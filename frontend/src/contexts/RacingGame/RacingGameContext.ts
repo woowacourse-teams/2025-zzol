@@ -23,6 +23,7 @@ type RankedPlayer = {
 
 export const useRacingGameRankedPlayers = () => {
   const finishOrderRef = useRef<RankedPlayer[]>([]);
+  const finishedPlayerNamesRef = useRef<Set<string>>(new Set());
   const previousResultRef = useRef<RankedPlayer[]>([]);
 
   const selector = useCallback((state: RacingGameContextType) => {
@@ -30,16 +31,14 @@ export const useRacingGameRankedPlayers = () => {
     const { players, distance } = state.racingGameData;
 
     players.forEach(({ playerName, position }) => {
-      if (
-        position >= distance.end &&
-        !finishOrder.some((player) => player.playerName === playerName)
-      ) {
+      if (position >= distance.end && !finishedPlayerNamesRef.current.has(playerName)) {
+        finishedPlayerNamesRef.current.add(playerName);
         finishOrder.push({ playerName, position, isFinished: true });
       }
     });
 
     const unFinishedSortedPlayers = players
-      .filter((player) => !finishOrder.some((p) => p.playerName === player.playerName))
+      .filter((player) => !finishedPlayerNamesRef.current.has(player.playerName))
       .sort((a, b) => b.position - a.position)
       .map((player) => ({
         playerName: player.playerName,

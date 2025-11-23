@@ -29,4 +29,3 @@ export const PlayersWrapper = styled.div`
   justify-content: center;
   align-items: center;
 `;
-

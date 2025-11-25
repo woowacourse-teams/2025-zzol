@@ -1,0 +1,64 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect  # 이것만 변경!
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+  lifecycle:
+    timeout-per-shutdown-phase: 1s
+  flyway:
+    enabled: false
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+  data:
+    redis:
+      ssl:
+        enabled: false
+  autoconfigure:
+    exclude:
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+
+server:
+  shutdown: immediate
+
+redisson:
+  enabled: false
+
+logging:
+  level:
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
+    coffeeshout: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318
+
+room:
+  qr:
+    prefix: https://coffee-shout.com/join/
+
+otel:
+  exporter:
+    otlp:
+      endpoint: http://localhost:4813
+
+tracing:
+  sampling:
+    probability: 1.0

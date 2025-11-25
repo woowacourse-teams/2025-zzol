@@ -1,0 +1,27 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+redisson:
+  enabled: true
+
+room:
+  qr:
+    prefix: "https://dev.coffee-shout.com/join/"
+
+websocket:
+  docs:
+    server-url: "https://api.dev.coffee-shout.com/ws"
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

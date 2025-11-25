@@ -1,0 +1,54 @@
+version: 0.0
+os: linux
+
+# 파일 복사 및 권한 설정
+files:
+  # 백엔드 JAR 파일을 EC2 서버의 배포 디렉토리로 복사
+  - source: coffee-shout-backend.jar
+    destination: /opt/coffee-shout/app
+    file_exists_behavior: OVERWRITE
+
+  # 설정 파일들 복사
+  - source: /scripts/
+    destination: /opt/coffee-shout/scripts
+    file_exists_behavior: OVERWRITE
+
+# 파일 권한 설정
+permissions:
+  - object: /opt/coffee-shout/app
+    pattern: "**"
+    owner: ubuntu
+    group: ubuntu
+    mode: 755
+
+  - object: /opt/coffee-shout/scripts
+    pattern: "**"
+    owner: ubuntu
+    group: ubuntu
+    mode: 755
+
+# 배포 생명주기 훅
+hooks:
+  # 배포 시작 전 준비 작업
+  BeforeInstall:
+    - location: scripts/before_install.sh
+      timeout: 300
+      runas: root
+
+  # 애플리케이션 시작 전 검증
+  ApplicationStart:
+    - location: scripts/application_start-dev.sh
+      timeout: 600
+      runas: ubuntu
+
+  # 애플리케이션 종료 (Dev 환경: 단순 종료)
+  ApplicationStop:
+    - location: scripts/application_stop-dev.sh
+      timeout: 60
+      runas: ubuntu
+
+  # 배포 성공 검증
+  ValidateService:
+    - location: scripts/validate_service.sh
+      timeout: 300
+      runas: ubuntu

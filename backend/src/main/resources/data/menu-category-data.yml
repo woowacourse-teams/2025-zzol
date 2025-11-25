@@ -1,0 +1,35 @@
+menuCategories:
+  - id: 1
+    name: "커피"
+    imageUrl: "https://techcourse-project-2025.s3.ap-northeast-2.amazonaws.com/coffee-shout/images/coffee.svg"
+
+  - id: 2
+    name: "논커피 라떼"
+    imageUrl: "https://techcourse-project-2025.s3.ap-northeast-2.amazonaws.com/coffee-shout/images/non-coffee-latte.svg"
+
+  - id: 3
+    name: "프라페"
+    imageUrl: "https://techcourse-project-2025.s3.ap-northeast-2.amazonaws.com/coffee-shout/images/frappe.svg"
+
+  - id: 4
+    name: "스무디"
+    imageUrl: "https://techcourse-project-2025.s3.ap-northeast-2.amazonaws.com/coffee-shout/images/smoothie.svg"
+
+  - id: 5
+    name: "아이스티"
+    imageUrl: "https://techcourse-project-2025.s3.ap-northeast-2.amazonaws.com/coffee-shout/images/ice-tea.svg"
+
+  - id: 6
+    name: "티"
+    imageUrl: "https://techcourse-project-2025.s3.ap-northeast-2.amazonaws.com/coffee-shout/images/tea.svg"
+
+
+  - id: 7
+    name: "생과일 주스"
+    imageUrl: "https://techcourse-project-2025.s3.ap-northeast-2.amazonaws.com/coffee-shout/images/fresh-fruit-juice.svg"
+
+
+  - id: 8
+    name: "에이드"
+    imageUrl: "https://techcourse-project-2025.s3.ap-northeast-2.amazonaws.com/coffee-shout/images/ade.svg"
+

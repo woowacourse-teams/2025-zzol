@@ -1,0 +1,65 @@
+version: 0.2
+
+env:
+  variables:
+    SNS_TOPIC_ARN: "arn:aws:sns:ap-northeast-2:843255971531:coffee-shout"
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto21
+    commands:
+      - cd backend
+      - ls -la
+      - chmod +x ./gradlew
+
+  pre_build:
+    commands:
+      - sed 's/\${/$/g; s/}//g' src/main/resources/application.yml > /tmp/application-tmp.yml
+      - envsubst < /tmp/application-tmp.yml > /tmp/application.yml
+      - cp /tmp/application.yml src/main/resources/application.yml
+
+      - sed 's/\${/$/g; s/}//g' src/main/resources/application-dev.yml > /tmp/application-dev-tmp.yml
+      - envsubst < /tmp/application-dev-tmp.yml > /tmp/application-dev.yml
+      - cp /tmp/application-dev.yml src/main/resources/application-dev.yml
+
+  build:
+    commands:
+      # dev 환경에서는 특정 테스트 제외하고 빌드
+      - ./gradlew build -x test
+      - ls -la build/libs/
+      - JAR_FILE=$(find build/libs -name "*.jar" -not -name "*-plain.jar" | head -1)
+      - echo "Found JAR file:" $JAR_FILE
+      - cp "$JAR_FILE" ../coffee-shout-backend.jar
+
+      # 스크립트 복사
+      - cp -r ./scripts ../scripts/
+      - chmod +x ../scripts/*.sh
+
+      # appspec 복사
+      - cp appspec-dev.yml ../appspec.yml
+  post_build:
+    commands:
+      - echo "Build completed on $(date)"
+      
+      - |
+        if [ $CODEBUILD_BUILD_SUCCEEDING -eq 0 ]; then
+          echo "Build failed, sending SNS notification..."
+        
+          aws sns publish \
+            --topic-arn "$SNS_TOPIC_ARN" \
+            --subject "🚨 Dev Build Failed: $CODEBUILD_INITIATOR" \
+            --message "Dev Build $CODEBUILD_BUILD_ID failed at $(date)" \
+            --region "$AWS_DEFAULT_REGION"
+        fi
+
+artifacts:
+  files:
+    - coffee-shout-backend.jar
+    - scripts/*
+    - appspec.yml
+
+cache:
+  paths:
+    - '/root/.gradle/**/*'     # Gradle 사용자 홈 캐시 (의존성, wrapper 등)
+    - '.gradle/**/*'            # 프로젝트 빌드 캐시

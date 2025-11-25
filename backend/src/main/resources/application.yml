@@ -1,1 +1,91 @@
-spring.application.name=coffee-shout
+spring:
+  application:
+    name:
+      coffee-shout
+  datasource:
+    url: ${MYSQL_URL}
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  lifecycle:
+    timeout-per-shutdown-phase: 5m
+  cloud:
+    aws:
+      s3:
+        bucket: ${S3_BUCKET_NAME}
+
+  data:
+    redis:
+      port: 6379
+      ssl:
+        enabled: true
+      host: localhost
+      stream:
+        room-join-key: room:broadcast
+        card-game-select-key: cardGame:select:broadcast
+        max-length: 100
+
+room:
+  removalDelay: 1h
+  qr:
+    width: 150
+    height: 150
+    presignedUrl:
+      expirationHours: 1
+    s3-key-prefix: ${S3_QR_KEY_PREFIX}
+  event:
+    timeout: 5s
+
+logging:
+  level:
+    root: info
+    io.opentelemetry.exporter.logging.LoggingSpanExporter: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus,tracing"
+  tracing:
+    enabled: true
+    sampling:
+      probability: ${TRACE_SAMPLING_PROBABILITY}
+  otlp:
+    tracing:
+      endpoint: ${TEMPO_URL}
+  metrics:
+    enable:
+      tomcat: true
+
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+server:
+  shutdown: graceful
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 30
+    max-connections: 700
+    accept-count: 300
+
+websocket:
+  docs:
+    enabled: true
+    base-package: "coffeeshout"
+    app-path: "/app"
+    topic-path: "/topic"
+    server-url: "http://localhost:8080/ws"
+    info:
+      title: "커피빵 WebSocket API 명세서"
+      version: "1.0.0"
+      description: "실시간 웹소켓 통신 API 문서"
+
+menu-category:
+  default-image: "https://techcourse-project-2025.s3.ap-northeast-2.amazonaws.com/coffee-shout/images/custom-menu.svg"

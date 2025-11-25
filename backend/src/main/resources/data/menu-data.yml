@@ -1,0 +1,220 @@
+menus:
+  - id: 1
+    name: "아메리카노"
+    categoryId: 1
+    temperatureAvailability: "BOTH"
+
+  - id: 2
+    name: "헤이즐넛 아메리카노"
+    categoryId: 1
+    temperatureAvailability: "BOTH"
+
+  - id: 3
+    name: "카페라떼"
+    categoryId: 1
+    temperatureAvailability: "BOTH"
+
+  - id: 4
+    name: "바닐라라떼"
+    categoryId: 1
+    temperatureAvailability: "BOTH"
+
+  - id: 5
+    name: "헤이즐넛라떼"
+    categoryId: 1
+    temperatureAvailability: "BOTH"
+
+  - id: 6
+    name: "돌체라떼"
+    categoryId: 1
+    temperatureAvailability: "BOTH"
+
+  - id: 7
+    name: "카푸치노"
+    categoryId: 1
+    temperatureAvailability: "BOTH"
+
+  - id: 8
+    name: "카페모카"
+    categoryId: 1
+    temperatureAvailability: "BOTH"
+
+  - id: 9
+    name: "카라멜마끼아또"
+    categoryId: 1
+    temperatureAvailability: "BOTH"
+
+  - id: 10
+    name: "말차 라떼"
+    categoryId: 2
+    temperatureAvailability: "BOTH"
+
+  - id: 11
+    name: "딸기 라떼"
+    categoryId: 2
+    temperatureAvailability: "BOTH"
+
+  - id: 12
+    name: "초코 라떼"
+    categoryId: 2
+    temperatureAvailability: "BOTH"
+
+  - id: 13
+    name: "자바칩 프라페"
+    categoryId: 3
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 14
+    name: "그린티 프라페"
+    categoryId: 3
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 15
+    name: "초코 프라페"
+    categoryId: 3
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 16
+    name: "민트초코 프라페"
+    categoryId: 3
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 17
+    name: "쿠키 프라페"
+    categoryId: 3
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 18
+    name: "딸기 스무디"
+    categoryId: 4
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 19
+    name: "복숭아 스무디"
+    categoryId: 4
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 20
+    name: "플레인 요거트 스무디"
+    categoryId: 4
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 21
+    name: "딸기 요거트 스무디"
+    categoryId: 4
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 22
+    name: "블루베리 요거트 스무디"
+    categoryId: 4
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 23
+    name: "복숭아 요거트 스무디"
+    categoryId: 4
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 24
+    name: "레몬 요거트 스무디"
+    categoryId: 4
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 25
+    name: "복숭아 아이스티"
+    categoryId: 5
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 26
+    name: "자몽 아이스티"
+    categoryId: 5
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 27
+    name: "레몬 아이스티"
+    categoryId: 5
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 28
+    name: "유자 티"
+    categoryId: 6
+    temperatureAvailability: "HOT_ONLY"
+
+  - id: 29
+    name: "레몬 티"
+    categoryId: 6
+    temperatureAvailability: "HOT_ONLY"
+
+  - id: 30
+    name: "그린 티"
+    categoryId: 6
+    temperatureAvailability: "BOTH"
+
+  - id: 31
+    name: "허니자몽블랙 티"
+    categoryId: 6
+    temperatureAvailability: "BOTH"
+
+  - id: 32
+    name: "얼그레이 티"
+    categoryId: 6
+    temperatureAvailability: "BOTH"
+
+  - id: 33
+    name: "캐모마일 티"
+    categoryId: 6
+    temperatureAvailability: "HOT_ONLY"
+
+  - id: 34
+    name: "페퍼민트 티"
+    categoryId: 6
+    temperatureAvailability: "BOTH"
+
+  - id: 35
+    name: "스위트베리 티"
+    categoryId: 6
+    temperatureAvailability: "BOTH"
+
+  - id: 36
+    name: "로즈마리 티"
+    categoryId: 6
+    temperatureAvailability: "BOTH"
+
+  - id: 37
+    name: "루이보스 티"
+    categoryId: 6
+    temperatureAvailability: "BOTH"
+
+  - id: 38
+    name: "딸기 주스"
+    categoryId: 7
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 39
+    name: "수박 주스"
+    categoryId: 7
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 40
+    name: "바나나 주스"
+    categoryId: 7
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 41
+    name: "자몽 에이드"
+    categoryId: 8
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 42
+    name: "레몬 에이드"
+    categoryId: 8
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 43
+    name: "청포도 에이드"
+    categoryId: 8
+    temperatureAvailability: "ICE_ONLY"
+
+  - id: 44
+    name: "블루레몬 에이드"
+    categoryId: 8
+    temperatureAvailability: "ICE_ONLY"

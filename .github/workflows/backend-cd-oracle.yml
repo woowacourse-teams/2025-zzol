@@ -1,0 +1,182 @@
+name: Backend CD - Oracle Cloud
+
+on:
+  push:
+    branches:
+      - be/dev
+      - be/prod
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-cd-oracle.yml"
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.artifact.outputs.name }}
+      environment: ${{ steps.env.outputs.name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          elif [ "${{ github.ref }}" == "refs/heads/be/prod" ]; then
+            ENV="prod"
+          else
+            ENV="dev"
+          fi
+          echo "name=$ENV" >> $GITHUB_OUTPUT
+          echo "Deploying to: $ENV"
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        working-directory: ./backend
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        working-directory: ./backend
+        env:
+          SPRING_PROFILES_ACTIVE: ${{ steps.env.outputs.name }}
+        run: |
+          ./gradlew clean build -x test
+
+      - name: Prepare artifacts
+        id: artifact
+        working-directory: ./backend
+        run: |
+          # JAR 파일 찾기
+          JAR_FILE=$(find build/libs -name "*.jar" -not -name "*-plain.jar" | head -1)
+          echo "Found JAR: $JAR_FILE"
+
+          # artifacts 디렉토리 생성
+          mkdir -p ../deploy-artifacts
+          cp "$JAR_FILE" ../deploy-artifacts/coffee-shout-backend.jar
+
+          # 배포 스크립트 복사
+          cp -r scripts ../deploy-artifacts/
+          chmod +x ../deploy-artifacts/scripts/*.sh
+
+          # 아티팩트 이름 설정
+          ARTIFACT_NAME="coffee-shout-backend-${{ steps.env.outputs.name }}-${{ github.sha }}"
+          echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: deploy-artifacts/
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: oracle-${{ needs.build.outputs.environment }}
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact-name }}
+          path: ./deploy
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.OCI_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.OCI_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to Oracle Cloud
+        env:
+          OCI_HOST: ${{ secrets.OCI_HOST }}
+          OCI_USER: ${{ secrets.OCI_USER }}
+          APP_HOME: /opt/coffee-shout
+          ENVIRONMENT: ${{ needs.build.outputs.environment }}
+        run: |
+          echo "🚀 Starting deployment to Oracle Cloud ($ENVIRONMENT)..."
+
+          # 배포 디렉토리 생성
+          ssh $OCI_USER@$OCI_HOST "sudo mkdir -p $APP_HOME/{app,scripts,logs}"
+          ssh $OCI_USER@$OCI_HOST "sudo chown -R $OCI_USER:$OCI_USER $APP_HOME"
+
+          # JAR 파일 전송
+          echo "📦 Uploading JAR file..."
+          scp -r deploy/coffee-shout-backend.jar $OCI_USER@$OCI_HOST:$APP_HOME/app/
+
+          # 배포 스크립트 전송
+          echo "📜 Uploading deployment scripts..."
+          scp -r deploy/scripts/* $OCI_USER@$OCI_HOST:$APP_HOME/scripts/
+
+          # 스크립트 실행 권한 부여
+          ssh $OCI_USER@$OCI_HOST "chmod +x $APP_HOME/scripts/*.sh"
+
+          # 기존 애플리케이션 중지
+          echo "🛑 Stopping existing application..."
+          ssh $OCI_USER@$OCI_HOST "$APP_HOME/scripts/application_stop-${ENVIRONMENT}.sh" || true
+
+          # 새 애플리케이션 시작
+          echo "▶️  Starting new application..."
+          ssh $OCI_USER@$OCI_HOST "$APP_HOME/scripts/application_start-${ENVIRONMENT}.sh"
+
+          # 헬스체크
+          echo "🏥 Health check..."
+          sleep 10
+          ssh $OCI_USER@$OCI_HOST "$APP_HOME/scripts/validate_service.sh"
+
+          echo "✅ Deployment completed successfully!"
+
+      - name: Cleanup SSH
+        if: always()
+        run: rm -rf ~/.ssh/id_rsa
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Deployment to Oracle Cloud (${{ needs.build.outputs.environment }}) succeeded!"
+          else
+            echo "❌ Deployment to Oracle Cloud (${{ needs.build.outputs.environment }}) failed!"
+          fi
+
+  notify:
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Send notification
+        run: |
+          ENV="${{ needs.build.outputs.environment }}"
+          STATUS="${{ needs.deploy.result }}"
+
+          if [ "$STATUS" == "success" ]; then
+            echo "🎉 Oracle Cloud deployment to $ENV succeeded!"
+            echo "Commit: ${{ github.sha }}"
+            echo "Branch: ${{ github.ref_name }}"
+          else
+            echo "⚠️ Oracle Cloud deployment to $ENV failed!"
+            echo "Check the logs for details"
+          fi

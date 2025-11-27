@@ -58,6 +58,7 @@ jobs:
           #   echo "ENVIRONMENT=prod" >> $GITHUB_ENV
           # fi
           echo "PROFILE=dev" >> $GITHUB_ENV
+          echo "ENVIRONMENT=dev" >> $GITHUB_ENV
           # echo "Deploying to $ENVIRONMENT environment with $PROFILE profile"
 
       - name: Get JAR file name
@@ -76,7 +77,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           source: "backend/build/libs/*.jar"
-          target: "/home/deploy/app/jar/"
+          target: "/home/ubuntu/dev/app/jar/"
           strip_components: 3
           overwrite: true
 

@@ -69,9 +69,6 @@ jobs:
           echo "JAR_NAME=$(basename $JAR_FILE)" >> $GITHUB_ENV
 
       - name: Transfer JAR via SCP
-        run: |
-          echo $JAR_FILE
-          echo $JAR_NAME
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -91,4 +88,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            echo "hi"
+            # echo "hi"

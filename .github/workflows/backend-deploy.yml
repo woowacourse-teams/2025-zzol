@@ -5,6 +5,7 @@ on:
     branches:
       - be/dev
       - be/prod
+      - be/feat/997-github-cd-migration
     paths:
       - "backend/**"
       - ".github/workflows/backend-deploy.yml"
@@ -46,32 +47,37 @@ jobs:
       - name: Set deployment environment
         id: set-env
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "PROFILE=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
-            echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == "refs/heads/be/dev" ]]; then
-            echo "PROFILE=dev" >> $GITHUB_ENV
-            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == "refs/heads/be/prod" ]]; then
-            echo "PROFILE=prod" >> $GITHUB_ENV
-            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
-          fi
-          echo "Deploying to $ENVIRONMENT environment with $PROFILE profile"
+          # if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          #   echo "PROFILE=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          #   echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          # elif [[ "${{ github.ref }}" == "refs/heads/be/dev" ]]; then
+          #   echo "PROFILE=dev" >> $GITHUB_ENV
+          #   echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+          # elif [[ "${{ github.ref }}" == "refs/heads/be/prod" ]]; then
+          #   echo "PROFILE=prod" >> $GITHUB_ENV
+          #   echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+          # fi
+          echo "PROFILE=dev" >> $GITHUB_ENV
+          # echo "Deploying to $ENVIRONMENT environment with $PROFILE profile"
 
       - name: Get JAR file name
         id: jar-file
         run: |
+          echo "Deploying to $ENVIRONMENT environment with $PROFILE profile"
           JAR_FILE=$(ls build/libs/*.jar | head -1)
           echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
           echo "JAR_NAME=$(basename $JAR_FILE)" >> $GITHUB_ENV
 
       - name: Transfer JAR via SCP
+        run: |
+          echo $JAR_FILE
+          echo $JAR_NAME
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_HOST || secrets.DEV_SSH_HOST }}
-          username: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_USERNAME || secrets.DEV_SSH_USERNAME }}
-          key: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PRIVATE_KEY || secrets.DEV_SSH_PRIVATE_KEY }}
-          port: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PORT || secrets.DEV_SSH_PORT }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           source: "backend/build/libs/*.jar"
           target: "/home/deploy/app/jar/"
           strip_components: 3
@@ -80,60 +86,9 @@ jobs:
       - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_HOST || secrets.DEV_SSH_HOST }}
-          username: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_USERNAME || secrets.DEV_SSH_USERNAME }}
-          key: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PRIVATE_KEY || secrets.DEV_SSH_PRIVATE_KEY }}
-          port: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PORT || secrets.DEV_SSH_PORT }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
-            cd /home/deploy/app
-
-            # Stop existing containers
-            docker compose --profile ${{ env.PROFILE }} down
-
-            # Rename JAR to app.jar
-            mv /home/deploy/app/jar/*.jar /home/deploy/app/jar/app.jar
-
-            # Start new containers
-            docker compose --profile ${{ env.PROFILE }} up -d
-
-            # Wait for application to start
-            sleep 10
-
-            # Check container status
-            docker compose --profile ${{ env.PROFILE }} ps
-
-            # Show recent logs
-            docker compose --profile ${{ env.PROFILE }} logs --tail=50
-
-      - name: Health Check
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_HOST || secrets.DEV_SSH_HOST }}
-          username: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_USERNAME || secrets.DEV_SSH_USERNAME }}
-          key: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PRIVATE_KEY || secrets.DEV_SSH_PRIVATE_KEY }}
-          port: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PORT || secrets.DEV_SSH_PORT }}
-          script: |
-            # Check if container is running
-            if ! docker compose --profile ${{ env.PROFILE }} ps | grep -q "Up"; then
-              echo "Container is not running!"
-              exit 1
-            fi
-
-            # Optional: Check health endpoint
-            # Uncomment and modify if you have a health check endpoint
-            # sleep 5
-            # curl -f http://localhost:8080/actuator/health || exit 1
-
-            echo "Deployment successful!"
-
-      - name: Deployment Summary
-        if: always()
-        run: |
-          echo "### Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Profile:** ${{ env.PROFILE }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **JAR File:** ${{ env.JAR_NAME }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+            echo "hi"

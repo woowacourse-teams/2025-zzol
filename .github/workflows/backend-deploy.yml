@@ -47,16 +47,13 @@ jobs:
         id: set-env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "PROFILE=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
             echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == "refs/heads/be/dev" ]]; then
-            echo "PROFILE=dev" >> $GITHUB_ENV
             echo "ENVIRONMENT=dev" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == "refs/heads/be/prod" ]]; then
-            echo "PROFILE=prod" >> $GITHUB_ENV
             echo "ENVIRONMENT=prod" >> $GITHUB_ENV
           fi
-          echo "Deploying to $ENVIRONMENT environment with $PROFILE profile"
+          echo "Deploying to $ENVIRONMENT environment"
 
       - name: Get JAR file name
         id: jar-file
@@ -65,75 +62,166 @@ jobs:
           echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
           echo "JAR_NAME=$(basename $JAR_FILE)" >> $GITHUB_ENV
 
-      - name: Transfer JAR via SCP
+      # ============================================
+      # 파일 전송
+      # ============================================
+      - name: Transfer files via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_HOST || secrets.DEV_SSH_HOST }}
-          username: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_USERNAME || secrets.DEV_SSH_USERNAME }}
-          key: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PRIVATE_KEY || secrets.DEV_SSH_PRIVATE_KEY }}
-          port: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PORT || secrets.DEV_SSH_PORT }}
-          source: "backend/build/libs/*.jar"
-          target: "/home/deploy/app/jar/"
-          strip_components: 3
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: |
+            backend/build/libs/*.jar
+            backend/docker/${{ env.ENVIRONMENT }}/docker-compose.yml
+            backend/docker/app/Dockerfile
+          target: /tmp/deploy-${{ env.ENVIRONMENT }}/
+          strip_components: 1
           overwrite: true
 
+      # ============================================
+      # Docker 빌드 및 배포
+      # ============================================
       - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_HOST || secrets.DEV_SSH_HOST }}
-          username: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_USERNAME || secrets.DEV_SSH_USERNAME }}
-          key: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PRIVATE_KEY || secrets.DEV_SSH_PRIVATE_KEY }}
-          port: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PORT || secrets.DEV_SSH_PORT }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
-            cd /home/deploy/app
+            set -e
 
-            # Stop existing containers
-            docker compose --profile ${{ env.PROFILE }} down
+            ENV=${{ env.ENVIRONMENT }}
+            DEPLOY_DIR=~/${ENV}
+            TMP_DIR=/tmp/deploy-${ENV}
 
-            # Rename JAR to app.jar
-            mv /home/deploy/app/jar/*.jar /home/deploy/app/jar/app.jar
+            echo "=== 🚀 Coffee Shout ${ENV} 배포 시작 ==="
 
-            # Start new containers
-            docker compose --profile ${{ env.PROFILE }} up -d
+            # ============================================
+            # 1. 디렉토리 준비
+            # ============================================
+            echo "📁 1. 디렉토리 준비 중..."
+            mkdir -p ${DEPLOY_DIR}
+            mkdir -p ~/common
 
-            # Wait for application to start
-            sleep 10
+            # ============================================
+            # 2. 파일 복사
+            # ============================================
+            echo "📦 2. 파일 복사 중..."
 
-            # Check container status
-            docker compose --profile ${{ env.PROFILE }} ps
+            # JAR 파일
+            cp ${TMP_DIR}/build/libs/*.jar ${DEPLOY_DIR}/app.jar
 
-            # Show recent logs
-            docker compose --profile ${{ env.PROFILE }} logs --tail=50
+            # docker-compose.yml
+            cp ${TMP_DIR}/docker/${ENV}/docker-compose.yml ${DEPLOY_DIR}/
 
+            # Dockerfile (공통)
+            cp ${TMP_DIR}/docker/app/Dockerfile ~/common/
+
+            # ============================================
+            # 3. 네트워크 생성
+            # ============================================
+            echo "🌐 3. Docker 네트워크 생성 중..."
+            docker network create ${ENV}-network 2>/dev/null || echo "Network ${ENV}-network already exists"
+            docker network create monitoring-network 2>/dev/null || echo "Network monitoring-network already exists"
+
+            # ============================================
+            # 4. 환경변수 파일 생성
+            # ============================================
+            echo "🔐 4. 환경변수 파일 생성 중..."
+            cat > ${DEPLOY_DIR}/.env << 'EOF'
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            EOF
+
+            # ============================================
+            # 5. Docker 이미지 빌드
+            # ============================================
+            echo "🐳 5. Docker 이미지 빌드 중..."
+            cd ${DEPLOY_DIR}
+            docker build -t coffee-shout-backend:${ENV} -f ~/common/Dockerfile .
+
+            # ============================================
+            # 6. 컨테이너 배포
+            # ============================================
+            echo "🚢 6. 컨테이너 배포 중..."
+
+            # App만 재시작 (DB는 유지)
+            docker-compose up -d --no-deps ${ENV}-app
+
+            # ============================================
+            # 7. 배포 확인
+            # ============================================
+            echo "✅ 7. 배포 상태 확인 중..."
+            sleep 5
+            docker-compose ps
+
+            # 최근 로그 확인
+            docker-compose logs --tail=50 ${ENV}-app
+
+            # ============================================
+            # 8. 정리
+            # ============================================
+            echo "🧹 8. 임시 파일 정리 중..."
+            rm -rf ${TMP_DIR}
+
+            echo "=== ✅ Coffee Shout ${ENV} 배포 완료 ==="
+
+      # ============================================
+      # Health Check
+      # ============================================
       - name: Health Check
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_HOST || secrets.DEV_SSH_HOST }}
-          username: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_USERNAME || secrets.DEV_SSH_USERNAME }}
-          key: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PRIVATE_KEY || secrets.DEV_SSH_PRIVATE_KEY }}
-          port: ${{ env.ENVIRONMENT == 'prod' && secrets.PROD_SSH_PORT || secrets.DEV_SSH_PORT }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
-            # Check if container is running
-            if ! docker compose --profile ${{ env.PROFILE }} ps | grep -q "Up"; then
-              echo "Container is not running!"
+            ENV=${{ env.ENVIRONMENT }}
+            DEPLOY_DIR=~/${ENV}
+
+            echo "🏥 Health Check 시작..."
+            cd ${DEPLOY_DIR}
+
+            # 컨테이너 실행 확인
+            if ! docker-compose ps | grep -q "${ENV}-app.*Up"; then
+              echo "❌ ${ENV}-app 컨테이너가 실행 중이지 않습니다!"
+              docker-compose logs --tail=100 ${ENV}-app
               exit 1
             fi
 
-            # Optional: Check health endpoint
-            # Uncomment and modify if you have a health check endpoint
-            # sleep 5
-            # curl -f http://localhost:8080/actuator/health || exit 1
+            # Health endpoint 확인 (40초 대기)
+            echo "Waiting for application to be ready..."
+            for i in {1..40}; do
+              if docker exec ${ENV}-app wget --quiet --tries=1 --spider http://localhost:8080/actuator/health 2>/dev/null; then
+                echo "✅ Application is healthy!"
+                exit 0
+              fi
+              echo "Attempt $i/40: Application not ready yet..."
+              sleep 1
+            done
 
-            echo "Deployment successful!"
+            echo "❌ Health check failed!"
+            docker-compose logs --tail=100 ${ENV}-app
+            exit 1
 
+      # ============================================
+      # 배포 요약
+      # ============================================
       - name: Deployment Summary
         if: always()
         run: |
           echo "### Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Profile:** ${{ env.PROFILE }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **JAR File:** ${{ env.JAR_NAME }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed Components:**" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ ${{ env.ENVIRONMENT }}-app (Spring Boot)" >> $GITHUB_STEP_SUMMARY
+          echo "- ℹ️  ${{ env.ENVIRONMENT }}-mysql (no changes)" >> $GITHUB_STEP_SUMMARY
+          echo "- ℹ️  ${{ env.ENVIRONMENT }}-redis (no changes)" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Dev Application (Spring Boot)
+  # ============================================
+  dev-app:
+    build:
+      context: ../../build/libs
+      dockerfile: ../../docker/app/Dockerfile
+    image: coffee-shout-backend:dev
+    container_name: dev-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:mysql://dev-mysql:3306/coffee_shout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATA_REDIS_HOST=dev-redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - TZ=Asia/Seoul
+    volumes:
+      - dev-app-logs:/app/logs
+    networks:
+      - dev-network
+    depends_on:
+      dev-mysql:
+        condition: service_healthy
+      dev-redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # Dev MySQL Database
+  # ============================================
+  dev-mysql:
+    image: mysql:8.0
+    container_name: dev-mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: coffee_shout
+      TZ: Asia/Seoul
+    volumes:
+      - dev-mysql-data:/var/lib/mysql
+      - dev-mysql-conf:/etc/mysql/conf.d
+      - dev-mysql-logs:/var/log/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - dev-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Dev Redis (Valkey)
+  # ============================================
+  dev-redis:
+    image: valkey/valkey:latest
+    container_name: dev-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - dev-redis-data:/data
+    command: valkey-server --appendonly yes
+    networks:
+      - dev-network
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  dev-network:
+    driver: bridge
+    name: dev-network
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  dev-app-logs:
+    driver: local
+  dev-mysql-data:
+    driver: local
+  dev-mysql-conf:
+    driver: local
+  dev-mysql-logs:
+    driver: local
+  dev-redis-data:
+    driver: local

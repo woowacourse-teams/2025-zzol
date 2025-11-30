@@ -1,0 +1,48 @@
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 168h  # 7일
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/blocks
+    wal:
+      path: /tmp/tempo/wal
+
+# OCI Object Storage 백업 (선택사항)
+# storage:
+#   trace:
+#     backend: s3
+#     s3:
+#       endpoint: https://${OCI_NAMESPACE}.compat.objectstorage.${OCI_REGION}.oraclecloud.com
+#       bucket: tempo-backup
+#       access_key: ${OCI_ACCESS_KEY}
+#       secret_key: ${OCI_SECRET_KEY}
+#       insecure: false
+#     wal:
+#       path: /tmp/tempo/wal
+
+query_frontend:
+  search:
+    max_duration: 0s
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors: [service-graphs, span-metrics]

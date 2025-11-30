@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Prod Application (Spring Boot)
+  # ============================================
+  prod-app:
+    build:
+      context: ../../build/libs
+      dockerfile: ../../docker/app/Dockerfile
+    image: coffee-shout-backend:prod
+    container_name: prod-app
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://prod-mysql:3306/coffee_shout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATA_REDIS_HOST=prod-redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - TZ=Asia/Seoul
+    volumes:
+      - prod-app-logs:/app/logs
+    networks:
+      - prod-network
+    depends_on:
+      prod-mysql:
+        condition: service_healthy
+      prod-redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # ============================================
+  # Prod MySQL Database
+  # ============================================
+  prod-mysql:
+    image: mysql:8.0
+    container_name: prod-mysql
+    restart: unless-stopped
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: coffee_shout
+      TZ: Asia/Seoul
+    volumes:
+      - prod-mysql-data:/var/lib/mysql
+      - prod-mysql-conf:/etc/mysql/conf.d
+      - prod-mysql-logs:/var/log/mysql
+      - prod-mysql-backup:/backup
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max_connections=200
+      --innodb_buffer_pool_size=512M
+      --slow_query_log=1
+      --slow_query_log_file=/var/log/mysql/slow.log
+      --long_query_time=2
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # ============================================
+  # Prod Redis (Valkey)
+  # ============================================
+  prod-redis:
+    image: valkey/valkey:latest
+    container_name: prod-redis
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - prod-redis-data:/data
+    command: >
+      valkey-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  prod-network:
+    driver: bridge
+    name: prod-network
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  prod-app-logs:
+    driver: local
+  prod-mysql-data:
+    driver: local
+  prod-mysql-conf:
+    driver: local
+  prod-mysql-logs:
+    driver: local
+  prod-mysql-backup:
+    driver: local
+  prod-redis-data:
+    driver: local

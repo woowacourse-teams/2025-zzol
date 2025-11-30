@@ -48,17 +48,21 @@ docker/
 # 환경변수 설정
 cd backend/docker/dev
 cp .env.example .env
-# .env 파일 수정
+# .env 파일 수정 (DB_PASSWORD, REGISTRY, IMAGE_TAG)
 
-# JAR 빌드
+# JAR 빌드 (GitHub Actions에서 자동)
 cd ../../
 ./gradlew bootJar
 
-# Docker 이미지 빌드
-cd docker/dev
-docker build -t coffee-shout-backend:dev -f ../app/Dockerfile ../../build/libs/
+# Docker 이미지 빌드 및 GHCR에 푸시 (GitHub Actions에서 자동)
+docker build -t ghcr.io/{owner}/coffee-shout-backend:dev -f docker/app/Dockerfile build/libs/
+docker push ghcr.io/{owner}/coffee-shout-backend:dev
 
-# 실행
+# 또는 로컬에서 테스트
+docker build -t coffee-shout-backend:local -f docker/app/Dockerfile build/libs/
+
+# 실행 (GHCR에서 이미지 pull)
+cd docker/dev
 docker-compose up -d
 
 # 로그 확인
@@ -67,15 +71,21 @@ docker-compose logs -f
 
 ### 2. 운영 서버 배포
 
-**자동 배포 (GitHub Actions) - 권장**
+**✅ 자동 배포 (GitHub Actions) - 권장**
 
 ```bash
-# Dev 배포
+# Dev 배포 (be/dev 브랜치)
 git push origin be/dev
 
-# Prod 배포
+# Prod 배포 (be/prod 브랜치)
 git push origin be/prod
 ```
+
+**배포 프로세스**:
+1. GitHub Actions에서 JAR 빌드
+2. Docker 이미지 빌드 및 **GHCR**(GitHub Container Registry)에 푸시
+3. 서버에서 GHCR로부터 이미지 pull
+4. docker-compose로 컨테이너 실행
 
 **수동 배포**
 

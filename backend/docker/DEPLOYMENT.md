@@ -1,16 +1,17 @@
-# Coffee Shout - Docker 배포 가이드
+# Coffee Shout - Docker 배포 가이드 (GHCR)
 
-이 문서는 Coffee Shout 백엔드 애플리케이션의 Docker 기반 배포 가이드입니다.
+이 문서는 Coffee Shout 백엔드 애플리케이션의 **GHCR(GitHub Container Registry) 기반** Docker 배포 가이드입니다.
 
 ## 📋 목차
 
 1. [아키텍처 개요](#아키텍처-개요)
-2. [사전 준비](#사전-준비)
-3. [GitHub Secrets 설정](#github-secrets-설정)
-4. [자동 배포 (GitHub Actions)](#자동-배포-github-actions)
-5. [수동 배포](#수동-배포)
-6. [모니터링 및 Nginx 설정](#모니터링-및-nginx-설정)
-7. [트러블슈팅](#트러블슈팅)
+2. [GHCR 배포 방식](#ghcr-배포-방식)
+3. [사전 준비](#사전-준비)
+4. [GitHub Secrets 설정](#github-secrets-설정)
+5. [자동 배포 (GitHub Actions)](#자동-배포-github-actions)
+6. [수동 배포](#수동-배포)
+7. [모니터링 및 Nginx 설정](#모니터링-및-nginx-설정)
+8. [트러블슈팅](#트러블슈팅)
 
 ---
 
@@ -48,21 +49,118 @@
 ~/ (홈 디렉토리)
 ├── dev/
 │   ├── docker-compose.yml
-│   ├── .env
-│   └── app.jar
+│   └── .env                        # DB_PASSWORD, REGISTRY, IMAGE_TAG
 ├── prod/
 │   ├── docker-compose.yml
-│   ├── .env
-│   └── app.jar
+│   └── .env                        # DB_PASSWORD, REGISTRY, IMAGE_TAG
 ├── monitoring/
 │   ├── docker-compose.yml
 │   ├── .env
 │   └── conf/
-├── nginx/
-│   ├── docker-compose.yml
-│   └── conf/
-└── common/
-    └── Dockerfile
+└── nginx/
+    ├── docker-compose.yml
+    └── conf/
+```
+
+**주요 변경사항**:
+- ✅ **JAR 파일 불필요** (GHCR에서 이미지 pull)
+- ✅ **Dockerfile 불필요** (GitHub Actions에서 빌드)
+- ✅ **디스크 사용량 감소**
+
+---
+
+## GHCR 배포 방식
+
+### 왜 GHCR을 사용하나요?
+
+**기존 방식 (서버에서 빌드)**:
+```
+GitHub Actions (무료)          EC2 인스턴스 (유료)
+     ↓                              ↓
+JAR 빌드                       Docker 빌드 ← CPU/메모리 사용!
+     ↓                              ↓
+JAR + Dockerfile 전송           이미지 생성
+                                   ↓
+                              컨테이너 실행
+```
+
+**GHCR 방식 (GitHub Actions에서 빌드)**:
+```
+GitHub Actions (무료)          EC2 인스턴스 (유료)
+     ↓                              ↓
+JAR 빌드                       이미지 Pull ← 네트워크만 사용!
+     ↓                              ↓
+Docker 이미지 빌드              컨테이너 실행
+     ↓
+GHCR에 Push
+```
+
+### 장점
+
+| 항목 | 기존 방식 | GHCR 방식 |
+|------|----------|-----------|
+| **EC2 CPU 사용** | 빌드 시마다 사용 | 거의 없음 (pull만) |
+| **EC2 메모리** | 빌드 중 spike | 안정적 |
+| **빌드 속도** | 서버 성능에 의존 | GitHub Actions 캐시 활용 |
+| **이미지 관리** | 로컬만 | 버전 관리 가능 |
+| **롤백** | 어려움 | 이전 이미지로 즉시 롤백 |
+| **비용** | EC2 리소스 사용 | GitHub 무료 리소스 활용 |
+
+### GHCR 이미지 구조
+
+```
+ghcr.io/woowacourse-teams/coffee-shout-backend
+├── :dev                    # Dev 환경 최신 이미지
+├── :dev-{commit-sha}       # Dev 환경 특정 커밋 이미지
+├── :prod                   # Prod 환경 최신 이미지
+└── :prod-{commit-sha}      # Prod 환경 특정 커밋 이미지
+```
+
+**예시**:
+```
+ghcr.io/woowacourse-teams/coffee-shout-backend:dev
+ghcr.io/woowacourse-teams/coffee-shout-backend:dev-d66065ac
+ghcr.io/woowacourse-teams/coffee-shout-backend:prod
+ghcr.io/woowacourse-teams/coffee-shout-backend:prod-ae72d781
+```
+
+### 배포 플로우
+
+```
+1. 코드 Push (be/dev 또는 be/prod)
+   ↓
+2. GitHub Actions 트리거
+   ↓
+3. JAR 빌드 (./gradlew bootJar)
+   ↓
+4. Docker 이미지 빌드
+   - context: backend/build/libs
+   - file: backend/docker/app/Dockerfile
+   ↓
+5. GHCR에 Push
+   - ghcr.io/.../coffee-shout-backend:dev
+   - ghcr.io/.../coffee-shout-backend:dev-{sha}
+   ↓
+6. docker-compose.yml 전송 (SCP)
+   ↓
+7. 서버에서 작업
+   ↓
+   7-1. .env 파일 생성
+        - DB_PASSWORD
+        - REGISTRY=ghcr.io/woowacourse-teams
+        - IMAGE_TAG=dev
+   ↓
+   7-2. GHCR 로그인
+        echo $GITHUB_TOKEN | docker login ghcr.io
+   ↓
+   7-3. 이미지 Pull
+        docker pull ghcr.io/.../coffee-shout-backend:dev
+   ↓
+   7-4. 컨테이너 실행
+        docker-compose up -d --no-deps dev-app
+   ↓
+8. Health Check
+   - /actuator/health 확인 (40초)
 ```
 
 ---
@@ -124,19 +222,35 @@ GitHub Repository → Settings → Secrets and variables → Actions에서 다�
 ### Dev 환경 배포
 
 ```bash
-# be/dev 브랜치에 푸시
+# be/dev 브랜치에 푸시 (PR merge 또는 직접 push)
 git checkout be/dev
 git push origin be/dev
 ```
 
-**배포 프로세스:**
-1. JAR 빌드
-2. 파일 전송 (JAR, docker-compose.yml, Dockerfile)
-3. 네트워크 생성
-4. .env 파일 생성
-5. Docker 이미지 빌드
-6. dev-app 컨테이너만 재시작 (DB는 유지)
-7. Health Check
+**배포 프로세스 (GHCR 방식)**:
+1. ✅ **JAR 빌드** (GitHub Actions)
+   - `./gradlew bootJar`
+2. ✅ **Docker 이미지 빌드** (GitHub Actions)
+   - GHCR 로그인
+   - Docker Buildx 설정
+   - 이미지 빌드 (캐시 활용)
+3. ✅ **GHCR에 푸시**
+   - `ghcr.io/woowacourse-teams/coffee-shout-backend:dev`
+   - `ghcr.io/woowacourse-teams/coffee-shout-backend:dev-{sha}`
+4. ✅ **파일 전송** (SCP)
+   - `docker-compose.yml` 만 전송
+5. ✅ **서버에서 배포**
+   - 네트워크 생성
+   - `.env` 파일 생성 (REGISTRY, IMAGE_TAG 포함)
+   - GHCR 로그인
+   - **이미지 Pull** (빌드 불필요!)
+   - 컨테이너 실행 (`docker-compose up -d --no-deps dev-app`)
+6. ✅ **Health Check**
+   - 40초간 `/actuator/health` 확인
+
+**리소스 사용**:
+- GitHub Actions: JAR 빌드 + Docker 빌드 (무료)
+- EC2 인스턴스: 이미지 Pull + 컨테이너 실행 (최소화)
 
 ### Prod 환경 배포
 
@@ -146,47 +260,97 @@ git checkout be/prod
 git push origin be/prod
 ```
 
+배포 프로세스는 Dev와 동일하며, 환경만 `prod`로 변경됩니다.
+
 ### 수동 트리거
 
 GitHub Actions 탭에서 `Backend Deploy` 워크플로우를 선택하고 "Run workflow"로 수동 실행 가능.
+
+**중요**: 브랜치와 환경이 일치해야 합니다!
+- ✅ `be/dev` 브랜치 + `dev` 환경 선택
+- ✅ `be/prod` 브랜치 + `prod` 환경 선택
+- ❌ `be/dev` 브랜치 + `prod` 환경 선택 → 에러 발생!
 
 ---
 
 ## 수동 배포
 
-### Dev 환경 수동 배포
+### 방법 1: GHCR에서 Pull (추천)
+
+```bash
+# 1. 서버 접속
+ssh user@host
+cd ~/dev
+
+# 2. .env 파일 생성
+cat > .env << EOF
+DB_PASSWORD=your-password
+REGISTRY=ghcr.io/woowacourse-teams
+IMAGE_TAG=dev
+EOF
+
+# 3. docker-compose.yml 업데이트 (필요시)
+# SCP로 전송하거나 직접 수정
+
+# 4. GHCR 로그인
+echo YOUR_GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+
+# 5. 최신 이미지 Pull
+docker pull ghcr.io/woowacourse-teams/coffee-shout-backend:dev
+
+# 6. 컨테이너 재시작
+docker-compose up -d --no-deps dev-app
+
+# 7. Health Check
+docker-compose logs -f dev-app
+```
+
+### 방법 2: 특정 커밋 버전으로 롤백
+
+```bash
+# 1. 서버 접속
+ssh user@host
+cd ~/dev
+
+# 2. 이전 커밋 이미지 Pull
+docker pull ghcr.io/woowacourse-teams/coffee-shout-backend:dev-d66065ac
+
+# 3. .env에서 IMAGE_TAG 변경
+cat > .env << EOF
+DB_PASSWORD=your-password
+REGISTRY=ghcr.io/woowacourse-teams
+IMAGE_TAG=dev-d66065ac
+EOF
+
+# 4. 컨테이너 재시작
+docker-compose up -d --no-deps dev-app
+```
+
+### 방법 3: 로컬에서 빌드 및 배포 (비상시)
 
 ```bash
 # 1. JAR 빌드 (로컬)
 ./gradlew bootJar
 
-# 2. 서버로 파일 전송
-scp backend/build/libs/*.jar user@host:~/dev/app.jar
-scp backend/docker/dev/docker-compose.yml user@host:~/dev/
-scp backend/docker/app/Dockerfile user@host:~/common/
+# 2. Docker 이미지 빌드 및 GHCR 푸시 (로컬)
+docker build -t ghcr.io/woowacourse-teams/coffee-shout-backend:dev-manual \
+  -f backend/docker/app/Dockerfile backend/build/libs/
 
-# 3. 서버에서 배포
-ssh user@host
-cd ~/dev
+# GHCR 로그인
+echo YOUR_GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
 
-# .env 파일 생성
-cat > .env << EOF
-DB_PASSWORD=your-password
-EOF
+# 이미지 푸시
+docker push ghcr.io/woowacourse-teams/coffee-shout-backend:dev-manual
 
-# Docker 이미지 빌드
-docker build -t coffee-shout-backend:dev -f ~/common/Dockerfile .
-
-# 컨테이너 배포
-docker-compose up -d
-
-# 또는 App만 재시작
-docker-compose up -d --no-deps dev-app
+# 3. 서버에서 Pull 및 배포 (방법 1 참조)
 ```
 
 ### Prod 환경 수동 배포
 
-위와 동일하되 `~/dev`를 `~/prod`로 변경.
+위와 동일하되 다음을 변경:
+- `~/dev` → `~/prod`
+- `IMAGE_TAG=dev` → `IMAGE_TAG=prod`
+- `:dev` → `:prod`
 
 ---
 
@@ -338,6 +502,73 @@ docker system prune -a
 
 # 볼륨 정리 (주의: 데이터 삭제됨)
 docker volume prune
+```
+
+### 6. GHCR 이미지 Pull 실패
+
+```bash
+# 에러: denied: permission_denied
+# 원인: GHCR 로그인 필요
+
+# 해결 1: GitHub Token으로 로그인
+echo YOUR_GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+
+# 해결 2: GitHub Actions에서 배포 재실행
+# (자동으로 GITHUB_TOKEN 사용)
+
+# 로그인 확인
+docker info | grep Username
+```
+
+### 7. 이미지 태그 불일치
+
+```bash
+# 에러: image not found: ghcr.io/.../coffee-shout-backend:dev
+# 원인: .env의 IMAGE_TAG와 실제 이미지 태그 불일치
+
+# 확인: 사용 가능한 이미지 확인
+docker images | grep coffee-shout-backend
+
+# 또는 GHCR에서 확인
+# https://github.com/orgs/woowacourse-teams/packages/container/coffee-shout-backend/versions
+
+# 해결: .env 파일에서 IMAGE_TAG 수정
+cat .env  # 현재 설정 확인
+vi .env   # 수정
+```
+
+### 8. 브랜치-환경 불일치 에러 (workflow_dispatch)
+
+```bash
+# 에러: "prod 환경은 be/prod 브랜치에서만 배포 가능합니다!"
+# 원인: 수동 실행 시 브랜치와 환경이 일치하지 않음
+
+# 해결: 올바른 브랜치 선택
+# - dev 배포: be/dev 브랜치 선택 + dev 환경 선택
+# - prod 배포: be/prod 브랜치 선택 + prod 환경 선택
+```
+
+### 9. 이전 버전으로 롤백
+
+```bash
+# 1. GitHub에서 커밋 SHA 확인
+# https://github.com/woowacourse-teams/2025-coffee-shout/commits/be/dev
+
+# 2. 해당 커밋의 이미지 Pull
+docker pull ghcr.io/woowacourse-teams/coffee-shout-backend:dev-{commit-sha}
+
+# 3. .env 업데이트
+cat > .env << EOF
+DB_PASSWORD=your-password
+REGISTRY=ghcr.io/woowacourse-teams
+IMAGE_TAG=dev-{commit-sha}
+EOF
+
+# 4. 컨테이너 재시작
+docker-compose up -d --no-deps dev-app
+
+# 5. 확인
+docker-compose logs -f dev-app
 ```
 
 ---

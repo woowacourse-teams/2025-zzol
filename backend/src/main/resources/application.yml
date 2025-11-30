@@ -18,7 +18,7 @@ spring:
     redis:
       port: 6379
       ssl:
-        enabled: true
+        enabled: false
       host: localhost
       stream:
         room-join-key: room:broadcast

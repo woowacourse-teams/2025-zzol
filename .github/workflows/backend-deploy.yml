@@ -66,7 +66,9 @@ jobs:
       # 파일 전송
       # ============================================
       - name: Transfer files via SCP
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1
+        # 주의: scp-action은 프로젝트 루트에서 실행되므로
+        # working-directory 설정과 무관하게 절대 경로 사용
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}

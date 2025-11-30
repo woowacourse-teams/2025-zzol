@@ -47,13 +47,42 @@ jobs:
         id: set-env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+            # 수동 실행: 브랜치와 환경 일치 검증
+            SELECTED_ENV=${{ github.event.inputs.environment }}
+            BRANCH_NAME=${{ github.ref }}
+
+            echo "🔍 검증 중: 브랜치=${BRANCH_NAME}, 선택환경=${SELECTED_ENV}"
+
+            # 브랜치와 환경 일치 검증
+            if [[ "$SELECTED_ENV" == "dev" && "$BRANCH_NAME" != "refs/heads/be/dev" ]]; then
+              echo "❌ Error: dev 환경은 be/dev 브랜치에서만 배포 가능합니다!"
+              echo "현재 브랜치: ${BRANCH_NAME}"
+              exit 1
+            elif [[ "$SELECTED_ENV" == "prod" && "$BRANCH_NAME" != "refs/heads/be/prod" ]]; then
+              echo "❌ Error: prod 환경은 be/prod 브랜치에서만 배포 가능합니다!"
+              echo "현재 브랜치: ${BRANCH_NAME}"
+              exit 1
+            fi
+
+            echo "ENVIRONMENT=$SELECTED_ENV" >> $GITHUB_ENV
+            echo "✅ 검증 완료: ${SELECTED_ENV} 환경 배포 진행"
+
           elif [[ "${{ github.ref }}" == "refs/heads/be/dev" ]]; then
             echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            echo "✅ be/dev 브랜치 감지: dev 환경 배포"
+
           elif [[ "${{ github.ref }}" == "refs/heads/be/prod" ]]; then
             echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+            echo "✅ be/prod 브랜치 감지: prod 환경 배포"
+
+          else
+            echo "❌ Error: 지원하지 않는 브랜치입니다!"
+            echo "현재 브랜치: ${{ github.ref }}"
+            echo "지원 브랜치: be/dev, be/prod"
+            exit 1
           fi
-          echo "Deploying to $ENVIRONMENT environment"
+
+          echo "🚀 Deploying to $ENVIRONMENT environment from branch ${{ github.ref }}"
 
       - name: Get JAR file name
         id: jar-file

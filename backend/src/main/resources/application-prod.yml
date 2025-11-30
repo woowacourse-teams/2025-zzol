@@ -14,7 +14,7 @@ redisson:
 
 room:
   qr:
-    prefix: "https://coffee-shout.com/join/"
+    prefix: "https://zzol.site/join/"
 
 websocket:
   docs:

@@ -29,7 +29,7 @@ USER spring:spring
 EXPOSE 8080
 
 # Health check 설정
-HEALTHCHECK --interval=30s \
+HEALTHCHECK --interval=5s \
     --timeout=3s \
     --start-period=40s \
     --retries=3 \

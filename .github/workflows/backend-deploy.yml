@@ -249,7 +249,7 @@ jobs:
             # Health endpoint 확인 (40초 대기)
             echo "Waiting for application to be ready..."
             for i in {1..40}; do
-              if docker exec ${ENV}-app wget --quiet --tries=1 --spider http://localhost:8080/actuator/health 2>/dev/null; then
+              if docker exec ${ENV}-app wget --tries=1 --spider http://localhost:8080/actuator/health; then
                 echo "✅ Application is healthy!"
                 exit 0
               fi

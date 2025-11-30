@@ -5,10 +5,8 @@ services:
   # Prod Application (Spring Boot)
   # ============================================
   prod-app:
-    build:
-      context: ../../build/libs
-      dockerfile: ../../docker/app/Dockerfile
-    image: coffee-shout-backend:prod
+    # 이미지는 GitHub Actions에서 빌드되어 GHCR에 푸시됨
+    image: ${REGISTRY}/coffee-shout-backend:${IMAGE_TAG}
     container_name: prod-app
     restart: unless-stopped
     ports:

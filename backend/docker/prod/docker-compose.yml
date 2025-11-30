@@ -70,7 +70,7 @@ services:
     networks:
       - prod-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      test: ["CMD-SHELL", "MYSQL_PWD=${DB_PASSWORD} mysqladmin ping -h localhost -u root"]
       interval: 10s
       timeout: 5s
       retries: 5

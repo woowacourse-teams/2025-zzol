@@ -131,27 +131,33 @@ deploy_application() {
 
     log_info "Deploying service: $SERVICE_NAME"
 
-    # 기존 컨테이너 정보 저장 (롤백용)
-    local old_container_id=""
-    if check_container_running "$SERVICE_NAME"; then
-        old_container_id=$(docker ps -q -f name="$SERVICE_NAME")
-        log_info "Found existing container: $old_container_id"
+    # 기존 컨테이너 확인 (running or stopped)
+    local existing_container
+    existing_container=$(docker ps -aq -f name="^${SERVICE_NAME}$")
+
+    if [[ -n "$existing_container" ]]; then
+        log_info "Found existing container: $existing_container"
+
+        # 기존 컨테이너 중지 및 제거
+        log_info "Stopping and removing old container..."
+        docker-compose --env-file .env stop "$SERVICE_NAME" 2>/dev/null || true
+        docker-compose --env-file .env rm -f "$SERVICE_NAME" 2>/dev/null || true
     fi
 
-    # 애플리케이션 재시작 (강제 재생성, DB 의존성 무시)
-    # Note: --no-deps는 안전함 (이미 verify_dependencies()에서 확인했음)
+    # 새 컨테이너 시작
     log_info "Starting new container..."
-    docker-compose --env-file .env up -d --force-recreate --no-deps "$SERVICE_NAME"
+    docker-compose --env-file .env up -d --no-deps "$SERVICE_NAME"
 
     # 컨테이너 시작 대기
     sleep 5
 
     # 새 컨테이너 ID 확인
     local new_container_id
-    new_container_id=$(docker ps -q -f name="$SERVICE_NAME")
+    new_container_id=$(docker ps -q -f name="^${SERVICE_NAME}$")
 
     if [[ -z "$new_container_id" ]]; then
         log_error "Container failed to start: $SERVICE_NAME"
+        docker-compose --env-file .env logs --tail=50 "$SERVICE_NAME"
         return 1
     fi
 

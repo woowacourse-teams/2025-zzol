@@ -129,7 +129,11 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    privileged: true
+    # Use only the required capabilities for cAdvisor to collect container metrics.
+    # See: https://github.com/google/cadvisor/blob/master/docs/running.md
+    cap_add:
+      - SYS_ADMIN
+      - SYS_RAWIO
     restart: unless-stopped
     volumes:
       - /:/rootfs:ro

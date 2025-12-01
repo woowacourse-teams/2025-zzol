@@ -23,14 +23,10 @@ services:
     environment:
       - TZ=Asia/Seoul
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD-SHELL", "nginx -t"]
       interval: 30s
       timeout: 10s
       retries: 3
-    depends_on:
-      - dev-app
-      - prod-app
-      - grafana
 
 # ============================================
 # Networks

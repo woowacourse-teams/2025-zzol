@@ -5,10 +5,11 @@ on:
     branches:
       - be/dev
       - be/prod
-      - 'be/feat/1000-docker-compose'
+      - be/feat/1000-docker-compose
     paths:
       - 'backend/**'
       - '.github/workflows/backend-deploy.yml'
+      - '.github/scripts/deploy-*.sh'
   workflow_dispatch:
     inputs:
       environment:

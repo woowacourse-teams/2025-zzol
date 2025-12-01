@@ -136,6 +136,21 @@ main() {
     # 배포 디렉토리로 이동
     cd "$DEPLOY_DIR"
 
+    # .env 파일 존재 및 내용 확인 (디버깅)
+    log_info "Checking .env file..."
+    if [[ -f .env ]]; then
+        log_success ".env file exists"
+        log_info ".env file contents (masked):"
+        sed 's/=.*/=***/' .env
+
+        # docker-compose가 변수를 제대로 읽는지 확인
+        log_info "Checking docker-compose environment variable substitution..."
+        docker-compose --env-file .env config | grep -A 3 "MYSQL_ROOT_PASSWORD" || log_warning "MYSQL_ROOT_PASSWORD not found in config"
+    else
+        log_error ".env file not found in ${DEPLOY_DIR}"
+        exit 1
+    fi
+
     # MySQL 배포
     if ! deploy_mysql; then
         log_error "MySQL deployment failed"

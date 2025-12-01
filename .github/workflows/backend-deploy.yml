@@ -73,6 +73,10 @@ jobs:
           echo "IMAGE_TAG=${{ env.IMAGE_TAG }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
 
+          # 디버깅: .env 파일 생성 확인 (비밀번호는 마스킹됨)
+          echo "Generated .env file (masked):"
+          sed 's/=.*/=***/' .env
+
       - name: Transfer files via SCP
         uses: appleboy/scp-action@v1
         with:

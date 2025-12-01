@@ -113,7 +113,7 @@ jobs:
 
             cp "${TMP_DIR}/backend/docker/${ENV}/docker-compose.yml" "${DEPLOY_DIR}/"
             cp "${TMP_DIR}/.env" "${DEPLOY_DIR}/"
-            cp "${TMP_DIR}/.github/scripts/deploy-"*.sh "${DEPLOY_DIR}/"
+            cp "${TMP_DIR}"/.github/scripts/deploy-*.sh "${DEPLOY_DIR}/"
 
             chmod +x "${DEPLOY_DIR}"/deploy-*.sh
 

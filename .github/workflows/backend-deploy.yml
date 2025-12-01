@@ -95,7 +95,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       # ============================================
-      # 파일 전송 (docker-compose.yml만)
+      # 파일 전송 (docker-compose.yml + 배포 스크립트)
       # ============================================
       - name: Transfer files via SCP
         uses: appleboy/scp-action@v1
@@ -106,7 +106,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: backend/docker/${{ env.ENVIRONMENT }}/docker-compose.yml
+          source: backend/docker/${{ env.ENVIRONMENT }}/docker-compose.yml,.github/scripts/deploy-*.sh
           target: /tmp/deploy-${{ env.ENVIRONMENT }}/
           strip_components: 1
           overwrite: true
@@ -127,6 +127,7 @@ jobs:
             ENV=${{ env.ENVIRONMENT }}
             DEPLOY_DIR=~/${ENV}
             TMP_DIR=/tmp/deploy-${ENV}
+            SCRIPTS_DIR=${TMP_DIR}/.github/scripts
 
             echo "=== 🚀 Coffee Shout ${ENV} 배포 시작 ==="
 
@@ -140,9 +141,9 @@ jobs:
             # 2. 파일 복사
             # ============================================
             echo "📦 2. 파일 복사 중..."
-
-            # docker-compose.yml
             cp ${TMP_DIR}/docker/${ENV}/docker-compose.yml ${DEPLOY_DIR}/
+            cp ${SCRIPTS_DIR}/deploy-*.sh ${DEPLOY_DIR}/
+            chmod +x ${DEPLOY_DIR}/deploy-*.sh
 
             # ============================================
             # 3. 네트워크 생성
@@ -163,30 +164,21 @@ jobs:
             EOF
 
             # ============================================
-            # 5. GHCR 로그인 및 이미지 Pull
+            # 5. GHCR 로그인
             # ============================================
-            echo "🐳 5. GHCR에서 Docker 이미지 Pull 중..."
+            echo "🔐 5. GHCR 로그인 중..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ghcr.io/${REPO_OWNER}/coffee-shout-backend:${ENV}
 
             # ============================================
-            # 6. 컨테이너 배포
+            # 6. 인프라 배포 (DB, Redis)
             # ============================================
-            echo "🚢 6. 컨테이너 배포 중..."
             cd ${DEPLOY_DIR}
-
-            # App만 재시작 (DB는 유지)
-            docker-compose up -d --no-deps ${ENV}-app
+            ./deploy-infrastructure.sh ${ENV} ${DEPLOY_DIR}
 
             # ============================================
-            # 7. 배포 확인
+            # 7. 애플리케이션 배포
             # ============================================
-            echo "✅ 7. 배포 상태 확인 중..."
-            sleep 5
-            docker-compose ps
-
-            # 최근 로그 확인
-            docker-compose logs --tail=50 ${ENV}-app
+            ./deploy-application.sh ${ENV} ${DEPLOY_DIR} ghcr.io/${REPO_OWNER} ${ENV}
 
             # ============================================
             # 8. 정리
@@ -199,41 +191,8 @@ jobs:
       # ============================================
       # Health Check
       # ============================================
-      - name: Health Check
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            ENV=${{ env.ENVIRONMENT }}
-            DEPLOY_DIR=~/${ENV}
-
-            echo "🏥 Health Check 시작..."
-            cd ${DEPLOY_DIR}
-
-            # 컨테이너 실행 확인
-            if ! docker-compose ps | grep -q "${ENV}-app.*Up"; then
-              echo "❌ ${ENV}-app 컨테이너가 실행 중이지 않습니다!"
-              docker-compose logs --tail=100 ${ENV}-app
-              exit 1
-            fi
-
-            # Health endpoint 확인 (40초 대기)
-            echo "Waiting for application to be ready..."
-            for i in {1..40}; do
-              if docker exec ${ENV}-app wget --quiet --tries=1 --spider http://localhost:8080/actuator/health 2>/dev/null; then
-                echo "✅ Application is healthy!"
-                exit 0
-              fi
-              echo "Attempt $i/40: Application not ready yet..."
-              sleep 1
-            done
-
-            echo "❌ Health check failed!"
-            docker-compose logs --tail=100 ${ENV}-app
-            exit 1
+      # Note: Health check는 deploy-application.sh 내부에서 수행됨
+      # 이 단계는 배포 스크립트가 성공했는지 확인하는 용도
 
       # ============================================
       # 배포 요약

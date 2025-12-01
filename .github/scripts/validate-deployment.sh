@@ -41,11 +41,11 @@ SELECTED_ENV="${3:-}"
 # ============================================
 
 log_info() {
-    echo "ℹ️  $*"
+    echo "ℹ️  $*" >&2
 }
 
 log_success() {
-    echo "✅ $*"
+    echo "✅ $*" >&2
 }
 
 log_error() {

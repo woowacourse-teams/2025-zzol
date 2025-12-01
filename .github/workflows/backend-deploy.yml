@@ -128,6 +128,11 @@ jobs:
             docker network create monitoring-network 2>/dev/null || true
             
             cd ${DEPLOY_DIR}
+            
+            # 1. 인프라 배포 (MySQL, Redis) - 앱 배포 전 필수!
+            ./deploy-infrastructure.sh "${ENV}" "${DEPLOY_DIR}"
+            
+            # 2. 애플리케이션 배포
             ./deploy-application.sh "${ENV}" "${DEPLOY_DIR}"
             
             rm -rf ${TMP_DIR}

@@ -25,19 +25,6 @@ storage:
     wal:
       path: /tmp/tempo/wal
 
-# OCI Object Storage 백업 (선택사항)
-# storage:
-#   trace:
-#     backend: s3
-#     s3:
-#       endpoint: https://${OCI_NAMESPACE}.compat.objectstorage.${OCI_REGION}.oraclecloud.com
-#       bucket: tempo-backup
-#       access_key: ${OCI_ACCESS_KEY}
-#       secret_key: ${OCI_SECRET_KEY}
-#       insecure: false
-#     wal:
-#       path: /tmp/tempo/wal
-
 query_frontend:
   search:
     max_duration: 0s

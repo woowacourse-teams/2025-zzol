@@ -61,26 +61,17 @@ if ! require_file "${DEPLOY_DIR}/docker-compose.yml"; then
     exit 1
 fi
 
-# .env 파일 존재 여부 확인 (중요)
+# .env 파일 존재 여부 확인
 if ! require_file "${DEPLOY_DIR}/.env"; then
-    log_error ".env file missing in ${DEPLOY_DIR}. Please ensure .env is generated and transferred."
+    log_error ".env file missing in ${DEPLOY_DIR}"
     exit 1
 fi
-
-# .env 파일 로드 (변수 사용을 위해)
-# set -a; source "${DEPLOY_DIR}/.env"; set +a
-# 다만, docker-compose가 자동으로 .env를 읽으므로 굳이 source 할 필요는 없으나,
-# 아래에서 이미지 이름을 조합하거나 할 때 필요할 수 있음.
-# 여기서는 docker-compose에 맡깁니다.
 
 # ============================================
 # 변수 설정
 # ============================================
 
 SERVICE_NAME="${ENVIRONMENT}-app"
-# 이미지 이름은 docker-compose가 .env를 보고 결정하므로 여기서는 로깅용으로만 추정하거나,
-# 확실하게 하려면 docker-compose config를 통해 알아내야 함.
-# 단순화를 위해 로그 메시지는 일반화합니다.
 
 # ============================================
 # 메인 함수
@@ -88,9 +79,6 @@ SERVICE_NAME="${ENVIRONMENT}-app"
 
 pull_application_image() {
     log_step "🐳 Application Image Pull"
-
-    # .env 파일이 있으므로 docker-compose가 알아서 변수 치환하여 pull 함
-    log_info "Pulling images using docker-compose..."
 
     if docker-compose --env-file .env pull "$SERVICE_NAME"; then
         log_success "Image pull completed"
@@ -217,40 +205,28 @@ show_deployment_status() {
 main() {
     print_script_info "Deploy Application" "Deploying Spring Boot application for $ENVIRONMENT environment"
 
-    log_info "Environment: $ENVIRONMENT"
-    log_info "Service: $SERVICE_NAME"
-    log_info "Deploy Directory: $DEPLOY_DIR"
-
-    # 배포 디렉토리로 이동
     cd "$DEPLOY_DIR"
 
-    # 1. .env 파일은 이미 존재해야 함 (사전 체크 완료됨)
-
-    # 2. 의존성 확인
     if ! verify_dependencies; then
         log_error "Dependency verification failed"
         exit 1
     fi
 
-    # 3. 이미지 Pull
     if ! pull_application_image; then
         log_error "Image pull failed"
         exit 1
     fi
 
-    # 4. 애플리케이션 배포
     if ! deploy_application; then
         log_error "Application deployment failed"
         exit 1
     fi
 
-    # 5. 헬스체크
     if ! health_check; then
         log_error "Health check failed"
         exit 1
     fi
 
-    # 6. 배포 상태 확인
     show_deployment_status
 
     log_step "✅ Application Deployment Completed"

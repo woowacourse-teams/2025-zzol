@@ -67,50 +67,30 @@ deploy_mysql() {
 
     log_step "📦 MySQL 배포"
 
-    # MySQL 컨테이너 존재 확인
     if check_container_running "$service_name"; then
         log_success "MySQL already running: $service_name"
 
-        # 헬스체크 확인
         if check_container_healthy "$service_name"; then
             log_success "MySQL is healthy"
         else
             log_warning "MySQL is running but not healthy yet"
 
-            # 단순히 대기만 함 - 자동 삭제는 위험
             if wait_for_healthy "$service_name" 30 2; then
                 log_success "MySQL became healthy"
             else
                 log_error "MySQL failed to become healthy"
-                log_info "Showing recent MySQL logs:"
                 docker-compose --env-file .env logs --tail=50 "$service_name"
-
-                # 환경변수 검증
-                log_info "Checking container environment variables:"
-                docker inspect "$service_name" --format='{{range .Config.Env}}{{println .}}{{end}}' | grep MYSQL_ROOT_PASSWORD || log_error "MYSQL_ROOT_PASSWORD not set in container!"
-
-                log_error "Manual intervention required:"
-                log_error "1. Check MySQL logs: docker logs $service_name"
-                log_error "2. If needed, manually remove and recreate:"
-                log_error "   cd ~/${ENVIRONMENT}"
-                log_error "   docker-compose --env-file .env down"
-                log_error "   docker volume rm ${ENVIRONMENT}-mysql-data  # WARNING: This deletes all data!"
-                log_error "   docker-compose --env-file .env up -d"
                 return 1
             fi
         fi
     else
         log_info "Starting MySQL: $service_name"
-
-        # MySQL 시작
         docker-compose --env-file .env up -d "$service_name"
 
-        # 헬스체크 대기
         if wait_for_healthy "$service_name" 30 2; then
             log_success "MySQL deployment completed"
         else
             log_error "MySQL failed to become healthy"
-            log_info "Showing recent MySQL logs:"
             docker-compose --env-file .env logs --tail=50 "$service_name"
             return 1
         fi
@@ -124,16 +104,12 @@ deploy_redis() {
 
     log_step "📦 Redis 배포"
 
-    # Redis 컨테이너 존재 확인
     if check_container_running "$service_name"; then
         log_success "Redis already running: $service_name"
     else
         log_info "Starting Redis: $service_name"
-
-        # Redis 시작
         docker-compose --env-file .env up -d "$service_name"
 
-        # 컨테이너 실행 대기
         if wait_for_container "$service_name" 15 2; then
             log_success "Redis deployment completed"
         else
@@ -149,31 +125,18 @@ deploy_redis() {
 main() {
     print_script_info "Deploy Infrastructure" "Deploying MySQL and Redis for $ENVIRONMENT environment"
 
-    # 배포 디렉토리로 이동
     cd "$DEPLOY_DIR"
 
-    # .env 파일 존재 및 내용 확인 (디버깅)
-    log_info "Checking .env file..."
-    if [[ -f .env ]]; then
-        log_success ".env file exists"
-        log_info ".env file contents (masked):"
-        sed 's/=.*/=***/' .env
-
-        # docker-compose가 변수를 제대로 읽는지 확인
-        log_info "Checking docker-compose environment variable substitution..."
-        docker-compose --env-file .env config | grep -A 3 "MYSQL_ROOT_PASSWORD" || log_warning "MYSQL_ROOT_PASSWORD not found in config"
-    else
+    if [[ ! -f .env ]]; then
         log_error ".env file not found in ${DEPLOY_DIR}"
         exit 1
     fi
 
-    # MySQL 배포
     if ! deploy_mysql; then
         log_error "MySQL deployment failed"
         exit 1
     fi
 
-    # Redis 배포
     if ! deploy_redis; then
         log_error "Redis deployment failed"
         exit 1
@@ -183,7 +146,6 @@ main() {
     log_success "MySQL: ${ENVIRONMENT}-mysql (healthy)"
     log_success "Redis: ${ENVIRONMENT}-redis (running)"
 
-    # 현재 상태 출력
     echo ""
     log_info "Current infrastructure status:"
     docker-compose --env-file .env ps "${ENVIRONMENT}-mysql" "${ENVIRONMENT}-redis"

@@ -5,7 +5,6 @@ on:
     branches:
       - be/dev
       - be/prod
-      - be/feat/1000-docker-compose
     paths:
       - 'backend/**'
       - '.github/workflows/backend-deploy.yml'

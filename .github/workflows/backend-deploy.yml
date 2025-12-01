@@ -73,6 +73,10 @@ jobs:
           echo "REGISTRY=ghcr.io/${{ env.REPO_OWNER }}" > .env
           echo "IMAGE_TAG=${{ env.IMAGE_TAG }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}" >> .env
+          echo "S3_QR_KEY_PREFIX=${{ secrets.S3_QR_KEY_PREFIX }}" >> .env
+          echo "TEMPO_URL=${{ secrets.TEMPO_URL }}" >> .env
+          echo "TRACE_SAMPLING_PROBABILITY=${{ secrets.TRACE_SAMPLING_PROBABILITY }}" >> .env
 
           # 디버깅: .env 파일 생성 확인 (비밀번호는 마스킹됨)
           echo "Generated .env file (masked):"

@@ -121,15 +121,15 @@ deploy_application() {
 
     # 기존 컨테이너 확인 (running or stopped)
     local existing_container
-    existing_container=$(docker ps -aq -f name="^${SERVICE_NAME}$")
+    existing_container=$(docker ps -aq -f name="^${SERVICE_NAME}$" 2>/dev/null) || true
 
     if [[ -n "$existing_container" ]]; then
         log_info "Found existing container: $existing_container"
-
-        # 기존 컨테이너 중지 및 제거
         log_info "Stopping and removing old container..."
         docker-compose --env-file .env stop "$SERVICE_NAME" 2>/dev/null || true
         docker-compose --env-file .env rm -f "$SERVICE_NAME" 2>/dev/null || true
+    else
+        log_info "No existing container found"
     fi
 
     # 새 컨테이너 시작
@@ -141,7 +141,7 @@ deploy_application() {
 
     # 새 컨테이너 ID 확인
     local new_container_id
-    new_container_id=$(docker ps -q -f name="^${SERVICE_NAME}$")
+    new_container_id=$(docker ps -q -f name="^${SERVICE_NAME}$" 2>/dev/null) || true
 
     if [[ -z "$new_container_id" ]]; then
         log_error "Container failed to start: $SERVICE_NAME"
@@ -169,7 +169,7 @@ health_check() {
             return 0
         fi
 
-        echo "Attempt $i/$max_attempts: Application not ready yet..."
+        log_info "Attempt $i/$max_attempts: Application not ready yet..."
         sleep "$interval"
     done
 
@@ -199,7 +199,7 @@ show_deployment_status() {
     # 이미지 정보
     echo ""
     log_info "Deployed image:"
-    docker inspect "$SERVICE_NAME" --format='{{.Config.Image}}' 2>/dev/null || echo "N/A"
+    docker inspect "$SERVICE_NAME" --format='{{.Config.Image}}' 2>/dev/null || log_info "Unable to retrieve image information"
 }
 
 main() {

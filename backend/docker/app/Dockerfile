@@ -1,13 +1,13 @@
 # ================================================
-# Coffee Shout Backend - Spring Boot Application
+# ZZOL Backend - Spring Boot Application
 # ================================================
 # Build: docker build -t coffee-shout-backend:latest .
 # Run:   docker run -p 8080:8080 coffee-shout-backend:latest
 
 FROM eclipse-temurin:21-jre-alpine
 
-LABEL maintainer="Coffee Shout Team"
-LABEL description="Coffee Shout Backend Spring Boot Application"
+LABEL maintainer="ZZOL Team"
+LABEL description="ZZOL Backend Spring Boot Application"
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -38,13 +38,13 @@ HEALTHCHECK --interval=30s \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # JVM 옵션 및 애플리케이션 실행
-ENTRYPOINT ["java", \
-    "-Xms512m", \
-    "-Xmx1024m", \
-    "-XX:+UseG1GC", \
-    "-XX:+HeapDumpOnOutOfMemoryError", \
-    "-XX:HeapDumpPath=/app/logs/heapdump.hprof", \
-    "-Duser.timezone=Asia/Seoul", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "-jar", \
-    "app.jar"]
+# 환경변수로 힙 메모리 설정 가능 (기본값: dev 환경)
+ENV JAVA_OPTS="-Xms1g -Xmx1536m"
+
+ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} \
+    -XX:+UseG1GC \
+    -XX:+HeapDumpOnOutOfMemoryError \
+    -XX:HeapDumpPath=/app/logs/heapdump.hprof \
+    -Duser.timezone=Asia/Seoul \
+    -Djava.security.egd=file:/dev/./urandom \
+    -jar app.jar"]

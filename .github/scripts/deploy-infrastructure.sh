@@ -106,14 +106,28 @@ deploy_redis() {
 
     if check_container_running "$service_name"; then
         log_success "Redis already running: $service_name"
+
+        if check_container_healthy "$service_name"; then
+            log_success "Redis is healthy"
+        else
+            log_warning "Redis is running but not healthy yet"
+
+            if wait_for_healthy "$service_name" 15 2; then
+                log_success "Redis became healthy"
+            else
+                log_error "Redis failed to become healthy"
+                docker-compose --env-file .env logs --tail=50 "$service_name"
+                return 1
+            fi
+        fi
     else
         log_info "Starting Redis: $service_name"
         docker-compose --env-file .env up -d "$service_name"
 
-        if wait_for_container "$service_name" 15 2; then
+        if wait_for_healthy "$service_name" 15 2; then
             log_success "Redis deployment completed"
         else
-            log_error "Redis failed to start"
+            log_error "Redis failed to become healthy"
             docker-compose --env-file .env logs --tail=50 "$service_name"
             return 1
         fi
@@ -144,12 +158,11 @@ main() {
 
     log_step "✅ Infrastructure Deployment Completed"
     log_success "MySQL: ${ENVIRONMENT}-mysql (healthy)"
-    log_success "Redis: ${ENVIRONMENT}-redis (running)"
+    log_success "Redis: ${ENVIRONMENT}-redis (healthy)"
 
     echo ""
     log_info "Current infrastructure status:"
-    docker-compose --env-file .env ps "${ENVIRONMENT}-mysql" "${ENVIRONMENT}-redis"
-
+    docker-compose --env-file .env ps "${ENVIRONMENT}-mysql" "${ENVIRONMENT}-redis" || log_warning "Status check incomplete"
     exit 0
 }
 

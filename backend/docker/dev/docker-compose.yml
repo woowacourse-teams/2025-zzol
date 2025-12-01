@@ -74,10 +74,11 @@ services:
           cpus: '0.15'       # 최소 0.15 vCPU
           memory: 768M       # 최소 768MB
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 40s
 
   # ============================================
   # Dev Redis (Valkey)

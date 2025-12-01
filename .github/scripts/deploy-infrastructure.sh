@@ -76,7 +76,12 @@ deploy_mysql() {
             log_success "MySQL is healthy"
         else
             log_warning "MySQL is running but not healthy yet"
-            wait_for_healthy "$service_name" 30 2
+            if ! wait_for_healthy "$service_name" 30 2; then
+                log_error "MySQL failed to become healthy"
+                log_info "Showing recent MySQL logs:"
+                docker-compose logs --tail=50 "$service_name"
+                return 1
+            fi
         fi
     else
         log_info "Starting MySQL: $service_name"
@@ -89,6 +94,7 @@ deploy_mysql() {
             log_success "MySQL deployment completed"
         else
             log_error "MySQL failed to become healthy"
+            log_info "Showing recent MySQL logs:"
             docker-compose logs --tail=50 "$service_name"
             return 1
         fi

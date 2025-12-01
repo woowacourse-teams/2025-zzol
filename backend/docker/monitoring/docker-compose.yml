@@ -22,8 +22,6 @@ services:
       - "4318"   # Spring OTLP HTTP
     environment:
       - TZ=Asia/Seoul
-      - OCI_ACCESS_KEY=${OCI_ACCESS_KEY}
-      - OCI_SECRET_KEY=${OCI_SECRET_KEY}
     # 자원 제한 (Tempo - Tracing)
     deploy:
       resources:

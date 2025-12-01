@@ -59,7 +59,8 @@ check_container_running() {
 check_container_healthy() {
     local container_name="$1"
 
-    local health_status=$(docker inspect --format='{{.State.Health.Status}}' "$container_name" 2>/dev/null || echo "none")
+    local health_status
+    health_status=$(docker inspect --format='{{.State.Health.Status}}' "$container_name" 2>/dev/null || echo "none")
 
     if [[ "$health_status" == "healthy" ]]; then
         return 0

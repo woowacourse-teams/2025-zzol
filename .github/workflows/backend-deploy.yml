@@ -75,6 +75,9 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}" >> .env
           echo "S3_QR_KEY_PREFIX=${{ secrets.S3_QR_KEY_PREFIX }}" >> .env
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
           echo "TEMPO_URL=${{ secrets.TEMPO_URL }}" >> .env
           echo "TRACE_SAMPLING_PROBABILITY=${{ secrets.TRACE_SAMPLING_PROBABILITY }}" >> .env
 

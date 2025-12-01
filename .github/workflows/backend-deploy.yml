@@ -5,10 +5,10 @@ on:
     branches:
       - be/dev
       - be/prod
+      - 'be/feat/1000-docker-compose'
     paths:
-      - "backend/**"
-      - ".github/workflows/backend-deploy.yml"
-
+      - 'backend/**'
+      - '.github/workflows/backend-deploy.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -20,15 +20,33 @@ on:
           - prod
 
 jobs:
-  deploy:
+  # 1. 환경 결정 및 빌드 Job (Secrets 불필요)
+  prepare-and-build:
     runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      repo_owner: ${{ steps.set-env.outputs.repo_owner }}
+      image_tag: ${{ steps.set-env.outputs.image_tag }}
     defaults:
       run:
         working-directory: ./backend
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set deployment environment
+        id: set-env
+        run: |
+          chmod +x ../.github/scripts/validate-deployment.sh
+          ENVIRONMENT=$(../.github/scripts/validate-deployment.sh "${{ github.event_name }}" "${{ github.ref }}" "${{ github.event.inputs.environment }}")
+          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+          
+          REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_owner=${REPO_OWNER}" >> $GITHUB_OUTPUT
+          
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          IMAGE_TAG="${ENVIRONMENT}-${SHORT_SHA}"
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
       - name: Setup JDK 21
         uses: actions/setup-java@v4
@@ -43,31 +61,36 @@ jobs:
       - name: Build JAR
         run: ./gradlew bootJar
 
-      - name: Set deployment environment
-        id: set-env
-        run: |
-          # 검증 스크립트에 실행 권한 부여
-          chmod +x .github/scripts/validate-deployment.sh
+      # 아티팩트 업로드 (빌드된 JAR와 Dockerfile을 다음 Job으로 전달)
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            backend/build/libs
+            backend/docker
+            .github/scripts
 
-          # 검증 스크립트 실행 및 환경 결정
-          ENVIRONMENT=$(.github/scripts/validate-deployment.sh \
-            "${{ github.event_name }}" \
-            "${{ github.ref }}" \
-            "${{ github.event.inputs.environment }}")
+  # 2. 배포 Job (Environment Secrets 사용)
+  deploy:
+    needs: prepare-and-build
+    runs-on: ubuntu-latest
+    # [핵심] 여기서 Environment를 지정하면 해당 환경의 Secrets가 로드됨
+    environment: ${{ needs.prepare-and-build.outputs.environment }}
+    
+    env:
+      ENVIRONMENT: ${{ needs.prepare-and-build.outputs.environment }}
+      REPO_OWNER: ${{ needs.prepare-and-build.outputs.repo_owner }}
+      IMAGE_TAG: ${{ needs.prepare-and-build.outputs.image_tag }}
 
-          # 환경변수 설정
-          echo "ENVIRONMENT=${ENVIRONMENT}" >> $GITHUB_ENV
+    steps:
+      # 아티팩트 다운로드 (이전 Job 결과물)
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
 
-      - name: Get JAR file name
-        id: jar-file
-        run: |
-          JAR_FILE=$(ls build/libs/*.jar | head -1)
-          echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
-          echo "JAR_NAME=$(basename $JAR_FILE)" >> $GITHUB_ENV
-
-      # ============================================
-      # Docker 이미지 빌드 및 푸시 (GitHub Actions)
-      # ============================================
+      # Docker 빌드 및 푸시
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -78,133 +101,77 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Convert repository owner to lowercase
-        run: |
-          echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
+          # 아티팩트 다운로드 경로 기준
           context: backend/build/libs
           file: backend/docker/app/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ env.REPO_OWNER }}/coffee-shout-backend:${{ env.ENVIRONMENT }}
-            ghcr.io/${{ env.REPO_OWNER }}/coffee-shout-backend:${{ env.ENVIRONMENT }}-${{ github.sha }}
+            ghcr.io/${{ env.REPO_OWNER }}/coffee-shout-backend:${{ env.IMAGE_TAG }}
+            ghcr.io/${{ env.REPO_OWNER }}/coffee-shout-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # ============================================
-      # 파일 전송 (docker-compose.yml + 배포 스크립트)
-      # ============================================
+      # .env 파일 생성 (이제 단순히 secrets.DB_PASSWORD만 쓰면 됨!)
+      - name: Create .env file
+        run: |
+          echo "REGISTRY=ghcr.io/${{ env.REPO_OWNER }}" > .env
+          echo "IMAGE_TAG=${{ env.IMAGE_TAG }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+
+      # 파일 전송
       - name: Transfer files via SCP
         uses: appleboy/scp-action@v1
-        # 주의: scp-action은 프로젝트 루트에서 실행되므로
-        # working-directory 설정과 무관하게 절대 경로 사용
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: backend/docker/${{ env.ENVIRONMENT }}/docker-compose.yml,.github/scripts/deploy-*.sh
+          # 다운로드된 아티팩트 경로 사용
+          source: backend/docker/${{ env.ENVIRONMENT }}/docker-compose.yml,.github/scripts/deploy-*.sh,.env
           target: /tmp/deploy-${{ env.ENVIRONMENT }}/
           strip_components: 1
           overwrite: true
 
-      # ============================================
-      # Docker 빌드 및 배포
-      # ============================================
+      # 배포 실행
       - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          ENV: ${{ env.ENVIRONMENT }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          envs: ENV
           script: |
             set -e
-
-            ENV=${{ env.ENVIRONMENT }}
             DEPLOY_DIR=~/${ENV}
             TMP_DIR=/tmp/deploy-${ENV}
             SCRIPTS_DIR=${TMP_DIR}/.github/scripts
-
-            echo "=== 🚀 Coffee Shout ${ENV} 배포 시작 ==="
-
-            # ============================================
-            # 1. 디렉토리 준비
-            # ============================================
-            echo "📁 1. 디렉토리 준비 중..."
             mkdir -p ${DEPLOY_DIR}
-
-            # ============================================
-            # 2. 파일 복사
-            # ============================================
-            echo "📦 2. 파일 복사 중..."
+            
+            # 파일 이동 로직 단순화 (아티팩트 구조 고려)
             cp ${TMP_DIR}/docker/${ENV}/docker-compose.yml ${DEPLOY_DIR}/
+            cp ${TMP_DIR}/.env ${DEPLOY_DIR}/
             cp ${SCRIPTS_DIR}/deploy-*.sh ${DEPLOY_DIR}/
             chmod +x ${DEPLOY_DIR}/deploy-*.sh
-
-            # ============================================
-            # 3. 네트워크 생성
-            # ============================================
-            echo "🌐 3. Docker 네트워크 생성 중..."
-            docker network create ${ENV}-network 2>/dev/null || echo "Network ${ENV}-network already exists"
-            docker network create monitoring-network 2>/dev/null || echo "Network monitoring-network already exists"
-
-            # ============================================
-            # 4. 환경변수 파일 생성
-            # ============================================
-            echo "🔐 4. 환경변수 파일 생성 중..."
-            REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-            cat > ${DEPLOY_DIR}/.env << EOF
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            IMAGE_TAG=${ENV}
-            REGISTRY=ghcr.io/${REPO_OWNER}
-            EOF
-
-            # ============================================
-            # 5. GHCR 로그인
-            # ============================================
-            echo "🔐 5. GHCR 로그인 중..."
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            # ============================================
-            # 6. 인프라 배포 (DB, Redis)
-            # ============================================
-            cd ${DEPLOY_DIR}
-            ./deploy-infrastructure.sh ${ENV} ${DEPLOY_DIR}
-
-            # ============================================
-            # 7. 애플리케이션 배포
-            # ============================================
-            ./deploy-application.sh ${ENV} ${DEPLOY_DIR} ghcr.io/${REPO_OWNER} ${ENV}
-
-            # ============================================
-            # 8. 정리
-            # ============================================
-            echo "🧹 8. 임시 파일 정리 중..."
+            
+            docker network create ${ENV}-network 2>/dev/null || true
+            docker network create monitoring-network 2>/dev/null || true
+            
+            ./deploy-application.sh "${ENV}" "${DEPLOY_DIR}"
+            
             rm -rf ${TMP_DIR}
+            echo "=== Deployment Completed ==="
 
-            echo "=== ✅ Coffee Shout ${ENV} 배포 완료 ==="
-
-      # ============================================
-      # Health Check
-      # ============================================
-      # Note: Health check는 deploy-application.sh 내부에서 수행됨
-      # 이 단계는 배포 스크립트가 성공했는지 확인하는 용도
-
-      # ============================================
-      # 배포 요약
-      # ============================================
       - name: Deployment Summary
         if: always()
         run: |
           echo "### Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image Tag:** ghcr.io/$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')/coffee-shout-backend:${{env.ENVIRONMENT }}-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** ${{ env.IMAGE_TAG }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY

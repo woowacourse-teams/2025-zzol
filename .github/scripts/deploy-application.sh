@@ -8,21 +8,22 @@ set -e
 # 이미지를 pull하고, 컨테이너를 재시작하며, 헬스체크를 수행합니다.
 #
 # Usage:
-#   ./deploy-application.sh <environment> <deploy_dir> <registry> <image_tag>
+#   ./deploy-application.sh <environment> <deploy_dir>
 #
 # Arguments:
 #   environment - dev, prod
 #   deploy_dir  - docker-compose.yml이 있는 디렉토리
-#   registry    - Docker registry URL (e.g., ghcr.io/owner)
-#   image_tag   - Image tag to deploy
+#
+# Note:
+#   이 스크립트를 실행하기 전에 .env 파일이 deploy_dir에 존재해야 합니다.
 #
 # Exit Codes:
 #   0 - Success
 #   1 - Error
 #
 # Examples:
-#   ./deploy-application.sh dev ~/dev ghcr.io/myorg dev
-#   ./deploy-application.sh prod ~/prod ghcr.io/myorg prod
+#   ./deploy-application.sh dev ~/dev
+#   ./deploy-application.sh prod ~/prod
 # ============================================
 
 # 스크립트 디렉토리
@@ -35,16 +36,14 @@ source "${SCRIPT_DIR}/deploy-utils.sh"
 # 파라미터 검증
 # ============================================
 
-if [[ $# -lt 4 ]]; then
-    log_error "Usage: $0 <environment> <deploy_dir> <registry> <image_tag>"
-    log_error "Example: $0 dev ~/dev ghcr.io/myorg dev"
+if [[ $# -lt 2 ]]; then
+    log_error "Usage: $0 <environment> <deploy_dir>"
+    log_error "Example: $0 dev ~/dev"
     exit 1
 fi
 
 ENVIRONMENT="$1"
 DEPLOY_DIR="$2"
-REGISTRY="$3"
-IMAGE_TAG="$4"
 
 # 환경 검증
 if ! validate_environment "$ENVIRONMENT"; then
@@ -62,12 +61,26 @@ if ! require_file "${DEPLOY_DIR}/docker-compose.yml"; then
     exit 1
 fi
 
+# .env 파일 존재 여부 확인 (중요)
+if ! require_file "${DEPLOY_DIR}/.env"; then
+    log_error ".env file missing in ${DEPLOY_DIR}. Please ensure .env is generated and transferred."
+    exit 1
+fi
+
+# .env 파일 로드 (변수 사용을 위해)
+# set -a; source "${DEPLOY_DIR}/.env"; set +a
+# 다만, docker-compose가 자동으로 .env를 읽으므로 굳이 source 할 필요는 없으나,
+# 아래에서 이미지 이름을 조합하거나 할 때 필요할 수 있음.
+# 여기서는 docker-compose에 맡깁니다.
+
 # ============================================
 # 변수 설정
 # ============================================
 
 SERVICE_NAME="${ENVIRONMENT}-app"
-IMAGE_NAME="${REGISTRY}/coffee-shout-backend:${IMAGE_TAG}"
+# 이미지 이름은 docker-compose가 .env를 보고 결정하므로 여기서는 로깅용으로만 추정하거나,
+# 확실하게 하려면 docker-compose config를 통해 알아내야 함.
+# 단순화를 위해 로그 메시지는 일반화합니다.
 
 # ============================================
 # 메인 함수
@@ -76,12 +89,13 @@ IMAGE_NAME="${REGISTRY}/coffee-shout-backend:${IMAGE_TAG}"
 pull_application_image() {
     log_step "🐳 Application Image Pull"
 
-    log_info "Pulling image: $IMAGE_NAME"
+    # .env 파일이 있으므로 docker-compose가 알아서 변수 치환하여 pull 함
+    log_info "Pulling images using docker-compose..."
 
-    if pull_image_with_retry "$IMAGE_NAME" 3; then
+    if docker-compose pull "$SERVICE_NAME"; then
         log_success "Image pull completed"
     else
-        log_error "Failed to pull image: $IMAGE_NAME"
+        log_error "Failed to pull image for service: $SERVICE_NAME"
         return 1
     fi
 
@@ -133,7 +147,9 @@ deploy_application() {
     sleep 5
 
     # 새 컨테이너 ID 확인
-    local new_container_id=$(docker ps -q -f name="$SERVICE_NAME")
+    local new_container_id
+    new_container_id=$(docker ps -q -f name="$SERVICE_NAME")
+
     if [[ -z "$new_container_id" ]]; then
         log_error "Container failed to start: $SERVICE_NAME"
         return 1
@@ -197,42 +213,42 @@ main() {
 
     log_info "Environment: $ENVIRONMENT"
     log_info "Service: $SERVICE_NAME"
-    log_info "Image: $IMAGE_NAME"
     log_info "Deploy Directory: $DEPLOY_DIR"
 
     # 배포 디렉토리로 이동
     cd "$DEPLOY_DIR"
 
-    # 1. 의존성 확인
+    # 1. .env 파일은 이미 존재해야 함 (사전 체크 완료됨)
+
+    # 2. 의존성 확인
     if ! verify_dependencies; then
         log_error "Dependency verification failed"
         exit 1
     fi
 
-    # 2. 이미지 Pull
+    # 3. 이미지 Pull
     if ! pull_application_image; then
         log_error "Image pull failed"
         exit 1
     fi
 
-    # 3. 애플리케이션 배포
+    # 4. 애플리케이션 배포
     if ! deploy_application; then
         log_error "Application deployment failed"
         exit 1
     fi
 
-    # 4. 헬스체크
+    # 5. 헬스체크
     if ! health_check; then
         log_error "Health check failed"
         exit 1
     fi
 
-    # 5. 배포 상태 확인
+    # 6. 배포 상태 확인
     show_deployment_status
 
     log_step "✅ Application Deployment Completed"
     log_success "Service: $SERVICE_NAME"
-    log_success "Image: $IMAGE_NAME"
     log_success "Status: Healthy"
 
     exit 0

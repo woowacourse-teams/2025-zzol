@@ -107,20 +107,32 @@ validate_branch_env_match() {
 get_env_from_branch() {
     local branch="$1"
 
+    # 1. 명시적 매핑 확인 (be/dev, be/prod)
     if [[ -v BRANCH_ENV_MAP[$branch] ]]; then
         echo "${BRANCH_ENV_MAP[$branch]}"
         return 0
-    else
-        log_error "Error: 지원하지 않는 브랜치입니다!"
-        log_error "현재 브랜치: $(get_branch_name "$branch")"
-        # 지원 브랜치 목록 출력
-        local supported_branches=""
-        for key in "${!BRANCH_ENV_MAP[@]}"; do
-            supported_branches+="$(get_branch_name "$key") "
-        done
-        log_error "지원 브랜치: ${supported_branches}"
-        return 1
     fi
+
+    # 2. Feature 브랜치 확인 (be/feat/** -> dev)
+    if [[ "$branch" == refs/heads/be/feat/* ]]; then
+        log_info "Feature branch detected: $(get_branch_name "$branch") -> mapping to 'dev' environment"
+        echo "dev"
+        return 0
+    fi
+
+    # 3. 매칭 실패
+    log_error "Error: 지원하지 않는 브랜치입니다!"
+    log_error "현재 브랜치: $(get_branch_name "$branch")"
+    
+    # 지원 브랜치 목록 출력
+    local supported_branches=""
+    for key in "${!BRANCH_ENV_MAP[@]}"; do
+        supported_branches+="$(get_branch_name "$key") "
+    done
+    supported_branches+="be/feat/*" # Feature 브랜치 안내 추가
+    
+    log_error "지원 브랜치: ${supported_branches}"
+    return 1
 }
 
 # ============================================

@@ -62,8 +62,8 @@ jobs:
           push: true
           platforms: linux/arm64
           tags: |
-            ghcr.io/${{ env.REPO_OWNER }}/coffee-shout-backend:${{ env.IMAGE_TAG }}
-            ghcr.io/${{ env.REPO_OWNER }}/coffee-shout-backend:latest
+            ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:${{ env.IMAGE_TAG }}
+            ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

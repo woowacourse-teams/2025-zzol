@@ -6,7 +6,7 @@ services:
   # ============================================
   prod-app:
     # 이미지는 GitHub Actions에서 빌드되어 GHCR에 푸시됨
-    image: ${REGISTRY}/coffee-shout-backend:${IMAGE_TAG}
+    image: ${REGISTRY}/zzol-backend:${IMAGE_TAG}
     container_name: prod-app
     restart: unless-stopped
     ports:

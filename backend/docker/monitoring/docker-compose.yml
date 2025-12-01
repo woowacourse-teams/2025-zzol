@@ -102,7 +102,6 @@ services:
   loki:
     image: grafana/loki:latest
     container_name: loki
-    user: root
     restart: unless-stopped
     volumes:
       - loki-data:/loki

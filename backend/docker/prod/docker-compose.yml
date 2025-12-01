@@ -40,7 +40,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 120s
     # 자원 제한 (Prod 환경: 총 2.0~2.5 vCPU, 12GB - 최우선 할당)
     deploy:
       resources:

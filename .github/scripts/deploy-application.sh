@@ -92,7 +92,7 @@ pull_application_image() {
     # .env 파일이 있으므로 docker-compose가 알아서 변수 치환하여 pull 함
     log_info "Pulling images using docker-compose..."
 
-    if docker-compose pull "$SERVICE_NAME"; then
+    if docker-compose --env-file .env pull "$SERVICE_NAME"; then
         log_success "Image pull completed"
     else
         log_error "Failed to pull image for service: $SERVICE_NAME"
@@ -141,7 +141,7 @@ deploy_application() {
     # 애플리케이션 재시작 (강제 재생성, DB 의존성 무시)
     # Note: --no-deps는 안전함 (이미 verify_dependencies()에서 확인했음)
     log_info "Starting new container..."
-    docker-compose up -d --force-recreate --no-deps "$SERVICE_NAME"
+    docker-compose --env-file .env up -d --force-recreate --no-deps "$SERVICE_NAME"
 
     # 컨테이너 시작 대기
     sleep 5
@@ -184,7 +184,7 @@ health_check() {
     # 실패 시 로그 출력
     echo ""
     log_error "Recent application logs:"
-    docker-compose logs --tail=100 "$SERVICE_NAME"
+    docker-compose --env-file .env logs --tail=100 "$SERVICE_NAME"
 
     return 1
 }
@@ -195,12 +195,12 @@ show_deployment_status() {
     # 컨테이너 상태
     echo ""
     log_info "Container status:"
-    docker-compose ps "$SERVICE_NAME"
+    docker-compose --env-file .env ps "$SERVICE_NAME"
 
     # 최근 로그
     echo ""
     log_info "Recent application logs:"
-    docker-compose logs --tail=30 "$SERVICE_NAME"
+    docker-compose --env-file .env logs --tail=30 "$SERVICE_NAME"
 
     # 이미지 정보
     echo ""

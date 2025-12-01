@@ -79,7 +79,7 @@ deploy_mysql() {
             if ! wait_for_healthy "$service_name" 30 2; then
                 log_error "MySQL failed to become healthy"
                 log_info "Showing recent MySQL logs:"
-                docker-compose logs --tail=50 "$service_name"
+                docker-compose --env-file .env logs --tail=50 "$service_name"
                 return 1
             fi
         fi
@@ -87,7 +87,7 @@ deploy_mysql() {
         log_info "Starting MySQL: $service_name"
 
         # MySQL 시작
-        docker-compose up -d "$service_name"
+        docker-compose --env-file .env up -d "$service_name"
 
         # 헬스체크 대기
         if wait_for_healthy "$service_name" 30 2; then
@@ -95,7 +95,7 @@ deploy_mysql() {
         else
             log_error "MySQL failed to become healthy"
             log_info "Showing recent MySQL logs:"
-            docker-compose logs --tail=50 "$service_name"
+            docker-compose --env-file .env logs --tail=50 "$service_name"
             return 1
         fi
     fi
@@ -115,14 +115,14 @@ deploy_redis() {
         log_info "Starting Redis: $service_name"
 
         # Redis 시작
-        docker-compose up -d "$service_name"
+        docker-compose --env-file .env up -d "$service_name"
 
         # 컨테이너 실행 대기
         if wait_for_container "$service_name" 15 2; then
             log_success "Redis deployment completed"
         else
             log_error "Redis failed to start"
-            docker-compose logs --tail=50 "$service_name"
+            docker-compose --env-file .env logs --tail=50 "$service_name"
             return 1
         fi
     fi
@@ -155,7 +155,7 @@ main() {
     # 현재 상태 출력
     echo ""
     log_info "Current infrastructure status:"
-    docker-compose ps "${ENVIRONMENT}-mysql" "${ENVIRONMENT}-redis"
+    docker-compose --env-file .env ps "${ENVIRONMENT}-mysql" "${ENVIRONMENT}-redis"
 
     exit 0
 }

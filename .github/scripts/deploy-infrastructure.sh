@@ -76,10 +76,26 @@ deploy_mysql() {
             log_success "MySQL is healthy"
         else
             log_warning "MySQL is running but not healthy yet"
-            if ! wait_for_healthy "$service_name" 30 2; then
+
+            # 단순히 대기만 함 - 자동 삭제는 위험
+            if wait_for_healthy "$service_name" 30 2; then
+                log_success "MySQL became healthy"
+            else
                 log_error "MySQL failed to become healthy"
                 log_info "Showing recent MySQL logs:"
                 docker-compose --env-file .env logs --tail=50 "$service_name"
+
+                # 환경변수 검증
+                log_info "Checking container environment variables:"
+                docker inspect "$service_name" --format='{{range .Config.Env}}{{println .}}{{end}}' | grep MYSQL_ROOT_PASSWORD || log_error "MYSQL_ROOT_PASSWORD not set in container!"
+
+                log_error "Manual intervention required:"
+                log_error "1. Check MySQL logs: docker logs $service_name"
+                log_error "2. If needed, manually remove and recreate:"
+                log_error "   cd ~/${ENVIRONMENT}"
+                log_error "   docker-compose --env-file .env down"
+                log_error "   docker volume rm ${ENVIRONMENT}-mysql-data  # WARNING: This deletes all data!"
+                log_error "   docker-compose --env-file .env up -d"
                 return 1
             fi
         fi

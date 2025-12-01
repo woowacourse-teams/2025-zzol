@@ -79,11 +79,19 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: backend/docker/${{ env.ENVIRONMENT }}/docker-compose.yml,.github/scripts/deploy-*.sh,.env
+          # .env는 루트에 생성됨. 나머지는 경로가 있음.
+          # strip_components를 제거하면 전체 경로가 포함되어 복사될 수 있음.
+          # 가장 안전한 방법: source를 명확히 하고 target에 다 때려넣기
+          source: "backend/docker/${{ env.ENVIRONMENT }}/docker-compose.yml,.github/scripts/deploy-*.sh,.env"
           target: /tmp/deploy-${{ env.ENVIRONMENT }}/
-          strip_components: 1
-          overwrite: true
-
+          # strip_components: 1 제거 -> 경로 구조 유지됨 (또는 scp 동작 방식에 따라 다름)
+          # appleboy/scp-action은 여러 파일 지정 시 동작이 복잡할 수 있음.
+          # 여기서 strip_components: 0 (기본값)으로 하면:
+          # /tmp/deploy-dev/backend/docker/dev/docker-compose.yml
+          # /tmp/deploy-dev/.github/scripts/deploy-app.sh
+          # /tmp/deploy-dev/.env
+          # 이렇게 들어갈 확률이 높음.
+          
       - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -98,17 +106,28 @@ jobs:
             set -e
             DEPLOY_DIR=~/${ENV}
             TMP_DIR=/tmp/deploy-${ENV}
-            SCRIPTS_DIR=${TMP_DIR}/.github/scripts
+            
+            echo "Listing TMP_DIR for debugging..."
+            ls -R ${TMP_DIR}
+            
             mkdir -p ${DEPLOY_DIR}
             
-            cp ${TMP_DIR}/docker/${ENV}/docker-compose.yml ${DEPLOY_DIR}/
+            # 파일 이동 로직 (strip_components 제거에 따른 경로 수정)
+            # 1. docker-compose.yml
+            cp ${TMP_DIR}/backend/docker/${ENV}/docker-compose.yml ${DEPLOY_DIR}/
+            
+            # 2. .env (루트에 있었으므로 TMP_DIR 바로 아래에 있을 것임)
             cp ${TMP_DIR}/.env ${DEPLOY_DIR}/
-            cp ${SCRIPTS_DIR}/deploy-*.sh ${DEPLOY_DIR}/
+            
+            # 3. 스크립트
+            cp ${TMP_DIR}/.github/scripts/deploy-*.sh ${DEPLOY_DIR}/
+            
             chmod +x ${DEPLOY_DIR}/deploy-*.sh
             
             docker network create ${ENV}-network 2>/dev/null || true
             docker network create monitoring-network 2>/dev/null || true
             
+            cd ${DEPLOY_DIR}
             ./deploy-application.sh "${ENV}" "${DEPLOY_DIR}"
             
             rm -rf ${TMP_DIR}

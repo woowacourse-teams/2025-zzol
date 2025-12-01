@@ -79,19 +79,19 @@ deploy_mysql() {
                 log_success "MySQL became healthy"
             else
                 log_error "MySQL failed to become healthy"
-                docker-compose --env-file .env logs --tail=50 "$service_name"
+                docker compose --env-file .env logs --tail=50 "$service_name"
                 return 1
             fi
         fi
     else
         log_info "Starting MySQL: $service_name"
-        docker-compose --env-file .env up -d "$service_name"
+        docker compose --env-file .env up -d "$service_name"
 
         if wait_for_healthy "$service_name" 30 2; then
             log_success "MySQL deployment completed"
         else
             log_error "MySQL failed to become healthy"
-            docker-compose --env-file .env logs --tail=50 "$service_name"
+            docker compose --env-file .env logs --tail=50 "$service_name"
             return 1
         fi
     fi
@@ -116,19 +116,19 @@ deploy_redis() {
                 log_success "Redis became healthy"
             else
                 log_error "Redis failed to become healthy"
-                docker-compose --env-file .env logs --tail=50 "$service_name"
+                docker compose --env-file .env logs --tail=50 "$service_name"
                 return 1
             fi
         fi
     else
         log_info "Starting Redis: $service_name"
-        docker-compose --env-file .env up -d "$service_name"
+        docker compose --env-file .env up -d "$service_name"
 
         if wait_for_healthy "$service_name" 15 2; then
             log_success "Redis deployment completed"
         else
             log_error "Redis failed to become healthy"
-            docker-compose --env-file .env logs --tail=50 "$service_name"
+            docker compose --env-file .env logs --tail=50 "$service_name"
             return 1
         fi
     fi
@@ -162,7 +162,7 @@ main() {
 
     echo ""
     log_info "Current infrastructure status:"
-    docker-compose --env-file .env ps "${ENVIRONMENT}-mysql" "${ENVIRONMENT}-redis" || log_warning "Status check incomplete"
+    docker compose --env-file .env ps "${ENVIRONMENT}-mysql" "${ENVIRONMENT}-redis" || log_warning "Status check incomplete"
     exit 0
 }
 

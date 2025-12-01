@@ -80,7 +80,7 @@ SERVICE_NAME="${ENVIRONMENT}-app"
 pull_application_image() {
     log_step "🐳 Application Image Pull"
 
-    if docker-compose --env-file .env pull "$SERVICE_NAME"; then
+    if docker compose --env-file .env pull "$SERVICE_NAME"; then
         log_success "Image pull completed"
     else
         log_error "Failed to pull image for service: $SERVICE_NAME"
@@ -126,15 +126,15 @@ deploy_application() {
     if [[ -n "$existing_container" ]]; then
         log_info "Found existing container: $existing_container"
         log_info "Stopping and removing old container..."
-        docker-compose --env-file .env stop "$SERVICE_NAME" 2>/dev/null || true
-        docker-compose --env-file .env rm -f "$SERVICE_NAME" 2>/dev/null || true
+        docker compose --env-file .env stop "$SERVICE_NAME" 2>/dev/null || true
+        docker compose --env-file .env rm -f "$SERVICE_NAME" 2>/dev/null || true
     else
         log_info "No existing container found"
     fi
 
     # 새 컨테이너 시작
     log_info "Starting new container..."
-    docker-compose --env-file .env up -d --no-deps "$SERVICE_NAME"
+    docker compose --env-file .env up -d --no-deps "$SERVICE_NAME"
 
     # 컨테이너 시작 대기
     sleep 5
@@ -145,7 +145,7 @@ deploy_application() {
 
     if [[ -z "$new_container_id" ]]; then
         log_error "Container failed to start: $SERVICE_NAME"
-        docker-compose --env-file .env logs --tail=50 "$SERVICE_NAME"
+        docker compose --env-file .env logs --tail=50 "$SERVICE_NAME"
         return 1
     fi
 
@@ -178,7 +178,7 @@ health_check() {
     # 실패 시 로그 출력
     echo ""
     log_error "Recent application logs:"
-    docker-compose --env-file .env logs --tail=100 "$SERVICE_NAME"
+    docker compose --env-file .env logs --tail=100 "$SERVICE_NAME"
 
     return 1
 }
@@ -189,12 +189,12 @@ show_deployment_status() {
     # 컨테이너 상태
     echo ""
     log_info "Container status:"
-    docker-compose --env-file .env ps "$SERVICE_NAME"
+    docker compose --env-file .env ps "$SERVICE_NAME"
 
     # 최근 로그
     echo ""
     log_info "Recent application logs:"
-    docker-compose --env-file .env logs --tail=30 "$SERVICE_NAME"
+    docker compose --env-file .env logs --tail=30 "$SERVICE_NAME"
 
     # 이미지 정보
     echo ""

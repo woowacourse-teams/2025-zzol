@@ -38,7 +38,6 @@ out/
 
 ### Docker ###
 # Environment files
-docker/**/.env
 .env
 
 # SSL certificates

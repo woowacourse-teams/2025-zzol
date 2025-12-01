@@ -18,7 +18,6 @@
 # 색상 정의
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # 테스트 결과 카운터
@@ -111,7 +110,7 @@ assert_output_contains() {
     output=$("$@" 2>&1) || exit_code=$?
 
     # 성공/실패 여부와 관계없이 출력에 특정 문자열이 포함되어 있는지 검증
-    if echo "$output" | grep -q "$expected"; then
+    if echo "$output" | grep -qF "$expected"; then
         echo -e "${GREEN}✅ PASS${NC}: $desc"
         echo "   Output contains: '$expected'"
         ((TESTS_PASSED++))

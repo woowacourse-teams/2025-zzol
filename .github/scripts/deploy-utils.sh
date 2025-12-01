@@ -146,7 +146,7 @@ pull_image_with_retry() {
 compose_service_exists() {
     local service_name="$1"
 
-    if docker-compose config --services 2>/dev/null | grep -q "^${service_name}$"; then
+    if docker compose config --services 2>/dev/null | grep -q "^${service_name}$"; then
         return 0
     else
         return 1
@@ -156,7 +156,7 @@ compose_service_exists() {
 compose_service_running() {
     local service_name="$1"
 
-    if docker-compose ps "$service_name" 2>/dev/null | grep -q "Up"; then
+    if docker compose ps "$service_name" 2>/dev/null | grep -q "Up"; then
         return 0
     else
         return 1

@@ -12,8 +12,9 @@ LABEL description="Coffee Shout Backend Spring Boot Application"
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# 보안: non-root 유저 생성 및 설정
-RUN addgroup -S spring && \
+# curl 설치 (헬스체크용) + non-root 유저 생성
+RUN apk add --no-cache curl && \
+    addgroup -S spring && \
     adduser -S spring -G spring && \
     mkdir -p /app/logs && \
     chown -R spring:spring /app
@@ -29,11 +30,12 @@ USER spring:spring
 EXPOSE 8080
 
 # Health check 설정
+# curl은 Alpine Linux에 기본 포함됨
 HEALTHCHECK --interval=30s \
     --timeout=3s \
     --start-period=40s \
     --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # JVM 옵션 및 애플리케이션 실행
 ENTRYPOINT ["java", \

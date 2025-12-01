@@ -153,8 +153,8 @@ health_check() {
     log_info "Waiting for application to be healthy (max ${max_attempts}s)..."
 
     for i in $(seq 1 "$max_attempts"); do
-        # /actuator/health 엔드포인트 체크
-        if docker exec "$SERVICE_NAME" wget --quiet --tries=1 --spider http://localhost:8080/actuator/health 2>/dev/null; then
+        # /actuator/health 엔드포인트 체크 (curl -f: HTTP 오류 시 실패)
+        if docker exec "$SERVICE_NAME" curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
             log_success "Application is healthy!"
             return 0
         fi

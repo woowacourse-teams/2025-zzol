@@ -205,10 +205,6 @@ jobs:
           echo "- **Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **JAR File:** ${{ env.JAR_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** ghcr.io/$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')/coffee-shout-backend:${{env.ENVIRONMENT }}-${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployed Components:**" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ ${{ env.ENVIRONMENT }}-app (Spring Boot)" >> $GITHUB_STEP_SUMMARY
-          echo "- ℹ️  ${{ env.ENVIRONMENT }}-mysql (no changes)" >> $GITHUB_STEP_SUMMARY
-          echo "- ℹ️  ${{ env.ENVIRONMENT }}-redis (no changes)" >> $GITHUB_STEP_SUMMARY

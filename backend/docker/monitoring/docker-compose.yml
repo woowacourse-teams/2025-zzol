@@ -24,6 +24,15 @@ services:
       - TZ=Asia/Seoul
       - OCI_ACCESS_KEY=${OCI_ACCESS_KEY}
       - OCI_SECRET_KEY=${OCI_SECRET_KEY}
+    # 자원 제한 (Tempo - Tracing)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'        # 최대 0.3 vCPU
+          memory: 1G         # 최대 1GB
+        reservations:
+          cpus: '0.15'       # 최소 0.15 vCPU
+          memory: 512M       # 최소 512MB
     healthcheck:
       test: ["CMD", "sh", "-c", "wget --quiet --tries=1 --spider http://localhost:3200/ready && wget --quiet --tries=1 --spider http://localhost:4318/ready"]
       interval: 30s
@@ -56,6 +65,15 @@ services:
       - '--web.enable-lifecycle'
     environment:
       - TZ=Asia/Seoul
+    # 자원 제한 (Prometheus - Metrics)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'        # 최대 0.4 vCPU
+          memory: 1536M      # 최대 1.5GB (TSDB + query)
+        reservations:
+          cpus: '0.2'        # 최소 0.2 vCPU
+          memory: 1G         # 최소 1GB
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
       interval: 30s
@@ -86,6 +104,15 @@ services:
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
       - GF_SERVER_ROOT_URL=http://status.zzol.site
       - TZ=Asia/Seoul
+    # 자원 제한 (Grafana - Visualization)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'        # 최대 0.3 vCPU
+          memory: 768M       # 최대 768MB
+        reservations:
+          cpus: '0.15'       # 최소 0.15 vCPU
+          memory: 512M       # 최소 512MB
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
       interval: 30s
@@ -117,6 +144,15 @@ services:
     command: -config.file=/etc/loki/loki.yaml -config.expand-env=true
     environment:
       - TZ=Asia/Seoul
+    # 자원 제한 (Loki - Logs)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'        # 최대 0.3 vCPU
+          memory: 1G         # 최대 1GB
+        reservations:
+          cpus: '0.15'       # 최소 0.15 vCPU
+          memory: 512M       # 최소 512MB
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3100/ready"]
       interval: 30s
@@ -145,6 +181,15 @@ services:
       - TZ=Asia/Seoul
     devices:
       - /dev/kmsg
+    # 자원 제한 (cAdvisor - Container Metrics)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'        # 최대 0.2 vCPU
+          memory: 256M       # 최대 256MB
+        reservations:
+          cpus: '0.1'        # 최소 0.1 vCPU
+          memory: 128M       # 최소 128MB
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/healthz"]
       interval: 30s

@@ -34,12 +34,15 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+    # 자원 제한 (Prod 환경: 총 2.0~2.5 vCPU, 12GB - 최우선 할당)
     deploy:
       resources:
         limits:
-          memory: 2G
+          cpus: '1.5'        # 최대 1.5 vCPU
+          memory: 6G         # 최대 6GB (JVM heap 3GB + 여유분)
         reservations:
-          memory: 1G
+          cpus: '1.0'        # 최소 1.0 vCPU 보장
+          memory: 4G         # 최소 4GB 보장
 
   # ============================================
   # Prod MySQL Database
@@ -74,12 +77,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    # 자원 제한 (Prod MySQL)
     deploy:
       resources:
         limits:
-          memory: 1G
+          cpus: '0.7'        # 최대 0.7 vCPU
+          memory: 4G         # 최대 4GB (InnoDB buffer pool + 여유분)
         reservations:
-          memory: 512M
+          cpus: '0.4'        # 최소 0.4 vCPU
+          memory: 2G         # 최소 2GB
 
   # ============================================
   # Prod Redis (Valkey)
@@ -98,7 +104,7 @@ services:
       valkey-server
       --appendonly yes
       --appendfsync everysec
-      --maxmemory 256mb
+      --maxmemory 1536mb
       --maxmemory-policy allkeys-lru
     networks:
       - prod-network
@@ -107,12 +113,15 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
+    # 자원 제한 (Prod Redis)
     deploy:
       resources:
         limits:
-          memory: 512M
+          cpus: '0.3'        # 최대 0.3 vCPU
+          memory: 2G         # 최대 2GB (캐시 확장 가능)
         reservations:
-          memory: 256M
+          cpus: '0.2'        # 최소 0.2 vCPU
+          memory: 1G         # 최소 1GB
 
 # ============================================
 # Networks

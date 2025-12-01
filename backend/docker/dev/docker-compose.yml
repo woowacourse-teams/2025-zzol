@@ -28,6 +28,15 @@ services:
         condition: service_healthy
       dev-redis:
         condition: service_started
+    # 자원 제한 (Dev 환경: 총 0.5~1.0 vCPU, 4GB)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'        # 최대 0.5 vCPU
+          memory: 2G         # 최대 2GB (JVM heap 포함)
+        reservations:
+          cpus: '0.25'       # 최소 0.25 vCPU 보장
+          memory: 1G         # 최소 1GB 보장
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -55,6 +64,15 @@ services:
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     networks:
       - dev-network
+    # 자원 제한 (Dev MySQL)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'        # 최대 0.3 vCPU
+          memory: 1536M      # 최대 1.5GB
+        reservations:
+          cpus: '0.15'       # 최소 0.15 vCPU
+          memory: 768M       # 최소 768MB
     healthcheck:
       test: ["CMD-SHELL", "MYSQL_PWD=${DB_PASSWORD} mysqladmin ping -h localhost -u root"]
       interval: 10s
@@ -77,6 +95,15 @@ services:
     command: valkey-server --appendonly yes
     networks:
       - dev-network
+    # 자원 제한 (Dev Redis)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'        # 최대 0.2 vCPU
+          memory: 512M       # 최대 512MB
+        reservations:
+          cpus: '0.1'        # 최소 0.1 vCPU
+          memory: 256M       # 최소 256MB
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 10s

@@ -39,7 +39,7 @@ HEALTHCHECK --interval=30s \
 
 # JVM 옵션 및 애플리케이션 실행
 # 환경변수로 힙 메모리 설정 가능 (기본값: dev 환경)
-ENV JAVA_OPTS="-Xms1g -Xmx1536m"
+ENV JAVA_OPTS="-Xms3g -Xmx3g"
 
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} \
     -XX:+UseG1GC \

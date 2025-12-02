@@ -117,9 +117,12 @@ services:
       timeout: 10s
       retries: 3
     depends_on:
-      - prometheus
-      - loki
-      - tempo
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+      tempo:
+        condition: service_healthy
 
   # ============================================
   # Loki - Log Aggregation

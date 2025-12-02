@@ -12,7 +12,7 @@ services:
     ports:
       - "8081:8080"
     environment:
-      - JAVA_OPTS=-Xms4200m -Xmx4200m
+      - JAVA_OPTS=${JAVA_OPTS:--Xms4200m -Xmx4200m}
       - SPRING_PROFILES_ACTIVE=prod
       - MYSQL_URL=jdbc:mysql://prod-mysql:3306/coffee_shout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
       - MYSQL_USERNAME=root
@@ -43,11 +43,14 @@ services:
       retries: 5
       start_period: 120s
     # 자원 제한 (Prod 환경: 총 2.0~2.5 vCPU, 12GB - 최우선 할당)
+    # Docker 메모리 제한: 6GB
+    # JVM 힙 설정: -Xms4200m -Xmx4200m (약 4.2GB, 70% 할당)
+    # 비힙 오버헤드: 약 1.8GB (메타스페이스, 스레드 스택, 네트워크 버퍼 등)
     deploy:
       resources:
         limits:
           cpus: '1.5'        # 최대 1.5 vCPU
-          memory: 6G         # 최대 6GB (JVM heap 3GB + 여유분)
+          memory: 6G         # 최대 6GB
         reservations:
           cpus: '1.0'        # 최소 1.0 vCPU 보장
           memory: 4G         # 최소 4GB 보장
@@ -81,7 +84,7 @@ services:
     networks:
       - prod-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
       interval: 10s
       timeout: 5s
       retries: 5

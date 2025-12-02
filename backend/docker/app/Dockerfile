@@ -43,6 +43,7 @@ ENV JAVA_OPTS="-Xms1400m -Xmx1400m"
 
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} \
     -XX:+UseG1GC \
+    -XX:MaxMetaspaceSize=256m \
     -XX:+HeapDumpOnOutOfMemoryError \
     -XX:HeapDumpPath=/app/logs/heapdump.hprof \
     -Duser.timezone=Asia/Seoul \

@@ -30,6 +30,7 @@ services:
     volumes:
       - prod-app-logs:/app/logs
     networks:
+      - zzol-network
       - prod-network
     depends_on:
       prod-mysql:
@@ -45,7 +46,8 @@ services:
     # 자원 제한 (Prod 환경: 총 2.0~2.5 vCPU, 12GB - 최우선 할당)
     # Docker 메모리 제한: 6GB
     # JVM 힙 설정: -Xms4200m -Xmx4200m (약 4.2GB, 70% 할당)
-    # 비힙 오버헤드: 약 1.8GB (메타스페이스, 스레드 스택, 네트워크 버퍼 등)
+    # 메타스페이스: -XX:MaxMetaspaceSize=256m
+    # 비힙 오버헤드: 약 1.8GB (메타스페이스 256MB + 스레드 스택 + 네트워크 버퍼 등)
     deploy:
       resources:
         limits:
@@ -142,6 +144,8 @@ networks:
   prod-network:
     driver: bridge
     name: prod-network
+  zzol-network:
+    external: true
 
 # ============================================
 # Volumes

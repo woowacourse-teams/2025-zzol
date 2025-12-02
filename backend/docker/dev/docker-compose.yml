@@ -30,6 +30,7 @@ services:
     volumes:
       - dev-app-logs:/app/logs
     networks:
+      - zzol-network
       - dev-network
     depends_on:
       dev-mysql:
@@ -39,7 +40,8 @@ services:
     # 자원 제한 (Dev 환경: 총 0.5~1.0 vCPU, 4GB)
     # Docker 메모리 제한: 2GB
     # JVM 힙 설정: -Xms1400m -Xmx1400m (약 1.4GB, 70% 할당)
-    # 비힙 오버헤드: 약 600MB (메타스페이스, 스레드 스택, 네트워크 버퍼 등)
+    # 메타스페이스: -XX:MaxMetaspaceSize=256m
+    # 비힙 오버헤드: 약 600MB (메타스페이스 256MB + 스레드 스택 + 네트워크 버퍼 등)
     deploy:
       resources:
         limits:
@@ -129,6 +131,8 @@ networks:
   dev-network:
     driver: bridge
     name: dev-network
+  zzol-network:
+    external: true
 
 # ============================================
 # Volumes

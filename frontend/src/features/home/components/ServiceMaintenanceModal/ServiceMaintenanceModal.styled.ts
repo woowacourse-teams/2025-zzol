@@ -44,4 +44,3 @@ export const PeriodDate = styled.p`
   margin: 0;
   font-weight: 600;
 `;
-

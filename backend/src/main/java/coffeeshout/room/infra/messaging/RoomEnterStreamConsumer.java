@@ -6,11 +6,8 @@ import coffeeshout.global.exception.custom.InvalidStateException;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;
-import coffeeshout.room.domain.menu.Menu;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.domain.service.MenuCommandService;
 import coffeeshout.room.domain.service.RoomCommandService;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -27,20 +24,18 @@ import org.springframework.stereotype.Component;
 public class RoomEnterStreamConsumer implements StreamListener<String, ObjectRecord<String, String>> {
 
     private final RoomCommandService roomCommandService;
-    private final MenuCommandService menuCommandService;
     private final RoomEventWaitManager roomEventWaitManager;
     private final StreamMessageListenerContainer<String, ObjectRecord<String, String>> roomEnterStreamContainer;
     private final RedisStreamProperties redisStreamProperties;
     private final ObjectMapper objectMapper;
 
     public RoomEnterStreamConsumer(
-            RoomCommandService roomCommandService, MenuCommandService menuCommandService,
+            RoomCommandService roomCommandService,
             RoomEventWaitManager roomEventWaitManager,
             @Qualifier("roomEnterStreamContainer") StreamMessageListenerContainer<String, ObjectRecord<String, String>> roomEnterStreamContainer,
             RedisStreamProperties redisStreamProperties, ObjectMapper objectMapper
     ) {
         this.roomCommandService = roomCommandService;
-        this.menuCommandService = menuCommandService;
         this.roomEventWaitManager = roomEventWaitManager;
         this.roomEnterStreamContainer = roomEnterStreamContainer;
         this.redisStreamProperties = redisStreamProperties;
@@ -66,17 +61,9 @@ public class RoomEnterStreamConsumer implements StreamListener<String, ObjectRec
                 event.eventId(), event.joinCode(), event.guestName());
 
         try {
-            final SelectedMenuRequest selectedMenuRequest = event.selectedMenuRequest();
-
-            final Menu menu = menuCommandService.convertMenu(
-                    selectedMenuRequest.id(),
-                    selectedMenuRequest.customName()
-            );
-
             final Room room = roomCommandService.joinGuest(
                     new JoinCode(event.joinCode()),
-                    new PlayerName(event.guestName()),
-                    menu, selectedMenuRequest.temperature()
+                    new PlayerName(event.guestName())
             );
 
             log.info("방 입장 성공: joinCode={}, guestName={}, 현재 인원={}, eventId={}",

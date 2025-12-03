@@ -10,9 +10,6 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.PlayerKickEvent;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
-import coffeeshout.room.domain.menu.Menu;
-import coffeeshout.room.domain.menu.MenuTemperature;
-import coffeeshout.room.domain.menu.SelectedMenu;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.PlayerType;
@@ -20,8 +17,6 @@ import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.roulette.Roulette;
 import coffeeshout.room.domain.roulette.RoulettePicker;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
-import coffeeshout.room.domain.service.MenuCommandService;
-import coffeeshout.room.domain.service.MenuQueryService;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomEnterStreamProducer;
@@ -29,7 +24,6 @@ import coffeeshout.room.infra.messaging.RoomEventPublisher;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import java.time.Duration;
@@ -52,12 +46,10 @@ public class RoomService {
 
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
-    private final MenuQueryService menuQueryService;
     private final QrCodeService qrCodeService;
     private final JoinCodeGenerator joinCodeGenerator;
     private final RoomEventPublisher roomEventPublisher;
     private final RoomEventWaitManager roomEventWaitManager;
-    private final MenuCommandService menuCommandService;
     private final RoomEnterStreamProducer roomEnterStreamProducer;
     private final RoomJpaRepository roomJpaRepository;
 
@@ -65,18 +57,15 @@ public class RoomService {
     private Duration eventTimeout;
 
     @Transactional
-    public Room createRoom(String hostName, SelectedMenuRequest selectedMenuRequest) {
+    public Room createRoom(String hostName) {
         final JoinCode joinCode = joinCodeGenerator.generate();
 
         // 방 생성 (QR 코드는 PENDING 상태로 시작)
-        final Menu menu = menuCommandService.convertMenu(selectedMenuRequest.id(), selectedMenuRequest.customName());
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(hostName),
-                menu, selectedMenuRequest.temperature());
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(hostName));
 
         // 방 생성 후 이벤트 전달
         final RoomCreateEvent event = new RoomCreateEvent(
                 hostName,
-                selectedMenuRequest,
                 joinCode.getValue()
         );
 
@@ -98,10 +87,9 @@ public class RoomService {
 
     public CompletableFuture<Room> enterRoomAsync(
             String joinCode,
-            String guestName,
-            SelectedMenuRequest selectedMenuRequest
+            String guestName
     ) {
-        final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName, selectedMenuRequest);
+        final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName);
 
         return processEventAsync(
                 event.eventId(),
@@ -166,14 +154,10 @@ public class RoomService {
         roomJpaRepository.save(roomEntity);
     }
 
-    public Room enterRoom(String joinCode, String guestName, SelectedMenuRequest selectedMenuRequest) {
-        Menu menu = menuCommandService.convertMenu(selectedMenuRequest.id(), selectedMenuRequest.customName());
-
+    public Room enterRoom(String joinCode, String guestName) {
         return roomCommandService.joinGuest(
                 new JoinCode(joinCode),
-                new PlayerName(guestName),
-                menu,
-                selectedMenuRequest.temperature()
+                new PlayerName(guestName)
         );
     }
 
@@ -211,16 +195,6 @@ public class RoomService {
 
     public List<Player> getAllPlayers(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-
-        return room.getPlayers();
-    }
-
-    public List<Player> selectMenu(String joinCode, String playerName, Long menuId) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final Menu menu = menuQueryService.getById(menuId);
-
-        final Player player = room.findPlayer(new PlayerName(playerName));
-        player.selectMenu(new SelectedMenu(menu, MenuTemperature.ICE));
 
         return room.getPlayers();
     }

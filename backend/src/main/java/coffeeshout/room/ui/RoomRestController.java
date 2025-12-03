@@ -43,7 +43,7 @@ public class RoomRestController implements RoomApi {
 
     @PostMapping
     public ResponseEntity<RoomCreateResponse> createRoom(@Valid @RequestBody RoomEnterRequest request) {
-        final Room room = roomService.createRoom(request.playerName(), request.menu());
+        final Room room = roomService.createRoom(request.playerName());
 
         return ResponseEntity.ok(RoomCreateResponse.from(room));
     }
@@ -53,7 +53,7 @@ public class RoomRestController implements RoomApi {
             @PathVariable String joinCode,
             @Valid @RequestBody RoomEnterRequest request
     ) {
-        return roomService.enterRoomAsync(joinCode, request.playerName(), request.menu())
+        return roomService.enterRoomAsync(joinCode, request.playerName())
                 .thenApply(room -> ResponseEntity.ok(RoomEnterResponse.from(room)))
                 .exceptionally(throwable -> {
                     // 원래 예외 추출

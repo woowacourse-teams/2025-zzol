@@ -2,11 +2,9 @@ package coffeeshout.room.domain.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.fixture.MenuFixture;
 import coffeeshout.global.ServiceTest;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.menu.MenuTemperature;
 import coffeeshout.room.domain.player.PlayerName;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,16 +39,13 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트");
 
             // when
-            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.HOT);
+            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(room.getJoinCode()).isEqualTo(joinCode);
                 softly.assertThat(room.getPlayers()).hasSize(1);
                 softly.assertThat(room.getPlayers().get(0).getName()).isEqualTo(hostName);
-                softly.assertThat(room.getPlayers().get(0).getSelectedMenu().menu().getName()).isEqualTo("아메리카노");
-                softly.assertThat(room.getPlayers().get(0).getSelectedMenu().menuTemperature())
-                        .isEqualTo(MenuTemperature.HOT);
             });
         }
 
@@ -61,8 +56,8 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName2 = new PlayerName("호스트2");
 
             // when
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName1, MenuFixture.아메리카노(), MenuTemperature.HOT);
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName2, MenuFixture.라떼(), MenuTemperature.ICE);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName1);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName2);
 
             // then
             Room room = roomQueryService.getByJoinCode(joinCode);
@@ -82,18 +77,15 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트");
             PlayerName guestName = new PlayerName("게스트");
 
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.HOT);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName);
 
             // when
-            Room room = roomCommandService.joinGuest(joinCode, guestName, MenuFixture.라떼(), MenuTemperature.ICE);
+            Room room = roomCommandService.joinGuest(joinCode, guestName);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(room.getPlayers()).hasSize(2);
                 softly.assertThat(room.getPlayers().get(1).getName()).isEqualTo(guestName);
-                softly.assertThat(room.getPlayers().get(1).getSelectedMenu().menu().getName()).isEqualTo("라떼");
-                softly.assertThat(room.getPlayers().get(1).getSelectedMenu().menuTemperature())
-                        .isEqualTo(MenuTemperature.ICE);
             });
         }
 
@@ -105,12 +97,12 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName guest2 = new PlayerName("게스트2");
             PlayerName guest3 = new PlayerName("게스트3");
 
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.HOT);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName);
 
             // when
-            roomCommandService.joinGuest(joinCode, guest1, MenuFixture.라떼(), MenuTemperature.ICE);
-            roomCommandService.joinGuest(joinCode, guest2, MenuFixture.아이스티(), MenuTemperature.ICE);
-            Room room = roomCommandService.joinGuest(joinCode, guest3, MenuFixture.아메리카노(), MenuTemperature.ICE);
+            roomCommandService.joinGuest(joinCode, guest1);
+            roomCommandService.joinGuest(joinCode, guest2);
+            Room room = roomCommandService.joinGuest(joinCode, guest3);
 
             // then
             assertThat(room.getPlayers()).hasSize(4);

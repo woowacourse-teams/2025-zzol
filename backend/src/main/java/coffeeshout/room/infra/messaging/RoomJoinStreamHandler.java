@@ -40,13 +40,10 @@ public class RoomJoinStreamHandler implements StreamEventHandler<RoomJoinEvent> 
             log.warn("방 입장 처리 중 비즈니스 오류: joinCode={}, guestName={}, eventId={}, error={}",
                     event.joinCode(), event.guestName(), event.eventId(), e.getMessage());
             roomEventWaitManager.notifyFailure(event.eventId(), e);
-            throw e;
-
         } catch (Exception e) {
             log.error("방 입장 처리 중 시스템 오류: joinCode={}, guestName={}, eventId={}",
                     event.joinCode(), event.guestName(), event.eventId(), e);
             roomEventWaitManager.notifyFailure(event.eventId(), e);
-            throw e;
         }
     }
 }

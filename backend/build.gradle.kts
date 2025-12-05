@@ -19,6 +19,10 @@ configurations {
     }
 }
 
+ext {
+    set("testcontainers.version", "2.0.2")
+}
+
 repositories {
     mavenCentral()
 }
@@ -60,7 +64,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:testcontainers:2.0.2")
+    testImplementation("org.testcontainers:testcontainers")
     testImplementation(platform("org.testcontainers:testcontainers-bom:1.20.4"))
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.h2database:h2")

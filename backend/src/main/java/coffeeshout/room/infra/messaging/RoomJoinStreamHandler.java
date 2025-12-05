@@ -6,11 +6,8 @@ import coffeeshout.global.infra.messaging.StreamEventHandler;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;
-import coffeeshout.room.domain.menu.Menu;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.domain.service.MenuCommandService;
 import coffeeshout.room.domain.service.RoomCommandService;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,7 +18,6 @@ import org.springframework.stereotype.Component;
 public class RoomJoinStreamHandler implements StreamEventHandler<RoomJoinEvent> {
 
     private final RoomCommandService roomCommandService;
-    private final MenuCommandService menuCommandService;
     private final RoomEventWaitManager roomEventWaitManager;
 
     @Override
@@ -30,17 +26,9 @@ public class RoomJoinStreamHandler implements StreamEventHandler<RoomJoinEvent> 
                 event.eventId(), event.joinCode(), event.guestName());
 
         try {
-            final SelectedMenuRequest selectedMenuRequest = event.selectedMenuRequest();
-            final Menu menu = menuCommandService.convertMenu(
-                    selectedMenuRequest.id(),
-                    selectedMenuRequest.customName()
-            );
-
             final Room room = roomCommandService.joinGuest(
                     new JoinCode(event.joinCode()),
-                    new PlayerName(event.guestName()),
-                    menu,
-                    selectedMenuRequest.temperature()
+                    new PlayerName(event.guestName())
             );
 
             log.info("방 입장 성공: joinCode={}, guestName={}, 현재 인원={}, eventId={}",

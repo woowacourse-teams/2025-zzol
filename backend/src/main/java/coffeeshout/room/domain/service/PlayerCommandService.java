@@ -2,15 +2,9 @@ package coffeeshout.room.domain.service;
 
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.menu.Menu;
-import coffeeshout.room.domain.menu.MenuTemperature;
-import coffeeshout.room.domain.menu.SelectedMenu;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.PlayerType;
-import coffeeshout.room.domain.service.MenuQueryService;
-import coffeeshout.room.domain.service.RoomCommandService;
-import coffeeshout.room.domain.service.RoomQueryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +15,6 @@ public class PlayerCommandService {
 
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
-    private final MenuQueryService menuQueryService;
 
     public List<Player> changePlayerReadyState(String joinCode, String playerName, Boolean isReady) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
@@ -38,16 +31,6 @@ public class PlayerCommandService {
 
     public List<Player> getAllPlayers(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        return room.getPlayers();
-    }
-
-    public List<Player> selectMenu(String joinCode, String playerName, Long menuId) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final Menu menu = menuQueryService.getById(menuId);
-
-        final Player player = room.findPlayer(new PlayerName(playerName));
-        player.selectMenu(new SelectedMenu(menu, MenuTemperature.ICE));
-
         return room.getPlayers();
     }
 

@@ -4,3 +4,4 @@
 
 *.env
 /backend/build/
+/backend/src/main/generated

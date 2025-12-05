@@ -12,9 +12,7 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.menu.MenuTemperature;
 import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -43,8 +41,7 @@ class MiniGameCommandServiceTest extends ServiceTest {
     void 미니게임을_선택한다() {
         // given
         String hostName = "호스트";
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
 
         // when
         List<MiniGameType> selectedMiniGames = miniGameCommandService.updateMiniGames(
@@ -63,10 +60,8 @@ class MiniGameCommandServiceTest extends ServiceTest {
         // given
         String hostName = "호스트";
         String guestName = "게스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        SelectedMenuRequest guestSelectedMenuRequest = new SelectedMenuRequest(2L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), guestName, guestSelectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), guestName);
 
         List<MiniGameType> miniGameTypes = List.of(MiniGameType.CARD_GAME);
         // when & then
@@ -83,10 +78,8 @@ class MiniGameCommandServiceTest extends ServiceTest {
         // given
         String hostName = "호스트";
         String guestName = "게스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        SelectedMenuRequest guestSelectedMenuRequest = new SelectedMenuRequest(2L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), guestName, guestSelectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), guestName);
         miniGameCommandService.updateMiniGames(
                 createdRoom.getJoinCode().getValue(),
                 hostName,
@@ -105,13 +98,10 @@ class MiniGameCommandServiceTest extends ServiceTest {
     void 미니게임의_점수를_반환한다() {
         // given
         String hostName = "호스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
         JoinCode joinCode = createdRoom.getJoinCode();
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1",
-                new SelectedMenuRequest(2L, null, MenuTemperature.ICE));
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트2",
-                new SelectedMenuRequest(3L, null, MenuTemperature.ICE));
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1");
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트2");
 
         List<MiniGameDummy> miniGames = List.of(new MiniGameDummy());
         ReflectionTestUtils.setField(createdRoom, "finishedGames", miniGames);
@@ -133,13 +123,10 @@ class MiniGameCommandServiceTest extends ServiceTest {
     void 미니게임의_순위를_반환한다() {
         // given
         String hostName = "호스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
         JoinCode joinCode = createdRoom.getJoinCode();
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1",
-                new SelectedMenuRequest(2L, null, MenuTemperature.ICE));
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트2",
-                new SelectedMenuRequest(3L, null, MenuTemperature.ICE));
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1");
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트2");
 
         List<MiniGameDummy> miniGames = List.of(new MiniGameDummy());
         ReflectionTestUtils.setField(createdRoom, "finishedGames", miniGames);
@@ -161,13 +148,10 @@ class MiniGameCommandServiceTest extends ServiceTest {
     void 선택된_미니게임의_목록을_반환한다() {
         // given
         String hostName = "호스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
         JoinCode joinCode = createdRoom.getJoinCode();
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1",
-                new SelectedMenuRequest(2L, null, MenuTemperature.ICE));
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트2",
-                new SelectedMenuRequest(3L, null, MenuTemperature.ICE));
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1");
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트2");
         miniGameCommandService.updateMiniGames(
                 createdRoom.getJoinCode().getValue(),
                 hostName,

@@ -78,12 +78,6 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
                    "data":[
                       {
                          "playerName":"꾹이",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"HOST",
                          "isReady":true,
                          "colorIndex":"*",
@@ -91,12 +85,6 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
                       },
                       {
                          "playerName":"루키",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
                          "colorIndex":"*",
@@ -104,12 +92,6 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
                       },
                       {
                          "playerName":"엠제이",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
                          "colorIndex":"*",
@@ -117,12 +99,6 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
                       },
                       {
                          "playerName":"한스",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
                          "colorIndex":"*",
@@ -160,12 +136,6 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
                    "data":[
                       {
                          "playerName":"꾹이",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"HOST",
                          "isReady":true,
                          "colorIndex":"*",
@@ -173,12 +143,6 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
                       },
                       {
                          "playerName":"루키",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
                          "colorIndex":"*",
@@ -186,12 +150,6 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
                       },
                       {
                          "playerName":"엠제이",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
                          "colorIndex":"*",
@@ -199,12 +157,6 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
                       },
                       {
                          "playerName":"한스",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
                          "colorIndex":"*",

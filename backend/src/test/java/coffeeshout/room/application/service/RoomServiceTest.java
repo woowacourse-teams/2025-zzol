@@ -15,11 +15,9 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
-import coffeeshout.room.domain.menu.MenuTemperature;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.room.domain.service.RoomQueryService;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,10 +44,9 @@ class RoomServiceTest extends ServiceTest {
     void 방을_생성한다() {
         // given
         String hostName = "호스트짱";
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
 
         // when
-        Room room = roomService.createRoom(hostName, selectedMenuRequest);
+        Room room = roomService.createRoom(hostName);
 
         // then
         assertThat(room).isNotNull();
@@ -62,30 +59,17 @@ class RoomServiceTest extends ServiceTest {
     }
 
     @Test
-    void 존재하지_않는_메뉴로_방을_생성하면_예외를_반환한다() {
-        // given
-        String hostName = "호스트";
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(999L, null, MenuTemperature.ICE);
-
-        // when & then
-        assertThatThrownBy(() -> roomService.createRoom(hostName, selectedMenuRequest))
-                .isInstanceOf(NotExistElementException.class);
-    }
-
-    @Test
     void 방에_게스트가_입장한다() {
         // given
         String hostName = "호스트";
         String guestName = "게스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        SelectedMenuRequest guestSelectedMenuRequest = new SelectedMenuRequest(2L, null, MenuTemperature.ICE);
 
         // 방 먼저 생성
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
         String joinCode = createdRoom.getJoinCode().getValue();
 
         // when
-        Room room = roomService.enterRoom(joinCode, guestName, guestSelectedMenuRequest);
+        Room room = roomService.enterRoom(joinCode, guestName);
 
         // then
         assertThat(room.getJoinCode().getValue()).isEqualTo(createdRoom.getJoinCode().getValue());
@@ -99,10 +83,9 @@ class RoomServiceTest extends ServiceTest {
         // given
         String invalidJoinCode = "ABCD";
         String guestName = "게스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
 
         // when & then
-        assertThatThrownBy(() -> roomService.enterRoom(invalidJoinCode, guestName, hostSelectedMenuRequest))
+        assertThatThrownBy(() -> roomService.enterRoom(invalidJoinCode, guestName))
                 .isInstanceOf(NotExistElementException.class);
     }
 
@@ -111,12 +94,11 @@ class RoomServiceTest extends ServiceTest {
         // given
         JoinCode existingJoinCode = joinCodeGenerator.generate();
         PlayerName guestName = new PlayerName("더미게스트");
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(2L, null, MenuTemperature.ICE);
 
         testDataHelper.createDummyRoom(existingJoinCode, new PlayerName("더미호스트"));
 
         // when
-        Room room = roomService.enterRoom(existingJoinCode.getValue(), guestName.value(), hostSelectedMenuRequest);
+        Room room = roomService.enterRoom(existingJoinCode.getValue(), guestName.value());
 
         // then
         assertThat(room.getJoinCode().getValue()).isEqualTo(existingJoinCode.getValue());
@@ -128,13 +110,12 @@ class RoomServiceTest extends ServiceTest {
         // given
         JoinCode existingJoinCode = joinCodeGenerator.generate();
         PlayerName guestName = new PlayerName("더미게스트");
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(2L, null, MenuTemperature.ICE);
 
         testDataHelper.createDummyPlayingRoom(existingJoinCode, new PlayerName("더미호스트"));
 
         // when & then
         assertThatThrownBy(
-                () -> roomService.enterRoom(existingJoinCode.getValue(), guestName.value(), hostSelectedMenuRequest))
+                () -> roomService.enterRoom(existingJoinCode.getValue(), guestName.value()))
                 .isInstanceOf(InvalidStateException.class);
     }
 
@@ -142,14 +123,13 @@ class RoomServiceTest extends ServiceTest {
     void 동일한_조인코드로_여러_게스트가_입장_가능() {
         // given
         String hostName = "호스트짱";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
         String joinCode = createdRoom.getJoinCode().getValue();
 
         // when
-        roomService.enterRoom(joinCode, "게스트1", new SelectedMenuRequest(2L, null, MenuTemperature.ICE));
-        roomService.enterRoom(joinCode, "게스트2", new SelectedMenuRequest(3L, null, MenuTemperature.ICE));
-        Room result = roomService.enterRoom(joinCode, "게스트3", new SelectedMenuRequest(4L, null, MenuTemperature.ICE));
+        roomService.enterRoom(joinCode, "게스트1");
+        roomService.enterRoom(joinCode, "게스트2");
+        Room result = roomService.enterRoom(joinCode, "게스트3");
 
         // then
         assertThat(result.getPlayers()).hasSize(4);
@@ -161,18 +141,17 @@ class RoomServiceTest extends ServiceTest {
     void 최대_인원에서_입장을_하면_예외를_반환한다() {
         // given
         String hostName = "호스트짱";
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
         String joinCode = createdRoom.getJoinCode().getValue();
 
         // 최대 9명까지니까 8명 더 넣어보기
         for (int i = 2; i <= 9; i++) {
-            roomService.enterRoom(joinCode, "게스트" + i, new SelectedMenuRequest(1L, null, MenuTemperature.ICE));
+            roomService.enterRoom(joinCode, "게스트" + i);
         }
 
         // when & then
         assertThatThrownBy(
-                () -> roomService.enterRoom(joinCode, "게스트10", new SelectedMenuRequest(1L, null, MenuTemperature.ICE)))
+                () -> roomService.enterRoom(joinCode, "게스트10"))
                 .isInstanceOf(InvalidStateException.class);
     }
 
@@ -180,41 +159,21 @@ class RoomServiceTest extends ServiceTest {
     void 중복된_이름으로_입장할_수_없다() {
         // given
         String hostName = "호스트짱";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
         String joinCode = createdRoom.getJoinCode().getValue();
-        roomService.enterRoom(joinCode, "게스트", new SelectedMenuRequest(2L, null, MenuTemperature.ICE));
-
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(3L, null, MenuTemperature.ICE);
+        roomService.enterRoom(joinCode, "게스트");
 
         // when & then
         assertThatThrownBy(
-                () -> roomService.enterRoom(joinCode, "게스트", selectedMenuRequest))
+                () -> roomService.enterRoom(joinCode, "게스트"))
                 .isInstanceOf(InvalidStateException.class);
-    }
-
-    @Test
-    void 잘못된_메뉴_ID로_게스트_입장하면_예외가_발생한다() {
-        // given
-        String hostName = "호스트짱";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
-        String joinCode = createdRoom.getJoinCode().getValue();
-
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(999L, null, MenuTemperature.ICE);
-
-        // when & then
-        assertThatThrownBy(
-                () -> roomService.enterRoom(joinCode, "게스트", selectedMenuRequest))
-                .isInstanceOf(NotExistElementException.class);
     }
 
     @Test
     void 방이_존재하는지_확인한다() {
         // given
         String hostName = "호스트";
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
         JoinCode joinCode = createdRoom.getJoinCode();
 
         // when & then
@@ -226,10 +185,9 @@ class RoomServiceTest extends ServiceTest {
     void 방_생성_시_QR_코드가_비동기로_생성된다() {
         // given
         String hostName = "호스트";
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
 
         // when
-        Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
         JoinCode joinCode = createdRoom.getJoinCode();
 
         // then
@@ -250,8 +208,7 @@ class RoomServiceTest extends ServiceTest {
     void QR코드_상태를_조회한다() {
         // given
         String hostName = "호스트";
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
         String joinCode = createdRoom.getJoinCode().getValue();
 
         // when

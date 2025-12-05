@@ -6,15 +6,12 @@ import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
-import coffeeshout.room.domain.menu.Menu;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
-import coffeeshout.room.domain.service.MenuCommandService;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.infra.persistence.RoomPersistenceService;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
@@ -37,25 +34,21 @@ public class RoomService {
     private final JoinCodeGenerator joinCodeGenerator;
     private final RoomEventPublisher roomEventPublisher;
     private final RoomEventWaitManager roomEventWaitManager;
-    private final MenuCommandService menuCommandService;
     private final RoomPersistenceService roomPersistenceService;
 
     @Value("${room.event.timeout:PT5S}")
     private Duration eventTimeout;
 
     @Transactional
-    public Room createRoom(String hostName, SelectedMenuRequest selectedMenuRequest) {
+    public Room createRoom(String hostName) {
         final JoinCode joinCode = joinCodeGenerator.generate();
 
         // 방 생성 (QR 코드는 PENDING 상태로 시작)
-        final Menu menu = menuCommandService.convertMenu(selectedMenuRequest.id(), selectedMenuRequest.customName());
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(hostName),
-                menu, selectedMenuRequest.temperature());
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(hostName));
 
         // 방 생성 후 이벤트 전달
         final RoomCreateEvent event = new RoomCreateEvent(
                 hostName,
-                selectedMenuRequest,
                 joinCode.getValue()
         );
 
@@ -75,10 +68,9 @@ public class RoomService {
 
     public CompletableFuture<Room> enterRoomAsync(
             String joinCode,
-            String guestName,
-            SelectedMenuRequest selectedMenuRequest
+            String guestName
     ) {
-        final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName, selectedMenuRequest);
+        final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName);
 
         return processEventAsync(
                 event.eventId(),
@@ -118,14 +110,10 @@ public class RoomService {
                 });
     }
 
-    public Room enterRoom(String joinCode, String guestName, SelectedMenuRequest selectedMenuRequest) {
-        Menu menu = menuCommandService.convertMenu(selectedMenuRequest.id(), selectedMenuRequest.customName());
-
+    public Room enterRoom(String joinCode, String guestName) {
         return roomCommandService.joinGuest(
                 new JoinCode(joinCode),
-                new PlayerName(guestName),
-                menu,
-                selectedMenuRequest.temperature()
+                new PlayerName(guestName)
         );
     }
 

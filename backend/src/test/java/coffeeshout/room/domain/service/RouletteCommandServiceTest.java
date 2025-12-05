@@ -6,10 +6,8 @@ import coffeeshout.global.ServiceTest;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
-import coffeeshout.room.domain.menu.MenuTemperature;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.Winner;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -29,10 +27,8 @@ class RouletteCommandServiceTest extends ServiceTest {
         // given
         String hostName = "호스트";
         String guestName = "게스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        SelectedMenuRequest guestSelectedMenuRequest = new SelectedMenuRequest(2L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), guestName, guestSelectedMenuRequest);
+        Room createdRoom = roomService.createRoom(hostName);
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), guestName);
 
         // when
         List<ProbabilityResponse> probabilities = rouletteCommandService.getProbabilities(
@@ -51,12 +47,9 @@ class RouletteCommandServiceTest extends ServiceTest {
     void 룰렛을_돌려서_당첨자를_선택한다() {
         // given
         String hostName = "호스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1",
-                new SelectedMenuRequest(2L, null, MenuTemperature.ICE));
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트2",
-                new SelectedMenuRequest(3L, null, MenuTemperature.ICE));
+        Room createdRoom = roomService.createRoom(hostName);
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1");
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트2");
         ReflectionTestUtils.setField(createdRoom, "roomState", RoomState.ROULETTE);
 
         // when
@@ -71,10 +64,8 @@ class RouletteCommandServiceTest extends ServiceTest {
     void 룰렛을_표시한다() {
         // given
         String hostName = "호스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1",
-                new SelectedMenuRequest(2L, null, MenuTemperature.ICE));
+        Room createdRoom = roomService.createRoom(hostName);
+        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1");
 
         // when
         Room room = rouletteCommandService.showRoulette(createdRoom.getJoinCode().getValue());

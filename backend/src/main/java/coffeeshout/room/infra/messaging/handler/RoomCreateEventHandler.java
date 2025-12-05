@@ -6,11 +6,8 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomEventType;
-import coffeeshout.room.domain.menu.Menu;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.domain.service.MenuCommandService;
 import coffeeshout.room.domain.service.RoomCommandService;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -22,7 +19,6 @@ public class RoomCreateEventHandler implements RoomEventHandler<RoomCreateEvent>
 
     private final DelayedRoomRemovalService delayedRoomRemovalService;
     private final RoomCommandService roomCommandService;
-    private final MenuCommandService menuCommandService;
 
     @Override
     public void handle(RoomCreateEvent event) {
@@ -31,14 +27,9 @@ public class RoomCreateEventHandler implements RoomEventHandler<RoomCreateEvent>
             log.info("방 생성 이벤트 수신: eventId={}, hostName={}, joinCode={}",
                     event.eventId(), event.hostName(), joinCode);
 
-            final SelectedMenuRequest selectedMenuRequest = event.selectedMenuRequest();
-            final Menu menu = menuCommandService.convertMenu(selectedMenuRequest.id(), selectedMenuRequest.customName());
-
             final Room room = roomCommandService.saveIfAbsentRoom(
                     new JoinCode(joinCode),
-                    new PlayerName(event.hostName()),
-                    menu,
-                    selectedMenuRequest.temperature()
+                    new PlayerName(event.hostName())
             );
 
             log.info("방 생성 이벤트 처리 완료: eventId={}, hostName={}, joinCode={}",

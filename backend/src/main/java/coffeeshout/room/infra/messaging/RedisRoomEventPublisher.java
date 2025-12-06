@@ -1,7 +1,6 @@
 package coffeeshout.room.infra.messaging;
 
 import coffeeshout.global.config.redis.EventTopicRegistry;
-import coffeeshout.global.config.redis.TopicManager;
 import coffeeshout.room.application.port.RoomEventPublisher;
 import coffeeshout.room.domain.event.RoomBaseEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 public class RedisRoomEventPublisher implements RoomEventPublisher {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final TopicManager topicManager;
     private final RoomEnterStreamProducer roomEnterStreamProducer;
 
     @Override
@@ -42,7 +40,7 @@ public class RedisRoomEventPublisher implements RoomEventPublisher {
     }
 
     private void publishToPubSub(RoomBaseEvent event) {
-        String topic = topicManager.getTopicName(EventTopicRegistry.ROOM);
+        String topic = EventTopicRegistry.ROOM.getTopic();
         redisTemplate.convertAndSend(topic, event);
 
         log.debug("Redis Pub/Sub로 이벤트 발행: topic={}, eventType={}",

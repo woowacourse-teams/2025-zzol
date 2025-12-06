@@ -20,4 +20,8 @@ public enum EventTopicRegistry {
     public ChannelTopic toChannelTopic() {
         return channelTopic;
     }
+
+    public String getTopic() {
+        return channelTopic.getTopic();
+    }
 }

@@ -1,7 +1,6 @@
 package coffeeshout.minigame.infra.messaging;
 
 import coffeeshout.global.config.redis.EventTopicRegistry;
-import coffeeshout.global.config.redis.TopicManager;
 import coffeeshout.minigame.event.MiniGameBaseEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +13,10 @@ import org.springframework.stereotype.Component;
 public class MiniGameEventPublisher {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final TopicManager topicManager;
 
     public <T extends MiniGameBaseEvent> void publishEvent(T event) {
         try {
-            final String topic = topicManager.getTopicName(EventTopicRegistry.MINI_GAME);
+            final String topic = EventTopicRegistry.MINI_GAME.getTopic();
             redisTemplate.convertAndSend(topic, event);
             log.info("미니게임 이벤트 발행됨: eventType={}, eventId={}",
                     event.eventType(), event.eventId());

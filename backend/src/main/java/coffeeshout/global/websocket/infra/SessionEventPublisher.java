@@ -1,7 +1,6 @@
 package coffeeshout.global.websocket.infra;
 
 import coffeeshout.global.config.redis.EventTopicRegistry;
-import coffeeshout.global.config.redis.TopicManager;
 import coffeeshout.global.websocket.event.session.SessionBaseEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +13,10 @@ import org.springframework.stereotype.Component;
 public class SessionEventPublisher {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final TopicManager topicManager;
 
     public <T extends SessionBaseEvent> void publishEvent(T event) {
         try {
-            final String topic = topicManager.getTopicName(EventTopicRegistry.SESSION);
+            final String topic = EventTopicRegistry.SESSION.getTopic();
             redisTemplate.convertAndSend(topic, event);
             log.info("세션 이벤트 발행됨: eventType={}, eventId={}",
                     event.eventType(), event.eventId());

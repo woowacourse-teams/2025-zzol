@@ -1,5 +1,8 @@
 package coffeeshout.room.domain.event;
 
+import lombok.Getter;
+
+@Getter
 public enum RoomEventType {
     ROOM_CREATE(RoomCreateEvent.class),
     ROOM_JOIN(RoomJoinEvent.class),
@@ -17,7 +20,4 @@ public enum RoomEventType {
         this.eventClass = eventClass;
     }
 
-    public Class<? extends RoomBaseEvent> getEventClass() {
-        return eventClass;
-    }
 }

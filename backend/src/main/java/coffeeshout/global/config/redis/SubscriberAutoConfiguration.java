@@ -14,14 +14,13 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 public class SubscriberAutoConfiguration {
 
     private final RedisMessageListenerContainer container;
-    private final TopicManager topicManager;
     private final List<EventSubscriber> subscribers;
 
     @PostConstruct
     public void registerAllSubscribers() {
         subscribers.forEach(subscriber -> {
             final EventTopicRegistry topicRegistry = subscriber.getTopicRegistry();
-            final ChannelTopic topic = topicManager.getTopic(topicRegistry);
+            final ChannelTopic topic = topicRegistry.toChannelTopic();
             container.addMessageListener(subscriber, topic);
             log.info("이벤트 구독자 자동 등록: {} -> {}",
                     subscriber.getClass().getSimpleName(),

@@ -3,7 +3,6 @@ package coffeeshout.global.log;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Winner;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -59,24 +58,14 @@ public class LogAspect {
     }
 
     @AfterReturning(
-            value = "execution(* coffeeshout.room.application.RoomService.enterRoom(..)) && args(joinCode, guestName, selectedMenuRequest)",
+            value = "execution(* coffeeshout.room.application.RoomService.enterRoom(..)) && args(joinCode, guestName)",
             returning = "room",
-            argNames = "joinCode,guestName,selectedMenuRequest,room"
+            argNames = "joinCode,guestName,room"
     )
-    public void logEnterRoom(String joinCode, String guestName, SelectedMenuRequest selectedMenuRequest, Room room) {
+    public void logEnterRoom(String joinCode, String guestName, Room room) {
         final List<String> playerNames = room.getPlayers().stream()
                 .map(player -> player.getName().value())
                 .toList();
-        log.info("JoinCode[{}] 게스트 입장 - 게스트 이름: {}, 메뉴 ID: {}, 현재 참여자 목록: {}", joinCode, guestName,
-                selectedMenuRequest.id(),
-                playerNames);
-    }
-
-    @After(
-            value = "execution(* coffeeshout.room.application.RoomService.selectMenu(..)) && args(joinCode, guestName, menuId)",
-            argNames = "joinCode,guestName,menuId"
-    )
-    public void logSelectMenu(String joinCode, String guestName, Long menuId) {
-        log.info("JoinCode[{}] 메뉴 변경 - 게스트 이름: {}, 메뉴 ID: {}", joinCode, guestName, menuId);
+        log.info("JoinCode[{}] 게스트 입장 - 게스트 이름: {}, 현재 참여자 목록: {}", joinCode, guestName, playerNames);
     }
 }

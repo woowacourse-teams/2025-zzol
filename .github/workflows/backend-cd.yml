@@ -7,7 +7,7 @@ on:
       - be/prod
     paths:
       - 'backend/**'
-      - '.github/workflows/backend-deploy.yml'
+      - 'backend-cd.yml'
       - '.github/scripts/deploy-*.sh'
   workflow_dispatch:
     inputs:
@@ -39,6 +39,9 @@ jobs:
       IMAGE_TAG: ${{ needs.ci-and-build.outputs.image_tag }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:

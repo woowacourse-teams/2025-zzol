@@ -48,7 +48,10 @@ dependencies {
     implementation("com.google.zxing:core:3.5.3")
     implementation("com.google.zxing:javase:3.5.3")
 
-    implementation("io.awspring.cloud:spring-cloud-aws-starter-s3:3.4.0")
+    // Oracle Cloud Infrastructure SDK
+    implementation(platform("com.oracle.oci.sdk:oci-java-sdk-bom:3.55.1"))
+    implementation("com.oracle.oci.sdk:oci-java-sdk-objectstorage")
+    implementation("com.oracle.oci.sdk:oci-java-sdk-common")
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.3")
 

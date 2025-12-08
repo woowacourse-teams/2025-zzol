@@ -9,10 +9,13 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   lifecycle:
     timeout-per-shutdown-phase: 5m
+
+oracle:
   cloud:
-    aws:
-      s3:
-        bucket: ${S3_BUCKET_NAME}
+    objectstorage:
+      region: ap-chuncheon-1
+      namespace: ax9wq4bhn4cn
+      bucket: zzol-backend
 
   data:
     redis:
@@ -32,7 +35,7 @@ room:
     height: 150
     presignedUrl:
       expirationHours: 1
-    s3-key-prefix: ${S3_QR_KEY_PREFIX}
+    s3-key-prefix: qr-code
   event:
     timeout: 5s
 

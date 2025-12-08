@@ -46,9 +46,7 @@ export const ParticipantSection = ({ participants }: Props) => {
         playerColor={myColor}
         isReady={mySelect.isReady}
         playerType={mySelect.playerType}
-      >
-        <S.Menu src={mySelect.menuResponse.categoryImageUrl} />
-      </PlayerCard>
+      />
       <Divider />
       <S.ScrollableWrapper>
         {filteredParticipants.length === 0 ? (
@@ -61,9 +59,7 @@ export const ParticipantSection = ({ participants }: Props) => {
               playerColor={colorList[participant.colorIndex]}
               isReady={participant.isReady}
               playerType={participant.playerType}
-            >
-              <S.Menu src={participant.menuResponse.categoryImageUrl} />
-            </PlayerCard>
+            />
           ))
         )}
       </S.ScrollableWrapper>

@@ -6,22 +6,24 @@ import coffeeshout.global.exception.custom.StorageServiceException;
 import coffeeshout.room.application.StorageService;
 import coffeeshout.room.domain.RoomErrorCode;
 import com.oracle.bmc.objectstorage.ObjectStorage;
-import com.oracle.bmc.objectstorage.requests.GetObjectRequest;
+import com.oracle.bmc.objectstorage.model.CreatePreauthenticatedRequestDetails;
+import com.oracle.bmc.objectstorage.requests.CreatePreauthenticatedRequestRequest;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
+import com.oracle.bmc.objectstorage.responses.CreatePreauthenticatedRequestResponse;
 import com.oracle.bmc.objectstorage.responses.PutObjectResponse;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.io.ByteArrayInputStream;
-import java.net.URL;
 import java.time.Duration;
 import java.util.Date;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@Profile("!local & !test")
 public class OracleObjectStorageService implements StorageService {
 
     private final ObjectStorage objectStorage;
@@ -108,35 +110,35 @@ public class OracleObjectStorageService implements StorageService {
 
     private String generatePresignedUrl(String objectName) throws Exception {
         return presignerTimer.recordCallable(() -> {
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .namespaceName(namespaceName)
-                    .bucketName(bucketName)
-                    .objectName(objectName)
-                    .build();
-
-            // Oracle Object Storage Presigned URL 생성
             // 만료 시간 계산
             Date expirationDate = new Date(System.currentTimeMillis() +
                     Duration.ofHours(presignedUrlExpirationHours).toMillis());
 
-            URL presignedUrl = objectStorage.createPreauthenticatedRequest(
-                    com.oracle.bmc.objectstorage.requests.CreatePreauthenticatedRequestRequest.builder()
+            // 1. PAR(Pre-Authenticated Request) Details 생성
+            CreatePreauthenticatedRequestDetails details =
+                    CreatePreauthenticatedRequestDetails.builder()
+                            .name("qr-" + System.currentTimeMillis()) // PAR 식별 이름 (관리용)
+                            .objectName(objectName) // 접근할 파일명
+                            .accessType(CreatePreauthenticatedRequestDetails.AccessType.ObjectRead) // 읽기 권한
+                            .timeExpires(expirationDate) // 만료 시간
+                            .build();
+
+            // 2. PAR 생성 요청 객체 생성
+            CreatePreauthenticatedRequestRequest request =
+                    CreatePreauthenticatedRequestRequest.builder()
                             .namespaceName(namespaceName)
                             .bucketName(bucketName)
-                            .createPreauthenticatedRequestDetails(
-                                    com.oracle.bmc.objectstorage.model.CreatePreauthenticatedRequestDetails.builder()
-                                            .name("qr-" + System.currentTimeMillis())
-                                            .objectName(objectName)
-                                            .accessType(com.oracle.bmc.objectstorage.model.CreatePreauthenticatedRequestDetails.AccessType.ObjectRead)
-                                            .timeExpires(expirationDate)
-                                            .build()
-                            )
-                            .build()
-            ).getCreatePreauthenticatedRequestResponse().getPreauthenticatedRequest().getAccessUri();
+                            .createPreauthenticatedRequestDetails(details)
+                            .build();
 
-            // Full URL 생성: https://<namespace>.objectstorage.<region>.oci.customer-oci.com<accessUri>
+            // 3. OCI에 요청하여 PAR 생성
+            CreatePreauthenticatedRequestResponse response =
+                    objectStorage.createPreauthenticatedRequest(request);
+
+            // 4. 반환된 URI로 전체 URL 생성
+            String accessUri = response.getPreauthenticatedRequest().getAccessUri();
             String fullUrl = String.format("https://%s.objectstorage.%s.oci.customer-oci.com%s",
-                    namespaceName, region, presignedUrl);
+                    namespaceName, region, accessUri);
 
             log.info("Presigned URL 생성 완료: objectName={}, expiresInHours={}", objectName, presignedUrlExpirationHours);
             meterRegistry.counter("oracle.objectstorage.url.signing.success").increment();

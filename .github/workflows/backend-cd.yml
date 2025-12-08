@@ -1,0 +1,143 @@
+name: Backend Deploy (CD)
+
+on:
+  push:
+    branches:
+      - be/dev
+      - be/prod
+    paths:
+      - 'backend/**'
+      - 'backend-cd.yml'
+      - '.github/scripts/deploy-*.sh'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  # 1. 공통 빌드/테스트 워크플로우 호출 (backend-ci.yml 재사용)
+  ci-and-build:
+    uses: ./.github/workflows/backend-ci.yml
+    with:
+      environment: ${{ inputs.environment }}
+
+  # 2. Deploy Job
+  deploy:
+    needs: ci-and-build
+    runs-on: ubuntu-latest
+    # 빌드 단계에서 결정된 환경 사용
+    environment: ${{ needs.ci-and-build.outputs.environment }}
+    
+    env:
+      ENVIRONMENT: ${{ needs.ci-and-build.outputs.environment }}
+      REPO_OWNER: ${{ needs.ci-and-build.outputs.repo_owner }}
+      IMAGE_TAG: ${{ needs.ci-and-build.outputs.image_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: backend/build/libs
+          file: backend/docker/app/Dockerfile
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:${{ env.IMAGE_TAG }}
+            ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          REGISTRY=ghcr.io/${{ env.REPO_OWNER }}
+          IMAGE_TAG=${{ env.IMAGE_TAG }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+          S3_QR_KEY_PREFIX=${{ secrets.S3_QR_KEY_PREFIX }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TEMPO_URL=${{ secrets.TEMPO_URL }}
+          TRACE_SAMPLING_PROBABILITY=${{ secrets.TRACE_SAMPLING_PROBABILITY }}
+          EOF
+
+      - name: Transfer files via SCP
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "backend/docker/${{ env.ENVIRONMENT }}/docker-compose.yml,.github/scripts/deploy-*.sh,.env"
+          target: /tmp/deploy-${{ env.ENVIRONMENT }}/
+          
+      - name: Deploy with Docker Compose
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ENV: ${{ env.ENVIRONMENT }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          envs: ENV
+          script: |
+            set -e
+            DEPLOY_DIR="${HOME}/${ENV}"
+            TMP_DIR="/tmp/deploy-${ENV}"
+
+            trap "rm -rf '${TMP_DIR}'" EXIT
+
+            mkdir -p "${DEPLOY_DIR}"
+
+            cp "${TMP_DIR}/backend/docker/${ENV}/docker-compose.yml" "${DEPLOY_DIR}/"
+            cp "${TMP_DIR}/.env" "${DEPLOY_DIR}/"
+            cp "${TMP_DIR}"/.github/scripts/deploy-*.sh "${DEPLOY_DIR}/"
+
+            chmod +x "${DEPLOY_DIR}"/deploy-*.sh
+
+            docker network create "${ENV}-network" 2>/dev/null || true
+            docker network create monitoring-network 2>/dev/null || true
+
+            cd "${DEPLOY_DIR}"
+
+            "${DEPLOY_DIR}/deploy-infrastructure.sh" "${ENV}" "${DEPLOY_DIR}"
+            "${DEPLOY_DIR}/deploy-application.sh" "${ENV}" "${DEPLOY_DIR}"
+
+            echo "=== Deployment Completed ==="
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "### Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** ${{ env.IMAGE_TAG }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deploy Directory:** ~/${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

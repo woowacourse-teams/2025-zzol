@@ -1,0 +1,165 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Prod Application (Spring Boot)
+  # ============================================
+  prod-app:
+    # 이미지는 GitHub Actions에서 빌드되어 GHCR에 푸시됨
+    image: ${REGISTRY}/zzol-backend:${IMAGE_TAG}
+    container_name: prod-app
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      - JAVA_OPTS=${JAVA_OPTS:--Xms4200m -Xmx4200m}
+      - SPRING_PROFILES_ACTIVE=prod
+      - MYSQL_URL=jdbc:mysql://prod-mysql:3306/coffee_shout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      - MYSQL_USERNAME=root
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=prod-redis
+      - REDIS_PORT=6379
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+      - S3_QR_KEY_PREFIX=${S3_QR_KEY_PREFIX}
+      - AWS_REGION=${AWS_REGION:-ap-northeast-2}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - TEMPO_URL=${TEMPO_URL:-http://tempo:4318/v1/traces}
+      - TRACE_SAMPLING_PROBABILITY=${TRACE_SAMPLING_PROBABILITY:-0.1}
+      - TZ=Asia/Seoul
+    volumes:
+      - prod-app-logs:/app/logs
+    networks:
+      - zzol-network
+      - prod-network
+    depends_on:
+      prod-mysql:
+        condition: service_healthy
+      prod-redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    # 자원 제한 (Prod 환경: 총 2.0~2.5 vCPU, 12GB - 최우선 할당)
+    # Docker 메모리 제한: 6GB
+    # JVM 힙 설정: -Xms4200m -Xmx4200m (약 4.2GB, 70% 할당)
+    # 메타스페이스: -XX:MaxMetaspaceSize=256m
+    # 비힙 오버헤드: 약 1.8GB (메타스페이스 256MB + 스레드 스택 + 네트워크 버퍼 등)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'        # 최대 1.5 vCPU
+          memory: 6G         # 최대 6GB
+        reservations:
+          cpus: '1.0'        # 최소 1.0 vCPU 보장
+          memory: 4G         # 최소 4GB 보장
+
+  # ============================================
+  # Prod MySQL Database
+  # ============================================
+  prod-mysql:
+    image: mysql:8.0
+    container_name: prod-mysql
+    restart: unless-stopped
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: coffee_shout
+      TZ: Asia/Seoul
+    volumes:
+      - prod-mysql-data:/var/lib/mysql
+      - prod-mysql-conf:/etc/mysql/conf.d
+      - prod-mysql-logs:/var/log/mysql
+      - prod-mysql-backup:/backup
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max_connections=200
+      --innodb_buffer_pool_size=512M
+      --slow_query_log=1
+      --slow_query_log_file=/var/log/mysql/slow.log
+      --long_query_time=2
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    # 자원 제한 (Prod MySQL)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.7'        # 최대 0.7 vCPU
+          memory: 4G         # 최대 4GB (InnoDB buffer pool + 여유분)
+        reservations:
+          cpus: '0.4'        # 최소 0.4 vCPU
+          memory: 2G         # 최소 2GB
+
+  # ============================================
+  # Prod Redis (Valkey)
+  # ============================================
+  prod-redis:
+    image: valkey/valkey:8.1.4-alpine
+    container_name: prod-redis
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - prod-redis-data:/data
+    command: >
+      valkey-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 1536mb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    # 자원 제한 (Prod Redis)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'        # 최대 0.3 vCPU
+          memory: 2G         # 최대 2GB (캐시 확장 가능)
+        reservations:
+          cpus: '0.2'        # 최소 0.2 vCPU
+          memory: 1G         # 최소 1GB
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  prod-network:
+    driver: bridge
+    name: prod-network
+  zzol-network:
+    external: true
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  prod-app-logs:
+    driver: local
+  prod-mysql-data:
+    driver: local
+  prod-mysql-conf:
+    driver: local
+  prod-mysql-logs:
+    driver: local
+  prod-mysql-backup:
+    driver: local
+  prod-redis-data:
+    driver: local

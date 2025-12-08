@@ -34,7 +34,7 @@ room:
     height: 150
     presignedUrl:
       expirationHours: 1
-    s3-key-prefix: qr-code
+    storage-key-prefix: qr-code
   event:
     timeout: 5s
 

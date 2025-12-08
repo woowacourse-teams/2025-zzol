@@ -54,7 +54,7 @@ public class OracleObjectStorageService implements StorageService {
         this.presignerTimer = Timer.builder("oracle.objectstorage.presigner.time")
                 .description("Time taken to generate presigned URL")
                 .register(meterRegistry);
-        this.storageKeyPrefix = qrProperties.s3KeyPrefix();
+        this.storageKeyPrefix = qrProperties.storageKeyPrefix();
     }
 
     @Override
@@ -117,7 +117,7 @@ public class OracleObjectStorageService implements StorageService {
             // 1. PAR(Pre-Authenticated Request) Details 생성
             CreatePreauthenticatedRequestDetails details =
                     CreatePreauthenticatedRequestDetails.builder()
-                            .name("qr-" + System.currentTimeMillis()) // PAR 식별 이름 (관리용)
+                            .name("qr-" + objectName + "-" + System.nanoTime()) // PAR 식별 이름 (고유성 보장)
                             .objectName(objectName) // 접근할 파일명
                             .accessType(CreatePreauthenticatedRequestDetails.AccessType.ObjectRead) // 읽기 권한
                             .timeExpires(expirationDate) // 만료 시간

@@ -1,5 +1,7 @@
 package coffeeshout.global.config.oracle;
 
+import coffeeshout.global.config.properties.OracleObjectStorageProperties;
+import com.oracle.bmc.Region;
 import com.oracle.bmc.auth.InstancePrincipalsAuthenticationDetailsProvider;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.ObjectStorageClient;
@@ -25,9 +27,11 @@ public class OracleCloudConfig {
 
     @Bean
     public ObjectStorage objectStorageClient(
-            InstancePrincipalsAuthenticationDetailsProvider authProvider
+            InstancePrincipalsAuthenticationDetailsProvider authProvider,
+            OracleObjectStorageProperties oracleProperties
     ) {
         return ObjectStorageClient.builder()
+                .region(Region.valueOf(oracleProperties.region()))
                 .build(authProvider);
     }
 }

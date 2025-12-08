@@ -10,6 +10,7 @@ import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import Layout from '@/layouts/Layout';
 import { useRef, useState } from 'react';
+import { useRoomManagement } from './hooks/useRoomManagement';
 import * as S from './EntryNamePage.styled';
 
 const MAX_NAME_LENGTH = 10;
@@ -25,6 +26,7 @@ const EntryNamePage = () => {
   const { playerType } = usePlayerType();
   const { showToast } = useToast();
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const { proceedToRoom, isLoading } = useRoomManagement();
 
   const { execute: checkGuestName } = useLazyFetch<PlayerNameCheckResponse>({
     endpoint: `/rooms/check-guestName?joinCode=${joinCode}&guestName=${name}`,
@@ -34,7 +36,7 @@ const EntryNamePage = () => {
     navigate('/');
   };
 
-  const handleNavigateToMenu = async () => {
+  const handleProceedToRoom = async () => {
     if (playerType === 'GUEST') {
       const response = await checkGuestName();
       if (!response) return;
@@ -48,7 +50,7 @@ const EntryNamePage = () => {
     }
 
     setMyName(name);
-    navigate('/entry/menu');
+    await proceedToRoom(name, null, null, 'ICE');
   };
 
   const isButtonDisabled = name.length === 0;
@@ -88,10 +90,13 @@ const EntryNamePage = () => {
         <Button
           ref={buttonRef}
           variant={isButtonDisabled ? 'disabled' : 'primary'}
-          onClick={handleNavigateToMenu}
-          data-testid="go-to-menu-button"
+          onClick={handleProceedToRoom}
+          isLoading={isLoading}
+          data-testid={
+            playerType === 'HOST' ? 'create-room-submit-button' : 'join-room-submit-button'
+          }
         >
-          메뉴 선택하러 가기
+          {playerType === 'HOST' ? '방 만들러 가기' : '방 참가하기'}
         </Button>
       </Layout.ButtonBar>
     </Layout>

@@ -3,7 +3,7 @@ import { createBrowserRouter, Outlet } from 'react-router-dom';
 import App from './App';
 import MiniGameProviders from './features/miniGame/context/MiniGameProviders';
 import RoomLayout from './features/room/RoomLayout';
-import { EntryMenuPage, EntryNamePage, HomePage } from './pages';
+import { EntryNamePage, HomePage } from './pages';
 
 const LobbyPage = lazy(
   /*webpackChunkName: "lobbyPage"*/ () => import('./features/room/lobby/pages/LobbyPage')
@@ -59,10 +59,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'entry',
-        children: [
-          { path: 'name', element: <EntryNamePage /> },
-          { path: 'menu', element: <EntryMenuPage /> },
-        ],
+        children: [{ path: 'name', element: <EntryNamePage /> }],
       },
       {
         path: 'room/:joinCode',

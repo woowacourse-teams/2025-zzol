@@ -24,7 +24,7 @@ export const useRoomManagement = () => {
   const navigate = useReplaceNavigate();
   const { startSocket } = useWebSocket();
   const { playerType } = usePlayerType();
-  const { joinCode, myName, setJoinCode } = useIdentifier();
+  const { joinCode, setJoinCode } = useIdentifier();
   const { showToast } = useToast();
 
   const createOrJoinRoom = useMutation<RoomResponse, RoomRequest>({
@@ -39,19 +39,8 @@ export const useRoomManagement = () => {
     errorDisplayMode: 'toast',
   });
 
-  const isMenuSelectionValid = (selectedMenu: Menu | null, customMenuName: string | null) => {
-    if (!selectedMenu && !customMenuName) {
-      showToast({
-        type: 'error',
-        message: '메뉴를 선택하지 않았습니다.',
-      });
-      return false;
-    }
-    return true;
-  };
-
-  const isPlayerNameValid = () => {
-    if (!myName) {
+  const isPlayerNameValid = (playerName: string) => {
+    if (!playerName) {
       showToast({
         type: 'error',
         message: '닉네임을 다시 입력해주세요.',
@@ -63,15 +52,15 @@ export const useRoomManagement = () => {
   };
 
   const proceedToRoom = async (
+    playerName: string,
     selectedMenu: Menu | null,
     customMenuName: string | null,
     selectedTemperature: TemperatureOption
   ) => {
-    if (!isPlayerNameValid()) return;
-    if (!isMenuSelectionValid(selectedMenu, customMenuName)) return;
+    if (!isPlayerNameValid(playerName)) return;
 
     const requestBody = createRoomRequestBody(
-      myName,
+      playerName,
       selectedMenu,
       customMenuName,
       selectedTemperature

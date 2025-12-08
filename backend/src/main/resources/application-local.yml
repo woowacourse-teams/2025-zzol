@@ -4,10 +4,6 @@ spring:
     username: root
     password: coffee-shout_123
     driver-class-name: com.mysql.cj.jdbc.Driver
-  cloud:
-    aws:
-      s3:
-        enabled: false
   docker:
     compose:
       enabled: true

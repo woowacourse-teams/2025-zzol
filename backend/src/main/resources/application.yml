@@ -9,14 +9,6 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   lifecycle:
     timeout-per-shutdown-phase: 5m
-
-oracle:
-  cloud:
-    objectstorage:
-      region: ap-chuncheon-1
-      namespace: ax9wq4bhn4cn
-      bucket: zzol-backend
-
   data:
     redis:
       port: 6379
@@ -27,6 +19,13 @@ oracle:
         room-join-key: room:broadcast
         card-game-select-key: cardGame:select:broadcast
         max-length: 100
+
+oracle:
+  cloud:
+    objectstorage:
+      region: ap-chuncheon-1
+      namespace: ax9wq4bhn4cn
+      bucket: zzol-backend
 
 room:
   removalDelay: 1h

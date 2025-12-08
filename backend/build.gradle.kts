@@ -62,10 +62,10 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation(platform("org.testcontainers:testcontainers-bom:2.0.2"))
     testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:testcontainers")
-    testImplementation(platform("org.testcontainers:testcontainers-bom:1.20.4"))
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.testcontainers:testcontainers:2.0.2")
+    testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("com.h2database:h2")
 
     implementation("io.micrometer:micrometer-observation")

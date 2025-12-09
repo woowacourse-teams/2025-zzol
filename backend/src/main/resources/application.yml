@@ -25,7 +25,7 @@ oracle:
     objectstorage:
       region: ap-chuncheon-1
       namespace: ax9wq4bhn4cn
-      bucket: zzol-backend
+      bucket: zzol-public
 
 room:
   removalDelay: 1h

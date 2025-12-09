@@ -6,16 +6,11 @@ import coffeeshout.global.exception.custom.StorageServiceException;
 import coffeeshout.room.application.StorageService;
 import coffeeshout.room.domain.RoomErrorCode;
 import com.oracle.bmc.objectstorage.ObjectStorage;
-import com.oracle.bmc.objectstorage.model.CreatePreauthenticatedRequestDetails;
-import com.oracle.bmc.objectstorage.requests.CreatePreauthenticatedRequestRequest;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
-import com.oracle.bmc.objectstorage.responses.CreatePreauthenticatedRequestResponse;
 import com.oracle.bmc.objectstorage.responses.PutObjectResponse;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import java.io.ByteArrayInputStream;
-import java.time.Duration;
-import java.util.Date;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -30,10 +25,8 @@ public class OracleObjectStorageService implements StorageService {
     private final String namespaceName;
     private final String bucketName;
     private final String region;
-    private final int presignedUrlExpirationHours;
     private final MeterRegistry meterRegistry;
     private final Timer uploadTimer;
-    private final Timer presignerTimer;
     private final String storageKeyPrefix;
 
     public OracleObjectStorageService(
@@ -46,13 +39,9 @@ public class OracleObjectStorageService implements StorageService {
         this.namespaceName = oracleProperties.namespace();
         this.bucketName = oracleProperties.bucket();
         this.region = oracleProperties.region();
-        this.presignedUrlExpirationHours = qrProperties.presignedUrl().expirationHours();
         this.meterRegistry = meterRegistry;
         this.uploadTimer = Timer.builder("oracle.objectstorage.upload.time")
                 .description("Time taken to upload QR code to Oracle Object Storage")
-                .register(meterRegistry);
-        this.presignerTimer = Timer.builder("oracle.objectstorage.presigner.time")
-                .description("Time taken to generate presigned URL")
                 .register(meterRegistry);
         this.storageKeyPrefix = qrProperties.storageKeyPrefix();
     }
@@ -76,11 +65,11 @@ public class OracleObjectStorageService implements StorageService {
     @Override
     public String getUrl(String storageKey) {
         try {
-            return generatePresignedUrl(storageKey);
+            return generatePublicUrl(storageKey);
         } catch (Exception e) {
-            meterRegistry.counter("oracle.objectstorage.qr.url.signing.failed",
+            meterRegistry.counter("oracle.objectstorage.qr.url.generation.failed",
                     "error", e.getClass().getSimpleName()).increment();
-            log.error("Oracle Object Storage Presigned URL 생성 실패: storageKey={}, error={}", storageKey, e.getMessage(), e);
+            log.error("Oracle Object Storage Public URL 생성 실패: storageKey={}, error={}", storageKey, e.getMessage(), e);
             throw new StorageServiceException(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED,
                     RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
         }
@@ -108,42 +97,19 @@ public class OracleObjectStorageService implements StorageService {
         });
     }
 
-    private String generatePresignedUrl(String objectName) throws Exception {
-        return presignerTimer.recordCallable(() -> {
-            // 만료 시간 계산
-            Date expirationDate = new Date(System.currentTimeMillis() +
-                    Duration.ofHours(presignedUrlExpirationHours).toMillis());
+    private String generatePublicUrl(String objectName) {
+        // objectName 검증
+        if (objectName == null || objectName.isBlank()) {
+            throw new IllegalArgumentException("objectName은 null이거나 비어있을 수 없습니다.");
+        }
 
-            // 1. PAR(Pre-Authenticated Request) Details 생성
-            CreatePreauthenticatedRequestDetails details =
-                    CreatePreauthenticatedRequestDetails.builder()
-                            .name("qr-" + objectName + "-" + System.nanoTime()) // PAR 식별 이름 (고유성 보장)
-                            .objectName(objectName) // 접근할 파일명
-                            .accessType(CreatePreauthenticatedRequestDetails.AccessType.ObjectRead) // 읽기 권한
-                            .timeExpires(expirationDate) // 만료 시간
-                            .build();
+        // Public 버킷이므로 PAR 없이 직접 URL 생성
+        String publicUrl = String.format("https://objectstorage.%s.oraclecloud.com/n/%s/b/%s/o/%s",
+                region, namespaceName, bucketName, objectName);
 
-            // 2. PAR 생성 요청 객체 생성
-            CreatePreauthenticatedRequestRequest request =
-                    CreatePreauthenticatedRequestRequest.builder()
-                            .namespaceName(namespaceName)
-                            .bucketName(bucketName)
-                            .createPreauthenticatedRequestDetails(details)
-                            .build();
+        log.info("Public URL 생성 완료: objectName={}", objectName);
+        meterRegistry.counter("oracle.objectstorage.url.generation.success").increment();
 
-            // 3. OCI에 요청하여 PAR 생성
-            CreatePreauthenticatedRequestResponse response =
-                    objectStorage.createPreauthenticatedRequest(request);
-
-            // 4. 반환된 URI로 전체 URL 생성
-            String accessUri = response.getPreauthenticatedRequest().getAccessUri();
-            String fullUrl = String.format("https://%s.objectstorage.%s.oci.customer-oci.com%s",
-                    namespaceName, region, accessUri);
-
-            log.info("Presigned URL 생성 완료: objectName={}, expiresInHours={}", objectName, presignedUrlExpirationHours);
-            meterRegistry.counter("oracle.objectstorage.url.signing.success").increment();
-
-            return fullUrl;
-        });
+        return publicUrl;
     }
 }

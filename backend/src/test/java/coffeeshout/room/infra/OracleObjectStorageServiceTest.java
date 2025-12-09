@@ -12,11 +12,7 @@ import coffeeshout.global.config.properties.QrProperties;
 import coffeeshout.global.exception.custom.StorageServiceException;
 import coffeeshout.room.domain.RoomErrorCode;
 import com.oracle.bmc.objectstorage.ObjectStorage;
-import com.oracle.bmc.objectstorage.model.CreatePreauthenticatedRequestDetails;
-import com.oracle.bmc.objectstorage.model.PreauthenticatedRequest;
-import com.oracle.bmc.objectstorage.requests.CreatePreauthenticatedRequestRequest;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
-import com.oracle.bmc.objectstorage.responses.CreatePreauthenticatedRequestResponse;
 import com.oracle.bmc.objectstorage.responses.PutObjectResponse;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -37,12 +33,6 @@ class OracleObjectStorageServiceTest {
     @Mock
     PutObjectResponse putObjectResponse;
 
-    @Mock
-    CreatePreauthenticatedRequestResponse createPreauthenticatedRequestResponse;
-
-    @Mock
-    PreauthenticatedRequest preauthenticatedRequest;
-
     MeterRegistry meterRegistry;
 
     OracleObjectStorageService oracleObjectStorageService;
@@ -56,7 +46,7 @@ class OracleObjectStorageServiceTest {
         oracleProperties = new OracleObjectStorageProperties(
                 "ap-chuncheon-1",
                 "ax9wq4bhn4cn",
-                "zzol-backend"
+                "zzol-public"
         );
         qrProperties = new QrProperties(
                 "https://example.com/join",
@@ -117,7 +107,7 @@ class OracleObjectStorageServiceTest {
 
         assertSoftly(softly -> {
             softly.assertThat(capturedRequest.getNamespaceName()).isEqualTo("ax9wq4bhn4cn");
-            softly.assertThat(capturedRequest.getBucketName()).isEqualTo("zzol-backend");
+            softly.assertThat(capturedRequest.getBucketName()).isEqualTo("zzol-public");
             softly.assertThat(capturedRequest.getObjectName()).isEqualTo("qr-code/TEST456.png");
             softly.assertThat(capturedRequest.getContentType()).isEqualTo("image/png");
             softly.assertThat(capturedRequest.getContentLength()).isEqualTo((long) qrCodeImage.length);
@@ -159,68 +149,27 @@ class OracleObjectStorageServiceTest {
     }
 
     @Test
-    void Presigned_URL_생성이_성공적으로_완료된다() {
+    void Public_URL_생성이_성공적으로_완료된다() {
         // given
         String storageKey = "qr-code/XYZ789.png";
-        String mockAccessUri = "/p/mock-access-uri";
-        String expectedUrl = "https://ax9wq4bhn4cn.objectstorage.ap-chuncheon-1.oci.customer-oci.com/p/mock-access-uri";
-
-        when(objectStorage.createPreauthenticatedRequest(any(CreatePreauthenticatedRequestRequest.class)))
-                .thenReturn(createPreauthenticatedRequestResponse);
-        when(createPreauthenticatedRequestResponse.getPreauthenticatedRequest())
-                .thenReturn(preauthenticatedRequest);
-        when(preauthenticatedRequest.getAccessUri()).thenReturn(mockAccessUri);
+        String expectedUrl = "https://objectstorage.ap-chuncheon-1.oraclecloud.com/n/ax9wq4bhn4cn/b/zzol-public/o/qr-code/XYZ789.png";
 
         // when
         String url = oracleObjectStorageService.getUrl(storageKey);
 
         // then
         assertThat(url).isEqualTo(expectedUrl);
-        verify(objectStorage).createPreauthenticatedRequest(any(CreatePreauthenticatedRequestRequest.class));
 
         // 메트릭 검증
-        Counter urlSigningSuccessCounter = meterRegistry.find("oracle.objectstorage.url.signing.success").counter();
-        assertThat(urlSigningSuccessCounter).isNotNull();
-        assertThat(urlSigningSuccessCounter.count()).isEqualTo(1.0);
+        Counter urlGenerationSuccessCounter = meterRegistry.find("oracle.objectstorage.url.generation.success").counter();
+        assertThat(urlGenerationSuccessCounter).isNotNull();
+        assertThat(urlGenerationSuccessCounter.count()).isEqualTo(1.0);
     }
 
     @Test
-    void Presigned_URL_생성_시_올바른_PAR_설정으로_요청한다() {
+    void objectName이_null이면_예외를_던진다() {
         // given
-        String storageKey = "qr-code/TEST999.png";
-        String mockAccessUri = "/p/test-uri";
-
-        when(objectStorage.createPreauthenticatedRequest(any(CreatePreauthenticatedRequestRequest.class)))
-                .thenReturn(createPreauthenticatedRequestResponse);
-        when(createPreauthenticatedRequestResponse.getPreauthenticatedRequest())
-                .thenReturn(preauthenticatedRequest);
-        when(preauthenticatedRequest.getAccessUri()).thenReturn(mockAccessUri);
-
-        // when
-        oracleObjectStorageService.getUrl(storageKey);
-
-        // then
-        ArgumentCaptor<CreatePreauthenticatedRequestRequest> requestCaptor =
-                ArgumentCaptor.forClass(CreatePreauthenticatedRequestRequest.class);
-        verify(objectStorage).createPreauthenticatedRequest(requestCaptor.capture());
-
-        CreatePreauthenticatedRequestRequest capturedRequest = requestCaptor.getValue();
-        assertThat(capturedRequest.getNamespaceName()).isEqualTo("ax9wq4bhn4cn");
-        assertThat(capturedRequest.getBucketName()).isEqualTo("zzol-backend");
-
-        CreatePreauthenticatedRequestDetails details = capturedRequest.getCreatePreauthenticatedRequestDetails();
-        assertThat(details.getObjectName()).isEqualTo(storageKey);
-        assertThat(details.getAccessType()).isEqualTo(CreatePreauthenticatedRequestDetails.AccessType.ObjectRead);
-        assertThat(details.getTimeExpires()).isNotNull();
-    }
-
-    @Test
-    void Presigned_URL_생성_실패_시_StorageServiceException을_던지고_실패_메트릭을_기록한다() {
-        // given
-        String storageKey = "qr-code/FAIL456.png";
-
-        when(objectStorage.createPreauthenticatedRequest(any(CreatePreauthenticatedRequestRequest.class)))
-                .thenThrow(new RuntimeException("PAR creation failed"));
+        String storageKey = null;
 
         // when & then
         assertThatThrownBy(() -> oracleObjectStorageService.getUrl(storageKey))
@@ -228,34 +177,46 @@ class OracleObjectStorageServiceTest {
                 .hasMessageContaining(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
 
         // 실패 메트릭 검증
-        Counter urlSigningFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.signing.failed")
-                .tag("error", "RuntimeException")
+        Counter urlGenerationFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.generation.failed")
+                .tag("error", "IllegalArgumentException")
                 .counter();
-        assertThat(urlSigningFailedCounter).isNotNull();
-        assertThat(urlSigningFailedCounter.count()).isEqualTo(1.0);
+        assertThat(urlGenerationFailedCounter).isNotNull();
+        assertThat(urlGenerationFailedCounter.count()).isEqualTo(1.0);
     }
 
     @Test
-    void URL_형식이_올바르게_생성된다() {
+    void objectName이_빈_문자열이면_예외를_던진다() {
+        // given
+        String storageKey = "   ";
+
+        // when & then
+        assertThatThrownBy(() -> oracleObjectStorageService.getUrl(storageKey))
+                .isInstanceOf(StorageServiceException.class)
+                .hasMessageContaining(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
+
+        // 실패 메트릭 검증
+        Counter urlGenerationFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.generation.failed")
+                .tag("error", "IllegalArgumentException")
+                .counter();
+        assertThat(urlGenerationFailedCounter).isNotNull();
+        assertThat(urlGenerationFailedCounter.count()).isEqualTo(1.0);
+    }
+
+    @Test
+    void Public_URL_형식이_올바르게_생성된다() {
         // given
         String storageKey = "qr-code/FORMAT_TEST.png";
-        String mockAccessUri = "/p/test-access-uri-123";
-
-        when(objectStorage.createPreauthenticatedRequest(any(CreatePreauthenticatedRequestRequest.class)))
-                .thenReturn(createPreauthenticatedRequestResponse);
-        when(createPreauthenticatedRequestResponse.getPreauthenticatedRequest())
-                .thenReturn(preauthenticatedRequest);
-        when(preauthenticatedRequest.getAccessUri()).thenReturn(mockAccessUri);
 
         // when
         String url = oracleObjectStorageService.getUrl(storageKey);
 
         // then
         assertThat(url).startsWith("https://")
-                .contains("ax9wq4bhn4cn")
                 .contains("objectstorage")
                 .contains("ap-chuncheon-1")
-                .contains("oci.customer-oci.com")
-                .endsWith(mockAccessUri);
+                .contains("oraclecloud.com")
+                .contains("ax9wq4bhn4cn") // namespace
+                .contains("zzol-public") // bucket
+                .endsWith(storageKey);
     }
 }

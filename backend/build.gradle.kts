@@ -23,7 +23,7 @@ repositories {
     mavenCentral()
 }
 
-val springDocVersion = "2.8.3"
+val springDocVersion = "3.0.0"
 val ociSdkVersion = "3.74.1"
 val redissonVersion = "3.27.2"
 val zxingVersion = "3.5.3"
@@ -82,7 +82,7 @@ dependencies {
 
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.h2database:h2")
     testRuntimeOnly("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")

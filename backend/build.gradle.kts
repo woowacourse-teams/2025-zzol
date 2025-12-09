@@ -23,7 +23,7 @@ repositories {
     mavenCentral()
 }
 
-val springDocVersion = "3.0.0"
+val springDocVersion = "2.8.3"
 val ociSdkVersion = "3.74.1"
 val redissonVersion = "3.27.2"
 val zxingVersion = "3.5.3"

@@ -2,10 +2,13 @@
 set -euo pipefail
 export PATH="/usr/bin:/bin:$PATH"
 
+# 애플리케이션 홈 디렉토리
+APP_HOME=/opt/coffee-shout
+
 echo "=== [BEFORE_BLOCK_TRAFFIC] Graceful Shutdown 시작 ==="
 
-cd /opt/coffee-shout || {
-    echo "❌ 디렉토리 이동 실패: /opt/coffee-shout"
+cd "${APP_HOME}" || {
+    echo "❌ 디렉토리 이동 실패: ${APP_HOME}"
     exit 1
 }
 

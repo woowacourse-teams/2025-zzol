@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Dev Application (Spring Boot)
+  # ============================================
+  dev-app:
+    # 이미지는 GitHub Actions에서 빌드되어 GHCR에 푸시됨
+    image: ${REGISTRY}/zzol-backend:${IMAGE_TAG}
+    container_name: dev-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - JAVA_OPTS=${JAVA_OPTS:--Xms1400m -Xmx1400m}
+      - SPRING_PROFILES_ACTIVE=dev
+      - MYSQL_URL=jdbc:mysql://dev-mysql:3306/coffee_shout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      - MYSQL_USERNAME=root
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=dev-redis
+      - REDIS_PORT=6379
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+      - S3_QR_KEY_PREFIX=${S3_QR_KEY_PREFIX}
+      - AWS_REGION=${AWS_REGION:-ap-northeast-2}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - TEMPO_URL=${TEMPO_URL:-http://tempo:4318/v1/traces}
+      - TRACE_SAMPLING_PROBABILITY=${TRACE_SAMPLING_PROBABILITY:-1.0}
+      - TZ=Asia/Seoul
+    volumes:
+      - dev-app-logs:/app/logs
+    networks:
+      - zzol-network
+      - dev-network
+    depends_on:
+      dev-mysql:
+        condition: service_healthy
+      dev-redis:
+        condition: service_started
+    # 자원 제한 (Dev 환경: 총 0.5~1.0 vCPU, 4GB)
+    # Docker 메모리 제한: 2GB
+    # JVM 힙 설정: -Xms1400m -Xmx1400m (약 1.4GB, 70% 할당)
+    # 메타스페이스: -XX:MaxMetaspaceSize=256m
+    # 비힙 오버헤드: 약 600MB (메타스페이스 256MB + 스레드 스택 + 네트워크 버퍼 등)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'        # 최대 0.5 vCPU
+          memory: 2G         # 최대 2GB
+        reservations:
+          cpus: '0.25'       # 최소 0.25 vCPU 보장
+          memory: 1G         # 최소 1GB 보장
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # ============================================
+  # Dev MySQL Database
+  # ============================================
+  dev-mysql:
+    image: mysql:8.0
+    container_name: dev-mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: coffee_shout
+      TZ: Asia/Seoul
+    volumes:
+      - dev-mysql-data:/var/lib/mysql
+      - dev-mysql-conf:/etc/mysql/conf.d
+      - dev-mysql-logs:/var/log/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - dev-network
+    # 자원 제한 (Dev MySQL)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'        # 최대 0.3 vCPU
+          memory: 1536M      # 최대 1.5GB
+        reservations:
+          cpus: '0.15'       # 최소 0.15 vCPU
+          memory: 768M       # 최소 768MB
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # ============================================
+  # Dev Redis (Valkey)
+  # ============================================
+  dev-redis:
+    image: valkey/valkey:8.1.4-alpine
+    container_name: dev-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - dev-redis-data:/data
+    command: valkey-server --appendonly yes
+    networks:
+      - dev-network
+    # 자원 제한 (Dev Redis)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'        # 최대 0.2 vCPU
+          memory: 512M       # 최대 512MB
+        reservations:
+          cpus: '0.1'        # 최소 0.1 vCPU
+          memory: 256M       # 최소 256MB
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  dev-network:
+    driver: bridge
+    name: dev-network
+  zzol-network:
+    external: true
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  dev-app-logs:
+    driver: local
+  dev-mysql-data:
+    driver: local
+  dev-mysql-conf:
+    driver: local
+  dev-mysql-logs:
+    driver: local
+  dev-redis-data:
+    driver: local

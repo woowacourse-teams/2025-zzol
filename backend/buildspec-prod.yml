@@ -12,27 +12,20 @@ phases:
       - cd backend
       - ls -la
       - chmod +x ./gradlew
-      - docker info
 
   pre_build:
     commands:
       - sed 's/\${/$/g; s/}//g' src/main/resources/application.yml > /tmp/application-tmp.yml
       - envsubst < /tmp/application-tmp.yml > /tmp/application.yml
-      - cat /tmp/application.yml
       - cp /tmp/application.yml src/main/resources/application.yml
 
       - sed 's/\${/$/g; s/}//g' src/main/resources/application-prod.yml > /tmp/application-prod-tmp.yml
       - envsubst < /tmp/application-prod-tmp.yml > /tmp/application-prod.yml
-      - cat /tmp/application-prod.yml
       - cp /tmp/application-prod.yml src/main/resources/application-prod.yml
 
   build:
     commands:
       # prod 환경에서는 모든 테스트 실행
-      - cat src/main/resources/application.yml
-      - cat src/main/resources/application-prod.yml
-      - ls src/test/resources
-      - cat src/test/resources/application-test.yml
       - ./gradlew clean test -Dspring.profiles.active=test
       - ./gradlew build -x test
       - ls -la build/libs/
@@ -68,6 +61,5 @@ artifacts:
 
 cache:
   paths:
-    - '/root/.gradle/caches/**/*'
-    - '/root/.gradle/wrapper/**/*'
-    - '.gradle/**/*'
+    - '/root/.gradle/**/*'     # Gradle 사용자 홈 캐시 (의존성, wrapper 등)
+    - '.gradle/**/*'            # 프로젝트 빌드 캐시

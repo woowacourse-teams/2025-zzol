@@ -2,10 +2,13 @@
 set -euo pipefail
 export PATH="/usr/bin:/bin:$PATH"
 
+# 애플리케이션 홈 디렉토리
+APP_HOME=/opt/coffee-shout
+
 echo "=== [APPLICATION_STOP] 강제 종료 확인 ==="
 
-cd /opt/coffee-shout || {
-    echo "❌ 디렉토리 이동 실패: /opt/coffee-shout"
+cd "${APP_HOME}" || {
+    echo "❌ 디렉토리 이동 실패: ${APP_HOME}"
     exit 1
 }
 

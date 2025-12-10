@@ -27,11 +27,6 @@ permissions:
     group: ubuntu
     mode: 755
 
-  - object: /opt/coffee-shout/compose.yaml
-    owner: ubuntu
-    group: ubuntu
-    mode: 644
-
 # 배포 생명주기 훅
 hooks:
   # 트래픽 차단 전 Graceful Shutdown 시작 (SIGTERM 전송)

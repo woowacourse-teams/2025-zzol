@@ -22,8 +22,8 @@ public class TapCommandEventHandler implements RacingGameEventHandler<TapCommand
     @Override
     public void handle(TapCommandEvent event) {
         try {
-            log.debug("탭 이벤트 수신: eventId={}, joinCode={}, playerName={}, tapCount={}",
-                    event.eventId(), event.joinCode(), event.playerName(), event.tapCount());
+//            log.debug("탭 이벤트 수신: eventId={}, joinCode={}, playerName={}, tapCount={}",
+//                    event.eventId(), event.joinCode(), event.playerName(), event.tapCount());
 
             racingGameService.tap(
                     event.joinCode(),

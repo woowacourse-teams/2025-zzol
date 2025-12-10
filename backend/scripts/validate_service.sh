@@ -2,10 +2,13 @@
 set -euo pipefail
 export PATH="/usr/bin:/bin:$PATH"
 
+# 애플리케이션 홈 디렉토리
+APP_HOME=/opt/coffee-shout
+
 echo "=== [VALIDATE_SERVICE] 서비스 상태 검증 ==="
 
-cd /opt/coffee-shout || {
-    echo "❌ 디렉토리 이동 실패: /opt/coffee-shout"
+cd "${APP_HOME}" || {
+    echo "❌ 디렉토리 이동 실패: ${APP_HOME}"
     exit 1
 }
 
@@ -54,6 +57,15 @@ if health_check; then
     echo "🎉 커피빵 게임 서버 배포 완료!"
     echo ""
     echo "=== 서비스 정보 ==="
+    echo "포트: 8080"
+    echo "프로파일: ${SPRING_PROFILES_ACTIVE:-unknown}"
+    if [ -f "app/coffee-shout.pid" ]; then
+        PID=$(cat app/coffee-shout.pid)
+        echo "PID: $PID"
+    fi
+    echo ""
+    echo "=== 프로세스 정보 ==="
+    pgrep -fa coffee-shout-backend.jar || echo "프로세스 정보를 찾을 수 없습니다"
 else
     echo "💥 헬스체크 실패!"
     exit 1

@@ -2,10 +2,13 @@
 set -euo pipefail
 export PATH="/usr/bin:/bin:$PATH"
 
+# 애플리케이션 홈 디렉토리
+APP_HOME=/opt/coffee-shout
+
 echo "=== [APPLICATION_STOP] 애플리케이션 종료 ==="
 
-cd /opt/coffee-shout || {
-    echo "❌ 디렉토리 이동 실패: /opt/coffee-shout"
+cd "${APP_HOME}" || {
+    echo "❌ 디렉토리 이동 실패: ${APP_HOME}"
     exit 1
 }
 
@@ -53,7 +56,8 @@ else
 fi
 
 # 포트 8080 사용 프로세스 강제 종료 (혹시 모를 좀비 프로세스)
-JAVA_PROCESS=$(lsof -ti:8080 2>/dev/null || true)
+# ss 명령어로 포트 확인 (lsof 대체)
+JAVA_PROCESS=$(ss -tlnp 2>/dev/null | awk '/:8080/ {match($0, /pid=([0-9]+)/, arr); print arr[1]; exit}' || true)
 if [ -n "$JAVA_PROCESS" ]; then
     echo "   🔫 포트 8080을 사용하는 좀비 프로세스 강제 종료 (PID: $JAVA_PROCESS)"
     kill -9 "$JAVA_PROCESS" 2>/dev/null || true

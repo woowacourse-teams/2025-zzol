@@ -1,0 +1,53 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'coffee-shout'
+    environment: 'oracle-cloud'
+
+# Alertmanager configuration (필요시 추가)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+scrape_configs:
+  # Prometheus 자체 메트릭
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # cAdvisor - 컨테이너 메트릭
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # Dev Application
+  - job_name: 'dev-app'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['dev-app:8080']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'dev-app'
+
+  # Prod Application
+  - job_name: 'prod-app'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['prod-app:8080']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'prod-app'
+
+  # MySQL Exporter (필요시 추가)
+  # - job_name: 'mysql'
+  #   static_configs:
+  #     - targets: ['mysql-exporter:9104']
+
+  # Redis Exporter (필요시 추가)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']

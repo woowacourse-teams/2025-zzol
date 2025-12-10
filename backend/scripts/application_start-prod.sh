@@ -2,10 +2,13 @@
 set -euo pipefail
 export PATH="/usr/bin:/bin:$PATH"
 
+# 애플리케이션 홈 디렉토리
+APP_HOME=/opt/coffee-shout
+
 echo "=== [APPLICATION_START] 커피빵 게임 서버 시작 ==="
 
-cd /opt/coffee-shout || {
-    echo "❌ 디렉토리 이동 실패: /opt/coffee-shout"
+cd "${APP_HOME}" || {
+    echo "❌ 디렉토리 이동 실패: ${APP_HOME}"
     exit 1
 }
 
@@ -40,12 +43,13 @@ fi
 
 # JVM 옵션 설정
 JVM_OPTS=(
-  -Xms256m
-  -Xmx512m
-  -XX:+UseParallelGC
-  -XX:+PrintGCDetails
-  -Xloggc:logs/gc.log
+  -Xms512m
+  -Xmx1024m
+  -XX:+UseG1GC
+  -Xlog:gc*:file=${APP_HOME}/logs/gc.log:time,tags:filecount=5,filesize=10M
   -Duser.timezone=Asia/Seoul
+  -XX:+HeapDumpOnOutOfMemoryError
+  -XX:HeapDumpPath=${APP_HOME}/logs/heapdump.hprof
 )
 
 # 환경 프로파일 설정

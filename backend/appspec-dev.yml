@@ -27,18 +27,13 @@ permissions:
     group: ubuntu
     mode: 755
 
-  - object: /opt/coffee-shout/compose.yaml
-    owner: ubuntu
-    group: ubuntu
-    mode: 644
-
 # 배포 생명주기 훅
 hooks:
   # 배포 시작 전 준비 작업
   BeforeInstall:
     - location: scripts/before_install.sh
       timeout: 300
-      runas: ubuntu
+      runas: root
 
   # 애플리케이션 시작 전 검증
   ApplicationStart:

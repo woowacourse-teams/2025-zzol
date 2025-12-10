@@ -35,3 +35,17 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Docker ###
+# Environment files
+.env
+
+# SSL certificates
+docker/nginx/ssl/*
+!docker/nginx/ssl/.gitkeep
+
+# Data directories (if mounted locally)
+docker/monitoring/data/
+docker/monitoring/logs/
+docker/monitoring/dashboards/
+docker/monitoring/provisioning/

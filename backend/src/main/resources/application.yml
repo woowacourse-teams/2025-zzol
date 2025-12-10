@@ -18,7 +18,7 @@ spring:
     redis:
       port: 6379
       ssl:
-        enabled: true
+        enabled: false
       host: localhost
       stream:
         room-join-key: room:broadcast
@@ -88,4 +88,4 @@ websocket:
       description: "실시간 웹소켓 통신 API 문서"
 
 menu-category:
-  default-image: "https://techcourse-project-2025.s3.ap-northeast-2.amazonaws.com/coffee-shout/images/custom-menu.svg"
+  default-image: "https://d35bef0h3hdfkh.cloudfront.net/custom-menu.svg"

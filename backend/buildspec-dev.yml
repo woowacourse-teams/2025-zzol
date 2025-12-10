@@ -61,6 +61,5 @@ artifacts:
 
 cache:
   paths:
-    - '/root/.gradle/caches/**/*'
-    - '/root/.gradle/wrapper/**/*'
-    - '.gradle/**/*'
+    - '/root/.gradle/**/*'     # Gradle 사용자 홈 캐시 (의존성, wrapper 등)
+    - '.gradle/**/*'            # 프로젝트 빌드 캐시

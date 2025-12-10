@@ -6,7 +6,7 @@ import * as S from './ServiceMaintenanceModal.styled';
 // TODO: 점검 종료 후 삭제 예정
 const ServiceMaintenanceModal = () => {
   // TODO: 점검 종료 후 삭제 예정
-  const MAINTENANCE_PERIOD = '2025.12.03(수) ~ 2025.12.10(수)';
+  const MAINTENANCE_PERIOD = '2025.12.03(수) ~ 2025.12.12(금)';
 
   return (
     <Layout padding="0px">

@@ -67,6 +67,7 @@ dependencies {
     implementation(platform("com.oracle.oci.sdk:oci-java-sdk-bom:${ociSdkVersion}"))
     implementation("com.oracle.oci.sdk:oci-java-sdk-objectstorage")
     implementation("com.oracle.oci.sdk:oci-java-sdk-common")
+    implementation("com.oracle.oci.sdk:oci-java-sdk-common-httpclient-jersey")
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}")
 

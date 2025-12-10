@@ -120,9 +120,6 @@ jobs:
 
             chmod +x "${DEPLOY_DIR}"/deploy-*.sh
 
-            docker network create "${ENV}-network" 2>/dev/null || true
-            docker network create monitoring-network 2>/dev/null || true
-
             cd "${DEPLOY_DIR}"
 
             "${DEPLOY_DIR}/deploy-infrastructure.sh" "${ENV}" "${DEPLOY_DIR}"

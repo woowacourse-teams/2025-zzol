@@ -5,6 +5,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
-@ConfigurationProperties(prefix = "spring.cloud.aws.s3")
-public record S3Properties(@NotBlank String bucket) {
+@ConfigurationProperties(prefix = "oracle.cloud.objectstorage")
+public record OracleObjectStorageProperties(
+        @NotBlank String region,
+        @NotBlank String namespace,
+        @NotBlank String bucket
+) {
 }

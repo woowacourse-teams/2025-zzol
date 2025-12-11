@@ -9,11 +9,6 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   lifecycle:
     timeout-per-shutdown-phase: 5m
-  cloud:
-    aws:
-      s3:
-        bucket: ${S3_BUCKET_NAME}
-
   data:
     redis:
       port: 6379
@@ -25,6 +20,13 @@ spring:
         card-game-select-key: cardGame:select:broadcast
         max-length: 100
 
+oracle:
+  cloud:
+    objectstorage:
+      region: ap-chuncheon-1
+      namespace: ax9wq4bhn4cn
+      bucket: zzol-public
+
 room:
   removalDelay: 1h
   qr:
@@ -32,7 +34,7 @@ room:
     height: 150
     presignedUrl:
       expirationHours: 1
-    s3-key-prefix: ${S3_QR_KEY_PREFIX}
+    storage-key-prefix: qr-code
   event:
     timeout: 5s
 

@@ -27,7 +27,7 @@ public record PlayerReconnectedEvent(
     }
 
     @Override
-    public TraceInfo getTraceInfo() {
+    public TraceInfo traceInfo() {
         return traceInfo;
     }
 }

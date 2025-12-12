@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.RoomFixture;
+import coffeeshout.global.redis.stream.StreamPublishManager;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;
@@ -25,7 +26,7 @@ class RoomEnterStreamProducerTest {
     RoomRepository roomRepository;
 
     @Autowired
-    RoomEnterStreamProducer producer;
+    StreamPublishManager streamPublishManager;
 
     private String joinCode;
 
@@ -45,7 +46,7 @@ class RoomEnterStreamProducerTest {
             String playerName = "인원 추가";
             SelectedMenuRequest menu = new SelectedMenuRequest(4L, "바닐라라떼", MenuTemperature.ICE);
 
-            producer.broadcastEnterRoom(new RoomJoinEvent(joinCode, playerName, menu));
+            streamPublishManager.publishRoomChannel(new RoomJoinEvent(joinCode, playerName, menu));
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
@@ -73,7 +74,7 @@ class RoomEnterStreamProducerTest {
 
             for (int i = 0; i < playerNames.length; i++) {
                 RoomJoinEvent roomJoinEvent = new RoomJoinEvent(joinCode, playerNames[i], menus[i]);
-                producer.broadcastEnterRoom(roomJoinEvent);
+                streamPublishManager.publishRoomChannel(roomJoinEvent);
             }
 
             // then
@@ -93,7 +94,7 @@ class RoomEnterStreamProducerTest {
             SelectedMenuRequest menu = new SelectedMenuRequest(5L, "모카라떼", MenuTemperature.ICE);
 
             // when
-            producer.broadcastEnterRoom(new RoomJoinEvent(joinCode, playerName, menu));
+            streamPublishManager.publishRoomChannel(new RoomJoinEvent(joinCode, playerName, menu));
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))

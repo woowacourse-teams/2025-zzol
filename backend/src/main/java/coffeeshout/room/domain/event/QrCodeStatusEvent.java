@@ -1,5 +1,6 @@
 package coffeeshout.room.domain.event;
 
+import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.trace.TraceInfo;
 import coffeeshout.global.trace.TraceInfoExtractor;
 import coffeeshout.global.trace.Traceable;
@@ -11,18 +12,16 @@ public record QrCodeStatusEvent(
         String eventId,
         TraceInfo traceInfo,
         Instant timestamp,
-        RoomEventType eventType,
         String joinCode,
         QrCodeStatus status,
         String qrCodeUrl
-) implements RoomBaseEvent, Traceable {
+) implements BaseEvent, Traceable {
 
     public QrCodeStatusEvent(String joinCode, QrCodeStatus status, String qrCodeUrl) {
         this(
                 UUID.randomUUID().toString(),
                 TraceInfoExtractor.extract(),
                 Instant.now(),
-                RoomEventType.QR_CODE_COMPLETE,
                 joinCode,
                 status,
                 status == QrCodeStatus.SUCCESS ? qrCodeUrl : null
@@ -30,7 +29,7 @@ public record QrCodeStatusEvent(
     }
 
     @Override
-    public TraceInfo getTraceInfo() {
+    public TraceInfo traceInfo() {
         return traceInfo;
     }
 }

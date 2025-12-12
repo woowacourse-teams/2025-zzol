@@ -9,11 +9,11 @@ import static org.mockito.Mockito.when;
 import coffeeshout.global.config.properties.QrProperties;
 import coffeeshout.global.exception.custom.QRCodeGenerationException;
 import coffeeshout.global.exception.custom.StorageServiceException;
+import coffeeshout.global.redis.stream.StreamPublishManager;
 import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.service.QrCodeGenerator;
-import coffeeshout.room.infra.messaging.RoomEventPublisher;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +33,7 @@ class QrCodeServiceTest {
     StorageService storageService;
 
     @Mock
-    RoomEventPublisher roomEventPublisher;
+    StreamPublishManager streamPublishManager;
 
     MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
@@ -49,7 +49,7 @@ class QrCodeServiceTest {
                 qrCodeGenerator,
                 storageService,
                 meterRegistry,
-                roomEventPublisher
+                streamPublishManager
         );
     }
 
@@ -177,7 +177,7 @@ class QrCodeServiceTest {
         // then
 
         ArgumentCaptor<QrCodeStatusEvent> successEventCaptor = ArgumentCaptor.forClass(QrCodeStatusEvent.class);
-        verify(roomEventPublisher).publishEvent(successEventCaptor.capture());
+        verify(streamPublishManager).publishRoomChannel(successEventCaptor.capture());
 
         // 2. 두 번째 이벤트는 SUCCESS (roomEventPublisher를 통해 발행)
         QrCodeStatusEvent successEvent = successEventCaptor.getValue();
@@ -198,7 +198,7 @@ class QrCodeServiceTest {
 
         // then
         ArgumentCaptor<QrCodeStatusEvent> errorCaptor = ArgumentCaptor.forClass(QrCodeStatusEvent.class);
-        verify(roomEventPublisher).publishEvent(errorCaptor.capture());
+        verify(streamPublishManager).publishRoomChannel(errorCaptor.capture());
 
         assertThat(errorCaptor.getValue().status()).isEqualTo(QrCodeStatus.ERROR);
     }

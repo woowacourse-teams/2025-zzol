@@ -3,6 +3,7 @@ package coffeeshout.global.config.redis;
 import coffeeshout.global.config.properties.RedisProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -39,16 +40,14 @@ public class RedisConfig {
     @Bean
     public RedisTemplate<String, Object> redisTemplate(
             RedisConnectionFactory redisConnectionFactory,
-            ObjectMapper objectMapper
+            @Qualifier("redisObjectMapper") ObjectMapper objectMapper
     ) {
         final RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
 
-        // 문자열 키 직렬화
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
 
-        // 객체 값 직렬화 (JSON 형태로 저장)
         final GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer = new GenericJackson2JsonRedisSerializer(
                 objectMapper);
         redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);

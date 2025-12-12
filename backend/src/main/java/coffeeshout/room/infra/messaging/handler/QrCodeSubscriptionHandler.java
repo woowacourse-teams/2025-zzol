@@ -39,7 +39,8 @@ public class QrCodeSubscriptionHandler {
             log.info("QR 코드 상태 구독 이벤트 감지: sessionId={}, destination={}",
                     sessionId, destination);
 
-            final Map<String, String> variables = pathMatcher.extractUriTemplateVariables(QR_CODE_TOPIC_PATTERN, destination);
+            final Map<String, String> variables = pathMatcher.extractUriTemplateVariables(QR_CODE_TOPIC_PATTERN,
+                    destination);
             final String joinCode = variables.get("joinCode");
 
             if (sessionId == null) {
@@ -54,7 +55,8 @@ public class QrCodeSubscriptionHandler {
         }
     }
 
-    private void sendQrCodeStatus(String destination, String sessionId, String joinCode, QrCodeStatusResponse qrCodeStatus) {
+    private void sendQrCodeStatus(String destination, String sessionId, String joinCode,
+                                  QrCodeStatusResponse qrCodeStatus) {
         try {
             messagingTemplate.convertAndSend(
                     destination,
@@ -63,8 +65,6 @@ public class QrCodeSubscriptionHandler {
 
             log.info("QR 코드 구독 시 현재 상태 전송 완료: sessionId={}, joinCode={}, status={}",
                     sessionId, joinCode, qrCodeStatus.status());
-        } catch (NotExistElementException e) {
-            messagingTemplate.convertAndSendError(sessionId, "해당 방이 존재하지 않습니다.");
         } catch (Exception e) {
             log.error("QR 코드 상태 전송 중 오류 발생: sessionId={}, joinCode={}, error={}",
                     sessionId, joinCode, e.getMessage(), e);

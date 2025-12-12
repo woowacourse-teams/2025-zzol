@@ -1,5 +1,6 @@
 package coffeeshout.room.domain.event;
 
+import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.trace.TraceInfo;
 import coffeeshout.global.trace.TraceInfoExtractor;
 import coffeeshout.global.trace.Traceable;
@@ -11,11 +12,10 @@ public record RoomCreateEvent(
         String eventId,
         TraceInfo traceInfo,
         Instant timestamp,
-        RoomEventType eventType,
         String hostName,
         SelectedMenuRequest selectedMenuRequest,
         String joinCode
-) implements RoomBaseEvent, Traceable {
+) implements BaseEvent, Traceable {
 
     public RoomCreateEvent(String hostName,
                            SelectedMenuRequest selectedMenuRequest,
@@ -24,7 +24,6 @@ public record RoomCreateEvent(
                 UUID.randomUUID().toString(),
                 TraceInfoExtractor.extract(),
                 Instant.now(),
-                RoomEventType.ROOM_CREATE,
                 hostName,
                 selectedMenuRequest,
                 joinCode
@@ -32,7 +31,7 @@ public record RoomCreateEvent(
     }
 
     @Override
-    public TraceInfo getTraceInfo() {
+    public TraceInfo traceInfo() {
         return traceInfo;
     }
 }

@@ -29,7 +29,7 @@ public record PlayerDisconnectedEvent(
     }
 
     @Override
-    public TraceInfo getTraceInfo() {
+    public TraceInfo traceInfo() {
         return traceInfo;
     }
 }

@@ -1,10 +1,10 @@
 package coffeeshout.minigame.infra.messaging.handler;
 
 import coffeeshout.cardgame.domain.event.dto.MiniGameStartedEvent;
+import coffeeshout.global.redis.EventHandler;
 import coffeeshout.minigame.application.MiniGamePersistenceService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.event.MiniGameEventType;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Playable;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class StartMiniGameCommandEventHandler implements MiniGameEventHandler<StartMiniGameCommandEvent> {
+public class StartMiniGameCommandEventHandler implements EventHandler<StartMiniGameCommandEvent> {
 
     private final Map<MiniGameType, MiniGameService> miniGameServiceMap;
     private final RoomQueryService roomQueryService;
@@ -44,16 +44,10 @@ public class StartMiniGameCommandEventHandler implements MiniGameEventHandler<St
 
     @Override
     public void handle(StartMiniGameCommandEvent event) {
-        try {
-            log.info("미니게임 시작 이벤트 수신: eventId={}, joinCode={}, hostName={}",
-                    event.eventId(), event.joinCode(), event.hostName());
+        log.info("미니게임 시작 이벤트 수신: eventId={}, joinCode={}, hostName={}",
+                event.eventId(), event.joinCode(), event.hostName());
 
-            updateRoomStateAndStartGame(event);
-
-        } catch (Exception e) {
-            log.error("미니게임 시작 이벤트 처리 실패: eventId={}, joinCode={}",
-                    event.eventId(), event.joinCode(), e);
-        }
+        updateRoomStateAndStartGame(event);
     }
 
     private void updateRoomStateAndStartGame(StartMiniGameCommandEvent event) {
@@ -66,7 +60,7 @@ public class StartMiniGameCommandEventHandler implements MiniGameEventHandler<St
     }
 
     @Override
-    public MiniGameEventType getSupportedEventType() {
-        return MiniGameEventType.START_MINIGAME_COMMAND;
+    public Class<StartMiniGameCommandEvent> eventType() {
+        return StartMiniGameCommandEvent.class;
     }
 }

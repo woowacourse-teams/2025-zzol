@@ -1,21 +1,17 @@
 package coffeeshout.racinggame.infra.messaging.handler;
 
 import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.redis.EventHandler;
 import coffeeshout.racinggame.application.RacingGameService;
-import coffeeshout.racinggame.domain.event.RacingGameEventType;
 import coffeeshout.racinggame.domain.event.TapCommandEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * Redis 이벤트를 수신하여 Command Service로 라우팅하는 핸들러
- * 메시지 수신과 로깅만 담당하며, 비즈니스 로직은 CommandService에 위임합니다.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TapCommandEventHandler implements RacingGameEventHandler<TapCommandEvent> {
+public class TapCommandEventHandler implements EventHandler<TapCommandEvent> {
 
     private final RacingGameService racingGameService;
 
@@ -41,7 +37,7 @@ public class TapCommandEventHandler implements RacingGameEventHandler<TapCommand
     }
 
     @Override
-    public RacingGameEventType getSupportedEventType() {
-        return RacingGameEventType.TAP_COMMAND;
+    public Class<TapCommandEvent> eventType() {
+        return TapCommandEvent.class;
     }
 }

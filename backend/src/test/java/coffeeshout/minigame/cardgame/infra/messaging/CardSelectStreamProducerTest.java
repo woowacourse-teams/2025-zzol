@@ -6,10 +6,10 @@ import static org.awaitility.Awaitility.await;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
-import coffeeshout.cardgame.infra.messaging.CardSelectStreamProducer;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.global.config.properties.RedisStreamProperties;
+import coffeeshout.global.redis.stream.StreamPublishManager;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -29,7 +29,7 @@ class CardSelectStreamProducerTest {
     RoomRepository roomRepository;
 
     @Autowired
-    CardSelectStreamProducer cardSelectStreamProducer;
+    StreamPublishManager streamPublishManager;
 
     @Autowired
     RedisTemplate<String, Object> redisTemplate;
@@ -76,7 +76,7 @@ class CardSelectStreamProducerTest {
                     joinCode.getValue(), playerName, cardIndex);
 
             // when
-            cardSelectStreamProducer.broadcastCardSelect(event);
+            streamPublishManager.publishCardGameChannel(event);
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
@@ -96,7 +96,7 @@ class CardSelectStreamProducerTest {
             for (int i = 0; i < playerNames.length; i++) {
                 SelectCardCommandEvent event = new SelectCardCommandEvent(
                         joinCode.getValue(), playerNames[i], cardIndexes[i]);
-                cardSelectStreamProducer.broadcastCardSelect(event);
+                streamPublishManager.publishCardGameChannel(event);
             }
 
             // then

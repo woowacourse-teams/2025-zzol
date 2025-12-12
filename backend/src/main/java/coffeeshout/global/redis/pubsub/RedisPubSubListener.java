@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class AbstractRedisPubSubListener implements MessageListener {
+public class RedisPubSubListener implements MessageListener {
 
     private final ObjectMapper objectMapper;
     private final RedisMessageListenerContainer redisMessageListenerContainer;

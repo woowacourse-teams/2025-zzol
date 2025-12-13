@@ -8,8 +8,6 @@ import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import { storageManager, STORAGE_KEYS } from '@/utils/StorageManager';
 import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import EnterRoomModal from '../components/EnterRoomModal/EnterRoomModal';
-// TODO: 점검 종료 후 삭제 예정
-import ServiceMaintenanceModal from '../components/ServiceMaintenanceModal/ServiceMaintenanceModal';
 import Splash from '../components/Splash/Splash';
 import * as S from './HomePage.styled';
 import DashBoard from '../components/DashBoard/DashBoard';
@@ -21,8 +19,6 @@ const HomePage = () => {
   const { setHost, setGuest } = usePlayerType();
   const { clearIdentifier } = useIdentifier();
   const { isConnected, stopSocket } = useWebSocket();
-  // TODO: 점검 종료 후 삭제 예정
-  const { openModal: openServiceMaintenanceModal } = useModal();
 
   useEffect(() => {
     if (isConnected) {
@@ -42,14 +38,6 @@ const HomePage = () => {
     };
     checkFirstVisit();
   }, []);
-
-  // TODO: 점검 종료 후 삭제 예정 - 서비스 점검 모달 자동 오픈
-  useEffect(() => {
-    openServiceMaintenanceModal(<ServiceMaintenanceModal />, {
-      showCloseButton: false,
-      closeOnBackdropClick: false,
-    });
-  }, [openServiceMaintenanceModal]);
 
   if (showSplash) {
     return <Splash onComplete={() => setShowSplash(false)} />;

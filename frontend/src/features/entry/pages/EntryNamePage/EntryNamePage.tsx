@@ -50,6 +50,7 @@ const EntryNamePage = () => {
     }
 
     setMyName(name);
+    // TODO: api 명세 수정 후 메뉴 삭제
     await proceedToRoom(name, null, null, 'ICE');
   };
 

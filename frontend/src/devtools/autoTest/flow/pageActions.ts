@@ -2,7 +2,6 @@ import {
   clickElement,
   clickElementWithClickEvent,
   findElement,
-  findFirstElementByTestIdPrefix,
   typeInInput,
   wait,
   waitForElement,

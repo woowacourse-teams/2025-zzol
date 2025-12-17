@@ -1,7 +1,8 @@
+import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import BreadLogoWhiteIcon from '@/assets/logo/bread-logo-white.png';
+import Button from '@/components/@common/Button/Button';
 import Headline1 from '@/components/@common/Headline1/Headline1';
 import Headline3 from '@/components/@common/Headline3/Headline3';
-import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import Layout from '@/layouts/Layout';
 import { useEffect } from 'react';
@@ -11,30 +12,33 @@ import * as S from './RouletteResultPage.styled';
 const RouletteResultPage = () => {
   const navigate = useReplaceNavigate();
   const location = useLocation();
-  const { joinCode } = useIdentifier();
+  const { stopSocket, isConnected } = useWebSocket();
   const winner = location.state?.winner ?? '알 수 없는 사용자';
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (joinCode) {
-        navigate(`/room/${joinCode}/order`, {
-          state: { winner },
-        });
-      } else {
-        navigate('/');
-      }
-    }, 3000);
+  const handleClickGoMain = () => {
+    navigate('/');
+  };
 
-    return () => clearTimeout(timer);
-  }, [navigate, joinCode, winner]);
+  useEffect(() => {
+    if (isConnected) {
+      stopSocket();
+    }
+  }, [stopSocket, isConnected]);
 
   return (
     <Layout color="point-400">
-      <S.Container>
-        <S.Logo src={BreadLogoWhiteIcon} />
-        <Headline1 color="white">{winner}</Headline1>
-        <Headline3 color="white">님이 당첨되었습니다!</Headline3>
-      </S.Container>
+      <Layout.Content>
+        <S.Container>
+          <S.Logo src={BreadLogoWhiteIcon} />
+          <Headline1 color="white">{winner}</Headline1>
+          <Headline3 color="white">님이 당첨되었습니다!</Headline3>
+        </S.Container>
+      </Layout.Content>
+      <Layout.ButtonBar>
+        <Button variant="secondary" onClick={handleClickGoMain}>
+          메인 화면으로 가기
+        </Button>
+      </Layout.ButtonBar>
     </Layout>
   );
 };

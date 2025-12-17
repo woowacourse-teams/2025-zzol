@@ -29,9 +29,6 @@ const MiniGameResultPage = lazy(
 const NotFoundPage = lazy(
   /*webpackChunkName: "notFoundPage"*/ () => import('./features/notFound/pages/NotFoundPage')
 );
-const OrderPage = lazy(
-  /*webpackChunkName: "orderPage"*/ () => import('./features/room/order/pages/OrderPage')
-);
 const RoulettePlayPage = lazy(
   () =>
     import(
@@ -68,7 +65,6 @@ const router = createBrowserRouter([
           { path: 'lobby', element: <LobbyPage /> },
           { path: 'roulette/play', element: <RoulettePlayPage /> },
           { path: 'roulette/result', element: <RouletteResultPage /> },
-          { path: 'order', element: <OrderPage /> },
           {
             path: ':miniGameType',
             element: (

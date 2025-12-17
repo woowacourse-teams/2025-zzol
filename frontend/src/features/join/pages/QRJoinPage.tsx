@@ -21,7 +21,7 @@ const QRJoinPage = () => {
     }
   }, [joinCode, setJoinCode, navigate, setPlayerType]);
 
-  return <S.Container>커피빵에 참여하는 중...</S.Container>;
+  return <S.Container>방에 참여하는 중...</S.Container>;
 };
 
 export default QRJoinPage;

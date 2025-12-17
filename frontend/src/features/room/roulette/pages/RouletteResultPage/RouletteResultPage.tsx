@@ -1,29 +1,20 @@
-import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import BreadLogoWhiteIcon from '@/assets/logo/bread-logo-white.png';
 import Button from '@/components/@common/Button/Button';
 import Headline1 from '@/components/@common/Headline1/Headline1';
 import Headline3 from '@/components/@common/Headline3/Headline3';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import Layout from '@/layouts/Layout';
-import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import * as S from './RouletteResultPage.styled';
 
 const RouletteResultPage = () => {
   const navigate = useReplaceNavigate();
   const location = useLocation();
-  const { stopSocket, isConnected } = useWebSocket();
   const winner = location.state?.winner ?? '알 수 없는 사용자';
 
   const handleClickGoMain = () => {
     navigate('/');
   };
-
-  useEffect(() => {
-    if (isConnected) {
-      stopSocket();
-    }
-  }, [stopSocket, isConnected]);
 
   return (
     <Layout color="point-400">

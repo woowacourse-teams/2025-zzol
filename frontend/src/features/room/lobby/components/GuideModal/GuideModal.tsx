@@ -73,7 +73,7 @@ const GuideModal = ({ onClose }: Props) => {
   return (
     <Layout padding="0px">
       <Layout.TopBar
-        center={<Headline3>커피빵 시작하기</Headline3>}
+        center={<Headline3>ZZOL 시작하기</Headline3>}
         right={<S.CloseButton onClick={handleClose}>건너뛰기</S.CloseButton>}
       />
       <Layout.Content>

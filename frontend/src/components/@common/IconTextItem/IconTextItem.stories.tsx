@@ -3,7 +3,7 @@ import { colorList } from '@/constants/color';
 import IconTextItem from './IconTextItem';
 import PlayerIcon from '../../@composition/PlayerIcon/PlayerIcon';
 import CircleIcon from '../CircleIcon/CircleIcon';
-import CustomMenuIcon from '@/assets/custom-menu-icon.svg';
+import CoffeeCharacter from '@/assets/coffee-character.svg';
 
 const meta: Meta<typeof IconTextItem> = {
   title: 'Common/IconTextItem',
@@ -59,7 +59,7 @@ export const PlayerCardWithChildren: Story = {
 export const CafeCategory: Story = {
   args: {
     iconContent: (
-      <CircleIcon color={colorList[1]} imageUrl={CustomMenuIcon} iconAlt="custom-menu" />
+      <CircleIcon color={colorList[1]} imageUrl={CoffeeCharacter} iconAlt="coffee-character" />
     ),
     textContent: (
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

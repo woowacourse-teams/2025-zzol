@@ -37,17 +37,6 @@ export const colorList = [
   '#1d6d4a',
 ] as const;
 
-export const categoryColorList = [theme.color.point[200], '#FFD6A8', '#FEE685', '#D8F999'] as const;
-
-export type CategoryColorKey = (typeof categoryColorList)[number];
-
-export const MenuColorMap: Record<CategoryColorKey, string> = {
-  [theme.color.point[200]]: theme.color.point[50],
-  '#FFD6A8': '#FFF7ED',
-  '#FEE685': '#FFFBEB',
-  '#D8F999': '#F7FEE7',
-} as const;
-
 export type ColorList = (typeof colorList)[number];
 
 export const rankColorMap: Record<number, string> = {

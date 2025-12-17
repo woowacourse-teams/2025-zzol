@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import { colorList } from '@/constants/color';
 import CircleIcon from './CircleIcon';
 import CoffeeCharacter from '@/assets/coffee-character.svg';
-import CustomMenuIcon from '@/assets/custom-menu-icon.svg';
 
 const meta: Meta<typeof CircleIcon> = {
   title: 'Common/CircleIcon',
@@ -54,7 +53,7 @@ export const DifferentIcons: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
       <CircleIcon color={colorList[0]} imageUrl={CoffeeCharacter} iconAlt="coffee" />
-      <CircleIcon color={colorList[2]} imageUrl={CustomMenuIcon} iconAlt="custom-menu" />
+      <CircleIcon color={colorList[2]} imageUrl={CoffeeCharacter} iconAlt="coffee-character" />
     </div>
   ),
 };

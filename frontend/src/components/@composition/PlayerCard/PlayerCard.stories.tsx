@@ -1,7 +1,7 @@
 import Headline4 from '@/components/@common/Headline4/Headline4';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import PlayerCard from './PlayerCard';
-import CustomMenuIcon from '@/assets/custom-menu-icon.svg';
+import CoffeeCharacter from '@/assets/coffee-character.svg';
 import { colorList } from '@/constants/color';
 
 const meta = {
@@ -26,7 +26,7 @@ export const WithIcon: Story = {
   args: {
     name: '김철수',
     playerColor: colorList[6],
-    children: <img src={CustomMenuIcon} alt="custom-menu" />,
+    children: <img src={CoffeeCharacter} alt="coffee-character" />,
   },
 };
 
@@ -50,7 +50,7 @@ export const LongNameWithIcon: Story = {
   args: {
     name: '아주아주아주아주아주긴이름의사용자님',
     playerColor: colorList[2],
-    children: <img src={CustomMenuIcon} alt="custom-menu" />,
+    children: <img src={CoffeeCharacter} alt="coffee-character" />,
   },
 };
 
@@ -87,6 +87,6 @@ export const Ready: Story = {
     name: '홍길동',
     playerColor: colorList[5],
     isReady: true,
-    children: <img src={CustomMenuIcon} alt="custom-menu" />,
+    children: <img src={CoffeeCharacter} alt="coffee-character" />,
   },
 };

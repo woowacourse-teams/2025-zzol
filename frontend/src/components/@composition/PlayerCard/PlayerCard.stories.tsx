@@ -26,7 +26,9 @@ export const WithIcon: Story = {
   args: {
     name: '김철수',
     playerColor: colorList[6],
-    children: <img src={CoffeeCharacter} alt="coffee-character" />,
+    children: (
+      <img src={CoffeeCharacter} alt="coffee-character" style={{ width: '30px', height: 'auto' }} />
+    ),
   },
 };
 
@@ -50,7 +52,9 @@ export const LongNameWithIcon: Story = {
   args: {
     name: '아주아주아주아주아주긴이름의사용자님',
     playerColor: colorList[2],
-    children: <img src={CoffeeCharacter} alt="coffee-character" />,
+    children: (
+      <img src={CoffeeCharacter} alt="coffee-character" style={{ width: '30px', height: 'auto' }} />
+    ),
   },
 };
 
@@ -87,6 +91,8 @@ export const Ready: Story = {
     name: '홍길동',
     playerColor: colorList[5],
     isReady: true,
-    children: <img src={CoffeeCharacter} alt="coffee-character" />,
+    children: (
+      <img src={CoffeeCharacter} alt="coffee-character" style={{ width: '30px', height: 'auto' }} />
+    ),
   },
 };

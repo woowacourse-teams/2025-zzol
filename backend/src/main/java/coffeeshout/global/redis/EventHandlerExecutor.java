@@ -1,7 +1,9 @@
 package coffeeshout.global.redis;
 
+import coffeeshout.global.redis.stream.StreamConsumerRegistrar;
 import coffeeshout.global.trace.Traceable;
 import coffeeshout.global.trace.TracerProvider;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -11,13 +13,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EventHandlerExecutor {
 
-    private final EventHandlerMapping handlerFactory;
+    private final StreamConsumerRegistrar consumerRegistrar;
     private final TracerProvider tracerProvider;
 
+    @SuppressWarnings("unchecked")
     public void handle(BaseEvent event) {
         try {
-            final EventHandler<BaseEvent> handler = handlerFactory.getHandler(event);
-            final Runnable handling = () -> handler.handle(event);
+            final Consumer<BaseEvent> consumer = (Consumer<BaseEvent>) consumerRegistrar.getConsumer(event.getClass());
+            final Runnable handling = () -> consumer.accept(event);
 
             if (event instanceof Traceable traceable) {
                 tracerProvider.executeWithTraceContext(traceable.traceInfo(), handling, event);
@@ -29,5 +32,4 @@ public class EventHandlerExecutor {
             log.error("이벤트 처리 실패: message={}", event, e);
         }
     }
-
 }

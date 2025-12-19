@@ -1,6 +1,6 @@
 package coffeeshout.global.redis;
 
-import coffeeshout.global.redis.stream.StreamConsumerRegistrar;
+import coffeeshout.global.redis.stream.StreamConsumerRegister;
 import coffeeshout.global.trace.Traceable;
 import coffeeshout.global.trace.TracerProvider;
 import java.util.function.Consumer;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EventHandlerExecutor {
 
-    private final StreamConsumerRegistrar consumerRegistrar;
+    private final StreamConsumerRegister consumerRegistrar;
     private final TracerProvider tracerProvider;
 
     @SuppressWarnings("unchecked")

@@ -16,9 +16,33 @@ spring:
         enabled: false
       host: localhost
       stream:
-        room-join-key: room:broadcast
-        card-game-select-key: cardGame:select:broadcast
+        # 스레드풀 정의 (공유 가능)
+        thread-pools:
+          sequential:
+            core-size: 1
+            max-size: 1
+            queue-capacity: 100
+          concurrent:
+            core-size: 4
+            max-size: 8
+            queue-capacity: 100
+
+        # 채널별 설정
+        channels:
+          - name: room
+            key: room:broadcast
+            thread-pool-name: sequential
+          - name: card-game
+            key: cardGame:select:broadcast
+            thread-pool:
+              core-size: 1
+              max-size: 1
+              queue-capacity: 100
+
+        # 공통 설정
         max-length: 100
+        batch-size: 10
+        poll-timeout: 2s
 
 oracle:
   cloud:

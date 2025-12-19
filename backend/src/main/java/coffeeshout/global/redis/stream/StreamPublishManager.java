@@ -9,14 +9,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class StreamPublishManager {
 
-    private final RedisStreamProperties redisStreamProperties;
+    private final RedisStreamProperties properties;
     private final StreamPublisher streamPublisher;
 
-    public void publishCardGameChannel(BaseEvent event) {
-        streamPublisher.broadcast(event, redisStreamProperties.cardGameSelectKey());
-    }
+    public void publish(String channelName, BaseEvent event) {
+        String streamKey = properties.channels().stream()
+                .filter(c -> c.name().equals(channelName))
+                .findFirst()
+                .map(RedisStreamProperties.ChannelConfig::key)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown channel: " + channelName));
 
-    public void publishRoomChannel(BaseEvent event) {
-        streamPublisher.broadcast(event, redisStreamProperties.roomJoinKey());
+        streamPublisher.broadcast(event, streamKey);
     }
 }

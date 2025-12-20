@@ -27,8 +27,8 @@ spring:
             max-size: 8
             queue-capacity: 100
 
-        # 채널별 설정
-        channels:
+        # 스트림별 설정
+        streams:
           - name: room
             key: room:broadcast
             thread-pool-name: sequential

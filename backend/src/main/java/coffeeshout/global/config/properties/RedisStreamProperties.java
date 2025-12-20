@@ -12,26 +12,26 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "spring.data.redis.stream")
 public record RedisStreamProperties(
         Map<String, ThreadPoolConfig> threadPools,
-        List<ChannelConfig> channels,
+        List<StreamConfig> streams,
         @Positive int maxLength,
         @Positive int batchSize,
         Duration pollTimeout
 ) {
-    public record ChannelConfig(
+    public record StreamConfig(
             @NotBlank String name,
             @NotBlank String key,
             String threadPoolName,
             ThreadPoolConfig threadPool
     ) {
-        public ChannelConfig {
+        public StreamConfig {
             if (threadPoolName == null && threadPool == null) {
                 throw new IllegalArgumentException(
-                        "채널 '" + name + "': threadPoolName 또는 threadPool 중 하나는 반드시 지정해야 합니다."
+                        "스트림 '" + name + "': threadPoolName 또는 threadPool 중 하나는 반드시 지정해야 합니다."
                 );
             }
             if (threadPoolName != null && threadPool != null) {
                 throw new IllegalArgumentException(
-                        "채널 '" + name + "': threadPoolName과 threadPool을 동시에 지정할 수 없습니다."
+                        "스트림 '" + name + "': threadPoolName과 threadPool을 동시에 지정할 수 없습니다."
                 );
             }
         }
@@ -44,31 +44,31 @@ public record RedisStreamProperties(
     ) {
     }
 
-    public ThreadPoolConfig getThreadPoolConfig(String channelName) {
-        ChannelConfig channel = channels.stream()
-                .filter(c -> c.name().equals(channelName))
+    public ThreadPoolConfig getThreadPoolConfig(String streamName) {
+        StreamConfig stream = streams.stream()
+                .filter(s -> s.name().equals(streamName))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Channel not found: " + channelName));
+                .orElseThrow(() -> new IllegalArgumentException("Stream not found: " + streamName));
 
-        if (channel.threadPoolName() != null) {
-            ThreadPoolConfig config = threadPools.get(channel.threadPoolName());
+        if (stream.threadPoolName() != null) {
+            ThreadPoolConfig config = threadPools.get(stream.threadPoolName());
             if (config == null) {
                 throw new IllegalArgumentException(
-                        "ThreadPool not found: " + channel.threadPoolName()
+                        "ThreadPool not found: " + stream.threadPoolName()
                 );
             }
             return config;
         }
 
-        return channel.threadPool();
+        return stream.threadPool();
     }
 
-    public boolean isUsingSharedThreadPool(String channelName) {
-        ChannelConfig channel = channels.stream()
-                .filter(c -> c.name().equals(channelName))
+    public boolean isUsingSharedThreadPool(String streamName) {
+        StreamConfig stream = streams.stream()
+                .filter(s -> s.name().equals(streamName))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Channel not found: " + channelName));
+                .orElseThrow(() -> new IllegalArgumentException("Stream not found: " + streamName));
 
-        return channel.threadPoolName() != null;
+        return stream.threadPoolName() != null;
     }
 }

@@ -60,12 +60,12 @@ public class QrCodeService {
             final String qrCodeUrl = getQrCodeUrl(joinCode);
 
             // 3. Room에 저장
-            streamPublishManager.publishRoomChannel(new QrCodeStatusEvent(joinCode, QrCodeStatus.SUCCESS, qrCodeUrl));
+            streamPublishManager.publish("room", new QrCodeStatusEvent(joinCode, QrCodeStatus.SUCCESS, qrCodeUrl));
             log.info("QR 코드 생성 완료: joinCode={}, url={}", joinCode, qrCodeUrl);
         } catch (Exception e) {
             log.error("QR 코드 생성 실패: joinCode={}, error={}", joinCode, e.getMessage(), e);
 
-            streamPublishManager.publishRoomChannel(new QrCodeStatusEvent(joinCode, QrCodeStatus.ERROR, null));
+            streamPublishManager.publish("room", new QrCodeStatusEvent(joinCode, QrCodeStatus.ERROR, null));
         }
     }
 

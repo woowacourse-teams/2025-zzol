@@ -12,12 +12,12 @@ public class StreamPublishManager {
     private final RedisStreamProperties properties;
     private final StreamPublisher streamPublisher;
 
-    public void publish(String channelName, BaseEvent event) {
-        String streamKey = properties.channels().stream()
-                .filter(c -> c.name().equals(channelName))
+    public void publish(String streamName, BaseEvent event) {
+        String streamKey = properties.streams().stream()
+                .filter(s -> s.name().equals(streamName))
                 .findFirst()
-                .map(RedisStreamProperties.ChannelConfig::key)
-                .orElseThrow(() -> new IllegalArgumentException("Unknown channel: " + channelName));
+                .map(RedisStreamProperties.StreamConfig::key)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown stream: " + streamName));
 
         streamPublisher.broadcast(event, streamKey);
     }

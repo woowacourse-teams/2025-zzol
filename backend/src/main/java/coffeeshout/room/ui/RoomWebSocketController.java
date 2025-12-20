@@ -49,7 +49,7 @@ public class RoomWebSocketController {
     )
     public void broadcastPlayers(@DestinationVariable String joinCode) {
         final BaseEvent event = new PlayerListUpdateEvent(joinCode);
-        streamPublishManager.publishRoomChannel(event);
+        streamPublishManager.publish("room", event);
     }
 
     @MessageMapping("/room/{joinCode}/update-ready")
@@ -68,7 +68,7 @@ public class RoomWebSocketController {
     )
     public void broadcastReady(@DestinationVariable String joinCode, ReadyChangeMessage message) {
         final BaseEvent event = new PlayerReadyEvent(joinCode, message.playerName(), message.isReady());
-        streamPublishManager.publishRoomChannel(event);
+        streamPublishManager.publish("room", event);
     }
 
     @MessageMapping("/room/{joinCode}/update-minigames")
@@ -88,7 +88,7 @@ public class RoomWebSocketController {
     public void broadcastMiniGames(@DestinationVariable String joinCode, MiniGameSelectMessage message) {
         final BaseEvent event = new MiniGameSelectEvent(joinCode, message.hostName(),
                 message.miniGameTypes());
-        streamPublishManager.publishRoomChannel(event);
+        streamPublishManager.publish("room", event);
     }
 
     @MessageMapping("/room/{joinCode}/show-roulette")
@@ -104,7 +104,7 @@ public class RoomWebSocketController {
     )
     public void broadcastShowRoulette(@DestinationVariable String joinCode) {
         final BaseEvent event = new RouletteShowEvent(joinCode);
-        streamPublishManager.publishRoomChannel(event);
+        streamPublishManager.publish("room", event);
     }
 
     @MessageMapping("/room/{joinCode}/spin-roulette")
@@ -122,6 +122,6 @@ public class RoomWebSocketController {
         final Room room = roomService.getRoomByJoinCode(joinCode);
         final Winner winner = room.spinRoulette(room.getHost(), new Roulette(new RoulettePicker()));
         final BaseEvent event = new RouletteSpinEvent(joinCode, message.hostName(), winner);
-        streamPublishManager.publishRoomChannel(event);
+        streamPublishManager.publish("room", event);
     }
 }

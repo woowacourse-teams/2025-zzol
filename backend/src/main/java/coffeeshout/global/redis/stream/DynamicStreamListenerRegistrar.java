@@ -1,7 +1,7 @@
 package coffeeshout.global.redis.stream;
 
 import coffeeshout.global.config.properties.RedisStreamProperties;
-import coffeeshout.global.config.properties.RedisStreamProperties.ChannelConfig;
+import coffeeshout.global.config.properties.RedisStreamProperties.StreamConfig;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.EventHandlerExecutor;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,20 +30,20 @@ public class DynamicStreamListenerRegistrar {
 
     @PostConstruct
     public void registerListeners() {
-        for (ChannelConfig channelConfig : properties.channels()) {
+        for (StreamConfig streamConfig : properties.streams()) {
             final StreamMessageListenerContainer<String, ObjectRecord<String, String>> container =
-                    streamContainers.get(channelConfig.name());
+                    streamContainers.get(streamConfig.name());
 
             if (container == null) {
-                throw new IllegalStateException("Container not found for channel: " + channelConfig.name());
+                throw new IllegalStateException("Container not found for stream: " + streamConfig.name());
             }
 
             container.receive(
-                    StreamOffset.fromStart(channelConfig.key()),
+                    StreamOffset.fromStart(streamConfig.key()),
                     this::onMessage
             );
 
-            log.info("Registered listener for channel: {} (key: {})", channelConfig.name(), channelConfig.key());
+            log.info("Registered listener for stream: {} (key: {})", streamConfig.name(), streamConfig.key());
         }
     }
 

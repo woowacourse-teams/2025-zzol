@@ -177,7 +177,7 @@ class QrCodeServiceTest {
         // then
 
         ArgumentCaptor<QrCodeStatusEvent> successEventCaptor = ArgumentCaptor.forClass(QrCodeStatusEvent.class);
-        verify(streamPublishManager).publishRoomChannel(successEventCaptor.capture());
+        verify(streamPublishManager).publish(anyString(), successEventCaptor.capture());
 
         // 2. 두 번째 이벤트는 SUCCESS (roomEventPublisher를 통해 발행)
         QrCodeStatusEvent successEvent = successEventCaptor.getValue();
@@ -198,7 +198,7 @@ class QrCodeServiceTest {
 
         // then
         ArgumentCaptor<QrCodeStatusEvent> errorCaptor = ArgumentCaptor.forClass(QrCodeStatusEvent.class);
-        verify(streamPublishManager).publishRoomChannel(errorCaptor.capture());
+        verify(streamPublishManager).publish(anyString(), errorCaptor.capture());
 
         assertThat(errorCaptor.getValue().status()).isEqualTo(QrCodeStatus.ERROR);
     }

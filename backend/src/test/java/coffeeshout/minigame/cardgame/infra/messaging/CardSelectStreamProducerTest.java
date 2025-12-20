@@ -60,7 +60,11 @@ class CardSelectStreamProducerTest {
         roomRepository.save(room);
         joinCode = room.getJoinCode();
 
-        cardGameStreamKey = redisStreamProperties.cardGameSelectKey();
+        cardGameStreamKey = redisStreamProperties.streams().stream()
+                .filter(s -> s.name().equals("card-game"))
+                .findFirst()
+                .map(RedisStreamProperties.StreamConfig::key)
+                .orElseThrow(() -> new IllegalArgumentException("Stream not found: card-game"));
 
     }
 
@@ -76,7 +80,7 @@ class CardSelectStreamProducerTest {
                     joinCode.getValue(), playerName, cardIndex);
 
             // when
-            streamPublishManager.publishCardGameChannel(event);
+            streamPublishManager.publish("card-game", event);
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
@@ -96,7 +100,7 @@ class CardSelectStreamProducerTest {
             for (int i = 0; i < playerNames.length; i++) {
                 SelectCardCommandEvent event = new SelectCardCommandEvent(
                         joinCode.getValue(), playerNames[i], cardIndexes[i]);
-                streamPublishManager.publishCardGameChannel(event);
+                streamPublishManager.publish("card-game", event);
             }
 
             // then

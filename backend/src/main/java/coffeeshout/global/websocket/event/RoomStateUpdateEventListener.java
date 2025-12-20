@@ -36,6 +36,6 @@ public class RoomStateUpdateEventListener {
 
     private void sendPlayerStatus(String joinCode) {
         final PlayerListUpdateEvent event = new PlayerListUpdateEvent(joinCode);
-        streamPublishManager.publishRoomChannel(event);
+        streamPublishManager.publish("room", event);
     }
 }

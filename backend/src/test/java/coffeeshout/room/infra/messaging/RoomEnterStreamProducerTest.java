@@ -46,7 +46,7 @@ class RoomEnterStreamProducerTest {
             String playerName = "인원 추가";
             SelectedMenuRequest menu = new SelectedMenuRequest(4L, "바닐라라떼", MenuTemperature.ICE);
 
-            streamPublishManager.publishRoomChannel(new RoomJoinEvent(joinCode, playerName, menu));
+            streamPublishManager.publish("room", new RoomJoinEvent(joinCode, playerName, menu));
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
@@ -74,7 +74,7 @@ class RoomEnterStreamProducerTest {
 
             for (int i = 0; i < playerNames.length; i++) {
                 RoomJoinEvent roomJoinEvent = new RoomJoinEvent(joinCode, playerNames[i], menus[i]);
-                streamPublishManager.publishRoomChannel(roomJoinEvent);
+                streamPublishManager.publish("room", roomJoinEvent);
             }
 
             // then
@@ -94,7 +94,7 @@ class RoomEnterStreamProducerTest {
             SelectedMenuRequest menu = new SelectedMenuRequest(5L, "모카라떼", MenuTemperature.ICE);
 
             // when
-            streamPublishManager.publishRoomChannel(new RoomJoinEvent(joinCode, playerName, menu));
+            streamPublishManager.publish("room", new RoomJoinEvent(joinCode, playerName, menu));
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))

@@ -79,7 +79,7 @@ public class RoomService {
                 joinCode.getValue()
         );
 
-        streamPublishManager.publishRoomChannel(event);
+        streamPublishManager.publish("room", event);
 
         // QR 코드 비동기 생성 시작
         qrCodeService.generateQrCodeAsync(joinCode.getValue());
@@ -104,7 +104,7 @@ public class RoomService {
 
         return processEventAsync(
                 event.eventId(),
-                () -> streamPublishManager.publishRoomChannel(event),
+                () -> streamPublishManager.publish("room", event),
                 "방 참가",
                 String.format("joinCode=%s, guestName=%s", joinCode, guestName),
                 room -> String.format("joinCode=%s, guestName=%s", joinCode, guestName)
@@ -306,7 +306,7 @@ public class RoomService {
 
         if (exists) {
             final PlayerKickEvent event = new PlayerKickEvent(joinCode, playerName);
-            streamPublishManager.publishRoomChannel(event);
+            streamPublishManager.publish("room", event);
         }
 
         return exists;

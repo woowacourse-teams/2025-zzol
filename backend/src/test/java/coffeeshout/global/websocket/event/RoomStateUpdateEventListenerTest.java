@@ -40,7 +40,7 @@ class RoomStateUpdateEventListenerTest {
 
         // then
         verify(roomService).roomExists(joinCode);
-        verify(streamPublishManager).publishRoomChannel(any(PlayerListUpdateEvent.class));
+        verify(streamPublishManager).publish(anyString(), any(PlayerListUpdateEvent.class));
     }
 
     @Test
@@ -57,6 +57,6 @@ class RoomStateUpdateEventListenerTest {
         // then
         verify(roomService).roomExists(joinCode);
         verify(roomService, never()).getAllPlayers(anyString());
-        verify(streamPublishManager, never()).publishRoomChannel(any());
+        verify(streamPublishManager, never()).publish(anyString(), any());
     }
 }

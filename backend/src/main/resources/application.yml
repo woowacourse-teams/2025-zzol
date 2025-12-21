@@ -37,9 +37,9 @@ redis:
 
     # 스트림 설정 (key가 식별자)
     keys:
-      "room:broadcast":
+      "[room:broadcast]":
         thread-pool-name: sequential
-      "cardGame:select:broadcast":
+      "[cardGame:select:broadcast]":
         thread-pool:
           core-size: 1
           max-size: 1

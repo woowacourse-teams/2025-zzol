@@ -2,7 +2,6 @@ package coffeeshout.global;
 
 import coffeeshout.global.config.ServiceTestConfig;
 import coffeeshout.global.config.TestContainerConfig;
-import coffeeshout.global.redis.stream.StreamPublisher;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
@@ -18,8 +17,5 @@ public abstract class ServiceTest {
 
     @MockitoBean
     protected ApplicationEventPublisher eventPublisher;
-
-    @MockitoBean
-    protected StreamPublisher streamPublisher;
 
 }

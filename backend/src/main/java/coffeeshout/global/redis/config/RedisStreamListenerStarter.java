@@ -35,6 +35,11 @@ public class RedisStreamListenerStarter {
 
     @PostConstruct
     public void streamContainers() {
+        if (properties.keys() == null) {
+            log.warn("Redis Stream 설정이 없습니다. 리스너를 시작하지 않습니다.");
+            return;
+        }
+
         for (Map.Entry<String, StreamConfig> entry : properties.keys().entrySet()) {
             final String streamKey = entry.getKey();
             final StreamConfig streamConfig = entry.getValue();
@@ -75,6 +80,10 @@ public class RedisStreamListenerStarter {
             Executor executor,
             StreamConfig streamConfig
     ) {
+        if (properties.commonSettings() == null) {
+            throw new IllegalStateException("Redis Stream 공통 설정이 없습니다.");
+        }
+
         final StreamMessageListenerContainerOptions<String, ObjectRecord<String, String>> options =
                 StreamMessageListenerContainerOptions.builder()
                         .batchSize(streamConfig.getBatchSize(properties.commonSettings()))

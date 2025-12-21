@@ -41,7 +41,7 @@ public record RedisStreamProperties(
         }
 
         public boolean isUseSharedThreadPool() {
-            return threadPool != null;
+            return threadPoolName != null;
         }
 
         public int getMaxLength(CommonSettings common) {

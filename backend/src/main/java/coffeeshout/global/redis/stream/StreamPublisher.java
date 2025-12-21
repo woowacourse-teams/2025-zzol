@@ -21,12 +21,23 @@ public class StreamPublisher {
     private final ObjectMapper objectMapper;
 
     public void publish(StreamKey key, BaseEvent event) {
+        if (redisStreamProperties.keys() == null) {
+            log.warn("Redis Stream 설정이 없습니다. 이벤트를 발행하지 않습니다: {}", key.getRedisKey());
+            return;
+        }
+
         if (!redisStreamProperties.keys().containsKey(key.getRedisKey())) {
+            log.error("존재하지 않는 키입니다: {}. 사용 가능한 키: {}", key.getRedisKey(), redisStreamProperties.keys().keySet());
             throw new IllegalArgumentException("존재하지 않는 키입니다: " + key.getRedisKey());
         }
 
         final var streamConfig = redisStreamProperties.keys().get(key.getRedisKey());
         if (streamConfig == null) {
+            return;
+        }
+
+        if (redisStreamProperties.commonSettings() == null) {
+            log.warn("Redis Stream 공통 설정이 없습니다. 이벤트를 발행하지 않습니다: {}", key.getRedisKey());
             return;
         }
 

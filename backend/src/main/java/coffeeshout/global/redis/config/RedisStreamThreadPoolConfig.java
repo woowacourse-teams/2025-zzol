@@ -21,9 +21,11 @@ public class RedisStreamThreadPoolConfig {
     @Bean
     public Map<String, Executor> streamSharedThreadPools() {
         final Map<String, Executor> sharedThreadPools = new HashMap<>();
-        properties.threadPools().forEach((poolName, poolConfig) ->
-                sharedThreadPools.put(poolName, createThreadPoolExecutor(poolConfig, String.format(SHARED_NAME, poolName)))
-        );
+        if (properties.threadPools() != null) {
+            properties.threadPools().forEach((poolName, poolConfig) ->
+                    sharedThreadPools.put(poolName, createThreadPoolExecutor(poolConfig, String.format(SHARED_NAME, poolName)))
+            );
+        }
         return sharedThreadPools;
     }
 

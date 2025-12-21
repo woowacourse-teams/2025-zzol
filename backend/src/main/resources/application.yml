@@ -15,34 +15,35 @@ spring:
       ssl:
         enabled: false
       host: localhost
-      stream:
-        # 스레드풀 정의 (공유 가능)
-        thread-pools:
-          sequential:
-            core-size: 1
-            max-size: 1
-            queue-capacity: 100
-          concurrent:
-            core-size: 4
-            max-size: 8
-            queue-capacity: 100
 
-        # 스트림별 설정
-        streams:
-          - name: room
-            key: room:broadcast
-            thread-pool-name: sequential
-          - name: card-game
-            key: cardGame:select:broadcast
-            thread-pool:
-              core-size: 1
-              max-size: 1
-              queue-capacity: 100
+redis:
+  stream:
+    # 공통 기본 설정 (각 스트림에서 오버라이드 가능)
+    common-settings:
+      max-length: 100
+      batch-size: 10
+      poll-timeout: 2s
 
-        # 공통 설정
-        max-length: 100
-        batch-size: 10
-        poll-timeout: 2s
+    # 공유 스레드풀
+    thread-pools:
+      sequential:
+        core-size: 1
+        max-size: 1
+        queue-capacity: 100
+      concurrent:
+        core-size: 4
+        max-size: 8
+        queue-capacity: 100
+
+    # 스트림 설정 (key가 식별자)
+    keys:
+      "room:broadcast":
+        thread-pool-name: sequential
+      "cardGame:select:broadcast":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 100
 
 oracle:
   cloud:

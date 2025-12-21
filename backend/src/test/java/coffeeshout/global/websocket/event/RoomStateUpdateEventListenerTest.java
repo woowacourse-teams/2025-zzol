@@ -6,7 +6,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.global.redis.stream.StreamPublishManager;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.RoomService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ class RoomStateUpdateEventListenerTest {
     private RoomService roomService;
 
     @Mock
-    private StreamPublishManager streamPublishManager;
+    private StreamPublisher streamPublisher;
 
     @InjectMocks
     private RoomStateUpdateEventListener listener;
@@ -40,7 +41,7 @@ class RoomStateUpdateEventListenerTest {
 
         // then
         verify(roomService).roomExists(joinCode);
-        verify(streamPublishManager).publish(anyString(), any(PlayerListUpdateEvent.class));
+        verify(streamPublisher).publish(any(StreamKey.class), any(PlayerListUpdateEvent.class));
     }
 
     @Test
@@ -57,6 +58,6 @@ class RoomStateUpdateEventListenerTest {
         // then
         verify(roomService).roomExists(joinCode);
         verify(roomService, never()).getAllPlayers(anyString());
-        verify(streamPublishManager, never()).publish(anyString(), any());
+        verify(streamPublisher, never()).publish(any(StreamKey.class), any());
     }
 }

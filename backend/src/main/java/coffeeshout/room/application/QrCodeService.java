@@ -2,7 +2,8 @@ package coffeeshout.room.application;
 
 import coffeeshout.global.config.properties.QrProperties;
 import coffeeshout.global.exception.custom.QRCodeGenerationException;
-import coffeeshout.global.redis.stream.StreamPublishManager;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
@@ -24,14 +25,14 @@ public class QrCodeService {
     private final StorageService storageService;
     private final MeterRegistry meterRegistry;
     private final Timer qrCodeGenerationTimer;
-    private final StreamPublishManager streamPublishManager;
+    private final StreamPublisher streamPublisher;
 
     public QrCodeService(
             QrProperties qrProperties,
             QrCodeGenerator qrCodeGenerator,
             StorageService storageService,
             MeterRegistry meterRegistry,
-            StreamPublishManager streamPublishManager
+            StreamPublisher streamPublisher
     ) {
         this.qrCodePrefix = qrProperties.prefix();
         this.qrCodeGenerator = qrCodeGenerator;
@@ -40,7 +41,7 @@ public class QrCodeService {
         this.qrCodeGenerationTimer = Timer.builder("qr.code.generation.time")
                 .description("Time taken to generate QR code")
                 .register(meterRegistry);
-        this.streamPublishManager = streamPublishManager;
+        this.streamPublisher = streamPublisher;
     }
 
     /**
@@ -60,12 +61,12 @@ public class QrCodeService {
             final String qrCodeUrl = getQrCodeUrl(joinCode);
 
             // 3. Room에 저장
-            streamPublishManager.publish("room", new QrCodeStatusEvent(joinCode, QrCodeStatus.SUCCESS, qrCodeUrl));
+            streamPublisher.publish(StreamKey.ROOM_BROADCAST, new QrCodeStatusEvent(joinCode, QrCodeStatus.SUCCESS, qrCodeUrl));
             log.info("QR 코드 생성 완료: joinCode={}, url={}", joinCode, qrCodeUrl);
         } catch (Exception e) {
             log.error("QR 코드 생성 실패: joinCode={}, error={}", joinCode, e.getMessage(), e);
 
-            streamPublishManager.publish("room", new QrCodeStatusEvent(joinCode, QrCodeStatus.ERROR, null));
+            streamPublisher.publish(StreamKey.ROOM_BROADCAST, new QrCodeStatusEvent(joinCode, QrCodeStatus.ERROR, null));
         }
     }
 

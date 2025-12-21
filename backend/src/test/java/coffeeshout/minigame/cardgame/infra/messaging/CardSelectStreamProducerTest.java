@@ -8,8 +8,9 @@ import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.global.config.properties.RedisStreamProperties;
-import coffeeshout.global.redis.stream.StreamPublishManager;
+import coffeeshout.global.redis.config.RedisStreamProperties;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -29,7 +30,7 @@ class CardSelectStreamProducerTest {
     RoomRepository roomRepository;
 
     @Autowired
-    StreamPublishManager streamPublishManager;
+    StreamPublisher streamPublisher;
 
     @Autowired
     RedisTemplate<String, Object> redisTemplate;
@@ -60,11 +61,7 @@ class CardSelectStreamProducerTest {
         roomRepository.save(room);
         joinCode = room.getJoinCode();
 
-        cardGameStreamKey = redisStreamProperties.streams().stream()
-                .filter(s -> s.name().equals("card-game"))
-                .findFirst()
-                .map(RedisStreamProperties.StreamConfig::key)
-                .orElseThrow(() -> new IllegalArgumentException("Stream not found: card-game"));
+        cardGameStreamKey = StreamKey.CARD_GAME_SELECT_BROADCAST.getRedisKey();
 
     }
 
@@ -80,7 +77,7 @@ class CardSelectStreamProducerTest {
                     joinCode.getValue(), playerName, cardIndex);
 
             // when
-            streamPublishManager.publish("card-game", event);
+            streamPublisher.publish(StreamKey.CARD_GAME_SELECT_BROADCAST, event);
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
@@ -100,7 +97,7 @@ class CardSelectStreamProducerTest {
             for (int i = 0; i < playerNames.length; i++) {
                 SelectCardCommandEvent event = new SelectCardCommandEvent(
                         joinCode.getValue(), playerNames[i], cardIndexes[i]);
-                streamPublishManager.publish("card-game", event);
+                streamPublisher.publish(StreamKey.CARD_GAME_SELECT_BROADCAST, event);
             }
 
             // then

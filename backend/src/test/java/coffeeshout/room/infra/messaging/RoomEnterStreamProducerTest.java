@@ -4,7 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.global.redis.stream.StreamPublishManager;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;
@@ -26,7 +27,7 @@ class RoomEnterStreamProducerTest {
     RoomRepository roomRepository;
 
     @Autowired
-    StreamPublishManager streamPublishManager;
+    StreamPublisher streamPublisher;
 
     private String joinCode;
 
@@ -46,7 +47,7 @@ class RoomEnterStreamProducerTest {
             String playerName = "인원 추가";
             SelectedMenuRequest menu = new SelectedMenuRequest(4L, "바닐라라떼", MenuTemperature.ICE);
 
-            streamPublishManager.publish("room", new RoomJoinEvent(joinCode, playerName, menu));
+            streamPublisher.publish(StreamKey.ROOM_BROADCAST, new RoomJoinEvent(joinCode, playerName, menu));
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
@@ -74,7 +75,7 @@ class RoomEnterStreamProducerTest {
 
             for (int i = 0; i < playerNames.length; i++) {
                 RoomJoinEvent roomJoinEvent = new RoomJoinEvent(joinCode, playerNames[i], menus[i]);
-                streamPublishManager.publish("room", roomJoinEvent);
+                streamPublisher.publish(StreamKey.ROOM_BROADCAST, roomJoinEvent);
             }
 
             // then
@@ -94,7 +95,7 @@ class RoomEnterStreamProducerTest {
             SelectedMenuRequest menu = new SelectedMenuRequest(5L, "모카라떼", MenuTemperature.ICE);
 
             // when
-            streamPublishManager.publish("room", new RoomJoinEvent(joinCode, playerName, menu));
+            streamPublisher.publish(StreamKey.ROOM_BROADCAST, new RoomJoinEvent(joinCode, playerName, menu));
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))

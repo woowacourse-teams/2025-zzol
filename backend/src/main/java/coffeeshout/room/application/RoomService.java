@@ -1,7 +1,8 @@
 package coffeeshout.room.application;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamPublishManager;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -58,7 +59,7 @@ public class RoomService {
     private final RoomEventWaitManager roomEventWaitManager;
     private final MenuCommandService menuCommandService;
     private final RoomJpaRepository roomJpaRepository;
-    private final StreamPublishManager streamPublishManager;
+    private final StreamPublisher streamPublisher;
 
     @Value("${room.event.timeout:PT5S}")
     private Duration eventTimeout;
@@ -79,7 +80,7 @@ public class RoomService {
                 joinCode.getValue()
         );
 
-        streamPublishManager.publish("room", event);
+        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
 
         // QR 코드 비동기 생성 시작
         qrCodeService.generateQrCodeAsync(joinCode.getValue());
@@ -104,7 +105,7 @@ public class RoomService {
 
         return processEventAsync(
                 event.eventId(),
-                () -> streamPublishManager.publish("room", event),
+                () -> streamPublisher.publish(StreamKey.ROOM_BROADCAST, event),
                 "방 참가",
                 String.format("joinCode=%s, guestName=%s", joinCode, guestName),
                 room -> String.format("joinCode=%s, guestName=%s", joinCode, guestName)
@@ -306,7 +307,7 @@ public class RoomService {
 
         if (exists) {
             final PlayerKickEvent event = new PlayerKickEvent(joinCode, playerName);
-            streamPublishManager.publish("room", event);
+            streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
         }
 
         return exists;

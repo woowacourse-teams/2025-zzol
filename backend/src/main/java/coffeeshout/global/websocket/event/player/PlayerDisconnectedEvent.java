@@ -28,9 +28,4 @@ public record PlayerDisconnectedEvent(
                 reason
         );
     }
-
-    @Override
-    public TraceInfo traceInfo() {
-        return traceInfo;
-    }
 }

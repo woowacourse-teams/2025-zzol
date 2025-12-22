@@ -2,9 +2,7 @@ package coffeeshout.global.websocket.infra;
 
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.global.websocket.DelayedPlayerRemovalService;
 import coffeeshout.global.websocket.StompSessionManager;
-import coffeeshout.global.websocket.event.player.PlayerDisconnectedEvent;
 import coffeeshout.global.websocket.event.player.PlayerReconnectedEvent;
 import coffeeshout.global.websocket.event.session.SessionRegisteredEvent;
 import coffeeshout.global.websocket.event.session.SessionRemovedEvent;

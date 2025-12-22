@@ -1,6 +1,6 @@
 package coffeeshout.minigame.cardgame.infra.messaging;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.cardgame.domain.CardGame;
@@ -8,7 +8,6 @@ import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
@@ -34,9 +33,6 @@ class CardSelectStreamProducerTest {
 
     @Autowired
     RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    RedisStreamProperties redisStreamProperties;
 
     private JoinCode joinCode;
     private String cardGameStreamKey;

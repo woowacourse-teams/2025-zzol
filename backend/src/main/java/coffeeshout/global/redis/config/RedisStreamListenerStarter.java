@@ -7,9 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Executor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
@@ -27,13 +25,14 @@ import org.springframework.stereotype.Component;
 @DependsOn("redisStreamThreadPoolConfig")
 public class RedisStreamListenerStarter {
 
+    public static final String STREAM_CONTAINER_BEAN_NAME_FORMAT = "stream-container-%s";
+    
     private final RedisStreamProperties properties;
     private final RedisConnectionFactory redisConnectionFactory;
     private final ObjectMapper redisObjectMapper;
     private final EventHandlerExecutor eventHandlerExecutor;
     private final ApplicationContext applicationContext;
     private final GenericApplicationContext genericApplicationContext;
-    public static final String STREAM_CONTAINER_BEAN_NAME_FORMAT = "stream-container-%s";
 
     public RedisStreamListenerStarter(
             RedisStreamProperties properties,

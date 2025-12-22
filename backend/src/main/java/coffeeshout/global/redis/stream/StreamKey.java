@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum StreamKey {
     ROOM_BROADCAST("room:broadcast"),
-    CARD_GAME_SELECT_BROADCAST("cardGame:select:broadcast"),
+    ROOM_JOIN("room:join"),
+    CARD_GAME_SELECT_BROADCAST("cardgame:select:broadcast"),
     MINIGAME_EVENTS("minigame:events"),
     RACING_GAME_EVENTS("racinggame:events");
 

@@ -105,7 +105,7 @@ public class RoomService {
 
         return processEventAsync(
                 event.eventId(),
-                () -> streamPublisher.publish(StreamKey.ROOM_BROADCAST, event),
+                () -> streamPublisher.publish(StreamKey.ROOM_JOIN, event),
                 "방 참가",
                 String.format("joinCode=%s, guestName=%s", joinCode, guestName),
                 room -> String.format("joinCode=%s, guestName=%s", joinCode, guestName)

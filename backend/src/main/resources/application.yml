@@ -31,22 +31,24 @@ redis:
 #        max-size: 1
 #        queue-capacity: 100
       concurrent:
-        core-size: 4
-        max-size: 8
-        queue-capacity: 100
+        core-size: 8
+        max-size: 16
+        queue-capacity: 1024
 
     # 스트림 설정 (key가 식별자)
     keys:
       "[room:broadcast]":
+        thread-pool-name: concurrent
+      "[room:join]":
         thread-pool:
           core-size: 1
           max-size: 1
-          queue-capacity: 100
-      "[cardGame:select:broadcast]":
+          queue-capacity: 1024
+      "[cardgame:select:broadcast]":
         thread-pool:
           core-size: 1
           max-size: 1
-          queue-capacity: 100
+          queue-capacity: 1024
       "[minigame:events]":
         thread-pool-name: concurrent
       "[racinggame:events]":

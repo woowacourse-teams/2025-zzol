@@ -37,21 +37,21 @@ redis:
 
     # 스트림 설정 (key가 식별자)
     keys:
-      "[room:broadcast]":
+      "[room]":
         thread-pool-name: concurrent
       "[room:join]":
         thread-pool:
           core-size: 1
           max-size: 1
           queue-capacity: 1024
-      "[cardgame:select:broadcast]":
+      "[cardgame:select]":
         thread-pool:
           core-size: 1
           max-size: 1
           queue-capacity: 1024
-      "[minigame:events]":
+      "[minigame]":
         thread-pool-name: concurrent
-      "[racinggame:events]":
+      "[racinggame]":
         thread-pool-name: concurrent
 
 oracle:

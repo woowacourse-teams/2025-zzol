@@ -26,10 +26,10 @@ redis:
 
     # 공유 스레드풀
     thread-pools:
-      sequential:
-        core-size: 1
-        max-size: 1
-        queue-capacity: 100
+#      sequential: # 단일 스레드풀은 여러 리스너에서 공유 불가능
+#        core-size: 1
+#        max-size: 1
+#        queue-capacity: 100
       concurrent:
         core-size: 4
         max-size: 8
@@ -38,14 +38,17 @@ redis:
     # 스트림 설정 (key가 식별자)
     keys:
       "[room:broadcast]":
-        thread-pool-name: sequential
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 100
       "[cardGame:select:broadcast]":
         thread-pool:
           core-size: 1
           max-size: 1
           queue-capacity: 100
       "[minigame:events]":
-        thread-pool-name: sequential
+        thread-pool-name: concurrent
       "[racinggame:events]":
         thread-pool-name: concurrent
 

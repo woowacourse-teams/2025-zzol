@@ -1,6 +1,7 @@
 package coffeeshout.global.websocket;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -69,7 +70,7 @@ class SessionDisconnectEventListenerTest {
 
             // then
             then(streamPublisher).should()
-                    .publish(StreamKey.ROOM_BROADCAST, any());
+                    .publish(eq(StreamKey.ROOM_BROADCAST), any());
         }
 
         @Test

@@ -22,9 +22,4 @@ public record PlayerListUpdateEvent(
                 joinCode
         );
     }
-
-    @Override
-    public TraceInfo traceInfo() {
-        return traceInfo;
-    }
 }

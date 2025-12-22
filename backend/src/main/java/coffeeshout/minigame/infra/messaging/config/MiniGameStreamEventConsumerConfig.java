@@ -12,6 +12,7 @@ import coffeeshout.room.domain.service.RoomQueryService;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -52,7 +53,9 @@ public class MiniGameStreamEventConsumerConfig {
             final Room room = roomQueryService.getByJoinCode(new JoinCode(event.joinCode()));
             final Playable playable = room.startNextGame(event.hostName());
             eventPublisher.publishEvent(new MiniGameStartedEvent(event.joinCode(), playable.getMiniGameType().name()));
-            miniGameServiceMap.get(playable.getMiniGameType()).start(event.joinCode(), event.hostName());
+            Optional.ofNullable(miniGameServiceMap.get(playable.getMiniGameType()))
+                    .orElseThrow(() -> new IllegalStateException("미니게임 서비스가 등록되지 않았습니다: " + playable.getMiniGameType()))
+                    .start(event.joinCode(), event.hostName());
             miniGamePersistenceService.saveGameEntities(event, playable.getMiniGameType());
             log.info("[CONSUMER] JoinCode[{}] 미니게임 시작됨 - MiniGameType : {}", event.joinCode(), playable.getMiniGameType());
         };

@@ -1,5 +1,6 @@
 package coffeeshout.global.redis.config;
 
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.Duration;
 import java.util.Map;
@@ -16,7 +17,7 @@ public record RedisStreamProperties(
     public record CommonSettings(
             @Positive int maxLength,
             @Positive int batchSize,
-            Duration pollTimeout
+            @NotNull Duration pollTimeout
     ) {
     }
 

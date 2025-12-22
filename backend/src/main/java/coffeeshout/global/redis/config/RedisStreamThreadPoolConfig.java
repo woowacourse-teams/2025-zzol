@@ -1,13 +1,12 @@
 package coffeeshout.global.redis.config;
 
+import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import coffeeshout.global.redis.config.RedisStreamProperties.ThreadPoolConfig;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executor;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
@@ -16,20 +15,34 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 public class RedisStreamThreadPoolConfig {
 
     private final RedisStreamProperties properties;
-    private static final String SHARED_NAME = "redis-stream-shared-%s-";
+    private final GenericApplicationContext applicationContext;
+    private static final String BEAN_NAME = "redis-stream-thread-pool-%s";
 
-    @Bean
-    public Map<String, Executor> streamSharedThreadPools() {
-        final Map<String, Executor> sharedThreadPools = new HashMap<>();
-        if (properties.threadPools() != null) {
-            properties.threadPools().forEach((poolName, poolConfig) ->
-                    sharedThreadPools.put(poolName, createThreadPoolExecutor(poolConfig, String.format(SHARED_NAME, poolName)))
-            );
-        }
-        return sharedThreadPools;
+    @PostConstruct
+    public void registerThreadPools() {
+        properties.threadPools().forEach((poolName, poolConfig) -> applicationContext.registerBean(
+                String.format(BEAN_NAME, poolName),
+                ThreadPoolTaskExecutor.class,
+                () -> createThreadPoolExecutor(poolConfig, String.format(BEAN_NAME, poolName))
+        ));
+        properties.keys().entrySet().stream()
+                .filter(entry -> !entry.getValue().isUseSharedThreadPool())
+                .forEach(entry -> {
+                    final String keyName = entry.getKey();
+                    final StreamConfig streamConfig = entry.getValue();
+                    applicationContext.registerBean(
+                            String.format(BEAN_NAME, keyName),
+                            ThreadPoolTaskExecutor.class,
+                            () -> createThreadPoolExecutor(streamConfig.threadPool(), String.format(BEAN_NAME, keyName))
+                    );
+                });
     }
 
-    public static ThreadPoolTaskExecutor createThreadPoolExecutor(ThreadPoolConfig config, String threadNamePrefix) {
+    public static String convertBeanName(String poolName) {
+        return String.format(BEAN_NAME, poolName);
+    }
+
+    public ThreadPoolTaskExecutor createThreadPoolExecutor(ThreadPoolConfig config, String threadNamePrefix) {
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(config.coreSize());
         executor.setMaxPoolSize(config.maxSize());
@@ -37,7 +50,6 @@ public class RedisStreamThreadPoolConfig {
         executor.setThreadNamePrefix(threadNamePrefix);
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(10);
-        executor.initialize();
         return executor;
     }
 }

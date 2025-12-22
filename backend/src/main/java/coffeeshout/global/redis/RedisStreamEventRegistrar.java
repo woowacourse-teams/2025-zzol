@@ -37,10 +37,11 @@ public class RedisStreamEventRegistrar implements SmartInitializingSingleton {
             if (beanFactory.getBeanDefinition(beanName) instanceof RootBeanDefinition) {
                 final ResolvableType type = beanFactory.getMergedBeanDefinition(beanName).getResolvableType();
                 final Class<?>[] classes = type.resolveGenerics();
-                if (classes.length == 0) {
+                if (classes.length == 0 || classes[0] == null) {
                     continue;
                 }
                 redisObjectMapper.registerSubtypes(classes[0]);
+                log.debug("Registered event subtype: {} from bean: {}", classes[0].getSimpleName(), beanName);
             }
         }
     }

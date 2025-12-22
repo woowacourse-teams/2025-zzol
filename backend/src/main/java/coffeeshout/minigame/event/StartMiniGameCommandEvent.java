@@ -24,9 +24,4 @@ public record StartMiniGameCommandEvent(
                 hostName
         );
     }
-
-    @Override
-    public TraceInfo traceInfo() {
-        return traceInfo;
-    }
 }

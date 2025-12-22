@@ -42,9 +42,6 @@ public class StreamPublisher {
         }
 
         final var streamConfig = redisStreamProperties.keys().get(key.getRedisKey());
-        if (streamConfig == null) {
-            return;
-        }
 
         if (redisStreamProperties.commonSettings() == null) {
             log.warn("Redis Stream 공통 설정이 없습니다. 이벤트를 발행하지 않습니다: {}", key.getRedisKey());
@@ -60,9 +57,6 @@ public class StreamPublisher {
             );
         } catch (JsonProcessingException e) {
             throw new RuntimeException("직렬화 실패: " + e.getMessage(), e);
-        } catch (Exception e) {
-            System.out.println("dsa");
-            throw e;
         }
     }
 }

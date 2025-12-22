@@ -27,9 +27,4 @@ public record RoomJoinEvent(
                 selectedMenuRequest
         );
     }
-
-    @Override
-    public TraceInfo traceInfo() {
-        return traceInfo;
-    }
 }

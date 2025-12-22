@@ -12,6 +12,9 @@ import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.data.redis.connection.stream.StreamOffset;
@@ -21,28 +24,31 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
+@DependsOn("redisStreamThreadPoolConfig")
 public class RedisStreamListenerStarter {
 
     private final RedisStreamProperties properties;
     private final RedisConnectionFactory redisConnectionFactory;
-
     private final ObjectMapper redisObjectMapper;
     private final EventHandlerExecutor eventHandlerExecutor;
-
-    private final Map<String, Executor> streamSharedThreadPools;
+    private final ApplicationContext applicationContext;
+    private final GenericApplicationContext genericApplicationContext;
+    public static final String STREAM_CONTAINER_BEAN_NAME_FORMAT = "stream-container-%s";
 
     public RedisStreamListenerStarter(
             RedisStreamProperties properties,
             RedisConnectionFactory redisConnectionFactory,
             @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper,
             EventHandlerExecutor eventHandlerExecutor,
-            Map<String, Executor> streamSharedThreadPools
+            ApplicationContext applicationContext,
+            GenericApplicationContext genericApplicationContext
     ) {
         this.properties = properties;
         this.redisConnectionFactory = redisConnectionFactory;
         this.redisObjectMapper = redisObjectMapper;
         this.eventHandlerExecutor = eventHandlerExecutor;
-        this.streamSharedThreadPools = streamSharedThreadPools;
+        this.applicationContext = applicationContext;
+        this.genericApplicationContext = genericApplicationContext;
     }
 
     @PostConstruct
@@ -56,13 +62,30 @@ public class RedisStreamListenerStarter {
             final String streamKey = entry.getKey();
             final StreamConfig streamConfig = entry.getValue();
 
-            final Executor executor = getExecutor(streamConfig, streamSharedThreadPools, streamKey);
-
-            final StreamMessageListenerContainer<String, ObjectRecord<String, String>> container =
-                    createContainer(redisConnectionFactory, executor, streamConfig);
+            final StreamMessageListenerContainer<String, ObjectRecord<String, String>> container = createContainer(
+                    redisConnectionFactory,
+                    findExecutor(streamKey, streamConfig),
+                    streamConfig
+            );
 
             container.receive(StreamOffset.fromStart(streamKey), this::onMessage);
+
+            genericApplicationContext.registerBean(
+                    String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey),
+                    StreamMessageListenerContainer.class,
+                    () -> container
+            );
         }
+    }
+
+    private Executor findExecutor(String streamKey, StreamConfig streamConfig) {
+        if (streamConfig.isUseSharedThreadPool()) {
+            return applicationContext.getBean(
+                    RedisStreamThreadPoolConfig.convertBeanName(streamConfig.threadPoolName()),
+                    Executor.class
+            );
+        }
+        return applicationContext.getBean(RedisStreamThreadPoolConfig.convertBeanName(streamKey), Executor.class);
     }
 
     private void onMessage(ObjectRecord<String, String> message) {
@@ -73,18 +96,6 @@ public class RedisStreamListenerStarter {
             log.error("Failed to parse event: {}", message.getValue(), e);
             throw new RuntimeException("Failed to parse event", e);
         }
-    }
-
-    private Executor getExecutor(StreamConfig streamConfig, Map<String, Executor> sharedThreadPools, String streamKey) {
-        if (streamConfig.isUseSharedThreadPool()) {
-            return Optional.of(sharedThreadPools.get(streamConfig.threadPoolName())).orElseThrow(
-                    () -> new IllegalStateException("존재하지 않는 스레드풀 이름입니다: " + streamConfig.threadPoolName())
-            );
-        }
-        return RedisStreamThreadPoolConfig.createThreadPoolExecutor(
-                streamConfig.threadPool(),
-                "redis-stream-" + streamKey.replace(":", "-") + "-"
-        );
     }
 
     private StreamMessageListenerContainer<String, ObjectRecord<String, String>> createContainer(

@@ -20,18 +20,30 @@ import org.springframework.data.redis.stream.StreamMessageListenerContainer.Stre
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class RedisStreamListenerStarter {
 
     private final RedisStreamProperties properties;
     private final RedisConnectionFactory redisConnectionFactory;
 
-    @Qualifier("redisObjectMapper")
     private final ObjectMapper redisObjectMapper;
     private final EventHandlerExecutor eventHandlerExecutor;
 
     private final Map<String, Executor> streamSharedThreadPools;
+
+    public RedisStreamListenerStarter(
+            RedisStreamProperties properties,
+            RedisConnectionFactory redisConnectionFactory,
+            @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper,
+            EventHandlerExecutor eventHandlerExecutor,
+            Map<String, Executor> streamSharedThreadPools
+    ) {
+        this.properties = properties;
+        this.redisConnectionFactory = redisConnectionFactory;
+        this.redisObjectMapper = redisObjectMapper;
+        this.eventHandlerExecutor = eventHandlerExecutor;
+        this.streamSharedThreadPools = streamSharedThreadPools;
+    }
 
     @PostConstruct
     public void streamContainers() {

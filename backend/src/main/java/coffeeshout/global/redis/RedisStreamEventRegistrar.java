@@ -13,13 +13,18 @@ import org.springframework.core.ResolvableType;
 
 @Slf4j
 @Configuration
-@RequiredArgsConstructor
 public class RedisStreamEventRegistrar implements SmartInitializingSingleton {
 
-    @Qualifier("redisObjectMapper")
     private final ObjectMapper redisObjectMapper;
-
     private final ConfigurableListableBeanFactory beanFactory;
+
+    public RedisStreamEventRegistrar(
+            @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper,
+            ConfigurableListableBeanFactory beanFactory
+    ) {
+        this.redisObjectMapper = redisObjectMapper;
+        this.beanFactory = beanFactory;
+    }
 
     @Override
     public void afterSingletonsInstantiated() {

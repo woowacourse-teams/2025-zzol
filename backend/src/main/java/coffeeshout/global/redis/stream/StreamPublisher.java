@@ -14,14 +14,21 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class StreamPublisher {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedisStreamProperties redisStreamProperties;
-
-    @Qualifier("redisObjectMapper")
     private final ObjectMapper objectMapper;
+
+    public StreamPublisher(
+            StringRedisTemplate stringRedisTemplate,
+            RedisStreamProperties redisStreamProperties,
+            @Qualifier("redisObjectMapper") ObjectMapper objectMapper
+    ) {
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.redisStreamProperties = redisStreamProperties;
+        this.objectMapper = objectMapper;
+    }
 
     public void publish(StreamKey key, BaseEvent event) {
         if (redisStreamProperties.keys() == null) {

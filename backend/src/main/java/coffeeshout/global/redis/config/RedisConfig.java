@@ -11,7 +11,6 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -62,30 +61,5 @@ public class RedisConfig {
         final RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         return container;
-    }
-
-    @Bean
-    public ChannelTopic roomEventTopic() {
-        return new ChannelTopic("room.events");
-    }
-
-    @Bean
-    public ChannelTopic miniGameEventTopic() {
-        return new ChannelTopic("minigame.events");
-    }
-
-    @Bean
-    public ChannelTopic playerEventTopic() {
-        return new ChannelTopic("player.events");
-    }
-
-    @Bean
-    public ChannelTopic sessionEventTopic() {
-        return new ChannelTopic("session.events");
-    }
-
-    @Bean
-    public ChannelTopic racingGameEventTopic() {
-        return new ChannelTopic("racinggame.events");
     }
 }

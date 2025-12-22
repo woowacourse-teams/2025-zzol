@@ -44,6 +44,10 @@ redis:
           core-size: 1
           max-size: 1
           queue-capacity: 100
+      "[minigame:events]":
+        thread-pool-name: sequential
+      "[racinggame:events]":
+        thread-pool-name: concurrent
 
 oracle:
   cloud:

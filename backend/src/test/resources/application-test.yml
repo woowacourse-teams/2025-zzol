@@ -28,6 +28,39 @@ spring:
     exclude:
       - org.redisson.spring.starter.RedissonAutoConfigurationV2
 
+redis:
+  stream:
+    # 공통 기본 설정 (각 스트림에서 오버라이드 가능)
+    common-settings:
+      max-length: 100
+      batch-size: 10
+      poll-timeout: 2s
+
+    # 공유 스레드풀
+    thread-pools:
+      sequential:
+        core-size: 1
+        max-size: 1
+        queue-capacity: 100
+      concurrent:
+        core-size: 4
+        max-size: 8
+        queue-capacity: 100
+
+    # 스트림 설정 (key가 식별자)
+    keys:
+      "[room:broadcast]":
+        thread-pool-name: sequential
+      "[cardGame:select:broadcast]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 100
+      "[minigame:events]":
+        thread-pool-name: sequential
+      "[racinggame:events]":
+        thread-pool-name: concurrent
+
 server:
   shutdown: immediate
 

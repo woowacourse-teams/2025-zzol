@@ -46,7 +46,7 @@ public class MiniGameStreamEventConsumerConfig {
     @Bean
     public Consumer<StartMiniGameCommandEvent> startMiniGameCommandEventConsumer() {
         return event -> {
-            log.info("미니게임 시작 이벤트 수신: eventId={}, joinCode={}, hostName={}",
+            log.info("[CONSUMER] 미니게임 시작 이벤트 수신: eventId={}, joinCode={}, hostName={}",
                     event.eventId(), event.joinCode(), event.hostName());
 
             final Room room = roomQueryService.getByJoinCode(new JoinCode(event.joinCode()));
@@ -54,7 +54,7 @@ public class MiniGameStreamEventConsumerConfig {
             eventPublisher.publishEvent(new MiniGameStartedEvent(event.joinCode(), playable.getMiniGameType().name()));
             miniGameServiceMap.get(playable.getMiniGameType()).start(event.joinCode(), event.hostName());
             miniGamePersistenceService.saveGameEntities(event, playable.getMiniGameType());
-            log.info("JoinCode[{}] 미니게임 시작됨 - MiniGameType : {}", event.joinCode(), playable.getMiniGameType());
+            log.info("[CONSUMER] JoinCode[{}] 미니게임 시작됨 - MiniGameType : {}", event.joinCode(), playable.getMiniGameType());
         };
     }
 }

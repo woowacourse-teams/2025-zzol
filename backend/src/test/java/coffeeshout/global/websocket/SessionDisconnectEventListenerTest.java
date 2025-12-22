@@ -5,8 +5,9 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import coffeeshout.global.metric.WebSocketMetricService;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.websocket.event.SessionDisconnectEventListener;
-import coffeeshout.global.websocket.infra.PlayerEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 class SessionDisconnectEventListenerTest {
 
     @Mock
-    PlayerEventPublisher playerEventPublisher;
+    StreamPublisher streamPublisher;
     @Mock
     SubscriptionInfoService subscriptionInfoService;
     @Mock
@@ -38,7 +39,7 @@ class SessionDisconnectEventListenerTest {
     @BeforeEach
     void setUp() {
         sessionManager = new StompSessionManager();
-        listener = new SessionDisconnectEventListener(sessionManager, playerEventPublisher,
+        listener = new SessionDisconnectEventListener(sessionManager, streamPublisher,
                 subscriptionInfoService, metricService);
     }
 
@@ -54,7 +55,7 @@ class SessionDisconnectEventListenerTest {
             listener.handleSessionDisconnectEvent(event);
 
             // then
-            verifyNoInteractions(playerEventPublisher);
+            verifyNoInteractions(streamPublisher);
         }
 
         @Test
@@ -67,8 +68,8 @@ class SessionDisconnectEventListenerTest {
             listener.handleSessionDisconnectEvent(event);
 
             // then
-            then(playerEventPublisher).should()
-                    .publishEvent(any());
+            then(streamPublisher).should()
+                    .publish(StreamKey.ROOM_BROADCAST, any());
         }
 
         @Test
@@ -83,7 +84,7 @@ class SessionDisconnectEventListenerTest {
             listener.handleSessionDisconnectEvent(event);
 
             // then
-            verifyNoInteractions(playerEventPublisher);
+            verifyNoInteractions(streamPublisher);
         }
     }
 

@@ -1,11 +1,12 @@
 package coffeeshout.global.redis.stream;
 
-import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.global.redis.config.RedisStreamProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.connection.RedisStreamCommands.XAddOptions;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -18,6 +19,8 @@ public class StreamPublisher {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedisStreamProperties redisStreamProperties;
+
+    @Qualifier("redisObjectMapper")
     private final ObjectMapper objectMapper;
 
     public void publish(StreamKey key, BaseEvent event) {

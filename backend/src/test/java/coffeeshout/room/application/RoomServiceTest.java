@@ -16,6 +16,8 @@ import coffeeshout.global.exception.custom.NotExistElementException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.room.application.service.DelayedRoomRemovalService;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.Room;
@@ -224,25 +226,6 @@ class RoomServiceTest extends ServiceTest {
     }
 
     @Test
-    void 방에_있는_모든_플레이어를_조회한다() {
-        // given
-        String hostName = "호스트";
-        String guestName = "게스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        SelectedMenuRequest guestSelectedMenuRequest = new SelectedMenuRequest(2L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), guestName, guestSelectedMenuRequest);
-
-        // when
-        List<Player> players = roomService.getAllPlayers(createdRoom.getJoinCode().getValue());
-
-        // then
-        assertThat(players).hasSize(2);
-        assertThat(players.stream().map(p -> p.getName().value()))
-                .containsExactlyInAnyOrder(hostName, guestName);
-    }
-
-    @Test
     void 플레이어가_메뉴를_선택한다() {
         // given
         String hostName = "호스트";
@@ -299,23 +282,6 @@ class RoomServiceTest extends ServiceTest {
 
         // then
         assertThat(miniGames).containsExactlyInAnyOrder(MiniGameType.values());
-    }
-
-    @Test
-    void 미니게임을_선택한다() {
-        // given
-        String hostName = "호스트";
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
-
-        // when
-        List<MiniGameType> selectedMiniGames = roomService.updateMiniGames(createdRoom.getJoinCode().getValue(),
-                hostName,
-                List.of(MiniGameType.CARD_GAME));
-
-        // then
-        assertThat(selectedMiniGames).hasSize(1);
-        assertThat(selectedMiniGames.getFirst()).isEqualTo(MiniGameType.CARD_GAME);
     }
 
     @Test
@@ -477,37 +443,6 @@ class RoomServiceTest extends ServiceTest {
             softly.assertThat(selectedMiniGames).hasSize(1);
             softly.assertThat(selectedMiniGames).containsExactly(MiniGameType.CARD_GAME);
         });
-    }
-
-    @Test
-    void 플레이어를_제거할_때_플레이어가_없다면_방을_제거한다() {
-        // given
-        String hostName = "호스트";
-        SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
-        JoinCode joinCode = createdRoom.getJoinCode();
-
-        // when
-        roomService.removePlayer(joinCode.getValue(), hostName);
-
-        // then
-        assertThat(roomService.roomExists(joinCode.getValue())).isFalse();
-    }
-
-    @Test
-    void 플레이어를_제거할_때_플레이어가_있다면_방을_제거하지_않는다() {
-        String hostName = "호스트";
-        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
-        JoinCode joinCode = createdRoom.getJoinCode();
-        roomService.enterRoom(createdRoom.getJoinCode().getValue(), "게스트1",
-                new SelectedMenuRequest(2L, null, MenuTemperature.ICE));
-
-        // when
-        roomService.removePlayer(joinCode.getValue(), hostName);
-
-        // then
-        assertThat(roomService.roomExists(joinCode.getValue())).isTrue();
     }
 
     @Test

@@ -4,7 +4,7 @@ import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.application.RoomService;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;

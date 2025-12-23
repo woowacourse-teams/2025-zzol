@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
+import coffeeshout.room.application.service.DelayedRoomRemovalService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.service.RoomCommandService;
 import java.time.Duration;

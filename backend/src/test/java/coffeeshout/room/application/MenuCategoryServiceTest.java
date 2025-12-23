@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.MenuCategoryFixture;
 import coffeeshout.global.ServiceTest;
+import coffeeshout.room.application.service.MenuCategoryService;
 import coffeeshout.room.domain.menu.MenuCategory;
 import coffeeshout.room.domain.repository.MenuCategoryRepository;
 import coffeeshout.room.domain.service.MenuCategoryQueryService;

@@ -1,7 +1,10 @@
-package coffeeshout.room.application;
+package coffeeshout.room.application.service;
 
+import coffeeshout.room.domain.JoinCode;
+import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Winner;
+import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
@@ -18,9 +21,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RouletteService {
 
+    private final RoomQueryService roomQueryService;
     private final RoomJpaRepository roomJpaRepository;
     private final PlayerJpaRepository playerJpaRepository;
     private final RouletteResultJpaRepository rouletteResultJpaRepository;
+
+    public Room showRoulette(String joinCode) {
+        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
+        room.showRoulette();
+        return room;
+    }
 
     @Transactional
     public void updateRoomStatusToRoulette(String joinCode) {

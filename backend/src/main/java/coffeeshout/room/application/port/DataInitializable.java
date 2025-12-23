@@ -1,4 +1,4 @@
-package coffeeshout.room.application;
+package coffeeshout.room.application.port;
 
 import java.io.IOException;
 

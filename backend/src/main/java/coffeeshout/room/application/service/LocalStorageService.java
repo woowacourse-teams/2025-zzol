@@ -1,6 +1,7 @@
-package coffeeshout.room.application;
+package coffeeshout.room.application.service;
 
 import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.room.application.port.StorageService;
 import coffeeshout.room.domain.RoomErrorCode;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Base64;

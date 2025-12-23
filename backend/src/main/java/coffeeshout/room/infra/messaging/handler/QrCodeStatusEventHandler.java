@@ -8,9 +8,11 @@ import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class QrCodeStatusEventHandler implements Consumer<QrCodeStatusEvent> {
@@ -20,14 +22,14 @@ public class QrCodeStatusEventHandler implements Consumer<QrCodeStatusEvent> {
 
     @Override
     public void accept(QrCodeStatusEvent event) {
-        LoggerFactory.getLogger(getClass()).info(
+        log.info(
                 "QR 코드 완료 이벤트 수신: eventId={}, joinCode={}, status={}",
                 event.eventId(), event.joinCode(), event.status()
         );
 
         switch (event.status()) {
             case SUCCESS -> {
-                LoggerFactory.getLogger(getClass()).info(
+                log.info(
                         "QR 코드 완료 이벤트 처리 완료 (SUCCESS): eventId={}, joinCode={}, url={}",
                         event.eventId(), event.joinCode(), event.qrCodeUrl()
                 );
@@ -35,14 +37,14 @@ public class QrCodeStatusEventHandler implements Consumer<QrCodeStatusEvent> {
                 sendQrCode(event);
             }
             case ERROR -> {
-                LoggerFactory.getLogger(getClass()).info(
+                log.info(
                         "QR 코드 완료 이벤트 처리 완료 (ERROR): eventId={}, joinCode={}",
                         event.eventId(), event.joinCode()
                 );
                 roomCommandService.assignQrCodeError(new JoinCode(event.joinCode()));
                 sendQrCode(event);
             }
-            default -> LoggerFactory.getLogger(getClass()).warn(
+            default -> log.warn(
                     "처리할 수 없는 QR 코드 상태: eventId={}, joinCode={}, status={}",
                     event.eventId(), event.joinCode(), event.status()
             );

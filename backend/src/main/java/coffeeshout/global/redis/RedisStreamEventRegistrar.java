@@ -34,14 +34,17 @@ public class RedisStreamEventRegistrar implements SmartInitializingSingleton {
     public void inspectConsumerBeans() {
         final String[] beanNames = beanFactory.getBeanNamesForType(Consumer.class);
         for (String beanName : beanNames) {
-            if (beanFactory.getBeanDefinition(beanName) instanceof RootBeanDefinition) {
-                final ResolvableType type = beanFactory.getMergedBeanDefinition(beanName).getResolvableType();
-                final Class<?>[] classes = type.resolveGenerics();
-                if (classes.length == 0 || classes[0] == null) {
-                    continue;
-                }
-                redisObjectMapper.registerSubtypes(classes[0]);
-                log.debug("Registered event subtype: {} from bean: {}", classes[0].getSimpleName(), beanName);
+            final Class<?> beanType = beanFactory.getType(beanName);
+            if (beanType == null) {
+                continue;
+            }
+
+            final ResolvableType resolvableType = ResolvableType.forClass(beanType).as(Consumer.class);
+            final Class<?> eventType = resolvableType.getGeneric(0).resolve();
+
+            if (eventType != null && BaseEvent.class.isAssignableFrom(eventType)) {
+                redisObjectMapper.registerSubtypes(eventType);
+                log.debug("Registered event subtype: {} from bean: {}", eventType.getSimpleName(), beanName);
             }
         }
     }

@@ -1,9 +1,11 @@
 package coffeeshout.global.websocket.event;
 
 import coffeeshout.global.metric.WebSocketMetricService;
+import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.websocket.StompSessionManager;
 import coffeeshout.global.websocket.event.session.SessionRegisteredEvent;
-import coffeeshout.global.websocket.infra.SessionEventPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.service.RoomQueryService;
@@ -23,7 +25,7 @@ public class SessionConnectEventListener {
 
     private final WebSocketMetricService webSocketMetricService;
     private final StompSessionManager sessionManager;
-    private final SessionEventPublisher sessionEventPublisher;
+    private final StreamPublisher streamPublisher;
     private final RoomQueryService roomQueryService;
 
     @EventListener
@@ -82,8 +84,8 @@ public class SessionConnectEventListener {
 
     private void publishSessionRegisteredEvent(String sessionId, String joinCode, String playerName) {
         final String playerKey = sessionManager.createPlayerKey(joinCode, playerName);
-        final SessionRegisteredEvent event = SessionRegisteredEvent.create(playerKey, sessionId);
-        sessionEventPublisher.publishEvent(event);
+        final BaseEvent event = SessionRegisteredEvent.create(playerKey, sessionId);
+        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
 
         log.info("세션 등록 이벤트 발행: playerKey={}, sessionId={}", playerKey, sessionId);
     }

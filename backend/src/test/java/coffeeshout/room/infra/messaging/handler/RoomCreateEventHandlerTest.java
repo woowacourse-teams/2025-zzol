@@ -12,6 +12,7 @@ import coffeeshout.room.domain.menu.MenuTemperature;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.ui.request.SelectedMenuRequest;
+import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 class RoomCreateEventHandlerTest extends ServiceTest {
 
     @Autowired
-    RoomCreateEventHandler roomCreateEventHandler;
+    Consumer<RoomCreateEvent> roomCreateEventConsumer;
 
     @Autowired
     RoomQueryService roomQueryService;
@@ -52,7 +53,7 @@ class RoomCreateEventHandlerTest extends ServiceTest {
         );
 
         // when
-        roomCreateEventHandler.handle(event);
+        roomCreateEventConsumer.accept(event);
 
         // then
         Room room = roomQueryService.getByJoinCode(joinCode);
@@ -78,7 +79,7 @@ class RoomCreateEventHandlerTest extends ServiceTest {
         );
 
         // when
-        roomCreateEventHandler.handle(event);
+        roomCreateEventConsumer.accept(event);
 
         // then
         verify(delayedRoomRemovalService).scheduleRemoveRoom(joinCode);
@@ -98,7 +99,7 @@ class RoomCreateEventHandlerTest extends ServiceTest {
         );
 
         // when
-        roomCreateEventHandler.handle(event);
+        roomCreateEventConsumer.accept(event);
 
         // then
         Room room = roomQueryService.getByJoinCode(joinCode);
@@ -110,7 +111,6 @@ class RoomCreateEventHandlerTest extends ServiceTest {
         // given
         String hostName = "호스트";
         SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.HOT);
-        String qrCodeUrl = "https://example.com/qr";
 
         RoomCreateEvent event = new RoomCreateEvent(
                 hostName,
@@ -119,8 +119,8 @@ class RoomCreateEventHandlerTest extends ServiceTest {
         );
 
         // when
-        roomCreateEventHandler.handle(event);
-        roomCreateEventHandler.handle(event); // 중복 호출
+        roomCreateEventConsumer.accept(event);
+        roomCreateEventConsumer.accept(event); // 중복 호출
 
         // then
         Room room = roomQueryService.getByJoinCode(joinCode);

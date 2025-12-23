@@ -32,7 +32,7 @@ public class QrCodeStatusEventHandler implements Consumer<QrCodeStatusEvent> {
                         event.eventId(), event.joinCode(), event.qrCodeUrl()
                 );
                 roomCommandService.assignQrCode(new JoinCode(event.joinCode()), event.qrCodeUrl());
-                sendQrCode(event, messagingTemplate);
+                sendQrCode(event);
             }
             case ERROR -> {
                 LoggerFactory.getLogger(getClass()).info(
@@ -40,7 +40,7 @@ public class QrCodeStatusEventHandler implements Consumer<QrCodeStatusEvent> {
                         event.eventId(), event.joinCode()
                 );
                 roomCommandService.assignQrCodeError(new JoinCode(event.joinCode()));
-                sendQrCode(event, messagingTemplate);
+                sendQrCode(event);
             }
             default -> LoggerFactory.getLogger(getClass()).warn(
                     "처리할 수 없는 QR 코드 상태: eventId={}, joinCode={}, status={}",
@@ -49,10 +49,7 @@ public class QrCodeStatusEventHandler implements Consumer<QrCodeStatusEvent> {
         }
     }
 
-    private void sendQrCode(
-            QrCodeStatusEvent event,
-            LoggingSimpMessagingTemplate messagingTemplate
-    ) {
+    private void sendQrCode(QrCodeStatusEvent event) {
         final QrCodeStatusResponse response = new QrCodeStatusResponse(event.status(), event.qrCodeUrl());
 
         final String destination = String.format("/topic/room/%s/qr-code", event.joinCode());

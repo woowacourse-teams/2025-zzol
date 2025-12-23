@@ -50,12 +50,17 @@ public class StartMiniGameCommandEventHandler implements Consumer<StartMiniGameC
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(event.joinCode()));
         final Playable playable = room.startNextGame(event.hostName());
-        eventPublisher.publishEvent(new MiniGameStartedEvent(event.joinCode(), playable.getMiniGameType().name()));
-        Optional.ofNullable(miniGameServiceMap.get(playable.getMiniGameType()))
-                .orElseThrow(() -> new IllegalStateException("미니게임 서비스가 등록되지 않았습니다: " + playable.getMiniGameType()))
-                .start(event.joinCode(), event.hostName());
-        miniGamePersistenceService.saveGameEntities(event, playable.getMiniGameType());
-        log.info("[CONSUMER] JoinCode[{}] 미니게임 시작됨 - MiniGameType : {}", event.joinCode(), playable.getMiniGameType());
+        final MiniGameType miniGameType = playable.getMiniGameType();
+
+        final MiniGameService miniGameService = Optional.ofNullable(miniGameServiceMap.get(miniGameType))
+                .orElseThrow(() -> new IllegalStateException("미니게임 서비스가 등록되지 않았습니다: " + miniGameType));
+        miniGameService.start(event.joinCode(), event.hostName());
+
+        miniGamePersistenceService.saveGameEntities(event, miniGameType);
+
+        // 모든 작업 성공 후 이벤트 발행
+        eventPublisher.publishEvent(new MiniGameStartedEvent(event.joinCode(), miniGameType.name()));
+        log.info("[CONSUMER] JoinCode[{}] 미니게임 시작됨 - MiniGameType : {}", event.joinCode(), miniGameType);
 
     }
 }

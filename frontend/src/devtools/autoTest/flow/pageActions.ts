@@ -2,7 +2,6 @@ import {
   clickElement,
   clickElementWithClickEvent,
   findElement,
-  findFirstElementByTestIdPrefix,
   typeInInput,
   wait,
   waitForElement,
@@ -78,55 +77,6 @@ const entryNamePageAction = async (context: PageActionContext) => {
     return;
   }
   await typeInInput(nameInput, context.playerName);
-
-  const goToMenuButton = await waitForElement('go-to-menu-button', 10000);
-  if (!goToMenuButton) {
-    console.warn('[AutoTest] Go to menu button not found');
-    return;
-  }
-  await clickElement(goToMenuButton);
-};
-
-// 메뉴 선택 페이지 액션 (공통 로직, 제출 버튼만 다름)
-const entryMenuPageAction = async (context: PageActionContext) => {
-  await wait(DELAY_BETWEEN_ACTIONS);
-
-  let firstCategory = findFirstElementByTestIdPrefix('category-card-');
-  let attempts = 0;
-  while (!firstCategory && attempts < 30) {
-    await wait(100);
-    firstCategory = findFirstElementByTestIdPrefix('category-card-');
-    attempts++;
-  }
-  if (firstCategory) {
-    await clickElement(firstCategory);
-  }
-
-  await wait(DELAY_BETWEEN_ACTIONS);
-
-  let firstMenuItem = findFirstElementByTestIdPrefix('menu-item-');
-  attempts = 0;
-  while (!firstMenuItem && attempts < 30) {
-    await wait(100);
-    firstMenuItem = findFirstElementByTestIdPrefix('menu-item-');
-    attempts++;
-  }
-  if (firstMenuItem) {
-    await clickElement(firstMenuItem);
-  }
-
-  await wait(DELAY_BETWEEN_ACTIONS);
-
-  const temperatureButton =
-    (await waitForElement('temperature-option-ICE', 5000)) ||
-    (await waitForElement('temperature-option-HOT', 5000));
-  if (temperatureButton) {
-    await clickElement(temperatureButton);
-  } else {
-    console.warn('[AutoTest] Temperature button not found');
-  }
-
-  await wait(DELAY_BETWEEN_ACTIONS);
 
   // 역할별 제출 버튼
   const submitButtonTestId =
@@ -347,10 +297,6 @@ export const pageActions: PageAction[] = [
   {
     pathPattern: '/entry/name',
     execute: entryNamePageAction,
-  },
-  {
-    pathPattern: '/entry/menu',
-    execute: entryMenuPageAction,
   },
   {
     pathPattern: /^\/room\/[^/]+\/lobby$/,

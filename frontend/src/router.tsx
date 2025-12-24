@@ -3,7 +3,7 @@ import { createBrowserRouter, Outlet } from 'react-router-dom';
 import App from './App';
 import MiniGameProviders from './features/miniGame/context/MiniGameProviders';
 import RoomLayout from './features/room/RoomLayout';
-import { EntryMenuPage, EntryNamePage, HomePage } from './pages';
+import { EntryNamePage, HomePage } from './pages';
 
 const LobbyPage = lazy(
   /*webpackChunkName: "lobbyPage"*/ () => import('./features/room/lobby/pages/LobbyPage')
@@ -28,9 +28,6 @@ const MiniGameResultPage = lazy(
 );
 const NotFoundPage = lazy(
   /*webpackChunkName: "notFoundPage"*/ () => import('./features/notFound/pages/NotFoundPage')
-);
-const OrderPage = lazy(
-  /*webpackChunkName: "orderPage"*/ () => import('./features/room/order/pages/OrderPage')
 );
 const RoulettePlayPage = lazy(
   () =>
@@ -59,10 +56,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'entry',
-        children: [
-          { path: 'name', element: <EntryNamePage /> },
-          { path: 'menu', element: <EntryMenuPage /> },
-        ],
+        children: [{ path: 'name', element: <EntryNamePage /> }],
       },
       {
         path: 'room/:joinCode',
@@ -71,7 +65,6 @@ const router = createBrowserRouter([
           { path: 'lobby', element: <LobbyPage /> },
           { path: 'roulette/play', element: <RoulettePlayPage /> },
           { path: 'roulette/result', element: <RouletteResultPage /> },
-          { path: 'order', element: <OrderPage /> },
           {
             path: ':miniGameType',
             element: (

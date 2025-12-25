@@ -90,7 +90,7 @@ public class RoomEventService {
     }
 
     public void joinRoom(RoomJoinEvent event) {
-        log.info(" JoinCode[{}] 게스트 방 입장 이벤트 처리 - 게스트 이름: {}",
+        log.info("JoinCode[{}] 게스트 방 입장 이벤트 처리 - 게스트 이름: {}",
                 event.joinCode(),
                 event.guestName()
         );
@@ -103,7 +103,7 @@ public class RoomEventService {
                     selectedMenuRequest.customName()
             );
 
-            Room room = roomCommandService.joinGuest(
+            final Room room = roomCommandService.joinGuest(
                     new JoinCode(event.joinCode()),
                     new PlayerName(event.guestName()),
                     menu, selectedMenuRequest.temperature()

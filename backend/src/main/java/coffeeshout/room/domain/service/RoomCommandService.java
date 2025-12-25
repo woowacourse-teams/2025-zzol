@@ -36,13 +36,17 @@ public class RoomCommandService {
     }
 
     public void removePlayer(JoinCode joinCode, PlayerName playerName) {
+        log.info("JoinCode[{}] 플레이어 퇴장 - 플레이어 이름: {} ", joinCode, playerName);
         final Room room = roomQueryService.getByJoinCode(joinCode);
 
         boolean removed = room.removePlayer(playerName);
 
         if (removed && room.isEmpty()) {
             delete(joinCode);
-        } else if (removed) {
+            return;
+        }
+
+        if (removed) {
             save(room);
         }
     }
@@ -114,6 +118,7 @@ public class RoomCommandService {
 
     public List<MiniGameType> updateMiniGames(JoinCode joinCode, PlayerName hostName,
                                               List<MiniGameType> miniGameTypes) {
+        log.info("JoinCode[{}] 미니게임 설정 변경 - 호스트 이름: {}, 미니게임 목록: {}", joinCode, hostName, miniGameTypes);
         final Room room = roomQueryService.getByJoinCode(joinCode);
         room.clearMiniGames();
 
@@ -130,6 +135,7 @@ public class RoomCommandService {
     }
 
     public Room readyPlayer(JoinCode joinCode, PlayerName playerName, Boolean isReady) {
+        log.info("JoinCode[{}] 플레이어 준비 상태 변경 - 플레이어 이름: {}, 준비 상태: {}", joinCode, playerName, isReady);
         final Room room = roomQueryService.getByJoinCode(joinCode);
         final Player player = room.findPlayer(playerName);
 

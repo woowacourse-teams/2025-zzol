@@ -159,7 +159,7 @@ public class RoomEventService {
         eventPublisher.publishEvent(new RouletteShownBroadcast(event.joinCode(), roomState));
     }
 
-    public void getQrCodeStatus(QrCodeStatusEvent event) {
+    public void handleQrCodeStatus(QrCodeStatusEvent event) {
         log.info(
                 "QR 코드 완료 이벤트 수신: eventId={}, joinCode={}, status={}",
                 event.eventId(), event.joinCode(), event.status()

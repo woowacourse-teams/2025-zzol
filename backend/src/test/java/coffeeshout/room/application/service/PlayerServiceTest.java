@@ -15,16 +15,11 @@ import coffeeshout.room.ui.request.SelectedMenuRequest;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 class PlayerServiceTest extends ServiceTest {
 
     @Autowired
     RoomService roomService;
-
-
-    @MockitoSpyBean
-    DelayedRoomRemovalService delayedRoomRemovalService;
 
     @Autowired
     RoomCommandService roomCommandService;

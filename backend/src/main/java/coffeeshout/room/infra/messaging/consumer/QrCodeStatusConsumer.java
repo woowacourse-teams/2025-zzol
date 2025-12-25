@@ -16,7 +16,7 @@ public class QrCodeStatusConsumer implements Consumer<QrCodeStatusEvent> {
 
     @Override
     public void accept(QrCodeStatusEvent event) {
-        roomEventService.getQrCodeStatus(event);
+        roomEventService.handleQrCodeStatus(event);
     }
 
 }

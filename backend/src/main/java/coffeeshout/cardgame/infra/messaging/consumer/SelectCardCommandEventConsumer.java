@@ -1,4 +1,4 @@
-package coffeeshout.cardgame.infra.messaging.handler;
+package coffeeshout.cardgame.infra.messaging.consumer;
 
 import coffeeshout.cardgame.application.CardGameService;
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SelectCardCommandEventHandler implements Consumer<SelectCardCommandEvent> {
+public class SelectCardCommandEventConsumer implements Consumer<SelectCardCommandEvent> {
 
     private final CardGameService cardGameService;
 

@@ -1,4 +1,4 @@
-package coffeeshout.racinggame.infra.messaging.handler;
+package coffeeshout.racinggame.infra.messaging.consumer;
 
 import coffeeshout.global.exception.custom.InvalidStateException;
 import coffeeshout.racinggame.application.RacingGameService;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TapCommandEventHandler implements Consumer<TapCommandEvent> {
+public class TapCommandEventConsumer implements Consumer<TapCommandEvent> {
 
     private final RacingGameService racingGameService;
 

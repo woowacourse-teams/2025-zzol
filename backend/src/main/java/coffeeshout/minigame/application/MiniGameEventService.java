@@ -1,7 +1,6 @@
-package coffeeshout.minigame.infra.messaging.handler;
+package coffeeshout.minigame.application;
 
 import coffeeshout.cardgame.domain.event.dto.MiniGameStartedEvent;
-import coffeeshout.minigame.application.MiniGamePersistenceService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
@@ -13,23 +12,22 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 @Slf4j
-@Component
-public class StartMiniGameCommandEventHandler implements Consumer<StartMiniGameCommandEvent> {
+@Service
+public class MiniGameEventService {
 
-    private final Map<MiniGameType, MiniGameService> miniGameServiceMap;
+    private final Map<MiniGameType, coffeeshout.minigame.domain.MiniGameService> miniGameServiceMap;
     private final RoomQueryService roomQueryService;
     private final ApplicationEventPublisher eventPublisher;
     private final MiniGamePersistenceService miniGamePersistenceService;
 
-    public StartMiniGameCommandEventHandler(
+    public MiniGameEventService(
             RoomQueryService roomQueryService,
-            List<MiniGameService> miniGameServices,
+            List<coffeeshout.minigame.domain.MiniGameService> miniGameServices,
             ApplicationEventPublisher eventPublisher,
             MiniGamePersistenceService miniGamePersistenceService
     ) {
@@ -43,9 +41,8 @@ public class StartMiniGameCommandEventHandler implements Consumer<StartMiniGameC
         ));
     }
 
-    @Override
-    public void accept(StartMiniGameCommandEvent event) {
-        log.info("[CONSUMER] 미니게임 시작 이벤트 수신: eventId={}, joinCode={}, hostName={}",
+    public void startMiniGame(StartMiniGameCommandEvent event) {
+        log.info("미니게임 시작 이벤트 수신: eventId={}, joinCode={}, hostName={}",
                 event.eventId(), event.joinCode(), event.hostName());
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(event.joinCode()));
@@ -60,7 +57,6 @@ public class StartMiniGameCommandEventHandler implements Consumer<StartMiniGameC
 
         // 모든 작업 성공 후 이벤트 발행
         eventPublisher.publishEvent(new MiniGameStartedEvent(event.joinCode(), miniGameType.name()));
-        log.info("[CONSUMER] JoinCode[{}] 미니게임 시작됨 - MiniGameType : {}", event.joinCode(), miniGameType);
-
+        log.info("JoinCode[{}] 미니게임 시작됨 - MiniGameType : {}", event.joinCode(), miniGameType);
     }
 }

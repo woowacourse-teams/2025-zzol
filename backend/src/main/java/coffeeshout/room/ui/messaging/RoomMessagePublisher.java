@@ -13,7 +13,6 @@ import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import coffeeshout.room.ui.response.RoomStatusResponse;
 import coffeeshout.room.ui.response.WinnerResponse;
 import generator.annotaions.MessageResponse;
-import generator.annotaions.Operation;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,18 +32,11 @@ public class RoomMessagePublisher {
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
-    /**
-     * 플레이어 목록 변경 이벤트를 수신하여 브로드캐스트
-     */
     @EventListener
     @MessageResponse(
             path = "/room/{joinCode}",
             returnType = List.class,
             genericType = PlayerResponse.class
-    )
-    @Operation(
-            summary = "플레이어 목록 브로드캐스트",
-            description = "변경된 플레이어 목록을 방의 모든 참가자에게 전송합니다."
     )
     public void onPlayerListChanged(PlayerListChangedBroadcast event) {
         log.debug("플레이어 목록 변경 이벤트 수신: joinCode={}, playerCount={}",
@@ -60,18 +52,11 @@ public class RoomMessagePublisher {
         log.debug("플레이어 목록 브로드캐스트 완료: joinCode={}", event.joinCode());
     }
 
-    /**
-     * 미니게임 목록 변경 이벤트를 수신하여 브로드캐스트
-     */
     @EventListener
     @MessageResponse(
             path = "/room/{joinCode}/minigame",
             returnType = List.class,
             genericType = String.class
-    )
-    @Operation(
-            summary = "미니게임 목록 브로드캐스트",
-            description = "선택된 미니게임 목록을 방의 모든 참가자에게 전송합니다."
     )
     public void onMiniGameListChanged(MiniGameListChangedBroadcast event) {
         log.debug("미니게임 목록 변경 이벤트 수신: joinCode={}, gameCount={}",
@@ -83,17 +68,10 @@ public class RoomMessagePublisher {
         log.debug("미니게임 목록 브로드캐스트 완료: joinCode={}", event.joinCode());
     }
 
-    /**
-     * 룰렛 화면 표시 이벤트를 수신하여 브로드캐스트
-     */
     @EventListener
     @MessageResponse(
             path = "/room/{joinCode}/roulette",
             returnType = RoomStatusResponse.class
-    )
-    @Operation(
-            summary = "룰렛 화면 전환 브로드캐스트",
-            description = "룰렛 화면으로의 전환을 방의 모든 참가자에게 전송합니다."
     )
     public void onRouletteShown(RouletteShownBroadcast event) {
         log.debug("룰렛 화면 표시 이벤트 수신: joinCode={}, roomState={}",
@@ -106,17 +84,10 @@ public class RoomMessagePublisher {
         log.debug("룰렛 화면 전환 브로드캐스트 완료: joinCode={}", event.joinCode());
     }
 
-    /**
-     * 룰렛 당첨자 선택 이벤트를 수신하여 브로드캐스트
-     */
     @EventListener
     @MessageResponse(
             path = "/room/{joinCode}/winner",
             returnType = WinnerResponse.class
-    )
-    @Operation(
-            summary = "룰렛 당첨자 브로드캐스트",
-            description = "룰렛으로 선택된 당첨자를 방의 모든 참가자에게 전송합니다."
     )
     public void onRouletteWinnerSelected(RouletteWinnerSelectedBroadcast event) {
         log.debug("룰렛 당첨자 선택 이벤트 수신: joinCode={}, winner={}",
@@ -130,17 +101,10 @@ public class RoomMessagePublisher {
                 event.joinCode(), event.winner().name().value());
     }
 
-    /**
-     * QR 코드 상태 변경 이벤트를 수신하여 브로드캐스트
-     */
     @EventListener
     @MessageResponse(
             path = "/room/{joinCode}/qr-code",
             returnType = QrCodeStatusResponse.class
-    )
-    @Operation(
-            summary = "QR 코드 상태 브로드캐스트",
-            description = "QR 코드 생성 상태를 방의 모든 참가자에게 전송합니다."
     )
     public void onQrCodeStatusChanged(QrCodeStatusChangedBroadcast event) {
         log.debug("QR 코드 상태 변경 이벤트 수신: joinCode={}, status={}",

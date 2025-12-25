@@ -112,7 +112,8 @@ class PlayerServiceTest extends ServiceTest {
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when & then
-                assertThatThrownBy(() -> playerService.removePlayer(joinCode.getValue(), "존재하지_않는_게스트"));
+                assertThatThrownBy(() -> playerService.removePlayer(joinCode.getValue(), "존재하지_않는_게스트"))
+                        .isInstanceOf(InvalidArgumentException.class);
             }
 
             @Test
@@ -132,8 +133,8 @@ class PlayerServiceTest extends ServiceTest {
         @Test
         void 존재하지_않는_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> playerService.removePlayer("", "플레이어"))
-                    .isInstanceOf(InvalidArgumentException.class);
+            assertThatThrownBy(() -> playerService.removePlayer("ABCD", "플레이어"))
+                    .isInstanceOf(NotExistElementException.class);
         }
 
         @Test

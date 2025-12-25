@@ -28,6 +28,6 @@ public class RoomQueryService {
 
     public List<Player> getPlayers(@NonNull JoinCode joinCode) {
         final Room room = getByJoinCode(joinCode);
-        return room.getPlayers();
+        return List.copyOf(room.getPlayers());
     }
 }

@@ -1,6 +1,5 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
@@ -12,14 +11,10 @@ import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
 import coffeeshout.room.domain.event.RouletteShowEvent;
+import coffeeshout.room.domain.event.RouletteShownEvent;
 import coffeeshout.room.domain.event.RouletteSpinEvent;
-import coffeeshout.room.domain.event.broadcast.MiniGameListChangedBroadcast;
-import coffeeshout.room.domain.event.broadcast.PlayerListChangedBroadcast;
-import coffeeshout.room.domain.event.broadcast.QrCodeStatusChangedBroadcast;
-import coffeeshout.room.domain.event.broadcast.RouletteShownBroadcast;
-import coffeeshout.room.domain.event.broadcast.RouletteWinnerSelectedBroadcast;
+import coffeeshout.room.domain.event.RouletteWinnerEvent;
 import coffeeshout.room.domain.menu.Menu;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.service.MenuCommandService;
@@ -28,7 +23,6 @@ import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.infra.persistence.RoulettePersistenceService;
 import coffeeshout.room.ui.request.SelectedMenuRequest;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -55,13 +49,13 @@ public class RoomEventService {
                 event.miniGameTypes()
         );
 
-        List<MiniGameType> miniGameTypes = roomCommandService.updateMiniGames(
+        roomCommandService.updateMiniGames(
                 new JoinCode(event.joinCode()),
                 new PlayerName(event.hostName()),
                 event.miniGameTypes()
         );
 
-        eventPublisher.publishEvent(new MiniGameListChangedBroadcast(event.joinCode(), miniGameTypes));
+        eventPublisher.publishEvent(event);
     }
 
     public void kickPlayer(PlayerKickEvent event) {
@@ -70,19 +64,13 @@ public class RoomEventService {
 
         roomCommandService.removePlayer(joinCode, new PlayerName(event.playerName()));
 
-        List<Player> players = roomQueryService.getPlayers(joinCode);
-
-        eventPublisher.publishEvent(new PlayerListChangedBroadcast(event.joinCode(), players));
+        eventPublisher.publishEvent(new PlayerListUpdateEvent(event.joinCode()));
     }
 
     public void updatePlayers(PlayerListUpdateEvent event) {
         log.info("JoinCode[{}] 플레이어 목록 업데이트 이벤트 처리", event.joinCode());
 
-        JoinCode joinCode = new JoinCode(event.joinCode());
-
-        final List<Player> players = roomQueryService.getPlayers(joinCode);
-
-        eventPublisher.publishEvent(new PlayerListChangedBroadcast(event.joinCode(), players));
+        eventPublisher.publishEvent(event);
     }
 
     public void readyPlayer(PlayerReadyEvent event) {
@@ -92,12 +80,12 @@ public class RoomEventService {
                 event.isReady()
         );
 
-        Room room = roomCommandService.readyPlayer(new JoinCode(event.joinCode()),
+        roomCommandService.readyPlayer(new JoinCode(event.joinCode()),
                 new PlayerName(event.playerName()),
                 event.isReady()
         );
 
-        eventPublisher.publishEvent(new PlayerListChangedBroadcast(event.joinCode(), room.getPlayers()));
+        eventPublisher.publishEvent(new PlayerListUpdateEvent(event.joinCode()));
     }
 
     public void joinRoom(RoomJoinEvent event) {
@@ -128,7 +116,7 @@ public class RoomEventService {
     }
 
     public void createRoom(RoomCreateEvent event) {
-        log.info(" JoinCode[{}] 방 생성 이벤트 처리 - 호스트 이름: {}",
+        log.info("JoinCode[{}] 방 생성 이벤트 처리 - 호스트 이름: {}",
                 event.joinCode(),
                 event.hostName()
         );
@@ -156,19 +144,13 @@ public class RoomEventService {
 
         roulettePersistenceService.saveRoomStatus(event);
 
-        eventPublisher.publishEvent(new RouletteShownBroadcast(event.joinCode(), roomState));
+        eventPublisher.publishEvent(new RouletteShownEvent(event.joinCode(), roomState));
     }
 
     public void handleQrCodeStatus(QrCodeStatusEvent event) {
         log.info(
                 "QR 코드 완료 이벤트 수신: eventId={}, joinCode={}, status={}",
                 event.eventId(), event.joinCode(), event.status()
-        );
-
-        final QrCodeStatusChangedBroadcast broadCast = new QrCodeStatusChangedBroadcast(
-                event.joinCode(),
-                event.status(),
-                event.qrCodeUrl()
         );
 
         switch (event.status()) {
@@ -178,7 +160,7 @@ public class RoomEventService {
                         event.eventId(), event.joinCode(), event.qrCodeUrl()
                 );
                 roomCommandService.assignQrCode(new JoinCode(event.joinCode()), event.qrCodeUrl());
-                eventPublisher.publishEvent(broadCast);
+                eventPublisher.publishEvent(event);
             }
             case ERROR -> {
                 log.info(
@@ -186,9 +168,9 @@ public class RoomEventService {
                         event.eventId(), event.joinCode()
                 );
                 roomCommandService.assignQrCodeError(new JoinCode(event.joinCode()));
-                eventPublisher.publishEvent(broadCast);
+                eventPublisher.publishEvent(event);
             }
-            default -> log.warn(
+            default -> log.error(
                     "처리할 수 없는 QR 코드 상태: eventId={}, joinCode={}, status={}",
                     event.eventId(), event.joinCode(), event.status()
             );
@@ -199,6 +181,6 @@ public class RoomEventService {
         final Winner winner = event.winner();
         roulettePersistenceService.saveRouletteResult(event);
 
-        eventPublisher.publishEvent(new RouletteWinnerSelectedBroadcast(event.joinCode(), winner));
+        eventPublisher.publishEvent(new RouletteWinnerEvent(event.joinCode(), winner));
     }
 }

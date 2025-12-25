@@ -3,11 +3,12 @@ package coffeeshout.room.ui.messaging;
 import coffeeshout.global.ui.WebSocketResponse;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.event.broadcast.MiniGameListChangedBroadcast;
-import coffeeshout.room.domain.event.broadcast.PlayerListChangedBroadcast;
-import coffeeshout.room.domain.event.broadcast.QrCodeStatusChangedBroadcast;
-import coffeeshout.room.domain.event.broadcast.RouletteShownBroadcast;
-import coffeeshout.room.domain.event.broadcast.RouletteWinnerSelectedBroadcast;
+import coffeeshout.room.domain.event.MiniGameSelectEvent;
+import coffeeshout.room.domain.event.PlayerListUpdateEvent;
+import coffeeshout.room.domain.event.QrCodeStatusEvent;
+import coffeeshout.room.domain.event.RouletteShownEvent;
+import coffeeshout.room.domain.event.RouletteWinnerEvent;
+import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.ui.response.PlayerResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import coffeeshout.room.ui.response.RoomStatusResponse;
@@ -31,6 +32,7 @@ public class RoomMessagePublisher {
     private static final String QR_CODE_TOPIC_FORMAT = "/topic/room/%s/qr-code";
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
+    private final RoomQueryService roomQueryService;
 
     @EventListener
     @MessageResponse(
@@ -38,11 +40,12 @@ public class RoomMessagePublisher {
             returnType = List.class,
             genericType = PlayerResponse.class
     )
-    public void onPlayerListChanged(PlayerListChangedBroadcast event) {
-        log.debug("플레이어 목록 변경 이벤트 수신: joinCode={}, playerCount={}",
-                event.joinCode(), event.players().size());
+    public void onPlayerListChanged(PlayerListUpdateEvent event) {
+        log.debug("플레이어 목록 변경 이벤트 수신: joinCode={}",
+                event.joinCode());
 
-        final List<PlayerResponse> responses = event.players().stream()
+        final List<PlayerResponse> responses = roomQueryService.getPlayers(new JoinCode(event.joinCode()))
+                .stream()
                 .map(PlayerResponse::from)
                 .toList();
 
@@ -58,7 +61,7 @@ public class RoomMessagePublisher {
             returnType = List.class,
             genericType = String.class
     )
-    public void onMiniGameListChanged(MiniGameListChangedBroadcast event) {
+    public void onMiniGameListChanged(MiniGameSelectEvent event) {
         log.debug("미니게임 목록 변경 이벤트 수신: joinCode={}, gameCount={}",
                 event.joinCode(), event.miniGameTypes().size());
 
@@ -73,7 +76,7 @@ public class RoomMessagePublisher {
             path = "/room/{joinCode}/roulette",
             returnType = RoomStatusResponse.class
     )
-    public void onRouletteShown(RouletteShownBroadcast event) {
+    public void onRouletteShown(RouletteShownEvent event) {
         log.debug("룰렛 화면 표시 이벤트 수신: joinCode={}, roomState={}",
                 event.joinCode(), event.roomState());
 
@@ -89,7 +92,7 @@ public class RoomMessagePublisher {
             path = "/room/{joinCode}/winner",
             returnType = WinnerResponse.class
     )
-    public void onRouletteWinnerSelected(RouletteWinnerSelectedBroadcast event) {
+    public void onRouletteWinnerSelected(RouletteWinnerEvent event) {
         log.debug("룰렛 당첨자 선택 이벤트 수신: joinCode={}, winner={}",
                 event.joinCode(), event.winner().name().value());
 
@@ -106,7 +109,7 @@ public class RoomMessagePublisher {
             path = "/room/{joinCode}/qr-code",
             returnType = QrCodeStatusResponse.class
     )
-    public void onQrCodeStatusChanged(QrCodeStatusChangedBroadcast event) {
+    public void onQrCodeStatusChanged(QrCodeStatusEvent event) {
         log.debug("QR 코드 상태 변경 이벤트 수신: joinCode={}, status={}",
                 event.joinCode(), event.status());
 

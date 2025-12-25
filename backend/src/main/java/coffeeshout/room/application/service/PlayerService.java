@@ -34,13 +34,17 @@ public class PlayerService {
         return isRemoved;
     }
 
-    public void kickPlayer(String joinCode, String playerName) {
+    public boolean kickPlayer(String joinCode, String playerName) {
         log.info("JoinCode[{}] 플레이어 강퇴 명령 처리 - 플레이어: {}", joinCode, playerName);
 
-        removePlayer(joinCode, playerName);
+        boolean exists = removePlayer(joinCode, playerName);
 
-        final PlayerKickEvent event = new PlayerKickEvent(joinCode, playerName);
-        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        if (exists) {
+            final PlayerKickEvent event = new PlayerKickEvent(joinCode, playerName);
+            streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        }
+
+        return exists;
     }
 
     public void changePlayerReadyState(String joinCode, String playerName, Boolean isReady) {

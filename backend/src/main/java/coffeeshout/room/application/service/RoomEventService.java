@@ -19,7 +19,6 @@ import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.service.MenuCommandService;
 import coffeeshout.room.domain.service.RoomCommandService;
-import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.infra.persistence.RoulettePersistenceService;
 import coffeeshout.room.ui.request.SelectedMenuRequest;
@@ -34,7 +33,6 @@ import org.springframework.stereotype.Service;
 public class RoomEventService {
 
     private final RoomCommandService roomCommandService;
-    private final RoomQueryService roomQueryService;
     private final MenuCommandService menuCommandService;
     private final DelayedRoomRemovalService delayedRoomRemovalService;
     private final ApplicationEventPublisher eventPublisher;
@@ -42,6 +40,9 @@ public class RoomEventService {
     private final RoulettePersistenceService roulettePersistenceService;
     private final RouletteService rouletteService;
 
+    /**
+     * 미니게임 목록을 업데이트하고, WebSocket 브로드캐스트를 위해 이벤트를 재발행합니다.
+     */
     public void updateMiniGames(MiniGameSelectEvent event) {
         log.info("JoinCode[{}] 미니게임 목록 업데이트 이벤트 처리 - 호스트: {}, 미니게임 종류: {}",
                 event.joinCode(),
@@ -178,6 +179,8 @@ public class RoomEventService {
     }
 
     public void spinRoulette(RouletteSpinEvent event) {
+        log.info("JoinCode[{}] 룰렛 스핀 이벤트 처리 - 당첨자: {}", event.joinCode(), event.winner().name().value());
+
         final Winner winner = event.winner();
         roulettePersistenceService.saveRouletteResult(event);
 

@@ -89,4 +89,25 @@ class PlayerServiceTest extends ServiceTest {
         assertThat(players.stream().map(p -> p.getName().value()))
                 .containsExactlyInAnyOrder(hostName, guestName);
     }
+
+    @Test
+    void 게스트를_제거했을_때_방이_유지되고_플레이어_목록에서_제외된다() {
+        // given
+        String hostName = "호스트";
+        String guestName = "게스트";
+        SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
+        SelectedMenuRequest guestSelectedMenuRequest = new SelectedMenuRequest(2L, null, MenuTemperature.ICE);
+        Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
+        JoinCode joinCode = createdRoom.getJoinCode();
+        joinGuest(joinCode, guestName, guestSelectedMenuRequest);
+
+        // when
+        playerService.removePlayer(joinCode.getValue(), guestName);
+
+        // then
+        assertThat(roomService.roomExists(joinCode.getValue())).isTrue();
+        List<Player> players = playerService.getPlayers(joinCode.getValue());
+        assertThat(players).hasSize(1);
+        assertThat(players.getFirst().getName().value()).isEqualTo(hostName);
+    }
 }

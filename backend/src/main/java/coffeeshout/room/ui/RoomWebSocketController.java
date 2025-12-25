@@ -5,15 +5,12 @@ import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.RoomService;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.PlayerReadyEvent;
 import coffeeshout.room.domain.event.RouletteShowEvent;
 import coffeeshout.room.domain.event.RouletteSpinEvent;
 import coffeeshout.room.domain.player.Winner;
-import coffeeshout.room.domain.roulette.Roulette;
-import coffeeshout.room.domain.roulette.RoulettePicker;
 import coffeeshout.room.ui.request.MiniGameSelectMessage;
 import coffeeshout.room.ui.request.ReadyChangeMessage;
 import coffeeshout.room.ui.request.RouletteSpinMessage;
@@ -120,8 +117,7 @@ public class RoomWebSocketController {
                     """
     )
     public void broadcastRouletteSpin(@DestinationVariable String joinCode, RouletteSpinMessage message) {
-        final Room room = roomService.getRoomByJoinCode(joinCode);
-        final Winner winner = room.spinRoulette(room.getHost(), new Roulette(new RoulettePicker()));
+        final Winner winner = roomService.spinRoulette(joinCode, message.hostName());
         final BaseEvent event = new RouletteSpinEvent(joinCode, message.hostName(), winner);
         streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
     }

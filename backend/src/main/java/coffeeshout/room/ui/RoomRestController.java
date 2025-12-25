@@ -1,7 +1,8 @@
 package coffeeshout.room.ui;
 
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.application.RoomService;
+import coffeeshout.room.application.service.PlayerService;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.ui.request.RoomEnterRequest;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RoomRestController implements RoomApi {
 
     private final RoomService roomService;
+    private final PlayerService playerService;
 
     @GetMapping("/{joinCode}/miniGames/remaining")
     public ResponseEntity<RemainingMiniGameResponse> getRemainingMiniGames(@PathVariable String joinCode) {
@@ -108,12 +110,7 @@ public class RoomRestController implements RoomApi {
             @PathVariable String joinCode,
             @PathVariable String playerName
     ) {
-        final boolean exists = roomService.kickPlayer(joinCode, playerName);
-
-        if (exists) {
-            return ResponseEntity.noContent().build();
-        }
-
-        return ResponseEntity.notFound().build();
+        playerService.kickPlayer(joinCode, playerName);
+        return ResponseEntity.noContent().build();
     }
 }

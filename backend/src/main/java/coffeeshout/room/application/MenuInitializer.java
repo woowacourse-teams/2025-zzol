@@ -1,5 +1,6 @@
 package coffeeshout.room.application;
 
+import coffeeshout.room.application.port.DataInitializable;
 import coffeeshout.room.domain.menu.ProvidedMenu;
 import coffeeshout.room.domain.menu.TemperatureAvailability;
 import coffeeshout.room.domain.service.MenuCategoryQueryService;

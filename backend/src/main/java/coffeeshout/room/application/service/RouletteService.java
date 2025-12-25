@@ -26,10 +26,10 @@ public class RouletteService {
     private final PlayerJpaRepository playerJpaRepository;
     private final RouletteResultJpaRepository rouletteResultJpaRepository;
 
-    public Room showRoulette(String joinCode) {
+    public RoomState showRoulette(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         room.showRoulette();
-        return room;
+        return room.getRoomState();
     }
 
     @Transactional

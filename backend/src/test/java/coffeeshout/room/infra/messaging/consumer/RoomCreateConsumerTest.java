@@ -1,10 +1,10 @@
-package coffeeshout.room.infra.messaging.handler;
+package coffeeshout.room.infra.messaging.consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.ServiceTest;
-import coffeeshout.room.application.DelayedRoomRemovalService;
+import coffeeshout.room.application.service.DelayedRoomRemovalService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomCreateEvent;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-class RoomCreateEventHandlerTest extends ServiceTest {
+class RoomCreateConsumerTest extends ServiceTest {
 
     @Autowired
     Consumer<RoomCreateEvent> roomCreateEventConsumer;
@@ -60,8 +60,8 @@ class RoomCreateEventHandlerTest extends ServiceTest {
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(room.getJoinCode()).isEqualTo(joinCode);
             softly.assertThat(room.getPlayers()).hasSize(1);
-            softly.assertThat(room.getPlayers().get(0).getName().value()).isEqualTo(hostName);
-            softly.assertThat(room.getPlayers().get(0).getSelectedMenu().menuTemperature())
+            softly.assertThat(room.getPlayers().getFirst().getName().value()).isEqualTo(hostName);
+            softly.assertThat(room.getPlayers().getFirst().getSelectedMenu().menuTemperature())
                     .isEqualTo(MenuTemperature.HOT);
         });
     }

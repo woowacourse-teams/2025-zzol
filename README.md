@@ -1,18 +1,19 @@
-# ☕ 커피빵 (CoffeeShout)
+# 쫄 (ZZOL)
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/ab912632-5b02-4743-a6b0-dab08d6b15d3" alt="커피빵 로고" style="width: 100%; max-width: 100%;" />
+  <img width="4800" height="1368" alt="banner" src="https://github.com/user-attachments/assets/bd6bc509-16bf-4c2d-aab1-21fd346398f1" />
 </div>
 
-## 똥손도 즐기는 커피빵 전쟁!
 
-점심시간마다 반복되는 '오늘 커피는 누가 살까?' 고민, 지루하지 않으신가요?
+## 똥손도 즐기는 운빨 게임!
 
-커피빵은 **커피 내기를 간편하고 유쾌하게** 즐길 수 있도록 만든 플랫폼입니다.
+친구들과 반복되는 '오늘은 누구로 정할까?', 지루하지 않으신가요?
+
+쫄(ZZOL)은 **똥손도 재미있게 즐길 수 있는 실시간 대결 게임 서비스**입니다.
 
 단순한 뽑기, 미니 게임 그리고 룰렛 시스템으로 더욱 재밌는 경험을 제공합니다.
 
-👉🏻[게임하러가기](https://coffee-shout.com)
+👉🏻[게임하러가기](https://zzol.site)
 
 ## 🎯 서비스 흐름
 

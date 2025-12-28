@@ -17,7 +17,8 @@
 
 ## 🎯 서비스 흐름
 
-<img width="7680" height="12960" alt="커피빵 리드미" src="https://github.com/user-attachments/assets/d7355bce-a09a-4f53-8d63-b5b152e24230" />
+<img width="7680" height="12960" alt="쫄 리드미" src="https://github.com/user-attachments/assets/93a0553b-56ad-4762-9872-f2f082400608" />
+
 
 ## 🛠 기술 스택
 

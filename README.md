@@ -17,7 +17,8 @@
 
 ## 🎯 서비스 흐름
 
-<img width="7680" height="12960" alt="쫄 리드미" src="https://github.com/user-attachments/assets/93a0553b-56ad-4762-9872-f2f082400608" />
+<img width="7680" height="12960" alt="쫄 리드미" src="https://github.com/user-attachments/assets/9cf5441e-32aa-4738-9e6a-2a67ee54827c" />
+
 
 
 ## 🛠 기술 스택

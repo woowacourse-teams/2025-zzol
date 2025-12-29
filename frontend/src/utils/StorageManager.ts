@@ -1,10 +1,10 @@
 export const STORAGE_KEYS = {
-  VISITED: 'coffee-shout-visited',
-  FIRST_TIME_USER: 'coffee-shout-first-time-user',
-  JOIN_CODE: 'coffee-shout-join-code',
-  MY_NAME: 'coffee-shout-my-name',
-  QR_CODE_URL: 'coffee-shout-qr-code-url',
-  PLAYER_TYPE: 'coffee-shout-player-type',
+  VISITED: 'zzol-visited',
+  FIRST_TIME_USER: 'zzol-first-time-user',
+  JOIN_CODE: 'zzol-join-code',
+  MY_NAME: 'zzol-my-name',
+  QR_CODE_URL: 'zzol-qr-code-url',
+  PLAYER_TYPE: 'zzol-player-type',
 } as const;
 
 type StorageType = 'localStorage' | 'sessionStorage';

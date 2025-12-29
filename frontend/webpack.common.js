@@ -106,7 +106,7 @@ export default (_, argv) => {
       sentryWebpackPlugin({
         authToken: process.env.SENTRY_AUTH_TOKEN,
         org: 'woowacourse-7th-fe',
-        project: '2025-coffee-shout',
+        project: '2025-zzol',
         release: appVersion,
         sourcemaps: { disable: mode !== 'production' },
       }),

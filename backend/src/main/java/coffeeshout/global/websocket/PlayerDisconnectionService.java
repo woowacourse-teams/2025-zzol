@@ -1,7 +1,9 @@
 package coffeeshout.global.websocket;
 
 import coffeeshout.global.websocket.event.RoomStateUpdateEvent;
-import coffeeshout.room.application.service.PlayerService;
+import coffeeshout.room.domain.JoinCode;
+import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.domain.service.RoomCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -16,14 +18,14 @@ import org.springframework.stereotype.Service;
 public class PlayerDisconnectionService {
 
     private final StompSessionManager sessionManager;
-    private final PlayerService playerService;
+    private final RoomCommandService roomCommandService;
     private final ApplicationEventPublisher eventPublisher;
 
     public void cancelReady(String playerKey) {
         final String joinCode = sessionManager.extractJoinCode(playerKey);
         final String playerName = sessionManager.extractPlayerName(playerKey);
 
-        playerService.changePlayerReadyState(joinCode, playerName, false);
+        roomCommandService.readyPlayer(new JoinCode(joinCode), new PlayerName(playerName), false);
 
         eventPublisher.publishEvent(new RoomStateUpdateEvent(joinCode, "PLAYER_SET_READY_FALSE"));
         log.info("삭제 대기된 플레이어 ready 상태 변경 완료: joinCode={}, playerName={}", joinCode, playerName);
@@ -54,7 +56,7 @@ public class PlayerDisconnectionService {
     private void removePlayerFromRoom(String joinCode, String playerName) {
         try {
             // 방에서 플레이어 제거
-            boolean removed = playerService.removePlayer(joinCode, playerName);
+            boolean removed = roomCommandService.removePlayer(new JoinCode(joinCode), new PlayerName(playerName));
 
             if (removed) {
                 eventPublisher.publishEvent(new RoomStateUpdateEvent(joinCode, "PLAYER_REMOVED"));

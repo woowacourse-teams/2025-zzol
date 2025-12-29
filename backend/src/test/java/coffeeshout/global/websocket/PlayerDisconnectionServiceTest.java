@@ -4,6 +4,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import coffeeshout.room.application.service.PlayerService;
+import coffeeshout.room.domain.JoinCode;
+import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.domain.service.RoomCommandService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,16 +18,19 @@ import org.springframework.context.ApplicationEventPublisher;
 class PlayerDisconnectionServiceTest {
 
     @Mock
-    private StompSessionManager sessionManager;
+    StompSessionManager sessionManager;
 
     @Mock
-    private PlayerService playerService;
+    PlayerService playerService;
 
     @Mock
-    private ApplicationEventPublisher eventPublisher;
+    ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
-    private PlayerDisconnectionService playerDisconnectionService;
+    PlayerDisconnectionService playerDisconnectionService;
+
+    @Mock
+    RoomCommandService roomCommandService;
 
     @Test
     void cancelReady_isReady가_false로_변경된다() {
@@ -40,6 +46,6 @@ class PlayerDisconnectionServiceTest {
         playerDisconnectionService.cancelReady(playerKey);
 
         // then
-        then(playerService).should().changePlayerReadyState(joinCode, playerName, false);
+        then(roomCommandService).should().readyPlayer(new JoinCode(joinCode), new PlayerName(playerName), false);
     }
 }

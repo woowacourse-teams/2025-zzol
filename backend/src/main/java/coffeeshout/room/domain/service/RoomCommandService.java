@@ -35,7 +35,7 @@ public class RoomCommandService {
         roomRepository.deleteByJoinCode(joinCode);
     }
 
-    public void removePlayer(JoinCode joinCode, PlayerName playerName) {
+    public boolean removePlayer(JoinCode joinCode, PlayerName playerName) {
         log.info("JoinCode[{}] 플레이어 퇴장 - 플레이어 이름: {} ", joinCode, playerName);
         final Room room = roomQueryService.getByJoinCode(joinCode);
 
@@ -43,12 +43,14 @@ public class RoomCommandService {
 
         if (removed && room.isEmpty()) {
             delete(joinCode);
-            return;
+            return true;
         }
 
         if (removed) {
             save(room);
         }
+
+        return removed;
     }
 
     public Room joinGuest(JoinCode joinCode, PlayerName playerName, Menu menu, MenuTemperature menuTemperature) {

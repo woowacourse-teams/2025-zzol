@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import coffeeshout.global.ServiceTest;
 import coffeeshout.global.exception.custom.InvalidArgumentException;
 import coffeeshout.global.exception.custom.NotExistElementException;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.menu.Menu;
@@ -19,6 +20,7 @@ import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PlayerServiceTest extends ServiceTest {
 
@@ -33,6 +35,9 @@ class PlayerServiceTest extends ServiceTest {
 
     @Autowired
     PlayerService playerService;
+
+    @MockitoBean
+    StreamPublisher streamPublisher;
 
     private void joinGuest(JoinCode joinCode, String guestName, SelectedMenuRequest selectedMenuRequest) {
         Menu menu = menuCommandService.convertMenu(selectedMenuRequest.id(), selectedMenuRequest.customName());
@@ -56,7 +61,7 @@ class PlayerServiceTest extends ServiceTest {
             JoinCode joinCode = createdRoom.getJoinCode();
 
             // when
-            playerService.removePlayer(joinCode.getValue(), hostName);
+            playerService.kickPlayer(joinCode.getValue(), hostName);
 
             // then
             assertThat(roomService.roomExists(joinCode.getValue())).isFalse();
@@ -73,7 +78,7 @@ class PlayerServiceTest extends ServiceTest {
             joinGuest(joinCode, "게스트1", new SelectedMenuRequest(2L, null, MenuTemperature.ICE));
 
             // when
-            playerService.removePlayer(joinCode.getValue(), hostName);
+            playerService.kickPlayer(joinCode.getValue(), hostName);
 
             // then
             assertThat(roomService.roomExists(joinCode.getValue())).isTrue();
@@ -94,7 +99,7 @@ class PlayerServiceTest extends ServiceTest {
                 joinGuest(joinCode, guestName, guestSelectedMenuRequest);
 
                 // when
-                playerService.removePlayer(joinCode.getValue(), guestName);
+                playerService.kickPlayer(joinCode.getValue(), guestName);
 
                 // then
                 assertThat(roomService.roomExists(joinCode.getValue())).isTrue();
@@ -112,7 +117,7 @@ class PlayerServiceTest extends ServiceTest {
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when & then
-                assertThatThrownBy(() -> playerService.removePlayer(joinCode.getValue(), "존재하지_않는_게스트"))
+                assertThatThrownBy(() -> playerService.kickPlayer(joinCode.getValue(), "존재하지_않는_게스트"))
                         .isInstanceOf(InvalidArgumentException.class);
             }
 
@@ -125,7 +130,7 @@ class PlayerServiceTest extends ServiceTest {
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when & then
-                assertThatThrownBy(() -> playerService.removePlayer(joinCode.getValue(), null))
+                assertThatThrownBy(() -> playerService.kickPlayer(joinCode.getValue(), null))
                         .isInstanceOf(InvalidArgumentException.class);
             }
         }
@@ -133,14 +138,14 @@ class PlayerServiceTest extends ServiceTest {
         @Test
         void 존재하지_않는_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> playerService.removePlayer("ABCD", "플레이어"))
+            assertThatThrownBy(() -> playerService.kickPlayer("ABCD", "플레이어"))
                     .isInstanceOf(NotExistElementException.class);
         }
 
         @Test
         void null_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> playerService.removePlayer(null, "플레이어"))
+            assertThatThrownBy(() -> playerService.kickPlayer(null, "플레이어"))
                     .isInstanceOf(InvalidArgumentException.class);
         }
     }
@@ -176,7 +181,7 @@ class PlayerServiceTest extends ServiceTest {
             JoinCode joinCode = createdRoom.getJoinCode();
 
             // 모든 플레이어 제거 (방도 제거됨)
-            playerService.removePlayer(joinCode.getValue(), hostName);
+            playerService.kickPlayer(joinCode.getValue(), hostName);
 
             // when & then
             assertThatThrownBy(() -> playerService.getPlayers(joinCode.getValue()))

@@ -26,10 +26,6 @@ public class RedisStreamEventRegistrar implements SmartInitializingSingleton {
 
     @Override
     public void afterSingletonsInstantiated() {
-        inspectConsumerBeans();
-    }
-
-    public void inspectConsumerBeans() {
         final String[] beanNames = beanFactory.getBeanNamesForType(Consumer.class);
         for (String beanName : beanNames) {
             try {
@@ -43,6 +39,7 @@ public class RedisStreamEventRegistrar implements SmartInitializingSingleton {
     private void registerEventTypeFromConsumer(String beanName) {
         final Class<?> eventType = resolveEventType(beanName);
         if (eventType == null) {
+            log.warn("Bean {} does not implement Consumer<T> with resolvable generic type", beanName);
             return;
         }
 
@@ -58,29 +55,7 @@ public class RedisStreamEventRegistrar implements SmartInitializingSingleton {
 
     private Class<?> resolveEventType(String beanName) {
         final ResolvableType type = beanFactory.getMergedBeanDefinition(beanName).getResolvableType();
-        if (type == ResolvableType.NONE) {
-            log.warn("Cannot resolve type for bean: {}", beanName);
-            return null;
-        }
 
-        final ResolvableType consumerType = type.as(Consumer.class);
-        if (consumerType == ResolvableType.NONE) {
-            log.warn("Bean {} does not properly implement Consumer interface", beanName);
-            return null;
-        }
-
-        final ResolvableType genericType = consumerType.getGeneric(0);
-        if (genericType == ResolvableType.NONE) {
-            log.warn("Bean {} has raw type Consumer without generic parameter", beanName);
-            return null;
-        }
-
-        final Class<?> eventType = genericType.resolve();
-        if (eventType == null) {
-            log.warn("Cannot resolve generic type for bean: {}", beanName);
-            return null;
-        }
-
-        return eventType;
+        return type.as(Consumer.class).getGeneric(0).resolve();
     }
 }

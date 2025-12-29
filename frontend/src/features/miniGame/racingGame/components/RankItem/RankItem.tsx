@@ -1,5 +1,6 @@
 import Description from '@/components/@common/Description/Description';
 import * as S from './RankItem.styled';
+import { memo } from 'react';
 
 type Props = {
   playerName: string;
@@ -8,7 +9,7 @@ type Props = {
   isFixed: boolean;
 };
 
-const RankItem = ({ playerName, rank, isMe, isFixed }: Props) => {
+const RankItem = memo(({ playerName, rank, isMe, isFixed }: Props) => {
   return (
     <S.Container $isFixed={isFixed}>
       <S.RankNumber>
@@ -17,7 +18,9 @@ const RankItem = ({ playerName, rank, isMe, isFixed }: Props) => {
       <Description color={getTextColor(isMe, isFixed)}>{playerName}</Description>
     </S.Container>
   );
-};
+});
+
+RankItem.displayName = 'RankItem';
 
 export default RankItem;
 

@@ -3,7 +3,6 @@ package coffeeshout.global.websocket;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
-import coffeeshout.room.application.service.PlayerService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomCommandService;
@@ -21,9 +20,6 @@ class PlayerDisconnectionServiceTest {
     StompSessionManager sessionManager;
 
     @Mock
-    PlayerService playerService;
-
-    @Mock
     ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
@@ -35,8 +31,8 @@ class PlayerDisconnectionServiceTest {
     @Test
     void cancelReady_isReady가_false로_변경된다() {
         // given
-        String playerKey = "ABC23:김철수";
-        String joinCode = "ABC23";
+        String playerKey = "ABC4:김철수";
+        String joinCode = "ABC4";
         String playerName = "김철수";
         
         given(sessionManager.extractJoinCode(playerKey)).willReturn(joinCode);

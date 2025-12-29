@@ -5,7 +5,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-import coffeeshout.room.application.RoomService;
+import coffeeshout.room.application.service.RoomService;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;

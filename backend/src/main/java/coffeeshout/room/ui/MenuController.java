@@ -1,6 +1,6 @@
 package coffeeshout.room.ui;
 
-import coffeeshout.room.application.MenuService;
+import coffeeshout.room.application.service.MenuService;
 import coffeeshout.room.ui.response.MenuResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

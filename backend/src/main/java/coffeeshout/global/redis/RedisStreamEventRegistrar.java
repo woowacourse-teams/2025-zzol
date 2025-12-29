@@ -2,12 +2,10 @@ package coffeeshout.global.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.function.Consumer;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.ResolvableType;
 
@@ -28,21 +26,36 @@ public class RedisStreamEventRegistrar implements SmartInitializingSingleton {
 
     @Override
     public void afterSingletonsInstantiated() {
-        inspectConsumerBeans();
-    }
-
-    public void inspectConsumerBeans() {
         final String[] beanNames = beanFactory.getBeanNamesForType(Consumer.class);
         for (String beanName : beanNames) {
-            if (beanFactory.getBeanDefinition(beanName) instanceof RootBeanDefinition) {
-                final ResolvableType type = beanFactory.getMergedBeanDefinition(beanName).getResolvableType();
-                final Class<?>[] classes = type.resolveGenerics();
-                if (classes.length == 0 || classes[0] == null) {
-                    continue;
-                }
-                redisObjectMapper.registerSubtypes(classes[0]);
-                log.debug("Registered event subtype: {} from bean: {}", classes[0].getSimpleName(), beanName);
+            try {
+                registerEventTypeFromConsumer(beanName);
+            } catch (Exception e) {
+                log.warn("Failed to process Consumer bean: {} - {}", beanName, e.getMessage(), e);
             }
         }
+    }
+
+    private void registerEventTypeFromConsumer(String beanName) {
+        final Class<?> eventType = resolveEventType(beanName);
+        if (eventType == null) {
+            log.warn("Bean {} does not implement Consumer<T> with resolvable generic type", beanName);
+            return;
+        }
+
+        if (!BaseEvent.class.isAssignableFrom(eventType)) {
+            log.debug("Skipping bean {} - generic type {} is not a BaseEvent subtype",
+                    beanName, eventType.getSimpleName());
+            return;
+        }
+
+        redisObjectMapper.registerSubtypes(eventType);
+        log.debug("Registered event subtype: {} from bean: {}", eventType.getSimpleName(), beanName);
+    }
+
+    private Class<?> resolveEventType(String beanName) {
+        final ResolvableType type = beanFactory.getMergedBeanDefinition(beanName).getResolvableType();
+
+        return type.as(Consumer.class).getGeneric(0).resolve();
     }
 }

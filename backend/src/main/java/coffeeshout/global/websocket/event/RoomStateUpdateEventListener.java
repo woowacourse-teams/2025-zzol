@@ -2,7 +2,7 @@ package coffeeshout.global.websocket.event;
 
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.room.application.RoomService;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

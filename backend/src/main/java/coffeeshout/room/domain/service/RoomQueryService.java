@@ -4,7 +4,9 @@ import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.NotExistElementException;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.repository.RoomRepository;
+import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,5 +24,10 @@ public class RoomQueryService {
 
     public boolean existsByJoinCode(@NonNull JoinCode joinCode) {
         return roomRepository.existsByJoinCode(joinCode);
+    }
+
+    public List<Player> getPlayers(@NonNull JoinCode joinCode) {
+        final Room room = getByJoinCode(joinCode);
+        return List.copyOf(room.getPlayers());
     }
 }

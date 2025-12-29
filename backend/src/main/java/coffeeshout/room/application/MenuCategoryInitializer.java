@@ -1,5 +1,6 @@
 package coffeeshout.room.application;
 
+import coffeeshout.room.application.port.DataInitializable;
 import coffeeshout.room.domain.menu.MenuCategory;
 import coffeeshout.room.domain.service.MenuCategoryCommandService;
 import java.io.IOException;

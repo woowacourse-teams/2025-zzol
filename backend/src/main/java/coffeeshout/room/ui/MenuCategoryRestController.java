@@ -1,7 +1,7 @@
 package coffeeshout.room.ui;
 
-import coffeeshout.room.application.MenuCategoryService;
-import coffeeshout.room.application.MenuService;
+import coffeeshout.room.application.service.MenuCategoryService;
+import coffeeshout.room.application.service.MenuService;
 import coffeeshout.room.domain.menu.MenuCategory;
 import coffeeshout.room.domain.menu.ProvidedMenu;
 import coffeeshout.room.ui.response.MenuCategoryResponse;

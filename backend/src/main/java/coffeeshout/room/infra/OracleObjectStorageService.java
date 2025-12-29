@@ -3,7 +3,7 @@ package coffeeshout.room.infra;
 import coffeeshout.global.config.properties.OracleObjectStorageProperties;
 import coffeeshout.global.config.properties.QrProperties;
 import coffeeshout.global.exception.custom.StorageServiceException;
-import coffeeshout.room.application.StorageService;
+import coffeeshout.room.application.port.StorageService;
 import coffeeshout.room.domain.RoomErrorCode;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;

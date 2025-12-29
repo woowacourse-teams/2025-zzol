@@ -7,7 +7,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-import coffeeshout.room.application.RoomService;
+import coffeeshout.room.application.service.RoomService;
 import java.time.Instant;
 import java.util.concurrent.ScheduledFuture;
 import org.junit.jupiter.api.BeforeEach;

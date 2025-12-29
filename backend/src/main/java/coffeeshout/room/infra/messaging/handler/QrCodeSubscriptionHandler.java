@@ -1,9 +1,8 @@
 package coffeeshout.room.infra.messaging.handler;
 
-import coffeeshout.global.exception.custom.NotExistElementException;
 import coffeeshout.global.ui.WebSocketResponse;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
-import coffeeshout.room.application.RoomService;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

@@ -1,7 +1,7 @@
 package coffeeshout.global.redis.config;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.EventHandlerExecutor;
+import coffeeshout.global.redis.EventDispatcher;
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +30,7 @@ public class RedisStreamListenerStarter {
     private final RedisStreamProperties properties;
     private final RedisConnectionFactory redisConnectionFactory;
     private final ObjectMapper redisObjectMapper;
-    private final EventHandlerExecutor eventHandlerExecutor;
+    private final EventDispatcher eventDispatcher;
     private final ApplicationContext applicationContext;
     private final GenericApplicationContext genericApplicationContext;
 
@@ -38,14 +38,14 @@ public class RedisStreamListenerStarter {
             RedisStreamProperties properties,
             RedisConnectionFactory redisConnectionFactory,
             @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper,
-            EventHandlerExecutor eventHandlerExecutor,
+            EventDispatcher eventDispatcher,
             ApplicationContext applicationContext,
             GenericApplicationContext genericApplicationContext
     ) {
         this.properties = properties;
         this.redisConnectionFactory = redisConnectionFactory;
         this.redisObjectMapper = redisObjectMapper;
-        this.eventHandlerExecutor = eventHandlerExecutor;
+        this.eventDispatcher = eventDispatcher;
         this.applicationContext = applicationContext;
         this.genericApplicationContext = genericApplicationContext;
     }
@@ -90,7 +90,7 @@ public class RedisStreamListenerStarter {
     private void onMessage(ObjectRecord<String, String> message) {
         try {
             final BaseEvent event = redisObjectMapper.readValue(message.getValue(), BaseEvent.class);
-            eventHandlerExecutor.handle(event);
+            eventDispatcher.handle(event);
         } catch (JsonProcessingException e) {
             log.error("Failed to parse event: {}", message.getValue(), e);
             throw new RuntimeException("Failed to parse event", e);

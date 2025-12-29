@@ -1,14 +1,13 @@
 package coffeeshout.global.websocket.event;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.room.application.RoomService;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,7 +56,6 @@ class RoomStateUpdateEventListenerTest {
 
         // then
         verify(roomService).roomExists(joinCode);
-        verify(roomService, never()).getAllPlayers(anyString());
         verify(streamPublisher, never()).publish(any(StreamKey.class), any());
     }
 }

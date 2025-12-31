@@ -80,10 +80,6 @@ public class Room {
         return miniGames.size() + finishedGames.size();
     }
 
-    public boolean isPlayingState() {
-        return roomState == RoomState.PLAYING;
-    }
-
     public Winner spinRoulette(Player host, Roulette roulette) {
         isTrue(isHost(host), "호스트만 룰렛을 돌릴 수 있습니다.");
         state(hasEnoughPlayers(), "룰렛은 2~9명의 플레이어가 참여해야 시작할 수 있습니다.");
@@ -103,10 +99,6 @@ public class Room {
 
     public Player findPlayer(PlayerName playerName) {
         return players.getPlayer(playerName);
-    }
-
-    public boolean hasPlayer(PlayerName playerName) {
-        return players.existsByName(playerName);
     }
 
     private void join(Player player) {
@@ -130,10 +122,6 @@ public class Room {
                 .orElseThrow(() -> new IllegalArgumentException("해당하는 미니게임이 존재하지 않습니다."));
     }
 
-    public Playable nextGame() {
-        return miniGames.peek();
-    }
-
     public Playable startNextGame(String hostName) {
         state(host.sameName(new PlayerName(hostName)), "호스트가 게임을 시작할 수 있습니다.");
         state(players.isAllReady(), "모든 플레이어가 준비완료해야합니다.");
@@ -154,14 +142,6 @@ public class Room {
 
     private boolean isPlayableState() {
         return roomState == RoomState.READY || roomState == RoomState.ROULETTE;
-    }
-
-    public void updateRouletteState() {
-        this.roomState = RoomState.ROULETTE;
-    }
-
-    public void updateDoneState() {
-        this.roomState = RoomState.DONE;
     }
 
     public void clearMiniGames() {

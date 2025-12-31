@@ -1,6 +1,5 @@
 package coffeeshout.room.domain.player;
 
-import coffeeshout.room.domain.menu.SelectedMenu;
 import coffeeshout.room.domain.roulette.Probability;
 import java.util.Objects;
 import lombok.Getter;
@@ -10,28 +9,22 @@ public class Player {
 
     private final PlayerName name;
     private PlayerType playerType;
-    private SelectedMenu selectedMenu;
     private Boolean isReady;
     private Integer colorIndex;
     private Probability probability;
 
-    private Player(PlayerName name, SelectedMenu selectedMenu, Boolean isReady, PlayerType playerType) {
+    private Player(PlayerName name, Boolean isReady, PlayerType playerType) {
         this.name = name;
         this.playerType = playerType;
-        this.selectedMenu = selectedMenu;
         this.isReady = isReady;
     }
 
-    public static Player createHost(PlayerName name, SelectedMenu selectedMenu) {
-        return new Player(name, selectedMenu, true, PlayerType.HOST);
+    public static Player createHost(PlayerName name) {
+        return new Player(name, true, PlayerType.HOST);
     }
 
-    public static Player createGuest(PlayerName name, SelectedMenu selectedMenu) {
-        return new Player(name, selectedMenu, false, PlayerType.GUEST);
-    }
-
-    public void selectMenu(SelectedMenu selectedMenu) {
-        this.selectedMenu = selectedMenu;
+    public static Player createGuest(PlayerName name) {
+        return new Player(name, false, PlayerType.GUEST);
     }
 
     public boolean sameName(PlayerName playerName) {

@@ -12,23 +12,17 @@ import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
-import coffeeshout.room.domain.menu.Menu;
-import coffeeshout.room.domain.menu.MenuTemperature;
-import coffeeshout.room.domain.menu.SelectedMenu;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.roulette.Roulette;
 import coffeeshout.room.domain.roulette.RoulettePicker;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
-import coffeeshout.room.domain.service.MenuCommandService;
-import coffeeshout.room.domain.service.MenuQueryService;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import java.time.Duration;
@@ -51,11 +45,9 @@ public class RoomService {
 
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
-    private final MenuQueryService menuQueryService;
     private final QrCodeService qrCodeService;
     private final JoinCodeGenerator joinCodeGenerator;
     private final RoomEventWaitManager roomEventWaitManager;
-    private final MenuCommandService menuCommandService;
     private final RoomJpaRepository roomJpaRepository;
     private final StreamPublisher streamPublisher;
 
@@ -63,20 +55,14 @@ public class RoomService {
     private Duration eventTimeout;
 
     @Transactional
-    public Room createRoom(String hostName, SelectedMenuRequest selectedMenuRequest) {
+    public Room createRoom(String hostName) {
         final JoinCode joinCode = joinCodeGenerator.generate();
 
         // 방 생성 (QR 코드는 PENDING 상태로 시작)
-        final Menu menu = menuCommandService.convertMenu(selectedMenuRequest.id(), selectedMenuRequest.customName());
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(hostName),
-                menu, selectedMenuRequest.temperature());
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(hostName));
 
         // 방 생성 후 이벤트 전달
-        final BaseEvent event = new RoomCreateEvent(
-                hostName,
-                selectedMenuRequest,
-                joinCode.getValue()
-        );
+        final BaseEvent event = new RoomCreateEvent(hostName, joinCode.getValue());
 
         streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
 
@@ -94,12 +80,8 @@ public class RoomService {
 
     // === 비동기 메서드들 (REST Controller용) ===
 
-    public CompletableFuture<Room> enterRoomAsync(
-            String joinCode,
-            String guestName,
-            SelectedMenuRequest selectedMenuRequest
-    ) {
-        final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName, selectedMenuRequest);
+    public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName) {
+        final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName);
 
         return processEventAsync(
                 event.eventId(),
@@ -144,18 +126,6 @@ public class RoomService {
         Player host = room.findPlayer(new PlayerName(hostName));
 
         return room.spinRoulette(host, new Roulette(new RoulettePicker()));
-    }
-
-    // === 나머지 기존 메서드들 (변경 없음) ===
-
-    public List<Player> selectMenu(String joinCode, String playerName, Long menuId) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final Menu menu = menuQueryService.getById(menuId);
-
-        final Player player = room.findPlayer(new PlayerName(playerName));
-        player.selectMenu(new SelectedMenu(menu, MenuTemperature.ICE));
-
-        return room.getPlayers();
     }
 
     public List<MiniGameType> getAllMiniGames() {

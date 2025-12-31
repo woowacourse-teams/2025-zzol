@@ -5,9 +5,6 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.menu.Menu;
-import coffeeshout.room.domain.menu.MenuTemperature;
-import coffeeshout.room.domain.menu.SelectedMenu;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.PlayerType;
@@ -53,24 +50,24 @@ public class RoomCommandService {
         return removed;
     }
 
-    public Room joinGuest(JoinCode joinCode, PlayerName playerName, Menu menu, MenuTemperature menuTemperature) {
-        log.info("JoinCode[{}] 게스트 입장 - 게스트 이름: {}, 메뉴 정보: {}, 온도 : {} ", joinCode, playerName, menu, menuTemperature);
+    public Room joinGuest(JoinCode joinCode, PlayerName playerName) {
+        log.info("JoinCode[{}] 게스트 입장 - 게스트 이름: {} ", joinCode, playerName);
         final Room room = roomQueryService.getByJoinCode(joinCode);
 
-        room.joinGuest(playerName, new SelectedMenu(menu, menuTemperature));
+        room.joinGuest(playerName);
 
         return save(room);
     }
 
-    public Room saveIfAbsentRoom(JoinCode joinCode, PlayerName hostName, Menu menu, MenuTemperature menuTemperature) {
+    public Room saveIfAbsentRoom(JoinCode joinCode, PlayerName hostName) {
         if (roomRepository.existsByJoinCode(joinCode)) {
             log.warn("JoinCode[{}] 방 생성 실패 - 이미 존재하는 방", joinCode);
             return roomQueryService.getByJoinCode(joinCode);
         }
 
-        log.info("JoinCode[{}] 방 생성 - 호스트 이름: {}, 메뉴 정보: {}, 온도 : {} ", joinCode, hostName, menu, menuTemperature);
+        log.info("JoinCode[{}] 방 생성 - 호스트 이름: {} ", joinCode, hostName);
 
-        final Room room = Room.createNewRoom(joinCode, hostName, new SelectedMenu(menu, menuTemperature));
+        final Room room = Room.createNewRoom(joinCode, hostName);
 
         return save(room);
     }

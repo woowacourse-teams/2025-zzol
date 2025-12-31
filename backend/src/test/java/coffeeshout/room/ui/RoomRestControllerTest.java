@@ -15,10 +15,8 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.menu.MenuTemperature;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.ui.request.RoomEnterRequest;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
 import coffeeshout.room.ui.response.RemainingMiniGameResponse;
@@ -60,8 +58,7 @@ class RoomRestControllerTest {
         @Test
         void 정상적인_방_생성_요청_시_방이_생성되고_응답을_반환한다() throws Exception {
             // given
-            SelectedMenuRequest menuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest request = new RoomEnterRequest("테스트유저", menuRequest);
+            RoomEnterRequest request = new RoomEnterRequest("테스트유저");
 
             // when & then
             String response = mockMvc.perform(post("/rooms")
@@ -80,8 +77,7 @@ class RoomRestControllerTest {
         @Test
         void 플레이어_이름이_없는_경우_400_에러를_반환한다() throws Exception {
             // given
-            SelectedMenuRequest menuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest request = new RoomEnterRequest(null, menuRequest);
+            RoomEnterRequest request = new RoomEnterRequest(null);
 
             // when & then
             mockMvc.perform(post("/rooms")
@@ -99,20 +95,7 @@ class RoomRestControllerTest {
         @NullAndEmptySource
         void 플레이어_이름이_없거나_빈값인_경우_400_에러를_반환한다(String invalidPlayerName) throws Exception {
             // given
-            SelectedMenuRequest menuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest request = new RoomEnterRequest(invalidPlayerName, menuRequest);
-
-            // when & then - Validation 실패는 비동기 처리 전에 발생
-            mockMvc.perform(post("/rooms/{joinCode}", "ANYCODE")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        void 메뉴_정보가_없는_경우_400_에러를_반환한다() throws Exception {
-            // given
-            RoomEnterRequest request = new RoomEnterRequest("게스트", null);
+            RoomEnterRequest request = new RoomEnterRequest(invalidPlayerName);
 
             // when & then - Validation 실패는 비동기 처리 전에 발생
             mockMvc.perform(post("/rooms/{joinCode}", "ANYCODE")
@@ -129,8 +112,7 @@ class RoomRestControllerTest {
         @Test
         void 존재하는_방에_정상적으로_입장할_수_있다() throws Exception {
             // given - 먼저 방을 생성
-            SelectedMenuRequest hostMenuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest createRequest = new RoomEnterRequest("호스트", hostMenuRequest);
+            RoomEnterRequest createRequest = new RoomEnterRequest("호스트");
 
             String createResponse = mockMvc.perform(post("/rooms")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -144,8 +126,7 @@ class RoomRestControllerTest {
             String joinCode = roomCreateResponse.joinCode();
 
             // given - 게스트 입장 요청
-            SelectedMenuRequest guestMenuRequest = new SelectedMenuRequest(2L, "라떼", MenuTemperature.ICE);
-            RoomEnterRequest enterRequest = new RoomEnterRequest("게스트", guestMenuRequest);
+            RoomEnterRequest enterRequest = new RoomEnterRequest("게스트");
 
             // when & then - 비동기 테스트
             var result = mockMvc.perform(post("/rooms/{joinCode}", joinCode)
@@ -174,8 +155,7 @@ class RoomRestControllerTest {
         @Test
         void 존재하지_않는_방_코드로_입장_시도_시_404_에러를_반환한다() throws Exception {
             // given
-            SelectedMenuRequest menuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest request = new RoomEnterRequest("테스트유저", menuRequest);
+            RoomEnterRequest request = new RoomEnterRequest("테스트유저");
 
             // when & then - 비동기 테스트
             var result = mockMvc.perform(post("/rooms/{joinCode}", INVALID_JOIN_CODE)
@@ -191,8 +171,7 @@ class RoomRestControllerTest {
         @Test
         void 중복된_플레이어_이름으로_입장_시도_시_409_에러를_반환한다() throws Exception {
             // given - 먼저 방을 생성
-            SelectedMenuRequest menuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest createRequest = new RoomEnterRequest("호스트", menuRequest);
+            RoomEnterRequest createRequest = new RoomEnterRequest("호스트");
 
             String createResponse = mockMvc.perform(post("/rooms")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -206,8 +185,7 @@ class RoomRestControllerTest {
             String joinCode = roomCreateResponse.joinCode();
 
             // given - 중복된 플레이어 이름으로 입장 요청
-            SelectedMenuRequest guestMenuRequest = new SelectedMenuRequest(2L, "라떼", MenuTemperature.ICE);
-            RoomEnterRequest enterRequest = new RoomEnterRequest("호스트", guestMenuRequest);
+            RoomEnterRequest enterRequest = new RoomEnterRequest("호스트");
 
             // when & then - 비동기 테스트
             var result = mockMvc.perform(post("/rooms/{joinCode}", joinCode)
@@ -224,8 +202,7 @@ class RoomRestControllerTest {
         @Test
         void 방이_가득_찬_경우_입장_시도_시_409_에러를_반환한다() throws Exception {
             // given - 먼저 방을 생성
-            SelectedMenuRequest menuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest createRequest = new RoomEnterRequest("호스트", menuRequest);
+            RoomEnterRequest createRequest = new RoomEnterRequest("호스트");
 
             String createResponse = mockMvc.perform(post("/rooms")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -240,8 +217,7 @@ class RoomRestControllerTest {
 
             // given - 8명의 게스트 입장 (호스트 1명 + 게스트 8명 = 총 9명)
             for (int i = 1; i <= 8; i++) {
-
-                RoomEnterRequest enterRequest = new RoomEnterRequest("게스트" + i, menuRequest);
+                RoomEnterRequest enterRequest = new RoomEnterRequest("게스트" + i);
 
                 var result = mockMvc.perform(post("/rooms/{joinCode}", joinCode)
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -254,7 +230,7 @@ class RoomRestControllerTest {
             }
 
             // given - 9번째 게스트 입장 시도 (정원 초과: 호스트 1명 + 게스트 9명 = 총 10명)
-            RoomEnterRequest overflowRequest = new RoomEnterRequest("초과유저", menuRequest);
+            RoomEnterRequest overflowRequest = new RoomEnterRequest("초과유저");
 
             // when & then - 비동기 테스트
             var result = mockMvc.perform(post("/rooms/{joinCode}", joinCode)
@@ -275,8 +251,7 @@ class RoomRestControllerTest {
         @Test
         void 존재하는_방_코드_확인_시_true를_반환한다() throws Exception {
             // given - 방 생성
-            SelectedMenuRequest menuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest request = new RoomEnterRequest("테스트유저", menuRequest);
+            RoomEnterRequest request = new RoomEnterRequest("테스트유저");
 
             String createResponse = mockMvc.perform(post("/rooms")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -325,8 +300,7 @@ class RoomRestControllerTest {
         @Test
         void 중복되지_않는_게스트_이름_확인_시_false를_반환한다() throws Exception {
             // given - 방 생성
-            SelectedMenuRequest menuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest request = new RoomEnterRequest("호스트", menuRequest);
+            RoomEnterRequest request = new RoomEnterRequest("호스트");
 
             String createResponse = mockMvc.perform(post("/rooms")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -357,8 +331,7 @@ class RoomRestControllerTest {
         @Test
         void 중복되는_게스트_이름_확인_시_true를_반환한다() throws Exception {
             // given - 방 생성
-            SelectedMenuRequest menuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest request = new RoomEnterRequest("호스트", menuRequest);
+            RoomEnterRequest request = new RoomEnterRequest("호스트");
 
             String createResponse = mockMvc.perform(post("/rooms")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -411,8 +384,7 @@ class RoomRestControllerTest {
         @Test
         void 특정_방의_선택된_미니게임_목록을_조회할_수_있다() throws Exception {
             // given - 방 생성
-            SelectedMenuRequest menuRequest = new SelectedMenuRequest(1L, "아메리카노", MenuTemperature.HOT);
-            RoomEnterRequest request = new RoomEnterRequest("호스트", menuRequest);
+            RoomEnterRequest request = new RoomEnterRequest("호스트");
 
             String createResponse = mockMvc.perform(post("/rooms")
                             .contentType(MediaType.APPLICATION_JSON)

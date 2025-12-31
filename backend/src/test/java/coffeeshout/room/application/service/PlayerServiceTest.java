@@ -9,13 +9,9 @@ import coffeeshout.global.exception.custom.NotExistElementException;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.menu.Menu;
-import coffeeshout.room.domain.menu.MenuTemperature;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.domain.service.MenuCommandService;
 import coffeeshout.room.domain.service.RoomCommandService;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -31,22 +27,13 @@ class PlayerServiceTest extends ServiceTest {
     RoomCommandService roomCommandService;
 
     @Autowired
-    MenuCommandService menuCommandService;
-
-    @Autowired
     PlayerService playerService;
 
     @MockitoBean
     StreamPublisher streamPublisher;
 
-    private void joinGuest(JoinCode joinCode, String guestName, SelectedMenuRequest selectedMenuRequest) {
-        Menu menu = menuCommandService.convertMenu(selectedMenuRequest.id(), selectedMenuRequest.customName());
-        roomCommandService.joinGuest(
-                joinCode,
-                new PlayerName(guestName),
-                menu,
-                selectedMenuRequest.temperature()
-        );
+    private void joinGuest(JoinCode joinCode, String guestName) {
+        roomCommandService.joinGuest(joinCode, new PlayerName(guestName));
     }
 
     @Nested
@@ -56,8 +43,7 @@ class PlayerServiceTest extends ServiceTest {
         void 호스트를_제거할_때_플레이어가_없다면_방을_제거한다() {
             // given
             String hostName = "호스트";
-            SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-            Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
+            Room createdRoom = roomService.createRoom(hostName);
             JoinCode joinCode = createdRoom.getJoinCode();
 
             // when
@@ -71,11 +57,10 @@ class PlayerServiceTest extends ServiceTest {
         void 호스트를_제거할_때_게스트가_있다면_방을_제거하지_않는다() {
             // given
             String hostName = "호스트";
-            SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-            Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
+            Room createdRoom = roomService.createRoom(hostName);
             JoinCode joinCode = createdRoom.getJoinCode();
 
-            joinGuest(joinCode, "게스트1", new SelectedMenuRequest(2L, null, MenuTemperature.ICE));
+            joinGuest(joinCode, "게스트1");
 
             // when
             playerService.kickPlayer(joinCode.getValue(), hostName);
@@ -92,11 +77,9 @@ class PlayerServiceTest extends ServiceTest {
                 // given
                 String hostName = "호스트";
                 String guestName = "게스트";
-                SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-                SelectedMenuRequest guestSelectedMenuRequest = new SelectedMenuRequest(2L, null, MenuTemperature.ICE);
-                Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
+                Room createdRoom = roomService.createRoom(hostName);
                 JoinCode joinCode = createdRoom.getJoinCode();
-                joinGuest(joinCode, guestName, guestSelectedMenuRequest);
+                joinGuest(joinCode, guestName);
 
                 // when
                 playerService.kickPlayer(joinCode.getValue(), guestName);
@@ -112,8 +95,7 @@ class PlayerServiceTest extends ServiceTest {
             void 존재하지_않는_게스트_제거_시도_시_예외가_발생한다() {
                 // given
                 String hostName = "호스트";
-                SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-                Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
+                Room createdRoom = roomService.createRoom(hostName);
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when & then
@@ -125,8 +107,7 @@ class PlayerServiceTest extends ServiceTest {
             void null_플레이어_이름으로_제거_시도_시_예외가_발생한다() {
                 // given
                 String hostName = "호스트";
-                SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-                Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
+                Room createdRoom = roomService.createRoom(hostName);
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when & then
@@ -158,10 +139,8 @@ class PlayerServiceTest extends ServiceTest {
             // given
             String hostName = "호스트";
             String guestName = "게스트";
-            SelectedMenuRequest hostSelectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-            SelectedMenuRequest guestSelectedMenuRequest = new SelectedMenuRequest(2L, null, MenuTemperature.ICE);
-            Room createdRoom = roomService.createRoom(hostName, hostSelectedMenuRequest);
-            joinGuest(createdRoom.getJoinCode(), guestName, guestSelectedMenuRequest);
+            Room createdRoom = roomService.createRoom(hostName);
+            joinGuest(createdRoom.getJoinCode(), guestName);
 
             // when
             List<Player> players = playerService.getPlayers(createdRoom.getJoinCode().getValue());
@@ -176,8 +155,7 @@ class PlayerServiceTest extends ServiceTest {
         void 빈_방에서_플레이어_조회_시_예외가_발생한다() {
             // given
             String hostName = "호스트";
-            SelectedMenuRequest selectedMenuRequest = new SelectedMenuRequest(1L, null, MenuTemperature.ICE);
-            Room createdRoom = roomService.createRoom(hostName, selectedMenuRequest);
+            Room createdRoom = roomService.createRoom(hostName);
             JoinCode joinCode = createdRoom.getJoinCode();
 
             // 모든 플레이어 제거 (방도 제거됨)

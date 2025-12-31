@@ -48,13 +48,4 @@ public class LogAspect {
     public void logDelayCleanUp(JoinCode joinCode) {
         log.info("JoinCode[{}] 방 삭제 완료", joinCode.getValue());
     }
-
-
-    @After(
-            value = "execution(* coffeeshout.room.application.service.RoomService.selectMenu(..)) && args(joinCode, guestName, menuId)",
-            argNames = "joinCode,guestName,menuId"
-    )
-    public void logSelectMenu(String joinCode, String guestName, Long menuId) {
-        log.info("JoinCode[{}] 메뉴 변경 - 게스트 이름: {}, 메뉴 ID: {}", joinCode, guestName, menuId);
-    }
 }

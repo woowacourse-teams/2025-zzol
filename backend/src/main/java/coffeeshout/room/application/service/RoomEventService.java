@@ -14,14 +14,11 @@ import coffeeshout.room.domain.event.RouletteShowEvent;
 import coffeeshout.room.domain.event.RouletteShownEvent;
 import coffeeshout.room.domain.event.RouletteSpinEvent;
 import coffeeshout.room.domain.event.RouletteWinnerEvent;
-import coffeeshout.room.domain.menu.Menu;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
-import coffeeshout.room.domain.service.MenuCommandService;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.infra.persistence.RoulettePersistenceService;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -33,7 +30,6 @@ import org.springframework.stereotype.Service;
 public class RoomEventService {
 
     private final RoomCommandService roomCommandService;
-    private final MenuCommandService menuCommandService;
     private final DelayedRoomRemovalService delayedRoomRemovalService;
     private final ApplicationEventPublisher eventPublisher;
     private final RoomEventWaitManager roomEventWaitManager;
@@ -96,17 +92,9 @@ public class RoomEventService {
         );
 
         try {
-            final SelectedMenuRequest selectedMenuRequest = event.selectedMenuRequest();
-
-            final Menu menu = menuCommandService.convertMenu(
-                    selectedMenuRequest.id(),
-                    selectedMenuRequest.customName()
-            );
-
             final Room room = roomCommandService.joinGuest(
                     new JoinCode(event.joinCode()),
-                    new PlayerName(event.guestName()),
-                    menu, selectedMenuRequest.temperature()
+                    new PlayerName(event.guestName())
             );
 
             roomEventWaitManager.notifySuccess(event.eventId(), room);
@@ -122,17 +110,9 @@ public class RoomEventService {
                 event.hostName()
         );
 
-        final SelectedMenuRequest selectedMenuRequest = event.selectedMenuRequest();
-        final Menu menu = menuCommandService.convertMenu(
-                selectedMenuRequest.id(),
-                selectedMenuRequest.customName()
-        );
-
         roomCommandService.saveIfAbsentRoom(
                 new JoinCode(event.joinCode()),
-                new PlayerName(event.hostName()),
-                menu,
-                selectedMenuRequest.temperature()
+                new PlayerName(event.hostName())
         );
 
         delayedRoomRemovalService.scheduleRemoveRoom(new JoinCode(event.joinCode()));

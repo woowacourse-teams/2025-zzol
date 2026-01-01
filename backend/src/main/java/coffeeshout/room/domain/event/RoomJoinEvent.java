@@ -4,7 +4,6 @@ import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.trace.TraceInfo;
 import coffeeshout.global.trace.TraceInfoExtractor;
 import coffeeshout.global.trace.Traceable;
-import coffeeshout.room.ui.request.SelectedMenuRequest;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -13,18 +12,16 @@ public record RoomJoinEvent(
         TraceInfo traceInfo,
         Instant timestamp,
         String joinCode,
-        String guestName,
-        SelectedMenuRequest selectedMenuRequest
+        String guestName
 ) implements BaseEvent, Traceable {
 
-    public RoomJoinEvent(String joinCode, String guestName, SelectedMenuRequest selectedMenuRequest) {
+    public RoomJoinEvent(String joinCode, String guestName) {
         this(
                 UUID.randomUUID().toString(),
                 TraceInfoExtractor.extract(),
                 Instant.now(),
                 joinCode,
-                guestName,
-                selectedMenuRequest
+                guestName
         );
     }
 }

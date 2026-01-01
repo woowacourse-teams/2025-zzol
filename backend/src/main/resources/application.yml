@@ -122,6 +122,3 @@ websocket:
       title: "커피빵 WebSocket API 명세서"
       version: "1.0.0"
       description: "실시간 웹소켓 통신 API 문서"
-
-menu-category:
-  default-image: "https://d35bef0h3hdfkh.cloudfront.net/custom-menu.svg"

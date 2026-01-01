@@ -3,7 +3,6 @@ package coffeeshout.room.domain.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.fixture.MenuFixture;
 import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.global.ServiceTest;
 import coffeeshout.global.exception.custom.InvalidStateException;
@@ -11,7 +10,6 @@ import coffeeshout.global.exception.custom.NotExistElementException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.menu.MenuTemperature;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
@@ -50,16 +48,13 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트");
 
             // when
-            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.HOT);
+            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(room.getJoinCode()).isEqualTo(joinCode);
                 softly.assertThat(room.getPlayers()).hasSize(1);
                 softly.assertThat(room.getPlayers().getFirst().getName()).isEqualTo(hostName);
-                softly.assertThat(room.getPlayers().getFirst().getSelectedMenu().menu().getName()).isEqualTo("아메리카노");
-                softly.assertThat(room.getPlayers().getFirst().getSelectedMenu().menuTemperature())
-                        .isEqualTo(MenuTemperature.HOT);
             });
         }
 
@@ -70,8 +65,8 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName2 = new PlayerName("호스트2");
 
             // when
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName1, MenuFixture.아메리카노(), MenuTemperature.HOT);
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName2, MenuFixture.라떼(), MenuTemperature.ICE);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName1);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName2);
 
             // then
             Room room = roomQueryService.getByJoinCode(joinCode);
@@ -91,18 +86,15 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트");
             PlayerName guestName = new PlayerName("게스트");
 
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.HOT);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName);
 
             // when
-            Room room = roomCommandService.joinGuest(joinCode, guestName, MenuFixture.라떼(), MenuTemperature.ICE);
+            Room room = roomCommandService.joinGuest(joinCode, guestName);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(room.getPlayers()).hasSize(2);
                 softly.assertThat(room.getPlayers().get(1).getName()).isEqualTo(guestName);
-                softly.assertThat(room.getPlayers().get(1).getSelectedMenu().menu().getName()).isEqualTo("라떼");
-                softly.assertThat(room.getPlayers().get(1).getSelectedMenu().menuTemperature())
-                        .isEqualTo(MenuTemperature.ICE);
             });
         }
 
@@ -114,12 +106,12 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName guest2 = new PlayerName("게스트2");
             PlayerName guest3 = new PlayerName("게스트3");
 
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.HOT);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName);
 
             // when
-            roomCommandService.joinGuest(joinCode, guest1, MenuFixture.라떼(), MenuTemperature.ICE);
-            roomCommandService.joinGuest(joinCode, guest2, MenuFixture.아이스티(), MenuTemperature.ICE);
-            Room room = roomCommandService.joinGuest(joinCode, guest3, MenuFixture.아메리카노(), MenuTemperature.ICE);
+            roomCommandService.joinGuest(joinCode, guest1);
+            roomCommandService.joinGuest(joinCode, guest2);
+            Room room = roomCommandService.joinGuest(joinCode, guest3);
 
             // then
             assertThat(room.getPlayers()).hasSize(4);
@@ -135,8 +127,7 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName guestName = new PlayerName("게스트");
 
             // when & then
-            assertThatThrownBy(() -> roomCommandService.joinGuest(invalidJoinCode, guestName, MenuFixture.아메리카노(),
-                    MenuTemperature.ICE))
+            assertThatThrownBy(() -> roomCommandService.joinGuest(invalidJoinCode, guestName))
                     .isInstanceOf(NotExistElementException.class);
         }
 
@@ -149,9 +140,7 @@ class RoomCommandServiceTest extends ServiceTest {
             testDataHelper.createDummyPlayingRoom(existingJoinCode, new PlayerName("더미호스트"));
 
             // when & then
-            assertThatThrownBy(
-                    () -> roomCommandService.joinGuest(existingJoinCode, guestName, MenuFixture.라떼(),
-                            MenuTemperature.ICE))
+            assertThatThrownBy(() -> roomCommandService.joinGuest(existingJoinCode, guestName))
                     .isInstanceOf(InvalidStateException.class);
         }
 
@@ -161,13 +150,12 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트짱");
             JoinCode testJoinCode = joinCodeGenerator.generate();
 
-            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.ICE);
+            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName);
 
             // when
-            roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트1"), MenuFixture.라떼(), MenuTemperature.ICE);
-            roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트2"), MenuFixture.아이스티(), MenuTemperature.ICE);
-            Room result = roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트3"), MenuFixture.아메리카노(),
-                    MenuTemperature.ICE);
+            roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트1"));
+            roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트2"));
+            Room result = roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트3"));
 
             // then
             assertThat(result.getPlayers()).hasSize(4);
@@ -181,18 +169,15 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트짱");
             JoinCode testJoinCode = joinCodeGenerator.generate();
 
-            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.ICE);
+            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName);
 
             // 최대 9명까지니까 8명 더 넣어보기
             for (int i = 2; i <= 9; i++) {
-                roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트" + i), MenuFixture.아메리카노(),
-                        MenuTemperature.ICE);
+                roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트" + i));
             }
 
             // when & then
-            assertThatThrownBy(
-                    () -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트10"), MenuFixture.아메리카노(),
-                            MenuTemperature.ICE))
+            assertThatThrownBy(() -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트10")))
                     .isInstanceOf(InvalidStateException.class);
         }
 
@@ -202,13 +187,11 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트짱");
             JoinCode testJoinCode = joinCodeGenerator.generate();
 
-            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.ICE);
-            roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트"), MenuFixture.라떼(), MenuTemperature.ICE);
+            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName);
+            roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트"));
 
             // when & then
-            assertThatThrownBy(
-                    () -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트"), MenuFixture.아이스티(),
-                            MenuTemperature.ICE))
+            assertThatThrownBy(() -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트")))
                     .isInstanceOf(InvalidStateException.class);
         }
 
@@ -220,8 +203,7 @@ class RoomCommandServiceTest extends ServiceTest {
         void 미니게임을_선택한다() {
             // given
             PlayerName hostName = new PlayerName("호스트");
-            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName, MenuFixture.아메리카노(),
-                    MenuTemperature.HOT);
+            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName);
 
             // when
             List<MiniGameType> selectedMiniGames = roomCommandService.updateMiniGames(room.getJoinCode(),
@@ -239,8 +221,8 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트");
             PlayerName guest1 = new PlayerName("게스트1");
 
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.HOT);
-            roomCommandService.joinGuest(joinCode, guest1, MenuFixture.라떼(), MenuTemperature.ICE);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName);
+            roomCommandService.joinGuest(joinCode, guest1);
 
             List<MiniGameType> miniGameTypes = List.of(MiniGameType.CARD_GAME);
             // when & then
@@ -257,8 +239,8 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트");
             PlayerName guest1 = new PlayerName("게스트1");
 
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName, MenuFixture.아메리카노(), MenuTemperature.HOT);
-            roomCommandService.joinGuest(joinCode, guest1, MenuFixture.라떼(), MenuTemperature.ICE);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName);
+            roomCommandService.joinGuest(joinCode, guest1);
 
             roomCommandService.updateMiniGames(joinCode, hostName, List.of(MiniGameType.CARD_GAME));
 

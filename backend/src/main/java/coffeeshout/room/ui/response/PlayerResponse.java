@@ -6,7 +6,6 @@ import coffeeshout.room.domain.roulette.Probability;
 
 public record PlayerResponse(
         String playerName,
-        PlayerMenuResponse menuResponse,
         PlayerType playerType,
         Boolean isReady,
         Integer colorIndex,
@@ -16,7 +15,6 @@ public record PlayerResponse(
     public static PlayerResponse from(Player player) {
         return new PlayerResponse(
                 player.getName().value(),
-                PlayerMenuResponse.from(player),
                 player.getPlayerType(),
                 player.getIsReady(),
                 player.getColorIndex(),
@@ -26,20 +24,5 @@ public record PlayerResponse(
 
     private static Double parseProbability(Probability probability) {
         return probability.value() / 100.0;
-    }
-
-    public record PlayerMenuResponse(
-            String name,
-            String temperature,
-            String categoryImageUrl
-    ) {
-
-        public static PlayerMenuResponse from(Player player) {
-            return new PlayerMenuResponse(
-                    player.getSelectedMenu().menu().getName(),
-                    player.getSelectedMenu().menuTemperature().name(),
-                    player.getSelectedMenu().menu().getCategoryImageUrl()
-            );
-        }
     }
 }

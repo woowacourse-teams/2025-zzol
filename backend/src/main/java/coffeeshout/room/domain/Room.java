@@ -7,7 +7,6 @@ import coffeeshout.global.exception.custom.InvalidArgumentException;
 import coffeeshout.global.exception.custom.InvalidStateException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.domain.menu.SelectedMenu;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Players;
@@ -34,9 +33,9 @@ public class Room {
     private Player host;
     private RoomState roomState;
 
-    public Room(JoinCode joinCode, PlayerName hostName, SelectedMenu selectedMenu) {
+    public Room(JoinCode joinCode, PlayerName hostName) {
         this.joinCode = joinCode;
-        this.host = Player.createHost(hostName, selectedMenu);
+        this.host = Player.createHost(hostName);
         this.players = new Players(joinCode.getValue());
         this.roomState = RoomState.READY;
         this.miniGames = new LinkedList<>();
@@ -45,15 +44,15 @@ public class Room {
         join(host);
     }
 
-    public static Room createNewRoom(JoinCode joinCode, PlayerName hostName, SelectedMenu selectedMenu) {
-        return new Room(joinCode, hostName, selectedMenu);
+    public static Room createNewRoom(JoinCode joinCode, PlayerName hostName) {
+        return new Room(joinCode, hostName);
     }
 
-    public void joinGuest(PlayerName guestName, SelectedMenu selectedMenu) {
+    public void joinGuest(PlayerName guestName) {
         validateRoomReady();
         validateCanJoin();
         validatePlayerNameNotDuplicate(guestName);
-        join(Player.createGuest(guestName, selectedMenu));
+        join(Player.createGuest(guestName));
     }
 
     public void addMiniGame(PlayerName hostName, Playable miniGame) {
@@ -81,10 +80,6 @@ public class Room {
         return miniGames.size() + finishedGames.size();
     }
 
-    public boolean isPlayingState() {
-        return roomState == RoomState.PLAYING;
-    }
-
     public Winner spinRoulette(Player host, Roulette roulette) {
         isTrue(isHost(host), "호스트만 룰렛을 돌릴 수 있습니다.");
         state(hasEnoughPlayers(), "룰렛은 2~9명의 플레이어가 참여해야 시작할 수 있습니다.");
@@ -104,10 +99,6 @@ public class Room {
 
     public Player findPlayer(PlayerName playerName) {
         return players.getPlayer(playerName);
-    }
-
-    public boolean hasPlayer(PlayerName playerName) {
-        return players.existsByName(playerName);
     }
 
     private void join(Player player) {
@@ -131,10 +122,6 @@ public class Room {
                 .orElseThrow(() -> new IllegalArgumentException("해당하는 미니게임이 존재하지 않습니다."));
     }
 
-    public Playable nextGame() {
-        return miniGames.peek();
-    }
-
     public Playable startNextGame(String hostName) {
         state(host.sameName(new PlayerName(hostName)), "호스트가 게임을 시작할 수 있습니다.");
         state(players.isAllReady(), "모든 플레이어가 준비완료해야합니다.");
@@ -155,14 +142,6 @@ public class Room {
 
     private boolean isPlayableState() {
         return roomState == RoomState.READY || roomState == RoomState.ROULETTE;
-    }
-
-    public void updateRouletteState() {
-        this.roomState = RoomState.ROULETTE;
-    }
-
-    public void updateDoneState() {
-        this.roomState = RoomState.DONE;
     }
 
     public void clearMiniGames() {

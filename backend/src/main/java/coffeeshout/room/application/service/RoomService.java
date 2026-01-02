@@ -19,6 +19,8 @@ import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
 import coffeeshout.room.domain.event.RouletteShowEvent;
 import coffeeshout.room.domain.event.RouletteShownEvent;
+import coffeeshout.room.domain.event.RouletteSpinEvent;
+import coffeeshout.room.domain.event.RouletteWinnerEvent;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
@@ -171,35 +173,6 @@ public class RoomService {
         return room.getMiniGames().stream().toList();
     }
 
-    private <T> CompletableFuture<T> processEventAsync(
-            String eventId,
-            Runnable eventPublisher,
-            String operationName,
-            String logParams,
-            Function<T, String> successLogParams
-    ) {
-        final CompletableFuture<T> future = roomEventWaitManager.registerWait(eventId);
-
-        try {
-            eventPublisher.run();
-        } catch (Exception e) {
-            log.error("{} 이벤트 발행 실패: eventId={}, {}", operationName, eventId, logParams, e);
-            future.completeExceptionally(e);
-            return future;
-        }
-
-        return future.orTimeout(eventTimeout.toMillis(), TimeUnit.MILLISECONDS)
-                .whenComplete((result, throwable) -> {
-                    if (throwable != null) {
-                        log.error("{} 비동기 처리 실패: eventId={}, {}",
-                                operationName, eventId, logParams, throwable);
-                        return;
-                    }
-                    log.info("{} 비동기 처리 완료: {}, eventId={}",
-                            operationName, successLogParams.apply(result), eventId);
-                });
-    }
-
     public void updateMiniGames(MiniGameSelectEvent event) {
         log.info("JoinCode[{}] 미니게임 목록 업데이트 이벤트 처리 - 호스트: {}, 미니게임 종류: {}",
                 event.joinCode(),
@@ -302,6 +275,44 @@ public class RoomService {
         roulettePersistenceService.saveRoomStatus(event);
 
         eventPublisher.publishEvent(new RouletteShownEvent(event.joinCode(), roomState));
+    }
+
+    public void spinRoulette(RouletteSpinEvent event) {
+        log.info("JoinCode[{}] 룰렛 스핀 이벤트 처리 - 당첨자: {}", event.joinCode(), event.winner().name().value());
+
+        final Winner winner = event.winner();
+        roulettePersistenceService.saveRouletteResult(event);
+
+        eventPublisher.publishEvent(new RouletteWinnerEvent(event.joinCode(), winner));
+    }
+
+    private <T> CompletableFuture<T> processEventAsync(
+            String eventId,
+            Runnable eventPublisher,
+            String operationName,
+            String logParams,
+            Function<T, String> successLogParams
+    ) {
+        final CompletableFuture<T> future = roomEventWaitManager.registerWait(eventId);
+
+        try {
+            eventPublisher.run();
+        } catch (Exception e) {
+            log.error("{} 이벤트 발행 실패: eventId={}, {}", operationName, eventId, logParams, e);
+            future.completeExceptionally(e);
+            return future;
+        }
+
+        return future.orTimeout(eventTimeout.toMillis(), TimeUnit.MILLISECONDS)
+                .whenComplete((result, throwable) -> {
+                    if (throwable != null) {
+                        log.error("{} 비동기 처리 실패: eventId={}, {}",
+                                operationName, eventId, logParams, throwable);
+                        return;
+                    }
+                    log.info("{} 비동기 처리 완료: {}, eventId={}",
+                            operationName, successLogParams.apply(result), eventId);
+                });
     }
 
     private void saveRoomEntity(String joinCodeValue) {

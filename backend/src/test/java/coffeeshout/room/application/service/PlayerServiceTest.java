@@ -9,6 +9,7 @@ import coffeeshout.global.exception.custom.NotExistElementException;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.event.PlayerKickEvent;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomCommandService;
@@ -47,7 +48,8 @@ class PlayerServiceTest extends ServiceTest {
             JoinCode joinCode = createdRoom.getJoinCode();
 
             // when
-            playerService.publishKickPlayerEvent(joinCode.getValue(), hostName);
+            PlayerKickEvent event = new PlayerKickEvent(joinCode.getValue(), hostName);
+            playerService.kickPlayer(event);
 
             // then
             assertThat(roomService.roomExists(joinCode.getValue())).isFalse();
@@ -82,7 +84,8 @@ class PlayerServiceTest extends ServiceTest {
                 joinGuest(joinCode, guestName);
 
                 // when
-                playerService.publishKickPlayerEvent(joinCode.getValue(), guestName);
+                PlayerKickEvent event = new PlayerKickEvent(joinCode.getValue(), guestName);
+                playerService.kickPlayer(event);
 
                 // then
                 assertThat(roomService.roomExists(joinCode.getValue())).isTrue();
@@ -119,7 +122,8 @@ class PlayerServiceTest extends ServiceTest {
         @Test
         void 존재하지_않는_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> playerService.publishKickPlayerEvent("ABCD", "플레이어"))
+            PlayerKickEvent event = new PlayerKickEvent("ABCD", "플레이어");
+            assertThatThrownBy(() -> playerService.kickPlayer(event))
                     .isInstanceOf(NotExistElementException.class);
         }
 
@@ -159,7 +163,8 @@ class PlayerServiceTest extends ServiceTest {
             JoinCode joinCode = createdRoom.getJoinCode();
 
             // 모든 플레이어 제거 (방도 제거됨)
-            playerService.publishKickPlayerEvent(joinCode.getValue(), hostName);
+            PlayerKickEvent event = new PlayerKickEvent(joinCode.getValue(), hostName);
+            playerService.kickPlayer(event);
 
             // when & then
             assertThatThrownBy(() -> playerService.getPlayers(joinCode.getValue()))

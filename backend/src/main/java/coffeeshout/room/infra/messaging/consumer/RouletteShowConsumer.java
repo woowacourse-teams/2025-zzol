@@ -1,6 +1,6 @@
 package coffeeshout.room.infra.messaging.consumer;
 
-import coffeeshout.room.application.service.RoomEventService;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.RouletteShowEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RouletteShowConsumer implements Consumer<RouletteShowEvent> {
 
-    private final RoomEventService roomEventService;
+    private final RoomService roomService;
 
     @Override
     public void accept(RouletteShowEvent event) {
-        roomEventService.showRoulette(event);
+        roomService.showRoulette(event);
     }
 }

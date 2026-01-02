@@ -10,12 +10,15 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.PlayerReadyEvent;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
+import coffeeshout.room.domain.event.RouletteShowEvent;
+import coffeeshout.room.domain.event.RouletteShownEvent;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
@@ -27,6 +30,7 @@ import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import coffeeshout.room.infra.persistence.RoulettePersistenceService;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import java.time.Duration;
@@ -55,6 +59,8 @@ public class RoomService {
     private final JoinCodeGenerator joinCodeGenerator;
     private final RoomEventWaitManager roomEventWaitManager;
     private final RoomJpaRepository roomJpaRepository;
+    private final RoulettePersistenceService roulettePersistenceService;
+    private final RouletteService rouletteService;
     private final StreamPublisher streamPublisher;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -286,6 +292,16 @@ public class RoomService {
             roomEventWaitManager.notifyFailure(event.eventId(), e);
             throw e;
         }
+    }
+
+    public void showRoulette(RouletteShowEvent event) {
+        log.info("JoinCode[{}] 룰렛 화면 표시 이벤트 처리", event.joinCode());
+
+        final RoomState roomState = rouletteService.showRoulette(event.joinCode());
+
+        roulettePersistenceService.saveRoomStatus(event);
+
+        eventPublisher.publishEvent(new RouletteShownEvent(event.joinCode(), roomState));
     }
 
     private void saveRoomEntity(String joinCodeValue) {

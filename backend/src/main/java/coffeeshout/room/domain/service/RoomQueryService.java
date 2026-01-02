@@ -30,4 +30,11 @@ public class RoomQueryService {
         final Room room = getByJoinCode(joinCode);
         return List.copyOf(room.getPlayers());
     }
+
+    public boolean existsPlayer(@NonNull JoinCode joinCode, @NonNull coffeeshout.room.domain.player.PlayerName playerName) {
+        return roomRepository.findByJoinCode(joinCode)
+                .map(room -> room.getPlayers().stream()
+                        .anyMatch(player -> player.sameName(playerName)))
+                .orElse(false);
+    }
 }

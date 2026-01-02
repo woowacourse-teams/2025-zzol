@@ -1,6 +1,6 @@
 package coffeeshout.room.infra.messaging.consumer;
 
-import coffeeshout.room.application.service.RoomEventService;
+import coffeeshout.room.application.service.PlayerService;
 import coffeeshout.room.domain.event.PlayerKickEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PlayerKickConsumer implements Consumer<PlayerKickEvent> {
 
-    private final RoomEventService roomEventService;
+    private final PlayerService playerService;
 
     @Override
     public void accept(PlayerKickEvent event) {
-        roomEventService.kickPlayer(event);
+        playerService.kickPlayer(event);
     }
 }

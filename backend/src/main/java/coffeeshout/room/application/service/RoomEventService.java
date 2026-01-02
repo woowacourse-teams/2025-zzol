@@ -54,12 +54,6 @@ public class RoomEventService {
         eventPublisher.publishEvent(event);
     }
 
-    public void updatePlayers(PlayerListUpdateEvent event) {
-        log.info("JoinCode[{}] 플레이어 목록 업데이트 이벤트 처리", event.joinCode());
-
-        eventPublisher.publishEvent(event);
-    }
-
     public void readyPlayer(PlayerReadyEvent event) {
         log.info("JoinCode[{}] 플레이어 준비 상태 변경 이벤트 처리 - 플레이어: {}, 준비 상태: {}",
                 event.joinCode(),

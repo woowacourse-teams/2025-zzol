@@ -49,4 +49,10 @@ public class PlayerService {
     public List<Player> getPlayers(String joinCode) {
         return roomQueryService.getPlayers(new JoinCode(joinCode));
     }
+
+    public void updatePlayers(PlayerListUpdateEvent event) {
+        log.info("JoinCode[{}] 플레이어 목록 업데이트 이벤트 처리", event.joinCode());
+
+        eventPublisher.publishEvent(event);
+    }
 }

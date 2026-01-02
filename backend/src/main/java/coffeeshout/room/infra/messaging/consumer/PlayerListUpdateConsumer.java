@@ -1,6 +1,6 @@
 package coffeeshout.room.infra.messaging.consumer;
 
-import coffeeshout.room.application.service.RoomEventService;
+import coffeeshout.room.application.service.PlayerService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PlayerListUpdateConsumer implements Consumer<PlayerListUpdateEvent> {
 
-    private final RoomEventService roomEventService;
+    private final PlayerService playerService;
 
     @Override
     public void accept(PlayerListUpdateEvent event) {
-        roomEventService.updatePlayers(event);
+        playerService.updatePlayers(event);
     }
 }

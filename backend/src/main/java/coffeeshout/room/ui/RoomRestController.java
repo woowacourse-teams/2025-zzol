@@ -110,7 +110,7 @@ public class RoomRestController implements RoomApi {
             @PathVariable String joinCode,
             @PathVariable String playerName
     ) {
-        final boolean exists = playerService.kickPlayer(joinCode, playerName);
+        final boolean exists = playerService.publishKickPlayerEvent(joinCode, playerName);
 
         if (exists) {
             return ResponseEntity.noContent().build();

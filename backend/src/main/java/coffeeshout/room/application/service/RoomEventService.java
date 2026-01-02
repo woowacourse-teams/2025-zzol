@@ -4,7 +4,6 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
-import coffeeshout.room.domain.event.PlayerKickEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.PlayerReadyEvent;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
@@ -53,15 +52,6 @@ public class RoomEventService {
         );
 
         eventPublisher.publishEvent(event);
-    }
-
-    public void kickPlayer(PlayerKickEvent event) {
-        log.info("JoinCode[{}] 플레이어 강퇴 이벤트 처리 - 플레이어: {}", event.joinCode(), event.playerName());
-        JoinCode joinCode = new JoinCode(event.joinCode());
-
-        roomCommandService.removePlayer(joinCode, new PlayerName(event.playerName()));
-
-        eventPublisher.publishEvent(new PlayerListUpdateEvent(event.joinCode()));
     }
 
     public void updatePlayers(PlayerListUpdateEvent event) {

@@ -3,7 +3,6 @@ package coffeeshout.room.application.service;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
-import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
 import coffeeshout.room.domain.event.RouletteShowEvent;
@@ -31,7 +30,7 @@ public class RoomEventService {
     private final RoomEventWaitManager roomEventWaitManager;
     private final RoulettePersistenceService roulettePersistenceService;
     private final RouletteService rouletteService;
-    
+
     public void joinRoom(RoomJoinEvent event) {
         log.info("JoinCode[{}] 게스트 방 입장 이벤트 처리 - 게스트 이름: {}",
                 event.joinCode(),
@@ -73,36 +72,6 @@ public class RoomEventService {
         roulettePersistenceService.saveRoomStatus(event);
 
         eventPublisher.publishEvent(new RouletteShownEvent(event.joinCode(), roomState));
-    }
-
-    public void handleQrCodeStatus(QrCodeStatusEvent event) {
-        log.info(
-                "QR 코드 완료 이벤트 수신: eventId={}, joinCode={}, status={}",
-                event.eventId(), event.joinCode(), event.status()
-        );
-
-        switch (event.status()) {
-            case SUCCESS -> {
-                log.info(
-                        "QR 코드 완료 이벤트 처리 완료 (SUCCESS): eventId={}, joinCode={}, url={}",
-                        event.eventId(), event.joinCode(), event.qrCodeUrl()
-                );
-                roomCommandService.assignQrCode(new JoinCode(event.joinCode()), event.qrCodeUrl());
-                eventPublisher.publishEvent(event);
-            }
-            case ERROR -> {
-                log.info(
-                        "QR 코드 완료 이벤트 처리 완료 (ERROR): eventId={}, joinCode={}",
-                        event.eventId(), event.joinCode()
-                );
-                roomCommandService.assignQrCodeError(new JoinCode(event.joinCode()));
-                eventPublisher.publishEvent(event);
-            }
-            default -> log.error(
-                    "처리할 수 없는 QR 코드 상태: eventId={}, joinCode={}, status={}",
-                    event.eventId(), event.joinCode(), event.status()
-            );
-        }
     }
 
     public void spinRoulette(RouletteSpinEvent event) {

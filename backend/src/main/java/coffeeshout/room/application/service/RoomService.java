@@ -269,6 +269,25 @@ public class RoomService {
         delayedRoomRemovalService.scheduleRemoveRoom(new JoinCode(event.joinCode()));
     }
 
+    public void joinRoom(RoomJoinEvent event) {
+        log.info("JoinCode[{}] 게스트 방 입장 이벤트 처리 - 게스트 이름: {}",
+                event.joinCode(),
+                event.guestName()
+        );
+
+        try {
+            final Room room = roomCommandService.joinGuest(
+                    new JoinCode(event.joinCode()),
+                    new PlayerName(event.guestName())
+            );
+
+            roomEventWaitManager.notifySuccess(event.eventId(), room);
+        } catch (Exception e) {
+            roomEventWaitManager.notifyFailure(event.eventId(), e);
+            throw e;
+        }
+    }
+
     private void saveRoomEntity(String joinCodeValue) {
         final RoomEntity roomEntity = new RoomEntity(joinCodeValue);
         roomJpaRepository.save(roomEntity);

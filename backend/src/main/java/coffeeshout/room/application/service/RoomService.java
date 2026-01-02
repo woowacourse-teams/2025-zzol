@@ -50,6 +50,7 @@ public class RoomService {
 
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
+    private final DelayedRoomRemovalService delayedRoomRemovalService;
     private final QrCodeService qrCodeService;
     private final JoinCodeGenerator joinCodeGenerator;
     private final RoomEventWaitManager roomEventWaitManager;
@@ -252,6 +253,20 @@ public class RoomService {
                     event.eventId(), event.joinCode(), event.status()
             );
         }
+    }
+
+    public void createRoom(RoomCreateEvent event) {
+        log.info("JoinCode[{}] 방 생성 이벤트 처리 - 호스트 이름: {}",
+                event.joinCode(),
+                event.hostName()
+        );
+
+        roomCommandService.saveIfAbsentRoom(
+                new JoinCode(event.joinCode()),
+                new PlayerName(event.hostName())
+        );
+
+        delayedRoomRemovalService.scheduleRemoveRoom(new JoinCode(event.joinCode()));
     }
 
     private void saveRoomEntity(String joinCodeValue) {

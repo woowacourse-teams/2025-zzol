@@ -3,7 +3,6 @@ package coffeeshout.room.application.service;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
-import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
 import coffeeshout.room.domain.event.RouletteShowEvent;
 import coffeeshout.room.domain.event.RouletteShownEvent;
@@ -48,20 +47,6 @@ public class RoomEventService {
             roomEventWaitManager.notifyFailure(event.eventId(), e);
             throw e;
         }
-    }
-
-    public void createRoom(RoomCreateEvent event) {
-        log.info("JoinCode[{}] 방 생성 이벤트 처리 - 호스트 이름: {}",
-                event.joinCode(),
-                event.hostName()
-        );
-
-        roomCommandService.saveIfAbsentRoom(
-                new JoinCode(event.joinCode()),
-                new PlayerName(event.hostName())
-        );
-
-        delayedRoomRemovalService.scheduleRemoveRoom(new JoinCode(event.joinCode()));
     }
 
     public void showRoulette(RouletteShowEvent event) {

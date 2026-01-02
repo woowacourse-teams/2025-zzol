@@ -3,7 +3,6 @@ package coffeeshout.room.application.service;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
-import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
@@ -32,26 +31,7 @@ public class RoomEventService {
     private final RoomEventWaitManager roomEventWaitManager;
     private final RoulettePersistenceService roulettePersistenceService;
     private final RouletteService rouletteService;
-
-    /**
-     * 미니게임 목록을 업데이트하고, WebSocket 브로드캐스트를 위해 이벤트를 재발행합니다.
-     */
-    public void updateMiniGames(MiniGameSelectEvent event) {
-        log.info("JoinCode[{}] 미니게임 목록 업데이트 이벤트 처리 - 호스트: {}, 미니게임 종류: {}",
-                event.joinCode(),
-                event.hostName(),
-                event.miniGameTypes()
-        );
-
-        roomCommandService.updateMiniGames(
-                new JoinCode(event.joinCode()),
-                new PlayerName(event.hostName()),
-                event.miniGameTypes()
-        );
-
-        eventPublisher.publishEvent(event);
-    }
-
+    
     public void joinRoom(RoomJoinEvent event) {
         log.info("JoinCode[{}] 게스트 방 입장 이벤트 처리 - 게스트 이름: {}",
                 event.joinCode(),

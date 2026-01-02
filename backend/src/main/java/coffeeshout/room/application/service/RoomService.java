@@ -10,6 +10,7 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.PlayerReadyEvent;
 import coffeeshout.room.domain.event.RoomCreateEvent;
@@ -189,6 +190,22 @@ public class RoomService {
                     log.info("{} 비동기 처리 완료: {}, eventId={}",
                             operationName, successLogParams.apply(result), eventId);
                 });
+    }
+
+    public void updateMiniGames(MiniGameSelectEvent event) {
+        log.info("JoinCode[{}] 미니게임 목록 업데이트 이벤트 처리 - 호스트: {}, 미니게임 종류: {}",
+                event.joinCode(),
+                event.hostName(),
+                event.miniGameTypes()
+        );
+
+        roomCommandService.updateMiniGames(
+                new JoinCode(event.joinCode()),
+                new PlayerName(event.hostName()),
+                event.miniGameTypes()
+        );
+
+        eventPublisher.publishEvent(event);
     }
 
     public void readyPlayer(PlayerReadyEvent event) {

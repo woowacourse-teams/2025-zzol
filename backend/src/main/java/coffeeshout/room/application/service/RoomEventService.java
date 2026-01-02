@@ -4,8 +4,6 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
-import coffeeshout.room.domain.event.PlayerListUpdateEvent;
-import coffeeshout.room.domain.event.PlayerReadyEvent;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.event.RoomJoinEvent;
@@ -52,21 +50,6 @@ public class RoomEventService {
         );
 
         eventPublisher.publishEvent(event);
-    }
-
-    public void readyPlayer(PlayerReadyEvent event) {
-        log.info("JoinCode[{}] 플레이어 준비 상태 변경 이벤트 처리 - 플레이어: {}, 준비 상태: {}",
-                event.joinCode(),
-                event.playerName(),
-                event.isReady()
-        );
-
-        roomCommandService.readyPlayer(new JoinCode(event.joinCode()),
-                new PlayerName(event.playerName()),
-                event.isReady()
-        );
-
-        eventPublisher.publishEvent(new PlayerListUpdateEvent(event.joinCode()));
     }
 
     public void joinRoom(RoomJoinEvent event) {

@@ -54,16 +54,4 @@ public class RoomEventWaitManager {
         future.completeExceptionally(throwable);
         log.debug("방 이벤트 실패 알림: eventId={}", eventId);
     }
-
-
-    /**
-     * 예외적 상황에서만 사용하는 수동 정리 메서드 (예: 강제 취소, 시스템 종료 등) 일반적인 경우는 registerWait의 자동 정리를 사용
-     */
-    public void forceCleanup(String eventId) {
-        CompletableFuture<?> future = pendingEvents.remove(eventId);
-        if (future != null) {
-            future.cancel(true);
-            log.warn("방 이벤트 강제 정리: eventId={}", eventId);
-        }
-    }
 }

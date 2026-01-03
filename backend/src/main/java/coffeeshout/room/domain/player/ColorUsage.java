@@ -22,7 +22,7 @@ public class ColorUsage {
     }
 
     public int pickRandomOne() {
-        List<Integer> available = colors.entrySet().stream()
+        final List<Integer> available = colors.entrySet().stream()
                 .filter(entry -> !entry.getValue())
                 .map(Map.Entry::getKey)
                 .toList();

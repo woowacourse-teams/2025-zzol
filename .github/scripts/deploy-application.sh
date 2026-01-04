@@ -18,8 +18,9 @@ set -e
 #   이 스크립트를 실행하기 전에 .env 파일이 deploy_dir에 존재해야 합니다.
 #
 # Exit Codes:
-#   0 - Success
-#   1 - Error
+#   0 - Success (새 버전 정상 배포)
+#   1 - Error (배포 실패, 롤백도 실패)
+#   3 - Rollback Success (배포 실패했지만 이전 버전으로 복구 성공)
 #
 # Examples:
 #   ./deploy-application.sh dev ~/dev
@@ -119,6 +120,12 @@ deploy_application() {
 
     log_info "Deploying service: $SERVICE_NAME"
 
+    # Checkpoint 저장 (롤백을 위해)
+    if ! save_deployment_checkpoint "$DEPLOY_DIR" "$ENVIRONMENT"; then
+        log_error "Failed to save deployment checkpoint"
+        return 1
+    fi
+
     # 기존 컨테이너 확인 (running or stopped)
     local existing_container
     existing_container=$(docker ps -aq -f name="^${SERVICE_NAME}$" 2>/dev/null) || true
@@ -175,12 +182,16 @@ health_check() {
 
     log_error "Health check failed after ${max_attempts} attempts"
 
-    # 실패 시 로그 출력
-    echo ""
-    log_error "Recent application logs:"
-    docker compose --env-file .env logs --tail=100 "$SERVICE_NAME"
-
-    return 1
+    # 롤백 시도
+    if perform_rollback "$ENVIRONMENT" "$DEPLOY_DIR"; then
+        return 2  # 특수 코드: 롤백 성공
+    else
+        # 실패 시 로그 출력 (기존 코드 유지)
+        echo ""
+        log_error "Recent application logs:"
+        docker compose --env-file .env logs --tail=100 "$SERVICE_NAME"
+        return 1  # 롤백 실패
+    fi
 }
 
 show_deployment_status() {
@@ -222,18 +233,29 @@ main() {
         exit 1
     fi
 
-    if ! health_check; then
-        log_error "Health check failed"
+    # Health check with rollback
+    health_check
+    local health_result=$?
+
+    if [[ $health_result -eq 0 ]]; then
+        # 정상 배포 성공
+        show_deployment_status
+        log_step "✅ Application Deployment Completed"
+        log_success "Service: $SERVICE_NAME"
+        log_success "Status: Healthy"
+        exit 0
+    elif [[ $health_result -eq 2 ]]; then
+        # 롤백 성공
+        log_warning "Deployment rolled back to previous version"
+        log_warning "Previous version is now running and healthy"
+        show_deployment_status
+        exit 3  # 특수 exit code: 롤백 성공
+    else
+        # 롤백 실패 또는 checkpoint 없음
+        log_error "Health check failed AND rollback failed"
+        show_deployment_status
         exit 1
     fi
-
-    show_deployment_status
-
-    log_step "✅ Application Deployment Completed"
-    log_success "Service: $SERVICE_NAME"
-    log_success "Status: Healthy"
-
-    exit 0
 }
 
 # 스크립트 실행

@@ -20,7 +20,6 @@ set -e
 # Exit Codes:
 #   0 - Success (새 버전 정상 배포)
 #   1 - Error (배포 실패, 롤백도 실패)
-#   3 - Rollback Success (배포 실패했지만 이전 버전으로 복구 성공)
 #
 # Examples:
 #   ./deploy-application.sh dev ~/dev
@@ -234,8 +233,8 @@ main() {
     fi
 
     # Health check with rollback
-    health_check
-    local health_result=$?
+    local health_result=0
+    health_check || health_result=$?
 
     if [[ $health_result -eq 0 ]]; then
         # 정상 배포 성공
@@ -249,7 +248,7 @@ main() {
         log_warning "Deployment rolled back to previous version"
         log_warning "Previous version is now running and healthy"
         show_deployment_status
-        exit 3  # 특수 exit code: 롤백 성공
+        exit 0
     else
         # 롤백 실패 또는 checkpoint 없음
         log_error "Health check failed AND rollback failed"

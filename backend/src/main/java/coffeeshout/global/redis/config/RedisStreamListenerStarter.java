@@ -93,6 +93,8 @@ public class RedisStreamListenerStarter {
             eventDispatcher.handle(event);
         } catch (JsonProcessingException e) {
             log.error("Failed to parse event: {}", message.getValue(), e);
+        } catch (Exception e) {
+            log.error("예외가 발생했습니다.", e);
         }
     }
 

@@ -25,7 +25,7 @@ public class PlayerService {
     private final ApplicationEventPublisher eventPublisher;
     private final StreamPublisher streamPublisher;
 
-    public boolean publishKickPlayerEvent(String joinCode, String playerName) {
+    public boolean checkAndKickPlayer(String joinCode, String playerName) {
         log.info("JoinCode[{}] 플레이어 강퇴 명령 처리 - 플레이어: {}", joinCode, playerName);
 
         final boolean exists = roomQueryService.existsPlayer(new JoinCode(joinCode), new PlayerName(playerName));

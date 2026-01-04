@@ -65,7 +65,7 @@ class PlayerServiceTest extends ServiceTest {
             joinGuest(joinCode, "게스트1");
 
             // when
-            playerService.publishKickPlayerEvent(joinCode.getValue(), hostName);
+            playerService.checkAndKickPlayer(joinCode.getValue(), hostName);
 
             // then
             assertThat(roomService.roomExists(joinCode.getValue())).isTrue();
@@ -102,7 +102,7 @@ class PlayerServiceTest extends ServiceTest {
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when & then
-                assertThatThrownBy(() -> playerService.publishKickPlayerEvent(joinCode.getValue(), "존재하지_않는_게스트"))
+                assertThatThrownBy(() -> playerService.checkAndKickPlayer(joinCode.getValue(), "존재하지_않는_게스트"))
                         .isInstanceOf(InvalidArgumentException.class);
             }
 
@@ -114,7 +114,7 @@ class PlayerServiceTest extends ServiceTest {
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when & then
-                assertThatThrownBy(() -> playerService.publishKickPlayerEvent(joinCode.getValue(), null))
+                assertThatThrownBy(() -> playerService.checkAndKickPlayer(joinCode.getValue(), null))
                         .isInstanceOf(InvalidArgumentException.class);
             }
         }
@@ -130,7 +130,7 @@ class PlayerServiceTest extends ServiceTest {
         @Test
         void null_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> playerService.publishKickPlayerEvent(null, "플레이어"))
+            assertThatThrownBy(() -> playerService.checkAndKickPlayer(null, "플레이어"))
                     .isInstanceOf(InvalidArgumentException.class);
         }
     }

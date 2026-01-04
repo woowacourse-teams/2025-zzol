@@ -1,6 +1,6 @@
 package coffeeshout.room.infra.messaging.consumer;
 
-import coffeeshout.room.application.service.RoomEventService;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class QrCodeStatusConsumer implements Consumer<QrCodeStatusEvent> {
 
-    private final RoomEventService roomEventService;
+    private final RoomService roomService;
 
     @Override
     public void accept(QrCodeStatusEvent event) {
-        roomEventService.handleQrCodeStatus(event);
+        roomService.handleQrCodeStatus(event);
     }
 
 }

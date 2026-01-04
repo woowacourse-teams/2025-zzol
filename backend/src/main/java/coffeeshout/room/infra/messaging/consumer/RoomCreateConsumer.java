@@ -1,6 +1,6 @@
 package coffeeshout.room.infra.messaging.consumer;
 
-import coffeeshout.room.application.service.RoomEventService;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RoomCreateConsumer implements Consumer<RoomCreateEvent> {
 
-    private final RoomEventService roomEventService;
+    private final RoomService roomService;
 
     @Override
     public void accept(RoomCreateEvent event) {
-        roomEventService.createRoom(event);
+        roomService.createRoom(event);
     }
 }

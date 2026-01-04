@@ -22,8 +22,7 @@ public class RedisJoinCodeRepository implements JoinCodeRepository {
     @Override
     public boolean save(JoinCode joinCode) {
         final String key = JOIN_CODE_KEY_PREFIX + joinCode.getValue();
-        // SETNX 명령어로 원자적으로 저장 (키가 없을 때만 저장)
-        Boolean success = redisTemplate.opsForValue().setIfAbsent(key, "1", ttl);
+        final Boolean success = redisTemplate.opsForValue().setIfAbsent(key, "1", ttl);
         return Boolean.TRUE.equals(success);
     }
 }

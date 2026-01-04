@@ -5,7 +5,6 @@ import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.connection.RedisStreamCommands.XAddOptions;
@@ -49,7 +48,7 @@ public class StreamPublisher {
             return;
         }
 
-        int maxLength = streamConfig.getMaxLength(redisStreamProperties.commonSettings());
+        final int maxLength = streamConfig.getMaxLength(redisStreamProperties.commonSettings());
 
         try {
             stringRedisTemplate.opsForStream().add(

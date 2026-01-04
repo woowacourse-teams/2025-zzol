@@ -101,7 +101,7 @@ public class CardGame implements Playable {
         final Random random = new Random(seed + round.ordinal());
 
         for (Player player : unselectedPlayers) {
-            Card card = deck.pickRandom(random);
+            final Card card = deck.pickRandom(random);
             playerHands.put(player, card);
         }
     }

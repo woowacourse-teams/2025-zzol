@@ -68,7 +68,7 @@ public class Room {
     }
 
     public void applyMiniGameResult(MiniGameResult miniGameResult) {
-        ProbabilityCalculator probabilityCalculator = new ProbabilityCalculator(
+        final ProbabilityCalculator probabilityCalculator = new ProbabilityCalculator(
                 players.getPlayerCount(),
                 calculateMiniGameCount()
         );
@@ -129,7 +129,7 @@ public class Room {
         state(!miniGames.isEmpty(), "시작할 게임이 없습니다.");
         state(isPlayableState(), "게임을 시작할 수 있는 상태가 아닙니다.");
 
-        Playable currentGame = miniGames.poll();
+        final Playable currentGame = miniGames.poll();
 
         currentGame.setUp(players.getPlayers());
 

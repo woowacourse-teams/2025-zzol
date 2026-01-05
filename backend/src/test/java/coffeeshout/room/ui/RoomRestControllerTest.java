@@ -71,7 +71,7 @@ class RoomRestControllerTest {
                     .getContentAsString();
 
             RoomCreateResponse roomCreateResponse = objectMapper.readValue(response, RoomCreateResponse.class);
-            assertThat(roomCreateResponse.joinCode()).isNotBlank();
+            assertThat(roomRepository.existsByJoinCode(new JoinCode(roomCreateResponse.joinCode()))).isTrue();
         }
 
         @Test

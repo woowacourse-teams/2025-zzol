@@ -38,7 +38,6 @@ jobs:
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: frontend
-          branchName: preview
           exitZeroOnChanges: true
           onlyChanged: true
 

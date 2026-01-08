@@ -214,7 +214,7 @@ export const ModalOpenAndClose = {
     });
 
     await step('모달 내부의 닫기(아이콘) 버튼 클릭', async () => {
-      const closeIconButton = within(document.body).getByRole('button', { name: /close-icon/i });
+      const closeIconButton = within(document.body).getByRole('button', { name: '모달 닫기' });
       await userEvent.click(closeIconButton);
     });
 

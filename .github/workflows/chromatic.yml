@@ -44,7 +44,7 @@ jobs:
       - name: Upsert Chromatic PR Comment
         uses: actions/github-script@v7
         env:
-          CHROMATIC_BUILD_URL: ${{ steps.chromatic.outputs.buildUrl }}
+          CHROMATIC_URL: ${{ steps.chromatic.outputs.url }}
         with:
           script: |
             const owner = context.repo.owner;
@@ -52,7 +52,7 @@ jobs:
             const issue_number = context.issue.number;
 
             const marker = '<!-- storybook-preview -->';
-            const body = `${marker}\n## 📚 Storybook Preview\n\n🔗 **Build URL**: ${process.env.CHROMATIC_BUILD_URL}\n\n이 링크에서 최신 Storybook 상태를 확인할 수 있습니다.`;
+            const body = `${marker}\n## 📚 Storybook Preview\n\n🔗 **Build URL**: ${process.env.CHROMATIC_URL}\n\n이 링크에서 최신 Storybook 상태를 확인할 수 있습니다.`;
 
             // 1. PR 코멘트 목록 조회
             const { data: comments } = await github.rest.issues.listComments({

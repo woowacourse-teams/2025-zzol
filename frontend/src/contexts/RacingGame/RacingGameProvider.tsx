@@ -1,10 +1,10 @@
 import { PropsWithChildren, useCallback, useState } from 'react';
-import { RacingGameContext } from './RacingGameContext';
 import { useWebSocketSubscription } from '@/apis/websocket/hooks/useWebSocketSubscription';
 import { RacingGameData, RacingGameState } from '@/types/miniGame/racingGame';
 import { useIdentifier } from '../Identifier/IdentifierContext';
+import { RacingGameProvider } from './RacingGameContext';
 
-const RacingGameProvider = ({ children }: PropsWithChildren) => {
+const RacingGameProviderWrapper = ({ children }: PropsWithChildren) => {
   const [racingGameState, setRacingGameState] = useState<RacingGameState>('DESCRIPTION');
   const [racingGameData, setRacingGameData] = useState<RacingGameData>({
     players: [],
@@ -27,10 +27,8 @@ const RacingGameProvider = ({ children }: PropsWithChildren) => {
   useWebSocketSubscription(`/room/${joinCode}/racing-game`, handleRacingGameData);
 
   return (
-    <RacingGameContext.Provider value={{ racingGameState, racingGameData }}>
-      {children}
-    </RacingGameContext.Provider>
+    <RacingGameProvider value={{ racingGameState, racingGameData }}>{children}</RacingGameProvider>
   );
 };
 
-export default RacingGameProvider;
+export default RacingGameProviderWrapper;

@@ -2,7 +2,6 @@ import { colorList } from '@/constants/color';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import PlayerIcon from '../../@composition/PlayerIcon/PlayerIcon';
 import IconTextItem from './IconTextItem';
-//수정 테스트
 
 const meta: Meta<typeof IconTextItem> = {
   title: 'Common/IconTextItem',

@@ -1,5 +1,5 @@
 # 쫄 (ZZOL) robots.txt
-# https://zzol.site
+# https://www.zzol.site
 
 User-agent: *
 
@@ -21,4 +21,4 @@ Allow: /*.webp$
 Allow: /*.woff2$
 
 # sitemap 위치
-Sitemap: https://zzol.site/sitemap.xml
+Sitemap: https://www.zzol.site/sitemap.xml

@@ -87,6 +87,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.h2database:h2")
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
+    testImplementation("org.testcontainers:mysql:1.20.4")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
 
     // --- Reflections (클래스패스 스캔) ---
     implementation("org.reflections:reflections:${reflectionsVersion}")
@@ -94,4 +96,6 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // 성능 테스트는 CI에서 제외 (수동 실행용)
+    exclude("**/QueryPerformanceTest.class")
 }

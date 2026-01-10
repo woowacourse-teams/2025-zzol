@@ -1,0 +1,51 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+    show-sql: true
+  flyway:
+    enabled: false
+  lifecycle:
+    timeout-per-shutdown-phase: 1s
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  autoconfigure:
+    exclude:
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.tracing.otlp.OtlpTracingAutoConfiguration
+
+server:
+  shutdown: immediate
+
+redisson:
+  enabled: false
+
+# Tracing 비활성화
+management:
+  tracing:
+    enabled: false
+    sampling:
+      probability: 0.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+    coffeeshout: DEBUG
+
+room:
+  qr:
+    prefix: https://coffee-shout.com/join/
+  removalDelay: PT1M
+  event:
+    timeout: PT5S

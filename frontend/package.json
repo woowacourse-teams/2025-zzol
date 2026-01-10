@@ -1,7 +1,7 @@
 {
   "name": "2025-zzol",
   "version": "1.0.0",
-  "description": "똥손도 즐기는 커피빵 전쟁 ☕️",
+  "description": "똥손도 즐기는 게임 기반 추첨 서비스, 쫄(ZZOL)",
   "private": true,
   "type": "module",
   "scripts": {

@@ -8,7 +8,12 @@ type Props = {
 
 const GameReadyButton = ({ onClick, isReady = false, ...rest }: Props) => {
   return (
-    <Button variant={isReady ? 'ready' : 'primary'} onClick={onClick} {...rest}>
+    <Button
+      variant={isReady ? 'ready' : 'primary'}
+      onClick={onClick}
+      data-testid="game-ready-button"
+      {...rest}
+    >
       {isReady ? '준비 완료!' : '준비하기'}
     </Button>
   );

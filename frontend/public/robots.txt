@@ -1,5 +1,5 @@
-# 커피빵 (CoffeeShout) robots.txt
-# https://coffee-shout.com
+# 쫄 (ZZOL) robots.txt
+# https://www.zzol.site
 
 User-agent: *
 
@@ -21,5 +21,4 @@ Allow: /*.webp$
 Allow: /*.woff2$
 
 # sitemap 위치
-Sitemap: https://coffee-shout.com/sitemap.xml
-
+Sitemap: https://www.zzol.site/sitemap.xml

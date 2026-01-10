@@ -10,10 +10,6 @@ export const BottomGap = styled.div`
   height: 3rem;
 `;
 
-export const Menu = styled.img`
-  width: 50px;
-`;
-
 export const Empty = styled.div`
   display: flex;
   justify-content: center;

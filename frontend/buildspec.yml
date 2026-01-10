@@ -6,7 +6,12 @@ phases:
       nodejs: 22
     commands:
       - cd frontend
-      - npm install
+      - npm ci
+
+  pre_build:
+    commands:
+      - npm run lint
+      - npm run test:jest
 
   build:
     commands:

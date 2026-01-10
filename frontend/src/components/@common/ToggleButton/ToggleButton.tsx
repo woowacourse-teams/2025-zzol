@@ -25,6 +25,7 @@ const ToggleButton = <Option extends string>({
             aria-selected={selectedIndex === index}
             tabIndex={selectedIndex === index ? 0 : -1}
             aria-label={`${option}, ${index + 1}/${options.length}`}
+            data-testid={`toggle-option-${option}`}
           >
             <Headline4 color={selectedIndex === index ? 'white' : 'gray-400'}>{option}</Headline4>
           </S.Option>

@@ -86,7 +86,11 @@ const MiniGameResultPage = () => {
       </Layout.Content>
       <Layout.ButtonBar>
         {playerType === 'HOST' ? (
-          <Button variant="primary" onClick={handleClickRouletteResultButton}>
+          <Button
+            variant="primary"
+            onClick={handleClickRouletteResultButton}
+            data-testid="roulette-result-button"
+          >
             룰렛 현황 보러가기
           </Button>
         ) : (

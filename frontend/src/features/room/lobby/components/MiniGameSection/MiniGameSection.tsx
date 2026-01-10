@@ -56,6 +56,7 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
               onClick={() => handleClick(miniGame)}
               icon={<S.Icon src={MINI_GAME_ICON_MAP[miniGame]} alt={miniGame} />}
               orderNumber={selectedMiniGames.indexOf(miniGame) + 1}
+              data-testid={`game-action-${miniGame}`}
             />
           ))
         )}

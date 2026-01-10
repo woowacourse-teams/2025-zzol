@@ -17,9 +17,10 @@ type Props = {
 
 const RoomActionButton = ({ title, descriptions, onClick, ...rest }: Props) => {
   const { touchState, pointerHandlers } = useButtonInteraction({ onClick });
+  const testId = title === '방 만들기' ? 'create-room-button' : 'join-room-button';
 
   return (
-    <S.Container {...pointerHandlers} $touchState={touchState} {...rest}>
+    <S.Container {...pointerHandlers} $touchState={touchState} data-testid={testId} {...rest}>
       <Headline3>{title}</Headline3>
       <div>
         <ScreenReaderOnly>,</ScreenReaderOnly>

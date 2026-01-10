@@ -7,7 +7,7 @@ type Props = {
 
 const GameStartButton = ({ onClick, ...rest }: Props) => {
   return (
-    <Button variant="primary" onClick={onClick} {...rest}>
+    <Button variant="primary" onClick={onClick} data-testid="game-start-button" {...rest}>
       게임 시작
     </Button>
   );

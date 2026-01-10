@@ -12,6 +12,7 @@ export type WebSocketContextType = {
   ) => StompSubscription | null;
   isConnected: boolean;
   client: Client | null;
+  sessionId: string | null;
 };
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null);

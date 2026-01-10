@@ -113,6 +113,7 @@ const RoulettePlayPage = () => {
           <Button
             variant={isSpinStarted ? 'disabled' : 'primary'}
             onClick={handleUnifiedButtonClick}
+            data-testid="roulette-spin-button"
           >
             {getButtonText()}
           </Button>

@@ -1,9 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import { colorList } from '@/constants/color';
-import IconTextItem from './IconTextItem';
+import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import PlayerIcon from '../../@composition/PlayerIcon/PlayerIcon';
-import CircleIcon from '../CircleIcon/CircleIcon';
-import CustomMenuIcon from '@/assets/custom-menu-icon.svg';
+import IconTextItem from './IconTextItem';
 
 const meta: Meta<typeof IconTextItem> = {
   title: 'Common/IconTextItem',
@@ -46,28 +44,6 @@ export const PlayerCardWithChildren: Story = {
     ),
     gap: 20,
     rightContent: <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>10%</h4>,
-  },
-  decorators: [
-    (Story) => (
-      <div style={{ width: '400px' }}>
-        <Story />
-      </div>
-    ),
-  ],
-};
-
-export const CafeCategory: Story = {
-  args: {
-    iconContent: (
-      <CircleIcon color={colorList[1]} imageUrl={CustomMenuIcon} iconAlt="custom-menu" />
-    ),
-    textContent: (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>커피</h4>
-      </div>
-    ),
-    showBorder: true,
-    gap: 20,
   },
   decorators: [
     (Story) => (

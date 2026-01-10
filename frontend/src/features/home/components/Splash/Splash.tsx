@@ -20,7 +20,7 @@ const Splash = ({ onComplete }: Props) => {
     <Layout color="point-400">
       <S.Container>
         <S.LogoImage src={LogoSplashIcon} />
-        <S.LogoText>커피빵</S.LogoText>
+        <S.LogoText>ZZOL</S.LogoText>
       </S.Container>
     </Layout>
   );

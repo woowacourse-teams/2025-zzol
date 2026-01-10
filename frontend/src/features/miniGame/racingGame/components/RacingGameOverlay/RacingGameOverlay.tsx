@@ -40,7 +40,11 @@ const RacingGameOverlay = ({ children, isGoal }: Props) => {
     };
   }, [joinCode, myName, send, racingGameState, isGoal]);
 
-  return <S.Overlay onPointerDown={handlePointerDown}>{children}</S.Overlay>;
+  return (
+    <S.Overlay data-testid="racing-game-overlay" onPointerDown={handlePointerDown}>
+      {children}
+    </S.Overlay>
+  );
 };
 
 export default RacingGameOverlay;

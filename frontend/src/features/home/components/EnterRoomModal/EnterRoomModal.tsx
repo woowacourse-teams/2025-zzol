@@ -83,13 +83,14 @@ const EnterRoomModal = ({ onClose }: Props) => {
         onKeyDown={handleKeyDown}
         autoFocus
         aria-label="초대코드를 입력해주세요"
+        data-testid="join-code-input"
       />
       <S.ErrorText aria-live="assertive">{errorText}</S.ErrorText>
       <S.ButtonContainer>
         <Button variant="secondary" onClick={onClose}>
           취소
         </Button>
-        <Button variant="primary" onClick={handleEnter}>
+        <Button variant="primary" onClick={handleEnter} data-testid="enter-room-button">
           입장
         </Button>
       </S.ButtonContainer>

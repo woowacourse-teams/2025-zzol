@@ -20,6 +20,6 @@
     },
     "types": ["jest", "node"]
   },
-  "include": ["src/**/*", "__tests__/**/*", ".storybook/**/*"],
+  "include": ["src/**/*", "__tests__/**/*", ".storybook/**/*", "public/devtools/devSnippet.js"],
   "exclude": ["node_modules", "dist"]
 }

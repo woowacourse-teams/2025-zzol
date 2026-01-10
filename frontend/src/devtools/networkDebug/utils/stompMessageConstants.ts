@@ -1,0 +1,19 @@
+/**
+ * STOMP 메시지의 명령어 타입
+ */
+export const STOMP_COMMAND = {
+  CONNECT: 'CONNECT',
+  CONNECTED: 'CONNECTED',
+  SEND: 'SEND',
+  SUBSCRIBE: 'SUBSCRIBE',
+  UNSUBSCRIBE: 'UNSUBSCRIBE',
+  MESSAGE: 'MESSAGE',
+  RECEIPT: 'RECEIPT',
+  ERROR: 'ERROR',
+  DISCONNECT: 'DISCONNECT',
+} as const;
+
+/**
+ * 일반 메시지 요약의 최대 길이
+ */
+export const MESSAGE_SUMMARY_MAX_LENGTH = 100;

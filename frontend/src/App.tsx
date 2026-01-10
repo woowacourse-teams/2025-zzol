@@ -10,10 +10,17 @@ import { ParticipantsProvider } from './contexts/Participants/ParticipantsProvid
 import { PlayerTypeProvider } from './contexts/PlayerType/PlayerTypeProvider';
 import ProbabilityHistoryProvider from './contexts/ProbabilityHistory/ProbabilityHistoryProvider';
 import { theme } from './styles/theme';
+import { DevToolsWrapper } from './devtools/common/components/DevToolsWrapper/DevToolsWrapper';
 
 const App = () => {
+  if (process.env.ENABLE_DEVTOOLS) {
+    console.log('ENABLE_DEVTOOLS', process.env.ENABLE_DEVTOOLS);
+  }
+
   return (
     <ThemeProvider theme={theme}>
+      {process.env.ENABLE_DEVTOOLS && <DevToolsWrapper />}
+
       <IdentifierProvider>
         <ParticipantsProvider>
           <WebSocketProvider>

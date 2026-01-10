@@ -115,7 +115,7 @@ public class StompSessionManager {
      */
     public String extractPlayerName(@NonNull String playerKey) {
         validatePlayerKey(playerKey);
-        String[] parts = playerKey.split(PLAYER_KEY_DELIMITER);
+        final String[] parts = playerKey.split(PLAYER_KEY_DELIMITER);
         return parts[1];
     }
 

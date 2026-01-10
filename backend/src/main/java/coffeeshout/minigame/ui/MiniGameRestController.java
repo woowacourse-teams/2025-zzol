@@ -5,7 +5,7 @@ import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.ui.response.MiniGameRanksResponse;
 import coffeeshout.minigame.ui.response.MiniGameScoresResponse;
-import coffeeshout.room.application.RoomService;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.player.Player;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;

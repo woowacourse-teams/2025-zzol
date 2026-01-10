@@ -3,7 +3,7 @@ package coffeeshout.room.infra;
 import coffeeshout.global.config.properties.OracleObjectStorageProperties;
 import coffeeshout.global.config.properties.QrProperties;
 import coffeeshout.global.exception.custom.StorageServiceException;
-import coffeeshout.room.application.StorageService;
+import coffeeshout.room.application.port.StorageService;
 import coffeeshout.room.domain.RoomErrorCode;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
@@ -58,7 +58,8 @@ public class OracleObjectStorageService implements StorageService {
             meterRegistry.counter("oracle.objectstorage.qr.upload.failed",
                     "error", e.getClass().getSimpleName()).increment();
             log.error("Oracle Object Storage QR 코드 업로드 실패: contents={}, error={}", contents, e.getMessage(), e);
-            throw new StorageServiceException(RoomErrorCode.QR_CODE_UPLOAD_FAILED, RoomErrorCode.QR_CODE_UPLOAD_FAILED.getMessage(), e);
+            throw new StorageServiceException(RoomErrorCode.QR_CODE_UPLOAD_FAILED,
+                    RoomErrorCode.QR_CODE_UPLOAD_FAILED.getMessage(), e);
         }
     }
 
@@ -77,9 +78,9 @@ public class OracleObjectStorageService implements StorageService {
 
     private String uploadQrCodeToObjectStorage(String contents, byte[] qrCodeImage) throws Exception {
         return uploadTimer.recordCallable(() -> {
-            String objectName = storageKeyPrefix + "/" + contents + ".png";
+            final String objectName = storageKeyPrefix + "/" + contents + ".png";
 
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+            final PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .namespaceName(namespaceName)
                     .bucketName(bucketName)
                     .objectName(objectName)
@@ -88,7 +89,7 @@ public class OracleObjectStorageService implements StorageService {
                     .putObjectBody(new ByteArrayInputStream(qrCodeImage))
                     .build();
 
-            PutObjectResponse response = objectStorage.putObject(putObjectRequest);
+            final PutObjectResponse response = objectStorage.putObject(putObjectRequest);
             log.info("QR 코드 Oracle Object Storage 업로드 완료: contents={}, objectName={}, etag={}",
                     contents, objectName, response.getETag());
 
@@ -104,7 +105,7 @@ public class OracleObjectStorageService implements StorageService {
         }
 
         // Public 버킷이므로 PAR 없이 직접 URL 생성
-        String publicUrl = String.format("https://objectstorage.%s.oraclecloud.com/n/%s/b/%s/o/%s",
+        final String publicUrl = String.format("https://objectstorage.%s.oraclecloud.com/n/%s/b/%s/o/%s",
                 region, namespaceName, bucketName, objectName);
 
         log.info("Public URL 생성 완료: objectName={}", objectName);

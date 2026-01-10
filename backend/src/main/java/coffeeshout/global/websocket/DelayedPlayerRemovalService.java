@@ -1,6 +1,6 @@
 package coffeeshout.global.websocket;
 
-import coffeeshout.room.application.RoomService;
+import coffeeshout.room.application.service.RoomService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;

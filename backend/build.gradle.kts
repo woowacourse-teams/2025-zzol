@@ -30,6 +30,7 @@ val zxingVersion = "3.5.3"
 val queryDslVersion = "5.0.0"
 val websocketDocsVersion = "1.0.7"
 val testcontainersVersion = "2.0.2"
+val reflectionsVersion = "0.10.2"
 
 dependencies {
     // --- Spring Boot Starters (버전 생략: Boot가 관리) ---
@@ -86,6 +87,9 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.h2database:h2")
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
+
+    // --- Reflections (클래스패스 스캔) ---
+    implementation("org.reflections:reflections:${reflectionsVersion}")
 }
 
 tasks.withType<Test> {

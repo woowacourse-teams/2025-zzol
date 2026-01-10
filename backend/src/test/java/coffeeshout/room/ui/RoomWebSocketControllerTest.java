@@ -19,6 +19,9 @@ import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.Customization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
 
@@ -33,7 +36,8 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
     @BeforeEach
     void setUp(@Autowired RoomRepository roomRepository,
                @Autowired RoomJpaRepository roomJpaRepository,
-               @Autowired PlayerJpaRepository playerJpaRepository) throws Exception {
+               @Autowired PlayerJpaRepository playerJpaRepository,
+               @Autowired PlatformTransactionManager transactionManager) throws Exception {
         testRoom = RoomFixture.호스트_꾹이();
         joinCode = testRoom.getJoinCode();  // Room에서 실제 joinCode 가져오기
         host = testRoom.getHost();
@@ -41,18 +45,24 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
         // MemoryRepository에 저장
         roomRepository.save(testRoom);
 
-        // DB에 RoomEntity 저장 (Redis 이벤트 핸들러가 DB에서 조회하므로 필요)
-        RoomEntity roomEntity = new RoomEntity(joinCode.getValue());
-        roomJpaRepository.save(roomEntity);
+        // 새로운 독립 트랜잭션으로 DB에 저장 (비동기 이벤트 핸들러가 조회할 수 있도록)
+        var txTemplate = new TransactionTemplate(transactionManager);
+        txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
-        // DB에 PlayerEntity들 저장 (룰렛 결과 저장 시 필요)
-        testRoom.getPlayers().forEach(player -> {
-            PlayerEntity playerEntity = new PlayerEntity(
-                    roomEntity,
-                    player.getName().value(),
-                    player.getPlayerType()
-            );
-            playerJpaRepository.save(playerEntity);
+        txTemplate.executeWithoutResult(status -> {
+            // DB에 RoomEntity 저장
+            RoomEntity roomEntity = new RoomEntity(joinCode.getValue());
+            roomJpaRepository.save(roomEntity);
+
+            // DB에 PlayerEntity들 저장 (룰렛 결과 저장 시 필요)
+            testRoom.getPlayers().forEach(player -> {
+                PlayerEntity playerEntity = new PlayerEntity(
+                        roomEntity,
+                        player.getName().value(),
+                        player.getPlayerType()
+                );
+                playerJpaRepository.save(playerEntity);
+            });
         });
 
         session = createSession();

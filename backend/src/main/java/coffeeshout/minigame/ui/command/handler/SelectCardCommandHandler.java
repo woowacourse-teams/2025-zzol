@@ -1,7 +1,9 @@
 package coffeeshout.minigame.ui.command.handler;
 
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
-import coffeeshout.cardgame.infra.messaging.CardSelectStreamProducer;
+import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.ui.command.MiniGameCommandHandler;
 import coffeeshout.minigame.ui.request.command.SelectCardCommand;
 import lombok.RequiredArgsConstructor;
@@ -13,12 +15,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SelectCardCommandHandler implements MiniGameCommandHandler<SelectCardCommand> {
 
-    private final CardSelectStreamProducer cardSelectStreamProducer;
+    private final StreamPublisher streamPublisher;
 
     @Override
     public void handle(String joinCode, SelectCardCommand command) {
-        final SelectCardCommandEvent event = new SelectCardCommandEvent(joinCode, command.playerName(), command.cardIndex());
-        cardSelectStreamProducer.broadcastCardSelect(event);
+        final BaseEvent event = new SelectCardCommandEvent(joinCode, command.playerName(), command.cardIndex());
+        streamPublisher.publish(StreamKey.CARD_GAME_SELECT_BROADCAST, event);
         log.info("카드 선택 이벤트 발행: joinCode={}, playerName={}, cardIndex={}, eventId={}",
                 joinCode, command.playerName(), command.cardIndex(), event.eventId());
     }

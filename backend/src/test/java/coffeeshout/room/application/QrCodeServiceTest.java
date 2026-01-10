@@ -2,6 +2,7 @@ package coffeeshout.room.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,11 +10,14 @@ import static org.mockito.Mockito.when;
 import coffeeshout.global.config.properties.QrProperties;
 import coffeeshout.global.exception.custom.QRCodeGenerationException;
 import coffeeshout.global.exception.custom.StorageServiceException;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.room.application.port.StorageService;
+import coffeeshout.room.application.service.QrCodeService;
 import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.service.QrCodeGenerator;
-import coffeeshout.room.infra.messaging.RoomEventPublisher;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +37,7 @@ class QrCodeServiceTest {
     StorageService storageService;
 
     @Mock
-    RoomEventPublisher roomEventPublisher;
+    StreamPublisher streamPublisher;
 
     MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
@@ -49,7 +53,7 @@ class QrCodeServiceTest {
                 qrCodeGenerator,
                 storageService,
                 meterRegistry,
-                roomEventPublisher
+                streamPublisher
         );
     }
 
@@ -177,7 +181,7 @@ class QrCodeServiceTest {
         // then
 
         ArgumentCaptor<QrCodeStatusEvent> successEventCaptor = ArgumentCaptor.forClass(QrCodeStatusEvent.class);
-        verify(roomEventPublisher).publishEvent(successEventCaptor.capture());
+        verify(streamPublisher).publish(any(StreamKey.class), successEventCaptor.capture());
 
         // 2. 두 번째 이벤트는 SUCCESS (roomEventPublisher를 통해 발행)
         QrCodeStatusEvent successEvent = successEventCaptor.getValue();
@@ -198,7 +202,7 @@ class QrCodeServiceTest {
 
         // then
         ArgumentCaptor<QrCodeStatusEvent> errorCaptor = ArgumentCaptor.forClass(QrCodeStatusEvent.class);
-        verify(roomEventPublisher).publishEvent(errorCaptor.capture());
+        verify(streamPublisher).publish(any(StreamKey.class), errorCaptor.capture());
 
         assertThat(errorCaptor.getValue().status()).isEqualTo(QrCodeStatus.ERROR);
     }

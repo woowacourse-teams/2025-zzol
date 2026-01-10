@@ -1,13 +1,15 @@
 package coffeeshout.room.domain.service;
 
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
+import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.menu.Menu;
-import coffeeshout.room.domain.menu.MenuTemperature;
-import coffeeshout.room.domain.menu.SelectedMenu;
+import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.domain.repository.RoomRepository;
+import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,24 +32,42 @@ public class RoomCommandService {
         roomRepository.deleteByJoinCode(joinCode);
     }
 
-    public Room joinGuest(JoinCode joinCode, PlayerName playerName, Menu menu, MenuTemperature menuTemperature) {
-        log.info("JoinCode[{}] 게스트 입장 - 게스트 이름: {}, 메뉴 정보: {}, 온도 : {} ", joinCode, playerName, menu, menuTemperature);
+    public boolean removePlayer(JoinCode joinCode, PlayerName playerName) {
+        log.info("JoinCode[{}] 플레이어 퇴장 - 플레이어 이름: {} ", joinCode, playerName);
         final Room room = roomQueryService.getByJoinCode(joinCode);
 
-        room.joinGuest(playerName, new SelectedMenu(menu, menuTemperature));
+        boolean removed = room.removePlayer(playerName);
+
+        if (removed && room.isEmpty()) {
+            delete(joinCode);
+            return true;
+        }
+
+        if (removed) {
+            save(room);
+        }
+
+        return removed;
+    }
+
+    public Room joinGuest(JoinCode joinCode, PlayerName playerName) {
+        log.info("JoinCode[{}] 게스트 입장 - 게스트 이름: {} ", joinCode, playerName);
+        final Room room = roomQueryService.getByJoinCode(joinCode);
+
+        room.joinGuest(playerName);
 
         return save(room);
     }
 
-    public Room saveIfAbsentRoom(JoinCode joinCode, PlayerName hostName, Menu menu, MenuTemperature menuTemperature) {
+    public Room saveIfAbsentRoom(JoinCode joinCode, PlayerName hostName) {
         if (roomRepository.existsByJoinCode(joinCode)) {
             log.warn("JoinCode[{}] 방 생성 실패 - 이미 존재하는 방", joinCode);
             return roomQueryService.getByJoinCode(joinCode);
         }
 
-        log.info("JoinCode[{}] 방 생성 - 호스트 이름: {}, 메뉴 정보: {}, 온도 : {} ", joinCode, hostName, menu, menuTemperature);
+        log.info("JoinCode[{}] 방 생성 - 호스트 이름: {} ", joinCode, hostName);
 
-        final Room room = Room.createNewRoom(joinCode, hostName, new SelectedMenu(menu, menuTemperature));
+        final Room room = Room.createNewRoom(joinCode, hostName);
 
         return save(room);
     }
@@ -93,5 +113,37 @@ public class RoomCommandService {
         room.assignQrCode(QrCode.error());
         save(room);
         log.info("QR 코드 ERROR 상태로 변경: joinCode={}", joinCode);
+    }
+
+    public List<MiniGameType> updateMiniGames(JoinCode joinCode, PlayerName hostName,
+                                              List<MiniGameType> miniGameTypes) {
+        log.info("JoinCode[{}] 미니게임 설정 변경 - 호스트 이름: {}, 미니게임 목록: {}", joinCode, hostName, miniGameTypes);
+        final Room room = roomQueryService.getByJoinCode(joinCode);
+        room.clearMiniGames();
+
+        miniGameTypes.forEach(miniGameType -> {
+            final Playable miniGame = miniGameType.createMiniGame(joinCode.getValue());
+            room.addMiniGame(hostName, miniGame);
+        });
+
+        save(room);
+
+        return room.getAllMiniGame().stream()
+                .map(Playable::getMiniGameType)
+                .toList();
+    }
+
+    public Room readyPlayer(JoinCode joinCode, PlayerName playerName, Boolean isReady) {
+        log.info("JoinCode[{}] 플레이어 준비 상태 변경 - 플레이어 이름: {}, 준비 상태: {}", joinCode, playerName, isReady);
+        final Room room = roomQueryService.getByJoinCode(joinCode);
+        final Player player = room.findPlayer(playerName);
+
+        if (player.getPlayerType() == PlayerType.HOST) {
+            return room;
+        }
+
+        player.updateReadyState(isReady);
+
+        return save(room);
     }
 }

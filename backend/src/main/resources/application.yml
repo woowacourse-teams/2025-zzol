@@ -15,10 +15,44 @@ spring:
       ssl:
         enabled: false
       host: localhost
-      stream:
-        room-join-key: room:broadcast
-        card-game-select-key: cardGame:select:broadcast
-        max-length: 100
+
+redis:
+  stream:
+    # 공통 기본 설정 (각 스트림에서 오버라이드 가능)
+    common-settings:
+      max-length: 100
+      batch-size: 10
+      poll-timeout: 2s
+
+    # 공유 스레드풀
+    thread-pools:
+#      sequential: # 단일 스레드풀은 여러 리스너에서 공유 불가능
+#        core-size: 1
+#        max-size: 1
+#        queue-capacity: 100
+      concurrent:
+        core-size: 8
+        max-size: 16
+        queue-capacity: 1024
+
+    # 스트림 설정 (key가 식별자)
+    keys:
+      "[room]":
+        thread-pool-name: concurrent
+      "[room:join]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 1024
+      "[cardgame:select]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 1024
+      "[minigame]":
+        thread-pool-name: concurrent
+      "[racinggame]":
+        thread-pool-name: concurrent
 
 oracle:
   cloud:
@@ -88,6 +122,3 @@ websocket:
       title: "커피빵 WebSocket API 명세서"
       version: "1.0.0"
       description: "실시간 웹소켓 통신 API 문서"
-
-menu-category:
-  default-image: "https://d35bef0h3hdfkh.cloudfront.net/custom-menu.svg"

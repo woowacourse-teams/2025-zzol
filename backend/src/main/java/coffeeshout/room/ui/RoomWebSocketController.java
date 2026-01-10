@@ -1,17 +1,16 @@
 package coffeeshout.room.ui;
 
+import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.application.RoomService;
-import coffeeshout.room.domain.Room;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.PlayerReadyEvent;
 import coffeeshout.room.domain.event.RouletteShowEvent;
 import coffeeshout.room.domain.event.RouletteSpinEvent;
 import coffeeshout.room.domain.player.Winner;
-import coffeeshout.room.domain.roulette.Roulette;
-import coffeeshout.room.domain.roulette.RoulettePicker;
-import coffeeshout.room.infra.messaging.RoomEventPublisher;
 import coffeeshout.room.ui.request.MiniGameSelectMessage;
 import coffeeshout.room.ui.request.ReadyChangeMessage;
 import coffeeshout.room.ui.request.RouletteSpinMessage;
@@ -30,7 +29,7 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 public class RoomWebSocketController {
 
-    private final RoomEventPublisher roomEventPublisher;
+    private final StreamPublisher streamPublisher;
     private final RoomService roomService;
 
     @MessageMapping("/room/{joinCode}/update-players")
@@ -47,8 +46,8 @@ public class RoomWebSocketController {
                     """
     )
     public void broadcastPlayers(@DestinationVariable String joinCode) {
-        final PlayerListUpdateEvent event = new PlayerListUpdateEvent(joinCode);
-        roomEventPublisher.publishEvent(event);
+        final BaseEvent event = new PlayerListUpdateEvent(joinCode);
+        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
     }
 
     @MessageMapping("/room/{joinCode}/update-ready")
@@ -66,8 +65,8 @@ public class RoomWebSocketController {
                     """
     )
     public void broadcastReady(@DestinationVariable String joinCode, ReadyChangeMessage message) {
-        final PlayerReadyEvent event = new PlayerReadyEvent(joinCode, message.playerName(), message.isReady());
-        roomEventPublisher.publishEvent(event);
+        final BaseEvent event = new PlayerReadyEvent(joinCode, message.playerName(), message.isReady());
+        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
     }
 
     @MessageMapping("/room/{joinCode}/update-minigames")
@@ -85,9 +84,9 @@ public class RoomWebSocketController {
                     """
     )
     public void broadcastMiniGames(@DestinationVariable String joinCode, MiniGameSelectMessage message) {
-        final MiniGameSelectEvent event = new MiniGameSelectEvent(joinCode, message.hostName(),
+        final BaseEvent event = new MiniGameSelectEvent(joinCode, message.hostName(),
                 message.miniGameTypes());
-        roomEventPublisher.publishEvent(event);
+        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
     }
 
     @MessageMapping("/room/{joinCode}/show-roulette")
@@ -102,8 +101,8 @@ public class RoomWebSocketController {
                     """
     )
     public void broadcastShowRoulette(@DestinationVariable String joinCode) {
-        final RouletteShowEvent event = new RouletteShowEvent(joinCode);
-        roomEventPublisher.publishEvent(event);
+        final BaseEvent event = new RouletteShowEvent(joinCode);
+        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
     }
 
     @MessageMapping("/room/{joinCode}/spin-roulette")
@@ -118,9 +117,8 @@ public class RoomWebSocketController {
                     """
     )
     public void broadcastRouletteSpin(@DestinationVariable String joinCode, RouletteSpinMessage message) {
-        final Room room = roomService.getRoomByJoinCode(joinCode);
-        final Winner winner = room.spinRoulette(room.getHost(), new Roulette(new RoulettePicker()));
-        final RouletteSpinEvent event = new RouletteSpinEvent(joinCode, message.hostName(), winner);
-        roomEventPublisher.publishEvent(event);
+        final Winner winner = roomService.spinRoulette(joinCode, message.hostName());
+        final BaseEvent event = new RouletteSpinEvent(joinCode, message.hostName(), winner);
+        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
     }
 }

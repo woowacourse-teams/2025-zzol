@@ -1,6 +1,7 @@
 package coffeeshout.global.websocket.event.session;
 
-import java.time.LocalDateTime;
+import coffeeshout.global.redis.BaseEvent;
+import java.time.Instant;
 import java.util.UUID;
 
 public record SessionRegisteredEvent(
@@ -8,8 +9,8 @@ public record SessionRegisteredEvent(
         SessionEventType eventType,
         String playerKey,
         String sessionId,
-        LocalDateTime timestamp
-) implements SessionBaseEvent {
+        Instant timestamp
+) implements BaseEvent {
 
     public static SessionRegisteredEvent create(String playerKey, String sessionId) {
         return new SessionRegisteredEvent(
@@ -17,7 +18,7 @@ public record SessionRegisteredEvent(
                 SessionEventType.SESSION_REGISTERED,
                 playerKey,
                 sessionId,
-                LocalDateTime.now()
+                Instant.now()
         );
     }
 }

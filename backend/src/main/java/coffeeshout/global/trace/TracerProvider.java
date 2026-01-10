@@ -1,5 +1,6 @@
 package coffeeshout.global.trace;
 
+import coffeeshout.global.redis.BaseEvent;
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.TraceContext;
 import io.micrometer.tracing.Tracer;
@@ -14,8 +15,8 @@ public class TracerProvider {
 
     private final Tracer tracer;
 
-    public void executeWithTraceContext(TraceInfo traceInfo, Runnable task, String name) {
-        if (!traceInfo.isAvailableTrace()) {
+    public void executeWithTraceContext(TraceInfo traceInfo, Runnable task, BaseEvent event) {
+        if (!traceInfo.traceable()) {
             task.run();
             return;
         }
@@ -25,7 +26,7 @@ public class TracerProvider {
                 .sampled(true)
                 .build();
         final Span span = tracer.spanBuilder()
-                .name(name)
+                .name(event.getClass().getSimpleName())
                 .setParent(context)
                 .start();
         try (Tracer.SpanInScope spanInScope = tracer.withSpan(span)) {

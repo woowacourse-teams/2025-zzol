@@ -42,13 +42,13 @@ public class Runners {
     }
 
     public Map<Runner, Integer> getPositions() {
-        Map<Runner, Integer> positions = new LinkedHashMap<>();
+        final Map<Runner, Integer> positions = new LinkedHashMap<>();
         runners.forEach(runner -> positions.put(runner, runner.getPosition()));
         return positions;
     }
 
     public Map<Runner, Integer> getSpeeds() {
-        Map<Runner, Integer> speeds = new LinkedHashMap<>();
+        final Map<Runner, Integer> speeds = new LinkedHashMap<>();
         runners.forEach(runner -> speeds.put(runner, runner.getSpeed()));
         return speeds;
     }

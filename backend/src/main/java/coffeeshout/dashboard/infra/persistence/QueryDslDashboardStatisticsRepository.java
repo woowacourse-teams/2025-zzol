@@ -15,6 +15,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -116,22 +117,50 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
             LocalDateTime endDate,
             int limit
     ) {
-        return queryFactory
-                .select(Projections.constructor(
-                        RacingGameTopPlayerResponse.class,
-                        PLAYER.playerName,
+        // 1단계: player_id로 GROUP BY하여 집계 (JOIN 없이)
+        final List<com.querydsl.core.Tuple> aggregations = queryFactory
+                .select(
+                        MINI_GAME_RESULT.player.id,
                         MINI_GAME_RESULT.rank.avg(),
                         MINI_GAME_RESULT.score.sum()
-                ))
+                )
                 .from(MINI_GAME_RESULT)
-                .join(MINI_GAME_RESULT.player, PLAYER)
                 .where(
                         MINI_GAME_RESULT.miniGameType.eq(MiniGameType.RACING_GAME),
                         MINI_GAME_RESULT.createdAt.between(startDate, endDate)
                 )
-                .groupBy(PLAYER.playerName)
+                .groupBy(MINI_GAME_RESULT.player.id)
                 .orderBy(MINI_GAME_RESULT.rank.avg().asc())
                 .limit(limit)
                 .fetch();
+
+        if (aggregations.isEmpty()) {
+            return List.of();
+        }
+
+        // 2단계: player_id 목록으로 player_name 조회
+        final List<Long> playerIds = aggregations.stream()
+                .map(tuple -> tuple.get(MINI_GAME_RESULT.player.id))
+                .toList();
+
+        final Map<Long, String> playerNameMap = queryFactory
+                .select(PLAYER.id, PLAYER.playerName)
+                .from(PLAYER)
+                .where(PLAYER.id.in(playerIds))
+                .fetch()
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        tuple -> tuple.get(PLAYER.id),
+                        tuple -> tuple.get(PLAYER.playerName)
+                ));
+
+        // 3단계: 집계 결과와 player_name 매핑
+        return aggregations.stream()
+                .map(tuple -> new RacingGameTopPlayerResponse(
+                        playerNameMap.get(tuple.get(MINI_GAME_RESULT.player.id)),
+                        tuple.get(MINI_GAME_RESULT.rank.avg()),
+                        tuple.get(MINI_GAME_RESULT.score.sum())
+                ))
+                .toList();
     }
 }

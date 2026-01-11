@@ -3,13 +3,12 @@ package coffeeshout.dashboard.infra.persistence;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import coffeeshout.global.config.QueryDslConfig;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.infra.persistence.MiniGameEntity;
-import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
-import coffeeshout.room.domain.player.PlayerType;
-import coffeeshout.room.infra.persistence.PlayerEntity;
-import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RouletteResultEntity;
 import jakarta.persistence.EntityManager;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
@@ -57,7 +55,8 @@ class QueryPerformanceTest {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        String jdbcUrl = "jdbc:mysql://" + mysql.getHost() + ":" + mysql.getMappedPort(MYSQL_PORT) + "/coffeeshout_test";
+        String jdbcUrl = "jdbc:mysql://" + mysql.getHost() + ":" + mysql.getMappedPort(MYSQL_PORT) + "/coffeeshout_test"
+                + "?rewriteBatchedStatements=true";  // Batch INSERT 성능 최적화
         registry.add("spring.datasource.url", () -> jdbcUrl);
         registry.add("spring.datasource.username", () -> "test");
         registry.add("spring.datasource.password", () -> "test");
@@ -65,7 +64,6 @@ class QueryPerformanceTest {
         registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.MySQLDialect");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "none");
         registry.add("spring.flyway.enabled", () -> "true");
-        registry.add("spring.flyway.locations", () -> "classpath:db/migration");
     }
 
     @Autowired
@@ -74,9 +72,13 @@ class QueryPerformanceTest {
     @Autowired
     private EntityManager em;
 
+    @Autowired
+    private javax.sql.DataSource dataSource;
+
     private static final int TOTAL_ROOMS = 100_000;
     private static final int MIN_PLAYERS_PER_ROOM = 4;
     private static final int MAX_PLAYERS_PER_ROOM = 8;
+    private static final int BATCH_SIZE = 10000;
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
@@ -302,70 +304,259 @@ class QueryPerformanceTest {
 
     private void insertBulkTestData() {
         Random random = new Random(42);
-        
-        // 1년치 데이터 분산 (2025-01-01 ~ 2025-12-31 + 2026-01-01 ~ 현재)
         LocalDateTime baseDate = LocalDateTime.of(2025, 1, 1, 0, 0, 0);
-        int totalDays = 375; // 약 1년 + 10일
+        int totalDays = 375;
 
-        int totalPlayers = 0;
-        int totalMiniGames = 0;
-        int totalMiniGameResults = 0;
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+
+            // PreparedStatement 준비
+            try (PreparedStatement roomStmt = conn.prepareStatement(
+                    "INSERT INTO room_session (join_code, room_status, created_at, finished_at) VALUES (?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS);
+                 PreparedStatement playerStmt = conn.prepareStatement(
+                         "INSERT INTO player (room_session_id, player_name, player_type, created_at) VALUES (?, ?, ?, ?)",
+                         Statement.RETURN_GENERATED_KEYS);
+                 PreparedStatement miniGameStmt = conn.prepareStatement(
+                         "INSERT INTO mini_game_play (room_session_id, mini_game_type) VALUES (?, ?)",
+                         Statement.RETURN_GENERATED_KEYS);
+                 PreparedStatement miniGameResultStmt = conn.prepareStatement(
+                         "INSERT INTO mini_game_result (mini_game_play_id, player_id, player_rank, score, mini_game_type, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+                 PreparedStatement rouletteStmt = conn.prepareStatement(
+                         "INSERT INTO roulette_result (room_session_id, winner_id, winner_probability, created_at) VALUES (?, ?, ?, ?)")) {
+
+                // 1. Room 데이터 준비 및 삽입
+                List<RoomData> roomDataList = prepareRoomData(random, baseDate, totalDays);
+                long baseRoomId = insertRooms(conn, roomStmt, roomDataList, random);
+
+                // 2. Player 삽입
+                int totalPlayers = insertPlayers(playerStmt, roomDataList, baseRoomId);
+
+                // 3. MiniGame 삽입
+                int totalMiniGames = insertMiniGames(miniGameStmt, roomDataList, baseRoomId);
+
+                // 4. Results 삽입
+                long basePlayerId = getMinId(conn, "player");
+                long baseMiniGameId = getMinId(conn, "mini_game_play");
+                int totalMiniGameResults = insertMiniGameResults(miniGameResultStmt, roomDataList, basePlayerId, baseMiniGameId, random);
+                insertRouletteResults(rouletteStmt, roomDataList, baseRoomId, basePlayerId, random);
+
+                conn.commit();
+
+                printStatistics(totalPlayers, totalMiniGames, totalMiniGameResults);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to insert bulk test data", e);
+        }
+    }
+
+    private List<RoomData> prepareRoomData(Random random, LocalDateTime baseDate, int totalDays) {
+        System.out.println("  RoomData 준비 중...");
+        List<RoomData> roomDataList = new ArrayList<>(TOTAL_ROOMS);
 
         for (int roomIdx = 0; roomIdx < TOTAL_ROOMS; roomIdx++) {
-            // 날짜 분산: roomIdx를 기반으로 날짜 계산
             int dayOffset = (roomIdx * totalDays) / TOTAL_ROOMS;
             LocalDateTime roomCreatedAt = baseDate.plusDays(dayOffset)
                     .plusHours(random.nextInt(24))
                     .plusMinutes(random.nextInt(60));
 
-            RoomEntity room = createRoom(generateJoinCode(roomIdx), roomCreatedAt);
-            em.persist(room);
-
-            // 방당 4~8명의 플레이어 (랜덤)
             int playerCount = MIN_PLAYERS_PER_ROOM + random.nextInt(MAX_PLAYERS_PER_ROOM - MIN_PLAYERS_PER_ROOM + 1);
-            List<PlayerEntity> roomPlayers = new ArrayList<>();
-            for (int playerIdx = 0; playerIdx < playerCount; playerIdx++) {
-                PlayerType type = playerIdx == 0 ? PlayerType.HOST : PlayerType.GUEST;
-                PlayerEntity player = createPlayer(room, "P" + roomIdx + "_" + playerIdx, type, roomCreatedAt);
-                em.persist(player);
-                roomPlayers.add(player);
-            }
-            totalPlayers += playerCount;
-
-            // 방당 미니게임 1~3개 (랜덤, 최소 1개 보장)
             int miniGameCount = 1 + random.nextInt(3);
-            for (int gameIdx = 0; gameIdx < miniGameCount; gameIdx++) {
-                MiniGameType gameType = MiniGameType.values()[random.nextInt(MiniGameType.values().length)];
-                MiniGameEntity miniGame = new MiniGameEntity(room, gameType);
-                em.persist(miniGame);
-                totalMiniGames++;
 
-                // 미니게임 결과 (플레이어별 순위, 점수)
-                List<PlayerEntity> shuffledPlayers = new ArrayList<>(roomPlayers);
-                java.util.Collections.shuffle(shuffledPlayers, random);
-                for (int rank = 1; rank <= shuffledPlayers.size(); rank++) {
-                    PlayerEntity player = shuffledPlayers.get(rank - 1);
-                    long score = (shuffledPlayers.size() + 1 - rank) * 1000L + random.nextInt(500);
-                    MiniGameResultEntity miniGameResult = createMiniGameResult(miniGame, player, rank, score, roomCreatedAt);
-                    em.persist(miniGameResult);
-                    totalMiniGameResults++;
+            List<MiniGameType> miniGameTypes = new ArrayList<>();
+            for (int i = 0; i < miniGameCount; i++) {
+                miniGameTypes.add(MiniGameType.values()[random.nextInt(MiniGameType.values().length)]);
+            }
+
+            roomDataList.add(new RoomData(roomCreatedAt, playerCount, miniGameTypes));
+        }
+
+        return roomDataList;
+    }
+
+    private long insertRooms(Connection conn, PreparedStatement roomStmt, List<RoomData> roomDataList, Random random) throws Exception {
+        System.out.println("  Room 생성 중...");
+
+        for (int roomIdx = 0; roomIdx < TOTAL_ROOMS; roomIdx++) {
+            RoomData roomData = roomDataList.get(roomIdx);
+            String joinCode = generateJoinCode(roomIdx);
+            Timestamp timestamp = Timestamp.valueOf(roomData.createdAt);
+
+            roomStmt.setString(1, joinCode);
+            roomStmt.setString(2, "FINISHED");
+            roomStmt.setTimestamp(3, timestamp);
+            roomStmt.setTimestamp(4, timestamp);
+            roomStmt.addBatch();
+
+            if ((roomIdx + 1) % BATCH_SIZE == 0) {
+                roomStmt.executeBatch();
+                System.out.println("    " + (roomIdx + 1) + " rooms inserted");
+            }
+        }
+        roomStmt.executeBatch();
+
+        return getMinId(conn, "room_session");
+    }
+
+    private int insertPlayers(PreparedStatement playerStmt, List<RoomData> roomDataList, long baseRoomId) throws Exception {
+        System.out.println("  Player 생성 중...");
+        long currentRoomId = baseRoomId;
+        int playerBatchCount = 0;
+        int totalPlayers = 0;
+
+        for (int roomIdx = 0; roomIdx < TOTAL_ROOMS; roomIdx++) {
+            RoomData roomData = roomDataList.get(roomIdx);
+            long roomId = currentRoomId++;
+            Timestamp timestamp = Timestamp.valueOf(roomData.createdAt);
+
+            for (int playerIdx = 0; playerIdx < roomData.playerCount; playerIdx++) {
+                String playerType = playerIdx == 0 ? "HOST" : "GUEST";
+                playerStmt.setLong(1, roomId);
+                playerStmt.setString(2, "P" + roomIdx + "_" + playerIdx);
+                playerStmt.setString(3, playerType);
+                playerStmt.setTimestamp(4, timestamp);
+                playerStmt.addBatch();
+                totalPlayers++;
+
+                if (++playerBatchCount >= BATCH_SIZE) {
+                    playerStmt.executeBatch();
+                    playerBatchCount = 0;
                 }
             }
 
-            // 방당 룰렛 결과 1개
-            PlayerEntity winner = roomPlayers.get(random.nextInt(roomPlayers.size()));
-            int probability = Math.max(1, Math.min(100, (int) (20 + random.nextGaussian() * 10)));
-            RouletteResultEntity rouletteResult = createRouletteResult(room, winner, probability, roomCreatedAt);
-            em.persist(rouletteResult);
-
-            if (roomIdx % 1000 == 0 && roomIdx > 0) {
-                em.flush();
-                em.clear();
-                System.out.println("  " + roomIdx + "개 방 생성...");
+            if ((roomIdx + 1) % 10000 == 0) {
+                System.out.println("    " + (roomIdx + 1) + "개 방의 플레이어 추가 완료");
             }
         }
-        em.flush();
-        em.clear();
+        playerStmt.executeBatch();
+
+        return totalPlayers;
+    }
+
+    private int insertMiniGames(PreparedStatement miniGameStmt, List<RoomData> roomDataList, long baseRoomId) throws Exception {
+        System.out.println("  MiniGame 생성 중...");
+        long currentRoomId = baseRoomId;
+        int miniGameBatchCount = 0;
+        int totalMiniGames = 0;
+
+        for (int roomIdx = 0; roomIdx < TOTAL_ROOMS; roomIdx++) {
+            RoomData roomData = roomDataList.get(roomIdx);
+            long roomId = currentRoomId++;
+
+            for (MiniGameType gameType : roomData.miniGameTypes) {
+                miniGameStmt.setLong(1, roomId);
+                miniGameStmt.setString(2, gameType.name());
+                miniGameStmt.addBatch();
+                totalMiniGames++;
+
+                if (++miniGameBatchCount >= BATCH_SIZE) {
+                    miniGameStmt.executeBatch();
+                    miniGameBatchCount = 0;
+                }
+            }
+        }
+        miniGameStmt.executeBatch();
+
+        return totalMiniGames;
+    }
+
+    private int insertMiniGameResults(PreparedStatement miniGameResultStmt, List<RoomData> roomDataList,
+                                      long basePlayerId, long baseMiniGameId, Random random) throws Exception {
+        System.out.println("  MiniGameResult 생성 중...");
+        long currentPlayerId = basePlayerId;
+        long currentMiniGameId = baseMiniGameId;
+        int miniGameResultBatchCount = 0;
+        int totalMiniGameResults = 0;
+
+        for (int roomIdx = 0; roomIdx < TOTAL_ROOMS; roomIdx++) {
+            RoomData roomData = roomDataList.get(roomIdx);
+            Timestamp timestamp = Timestamp.valueOf(roomData.createdAt);
+
+            // 이 방의 플레이어 ID 목록
+            List<Long> playerIds = new ArrayList<>();
+            for (int playerIdx = 0; playerIdx < roomData.playerCount; playerIdx++) {
+                playerIds.add(currentPlayerId++);
+            }
+
+            // 이 방의 미니게임별 결과 생성
+            for (MiniGameType gameType : roomData.miniGameTypes) {
+                long miniGameId = currentMiniGameId++;
+
+                List<Long> shuffledPlayerIds = new ArrayList<>(playerIds);
+                java.util.Collections.shuffle(shuffledPlayerIds, random);
+
+                for (int rank = 1; rank <= shuffledPlayerIds.size(); rank++) {
+                    long playerId = shuffledPlayerIds.get(rank - 1);
+                    long score = (shuffledPlayerIds.size() + 1 - rank) * 1000L + random.nextInt(500);
+
+                    miniGameResultStmt.setLong(1, miniGameId);
+                    miniGameResultStmt.setLong(2, playerId);
+                    miniGameResultStmt.setInt(3, rank);
+                    miniGameResultStmt.setLong(4, score);
+                    miniGameResultStmt.setString(5, gameType.name());
+                    miniGameResultStmt.setTimestamp(6, timestamp);
+                    miniGameResultStmt.addBatch();
+                    totalMiniGameResults++;
+
+                    if (++miniGameResultBatchCount >= BATCH_SIZE) {
+                        miniGameResultStmt.executeBatch();
+                        miniGameResultBatchCount = 0;
+                    }
+                }
+            }
+
+            if ((roomIdx + 1) % 10000 == 0) {
+                System.out.println("    " + (roomIdx + 1) + "개 방 결과 추가 완료");
+            }
+        }
+        miniGameResultStmt.executeBatch();
+
+        return totalMiniGameResults;
+    }
+
+    private void insertRouletteResults(PreparedStatement rouletteStmt, List<RoomData> roomDataList,
+                                       long baseRoomId, long basePlayerId, Random random) throws Exception {
+        System.out.println("  RouletteResult 생성 중...");
+        long currentRoomId = baseRoomId;
+        long currentPlayerId = basePlayerId;
+        int rouletteBatchCount = 0;
+
+        for (int roomIdx = 0; roomIdx < TOTAL_ROOMS; roomIdx++) {
+            RoomData roomData = roomDataList.get(roomIdx);
+            long roomId = currentRoomId++;
+            Timestamp timestamp = Timestamp.valueOf(roomData.createdAt);
+
+            // 이 방의 플레이어 중 랜덤으로 승자 선택
+            List<Long> playerIds = new ArrayList<>();
+            for (int playerIdx = 0; playerIdx < roomData.playerCount; playerIdx++) {
+                playerIds.add(currentPlayerId++);
+            }
+
+            long winnerId = playerIds.get(random.nextInt(playerIds.size()));
+            int probability = Math.max(1, Math.min(100, (int) (20 + random.nextGaussian() * 10)));
+
+            rouletteStmt.setLong(1, roomId);
+            rouletteStmt.setLong(2, winnerId);
+            rouletteStmt.setInt(3, probability);
+            rouletteStmt.setTimestamp(4, timestamp);
+            rouletteStmt.addBatch();
+
+            if (++rouletteBatchCount >= BATCH_SIZE) {
+                rouletteStmt.executeBatch();
+                rouletteBatchCount = 0;
+            }
+        }
+        rouletteStmt.executeBatch();
+    }
+
+    private long getMinId(Connection conn, String tableName) throws Exception {
+        ResultSet rs = conn.createStatement().executeQuery("SELECT MIN(id) FROM " + tableName);
+        rs.next();
+        return rs.getLong(1);
+    }
+
+    private void printStatistics(int totalPlayers, int totalMiniGames, int totalMiniGameResults) {
         System.out.println("=== 생성 완료 ===");
         System.out.println("방: " + TOTAL_ROOMS + "개");
         System.out.println("플레이어: " + totalPlayers + "명 (방당 평균 " + (totalPlayers / TOTAL_ROOMS) + "명)");
@@ -375,30 +566,19 @@ class QueryPerformanceTest {
         System.out.println("날짜 범위: 2025-01-01 ~ 2026-01-10 (약 1년치)");
     }
 
-    private RoomEntity createRoom(String joinCode, LocalDateTime createdAt) {
-        RoomEntity room = new RoomEntity(joinCode);
-        ReflectionTestUtils.setField(room, "createdAt", createdAt);
-        return room;
+    // 데이터 구조 클래스
+    private static class RoomData {
+        final LocalDateTime createdAt;
+        final int playerCount;
+        final List<MiniGameType> miniGameTypes;
+
+        RoomData(LocalDateTime createdAt, int playerCount, List<MiniGameType> miniGameTypes) {
+            this.createdAt = createdAt;
+            this.playerCount = playerCount;
+            this.miniGameTypes = miniGameTypes;
+        }
     }
 
-    private PlayerEntity createPlayer(RoomEntity room, String playerName, PlayerType playerType, LocalDateTime createdAt) {
-        PlayerEntity player = new PlayerEntity(room, playerName, playerType);
-        ReflectionTestUtils.setField(player, "createdAt", createdAt);
-        return player;
-    }
-
-    private RouletteResultEntity createRouletteResult(RoomEntity room, PlayerEntity winner, int probability, LocalDateTime createdAt) {
-        RouletteResultEntity result = new RouletteResultEntity(room, winner, probability);
-        ReflectionTestUtils.setField(result, "createdAt", createdAt);
-        return result;
-    }
-
-    private MiniGameResultEntity createMiniGameResult(MiniGameEntity miniGame, PlayerEntity player, int rank, long score, LocalDateTime createdAt) {
-        MiniGameResultEntity result = new MiniGameResultEntity(miniGame, player, rank, score);
-        ReflectionTestUtils.setField(result, "createdAt", createdAt);
-        ReflectionTestUtils.setField(result, "miniGameType", miniGame.getMiniGameType());
-        return result;
-    }
 
     private String generateJoinCode(int index) {
         String base = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

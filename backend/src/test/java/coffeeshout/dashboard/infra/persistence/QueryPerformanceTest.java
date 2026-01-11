@@ -568,9 +568,9 @@ class QueryPerformanceTest {
 
     // 데이터 구조 클래스
     private static class RoomData {
-        LocalDateTime createdAt;
-        int playerCount;
-        List<MiniGameType> miniGameTypes;
+        final LocalDateTime createdAt;
+        final int playerCount;
+        final List<MiniGameType> miniGameTypes;
 
         RoomData(LocalDateTime createdAt, int playerCount, List<MiniGameType> miniGameTypes) {
             this.createdAt = createdAt;

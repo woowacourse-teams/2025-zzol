@@ -434,7 +434,7 @@ class QueryPerformanceTest {
         return totalPlayers;
     }
 
-    private int insertMiniGames( PreparedStatement miniGameStmt, List<RoomData> roomDataList, long baseRoomId) throws Exception {
+    private int insertMiniGames(PreparedStatement miniGameStmt, List<RoomData> roomDataList, long baseRoomId) throws Exception {
         System.out.println("  MiniGame 생성 중...");
         long currentRoomId = baseRoomId;
         int miniGameBatchCount = 0;

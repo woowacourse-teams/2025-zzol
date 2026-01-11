@@ -4,6 +4,7 @@ import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import coffeeshout.global.config.QueryDslConfig;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
+import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
 import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.RoomEntity;
@@ -74,7 +75,8 @@ class QueryPerformanceTest {
     private EntityManager em;
 
     private static final int TOTAL_ROOMS = 100_000;
-    private static final int PLAYERS_PER_ROOM = 4;
+    private static final int MIN_PLAYERS_PER_ROOM = 4;
+    private static final int MAX_PLAYERS_PER_ROOM = 8;
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
@@ -236,6 +238,68 @@ class QueryPerformanceTest {
         System.out.println("최대: " + times.stream().mapToLong(Long::longValue).max().orElse(0) + "ms");
     }
 
+    @Test
+    @Commit
+    @DisplayName("findRacingGameTopPlayers 성능 측정")
+    void measure_findRacingGameTopPlayers() {
+        // 웜업
+        System.out.println("=== 웜업 (3회) ===");
+        for (int i = 0; i < 3; i++) {
+            dashboardStatisticsRepository.findRacingGameTopPlayers(startDate, endDate, 5);
+        }
+        em.clear();
+
+        System.out.println("=== 성능 측정 (10회) ===");
+        long totalTime = 0;
+        List<Long> times = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            em.clear();
+            long start = System.currentTimeMillis();
+            dashboardStatisticsRepository.findRacingGameTopPlayers(startDate, endDate, 5);
+            long elapsed = System.currentTimeMillis() - start;
+            times.add(elapsed);
+            totalTime += elapsed;
+            System.out.println((i + 1) + "회: " + elapsed + "ms");
+        }
+
+        System.out.println("\n=== 결과 ===");
+        System.out.println("평균: " + (totalTime / 10) + "ms");
+        System.out.println("최소: " + times.stream().mapToLong(Long::longValue).min().orElse(0) + "ms");
+        System.out.println("최대: " + times.stream().mapToLong(Long::longValue).max().orElse(0) + "ms");
+    }
+
+    @Test
+    @Commit
+    @DisplayName("EXPLAIN ANALYZE - findRacingGameTopPlayers")
+    void explain_findRacingGameTopPlayers() {
+        String sql = """
+                EXPLAIN ANALYZE
+                SELECT
+                    p.player_name,
+                    AVG(mr.player_rank) as avg_rank,
+                    SUM(mr.score) as total_score
+                FROM mini_game_result mr
+                JOIN player p ON mr.player_id = p.id
+                WHERE mr.mini_game_type = 'RACING_GAME'
+                  AND mr.created_at BETWEEN :startDate AND :endDate
+                GROUP BY p.player_name
+                ORDER BY avg_rank ASC
+                LIMIT 5
+                """;
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> explainResult = em.createNativeQuery(sql)
+                .setParameter("startDate", startDate)
+                .setParameter("endDate", endDate)
+                .getResultList();
+
+        System.out.println("=== EXPLAIN ANALYZE 결과 ===");
+        for (Object row : explainResult) {
+            System.out.println(row);
+        }
+    }
+
     private void insertBulkTestData() {
         Random random = new Random(42);
         
@@ -243,7 +307,10 @@ class QueryPerformanceTest {
         LocalDateTime baseDate = LocalDateTime.of(2025, 1, 1, 0, 0, 0);
         int totalDays = 375; // 약 1년 + 10일
 
-        int count = 0;
+        int totalPlayers = 0;
+        int totalMiniGames = 0;
+        int totalMiniGameResults = 0;
+
         for (int roomIdx = 0; roomIdx < TOTAL_ROOMS; roomIdx++) {
             // 날짜 분산: roomIdx를 기반으로 날짜 계산
             int dayOffset = (roomIdx * totalDays) / TOTAL_ROOMS;
@@ -254,25 +321,42 @@ class QueryPerformanceTest {
             RoomEntity room = createRoom(generateJoinCode(roomIdx), roomCreatedAt);
             em.persist(room);
 
-            // 방당 4명의 플레이어
+            // 방당 4~8명의 플레이어 (랜덤)
+            int playerCount = MIN_PLAYERS_PER_ROOM + random.nextInt(MAX_PLAYERS_PER_ROOM - MIN_PLAYERS_PER_ROOM + 1);
             List<PlayerEntity> roomPlayers = new ArrayList<>();
-            for (int playerIdx = 0; playerIdx < PLAYERS_PER_ROOM; playerIdx++) {
+            for (int playerIdx = 0; playerIdx < playerCount; playerIdx++) {
                 PlayerType type = playerIdx == 0 ? PlayerType.HOST : PlayerType.GUEST;
                 PlayerEntity player = createPlayer(room, "P" + roomIdx + "_" + playerIdx, type, roomCreatedAt);
                 em.persist(player);
                 roomPlayers.add(player);
             }
+            totalPlayers += playerCount;
 
-            // 방당 미니게임 1개 (랜덤 타입)
-            MiniGameType gameType = MiniGameType.values()[random.nextInt(MiniGameType.values().length)];
-            em.persist(new MiniGameEntity(room, gameType));
+            // 방당 미니게임 1~3개 (랜덤, 최소 1개 보장)
+            int miniGameCount = 1 + random.nextInt(3);
+            for (int gameIdx = 0; gameIdx < miniGameCount; gameIdx++) {
+                MiniGameType gameType = MiniGameType.values()[random.nextInt(MiniGameType.values().length)];
+                MiniGameEntity miniGame = new MiniGameEntity(room, gameType);
+                em.persist(miniGame);
+                totalMiniGames++;
+
+                // 미니게임 결과 (플레이어별 순위, 점수)
+                List<PlayerEntity> shuffledPlayers = new ArrayList<>(roomPlayers);
+                java.util.Collections.shuffle(shuffledPlayers, random);
+                for (int rank = 1; rank <= shuffledPlayers.size(); rank++) {
+                    PlayerEntity player = shuffledPlayers.get(rank - 1);
+                    long score = (shuffledPlayers.size() + 1 - rank) * 1000L + random.nextInt(500);
+                    MiniGameResultEntity miniGameResult = createMiniGameResult(miniGame, player, rank, score, roomCreatedAt);
+                    em.persist(miniGameResult);
+                    totalMiniGameResults++;
+                }
+            }
 
             // 방당 룰렛 결과 1개
             PlayerEntity winner = roomPlayers.get(random.nextInt(roomPlayers.size()));
             int probability = Math.max(1, Math.min(100, (int) (20 + random.nextGaussian() * 10)));
             RouletteResultEntity rouletteResult = createRouletteResult(room, winner, probability, roomCreatedAt);
             em.persist(rouletteResult);
-            count++;
 
             if (roomIdx % 1000 == 0 && roomIdx > 0) {
                 em.flush();
@@ -282,7 +366,12 @@ class QueryPerformanceTest {
         }
         em.flush();
         em.clear();
-        System.out.println("총 " + TOTAL_ROOMS + "개 방, " + count + "건 룰렛 결과 생성");
+        System.out.println("=== 생성 완료 ===");
+        System.out.println("방: " + TOTAL_ROOMS + "개");
+        System.out.println("플레이어: " + totalPlayers + "명 (방당 평균 " + (totalPlayers / TOTAL_ROOMS) + "명)");
+        System.out.println("미니게임: " + totalMiniGames + "개 (방당 평균 " + (totalMiniGames / TOTAL_ROOMS) + "개)");
+        System.out.println("미니게임 결과: " + totalMiniGameResults + "건");
+        System.out.println("룰렛 결과: " + TOTAL_ROOMS + "건");
         System.out.println("날짜 범위: 2025-01-01 ~ 2026-01-10 (약 1년치)");
     }
 
@@ -301,6 +390,13 @@ class QueryPerformanceTest {
     private RouletteResultEntity createRouletteResult(RoomEntity room, PlayerEntity winner, int probability, LocalDateTime createdAt) {
         RouletteResultEntity result = new RouletteResultEntity(room, winner, probability);
         ReflectionTestUtils.setField(result, "createdAt", createdAt);
+        return result;
+    }
+
+    private MiniGameResultEntity createMiniGameResult(MiniGameEntity miniGame, PlayerEntity player, int rank, long score, LocalDateTime createdAt) {
+        MiniGameResultEntity result = new MiniGameResultEntity(miniGame, player, rank, score);
+        ReflectionTestUtils.setField(result, "createdAt", createdAt);
+        ReflectionTestUtils.setField(result, "miniGameType", miniGame.getMiniGameType());
         return result;
     }
 

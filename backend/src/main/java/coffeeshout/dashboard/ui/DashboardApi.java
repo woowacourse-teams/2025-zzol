@@ -2,6 +2,7 @@ package coffeeshout.dashboard.ui;
 
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
+import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,4 +20,7 @@ public interface DashboardApi {
 
     @Operation(summary = "게임 실행 횟수 조회", description = "이번 달 제일 많이 실행된 게임 통계를 조회합니다.")
     ResponseEntity<List<GamePlayCountResponse>> getGamePlayCounts();
+
+    @Operation(summary = "레이싱 게임 TOP 플레이어 조회", description = "이번 달 레이싱 게임 평균 순위 기준 상위 5명을 조회합니다.")
+    ResponseEntity<List<RacingGameTopPlayerResponse>> getRacingGameTopPlayers();
 }

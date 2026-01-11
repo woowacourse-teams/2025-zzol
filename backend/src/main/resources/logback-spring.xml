@@ -11,7 +11,7 @@
               value="[%d{yyyy-MM-dd HH:mm:ss}] [%clr(%-5level)] %clr(---){faint} %clr([%15.15thread]){faint} %clr(%-40.40logger{36}){cyan} %clr(:){faint} %msg %clr(%marker)  %n"/>
 
     <property name="FILE_LOG_PATTERN"
-              value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] --- [%15.15thread] %-40.40logger{36} : %msg%n"/>
+              value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%level] --- [%thread] %logger{36} : %msg%n"/>
 
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">

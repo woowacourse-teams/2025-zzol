@@ -2,9 +2,12 @@ package coffeeshout.dashboard.infra.persistence;
 
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
+import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.persistence.QMiniGameEntity;
+import coffeeshout.minigame.infra.persistence.QMiniGameResultEntity;
 import coffeeshout.room.infra.persistence.QPlayerEntity;
 import coffeeshout.room.infra.persistence.QRoomEntity;
 import coffeeshout.room.infra.persistence.QRouletteResultEntity;
@@ -23,6 +26,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
     private static final QRouletteResultEntity ROULETTE_RESULT = QRouletteResultEntity.rouletteResultEntity;
     private static final QPlayerEntity PLAYER = QPlayerEntity.playerEntity;
     private static final QMiniGameEntity MINI_GAME = QMiniGameEntity.miniGameEntity;
+    private static final QMiniGameResultEntity MINI_GAME_RESULT = QMiniGameResultEntity.miniGameResultEntity;
     private static final QRoomEntity ROOM = QRoomEntity.roomEntity;
 
     private final JPAQueryFactory queryFactory;
@@ -103,6 +107,31 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 .where(ROOM.createdAt.between(startDate, endDate))
                 .groupBy(MINI_GAME.miniGameType)
                 .orderBy(MINI_GAME.count().desc())
+                .fetch();
+    }
+
+    @Override
+    public List<RacingGameTopPlayerResponse> findRacingGameTopPlayers(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int limit
+    ) {
+        return queryFactory
+                .select(Projections.constructor(
+                        RacingGameTopPlayerResponse.class,
+                        PLAYER.playerName,
+                        MINI_GAME_RESULT.rank.avg(),
+                        MINI_GAME_RESULT.score.sum()
+                ))
+                .from(MINI_GAME_RESULT)
+                .join(MINI_GAME_RESULT.player, PLAYER)
+                .where(
+                        MINI_GAME_RESULT.miniGameType.eq(MiniGameType.RACING_GAME),
+                        MINI_GAME_RESULT.createdAt.between(startDate, endDate)
+                )
+                .groupBy(PLAYER.playerName)
+                .orderBy(MINI_GAME_RESULT.rank.avg().asc())
+                .limit(limit)
                 .fetch();
     }
 }

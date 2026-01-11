@@ -135,6 +135,32 @@ services:
           cpus: '0.2'        # 최소 0.2 vCPU
           memory: 1G         # 최소 1GB
 
+  # ============================================
+  # Prod Promtail - Log Shipper
+  # ============================================
+  prod-promtail:
+    image: grafana/promtail:latest
+    container_name: prod-promtail
+    restart: unless-stopped
+    volumes:
+      - prod-app-logs:/app/logs:ro
+      - ./conf/promtail.yml:/etc/promtail/promtail.yml:ro
+    command: -config.file=/etc/promtail/promtail.yml
+    networks:
+      - prod-network
+      - zzol-network
+    environment:
+      - TZ=Asia/Seoul
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+
+
 # ============================================
 # Networks
 # ============================================

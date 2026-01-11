@@ -122,6 +122,31 @@ services:
       timeout: 3s
       retries: 3
 
+  # ============================================
+  # Dev Promtail - Log Shipper
+  # ============================================
+  dev-promtail:
+    image: grafana/promtail:latest
+    container_name: dev-promtail
+    restart: unless-stopped
+    volumes:
+      - dev-app-logs:/app/logs:ro
+      - ./conf/promtail.yml:/etc/promtail/promtail.yml:ro
+    command: -config.file=/etc/promtail/promtail.yml
+    networks:
+      - dev-network
+      - zzol-network
+    environment:
+      - TZ=Asia/Seoul
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+
 # ============================================
 # Networks
 # ============================================

@@ -154,10 +154,16 @@ services:
   # cAdvisor - Container Metrics
   # ============================================
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.50.0
     container_name: cadvisor
     privileged: true
     restart: unless-stopped
+    command:
+      - '--docker_only=true'
+      - '--housekeeping_interval=10s'
+      - '--max_housekeeping_interval=15s'
+      - '--event_storage_event_limit=default=0'
+      - '--event_storage_age_limit=default=0'
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro

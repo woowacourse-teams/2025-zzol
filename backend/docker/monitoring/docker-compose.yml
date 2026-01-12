@@ -81,11 +81,12 @@ services:
     user: "472:472"  # grafana:grafana (Grafana 기본 UID)
     restart: unless-stopped
     volumes:
-      - grafana-data:/var/lib/grafana
-      - grafana-logs:/var/log/grafana
-      - ./dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./data/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./data/grafana/grafana_data:/var/lib/grafana
+      - ./data/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./logs/grafana:/var/log/grafana
     networks:
+      - zzol-network
       - monitoring-network
     expose:
       - "3000"
@@ -196,6 +197,8 @@ networks:
   dev-network:
     external: true
   prod-network:
+    external: true
+  zzol-network:
     external: true
 
 # ============================================

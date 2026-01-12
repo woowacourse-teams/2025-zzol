@@ -139,6 +139,7 @@ services:
       - "9104:9104"
     networks:
       - dev-network
+      - zzol-network
     depends_on:
       dev-mysql:
         condition: service_healthy
@@ -165,6 +166,7 @@ services:
       - "9121:9121"
     networks:
       - dev-network
+      - zzol-network
     depends_on:
       dev-redis:
         condition: service_healthy

@@ -4,8 +4,10 @@ set -e
 # ============================================
 # Deploy Application (Spring Boot)
 # ============================================
-# Spring Boot 애플리케이션 컨테이너를 배포합니다.
-# 이미지를 pull하고, 컨테이너를 재시작하며, 헬스체크를 수행합니다.
+# docker-compose.yml에 정의된 모든 서비스를 배포합니다.
+# - Application 이미지를 pull하고 재시작
+# - Exporter 등 다른 서비스는 없으면 시작, 변경사항이 있으면 재시작
+# - 변경사항이 없는 서비스(MySQL, Redis 등)는 그대로 유지
 #
 # Usage:
 #   ./deploy-application.sh <environment> <deploy_dir>
@@ -117,39 +119,34 @@ verify_dependencies() {
 deploy_application() {
     log_step "🚢 Application Deployment"
 
-    log_info "Deploying service: $SERVICE_NAME"
+    log_info "Deploying all services with docker-compose up -d"
+    log_info "Note: Only changed services will be restarted"
 
-    # 기존 컨테이너 확인 (running or stopped)
-    local existing_container
-    existing_container=$(docker ps -aq -f name="^${SERVICE_NAME}$" 2>/dev/null) || true
-
-    if [[ -n "$existing_container" ]]; then
-        log_info "Found existing container: $existing_container"
-        log_info "Stopping and removing old container..."
-        docker compose --env-file .env stop "$SERVICE_NAME" 2>/dev/null || true
-        docker compose --env-file .env rm -f "$SERVICE_NAME" 2>/dev/null || true
-    else
-        log_info "No existing container found"
-    fi
-
-    # 새 컨테이너 시작
-    log_info "Starting new container..."
-    docker compose --env-file .env up -d --no-deps "$SERVICE_NAME"
+    # 전체 서비스 up (변경사항이 있는 서비스만 재시작됨)
+    # - 이미 실행 중인 MySQL, Redis는 변경사항이 없으면 그대로 유지
+    # - Application은 새 이미지로 재시작
+    # - Exporter는 없으면 시작, 있으면 변경사항 확인 후 처리
+    docker compose --env-file .env up -d
 
     # 컨테이너 시작 대기
     sleep 5
 
-    # 새 컨테이너 ID 확인
+    # 애플리케이션 컨테이너 ID 확인
     local new_container_id
     new_container_id=$(docker ps -q -f name="^${SERVICE_NAME}$" 2>/dev/null) || true
 
     if [[ -z "$new_container_id" ]]; then
-        log_error "Container failed to start: $SERVICE_NAME"
+        log_error "Application container failed to start: $SERVICE_NAME"
         docker compose --env-file .env logs --tail=50 "$SERVICE_NAME"
         return 1
     fi
 
-    log_success "Container started: $new_container_id"
+    log_success "Application container started: $new_container_id"
+
+    # 배포된 모든 서비스 상태 확인
+    echo ""
+    log_info "All services status:"
+    docker compose --env-file .env ps
 
     return 0
 }
@@ -157,7 +154,7 @@ deploy_application() {
 health_check() {
     log_step "🏥 Application Health Check"
 
-    local max_attempts=120
+    local max_attempts=150
     local interval=1
 
     log_info "Waiting for application to be healthy (max ${max_attempts}s)..."

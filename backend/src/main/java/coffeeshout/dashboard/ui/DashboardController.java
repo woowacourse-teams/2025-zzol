@@ -3,6 +3,7 @@ package coffeeshout.dashboard.ui;
 import coffeeshout.dashboard.application.DashboardService;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
+import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,5 +32,10 @@ public class DashboardController implements DashboardApi {
     @GetMapping("/game-play-counts")
     public ResponseEntity<List<GamePlayCountResponse>> getGamePlayCounts() {
         return ResponseEntity.ok(dashboardService.getGamePlayCounts());
+    }
+
+    @GetMapping("/racing-game-top-players")
+    public ResponseEntity<List<RacingGameTopPlayerResponse>> getRacingGameTopPlayers() {
+        return ResponseEntity.ok(dashboardService.getRacingGameTopPlayers());
     }
 }

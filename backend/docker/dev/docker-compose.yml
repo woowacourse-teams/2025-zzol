@@ -126,6 +126,9 @@ services:
     restart: unless-stopped
     environment:
       - "DATA_SOURCE_NAME=root:${DB_PASSWORD}@(dev-mysql:3306)/"
+    command:
+      - --config.my-cnf=""
+      - --mysqld.address=dev-mysql:3306
     ports:
       - "9104:9104"
     networks:

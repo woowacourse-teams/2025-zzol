@@ -154,7 +154,7 @@ deploy_application() {
 health_check() {
     log_step "🏥 Application Health Check"
 
-    local max_attempts=120
+    local max_attempts=150
     local interval=1
 
     log_info "Waiting for application to be healthy (max ${max_attempts}s)..."

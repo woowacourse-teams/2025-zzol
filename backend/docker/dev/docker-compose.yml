@@ -125,10 +125,16 @@ services:
     container_name: dev-mysql-exporter
     restart: unless-stopped
     environment:
-      - "DATA_SOURCE_NAME=root:${DB_PASSWORD}@(dev-mysql:3306)/"
+      - DB_PASSWORD=${DB_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
     command:
-      - --config.my-cnf=""
-      - --mysqld.address=dev-mysql:3306
+      - |
+        echo "[client]
+        user=root
+        password=$${DB_PASSWORD}
+        host=dev-mysql
+        port=3306" > /tmp/.my.cnf
+        exec /bin/mysqld_exporter --config.my-cnf=/tmp/.my.cnf
     ports:
       - "9104:9104"
     networks:
@@ -146,7 +152,7 @@ services:
           cpus: '0.05'       # 최소 0.05 vCPU
           memory: 64M        # 최소 64MB
     healthcheck:
-      test: ["CMD-SHELL", "command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9104/metrics || command -v wget >/dev/null 2>&1 && wget --quiet --tries=1 --spider http://localhost:9104/metrics"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9104/metrics > /dev/null 2>&1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -177,9 +183,9 @@ services:
           cpus: '0.05'       # 최소 0.05 vCPU
           memory: 64M        # 최소 64MB
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9121/metrics"]
+      test: ["CMD-SHELL", "nc -z localhost 9121 || exit 1"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
 
 # ============================================

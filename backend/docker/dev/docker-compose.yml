@@ -143,7 +143,7 @@ services:
           cpus: '0.05'       # 최소 0.05 vCPU
           memory: 64M        # 최소 64MB
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9104/metrics"]
+      test: ["CMD-SHELL", "command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9104/metrics || command -v wget >/dev/null 2>&1 && wget --quiet --tries=1 --spider http://localhost:9104/metrics"]
       interval: 30s
       timeout: 5s
       retries: 3

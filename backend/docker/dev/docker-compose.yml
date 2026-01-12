@@ -125,7 +125,7 @@ services:
     container_name: dev-mysql-exporter
     restart: unless-stopped
     environment:
-      - DATA_SOURCE_NAME=root:${DB_PASSWORD}@(dev-mysql:3306)/
+      - "DATA_SOURCE_NAME=root:${DB_PASSWORD}@(dev-mysql:3306)/"
     ports:
       - "9104:9104"
     networks:
@@ -176,7 +176,7 @@ services:
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9121/metrics"]
       interval: 30s
-      timeout: 5s
+      timeout: 10s
       retries: 3
 
 # ============================================

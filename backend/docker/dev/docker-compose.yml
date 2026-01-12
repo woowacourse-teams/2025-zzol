@@ -17,11 +17,6 @@ services:
       - MYSQL_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=dev-redis
       - REDIS_PORT=6379
-      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
-      - S3_QR_KEY_PREFIX=${S3_QR_KEY_PREFIX}
-      - AWS_REGION=${AWS_REGION:-ap-northeast-2}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - TEMPO_URL=${TEMPO_URL:-http://tempo:4318/v1/traces}
       - TRACE_SAMPLING_PROBABILITY=${TRACE_SAMPLING_PROBABILITY:-1.0}
       - TZ=Asia/Seoul
@@ -120,6 +115,68 @@ services:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 10s
       timeout: 3s
+      retries: 3
+
+  # ============================================
+  # Dev MySQL Exporter (for Prometheus)
+  # ============================================
+  dev-mysql-exporter:
+    image: prom/mysqld-exporter
+    container_name: dev-mysql-exporter
+    restart: unless-stopped
+    environment:
+      - DATA_SOURCE_NAME=root:${DB_PASSWORD}@(dev-mysql:3306)/
+    ports:
+      - "9104:9104"
+    networks:
+      - dev-network
+    depends_on:
+      dev-mysql:
+        condition: service_healthy
+    # 자원 제한 (MySQL Exporter)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'        # 최대 0.1 vCPU
+          memory: 128M       # 최대 128MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 64M        # 최소 64MB
+    healthcheck:
+      test: ["CMD-SHELL", "command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:9104/metrics || command -v wget >/dev/null 2>&1 && wget --quiet --tries=1 --spider http://localhost:9104/metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ============================================
+  # Dev Redis Exporter (for Prometheus)
+  # ============================================
+  dev-redis-exporter:
+    image: oliver006/redis_exporter
+    container_name: dev-redis-exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://dev-redis:6379
+    ports:
+      - "9121:9121"
+    networks:
+      - dev-network
+    depends_on:
+      dev-redis:
+        condition: service_healthy
+    # 자원 제한 (Redis Exporter)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'        # 최대 0.1 vCPU
+          memory: 128M       # 최대 128MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 64M        # 최소 64MB
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9121/metrics"]
+      interval: 30s
+      timeout: 5s
       retries: 3
 
 # ============================================

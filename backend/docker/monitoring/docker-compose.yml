@@ -29,11 +29,6 @@ services:
         reservations:
           cpus: '0.15'       # 최소 0.15 vCPU
           memory: 512M       # 최소 512MB
-    healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f -s http://localhost:3200/ready && curl -f -s http://localhost:4318/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # ============================================
   # Prometheus - Metrics Collection
@@ -71,7 +66,7 @@ services:
           cpus: '0.2'        # 최소 0.2 vCPU
           memory: 1G         # 최소 1GB
     healthcheck:
-      test: ["CMD", "curl", "-f", "-s", "http://localhost:9090/-/healthy"]
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:9090/-/healthy || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -110,7 +105,7 @@ services:
           cpus: '0.15'       # 최소 0.15 vCPU
           memory: 512M       # 최소 512MB
     healthcheck:
-      test: ["CMD-SHELL", "curl -f -s http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -118,9 +113,9 @@ services:
       prometheus:
         condition: service_healthy
       loki:
-        condition: service_healthy
+        condition: service_started
       tempo:
-        condition: service_healthy
+        condition: service_started
 
   # ============================================
   # Loki - Log Aggregation
@@ -152,11 +147,6 @@ services:
         reservations:
           cpus: '0.15'       # 최소 0.15 vCPU
           memory: 512M       # 최소 512MB
-    healthcheck:
-      test: ["CMD", "curl", "-f", "-s", "http://localhost:3100/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # ============================================
   # cAdvisor - Container Metrics
@@ -190,7 +180,7 @@ services:
           cpus: '0.1'        # 최소 0.1 vCPU
           memory: 128M       # 최소 128MB
     healthcheck:
-      test: ["CMD", "curl", "-f", "-s", "http://localhost:8080/healthz"]
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/healthz || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

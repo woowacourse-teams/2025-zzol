@@ -126,7 +126,7 @@ services:
   # Dev Promtail - Log Shipper
   # ============================================
   dev-promtail:
-    image: grafana/promtail:latest
+    image: grafana/promtail:2.9.6
     container_name: dev-promtail
     restart: unless-stopped
     volumes:

@@ -3,7 +3,7 @@ services:
   # Tempo - Distributed Tracing
   # ============================================
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.6.0
     container_name: tempo
     user: "0:0"
     restart: unless-stopped
@@ -35,7 +35,7 @@ services:
   # Prometheus - Metrics Collection
   # ============================================
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.49.1
     container_name: prometheus
     user: "65534:65534"  # nobody:nogroup (Prometheus 기본 UID)
     restart: unless-stopped
@@ -76,7 +76,7 @@ services:
   # Grafana - Visualization
   # ============================================
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.4.3
     container_name: grafana
     user: "472:472"  # grafana:grafana (Grafana 기본 UID)
     restart: unless-stopped
@@ -123,7 +123,7 @@ services:
   # Loki - Log Aggregation
   # ============================================
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:2.9.6
     container_name: loki
     user: "10001:10001"  # loki:loki (Loki 기본 UID)
     restart: unless-stopped

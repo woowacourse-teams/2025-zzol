@@ -5,6 +5,7 @@ services:
   tempo:
     image: grafana/tempo:latest
     container_name: tempo
+    user: "0:0"
     restart: unless-stopped
     command: ["-config.file=/etc/tempo.yaml", "-config.expand-env=true"]
     volumes:

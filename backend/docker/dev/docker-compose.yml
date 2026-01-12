@@ -205,7 +205,7 @@ services:
           cpus: '0.05'
           memory: 64M
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:9080/ready" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9080/ready"]
       interval: 30s
       timeout: 5s
       retries: 3

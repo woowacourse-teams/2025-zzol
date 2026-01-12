@@ -120,9 +120,9 @@ services:
   # ============================================
   # Dev MySQL Exporter (for Prometheus)
   # ============================================
-  mysql-exporter:
+  dev-mysql-exporter:
     image: prom/mysqld-exporter
-    container_name: mysql-exporter
+    container_name: dev-mysql-exporter
     restart: unless-stopped
     environment:
       - DATA_SOURCE_NAME=root:${DB_PASSWORD}@(dev-mysql:3306)/
@@ -151,9 +151,9 @@ services:
   # ============================================
   # Dev Redis Exporter (for Prometheus)
   # ============================================
-  redis-exporter:
+  dev-redis-exporter:
     image: oliver006/redis_exporter
-    container_name: redis-exporter
+    container_name: dev-redis-exporter
     restart: unless-stopped
     environment:
       - REDIS_ADDR=redis://dev-redis:6379

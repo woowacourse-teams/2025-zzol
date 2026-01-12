@@ -151,11 +151,6 @@ services:
         reservations:
           cpus: '0.05'       # 최소 0.05 vCPU
           memory: 64M        # 최소 64MB
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:9104/metrics > /dev/null 2>&1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
 
   # ============================================
   # Dev Redis Exporter (for Prometheus)
@@ -182,11 +177,6 @@ services:
         reservations:
           cpus: '0.05'       # 최소 0.05 vCPU
           memory: 64M        # 최소 64MB
-    healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 9121 || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
 
 # ============================================
 # Networks

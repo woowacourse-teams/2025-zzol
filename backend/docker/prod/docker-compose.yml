@@ -135,6 +135,69 @@ services:
           cpus: '0.2'        # 최소 0.2 vCPU
           memory: 1G         # 최소 1GB
 
+  # ============================================
+  # Prod MySQL Exporter (for Prometheus)
+  # ============================================
+  prod-mysql-exporter:
+    image: prom/mysqld-exporter
+    container_name: prod-mysql-exporter
+    restart: unless-stopped
+    environment:
+      - DB_PASSWORD=${DB_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "[client]
+        user=root
+        password=$${DB_PASSWORD}
+        host=prod-mysql
+        port=3306" > /tmp/.my.cnf
+        exec /bin/mysqld_exporter --config.my-cnf=/tmp/.my.cnf
+    ports:
+      - "9105:9104"
+    networks:
+      - prod-network
+      - zzol-network
+    depends_on:
+      prod-mysql:
+        condition: service_healthy
+    # 자원 제한 (MySQL Exporter)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'        # 최대 0.1 vCPU
+          memory: 128M       # 최대 128MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 64M        # 최소 64MB
+
+  # ============================================
+  # Prod Redis Exporter (for Prometheus)
+  # ============================================
+  prod-redis-exporter:
+    image: oliver006/redis_exporter
+    container_name: prod-redis-exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://prod-redis:6379
+    ports:
+      - "9122:9121"
+    networks:
+      - prod-network
+      - zzol-network
+    depends_on:
+      prod-redis:
+        condition: service_healthy
+    # 자원 제한 (Redis Exporter)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'        # 최대 0.1 vCPU
+          memory: 128M       # 최대 128MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 64M        # 최소 64MB
+
 # ============================================
 # Networks
 # ============================================

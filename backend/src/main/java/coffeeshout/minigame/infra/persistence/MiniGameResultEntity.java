@@ -1,8 +1,11 @@
 package coffeeshout.minigame.infra.persistence;
 
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,6 +42,10 @@ public class MiniGameResultEntity {
     @Column
     private Long score;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private MiniGameType miniGameType;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -47,6 +54,7 @@ public class MiniGameResultEntity {
         this.player = player;
         this.rank = rank;
         this.score = score;
+        this.miniGameType = miniGamePlay.getMiniGameType();
         this.createdAt = LocalDateTime.now();
     }
 }

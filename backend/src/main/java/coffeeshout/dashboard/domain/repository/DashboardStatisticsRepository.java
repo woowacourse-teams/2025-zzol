@@ -2,6 +2,7 @@ package coffeeshout.dashboard.domain.repository;
 
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
+import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,4 +23,10 @@ public interface DashboardStatisticsRepository {
     );
 
     List<GamePlayCountResponse> findGamePlayCountByMonth(LocalDateTime startDate, LocalDateTime endDate);
+
+    List<RacingGameTopPlayerResponse> findRacingGameTopPlayers(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int limit
+    );
 }

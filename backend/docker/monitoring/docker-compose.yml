@@ -3,8 +3,9 @@ services:
   # Tempo - Distributed Tracing
   # ============================================
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.6.0
     container_name: tempo
+    user: "0:0"
     restart: unless-stopped
     command: ["-config.file=/etc/tempo.yaml", "-config.expand-env=true"]
     volumes:
@@ -29,17 +30,12 @@ services:
         reservations:
           cpus: '0.15'       # 최소 0.15 vCPU
           memory: 512M       # 최소 512MB
-    healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f -s http://localhost:3200/ready && curl -f -s http://localhost:4318/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # ============================================
   # Prometheus - Metrics Collection
   # ============================================
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.49.1
     container_name: prometheus
     user: "65534:65534"  # nobody:nogroup (Prometheus 기본 UID)
     restart: unless-stopped
@@ -71,7 +67,7 @@ services:
           cpus: '0.2'        # 최소 0.2 vCPU
           memory: 1G         # 최소 1GB
     healthcheck:
-      test: ["CMD", "curl", "-f", "-s", "http://localhost:9090/-/healthy"]
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:9090/-/healthy || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -80,16 +76,17 @@ services:
   # Grafana - Visualization
   # ============================================
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.4.3
     container_name: grafana
     user: "472:472"  # grafana:grafana (Grafana 기본 UID)
     restart: unless-stopped
     volumes:
-      - grafana-data:/var/lib/grafana
-      - grafana-logs:/var/log/grafana
-      - ./dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./data/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./data/grafana/grafana_data:/var/lib/grafana
+      - ./data/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./logs/grafana:/var/log/grafana
     networks:
+      - zzol-network
       - monitoring-network
     expose:
       - "3000"
@@ -110,7 +107,7 @@ services:
           cpus: '0.15'       # 최소 0.15 vCPU
           memory: 512M       # 최소 512MB
     healthcheck:
-      test: ["CMD-SHELL", "curl -f -s http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -118,15 +115,15 @@ services:
       prometheus:
         condition: service_healthy
       loki:
-        condition: service_healthy
+        condition: service_started
       tempo:
-        condition: service_healthy
+        condition: service_started
 
   # ============================================
   # Loki - Log Aggregation
   # ============================================
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:2.9.6
     container_name: loki
     user: "10001:10001"  # loki:loki (Loki 기본 UID)
     restart: unless-stopped
@@ -152,20 +149,21 @@ services:
         reservations:
           cpus: '0.15'       # 최소 0.15 vCPU
           memory: 512M       # 최소 512MB
-    healthcheck:
-      test: ["CMD", "curl", "-f", "-s", "http://localhost:3100/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # ============================================
   # cAdvisor - Container Metrics
   # ============================================
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.50.0
     container_name: cadvisor
     privileged: true
     restart: unless-stopped
+    command:
+      - '--docker_only=true'
+      - '--housekeeping_interval=10s'
+      - '--max_housekeeping_interval=15s'
+      - '--event_storage_event_limit=default=0'
+      - '--event_storage_age_limit=default=0'
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -190,7 +188,7 @@ services:
           cpus: '0.1'        # 최소 0.1 vCPU
           memory: 128M       # 최소 128MB
     healthcheck:
-      test: ["CMD", "curl", "-f", "-s", "http://localhost:8080/healthz"]
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/healthz || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -205,6 +203,8 @@ networks:
   dev-network:
     external: true
   prod-network:
+    external: true
+  zzol-network:
     external: true
 
 # ============================================

@@ -2,9 +2,12 @@ package coffeeshout.dashboard.infra.persistence;
 
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
+import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.persistence.QMiniGameEntity;
+import coffeeshout.minigame.infra.persistence.QMiniGameResultEntity;
 import coffeeshout.room.infra.persistence.QPlayerEntity;
 import coffeeshout.room.infra.persistence.QRoomEntity;
 import coffeeshout.room.infra.persistence.QRouletteResultEntity;
@@ -12,6 +15,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -23,6 +27,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
     private static final QRouletteResultEntity ROULETTE_RESULT = QRouletteResultEntity.rouletteResultEntity;
     private static final QPlayerEntity PLAYER = QPlayerEntity.playerEntity;
     private static final QMiniGameEntity MINI_GAME = QMiniGameEntity.miniGameEntity;
+    private static final QMiniGameResultEntity MINI_GAME_RESULT = QMiniGameResultEntity.miniGameResultEntity;
     private static final QRoomEntity ROOM = QRoomEntity.roomEntity;
 
     private final JPAQueryFactory queryFactory;
@@ -104,5 +109,58 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 .groupBy(MINI_GAME.miniGameType)
                 .orderBy(MINI_GAME.count().desc())
                 .fetch();
+    }
+
+    @Override
+    public List<RacingGameTopPlayerResponse> findRacingGameTopPlayers(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int limit
+    ) {
+        // 1단계: player_id로 GROUP BY하여 집계 (JOIN 없이)
+        final List<com.querydsl.core.Tuple> aggregations = queryFactory
+                .select(
+                        MINI_GAME_RESULT.player.id,
+                        MINI_GAME_RESULT.rank.avg(),
+                        MINI_GAME_RESULT.score.sum()
+                )
+                .from(MINI_GAME_RESULT)
+                .where(
+                        MINI_GAME_RESULT.miniGameType.eq(MiniGameType.RACING_GAME),
+                        MINI_GAME_RESULT.createdAt.between(startDate, endDate)
+                )
+                .groupBy(MINI_GAME_RESULT.player.id)
+                .orderBy(MINI_GAME_RESULT.rank.avg().asc())
+                .limit(limit)
+                .fetch();
+
+        if (aggregations.isEmpty()) {
+            return List.of();
+        }
+
+        // 2단계: player_id 목록으로 player_name 조회
+        final List<Long> playerIds = aggregations.stream()
+                .map(tuple -> tuple.get(MINI_GAME_RESULT.player.id))
+                .toList();
+
+        final Map<Long, String> playerNameMap = queryFactory
+                .select(PLAYER.id, PLAYER.playerName)
+                .from(PLAYER)
+                .where(PLAYER.id.in(playerIds))
+                .fetch()
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        tuple -> tuple.get(PLAYER.id),
+                        tuple -> tuple.get(PLAYER.playerName)
+                ));
+
+        // 3단계: 집계 결과와 player_name 매핑
+        return aggregations.stream()
+                .map(tuple -> new RacingGameTopPlayerResponse(
+                        playerNameMap.get(tuple.get(MINI_GAME_RESULT.player.id)),
+                        tuple.get(MINI_GAME_RESULT.rank.avg()),
+                        tuple.get(MINI_GAME_RESULT.score.sum())
+                ))
+                .toList();
     }
 }

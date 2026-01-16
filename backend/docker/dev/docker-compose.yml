@@ -17,11 +17,6 @@ services:
       - MYSQL_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=dev-redis
       - REDIS_PORT=6379
-      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
-      - S3_QR_KEY_PREFIX=${S3_QR_KEY_PREFIX}
-      - AWS_REGION=${AWS_REGION:-ap-northeast-2}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - TEMPO_URL=${TEMPO_URL:-http://tempo:4318/v1/traces}
       - TRACE_SAMPLING_PROBABILITY=${TRACE_SAMPLING_PROBABILITY:-1.0}
       - TZ=Asia/Seoul
@@ -122,6 +117,99 @@ services:
       timeout: 3s
       retries: 3
 
+  # ============================================
+  # Dev MySQL Exporter (for Prometheus)
+  # ============================================
+  dev-mysql-exporter:
+    image: prom/mysqld-exporter
+    container_name: dev-mysql-exporter
+    restart: unless-stopped
+    environment:
+      - DB_PASSWORD=${DB_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "[client]
+        user=root
+        password=$${DB_PASSWORD}
+        host=dev-mysql
+        port=3306" > /tmp/.my.cnf
+        exec /bin/mysqld_exporter --config.my-cnf=/tmp/.my.cnf
+    ports:
+      - "9104:9104"
+    networks:
+      - dev-network
+      - zzol-network
+    depends_on:
+      dev-mysql:
+        condition: service_healthy
+    # 자원 제한 (MySQL Exporter)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'        # 최대 0.1 vCPU
+          memory: 128M       # 최대 128MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 64M        # 최소 64MB
+
+  # ============================================
+  # Dev Redis Exporter (for Prometheus)
+  # ============================================
+  dev-redis-exporter:
+    image: oliver006/redis_exporter
+    container_name: dev-redis-exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://dev-redis:6379
+    ports:
+      - "9121:9121"
+    networks:
+      - dev-network
+      - zzol-network
+    depends_on:
+      dev-redis:
+        condition: service_healthy
+    # 자원 제한 (Redis Exporter)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'        # 최대 0.1 vCPU
+          memory: 128M       # 최대 128MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 64M        # 최소 64MB
+
+  # ============================================
+  # Dev Promtail - Log Shipper
+  # ============================================
+  dev-promtail:
+    image: grafana/promtail:2.9.6
+    container_name: dev-promtail
+    restart: unless-stopped
+    volumes:
+      - dev-app-logs:/app/logs:ro
+      - ./conf/promtail.yml:/etc/promtail/promtail.yml:ro
+    command: -config.file=/etc/promtail/promtail.yml
+    networks:
+      - dev-network
+      - zzol-network
+    environment:
+      - TZ=Asia/Seoul
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9080/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 # ============================================
 # Networks
 # ============================================

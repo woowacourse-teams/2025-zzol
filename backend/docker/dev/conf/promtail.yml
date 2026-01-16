@@ -27,7 +27,8 @@ scrape_configs:
       - labels:
           level:
 
-      # 타임스탬프 설정
+      # 타임스탬프 설정 (KST → UTC 변환)
       - timestamp:
           source: timestamp
           format: '2006-01-02 15:04:05.000'
+          location: Asia/Seoul

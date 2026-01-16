@@ -14,7 +14,7 @@ redisson:
 
 room:
   qr:
-    prefix: "https://zzol.site/join/"
+    prefix: "https://www.zzol.site/join/"
 
 websocket:
   docs:

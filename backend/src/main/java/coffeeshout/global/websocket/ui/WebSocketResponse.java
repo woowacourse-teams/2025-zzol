@@ -1,4 +1,4 @@
-package coffeeshout.global.ui;
+package coffeeshout.global.websocket.ui;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

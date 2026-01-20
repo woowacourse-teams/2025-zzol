@@ -1,7 +1,7 @@
 package coffeeshout.global.websocket.recovery;
 
-import coffeeshout.global.ui.WebSocketResponse;
 import coffeeshout.global.websocket.recovery.dto.RecoveryMessage;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;

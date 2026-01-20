@@ -1,6 +1,6 @@
 package coffeeshout.room.ui.messaging;
 
-import coffeeshout.global.ui.WebSocketResponse;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;

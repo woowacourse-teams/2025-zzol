@@ -1,6 +1,6 @@
 package coffeeshout.global.websocket.recovery.dto;
 
-import coffeeshout.global.ui.WebSocketResponse;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 
 /**
  * 복구용 메시지 DTO

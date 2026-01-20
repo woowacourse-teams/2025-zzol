@@ -3,7 +3,7 @@ package coffeeshout.cardgame.domain.event;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.event.dto.CardGameStateChangedEvent;
 import coffeeshout.cardgame.domain.event.dto.MiniGameStartedEvent;
-import coffeeshout.global.ui.WebSocketResponse;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.CardSelectedEvent;

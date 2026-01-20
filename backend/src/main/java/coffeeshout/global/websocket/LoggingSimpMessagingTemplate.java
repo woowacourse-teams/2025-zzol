@@ -1,7 +1,7 @@
 package coffeeshout.global.websocket;
 
-import coffeeshout.global.ui.WebSocketResponse;
 import coffeeshout.global.websocket.recovery.GameRecoveryService;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import io.micrometer.observation.annotation.Observed;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

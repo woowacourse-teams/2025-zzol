@@ -149,8 +149,7 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
                          }
                       ],
                       "allSelected":false
-                   },
-                   "errorMessage":null
+                   }
                 }
                 """, getColorIndexCustomization());
 
@@ -269,8 +268,7 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
                             }
                         ],
                         "allSelected":false
-                    },
-                    "errorMessage":null
+                    }
                 }
                 """, getColorIndexCustomization());
     }

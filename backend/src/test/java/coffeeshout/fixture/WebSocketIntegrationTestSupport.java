@@ -99,7 +99,7 @@ public abstract class WebSocketIntegrationTestSupport {
     }
 
     protected void assertMessage(MessageResponse response, String payload) throws JSONException {
-        JSONAssert.assertEquals(response.payload(), payload, false);
+        JSONAssert.assertEquals(payload, response.payload(), false);
     }
 
     protected void assertMessageCustomization(
@@ -108,8 +108,8 @@ public abstract class WebSocketIntegrationTestSupport {
             Customization customization
     ) throws JSONException {
         JSONAssert.assertEquals(
-                response.payload(),
                 payload,
+                response.payload(),
                 new CustomComparator(LENIENT, customization)
         );
     }
@@ -128,7 +128,7 @@ public abstract class WebSocketIntegrationTestSupport {
     }
 
     protected void assertMessage(MessageResponse response, long duration, String payload) throws JSONException {
-        JSONAssert.assertEquals(response.payload(), payload, false);
+        JSONAssert.assertEquals(payload, response.payload(), false);
         Assertions.assertThat(response.duration()).isBetween(duration - 100, duration + 100);
     }
 }

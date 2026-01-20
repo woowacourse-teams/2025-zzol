@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
+import coffeeshout.global.websocket.recovery.GameRecoveryService;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.service.RoomCommandService;
@@ -30,6 +31,9 @@ class DelayedRoomRemovalServiceTest {
     @Mock
     TaskScheduler taskScheduler;
 
+    @Mock
+    GameRecoveryService gameRecoveryService;
+
     @SuppressWarnings({"rawtypes"})
     ScheduledFuture scheduledFuture = mock(ScheduledFuture.class);
 
@@ -44,7 +48,8 @@ class DelayedRoomRemovalServiceTest {
         delayedRoomRemovalService = new DelayedRoomRemovalService(
                 taskScheduler,
                 removalDelay,
-                roomCommandService
+                roomCommandService,
+                gameRecoveryService
         );
 
         joinCode = new JoinCode("ABCD");

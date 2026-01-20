@@ -2,12 +2,12 @@ package coffeeshout.global.websocket.recovery;
 
 import coffeeshout.global.websocket.recovery.dto.RecoveryMessage;
 import coffeeshout.global.websocket.ui.WebSocketResponse;
+import coffeeshout.room.domain.JoinCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Range;
@@ -23,13 +23,18 @@ import org.springframework.util.DigestUtils;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class GameRecoveryService {
 
     private final StringRedisTemplate stringRedisTemplate;
-
-    @Qualifier("redisObjectMapper")
     private final ObjectMapper objectMapper;
+
+    public GameRecoveryService(
+            StringRedisTemplate stringRedisTemplate,
+            @Qualifier("redisObjectMapper") ObjectMapper objectMapper
+    ) {
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     private static final String STREAM_KEY_FORMAT = "room:%s:recovery";
     private static final String ID_SET_KEY_FORMAT = "room:%s:recovery:ids";
@@ -118,11 +123,7 @@ public class GameRecoveryService {
                     String.valueOf(TTL_SECONDS)
             );
 
-            if (streamId == null) {
-                log.debug("중복 메시지 감지, 저장 스킵: joinCode={}, messageId={}", joinCode, messageId);
-            } else {
-                log.debug("복구 메시지 저장: joinCode={}, streamId={}, messageId={}", joinCode, streamId, messageId);
-            }
+            log.debug("복구 메시지 저장: joinCode={}, streamId={}, messageId={}", joinCode, streamId, messageId);
 
             return streamId;
 
@@ -191,9 +192,9 @@ public class GameRecoveryService {
      *
      * @param joinCode 방 코드
      */
-    public void cleanup(String joinCode) {
-        String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
-        String idSetKey = String.format(ID_SET_KEY_FORMAT, joinCode);
+    public void cleanup(JoinCode joinCode) {
+        String streamKey = String.format(STREAM_KEY_FORMAT, joinCode.getValue());
+        String idSetKey = String.format(ID_SET_KEY_FORMAT, joinCode.getValue());
 
         try {
             Long deleted = stringRedisTemplate.delete(List.of(streamKey, idSetKey));

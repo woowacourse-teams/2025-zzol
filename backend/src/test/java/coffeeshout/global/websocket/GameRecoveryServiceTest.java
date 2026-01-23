@@ -43,16 +43,16 @@ class GameRecoveryServiceTest extends ServiceTest {
     StringRedisTemplate stringRedisTemplate;
 
 
-    private String joinCode;
+    private JoinCode joinCode;
 
     @BeforeEach
     void setUp() {
-        joinCode = "ABCD";
+        joinCode = new JoinCode("ABCD");
         // 테스트 전 Redis 정리
         cleanupRedis(joinCode);
     }
 
-    private void cleanupRedis(String joinCode) {
+    private void cleanupRedis(JoinCode joinCode) {
         String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
         String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode);
         stringRedisTemplate.delete(List.of(streamKey, idMapKey));
@@ -321,7 +321,7 @@ class GameRecoveryServiceTest extends ServiceTest {
         @DisplayName("존재하지 않는 방의 메시지를 조회하면 빈 리스트를 반환한다")
         void 존재하지_않는_방의_메시지를_조회하면_빈_리스트를_반환한다() {
             // when
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince("ZZZZ", "0-0");
+            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(new JoinCode("ZZZZ"), "0-0");
 
             // then
             assertThat(messages).isEmpty();
@@ -406,7 +406,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             assertThat(stringRedisTemplate.hasKey(idMapKey)).isTrue();
 
             // when
-            gameRecoveryService.cleanup(new JoinCode(joinCode));
+            gameRecoveryService.cleanup(joinCode);
 
             // then
             assertThat(stringRedisTemplate.hasKey(streamKey)).isFalse();
@@ -423,7 +423,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             gameRecoveryService.save(joinCode, destination, response, messageId);
 
             // when
-            gameRecoveryService.cleanup(new JoinCode(joinCode));
+            gameRecoveryService.cleanup(joinCode);
             List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
 
             // then
@@ -445,14 +445,15 @@ class GameRecoveryServiceTest extends ServiceTest {
         @ValueSource(strings = {"ABCD", "XYZ9", "ABCF"})
         void 다양한_joinCode에_대해_cleanup이_정상_동작한다(String code) {
             // given
-            cleanupRedis(code);
+            JoinCode jc = new JoinCode(code);
+            cleanupRedis(jc);
             String destination = "/topic/room/" + code;
             WebSocketResponse<String> response = WebSocketResponse.success("test");
             String messageId = gameRecoveryService.generateMessageId(destination, response);
-            gameRecoveryService.save(code, destination, response, messageId);
+            gameRecoveryService.save(jc, destination, response, messageId);
 
             // when
-            gameRecoveryService.cleanup(new JoinCode(code));
+            gameRecoveryService.cleanup(jc);
 
             // then
             String streamKey = String.format(STREAM_KEY_FORMAT, code);
@@ -470,7 +471,7 @@ class GameRecoveryServiceTest extends ServiceTest {
         @Qualifier("redisObjectMapper")
         ObjectMapper objectMapper;
 
-        private static final String TTL_TEST_JOIN_CODE = "TTL1";
+        private static final JoinCode TTL_TEST_JOIN_CODE = new JoinCode("TTXV");
         private static final int MAX_LENGTH = 100;
         private static final int SHORT_STREAM_TTL = 5;
         private static final int SHORT_DEDUP_TTL = 2;
@@ -719,8 +720,8 @@ class GameRecoveryServiceTest extends ServiceTest {
         @DisplayName("서로 다른 방의 메시지는 독립적으로 관리된다")
         void 서로_다른_방의_메시지는_독립적으로_관리된다() {
             // given
-            String joinCode1 = "ABC3";
-            String joinCode2 = "ABC4";
+            JoinCode joinCode1 = new JoinCode("ABC3");
+            JoinCode joinCode2 = new JoinCode("ABC4");
             cleanupRedis(joinCode1);
             cleanupRedis(joinCode2);
 
@@ -737,7 +738,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             gameRecoveryService.save(joinCode2, destination2, response2, messageId2);
 
             // when
-            gameRecoveryService.cleanup(new JoinCode(joinCode1));
+            gameRecoveryService.cleanup(joinCode1);
 
             // then
             List<RecoveryMessage> room1Messages = gameRecoveryService.getMessagesSince(joinCode1, "0-0");
@@ -858,8 +859,8 @@ class GameRecoveryServiceTest extends ServiceTest {
         @DisplayName("destination에 포함된 joinCode와 저장된 joinCode가 일치하는 메시지만 복구된다")
         void destination_joinCode와_저장된_joinCode가_일치하는_메시지만_복구된다() {
             // given
-            String joinCode1 = "ABC5";
-            String joinCode2 = "ABC6";
+            JoinCode joinCode1 = new JoinCode("ABC3");
+            JoinCode joinCode2 = new JoinCode("ABC4");
             cleanupRedis(joinCode1);
             cleanupRedis(joinCode2);
 
@@ -877,10 +878,10 @@ class GameRecoveryServiceTest extends ServiceTest {
 
             // then
             assertThat(room1Messages).hasSize(1);
-            assertThat(room1Messages.getFirst().destination()).contains(joinCode1);
+            assertThat(room1Messages.getFirst().destination()).contains(joinCode1.getValue());
 
             assertThat(room2Messages).hasSize(1);
-            assertThat(room2Messages.getFirst().destination()).contains(joinCode2);
+            assertThat(room2Messages.getFirst().destination()).contains(joinCode2.getValue());
 
             // cleanup
             cleanupRedis(joinCode1);
@@ -891,7 +892,7 @@ class GameRecoveryServiceTest extends ServiceTest {
         @DisplayName("복구된 메시지의 destination에서 joinCode를 추출할 수 있다")
         void 복구된_메시지의_destination에서_joinCode를_추출할_수_있다() {
             // given
-            String testJoinCode = "XYZ7";
+            JoinCode testJoinCode = new JoinCode("XYZ7");
             cleanupRedis(testJoinCode);
 
             String destination = String.format(ROULETTE_TOPIC_FORMAT, testJoinCode);
@@ -906,11 +907,11 @@ class GameRecoveryServiceTest extends ServiceTest {
 
             // destination에서 joinCode 추출 검증
             assertThat(recoveredDestination).isEqualTo("/topic/room/" + testJoinCode + "/roulette");
-            assertThat(recoveredDestination).contains(testJoinCode);
+            assertThat(recoveredDestination).contains(testJoinCode.getValue());
 
             // 정규식으로 joinCode 추출
             String extractedJoinCode = recoveredDestination.split("/")[3];
-            assertThat(extractedJoinCode).isEqualTo(testJoinCode);
+            assertThat(extractedJoinCode).isEqualTo(testJoinCode.getValue());
 
             // cleanup
             cleanupRedis(testJoinCode);
@@ -921,7 +922,7 @@ class GameRecoveryServiceTest extends ServiceTest {
         @MethodSource("coffeeshout.global.websocket.GameRecoveryServiceTest#allDestinationFormats")
         void 모든_destination_형식에서_joinCode가_올바르게_포함된다(String destinationFormat) {
             // given
-            String testJoinCode = "TEST";
+            JoinCode testJoinCode = new JoinCode("T3ST");
             cleanupRedis(testJoinCode);
 
             String destination = String.format(destinationFormat, testJoinCode);
@@ -936,7 +937,7 @@ class GameRecoveryServiceTest extends ServiceTest {
 
             // destination 검증
             assertThat(message.destination()).isEqualTo(destination);
-            assertThat(message.destination()).contains(testJoinCode);
+            assertThat(message.destination()).contains(testJoinCode.getValue());
 
             // /topic/room/{joinCode} 또는 /topic/room/{joinCode}/... 형식 검증
             assertThat(message.destination()).startsWith("/topic/room/" + testJoinCode);
@@ -951,7 +952,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             gameRecoveryService.save(joinCode, destination, response, messageId);
         }
 
-        private void saveMessageToRoom(String roomJoinCode, String destination, String data) {
+        private void saveMessageToRoom(JoinCode roomJoinCode, String destination, String data) {
             WebSocketResponse<String> response = WebSocketResponse.success(data);
             String messageId = gameRecoveryService.generateMessageId(destination, response);
             gameRecoveryService.save(roomJoinCode, destination, response, messageId);

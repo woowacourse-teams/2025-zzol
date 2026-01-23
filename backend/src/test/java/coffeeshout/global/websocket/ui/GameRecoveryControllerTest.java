@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import coffeeshout.global.websocket.GameRecoveryService;
 import coffeeshout.global.websocket.StompSessionManager;
+import coffeeshout.room.domain.JoinCode;
 import coffeeshout.support.test.IntegrationTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ class GameRecoveryControllerTest {
         String messageId = gameRecoveryService.generateMessageId(destination, response);
         
         // Redis Stream에 메시지 저장
-        String savedStreamId = gameRecoveryService.save(joinCode, destination, response, messageId);
+        String savedStreamId = gameRecoveryService.save(new JoinCode(joinCode), destination, response, messageId);
 
         // when & then
         mockMvc.perform(post("/api/rooms/{joinCode}/recovery", joinCode)
@@ -77,19 +78,20 @@ class GameRecoveryControllerTest {
     }
 
     @Test
-    void 유효하지_않은_파라미터_포함_시_500_에러를_반환한다() throws Exception {
+    void 유효하지_않은_Stream_ID_형식일_경우_400_에러를_반환한다() throws Exception {
         // given
-        // joinCode에 구분자(:)가 포함되면 StompSessionManager에서 예외 발생 -> Controller에서 catch -> 500
-        String invalidJoinCode = "CODE:INVALID";
+        String joinCode = "T3ST";
         String playerName = "Tester";
+        String sessionId = "session-123";
+        String invalidLastId = "invalid-stream-id";
+
+        stompSessionManager.registerPlayerSession(joinCode, playerName, sessionId);
 
         // when & then
-        mockMvc.perform(post("/api/rooms/{joinCode}/recovery", invalidJoinCode)
+        mockMvc.perform(post("/api/rooms/{joinCode}/recovery", joinCode)
                         .param("playerName", playerName)
-                        .param("lastId", "0-0"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorMessage").value("메시지 복구 실패"));
+                        .param("lastId", invalidLastId))
+                .andExpect(status().isBadRequest());
     }
 
     @ParameterizedTest

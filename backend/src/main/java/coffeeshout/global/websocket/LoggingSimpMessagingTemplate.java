@@ -1,6 +1,7 @@
 package coffeeshout.global.websocket;
 
 import coffeeshout.global.websocket.ui.WebSocketResponse;
+import coffeeshout.room.domain.JoinCode;
 import io.micrometer.observation.annotation.Observed;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,7 +25,7 @@ public class LoggingSimpMessagingTemplate {
     public void convertAndSend(String destination, Object payload) {
         // WebSocketResponse인 경우에만 복구 저장 처리
         if (payload instanceof WebSocketResponse<?> response) {
-            String joinCode = extractJoinCode(destination);
+            JoinCode joinCode = extractJoinCode(destination);
 
             if (joinCode != null) {
                 // 1. messageId 생성 (Hash 기반)
@@ -67,10 +68,10 @@ public class LoggingSimpMessagingTemplate {
      * @param destination 예: "/topic/room/ABC123/gameState"
      * @return joinCode 예: "ABC123", 추출 실패 시 null
      */
-    private String extractJoinCode(String destination) {
+    private JoinCode extractJoinCode(String destination) {
         Matcher matcher = ROOM_DESTINATION_PATTERN.matcher(destination);
         if (matcher.matches()) {
-            return matcher.group(1);
+            return new JoinCode(matcher.group(1));
         }
         return null;
     }

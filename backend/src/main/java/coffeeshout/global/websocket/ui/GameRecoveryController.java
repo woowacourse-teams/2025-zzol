@@ -4,6 +4,7 @@ import coffeeshout.global.websocket.GameRecoveryService;
 import coffeeshout.global.websocket.StompSessionManager;
 import coffeeshout.global.websocket.ui.dto.RecoveryMessage;
 import coffeeshout.global.websocket.ui.dto.RecoveryResponse;
+import coffeeshout.room.domain.JoinCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +43,7 @@ public class GameRecoveryController implements GameRecoveryApi {
                     .body(RecoveryResponse.error("웹소켓 미연결"));
         }
 
-        final List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, lastId);
+        final List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(new JoinCode(joinCode), lastId);
 
         log.info("메시지 복구 완료: joinCode={}, playerName={}, lastId={}, count={}",
                 joinCode, playerName, lastId, messages.size());

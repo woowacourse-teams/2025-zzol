@@ -1,5 +1,7 @@
 package coffeeshout.global.websocket;
 
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.InvalidArgumentException;
 import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.global.websocket.ui.dto.RecoveryMessage;
 import coffeeshout.room.domain.JoinCode;
@@ -111,7 +113,7 @@ public class GameRecoveryService {
      * @param messageId Hash 기반 메시지 ID
      * @return Redis Stream Entry ID (예: "1234567890-0"), 중복인 경우에도 기존 streamId 반환
      */
-    public String save(String joinCode, String destination, WebSocketResponse<?> response, String messageId) {
+    public String save(JoinCode joinCode, String destination, WebSocketResponse<?> response, String messageId) {
         final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
         final String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode);
 
@@ -146,6 +148,8 @@ public class GameRecoveryService {
         }
     }
 
+    private static final String STREAM_ID_PATTERN = "^\\d+-\\d+$";
+
     /**
      * lastStreamId 이후의 메시지 조회 (XRANGE 활용)
      *
@@ -153,7 +157,9 @@ public class GameRecoveryService {
      * @param lastStreamId 클라이언트가 마지막으로 받은 Redis Stream Entry ID (예: "1234567890-0")
      * @return 복구 메시지 리스트
      */
-    public List<RecoveryMessage> getMessagesSince(String joinCode, String lastStreamId) {
+    public List<RecoveryMessage> getMessagesSince(JoinCode joinCode, String lastStreamId) {
+        validateStreamId(lastStreamId);
+
         final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
 
         try {
@@ -219,6 +225,15 @@ public class GameRecoveryService {
         } catch (Exception e) {
             log.error("메시지 역직렬화 실패: recordId={}", mapRecord.getId(), e);
             return null;
+        }
+    }
+
+    private void validateStreamId(String streamId) {
+        if (streamId == null || !streamId.matches(STREAM_ID_PATTERN)) {
+            throw new InvalidArgumentException(
+                    GlobalErrorCode.INVALID_STREAM_ID,
+                    "유효하지 않은 Stream ID 형식입니다: " + streamId
+            );
         }
     }
 }

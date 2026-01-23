@@ -51,7 +51,7 @@ public class DelayedPlayerRemovalService {
         final ScheduledFuture<?> future = taskScheduler.schedule(
                 () -> {
                     executePlayerRemoval(playerKey, sessionId, reason);
-                    stompSessionManager.removeSessionInternal(sessionId);
+                    stompSessionManager.removeSession(sessionId);
                 },
                 Instant.now().plus(REMOVAL_DELAY)
         );

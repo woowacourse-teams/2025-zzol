@@ -113,23 +113,9 @@ public class StompSessionManager {
     }
 
     /**
-     * 세션 매핑 제거
-     */
-    public void removeSession(@NonNull String sessionId) {
-        final String playerKey = sessionPlayerMap.remove(sessionId);
-        if (playerKey != null) {
-            playerSessionMap.remove(playerKey);
-            log.info("세션 매핑 제거: playerKey={}, sessionId={}", playerKey, sessionId);
-        }
-
-        // 중복 disconnect 방지 세트 정리(메모리 누수 방지 목적)
-        processedDisconnections.remove(sessionId);
-    }
-
-    /**
      * 세션 매핑 제거 (Internal - Redis 이벤트 핸들러용)
      */
-    public void removeSessionInternal(@NonNull String sessionId) {
+    public void removeSession(@NonNull String sessionId) {
         final String playerKey = sessionPlayerMap.remove(sessionId);
         if (playerKey != null) {
             playerSessionMap.remove(playerKey);

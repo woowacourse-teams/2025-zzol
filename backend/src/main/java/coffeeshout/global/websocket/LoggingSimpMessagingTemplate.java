@@ -17,8 +17,8 @@ public class LoggingSimpMessagingTemplate {
     private final SimpMessagingTemplate messagingTemplate;
     private final GameRecoveryService gameRecoveryService;
 
-    // destination 패턴: /topic/room/{joinCode}/...
-    private static final Pattern ROOM_DESTINATION_PATTERN = Pattern.compile("/topic/room/([^/]+)/.*");
+    // destination 패턴: /topic/room/{joinCode} 또는 /topic/room/{joinCode}/...
+    private static final Pattern ROOM_DESTINATION_PATTERN = Pattern.compile("/topic/room/([^/]+)(?:/.*)?");
 
     @Observed(name = "websocket.send")
     public void convertAndSend(String destination, Object payload) {

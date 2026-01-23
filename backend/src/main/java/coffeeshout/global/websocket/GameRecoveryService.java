@@ -1,7 +1,7 @@
-package coffeeshout.global.websocket.recovery;
+package coffeeshout.global.websocket;
 
-import coffeeshout.global.websocket.recovery.dto.RecoveryMessage;
 import coffeeshout.global.websocket.ui.WebSocketResponse;
+import coffeeshout.global.websocket.ui.dto.RecoveryMessage;
 import coffeeshout.room.domain.JoinCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Range;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -27,64 +28,70 @@ public class GameRecoveryService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+    private final int maxLength;
+    private final int streamTtlSeconds;
+    private final int dedupTtlSeconds;
 
     public GameRecoveryService(
             StringRedisTemplate stringRedisTemplate,
-            @Qualifier("redisObjectMapper") ObjectMapper objectMapper
+            @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
+            @Value("${websocket.recovery.max-length}") int maxLength,
+            @Value("${websocket.recovery.stream-ttl-seconds}") int streamTtlSeconds,
+            @Value("${websocket.recovery.dedup-ttl-seconds}") int dedupTtlSeconds
     ) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
+        this.maxLength = maxLength;
+        this.streamTtlSeconds = streamTtlSeconds;
+        this.dedupTtlSeconds = dedupTtlSeconds;
     }
 
     private static final String STREAM_KEY_FORMAT = "room:%s:recovery";
-    private static final String ID_SET_KEY_FORMAT = "room:%s:recovery:ids";
-    private static final int MAX_LENGTH = 1000;  // 최대 1000개 메시지 보관
-    private static final int TTL_SECONDS = 3600;  // 1시간
+    private static final String ID_MAP_KEY_FORMAT = "room:%s:recovery:ids";
 
-    // Lua Script for atomic save with deduplication
+    // Lua Script for atomic save with deduplication (HSET 방식)
+    // idMapKey: 중복 방지용 (짧은 TTL, 1초)
+    // streamKey: 메시지 복구용 (긴 TTL, 1시간)
     private static final String SAVE_SCRIPT = """
-            local idKey = KEYS[1]
+            local idMapKey = KEYS[1]
             local streamKey = KEYS[2]
             local messageId = ARGV[1]
             local destination = ARGV[2]
             local payloadJson = ARGV[3]
             local timestamp = ARGV[4]
             local maxLen = tonumber(ARGV[5])
-            local ttl = tonumber(ARGV[6])
+            local streamTtl = tonumber(ARGV[6])
+            local dedupTtl = tonumber(ARGV[7])
 
-            -- 중복 체크: SADD는 이미 존재하면 0 반환
-            if redis.call('SADD', idKey, messageId) == 0 then
-                return nil
-            end
-
-            -- TTL 설정 (처음 생성 시에만)
-            if redis.call('TTL', idKey) == -1 then
-                redis.call('EXPIRE', idKey, ttl)
-                redis.call('EXPIRE', streamKey, ttl)
+            -- 중복 체크: 이미 저장된 메시지인지 확인
+            local existingStreamId = redis.call('HGET', idMapKey, messageId)
+            if existingStreamId then
+                return existingStreamId  -- 기존 streamId 반환
             end
 
             -- Stream에 저장
             local streamId = redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*',
-                'messageId', messageId,
                 'destination', destination,
                 'payload', payloadJson,
                 'timestamp', timestamp
             )
 
+            -- messageId → streamId 매핑 저장 (짧은 TTL로 중복 방지)
+            redis.call('HSET', idMapKey, messageId, streamId)
+            redis.call('EXPIRE', idMapKey, dedupTtl)
+
+            -- Stream TTL 설정 (처음 생성 시에만)
+            if redis.call('TTL', streamKey) == -1 then
+                redis.call('EXPIRE', streamKey, streamTtl)
+            end
+
             return streamId
             """;
 
-    /**
-     * 메시지 ID 생성 (Hash 기반)
-     *
-     * @param destination 웹소켓 destination
-     * @param response WebSocketResponse 객체
-     * @return MD5 hash (소문자 hex)
-     */
     public String generateMessageId(String destination, WebSocketResponse<?> response) {
         try {
             // timestamp는 제외하고 destination + payload만 해싱
-            String content = destination + ":" + objectMapper.writeValueAsString(response.data());
+            final String content = destination + ":" + objectMapper.writeValueAsString(response.data());
             return DigestUtils.md5DigestAsHex(content.getBytes(StandardCharsets.UTF_8));
         } catch (JsonProcessingException e) {
             log.error("메시지 ID 생성 실패", e);
@@ -100,27 +107,28 @@ public class GameRecoveryService {
      * @param destination 웹소켓 destination
      * @param response WebSocketResponse (ID 포함)
      * @param messageId Hash 기반 메시지 ID
-     * @return Redis Stream Entry ID (예: "1234567890-0"), 중복인 경우 null
+     * @return Redis Stream Entry ID (예: "1234567890-0"), 중복인 경우에도 기존 streamId 반환
      */
     public String save(String joinCode, String destination, WebSocketResponse<?> response, String messageId) {
-        String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
-        String idSetKey = String.format(ID_SET_KEY_FORMAT, joinCode);
+        final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
+        final String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode);
 
         try {
-            String payloadJson = objectMapper.writeValueAsString(response);
-            String timestamp = String.valueOf(System.currentTimeMillis());
+            final String payloadJson = objectMapper.writeValueAsString(response);
+            final String timestamp = String.valueOf(System.currentTimeMillis());
 
-            RedisScript<String> script = RedisScript.of(SAVE_SCRIPT, String.class);
+            final RedisScript<String> script = RedisScript.of(SAVE_SCRIPT, String.class);
 
-            String streamId = stringRedisTemplate.execute(
+            final String streamId = stringRedisTemplate.execute(
                     script,
-                    List.of(idSetKey, streamKey),
+                    List.of(idMapKey, streamKey),
                     messageId,
                     destination,
                     payloadJson,
                     timestamp,
-                    String.valueOf(MAX_LENGTH),
-                    String.valueOf(TTL_SECONDS)
+                    String.valueOf(maxLength),
+                    String.valueOf(streamTtlSeconds),
+                    String.valueOf(dedupTtlSeconds)
             );
 
             log.debug("복구 메시지 저장: joinCode={}, streamId={}, messageId={}", joinCode, streamId, messageId);
@@ -137,52 +145,39 @@ public class GameRecoveryService {
     }
 
     /**
-     * lastId 이후의 메시지 조회
+     * lastStreamId 이후의 메시지 조회 (XRANGE 활용)
      *
      * @param joinCode 방 코드
-     * @param lastId 클라이언트가 마지막으로 받은 메시지 ID (Hash)
+     * @param lastStreamId 클라이언트가 마지막으로 받은 Redis Stream Entry ID (예: "1234567890-0")
      * @return 복구 메시지 리스트
      */
-    public List<RecoveryMessage> getMessagesSince(String joinCode, String lastId) {
-        String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
+    public List<RecoveryMessage> getMessagesSince(String joinCode, String lastStreamId) {
+        final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
 
         try {
-            // Redis Stream에서 모든 메시지 조회
+            // lastStreamId 이후 메시지만 조회 (exclusive)
             List<MapRecord<String, Object, Object>> records =
                     stringRedisTemplate.opsForStream()
-                            .range(streamKey, Range.unbounded());
+                            .range(streamKey, Range.open(lastStreamId, "+"));
 
             if (records == null || records.isEmpty()) {
-                log.info("복구 메시지 없음: joinCode={}", joinCode);
+                log.info("복구 메시지 없음: joinCode={}, lastStreamId={}", joinCode, lastStreamId);
                 return List.of();
             }
 
-            // lastId 이후 메시지 필터링
-            boolean foundLastId = false;
-            List<RecoveryMessage> messages = new ArrayList<>();
-
+            final List<RecoveryMessage> messages = new ArrayList<>();
             for (MapRecord<String, Object, Object> record : records) {
-                String recordMessageId = (String) record.getValue().get("messageId");
-
-                if (!foundLastId) {
-                    if (recordMessageId.equals(lastId)) {
-                        foundLastId = true;
-                    }
-                    continue;  // lastId까지 스킵
-                }
-
-                // lastId 이후 메시지 수집
-                RecoveryMessage message = deserializeMessage(record);
+                final RecoveryMessage message = deserializeMessage(record);
                 if (message != null) {
                     messages.add(message);
                 }
             }
 
-            log.info("복구 메시지 조회: joinCode={}, lastId={}, count={}", joinCode, lastId, messages.size());
+            log.info("복구 메시지 조회: joinCode={}, lastStreamId={}, count={}", joinCode, lastStreamId, messages.size());
             return messages;
 
         } catch (Exception e) {
-            log.error("복구 메시지 조회 실패: joinCode={}, lastId={}", joinCode, lastId, e);
+            log.error("복구 메시지 조회 실패: joinCode={}, lastStreamId={}", joinCode, lastStreamId, e);
             return List.of();
         }
     }
@@ -193,11 +188,11 @@ public class GameRecoveryService {
      * @param joinCode 방 코드
      */
     public void cleanup(JoinCode joinCode) {
-        String streamKey = String.format(STREAM_KEY_FORMAT, joinCode.getValue());
-        String idSetKey = String.format(ID_SET_KEY_FORMAT, joinCode.getValue());
+        final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode.getValue());
+        final String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode.getValue());
 
         try {
-            Long deleted = stringRedisTemplate.delete(List.of(streamKey, idSetKey));
+            Long deleted = stringRedisTemplate.delete(List.of(streamKey, idMapKey));
             log.info("복구 Stream 정리: joinCode={}, deleted={}", joinCode, deleted);
         } catch (Exception e) {
             log.error("복구 Stream 정리 실패: joinCode={}", joinCode, e);
@@ -209,15 +204,15 @@ public class GameRecoveryService {
      */
     private RecoveryMessage deserializeMessage(MapRecord<String, Object, Object> record) {
         try {
-            String messageId = (String) record.getValue().get("messageId");
-            String destination = (String) record.getValue().get("destination");
-            String payloadJson = (String) record.getValue().get("payload");
-            String timestamp = (String) record.getValue().get("timestamp");
+            final String streamId = record.getId().getValue();
+            final String destination = (String) record.getValue().get("destination");
+            final String payloadJson = (String) record.getValue().get("payload");
+            final String timestamp = (String) record.getValue().get("timestamp");
 
-            WebSocketResponse<?> response = objectMapper.readValue(payloadJson, WebSocketResponse.class);
+            final WebSocketResponse<?> response = objectMapper.readValue(payloadJson, WebSocketResponse.class);
 
             return new RecoveryMessage(
-                    messageId,
+                    streamId,
                     destination,
                     response,
                     Long.parseLong(timestamp)

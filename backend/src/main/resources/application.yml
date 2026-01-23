@@ -112,6 +112,10 @@ server:
     accept-count: 300
 
 websocket:
+  recovery:
+    max-length: 1000
+    stream-ttl-seconds: 3600
+    dedup-ttl-seconds: 1
   docs:
     enabled: true
     base-package: "coffeeshout"

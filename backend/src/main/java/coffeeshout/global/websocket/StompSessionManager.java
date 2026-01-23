@@ -35,9 +35,6 @@ public class StompSessionManager {
         upsertSessionMapping(playerKey, sessionId);
     }
 
-    /**
-     * 플레이어 세션 매핑 등록 (Internal - Redis 이벤트 핸들러용)
-     */
     public void registerPlayerSession(@NonNull String playerKey, @NonNull String sessionId) {
         validatePlayerKey(playerKey);
         upsertSessionMapping(playerKey, sessionId);

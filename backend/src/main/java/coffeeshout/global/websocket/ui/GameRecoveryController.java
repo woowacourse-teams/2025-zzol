@@ -5,6 +5,7 @@ import coffeeshout.global.websocket.StompSessionManager;
 import coffeeshout.global.websocket.ui.dto.RecoveryMessage;
 import coffeeshout.global.websocket.ui.dto.RecoveryResponse;
 import coffeeshout.room.domain.JoinCode;
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,9 +34,9 @@ public class GameRecoveryController implements GameRecoveryApi {
     @Override
     @PostMapping
     public ResponseEntity<RecoveryResponse> requestRecovery(
-            @PathVariable String joinCode,
-            @RequestParam String playerName,
-            @RequestParam String lastId
+            @PathVariable @NotBlank String joinCode,
+            @RequestParam @NotBlank String playerName,
+            @RequestParam @NotBlank String lastId
     ) {
         if (!stompSessionManager.hasSessionId(joinCode, playerName)) {
             log.warn("복구 요청 실패: 웹소켓 미연결 - joinCode={}, playerName={}", joinCode, playerName);

@@ -15,7 +15,7 @@ public record WebSocketResponse<T>(
         @Schema(description = "에러 메시지 (실패 시)", example = "잘못된 요청입니다.")
         String errorMessage,
 
-        @Schema(description = "메시지 ID (복구용)", example = "1234567890abcdef")
+        @Schema(description = "메시지 ID (복구용)", example = "1737612345678-0")
         String id
 ) {
 

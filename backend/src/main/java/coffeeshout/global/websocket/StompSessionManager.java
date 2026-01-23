@@ -32,25 +32,18 @@ public class StompSessionManager {
      */
     public void registerPlayerSession(@NonNull String joinCode, @NonNull String playerName, @NonNull String sessionId) {
         final String playerKey = createPlayerKey(joinCode, playerName);
-
-        // 기존 세션이 있으면 정리
-        final String oldSessionId = playerSessionMap.get(playerKey);
-        if (oldSessionId != null) {
-            log.info("기존 플레이어 세션 정리: playerKey={}, oldSessionId={}", playerKey, oldSessionId);
-            sessionPlayerMap.remove(oldSessionId);
-        }
-
-        playerSessionMap.put(playerKey, sessionId);
-        sessionPlayerMap.put(sessionId, playerKey);
-        log.info("플레이어 세션 매핑 등록: playerKey={}, sessionId={}", playerKey, sessionId);
+        upsertSessionMapping(playerKey, sessionId);
     }
 
     /**
      * 플레이어 세션 매핑 등록 (Internal - Redis 이벤트 핸들러용)
      */
-    public void registerPlayerSessionInternal(@NonNull String playerKey, @NonNull String sessionId) {
+    public void registerPlayerSession(@NonNull String playerKey, @NonNull String sessionId) {
         validatePlayerKey(playerKey);
-        
+        upsertSessionMapping(playerKey, sessionId);
+    }
+
+    private void upsertSessionMapping(@NonNull String playerKey, @NonNull String sessionId) {
         // 기존 세션이 있으면 정리
         final String oldSessionId = playerSessionMap.get(playerKey);
         if (oldSessionId != null) {

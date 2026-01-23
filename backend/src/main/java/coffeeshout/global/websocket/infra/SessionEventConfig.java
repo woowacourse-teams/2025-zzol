@@ -35,7 +35,7 @@ public class SessionEventConfig {
                 streamPublisher.publish(StreamKey.ROOM_BROADCAST, playerReconnectedEvent);
             }
 
-            sessionManager.registerPlayerSessionInternal(playerKey, sessionId);
+            sessionManager.registerPlayerSession(playerKey, sessionId);
         };
     }
 

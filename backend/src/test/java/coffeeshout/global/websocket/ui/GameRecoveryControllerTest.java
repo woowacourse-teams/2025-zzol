@@ -89,7 +89,7 @@ class GameRecoveryControllerTest {
                         .param("lastId", "0-0"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorMessage").value("메세지 복구 실패"));
+                .andExpect(jsonPath("$.errorMessage").value("메시지 복구 실패"));
     }
 
     @ParameterizedTest

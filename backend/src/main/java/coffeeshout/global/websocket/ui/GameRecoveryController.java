@@ -56,7 +56,7 @@ public class GameRecoveryController implements GameRecoveryApi {
             log.error("메시지 복구 실패: joinCode={}, playerName={}, lastId={}",
                     joinCode, playerName, lastId, e);
             return ResponseEntity.internalServerError()
-                    .body(RecoveryResponse.error("메세지 복구 실패"));
+                    .body(RecoveryResponse.error("메시지 복구 실패"));
         }
     }
 }

@@ -4,10 +4,10 @@ import coffeeshout.global.websocket.GameRecoveryService;
 import coffeeshout.global.websocket.StompSessionManager;
 import coffeeshout.global.websocket.ui.dto.RecoveryMessage;
 import coffeeshout.global.websocket.ui.dto.RecoveryResponse;
-import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,31 +32,21 @@ public class GameRecoveryController implements GameRecoveryApi {
     @Override
     @PostMapping
     public ResponseEntity<RecoveryResponse> requestRecovery(
-            @PathVariable @NotBlank String joinCode,
-            @RequestParam @NotBlank String playerName,
-            @RequestParam @NotBlank String lastId
+            @PathVariable String joinCode,
+            @RequestParam String playerName,
+            @RequestParam String lastId
     ) {
-        try {
-            // 2. 웹소켓 연결 확인
-            if (!stompSessionManager.hasSessionId(joinCode, playerName)) {
-                log.warn("복구 요청 실패: 웹소켓 미연결 - joinCode={}, playerName={}", joinCode, playerName);
-                return ResponseEntity.badRequest()
-                        .body(RecoveryResponse.error("웹소켓 미연결"));
-            }
-
-            // 3. 복구 메시지 조회
-            final List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, lastId);
-
-            log.info("메시지 복구 완료: joinCode={}, playerName={}, lastId={}, count={}",
-                    joinCode, playerName, lastId, messages.size());
-
-            return ResponseEntity.ok(RecoveryResponse.success(messages));
-
-        } catch (Exception e) {
-            log.error("메시지 복구 실패: joinCode={}, playerName={}, lastId={}",
-                    joinCode, playerName, lastId, e);
-            return ResponseEntity.internalServerError()
-                    .body(RecoveryResponse.error("메시지 복구 실패"));
+        if (!stompSessionManager.hasSessionId(joinCode, playerName)) {
+            log.warn("복구 요청 실패: 웹소켓 미연결 - joinCode={}, playerName={}", joinCode, playerName);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(RecoveryResponse.error("웹소켓 미연결"));
         }
+
+        final List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, lastId);
+
+        log.info("메시지 복구 완료: joinCode={}, playerName={}, lastId={}, count={}",
+                joinCode, playerName, lastId, messages.size());
+
+        return ResponseEntity.ok(RecoveryResponse.success(messages));
     }
 }

@@ -2,6 +2,8 @@ package coffeeshout.global.websocket;
 
 import static coffeeshout.cardgame.domain.event.CardGameMessagePublisher.CARD_GAME_STATE_DESTINATION_FORMAT;
 import static coffeeshout.cardgame.domain.event.CardGameMessagePublisher.GAME_START_DESTINATION_FORMAT;
+import static coffeeshout.global.websocket.GameRecoveryService.ID_MAP_KEY_FORMAT;
+import static coffeeshout.global.websocket.GameRecoveryService.STREAM_KEY_FORMAT;
 import static coffeeshout.racinggame.infra.messaging.RacingGameMessagePublisher.RACING_GAME_PLAYERS_POSITION_DESTINATION_FORMAT;
 import static coffeeshout.racinggame.infra.messaging.RacingGameMessagePublisher.RACING_GAME_STATE_DESTINATION_FORMAT;
 import static coffeeshout.room.ui.messaging.RoomMessagePublisher.MINI_GAME_TOPIC_FORMAT;
@@ -40,8 +42,6 @@ class GameRecoveryServiceTest extends ServiceTest {
     @Autowired
     StringRedisTemplate stringRedisTemplate;
 
-    private static final String STREAM_KEY_FORMAT = "room:%s:recovery";
-    private static final String ID_MAP_KEY_FORMAT = "room:%s:recovery:ids";
 
     private String joinCode;
 

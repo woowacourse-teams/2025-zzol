@@ -6,8 +6,9 @@ import coffeeshout.room.domain.JoinCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,8 +47,8 @@ public class GameRecoveryService {
         this.dedupTtlSeconds = dedupTtlSeconds;
     }
 
-    private static final String STREAM_KEY_FORMAT = "room:%s:recovery";
-    private static final String ID_MAP_KEY_FORMAT = "room:%s:recovery:ids";
+    public static final String STREAM_KEY_FORMAT = "room:%s:recovery";
+    public static final String ID_MAP_KEY_FORMAT = "room:%s:recovery:ids";
 
     // Lua Script for atomic save with deduplication (HSET 방식)
     // idMapKey: 중복 방지용 (짧은 TTL, 1초)
@@ -90,13 +91,14 @@ public class GameRecoveryService {
 
     public String generateMessageId(String destination, WebSocketResponse<?> response) {
         try {
-            // timestamp는 제외하고 destination + payload만 해싱
-            final String content = destination + ":" + objectMapper.writeValueAsString(response.data());
+            final String content = destination +
+                    response.success() +
+                    objectMapper.writeValueAsString(response.data()) +
+                    response.errorMessage();
             return DigestUtils.md5DigestAsHex(content.getBytes(StandardCharsets.UTF_8));
         } catch (JsonProcessingException e) {
             log.error("메시지 ID 생성 실패", e);
-            // fallback: timestamp 기반
-            return DigestUtils.md5DigestAsHex((destination + System.currentTimeMillis()).getBytes(StandardCharsets.UTF_8));
+            return DigestUtils.md5DigestAsHex((destination + UUID.randomUUID()).getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -165,20 +167,17 @@ public class GameRecoveryService {
                 return List.of();
             }
 
-            final List<RecoveryMessage> messages = new ArrayList<>();
-            for (MapRecord<String, Object, Object> record : records) {
-                final RecoveryMessage message = deserializeMessage(record);
-                if (message != null) {
-                    messages.add(message);
-                }
-            }
+            final List<RecoveryMessage> messages = records.stream()
+                    .map(this::deserializeMessage)
+                    .filter(Objects::nonNull)
+                    .toList();
 
             log.info("복구 메시지 조회: joinCode={}, lastStreamId={}, count={}", joinCode, lastStreamId, messages.size());
             return messages;
 
         } catch (Exception e) {
             log.error("복구 메시지 조회 실패: joinCode={}, lastStreamId={}", joinCode, lastStreamId, e);
-            return List.of();
+            throw e;
         }
     }
 
@@ -202,12 +201,12 @@ public class GameRecoveryService {
     /**
      * Redis Stream Record를 RecoveryMessage로 변환
      */
-    private RecoveryMessage deserializeMessage(MapRecord<String, Object, Object> record) {
+    private RecoveryMessage deserializeMessage(MapRecord<String, Object, Object> mapRecord) {
         try {
-            final String streamId = record.getId().getValue();
-            final String destination = (String) record.getValue().get("destination");
-            final String payloadJson = (String) record.getValue().get("payload");
-            final String timestamp = (String) record.getValue().get("timestamp");
+            final String streamId = mapRecord.getId().getValue();
+            final String destination = (String) mapRecord.getValue().get("destination");
+            final String payloadJson = (String) mapRecord.getValue().get("payload");
+            final String timestamp = (String) mapRecord.getValue().get("timestamp");
 
             final WebSocketResponse<?> response = objectMapper.readValue(payloadJson, WebSocketResponse.class);
 
@@ -218,7 +217,7 @@ public class GameRecoveryService {
                     Long.parseLong(timestamp)
             );
         } catch (Exception e) {
-            log.error("메시지 역직렬화 실패: recordId={}", record.getId(), e);
+            log.error("메시지 역직렬화 실패: recordId={}", mapRecord.getId(), e);
             return null;
         }
     }

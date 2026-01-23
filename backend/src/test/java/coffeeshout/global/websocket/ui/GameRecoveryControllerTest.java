@@ -35,7 +35,7 @@ class GameRecoveryControllerTest {
         String joinCode = "T3ST";
         String playerName = "Tester";
         String sessionId = "session-123";
-        String destination = "/topic/room/TESTCODE";
+        String destination = "/topic/room/T3ST";
 
         // 1. 세션 등록 (웹소켓 연결 상태 시뮬레이션)
         stompSessionManager.registerPlayerSession(joinCode, playerName, sessionId);
@@ -61,16 +61,16 @@ class GameRecoveryControllerTest {
     }
 
     @Test
-    void 웹소켓이_연결되지_않은_상태에서_복구_요청_시_400_에러를_반환한다() throws Exception {
+    void 웹소켓이_연결되지_않은_상태에서_복구_요청_시_409_에러를_반환한다() throws Exception {
         // given
-        String joinCode = "T3ST";
+        String joinCode = "NOTCONNECTED";
         String playerName = "Unknown";
 
         // when & then
         mockMvc.perform(post("/api/rooms/{joinCode}/recovery", joinCode)
                         .param("playerName", playerName)
                         .param("lastId", "0-0"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errorMessage").value("웹소켓 미연결"))
                 .andExpect(jsonPath("$.messageCount").value(0));

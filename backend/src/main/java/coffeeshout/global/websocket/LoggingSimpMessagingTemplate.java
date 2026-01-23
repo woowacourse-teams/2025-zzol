@@ -34,7 +34,10 @@ public class LoggingSimpMessagingTemplate {
                 WebSocketResponse<?> responseWithId = response.withId(messageId);
 
                 // 3. Recovery Stream에 저장 (Lua Script로 중복 방지)
-                gameRecoveryService.save(joinCode, destination, responseWithId, messageId);
+                final String streamId = gameRecoveryService.save(joinCode, destination, responseWithId, messageId);
+                if (streamId == null) {
+                    log.warn("복구 메시지 저장 실패: joinCode={}, destination={}, messageId={}", joinCode, destination, messageId);
+                }
 
                 // 4. 웹소켓 전송 (ID 포함)
                 messagingTemplate.convertAndSend(destination, responseWithId);

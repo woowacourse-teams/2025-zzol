@@ -1,8 +1,9 @@
-package coffeeshout.global.websocket.recovery;
+package coffeeshout.global.websocket.ui;
 
 import coffeeshout.global.websocket.StompSessionManager;
-import coffeeshout.global.websocket.recovery.dto.RecoveryMessage;
-import coffeeshout.global.websocket.recovery.dto.RecoveryResponse;
+import coffeeshout.global.websocket.GameRecoveryService;
+import coffeeshout.global.websocket.ui.dto.RecoveryMessage;
+import coffeeshout.global.websocket.ui.dto.RecoveryResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,14 +26,6 @@ public class GameRecoveryController {
     private final GameRecoveryService gameRecoveryService;
     private final StompSessionManager stompSessionManager;
 
-    /**
-     * 유실된 메시지 복구 요청
-     *
-     * @param joinCode 방 코드
-     * @param playerName 플레이어 이름
-     * @param lastId 클라이언트가 마지막으로 받은 메시지 ID (필수)
-     * @return 복구된 메시지 리스트
-     */
     @PostMapping
     public ResponseEntity<RecoveryResponse> requestRecovery(
             @PathVariable String joinCode,

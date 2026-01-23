@@ -1,4 +1,4 @@
-package coffeeshout.global.websocket.recovery.dto;
+package coffeeshout.global.websocket.ui.dto;
 
 import java.util.List;
 

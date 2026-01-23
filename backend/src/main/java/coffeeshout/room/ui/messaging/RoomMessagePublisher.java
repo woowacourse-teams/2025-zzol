@@ -25,11 +25,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RoomMessagePublisher {
 
-    private static final String PLAYER_LIST_TOPIC_FORMAT = "/topic/room/%s";
-    private static final String MINI_GAME_TOPIC_FORMAT = "/topic/room/%s/minigame";
-    private static final String ROULETTE_TOPIC_FORMAT = "/topic/room/%s/roulette";
-    private static final String WINNER_TOPIC_FORMAT = "/topic/room/%s/winner";
-    private static final String QR_CODE_TOPIC_FORMAT = "/topic/room/%s/qr-code";
+    public static final String PLAYER_LIST_TOPIC_FORMAT = "/topic/room/%s";
+    public static final String MINI_GAME_TOPIC_FORMAT = "/topic/room/%s/minigame";
+    public static final String ROULETTE_TOPIC_FORMAT = "/topic/room/%s/roulette";
+    public static final String WINNER_TOPIC_FORMAT = "/topic/room/%s/winner";
+    public static final String QR_CODE_TOPIC_FORMAT = "/topic/room/%s/qr-code";
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
     private final RoomQueryService roomQueryService;

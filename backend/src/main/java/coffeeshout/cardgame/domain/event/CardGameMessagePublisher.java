@@ -22,8 +22,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class CardGameMessagePublisher {
 
-    private static final String CARD_GAME_STATE_DESTINATION_FORMAT = "/topic/room/%s/gameState";
-    private static final String GAME_START_DESTINATION_FORMAT = "/topic/room/%s/round";
+    public static final String CARD_GAME_STATE_DESTINATION_FORMAT = "/topic/room/%s/gameState";
+    public static final String GAME_START_DESTINATION_FORMAT = "/topic/room/%s/round";
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
 

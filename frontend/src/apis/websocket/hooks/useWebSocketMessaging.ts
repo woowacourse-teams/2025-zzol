@@ -51,7 +51,6 @@ export const useWebSocketMessaging = ({ client, isConnected }: Props) => {
             return;
           }
 
-          // streamId 저장 (복구용)
           if (parsedMessage.id) {
             const joinCode = extractJoinCodeFromDestination(url);
             if (joinCode) {

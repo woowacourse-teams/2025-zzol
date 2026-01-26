@@ -1,6 +1,6 @@
+import { useCallback, useEffect, useRef } from 'react';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
-import { useCallback, useEffect, useRef } from 'react';
 
 type Props = {
   isConnected: boolean;
@@ -37,9 +37,6 @@ export const useWebSocketReconnection = ({
     }, 200);
   }, [joinCode, myName, startSocket, clearReconnectTimer]);
 
-  /**
-   * 재연결 완료 감지 - 복구 콜백 호출
-   */
   useEffect(() => {
     if (isConnected && wasDisconnectedRef.current) {
       console.log('🔄 재연결 완료 - 복구 시작');
@@ -48,9 +45,6 @@ export const useWebSocketReconnection = ({
     }
   }, [isConnected, onReconnected]);
 
-  /**
-   * 새로고침 감지
-   */
   useEffect(() => {
     if (hasCheckedRefresh.current) return;
 
@@ -74,9 +68,6 @@ export const useWebSocketReconnection = ({
     }
   }, [myName, joinCode, isConnected, startSocket]);
 
-  /**
-   * 백그라운드 ↔ 포그라운드 감지
-   */
   useEffect(() => {
     if (!isVisible && isConnected) {
       console.log('📱 백그라운드 전환 - 소켓 연결 해제');
@@ -94,9 +85,6 @@ export const useWebSocketReconnection = ({
     return () => clearReconnectTimer();
   }, [isVisible, isConnected, stopSocket, scheduleReconnect, clearReconnectTimer]);
 
-  /**
-   * 온라인/오프라인 감지
-   */
   useEffect(() => {
     const handleOnline = () => {
       if (!isConnected) {

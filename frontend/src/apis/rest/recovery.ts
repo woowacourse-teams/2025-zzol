@@ -1,5 +1,5 @@
-import { api } from './api';
 import { WebSocketMessage } from '../websocket/constants/constants';
+import { api } from './api';
 
 export type RecoveryMessage = {
   streamId: string;

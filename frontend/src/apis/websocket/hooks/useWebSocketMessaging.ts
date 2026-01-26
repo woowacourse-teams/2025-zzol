@@ -8,6 +8,19 @@ type Props = {
   isConnected: boolean;
 };
 
+const extractJoinCodeFromDestination = (destination: string): string | null => {
+  const match = destination.match(/\/room\/([^/]+)/);
+  return match ? match[1] : null;
+};
+
+const saveLastStreamId = (joinCode: string, streamId: string) => {
+  try {
+    localStorage.setItem(`lastStreamId:${joinCode}`, streamId);
+  } catch (error) {
+    console.warn('lastStreamId 저장 실패:', error);
+  }
+};
+
 export const useWebSocketMessaging = ({ client, isConnected }: Props) => {
   const subscribe = useCallback(
     <T>(url: string, onData: (data: T) => void, onError?: (error: Error) => void) => {
@@ -36,6 +49,14 @@ export const useWebSocketMessaging = ({ client, isConnected }: Props) => {
               onError,
             });
             return;
+          }
+
+          // streamId 저장 (복구용)
+          if (parsedMessage.id) {
+            const joinCode = extractJoinCodeFromDestination(url);
+            if (joinCode) {
+              saveLastStreamId(joinCode, parsedMessage.id);
+            }
           }
 
           onData(parsedMessage.data);

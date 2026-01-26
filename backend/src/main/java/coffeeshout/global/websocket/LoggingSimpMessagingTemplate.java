@@ -28,19 +28,12 @@ public class LoggingSimpMessagingTemplate {
             JoinCode joinCode = extractJoinCode(destination);
 
             if (joinCode != null) {
-                // 1. messageId 생성 (Hash 기반)
-                String messageId = gameRecoveryService.generateMessageId(destination, response);
-
-                // 2. ID 추가된 새 response 생성
-                WebSocketResponse<?> responseWithId = response.withId(messageId);
-
-                // 3. Recovery Stream에 저장 (Lua Script로 중복 방지)
-                final String streamId = gameRecoveryService.save(joinCode, destination, responseWithId, messageId);
+                final String streamId = gameRecoveryService.save(joinCode, destination, response);
                 if (streamId == null) {
-                    log.warn("복구 메시지 저장 실패: joinCode={}, destination={}, messageId={}", joinCode, destination, messageId);
+                    log.warn("복구 메시지 저장 실패: joinCode={}, destination={}", joinCode, destination);
                 }
+                WebSocketResponse<?> responseWithId = response.withId(streamId);
 
-                // 4. 웹소켓 전송 (ID 포함)
                 messagingTemplate.convertAndSend(destination, responseWithId);
                 return;
             }

@@ -91,29 +91,19 @@ public class GameRecoveryService {
             return streamId
             """;
 
-    public String generateMessageId(String destination, WebSocketResponse<?> response) {
-        try {
-            final String content = destination +
-                    response.success() +
-                    objectMapper.writeValueAsString(response.data()) +
-                    response.errorMessage();
-            return DigestUtils.md5DigestAsHex(content.getBytes(StandardCharsets.UTF_8));
-        } catch (JsonProcessingException e) {
-            log.error("메시지 ID 생성 실패", e);
-            return DigestUtils.md5DigestAsHex((destination + UUID.randomUUID()).getBytes(StandardCharsets.UTF_8));
-        }
-    }
+    private static final String STREAM_ID_PATTERN = "^\\d+-\\d+$";
+
 
     /**
      * 메시지를 Recovery Stream에 저장 (중복 방지)
      *
      * @param joinCode 방 코드
      * @param destination 웹소켓 destination
-     * @param response WebSocketResponse (ID 포함)
-     * @param messageId Hash 기반 메시지 ID
+     * @param response WebSocketResponse
      * @return Redis Stream Entry ID (예: "1234567890-0"), 중복인 경우에도 기존 streamId 반환
      */
-    public String save(JoinCode joinCode, String destination, WebSocketResponse<?> response, String messageId) {
+    public String save(JoinCode joinCode, String destination, WebSocketResponse<?> response) {
+        final String messageId = generateMessageId(destination, response);
         final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
         final String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode);
 
@@ -147,8 +137,6 @@ public class GameRecoveryService {
             return null;
         }
     }
-
-    private static final String STREAM_ID_PATTERN = "^\\d+-\\d+$";
 
     /**
      * lastStreamId 이후의 메시지 조회 (XRANGE 활용)
@@ -234,6 +222,19 @@ public class GameRecoveryService {
                     GlobalErrorCode.INVALID_STREAM_ID,
                     "유효하지 않은 Stream ID 형식입니다: " + streamId
             );
+        }
+    }
+
+    private String generateMessageId(String destination, WebSocketResponse<?> response) {
+        try {
+            final String content = destination +
+                    response.success() +
+                    objectMapper.writeValueAsString(response.data()) +
+                    response.errorMessage();
+            return DigestUtils.md5DigestAsHex(content.getBytes(StandardCharsets.UTF_8));
+        } catch (JsonProcessingException e) {
+            log.error("메시지 ID 생성 실패", e);
+            return DigestUtils.md5DigestAsHex((destination + UUID.randomUUID()).getBytes(StandardCharsets.UTF_8));
         }
     }
 }

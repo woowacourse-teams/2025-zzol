@@ -9,7 +9,6 @@ import coffeeshout.global.websocket.StompSessionManager;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.support.test.IntegrationTest;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -19,7 +18,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @IntegrationTest
 @AutoConfigureMockMvc
-@DisplayName("GameRecoveryController 통합 테스트")
 class GameRecoveryControllerTest {
 
     private static final String TEST_JOIN_CODE = "T3ST";
@@ -48,8 +46,7 @@ class GameRecoveryControllerTest {
         stompSessionManager.registerPlayerSession(TEST_JOIN_CODE, TEST_PLAYER_NAME, TEST_SESSION_ID);
 
         WebSocketResponse<String> response = WebSocketResponse.success("Test Message");
-        String messageId = gameRecoveryService.generateMessageId(TEST_DESTINATION, response);
-        String savedStreamId = gameRecoveryService.save(new JoinCode(TEST_JOIN_CODE), TEST_DESTINATION, response, messageId);
+        String savedStreamId = gameRecoveryService.save(new JoinCode(TEST_JOIN_CODE), TEST_DESTINATION, response);
 
         // when & then
         mockMvc.perform(post("/api/rooms/{joinCode}/recovery", TEST_JOIN_CODE)

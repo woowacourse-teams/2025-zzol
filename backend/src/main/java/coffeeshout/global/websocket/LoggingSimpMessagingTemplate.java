@@ -31,6 +31,8 @@ public class LoggingSimpMessagingTemplate {
                 final String streamId = gameRecoveryService.save(joinCode, destination, response);
                 if (streamId == null) {
                     log.warn("복구 메시지 저장 실패: joinCode={}, destination={}", joinCode, destination);
+                    messagingTemplate.convertAndSend(destination, response);
+                    return;
                 }
                 WebSocketResponse<?> responseWithId = response.withId(streamId);
 

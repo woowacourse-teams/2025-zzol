@@ -4,7 +4,7 @@ import { api } from './api';
 export type RecoveryMessage = {
   streamId: string;
   destination: string;
-  payload: WebSocketMessage<unknown>;
+  response: WebSocketMessage<unknown>;
   timestamp: number;
 };
 

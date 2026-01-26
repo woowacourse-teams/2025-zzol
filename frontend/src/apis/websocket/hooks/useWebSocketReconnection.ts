@@ -6,14 +6,21 @@ type Props = {
   isConnected: boolean;
   startSocket: (joinCode: string, myName: string) => void;
   stopSocket: () => void;
+  onReconnected?: () => void;
 };
 
-export const useWebSocketReconnection = ({ isConnected, startSocket, stopSocket }: Props) => {
+export const useWebSocketReconnection = ({
+  isConnected,
+  startSocket,
+  stopSocket,
+  onReconnected,
+}: Props) => {
   const { isVisible } = usePageVisibility();
   const { joinCode, myName } = useIdentifier();
   const reconnectTimerRef = useRef<number | null>(null);
   const wasBackgrounded = useRef(false);
   const hasCheckedRefresh = useRef(false);
+  const wasDisconnectedRef = useRef(false);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimerRef.current) {
@@ -24,10 +31,22 @@ export const useWebSocketReconnection = ({ isConnected, startSocket, stopSocket 
 
   const scheduleReconnect = useCallback(() => {
     clearReconnectTimer();
+    wasDisconnectedRef.current = true;
     reconnectTimerRef.current = window.setTimeout(() => {
       if (joinCode && myName) startSocket(joinCode, myName);
     }, 200);
   }, [joinCode, myName, startSocket, clearReconnectTimer]);
+
+  /**
+   * 재연결 완료 감지 - 복구 콜백 호출
+   */
+  useEffect(() => {
+    if (isConnected && wasDisconnectedRef.current) {
+      console.log('🔄 재연결 완료 - 복구 시작');
+      wasDisconnectedRef.current = false;
+      onReconnected?.();
+    }
+  }, [isConnected, onReconnected]);
 
   /**
    * 새로고침 감지
@@ -50,6 +69,7 @@ export const useWebSocketReconnection = ({ isConnected, startSocket, stopSocket 
     if (isReload && !isConnected && joinCode && myName && startSocket) {
       console.log('🔄 새로고침 감지 - 웹소켓 재연결 시도:', { myName, joinCode });
       hasCheckedRefresh.current = true;
+      wasDisconnectedRef.current = true;
       startSocket(joinCode, myName);
     }
   }, [myName, joinCode, isConnected, startSocket]);

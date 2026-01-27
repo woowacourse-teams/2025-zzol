@@ -2,6 +2,7 @@ import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { StompSubscription } from '@stomp/stompjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { subscriptionRegistry } from '../utils/subscriptionRegistry';
 
 export const useWebSocketSubscription = <T>(
   destination: string,
@@ -17,6 +18,25 @@ export const useWebSocketSubscription = <T>(
   const prevSessionIdRef = useRef<string | null>(null);
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onDataRef = useRef(onData);
+
+  useEffect(() => {
+    onDataRef.current = onData;
+  }, [onData]);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const handler = (data: unknown) => {
+      onDataRef.current(data as T);
+    };
+
+    subscriptionRegistry.register(destination, handler);
+
+    return () => {
+      subscriptionRegistry.unregister(destination, handler);
+    };
+  }, [destination, enabled]);
 
   const unsubscribe = useCallback(() => {
     if (subscriptionRef.current) {

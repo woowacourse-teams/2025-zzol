@@ -6,7 +6,20 @@ import { useStompSessionWatcher } from '../hooks/useStompSessionWatcher';
 import { useWebSocketConnection } from '../hooks/useWebSocketConnection';
 import { useWebSocketMessaging } from '../hooks/useWebSocketMessaging';
 import { useWebSocketReconnection } from '../hooks/useWebSocketReconnection';
+import { subscriptionRegistry } from '../utils/subscriptionRegistry';
 import { WebSocketContext, WebSocketContextType } from './WebSocketContext';
+
+const TOPIC_PREFIX = '/topic';
+
+const SCREEN_TRANSITION_PATTERNS = ['/roulette', '/winner', '/round'] as const;
+
+const isScreenTransitionMessage = (destination: string): boolean => {
+  return SCREEN_TRANSITION_PATTERNS.some((pattern) => destination.includes(pattern));
+};
+
+const extractSubscriptionPath = (destination: string): string => {
+  return destination.replace(TOPIC_PREFIX, '');
+};
 
 export const WebSocketProvider = ({ children }: PropsWithChildren) => {
   const navigate = useNavigate();
@@ -17,23 +30,42 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
   const { subscribe, send } = useWebSocketMessaging({ client, isConnected });
 
   const routeRecoveryMessage = useCallback(
-    (msg: RecoveryMessage) => {
-      const { destination } = msg;
-
+    (destination: string) => {
       if (destination.includes('/roulette') && !destination.includes('/winner')) {
         console.log('🔄 복구: 룰렛 화면으로 이동');
         navigate(`/room/${joinCode}/roulette/play`, { replace: true });
-        return;
+        return true;
       }
 
       if (destination.includes('/winner')) {
         console.log('🔄 복구: 당첨자 화면으로 이동');
         navigate(`/room/${joinCode}/roulette/result`, { replace: true });
-        return;
+        return true;
       }
+
+      if (destination.includes('/round')) {
+        console.log('🔄 복구: 게임 시작 - 핸들러에게 위임');
+        return false;
+      }
+
+      return false;
     },
     [joinCode, navigate]
   );
+
+  const dispatchToSubscribers = useCallback((msg: RecoveryMessage) => {
+    const { destination, response } = msg;
+    const subscriptionPath = extractSubscriptionPath(destination);
+
+    if (response.success && response.data !== null) {
+      const dispatched = subscriptionRegistry.dispatch(subscriptionPath, response.data);
+      if (dispatched) {
+        console.log('🔄 복구 메시지 핸들러에 전달:', subscriptionPath);
+      }
+      return dispatched;
+    }
+    return false;
+  }, []);
 
   const handleReconnected = useCallback(async () => {
     if (!joinCode || !myName) {
@@ -47,7 +79,6 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
       return;
     }
 
-    // 백엔드 세션 등록 대기
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     console.log('🔄 메시지 복구 시작:', { joinCode, myName, lastStreamId });
@@ -73,18 +104,34 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
 
     console.log(`🔄 복구 메시지 ${messages.length}개 처리`);
 
-    const lastMessage = messages[messages.length - 1];
+    let lastScreenTransitionMsg: RecoveryMessage | null = null;
 
-    routeRecoveryMessage(lastMessage);
+    for (const msg of messages) {
+      const { destination } = msg;
 
-    try {
-      localStorage.setItem(`lastStreamId:${joinCode}`, lastMessage.streamId);
-    } catch {
-      // ignore
+      if (isScreenTransitionMessage(destination)) {
+        lastScreenTransitionMsg = msg;
+      } else {
+        dispatchToSubscribers(msg);
+      }
+
+      try {
+        localStorage.setItem(`lastStreamId:${joinCode}`, msg.streamId);
+      } catch {
+        // ignore
+      }
+    }
+
+    if (lastScreenTransitionMsg) {
+      const handled = routeRecoveryMessage(lastScreenTransitionMsg.destination);
+
+      if (!handled) {
+        dispatchToSubscribers(lastScreenTransitionMsg);
+      }
     }
 
     console.log('✅ 메시지 복구 완료');
-  }, [joinCode, myName, routeRecoveryMessage]);
+  }, [joinCode, myName, routeRecoveryMessage, dispatchToSubscribers]);
 
   useWebSocketReconnection({
     isConnected,

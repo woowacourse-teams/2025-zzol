@@ -1,39 +1,11 @@
-import { useMemo, useRef } from 'react';
+import { useRacingGameRankedPlayers } from '@/contexts/RacingGame/RacingGameContext';
+import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import RankItem from '../RankItem/RankItem';
 import * as S from './RacingRanks.styled';
 
-type Player = {
-  playerName: string;
-  position: number;
-};
-
-type Props = {
-  players: Player[];
-  myName: string;
-  endDistance: number;
-};
-
-const RacingRanks = ({ players, myName, endDistance }: Props) => {
-  const finishOrderRef = useRef<Player[]>([]);
-
-  const rankedPlayers = useMemo(() => {
-    const finishOrder = finishOrderRef.current;
-
-    players.forEach(({ playerName, position }) => {
-      if (
-        position >= endDistance &&
-        !finishOrder.some((player) => player.playerName === playerName)
-      ) {
-        finishOrder.push({ playerName, position });
-      }
-    });
-
-    const unFinishedSortedPlayers = players
-      .filter((player) => !finishOrder.some((p) => p.playerName === player.playerName))
-      .sort((a, b) => b.position - a.position);
-
-    return [...finishOrder, ...unFinishedSortedPlayers];
-  }, [players, endDistance]);
+const RacingRanks = () => {
+  const rankedPlayers = useRacingGameRankedPlayers();
+  const { myName } = useIdentifier();
 
   return (
     <S.Container>
@@ -47,7 +19,7 @@ const RacingRanks = ({ players, myName, endDistance }: Props) => {
               playerName={player.playerName}
               rank={index + 1}
               isMe={isMe}
-              isFixed={player.position >= endDistance}
+              isFixed={player.isFinished}
             />
           );
         })}
@@ -55,5 +27,7 @@ const RacingRanks = ({ players, myName, endDistance }: Props) => {
     </S.Container>
   );
 };
+
+RacingRanks.displayName = 'RacingRanks';
 
 export default RacingRanks;

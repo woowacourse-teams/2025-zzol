@@ -2,7 +2,7 @@ import { ReactNode, useRef, useEffect } from 'react';
 import * as S from './RacingGameOverlay.styled';
 import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
-import { useRacingGame } from '@/contexts/RacingGame/RacingGameContext';
+import { useRacingGameState } from '@/contexts/RacingGame/RacingGameContext';
 
 type Props = {
   children: ReactNode;
@@ -12,7 +12,7 @@ type Props = {
 const RacingGameOverlay = ({ children, isGoal }: Props) => {
   const { joinCode, myName } = useIdentifier();
   const { send } = useWebSocket();
-  const { racingGameState } = useRacingGame();
+  const racingGameState = useRacingGameState();
 
   const tapCountRef = useRef(0);
   const intervalRef = useRef<number | null>(null);

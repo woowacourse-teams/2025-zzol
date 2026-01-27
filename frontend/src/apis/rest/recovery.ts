@@ -21,7 +21,7 @@ export const fetchRecoveryMessages = async (
 ): Promise<RecoveryMessage[]> => {
   try {
     const response = await api.post<RecoveryResponse, undefined>(
-      `/rooms/${joinCode}/recovery?playerName=${encodeURIComponent(playerName)}&lastId=${encodeURIComponent(lastStreamId)}`
+      `/api/rooms/${joinCode}/recovery?playerName=${encodeURIComponent(playerName)}&lastId=${encodeURIComponent(lastStreamId)}`
     );
 
     if (!response.success) {

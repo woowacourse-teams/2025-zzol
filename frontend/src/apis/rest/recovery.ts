@@ -36,17 +36,25 @@ export const fetchRecoveryMessages = async (
   }
 };
 
-export const getLastStreamId = (joinCode: string): string | null => {
+export const getLastStreamId = (joinCode: string, playerName: string): string | null => {
   try {
-    return localStorage.getItem(`lastStreamId:${joinCode}`);
+    return localStorage.getItem(`lastStreamId:${joinCode}:${playerName}`);
   } catch {
     return null;
   }
 };
 
-export const clearLastStreamId = (joinCode: string): void => {
+export const saveLastStreamId = (joinCode: string, playerName: string, streamId: string): void => {
   try {
-    localStorage.removeItem(`lastStreamId:${joinCode}`);
+    localStorage.setItem(`lastStreamId:${joinCode}:${playerName}`, streamId);
+  } catch {
+    // ignore
+  }
+};
+
+export const clearLastStreamId = (joinCode: string, playerName: string): void => {
+  try {
+    localStorage.removeItem(`lastStreamId:${joinCode}:${playerName}`);
   } catch {
     // ignore
   }

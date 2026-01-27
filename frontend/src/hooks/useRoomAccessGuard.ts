@@ -1,4 +1,5 @@
 import useLazyFetch from '@/apis/rest/useLazyFetch';
+import { getIsRecovering } from '@/apis/websocket/contexts/WebSocketProvider';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
@@ -28,6 +29,12 @@ export const useRoomAccessGuard = () => {
   );
 
   const validateUserExistsAndRedirect = useCallback(async () => {
+    // 동기적으로 체크
+    if (getIsRecovering()) {
+      console.log('복구 중 - 검증 건너뜀');
+      return;
+    }
+
     if (!joinCode) {
       navigateToHome('joinCode가 없음');
       return;

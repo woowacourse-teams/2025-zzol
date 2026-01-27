@@ -1,11 +1,13 @@
 import { Client } from '@stomp/stompjs';
 import { useCallback } from 'react';
 import { WEBSOCKET_CONFIG, WebSocketMessage } from '../constants/constants';
+import { saveLastStreamId } from '@/apis/rest/recovery';
 import WebSocketErrorHandler from '../utils/WebSocketErrorHandler';
 
 type Props = {
   client: Client | null;
   isConnected: boolean;
+  playerName: string | null;
 };
 
 const extractJoinCodeFromDestination = (destination: string): string | null => {
@@ -13,15 +15,7 @@ const extractJoinCodeFromDestination = (destination: string): string | null => {
   return match ? match[1] : null;
 };
 
-const saveLastStreamId = (joinCode: string, streamId: string) => {
-  try {
-    localStorage.setItem(`lastStreamId:${joinCode}`, streamId);
-  } catch (error) {
-    console.warn('lastStreamId 저장 실패:', error);
-  }
-};
-
-export const useWebSocketMessaging = ({ client, isConnected }: Props) => {
+export const useWebSocketMessaging = ({ client, isConnected, playerName }: Props) => {
   const subscribe = useCallback(
     <T>(url: string, onData: (data: T) => void, onError?: (error: Error) => void) => {
       if (!client || !isConnected) {
@@ -51,10 +45,10 @@ export const useWebSocketMessaging = ({ client, isConnected }: Props) => {
             return;
           }
 
-          if (parsedMessage.id) {
+          if (parsedMessage.id && playerName) {
             const joinCode = extractJoinCodeFromDestination(url);
             if (joinCode) {
-              saveLastStreamId(joinCode, parsedMessage.id);
+              saveLastStreamId(joinCode, playerName, parsedMessage.id);
             }
           }
 
@@ -69,7 +63,7 @@ export const useWebSocketMessaging = ({ client, isConnected }: Props) => {
         }
       });
     },
-    [client, isConnected]
+    [client, isConnected, playerName]
   );
 
   const send = useCallback(

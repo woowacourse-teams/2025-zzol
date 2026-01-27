@@ -13,6 +13,7 @@ export type WebSocketContextType = {
   isConnected: boolean;
   client: Client | null;
   sessionId: string | null;
+  isRecovering: boolean;
 };
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null);

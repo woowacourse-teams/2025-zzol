@@ -1,4 +1,5 @@
 import { WebSocketMessage } from '../websocket/constants/constants';
+import { api } from './api';
 
 export type RecoveryMessage = {
   streamId: string;
@@ -13,34 +14,15 @@ type RecoveryResponse = {
   errorMessage?: string;
 };
 
-const getApiUrl = (): string => {
-  // Storybook 환경에서는 process.env가 없을 수 있음
-  if (typeof process !== 'undefined' && process.env?.API_URL) {
-    return process.env.API_URL;
-  }
-  return '';
-};
-
 export const fetchRecoveryMessages = async (
   joinCode: string,
   playerName: string,
   lastStreamId: string
 ): Promise<RecoveryMessage[]> => {
   try {
-    const apiUrl = getApiUrl();
-    const url = `${apiUrl}/api/rooms/${joinCode}/recovery?playerName=${encodeURIComponent(playerName)}&lastId=${encodeURIComponent(lastStreamId)}`;
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    if (!res.ok) {
-      console.warn('Recovery API 실패:', res.status);
-      return [];
-    }
-
-    const response: RecoveryResponse = await res.json();
+    const response = await api.post<RecoveryResponse, undefined>(
+      `/api/rooms/${joinCode}/recovery?playerName=${encodeURIComponent(playerName)}&lastId=${encodeURIComponent(lastStreamId)}`
+    );
 
     if (!response.success) {
       console.warn('Recovery API 실패:', response.errorMessage);

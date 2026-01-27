@@ -3,7 +3,7 @@ package coffeeshout.cardgame.domain.event;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.event.dto.CardGameStateChangedEvent;
 import coffeeshout.cardgame.domain.event.dto.MiniGameStartedEvent;
-import coffeeshout.global.ui.WebSocketResponse;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.CardSelectedEvent;
@@ -22,8 +22,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class CardGameMessagePublisher {
 
-    private static final String CARD_GAME_STATE_DESTINATION_FORMAT = "/topic/room/%s/gameState";
-    private static final String GAME_START_DESTINATION_FORMAT = "/topic/room/%s/round";
+    public static final String CARD_GAME_STATE_DESTINATION_FORMAT = "/topic/room/%s/gameState";
+    public static final String GAME_START_DESTINATION_FORMAT = "/topic/room/%s/round";
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
 

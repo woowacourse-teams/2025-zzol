@@ -32,25 +32,15 @@ public class StompSessionManager {
      */
     public void registerPlayerSession(@NonNull String joinCode, @NonNull String playerName, @NonNull String sessionId) {
         final String playerKey = createPlayerKey(joinCode, playerName);
-
-        // 기존 세션이 있으면 정리
-        final String oldSessionId = playerSessionMap.get(playerKey);
-        if (oldSessionId != null) {
-            log.info("기존 플레이어 세션 정리: playerKey={}, oldSessionId={}", playerKey, oldSessionId);
-            sessionPlayerMap.remove(oldSessionId);
-        }
-
-        playerSessionMap.put(playerKey, sessionId);
-        sessionPlayerMap.put(sessionId, playerKey);
-        log.info("플레이어 세션 매핑 등록: playerKey={}, sessionId={}", playerKey, sessionId);
+        upsertSessionMapping(playerKey, sessionId);
     }
 
-    /**
-     * 플레이어 세션 매핑 등록 (Internal - Redis 이벤트 핸들러용)
-     */
-    public void registerPlayerSessionInternal(@NonNull String playerKey, @NonNull String sessionId) {
+    public void registerPlayerSession(@NonNull String playerKey, @NonNull String sessionId) {
         validatePlayerKey(playerKey);
-        
+        upsertSessionMapping(playerKey, sessionId);
+    }
+
+    private void upsertSessionMapping(@NonNull String playerKey, @NonNull String sessionId) {
         // 기존 세션이 있으면 정리
         final String oldSessionId = playerSessionMap.get(playerKey);
         if (oldSessionId != null) {
@@ -120,23 +110,9 @@ public class StompSessionManager {
     }
 
     /**
-     * 세션 매핑 제거
-     */
-    public void removeSession(@NonNull String sessionId) {
-        final String playerKey = sessionPlayerMap.remove(sessionId);
-        if (playerKey != null) {
-            playerSessionMap.remove(playerKey);
-            log.info("세션 매핑 제거: playerKey={}, sessionId={}", playerKey, sessionId);
-        }
-
-        // 중복 disconnect 방지 세트 정리(메모리 누수 방지 목적)
-        processedDisconnections.remove(sessionId);
-    }
-
-    /**
      * 세션 매핑 제거 (Internal - Redis 이벤트 핸들러용)
      */
-    public void removeSessionInternal(@NonNull String sessionId) {
+    public void removeSession(@NonNull String sessionId) {
         final String playerKey = sessionPlayerMap.remove(sessionId);
         if (playerKey != null) {
             playerSessionMap.remove(playerKey);

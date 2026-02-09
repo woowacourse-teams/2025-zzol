@@ -4,6 +4,13 @@
 # Build: docker build -t coffee-shout-backend:latest .
 # Run:   docker run -p 8080:8080 coffee-shout-backend:latest
 
+# Stage 1: JAR 레이어 추출
+FROM eclipse-temurin:21-jre-alpine AS extract
+WORKDIR /extract
+COPY *.jar app.jar
+RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
+
+# Stage 2: 최종 이미지
 FROM eclipse-temurin:21-jre-alpine
 
 LABEL maintainer="ZZOL Team"
@@ -18,9 +25,11 @@ RUN addgroup -S spring && \
     mkdir -p /app/logs && \
     chown -R spring:spring /app
 
-# JAR 파일 복사 (GitHub Actions에서 빌드된 JAR)
-# docker build 시 context에서 복사됨
-COPY --chown=spring:spring *.jar app.jar
+# 레이어별 복사 (변경 빈도 낮은 순서 → 캐시 효율 극대화)
+COPY --from=extract --chown=spring:spring /extract/extracted/dependencies/ ./
+COPY --from=extract --chown=spring:spring /extract/extracted/spring-boot-loader/ ./
+COPY --from=extract --chown=spring:spring /extract/extracted/snapshot-dependencies/ ./
+COPY --from=extract --chown=spring:spring /extract/extracted/application/ ./
 
 # spring 유저로 전환
 USER spring:spring
@@ -45,4 +54,4 @@ ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS} \
     -XX:+HeapDumpOnOutOfMemoryError \
     -XX:HeapDumpPath=/app/logs/heapdump.hprof \
     -Duser.timezone=Asia/Seoul \
-    -jar app.jar"]
+    org.springframework.boot.loader.launch.JarLauncher"]

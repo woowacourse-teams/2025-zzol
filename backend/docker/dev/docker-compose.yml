@@ -57,8 +57,6 @@ services:
     image: mysql:8.0
     container_name: dev-mysql
     restart: unless-stopped
-    ports:
-      - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: coffee_shout
@@ -93,8 +91,6 @@ services:
     image: valkey/valkey:8.1.4-alpine
     container_name: dev-redis
     restart: unless-stopped
-    ports:
-      - "6380:6379"
     environment:
       TZ: Asia/Seoul
     volumes:
@@ -135,8 +131,6 @@ services:
         host=dev-mysql
         port=3306" > /tmp/.my.cnf
         exec /bin/mysqld_exporter --config.my-cnf=/tmp/.my.cnf
-    ports:
-      - "9104:9104"
     networks:
       - dev-network
       - zzol-network
@@ -162,8 +156,6 @@ services:
     restart: unless-stopped
     environment:
       - REDIS_ADDR=redis://dev-redis:6379
-    ports:
-      - "9121:9121"
     networks:
       - dev-network
       - zzol-network

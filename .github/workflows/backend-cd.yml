@@ -7,7 +7,6 @@ on:
       - be/prod
     paths:
       - 'backend/**'
-      - 'backend-cd.yml'
       - '.github/scripts/deploy-*.sh'
   workflow_dispatch:
     inputs:

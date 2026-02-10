@@ -57,51 +57,39 @@ main() {
     cd "$DEPLOY_DIR"
 
     # .env의 IMAGE_TAG를 롤백 대상으로 교체
-    if [[ -f ".env" ]]; then
-        sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${TARGET_TAG}/" .env
-        log_success "Updated .env IMAGE_TAG to: $TARGET_TAG"
-    else
+    if [[ ! -f ".env" ]]; then
         log_error ".env file not found in $DEPLOY_DIR"
         exit 1
     fi
+
+    if grep -q "^IMAGE_TAG=" .env; then
+        sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${TARGET_TAG}/" .env
+    else
+        echo "IMAGE_TAG=${TARGET_TAG}" >> .env
+    fi
+    log_success "Updated .env IMAGE_TAG to: $TARGET_TAG"
 
     # 이미지 pull
     log_info "Pulling rollback image..."
     if ! docker compose --env-file .env pull "$service_name"; then
         log_error "Failed to pull rollback image"
-        record_deployment "$ENVIRONMENT" "$TARGET_TAG" "unknown" "rollback-failed"
         exit 1
     fi
 
     # 서비스 재시작
     log_info "Restarting service with rollback image..."
-    docker compose --env-file .env up -d
+    docker compose --env-file .env up -d "$service_name"
 
     sleep 5
 
     # 헬스체크
-    log_info "Checking rollback health..."
-    local max_attempts=150
-    local healthy=false
-
-    for i in $(seq 1 "$max_attempts"); do
-        if docker exec "$service_name" wget --quiet --spider http://localhost:8080/actuator/health 2>/dev/null; then
-            healthy=true
-            break
-        fi
-        log_info "Rollback health check $i/$max_attempts..."
-        sleep 1
-    done
-
-    if [[ "$healthy" == "true" ]]; then
+    if wait_for_app_healthy "$service_name"; then
         log_success "Rollback successful! Service is healthy with tag: $TARGET_TAG"
-        record_deployment "$ENVIRONMENT" "$TARGET_TAG" "unknown" "rollback-success"
         exit 0
     else
         log_error "Rollback health check failed for tag: $TARGET_TAG"
         log_error "Recent application logs:"
         docker compose --env-file .env logs --tail=100 "$service_name"
-        record_deployment "$ENVIRONMENT" "$TARGET_TAG" "unknown" "rollback-failed"
         exit 1
     fi
 }

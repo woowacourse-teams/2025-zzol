@@ -13,7 +13,7 @@
 #   - check_container_running
 #   - wait_for_healthy
 #   - pull_image_with_retry
-#   - record_deployment, get_previous_image, get_history
+#   - get_previous_image
 # ============================================
 
 # ============================================
@@ -207,26 +207,39 @@ require_file() {
 }
 
 # ============================================
-# 배포 히스토리 관리
+# 애플리케이션 헬스체크 (actuator)
+# ============================================
+
+# 헬스체크 공통 설정
+APP_HEALTH_MAX_ATTEMPTS=150
+APP_HEALTH_INTERVAL=1
+
+wait_for_app_healthy() {
+    local container_name="$1"
+    local max_attempts="${2:-$APP_HEALTH_MAX_ATTEMPTS}"
+    local interval="${3:-$APP_HEALTH_INTERVAL}"
+
+    log_info "Waiting for application to be healthy (max ${max_attempts}s)..."
+
+    for i in $(seq 1 "$max_attempts"); do
+        if docker exec "$container_name" wget --quiet --spider http://localhost:8080/actuator/health 2>/dev/null; then
+            log_success "Application is healthy!"
+            return 0
+        fi
+
+        log_info "Attempt $i/$max_attempts: Application not ready yet..."
+        sleep "$interval"
+    done
+
+    log_error "Health check failed after ${max_attempts} attempts"
+    return 1
+}
+
+# ============================================
+# 배포 상태 관리
 # ============================================
 
 DEPLOY_STATE_DIR="${HOME}/.deploy"
-
-record_deployment() {
-    local env="$1"
-    local image_tag="$2"
-    local commit_sha="${3:-unknown}"
-    local status="${4:-success}"
-
-    local history_dir="${DEPLOY_STATE_DIR}/${env}"
-    mkdir -p "$history_dir"
-
-    local timestamp
-    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-
-    echo "${timestamp}|${image_tag}|${commit_sha}|${status}" >> "${history_dir}/history.log"
-    log_info "Deployment recorded: env=${env}, tag=${image_tag}, status=${status}"
-}
 
 get_previous_image() {
     local env="$1"
@@ -237,19 +250,6 @@ get_previous_image() {
         cat "$tag_file"
     else
         echo ""
-    fi
-}
-
-get_history() {
-    local env="$1"
-    local count="${2:-10}"
-
-    local history_file="${DEPLOY_STATE_DIR}/${env}/history.log"
-
-    if [[ -f "$history_file" ]]; then
-        tail -n "$count" "$history_file"
-    else
-        log_warning "No deployment history found for environment: $env"
     fi
 }
 

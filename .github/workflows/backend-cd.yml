@@ -18,6 +18,10 @@ on:
           - dev
           - prod
 
+concurrency:
+  group: backend-deploy-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   # 1. 공통 빌드/테스트 워크플로우 호출 (backend-ci.yml 재사용)
   ci-and-build:
@@ -85,16 +89,12 @@ jobs:
             core.setOutput('deployment_id', deployment.data.id);
 
       - name: Set Deployment Status (in_progress)
-        uses: actions/github-script@v7
+        uses: ./.github/actions/deployment-status
         with:
-          script: |
-            await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: ${{ steps.create_deployment.outputs.deployment_id }},
-              state: 'in_progress',
-              description: 'Deployment in progress'
-            });
+          deployment_id: ${{ steps.create_deployment.outputs.deployment_id }}
+          state: in_progress
+          status_description: Deployment in progress
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create .env file
         run: |
@@ -154,36 +154,45 @@ jobs:
             echo "=== Deployment Completed ==="
 
       - name: Set Deployment Status (success)
-        if: success()
-        uses: actions/github-script@v7
+        if: success() && steps.create_deployment.outputs.deployment_id
+        uses: ./.github/actions/deployment-status
         with:
-          script: |
-            await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: ${{ steps.create_deployment.outputs.deployment_id }},
-              state: 'success',
-              description: 'Deployment succeeded'
-            });
+          deployment_id: ${{ steps.create_deployment.outputs.deployment_id }}
+          state: success
+          status_description: Deployment succeeded
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set Deployment Status (failure)
-        if: failure()
-        uses: actions/github-script@v7
+        if: failure() && steps.create_deployment.outputs.deployment_id
+        uses: ./.github/actions/deployment-status
         with:
-          script: |
-            await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: ${{ steps.create_deployment.outputs.deployment_id }},
-              state: 'failure',
-              description: 'Deployment failed'
-            });
+          deployment_id: ${{ steps.create_deployment.outputs.deployment_id }}
+          state: failure
+          status_description: Deployment failed
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Issue on Failure
         if: failure()
         uses: actions/github-script@v7
         with:
           script: |
+            const label = 'deployment-failure';
+            try {
+              await github.rest.issues.getLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: label
+              });
+            } catch {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: label,
+                color: 'd73a4a',
+                description: 'Deployment failure alert'
+              });
+            }
+
             const title = `🚨 Deployment failed: ${context.sha.substring(0, 7)} to ${{ env.ENVIRONMENT }}`;
             const body = [
               `## Deployment Failure`,
@@ -205,17 +214,19 @@ jobs:
               repo: context.repo.repo,
               title: title,
               body: body,
-              labels: ['deployment-failure']
+              labels: [label]
             });
 
       - name: Deployment Summary
         if: always()
         run: |
-          echo "### Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image Tag:** ${{ env.IMAGE_TAG }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Deploy Directory:** ~/${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "### Deployment Summary :rocket:"
+            echo ""
+            echo "- **Environment:** ${{ env.ENVIRONMENT }}"
+            echo "- **Branch:** ${{ github.ref_name }}"
+            echo "- **Commit:** ${{ github.sha }}"
+            echo "- **Image Tag:** ${{ env.IMAGE_TAG }}"
+            echo "- **Deploy Directory:** ~/${{ env.ENVIRONMENT }}"
+            echo "- **Status:** ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"

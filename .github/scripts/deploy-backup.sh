@@ -44,9 +44,9 @@ main() {
         local current_image
         current_image=$(docker inspect "$service_name" --format='{{.Config.Image}}' 2>/dev/null || echo "")
 
-        if [[ -n "$current_image" ]]; then
+        if [[ -n "$current_image" && "$current_image" == *":"* ]]; then
             local current_tag
-            current_tag=$(echo "$current_image" | awk -F: '{print $NF}')
+            current_tag="${current_image##*:}"
             echo "$current_tag" > "${backup_dir}/previous-image-tag"
             log_success "Saved current image tag: $current_tag"
         else

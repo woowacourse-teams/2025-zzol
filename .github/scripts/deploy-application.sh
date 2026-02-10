@@ -206,16 +206,7 @@ main() {
     cd "$DEPLOY_DIR"
 
     # 롤백용 현재 이미지 태그 저장 (백업 스크립트와 독립적으로 실행)
-    local backup_dir="${DEPLOY_STATE_DIR}/${ENVIRONMENT}"
-    mkdir -p "$backup_dir"
-    if check_container_running "$SERVICE_NAME"; then
-        local current_image
-        current_image=$(docker inspect "$SERVICE_NAME" --format='{{.Config.Image}}' 2>/dev/null || echo "")
-        if [[ -n "$current_image" && "$current_image" == *":"* ]]; then
-            echo "${current_image##*:}" > "${backup_dir}/previous-image-tag"
-            log_info "Saved previous image tag: ${current_image##*:}"
-        fi
-    fi
+    save_current_image_tag "$SERVICE_NAME" "$ENVIRONMENT"
 
     # 배포 전 현재 상태 백업 (.env, docker-compose.yml)
     if [[ -x "${DEPLOY_DIR}/deploy-backup.sh" ]]; then

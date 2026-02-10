@@ -241,6 +241,30 @@ wait_for_app_healthy() {
 
 DEPLOY_STATE_DIR="${HOME}/.deploy"
 
+save_current_image_tag() {
+    local service_name="$1"
+    local env="$2"
+
+    local backup_dir="${DEPLOY_STATE_DIR}/${env}"
+    mkdir -p "$backup_dir"
+
+    if ! check_container_running "$service_name"; then
+        log_warning "No running container found for $service_name, skipping image tag backup"
+        return 0
+    fi
+
+    local current_image
+    current_image=$(docker inspect "$service_name" --format='{{.Config.Image}}' 2>/dev/null || echo "")
+
+    if [[ -n "$current_image" && "$current_image" == *":"* ]]; then
+        local current_tag="${current_image##*:}"
+        echo "$current_tag" > "${backup_dir}/previous-image-tag"
+        log_success "Saved current image tag: $current_tag"
+    else
+        log_warning "Could not retrieve image tag for $service_name"
+    fi
+}
+
 get_previous_image() {
     local env="$1"
 

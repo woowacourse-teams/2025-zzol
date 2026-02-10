@@ -183,14 +183,18 @@ jobs:
                 repo: context.repo.repo,
                 name: label
               });
-            } catch {
-              await github.rest.issues.createLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: label,
-                color: 'd73a4a',
-                description: 'Deployment failure alert'
-              });
+            } catch (error) {
+              if (error.status === 404) {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label,
+                  color: 'd73a4a',
+                  description: 'Deployment failure alert'
+                });
+              } else {
+                core.warning(`Failed to check label: ${error.message}`);
+              }
             }
 
             const title = `🚨 Deployment failed: ${context.sha.substring(0, 7)} to ${{ env.ENVIRONMENT }}`;

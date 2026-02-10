@@ -199,10 +199,33 @@ show_deployment_status() {
     docker inspect "$SERVICE_NAME" --format='{{.Config.Image}}' 2>/dev/null || log_info "Unable to retrieve image information"
 }
 
+attempt_rollback() {
+    log_step "🔄 Attempting Automatic Rollback"
+
+    if [[ -x "${DEPLOY_DIR}/deploy-rollback.sh" ]]; then
+        if "${DEPLOY_DIR}/deploy-rollback.sh" "$ENVIRONMENT" "$DEPLOY_DIR"; then
+            log_success "Automatic rollback succeeded"
+            return 0
+        else
+            log_error "Automatic rollback also failed"
+            return 1
+        fi
+    else
+        log_error "Rollback script not found or not executable: ${DEPLOY_DIR}/deploy-rollback.sh"
+        return 1
+    fi
+}
+
 main() {
     print_script_info "Deploy Application" "Deploying Spring Boot application for $ENVIRONMENT environment"
 
     cd "$DEPLOY_DIR"
+
+    # 배포 전 현재 상태 백업
+    if [[ -x "${DEPLOY_DIR}/deploy-backup.sh" ]]; then
+        log_step "📦 Backing Up Current State"
+        "${DEPLOY_DIR}/deploy-backup.sh" "$ENVIRONMENT" "$DEPLOY_DIR" || log_warning "Backup failed, continuing with deployment"
+    fi
 
     if ! verify_dependencies; then
         log_error "Dependency verification failed"
@@ -216,13 +239,26 @@ main() {
 
     if ! deploy_application; then
         log_error "Application deployment failed"
+        if ! attempt_rollback; then
+            log_error "Deployment and rollback both failed"
+        fi
         exit 1
     fi
 
     if ! health_check; then
-        log_error "Health check failed"
+        log_error "Health check failed, triggering rollback"
+        if ! attempt_rollback; then
+            log_error "Deployment and rollback both failed"
+        fi
         exit 1
     fi
+
+    # 배포 성공 시 히스토리 기록
+    local image_tag
+    image_tag=$(grep -E '^IMAGE_TAG=' "${DEPLOY_DIR}/.env" | cut -d= -f2 || echo "unknown")
+    local commit_sha
+    commit_sha=$(echo "$image_tag" | grep -oE '[a-f0-9]{7}$' || echo "unknown")
+    record_deployment "$ENVIRONMENT" "$image_tag" "$commit_sha" "success"
 
     show_deployment_status
 

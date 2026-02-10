@@ -13,6 +13,7 @@
 #   - check_container_running
 #   - wait_for_healthy
 #   - pull_image_with_retry
+#   - record_deployment, get_previous_image, get_history
 # ============================================
 
 # ============================================
@@ -203,6 +204,53 @@ require_file() {
     fi
 
     return 0
+}
+
+# ============================================
+# 배포 히스토리 관리
+# ============================================
+
+DEPLOY_STATE_DIR="${HOME}/.deploy"
+
+record_deployment() {
+    local env="$1"
+    local image_tag="$2"
+    local commit_sha="${3:-unknown}"
+    local status="${4:-success}"
+
+    local history_dir="${DEPLOY_STATE_DIR}/${env}"
+    mkdir -p "$history_dir"
+
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+
+    echo "${timestamp}|${image_tag}|${commit_sha}|${status}" >> "${history_dir}/history.log"
+    log_info "Deployment recorded: env=${env}, tag=${image_tag}, status=${status}"
+}
+
+get_previous_image() {
+    local env="$1"
+
+    local tag_file="${DEPLOY_STATE_DIR}/${env}/previous-image-tag"
+
+    if [[ -f "$tag_file" ]]; then
+        cat "$tag_file"
+    else
+        echo ""
+    fi
+}
+
+get_history() {
+    local env="$1"
+    local count="${2:-10}"
+
+    local history_file="${DEPLOY_STATE_DIR}/${env}/history.log"
+
+    if [[ -f "$history_file" ]]; then
+        tail -n "$count" "$history_file"
+    else
+        log_warning "No deployment history found for environment: $env"
+    fi
 }
 
 # ============================================

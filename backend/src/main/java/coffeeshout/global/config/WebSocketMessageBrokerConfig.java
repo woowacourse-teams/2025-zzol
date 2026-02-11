@@ -2,6 +2,7 @@ package coffeeshout.global.config;
 
 
 import coffeeshout.global.websocket.interceptor.ShutdownAwareHandshakeInterceptor;
+import coffeeshout.global.websocket.interceptor.StompPrincipalInterceptor;
 import coffeeshout.global.websocket.interceptor.WebSocketInboundMetricInterceptor;
 import coffeeshout.global.websocket.interceptor.WebSocketOutboundMetricInterceptor;
 import io.micrometer.context.ContextSnapshot;
@@ -23,6 +24,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfigurer {
 
+    private final StompPrincipalInterceptor stompPrincipalInterceptor;
     private final WebSocketInboundMetricInterceptor webSocketInboundMetricInterceptor;
     private final WebSocketOutboundMetricInterceptor webSocketOutboundMetricInterceptor;
     private final ShutdownAwareHandshakeInterceptor shutdownAwareHandshakeInterceptor;
@@ -53,7 +55,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(webSocketInboundMetricInterceptor)
+        registration.interceptors(stompPrincipalInterceptor, webSocketInboundMetricInterceptor)
                 .taskExecutor()
                 .corePoolSize(32)
                 .maxPoolSize(32)

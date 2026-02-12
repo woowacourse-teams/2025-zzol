@@ -74,13 +74,17 @@ jobs:
         with:
           java-version: '21'
           distribution: 'corretto'
-          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/be/dev' && github.ref != 'refs/heads/be/prod' }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Run Tests
-        run: ./gradlew test --no-daemon
+        run: ./gradlew test --build-cache --no-daemon
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -91,7 +95,7 @@ jobs:
 
       - name: Build JAR
         if: github.event_name != 'pull_request'
-        run: ./gradlew bootJar --no-daemon
+        run: ./gradlew bootJar --build-cache --no-daemon
 
       - name: Upload Build Artifacts
         if: github.event_name != 'pull_request'

@@ -74,16 +74,20 @@ jobs:
         with:
           java-version: '21'
           distribution: 'corretto'
-          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/be/dev' && github.ref != 'refs/heads/be/prod' }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Compile Check
-        run: ./gradlew compileJava compileTestJava
+        run: ./gradlew compileJava compileTestJava --build-cache
 
       - name: Run Tests
-        run: ./gradlew test
+        run: ./gradlew test --build-cache
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -93,7 +97,7 @@ jobs:
           check_name: "Backend Test Results"
 
       - name: Build JAR
-        run: ./gradlew bootJar
+        run: ./gradlew bootJar --build-cache
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4

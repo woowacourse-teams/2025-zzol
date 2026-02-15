@@ -125,7 +125,7 @@ public class GameRecoveryService {
                     String.valueOf(dedupTtlSeconds)
             );
 
-            log.debug("복구 메시지 저장: joinCode={}, streamId={}, messageId={}", joinCode, streamId, messageId);
+            log.info("복구 메시지 저장: joinCode={}, streamId={}, messageId={}", joinCode, streamId, messageId);
 
             return streamId;
 

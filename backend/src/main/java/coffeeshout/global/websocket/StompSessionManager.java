@@ -33,7 +33,9 @@ public class StompSessionManager {
     }
 
     public void registerPlayerSession(@NonNull String playerKey, @NonNull String sessionId) {
-        PlayerKey.parse(playerKey); // 유효성 검증
+        if (!PlayerKey.isValid(playerKey)) {
+            throw new IllegalArgumentException("잘못된 플레이어 키 형식: " + playerKey);
+        }
         upsertSessionMapping(playerKey, sessionId);
     }
 
@@ -113,7 +115,7 @@ public class StompSessionManager {
      * 특정 방의 연결된 플레이어 수 조회
      */
     public long getConnectedPlayerCountByJoinCode(@NonNull String joinCode) {
-        final String prefix = joinCode + ":";
+        final String prefix = PlayerKey.prefix(joinCode);
         return playerSessionMap.keySet().stream()
                 .filter(playerKey -> playerKey.startsWith(prefix))
                 .count();

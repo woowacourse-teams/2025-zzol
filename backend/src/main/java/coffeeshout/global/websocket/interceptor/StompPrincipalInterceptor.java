@@ -25,12 +25,14 @@ public class StompPrincipalInterceptor implements ChannelInterceptor {
         String joinCode = accessor.getFirstNativeHeader("joinCode");
         String playerName = accessor.getFirstNativeHeader("playerName");
 
+        String userName;
         if (joinCode == null || playerName == null) {
-            log.warn("STOMP CONNECT 헤더 누락: joinCode={}, playerName={}", joinCode, playerName);
-            return message;
+            log.warn("STOMP CONNECT 헤더 누락으로 sessionId를 Principal로 사용: sessionId={}", accessor.getSessionId());
+            userName = accessor.getSessionId();
+        } else {
+            userName = PlayerKey.of(joinCode, playerName).toString();
         }
 
-        String userName = PlayerKey.of(joinCode, playerName).toString();
         accessor.setUser(() -> userName);
         log.debug("STOMP Principal 설정: {}", userName);
 

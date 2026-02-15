@@ -33,6 +33,10 @@ public record PlayerKey(@NonNull String joinCode, @NonNull String playerName) {
         return new PlayerKey(parts[0], parts[1]);
     }
 
+    public static String prefix(@NonNull String joinCode) {
+        return joinCode + DELIMITER;
+    }
+
     public static boolean isValid(String playerKey) {
         if (playerKey == null || !playerKey.contains(DELIMITER)) {
             return false;

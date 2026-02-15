@@ -49,6 +49,13 @@ public class OracleObjectStorageService implements StorageService {
         this.storageKeyPrefix = qrProperties.storageKeyPrefix();
     }
 
+    /**
+     * QR 코드 이미지를 Oracle Object Storage에 업로드합니다.
+     * 
+     * 서킷 브레이커와 리트라이가 적용되어 있으며, 원본 예외를 그대로 던져서
+     * Resilience4j가 예외 타입을 정확히 판단할 수 있도록 합니다.
+     * 모든 예외 래핑은 fallback 메서드에서 처리합니다.
+     */
     @Override
     @CircuitBreaker(name = "oracleStorage", fallbackMethod = "uploadFallback")
     @Retry(name = "oracleStorage")
@@ -57,15 +64,7 @@ public class OracleObjectStorageService implements StorageService {
             throw new StorageServiceException(RoomErrorCode.QR_CODE_UPLOAD_FAILED, "QR 이미지 바이트가 비어 있습니다.");
         }
 
-        try {
-            return uploadQrCodeToObjectStorage(contents, data);
-        } catch (Exception e) {
-            meterRegistry.counter("oracle.objectstorage.qr.upload.failed",
-                    "error", e.getClass().getSimpleName()).increment();
-            log.error("Oracle Object Storage QR 코드 업로드 실패: contents={}, error={}", contents, e.getMessage(), e);
-            throw new StorageServiceException(RoomErrorCode.QR_CODE_UPLOAD_FAILED,
-                    RoomErrorCode.QR_CODE_UPLOAD_FAILED.getMessage(), e);
-        }
+        return doUpload(contents, data);
     }
 
     @Override
@@ -82,10 +81,11 @@ public class OracleObjectStorageService implements StorageService {
     }
 
     /**
-     * 서킷 브레이커 OPEN 시 또는 모든 재시도 실패 시 호출되는 폴백 메서드
+     * 서킷 브레이커 OPEN 시 또는 모든 재시도 실패 시 호출되는 폴백 메서드.
+     * 여기서 예외를 StorageServiceException으로 래핑합니다.
      */
     private String uploadFallback(String contents, byte[] data, Exception e) {
-        meterRegistry.counter("oracle.objectstorage.circuitbreaker.fallback",
+        meterRegistry.counter("oracle.objectstorage.qr.upload.failed",
                 "error", e.getClass().getSimpleName()).increment();
 
         if (e instanceof CallNotPermittedException) {
@@ -94,31 +94,40 @@ public class OracleObjectStorageService implements StorageService {
                     "스토리지 서비스가 일시적으로 사용 불가능합니다. 잠시 후 다시 시도해주세요.");
         }
 
-        log.warn("Oracle Storage 업로드 폴백 처리: contents={}, error={}", contents, e.getMessage());
+        log.error("Oracle Object Storage QR 코드 업로드 실패: contents={}, error={}", contents, e.getMessage(), e);
         throw new StorageServiceException(RoomErrorCode.QR_CODE_UPLOAD_FAILED,
                 "QR 코드 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.", e);
     }
 
-    private String uploadQrCodeToObjectStorage(String contents, byte[] qrCodeImage) throws Exception {
-        return uploadTimer.recordCallable(() -> {
-            final String objectName = storageKeyPrefix + "/" + contents + ".png";
+    /**
+     * 실제 업로드 로직. 예외를 래핑하지 않고 그대로 던집니다.
+     */
+    private String doUpload(String contents, byte[] qrCodeImage) {
+        try {
+            return uploadTimer.recordCallable(() -> {
+                final String objectName = storageKeyPrefix + "/" + contents + ".png";
 
-            final PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .namespaceName(namespaceName)
-                    .bucketName(bucketName)
-                    .objectName(objectName)
-                    .contentType("image/png")
-                    .contentLength((long) qrCodeImage.length)
-                    .putObjectBody(new ByteArrayInputStream(qrCodeImage))
-                    .build();
+                final PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                        .namespaceName(namespaceName)
+                        .bucketName(bucketName)
+                        .objectName(objectName)
+                        .contentType("image/png")
+                        .contentLength((long) qrCodeImage.length)
+                        .putObjectBody(new ByteArrayInputStream(qrCodeImage))
+                        .build();
 
-            final PutObjectResponse response = objectStorage.putObject(putObjectRequest);
-            log.info("QR 코드 Oracle Object Storage 업로드 완료: contents={}, objectName={}, etag={}",
-                    contents, objectName, response.getETag());
+                final PutObjectResponse response = objectStorage.putObject(putObjectRequest);
+                log.info("QR 코드 Oracle Object Storage 업로드 완료: contents={}, objectName={}, etag={}",
+                        contents, objectName, response.getETag());
 
-            meterRegistry.counter("oracle.objectstorage.upload.success").increment();
-            return objectName;
-        });
+                meterRegistry.counter("oracle.objectstorage.upload.success").increment();
+                return objectName;
+            });
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String generatePublicUrl(String objectName) {

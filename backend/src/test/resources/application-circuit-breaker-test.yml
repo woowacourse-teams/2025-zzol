@@ -17,13 +17,13 @@ management:
     tracing:
       endpoint: http://localhost:4318/v1/traces
 
+# 운영 설정과 동일하게 맞춤
 resilience4j:
   circuitbreaker:
     instances:
       oracleStorage:
         slidingWindowType: COUNT_BASED
         slidingWindowSize: 10
-        minimumNumberOfCalls: 10
         failureRateThreshold: 50
         waitDurationInOpenState: 30s
         permittedNumberOfCallsInHalfOpenState: 3
@@ -36,11 +36,10 @@ resilience4j:
     instances:
       oracleStorage:
         maxAttempts: 3
-        waitDuration: 100ms
+        waitDuration: 500ms
         retryExceptions:
           - java.io.IOException
           - com.oracle.bmc.model.BmcException
-          - java.lang.RuntimeException
 
 redis:
   stream:

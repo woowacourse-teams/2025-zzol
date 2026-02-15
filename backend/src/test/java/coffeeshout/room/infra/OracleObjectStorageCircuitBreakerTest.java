@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import coffeeshout.global.config.properties.OracleObjectStorageProperties;
 import coffeeshout.global.config.properties.QrProperties;
-import coffeeshout.global.exception.custom.StorageServiceException;
+import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
 import com.oracle.bmc.objectstorage.responses.PutObjectResponse;
@@ -20,6 +20,7 @@ import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * Oracle Object Storage 서킷 브레이커 및 리트라이 테스트.
+ * 
+ * 운영 설정(application.yml)과 동일한 설정값을 사용하여 실제 동작을 검증합니다.
+ * - slidingWindowSize: 10
+ * - minimumNumberOfCalls: 10 (운영 기본값)
+ * - failureRateThreshold: 50%
+ * - maxAttempts: 3
+ * - retryExceptions: IOException, BmcException
+ */
 @ExtendWith(MockitoExtension.class)
 class OracleObjectStorageCircuitBreakerTest {
 
@@ -64,24 +75,25 @@ class OracleObjectStorageCircuitBreakerTest {
                 new SimpleMeterRegistry()
         );
 
-        // 서킷 브레이커 설정
+        // 서킷 브레이커 설정 (운영 설정과 동일)
         CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
                 .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
                 .slidingWindowSize(10)
-                .minimumNumberOfCalls(5)
+                .minimumNumberOfCalls(10)
                 .failureRateThreshold(50)
                 .waitDurationInOpenState(Duration.ofSeconds(30))
                 .permittedNumberOfCallsInHalfOpenState(3)
+                .recordExceptions(IOException.class, BmcException.class, RuntimeException.class)
                 .build();
 
         CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(circuitBreakerConfig);
         circuitBreaker = circuitBreakerRegistry.circuitBreaker("oracleStorage");
 
-        // 리트라이 설정
+        // 리트라이 설정 (운영 설정과 동일)
         RetryConfig retryConfig = RetryConfig.custom()
                 .maxAttempts(3)
                 .waitDuration(Duration.ofMillis(100))
-                .retryExceptions(RuntimeException.class)
+                .retryExceptions(IOException.class, BmcException.class)
                 .build();
 
         RetryRegistry retryRegistry = RetryRegistry.of(retryConfig);
@@ -110,17 +122,17 @@ class OracleObjectStorageCircuitBreakerTest {
     @Test
     @DisplayName("실패율이 임계치를 넘으면 서킷이 OPEN 상태가 된다")
     void 실패율_초과시_서킷_OPEN() {
-        // given
+        // given - BmcException은 운영에서 실제로 발생하는 예외 타입
         when(objectStorage.putObject(any(PutObjectRequest.class)))
-                .thenThrow(new RuntimeException("Storage unavailable"));
+                .thenThrow(new BmcException(500, "ServiceCode", "Storage unavailable", "requestId"));
 
         Supplier<String> decoratedSupplier = CircuitBreaker.decorateSupplier(
                 circuitBreaker,
                 () -> storageService.upload("test", "data".getBytes())
         );
 
-        // when - minimumNumberOfCalls(5)의 50% 이상 실패해야 OPEN
-        for (int i = 0; i < 5; i++) {
+        // when - minimumNumberOfCalls(10)의 50% 이상 실패해야 OPEN
+        for (int i = 0; i < 10; i++) {
             try {
                 decoratedSupplier.get();
             } catch (Exception ignored) {
@@ -151,12 +163,12 @@ class OracleObjectStorageCircuitBreakerTest {
     }
 
     @Test
-    @DisplayName("일시적 실패 시 리트라이가 동작한다")
-    void 일시적_실패시_리트라이() {
+    @DisplayName("BmcException 발생 시 리트라이가 동작한다")
+    void BmcException_발생시_리트라이() {
         // given - 2번 실패 후 성공
         when(objectStorage.putObject(any(PutObjectRequest.class)))
-                .thenThrow(new RuntimeException("Temporary failure"))
-                .thenThrow(new RuntimeException("Temporary failure"))
+                .thenThrow(new BmcException(500, "ServiceCode", "Temporary failure", "requestId"))
+                .thenThrow(new BmcException(500, "ServiceCode", "Temporary failure", "requestId"))
                 .thenReturn(putObjectResponse);
         when(putObjectResponse.getETag()).thenReturn("test-etag");
 
@@ -178,16 +190,16 @@ class OracleObjectStorageCircuitBreakerTest {
     void 리트라이_초과시_예외() {
         // given - 계속 실패
         when(objectStorage.putObject(any(PutObjectRequest.class)))
-                .thenThrow(new RuntimeException("Persistent failure"));
+                .thenThrow(new BmcException(500, "ServiceCode", "Persistent failure", "requestId"));
 
         Supplier<String> decoratedSupplier = Retry.decorateSupplier(
                 retry,
                 () -> storageService.upload("test", "data".getBytes())
         );
 
-        // when & then
+        // when & then - BmcException이 그대로 던져짐 (fallback은 어노테이션 기반에서만 동작)
         assertThatThrownBy(decoratedSupplier::get)
-                .isInstanceOf(StorageServiceException.class);
+                .isInstanceOf(BmcException.class);
 
         // maxAttempts(3)만큼 호출됨
         verify(objectStorage, times(3)).putObject(any(PutObjectRequest.class));
@@ -198,8 +210,8 @@ class OracleObjectStorageCircuitBreakerTest {
     void 서킷브레이커_리트라이_조합() {
         // given - 2번 실패 후 성공
         when(objectStorage.putObject(any(PutObjectRequest.class)))
-                .thenThrow(new RuntimeException("Temporary failure"))
-                .thenThrow(new RuntimeException("Temporary failure"))
+                .thenThrow(new BmcException(500, "ServiceCode", "Temporary failure", "requestId"))
+                .thenThrow(new BmcException(500, "ServiceCode", "Temporary failure", "requestId"))
                 .thenReturn(putObjectResponse);
         when(putObjectResponse.getETag()).thenReturn("test-etag");
 
@@ -219,5 +231,25 @@ class OracleObjectStorageCircuitBreakerTest {
         assertThat(result).isEqualTo("qr-code/test.png");
         assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
         verify(objectStorage, times(3)).putObject(any(PutObjectRequest.class));
+    }
+
+    @Test
+    @DisplayName("retryExceptions에 없는 예외는 리트라이하지 않는다")
+    void retryExceptions에_없는_예외는_리트라이_안함() {
+        // given - IllegalArgumentException은 retryExceptions에 없음
+        when(objectStorage.putObject(any(PutObjectRequest.class)))
+                .thenThrow(new IllegalArgumentException("Invalid argument"));
+
+        Supplier<String> decoratedSupplier = Retry.decorateSupplier(
+                retry,
+                () -> storageService.upload("test", "data".getBytes())
+        );
+
+        // when & then - 리트라이 없이 바로 예외 발생
+        assertThatThrownBy(decoratedSupplier::get)
+                .isInstanceOf(IllegalArgumentException.class);
+
+        // 1번만 호출됨 (리트라이 안 함)
+        verify(objectStorage, times(1)).putObject(any(PutObjectRequest.class));
     }
 }

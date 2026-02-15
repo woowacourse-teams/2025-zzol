@@ -42,6 +42,7 @@ resilience4j:
         retryExceptions:
           - java.io.IOException
           - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
 
 redis:
   stream:

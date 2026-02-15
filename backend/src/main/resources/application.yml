@@ -135,6 +135,7 @@ resilience4j:
         retryExceptions:
           - java.io.IOException
           - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
 
 websocket:
   recovery:

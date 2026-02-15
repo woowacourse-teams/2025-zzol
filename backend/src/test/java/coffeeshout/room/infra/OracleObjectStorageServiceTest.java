@@ -127,7 +127,7 @@ class OracleObjectStorageServiceTest {
     }
 
     @Test
-    void 업로드_실패_시_StorageServiceException을_던지고_실패_메트릭을_기록한다() {
+    void 업로드_실패_시_RuntimeException을_던진다() {
         // given
         String contents = "FAIL123";
         byte[] qrCodeImage = "mock data".getBytes();
@@ -136,16 +136,11 @@ class OracleObjectStorageServiceTest {
                 .thenThrow(new RuntimeException("Upload failed"));
 
         // when & then
+        // 서킷 브레이커 적용 후 원본 예외를 그대로 던지도록 변경됨
+        // fallback에서 StorageServiceException으로 래핑하지만, 단위 테스트에서는 어노테이션이 동작하지 않음
         assertThatThrownBy(() -> oracleObjectStorageService.upload(contents, qrCodeImage))
-                .isInstanceOf(StorageServiceException.class)
-                .hasMessageContaining(RoomErrorCode.QR_CODE_UPLOAD_FAILED.getMessage());
-
-        // 실패 메트릭 검증
-        Counter uploadFailedCounter = meterRegistry.find("oracle.objectstorage.qr.upload.failed")
-                .tag("error", "RuntimeException")
-                .counter();
-        assertThat(uploadFailedCounter).isNotNull();
-        assertThat(uploadFailedCounter.count()).isEqualTo(1.0);
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Upload failed");
     }
 
     @Test

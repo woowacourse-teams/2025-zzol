@@ -36,10 +36,19 @@
         </rollingPolicy>
     </appender>
 
-    <root level="${LOG_LEVEL}">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
-    </root>
+    <!-- local 프로파일: 콘솔만 -->
+    <springProfile name="local">
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- local 외 프로파일: 콘솔 + 파일 -->
+    <springProfile name="!local">
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
 
 </configuration>
-

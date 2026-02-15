@@ -36,7 +36,7 @@ services:
       prod-redis:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -62,8 +62,6 @@ services:
     image: mysql:8.0
     container_name: prod-mysql
     restart: unless-stopped
-    ports:
-      - "3308:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: coffee_shout
@@ -106,8 +104,6 @@ services:
     image: valkey/valkey:8.1.4-alpine
     container_name: prod-redis
     restart: unless-stopped
-    ports:
-      - "6381:6379"
     environment:
       TZ: Asia/Seoul
     volumes:
@@ -153,8 +149,6 @@ services:
         host=prod-mysql
         port=3306" > /tmp/.my.cnf
         exec /bin/mysqld_exporter --config.my-cnf=/tmp/.my.cnf
-    ports:
-      - "9105:9104"
     networks:
       - prod-network
       - zzol-network
@@ -180,8 +174,6 @@ services:
     restart: unless-stopped
     environment:
       - REDIS_ADDR=redis://prod-redis:6379
-    ports:
-      - "9122:9121"
     networks:
       - prod-network
       - zzol-network

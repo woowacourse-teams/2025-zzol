@@ -86,7 +86,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: "health,info,metrics,prometheus,tracing"
+        include: "health,info,metrics,prometheus,tracing,circuitbreakers,retries"
   tracing:
     enabled: true
     sampling:
@@ -110,6 +110,29 @@ server:
       min-spare: 30
     max-connections: 700
     accept-count: 300
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      oracleStorage:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - java.io.IOException
+          - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
+  retry:
+    instances:
+      oracleStorage:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - java.io.IOException
+          - com.oracle.bmc.model.BmcException
 
 websocket:
   recovery:

@@ -8,7 +8,7 @@
 FROM eclipse-temurin:21-jre-alpine AS extract
 WORKDIR /extract
 COPY *.jar app.jar
-RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
+RUN java -Djarmode=tools -jar app.jar extract --layers --launcher --destination extracted
 
 # Stage 2: 최종 이미지
 FROM eclipse-temurin:21-jre-alpine

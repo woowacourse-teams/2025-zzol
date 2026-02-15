@@ -113,6 +113,7 @@ server:
 
 resilience4j:
   circuitbreaker:
+    circuit-breaker-aspect-order: 1
     instances:
       oracleStorage:
         slidingWindowType: COUNT_BASED
@@ -126,6 +127,7 @@ resilience4j:
           - com.oracle.bmc.model.BmcException
           - java.lang.RuntimeException
   retry:
+    retry-aspect-order: 2
     instances:
       oracleStorage:
         maxAttempts: 3

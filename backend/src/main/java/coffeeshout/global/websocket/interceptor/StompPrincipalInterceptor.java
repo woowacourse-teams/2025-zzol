@@ -1,5 +1,6 @@
 package coffeeshout.global.websocket.interceptor;
 
+import coffeeshout.global.websocket.PlayerKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -24,11 +25,14 @@ public class StompPrincipalInterceptor implements ChannelInterceptor {
         String joinCode = accessor.getFirstNativeHeader("joinCode");
         String playerName = accessor.getFirstNativeHeader("playerName");
 
-        if (joinCode != null && playerName != null) {
-            String userName = joinCode + ":" + playerName;
-            accessor.setUser(() -> userName);
-            log.debug("STOMP Principal 설정: {}", userName);
+        if (joinCode == null || playerName == null) {
+            log.warn("STOMP CONNECT 헤더 누락: joinCode={}, playerName={}", joinCode, playerName);
+            return message;
         }
+
+        String userName = PlayerKey.of(joinCode, playerName).toString();
+        accessor.setUser(() -> userName);
+        log.debug("STOMP Principal 설정: {}", userName);
 
         return message;
     }

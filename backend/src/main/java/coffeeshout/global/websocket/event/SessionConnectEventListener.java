@@ -4,6 +4,7 @@ import coffeeshout.global.metric.WebSocketMetricService;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.global.websocket.PlayerKey;
 import coffeeshout.global.websocket.StompSessionManager;
 import coffeeshout.global.websocket.event.session.SessionRegisteredEvent;
 import coffeeshout.room.domain.JoinCode;
@@ -83,7 +84,7 @@ public class SessionConnectEventListener {
     }
 
     private void publishSessionRegisteredEvent(String sessionId, String joinCode, String playerName) {
-        final String playerKey = sessionManager.createPlayerKey(joinCode, playerName);
+        final String playerKey = PlayerKey.of(joinCode, playerName).toString();
         final BaseEvent event = SessionRegisteredEvent.create(playerKey, sessionId);
         streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
 

@@ -19,7 +19,7 @@ public class WebSocketExceptionHandler {
     @MessageExceptionHandler(CoffeeShoutException.class)
     public void handleBusinessException(
             CoffeeShoutException e,
-            @Header("simpUser") Principal user,
+            @Header(value = "simpUser", required = false) Principal user,
             @Header("simpDestination") String destination
     ) {
         log.warn("WebSocket BusinessException: destination={}, errorCode={}, message={}",

@@ -12,9 +12,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class StompSessionManager {
 
-    private static final String PLAYER_KEY_DELIMITER = ":";
-    private static final int EXPECTED_PLAYER_KEY_PARTS = 2;
-
     // 중복 처리 방지용
     private final Set<String> processedDisconnections = ConcurrentHashMap.newKeySet();
 
@@ -31,12 +28,14 @@ public class StompSessionManager {
      * 플레이어 세션 매핑 등록
      */
     public void registerPlayerSession(@NonNull String joinCode, @NonNull String playerName, @NonNull String sessionId) {
-        final String playerKey = createPlayerKey(joinCode, playerName);
+        final String playerKey = PlayerKey.of(joinCode, playerName).toString();
         upsertSessionMapping(playerKey, sessionId);
     }
 
     public void registerPlayerSession(@NonNull String playerKey, @NonNull String sessionId) {
-        validatePlayerKey(playerKey);
+        if (!PlayerKey.isValid(playerKey)) {
+            throw new IllegalArgumentException("잘못된 플레이어 키 형식: " + playerKey);
+        }
         upsertSessionMapping(playerKey, sessionId);
     }
 
@@ -57,7 +56,7 @@ public class StompSessionManager {
      * 플레이어의 기존 세션 ID 조회
      */
     public boolean hasSessionId(@NonNull String joinCode, @NonNull String playerName) {
-        final String playerKey = createPlayerKey(joinCode, playerName);
+        final String playerKey = PlayerKey.of(joinCode, playerName).toString();
         return playerSessionMap.containsKey(playerKey);
     }
 
@@ -69,7 +68,7 @@ public class StompSessionManager {
     }
 
     public String getSessionId(@NonNull String joinCode, @NonNull String playerName) {
-        final String playerKey = createPlayerKey(joinCode, playerName);
+        final String playerKey = PlayerKey.of(joinCode, playerName).toString();
 
         isTrue(playerSessionMap.containsKey(playerKey),
                 "플레이어 세션이 존재하지 않습니다: joinCode=%s, playerName=%s".formatted(joinCode, playerName));
@@ -89,24 +88,6 @@ public class StompSessionManager {
                 "세션 ID가 존재하지 않습니다: sessionId=%s".formatted(sessionId));
 
         return sessionPlayerMap.get(sessionId);
-    }
-
-    /**
-     * 플레이어 키에서 조인 코드 추출
-     */
-    public String extractJoinCode(@NonNull String playerKey) {
-        validatePlayerKey(playerKey);
-        final String[] parts = playerKey.split(PLAYER_KEY_DELIMITER);
-        return parts[0];
-    }
-
-    /**
-     * 플레이어 키에서 플레이어 이름 추출
-     */
-    public String extractPlayerName(@NonNull String playerKey) {
-        validatePlayerKey(playerKey);
-        final String[] parts = playerKey.split(PLAYER_KEY_DELIMITER);
-        return parts[1];
     }
 
     /**
@@ -134,8 +115,9 @@ public class StompSessionManager {
      * 특정 방의 연결된 플레이어 수 조회
      */
     public long getConnectedPlayerCountByJoinCode(@NonNull String joinCode) {
+        final String prefix = PlayerKey.prefix(joinCode);
         return playerSessionMap.keySet().stream()
-                .filter(playerKey -> playerKey.startsWith(joinCode + PLAYER_KEY_DELIMITER))
+                .filter(playerKey -> playerKey.startsWith(prefix))
                 .count();
     }
 
@@ -144,44 +126,5 @@ public class StompSessionManager {
      */
     public int getTotalConnectedClientCount() {
         return sessionPlayerMap.size();
-    }
-
-    /**
-     * 플레이어 키 생성 (public 메서드)
-     */
-    public String createPlayerKey(@NonNull String joinCode, @NonNull String playerName) {
-        if (joinCode.contains(PLAYER_KEY_DELIMITER) || playerName.contains(PLAYER_KEY_DELIMITER)) {
-            throw new IllegalArgumentException("joinCode와 playerName에 구분자('" + PLAYER_KEY_DELIMITER + "')가 포함될 수 없습니다");
-        }
-        return joinCode + PLAYER_KEY_DELIMITER + playerName;
-    }
-
-    /**
-     * 플레이어 키 유효성 검증
-     */
-    public boolean isValidPlayerKey(String playerKey) {
-        if (playerKey == null || !playerKey.contains(PLAYER_KEY_DELIMITER)) {
-            return false;
-        }
-        final String[] parts = playerKey.split(PLAYER_KEY_DELIMITER);
-        return parts.length == EXPECTED_PLAYER_KEY_PARTS &&
-                !parts[0].isEmpty() && !parts[1].isEmpty();
-    }
-
-    /**
-     * 플레이어 키 유효성 검증 및 예외 발생
-     */
-    private void validatePlayerKey(@NonNull String playerKey) {
-        if (!playerKey.contains(PLAYER_KEY_DELIMITER)) {
-            throw new IllegalArgumentException("플레이어 키에 구분자('" + PLAYER_KEY_DELIMITER + "')가 없습니다: " + playerKey);
-        }
-        final String[] parts = playerKey.split(PLAYER_KEY_DELIMITER);
-        if (parts.length != EXPECTED_PLAYER_KEY_PARTS) {
-            throw new IllegalArgumentException(
-                    "플레이어 키 형식이 잘못되었습니다. 예상: joinCode" + PLAYER_KEY_DELIMITER + "playerName, 실제: " + playerKey);
-        }
-        if (parts[0].isEmpty() || parts[1].isEmpty()) {
-            throw new IllegalArgumentException("joinCode 또는 playerName이 비어있습니다: " + playerKey);
-        }
     }
 }

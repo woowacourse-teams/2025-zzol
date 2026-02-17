@@ -30,6 +30,7 @@ import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;
@@ -62,6 +63,11 @@ public abstract class WebSocketIntegrationTestSupport {
     }
 
     protected TestStompSession createSession() throws InterruptedException, ExecutionException, TimeoutException {
+        return createSession(null, null);
+    }
+
+    protected TestStompSession createSession(String joinCode, String playerName)
+            throws InterruptedException, ExecutionException, TimeoutException {
         SockJsClient sockJsClient = new SockJsClient(List.of(
                 new WebSocketTransport(new StandardWebSocketClient())
         ));
@@ -71,9 +77,16 @@ public abstract class WebSocketIntegrationTestSupport {
         messageConverter.setStrictContentTypeMatch(false);
         stompClient.setMessageConverter(messageConverter);
         String url = String.format(WEBSOCKET_BASE_URL_FORMAT, port);
+
+        StompHeaders connectHeaders = new StompHeaders();
+        if (joinCode != null && playerName != null) {
+            connectHeaders.add("joinCode", joinCode);
+            connectHeaders.add("playerName", playerName);
+        }
+
         StompSession session = stompClient
                 .connectAsync(
-                        url, new StompSessionHandlerAdapter() {
+                        url, new WebSocketHttpHeaders(), connectHeaders, new StompSessionHandlerAdapter() {
 
                             @Override
                             public void handleTransportError(StompSession session, Throwable exception) {
@@ -122,9 +135,7 @@ public abstract class WebSocketIntegrationTestSupport {
     }
 
     protected void assertMessageContains(MessageResponse response, String expected) {
-        SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(response.payload()).contains(expected);
-        });
+        SoftAssertions.assertSoftly(softly -> softly.assertThat(response.payload()).contains(expected));
     }
 
     protected void assertMessage(MessageResponse response, long duration, String payload) throws JSONException {

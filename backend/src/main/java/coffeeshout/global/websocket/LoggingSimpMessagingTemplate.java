@@ -46,15 +46,15 @@ public class LoggingSimpMessagingTemplate {
     }
 
     @Observed(name = "websocket.send.toUser")
-    public void convertAndSendToUser(String sessionId, String destination, Object payload) {
+    public void convertAndSendToUser(String userName, String destination, Object payload) {
         // 개인 메시지는 복구 대상 제외
-        messagingTemplate.convertAndSendToUser(sessionId, destination, payload);
+        messagingTemplate.convertAndSendToUser(userName, destination, payload);
     }
 
     @Observed(name = "websocket.send.error")
-    public void convertAndSendError(String sessionId, String errorMessage) {
+    public void convertAndSendError(String userName, String errorMessage) {
         // 에러 메시지는 복구 대상 제외
-        messagingTemplate.convertAndSendToUser(sessionId, "/queue/errors", WebSocketResponse.error(errorMessage));
+        messagingTemplate.convertAndSendToUser(userName, "/queue/errors", WebSocketResponse.error(errorMessage));
     }
 
     /**

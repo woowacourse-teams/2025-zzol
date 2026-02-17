@@ -154,30 +154,14 @@ deploy_application() {
 health_check() {
     log_step "🏥 Application Health Check"
 
-    local max_attempts=150
-    local interval=1
+    if ! wait_for_app_healthy "$SERVICE_NAME"; then
+        echo ""
+        log_error "Recent application logs:"
+        docker compose --env-file .env logs --tail=100 "$SERVICE_NAME"
+        return 1
+    fi
 
-    log_info "Waiting for application to be healthy (max ${max_attempts}s)..."
-
-    for i in $(seq 1 "$max_attempts"); do
-        # /actuator/health 엔드포인트 체크 (curl -f: HTTP 오류 시 실패)
-        if docker exec "$SERVICE_NAME" curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
-            log_success "Application is healthy!"
-            return 0
-        fi
-
-        log_info "Attempt $i/$max_attempts: Application not ready yet..."
-        sleep "$interval"
-    done
-
-    log_error "Health check failed after ${max_attempts} attempts"
-
-    # 실패 시 로그 출력
-    echo ""
-    log_error "Recent application logs:"
-    docker compose --env-file .env logs --tail=100 "$SERVICE_NAME"
-
-    return 1
+    return 0
 }
 
 show_deployment_status() {
@@ -199,10 +183,36 @@ show_deployment_status() {
     docker inspect "$SERVICE_NAME" --format='{{.Config.Image}}' 2>/dev/null || log_info "Unable to retrieve image information"
 }
 
+attempt_rollback() {
+    log_step "🔄 Attempting Automatic Rollback"
+
+    if [[ -x "${DEPLOY_DIR}/deploy-rollback.sh" ]]; then
+        if "${DEPLOY_DIR}/deploy-rollback.sh" "$ENVIRONMENT" "$DEPLOY_DIR"; then
+            log_success "Automatic rollback succeeded"
+            return 0
+        else
+            log_error "Automatic rollback also failed"
+            return 1
+        fi
+    else
+        log_error "Rollback script not found or not executable: ${DEPLOY_DIR}/deploy-rollback.sh"
+        return 1
+    fi
+}
+
 main() {
     print_script_info "Deploy Application" "Deploying Spring Boot application for $ENVIRONMENT environment"
 
     cd "$DEPLOY_DIR"
+
+    # 롤백용 현재 이미지 태그 저장 (백업 스크립트와 독립적으로 실행)
+    save_current_image_tag "$SERVICE_NAME" "$ENVIRONMENT"
+
+    # 배포 전 현재 상태 백업 (.env, docker-compose.yml)
+    if [[ -x "${DEPLOY_DIR}/deploy-backup.sh" ]]; then
+        log_step "📦 Backing Up Current State"
+        "${DEPLOY_DIR}/deploy-backup.sh" "$ENVIRONMENT" "$DEPLOY_DIR" || log_warning "Backup failed, continuing with deployment"
+    fi
 
     if ! verify_dependencies; then
         log_error "Dependency verification failed"
@@ -216,11 +226,17 @@ main() {
 
     if ! deploy_application; then
         log_error "Application deployment failed"
+        if ! attempt_rollback; then
+            log_error "Deployment and rollback both failed"
+        fi
         exit 1
     fi
 
     if ! health_check; then
-        log_error "Health check failed"
+        log_error "Health check failed, triggering rollback"
+        if ! attempt_rollback; then
+            log_error "Deployment and rollback both failed"
+        fi
         exit 1
     fi
 

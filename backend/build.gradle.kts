@@ -13,6 +13,10 @@ java {
     }
 }
 
+tasks.jar {
+    enabled = false
+}
+
 configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
@@ -31,6 +35,7 @@ val queryDslVersion = "5.0.0"
 val websocketDocsVersion = "1.0.7"
 val testcontainersVersion = "2.0.2"
 val reflectionsVersion = "0.10.2"
+val resilience4jVersion = "2.2.0"
 
 dependencies {
     // --- Spring Boot Starters (버전 생략: Boot가 관리) ---
@@ -92,6 +97,9 @@ dependencies {
 
     // --- Reflections (클래스패스 스캔) ---
     implementation("org.reflections:reflections:${reflectionsVersion}")
+
+    // --- Resilience4j (서킷 브레이커, 리트라이) ---
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:${resilience4jVersion}")
 }
 
 tasks.withType<Test> {

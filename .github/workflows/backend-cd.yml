@@ -7,7 +7,6 @@ on:
       - be/prod
     paths:
       - 'backend/**'
-      - 'backend-cd.yml'
       - '.github/scripts/deploy-*.sh'
   workflow_dispatch:
     inputs:
@@ -18,6 +17,10 @@ on:
         options:
           - dev
           - prod
+
+concurrency:
+  group: backend-deploy-${{ github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   # 1. 공통 빌드/테스트 워크플로우 호출 (backend-ci.yml 재사용)
@@ -32,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     # 빌드 단계에서 결정된 환경 사용
     environment: ${{ needs.ci-and-build.outputs.environment }}
-    
+
     env:
       ENVIRONMENT: ${{ needs.ci-and-build.outputs.environment }}
       REPO_OWNER: ${{ needs.ci-and-build.outputs.repo_owner }}
@@ -66,9 +69,32 @@ jobs:
           platforms: linux/arm64
           tags: |
             ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:${{ env.IMAGE_TAG }}
-            ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Create GitHub Deployment
+        id: create_deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: '${{ env.ENVIRONMENT }}',
+              auto_merge: false,
+              required_contexts: [],
+              description: `Deploy ${context.sha.substring(0, 7)} to ${{ env.ENVIRONMENT }}`
+            });
+            core.setOutput('deployment_id', deployment.data.id);
+
+      - name: Set Deployment Status (in_progress)
+        uses: ./.github/actions/deployment-status
+        with:
+          deployment_id: ${{ steps.create_deployment.outputs.deployment_id }}
+          state: in_progress
+          status_description: Deployment in progress
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create .env file
         run: |
@@ -94,7 +120,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           source: "backend/docker/${{ env.ENVIRONMENT }}/docker-compose.yml,.github/scripts/deploy-*.sh,.env"
           target: /tmp/deploy-${{ env.ENVIRONMENT }}/
-          
+
       - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -127,14 +153,84 @@ jobs:
 
             echo "=== Deployment Completed ==="
 
+      - name: Set Deployment Status (success)
+        if: success() && steps.create_deployment.outputs.deployment_id
+        uses: ./.github/actions/deployment-status
+        with:
+          deployment_id: ${{ steps.create_deployment.outputs.deployment_id }}
+          state: success
+          status_description: Deployment succeeded
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Deployment Status (failure)
+        if: failure() && steps.create_deployment.outputs.deployment_id
+        uses: ./.github/actions/deployment-status
+        with:
+          deployment_id: ${{ steps.create_deployment.outputs.deployment_id }}
+          state: failure
+          status_description: Deployment failed
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const label = 'deployment-failure';
+            try {
+              await github.rest.issues.getLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: label
+              });
+            } catch (error) {
+              if (error.status === 404) {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label,
+                  color: 'd73a4a',
+                  description: 'Deployment failure alert'
+                });
+              } else {
+                core.warning(`Failed to check label: ${error.message}`);
+              }
+            }
+
+            const title = `🚨 Deployment failed: ${context.sha.substring(0, 7)} to ${{ env.ENVIRONMENT }}`;
+            const body = [
+              `## Deployment Failure`,
+              ``,
+              `| Field | Value |`,
+              `|-------|-------|`,
+              `| **Environment** | \`${{ env.ENVIRONMENT }}\` |`,
+              `| **Branch** | \`${context.ref}\` |`,
+              `| **Commit** | \`${context.sha}\` |`,
+              `| **Image Tag** | \`${{ env.IMAGE_TAG }}\` |`,
+              `| **Workflow Run** | [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) |`,
+              ``,
+              `### Rollback`,
+              `자동 롤백이 시도되었습니다. 서버 상태를 확인하고, 필요 시 [수동 롤백 워크플로우](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/workflows/backend-rollback.yml)를 실행하세요.`,
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: [label]
+            });
+
       - name: Deployment Summary
         if: always()
         run: |
-          echo "### Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image Tag:** ${{ env.IMAGE_TAG }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Deploy Directory:** ~/${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "### Deployment Summary :rocket:"
+            echo ""
+            echo "- **Environment:** ${{ env.ENVIRONMENT }}"
+            echo "- **Branch:** ${{ github.ref_name }}"
+            echo "- **Commit:** ${{ github.sha }}"
+            echo "- **Image Tag:** ${{ env.IMAGE_TAG }}"
+            echo "- **Deploy Directory:** ~/${{ env.ENVIRONMENT }}"
+            echo "- **Status:** ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"

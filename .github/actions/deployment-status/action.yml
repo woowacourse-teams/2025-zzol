@@ -1,0 +1,33 @@
+name: 'Update Deployment Status'
+description: 'GitHub Deployment API를 통해 배포 상태를 업데이트합니다.'
+
+inputs:
+  deployment_id:
+    description: 'GitHub Deployment ID'
+    required: true
+  state:
+    description: 'Deployment state (in_progress, success, failure)'
+    required: true
+  status_description:
+    description: 'Status description'
+    required: false
+    default: ''
+  token:
+    description: 'GitHub token'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Update Deployment Status
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: ${{ inputs.deployment_id }},
+            state: '${{ inputs.state }}',
+            description: '${{ inputs.status_description }}'
+          });

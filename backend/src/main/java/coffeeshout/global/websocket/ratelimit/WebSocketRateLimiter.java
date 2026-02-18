@@ -6,6 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -28,6 +30,7 @@ public class WebSocketRateLimiter {
     private final Clock clock;
     private final Map<String, SessionCounter> sessionCounters = new ConcurrentHashMap<>();
 
+    @Autowired
     public WebSocketRateLimiter(
             @Value("${websocket.rate-limit.max-messages-per-second:20}") int maxMessagesPerSecond
     ) {

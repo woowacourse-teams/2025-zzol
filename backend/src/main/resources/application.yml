@@ -138,6 +138,8 @@ resilience4j:
           - java.lang.RuntimeException
 
 websocket:
+  rate-limit:
+    max-messages-per-second: 20
   recovery:
     max-length: 1000
     stream-ttl-seconds: 3600

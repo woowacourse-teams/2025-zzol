@@ -2,11 +2,13 @@ package coffeeshout.global.health;
 
 import static coffeeshout.global.redis.config.RedisStreamListenerStarter.STREAM_CONTAINER_BEAN_NAME_FORMAT;
 
+import coffeeshout.global.redis.config.RedisStreamProperties;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.ApplicationContext;
@@ -22,38 +24,38 @@ import org.springframework.stereotype.Component;
  * DOWN 조건: Recovery가 복구를 시도했지만 실패한 container가 있을 때.
  * 즉, 애플리케이션 내부에서 복구를 시도한 후에도 안 되는 경우에만
  * Docker 재시작(last resort)을 트리거한다.
+ * <p>
+ * 스트림 키 목록은 RedisStreamProperties에서 동적으로 로드한다.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class RedisStreamHealthIndicator implements HealthIndicator {
 
-    private static final String[] STREAM_KEYS = {
-            "room", "room:join", "cardgame:select", "minigame", "racinggame"
-    };
-
     private final ApplicationContext applicationContext;
     private final RedisStreamContainerRecovery containerRecovery;
+    private final RedisStreamProperties redisStreamProperties;
 
     @Override
     public Health health() {
         final Map<String, Object> details = new HashMap<>();
 
-        for (String streamKey : STREAM_KEYS) {
-            final String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
+        if (redisStreamProperties.keys() != null) {
+            for (String streamKey : redisStreamProperties.keys().keySet()) {
+                final String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
 
-            try {
-                final StreamMessageListenerContainer<?, ?> container =
-                        applicationContext.getBean(beanName, StreamMessageListenerContainer.class);
+                try {
+                    final StreamMessageListenerContainer<?, ?> container =
+                            applicationContext.getBean(beanName, StreamMessageListenerContainer.class);
 
-                final boolean running = container.isRunning();
-                details.put(streamKey, running ? "RUNNING" : "STOPPED");
-            } catch (Exception e) {
-                details.put(streamKey, "NOT_REGISTERED");
+                    final boolean running = container.isRunning();
+                    details.put(streamKey, running ? "RUNNING" : "STOPPED");
+                } catch (NoSuchBeanDefinitionException e) {
+                    details.put(streamKey, "NOT_REGISTERED");
+                }
             }
         }
 
-        // Recovery가 복구를 시도했지만 실패한 스트림이 있으면 DOWN
         if (containerRecovery.hasUnrecoverableStreams()) {
             final Set<String> failedStreams = containerRecovery.getFailedRecoveryStreams();
             details.put("unrecoverable", failedStreams);

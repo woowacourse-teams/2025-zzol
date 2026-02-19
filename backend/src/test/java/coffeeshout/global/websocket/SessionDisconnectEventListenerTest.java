@@ -9,6 +9,7 @@ import coffeeshout.global.metric.WebSocketMetricService;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.websocket.event.SessionDisconnectEventListener;
+import coffeeshout.global.websocket.ratelimit.WebSocketRateLimiter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,8 @@ class SessionDisconnectEventListenerTest {
     SubscriptionInfoService subscriptionInfoService;
     @Mock
     WebSocketMetricService metricService;
+    @Mock
+    WebSocketRateLimiter webSocketRateLimiter;
 
     StompSessionManager sessionManager;
     SessionDisconnectEventListener listener;
@@ -41,7 +44,7 @@ class SessionDisconnectEventListenerTest {
     void setUp() {
         sessionManager = new StompSessionManager();
         listener = new SessionDisconnectEventListener(sessionManager, streamPublisher,
-                subscriptionInfoService, metricService);
+                subscriptionInfoService, metricService, webSocketRateLimiter);
     }
 
     @Nested

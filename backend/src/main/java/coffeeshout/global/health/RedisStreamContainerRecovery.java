@@ -63,6 +63,17 @@ public class RedisStreamContainerRecovery {
 
     @Scheduled(fixedDelay = 30_000, initialDelay = 60_000)
     public void checkAndRecover() {
+        try {
+            doCheckAndRecover();
+        } catch (Exception e) {
+            // @Scheduled에서 예외가 메서드 밖으로 전파되면
+            // ScheduledExecutorService가 해당 태스크를 영구 취소한다.
+            // 복구 모니터링이 영원히 멈추는 것을 방지하기 위해 여기서 잡는다.
+            log.error("Redis Stream 복구 체크 중 예상치 못한 예외 발생", e);
+        }
+    }
+
+    private void doCheckAndRecover() {
         if (redisStreamProperties.keys() == null) {
             return;
         }
@@ -85,6 +96,8 @@ public class RedisStreamContainerRecovery {
 
             } catch (NoSuchBeanDefinitionException e) {
                 log.debug("Redis Stream container 빈 없음: stream={}", streamKey);
+            } catch (Exception e) {
+                log.error("Redis Stream container 상태 확인 중 예외: stream={}", streamKey, e);
             }
         }
     }

@@ -84,6 +84,7 @@ services:
       - ./data/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./data/grafana/grafana_data:/var/lib/grafana
       - ./data/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./provisioning/alerting:/etc/grafana/provisioning/alerting:ro
       - ./logs/grafana:/var/log/grafana
     networks:
       - zzol-network

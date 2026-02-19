@@ -4,6 +4,7 @@ import static coffeeshout.global.redis.config.RedisStreamListenerStarter.STREAM_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +22,9 @@ class RedisStreamHealthIndicatorTest {
     private ApplicationContext applicationContext;
 
     @Mock
+    private RedisStreamContainerRecovery containerRecovery;
+
+    @Mock
     private StreamMessageListenerContainer<?, ?> runningContainer;
 
     @Mock
@@ -34,12 +38,13 @@ class RedisStreamHealthIndicatorTest {
 
     @BeforeEach
     void setUp() {
-        indicator = new RedisStreamHealthIndicator(applicationContext);
+        indicator = new RedisStreamHealthIndicator(applicationContext, containerRecovery);
     }
 
     @Test
-    void 모든_컨테이너가_실행_중이면_UP을_반환한다() {
+    void 모든_컨테이너가_실행_중이고_복구_실패가_없으면_UP을_반환한다() {
         given(runningContainer.isRunning()).willReturn(true);
+        given(containerRecovery.hasUnrecoverableStreams()).willReturn(false);
 
         for (String streamKey : STREAM_KEYS) {
             String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
@@ -54,9 +59,11 @@ class RedisStreamHealthIndicatorTest {
     }
 
     @Test
-    void 하나라도_중단된_컨테이너가_있으면_DOWN을_반환한다() {
+    void 컨테이너가_중단됐지만_복구_실패가_아직_없으면_UP을_반환한다() {
+        // container가 STOPPED여도, Recovery가 아직 복구를 시도 중이면 DOWN이 아님
         given(runningContainer.isRunning()).willReturn(true);
         given(stoppedContainer.isRunning()).willReturn(false);
+        given(containerRecovery.hasUnrecoverableStreams()).willReturn(false);
 
         for (String streamKey : STREAM_KEYS) {
             String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
@@ -71,12 +78,32 @@ class RedisStreamHealthIndicatorTest {
 
         Health health = indicator.health();
 
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(Status.UP);
         assertThat(health.getDetails()).containsEntry("room", "STOPPED");
     }
 
     @Test
+    void 복구_실패한_스트림이_있으면_DOWN을_반환한다() {
+        given(runningContainer.isRunning()).willReturn(true);
+        given(containerRecovery.hasUnrecoverableStreams()).willReturn(true);
+        given(containerRecovery.getFailedRecoveryStreams()).willReturn(Set.of("room"));
+
+        for (String streamKey : STREAM_KEYS) {
+            String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
+            given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
+                    .willReturn(runningContainer);
+        }
+
+        Health health = indicator.health();
+
+        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getDetails()).containsKey("unrecoverable");
+    }
+
+    @Test
     void 컨테이너_빈이_없으면_NOT_REGISTERED로_표시하고_UP을_반환한다() {
+        given(containerRecovery.hasUnrecoverableStreams()).willReturn(false);
+
         for (String streamKey : STREAM_KEYS) {
             String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
             given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))

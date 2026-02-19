@@ -3,14 +3,17 @@ package coffeeshout.global.health;
 import static coffeeshout.global.redis.config.RedisStreamListenerStarter.STREAM_CONTAINER_BEAN_NAME_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import coffeeshout.global.redis.config.RedisStreamProperties;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 
@@ -19,6 +22,9 @@ class RedisStreamContainerRecoveryTest {
 
     @Mock
     private ApplicationContext applicationContext;
+
+    @Mock
+    private RedisStreamProperties redisStreamProperties;
 
     @Mock
     private StreamMessageListenerContainer<?, ?> runningContainer;
@@ -34,7 +40,13 @@ class RedisStreamContainerRecoveryTest {
 
     @BeforeEach
     void setUp() {
-        recovery = new RedisStreamContainerRecovery(applicationContext);
+        recovery = new RedisStreamContainerRecovery(applicationContext, redisStreamProperties);
+
+        Map<String, RedisStreamProperties.StreamConfig> keys = new LinkedHashMap<>();
+        for (String key : STREAM_KEYS) {
+            keys.put(key, null);
+        }
+        given(redisStreamProperties.keys()).willReturn(keys);
     }
 
     private void mockAllContainersRunning() {
@@ -57,7 +69,7 @@ class RedisStreamContainerRecoveryTest {
 
     @Test
     void 멈춘_컨테이너를_발견하면_start를_호출한다() {
-        given(stoppedContainer.isRunning()).willReturn(false, true); // 첫 호출: false, start 후: true
+        given(stoppedContainer.isRunning()).willReturn(false, true);
         given(runningContainer.isRunning()).willReturn(true);
 
         for (String streamKey : STREAM_KEYS) {
@@ -93,7 +105,7 @@ class RedisStreamContainerRecoveryTest {
             }
         }
 
-        recovery.checkAndRecover(); // 1회 실패
+        recovery.checkAndRecover();
 
         assertThat(recovery.hasUnrecoverableStreams()).isFalse();
     }
@@ -114,8 +126,8 @@ class RedisStreamContainerRecoveryTest {
             }
         }
 
-        recovery.checkAndRecover(); // 1회 실패
-        recovery.checkAndRecover(); // 2회 실패
+        recovery.checkAndRecover();
+        recovery.checkAndRecover();
 
         assertThat(recovery.hasUnrecoverableStreams()).isTrue();
         assertThat(recovery.getFailedRecoveryStreams()).contains("room");
@@ -123,7 +135,6 @@ class RedisStreamContainerRecoveryTest {
 
     @Test
     void 복구_성공하면_실패_카운트가_초기화된다() {
-        // 1회차: 멈춤 → 복구 실패
         given(stoppedContainer.isRunning()).willReturn(false);
         given(runningContainer.isRunning()).willReturn(true);
 
@@ -140,7 +151,7 @@ class RedisStreamContainerRecoveryTest {
 
         recovery.checkAndRecover(); // 1회 실패
 
-        // 2회차: 복구 성공 (running=true)
+        // 2회차: 복구 성공
         given(stoppedContainer.isRunning()).willReturn(true);
 
         recovery.checkAndRecover();

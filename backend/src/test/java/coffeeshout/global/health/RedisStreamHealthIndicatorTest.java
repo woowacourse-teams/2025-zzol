@@ -4,12 +4,16 @@ import static coffeeshout.global.redis.config.RedisStreamListenerStarter.STREAM_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
+import coffeeshout.global.redis.config.RedisStreamProperties;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.context.ApplicationContext;
@@ -25,6 +29,9 @@ class RedisStreamHealthIndicatorTest {
     private RedisStreamContainerRecovery containerRecovery;
 
     @Mock
+    private RedisStreamProperties redisStreamProperties;
+
+    @Mock
     private StreamMessageListenerContainer<?, ?> runningContainer;
 
     @Mock
@@ -38,7 +45,13 @@ class RedisStreamHealthIndicatorTest {
 
     @BeforeEach
     void setUp() {
-        indicator = new RedisStreamHealthIndicator(applicationContext, containerRecovery);
+        indicator = new RedisStreamHealthIndicator(applicationContext, containerRecovery, redisStreamProperties);
+
+        Map<String, RedisStreamProperties.StreamConfig> keys = new LinkedHashMap<>();
+        for (String key : STREAM_KEYS) {
+            keys.put(key, null);
+        }
+        given(redisStreamProperties.keys()).willReturn(keys);
     }
 
     @Test
@@ -60,7 +73,6 @@ class RedisStreamHealthIndicatorTest {
 
     @Test
     void 컨테이너가_중단됐지만_복구_실패가_아직_없으면_UP을_반환한다() {
-        // container가 STOPPED여도, Recovery가 아직 복구를 시도 중이면 DOWN이 아님
         given(runningContainer.isRunning()).willReturn(true);
         given(stoppedContainer.isRunning()).willReturn(false);
         given(containerRecovery.hasUnrecoverableStreams()).willReturn(false);
@@ -107,7 +119,7 @@ class RedisStreamHealthIndicatorTest {
         for (String streamKey : STREAM_KEYS) {
             String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
             given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                    .willThrow(new org.springframework.beans.factory.NoSuchBeanDefinitionException(beanName));
+                    .willThrow(new NoSuchBeanDefinitionException(beanName));
         }
 
         Health health = indicator.health();

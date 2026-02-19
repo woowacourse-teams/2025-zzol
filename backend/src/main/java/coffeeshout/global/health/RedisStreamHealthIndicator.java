@@ -4,6 +4,8 @@ import static coffeeshout.global.redis.config.RedisStreamListenerStarter.STREAM_
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -14,16 +16,16 @@ import org.springframework.stereotype.Component;
 /**
  * Redis Stream Listener Container 상태 기반 헬스체크.
  * <p>
- * 각 스트림의 ListenerContainer가 running 상태인지 확인한다.
- * Container가 멈춰있으면 이벤트 소비가 중단된 것이고,
- * 서버 재시작으로 container가 재생성되면 복구 가능하다.
+ * 이 HealthIndicator는 상태를 "보고"만 하고, "복구"는 하지 않는다.
+ * 복구는 {@link RedisStreamContainerRecovery}가 담당한다.
  * <p>
- * DOWN이 되면 Docker HEALTHCHECK에 의해 컨테이너 재시작이 트리거된다.
- * 재시작 시 RedisStreamListenerStarter가 모든 container를 다시 생성하므로
- * 자동 복구가 가능하다.
+ * DOWN 조건: Recovery가 복구를 시도했지만 실패한 container가 있을 때.
+ * 즉, 애플리케이션 내부에서 복구를 시도한 후에도 안 되는 경우에만
+ * Docker 재시작(last resort)을 트리거한다.
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class RedisStreamHealthIndicator implements HealthIndicator {
 
     private static final String[] STREAM_KEYS = {
@@ -31,15 +33,11 @@ public class RedisStreamHealthIndicator implements HealthIndicator {
     };
 
     private final ApplicationContext applicationContext;
-
-    public RedisStreamHealthIndicator(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
-    }
+    private final RedisStreamContainerRecovery containerRecovery;
 
     @Override
     public Health health() {
         final Map<String, Object> details = new HashMap<>();
-        boolean hasStoppedContainer = false;
 
         for (String streamKey : STREAM_KEYS) {
             final String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
@@ -50,18 +48,16 @@ public class RedisStreamHealthIndicator implements HealthIndicator {
 
                 final boolean running = container.isRunning();
                 details.put(streamKey, running ? "RUNNING" : "STOPPED");
-
-                if (!running) {
-                    hasStoppedContainer = true;
-                    log.warn("Redis Stream container 중단 감지: stream={}", streamKey);
-                }
             } catch (Exception e) {
                 details.put(streamKey, "NOT_REGISTERED");
-                log.debug("Redis Stream container 빈 없음: stream={}, reason={}", streamKey, e.getMessage());
             }
         }
 
-        if (hasStoppedContainer) {
+        // Recovery가 복구를 시도했지만 실패한 스트림이 있으면 DOWN
+        if (containerRecovery.hasUnrecoverableStreams()) {
+            final Set<String> failedStreams = containerRecovery.getFailedRecoveryStreams();
+            details.put("unrecoverable", failedStreams);
+            details.put("action", "Internal recovery failed. Docker restart required.");
             return Health.down()
                     .withDetails(details)
                     .build();

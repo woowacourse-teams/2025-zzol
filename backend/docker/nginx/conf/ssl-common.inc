@@ -6,3 +6,4 @@ ssl_prefer_server_ciphers on;
 # 성능
 ssl_session_cache shared:SSL:10m;
 ssl_session_timeout 10m;
+ssl_session_tickets off;

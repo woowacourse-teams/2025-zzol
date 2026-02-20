@@ -1,59 +1,67 @@
+# ============================================
+# Prod Application 공통 설정 (Blue/Green 공유)
+# ============================================
+x-prod-app: &prod-app
+  restart: unless-stopped
+  environment:
+    - JAVA_OPTS=${JAVA_OPTS:--Xms4200m -Xmx4200m}
+    - SPRING_PROFILES_ACTIVE=prod
+    - MYSQL_URL=jdbc:mysql://prod-mysql:3306/coffee_shout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    - MYSQL_USERNAME=root
+    - MYSQL_PASSWORD=${DB_PASSWORD}
+    - REDIS_HOST=prod-redis
+    - REDIS_PORT=6379
+    - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+    - S3_QR_KEY_PREFIX=${S3_QR_KEY_PREFIX}
+    - AWS_REGION=${AWS_REGION:-ap-northeast-2}
+    - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    - TEMPO_URL=${TEMPO_URL:-http://tempo:4318/v1/traces}
+    - TRACE_SAMPLING_PROBABILITY=${TRACE_SAMPLING_PROBABILITY:-0.1}
+    - TZ=Asia/Seoul
+  volumes:
+    - prod-app-logs:/app/logs
+  networks:
+    - zzol-network
+    - prod-network
+  depends_on:
+    prod-mysql:
+      condition: service_healthy
+    prod-redis:
+      condition: service_started
+  healthcheck:
+    test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/actuator/health/readiness"]
+    interval: 30s
+    timeout: 10s
+    retries: 5
+    start_period: 120s
+  # 자원 제한 (Prod 환경: 총 2.0~2.5 vCPU, 12GB - 최우선 할당)
+  # Docker 메모리 제한: 6GB
+  # JVM 힙 설정: -Xms4200m -Xmx4200m (약 4.2GB, 70% 할당)
+  # 메타스페이스: -XX:MaxMetaspaceSize=256m
+  # 비힙 오버헤드: 약 1.8GB (메타스페이스 256MB + 스레드 스택 + 네트워크 버퍼 등)
+  deploy:
+    resources:
+      limits:
+        cpus: '1.5'        # 최대 1.5 vCPU
+        memory: 6G         # 최대 6GB
+      reservations:
+        cpus: '1.0'        # 최소 1.0 vCPU 보장
+        memory: 4G         # 최소 4GB 보장
+
 services:
   # ============================================
-  # Prod Application (Spring Boot)
+  # Prod Application (Spring Boot) - Blue/Green
   # ============================================
-  prod-app:
-    # 이미지는 GitHub Actions에서 빌드되어 GHCR에 푸시됨
-    image: ${REGISTRY}/zzol-backend:${IMAGE_TAG}
-    container_name: prod-app
-    restart: unless-stopped
-    ports:
-      - "8081:8080"
-    environment:
-      - JAVA_OPTS=${JAVA_OPTS:--Xms4200m -Xmx4200m}
-      - SPRING_PROFILES_ACTIVE=prod
-      - MYSQL_URL=jdbc:mysql://prod-mysql:3306/coffee_shout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
-      - MYSQL_USERNAME=root
-      - MYSQL_PASSWORD=${DB_PASSWORD}
-      - REDIS_HOST=prod-redis
-      - REDIS_PORT=6379
-      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
-      - S3_QR_KEY_PREFIX=${S3_QR_KEY_PREFIX}
-      - AWS_REGION=${AWS_REGION:-ap-northeast-2}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - TEMPO_URL=${TEMPO_URL:-http://tempo:4318/v1/traces}
-      - TRACE_SAMPLING_PROBABILITY=${TRACE_SAMPLING_PROBABILITY:-0.1}
-      - TZ=Asia/Seoul
-    volumes:
-      - prod-app-logs:/app/logs
-    networks:
-      - zzol-network
-      - prod-network
-    depends_on:
-      prod-mysql:
-        condition: service_healthy
-      prod-redis:
-        condition: service_started
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/actuator/health/readiness"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 120s
-    # 자원 제한 (Prod 환경: 총 2.0~2.5 vCPU, 12GB - 최우선 할당)
-    # Docker 메모리 제한: 6GB
-    # JVM 힙 설정: -Xms4200m -Xmx4200m (약 4.2GB, 70% 할당)
-    # 메타스페이스: -XX:MaxMetaspaceSize=256m
-    # 비힙 오버헤드: 약 1.8GB (메타스페이스 256MB + 스레드 스택 + 네트워크 버퍼 등)
-    deploy:
-      resources:
-        limits:
-          cpus: '1.5'        # 최대 1.5 vCPU
-          memory: 6G         # 최대 6GB
-        reservations:
-          cpus: '1.0'        # 최소 1.0 vCPU 보장
-          memory: 4G         # 최소 4GB 보장
+  prod-app-blue:
+    <<: *prod-app
+    image: ${REGISTRY}/zzol-backend:${BLUE_IMAGE_TAG:-placeholder}
+    container_name: prod-app-blue
+
+  prod-app-green:
+    <<: *prod-app
+    image: ${REGISTRY}/zzol-backend:${GREEN_IMAGE_TAG:-placeholder}
+    container_name: prod-app-green
 
   # ============================================
   # Prod MySQL Database

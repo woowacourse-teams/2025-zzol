@@ -5,8 +5,8 @@ set -e
 # Deploy Backup
 # ============================================
 # 배포 전 현재 상태를 백업합니다.
-# - 현재 실행 중인 앱 컨테이너의 이미지 태그 저장
-# - .env, docker-compose.yml 백업
+# - .env 백업 (BLUE/GREEN_IMAGE_TAG 포함)
+# - docker-compose.yml 백업
 #
 # Usage:
 #   ./deploy-backup.sh <environment> <deploy_dir>
@@ -32,20 +32,12 @@ if ! validate_environment "$ENVIRONMENT"; then
 fi
 
 main() {
-    local service_name="${ENVIRONMENT}-app"
-    local backup_dir="${DEPLOY_STATE_DIR}/${ENVIRONMENT}"
-
-    mkdir -p "$backup_dir"
-
     log_step "Backup Current Deployment State"
 
-    # 현재 실행 중인 컨테이너의 이미지 태그 저장
-    save_current_image_tag "$service_name" "$ENVIRONMENT"
-
-    # .env 백업
+    # .env 백업 (BLUE/GREEN_IMAGE_TAG 가 배포 이력)
     if [[ -f "${DEPLOY_DIR}/.env" ]]; then
         cp "${DEPLOY_DIR}/.env" "${DEPLOY_DIR}/.env.backup"
-        log_success "Backed up .env"
+        log_success "Backed up .env → .env.backup"
     fi
 
     # docker-compose.yml 백업

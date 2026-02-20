@@ -2,113 +2,87 @@
 set -e
 
 # ============================================
-# Deploy Application (Spring Boot)
+# Deploy Application - Blue-Green Strategy
 # ============================================
-# docker-compose.yml에 정의된 모든 서비스를 배포합니다.
-# - Application 이미지를 pull하고 재시작
-# - Exporter 등 다른 서비스는 없으면 시작, 변경사항이 있으면 재시작
-# - 변경사항이 없는 서비스(MySQL, Redis 등)는 그대로 유지
+# Blue-Green 무중단 배포를 수행합니다.
+#
+# 상태 관리:
+#   - 트래픽 기준: ~/nginx/conf/{env}-service.inc
+#   - 이미지 기준: {deploy_dir}/.env 의 BLUE/GREEN_IMAGE_TAG
+#
+# 흐름:
+#   1. {env}-service.inc 읽어 current/target 색상 결정
+#   2. .env 의 TARGET_COLOR_IMAGE_TAG를 새 태그로 업데이트
+#   3. docker compose up -d (--env-file .env 로 이미지 결정)
+#   4. readiness 확인
+#   5. {env}-service.inc 교체 → nginx reload (트래픽 전환)
+#   6. 구버전 컨테이너 graceful stop (300초)
 #
 # Usage:
-#   ./deploy-application.sh <environment> <deploy_dir>
+#   ./deploy-application.sh <environment> <deploy_dir> <new_image_tag>
 #
 # Arguments:
-#   environment - dev, prod
-#   deploy_dir  - docker-compose.yml이 있는 디렉토리
-#
-# Note:
-#   이 스크립트를 실행하기 전에 .env 파일이 deploy_dir에 존재해야 합니다.
+#   environment    - dev, prod
+#   deploy_dir     - docker-compose.yml 및 .env가 있는 디렉토리
+#   new_image_tag  - 배포할 이미지 태그 (GitHub Actions에서 전달)
 #
 # Exit Codes:
 #   0 - Success
 #   1 - Error
-#
-# Examples:
-#   ./deploy-application.sh dev ~/dev
-#   ./deploy-application.sh prod ~/prod
 # ============================================
 
-# 스크립트 디렉토리
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# 공통 유틸리티 로드
 source "${SCRIPT_DIR}/deploy-utils.sh"
 
 # ============================================
 # 파라미터 검증
 # ============================================
 
-if [[ $# -lt 2 ]]; then
-    log_error "Usage: $0 <environment> <deploy_dir>"
-    log_error "Example: $0 dev ~/dev"
+if [[ $# -lt 3 ]]; then
+    log_error "Usage: $0 <environment> <deploy_dir> <new_image_tag>"
+    log_error "Example: $0 prod ~/prod prod-abc123"
     exit 1
 fi
 
 ENVIRONMENT="$1"
 DEPLOY_DIR="$2"
+NEW_TAG="$3"
 
-# 환경 검증
 if ! validate_environment "$ENVIRONMENT"; then
     exit 1
 fi
 
-# 디렉토리 검증
 if [[ ! -d "$DEPLOY_DIR" ]]; then
     log_error "Deploy directory not found: $DEPLOY_DIR"
     exit 1
 fi
 
-# docker-compose.yml 검증
 if ! require_file "${DEPLOY_DIR}/docker-compose.yml"; then
     exit 1
 fi
 
-# .env 파일 존재 여부 확인
 if ! require_file "${DEPLOY_DIR}/.env"; then
     log_error ".env file missing in ${DEPLOY_DIR}"
     exit 1
 fi
 
 # ============================================
-# 변수 설정
+# 의존성 확인
 # ============================================
-
-SERVICE_NAME="${ENVIRONMENT}-app"
-
-# ============================================
-# 메인 함수
-# ============================================
-
-pull_application_image() {
-    log_step "🐳 Application Image Pull"
-
-    if docker compose --env-file .env pull "$SERVICE_NAME"; then
-        log_success "Image pull completed"
-    else
-        log_error "Failed to pull image for service: $SERVICE_NAME"
-        return 1
-    fi
-
-    return 0
-}
 
 verify_dependencies() {
     log_info "Verifying infrastructure dependencies..."
 
-    # MySQL 확인
     local mysql_service="${ENVIRONMENT}-mysql"
     if ! check_container_healthy "$mysql_service"; then
         log_error "MySQL is not healthy: $mysql_service"
-        log_error "Cannot deploy application without healthy database"
         return 1
     fi
     log_success "MySQL is healthy: $mysql_service"
 
-    # Redis 확인
     local redis_service="${ENVIRONMENT}-redis"
     if ! check_container_running "$redis_service"; then
         log_error "Redis is not running: $redis_service"
-        log_error "Cannot deploy application without Redis"
         return 1
     fi
     log_success "Redis is running: $redis_service"
@@ -116,138 +90,133 @@ verify_dependencies() {
     return 0
 }
 
-deploy_application() {
-    log_step "🚢 Application Deployment"
+# ============================================
+# Bootstrap: 최초 배포 (blue로 시작)
+# ============================================
 
-    log_info "Deploying all services with docker-compose up -d"
-    log_info "Note: Only changed services will be restarted"
+bootstrap_deployment() {
+    log_step "Bootstrap: First Blue-Green Deployment (blue)"
 
-    # 전체 서비스 up (변경사항이 있는 서비스만 재시작됨)
-    # - 이미 실행 중인 MySQL, Redis는 변경사항이 없으면 그대로 유지
-    # - Application은 새 이미지로 재시작
-    # - Exporter는 없으면 시작, 있으면 변경사항 확인 후 처리
-    docker compose --env-file .env up -d
-
-    # 컨테이너 시작 대기
-    sleep 5
-
-    # 애플리케이션 컨테이너 ID 확인
-    local new_container_id
-    new_container_id=$(docker ps -q -f name="^${SERVICE_NAME}$" 2>/dev/null) || true
-
-    if [[ -z "$new_container_id" ]]; then
-        log_error "Application container failed to start: $SERVICE_NAME"
-        docker compose --env-file .env logs --tail=50 "$SERVICE_NAME"
-        return 1
-    fi
-
-    log_success "Application container started: $new_container_id"
-
-    # 배포된 모든 서비스 상태 확인
-    echo ""
-    log_info "All services status:"
-    docker compose --env-file .env ps
-
-    return 0
-}
-
-health_check() {
-    log_step "🏥 Application Health Check"
-
-    if ! wait_for_app_healthy "$SERVICE_NAME"; then
-        echo ""
-        log_error "Recent application logs:"
-        docker compose --env-file .env logs --tail=100 "$SERVICE_NAME"
-        return 1
-    fi
-
-    return 0
-}
-
-show_deployment_status() {
-    log_step "📊 Deployment Status"
-
-    # 컨테이너 상태
-    echo ""
-    log_info "Container status:"
-    docker compose --env-file .env ps "$SERVICE_NAME"
-
-    # 최근 로그
-    echo ""
-    log_info "Recent application logs:"
-    docker compose --env-file .env logs --tail=30 "$SERVICE_NAME"
-
-    # 이미지 정보
-    echo ""
-    log_info "Deployed image:"
-    docker inspect "$SERVICE_NAME" --format='{{.Config.Image}}' 2>/dev/null || log_info "Unable to retrieve image information"
-}
-
-attempt_rollback() {
-    log_step "🔄 Attempting Automatic Rollback"
-
-    if [[ -x "${DEPLOY_DIR}/deploy-rollback.sh" ]]; then
-        if "${DEPLOY_DIR}/deploy-rollback.sh" "$ENVIRONMENT" "$DEPLOY_DIR"; then
-            log_success "Automatic rollback succeeded"
-            return 0
-        else
-            log_error "Automatic rollback also failed"
-            return 1
-        fi
-    else
-        log_error "Rollback script not found or not executable: ${DEPLOY_DIR}/deploy-rollback.sh"
-        return 1
-    fi
-}
-
-main() {
-    print_script_info "Deploy Application" "Deploying Spring Boot application for $ENVIRONMENT environment"
-
-    cd "$DEPLOY_DIR"
-
-    # 롤백용 현재 이미지 태그 저장 (백업 스크립트와 독립적으로 실행)
-    save_current_image_tag "$SERVICE_NAME" "$ENVIRONMENT"
-
-    # 배포 전 현재 상태 백업 (.env, docker-compose.yml)
-    if [[ -x "${DEPLOY_DIR}/deploy-backup.sh" ]]; then
-        log_step "📦 Backing Up Current State"
-        "${DEPLOY_DIR}/deploy-backup.sh" "$ENVIRONMENT" "$DEPLOY_DIR" || log_warning "Backup failed, continuing with deployment"
-    fi
+    local blue_container="${ENVIRONMENT}-app-blue"
 
     if ! verify_dependencies; then
         log_error "Dependency verification failed"
         exit 1
     fi
 
-    if ! pull_application_image; then
-        log_error "Image pull failed"
+    # .env에 BLUE_IMAGE_TAG 기록
+    update_env_image_tag "${DEPLOY_DIR}/.env" "blue" "$NEW_TAG"
+
+    log_info "Pulling image: $NEW_TAG"
+    docker compose --env-file .env pull "${ENVIRONMENT}-app-blue"
+
+    log_info "Starting $blue_container..."
+    docker compose --env-file .env up -d "${ENVIRONMENT}-app-blue"
+
+    if ! wait_for_app_ready "$blue_container"; then
+        log_error "Bootstrap readiness check failed"
+        docker compose --env-file .env logs --tail=50 "${ENVIRONMENT}-app-blue"
+        docker stop "$blue_container" 2>/dev/null || true
         exit 1
     fi
 
-    if ! deploy_application; then
-        log_error "Application deployment failed"
-        if ! attempt_rollback; then
-            log_error "Deployment and rollback both failed"
-        fi
+    # {env}-service.inc 생성 → nginx 트래픽 연결
+    if ! switch_nginx_upstream "$blue_container" "$ENVIRONMENT"; then
+        log_error "Failed to set initial nginx upstream"
+        docker stop "$blue_container" 2>/dev/null || true
         exit 1
     fi
 
-    if ! health_check; then
-        log_error "Health check failed, triggering rollback"
-        if ! attempt_rollback; then
-            log_error "Deployment and rollback both failed"
-        fi
-        exit 1
-    fi
-
-    show_deployment_status
-
-    log_step "✅ Application Deployment Completed"
-    log_success "Service: $SERVICE_NAME"
-    log_success "Status: Healthy"
-
-    exit 0
+    log_step "Bootstrap Completed"
+    log_success "Active: blue ($blue_container) → $NEW_TAG"
 }
 
-# 스크립트 실행
+# ============================================
+# Blue-Green 배포
+# ============================================
+
+deploy_blue_green() {
+    local current_color="$1"
+    local target_color
+    target_color=$(get_inactive_color "$current_color")
+
+    local current_container="${ENVIRONMENT}-app-${current_color}"
+    local target_container="${ENVIRONMENT}-app-${target_color}"
+
+    log_info "Current: $current_color ($current_container)"
+    log_info "Target:  $target_color ($target_container) → $NEW_TAG"
+
+    if ! verify_dependencies; then
+        log_error "Dependency verification failed"
+        exit 1
+    fi
+
+    # 1. .env에 target 색상의 이미지 태그 기록
+    update_env_image_tag "${DEPLOY_DIR}/.env" "$target_color" "$NEW_TAG"
+
+    # 2. 이미지 pull
+    log_step "Pulling Image: $NEW_TAG"
+    docker compose --env-file .env pull "${ENVIRONMENT}-app-${target_color}"
+
+    # 3. target 컨테이너 기동
+    log_step "Starting $target_container"
+    docker compose --env-file .env up -d "${ENVIRONMENT}-app-${target_color}"
+
+    # 4. Readiness 확인
+    log_step "Waiting for $target_container to be Ready"
+    if ! wait_for_app_ready "$target_container"; then
+        log_error "$target_container failed readiness check"
+        docker compose --env-file .env logs --tail=50 "${ENVIRONMENT}-app-${target_color}"
+        log_info "Stopping failed container: $target_container"
+        docker stop "$target_container" 2>/dev/null || true
+        exit 1
+    fi
+
+    # 5. {env}-service.inc 교체 → nginx reload (트래픽 전환)
+    log_step "Switching Nginx Upstream → $target_container"
+    if ! switch_nginx_upstream "$target_container" "$ENVIRONMENT"; then
+        log_error "Failed to switch nginx upstream"
+        log_info "Restoring upstream to $current_container"
+        switch_nginx_upstream "$current_container" "$ENVIRONMENT" \
+            || log_warning "Upstream restore also failed — check nginx manually"
+        docker stop "$target_container" 2>/dev/null || true
+        exit 1
+    fi
+
+    # 6. 구버전 graceful shutdown (300초 = 5분, 게임 1라운드 기준)
+    log_step "Graceful Shutdown: $current_container (timeout: 300s)"
+    docker stop "$current_container" --time 300 \
+        || log_warning "Graceful stop of $current_container timed out or failed"
+
+    log_step "Deployment Completed"
+    log_success "Active:   $target_color ($target_container) → $NEW_TAG"
+    log_success "Stopped:  $current_color ($current_container)"
+}
+
+# ============================================
+# 메인
+# ============================================
+
+main() {
+    print_script_info "Blue-Green Deploy Application" \
+        "Environment: $ENVIRONMENT | Tag: $NEW_TAG"
+
+    cd "$DEPLOY_DIR"
+
+    # {env}-service.inc 로 현재 색상 확인
+    local current_color
+    current_color=$(get_active_color "$ENVIRONMENT")
+
+    # Bootstrap 조건: service.inc 없거나 active 컨테이너 미실행
+    if [[ -z "$current_color" ]] || ! check_container_running "${ENVIRONMENT}-app-${current_color}"; then
+        if [[ -n "$current_color" ]]; then
+            log_warning "${ENVIRONMENT}-app-${current_color} is not running. Re-bootstrapping with blue."
+        fi
+        bootstrap_deployment
+        exit 0
+    fi
+
+    deploy_blue_green "$current_color"
+}
+
 main "$@"

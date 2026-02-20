@@ -5,15 +5,13 @@
 # ============================================
 # 배포 스크립트에서 공통으로 사용하는 유틸리티 함수 모음
 #
+# 상태 관리 방식:
+#   - 트래픽 기준: ~/nginx/conf/{env}-service.inc  (nginx가 읽는 파일 자체)
+#   - 이미지 기준: ~/prod(dev)/.env 의 BLUE/GREEN_IMAGE_TAG (docker compose가 읽는 파일 자체)
+#   별도 상태 파일 없음 - 각 시스템이 자신의 상태를 직접 보관
+#
 # Usage:
 #   source .github/scripts/deploy-utils.sh
-#
-# Functions:
-#   - log_info, log_success, log_error, log_warning
-#   - check_container_running
-#   - wait_for_healthy
-#   - pull_image_with_retry
-#   - get_previous_image
 # ============================================
 
 # ============================================
@@ -154,16 +152,6 @@ compose_service_exists() {
     fi
 }
 
-compose_service_running() {
-    local service_name="$1"
-
-    if docker compose ps "$service_name" 2>/dev/null | grep -q "Up"; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 # ============================================
 # 환경 검증
 # ============================================
@@ -207,74 +195,128 @@ require_file() {
 }
 
 # ============================================
-# 애플리케이션 헬스체크 (actuator)
+# Readiness probe (actuator/health/readiness)
 # ============================================
 
-# 헬스체크 공통 설정
-APP_HEALTH_MAX_ATTEMPTS=150
-APP_HEALTH_INTERVAL=1
-
-wait_for_app_healthy() {
+wait_for_app_ready() {
     local container_name="$1"
-    local max_attempts="${2:-$APP_HEALTH_MAX_ATTEMPTS}"
-    local interval="${3:-$APP_HEALTH_INTERVAL}"
+    local max_attempts="${2:-150}"
+    local interval="${3:-1}"
 
-    log_info "Waiting for application to be healthy (max ${max_attempts}s)..."
+    log_info "Waiting for $container_name to be ready (max ${max_attempts}s)..."
 
     for i in $(seq 1 "$max_attempts"); do
-        if docker exec "$container_name" wget --quiet --spider http://localhost:8080/actuator/health 2>/dev/null; then
-            log_success "Application is healthy!"
+        if docker exec "$container_name" wget --quiet --spider http://localhost:8080/actuator/health/readiness 2>/dev/null; then
+            log_success "$container_name is ready!"
             return 0
         fi
 
-        log_info "Attempt $i/$max_attempts: Application not ready yet..."
+        log_info "Attempt $i/$max_attempts: $container_name not ready yet..."
         sleep "$interval"
     done
 
-    log_error "Health check failed after ${max_attempts} attempts"
+    log_error "$container_name readiness check timeout after $max_attempts attempts"
     return 1
 }
 
 # ============================================
-# 배포 상태 관리
+# Blue-Green 색상 관리
+# 진실의 근거: {env}-service.inc 파일
 # ============================================
 
-DEPLOY_STATE_DIR="${HOME}/.deploy"
+# nginx 컨테이너 이름 (기본값)
+NGINX_CONTAINER="${NGINX_CONTAINER:-nginx}"
 
-save_current_image_tag() {
-    local service_name="$1"
-    local env="$2"
+# 서버 호스트의 nginx conf 디렉토리 (기본값)
+NGINX_CONF_BASE="${NGINX_CONF_BASE:-${HOME}/nginx/conf}"
 
-    local backup_dir="${DEPLOY_STATE_DIR}/${env}"
-    mkdir -p "$backup_dir"
+# {env}-service.inc 를 읽어 현재 active 색상 반환
+# 파일이 없으면 "" 반환 → Bootstrap 필요
+get_active_color() {
+    local env="$1"
+    local nginx_inc="${NGINX_CONF_BASE}/${env}-service.inc"
 
-    if ! check_container_running "$service_name"; then
-        log_warning "No running container found for $service_name, skipping image tag backup"
-        return 0
+    if [[ ! -f "$nginx_inc" ]]; then
+        echo ""
+        return
     fi
 
-    local current_image
-    current_image=$(docker inspect "$service_name" --format='{{.Config.Image}}' 2>/dev/null || echo "")
+    grep -oiE 'app-(blue|green)\b' "$nginx_inc" | sed -E 's/^app-//' | head -1
+}
 
-    if [[ -n "$current_image" && "$current_image" == *":"* ]]; then
-        local current_tag="${current_image##*:}"
-        echo "$current_tag" > "${backup_dir}/previous-image-tag"
-        log_success "Saved current image tag: $current_tag"
+get_inactive_color() {
+    local active="$1"
+
+    if [[ "$active" == "blue" ]]; then
+        echo "green"
     else
-        log_warning "Could not retrieve image tag for $service_name"
+        echo "blue"
     fi
 }
 
-get_previous_image() {
-    local env="$1"
+# ============================================
+# Nginx upstream 전환
+# 진실의 근거: {env}-service.inc 파일 자체를 교체
+# ============================================
 
-    local tag_file="${DEPLOY_STATE_DIR}/${env}/previous-image-tag"
+switch_nginx_upstream() {
+    local container_name="$1"
+    local environment="$2"
 
-    if [[ -f "$tag_file" ]]; then
-        cat "$tag_file"
-    else
-        echo ""
+    local nginx_inc="${NGINX_CONF_BASE}/${environment}-service.inc"
+
+    log_info "Switching nginx upstream to: $container_name"
+
+    # 파일 전체를 교체 (sed 없이 atomic write)
+    echo "set \$upstream http://${container_name}:8080;" > "$nginx_inc"
+
+    # nginx 설정 문법 검증
+    if ! docker exec "$NGINX_CONTAINER" nginx -t 2>/dev/null; then
+        log_error "Nginx config test failed after upstream change"
+        return 1
     fi
+
+    # nginx graceful reload
+    if ! docker exec "$NGINX_CONTAINER" nginx -s reload; then
+        log_error "Nginx reload failed"
+        return 1
+    fi
+
+    log_success "Nginx upstream switched to $container_name"
+    return 0
+}
+
+# ============================================
+# .env 이미지 태그 관리
+# 진실의 근거: .env 파일의 BLUE/GREEN_IMAGE_TAG
+# ============================================
+
+# .env 파일에서 색상별 이미지 태그 읽기
+get_env_image_tag() {
+    local env_file="$1"
+    local color="$2"
+    local var_name="${color^^}_IMAGE_TAG"
+
+    grep "^${var_name}=" "$env_file" 2>/dev/null | cut -d'=' -f2- | xargs
+}
+
+# .env 파일의 색상별 이미지 태그를 직접 수정
+update_env_image_tag() {
+    local env_file="$1"
+    local color="$2"
+    local tag="$3"
+    local var_name="${color^^}_IMAGE_TAG"
+
+    # Escape '&' so sed treats the tag literally in the replacement
+    local escaped_tag="${tag//&/\\&}"
+
+    if grep -q "^${var_name}=" "$env_file"; then
+        sed -i "s#^${var_name}=.*#${var_name}=${escaped_tag}#" "$env_file"
+    else
+        echo "${var_name}=${tag}" >> "$env_file"
+    fi
+
+    log_success "Updated ${var_name}=${tag} in $(basename "$env_file")"
 }
 
 # ============================================

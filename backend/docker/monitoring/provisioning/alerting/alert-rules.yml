@@ -4,6 +4,7 @@
 # - HealthIndicator(DOWN → 재시작)로 처리할 수 없는 것만 여기서 알림
 # - 재시작으로 해결 안 되지만, 사람이 인지해야 하는 상황
 # - 임계값은 부하 테스트 실측 데이터와 인프라 스펙 기반
+# - dev/prod 환경 모두 모니터링 (job=~"dev-app|prod-app")
 apiVersion: 1
 
 groups:
@@ -28,7 +29,7 @@ groups:
               to: 0
             datasourceUid: prometheus
             model:
-              expr: increase(websocket_connections_failed_total[5m])
+              expr: increase(websocket_connections_failed_total{job=~"dev-app|prod-app"}[5m])
               intervalMs: 15000
               maxDataPoints: 43200
           - refId: B
@@ -79,7 +80,7 @@ groups:
               to: 0
             datasourceUid: prometheus
             model:
-              expr: websocket_message_inbound_time_seconds{quantile="0.99"}
+              expr: websocket_message_inbound_time_seconds{quantile="0.99", job=~"dev-app|prod-app"}
               intervalMs: 15000
               maxDataPoints: 43200
           - refId: B
@@ -100,7 +101,7 @@ groups:
                     type: gt
                     params:
                       - 0.5
-        noDataState: OK
+        noDataState: Alerting
         execErrState: Error
         for: 3m
         annotations:
@@ -130,8 +131,8 @@ groups:
             datasourceUid: prometheus
             model:
               expr: |
-                jvm_memory_used_bytes{area="heap", job="prod-app"}
-                / jvm_memory_max_bytes{area="heap", job="prod-app"} * 100
+                jvm_memory_used_bytes{area="heap", job=~"dev-app|prod-app"}
+                / jvm_memory_max_bytes{area="heap", job=~"dev-app|prod-app"} * 100
               intervalMs: 15000
               maxDataPoints: 43200
           - refId: B
@@ -152,7 +153,7 @@ groups:
                     type: gt
                     params:
                       - 85
-        noDataState: OK
+        noDataState: Alerting
         execErrState: Error
         for: 5m
         annotations:
@@ -174,7 +175,7 @@ groups:
               to: 0
             datasourceUid: prometheus
             model:
-              expr: hikaricp_connections_active{job="prod-app"}
+              expr: hikaricp_connections_active{job=~"dev-app|prod-app"}
               intervalMs: 15000
               maxDataPoints: 43200
           - refId: B
@@ -269,7 +270,7 @@ groups:
               to: 0
             datasourceUid: prometheus
             model:
-              expr: resilience4j_circuitbreaker_state{state="open"}
+              expr: resilience4j_circuitbreaker_state{state="open", job=~"dev-app|prod-app"}
               intervalMs: 15000
               maxDataPoints: 43200
           - refId: B
@@ -290,7 +291,7 @@ groups:
                     type: gt
                     params:
                       - 0
-        noDataState: OK
+        noDataState: Alerting
         execErrState: Error
         for: 0s
         annotations:
@@ -386,7 +387,7 @@ groups:
                     type: gt
                     params:
                       - 90
-        noDataState: OK
+        noDataState: Alerting
         execErrState: Error
         for: 5m
         annotations:

@@ -241,7 +241,7 @@ get_active_color() {
         return
     fi
 
-    grep -oiE 'app-(blue|green)\b' "$nginx_inc" | sed -E 's/^app-//' | head -1
+    grep -oiE 'app-(blue|green)\>' "$nginx_inc" | sed -E 's/^app-//' | head -1
 }
 
 get_inactive_color() {

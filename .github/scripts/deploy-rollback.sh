@@ -127,7 +127,7 @@ main() {
 
     # 6. 실패한 컨테이너 중지
     log_step "Stopping Failed Container: $current_container"
-    docker stop "$current_container" --time 30 \
+    docker stop "$current_container" --timeout 30 \
         || log_warning "Failed to stop $current_container"
 
     log_step "Rollback Completed"

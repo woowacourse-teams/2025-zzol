@@ -110,7 +110,7 @@ rollback_tx() {
     if [[ "$TX_CONTAINER_STARTED" == "true" && -n "$TX_TARGET_COLOR" ]]; then
         local target_container="${ENVIRONMENT}-app-${TX_TARGET_COLOR}"
         log_info "Stopping failed container: $target_container"
-        docker stop "$target_container" --time 30 2>/dev/null || true
+        docker stop "$target_container" --timeout 30 2>/dev/null || true
     fi
 
     # 3. .env 복원
@@ -270,7 +270,7 @@ deploy_blue_green() {
 
     # 6. 구버전 graceful shutdown (300초 = 5분, 게임 1라운드 기준)
     log_step "Graceful Shutdown: $current_container (timeout: 300s)"
-    docker stop "$current_container" --time 300 \
+    docker stop "$current_container" --timeout 300 \
         || log_warning "Graceful stop of $current_container timed out or failed"
 
     log_step "Deployment Completed"

@@ -100,7 +100,6 @@ jobs:
         run: |
           cat > .env << EOF
           REGISTRY=ghcr.io/${{ env.REPO_OWNER }}
-          IMAGE_TAG=${{ env.IMAGE_TAG }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
           S3_QR_KEY_PREFIX=${{ secrets.S3_QR_KEY_PREFIX }}
@@ -110,6 +109,7 @@ jobs:
           TEMPO_URL=${{ secrets.TEMPO_URL }}
           TRACE_SAMPLING_PROBABILITY=${{ secrets.TRACE_SAMPLING_PROBABILITY }}
           EOF
+          # IMAGE_TAG는 deploy-application.sh 인자로 전달 (Blue/Green 색상별 관리)
 
       - name: Transfer files via SCP
         uses: appleboy/scp-action@v1
@@ -125,12 +125,13 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           ENV: ${{ env.ENVIRONMENT }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          envs: ENV
+          envs: ENV,IMAGE_TAG
           script: |
             set -e
             DEPLOY_DIR="${HOME}/${ENV}"
@@ -141,15 +142,21 @@ jobs:
             mkdir -p "${DEPLOY_DIR}"
 
             cp "${TMP_DIR}/backend/docker/${ENV}/docker-compose.yml" "${DEPLOY_DIR}/"
-            cp "${TMP_DIR}/.env" "${DEPLOY_DIR}/"
             cp "${TMP_DIR}"/.github/scripts/deploy-*.sh "${DEPLOY_DIR}/"
-
             chmod +x "${DEPLOY_DIR}"/deploy-*.sh
+
+            # .env 업데이트: 시크릿은 덮어쓰되 BLUE/GREEN_IMAGE_TAG는 보존
+            NEW_ENV="${TMP_DIR}/.env"
+            OLD_ENV="${DEPLOY_DIR}/.env"
+            if [[ -f "${OLD_ENV}" ]]; then
+              grep -E "^(BLUE|GREEN)_IMAGE_TAG=" "${OLD_ENV}" >> "${NEW_ENV}" || true
+            fi
+            cp "${NEW_ENV}" "${OLD_ENV}"
 
             cd "${DEPLOY_DIR}"
 
             "${DEPLOY_DIR}/deploy-infrastructure.sh" "${ENV}" "${DEPLOY_DIR}"
-            "${DEPLOY_DIR}/deploy-application.sh" "${ENV}" "${DEPLOY_DIR}"
+            "${DEPLOY_DIR}/deploy-application.sh" "${ENV}" "${DEPLOY_DIR}" "${IMAGE_TAG}"
 
             echo "=== Deployment Completed ==="
 

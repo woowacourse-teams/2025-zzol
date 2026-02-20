@@ -118,6 +118,9 @@ main() {
     log_step "Restoring Nginx Upstream → $rollback_container"
     if ! switch_nginx_upstream "$rollback_container" "$ENVIRONMENT"; then
         log_error "Failed to restore nginx upstream"
+         log_info "Attempting to keep upstream on $current_container"
+          switch_nginx_upstream "$current_container" "$ENVIRONMENT" \
+                  || log_warning "Upstream restore also failed — check nginx manually"
         docker stop "$rollback_container" 2>/dev/null || true
         exit 1
     fi

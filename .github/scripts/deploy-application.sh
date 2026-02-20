@@ -12,11 +12,14 @@ set -e
 #
 # 흐름:
 #   1. {env}-service.inc 읽어 current/target 색상 결정
-#   2. .env 의 TARGET_COLOR_IMAGE_TAG를 새 태그로 업데이트
-#   3. docker compose up -d (--env-file .env 로 이미지 결정)
-#   4. readiness 확인
-#   5. {env}-service.inc 교체 → nginx reload (트래픽 전환)
-#   6. 구버전 컨테이너 graceful stop (300초)
+#   2. TX 시작: .env 백업
+#   3. .env 의 TARGET_COLOR_IMAGE_TAG를 새 태그로 업데이트
+#   4. docker compose up -d (--env-file .env 로 이미지 결정)
+#   5. readiness 확인
+#   6. {env}-service.inc 교체 → nginx reload (트래픽 전환)
+#   7. 구버전 컨테이너 graceful stop (300초)
+#   8. TX 커밋: 백업 제거
+#   실패 시: rollback_tx → upstream 원복, 컨테이너 중지, .env 복원
 #
 # Usage:
 #   ./deploy-application.sh <environment> <deploy_dir> <new_image_tag>
@@ -67,6 +70,66 @@ if ! require_file "${DEPLOY_DIR}/.env"; then
 fi
 
 # ============================================
+# 배포 트랜잭션 상태
+# ============================================
+
+TX_ENV_BACKUP=""          # .env 백업 파일 경로
+TX_TARGET_COLOR=""        # 배포 대상 색상
+TX_CONTAINER_STARTED=false  # target 컨테이너 기동 완료 여부
+TX_NGINX_SWITCHED=false     # nginx upstream 전환 완료 여부
+TX_PREV_COLOR=""          # 롤백 시 복원할 이전 색상
+
+begin_tx() {
+    local target_color="$1"
+    local prev_color="$2"
+
+    TX_TARGET_COLOR="$target_color"
+    TX_PREV_COLOR="$prev_color"
+    TX_CONTAINER_STARTED=false
+    TX_NGINX_SWITCHED=false
+
+    # .env 원자적 백업
+    TX_ENV_BACKUP="${DEPLOY_DIR}/.env.tx.$$"
+    cp "${DEPLOY_DIR}/.env" "$TX_ENV_BACKUP"
+    log_info "TX started: backup saved to $(basename "$TX_ENV_BACKUP")"
+}
+
+rollback_tx() {
+    local reason="${1:-unknown error}"
+    log_warning "Rolling back deployment: $reason"
+
+    # 1. nginx upstream 원복
+    if [[ "$TX_NGINX_SWITCHED" == "true" && -n "$TX_PREV_COLOR" ]]; then
+        local prev_container="${ENVIRONMENT}-app-${TX_PREV_COLOR}"
+        log_info "Restoring nginx upstream to $prev_container"
+        switch_nginx_upstream "$prev_container" "$ENVIRONMENT" \
+            || log_warning "Upstream restore failed — check nginx manually"
+    fi
+
+    # 2. target 컨테이너 중지
+    if [[ "$TX_CONTAINER_STARTED" == "true" && -n "$TX_TARGET_COLOR" ]]; then
+        local target_container="${ENVIRONMENT}-app-${TX_TARGET_COLOR}"
+        log_info "Stopping failed container: $target_container"
+        docker stop "$target_container" --time 30 2>/dev/null || true
+    fi
+
+    # 3. .env 복원
+    if [[ -n "$TX_ENV_BACKUP" && -f "$TX_ENV_BACKUP" ]]; then
+        mv "$TX_ENV_BACKUP" "${DEPLOY_DIR}/.env"
+        log_info ".env restored from backup"
+        TX_ENV_BACKUP=""
+    fi
+}
+
+commit_tx() {
+    if [[ -n "$TX_ENV_BACKUP" && -f "$TX_ENV_BACKUP" ]]; then
+        rm -f "$TX_ENV_BACKUP"
+        TX_ENV_BACKUP=""
+    fi
+    log_success "TX committed"
+}
+
+# ============================================
 # 의존성 확인
 # ============================================
 
@@ -99,34 +162,48 @@ bootstrap_deployment() {
 
     local blue_container="${ENVIRONMENT}-app-blue"
 
+    # 이전 컨테이너 정리
+    docker compose --env-file .env stop "${ENVIRONMENT}-app-blue" "${ENVIRONMENT}-app-green" 2>/dev/null || true
+
     if ! verify_dependencies; then
         log_error "Dependency verification failed"
         exit 1
     fi
 
+    begin_tx "blue" ""
+
     # .env에 BLUE_IMAGE_TAG 기록
     update_env_image_tag "${DEPLOY_DIR}/.env" "blue" "$NEW_TAG"
 
     log_info "Pulling image: $NEW_TAG"
-    docker compose --env-file .env pull "${ENVIRONMENT}-app-blue"
+    if ! docker compose --env-file .env pull "${ENVIRONMENT}-app-blue"; then
+        rollback_tx "Image pull failed"
+        exit 1
+    fi
 
     log_info "Starting $blue_container..."
-    docker compose --env-file .env up -d "${ENVIRONMENT}-app-blue"
+    if ! docker compose --env-file .env up -d "${ENVIRONMENT}-app-blue"; then
+        rollback_tx "Container start failed"
+        exit 1
+    fi
+    TX_CONTAINER_STARTED=true
 
     if ! wait_for_app_ready "$blue_container"; then
         log_error "Bootstrap readiness check failed"
         docker compose --env-file .env logs --tail=50 "${ENVIRONMENT}-app-blue"
-        docker stop "$blue_container" 2>/dev/null || true
+        rollback_tx "Readiness check failed"
         exit 1
     fi
 
     # {env}-service.inc 생성 → nginx 트래픽 연결
     if ! switch_nginx_upstream "$blue_container" "$ENVIRONMENT"; then
         log_error "Failed to set initial nginx upstream"
-        docker stop "$blue_container" 2>/dev/null || true
+        rollback_tx "Nginx upstream switch failed"
         exit 1
     fi
+    TX_NGINX_SWITCHED=true
 
+    commit_tx
     log_step "Bootstrap Completed"
     log_success "Active: blue ($blue_container) → $NEW_TAG"
 }
@@ -151,24 +228,32 @@ deploy_blue_green() {
         exit 1
     fi
 
+    begin_tx "$target_color" "$current_color"
+
     # 1. .env에 target 색상의 이미지 태그 기록
     update_env_image_tag "${DEPLOY_DIR}/.env" "$target_color" "$NEW_TAG"
 
     # 2. 이미지 pull
     log_step "Pulling Image: $NEW_TAG"
-    docker compose --env-file .env pull "${ENVIRONMENT}-app-${target_color}"
+    if ! docker compose --env-file .env pull "${ENVIRONMENT}-app-${target_color}"; then
+        rollback_tx "Image pull failed"
+        exit 1
+    fi
 
     # 3. target 컨테이너 기동
     log_step "Starting $target_container"
-    docker compose --env-file .env up -d "${ENVIRONMENT}-app-${target_color}"
+    if ! docker compose --env-file .env up -d "${ENVIRONMENT}-app-${target_color}"; then
+        rollback_tx "Container start failed"
+        exit 1
+    fi
+    TX_CONTAINER_STARTED=true
 
     # 4. Readiness 확인
     log_step "Waiting for $target_container to be Ready"
     if ! wait_for_app_ready "$target_container"; then
         log_error "$target_container failed readiness check"
         docker compose --env-file .env logs --tail=50 "${ENVIRONMENT}-app-${target_color}"
-        log_info "Stopping failed container: $target_container"
-        docker stop "$target_container" 2>/dev/null || true
+        rollback_tx "Readiness check failed"
         exit 1
     fi
 
@@ -176,12 +261,12 @@ deploy_blue_green() {
     log_step "Switching Nginx Upstream → $target_container"
     if ! switch_nginx_upstream "$target_container" "$ENVIRONMENT"; then
         log_error "Failed to switch nginx upstream"
-        log_info "Restoring upstream to $current_container"
-        switch_nginx_upstream "$current_container" "$ENVIRONMENT" \
-            || log_warning "Upstream restore also failed — check nginx manually"
-        docker stop "$target_container" 2>/dev/null || true
+        rollback_tx "Nginx upstream switch failed"
         exit 1
     fi
+    TX_NGINX_SWITCHED=true
+
+    commit_tx
 
     # 6. 구버전 graceful shutdown (300초 = 5분, 게임 1라운드 기준)
     log_step "Graceful Shutdown: $current_container (timeout: 300s)"

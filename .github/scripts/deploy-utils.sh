@@ -264,25 +264,60 @@ switch_nginx_upstream() {
     local environment="$2"
 
     local nginx_inc="${NGINX_CONF_BASE}/${environment}-service.inc"
+    local new_line="set \$upstream http://${container_name}:8080;"
 
     log_info "Switching nginx upstream to: $container_name"
 
-    # 파일 전체를 교체 (sed 없이 atomic write)
-    echo "set \$upstream http://${container_name}:8080;" > "$nginx_inc"
-
-    # nginx 설정 문법 검증
-    if ! docker exec "$NGINX_CONTAINER" nginx -t 2>/dev/null; then
-        log_error "Nginx config test failed after upstream change"
+    # 1. 사전 검증: 변경 전 현재 설정이 유효한지 확인
+    if ! docker exec "$NGINX_CONTAINER" nginx -t 2>&1; then
+        log_error "Nginx config is already invalid before upstream change — aborting"
         return 1
     fi
 
-    # nginx graceful reload
+    # 2. 롤백을 위해 현재 inc 내용 저장
+    local prev_line=""
+    if [[ -f "$nginx_inc" ]]; then
+        prev_line=$(cat "$nginx_inc")
+    fi
+
+    # 3. inc 파일 교체 (atomic write)
+    echo "$new_line" > "$nginx_inc"
+
+    # 4. 사후 검증: 새 설정이 문법상 유효한지 확인
+    if ! docker exec "$NGINX_CONTAINER" nginx -t 2>&1; then
+        log_error "Nginx config test failed after upstream change — restoring previous config"
+        if [[ -n "$prev_line" ]]; then
+            echo "$prev_line" > "$nginx_inc"
+        else
+            rm -f "$nginx_inc"
+        fi
+        return 1
+    fi
+
+    # 5. Graceful reload
     if ! docker exec "$NGINX_CONTAINER" nginx -s reload; then
-        log_error "Nginx reload failed"
+        log_error "Nginx reload failed — restoring previous config"
+        if [[ -n "$prev_line" ]]; then
+            echo "$prev_line" > "$nginx_inc"
+        else
+            rm -f "$nginx_inc"
+        fi
         return 1
     fi
 
-    log_success "Nginx upstream switched to $container_name"
+    # 6. Reload 완료 대기: 새 워커가 요청을 받을 때까지 nginx -t 로 폴링
+    local max_wait=10
+    local interval=1
+    for i in $(seq 1 "$max_wait"); do
+        if docker exec "$NGINX_CONTAINER" nginx -t 2>/dev/null; then
+            log_success "Nginx upstream switched to $container_name (reload confirmed in ${i}s)"
+            return 0
+        fi
+        log_info "Waiting for nginx reload... ($i/${max_wait}s)"
+        sleep "$interval"
+    done
+
+    log_warning "Nginx reload signal sent but could not confirm within ${max_wait}s — check nginx manually"
     return 0
 }
 
@@ -300,22 +335,27 @@ get_env_image_tag() {
     grep "^${var_name}=" "$env_file" 2>/dev/null | cut -d'=' -f2- | xargs
 }
 
-# .env 파일의 색상별 이미지 태그를 직접 수정
+# .env 파일의 색상별 이미지 태그를 원자적으로 수정
+# tmp 파일에 먼저 쓴 뒤 mv로 교체 → 쓰기 도중 실패해도 원본 보존
 update_env_image_tag() {
     local env_file="$1"
     local color="$2"
     local tag="$3"
     local var_name="${color^^}_IMAGE_TAG"
-
-    # Escape '&' so sed treats the tag literally in the replacement
     local escaped_tag="${tag//&/\\&}"
 
+    # tmp 파일은 같은 디렉토리에 생성 (mv가 atomic하려면 같은 파일시스템이어야 함)
+    local tmp_file
+    tmp_file="$(dirname "$env_file")/.env.write.$$"
+
     if grep -q "^${var_name}=" "$env_file"; then
-        sed -i "s#^${var_name}=.*#${var_name}=${escaped_tag}#" "$env_file"
+        sed "s#^${var_name}=.*#${var_name}=${escaped_tag}#" "$env_file" > "$tmp_file"
     else
-        echo "${var_name}=${tag}" >> "$env_file"
+        cp "$env_file" "$tmp_file"
+        echo "${var_name}=${tag}" >> "$tmp_file"
     fi
 
+    mv "$tmp_file" "$env_file"
     log_success "Updated ${var_name}=${tag} in $(basename "$env_file")"
 }
 

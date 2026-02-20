@@ -36,7 +36,7 @@ services:
       prod-redis:
         condition: service_started
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/actuator/health/readiness"]
       interval: 30s
       timeout: 10s
       retries: 5

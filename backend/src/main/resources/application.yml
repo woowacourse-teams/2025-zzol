@@ -83,6 +83,13 @@ management:
   endpoint:
     health:
       show-details: always
+      group:
+        liveness:
+          include: "ping"
+          show-details: always
+        readiness:
+          include: "db,redis,gracefulShutdown,redisStream"
+          show-details: always
   endpoints:
     web:
       exposure:

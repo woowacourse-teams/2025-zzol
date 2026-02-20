@@ -42,7 +42,7 @@ HEALTHCHECK --interval=30s \
     --timeout=3s \
     --start-period=40s \
     --retries=3 \
-    CMD wget --quiet --spider http://localhost:8080/actuator/health || exit 1
+    CMD wget --quiet --spider http://localhost:8080/actuator/health/readiness || exit 1
 
 # JVM 옵션 및 애플리케이션 실행
 # 환경변수로 힙 메모리 설정 가능 (기본값: dev 환경)

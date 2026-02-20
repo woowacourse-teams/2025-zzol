@@ -15,52 +15,6 @@ groups:
     folder: ZZOL
     interval: 30s
     rules:
-      # WebSocket 연결 급감 감지
-      # 정상: 점심시간 피크에 ~250 연결
-      # 알림 조건: 5분 내에 50% 이상 감소
-      # 왜 HealthIndicator가 아닌가: 재시작으로 해결되지 않음. 네트워크/클라이언트 문제일 수 있음
-      - uid: ws-connection-drop
-        title: WebSocket 연결 수 급감
-        condition: C
-        data:
-          - refId: A
-            relativeTimeRange:
-              from: 600
-              to: 0
-            datasourceUid: prometheus
-            model:
-              expr: websocket_connections_current
-              intervalMs: 15000
-              maxDataPoints: 43200
-          - refId: B
-            relativeTimeRange:
-              from: 600
-              to: 0
-            datasourceUid: __expr__
-            model:
-              type: reduce
-              expression: A
-              reducer: diff
-              settings:
-                mode: dropNN
-          - refId: C
-            datasourceUid: __expr__
-            model:
-              type: threshold
-              expression: B
-              conditions:
-                - evaluator:
-                    type: lt
-                    params:
-                      - -10
-        noDataState: OK
-        execErrState: Error
-        for: 2m
-        annotations:
-          summary: "WebSocket 연결 수가 5분 내 급감했습니다. 현재 연결 수를 확인하세요."
-        labels:
-          severity: warning
-
       # WebSocket 연결 실패율 증가
       # 정상: 연결 실패 거의 0
       # 알림 조건: 5분간 실패 10건 이상

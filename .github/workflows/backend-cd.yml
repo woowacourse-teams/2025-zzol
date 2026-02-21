@@ -8,6 +8,7 @@ on:
     paths:
       - 'backend/**'
       - '.github/scripts/deploy-*.sh'
+      - '.github/workflows/backend-cd.yml'
   workflow_dispatch:
     inputs:
       environment:

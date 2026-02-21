@@ -80,9 +80,11 @@ jobs:
       - name: Cleanup old GHCR images (keep 5)
         uses: actions/delete-package-versions@v5
         with:
-          package-name: zzol-backend
-          package-type: container
+          package-name: 'zzol-backend'
+          package-type: 'container'
           min-versions-to-keep: 5
+          # 태그 유무와 상관없이 오래된 버전은 모두 삭제 대상에 포함 (최신 5개 제외)
+          delete-only-untagged-versions: 'false'
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Deployment

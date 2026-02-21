@@ -35,6 +35,11 @@ jobs:
     runs-on: ubuntu-latest
     # 빌드 단계에서 결정된 환경 사용
     environment: ${{ needs.ci-and-build.outputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      issues: write
 
     env:
       ENVIRONMENT: ${{ needs.ci-and-build.outputs.environment }}
@@ -71,6 +76,14 @@ jobs:
             ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:${{ env.IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Cleanup old GHCR images (keep 5)
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: zzol-backend
+          package-type: container
+          min-versions-to-keep: 5
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Deployment
         id: create_deployment

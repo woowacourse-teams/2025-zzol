@@ -37,12 +37,16 @@ USER spring:spring
 # 애플리케이션 포트
 EXPOSE 8080
 
-# Health check 설정 (wget은 Alpine에 기본 내장)
+# Health check 설정
+# DOWN만 unhealthy로 판정. OUT_OF_SERVICE(Graceful Shutdown)는 healthy로 통과시킴.
+# wget --spider는 HTTP 상태 코드만 보므로 503(OUT_OF_SERVICE)도 실패 처리됨.
+# 그래서 응답 본문의 status 필드를 직접 파싱하는 방식으로 변경.
 HEALTHCHECK --interval=30s \
     --timeout=3s \
     --start-period=40s \
     --retries=3 \
-    CMD wget --quiet --spider http://localhost:8080/actuator/health/readiness || exit 1
+    CMD wget -qO- http://localhost:8080/actuator/health/readiness 2>/dev/null \
+        | grep -qv '"status":"DOWN"'
 
 # JVM 옵션 및 애플리케이션 실행
 # 환경변수로 힙 메모리 설정 가능 (기본값: dev 환경)

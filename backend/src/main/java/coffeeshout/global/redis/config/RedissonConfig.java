@@ -25,7 +25,11 @@ public class RedissonConfig {
         final String protocol = sslEnabled ? "rediss://" : "redis://";
         
         final var singleServerConfig = config.useSingleServer()
-                .setAddress(protocol + host + ":" + port);
+                .setAddress(protocol + host + ":" + port)
+                .setTimeout(1000)
+                .setConnectTimeout(1000)
+                .setRetryAttempts(1)
+                .setRetryInterval(500);
         
         if (username != null && !username.isBlank()) {
             singleServerConfig.setUsername(username);

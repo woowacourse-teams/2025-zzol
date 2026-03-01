@@ -39,14 +39,14 @@ EXPOSE 8080
 
 # Health check 설정
 # DOWN만 unhealthy로 판정. OUT_OF_SERVICE(Graceful Shutdown)는 healthy로 통과시킴.
-# wget --spider는 HTTP 상태 코드만 보므로 503(OUT_OF_SERVICE)도 실패 처리됨.
-# 그래서 응답 본문의 status 필드를 직접 파싱하는 방식으로 변경.
+# 1) wget 실패(앱 죽음, 타임아웃) → 즉시 unhealthy
+# 2) wget 성공 → 응답 본문에 "DOWN"이 있으면 unhealthy, 없으면(UP/OUT_OF_SERVICE) healthy
 HEALTHCHECK --interval=30s \
     --timeout=3s \
     --start-period=40s \
     --retries=3 \
-    CMD wget -qO- http://localhost:8080/actuator/health/readiness 2>/dev/null \
-        | grep -qv '"status":"DOWN"'
+    CMD response=$(wget -qO- http://localhost:8080/actuator/health/readiness 2>/dev/null) || exit 1; \
+        echo "$response" | grep -qv '"status":"DOWN"'
 
 # JVM 옵션 및 애플리케이션 실행
 # 환경변수로 힙 메모리 설정 가능 (기본값: dev 환경)

@@ -15,6 +15,10 @@ public class MiniGameResultBulkRepositoryImpl implements MiniGameResultBulkRepos
 
     @Override
     public void bulkInsert(List<MiniGameResultEntity> resultEntities) {
+        if (resultEntities.isEmpty()) {
+            return;
+        }
+
         final String sql = """
                 INSERT INTO mini_game_result (mini_game_play_id, player_id, player_rank, score, mini_game_type, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)

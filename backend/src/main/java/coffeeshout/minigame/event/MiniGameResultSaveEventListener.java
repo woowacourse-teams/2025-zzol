@@ -71,7 +71,11 @@ public class MiniGameResultSaveEventListener {
         final Map<String, PlayerEntity> playerEntityMap = playerJpaRepository
                 .findByRoomSessionAndPlayerNameIn(roomEntity, playerNames)
                 .stream()
-                .collect(Collectors.toMap(PlayerEntity::getPlayerName, Function.identity()));
+                .collect(Collectors.toMap(
+                        PlayerEntity::getPlayerName,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ));
 
         final List<MiniGameResultEntity> resultEntities = new ArrayList<>();
 

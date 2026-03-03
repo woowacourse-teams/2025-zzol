@@ -54,7 +54,7 @@ public class MemoryRoomRepository implements RoomRepository {
     /**
      * 전체 Room 수를 반환한다.
      */
-    public int totalCount() {
+    public long totalCount() {
         return rooms.size();
     }
 }

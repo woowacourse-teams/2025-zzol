@@ -27,8 +27,9 @@ scrape_configs:
       - labels:
           level:
 
+      # promtail이 직접 자신의 시스템 시계를 보고 Loki에게 보내도록 설정
       # 타임스탬프 설정 (KST → UTC 변환)
-      - timestamp:
-          source: timestamp
-          format: '2006-01-02 15:04:05.000'
-          location: Asia/Seoul
+#      - timestamp:
+#          source: timestamp
+#          format: '2006-01-02 15:04:05.000'
+#          location: Asia/Seoul

@@ -190,6 +190,7 @@ services:
     volumes:
       - dev-app-logs:/app/logs:ro
       - ./conf/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /etc/localtime:/etc/localtime:ro
     command: -config.file=/etc/promtail/promtail.yml
     networks:
       - dev-network

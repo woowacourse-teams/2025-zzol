@@ -1,5 +1,7 @@
 package coffeeshout.global.websocket.ratelimit;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,18 +29,31 @@ public class WebSocketRateLimiter {
 
     private final int maxMessagesPerSecond;
     private final Clock clock;
+    private final Counter rateLimitDropCounter;
     private final Map<String, SessionCounter> sessionCounters = new ConcurrentHashMap<>();
 
     @Autowired
     public WebSocketRateLimiter(
-            @Value("${websocket.rate-limit.max-messages-per-second:20}") int maxMessagesPerSecond
+            @Value("${websocket.rate-limit.max-messages-per-second:20}") int maxMessagesPerSecond,
+            MeterRegistry meterRegistry
     ) {
-        this(maxMessagesPerSecond, Clock.systemUTC());
+        this(maxMessagesPerSecond, Clock.systemUTC(), meterRegistry);
     }
 
     WebSocketRateLimiter(int maxMessagesPerSecond, Clock clock) {
+        this(maxMessagesPerSecond, clock, null);
+    }
+
+    WebSocketRateLimiter(int maxMessagesPerSecond, Clock clock, MeterRegistry meterRegistry) {
         this.maxMessagesPerSecond = maxMessagesPerSecond;
         this.clock = clock;
+        if (meterRegistry != null) {
+            this.rateLimitDropCounter = Counter.builder("websocket.ratelimit.dropped.total")
+                    .description("WebSocket Rate Limit에 의해 드롭된 메시지 수")
+                    .register(meterRegistry);
+        } else {
+            this.rateLimitDropCounter = null;
+        }
     }
 
     /**
@@ -51,7 +66,11 @@ public class WebSocketRateLimiter {
         final SessionCounter counter = sessionCounters.computeIfAbsent(
                 sessionId, k -> new SessionCounter(clock.millis())
         );
-        return counter.tryAcquire(maxMessagesPerSecond, clock.millis());
+        boolean allowed = counter.tryAcquire(maxMessagesPerSecond, clock.millis());
+        if (!allowed && rateLimitDropCounter != null) {
+            rateLimitDropCounter.increment();
+        }
+        return allowed;
     }
 
     /**

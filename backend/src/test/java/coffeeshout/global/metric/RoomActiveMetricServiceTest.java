@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.MemoryRoomRepository;
 import io.micrometer.core.instrument.Gauge;
@@ -27,16 +28,19 @@ class RoomActiveMetricServiceTest {
     }
 
     @Test
-    void Room이_없을_때_모든_상태의_Gauge가_0이다() {
-        // when
-        Gauge readyGauge = meterRegistry.find("room.active.count")
-                .tag("state", "READY")
-                .gauge();
-        Gauge totalGauge = meterRegistry.find("room.total.count").gauge();
+    void 모든_RoomState에_대해_Gauge가_등록된다() {
+        // when & then
+        for (RoomState state : RoomState.values()) {
+            Gauge gauge = meterRegistry.find("room.active.count")
+                    .tag("state", state.name())
+                    .gauge();
+            assertThat(gauge)
+                    .as("state=%s에 대한 Gauge가 등록되어야 한다", state.name())
+                    .isNotNull();
+            assertThat(gauge.value()).isEqualTo(0.0);
+        }
 
-        // then
-        assertThat(readyGauge).isNotNull();
-        assertThat(readyGauge.value()).isEqualTo(0.0);
+        Gauge totalGauge = meterRegistry.find("room.total.count").gauge();
         assertThat(totalGauge).isNotNull();
         assertThat(totalGauge.value()).isEqualTo(0.0);
     }
@@ -44,12 +48,12 @@ class RoomActiveMetricServiceTest {
     @Test
     void Room_생성_시_READY_상태_Gauge가_증가한다() {
         // given
-        Room room = Room.createNewRoom(new JoinCode("ABC4"), new PlayerName("host1"));
+        Room room = Room.createNewRoom(new JoinCode("ABC12"), new PlayerName("host1"));
         memoryRoomRepository.save(room);
 
         // when
         Gauge readyGauge = meterRegistry.find("room.active.count")
-                .tag("state", "READY")
+                .tag("state", RoomState.READY.name())
                 .gauge();
         Gauge totalGauge = meterRegistry.find("room.total.count").gauge();
 
@@ -61,15 +65,15 @@ class RoomActiveMetricServiceTest {
     @Test
     void 여러_Room의_상태별_Gauge가_정확히_집계된다() {
         // given
-        Room room1 = Room.createNewRoom(new JoinCode("ABC4"), new PlayerName("host1"));
-        Room room2 = Room.createNewRoom(new JoinCode("D7F3"), new PlayerName("host2"));
+        Room room1 = Room.createNewRoom(new JoinCode("ABC12"), new PlayerName("host1"));
+        Room room2 = Room.createNewRoom(new JoinCode("DEF34"), new PlayerName("host2"));
 
         memoryRoomRepository.save(room1);
         memoryRoomRepository.save(room2);
 
         // when
         Gauge readyGauge = meterRegistry.find("room.active.count")
-                .tag("state", "READY")
+                .tag("state", RoomState.READY.name())
                 .gauge();
         Gauge totalGauge = meterRegistry.find("room.total.count").gauge();
 
@@ -81,7 +85,7 @@ class RoomActiveMetricServiceTest {
     @Test
     void Room_삭제_시_Gauge가_감소한다() {
         // given
-        JoinCode joinCode = new JoinCode("ABC4");
+        JoinCode joinCode = new JoinCode("ABC12");
         Room room = Room.createNewRoom(joinCode, new PlayerName("host1"));
         memoryRoomRepository.save(room);
 
@@ -90,24 +94,11 @@ class RoomActiveMetricServiceTest {
 
         // then
         Gauge readyGauge = meterRegistry.find("room.active.count")
-                .tag("state", "READY")
+                .tag("state", RoomState.READY.name())
                 .gauge();
         Gauge totalGauge = meterRegistry.find("room.total.count").gauge();
 
         assertThat(readyGauge.value()).isEqualTo(0.0);
         assertThat(totalGauge.value()).isEqualTo(0.0);
-    }
-
-    @Test
-    void 모든_RoomState에_대해_Gauge가_등록된다() {
-        // when & then
-        for (String state : new String[]{"READY", "PLAYING", "SCORE_BOARD", "ROULETTE", "DONE"}) {
-            Gauge gauge = meterRegistry.find("room.active.count")
-                    .tag("state", state)
-                    .gauge();
-            assertThat(gauge)
-                    .as("state=%s에 대한 Gauge가 등록되어야 한다", state)
-                    .isNotNull();
-        }
     }
 }

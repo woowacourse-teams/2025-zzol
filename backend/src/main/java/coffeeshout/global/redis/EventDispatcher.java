@@ -1,5 +1,6 @@
 package coffeeshout.global.redis;
 
+import coffeeshout.global.metric.RedisStreamLatencyMetricService;
 import coffeeshout.global.trace.Traceable;
 import coffeeshout.global.trace.TracerProvider;
 import java.util.function.Consumer;
@@ -17,10 +18,13 @@ public class EventDispatcher {
 
     private final TracerProvider tracerProvider;
     private final ApplicationContext applicationContext;
+    private final RedisStreamLatencyMetricService latencyMetricService;
 
     @SuppressWarnings("unchecked")
     public void handle(BaseEvent event) {
         try {
+            latencyMetricService.recordLatency(event);
+
             final Consumer<BaseEvent> consumer = (Consumer<BaseEvent>) getConsumer(event.getClass());
             final Runnable handling = () -> consumer.accept(event);
 

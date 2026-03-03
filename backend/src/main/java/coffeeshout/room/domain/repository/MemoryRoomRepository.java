@@ -4,6 +4,7 @@ import static org.springframework.util.Assert.notNull;
 
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.RoomState;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,5 +40,21 @@ public class MemoryRoomRepository implements RoomRepository {
         notNull(joinCode, "JoinCode는 null일 수 없습니다.");
 
         rooms.remove(joinCode);
+    }
+
+    /**
+     * 특정 상태의 Room 수를 반환한다.
+     */
+    public long countByState(RoomState state) {
+        return rooms.values().stream()
+                .filter(room -> room.getRoomState() == state)
+                .count();
+    }
+
+    /**
+     * 전체 Room 수를 반환한다.
+     */
+    public int totalCount() {
+        return rooms.size();
     }
 }

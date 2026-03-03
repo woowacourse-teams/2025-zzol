@@ -157,6 +157,12 @@ public class RedisStreamLagMetricService {
         for (Map.Entry<String, StreamConfig> entry : redisStreamProperties.keys().entrySet()) {
             String streamKey = entry.getKey();
             double length = getStreamLength(streamKey);
+
+            // XLEN 조회 실패 시 비교 스킵
+            if (length < 0) {
+                continue;
+            }
+
             int maxLength = entry.getValue().getMaxLength(redisStreamProperties.commonSettings());
 
             if (length > maxLength * 0.8) {

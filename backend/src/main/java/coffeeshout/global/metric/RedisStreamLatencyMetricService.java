@@ -43,6 +43,10 @@ public class RedisStreamLatencyMetricService {
      * @param event 소비된 Redis Stream 이벤트
      */
     public void recordLatency(BaseEvent event) {
+        if (streamLatencyTimer == null) {
+            return;
+        }
+
         if (event.timestamp() == null) {
             log.warn("이벤트에 timestamp가 없습니다: eventId={}", event.eventId());
             return;

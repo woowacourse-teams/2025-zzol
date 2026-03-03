@@ -19,7 +19,11 @@ import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import jakarta.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -60,24 +64,40 @@ public class MiniGameResultSaveEventListener {
         final MiniGameResult result = miniGame.getResult();
         final Map<Player, MiniGameScore> scores = miniGame.getScores();
 
+        final List<String> playerNames = room.getPlayers().stream()
+                .map(player -> player.getName().value())
+                .toList();
+
+        final Map<String, PlayerEntity> playerEntityMap = playerJpaRepository
+                .findByRoomSessionAndPlayerNameIn(roomEntity, playerNames)
+                .stream()
+                .collect(Collectors.toMap(
+                        PlayerEntity::getPlayerName,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ));
+
+        final List<MiniGameResultEntity> resultEntities = new ArrayList<>();
+
         for (Player player : room.getPlayers()) {
-            final PlayerEntity playerEntity = playerJpaRepository.findByRoomSessionAndPlayerName(roomEntity,
-                            player.getName().value())
-                    .orElseThrow(() -> new IllegalArgumentException("플레이어가 존재하지 않습니다: " + player.getName().value()));
+            final PlayerEntity playerEntity = playerEntityMap.get(player.getName().value());
+            if (playerEntity == null) {
+                throw new IllegalArgumentException("플레이어가 존재하지 않습니다: " + player.getName().value());
+            }
 
             final Integer rank = result.getPlayerRank(player);
             final Long score = scores.get(player).getValue();
 
-            final MiniGameResultEntity resultEntity = new MiniGameResultEntity(
+            resultEntities.add(new MiniGameResultEntity(
                     miniGameEntity,
                     playerEntity,
                     rank,
                     score
-            );
-
-            miniGameResultJpaRepository.save(resultEntity);
+            ));
         }
 
-        log.info("미니게임 결과 저장 완료: joinCode={}", event.joinCode());
+        miniGameResultJpaRepository.bulkInsert(resultEntities);
+
+        log.info("미니게임 결과 벌크 저장 완료: joinCode={}, playerCount={}", event.joinCode(), resultEntities.size());
     }
 }

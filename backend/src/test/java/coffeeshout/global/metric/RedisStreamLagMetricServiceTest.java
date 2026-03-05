@@ -90,12 +90,12 @@ class RedisStreamLagMetricServiceTest {
         // when
         lagMetricService.initializeMetrics();
 
-        // then: 빈을 못 찾으면 -1.0 반환
+        // then: 빈을 못 찾으면 Nan 반환
         Gauge queueGauge = meterRegistry.find("redis.stream.threadpool.queue.size")
                 .tag("stream", "room")
                 .gauge();
         assertThat(queueGauge).isNotNull();
-        assertThat(queueGauge.value()).isEqualTo(-1.0);
+        assertThat(queueGauge.value()).isNaN();
     }
 
     @Test
@@ -116,7 +116,7 @@ class RedisStreamLagMetricServiceTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void XLEN_조회_실패_시_음수를_반환한다() {
+    void XLEN_조회_실패_시_Nan를_반환한다() {
         // given
         StreamOperations<String, Object, Object> failingOps = mock(StreamOperations.class);
         given(stringRedisTemplate.opsForStream()).willReturn(failingOps);
@@ -131,6 +131,6 @@ class RedisStreamLagMetricServiceTest {
 
         // then
         assertThat(gauge).isNotNull();
-        assertThat(gauge.value()).isEqualTo(-1.0);
+        assertThat(gauge.value()).isEqualTo(Double.NaN);
     }
 }

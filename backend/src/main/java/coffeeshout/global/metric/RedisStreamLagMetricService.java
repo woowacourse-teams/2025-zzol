@@ -128,7 +128,7 @@ public class RedisStreamLagMetricService {
             return executor.getThreadPoolExecutor().getActiveCount();
         } catch (Exception e) {
             log.debug("활성 스레드 수 조회 실패: stream={}", streamKey, e);
-            return -Double.NaN;
+            return Double.NaN;
         }
     }
 

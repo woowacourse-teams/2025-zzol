@@ -100,32 +100,36 @@ public class RedisStreamLagMetricService {
             return length != null ? length.doubleValue() : 0.0;
         } catch (Exception e) {
             log.warn("XLEN 조회 실패: stream={}", streamKey, e);
-            return -1.0;
+            return Double.NaN;
         }
     }
 
     private double getThreadPoolQueueSize(String streamKey, StreamConfig config) {
         try {
             ThreadPoolTaskExecutor executor = resolveExecutor(streamKey, config);
-            if (executor == null) return -1.0;
+            if (executor == null) {
+                return Double.NaN;
+            }
 
             ThreadPoolExecutor threadPoolExecutor = executor.getThreadPoolExecutor();
             return threadPoolExecutor.getQueue().size();
         } catch (Exception e) {
             log.debug("스레드풀 큐 크기 조회 실패: stream={}", streamKey, e);
-            return -1.0;
+            return Double.NaN;
         }
     }
 
     private double getThreadPoolActiveCount(String streamKey, StreamConfig config) {
         try {
             ThreadPoolTaskExecutor executor = resolveExecutor(streamKey, config);
-            if (executor == null) return -1.0;
+            if (executor == null) {
+                return Double.NaN;
+            }
 
             return executor.getThreadPoolExecutor().getActiveCount();
         } catch (Exception e) {
             log.debug("활성 스레드 수 조회 실패: stream={}", streamKey, e);
-            return -1.0;
+            return -Double.NaN;
         }
     }
 
@@ -152,7 +156,9 @@ public class RedisStreamLagMetricService {
      */
     @Scheduled(fixedRate = 10_000)
     public void logStreamStatus() {
-        if (redisStreamProperties.keys() == null) return;
+        if (redisStreamProperties.keys() == null) {
+            return;
+        }
 
         for (Map.Entry<String, StreamConfig> entry : redisStreamProperties.keys().entrySet()) {
             String streamKey = entry.getKey();

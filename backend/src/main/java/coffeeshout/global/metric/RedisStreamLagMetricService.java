@@ -11,7 +11,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
@@ -154,33 +153,5 @@ public class RedisStreamLagMetricService {
         }
 
         return RedisStreamThreadPoolConfig.convertBeanName(streamKey);
-    }
-
-    /**
-     * 10초 주기로 스트림 길이가 maxLength의 80%를 넘으면 경고 로그를 남긴다.
-     */
-    @Scheduled(fixedRate = 10_000)
-    public void logStreamStatus() {
-        if (redisStreamProperties.keys() == null) {
-            return;
-        }
-
-        for (Map.Entry<String, StreamConfig> entry : redisStreamProperties.keys().entrySet()) {
-            String streamKey = entry.getKey();
-            double length = getStreamLength(streamKey);
-
-            // XLEN 조회 실패 시 비교 스킵
-            if (Double.isNaN(length)) {
-                continue;
-            }
-
-            int maxLength = entry.getValue().getMaxLength(redisStreamProperties.commonSettings());
-
-            if (length > maxLength * 0.8) {
-                log.warn("Redis Stream 길이 경고: stream={}, length={}, maxLength={} ({}%)",
-                        streamKey, (long) length, maxLength,
-                        String.format("%.1f", (length / maxLength) * 100));
-            }
-        }
     }
 }

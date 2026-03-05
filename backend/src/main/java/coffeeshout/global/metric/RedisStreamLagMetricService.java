@@ -170,7 +170,7 @@ public class RedisStreamLagMetricService {
             double length = getStreamLength(streamKey);
 
             // XLEN 조회 실패 시 비교 스킵
-            if (length < 0) {
+            if (Double.isNaN(length)) {
                 continue;
             }
 

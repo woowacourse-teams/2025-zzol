@@ -135,20 +135,25 @@ public class RedisStreamLagMetricService {
 
     private ThreadPoolTaskExecutor resolveExecutor(String streamKey, StreamConfig config) {
         try {
-            String beanName;
-            if (config.isUseSharedThreadPool()) {
-                beanName = RedisStreamThreadPoolConfig.convertBeanName(config.threadPoolName());
-            } else {
-                beanName = RedisStreamThreadPoolConfig.convertBeanName(streamKey);
-            }
+            String beanName = resolveBeanName(streamKey, config);
             Object bean = applicationContext.getBean(beanName);
-            if (bean instanceof ThreadPoolTaskExecutor executor) {
-                return executor;
+
+            if (!(bean instanceof ThreadPoolTaskExecutor executor)) {
+                return null;
             }
-            return null;
+
+            return executor;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private String resolveBeanName(String streamKey, StreamConfig config) {
+        if (config != null && config.threadPoolName() != null) {
+            return RedisStreamThreadPoolConfig.convertBeanName(config.threadPoolName());
+        }
+
+        return RedisStreamThreadPoolConfig.convertBeanName(streamKey);
     }
 
     /**

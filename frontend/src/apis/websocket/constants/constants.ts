@@ -7,6 +7,7 @@ export type WebSocketSuccess<T> = {
   success: true;
   data: T;
   errorMessage: null;
+  id: string | null;
 };
 
 export type WebSocketError = {

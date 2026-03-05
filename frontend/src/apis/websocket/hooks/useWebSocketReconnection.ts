@@ -1,19 +1,26 @@
+import { useCallback, useEffect, useRef } from 'react';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
-import { useCallback, useEffect, useRef } from 'react';
 
 type Props = {
   isConnected: boolean;
   startSocket: (joinCode: string, myName: string) => void;
   stopSocket: () => void;
+  onReconnected?: () => void;
 };
 
-export const useWebSocketReconnection = ({ isConnected, startSocket, stopSocket }: Props) => {
+export const useWebSocketReconnection = ({
+  isConnected,
+  startSocket,
+  stopSocket,
+  onReconnected,
+}: Props) => {
   const { isVisible } = usePageVisibility();
   const { joinCode, myName } = useIdentifier();
   const reconnectTimerRef = useRef<number | null>(null);
   const wasBackgrounded = useRef(false);
   const hasCheckedRefresh = useRef(false);
+  const wasDisconnectedRef = useRef(false);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimerRef.current) {
@@ -24,14 +31,20 @@ export const useWebSocketReconnection = ({ isConnected, startSocket, stopSocket 
 
   const scheduleReconnect = useCallback(() => {
     clearReconnectTimer();
+    wasDisconnectedRef.current = true;
     reconnectTimerRef.current = window.setTimeout(() => {
       if (joinCode && myName) startSocket(joinCode, myName);
     }, 200);
   }, [joinCode, myName, startSocket, clearReconnectTimer]);
 
-  /**
-   * 새로고침 감지
-   */
+  useEffect(() => {
+    if (isConnected && wasDisconnectedRef.current) {
+      console.log('🔄 재연결 완료 - 복구 시작');
+      wasDisconnectedRef.current = false;
+      onReconnected?.();
+    }
+  }, [isConnected, onReconnected]);
+
   useEffect(() => {
     if (hasCheckedRefresh.current) return;
 
@@ -50,13 +63,11 @@ export const useWebSocketReconnection = ({ isConnected, startSocket, stopSocket 
     if (isReload && !isConnected && joinCode && myName && startSocket) {
       console.log('🔄 새로고침 감지 - 웹소켓 재연결 시도:', { myName, joinCode });
       hasCheckedRefresh.current = true;
+      wasDisconnectedRef.current = true;
       startSocket(joinCode, myName);
     }
   }, [myName, joinCode, isConnected, startSocket]);
 
-  /**
-   * 백그라운드 ↔ 포그라운드 감지
-   */
   useEffect(() => {
     if (!isVisible && isConnected) {
       console.log('📱 백그라운드 전환 - 소켓 연결 해제');
@@ -74,9 +85,6 @@ export const useWebSocketReconnection = ({ isConnected, startSocket, stopSocket 
     return () => clearReconnectTimer();
   }, [isVisible, isConnected, stopSocket, scheduleReconnect, clearReconnectTimer]);
 
-  /**
-   * 온라인/오프라인 감지
-   */
   useEffect(() => {
     const handleOnline = () => {
       if (!isConnected) {

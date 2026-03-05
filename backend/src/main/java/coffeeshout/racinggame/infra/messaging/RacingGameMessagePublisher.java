@@ -1,6 +1,6 @@
 package coffeeshout.racinggame.infra.messaging;
 
-import coffeeshout.global.ui.WebSocketResponse;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.racinggame.domain.RacingGameState;
 import coffeeshout.racinggame.domain.event.RaceFinishedEvent;
@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RacingGameMessagePublisher {
 
-    private static final String RACING_GAME_PLAYERS_POSITION_DESTINATION_FORMAT = "/topic/room/%s/racing-game";
-    private static final String RACING_GAME_STATE_DESTINATION_FORMAT = "/topic/room/%s/racing-game/state";
+    public static final String RACING_GAME_PLAYERS_POSITION_DESTINATION_FORMAT = "/topic/room/%s/racing-game";
+    public static final String RACING_GAME_STATE_DESTINATION_FORMAT = "/topic/room/%s/racing-game/state";
     private final LoggingSimpMessagingTemplate loggingSimpMessagingTemplate;
 
     @EventListener

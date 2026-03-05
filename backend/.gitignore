@@ -49,4 +49,6 @@ docker/nginx/ssl/*
 docker/monitoring/data/
 docker/monitoring/logs/
 docker/monitoring/dashboards/
-docker/monitoring/provisioning/
+docker/monitoring/provisioning/*
+!docker/monitoring/provisioning/alerting
+!docker/monitoring/provisioning/alerting/**

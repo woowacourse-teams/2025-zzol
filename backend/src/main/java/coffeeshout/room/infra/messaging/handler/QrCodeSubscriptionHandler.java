@@ -1,6 +1,6 @@
 package coffeeshout.room.infra.messaging.handler;
 
-import coffeeshout.global.ui.WebSocketResponse;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;

@@ -7,6 +7,7 @@ import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.websocket.StompSessionManager;
 import coffeeshout.global.websocket.SubscriptionInfoService;
 import coffeeshout.global.websocket.event.player.PlayerDisconnectedEvent;
+import coffeeshout.global.websocket.ratelimit.WebSocketRateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -25,6 +26,7 @@ public class SessionDisconnectEventListener {
     private final StreamPublisher streamPublisher;
     private final SubscriptionInfoService subscriptionInfoService;
     private final WebSocketMetricService webSocketMetricService;
+    private final WebSocketRateLimiter webSocketRateLimiter;
 
     @EventListener
     public void handleSessionDisconnectEvent(SessionDisconnectEvent event) {
@@ -36,6 +38,9 @@ public class SessionDisconnectEventListener {
 
         // 구독 정보 정리
         subscriptionInfoService.removeAllSubscriptions(sessionId);
+
+        // Rate Limiter 세션 카운터 정리
+        webSocketRateLimiter.removeSession(sessionId);
 
         // 중복 처리 방지
         if (sessionManager.isDisconnectionProcessed(sessionId)) {

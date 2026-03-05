@@ -1,15 +1,10 @@
 package coffeeshout.global.exception.custom;
 
 import coffeeshout.global.exception.ErrorCode;
-import lombok.Getter;
 
-@Getter
-public class QRCodeGenerationException extends RuntimeException {
-
-    private final ErrorCode errorCode;
+public class QRCodeGenerationException extends CoffeeShoutException {
 
     public QRCodeGenerationException(ErrorCode errorCode, String message, Throwable cause) {
-        super(message, cause);
-        this.errorCode = errorCode;
+        super(errorCode, message, cause);
     }
 }

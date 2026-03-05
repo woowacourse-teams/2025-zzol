@@ -62,3 +62,9 @@ otel:
 tracing:
   sampling:
     probability: 1.0
+
+websocket:
+  recovery:
+    max-length: 100
+    stream-ttl-seconds: 3600
+    dedup-ttl-seconds: 1

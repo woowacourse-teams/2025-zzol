@@ -46,7 +46,7 @@ public class RedisLockAspect {
         final String lockKey = getLockKey(joinPoint, redisLock);
         final String doneKey = getDoneKey(joinPoint, redisLock);
 
-        // 이미 처리된 이벤트인지 확인
+        // 1단계: 락 획득 전 빠른 체크 (성능 최적화)
         if (isAlreadyProcessed(doneKey)) {
             log.debug("이미 처리된 이벤트 (스킵): doneKey={}", doneKey);
             return null;
@@ -65,6 +65,12 @@ public class RedisLockAspect {
 
             if (!acquired) {
                 log.warn("락 획득 실패 (스킵): lockKey={}", lockKey);
+                return null;
+            }
+
+            // 2단계: 락 획득 후 이중 체크 (Race Condition 방지)
+            if (isAlreadyProcessed(doneKey)) {
+                log.debug("락 획득 후 이중 체크 - 이미 처리됨 (스킵): doneKey={}", doneKey);
                 return null;
             }
 

@@ -7,6 +7,9 @@ spring:
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      data-source-properties:
+        rewriteBatchedStatements: true
   lifecycle:
     timeout-per-shutdown-phase: 5m
   data:
@@ -23,18 +26,16 @@ redis:
       max-length: 100
       batch-size: 10
       poll-timeout: 2s
-
     # 공유 스레드풀
     thread-pools:
-#      sequential: # 단일 스레드풀은 여러 리스너에서 공유 불가능
-#        core-size: 1
-#        max-size: 1
-#        queue-capacity: 100
+      #      sequential: # 단일 스레드풀은 여러 리스너에서 공유 불가능
+      #        core-size: 1
+      #        max-size: 1
+      #        queue-capacity: 100
       concurrent:
         core-size: 8
         max-size: 16
         queue-capacity: 1024
-
     # 스트림 설정 (key가 식별자)
     keys:
       "[room]":
@@ -53,6 +54,13 @@ redis:
         thread-pool-name: concurrent
       "[racinggame]":
         thread-pool-name: concurrent
+
+redisson:
+  enabled: true
+  timeout: 1000
+  connect-timeout: 3000
+  retry-attempts: 1
+  retry-interval: 500
 
 oracle:
   cloud:
@@ -83,10 +91,17 @@ management:
   endpoint:
     health:
       show-details: always
+      group:
+        liveness:
+          include: "ping"
+          show-details: always
+        readiness:
+          include: "db,redis,gracefulShutdown,redisStream"
+          show-details: always
   endpoints:
     web:
       exposure:
-        include: "health,info,metrics,prometheus,tracing"
+        include: "health,info,metrics,prometheus,tracing,circuitbreakers,retries"
   tracing:
     enabled: true
     sampling:
@@ -97,11 +112,11 @@ management:
   metrics:
     enable:
       tomcat: true
-
   prometheus:
     metrics:
       export:
         enabled: true
+
 server:
   shutdown: graceful
   tomcat:
@@ -111,7 +126,39 @@ server:
     max-connections: 700
     accept-count: 300
 
+resilience4j:
+  circuitbreaker:
+    circuit-breaker-aspect-order: 1
+    instances:
+      oracleStorage:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - java.io.IOException
+          - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
+  retry:
+    retry-aspect-order: 2
+    instances:
+      oracleStorage:
+        maxAttempts: 2
+        waitDuration: 500ms
+        retryExceptions:
+          - java.io.IOException
+          - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
+
 websocket:
+  rate-limit:
+    max-messages-per-second: 20
+  recovery:
+    max-length: 1000
+    stream-ttl-seconds: 3600
+    dedup-ttl-seconds: 1
   docs:
     enabled: true
     base-package: "coffeeshout"

@@ -8,7 +8,6 @@ import static org.awaitility.Awaitility.await;
 import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.global.ServiceTest;
-import coffeeshout.global.exception.custom.InvalidArgumentException;
 import coffeeshout.global.exception.custom.NotExistElementException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;

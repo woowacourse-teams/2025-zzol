@@ -82,66 +82,37 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
 
         // then
         MessageResponse playersResponse = responses.get();
-        assertMessageCustomization(playersResponse, """
+        assertMessage(playersResponse, """
                 {
                    "success":true,
                    "data":[
                       {
                          "playerName":"꾹이",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"HOST",
                          "isReady":true,
-                         "colorIndex":"*",
-                         "probability": 25
+                         "probability": 25.0
                       },
                       {
                          "playerName":"루키",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
-                         "colorIndex":"*",
-                         "probability": 25
+                         "probability": 25.0
                       },
                       {
                          "playerName":"엠제이",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
-                         "colorIndex":"*",
-                         "probability": 25
+                         "probability": 25.0
                       },
                       {
                          "playerName":"한스",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
-                         "colorIndex":"*",
-                         "probability": 25
+                         "probability": 25.0
                       }
-                   ],
-                   "errorMessage":null
+                   ]
                 }
-                """, getColorIndexCustomization("colorIndex"));
+                """);
     }
 
     @Test
@@ -164,66 +135,37 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
         // then
         MessageResponse readyResponse = responses.get();
 
-        assertMessageCustomization(readyResponse, """
+        assertMessage(readyResponse, """
                 {
                    "success":true,
                    "data":[
                       {
                          "playerName":"꾹이",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"HOST",
                          "isReady":true,
-                         "colorIndex":"*",
-                         "probability": 25
+                         "probability": 25.0
                       },
                       {
                          "playerName":"루키",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
-                         "colorIndex":"*",
-                         "probability": 25
+                         "probability": 25.0
                       },
                       {
                          "playerName":"엠제이",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
-                         "colorIndex":"*",
-                         "probability": 25
+                         "probability": 25.0
                       },
                       {
                          "playerName":"한스",
-                         "menuResponse":{
-                            "id":1,
-                            "name":"아메리카노",
-                            "temperature":"ICE",
-                            "categoryImageUrl":"커피.jpg"
-                         },
                          "playerType":"GUEST",
                          "isReady":false,
-                         "colorIndex":"*",
-                         "probability": 25
+                         "probability": 25.0
                       }
-                   ],
-                   "errorMessage":null
+                   ]
                 }
-                """, getColorIndexCustomization("colorIndex"));
+                """);
     }
 
     @Test
@@ -248,8 +190,7 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
         assertMessage(miniGameResponse, """
                 {
                    "success":true,
-                   "data":["CARD_GAME"],
-                   "errorMessage":null
+                   "data":["CARD_GAME"]
                 }
                 """);
     }

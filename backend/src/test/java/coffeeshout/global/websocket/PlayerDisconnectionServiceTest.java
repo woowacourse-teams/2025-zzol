@@ -1,6 +1,5 @@
 package coffeeshout.global.websocket;
 
-import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import coffeeshout.room.domain.JoinCode;
@@ -34,9 +33,6 @@ class PlayerDisconnectionServiceTest {
         String playerKey = "ABC4:김철수";
         String joinCode = "ABC4";
         String playerName = "김철수";
-        
-        given(sessionManager.extractJoinCode(playerKey)).willReturn(joinCode);
-        given(sessionManager.extractPlayerName(playerKey)).willReturn(playerName);
 
         // when
         playerDisconnectionService.cancelReady(playerKey);

@@ -35,7 +35,7 @@ public class SessionEventConfig {
                 streamPublisher.publish(StreamKey.ROOM_BROADCAST, playerReconnectedEvent);
             }
 
-            sessionManager.registerPlayerSessionInternal(playerKey, sessionId);
+            sessionManager.registerPlayerSession(playerKey, sessionId);
         };
     }
 
@@ -47,7 +47,7 @@ public class SessionEventConfig {
             log.info("세션 제거 이벤트 처리: sessionId={}", sessionId);
 
             // 모든 인스턴스가 세션 매핑 제거
-            sessionManager.removeSessionInternal(sessionId);
+            sessionManager.removeSession(sessionId);
         };
     }
 

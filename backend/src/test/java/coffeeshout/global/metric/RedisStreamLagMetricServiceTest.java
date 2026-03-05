@@ -131,6 +131,6 @@ class RedisStreamLagMetricServiceTest {
 
         // then
         assertThat(gauge).isNotNull();
-        assertThat(gauge.value()).isEqualTo(Double.NaN);
+        assertThat(gauge.value()).isNaN();
     }
 }

@@ -12,7 +12,7 @@ scrape_configs:
 
   - job_name: 'prod-app'
     static_configs:
-      - targets: [ 'prod-app:8080' ]
+      - targets: [ 'prod-app-blue:8080', 'prod-app-green:8080' ]
     metrics_path: '/actuator/prometheus'
     scrape_interval: 10s
     scrape_timeout: 5s

@@ -1,5 +1,6 @@
 package coffeeshout.global.redis;
 
+import coffeeshout.global.metric.RedisStreamLatencyMetricService;
 import coffeeshout.global.trace.Traceable;
 import coffeeshout.global.trace.TracerProvider;
 import java.util.function.Consumer;
@@ -17,10 +18,13 @@ public class EventDispatcher {
 
     private final TracerProvider tracerProvider;
     private final ApplicationContext applicationContext;
+    private final RedisStreamLatencyMetricService latencyMetricService;
 
     @SuppressWarnings("unchecked")
     public void handle(BaseEvent event) {
         try {
+            recordLatency(event);
+
             final Consumer<BaseEvent> consumer = (Consumer<BaseEvent>) getConsumer(event.getClass());
             final Runnable handling = () -> consumer.accept(event);
 
@@ -32,6 +36,14 @@ public class EventDispatcher {
 
         } catch (Exception e) {
             log.error("이벤트 처리 실패: message={}", event, e);
+        }
+    }
+
+    private void recordLatency(BaseEvent event) {
+        try {
+            latencyMetricService.recordLatency(event);
+        } catch (Exception e) {
+            log.warn("Redis Stream 지연 메트릭 기록 실패: eventId={}", event.eventId(), e);
         }
     }
 

@@ -2,6 +2,7 @@ package coffeeshout.global.redis.config;
 
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import coffeeshout.global.redis.config.RedisStreamProperties.ThreadPoolConfig;
+import io.micrometer.context.ContextSnapshotFactory;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ public class RedisStreamThreadPoolConfig {
 
     private final RedisStreamProperties properties;
     private final GenericApplicationContext applicationContext;
+    private final ContextSnapshotFactory snapshotFactory;
     private static final String BEAN_NAME = "redis-stream-thread-pool-%s";
 
     @PostConstruct
@@ -48,6 +50,7 @@ public class RedisStreamThreadPoolConfig {
         executor.setMaxPoolSize(config.maxSize());
         executor.setQueueCapacity(config.queueCapacity());
         executor.setThreadNamePrefix(threadNamePrefix);
+        executor.setTaskDecorator(runnable -> snapshotFactory.captureAll().wrap(runnable));
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(10);
         return executor;

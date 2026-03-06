@@ -2,6 +2,9 @@ package coffeeshout.global.trace;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.global.redis.stream.StreamKey;
@@ -27,16 +30,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 /**
  * Redis Stream을 경유하는 이벤트의 Trace Context 전파를 검증하는 통합 테스트.
  *
  * <p>Publisher 스레드에서 생성한 traceId가 이벤트 DTO에 정상 주입되고,
- * Consumer 스레드(EventDispatcher → TracerProvider)에서 해당 traceId로 Span이 복원되는지 확인한다.</p>
- *
- * <p>Consumer 내부의 MDC/Span 복원은 {@link TracerProviderTest}에서 단위 테스트로 증명한다.
- * 이 통합 테스트는 "Publisher traceId → 이벤트 DTO → Redis Stream → Consumer 정상 처리"
- * 의 E2E 흐름이 끊어지지 않는 것을 검증한다.</p>
+ * Consumer 스레드에서 EventDispatcher가 TracerProvider.executeWithTraceContext()를
+ * 실제로 호출하여 Span을 복원하는지 검증한다.</p>
  */
 @IntegrationTest
 class RedisStreamContextPropagationTest {
@@ -52,6 +53,9 @@ class RedisStreamContextPropagationTest {
 
     @Autowired
     Tracer tracer;
+
+    @MockitoSpyBean
+    TracerProvider tracerProvider;
 
     private String joinCode;
 
@@ -87,42 +91,38 @@ class RedisStreamContextPropagationTest {
         }
 
         @Test
-        void Publisher의_traceId가_담긴_이벤트가_Consumer에서_정상_처리된다() {
+        void Consumer에서_TracerProvider_executeWithTraceContext가_호출된다() {
             // given
             AtomicReference<String> publisherTraceId = new AtomicReference<>();
-            AtomicReference<String> eventTraceId = new AtomicReference<>();
 
             Observation observation = Observation.createNotStarted("test-e2e-trace", observationRegistry).start();
             try (Scope scope = observation.openScope()) {
                 publisherTraceId.set(tracer.currentSpan().context().traceId());
 
                 RoomJoinEvent event = new RoomJoinEvent(joinCode, "E2E전파");
-                eventTraceId.set(event.traceInfo().traceId());
-
                 streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
             } finally {
                 observation.stop();
             }
 
-            // then — 이벤트에 Publisher의 traceId가 주입됨을 먼저 확인
-            assertThat(eventTraceId.get())
-                    .as("이벤트 DTO에 Publisher의 traceId가 주입되어야 한다")
-                    .isEqualTo(publisherTraceId.get());
-
-            // then — Consumer가 Traceable 이벤트를 정상 처리 (TracerProvider 경유)
-            // TracerProvider가 traceInfo.traceable() == true인 이벤트를 받으면
-            // Span을 복원하고 MDC에 traceId를 세팅한 뒤 task를 실행한다.
-            // MDC 복원 자체는 TracerProviderTest에서 단위 검증 완료.
+            // then — Consumer가 이벤트를 처리할 때까지 대기
             await().atMost(Duration.ofSeconds(5))
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
                         Room updatedRoom = roomRepository.findByJoinCode(new JoinCode(joinCode)).orElseThrow();
                         boolean playerExists = updatedRoom.getPlayers().stream()
                                 .anyMatch(player -> "E2E전파".equals(player.getName().value()));
-                        assertThat(playerExists)
-                                .as("traceable 이벤트가 Consumer에서 정상 처리되어야 한다")
-                                .isTrue();
+                        assertThat(playerExists).isTrue();
                     });
+
+            // then — EventDispatcher가 TracerProvider.executeWithTraceContext()를
+            // Publisher의 traceId가 담긴 TraceInfo로 실제 호출했는지 검증
+            String expectedTraceId = publisherTraceId.get();
+            verify(tracerProvider).executeWithTraceContext(
+                    argThat(traceInfo -> expectedTraceId.equals(traceInfo.traceId())),
+                    any(Runnable.class),
+                    any()
+            );
         }
 
         @Test
@@ -131,7 +131,6 @@ class RedisStreamContextPropagationTest {
             String[] playerNames = {"동시전파1", "동시전파2", "동시전파3"};
             List<String> capturedTraceIds = new ArrayList<>();
 
-            // 모든 스레드가 동시에 출발하도록 barrier 사용
             CountDownLatch startBarrier = new CountDownLatch(1);
             ExecutorService executor = Executors.newFixedThreadPool(playerNames.length);
 
@@ -163,25 +162,17 @@ class RedisStreamContextPropagationTest {
                 }, executor);
             }
 
-            // 모든 스레드 동시 출발
             startBarrier.countDown();
-
-            // 모든 발행이 완료될 때까지 대기
             CompletableFuture.allOf(futures).join();
             executor.shutdown();
 
-            // then — 각 이벤트가 서로 다른 traceId를 가지고 있어야 함 (Observation이 각각 별도)
+            // then — 각 이벤트가 서로 다른 traceId를 가짐
             assertThat(capturedTraceIds)
-                    .as("모든 이벤트에 traceId가 주입되어야 한다")
                     .hasSize(playerNames.length)
-                    .allSatisfy(traceId -> assertThat(traceId).isNotBlank());
-
-            // 각 traceId가 서로 다른지 확인 (각 Observation이 독립적이므로)
-            assertThat(capturedTraceIds)
-                    .as("동시 발행된 이벤트들은 서로 다른 traceId를 가져야 한다")
+                    .allSatisfy(traceId -> assertThat(traceId).isNotBlank())
                     .doesNotHaveDuplicates();
 
-            // then — 모든 이벤트가 Consumer에서 정상 처리되었는지 검증
+            // then — 모든 이벤트가 Consumer에서 정상 처리됨
             await().atMost(Duration.ofSeconds(5))
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
@@ -194,6 +185,15 @@ class RedisStreamContextPropagationTest {
                                     .isTrue();
                         }
                     });
+
+            // then — 각 이벤트에 대해 TracerProvider가 호출됨
+            for (String traceId : capturedTraceIds) {
+                verify(tracerProvider).executeWithTraceContext(
+                        argThat(info -> traceId.equals(info.traceId())),
+                        any(Runnable.class),
+                        any()
+                );
+            }
         }
     }
 
@@ -213,9 +213,7 @@ class RedisStreamContextPropagationTest {
 
         @Test
         void 빈_TraceInfo여도_Consumer에서_이벤트는_정상_처리된다() {
-            // given — Observation 없이 이벤트 생성 → traceInfo.traceable() == false
-            // EventDispatcher에서 Traceable 분기는 타지만,
-            // TracerProvider는 traceable()이 false이면 Span 생성 없이 task를 바로 실행한다.
+            // given
             RoomJoinEvent event = new RoomJoinEvent(joinCode, "노트레이스처리");
             assertThat(event.traceInfo().traceable()).isFalse();
 
@@ -230,6 +228,14 @@ class RedisStreamContextPropagationTest {
                                 .anyMatch(p -> "노트레이스처리".equals(p.getName().value()));
                         assertThat(exists).isTrue();
                     });
+
+            // then — TracerProvider는 빈 TraceInfo로 호출되어야 하고,
+            // 내부에서 traceable() == false이므로 Span 생성 없이 task만 실행
+            verify(tracerProvider).executeWithTraceContext(
+                    argThat(info -> !info.traceable()),
+                    any(Runnable.class),
+                    any()
+            );
         }
     }
 }

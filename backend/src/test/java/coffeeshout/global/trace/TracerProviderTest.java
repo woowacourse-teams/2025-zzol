@@ -127,21 +127,23 @@ class TracerProviderTest {
             AtomicReference<String> capturedTraceId = new AtomicReference<>();
             ExecutorService executor = Executors.newSingleThreadExecutor();
 
-            // when — 다른 스레드에서 executeWithTraceContext 호출
-            executor.submit(() -> {
-                tracerProvider.executeWithTraceContext(traceInfo, () -> {
-                    capturedTraceId.set(simpleTracer.currentSpan().context().traceId());
-                }, new StubEvent());
-                latch.countDown();
-            });
+            try {
+                // when — 다른 스레드에서 executeWithTraceContext 호출
+                executor.submit(() -> {
+                    tracerProvider.executeWithTraceContext(traceInfo, () -> {
+                        capturedTraceId.set(simpleTracer.currentSpan().context().traceId());
+                    }, new StubEvent());
+                    latch.countDown();
+                });
 
-            // then — CountDownLatch로 스레드 완료 대기
-            assertThat(latch.await(3, TimeUnit.SECONDS))
-                    .as("비동기 태스크가 3초 이내에 완료되어야 한다")
-                    .isTrue();
-            assertThat(capturedTraceId.get()).isEqualTo(expectedTraceId);
-
-            executor.shutdown();
+                // then — CountDownLatch로 스레드 완료 대기
+                assertThat(latch.await(3, TimeUnit.SECONDS))
+                        .as("비동기 태스크가 3초 이내에 완료되어야 한다")
+                        .isTrue();
+                assertThat(capturedTraceId.get()).isEqualTo(expectedTraceId);
+            } finally {
+                executor.shutdownNow();
+            }
         }
     }
 

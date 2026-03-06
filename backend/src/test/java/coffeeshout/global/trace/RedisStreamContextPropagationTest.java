@@ -134,37 +134,40 @@ class RedisStreamContextPropagationTest {
             CountDownLatch startBarrier = new CountDownLatch(1);
             ExecutorService executor = Executors.newFixedThreadPool(playerNames.length);
 
-            // when — CompletableFuture로 실제 동시 발행
-            CompletableFuture<?>[] futures = new CompletableFuture[playerNames.length];
-            for (int i = 0; i < playerNames.length; i++) {
-                String playerName = playerNames[i];
-                futures[i] = CompletableFuture.runAsync(() -> {
-                    try {
-                        startBarrier.await(3, java.util.concurrent.TimeUnit.SECONDS);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return;
-                    }
-
-                    Observation observation = Observation.createNotStarted(
-                            "test-concurrent-" + playerName, observationRegistry).start();
-                    try (Scope scope = observation.openScope()) {
-                        RoomJoinEvent event = new RoomJoinEvent(joinCode, playerName);
-
-                        synchronized (capturedTraceIds) {
-                            capturedTraceIds.add(event.traceInfo().traceId());
+            try {
+                // when — CompletableFuture로 실제 동시 발행
+                CompletableFuture<?>[] futures = new CompletableFuture[playerNames.length];
+                for (int i = 0; i < playerNames.length; i++) {
+                    String playerName = playerNames[i];
+                    futures[i] = CompletableFuture.runAsync(() -> {
+                        try {
+                            startBarrier.await(3, java.util.concurrent.TimeUnit.SECONDS);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            return;
                         }
 
-                        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
-                    } finally {
-                        observation.stop();
-                    }
-                }, executor);
-            }
+                        Observation observation = Observation.createNotStarted(
+                                "test-concurrent-" + playerName, observationRegistry).start();
+                        try (Scope scope = observation.openScope()) {
+                            RoomJoinEvent event = new RoomJoinEvent(joinCode, playerName);
 
-            startBarrier.countDown();
-            CompletableFuture.allOf(futures).join();
-            executor.shutdown();
+                            synchronized (capturedTraceIds) {
+                                capturedTraceIds.add(event.traceInfo().traceId());
+                            }
+
+                            streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+                        } finally {
+                            observation.stop();
+                        }
+                    }, executor);
+                }
+
+                startBarrier.countDown();
+                CompletableFuture.allOf(futures).join();
+            } finally {
+                executor.shutdownNow();
+            }
 
             // then — 각 이벤트가 서로 다른 traceId를 가짐
             assertThat(capturedTraceIds)

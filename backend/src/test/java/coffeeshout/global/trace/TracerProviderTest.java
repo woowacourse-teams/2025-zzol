@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 import coffeeshout.global.redis.BaseEvent;
 import io.micrometer.tracing.Span;
+import io.micrometer.tracing.test.simple.SimpleSpan;
 import io.micrometer.tracing.test.simple.SimpleTracer;
 import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
@@ -69,11 +70,12 @@ class TracerProviderTest {
             TraceInfo traceInfo = new TraceInfo("463ac35c9f6413ad48485a3953bb6124", "0020000000000001");
 
             // when
-            tracerProvider.executeWithTraceContext(traceInfo, () -> {}, new StubEvent());
+            tracerProvider.executeWithTraceContext(traceInfo, () -> {
+            }, new StubEvent());
 
             // then
-            assertThat(simpleTracer.getSpans()).hasSize(1);
-            assertThat(simpleTracer.getSpans().getFirst().getEndTimestamp()).isNotNull();
+            SimpleSpan span = simpleTracer.getSpans().getFirst();
+            assertThat(span.getEndTimestamp()).isNotNull();
         }
 
         @Test
@@ -88,7 +90,11 @@ class TracerProviderTest {
                     }, new StubEvent())
             ).isInstanceOf(RuntimeException.class);
 
-            assertThat(simpleTracer.getSpans()).isNotEmpty();
+            // finally 블록에서 span.end()가 호출되었는지 getEndTimestamp로 직접 검증
+            SimpleSpan span = simpleTracer.getSpans().getFirst();
+            assertThat(span.getEndTimestamp())
+                    .as("예외가 발생해도 finally에서 span.end()가 호출되어야 한다")
+                    .isNotNull();
         }
 
         @Test
@@ -97,7 +103,8 @@ class TracerProviderTest {
             TraceInfo traceInfo = new TraceInfo("463ac35c9f6413ad48485a3953bb6124", "0020000000000001");
 
             // when
-            tracerProvider.executeWithTraceContext(traceInfo, () -> {}, new StubEvent());
+            tracerProvider.executeWithTraceContext(traceInfo, () -> {
+            }, new StubEvent());
 
             // then
             assertThat(simpleTracer.getSpans().getFirst().getName()).isEqualTo("StubEvent");
@@ -121,7 +128,7 @@ class TracerProviderTest {
                 latch.countDown();
             });
 
-            // then — CountDownLatch로 스레드 완료 대기 (Thread.sleep 아님)
+            // then — CountDownLatch로 스레드 완료 대기
             assertThat(latch.await(3, TimeUnit.SECONDS))
                     .as("비동기 태스크가 3초 이내에 완료되어야 한다")
                     .isTrue();

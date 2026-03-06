@@ -79,7 +79,7 @@ class TracerProviderTest {
         }
 
         @Test
-        void task_내부에서_예외가_발생해도_Span은_종료된다() {
+        void task_내부에서_예외가_발생하면_Span에_에러가_기록되고_종료된다() {
             // given
             TraceInfo traceInfo = new TraceInfo("463ac35c9f6413ad48485a3953bb6124", "0020000000000001");
 
@@ -90,8 +90,15 @@ class TracerProviderTest {
                     }, new StubEvent())
             ).isInstanceOf(RuntimeException.class);
 
-            // finally 블록에서 span.end()가 호출되었는지 getEndTimestamp로 직접 검증
             SimpleSpan span = simpleTracer.getSpans().getFirst();
+
+            // span.error(t)가 호출되어 Tempo에서 에러 Span으로 표시됨
+            assertThat(span.getError())
+                    .as("span.error(t)로 예외가 기록되어야 한다")
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessage("의도된 예외");
+
+            // finally에서 span.end()가 호출됨
             assertThat(span.getEndTimestamp())
                     .as("예외가 발생해도 finally에서 span.end()가 호출되어야 한다")
                     .isNotNull();

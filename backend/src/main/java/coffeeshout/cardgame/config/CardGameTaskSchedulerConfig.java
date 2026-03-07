@@ -33,6 +33,6 @@ public class CardGameTaskSchedulerConfig {
     @Bean
     @Profile("!test")
     public CardGameFlowScheduler cardGameFlowScheduler(ThreadPoolTaskScheduler cardGameThreadPoolTaskScheduler) {
-        return new CompletableFutureFlowScheduler(cardGameThreadPoolTaskScheduler.getScheduledExecutor());
+        return new CompletableFutureFlowScheduler(cardGameThreadPoolTaskScheduler);
     }
 }

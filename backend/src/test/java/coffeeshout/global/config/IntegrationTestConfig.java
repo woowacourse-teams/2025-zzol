@@ -21,7 +21,7 @@ public class IntegrationTestConfig {
     @Bean
     public CardGameFlowScheduler cardGameFlowScheduler(
             ShutDownTestScheduler cardGameExecutorScheduler) {
-        return new CompletableFutureFlowScheduler(cardGameExecutorScheduler.getScheduledExecutor());
+        return new CompletableFutureFlowScheduler(cardGameExecutorScheduler);
     }
 
     @Bean(name = "delayRemovalScheduler")

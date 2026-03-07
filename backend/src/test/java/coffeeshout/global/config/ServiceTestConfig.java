@@ -1,5 +1,6 @@
 package coffeeshout.global.config;
 
+import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
@@ -13,9 +14,10 @@ import org.springframework.scheduling.TaskScheduler;
 @Profile("test")
 public class ServiceTestConfig {
 
-    @Bean(name = "cardGameTaskScheduler")
-    public TaskScheduler testCardGameTaskScheduler() {
-        return new TestTaskScheduler();
+    @Bean
+    @Primary
+    public CardGameFlowScheduler mockCardGameFlowScheduler() {
+        return Mockito.mock(CardGameFlowScheduler.class);
     }
 
     @Bean(name = "delayRemovalScheduler")

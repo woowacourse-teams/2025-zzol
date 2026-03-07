@@ -42,12 +42,12 @@ public class CardGameFlowOrchestrator {
         for (int currentRound = 0; currentRound < timing.totalRounds(); currentRound++) {
             EarlyFinishTrigger trigger = flowScheduler.createEarlyFinishTrigger();
             flow = isFirstRound(currentRound)
-                    ? chainFirstRound(flow, joinCode, cardGame, room, trigger)
-                    : chainSubsequentRound(flow, joinCode, cardGame, room, trigger);
+                    ? chainFirstRound(flow, cardGame, room, trigger)
+                    : chainSubsequentRound(flow, cardGame, room, trigger);
             flow = finishRound(flow, cardGame, room, currentRound);
         }
 
-        flow.andThen(finishGame(joinCode, cardGame, room), timing.scoreBoard())
+        flow.andThen(finishGame(cardGame, room), timing.scoreBoard())
                 .onError(ex -> log.error("CardGame flow 실패: joinCode={}", joinCode, ex));
     }
 
@@ -68,18 +68,18 @@ public class CardGameFlowOrchestrator {
         return roundIndex == timing.totalRounds() - 1;
     }
 
-    private FlowHandle chainFirstRound(FlowHandle flow, String joinCode, CardGame cardGame, Room room,
+    private FlowHandle chainFirstRound(FlowHandle flow, CardGame cardGame, Room room,
                                        EarlyFinishTrigger trigger) {
         return flow
                 .andThen(step(cardGame, room, PREPARE), timing.firstLoading())
-                .andThen(startPlay(joinCode, cardGame, room, trigger), timing.prepare())
+                .andThen(startPlay(cardGame, room, trigger), timing.prepare())
                 .raceTimeout(timing.playing(), trigger, timing.earlyFinishDelay());
     }
 
-    private FlowHandle chainSubsequentRound(FlowHandle flow, String joinCode, CardGame cardGame, Room room,
+    private FlowHandle chainSubsequentRound(FlowHandle flow, CardGame cardGame, Room room,
                                             EarlyFinishTrigger trigger) {
         return flow
-                .andThen(startPlay(joinCode, cardGame, room, trigger), timing.loading())
+                .andThen(startPlay(cardGame, room, trigger), timing.loading())
                 .raceTimeout(timing.playing(), trigger, timing.earlyFinishDelay());
     }
 
@@ -91,14 +91,15 @@ public class CardGameFlowOrchestrator {
         return flow.andThen(step(cardGame, room, START_ROUND), timing.scoreBoard());
     }
 
-    private Runnable startPlay(String joinCode, CardGame cardGame, Room room, EarlyFinishTrigger trigger) {
+    private Runnable startPlay(CardGame cardGame, Room room, EarlyFinishTrigger trigger) {
         return () -> {
-            earlyFinishTriggers.put(joinCode, trigger);
+            earlyFinishTriggers.put(room.getJoinCode().getValue(), trigger);
             step(cardGame, room, START_PLAY).run();
         };
     }
 
-    private Runnable finishGame(String joinCode, CardGame cardGame, Room room) {
+    private Runnable finishGame(CardGame cardGame, Room room) {
+        String joinCode = room.getJoinCode().getValue();
         return () -> {
             earlyFinishTriggers.remove(joinCode);
             step(cardGame, room, FINISH_GAME).run();

@@ -113,7 +113,11 @@ public class CardGameFlowOrchestrator {
     private Runnable step(CardGame cardGame, Room room, CardGameStep step) {
         return () -> {
             step.execute(cardGame, room);
-            notifier.notifyStepCompleted(cardGame, room);
+            try {
+                notifier.notifyStepCompleted(cardGame, room);
+            } catch (Exception e) {
+                log.warn("CardGame step 알림 실패: joinCode={}, step={}", room.getJoinCode().getValue(), step, e);
+            }
         };
     }
 }

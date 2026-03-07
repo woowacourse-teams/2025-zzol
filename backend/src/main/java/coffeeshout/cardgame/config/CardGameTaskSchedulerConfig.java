@@ -16,9 +16,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @Slf4j
 public class CardGameTaskSchedulerConfig {
 
-    @Bean
+    @Bean(name = "cardGameThreadPoolTaskScheduler")
     @Profile("!test")
-    public CardGameFlowScheduler cardGameFlowScheduler() {
+    public ThreadPoolTaskScheduler cardGameThreadPoolTaskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(3);
         scheduler.setThreadNamePrefix("card-game-task-");
@@ -27,6 +27,12 @@ public class CardGameTaskSchedulerConfig {
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         scheduler.setAwaitTerminationSeconds(30);
         scheduler.initialize();
-        return new CompletableFutureFlowScheduler(scheduler.getScheduledExecutor());
+        return scheduler;
+    }
+
+    @Bean
+    @Profile("!test")
+    public CardGameFlowScheduler cardGameFlowScheduler(ThreadPoolTaskScheduler cardGameThreadPoolTaskScheduler) {
+        return new CompletableFutureFlowScheduler(cardGameThreadPoolTaskScheduler.getScheduledExecutor());
     }
 }

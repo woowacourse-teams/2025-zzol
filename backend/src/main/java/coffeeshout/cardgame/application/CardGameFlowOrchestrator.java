@@ -48,7 +48,10 @@ public class CardGameFlowOrchestrator {
         }
 
         flow.andThen(finishGame(cardGame, room), timing.scoreBoard())
-                .onError(ex -> log.error("CardGame flow 실패: joinCode={}", joinCode, ex));
+                .onError(ex -> {
+                    earlyFinishTriggers.remove(joinCode);
+                    log.error("CardGame flow 실패: joinCode={}", joinCode, ex);
+                });
     }
 
     public void triggerEarlyRoundFinish(String joinCode) {

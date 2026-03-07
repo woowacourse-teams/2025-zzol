@@ -13,10 +13,15 @@ import org.springframework.scheduling.TaskScheduler;
 @Import(TestContainerConfig.class)
 public class IntegrationTestConfig {
 
+    @Bean(name = "cardGameExecutorScheduler")
+    public ShutDownTestScheduler cardGameExecutorScheduler() {
+        return new ShutDownTestScheduler();
+    }
+
     @Bean
-    public CardGameFlowScheduler cardGameFlowScheduler() {
-        ShutDownTestScheduler scheduler = new ShutDownTestScheduler();
-        return new CompletableFutureFlowScheduler(scheduler.getScheduledExecutor());
+    public CardGameFlowScheduler cardGameFlowScheduler(
+            ShutDownTestScheduler cardGameExecutorScheduler) {
+        return new CompletableFutureFlowScheduler(cardGameExecutorScheduler.getScheduledExecutor());
     }
 
     @Bean(name = "delayRemovalScheduler")

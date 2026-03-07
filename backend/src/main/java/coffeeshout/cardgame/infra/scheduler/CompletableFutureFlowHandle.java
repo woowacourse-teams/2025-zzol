@@ -7,9 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class CompletableFutureFlowHandle implements FlowHandle {
 
     private final CompletableFuture<Void> future;
@@ -39,8 +37,7 @@ public class CompletableFutureFlowHandle implements FlowHandle {
 
     @Override
     public FlowHandle raceTimeout(Duration timeout, EarlyFinishTrigger trigger, Duration earlyFinishExtraDelay) {
-        CompletableFutureEarlyFinishTrigger cfTrigger = (CompletableFutureEarlyFinishTrigger) trigger;
-        CompletableFuture<Void> triggerFuture = cfTrigger.getFuture();
+        CompletableFuture<Void> triggerFuture = trigger.asCompletionStage().toCompletableFuture();
 
         CompletableFuture<Void> raced = future.thenCompose(v -> {
             CompletableFuture<Void> timeoutFuture = new CompletableFuture<>();
@@ -56,7 +53,8 @@ public class CompletableFutureFlowHandle implements FlowHandle {
                                     earlyFinishExtraDelay.toMillis(),
                                     TimeUnit.MILLISECONDS
                             );
-                            return extraDelay;
+                            // timeout 잔여 시간이 extraDelay보다 짧으면 timeout이 먼저 완료되어 즉시 진행
+                            return CompletableFuture.anyOf(extraDelay, timeoutFuture).thenApply(ignored -> null);
                         }
                         return CompletableFuture.completedFuture(null);
                     });

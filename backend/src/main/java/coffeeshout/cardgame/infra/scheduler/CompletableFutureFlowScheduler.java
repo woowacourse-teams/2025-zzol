@@ -3,6 +3,7 @@ package coffeeshout.cardgame.infra.scheduler;
 import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
 import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
 import coffeeshout.cardgame.application.port.FlowHandle;
+import jakarta.annotation.PreDestroy;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
@@ -33,5 +34,10 @@ public class CompletableFutureFlowScheduler implements CardGameFlowScheduler {
     @Override
     public EarlyFinishTrigger createEarlyFinishTrigger() {
         return new CompletableFutureEarlyFinishTrigger();
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        executor.shutdown();
     }
 }

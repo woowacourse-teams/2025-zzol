@@ -2,6 +2,7 @@ package coffeeshout.cardgame.infra.scheduler;
 
 import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public class CompletableFutureEarlyFinishTrigger implements EarlyFinishTrigger {
 
@@ -21,7 +22,8 @@ public class CompletableFutureEarlyFinishTrigger implements EarlyFinishTrigger {
         return future.isDone();
     }
 
-    CompletableFuture<Void> getFuture() {
+    @Override
+    public CompletionStage<Void> asCompletionStage() {
         return future;
     }
 }

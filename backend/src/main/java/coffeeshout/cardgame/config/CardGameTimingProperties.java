@@ -1,26 +1,21 @@
 package coffeeshout.cardgame.config;
 
+import jakarta.validation.constraints.Positive;
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @ConfigurationProperties(prefix = "card-game.timing")
 public record CardGameTimingProperties(
-        long firstLoadingMs,
-        long loadingMs,
-        long prepareMs,
-        long playingMs,
-        long scoreBoardMs,
-        long earlyFinishDelayMs
+        @Positive(message = "총 라운드 수는 양수여야 합니다") int totalRounds,
+        @Positive(message = "첫 번째 로딩 시간은 양수여야 합니다") long firstLoadingMs,
+        @Positive(message = "로딩 시간은 양수여야 합니다") long loadingMs,
+        @Positive(message = "설명 시간은 양수여야 합니다") long prepareMs,
+        @Positive(message = "플레이 시간은 양수여야 합니다") long playingMs,
+        @Positive(message = "스코어보드 시간은 양수여야 합니다") long scoreBoardMs,
+        @Positive(message = "조기 종료 딜레이는 양수여야 합니다") long earlyFinishDelayMs
 ) {
-
-    public CardGameTimingProperties {
-        if (firstLoadingMs <= 0) firstLoadingMs = 4000;
-        if (loadingMs <= 0) loadingMs = 3000;
-        if (prepareMs <= 0) prepareMs = 2000;
-        if (playingMs <= 0) playingMs = 10250;
-        if (scoreBoardMs <= 0) scoreBoardMs = 1500;
-        if (earlyFinishDelayMs <= 0) earlyFinishDelayMs = 2000;
-    }
 
     public Duration firstLoading() {
         return Duration.ofMillis(firstLoadingMs);

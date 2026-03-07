@@ -71,6 +71,7 @@ oracle:
 
 card-game:
   timing:
+    total-rounds: 2
     first-loading-ms: 4000
     loading-ms: 3000
     prepare-ms: 2000

@@ -8,6 +8,7 @@ import static coffeeshout.cardgame.domain.CardGameStep.START_ROUND;
 
 import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
 import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
+import coffeeshout.cardgame.application.port.FlowHandle;
 import coffeeshout.cardgame.config.CardGameTimingProperties;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.CardGameStep;
@@ -36,45 +37,73 @@ public class CardGameFlowOrchestrator {
     public void startFlow(CardGame cardGame, Room room) {
         final String joinCode = room.getJoinCode().getValue();
 
-        EarlyFinishTrigger round1Trigger = flowScheduler.createEarlyFinishTrigger();
-        EarlyFinishTrigger round2Trigger = flowScheduler.createEarlyFinishTrigger();
+        FlowHandle flow = flowScheduler.schedule(step(cardGame, room, START_ROUND), Duration.ZERO);
 
-        flowScheduler.schedule(step(cardGame, room, START_ROUND), Duration.ZERO)
+        for (int currentRound = 0; currentRound < timing.totalRounds(); currentRound++) {
+            EarlyFinishTrigger trigger = flowScheduler.createEarlyFinishTrigger();
+            flow = isFirstRound(currentRound)
+                    ? chainFirstRound(flow, joinCode, cardGame, room, trigger)
+                    : chainSubsequentRound(flow, joinCode, cardGame, room, trigger);
+            flow = finishRound(flow, cardGame, room, currentRound);
+        }
 
-                // 1라운드: 로딩 → 설명 → 플레이
-                .andThen(step(cardGame, room, PREPARE), timing.firstLoading())
-                .andThen(() -> {
-                    earlyFinishTriggers.put(joinCode, round1Trigger);
-                    step(cardGame, room, START_PLAY).run();
-                }, timing.prepare())
-                .raceTimeout(timing.playing(), round1Trigger, timing.earlyFinishDelay())
-
-                // 1라운드 종료 → 2라운드: 로딩 → 플레이
-                .andThen(step(cardGame, room, FINISH_ROUND), Duration.ZERO)
-                .andThen(step(cardGame, room, START_ROUND), timing.scoreBoard())
-                .andThen(() -> {
-                    earlyFinishTriggers.put(joinCode, round2Trigger);
-                    step(cardGame, room, START_PLAY).run();
-                }, timing.loading())
-                .raceTimeout(timing.playing(), round2Trigger, timing.earlyFinishDelay())
-
-                // 2라운드 종료 → 게임 종료
-                .andThen(step(cardGame, room, FINISH_ROUND), Duration.ZERO)
-                .andThen(() -> {
-                    earlyFinishTriggers.remove(joinCode);
-                    step(cardGame, room, FINISH_GAME).run();
-                    eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.CARD_GAME.name()));
-                }, timing.scoreBoard())
-
+        flow.andThen(finishGame(joinCode, cardGame, room), timing.scoreBoard())
                 .onError(ex -> log.error("CardGame flow 실패: joinCode={}", joinCode, ex));
     }
 
     public void triggerEarlyRoundFinish(String joinCode) {
         EarlyFinishTrigger trigger = earlyFinishTriggers.get(joinCode);
-        if (trigger != null && !trigger.isCompleted()) {
-            log.info("전원 카드 선택 완료 - 조기 라운드 종료 트리거: joinCode={}", joinCode);
-            trigger.complete();
+        if (trigger == null || trigger.isCompleted()) {
+            return;
         }
+        log.info("전원 카드 선택 완료 - 조기 라운드 종료 트리거: joinCode={}", joinCode);
+        trigger.complete();
+    }
+
+    private boolean isFirstRound(int roundIndex) {
+        return roundIndex == 0;
+    }
+
+    private boolean isLastRound(int roundIndex) {
+        return roundIndex == timing.totalRounds() - 1;
+    }
+
+    private FlowHandle chainFirstRound(FlowHandle flow, String joinCode, CardGame cardGame, Room room,
+                                       EarlyFinishTrigger trigger) {
+        return flow
+                .andThen(step(cardGame, room, PREPARE), timing.firstLoading())
+                .andThen(startPlay(joinCode, cardGame, room, trigger), timing.prepare())
+                .raceTimeout(timing.playing(), trigger, timing.earlyFinishDelay());
+    }
+
+    private FlowHandle chainSubsequentRound(FlowHandle flow, String joinCode, CardGame cardGame, Room room,
+                                            EarlyFinishTrigger trigger) {
+        return flow
+                .andThen(startPlay(joinCode, cardGame, room, trigger), timing.loading())
+                .raceTimeout(timing.playing(), trigger, timing.earlyFinishDelay());
+    }
+
+    private FlowHandle finishRound(FlowHandle flow, CardGame cardGame, Room room, int roundIndex) {
+        flow = flow.andThen(step(cardGame, room, FINISH_ROUND), Duration.ZERO);
+        if (isLastRound(roundIndex)) {
+            return flow;
+        }
+        return flow.andThen(step(cardGame, room, START_ROUND), timing.scoreBoard());
+    }
+
+    private Runnable startPlay(String joinCode, CardGame cardGame, Room room, EarlyFinishTrigger trigger) {
+        return () -> {
+            earlyFinishTriggers.put(joinCode, trigger);
+            step(cardGame, room, START_PLAY).run();
+        };
+    }
+
+    private Runnable finishGame(String joinCode, CardGame cardGame, Room room) {
+        return () -> {
+            earlyFinishTriggers.remove(joinCode);
+            step(cardGame, room, FINISH_GAME).run();
+            eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.CARD_GAME.name()));
+        };
     }
 
     private Runnable step(CardGame cardGame, Room room, CardGameStep step) {

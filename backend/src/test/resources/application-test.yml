@@ -68,3 +68,12 @@ websocket:
     max-length: 100
     stream-ttl-seconds: 3600
     dedup-ttl-seconds: 1
+
+card-game:
+  timing:
+    first-loading-ms: 500
+    loading-ms: 500
+    prepare-ms: 500
+    playing-ms: 2000
+    score-board-ms: 500
+    early-finish-delay-ms: 500

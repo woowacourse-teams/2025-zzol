@@ -1,4 +1,4 @@
-package coffeeshout.minigame.cardgame.domain.cardgame.card;
+package coffeeshout.cardgame.domain.cardgame.card;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;

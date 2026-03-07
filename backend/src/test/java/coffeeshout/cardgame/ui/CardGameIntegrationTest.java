@@ -1,4 +1,4 @@
-package coffeeshout.minigame.cardgame.ui;
+package coffeeshout.cardgame.ui;
 
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.fixture.CardGameDeckStub;

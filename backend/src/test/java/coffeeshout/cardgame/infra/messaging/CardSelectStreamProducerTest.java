@@ -1,4 +1,4 @@
-package coffeeshout.minigame.cardgame.infra.messaging;
+package coffeeshout.cardgame.infra.messaging;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;

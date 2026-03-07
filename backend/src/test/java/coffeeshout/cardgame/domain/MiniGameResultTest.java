@@ -1,4 +1,4 @@
-package coffeeshout.minigame.cardgame.domain;
+package coffeeshout.cardgame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

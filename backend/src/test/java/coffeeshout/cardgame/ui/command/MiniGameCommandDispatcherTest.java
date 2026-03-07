@@ -1,4 +1,4 @@
-package coffeeshout.minigame.cardgame.ui.command;
+package coffeeshout.cardgame.ui.command;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.mock;

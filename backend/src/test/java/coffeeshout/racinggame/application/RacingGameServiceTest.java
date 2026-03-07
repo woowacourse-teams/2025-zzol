@@ -1,4 +1,4 @@
-package coffeeshout.minigame.racinggame.application;
+package coffeeshout.racinggame.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

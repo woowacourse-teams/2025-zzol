@@ -1,9 +1,8 @@
-package coffeeshout.cardgame.domain.cardgame;
+package coffeeshout.cardgame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.cardgame.domain.CardGameRound;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

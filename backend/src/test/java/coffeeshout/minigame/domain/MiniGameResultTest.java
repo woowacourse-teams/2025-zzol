@@ -1,11 +1,9 @@
-package coffeeshout.cardgame.domain;
+package coffeeshout.minigame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.cardgame.domain.CardGameScore;
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.minigame.domain.MiniGameResult;
-import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.racinggame.domain.RacingGameScore;
 import coffeeshout.room.domain.player.Player;
 import java.util.Map;

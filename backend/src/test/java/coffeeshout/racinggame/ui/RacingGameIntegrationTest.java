@@ -1,4 +1,4 @@
-package coffeeshout.minigame.racinggame.ui;
+package coffeeshout.racinggame.ui;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.fixture.TestStompSession;

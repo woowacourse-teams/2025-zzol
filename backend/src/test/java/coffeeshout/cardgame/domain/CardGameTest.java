@@ -1,11 +1,8 @@
-package coffeeshout.cardgame.domain.cardgame;
+package coffeeshout.cardgame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.cardgame.domain.CardGame;
-import coffeeshout.cardgame.domain.CardGameRound;
-import coffeeshout.cardgame.domain.CardGameState;
 import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.cardgame.domain.card.CardGameDeckGenerator;
 import coffeeshout.fixture.CardGameDeckStub;

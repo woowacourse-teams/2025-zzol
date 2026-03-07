@@ -1,9 +1,7 @@
-package coffeeshout.cardgame.domain.cardgame;
+package coffeeshout.cardgame.domain;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import coffeeshout.cardgame.domain.CardGameScore;
-import coffeeshout.cardgame.domain.CardHand;
 import coffeeshout.cardgame.domain.card.AdditionCard;
 import coffeeshout.cardgame.domain.card.MultiplierCard;
 import org.junit.jupiter.api.Test;

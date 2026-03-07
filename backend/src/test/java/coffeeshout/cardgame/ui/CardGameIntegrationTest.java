@@ -29,8 +29,12 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
 
-    // playing 제한시간 (application-test.yml 값과 일치) - 조기 전환 검증에 사용
+    // application-test.yml 타이밍 값과 일치해야 함
+    private static final long FIRST_LOADING_MS = 500L;
+    private static final long PREPARE_MS = 500L;
     private static final long PLAYING_MS = 2000L;
+    private static final long SCORE_BOARD_MS = 500L;
+    private static final long LOADING_MS = 500L;
 
     JoinCode joinCode;
     Player host;
@@ -97,13 +101,13 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
                 }
                 """, getColorIndexCustomization());
 
-        assertMessageContains(prepare, "\"cardGameState\":\"PREPARE\"");
-        assertMessageContains(firstRoundPlaying, "\"cardGameState\":\"PLAYING\"");
-        assertMessageContains(firstRoundScoreBoard, "\"cardGameState\":\"SCORE_BOARD\"");
-        assertMessageContains(secondRoundLoading, "\"cardGameState\":\"LOADING\"");
-        assertMessageContains(secondRoundPlaying, "\"cardGameState\":\"PLAYING\"");
-        assertMessageContains(secondRoundScoreBoard, "\"cardGameState\":\"SCORE_BOARD\"");
-        assertMessageContains(done, "\"cardGameState\":\"DONE\"");
+        assertMessageContains(prepare, FIRST_LOADING_MS, "\"cardGameState\":\"PREPARE\"");
+        assertMessageContains(firstRoundPlaying, PREPARE_MS, "\"cardGameState\":\"PLAYING\"");
+        assertMessageContains(firstRoundScoreBoard, PLAYING_MS, "\"cardGameState\":\"SCORE_BOARD\"");
+        assertMessageContains(secondRoundLoading, SCORE_BOARD_MS, "\"cardGameState\":\"LOADING\"");
+        assertMessageContains(secondRoundPlaying, LOADING_MS, "\"cardGameState\":\"PLAYING\"");
+        assertMessageContains(secondRoundScoreBoard, PLAYING_MS, "\"cardGameState\":\"SCORE_BOARD\"");
+        assertMessageContains(done, SCORE_BOARD_MS, "\"cardGameState\":\"DONE\"");
     }
 
     @Test
@@ -138,7 +142,72 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
                     "data":{
                         "cardGameState":"PLAYING",
                         "currentRound":"FIRST",
-                        "allSelected":false
+                        "allSelected":false,
+                        "cardInfoMessages":[
+                           {
+                              "cardType":"MULTIPLIER",
+                              "value":2,
+                              "selected":true,
+                              "playerName":"꾹이",
+                              "colorIndex":4
+                          },
+                          {
+                              "cardType":"ADDITION",
+                              "value":30,
+                              "selected":false,
+                              "playerName":null,
+                              "colorIndex":null
+                          },
+                          {
+                              "cardType":"MULTIPLIER",
+                              "value":0,
+                              "selected":false,
+                              "playerName":null,
+                              "colorIndex":null
+                          },
+                          {
+                              "cardType":"ADDITION",
+                              "value":0,
+                              "selected":false,
+                              "playerName":null,
+                              "colorIndex":null
+                          },
+                          {
+                              "cardType":"ADDITION",
+                              "value":-10,
+                              "selected":false,
+                              "playerName":null,
+                              "colorIndex":null
+                          },
+                          {
+                              "cardType":"MULTIPLIER",
+                              "value":4,
+                              "selected":false,
+                              "playerName":null,
+                              "colorIndex":null
+                          },
+                          {
+                              "cardType":"ADDITION",
+                              "value":10,
+                              "selected":false,
+                              "playerName":null,
+                              "colorIndex":null
+                          },
+                          {
+                              "cardType":"ADDITION"
+                              ,"value":20,
+                              "selected":false,
+                              "playerName":null,
+                              "colorIndex":null
+                          },
+                          {
+                              "cardType":"ADDITION",
+                              "value":40,
+                              "selected":false,
+                              "playerName":null,
+                              "colorIndex":null
+                          }
+                        ]
                     }
                 }
                 """, getColorIndexCustomization());

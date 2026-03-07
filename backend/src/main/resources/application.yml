@@ -69,6 +69,15 @@ oracle:
       namespace: ax9wq4bhn4cn
       bucket: zzol-public
 
+card-game:
+  timing:
+    first-loading-ms: 4000
+    loading-ms: 3000
+    prepare-ms: 2000
+    playing-ms: 10250
+    score-board-ms: 1500
+    early-finish-delay-ms: 2000
+
 room:
   removalDelay: 1h
   qr:

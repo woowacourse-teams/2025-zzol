@@ -1,7 +1,7 @@
 package coffeeshout.global.websocket;
 
-import static coffeeshout.cardgame.domain.event.CardGameMessagePublisher.CARD_GAME_STATE_DESTINATION_FORMAT;
-import static coffeeshout.cardgame.domain.event.CardGameMessagePublisher.GAME_START_DESTINATION_FORMAT;
+import static coffeeshout.cardgame.application.CardGameNotifier.CARD_GAME_STATE_DESTINATION_FORMAT;
+import static coffeeshout.cardgame.application.CardGameNotifier.GAME_START_DESTINATION_FORMAT;
 import static coffeeshout.global.websocket.GameRecoveryService.ID_MAP_KEY_FORMAT;
 import static coffeeshout.global.websocket.GameRecoveryService.STREAM_KEY_FORMAT;
 import static coffeeshout.racinggame.infra.messaging.RacingGameMessagePublisher.RACING_GAME_PLAYERS_POSITION_DESTINATION_FORMAT;
@@ -13,6 +13,7 @@ import static coffeeshout.room.ui.messaging.RoomMessagePublisher.ROULETTE_TOPIC_
 import static coffeeshout.room.ui.messaging.RoomMessagePublisher.WINNER_TOPIC_FORMAT;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.global.ServiceTest;
@@ -129,7 +130,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<String> response = WebSocketResponse.success("test");
 
             // when
-            String streamId = gameRecoveryService.save(joinCode, destination, response);
+            gameRecoveryService.save(joinCode, destination, response);
 
             // then
             String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode);
@@ -256,17 +257,15 @@ class GameRecoveryServiceTest extends ServiceTest {
             String destination = "/topic/room/" + joinCode;
             int totalMessages = 5;
             List<String> streamIds = new ArrayList<>();
-            List<String> expectedData = new ArrayList<>();
 
             for (int i = 0; i < totalMessages; i++) {
                 String data = "message" + i;
-                expectedData.add(data);
                 String streamId = saveMessage(destination, data);
                 streamIds.add(streamId);
             }
 
             // when - 첫 번째 streamId 이후의 메시지들 복구
-            String firstStreamId = streamIds.get(0);
+            String firstStreamId = streamIds.getFirst();
             List<RecoveryMessage> recoveredMessages = gameRecoveryService.getMessagesSince(joinCode, firstStreamId);
 
             // then
@@ -343,7 +342,8 @@ class GameRecoveryServiceTest extends ServiceTest {
             JoinCode nonExistentJoinCode = new JoinCode("ZZZZ");
 
             // when & then - 예외 없이 정상 수행
-            gameRecoveryService.cleanup(nonExistentJoinCode);
+            assertThatCode(() -> gameRecoveryService.cleanup(nonExistentJoinCode))
+                    .doesNotThrowAnyException();
         }
 
         @ParameterizedTest
@@ -506,8 +506,8 @@ class GameRecoveryServiceTest extends ServiceTest {
             assertThat(idMapKeyTtl).isGreaterThan(0L).isLessThanOrEqualTo((long) SHORT_DEDUP_TTL);
 
             // streamKey는 긴 TTL (5초 이하, idMapKey보다 큼)
-            assertThat(streamKeyTtl).isGreaterThan(0L).isLessThanOrEqualTo((long) SHORT_STREAM_TTL);
-            assertThat(streamKeyTtl).isGreaterThan(idMapKeyTtl);
+            assertThat(streamKeyTtl).isGreaterThan(0L).isLessThanOrEqualTo((long) SHORT_STREAM_TTL)
+                    .isGreaterThan(idMapKeyTtl);
         }
     }
 
@@ -737,8 +737,8 @@ class GameRecoveryServiceTest extends ServiceTest {
             String recoveredDestination = messages.getFirst().destination();
 
             // destination에서 joinCode 추출 검증
-            assertThat(recoveredDestination).isEqualTo("/topic/room/" + testJoinCode + "/roulette");
-            assertThat(recoveredDestination).contains(testJoinCode.getValue());
+            assertThat(recoveredDestination).isEqualTo("/topic/room/" + testJoinCode + "/roulette")
+                    .contains(testJoinCode.getValue());
 
             // 정규식으로 joinCode 추출
             String extractedJoinCode = recoveredDestination.split("/")[3];

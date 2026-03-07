@@ -1,5 +1,7 @@
 package coffeeshout.global.config;
 
+import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
+import coffeeshout.cardgame.infra.scheduler.CompletableFutureFlowScheduler;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -11,9 +13,10 @@ import org.springframework.scheduling.TaskScheduler;
 @Import(TestContainerConfig.class)
 public class IntegrationTestConfig {
 
-    @Bean(name = "cardGameTaskScheduler")
-    public TaskScheduler testIntegrationCardGameTaskScheduler() {
-        return new ShutDownTestScheduler();
+    @Bean
+    public CardGameFlowScheduler cardGameFlowScheduler() {
+        ShutDownTestScheduler scheduler = new ShutDownTestScheduler();
+        return new CompletableFutureFlowScheduler(scheduler.getScheduledExecutor());
     }
 
     @Bean(name = "delayRemovalScheduler")

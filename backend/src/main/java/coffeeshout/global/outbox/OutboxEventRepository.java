@@ -28,7 +28,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
      */
     @Modifying
     @Query("UPDATE OutboxEvent o SET o.status = 'PENDING' "
-            + "WHERE o.status = 'IN_PROGRESS' AND o.createdAt < :threshold")
+            + "WHERE o.status = 'IN_PROGRESS' AND o.updatedAt < :threshold")
     int recoverStaleInProgressEvents(@Param("threshold") LocalDateTime threshold);
 
     @Modifying

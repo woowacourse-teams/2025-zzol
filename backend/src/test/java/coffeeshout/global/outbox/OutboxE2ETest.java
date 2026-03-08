@@ -96,6 +96,17 @@ class OutboxE2ETest {
         public TaskScheduler racingGameScheduler() {
             return new coffeeshout.global.config.ShutDownTestScheduler();
         }
+
+        /**
+         * 기본 taskScheduler를 no-op으로 덮어써서 @Scheduled 메서드 실행을 막는다.
+         * OutboxRelayWorker의 relay(), recoverStaleEvents(), cleanup()이
+         * 테스트 중에 백그라운드로 돌면서 수동 호출과 경합하는 걸 방지한다.
+         */
+        @Bean(name = "taskScheduler")
+        @Primary
+        public TaskScheduler noOpTaskScheduler() {
+            return new coffeeshout.global.config.ShutDownTestScheduler();
+        }
     }
 
     @Autowired

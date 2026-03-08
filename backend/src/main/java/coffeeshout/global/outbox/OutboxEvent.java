@@ -43,6 +43,9 @@ public class OutboxEvent {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
     public static OutboxEvent create(String streamKey, String payload) {
         final OutboxEvent event = new OutboxEvent();
         event.streamKey = streamKey;
@@ -50,15 +53,18 @@ public class OutboxEvent {
         event.status = OutboxStatus.PENDING;
         event.retryCount = 0;
         event.createdAt = LocalDateTime.now();
+        event.updatedAt = event.createdAt;
         return event;
     }
 
     public void markInProgress() {
         this.status = OutboxStatus.IN_PROGRESS;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void markPublished() {
         this.status = OutboxStatus.PUBLISHED;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void incrementRetryCount() {
@@ -67,9 +73,11 @@ public class OutboxEvent {
 
     public void markDeadLetter() {
         this.status = OutboxStatus.DEAD_LETTER;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void setStatusPending() {
         this.status = OutboxStatus.PENDING;
+        this.updatedAt = LocalDateTime.now();
     }
 }

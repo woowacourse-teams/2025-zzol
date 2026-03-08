@@ -95,7 +95,8 @@ public class CardGameFlowOrchestrator {
             case PREPARE -> timing.prepare();
             case PLAYING -> timing.playing();
             case SCORE_BOARD -> timing.scoreBoard();
-            default -> Duration.ZERO;
+            case READY, DONE -> throw new IllegalArgumentException(
+                    "타이밍이 정의되지 않은 상태입니다: " + state);
         };
     }
 

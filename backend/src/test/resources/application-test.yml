@@ -71,9 +71,9 @@ websocket:
 
 card-game:
   timing:
-    first-loading-ms: 500
-    loading-ms: 500
-    prepare-ms: 500
-    playing-ms: 2000
-    score-board-ms: 500
-    early-finish-delay-ms: 500
+    first-loading: 500ms
+    loading: 500ms
+    prepare: 500ms
+    playing: 2000ms
+    score-board: 500ms
+    early-finish-delay: 500ms

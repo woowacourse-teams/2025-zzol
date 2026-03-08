@@ -71,12 +71,12 @@ oracle:
 
 card-game:
   timing:
-    first-loading-ms: 4000
-    loading-ms: 3000
-    prepare-ms: 2000
-    playing-ms: 10250
-    score-board-ms: 1500
-    early-finish-delay-ms: 2000
+    first-loading: 4000ms
+    loading: 3000ms
+    prepare: 2000ms
+    playing: 10250ms
+    score-board: 1500ms
+    early-finish-delay: 2000ms
 
 room:
   removalDelay: 1h

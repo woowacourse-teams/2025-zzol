@@ -1,5 +1,6 @@
 package coffeeshout.room.application.service;
 
+import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
@@ -63,6 +64,7 @@ public class RoomService {
     private final RoomJpaRepository roomJpaRepository;
     private final RoulettePersistenceService roulettePersistenceService;
     private final RouletteService rouletteService;
+    private final OutboxEventRecorder outboxEventRecorder;
     private final StreamPublisher streamPublisher;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -79,7 +81,10 @@ public class RoomService {
         // 방 생성 후 이벤트 전달
         final BaseEvent event = new RoomCreateEvent(hostName, joinCode.getValue());
 
-        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        // 방 생성 이벤트: DB 저장과 원자적으로 묶기 위해 Outbox 경로 사용
+        // 트랜잭션 커밋 직후 AFTER_COMMIT으로 즉시 발행 (0ms 지연)
+        // Redis 장애 시에만 Worker가 500ms 후 재시도
+        outboxEventRecorder.record(StreamKey.ROOM_BROADCAST, event);
 
         // QR 코드 비동기 생성 시작
         qrCodeService.generateQrCodeAsync(joinCode.getValue());
@@ -98,6 +103,7 @@ public class RoomService {
 
         return processEventAsync(
                 event.eventId(),
+                // 방 참가는 결과를 CompletableFuture로 기다리는 요청-응답 패턴이므로 즉시 발행
                 () -> streamPublisher.publish(StreamKey.ROOM_JOIN, event),
                 "방 참가",
                 String.format("joinCode=%s, guestName=%s", joinCode, guestName),

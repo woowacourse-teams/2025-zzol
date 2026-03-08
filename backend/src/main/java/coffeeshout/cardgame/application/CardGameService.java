@@ -33,11 +33,8 @@ public class CardGameService implements MiniGameService {
 
     public void selectCard(String joinCode, String playerName, Integer cardIndex) {
         final JoinCode code = new JoinCode(joinCode);
-        final Room room = roomQueryService.getByJoinCode(code);
-        final CardGame cardGame = getCardGame(room);
-
-        cardGameCommandService.selectCard(code, new PlayerName(playerName), cardIndex);
-        if (cardGame.isFinishedThisRound()) {
+        final boolean roundFinished = cardGameCommandService.selectCard(code, new PlayerName(playerName), cardIndex);
+        if (roundFinished) {
             flowOrchestrator.triggerEarlyRoundFinish(joinCode);
         }
     }

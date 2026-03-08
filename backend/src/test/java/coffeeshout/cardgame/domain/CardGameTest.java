@@ -180,10 +180,10 @@ class CardGameTest {
             cardGame.selectCard(player1, 0);
             cardGame.selectCard(player2, 1);
             cardGame.selectCard(player3, 2);
-            cardGame.selectCard(player4, 3);
+            boolean roundFinished = cardGame.selectCard(player4, 3);
 
             // when - 두 번째 라운드 시작 가능한지 확인
-            assertThat(cardGame.isFinishedThisRound()).isTrue();
+            assertThat(roundFinished).isTrue();
 
             // then - 점수가 계산되는지 확인
             Map<Player, MiniGameScore> scores = cardGame.getScores();
@@ -230,14 +230,14 @@ class CardGameTest {
             cardGame.startPlay();
             cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0);
             cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1);
-            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
-            assertThat(cardGame.isFinishedThisRound()).isFalse();
+            boolean notYetFinished = cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
+            assertThat(notYetFinished).isFalse();
 
             // when
-            cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3);
+            boolean roundFinished = cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3);
 
             // then
-            assertThat(cardGame.isFinishedThisRound()).isTrue();
+            assertThat(roundFinished).isTrue();
         }
 
         @Test
@@ -246,14 +246,14 @@ class CardGameTest {
             cardGame.startPlay();
             cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0);
             cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1);
-            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
-            assertThat(cardGame.isFinishedThisRound()).isFalse();
+            boolean notYetFinished = cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
+            assertThat(notYetFinished).isFalse();
 
             // when - 마지막 플레이어가 선택
-            cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3);
+            boolean roundFinished = cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3);
 
             // then
-            assertThat(cardGame.isFinishedThisRound()).isTrue();
+            assertThat(roundFinished).isTrue();
         }
     }
 

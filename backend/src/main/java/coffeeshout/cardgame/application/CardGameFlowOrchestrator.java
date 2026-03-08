@@ -11,6 +11,7 @@ import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
 import coffeeshout.cardgame.application.port.FlowHandle;
 import coffeeshout.cardgame.config.CardGameTimingProperties;
 import coffeeshout.cardgame.domain.CardGame;
+import coffeeshout.cardgame.domain.CardGameState;
 import coffeeshout.cardgame.domain.CardGameStep;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
@@ -48,7 +49,7 @@ public class CardGameFlowOrchestrator {
             flow = finishRound(flow, cardGame, room, i == totalRounds - 1);
         }
 
-        flow.andThen(finishGame(cardGame, room), timing.scoreBoard())
+        flow.andThen(finishGame(cardGame, room), durationOf(CardGameState.SCORE_BOARD))
                 .onError(ex -> {
                     earlyFinishTriggers.remove(joinCode);
                     log.error("CardGame flow 실패: joinCode={}", joinCode, ex);
@@ -67,16 +68,16 @@ public class CardGameFlowOrchestrator {
     private FlowHandle chainFirstRound(FlowHandle flow, CardGame cardGame, Room room,
                                        EarlyFinishTrigger trigger) {
         return flow
-                .andThen(step(cardGame, room, PREPARE), timing.firstLoading())
-                .andThen(startPlay(cardGame, room, trigger), timing.prepare())
-                .raceTimeout(timing.playing(), trigger, timing.earlyFinishDelay());
+                .andThen(step(cardGame, room, PREPARE), durationOf(CardGameState.FIRST_LOADING))
+                .andThen(startPlay(cardGame, room, trigger), durationOf(CardGameState.PREPARE))
+                .raceTimeout(durationOf(CardGameState.PLAYING), trigger, timing.earlyFinishDelay());
     }
 
     private FlowHandle chainSubsequentRound(FlowHandle flow, CardGame cardGame, Room room,
                                             EarlyFinishTrigger trigger) {
         return flow
-                .andThen(startPlay(cardGame, room, trigger), timing.loading())
-                .raceTimeout(timing.playing(), trigger, timing.earlyFinishDelay());
+                .andThen(startPlay(cardGame, room, trigger), durationOf(CardGameState.LOADING))
+                .raceTimeout(durationOf(CardGameState.PLAYING), trigger, timing.earlyFinishDelay());
     }
 
     private FlowHandle finishRound(FlowHandle flow, CardGame cardGame, Room room, boolean isLastRound) {
@@ -84,7 +85,18 @@ public class CardGameFlowOrchestrator {
         if (isLastRound) {
             return flow;
         }
-        return flow.andThen(step(cardGame, room, START_ROUND), timing.scoreBoard());
+        return flow.andThen(step(cardGame, room, START_ROUND), durationOf(CardGameState.SCORE_BOARD));
+    }
+
+    private Duration durationOf(CardGameState state) {
+        return switch (state) {
+            case FIRST_LOADING -> timing.firstLoading();
+            case LOADING -> timing.loading();
+            case PREPARE -> timing.prepare();
+            case PLAYING -> timing.playing();
+            case SCORE_BOARD -> timing.scoreBoard();
+            default -> Duration.ZERO;
+        };
     }
 
     private Runnable startPlay(CardGame cardGame, Room room, EarlyFinishTrigger trigger) {

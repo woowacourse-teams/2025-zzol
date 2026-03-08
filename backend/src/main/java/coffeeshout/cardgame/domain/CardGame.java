@@ -73,7 +73,7 @@ public class CardGame implements Playable {
         this.state = CardGameState.PLAYING;
     }
 
-    public void selectCard(Player player, Integer cardIndex) {
+    public boolean selectCard(Player player, Integer cardIndex) {
         if (state != CardGameState.PLAYING) {
             throw new InvalidStateException(
                     CardGameErrorCode.NOT_PLAYING_STATE,
@@ -82,6 +82,7 @@ public class CardGame implements Playable {
         }
 
         playerHands.put(player, deck.pick(cardIndex));
+        return playerHands.isRoundFinished();
     }
 
     public boolean isFinishedThisRound() {

@@ -20,15 +20,16 @@ public class CardGameCommandService {
     private final RoomQueryService roomQueryService;
     private final CardGameNotifier notifier;
 
-    public void selectCard(JoinCode joinCode, PlayerName playerName, int cardIndex) {
+    public boolean selectCard(JoinCode joinCode, PlayerName playerName, int cardIndex) {
         log.info("카드 선택 처리 시작: joinCode={}, playerName={}, cardIndex={}",
                 joinCode, playerName, cardIndex);
 
         final Room room = roomQueryService.getByJoinCode(joinCode);
         final CardGame cardGame = (CardGame) room.findMiniGame(MiniGameType.CARD_GAME);
         final Player player = cardGame.findPlayerByName(playerName);
-        cardGame.selectCard(player, cardIndex);
+        final boolean roundFinished = cardGame.selectCard(player, cardIndex);
 
         notifier.notifyCardSelected(joinCode, cardGame);
+        return roundFinished;
     }
 }

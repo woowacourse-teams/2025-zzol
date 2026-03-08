@@ -8,7 +8,6 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "card-game.timing")
 public record CardGameTimingProperties(
-        @Positive(message = "총 라운드 수는 양수여야 합니다") int totalRounds,
         @Positive(message = "첫 번째 로딩 시간은 양수여야 합니다") long firstLoadingMs,
         @Positive(message = "로딩 시간은 양수여야 합니다") long loadingMs,
         @Positive(message = "설명 시간은 양수여야 합니다") long prepareMs,

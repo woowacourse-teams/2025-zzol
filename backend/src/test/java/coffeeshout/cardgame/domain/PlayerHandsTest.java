@@ -22,6 +22,9 @@ import org.junit.jupiter.api.Test;
 
 class PlayerHandsTest {
 
+    private static final CardGameRound ROUND_FIRST = CardGameRound.roundOf(1, 2);
+    private static final CardGameRound ROUND_SECOND = CardGameRound.roundOf(2, 2);
+
     private PlayerHands playerHands;
     private Players players;
 
@@ -157,8 +160,9 @@ class PlayerHandsTest {
             // given
             String nonExistentName = "존재하지않는플레이어";
 
+            PlayerName playerName = new PlayerName(nonExistentName);
             // when & then
-            assertThatThrownBy(() -> playerHands.findPlayerByName(new PlayerName(nonExistentName)))
+            assertThatThrownBy(() -> playerHands.findPlayerByName(playerName))
                     .isInstanceOf(InvalidArgumentException.class);
         }
     }
@@ -210,7 +214,7 @@ class PlayerHandsTest {
             playerHands.put(players.getPlayer(new PlayerName("루키")), AdditionCard.PLUS_30);
 
             // when
-            List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(CardGameRound.FIRST);
+            List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(ROUND_FIRST);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -234,7 +238,7 @@ class PlayerHandsTest {
             playerHands.put(players.getPlayer(new PlayerName("꾹이")), MultiplierCard.DOUBLE);
 
             // when
-            List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(CardGameRound.SECOND);
+            List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(ROUND_SECOND);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -256,7 +260,7 @@ class PlayerHandsTest {
             playerHands.put(players.getPlayer(new PlayerName("엠제이")), AdditionCard.PLUS_10);
 
             // when
-            List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(CardGameRound.FIRST);
+            List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(ROUND_FIRST);
 
             // then
             assertThat(unselectedPlayers).isEmpty();
@@ -274,7 +278,7 @@ class PlayerHandsTest {
             playerHands.put(player, card);
 
             // when
-            Optional<Player> cardOwner = playerHands.findCardOwner(card, CardGameRound.FIRST);
+            Optional<Player> cardOwner = playerHands.findCardOwner(card, ROUND_FIRST);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -292,7 +296,7 @@ class PlayerHandsTest {
             playerHands.put(player, secondRoundCard); // 두 번째 라운드
 
             // when
-            Optional<Player> cardOwner = playerHands.findCardOwner(secondRoundCard, CardGameRound.SECOND);
+            Optional<Player> cardOwner = playerHands.findCardOwner(secondRoundCard, ROUND_SECOND);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -307,7 +311,7 @@ class PlayerHandsTest {
             Card nonExistentCard = AdditionCard.PLUS_40;
 
             // when
-            Optional<Player> cardOwner = playerHands.findCardOwner(nonExistentCard, CardGameRound.FIRST);
+            Optional<Player> cardOwner = playerHands.findCardOwner(nonExistentCard, ROUND_FIRST);
 
             // then
             assertThat(cardOwner).isEmpty();
@@ -321,7 +325,7 @@ class PlayerHandsTest {
             playerHands.put(player, card); // 첫 번째 라운드
 
             // when - 두 번째 라운드에서 첫 번째 라운드 카드를 찾음
-            Optional<Player> cardOwner = playerHands.findCardOwner(card, CardGameRound.SECOND);
+            Optional<Player> cardOwner = playerHands.findCardOwner(card, ROUND_SECOND);
 
             // then
             assertThat(cardOwner).isEmpty();

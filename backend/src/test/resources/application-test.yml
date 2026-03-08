@@ -71,7 +71,6 @@ websocket:
 
 card-game:
   timing:
-    total-rounds: 2
     first-loading-ms: 500
     loading-ms: 500
     prepare-ms: 500

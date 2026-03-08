@@ -22,6 +22,7 @@ public class CardGame implements Playable {
 
     private static final int ADDITION_CARD_COUNT = 7;
     private static final int MULTIPLIER_CARD_COUNT = 2;
+    static final int TOTAL_ROUNDS = 2;
 
     private final Deck deck;
     private final long seed;
@@ -30,7 +31,7 @@ public class CardGame implements Playable {
     private CardGameState state;
 
     public CardGame(@NonNull CardGameDeckGenerator deckGenerator, long seed) {
-        this.round = CardGameRound.READY;
+        this.round = CardGameRound.ready(TOTAL_ROUNDS);
         this.state = CardGameState.READY;
         this.seed = seed;
         this.deck = deckGenerator.generate(ADDITION_CARD_COUNT, MULTIPLIER_CARD_COUNT, seed);
@@ -58,7 +59,7 @@ public class CardGame implements Playable {
 
     public void startRound() {
         this.round = round.next();
-        this.state = round == CardGameRound.FIRST ? CardGameState.FIRST_LOADING : CardGameState.LOADING;
+        this.state = round.isFirst() ? CardGameState.FIRST_LOADING : CardGameState.LOADING;
     }
 
     public void updateDescription() {
@@ -84,11 +85,19 @@ public class CardGame implements Playable {
     }
 
     public boolean isFinishedThisRound() {
-        return isFinished(round);
+        return playerHands.isRoundFinished();
     }
 
-    public boolean isFinished(CardGameRound targetRound) {
-        return round == targetRound && playerHands.isRoundFinished();
+    public boolean isFirstRound() {
+        return round.isFirst();
+    }
+
+    public boolean isLastRound() {
+        return round.isLast();
+    }
+
+    public int getTotalRounds() {
+        return round.getTotalRounds();
     }
 
     public Player findPlayerByName(PlayerName name) {
@@ -98,7 +107,7 @@ public class CardGame implements Playable {
     public void assignRandomCardsToUnselectedPlayers() {
         final List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(round);
         // 라운드 정보를 포함한 시드로 일관된 랜덤 생성
-        final Random random = new Random(seed + round.ordinal());
+        final Random random = new Random(seed + round.toIndex());
 
         for (Player player : unselectedPlayers) {
             final Card card = deck.pickRandom(random);

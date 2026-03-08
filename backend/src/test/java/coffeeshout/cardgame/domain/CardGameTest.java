@@ -42,7 +42,7 @@ class CardGameTest {
         void 카드게임이_READY_상태로_시작한다() {
             // when & then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(cardGame.getRound()).isEqualTo(CardGameRound.READY);
+                softly.assertThat(cardGame.getRound().isReady()).isTrue();
                 softly.assertThat(cardGame.getState()).isEqualTo(CardGameState.READY);
             });
         }
@@ -54,7 +54,7 @@ class CardGameTest {
 
             // then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(cardGame.getRound()).isEqualTo(CardGameRound.FIRST);
+                softly.assertThat(cardGame.getRound().isFirst()).isTrue();
                 softly.assertThat(cardGame.getState()).isEqualTo(CardGameState.FIRST_LOADING);
             });
         }
@@ -68,7 +68,7 @@ class CardGameTest {
             cardGame.startRound(); // SECOND 라운드
 
             // then
-            assertThat(cardGame.getRound()).isEqualTo(CardGameRound.SECOND);
+            assertThat(cardGame.getRound().isLast()).isTrue();
         }
     }
 
@@ -183,7 +183,7 @@ class CardGameTest {
             cardGame.selectCard(player4, 3);
 
             // when - 두 번째 라운드 시작 가능한지 확인
-            assertThat(cardGame.isFinished(CardGameRound.FIRST)).isTrue();
+            assertThat(cardGame.isFinishedThisRound()).isTrue();
 
             // then - 점수가 계산되는지 확인
             Map<Player, MiniGameScore> scores = cardGame.getScores();
@@ -208,7 +208,7 @@ class CardGameTest {
             cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
 
             // when & then
-            assertThat(cardGame.isFinished(CardGameRound.FIRST)).isFalse();
+            assertThat(cardGame.isFinishedThisRound()).isFalse();
         }
 
         @Test
@@ -221,7 +221,7 @@ class CardGameTest {
             cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3);
 
             // when & then
-            assertThat(cardGame.isFinished(CardGameRound.FIRST)).isTrue();
+            assertThat(cardGame.isFinishedThisRound()).isTrue();
         }
 
         @Test
@@ -242,18 +242,18 @@ class CardGameTest {
 
         @Test
         void 라운드_진행_상태를_확인한다() {
-            // given - 첫 번째 라운드 완료
+            // given - 첫 번째 라운드 진행 중
             cardGame.startPlay();
             cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0);
             cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1);
             cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
-            assertThat(cardGame.isFinished(CardGameRound.FIRST)).isFalse();
+            assertThat(cardGame.isFinishedThisRound()).isFalse();
 
             // when - 마지막 플레이어가 선택
             cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3);
 
             // then
-            assertThat(cardGame.isFinished(CardGameRound.FIRST)).isTrue();
+            assertThat(cardGame.isFinishedThisRound()).isTrue();
         }
     }
 
@@ -293,7 +293,7 @@ class CardGameTest {
             cardGame.startRound();
 
             // when & then
-            assertThat(cardGame.getRound()).isEqualTo(CardGameRound.FIRST);
+            assertThat(cardGame.isFirstRound()).isTrue();
         }
 
         @Test
@@ -303,7 +303,7 @@ class CardGameTest {
             cardGame.startRound(); // SECOND
 
             // when & then
-            assertThat(cardGame.getRound()).isEqualTo(CardGameRound.SECOND);
+            assertThat(cardGame.isLastRound()).isTrue();
         }
     }
 

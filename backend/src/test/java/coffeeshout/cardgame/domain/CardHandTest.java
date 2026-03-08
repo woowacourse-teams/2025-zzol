@@ -13,6 +13,9 @@ import org.junit.jupiter.api.Test;
 
 class CardHandTest {
 
+    private static final CardGameRound ROUND_FIRST = CardGameRound.roundOf(1, 2);
+    private static final CardGameRound ROUND_SECOND = CardGameRound.roundOf(2, 2);
+
     private CardHand cardHand;
 
     @BeforeEach
@@ -48,10 +51,10 @@ class CardHandTest {
 
         // when & then
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(cardHand.isAssign(firstRoundCard, CardGameRound.FIRST)).isTrue();
-            softly.assertThat(cardHand.isAssign(secondRoundCard, CardGameRound.SECOND)).isTrue();
-            softly.assertThat(cardHand.isAssign(notPickedCard, CardGameRound.FIRST)).isFalse();
-            softly.assertThat(cardHand.isAssign(notPickedCard, CardGameRound.SECOND)).isFalse();
+            softly.assertThat(cardHand.isAssign(firstRoundCard, ROUND_FIRST)).isTrue();
+            softly.assertThat(cardHand.isAssign(secondRoundCard, ROUND_SECOND)).isTrue();
+            softly.assertThat(cardHand.isAssign(notPickedCard, ROUND_FIRST)).isFalse();
+            softly.assertThat(cardHand.isAssign(notPickedCard, ROUND_SECOND)).isFalse();
         });
     }
 
@@ -62,8 +65,8 @@ class CardHandTest {
 
         // when & then
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(cardHand.isSelected(CardGameRound.FIRST)).isTrue();
-            softly.assertThat(cardHand.isSelected(CardGameRound.SECOND)).isFalse();
+            softly.assertThat(cardHand.isSelected(ROUND_FIRST)).isTrue();
+            softly.assertThat(cardHand.isSelected(ROUND_SECOND)).isFalse();
         });
     }
 
@@ -137,7 +140,7 @@ class CardHandTest {
             CardGameScore score = cardHand.calculateCardGameScore();
 
             // then
-            assertThat(score.getValue()).isEqualTo(0);
+            assertThat(score.getValue()).isZero();
         }
 
         @Test
@@ -164,8 +167,8 @@ class CardHandTest {
 
             // when & then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(cardHand.isSelected(CardGameRound.FIRST)).isTrue();
-                softly.assertThat(cardHand.isSelected(CardGameRound.SECOND)).isFalse();
+                softly.assertThat(cardHand.isSelected(ROUND_FIRST)).isTrue();
+                softly.assertThat(cardHand.isSelected(ROUND_SECOND)).isFalse();
             });
         }
 
@@ -177,8 +180,8 @@ class CardHandTest {
 
             // when & then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(cardHand.isSelected(CardGameRound.FIRST)).isTrue();
-                softly.assertThat(cardHand.isSelected(CardGameRound.SECOND)).isTrue();
+                softly.assertThat(cardHand.isSelected(ROUND_FIRST)).isTrue();
+                softly.assertThat(cardHand.isSelected(ROUND_SECOND)).isTrue();
             });
         }
 
@@ -186,8 +189,8 @@ class CardHandTest {
         void 아무_카드도_선택하지_않았을_때_확인한다() {
             // when & then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(cardHand.isSelected(CardGameRound.FIRST)).isFalse();
-                softly.assertThat(cardHand.isSelected(CardGameRound.SECOND)).isFalse();
+                softly.assertThat(cardHand.isSelected(ROUND_FIRST)).isFalse();
+                softly.assertThat(cardHand.isSelected(ROUND_SECOND)).isFalse();
             });
         }
     }
@@ -205,8 +208,8 @@ class CardHandTest {
 
             // when & then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(cardHand.isAssign(card1, CardGameRound.FIRST)).isTrue();
-                softly.assertThat(cardHand.isAssign(card2, CardGameRound.FIRST)).isFalse();
+                softly.assertThat(cardHand.isAssign(card1, ROUND_FIRST)).isTrue();
+                softly.assertThat(cardHand.isAssign(card2, ROUND_FIRST)).isFalse();
             });
         }
 
@@ -220,8 +223,8 @@ class CardHandTest {
 
             // when & then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(cardHand.isAssign(card1, CardGameRound.SECOND)).isFalse();
-                softly.assertThat(cardHand.isAssign(card2, CardGameRound.SECOND)).isTrue();
+                softly.assertThat(cardHand.isAssign(card1, ROUND_SECOND)).isFalse();
+                softly.assertThat(cardHand.isAssign(card2, ROUND_SECOND)).isTrue();
             });
         }
 
@@ -234,8 +237,8 @@ class CardHandTest {
 
             // when & then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(cardHand.isAssign(existingCard, CardGameRound.FIRST)).isTrue();
-                softly.assertThat(cardHand.isAssign(nonExistentCard, CardGameRound.FIRST)).isFalse();
+                softly.assertThat(cardHand.isAssign(existingCard, ROUND_FIRST)).isTrue();
+                softly.assertThat(cardHand.isAssign(nonExistentCard, ROUND_FIRST)).isFalse();
             });
         }
 
@@ -247,8 +250,8 @@ class CardHandTest {
 
             // when & then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(cardHand.isAssign(card, CardGameRound.FIRST)).isTrue();
-                softly.assertThat(cardHand.isAssign(card, CardGameRound.SECOND)).isFalse();
+                softly.assertThat(cardHand.isAssign(card, ROUND_FIRST)).isTrue();
+                softly.assertThat(cardHand.isAssign(card, ROUND_SECOND)).isFalse();
             });
         }
     }

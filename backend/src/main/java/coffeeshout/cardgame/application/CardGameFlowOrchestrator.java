@@ -36,15 +36,16 @@ public class CardGameFlowOrchestrator {
 
     public void startFlow(CardGame cardGame, Room room) {
         final String joinCode = room.getJoinCode().getValue();
+        final int totalRounds = cardGame.getTotalRounds();
 
         FlowHandle flow = flowScheduler.schedule(step(cardGame, room, START_ROUND), Duration.ZERO);
 
-        for (int currentRound = 0; currentRound < timing.totalRounds(); currentRound++) {
+        for (int i = 0; i < totalRounds; i++) {
             EarlyFinishTrigger trigger = flowScheduler.createEarlyFinishTrigger();
-            flow = isFirstRound(currentRound)
+            flow = (i == 0)
                     ? chainFirstRound(flow, cardGame, room, trigger)
                     : chainSubsequentRound(flow, cardGame, room, trigger);
-            flow = finishRound(flow, cardGame, room, currentRound);
+            flow = finishRound(flow, cardGame, room, i == totalRounds - 1);
         }
 
         flow.andThen(finishGame(cardGame, room), timing.scoreBoard())
@@ -63,14 +64,6 @@ public class CardGameFlowOrchestrator {
         trigger.complete();
     }
 
-    private boolean isFirstRound(int roundIndex) {
-        return roundIndex == 0;
-    }
-
-    private boolean isLastRound(int roundIndex) {
-        return roundIndex == timing.totalRounds() - 1;
-    }
-
     private FlowHandle chainFirstRound(FlowHandle flow, CardGame cardGame, Room room,
                                        EarlyFinishTrigger trigger) {
         return flow
@@ -86,9 +79,9 @@ public class CardGameFlowOrchestrator {
                 .raceTimeout(timing.playing(), trigger, timing.earlyFinishDelay());
     }
 
-    private FlowHandle finishRound(FlowHandle flow, CardGame cardGame, Room room, int roundIndex) {
+    private FlowHandle finishRound(FlowHandle flow, CardGame cardGame, Room room, boolean isLastRound) {
         flow = flow.andThen(step(cardGame, room, FINISH_ROUND), Duration.ZERO);
-        if (isLastRound(roundIndex)) {
+        if (isLastRound) {
             return flow;
         }
         return flow.andThen(step(cardGame, room, START_ROUND), timing.scoreBoard());

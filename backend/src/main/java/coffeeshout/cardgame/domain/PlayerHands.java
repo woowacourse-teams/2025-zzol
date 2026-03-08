@@ -38,12 +38,9 @@ public class PlayerHands {
         return playerHands.size();
     }
 
-    public boolean isRoundFinished() {
-        if (totalHandSize() == 0) {
-            return false;
-        }
-
-        return totalHandSize() % playerCount() == 0;
+    public boolean isRoundFinished(CardGameRound round) {
+        return playerHands.values().stream()
+                .allMatch(hand -> hand.isSelected(round));
     }
 
     public Player findPlayerByName(PlayerName name) {

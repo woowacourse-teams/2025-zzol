@@ -70,7 +70,7 @@ public record MiniGameStateMessage(
                 cardGame.getState().name(),
                 RoundLabel.from(cardGame.getRound().toIndex()).name(),
                 CardInfoMessage.from(cardGame),
-                cardGame.getPlayerHands().isRoundFinished()
+                cardGame.isFinishedThisRound()
         );
     }
 }

@@ -102,7 +102,7 @@ class PlayerHandsTest {
         @Test
         void 카드가_없으면_라운드가_끝나지_않는다() {
             // when & then
-            assertThat(playerHands.isRoundFinished()).isFalse();
+            assertThat(playerHands.isRoundFinished(ROUND_FIRST)).isFalse();
         }
 
         @Test
@@ -111,13 +111,13 @@ class PlayerHandsTest {
             playerHands.put(players.getPlayer(new PlayerName("꾹이")), AdditionCard.PLUS_40);
             playerHands.put(players.getPlayer(new PlayerName("루키")), AdditionCard.PLUS_30);
             playerHands.put(players.getPlayer(new PlayerName("한스")), AdditionCard.PLUS_20);
-            assertThat(playerHands.isRoundFinished()).isFalse();
+            assertThat(playerHands.isRoundFinished(ROUND_FIRST)).isFalse();
 
             // when
             playerHands.put(players.getPlayer(new PlayerName("엠제이")), AdditionCard.PLUS_10);
 
             // then
-            assertThat(playerHands.isRoundFinished()).isTrue();
+            assertThat(playerHands.isRoundFinished(ROUND_FIRST)).isTrue();
         }
 
         @Test
@@ -132,11 +132,11 @@ class PlayerHandsTest {
             playerHands.put(players.getPlayer(new PlayerName("꾹이")), MultiplierCard.DOUBLE);
             playerHands.put(players.getPlayer(new PlayerName("루키")), MultiplierCard.QUADRUPLE);
             playerHands.put(players.getPlayer(new PlayerName("한스")), MultiplierCard.INVERT);
-            assertThat(playerHands.isRoundFinished()).isFalse();
+            assertThat(playerHands.isRoundFinished(ROUND_SECOND)).isFalse();
             playerHands.put(players.getPlayer(new PlayerName("엠제이")), AdditionCard.ZERO);
 
             // then
-            assertThat(playerHands.isRoundFinished()).isTrue();
+            assertThat(playerHands.isRoundFinished(ROUND_SECOND)).isTrue();
         }
     }
 

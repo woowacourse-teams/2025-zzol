@@ -82,11 +82,11 @@ public class CardGame implements Playable {
         }
 
         playerHands.put(player, deck.pick(cardIndex));
-        return playerHands.isRoundFinished();
+        return playerHands.isRoundFinished(this.round);
     }
 
     public boolean isFinishedThisRound() {
-        return playerHands.isRoundFinished();
+        return playerHands.isRoundFinished(this.round);
     }
 
     public boolean isFirstRound() {

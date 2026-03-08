@@ -1,5 +1,6 @@
 package coffeeshout.global.redis.stream;
 
+import java.util.Arrays;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -13,4 +14,11 @@ public enum StreamKey {
     RACING_GAME_EVENTS("racinggame");
 
     private final String redisKey;
+
+    public static StreamKey fromRedisKey(String redisKey) {
+        return Arrays.stream(values())
+                .filter(key -> key.redisKey.equals(redisKey))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("알 수 없는 Redis Stream 키: " + redisKey));
+    }
 }

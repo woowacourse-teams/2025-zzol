@@ -2,7 +2,6 @@ package coffeeshout.global.outbox;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,8 +18,6 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
             nativeQuery = true
     )
     List<OutboxEvent> findPendingEventsForUpdate(@Param("size") int size);
-
-    Optional<OutboxEvent> findById(Long id);
 
     /**
      * IN_PROGRESS 상태로 오래 남아있는 이벤트를 복구한다.

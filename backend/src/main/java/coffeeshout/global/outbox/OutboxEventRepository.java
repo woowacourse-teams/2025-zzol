@@ -1,6 +1,6 @@
 package coffeeshout.global.outbox;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -26,9 +26,9 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     @Modifying
     @Query("UPDATE OutboxEvent o SET o.status = 'PENDING', o.updatedAt = CURRENT_TIMESTAMP "
             + "WHERE o.status = 'IN_PROGRESS' AND o.updatedAt < :threshold")
-    int recoverStaleInProgressEvents(@Param("threshold") LocalDateTime threshold);
+    int recoverStaleInProgressEvents(@Param("threshold") Instant threshold);
 
     @Modifying
     @Query("DELETE FROM OutboxEvent o WHERE o.status = 'PUBLISHED' AND o.createdAt < :threshold")
-    int deletePublishedEventsBefore(@Param("threshold") LocalDateTime threshold);
+    int deletePublishedEventsBefore(@Param("threshold") Instant threshold);
 }

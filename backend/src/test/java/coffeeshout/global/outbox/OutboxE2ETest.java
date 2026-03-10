@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -106,6 +108,16 @@ class OutboxE2ETest {
         @Primary
         public TaskScheduler noOpTaskScheduler() {
             return new coffeeshout.global.config.ShutDownTestScheduler();
+        }
+
+        /**
+         * CardGameFlowScheduler는 @Profile("!test")로 등록되어 test 프로파일에서 빈이 없다.
+         * ServiceTestConfig에서는 mock으로 등록하지만, E2E 테스트는 자체 컨텍스트를 쓰므로 별도 등록.
+         */
+        @Bean
+        @Primary
+        public CardGameFlowScheduler mockCardGameFlowScheduler() {
+            return Mockito.mock(CardGameFlowScheduler.class);
         }
     }
 

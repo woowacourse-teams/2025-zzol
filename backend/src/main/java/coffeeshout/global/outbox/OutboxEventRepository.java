@@ -24,9 +24,9 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
      * 서버가 IN_PROGRESS 상태에서 죽었을 때를 대비한 안전장치.
      */
     @Modifying
-    @Query("UPDATE OutboxEvent o SET o.status = 'PENDING', o.updatedAt = CURRENT_TIMESTAMP "
+    @Query("UPDATE OutboxEvent o SET o.status = 'PENDING', o.updatedAt = :now "
             + "WHERE o.status = 'IN_PROGRESS' AND o.updatedAt < :threshold")
-    int recoverStaleInProgressEvents(@Param("threshold") Instant threshold);
+    int recoverStaleInProgressEvents(@Param("threshold") Instant threshold, @Param("now") Instant now);
 
     @Modifying
     @Query("DELETE FROM OutboxEvent o WHERE o.status = 'PUBLISHED' AND o.createdAt < :threshold")

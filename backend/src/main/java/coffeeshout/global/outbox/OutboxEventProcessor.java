@@ -81,6 +81,6 @@ public class OutboxEventProcessor {
     @Transactional
     public int recoverStaleEvents() {
         final Instant threshold = Instant.now().minusSeconds(300);
-        return outboxEventRepository.recoverStaleInProgressEvents(threshold);
+        return outboxEventRepository.recoverStaleInProgressEvents(threshold, Instant.now());
     }
 }

@@ -4,8 +4,7 @@ import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Duration;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -111,7 +110,7 @@ public class OutboxRelayWorker {
     @Scheduled(cron = "0 0 4 * * *")
     @Transactional
     public void cleanup() {
-        final Instant threshold = Instant.now().minus(Duration.ofHours(24));
+        final LocalDateTime threshold = LocalDateTime.now().minusHours(24);
         final int deleted = outboxEventRepository.deletePublishedEventsBefore(threshold);
         log.info("Outbox 정리 완료: {}건 삭제", deleted);
     }

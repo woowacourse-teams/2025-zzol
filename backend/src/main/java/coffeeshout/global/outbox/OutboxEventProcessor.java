@@ -1,6 +1,6 @@
 package coffeeshout.global.outbox;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,7 +80,7 @@ public class OutboxEventProcessor {
      */
     @Transactional
     public int recoverStaleEvents() {
-        final Instant threshold = Instant.now().minusSeconds(300);
-        return outboxEventRepository.recoverStaleInProgressEvents(threshold, Instant.now());
+        final LocalDateTime threshold = LocalDateTime.now().minusMinutes(5);
+        return outboxEventRepository.recoverStaleInProgressEvents(threshold);
     }
 }

@@ -9,7 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,10 +41,10 @@ public class OutboxEvent {
     private int retryCount;
 
     @Column(nullable = false, updatable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @Column(nullable = false)
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
     public static OutboxEvent create(String streamKey, String payload) {
         final OutboxEvent event = new OutboxEvent();
@@ -52,19 +52,19 @@ public class OutboxEvent {
         event.payload = payload;
         event.status = OutboxStatus.PENDING;
         event.retryCount = 0;
-        event.createdAt = Instant.now();
+        event.createdAt = LocalDateTime.now();
         event.updatedAt = event.createdAt;
         return event;
     }
 
     public void markInProgress() {
         this.status = OutboxStatus.IN_PROGRESS;
-        this.updatedAt = Instant.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void markPublished() {
         this.status = OutboxStatus.PUBLISHED;
-        this.updatedAt = Instant.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void incrementRetryCount() {
@@ -73,11 +73,11 @@ public class OutboxEvent {
 
     public void markDeadLetter() {
         this.status = OutboxStatus.DEAD_LETTER;
-        this.updatedAt = Instant.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void setStatusPending() {
         this.status = OutboxStatus.PENDING;
-        this.updatedAt = Instant.now();
+        this.updatedAt = LocalDateTime.now();
     }
 }

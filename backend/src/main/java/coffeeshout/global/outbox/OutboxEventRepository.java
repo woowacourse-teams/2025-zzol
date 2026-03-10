@@ -1,6 +1,6 @@
 package coffeeshout.global.outbox;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -24,11 +24,11 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
      * 서버가 IN_PROGRESS 상태에서 죽었을 때를 대비한 안전장치.
      */
     @Modifying
-    @Query("UPDATE OutboxEvent o SET o.status = 'PENDING', o.updatedAt = :now "
+    @Query("UPDATE OutboxEvent o SET o.status = 'PENDING', o.updatedAt = CURRENT_TIMESTAMP "
             + "WHERE o.status = 'IN_PROGRESS' AND o.updatedAt < :threshold")
-    int recoverStaleInProgressEvents(@Param("threshold") Instant threshold, @Param("now") Instant now);
+    int recoverStaleInProgressEvents(@Param("threshold") LocalDateTime threshold);
 
     @Modifying
     @Query("DELETE FROM OutboxEvent o WHERE o.status = 'PUBLISHED' AND o.createdAt < :threshold")
-    int deletePublishedEventsBefore(@Param("threshold") Instant threshold);
+    int deletePublishedEventsBefore(@Param("threshold") LocalDateTime threshold);
 }

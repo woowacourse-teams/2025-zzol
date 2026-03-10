@@ -77,3 +77,9 @@ card-game:
     playing: 2000ms
     score-board: 500ms
     early-finish-delay: 500ms
+
+speed-touch:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    playing: 30000ms

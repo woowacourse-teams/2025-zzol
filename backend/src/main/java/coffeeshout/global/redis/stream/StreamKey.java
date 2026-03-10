@@ -10,7 +10,8 @@ public enum StreamKey {
     ROOM_JOIN("room:join"),
     CARD_GAME_SELECT_BROADCAST("cardgame:select"),
     MINIGAME_EVENTS("minigame"),
-    RACING_GAME_EVENTS("racinggame");
+    RACING_GAME_EVENTS("racinggame"),
+    SPEED_TOUCH_EVENTS("speedtouch");
 
     private final String redisKey;
 }

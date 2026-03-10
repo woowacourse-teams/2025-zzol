@@ -95,6 +95,7 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
     testImplementation("org.testcontainers:mysql:1.20.4")
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+    testImplementation("org.awaitility:awaitility:4.2.2")
 
     // --- Reflections (클래스패스 스캔) ---
     implementation("org.reflections:reflections:${reflectionsVersion}")

@@ -12,4 +12,16 @@ public record SpeedTouchGameTimingProperties(
         @NotNull Duration prepare,
         @NotNull Duration playing
 ) {
+
+    public SpeedTouchGameTimingProperties {
+        validatePositive(description, "description");
+        validatePositive(prepare, "prepare");
+        validatePositive(playing, "playing");
+    }
+
+    private static void validatePositive(Duration duration, String name) {
+        if (duration != null && (duration.isZero() || duration.isNegative())) {
+            throw new IllegalArgumentException(name + " 타이밍은 0보다 커야 합니다: " + duration);
+        }
+    }
 }

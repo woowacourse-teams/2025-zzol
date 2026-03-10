@@ -94,14 +94,14 @@ public class SpeedTouchGameService implements MiniGameService {
     }
 
     private void handleTimeout(SpeedTouchGame game, String joinCode) {
-        if (game.isDone()) {
-            return;
-        }
         log.info("스피드 터치 게임 타임아웃: joinCode={}", joinCode);
         finishGame(game, joinCode);
     }
 
     void finishGame(SpeedTouchGame game, String joinCode) {
+        if (!game.tryFinish()) {
+            return;
+        }
         game.updateState(SpeedTouchGameState.DONE);
         game.cancelTimeout();
 

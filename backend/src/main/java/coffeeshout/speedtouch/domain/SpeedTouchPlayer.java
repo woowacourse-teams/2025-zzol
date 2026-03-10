@@ -20,7 +20,7 @@ public class SpeedTouchPlayer {
         this.currentNumber = FIRST_NUMBER;
     }
 
-    public boolean touch(int number, Instant now) {
+    public synchronized boolean touch(int number, Instant now) {
         if (isFinished()) {
             return false;
         }

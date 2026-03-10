@@ -6,13 +6,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.global.exception.custom.InvalidStateException;
 import coffeeshout.minigame.domain.MiniGameResult;
-import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,8 +46,6 @@ class SpeedTouchGameTest {
 
         @Test
         void startPlaying_호출시_PLAYING_상태가_된다() {
-            // given - setUp에서 이미 startPlaying 호출됨
-
             // when & then
             assertThat(game.isPlaying()).isTrue();
             assertThat(game.getStartTime()).isNotNull();
@@ -72,14 +68,14 @@ class SpeedTouchGameTest {
             newGame.setUp(List.of(한스));
 
             // when & then
-            assertThatThrownBy(() -> newGame.touch(new PlayerName("한스"), 1, Instant.now()))
+            assertThatThrownBy(() -> newGame.touch(new PlayerName("한스"), SpeedTouchPlayer.FIRST_NUMBER, Instant.now()))
                     .isInstanceOf(InvalidStateException.class);
         }
 
         @Test
         void 올바른_번호_터치시_true를_반환한다() {
             // when
-            final boolean result = game.touch(new PlayerName("한스"), 1, Instant.now());
+            final boolean result = game.touch(new PlayerName("한스"), SpeedTouchPlayer.FIRST_NUMBER, Instant.now());
 
             // then
             assertThat(result).isTrue();
@@ -126,8 +122,9 @@ class SpeedTouchGameTest {
         @Test
         void 완주자는_소요시간이_짧은_순서대로_높은_순위를_받는다() {
             // given
-            final Instant time1 = Instant.parse("2025-01-01T00:00:10Z");
-            final Instant time2 = Instant.parse("2025-01-01T00:00:20Z");
+            final Instant startTime = game.getStartTime();
+            final Instant time1 = startTime.plusSeconds(10);
+            final Instant time2 = startTime.plusSeconds(20);
 
             finishPlayerAt("한스", time1);
             finishPlayerAt("꾹이", time2);
@@ -161,10 +158,10 @@ class SpeedTouchGameTest {
         @Test
         void 완주자는_항상_DNF보다_높은_순위를_받는다() {
             // given
-            final Instant finishTime = Instant.parse("2025-01-01T00:00:29Z");
+            final Instant finishTime = game.getStartTime().plusSeconds(29);
             finishPlayerAt("한스", finishTime); // 29초 완주
-            touchUpTo("꾹이", 24); // 24/25 DNF
-            touchUpTo("루키", 1); // 1/25 DNF
+            touchUpTo("꾹이", SpeedTouchPlayer.LAST_NUMBER - 1); // 24/25 DNF
+            touchUpTo("루키", SpeedTouchPlayer.FIRST_NUMBER); // 1/25 DNF
 
             // when
             final MiniGameResult result = game.getResult();
@@ -176,22 +173,41 @@ class SpeedTouchGameTest {
         }
     }
 
+    @Nested
+    class 종료_원자성 {
+
+        @Test
+        void tryFinish는_처음_호출시_true를_반환한다() {
+            // when & then
+            assertThat(game.tryFinish()).isTrue();
+        }
+
+        @Test
+        void tryFinish는_두번째_호출부터_false를_반환한다() {
+            // given
+            game.tryFinish();
+
+            // when & then
+            assertThat(game.tryFinish()).isFalse();
+        }
+    }
+
     private void finishPlayer(String name) {
         final Instant now = Instant.now();
-        for (int i = 1; i <= 25; i++) {
+        for (int i = SpeedTouchPlayer.FIRST_NUMBER; i <= SpeedTouchPlayer.LAST_NUMBER; i++) {
             game.touch(new PlayerName(name), i, now);
         }
     }
 
     private void finishPlayerAt(String name, Instant finishTime) {
-        for (int i = 1; i <= 25; i++) {
+        for (int i = SpeedTouchPlayer.FIRST_NUMBER; i <= SpeedTouchPlayer.LAST_NUMBER; i++) {
             game.touch(new PlayerName(name), i, finishTime);
         }
     }
 
     private void touchUpTo(String name, int upTo) {
         final Instant now = Instant.now();
-        for (int i = 1; i <= upTo; i++) {
+        for (int i = SpeedTouchPlayer.FIRST_NUMBER; i <= upTo; i++) {
             game.touch(new PlayerName(name), i, now);
         }
     }

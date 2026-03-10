@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,6 +22,7 @@ public class SpeedTouchGame implements Playable {
     private SpeedTouchPlayers players;
     private SpeedTouchGameState state;
     private Instant startTime;
+    private final AtomicBoolean finished = new AtomicBoolean(false);
 
     @Setter
     private ScheduledFuture<?> timeoutFuture;
@@ -78,6 +80,10 @@ public class SpeedTouchGame implements Playable {
 
     public boolean isDone() {
         return state == SpeedTouchGameState.DONE;
+    }
+
+    public boolean tryFinish() {
+        return finished.compareAndSet(false, true);
     }
 
     public void cancelTimeout() {

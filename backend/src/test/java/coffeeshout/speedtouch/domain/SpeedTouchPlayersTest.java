@@ -59,7 +59,7 @@ class SpeedTouchPlayersTest {
             // given
             final SpeedTouchPlayer 한스플레이어 = players.findByName(new PlayerName("한스"));
             final Instant now = Instant.now();
-            for (int i = 1; i <= 25; i++) {
+            for (int i = SpeedTouchPlayer.FIRST_NUMBER; i <= SpeedTouchPlayer.LAST_NUMBER; i++) {
                 한스플레이어.touch(i, now);
             }
 
@@ -72,7 +72,7 @@ class SpeedTouchPlayersTest {
             // given
             final Instant now = Instant.now();
             for (SpeedTouchPlayer player : players.getPlayers()) {
-                for (int i = 1; i <= 25; i++) {
+                for (int i = SpeedTouchPlayer.FIRST_NUMBER; i <= SpeedTouchPlayer.LAST_NUMBER; i++) {
                     player.touch(i, now);
                 }
             }

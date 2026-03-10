@@ -19,11 +19,11 @@ class SpeedTouchPlayerTest {
             final SpeedTouchPlayer player = new SpeedTouchPlayer(PlayerFixture.게스트한스());
 
             // when
-            final boolean result = player.touch(1, Instant.now());
+            final boolean result = player.touch(SpeedTouchPlayer.FIRST_NUMBER, Instant.now());
 
             // then
             assertThat(result).isTrue();
-            assertThat(player.getCurrentNumber()).isEqualTo(2);
+            assertThat(player.getCurrentNumber()).isEqualTo(SpeedTouchPlayer.FIRST_NUMBER + 1);
         }
 
         @Test
@@ -36,17 +36,17 @@ class SpeedTouchPlayerTest {
 
             // then
             assertThat(result).isFalse();
-            assertThat(player.getCurrentNumber()).isEqualTo(1);
+            assertThat(player.getCurrentNumber()).isEqualTo(SpeedTouchPlayer.FIRST_NUMBER);
         }
 
         @Test
-        void 순서대로_1부터_25까지_터치하면_완주한다() {
+        void 순서대로_처음부터_끝까지_터치하면_완주한다() {
             // given
             final SpeedTouchPlayer player = new SpeedTouchPlayer(PlayerFixture.게스트한스());
             final Instant now = Instant.now();
 
             // when
-            for (int i = 1; i <= 25; i++) {
+            for (int i = SpeedTouchPlayer.FIRST_NUMBER; i <= SpeedTouchPlayer.LAST_NUMBER; i++) {
                 player.touch(i, now);
             }
 
@@ -60,12 +60,12 @@ class SpeedTouchPlayerTest {
             // given
             final SpeedTouchPlayer player = new SpeedTouchPlayer(PlayerFixture.게스트한스());
             final Instant now = Instant.now();
-            for (int i = 1; i <= 25; i++) {
+            for (int i = SpeedTouchPlayer.FIRST_NUMBER; i <= SpeedTouchPlayer.LAST_NUMBER; i++) {
                 player.touch(i, now);
             }
 
             // when
-            final boolean result = player.touch(25, now);
+            final boolean result = player.touch(SpeedTouchPlayer.LAST_NUMBER, now);
 
             // then
             assertThat(result).isFalse();
@@ -89,7 +89,7 @@ class SpeedTouchPlayerTest {
             // given
             final SpeedTouchPlayer player = new SpeedTouchPlayer(PlayerFixture.게스트한스());
             final Instant now = Instant.now();
-            for (int i = 1; i <= 5; i++) {
+            for (int i = SpeedTouchPlayer.FIRST_NUMBER; i <= 5; i++) {
                 player.touch(i, now);
             }
 
@@ -107,7 +107,7 @@ class SpeedTouchPlayerTest {
             final SpeedTouchPlayer player = new SpeedTouchPlayer(PlayerFixture.게스트한스());
             final Instant startTime = Instant.parse("2025-01-01T00:00:00Z");
             final Instant finishTime = Instant.parse("2025-01-01T00:00:15.500Z");
-            for (int i = 1; i <= 25; i++) {
+            for (int i = SpeedTouchPlayer.FIRST_NUMBER; i <= SpeedTouchPlayer.LAST_NUMBER; i++) {
                 player.touch(i, finishTime);
             }
 

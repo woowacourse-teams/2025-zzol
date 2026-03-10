@@ -36,6 +36,7 @@ val websocketDocsVersion = "1.0.7"
 val testcontainersVersion = "2.0.2"
 val reflectionsVersion = "0.10.2"
 val resilience4jVersion = "2.2.0"
+val awaitilityVersion = "4.2.2"
 
 dependencies {
     // --- Spring Boot Starters (버전 생략: Boot가 관리) ---
@@ -95,7 +96,7 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
     testImplementation("org.testcontainers:mysql:1.20.4")
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
-    testImplementation("org.awaitility:awaitility:4.2.2")
+    testImplementation("org.awaitility:awaitility:${awaitilityVersion}")
 
     // --- Reflections (클래스패스 스캔) ---
     implementation("org.reflections:reflections:${reflectionsVersion}")

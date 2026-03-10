@@ -4,6 +4,7 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.NonNull;
@@ -14,6 +15,26 @@ public record MiniGameStateMessage(
         List<CardInfoMessage> cardInfoMessages,
         Boolean allSelected
 ) {
+
+    private enum RoundLabel {
+        READY(0),
+        FIRST(1),
+        SECOND(2),
+        ;
+
+        private final int index;
+
+        RoundLabel(int index) {
+            this.index = index;
+        }
+
+        static RoundLabel from(int roundIndex) {
+            return Arrays.stream(values())
+                    .filter(label -> label.index == roundIndex)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 라운드 인덱스: " + roundIndex));
+        }
+    }
 
     public record CardInfoMessage(
             String cardType,
@@ -47,9 +68,9 @@ public record MiniGameStateMessage(
     public static MiniGameStateMessage from(@NonNull CardGame cardGame) {
         return new MiniGameStateMessage(
                 cardGame.getState().name(),
-                cardGame.getRound().name(),
+                RoundLabel.from(cardGame.getRound().toIndex()).name(),
                 CardInfoMessage.from(cardGame),
-                cardGame.getPlayerHands().isRoundFinished()
+                cardGame.isFinishedThisRound()
         );
     }
 }

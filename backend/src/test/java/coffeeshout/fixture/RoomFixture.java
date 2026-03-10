@@ -10,8 +10,12 @@ public final class RoomFixture {
     }
 
     public static Room 호스트_꾹이() {
+        return 호스트_꾹이(new JoinCode("A4BX"));
+    }
+
+    public static Room 호스트_꾹이(JoinCode joinCode) {
         final Room room = new Room(
-                new JoinCode("A4BX"),
+                joinCode,
                 PlayerFixture.호스트꾹이().getName()
         );
         final Players players = PlayersFixture.루키_엠제이_한스_리스트;

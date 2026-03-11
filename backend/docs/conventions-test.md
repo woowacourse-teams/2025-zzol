@@ -5,7 +5,17 @@
 - 테스트 메서드명은 한글로 작성한다 (도메인 언어 사용)
 - `@Nested`로 연관된 테스트를 시나리오 단위로 그룹화한다. 중첩 클래스명은 테스트 대상 상황을 설명한다
 - 복수 검증은 `SoftAssertions`를 사용한다
-- `@SpringBootTest` 없이 순수 Java로 작성한다 (통합 테스트 제외)
+- `@SpringBootTest` 없이 순수 Java로 작성한다 (아래 베이스 클래스/어노테이션 사용 시 제외)
+
+## 테스트 종류별 베이스
+
+| 종류               | 베이스                      | 특징                                                                                                |
+|------------------|--------------------------|---------------------------------------------------------------------------------------------------|
+| 순수 단위 테스트        | 없음 (순수 Java)             | 스프링 컨텍스트 없이 도메인 로직만 검증                                                                            |
+| 서비스 테스트          | `ServiceTest` 추상 클래스 상속  | `@SpringBootTest` + `test` 프로파일 + `@Transactional`. `ApplicationEventPublisher`는 MockitoBean으로 제공 |
+| WebSocket 통합 테스트 | `@IntegrationTest` 어노테이션 | `RANDOM_PORT` + `test` 프로파일 + `@Transactional`. 실제 STOMP 세션으로 검증                                  |
+
+두 베이스 모두 `TestContainerConfig`를 import하므로 Valkey TestContainer가 자동으로 구동된다.
 
 ## 픽스처
 
@@ -13,11 +23,11 @@
 
 ## 통합 테스트 (WebSocket)
 
-`WebSocketIntegrationTestSupport`를 상속하여 실제 STOMP 세션으로 테스트한다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다.
+`@IntegrationTest` 어노테이션을 붙이고 `WebSocketIntegrationTestSupport`를 상속하여 실제 STOMP 세션으로 테스트한다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다.
 
 ## 테스트 프로파일
 
-통합 테스트는 `test` 프로파일을 사용하며 `application-test.yml`이 자동 적용된다.
+`test` 프로파일 적용 시 `application-test.yml`이 자동 적용된다.
 - 타이밍 값이 500ms~2s로 단축됨
 - DB: H2 인메모리 사용 (Flyway 비활성화)
 - Valkey(Redis): TestContainers로 실제 컨테이너 구동 (`TestContainerConfig`)

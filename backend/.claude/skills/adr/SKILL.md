@@ -13,7 +13,9 @@ allowed-tools: Read, Glob, Write
 1. `docs/adr/index.md`를 읽어 다음 순번과 기존 결정 목록을 확인한다 (없으면 0001부터 시작)
 2. 주제를 바탕으로 아래 형식에 맞춰 ADR을 작성한다
 3. 파일명은 `docs/adr/NNNN-{kebab-case-title}.md` 형식으로 생성한다
-4. ADR 작성 후 `docs/adr/index.md`의 테이블에 해당 ADR을 한 줄로 추가한다
+4. ADR 작성 후 `docs/adr/index.md` 테이블에 한 줄을 추가한다
+   - **영향 범위**: 이 결정이 적용되는 패키지 또는 도메인 (예: `global/redis`, `cardgame/`)
+   - **핵심 제약**: 이 결정으로 인해 지켜야 할 규칙을 한 문장으로 (Claude가 충돌 여부를 판단하는 기준이 된다)
 
 ## ADR 형식
 

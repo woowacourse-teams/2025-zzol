@@ -13,10 +13,10 @@ public class SpeedTouchPlayers {
     private final List<SpeedTouchPlayer> players;
 
     public SpeedTouchPlayers(List<Player> roomPlayers) {
-        this.players = Collections.synchronizedList(
+        this.players = List.copyOf(
                 roomPlayers.stream()
                         .map(SpeedTouchPlayer::new)
-                        .collect(Collectors.toList())
+                        .toList()
         );
     }
 
@@ -27,7 +27,7 @@ public class SpeedTouchPlayers {
                 .orElseThrow(() -> new IllegalArgumentException("해당 플레이어를 찾을 수 없습니다: " + name.value()));
     }
 
-    public boolean isAllFinished() {
+    public synchronized boolean isAllFinished() {
         return players.stream().allMatch(SpeedTouchPlayer::isFinished);
     }
 
@@ -41,6 +41,6 @@ public class SpeedTouchPlayers {
     }
 
     public List<SpeedTouchPlayer> getPlayers() {
-        return Collections.unmodifiableList(players);
+        return players;
     }
 }

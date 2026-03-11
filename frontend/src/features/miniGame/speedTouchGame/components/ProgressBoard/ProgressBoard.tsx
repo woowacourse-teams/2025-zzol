@@ -25,7 +25,7 @@ const ProgressBoard = ({ players, myName }: Props) => {
           <S.PlayerRow key={player.playerName} $isMe={isMe}>
             <S.PlayerName>{isMe ? '나' : player.playerName}</S.PlayerName>
             <S.BarWrapper>
-              <S.Bar $progress={progress} $isMe={isMe} />
+              <S.Bar $percent={(progress / MAX_NUMBER) * 100} $isMe={isMe} />
             </S.BarWrapper>
             <S.Count>{player.finished ? '완주' : `${progress}/${MAX_NUMBER}`}</S.Count>
           </S.PlayerRow>

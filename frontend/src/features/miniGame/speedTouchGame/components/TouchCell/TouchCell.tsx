@@ -14,7 +14,7 @@ const TouchCell = ({ number, touched, onTouch }: Props) => {
   };
 
   return (
-    <S.Cell $touched={touched} onClick={handleClick}>
+    <S.Cell $touched={touched} onClick={handleClick} aria-label={`${number}`}>
       {touched ? (
         <S.CoffeeCircle>
           <S.CoffeeIcon src={CoffeeWhite} alt="" />

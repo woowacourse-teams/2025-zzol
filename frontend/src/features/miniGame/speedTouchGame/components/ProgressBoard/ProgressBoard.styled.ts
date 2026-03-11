@@ -35,9 +35,9 @@ export const BarWrapper = styled.div`
   overflow: hidden;
 `;
 
-export const Bar = styled.div<{ $progress: number; $isMe: boolean }>`
+export const Bar = styled.div<{ $percent: number; $isMe: boolean }>`
   height: 100%;
-  width: ${({ $progress }) => ($progress / 25) * 100}%;
+  width: ${({ $percent }) => $percent}%;
   background-color: ${({ theme, $isMe }) =>
     $isMe ? theme.color.point[400] : theme.color.gray[300]};
   border-radius: 7px;

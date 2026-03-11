@@ -54,6 +54,8 @@ redis:
         thread-pool-name: concurrent
       "[racinggame]":
         thread-pool-name: concurrent
+      "[speedtouch]":
+        thread-pool-name: concurrent
 
 redisson:
   enabled: true
@@ -77,6 +79,12 @@ card-game:
     playing: 10250ms
     score-board: 1500ms
     early-finish-delay: 2000ms
+
+speed-touch:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    playing: 30000ms
 
 room:
   removalDelay: 1h

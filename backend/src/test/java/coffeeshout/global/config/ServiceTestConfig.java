@@ -30,6 +30,11 @@ public class ServiceTestConfig {
         return new TestTaskScheduler();
     }
 
+    @Bean(name = "speedTouchGameScheduler")
+    public TaskScheduler testSpeedTouchGameScheduler() {
+        return new TestTaskScheduler();
+    }
+
     @Bean
     @Primary
     public SimpMessagingTemplate mockMessagingTemplate() {

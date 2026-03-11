@@ -57,7 +57,7 @@
 
 - 모든 이벤트는 `BaseEvent`를 구현하는 record로 정의한다
 - `StreamPublisher.publish(StreamKey, BaseEvent)`로 발행한다. StreamKey로 설정(max-length, thread-pool)을 자동 적용한다
-- Consumer는 `java.util.function.Consumer<구체이벤트타입>`을 구현하는 것만으로 `EventDispatcher`에 자동 연결된다. 별도 등록 코드가 필요없다
+- Consumer는 `java.util.function.Consumer<구체이벤트타입>`을 구현하고 `@Component` 등으로 스프링 빈으로 등록해야 한다. `EventDispatcher`가 이벤트 타입으로 스프링 컨텍스트에서 빈을 조회하는 구조이므로, 빈 등록이 없으면 소비가 일어나지 않는다
 - 순서 보장이 필요한 스트림(카드 선택 등)은 `core-size: 1` 단일 스레드, 브로드캐스트성 스트림은 공용 concurrent 풀을 사용한다
 
 ---

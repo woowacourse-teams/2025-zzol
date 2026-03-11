@@ -9,13 +9,14 @@
 
 ## 테스트 종류별 베이스
 
-| 종류               | 베이스                      | 특징                                                                                                |
-|------------------|--------------------------|---------------------------------------------------------------------------------------------------|
-| 순수 단위 테스트        | 없음 (순수 Java)             | 스프링 컨텍스트 없이 도메인 로직만 검증                                                                            |
-| 서비스 테스트          | `ServiceTest` 추상 클래스 상속  | `@SpringBootTest` + `test` 프로파일 + `@Transactional`. `ApplicationEventPublisher`는 MockitoBean으로 제공 |
-| WebSocket 통합 테스트 | `@IntegrationTest` 어노테이션 | `RANDOM_PORT` + `test` 프로파일 + `@Transactional`. 실제 STOMP 세션으로 검증                                  |
+| 종류 | 베이스 | 특징 |
+|------|--------|------|
+| 순수 단위 테스트 | 없음 (순수 Java) | 스프링 컨텍스트 없이 도메인 로직만 검증 |
+| 서비스 테스트 | `ServiceTest` 추상 클래스 상속 | `@SpringBootTest` + `test` 프로파일 + `@Transactional`. `ApplicationEventPublisher`는 MockitoBean으로 제공 |
+| WebSocket 통합 테스트 | `WebSocketIntegrationTestSupport` 추상 클래스 상속 | `RANDOM_PORT` + `test` 프로파일 + `@Transactional` 포함. `@IntegrationTest` 추가 불필요 |
+| 일반 통합 테스트 (REST, Stream 등) | `@IntegrationTest` 어노테이션 | `RANDOM_PORT` + `test` 프로파일 + `@Transactional` |
 
-두 베이스 모두 `TestContainerConfig`를 import하므로 Valkey TestContainer가 자동으로 구동된다.
+모든 베이스는 `TestContainerConfig`를 import하므로 Valkey TestContainer가 자동으로 구동된다.
 
 ## 픽스처
 
@@ -23,7 +24,7 @@
 
 ## 통합 테스트 (WebSocket)
 
-`@IntegrationTest` 어노테이션을 붙이고 `WebSocketIntegrationTestSupport`를 상속하여 실제 STOMP 세션으로 테스트한다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다.
+`WebSocketIntegrationTestSupport`를 상속하면 STOMP 세션 유틸(`createSession`, `assertMessage` 등)이 제공된다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다. `@IntegrationTest`를 함께 붙이면 설정이 중복되므로 사용하지 않는다.
 
 ## 테스트 프로파일
 

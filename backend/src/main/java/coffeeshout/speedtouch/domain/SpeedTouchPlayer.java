@@ -5,15 +5,15 @@ import java.time.Duration;
 import java.time.Instant;
 import lombok.Getter;
 
-@Getter
 public class SpeedTouchPlayer {
 
     public static final int FIRST_NUMBER = 1;
     public static final int LAST_NUMBER = 25;
 
+    @Getter
     private final Player player;
-    private volatile int currentNumber;
-    private volatile Instant finishTime;
+    private int currentNumber;
+    private Instant finishTime;
 
     public SpeedTouchPlayer(Player player) {
         this.player = player;
@@ -34,15 +34,23 @@ public class SpeedTouchPlayer {
         return true;
     }
 
-    public boolean isFinished() {
+    public synchronized boolean isFinished() {
         return finishTime != null;
     }
 
-    public int getProgress() {
+    public synchronized int getCurrentNumber() {
+        return currentNumber;
+    }
+
+    public synchronized int getProgress() {
         return currentNumber - FIRST_NUMBER;
     }
 
-    public long calculateFinishMillis(Instant startTime) {
+    public synchronized Instant getFinishTime() {
+        return finishTime;
+    }
+
+    public synchronized long calculateFinishMillis(Instant startTime) {
         if (!isFinished()) {
             throw new IllegalStateException("완주하지 않은 플레이어의 완주 시간을 계산할 수 없습니다.");
         }

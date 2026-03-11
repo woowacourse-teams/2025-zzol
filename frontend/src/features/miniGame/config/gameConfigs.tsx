@@ -4,16 +4,19 @@ import RacingGameDescription1 from '@/assets/racing_game_desc1.svg';
 import RacingGameDescription2 from '@/assets/racing_game_desc2.svg';
 import CardGameProvider from '@/contexts/CardGame/CardGameProvider';
 import RacingGameProvider from '@/contexts/RacingGame/RacingGameProvider';
+import SpeedTouchGameProvider from '@/contexts/SpeedTouchGame/SpeedTouchGameProvider';
 import { MiniGameType } from '@/types/miniGame/common';
 import { ComponentType, PropsWithChildren } from 'react';
 import CardGameReadyPage from '../cardGame/pages/CardGameReadyPage';
 import RacingGameReadyPage from '../racingGame/pages/RacingGameReadyPage';
+import SpeedTouchGameReadyPage from '../speedTouchGame/pages/SpeedTouchGameReadyPage';
 import CardGamePlayPage from '../cardGame/pages/CardGamePlayPage';
 import RacingGamePlayPage from '../racingGame/pages/RacingGamePlayPage';
+import SpeedTouchGamePlayPage from '../speedTouchGame/pages/SpeedTouchGamePlayPage';
 
 export type SlideConfig = {
   textLines: string[];
-  imageSrc: string;
+  imageSrc?: string;
   className: string;
 };
 
@@ -58,5 +61,20 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
       },
     ],
     PlayPage: RacingGamePlayPage,
+  },
+  SPEED_TOUCH: {
+    Provider: SpeedTouchGameProvider,
+    ReadyPage: SpeedTouchGameReadyPage,
+    slides: [
+      {
+        textLines: ['1부터 25까지', '순서대로 터치하세요!'],
+        className: 'slide-first',
+      },
+      {
+        textLines: ['가장 빠르게 완주한 순으로', '등수가 결정됩니다'],
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: SpeedTouchGamePlayPage,
   },
 };

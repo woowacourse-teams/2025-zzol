@@ -19,7 +19,6 @@
 | 요청 객체               | `{Action}Request` / `{Action}Message`    | `RoomEnterRequest`               |
 
 ### 값 객체(Value Object)
-ㅊ
 도메인의 식별자와 핵심 개념은 record로 정의한다. 원시 타입(`String`, `int`)을 도메인 메서드 시그니처에 그대로 노출하지 않는다.
 
 ---

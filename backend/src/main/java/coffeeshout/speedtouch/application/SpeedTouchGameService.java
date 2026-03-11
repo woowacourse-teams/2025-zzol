@@ -102,7 +102,6 @@ public class SpeedTouchGameService implements MiniGameService {
         if (!game.tryFinish()) {
             return;
         }
-        game.updateState(SpeedTouchGameState.DONE);
         game.cancelTimeout();
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));

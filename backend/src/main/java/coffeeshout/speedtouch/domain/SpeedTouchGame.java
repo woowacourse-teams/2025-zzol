@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,16 +20,12 @@ import lombok.Setter;
 public class SpeedTouchGame implements Playable {
 
     private SpeedTouchPlayers players;
-    private volatile SpeedTouchGameState state;
+    private final AtomicReference<SpeedTouchGameState> state =
+            new AtomicReference<>(SpeedTouchGameState.DESCRIPTION);
     private volatile Instant startTime;
-    private final AtomicBoolean finished = new AtomicBoolean(false);
 
     @Setter
     private ScheduledFuture<?> timeoutFuture;
-
-    public SpeedTouchGame() {
-        this.state = SpeedTouchGameState.DESCRIPTION;
-    }
 
     @Override
     public void setUp(List<Player> playerList) {
@@ -66,24 +62,28 @@ public class SpeedTouchGame implements Playable {
     }
 
     public void startPlaying() {
-        this.state = SpeedTouchGameState.PLAYING;
+        state.set(SpeedTouchGameState.PLAYING);
         this.startTime = Instant.now();
     }
 
-    public void updateState(SpeedTouchGameState state) {
-        this.state = state;
+    public void updateState(SpeedTouchGameState newState) {
+        state.set(newState);
+    }
+
+    public SpeedTouchGameState getState() {
+        return state.get();
     }
 
     public boolean isPlaying() {
-        return state == SpeedTouchGameState.PLAYING;
+        return state.get() == SpeedTouchGameState.PLAYING;
     }
 
     public boolean isDone() {
-        return state == SpeedTouchGameState.DONE;
+        return state.get() == SpeedTouchGameState.DONE;
     }
 
     public boolean tryFinish() {
-        return finished.compareAndSet(false, true);
+        return state.compareAndSet(SpeedTouchGameState.PLAYING, SpeedTouchGameState.DONE);
     }
 
     public void cancelTimeout() {
@@ -104,10 +104,10 @@ public class SpeedTouchGame implements Playable {
     }
 
     private void validatePlaying() {
-        if (state != SpeedTouchGameState.PLAYING) {
+        if (state.get() != SpeedTouchGameState.PLAYING) {
             throw new InvalidStateException(
                     SpeedTouchGameErrorCode.NOT_PLAYING_STATE,
-                    "현재 게임 상태가 플레이 중이 아닙니다: " + state
+                    "현재 게임 상태가 플레이 중이 아닙니다: " + state.get()
             );
         }
     }

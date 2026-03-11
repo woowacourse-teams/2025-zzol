@@ -33,7 +33,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit
 
 변경 제안 시 다음 형식으로 사용자에게 설명한다:
 
-```
+```markdown
 테스트하기 어려운 설계가 발견되었습니다.
 
 [발견된 문제]

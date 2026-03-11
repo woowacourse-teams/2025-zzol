@@ -20,8 +20,8 @@ import lombok.Setter;
 public class SpeedTouchGame implements Playable {
 
     private SpeedTouchPlayers players;
-    private SpeedTouchGameState state;
-    private Instant startTime;
+    private volatile SpeedTouchGameState state;
+    private volatile Instant startTime;
     private final AtomicBoolean finished = new AtomicBoolean(false);
 
     @Setter

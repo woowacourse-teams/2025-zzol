@@ -12,8 +12,8 @@ public class SpeedTouchPlayer {
     public static final int LAST_NUMBER = 25;
 
     private final Player player;
-    private int currentNumber;
-    private Instant finishTime;
+    private volatile int currentNumber;
+    private volatile Instant finishTime;
 
     public SpeedTouchPlayer(Player player) {
         this.player = player;

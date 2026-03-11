@@ -1,5 +1,6 @@
 import CardIcon from '@/assets/card-icon.svg';
 import RacingIcon from '@/assets/racing-icon.svg';
+import SpeedTouchIcon from '@/assets/speed-touch-icon.svg';
 
 /**
  * 전체 미니 게임 공통 타입
@@ -22,5 +23,5 @@ export const MINI_GAME_DESCRIPTION_MAP: Record<MiniGameType, string[]> = {
 export const MINI_GAME_ICON_MAP: Record<MiniGameType, string> = {
   CARD_GAME: CardIcon,
   RACING_GAME: RacingIcon,
-  SPEED_TOUCH: CardIcon,
+  SPEED_TOUCH: SpeedTouchIcon,
 };

@@ -177,9 +177,13 @@ class SpeedTouchGameTest {
     class 종료_원자성 {
 
         @Test
-        void tryFinish는_처음_호출시_true를_반환한다() {
-            // when & then
-            assertThat(game.tryFinish()).isTrue();
+        void tryFinish는_처음_호출시_true를_반환하고_DONE_상태가_된다() {
+            // when
+            final boolean result = game.tryFinish();
+
+            // then
+            assertThat(result).isTrue();
+            assertThat(game.getState()).isEqualTo(SpeedTouchGameState.DONE);
         }
 
         @Test

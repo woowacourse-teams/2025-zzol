@@ -15,6 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,6 +26,7 @@ public class BlindTimerGame implements Playable {
     private static final int TARGET_MAX_CENTIS = 2000;
 
     private BlindTimerPlayers players;
+    @Getter(AccessLevel.NONE)
     private final AtomicReference<BlindTimerGameState> state =
             new AtomicReference<>(BlindTimerGameState.DESCRIPTION);
     private volatile Instant startTime;
@@ -83,8 +85,8 @@ public class BlindTimerGame implements Playable {
     }
 
     public void startPlaying() {
-        state.set(BlindTimerGameState.PLAYING);
         this.startTime = Instant.now();
+        state.set(BlindTimerGameState.PLAYING);
     }
 
     public void updateState(BlindTimerGameState newState) {

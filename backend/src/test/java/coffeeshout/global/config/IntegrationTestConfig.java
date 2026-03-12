@@ -38,4 +38,9 @@ public class IntegrationTestConfig {
     public TaskScheduler testIntegrationSpeedTouchGameScheduler() {
         return new ShutDownTestScheduler();
     }
+
+    @Bean(name = "blindTimerGameScheduler")
+    public TaskScheduler testIntegrationBlindTimerGameScheduler() {
+        return new ShutDownTestScheduler();
+    }
 }

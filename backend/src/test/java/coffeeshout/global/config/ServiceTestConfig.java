@@ -35,6 +35,11 @@ public class ServiceTestConfig {
         return new TestTaskScheduler();
     }
 
+    @Bean(name = "blindTimerGameScheduler")
+    public TaskScheduler testBlindTimerGameScheduler() {
+        return new TestTaskScheduler();
+    }
+
     @Bean
     @Primary
     public SimpMessagingTemplate mockMessagingTemplate() {

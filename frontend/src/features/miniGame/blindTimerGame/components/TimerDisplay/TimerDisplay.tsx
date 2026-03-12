@@ -12,7 +12,7 @@ const TimerDisplay = ({ displayTime, isBlind, isStopped, stoppedTimeDisplay, onS
   return (
     <S.Container>
       <S.TimeText $isBlind={isBlind}>{displayTime}</S.TimeText>
-      <S.StopButton $disabled={isStopped} onClick={isStopped ? undefined : onStop}>
+      <S.StopButton $disabled={isStopped} disabled={isStopped} onClick={onStop}>
         STOP
       </S.StopButton>
       {isStopped && stoppedTimeDisplay && (

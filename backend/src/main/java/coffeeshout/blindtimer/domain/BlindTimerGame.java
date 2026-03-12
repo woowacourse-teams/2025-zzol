@@ -1,0 +1,132 @@
+package coffeeshout.blindtimer.domain;
+
+import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.minigame.domain.MiniGameResult;
+import coffeeshout.minigame.domain.MiniGameScore;
+import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.room.domain.Playable;
+import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+public class BlindTimerGame implements Playable {
+
+    private static final int TARGET_MIN_CENTIS = 500;
+    private static final int TARGET_MAX_CENTIS = 2000;
+
+    private BlindTimerPlayers players;
+    private final AtomicReference<BlindTimerGameState> state =
+            new AtomicReference<>(BlindTimerGameState.DESCRIPTION);
+    private volatile Instant startTime;
+    private final long targetTimeMillis;
+
+    @Setter
+    private ScheduledFuture<?> timeoutFuture;
+
+    public BlindTimerGame() {
+        this.targetTimeMillis = ThreadLocalRandom.current().nextInt(TARGET_MIN_CENTIS, TARGET_MAX_CENTIS) * 10L;
+    }
+
+    public BlindTimerGame(long targetTimeMillis) {
+        this.targetTimeMillis = targetTimeMillis;
+    }
+
+    @Override
+    public void setUp(List<Player> playerList) {
+        this.players = new BlindTimerPlayers(playerList);
+    }
+
+    @Override
+    public MiniGameResult getResult() {
+        return MiniGameResult.fromAscending(getScores());
+    }
+
+    @Override
+    public Map<Player, MiniGameScore> getScores() {
+        return players.stream()
+                .collect(Collectors.toMap(
+                        BlindTimerPlayer::getPlayer,
+                        this::calculateScore
+                ));
+    }
+
+    @Override
+    public MiniGameType getMiniGameType() {
+        return MiniGameType.BLIND_TIMER;
+    }
+
+    public boolean stop(PlayerName playerName, Instant now) {
+        validatePlaying();
+        final BlindTimerPlayer player = players.findByName(playerName);
+        final long elapsedMillis = Duration.between(startTime, now).toMillis();
+        return player.stop(elapsedMillis);
+    }
+
+    public void markAllTimedOut() {
+        players.stream()
+                .filter(p -> !p.isStopped())
+                .forEach(BlindTimerPlayer::markTimedOut);
+    }
+
+    public boolean isAllStopped() {
+        return players.isAllStopped();
+    }
+
+    public void startPlaying() {
+        state.set(BlindTimerGameState.PLAYING);
+        this.startTime = Instant.now();
+    }
+
+    public void updateState(BlindTimerGameState newState) {
+        state.set(newState);
+    }
+
+    public BlindTimerGameState getState() {
+        return state.get();
+    }
+
+    public boolean isPlaying() {
+        return state.get() == BlindTimerGameState.PLAYING;
+    }
+
+    public boolean tryFinish() {
+        return state.compareAndSet(BlindTimerGameState.PLAYING, BlindTimerGameState.DONE);
+    }
+
+    public void cancelTimeout() {
+        if (timeoutFuture != null && !timeoutFuture.isDone()) {
+            timeoutFuture.cancel(false);
+        }
+    }
+
+    public BlindTimerPlayer findPlayer(PlayerName name) {
+        return players.findByName(name);
+    }
+
+    private MiniGameScore calculateScore(BlindTimerPlayer player) {
+        if (player.isTimedOut()) {
+            return BlindTimerScore.ofTimeout();
+        }
+        final long error = Math.abs(targetTimeMillis - player.getStoppedElapsedMillis());
+        return BlindTimerScore.ofNormal(error);
+    }
+
+    private void validatePlaying() {
+        if (state.get() != BlindTimerGameState.PLAYING) {
+            throw new InvalidStateException(
+                    BlindTimerGameErrorCode.NOT_PLAYING_STATE,
+                    "현재 게임 상태가 플레이 중이 아닙니다: " + state.get()
+            );
+        }
+    }
+}

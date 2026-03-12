@@ -62,8 +62,8 @@ public class SpeedTouchGame implements Playable {
     }
 
     public void startPlaying() {
-        state.set(SpeedTouchGameState.PLAYING);
         this.startTime = Instant.now();
+        state.set(SpeedTouchGameState.PLAYING);
     }
 
     public void updateState(SpeedTouchGameState newState) {

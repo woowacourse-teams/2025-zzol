@@ -22,6 +22,9 @@ public class BlindTimerScore extends MiniGameScore {
     }
 
     public static BlindTimerScore ofNormal(long errorMillis) {
+        if (errorMillis < 0) {
+            throw new IllegalArgumentException("오차는 0 이상이어야 합니다: " + errorMillis);
+        }
         return new BlindTimerScore(errorMillis);
     }
 

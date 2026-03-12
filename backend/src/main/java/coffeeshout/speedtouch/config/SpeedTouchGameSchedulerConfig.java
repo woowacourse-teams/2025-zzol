@@ -23,7 +23,6 @@ public class SpeedTouchGameSchedulerConfig {
         );
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         scheduler.setAwaitTerminationSeconds(30);
-        scheduler.initialize();
         return scheduler;
     }
 }

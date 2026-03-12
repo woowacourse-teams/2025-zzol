@@ -25,7 +25,7 @@ const BlindTimerGamePlayPage = () => {
 
   const isPlaying = gameState === 'PLAYING';
   const { elapsedMs, isBlind, displayTime, formatTime } = useBlindTimer(
-    isPlaying,
+    isPlaying && !isStopped,
     blindDelayMillis
   );
 

@@ -13,6 +13,7 @@ import coffeeshout.global.ServiceTest;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class BlindTimerGameProgressHandlerTest extends ServiceTest {
         room = RoomFixture.호스트_꾹이();
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         roomRepository.save(room);
-        game = new BlindTimerGame(10000L);
+        game = new BlindTimerGame(Duration.ofSeconds(10));
         room.addMiniGame(new PlayerName(HOST_NAME), game);
         room.startNextGame(HOST_NAME);
         joinCode = room.getJoinCode().getValue();

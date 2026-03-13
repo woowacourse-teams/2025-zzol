@@ -1,24 +1,25 @@
 package coffeeshout.blindtimer.domain;
 
 import coffeeshout.room.domain.player.Player;
+import java.time.Duration;
 import lombok.Getter;
 
 @Getter
 public class BlindTimerPlayer {
 
     private final Player player;
-    private Long stoppedElapsedMillis;
+    private Duration stoppedElapsed;
     private boolean timedOut;
 
     public BlindTimerPlayer(Player player) {
         this.player = player;
     }
 
-    public synchronized boolean stop(long elapsedMillis) {
+    public synchronized boolean stop(Duration elapsed) {
         if (isStopped()) {
             return false;
         }
-        this.stoppedElapsedMillis = elapsedMillis;
+        this.stoppedElapsed = elapsed;
         return true;
     }
 
@@ -29,14 +30,14 @@ public class BlindTimerPlayer {
     }
 
     public synchronized boolean isStopped() {
-        return stoppedElapsedMillis != null || timedOut;
+        return stoppedElapsed != null || timedOut;
     }
 
     public synchronized boolean isTimedOut() {
         return timedOut;
     }
 
-    public synchronized Long getStoppedElapsedMillis() {
-        return stoppedElapsedMillis;
+    public synchronized Duration getStoppedElapsed() {
+        return stoppedElapsed;
     }
 }

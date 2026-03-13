@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
+import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -56,7 +57,7 @@ class BlindTimerPlayersTest {
         @Test
         void 한명만_STOP하면_false이다() {
             // given
-            players.findByName(new PlayerName("한스")).stop(7000L);
+            players.findByName(new PlayerName("한스")).stop(Duration.ofSeconds(7));
 
             // when & then
             assertThat(players.isAllStopped()).isFalse();
@@ -65,8 +66,8 @@ class BlindTimerPlayersTest {
         @Test
         void 전원_STOP하면_true이다() {
             // given
-            players.findByName(new PlayerName("한스")).stop(7000L);
-            players.findByName(new PlayerName("꾹이")).stop(8000L);
+            players.findByName(new PlayerName("한스")).stop(Duration.ofSeconds(7));
+            players.findByName(new PlayerName("꾹이")).stop(Duration.ofSeconds(8));
 
             // when & then
             assertThat(players.isAllStopped()).isTrue();
@@ -75,7 +76,7 @@ class BlindTimerPlayersTest {
         @Test
         void 타임아웃도_STOP으로_간주한다() {
             // given
-            players.findByName(new PlayerName("한스")).stop(7000L);
+            players.findByName(new PlayerName("한스")).stop(Duration.ofSeconds(7));
             players.findByName(new PlayerName("꾹이")).markTimedOut();
 
             // when & then

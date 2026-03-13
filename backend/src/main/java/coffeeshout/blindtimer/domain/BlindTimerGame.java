@@ -22,25 +22,27 @@ import lombok.Setter;
 @Getter
 public class BlindTimerGame implements Playable {
 
-    private static final int TARGET_MIN_CENTIS = 500;
-    private static final int TARGET_MAX_CENTIS = 2000;
+    private static final Duration TARGET_MIN = Duration.ofSeconds(5);
+    private static final Duration TARGET_MAX = Duration.ofMillis(19990);
 
     private BlindTimerPlayers players;
     @Getter(AccessLevel.NONE)
     private final AtomicReference<BlindTimerGameState> state =
             new AtomicReference<>(BlindTimerGameState.DESCRIPTION);
     private volatile Instant startTime;
-    private final long targetTimeMillis;
+    private final Duration targetTime;
 
     @Setter
     private ScheduledFuture<?> timeoutFuture;
 
     public BlindTimerGame() {
-        this.targetTimeMillis = ThreadLocalRandom.current().nextInt(TARGET_MIN_CENTIS, TARGET_MAX_CENTIS) * 10L;
+        final long millis = ThreadLocalRandom.current().nextLong(
+                TARGET_MIN.toMillis() / 10, TARGET_MAX.toMillis() / 10 + 1) * 10;
+        this.targetTime = Duration.ofMillis(millis);
     }
 
-    public BlindTimerGame(long targetTimeMillis) {
-        this.targetTimeMillis = targetTimeMillis;
+    public BlindTimerGame(Duration targetTime) {
+        this.targetTime = targetTime;
     }
 
     @Override
@@ -70,8 +72,8 @@ public class BlindTimerGame implements Playable {
     public boolean stop(PlayerName playerName, Instant now) {
         validatePlaying();
         final BlindTimerPlayer player = players.findByName(playerName);
-        final long elapsedMillis = Duration.between(startTime, now).toMillis();
-        return player.stop(elapsedMillis);
+        final Duration elapsed = Duration.between(startTime, now);
+        return player.stop(elapsed);
     }
 
     public void markAllTimedOut() {
@@ -119,7 +121,8 @@ public class BlindTimerGame implements Playable {
         if (player.isTimedOut()) {
             return BlindTimerScore.ofTimeout();
         }
-        final long error = Math.abs(targetTimeMillis - player.getStoppedElapsedMillis());
+        final Duration diff = targetTime.minus(player.getStoppedElapsed());
+        final Duration error = diff.isNegative() ? diff.negated() : diff;
         return BlindTimerScore.ofNormal(error);
     }
 

@@ -3,6 +3,7 @@ package coffeeshout.blindtimer.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
+import java.time.Duration;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -17,11 +18,11 @@ class BlindTimerPlayerTest {
             final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스());
 
             // when
-            final boolean result = player.stop(7500L);
+            final boolean result = player.stop(Duration.ofMillis(7500));
 
             // then
             assertThat(result).isTrue();
-            assertThat(player.getStoppedElapsedMillis()).isEqualTo(7500L);
+            assertThat(player.getStoppedElapsed()).isEqualTo(Duration.ofMillis(7500));
             assertThat(player.isStopped()).isTrue();
         }
 
@@ -29,14 +30,14 @@ class BlindTimerPlayerTest {
         void 이미_STOP한_플레이어는_다시_STOP할_수_없다() {
             // given
             final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스());
-            player.stop(7500L);
+            player.stop(Duration.ofMillis(7500));
 
             // when
-            final boolean result = player.stop(8000L);
+            final boolean result = player.stop(Duration.ofMillis(8000));
 
             // then
             assertThat(result).isFalse();
-            assertThat(player.getStoppedElapsedMillis()).isEqualTo(7500L);
+            assertThat(player.getStoppedElapsed()).isEqualTo(Duration.ofMillis(7500));
         }
 
         @Test
@@ -46,7 +47,7 @@ class BlindTimerPlayerTest {
             player.markTimedOut();
 
             // when
-            final boolean result = player.stop(10000L);
+            final boolean result = player.stop(Duration.ofMillis(10000));
 
             // then
             assertThat(result).isFalse();
@@ -68,21 +69,21 @@ class BlindTimerPlayerTest {
             // then
             assertThat(player.isTimedOut()).isTrue();
             assertThat(player.isStopped()).isTrue();
-            assertThat(player.getStoppedElapsedMillis()).isNull();
+            assertThat(player.getStoppedElapsed()).isNull();
         }
 
         @Test
         void 이미_STOP한_플레이어는_타임아웃되지_않는다() {
             // given
             final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스());
-            player.stop(7500L);
+            player.stop(Duration.ofMillis(7500));
 
             // when
             player.markTimedOut();
 
             // then
             assertThat(player.isTimedOut()).isFalse();
-            assertThat(player.getStoppedElapsedMillis()).isEqualTo(7500L);
+            assertThat(player.getStoppedElapsed()).isEqualTo(Duration.ofMillis(7500));
         }
     }
 
@@ -97,7 +98,7 @@ class BlindTimerPlayerTest {
             // when & then
             assertThat(player.isStopped()).isFalse();
             assertThat(player.isTimedOut()).isFalse();
-            assertThat(player.getStoppedElapsedMillis()).isNull();
+            assertThat(player.getStoppedElapsed()).isNull();
         }
     }
 }

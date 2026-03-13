@@ -9,6 +9,7 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,8 @@ import org.junit.jupiter.api.Test;
 
 class BlindTimerGameTest {
 
+    private static final Duration TARGET_TIME = Duration.ofSeconds(10);
+
     private BlindTimerGame game;
     private Player 한스;
     private Player 꾹이;
@@ -24,7 +27,7 @@ class BlindTimerGameTest {
 
     @BeforeEach
     void setUp() {
-        game = new BlindTimerGame(10000L);
+        game = new BlindTimerGame(TARGET_TIME);
         한스 = PlayerFixture.게스트한스();
         꾹이 = PlayerFixture.게스트꾹이();
         루키 = PlayerFixture.게스트루키();
@@ -38,7 +41,7 @@ class BlindTimerGameTest {
         @Test
         void 초기_상태는_DESCRIPTION이다() {
             // given
-            final BlindTimerGame newGame = new BlindTimerGame(10000L);
+            final BlindTimerGame newGame = new BlindTimerGame(TARGET_TIME);
 
             // when & then
             assertThat(newGame.getState()).isEqualTo(BlindTimerGameState.DESCRIPTION);
@@ -60,17 +63,17 @@ class BlindTimerGameTest {
         @Test
         void 목표시간은_생성자에서_설정된_값이다() {
             // when & then
-            assertThat(game.getTargetTimeMillis()).isEqualTo(10000L);
+            assertThat(game.getTargetTime()).isEqualTo(TARGET_TIME);
         }
 
         @Test
-        void 기본_생성자는_5000에서_19990_사이의_목표시간을_생성한다() {
+        void 기본_생성자는_5초에서_19점99초_사이의_목표시간을_생성한다() {
             // given
             final BlindTimerGame randomGame = new BlindTimerGame();
 
             // when & then
-            assertThat(randomGame.getTargetTimeMillis()).isBetween(5000L, 19990L);
-            assertThat(randomGame.getTargetTimeMillis() % 10).isEqualTo(0L);
+            assertThat(randomGame.getTargetTime().toMillis()).isBetween(5000L, 19990L);
+            assertThat(randomGame.getTargetTime().toMillis() % 10).isEqualTo(0L);
         }
     }
 
@@ -80,7 +83,7 @@ class BlindTimerGameTest {
         @Test
         void PLAYING_상태가_아니면_STOP시_예외가_발생한다() {
             // given
-            final BlindTimerGame newGame = new BlindTimerGame(10000L);
+            final BlindTimerGame newGame = new BlindTimerGame(TARGET_TIME);
             newGame.setUp(List.of(한스));
 
             // when & then

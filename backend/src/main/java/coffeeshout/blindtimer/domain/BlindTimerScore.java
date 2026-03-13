@@ -1,6 +1,7 @@
 package coffeeshout.blindtimer.domain;
 
 import coffeeshout.minigame.domain.MiniGameScore;
+import java.time.Duration;
 
 /**
  * 오차 기반 점수 체계.
@@ -21,9 +22,10 @@ public class BlindTimerScore extends MiniGameScore {
         this.value = value;
     }
 
-    public static BlindTimerScore ofNormal(long errorMillis) {
+    public static BlindTimerScore ofNormal(Duration error) {
+        final long errorMillis = error.toMillis();
         if (errorMillis < 0) {
-            throw new IllegalArgumentException("오차는 0 이상이어야 합니다: " + errorMillis);
+            throw new IllegalArgumentException("오차는 0 이상이어야 합니다: " + error);
         }
         return new BlindTimerScore(errorMillis);
     }

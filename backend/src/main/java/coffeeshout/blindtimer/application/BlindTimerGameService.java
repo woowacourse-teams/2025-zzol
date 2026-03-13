@@ -13,8 +13,8 @@ import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.service.RoomQueryService;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ScheduledFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -54,7 +54,7 @@ public class BlindTimerGameService implements MiniGameService {
         scheduleDescription(game, joinCode);
 
         eventPublisher.publishEvent(stateEvent(game, joinCode));
-        log.info("블라인드 타이머 게임 시작: joinCode={}, targetTime={}ms", joinCode, game.getTargetTimeMillis());
+        log.info("블라인드 타이머 게임 시작: joinCode={}, targetTime={}", joinCode, game.getTargetTime());
     }
 
     @Override
@@ -74,7 +74,7 @@ public class BlindTimerGameService implements MiniGameService {
         eventPublisher.publishEvent(BlindTimerProgressEvent.of(game, joinCode));
         taskScheduler.schedule(
                 () -> eventPublisher.publishEvent(BlindTimerFinishedEvent.of(game, joinCode)),
-                Instant.now().plus(timing.resultDelay().toMillis(), ChronoUnit.MILLIS)
+                Instant.now().plus(timing.resultDelay())
         );
         eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.BLIND_TIMER.name()));
         log.info("블라인드 타이머 게임 종료: joinCode={}", joinCode);
@@ -88,7 +88,7 @@ public class BlindTimerGameService implements MiniGameService {
         game.updateState(BlindTimerGameState.DESCRIPTION);
         taskScheduler.schedule(
                 () -> schedulePrepare(game, joinCode),
-                Instant.now().plus(timing.description().toMillis(), ChronoUnit.MILLIS)
+                Instant.now().plus(timing.description())
         );
     }
 
@@ -99,7 +99,7 @@ public class BlindTimerGameService implements MiniGameService {
 
         taskScheduler.schedule(
                 () -> startPlaying(game, joinCode),
-                Instant.now().plus(timing.prepare().toMillis(), ChronoUnit.MILLIS)
+                Instant.now().plus(timing.prepare())
         );
     }
 
@@ -108,10 +108,10 @@ public class BlindTimerGameService implements MiniGameService {
         eventPublisher.publishEvent(stateEvent(game, joinCode));
         gameDurationMetricService.startGameTimer(joinCode);
 
-        final long timeoutMillis = game.getTargetTimeMillis() + timing.timeoutBuffer().toMillis();
+        final Duration timeout = game.getTargetTime().plus(timing.timeoutBuffer());
         final ScheduledFuture<?> timeoutFuture = taskScheduler.schedule(
                 () -> handleTimeout(game, joinCode),
-                Instant.now().plus(timeoutMillis, ChronoUnit.MILLIS)
+                Instant.now().plus(timeout)
         );
         game.setTimeoutFuture(timeoutFuture);
     }
@@ -123,6 +123,6 @@ public class BlindTimerGameService implements MiniGameService {
     }
 
     private BlindTimerStateChangedEvent stateEvent(BlindTimerGame game, String joinCode) {
-        return BlindTimerStateChangedEvent.of(game, joinCode, timing.blindDelay().toMillis());
+        return BlindTimerStateChangedEvent.of(game, joinCode, timing.blindDelay());
     }
 }

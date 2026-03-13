@@ -5,14 +5,17 @@ import RacingGameDescription2 from '@/assets/racing_game_desc2.svg';
 import CardGameProvider from '@/contexts/CardGame/CardGameProvider';
 import RacingGameProvider from '@/contexts/RacingGame/RacingGameProvider';
 import SpeedTouchGameProvider from '@/contexts/SpeedTouchGame/SpeedTouchGameProvider';
+import BlindTimerGameProvider from '@/contexts/BlindTimerGame/BlindTimerGameProvider';
 import { MiniGameType } from '@/types/miniGame/common';
 import { ComponentType, PropsWithChildren } from 'react';
 import CardGameReadyPage from '../cardGame/pages/CardGameReadyPage';
 import RacingGameReadyPage from '../racingGame/pages/RacingGameReadyPage';
 import SpeedTouchGameReadyPage from '../speedTouchGame/pages/SpeedTouchGameReadyPage';
+import BlindTimerGameReadyPage from '../blindTimerGame/pages/BlindTimerGameReadyPage';
 import CardGamePlayPage from '../cardGame/pages/CardGamePlayPage';
 import RacingGamePlayPage from '../racingGame/pages/RacingGamePlayPage';
 import SpeedTouchGamePlayPage from '../speedTouchGame/pages/SpeedTouchGamePlayPage';
+import BlindTimerGamePlayPage from '../blindTimerGame/pages/BlindTimerGamePlayPage';
 
 export type SlideConfig = {
   textLines: string[];
@@ -76,5 +79,20 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
       },
     ],
     PlayPage: SpeedTouchGamePlayPage,
+  },
+  BLIND_TIMER: {
+    Provider: BlindTimerGameProvider,
+    ReadyPage: BlindTimerGameReadyPage,
+    slides: [
+      {
+        textLines: ['목표 시간이 주어지면', '타이머를 보며 감을 잡으세요'],
+        className: 'slide-first',
+      },
+      {
+        textLines: ['3초 후 화면이 가려지면', '감각만으로 STOP!'],
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: BlindTimerGamePlayPage,
   },
 };

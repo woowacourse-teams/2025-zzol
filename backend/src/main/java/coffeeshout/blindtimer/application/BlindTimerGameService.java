@@ -111,7 +111,7 @@ public class BlindTimerGameService implements MiniGameService {
         final Duration timeout = game.getTargetTime().plus(timing.timeoutBuffer());
         final ScheduledFuture<?> timeoutFuture = taskScheduler.schedule(
                 () -> handleTimeout(game, joinCode),
-                Instant.now().plus(timeout)
+                game.getStartTime().plus(timeout)
         );
         game.setTimeoutFuture(timeoutFuture);
     }

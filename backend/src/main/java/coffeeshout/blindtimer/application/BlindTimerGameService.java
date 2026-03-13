@@ -62,6 +62,28 @@ public class BlindTimerGameService implements MiniGameService {
         return MiniGameType.BLIND_TIMER;
     }
 
+    public void finishGame(BlindTimerGame game, String joinCode) {
+        if (!game.tryFinish()) {
+            return;
+        }
+        game.cancelTimeout();
+
+        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
+        room.applyMiniGameResult(game.getResult());
+
+        eventPublisher.publishEvent(BlindTimerProgressEvent.of(game, joinCode));
+        taskScheduler.schedule(
+                () -> eventPublisher.publishEvent(BlindTimerFinishedEvent.of(game, joinCode)),
+                Instant.now().plus(timing.resultDelay().toMillis(), ChronoUnit.MILLIS)
+        );
+        eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.BLIND_TIMER.name()));
+        log.info("블라인드 타이머 게임 종료: joinCode={}", joinCode);
+    }
+
+    public BlindTimerGame getBlindTimerGame(Room room) {
+        return (BlindTimerGame) room.findMiniGame(MiniGameType.BLIND_TIMER);
+    }
+
     private void scheduleDescription(BlindTimerGame game, String joinCode) {
         game.updateState(BlindTimerGameState.DESCRIPTION);
         taskScheduler.schedule(
@@ -98,28 +120,6 @@ public class BlindTimerGameService implements MiniGameService {
         log.info("블라인드 타이머 게임 타임아웃: joinCode={}", joinCode);
         game.markAllTimedOut();
         finishGame(game, joinCode);
-    }
-
-    void finishGame(BlindTimerGame game, String joinCode) {
-        if (!game.tryFinish()) {
-            return;
-        }
-        game.cancelTimeout();
-
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        room.applyMiniGameResult(game.getResult());
-
-        eventPublisher.publishEvent(BlindTimerProgressEvent.of(game, joinCode));
-        taskScheduler.schedule(
-                () -> eventPublisher.publishEvent(BlindTimerFinishedEvent.of(game, joinCode)),
-                Instant.now().plus(timing.resultDelay().toMillis(), ChronoUnit.MILLIS)
-        );
-        eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.BLIND_TIMER.name()));
-        log.info("블라인드 타이머 게임 종료: joinCode={}", joinCode);
-    }
-
-    BlindTimerGame getBlindTimerGame(Room room) {
-        return (BlindTimerGame) room.findMiniGame(MiniGameType.BLIND_TIMER);
     }
 
     private BlindTimerStateChangedEvent stateEvent(BlindTimerGame game, String joinCode) {

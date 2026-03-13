@@ -121,9 +121,7 @@ public class BlindTimerGame implements Playable {
         if (player.isTimedOut()) {
             return BlindTimerScore.ofTimeout();
         }
-        final Duration diff = targetTime.minus(player.getStoppedElapsed());
-        final Duration error = diff.isNegative() ? diff.negated() : diff;
-        return BlindTimerScore.ofNormal(error);
+        return BlindTimerScore.ofNormal(targetTime, player.getStoppedElapsed());
     }
 
     private void validatePlaying() {

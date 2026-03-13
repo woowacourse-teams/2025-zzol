@@ -22,11 +22,9 @@ public class BlindTimerScore extends MiniGameScore {
         this.value = value;
     }
 
-    public static BlindTimerScore ofNormal(Duration error) {
-        final long errorMillis = error.toMillis();
-        if (errorMillis < 0) {
-            throw new IllegalArgumentException("오차는 0 이상이어야 합니다: " + error);
-        }
+    public static BlindTimerScore ofNormal(Duration targetTime, Duration stoppedElapsed) {
+        final Duration diff = targetTime.minus(stoppedElapsed);
+        final long errorMillis = Math.abs(diff.toMillis());
         return new BlindTimerScore(errorMillis);
     }
 

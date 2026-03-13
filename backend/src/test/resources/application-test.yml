@@ -83,3 +83,11 @@ speed-touch:
     description: 500ms
     prepare: 500ms
     playing: 30000ms
+
+blind-timer:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    blind-delay: 500ms
+    timeout-buffer: 3000ms
+    result-delay: 500ms

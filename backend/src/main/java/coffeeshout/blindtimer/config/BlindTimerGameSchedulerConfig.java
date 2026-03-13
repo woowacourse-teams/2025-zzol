@@ -1,4 +1,4 @@
-package coffeeshout.speedtouch.config;
+package coffeeshout.blindtimer.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -9,17 +9,17 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @Configuration
 @Slf4j
-public class SpeedTouchGameSchedulerConfig {
+public class BlindTimerGameSchedulerConfig {
 
-    @Bean(name = "speedTouchGameScheduler")
+    @Bean(name = "blindTimerGameScheduler")
     @Profile("!test")
-    public TaskScheduler speedTouchGameScheduler() {
+    public TaskScheduler blindTimerGameScheduler() {
         final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(2);
-        scheduler.setThreadNamePrefix("speed-touch-");
+        scheduler.setThreadNamePrefix("blind-timer-");
         scheduler.setDaemon(false);
         scheduler.setErrorHandler(t ->
-                log.error("스피드 터치 스케줄 실행 중 예외가 발생했습니다.", t)
+                log.error("블라인드 타이머 스케줄 실행 중 예외가 발생했습니다.", t)
         );
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         scheduler.setAwaitTerminationSeconds(30);

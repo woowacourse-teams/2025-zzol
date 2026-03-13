@@ -98,7 +98,7 @@ public class SpeedTouchGameService implements MiniGameService {
         finishGame(game, joinCode);
     }
 
-    void finishGame(SpeedTouchGame game, String joinCode) {
+    public void finishGame(SpeedTouchGame game, String joinCode) {
         if (!game.tryFinish()) {
             return;
         }
@@ -116,7 +116,7 @@ public class SpeedTouchGameService implements MiniGameService {
         log.info("스피드 터치 게임 종료: joinCode={}", joinCode);
     }
 
-    SpeedTouchGame getSpeedTouchGame(Room room) {
+    public SpeedTouchGame getSpeedTouchGame(Room room) {
         return (SpeedTouchGame) room.findMiniGame(MiniGameType.SPEED_TOUCH);
     }
 }

@@ -12,7 +12,8 @@ public enum StreamKey {
     CARD_GAME_SELECT_BROADCAST("cardgame:select"),
     MINIGAME_EVENTS("minigame"),
     RACING_GAME_EVENTS("racinggame"),
-    SPEED_TOUCH_EVENTS("speedtouch");
+    SPEED_TOUCH_EVENTS("speedtouch"),
+    BLIND_TIMER_EVENTS("blindtimer");
 
     private final String redisKey;
 

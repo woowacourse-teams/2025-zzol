@@ -1,5 +1,6 @@
 package coffeeshout.minigame.domain;
 
+import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.racinggame.domain.RacingGame;
@@ -14,6 +15,7 @@ public enum MiniGameType {
     CARD_GAME,
     RACING_GAME,
     SPEED_TOUCH,
+    BLIND_TIMER,
     ;
 
     public Playable createMiniGame(String joinCode) {
@@ -25,6 +27,7 @@ public enum MiniGameType {
             }
             case RACING_GAME -> new RacingGame();
             case SPEED_TOUCH -> new SpeedTouchGame();
+            case BLIND_TIMER -> new BlindTimerGame();
         };
     }
 }

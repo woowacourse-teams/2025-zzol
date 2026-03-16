@@ -34,7 +34,8 @@ const BombRelayGamePlayPage = () => {
 
   const isMyTurn = currentTurnPlayerName === myName;
   const isPlaying = gameState === 'PLAYING';
-  const showExplosion = (gameState === 'ROUND_RESULT' || gameState === 'DONE') && !!eliminatedPlayerName;
+  const showExplosion =
+    (gameState === 'ROUND_RESULT' || gameState === 'DONE') && !!eliminatedPlayerName;
 
   const handleSubmitWord = useCallback(
     (word: string) => {
@@ -58,11 +59,15 @@ const BombRelayGamePlayPage = () => {
     };
   }, [gameState, joinCode, navigate, miniGameType]);
 
+  const turnBannerText = isMyTurn
+    ? '💣 내 차례! 빨리 단어를 입력하세요!'
+    : `${currentTurnPlayerName}의 차례입니다...`;
+
   return (
     <Layout>
       <Layout.TopBar center={<Headline4>폭탄 끝말잇기</Headline4>} />
       <Layout.Content>
-        <S.Container>
+        <S.Container $isMyTurn={isMyTurn && isPlaying}>
           <S.RoundSection>
             <RoundInfo
               currentRound={currentRound}
@@ -71,11 +76,14 @@ const BombRelayGamePlayPage = () => {
               myName={myName}
             />
           </S.RoundSection>
+          {isPlaying && (
+            <S.TurnBanner $isMyTurn={isMyTurn}>{turnBannerText}</S.TurnBanner>
+          )}
           <S.WordSection>
             {currentWord && <CurrentWord currentWord={currentWord} />}
           </S.WordSection>
           <S.FeedbackSection>
-            <WordFeedback result={lastWordResult} />
+            <WordFeedback result={lastWordResult} myName={myName} />
           </S.FeedbackSection>
           <S.PlayerSection>
             <PlayerList

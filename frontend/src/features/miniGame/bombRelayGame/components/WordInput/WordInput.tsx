@@ -28,6 +28,7 @@ const WordInput = ({ isMyTurn, onSubmit }: Props) => {
   return (
     <S.Container>
       <S.Input
+        $isMyTurn={isMyTurn}
         value={word}
         onChange={(e) => setWord(e.target.value)}
         onKeyDown={handleKeyDown}

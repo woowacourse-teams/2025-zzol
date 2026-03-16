@@ -102,8 +102,8 @@ bomb-relay:
   timing:
     description: 4000ms
     prepare: 2000ms
-    min-bomb-timer: 10000ms
-    max-bomb-timer: 25000ms
+    min-bomb-timer: 18000ms
+    max-bomb-timer: 40000ms
     round-result-delay: 4000ms
     result-delay: 2000ms
   dictionary:

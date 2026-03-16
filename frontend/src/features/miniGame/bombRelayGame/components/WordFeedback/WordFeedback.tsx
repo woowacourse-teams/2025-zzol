@@ -13,7 +13,10 @@ const WordFeedback = ({ result, myName }: Props) => {
   if (!result.accepted && result.playerName !== myName) return null;
 
   return (
-    <S.Container key={`${result.playerName}-${result.word}-${Date.now()}`} $accepted={result.accepted}>
+    <S.Container
+      key={`${result.playerName}-${result.word}-${Date.now()}`}
+      $accepted={result.accepted}
+    >
       {result.accepted
         ? `✅ ${result.playerName}: "${result.word}" 정답!`
         : `❌ "${result.word}" - ${result.rejectReason}`}

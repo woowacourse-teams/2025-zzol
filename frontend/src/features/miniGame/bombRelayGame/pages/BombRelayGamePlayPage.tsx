@@ -76,12 +76,8 @@ const BombRelayGamePlayPage = () => {
               myName={myName}
             />
           </S.RoundSection>
-          {isPlaying && (
-            <S.TurnBanner $isMyTurn={isMyTurn}>{turnBannerText}</S.TurnBanner>
-          )}
-          <S.WordSection>
-            {currentWord && <CurrentWord currentWord={currentWord} />}
-          </S.WordSection>
+          {isPlaying && <S.TurnBanner $isMyTurn={isMyTurn}>{turnBannerText}</S.TurnBanner>}
+          <S.WordSection>{currentWord && <CurrentWord currentWord={currentWord} />}</S.WordSection>
           <S.FeedbackSection>
             <WordFeedback result={lastWordResult} myName={myName} />
           </S.FeedbackSection>

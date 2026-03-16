@@ -41,7 +41,9 @@ export const TurnBanner = styled.div<{ $isMyTurn: boolean }>`
       ? css`
           background: linear-gradient(135deg, #ff6b6b, #ff8e53);
           color: white;
-          animation: ${pulseGlow} 1.5s ease-in-out infinite, ${bannerPulse} 1.5s ease-in-out infinite;
+          animation:
+            ${pulseGlow} 1.5s ease-in-out infinite,
+            ${bannerPulse} 1.5s ease-in-out infinite;
         `
       : css`
           background-color: #f0f0f0;

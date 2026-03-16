@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import * as S from './WordInput.styled';
 
 type Props = {
@@ -36,7 +36,11 @@ const WordInput = ({ isMyTurn, onSubmit }: Props) => {
         disabled={!isMyTurn}
         autoFocus={isMyTurn}
       />
-      <S.SubmitButton $disabled={!isMyTurn || !word.trim()} disabled={!isMyTurn || !word.trim()} onClick={handleSubmit}>
+      <S.SubmitButton
+        $disabled={!isMyTurn || !word.trim()}
+        disabled={!isMyTurn || !word.trim()}
+        onClick={handleSubmit}
+      >
         전송
       </S.SubmitButton>
     </S.Container>

@@ -52,7 +52,9 @@ export const Overlay = styled.div`
   align-items: center;
   justify-content: center;
   gap: 20px;
-  animation: ${flashBg} 0.8s ease forwards, ${shakeScreen} 0.5s ease;
+  animation:
+    ${flashBg} 0.8s ease forwards,
+    ${shakeScreen} 0.5s ease;
 `;
 
 export const BombEmoji = styled.div`

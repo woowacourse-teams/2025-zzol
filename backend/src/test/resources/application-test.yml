@@ -98,6 +98,7 @@ bomb-relay:
     prepare: 500ms
     min-bomb-timer: 3000ms
     max-bomb-timer: 5000ms
+    round-result-delay: 1000ms
     result-delay: 500ms
   dictionary:
     api-url: https://stdict.korean.go.kr/api/search

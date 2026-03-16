@@ -7,7 +7,8 @@ public record BombRelayStateResponse(
         int currentRound,
         int maxRounds,
         String currentWord,
-        String currentTurnPlayerName
+        String currentTurnPlayerName,
+        String eliminatedPlayerName
 ) {
 
     public static BombRelayStateResponse from(BombRelayStateChangedEvent event) {
@@ -16,7 +17,8 @@ public record BombRelayStateResponse(
                 event.currentRound(),
                 event.maxRounds(),
                 event.currentWord(),
-                event.currentTurnPlayerName()
+                event.currentTurnPlayerName(),
+                event.eliminatedPlayerName()
         );
     }
 }

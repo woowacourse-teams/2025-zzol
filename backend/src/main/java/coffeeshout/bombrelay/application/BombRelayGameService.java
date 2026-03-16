@@ -85,14 +85,14 @@ public class BombRelayGameService implements MiniGameService {
         eventPublisher.publishEvent(BombRelayProgressEvent.of(game, joinCode));
 
         if (game.isGameOver()) {
-            finishGame(game, joinCode);
+            finishGame(game, joinCode, eliminatedName);
         } else {
             game.updateState(BombRelayGameState.ROUND_RESULT);
-            eventPublisher.publishEvent(BombRelayStateChangedEvent.of(game, joinCode));
+            eventPublisher.publishEvent(BombRelayStateChangedEvent.of(game, joinCode, eliminatedName));
 
             taskScheduler.schedule(
                     () -> startNextRound(game, joinCode),
-                    Instant.now().plus(timing.resultDelay())
+                    Instant.now().plus(timing.roundResultDelay())
             );
         }
     }
@@ -107,7 +107,7 @@ public class BombRelayGameService implements MiniGameService {
         return (BombRelayGame) room.findMiniGame(MiniGameType.BOMB_RELAY);
     }
 
-    private void finishGame(BombRelayGame game, String joinCode) {
+    private void finishGame(BombRelayGame game, String joinCode, String eliminatedName) {
         if (!game.tryFinish()) {
             return;
         }
@@ -116,9 +116,10 @@ public class BombRelayGameService implements MiniGameService {
         room.applyMiniGameResult(game.getResult());
 
         eventPublisher.publishEvent(BombRelayProgressEvent.of(game, joinCode));
+        eventPublisher.publishEvent(BombRelayStateChangedEvent.of(game, joinCode, eliminatedName));
         taskScheduler.schedule(
                 () -> eventPublisher.publishEvent(BombRelayFinishedEvent.of(game, joinCode)),
-                Instant.now().plus(timing.resultDelay())
+                Instant.now().plus(timing.roundResultDelay())
         );
         eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.BOMB_RELAY.name()));
         log.info("폭탄 끝말잇기 게임 종료: joinCode={}", joinCode);

@@ -12,6 +12,7 @@ public record BombRelayGameTimingProperties(
         @NotNull Duration prepare,
         @NotNull Duration minBombTimer,
         @NotNull Duration maxBombTimer,
+        @NotNull Duration roundResultDelay,
         @NotNull Duration resultDelay
 ) {
 
@@ -20,6 +21,7 @@ public record BombRelayGameTimingProperties(
         validatePositive(prepare, "prepare");
         validatePositive(minBombTimer, "minBombTimer");
         validatePositive(maxBombTimer, "maxBombTimer");
+        validatePositive(roundResultDelay, "roundResultDelay");
         validatePositive(resultDelay, "resultDelay");
     }
 

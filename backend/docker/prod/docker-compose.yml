@@ -18,6 +18,7 @@ x-prod-app: &prod-app
     - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     - TEMPO_URL=${TEMPO_URL:-http://tempo:4318/v1/traces}
     - TRACE_SAMPLING_PROBABILITY=${TRACE_SAMPLING_PROBABILITY:-0.1}
+    - STDICT_API_KEY=${STDICT_API_KEY}
     - TZ=Asia/Seoul
   volumes:
     - prod-app-logs:/app/logs

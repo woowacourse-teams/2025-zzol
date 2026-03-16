@@ -58,6 +58,8 @@ redis:
         thread-pool-name: concurrent
       "[blindtimer]":
         thread-pool-name: concurrent
+      "[bombrelay]":
+        thread-pool-name: concurrent
 
 redisson:
   enabled: true
@@ -95,6 +97,17 @@ blind-timer:
     blind-delay: 3000ms
     timeout-buffer: 3000ms
     result-delay: 2000ms
+
+bomb-relay:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    min-bomb-timer: 10000ms
+    max-bomb-timer: 25000ms
+    result-delay: 2000ms
+  dictionary:
+    api-url: https://stdict.korean.go.kr/api/search
+    api-key: ${STDICT_API_KEY:}
 
 room:
   removalDelay: 1h

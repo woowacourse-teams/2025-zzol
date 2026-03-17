@@ -97,12 +97,6 @@ public class BombRelayGameService implements MiniGameService {
         }
     }
 
-    public void resetBombTimer(BombRelayGame game, String joinCode) {
-        // 턴이 넘어갈 때마다 폭탄 타이머를 리셋하지 않는다.
-        // 폭탄 타이머는 라운드 시작 시 한 번만 설정되고, 라운드 끝날 때까지 유지된다.
-        // 이게 핵심: 언제 터질지 모르니까 긴장감이 생긴다.
-    }
-
     public BombRelayGame getBombRelayGame(Room room) {
         return (BombRelayGame) room.findMiniGame(MiniGameType.BOMB_RELAY);
     }

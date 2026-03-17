@@ -139,21 +139,22 @@ class BombRelayGameTest {
         @Test
         void 이미_사용된_단어는_거절된다() {
             final String currentTurnName = game.getCurrentTurnPlayer().getName();
-            final String validWord = makeValidWord(game.getCurrentWord());
+            final String currentWord = game.getCurrentWord();
+            final char lastChar = KoreanCharUtils.getLastChar(currentWord);
 
-            game.acceptWord(validWord);
-            // turnIndex 증가됨, 다음 턴 플레이어로
-            final String nextTurnName = game.getCurrentTurnPlayer().getName();
-            // validWord의 끝 글자로 시작하는 단어를 다시 acceptWord
-            final String anotherWord = makeValidWord(validWord);
-            game.acceptWord(anotherWord);
+            // lastChar + "자" → "자자" → "자자" 재시도로 ALREADY_USED_WORD 검증
+            final String word1 = lastChar + "자";
+            game.acceptWord(word1);
 
-            // 이제 다시 validWord를 시도 (이미 사용됨)
+            // "자자"를 acceptWord → currentWord가 "자자" (끝 글자 '자')
+            game.acceptWord("자자");
+
+            // "자자"를 다시 시도 → 끝 글자 '자'로 시작 ✓, usedWords에 이미 있음 → ALREADY_USED_WORD
             final String thirdTurnName = game.getCurrentTurnPlayer().getName();
-            // anotherWord 끝 글자 → validWord 첫 글자가 같아야 하는데 보장 못함
-            // 대신 직접 이미 들어있는 단어를 시도
-            final WordValidationResult result = game.validateWord(thirdTurnName, validWord);
-            // 첫 글자 불일치일 수도 있어서, usedWords 체크만 단독 테스트
+            final WordValidationResult result = game.validateWord(thirdTurnName, "자자");
+
+            assertThat(result.isRejected()).isTrue();
+            assertThat(result.errorCode()).isEqualTo(BombRelayGameErrorCode.ALREADY_USED_WORD);
         }
 
         @Test

@@ -23,6 +23,11 @@ public record BombRelayGameTimingProperties(
         validatePositive(maxBombTimer, "maxBombTimer");
         validatePositive(roundResultDelay, "roundResultDelay");
         validatePositive(resultDelay, "resultDelay");
+        if (minBombTimer != null && maxBombTimer != null
+                && minBombTimer.compareTo(maxBombTimer) > 0) {
+            throw new IllegalArgumentException(
+                    "minBombTimer가 maxBombTimer보다 클 수 없습니다: min=" + minBombTimer + ", max=" + maxBombTimer);
+        }
     }
 
     private static void validatePositive(Duration duration, String name) {

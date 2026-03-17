@@ -64,7 +64,7 @@ const BombRelayGamePlayPage = () => {
     : `${currentTurnPlayerName}의 차례입니다...`;
 
   return (
-    <Layout>
+    <Layout padding="0">
       <Layout.TopBar center={<Headline4>폭탄 끝말잇기</Headline4>} />
       <Layout.Content>
         <S.Container $isMyTurn={isMyTurn && isPlaying}>

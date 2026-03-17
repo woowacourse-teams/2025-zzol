@@ -19,7 +19,7 @@ const WordFeedback = ({ result, myName }: Props) => {
     >
       {result.accepted
         ? `✅ ${result.playerName}: "${result.word}" 정답!`
-        : `❌ "${result.word}" - ${result.rejectReason}`}
+        : `❌ "${result.word}"${result.rejectReason ? ` - ${result.rejectReason}` : ''}`}
     </S.Container>
   );
 };

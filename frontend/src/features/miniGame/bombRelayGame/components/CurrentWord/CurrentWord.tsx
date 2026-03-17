@@ -9,9 +9,14 @@ const CurrentWord = ({ currentWord }: Props) => {
 
   return (
     <S.Container>
-      <S.Label>현재 단어</S.Label>
-      <S.Word>{currentWord}</S.Word>
-      <S.LastChar>다음 글자: {lastChar}</S.LastChar>
+      <S.WordCard>
+        <S.Label>현재 단어</S.Label>
+        <S.Word>{currentWord}</S.Word>
+      </S.WordCard>
+      <S.NextCharContainer>
+        <S.NextCharLabel>다음 글자</S.NextCharLabel>
+        <S.NextChar>{lastChar}</S.NextChar>
+      </S.NextCharContainer>
     </S.Container>
   );
 };

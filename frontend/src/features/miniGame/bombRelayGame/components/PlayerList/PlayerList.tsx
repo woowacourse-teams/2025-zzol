@@ -12,18 +12,18 @@ const PlayerList = ({ players, currentTurnPlayerName, myName }: Props) => {
     <S.Container>
       {players.map((player) => {
         const isMe = player.playerName === myName;
-        const displayName = isMe ? `${player.playerName} (나)` : player.playerName;
+        const isTurn = player.playerName === currentTurnPlayerName;
 
         return (
           <S.PlayerChip
             key={player.playerName}
             $eliminated={player.eliminated}
-            $isCurrentTurn={player.playerName === currentTurnPlayerName}
+            $isCurrentTurn={isTurn}
+            $isMe={isMe}
           >
-            {player.playerName === currentTurnPlayerName && !player.eliminated && (
-              <S.BombEmoji>💣</S.BombEmoji>
-            )}
-            {displayName}
+            {isTurn && !player.eliminated && <S.BombEmoji>💣</S.BombEmoji>}
+            {player.playerName}
+            {isMe && <S.MeTag>나</S.MeTag>}
             {player.eliminated && ' 💥'}
           </S.PlayerChip>
         );

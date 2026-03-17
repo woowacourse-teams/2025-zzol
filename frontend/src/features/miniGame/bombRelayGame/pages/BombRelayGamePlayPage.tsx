@@ -69,12 +69,7 @@ const BombRelayGamePlayPage = () => {
       <Layout.Content>
         <S.Container $isMyTurn={isMyTurn && isPlaying}>
           <S.RoundSection>
-            <RoundInfo
-              currentRound={currentRound}
-              maxRounds={maxRounds}
-              currentTurnPlayerName={currentTurnPlayerName}
-              myName={myName}
-            />
+            <RoundInfo currentRound={currentRound} maxRounds={maxRounds} />
           </S.RoundSection>
           {isPlaying && <S.TurnBanner $isMyTurn={isMyTurn}>{turnBannerText}</S.TurnBanner>}
           <S.WordSection>{currentWord && <CurrentWord currentWord={currentWord} />}</S.WordSection>

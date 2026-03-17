@@ -91,7 +91,7 @@ const BombRelayGamePlayPage = () => {
       {gameState === 'PREPARE' && <PrepareOverlay />}
       {showExplosion && (
         <BombExplosionOverlay
-          eliminatedPlayerName={eliminatedPlayerName}
+          eliminatedPlayerName={eliminatedPlayerName!}
           currentRound={currentRound}
           isGameOver={gameState === 'DONE'}
         />

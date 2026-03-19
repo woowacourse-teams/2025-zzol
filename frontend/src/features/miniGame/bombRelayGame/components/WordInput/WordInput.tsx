@@ -18,6 +18,7 @@ const WordInput = ({ isMyTurn, onSubmit }: Props) => {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (e.nativeEvent.isComposing) return;
       if (e.key === 'Enter') {
         handleSubmit();
       }

@@ -1,6 +1,7 @@
 import useLazyFetch from '@/apis/rest/useLazyFetch';
 import BackButton from '@/components/@common/BackButton/BackButton';
 import Button from '@/components/@common/Button/Button';
+import RefreshIcon from '@/components/@common/RefreshIcon/RefreshIcon';
 import Headline3 from '@/components/@common/Headline3/Headline3';
 import Input from '@/components/@common/Input/Input';
 import ProgressCounter from '@/components/@common/ProgressCounter/ProgressCounter';
@@ -9,6 +10,7 @@ import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import Layout from '@/layouts/Layout';
+import { useTheme } from '@emotion/react';
 import { useRef, useState } from 'react';
 import { useRoomManagement } from './hooks/useRoomManagement';
 import * as S from './EntryNamePage.styled';
@@ -19,6 +21,10 @@ type PlayerNameCheckResponse = {
   exist: boolean;
 };
 
+type RandomNicknameResponse = {
+  nickname: string;
+};
+
 const EntryNamePage = () => {
   const [name, setName] = useState('');
   const navigate = useReplaceNavigate();
@@ -27,13 +33,32 @@ const EntryNamePage = () => {
   const { showToast } = useToast();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { proceedToRoom, isLoading } = useRoomManagement();
+  const theme = useTheme();
 
   const { execute: checkGuestName } = useLazyFetch<PlayerNameCheckResponse>({
     endpoint: `/rooms/check-guestName?joinCode=${joinCode}&guestName=${name}`,
+    errorDisplayMode: 'toast',
   });
+
+  const randomNicknameEndpoint = joinCode
+    ? `/rooms/nickname/random?joinCode=${joinCode}`
+    : `/rooms/nickname/random`;
+
+  const { execute: fetchRandomNickname, loading: isRandomLoading } =
+    useLazyFetch<RandomNicknameResponse>({
+      endpoint: randomNicknameEndpoint,
+      errorDisplayMode: 'toast',
+    });
 
   const handleNavigateToHome = () => {
     navigate('/');
+  };
+
+  const handleRandomNickname = async () => {
+    const response = await fetchRandomNickname();
+    if (response?.nickname) {
+      setName(response.nickname);
+    }
   };
 
   const handleProceedToRoom = async () => {
@@ -60,7 +85,19 @@ const EntryNamePage = () => {
       <Layout.TopBar left={<BackButton onClick={handleNavigateToHome} />} />
       <Layout.Content>
         <S.Container>
-          <Headline3>닉네임을 입력해주세요</Headline3>
+          <S.HeadlineRow>
+            <Headline3>닉네임을 입력해주세요</Headline3>
+            <S.RandomButton
+              type="button"
+              onClick={handleRandomNickname}
+              disabled={isRandomLoading}
+              aria-label="닉네임 자동 생성"
+              data-testid="random-nickname-button"
+            >
+              <RefreshIcon size={16} fill={theme.color.point[400]} />
+              <span>자동 생성</span>
+            </S.RandomButton>
+          </S.HeadlineRow>
           <S.Wrapper>
             <Input
               value={name}

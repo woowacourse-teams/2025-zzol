@@ -43,4 +43,9 @@ public class IntegrationTestConfig {
     public TaskScheduler testIntegrationBlindTimerGameScheduler() {
         return new ShutDownTestScheduler();
     }
+
+    @Bean(name = "bombRelayGameScheduler")
+    public TaskScheduler testIntegrationBombRelayGameScheduler() {
+        return new ShutDownTestScheduler();
+    }
 }

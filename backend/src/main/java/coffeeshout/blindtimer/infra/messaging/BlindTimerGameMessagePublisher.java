@@ -40,7 +40,7 @@ public class BlindTimerGameMessagePublisher {
     public void publishFinished(BlindTimerFinishedEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(STATE_DESTINATION_FORMAT, event.joinCode()),
-                WebSocketResponse.success(new BlindTimerStateResponse(event.state(), 0, 0))
+                WebSocketResponse.success(new BlindTimerStateResponse(event.state().name(), 0, 0))
         );
     }
 }

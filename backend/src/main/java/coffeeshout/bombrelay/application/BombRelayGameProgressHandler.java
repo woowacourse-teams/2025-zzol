@@ -38,14 +38,12 @@ public class BombRelayGameProgressHandler {
             return;
         }
 
-        if (result.requiresDictionaryCheck()) {
-            if (!wordValidator.isValidWord(word)) {
-                eventPublisher.publishEvent(
-                        WordResultEvent.rejected(joinCode, playerName, word, "사전에 존재하지 않는 단어입니다.")
-                );
-                log.debug("단어 거절 (사전 검증): joinCode={}, player={}, word={}", joinCode, playerName, word);
-                return;
-            }
+        if (result.requiresDictionaryCheck() && !wordValidator.isValidWord(word)) {
+            eventPublisher.publishEvent(
+                    WordResultEvent.rejected(joinCode, playerName, word, "사전에 존재하지 않는 단어입니다.")
+            );
+            log.debug("단어 거절 (사전 검증): joinCode={}, player={}, word={}", joinCode, playerName, word);
+            return;
         }
 
         game.acceptWord(word);

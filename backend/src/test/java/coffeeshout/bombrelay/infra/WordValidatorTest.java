@@ -3,7 +3,6 @@ package coffeeshout.bombrelay.infra;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.bombrelay.config.BombRelayDictionaryProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -25,7 +24,7 @@ class WordValidatorTest {
         server = HttpServer.create(new InetSocketAddress(0), 0);
         server.createContext("/api/search", exchange -> {
             final byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
-            exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+            exchange.getResponseHeaders().set("Content-Type", "text/xml; charset=UTF-8");
             exchange.sendResponseHeaders(responseStatus, body.length);
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(body);
@@ -38,7 +37,7 @@ class WordValidatorTest {
                 "http://localhost:" + port + "/api/search",
                 "test-key"
         );
-        wordValidator = new WordValidator(properties, new ObjectMapper());
+        wordValidator = new WordValidator(properties);
 
         responseStatus = 200;
     }
@@ -53,39 +52,41 @@ class WordValidatorTest {
 
         @Test
         void 정확히_일치하는_단어가_있으면_true를_반환한다() {
-            // given
             responseBody = """
-                    {
-                      "channel": {
-                        "total": 1,
-                        "item": [
-                          { "word": "사과", "pos": "명사" }
-                        ]
-                      }
-                    }
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <channel>
+                        <total>1</total>
+                        <item>
+                            <word>사과</word>
+                            <pos>명사</pos>
+                        </item>
+                    </channel>
                     """;
 
-            // when & then
             assertThat(wordValidator.isValidWord("사과")).isTrue();
         }
 
         @Test
         void 검색_결과에_여러_단어가_있고_정확히_일치하는_항목이_있으면_true를_반환한다() {
-            // given
             responseBody = """
-                    {
-                      "channel": {
-                        "total": 3,
-                        "item": [
-                          { "word": "사과나무", "pos": "명사" },
-                          { "word": "사과", "pos": "명사" },
-                          { "word": "사과하다", "pos": "동사" }
-                        ]
-                      }
-                    }
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <channel>
+                        <total>3</total>
+                        <item>
+                            <word>사과나무</word>
+                            <pos>명사</pos>
+                        </item>
+                        <item>
+                            <word>사과</word>
+                            <pos>명사</pos>
+                        </item>
+                        <item>
+                            <word>사과하다</word>
+                            <pos>동사</pos>
+                        </item>
+                    </channel>
                     """;
 
-            // when & then
             assertThat(wordValidator.isValidWord("사과")).isTrue();
         }
     }
@@ -95,34 +96,29 @@ class WordValidatorTest {
 
         @Test
         void total이_0이면_false를_반환한다() {
-            // given
             responseBody = """
-                    {
-                      "channel": {
-                        "total": 0
-                      }
-                    }
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <channel>
+                        <total>0</total>
+                    </channel>
                     """;
 
-            // when & then
             assertThat(wordValidator.isValidWord("ㅋㅋㅋ")).isFalse();
         }
 
         @Test
         void 검색_결과에_정확히_일치하는_단어가_없으면_false를_반환한다() {
-            // given
             responseBody = """
-                    {
-                      "channel": {
-                        "total": 1,
-                        "item": [
-                          { "word": "사과나무", "pos": "명사" }
-                        ]
-                      }
-                    }
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <channel>
+                        <total>1</total>
+                        <item>
+                            <word>사과나무</word>
+                            <pos>명사</pos>
+                        </item>
+                    </channel>
                     """;
 
-            // when & then
             assertThat(wordValidator.isValidWord("사과")).isFalse();
         }
     }
@@ -132,22 +128,31 @@ class WordValidatorTest {
 
         @Test
         void 서버_오류_응답이면_단어를_허용한다() {
-            // given
             responseStatus = 500;
             responseBody = "Internal Server Error";
 
-            // when & then — 서버 장애 시 게임 진행을 막지 않기 위해 true
             assertThat(wordValidator.isValidWord("사과")).isTrue();
         }
 
         @Test
         void 클라이언트_오류_응답이면_단어를_거절한다() {
-            // given
             responseStatus = 404;
             responseBody = "Not Found";
 
-            // when & then — 4xx는 요청 자체 문제이므로 거절
             assertThat(wordValidator.isValidWord("사과")).isFalse();
+        }
+
+        @Test
+        void API_에러_코드_응답이면_단어를_허용한다() {
+            responseBody = """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <error>
+                        <error_code>010</error_code>
+                        <message>Daily API Limit Exceeded</message>
+                    </error>
+                    """;
+
+            assertThat(wordValidator.isValidWord("사과")).isTrue();
         }
     }
 
@@ -156,28 +161,27 @@ class WordValidatorTest {
 
         @Test
         void 같은_단어를_두_번_검증하면_캐시에서_반환한다() {
-            // given
             responseBody = """
-                    {
-                      "channel": {
-                        "total": 1,
-                        "item": [
-                          { "word": "사과", "pos": "명사" }
-                        ]
-                      }
-                    }
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <channel>
+                        <total>1</total>
+                        <item>
+                            <word>사과</word>
+                            <pos>명사</pos>
+                        </item>
+                    </channel>
                     """;
 
-            // when
             final boolean first = wordValidator.isValidWord("사과");
 
-            // 서버 응답을 바꿔도 캐시된 결과를 반환해야 함
             responseBody = """
-                    { "channel": { "total": 0 } }
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <channel>
+                        <total>0</total>
+                    </channel>
                     """;
             final boolean second = wordValidator.isValidWord("사과");
 
-            // then
             assertThat(first).isTrue();
             assertThat(second).isTrue();
         }

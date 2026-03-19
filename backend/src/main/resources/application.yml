@@ -107,7 +107,7 @@ bomb-relay:
     round-result-delay: 4000ms
     result-delay: 2000ms
   dictionary:
-    api-url: https://stdict.korean.go.kr/api/search.do
+    api-url: https://krdict.korean.go.kr/api/search
     api-key: ${STDICT_API_KEY:}
 
 room:

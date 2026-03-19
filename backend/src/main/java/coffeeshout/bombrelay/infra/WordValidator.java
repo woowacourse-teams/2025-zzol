@@ -1,8 +1,7 @@
 package coffeeshout.bombrelay.infra;
 
 import coffeeshout.bombrelay.config.BombRelayDictionaryProperties;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -12,8 +11,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.IntStream;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 @Slf4j
 @Component
@@ -21,15 +26,15 @@ public class WordValidator {
 
     private final BombRelayDictionaryProperties properties;
     private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
+    private final DocumentBuilderFactory documentBuilderFactory;
     private final ConcurrentMap<String, Boolean> cache = new ConcurrentHashMap<>();
 
-    public WordValidator(BombRelayDictionaryProperties properties, ObjectMapper objectMapper) {
+    public WordValidator(BombRelayDictionaryProperties properties) {
         this.properties = properties;
-        this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(3))
                 .build();
+        this.documentBuilderFactory = createSecureDocumentBuilderFactory();
     }
 
     public boolean isValidWord(String word) {
@@ -50,12 +55,13 @@ public class WordValidator {
 
     private boolean queryDictionary(String word) throws Exception {
         final String encoded = URLEncoder.encode(word, StandardCharsets.UTF_8);
-        final String url = String.format("%s?key=%s&q=%s&req_type=json&type1=word&pos=1",
+        final String url = String.format("%s?key=%s&q=%s&type1=word&pos=1",
                 properties.apiUrl(), properties.apiKey(), encoded);
 
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(3))
+                .header("User-Agent", "CoffeeShout/1.0")
                 .GET()
                 .build();
 
@@ -66,28 +72,52 @@ public class WordValidator {
             return response.statusCode() >= 500;
         }
 
-        final JsonNode root = objectMapper.readTree(response.body());
-        final JsonNode channel = root.path("channel");
-        final int total = channel.path("total").asInt(0);
+        final String body = response.body();
+        if (body == null || body.isBlank()) {
+            log.warn("사전 API 빈 응답, 단어 허용 처리: word={}", word);
+            return true;
+        }
 
+        final DocumentBuilder builder = documentBuilderFactory.newDocumentBuilder();
+        final Document doc = builder.parse(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)));
+
+        final NodeList errorNodes = doc.getElementsByTagName("error_code");
+        if (errorNodes.getLength() > 0) {
+            final String errorCode = errorNodes.item(0).getTextContent();
+            log.warn("사전 API 에러 응답: errorCode={}, word={}", errorCode, word);
+            return true;
+        }
+
+        final NodeList totalNodes = doc.getElementsByTagName("total");
+        if (totalNodes.getLength() == 0) {
+            return false;
+        }
+
+        final int total = Integer.parseInt(totalNodes.item(0).getTextContent().trim());
         if (total == 0) {
             return false;
         }
 
-        return hasExactMatch(channel, word);
+        return hasExactMatch(doc, word);
     }
 
-    private boolean hasExactMatch(JsonNode channel, String word) {
-        final JsonNode items = channel.path("item");
-        if (items.isArray()) {
-            for (JsonNode item : items) {
-                if (word.equals(item.path("word").asText())) {
-                    return true;
-                }
-            }
-        } else if (items.isObject()) {
-            return word.equals(items.path("word").asText());
+    private boolean hasExactMatch(Document doc, String word) {
+        final NodeList items = doc.getElementsByTagName("item");
+        return IntStream.range(0, items.getLength())
+                .mapToObj(i -> (Element) items.item(i))
+                .map(item -> item.getElementsByTagName("word"))
+                .filter(wordNodes -> wordNodes.getLength() > 0)
+                .map(wordNodes -> wordNodes.item(0).getTextContent().trim())
+                .anyMatch(word::equals);
+    }
+
+    private static DocumentBuilderFactory createSecureDocumentBuilderFactory() {
+        final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        try {
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        } catch (Exception e) {
+            log.warn("XXE 방어 설정 실패", e);
         }
-        return false;
+        return factory;
     }
 }

@@ -35,13 +35,18 @@ const EntryNamePage = () => {
   const { proceedToRoom, isLoading } = useRoomManagement();
   const theme = useTheme();
 
+  const checkGuestNameQuery = new URLSearchParams({
+    joinCode: joinCode ?? '',
+    guestName: name,
+  }).toString();
+
   const { execute: checkGuestName } = useLazyFetch<PlayerNameCheckResponse>({
-    endpoint: `/rooms/check-guestName?joinCode=${joinCode}&guestName=${name}`,
+    endpoint: `/rooms/check-guestName?${checkGuestNameQuery}`,
     errorDisplayMode: 'toast',
   });
 
   const randomNicknameEndpoint = joinCode
-    ? `/rooms/nickname/random?joinCode=${joinCode}`
+    ? `/rooms/nickname/random?${new URLSearchParams({ joinCode }).toString()}`
     : `/rooms/nickname/random`;
 
   const { execute: fetchRandomNickname, loading: isRandomLoading } =

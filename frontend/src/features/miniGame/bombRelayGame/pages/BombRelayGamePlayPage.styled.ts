@@ -6,13 +6,17 @@ const pulseGlow = keyframes`
   50% { box-shadow: 0 0 0 6px rgba(255, 107, 107, 0); }
 `;
 
-export const Container = styled.div<{ $isMyTurn: boolean }>`
+export const Container = styled.div<{ $isMyTurn: boolean; $isEliminated: boolean }>`
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 12px 0 16px;
   transition: background-color 0.4s ease;
-  background-color: ${({ $isMyTurn }) => ($isMyTurn ? '#fff8f6' : '#fafafa')};
+  background-color: ${({ $isMyTurn, $isEliminated }) => {
+    if ($isEliminated) return '#f5f5f5';
+    if ($isMyTurn) return '#fff8f6';
+    return '#fafafa';
+  }};
 `;
 
 export const RoundSection = styled.div`
@@ -43,6 +47,22 @@ export const TurnBanner = styled.div<{ $isMyTurn: boolean }>`
         `}
 `;
 
+export const EliminatedBanner = styled.div`
+  flex-shrink: 0;
+  text-align: center;
+  padding: 14px 20px;
+  margin: 0 20px 12px;
+  border-radius: 16px;
+  background-color: #2b2b2b;
+  color: #999;
+  font-weight: 700;
+  font-size: 0.95rem;
+`;
+
+export const EliminatedLabel = styled.span`
+  color: #ff6b6b;
+`;
+
 export const WordSection = styled.div`
   flex: 1;
   display: flex;
@@ -65,4 +85,14 @@ export const PlayerSection = styled.div`
 export const InputSection = styled.div`
   flex-shrink: 0;
   padding: 0 20px;
+`;
+
+export const SpectatingText = styled.div`
+  text-align: center;
+  padding: 14px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #bbb;
+  background-color: #f0f0f0;
+  border-radius: 16px;
 `;

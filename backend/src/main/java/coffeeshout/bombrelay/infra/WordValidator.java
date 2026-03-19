@@ -63,7 +63,7 @@ public class WordValidator {
 
         if (response.statusCode() != 200) {
             log.warn("사전 API 응답 오류: status={}, word={}", response.statusCode(), word);
-            return true;
+            return response.statusCode() >= 500;
         }
 
         final JsonNode root = objectMapper.readTree(response.body());

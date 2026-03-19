@@ -131,13 +131,23 @@ class WordValidatorTest {
     class API_오류_처리 {
 
         @Test
-        void 응답_상태가_200이_아니면_단어를_허용한다() {
+        void 서버_오류_응답이면_단어를_허용한다() {
             // given
             responseStatus = 500;
             responseBody = "Internal Server Error";
 
-            // when & then — 장애 시 게임 진행을 막지 않기 위해 true
+            // when & then — 서버 장애 시 게임 진행을 막지 않기 위해 true
             assertThat(wordValidator.isValidWord("사과")).isTrue();
+        }
+
+        @Test
+        void 클라이언트_오류_응답이면_단어를_거절한다() {
+            // given
+            responseStatus = 404;
+            responseBody = "Not Found";
+
+            // when & then — 4xx는 요청 자체 문제이므로 거절
+            assertThat(wordValidator.isValidWord("사과")).isFalse();
         }
     }
 

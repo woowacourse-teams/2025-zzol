@@ -59,6 +59,7 @@ public class RoomService {
     private final RoomCommandService roomCommandService;
     private final DelayedRoomRemovalService delayedRoomRemovalService;
     private final QrCodeService qrCodeService;
+    private final NicknameValidator nicknameValidator;
     private final JoinCodeGenerator joinCodeGenerator;
     private final RoomEventWaitManager roomEventWaitManager;
     private final RoomJpaRepository roomJpaRepository;
@@ -73,6 +74,7 @@ public class RoomService {
 
     @Transactional
     public Room createRoom(String hostName) {
+        nicknameValidator.validate(hostName);
         final JoinCode joinCode = joinCodeGenerator.generate();
 
         // 방 생성 (QR 코드는 PENDING 상태로 시작)
@@ -99,6 +101,7 @@ public class RoomService {
     }
 
     public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName) {
+        nicknameValidator.validate(guestName);
         final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName);
 
         return processEventAsync(

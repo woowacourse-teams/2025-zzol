@@ -10,7 +10,7 @@ public record BlindTimerStateResponse(
 
     public static BlindTimerStateResponse from(BlindTimerStateChangedEvent event) {
         return new BlindTimerStateResponse(
-                event.state(),
+                event.state().name(),
                 event.targetTime().toMillis(),
                 event.blindDelay().toMillis()
         );

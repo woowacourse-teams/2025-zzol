@@ -1,10 +1,11 @@
 package coffeeshout.bombrelay.domain.event;
 
 import coffeeshout.bombrelay.domain.BombRelayGame;
+import coffeeshout.bombrelay.domain.BombRelayGameState;
 
 public record BombRelayStateChangedEvent(
         String joinCode,
-        String state,
+        BombRelayGameState state,
         int currentRound,
         int maxRounds,
         String currentWord,
@@ -22,7 +23,7 @@ public record BombRelayStateChangedEvent(
                 : "";
         return new BombRelayStateChangedEvent(
                 joinCode,
-                game.getState().name(),
+                game.getState(),
                 game.getCurrentRound(),
                 game.getMaxRounds(),
                 game.getCurrentWord(),

@@ -51,7 +51,7 @@ public class BombRelayGameMessagePublisher {
     public void publishFinished(BombRelayFinishedEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(STATE_DESTINATION_FORMAT, event.joinCode()),
-                WebSocketResponse.success(new BombRelayStateResponse(event.state(), 0, 0, null, null, null))
+                WebSocketResponse.success(new BombRelayStateResponse(event.state().name(), 0, 0, null, null, null))
         );
     }
 }

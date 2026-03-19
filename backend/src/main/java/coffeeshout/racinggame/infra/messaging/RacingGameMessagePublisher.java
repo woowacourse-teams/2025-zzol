@@ -43,7 +43,7 @@ public class RacingGameMessagePublisher {
     public void publishRacingGameStart(RaceStateChangedEvent raceStateChangedEvent) {
         loggingSimpMessagingTemplate.convertAndSend(
                 String.format(RACING_GAME_STATE_DESTINATION_FORMAT, raceStateChangedEvent.joinCode()),
-                WebSocketResponse.success(new RacingGameStateResponse(raceStateChangedEvent.state()))
+                WebSocketResponse.success(new RacingGameStateResponse(raceStateChangedEvent.state().name()))
         );
     }
 
@@ -56,7 +56,7 @@ public class RacingGameMessagePublisher {
     public void publishRacingGameFinish(RaceFinishedEvent raceFinishedEvent) {
         loggingSimpMessagingTemplate.convertAndSend(
                 String.format(RACING_GAME_STATE_DESTINATION_FORMAT, raceFinishedEvent.joinCode()),
-                WebSocketResponse.success(new RacingGameStateResponse(raceFinishedEvent.state()))
+                WebSocketResponse.success(new RacingGameStateResponse(raceFinishedEvent.state().name()))
         );
     }
 }

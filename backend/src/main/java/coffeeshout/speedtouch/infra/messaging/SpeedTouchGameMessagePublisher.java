@@ -32,7 +32,7 @@ public class SpeedTouchGameMessagePublisher {
     public void publishStateChanged(SpeedTouchStateChangedEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(STATE_DESTINATION_FORMAT, event.joinCode()),
-                WebSocketResponse.success(new SpeedTouchStateResponse(event.state()))
+                WebSocketResponse.success(new SpeedTouchStateResponse(event.state().name()))
         );
     }
 
@@ -40,7 +40,7 @@ public class SpeedTouchGameMessagePublisher {
     public void publishFinished(SpeedTouchFinishedEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(STATE_DESTINATION_FORMAT, event.joinCode()),
-                WebSocketResponse.success(new SpeedTouchStateResponse(event.state()))
+                WebSocketResponse.success(new SpeedTouchStateResponse(event.state().name()))
         );
     }
 }

@@ -13,7 +13,7 @@ public record BombRelayStateResponse(
 
     public static BombRelayStateResponse from(BombRelayStateChangedEvent event) {
         return new BombRelayStateResponse(
-                event.state(),
+                event.state().name(),
                 event.currentRound(),
                 event.maxRounds(),
                 event.currentWord(),

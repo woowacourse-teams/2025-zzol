@@ -1,11 +1,12 @@
 package coffeeshout.blindtimer.domain.event;
 
 import coffeeshout.blindtimer.domain.BlindTimerGame;
+import coffeeshout.blindtimer.domain.BlindTimerGameState;
 import java.time.Duration;
 
 public record BlindTimerStateChangedEvent(
         String joinCode,
-        String state,
+        BlindTimerGameState state,
         Duration targetTime,
         Duration blindDelay
 ) {
@@ -13,7 +14,7 @@ public record BlindTimerStateChangedEvent(
     public static BlindTimerStateChangedEvent of(BlindTimerGame game, String joinCode, Duration blindDelay) {
         return new BlindTimerStateChangedEvent(
                 joinCode,
-                game.getState().name(),
+                game.getState(),
                 game.getTargetTime(),
                 blindDelay
         );

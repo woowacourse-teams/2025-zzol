@@ -57,7 +57,8 @@ const EntryNamePage = () => {
   const handleRandomNickname = async () => {
     const response = await fetchRandomNickname();
     if (response?.nickname) {
-      setName(response.nickname);
+      const truncatedNickname = response.nickname.slice(0, MAX_NAME_LENGTH);
+      setName(truncatedNickname);
     }
   };
 

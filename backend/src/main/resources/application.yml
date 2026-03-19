@@ -110,6 +110,10 @@ bomb-relay:
     api-url: https://krdict.korean.go.kr/api/search
     api-key: ${STDICT_API_KEY:}
 
+outbox:
+  relay:
+    delay: 500  # ms, 로컬에서는 application-local.yml로 오버라이드
+
 room:
   removalDelay: 1h
   qr:

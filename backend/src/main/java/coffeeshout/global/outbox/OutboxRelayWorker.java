@@ -54,7 +54,7 @@ public class OutboxRelayWorker {
      * 이 메서드에 @Transactional이 없는 것이 핵심이다.
      * Redis publish()가 3초 타임아웃 나더라도 DB 커넥션을 물고 있지 않는다.
      */
-    @Scheduled(fixedDelay = 500)
+    @Scheduled(fixedDelayString = "${outbox.relay.delay:500}")
     public void relay() {
         // 1단계: DB 트랜잭션 — PENDING 조회 + IN_PROGRESS 전환 + 커밋 (DB 커넥션 즉시 반환)
         final List<OutboxEvent> events = eventProcessor.fetchAndMarkInProgress(BATCH_SIZE);

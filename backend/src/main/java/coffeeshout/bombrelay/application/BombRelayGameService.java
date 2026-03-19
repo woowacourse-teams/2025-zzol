@@ -6,7 +6,6 @@ import coffeeshout.bombrelay.domain.BombRelayGameState;
 import coffeeshout.bombrelay.domain.event.BombRelayFinishedEvent;
 import coffeeshout.bombrelay.domain.event.BombRelayProgressEvent;
 import coffeeshout.bombrelay.domain.event.BombRelayStateChangedEvent;
-import coffeeshout.global.metric.GameDurationMetricService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
@@ -30,20 +29,17 @@ public class BombRelayGameService implements MiniGameService {
     private final TaskScheduler taskScheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final BombRelayGameTimingProperties timing;
-    private final GameDurationMetricService gameDurationMetricService;
 
     public BombRelayGameService(
             RoomQueryService roomQueryService,
             @Qualifier("bombRelayGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
-            BombRelayGameTimingProperties timing,
-            GameDurationMetricService gameDurationMetricService
+            BombRelayGameTimingProperties timing
     ) {
         this.roomQueryService = roomQueryService;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
         this.timing = timing;
-        this.gameDurationMetricService = gameDurationMetricService;
     }
 
     @Override

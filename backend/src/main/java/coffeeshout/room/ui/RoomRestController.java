@@ -9,6 +9,7 @@ import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
 import coffeeshout.room.ui.response.ProbabilityResponse;
+import coffeeshout.room.ui.response.RandomNicknameResponse;
 import coffeeshout.room.ui.response.RemainingMiniGameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
@@ -65,6 +66,17 @@ public class RoomRestController implements RoomApi {
                     }
                     throw new RuntimeException("방 참가 실패", cause);
                 });
+    }
+
+    @GetMapping("/nickname/random")
+    public ResponseEntity<RandomNicknameResponse> generateRandomNickname(
+            @RequestParam(required = false) String joinCode
+    ) {
+        final String nickname = (joinCode != null)
+                ? roomService.generateRandomNickname(joinCode)
+                : roomService.generateRandomNickname();
+
+        return ResponseEntity.ok(RandomNicknameResponse.from(nickname));
     }
 
     @GetMapping("/check-joinCode")

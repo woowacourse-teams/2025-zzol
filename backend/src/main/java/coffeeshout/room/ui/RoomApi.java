@@ -5,6 +5,7 @@ import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
 import coffeeshout.room.ui.response.ProbabilityResponse;
+import coffeeshout.room.ui.response.RandomNicknameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,6 +25,11 @@ public interface RoomApi {
     CompletableFuture<ResponseEntity<RoomEnterResponse>> enterRoom(
             @Parameter(description = "방 입장 코드", required = true) String joinCode,
             RoomEnterRequest request
+    );
+
+    @Operation(summary = "랜덤 닉네임 생성", description = "랜덤 닉네임을 생성합니다. joinCode를 전달하면 방 내 중복을 제외합니다.")
+    ResponseEntity<RandomNicknameResponse> generateRandomNickname(
+            @Parameter(description = "방 입장 코드 (선택)") String joinCode
     );
 
     @Operation(summary = "방 코드 존재 확인", description = "joinCode가 유효한지 확인합니다.")

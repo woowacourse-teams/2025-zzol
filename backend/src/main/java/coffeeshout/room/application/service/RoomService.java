@@ -40,9 +40,11 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,6 +62,7 @@ public class RoomService {
     private final DelayedRoomRemovalService delayedRoomRemovalService;
     private final QrCodeService qrCodeService;
     private final NicknameValidator nicknameValidator;
+    private final NicknameGenerator nicknameGenerator;
     private final JoinCodeGenerator joinCodeGenerator;
     private final RoomEventWaitManager roomEventWaitManager;
     private final RoomJpaRepository roomJpaRepository;
@@ -124,6 +127,18 @@ public class RoomService {
     public List<MiniGameType> getAllMiniGames() {
         return Arrays.stream(MiniGameType.values())
                 .toList();
+    }
+
+    public String generateRandomNickname(String joinCode) {
+        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
+        final Set<String> existingNames = room.getPlayers().stream()
+                .map(player -> player.getName().value())
+                .collect(Collectors.toSet());
+        return nicknameGenerator.generate(existingNames);
+    }
+
+    public String generateRandomNickname() {
+        return nicknameGenerator.generate(Set.of());
     }
 
     public boolean roomExists(String joinCode) {

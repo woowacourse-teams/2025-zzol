@@ -1,4 +1,5 @@
 -- Feature 3: 랭킹 닉네임 AI 기반 사후 검열
+-- TIMESTAMP(6): UTC 저장, Hibernate 6의 Instant 기본 매핑 타입
 
 -- 1. nickname_audit: AI 검열 대상 및 결과
 -- 랭킹 등록 시점에 UNAUDITED 상태로 INSERT, 스케줄러가 증분 처리
@@ -8,8 +9,8 @@ CREATE TABLE nickname_audit (
     status      ENUM('UNAUDITED', 'FLAGGED', 'PENDING', 'CLEAN') NOT NULL DEFAULT 'UNAUDITED',
     confidence  DECIMAL(3, 2),
     reason      VARCHAR(255),
-    created_at  DATETIME        NOT NULL,
-    audited_at  DATETIME
+    created_at  TIMESTAMP(6)    NOT NULL,
+    audited_at  TIMESTAMP(6)    NULL
 );
 
 -- 스케줄러 증분 스캔 쿼리:
@@ -27,7 +28,7 @@ CREATE TABLE nickname_feedback (
     ai_confidence     DECIMAL(3, 2)   NOT NULL,
     operator_decision ENUM('APPROVED', 'REJECTED') NOT NULL,
     reason            VARCHAR(255),
-    created_at        DATETIME        NOT NULL
+    created_at        TIMESTAMP(6)    NOT NULL
 );
 
 -- few-shot 주입 쿼리:
@@ -41,6 +42,6 @@ CREATE TABLE custom_profanity (
     id         BIGINT          AUTO_INCREMENT PRIMARY KEY,
     word       VARCHAR(20)     NOT NULL,
     source     ENUM('AI_AUDIT', 'OPERATOR_MANUAL') NOT NULL,
-    created_at DATETIME        NOT NULL,
+    created_at TIMESTAMP(6)    NOT NULL,
     UNIQUE KEY uq_custom_profanity_word (word)  -- 중복 등록 방지 + 조회 인덱스
 );

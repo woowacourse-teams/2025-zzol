@@ -25,6 +25,7 @@ public class RouletteService {
     private final RoomJpaRepository roomJpaRepository;
     private final PlayerJpaRepository playerJpaRepository;
     private final RouletteResultJpaRepository rouletteResultJpaRepository;
+    private final NicknameAuditService nicknameAuditService;
 
     public RoomState showRoulette(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
@@ -57,6 +58,7 @@ public class RouletteService {
                 winner.probability()
         );
         rouletteResultJpaRepository.save(rouletteResult);
+        nicknameAuditService.register(winner.name().value());
 
         log.info("RouletteResultEntity 저장 완료: joinCode={}, winner={}, probability={}",
                 joinCode, winner.name().value(), winner.probability());

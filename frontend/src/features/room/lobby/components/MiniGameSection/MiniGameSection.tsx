@@ -4,6 +4,7 @@ import ScreenReaderOnly from '@/components/@common/ScreenReaderOnly/ScreenReader
 import GameActionButtonSkeleton from '@/components/@composition/GameActionButtonSkeleton/GameActionButtonSkeleton';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import {
+  HIDDEN_MINI_GAMES,
   MINI_GAME_DESCRIPTION_MAP,
   MINI_GAME_ICON_MAP,
   MINI_GAME_NAME_MAP,
@@ -46,7 +47,9 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
         {loading ? (
           <GameActionButtonSkeleton />
         ) : (
-          miniGames?.map((miniGame) => (
+          miniGames
+            ?.filter((miniGame) => !HIDDEN_MINI_GAMES.includes(miniGame))
+            .map((miniGame) => (
             <GameActionButton
               key={miniGame}
               isSelected={selectedMiniGames.includes(miniGame)}

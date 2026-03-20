@@ -1,0 +1,6 @@
+# Grafana Contact Points
+# 현재 Grafana UI 알림만 사용 (외부 알림 채널 없음)
+# 추후 Discord/Slack/Email 연동 시 여기에 추가
+apiVersion: 1
+
+contactPoints: []

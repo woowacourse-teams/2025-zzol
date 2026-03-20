@@ -1,0 +1,233 @@
+# ============================================
+# Dev Application 공통 설정 (Blue/Green 공유)
+# ============================================
+x-dev-app: &dev-app
+  restart: unless-stopped
+  environment:
+    - JAVA_OPTS=${JAVA_OPTS:--Xms1400m -Xmx1400m}
+    - SPRING_PROFILES_ACTIVE=dev
+    - MYSQL_URL=jdbc:mysql://dev-mysql:3306/coffee_shout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    - MYSQL_USERNAME=root
+    - MYSQL_PASSWORD=${DB_PASSWORD}
+    - REDIS_HOST=dev-redis
+    - REDIS_PORT=6379
+    - TEMPO_URL=${TEMPO_URL:-http://tempo:4318/v1/traces}
+    - TRACE_SAMPLING_PROBABILITY=${TRACE_SAMPLING_PROBABILITY:-1.0}
+    - STDICT_API_KEY=${STDICT_API_KEY}
+    - TZ=Asia/Seoul
+  volumes:
+    - dev-app-logs:/app/logs
+  networks:
+    - zzol-network
+    - dev-network
+  depends_on:
+    dev-mysql:
+      condition: service_healthy
+    dev-redis:
+      condition: service_started
+  healthcheck:
+    test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/actuator/health/readiness"]
+    interval: 30s
+    timeout: 10s
+    retries: 5
+    start_period: 120s
+  # 자원 제한 (Dev 환경: 총 0.5~1.0 vCPU, 4GB)
+  # Docker 메모리 제한: 2GB
+  # JVM 힙 설정: -Xms1400m -Xmx1400m (약 1.4GB, 70% 할당)
+  # 메타스페이스: -XX:MaxMetaspaceSize=256m
+  # 비힙 오버헤드: 약 600MB (메타스페이스 256MB + 스레드 스택 + 네트워크 버퍼 등)
+  deploy:
+    resources:
+      limits:
+        cpus: '0.5'        # 최대 0.5 vCPU
+        memory: 2G         # 최대 2GB
+      reservations:
+        cpus: '0.25'       # 최소 0.25 vCPU 보장
+        memory: 1G         # 최소 1GB 보장
+
+services:
+  # ============================================
+  # Dev Application (Spring Boot) - Blue/Green
+  # ============================================
+  dev-app-blue:
+    <<: *dev-app
+    image: ${REGISTRY}/zzol-backend:${BLUE_IMAGE_TAG:-placeholder}
+    container_name: dev-app-blue
+
+  dev-app-green:
+    <<: *dev-app
+    image: ${REGISTRY}/zzol-backend:${GREEN_IMAGE_TAG:-placeholder}
+    container_name: dev-app-green
+
+  # ============================================
+  # Dev MySQL Database
+  # ============================================
+  dev-mysql:
+    image: mysql:8.0
+    container_name: dev-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: coffee_shout
+      TZ: Asia/Seoul
+    volumes:
+      - dev-mysql-data:/var/lib/mysql
+      - dev-mysql-conf:/etc/mysql/conf.d
+      - dev-mysql-logs:/var/log/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - dev-network
+    # 자원 제한 (Dev MySQL)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'        # 최대 0.3 vCPU
+          memory: 1536M      # 최대 1.5GB
+        reservations:
+          cpus: '0.15'       # 최소 0.15 vCPU
+          memory: 768M       # 최소 768MB
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # ============================================
+  # Dev Redis (Valkey)
+  # ============================================
+  dev-redis:
+    image: valkey/valkey:8.1.4-alpine
+    container_name: dev-redis
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - dev-redis-data:/data
+    command: valkey-server --appendonly yes
+    networks:
+      - dev-network
+    # 자원 제한 (Dev Redis)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'        # 최대 0.2 vCPU
+          memory: 512M       # 최대 512MB
+        reservations:
+          cpus: '0.1'        # 최소 0.1 vCPU
+          memory: 256M       # 최소 256MB
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ============================================
+  # Dev MySQL Exporter (for Prometheus)
+  # ============================================
+  dev-mysql-exporter:
+    image: prom/mysqld-exporter
+    container_name: dev-mysql-exporter
+    restart: unless-stopped
+    environment:
+      - DB_PASSWORD=${DB_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "[client]
+        user=root
+        password=$${DB_PASSWORD}
+        host=dev-mysql
+        port=3306" > /tmp/.my.cnf
+        exec /bin/mysqld_exporter --config.my-cnf=/tmp/.my.cnf
+    networks:
+      - dev-network
+      - zzol-network
+    depends_on:
+      dev-mysql:
+        condition: service_healthy
+    # 자원 제한 (MySQL Exporter)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'        # 최대 0.1 vCPU
+          memory: 128M       # 최대 128MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 64M        # 최소 64MB
+
+  # ============================================
+  # Dev Redis Exporter (for Prometheus)
+  # ============================================
+  dev-redis-exporter:
+    image: oliver006/redis_exporter
+    container_name: dev-redis-exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://dev-redis:6379
+    networks:
+      - dev-network
+      - zzol-network
+    depends_on:
+      dev-redis:
+        condition: service_healthy
+    # 자원 제한 (Redis Exporter)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'        # 최대 0.1 vCPU
+          memory: 128M       # 최대 128MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 64M        # 최소 64MB
+
+  # ============================================
+  # Dev Promtail - Log Shipper
+  # ============================================
+  dev-promtail:
+    image: grafana/promtail:2.9.6
+    container_name: dev-promtail
+    restart: unless-stopped
+    volumes:
+      - dev-app-logs:/app/logs:ro
+      - ./conf/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /etc/localtime:/etc/localtime:ro
+    command: -config.file=/etc/promtail/promtail.yml
+    networks:
+      - dev-network
+      - zzol-network
+    environment:
+      - TZ=Asia/Seoul
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  dev-network:
+    driver: bridge
+    name: dev-network
+  zzol-network:
+    external: true
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  dev-app-logs:
+    driver: local
+  dev-mysql-data:
+    driver: local
+  dev-mysql-conf:
+    driver: local
+  dev-mysql-logs:
+    driver: local
+  dev-redis-data:
+    driver: local

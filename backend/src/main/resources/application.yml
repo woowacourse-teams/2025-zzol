@@ -1,1 +1,212 @@
-spring.application.name=coffee-shout
+spring:
+  application:
+    name:
+      coffee-shout
+  datasource:
+    url: ${MYSQL_URL}
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      data-source-properties:
+        rewriteBatchedStatements: true
+  lifecycle:
+    timeout-per-shutdown-phase: 5m
+  data:
+    redis:
+      port: 6379
+      ssl:
+        enabled: false
+      host: localhost
+
+redis:
+  stream:
+    # 공통 기본 설정 (각 스트림에서 오버라이드 가능)
+    common-settings:
+      max-length: 100
+      batch-size: 10
+      poll-timeout: 2s
+    # 공유 스레드풀
+    thread-pools:
+      #      sequential: # 단일 스레드풀은 여러 리스너에서 공유 불가능
+      #        core-size: 1
+      #        max-size: 1
+      #        queue-capacity: 100
+      concurrent:
+        core-size: 8
+        max-size: 16
+        queue-capacity: 1024
+    # 스트림 설정 (key가 식별자)
+    keys:
+      "[room]":
+        thread-pool-name: concurrent
+      "[room:join]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 1024
+      "[cardgame:select]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 1024
+      "[minigame]":
+        thread-pool-name: concurrent
+      "[racinggame]":
+        thread-pool-name: concurrent
+      "[speedtouch]":
+        thread-pool-name: concurrent
+      "[blindtimer]":
+        thread-pool-name: concurrent
+      "[bombrelay]":
+        thread-pool-name: concurrent
+
+redisson:
+  enabled: true
+  timeout: 1000
+  connect-timeout: 3000
+  retry-attempts: 1
+  retry-interval: 500
+
+oracle:
+  cloud:
+    objectstorage:
+      region: ap-chuncheon-1
+      namespace: ax9wq4bhn4cn
+      bucket: zzol-public
+
+card-game:
+  timing:
+    first-loading: 4000ms
+    loading: 3000ms
+    prepare: 2000ms
+    playing: 10250ms
+    score-board: 1500ms
+    early-finish-delay: 2000ms
+
+speed-touch:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    playing: 30000ms
+
+blind-timer:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    blind-delay: 3000ms
+    timeout-buffer: 3000ms
+    result-delay: 2000ms
+
+bomb-relay:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    min-bomb-timer: 18000ms
+    max-bomb-timer: 40000ms
+    round-result-delay: 4000ms
+    result-delay: 2000ms
+  dictionary:
+    api-url: https://krdict.korean.go.kr/api/search
+    api-key: ${STDICT_API_KEY:}
+
+room:
+  removalDelay: 1h
+  qr:
+    width: 150
+    height: 150
+    presignedUrl:
+      expirationHours: 1
+    storage-key-prefix: qr-code
+  event:
+    timeout: 5s
+
+logging:
+  level:
+    root: info
+    io.opentelemetry.exporter.logging.LoggingSpanExporter: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      group:
+        liveness:
+          include: "ping"
+          show-details: always
+        readiness:
+          include: "db,redis,gracefulShutdown,redisStream"
+          show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus,tracing,circuitbreakers,retries"
+  tracing:
+    enabled: true
+    sampling:
+      probability: ${TRACE_SAMPLING_PROBABILITY}
+  otlp:
+    tracing:
+      endpoint: ${TEMPO_URL}
+  metrics:
+    enable:
+      tomcat: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+server:
+  shutdown: graceful
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 30
+    max-connections: 700
+    accept-count: 300
+
+resilience4j:
+  circuitbreaker:
+    circuit-breaker-aspect-order: 1
+    instances:
+      oracleStorage:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - java.io.IOException
+          - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
+  retry:
+    retry-aspect-order: 2
+    instances:
+      oracleStorage:
+        maxAttempts: 2
+        waitDuration: 500ms
+        retryExceptions:
+          - java.io.IOException
+          - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
+
+websocket:
+  rate-limit:
+    max-messages-per-second: 20
+  recovery:
+    max-length: 1000
+    stream-ttl-seconds: 3600
+    dedup-ttl-seconds: 1
+  docs:
+    enabled: true
+    base-package: "coffeeshout"
+    app-path: "/app"
+    topic-path: "/topic"
+    server-url: "http://localhost:8080/ws"
+    info:
+      title: "커피빵 WebSocket API 명세서"
+      version: "1.0.0"
+      description: "실시간 웹소켓 통신 API 문서"

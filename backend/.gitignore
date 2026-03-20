@@ -4,6 +4,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+/src/main/generated/
 
 ### STS ###
 .apt_generated
@@ -35,3 +36,19 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Docker ###
+# Environment files
+.env
+
+# SSL certificates
+docker/nginx/ssl/*
+!docker/nginx/ssl/.gitkeep
+
+# Data directories (if mounted locally)
+docker/monitoring/data/
+docker/monitoring/logs/
+docker/monitoring/dashboards/
+docker/monitoring/provisioning/*
+!docker/monitoring/provisioning/alerting
+!docker/monitoring/provisioning/alerting/**

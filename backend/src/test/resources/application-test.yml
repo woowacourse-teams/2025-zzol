@@ -1,0 +1,105 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect  # 이것만 변경!
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+  lifecycle:
+    timeout-per-shutdown-phase: 1s
+  flyway:
+    enabled: false
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+  data:
+    redis:
+      ssl:
+        enabled: false
+  autoconfigure:
+    exclude:
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+
+server:
+  shutdown: immediate
+
+redisson:
+  enabled: false
+
+logging:
+  level:
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
+    coffeeshout: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318
+
+room:
+  qr:
+    prefix: https://coffee-shout.com/join/
+
+otel:
+  exporter:
+    otlp:
+      endpoint: http://localhost:4813
+
+tracing:
+  sampling:
+    probability: 1.0
+
+websocket:
+  recovery:
+    max-length: 100
+    stream-ttl-seconds: 3600
+    dedup-ttl-seconds: 1
+
+card-game:
+  timing:
+    first-loading: 500ms
+    loading: 500ms
+    prepare: 500ms
+    playing: 2000ms
+    score-board: 500ms
+    early-finish-delay: 500ms
+
+speed-touch:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    playing: 30000ms
+
+blind-timer:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    blind-delay: 500ms
+    timeout-buffer: 3000ms
+    result-delay: 500ms
+
+bomb-relay:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    min-bomb-timer: 3000ms
+    max-bomb-timer: 5000ms
+    round-result-delay: 1000ms
+    result-delay: 500ms
+  dictionary:
+    api-url: https://stdict.korean.go.kr/api/search
+    api-key: test-key

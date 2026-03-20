@@ -1,0 +1,59 @@
+package coffeeshout.global.config;
+
+import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
+import org.mockito.Mockito;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.TaskScheduler;
+
+@TestConfiguration(proxyBeanMethods = false)
+@Profile("test")
+public class ServiceTestConfig {
+
+    @Bean
+    @Primary
+    public CardGameFlowScheduler mockCardGameFlowScheduler() {
+        return Mockito.mock(CardGameFlowScheduler.class);
+    }
+
+    @Bean(name = "delayRemovalScheduler")
+    public TaskScheduler testDelayRemovalScheduler() {
+        return new ShutDownTestScheduler();
+    }
+
+    @Bean(name = "racingGameScheduler")
+    public TaskScheduler testRacingGameScheduler() {
+        return new TestTaskScheduler();
+    }
+
+    @Bean(name = "speedTouchGameScheduler")
+    public TaskScheduler testSpeedTouchGameScheduler() {
+        return new TestTaskScheduler();
+    }
+
+    @Bean(name = "blindTimerGameScheduler")
+    public TaskScheduler testBlindTimerGameScheduler() {
+        return new TestTaskScheduler();
+    }
+
+    @Bean(name = "bombRelayGameScheduler")
+    public TaskScheduler testBombRelayGameScheduler() {
+        return new TestTaskScheduler();
+    }
+
+    @Bean
+    @Primary
+    public SimpMessagingTemplate mockMessagingTemplate() {
+        return Mockito.mock(SimpMessagingTemplate.class);
+    }
+
+    @Bean
+    @Primary
+    public ApplicationEventPublisher mockEventPublisher() {
+        return Mockito.mock(ApplicationEventPublisher.class);
+    }
+}

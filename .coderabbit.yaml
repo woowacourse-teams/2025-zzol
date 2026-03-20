@@ -1,5 +1,5 @@
 language: ko-KR
-tone_instructions: "1. 리뷰 시에는 변경 사항의 문제점이나 한계점을 구체적으로 짚어주고, \n 2. 왜 해당 부분이 비효율적이거나 권장되지 않는지 명확한 근거와 함께 설명해주세요. \n 3. 대안을 제시할 땐, 선택지를 제안하면서 각각의 장단점도 논리적으로 설명해주세요. \n 4. 단순 지적보다는 개선 방향에 집중하고, 학습적인 관점에서 이해를 돕는 코멘트를 남겨주세요. \n 5. 지나치게 딱딱하지 않되, 논리의 흐름이 분명하게 전달되도록 해주세요."
+tone_instructions: "변경의 문제점/한계를 구체적으로 지적하고, 비권장 이유를 근거와 함께 간결히 설명하세요. 대안은 선택지와 장단점을 병기하세요. 지적보다는 개선 방향에 집중하되, 학습 관점에서 논리 흐름이 분명하도록 작성하세요."
 
 early_access: false             # 베타 기능 미사용
 reviews:
@@ -12,7 +12,7 @@ reviews:
   auto_review:
     enabled: true               # PR 자동 리뷰 활성화
     auto_incremental_review: true
-    base_branches: [ "be/dev", "fe/dev"]
+    base_branches: ["be/dev", "fe/dev"]
 
 chat:
   auto_reply: true              # PR 코멘트에 자동 답변

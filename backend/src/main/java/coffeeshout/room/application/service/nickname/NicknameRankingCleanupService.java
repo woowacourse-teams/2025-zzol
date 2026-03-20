@@ -7,6 +7,7 @@ import coffeeshout.room.domain.audit.NicknameAuditStatus;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +25,7 @@ public class NicknameRankingCleanupService {
 
     private static final int RANKING_LIMIT = 50;
 
+    private final Clock clock;
     private final DashboardStatisticsRepository dashboardRepository;
     private final NicknameAuditJpaRepository auditRepository;
     private final PlayerJpaRepository playerRepository;
@@ -37,7 +39,7 @@ public class NicknameRankingCleanupService {
             return;
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
 
         Set<String> rankingNicknames = collectRankingNicknames(startOfMonth, now);

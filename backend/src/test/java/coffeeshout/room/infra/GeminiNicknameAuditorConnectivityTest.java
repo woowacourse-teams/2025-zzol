@@ -45,8 +45,7 @@ class GeminiNicknameAuditorConnectivityTest {
                 "gemini-2.5-flash",
                 0.85,
                 50,
-                20,
-                10
+                20
         );
 
         NicknameFeedbackJpaRepository feedbackRepository = mock(NicknameFeedbackJpaRepository.class);

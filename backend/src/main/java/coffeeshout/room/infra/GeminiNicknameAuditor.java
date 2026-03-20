@@ -6,7 +6,9 @@ import coffeeshout.room.domain.audit.NicknameAuditor;
 import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackEntity;
 import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackJpaRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
@@ -53,6 +55,7 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
 
     private Timer apiCallTimer;
     private Counter parseFailureCounter;
+    private Counter itemParseFailureCounter;
 
     @PostConstruct
     void initMetrics() {
@@ -61,6 +64,9 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
                 .register(meterRegistry);
         parseFailureCounter = Counter.builder("nickname.audit.gemini.parse.failures")
                 .description("Gemini 응답 JSON 파싱 실패 횟수")
+                .register(meterRegistry);
+        itemParseFailureCounter = Counter.builder("nickname.audit.gemini.item.parse.failures")
+                .description("Gemini 응답 항목 단위 파싱 실패 횟수")
                 .register(meterRegistry);
     }
 
@@ -114,21 +120,30 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
     }
 
     private List<NicknameAuditResult> parseResults(String responseText, List<String> requestedNicknames) {
+        List<JsonNode> nodes;
         try {
-            List<GeminiAuditItem> items = objectMapper.readValue(responseText, new TypeReference<>() {
-            });
-            return items.stream()
-                    .map(item -> NicknameAuditResult.of(
-                            item.nickname(), item.flagged(), item.confidence(), item.reason(),
-                            properties.flaggedThreshold()
-                    ))
-                    .toList();
+            nodes = objectMapper.readValue(responseText, new TypeReference<>() {});
         } catch (Exception e) {
             parseFailureCounter.increment();
-            log.warn("Gemini 응답 파싱 실패, 해당 배치 skip ({}건). responseText={}",
+            log.warn("Gemini 응답 JSON 파싱 실패, 해당 배치 skip ({}건). responseText={}",
                     requestedNicknames.size(), responseText, e);
             return List.of();
         }
+
+        List<NicknameAuditResult> results = new ArrayList<>();
+        for (JsonNode node : nodes) {
+            try {
+                GeminiAuditItem item = objectMapper.treeToValue(node, GeminiAuditItem.class);
+                results.add(NicknameAuditResult.of(
+                        item.nickname(), item.flagged(), item.confidence(), item.reason(),
+                        properties.flaggedThreshold()
+                ));
+            } catch (Exception e) {
+                itemParseFailureCounter.increment();
+                log.warn("Gemini 응답 항목 파싱 실패, 해당 항목 skip. node={}", node, e);
+            }
+        }
+        return results;
     }
 
     private record GeminiAuditItem(String nickname, boolean flagged, double confidence, String reason) {

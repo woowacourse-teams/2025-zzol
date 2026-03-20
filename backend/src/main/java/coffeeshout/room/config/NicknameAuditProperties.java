@@ -14,7 +14,6 @@ public record NicknameAuditProperties(
         @NotBlank String model,
         @DecimalMin("0.0") @DecimalMax("1.0") double flaggedThreshold,
         @Positive int batchSize,                                       // Gemini API 호출 1회당 처리할 닉네임 수
-        @Positive int batchDelayMs,                                    // RPM 제한 대응을 위한 배치 간 대기 시간 (ms)
         @Positive int feedbackInjectionThreshold
 ) {
 }

@@ -190,14 +190,19 @@ NicknameAuditService.auditPending()
 
 > 임계값 0.85는 초기값이며, `application.yml`의 `nickname-audit.flagged-threshold`로 조정한다.
 
-### Rate Limit 대응 전략
+### Rate Limit 대응 전략 (Resilience4j RateLimiter)
 
+```yaml
+resilience4j.ratelimiter:
+  instances:
+    geminiAudit:
+      limit-for-period: 1        # 주기당 허용 요청 수
+      limit-refresh-period: 13s  # 13초마다 1개씩 충전 (RPM 4.6 수준)
+      timeout-duration: 60s      # 대기 타임아웃
 ```
-batchSize = 100  (API 호출 1회당 처리량)
-batchDelayMs = 13000  (RPM 5 → 60s/5 = 12s + 1s 버퍼)
-→ 배치 1 처리 → 13초 대기 → 배치 2 처리 → ...
-→ 100개 × 5회/min = 500개/min 처리 가능
-```
+- `Thread.sleep()` 대신 Resilience4j의 `RateLimiter`를 사용하여 선언적으로 속도를 제어한다.
+- 배치 1 처리 후 `RateLimiter`가 다음 주기까지 쓰레드를 안전하게 대기시킨다.
+- 100개 × 약 4.6회/min = 약 460개/min 처리 가능
 
 ### 프롬프트 설계
 

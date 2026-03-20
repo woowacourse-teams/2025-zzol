@@ -52,15 +52,9 @@ public class NicknameAuditService {
         Pageable pageable = PageRequest.of(0, properties.batchSize(), Sort.by("createdAt").ascending());
         List<NicknameAuditEntity> batch = auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
         int processedTotal = 0;
-        int batchCount = 0;
 
         while (!batch.isEmpty()) {
-            if (batchCount > 0) {
-                sleepForRateLimit();
-            }
-
             processedTotal += batchProcessor.process(batch);
-            batchCount++;
             log.info("닉네임 검열 진행: 이번 배치 {}건, 누적 {}건", batch.size(), processedTotal);
 
             if (batch.size() < properties.batchSize()) {
@@ -70,14 +64,5 @@ public class NicknameAuditService {
         }
 
         log.info("닉네임 검열 완료: 총 {}건 처리", processedTotal);
-    }
-
-    private void sleepForRateLimit() {
-        try {
-            Thread.sleep(properties.batchDelayMs());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("배치 대기 중 인터럽트 발생");
-        }
     }
 }

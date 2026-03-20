@@ -123,7 +123,6 @@ nickname-audit:
   model: gemini-2.5-flash
   flagged-threshold: 0.85
   batch-size: 100                      # API 호출 1회당 처리량 (RPM 5 기준 100개씩 5회 = 500개/min)
-  batch-delay-ms: 13000                # RPM 5 대응: 60s/5 = 12s + 1s 버퍼
   feedback-injection-threshold: 20
 
 room:
@@ -216,6 +215,12 @@ resilience4j:
         exponential-max-wait-duration: 30s      # 상한선 (rate limit 대응)
         retry-exceptions:
           - java.lang.RuntimeException   # SDK가 rate limit/서버 오류 시 RuntimeException으로 래핑
+  ratelimiter:
+    instances:
+      geminiAudit:
+        limit-for-period: 1                     # 주기당 허용 요청 수
+        limit-refresh-period: 13s               # 13초마다 1개씩 (RPM 4.6 안전 수치)
+        timeout-duration: 60s                   # 허용량을 기다릴 최대 시간 (배치이므로 넉넉히)
 websocket:
   rate-limit:
     max-messages-per-second: 20

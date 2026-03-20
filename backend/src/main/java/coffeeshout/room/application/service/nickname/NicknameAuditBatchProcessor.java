@@ -4,6 +4,7 @@ import coffeeshout.room.domain.audit.NicknameAuditResult;
 import coffeeshout.room.domain.audit.NicknameAuditor;
 import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -34,6 +35,7 @@ public class NicknameAuditBatchProcessor {
                 .register(meterRegistry);
     }
 
+    @RateLimiter(name = "geminiAudit")
     @Transactional
     public int process(List<NicknameAuditEntity> batch) {
         List<String> nicknames = batch.stream()

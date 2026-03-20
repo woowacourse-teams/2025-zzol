@@ -1,4 +1,4 @@
-package coffeeshout.room.infra.persistence;
+package coffeeshout.room.infra.persistence.nickname;
 
 import coffeeshout.room.domain.audit.NicknameAuditStatus;
 import jakarta.persistence.Column;

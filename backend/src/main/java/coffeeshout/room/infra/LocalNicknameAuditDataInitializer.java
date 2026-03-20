@@ -1,8 +1,8 @@
 package coffeeshout.room.infra;
 
 import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.infra.persistence.NicknameAuditEntity;
-import coffeeshout.room.infra.persistence.NicknameAuditJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
+import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

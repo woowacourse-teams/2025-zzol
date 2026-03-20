@@ -3,7 +3,7 @@ package coffeeshout.room.ui;
 import coffeeshout.room.application.service.nickname.NicknameAuditService;
 import coffeeshout.room.application.service.nickname.NicknameFeedbackService;
 import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.infra.persistence.NicknameAuditEntity;
+import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;

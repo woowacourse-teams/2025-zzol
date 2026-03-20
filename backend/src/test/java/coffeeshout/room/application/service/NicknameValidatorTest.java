@@ -9,7 +9,6 @@ import coffeeshout.room.domain.RoomErrorCode;
 import com.vane.badwordfiltering.BadWordFiltering;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -19,7 +18,12 @@ class NicknameValidatorTest {
 
     @BeforeEach
     void setUp() {
-        nicknameValidator = new NicknameValidator(new BadWordFiltering());
+        BadWordFiltering filtering = new BadWordFiltering();
+        filtering.add("shit");
+        filtering.add("ass");
+        filtering.add("fuck");
+        filtering.add("bastard");
+        nicknameValidator = new NicknameValidator(filtering);
     }
 
     @Nested
@@ -36,19 +40,36 @@ class NicknameValidatorTest {
     @Nested
     class 비속어_닉네임 {
 
-        @Test
-        void 직접_비속어는_예외를_발생한다() {
-            assertThatThrownBy(() -> nicknameValidator.validate("씨발"))
+        @ParameterizedTest
+        @ValueSource(strings = {"씨발", "개새끼", "ㅅㅂ"})
+        void 직접_비속어는_예외를_발생한다(String nickname) {
+            assertThatThrownBy(() -> nicknameValidator.validate(nickname))
                     .isInstanceOf(InvalidArgumentException.class)
                     .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
         }
 
-        @Test
-        void 공백_삽입으로_우회한_비속어는_예외를_발생한다() {
-            assertThatThrownBy(() -> nicknameValidator.validate("씨 발"))
+        @ParameterizedTest
+        @ValueSource(strings = {"씨 발", "개 새끼"})
+        void 공백_삽입으로_우회한_비속어는_예외를_발생한다(String nickname) {
+            assertThatThrownBy(() -> nicknameValidator.validate(nickname))
                     .isInstanceOf(InvalidArgumentException.class)
                     .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
         }
 
+        @ParameterizedTest
+        @ValueSource(strings = {"씨@@@@@발", "씨!!!!!!발", "개#새#끼", "씨*발", "씨.발"})
+        void 특수문자_삽입으로_우회한_한국어_비속어는_예외를_발생한다(String nickname) {
+            assertThatThrownBy(() -> nicknameValidator.validate(nickname))
+                    .isInstanceOf(InvalidArgumentException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"sh1t", "sh!t", "@ss", "$hit", "b1tch", "4ss"})
+        void 리트스피크로_우회한_영어_비속어는_예외를_발생한다(String nickname) {
+            assertThatThrownBy(() -> nicknameValidator.validate(nickname))
+                    .isInstanceOf(InvalidArgumentException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
+        }
     }
 }

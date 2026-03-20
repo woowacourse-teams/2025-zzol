@@ -2,8 +2,8 @@ package coffeeshout.room.application.service.nickname;
 
 import coffeeshout.room.domain.audit.NicknameAuditResult;
 import coffeeshout.room.domain.audit.NicknameAuditor;
-import coffeeshout.room.infra.persistence.NicknameAuditEntity;
-import coffeeshout.room.infra.persistence.NicknameAuditJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
+import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;

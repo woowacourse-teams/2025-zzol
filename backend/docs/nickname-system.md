@@ -1,7 +1,7 @@
 # 닉네임 시스템 설계
 
 > **브랜치:** `be/feat/1123-nickname`
-> **상태:** 1·2번 구현 완료, 3번 구현 진행 중 (Phase 1~5 완료)
+> **상태:** 1·2·3번 구현 완료
 
 ---
 
@@ -13,7 +13,7 @@
 |---|--------------------|-------|
 | 1 | 닉네임 자동 생성          | 구현 완료 |
 | 2 | 입장 시 비속어 검열        | 구현 완료 |
-| 3 | 랭킹 닉네임 AI 기반 사후 검열 | 구현 중  |
+| 3 | 랭킹 닉네임 AI 기반 사후 검열 | 구현 완료 |
 
 ---
 
@@ -125,8 +125,12 @@ GET /rooms/nickname/random?joinCode= → 게스트용 (방 기존 멤버 제외)
 - [x] `NicknameFeedbackService` — 운영자 피드백 저장 + 비속어 등록
 - [x] `CustomProfanityLoader` (`ApplicationRunner`) — 시작 시 DB → BadWordFiltering 로딩
 - [x] `GeminiNicknameAuditorConnectivityTest` — 실제 API 연결 테스트 (`@Disabled`)
-- [ ] `SecurityConfig` — `/admin/**` 인증, 기존 API/WS `permitAll()`
-- [ ] 운영자 대시보드 (`/admin/nickname-audit`) — 목록 조회 / 승인 / 거절
+- [x] `SecurityConfig` — `/admin/**` 인증, 기존 API/WS `permitAll()`
+- [x] `AdminProperties` — 환경변수 기반 InMemoryUserDetails 설정
+- [x] `LoginAdminController` — `/admin/login` 폼 렌더링
+- [x] `templates/admin/login.html` — 로그인 페이지
+- [x] 운영자 대시보드 (`/admin/nickname-audit`) — FLAGGED·PENDING 목록 조회 / 허용 / 차단 / 페이지네이션
+- [x] `NicknameAuditAdminController` — 대시보드 GET·POST, 빈 페이지 자동 clamp redirect
 
 ---
 

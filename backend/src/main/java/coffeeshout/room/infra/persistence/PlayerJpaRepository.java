@@ -10,4 +10,8 @@ public interface PlayerJpaRepository extends Repository<PlayerEntity, Long> {
     Optional<PlayerEntity> findByRoomSessionAndPlayerName(RoomEntity roomSession, String playerName);
 
     List<PlayerEntity> findByRoomSessionAndPlayerNameIn(RoomEntity roomSession, List<String> playerNames);
+
+    List<PlayerEntity> findAllByPlayerName(String playerName);
+
+    List<PlayerEntity> findAllByRoomSession(RoomEntity roomSession);
 }

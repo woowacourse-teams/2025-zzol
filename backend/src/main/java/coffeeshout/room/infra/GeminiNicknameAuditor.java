@@ -3,8 +3,8 @@ package coffeeshout.room.infra;
 import coffeeshout.room.config.NicknameAuditProperties;
 import coffeeshout.room.domain.audit.NicknameAuditResult;
 import coffeeshout.room.domain.audit.NicknameAuditor;
-import coffeeshout.room.infra.persistence.NicknameFeedbackEntity;
-import coffeeshout.room.infra.persistence.NicknameFeedbackJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackEntity;
+import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackJpaRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
@@ -78,6 +78,10 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
                                     .responseMimeType("application/json")
                                     .build()
                     ));
+
+            if (response == null) {
+                return List.of();
+            }
 
             return parseResults(response.text(), nicknames);
         } catch (Exception e) {

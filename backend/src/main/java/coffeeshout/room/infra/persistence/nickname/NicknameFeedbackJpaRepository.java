@@ -1,4 +1,4 @@
-package coffeeshout.room.infra.persistence;
+package coffeeshout.room.infra.persistence.nickname;
 
 import java.util.List;
 import org.springframework.data.domain.Pageable;

@@ -1,12 +1,12 @@
 package coffeeshout.room.application.service.nickname;
 
 import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.infra.persistence.CustomProfanityEntity;
-import coffeeshout.room.infra.persistence.CustomProfanityJpaRepository;
-import coffeeshout.room.infra.persistence.NicknameAuditEntity;
-import coffeeshout.room.infra.persistence.NicknameAuditJpaRepository;
-import coffeeshout.room.infra.persistence.NicknameFeedbackEntity;
-import coffeeshout.room.infra.persistence.NicknameFeedbackJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity;
+import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
+import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackEntity;
+import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackJpaRepository;
 import com.vane.badwordfiltering.BadWordFiltering;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

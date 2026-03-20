@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 import coffeeshout.room.config.NicknameAuditProperties;
 import coffeeshout.room.domain.audit.NicknameAuditResult;
 import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.infra.persistence.NicknameFeedbackJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackJpaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;

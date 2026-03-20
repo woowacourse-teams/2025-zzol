@@ -3,6 +3,7 @@ package coffeeshout.room.infra.persistence;
 import coffeeshout.room.domain.audit.NicknameAuditStatus;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.Repository;
 
@@ -16,5 +17,9 @@ public interface NicknameAuditJpaRepository extends Repository<NicknameAuditEnti
 
     long countByStatusAndAuditedAtIsNull(NicknameAuditStatus status);
 
+    long countByStatus(NicknameAuditStatus status);
+
     List<NicknameAuditEntity> findByStatusAndAuditedAtIsNull(NicknameAuditStatus status, Pageable pageable);
+
+    Page<NicknameAuditEntity> findByStatus(NicknameAuditStatus status, Pageable pageable);
 }

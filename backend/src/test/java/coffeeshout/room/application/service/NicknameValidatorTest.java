@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.room.application.service.nickname.NicknameValidator;
 import coffeeshout.room.domain.RoomErrorCode;
 import com.vane.badwordfiltering.BadWordFiltering;
 import org.junit.jupiter.api.BeforeEach;

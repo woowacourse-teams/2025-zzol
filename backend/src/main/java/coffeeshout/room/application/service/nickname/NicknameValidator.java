@@ -1,4 +1,4 @@
-package coffeeshout.room.application.service;
+package coffeeshout.room.application.service.nickname;
 
 import coffeeshout.global.exception.custom.InvalidArgumentException;
 import coffeeshout.room.domain.RoomErrorCode;

@@ -2,6 +2,7 @@ package coffeeshout.room.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.room.application.service.nickname.NicknameGenerator;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;

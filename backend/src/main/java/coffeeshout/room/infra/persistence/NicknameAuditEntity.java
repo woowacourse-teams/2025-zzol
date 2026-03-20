@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -32,7 +33,7 @@ public class NicknameAuditEntity {
     private NicknameAuditStatus status;
 
     @Column(precision = 3, scale = 2)
-    private Double confidence;
+    private BigDecimal confidence;
 
     @Column(length = 255)
     private String reason;
@@ -49,9 +50,13 @@ public class NicknameAuditEntity {
         this.createdAt = Instant.now();
     }
 
+    public void updateStatus(NicknameAuditStatus status) {
+        this.status = status;
+    }
+
     public void complete(NicknameAuditStatus status, double confidence, String reason) {
         this.status = status;
-        this.confidence = confidence;
+        this.confidence = BigDecimal.valueOf(confidence);
         this.reason = reason;
         this.auditedAt = Instant.now();
     }

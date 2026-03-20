@@ -114,6 +114,10 @@ outbox:
   relay:
     delay: 500  # ms, 로컬에서는 application-local.yml로 오버라이드
 
+admin:
+  username: ${ADMIN_USERNAME}
+  password: ${ADMIN_PASSWORD}
+
 nickname-audit:
   gemini-api-key: ${GEMINI_API_KEY:}   # local/test 프로파일에서는 NoOpNicknameAuditor가 대신 동작
   model: gemini-2.5-flash

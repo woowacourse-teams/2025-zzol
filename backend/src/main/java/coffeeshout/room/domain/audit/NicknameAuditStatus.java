@@ -4,5 +4,7 @@ public enum NicknameAuditStatus {
     UNAUDITED,
     FLAGGED,
     PENDING,
-    CLEAN
+    CLEAN,
+    ALLOWED,
+    BLOCKED
 }

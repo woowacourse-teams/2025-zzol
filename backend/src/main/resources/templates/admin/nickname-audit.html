@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>닉네임 검열 대시보드 — 커피빵</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #111; }
+        header {
+            background: #fff; border-bottom: 1px solid #e5e7eb;
+            padding: 0 2rem; height: 56px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 10;
+        }
+        header h1 { font-size: 1rem; font-weight: 600; }
+        .logout-btn {
+            background: none; border: 1px solid #d1d5db; border-radius: 6px;
+            padding: 0.35rem 0.75rem; font-size: 0.85rem; cursor: pointer; color: #555;
+        }
+        .logout-btn:hover { background: #f9fafb; }
+        main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .section-header { display: flex; align-items: center; gap: 0.6rem; margin: 2rem 0 0.75rem; }
+        .section-header:first-of-type { margin-top: 0; }
+        .section-title { font-size: 1rem; font-weight: 600; }
+        .badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+        .badge-flagged { background: #fee2e2; color: #b91c1c; }
+        .badge-pending  { background: #fef3c7; color: #92400e; }
+        .table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.07); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        thead th {
+            background: #f9fafb; border-bottom: 1px solid #e5e7eb;
+            padding: 0.65rem 1rem; text-align: left; font-weight: 600; color: #374151; white-space: nowrap;
+        }
+        tbody td { padding: 0.7rem 1rem; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #fafafa; }
+        .nickname { font-weight: 600; font-size: 0.95rem; }
+        .conf-wrap { display: flex; align-items: center; gap: 0.5rem; }
+        .conf-bar-bg { width: 60px; height: 6px; background: #e5e7eb; border-radius: 3px; flex-shrink: 0; }
+        .conf-bar-fill { height: 100%; border-radius: 3px; }
+        .fill-high { background: #ef4444; }
+        .fill-mid  { background: #f59e0b; }
+        .conf-text { font-size: 0.8rem; color: #555; }
+        .reason { color: #555; max-width: 280px; }
+        .date { white-space: nowrap; color: #6b7280; font-size: 0.8rem; }
+        .actions { display: flex; gap: 0.5rem; white-space: nowrap; }
+        .btn { padding: 0.35rem 0.75rem; border: none; border-radius: 5px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+        .btn:hover { opacity: .85; }
+        .btn-allow { background: #dcfce7; color: #166534; }
+        .btn-block  { background: #fee2e2; color: #991b1b; }
+        .empty {
+            background: #fff; border-radius: 8px; padding: 1.5rem 1rem;
+            text-align: center; color: #9ca3af; font-size: 0.875rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,.07);
+        }
+        .pagination {
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.75rem 0; background: #fff; border-top: 1px solid #f3f4f6;
+        }
+        .page-info { font-size: 0.85rem; color: #6b7280; }
+        .page-btn {
+            padding: 0.3rem 0.65rem; border: 1px solid #d1d5db; border-radius: 5px;
+            background: #fff; font-size: 0.8rem; color: #374151; text-decoration: none;
+        }
+        .page-btn:hover { background: #f9fafb; }
+        .page-current {
+            padding: 0.3rem 0.65rem; border: 1px solid #6366f1; border-radius: 5px;
+            background: #6366f1; font-size: 0.8rem; color: #fff; font-weight: 700;
+        }
+        .page-ellipsis { font-size: 0.8rem; color: #9ca3af; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>닉네임 검열 대시보드</h1>
+    <form th:action="@{/admin/logout}" method="post">
+        <button type="submit" class="logout-btn">로그아웃</button>
+    </form>
+</header>
+
+<main>
+
+    <!-- FLAGGED -->
+    <div class="section-header">
+        <span class="section-title">FLAGGED</span>
+        <span class="badge badge-flagged" th:text="${flagged.totalElements}">0</span>
+        <span style="font-size:0.8rem;color:#9ca3af;">신뢰도 ≥ 0.85 — 즉시 검토 권장</span>
+    </div>
+
+    <div th:if="${flagged.empty}" class="empty">처리할 FLAGGED 항목이 없습니다.</div>
+
+    <div th:if="${!flagged.empty}" class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th><th>닉네임</th><th>신뢰도</th><th>AI 판단 사유</th><th>등록</th><th>검열</th><th>처리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${flagged.content}">
+                <td th:text="${item.id}" style="color:#9ca3af;font-size:0.8rem;"></td>
+                <td class="nickname" th:text="${item.nickname}"></td>
+                <td>
+                    <div class="conf-wrap">
+                        <div class="conf-bar-bg">
+                            <div class="conf-bar-fill fill-high"
+                                 th:style="|width:${item.confidence.movePointRight(2).intValue()}%|"></div>
+                        </div>
+                        <span class="conf-text" th:text="${#numbers.formatDecimal(item.confidence, 1, 2)}"></span>
+                    </div>
+                </td>
+                <td class="reason" th:text="${item.reason}"></td>
+                <td class="date" th:text="${#temporals.format(item.createdAt, 'MM-dd HH:mm')}"></td>
+                <td class="date" th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
+                <td>
+                    <div class="actions">
+                        <form th:action="@{/admin/nickname-audit/{id}/allow(id=${item.id})}" method="post">
+                            <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
+                            <input type="hidden" name="pendingPage" th:value="${pendingPage}">
+                            <button type="submit" class="btn btn-allow">허용</button>
+                        </form>
+                        <form th:action="@{/admin/nickname-audit/{id}/block(id=${item.id})}" method="post">
+                            <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
+                            <input type="hidden" name="pendingPage" th:value="${pendingPage}">
+                            <button type="submit" class="btn btn-block">차단</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination" th:if="${flagged.totalPages > 1}">
+            <a class="page-btn" th:if="${!flagged.first}"
+               th:href="@{/admin/nickname-audit(flaggedPage=${flagged.number - 1}, pendingPage=${pendingPage})}">← 이전</a>
+            <a class="page-btn" th:if="${flaggedPageStart > 0}"
+               th:href="@{/admin/nickname-audit(flaggedPage=0, pendingPage=${pendingPage})}">1</a>
+            <span class="page-ellipsis" th:if="${flaggedPageStart > 1}">…</span>
+            <th:block th:each="p : ${#numbers.sequence(flaggedPageStart, flaggedPageEnd)}">
+                <span th:if="${p == flagged.number}" class="page-current" th:text="${p + 1}"></span>
+                <a th:unless="${p == flagged.number}" class="page-btn"
+                   th:href="@{/admin/nickname-audit(flaggedPage=${p}, pendingPage=${pendingPage})}"
+                   th:text="${p + 1}"></a>
+            </th:block>
+            <span class="page-ellipsis" th:if="${flaggedPageEnd < flagged.totalPages - 2}">…</span>
+            <a class="page-btn" th:if="${flaggedPageEnd < flagged.totalPages - 1}"
+               th:href="@{/admin/nickname-audit(flaggedPage=${flagged.totalPages - 1}, pendingPage=${pendingPage})}"
+               th:text="${flagged.totalPages}"></a>
+            <a class="page-btn" th:if="${!flagged.last}"
+               th:href="@{/admin/nickname-audit(flaggedPage=${flagged.number + 1}, pendingPage=${pendingPage})}">다음 →</a>
+        </div>
+    </div>
+
+    <!-- PENDING -->
+    <div class="section-header">
+        <span class="section-title">PENDING</span>
+        <span class="badge badge-pending" th:text="${pending.totalElements}">0</span>
+        <span style="font-size:0.8rem;color:#9ca3af;">신뢰도 &lt; 0.85 — 운영자 판단 필요</span>
+    </div>
+
+    <div th:if="${pending.empty}" class="empty">처리할 PENDING 항목이 없습니다.</div>
+
+    <div th:if="${!pending.empty}" class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th><th>닉네임</th><th>신뢰도</th><th>AI 판단 사유</th><th>등록</th><th>검열</th><th>처리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${pending.content}">
+                <td th:text="${item.id}" style="color:#9ca3af;font-size:0.8rem;"></td>
+                <td class="nickname" th:text="${item.nickname}"></td>
+                <td>
+                    <div class="conf-wrap">
+                        <div class="conf-bar-bg">
+                            <div class="conf-bar-fill fill-mid"
+                                 th:style="|width:${item.confidence.movePointRight(2).intValue()}%|"></div>
+                        </div>
+                        <span class="conf-text" th:text="${#numbers.formatDecimal(item.confidence, 1, 2)}"></span>
+                    </div>
+                </td>
+                <td class="reason" th:text="${item.reason}"></td>
+                <td class="date" th:text="${#temporals.format(item.createdAt, 'MM-dd HH:mm')}"></td>
+                <td class="date" th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
+                <td>
+                    <div class="actions">
+                        <form th:action="@{/admin/nickname-audit/{id}/allow(id=${item.id})}" method="post">
+                            <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
+                            <input type="hidden" name="pendingPage" th:value="${pendingPage}">
+                            <button type="submit" class="btn btn-allow">허용</button>
+                        </form>
+                        <form th:action="@{/admin/nickname-audit/{id}/block(id=${item.id})}" method="post">
+                            <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
+                            <input type="hidden" name="pendingPage" th:value="${pendingPage}">
+                            <button type="submit" class="btn btn-block">차단</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination" th:if="${pending.totalPages > 1}">
+            <a class="page-btn" th:if="${!pending.first}"
+               th:href="@{/admin/nickname-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number - 1})}">← 이전</a>
+            <a class="page-btn" th:if="${pendingPageStart > 0}"
+               th:href="@{/admin/nickname-audit(flaggedPage=${flaggedPage}, pendingPage=0)}">1</a>
+            <span class="page-ellipsis" th:if="${pendingPageStart > 1}">…</span>
+            <th:block th:each="p : ${#numbers.sequence(pendingPageStart, pendingPageEnd)}">
+                <span th:if="${p == pending.number}" class="page-current" th:text="${p + 1}"></span>
+                <a th:unless="${p == pending.number}" class="page-btn"
+                   th:href="@{/admin/nickname-audit(flaggedPage=${flaggedPage}, pendingPage=${p})}"
+                   th:text="${p + 1}"></a>
+            </th:block>
+            <span class="page-ellipsis" th:if="${pendingPageEnd < pending.totalPages - 2}">…</span>
+            <a class="page-btn" th:if="${pendingPageEnd < pending.totalPages - 1}"
+               th:href="@{/admin/nickname-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.totalPages - 1})}"
+               th:text="${pending.totalPages}"></a>
+            <a class="page-btn" th:if="${!pending.last}"
+               th:href="@{/admin/nickname-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number + 1})}">다음 →</a>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

@@ -12,6 +12,7 @@ import coffeeshout.room.domain.audit.NicknameAuditStatus;
 import coffeeshout.room.infra.persistence.NicknameFeedbackJpaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -30,6 +31,7 @@ class GeminiNicknameAuditorConnectivityTest {
 
     private GeminiNicknameAuditor auditor;
 
+
     @BeforeEach
     void setUp() {
         String apiKey = System.getenv("GEMINI_API_KEY");
@@ -43,7 +45,8 @@ class GeminiNicknameAuditorConnectivityTest {
                 "gemini-2.5-flash",
                 0.85,
                 50,
-                20
+                20,
+                10
         );
 
         NicknameFeedbackJpaRepository feedbackRepository = mock(NicknameFeedbackJpaRepository.class);
@@ -53,7 +56,8 @@ class GeminiNicknameAuditorConnectivityTest {
                 Client.builder().apiKey(apiKey).build(),
                 new ObjectMapper(),
                 properties,
-                feedbackRepository
+                feedbackRepository,
+                new SimpleMeterRegistry()
         );
     }
 

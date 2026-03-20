@@ -1,5 +1,6 @@
-package coffeeshout.room.application.service;
+package coffeeshout.room.application.service.nickname;
 
+import coffeeshout.room.domain.audit.NicknameAuditStatus;
 import coffeeshout.room.infra.persistence.CustomProfanityEntity;
 import coffeeshout.room.infra.persistence.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.NicknameAuditEntity;
@@ -9,7 +10,6 @@ import coffeeshout.room.infra.persistence.NicknameFeedbackJpaRepository;
 import com.vane.badwordfiltering.BadWordFiltering;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,28 +24,30 @@ public class NicknameFeedbackService {
     private final BadWordFiltering badWordFiltering;
 
     @Transactional
-    public void approve(Long auditId) {
+    public void allow(Long auditId) {
         NicknameAuditEntity audit = getAuditEntity(auditId);
+        audit.updateStatus(NicknameAuditStatus.ALLOWED);
         feedbackRepository.save(new NicknameFeedbackEntity(
                 audit.getNickname(),
                 true,
                 audit.getConfidence(),
-                NicknameFeedbackEntity.OperatorDecision.APPROVED,
+                NicknameFeedbackEntity.OperatorDecision.ALLOWED,
                 null
         ));
-        log.info("닉네임 검열 승인 처리: auditId={}, nickname={}", auditId, audit.getNickname());
+        log.info("닉네임 허용 처리: auditId={}, nickname={}", auditId, audit.getNickname());
     }
 
     @Transactional
-    public void reject(Long auditId) {
+    public void block(Long auditId) {
         NicknameAuditEntity audit = getAuditEntity(auditId);
         String nickname = audit.getNickname();
+        audit.updateStatus(NicknameAuditStatus.BLOCKED);
 
         feedbackRepository.save(new NicknameFeedbackEntity(
                 nickname,
                 true,
                 audit.getConfidence(),
-                NicknameFeedbackEntity.OperatorDecision.REJECTED,
+                NicknameFeedbackEntity.OperatorDecision.BLOCKED,
                 null
         ));
 
@@ -57,7 +59,7 @@ public class NicknameFeedbackService {
             log.info("커스텀 비속어 등록: nickname={}", nickname);
         }
 
-        log.info("닉네임 검열 거절 처리: auditId={}, nickname={}", auditId, nickname);
+        log.info("닉네임 차단 처리: auditId={}, nickname={}", auditId, nickname);
     }
 
     private NicknameAuditEntity getAuditEntity(Long auditId) {

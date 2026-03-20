@@ -96,7 +96,7 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
             prompt.append("\n운영자 피드백 기반 추가 예시:\n");
             for (NicknameFeedbackEntity feedback : feedbacks) {
                 boolean operatorFlagged =
-                        feedback.getOperatorDecision() == NicknameFeedbackEntity.OperatorDecision.REJECTED;
+                        feedback.getOperatorDecision() == NicknameFeedbackEntity.OperatorDecision.BLOCKED;
                 double exampleConfidence = operatorFlagged ? 0.99 : 0.01;
                 prompt.append(String.format(
                         "{ \"nickname\": \"%s\", \"flagged\": %b, \"confidence\": %.2f, \"reason\": \"운영자 피드백\" }%n",

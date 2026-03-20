@@ -366,11 +366,11 @@ nickname_audit_unaudited_queue
 
 **3. 알림(Alert) 권장 조건**
 
-| 조건 | 임계값 | 의미 |
-|------|--------|------|
-| `nickname_audit_gemini_parse_failures_total` 증가율 | > 3회/시간 | 프롬프트 또는 모델 응답 형식 문제 |
-| `nickname_audit_unaudited_queue` | > 500 | 스케줄러가 처리를 못 따라가는 상황 |
-| `nickname_audit_gemini_call_duration_seconds` p99 | > 30s | Gemini 응답 지연 |
+| 조건                                                | 임계값     | 의미                  |
+|---------------------------------------------------|---------|---------------------|
+| `nickname_audit_gemini_parse_failures_total` 증가율  | > 3회/시간 | 프롬프트 또는 모델 응답 형식 문제 |
+| `nickname_audit_unaudited_queue`                  | > 500   | 스케줄러가 처리를 못 따라가는 상황 |
+| `nickname_audit_gemini_call_duration_seconds` p99 | > 30s   | Gemini 응답 지연        |
 
 ---
 

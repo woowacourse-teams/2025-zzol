@@ -1,4 +1,4 @@
-package coffeeshout.room.application.service;
+package coffeeshout.room.application.service.nickname;
 
 import java.util.List;
 import java.util.Set;

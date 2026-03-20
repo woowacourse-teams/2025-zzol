@@ -1,5 +1,6 @@
 package coffeeshout.room.application.service;
 
+import coffeeshout.room.application.service.nickname.NicknameAuditService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;

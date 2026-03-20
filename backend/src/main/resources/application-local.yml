@@ -61,3 +61,7 @@ logging:
     coffeeshout: DEBUG
     coffeeshout.global.outbox: WARN
     org.springframework.web: INFO
+
+admin:
+  username: admin
+  password: "1234"

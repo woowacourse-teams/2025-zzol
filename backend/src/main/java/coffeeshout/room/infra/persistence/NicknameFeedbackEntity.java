@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,7 +31,7 @@ public class NicknameFeedbackEntity {
     private boolean aiFlagged;
 
     @Column(nullable = false, precision = 3, scale = 2)
-    private double aiConfidence;
+    private BigDecimal aiConfidence;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
@@ -42,7 +43,7 @@ public class NicknameFeedbackEntity {
     @Column(nullable = false)
     private Instant createdAt;
 
-    public NicknameFeedbackEntity(String nickname, boolean aiFlagged, double aiConfidence,
+    public NicknameFeedbackEntity(String nickname, boolean aiFlagged, BigDecimal aiConfidence,
                                   OperatorDecision operatorDecision, String reason) {
         this.nickname = nickname;
         this.aiFlagged = aiFlagged;
@@ -53,6 +54,6 @@ public class NicknameFeedbackEntity {
     }
 
     public enum OperatorDecision {
-        APPROVED, REJECTED
+        ALLOWED, BLOCKED
     }
 }

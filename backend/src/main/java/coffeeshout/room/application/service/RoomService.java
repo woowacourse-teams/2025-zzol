@@ -7,6 +7,8 @@ import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.room.application.service.nickname.NicknameGenerator;
+import coffeeshout.room.application.service.nickname.NicknameValidator;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.QrCode;

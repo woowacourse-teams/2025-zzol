@@ -11,6 +11,7 @@ import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackJpaRepository;
+import com.vane.badwordfiltering.BadWordFiltering;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ class NicknameFeedbackServiceTest extends ServiceTest {
     @Autowired NicknameAuditJpaRepository auditRepository;
     @Autowired NicknameFeedbackJpaRepository feedbackRepository;
     @Autowired CustomProfanityJpaRepository customProfanityRepository;
+    @Autowired BadWordFiltering badWordFiltering;
 
     @Nested
     class allow_처리 {
@@ -38,6 +40,35 @@ class NicknameFeedbackServiceTest extends ServiceTest {
                 softly.assertThat(updated.getStatus()).isEqualTo(NicknameAuditStatus.ALLOWED);
                 softly.assertThat(feedbackRepository.count()).isEqualTo(1);
             });
+        }
+
+        @Nested
+        class 자동_차단된_FLAGGED_항목인_경우 {
+
+            @Test
+            void custom_profanity에서_삭제된다() {
+                customProfanityRepository.save(
+                        new CustomProfanityEntity("욕설닉네임", CustomProfanityEntity.Source.AI_AUDIT)
+                );
+                NicknameAuditEntity audit = auditRepository.save(NicknameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
+
+                feedbackService.allow(audit.getId());
+
+                assertThat(customProfanityRepository.existsByWord("욕설닉네임")).isFalse();
+            }
+
+            @Test
+            void BadWordFiltering에서_즉시_제거된다() {
+                badWordFiltering.add("욕설닉네임");
+                customProfanityRepository.save(
+                        new CustomProfanityEntity("욕설닉네임", CustomProfanityEntity.Source.AI_AUDIT)
+                );
+                NicknameAuditEntity audit = auditRepository.save(NicknameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
+
+                feedbackService.allow(audit.getId());
+
+                assertThat(badWordFiltering.check("욕설닉네임")).isFalse();
+            }
         }
 
         @Test

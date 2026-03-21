@@ -131,7 +131,6 @@ NicknameAuditService.auditPending()
 **FLAGGED는 즉시 차단, PENDING은 운영자 검토를 거친다.**
 FLAGGED 차단 후 운영자가 오판으로 판단하면 ALLOWED 처리로 필터에서 제거한다.
 
-> **구현 상태**: FLAGGED 자동 차단은 후속 작업으로 예정. 현재는 상태 저장만 하고 운영자 BLOCKED 처리 시에만 필터 등록.
 
 ### 신뢰도 임계값
 
@@ -391,11 +390,11 @@ nickname_audit_unaudited_queue
 > 어드민이 허용(ALLOWED) 처리 시 필터에서 제거하는 방식으로 자동화 수준을 높인다.
 > PENDING(confidence < 0.85)은 기존처럼 운영자 수동 검토 유지.
 
-- [ ] `NicknameAuditBatchProcessor` — FLAGGED 결과 시 `custom_profanity` 자동 등록 + `BadWordFiltering.add()`
-- [ ] `NicknameFeedbackService.allow()` — ALLOWED 처리 시 `custom_profanity` 삭제 + `BadWordFiltering.remove()`
-- [ ] `CustomProfanityJpaRepository` — `deleteByWord()` 추가
-- [ ] 어드민 대시보드 — FLAGGED 항목에 "자동 차단됨" 표시 추가
-- [ ] ADR 0001 업데이트 — 자동 차단 정책 반영
+- [x] `NicknameAuditBatchProcessor` — FLAGGED 결과 시 `custom_profanity` 자동 등록 + `BadWordFiltering.add()`
+- [x] `NicknameFeedbackService.allow()` — ALLOWED 처리 시 `custom_profanity` 삭제 + `BadWordFiltering.remove()`
+- [x] `CustomProfanityJpaRepository` — `deleteByWord()` 추가
+- [x] 어드민 대시보드 — FLAGGED 항목에 "자동 차단됨" 배지 + "차단 해제" 버튼(confirm 다이얼로그) + "차단" 버튼 제거
+- [x] ADR 0001 업데이트 — 자동 차단 정책 반영
 
 ---
 

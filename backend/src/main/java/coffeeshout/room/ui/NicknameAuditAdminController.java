@@ -26,7 +26,7 @@ public class NicknameAuditAdminController {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int PAGE_SIZE = 10;
-    private static final Sort CONFIDENCE_DESC = Sort.by("confidence").descending();
+    private static final Sort AUDITED_AT_DESC = Sort.by("auditedAt").descending();
 
     private final NicknameAuditService nicknameAuditService;
     private final NicknameFeedbackService nicknameFeedbackService;
@@ -37,16 +37,16 @@ public class NicknameAuditAdminController {
             @RequestParam(defaultValue = "0") int pendingPage,
             Model model) {
 
-        Page<AuditRow> flagged = nicknameAuditService
-                .listByStatus(NicknameAuditStatus.FLAGGED, PageRequest.of(flaggedPage, PAGE_SIZE, CONFIDENCE_DESC))
+        final Page<AuditRow> flagged = nicknameAuditService
+                .listByStatus(NicknameAuditStatus.FLAGGED, PageRequest.of(flaggedPage, PAGE_SIZE, AUDITED_AT_DESC))
                 .map(this::toRow);
 
         if (flagged.isEmpty() && flagged.getTotalPages() > 0) {
             return redirectTo(flagged.getTotalPages() - 1, pendingPage);
         }
 
-        Page<AuditRow> pending = nicknameAuditService
-                .listByStatus(NicknameAuditStatus.PENDING, PageRequest.of(pendingPage, PAGE_SIZE, CONFIDENCE_DESC))
+        final Page<AuditRow> pending = nicknameAuditService
+                .listByStatus(NicknameAuditStatus.PENDING, PageRequest.of(pendingPage, PAGE_SIZE, AUDITED_AT_DESC))
                 .map(this::toRow);
 
         if (pending.isEmpty() && pending.getTotalPages() > 0) {

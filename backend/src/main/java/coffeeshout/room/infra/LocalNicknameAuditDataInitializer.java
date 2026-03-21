@@ -102,13 +102,13 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
     }
 
     private NicknameAuditEntity flagged(String nickname, double confidence, String reason) {
-        NicknameAuditEntity entity = new NicknameAuditEntity(nickname);
+        final NicknameAuditEntity entity = new NicknameAuditEntity(nickname);
         entity.complete(NicknameAuditStatus.FLAGGED, confidence, reason);
         return entity;
     }
 
     private NicknameAuditEntity pending(String nickname, double confidence, String reason) {
-        NicknameAuditEntity entity = new NicknameAuditEntity(nickname);
+        final NicknameAuditEntity entity = new NicknameAuditEntity(nickname);
         entity.complete(NicknameAuditStatus.PENDING, confidence, reason);
         return entity;
     }

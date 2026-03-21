@@ -1,9 +1,13 @@
 package coffeeshout.room.application.service.nickname;
 
 import coffeeshout.room.domain.audit.NicknameAuditResult;
+import coffeeshout.room.domain.audit.NicknameAuditStatus;
 import coffeeshout.room.domain.audit.NicknameAuditor;
+import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity;
+import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
+import com.vane.badwordfiltering.BadWordFiltering;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -24,6 +28,8 @@ public class NicknameAuditBatchProcessor {
 
     private final NicknameAuditJpaRepository auditRepository;
     private final NicknameAuditor nicknameAuditor;
+    private final CustomProfanityJpaRepository customProfanityRepository;
+    private final BadWordFiltering badWordFiltering;
     private final MeterRegistry meterRegistry;
 
     private Counter batchSkippedCounter;
@@ -38,12 +44,12 @@ public class NicknameAuditBatchProcessor {
     @RateLimiter(name = "geminiAudit")
     @Transactional
     public int process(List<NicknameAuditEntity> batch) {
-        List<String> nicknames = batch.stream()
+        final List<String> nicknames = batch.stream()
                 .map(NicknameAuditEntity::getNickname)
                 .distinct()
                 .toList();
 
-        List<NicknameAuditResult> results = nicknameAuditor.audit(nicknames);
+        final List<NicknameAuditResult> results = nicknameAuditor.audit(nicknames);
 
         if (results.isEmpty()) {
             batchSkippedCounter.increment();
@@ -51,18 +57,28 @@ public class NicknameAuditBatchProcessor {
             return 0;
         }
 
-        Map<String, NicknameAuditResult> resultMap = results.stream()
+        final Map<String, NicknameAuditResult> resultMap = results.stream()
                 .collect(Collectors.toMap(NicknameAuditResult::nickname, Function.identity(), (a, b) -> a));
 
-        batch.forEach(entity -> {
-            NicknameAuditResult result = resultMap.get(entity.getNickname());
-            if (result != null) {
-                entity.complete(result.status(), result.confidence(), result.reason());
-                meterRegistry.counter("nickname.audit.result", "status", result.status().name()).increment();
-            }
-        });
+        batch.forEach(entity -> applyResult(entity, resultMap.get(entity.getNickname())));
 
         auditRepository.saveAll(batch);
         return batch.size();
+    }
+
+    private void applyResult(NicknameAuditEntity entity, NicknameAuditResult result) {
+        if (result == null) return;
+        entity.complete(result.status(), result.confidence(), result.reason());
+        meterRegistry.counter("nickname.audit.result", "status", result.status().name()).increment();
+        if (result.status() == NicknameAuditStatus.FLAGGED) {
+            autoBlock(entity.getNickname());
+        }
+    }
+
+    private void autoBlock(String nickname) {
+        if (customProfanityRepository.existsByWord(nickname)) return;
+        customProfanityRepository.save(new CustomProfanityEntity(nickname, CustomProfanityEntity.Source.AI_AUDIT));
+        badWordFiltering.add(nickname);
+        log.info("FLAGGED 자동 차단: {}", nickname);
     }
 }

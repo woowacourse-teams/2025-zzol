@@ -50,6 +50,14 @@ management:
     tracing:
       endpoint: http://localhost:4318
 
+resilience4j:
+  ratelimiter:
+    instances:
+      geminiAudit:
+        limit-for-period: 100
+        limit-refresh-period: 1s
+        timeout-duration: 5s
+
 room:
   qr:
     prefix: https://coffee-shout.com/join/

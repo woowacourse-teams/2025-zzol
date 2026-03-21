@@ -13,4 +13,6 @@ public interface CustomProfanityJpaRepository extends Repository<CustomProfanity
     List<String> findWords(Pageable pageable);
 
     boolean existsByWord(String word);
+
+    void deleteByWord(String word);
 }

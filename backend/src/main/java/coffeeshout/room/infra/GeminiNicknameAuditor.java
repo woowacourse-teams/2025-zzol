@@ -73,10 +73,10 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
     @Override
     @Retry(name = "geminiAudit")
     public List<NicknameAuditResult> audit(List<String> nicknames) {
-        String prompt = buildPrompt(nicknames);
+        final String prompt = buildPrompt(nicknames);
 
         try {
-            GenerateContentResponse response = apiCallTimer.recordCallable(() ->
+            final GenerateContentResponse response = apiCallTimer.recordCallable(() ->
                     geminiClient.models.generateContent(
                             properties.model(),
                             prompt,

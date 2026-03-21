@@ -25,22 +25,25 @@ public class NicknameFeedbackService {
 
     @Transactional
     public void allow(Long auditId) {
-        NicknameAuditEntity audit = getAuditEntity(auditId);
+        final NicknameAuditEntity audit = getAuditEntity(auditId);
+        final String nickname = audit.getNickname();
         audit.updateStatus(NicknameAuditStatus.ALLOWED);
         feedbackRepository.save(new NicknameFeedbackEntity(
-                audit.getNickname(),
+                nickname,
                 true,
                 audit.getConfidence(),
                 NicknameFeedbackEntity.OperatorDecision.ALLOWED,
                 null
         ));
-        log.info("닉네임 허용 처리: auditId={}, nickname={}", auditId, audit.getNickname());
+        customProfanityRepository.deleteByWord(nickname);
+        badWordFiltering.remove(nickname);
+        log.info("닉네임 허용 처리: auditId={}, nickname={}", auditId, nickname);
     }
 
     @Transactional
     public void block(Long auditId) {
-        NicknameAuditEntity audit = getAuditEntity(auditId);
-        String nickname = audit.getNickname();
+        final NicknameAuditEntity audit = getAuditEntity(auditId);
+        final String nickname = audit.getNickname();
         audit.updateStatus(NicknameAuditStatus.BLOCKED);
 
         feedbackRepository.save(new NicknameFeedbackEntity(

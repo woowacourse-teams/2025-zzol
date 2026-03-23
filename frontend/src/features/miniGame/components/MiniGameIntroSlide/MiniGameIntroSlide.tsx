@@ -3,7 +3,7 @@ import * as S from './MiniGameIntroSlide.styled';
 
 type Props = {
   textLines: string[];
-  imageSrc: string;
+  imageSrc?: string;
   className: string;
 };
 
@@ -17,9 +17,11 @@ const MiniGameIntroSlide = ({ textLines, imageSrc, className }: Props) => {
           </Headline2>
         ))}
       </S.TextWrapper>
-      <S.ImageWrapper>
-        <S.Image src={imageSrc} />
-      </S.ImageWrapper>
+      {imageSrc && (
+        <S.ImageWrapper>
+          <S.Image src={imageSrc} />
+        </S.ImageWrapper>
+      )}
     </S.Container>
   );
 };

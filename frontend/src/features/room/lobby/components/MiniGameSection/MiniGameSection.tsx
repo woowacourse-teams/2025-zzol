@@ -4,6 +4,7 @@ import ScreenReaderOnly from '@/components/@common/ScreenReaderOnly/ScreenReader
 import GameActionButtonSkeleton from '@/components/@composition/GameActionButtonSkeleton/GameActionButtonSkeleton';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import {
+  HIDDEN_MINI_GAMES,
   MINI_GAME_DESCRIPTION_MAP,
   MINI_GAME_ICON_MAP,
   MINI_GAME_NAME_MAP,
@@ -46,19 +47,21 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
         {loading ? (
           <GameActionButtonSkeleton />
         ) : (
-          miniGames?.map((miniGame) => (
-            <GameActionButton
-              key={miniGame}
-              isSelected={selectedMiniGames.includes(miniGame)}
-              isDisabled={playerType === 'GUEST'}
-              gameName={MINI_GAME_NAME_MAP[miniGame]}
-              description={MINI_GAME_DESCRIPTION_MAP[miniGame]}
-              onClick={() => handleClick(miniGame)}
-              icon={<S.Icon src={MINI_GAME_ICON_MAP[miniGame]} alt={miniGame} />}
-              orderNumber={selectedMiniGames.indexOf(miniGame) + 1}
-              data-testid={`game-action-${miniGame}`}
-            />
-          ))
+          miniGames
+            ?.filter((miniGame) => !HIDDEN_MINI_GAMES.includes(miniGame))
+            .map((miniGame) => (
+              <GameActionButton
+                key={miniGame}
+                isSelected={selectedMiniGames.includes(miniGame)}
+                isDisabled={playerType === 'GUEST'}
+                gameName={MINI_GAME_NAME_MAP[miniGame]}
+                description={MINI_GAME_DESCRIPTION_MAP[miniGame]}
+                onClick={() => handleClick(miniGame)}
+                icon={<S.Icon src={MINI_GAME_ICON_MAP[miniGame]} alt={miniGame} />}
+                orderNumber={selectedMiniGames.indexOf(miniGame) + 1}
+                data-testid={`game-action-${miniGame}`}
+              />
+            ))
         )}
       </S.Wrapper>
     </>

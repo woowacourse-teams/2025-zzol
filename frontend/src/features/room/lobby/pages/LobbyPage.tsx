@@ -292,7 +292,7 @@ const LobbyPage = () => {
       <Layout.TopBar left={<BackButton onClick={handleBackClick} text="방 나가기" />} />
       <Layout.Content>
         <S.Container>
-          {SECTIONS[currentSection]}
+          <S.SectionContent>{SECTIONS[currentSection]}</S.SectionContent>
           <S.Wrapper>
             <ToggleButton
               options={['참가자', '룰렛', '미니게임']}

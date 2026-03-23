@@ -1,15 +1,17 @@
 import styled from '@emotion/styled';
 
 export const Container = styled.div`
-  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
 `;
 
+export const SectionContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+`;
+
 export const Wrapper = styled.div`
-  position: absolute;
-  bottom: 1rem;
-  left: 2rem;
-  right: 2rem;
+  flex-shrink: 0;
+  padding: 0.75rem 2rem;
 `;

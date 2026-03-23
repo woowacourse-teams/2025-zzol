@@ -4,16 +4,25 @@ import RacingGameDescription1 from '@/assets/racing_game_desc1.svg';
 import RacingGameDescription2 from '@/assets/racing_game_desc2.svg';
 import CardGameProvider from '@/contexts/CardGame/CardGameProvider';
 import RacingGameProvider from '@/contexts/RacingGame/RacingGameProvider';
+import SpeedTouchGameProvider from '@/contexts/SpeedTouchGame/SpeedTouchGameProvider';
+import BlindTimerGameProvider from '@/contexts/BlindTimerGame/BlindTimerGameProvider';
+import BombRelayGameProvider from '@/contexts/BombRelayGame/BombRelayGameProvider';
 import { MiniGameType } from '@/types/miniGame/common';
 import { ComponentType, PropsWithChildren } from 'react';
 import CardGameReadyPage from '../cardGame/pages/CardGameReadyPage';
 import RacingGameReadyPage from '../racingGame/pages/RacingGameReadyPage';
+import SpeedTouchGameReadyPage from '../speedTouchGame/pages/SpeedTouchGameReadyPage';
+import BlindTimerGameReadyPage from '../blindTimerGame/pages/BlindTimerGameReadyPage';
+import BombRelayGameReadyPage from '../bombRelayGame/pages/BombRelayGameReadyPage';
 import CardGamePlayPage from '../cardGame/pages/CardGamePlayPage';
 import RacingGamePlayPage from '../racingGame/pages/RacingGamePlayPage';
+import SpeedTouchGamePlayPage from '../speedTouchGame/pages/SpeedTouchGamePlayPage';
+import BlindTimerGamePlayPage from '../blindTimerGame/pages/BlindTimerGamePlayPage';
+import BombRelayGamePlayPage from '../bombRelayGame/pages/BombRelayGamePlayPage';
 
 export type SlideConfig = {
   textLines: string[];
-  imageSrc: string;
+  imageSrc?: string;
   className: string;
 };
 
@@ -58,5 +67,50 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
       },
     ],
     PlayPage: RacingGamePlayPage,
+  },
+  SPEED_TOUCH: {
+    Provider: SpeedTouchGameProvider,
+    ReadyPage: SpeedTouchGameReadyPage,
+    slides: [
+      {
+        textLines: ['1부터 25까지', '순서대로 터치하세요!'],
+        className: 'slide-first',
+      },
+      {
+        textLines: ['가장 빠르게 완주한 순으로', '등수가 결정됩니다'],
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: SpeedTouchGamePlayPage,
+  },
+  BLIND_TIMER: {
+    Provider: BlindTimerGameProvider,
+    ReadyPage: BlindTimerGameReadyPage,
+    slides: [
+      {
+        textLines: ['목표 시간이 주어지면', '타이머를 보며 감을 잡으세요'],
+        className: 'slide-first',
+      },
+      {
+        textLines: ['3초 후 화면이 가려지면', '감각만으로 STOP!'],
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: BlindTimerGamePlayPage,
+  },
+  BOMB_RELAY: {
+    Provider: BombRelayGameProvider,
+    ReadyPage: BombRelayGameReadyPage,
+    slides: [
+      {
+        textLines: ['끝말잇기로', '폭탄을 다음 사람에게 넘기세요!'],
+        className: 'slide-first',
+      },
+      {
+        textLines: ['폭탄이 터지면 탈락!', '마지막까지 살아남으세요'],
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: BombRelayGamePlayPage,
   },
 };

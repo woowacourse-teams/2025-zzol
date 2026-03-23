@@ -5,7 +5,7 @@ import coffeeshout.room.domain.RoomErrorCode;
 
 public record PlayerName(String value) {
 
-    private static final int MAX_NAME_LENGTH = 10;
+    public static final int MAX_NAME_LENGTH = 10;
 
     public PlayerName {
         validatePlayerName(value);

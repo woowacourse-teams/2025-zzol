@@ -1,14 +1,15 @@
-package coffeeshout.room.application.service;
+package coffeeshout.room.domain.service;
 
 import coffeeshout.global.exception.custom.InvalidStateException;
 import coffeeshout.room.domain.RoomErrorCode;
+import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.stereotype.Service;
 
 @Service
-public class NicknameGenerator {
+public class PlayerNameGenerator {
 
     private static final List<String> ADJECTIVES = List.of(
             "용감한", "빠른", "느린", "귀여운", "강한", "작은", "차가운", "따뜻한",
@@ -29,6 +30,11 @@ public class NicknameGenerator {
     public String generate(Set<String> existingNames) {
         for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
             final String candidate = pickRandom(ADJECTIVES) + pickRandom(NOUNS);
+
+            if (candidate.length() > PlayerName.MAX_NAME_LENGTH) {
+                continue;
+            }
+
             if (!existingNames.contains(candidate)) {
                 return candidate;
             }
@@ -37,7 +43,8 @@ public class NicknameGenerator {
         throw new InvalidStateException(
                 RoomErrorCode.NICKNAME_GENERATION_FAILED,
                 "닉네임 생성 실패: 최대 재시도 횟수를 초과했습니다."
-        );    }
+        );
+    }
 
     private String pickRandom(List<String> words) {
         return words.get(ThreadLocalRandom.current().nextInt(words.size()));

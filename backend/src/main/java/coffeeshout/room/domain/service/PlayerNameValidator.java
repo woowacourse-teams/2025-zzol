@@ -1,27 +1,23 @@
-package coffeeshout.room.application.service;
+package coffeeshout.room.domain.service;
 
 import coffeeshout.global.exception.custom.InvalidArgumentException;
 import coffeeshout.room.domain.RoomErrorCode;
-import com.vane.badwordfiltering.BadWordFiltering;
+import coffeeshout.room.domain.player.PlayerName;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class NicknameValidator {
+public class PlayerNameValidator {
 
-    private final BadWordFiltering badWordFiltering;
+    private final ProfanityChecker profanityChecker;
 
-    public void validate(String nickname) {
-        if (containsProfanity(nickname)) {
+    public void validate(PlayerName playerName) {
+        if (profanityChecker.contains(playerName.value())) {
             throw new InvalidArgumentException(
                     RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY,
-                    "비속어가 포함된 닉네임입니다. 입력값: '" + nickname + "'"
+                    "비속어가 포함된 닉네임입니다. 입력값: '" + playerName + "'"
             );
         }
-    }
-
-    private boolean containsProfanity(String nickname) {
-        return badWordFiltering.check(nickname) || badWordFiltering.blankCheck(nickname);
     }
 }

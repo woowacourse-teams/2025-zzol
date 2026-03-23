@@ -2,52 +2,51 @@ package coffeeshout.room.application.service;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import coffeeshout.global.exception.custom.InvalidArgumentException;
 import coffeeshout.room.domain.RoomErrorCode;
-import com.vane.badwordfiltering.BadWordFiltering;
+import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.domain.service.PlayerNameValidator;
+import coffeeshout.room.domain.service.ProfanityChecker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
-class NicknameValidatorTest {
+class PlayerNameValidatorTest {
 
-    NicknameValidator nicknameValidator;
+    ProfanityChecker profanityChecker;
+    PlayerNameValidator playerNameValidator;
 
     @BeforeEach
     void setUp() {
-        nicknameValidator = new NicknameValidator(new BadWordFiltering());
+        profanityChecker = mock(ProfanityChecker.class);
+        playerNameValidator = new PlayerNameValidator(profanityChecker);
     }
 
     @Nested
-    class 정상_닉네임 {
+    class 비속어가_없는_경우 {
 
-        @ParameterizedTest
-        @ValueSource(strings = {"용감한호랑이", "player1", "게스트", "홍길동", "빠른여우"})
-        void 정상_닉네임은_검증을_통과한다(String nickname) {
-            assertThatCode(() -> nicknameValidator.validate(nickname))
+        @Test
+        void 예외_없이_통과한다() {
+            when(profanityChecker.contains("용감한호랑이")).thenReturn(false);
+
+            assertThatCode(() -> playerNameValidator.validate(new PlayerName("용감한호랑이")))
                     .doesNotThrowAnyException();
         }
     }
 
     @Nested
-    class 비속어_닉네임 {
+    class 비속어가_있는_경우 {
 
         @Test
-        void 직접_비속어는_예외를_발생한다() {
-            assertThatThrownBy(() -> nicknameValidator.validate("씨발"))
+        void InvalidArgumentException을_던진다() {
+            when(profanityChecker.contains("비속어닉네임")).thenReturn(true);
+
+            assertThatThrownBy(() -> playerNameValidator.validate(new PlayerName("비속어닉네임")))
                     .isInstanceOf(InvalidArgumentException.class)
                     .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
         }
-
-        @Test
-        void 공백_삽입으로_우회한_비속어는_예외를_발생한다() {
-            assertThatThrownBy(() -> nicknameValidator.validate("씨 발"))
-                    .isInstanceOf(InvalidArgumentException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
-        }
-
     }
 }

@@ -79,11 +79,12 @@ public class RoomService {
 
     @Transactional
     public Room createRoom(String hostName) {
-        playerNameValidator.validate(hostName);
+        PlayerName playerName = new PlayerName(hostName);
+        playerNameValidator.validate(playerName);
         final JoinCode joinCode = joinCodeGenerator.generate();
 
         // 방 생성 (QR 코드는 PENDING 상태로 시작)
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(hostName));
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, playerName);
 
         // 방 생성 후 이벤트 전달
         final BaseEvent event = new RoomCreateEvent(hostName, joinCode.getValue());
@@ -106,7 +107,7 @@ public class RoomService {
     }
 
     public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName) {
-        playerNameValidator.validate(guestName);
+        playerNameValidator.validate(new PlayerName(guestName));
         final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName);
 
         return processEventAsync(

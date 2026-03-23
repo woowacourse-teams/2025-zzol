@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +15,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class DelayedPlayerRemovalService {
 
-    private static final Duration REMOVAL_DELAY = Duration.ofSeconds(15);
-
     private final TaskScheduler taskScheduler;
+    private final Duration removalDelay;
     private final PlayerDisconnectionService playerDisconnectionService;
     private final ConcurrentHashMap<String, ScheduledFuture<?>> scheduledTasks;
     private final RoomService roomService;
@@ -24,15 +24,24 @@ public class DelayedPlayerRemovalService {
 
     public DelayedPlayerRemovalService(
             @Qualifier("delayRemovalScheduler") TaskScheduler taskScheduler,
+            @Value("${player.removalDelay}") Duration removalDelay,
             PlayerDisconnectionService playerDisconnectionService,
             StompSessionManager stompSessionManager,
             RoomService roomService
     ) {
+        validateRemovalDuration(removalDelay);
         this.taskScheduler = taskScheduler;
+        this.removalDelay = removalDelay;
         this.playerDisconnectionService = playerDisconnectionService;
         this.scheduledTasks = new ConcurrentHashMap<>();
         this.roomService = roomService;
         this.stompSessionManager = stompSessionManager;
+    }
+
+    private void validateRemovalDuration(Duration removalDelay) {
+        if (removalDelay == null || removalDelay.isNegative() || removalDelay.isZero()) {
+            throw new IllegalArgumentException("지연 삭제 시간은 양수여야 합니다.");
+        }
     }
 
     public void schedulePlayerRemoval(String playerKey, String sessionId, String reason) {
@@ -42,7 +51,7 @@ public class DelayedPlayerRemovalService {
         }
 
         log.info("플레이어 지연 삭제 스케줄링: playerKey={}, sessionId={}, delay={}초",
-                playerKey, sessionId, REMOVAL_DELAY.getSeconds());
+                playerKey, sessionId, removalDelay.getSeconds());
 
         // disconnect 된 플레이어는 ready 상태 false로 변경
         playerDisconnectionService.cancelReady(playerKey);
@@ -53,7 +62,7 @@ public class DelayedPlayerRemovalService {
                     executePlayerRemoval(playerKey, sessionId, reason);
                     stompSessionManager.removeSession(sessionId);
                 },
-                Instant.now().plus(REMOVAL_DELAY)
+                Instant.now().plus(removalDelay)
         );
 
         scheduledTasks.put(playerKey, future);

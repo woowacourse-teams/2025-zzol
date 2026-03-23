@@ -101,6 +101,9 @@ dependencies {
 
     // --- Resilience4j (서킷 브레이커, 리트라이) ---
     implementation("io.github.resilience4j:resilience4j-spring-boot3:${resilience4jVersion}")
+
+    // --- 비속어 필터 ---
+    implementation("io.github.vaneproject:badwordfiltering:1.0.0")
 }
 
 tasks.withType<Test> {

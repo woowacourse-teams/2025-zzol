@@ -52,7 +52,12 @@ room:
   qr:
     prefix: http://localhost:8080/join/
 
+outbox:
+  relay:
+    delay: 5000  # 로컬에서는 5초마다 폴링 (기본값 500ms)
+
 logging:
   level:
     coffeeshout: DEBUG
+    coffeeshout.global.outbox: WARN
     org.springframework.web: INFO

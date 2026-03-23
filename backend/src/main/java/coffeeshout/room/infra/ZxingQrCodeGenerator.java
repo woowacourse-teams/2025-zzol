@@ -1,6 +1,6 @@
 package coffeeshout.room.infra;
 
-import coffeeshout.global.config.properties.QrProperties;
+import coffeeshout.room.config.QrProperties;
 import coffeeshout.room.domain.service.QrCodeGenerator;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;

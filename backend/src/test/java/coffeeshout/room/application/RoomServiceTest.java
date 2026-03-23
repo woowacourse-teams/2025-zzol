@@ -2,12 +2,14 @@ package coffeeshout.room.application;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.global.ServiceTest;
+import coffeeshout.global.exception.custom.InvalidArgumentException;
 import coffeeshout.global.exception.custom.NotExistElementException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
@@ -17,6 +19,7 @@ import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
@@ -28,6 +31,7 @@ import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -50,6 +54,63 @@ class RoomServiceTest extends ServiceTest {
     // 테스트 헬퍼 메서드: enterRoom 대체
     private void joinGuest(JoinCode joinCode, String guestName) {
         roomCommandService.joinGuest(joinCode, new PlayerName(guestName));
+    }
+
+    @Nested
+    class 랜덤_닉네임_생성 {
+
+        @Test
+        void joinCode_없이_랜덤_닉네임을_생성한다() {
+            final String nickname = roomService.generateRandomNicknameForHost();
+
+            assertThat(nickname).isNotBlank();
+            assertThat(nickname.length()).isLessThanOrEqualTo(10);
+        }
+
+        @Test
+        void joinCode_있으면_기존_플레이어와_중복되지_않는_닉네임을_생성한다() {
+            Room createdRoom = roomService.createRoom("호스트");
+            joinGuest(createdRoom.getJoinCode(), "게스트1");
+            joinGuest(createdRoom.getJoinCode(), "게스트2");
+
+            final String nickname = roomService.generateRandomNicknameForGuest(createdRoom.getJoinCode().getValue());
+
+            assertThat(nickname).isNotIn("호스트", "게스트1", "게스트2");
+        }
+    }
+
+    @Nested
+    class 닉네임_비속어_검증 {
+
+        @Test
+        void 정상_닉네임으로_방을_생성한다() {
+            assertThatCode(() -> roomService.createRoom("용감한호랑이"))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        void 비속어_호스트_닉네임으로_방_생성이_실패한다() {
+            assertThatThrownBy(() -> roomService.createRoom("씨발"))
+                    .isInstanceOf(InvalidArgumentException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
+        }
+
+        @Test
+        void 공백_우회_비속어_호스트_닉네임으로_방_생성이_실패한다() {
+            assertThatThrownBy(() -> roomService.createRoom("씨 발"))
+                    .isInstanceOf(InvalidArgumentException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
+        }
+
+        @Test
+        void 비속어_게스트_닉네임으로_방_입장이_실패한다() {
+            Room createdRoom = roomService.createRoom("호스트");
+
+            String joinCode = createdRoom.getJoinCode().getValue();
+            assertThatThrownBy(() -> roomService.enterRoomAsync(joinCode, "씨발"))
+                    .isInstanceOf(InvalidArgumentException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
+        }
     }
 
     @Test

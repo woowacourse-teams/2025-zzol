@@ -1,4 +1,4 @@
-package coffeeshout.global.config.properties;
+package coffeeshout.room.config;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;

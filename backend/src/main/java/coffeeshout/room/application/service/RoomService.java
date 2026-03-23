@@ -1,5 +1,6 @@
 package coffeeshout.room.application.service;
 
+import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
@@ -27,6 +28,8 @@ import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.roulette.Roulette;
 import coffeeshout.room.domain.roulette.RoulettePicker;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
+import coffeeshout.room.domain.service.PlayerNameGenerator;
+import coffeeshout.room.domain.service.PlayerNameValidator;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
@@ -39,9 +42,11 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,11 +63,14 @@ public class RoomService {
     private final RoomCommandService roomCommandService;
     private final DelayedRoomRemovalService delayedRoomRemovalService;
     private final QrCodeService qrCodeService;
+    private final PlayerNameValidator playerNameValidator;
+    private final PlayerNameGenerator playerNameGenerator;
     private final JoinCodeGenerator joinCodeGenerator;
     private final RoomEventWaitManager roomEventWaitManager;
     private final RoomJpaRepository roomJpaRepository;
     private final RoulettePersistenceService roulettePersistenceService;
     private final RouletteService rouletteService;
+    private final OutboxEventRecorder outboxEventRecorder;
     private final StreamPublisher streamPublisher;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -71,15 +79,20 @@ public class RoomService {
 
     @Transactional
     public Room createRoom(String hostName) {
+        PlayerName playerName = new PlayerName(hostName);
+        playerNameValidator.validate(playerName);
         final JoinCode joinCode = joinCodeGenerator.generate();
 
         // 방 생성 (QR 코드는 PENDING 상태로 시작)
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(hostName));
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, playerName);
 
         // 방 생성 후 이벤트 전달
         final BaseEvent event = new RoomCreateEvent(hostName, joinCode.getValue());
 
-        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        // 방 생성 이벤트: DB 저장과 원자적으로 묶기 위해 Outbox 경로 사용
+        // 트랜잭션 커밋 직후 AFTER_COMMIT으로 즉시 발행 (0ms 지연)
+        // Redis 장애 시에만 Worker가 500ms 후 재시도
+        outboxEventRecorder.record(StreamKey.ROOM_BROADCAST, event);
 
         // QR 코드 비동기 생성 시작
         qrCodeService.generateQrCodeAsync(joinCode.getValue());
@@ -94,10 +107,12 @@ public class RoomService {
     }
 
     public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName) {
+        playerNameValidator.validate(new PlayerName(guestName));
         final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName);
 
         return processEventAsync(
                 event.eventId(),
+                // 방 참가는 결과를 CompletableFuture로 기다리는 요청-응답 패턴이므로 즉시 발행
                 () -> streamPublisher.publish(StreamKey.ROOM_JOIN, event),
                 "방 참가",
                 String.format("joinCode=%s, guestName=%s", joinCode, guestName),
@@ -115,6 +130,18 @@ public class RoomService {
     public List<MiniGameType> getAllMiniGames() {
         return Arrays.stream(MiniGameType.values())
                 .toList();
+    }
+
+    public String generateRandomNicknameForGuest(String joinCode) {
+        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
+        final Set<String> existingNames = room.getPlayers().stream()
+                .map(player -> player.getName().value())
+                .collect(Collectors.toSet());
+        return playerNameGenerator.generate(existingNames);
+    }
+
+    public String generateRandomNicknameForHost() {
+        return playerNameGenerator.generate(Set.of());
     }
 
     public boolean roomExists(String joinCode) {

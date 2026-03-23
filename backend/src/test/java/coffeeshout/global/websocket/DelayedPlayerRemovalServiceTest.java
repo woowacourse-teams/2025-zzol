@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import coffeeshout.room.application.service.RoomService;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ScheduledFuture;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,8 @@ import org.springframework.scheduling.TaskScheduler;
 
 @ExtendWith(MockitoExtension.class)
 class DelayedPlayerRemovalServiceTest {
+
+    private static final Duration TEST_REMOVAL_DELAY = Duration.ofMillis(100);
 
     @Mock
     private TaskScheduler taskScheduler;
@@ -45,8 +48,8 @@ class DelayedPlayerRemovalServiceTest {
 
     @BeforeEach
     void setUp() {
-        delayedPlayerRemovalService = new DelayedPlayerRemovalService(taskScheduler, playerDisconnectionService,
-                sessionManager, roomService);
+        delayedPlayerRemovalService = new DelayedPlayerRemovalService(taskScheduler, TEST_REMOVAL_DELAY,
+                playerDisconnectionService, sessionManager, roomService);
     }
 
     @Nested

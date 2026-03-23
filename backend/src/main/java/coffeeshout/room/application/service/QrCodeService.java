@@ -1,6 +1,6 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.global.config.properties.QrProperties;
+import coffeeshout.room.config.QrProperties;
 import coffeeshout.global.exception.custom.QRCodeGenerationException;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;

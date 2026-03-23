@@ -68,3 +68,38 @@ websocket:
     max-length: 100
     stream-ttl-seconds: 3600
     dedup-ttl-seconds: 1
+
+card-game:
+  timing:
+    first-loading: 500ms
+    loading: 500ms
+    prepare: 500ms
+    playing: 2000ms
+    score-board: 500ms
+    early-finish-delay: 500ms
+
+speed-touch:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    playing: 30000ms
+
+blind-timer:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    blind-delay: 500ms
+    timeout-buffer: 3000ms
+    result-delay: 500ms
+
+bomb-relay:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    min-bomb-timer: 3000ms
+    max-bomb-timer: 5000ms
+    round-result-delay: 1000ms
+    result-delay: 500ms
+  dictionary:
+    api-url: https://stdict.korean.go.kr/api/search
+    api-key: test-key

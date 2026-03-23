@@ -54,6 +54,12 @@ redis:
         thread-pool-name: concurrent
       "[racinggame]":
         thread-pool-name: concurrent
+      "[speedtouch]":
+        thread-pool-name: concurrent
+      "[blindtimer]":
+        thread-pool-name: concurrent
+      "[bombrelay]":
+        thread-pool-name: concurrent
 
 redisson:
   enabled: true
@@ -69,6 +75,45 @@ oracle:
       namespace: ax9wq4bhn4cn
       bucket: zzol-public
 
+card-game:
+  timing:
+    first-loading: 4000ms
+    loading: 3000ms
+    prepare: 2000ms
+    playing: 10250ms
+    score-board: 1500ms
+    early-finish-delay: 2000ms
+
+speed-touch:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    playing: 30000ms
+
+blind-timer:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    blind-delay: 3000ms
+    timeout-buffer: 3000ms
+    result-delay: 2000ms
+
+bomb-relay:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    min-bomb-timer: 18000ms
+    max-bomb-timer: 40000ms
+    round-result-delay: 4000ms
+    result-delay: 2000ms
+  dictionary:
+    api-url: https://krdict.korean.go.kr/api/search
+    api-key: ${STDICT_API_KEY:}
+
+outbox:
+  relay:
+    delay: 500  # ms, 로컬에서는 application-local.yml로 오버라이드
+
 room:
   removalDelay: 1h
   qr:
@@ -79,6 +124,9 @@ room:
     storage-key-prefix: qr-code
   event:
     timeout: 5s
+
+player:
+  removalDelay: 15s
 
 logging:
   level:

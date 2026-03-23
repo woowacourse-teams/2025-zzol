@@ -22,8 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 /**
- * 웹소켓 메시지 복구 서비스
- * Redis Stream을 활용하여 메시지를 백업하고 복구 기능을 제공합니다.
+ * 웹소켓 메시지 복구 서비스 Redis Stream을 활용하여 메시지를 백업하고 복구 기능을 제공합니다.
  */
 @Slf4j
 @Service
@@ -65,29 +64,29 @@ public class GameRecoveryService {
             local maxLen = tonumber(ARGV[5])
             local streamTtl = tonumber(ARGV[6])
             local dedupTtl = tonumber(ARGV[7])
-
+            
             -- 중복 체크: 이미 저장된 메시지인지 확인
             local existingStreamId = redis.call('HGET', idMapKey, messageId)
             if existingStreamId then
                 return existingStreamId  -- 기존 streamId 반환
             end
-
+            
             -- Stream에 저장
             local streamId = redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*',
                 'destination', destination,
                 'payload', payloadJson,
                 'timestamp', timestamp
             )
-
+            
             -- messageId → streamId 매핑 저장 (짧은 TTL로 중복 방지)
             redis.call('HSET', idMapKey, messageId, streamId)
             redis.call('EXPIRE', idMapKey, dedupTtl)
-
+            
             -- Stream TTL 설정 (처음 생성 시에만)
             if redis.call('TTL', streamKey) == -1 then
                 redis.call('EXPIRE', streamKey, streamTtl)
             end
-
+            
             return streamId
             """;
 
@@ -97,9 +96,9 @@ public class GameRecoveryService {
     /**
      * 메시지를 Recovery Stream에 저장 (중복 방지)
      *
-     * @param joinCode 방 코드
+     * @param joinCode    방 코드
      * @param destination 웹소켓 destination
-     * @param response WebSocketResponse
+     * @param response    WebSocketResponse
      * @return Redis Stream Entry ID (예: "1234567890-0"), 중복인 경우에도 기존 streamId 반환
      */
     public String save(JoinCode joinCode, String destination, WebSocketResponse<?> response) {
@@ -125,7 +124,7 @@ public class GameRecoveryService {
                     String.valueOf(dedupTtlSeconds)
             );
 
-            log.info("복구 메시지 저장: joinCode={}, streamId={}, messageId={}", joinCode, streamId, messageId);
+            log.debug("복구 메시지 저장: joinCode={}, streamId={}, messageId={}", joinCode, streamId, messageId);
 
             return streamId;
 
@@ -141,7 +140,7 @@ public class GameRecoveryService {
     /**
      * lastStreamId 이후의 메시지 조회 (XRANGE 활용)
      *
-     * @param joinCode 방 코드
+     * @param joinCode     방 코드
      * @param lastStreamId 클라이언트가 마지막으로 받은 Redis Stream Entry ID (예: "1234567890-0")
      * @return 복구 메시지 리스트
      */
@@ -157,7 +156,7 @@ public class GameRecoveryService {
                             .range(streamKey, Range.open(lastStreamId, "+"));
 
             if (records == null || records.isEmpty()) {
-                log.info("복구 메시지 없음: joinCode={}, lastStreamId={}", joinCode, lastStreamId);
+                log.debug("복구 메시지 없음: joinCode={}, lastStreamId={}", joinCode, lastStreamId);
                 return List.of();
             }
 
@@ -166,7 +165,7 @@ public class GameRecoveryService {
                     .filter(Objects::nonNull)
                     .toList();
 
-            log.info("복구 메시지 조회: joinCode={}, lastStreamId={}, count={}", joinCode, lastStreamId, messages.size());
+            log.debug("복구 메시지 조회: joinCode={}, lastStreamId={}, count={}", joinCode, lastStreamId, messages.size());
             return messages;
 
         } catch (Exception e) {

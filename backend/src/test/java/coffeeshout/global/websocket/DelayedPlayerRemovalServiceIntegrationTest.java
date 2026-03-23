@@ -7,7 +7,6 @@ import static org.mockito.Mockito.never;
 
 import coffeeshout.room.application.service.RoomService;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,6 +20,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
  */
 @ExtendWith(MockitoExtension.class)
 class DelayedPlayerRemovalServiceIntegrationTest {
+
+    private static final Duration TEST_REMOVAL_DELAY = Duration.ofMillis(500);
 
     @Mock
     private PlayerDisconnectionService playerDisconnectionService;
@@ -44,8 +45,8 @@ class DelayedPlayerRemovalServiceIntegrationTest {
         taskScheduler.initialize();
         stompSessionManager = new StompSessionManager();
 
-        delayedPlayerRemovalService = new DelayedPlayerRemovalService(taskScheduler, playerDisconnectionService,
-                stompSessionManager, roomService);
+        delayedPlayerRemovalService = new DelayedPlayerRemovalService(taskScheduler, TEST_REMOVAL_DELAY,
+                playerDisconnectionService, stompSessionManager, roomService);
     }
 
     @Nested
@@ -59,9 +60,8 @@ class DelayedPlayerRemovalServiceIntegrationTest {
             // when
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
-            // then - 15초 후 실행을 기다림 (테스트에서는 짧게 조정할 수 없어서 긴 시간이 필요)
-            // 실제 운영에서는 15초지만, 테스트에서는 적절한 시간으로 조정 필요
-            await().atMost(20, TimeUnit.SECONDS)
+            // then
+            await().atMost(Duration.ofSeconds(2))
                     .untilAsserted(() -> {
                         then(playerDisconnectionService).should()
                                 .handlePlayerDisconnection(playerKey, sessionId, reason);
@@ -77,9 +77,9 @@ class DelayedPlayerRemovalServiceIntegrationTest {
             // when - 즉시 취소
             delayedPlayerRemovalService.cancelScheduledRemoval(playerKey);
 
-            // then - 15초 기다려도 실행되지 않음
-            await().during(Duration.ofSeconds(2)) // 2초 동안 호출되지 않음을 확인
-                    .atMost(Duration.ofSeconds(3))
+            // then - 지연시간이 지나도 실행되지 않음
+            await().during(Duration.ofMillis(700))
+                    .atMost(Duration.ofSeconds(1))
                     .untilAsserted(() -> {
                         then(playerDisconnectionService).should(never())
                                 .handlePlayerDisconnection(playerKey, sessionId, reason);
@@ -107,7 +107,7 @@ class DelayedPlayerRemovalServiceIntegrationTest {
             delayedPlayerRemovalService.schedulePlayerRemoval(player3, "session-3", reason);
 
             // then - 모든 플레이어가 독립적으로 처리됨
-            await().atMost(20, TimeUnit.SECONDS)
+            await().atMost(Duration.ofSeconds(2))
                     .untilAsserted(() -> {
                         then(playerDisconnectionService).should()
                                 .handlePlayerDisconnection(player1, "session-1", reason);
@@ -131,7 +131,7 @@ class DelayedPlayerRemovalServiceIntegrationTest {
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
             // then - 실행 완료 후 PlayerDisconnectionService 호출됨을 확인
-            await().atMost(20, TimeUnit.SECONDS)
+            await().atMost(Duration.ofSeconds(2))
                     .untilAsserted(() -> {
                         then(playerDisconnectionService).should()
                                 .handlePlayerDisconnection(playerKey, sessionId, reason);
@@ -148,30 +148,12 @@ class DelayedPlayerRemovalServiceIntegrationTest {
             delayedPlayerRemovalService.cancelScheduledRemoval(playerKey);
 
             // then - 취소 후 일정 시간이 지나도 호출되지 않음
-            await().during(Duration.ofSeconds(2))
-                    .atMost(Duration.ofSeconds(3))
+            await().during(Duration.ofMillis(700))
+                    .atMost(Duration.ofSeconds(1))
                     .untilAsserted(() -> {
                         then(playerDisconnectionService).should(never())
                                 .handlePlayerDisconnection(playerKey, sessionId, reason);
                     });
         }
-    }
-
-    /**
-     * 테스트용 DelayedPlayerRemovalService 실제 15초 대신 짧은 시간으로 테스트할 수 있도록 오버라이드
-     */
-    private static class TestDelayedPlayerRemovalService extends DelayedPlayerRemovalService {
-        private static final Duration TEST_REMOVAL_DELAY = Duration.ofMillis(500); // 500ms로 단축
-
-        public TestDelayedPlayerRemovalService(ThreadPoolTaskScheduler taskScheduler,
-                                               PlayerDisconnectionService playerDisconnectionService,
-                                               StompSessionManager stompSessionManager,
-                                               RoomService roomService) {
-            super(taskScheduler, playerDisconnectionService, stompSessionManager, roomService);
-        }
-
-        // 테스트에서는 더 짧은 지연시간 사용하고 싶다면 이런 식으로 오버라이드 가능
-        // 하지만 현재 구조상 REMOVAL_DELAY가 private static final이라 어렵다
-        // 실제로는 설정으로 빼거나 생성자 주입으로 받는 게 좋을 듯
     }
 }

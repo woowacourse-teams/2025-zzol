@@ -28,6 +28,8 @@ import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.roulette.Roulette;
 import coffeeshout.room.domain.roulette.RoulettePicker;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
+import coffeeshout.room.domain.service.PlayerNameGenerator;
+import coffeeshout.room.domain.service.PlayerNameValidator;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
@@ -61,8 +63,8 @@ public class RoomService {
     private final RoomCommandService roomCommandService;
     private final DelayedRoomRemovalService delayedRoomRemovalService;
     private final QrCodeService qrCodeService;
-    private final NicknameValidator nicknameValidator;
-    private final NicknameGenerator nicknameGenerator;
+    private final PlayerNameValidator playerNameValidator;
+    private final PlayerNameGenerator playerNameGenerator;
     private final JoinCodeGenerator joinCodeGenerator;
     private final RoomEventWaitManager roomEventWaitManager;
     private final RoomJpaRepository roomJpaRepository;
@@ -77,7 +79,7 @@ public class RoomService {
 
     @Transactional
     public Room createRoom(String hostName) {
-        nicknameValidator.validate(hostName);
+        playerNameValidator.validate(hostName);
         final JoinCode joinCode = joinCodeGenerator.generate();
 
         // 방 생성 (QR 코드는 PENDING 상태로 시작)
@@ -104,7 +106,7 @@ public class RoomService {
     }
 
     public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName) {
-        nicknameValidator.validate(guestName);
+        playerNameValidator.validate(guestName);
         final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName);
 
         return processEventAsync(
@@ -129,16 +131,16 @@ public class RoomService {
                 .toList();
     }
 
-    public String generateRandomNickname(String joinCode) {
+    public String generateRandomNicknameForGuest(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final Set<String> existingNames = room.getPlayers().stream()
                 .map(player -> player.getName().value())
                 .collect(Collectors.toSet());
-        return nicknameGenerator.generate(existingNames);
+        return playerNameGenerator.generate(existingNames);
     }
 
-    public String generateRandomNickname() {
-        return nicknameGenerator.generate(Set.of());
+    public String generateRandomNicknameForHost() {
+        return playerNameGenerator.generate(Set.of());
     }
 
     public boolean roomExists(String joinCode) {

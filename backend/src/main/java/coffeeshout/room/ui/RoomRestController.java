@@ -73,8 +73,8 @@ public class RoomRestController implements RoomApi {
             @RequestParam(required = false) String joinCode
     ) {
         final String nickname = (joinCode != null)
-                ? roomService.generateRandomNickname(joinCode)
-                : roomService.generateRandomNickname();
+                ? roomService.generateRandomNicknameForGuest(joinCode)
+                : roomService.generateRandomNicknameForHost();
 
         return ResponseEntity.ok(RandomNicknameResponse.from(nickname));
     }

@@ -61,7 +61,7 @@ class RoomServiceTest extends ServiceTest {
 
         @Test
         void joinCode_없이_랜덤_닉네임을_생성한다() {
-            final String nickname = roomService.generateRandomNickname();
+            final String nickname = roomService.generateRandomNicknameForHost();
 
             assertThat(nickname).isNotBlank();
             assertThat(nickname.length()).isLessThanOrEqualTo(10);
@@ -73,7 +73,7 @@ class RoomServiceTest extends ServiceTest {
             joinGuest(createdRoom.getJoinCode(), "게스트1");
             joinGuest(createdRoom.getJoinCode(), "게스트2");
 
-            final String nickname = roomService.generateRandomNickname(createdRoom.getJoinCode().getValue());
+            final String nickname = roomService.generateRandomNicknameForGuest(createdRoom.getJoinCode().getValue());
 
             assertThat(nickname).isNotIn("호스트", "게스트1", "게스트2");
         }

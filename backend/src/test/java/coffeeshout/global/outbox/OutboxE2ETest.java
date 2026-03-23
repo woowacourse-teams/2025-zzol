@@ -64,7 +64,7 @@ class OutboxE2ETest {
         registry.add("spring.datasource.password", mysql::getPassword);
         registry.add("spring.datasource.driver-class-name", () -> "com.mysql.cj.jdbc.Driver");
         registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.MySQLDialect");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create");
         registry.add("spring.flyway.enabled", () -> "false");
 
         registry.add("spring.data.redis.host", redis::getHost);

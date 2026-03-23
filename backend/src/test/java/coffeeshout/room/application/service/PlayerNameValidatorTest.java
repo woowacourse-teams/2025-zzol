@@ -26,6 +26,37 @@ class PlayerNameValidatorTest {
     }
 
     @Nested
+    class null_또는_blank인_경우 {
+
+        @Test
+        void null_PlayerName은_NullPointerException을_던진다() {
+            assertThatThrownBy(() -> playerNameValidator.validate(null))
+                    .isInstanceOf(NullPointerException.class);
+        }
+
+        @Test
+        void null_이름은_예외를_던진다() {
+            assertThatThrownBy(() -> playerNameValidator.validate(new PlayerName(null)))
+                    .isInstanceOf(InvalidArgumentException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_BLANK);
+        }
+
+        @Test
+        void 빈_문자열_이름은_예외를_던진다() {
+            assertThatThrownBy(() -> playerNameValidator.validate(new PlayerName("")))
+                    .isInstanceOf(InvalidArgumentException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_BLANK);
+        }
+
+        @Test
+        void 공백만_있는_이름은_예외를_던진다() {
+            assertThatThrownBy(() -> playerNameValidator.validate(new PlayerName("   ")))
+                    .isInstanceOf(InvalidArgumentException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_BLANK);
+        }
+    }
+
+    @Nested
     class 비속어가_없는_경우 {
 
         @Test

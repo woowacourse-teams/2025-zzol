@@ -1,5 +1,7 @@
 package coffeeshout.room.application.service;
 
+import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.room.domain.RoomErrorCode;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -32,8 +34,10 @@ public class NicknameGenerator {
             }
         }
 
-        throw new IllegalStateException("닉네임 생성 실패: 최대 재시도 횟수를 초과했습니다.");
-    }
+        throw new InvalidStateException(
+                RoomErrorCode.NICKNAME_GENERATION_FAILED,
+                "닉네임 생성 실패: 최대 재시도 횟수를 초과했습니다."
+        );    }
 
     private String pickRandom(List<String> words) {
         return words.get(ThreadLocalRandom.current().nextInt(words.size()));

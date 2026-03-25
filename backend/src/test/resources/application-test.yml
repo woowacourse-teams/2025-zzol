@@ -1,6 +1,5 @@
 spring:
   jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       # create: 기동 시 DROP 후 재생성 — withReuse 환경에서 잔여 스키마를 정리한다
       ddl-auto: create

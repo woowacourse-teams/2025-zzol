@@ -80,11 +80,15 @@ public abstract class TestContainerSupport {
             for (String table : tables) {
                 jdbcTemplate.execute("TRUNCATE TABLE `" + table + "`");
             }
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
             log.debug("Database truncated ({} tables)", tables.size());
         } catch (Exception e) {
-            log.warn("Failed to clean database: {}", e.getMessage());
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+            log.warn("Failed to clean database", e);
+        } finally {
+            try {
+                jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+            } catch (Exception restoreEx) {
+                log.error("Failed to restore FOREIGN_KEY_CHECKS to 1", restoreEx);
+            }
         }
     }
 }

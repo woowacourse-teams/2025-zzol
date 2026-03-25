@@ -29,7 +29,7 @@ public class OutboxEventProcessor {
      * PENDING 이벤트를 SKIP LOCKED로 조회하고 IN_PROGRESS로 전환 후 커밋한다.
      * 이 메서드가 반환되면 DB 커넥션은 즉시 반환된다.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public List<OutboxEvent> fetchAndMarkInProgress(int batchSize) {
         final List<OutboxEvent> events = outboxEventRepository.findPendingEventsForUpdate(batchSize);
         events.forEach(OutboxEvent::markInProgress);
@@ -55,7 +55,7 @@ public class OutboxEventProcessor {
      * 최대 재시도 횟수를 초과하면 DEAD_LETTER로 전환한다.
      * 재시도 대상은 다시 PENDING으로 되돌린다.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void handleFailure(Long eventId) {
         outboxEventRepository.findById(eventId).ifPresent(this::processFailure);
     }

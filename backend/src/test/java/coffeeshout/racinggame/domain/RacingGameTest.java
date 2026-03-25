@@ -5,10 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.global.exception.custom.InvalidStateException;
-import coffeeshout.racinggame.domain.RacingGame;
-import coffeeshout.racinggame.domain.RacingGameState;
-import coffeeshout.racinggame.domain.Runner;
-import coffeeshout.racinggame.domain.SpeedCalculator;
 import coffeeshout.room.domain.player.Player;
 import java.time.Instant;
 import java.util.List;
@@ -85,7 +81,7 @@ class RacingGameTest {
         racingGame.setUp(players);
 
         // when && then
-        assertThatThrownBy(() -> racingGame.updateSpeed(players.get(0), 10, speedCalculator, Instant.now()))
+        assertThatThrownBy(() -> racingGame.updateSpeed(players.getFirst(), 10, speedCalculator, Instant.now()))
                 .isInstanceOf(InvalidStateException.class);
     }
 

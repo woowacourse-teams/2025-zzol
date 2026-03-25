@@ -43,7 +43,7 @@ class PlayerNameGeneratorTest {
         @Test
         void 최대_재시도_횟수를_초과하면_예외를_던진다() {
             // 항상 ADJECTIVES[0] + NOUNS[0] = "용감한호랑이"만 생성
-            PlayerNameGenerator generator = new PlayerNameGenerator(words -> words.get(0));
+            PlayerNameGenerator generator = new PlayerNameGenerator(List::getFirst);
 
             assertThatThrownBy(() -> generator.generate(Set.of("용감한호랑이")))
                     .isInstanceOf(InvalidStateException.class);

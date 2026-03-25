@@ -49,7 +49,7 @@ class OutboxEventRecorderTest extends ServiceTest {
         List<OutboxEvent> events = outboxEventRepository.findAll();
         assertThat(events).hasSize(1);
 
-        OutboxEvent saved = events.get(0);
+        OutboxEvent saved = events.getFirst();
         assertThat(saved.getStreamKey()).isEqualTo("room");
         assertThat(saved.getStatus()).isEqualTo(OutboxStatus.PENDING);
         assertThat(saved.getRetryCount()).isZero();

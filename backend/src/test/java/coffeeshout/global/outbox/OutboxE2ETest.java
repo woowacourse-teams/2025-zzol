@@ -121,7 +121,7 @@ class OutboxE2ETest extends TestContainerSupport {
             // then — AFTER_COMMIT이 즉시 실행되어 이미 PUBLISHED
             final List<OutboxEvent> events = outboxEventRepository.findAll();
             assertThat(events).hasSize(1);
-            assertThat(events.get(0).getStatus()).isEqualTo(OutboxStatus.PUBLISHED);
+            assertThat(events.getFirst().getStatus()).isEqualTo(OutboxStatus.PUBLISHED);
         }
 
         @Test
@@ -150,7 +150,7 @@ class OutboxE2ETest extends TestContainerSupport {
                     "{\"@type\":\"PlayerListUpdateEvent\",\"eventId\":\"test\",\"timestamp\":\"2025-01-01T00:00:00Z\",\"joinCode\":\"ABCD\"}");
             outboxEventRepository.saveAndFlush(event);
 
-            assertThat(outboxEventRepository.findAll().get(0).getStatus()).isEqualTo(OutboxStatus.PENDING);
+            assertThat(outboxEventRepository.findAll().getFirst().getStatus()).isEqualTo(OutboxStatus.PENDING);
 
             // when — Worker 수동 호출
             outboxRelayWorker.relay();
@@ -205,7 +205,7 @@ class OutboxE2ETest extends TestContainerSupport {
 
             // then
             assertThat(fetched).hasSize(1);
-            assertThat(fetched.get(0).getStatus()).isEqualTo(OutboxStatus.IN_PROGRESS);
+            assertThat(fetched.getFirst().getStatus()).isEqualTo(OutboxStatus.IN_PROGRESS);
         }
 
         @Test

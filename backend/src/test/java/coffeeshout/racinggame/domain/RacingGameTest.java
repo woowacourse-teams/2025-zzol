@@ -32,7 +32,7 @@ class RacingGameTest {
         racingGame.setUp(players);
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.get(0), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
         racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
 
         // when
@@ -49,7 +49,7 @@ class RacingGameTest {
         racingGame.setUp(players);
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.get(0), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
+        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
         racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
 
         // when
@@ -67,7 +67,7 @@ class RacingGameTest {
         racingGame.setUp(players);
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.get(0), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
         racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
 
         // then
@@ -95,14 +95,14 @@ class RacingGameTest {
 
         for (int i = 0; i < 100; i++) {
             racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
-            racingGame.updateSpeed(players.get(0), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+            racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
             racingGame.moveAll();
         }
 
         Thread.sleep(2);
 
         for (int i = 0; i < 200; i++) {
-            racingGame.updateSpeed(players.get(0), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+            racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
             racingGame.moveAll();
         }
 
@@ -111,7 +111,7 @@ class RacingGameTest {
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getRank().get(players.get(0))).isEqualTo(2);
+        assertThat(result.getRank().get(players.getFirst())).isEqualTo(2);
         assertThat(result.getRank().get(players.get(1))).isEqualTo(1);
     }
 }

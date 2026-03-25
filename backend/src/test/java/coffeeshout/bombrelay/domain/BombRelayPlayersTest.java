@@ -52,7 +52,7 @@ class BombRelayPlayersTest {
             final BombRelayPlayers players = new BombRelayPlayers(
                     List.of(PlayerFixture.게스트한스(), PlayerFixture.게스트꾹이(), PlayerFixture.게스트루키()));
 
-            players.getAll().get(0).eliminate(1);
+            players.getAll().getFirst().eliminate(1);
 
             assertThat(players.survivorCount()).isEqualTo(2);
             assertThat(players.getSurvivors()).hasSize(2);

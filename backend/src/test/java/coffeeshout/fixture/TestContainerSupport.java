@@ -32,7 +32,7 @@ public abstract class TestContainerSupport {
             DockerImageName.parse("valkey/valkey:alpine"))
             .withExposedPorts(VALKEY_PORT)
             .withCommand("valkey-server", "--appendonly", "yes")
-            .withEnv("VALKEY_DISABLE_COMMANDS", "CONFIG,SHUTDOWN,DEBUG,EVAL,SCRIPT")
+            .withEnv("VALKEY_DISABLE_COMMANDS", "CONFIG,SHUTDOWN,DEBUG")
             .withReuse(true)
             .waitingFor(Wait.forListeningPort())
             .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("VALKEY"));
@@ -59,8 +59,8 @@ public abstract class TestContainerSupport {
 
     @BeforeEach
     void cleanRedis() {
-        try {
-            redisConnectionFactory.getConnection().serverCommands().flushAll();
+        try (var connection = redisConnectionFactory.getConnection()) {
+            connection.serverCommands().flushAll();
             log.debug("Redis flushed");
         } catch (Exception e) {
             log.warn("Failed to flush Redis: {}", e.getMessage());

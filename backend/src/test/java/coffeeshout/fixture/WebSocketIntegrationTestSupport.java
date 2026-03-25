@@ -3,7 +3,6 @@ package coffeeshout.fixture;
 import static org.skyscreamer.jsonassert.JSONCompareMode.LENIENT;
 
 import coffeeshout.global.MessageResponse;
-import coffeeshout.support.test.IntegrationTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -32,8 +31,7 @@ import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
-@IntegrationTest
-public abstract class WebSocketIntegrationTestSupport extends TestContainerSupport {
+public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSupport {
 
     static final int CONNECT_TIMEOUT_SECONDS = 1;
     static final String WEBSOCKET_BASE_URL_FORMAT = "ws://localhost:%d/ws";

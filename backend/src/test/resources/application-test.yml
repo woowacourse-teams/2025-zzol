@@ -23,7 +23,7 @@ server:
   shutdown: immediate
 
 redisson:
-  enabled: false
+  enabled: true
 
 logging:
   level:

@@ -176,13 +176,16 @@ class OutboxE2ETest extends TestContainerSupport {
         }
 
         @Test
-        void 재시도_10회_실패_시_DEAD_LETTER로_전환된다() {
+        void 재시도_10회_실패_시_DEAD_LETTER로_전환된다() throws InterruptedException {
             // given
             final OutboxEvent event = OutboxEvent.create("nonexistent-stream-key", "{\"invalid\":true}");
             outboxEventRepository.saveAndFlush(event);
 
             // when — 10번 relay 반복
-            IntStream.range(0, 10).forEach(i -> outboxRelayWorker.relay());
+            for (int i = 0; i < 10; i++) {
+                outboxRelayWorker.relay();
+                Thread.sleep(10);
+            }
 
             // then
             final OutboxEvent afterRetries = outboxEventRepository.findById(event.getId()).orElseThrow();

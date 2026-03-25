@@ -16,9 +16,9 @@ public class RoulettePersistenceService {
     private final RouletteService rouletteService;
 
     @RedisLock(
-            key = "#event.joinCode()",
-            lockPrefix = "roulette:show:lock:",
-            donePrefix = "roulette:show:done:",
+            key = "#event.eventId()",
+            lockPrefix = "event:lock:",
+            donePrefix = "event:done:",
             waitTime = 0,
             leaseTime = 5000
     )
@@ -28,9 +28,9 @@ public class RoulettePersistenceService {
     }
 
     @RedisLock(
-            key = "#event.joinCode()",
-            lockPrefix = "roulette:spin:lock:",
-            donePrefix = "roulette:spin:done:",
+            key = "#event.eventId()",
+            lockPrefix = "event:lock:",
+            donePrefix = "event:done:",
             waitTime = 0,
             leaseTime = 5000
     )

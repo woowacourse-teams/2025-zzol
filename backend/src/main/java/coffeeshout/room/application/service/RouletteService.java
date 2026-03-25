@@ -6,6 +6,7 @@ import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
+import java.time.LocalDateTime;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
@@ -42,21 +43,18 @@ public class RouletteService {
 
     @Transactional
     public void saveRouletteResult(String joinCode, Winner winner) {
-        // RoomEntity 조회 및 상태 업데이트
-        final RoomEntity roomEntity = getRoomEntity(joinCode);
+        // Atomic Update: 'DONE'이 아닐 때만 'DONE'으로 변경 시도
+        int updatedCount = roomJpaRepository.updateStatusToDone(joinCode, LocalDateTime.now());
 
-        if (roomEntity.getRoomStatus() == RoomState.DONE) {
-            log.info("이미 완료된 룰렛 결과 저장 스킵: joinCode={}", joinCode);
+        if (updatedCount == 0) {
+            log.info("이미 처리된 룰렛 결과입니다. (중복 저장 방지): joinCode={}", joinCode);
             return;
         }
 
-        roomEntity.updateRoomStatus(RoomState.DONE);
-        roomEntity.finish();
-
-        // PlayerEntity 조회
+        // 1건 업데이트 성공(최초 실행자) 시에만 후속 작업 수행
+        final RoomEntity roomEntity = getRoomEntity(joinCode);
         final PlayerEntity playerEntity = getPlayerEntity(roomEntity, winner.name().value());
 
-        // RouletteResultEntity 저장
         final RouletteResultEntity rouletteResult = new RouletteResultEntity(
                 roomEntity,
                 playerEntity,

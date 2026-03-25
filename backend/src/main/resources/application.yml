@@ -136,6 +136,9 @@ room:
   event:
     timeout: 5s
 
+player:
+  removalDelay: 15s
+
 logging:
   level:
     root: info

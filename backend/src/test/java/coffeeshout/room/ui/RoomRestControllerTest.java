@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
@@ -418,6 +419,48 @@ class RoomRestControllerTest {
             mockMvc.perform(get("/rooms/minigames/selected")
                             .param("joinCode", INVALID_JOIN_CODE))
                     .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    @DisplayName("랜덤 닉네임 생성 테스트")
+    class RandomNicknameTest {
+
+        @Test
+        void joinCode_없이_요청하면_호스트용_닉네임을_반환한다() throws Exception {
+            mockMvc.perform(get("/rooms/nickname/random"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.nickname").exists());
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"", "   "})
+        void joinCode가_빈값이거나_공백이면_호스트용_닉네임을_반환한다(String blankJoinCode) throws Exception {
+            mockMvc.perform(get("/rooms/nickname/random")
+                            .param("joinCode", blankJoinCode))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.nickname").exists());
+        }
+
+        @Test
+        void 유효한_joinCode로_요청하면_방_내_중복_없는_닉네임을_반환한다() throws Exception {
+            // given
+            RoomEnterRequest request = new RoomEnterRequest("호스트");
+            String createResponse = mockMvc.perform(post("/rooms")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            String joinCode = objectMapper.readValue(createResponse, RoomCreateResponse.class).joinCode();
+
+            // when & then
+            mockMvc.perform(get("/rooms/nickname/random")
+                            .param("joinCode", joinCode))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.nickname").exists());
         }
     }
 

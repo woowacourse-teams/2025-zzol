@@ -1,7 +1,9 @@
 package coffeeshout.room.config;
 
+import coffeeshout.room.domain.service.WordPicker;
 import com.google.genai.Client;
 import com.vane.badwordfiltering.BadWordFiltering;
+import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -20,5 +22,10 @@ public class RoomConfig {
         return Client.builder()
                 .apiKey(properties.geminiApiKey())
                 .build();
+    }
+
+    @Bean
+    public WordPicker wordPicker() {
+        return words -> words.get(ThreadLocalRandom.current().nextInt(words.size()));
     }
 }

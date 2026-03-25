@@ -2,6 +2,7 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
@@ -10,10 +11,9 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
-import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -64,7 +64,7 @@ class OutboxE2ETest {
         registry.add("spring.datasource.password", mysql::getPassword);
         registry.add("spring.datasource.driver-class-name", () -> "com.mysql.cj.jdbc.Driver");
         registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.MySQLDialect");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create");
         registry.add("spring.flyway.enabled", () -> "false");
 
         registry.add("spring.data.redis.host", redis::getHost);
@@ -178,8 +178,7 @@ class OutboxE2ETest {
 
             // then
             final List<OutboxEvent> events = outboxEventRepository.findAll();
-            assertThat(events).hasSize(5);
-            assertThat(events).allSatisfy(event ->
+            assertThat(events).hasSize(5).allSatisfy(event ->
                     assertThat(event.getStatus()).isEqualTo(OutboxStatus.PUBLISHED)
             );
         }

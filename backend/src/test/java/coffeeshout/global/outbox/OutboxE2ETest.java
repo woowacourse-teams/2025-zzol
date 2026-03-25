@@ -81,11 +81,13 @@ class OutboxE2ETest extends TestContainerSupport {
          * 기본 taskScheduler를 no-op으로 덮어써서 @Scheduled 메서드 실행을 막는다.
          * OutboxRelayWorker의 relay(), recoverStaleEvents(), cleanup()이
          * 테스트 중에 백그라운드로 돌면서 수동 호출과 경합하는 걸 방지한다.
+         * ShutDownTestScheduler는 ThreadPoolTaskScheduler 상속이라 실제로 태스크를 실행하므로
+         * Mockito mock을 사용해 진짜 no-op으로 만든다.
          */
         @Bean(name = "taskScheduler")
         @Primary
         public TaskScheduler noOpTaskScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return Mockito.mock(TaskScheduler.class);
         }
     }
 

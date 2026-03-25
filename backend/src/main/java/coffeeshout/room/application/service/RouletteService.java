@@ -44,6 +44,12 @@ public class RouletteService {
     public void saveRouletteResult(String joinCode, Winner winner) {
         // RoomEntity 조회 및 상태 업데이트
         final RoomEntity roomEntity = getRoomEntity(joinCode);
+
+        if (roomEntity.getRoomStatus() == RoomState.DONE) {
+            log.info("이미 완료된 룰렛 결과 저장 스킵: joinCode={}", joinCode);
+            return;
+        }
+
         roomEntity.updateRoomStatus(RoomState.DONE);
         roomEntity.finish();
 

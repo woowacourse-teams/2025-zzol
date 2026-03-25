@@ -41,7 +41,7 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 @ActiveProfiles("test")
 @Import({IntegrationTestConfig.class, TestContainerConfig.class})
 @Transactional
-public abstract class WebSocketIntegrationTestSupport {
+public abstract class WebSocketIntegrationTestSupport extends TestContainerSupport {
 
     static final int CONNECT_TIMEOUT_SECONDS = 1;
     static final String WEBSOCKET_BASE_URL_FORMAT = "ws://localhost:%d/ws";

@@ -1,9 +1,13 @@
 spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
   jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect
+    database-platform: org.hibernate.dialect.H2Dialect  # 이것만 변경!
     hibernate:
-      # create: 기동 시 DROP 후 재생성 — withReuse 환경에서 잔여 스키마를 정리한다
-      ddl-auto: create
+      ddl-auto: create-drop
     properties:
       hibernate:
         format_sql: true
@@ -12,6 +16,10 @@ spring:
     timeout-per-shutdown-phase: 1s
   flyway:
     enabled: false
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
   data:
     redis:
       ssl:

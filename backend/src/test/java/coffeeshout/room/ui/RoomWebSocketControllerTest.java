@@ -9,7 +9,6 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.repository.RoomRepository;
-import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
@@ -38,11 +37,9 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
     void setUp(@Autowired RoomRepository roomRepository,
                @Autowired RoomJpaRepository roomJpaRepository,
                @Autowired PlayerJpaRepository playerJpaRepository,
-               @Autowired PlatformTransactionManager transactionManager,
-               @Autowired JoinCodeGenerator joinCodeGenerator
-    ) throws Exception {
-        joinCode = joinCodeGenerator.generate();
-        testRoom = RoomFixture.호스트_꾹이(joinCode);
+               @Autowired PlatformTransactionManager transactionManager) throws Exception {
+        testRoom = RoomFixture.호스트_꾹이();
+        joinCode = testRoom.getJoinCode();  // Room에서 실제 joinCode 가져오기
         host = testRoom.getHost();
 
         // MemoryRepository에 저장

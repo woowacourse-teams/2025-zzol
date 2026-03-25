@@ -2,8 +2,6 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
-import coffeeshout.fixture.TestContainerSupport;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
@@ -12,15 +10,25 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 /**
  * Outbox 패턴 E2E 테스트 (2단 콤보 Outbox).
@@ -32,19 +40,48 @@ import org.springframework.test.context.ActiveProfiles;
  * <p>
  * H2 대신 MySQL을 쓰는 이유: FOR UPDATE SKIP LOCKED가 H2에서 지원되지 않는다.
  */
-
 @SpringBootTest
+@Testcontainers
 @ActiveProfiles("test")
 @Import(OutboxE2ETest.OutboxE2ETestConfig.class)
-class OutboxE2ETest extends TestContainerSupport {
+class OutboxE2ETest {
+
+    @Container
+    static MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
+            .withDatabaseName("outbox_test")
+            .withUsername("test")
+            .withPassword("test")
+            .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci");
+
+    @Container
+    static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("valkey/valkey:latest"))
+            .withExposedPorts(6379);
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", mysql::getJdbcUrl);
+        registry.add("spring.datasource.username", mysql::getUsername);
+        registry.add("spring.datasource.password", mysql::getPassword);
+        registry.add("spring.datasource.driver-class-name", () -> "com.mysql.cj.jdbc.Driver");
+        registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.MySQLDialect");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create");
+        registry.add("spring.flyway.enabled", () -> "false");
+
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+    }
 
     @TestConfiguration
     static class OutboxE2ETestConfig {
 
         @Bean
         @Primary
-        public CardGameFlowScheduler mockCardGameFlowScheduler() {
-            return Mockito.mock(CardGameFlowScheduler.class);
+        public RedisConnectionFactory testRedisConnectionFactory() {
+            final LettuceConnectionFactory factory = new LettuceConnectionFactory(
+                    redis.getHost(), redis.getMappedPort(6379)
+            );
+            factory.afterPropertiesSet();
+            return factory;
         }
 
         @Bean(name = "cardGameTaskScheduler")
@@ -87,6 +124,16 @@ class OutboxE2ETest extends TestContainerSupport {
         public TaskScheduler noOpTaskScheduler() {
             return new coffeeshout.global.config.ShutDownTestScheduler();
         }
+
+        /**
+         * CardGameFlowScheduler는 @Profile("!test")로 등록되어 test 프로파일에서 빈이 없다.
+         * ServiceTestConfig에서는 mock으로 등록하지만, E2E 테스트는 자체 컨텍스트를 쓰므로 별도 등록.
+         */
+        @Bean
+        @Primary
+        public CardGameFlowScheduler mockCardGameFlowScheduler() {
+            return Mockito.mock(CardGameFlowScheduler.class);
+        }
     }
 
     @Autowired
@@ -103,8 +150,7 @@ class OutboxE2ETest extends TestContainerSupport {
 
     @BeforeEach
     void setUp() {
-        // @Transactional 없는 E2E 테스트이므로 superclass의 cleanRedis()에 더해 DB도 직접 정리한다.
-        cleanDatabase();
+        outboxEventRepository.deleteAllInBatch();
     }
 
     @Nested
@@ -132,7 +178,8 @@ class OutboxE2ETest extends TestContainerSupport {
 
             // then
             final List<OutboxEvent> events = outboxEventRepository.findAll();
-            assertThat(events).hasSize(5).allSatisfy(event ->
+            assertThat(events).hasSize(5);
+            assertThat(events).allSatisfy(event ->
                     assertThat(event.getStatus()).isEqualTo(OutboxStatus.PUBLISHED)
             );
         }

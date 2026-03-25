@@ -1,9 +1,8 @@
 package coffeeshout.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.support.test.IntegrationTest;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -26,7 +25,8 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 /**
  * 간단한 웹소켓 연결 및 E2E 테스트 실제 데이터 없이도 웹소켓 연결과 메시지 전송을 테스트
  */
-class WebSocketSimpleTest extends IntegrationTestSupport {
+@IntegrationTest
+class WebSocketSimpleTest {
 
     @LocalServerPort
     private int port;
@@ -109,9 +109,8 @@ class WebSocketSimpleTest extends IntegrationTestSupport {
         session.send("/app/room/1/players", null);
 
         // then - 메시지 전송이 완료되었는지 확인
-        await().atMost(5, TimeUnit.SECONDS)
-                .untilAsserted(() ->
-                        assertThat(session.isConnected()).isTrue());
+        Thread.sleep(1000); // 비동기 처리 대기
+        assertThat(session.isConnected()).isTrue();
 
         session.disconnect();
     }

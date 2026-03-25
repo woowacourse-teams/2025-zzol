@@ -3,7 +3,6 @@ package coffeeshout.room.infra.messaging;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
@@ -12,13 +11,15 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.repository.RoomRepository;
+import coffeeshout.support.test.IntegrationTest;
 import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class RoomEnterStreamProducerTest extends IntegrationTestSupport {
+@IntegrationTest
+class RoomEnterStreamProducerTest {
 
     @Autowired
     RoomRepository roomRepository;

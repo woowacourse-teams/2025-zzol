@@ -1,28 +1,40 @@
-package coffeeshout.global;
+package coffeeshout.global.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.support.test.IntegrationTest;
 import java.time.Duration;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-@DisplayName("RedisContainer 통합 테스트")
-class RedisContainerIntegrationTest extends IntegrationTestSupport {
+@IntegrationTest
+@DisplayName("TestContainer 통합 테스트")
+class TestContainerIntegrationTest {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
+    @BeforeEach
+    void setUp() {
+        stringRedisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+    }
+
     @Test
-    @DisplayName("Valkey 컨테이너 연결 확인")
+    @DisplayName("TestContainer Valkey 연결 확인")
     void testValkeyConnectionIsAvailable() {
-        // given & when & then
-        assertThat(valkey.isRunning()).isTrue();
-        assertThat(valkey.getHost()).isNotNull();
-        assertThat(valkey.getMappedPort(6379)).isGreaterThan(0);
+        // given & when
+        Boolean isContainerRunning = TestContainerConfig.isContainerRunning();
+        String host = TestContainerConfig.getContainerHost();
+        Integer port = TestContainerConfig.getContainerPort();
+
+        // then
+        assertThat(isContainerRunning).isTrue();
+        assertThat(host).isNotNull();
+        assertThat(port).isNotNull().isGreaterThan(0);
     }
 
     @Test

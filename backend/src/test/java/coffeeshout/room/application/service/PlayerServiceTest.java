@@ -3,10 +3,9 @@ package coffeeshout.room.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.global.ServiceTest;
+import coffeeshout.global.StreamMockedServiceTest;
 import coffeeshout.global.exception.custom.InvalidArgumentException;
 import coffeeshout.global.exception.custom.NotExistElementException;
-import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.PlayerKickEvent;
@@ -17,9 +16,8 @@ import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-class PlayerServiceTest extends ServiceTest {
+class PlayerServiceTest extends StreamMockedServiceTest {
 
     @Autowired
     RoomService roomService;
@@ -29,9 +27,6 @@ class PlayerServiceTest extends ServiceTest {
 
     @Autowired
     PlayerService playerService;
-
-    @MockitoBean
-    StreamPublisher streamPublisher;
 
     private void joinGuest(JoinCode joinCode, String guestName) {
         roomCommandService.joinGuest(joinCode, new PlayerName(guestName));

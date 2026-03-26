@@ -12,6 +12,7 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -87,7 +88,7 @@ class OutboxE2ETest extends TestContainerSupport {
         @Bean(name = "taskScheduler")
         @Primary
         public TaskScheduler noOpTaskScheduler() {
-            return Mockito.mock(TaskScheduler.class);
+            return Mockito.mock(TaskScheduler.class, Answers.RETURNS_MOCKS);
         }
     }
 

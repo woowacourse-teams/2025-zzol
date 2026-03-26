@@ -4,6 +4,7 @@ import static org.skyscreamer.jsonassert.JSONCompareMode.LENIENT;
 
 import coffeeshout.global.MessageResponse;
 import coffeeshout.global.config.IntegrationTestConfig;
+import coffeeshout.global.config.TestContainerConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -38,7 +39,7 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@Import({IntegrationTestConfig.class})
+@Import({IntegrationTestConfig.class, TestContainerConfig.class})
 @Transactional
 public abstract class WebSocketIntegrationTestSupport {
 

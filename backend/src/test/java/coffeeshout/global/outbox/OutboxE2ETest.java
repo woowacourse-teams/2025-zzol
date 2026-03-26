@@ -9,6 +9,7 @@ import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import java.util.List;
 import java.util.stream.IntStream;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -101,6 +102,11 @@ class OutboxE2ETest extends TestContainerSupport {
 
     @Autowired
     private OutboxEventRepository outboxEventRepository;
+
+    @BeforeEach
+    void setUp() {
+        cleanDatabase();
+    }
 
     @Nested
     class AFTER_COMMIT_즉시_발행_Happy_Path는 {

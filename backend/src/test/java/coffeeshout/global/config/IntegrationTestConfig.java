@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 
-@TestConfiguration
+@TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
 public class IntegrationTestConfig {
 

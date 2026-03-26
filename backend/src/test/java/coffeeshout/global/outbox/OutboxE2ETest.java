@@ -9,7 +9,6 @@ import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import java.util.List;
 import java.util.stream.IntStream;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -103,12 +102,6 @@ class OutboxE2ETest extends TestContainerSupport {
     @Autowired
     private OutboxEventRepository outboxEventRepository;
 
-    @BeforeEach
-    void setUp() {
-        // @Transactional 없는 E2E 테스트이므로 superclass의 cleanRedis()에 더해 DB도 직접 정리한다.
-        cleanDatabase();
-    }
-
     @Nested
     class AFTER_COMMIT_즉시_발행_Happy_Path는 {
 
@@ -175,23 +168,23 @@ class OutboxE2ETest extends TestContainerSupport {
             assertThat(afterRelay.getStatus()).isEqualTo(OutboxStatus.PENDING);
         }
 
-        @Test
-        void 재시도_10회_실패_시_DEAD_LETTER로_전환된다() throws InterruptedException {
-            // given
-            final OutboxEvent event = OutboxEvent.create("nonexistent-stream-key", "{\"invalid\":true}");
-            outboxEventRepository.saveAndFlush(event);
+    }
 
-            // when — 10번 relay 반복
-            for (int i = 0; i < 10; i++) {
-                outboxRelayWorker.relay();
-                Thread.sleep(10);
-            }
+    @Test
+    void 재시도_10회_실패_시_DEAD_LETTER로_전환된다() {
+        // given
+        final OutboxEvent event = OutboxEvent.create("nonexistent-stream-key", "{\"invalid\":true}");
+        outboxEventRepository.saveAndFlush(event);
 
-            // then
-            final OutboxEvent afterRetries = outboxEventRepository.findById(event.getId()).orElseThrow();
-            assertThat(afterRetries.getStatus()).isEqualTo(OutboxStatus.DEAD_LETTER);
-            assertThat(afterRetries.getRetryCount()).isEqualTo(10);
+        // when — 10번 relay 반복
+        for (int i = 0; i < 10; i++) {
+            outboxRelayWorker.relay();
         }
+
+        // then
+        final OutboxEvent afterRetries = outboxEventRepository.findById(event.getId()).orElseThrow();
+        assertThat(afterRetries.getStatus()).isEqualTo(OutboxStatus.DEAD_LETTER);
+        assertThat(afterRetries.getRetryCount()).isEqualTo(10);
     }
 
     @Nested

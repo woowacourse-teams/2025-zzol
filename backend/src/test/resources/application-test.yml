@@ -41,6 +41,10 @@ management:
     tracing:
       endpoint: http://localhost:4318
 
+outbox:
+  relay:
+    delay: 2147483647  # 테스트에서 백그라운드 스케줄러 실행 방지 (≈ 24일)
+
 room:
   qr:
     prefix: https://coffee-shout.com/join/

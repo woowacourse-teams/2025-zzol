@@ -58,6 +58,11 @@ public abstract class TestContainerSupport {
     }
 
     @BeforeEach
+    void cleanUp() {
+        cleanDatabase();
+        cleanRedis();
+    }
+
     void cleanRedis() {
         try (var connection = redisConnectionFactory.getConnection()) {
             connection.serverCommands().flushAll();

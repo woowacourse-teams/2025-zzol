@@ -2,17 +2,15 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.ServiceTest;
+import coffeeshout.global.StreamMockedServiceTest;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
  * OutboxEventRecorder 단위 테스트.
@@ -21,16 +19,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
  * 따라서 @TransactionalEventListener(AFTER_COMMIT)은 실행되지 않는다.
  * AFTER_COMMIT 즉시 발행 동작은 OutboxAfterCommitRelayTest에서 별도 검증한다.
  */
-class OutboxEventRecorderTest extends ServiceTest {
+class OutboxEventRecorderTest extends StreamMockedServiceTest {
 
     @Autowired
     private OutboxEventRecorder outboxEventRecorder;
 
     @Autowired
     private OutboxEventRepository outboxEventRepository;
-
-    @MockitoBean
-    private StreamPublisher streamPublisher;
 
     @BeforeEach
     void setUp() {

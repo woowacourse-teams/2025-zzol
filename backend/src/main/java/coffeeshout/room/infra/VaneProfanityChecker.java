@@ -16,7 +16,7 @@ public class VaneProfanityChecker implements ProfanityChecker {
     private final BadWordFiltering badWordFiltering;
 
     @Override
-    public boolean contains(String text) {
+    public synchronized boolean contains(String text) {
         return badWordFiltering.check(text)
                 || badWordFiltering.blankCheck(text)
                 || checkAfterStrippingBypassChars(text);

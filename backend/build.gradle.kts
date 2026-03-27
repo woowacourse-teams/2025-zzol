@@ -33,6 +33,7 @@ val redissonVersion = "3.27.2"
 val zxingVersion = "3.5.3"
 val queryDslVersion = "5.0.0"
 val websocketDocsVersion = "1.0.7"
+val googleGenAiVersion = "1.44.0"
 val testcontainersVersion = "2.0.2"
 val reflectionsVersion = "0.10.2"
 val resilience4jVersion = "2.2.0"
@@ -104,6 +105,14 @@ dependencies {
 
     // --- 비속어 필터 ---
     implementation("io.github.vaneproject:badwordfiltering:1.0.0")
+
+    // --- Gemini AI ---
+    implementation("com.google.genai:google-genai:${googleGenAiVersion}")
+
+    // --- 운영자 대시보드 ---
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 }
 
 tasks.withType<Test> {

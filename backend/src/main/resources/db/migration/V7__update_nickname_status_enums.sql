@@ -1,0 +1,6 @@
+ALTER TABLE nickname_audit
+    MODIFY COLUMN status ENUM('UNAUDITED', 'FLAGGED', 'PENDING', 'CLEAN', 'ALLOWED', 'BLOCKED')
+        NOT NULL DEFAULT 'UNAUDITED';
+
+ALTER TABLE nickname_feedback
+    MODIFY COLUMN operator_decision ENUM('ALLOWED', 'BLOCKED') NOT NULL;

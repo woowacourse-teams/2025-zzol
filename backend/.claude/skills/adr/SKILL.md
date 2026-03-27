@@ -54,3 +54,7 @@ allowed-tools: Read, Glob, Write
 - 고려한 대안은 실제로 검토한 것만 작성한다
 - 트레이드오프는 단점을 숨기지 않고 솔직하게 작성한다
 - 결정 후 드러난 문제점이 있다면 상태를 `폐기` 또는 `대체됨`으로 변경하고 사유를 추가한다
+
+## Markdown 작성 규칙
+
+ADR 문서는 markdownlint 검사를 통과해야 한다. 규칙은 `docs/conventions-docs.md`를 따른다.

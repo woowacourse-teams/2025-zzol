@@ -1,5 +1,6 @@
 package coffeeshout.room.infra.persistence;
 
+import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.PlayerType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -18,7 +20,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "player")
+@Table(name = "player",
+       indexes = @Index(name = "idx_player_player_name", columnList = "player_name"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlayerEntity {
@@ -46,5 +49,9 @@ public class PlayerEntity {
         this.playerName = playerName;
         this.playerType = playerType;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void updatePlayerName(PlayerName playerName) {
+        this.playerName = playerName.value();
     }
 }

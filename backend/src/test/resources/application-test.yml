@@ -1,4 +1,6 @@
 spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
   jpa:
     hibernate:
       # create: 기동 시 DROP 후 재생성 — withReuse 환경에서 잔여 스키마를 정리한다
@@ -40,6 +42,14 @@ management:
   otlp:
     tracing:
       endpoint: http://localhost:4318
+
+resilience4j:
+  ratelimiter:
+    instances:
+      geminiAudit:
+        limit-for-period: 100
+        limit-refresh-period: 1s
+        timeout-duration: 5s
 
 room:
   qr:

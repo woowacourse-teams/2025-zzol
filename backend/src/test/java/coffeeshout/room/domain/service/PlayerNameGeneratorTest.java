@@ -22,7 +22,7 @@ class PlayerNameGeneratorTest {
             WordPicker random = words -> words.get(ThreadLocalRandom.current().nextInt(words.size()));
             final PlayerNameGenerator generator = new PlayerNameGenerator(random);
 
-            final String nickname = generator.generate(Set.of());
+            final String nickname = generator.generate(Set.of()).value();
 
             assertThat(nickname.length()).isLessThanOrEqualTo(10);
         }
@@ -35,7 +35,7 @@ class PlayerNameGeneratorTest {
             AtomicInteger idx = new AtomicInteger(0);
             PlayerNameGenerator generator = new PlayerNameGenerator(words -> sequence.get(idx.getAndIncrement()));
 
-            final String nickname = generator.generate(Set.of("용감한호랑이"));
+            final String nickname = generator.generate(Set.of("용감한호랑이")).value();
 
             assertThat(nickname).isEqualTo("빠른여우");
         }

@@ -36,8 +36,8 @@ class GeminiPlayerNameAuditorParseTest {
         auditor.initMetrics();
     }
 
-    private List<PlayerNameAuditResult> parse(String responseText, List<String> nicknames) {
-        return ReflectionTestUtils.invokeMethod(auditor, "parseResults", responseText, nicknames);
+    private List<PlayerNameAuditResult> parse(String responseText, List<String> playerNames) {
+        return ReflectionTestUtils.invokeMethod(auditor, "parseResults", responseText, playerNames);
     }
 
     @Nested
@@ -54,7 +54,7 @@ class GeminiPlayerNameAuditorParseTest {
         void 배치_파싱_실패_카운터가_증가한다() {
             parse("not json at all", List.of("닉네임"));
 
-            assertThat(meterRegistry.counter("nickname.audit.gemini.parse.failures").count()).isEqualTo(1);
+            assertThat(meterRegistry.counter("playerName.audit.gemini.parse.failures").count()).isEqualTo(1);
         }
     }
 
@@ -65,8 +65,8 @@ class GeminiPlayerNameAuditorParseTest {
         void 실패_항목을_제외한_나머지를_반환한다() {
             String responseText = """
                     [
-                      {"nickname": "용감한호랑이", "flagged": false, "confidence": 0.99, "reason": "정상"},
-                      {"nickname": "씨발", "flagged": true, "confidence": "숫자아님", "reason": "욕설"}
+                      {"playerName": "용감한호랑이", "flagged": false, "confidence": 0.99, "reason": "정상"},
+                      {"playerName": "씨발", "flagged": true, "confidence": "숫자아님", "reason": "욕설"}
                     ]
                     """;
 
@@ -81,20 +81,20 @@ class GeminiPlayerNameAuditorParseTest {
         @Test
         void 항목_파싱_실패_카운터가_증가한다() {
             String responseText = """
-                    [{"nickname": "씨발", "flagged": true, "confidence": "숫자아님", "reason": "욕설"}]
+                    [{"playerName": "씨발", "flagged": true, "confidence": "숫자아님", "reason": "욕설"}]
                     """;
 
             parse(responseText, List.of("씨발"));
 
-            assertThat(meterRegistry.counter("nickname.audit.gemini.item.parse.failures").count()).isEqualTo(1);
+            assertThat(meterRegistry.counter("playerName.audit.gemini.item.parse.failures").count()).isEqualTo(1);
         }
 
         @Test
         void 전체_항목_실패_시_빈_리스트를_반환한다() {
             String responseText = """
                     [
-                      {"nickname": "닉1", "flagged": true, "confidence": "bad", "reason": "욕설"},
-                      {"nickname": "닉2", "flagged": false, "confidence": "bad", "reason": "정상"}
+                      {"playerName": "닉1", "flagged": true, "confidence": "bad", "reason": "욕설"},
+                      {"playerName": "닉2", "flagged": false, "confidence": "bad", "reason": "정상"}
                     ]
                     """;
 
@@ -110,7 +110,7 @@ class GeminiPlayerNameAuditorParseTest {
         @Test
         void flagged_true이고_confidence가_threshold_이상이면_FLAGGED() {
             String responseText = """
-                    [{"nickname": "씨발", "flagged": true, "confidence": 0.9, "reason": "욕설"}]
+                    [{"playerName": "씨발", "flagged": true, "confidence": 0.9, "reason": "욕설"}]
                     """;
 
             List<PlayerNameAuditResult> results = parse(responseText, List.of("씨발"));
@@ -121,7 +121,7 @@ class GeminiPlayerNameAuditorParseTest {
         @Test
         void flagged_true이고_confidence가_threshold_미만이면_PENDING() {
             String responseText = """
-                    [{"nickname": "씨발", "flagged": true, "confidence": 0.5, "reason": "애매함"}]
+                    [{"playerName": "씨발", "flagged": true, "confidence": 0.5, "reason": "애매함"}]
                     """;
 
             List<PlayerNameAuditResult> results = parse(responseText, List.of("씨발"));
@@ -132,7 +132,7 @@ class GeminiPlayerNameAuditorParseTest {
         @Test
         void flagged_false이면_CLEAN() {
             String responseText = """
-                    [{"nickname": "용감한호랑이", "flagged": false, "confidence": 0.99, "reason": "정상"}]
+                    [{"playerName": "용감한호랑이", "flagged": false, "confidence": 0.99, "reason": "정상"}]
                     """;
 
             List<PlayerNameAuditResult> results = parse(responseText, List.of("용감한호랑이"));
@@ -144,8 +144,8 @@ class GeminiPlayerNameAuditorParseTest {
         void 여러_항목을_모두_파싱한다() {
             String responseText = """
                     [
-                      {"nickname": "씨발", "flagged": true, "confidence": 0.97, "reason": "욕설"},
-                      {"nickname": "용감한호랑이", "flagged": false, "confidence": 0.99, "reason": "정상"}
+                      {"playerName": "씨발", "flagged": true, "confidence": 0.97, "reason": "욕설"},
+                      {"playerName": "용감한호랑이", "flagged": false, "confidence": 0.99, "reason": "정상"}
                     ]
                     """;
 

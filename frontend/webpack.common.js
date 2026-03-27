@@ -97,7 +97,7 @@ export default (_, argv) => {
             to: 'sitemap.xml',
             transform(content) {
               const today = new Date().toISOString().split('T')[0];
-              return content.toString().replace(/<lastmod>.*<\/lastmod>/g, `<lastmod>${today}</lastmod>`);
+              return content.toString().replace(/<lastmod>[^<]*<\/lastmod>/g, `<lastmod>${today}</lastmod>`);
             },
           },
           {

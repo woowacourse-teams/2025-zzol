@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -23,6 +24,9 @@ public class RoomEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version;
 
     @Column(nullable = false, length = 5)
     private String joinCode;
@@ -42,11 +46,16 @@ public class RoomEntity {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void updateRoomStatus(RoomState roomStatus) {
-        this.roomStatus = roomStatus;
+    public boolean isDone() {
+        return this.roomStatus == RoomState.DONE;
     }
 
     public void finish() {
+        this.roomStatus = RoomState.DONE;
         this.finishedAt = LocalDateTime.now();
+    }
+
+    public void updateRoomStatus(RoomState roomStatus) {
+        this.roomStatus = roomStatus;
     }
 }

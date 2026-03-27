@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
+import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.racinggame.domain.RacingGame;
@@ -22,7 +23,6 @@ import coffeeshout.room.ui.response.JoinCodeExistResponse;
 import coffeeshout.room.ui.response.RemainingMiniGameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
-import coffeeshout.support.test.IntegrationTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -36,10 +36,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@IntegrationTest
 @AutoConfigureMockMvc
 @DisplayName("RoomRestController 통합 테스트")
-class RoomRestControllerTest {
+class RoomRestControllerTest extends IntegrationTestSupport {
 
     private static final String INVALID_JOIN_CODE = "XXXX";
 

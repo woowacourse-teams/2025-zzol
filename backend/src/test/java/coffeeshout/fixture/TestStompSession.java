@@ -47,6 +47,14 @@ public class TestStompSession {
         session.send(sendEndpoint, null);
     }
 
+    public boolean isConnected() {
+        return session.isConnected();
+    }
+
+    public void disconnect() {
+        session.disconnect();
+    }
+
     public static class MessageCollector {
         private final BlockingQueue<String> queue = new LinkedBlockingQueue<>();
 

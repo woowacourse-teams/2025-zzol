@@ -90,8 +90,8 @@ public class PlayerNameAuditAdminController {
         return new AuditRow(
                 e.getId(),
                 e.getPlayerName(),
-                e.getConfidence(),
-                e.getReason(),
+                e.getConfidence() != null ? e.getConfidence() : BigDecimal.ZERO,
+                e.getReason() != null ? e.getReason() : "",
                 LocalDateTime.ofInstant(e.getCreatedAt(), KST),
                 e.getAuditedAt() != null ? LocalDateTime.ofInstant(e.getAuditedAt(), KST) : null
         );

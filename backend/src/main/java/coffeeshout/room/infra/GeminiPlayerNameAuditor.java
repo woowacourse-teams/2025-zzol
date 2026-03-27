@@ -14,6 +14,7 @@ import java.util.Map;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -74,6 +75,7 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
 
     @Override
     @Retry(name = "geminiAudit")
+    @RateLimiter(name = "geminiAudit")
     public List<PlayerNameAuditResult> audit(List<String> nicknames) {
         final String prompt = buildPrompt(nicknames);
 

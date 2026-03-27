@@ -165,7 +165,7 @@ class PlayerNameRankingCleanupServiceTest {
                     .willReturn(List.of(player1, player2));
             given(player1.getPlayerName()).willReturn("씨발");
             given(player2.getPlayerName()).willReturn("씨발");
-            given(playerNameGenerator.generate(any())).willReturn(new PlayerName("빠른여우"), new PlayerName("용감한호랑이"));
+            given(playerNameGenerator.generate(eq(Set.of("씨발")))).willReturn(new PlayerName("빠른여우"), new PlayerName("용감한호랑이"));
 
             cleanupService.cleanupBlockedNicknames();
 

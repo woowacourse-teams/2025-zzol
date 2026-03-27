@@ -8,7 +8,6 @@ import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity.Source;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -42,7 +41,6 @@ public class PlayerNameAuditBatchProcessor {
                 .register(meterRegistry);
     }
 
-    @RateLimiter(name = "geminiAudit")
     @Transactional
     public int process(List<PlayerNameAuditEntity> batch) {
         final List<String> playerNames = batch.stream()

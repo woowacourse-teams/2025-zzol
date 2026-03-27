@@ -1,5 +1,7 @@
 package coffeeshout.room.infra;
 
+import static java.util.Objects.requireNonNull;
+
 import coffeeshout.room.domain.audit.AiConfidence;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
@@ -17,6 +19,8 @@ public class NoOpPlayerNameAuditor implements PlayerNameAuditor {
     @Override
     public List<PlayerNameAuditResult> audit(List<String> playerNames) {
         log.debug("NoOpPlayerNameAuditor: Gemini 호출 생략 (local/test 프로파일), playerNames={}", playerNames);
+
+        requireNonNull(playerNames, "playerNames은 null일 수 없습니다.");
         return playerNames.stream()
                 .map(nickname -> new PlayerNameAuditResult(nickname, PlayerNameAuditStatus.CLEAN, AiConfidence.UNKNOWN, "no-op"))
                 .toList();

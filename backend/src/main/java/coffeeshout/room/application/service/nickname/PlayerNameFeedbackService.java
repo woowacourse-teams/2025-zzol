@@ -1,12 +1,12 @@
 package coffeeshout.room.application.service.nickname;
 
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
-import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackEntity;
-import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackJpaRepository;
 import com.vane.badwordfiltering.BadWordFiltering;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,23 +16,23 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NicknameFeedbackService {
+public class PlayerNameFeedbackService {
 
-    private final NicknameAuditJpaRepository auditRepository;
-    private final NicknameFeedbackJpaRepository feedbackRepository;
+    private final PlayerNameAuditJpaRepository auditRepository;
+    private final PlayerNameFeedbackJpaRepository feedbackRepository;
     private final CustomProfanityJpaRepository customProfanityRepository;
     private final BadWordFiltering badWordFiltering;
 
     @Transactional
     public void allow(Long auditId) {
-        final NicknameAuditEntity audit = getAuditEntity(auditId);
-        final String nickname = audit.getNickname();
-        audit.updateStatus(NicknameAuditStatus.ALLOWED);
-        feedbackRepository.save(new NicknameFeedbackEntity(
+        final PlayerNameAuditEntity audit = getAuditEntity(auditId);
+        final String nickname = audit.getPlayerName();
+        audit.updateStatus(PlayerNameAuditStatus.ALLOWED);
+        feedbackRepository.save(new PlayerNameFeedbackEntity(
                 nickname,
                 true,
                 audit.getConfidence(),
-                NicknameFeedbackEntity.OperatorDecision.ALLOWED,
+                PlayerNameFeedbackEntity.OperatorDecision.ALLOWED,
                 null
         ));
         customProfanityRepository.deleteByWord(nickname);
@@ -42,15 +42,15 @@ public class NicknameFeedbackService {
 
     @Transactional
     public void block(Long auditId) {
-        final NicknameAuditEntity audit = getAuditEntity(auditId);
-        final String nickname = audit.getNickname();
-        audit.updateStatus(NicknameAuditStatus.BLOCKED);
+        final PlayerNameAuditEntity audit = getAuditEntity(auditId);
+        final String nickname = audit.getPlayerName();
+        audit.updateStatus(PlayerNameAuditStatus.BLOCKED);
 
-        feedbackRepository.save(new NicknameFeedbackEntity(
+        feedbackRepository.save(new PlayerNameFeedbackEntity(
                 nickname,
                 true,
                 audit.getConfidence(),
-                NicknameFeedbackEntity.OperatorDecision.BLOCKED,
+                PlayerNameFeedbackEntity.OperatorDecision.BLOCKED,
                 null
         ));
 
@@ -65,7 +65,7 @@ public class NicknameFeedbackService {
         log.info("닉네임 차단 처리: auditId={}, nickname={}", auditId, nickname);
     }
 
-    private NicknameAuditEntity getAuditEntity(Long auditId) {
+    private PlayerNameAuditEntity getAuditEntity(Long auditId) {
         return auditRepository.findById(auditId)
                 .orElseThrow(() -> new IllegalArgumentException("검열 항목을 찾을 수 없습니다: " + auditId));
     }

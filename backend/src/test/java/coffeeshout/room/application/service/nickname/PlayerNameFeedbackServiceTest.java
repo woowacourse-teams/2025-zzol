@@ -3,14 +3,14 @@ package coffeeshout.room.application.service.nickname;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.fixture.NicknameAuditFixture;
+import coffeeshout.fixture.PlayerNameAuditFixture;
 import coffeeshout.global.ServiceTest;
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
-import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackJpaRepository;
 import com.vane.badwordfiltering.BadWordFiltering;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
@@ -18,11 +18,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 
-class NicknameFeedbackServiceTest extends ServiceTest {
+class PlayerNameFeedbackServiceTest extends ServiceTest {
 
-    @Autowired NicknameFeedbackService feedbackService;
-    @Autowired NicknameAuditJpaRepository auditRepository;
-    @Autowired NicknameFeedbackJpaRepository feedbackRepository;
+    @Autowired
+    PlayerNameFeedbackService feedbackService;
+    @Autowired
+    PlayerNameAuditJpaRepository auditRepository;
+    @Autowired
+    PlayerNameFeedbackJpaRepository feedbackRepository;
     @Autowired CustomProfanityJpaRepository customProfanityRepository;
     @Autowired BadWordFiltering badWordFiltering;
 
@@ -31,13 +34,13 @@ class NicknameFeedbackServiceTest extends ServiceTest {
 
         @Test
         void 검열_항목의_상태가_ALLOWED로_변경되고_피드백이_저장된다() {
-            NicknameAuditEntity audit = auditRepository.save(NicknameAuditFixture.검열완료_FLAGGED("용감한호랑이"));
+            PlayerNameAuditEntity audit = auditRepository.save(PlayerNameAuditFixture.검열완료_FLAGGED("용감한호랑이"));
 
             feedbackService.allow(audit.getId());
 
             SoftAssertions.assertSoftly(softly -> {
-                NicknameAuditEntity updated = auditRepository.findById(audit.getId()).orElseThrow();
-                softly.assertThat(updated.getStatus()).isEqualTo(NicknameAuditStatus.ALLOWED);
+                PlayerNameAuditEntity updated = auditRepository.findById(audit.getId()).orElseThrow();
+                softly.assertThat(updated.getStatus()).isEqualTo(PlayerNameAuditStatus.ALLOWED);
                 softly.assertThat(feedbackRepository.count()).isEqualTo(1);
             });
         }
@@ -50,7 +53,7 @@ class NicknameFeedbackServiceTest extends ServiceTest {
                 customProfanityRepository.save(
                         new CustomProfanityEntity("욕설닉네임", CustomProfanityEntity.Source.AI_AUDIT)
                 );
-                NicknameAuditEntity audit = auditRepository.save(NicknameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
+                PlayerNameAuditEntity audit = auditRepository.save(PlayerNameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
 
                 feedbackService.allow(audit.getId());
 
@@ -63,7 +66,7 @@ class NicknameFeedbackServiceTest extends ServiceTest {
                 customProfanityRepository.save(
                         new CustomProfanityEntity("욕설닉네임", CustomProfanityEntity.Source.AI_AUDIT)
                 );
-                NicknameAuditEntity audit = auditRepository.save(NicknameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
+                PlayerNameAuditEntity audit = auditRepository.save(PlayerNameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
 
                 feedbackService.allow(audit.getId());
 
@@ -84,13 +87,13 @@ class NicknameFeedbackServiceTest extends ServiceTest {
 
         @Test
         void 검열_항목의_상태가_BLOCKED로_변경되고_피드백이_저장된다() {
-            NicknameAuditEntity audit = auditRepository.save(NicknameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
+            PlayerNameAuditEntity audit = auditRepository.save(PlayerNameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
 
             feedbackService.block(audit.getId());
 
             SoftAssertions.assertSoftly(softly -> {
-                NicknameAuditEntity updated = auditRepository.findById(audit.getId()).orElseThrow();
-                softly.assertThat(updated.getStatus()).isEqualTo(NicknameAuditStatus.BLOCKED);
+                PlayerNameAuditEntity updated = auditRepository.findById(audit.getId()).orElseThrow();
+                softly.assertThat(updated.getStatus()).isEqualTo(PlayerNameAuditStatus.BLOCKED);
                 softly.assertThat(feedbackRepository.count()).isEqualTo(1);
             });
         }
@@ -100,7 +103,7 @@ class NicknameFeedbackServiceTest extends ServiceTest {
 
             @Test
             void 커스텀_비속어로_등록된다() {
-                NicknameAuditEntity audit = auditRepository.save(NicknameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
+                PlayerNameAuditEntity audit = auditRepository.save(PlayerNameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
 
                 feedbackService.block(audit.getId());
 
@@ -116,7 +119,7 @@ class NicknameFeedbackServiceTest extends ServiceTest {
                 customProfanityRepository.save(
                         new CustomProfanityEntity("욕설닉네임", CustomProfanityEntity.Source.OPERATOR_MANUAL)
                 );
-                NicknameAuditEntity audit = auditRepository.save(NicknameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
+                PlayerNameAuditEntity audit = auditRepository.save(PlayerNameAuditFixture.검열완료_FLAGGED("욕설닉네임"));
 
                 feedbackService.block(audit.getId());
 

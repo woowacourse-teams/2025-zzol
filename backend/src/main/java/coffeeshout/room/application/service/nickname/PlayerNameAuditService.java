@@ -1,9 +1,9 @@
 package coffeeshout.room.application.service.nickname;
 
-import coffeeshout.room.config.NicknameAuditProperties;
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
+import coffeeshout.room.config.PlayerNameAuditProperties;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -20,11 +20,11 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NicknameAuditService {
+public class PlayerNameAuditService {
 
-    private final NicknameAuditJpaRepository auditRepository;
-    private final NicknameAuditBatchProcessor batchProcessor;
-    private final NicknameAuditProperties properties;
+    private final PlayerNameAuditJpaRepository auditRepository;
+    private final PlayerNameAuditBatchProcessor batchProcessor;
+    private final PlayerNameAuditProperties properties;
     private final MeterRegistry meterRegistry;
 
     private final AtomicLong unauditedQueueDepth = new AtomicLong(0);
@@ -36,21 +36,21 @@ public class NicknameAuditService {
                 .register(meterRegistry);
     }
 
-    public Page<NicknameAuditEntity> listByStatus(NicknameAuditStatus status, Pageable pageable) {
+    public Page<PlayerNameAuditEntity> listByStatus(PlayerNameAuditStatus status, Pageable pageable) {
         return auditRepository.findByStatus(status, pageable);
     }
 
-    public void register(String nickname) {
-        auditRepository.save(new NicknameAuditEntity(nickname));
+    public void register(String playerName) {
+        auditRepository.save(new PlayerNameAuditEntity(playerName));
     }
 
     public void auditPending() {
-        long initialQueueSize = auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED);
+        long initialQueueSize = auditRepository.countByStatusAndAuditedAtIsNull(PlayerNameAuditStatus.UNAUDITED);
         unauditedQueueDepth.set(initialQueueSize);
         log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
 
         Pageable pageable = PageRequest.of(0, properties.batchSize(), Sort.by("createdAt").ascending());
-        List<NicknameAuditEntity> batch = auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+        List<PlayerNameAuditEntity> batch = auditRepository.findByStatusAndAuditedAtIsNull(PlayerNameAuditStatus.UNAUDITED, pageable);
         int processedTotal = 0;
 
         while (!batch.isEmpty()) {
@@ -60,7 +60,7 @@ public class NicknameAuditService {
             if (batch.size() < properties.batchSize()) {
                 break;
             }
-            batch = auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+            batch = auditRepository.findByStatusAndAuditedAtIsNull(PlayerNameAuditStatus.UNAUDITED, pageable);
         }
 
         log.info("닉네임 검열 완료: 총 {}건 처리", processedTotal);

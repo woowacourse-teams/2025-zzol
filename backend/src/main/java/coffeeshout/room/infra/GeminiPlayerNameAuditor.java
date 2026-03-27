@@ -1,10 +1,10 @@
 package coffeeshout.room.infra;
 
-import coffeeshout.room.config.NicknameAuditProperties;
-import coffeeshout.room.domain.audit.NicknameAuditResult;
-import coffeeshout.room.domain.audit.NicknameAuditor;
-import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackEntity;
-import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackJpaRepository;
+import coffeeshout.room.config.PlayerNameAuditProperties;
+import coffeeshout.room.domain.audit.PlayerNameAuditResult;
+import coffeeshout.room.domain.audit.PlayerNameAuditor;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackJpaRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile("!local & !test")
 @RequiredArgsConstructor
-public class GeminiNicknameAuditor implements NicknameAuditor {
+public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
 
     private static final String BASE_SYSTEM_PROMPT = """
             너는 한국어 닉네임 검열 전문가다.
@@ -49,8 +49,8 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
 
     private final Client geminiClient;
     private final ObjectMapper objectMapper;
-    private final NicknameAuditProperties properties;
-    private final NicknameFeedbackJpaRepository feedbackRepository;
+    private final PlayerNameAuditProperties properties;
+    private final PlayerNameFeedbackJpaRepository feedbackRepository;
     private final MeterRegistry meterRegistry;
 
     private Timer apiCallTimer;
@@ -72,7 +72,7 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
 
     @Override
     @Retry(name = "geminiAudit")
-    public List<NicknameAuditResult> audit(List<String> nicknames) {
+    public List<PlayerNameAuditResult> audit(List<String> nicknames) {
         final String prompt = buildPrompt(nicknames);
 
         try {
@@ -98,19 +98,19 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
     private String buildPrompt(List<String> nicknames) {
         StringBuilder prompt = new StringBuilder(BASE_SYSTEM_PROMPT);
 
-        List<NicknameFeedbackEntity> feedbacks = feedbackRepository.findRecentFeedbacks(
+        List<PlayerNameFeedbackEntity> feedbacks = feedbackRepository.findRecentFeedbacks(
                 PageRequest.of(0, properties.feedbackInjectionThreshold(), Sort.by("createdAt").descending())
         );
 
         if (feedbacks.size() >= properties.feedbackInjectionThreshold()) {
             prompt.append("\n운영자 피드백 기반 추가 예시:\n");
-            for (NicknameFeedbackEntity feedback : feedbacks) {
+            for (PlayerNameFeedbackEntity feedback : feedbacks) {
                 boolean operatorFlagged =
-                        feedback.getOperatorDecision() == NicknameFeedbackEntity.OperatorDecision.BLOCKED;
+                        feedback.getOperatorDecision() == PlayerNameFeedbackEntity.OperatorDecision.BLOCKED;
                 double exampleConfidence = operatorFlagged ? 0.99 : 0.01;
                 prompt.append(String.format(
                         "{ \"nickname\": \"%s\", \"flagged\": %b, \"confidence\": %.2f, \"reason\": \"운영자 피드백\" }%n",
-                        feedback.getNickname(), operatorFlagged, exampleConfidence
+                        feedback.getPlayerName(), operatorFlagged, exampleConfidence
                 ));
             }
         }
@@ -119,7 +119,7 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
         return prompt.toString();
     }
 
-    private List<NicknameAuditResult> parseResults(String responseText, List<String> requestedNicknames) {
+    private List<PlayerNameAuditResult> parseResults(String responseText, List<String> requestedNicknames) {
         List<JsonNode> nodes;
         try {
             nodes = objectMapper.readValue(responseText, new TypeReference<>() {});
@@ -130,11 +130,11 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
             return List.of();
         }
 
-        List<NicknameAuditResult> results = new ArrayList<>();
+        List<PlayerNameAuditResult> results = new ArrayList<>();
         for (JsonNode node : nodes) {
             try {
                 GeminiAuditItem item = objectMapper.treeToValue(node, GeminiAuditItem.class);
-                results.add(NicknameAuditResult.of(
+                results.add(PlayerNameAuditResult.of(
                         item.nickname(), item.flagged(), item.confidence(), item.reason(),
                         properties.flaggedThreshold()
                 ));

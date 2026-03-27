@@ -1,6 +1,6 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.room.application.service.nickname.NicknameAuditService;
+import coffeeshout.room.application.service.nickname.PlayerNameAuditService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
@@ -26,7 +26,7 @@ public class RouletteService {
     private final RoomJpaRepository roomJpaRepository;
     private final PlayerJpaRepository playerJpaRepository;
     private final RouletteResultJpaRepository rouletteResultJpaRepository;
-    private final NicknameAuditService nicknameAuditService;
+    private final PlayerNameAuditService playerNameAuditService;
 
     public RoomState showRoulette(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
@@ -62,7 +62,7 @@ public class RouletteService {
                 winner.probability()
         );
         rouletteResultJpaRepository.save(rouletteResult);
-        nicknameAuditService.register(winner.name().value());
+        playerNameAuditService.register(winner.name().value());
 
         log.info("RouletteResultEntity 저장 완료: joinCode={}, winner={}, probability={}",
                 joinCode, winner.name().value(), winner.probability());

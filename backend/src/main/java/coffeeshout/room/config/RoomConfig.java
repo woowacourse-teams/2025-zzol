@@ -18,7 +18,7 @@ public class RoomConfig {
 
     @Bean
     @Profile("!local & !test")
-    public Client geminiClient(NicknameAuditProperties properties) {
+    public Client geminiClient(PlayerNameAuditProperties properties) {
         return Client.builder()
                 .apiKey(properties.geminiApiKey())
                 .build();

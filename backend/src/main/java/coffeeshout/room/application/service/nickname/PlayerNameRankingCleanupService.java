@@ -3,10 +3,11 @@ package coffeeshout.room.application.service.nickname;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -21,19 +22,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NicknameRankingCleanupService {
+public class PlayerNameRankingCleanupService {
 
     private static final int RANKING_LIMIT = 50;
 
     private final Clock clock;
     private final DashboardStatisticsRepository dashboardRepository;
-    private final NicknameAuditJpaRepository auditRepository;
+    private final PlayerNameAuditJpaRepository auditRepository;
     private final PlayerJpaRepository playerRepository;
-    private final NicknameGenerator nicknameGenerator;
+    private final PlayerNameGenerator nicknameGenerator;
 
     @Transactional
     public void cleanupBlockedNicknames() {
-        Set<String> blockedNicknames = auditRepository.findNicknamesByStatus(NicknameAuditStatus.BLOCKED);
+        Set<String> blockedNicknames = auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED);
         if (blockedNicknames.isEmpty()) {
             log.info("[RankingCleanup] BLOCKED 닉네임 없음, 종료");
             return;

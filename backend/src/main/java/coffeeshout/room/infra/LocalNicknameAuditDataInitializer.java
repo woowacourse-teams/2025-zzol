@@ -1,8 +1,8 @@
 package coffeeshout.room.infra;
 
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,18 +18,18 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
 
-    private final NicknameAuditJpaRepository auditRepository;
+    private final PlayerNameAuditJpaRepository auditRepository;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (auditRepository.countByStatus(NicknameAuditStatus.FLAGGED) > 0
-                || auditRepository.countByStatus(NicknameAuditStatus.PENDING) > 0) {
+        if (auditRepository.countByStatus(PlayerNameAuditStatus.FLAGGED) > 0
+                || auditRepository.countByStatus(PlayerNameAuditStatus.PENDING) > 0) {
             log.info("[LocalInit] 닉네임 검열 데이터가 이미 존재합니다. 초기 데이터 삽입을 건너뜁니다.");
             return;
         }
 
-        List<NicknameAuditEntity> flaggedData = List.of(
+        List<PlayerNameAuditEntity> flaggedData = List.of(
                 flagged("씨b알",       0.97, "비속어 우회 (특수문자 삽입)"),
                 flagged("ㅅㅂ놈아",    0.95, "초성 비속어"),
                 flagged("개새끼야",    0.99, "직접적 욕설"),
@@ -62,7 +62,7 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
                 flagged("바보새X야",   0.88, "복합 모욕 우회 표현")
         );
 
-        List<NicknameAuditEntity> pendingData = List.of(
+        List<PlayerNameAuditEntity> pendingData = List.of(
                 pending("열받네",      0.62, "감탄사로도 쓰이나 문맥 의존적"),
                 pending("빡친호랑이",  0.71, "비속어 경계 표현"),
                 pending("킹받는곰",    0.68, "신조어, 판단 불명확"),
@@ -101,15 +101,15 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
                 flaggedData.size(), pendingData.size());
     }
 
-    private NicknameAuditEntity flagged(String nickname, double confidence, String reason) {
-        final NicknameAuditEntity entity = new NicknameAuditEntity(nickname);
-        entity.complete(NicknameAuditStatus.FLAGGED, confidence, reason);
+    private PlayerNameAuditEntity flagged(String nickname, double confidence, String reason) {
+        final PlayerNameAuditEntity entity = new PlayerNameAuditEntity(nickname);
+        entity.complete(PlayerNameAuditStatus.FLAGGED, confidence, reason);
         return entity;
     }
 
-    private NicknameAuditEntity pending(String nickname, double confidence, String reason) {
-        final NicknameAuditEntity entity = new NicknameAuditEntity(nickname);
-        entity.complete(NicknameAuditStatus.PENDING, confidence, reason);
+    private PlayerNameAuditEntity pending(String nickname, double confidence, String reason) {
+        final PlayerNameAuditEntity entity = new PlayerNameAuditEntity(nickname);
+        entity.complete(PlayerNameAuditStatus.PENDING, confidence, reason);
         return entity;
     }
 }

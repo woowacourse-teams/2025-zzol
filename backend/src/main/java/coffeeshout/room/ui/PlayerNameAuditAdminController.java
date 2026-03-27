@@ -1,9 +1,9 @@
 package coffeeshout.room.ui;
 
-import coffeeshout.room.application.service.nickname.NicknameAuditService;
-import coffeeshout.room.application.service.nickname.NicknameFeedbackService;
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
+import coffeeshout.room.application.service.nickname.PlayerNameAuditService;
+import coffeeshout.room.application.service.nickname.PlayerNameFeedbackService;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -20,16 +20,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-@RequestMapping("/admin/nickname-audit")
+@RequestMapping("/admin/playername-audit")
 @RequiredArgsConstructor
-public class NicknameAuditAdminController {
+public class PlayerNameAuditAdminController {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int PAGE_SIZE = 10;
     private static final Sort AUDITED_AT_DESC = Sort.by("auditedAt").descending();
 
-    private final NicknameAuditService nicknameAuditService;
-    private final NicknameFeedbackService nicknameFeedbackService;
+    private final PlayerNameAuditService playerNameAuditService;
+    private final PlayerNameFeedbackService playerNameFeedbackService;
 
     @GetMapping
     public String dashboard(
@@ -37,16 +37,16 @@ public class NicknameAuditAdminController {
             @RequestParam(defaultValue = "0") int pendingPage,
             Model model) {
 
-        final Page<AuditRow> flagged = nicknameAuditService
-                .listByStatus(NicknameAuditStatus.FLAGGED, PageRequest.of(flaggedPage, PAGE_SIZE, AUDITED_AT_DESC))
+        final Page<AuditRow> flagged = playerNameAuditService
+                .listByStatus(PlayerNameAuditStatus.FLAGGED, PageRequest.of(flaggedPage, PAGE_SIZE, AUDITED_AT_DESC))
                 .map(this::toRow);
 
         if (flagged.isEmpty() && flagged.getTotalPages() > 0) {
             return redirectTo(flagged.getTotalPages() - 1, pendingPage);
         }
 
-        final Page<AuditRow> pending = nicknameAuditService
-                .listByStatus(NicknameAuditStatus.PENDING, PageRequest.of(pendingPage, PAGE_SIZE, AUDITED_AT_DESC))
+        final Page<AuditRow> pending = playerNameAuditService
+                .listByStatus(PlayerNameAuditStatus.PENDING, PageRequest.of(pendingPage, PAGE_SIZE, AUDITED_AT_DESC))
                 .map(this::toRow);
 
         if (pending.isEmpty() && pending.getTotalPages() > 0) {
@@ -69,7 +69,7 @@ public class NicknameAuditAdminController {
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int flaggedPage,
             @RequestParam(defaultValue = "0") int pendingPage) {
-        nicknameFeedbackService.allow(id);
+        playerNameFeedbackService.allow(id);
         return redirectTo(flaggedPage, pendingPage);
     }
 
@@ -78,7 +78,7 @@ public class NicknameAuditAdminController {
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int flaggedPage,
             @RequestParam(defaultValue = "0") int pendingPage) {
-        nicknameFeedbackService.block(id);
+        playerNameFeedbackService.block(id);
         return redirectTo(flaggedPage, pendingPage);
     }
 
@@ -86,10 +86,10 @@ public class NicknameAuditAdminController {
         return "redirect:/admin/nickname-audit?flaggedPage=" + flaggedPage + "&pendingPage=" + pendingPage;
     }
 
-    private AuditRow toRow(NicknameAuditEntity e) {
+    private AuditRow toRow(PlayerNameAuditEntity e) {
         return new AuditRow(
                 e.getId(),
-                e.getNickname(),
+                e.getPlayerName(),
                 e.getConfidence(),
                 e.getReason(),
                 LocalDateTime.ofInstant(e.getCreatedAt(), KST),
@@ -99,7 +99,7 @@ public class NicknameAuditAdminController {
 
     public record AuditRow(
             Long id,
-            String nickname,
+            String playerName,
             BigDecimal confidence,
             String reason,
             LocalDateTime createdAt,

@@ -1,6 +1,5 @@
 package coffeeshout.room.infra.persistence.nickname;
 
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,24 +15,27 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "nickname_audit")
+@Table(name = "player_name_feedback")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class NicknameAuditEntity {
+public class PlayerNameFeedbackEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 10)
-    private String nickname;
+    private String playerName;
+
+    @Column(nullable = false)
+    private boolean aiFlagged;
+
+    @Column(nullable = false, precision = 3, scale = 2)
+    private BigDecimal aiConfidence;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    private NicknameAuditStatus status;
-
-    @Column(precision = 3, scale = 2)
-    private BigDecimal confidence;
+    private OperatorDecision operatorDecision;
 
     @Column(length = 255)
     private String reason;
@@ -41,23 +43,17 @@ public class NicknameAuditEntity {
     @Column(nullable = false)
     private Instant createdAt;
 
-    @Column
-    private Instant auditedAt;
-
-    public NicknameAuditEntity(String nickname) {
-        this.nickname = nickname;
-        this.status = NicknameAuditStatus.UNAUDITED;
+    public PlayerNameFeedbackEntity(String playerName, boolean aiFlagged, BigDecimal aiConfidence,
+                                    OperatorDecision operatorDecision, String reason) {
+        this.playerName = playerName;
+        this.aiFlagged = aiFlagged;
+        this.aiConfidence = aiConfidence;
+        this.operatorDecision = operatorDecision;
+        this.reason = reason;
         this.createdAt = Instant.now();
     }
 
-    public void updateStatus(NicknameAuditStatus status) {
-        this.status = status;
-    }
-
-    public void complete(NicknameAuditStatus status, double confidence, String reason) {
-        this.status = status;
-        this.confidence = BigDecimal.valueOf(confidence);
-        this.reason = reason;
-        this.auditedAt = Instant.now();
+    public enum OperatorDecision {
+        ALLOWED, BLOCKED
     }
 }

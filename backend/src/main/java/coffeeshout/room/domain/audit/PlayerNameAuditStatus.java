@@ -1,6 +1,6 @@
 package coffeeshout.room.domain.audit;
 
-public enum NicknameAuditStatus {
+public enum PlayerNameAuditStatus {
     UNAUDITED,
     FLAGGED,
     PENDING,

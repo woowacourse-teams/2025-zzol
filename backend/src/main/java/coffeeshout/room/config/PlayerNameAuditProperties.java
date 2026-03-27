@@ -9,7 +9,7 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "nickname-audit")
-public record NicknameAuditProperties(
+public record PlayerNameAuditProperties(
         String geminiApiKey,                                           // local/test는 NoOpNicknameAuditor가 사용되므로 빈 값 허용
         @NotBlank String model,
         @DecimalMin("0.0") @DecimalMax("1.0") double flaggedThreshold,

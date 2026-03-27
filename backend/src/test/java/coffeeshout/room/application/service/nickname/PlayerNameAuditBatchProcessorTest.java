@@ -4,15 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 
-import coffeeshout.fixture.NicknameAuditFixture;
+import coffeeshout.fixture.PlayerNameAuditFixture;
 import coffeeshout.global.ServiceTest;
-import coffeeshout.room.domain.audit.NicknameAuditResult;
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.domain.audit.NicknameAuditor;
+import coffeeshout.room.domain.audit.PlayerNameAuditResult;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.domain.audit.PlayerNameAuditor;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import com.vane.badwordfiltering.BadWordFiltering;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
@@ -23,28 +23,31 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-class NicknameAuditBatchProcessorTest extends ServiceTest {
+class PlayerNameAuditBatchProcessorTest extends ServiceTest {
 
-    @MockitoBean NicknameAuditor nicknameAuditor;
+    @MockitoBean
+    PlayerNameAuditor playerNameAuditor;
 
-    @Autowired NicknameAuditBatchProcessor batchProcessor;
-    @Autowired NicknameAuditJpaRepository auditRepository;
+    @Autowired
+    PlayerNameAuditBatchProcessor batchProcessor;
+    @Autowired
+    PlayerNameAuditJpaRepository auditRepository;
     @Autowired CustomProfanityJpaRepository customProfanityRepository;
     @Autowired BadWordFiltering badWordFiltering;
     @Autowired MeterRegistry meterRegistry;
 
     private static final double THRESHOLD = 0.85;
 
-    private NicknameAuditResult flaggedResult(String nickname) {
-        return NicknameAuditResult.of(nickname, true, 0.97, "욕설", THRESHOLD);
+    private PlayerNameAuditResult flaggedResult(String nickname) {
+        return PlayerNameAuditResult.of(nickname, true, 0.97, "욕설", THRESHOLD);
     }
 
-    private NicknameAuditResult pendingResult(String nickname) {
-        return NicknameAuditResult.of(nickname, true, 0.60, "애매함", THRESHOLD);
+    private PlayerNameAuditResult pendingResult(String nickname) {
+        return PlayerNameAuditResult.of(nickname, true, 0.60, "애매함", THRESHOLD);
     }
 
-    private NicknameAuditResult cleanResult(String nickname) {
-        return NicknameAuditResult.of(nickname, false, 0.99, "정상", THRESHOLD);
+    private PlayerNameAuditResult cleanResult(String nickname) {
+        return PlayerNameAuditResult.of(nickname, false, 0.99, "정상", THRESHOLD);
     }
 
     @Nested
@@ -52,8 +55,8 @@ class NicknameAuditBatchProcessorTest extends ServiceTest {
 
         @Test
         void 기준치_이상이면_custom_profanity에_등록된다() {
-            final NicknameAuditEntity entity = auditRepository.save(NicknameAuditFixture.검열대기("욕설닉네임"));
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
+            final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("욕설닉네임"));
+            given(playerNameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
 
             batchProcessor.process(List.of(entity));
 
@@ -62,8 +65,8 @@ class NicknameAuditBatchProcessorTest extends ServiceTest {
 
         @Test
         void 기준치_이상이면_BadWordFiltering에_즉시_반영된다() {
-            final NicknameAuditEntity entity = auditRepository.save(NicknameAuditFixture.검열대기("욕설닉네임"));
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
+            final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("욕설닉네임"));
+            given(playerNameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
 
             batchProcessor.process(List.of(entity));
 
@@ -72,13 +75,13 @@ class NicknameAuditBatchProcessorTest extends ServiceTest {
 
         @Test
         void 엔티티_상태가_FLAGGED로_변경된다() {
-            final NicknameAuditEntity entity = auditRepository.save(NicknameAuditFixture.검열대기("욕설닉네임"));
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
+            final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("욕설닉네임"));
+            given(playerNameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
 
             batchProcessor.process(List.of(entity));
 
             assertThat(auditRepository.findById(entity.getId()).orElseThrow().getStatus())
-                    .isEqualTo(NicknameAuditStatus.FLAGGED);
+                    .isEqualTo(PlayerNameAuditStatus.FLAGGED);
         }
 
         @Nested
@@ -89,8 +92,8 @@ class NicknameAuditBatchProcessorTest extends ServiceTest {
                 customProfanityRepository.save(
                         new CustomProfanityEntity("욕설닉네임", CustomProfanityEntity.Source.OPERATOR_MANUAL)
                 );
-                final NicknameAuditEntity entity = auditRepository.save(NicknameAuditFixture.검열대기("욕설닉네임"));
-                given(nicknameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
+                final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("욕설닉네임"));
+                given(playerNameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
 
                 batchProcessor.process(List.of(entity));
 
@@ -105,29 +108,29 @@ class NicknameAuditBatchProcessorTest extends ServiceTest {
 
         @Test
         void PENDING이면_custom_profanity에_등록하지_않는다() {
-            final NicknameAuditEntity entity = auditRepository.save(NicknameAuditFixture.검열대기("애매한닉네임"));
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(pendingResult("애매한닉네임")));
+            final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("애매한닉네임"));
+            given(playerNameAuditor.audit(anyList())).willReturn(List.of(pendingResult("애매한닉네임")));
 
             batchProcessor.process(List.of(entity));
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(customProfanityRepository.existsByWord("애매한닉네임")).isFalse();
                 softly.assertThat(auditRepository.findById(entity.getId()).orElseThrow().getStatus())
-                        .isEqualTo(NicknameAuditStatus.PENDING);
+                        .isEqualTo(PlayerNameAuditStatus.PENDING);
             });
         }
 
         @Test
         void CLEAN이면_custom_profanity에_등록하지_않는다() {
-            final NicknameAuditEntity entity = auditRepository.save(NicknameAuditFixture.검열대기("용감한호랑이"));
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(cleanResult("용감한호랑이")));
+            final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("용감한호랑이"));
+            given(playerNameAuditor.audit(anyList())).willReturn(List.of(cleanResult("용감한호랑이")));
 
             batchProcessor.process(List.of(entity));
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(customProfanityRepository.existsByWord("용감한호랑이")).isFalse();
                 softly.assertThat(auditRepository.findById(entity.getId()).orElseThrow().getStatus())
-                        .isEqualTo(NicknameAuditStatus.CLEAN);
+                        .isEqualTo(PlayerNameAuditStatus.CLEAN);
             });
         }
     }
@@ -137,8 +140,8 @@ class NicknameAuditBatchProcessorTest extends ServiceTest {
 
         @Test
         void auditor가_빈_리스트를_반환하면_배치를_skip하고_0을_반환한다() {
-            final NicknameAuditEntity entity = auditRepository.save(NicknameAuditFixture.검열대기("닉네임"));
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of());
+            final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("닉네임"));
+            given(playerNameAuditor.audit(anyList())).willReturn(List.of());
 
             final int processed = batchProcessor.process(List.of(entity));
 
@@ -147,19 +150,19 @@ class NicknameAuditBatchProcessorTest extends ServiceTest {
 
         @Test
         void 배치_skip_시_엔티티_상태가_UNAUDITED로_유지된다() {
-            final NicknameAuditEntity entity = auditRepository.save(NicknameAuditFixture.검열대기("닉네임"));
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of());
+            final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("닉네임"));
+            given(playerNameAuditor.audit(anyList())).willReturn(List.of());
 
             batchProcessor.process(List.of(entity));
 
             assertThat(auditRepository.findById(entity.getId()).orElseThrow().getStatus())
-                    .isEqualTo(NicknameAuditStatus.UNAUDITED);
+                    .isEqualTo(PlayerNameAuditStatus.UNAUDITED);
         }
 
         @Test
         void 배치_skip_카운터가_증가한다() {
-            final NicknameAuditEntity entity = auditRepository.save(NicknameAuditFixture.검열대기("닉네임"));
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of());
+            final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("닉네임"));
+            given(playerNameAuditor.audit(anyList())).willReturn(List.of());
             final double before = meterRegistry.counter("nickname.audit.batch.skipped").count();
 
             batchProcessor.process(List.of(entity));
@@ -173,17 +176,17 @@ class NicknameAuditBatchProcessorTest extends ServiceTest {
 
         @Test
         void 해당_엔티티는_상태_변경_없이_skip된다() {
-            final NicknameAuditEntity matched = auditRepository.save(NicknameAuditFixture.검열대기("욕설닉네임"));
-            final NicknameAuditEntity unmatched = auditRepository.save(NicknameAuditFixture.검열대기("다른닉네임"));
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
+            final PlayerNameAuditEntity matched = auditRepository.save(PlayerNameAuditFixture.검열대기("욕설닉네임"));
+            final PlayerNameAuditEntity unmatched = auditRepository.save(PlayerNameAuditFixture.검열대기("다른닉네임"));
+            given(playerNameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
 
             batchProcessor.process(List.of(matched, unmatched));
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(auditRepository.findById(matched.getId()).orElseThrow().getStatus())
-                        .isEqualTo(NicknameAuditStatus.FLAGGED);
+                        .isEqualTo(PlayerNameAuditStatus.FLAGGED);
                 softly.assertThat(auditRepository.findById(unmatched.getId()).orElseThrow().getStatus())
-                        .isEqualTo(NicknameAuditStatus.UNAUDITED);
+                        .isEqualTo(PlayerNameAuditStatus.UNAUDITED);
             });
         }
     }

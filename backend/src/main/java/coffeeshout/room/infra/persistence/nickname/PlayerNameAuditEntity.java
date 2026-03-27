@@ -1,5 +1,6 @@
 package coffeeshout.room.infra.persistence.nickname;
 
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,27 +16,24 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "nickname_feedback")
+@Table(name = "player_name_audit")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class NicknameFeedbackEntity {
+public class PlayerNameAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 10)
-    private String nickname;
-
-    @Column(nullable = false)
-    private boolean aiFlagged;
-
-    @Column(nullable = false, precision = 3, scale = 2)
-    private BigDecimal aiConfidence;
+    private String playerName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    private OperatorDecision operatorDecision;
+    private PlayerNameAuditStatus status;
+
+    @Column(precision = 3, scale = 2)
+    private BigDecimal confidence;
 
     @Column(length = 255)
     private String reason;
@@ -43,17 +41,23 @@ public class NicknameFeedbackEntity {
     @Column(nullable = false)
     private Instant createdAt;
 
-    public NicknameFeedbackEntity(String nickname, boolean aiFlagged, BigDecimal aiConfidence,
-                                  OperatorDecision operatorDecision, String reason) {
-        this.nickname = nickname;
-        this.aiFlagged = aiFlagged;
-        this.aiConfidence = aiConfidence;
-        this.operatorDecision = operatorDecision;
-        this.reason = reason;
+    @Column
+    private Instant auditedAt;
+
+    public PlayerNameAuditEntity(String playerName) {
+        this.playerName = playerName;
+        this.status = PlayerNameAuditStatus.UNAUDITED;
         this.createdAt = Instant.now();
     }
 
-    public enum OperatorDecision {
-        ALLOWED, BLOCKED
+    public void updateStatus(PlayerNameAuditStatus status) {
+        this.status = status;
+    }
+
+    public void complete(PlayerNameAuditStatus status, double confidence, String reason) {
+        this.status = status;
+        this.confidence = BigDecimal.valueOf(confidence);
+        this.reason = reason;
+        this.auditedAt = Instant.now();
     }
 }

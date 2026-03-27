@@ -2,10 +2,10 @@ package coffeeshout.room.infra;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.room.config.NicknameAuditProperties;
-import coffeeshout.room.domain.audit.NicknameAuditResult;
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackJpaRepository;
+import coffeeshout.room.config.PlayerNameAuditProperties;
+import coffeeshout.room.domain.audit.PlayerNameAuditResult;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackJpaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
@@ -19,23 +19,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-class GeminiNicknameAuditorParseTest {
+class GeminiPlayerNameAuditorParseTest {
 
-    private static final NicknameAuditProperties PROPERTIES =
-            new NicknameAuditProperties(null, "gemini-2.5-flash", 0.85, 10, 5);
+    private static final PlayerNameAuditProperties PROPERTIES =
+            new PlayerNameAuditProperties(null, "gemini-2.5-flash", 0.85, 10, 5);
 
-    @Mock NicknameFeedbackJpaRepository feedbackRepository;
+    @Mock
+    PlayerNameFeedbackJpaRepository feedbackRepository;
 
     SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-    GeminiNicknameAuditor auditor;
+    GeminiPlayerNameAuditor auditor;
 
     @BeforeEach
     void setUp() {
-        auditor = new GeminiNicknameAuditor(null, new ObjectMapper(), PROPERTIES, feedbackRepository, meterRegistry);
+        auditor = new GeminiPlayerNameAuditor(null, new ObjectMapper(), PROPERTIES, feedbackRepository, meterRegistry);
         auditor.initMetrics();
     }
 
-    private List<NicknameAuditResult> parse(String responseText, List<String> nicknames) {
+    private List<PlayerNameAuditResult> parse(String responseText, List<String> nicknames) {
         return ReflectionTestUtils.invokeMethod(auditor, "parseResults", responseText, nicknames);
     }
 
@@ -44,7 +45,7 @@ class GeminiNicknameAuditorParseTest {
 
         @Test
         void 빈_리스트를_반환한다() {
-            List<NicknameAuditResult> results = parse("invalid json", List.of("닉네임"));
+            List<PlayerNameAuditResult> results = parse("invalid json", List.of("닉네임"));
 
             assertThat(results).isEmpty();
         }
@@ -69,11 +70,11 @@ class GeminiNicknameAuditorParseTest {
                     ]
                     """;
 
-            List<NicknameAuditResult> results = parse(responseText, List.of("용감한호랑이", "씨발"));
+            List<PlayerNameAuditResult> results = parse(responseText, List.of("용감한호랑이", "씨발"));
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(results).hasSize(1);
-                softly.assertThat(results.get(0).nickname()).isEqualTo("용감한호랑이");
+                softly.assertThat(results.getFirst().playerName()).isEqualTo("용감한호랑이");
             });
         }
 
@@ -97,7 +98,7 @@ class GeminiNicknameAuditorParseTest {
                     ]
                     """;
 
-            List<NicknameAuditResult> results = parse(responseText, List.of("닉1", "닉2"));
+            List<PlayerNameAuditResult> results = parse(responseText, List.of("닉1", "닉2"));
 
             assertThat(results).isEmpty();
         }
@@ -112,9 +113,9 @@ class GeminiNicknameAuditorParseTest {
                     [{"nickname": "씨발", "flagged": true, "confidence": 0.9, "reason": "욕설"}]
                     """;
 
-            List<NicknameAuditResult> results = parse(responseText, List.of("씨발"));
+            List<PlayerNameAuditResult> results = parse(responseText, List.of("씨발"));
 
-            assertThat(results.get(0).status()).isEqualTo(NicknameAuditStatus.FLAGGED);
+            assertThat(results.get(0).status()).isEqualTo(PlayerNameAuditStatus.FLAGGED);
         }
 
         @Test
@@ -123,9 +124,9 @@ class GeminiNicknameAuditorParseTest {
                     [{"nickname": "씨발", "flagged": true, "confidence": 0.5, "reason": "애매함"}]
                     """;
 
-            List<NicknameAuditResult> results = parse(responseText, List.of("씨발"));
+            List<PlayerNameAuditResult> results = parse(responseText, List.of("씨발"));
 
-            assertThat(results.get(0).status()).isEqualTo(NicknameAuditStatus.PENDING);
+            assertThat(results.get(0).status()).isEqualTo(PlayerNameAuditStatus.PENDING);
         }
 
         @Test
@@ -134,9 +135,9 @@ class GeminiNicknameAuditorParseTest {
                     [{"nickname": "용감한호랑이", "flagged": false, "confidence": 0.99, "reason": "정상"}]
                     """;
 
-            List<NicknameAuditResult> results = parse(responseText, List.of("용감한호랑이"));
+            List<PlayerNameAuditResult> results = parse(responseText, List.of("용감한호랑이"));
 
-            assertThat(results.get(0).status()).isEqualTo(NicknameAuditStatus.CLEAN);
+            assertThat(results.get(0).status()).isEqualTo(PlayerNameAuditStatus.CLEAN);
         }
 
         @Test
@@ -148,7 +149,7 @@ class GeminiNicknameAuditorParseTest {
                     ]
                     """;
 
-            List<NicknameAuditResult> results = parse(responseText, List.of("씨발", "용감한호랑이"));
+            List<PlayerNameAuditResult> results = parse(responseText, List.of("씨발", "용감한호랑이"));
 
             assertThat(results).hasSize(2);
         }

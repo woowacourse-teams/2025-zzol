@@ -12,11 +12,12 @@ import static org.mockito.Mockito.never;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -31,23 +32,25 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class NicknameRankingCleanupServiceTest {
+class PlayerNameRankingCleanupServiceTest {
 
     private static final Clock FIXED_CLOCK = Clock.fixed(
             Instant.parse("2026-03-21T12:00:00Z"), ZoneOffset.UTC
     );
 
     @Mock DashboardStatisticsRepository dashboardRepository;
-    @Mock NicknameAuditJpaRepository auditRepository;
+    @Mock
+    PlayerNameAuditJpaRepository auditRepository;
     @Mock PlayerJpaRepository playerRepository;
-    @Mock NicknameGenerator nicknameGenerator;
+    @Mock
+    PlayerNameGenerator playerNameGenerator;
 
-    NicknameRankingCleanupService cleanupService;
+    PlayerNameRankingCleanupService cleanupService;
 
     @BeforeEach
     void setUp() {
-        cleanupService = new NicknameRankingCleanupService(
-                FIXED_CLOCK, dashboardRepository, auditRepository, playerRepository, nicknameGenerator
+        cleanupService = new PlayerNameRankingCleanupService(
+                FIXED_CLOCK, dashboardRepository, auditRepository, playerRepository, playerNameGenerator
         );
     }
 
@@ -56,7 +59,7 @@ class NicknameRankingCleanupServiceTest {
 
         @Test
         void 랭킹_조회_없이_종료한다() {
-            given(auditRepository.findNicknamesByStatus(NicknameAuditStatus.BLOCKED))
+            given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of());
 
             cleanupService.cleanupBlockedNicknames();
@@ -71,7 +74,7 @@ class NicknameRankingCleanupServiceTest {
 
         @Test
         void 교체_없이_종료한다() {
-            given(auditRepository.findNicknamesByStatus(NicknameAuditStatus.BLOCKED))
+            given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
             given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
                     .willReturn(List.of(new TopWinnerResponse("용감한호랑이", 5L)));
@@ -93,7 +96,7 @@ class NicknameRankingCleanupServiceTest {
             PlayerEntity player = mock(PlayerEntity.class);
             PlayerEntity roommate = mock(PlayerEntity.class);
 
-            given(auditRepository.findNicknamesByStatus(NicknameAuditStatus.BLOCKED))
+            given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
             given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
                     .willReturn(List.of(new TopWinnerResponse("씨발", 3L)));
@@ -106,7 +109,7 @@ class NicknameRankingCleanupServiceTest {
                     .willReturn(List.of(player, roommate));
             given(player.getPlayerName()).willReturn("씨발");
             given(roommate.getPlayerName()).willReturn("용감한호랑이");
-            given(nicknameGenerator.generate(Set.of("씨발", "용감한호랑이")))
+            given(playerNameGenerator.generate(Set.of("씨발", "용감한호랑이")))
                     .willReturn("빠른여우");
 
             cleanupService.cleanupBlockedNicknames();
@@ -119,7 +122,7 @@ class NicknameRankingCleanupServiceTest {
             RoomEntity room = mock(RoomEntity.class);
             PlayerEntity player = mock(PlayerEntity.class);
 
-            given(auditRepository.findNicknamesByStatus(NicknameAuditStatus.BLOCKED))
+            given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
             given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
                     .willReturn(List.of());
@@ -131,7 +134,7 @@ class NicknameRankingCleanupServiceTest {
             given(playerRepository.findAllByRoomSession(room))
                     .willReturn(List.of(player));
             given(player.getPlayerName()).willReturn("씨발");
-            given(nicknameGenerator.generate(Set.of("씨발")))
+            given(playerNameGenerator.generate(Set.of("씨발")))
                     .willReturn("빠른여우");
 
             cleanupService.cleanupBlockedNicknames();
@@ -146,7 +149,7 @@ class NicknameRankingCleanupServiceTest {
             PlayerEntity player1 = mock(PlayerEntity.class);
             PlayerEntity player2 = mock(PlayerEntity.class);
 
-            given(auditRepository.findNicknamesByStatus(NicknameAuditStatus.BLOCKED))
+            given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
             given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
                     .willReturn(List.of(new TopWinnerResponse("씨발", 2L)));
@@ -160,7 +163,7 @@ class NicknameRankingCleanupServiceTest {
             given(playerRepository.findAllByRoomSession(room2)).willReturn(List.of(player2));
             given(player1.getPlayerName()).willReturn("씨발");
             given(player2.getPlayerName()).willReturn("씨발");
-            given(nicknameGenerator.generate(any())).willReturn("빠른여우", "용감한호랑이");
+            given(playerNameGenerator.generate(any())).willReturn("빠른여우", "용감한호랑이");
 
             cleanupService.cleanupBlockedNicknames();
 
@@ -173,7 +176,7 @@ class NicknameRankingCleanupServiceTest {
             LocalDateTime now = LocalDateTime.now(FIXED_CLOCK);
             LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
 
-            given(auditRepository.findNicknamesByStatus(NicknameAuditStatus.BLOCKED))
+            given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
             given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
                     .willReturn(List.of());

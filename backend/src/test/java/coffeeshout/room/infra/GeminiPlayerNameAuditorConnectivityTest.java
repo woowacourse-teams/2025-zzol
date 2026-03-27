@@ -6,10 +6,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.room.config.NicknameAuditProperties;
-import coffeeshout.room.domain.audit.NicknameAuditResult;
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.infra.persistence.nickname.NicknameFeedbackJpaRepository;
+import coffeeshout.room.config.PlayerNameAuditProperties;
+import coffeeshout.room.domain.audit.PlayerNameAuditResult;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackJpaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -27,9 +27,9 @@ import org.springframework.data.domain.Pageable;
  * GEMINI_API_KEY 미설정 시 테스트가 자동으로 skip된다.
  */
 @Disabled("실제 Gemini API 연결 테스트 - 수동 실행 전용")
-class GeminiNicknameAuditorConnectivityTest {
+class GeminiPlayerNameAuditorConnectivityTest {
 
-    private GeminiNicknameAuditor auditor;
+    private GeminiPlayerNameAuditor auditor;
 
 
     @BeforeEach
@@ -40,7 +40,7 @@ class GeminiNicknameAuditorConnectivityTest {
                 .isNotNull()
                 .isNotBlank();
 
-        NicknameAuditProperties properties = new NicknameAuditProperties(
+        PlayerNameAuditProperties properties = new PlayerNameAuditProperties(
                 apiKey,
                 "gemini-2.5-flash",
                 0.85,
@@ -48,10 +48,10 @@ class GeminiNicknameAuditorConnectivityTest {
                 20
         );
 
-        NicknameFeedbackJpaRepository feedbackRepository = mock(NicknameFeedbackJpaRepository.class);
+        PlayerNameFeedbackJpaRepository feedbackRepository = mock(PlayerNameFeedbackJpaRepository.class);
         when(feedbackRepository.findRecentFeedbacks(any(Pageable.class))).thenReturn(List.of());
 
-        auditor = new GeminiNicknameAuditor(
+        auditor = new GeminiPlayerNameAuditor(
                 Client.builder().apiKey(apiKey).build(),
                 new ObjectMapper(),
                 properties,
@@ -62,41 +62,41 @@ class GeminiNicknameAuditorConnectivityTest {
 
     @Test
     void 명확한_비속어는_FLAGGED로_판정한다() {
-        List<NicknameAuditResult> results = auditor.audit(List.of("씨발놈", "용감한호랑이"));
+        List<PlayerNameAuditResult> results = auditor.audit(List.of("씨발놈", "용감한호랑이"));
 
-        NicknameAuditResult profanity = findByNickname(results, "씨발놈");
-        NicknameAuditResult normal = findByNickname(results, "용감한호랑이");
+        PlayerNameAuditResult profanity = findByNickname(results, "씨발놈");
+        PlayerNameAuditResult normal = findByNickname(results, "용감한호랑이");
 
-        assertThat(profanity.status()).isEqualTo(NicknameAuditStatus.FLAGGED);
-        assertThat(normal.status()).isEqualTo(NicknameAuditStatus.CLEAN);
+        assertThat(profanity.status()).isEqualTo(PlayerNameAuditStatus.FLAGGED);
+        assertThat(normal.status()).isEqualTo(PlayerNameAuditStatus.CLEAN);
     }
 
     @Test
     void 특수문자_우회_비속어는_탐지한다() {
-        List<NicknameAuditResult> results = auditor.audit(List.of("씨b알", "빠른여우"));
+        List<PlayerNameAuditResult> results = auditor.audit(List.of("씨b알", "빠른여우"));
 
-        NicknameAuditResult bypassed = findByNickname(results, "씨b알");
-        assertThat(bypassed.status()).isIn(NicknameAuditStatus.FLAGGED, NicknameAuditStatus.PENDING);
+        PlayerNameAuditResult bypassed = findByNickname(results, "씨b알");
+        assertThat(bypassed.status()).isIn(PlayerNameAuditStatus.FLAGGED, PlayerNameAuditStatus.PENDING);
     }
 
     @Test
     void 모든_닉네임에_대해_결과가_반환된다() {
-        List<String> nicknames = List.of("용감한호랑이", "빠른여우", "작은곰");
+        List<String> playerNames = List.of("용감한호랑이", "빠른여우", "작은곰");
 
-        List<NicknameAuditResult> results = auditor.audit(nicknames);
+        List<PlayerNameAuditResult> results = auditor.audit(playerNames);
 
-        assertThat(results).hasSize(nicknames.size())
+        assertThat(results).hasSize(playerNames.size())
                 .allSatisfy(result -> {
-                    assertThat(result.nickname()).isNotBlank();
+                    assertThat(result.playerName()).isNotBlank();
                     assertThat(result.status()).isNotNull();
                     assertThat(result.confidence()).isBetween(0.0, 1.0);
                 });
     }
 
-    private NicknameAuditResult findByNickname(List<NicknameAuditResult> results, String nickname) {
+    private PlayerNameAuditResult findByNickname(List<PlayerNameAuditResult> results, String playerName) {
         return results.stream()
-                .filter(r -> r.nickname().equals(nickname))
+                .filter(r -> r.playerName().equals(playerName))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("결과에서 닉네임을 찾을 수 없음: " + nickname));
+                .orElseThrow(() -> new AssertionError("결과에서 닉네임을 찾을 수 없음: " + playerName));
     }
 }

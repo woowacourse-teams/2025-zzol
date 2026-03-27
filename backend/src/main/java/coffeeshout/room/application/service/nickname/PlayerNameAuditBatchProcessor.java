@@ -1,12 +1,12 @@
 package coffeeshout.room.application.service.nickname;
 
-import coffeeshout.room.domain.audit.NicknameAuditResult;
-import coffeeshout.room.domain.audit.NicknameAuditStatus;
-import coffeeshout.room.domain.audit.NicknameAuditor;
+import coffeeshout.room.domain.audit.PlayerNameAuditResult;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.domain.audit.PlayerNameAuditor;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditEntity;
-import coffeeshout.room.infra.persistence.nickname.NicknameAuditJpaRepository;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
+import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import com.vane.badwordfiltering.BadWordFiltering;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.micrometer.core.instrument.Counter;
@@ -24,10 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NicknameAuditBatchProcessor {
+public class PlayerNameAuditBatchProcessor {
 
-    private final NicknameAuditJpaRepository auditRepository;
-    private final NicknameAuditor nicknameAuditor;
+    private final PlayerNameAuditJpaRepository auditRepository;
+    private final PlayerNameAuditor playerNameAuditor;
     private final CustomProfanityJpaRepository customProfanityRepository;
     private final BadWordFiltering badWordFiltering;
     private final MeterRegistry meterRegistry;
@@ -43,13 +43,13 @@ public class NicknameAuditBatchProcessor {
 
     @RateLimiter(name = "geminiAudit")
     @Transactional
-    public int process(List<NicknameAuditEntity> batch) {
-        final List<String> nicknames = batch.stream()
-                .map(NicknameAuditEntity::getNickname)
+    public int process(List<PlayerNameAuditEntity> batch) {
+        final List<String> playerNames = batch.stream()
+                .map(PlayerNameAuditEntity::getPlayerName)
                 .distinct()
                 .toList();
 
-        final List<NicknameAuditResult> results = nicknameAuditor.audit(nicknames);
+        final List<PlayerNameAuditResult> results = playerNameAuditor.audit(playerNames);
 
         if (results.isEmpty()) {
             batchSkippedCounter.increment();
@@ -57,28 +57,28 @@ public class NicknameAuditBatchProcessor {
             return 0;
         }
 
-        final Map<String, NicknameAuditResult> resultMap = results.stream()
-                .collect(Collectors.toMap(NicknameAuditResult::nickname, Function.identity(), (a, b) -> a));
+        final Map<String, PlayerNameAuditResult> resultMap = results.stream()
+                .collect(Collectors.toMap(PlayerNameAuditResult::playerName, Function.identity(), (a, b) -> a));
 
-        batch.forEach(entity -> applyResult(entity, resultMap.get(entity.getNickname())));
+        batch.forEach(entity -> applyResult(entity, resultMap.get(entity.getPlayerName())));
 
         auditRepository.saveAll(batch);
         return batch.size();
     }
 
-    private void applyResult(NicknameAuditEntity entity, NicknameAuditResult result) {
+    private void applyResult(PlayerNameAuditEntity entity, PlayerNameAuditResult result) {
         if (result == null) return;
         entity.complete(result.status(), result.confidence(), result.reason());
         meterRegistry.counter("nickname.audit.result", "status", result.status().name()).increment();
-        if (result.status() == NicknameAuditStatus.FLAGGED) {
-            autoBlock(entity.getNickname());
+        if (result.status() == PlayerNameAuditStatus.FLAGGED) {
+            autoBlock(entity.getPlayerName());
         }
     }
 
-    private void autoBlock(String nickname) {
-        if (customProfanityRepository.existsByWord(nickname)) return;
-        customProfanityRepository.save(new CustomProfanityEntity(nickname, CustomProfanityEntity.Source.AI_AUDIT));
-        badWordFiltering.add(nickname);
-        log.info("FLAGGED 자동 차단: {}", nickname);
+    private void autoBlock(String playerName) {
+        if (customProfanityRepository.existsByWord(playerName)) return;
+        customProfanityRepository.save(new CustomProfanityEntity(playerName, CustomProfanityEntity.Source.AI_AUDIT));
+        badWordFiltering.add(playerName);
+        log.info("FLAGGED 자동 차단: {}", playerName);
     }
 }

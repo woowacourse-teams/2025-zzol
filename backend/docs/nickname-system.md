@@ -30,7 +30,7 @@
 
 ### 엔드포인트
 
-```
+```text
 GET /rooms/nickname/random           → 호스트용 (빈 목록 기준 생성)
 GET /rooms/nickname/random?joinCode= → 게스트용 (방 기존 멤버 제외)
 ```
@@ -54,7 +54,7 @@ GET /rooms/nickname/random?joinCode= → 게스트용 (방 기존 멤버 제외)
 
 ### 아키텍처
 
-```
+```text
 POST /rooms         (호스트 방 생성)
 POST /rooms/{joinCode} (게스트 입장)
   ↓
@@ -104,7 +104,7 @@ Rate limit 초과 시 **Resilience4j** retry + 지수 백오프 적용 (2s → 4
 
 ### 처리 흐름
 
-```
+```text
 룰렛 결과 저장 (RouletteService.saveRouletteResult())
   → nicknameAuditService.register(winnerNickname)
       → nickname_audit에 (nickname, status=UNAUDITED) INSERT
@@ -161,7 +161,7 @@ resilience4j.ratelimiter:
 
 #### 기본 구조
 
-```
+```text
 너는 한국어 닉네임 검열 전문가다.
 아래 닉네임 목록을 검토하고 각 항목에 대해 JSON 배열로만 응답하라.
 
@@ -183,7 +183,7 @@ resilience4j.ratelimiter:
 
 운영자가 AI 판단을 뒤집으면 해당 케이스를 few-shot 예시 풀에 누적한다.
 
-```
+```text
 [운영자 피드백 누적 예시]
 - "열받네" → 운영자가 CLEAN 승인 → few-shot에 confidence=0.01로 추가
 - "ㅅㅂ야" → 운영자가 직접 BLOCKED 처리 → few-shot에 confidence=0.99로 추가
@@ -193,7 +193,7 @@ resilience4j.ratelimiter:
 
 ### 커스텀 비속어 DB 연동
 
-```
+```text
 [스케줄러 - FLAGGED 자동 차단]
   → NicknameAuditBatchProcessor (FLAGGED 판정 시)
       → custom_profanity 테이블에 저장 (중복 체크 후)
@@ -294,6 +294,7 @@ resilience4j.ratelimiter:
 #### Grafana 패널 구성 예시
 
 **Gemini API 레이턴시 (p99)**
+
 ```promql
 histogram_quantile(0.99,
   rate(nickname_audit_gemini_call_duration_seconds_bucket[5m])
@@ -301,6 +302,7 @@ histogram_quantile(0.99,
 ```
 
 **검열 결과 분포 (stacked bar)**
+
 ```promql
 rate(nickname_audit_result_total{status="FLAGGED"}[1h])
 rate(nickname_audit_result_total{status="PENDING"}[1h])
@@ -308,12 +310,14 @@ rate(nickname_audit_result_total{status="CLEAN"}[1h])
 ```
 
 **파싱 실패율**
+
 ```promql
 rate(nickname_audit_gemini_parse_failures_total[1h])
 rate(nickname_audit_gemini_item_parse_failures_total[1h])
 ```
 
 **UNAUDITED 적체량**
+
 ```promql
 nickname_audit_unaudited_queue
 ```
@@ -337,6 +341,7 @@ nickname_audit_unaudited_queue
 ## 구현 체크리스트
 
 ### Feature 1: 닉네임 자동 생성
+
 - [x] `NicknameGenerator` — 형용사 30 × 명사 30 조합, 충돌 시 재시도(최대 50회)
 - [x] `RoomService.generateRandomNickname()` — joinCode 없는 호스트용
 - [x] `RoomService.generateRandomNickname(joinCode)` — joinCode 있는 게스트용
@@ -347,6 +352,7 @@ nickname_audit_unaudited_queue
 - [x] `RoomServiceTest` — 통합 테스트 (`랜덤_닉네임_생성` @Nested)
 
 ### Feature 2: 입장 시 비속어 검열
+
 - [x] `build.gradle.kts` — `badwordfiltering:1.0.0` 의존성 추가
 - [x] `RoomErrorCode` — `PLAYER_NAME_CONTAINS_PROFANITY` 추가
 - [x] `RoomConfig` — `BadWordFiltering` Bean 등록
@@ -357,6 +363,7 @@ nickname_audit_unaudited_queue
 - [x] `RoomServiceTest` — 통합 테스트 (`닉네임_비속어_검증` @Nested)
 
 ### Feature 3: 랭킹 닉네임 AI 기반 사후 검열
+
 - [x] `spring-boot-starter-security` 의존성 추가
 - [x] `spring-boot-starter-thymeleaf` + `thymeleaf-extras-springsecurity6` 의존성 추가
 - [x] `com.google.genai:google-genai:1.44.0` Gemini SDK 의존성 추가
@@ -386,6 +393,7 @@ nickname_audit_unaudited_queue
 - [x] `NicknameAuditAdminController` — 대시보드 GET·POST, 빈 페이지 자동 clamp redirect
 
 ### Feature 3 후속: FLAGGED 자동 차단 + 어드민 해제
+
 > confidence ≥ 0.85(FLAGGED) 닉네임을 스케줄러 검열 시점에 `custom_profanity` + `BadWordFiltering`에 자동 등록하고,
 > 어드민이 허용(ALLOWED) 처리 시 필터에서 제거하는 방식으로 자동화 수준을 높인다.
 > PENDING(confidence < 0.85)은 기존처럼 운영자 수동 검토 유지.

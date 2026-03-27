@@ -22,7 +22,7 @@ import org.springframework.data.domain.Pageable;
 /**
  * Gemini API 실제 연결 테스트. 수동 실행 전용 — CI에서는 제외된다.
  * <p>
- * 실행 방법: 1. 환경변수 GEMINI_API_KEY 설정 2. ./gradlew test --tests "*.GeminiNicknameAuditorConnectivityTest"
+ * 실행 방법: 1. 환경변수 GEMINI_API_KEY 설정 2. ./gradlew test --tests "*.GeminiPlayerNameAuditorConnectivityTest"
  * <p>
  * GEMINI_API_KEY 미설정 시 테스트가 자동으로 skip된다.
  */

@@ -2,6 +2,7 @@ package coffeeshout.room.infra;
 
 import coffeeshout.room.domain.service.ProfanityChecker;
 import com.vane.badwordfiltering.BadWordFiltering;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,21 @@ public class VaneProfanityChecker implements ProfanityChecker {
         return badWordFiltering.check(text)
                 || badWordFiltering.blankCheck(text)
                 || checkAfterStrippingBypassChars(text);
+    }
+
+    @Override
+    public synchronized void addAll(List<String> words) {
+        badWordFiltering.addAll(words);
+    }
+
+    @Override
+    public synchronized void add(String word) {
+        badWordFiltering.add(word);
+    }
+
+    @Override
+    public synchronized void remove(String word) {
+        badWordFiltering.remove(word);
     }
 
     private boolean checkAfterStrippingBypassChars(String text) {

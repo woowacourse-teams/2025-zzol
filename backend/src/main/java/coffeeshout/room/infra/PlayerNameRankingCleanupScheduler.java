@@ -16,7 +16,7 @@ public class PlayerNameRankingCleanupScheduler {
     @Scheduled(cron = "0 30 0/12 * * *")
     public void cleanupBlockedNicknames() {
         log.info("랭킹 닉네임 정제 스케줄러 시작");
-        long start = System.currentTimeMillis();
+        final long start = System.currentTimeMillis();
         try {
             playerNameRankingCleanupService.cleanupBlockedNicknames();
             log.info("랭킹 닉네임 정제 스케줄러 완료 ({}ms)", System.currentTimeMillis() - start);

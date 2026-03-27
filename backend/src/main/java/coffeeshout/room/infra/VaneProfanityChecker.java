@@ -38,7 +38,7 @@ public class VaneProfanityChecker implements ProfanityChecker {
     }
 
     private boolean checkAfterStrippingBypassChars(String text) {
-        String stripped = text.replaceAll(BYPASS_CHARS_PATTERN, "");
+        final String stripped = text.replaceAll(BYPASS_CHARS_PATTERN, "");
         if (stripped.equals(text)) {
             return false;
         }

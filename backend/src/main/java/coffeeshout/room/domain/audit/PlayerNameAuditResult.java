@@ -8,7 +8,7 @@ public record PlayerNameAuditResult(
 ) {
 
     public static PlayerNameAuditResult of(String playerName, boolean flagged, double confidence, String reason, double flaggedThreshold) {
-        AiConfidence aiConfidence = AiConfidence.of(confidence);
+        final AiConfidence aiConfidence = AiConfidence.of(confidence);
 
         if (!flagged) {
             return new PlayerNameAuditResult(playerName, PlayerNameAuditStatus.CLEAN, aiConfidence, reason);

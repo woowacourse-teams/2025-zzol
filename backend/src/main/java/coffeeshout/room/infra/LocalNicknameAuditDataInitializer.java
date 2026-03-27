@@ -30,7 +30,7 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
             return;
         }
 
-        List<PlayerNameAuditEntity> flaggedData = List.of(
+        final List<PlayerNameAuditEntity> flaggedData = List.of(
                 flagged("씨b알",       0.97, "비속어 우회 (특수문자 삽입)"),
                 flagged("ㅅㅂ놈아",    0.95, "초성 비속어"),
                 flagged("개새끼야",    0.99, "직접적 욕설"),
@@ -63,7 +63,7 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
                 flagged("바보새X야",   0.88, "복합 모욕 우회 표현")
         );
 
-        List<PlayerNameAuditEntity> pendingData = List.of(
+        final List<PlayerNameAuditEntity> pendingData = List.of(
                 pending("열받네",      0.62, "감탄사로도 쓰이나 문맥 의존적"),
                 pending("빡친호랑이",  0.71, "비속어 경계 표현"),
                 pending("킹받는곰",    0.68, "신조어, 판단 불명확"),

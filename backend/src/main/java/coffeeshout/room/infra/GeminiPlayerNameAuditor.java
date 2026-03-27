@@ -100,14 +100,14 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
     }
 
     private String buildPrompt(List<String> nicknames) {
-        StringBuilder prompt = new StringBuilder(BASE_SYSTEM_PROMPT);
+        final StringBuilder prompt = new StringBuilder(BASE_SYSTEM_PROMPT);
 
-        List<PlayerNameFeedbackEntity> feedbacks = feedbackRepository.findRecentFeedbacks(
+        final List<PlayerNameFeedbackEntity> feedbacks = feedbackRepository.findRecentFeedbacks(
                 PageRequest.of(0, properties.feedbackInjectionThreshold(), Sort.by("createdAt").descending())
         );
 
         if (feedbacks.size() >= properties.feedbackInjectionThreshold()) {
-            List<Map<String, Object>> examples = feedbacks.stream()
+            final List<Map<String, Object>> examples = feedbacks.stream()
                     .map(feedback -> {
                         boolean operatorFlagged =
                                 feedback.getOperatorDecision() == PlayerNameFeedbackEntity.OperatorDecision.BLOCKED;
@@ -147,10 +147,10 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
             return List.of();
         }
 
-        List<PlayerNameAuditResult> results = new ArrayList<>();
+        final List<PlayerNameAuditResult> results = new ArrayList<>();
         for (JsonNode node : nodes) {
             try {
-                GeminiAuditItem item = objectMapper.treeToValue(node, GeminiAuditItem.class);
+                final GeminiAuditItem item = objectMapper.treeToValue(node, GeminiAuditItem.class);
                 results.add(PlayerNameAuditResult.of(
                         item.playerName(), item.flagged(), item.confidence(), item.reason(),
                         properties.flaggedThreshold()

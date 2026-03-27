@@ -112,11 +112,11 @@ Rate limit 초과 시 **Resilience4j** retry + 지수 백오프 적용 (2s → 4
 [스케줄러 (12시간마다)]
   │
   ▼
-NicknameAuditService.auditPending()
+PlayerNameAuditService.auditPending()
   │  UNAUDITED & audited_at IS NULL 조건으로 증분 조회 (batchSize=100)
   │
   ├─ [배치 루프]
-  │   → GeminiNicknameAuditor.audit(batch)   ← Gemini API 호출
+  │   → GeminiPlayerNameAuditor.audit(batch)   ← Gemini API 호출
   │   → JSON 전체 파싱 성공: 항목별 entity.complete(status, confidence, reason)
   │   → JSON 전체 파싱 실패: 빈 리스트 반환 → 해당 배치 skip (UNAUDITED 유지, 다음 실행 재시도)
   │   → 항목 단위 파싱 실패: 해당 항목만 skip, 나머지 항목은 정상 처리
@@ -237,7 +237,7 @@ public class SecurityConfig {
             )
             .formLogin(form -> form
                 .loginPage("/admin/login")
-                .defaultSuccessUrl("/admin/nickname-audit")
+                .defaultSuccessUrl("/admin/playername-audit")
                 .permitAll()
             )
             .csrf(AbstractHttpConfigurer::disable);  // REST API + 내부망 admin
@@ -276,7 +276,7 @@ resilience4j.ratelimiter:
 | 프로파일            | NicknameAuditor 구현체                    | API 키 필요 |
 |-----------------|----------------------------------------|----------|
 | `local`, `test` | `NoOpNicknameAuditor` (항상 CLEAN 반환)    | 불필요      |
-| `dev`, `prod`   | `GeminiNicknameAuditor`                | 필요       |
+| `dev`, `prod`   | `GeminiPlayerNameAuditor`              | 필요       |
 
 ### 모니터링 (Micrometer → Prometheus → Grafana)
 
@@ -367,30 +367,30 @@ nickname_audit_unaudited_queue
 - [x] `spring-boot-starter-security` 의존성 추가
 - [x] `spring-boot-starter-thymeleaf` + `thymeleaf-extras-springsecurity6` 의존성 추가
 - [x] `com.google.genai:google-genai:1.44.0` Gemini SDK 의존성 추가
-- [x] `NicknameAuditStatus` Enum (`UNAUDITED`, `FLAGGED`, `PENDING`, `CLEAN`)
-- [x] `NicknameAuditResult` record — `of()` 팩토리 메서드 (external threshold)
-- [x] `NicknameAuditor` 포트 인터페이스 (`domain/audit/`)
+- [x] `PlayerNameAuditStatus` Enum (`UNAUDITED`, `FLAGGED`, `PENDING`, `CLEAN`)
+- [x] `PlayerNameAuditResult` record — `of()` 팩토리 메서드 (external threshold)
+- [x] `PlayerNameAuditor` 포트 인터페이스 (`domain/audit/`)
 - [x] `V6__create_nickname_audit_tables.sql` — 3개 테이블 + 인덱스
-- [x] `NicknameAuditEntity` + `NicknameAuditJpaRepository`
-- [x] `NicknameFeedbackEntity` + `NicknameFeedbackJpaRepository`
+- [x] `PlayerNameAuditEntity` + `PlayerNameAuditJpaRepository`
+- [x] `PlayerNameFeedbackEntity` + `PlayerNameFeedbackJpaRepository`
 - [x] `CustomProfanityEntity` + `CustomProfanityJpaRepository`
-- [x] `NicknameAuditProperties` — `@ConfigurationProperties(prefix = "nickname-audit")`
-- [x] `GeminiNicknameAuditor` — SDK 기반 배치 호출, 피드백 주입, 배치/항목 단위 파싱 실패 처리
-- [x] `NoOpNicknameAuditor` — local/test 프로파일용 no-op 구현체
-- [x] `NicknameAuditService` — 증분 스캔, 배치 간 rate limit 대기, 메트릭
-- [x] `NicknameAuditScheduler` — 12시간 주기 (`infra/`)
-- [x] `RouletteService` — 룰렛 결과 저장 시 `nicknameAuditService.register()` 훅
-- [x] `NicknameFeedbackService` — 운영자 피드백 저장 + 비속어 등록
+- [x] `PlayerNameAuditProperties` — `@ConfigurationProperties(prefix = "nickname-audit")`
+- [x] `GeminiPlayerNameAuditor` — SDK 기반 배치 호출, 피드백 주입, 배치/항목 단위 파싱 실패 처리
+- [x] `NoOpPlayerNameAuditor` — local/test 프로파일용 no-op 구현체
+- [x] `PlayerNameAuditService` — 증분 스캔, 배치 간 rate limit 대기, 메트릭
+- [x] `PlayerNameAuditScheduler` — 12시간 주기 (`infra/`)
+- [x] `RouletteService` — 룰렛 결과 저장 시 `playerNameAuditService.register()` 훅
+- [x] `PlayerNameFeedbackService` — 운영자 피드백 저장 + 비속어 등록
 - [x] `CustomProfanityLoader` (`ApplicationRunner`) — 시작 시 DB → BadWordFiltering 로딩
-- [x] `GeminiNicknameAuditorConnectivityTest` — 실제 API 연결 테스트 (`@Disabled`)
-- [x] `GeminiNicknameAuditorParseTest` — 파싱 실패 단위 테스트 (배치/항목 단위)
-- [x] `NicknameFeedbackServiceTest` — 운영자 피드백 서비스 통합 테스트
+- [x] `GeminiPlayerNameAuditorConnectivityTest` — 실제 API 연결 테스트 (`@Disabled`)
+- [x] `GeminiPlayerNameAuditorParseTest` — 파싱 실패 단위 테스트 (배치/항목 단위)
+- [x] `PlayerNameFeedbackServiceTest` — 운영자 피드백 서비스 통합 테스트
 - [x] `SecurityConfig` — `/admin/**` 인증, 기존 API/WS `permitAll()`
 - [x] `AdminProperties` — 환경변수 기반 InMemoryUserDetails 설정
 - [x] `LoginAdminController` — `/admin/login` 폼 렌더링
 - [x] `templates/admin/login.html` — 로그인 페이지
-- [x] 운영자 대시보드 (`/admin/nickname-audit`) — FLAGGED·PENDING 목록 조회 / 허용 / 차단 / 페이지네이션
-- [x] `NicknameAuditAdminController` — 대시보드 GET·POST, 빈 페이지 자동 clamp redirect
+- [x] 운영자 대시보드 (`/admin/playername-audit`) — FLAGGED·PENDING 목록 조회 / 허용 / 차단 / 페이지네이션
+- [x] `PlayerNameAuditAdminController` — 대시보드 GET·POST, 빈 페이지 자동 clamp redirect
 
 ### Feature 3 후속: FLAGGED 자동 차단 + 어드민 해제
 
@@ -398,8 +398,8 @@ nickname_audit_unaudited_queue
 > 어드민이 허용(ALLOWED) 처리 시 필터에서 제거하는 방식으로 자동화 수준을 높인다.
 > PENDING(confidence < 0.85)은 기존처럼 운영자 수동 검토 유지.
 
-- [x] `NicknameAuditBatchProcessor` — FLAGGED 결과 시 `custom_profanity` 자동 등록 + `BadWordFiltering.add()`
-- [x] `NicknameFeedbackService.allow()` — ALLOWED 처리 시 `custom_profanity` 삭제 + `BadWordFiltering.remove()`
+- [x] `PlayerNameAuditBatchProcessor` — FLAGGED 결과 시 `custom_profanity` 자동 등록 + `BadWordFiltering.add()`
+- [x] `PlayerNameFeedbackService.allow()` — ALLOWED 처리 시 `custom_profanity` 삭제 + `BadWordFiltering.remove()`
 - [x] `CustomProfanityJpaRepository` — `deleteByWord()` 추가
 - [x] 어드민 대시보드 — FLAGGED 항목에 "자동 차단됨" 배지 + "차단 해제" 버튼(confirm 다이얼로그) + "차단" 버튼 제거
 - [x] ADR 0001 업데이트 — 자동 차단 정책 반영

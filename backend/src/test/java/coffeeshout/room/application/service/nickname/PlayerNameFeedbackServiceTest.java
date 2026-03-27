@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.PlayerNameAuditFixture;
 import coffeeshout.global.ServiceTest;
+import coffeeshout.global.exception.custom.NotExistElementException;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.event.ProfanityWordAllowedEvent;
 import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
@@ -99,7 +100,7 @@ class PlayerNameFeedbackServiceTest extends ServiceTest {
         @Test
         void 존재하지_않는_auditId이면_예외를_던진다() {
             assertThatThrownBy(() -> feedbackService.allow(999L))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(NotExistElementException.class)
                     .hasMessageContaining("999");
         }
     }
@@ -169,7 +170,7 @@ class PlayerNameFeedbackServiceTest extends ServiceTest {
         @Test
         void 존재하지_않는_auditId이면_예외를_던진다() {
             assertThatThrownBy(() -> feedbackService.block(999L))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(NotExistElementException.class)
                     .hasMessageContaining("999");
         }
     }

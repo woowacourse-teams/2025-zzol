@@ -117,9 +117,9 @@
                     <div class="conf-wrap">
                         <div class="conf-bar-bg">
                             <div class="conf-bar-fill fill-high"
-                                 th:style="|width:${item.confidence.movePointRight(2).intValue()}%|"></div>
+                                 th:style="|width:${item.confidence.value().movePointRight(2).intValue()}%|"></div>
                         </div>
-                        <span class="conf-text" th:text="${#numbers.formatDecimal(item.confidence, 1, 2)}"></span>
+                        <span class="conf-text" th:text="${#numbers.formatDecimal(item.confidence.value(), 1, 2)}"></span>
                     </div>
                 </td>
                 <td class="reason" th:text="${item.reason}"></td>
@@ -181,9 +181,9 @@
                     <div class="conf-wrap">
                         <div class="conf-bar-bg">
                             <div class="conf-bar-fill fill-mid"
-                                 th:style="|width:${item.confidence.movePointRight(2).intValue()}%|"></div>
+                                 th:style="|width:${item.confidence.value().movePointRight(2).intValue()}%|"></div>
                         </div>
-                        <span class="conf-text" th:text="${#numbers.formatDecimal(item.confidence, 1, 2)}"></span>
+                        <span class="conf-text" th:text="${#numbers.formatDecimal(item.confidence.value(), 1, 2)}"></span>
                     </div>
                 </td>
                 <td class="reason" th:text="${item.reason}"></td>

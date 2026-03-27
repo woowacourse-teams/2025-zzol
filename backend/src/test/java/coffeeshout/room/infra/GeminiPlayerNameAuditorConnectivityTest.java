@@ -89,7 +89,7 @@ class GeminiPlayerNameAuditorConnectivityTest {
                 .allSatisfy(result -> {
                     assertThat(result.playerName()).isNotBlank();
                     assertThat(result.status()).isNotNull();
-                    assertThat(result.confidence()).isBetween(0.0, 1.0);
+                    assertThat(result.confidence().value().doubleValue()).isBetween(0.0, 1.0);
                 });
     }
 

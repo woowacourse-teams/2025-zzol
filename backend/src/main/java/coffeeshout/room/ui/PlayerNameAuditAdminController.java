@@ -2,9 +2,9 @@ package coffeeshout.room.ui;
 
 import coffeeshout.room.application.service.nickname.PlayerNameAuditService;
 import coffeeshout.room.application.service.nickname.PlayerNameFeedbackService;
+import coffeeshout.room.domain.audit.AiConfidence;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
@@ -90,7 +90,7 @@ public class PlayerNameAuditAdminController {
         return new AuditRow(
                 e.getId(),
                 e.getPlayerName(),
-                e.getConfidence() != null ? e.getConfidence() : BigDecimal.ZERO,
+                e.getConfidence() != null ? e.getConfidence() : AiConfidence.UNKNOWN,
                 e.getReason() != null ? e.getReason() : "",
                 LocalDateTime.ofInstant(e.getCreatedAt(), KST),
                 e.getAuditedAt() != null ? LocalDateTime.ofInstant(e.getAuditedAt(), KST) : null
@@ -100,7 +100,7 @@ public class PlayerNameAuditAdminController {
     public record AuditRow(
             Long id,
             String playerName,
-            BigDecimal confidence,
+            AiConfidence confidence,
             String reason,
             LocalDateTime createdAt,
             LocalDateTime auditedAt

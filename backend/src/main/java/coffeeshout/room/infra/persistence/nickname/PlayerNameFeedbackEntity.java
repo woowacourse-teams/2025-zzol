@@ -1,6 +1,8 @@
 package coffeeshout.room.infra.persistence.nickname;
 
+import coffeeshout.room.domain.audit.AiConfidence;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -8,7 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,8 +31,9 @@ public class PlayerNameFeedbackEntity {
     @Column(nullable = false)
     private boolean aiFlagged;
 
+    @Embedded
     @Column(nullable = false, precision = 3, scale = 2)
-    private BigDecimal aiConfidence;
+    private AiConfidence aiConfidence;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
@@ -43,11 +45,11 @@ public class PlayerNameFeedbackEntity {
     @Column(nullable = false)
     private Instant createdAt;
 
-    public PlayerNameFeedbackEntity(String playerName, boolean aiFlagged, BigDecimal aiConfidence,
+    public PlayerNameFeedbackEntity(String playerName, boolean aiFlagged, AiConfidence aiConfidence,
                                     OperatorDecision operatorDecision, String reason) {
         this.playerName = playerName;
         this.aiFlagged = aiFlagged;
-        this.aiConfidence = aiConfidence != null ? aiConfidence : BigDecimal.ZERO;
+        this.aiConfidence = aiConfidence != null ? aiConfidence : AiConfidence.UNKNOWN;
         this.operatorDecision = operatorDecision;
         this.reason = reason;
         this.createdAt = Instant.now();

@@ -1,5 +1,6 @@
 package coffeeshout.room.infra.persistence.nickname;
 
+import coffeeshout.room.domain.audit.AiConfidence;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,7 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -33,7 +33,7 @@ public class PlayerNameAuditEntity {
     private PlayerNameAuditStatus status;
 
     @Column(precision = 3, scale = 2)
-    private BigDecimal confidence;
+    private AiConfidence confidence;
 
     @Column(length = 255)
     private String reason;
@@ -54,9 +54,9 @@ public class PlayerNameAuditEntity {
         this.status = status;
     }
 
-    public void complete(PlayerNameAuditStatus status, double confidence, String reason) {
+    public void complete(PlayerNameAuditStatus status, AiConfidence confidence, String reason) {
         this.status = status;
-        this.confidence = BigDecimal.valueOf(confidence);
+        this.confidence = confidence;
         this.reason = reason;
         this.auditedAt = Instant.now();
     }

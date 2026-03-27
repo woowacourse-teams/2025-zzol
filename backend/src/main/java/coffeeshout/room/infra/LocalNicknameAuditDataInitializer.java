@@ -1,5 +1,6 @@
 package coffeeshout.room.infra;
 
+import coffeeshout.room.domain.audit.AiConfidence;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
@@ -103,13 +104,13 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
 
     private PlayerNameAuditEntity flagged(String nickname, double confidence, String reason) {
         final PlayerNameAuditEntity entity = new PlayerNameAuditEntity(nickname);
-        entity.complete(PlayerNameAuditStatus.FLAGGED, confidence, reason);
+        entity.complete(PlayerNameAuditStatus.FLAGGED, AiConfidence.of(confidence), reason);
         return entity;
     }
 
     private PlayerNameAuditEntity pending(String nickname, double confidence, String reason) {
         final PlayerNameAuditEntity entity = new PlayerNameAuditEntity(nickname);
-        entity.complete(PlayerNameAuditStatus.PENDING, confidence, reason);
+        entity.complete(PlayerNameAuditStatus.PENDING, AiConfidence.of(confidence), reason);
         return entity;
     }
 }

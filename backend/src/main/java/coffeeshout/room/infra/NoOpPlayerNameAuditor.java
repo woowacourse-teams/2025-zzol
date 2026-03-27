@@ -1,5 +1,6 @@
 package coffeeshout.room.infra;
 
+import coffeeshout.room.domain.audit.AiConfidence;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;
@@ -17,7 +18,7 @@ public class NoOpPlayerNameAuditor implements PlayerNameAuditor {
     public List<PlayerNameAuditResult> audit(List<String> playerNames) {
         log.debug("NoOpPlayerNameAuditor: Gemini 호출 생략 (local/test 프로파일), playerNames={}", playerNames);
         return playerNames.stream()
-                .map(nickname -> new PlayerNameAuditResult(nickname, PlayerNameAuditStatus.CLEAN, 0.0, "no-op"))
+                .map(nickname -> new PlayerNameAuditResult(nickname, PlayerNameAuditStatus.CLEAN, AiConfidence.UNKNOWN, "no-op"))
                 .toList();
     }
 }

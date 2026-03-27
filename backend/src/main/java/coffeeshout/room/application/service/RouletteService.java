@@ -50,6 +50,7 @@ public class RouletteService {
         }
 
         roomEntity.finish();
+        roomJpaRepository.saveAndFlush(roomEntity);
 
         final PlayerEntity playerEntity = getPlayerEntity(roomEntity, winner.name().value());
 

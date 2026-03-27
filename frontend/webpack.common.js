@@ -85,6 +85,10 @@ export default (_, argv) => {
             to: 'fonts',
           },
           {
+            from: 'src/assets/logo',
+            to: 'logo',
+          },
+          {
             from: 'public/robots.txt',
             to: 'robots.txt',
           },

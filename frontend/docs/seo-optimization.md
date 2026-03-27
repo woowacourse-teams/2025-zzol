@@ -80,7 +80,7 @@ transform(content) {
 | JSON-LD 구조화 데이터 추가 | 중 | 검색 결과 리치 스니펫 |
 | `apple-touch-icon` 추가 | 낮 | iOS 홈 화면 아이콘 |
 | `theme-color` 메타태그 추가 | 낮 | 모바일 브라우저 상단 바 색상 |
-| PWA 아이콘 192x192, 512x512 추가 | 낮 | `src/assets/logo/`에 정사각형 PNG 추가 필요 |
+| PWA 아이콘 192x192, 512x512 추가 | 낮 | 현재 `logo-main.png`이 322x234 비정사각형이라 표준 미충족. `src/assets/logo/`에 192x192, 512x512 정사각형 PNG 추가 후 `manifest.json` icons 항목 업데이트 필요 |
 | Naver Search Advisor 등록 | 낮 | 네이버 검색 유입이 필요한 경우 |
 
 ---

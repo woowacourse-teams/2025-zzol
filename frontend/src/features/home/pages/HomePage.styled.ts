@@ -33,3 +33,15 @@ export const ButtonContainer = styled.section`
   flex-direction: column;
   gap: 16px;
 `;
+
+export const VisuallyHidden = styled.div`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+`;

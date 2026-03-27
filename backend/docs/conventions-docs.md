@@ -7,7 +7,7 @@
 
 모든 펜스 코드 블록(` ``` `)에 언어를 명시한다. 언어를 특정할 수 없는 경우 `text`를 사용한다.
 
-```text
+````text
 # 잘못된 예
 ```
 SELECT * FROM room_session;
@@ -22,7 +22,7 @@ SELECT * FROM room_session;
 ```text
 nickname_audit → player_name_audit
 ```
-```
+````
 
 자주 쓰는 언어 식별자: `java`, `sql`, `yaml`, `bash`, `json`, `text`
 
@@ -30,7 +30,7 @@ nickname_audit → player_name_audit
 
 펜스 코드 블록 바로 앞과 바로 뒤에 빈 줄이 있어야 한다.
 
-```text
+````text
 # 잘못된 예
 다음은 예시다:
 ```sql
@@ -46,7 +46,7 @@ SELECT 1;
 ```
 
 이후 내용
-```
+````
 
 ## MD022 — 헤딩 앞뒤에 빈 줄 필수
 

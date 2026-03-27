@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 @Service
@@ -31,6 +31,7 @@ public class PlayerNameAuditBatchProcessor {
     private final CustomProfanityJpaRepository customProfanityRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final MeterRegistry meterRegistry;
+    private final TransactionTemplate transactionTemplate;
 
     private Counter batchSkippedCounter;
 
@@ -41,7 +42,6 @@ public class PlayerNameAuditBatchProcessor {
                 .register(meterRegistry);
     }
 
-    @Transactional
     public int process(List<PlayerNameAuditEntity> batch) {
         final List<String> playerNames = batch.stream()
                 .map(PlayerNameAuditEntity::getPlayerName)
@@ -59,9 +59,11 @@ public class PlayerNameAuditBatchProcessor {
         final Map<String, PlayerNameAuditResult> resultMap = results.stream()
                 .collect(Collectors.toMap(PlayerNameAuditResult::playerName, Function.identity(), (a, b) -> a));
 
-        batch.forEach(entity -> applyResult(entity, resultMap.get(entity.getPlayerName())));
+        transactionTemplate.executeWithoutResult(status -> {
+            batch.forEach(entity -> applyResult(entity, resultMap.get(entity.getPlayerName())));
+            auditRepository.saveAll(batch);
+        });
 
-        auditRepository.saveAll(batch);
         return batch.size();
     }
 

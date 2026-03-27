@@ -45,8 +45,8 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
             
             응답 형식:
             [
-              { "nickname": "씨b알",     "flagged": true,  "confidence": 0.97, "reason": "비속어 우회 (특수문자 삽입)" },
-              { "nickname": "용감한호랑이", "flagged": false, "confidence": 0.99, "reason": "일반 닉네임" }
+              { "playerName": "씨b알",     "flagged": true,  "confidence": 0.97, "reason": "비속어 우회 (특수문자 삽입)" },
+              { "playerName": "용감한호랑이", "flagged": false, "confidence": 0.99, "reason": "일반 닉네임" }
             ]
             """;
 
@@ -62,13 +62,13 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
 
     @PostConstruct
     void initMetrics() {
-        apiCallTimer = Timer.builder("nickname.audit.gemini.call.duration")
+        apiCallTimer = Timer.builder("playerName.audit.gemini.call.duration")
                 .description("Gemini API 호출 소요 시간")
                 .register(meterRegistry);
-        parseFailureCounter = Counter.builder("nickname.audit.gemini.parse.failures")
+        parseFailureCounter = Counter.builder("playerName.audit.gemini.parse.failures")
                 .description("Gemini 응답 JSON 파싱 실패 횟수")
                 .register(meterRegistry);
-        itemParseFailureCounter = Counter.builder("nickname.audit.gemini.item.parse.failures")
+        itemParseFailureCounter = Counter.builder("playerName.audit.gemini.item.parse.failures")
                 .description("Gemini 응답 항목 단위 파싱 실패 횟수")
                 .register(meterRegistry);
     }
@@ -113,7 +113,7 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
                                 feedback.getOperatorDecision() == PlayerNameFeedbackEntity.OperatorDecision.BLOCKED;
                         double exampleConfidence = operatorFlagged ? 0.99 : 0.01;
                         return Map.<String, Object>of(
-                                "nickname", feedback.getPlayerName(),
+                                "playerName", feedback.getPlayerName(),
                                 "flagged", operatorFlagged,
                                 "confidence", exampleConfidence,
                                 "reason", "운영자 피드백"
@@ -152,7 +152,7 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
             try {
                 GeminiAuditItem item = objectMapper.treeToValue(node, GeminiAuditItem.class);
                 results.add(PlayerNameAuditResult.of(
-                        item.nickname(), item.flagged(), item.confidence(), item.reason(),
+                        item.playerName(), item.flagged(), item.confidence(), item.reason(),
                         properties.flaggedThreshold()
                 ));
             } catch (Exception e) {
@@ -163,6 +163,6 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
         return results;
     }
 
-    private record GeminiAuditItem(String nickname, boolean flagged, double confidence, String reason) {
+    private record GeminiAuditItem(String playerName, boolean flagged, double confidence, String reason) {
     }
 }

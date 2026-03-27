@@ -5,10 +5,12 @@ import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackJpaRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Map;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
@@ -103,19 +105,32 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
         );
 
         if (feedbacks.size() >= properties.feedbackInjectionThreshold()) {
-            prompt.append("\n운영자 피드백 기반 추가 예시:\n");
-            for (PlayerNameFeedbackEntity feedback : feedbacks) {
-                boolean operatorFlagged =
-                        feedback.getOperatorDecision() == PlayerNameFeedbackEntity.OperatorDecision.BLOCKED;
-                double exampleConfidence = operatorFlagged ? 0.99 : 0.01;
-                prompt.append(String.format(
-                        "{ \"nickname\": \"%s\", \"flagged\": %b, \"confidence\": %.2f, \"reason\": \"운영자 피드백\" }%n",
-                        feedback.getPlayerName(), operatorFlagged, exampleConfidence
-                ));
+            List<Map<String, Object>> examples = feedbacks.stream()
+                    .map(feedback -> {
+                        boolean operatorFlagged =
+                                feedback.getOperatorDecision() == PlayerNameFeedbackEntity.OperatorDecision.BLOCKED;
+                        double exampleConfidence = operatorFlagged ? 0.99 : 0.01;
+                        return Map.<String, Object>of(
+                                "nickname", feedback.getPlayerName(),
+                                "flagged", operatorFlagged,
+                                "confidence", exampleConfidence,
+                                "reason", "운영자 피드백"
+                        );
+                    })
+                    .toList();
+            try {
+                prompt.append("\n운영자 피드백 기반 추가 예시:\n")
+                        .append(objectMapper.writeValueAsString(examples)).append("\n");
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("피드백 예시 직렬화 실패", e);
             }
         }
 
-        prompt.append("\n검열할 닉네임 목록:\n").append(nicknames);
+        try {
+            prompt.append("\n검열할 닉네임 목록:\n").append(objectMapper.writeValueAsString(nicknames));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("닉네임 목록 직렬화 실패", e);
+        }
         return prompt.toString();
     }
 

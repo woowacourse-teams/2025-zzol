@@ -2,6 +2,7 @@ package coffeeshout.room.application.service.nickname;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -13,6 +14,7 @@ import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
@@ -39,11 +41,9 @@ class PlayerNameRankingCleanupServiceTest {
     );
 
     @Mock DashboardStatisticsRepository dashboardRepository;
-    @Mock
-    PlayerNameAuditJpaRepository auditRepository;
+    @Mock PlayerNameAuditJpaRepository auditRepository;
     @Mock PlayerJpaRepository playerRepository;
-    @Mock
-    PlayerNameGenerator playerNameGenerator;
+    @Mock PlayerNameGenerator playerNameGenerator;
 
     PlayerNameRankingCleanupService cleanupService;
 
@@ -105,16 +105,18 @@ class PlayerNameRankingCleanupServiceTest {
             given(playerRepository.findAllByPlayerName("씨발"))
                     .willReturn(List.of(player));
             given(player.getRoomSession()).willReturn(room);
-            given(playerRepository.findAllByRoomSession(room))
+            given(roommate.getRoomSession()).willReturn(room);
+            given(playerRepository.findAllByRoomSessionIn(anyList()))
                     .willReturn(List.of(player, roommate));
             given(player.getPlayerName()).willReturn("씨발");
             given(roommate.getPlayerName()).willReturn("용감한호랑이");
             given(playerNameGenerator.generate(Set.of("씨발", "용감한호랑이")))
-                    .willReturn("빠른여우");
+                    .willReturn(new PlayerName("빠른여우"));
 
             cleanupService.cleanupBlockedNicknames();
 
-            then(player).should().updatePlayerName("빠른여우");
+            then(player).should().updatePlayerName(new PlayerName("빠른여우"));
+            then(roommate).should(never()).updatePlayerName(any(PlayerName.class));
         }
 
         @Test
@@ -131,15 +133,15 @@ class PlayerNameRankingCleanupServiceTest {
             given(playerRepository.findAllByPlayerName("씨발"))
                     .willReturn(List.of(player));
             given(player.getRoomSession()).willReturn(room);
-            given(playerRepository.findAllByRoomSession(room))
+            given(playerRepository.findAllByRoomSessionIn(anyList()))
                     .willReturn(List.of(player));
             given(player.getPlayerName()).willReturn("씨발");
             given(playerNameGenerator.generate(Set.of("씨발")))
-                    .willReturn("빠른여우");
+                    .willReturn(new PlayerName("빠른여우"));
 
             cleanupService.cleanupBlockedNicknames();
 
-            then(player).should().updatePlayerName("빠른여우");
+            then(player).should().updatePlayerName(new PlayerName("빠른여우"));
         }
 
         @Test
@@ -159,16 +161,16 @@ class PlayerNameRankingCleanupServiceTest {
                     .willReturn(List.of(player1, player2));
             given(player1.getRoomSession()).willReturn(room1);
             given(player2.getRoomSession()).willReturn(room2);
-            given(playerRepository.findAllByRoomSession(room1)).willReturn(List.of(player1));
-            given(playerRepository.findAllByRoomSession(room2)).willReturn(List.of(player2));
+            given(playerRepository.findAllByRoomSessionIn(anyList()))
+                    .willReturn(List.of(player1, player2));
             given(player1.getPlayerName()).willReturn("씨발");
             given(player2.getPlayerName()).willReturn("씨발");
-            given(playerNameGenerator.generate(any())).willReturn("빠른여우", "용감한호랑이");
+            given(playerNameGenerator.generate(any())).willReturn(new PlayerName("빠른여우"), new PlayerName("용감한호랑이"));
 
             cleanupService.cleanupBlockedNicknames();
 
-            then(player1).should().updatePlayerName(anyString());
-            then(player2).should().updatePlayerName(anyString());
+            then(player1).should().updatePlayerName(any(PlayerName.class));
+            then(player2).should().updatePlayerName(any(PlayerName.class));
         }
 
         @Test

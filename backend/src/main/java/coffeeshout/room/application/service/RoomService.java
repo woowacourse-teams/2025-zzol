@@ -137,11 +137,11 @@ public class RoomService {
         final Set<String> existingNames = room.getPlayers().stream()
                 .map(player -> player.getName().value())
                 .collect(Collectors.toSet());
-        return playerNameGenerator.generate(existingNames);
+        return playerNameGenerator.generate(existingNames).value();
     }
 
     public String generateRandomNicknameForHost() {
-        return playerNameGenerator.generate(Set.of());
+        return playerNameGenerator.generate(Set.of()).value();
     }
 
     public boolean roomExists(String joinCode) {

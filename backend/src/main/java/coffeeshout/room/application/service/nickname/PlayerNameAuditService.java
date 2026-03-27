@@ -2,6 +2,7 @@ package coffeeshout.room.application.service.nickname;
 
 import coffeeshout.room.config.PlayerNameAuditProperties;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import io.micrometer.core.instrument.Gauge;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -52,6 +52,10 @@ public class PlayerNameAuditService {
     }
 
     public void register(String playerName) {
+        if (auditRepository.existsByPlayerNameAndStatus(playerName, PlayerNameAuditStatus.UNAUDITED)) {
+            log.debug("이미 UNAUDITED 상태로 등록된 닉네임: {}", playerName);
+            return;
+        }
         auditRepository.save(new PlayerNameAuditEntity(playerName));
     }
 

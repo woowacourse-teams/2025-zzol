@@ -30,7 +30,7 @@ public class PlayerNameGenerator {
 
     private final WordPicker wordPicker;
 
-    public String generate(Set<String> existingNames) {
+    public PlayerName generate(Set<String> existingNames) {
         for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
             final String candidate = wordPicker.pick(ADJECTIVES) + wordPicker.pick(NOUNS);
 
@@ -39,7 +39,7 @@ public class PlayerNameGenerator {
             }
 
             if (!existingNames.contains(candidate)) {
-                return candidate;
+                return new PlayerName(candidate);
             }
         }
 

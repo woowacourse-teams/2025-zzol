@@ -47,7 +47,7 @@ public class PlayerNameFeedbackEntity {
                                     OperatorDecision operatorDecision, String reason) {
         this.playerName = playerName;
         this.aiFlagged = aiFlagged;
-        this.aiConfidence = aiConfidence;
+        this.aiConfidence = aiConfidence != null ? aiConfidence : BigDecimal.ZERO;
         this.operatorDecision = operatorDecision;
         this.reason = reason;
         this.createdAt = Instant.now();

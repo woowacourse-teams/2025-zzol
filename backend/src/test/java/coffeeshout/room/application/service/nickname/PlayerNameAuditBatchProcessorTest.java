@@ -3,17 +3,17 @@ package coffeeshout.room.application.service.nickname;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.PlayerNameAuditFixture;
 import coffeeshout.global.ServiceTest;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;
-import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity;
+import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
-import com.vane.badwordfiltering.BadWordFiltering;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
@@ -32,9 +32,10 @@ class PlayerNameAuditBatchProcessorTest extends ServiceTest {
     PlayerNameAuditBatchProcessor batchProcessor;
     @Autowired
     PlayerNameAuditJpaRepository auditRepository;
-    @Autowired CustomProfanityJpaRepository customProfanityRepository;
-    @Autowired BadWordFiltering badWordFiltering;
-    @Autowired MeterRegistry meterRegistry;
+    @Autowired
+    CustomProfanityJpaRepository customProfanityRepository;
+    @Autowired
+    MeterRegistry meterRegistry;
 
     private static final double THRESHOLD = 0.85;
 
@@ -64,13 +65,13 @@ class PlayerNameAuditBatchProcessorTest extends ServiceTest {
         }
 
         @Test
-        void 기준치_이상이면_BadWordFiltering에_즉시_반영된다() {
+        void 기준치_이상이면_ProfanityWordBlockedEvent를_발행한다() {
             final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("욕설닉네임"));
             given(playerNameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
 
             batchProcessor.process(List.of(entity));
 
-            assertThat(badWordFiltering.check("욕설닉네임")).isTrue();
+            verify(eventPublisher).publishEvent(new ProfanityWordBlockedEvent("욕설닉네임"));
         }
 
         @Test
@@ -89,15 +90,13 @@ class PlayerNameAuditBatchProcessorTest extends ServiceTest {
 
             @Test
             void 중복_등록하지_않는다() {
-                customProfanityRepository.save(
-                        new CustomProfanityEntity("욕설닉네임", CustomProfanityEntity.Source.OPERATOR_MANUAL)
-                );
+                customProfanityRepository.insertIgnore("욕설닉네임", "OPERATOR_MANUAL");
                 final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("욕설닉네임"));
                 given(playerNameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
 
                 batchProcessor.process(List.of(entity));
 
-                assertThat(customProfanityRepository.findWords(Pageable.unpaged()))
+                assertThat(customProfanityRepository.findWords(Pageable.unpaged()).getContent())
                         .containsExactly("욕설닉네임");
             }
         }

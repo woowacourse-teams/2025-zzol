@@ -3,11 +3,11 @@ package coffeeshout.room.application.service.nickname;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;
-import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity;
+import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
+import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity.Source;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
-import com.vane.badwordfiltering.BadWordFiltering;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +30,7 @@ public class PlayerNameAuditBatchProcessor {
     private final PlayerNameAuditJpaRepository auditRepository;
     private final PlayerNameAuditor playerNameAuditor;
     private final CustomProfanityJpaRepository customProfanityRepository;
-    private final BadWordFiltering badWordFiltering;
+    private final ApplicationEventPublisher eventPublisher;
     private final MeterRegistry meterRegistry;
 
     private Counter batchSkippedCounter;
@@ -76,9 +77,9 @@ public class PlayerNameAuditBatchProcessor {
     }
 
     private void autoBlock(String playerName) {
-        if (customProfanityRepository.existsByWord(playerName)) return;
-        customProfanityRepository.save(new CustomProfanityEntity(playerName, CustomProfanityEntity.Source.AI_AUDIT));
-        badWordFiltering.add(playerName);
+        int inserted = customProfanityRepository.insertIgnore(playerName, Source.AI_AUDIT.name());
+        if (inserted == 0) return;
+        eventPublisher.publishEvent(new ProfanityWordBlockedEvent(playerName));
         log.info("FLAGGED 자동 차단: {}", playerName);
     }
 }

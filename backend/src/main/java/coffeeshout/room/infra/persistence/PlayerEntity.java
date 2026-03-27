@@ -1,5 +1,6 @@
 package coffeeshout.room.infra.persistence;
 
+import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.PlayerType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,7 +51,7 @@ public class PlayerEntity {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void updatePlayerName(String newName) {
-        this.playerName = newName;
+    public void updatePlayerName(PlayerName playerName) {
+        this.playerName = playerName.value();
     }
 }

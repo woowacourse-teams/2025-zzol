@@ -4,14 +4,17 @@ import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import coffeeshout.room.infra.persistence.RoomEntity;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -77,17 +80,27 @@ public class PlayerNameRankingCleanupService {
     }
 
     private int replaceNickname(String nickname) {
-        List<PlayerEntity> players = playerRepository.findAllByPlayerName(nickname);
-        for (PlayerEntity player : players) {
-            Set<String> existingNamesInRoom = playerRepository.findAllByRoomSession(player.getRoomSession())
-                    .stream()
-                    .map(PlayerEntity::getPlayerName)
-                    .collect(Collectors.toSet());
+        List<PlayerEntity> targets = playerRepository.findAllByPlayerName(nickname);
+        if (targets.isEmpty()) return 0;
 
-            String newName = nicknameGenerator.generate(existingNamesInRoom);
+        List<RoomEntity> rooms = targets.stream()
+                .map(PlayerEntity::getRoomSession)
+                .distinct()
+                .toList();
+
+        Map<RoomEntity, Set<String>> namesByRoom = playerRepository.findAllByRoomSessionIn(rooms)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        PlayerEntity::getRoomSession,
+                        Collectors.mapping(PlayerEntity::getPlayerName, Collectors.toSet())
+                ));
+
+        for (PlayerEntity player : targets) {
+            Set<String> existingNamesInRoom = namesByRoom.getOrDefault(player.getRoomSession(), Set.of());
+            PlayerName newName = nicknameGenerator.generate(existingNamesInRoom);
             log.debug("[RankingCleanup] {} → {} (playerId={})", nickname, newName, player.getId());
             player.updatePlayerName(newName);
         }
-        return players.size();
+        return targets.size();
     }
 }

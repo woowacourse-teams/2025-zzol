@@ -119,7 +119,7 @@ admin:
   password: ${ADMIN_PASSWORD}
 
 nickname-audit:
-  gemini-api-key: ${GEMINI_API_KEY:}   # local/test 프로파일에서는 NoOpNicknameAuditor가 대신 동작
+  gemini-api-key: ${GEMINI_API_KEY}   # local/test 프로파일에서는 NoOpNicknameAuditor가 대신 동작
   model: gemini-2.5-flash
   flagged-threshold: 0.85
   batch-size: 100                      # API 호출 1회당 처리량 (RPM 5 기준 100개씩 5회 = 500개/min)

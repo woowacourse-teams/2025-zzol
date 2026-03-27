@@ -26,6 +26,8 @@ public interface PlayerNameAuditJpaRepository extends Repository<PlayerNameAudit
 
     Page<PlayerNameAuditEntity> findByStatus(PlayerNameAuditStatus status, Pageable pageable);
 
-    @Query("SELECT n.playerName FROM PlayerNameAuditEntity n WHERE n.status = :status")
+    @Query("SELECT DISTINCT n.playerName FROM PlayerNameAuditEntity n WHERE n.status = :status")
     Set<String> findPlayerNamesByStatus(@Param("status") PlayerNameAuditStatus status);
+
+    boolean existsByPlayerNameAndStatus(String playerName, PlayerNameAuditStatus status);
 }

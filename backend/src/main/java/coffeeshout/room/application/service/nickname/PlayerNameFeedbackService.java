@@ -1,15 +1,16 @@
 package coffeeshout.room.application.service.nickname;
 
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
-import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity;
+import coffeeshout.room.infra.event.ProfanityWordAllowedEvent;
+import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackJpaRepository;
-import com.vane.badwordfiltering.BadWordFiltering;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +22,7 @@ public class PlayerNameFeedbackService {
     private final PlayerNameAuditJpaRepository auditRepository;
     private final PlayerNameFeedbackJpaRepository feedbackRepository;
     private final CustomProfanityJpaRepository customProfanityRepository;
-    private final BadWordFiltering badWordFiltering;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void allow(Long auditId) {
@@ -35,8 +36,10 @@ public class PlayerNameFeedbackService {
                 PlayerNameFeedbackEntity.OperatorDecision.ALLOWED,
                 null
         ));
-        customProfanityRepository.deleteByWord(nickname);
-        badWordFiltering.remove(nickname);
+        int deleted = customProfanityRepository.deleteAiAuditByWord(nickname);
+        if (deleted > 0) {
+            eventPublisher.publishEvent(new ProfanityWordAllowedEvent(nickname));
+        }
         log.info("닉네임 허용 처리: auditId={}, nickname={}", auditId, nickname);
     }
 
@@ -45,7 +48,6 @@ public class PlayerNameFeedbackService {
         final PlayerNameAuditEntity audit = getAuditEntity(auditId);
         final String nickname = audit.getPlayerName();
         audit.updateStatus(PlayerNameAuditStatus.BLOCKED);
-
         feedbackRepository.save(new PlayerNameFeedbackEntity(
                 nickname,
                 true,
@@ -53,15 +55,8 @@ public class PlayerNameFeedbackService {
                 PlayerNameFeedbackEntity.OperatorDecision.BLOCKED,
                 null
         ));
-
-        if (!customProfanityRepository.existsByWord(nickname)) {
-            customProfanityRepository.save(
-                    new CustomProfanityEntity(nickname, CustomProfanityEntity.Source.AI_AUDIT)
-            );
-            badWordFiltering.add(nickname);
-            log.info("커스텀 비속어 등록: nickname={}", nickname);
-        }
-
+        customProfanityRepository.upsertOperatorManual(nickname);
+        eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
         log.info("닉네임 차단 처리: auditId={}, nickname={}", auditId, nickname);
     }
 

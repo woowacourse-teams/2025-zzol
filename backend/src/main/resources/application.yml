@@ -218,6 +218,8 @@ resilience4j:
         exponential-max-wait-duration: 30s      # 상한선 (rate limit 대응)
         retry-exceptions:
           - java.lang.RuntimeException   # SDK가 rate limit/서버 오류 시 RuntimeException으로 래핑
+        ignore-exceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted  # RateLimiter 초과는 재시도하지 않음
   ratelimiter:
     instances:
       geminiAudit:

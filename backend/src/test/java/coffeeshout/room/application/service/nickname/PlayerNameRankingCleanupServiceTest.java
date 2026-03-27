@@ -169,8 +169,8 @@ class PlayerNameRankingCleanupServiceTest {
 
             cleanupService.cleanupBlockedNicknames();
 
-            then(player1).should().updatePlayerName(any(PlayerName.class));
-            then(player2).should().updatePlayerName(any(PlayerName.class));
+            then(player1).should().updatePlayerName(new PlayerName("빠른여우"));
+            then(player2).should().updatePlayerName(new PlayerName("용감한호랑이"));
         }
 
         @Test

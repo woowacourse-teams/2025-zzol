@@ -83,7 +83,7 @@ public class PlayerNameAuditAdminController {
     }
 
     private String redirectTo(int flaggedPage, int pendingPage) {
-        return "redirect:/admin/nickname-audit?flaggedPage=" + flaggedPage + "&pendingPage=" + pendingPage;
+        return "redirect:/admin/playername-audit?flaggedPage=" + flaggedPage + "&pendingPage=" + pendingPage;
     }
 
     private AuditRow toRow(PlayerNameAuditEntity e) {

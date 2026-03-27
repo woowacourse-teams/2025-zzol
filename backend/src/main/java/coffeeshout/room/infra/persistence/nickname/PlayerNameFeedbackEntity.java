@@ -2,7 +2,6 @@ package coffeeshout.room.infra.persistence.nickname;
 
 import coffeeshout.room.domain.audit.AiConfidence;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -31,7 +30,6 @@ public class PlayerNameFeedbackEntity {
     @Column(nullable = false)
     private boolean aiFlagged;
 
-    @Embedded
     @Column(nullable = false, precision = 3, scale = 2)
     private AiConfidence aiConfidence;
 

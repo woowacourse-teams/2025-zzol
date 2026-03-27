@@ -126,7 +126,7 @@
                 <td class="date" th:text="${#temporals.format(item.createdAt, 'MM-dd HH:mm')}"></td>
                 <td class="date" th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
                 <td>
-                    <form th:action="@{/admin/nickname-audit/{id}/allow(id=${item.id})}" method="post"
+                    <form th:action="@{/admin/playername-audit/{id}/allow(id=${item.id})}" method="post"
                           th:data-nickname="${item.playerName}" onsubmit="return confirmRelease(this)">
                         <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
                         <input type="hidden" name="pendingPage" th:value="${pendingPage}">
@@ -138,22 +138,22 @@
         </table>
         <div class="pagination" th:if="${flagged.totalPages > 1}">
             <a class="page-btn" th:if="${!flagged.first}"
-               th:href="@{/admin/nickname-audit(flaggedPage=${flagged.number - 1}, pendingPage=${pendingPage})} + '#flagged'">← 이전</a>
+               th:href="@{/admin/playername-audit(flaggedPage=${flagged.number - 1}, pendingPage=${pendingPage})} + '#flagged'">← 이전</a>
             <a class="page-btn" th:if="${flaggedPageStart > 0}"
-               th:href="@{/admin/nickname-audit(flaggedPage=0, pendingPage=${pendingPage})} + '#flagged'">1</a>
+               th:href="@{/admin/playername-audit(flaggedPage=0, pendingPage=${pendingPage})} + '#flagged'">1</a>
             <span class="page-ellipsis" th:if="${flaggedPageStart > 1}">…</span>
             <th:block th:each="p : ${#numbers.sequence(flaggedPageStart, flaggedPageEnd)}">
                 <span th:if="${p == flagged.number}" class="page-current" th:text="${p + 1}"></span>
                 <a th:unless="${p == flagged.number}" class="page-btn"
-                   th:href="@{/admin/nickname-audit(flaggedPage=${p}, pendingPage=${pendingPage})} + '#flagged'"
+                   th:href="@{/admin/playername-audit(flaggedPage=${p}, pendingPage=${pendingPage})} + '#flagged'"
                    th:text="${p + 1}"></a>
             </th:block>
             <span class="page-ellipsis" th:if="${flaggedPageEnd < flagged.totalPages - 2}">…</span>
             <a class="page-btn" th:if="${flaggedPageEnd < flagged.totalPages - 1}"
-               th:href="@{/admin/nickname-audit(flaggedPage=${flagged.totalPages - 1}, pendingPage=${pendingPage})} + '#flagged'"
+               th:href="@{/admin/playername-audit(flaggedPage=${flagged.totalPages - 1}, pendingPage=${pendingPage})} + '#flagged'"
                th:text="${flagged.totalPages}"></a>
             <a class="page-btn" th:if="${!flagged.last}"
-               th:href="@{/admin/nickname-audit(flaggedPage=${flagged.number + 1}, pendingPage=${pendingPage})} + '#flagged'">다음 →</a>
+               th:href="@{/admin/playername-audit(flaggedPage=${flagged.number + 1}, pendingPage=${pendingPage})} + '#flagged'">다음 →</a>
         </div>
     </div>
 
@@ -191,12 +191,12 @@
                 <td class="date" th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
                 <td>
                     <div class="actions">
-                        <form th:action="@{/admin/nickname-audit/{id}/allow(id=${item.id})}" method="post">
+                        <form th:action="@{/admin/playername-audit/{id}/allow(id=${item.id})}" method="post">
                             <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
                             <input type="hidden" name="pendingPage" th:value="${pendingPage}">
                             <button type="submit" class="btn btn-allow">허용</button>
                         </form>
-                        <form th:action="@{/admin/nickname-audit/{id}/block(id=${item.id})}" method="post">
+                        <form th:action="@{/admin/playername-audit/{id}/block(id=${item.id})}" method="post">
                             <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
                             <input type="hidden" name="pendingPage" th:value="${pendingPage}">
                             <button type="submit" class="btn btn-block">차단</button>
@@ -208,22 +208,22 @@
         </table>
         <div class="pagination" th:if="${pending.totalPages > 1}">
             <a class="page-btn" th:if="${!pending.first}"
-               th:href="@{/admin/nickname-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number - 1})} + '#pending'">← 이전</a>
+               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number - 1})} + '#pending'">← 이전</a>
             <a class="page-btn" th:if="${pendingPageStart > 0}"
-               th:href="@{/admin/nickname-audit(flaggedPage=${flaggedPage}, pendingPage=0)} + '#pending'">1</a>
+               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=0)} + '#pending'">1</a>
             <span class="page-ellipsis" th:if="${pendingPageStart > 1}">…</span>
             <th:block th:each="p : ${#numbers.sequence(pendingPageStart, pendingPageEnd)}">
                 <span th:if="${p == pending.number}" class="page-current" th:text="${p + 1}"></span>
                 <a th:unless="${p == pending.number}" class="page-btn"
-                   th:href="@{/admin/nickname-audit(flaggedPage=${flaggedPage}, pendingPage=${p})} + '#pending'"
+                   th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${p})} + '#pending'"
                    th:text="${p + 1}"></a>
             </th:block>
             <span class="page-ellipsis" th:if="${pendingPageEnd < pending.totalPages - 2}">…</span>
             <a class="page-btn" th:if="${pendingPageEnd < pending.totalPages - 1}"
-               th:href="@{/admin/nickname-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.totalPages - 1})} + '#pending'"
+               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.totalPages - 1})} + '#pending'"
                th:text="${pending.totalPages}"></a>
             <a class="page-btn" th:if="${!pending.last}"
-               th:href="@{/admin/nickname-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number + 1})} + '#pending'">다음 →</a>
+               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number + 1})} + '#pending'">다음 →</a>
         </div>
     </div>
 

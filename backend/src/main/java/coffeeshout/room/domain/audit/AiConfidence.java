@@ -1,10 +1,8 @@
 package coffeeshout.room.domain.audit;
 
-import jakarta.persistence.Embeddable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-@Embeddable
 public record AiConfidence(BigDecimal value) {
 
     public static final AiConfidence UNKNOWN = new AiConfidence(BigDecimal.ZERO);

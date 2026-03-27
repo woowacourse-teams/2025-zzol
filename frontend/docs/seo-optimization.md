@@ -48,13 +48,14 @@ transform(content) {
 ## 4. SEO 메타태그 누락 및 불일치
 
 ### 원인
-- `canonical` URL에 trailing slash 없어 `sitemap.xml`과 불일치
+- `canonical`, `og:url` URL에 trailing slash 없어 `sitemap.xml`과 불일치
 - `hreflang` 태그 미설정으로 한국어 서비스임을 검색엔진에 명시하지 않음
 
 ### 해결
 `public/index.html`에 아래 태그 추가 및 수정.
 
 ```html
+<meta property="og:url" content="https://www.zzol.site/" />
 <link rel="canonical" href="https://www.zzol.site/" />
 <link rel="alternate" hreflang="ko" href="https://www.zzol.site/" />
 <link rel="alternate" hreflang="x-default" href="https://www.zzol.site/" />
@@ -71,11 +72,24 @@ transform(content) {
 
 ---
 
+## 잔여 작업
+
+| 항목 | 우선순위 | 비고 |
+|---|---|---|
+| Twitter Card 메타태그 추가 | 중 | X(트위터) 공유 미리보기 |
+| JSON-LD 구조화 데이터 추가 | 중 | 검색 결과 리치 스니펫 |
+| `apple-touch-icon` 추가 | 낮 | iOS 홈 화면 아이콘 |
+| `theme-color` 메타태그 추가 | 낮 | 모바일 브라우저 상단 바 색상 |
+| PWA 아이콘 192x192, 512x512 추가 | 낮 | `src/assets/logo/`에 정사각형 PNG 추가 필요 |
+| Naver Search Advisor 등록 | 낮 | 네이버 검색 유입이 필요한 경우 |
+
+---
+
 ## 변경 파일 목록
 
 | 파일 | 변경 내용 |
 |---|---|
-| `public/index.html` | canonical trailing slash 수정, hreflang 추가, manifest 링크 추가 |
+| `public/index.html` | canonical·og:url trailing slash 통일, hreflang 추가, manifest 링크 추가 |
 | `public/manifest.json` | 신규 생성 |
-| `webpack.common.js` | manifest.json CopyPlugin 추가, sitemap lastmod 자동 갱신 transform 추가 |
+| `webpack.common.js` | manifest.json CopyPlugin 추가, sitemap lastmod 빌드 타임 자동 갱신 |
 | CloudFront 설정 | `/sitemap.xml`, `/robots.txt` Cache Behavior 추가 (인프라 작업) |

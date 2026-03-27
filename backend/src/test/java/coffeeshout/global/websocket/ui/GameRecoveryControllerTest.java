@@ -4,10 +4,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.global.websocket.GameRecoveryService;
 import coffeeshout.global.websocket.StompSessionManager;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.support.test.IntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,9 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
-@IntegrationTest
 @AutoConfigureMockMvc
-class GameRecoveryControllerTest {
+class GameRecoveryControllerTest extends IntegrationTestSupport {
 
     private static final String TEST_JOIN_CODE = "T3ST";
     private static final String TEST_PLAYER_NAME = "Tester";

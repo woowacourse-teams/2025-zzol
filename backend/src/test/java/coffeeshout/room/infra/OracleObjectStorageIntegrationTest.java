@@ -6,10 +6,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.global.config.properties.OracleObjectStorageProperties;
-import coffeeshout.room.config.QrProperties;
 import coffeeshout.global.exception.custom.StorageServiceException;
-import coffeeshout.support.test.IntegrationTest;
+import coffeeshout.room.config.QrProperties;
 import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
@@ -30,9 +30,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
  * OracleObjectStorageService의 서킷 브레이커 및 리트라이 동작을 검증하는 통합 테스트. 실제 Spring 컨텍스트에서 Resilience4j 어노테이션(@CircuitBreaker,
  * @Retry)과 폴백(fallbackMethod) 로직이 정상적으로 작동하여 StorageServiceException을 던지는지 확인합니다.
  */
-@IntegrationTest
 @ActiveProfiles({"test", "circuit-breaker-test"})
-class OracleObjectStorageIntegrationTest {
+class OracleObjectStorageIntegrationTest extends IntegrationTestSupport {
 
     @MockitoBean
     private ObjectStorage objectStorage;

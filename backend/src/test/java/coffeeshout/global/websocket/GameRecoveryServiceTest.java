@@ -157,7 +157,7 @@ class GameRecoveryServiceTest extends ServiceTest {
 
             // then
             assertThat(messages).hasSize(2);
-            assertThat(messages.get(0).streamId()).isEqualTo(streamId2);
+            assertThat(messages.getFirst().streamId()).isEqualTo(streamId2);
             assertThat(messages.get(1).streamId()).isEqualTo(streamId3);
         }
 
@@ -243,7 +243,7 @@ class GameRecoveryServiceTest extends ServiceTest {
 
             // then
             assertThat(messages).hasSize(1);
-            RecoveryMessage recoveredMessage = messages.get(0);
+            RecoveryMessage recoveredMessage = messages.getFirst();
             assertThat(recoveredMessage.streamId()).isNotBlank();
             assertThat(recoveredMessage.destination()).isEqualTo(destination);
             assertThat(recoveredMessage.response()).isNotNull();
@@ -503,10 +503,10 @@ class GameRecoveryServiceTest extends ServiceTest {
             Long idMapKeyTtl = stringRedisTemplate.getExpire(idMapKey);
 
             // idMapKey는 짧은 TTL (2초 이하)
-            assertThat(idMapKeyTtl).isGreaterThan(0L).isLessThanOrEqualTo((long) SHORT_DEDUP_TTL);
+            assertThat(idMapKeyTtl).isGreaterThan(0L).isLessThanOrEqualTo(SHORT_DEDUP_TTL);
 
             // streamKey는 긴 TTL (5초 이하, idMapKey보다 큼)
-            assertThat(streamKeyTtl).isGreaterThan(0L).isLessThanOrEqualTo((long) SHORT_STREAM_TTL)
+            assertThat(streamKeyTtl).isGreaterThan(0L).isLessThanOrEqualTo(SHORT_STREAM_TTL)
                     .isGreaterThan(idMapKeyTtl);
         }
     }

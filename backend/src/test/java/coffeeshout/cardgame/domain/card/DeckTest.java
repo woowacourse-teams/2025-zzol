@@ -157,7 +157,7 @@ class DeckTest {
         @Test
         void 카드가_선택되었는지_확인한다() {
             // given
-            Card card = deck.getCards().get(0);
+            Card card = deck.getCards().getFirst();
 
             // when & then
             SoftAssertions.assertSoftly(softly -> {

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 
+import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
@@ -13,7 +14,6 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;
 import coffeeshout.room.domain.repository.RoomRepository;
-import coffeeshout.support.test.IntegrationTest;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
@@ -39,8 +39,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
  * Consumer 스레드에서 EventDispatcher가 TracerProvider.executeWithTraceContext()를
  * 실제로 호출하여 Span을 복원하는지 검증한다.</p>
  */
-@IntegrationTest
-class RedisStreamContextPropagationTest {
+class RedisStreamContextPropagationTest extends IntegrationTestSupport {
 
     @Autowired
     StreamPublisher streamPublisher;

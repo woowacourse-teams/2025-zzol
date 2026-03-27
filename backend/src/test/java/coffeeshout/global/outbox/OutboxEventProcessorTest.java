@@ -2,27 +2,22 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.ServiceTest;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.global.StreamMockedServiceTest;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.transaction.TestTransaction;
 
-class OutboxEventProcessorTest extends ServiceTest {
+class OutboxEventProcessorTest extends StreamMockedServiceTest {
 
     @Autowired
     private OutboxEventProcessor outboxEventProcessor;
 
     @Autowired
     private OutboxEventRepository outboxEventRepository;
-
-    @MockitoBean
-    private StreamPublisher streamPublisher;
 
     @BeforeEach
     void setUp() {

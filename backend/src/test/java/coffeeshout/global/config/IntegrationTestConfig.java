@@ -2,16 +2,23 @@ package coffeeshout.global.config;
 
 import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
 import coffeeshout.cardgame.infra.scheduler.CompletableFutureFlowScheduler;
+import org.mockito.Answers;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 
-@TestConfiguration
+@TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
-@Import(TestContainerConfig.class)
 public class IntegrationTestConfig {
+
+    @Bean(name = "taskScheduler")
+    @Primary
+    public TaskScheduler noOpTaskScheduler() {
+        return Mockito.mock(TaskScheduler.class, Answers.RETURNS_MOCKS);
+    }
 
     @Bean(name = "cardGameExecutorScheduler")
     public ShutDownTestScheduler cardGameExecutorScheduler() {

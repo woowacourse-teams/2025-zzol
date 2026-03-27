@@ -2,6 +2,8 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
+import coffeeshout.fixture.TestContainerSupport;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
@@ -10,25 +12,16 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
-import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * Outbox 패턴 E2E 테스트 (2단 콤보 Outbox).
@@ -40,48 +33,19 @@ import org.testcontainers.utility.DockerImageName;
  * <p>
  * H2 대신 MySQL을 쓰는 이유: FOR UPDATE SKIP LOCKED가 H2에서 지원되지 않는다.
  */
+
 @SpringBootTest
-@Testcontainers
 @ActiveProfiles("test")
 @Import(OutboxE2ETest.OutboxE2ETestConfig.class)
-class OutboxE2ETest {
-
-    @Container
-    static MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
-            .withDatabaseName("outbox_test")
-            .withUsername("test")
-            .withPassword("test")
-            .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci");
-
-    @Container
-    static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("valkey/valkey:latest"))
-            .withExposedPorts(6379);
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", mysql::getJdbcUrl);
-        registry.add("spring.datasource.username", mysql::getUsername);
-        registry.add("spring.datasource.password", mysql::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "com.mysql.cj.jdbc.Driver");
-        registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.MySQLDialect");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create");
-        registry.add("spring.flyway.enabled", () -> "false");
-
-        registry.add("spring.data.redis.host", redis::getHost);
-        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
-    }
+class OutboxE2ETest extends TestContainerSupport {
 
     @TestConfiguration
     static class OutboxE2ETestConfig {
 
         @Bean
         @Primary
-        public RedisConnectionFactory testRedisConnectionFactory() {
-            final LettuceConnectionFactory factory = new LettuceConnectionFactory(
-                    redis.getHost(), redis.getMappedPort(6379)
-            );
-            factory.afterPropertiesSet();
-            return factory;
+        public CardGameFlowScheduler mockCardGameFlowScheduler() {
+            return Mockito.mock(CardGameFlowScheduler.class);
         }
 
         @Bean(name = "cardGameTaskScheduler")
@@ -118,21 +82,13 @@ class OutboxE2ETest {
          * 기본 taskScheduler를 no-op으로 덮어써서 @Scheduled 메서드 실행을 막는다.
          * OutboxRelayWorker의 relay(), recoverStaleEvents(), cleanup()이
          * 테스트 중에 백그라운드로 돌면서 수동 호출과 경합하는 걸 방지한다.
+         * ShutDownTestScheduler는 ThreadPoolTaskScheduler 상속이라 실제로 태스크를 실행하므로
+         * Mockito mock을 사용해 진짜 no-op으로 만든다.
          */
         @Bean(name = "taskScheduler")
         @Primary
         public TaskScheduler noOpTaskScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
-        }
-
-        /**
-         * CardGameFlowScheduler는 @Profile("!test")로 등록되어 test 프로파일에서 빈이 없다.
-         * ServiceTestConfig에서는 mock으로 등록하지만, E2E 테스트는 자체 컨텍스트를 쓰므로 별도 등록.
-         */
-        @Bean
-        @Primary
-        public CardGameFlowScheduler mockCardGameFlowScheduler() {
-            return Mockito.mock(CardGameFlowScheduler.class);
+            return Mockito.mock(TaskScheduler.class, Answers.RETURNS_MOCKS);
         }
     }
 
@@ -150,7 +106,7 @@ class OutboxE2ETest {
 
     @BeforeEach
     void setUp() {
-        outboxEventRepository.deleteAllInBatch();
+        cleanDatabase();
     }
 
     @Nested
@@ -165,7 +121,7 @@ class OutboxE2ETest {
             // then — AFTER_COMMIT이 즉시 실행되어 이미 PUBLISHED
             final List<OutboxEvent> events = outboxEventRepository.findAll();
             assertThat(events).hasSize(1);
-            assertThat(events.get(0).getStatus()).isEqualTo(OutboxStatus.PUBLISHED);
+            assertThat(events.getFirst().getStatus()).isEqualTo(OutboxStatus.PUBLISHED);
         }
 
         @Test
@@ -178,8 +134,7 @@ class OutboxE2ETest {
 
             // then
             final List<OutboxEvent> events = outboxEventRepository.findAll();
-            assertThat(events).hasSize(5);
-            assertThat(events).allSatisfy(event ->
+            assertThat(events).hasSize(5).allSatisfy(event ->
                     assertThat(event.getStatus()).isEqualTo(OutboxStatus.PUBLISHED)
             );
         }
@@ -195,7 +150,7 @@ class OutboxE2ETest {
                     "{\"@type\":\"PlayerListUpdateEvent\",\"eventId\":\"test\",\"timestamp\":\"2025-01-01T00:00:00Z\",\"joinCode\":\"ABCD\"}");
             outboxEventRepository.saveAndFlush(event);
 
-            assertThat(outboxEventRepository.findAll().get(0).getStatus()).isEqualTo(OutboxStatus.PENDING);
+            assertThat(outboxEventRepository.findAll().getFirst().getStatus()).isEqualTo(OutboxStatus.PENDING);
 
             // when — Worker 수동 호출
             outboxRelayWorker.relay();
@@ -220,20 +175,23 @@ class OutboxE2ETest {
             assertThat(afterRelay.getStatus()).isEqualTo(OutboxStatus.PENDING);
         }
 
-        @Test
-        void 재시도_10회_실패_시_DEAD_LETTER로_전환된다() {
-            // given
-            final OutboxEvent event = OutboxEvent.create("nonexistent-stream-key", "{\"invalid\":true}");
-            outboxEventRepository.saveAndFlush(event);
+    }
 
-            // when — 10번 relay 반복
-            IntStream.range(0, 10).forEach(i -> outboxRelayWorker.relay());
+    @Test
+    void 재시도_10회_실패_시_DEAD_LETTER로_전환된다() {
+        // given
+        final OutboxEvent event = OutboxEvent.create("nonexistent-stream-key", "{\"invalid\":true}");
+        outboxEventRepository.saveAndFlush(event);
 
-            // then
-            final OutboxEvent afterRetries = outboxEventRepository.findById(event.getId()).orElseThrow();
-            assertThat(afterRetries.getStatus()).isEqualTo(OutboxStatus.DEAD_LETTER);
-            assertThat(afterRetries.getRetryCount()).isEqualTo(10);
+        // when — 10번 relay 반복
+        for (int i = 0; i < 10; i++) {
+            outboxRelayWorker.relay();
         }
+
+        // then
+        final OutboxEvent afterRetries = outboxEventRepository.findById(event.getId()).orElseThrow();
+        assertThat(afterRetries.getStatus()).isEqualTo(OutboxStatus.DEAD_LETTER);
+        assertThat(afterRetries.getRetryCount()).isEqualTo(10);
     }
 
     @Nested
@@ -250,7 +208,7 @@ class OutboxE2ETest {
 
             // then
             assertThat(fetched).hasSize(1);
-            assertThat(fetched.get(0).getStatus()).isEqualTo(OutboxStatus.IN_PROGRESS);
+            assertThat(fetched.getFirst().getStatus()).isEqualTo(OutboxStatus.IN_PROGRESS);
         }
 
         @Test

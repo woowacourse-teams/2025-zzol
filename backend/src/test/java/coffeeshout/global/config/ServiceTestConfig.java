@@ -1,6 +1,7 @@
 package coffeeshout.global.config;
 
 import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
+import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
@@ -13,6 +14,12 @@ import org.springframework.scheduling.TaskScheduler;
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
 public class ServiceTestConfig {
+
+    @Bean(name = "taskScheduler")
+    @Primary
+    public TaskScheduler noOpTaskScheduler() {
+        return Mockito.mock(TaskScheduler.class, Answers.RETURNS_MOCKS);
+    }
 
     @Bean
     @Primary

@@ -42,15 +42,18 @@ public class RouletteService {
 
     @Transactional
     public void saveRouletteResult(String joinCode, Winner winner) {
-        // RoomEntity 조회 및 상태 업데이트
         final RoomEntity roomEntity = getRoomEntity(joinCode);
-        roomEntity.updateRoomStatus(RoomState.DONE);
-        roomEntity.finish();
 
-        // PlayerEntity 조회
+        if (roomEntity.isDone()) {
+            log.info("이미 처리된 룰렛 결과입니다. (중복 저장 방지): joinCode={}", joinCode);
+            return;
+        }
+
+        roomEntity.finish();
+        roomJpaRepository.saveAndFlush(roomEntity);
+
         final PlayerEntity playerEntity = getPlayerEntity(roomEntity, winner.name().value());
 
-        // RouletteResultEntity 저장
         final RouletteResultEntity rouletteResult = new RouletteResultEntity(
                 roomEntity,
                 playerEntity,

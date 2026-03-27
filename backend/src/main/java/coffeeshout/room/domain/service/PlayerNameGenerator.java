@@ -44,7 +44,7 @@ public class PlayerNameGenerator {
         }
 
         throw new InvalidStateException(
-                RoomErrorCode.NICKNAME_GENERATION_FAILED,
+                RoomErrorCode.PLAYER_NAME_GENERATION_FAILED,
                 "닉네임 생성 실패: 최대 재시도 횟수를 초과했습니다."
         );
     }

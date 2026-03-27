@@ -1,5 +1,7 @@
 package coffeeshout.room.application.service.nickname;
 
+import coffeeshout.global.exception.custom.NotExistElementException;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.event.ProfanityWordAllowedEvent;
 import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
@@ -62,6 +64,8 @@ public class PlayerNameFeedbackService {
 
     private PlayerNameAuditEntity getAuditEntity(Long auditId) {
         return auditRepository.findById(auditId)
-                .orElseThrow(() -> new IllegalArgumentException("검열 항목을 찾을 수 없습니다: " + auditId));
+                .orElseThrow(() -> new NotExistElementException(
+                        RoomErrorCode.NO_EXIST_PLAYER_NAME_AUDIT, "검열 항목을 찾을 수 없습니다: " + auditId) {
+                });
     }
 }

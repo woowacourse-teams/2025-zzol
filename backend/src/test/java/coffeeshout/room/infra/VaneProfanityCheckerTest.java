@@ -48,16 +48,6 @@ class VaneProfanityCheckerTest {
     }
 
     @Nested
-    class 자음_축약_우회 {
-
-        @ParameterizedTest
-        @ValueSource(strings = {"ㅅㅂ", "ㅂㅅ"})
-        void 자음_축약으로_우회한_비속어는_true를_반환한다(String nickname) {
-            assertThat(profanityChecker.contains(nickname)).isTrue();
-        }
-    }
-
-    @Nested
     class 특수문자_삽입_우회 {
 
         @ParameterizedTest

@@ -110,7 +110,7 @@
             <tr th:each="item : ${flagged.content}">
                 <td th:text="${item.id}" style="color:#9ca3af;font-size:0.8rem;"></td>
                 <td>
-                    <span class="nickname" th:text="${item.nickname}"></span>
+                    <span class="nickname" th:text="${item.playerName}"></span>
                     <span class="badge badge-auto-blocked" style="margin-left:0.4rem;">자동 차단됨</span>
                 </td>
                 <td>
@@ -127,7 +127,7 @@
                 <td class="date" th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
                 <td>
                     <form th:action="@{/admin/nickname-audit/{id}/allow(id=${item.id})}" method="post"
-                          th:data-nickname="${item.nickname}" onsubmit="return confirmRelease(this)">
+                          th:data-nickname="${item.playerName}" onsubmit="return confirmRelease(this)">
                         <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
                         <input type="hidden" name="pendingPage" th:value="${pendingPage}">
                         <button type="submit" class="btn btn-allow">차단 해제</button>
@@ -176,7 +176,7 @@
             <tbody>
             <tr th:each="item : ${pending.content}">
                 <td th:text="${item.id}" style="color:#9ca3af;font-size:0.8rem;"></td>
-                <td class="nickname" th:text="${item.nickname}"></td>
+                <td class="nickname" th:text="${item.playerName}"></td>
                 <td>
                     <div class="conf-wrap">
                         <div class="conf-bar-bg">

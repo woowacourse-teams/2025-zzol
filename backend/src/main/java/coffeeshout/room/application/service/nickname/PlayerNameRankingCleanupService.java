@@ -37,17 +37,17 @@ public class PlayerNameRankingCleanupService {
 
     @Transactional
     public void cleanupBlockedNicknames() {
-        Set<String> blockedNicknames = auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED);
+        final Set<String> blockedNicknames = auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED);
         if (blockedNicknames.isEmpty()) {
             log.info("[RankingCleanup] BLOCKED 닉네임 없음, 종료");
             return;
         }
 
-        LocalDateTime now = LocalDateTime.now(clock);
-        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        final LocalDateTime now = LocalDateTime.now(clock);
+        final LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
 
-        Set<String> rankingNicknames = collectRankingNicknames(startOfMonth, now);
-        Set<String> targets = new HashSet<>(rankingNicknames);
+        final Set<String> rankingNicknames = collectRankingNicknames(startOfMonth, now);
+        final Set<String> targets = new HashSet<>(rankingNicknames);
         targets.retainAll(blockedNicknames);
 
         if (targets.isEmpty()) {
@@ -64,7 +64,7 @@ public class PlayerNameRankingCleanupService {
     }
 
     private Set<String> collectRankingNicknames(LocalDateTime start, LocalDateTime end) {
-        Set<String> nicknames = new HashSet<>();
+        final Set<String> nicknames = new HashSet<>();
 
         dashboardRepository.findTopWinnersBetween(start, end, RANKING_LIMIT)
                 .stream()
@@ -80,15 +80,15 @@ public class PlayerNameRankingCleanupService {
     }
 
     private int replaceNickname(String nickname) {
-        List<PlayerEntity> targets = playerRepository.findAllByPlayerName(nickname);
+        final List<PlayerEntity> targets = playerRepository.findAllByPlayerName(nickname);
         if (targets.isEmpty()) return 0;
 
-        List<RoomEntity> rooms = targets.stream()
+        final List<RoomEntity> rooms = targets.stream()
                 .map(PlayerEntity::getRoomSession)
                 .distinct()
                 .toList();
 
-        Map<RoomEntity, Set<String>> namesByRoom = playerRepository.findAllByRoomSessionIn(rooms)
+        final Map<RoomEntity, Set<String>> namesByRoom = playerRepository.findAllByRoomSessionIn(rooms)
                 .stream()
                 .collect(Collectors.groupingBy(
                         PlayerEntity::getRoomSession,
@@ -96,8 +96,8 @@ public class PlayerNameRankingCleanupService {
                 ));
 
         for (PlayerEntity player : targets) {
-            Set<String> existingNamesInRoom = namesByRoom.getOrDefault(player.getRoomSession(), Set.of());
-            PlayerName newName = nicknameGenerator.generate(existingNamesInRoom);
+            final Set<String> existingNamesInRoom = namesByRoom.getOrDefault(player.getRoomSession(), Set.of());
+            final PlayerName newName = nicknameGenerator.generate(existingNamesInRoom);
             log.debug("[RankingCleanup] {} → {} (playerId={})", nickname, newName, player.getId());
             player.updatePlayerName(newName);
         }

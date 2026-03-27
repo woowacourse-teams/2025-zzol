@@ -36,7 +36,7 @@ public class PlayerNameFeedbackService {
                 PlayerNameFeedbackEntity.OperatorDecision.ALLOWED,
                 null
         ));
-        int deleted = customProfanityRepository.deleteAiAuditByWord(nickname);
+        final int deleted = customProfanityRepository.deleteAiAuditByWord(nickname);
         if (deleted > 0) {
             eventPublisher.publishEvent(new ProfanityWordAllowedEvent(nickname));
         }

@@ -60,7 +60,7 @@ public class PlayerNameAuditService {
     }
 
     public void auditPending() {
-        long initialQueueSize = auditRepository.countByStatusAndAuditedAtIsNull(PlayerNameAuditStatus.UNAUDITED);
+        final long initialQueueSize = auditRepository.countByStatusAndAuditedAtIsNull(PlayerNameAuditStatus.UNAUDITED);
         unauditedQueueDepth.set(initialQueueSize);
         log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
 

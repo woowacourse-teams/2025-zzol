@@ -50,7 +50,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails admin = User.builder()
+        final UserDetails admin = User.builder()
                 .username(adminProperties.username())
                 .password(passwordEncoder.encode(adminProperties.password()))
                 .roles("ADMIN")

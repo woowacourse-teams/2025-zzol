@@ -77,7 +77,7 @@ public class PlayerNameAuditBatchProcessor {
     }
 
     private void autoBlock(String playerName) {
-        int inserted = customProfanityRepository.insertIgnore(playerName, Source.AI_AUDIT.name());
+        final int inserted = customProfanityRepository.insertIgnore(playerName, Source.AI_AUDIT.name());
         if (inserted == 0) return;
         eventPublisher.publishEvent(new ProfanityWordBlockedEvent(playerName));
         log.info("FLAGGED 자동 차단: {}", playerName);

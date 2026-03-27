@@ -79,7 +79,7 @@ public class RoomService {
 
     @Transactional
     public Room createRoom(String hostName) {
-        PlayerName playerName = new PlayerName(hostName);
+        final PlayerName playerName = new PlayerName(hostName);
         playerNameValidator.validate(playerName);
         final JoinCode joinCode = joinCodeGenerator.generate();
 
@@ -122,7 +122,7 @@ public class RoomService {
 
     public Winner spinRoulette(String joinCode, String hostName) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        Player host = room.findPlayer(new PlayerName(hostName));
+        final Player host = room.findPlayer(new PlayerName(hostName));
 
         return room.spinRoulette(host, new Roulette(new RoulettePicker()));
     }
@@ -189,7 +189,7 @@ public class RoomService {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final QrCode qrCode = room.getJoinCode().getQrCode();
 
-        QrCodeStatusResponse response = new QrCodeStatusResponse(qrCode.getStatus(), qrCode.getUrl());
+        final QrCodeStatusResponse response = new QrCodeStatusResponse(qrCode.getStatus(), qrCode.getUrl());
 
         log.debug("QR 코드 상태 반환: joinCode={}, status={}", joinCode, qrCode.getStatus());
         return response;

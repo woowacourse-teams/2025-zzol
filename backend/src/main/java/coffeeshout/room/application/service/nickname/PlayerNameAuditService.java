@@ -11,11 +11,16 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Service
@@ -38,6 +43,12 @@ public class PlayerNameAuditService {
 
     public Page<PlayerNameAuditEntity> listByStatus(PlayerNameAuditStatus status, Pageable pageable) {
         return auditRepository.findByStatus(status, pageable);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onAuditRequested(PlayerNameAuditRequestedEvent event) {
+        register(event.playerName());
     }
 
     public void register(String playerName) {

@@ -1,6 +1,5 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.room.application.service.nickname.PlayerNameAuditService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
@@ -11,9 +10,11 @@ import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.room.infra.persistence.RouletteResultEntity;
+import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
 import coffeeshout.room.infra.persistence.RouletteResultJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,7 @@ public class RouletteService {
     private final RoomJpaRepository roomJpaRepository;
     private final PlayerJpaRepository playerJpaRepository;
     private final RouletteResultJpaRepository rouletteResultJpaRepository;
-    private final PlayerNameAuditService playerNameAuditService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RoomState showRoulette(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
@@ -62,7 +63,7 @@ public class RouletteService {
                 winner.probability()
         );
         rouletteResultJpaRepository.save(rouletteResult);
-        playerNameAuditService.register(winner.name().value());
+        eventPublisher.publishEvent(new PlayerNameAuditRequestedEvent(winner.name().value()));
 
         log.info("RouletteResultEntity 저장 완료: joinCode={}, winner={}, probability={}",
                 joinCode, winner.name().value(), winner.probability());

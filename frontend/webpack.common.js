@@ -91,6 +91,14 @@ export default (_, argv) => {
           {
             from: 'public/sitemap.xml',
             to: 'sitemap.xml',
+            transform(content) {
+              const today = new Date().toISOString().split('T')[0];
+              return content.toString().replace(/<lastmod>.*<\/lastmod>/g, `<lastmod>${today}</lastmod>`);
+            },
+          },
+          {
+            from: 'public/manifest.json',
+            to: 'manifest.json',
           },
           ...(process.env.ENABLE_DEVTOOLS === 'true'
             ? [

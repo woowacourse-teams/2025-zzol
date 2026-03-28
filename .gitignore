@@ -5,3 +5,4 @@
 *.env.*
 
 .cursor/
+frontend/.claude/settings.local.json

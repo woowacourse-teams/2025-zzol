@@ -10,9 +10,11 @@ import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.room.infra.persistence.RouletteResultEntity;
+import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
 import coffeeshout.room.infra.persistence.RouletteResultJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ public class RouletteService {
     private final RoomJpaRepository roomJpaRepository;
     private final PlayerJpaRepository playerJpaRepository;
     private final RouletteResultJpaRepository rouletteResultJpaRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RoomState showRoulette(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
@@ -42,21 +45,25 @@ public class RouletteService {
 
     @Transactional
     public void saveRouletteResult(String joinCode, Winner winner) {
-        // RoomEntity 조회 및 상태 업데이트
         final RoomEntity roomEntity = getRoomEntity(joinCode);
-        roomEntity.updateRoomStatus(RoomState.DONE);
-        roomEntity.finish();
 
-        // PlayerEntity 조회
+        if (roomEntity.isDone()) {
+            log.info("이미 처리된 룰렛 결과입니다. (중복 저장 방지): joinCode={}", joinCode);
+            return;
+        }
+
+        roomEntity.finish();
+        roomJpaRepository.saveAndFlush(roomEntity);
+
         final PlayerEntity playerEntity = getPlayerEntity(roomEntity, winner.name().value());
 
-        // RouletteResultEntity 저장
         final RouletteResultEntity rouletteResult = new RouletteResultEntity(
                 roomEntity,
                 playerEntity,
                 winner.probability()
         );
         rouletteResultJpaRepository.save(rouletteResult);
+        eventPublisher.publishEvent(new PlayerNameAuditRequestedEvent(winner.name().value()));
 
         log.info("RouletteResultEntity 저장 완료: joinCode={}, winner={}, probability={}",
                 joinCode, winner.name().value(), winner.probability());

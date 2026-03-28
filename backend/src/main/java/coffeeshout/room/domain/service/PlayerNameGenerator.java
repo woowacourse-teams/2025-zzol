@@ -30,7 +30,7 @@ public class PlayerNameGenerator {
 
     private final WordPicker wordPicker;
 
-    public String generate(Set<String> existingNames) {
+    public PlayerName generate(Set<String> existingNames) {
         for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
             final String candidate = wordPicker.pick(ADJECTIVES) + wordPicker.pick(NOUNS);
 
@@ -39,12 +39,12 @@ public class PlayerNameGenerator {
             }
 
             if (!existingNames.contains(candidate)) {
-                return candidate;
+                return new PlayerName(candidate);
             }
         }
 
         throw new InvalidStateException(
-                RoomErrorCode.NICKNAME_GENERATION_FAILED,
+                RoomErrorCode.PLAYER_NAME_GENERATION_FAILED,
                 "닉네임 생성 실패: 최대 재시도 횟수를 초과했습니다."
         );
     }

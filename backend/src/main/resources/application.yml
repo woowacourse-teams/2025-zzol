@@ -114,6 +114,17 @@ outbox:
   relay:
     delay: 500  # ms, 로컬에서는 application-local.yml로 오버라이드
 
+admin:
+  username: ${ADMIN_USERNAME}
+  password: ${ADMIN_PASSWORD}
+
+nickname-audit:
+  gemini-api-key: ${GEMINI_API_KEY}   # local/test 프로파일에서는 NoOpNicknameAuditor가 대신 동작
+  model: gemini-2.5-flash
+  flagged-threshold: 0.85
+  batch-size: 100                      # API 호출 1회당 처리량 (RPM 5 기준 100개씩 5회 = 500개/min)
+  feedback-injection-threshold: 20
+
 room:
   removalDelay: 1h
   qr:
@@ -199,7 +210,22 @@ resilience4j:
           - java.io.IOException
           - com.oracle.bmc.model.BmcException
           - java.lang.RuntimeException
-
+      geminiAudit:
+        max-attempts: 4                         # 최초 1회 + 재시도 3회
+        wait-duration: 2s                       # 초기 대기
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2       # 2s → 4s → 8s
+        exponential-max-wait-duration: 30s      # 상한선 (rate limit 대응)
+        retry-exceptions:
+          - java.lang.RuntimeException   # SDK가 rate limit/서버 오류 시 RuntimeException으로 래핑
+        ignore-exceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted  # RateLimiter 초과는 재시도하지 않음
+  ratelimiter:
+    instances:
+      geminiAudit:
+        limit-for-period: 1                     # 주기당 허용 요청 수
+        limit-refresh-period: 13s               # 13초마다 1개씩 (RPM 4.6 안전 수치)
+        timeout-duration: 60s                   # 허용량을 기다릴 최대 시간 (배치이므로 넉넉히)
 websocket:
   rate-limit:
     max-messages-per-second: 20

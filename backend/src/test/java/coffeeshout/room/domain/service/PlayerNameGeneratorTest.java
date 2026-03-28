@@ -22,7 +22,7 @@ class PlayerNameGeneratorTest {
             WordPicker random = words -> words.get(ThreadLocalRandom.current().nextInt(words.size()));
             final PlayerNameGenerator generator = new PlayerNameGenerator(random);
 
-            final String nickname = generator.generate(Set.of());
+            final String nickname = generator.generate(Set.of()).value();
 
             assertThat(nickname.length()).isLessThanOrEqualTo(10);
         }
@@ -35,7 +35,7 @@ class PlayerNameGeneratorTest {
             AtomicInteger idx = new AtomicInteger(0);
             PlayerNameGenerator generator = new PlayerNameGenerator(words -> sequence.get(idx.getAndIncrement()));
 
-            final String nickname = generator.generate(Set.of("용감한호랑이"));
+            final String nickname = generator.generate(Set.of("용감한호랑이")).value();
 
             assertThat(nickname).isEqualTo("빠른여우");
         }
@@ -43,7 +43,7 @@ class PlayerNameGeneratorTest {
         @Test
         void 최대_재시도_횟수를_초과하면_예외를_던진다() {
             // 항상 ADJECTIVES[0] + NOUNS[0] = "용감한호랑이"만 생성
-            PlayerNameGenerator generator = new PlayerNameGenerator(words -> words.get(0));
+            PlayerNameGenerator generator = new PlayerNameGenerator(List::getFirst);
 
             assertThatThrownBy(() -> generator.generate(Set.of("용감한호랑이")))
                     .isInstanceOf(InvalidStateException.class);

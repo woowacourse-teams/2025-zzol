@@ -5,10 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.global.exception.custom.InvalidStateException;
-import coffeeshout.racinggame.domain.RacingGame;
-import coffeeshout.racinggame.domain.RacingGameState;
-import coffeeshout.racinggame.domain.Runner;
-import coffeeshout.racinggame.domain.SpeedCalculator;
 import coffeeshout.room.domain.player.Player;
 import java.time.Instant;
 import java.util.List;
@@ -36,7 +32,7 @@ class RacingGameTest {
         racingGame.setUp(players);
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.get(0), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
         racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
 
         // when
@@ -53,7 +49,7 @@ class RacingGameTest {
         racingGame.setUp(players);
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.get(0), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
+        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
         racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
 
         // when
@@ -71,7 +67,7 @@ class RacingGameTest {
         racingGame.setUp(players);
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.get(0), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
         racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
 
         // then
@@ -85,7 +81,7 @@ class RacingGameTest {
         racingGame.setUp(players);
 
         // when && then
-        assertThatThrownBy(() -> racingGame.updateSpeed(players.get(0), 10, speedCalculator, Instant.now()))
+        assertThatThrownBy(() -> racingGame.updateSpeed(players.getFirst(), 10, speedCalculator, Instant.now()))
                 .isInstanceOf(InvalidStateException.class);
     }
 
@@ -99,14 +95,14 @@ class RacingGameTest {
 
         for (int i = 0; i < 100; i++) {
             racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
-            racingGame.updateSpeed(players.get(0), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+            racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
             racingGame.moveAll();
         }
 
         Thread.sleep(2);
 
         for (int i = 0; i < 200; i++) {
-            racingGame.updateSpeed(players.get(0), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+            racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
             racingGame.moveAll();
         }
 
@@ -115,7 +111,7 @@ class RacingGameTest {
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getRank().get(players.get(0))).isEqualTo(2);
+        assertThat(result.getRank().get(players.getFirst())).isEqualTo(2);
         assertThat(result.getRank().get(players.get(1))).isEqualTo(1);
     }
 }

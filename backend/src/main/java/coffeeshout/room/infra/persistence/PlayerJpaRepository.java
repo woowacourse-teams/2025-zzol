@@ -2,6 +2,7 @@ package coffeeshout.room.infra.persistence;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
 public interface PlayerJpaRepository extends Repository<PlayerEntity, Long> {
@@ -10,4 +11,11 @@ public interface PlayerJpaRepository extends Repository<PlayerEntity, Long> {
     Optional<PlayerEntity> findByRoomSessionAndPlayerName(RoomEntity roomSession, String playerName);
 
     List<PlayerEntity> findByRoomSessionAndPlayerNameIn(RoomEntity roomSession, List<String> playerNames);
+
+    @Query("SELECT p FROM PlayerEntity p JOIN FETCH p.roomSession WHERE p.playerName = :playerName")
+    List<PlayerEntity> findAllByPlayerName(String playerName);
+
+    List<PlayerEntity> findAllByRoomSession(RoomEntity roomSession);
+
+    List<PlayerEntity> findAllByRoomSessionIn(List<RoomEntity> roomSessions);
 }

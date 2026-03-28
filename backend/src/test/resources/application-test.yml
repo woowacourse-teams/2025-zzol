@@ -1,13 +1,10 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb;
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect  # 이것만 변경!
     hibernate:
-      ddl-auto: create-drop
+      # create: 기동 시 DROP 후 재생성 — withReuse 환경에서 잔여 스키마를 정리한다
+      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
@@ -16,10 +13,6 @@ spring:
     timeout-per-shutdown-phase: 1s
   flyway:
     enabled: false
-  cloud:
-    aws:
-      region:
-        static: ap-northeast-2
   data:
     redis:
       ssl:
@@ -32,7 +25,7 @@ server:
   shutdown: immediate
 
 redisson:
-  enabled: false
+  enabled: true
 
 logging:
   level:
@@ -49,6 +42,14 @@ management:
   otlp:
     tracing:
       endpoint: http://localhost:4318
+
+resilience4j:
+  ratelimiter:
+    instances:
+      geminiAudit:
+        limit-for-period: 100
+        limit-refresh-period: 1s
+        timeout-duration: 5s
 
 room:
   qr:

@@ -1,15 +1,16 @@
 package coffeeshout.racinggame.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.global.ServiceTest;
-import coffeeshout.racinggame.application.RacingGameService;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.racinggame.domain.RacingGameState;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,17 +35,19 @@ class RacingGameServiceTest extends ServiceTest {
     }
 
     @Test
-    void 레이싱_게임을_시작하면_DESCRIPTION_PREPARE_PLAYING_순서로_상태가_전환된다() throws InterruptedException {
+    void 레이싱_게임을_시작하면_DESCRIPTION_PREPARE_PLAYING_순서로_상태가_전환된다() {
         // given
         room.addMiniGame(new PlayerName(HOST_NAME), racingGame);
         room.startNextGame(HOST_NAME);
 
         // when
         racingGameService.start(room.getJoinCode().getValue(), HOST_NAME);
-        Thread.sleep(100);
 
         // then
-        assertThat(racingGame.getState()).isEqualTo(RacingGameState.PLAYING);
-        assertThat(racingGame.isStarted()).isTrue();
+        await().atMost(Duration.ofSeconds(3))
+                .untilAsserted(() -> {
+                    assertThat(racingGame.getState()).isEqualTo(RacingGameState.PLAYING);
+                    assertThat(racingGame.isStarted()).isTrue();
+                });
     }
 }

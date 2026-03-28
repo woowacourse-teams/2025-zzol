@@ -79,8 +79,8 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).hasSize(3);
-            assertThat(result.get(0).playerName()).isEqualTo("철수");
-            assertThat(result.get(0).winCount()).isEqualTo(5);
+            assertThat(result.getFirst().playerName()).isEqualTo("철수");
+            assertThat(result.getFirst().winCount()).isEqualTo(5);
             assertThat(result.get(1).playerName()).isEqualTo("영희");
             assertThat(result.get(1).winCount()).isEqualTo(3);
             assertThat(result.get(2).playerName()).isEqualTo("민수");
@@ -117,8 +117,8 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).playerName()).isEqualTo("철수");
-            assertThat(result.get(0).winCount()).isEqualTo(2);
+            assertThat(result.getFirst().playerName()).isEqualTo("철수");
+            assertThat(result.getFirst().winCount()).isEqualTo(2);
         }
 
         @Test
@@ -141,8 +141,8 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).hasSize(5);
-            assertThat(result.get(0).playerName()).isEqualTo("플레이어10");
-            assertThat(result.get(0).winCount()).isEqualTo(10);
+            assertThat(result.getFirst().playerName()).isEqualTo("플레이어10");
+            assertThat(result.getFirst().winCount()).isEqualTo(10);
             assertThat(result.get(4).playerName()).isEqualTo("플레이어6");
             assertThat(result.get(4).winCount()).isEqualTo(6);
         }
@@ -285,8 +285,8 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).gameType()).isEqualTo(MiniGameType.CARD_GAME);
-            assertThat(result.get(0).playCount()).isEqualTo(3);
+            assertThat(result.getFirst().gameType()).isEqualTo(MiniGameType.CARD_GAME);
+            assertThat(result.getFirst().playCount()).isEqualTo(3);
         }
 
         @Test
@@ -304,8 +304,8 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).gameType()).isEqualTo(MiniGameType.CARD_GAME);
-            assertThat(result.get(0).playCount()).isEqualTo(5);
+            assertThat(result.getFirst().gameType()).isEqualTo(MiniGameType.CARD_GAME);
+            assertThat(result.getFirst().playCount()).isEqualTo(5);
         }
 
         @Test
@@ -323,8 +323,8 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).gameType()).isEqualTo(MiniGameType.CARD_GAME);
-            assertThat(result.get(0).playCount()).isEqualTo(3);
+            assertThat(result.getFirst().gameType()).isEqualTo(MiniGameType.CARD_GAME);
+            assertThat(result.getFirst().playCount()).isEqualTo(3);
         }
 
         @Test

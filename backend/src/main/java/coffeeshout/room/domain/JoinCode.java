@@ -1,6 +1,6 @@
 package coffeeshout.room.domain;
 
-import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.global.exception.custom.BusinessException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +39,7 @@ public final class JoinCode {
 
     private void validate(String value) {
         if (value == null) {
-            throw new InvalidArgumentException(RoomErrorCode.JOIN_CODE_NULL, "참여 코드는 null일 수 없습니다.");
+            throw new BusinessException(RoomErrorCode.JOIN_CODE_NULL, "참여 코드는 null일 수 없습니다.");
         }
 
         validateLength(value);
@@ -48,14 +48,14 @@ public final class JoinCode {
 
     private void validateLength(String value) {
         if (value.length() != CODE_LENGTH) {
-            throw new InvalidArgumentException(RoomErrorCode.JOIN_CODE_ILLEGAL_LENGTH,
+            throw new BusinessException(RoomErrorCode.JOIN_CODE_ILLEGAL_LENGTH,
                     "4자리 코드여야 합니다. 현재 길이: " + value.length());
         }
     }
 
     private void validateCharacters(String value) {
         if (value.chars().anyMatch(charCode -> !isValidCharacter(charCode))) {
-            throw new InvalidArgumentException(RoomErrorCode.JOIN_CODE_ILLEGAL_CHARACTER,
+            throw new BusinessException(RoomErrorCode.JOIN_CODE_ILLEGAL_CHARACTER,
                     "허용되지 않는 문자가 포함되어 있습니다. 현재 코드: " + value);
         }
     }

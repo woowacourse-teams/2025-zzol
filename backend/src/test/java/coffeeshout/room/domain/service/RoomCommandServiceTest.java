@@ -5,8 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.global.ServiceTest;
-import coffeeshout.global.exception.custom.InvalidStateException;
-import coffeeshout.global.exception.custom.NotExistElementException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -128,7 +127,7 @@ class RoomCommandServiceTest extends ServiceTest {
 
             // when & then
             assertThatThrownBy(() -> roomCommandService.joinGuest(invalidJoinCode, guestName))
-                    .isInstanceOf(NotExistElementException.class);
+                    .isInstanceOf(BusinessException.class);
         }
 
         @Test
@@ -141,7 +140,7 @@ class RoomCommandServiceTest extends ServiceTest {
 
             // when & then
             assertThatThrownBy(() -> roomCommandService.joinGuest(existingJoinCode, guestName))
-                    .isInstanceOf(InvalidStateException.class);
+                    .isInstanceOf(BusinessException.class);
         }
 
         @Test
@@ -178,7 +177,7 @@ class RoomCommandServiceTest extends ServiceTest {
 
             // when & then
             assertThatThrownBy(() -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트10")))
-                    .isInstanceOf(InvalidStateException.class);
+                    .isInstanceOf(BusinessException.class);
         }
 
         @Test
@@ -192,7 +191,7 @@ class RoomCommandServiceTest extends ServiceTest {
 
             // when & then
             assertThatThrownBy(() -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트")))
-                    .isInstanceOf(InvalidStateException.class);
+                    .isInstanceOf(BusinessException.class);
         }
 
     }

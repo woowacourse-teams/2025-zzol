@@ -1,7 +1,7 @@
 package coffeeshout.cardgame.domain;
 
 import coffeeshout.cardgame.domain.card.Card;
-import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.Player;
@@ -47,7 +47,7 @@ public class PlayerHands {
         return playerHands.keySet().stream()
                 .filter(player -> player.sameName(name))
                 .findFirst()
-                .orElseThrow(() -> new InvalidArgumentException(
+                .orElseThrow(() -> new BusinessException(
                         RoomErrorCode.NO_EXIST_PLAYER,
                         "해당 플레이어를 찾을 수 없습니다. name: " + name)
                 );

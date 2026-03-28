@@ -1,6 +1,6 @@
 package coffeeshout.speedtouch.infra.messaging.consumer;
 
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.speedtouch.application.SpeedTouchGameProgressHandler;
 import coffeeshout.speedtouch.domain.event.TouchProgressCommandEvent;
 import java.util.function.Consumer;
@@ -23,7 +23,7 @@ public class TouchProgressEventConsumer implements Consumer<TouchProgressCommand
                     event.playerName(),
                     event.touchedNumber()
             );
-        } catch (InvalidStateException e) {
+        } catch (BusinessException e) {
             log.warn("터치 이벤트 처리 중 상태 오류: eventId={}, joinCode={}",
                     event.eventId(), event.joinCode(), e);
         } catch (Exception e) {

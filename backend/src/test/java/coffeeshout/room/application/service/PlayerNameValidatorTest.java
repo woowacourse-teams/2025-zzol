@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameValidator;
@@ -37,21 +37,21 @@ class PlayerNameValidatorTest {
         @Test
         void null_이름은_예외를_던진다() {
             assertThatThrownBy(() -> playerNameValidator.validate(new PlayerName(null)))
-                    .isInstanceOf(InvalidArgumentException.class)
+                    .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_BLANK);
         }
 
         @Test
         void 빈_문자열_이름은_예외를_던진다() {
             assertThatThrownBy(() -> playerNameValidator.validate(new PlayerName("")))
-                    .isInstanceOf(InvalidArgumentException.class)
+                    .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_BLANK);
         }
 
         @Test
         void 공백만_있는_이름은_예외를_던진다() {
             assertThatThrownBy(() -> playerNameValidator.validate(new PlayerName("   ")))
-                    .isInstanceOf(InvalidArgumentException.class)
+                    .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_BLANK);
         }
     }
@@ -72,11 +72,11 @@ class PlayerNameValidatorTest {
     class 비속어가_있는_경우 {
 
         @Test
-        void InvalidArgumentException을_던진다() {
+        void BusinessException을_던진다() {
             when(profanityChecker.contains("비속어닉네임")).thenReturn(true);
 
             assertThatThrownBy(() -> playerNameValidator.validate(new PlayerName("비속어닉네임")))
-                    .isInstanceOf(InvalidArgumentException.class)
+                    .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
         }
     }

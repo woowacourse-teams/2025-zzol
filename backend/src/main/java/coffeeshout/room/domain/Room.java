@@ -3,8 +3,8 @@ package coffeeshout.room.domain;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.state;
 
-import coffeeshout.global.exception.custom.InvalidArgumentException;
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
@@ -177,7 +177,7 @@ public class Room {
 
     public void assignQrCode(QrCode qrCode) {
         if (qrCode == null) {
-            throw new InvalidArgumentException(RoomErrorCode.QR_CODE_GENERATION_FAILED,
+            throw new InfrastructureException(RoomErrorCode.QR_CODE_GENERATION_FAILED,
                     "QR 코드는 null일 수 없습니다.");
         }
 
@@ -202,7 +202,7 @@ public class Room {
 
     private void validateRoomReady() {
         if (roomState != RoomState.READY) {
-            throw new InvalidStateException(
+            throw new BusinessException(
                     RoomErrorCode.ROOM_NOT_READY_TO_JOIN,
                     "READY 상태에서만 참여 가능합니다. 현재 상태: " + roomState
             );
@@ -211,7 +211,7 @@ public class Room {
 
     private void validateCanJoin() {
         if (!canJoin()) {
-            throw new InvalidStateException(
+            throw new BusinessException(
                     RoomErrorCode.ROOM_FULL,
                     "방에는 최대 9명만 입장가능합니다. 현재 인원: " + players.getPlayerCount()
             );
@@ -220,7 +220,7 @@ public class Room {
 
     private void validatePlayerNameNotDuplicate(PlayerName guestName) {
         if (hasDuplicatePlayerName(guestName)) {
-            throw new InvalidStateException(
+            throw new BusinessException(
                     RoomErrorCode.DUPLICATE_PLAYER_NAME,
                     "중복된 닉네임은 들어올 수 없습니다. 닉네임: " + guestName.value()
             );

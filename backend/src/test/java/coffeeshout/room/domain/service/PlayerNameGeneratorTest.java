@@ -3,7 +3,7 @@ package coffeeshout.room.domain.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.exception.custom.BusinessException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,7 +46,7 @@ class PlayerNameGeneratorTest {
             PlayerNameGenerator generator = new PlayerNameGenerator(List::getFirst);
 
             assertThatThrownBy(() -> generator.generate(Set.of("용감한호랑이")))
-                    .isInstanceOf(InvalidStateException.class);
+                    .isInstanceOf(BusinessException.class);
         }
     }
 }

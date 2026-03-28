@@ -3,7 +3,7 @@ package coffeeshout.room.domain.player;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.global.exception.custom.BusinessException;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +63,7 @@ class ColorUsageTest {
 
         // when & then
         assertThatThrownBy(() -> colorUsage.pickRandomOne())
-                .isInstanceOf(InvalidArgumentException.class)
+                .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("사용가능한 색깔을 찾지 못했습니다");
     }
 
@@ -71,7 +71,7 @@ class ColorUsageTest {
     void release에_음수인덱스_전달시_예외가발생한다() {
         // when & then
         assertThatThrownBy(() -> colorUsage.release(-1))
-                .isInstanceOf(InvalidArgumentException.class)
+                .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("유효하지 않은 색깔 index입니다");
     }
 
@@ -79,7 +79,7 @@ class ColorUsageTest {
     void release에_9이상인덱스_전달시_예외가발생한다() {
         // when & then
         assertThatThrownBy(() -> colorUsage.release(9))
-                .isInstanceOf(InvalidArgumentException.class)
+                .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("유효하지 않은 색깔 index입니다");
     }
 

@@ -1,7 +1,7 @@
 package coffeeshout.room.domain.service;
 
 import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.exception.custom.NotExistElementException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -19,7 +19,7 @@ public class RoomQueryService {
 
     public Room getByJoinCode(@NonNull JoinCode joinCode) {
         return roomRepository.findByJoinCode(joinCode)
-                .orElseThrow(() -> new NotExistElementException(GlobalErrorCode.NOT_EXIST, "방이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "방이 존재하지 않습니다."));
     }
 
     public boolean existsByJoinCode(@NonNull JoinCode joinCode) {

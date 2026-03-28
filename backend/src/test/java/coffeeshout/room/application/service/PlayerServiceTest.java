@@ -4,8 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.global.StreamMockedServiceTest;
-import coffeeshout.global.exception.custom.InvalidArgumentException;
-import coffeeshout.global.exception.custom.NotExistElementException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.PlayerKickEvent;
@@ -98,7 +97,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> playerService.checkAndKickPlayer(joinCode.getValue(), "존재하지_않는_게스트"))
-                        .isInstanceOf(InvalidArgumentException.class);
+                        .isInstanceOf(BusinessException.class);
             }
 
             @Test
@@ -110,7 +109,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> playerService.checkAndKickPlayer(joinCode.getValue(), null))
-                        .isInstanceOf(InvalidArgumentException.class);
+                        .isInstanceOf(BusinessException.class);
             }
         }
 
@@ -119,14 +118,14 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             // when & then
             PlayerKickEvent event = new PlayerKickEvent("ABCD", "플레이어");
             assertThatThrownBy(() -> playerService.kickPlayer(event))
-                    .isInstanceOf(NotExistElementException.class);
+                    .isInstanceOf(BusinessException.class);
         }
 
         @Test
         void null_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
             assertThatThrownBy(() -> playerService.checkAndKickPlayer(null, "플레이어"))
-                    .isInstanceOf(InvalidArgumentException.class);
+                    .isInstanceOf(BusinessException.class);
         }
     }
 
@@ -163,21 +162,21 @@ class PlayerServiceTest extends StreamMockedServiceTest {
 
             // when & then
             assertThatThrownBy(() -> playerService.getPlayers(joinCode.getValue()))
-                    .isInstanceOf(NotExistElementException.class);
+                    .isInstanceOf(BusinessException.class);
         }
 
         @Test
         void 존재하지_않는_방_코드로_조회_시_예외가_발생한다() {
             // when & then
             assertThatThrownBy(() -> playerService.getPlayers("ABCD"))
-                    .isInstanceOf(NotExistElementException.class);
+                    .isInstanceOf(BusinessException.class);
         }
 
         @Test
         void null_방_코드로_조회_시_예외가_발생한다() {
             // when & then
             assertThatThrownBy(() -> playerService.getPlayers(null))
-                    .isInstanceOf(InvalidArgumentException.class);
+                    .isInstanceOf(BusinessException.class);
         }
     }
 }

@@ -8,8 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.room.config.QrProperties;
-import coffeeshout.global.exception.custom.QRCodeGenerationException;
-import coffeeshout.global.exception.custom.StorageServiceException;
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.port.StorageService;
@@ -89,7 +88,7 @@ class QrCodeServiceTest {
 
         // when & then
         assertThatThrownBy(() -> qrCodeService.getQrCodeUrl(contents))
-                .isInstanceOf(QRCodeGenerationException.class)
+                .isInstanceOf(InfrastructureException.class)
                 .hasMessageContaining(RoomErrorCode.QR_CODE_GENERATION_FAILED.getMessage());
     }
 
@@ -101,11 +100,11 @@ class QrCodeServiceTest {
 
         when(qrCodeGenerator.generate(anyString())).thenReturn(qrCodeImage);
         when(storageService.upload(contents, qrCodeImage))
-                .thenThrow(new StorageServiceException(RoomErrorCode.QR_CODE_UPLOAD_FAILED, RoomErrorCode.QR_CODE_UPLOAD_FAILED.getMessage()));
+                .thenThrow(new InfrastructureException(RoomErrorCode.QR_CODE_UPLOAD_FAILED, RoomErrorCode.QR_CODE_UPLOAD_FAILED.getMessage()));
 
         // when & then
         assertThatThrownBy(() -> qrCodeService.getQrCodeUrl(contents))
-                .isInstanceOf(StorageServiceException.class)
+                .isInstanceOf(InfrastructureException.class)
                 .hasMessageContaining(RoomErrorCode.QR_CODE_UPLOAD_FAILED.getMessage());
     }
 
@@ -119,12 +118,12 @@ class QrCodeServiceTest {
         when(qrCodeGenerator.generate(anyString())).thenReturn(qrCodeImage);
         when(storageService.upload(contents, qrCodeImage)).thenReturn(storageKey);
         when(storageService.getUrl(storageKey))
-                .thenThrow(new StorageServiceException(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED,
+                .thenThrow(new InfrastructureException(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED,
                         RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage()));
 
         // when & then
         assertThatThrownBy(() -> qrCodeService.getQrCodeUrl(contents))
-                .isInstanceOf(StorageServiceException.class)
+                .isInstanceOf(InfrastructureException.class)
                 .hasMessageContaining(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
     }
 
@@ -156,7 +155,7 @@ class QrCodeServiceTest {
 
         // when & then
         assertThatThrownBy(() -> qrCodeService.getQrCodeUrl(contents))
-                .isInstanceOf(QRCodeGenerationException.class)
+                .isInstanceOf(InfrastructureException.class)
                 .hasMessageContaining(RoomErrorCode.QR_CODE_GENERATION_FAILED.getMessage());
     }
 

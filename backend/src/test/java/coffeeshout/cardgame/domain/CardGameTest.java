@@ -8,8 +8,7 @@ import coffeeshout.cardgame.domain.card.CardGameDeckGenerator;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.PlayersFixture;
-import coffeeshout.global.exception.custom.InvalidArgumentException;
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
@@ -101,7 +100,7 @@ class CardGameTest {
 
             // when & then
             assertThatThrownBy(() -> cardGame.selectCard(player, 0))
-                    .isInstanceOf(InvalidStateException.class);
+                    .isInstanceOf(BusinessException.class);
         }
 
         @Test
@@ -280,7 +279,7 @@ class CardGameTest {
             PlayerName playerName = new PlayerName(nonExistentName);
             // when & then
             assertThatThrownBy(() -> cardGame.findPlayerByName(playerName))
-                    .isInstanceOf(InvalidArgumentException.class);
+                    .isInstanceOf(BusinessException.class);
         }
     }
 

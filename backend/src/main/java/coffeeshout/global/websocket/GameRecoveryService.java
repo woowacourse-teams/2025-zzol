@@ -1,7 +1,7 @@
 package coffeeshout.global.websocket;
 
 import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.global.websocket.ui.dto.RecoveryMessage;
 import coffeeshout.room.domain.JoinCode;
@@ -217,7 +217,7 @@ public class GameRecoveryService {
 
     private void validateStreamId(String streamId) {
         if (streamId == null || !streamId.matches(STREAM_ID_PATTERN)) {
-            throw new InvalidArgumentException(
+            throw new BusinessException(
                     GlobalErrorCode.INVALID_STREAM_ID,
                     "유효하지 않은 Stream ID 형식입니다: " + streamId
             );

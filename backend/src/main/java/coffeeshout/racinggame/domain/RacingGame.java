@@ -1,6 +1,6 @@
 package coffeeshout.racinggame.domain;
 
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -67,7 +67,7 @@ public class RacingGame implements Playable {
 
     private void validatePlaying() {
         if (state != RacingGameState.PLAYING) {
-            throw new InvalidStateException(
+            throw new BusinessException(
                     RacingGameErrorCode.NOT_PLAYING_STATE,
                     "현재 게임 상태가 플레이 중이 아닙니다: " + state
             );

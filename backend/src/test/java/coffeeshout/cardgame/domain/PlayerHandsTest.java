@@ -7,7 +7,7 @@ import coffeeshout.cardgame.domain.card.AdditionCard;
 import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.cardgame.domain.card.MultiplierCard;
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
@@ -163,7 +163,7 @@ class PlayerHandsTest {
             PlayerName playerName = new PlayerName(nonExistentName);
             // when & then
             assertThatThrownBy(() -> playerHands.findPlayerByName(playerName))
-                    .isInstanceOf(InvalidArgumentException.class);
+                    .isInstanceOf(BusinessException.class);
         }
     }
 

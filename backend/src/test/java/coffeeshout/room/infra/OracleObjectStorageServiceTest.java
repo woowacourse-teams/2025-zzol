@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import coffeeshout.global.config.properties.OracleObjectStorageProperties;
 import coffeeshout.room.config.QrProperties;
-import coffeeshout.global.exception.custom.StorageServiceException;
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.room.domain.RoomErrorCode;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
@@ -122,7 +122,7 @@ class OracleObjectStorageServiceTest {
 
         // when & then
         assertThatThrownBy(() -> oracleObjectStorageService.upload(contents, emptyData))
-                .isInstanceOf(StorageServiceException.class)
+                .isInstanceOf(InfrastructureException.class)
                 .hasMessageContaining("QR 이미지 바이트가 비어 있습니다.");
     }
 
@@ -137,7 +137,7 @@ class OracleObjectStorageServiceTest {
 
         // when & then
         // 서킷 브레이커 적용 후 원본 예외를 그대로 던지도록 변경됨
-        // fallback에서 StorageServiceException으로 래핑하지만, 단위 테스트에서는 어노테이션이 동작하지 않음
+        // fallback에서 InfrastructureException으로 래핑하지만, 단위 테스트에서는 어노테이션이 동작하지 않음
         assertThatThrownBy(() -> oracleObjectStorageService.upload(contents, qrCodeImage))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Upload failed");
@@ -168,7 +168,7 @@ class OracleObjectStorageServiceTest {
 
         // when & then
         assertThatThrownBy(() -> oracleObjectStorageService.getUrl(storageKey))
-                .isInstanceOf(StorageServiceException.class)
+                .isInstanceOf(InfrastructureException.class)
                 .hasMessageContaining(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
 
         // 실패 메트릭 검증
@@ -186,7 +186,7 @@ class OracleObjectStorageServiceTest {
 
         // when & then
         assertThatThrownBy(() -> oracleObjectStorageService.getUrl(storageKey))
-                .isInstanceOf(StorageServiceException.class)
+                .isInstanceOf(InfrastructureException.class)
                 .hasMessageContaining(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
 
         // 실패 메트릭 검증

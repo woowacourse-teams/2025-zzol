@@ -20,7 +20,7 @@ public class WordCommandEventConsumer implements Consumer<WordCommandEvent> {
         try {
             progressHandler.handleWord(event.joinCode(), event.playerName(), event.word());
         } catch (BusinessException e) {
-            log.warn("단어 입력 이벤트 처리 중 상태 오류: eventId={}, joinCode={}",
+            log.warn("단어 입력 이벤트 처리 중 비즈니스 오류: eventId={}, joinCode={}",
                     event.eventId(), event.joinCode(), e);
         } catch (Exception e) {
             log.error("단어 입력 이벤트 처리 실패: eventId={}, joinCode={}",

@@ -1,6 +1,6 @@
 package coffeeshout.room.domain.service;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
@@ -43,7 +43,7 @@ public class PlayerNameGenerator {
             }
         }
 
-        throw new BusinessException(
+        throw new SystemException(
                 RoomErrorCode.PLAYER_NAME_GENERATION_FAILED,
                 "닉네임 생성 실패: 최대 재시도 횟수를 초과했습니다."
         );

@@ -4,6 +4,7 @@ import static coffeeshout.global.log.LogAspect.NOTIFICATION_MARKER;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.global.exception.custom.SystemException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
@@ -47,6 +48,15 @@ public class RestExceptionHandler {
         return getProblemDetail(exception.getErrorCode().getHttpStatus(), exception, exception.getErrorCode());
     }
 
+    @ExceptionHandler(SystemException.class)
+    public ProblemDetail handleSystemException(
+            SystemException exception,
+            HttpServletRequest request
+    ) {
+        logError(exception, request);
+        return getProblemDetail(exception.getErrorCode().getHttpStatus(), exception, exception.getErrorCode());
+    }
+
     @ExceptionHandler(InfrastructureException.class)
     public ProblemDetail handleInfrastructureException(
             InfrastructureException exception,
@@ -70,11 +80,11 @@ public class RestExceptionHandler {
                 .reduce((msg1, msg2) -> msg1 + ", " + msg2)
                 .orElse(GlobalErrorCode.VALIDATION_ERROR.getMessage());
 
-        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, new ErrorCode() {
-            @Override public String getCode() { return GlobalErrorCode.VALIDATION_ERROR.getCode(); }
-            @Override public String getMessage() { return errorMessage; }
-            @Override public org.springframework.http.HttpStatus getHttpStatus() { return HttpStatus.BAD_REQUEST; }
-        });
+        return getProblemDetail(
+                HttpStatus.BAD_REQUEST,
+                exception,
+                getErrorCode(errorMessage, GlobalErrorCode.VALIDATION_ERROR)
+        );
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -89,11 +99,10 @@ public class RestExceptionHandler {
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .collect(Collectors.joining(", "));
 
-        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, new ErrorCode() {
-            @Override public String getCode() { return GlobalErrorCode.CONSTRAINT_VIOLATION.getCode(); }
-            @Override public String getMessage() { return errorMessage.isBlank() ? GlobalErrorCode.CONSTRAINT_VIOLATION.getMessage() : errorMessage; }
-            @Override public org.springframework.http.HttpStatus getHttpStatus() { return HttpStatus.BAD_REQUEST; }
-        });
+        return getProblemDetail(HttpStatus.BAD_REQUEST,
+                exception,
+                getErrorCode(errorMessage, GlobalErrorCode.CONSTRAINT_VIOLATION)
+        );
     }
 
     private static ProblemDetail getProblemDetail(HttpStatus status, Exception exception, ErrorCode errorCode) {
@@ -104,6 +113,25 @@ public class RestExceptionHandler {
         problemDetail.setProperty("exception", exception.getClass().getSimpleName());
 
         return problemDetail;
+    }
+
+    private static ErrorCode getErrorCode(String errorMessage, GlobalErrorCode globalErrorCode) {
+        return new ErrorCode() {
+            @Override
+            public String getCode() {
+                return globalErrorCode.getCode();
+            }
+
+            @Override
+            public String getMessage() {
+                return errorMessage.isBlank() ? globalErrorCode.getMessage() : errorMessage;
+            }
+
+            @Override
+            public org.springframework.http.HttpStatus getHttpStatus() {
+                return HttpStatus.BAD_REQUEST;
+            }
+        };
     }
 
     private void logError(

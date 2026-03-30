@@ -8,9 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.global.config.properties.OracleObjectStorageProperties;
-import coffeeshout.room.config.QrProperties;
 import coffeeshout.global.exception.custom.InfrastructureException;
-import coffeeshout.room.domain.RoomErrorCode;
+import coffeeshout.room.config.QrProperties;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
 import com.oracle.bmc.objectstorage.responses.PutObjectResponse;
@@ -169,7 +168,7 @@ class OracleObjectStorageServiceTest {
         // when & then
         assertThatThrownBy(() -> oracleObjectStorageService.getUrl(storageKey))
                 .isInstanceOf(InfrastructureException.class)
-                .hasMessageContaining(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
+                .hasMessageContaining(QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
 
         // 실패 메트릭 검증
         Counter urlGenerationFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.generation.failed")
@@ -187,7 +186,7 @@ class OracleObjectStorageServiceTest {
         // when & then
         assertThatThrownBy(() -> oracleObjectStorageService.getUrl(storageKey))
                 .isInstanceOf(InfrastructureException.class)
-                .hasMessageContaining(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
+                .hasMessageContaining(QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
 
         // 실패 메트릭 검증
         Counter urlGenerationFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.generation.failed")

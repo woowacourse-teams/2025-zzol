@@ -21,9 +21,6 @@ public enum RoomErrorCode implements ErrorCode {
     DUPLICATE_PLAYER_NAME(HttpStatus.CONFLICT, "중복된 닉네임은 들어올 수 없습니다."),
     NO_EXIST_PLAYER(HttpStatus.NOT_FOUND, "플레이어가 존재하지 않습니다."),
     NO_EXIST_PLAYER_NAME_AUDIT(HttpStatus.NOT_FOUND, "플레이어 검열 항목을 찾을 수 없습니다."),
-    QR_CODE_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "QR 코드 생성에 실패했습니다."),
-    QR_CODE_UPLOAD_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "QR 코드 업로드에 실패했습니다."),
-    QR_CODE_URL_SIGNING_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "QR 코드 URL 생성에 실패했습니다."),
     ;
 
     private final HttpStatus httpStatus;

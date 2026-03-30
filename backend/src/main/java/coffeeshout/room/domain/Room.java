@@ -4,7 +4,7 @@ import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.state;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
@@ -177,7 +177,7 @@ public class Room {
 
     public void assignQrCode(QrCode qrCode) {
         if (qrCode == null) {
-            throw new InfrastructureException(RoomErrorCode.QR_CODE_GENERATION_FAILED,
+            throw new BusinessException(GlobalErrorCode.INTERNAL_SERVER_ERROR,
                     "QR 코드는 null일 수 없습니다.");
         }
 

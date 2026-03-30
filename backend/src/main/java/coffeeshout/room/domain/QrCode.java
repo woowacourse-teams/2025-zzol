@@ -1,6 +1,7 @@
 package coffeeshout.room.domain;
 
-import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.BusinessException;
 import lombok.Getter;
 
 @Getter
@@ -20,7 +21,7 @@ public final class QrCode {
 
     public static QrCode success(String url) {
         if (url == null || url.isBlank()) {
-            throw new InfrastructureException(RoomErrorCode.QR_CODE_GENERATION_FAILED,
+            throw new BusinessException(GlobalErrorCode.INTERNAL_SERVER_ERROR,
                     "QR 코드 URL은 공백일 수 없습니다. url: " + url);
         }
         return new QrCode(url, QrCodeStatus.SUCCESS);

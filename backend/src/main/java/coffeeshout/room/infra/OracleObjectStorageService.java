@@ -4,7 +4,7 @@ import coffeeshout.global.config.properties.OracleObjectStorageProperties;
 import coffeeshout.room.config.QrProperties;
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.room.application.port.StorageService;
-import coffeeshout.room.domain.RoomErrorCode;
+import coffeeshout.room.infra.QrCodeErrorCode;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
 import com.oracle.bmc.objectstorage.responses.PutObjectResponse;
@@ -61,7 +61,7 @@ public class OracleObjectStorageService implements StorageService {
     @Retry(name = "oracleStorage")
     public String upload(@NonNull String contents, byte[] data) {
         if (data.length == 0) {
-            throw new InfrastructureException(RoomErrorCode.QR_CODE_UPLOAD_FAILED, "QR 이미지 바이트가 비어 있습니다.");
+            throw new InfrastructureException(QrCodeErrorCode.QR_CODE_UPLOAD_FAILED, "QR 이미지 바이트가 비어 있습니다.");
         }
 
         return doUpload(contents, data);
@@ -75,8 +75,8 @@ public class OracleObjectStorageService implements StorageService {
             meterRegistry.counter("oracle.objectstorage.qr.url.generation.failed",
                     "error", e.getClass().getSimpleName()).increment();
             log.error("Oracle Object Storage Public URL 생성 실패: storageKey={}, error={}", storageKey, e.getMessage(), e);
-            throw new InfrastructureException(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED,
-                    RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
+            throw new InfrastructureException(QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED,
+                    QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
         }
     }
 
@@ -90,12 +90,12 @@ public class OracleObjectStorageService implements StorageService {
 
         if (e instanceof CallNotPermittedException) {
             log.warn("서킷 브레이커 OPEN 상태 - Oracle Storage 호출 차단됨: contents={}", contents);
-            throw new InfrastructureException(RoomErrorCode.QR_CODE_UPLOAD_FAILED,
+            throw new InfrastructureException(QrCodeErrorCode.QR_CODE_UPLOAD_FAILED,
                     "스토리지 서비스가 일시적으로 사용 불가능합니다. 잠시 후 다시 시도해주세요.");
         }
 
         log.error("Oracle Object Storage QR 코드 업로드 실패: contents={}, error={}", contents, e.getMessage(), e);
-        throw new InfrastructureException(RoomErrorCode.QR_CODE_UPLOAD_FAILED,
+        throw new InfrastructureException(QrCodeErrorCode.QR_CODE_UPLOAD_FAILED,
                 "QR 코드 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.", e);
     }
 

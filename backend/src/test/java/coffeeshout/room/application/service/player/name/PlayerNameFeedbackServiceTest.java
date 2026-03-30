@@ -1,14 +1,14 @@
 package coffeeshout.room.application.service.player.name;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.PlayerNameAuditFixture;
 import coffeeshout.global.ServiceTest;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.event.ProfanityWordAllowedEvent;
 import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
@@ -99,9 +99,10 @@ class PlayerNameFeedbackServiceTest extends ServiceTest {
 
         @Test
         void 존재하지_않는_auditId이면_예외를_던진다() {
-            assertThatThrownBy(() -> feedbackService.allow(999L))
-                    .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("999");
+            assertCoffeeShoutException(
+                    () -> feedbackService.allow(999L),
+                    RoomErrorCode.NO_EXIST_PLAYER_NAME_AUDIT
+            );
         }
     }
 
@@ -169,9 +170,10 @@ class PlayerNameFeedbackServiceTest extends ServiceTest {
 
         @Test
         void 존재하지_않는_auditId이면_예외를_던진다() {
-            assertThatThrownBy(() -> feedbackService.block(999L))
-                    .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("999");
+            assertCoffeeShoutException(
+                    () -> feedbackService.block(999L),
+                    RoomErrorCode.NO_EXIST_PLAYER_NAME_AUDIT
+            );
         }
     }
 }

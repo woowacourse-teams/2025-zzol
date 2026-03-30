@@ -124,7 +124,7 @@ public class Room {
 
     public Playable startNextGame(String hostName) {
         state(host.sameName(new PlayerName(hostName)), "호스트가 게임을 시작할 수 있습니다.");
-        state(players.isAllReady(), "모든 플레이어가 준비완료해야합니다.");
+        state(players.isAllReady(), "모든 플레이어가 준비 완료해야합니다.");
         state(players.getPlayerCount() >= 2, "게임을 시작하려면 플레이어가 2명 이상이어야 합니다.");
         state(!miniGames.isEmpty(), "시작할 게임이 없습니다.");
         state(isPlayableState(), "게임을 시작할 수 있는 상태가 아닙니다.");
@@ -213,7 +213,7 @@ public class Room {
         if (!canJoin()) {
             throw new BusinessException(
                     RoomErrorCode.ROOM_FULL,
-                    "방에는 최대 9명만 입장가능합니다. 현재 인원: " + players.getPlayerCount()
+                    "방에는 최대 9명만 입장 가능합니다. 현재 인원: " + players.getPlayerCount()
             );
         }
     }

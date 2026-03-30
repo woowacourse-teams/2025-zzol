@@ -1,11 +1,13 @@
 package coffeeshout.room.domain.service;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.global.ServiceTest;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -126,8 +128,10 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName guestName = new PlayerName("게스트");
 
             // when & then
-            assertThatThrownBy(() -> roomCommandService.joinGuest(invalidJoinCode, guestName))
-                    .isInstanceOf(BusinessException.class);
+            assertCoffeeShoutException(
+                    () -> roomCommandService.joinGuest(invalidJoinCode, guestName),
+                    GlobalErrorCode.NOT_EXIST
+            );
         }
 
         @Test
@@ -139,8 +143,10 @@ class RoomCommandServiceTest extends ServiceTest {
             testDataHelper.createDummyPlayingRoom(existingJoinCode, new PlayerName("더미호스트"));
 
             // when & then
-            assertThatThrownBy(() -> roomCommandService.joinGuest(existingJoinCode, guestName))
-                    .isInstanceOf(BusinessException.class);
+            assertCoffeeShoutException(
+                    () -> roomCommandService.joinGuest(existingJoinCode, guestName),
+                    RoomErrorCode.ROOM_NOT_READY_TO_JOIN
+            );
         }
 
         @Test
@@ -176,8 +182,10 @@ class RoomCommandServiceTest extends ServiceTest {
             }
 
             // when & then
-            assertThatThrownBy(() -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트10")))
-                    .isInstanceOf(BusinessException.class);
+            assertCoffeeShoutException(
+                    () -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트10")),
+                    RoomErrorCode.ROOM_FULL
+            );
         }
 
         @Test
@@ -190,8 +198,10 @@ class RoomCommandServiceTest extends ServiceTest {
             roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트"));
 
             // when & then
-            assertThatThrownBy(() -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트")))
-                    .isInstanceOf(BusinessException.class);
+            assertCoffeeShoutException(
+                    () -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트")),
+                    RoomErrorCode.DUPLICATE_PLAYER_NAME
+            );
         }
 
     }

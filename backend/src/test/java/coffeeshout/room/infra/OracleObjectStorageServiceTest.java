@@ -1,5 +1,6 @@
 package coffeeshout.room.infra;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -8,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.global.config.properties.OracleObjectStorageProperties;
-import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.room.config.QrProperties;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
@@ -120,9 +120,10 @@ class OracleObjectStorageServiceTest {
         byte[] emptyData = new byte[0];
 
         // when & then
-        assertThatThrownBy(() -> oracleObjectStorageService.upload(contents, emptyData))
-                .isInstanceOf(InfrastructureException.class)
-                .hasMessageContaining("QR 이미지 바이트가 비어 있습니다.");
+        assertCoffeeShoutException(
+                () -> oracleObjectStorageService.upload(contents, emptyData),
+                QrCodeErrorCode.QR_CODE_UPLOAD_FAILED
+        );
     }
 
     @Test
@@ -166,9 +167,10 @@ class OracleObjectStorageServiceTest {
         String storageKey = null;
 
         // when & then
-        assertThatThrownBy(() -> oracleObjectStorageService.getUrl(storageKey))
-                .isInstanceOf(InfrastructureException.class)
-                .hasMessageContaining(QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
+        assertCoffeeShoutException(
+                () -> oracleObjectStorageService.getUrl(storageKey),
+                QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED
+        );
 
         // 실패 메트릭 검증
         Counter urlGenerationFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.generation.failed")
@@ -184,9 +186,10 @@ class OracleObjectStorageServiceTest {
         String storageKey = "   ";
 
         // when & then
-        assertThatThrownBy(() -> oracleObjectStorageService.getUrl(storageKey))
-                .isInstanceOf(InfrastructureException.class)
-                .hasMessageContaining(QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
+        assertCoffeeShoutException(
+                () -> oracleObjectStorageService.getUrl(storageKey),
+                QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED
+        );
 
         // 실패 메트릭 검증
         Counter urlGenerationFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.generation.failed")

@@ -129,7 +129,7 @@ public class RestExceptionHandler {
 
             @Override
             public org.springframework.http.HttpStatus getHttpStatus() {
-                return HttpStatus.BAD_REQUEST;
+                return globalErrorCode.getHttpStatus();
             }
         };
     }

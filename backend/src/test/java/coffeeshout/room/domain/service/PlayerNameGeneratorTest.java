@@ -1,13 +1,13 @@
 package coffeeshout.room.domain.service;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.global.exception.custom.SystemException;
+import coffeeshout.room.domain.RoomErrorCode;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -45,8 +45,8 @@ class PlayerNameGeneratorTest {
             // 항상 ADJECTIVES[0] + NOUNS[0] = "용감한호랑이"만 생성
             PlayerNameGenerator generator = new PlayerNameGenerator(List::getFirst);
 
-            assertThatThrownBy(() -> generator.generate(Set.of("용감한호랑이")))
-                    .isInstanceOf(SystemException.class);
+            assertCoffeeShoutException(() -> generator.generate(Set.of("용감한호랑이")),
+                    RoomErrorCode.PLAYER_NAME_GENERATION_FAILED);
         }
     }
 }

@@ -1,23 +1,22 @@
 package coffeeshout.room.application;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.room.config.QrProperties;
-import coffeeshout.global.exception.custom.QRCodeGenerationException;
-import coffeeshout.global.exception.custom.StorageServiceException;
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.port.StorageService;
 import coffeeshout.room.application.service.QrCodeService;
+import coffeeshout.room.config.QrProperties;
 import coffeeshout.room.domain.QrCodeStatus;
-import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.service.QrCodeGenerator;
+import coffeeshout.room.infra.QrCodeErrorCode;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -88,9 +87,10 @@ class QrCodeServiceTest {
                 .thenThrow(new RuntimeException("QR code generation failed"));
 
         // when & then
-        assertThatThrownBy(() -> qrCodeService.getQrCodeUrl(contents))
-                .isInstanceOf(QRCodeGenerationException.class)
-                .hasMessageContaining(RoomErrorCode.QR_CODE_GENERATION_FAILED.getMessage());
+        assertCoffeeShoutException(
+                () -> qrCodeService.getQrCodeUrl(contents),
+                QrCodeErrorCode.QR_CODE_GENERATION_FAILED
+        );
     }
 
     @Test
@@ -101,12 +101,14 @@ class QrCodeServiceTest {
 
         when(qrCodeGenerator.generate(anyString())).thenReturn(qrCodeImage);
         when(storageService.upload(contents, qrCodeImage))
-                .thenThrow(new StorageServiceException(RoomErrorCode.QR_CODE_UPLOAD_FAILED, RoomErrorCode.QR_CODE_UPLOAD_FAILED.getMessage()));
+                .thenThrow(new InfrastructureException(QrCodeErrorCode.QR_CODE_UPLOAD_FAILED,
+                        QrCodeErrorCode.QR_CODE_UPLOAD_FAILED.getMessage()));
 
         // when & then
-        assertThatThrownBy(() -> qrCodeService.getQrCodeUrl(contents))
-                .isInstanceOf(StorageServiceException.class)
-                .hasMessageContaining(RoomErrorCode.QR_CODE_UPLOAD_FAILED.getMessage());
+        assertCoffeeShoutException(
+                () -> qrCodeService.getQrCodeUrl(contents),
+                QrCodeErrorCode.QR_CODE_UPLOAD_FAILED
+        );
     }
 
     @Test
@@ -119,13 +121,14 @@ class QrCodeServiceTest {
         when(qrCodeGenerator.generate(anyString())).thenReturn(qrCodeImage);
         when(storageService.upload(contents, qrCodeImage)).thenReturn(storageKey);
         when(storageService.getUrl(storageKey))
-                .thenThrow(new StorageServiceException(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED,
-                        RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage()));
+                .thenThrow(new InfrastructureException(QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED,
+                        QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage()));
 
         // when & then
-        assertThatThrownBy(() -> qrCodeService.getQrCodeUrl(contents))
-                .isInstanceOf(StorageServiceException.class)
-                .hasMessageContaining(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
+        assertCoffeeShoutException(
+                () -> qrCodeService.getQrCodeUrl(contents),
+                QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED
+        );
     }
 
     @Test
@@ -155,9 +158,10 @@ class QrCodeServiceTest {
         when(qrCodeGenerator.generate(anyString())).thenThrow(new RuntimeException("Unexpected error"));
 
         // when & then
-        assertThatThrownBy(() -> qrCodeService.getQrCodeUrl(contents))
-                .isInstanceOf(QRCodeGenerationException.class)
-                .hasMessageContaining(RoomErrorCode.QR_CODE_GENERATION_FAILED.getMessage());
+        assertCoffeeShoutException(
+                () -> qrCodeService.getQrCodeUrl(contents),
+                QrCodeErrorCode.QR_CODE_GENERATION_FAILED
+        );
     }
 
     // ===== 비동기 QR 코드 생성 테스트 =====

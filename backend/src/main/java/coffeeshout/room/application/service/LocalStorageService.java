@@ -1,8 +1,8 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.room.application.port.StorageService;
-import coffeeshout.room.domain.RoomErrorCode;
+import coffeeshout.room.infra.QrCodeErrorCode;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Base64;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class LocalStorageService implements StorageService {
             meterRegistry.counter("qr.local.upload.failed",
                     "error", e.getClass().getSimpleName()).increment();
             log.error("로컬 데이터 업로드 실패: contents={}, error={}", contents, e.getMessage(), e);
-            throw new InvalidArgumentException(RoomErrorCode.QR_CODE_UPLOAD_FAILED, "로컬 QR 코드 업로드에 실패했습니다.");
+            throw new InfrastructureException(QrCodeErrorCode.QR_CODE_UPLOAD_FAILED, "로컬 QR 코드 업로드에 실패했습니다.");
         }
     }
     
@@ -49,7 +49,7 @@ public class LocalStorageService implements StorageService {
             meterRegistry.counter("qr.local.url.generation.failed",
                     "error", e.getClass().getSimpleName()).increment();
             log.error("로컬 Data URL 생성 실패: error={}", e.getMessage(), e);
-            throw new InvalidArgumentException(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED, "로컬 QR 코드 URL 생성에 실패했습니다.");
+            throw new InfrastructureException(QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED, "로컬 QR 코드 URL 생성에 실패했습니다.");
         }
     }
 }

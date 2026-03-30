@@ -7,7 +7,7 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.RouletteFixture;
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
@@ -60,7 +60,7 @@ class RoomTest {
 
         // when & then
         assertThatThrownBy(() -> room.joinGuest(게스트_엠제이))
-                .isInstanceOf(InvalidStateException.class)
+                .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.ROOM_NOT_READY_TO_JOIN);
     }
 
@@ -71,7 +71,7 @@ class RoomTest {
 
         // when & then
         assertThatThrownBy(() -> room.joinGuest(게스트_꾹이))
-                .isInstanceOf(InvalidStateException.class)
+                .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.DUPLICATE_PLAYER_NAME);
     }
 
@@ -84,7 +84,7 @@ class RoomTest {
 
         // when & then
         assertThatThrownBy(() -> room.joinGuest(new PlayerName("guest9")))
-                .isInstanceOf(InvalidStateException.class)
+                .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.ROOM_FULL);
     }
 
@@ -261,7 +261,7 @@ class RoomTest {
         // when & then
         assertThatThrownBy(() -> room.startNextGame(host.getName().value()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("모든 플레이어가 준비완료해야합니다.");
+                .hasMessage("모든 플레이어가 준비 완료해야합니다.");
     }
 
     @Test

@@ -1,6 +1,6 @@
 package coffeeshout.room.domain.service;
 
-import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Objects;
@@ -17,7 +17,7 @@ public class PlayerNameValidator {
         Objects.requireNonNull(playerName, "playerName은 null일 수 없습니다.");
 
         if (profanityChecker.contains(playerName.value())) {
-            throw new InvalidArgumentException(
+            throw new BusinessException(
                     RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY,
                     "비속어가 포함된 닉네임입니다. 입력값: '" + playerName + "'"
             );

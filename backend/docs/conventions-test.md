@@ -26,6 +26,23 @@
 
 `WebSocketIntegrationTestSupport`를 상속하면 STOMP 세션 유틸(`createSession`, `assertMessage` 등)이 제공된다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다. `@IntegrationTest`를 함께 붙이면 설정이 중복되므로 사용하지 않는다.
 
+## 예외 검증
+
+`CoffeeShoutException` 계열 예외는 `ExceptionAssertions.assertCoffeeShoutException`을 사용한다.
+
+```java
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+
+assertCoffeeShoutException(
+        () -> service.someMethod(),
+        RoomErrorCode.ROOM_FULL
+);
+```
+
+예외 타입(`CoffeeShoutException` 여부)과 `ErrorCode`를 한 번에 검증한다. `assertThatThrownBy(...).isInstanceOf(...).satisfies(...)` 체인을 직접 작성하지 않는다.
+
+`IllegalArgumentException`, `IllegalStateException` 등 도메인 외 예외는 기존 `assertThatThrownBy`를 그대로 사용한다.
+
 ## 테스트 프로파일
 
 `test` 프로파일 적용 시 `application-test.yml`이 자동 적용된다.

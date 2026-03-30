@@ -1,4 +1,4 @@
-package coffeeshout.room.application.service.nickname;
+package coffeeshout.room.application.service.player.name;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;

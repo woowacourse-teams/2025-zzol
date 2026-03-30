@@ -1,16 +1,15 @@
 package coffeeshout.room.application;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.global.ServiceTest;
-import coffeeshout.global.exception.custom.InvalidArgumentException;
-import coffeeshout.global.exception.custom.NotExistElementException;
+import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -90,16 +89,18 @@ class RoomServiceTest extends ServiceTest {
 
         @Test
         void 비속어_호스트_닉네임으로_방_생성이_실패한다() {
-            assertThatThrownBy(() -> roomService.createRoom("씨발"))
-                    .isInstanceOf(InvalidArgumentException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
+            assertCoffeeShoutException(
+                    () -> roomService.createRoom("씨발"),
+                    RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY
+            );
         }
 
         @Test
         void 공백_우회_비속어_호스트_닉네임으로_방_생성이_실패한다() {
-            assertThatThrownBy(() -> roomService.createRoom("씨 발"))
-                    .isInstanceOf(InvalidArgumentException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
+            assertCoffeeShoutException(
+                    () -> roomService.createRoom("씨 발"),
+                    RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY
+            );
         }
 
         @Test
@@ -107,9 +108,10 @@ class RoomServiceTest extends ServiceTest {
             Room createdRoom = roomService.createRoom("호스트");
 
             String joinCode = createdRoom.getJoinCode().getValue();
-            assertThatThrownBy(() -> roomService.enterRoomAsync(joinCode, "씨발"))
-                    .isInstanceOf(InvalidArgumentException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
+            assertCoffeeShoutException(
+                    () -> roomService.enterRoomAsync(joinCode, "씨발"),
+                    RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY
+            );
         }
     }
 
@@ -314,7 +316,9 @@ class RoomServiceTest extends ServiceTest {
         String nonExistentJoinCode = "NXNX";
 
         // when & then
-        assertThatThrownBy(() -> roomService.getQrCodeStatus(nonExistentJoinCode))
-                .isInstanceOf(NotExistElementException.class);
+        assertCoffeeShoutException(
+                () -> roomService.getQrCodeStatus(nonExistentJoinCode),
+                GlobalErrorCode.NOT_EXIST
+        );
     }
 }

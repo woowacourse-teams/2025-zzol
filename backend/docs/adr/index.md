@@ -7,3 +7,4 @@
 | 번호                                                                | 제목                        | 상태 | 영향 범위                                                      | 핵심 제약                                                                      |
 |-------------------------------------------------------------------|---------------------------|----|------------------------------------------------------------|----------------------------------------------------------------------------|
 | [0001](adr/0001-ai-nickname-audit-with-operator-feedback-loop.md) | AI 닉네임 검열 + 운영자 피드백 루프 설계 | 승인 (후속 작업 예정) | `room/infra/nickname`, `room/application/service/nickname` | FLAGGED(confidence ≥ 0.85)는 자동 차단 후 어드민 해제 가능, PENDING(< 0.85)은 운영자 수동 결정 |
+| [0002](adr/0002-number-poker-game-design.md) | 넘버포커 게임 설계 | 승인 | `numberpoker/`, `minigame/domain/` | 플레이어 vs 딜러 개인전, 3단계 공개 구조(STAGE_1/2/SHOWDOWN), 3라운드 합산 후 MiniGameResult 1회 반영 |

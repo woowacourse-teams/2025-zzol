@@ -2,9 +2,9 @@ package coffeeshout.global.exception.custom;
 
 import coffeeshout.global.exception.ErrorCode;
 
-public class InvalidStateException extends CoffeeShoutException {
+public class BusinessException extends CoffeeShoutException {
 
-    public InvalidStateException(ErrorCode errorCode, String message) {
+    public BusinessException(ErrorCode errorCode, String message) {
         super(errorCode, message);
     }
 }

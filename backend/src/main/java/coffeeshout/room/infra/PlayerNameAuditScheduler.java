@@ -1,6 +1,6 @@
 package coffeeshout.room.infra;
 
-import coffeeshout.room.application.service.nickname.PlayerNameAuditService;
+import coffeeshout.room.application.service.player.name.PlayerNameAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

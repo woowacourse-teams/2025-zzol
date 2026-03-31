@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
@@ -88,7 +88,7 @@ class BlindTimerGameTest {
 
             // when & then
             assertThatThrownBy(() -> newGame.stop(new PlayerName("한스"), Instant.now()))
-                    .isInstanceOf(InvalidStateException.class);
+                    .isInstanceOf(BusinessException.class);
         }
 
         @Test

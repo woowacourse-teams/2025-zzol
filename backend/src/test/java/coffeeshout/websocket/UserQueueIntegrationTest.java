@@ -29,7 +29,7 @@ class UserQueueIntegrationTest extends WebSocketIntegrationTestSupport {
         TestStompSession session = createSession("TEST_CODE", "testPlayer");
         MessageCollector errorCollector = session.subscribe("/user/queue/errors");
 
-        // when - 존재하지 않는 방에 룰렛 스핀 요청 → NotExistElementException(GlobalErrorCode.NOT_EXIST)
+        // when - 존재하지 않는 방에 룰렛 스핀 요청 → BusinessException(GlobalErrorCode.NOT_EXIST)
         session.send("/app/room/ABCD/spin-roulette", "{\"hostName\": \"testPlayer\"}");
 
         // then - ErrorCode.getMessage()인 "해당 데이터가 존재하지 않습니다."가 반환되어야 함

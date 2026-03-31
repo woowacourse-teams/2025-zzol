@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
@@ -105,7 +105,7 @@ class BombRelayGameTest {
             newGame.setUp(List.of(한스));
 
             assertThatThrownBy(() -> newGame.validateWord("한스", "테스트"))
-                    .isInstanceOf(InvalidStateException.class);
+                    .isInstanceOf(BusinessException.class);
         }
 
         @Test

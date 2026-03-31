@@ -1,13 +1,13 @@
 package coffeeshout.room.application.service;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.global.StreamMockedServiceTest;
-import coffeeshout.global.exception.custom.InvalidArgumentException;
-import coffeeshout.global.exception.custom.NotExistElementException;
+import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.event.PlayerKickEvent;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
@@ -90,15 +90,17 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             }
 
             @Test
-            void 존재하지_않는_게스트_제거_시도_시_예외가_발생한다() {
+            void 존재하지_않는_게스트_제거_시도_시_false를_반환한다() {
                 // given
                 String hostName = "호스트";
                 Room createdRoom = roomService.createRoom(hostName);
                 JoinCode joinCode = createdRoom.getJoinCode();
 
-                // when & then
-                assertThatThrownBy(() -> playerService.checkAndKickPlayer(joinCode.getValue(), "존재하지_않는_게스트"))
-                        .isInstanceOf(InvalidArgumentException.class);
+                // when
+                boolean result = playerService.checkAndKickPlayer(joinCode.getValue(), "없는게스트");
+
+                // then
+                assertThat(result).isFalse();
             }
 
             @Test
@@ -109,8 +111,10 @@ class PlayerServiceTest extends StreamMockedServiceTest {
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when & then
-                assertThatThrownBy(() -> playerService.checkAndKickPlayer(joinCode.getValue(), null))
-                        .isInstanceOf(InvalidArgumentException.class);
+                assertCoffeeShoutException(
+                        () -> playerService.checkAndKickPlayer(joinCode.getValue(), null),
+                        RoomErrorCode.PLAYER_NAME_BLANK
+                );
             }
         }
 
@@ -118,15 +122,19 @@ class PlayerServiceTest extends StreamMockedServiceTest {
         void 존재하지_않는_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
             PlayerKickEvent event = new PlayerKickEvent("ABCD", "플레이어");
-            assertThatThrownBy(() -> playerService.kickPlayer(event))
-                    .isInstanceOf(NotExistElementException.class);
+            assertCoffeeShoutException(
+                    () -> playerService.kickPlayer(event),
+                    GlobalErrorCode.NOT_EXIST
+            );
         }
 
         @Test
         void null_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> playerService.checkAndKickPlayer(null, "플레이어"))
-                    .isInstanceOf(InvalidArgumentException.class);
+            assertCoffeeShoutException(
+                    () -> playerService.checkAndKickPlayer(null, "플레이어"),
+                    RoomErrorCode.JOIN_CODE_NULL
+            );
         }
     }
 
@@ -162,22 +170,28 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             playerService.kickPlayer(event);
 
             // when & then
-            assertThatThrownBy(() -> playerService.getPlayers(joinCode.getValue()))
-                    .isInstanceOf(NotExistElementException.class);
+            assertCoffeeShoutException(
+                    () -> playerService.getPlayers(joinCode.getValue()),
+                    GlobalErrorCode.NOT_EXIST
+            );
         }
 
         @Test
         void 존재하지_않는_방_코드로_조회_시_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> playerService.getPlayers("ABCD"))
-                    .isInstanceOf(NotExistElementException.class);
+            assertCoffeeShoutException(
+                    () -> playerService.getPlayers("ABCD"),
+                    GlobalErrorCode.NOT_EXIST
+            );
         }
 
         @Test
         void null_방_코드로_조회_시_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> playerService.getPlayers(null))
-                    .isInstanceOf(InvalidArgumentException.class);
+            assertCoffeeShoutException(
+                    () -> playerService.getPlayers(null),
+                    RoomErrorCode.JOIN_CODE_NULL
+            );
         }
     }
 }

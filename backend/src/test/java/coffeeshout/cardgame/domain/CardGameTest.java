@@ -1,5 +1,6 @@
 package coffeeshout.cardgame.domain;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -8,8 +9,7 @@ import coffeeshout.cardgame.domain.card.CardGameDeckGenerator;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.PlayersFixture;
-import coffeeshout.global.exception.custom.InvalidArgumentException;
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
@@ -100,8 +100,10 @@ class CardGameTest {
             Player player = players.getPlayer(new PlayerName("꾹이"));
 
             // when & then
-            assertThatThrownBy(() -> cardGame.selectCard(player, 0))
-                    .isInstanceOf(InvalidStateException.class);
+            assertCoffeeShoutException(
+                    () -> cardGame.selectCard(player, 0),
+                    CardGameErrorCode.NOT_PLAYING_STATE
+            );
         }
 
         @Test
@@ -279,8 +281,10 @@ class CardGameTest {
 
             PlayerName playerName = new PlayerName(nonExistentName);
             // when & then
-            assertThatThrownBy(() -> cardGame.findPlayerByName(playerName))
-                    .isInstanceOf(InvalidArgumentException.class);
+            assertCoffeeShoutException(
+                    () -> cardGame.findPlayerByName(playerName),
+                    RoomErrorCode.NO_EXIST_PLAYER
+            );
         }
     }
 

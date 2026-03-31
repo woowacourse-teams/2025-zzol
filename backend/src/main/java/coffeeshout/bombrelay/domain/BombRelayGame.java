@@ -1,6 +1,6 @@
 package coffeeshout.bombrelay.domain;
 
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -170,7 +170,7 @@ public class BombRelayGame implements Playable {
 
     private void validatePlaying() {
         if (state.get() != BombRelayGameState.PLAYING) {
-            throw new InvalidStateException(
+            throw new BusinessException(
                     BombRelayGameErrorCode.NOT_PLAYING_STATE,
                     "현재 게임 상태가 플레이 중이 아닙니다: " + state.get()
             );

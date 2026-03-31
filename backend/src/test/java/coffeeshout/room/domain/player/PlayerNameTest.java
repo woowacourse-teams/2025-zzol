@@ -3,7 +3,7 @@ package coffeeshout.room.domain.player;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.RoomErrorCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,7 +26,7 @@ class PlayerNameTest {
     void 플레이어_이름이_공백이면_예외를_발생한다(String name) {
         // given & when & then
         assertThatThrownBy(() -> new PlayerName(name))
-                .isInstanceOf(InvalidArgumentException.class)
+                .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_BLANK);
     }
 
@@ -37,7 +37,7 @@ class PlayerNameTest {
 
         // when & then
         assertThatThrownBy(() -> new PlayerName(longName))
-                .isInstanceOf(InvalidArgumentException.class)
+                .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", RoomErrorCode.PLAYER_NAME_TOO_LONG);
     }
 }

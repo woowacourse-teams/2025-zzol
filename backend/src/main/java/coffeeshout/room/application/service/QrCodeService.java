@@ -1,12 +1,12 @@
 package coffeeshout.room.application.service;
 
 import coffeeshout.room.config.QrProperties;
-import coffeeshout.global.exception.custom.QRCodeGenerationException;
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.port.StorageService;
 import coffeeshout.room.domain.QrCodeStatus;
-import coffeeshout.room.domain.RoomErrorCode;
+import coffeeshout.room.infra.QrCodeErrorCode;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.service.QrCodeGenerator;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -106,7 +106,7 @@ public class QrCodeService {
                     "error", e.getClass().getSimpleName()).increment();
             log.error("QR 코드 생성 실패: contents={}, error={}", contents, e.getMessage(), e);
 
-            throw new QRCodeGenerationException(RoomErrorCode.QR_CODE_GENERATION_FAILED, "QR 코드 생성에 실패했습니다.", e);
+            throw new InfrastructureException(QrCodeErrorCode.QR_CODE_GENERATION_FAILED, "QR 코드 생성에 실패했습니다.", e);
         }
     }
 

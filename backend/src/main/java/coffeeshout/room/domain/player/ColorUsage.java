@@ -1,6 +1,6 @@
 package coffeeshout.room.domain.player;
 
-import coffeeshout.global.exception.custom.InvalidArgumentException;
+import coffeeshout.global.exception.custom.BusinessException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -28,7 +28,7 @@ public class ColorUsage {
                 .toList();
 
         if (available.isEmpty()) {
-            throw new InvalidArgumentException(ColorErrorCode.NO_AVAILABLE_COLOR, "사용가능한 색깔을 찾지 못했습니다.");
+            throw new BusinessException(ColorErrorCode.NO_AVAILABLE_COLOR, "사용가능한 색깔을 찾지 못했습니다.");
         }
 
         final Integer colorIndex = available.get(random.nextInt(available.size()));
@@ -38,7 +38,7 @@ public class ColorUsage {
 
     public void release(int colorIndex) {
         if (colorIndex < 0 || colorIndex >= COLOR_MAX_COUNT) {
-            throw new InvalidArgumentException(ColorErrorCode.INVALID_COLOR_INDEX, "유효하지 않은 색깔 index입니다.");
+            throw new BusinessException(ColorErrorCode.INVALID_COLOR_INDEX, "유효하지 않은 색깔 index입니다.");
         }
         colors.put(colorIndex, false);
     }

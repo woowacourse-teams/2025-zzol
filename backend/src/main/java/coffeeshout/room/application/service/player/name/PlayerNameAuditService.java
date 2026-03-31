@@ -1,4 +1,4 @@
-package coffeeshout.room.application.service.nickname;
+package coffeeshout.room.application.service.player.name;
 
 import coffeeshout.room.config.PlayerNameAuditProperties;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;

@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
 import coffeeshout.fixture.TestContainerSupport;
+import coffeeshout.global.config.ServiceTestConfig;
+import coffeeshout.global.outbox.OutboxE2ETest.OutboxE2ETestConfig;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -36,7 +39,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Import(OutboxE2ETest.OutboxE2ETestConfig.class)
+@Import(OutboxE2ETestConfig.class)
 class OutboxE2ETest extends TestContainerSupport {
 
     @TestConfiguration
@@ -46,6 +49,12 @@ class OutboxE2ETest extends TestContainerSupport {
         @Primary
         public CardGameFlowScheduler mockCardGameFlowScheduler() {
             return Mockito.mock(CardGameFlowScheduler.class);
+        }
+
+        @Bean
+        @Primary
+        public NumberPokerFlowScheduler mockNumberPokerFlowScheduler() {
+            return Mockito.mock(NumberPokerFlowScheduler.class);
         }
 
         @Bean(name = "cardGameTaskScheduler")

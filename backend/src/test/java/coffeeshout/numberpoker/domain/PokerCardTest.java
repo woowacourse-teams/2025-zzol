@@ -3,7 +3,6 @@ package coffeeshout.numberpoker.domain;
 import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.numberpoker.domain.NumberPokerErrorCode;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

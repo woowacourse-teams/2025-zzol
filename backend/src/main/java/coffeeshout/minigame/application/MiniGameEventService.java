@@ -20,14 +20,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class MiniGameEventService {
 
-    private final Map<MiniGameType, coffeeshout.minigame.domain.MiniGameService> miniGameServiceMap;
+    private final Map<MiniGameType, MiniGameService> miniGameServiceMap;
     private final RoomQueryService roomQueryService;
     private final ApplicationEventPublisher eventPublisher;
     private final MiniGamePersistenceService miniGamePersistenceService;
 
     public MiniGameEventService(
             RoomQueryService roomQueryService,
-            List<coffeeshout.minigame.domain.MiniGameService> miniGameServices,
+            List<MiniGameService> miniGameServices,
             ApplicationEventPublisher eventPublisher,
             MiniGamePersistenceService miniGamePersistenceService
     ) {

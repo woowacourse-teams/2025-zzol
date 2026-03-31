@@ -103,7 +103,7 @@ public class BombRelayGameService implements MiniGameService {
         }
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        room.applyMiniGameResult(game.getResult());
+        room.applyMiniGameResult(game);
 
         eventPublisher.publishEvent(BombRelayProgressEvent.of(game, joinCode));
         eventPublisher.publishEvent(BombRelayStateChangedEvent.of(game, joinCode, eliminatedName));

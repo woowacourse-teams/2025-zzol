@@ -14,7 +14,8 @@ public enum StreamKey {
     RACING_GAME_EVENTS("racinggame"),
     SPEED_TOUCH_EVENTS("speedtouch"),
     BLIND_TIMER_EVENTS("blindtimer"),
-    BOMB_RELAY_EVENTS("bombrelay");
+    BOMB_RELAY_EVENTS("bombrelay"),
+    NUMBER_POKER_EVENTS("numberpoker");
 
     private final String redisKey;
 

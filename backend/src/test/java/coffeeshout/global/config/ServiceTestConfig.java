@@ -1,6 +1,7 @@
 package coffeeshout.global.config;
 
 import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
+import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;
 import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -26,6 +27,13 @@ public class ServiceTestConfig {
     public CardGameFlowScheduler mockCardGameFlowScheduler() {
         return Mockito.mock(CardGameFlowScheduler.class);
     }
+
+    @Bean
+    @Primary
+    public NumberPokerFlowScheduler mockNumberPokerFlowScheduler() {
+        return Mockito.mock(NumberPokerFlowScheduler.class);
+    }
+
 
     @Bean(name = "delayRemovalScheduler")
     public TaskScheduler testDelayRemovalScheduler() {

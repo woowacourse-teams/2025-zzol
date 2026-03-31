@@ -69,7 +69,7 @@ public class BlindTimerGameService implements MiniGameService {
         game.cancelTimeout();
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        room.applyMiniGameResult(game.getResult());
+        room.applyMiniGameResult(game);
 
         eventPublisher.publishEvent(BlindTimerProgressEvent.of(game, joinCode));
         taskScheduler.schedule(

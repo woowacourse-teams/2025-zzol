@@ -70,6 +70,14 @@ public class PokerRound {
         return number;
     }
 
+    public boolean isPlayerReady(Player player) {
+        return readyPlayers.contains(player);
+    }
+
+    public int[] getPlayerCardValues(Player player) {
+        return findHand(player).getCardValues();
+    }
+
     private PlayerPokerHand findHand(Player player) {
         final PlayerPokerHand hand = playerHands.get(player);
         if (hand == null) {

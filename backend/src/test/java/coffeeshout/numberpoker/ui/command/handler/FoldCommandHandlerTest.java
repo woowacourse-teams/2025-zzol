@@ -1,0 +1,38 @@
+package coffeeshout.numberpoker.ui.command.handler;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.numberpoker.infra.messaging.event.FoldCommandEvent;
+import coffeeshout.numberpoker.ui.command.FoldCommand;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class FoldCommandHandlerTest {
+
+    @Mock
+    StreamPublisher streamPublisher;
+
+    @InjectMocks
+    FoldCommandHandler handler;
+
+    @Test
+    void FoldCommand_처리_시_FoldCommandEvent를_스트림에_발행한다() {
+        handler.handle("ABC123", new FoldCommand("꾹이"));
+
+        verify(streamPublisher).publish(eq(StreamKey.NUMBER_POKER_EVENTS), any(FoldCommandEvent.class));
+    }
+
+    @Test
+    void 지원하는_커맨드_타입은_FoldCommand다() {
+        assertThat(handler.getCommandType()).isEqualTo(FoldCommand.class);
+    }
+}

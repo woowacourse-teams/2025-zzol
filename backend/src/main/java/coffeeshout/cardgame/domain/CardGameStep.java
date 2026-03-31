@@ -33,7 +33,7 @@ public enum CardGameStep {
         @Override
         public void execute(CardGame cardGame, Room room) {
             cardGame.changeDoneState();
-            room.applyMiniGameResult(cardGame.getResult());
+            room.applyMiniGameResult(cardGame);
         }
     },
     ;

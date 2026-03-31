@@ -1,6 +1,10 @@
 package coffeeshout.numberpoker.domain;
 
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.MiniGameResult;
+import coffeeshout.minigame.domain.MiniGameScore;
+import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.player.Player;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,19 +12,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import lombok.Getter;
 
-public class NumberPokerGame {
+@Getter
+public class NumberPokerGame implements Playable {
 
     private static final int DEFAULT_ROUND_COUNT = 3;
     private static final int MIN_ROUND_COUNT = 1;
     private static final int MAX_ROUND_COUNT = 5;
     private static final int CARDS_PER_HAND = 2;
 
-    private final List<Player> players;
+    private List<Player> players;
     private int totalRounds;
     private int currentRoundNumber;
     private PokerPhase currentPhase;
     private PokerRound currentRound;
+
+    public NumberPokerGame() {
+        this.players = List.of();
+        this.totalRounds = DEFAULT_ROUND_COUNT;
+        this.currentRoundNumber = 0;
+        this.currentPhase = null;
+    }
 
     public NumberPokerGame(List<Player> players) {
         this.players = List.copyOf(players);
@@ -110,16 +125,26 @@ public class NumberPokerGame {
         return currentRound != null && currentRound.isLast();
     }
 
-    public PokerPhase getCurrentPhase() {
-        return currentPhase;
+    public int getCurrentRoundNumber() {
+        return currentRound != null ? currentRound.getNumber() : 0;
     }
 
-    public int getTotalRounds() {
-        return totalRounds;
+    public List<PokerCard> getDealerVisibleCards() {
+        if (currentRound == null) {
+            return List.of();
+        }
+        return currentRound.getDealer().getVisibleCards();
     }
 
-    public List<Player> getPlayers() {
-        return players;
+    public boolean isPlayerReady(Player player) {
+        if (currentRound == null) {
+            return false;
+        }
+        return currentRound.isPlayerReady(player);
+    }
+
+    public int[] getPlayerCardValues(Player player) {
+        return currentRound.getPlayerCardValues(player);
     }
 
     private void requirePhase(PokerPhase... allowedPhases) {
@@ -143,5 +168,33 @@ public class NumberPokerGame {
         }
         Collections.shuffle(deck, random);
         return deck;
+    }
+
+    @Override
+    public void setUp(List<Player> players) {
+        this.players = List.copyOf(players);
+    }
+
+    @Override
+    public MiniGameType getMiniGameType() {
+        return MiniGameType.NUMBER_POKER;
+    }
+
+    @Override
+    public MiniGameResult getResult() {
+        final Map<Player, Integer> allFirst = players.stream()
+                .collect(Collectors.toMap(Function.identity(), p -> 1));
+        return new MiniGameResult(allFirst);
+    }
+
+    @Override
+    public Map<Player, MiniGameScore> getScores() {
+        return players.stream()
+                .collect(Collectors.toMap(Function.identity(), p -> new NumberPokerScore()));
+    }
+
+    @Override
+    public boolean shouldAdjustProbabilities() {
+        return false;
     }
 }

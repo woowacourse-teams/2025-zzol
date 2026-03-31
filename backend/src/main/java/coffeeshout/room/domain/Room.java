@@ -68,13 +68,15 @@ public class Room {
         miniGames.removeIf(m -> m.getMiniGameType() == miniGame.getMiniGameType());
     }
 
-    public void applyMiniGameResult(MiniGameResult miniGameResult) {
-        final ProbabilityCalculator probabilityCalculator = new ProbabilityCalculator(
-                players.getPlayerCount(),
-                calculateMiniGameCount()
-        );
+    public void applyMiniGameResult(Playable miniGame) {
         this.roomState = RoomState.SCORE_BOARD;
-        players.adjustProbabilities(miniGameResult, probabilityCalculator);
+        if (miniGame.shouldAdjustProbabilities()) {
+            final ProbabilityCalculator probabilityCalculator = new ProbabilityCalculator(
+                    players.getPlayerCount(),
+                    calculateMiniGameCount()
+            );
+            players.adjustProbabilities(miniGame.getResult(), probabilityCalculator);
+        }
     }
 
     private int calculateMiniGameCount() {

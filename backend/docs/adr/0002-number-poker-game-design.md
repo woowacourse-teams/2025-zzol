@@ -232,8 +232,12 @@ public record NumberPokerProperties(
 ### 8. 백엔드 도메인 구조
 
 기존 미니게임(`CardGame` 등)은 `Playable` 인터페이스를 구현해 `MiniGameResult` 파이프라인을 거친다.
-넘버포커는 결과 구조(WIN/LOSE/FOLD/TIE)가 기존 파이프라인과 맞지 않으므로 **`Playable`을 구현하지 않는 독립 구조**로 설계한다.
-확률 조정은 `NumberPokerProbabilityAdjuster`가 전담하며 기존 `ProbabilityCalculator`를 거치지 않는다.
+넘버포커도 `Playable`을 구현하되, **라운드마다 실시간으로 확률이 조정**되므로 게임 종료 후 추가 확률 조정은 없다.
+이를 위해 `Playable`의 `shouldAdjustProbabilities()`를 `false`로 오버라이드한다.
+`Room.applyMiniGameResult(Playable)`은 이 플래그를 확인해 확률 조정 단계를 건너뛴다.
+
+라운드별 확률 조정은 `NumberPokerProbabilityAdjuster`가 전담하며 기존 `ProbabilityCalculator`를 거치지 않는다.
+`getResult()`는 전원 1위(공동 순위)를 반환하고, `getScores()`는 0점을 반환한다 — DB 기록 목적으로만 사용된다.
 
 `PokerPhase`(현재 게임 페이즈)는 `NumberPokerGame`(Aggregate Root)이 보유한다.
 `PokerRound`는 라운드 내 데이터(패, 폴드 여부, 딜러)만 책임지며 페이즈 상태를 갖지 않는다.
@@ -241,7 +245,8 @@ public record NumberPokerProperties(
 ```text
 numberpoker/
 ├── domain/
-│   ├── NumberPokerGame        ← Aggregate Root (라운드 관리, PokerPhase 보유)
+│   ├── NumberPokerGame        ← Aggregate Root (Playable 구현, 라운드 관리, PokerPhase 보유)
+│   ├── NumberPokerScore       ← MiniGameScore 구현체 (getValue()=0, DB 기록 전용)
 │   ├── PokerRound             ← 라운드 1개의 데이터 (패, 폴드, 딜러, 준비 상태)
 │   ├── Dealer                 ← 딜러 패 + 단계별 공개 관리
 │   ├── PlayerPokerHand        ← 플레이어 패 + ACTIVE/FOLDED 상태

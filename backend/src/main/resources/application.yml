@@ -60,6 +60,11 @@ redis:
         thread-pool-name: concurrent
       "[bombrelay]":
         thread-pool-name: concurrent
+      "[numberpoker]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 1024
 
 redisson:
   enabled: true
@@ -74,6 +79,16 @@ oracle:
       region: ap-chuncheon-1
       namespace: ax9wq4bhn4cn
       bucket: zzol-public
+
+number-poker:
+  timing:
+    stage1: 4000ms
+    stage2: 8000ms
+    round-ready: 5000ms
+  probability:
+    stage1-fold-multiplier: 0.3
+    stage2-fold-multiplier: 0.6
+    adjustment-step: 1000
 
 card-game:
   timing:

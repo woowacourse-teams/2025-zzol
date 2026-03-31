@@ -65,4 +65,8 @@ public class PlayerPokerHand {
     public PokerRoundResult getFoldResult() {
         return foldResult;
     }
+
+    public int[] getCardValues() {
+        return new int[]{firstCard.value(), secondCard.value()};
+    }
 }

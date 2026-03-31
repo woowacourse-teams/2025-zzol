@@ -2,6 +2,8 @@ package coffeeshout.global.config;
 
 import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
 import coffeeshout.cardgame.infra.scheduler.CompletableFutureFlowScheduler;
+import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;
+import coffeeshout.numberpoker.infra.scheduler.CompletableFutureNumberPokerFlowScheduler;
 import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -20,15 +22,21 @@ public class IntegrationTestConfig {
         return Mockito.mock(TaskScheduler.class, Answers.RETURNS_MOCKS);
     }
 
-    @Bean(name = "cardGameExecutorScheduler")
-    public ShutDownTestScheduler cardGameExecutorScheduler() {
+    @Bean(name = "gameExecutorScheduler")
+    public ShutDownTestScheduler gameExecutorScheduler() {
         return new ShutDownTestScheduler();
     }
 
     @Bean
     public CardGameFlowScheduler cardGameFlowScheduler(
-            ShutDownTestScheduler cardGameExecutorScheduler) {
-        return new CompletableFutureFlowScheduler(cardGameExecutorScheduler);
+            ShutDownTestScheduler gameExecutorScheduler) {
+        return new CompletableFutureFlowScheduler(gameExecutorScheduler);
+    }
+
+    @Bean
+    public NumberPokerFlowScheduler numberPokerFlowSchedulerForTest( ShutDownTestScheduler gameExecutorScheduler) {
+        return new CompletableFutureNumberPokerFlowScheduler(
+                new CompletableFutureFlowScheduler(gameExecutorScheduler));
     }
 
     @Bean(name = "delayRemovalScheduler")
@@ -55,4 +63,6 @@ public class IntegrationTestConfig {
     public TaskScheduler testIntegrationBombRelayGameScheduler() {
         return new ShutDownTestScheduler();
     }
+
+
 }

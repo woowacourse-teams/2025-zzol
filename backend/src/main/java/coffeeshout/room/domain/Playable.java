@@ -16,4 +16,8 @@ public interface Playable {
     MiniGameType getMiniGameType();
 
     void setUp(List<Player> players);
+
+    default boolean shouldAdjustProbabilities() {
+        return true;
+    }
 }

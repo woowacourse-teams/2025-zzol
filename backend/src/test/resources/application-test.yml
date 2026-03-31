@@ -104,3 +104,13 @@ bomb-relay:
   dictionary:
     api-url: https://stdict.korean.go.kr/api/search
     api-key: test-key
+
+number-poker:
+  timing:
+    stage1: 1000ms
+    stage2: 1000ms
+    round-ready: 1500ms
+  probability:
+    stage1-fold-multiplier: 0.3
+    stage2-fold-multiplier: 0.6
+    adjustment-step: 1000

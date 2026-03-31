@@ -1,5 +1,8 @@
 package coffeeshout.numberpoker.domain;
 
+import java.util.Objects;
+import org.jspecify.annotations.NonNull;
+
 public class HandRanking implements Comparable<HandRanking> {
 
     private enum Type {
@@ -30,7 +33,7 @@ public class HandRanking implements Comparable<HandRanking> {
     }
 
     @Override
-    public int compareTo(HandRanking other) {
+    public int compareTo(@NonNull HandRanking other) {
         if (this.type == Type.PAIR && other.type == Type.HIGH_CARD) {
             return 1;
         }
@@ -41,5 +44,19 @@ public class HandRanking implements Comparable<HandRanking> {
             return Integer.compare(this.primary, other.primary);
         }
         return Integer.compare(this.secondary, other.secondary);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final HandRanking that = (HandRanking) o;
+        return primary == that.primary && secondary == that.secondary && type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, primary, secondary);
     }
 }

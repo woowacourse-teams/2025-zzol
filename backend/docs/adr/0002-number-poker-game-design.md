@@ -110,13 +110,14 @@ TIE: 두 패가 완전히 동일한 경우에만 발생
 
 ### 5. 확률 조정 공식
 
-기존 `ProbabilityCalculator`를 거치지 않고 `NumberPokerProbabilityAdjuster`가 직접 `player.updateProbability()`를 호출한다.
+기존 `ProbabilityCalculator`를 거치지 않고 `NumberPokerProbabilityAdjuster`가 변동량을 계산하고,
+Application Layer에서 `player.updateProbability()`를 호출한다.
 기존 확률 시스템에 영향을 주지 않으며, 넘버포커 전용 4단계 결과를 그대로 표현할 수 있다.
 
 ```text
 라운드당 step = adjustmentStep / roundCount  (= adjustmentStep / 3)
 
-결과별 기본 변동량 (step 상한 적용 전):
+결과별 변동량:
   STAGE_1 FOLD → +(step × 0.3)
   STAGE_2 FOLD → +(step × 0.6)
   LOSE         → +(step × 1.0)
@@ -130,11 +131,6 @@ TIE: 두 패가 완전히 동일한 경우에만 발생
 
 흡수자 변동량 = -(증가분 총합 ÷ 흡수자 인원수)
 TIE (비흡수자, WIN 존재 시) → 변동 없음
-
-step 상한 제약:
-  모든 플레이어의 라운드당 변동량은 절댓값 기준 step을 초과할 수 없다.
-  |변동량| > step 이면 → ±step 으로 클램핑
-  (확률이 0에 수렴하는 것을 방지하기 위한 안전 장치)
 ```
 
 케이스별 예시: 4명, adjustmentStep = 300, 라운드당 step = 100
@@ -142,8 +138,7 @@ step 상한 제약:
 ```text
 케이스 1 (WIN 존재): A=WIN, B=TIE, C=STAGE_1_FOLD, D=LOSE
   증가분 = 30 + 100 = 130
-  A: -min(130, 100) = -100 (step 상한 클램핑)
-  B: 0   C: +30   D: +100
+  A: -130   B: 0   C: +30   D: +100
 
 케이스 2 (WIN 없음, TIE 흡수): A=TIE, B=TIE, C=STAGE_2_FOLD, D=LOSE
   증가분 = 60 + 100 = 160
@@ -163,6 +158,20 @@ step 상한 제약:
 
 케이스 6: 전원 LOSE, 전원 STAGE_2_FOLD, 또는 흡수자 없음 → 전원 변동 없음
 ```
+
+**1% 하한선 보장 (Application Layer)**
+
+`NumberPokerProbabilityAdjuster`는 순수 변동량만 계산한다. 실제 적용 시 플레이어 확률이
+최솟값(100 = 1%) 미만으로 내려가지 않도록 Application Layer에서 보정한다.
+
+```text
+적용값 = max(MIN_PROBABILITY, currentProbability + delta)
+MIN_PROBABILITY = 100  (Probability 단위 기준 1%)
+```
+
+룰렛이 상대값(전체 합 기준 비율) 방식으로 동작하므로,
+하한선 보정으로 총합이 10000에서 소폭 벗어나도 룰렛 결과에 영향 없다.
+`Probability` 도메인 객체의 상한(10000) 제약은 그대로 유지한다.
 
 ### 6. 설정 구조
 
@@ -222,18 +231,25 @@ public record NumberPokerProperties(
 
 ### 8. 백엔드 도메인 구조
 
+기존 미니게임(`CardGame` 등)은 `Playable` 인터페이스를 구현해 `MiniGameResult` 파이프라인을 거친다.
+넘버포커는 결과 구조(WIN/LOSE/FOLD/TIE)가 기존 파이프라인과 맞지 않으므로 **`Playable`을 구현하지 않는 독립 구조**로 설계한다.
+확률 조정은 `NumberPokerProbabilityAdjuster`가 전담하며 기존 `ProbabilityCalculator`를 거치지 않는다.
+
+`PokerPhase`(현재 게임 페이즈)는 `NumberPokerGame`(Aggregate Root)이 보유한다.
+`PokerRound`는 라운드 내 데이터(패, 폴드 여부, 딜러)만 책임지며 페이즈 상태를 갖지 않는다.
+
 ```text
 numberpoker/
 ├── domain/
-│   ├── NumberPokerGame        ← Aggregate Root (3라운드 관리)
-│   ├── PokerRound             ← 라운드 1개의 상태와 행동
+│   ├── NumberPokerGame        ← Aggregate Root (라운드 관리, PokerPhase 보유)
+│   ├── PokerRound             ← 라운드 1개의 데이터 (패, 폴드, 딜러, 준비 상태)
 │   ├── Dealer                 ← 딜러 패 + 단계별 공개 관리
 │   ├── PlayerPokerHand        ← 플레이어 패 + ACTIVE/FOLDED 상태
 │   ├── PokerCard              ← 카드 단위 (숫자 1~10)
 │   ├── HandRanking            ← 패 강도 비교 (페어 > 하이카드)
 │   ├── PokerRoundResult       ← WIN / STAGE_1_FOLD / STAGE_2_FOLD / LOSE / TIE
-│   ├── NumberPokerProbabilityAdjuster ← 라운드 결과로 player.updateProbability() 직접 호출
-│   └── PokerPhase             ← LOADING/STAGE_1/STAGE_2/SHOWDOWN/SCORE_BOARD/ROUND_READY
+│   ├── PokerPhase             ← LOADING/STAGE_1/STAGE_2/SHOWDOWN/SCORE_BOARD/ROUND_READY
+│   └── NumberPokerProbabilityAdjuster ← 라운드 결과로 변동량 계산 (적용은 Application Layer)
 ├── application/
 ├── infra/
 └── ui/

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
 import coffeeshout.fixture.TestContainerSupport;
-import coffeeshout.global.config.ServiceTestConfig;
 import coffeeshout.global.outbox.OutboxE2ETest.OutboxE2ETestConfig;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;

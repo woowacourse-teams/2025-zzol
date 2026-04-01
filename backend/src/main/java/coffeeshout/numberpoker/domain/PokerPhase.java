@@ -7,4 +7,5 @@ public enum PokerPhase {
     SHOWDOWN,
     SCORE_BOARD,
     ROUND_READY,
+    DONE,
 }

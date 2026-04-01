@@ -93,6 +93,10 @@ public class NumberPokerGame implements Playable {
         this.currentPhase = PokerPhase.ROUND_READY;
     }
 
+    public void done() {
+        this.currentPhase = PokerPhase.DONE;
+    }
+
     public void markReady(Player player) {
         currentRound.markReady(player);
     }

@@ -107,10 +107,13 @@ bomb-relay:
 
 number-poker:
   timing:
+    first-loading: 500ms
+    loading: 500ms
     stage1: 1000ms
     stage2: 1000ms
+    showdown: 500ms
+    score-board: 500ms
     round-ready: 1500ms
   probability:
     stage1-fold-multiplier: 0.3
     stage2-fold-multiplier: 0.6
-    adjustment-step: 1000

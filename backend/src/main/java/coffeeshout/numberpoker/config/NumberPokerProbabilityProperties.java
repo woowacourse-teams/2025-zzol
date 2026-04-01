@@ -7,7 +7,6 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "number-poker.probability")
 public record NumberPokerProbabilityProperties(
         double stage1FoldMultiplier,
-        double stage2FoldMultiplier,
-        int adjustmentStep
+        double stage2FoldMultiplier
 ) {
 }

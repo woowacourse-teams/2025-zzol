@@ -64,6 +64,7 @@ public class NumberPokerService implements MiniGameService {
         validateHost(room, hostName);
         final NumberPokerGame game = gameStore.get(joinCode);
         game.configureRoundCount(roundCount);
+        notifier.notifyPhaseChanged(game, room);
         log.debug("라운드 수 설정: joinCode={}, roundCount={}", joinCode, roundCount);
     }
 

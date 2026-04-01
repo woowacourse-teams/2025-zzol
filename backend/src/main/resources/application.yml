@@ -82,13 +82,16 @@ oracle:
 
 number-poker:
   timing:
+    first-loading: 3000ms
+    loading: 2000ms
     stage1: 4000ms
     stage2: 8000ms
+    showdown: 3000ms
+    score-board: 3000ms
     round-ready: 5000ms
   probability:
     stage1-fold-multiplier: 0.3
     stage2-fold-multiplier: 0.6
-    adjustment-step: 1000
 
 card-game:
   timing:

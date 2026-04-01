@@ -2,6 +2,7 @@ package coffeeshout.numberpoker.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -14,7 +15,6 @@ import coffeeshout.cardgame.application.port.FlowHandle;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;
-import coffeeshout.numberpoker.config.NumberPokerProbabilityProperties;
 import coffeeshout.numberpoker.config.NumberPokerTimingProperties;
 import coffeeshout.numberpoker.domain.NumberPokerGame;
 import coffeeshout.numberpoker.domain.NumberPokerProbabilityAdjuster;
@@ -22,6 +22,7 @@ import coffeeshout.numberpoker.domain.PokerPhase;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.service.RoomQueryService;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,8 +40,8 @@ class NumberPokerFlowOrchestratorTest {
     private NumberPokerNotifier notifier;
     private ApplicationEventPublisher eventPublisher;
     private NumberPokerTimingProperties timing;
-    private NumberPokerProbabilityProperties probabilityProps;
     private NumberPokerProbabilityAdjuster adjuster;
+    private RoomQueryService roomQueryService;
 
     Player 꾹이 = PlayerFixture.호스트꾹이();
     Player 루키 = PlayerFixture.게스트루키();
@@ -50,27 +51,43 @@ class NumberPokerFlowOrchestratorTest {
         scheduler = new SynchronousFlowScheduler();
         notifier = mock(NumberPokerNotifier.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
+        roomQueryService = mock(RoomQueryService.class);
         timing = new NumberPokerTimingProperties(
-                Duration.ofMillis(1), Duration.ofMillis(1), Duration.ofMillis(1));
-        probabilityProps = new NumberPokerProbabilityProperties(0.3, 0.6, 1000);
+                Duration.ofMillis(1), Duration.ofMillis(1), Duration.ofMillis(1),
+                Duration.ofMillis(1), Duration.ofMillis(1), Duration.ofMillis(1),
+                Duration.ofMillis(1));
         adjuster = new NumberPokerProbabilityAdjuster(0.3, 0.6);
 
         orchestrator = new NumberPokerFlowOrchestrator(
-                scheduler, timing, notifier, adjuster, probabilityProps, eventPublisher);
+                scheduler, timing, notifier, adjuster, eventPublisher, roomQueryService);
     }
 
     @Nested
     class 정상_플로우_1라운드 {
 
         @Test
-        void 단일_라운드_게임_시_LOADING부터_SCORE_BOARD까지_순서대로_전환된다() {
+        void 단일_라운드_게임_완료_시_최종_페이즈는_DONE이다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
             game.configureRoundCount(1);
             Room room = stubRoom("ABCD");
 
             orchestrator.startFlow(game, room);
 
-            assertThat(game.getCurrentPhase()).isEqualTo(PokerPhase.SCORE_BOARD);
+            assertThat(game.getCurrentPhase()).isEqualTo(PokerPhase.DONE);
+        }
+
+        @Test
+        void 게임_완료_시_DONE_페이즈로_notifier가_호출된다() {
+            NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
+            game.configureRoundCount(1);
+            Room room = stubRoom("ABCD");
+
+            orchestrator.startFlow(game, room);
+
+            ArgumentCaptor<NumberPokerGame> gameCaptor = ArgumentCaptor.forClass(NumberPokerGame.class);
+            verify(notifier, atLeastOnce()).notifyPhaseChanged(gameCaptor.capture(), any());
+            assertThat(gameCaptor.getAllValues())
+                    .anyMatch(g -> g.getCurrentPhase() == PokerPhase.DONE);
         }
 
         @Test
@@ -126,7 +143,7 @@ class NumberPokerFlowOrchestratorTest {
     class 전원_폴드_시_STAGE_2_스킵 {
 
         @Test
-        void STAGE_1에서_전원_폴드_시_STAGE_2를_건너뛰고_SHOWDOWN으로_간다() {
+        void STAGE_1에서_전원_폴드_시_STAGE_2를_건너뛰고_SHOWDOWN을_거쳐_DONE이_된다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
             game.configureRoundCount(1);
             Room room = stubRoom("ABCD");
@@ -139,7 +156,9 @@ class NumberPokerFlowOrchestratorTest {
 
             orchestrator.startFlow(game, room);
 
-            assertThat(game.getCurrentPhase()).isEqualTo(PokerPhase.SCORE_BOARD);
+            // 전원 폴드여도 SHOWDOWN(딜러 패 전체 공개)은 거친다 — 딜러 카드 2장 모두 공개됨으로 검증
+            assertThat(game.getDealerVisibleCards()).hasSize(2);
+            assertThat(game.getCurrentPhase()).isEqualTo(PokerPhase.DONE);
         }
     }
 
@@ -158,7 +177,7 @@ class NumberPokerFlowOrchestratorTest {
             orchestrator.startFlow(game, room);
 
             // 2라운드까지 완료된 상태여야 함
-            assertThat(game.getCurrentPhase()).isEqualTo(PokerPhase.SCORE_BOARD);
+            assertThat(game.getCurrentPhase()).isEqualTo(PokerPhase.DONE);
             assertThat(game.isLastRound()).isTrue();
         }
     }
@@ -184,6 +203,7 @@ class NumberPokerFlowOrchestratorTest {
         Room room = mock(Room.class);
         when(room.getJoinCode()).thenReturn(new JoinCode(joinCode));
         when(room.getPlayers()).thenReturn(List.of(꾹이, 루키));
+        when(roomQueryService.getByJoinCode(any())).thenReturn(room);
         return room;
     }
 

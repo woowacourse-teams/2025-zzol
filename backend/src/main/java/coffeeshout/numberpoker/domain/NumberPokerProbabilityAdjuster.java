@@ -10,6 +10,10 @@ import java.util.stream.Collectors;
 
 public class NumberPokerProbabilityAdjuster {
 
+    /** ProbabilityCalculator.ADJUSTMENT_WEIGHT 와 동일 */
+    private static final double ADJUSTMENT_WEIGHT = 0.7;
+    private static final int TOTAL_PROBABILITY = 10000;
+
     private final double stage1FoldMultiplier;
     private final double stage2FoldMultiplier;
 
@@ -20,15 +24,17 @@ public class NumberPokerProbabilityAdjuster {
 
     /**
      * 라운드 결과를 바탕으로 플레이어별 확률 변동량을 계산한다.
+     * step은 ProbabilityCalculator.computeAdjustmentStep 과 동일한 공식으로 산출한다:
+     * step = (TOTAL / playerCount) / roundCount / (playerCount / 2) * ADJUSTMENT_WEIGHT
      * 실제 적용(하한선 보정)은 Application Layer에서 담당한다.
      *
-     * @param results        플레이어별 라운드 결과
-     * @param adjustmentStep 게임 전체 확률 조정 폭 (Probability.value 단위)
-     * @param roundCount     총 라운드 수
+     * @param results     플레이어별 라운드 결과
+     * @param playerCount 참여 플레이어 수
+     * @param roundCount  총 라운드 수
      * @return 플레이어별 확률 변동량 (양수=증가, 음수=감소)
      */
-    public Map<Player, Integer> calculate(Map<Player, PokerRoundResult> results, int adjustmentStep, int roundCount) {
-        final int step = adjustmentStep / roundCount;
+    public Map<Player, Integer> calculate(Map<Player, PokerRoundResult> results, int playerCount, int roundCount) {
+        final int step = computeStep(playerCount, roundCount);
         final Map<PokerRoundResult, List<Player>> byResult = groupByResult(results);
         final Set<Player> absorbers = findAbsorbers(byResult);
 
@@ -66,6 +72,10 @@ public class NumberPokerProbabilityAdjuster {
         }
 
         return changes;
+    }
+
+    private int computeStep(int playerCount, int roundCount) {
+        return (int) ((TOTAL_PROBABILITY / (double) playerCount) / roundCount / (playerCount / 2.0) * ADJUSTMENT_WEIGHT);
     }
 
     private Map<PokerRoundResult, List<Player>> groupByResult(Map<Player, PokerRoundResult> results) {

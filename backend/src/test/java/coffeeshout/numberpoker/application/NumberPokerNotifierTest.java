@@ -39,9 +39,11 @@ class NumberPokerNotifierTest {
 
     NumberPokerNotifier notifier;
 
-    // stage1=4s, stage2=8s, roundReady=5s — ADR 명세 값
+    // firstLoading=3s, loading=2s, stage1=4s, stage2=8s, showdown=3s, scoreBoard=3s, roundReady=5s — ADR 명세 값
     final NumberPokerTimingProperties timing = new NumberPokerTimingProperties(
-            Duration.ofSeconds(4), Duration.ofSeconds(8), Duration.ofSeconds(5));
+            Duration.ofSeconds(3), Duration.ofSeconds(2),
+            Duration.ofSeconds(4), Duration.ofSeconds(8),
+            Duration.ofSeconds(3), Duration.ofSeconds(3), Duration.ofSeconds(5));
 
     Player 꾹이 = PlayerFixture.호스트꾹이();
     Player 루키 = PlayerFixture.게스트루키();

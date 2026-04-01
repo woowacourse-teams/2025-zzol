@@ -236,6 +236,23 @@ class NumberPokerGameTest {
     }
 
     @Nested
+    class DONE_페이즈 {
+
+        @Test
+        void 마지막_SCORE_BOARD_후_done_호출_시_DONE_페이즈로_전환한다() {
+            game.configureRoundCount(1);
+            game.startRound(new Random(42));
+            game.beginStage1();
+            game.beginStage2();
+            game.showdown();
+            game.scoreBoard();
+            game.done();
+
+            assertThat(game.getCurrentPhase()).isEqualTo(PokerPhase.DONE);
+        }
+    }
+
+    @Nested
     class 라운드_결과_조회 {
 
         @Test

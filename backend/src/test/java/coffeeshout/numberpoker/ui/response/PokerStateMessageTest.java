@@ -11,6 +11,7 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.roulette.Probability;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -39,7 +40,7 @@ class PokerStateMessageTest {
         void 라운드_번호와_총_라운드_수가_포함된다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
             game.configureRoundCount(2);
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
 
             PokerStateMessage message = PokerStateMessage.from(game, room, (Integer) null);
 
@@ -52,7 +53,7 @@ class PokerStateMessageTest {
         @Test
         void 현재_페이즈명이_문자열로_포함된다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage1();
 
             PokerStateMessage message = PokerStateMessage.from(game, room, 4);
@@ -72,7 +73,7 @@ class PokerStateMessageTest {
         @Test
         void 플레이어_목록에_모든_플레이어가_포함된다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
 
             PokerStateMessage message = PokerStateMessage.from(game, room, (Integer) null);
 
@@ -87,7 +88,7 @@ class PokerStateMessageTest {
         @Test
         void LOADING_페이즈에서_공개_카드_없음_뒷면_2장() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
 
             PokerStateMessage message = PokerStateMessage.from(game, room, (Integer) null);
 
@@ -100,7 +101,7 @@ class PokerStateMessageTest {
         @Test
         void STAGE_2_페이즈에서_공개_카드_1장_뒷면_1장() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage2(); // 딜러 1장 공개
 
             PokerStateMessage message = PokerStateMessage.from(game, room, 8);
@@ -114,7 +115,7 @@ class PokerStateMessageTest {
         @Test
         void SHOWDOWN_페이즈에서_공개_카드_2장_뒷면_0장() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage2();
             game.showdown(); // 딜러 2장 전체 공개
 
@@ -133,7 +134,7 @@ class PokerStateMessageTest {
         @Test
         void LOADING_페이즈에서_전_플레이어_result_null() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
 
             PokerStateMessage message = PokerStateMessage.from(game, room, (Integer) null);
 
@@ -144,7 +145,7 @@ class PokerStateMessageTest {
         @Test
         void STAGE_1_페이즈에서_전_플레이어_result_null() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage1();
 
             PokerStateMessage message = PokerStateMessage.from(game, room, 4);
@@ -156,7 +157,7 @@ class PokerStateMessageTest {
         @Test
         void STAGE_2_페이즈에서_전_플레이어_result_null() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage2();
 
             PokerStateMessage message = PokerStateMessage.from(game, room, 8);
@@ -168,7 +169,7 @@ class PokerStateMessageTest {
         @Test
         void SHOWDOWN_페이즈에서_전_플레이어_result_포함() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage2();
             game.showdown();
 
@@ -181,7 +182,7 @@ class PokerStateMessageTest {
         @Test
         void SCORE_BOARD_페이즈에서_전_플레이어_result_포함() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage2();
             game.showdown();
             game.scoreBoard();
@@ -196,7 +197,7 @@ class PokerStateMessageTest {
         void STAGE_1_폴드한_플레이어도_result는_null이고_folded는_true() {
             // folded:true 로 폴드 여부를 표현하므로 result는 SCORE_BOARD 전까지 숨긴다
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage1();
             game.fold(꾹이);
 
@@ -216,7 +217,7 @@ class PokerStateMessageTest {
         @Test
         void ROUND_READY에서_레디한_플레이어는_ready_true() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginRoundReady();
             game.markReady(꾹이);
 
@@ -235,7 +236,7 @@ class PokerStateMessageTest {
             꾹이.updateProbability(new Probability(3000));
             루키.updateProbability(new Probability(7000));
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
 
             PokerStateMessage message = PokerStateMessage.from(game, room, (Integer) null);
 
@@ -249,7 +250,7 @@ class PokerStateMessageTest {
         void probability_미설정_플레이어는_probability_null() {
             // probability가 설정되지 않은 Player는 null 반환
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
 
             PokerStateMessage message = PokerStateMessage.from(game, room, (Integer) null);
 
@@ -264,7 +265,7 @@ class PokerStateMessageTest {
         @Test
         void 플레이어별_probabilityDelta가_포함된다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage2();
             game.showdown();
             game.scoreBoard();
@@ -282,7 +283,7 @@ class PokerStateMessageTest {
         @Test
         void delta_없는_플레이어는_probabilityDelta_null() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage2();
             game.showdown();
             game.scoreBoard();

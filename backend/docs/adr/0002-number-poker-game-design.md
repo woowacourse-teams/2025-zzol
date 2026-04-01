@@ -46,11 +46,12 @@
 - 딜러 패 2장이 모두 공개된다.
 - 전원 폴드 시에도 딜러 패를 공개한 후 SCORE_BOARD로 넘어간다.
 - 2단계까지 남은 플레이어의 패와 딜러 패를 자동으로 비교한다.
-- 폴드한 플레이어는 자동으로 FOLD 결과를 받는다.
+- 1단계에서 폴드한 플레이어는 STAGE_1_FOLD, 2단계에서 폴드한 플레이어는 STAGE_2_FOLD 결과를 받는다.
 
 **5. 라운드 결과 (SCORE_BOARD)**
 
-- 각 플레이어의 결과(WIN / FOLD / LOSE)와 확률 변동량을 표시한다.
+- 각 플레이어의 결과(WIN / TIE / STAGE_1_FOLD / STAGE_2_FOLD / LOSE)와 확률 변동량을 표시한다.
+- 확률 조정은 라운드 결과 확정 즉시 반영된다 (게임 종료 후 일괄 처리 없음).
 - 마지막 라운드(3라운드)이면 게임 종료 후 룰렛 확률에 반영된다.
 - 마지막 라운드가 아니면 라운드 준비 단계(ROUND_READY)로 넘어간다.
 
@@ -108,58 +109,96 @@ TIE: 두 패가 완전히 동일한 경우에만 발생
 | STAGE_2 | 1장 | 8초 | 부분 정보 보고 포기 |
 | SHOWDOWN | 2장 | 없음 | 자동 승패 결정 |
 
-두 단계 모두 폴드 결과는 동일 등급(FOLD)으로 처리한다.
+1단계 폴드와 2단계 폴드는 각각 **STAGE_1_FOLD·STAGE_2_FOLD**로 구분하여 서로 다른 확률 변동 배수를 적용한다.
+일찍 포기할수록 정보 손실이 크므로 확률 이득이 작고, 늦게 포기할수록 이득이 크다.
+
+| 결과 | 변동 방향 | 배수 |
+|------|---------|------|
+| STAGE_1_FOLD | 증가 (소폭) | × 0.3 |
+| STAGE_2_FOLD | 증가 (중간) | × 0.6 |
+| LOSE | 증가 (최대) | × 1.0 |
+| WIN | 감소 (흡수) | — |
+| TIE | WIN 없으면 흡수, 있으면 변동 없음 | — |
 
 ### 5. 확률 조정 공식
 
 기존 `ProbabilityCalculator`를 거치지 않고 `NumberPokerProbabilityAdjuster`가 변동량을 계산하고,
 Application Layer에서 `player.updateProbability()`를 호출한다.
-기존 확률 시스템에 영향을 주지 않으며, 넘버포커 전용 4단계 결과를 그대로 표현할 수 있다.
+기존 확률 시스템에 영향을 주지 않으며, 넘버포커 전용 5단계 결과(WIN/TIE/STAGE_1_FOLD/STAGE_2_FOLD/LOSE)를 그대로 표현할 수 있다.
+
+**step 공식 (동적, 플레이어 수·라운드 수에 따라 계산)**
 
 ```text
-라운드당 step = adjustmentStep / roundCount  (= adjustmentStep / 3)
+step = (10000 / playerCount) / roundCount / (playerCount / 2) × 0.7
 
-결과별 변동량:
-  STAGE_1 FOLD → +(step × 0.3)
-  STAGE_2 FOLD → +(step × 0.6)
-  LOSE         → +(step × 1.0)
+  playerCount / 2 : 경쟁 포지션 수. 한 라운드당 대략 절반이 승부 포지션에 있다는 가정.
+                    이 값이 없으면 다수 동시 패배 시 단일 흡수자의 변동량이 폭발적으로 커진다.
+  0.7             : ProbabilityCalculator.ADJUSTMENT_WEIGHT 와 공유하는 조정 가중치.
 
-흡수자 결정 (우선순위):
-  1순위: WIN
-  2순위: TIE (WIN 없을 때)
-  3순위: STAGE_1_FOLD (WIN·TIE·LOSE 없고 STAGE_2_FOLD가 있을 때) → STAGE_1_FOLD는 증가 대신 흡수
-  4순위: FOLD 전체 (WIN·TIE 없고 LOSE가 있을 때) → FOLD는 증가 대신 흡수
-  흡수자 없거나 전원 동일 결과 → 해당 라운드 전원 변동 없음
-
-흡수자 변동량 = -(증가분 총합 ÷ 흡수자 인원수)
-TIE (비흡수자, WIN 존재 시) → 변동 없음
+예) 4명 3라운드: step = (10000/4) / 3 / 2 × 0.7 = 291
+    2명 3라운드: step = (10000/2) / 3 / 1 × 0.7 = 1166
 ```
 
-케이스별 예시: 4명, adjustmentStep = 300, 라운드당 step = 100
+**결과별 변동량**
+
+```text
+  STAGE_1_FOLD → +(step × 0.3)   정보 없이 포기 — 소폭 증가
+  STAGE_2_FOLD → +(step × 0.6)   부분 정보 보고 포기 — 중간 증가
+  LOSE         → +(step × 1.0)   끝까지 싸워 패배 — 최대 증가
+```
+
+**흡수자 결정 (우선순위)**
+
+```text
+  1순위: WIN
+  2순위: TIE (WIN 없을 때)
+  3순위: STAGE_1_FOLD + STAGE_2_FOLD 전체 (WIN·TIE 없고 LOSE가 있을 때)
+  4순위: STAGE_1_FOLD만 (WIN·TIE·LOSE 없고 STAGE_2_FOLD가 있을 때)
+  흡수자 없거나 전원 동일 결과 → 해당 라운드 전원 변동 없음
+```
+
+흡수자 변동량 = `-(증가분 총합 ÷ 흡수자 인원수)`.
+정수 나눗셈 나머지는 이름 순 마지막 흡수자에게 배분해 라운드당 총합이 정확히 0이 되도록 보장한다.
+
+케이스별 예시 (4명, step = 100 기준)
 
 ```text
 케이스 1 (WIN 존재): A=WIN, B=TIE, C=STAGE_1_FOLD, D=LOSE
   증가분 = 30 + 100 = 130
-  A: -130   B: 0   C: +30   D: +100
+  A: -130   B: 0   C: +30   D: +100   합계 = 0 ✓
 
-케이스 2 (WIN 없음, TIE 흡수): A=TIE, B=TIE, C=STAGE_2_FOLD, D=LOSE
+케이스 2 (TIE 흡수): A=TIE, B=TIE, C=STAGE_2_FOLD, D=LOSE
   증가분 = 60 + 100 = 160
   TIE 2명 흡수: 각 -80
   A: -80   B: -80   C: +60   D: +100   합계 = 0 ✓
 
-케이스 3 (WIN·TIE 없음, FOLD 흡수): A=STAGE_1_FOLD, B=STAGE_2_FOLD, C=LOSE, D=LOSE
-  LOSE 증가분 = 100 + 100 = 200
-  FOLD 2명 흡수: 각 -100
+케이스 3 (FOLD 흡수): A=STAGE_1_FOLD, B=STAGE_2_FOLD, C=LOSE, D=LOSE
+  LOSE 증가분 = 200, FOLD 2명 흡수: 각 -100
   A: -100   B: -100   C: +100   D: +100   합계 = 0 ✓
 
-케이스 5 (STAGE_1_FOLD 흡수): A=STAGE_1_FOLD, B=STAGE_1_FOLD, C=STAGE_2_FOLD, D=STAGE_2_FOLD
-  WIN·TIE·LOSE 없고 STAGE_2_FOLD 있음 → STAGE_1_FOLD가 흡수자
-  STAGE_2_FOLD 증가분 = 60 + 60 = 120
-  STAGE_1_FOLD 2명 흡수: 각 -60
+케이스 4 (STAGE_1_FOLD 흡수): A=STAGE_1_FOLD, B=STAGE_1_FOLD, C=STAGE_2_FOLD, D=STAGE_2_FOLD
+  STAGE_2_FOLD 증가분 = 120, STAGE_1_FOLD 2명 흡수: 각 -60
   A: -60   B: -60   C: +60   D: +60   합계 = 0 ✓
 
-케이스 6: 전원 LOSE, 전원 STAGE_2_FOLD, 또는 흡수자 없음 → 전원 변동 없음
+케이스 5: 전원 LOSE, 전원 STAGE_2_FOLD, 또는 흡수자 없음 → 전원 변동 없음
 ```
+
+**라운드 즉시 확률 반영**
+
+확률 조정은 SCORE_BOARD 진입 시 즉시 수행된다. 게임 종료 시 일괄 처리하지 않는다.
+
+```text
+SHOWDOWN 완료
+  → NumberPokerProbabilityAdjuster.calculate() 로 라운드 변동량 계산
+  → player.updateProbability() 즉시 호출 (Application Layer)
+  → SCORE_BOARD 메시지에 변동량(probabilityDelta) 포함해 브로드캐스트
+
+게임 종료 (DONE)
+  → shouldAdjustProbabilities() = false 이므로 Room.applyMiniGameResult() 에서 추가 조정 없음
+  → MiniGameFinishedEvent 발행 → gameStore 정리
+```
+
+이 구조로 라운드 결과가 즉각 플레이어 확률에 반영되어, 다음 라운드부터 변동된 확률이 적용된다.
 
 **1% 하한선 보장 (Application Layer)**
 
@@ -178,15 +217,19 @@ MIN_PROBABILITY = 100  (Probability 단위 기준 1%)
 ### 6. 설정 구조
 
 타이밍과 확률 배수는 yml로 관리하고, **라운드 수는 호스트가 게임 시작 전 직접 설정**한다.
-`adjustmentStep / roundCount` 공식으로 라운드 수에 관계없이 총 확률 조정량이 일정하게 유지된다.
+step 공식에 `/ roundCount`가 포함되어 있어, 라운드 수가 달라져도 게임 전체 총 확률 조정량이 일정하게 유지된다.
 
 **application.yml** (서버 고정값)
 
 ```yaml
 number-poker:
   timing:
+    first-loading: 3000ms   # 첫 라운드 LOADING 대기
+    loading: 2000ms          # 이후 라운드 LOADING 대기
     stage1: 4000ms
     stage2: 8000ms
+    showdown: 3000ms         # SHOWDOWN 표시 시간
+    score-board: 3000ms      # SCORE_BOARD 표시 시간
     round-ready: 5000ms
   probability:
     stage1-fold-multiplier: 0.3
@@ -198,7 +241,7 @@ number-poker:
 ```text
 발행: /app/room/{joinCode}/poker/settings
 
-{ "roundCount": 3 }
+{ "hostName": "꾹이", "roundCount": 3 }
 ```
 
 - 호스트만 전송 가능하며, 게임 시작 전에만 유효하다.
@@ -255,7 +298,8 @@ numberpoker/
 │   ├── PokerCard              ← 카드 단위 (숫자 1~10)
 │   ├── HandRanking            ← 패 강도 비교 (페어 > 하이카드)
 │   ├── PokerRoundResult       ← WIN / STAGE_1_FOLD / STAGE_2_FOLD / LOSE / TIE
-│   ├── PokerPhase             ← LOADING/STAGE_1/STAGE_2/SHOWDOWN/SCORE_BOARD/ROUND_READY
+│   ├── DeckShuffler           ← 덱 셔플 전략 인터페이스 (도메인이 Random에 직접 의존하지 않도록 분리)
+│   ├── PokerPhase             ← LOADING/STAGE_1/STAGE_2/SHOWDOWN/SCORE_BOARD/ROUND_READY/DONE
 │   └── NumberPokerProbabilityAdjuster ← 라운드 결과로 변동량 계산 (적용은 Application Layer)
 ├── application/
 ├── infra/

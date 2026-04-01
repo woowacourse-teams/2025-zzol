@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.numberpoker.domain.NumberPokerErrorCode;
 import coffeeshout.numberpoker.domain.NumberPokerGame;
 import coffeeshout.room.domain.JoinCode;
@@ -19,6 +20,7 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomQueryService;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,7 +62,7 @@ class NumberPokerServiceTest {
     void setUp() {
         room = mock(Room.class);
         game = new NumberPokerGame(List.of(꾹이, 루키));
-        game.startRound(new Random(42));
+        game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
         game.beginStage1();
 
         when(roomQueryService.getByJoinCode(new JoinCode("ABCD"))).thenReturn(room);
@@ -187,6 +189,24 @@ class NumberPokerServiceTest {
                     () -> service.configureRoundCount("ABCD", "루키", 5),
                     NumberPokerErrorCode.NOT_HOST
             );
+        }
+    }
+
+    @Nested
+    class 게임_스토어_정리 {
+
+        @Test
+        void NUMBER_POKER_게임_완료_이벤트_수신_시_스토어에서_제거된다() {
+            service.onMiniGameFinished(new MiniGameFinishedEvent("ABCD", MiniGameType.NUMBER_POKER.name()));
+
+            verify(gameStore).remove("ABCD");
+        }
+
+        @Test
+        void 다른_미니게임_완료_이벤트는_스토어를_건드리지_않는다() {
+            service.onMiniGameFinished(new MiniGameFinishedEvent("ABCD", "CARD_GAME"));
+
+            verify(gameStore, never()).remove(any());
         }
     }
 }

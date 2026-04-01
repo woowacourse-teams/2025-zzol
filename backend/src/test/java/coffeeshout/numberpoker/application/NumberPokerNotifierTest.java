@@ -16,6 +16,7 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -59,7 +60,7 @@ class NumberPokerNotifierTest {
         @Test
         void topic_poker_state로_현재_게임_상태를_전송한다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             Room room = stubRoom("ABCD");
 
             notifier.notifyPhaseChanged(game, room);
@@ -93,7 +94,7 @@ class NumberPokerNotifierTest {
         @Test
         void ROUND_READY_페이즈에서_timerSeconds_5가_포함된다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginRoundReady();
             Room room = stubRoom("ABCD");
 
@@ -105,7 +106,7 @@ class NumberPokerNotifierTest {
         @Test
         void LOADING_페이즈에서_timerSeconds가_null이다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42)); // LOADING
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42))); // LOADING
             Room room = stubRoom("ABCD");
 
             PokerStateMessage message = captureStateMessage(game, room);
@@ -141,7 +142,7 @@ class NumberPokerNotifierTest {
         @Test
         void LOADING_페이즈에서_dealerHiddenCount가_2이다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42)); // LOADING: 딜러 뒷면 2장
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42))); // LOADING: 딜러 뒷면 2장
             Room room = stubRoom("ABCD");
 
             PokerStateMessage message = captureStateMessage(game, room);
@@ -168,7 +169,7 @@ class NumberPokerNotifierTest {
 
             PokerStateMessage message = captureStateMessage(game, room);
 
-            assertThat(message.dealerHiddenCount()).isEqualTo(0);
+            assertThat(message.dealerHiddenCount()).isZero();
             assertThat(message.dealerCards()).hasSize(2);
         }
     }
@@ -256,7 +257,7 @@ class NumberPokerNotifierTest {
         @Test
         void LOADING_페이즈에서_각_플레이어에게_개인_패를_전송한다() {
             NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             Room room = stubRoom("ABCD");
 
             notifier.notifyHands(game, room);
@@ -274,21 +275,21 @@ class NumberPokerNotifierTest {
 
     private NumberPokerGame gameAtStage1() {
         NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-        game.startRound(new Random(42));
+        game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
         game.beginStage1();
         return game;
     }
 
     private NumberPokerGame gameAtStage2() {
         NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-        game.startRound(new Random(42));
+        game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
         game.beginStage2();
         return game;
     }
 
     private NumberPokerGame gameAtShowdown() {
         NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
-        game.startRound(new Random(42));
+        game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
         game.beginStage2();
         game.showdown();
         return game;

@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
  */
 public class ProbabilityCalculator {
 
-    protected static final double ADJUSTMENT_WEIGHT = 0.7;
+    public static final double ADJUSTMENT_WEIGHT = 0.7;
 
     private final Integer playerCount;
     private final Integer roundCount;

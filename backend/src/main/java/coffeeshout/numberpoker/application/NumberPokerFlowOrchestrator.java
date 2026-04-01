@@ -7,6 +7,7 @@ import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;
 import coffeeshout.numberpoker.config.NumberPokerTimingProperties;
 import coffeeshout.numberpoker.domain.NumberPokerGame;
+import coffeeshout.numberpoker.domain.DeckShuffler;
 import coffeeshout.numberpoker.domain.NumberPokerProbabilityAdjuster;
 import coffeeshout.numberpoker.domain.PokerRoundResult;
 import coffeeshout.room.domain.JoinCode;
@@ -16,7 +17,6 @@ import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.service.RoomQueryService;
 import java.time.Duration;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +36,9 @@ public class NumberPokerFlowOrchestrator {
     private final NumberPokerProbabilityAdjuster probabilityAdjuster;
     private final ApplicationEventPublisher eventPublisher;
     private final RoomQueryService roomQueryService;
+    private final DeckShuffler deckShuffler;
 
     private final ConcurrentHashMap<String, EarlyFinishTrigger> earlyReadyTriggers = new ConcurrentHashMap<>();
-
-    private final Random random = new Random();
 
     public void startFlow(NumberPokerGame game, Room room) {
         final String joinCode = room.getJoinCode().getValue();
@@ -73,10 +72,15 @@ public class NumberPokerFlowOrchestrator {
 
     // ── Round chaining ────────────────────────────────────────────────────────
 
-    private FlowHandle chainRound(FlowHandle flow, NumberPokerGame game, Room room,
-                                   EarlyFinishTrigger allFoldedTrigger,
-                                   EarlyFinishTrigger readyTrigger,
-                                   boolean isFirst, boolean isLast) {
+    private FlowHandle chainRound(
+            FlowHandle flow,
+            NumberPokerGame game,
+            Room room,
+            EarlyFinishTrigger allFoldedTrigger,
+            EarlyFinishTrigger readyTrigger,
+            boolean isFirst,
+            boolean isLast
+    ) {
         flow = chainStages(flow, game, room, allFoldedTrigger, isFirst);
         flow = chainShowdownAndScoreBoard(flow, game, room);
         if (isLast) {
@@ -113,7 +117,7 @@ public class NumberPokerFlowOrchestrator {
 
     private Runnable startRound(NumberPokerGame game, Room room) {
         return () -> {
-            game.startRound(random);
+            game.startRound(deckShuffler);
             try {
                 notifier.notifyPhaseChanged(game, room);
                 notifier.notifyHands(game, room);

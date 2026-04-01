@@ -3,6 +3,7 @@ package coffeeshout.numberpoker.application;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.numberpoker.domain.NumberPokerErrorCode;
 import coffeeshout.numberpoker.domain.NumberPokerGame;
 import coffeeshout.room.domain.JoinCode;
@@ -12,6 +13,7 @@ import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -66,6 +68,15 @@ public class NumberPokerService implements MiniGameService {
         game.configureRoundCount(roundCount);
         notifier.notifyPhaseChanged(game, room);
         log.debug("라운드 수 설정: joinCode={}, roundCount={}", joinCode, roundCount);
+    }
+
+    @EventListener
+    public void onMiniGameFinished(MiniGameFinishedEvent event) {
+        if (!MiniGameType.NUMBER_POKER.name().equals(event.miniGameType())) {
+            return;
+        }
+        gameStore.remove(event.joinCode());
+        log.debug("넘버포커 게임 스토어 정리: joinCode={}", event.joinCode());
     }
 
     private void validateHost(Room room, String hostName) {

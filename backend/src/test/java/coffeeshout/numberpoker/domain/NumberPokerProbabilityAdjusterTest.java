@@ -61,15 +61,16 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void WIN_없을_때_TIE가_흡수자가_된다() {
-            // A=TIE, B=TIE, C=STAGE_2_FOLD(+174), D=LOSE(+291)
-            // 증가분 = 465 → TIE 2명: 각 -232 (integer division)
+            // A=TIE(꾹이), B=TIE(루키), C=STAGE_2_FOLD(+174), D=LOSE(+291)
+            // 증가분 = 465 → TIE 2명 균등 배분: 465/2=232, 나머지 1
+            // 이름 순 정렬: 꾹이(A) → -232, 루키(B) → -(465-232)=-233 (zero-sum 보장)
             final Map<Player, PokerRoundResult> results = Map.of(A, TIE, B, TIE, C, STAGE_2_FOLD, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, 4, 3);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(changes.get(A)).isEqualTo(-232);
-                softly.assertThat(changes.get(B)).isEqualTo(-232);
+                softly.assertThat(changes.get(B)).isEqualTo(-233);
                 softly.assertThat(changes.get(C)).isEqualTo(174);
                 softly.assertThat(changes.get(D)).isEqualTo(291);
             });
@@ -169,14 +170,23 @@ class NumberPokerProbabilityAdjusterTest {
     class 합계_검증 {
 
         @Test
-        void 클램핑_없으므로_변동량_합계는_0이다() {
-            // A=WIN, B=TIE, C=STAGE_1_FOLD(+87), D=LOSE(+291) → 총합 -378+0+87+291=0
+        void WIN이_흡수할_때_변동량_합계는_0이다() {
+            // A=WIN, B=TIE, C=STAGE_1_FOLD(+87), D=LOSE(+291) → -378+0+87+291=0
             final Map<Player, PokerRoundResult> results = Map.of(A, WIN, B, TIE, C, STAGE_1_FOLD, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, 4, 3);
 
-            final int total = changes.values().stream().mapToInt(Integer::intValue).sum();
-            assertThat(total).isEqualTo(0);
+            assertThat(changes.values().stream().mapToInt(Integer::intValue).sum()).isZero();
+        }
+
+        @Test
+        void TIE가_흡수할_때_나머지_배분으로_변동량_합계는_0이다() {
+            // A=TIE, B=TIE, C=STAGE_2_FOLD(+174), D=LOSE(+291) → 465 홀수 나머지 처리
+            final Map<Player, PokerRoundResult> results = Map.of(A, TIE, B, TIE, C, STAGE_2_FOLD, D, LOSE);
+
+            final Map<Player, Integer> changes = adjuster.calculate(results, 4, 3);
+
+            assertThat(changes.values().stream().mapToInt(Integer::intValue).sum()).isZero();
         }
     }
 

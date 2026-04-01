@@ -1,6 +1,7 @@
 package coffeeshout.numberpoker.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -13,6 +14,7 @@ import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;
 import coffeeshout.numberpoker.config.NumberPokerTimingProperties;
+import coffeeshout.numberpoker.domain.DeckShuffler;
 import coffeeshout.numberpoker.domain.NumberPokerGame;
 import coffeeshout.numberpoker.domain.NumberPokerProbabilityAdjuster;
 import coffeeshout.numberpoker.domain.PokerPhase;
@@ -21,7 +23,9 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.service.RoomQueryService;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,6 +44,7 @@ class NumberPokerFlowOrchestratorTest {
     private NumberPokerTimingProperties timing;
     private NumberPokerProbabilityAdjuster adjuster;
     private RoomQueryService roomQueryService;
+    private DeckShuffler deckShuffler;
 
     Player 꾹이 = PlayerFixture.호스트꾹이();
     Player 루키 = PlayerFixture.게스트루키();
@@ -55,9 +60,10 @@ class NumberPokerFlowOrchestratorTest {
                 Duration.ofMillis(1), Duration.ofMillis(1), Duration.ofMillis(1),
                 Duration.ofMillis(1));
         adjuster = new NumberPokerProbabilityAdjuster(0.3, 0.6);
+        deckShuffler = deck -> Collections.shuffle(deck, new Random());
 
         orchestrator = new NumberPokerFlowOrchestrator(
-                scheduler, timing, notifier, adjuster, eventPublisher, roomQueryService);
+                scheduler, timing, notifier, adjuster, eventPublisher, roomQueryService, deckShuffler);
     }
 
     @Nested
@@ -189,11 +195,8 @@ class NumberPokerFlowOrchestratorTest {
             game.configureRoundCount(2);
             Room room = stubRoom("ABCD");
 
-            // 첫 ROUND_READY 진입 시점에 외부에서 트리거 발동
             orchestrator.startFlow(game, room);
-            orchestrator.triggerEarlyRoundReady("ABCD");
-
-            // 예외 없이 실행되어야 함
+            assertThatCode(() -> orchestrator.triggerEarlyRoundReady("ABCD")).doesNotThrowAnyException();
         }
     }
 

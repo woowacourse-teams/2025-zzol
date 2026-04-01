@@ -2,8 +2,11 @@ package coffeeshout.numberpoker.config;
 
 import coffeeshout.cardgame.infra.scheduler.CompletableFutureFlowScheduler;
 import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;
+import coffeeshout.numberpoker.domain.DeckShuffler;
 import coffeeshout.numberpoker.domain.NumberPokerProbabilityAdjuster;
 import coffeeshout.numberpoker.infra.scheduler.CompletableFutureNumberPokerFlowScheduler;
+import java.util.Collections;
+import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -36,6 +39,11 @@ public class NumberPokerConfig {
             ThreadPoolTaskScheduler numberPokerTaskScheduler) {
         return new CompletableFutureNumberPokerFlowScheduler(
                 new CompletableFutureFlowScheduler(numberPokerTaskScheduler));
+    }
+
+    @Bean
+    public DeckShuffler deckShuffler() {
+        return deck -> Collections.shuffle(deck, new Random());
     }
 
     @Bean

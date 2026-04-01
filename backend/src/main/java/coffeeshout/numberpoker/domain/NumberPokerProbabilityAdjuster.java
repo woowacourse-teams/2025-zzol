@@ -1,6 +1,8 @@
 package coffeeshout.numberpoker.domain;
 
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.roulette.ProbabilityCalculator;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -10,8 +12,6 @@ import java.util.stream.Collectors;
 
 public class NumberPokerProbabilityAdjuster {
 
-    /** ProbabilityCalculator.ADJUSTMENT_WEIGHT 와 동일 */
-    private static final double ADJUSTMENT_WEIGHT = 0.7;
     private static final int TOTAL_PROBABILITY = 10000;
 
     private final double stage1FoldMultiplier;
@@ -24,14 +24,7 @@ public class NumberPokerProbabilityAdjuster {
 
     /**
      * 라운드 결과를 바탕으로 플레이어별 확률 변동량을 계산한다.
-     * step은 ProbabilityCalculator.computeAdjustmentStep 과 동일한 공식으로 산출한다:
-     * step = (TOTAL / playerCount) / roundCount / (playerCount / 2) * ADJUSTMENT_WEIGHT
      * 실제 적용(하한선 보정)은 Application Layer에서 담당한다.
-     *
-     * @param results     플레이어별 라운드 결과
-     * @param playerCount 참여 플레이어 수
-     * @param roundCount  총 라운드 수
-     * @return 플레이어별 확률 변동량 (양수=증가, 음수=감소)
      */
     public Map<Player, Integer> calculate(Map<Player, PokerRoundResult> results, int playerCount, int roundCount) {
         final int step = computeStep(playerCount, roundCount);
@@ -47,35 +40,97 @@ public class NumberPokerProbabilityAdjuster {
 
         for (Map.Entry<Player, PokerRoundResult> entry : results.entrySet()) {
             final Player player = entry.getKey();
-            final PokerRoundResult result = entry.getValue();
-
             if (absorbers.contains(player)) {
                 continue;
             }
-
-            final int increase = switch (result) {
-                case STAGE_1_FOLD -> (int) (step * stage1FoldMultiplier);
-                case STAGE_2_FOLD -> (int) (step * stage2FoldMultiplier);
-                case LOSE -> step;
-                case TIE -> 0; // WIN 존재 시 비흡수자 TIE는 변동 없음
-                default -> 0;
-            };
-
+            final int increase = increaseFor(entry.getValue(), step);
             changes.put(player, increase);
             totalIncrease += increase;
         }
 
-        final int absorptionEach = totalIncrease > 0 ? totalIncrease / absorbers.size() : 0;
-
-        for (Player absorber : absorbers) {
-            changes.put(absorber, -absorptionEach);
-        }
-
+        distributeAbsorption(absorbers, totalIncrease, changes);
         return changes;
     }
 
+    // ── Step 계산 ─────────────────────────────────────────────────────────────
+
+    /**
+     * step = (총확률 / 플레이어 수) / 라운드 수 / 경쟁 포지션 수 × 조정 가중치
+     *
+     * <p>경쟁 포지션 수(playerCount / 2): 딜러 vs 플레이어 포커에서 한 라운드당 대략
+     * 절반의 플레이어가 승부 포지션에 있다는 가정. 이 값을 나누지 않으면 다수가 동시에
+     * 패배해 단일 흡수자가 받는 변동량이 플레이어 수에 비례해 폭발적으로 증가한다.
+     */
     private int computeStep(int playerCount, int roundCount) {
-        return (int) ((TOTAL_PROBABILITY / (double) playerCount) / roundCount / (playerCount / 2.0) * ADJUSTMENT_WEIGHT);
+        final double competitivePositions = playerCount / 2.0;
+        return (int) (TOTAL_PROBABILITY / (double) playerCount / roundCount / competitivePositions
+                * ProbabilityCalculator.ADJUSTMENT_WEIGHT);
+    }
+
+    private int increaseFor(PokerRoundResult result, int step) {
+        return switch (result) {
+            case STAGE_1_FOLD -> (int) (step * stage1FoldMultiplier);
+            case STAGE_2_FOLD -> (int) (step * stage2FoldMultiplier);
+            case LOSE -> step;
+            default -> 0;
+        };
+    }
+
+    // ── 흡수 분배 ─────────────────────────────────────────────────────────────
+
+    /**
+     * 총 증가분을 흡수자에게 균등 배분한다.
+     * 정수 나눗셈 나머지는 이름 순 마지막 흡수자에게 배분해 zero-sum을 보장한다.
+     */
+    private void distributeAbsorption(Set<Player> absorbers, int totalIncrease, Map<Player, Integer> changes) {
+        if (totalIncrease == 0) {
+            absorbers.forEach(absorber -> changes.put(absorber, 0));
+            return;
+        }
+        final List<Player> sorted = absorbers.stream()
+                .sorted(Comparator.comparing(p -> p.getName().value()))
+                .toList();
+        final int shareEach = totalIncrease / sorted.size();
+        int remaining = totalIncrease;
+        for (int i = 0; i < sorted.size() - 1; i++) {
+            changes.put(sorted.get(i), -shareEach);
+            remaining -= shareEach;
+        }
+        changes.put(sorted.getLast(), -remaining);
+    }
+
+    // ── 흡수자 선택 ───────────────────────────────────────────────────────────
+
+    /**
+     * 흡수자 우선순위: WIN > TIE > FOLD 전체(LOSE 있을 때) > STAGE_1_FOLD(STAGE_2_FOLD만 있을 때)
+     * 흡수자가 없으면 빈 집합을 반환한다.
+     */
+    private Set<Player> findAbsorbers(Map<PokerRoundResult, List<Player>> byResult) {
+        if (byResult.containsKey(PokerRoundResult.WIN)) {
+            return Set.copyOf(byResult.get(PokerRoundResult.WIN));
+        }
+        if (byResult.containsKey(PokerRoundResult.TIE)) {
+            return Set.copyOf(byResult.get(PokerRoundResult.TIE));
+        }
+        if (byResult.containsKey(PokerRoundResult.LOSE)) {
+            return collectFoldAbsorbers(byResult);
+        }
+        if (byResult.containsKey(PokerRoundResult.STAGE_1_FOLD)
+                && byResult.containsKey(PokerRoundResult.STAGE_2_FOLD)) {
+            return Set.copyOf(byResult.get(PokerRoundResult.STAGE_1_FOLD));
+        }
+        return Set.of();
+    }
+
+    /** LOSE 있을 때 STAGE_1_FOLD + STAGE_2_FOLD 전체를 흡수자로 수집한다. */
+    private Set<Player> collectFoldAbsorbers(Map<PokerRoundResult, List<Player>> byResult) {
+        final Set<Player> foldAbsorbers = new HashSet<>();
+        for (PokerRoundResult foldResult : List.of(PokerRoundResult.STAGE_1_FOLD, PokerRoundResult.STAGE_2_FOLD)) {
+            if (byResult.containsKey(foldResult)) {
+                foldAbsorbers.addAll(byResult.get(foldResult));
+            }
+        }
+        return foldAbsorbers;
     }
 
     private Map<PokerRoundResult, List<Player>> groupByResult(Map<Player, PokerRoundResult> results) {
@@ -84,42 +139,5 @@ public class NumberPokerProbabilityAdjuster {
                         Map.Entry::getValue,
                         Collectors.mapping(Map.Entry::getKey, Collectors.toList())
                 ));
-    }
-
-    private Set<Player> findAbsorbers(Map<PokerRoundResult, List<Player>> byResult) {
-        final boolean hasWin = byResult.containsKey(PokerRoundResult.WIN);
-        final boolean hasTie = byResult.containsKey(PokerRoundResult.TIE);
-        final boolean hasLose = byResult.containsKey(PokerRoundResult.LOSE);
-        final boolean hasStage1Fold = byResult.containsKey(PokerRoundResult.STAGE_1_FOLD);
-        final boolean hasStage2Fold = byResult.containsKey(PokerRoundResult.STAGE_2_FOLD);
-
-        // 1순위: WIN
-        if (hasWin) {
-            return Set.copyOf(byResult.get(PokerRoundResult.WIN));
-        }
-
-        // 2순위: TIE (WIN 없을 때)
-        if (hasTie) {
-            return Set.copyOf(byResult.get(PokerRoundResult.TIE));
-        }
-
-        // 3순위: FOLD 전체 (WIN·TIE 없고 LOSE 있을 때)
-        if (hasLose) {
-            final Set<Player> foldAbsorbers = new HashSet<>();
-            if (hasStage1Fold) {
-                foldAbsorbers.addAll(byResult.get(PokerRoundResult.STAGE_1_FOLD));
-            }
-            if (hasStage2Fold) {
-                foldAbsorbers.addAll(byResult.get(PokerRoundResult.STAGE_2_FOLD));
-            }
-            return foldAbsorbers;
-        }
-
-        // 4순위: STAGE_1_FOLD (WIN·TIE·LOSE 없고 STAGE_2_FOLD 있을 때)
-        if (hasStage1Fold && hasStage2Fold) {
-            return Set.copyOf(byResult.get(PokerRoundResult.STAGE_1_FOLD));
-        }
-
-        return Set.of();
     }
 }

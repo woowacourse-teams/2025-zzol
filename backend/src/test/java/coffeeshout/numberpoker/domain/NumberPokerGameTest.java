@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.room.domain.player.Player;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -69,21 +70,21 @@ class NumberPokerGameTest {
 
         @Test
         void 라운드_시작_시_LOADING_페이즈가_된다() {
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
 
             assertThat(game.getCurrentPhase()).isEqualTo(PokerPhase.LOADING);
         }
 
         @Test
         void 라운드_시작_시_모든_플레이어에게_카드가_배분된다() {
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
 
             assertThat(game.hasCurrentRound()).isTrue();
         }
 
         @Test
         void 첫_번째_라운드임을_확인한다() {
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
 
             assertThat(game.isFirstRound()).isTrue();
         }
@@ -94,7 +95,7 @@ class NumberPokerGameTest {
 
         @BeforeEach
         void 라운드_시작() {
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
         }
 
         @Test
@@ -137,7 +138,7 @@ class NumberPokerGameTest {
 
         @BeforeEach
         void 라운드_시작_후_STAGE_1() {
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage1();
         }
 
@@ -151,7 +152,7 @@ class NumberPokerGameTest {
         @Test
         void LOADING_페이즈에서_폴드하면_예외가_발생한다() {
             final NumberPokerGame newGame = new NumberPokerGame(players);
-            newGame.startRound(new Random(42));
+            newGame.startRound(deck -> Collections.shuffle(deck, new Random(42)));
 
             assertCoffeeShoutException(
                     () -> newGame.fold(꾹이),
@@ -165,7 +166,7 @@ class NumberPokerGameTest {
 
         @Test
         void STAGE_1에서_전원_폴드하면_STAGE_2를_건너뛸_수_있다() {
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage1();
             game.fold(꾹이);
             game.fold(루키);
@@ -183,7 +184,7 @@ class NumberPokerGameTest {
 
         @BeforeEach
         void 첫_라운드_SCORE_BOARD까지_진행() {
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage1();
             game.beginStage2();
             game.showdown();
@@ -222,7 +223,7 @@ class NumberPokerGameTest {
         @Test
         void 마지막_라운드_SCORE_BOARD_후_ROUND_READY가_없다() {
             game.configureRoundCount(1);
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage1();
             game.beginStage2();
             game.showdown();
@@ -241,7 +242,7 @@ class NumberPokerGameTest {
         @Test
         void 마지막_SCORE_BOARD_후_done_호출_시_DONE_페이즈로_전환한다() {
             game.configureRoundCount(1);
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage1();
             game.beginStage2();
             game.showdown();
@@ -257,7 +258,7 @@ class NumberPokerGameTest {
 
         @Test
         void SHOWDOWN_후_현재_라운드_결과를_조회할_수_있다() {
-            game.startRound(new Random(42));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
             game.beginStage1();
             game.beginStage2();
             game.showdown();

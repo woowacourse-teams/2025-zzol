@@ -7,11 +7,9 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.player.Player;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -23,6 +21,9 @@ public class NumberPokerGame implements Playable {
     private static final int MIN_ROUND_COUNT = 1;
     private static final int MAX_ROUND_COUNT = 5;
     private static final int CARDS_PER_HAND = 2;
+    private static final int MIN_CARD_VALUE = 1;
+    private static final int MAX_CARD_VALUE = 10;
+    private static final int CARDS_PER_VALUE = 4;
 
     private List<Player> players;
     private int totalRounds;
@@ -54,13 +55,13 @@ public class NumberPokerGame implements Playable {
         this.totalRounds = roundCount;
     }
 
-    public void startRound(Random random) {
+    public void startRound(DeckShuffler shuffler) {
         this.currentRoundNumber++;
-        final List<PokerCard> deck = buildShuffledDeck(random);
-        final Dealer dealer = new Dealer(deck.remove(0), deck.remove(0));
+        final List<PokerCard> deck = buildShuffledDeck(shuffler);
+        final Dealer dealer = new Dealer(deck.removeFirst(), deck.removeFirst());
         final Map<Player, PlayerPokerHand> hands = new HashMap<>();
         for (Player player : players) {
-            hands.put(player, new PlayerPokerHand(player, deck.remove(0), deck.remove(0)));
+            hands.put(player, new PlayerPokerHand(player, deck.removeFirst(), deck.removeFirst()));
         }
         this.currentRound = new PokerRound(currentRoundNumber, totalRounds, dealer, hands);
         this.currentPhase = PokerPhase.LOADING;
@@ -158,9 +159,9 @@ public class NumberPokerGame implements Playable {
         return currentRound.getPlayerCardValues(player);
     }
 
-    private void requirePhase(PokerPhase... allowedPhases) {
-        for (PokerPhase allowed : allowedPhases) {
-            if (currentPhase == allowed) {
+    private void requirePhase(PokerPhase... allowed) {
+        for (PokerPhase phase : allowed) {
+            if (currentPhase == phase) {
                 return;
             }
         }
@@ -170,14 +171,14 @@ public class NumberPokerGame implements Playable {
         );
     }
 
-    private List<PokerCard> buildShuffledDeck(Random random) {
+    private List<PokerCard> buildShuffledDeck(DeckShuffler shuffler) {
         final List<PokerCard> deck = new ArrayList<>();
-        for (int value = 1; value <= 10; value++) {
-            for (int copy = 0; copy < 4; copy++) {
+        for (int value = MIN_CARD_VALUE; value <= MAX_CARD_VALUE; value++) {
+            for (int copy = 0; copy < CARDS_PER_VALUE; copy++) {
                 deck.add(new PokerCard(value));
             }
         }
-        Collections.shuffle(deck, random);
+        shuffler.shuffle(deck);
         return deck;
     }
 
@@ -193,6 +194,8 @@ public class NumberPokerGame implements Playable {
 
     @Override
     public MiniGameResult getResult() {
+        // Number Poker는 자체 확률 조정 로직(NumberPokerProbabilityAdjuster)을 사용하므로
+        // MiniGameResult는 placeholder로 모든 플레이어에게 동일 순위 부여
         final Map<Player, Integer> allFirst = players.stream()
                 .collect(Collectors.toMap(Function.identity(), p -> 1));
         return new MiniGameResult(allFirst);

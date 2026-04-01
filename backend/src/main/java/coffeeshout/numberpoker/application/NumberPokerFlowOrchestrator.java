@@ -71,61 +71,56 @@ public class NumberPokerFlowOrchestrator {
         trigger.complete();
     }
 
+    // ── Round chaining ────────────────────────────────────────────────────────
+
     private FlowHandle chainRound(FlowHandle flow, NumberPokerGame game, Room room,
                                    EarlyFinishTrigger allFoldedTrigger,
                                    EarlyFinishTrigger readyTrigger,
-                                   boolean isFirst,
-                                   boolean isLast) {
-        final Duration loadingDuration = isFirst ? timing.firstLoading() : timing.loading();
-
-        // STAGE_1 (LOADING 표시 후)
-        flow = flow.andThen(step(game, room, NumberPokerGame::beginStage1), loadingDuration);
-
-        // STAGE_1 종료 후: 전원 폴드 여부에 따라 STAGE_2 진입 또는 스킵
-        flow = flow.andThen(() -> {
-            if (game.isAllFolded()) {
-                allFoldedTrigger.complete();
-            } else {
-                step(game, room, NumberPokerGame::beginStage2).run();
-            }
-        }, timing.stage1());
-
-        // STAGE_2 대기 (전원 폴드 시 즉시 통과)
-        flow = flow.raceTimeout(timing.stage2(), allFoldedTrigger, Duration.ZERO);
-
-        // SHOWDOWN
-        flow = flow.andThen(step(game, room, NumberPokerGame::showdown), Duration.ZERO);
-
-        // SCORE_BOARD (SHOWDOWN 표시 후, 확률 적용 포함)
-        flow = flow.andThen(() -> {
-            final Map<Player, Integer> deltas = applyRoundProbabilities(game, room);
-            game.scoreBoard();
-            try {
-                notifier.notifyPhaseChanged(game, room, deltas);
-            } catch (Exception e) {
-                log.warn("페이즈 변경 알림 실패: joinCode={}, phase={}",
-                        room.getJoinCode().getValue(), game.getCurrentPhase(), e);
-            }
-        }, timing.showdown());
-
+                                   boolean isFirst, boolean isLast) {
+        flow = chainStages(flow, game, room, allFoldedTrigger, isFirst);
+        flow = chainShowdownAndScoreBoard(flow, game, room);
         if (isLast) {
             return flow;
         }
+        return chainRoundReady(flow, game, room, readyTrigger);
+    }
 
-        // ROUND_READY (SCORE_BOARD 표시 후)
+    private FlowHandle chainStages(FlowHandle flow, NumberPokerGame game, Room room,
+                                    EarlyFinishTrigger allFoldedTrigger, boolean isFirst) {
+        final Duration loadingDuration = isFirst ? timing.firstLoading() : timing.loading();
+        flow = flow.andThen(step(game, room, NumberPokerGame::beginStage1), loadingDuration);
+        flow = flow.andThen(beginStage2OrSkipOnAllFolded(game, room, allFoldedTrigger), timing.stage1());
+        return flow.raceTimeout(timing.stage2(), allFoldedTrigger, Duration.ZERO);
+    }
+
+    private FlowHandle chainShowdownAndScoreBoard(FlowHandle flow, NumberPokerGame game, Room room) {
+        flow = flow.andThen(step(game, room, NumberPokerGame::showdown), Duration.ZERO);
+        return flow.andThen(scoreBoard(game, room), timing.showdown());
+    }
+
+    private FlowHandle chainRoundReady(FlowHandle flow, NumberPokerGame game, Room room,
+                                        EarlyFinishTrigger readyTrigger) {
         final String joinCode = room.getJoinCode().getValue();
         flow = flow.andThen(() -> {
             earlyReadyTriggers.put(joinCode, readyTrigger);
             step(game, room, NumberPokerGame::beginRoundReady).run();
         }, timing.scoreBoard());
-
-        // 전원 레디 또는 타임아웃 대기
         flow = flow.raceTimeout(timing.roundReady(), readyTrigger, Duration.ZERO);
+        return flow.andThen(startRound(game, room), Duration.ZERO);
+    }
 
-        // 다음 라운드 시작
-        flow = flow.andThen(startRound(game, room), Duration.ZERO);
+    // ── Runnable factories ────────────────────────────────────────────────────
 
-        return flow;
+    private Runnable startRound(NumberPokerGame game, Room room) {
+        return () -> {
+            game.startRound(random);
+            try {
+                notifier.notifyPhaseChanged(game, room);
+                notifier.notifyHands(game, room);
+            } catch (Exception e) {
+                log.warn("라운드 시작 알림 실패: joinCode={}", room.getJoinCode().getValue(), e);
+            }
+        };
     }
 
     private Runnable finishGame(NumberPokerGame game, Room room) {
@@ -145,14 +140,26 @@ public class NumberPokerFlowOrchestrator {
         };
     }
 
-    private Runnable startRound(NumberPokerGame game, Room room) {
+    private Runnable beginStage2OrSkipOnAllFolded(NumberPokerGame game, Room room,
+                                                   EarlyFinishTrigger allFoldedTrigger) {
         return () -> {
-            game.startRound(random);
+            if (game.isAllFolded()) {
+                allFoldedTrigger.complete();
+            } else {
+                step(game, room, NumberPokerGame::beginStage2).run();
+            }
+        };
+    }
+
+    private Runnable scoreBoard(NumberPokerGame game, Room room) {
+        return () -> {
+            final Map<Player, Integer> deltas = applyRoundProbabilities(game, room);
+            game.scoreBoard();
             try {
-                notifier.notifyPhaseChanged(game, room);
-                notifier.notifyHands(game, room);
+                notifier.notifyPhaseChanged(game, room, deltas);
             } catch (Exception e) {
-                log.warn("라운드 시작 알림 실패: joinCode={}", room.getJoinCode().getValue(), e);
+                log.warn("페이즈 변경 알림 실패: joinCode={}, phase={}",
+                        room.getJoinCode().getValue(), game.getCurrentPhase(), e);
             }
         };
     }
@@ -168,6 +175,8 @@ public class NumberPokerFlowOrchestrator {
             }
         };
     }
+
+    // ── Probability ───────────────────────────────────────────────────────────
 
     private Map<Player, Integer> applyRoundProbabilities(NumberPokerGame game, Room room) {
         final Map<Player, PokerRoundResult> results = game.getCurrentRoundResults();

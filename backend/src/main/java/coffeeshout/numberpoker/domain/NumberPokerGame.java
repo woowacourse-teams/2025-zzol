@@ -98,6 +98,13 @@ public class NumberPokerGame implements Playable {
     }
 
     public void markReady(Player player) {
+        if (currentRound == null) {
+            throw new BusinessException(
+                    NumberPokerErrorCode.ROUND_NOT_IN_PROGRESS,
+                    "진행 중인 라운드가 없습니다."
+            );
+        }
+        requirePhase(PokerPhase.ROUND_READY);
         currentRound.markReady(player);
     }
 

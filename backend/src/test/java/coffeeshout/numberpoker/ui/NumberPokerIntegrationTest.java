@@ -66,6 +66,10 @@ class NumberPokerIntegrationTest extends WebSocketIntegrationTestSupport {
         return "/app/room/%s/poker/ready".formatted(joinCode.getValue());
     }
 
+    private String settingsUrl() {
+        return "/app/room/%s/poker/settings".formatted(joinCode.getValue());
+    }
+
     // ── Action helpers ───────────────────────────────────────────────────────
 
     private void startGame() {
@@ -87,6 +91,12 @@ class NumberPokerIntegrationTest extends WebSocketIntegrationTestSupport {
         session.send(readyUrl(), """
                 { "playerName": "%s" }
                 """.formatted(playerName));
+    }
+
+    private void settings(int roundCount) {
+        session.send(settingsUrl(), """
+                { "hostName": "%s", "roundCount": %d }
+                """.formatted(host.getName().value(), roundCount));
     }
 
     private void setupGame(@Autowired RoomRepository roomRepository, int roundCount) {
@@ -151,7 +161,6 @@ class NumberPokerIntegrationTest extends WebSocketIntegrationTestSupport {
             // 딜러 카드가 2장 공개됨
             assertMessageContains(showdown, "\"phase\":\"SHOWDOWN\"");
             String payload = showdown.payload();
-            long cardCount = payload.chars().filter(c -> c == ',').count();
             // dealerCards 배열에 쉼표가 1개 이상 있음 = 카드 2장
             assertThat(payload).contains("\"dealerCards\":[")
                     .doesNotContain("\"dealerCards\":[]");
@@ -220,12 +229,46 @@ class NumberPokerIntegrationTest extends WebSocketIntegrationTestSupport {
             responses.get(STAGE1_MS + 500, TimeUnit.MILLISECONDS); // SHOWDOWN
             MessageResponse scoreBoard = responses.get();
 
-            // SCORE_BOARD에서 모든 플레이어 folded:true
-            long foldedCount = scoreBoard.payload().chars()
-                    .filter(c -> c == 't')
-                    .count();
             // "folded":true 가 플레이어 수(4) 만큼 존재
             assertThat(scoreBoard.payload()).containsPattern("\"folded\":true");
+        }
+    }
+
+    @Nested
+    class 라운드_수_설정 {
+
+        @BeforeEach
+        void 게임_설정(@Autowired RoomRepository roomRepository) {
+            // 기본 3라운드 게임을 등록 — settings 명령으로 변경할 것
+            NumberPokerGame game = new NumberPokerGame();
+            room.addMiniGame(host.getName(), game);
+            roomRepository.save(room);
+        }
+
+        @Test
+        void settings_명령으로_totalRounds가_변경된_상태_메시지를_받는다() {
+            var responses = session.subscribe(stateUrl());
+
+            settings(1);
+
+            MessageResponse settingsResponse = responses.get(2, TimeUnit.SECONDS);
+
+            assertMessageContains(settingsResponse, "\"totalRounds\":1");
+        }
+
+        @Test
+        void settings로_설정한_라운드_수로_게임이_실행된다() {
+            var responses = session.subscribe(stateUrl());
+
+            settings(1);
+            responses.get(2, TimeUnit.SECONDS); // settings 상태 알림 소비
+
+            startGame();
+
+            MessageResponse loading = responses.get();
+
+            assertMessageContains(loading, "\"phase\":\"LOADING\"");
+            assertMessageContains(loading, "\"totalRounds\":1");
         }
     }
 

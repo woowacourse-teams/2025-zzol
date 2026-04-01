@@ -62,7 +62,7 @@ public class NumberPokerService implements MiniGameService {
     public void configureRoundCount(String joinCode, String hostName, int roundCount) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         validateHost(room, hostName);
-        final NumberPokerGame game = gameStore.get(joinCode);
+        final NumberPokerGame game = (NumberPokerGame) room.findQueuedMiniGame(MiniGameType.NUMBER_POKER);
         game.configureRoundCount(roundCount);
         notifier.notifyPhaseChanged(game, room);
         log.debug("라운드 수 설정: joinCode={}, roundCount={}", joinCode, roundCount);

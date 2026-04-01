@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.numberpoker.domain.NumberPokerGame;
-import coffeeshout.numberpoker.domain.PokerPhase;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;

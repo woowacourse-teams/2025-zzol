@@ -3,10 +3,9 @@ package coffeeshout.room.domain;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.state;
 
-import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.custom.SystemException;
-import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
@@ -123,6 +122,15 @@ public class Room {
                 .filter(minigame -> minigame.getMiniGameType() == miniGameType)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("해당하는 미니게임이 존재하지 않습니다."));
+    }
+
+    public Playable findQueuedMiniGame(MiniGameType miniGameType) {
+        return miniGames.stream()
+                .filter(minigame -> minigame.getMiniGameType() == miniGameType)
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(
+                        GlobalErrorCode.NOT_EXIST,
+                        "대기 중인 미니게임이 없습니다: " + miniGameType));
     }
 
     public Playable startNextGame(String hostName) {

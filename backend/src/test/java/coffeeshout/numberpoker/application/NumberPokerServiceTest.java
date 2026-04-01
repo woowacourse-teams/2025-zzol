@@ -174,7 +174,7 @@ class NumberPokerServiceTest {
         @Test
         void 호스트가_라운드_수를_변경할_수_있다() {
             NumberPokerGame freshGame = new NumberPokerGame(List.of(꾹이, 루키));
-            when(gameStore.get("ABCD")).thenReturn(freshGame);
+            when(room.findQueuedMiniGame(MiniGameType.NUMBER_POKER)).thenReturn(freshGame);
 
             service.configureRoundCount("ABCD", "꾹이", 5);
 

@@ -162,8 +162,8 @@ class NumberPokerIntegrationTest extends WebSocketIntegrationTestSupport {
             assertMessageContains(showdown, "\"phase\":\"SHOWDOWN\"");
             String payload = showdown.payload();
             // dealerCards 배열에 쉼표가 1개 이상 있음 = 카드 2장
-            assertThat(payload).contains("\"dealerCards\":[")
-                    .doesNotContain("\"dealerCards\":[]");
+            assertThat(payload)
+                    .containsPattern("\"dealerCards\":\\[\\d+,\\d+]");
         }
     }
 

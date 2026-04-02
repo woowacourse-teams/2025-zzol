@@ -8,8 +8,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
-import coffeeshout.cardgame.application.port.FlowHandle;
+import coffeeshout.global.flow.EarlyFinishTrigger;
+import coffeeshout.global.flow.FlowHandle;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;

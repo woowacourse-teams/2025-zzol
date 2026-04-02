@@ -20,10 +20,9 @@ public class NumberPokerGame implements Playable {
     private static final int DEFAULT_ROUND_COUNT = 3;
     private static final int MIN_ROUND_COUNT = 1;
     private static final int MAX_ROUND_COUNT = 5;
-    private static final int CARDS_PER_HAND = 2;
     private static final int MIN_CARD_VALUE = 1;
     private static final int MAX_CARD_VALUE = 10;
-    private static final int CARDS_PER_VALUE = 4;
+    private static final int CARDS_PER_VALUE = 3;
 
     private List<Player> players;
     private int totalRounds;
@@ -146,6 +145,13 @@ public class NumberPokerGame implements Playable {
             return List.of();
         }
         return currentRound.getDealer().getVisibleCards();
+    }
+
+    public int getDealerHiddenCount() {
+        if (currentRound == null) {
+            return 0;
+        }
+        return currentRound.getDealer().getHiddenCount();
     }
 
     public boolean isPlayerReady(Player player) {

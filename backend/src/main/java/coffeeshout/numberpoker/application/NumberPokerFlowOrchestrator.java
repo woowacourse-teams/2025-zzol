@@ -1,7 +1,7 @@
 package coffeeshout.numberpoker.application;
 
-import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
-import coffeeshout.cardgame.application.port.FlowHandle;
+import coffeeshout.global.flow.EarlyFinishTrigger;
+import coffeeshout.global.flow.FlowHandle;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;

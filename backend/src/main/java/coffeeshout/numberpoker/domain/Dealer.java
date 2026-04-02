@@ -41,6 +41,10 @@ public class Dealer {
         return HandRanking.of(firstCard, secondCard);
     }
 
+    public int getHiddenCount() {
+        return 2 - revealedCount;
+    }
+
     public boolean isFullyRevealed() {
         return revealedCount == 2;
     }

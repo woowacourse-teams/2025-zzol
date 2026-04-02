@@ -47,7 +47,7 @@ public record PokerStateMessage(
         final List<Integer> dealerCards = game.getDealerVisibleCards().stream()
                 .map(PokerCard::value)
                 .toList();
-        final int dealerHiddenCount = 2 - dealerCards.size();
+        final int dealerHiddenCount = game.getDealerHiddenCount();
 
         // result는 SHOWDOWN·SCORE_BOARD에서만 포함 — 그 이전 페이즈에 노출되면 게임 정보가 유출됨
         final boolean showResult = game.getCurrentPhase() == PokerPhase.SHOWDOWN

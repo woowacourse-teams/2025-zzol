@@ -1,7 +1,6 @@
 package coffeeshout.numberpoker.domain;
 
 import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.roulette.ProbabilityCalculator;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,7 +54,7 @@ public class NumberPokerProbabilityAdjuster {
     // ── Step 계산 ─────────────────────────────────────────────────────────────
 
     /**
-     * step = (총확률 / 플레이어 수) / 라운드 수 / 경쟁 포지션 수 × 조정 가중치
+     * step = (총확률 / 플레이어 수) / 라운드 수 / 경쟁 포지션 수
      *
      * <p>경쟁 포지션 수(playerCount / 2): 딜러 vs 플레이어 포커에서 한 라운드당 대략
      * 절반의 플레이어가 승부 포지션에 있다는 가정. 이 값을 나누지 않으면 다수가 동시에
@@ -63,8 +62,7 @@ public class NumberPokerProbabilityAdjuster {
      */
     private int computeStep(int playerCount, int roundCount) {
         final double competitivePositions = playerCount / 2.0;
-        return (int) (TOTAL_PROBABILITY / (double) playerCount / roundCount / competitivePositions
-                * ProbabilityCalculator.ADJUSTMENT_WEIGHT);
+        return (int) (TOTAL_PROBABILITY / (double) playerCount / roundCount / competitivePositions);
     }
 
     private int increaseFor(PokerRoundResult result, int step) {

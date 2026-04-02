@@ -1,7 +1,7 @@
 package coffeeshout.numberpoker.infra.scheduler;
 
-import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
-import coffeeshout.cardgame.application.port.FlowHandle;
+import coffeeshout.global.flow.EarlyFinishTrigger;
+import coffeeshout.global.flow.FlowHandle;
 import coffeeshout.cardgame.infra.scheduler.CompletableFutureFlowScheduler;
 import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;
 import java.time.Duration;

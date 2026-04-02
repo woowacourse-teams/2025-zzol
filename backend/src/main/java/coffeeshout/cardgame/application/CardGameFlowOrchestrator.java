@@ -7,8 +7,8 @@ import static coffeeshout.cardgame.domain.CardGameStep.START_PLAY;
 import static coffeeshout.cardgame.domain.CardGameStep.START_ROUND;
 
 import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
-import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
-import coffeeshout.cardgame.application.port.FlowHandle;
+import coffeeshout.global.flow.EarlyFinishTrigger;
+import coffeeshout.global.flow.FlowHandle;
 import coffeeshout.cardgame.config.CardGameTimingProperties;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.CardGameState;

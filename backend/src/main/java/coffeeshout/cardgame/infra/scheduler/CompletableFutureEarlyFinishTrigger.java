@@ -1,6 +1,6 @@
 package coffeeshout.cardgame.infra.scheduler;
 
-import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
+import coffeeshout.global.flow.EarlyFinishTrigger;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 

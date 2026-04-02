@@ -90,8 +90,8 @@ number-poker:
     score-board: 3000ms
     round-ready: 5000ms
   probability:
-    stage1-fold-multiplier: 0.3
-    stage2-fold-multiplier: 0.6
+    stage1-fold-multiplier: 0.5
+    stage2-fold-multiplier: 0.9
 
 card-game:
   timing:

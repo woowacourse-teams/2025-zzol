@@ -5,7 +5,6 @@ import coffeeshout.numberpoker.infra.messaging.event.SettingsCommandEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.extern.slf4j.XSlf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j

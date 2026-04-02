@@ -1,7 +1,5 @@
 package coffeeshout.numberpoker.domain;
 
-import static coffeeshout.room.domain.roulette.ProbabilityCalculator.ADJUSTMENT_WEIGHT;
-
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.roulette.Probability;
 import java.util.Comparator;
@@ -76,11 +74,13 @@ public class NumberPokerProbabilityAdjuster {
      * <p>roundMultiplier = 2 × currentRoundNumber / (roundCount + 1)
      * → 라운드 번호에 비례해 선형 증가. 전체 라운드 평균은 1.0을 유지하므로
      * 총 기댓값은 기존 설계와 동일하고, 후반 라운드일수록 개별 변동폭이 커진다.
+     *
+     * baseStep에서 원래 가중치(ADJUSTMENT_WEIGHT)를 곱연산해야하나 좀 더 긴장감 있도록 하기 위해 제거하였음
      */
     private int computeStep(int playerCount, int roundCount, int currentRoundNumber) {
         final double competitivePositions = playerCount / 2.0;
-        final int baseStep = (int) (Probability.TOTAL.value() / (double) playerCount / roundCount / competitivePositions
-                * ADJUSTMENT_WEIGHT);
+        final int baseStep = (int) (Probability.TOTAL.value() / (double) playerCount / roundCount
+                / competitivePositions);
         final double roundMultiplier = 2.0 * currentRoundNumber / (roundCount + 1);
         return (int) (baseStep * roundMultiplier);
     }

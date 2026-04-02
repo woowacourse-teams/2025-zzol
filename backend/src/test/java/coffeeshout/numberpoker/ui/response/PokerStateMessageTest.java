@@ -260,6 +260,42 @@ class PokerStateMessageTest {
     }
 
     @Nested
+    class 폴드_수_공개 {
+
+        @Test
+        void 폴드_없을_때_foldCount는_0이다() {
+            NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
+            game.beginStage1();
+
+            PokerStateMessage message = PokerStateMessage.from(game, room, 4);
+
+            assertThat(message.foldCount()).isZero();
+        }
+
+        @Test
+        void 플레이어가_폴드하면_foldCount가_증가한다() {
+            NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
+            game.startRound(deck -> Collections.shuffle(deck, new Random(42)));
+            game.beginStage1();
+            game.fold(꾹이);
+
+            PokerStateMessage message = PokerStateMessage.from(game, room, 4);
+
+            assertThat(message.foldCount()).isEqualTo(1);
+        }
+
+        @Test
+        void 라운드_시작_전에는_foldCount가_0이다() {
+            NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
+
+            PokerStateMessage message = PokerStateMessage.from(game, room, (Integer) null);
+
+            assertThat(message.foldCount()).isZero();
+        }
+    }
+
+    @Nested
     class SCORE_BOARD_확률_변동량 {
 
         @Test

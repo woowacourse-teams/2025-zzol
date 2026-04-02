@@ -1,6 +1,9 @@
 package coffeeshout.numberpoker.domain;
 
+import static coffeeshout.room.domain.roulette.ProbabilityCalculator.ADJUSTMENT_WEIGHT;
+
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.roulette.Probability;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,7 +14,6 @@ import java.util.stream.Collectors;
 
 public class NumberPokerProbabilityAdjuster {
 
-    private static final int TOTAL_PROBABILITY = 10000;
 
     private final double stage1FoldMultiplier;
     private final double stage2FoldMultiplier;
@@ -24,9 +26,20 @@ public class NumberPokerProbabilityAdjuster {
     /**
      * 라운드 결과를 바탕으로 플레이어별 확률 변동량을 계산한다.
      * 실제 적용(하한선 보정)은 Application Layer에서 담당한다.
+     *
+     * <p>handRankings: 폴드하지 않은 플레이어의 HandRanking 맵.
+     * WIN 흡수자가 여럿일 때 핸드 강도에 따라 흡수량을 차등 배분하는 데 사용한다.
+     * WIN 이외의 흡수자 그룹(TIE·FOLD)에는 균등 배분이 적용된다.
+     *
+     * <p>currentRoundNumber: 라운드 번호(1-indexed). 후반 라운드일수록 step이 커진다.
      */
-    public Map<Player, Integer> calculate(Map<Player, PokerRoundResult> results, int playerCount, int roundCount) {
-        final int step = computeStep(playerCount, roundCount);
+    public Map<Player, Integer> calculate(
+            Map<Player, PokerRoundResult> results,
+            Map<Player, HandRanking> handRankings,
+            int playerCount,
+            int roundCount,
+            int currentRoundNumber) {
+        final int step = computeStep(playerCount, roundCount, currentRoundNumber);
         final Map<PokerRoundResult, List<Player>> byResult = groupByResult(results);
         final Set<Player> absorbers = findAbsorbers(byResult);
 
@@ -47,22 +60,29 @@ public class NumberPokerProbabilityAdjuster {
             totalIncrease += increase;
         }
 
-        distributeAbsorption(absorbers, totalIncrease, changes);
+        final boolean absorbersAreWinners = byResult.containsKey(PokerRoundResult.WIN)
+                && new HashSet<>(byResult.get(PokerRoundResult.WIN)).equals(absorbers);
+        distributeAbsorption(absorbers, totalIncrease, changes, handRankings, absorbersAreWinners);
         return changes;
     }
 
     // ── Step 계산 ─────────────────────────────────────────────────────────────
 
     /**
-     * step = (총확률 / 플레이어 수) / 라운드 수 / 경쟁 포지션 수
+     * step = base × roundMultiplier
      *
-     * <p>경쟁 포지션 수(playerCount / 2): 딜러 vs 플레이어 포커에서 한 라운드당 대략
-     * 절반의 플레이어가 승부 포지션에 있다는 가정. 이 값을 나누지 않으면 다수가 동시에
-     * 패배해 단일 흡수자가 받는 변동량이 플레이어 수에 비례해 폭발적으로 증가한다.
+     * <p>base = (총확률 / 플레이어 수) / 라운드 수 / 경쟁 포지션 수
+     *
+     * <p>roundMultiplier = 2 × currentRoundNumber / (roundCount + 1)
+     * → 라운드 번호에 비례해 선형 증가. 전체 라운드 평균은 1.0을 유지하므로
+     * 총 기댓값은 기존 설계와 동일하고, 후반 라운드일수록 개별 변동폭이 커진다.
      */
-    private int computeStep(int playerCount, int roundCount) {
+    private int computeStep(int playerCount, int roundCount, int currentRoundNumber) {
         final double competitivePositions = playerCount / 2.0;
-        return (int) (TOTAL_PROBABILITY / (double) playerCount / roundCount / competitivePositions);
+        final int baseStep = (int) (Probability.TOTAL.value() / (double) playerCount / roundCount / competitivePositions
+                * ADJUSTMENT_WEIGHT);
+        final double roundMultiplier = 2.0 * currentRoundNumber / (roundCount + 1);
+        return (int) (baseStep * roundMultiplier);
     }
 
     private int increaseFor(PokerRoundResult result, int step) {
@@ -76,15 +96,57 @@ public class NumberPokerProbabilityAdjuster {
 
     // ── 흡수 분배 ─────────────────────────────────────────────────────────────
 
-    /**
-     * 총 증가분을 흡수자에게 균등 배분한다.
-     * 정수 나눗셈 나머지는 이름 순 마지막 흡수자에게 배분해 zero-sum을 보장한다.
-     */
-    private void distributeAbsorption(Set<Player> absorbers, int totalIncrease, Map<Player, Integer> changes) {
+    private void distributeAbsorption(
+            Set<Player> absorbers,
+            int totalIncrease,
+            Map<Player, Integer> changes,
+            Map<Player, HandRanking> handRankings,
+            boolean absorbersAreWinners) {
         if (totalIncrease == 0) {
             absorbers.forEach(absorber -> changes.put(absorber, 0));
             return;
         }
+        if (absorbersAreWinners && absorbers.size() > 1
+                && absorbers.stream().allMatch(handRankings::containsKey)) {
+            distributeByRanking(absorbers, totalIncrease, changes, handRankings);
+        } else {
+            distributeEvenly(absorbers, totalIncrease, changes);
+        }
+    }
+
+    /**
+     * WIN 흡수자들에게 핸드 랭킹 순위 비례로 흡수량을 배분한다.
+     * 순위 1위(최강 핸드)가 weight n, 2위가 n-1, ..., n위가 1을 가진다.
+     * 동점 핸드가 있는 경우 이름 순으로 순위를 결정한다.
+     * 마지막 흡수자에게 나머지를 부여해 zero-sum을 보장한다.
+     */
+    private void distributeByRanking(
+            Set<Player> absorbers,
+            int totalIncrease,
+            Map<Player, Integer> changes,
+            Map<Player, HandRanking> handRankings) {
+        final List<Player> sorted = absorbers.stream()
+                .sorted(Comparator.comparing((Player p) -> handRankings.get(p)).reversed()
+                        .thenComparing(p -> p.getName().value()))
+                .toList();
+        final int n = sorted.size();
+        final int totalWeight = n * (n + 1) / 2;
+
+        int distributed = 0;
+        for (int i = 0; i < n - 1; i++) {
+            final int weight = n - i;
+            final int share = totalIncrease * weight / totalWeight;
+            changes.put(sorted.get(i), -share);
+            distributed += share;
+        }
+        changes.put(sorted.getLast(), -(totalIncrease - distributed));
+    }
+
+    /**
+     * 흡수자들에게 총 증가분을 균등 배분한다.
+     * 정수 나눗셈 나머지는 이름 순 마지막 흡수자에게 부여해 zero-sum을 보장한다.
+     */
+    private void distributeEvenly(Set<Player> absorbers, int totalIncrease, Map<Player, Integer> changes) {
         final List<Player> sorted = absorbers.stream()
                 .sorted(Comparator.comparing(p -> p.getName().value()))
                 .toList();

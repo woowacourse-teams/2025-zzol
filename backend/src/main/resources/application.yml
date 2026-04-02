@@ -82,10 +82,10 @@ oracle:
 
 number-poker:
   timing:
-    first-loading: 3000ms
+    first-loading: 5000ms
     loading: 2000ms
     stage1: 4000ms
-    stage2: 8000ms
+    stage2: 6000ms
     showdown: 3000ms
     score-board: 3000ms
     round-ready: 5000ms

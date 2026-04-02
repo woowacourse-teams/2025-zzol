@@ -133,6 +133,63 @@ class PokerRoundTest {
     }
 
     @Nested
+    class 폴드_수_조회 {
+
+        @Test
+        void 폴드_없을_때_0을_반환한다() {
+            assertThat(round.getFoldCount()).isZero();
+        }
+
+        @Test
+        void 폴드한_플레이어_수만큼_반환한다() {
+            round.fold(꾹이, PokerPhase.STAGE_1);
+            round.fold(루키, PokerPhase.STAGE_2);
+
+            assertThat(round.getFoldCount()).isEqualTo(2);
+        }
+
+        @Test
+        void 전원_폴드하면_전체_플레이어_수를_반환한다() {
+            round.fold(꾹이, PokerPhase.STAGE_1);
+            round.fold(루키, PokerPhase.STAGE_1);
+            round.fold(엠제이, PokerPhase.STAGE_1);
+
+            assertThat(round.getFoldCount()).isEqualTo(3);
+        }
+    }
+
+    @Nested
+    class 활성_플레이어_핸드_랭킹 {
+
+        @Test
+        void 폴드_없을_때_전원의_핸드_랭킹을_반환한다() {
+            final var rankings = round.getActivePlayerHandRankings();
+
+            assertThat(rankings).containsKeys(꾹이, 루키, 엠제이);
+        }
+
+        @Test
+        void 폴드한_플레이어는_핸드_랭킹_맵에서_제외된다() {
+            round.fold(꾹이, PokerPhase.STAGE_1);
+
+            final var rankings = round.getActivePlayerHandRankings();
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(rankings).doesNotContainKey(꾹이);
+                softly.assertThat(rankings).containsKeys(루키, 엠제이);
+            });
+        }
+
+        @Test
+        void 반환된_핸드_랭킹이_실제_카드와_일치한다() {
+            // 꾹이: [9,9] → PAIR(9)
+            final var rankings = round.getActivePlayerHandRankings();
+
+            assertThat(rankings.get(꾹이).isPair()).isTrue();
+        }
+    }
+
+    @Nested
     class 준비_완료_처리 {
 
         @Test

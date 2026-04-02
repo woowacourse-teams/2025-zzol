@@ -6,8 +6,9 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.numberpoker.application.port.NumberPokerFlowScheduler;
 import coffeeshout.numberpoker.config.NumberPokerTimingProperties;
-import coffeeshout.numberpoker.domain.NumberPokerGame;
 import coffeeshout.numberpoker.domain.DeckShuffler;
+import coffeeshout.numberpoker.domain.HandRanking;
+import coffeeshout.numberpoker.domain.NumberPokerGame;
 import coffeeshout.numberpoker.domain.NumberPokerProbabilityAdjuster;
 import coffeeshout.numberpoker.domain.PokerRoundResult;
 import coffeeshout.room.domain.JoinCode;
@@ -184,10 +185,13 @@ public class NumberPokerFlowOrchestrator {
 
     private Map<Player, Integer> applyRoundProbabilities(NumberPokerGame game, Room room) {
         final Map<Player, PokerRoundResult> results = game.getCurrentRoundResults();
+        final Map<Player, HandRanking> handRankings = game.getActivePlayerHandRankings();
         final Map<Player, Integer> deltas = probabilityAdjuster.calculate(
                 results,
+                handRankings,
                 room.getPlayers().size(),
-                game.getTotalRounds()
+                game.getTotalRounds(),
+                game.getCurrentRoundNumber()
         );
         for (Player player : room.getPlayers()) {
             final int delta = deltas.getOrDefault(player, 0);

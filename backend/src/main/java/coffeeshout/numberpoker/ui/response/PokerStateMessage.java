@@ -16,6 +16,7 @@ public record PokerStateMessage(
         Integer timerSeconds,      // STAGE_1·STAGE_2·ROUND_READY 에서만 값 존재, 나머지는 null
         List<Integer> dealerCards, // 공개된 딜러 카드
         int dealerHiddenCount,     // 뒷면(미공개) 딜러 카드 수
+        int foldCount,             // 현재 라운드에서 폴드한 플레이어 수
         List<PlayerInfo> players
 ) {
 
@@ -67,7 +68,9 @@ public record PokerStateMessage(
                 ))
                 .toList();
 
+        final int foldCount = game.hasCurrentRound() ? game.getFoldCount() : 0;
+
         return new PokerStateMessage(phase, game.getCurrentRoundNumber(), game.getTotalRounds(),
-                timerSeconds, dealerCards, dealerHiddenCount, playerInfos);
+                timerSeconds, dealerCards, dealerHiddenCount, foldCount, playerInfos);
     }
 }

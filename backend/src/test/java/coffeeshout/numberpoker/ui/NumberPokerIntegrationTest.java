@@ -12,6 +12,8 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -35,6 +37,7 @@ class NumberPokerIntegrationTest extends WebSocketIntegrationTestSupport {
     Player host;
     Room room;
     TestStompSession session;
+    Map<String, TestStompSession> playerSessions;
 
     @BeforeEach
     void setUp(
@@ -45,7 +48,12 @@ class NumberPokerIntegrationTest extends WebSocketIntegrationTestSupport {
         room = RoomFixture.호스트_꾹이(joinCode);
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         host = room.getHost();
-        session = createSession();
+        playerSessions = new HashMap<>();
+        for (Player player : room.getPlayers()) {
+            playerSessions.put(player.getName().value(),
+                    createSession(joinCode.getValue(), player.getName().value()));
+        }
+        session = playerSessions.get(host.getName().value());
     }
 
     // ── URL helpers ──────────────────────────────────────────────────────────
@@ -82,15 +90,11 @@ class NumberPokerIntegrationTest extends WebSocketIntegrationTestSupport {
     }
 
     private void fold(String playerName) {
-        session.send(foldUrl(), """
-                { "playerName": "%s" }
-                """.formatted(playerName));
+        playerSessions.get(playerName).send(foldUrl());
     }
 
     private void ready(String playerName) {
-        session.send(readyUrl(), """
-                { "playerName": "%s" }
-                """.formatted(playerName));
+        playerSessions.get(playerName).send(readyUrl());
     }
 
     private void settings(int roundCount) {

@@ -74,6 +74,21 @@ public class PokerRound {
         return readyPlayers.contains(player);
     }
 
+    public int getFoldCount() {
+        return (int) playerHands.values().stream().filter(PlayerPokerHand::isFolded).count();
+    }
+
+    /** 폴드하지 않은 플레이어의 HandRanking 맵을 반환한다. */
+    public Map<Player, HandRanking> getActivePlayerHandRankings() {
+        final Map<Player, HandRanking> rankings = new HashMap<>();
+        for (Map.Entry<Player, PlayerPokerHand> entry : playerHands.entrySet()) {
+            if (!entry.getValue().isFolded()) {
+                rankings.put(entry.getKey(), entry.getValue().getHandRanking());
+            }
+        }
+        return rankings;
+    }
+
     public int[] getPlayerCardValues(Player player) {
         return findHand(player).getCardValues();
     }

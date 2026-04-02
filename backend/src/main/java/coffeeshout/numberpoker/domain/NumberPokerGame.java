@@ -161,6 +161,20 @@ public class NumberPokerGame implements Playable {
         return currentRound.isPlayerReady(player);
     }
 
+    public int getFoldCount() {
+        if (currentRound == null) {
+            return 0;
+        }
+        return currentRound.getFoldCount();
+    }
+
+    public Map<Player, HandRanking> getActivePlayerHandRankings() {
+        if (currentRound == null) {
+            return Map.of();
+        }
+        return currentRound.getActivePlayerHandRankings();
+    }
+
     public int[] getPlayerCardValues(Player player) {
         return currentRound.getPlayerCardValues(player);
     }

@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 public class NumberPokerProbabilityAdjuster {
 
-
     private final double stage1FoldMultiplier;
     private final double stage2FoldMultiplier;
 
@@ -69,18 +68,17 @@ public class NumberPokerProbabilityAdjuster {
     /**
      * step = base × roundMultiplier
      *
-     * <p>base = (총확률 / 플레이어 수) / 라운드 수 / 경쟁 포지션 수
+     * <p>base = 총확률 / 플레이어 수 / 라운드 수
+     * (기존 경쟁포지션 수 나누기 제거 — 플레이어 수에 따른 변동폭 과소 억제 문제 해소)
      *
      * <p>roundMultiplier = 2 × currentRoundNumber / (roundCount + 1)
      * → 라운드 번호에 비례해 선형 증가. 전체 라운드 평균은 1.0을 유지하므로
-     * 총 기댓값은 기존 설계와 동일하고, 후반 라운드일수록 개별 변동폭이 커진다.
-     *
-     * baseStep에서 원래 가중치(ADJUSTMENT_WEIGHT)를 곱연산해야하나 좀 더 긴장감 있도록 하기 위해 제거하였음
+     * 총 기댓값은 동일하고, 후반 라운드일수록 개별 변동폭이 커진다.
+     * 변동 없는 라운드의 weight가 이월될 경우 currentRoundNumber가 totalRounds를
+     * 초과할 수 있으며, 이는 의도적으로 허용된 긴장 고조 효과다.
      */
     private int computeStep(int playerCount, int roundCount, int currentRoundNumber) {
-        final double competitivePositions = playerCount / 2.0;
-        final int baseStep = (int) (Probability.TOTAL.value() / (double) playerCount / roundCount
-                / competitivePositions);
+        final int baseStep = (int) (Probability.TOTAL.value() / (double) playerCount / roundCount);
         final double roundMultiplier = 2.0 * currentRoundNumber / (roundCount + 1);
         return (int) (baseStep * roundMultiplier);
     }

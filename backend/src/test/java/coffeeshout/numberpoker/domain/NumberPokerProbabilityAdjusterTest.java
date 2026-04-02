@@ -18,10 +18,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 /**
- * 4명 · 3라운드 기준
- * step = (10000/4) / 3 / (4/2.0) = 416
- * stage1Fold = (int)(416 * 0.3) = 124
- * stage2Fold = (int)(416 * 0.6) = 249
+ * 4명 · 3라운드 · round 2 기준
+ * step = (10000/4) / 3 = 833  (경쟁포지션 나누기 제거)
+ * stage1Fold = (int)(833 * 0.3) = 249
+ * stage2Fold = (int)(833 * 0.6) = 499
  * 케이스는 ADR 0002 확률 조정 공식 기준
  */
 class NumberPokerProbabilityAdjusterTest {
@@ -43,17 +43,17 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void WIN이_증가분_전체를_흡수한다() {
-            // A=WIN, B=TIE, C=STAGE_1_FOLD(+124), D=LOSE(+416)
-            // 증가분 = 540 → WIN 1명: -540
+            // A=WIN, B=TIE, C=STAGE_1_FOLD(+249), D=LOSE(+833)
+            // 증가분 = 1082 → WIN 1명: -1082
             final Map<Player, PokerRoundResult> results = Map.of(A, WIN, B, TIE, C, STAGE_1_FOLD, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, Map.of(), 4, 3, 2);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(changes.get(A)).isEqualTo(-540);
+                softly.assertThat(changes.get(A)).isEqualTo(-1082);
                 softly.assertThat(changes.get(B)).isEqualTo(0);
-                softly.assertThat(changes.get(C)).isEqualTo(124);
-                softly.assertThat(changes.get(D)).isEqualTo(416);
+                softly.assertThat(changes.get(C)).isEqualTo(249);
+                softly.assertThat(changes.get(D)).isEqualTo(833);
             });
         }
     }
@@ -63,32 +63,32 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void WIN_없을_때_TIE가_흡수자가_된다() {
-            // A=TIE(꾹이), B=TIE(루키), C=STAGE_2_FOLD(+249), D=LOSE(+416)
-            // 증가분 = 665 → TIE 2명 균등 배분: 665/2=332, 나머지 1
-            // 이름 순 정렬: 꾹이(A) → -332, 루키(B) → -(665-332)=-333 (zero-sum 보장)
+            // A=TIE(꾹이), B=TIE(루키), C=STAGE_2_FOLD(+499), D=LOSE(+833)
+            // 증가분 = 1332 → TIE 2명 균등: 1332/2=666, 나머지 0
+            // 꾹이(A): -666, 루키(B): -666
             final Map<Player, PokerRoundResult> results = Map.of(A, TIE, B, TIE, C, STAGE_2_FOLD, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, Map.of(), 4, 3, 2);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(changes.get(A)).isEqualTo(-332);
-                softly.assertThat(changes.get(B)).isEqualTo(-333);
-                softly.assertThat(changes.get(C)).isEqualTo(249);
-                softly.assertThat(changes.get(D)).isEqualTo(416);
+                softly.assertThat(changes.get(A)).isEqualTo(-666);
+                softly.assertThat(changes.get(B)).isEqualTo(-666);
+                softly.assertThat(changes.get(C)).isEqualTo(499);
+                softly.assertThat(changes.get(D)).isEqualTo(833);
             });
         }
 
         @Test
         void TIE와_STAGE_1_FOLD만_있을_때_TIE가_흡수하고_STAGE_1_FOLD는_증가한다() {
-            // A=TIE, B=STAGE_1_FOLD(+124)
-            // TIE는 2순위 흡수자 → A: -124, B: +124
+            // A=TIE, B=STAGE_1_FOLD(+249)
+            // TIE는 2순위 흡수자 → A: -249, B: +249
             final Map<Player, PokerRoundResult> results = Map.of(A, TIE, B, STAGE_1_FOLD);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, Map.of(), 4, 3, 2);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(changes.get(A)).isEqualTo(-124);
-                softly.assertThat(changes.get(B)).isEqualTo(124);
+                softly.assertThat(changes.get(A)).isEqualTo(-249);
+                softly.assertThat(changes.get(B)).isEqualTo(249);
             });
         }
     }
@@ -98,17 +98,17 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void WIN_TIE_없을_때_FOLD_전체가_LOSE를_흡수한다() {
-            // A=STAGE_1_FOLD, B=STAGE_2_FOLD, C=LOSE(+416), D=LOSE(+416)
-            // LOSE 증가분 = 832 → FOLD 2명 균등: 832/2=416, 나머지 0
+            // A=STAGE_1_FOLD, B=STAGE_2_FOLD, C=LOSE(+833), D=LOSE(+833)
+            // LOSE 증가분 = 1666 → FOLD 2명 균등: 1666/2=833, 나머지 0
             final Map<Player, PokerRoundResult> results = Map.of(A, STAGE_1_FOLD, B, STAGE_2_FOLD, C, LOSE, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, Map.of(), 4, 3, 2);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(changes.get(A)).isEqualTo(-416);
-                softly.assertThat(changes.get(B)).isEqualTo(-416);
-                softly.assertThat(changes.get(C)).isEqualTo(416);
-                softly.assertThat(changes.get(D)).isEqualTo(416);
+                softly.assertThat(changes.get(A)).isEqualTo(-833);
+                softly.assertThat(changes.get(B)).isEqualTo(-833);
+                softly.assertThat(changes.get(C)).isEqualTo(833);
+                softly.assertThat(changes.get(D)).isEqualTo(833);
             });
         }
     }
@@ -118,8 +118,8 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void STAGE_1_FOLD와_STAGE_2_FOLD만_있을_때_STAGE_1_FOLD가_흡수자가_된다() {
-            // A=STAGE_1_FOLD, B=STAGE_1_FOLD, C=STAGE_2_FOLD(+249), D=STAGE_2_FOLD(+249)
-            // STAGE_2_FOLD 증가분 = 498 → STAGE_1_FOLD 2명 균등: 498/2=249, 나머지 0
+            // A=STAGE_1_FOLD, B=STAGE_1_FOLD, C=STAGE_2_FOLD(+499), D=STAGE_2_FOLD(+499)
+            // STAGE_2_FOLD 증가분 = 998 → STAGE_1_FOLD 2명 균등: 998/2=499, 나머지 0
             final Map<Player, PokerRoundResult> results = Map.of(
                     A, STAGE_1_FOLD, B, STAGE_1_FOLD, C, STAGE_2_FOLD, D, STAGE_2_FOLD
             );
@@ -127,10 +127,10 @@ class NumberPokerProbabilityAdjusterTest {
             final Map<Player, Integer> changes = adjuster.calculate(results, Map.of(), 4, 3, 2);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(changes.get(A)).isEqualTo(-249);
-                softly.assertThat(changes.get(B)).isEqualTo(-249);
-                softly.assertThat(changes.get(C)).isEqualTo(249);
-                softly.assertThat(changes.get(D)).isEqualTo(249);
+                softly.assertThat(changes.get(A)).isEqualTo(-499);
+                softly.assertThat(changes.get(B)).isEqualTo(-499);
+                softly.assertThat(changes.get(C)).isEqualTo(499);
+                softly.assertThat(changes.get(D)).isEqualTo(499);
             });
         }
     }
@@ -173,7 +173,6 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void WIN이_흡수할_때_변동량_합계는_0이다() {
-            // A=WIN, B=TIE, C=STAGE_1_FOLD(+124), D=LOSE(+416) → -540+0+124+416=0
             final Map<Player, PokerRoundResult> results = Map.of(A, WIN, B, TIE, C, STAGE_1_FOLD, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, Map.of(), 4, 3, 2);
@@ -183,7 +182,6 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void TIE가_흡수할_때_나머지_배분으로_변동량_합계는_0이다() {
-            // A=TIE, B=TIE, C=STAGE_2_FOLD(+249), D=LOSE(+416) → 665 홀수 나머지 처리
             final Map<Player, PokerRoundResult> results = Map.of(A, TIE, B, TIE, C, STAGE_2_FOLD, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, Map.of(), 4, 3, 2);
@@ -196,10 +194,10 @@ class NumberPokerProbabilityAdjusterTest {
     class 라운드별_스테이크_차등 {
 
         /**
-         * 4명·3라운드 baseStep = 416
-         * round 1: multiplier = 2*1/(3+1) = 0.5  → step = 208
-         * round 2: multiplier = 2*2/(3+1) = 1.0  → step = 416
-         * round 3: multiplier = 2*3/(3+1) = 1.5  → step = 624
+         * 4명·3라운드 baseStep = (10000/4)/3 = 833
+         * round 1: multiplier = 2*1/(3+1) = 0.5  → (int)(833*0.5) = 416
+         * round 2: multiplier = 2*2/(3+1) = 1.0  → (int)(833*1.0) = 833
+         * round 3: multiplier = 2*3/(3+1) = 1.5  → (int)(833*1.5) = 1249
          */
         @Test
         void 마지막_라운드_step이_첫_라운드보다_크다() {
@@ -212,20 +210,20 @@ class NumberPokerProbabilityAdjusterTest {
         }
 
         @Test
-        void 중간_라운드_step이_라운드_수_무관_기준값과_일치한다() {
-            // round 2/3 → multiplier = 1.0 → 기존 설계 값과 동일: D(LOSE) = 416
+        void 중간_라운드_step이_라운드_기준값과_일치한다() {
+            // round 2/3 → multiplier = 1.0 → D(LOSE) = baseStep = 833
             final Map<Player, PokerRoundResult> results = Map.of(A, WIN, B, TIE, C, STAGE_1_FOLD, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, Map.of(), 4, 3, 2);
 
-            assertThat(changes.get(D)).isEqualTo(416);
+            assertThat(changes.get(D)).isEqualTo(833);
         }
 
         @ParameterizedTest(name = "라운드 {0}/{1} → LOSE delta = {2}")
         @CsvSource({
-                "1, 3, 208",
-                "2, 3, 416",
-                "3, 3, 624",
+                "1, 3, 416",
+                "2, 3, 833",
+                "3, 3, 1249",
         })
         void 라운드_번호에_따라_LOSE_delta가_선형_증가한다(int roundNumber, int totalRounds, int expectedLoseDelta) {
             final Map<Player, PokerRoundResult> results = Map.of(A, WIN, B, LOSE);
@@ -237,14 +235,25 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void 전체_라운드의_평균_step은_기준값과_동일하다() {
-            // round 1+2+3 delta 합이 3라운드 동일 step의 합과 같아야 함 (기댓값 보존)
+            // 416 + 833 + 1249 = 2498 ≈ 833 * 3 = 2499 (정수 truncation 오차 허용)
             final Map<Player, PokerRoundResult> results = Map.of(A, WIN, B, LOSE);
             final int deltaR1 = adjuster.calculate(results, Map.of(), 4, 3, 1).get(B);
             final int deltaR2 = adjuster.calculate(results, Map.of(), 4, 3, 2).get(B);
             final int deltaR3 = adjuster.calculate(results, Map.of(), 4, 3, 3).get(B);
 
-            // 208 + 416 + 624 = 1248 = 416 * 3 (정수 truncation 오차 1 허용)
-            assertThat(deltaR1 + deltaR2 + deltaR3).isBetween(416 * 3 - 3, 416 * 3);
+            assertThat(deltaR1 + deltaR2 + deltaR3).isBetween(833 * 3 - 3, 833 * 3);
+        }
+
+        @Test
+        void 누적_라운드_이월로_effectiveRound가_totalRounds_초과_시_step이_더_커진다() {
+            // effectiveRound = 3 + 2(skipped) = 5, totalRounds = 3
+            // multiplier = 2*5/(3+1) = 2.5 → step > round 3 일반 step
+            final Map<Player, PokerRoundResult> results = Map.of(A, WIN, B, LOSE);
+
+            final int deltaRound3Normal = adjuster.calculate(results, Map.of(), 4, 3, 3).get(B);
+            final int deltaRound3Accumulated = adjuster.calculate(results, Map.of(), 4, 3, 5).get(B);
+
+            assertThat(deltaRound3Accumulated).isGreaterThan(deltaRound3Normal);
         }
     }
 
@@ -262,41 +271,43 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void WIN_흡수자_1명이면_전액_흡수한다() {
-            // A=WIN, B=LOSE(+416), C=STAGE_1_FOLD(+124) → A: -540
+            // A=WIN, B=LOSE(+833), C=STAGE_1_FOLD(+249) → total = 1082 → A: -1082
             final Map<Player, PokerRoundResult> results = Map.of(A, WIN, B, LOSE, C, STAGE_1_FOLD, D, TIE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, handRankings, 4, 3, 2);
 
-            assertThat(changes.get(A)).isEqualTo(-540);
+            assertThat(changes.get(A)).isEqualTo(-1082);
         }
 
         @Test
         void 강한_핸드의_WIN이_약한_핸드의_WIN보다_더_많이_흡수한다() {
-            // A(PAIR_9) > B(HIGH_CARD_7_3) — 둘 다 WIN, D=LOSE(+416)*2 = 832
-            // n=2, totalWeight=3: A weight=2 → 832*2/3=554, B: -(832-554)=-278
+            // A(PAIR_9) > B(HIGH_CARD_7_3) — 둘 다 WIN, C=LOSE(+833), D=LOSE(+833)
+            // total = 1666, n=2, totalWeight=3
+            // A: -(int)(1666*2/3) = -1110, B: -(1666-1110) = -556
             final Map<Player, PokerRoundResult> results = Map.of(A, WIN, B, WIN, C, LOSE, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, handRankings, 4, 3, 2);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(Math.abs(changes.get(A))).isGreaterThan(Math.abs(changes.get(B)));
-                softly.assertThat(changes.get(A)).isEqualTo(-554);
-                softly.assertThat(changes.get(B)).isEqualTo(-278);
+                softly.assertThat(changes.get(A)).isEqualTo(-1110);
+                softly.assertThat(changes.get(B)).isEqualTo(-556);
             });
         }
 
         @Test
         void WIN_3명일_때_핸드_강도_순으로_흡수량이_감소한다() {
-            // A(PAIR_9) > B(HIGH_CARD_7_3) > C(HIGH_CARD_2_1), D=LOSE(+416)
-            // n=3, totalWeight=6: A weight=3→208, B weight=2→138, C remainder→70
+            // A(PAIR_9) > B(HIGH_CARD_7_3) > C(HIGH_CARD_2_1), D=LOSE(+833)
+            // total = 833, n=3, totalWeight=6
+            // A: -(int)(833*3/6) = -416, B: -(int)(833*2/6) = -277, C: -(833-416-277) = -140
             final Map<Player, PokerRoundResult> results = Map.of(A, WIN, B, WIN, C, WIN, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, handRankings, 4, 3, 2);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(changes.get(A)).isEqualTo(-208);
-                softly.assertThat(changes.get(B)).isEqualTo(-138);
-                softly.assertThat(changes.get(C)).isEqualTo(-70);
+                softly.assertThat(changes.get(A)).isEqualTo(-416);
+                softly.assertThat(changes.get(B)).isEqualTo(-277);
+                softly.assertThat(changes.get(C)).isEqualTo(-140);
             });
         }
 
@@ -311,13 +322,10 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void WIN이_아닌_TIE_흡수자는_핸드_랭킹과_무관하게_균등_배분한다() {
-            // A=TIE, B=TIE, C=LOSE(+416), D=LOSE(+416) → 832 균등: A=-332, B=-500(나머지)
-            // 꾹이(A)='꾹이', 루키(B)='루키' 이름 순: 꾹이 먼저
             final Map<Player, PokerRoundResult> results = Map.of(A, TIE, B, TIE, C, LOSE, D, LOSE);
 
             final Map<Player, Integer> changes = adjuster.calculate(results, handRankings, 4, 3, 2);
 
-            // TIE는 핸드 강도 무관 → 균등 배분 (기존 케이스2 동일)
             assertThat(changes.values().stream().mapToInt(Integer::intValue).sum()).isZero();
         }
     }
@@ -327,8 +335,8 @@ class NumberPokerProbabilityAdjusterTest {
 
         @Test
         void 플레이어_수가_많을수록_step이_작아진다() {
-            // 2명 3라운드: step = (10000/2)/3/(2/2.0)*0.7 = 5000/3/1*0.7 = 1166
-            // 8명 3라운드: step = (10000/8)/3/(8/2.0)*0.7 = 1250/3/4*0.7 = 72
+            // 2명 3라운드 round2: step = (10000/2)/3 = 1666
+            // 8명 3라운드 round2: step = (10000/8)/3 = 416
             final Map<Player, PokerRoundResult> twoPlayerResults = Map.of(A, WIN, B, LOSE);
             final Map<Player, PokerRoundResult> eightPlayerResults = Map.of(
                     A, WIN, B, LOSE, C, LOSE, D, LOSE

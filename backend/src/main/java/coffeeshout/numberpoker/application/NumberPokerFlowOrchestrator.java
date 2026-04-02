@@ -186,13 +186,22 @@ public class NumberPokerFlowOrchestrator {
     private Map<Player, Integer> applyRoundProbabilities(NumberPokerGame game, Room room) {
         final Map<Player, PokerRoundResult> results = game.getCurrentRoundResults();
         final Map<Player, HandRanking> handRankings = game.getActivePlayerHandRankings();
+
         final Map<Player, Integer> deltas = probabilityAdjuster.calculate(
                 results,
                 handRankings,
                 room.getPlayers().size(),
                 game.getTotalRounds(),
-                game.getCurrentRoundNumber()
+                game.getEffectiveRoundNumber()
         );
+
+        final boolean anyChange = deltas.values().stream().anyMatch(d -> d != 0);
+        if (anyChange) {
+            game.resetSkippedRounds();
+        } else {
+            game.addSkippedRound();
+        }
+
         for (Player player : room.getPlayers()) {
             final int delta = deltas.getOrDefault(player, 0);
             final int current = player.getProbability() != null ? player.getProbability().value() : 0;

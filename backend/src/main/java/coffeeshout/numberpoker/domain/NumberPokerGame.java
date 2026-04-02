@@ -27,6 +27,7 @@ public class NumberPokerGame implements Playable {
     private List<Player> players;
     private int totalRounds;
     private int currentRoundNumber;
+    private int skippedRounds;
     private PokerPhase currentPhase;
     private PokerRound currentRound;
 
@@ -34,6 +35,7 @@ public class NumberPokerGame implements Playable {
         this.players = List.of();
         this.totalRounds = DEFAULT_ROUND_COUNT;
         this.currentRoundNumber = 0;
+        this.skippedRounds = 0;
         this.currentPhase = null;
     }
 
@@ -41,6 +43,7 @@ public class NumberPokerGame implements Playable {
         this.players = List.copyOf(players);
         this.totalRounds = DEFAULT_ROUND_COUNT;
         this.currentRoundNumber = 0;
+        this.skippedRounds = 0;
         this.currentPhase = null;
     }
 
@@ -138,6 +141,18 @@ public class NumberPokerGame implements Playable {
 
     public int getCurrentRoundNumber() {
         return currentRound != null ? currentRound.getNumber() : 0;
+    }
+
+    public int getEffectiveRoundNumber() {
+        return getCurrentRoundNumber() + skippedRounds;
+    }
+
+    public void addSkippedRound() {
+        this.skippedRounds++;
+    }
+
+    public void resetSkippedRounds() {
+        this.skippedRounds = 0;
     }
 
     public List<PokerCard> getDealerVisibleCards() {

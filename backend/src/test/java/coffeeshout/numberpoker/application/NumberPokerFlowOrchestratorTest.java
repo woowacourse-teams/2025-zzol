@@ -17,7 +17,9 @@ import coffeeshout.numberpoker.config.NumberPokerTimingProperties;
 import coffeeshout.numberpoker.domain.DeckShuffler;
 import coffeeshout.numberpoker.domain.NumberPokerGame;
 import coffeeshout.numberpoker.domain.NumberPokerProbabilityAdjuster;
+import coffeeshout.numberpoker.domain.PokerCard;
 import coffeeshout.numberpoker.domain.PokerPhase;
+import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -26,6 +28,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -197,6 +200,100 @@ class NumberPokerFlowOrchestratorTest {
 
             orchestrator.startFlow(game, room);
             assertThatCode(() -> orchestrator.triggerEarlyRoundReady("ABCD")).doesNotThrowAnyException();
+        }
+    }
+
+    @Nested
+    class 누적_라운드_긴장_이월 {
+
+        /**
+         * 2명·2라운드 기준
+         * baseStep = (10000/2)/2 = 2500
+         *
+         * Round 1: 딜러 HIGH_CARD(2,1), 꾹이 PAIR(3) WIN, 루키 PAIR(4) WIN
+         * → 전원 WIN → delta 전원 0 → skippedRounds = 1
+         *
+         * Round 2 (effectiveRound = 2+1 = 3):
+         * 딜러 PAIR(5), 꾹이 PAIR(6) WIN, 루키 HIGH_CARD(4,3) LOSE
+         * multiplier = 2*3/(2+1) = 2.0 → step = 5000
+         * (누적 없을 경우 multiplier = 2*2/3 ≈ 1.33 → step = 3333)
+         */
+        @Test
+        void 변동_없는_라운드_후_다음_라운드_step이_이월_가중치만큼_증가한다() {
+            final AtomicInteger roundCall = new AtomicInteger(0);
+            final DeckShuffler controlledShuffler = deck -> {
+                deck.clear();
+                if (roundCall.getAndIncrement() == 0) {
+                    // 전원 WIN: 딜러 HIGH_CARD(2,1), 꾹이 PAIR(3), 루키 PAIR(4)
+                    deck.add(new PokerCard(1)); deck.add(new PokerCard(2));
+                    deck.add(new PokerCard(3)); deck.add(new PokerCard(3));
+                    deck.add(new PokerCard(4)); deck.add(new PokerCard(4));
+                } else {
+                    // 꾹이 WIN, 루키 LOSE: 딜러 PAIR(5), 꾹이 PAIR(6), 루키 HIGH_CARD(4,3)
+                    deck.add(new PokerCard(5)); deck.add(new PokerCard(5));
+                    deck.add(new PokerCard(6)); deck.add(new PokerCard(6));
+                    deck.add(new PokerCard(4)); deck.add(new PokerCard(3));
+                }
+            };
+            final NumberPokerFlowOrchestrator customOrchestrator = new NumberPokerFlowOrchestrator(
+                    scheduler, timing, notifier, adjuster, eventPublisher, roomQueryService, controlledShuffler);
+
+            꾹이.updateProbability(new Probability(5000));
+            루키.updateProbability(new Probability(5000));
+            final NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
+            game.configureRoundCount(2);
+            final Room room = stubRoom("ACCU");
+
+            customOrchestrator.startFlow(game, room);
+
+            // 누적 있음: 루키 = 5000 + 5000 = 10000 (TOTAL 상한)
+            // 누적 없음: 루키 = 5000 + 3333 = 8333
+            assertThat(루키.getProbability().value()).isEqualTo(10000);
+        }
+
+        /**
+         * 3라운드 기준
+         * baseStep = (10000/2)/3 = 1666
+         *
+         * Round 1: 전원 WIN → skippedRounds = 1
+         * Round 2 (effectiveRound = 3): 꾹이 WIN, 루키 LOSE → change, skippedRounds 초기화
+         * Round 3 (effectiveRound = 3, 누적 없음): 꾹이 WIN, 루키 LOSE
+         * multiplier = 2*3/4 = 1.5 → step = 2499 (누적 있었다면 effectiveRound=4 → step = 3333)
+         */
+        @Test
+        void 변동_발생_후_누적이_초기화되어_다음_라운드에_영향_없다() {
+            final AtomicInteger roundCall = new AtomicInteger(0);
+            final DeckShuffler controlledShuffler = deck -> {
+                deck.clear();
+                if (roundCall.getAndIncrement() == 0) {
+                    // Round 1: 전원 WIN
+                    deck.add(new PokerCard(1)); deck.add(new PokerCard(2));
+                    deck.add(new PokerCard(3)); deck.add(new PokerCard(3));
+                    deck.add(new PokerCard(4)); deck.add(new PokerCard(4));
+                } else {
+                    // Round 2,3: 꾹이 WIN, 루키 LOSE
+                    deck.add(new PokerCard(5)); deck.add(new PokerCard(5));
+                    deck.add(new PokerCard(6)); deck.add(new PokerCard(6));
+                    deck.add(new PokerCard(4)); deck.add(new PokerCard(3));
+                }
+            };
+            final NumberPokerFlowOrchestrator customOrchestrator = new NumberPokerFlowOrchestrator(
+                    scheduler, timing, notifier, adjuster, eventPublisher, roomQueryService, controlledShuffler);
+
+            꾹이.updateProbability(new Probability(2500));
+            루키.updateProbability(new Probability(2500));
+            final NumberPokerGame game = new NumberPokerGame(List.of(꾹이, 루키));
+            game.configureRoundCount(3);
+            final Room room = stubRoom("RSBT");
+
+            customOrchestrator.startFlow(game, room);
+
+            // Round 1: delta 0 (전원 WIN) → 루키 = 2500
+            // Round 2: effectiveRound=3, step=(int)(1666*1.5)=2499 → 루키 = 2500 + 2499 = 4999
+            // Round 3: 누적 초기화 → effectiveRound=3 (not 4), step=2499 → 루키 = 4999 + 2499 = 7498
+            //
+            // 초기화 안 됐다면 Round 3: effectiveRound=4, step=(int)(1666*2.0)=3333 → 루키 = 4999+3333=8332
+            assertThat(루키.getProbability().value()).isEqualTo(7498);
         }
     }
 

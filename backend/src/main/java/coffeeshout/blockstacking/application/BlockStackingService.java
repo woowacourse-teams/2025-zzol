@@ -30,11 +30,11 @@ public class BlockStackingService implements MiniGameService {
 
     public void recordProgress(
             String joinCode, String playerName, int floor,
-            double tapX, double movingBlockX, double stackTopX, double stackTopWidth
+            double movingBlockX, double stackTopX, double stackTopWidth
     ) {
         commandService.recordProgress(
                 new JoinCode(joinCode), new PlayerName(playerName),
-                floor, tapX, movingBlockX, stackTopX, stackTopWidth
+                floor, movingBlockX, stackTopX, stackTopWidth
         );
     }
 

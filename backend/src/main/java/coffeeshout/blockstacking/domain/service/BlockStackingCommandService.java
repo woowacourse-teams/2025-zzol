@@ -22,7 +22,7 @@ public class BlockStackingCommandService {
 
     public void recordProgress(
             JoinCode joinCode, PlayerName playerName, int floor,
-            double tapX, double movingBlockX, double stackTopX, double stackTopWidth
+            double movingBlockX, double stackTopX, double stackTopWidth
     ) {
         log.info("블록 쌓기 진행 처리 시작: joinCode={}, playerName={}, floor={}",
                 joinCode, playerName, floor);
@@ -31,7 +31,7 @@ public class BlockStackingCommandService {
         final BlockStackingGame game = (BlockStackingGame) room.findMiniGame(MiniGameType.BLOCK_STACKING);
         final Player player = game.findPlayerByName(playerName);
 
-        game.recordProgress(player, floor, tapX, movingBlockX, stackTopX, stackTopWidth);
+        game.recordProgress(player, floor, movingBlockX, stackTopX, stackTopWidth);
         notifier.notifyProgressUpdated(game, room);
     }
 }

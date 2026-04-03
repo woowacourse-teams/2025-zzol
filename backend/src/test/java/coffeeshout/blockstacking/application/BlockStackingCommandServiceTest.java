@@ -59,7 +59,7 @@ class BlockStackingCommandServiceTest extends ServiceTest {
         @Test
         void 유효한_블록_안착_이벤트가_플레이어_floor를_갱신한다() {
             commandService.recordProgress(joinCode, new PlayerName(HOST_NAME),
-                    1, 100.0, 100.0, 85.0, 150.0);
+                    1, 100.0, 85.0, 150.0);
 
             final int floor = floorOf(HOST_NAME);
             assertThat(floor).isEqualTo(1);
@@ -68,9 +68,9 @@ class BlockStackingCommandServiceTest extends ServiceTest {
         @Test
         void 연속된_floor를_전송하면_순차적으로_갱신된다() {
             commandService.recordProgress(joinCode, new PlayerName(HOST_NAME),
-                    1, 100.0, 100.0, 85.0, 150.0);
+                    1, 100.0, 85.0, 150.0);
             commandService.recordProgress(joinCode, new PlayerName(HOST_NAME),
-                    2, 100.0, 100.0, 85.0, 135.0);
+                    2, 100.0, 85.0, 135.0);
 
             assertThat(floorOf(HOST_NAME)).isEqualTo(2);
         }
@@ -78,9 +78,9 @@ class BlockStackingCommandServiceTest extends ServiceTest {
         @Test
         void 유효한_이벤트마다_notifier를_호출한다() {
             commandService.recordProgress(joinCode, new PlayerName(HOST_NAME),
-                    1, 100.0, 100.0, 85.0, 150.0);
+                    1, 100.0, 85.0, 150.0);
             commandService.recordProgress(joinCode, new PlayerName(HOST_NAME),
-                    2, 100.0, 100.0, 85.0, 135.0);
+                    2, 100.0, 85.0, 135.0);
 
             verify(notifier, times(2)).notifyProgressUpdated(any(), any());
         }
@@ -93,7 +93,7 @@ class BlockStackingCommandServiceTest extends ServiceTest {
         void 비연속적_floor_이벤트는_floor를_갱신하지_않는다() {
             // floor=1 을 건너뛰고 floor=2 전송
             commandService.recordProgress(joinCode, new PlayerName(HOST_NAME),
-                    2, 100.0, 100.0, 85.0, 150.0);
+                    2, 100.0, 85.0, 150.0);
 
             assertThat(floorOf(HOST_NAME)).isZero();
         }
@@ -102,7 +102,7 @@ class BlockStackingCommandServiceTest extends ServiceTest {
         void overlap이_0_이하인_이벤트는_floor를_갱신하지_않는다() {
             // movingBlockX=300 → stackTop 범위(85~235) 완전 이탈, overlap < 0
             commandService.recordProgress(joinCode, new PlayerName(HOST_NAME),
-                    1, 300.0, 300.0, 85.0, 150.0);
+                    1, 300.0, 85.0, 150.0);
 
             assertThat(floorOf(HOST_NAME)).isZero();
         }
@@ -110,7 +110,7 @@ class BlockStackingCommandServiceTest extends ServiceTest {
         @Test
         void 유효하지_않은_이벤트도_notifier는_호출된다() {
             commandService.recordProgress(joinCode, new PlayerName(HOST_NAME),
-                    1, 300.0, 300.0, 85.0, 150.0);
+                    1, 300.0, 85.0, 150.0);
 
             verify(notifier).notifyProgressUpdated(any(), any());
         }
@@ -123,7 +123,7 @@ class BlockStackingCommandServiceTest extends ServiceTest {
         void 존재하지_않는_플레이어_이름이면_PLAYER_NOT_FOUND_예외가_발생한다() {
             assertCoffeeShoutException(
                     () -> commandService.recordProgress(joinCode, new PlayerName("없는플레이어"),
-                            1, 100.0, 100.0, 85.0, 150.0),
+                            1, 100.0, 85.0, 150.0),
                     BlockStackingGameErrorCode.PLAYER_NOT_FOUND
             );
         }
@@ -134,7 +134,7 @@ class BlockStackingCommandServiceTest extends ServiceTest {
 
             assertCoffeeShoutException(
                     () -> commandService.recordProgress(joinCode, new PlayerName(HOST_NAME),
-                            1, 100.0, 100.0, 85.0, 150.0),
+                            1, 100.0, 85.0, 150.0),
                     BlockStackingGameErrorCode.NOT_PLAYING_STATE
             );
         }

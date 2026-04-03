@@ -55,8 +55,7 @@ public class BlockStackingGame implements Playable {
      */
     public boolean recordProgress(
             Player player, int floor,
-            double tapX, double movingBlockX,
-            double stackTopX, double stackTopWidth
+            double movingBlockX, double stackTopX, double stackTopWidth
     ) {
         if (state != BlockStackingGameState.PLAYING) {
             throw new BusinessException(

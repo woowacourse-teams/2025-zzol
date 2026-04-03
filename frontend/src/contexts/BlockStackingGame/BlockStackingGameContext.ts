@@ -12,6 +12,7 @@ type BlockStackingGameContextType = {
   isLocalGameOver: boolean;
   setLocalGameOver: () => void;
   endTimeEpochMs: number | null;
+  totalTimeSeconds: number;
 };
 
 export const BlockStackingGameContext = createContext<BlockStackingGameContextType | null>(null);

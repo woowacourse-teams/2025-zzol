@@ -267,24 +267,28 @@ export const useBlockStackingGame = (
   // --- 4. Effects (생명주기 및 동기화) ---
 
   /**
-   * 서버 종료 시각(endTimeEpochMs) 기반 타이머 동기화 Effect
+   * 서버 종료 시각(endTimeEpochMs) 기반 타이머 동기화 Effect (60 FPS 기반)
    */
   useEffect(() => {
     if (gameState !== 'PLAYING' || endTimeEpochMs == null) return;
 
-    const computeRemaining = () => Math.max(0, Math.ceil((endTimeEpochMs - Date.now()) / 1000));
-    setTimeLeft(computeRemaining());
+    let rafId: number;
+    const computeRemaining = () => Math.max(0, (endTimeEpochMs - Date.now()) / 1000);
 
-    const timer = setInterval(() => {
+    const updateTimer = () => {
       const remaining = computeRemaining();
       setTimeLeft(remaining);
-      if (remaining <= 0) {
-        clearInterval(timer);
-        setLocalGameOverRef.current();
-      }
-    }, 1000);
 
-    return () => clearInterval(timer);
+      if (remaining <= 0) {
+        setLocalGameOverRef.current();
+        return;
+      }
+
+      rafId = requestAnimationFrame(updateTimer);
+    };
+
+    rafId = requestAnimationFrame(updateTimer);
+    return () => cancelAnimationFrame(rafId);
   }, [gameState, endTimeEpochMs]);
 
   /**

@@ -3,6 +3,7 @@ import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { BlockStackingGameState } from '@/types/miniGame/blockStackingGame';
 import { PropsWithChildren, useCallback, useState } from 'react';
 import { BlockStackingGameContext } from './BlockStackingGameContext';
+import { GAME_DURATION } from '@/features/miniGame/blockStackingGame/constants/blockStackingConstants';
 
 type BlockStackingRanking = { name: string; floor: number };
 
@@ -17,6 +18,7 @@ const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
   const [rankings, setRankings] = useState<BlockStackingRanking[]>([]);
   const [isLocalGameOver, setIsLocalGameOver] = useState(false);
   const [endTimeEpochMs, setEndTimeEpochMs] = useState<number | null>(null);
+  const [totalTimeSeconds, setTotalTimeSeconds] = useState(GAME_DURATION);
 
   const setLocalGameOver = useCallback(() => setIsLocalGameOver(true), []);
 
@@ -27,6 +29,9 @@ const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
       if (state === 'PLAYING') {
         setIsLocalGameOver(false);
         setEndTimeEpochMs(ms ?? null);
+        if (ms) {
+          setTotalTimeSeconds(Math.ceil((ms - Date.now()) / 1000));
+        }
       }
     }, [])
   );
@@ -40,7 +45,14 @@ const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
 
   return (
     <BlockStackingGameContext.Provider
-      value={{ gameState, rankings, isLocalGameOver, setLocalGameOver, endTimeEpochMs }}
+      value={{
+        gameState,
+        rankings,
+        isLocalGameOver,
+        setLocalGameOver,
+        endTimeEpochMs,
+        totalTimeSeconds,
+      }}
     >
       {children}
     </BlockStackingGameContext.Provider>

@@ -49,8 +49,8 @@ export const TimerFill = styled.div<{ timeLeft: number; totalTime: number }>`
       ? 'linear-gradient(to top, #ff4d4d, #ff9f43)'
       : 'linear-gradient(to top, #48dbfb, #1dd1a1)'};
   transition:
-    height 1s linear,
-    background 0.3s ease;
+    background 0.3s ease,
+    box-shadow 0.3s ease;
   box-shadow: 0 0 8px
     ${({ timeLeft }) => (timeLeft < 5 ? 'rgba(255, 77, 77, 0.5)' : 'rgba(72, 219, 251, 0.3)')};
 `;

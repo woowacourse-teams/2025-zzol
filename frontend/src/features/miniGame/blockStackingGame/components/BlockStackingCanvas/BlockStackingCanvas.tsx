@@ -8,7 +8,7 @@ import * as S from './BlockStackingCanvas.styled';
 
 const BlockStackingCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { gameState, isLocalGameOver, setLocalGameOver, endTimeEpochMs } =
+  const { gameState, isLocalGameOver, setLocalGameOver, endTimeEpochMs, totalTimeSeconds } =
     useBlockStackingGameContext();
   const [muted, setMuted] = useState(false);
 
@@ -59,7 +59,7 @@ const BlockStackingCanvas = () => {
         </S.MuteButton>
       </S.GameContainer>
       <S.TimerContainer>
-        <S.TimerFill timeLeft={timeLeft} totalTime={20} />
+        <S.TimerFill timeLeft={timeLeft} totalTime={totalTimeSeconds} />
       </S.TimerContainer>
     </S.Wrapper>
   );

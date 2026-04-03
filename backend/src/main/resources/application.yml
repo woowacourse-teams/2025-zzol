@@ -84,6 +84,11 @@ card-game:
     score-board: 1500ms
     early-finish-delay: 2000ms
 
+block-stacking:
+  timing:
+    prepare: 3000ms
+    playing: 20000ms
+
 speed-touch:
   timing:
     description: 4000ms

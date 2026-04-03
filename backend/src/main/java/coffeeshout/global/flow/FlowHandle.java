@@ -1,4 +1,4 @@
-package coffeeshout.cardgame.application.port;
+package coffeeshout.global.flow;
 
 import java.time.Duration;
 import java.util.function.Consumer;

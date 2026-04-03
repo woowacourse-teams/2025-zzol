@@ -1,4 +1,4 @@
-package coffeeshout.cardgame.application.port;
+package coffeeshout.global.flow;
 
 import java.util.concurrent.CompletionStage;
 

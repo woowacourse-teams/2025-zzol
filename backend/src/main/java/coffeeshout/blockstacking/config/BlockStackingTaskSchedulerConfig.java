@@ -1,4 +1,4 @@
-package coffeeshout.cardgame.config;
+package coffeeshout.blockstacking.config;
 
 import coffeeshout.global.flow.CompletableFutureFlowScheduler;
 import coffeeshout.global.flow.FlowScheduler;
@@ -12,27 +12,28 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @Configuration
 @EnableScheduling
-@EnableConfigurationProperties(CardGameTimingProperties.class)
+@EnableConfigurationProperties(BlockStackingTimingProperties.class)
 @Slf4j
-public class CardGameTaskSchedulerConfig {
+public class BlockStackingTaskSchedulerConfig {
 
-    @Bean(name = "cardGameThreadPoolTaskScheduler")
+    @Bean(name = "blockStackingThreadPoolTaskScheduler")
     @Profile("!test")
-    public ThreadPoolTaskScheduler cardGameThreadPoolTaskScheduler() {
+    public ThreadPoolTaskScheduler blockStackingThreadPoolTaskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(3);
-        scheduler.setThreadNamePrefix("card-game-task-");
+        scheduler.setPoolSize(2);
+        scheduler.setThreadNamePrefix("block-stacking-task-");
         scheduler.setDaemon(false);
-        scheduler.setErrorHandler(t -> log.error("스케줄 실행 중 예외가 발생했습니다.", t));
+        scheduler.setErrorHandler(t -> log.error("블록 쌓기 스케줄 실행 중 예외가 발생했습니다.", t));
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         scheduler.setAwaitTerminationSeconds(30);
         scheduler.initialize();
         return scheduler;
     }
 
-    @Bean
+    @Bean(name = "blockStackingFlowScheduler")
     @Profile("!test")
-    public FlowScheduler cardGameFlowScheduler(ThreadPoolTaskScheduler cardGameThreadPoolTaskScheduler) {
-        return new CompletableFutureFlowScheduler(cardGameThreadPoolTaskScheduler);
+    public FlowScheduler blockStackingFlowScheduler(
+            ThreadPoolTaskScheduler blockStackingThreadPoolTaskScheduler) {
+        return new CompletableFutureFlowScheduler(blockStackingThreadPoolTaskScheduler);
     }
 }

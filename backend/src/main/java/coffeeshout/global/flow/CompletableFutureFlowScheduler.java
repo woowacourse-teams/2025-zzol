@@ -1,8 +1,5 @@
-package coffeeshout.cardgame.infra.scheduler;
+package coffeeshout.global.flow;
 
-import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
-import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
-import coffeeshout.cardgame.application.port.FlowHandle;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
@@ -10,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.TaskScheduler;
 
 @RequiredArgsConstructor
-public class CompletableFutureFlowScheduler implements CardGameFlowScheduler {
+public class CompletableFutureFlowScheduler implements FlowScheduler {
 
     private final TaskScheduler taskScheduler;
 
@@ -32,5 +29,4 @@ public class CompletableFutureFlowScheduler implements CardGameFlowScheduler {
     public EarlyFinishTrigger createEarlyFinishTrigger() {
         return new CompletableFutureEarlyFinishTrigger();
     }
-
 }

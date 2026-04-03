@@ -26,7 +26,7 @@ const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
       setGameState(state);
       if (state === 'PLAYING') {
         setIsLocalGameOver(false);
-        if (ms != null) setEndTimeEpochMs(ms);
+        setEndTimeEpochMs(ms ?? null);
       }
     }, [])
   );

@@ -21,22 +21,6 @@ public record BlockStackingCommandEvent(
         TraceInfo traceInfo
 ) implements BaseEvent, Traceable {
 
-    public static BlockStackingCommandEvent create(String joinCode, String playerName, int floor, double tapX,
-                                                   double movingBlockX, double stackTopX, double stackTopWidth) {
-        return new BlockStackingCommandEvent(
-                UUID.randomUUID().toString(),
-                joinCode,
-                playerName,
-                floor,
-                tapX,
-                movingBlockX,
-                stackTopX,
-                stackTopWidth,
-                Instant.now(),
-                TraceInfoExtractor.extract()
-        );
-    }
-
     public static BlockStackingCommandEvent of(String joinCode, BlockStackingProgressRequest request) {
         return new BlockStackingCommandEvent(
                 UUID.randomUUID().toString(),

@@ -1,6 +1,5 @@
 package coffeeshout.blockstacking.ui;
 
-import coffeeshout.blockstacking.application.BlockStackingService;
 import coffeeshout.blockstacking.domain.event.BlockStackingCommandEvent;
 import coffeeshout.blockstacking.ui.request.BlockStackingProgressRequest;
 import coffeeshout.global.redis.stream.StreamKey;

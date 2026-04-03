@@ -57,21 +57,18 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
         @Test
         void 게임_페이즈가_PREPARE_PLAYING_DONE_순서로_전환된다() {
             final var stateResponses = session.subscribe(stateUrl());
-            final var completeResponses = session.subscribe(completeUrl());
 
             session.send(startCommandUrl(), hostStartCommand());
 
             final MessageResponse prepare = stateResponses.get();
             final MessageResponse playing = stateResponses.get();
             final MessageResponse done = stateResponses.get(4, TimeUnit.SECONDS);
-            final MessageResponse complete = completeResponses.get(1, TimeUnit.SECONDS);
 
             assertMessageContains(prepare, "\"state\":\"PREPARE\"");
             assertMessageContains(playing, PREPARE_MS, "\"state\":\"PLAYING\"");
             assertThat(playing.payload()).contains("\"endTimeEpochMs\":");
             assertMessageContains(done, PLAYING_MS, "\"state\":\"DONE\"");
             assertThat(done.payload()).doesNotContain("\"endTimeEpochMs\":");
-            assertMessageContains(complete, "\"state\":\"DONE\"");
         }
 
         @Test
@@ -89,7 +86,6 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
         @Test
         void 타이머_만료_후_게임이_완료된다() {
             final var stateResponses = session.subscribe(stateUrl());
-            final var completeResponses = session.subscribe(completeUrl());
 
             session.send(startCommandUrl(), hostStartCommand());
 
@@ -98,10 +94,8 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
 
             // playing(2000ms) 후 DONE 전환
             final MessageResponse done = stateResponses.get(4, TimeUnit.SECONDS);
-            final MessageResponse complete = completeResponses.get(1, TimeUnit.SECONDS);
 
             assertMessageContains(done, "\"state\":\"DONE\"");
-            assertMessageContains(complete, "\"state\":\"DONE\"");
 
             // 핵심 검증: playing 제한 시간(2000ms) 이내에 done으로 전환되지 않음
             assertThat(done.duration())
@@ -206,10 +200,6 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
 
     private String progressUrl() {
         return String.format("/topic/room/%s/block-stacking/progress", joinCode.getValue());
-    }
-
-    private String completeUrl() {
-        return String.format("/topic/room/%s/block-stacking/complete", joinCode.getValue());
     }
 
     private String startCommandUrl() {

@@ -305,13 +305,18 @@ export const useBlockStackingGame = (
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // 초기 상태 셋팅
-    const initialX = (canvas.width - INITIAL_BLOCK_WIDTH) / 2;
+    // 가상 좌표 시스템 설정 (CANVAS_WIDTH = 320 기준)
+    const scale = canvas.width / CANVAS_WIDTH;
+    const virtualWidth = CANVAS_WIDTH;
+    const virtualHeight = canvas.height / scale;
+
+    // 초기 상태 셋팅 (가상 좌표 기준)
+    const initialX = (virtualWidth - INITIAL_BLOCK_WIDTH) / 2;
     stackRef.current = [{ x: initialX, width: INITIAL_BLOCK_WIDTH }];
     currentBlockRef.current = { x: initialX, width: INITIAL_BLOCK_WIDTH, direction: 1 };
     fallingPiecesRef.current = [];
     shakeRef.current = { intensity: 0, startTime: 0, duration: 0 };
-    cameraYRef.current = canvas.height - 2 * BLOCK_HEIGHT;
+    cameraYRef.current = virtualHeight - 2 * BLOCK_HEIGHT;
 
     let rafId: number;
 
@@ -319,10 +324,17 @@ export const useBlockStackingGame = (
      * 프레임 드로우 함수 (Main Loop)
      */
     const draw = (time: number) => {
-      const W = canvas.width;
-      const H = canvas.height;
+      // 매 프레임 스케일 재계산 (창 크기 조절 대응)
+      const currentScale = canvas.width / CANVAS_WIDTH;
+      const W = CANVAS_WIDTH;
+      const H = canvas.height / currentScale;
 
-      ctx.clearRect(0, 0, W, H);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 가상 좌표계로 변환하여 그리기
+      ctx.save();
+      ctx.scale(currentScale, currentScale);
+
       drawBackground(ctx, W, H, scoreRef.current);
 
       // 화면 흔들림 효과 연산
@@ -355,7 +367,7 @@ export const useBlockStackingGame = (
         currentBlockRef.current.direction = nd;
       }
 
-      // [Camera Logic] 카메라 팔로우 부모 이동
+      // [Camera Logic] 카메라 팔로우 부드럽게 이동
       const targetCameraY = Math.max(H / 2, H - (stack.length + 1) * BLOCK_HEIGHT);
       cameraYRef.current += (targetCameraY - cameraYRef.current) * 0.1;
       const movingBlockY = cameraYRef.current;
@@ -380,7 +392,8 @@ export const useBlockStackingGame = (
       ctx.textAlign = 'center';
       ctx.fillText(`${scoreRef.current}층`, W / 2, 60);
 
-      ctx.restore();
+      ctx.restore(); // shake translate restore
+      ctx.restore(); // scale restore
 
       // 서버 대기 모드(DONE)가 되기 전까지 애니메이션 루프 유지
       if (gameState === 'PLAYING') {

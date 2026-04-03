@@ -10,17 +10,16 @@ export type BlockStackingProgressPayload = {
 };
 
 export const useBlockStackingActions = () => {
-  const { joinCode, myName } = useIdentifier();
+  const { joinCode } = useIdentifier();
   const { send } = useWebSocket();
 
   const publishProgress = useCallback(
     (payload: BlockStackingProgressPayload) => {
       send(`/room/${joinCode}/block-stacking/progress`, {
-        playerName: myName,
         ...payload,
       });
     },
-    [joinCode, myName, send]
+    [joinCode, send]
   );
 
   return { publishProgress };

@@ -161,7 +161,10 @@ export const useBlockStackingGame = (
     soundsRef.current.ensureAudioContext();
 
     const stack = stackRef.current;
+    if (stack.length === 0) return;
+
     const topBlock = stack[stack.length - 1];
+    if (!topBlock) return;
     const cur = currentBlockRef.current;
     const currentColor = BLOCK_COLORS[stack.length % BLOCK_COLORS.length];
 

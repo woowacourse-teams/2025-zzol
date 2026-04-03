@@ -55,7 +55,7 @@ const BlockStackingCanvas = () => {
         <S.Canvas ref={canvasRef} />
         <BlockStackingRanks />
         <S.MuteButton onPointerDown={handleMutePointerDown}>
-          {muted ? '소리 끄기' : '소리 켜기'}
+          {muted ? '소리 켜기' : '소리 끄기'}
         </S.MuteButton>
       </S.GameContainer>
       <S.TimerContainer>

@@ -32,6 +32,7 @@ export const useBlockStackingGame = (
   canvasRef: MutableRefObject<HTMLCanvasElement | null>,
   gameState: BlockStackingGameState,
   isLocalGameOver: boolean,
+  endTimeEpochMs: number | null,
   options: {
     setLocalGameOver: () => void;
     sounds: ReturnType<typeof useBlockStackingSounds>;
@@ -96,7 +97,13 @@ export const useBlockStackingGame = (
         newPieces.push({ x: cur.x, y: currentY, width: leftEdge - cur.x, vy: 1, opacity: 1 });
       }
       if (cur.x + cur.width > rightEdge) {
-        newPieces.push({ x: rightEdge, y: currentY, width: cur.x + cur.width - rightEdge, vy: 1, opacity: 1 });
+        newPieces.push({
+          x: rightEdge,
+          y: currentY,
+          width: cur.x + cur.width - rightEdge,
+          vy: 1,
+          opacity: 1,
+        });
       }
       fallingPiecesRef.current = [...fallingPiecesRef.current, ...newPieces];
     }
@@ -137,27 +144,29 @@ export const useBlockStackingGame = (
     }
   }, [gameState]);
 
-  // 타이머 — 표시용. 서버 20초 타이머가 권위이며, 로컬 만료 시 루프만 중단.
+  // 타이머 — endTimeEpochMs 기준으로 동기화. 로컬 만료 시 루프만 중단.
   useEffect(() => {
-    if (gameState !== 'PLAYING') return;
+    if (gameState !== 'PLAYING' || endTimeEpochMs == null) return;
+
+    const computeRemaining = () => Math.max(0, Math.ceil((endTimeEpochMs - Date.now()) / 1000));
+
+    setTimeLeft(computeRemaining());
 
     const timer = setInterval(() => {
       if (isLocalGameOverRef.current) {
         clearInterval(timer);
         return;
       }
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setLocalGameOverRef.current();
-          return 0;
-        }
-        return prev - 1;
-      });
+      const remaining = computeRemaining();
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(timer);
+        setLocalGameOverRef.current();
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState]);
+  }, [gameState, endTimeEpochMs]);
 
   useEffect(() => {
     if (gameState !== 'PLAYING') return;

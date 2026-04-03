@@ -6,19 +6,28 @@ import { BlockStackingGameContext } from './BlockStackingGameContext';
 
 type BlockStackingRanking = { name: string; floor: number };
 
+type StateMessage = {
+  state: BlockStackingGameState;
+  endTimeEpochMs?: number | null;
+};
+
 const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
   const { joinCode } = useIdentifier();
   const [gameState, setGameState] = useState<BlockStackingGameState>('DESCRIPTION');
   const [rankings, setRankings] = useState<BlockStackingRanking[]>([]);
   const [isLocalGameOver, setIsLocalGameOver] = useState(false);
+  const [endTimeEpochMs, setEndTimeEpochMs] = useState<number | null>(null);
 
   const setLocalGameOver = useCallback(() => setIsLocalGameOver(true), []);
 
   useWebSocketSubscription(
     `/room/${joinCode}/block-stacking/state`,
-    useCallback(({ state }: { state: BlockStackingGameState }) => {
+    useCallback(({ state, endTimeEpochMs: ms }: StateMessage) => {
       setGameState(state);
-      if (state === 'PLAYING') setIsLocalGameOver(false);
+      if (state === 'PLAYING') {
+        setIsLocalGameOver(false);
+        if (ms != null) setEndTimeEpochMs(ms);
+      }
     }, [])
   );
 
@@ -37,7 +46,9 @@ const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
   );
 
   return (
-    <BlockStackingGameContext.Provider value={{ gameState, rankings, isLocalGameOver, setLocalGameOver }}>
+    <BlockStackingGameContext.Provider
+      value={{ gameState, rankings, isLocalGameOver, setLocalGameOver, endTimeEpochMs }}
+    >
       {children}
     </BlockStackingGameContext.Provider>
   );

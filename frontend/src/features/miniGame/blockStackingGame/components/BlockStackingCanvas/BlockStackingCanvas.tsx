@@ -3,16 +3,17 @@ import { useBlockStackingGameContext } from '@/contexts/BlockStackingGame/BlockS
 import { useBlockStackingGame } from '../../hooks/useBlockStackingGame';
 import { useBlockStackingActions } from '../../hooks/useBlockStackingActions';
 import { useBlockStackingSounds } from '../../hooks/useBlockStackingSounds';
+import BlockStackingRanks from '../BlockStackingRanks/BlockStackingRanks';
 import * as S from './BlockStackingCanvas.styled';
 
 const BlockStackingCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { gameState, isLocalGameOver, setLocalGameOver } = useBlockStackingGameContext();
+  const { gameState, isLocalGameOver, setLocalGameOver, endTimeEpochMs } = useBlockStackingGameContext();
   const [muted, setMuted] = useState(false);
 
   const sounds = useBlockStackingSounds(muted);
   const { publishProgress } = useBlockStackingActions();
-  const { handleTap, timeLeft } = useBlockStackingGame(canvasRef, gameState, isLocalGameOver, {
+  const { handleTap, timeLeft } = useBlockStackingGame(canvasRef, gameState, isLocalGameOver, endTimeEpochMs, {
     setLocalGameOver,
     sounds,
     onBlockPlaced: publishProgress,
@@ -45,6 +46,7 @@ const BlockStackingCanvas = () => {
     <S.Wrapper>
       <S.GameContainer onPointerDown={handleTap}>
         <S.Canvas ref={canvasRef} />
+        <BlockStackingRanks />
         <S.MuteButton onPointerDown={handleMutePointerDown}>
           {muted ? '소리 끄기' : '소리 켜기'}
         </S.MuteButton>

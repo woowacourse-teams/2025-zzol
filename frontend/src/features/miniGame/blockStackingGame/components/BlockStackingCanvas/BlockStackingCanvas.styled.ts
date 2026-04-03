@@ -51,7 +51,8 @@ export const TimerFill = styled.div<{ timeLeft: number; totalTime: number }>`
   transition:
     height 1s linear,
     background 0.3s ease;
-  box-shadow: 0 0 8px ${({ timeLeft }) => (timeLeft < 5 ? 'rgba(255, 77, 77, 0.5)' : 'rgba(72, 219, 251, 0.3)')};
+  box-shadow: 0 0 8px
+    ${({ timeLeft }) => (timeLeft < 5 ? 'rgba(255, 77, 77, 0.5)' : 'rgba(72, 219, 251, 0.3)')};
 `;
 
 export const MuteButton = styled.button`

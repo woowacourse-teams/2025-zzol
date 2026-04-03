@@ -7,12 +7,12 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import PrepareOverlay from '../../components/PrepareOverlay/PrepareOverlay';
 import BlockStackingCanvas from '../components/BlockStackingCanvas/BlockStackingCanvas';
-import RankingBar from '../components/RankingBar/RankingBar';
+import EliminatedOverlay from '../components/EliminatedOverlay/EliminatedOverlay';
 import * as S from './BlockStackingGamePlayPage.styled';
 
 const BlockStackingGamePlayPage = () => {
   const { joinCode } = useIdentifier();
-  const { gameState } = useBlockStackingGameContext();
+  const { gameState, isLocalGameOver } = useBlockStackingGameContext();
   const navigate = useReplaceNavigate();
   const { miniGameType } = useParams();
 
@@ -28,7 +28,7 @@ const BlockStackingGamePlayPage = () => {
       <Layout.Content>
         <S.Container>
           <BlockStackingCanvas />
-          <RankingBar />
+          {isLocalGameOver && <EliminatedOverlay />}
         </S.Container>
       </Layout.Content>
       {gameState === 'PREPARE' && <PrepareOverlay />}

@@ -83,9 +83,17 @@ src/
 ```typescript
 // 쌓인 블록 한 층
 type StackedBlock = {
-  x: number;      // canvas 내 좌측 시작 x
-  width: number;  // 현재 층 너비
+  x: number;       // canvas 내 좌측 시작 x
+  width: number;   // 현재 층 너비
   // y 위치는 별도 필드로 저장하지 않고 카메라/스택 인덱스로 계산
+};
+
+// 현재 이동 중인 블록
+type CurrentBlock = {
+  x: number;
+  width: number;
+  direction: 1 | -1;
+  speed: number;
 };
 
 // 낙하하는 잘린 조각
@@ -93,22 +101,24 @@ type FallingPiece = {
   x: number;
   y: number;
   width: number;
-  vy: number;     // 낙하 속도
+  vy: number;      // 낙하 속도
   opacity: number;
 };
 
-// Context가 제공하는 상태
-type BlockStackingGameState = {
-  phase: 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
-  score: number;             // 현재 층수
-  timeLeft: number;          // 남은 시간 (초)
-  stack: StackedBlock[];     // 쌓인 블록 목록
-  currentBlock: {
-    x: number;
-    width: number;
-    direction: 1 | -1;
-    speed: number;
-  };
+// 게임의 단계 자체는 문자열 유니온으로 관리
+type BlockStackingGameState =
+  | 'DESCRIPTION'
+  | 'PREPARE'
+  | 'PLAYING'
+  | 'DONE';
+
+// Context가 별도로 제공하는 게임 데이터
+type BlockStackingGameContextValue = {
+  gameState: BlockStackingGameState;
+  score: number;              // 현재 층수
+  timeLeft: number;           // 남은 시간 (초)
+  stack: StackedBlock[];      // 쌓인 블록 목록
+  currentBlock: CurrentBlock;
   fallingPieces: FallingPiece[];
 };
 ```

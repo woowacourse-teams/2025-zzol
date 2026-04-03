@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 
 export type BlockStackingProgressPayload = {
   floor: number;
-  tapX: number;
   movingBlockX: number;
   stackTopX: number;
   stackTopWidth: number;

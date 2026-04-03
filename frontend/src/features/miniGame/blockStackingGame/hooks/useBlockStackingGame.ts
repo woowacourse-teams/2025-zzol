@@ -243,7 +243,6 @@ export const useBlockStackingGame = (
     // 서버로 현재 진행 상황 보고 (실시간 랭킹용)
     onBlockPlacedRef.current({
       floor: newScore,
-      tapX: cur.x,
       movingBlockX: cur.x,
       stackTopX: topBlock.x,
       stackTopWidth: topBlock.width,

@@ -38,13 +38,6 @@ const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
     }, [])
   );
 
-  useWebSocketSubscription(
-    `/room/${joinCode}/block-stacking/complete`,
-    useCallback(() => {
-      setGameState('DONE');
-    }, [])
-  );
-
   return (
     <BlockStackingGameContext.Provider
       value={{ gameState, rankings, isLocalGameOver, setLocalGameOver, endTimeEpochMs }}

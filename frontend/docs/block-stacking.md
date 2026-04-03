@@ -78,8 +78,8 @@ src/
 // 쌓인 블록 한 층
 type StackedBlock = {
   x: number;      // canvas 내 좌측 시작 x
-  y: number;      // canvas 내 상단 y
   width: number;  // 현재 층 너비
+  // y 위치는 별도 필드로 저장하지 않고 카메라/스택 인덱스로 계산
 };
 
 // 낙하하는 잘린 조각

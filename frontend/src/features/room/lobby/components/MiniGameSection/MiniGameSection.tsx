@@ -10,15 +10,8 @@ import {
   MINI_GAME_NAME_MAP,
   MiniGameType,
 } from '@/types/miniGame/common';
-import { useMemo } from 'react';
 import * as S from './MiniGameSection.styled';
 import { useMiniGameScreenReader } from './useMiniGameScreenReader';
-
-/**
- * 백엔드가 아직 지원하지 않는 게임을 프론트에서 임시로 추가.
- * 백엔드 연동 완료 후 이 상수와 useMemo 보완 로직을 제거한다.
- */
-const FRONTEND_ONLY_GAMES: MiniGameType[] = ['BLOCK_STACKING'];
 
 type Props = {
   selectedMiniGames: MiniGameType[];
@@ -30,12 +23,6 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
   const { data: miniGames, loading } = useFetch<MiniGameType[]>({
     endpoint: '/rooms/minigames',
   });
-
-  const allMiniGames = useMemo(() => {
-    const fromApi = miniGames ?? [];
-    const extra = FRONTEND_ONLY_GAMES.filter((g) => !fromApi.includes(g));
-    return [...fromApi, ...extra];
-  }, [miniGames]);
 
   const { message, screenReaderRef, announceSelection } = useMiniGameScreenReader(
     loading,
@@ -60,7 +47,7 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
         {loading ? (
           <GameActionButtonSkeleton />
         ) : (
-          allMiniGames
+          (miniGames ?? [])
             .filter((miniGame) => !HIDDEN_MINI_GAMES.includes(miniGame))
             .map((miniGame) => (
               <GameActionButton

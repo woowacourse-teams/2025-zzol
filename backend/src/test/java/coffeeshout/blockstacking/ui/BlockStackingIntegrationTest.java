@@ -117,7 +117,7 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
             stateResponses.get(); // PREPARE
             stateResponses.get(); // PLAYING
 
-            session.send(progressCommandUrl(), progressCommand("꾹이", 1, 100.0, 85.0, 150.0));
+            session.send(progressCommandUrl(), progressCommand(1, 100.0, 85.0, 150.0));
 
             final MessageResponse progressResponse = progressResponses.get();
 
@@ -139,13 +139,13 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
             stateResponses.get(); // PLAYING
 
             // 꾹이: 2층, 루키: 1층
-            session.send(progressCommandUrl(), progressCommand("꾹이", 1, 100.0, 85.0, 150.0));
+            session.send(progressCommandUrl(), progressCommand(1, 100.0, 85.0, 150.0));
             progressResponses.get(); // 꾹이 1층 브로드캐스트
 
-            session.send(progressCommandUrl(), progressCommand("꾹이", 2, 100.0, 85.0, 135.0));
+            session.send(progressCommandUrl(), progressCommand(2, 100.0, 85.0, 135.0));
             progressResponses.get(); // 꾹이 2층 브로드캐스트
 
-            루키세션.send(progressCommandUrl(), progressCommand("루키", 1, 100.0, 85.0, 135.0));
+            루키세션.send(progressCommandUrl(), progressCommand(1, 100.0, 85.0, 135.0));
             final MessageResponse rankingResponse = progressResponses.get();
 
             // 꾹이(2층)가 루키(1층)보다 앞에 위치
@@ -155,7 +155,7 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
         }
 
         @Test
-        void 유효하지_않은_overlap_이벤트는_floor를_갱신하지_않는다() {
+        void 유효하지_않은_overlap_이벤트는_브로드캐스트되지_않는다() {
             final var stateResponses = session.subscribe(stateUrl());
             final var progressResponses = session.subscribe(progressUrl());
 
@@ -165,17 +165,13 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
             stateResponses.get(); // PLAYING
 
             // overlap <= 0: movingBlockX=300으로 stackTop 범위(85~235) 완전 이탈
-            session.send(progressCommandUrl(), progressCommand("꾹이", 1, 300.0, 85.0, 150.0));
+            session.send(progressCommandUrl(), progressCommand(1, 300.0, 85.0, 150.0));
 
-            final MessageResponse progressResponse = progressResponses.get();
-
-            // 랭킹 업데이트는 발생하되, 꾹이의 floor는 0으로 유지
-            assertMessageContains(progressResponse, "\"name\":\"꾹이\"");
-            assertMessageContains(progressResponse, "\"floor\":0");
+            progressResponses.assertNoMessage();
         }
 
         @Test
-        void 비연속적_floor_이벤트는_floor를_갱신하지_않는다() {
+        void 비연속적_floor_이벤트는_브로드캐스트되지_않는다() {
             final var stateResponses = session.subscribe(stateUrl());
             final var progressResponses = session.subscribe(progressUrl());
 
@@ -185,12 +181,9 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
             stateResponses.get(); // PLAYING
 
             // floor=1을 건너뛰고 floor=2 전송 → 무시됨
-            session.send(progressCommandUrl(), progressCommand("꾹이", 2, 100.0, 85.0, 150.0));
+            session.send(progressCommandUrl(), progressCommand(2, 100.0, 85.0, 150.0));
 
-            final MessageResponse progressResponse = progressResponses.get();
-
-            assertMessageContains(progressResponse, "\"name\":\"꾹이\"");
-            assertMessageContains(progressResponse, "\"floor\":0");
+            progressResponses.assertNoMessage();
         }
     }
 
@@ -222,17 +215,16 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
     }
 
     private String progressCommand(
-            String playerName, int floor,
+            int floor,
             double movingBlockX, double stackTopX, double stackTopWidth
     ) {
         return String.format("""
                 {
-                  "playerName": "%s",
                   "floor": %d,
                   "movingBlockX": %f,
                   "stackTopX": %f,
                   "stackTopWidth": %f
                 }
-                """, playerName, floor, movingBlockX, stackTopX, stackTopWidth);
+                """, floor, movingBlockX, stackTopX, stackTopWidth);
     }
 }

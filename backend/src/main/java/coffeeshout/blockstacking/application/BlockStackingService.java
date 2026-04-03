@@ -1,11 +1,11 @@
 package coffeeshout.blockstacking.application;
 
 import coffeeshout.blockstacking.domain.BlockStackingGame;
-import coffeeshout.blockstacking.domain.service.BlockStackingCommandService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +18,9 @@ import org.springframework.stereotype.Service;
 public class BlockStackingService implements MiniGameService {
 
     private final RoomQueryService roomQueryService;
-    private final BlockStackingCommandService commandService;
     private final BlockStackingFlowOrchestrator flowOrchestrator;
+    private final BlockStackingNotifier notifier;
+
 
     @Override
     public void start(String joinCode, String hostName) {
@@ -32,10 +33,17 @@ public class BlockStackingService implements MiniGameService {
             String joinCode, String playerName, int floor,
             double movingBlockX, double stackTopX, double stackTopWidth
     ) {
-        commandService.recordProgress(
-                new JoinCode(joinCode), new PlayerName(playerName),
-                floor, movingBlockX, stackTopX, stackTopWidth
-        );
+        log.debug("블록 쌓기 진행 처리 시작: joinCode={}, playerName={}, floor={}",
+                joinCode, playerName, floor);
+
+        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
+        final BlockStackingGame game = (BlockStackingGame) room.findMiniGame(MiniGameType.BLOCK_STACKING);
+        final Player player = game.findPlayerByName(new PlayerName(playerName));
+
+        final boolean updated = game.recordProgress(player, floor, movingBlockX, stackTopX, stackTopWidth);
+        if (updated) {
+            notifier.notifyProgressUpdated(game, room);
+        }
     }
 
     @Override

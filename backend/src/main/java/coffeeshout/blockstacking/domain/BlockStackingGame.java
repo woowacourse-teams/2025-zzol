@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -19,18 +20,18 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 public class BlockStackingGame implements Playable {
 
-    private BlockStackingGameState state;
+    private volatile BlockStackingGameState state;
     private Map<Player, BlockStackingPlayerProgress> playerProgresses;
 
     public BlockStackingGame() {
         this.state = BlockStackingGameState.READY;
-        this.playerProgresses = new HashMap<>();
+        this.playerProgresses = new ConcurrentHashMap<>();
     }
 
     @Override
     public void setUp(List<Player> players) {
         this.playerProgresses = players.stream()
-                .collect(Collectors.toMap(
+                .collect(Collectors.toConcurrentMap(
                         p -> p,
                         p -> BlockStackingPlayerProgress.initial(p.getName())
                 ));
@@ -53,7 +54,7 @@ public class BlockStackingGame implements Playable {
      *
      * @return 유효한 이벤트면 true, 검증 실패로 무시됐으면 false
      */
-    public boolean recordProgress(
+    public synchronized boolean recordProgress(
             Player player, int floor,
             double movingBlockX, double stackTopX, double stackTopWidth
     ) {
@@ -74,12 +75,14 @@ public class BlockStackingGame implements Playable {
                     "등록되지 않은 플레이어입니다: " + player.getName().value()
             );
         }
+
         if (!isValidFloorSequence(floor, progress.currentFloor())) {
             log.warn("[{}] 비연속적 층수 수신 — 무시: player={}, expected={}, received={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
                     player.getName().value(), progress.currentFloor() + 1, floor);
             return false;
         }
+
         final double overlap = calculateOverlap(movingBlockX, stackTopX, stackTopWidth);
         if (overlap <= 0) {
             log.warn("[{}] 유효하지 않은 overlap — 무시: player={}, floor={}, overlap={}",
@@ -87,6 +90,7 @@ public class BlockStackingGame implements Playable {
                     player.getName().value(), floor, overlap);
             return false;
         }
+
         playerProgresses.put(player, progress.advanceTo(floor));
         return true;
     }

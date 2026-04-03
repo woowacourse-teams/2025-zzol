@@ -11,6 +11,7 @@ export type FallingPiece = {
   width: number;
   vy: number;
   opacity: number;
+  color: string;
 };
 
 export type CurrentBlock = {

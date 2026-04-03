@@ -65,6 +65,15 @@ public class BlockStackingGame implements Playable {
         }
 
         final BlockStackingPlayerProgress progress = playerProgresses.get(player);
+        if (progress == null) {
+            log.warn("[{}] 등록되지 않은 플레이어의 진행 이벤트 수신 — 무시: player={}",
+                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND.getCode(),
+                    player.getName().value());
+            throw new BusinessException(
+                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
+                    "등록되지 않은 플레이어입니다: " + player.getName().value()
+            );
+        }
         if (!isValidFloorSequence(floor, progress.currentFloor())) {
             log.warn("[{}] 비연속적 층수 수신 — 무시: player={}, expected={}, received={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
@@ -84,7 +93,8 @@ public class BlockStackingGame implements Playable {
 
     public List<BlockStackingPlayerRankInfo> getRanking() {
         return playerProgresses.values().stream()
-                .sorted(Comparator.comparingInt(BlockStackingPlayerProgress::currentFloor).reversed())
+                .sorted(Comparator.comparingInt(BlockStackingPlayerProgress::currentFloor).reversed()
+                        .thenComparing(p -> p.playerName().value()))
                 .map(p -> new BlockStackingPlayerRankInfo(p.playerName().value(), p.currentFloor()))
                 .toList();
     }

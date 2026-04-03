@@ -4,9 +4,11 @@ import coffeeshout.blockstacking.domain.event.BlockStackingCommandEvent;
 import coffeeshout.blockstacking.ui.request.BlockStackingProgressRequest;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.global.websocket.PlayerKey;
 import generator.annotaions.MessageResponse;
 import generator.annotaions.Operation;
 import jakarta.validation.Valid;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -38,12 +40,14 @@ public class BlockStackingWebSocketController {
     )
     public void recordProgress(
             @DestinationVariable String joinCode,
-            @Payload @Valid BlockStackingProgressRequest request
+            @Payload @Valid BlockStackingProgressRequest request,
+            Principal principal
     ) {
-        final BlockStackingCommandEvent event = BlockStackingCommandEvent.of(joinCode, request);
+        final String authenticatedPlayerName = PlayerKey.parse(principal.getName()).playerName();
+        final BlockStackingCommandEvent event = BlockStackingCommandEvent.of(joinCode, authenticatedPlayerName, request);
         streamPublisher.publish(StreamKey.BLOCK_STACKING_EVENTS, event);
 
         log.debug("블록 쌓기 진행 이벤트 발행: joinCode={}, playerName={}, floor={}, eventId = {}",
-                joinCode, request.playerName(), request.floor(), event.eventId());
+                joinCode, authenticatedPlayerName, request.floor(), event.eventId());
     }
 }

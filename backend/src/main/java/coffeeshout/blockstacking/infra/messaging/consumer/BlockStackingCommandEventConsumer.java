@@ -30,6 +30,7 @@ public class BlockStackingCommandEventConsumer implements Consumer<BlockStacking
                     "블록 쌓기 명령 이벤트 처리 중 오류 발생: joinCode={}, playerName={}, floor={}, movingBlockX={}, stackTopX={}, stackTopWidth={}",
                     event.joinCode(), event.playerName(), event.floor(),
                     event.movingBlockX(), event.stackTopX(), event.stackTopWidth(), e);
+            throw e;
         }
     }
 }

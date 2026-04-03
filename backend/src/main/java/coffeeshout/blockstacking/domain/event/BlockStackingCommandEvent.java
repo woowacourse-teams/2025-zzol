@@ -20,11 +20,13 @@ public record BlockStackingCommandEvent(
         TraceInfo traceInfo
 ) implements BaseEvent, Traceable {
 
-    public static BlockStackingCommandEvent of(String joinCode, BlockStackingProgressRequest request) {
+    public static BlockStackingCommandEvent of(
+            String joinCode, String authenticatedPlayerName, BlockStackingProgressRequest request
+    ) {
         return new BlockStackingCommandEvent(
                 UUID.randomUUID().toString(),
                 joinCode,
-                request.playerName(),
+                authenticatedPlayerName,
                 request.floor(),
                 request.movingBlockX(),
                 request.stackTopX(),

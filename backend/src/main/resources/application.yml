@@ -90,6 +90,8 @@ block-stacking:
   timing:
     prepare: 3000ms
     playing: 20000ms
+  scheduler:
+    pool-size: 2
 
 speed-touch:
   timing:

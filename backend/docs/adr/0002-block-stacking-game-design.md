@@ -48,7 +48,7 @@ class BlockStackingPlayerProgress {
 
 ### 4. FlowScheduler — global 포트로 승격
 
-`FlowScheduler`, `FlowHandle`을 `cardgame/application/port/`에서 `global/flow/`로 이동한다. CardGame 전용인 `EarlyFinishTrigger`는 `cardgame/application/port/`에 유지한다. 각 게임은 별도 빈으로 등록된 `CompletableFuture` 구현체를 주입받아 스레드풀을 독립적으로 관리한다.
+`FlowScheduler`, `FlowHandle`, `EarlyFinishTrigger` 모두 `cardgame/application/port/`에서 `global/flow/`로 이동한다. 각 게임은 별도 빈으로 등록된 `CompletableFuture` 구현체를 주입받아 스레드풀을 독립적으로 관리한다.
 
 ### 5. progress 수신 — 전용 WebSocket 컨트롤러 + Redis Stream
 

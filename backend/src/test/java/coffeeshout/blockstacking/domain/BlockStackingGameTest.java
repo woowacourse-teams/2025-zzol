@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 class BlockStackingGameTest {
 
-    // 기본 탭 좌표: 정상 overlap(50px) 발생 케이스
+    // 기본 탭 좌표: 정상 overlap(135px) 발생 케이스
     // movingBlock: x=100, width=150 → right=250
     // stackTop:    x=85,  width=150 → right=235
     // overlap = min(250,235) - max(100,85) = 235 - 100 = 135

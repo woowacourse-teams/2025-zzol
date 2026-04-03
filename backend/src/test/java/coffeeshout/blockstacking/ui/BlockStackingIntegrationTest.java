@@ -48,7 +48,7 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
         roomRepository.save(room);
         roomJpaRepository.save(new RoomEntity(joinCode.getValue()));
 
-        session = createSession();
+        session = createSession(joinCode.getValue(), host.getName().value());
     }
 
     @Nested
@@ -127,7 +127,9 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
         }
 
         @Test
-        void 여러_플레이어의_진행을_랭킹_내림차순으로_브로드캐스트한다() {
+        void 여러_플레이어의_진행을_랭킹_내림차순으로_브로드캐스트한다() throws Exception {
+            final TestStompSession 루키세션 = createSession(joinCode.getValue(), "루키");
+
             final var stateResponses = session.subscribe(stateUrl());
             final var progressResponses = session.subscribe(progressUrl());
 
@@ -143,7 +145,7 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
             session.send(progressCommandUrl(), progressCommand("꾹이", 2, 100.0, 85.0, 135.0));
             progressResponses.get(); // 꾹이 2층 브로드캐스트
 
-            session.send(progressCommandUrl(), progressCommand("루키", 1, 100.0, 85.0, 135.0));
+            루키세션.send(progressCommandUrl(), progressCommand("루키", 1, 100.0, 85.0, 135.0));
             final MessageResponse rankingResponse = progressResponses.get();
 
             // 꾹이(2층)가 루키(1층)보다 앞에 위치

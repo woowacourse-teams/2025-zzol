@@ -24,7 +24,7 @@ public class BlockStackingCommandService {
             JoinCode joinCode, PlayerName playerName, int floor,
             double movingBlockX, double stackTopX, double stackTopWidth
     ) {
-        log.info("블록 쌓기 진행 처리 시작: joinCode={}, playerName={}, floor={}",
+        log.debug("블록 쌓기 진행 처리 시작: joinCode={}, playerName={}, floor={}",
                 joinCode, playerName, floor);
 
         final Room room = roomQueryService.getByJoinCode(joinCode);

@@ -8,16 +8,23 @@ import * as S from './BlockStackingCanvas.styled';
 
 const BlockStackingCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { gameState, isLocalGameOver, setLocalGameOver, endTimeEpochMs } = useBlockStackingGameContext();
+  const { gameState, isLocalGameOver, setLocalGameOver, endTimeEpochMs } =
+    useBlockStackingGameContext();
   const [muted, setMuted] = useState(false);
 
   const sounds = useBlockStackingSounds(muted);
   const { publishProgress } = useBlockStackingActions();
-  const { handleTap, timeLeft } = useBlockStackingGame(canvasRef, gameState, isLocalGameOver, endTimeEpochMs, {
-    setLocalGameOver,
-    sounds,
-    onBlockPlaced: publishProgress,
-  });
+  const { handleTap, timeLeft } = useBlockStackingGame(
+    canvasRef,
+    gameState,
+    isLocalGameOver,
+    endTimeEpochMs,
+    {
+      setLocalGameOver,
+      sounds,
+      onBlockPlaced: publishProgress,
+    }
+  );
 
   // 캔버스 크기를 부모 요소에 맞게 조정
   useEffect(() => {

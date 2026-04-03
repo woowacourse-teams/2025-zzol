@@ -2,11 +2,14 @@ import CardGameDescription1 from '@/assets/card_game_desc1.svg';
 import CardGameDescription2 from '@/assets/card_game_desc2.svg';
 import RacingGameDescription1 from '@/assets/racing_game_desc1.svg';
 import RacingGameDescription2 from '@/assets/racing_game_desc2.svg';
+import BlockStackingDescription1 from '@/assets/block_stacking_desc1.svg';
+import BlockStackingDescription2 from '@/assets/block_stacking_desc2.svg';
 import CardGameProvider from '@/contexts/CardGame/CardGameProvider';
 import RacingGameProvider from '@/contexts/RacingGame/RacingGameProvider';
 import SpeedTouchGameProvider from '@/contexts/SpeedTouchGame/SpeedTouchGameProvider';
 import BlindTimerGameProvider from '@/contexts/BlindTimerGame/BlindTimerGameProvider';
 import BombRelayGameProvider from '@/contexts/BombRelayGame/BombRelayGameProvider';
+import BlockStackingGameProvider from '@/contexts/BlockStackingGame/BlockStackingGameProvider';
 import { MiniGameType } from '@/types/miniGame/common';
 import { ComponentType, PropsWithChildren } from 'react';
 import CardGameReadyPage from '../cardGame/pages/CardGameReadyPage';
@@ -19,6 +22,8 @@ import RacingGamePlayPage from '../racingGame/pages/RacingGamePlayPage';
 import SpeedTouchGamePlayPage from '../speedTouchGame/pages/SpeedTouchGamePlayPage';
 import BlindTimerGamePlayPage from '../blindTimerGame/pages/BlindTimerGamePlayPage';
 import BombRelayGamePlayPage from '../bombRelayGame/pages/BombRelayGamePlayPage';
+import BlockStackingGameReadyPage from '../blockStackingGame/pages/BlockStackingGameReadyPage';
+import BlockStackingGamePlayPage from '../blockStackingGame/pages/BlockStackingGamePlayPage';
 
 export type SlideConfig = {
   textLines: string[];
@@ -112,5 +117,22 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
       },
     ],
     PlayPage: BombRelayGamePlayPage,
+  },
+  BLOCK_STACKING: {
+    Provider: BlockStackingGameProvider,
+    ReadyPage: BlockStackingGameReadyPage,
+    slides: [
+      {
+        textLines: ['블록이 좌우로 움직입니다', '화면을 탭해서 블록을 쌓으세요!'],
+        imageSrc: BlockStackingDescription1,
+        className: 'slide-first',
+      },
+      {
+        textLines: ['많이 쌓을수록', '당첨 확률이 올라갑니다'],
+        imageSrc: BlockStackingDescription2,
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: BlockStackingGamePlayPage,
   },
 };

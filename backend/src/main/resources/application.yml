@@ -60,6 +60,8 @@ redis:
         thread-pool-name: concurrent
       "[bombrelay]":
         thread-pool-name: concurrent
+      "[blockstacking]":
+        thread-pool-name: concurrent
 
 redisson:
   enabled: true
@@ -83,6 +85,13 @@ card-game:
     playing: 10250ms
     score-board: 1500ms
     early-finish-delay: 2000ms
+
+block-stacking:
+  timing:
+    prepare: 3000ms
+    playing: 20000ms
+  scheduler:
+    pool-size: 2
 
 speed-touch:
   timing:

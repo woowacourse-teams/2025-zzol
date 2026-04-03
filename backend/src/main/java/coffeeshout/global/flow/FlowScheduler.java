@@ -1,8 +1,8 @@
-package coffeeshout.cardgame.application.port;
+package coffeeshout.global.flow;
 
 import java.time.Duration;
 
-public interface CardGameFlowScheduler {
+public interface FlowScheduler {
 
     FlowHandle schedule(Runnable action, Duration delay);
 

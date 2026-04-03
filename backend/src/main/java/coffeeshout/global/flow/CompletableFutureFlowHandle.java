@@ -1,7 +1,5 @@
-package coffeeshout.cardgame.infra.scheduler;
+package coffeeshout.global.flow;
 
-import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
-import coffeeshout.cardgame.application.port.FlowHandle;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
@@ -42,14 +40,12 @@ public class CompletableFutureFlowHandle implements FlowHandle {
 
             return CompletableFuture.anyOf(timeoutFuture, triggerFuture)
                     .thenCompose(winner -> {
-                        // trigger가 이겼고 timeout은 아직 완료되지 않은 경우만 추가 대기
                         if (triggerFuture.isDone() && !timeoutFuture.isDone()) {
                             CompletableFuture<Void> extraDelay = new CompletableFuture<>();
                             taskScheduler.schedule(
                                     () -> extraDelay.complete(null),
                                     Instant.now().plus(earlyFinishExtraDelay)
                             );
-                            // timeout 잔여 시간이 extraDelay보다 짧으면 timeout이 먼저 완료되어 즉시 진행
                             return CompletableFuture.anyOf(extraDelay, timeoutFuture).thenApply(ignored -> null);
                         }
                         return CompletableFuture.completedFuture(null);

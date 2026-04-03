@@ -70,6 +70,11 @@ websocket:
     stream-ttl-seconds: 3600
     dedup-ttl-seconds: 1
 
+block-stacking:
+  timing:
+    prepare: 500ms
+    playing: 2000ms
+
 card-game:
   timing:
     first-loading: 500ms

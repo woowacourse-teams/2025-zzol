@@ -53,24 +53,12 @@ export const MessageWrapper = styled.div`
 
 export const EliminatedText = styled.h2`
   color: #ff4d4d;
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: 2.2rem;
+  font-weight: 900;
   text-shadow: 0 0 20px rgba(255, 77, 77, 0.5);
   margin: 0;
   letter-spacing: -0.05rem;
-`;
-
-export const SubText = styled.p`
-  color: #ffffff;
-  font-size: 1.1rem;
-  font-weight: 500;
-  opacity: 0.8;
-  margin: 0;
-`;
-
-export const IconWrapper = styled.div`
-  font-size: 4rem;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+  animation: ${scaleUp} 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
 `;
 
 export const RankContainer = styled.div`
@@ -88,4 +76,27 @@ export const RankTitle = styled.div`
   font-weight: 600;
   letter-spacing: 0.05rem;
   text-transform: uppercase;
+`;
+
+export const ChatBubbleWrapper = styled.div`
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+export const ChatBubble = styled.img`
+  width: 280px;
+  filter: hue-rotate(320deg) brightness(0.8);
+`;
+
+export const GameIcon = styled.img`
+  width: 80px;
+  opacity: 0.9;
+`;
+
+export const MessageContent = styled.div`
+  position: absolute;
+  top: 40%;
+  transform: translateY(-50%);
 `;

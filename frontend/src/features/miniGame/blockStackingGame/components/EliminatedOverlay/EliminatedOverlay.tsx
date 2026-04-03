@@ -9,26 +9,15 @@ const EliminatedOverlay = () => {
     <S.Backdrop>
       <S.Content>
         <S.MessageWrapper>
-          <div
-            style={{
-              position: 'relative',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <img
-              src={chatBubble}
-              alt="chat bubble"
-              style={{ width: '280px', filter: 'hue-rotate(320deg) brightness(0.8)' }}
-            />
-            <div style={{ position: 'absolute', top: '40%', transform: 'translateY(-50%)' }}>
-              <Headline1 color="white">탈락 ㅠㅠ</Headline1>
-            </div>
-          </div>
+          <S.ChatBubbleWrapper>
+            <S.ChatBubble src={chatBubble} alt="chat bubble" />
+            <S.MessageContent>
+              <S.EliminatedText>탈락 ㅠㅠ</S.EliminatedText>
+            </S.MessageContent>
+          </S.ChatBubbleWrapper>
         </S.MessageWrapper>
 
-        <img src={coffee} alt="coffee" style={{ width: '80px', opacity: 0.9 }} />
+        <S.GameIcon src={coffee} alt="coffee" />
 
         <S.RankContainer>
           <S.RankTitle>현재 순위</S.RankTitle>

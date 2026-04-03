@@ -123,6 +123,9 @@ const getScoreTextByGameType = ({
     case 'CARD_GAME': {
       return scoreValue + '점';
     }
+    case 'BLOCK_STACKING': {
+      return scoreValue + '층';
+    }
     default:
       return null;
   }

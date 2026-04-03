@@ -26,8 +26,8 @@ DESCRIPTION → PREPARE → PLAYING → DONE
 - **PLAYING**: 게임 진행 중
 - **DONE**: 게임 오버 → result 페이지로 이동
 
-> 프론트 전용 단계에서는 WebSocket 없이 로컬 상태로만 관리.
-> 백엔드 연동 시 Provider에 WebSocket 구독 추가.
+> 현재 구현에서는 Provider가 WebSocket을 통해 게임 상태를 구독한다.
+> `state`, `progress`, `complete` 이벤트를 수신하며, 상태 머신 전환과 진행 상태 반영에 사용된다.
 
 ---
 
@@ -53,9 +53,15 @@ src/
 │   │   ├── BlockStackingCanvas/
 │   │   │   ├── BlockStackingCanvas.tsx      # canvas 엘리먼트 + 이벤트 바인딩
 │   │   │   └── BlockStackingCanvas.styled.ts
-│   │   └── BlockStackingGameOverlay/
-│   │       ├── BlockStackingGameOverlay.tsx # 게임오버 오버레이
-│   │       └── BlockStackingGameOverlay.styled.ts
+│   │   ├── EliminatedOverlay/
+│   │   │   ├── EliminatedOverlay.tsx        # 탈락/게임 종료 오버레이
+│   │   │   └── EliminatedOverlay.styled.ts
+│   │   ├── BlockStackingRanks/
+│   │   │   ├── BlockStackingRanks.tsx       # 랭킹 섹션 컨테이너
+│   │   │   └── BlockStackingRanks.styled.ts
+│   │   └── BlockStackingRankList/
+│   │       ├── BlockStackingRankList.tsx    # 랭킹 목록 아이템 렌더링
+│   │       └── BlockStackingRankList.styled.ts
 │   ├── hooks/
 │   │   ├── useBlockStackingGame.ts          # 핵심 게임 루프 (canvas 드로우 + 상태)
 │   │   └── useBlockStackingActions.ts       # 백엔드 연동 시 WebSocket publish 담당
@@ -78,8 +84,8 @@ src/
 // 쌓인 블록 한 층
 type StackedBlock = {
   x: number;      // canvas 내 좌측 시작 x
-  y: number;      // canvas 내 상단 y
   width: number;  // 현재 층 너비
+  // y 위치는 별도 필드로 저장하지 않고 카메라/스택 인덱스로 계산
 };
 
 // 낙하하는 잘린 조각

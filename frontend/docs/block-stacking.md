@@ -53,9 +53,15 @@ src/
 │   │   ├── BlockStackingCanvas/
 │   │   │   ├── BlockStackingCanvas.tsx      # canvas 엘리먼트 + 이벤트 바인딩
 │   │   │   └── BlockStackingCanvas.styled.ts
-│   │   └── BlockStackingGameOverlay/
-│   │       ├── BlockStackingGameOverlay.tsx # 게임오버 오버레이
-│   │       └── BlockStackingGameOverlay.styled.ts
+│   │   ├── EliminatedOverlay/
+│   │   │   ├── EliminatedOverlay.tsx        # 탈락/게임 종료 오버레이
+│   │   │   └── EliminatedOverlay.styled.ts
+│   │   ├── BlockStackingRanks/
+│   │   │   ├── BlockStackingRanks.tsx       # 랭킹 섹션 컨테이너
+│   │   │   └── BlockStackingRanks.styled.ts
+│   │   └── BlockStackingRankList/
+│   │       ├── BlockStackingRankList.tsx    # 랭킹 목록 아이템 렌더링
+│   │       └── BlockStackingRankList.styled.ts
 │   ├── hooks/
 │   │   ├── useBlockStackingGame.ts          # 핵심 게임 루프 (canvas 드로우 + 상태)
 │   │   └── useBlockStackingActions.ts       # 백엔드 연동 시 WebSocket publish 담당

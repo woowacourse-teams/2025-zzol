@@ -330,7 +330,7 @@ export const useBlockStackingGame = (
       const H = canvas.height / currentScale;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       // 가상 좌표계로 변환하여 그리기
       ctx.save();
       ctx.scale(currentScale, currentScale);

@@ -28,7 +28,7 @@ export const MINI_GAME_DESCRIPTION_MAP: Record<MiniGameType, string[]> = {
   SPEED_TOUCH: ['1부터 25까지 순서대로 터치해서', '가장 빠르게 완주하세요!'],
   BLIND_TIMER: ['목표 시간에 정확히 맞춰', 'STOP을 눌러보세요!'],
   BOMB_RELAY: ['끝말잇기로 폭탄을 넘기세요', '폭탄이 터지면 탈락!'],
-  BLOCK_STACKING: ['블록을 정확히 쌓아올리세요!', '많이 쌓을수록 당첨 확률이 올라갑니다'],
+  BLOCK_STACKING: ['블록을 정확히 쌓아올리세요!'],
 };
 
 export const MINI_GAME_ICON_MAP: Record<MiniGameType, string> = {

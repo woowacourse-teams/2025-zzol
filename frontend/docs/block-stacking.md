@@ -26,8 +26,8 @@ DESCRIPTION → PREPARE → PLAYING → DONE
 - **PLAYING**: 게임 진행 중
 - **DONE**: 게임 오버 → result 페이지로 이동
 
-> 프론트 전용 단계에서는 WebSocket 없이 로컬 상태로만 관리.
-> 백엔드 연동 시 Provider에 WebSocket 구독 추가.
+> 현재 구현에서는 Provider가 WebSocket을 통해 게임 상태를 구독한다.
+> `state`, `progress`, `complete` 이벤트를 수신하며, 상태 머신 전환과 진행 상태 반영에 사용된다.
 
 ---
 

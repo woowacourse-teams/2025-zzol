@@ -241,10 +241,6 @@ export const useBlockStackingGame = (
     setTimeLeft(computeRemaining());
 
     const timer = setInterval(() => {
-      if (isLocalGameOverRef.current) {
-        clearInterval(timer);
-        return;
-      }
       const remaining = computeRemaining();
       setTimeLeft(remaining);
       if (remaining <= 0) {
@@ -263,7 +259,6 @@ export const useBlockStackingGame = (
     // 상태 초기화
     scoreRef.current = 0;
     setScore(0);
-    setTimeLeft(GAME_DURATION);
 
     const canvas = canvasRef.current;
     if (!canvas) return;

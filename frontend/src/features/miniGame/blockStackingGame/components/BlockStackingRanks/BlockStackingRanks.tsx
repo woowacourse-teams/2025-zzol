@@ -1,32 +1,16 @@
 import { useBlockStackingGameContext } from '@/contexts/BlockStackingGame/BlockStackingGameContext';
-import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
-import { useMemo } from 'react';
+import BlockStackingRankList from '../BlockStackingRankList/BlockStackingRankList';
 import * as S from './BlockStackingRanks.styled';
 
 const BlockStackingRanks = () => {
-  const { rankings } = useBlockStackingGameContext();
-  const { myName } = useIdentifier();
+  const { isLocalGameOver } = useBlockStackingGameContext();
 
-  const sortedRankings = useMemo(() => {
-    return [...rankings].sort((a, b) => b.floor - a.floor);
-  }, [rankings]);
-
-  if (sortedRankings.length === 0) return null;
+  // 탈락(Game Over) 시에는 우측 상단 랭킹을 숨기고 중앙 오버레이의 랭킹만 표시합니다.
+  if (isLocalGameOver) return null;
 
   return (
     <S.Container>
-      <S.RankList>
-        {sortedRankings.slice(0, 6).map((player, index) => {
-          const isMe = player.name === myName;
-          return (
-            <S.RankItem key={player.name} isMe={isMe}>
-              <S.Rank>{index + 1}</S.Rank>
-              <S.Name>{player.name}</S.Name>
-              <S.Floor>{player.floor}층</S.Floor>
-            </S.RankItem>
-          );
-        })}
-      </S.RankList>
+      <BlockStackingRankList />
     </S.Container>
   );
 };

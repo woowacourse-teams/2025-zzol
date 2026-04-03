@@ -2,6 +2,7 @@ import Headline1 from '@/components/@common/Headline1/Headline1';
 import * as S from './EliminatedOverlay.styled';
 import chatBubble from '@/assets/chat_bubble.svg';
 import coffee from '@/assets/logo/coffee-white.png';
+import BlockStackingRankList from '../BlockStackingRankList/BlockStackingRankList';
 
 const EliminatedOverlay = () => {
   return (
@@ -26,7 +27,13 @@ const EliminatedOverlay = () => {
             </div>
           </div>
         </S.MessageWrapper>
-        <img src={coffee} alt="coffee" style={{ width: '120px', opacity: 0.9 }} />
+
+        <img src={coffee} alt="coffee" style={{ width: '80px', opacity: 0.9 }} />
+
+        <S.RankContainer>
+          <S.RankTitle>현재 순위</S.RankTitle>
+          <BlockStackingRankList isCentered />
+        </S.RankContainer>
       </S.Content>
     </S.Backdrop>
   );

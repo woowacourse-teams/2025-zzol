@@ -50,7 +50,7 @@ class BlockStackingPlayerProgress {
 
 `FlowScheduler`, `FlowHandle`을 `cardgame/application/port/`에서 `global/flow/`로 이동한다. CardGame 전용인 `EarlyFinishTrigger`는 `cardgame/application/port/`에 유지한다. 각 게임은 별도 빈으로 등록된 `CompletableFuture` 구현체를 주입받아 스레드풀을 독립적으로 관리한다.
 
-### 5. progress 수신 — 전용 WebSocket 컨트롤러
+### 5. progress 수신 — 전용 WebSocket 컨트롤러 + Redis Stream
 
 progress 이벤트를 공유 `CommandType` 라우터(`/app/room/{joinCode}/minigame/command`)를 거치지 않고 전용 엔드포인트로 직접 수신한다.
 
@@ -59,16 +59,45 @@ STOMP SEND /app/room/{joinCode}/block-stacking/progress
 {
   "playerName": "꾹이",
   "floor": 3,
-  "tapX": 100.0,
   "movingBlockX": 100.0,
   "stackTopX": 85.0,
   "stackTopWidth": 150.0
 }
 ```
 
-`BlockStackingWebSocketController`가 `BlockStackingService.recordProgress()`를 직접 호출한다. Redis Stream 중간 단계 없이 WebSocket 스레드에서 인메모리 상태를 갱신하고 STOMP로 브로드캐스트한다.
+`tapX`(터치 좌표)는 서버가 블록의 실시간 이동 위치를 알 수 없어 overlap 계산에 사용할 수 없으므로 제거했다. overlap 검증에는 `movingBlockX`, `stackTopX`, `stackTopWidth`만 사용한다.
 
-### 6. FlowOrchestrator — 단일 체인
+`BlockStackingWebSocketController`는 수신한 요청을 `BlockStackingCommandEvent`로 변환해 `StreamKey.BLOCK_STACKING_EVENTS` Redis Stream에 발행한다. `BlockStackingCommandEventConsumer`가 이를 소비해 `BlockStackingService.recordProgress()`를 호출한다.
+
+```
+WebSocketController
+  → StreamPublisher.publish(BLOCK_STACKING_EVENTS, event)
+  → BlockStackingCommandEventConsumer.accept(event)
+  → BlockStackingService.recordProgress()
+  → BlockStackingCommandService.recordProgress()
+  → game.recordProgress() + notifier.notifyProgressUpdated()
+```
+
+### 6. PLAYING 상태 — 서버 종료 타임스탬프 동기화
+
+PLAYING 상태로 전환할 때 서버 기준 게임 종료 시각을 함께 전달한다. 클라이언트는 `Date.now()`와의 차이로 남은 시간을 계산하므로 네트워크 지연이 자동 보정된다.
+
+```json
+// PLAYING 전환 시
+{ "state": "PLAYING", "endTimeEpochMs": 1712140000000 }
+
+// PREPARE / DONE
+{ "state": "PREPARE" }
+{ "state": "DONE" }
+```
+
+`endTimeEpochMs`는 `Instant.now().plus(timing.playing())`으로 계산되며, `@JsonInclude(NON_NULL)`로 PLAYING 이외의 상태에서는 직렬화에서 제외된다.
+
+### 7. 상태 응답 통일 — BlockStackingStateResponse
+
+PREPARE / PLAYING / DONE 세 가지 상태 전환 알림을 단일 `BlockStackingStateResponse`로 통일한다. 별도 complete 토픽(`/block-stacking/complete`)을 두지 않는다. 게임 최종 결과는 `room.applyMiniGameResult()`로 Room Score에 반영되므로 DONE 알림에 랭킹 데이터를 포함할 필요가 없다.
+
+### 8. FlowOrchestrator — 단일 체인
 
 ```text
 startFlow()
@@ -81,14 +110,16 @@ startFlow()
 
 ## 고려한 대안
 
-| 대안 | 장점 | 단점 |
-|------|------|------|
-| 잘못된 값 수신 시 에러 응답 + 재전송 요청 | 서버-클라이언트 상태 동기화 | 낙관적 업데이트와 충돌, 재현 불가 |
-| 잘못된 값 수신 시 WebSocket 연결 끊기 | 강력한 치팅 차단 | 파티 게임에 과도한 제재, UX 파괴 |
-| 전원 제출 완료 시 조기 종료 (EarlyFinishTrigger) | 전원 완료 즉시 결과 확인 가능 | 미제출 플레이어로 인한 대기, 별도 제출 커맨드 필요 |
-| currentFloors / finalFloors 분리 관리 | 제출 전후 상태 명시적 구분 | 두 Map 동기화 부담, 클래스 외부에서 관리 규칙 추론 필요 |
-| FlowScheduler를 각 게임 패키지에 유지 | 게임별 완전 독립 | 동일 패턴 중복, 의존성 방향 불명확 |
-| progress 이벤트를 공유 CommandType 라우터 사용 | 기존 인프라 재사용 | 게임별 독립 진화 어려움, payload 구조 공유 라우터에 노출 |
+| 대안                                          | 장점                | 단점                                   |
+|---------------------------------------------|-------------------|--------------------------------------|
+| 잘못된 값 수신 시 에러 응답 + 재전송 요청                   | 서버-클라이언트 상태 동기화   | 낙관적 업데이트와 충돌, 재현 불가                  |
+| 잘못된 값 수신 시 WebSocket 연결 끊기                  | 강력한 치팅 차단         | 파티 게임에 과도한 제재, UX 파괴                 |
+| 전원 제출 완료 시 조기 종료 (EarlyFinishTrigger)       | 전원 완료 즉시 결과 확인 가능 | 미제출 플레이어로 인한 대기, 별도 제출 커맨드 필요        |
+| currentFloors / finalFloors 분리 관리           | 제출 전후 상태 명시적 구분   | 두 Map 동기화 부담, 클래스 외부에서 관리 규칙 추론 필요   |
+| FlowScheduler를 각 게임 패키지에 유지                 | 게임별 완전 독립         | 동일 패턴 중복, 의존성 방향 불명확                 |
+| progress 이벤트를 공유 CommandType 라우터 사용         | 기존 인프라 재사용        | 게임별 독립 진화 어려움, payload 구조 공유 라우터에 노출 |
+| progress 컨트롤러에서 서비스 직접 호출 (Redis Stream 없음) | 구조 단순, 지연 최소      | Redis Stream 기반 소비자 패턴 일관성 깨짐        |
+| complete 토픽 별도 유지                           | 명시적 완료 신호         | state 토픽과 중복, 프론트 구독 대상 증가           |
 
 ## 트레이드오프
 
@@ -105,13 +136,17 @@ startFlow()
 - `BlockStackingPlayerProgress` 단일 객체로 도메인 규칙이 한 곳에 집중된다.
 - FlowScheduler global 승격으로 신규 게임 추가 시 동일 인프라를 재사용할 수 있다.
 - 전용 컨트롤러로 인해 progress payload 스키마가 공유 라우터(`CommandType`)에 독립적으로 진화 가능하다.
-- Redis Stream 중간 단계 제거로 progress 처리 지연이 줄어든다.
+- `endTimeEpochMs` 동기화로 클라이언트 타이머가 네트워크 지연에 강해진다.
+- 상태 응답 통일(`BlockStackingStateResponse`)로 프론트엔드 구독 대상이 단순해진다.
 
 ## 결과
 
 - `global/flow/FlowScheduler`, `global/flow/FlowHandle` 신규 위치 (CardGame에서 이동)
 - `blockstacking/` 패키지 신설: `BlockStackingGame`, `BlockStackingPlayerProgress`, `BlockStackingGameStep`, `BlockStackingFlowOrchestrator`, `BlockStackingNotifier`, `BlockStackingCommandService`
 - `MiniGameType`에 `BLOCK_STACKING` 추가
-- progress 이벤트는 전용 엔드포인트 `/app/room/{joinCode}/block-stacking/progress` 로 직접 수신 (`CommandType` 미사용)
-- 검증 실패 시 warn 로그 기록 위치: `BlockStackingCommandService.recordProgress()`
+- progress 수신 전용 엔드포인트: `/app/room/{joinCode}/block-stacking/progress` (`CommandType` 미사용)
+- 상태 알림 토픽: `/topic/room/{joinCode}/block-stacking/state` (PREPARE / PLAYING / DONE 통일)
+- 랭킹 알림 토픽: `/topic/room/{joinCode}/block-stacking/progress`
+- PLAYING 전환 시 `endTimeEpochMs` (UTC epoch ms) 포함
+- 검증 실패 시 warn 로그 기록 위치: `BlockStackingGame.recordProgress()`
 - 타이밍 설정: `block-stacking.timing.prepare=3s`, `block-stacking.timing.playing=20s`

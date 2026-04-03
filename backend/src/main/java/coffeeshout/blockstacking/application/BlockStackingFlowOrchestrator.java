@@ -12,6 +12,7 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.room.domain.Room;
 import java.time.Duration;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,7 +32,7 @@ public class BlockStackingFlowOrchestrator {
         final String joinCode = room.getJoinCode().getValue();
 
         blockStackingFlowScheduler.schedule(step(game, room, PREPARE), Duration.ZERO)
-                .andThen(step(game, room, START_PLAY), timing.prepare())
+                .andThen(startPlay(game, room), timing.prepare())
                 .andThen(finishGame(game, room), timing.playing())
                 .onError(ex -> log.error("BlockStacking flow 실패: joinCode={}", joinCode, ex));
     }
@@ -48,13 +49,24 @@ public class BlockStackingFlowOrchestrator {
         };
     }
 
+    private Runnable startPlay(BlockStackingGame game, Room room) {
+        return () -> {
+            START_PLAY.execute(game, room);
+            final Instant playingEndTime = Instant.now().plus(timing.playing());
+            try {
+                notifier.notifyPlayingStarted(room, playingEndTime);
+            } catch (Exception e) {
+                log.warn("BlockStacking PLAYING 알림 실패: joinCode={}", room.getJoinCode().getValue(), e);
+            }
+        };
+    }
+
     private Runnable finishGame(BlockStackingGame game, Room room) {
         return () -> {
             final String joinCode = room.getJoinCode().getValue();
             FINISH_GAME.execute(game, room);
             try {
                 notifier.notifyStateChanged(game, room);
-                notifier.notifyGameComplete(room);
             } catch (Exception e) {
                 log.warn("BlockStacking 완료 알림 실패: joinCode={}", joinCode, e);
             }

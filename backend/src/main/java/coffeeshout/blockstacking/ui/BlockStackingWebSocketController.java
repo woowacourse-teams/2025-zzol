@@ -1,7 +1,10 @@
 package coffeeshout.blockstacking.ui;
 
 import coffeeshout.blockstacking.application.BlockStackingService;
+import coffeeshout.blockstacking.domain.event.BlockStackingCommandEvent;
 import coffeeshout.blockstacking.ui.request.BlockStackingProgressRequest;
+import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import generator.annotaions.MessageResponse;
 import generator.annotaions.Operation;
 import jakarta.validation.Valid;
@@ -17,7 +20,7 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 public class BlockStackingWebSocketController {
 
-    private final BlockStackingService blockStackingService;
+    private final StreamPublisher streamPublisher;
 
     @MessageMapping("/room/{joinCode}/block-stacking/progress")
     @Operation(
@@ -38,14 +41,10 @@ public class BlockStackingWebSocketController {
             @DestinationVariable String joinCode,
             @Payload @Valid BlockStackingProgressRequest request
     ) {
-        blockStackingService.recordProgress(
-                joinCode,
-                request.playerName(),
-                request.floor(),
-                request.tapX(),
-                request.movingBlockX(),
-                request.stackTopX(),
-                request.stackTopWidth()
-        );
+        final BlockStackingCommandEvent event = BlockStackingCommandEvent.of(joinCode, request);
+        streamPublisher.publish(StreamKey.BLOCK_STACKING_EVENTS, event);
+
+        log.debug("블록 쌓기 진행 이벤트 발행: joinCode={}, playerName={}, floor={}, eventId = {}",
+                joinCode, request.playerName(), request.floor(), event.eventId());
     }
 }

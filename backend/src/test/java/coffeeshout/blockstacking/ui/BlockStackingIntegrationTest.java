@@ -68,7 +68,9 @@ class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
 
             assertMessageContains(prepare, "\"state\":\"PREPARE\"");
             assertMessageContains(playing, PREPARE_MS, "\"state\":\"PLAYING\"");
+            assertThat(playing.payload()).contains("\"endTimeEpochMs\":");
             assertMessageContains(done, PLAYING_MS, "\"state\":\"DONE\"");
+            assertThat(done.payload()).doesNotContain("\"endTimeEpochMs\":");
             assertMessageContains(complete, "\"state\":\"DONE\"");
         }
 

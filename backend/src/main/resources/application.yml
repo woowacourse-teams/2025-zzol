@@ -60,6 +60,8 @@ redis:
         thread-pool-name: concurrent
       "[bombrelay]":
         thread-pool-name: concurrent
+      "[blockstacking]":
+        thread-pool-name: concurrent
 
 redisson:
   enabled: true

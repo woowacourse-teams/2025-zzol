@@ -267,26 +267,27 @@ BLOCK_STACKING: {
 
 ---
 
-## 실시간 랭킹 바 (Phase 2 — 백엔드 연동 시)
+## 실시간 랭킹 (Real-time Ranking)
 
-캔버스 **아래쪽**에 가로형 리스트로 각 플레이어의 현재 층수를 실시간 표시.
-모바일 세로 화면에서 사이드바 배치는 캔버스 너비를 잡아먹기 때문에 하단 배치가 적합.
+게임 화면 **우측 상단**에 수직 리스트 형태로 각 플레이어의 현재 층수를 실시간 표시합니다. 
+`RacingRanks`와 유사한 스타일로 구현되었으며, 본인의 경우 하이라이트 처리가 됩니다.
 
 ### UI 구조
 
 ```
 ┌──────────────────────────┐
-│      Canvas (게임)        │
-│                          │
-├──────────────────────────┤
-│ 철수 12층  영희 9층  ...  │  ← RankingBar (가로 스크롤)
+│      Canvas (게임)       │
+│  ┌────────────────────┐  │
+│  │ 1. 철수 12층        │  │ ← BlockStackingRanks (수직 리스트)
+│  │ 2. 영희 9층         │  │
+│  └────────────────────┘  │
 └──────────────────────────┘
 ```
 
-### 프론트 전용 단계 처리
+### 구현 방식
 
-`RankingBar` 컴포넌트는 미리 만들되, mock 데이터로 렌더링.
-WebSocket 연동 시 Provider에서 구독 추가하고 context 값만 교체.
+`BlockStackingRanks` 컴포넌트가 Context의 `rankings`를 구독하여 실시간 정렬 후 렌더링합니다.
+캔버스 위의 오버레이 형태로 배치되어 게임 몰입감을 해치지 않으면서 정보를 제공합니다.
 
 ---
 
@@ -363,25 +364,10 @@ WebSocket 연동 시 Provider에서 구독 추가하고 context 값만 교체.
 }
 ```
 
-#### 3. 게임 오버 — 최종 점수 제출
+#### 3. 게임 오버 — 최종 점수 제출 (Optional)
 
-**Publish** `/room/{joinCode}/block-stacking/submit`
-
-클라이언트 → 서버. 게임 오버(블록 이탈 또는 타이머 만료) 시 1회 발행.
-`tapLog`는 해당 게임에서의 모든 탭 이벤트 기록으로, 서버가 최종 점수를 독립적으로 검증하는 데 사용.
-
-```json
-{
-  "playerName": "string",
-  "finalFloor": 15,
-  "tapLog": [
-    { "floor": 1, "tapX": 142.5, "movingBlockX": 140.0, "stackTopX": 85.0, "stackTopWidth": 150.0 },
-    { "floor": 2, "tapX": 138.0, "movingBlockX": 135.5, "stackTopX": 87.5, "stackTopWidth": 147.5 }
-  ]
-}
-```
-
-> `tapLog`는 서버 검증용이며 게임 진행(렌더링)에는 영향을 주지 않는다. 파티 게임 특성상 완벽한 anti-cheat보다 **기록의 근거를 남기는** 수준으로 설계.
+클라이언트는 게임 오버(블록 이탈 또는 타이머 만료) 시 최종 상태를 기록합니다. 
+이미 매 탭마다 `progress` 토픽을 통해 실시간 검증 및 점수 기록이 이루어지고 있으므로, 별도의 누적 로그 제출은 생략합니다.
 
 #### 4. 전체 완료 브로드캐스트
 
@@ -448,7 +434,7 @@ WebSocket 연동 시 Provider에서 구독 추가하고 context 값만 교체.
 
 ### Phase 1 — 게임 코어 (프론트 전용)
 - [x] `blockStackingConstants.ts` (속도 구간 테이블 포함)
-- [x] `BlockStackingGameContext.ts` + `BlockStackingGameProvider.tsx` (로컬 상태)
+- [x] `BlockStackingGameContext.ts` + `BlockStackingGameProvider.tsx` (로컬 상태 → WebSocket 연동 완료)
 - [x] `useBlockStackingGame.ts` (canvas rAF 루프 + 슬라이싱 로직, 흔들림 효과 내장)
 - [x] `useBlockStackingSounds.ts` (Web Audio API 사운드)
 - [x] `BlockStackingCanvas.tsx`
@@ -456,22 +442,19 @@ WebSocket 연동 시 Provider에서 구독 추가하고 context 값만 교체.
 ### Phase 2 — UI 조립 + 프레임워크 편입
 - [x] `BlockStackingGamePlayPage.tsx` (음소거 토글 포함)
 - [x] `BlockStackingGameReadyPage.tsx`
-- [ ] `BlockStackingGameOverlay.tsx` (게임오버 전용 오버레이 — 현재 canvas 내 처리)
-- [ ] `RankingBar.tsx` (캔버스 하단 가로형, mock 데이터)
+- [x] `EliminatedOverlay.tsx` (탈락 시 전용 오버레이)
+- [x] `BlockStackingRanks.tsx` (캔버스 우측 상단 수직형 랭킹)
 - [x] `gameConfigs.tsx` 등록 + 슬라이드 이미지 연결
-- [x] `MiniGameType` 확장 + `MiniGameSection` 프론트 보완 (백엔드 미지원 임시 대응)
+- [x] `MiniGameType` 확장 + `MiniGameSection` 통합
 
 ### Phase 3 — 백엔드 연동
-
-#### 프론트엔드 작업
-- [ ] Provider에 WebSocket 구독 추가 (`state`, `progress`, `complete`)
-- [ ] `BlockStackingGameContext.ts`에서 `startGame()` 제거, `rankings` 추가
-- [ ] `useBlockStackingActions.ts` 구현 (progress/submit publish, `tapLog` 누적 관리)
-- [ ] `useBlockStackingGame.ts`에서 탭 성공 시 `publishProgress()`, 게임 오버 시 `publishSubmit()` 호출 연결
-- [ ] `MiniGameSection` `FRONTEND_ONLY_GAMES` 제거 (백엔드가 BLOCK_STACKING 반환 시)
-- [ ] `BlockStackingGameReadyPage` 임시 시작 버튼 제거
-- [ ] `RankingBar` mock → WebSocket 데이터로 교체
-- [ ] REST 최종 랭킹 연동 (기존 `MiniGameResultPage` 재사용)
+- [x] Provider에 WebSocket 구독 추가 (`state`, `progress`, `complete`) 및 타임스탬프 동기화
+- [x] `BlockStackingGameContext.ts` 및 `BlockStackingGameProvider.tsx` 연동 완료
+- [x] `useBlockStackingActions.ts` 구현 (progress publish)
+- [x] `useBlockStackingGame.ts`에서 탭 성공 시 `publishProgress()` 호출 연결
+- [x] `MiniGameSection` 연동 완료
+- [x] `BlockStackingRanks` WebSocket 데이터 연동
+- [x] REST 최종 랭킹 연동 (기존 `MiniGameResultPage` 재사용)
 
 #### 백엔드 작업 (프론트 연동 전 완료 필요)
 → 아래 **백엔드 구현 요구사항** 섹션 참고
@@ -482,8 +465,8 @@ WebSocket 연동 시 Provider에서 구독 추가하고 context 값만 교체.
 
 - [x] 블록 색상 팔레트 — 10색 순환 적용
 - [x] 배경색 — 층수에 따라 낮→밤 그라디언트 전환
-- [ ] 게임 오버 후 결과 화면 — 공유 `MiniGameResultPage` 사용으로 결정, 백엔드 연동 후 검증 필요
-- [ ] 싱글 플레이 여부 (각자 독립 게임) vs 동시 플레이 + 실시간 비교 — 백엔드 설계 시 확정 필요
+- [x] 게임 오버 후 결과 화면 — 공유 `MiniGameResultPage` 사용 완료
+- [x] 멀티 플레이 실시간 비교 — `BlockStackingRanks` 오버레이 적용 완료
 
 ---
 
@@ -542,21 +525,10 @@ WebSocket 연동 시 Provider에서 구독 추가하고 context 값만 교체.
 > overlap ≤ 0이면 해당 탭은 게임 오버 조건 — 이상 플래그 처리 가능.
 > 단, 클라이언트가 낙관적으로 처리 중이므로 서버가 결과를 되돌리는 방식은 사용하지 않음.
 
-#### 최종 점수 제출 수신 (`/room/{joinCode}/block-stacking/submit`)
+#### 최종 점수 제출 수신
 
-게임 오버 또는 타이머 만료 시 클라이언트가 1회 발행. 서버는 `tapLog`로 `finalFloor` 검증 후 점수 기록.
-
-```json
-{
-  "playerName": "string",
-  "finalFloor": 15,
-  "tapLog": [
-    { "floor": 1, "tapX": 142.5, "movingBlockX": 140.0, "stackTopX": 85.0, "stackTopWidth": 150.0 }
-  ]
-}
-```
-
-모든 플레이어 제출 완료(또는 20초 타이머 만료) 시 complete 브로드캐스트:
+이미 매 탭마다 `progress` 토픽을 통해 실시간 검증 및 점수 기록이 이루어지고 있으므로, 별도의 누적 로그 제출은 생략 가능합니다. 
+모든 플레이어 제출 완료(또는 20초 타이머 만료) 시 complete 브로드캐스트를 수행합니다.
 
 **Publish** `/room/{joinCode}/block-stacking/complete`
 ```json

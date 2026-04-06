@@ -18,11 +18,6 @@ export const CenterWrapper = styled.div`
   gap: 16px;
 `;
 
-export const StepLabel = styled.p`
-  ${({ theme }) => theme.typography.h4}
-  color: ${({ theme }) => theme.color.gray[700]};
-`;
-
 export const ChipGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -94,25 +89,6 @@ export const CharCount = styled.span`
   margin-top: -8px;
 `;
 
-export const SubmitButton = styled.button`
-  width: 100%;
-  height: 48px;
-  border-radius: 10px;
-  border: none;
-  background: ${({ theme, disabled }) =>
-    disabled ? theme.color.gray[200] : theme.color.point[400]};
-  color: ${({ theme, disabled }) =>
-    disabled ? theme.color.gray[400] : theme.color.white};
-  ${({ theme }) => theme.typography.h4}
-  cursor: ${({ disabled }) => (disabled ? 'default' : 'pointer')};
-  transition: all 0.15s ease;
-
-  &:not(:disabled):active {
-    transform: scale(0.98);
-    background: ${({ theme }) => theme.color.point[500]};
-  }
-`;
-
 /* Success */
 export const SuccessIcon = styled.span`
   font-size: 40px;
@@ -154,11 +130,6 @@ export const InfoBox = styled.div`
   background: ${({ theme }) => theme.color.gray[50]};
 `;
 
-export const InfoTitle = styled.p`
-  ${({ theme }) => theme.typography.h4}
-  color: ${({ theme }) => theme.color.gray[800]};
-`;
-
 export const InfoRow = styled.div`
   display: flex;
   justify-content: space-between;
@@ -174,12 +145,6 @@ export const InfoValue = styled.span`
   ${({ theme }) => theme.typography.small}
   font-weight: 600;
   color: ${({ theme }) => theme.color.gray[700]};
-`;
-
-export const Divider = styled.hr`
-  border: none;
-  border-top: 1px solid ${({ theme }) => theme.color.gray[200]};
-  margin: 0;
 `;
 
 export const InfoLinkButton = styled.a`

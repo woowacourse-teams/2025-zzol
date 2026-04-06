@@ -2,6 +2,9 @@ import { MINI_GAME_NAME_MAP, type MiniGameType } from '@/types/miniGame/common';
 import { useState } from 'react';
 import { EXTERNAL_LINKS } from '@/constants/external';
 import BackButton from '@/components/@common/BackButton/BackButton';
+import Button from '@/components/@common/Button/Button';
+import Divider from '@/components/@common/Divider/Divider';
+import Headline4 from '@/components/@common/Headline4/Headline4';
 import * as S from './SuggestionTab.styled';
 
 type SuggestionCategory = 'BUG' | 'SUGGESTION' | 'GAME_REQUEST' | 'OTHER' | 'INFO';
@@ -71,7 +74,7 @@ const SuggestionTab = () => {
       <S.CenterWrapper>
         {step === 'category' && (
           <>
-            <S.StepLabel>무엇을 알려주실건가요?</S.StepLabel>
+            <Headline4>무엇을 알려주실건가요?</Headline4>
             <S.ChipGrid>
               {CATEGORIES.map(({ key, label, icon, fullWidth }) => (
                 <S.CategoryChip key={key} $fullWidth={fullWidth} onClick={() => handleCategorySelect(key)}>
@@ -85,7 +88,7 @@ const SuggestionTab = () => {
 
         {step === 'game-select' && (
           <>
-            <S.StepLabel>어떤 게임에서 발생했나요?</S.StepLabel>
+            <Headline4>어떤 게임에서 발생했나요?</Headline4>
             <S.ChipGrid>
               {GAME_OPTIONS.map(([key, name]) => (
                 <S.CategoryChip key={key} onClick={() => handleGameSelect(key)}>
@@ -101,7 +104,7 @@ const SuggestionTab = () => {
 
         {step === 'form' && (
           <>
-            <S.StepLabel>{getFormLabel()}</S.StepLabel>
+            <Headline4>{getFormLabel()}</Headline4>
             <S.Textarea
               placeholder="자유롭게 작성해주세요 (최대 200자)"
               maxLength={200}
@@ -109,20 +112,23 @@ const SuggestionTab = () => {
               onChange={(e) => setContent(e.target.value)}
             />
             <S.CharCount>{content.length}/200</S.CharCount>
-            <S.SubmitButton disabled={content.trim().length === 0} onClick={handleSubmit}>
+            <Button
+              variant={content.trim().length === 0 ? 'disabled' : 'primary'}
+              onClick={handleSubmit}
+            >
               제출하기
-            </S.SubmitButton>
+            </Button>
           </>
         )}
 
         {step === 'info' && (
           <S.InfoBox>
-            <S.InfoTitle>ZZOL 정보</S.InfoTitle>
+            <Headline4 color="gray-800">ZZOL 정보</Headline4>
             <S.InfoRow>
               <S.InfoLabel>서비스</S.InfoLabel>
               <S.InfoValue>zzol.site</S.InfoValue>
             </S.InfoRow>
-            <S.Divider />
+            <Divider color="gray-200" height="1px" />
             <S.InfoLinkButton href={EXTERNAL_LINKS.GITHUB} target="_blank" rel="noopener noreferrer">
               <span>GitHub 보기</span>
               <span>↗</span>

@@ -9,12 +9,16 @@ import { storageManager, STORAGE_KEYS } from '@/utils/StorageManager';
 import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import EnterRoomModal from '../components/EnterRoomModal/EnterRoomModal';
 import Splash from '../components/Splash/Splash';
+import HomeTabs, { type HomeTabType } from '../components/HomeTabs/HomeTabs';
+import RankingTab from '../components/RankingTab/RankingTab';
+import SuggestionTab from '../components/SuggestionTab/SuggestionTab';
 import * as S from './HomePage.styled';
 import DashBoard from '../components/DashBoard/DashBoard';
 
 const HomePage = () => {
   const navigate = useReplaceNavigate();
   const [showSplash, setShowSplash] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<HomeTabType>('game');
   const { openModal, closeModal } = useModal();
   const { setHost, setGuest } = usePlayerType();
   const { clearIdentifier } = useIdentifier();
@@ -72,23 +76,32 @@ const HomePage = () => {
           }
         </p>
       </S.VisuallyHidden>
-      <Layout.Banner height="55%">
-        <S.Banner>
-          <DashBoard />
-        </S.Banner>
-      </Layout.Banner>
-      <S.ButtonContainer>
-        <RoomActionButton
-          title="방 만들기"
-          descriptions={['새로운 방을 만들어', '재미있는 커피내기를 시작해보세요 ']}
-          onClick={handleClickHostButton}
-        />
-        <RoomActionButton
-          title="방 참가하러 가기"
-          descriptions={['받은 초대 코드를 입력해서', '방으로 들어가보세요']}
-          onClick={handleEnterRoom}
-        />
-      </S.ButtonContainer>
+      {activeTab === 'game' && (
+        <Layout.Banner height="55%">
+          <S.Banner>
+            <DashBoard />
+          </S.Banner>
+        </Layout.Banner>
+      )}
+      <S.ContentArea>
+        {activeTab === 'game' && (
+          <S.GameTabContent>
+            <RoomActionButton
+              title="방 만들기"
+              descriptions={['새로운 방을 만들어', '재미있는 커피내기를 시작해보세요 ']}
+              onClick={handleClickHostButton}
+            />
+            <RoomActionButton
+              title="방 참가하러 가기"
+              descriptions={['받은 초대 코드를 입력해서', '방으로 들어가보세요']}
+              onClick={handleEnterRoom}
+            />
+          </S.GameTabContent>
+        )}
+        {activeTab === 'ranking' && <RankingTab />}
+        {activeTab === 'suggestion' && <SuggestionTab />}
+      </S.ContentArea>
+      <HomeTabs activeTab={activeTab} onTabChange={setActiveTab} />
     </Layout>
   );
 };

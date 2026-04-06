@@ -28,10 +28,16 @@ export const Logo = styled.img`
   }
 `;
 
-export const ButtonContainer = styled.section`
+export const ContentArea = styled.div`
+  flex: 1;
+  overflow-y: auto;
+`;
+
+export const GameTabContent = styled.section`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-top: 16px;
 `;
 
 export const VisuallyHidden = styled.div`

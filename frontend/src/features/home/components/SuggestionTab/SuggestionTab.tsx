@@ -113,7 +113,7 @@ const SuggestionTab = () => {
       )}
 
       {step === 'game-select' && (
-        <>
+        <S.CategoryWrapper>
           <S.StepHeader>
             <S.BackButton onClick={handleReset}>← 돌아가기</S.BackButton>
             <S.StepLabel>어떤 게임에서 발생했나요?</S.StepLabel>
@@ -128,11 +128,11 @@ const SuggestionTab = () => {
               <S.ChipLabel>게임 외 (로비/룰렛)</S.ChipLabel>
             </S.CategoryChip>
           </S.ChipGrid>
-        </>
+        </S.CategoryWrapper>
       )}
 
       {step === 'form' && (
-        <>
+        <S.FormWrapper>
           <S.StepHeader>
             <S.BackButton
               onClick={() => {
@@ -160,7 +160,7 @@ const SuggestionTab = () => {
           >
             제출하기
           </S.SubmitButton>
-        </>
+        </S.FormWrapper>
       )}
     </S.Container>
   );

@@ -8,8 +8,16 @@ export const Container = styled.div`
   height: 100%;
 `;
 
-/* 카테고리 선택 step — 수직 중앙 정렬 */
+/* 카테고리 선택 / 폼 step — 수직 중앙 정렬 공통 */
 export const CategoryWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  gap: 16px;
+`;
+
+export const FormWrapper = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;

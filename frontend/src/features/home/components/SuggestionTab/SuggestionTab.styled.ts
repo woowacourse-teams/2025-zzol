@@ -113,22 +113,6 @@ export const SubmitButton = styled.button`
   }
 `;
 
-export const BackButton = styled.button`
-  border: none;
-  background: transparent;
-  ${({ theme }) => theme.typography.small}
-  color: ${({ theme }) => theme.color.gray[400]};
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-  width: fit-content;
-  flex-shrink: 0;
-
-  &:hover {
-    color: ${({ theme }) => theme.color.gray[600]};
-  }
-`;
-
 /* Success */
 export const SuccessIcon = styled.span`
   font-size: 40px;

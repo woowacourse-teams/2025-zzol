@@ -1,6 +1,7 @@
 import { MINI_GAME_NAME_MAP, type MiniGameType } from '@/types/miniGame/common';
 import { useState } from 'react';
 import { EXTERNAL_LINKS } from '@/constants/external';
+import BackButton from '@/components/@common/BackButton/BackButton';
 import * as S from './SuggestionTab.styled';
 
 type SuggestionCategory = 'BUG' | 'SUGGESTION' | 'GAME_REQUEST' | 'OTHER' | 'INFO';
@@ -65,7 +66,7 @@ const SuggestionTab = () => {
   return (
     <S.Container>
       {showBackButton && (
-        <S.BackButton onClick={handleBack}>← 돌아가기</S.BackButton>
+        <BackButton onClick={handleBack} text="돌아가기" />
       )}
       <S.CenterWrapper>
         {step === 'category' && (

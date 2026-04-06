@@ -8,27 +8,14 @@ export const Container = styled.div`
   height: 100%;
 `;
 
-/* 카테고리 선택 / 폼 step — 수직 중앙 정렬 공통 */
-export const CategoryWrapper = styled.div`
+/* 모든 step 공통 — 수직 중앙 정렬 */
+export const CenterWrapper = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: stretch;
   flex: 1;
   gap: 16px;
-`;
-
-export const FormWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex: 1;
-  gap: 16px;
-`;
-
-export const StepHeader = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 `;
 
 export const StepLabel = styled.p`
@@ -135,6 +122,7 @@ export const BackButton = styled.button`
   padding: 0;
   text-align: left;
   width: fit-content;
+  flex-shrink: 0;
 
   &:hover {
     color: ${({ theme }) => theme.color.gray[600]};
@@ -142,28 +130,22 @@ export const BackButton = styled.button`
 `;
 
 /* Success */
-export const SuccessBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 100%;
-`;
-
 export const SuccessIcon = styled.span`
   font-size: 40px;
+  text-align: center;
   margin-bottom: 4px;
 `;
 
 export const SuccessTitle = styled.p`
   ${({ theme }) => theme.typography.h3}
   color: ${({ theme }) => theme.color.gray[800]};
+  text-align: center;
 `;
 
 export const SuccessDesc = styled.p`
   ${({ theme }) => theme.typography.paragraph}
   color: ${({ theme }) => theme.color.gray[500]};
+  text-align: center;
 `;
 
 export const ResetButton = styled.button`
@@ -174,6 +156,7 @@ export const ResetButton = styled.button`
   color: ${({ theme }) => theme.color.point[400]};
   cursor: pointer;
   text-decoration: underline;
+  text-align: center;
 `;
 
 /* Info */

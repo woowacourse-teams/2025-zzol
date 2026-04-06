@@ -22,23 +22,18 @@ const SuggestionTab = () => {
   const [gameType, setGameType] = useState<MiniGameType | null>(null);
   const [content, setContent] = useState('');
 
-  const handleCategorySelect = (selected: SuggestionCategory) => {
-    setCategory(selected);
-    if (selected === 'INFO') {
-      setStep('info');
-    } else if (selected === 'BUG') {
-      setStep('game-select');
-    } else {
-      setStep('form');
-    }
+  const handleReset = () => {
+    setStep('category');
+    setCategory(null);
+    setGameType(null);
+    setContent('');
   };
 
-  const getFormLabel = () => {
-    if (category === 'BUG') {
-      return gameType ? `${MINI_GAME_NAME_MAP[gameType]} 버그 내용` : '버그 내용';
-    }
-    if (category === 'GAME_REQUEST') return '어떤 게임을 원하시나요?';
-    return '어떤 내용인가요?';
+  const handleCategorySelect = (selected: SuggestionCategory) => {
+    setCategory(selected);
+    if (selected === 'INFO') setStep('info');
+    else if (selected === 'BUG') setStep('game-select');
+    else setStep('form');
   };
 
   const handleGameSelect = (selected: MiniGameType) => {
@@ -52,116 +47,97 @@ const SuggestionTab = () => {
     setStep('success');
   };
 
-  const handleReset = () => {
-    setStep('category');
-    setCategory(null);
-    setGameType(null);
-    setContent('');
+  const handleBack = () => {
+    if (step === 'form' && category === 'BUG') setStep('game-select');
+    else handleReset();
   };
 
-  if (step === 'success') {
-    return (
-      <S.Container>
-        <S.SuccessBox>
-          <S.SuccessIcon>✅</S.SuccessIcon>
-          <S.SuccessTitle>전달되었습니다!</S.SuccessTitle>
-          <S.SuccessDesc>소중한 의견 감사해요.</S.SuccessDesc>
-          <S.ResetButton onClick={handleReset}>다시 작성하기</S.ResetButton>
-        </S.SuccessBox>
-      </S.Container>
-    );
-  }
+  const getFormLabel = () => {
+    if (category === 'BUG') {
+      return gameType ? `${MINI_GAME_NAME_MAP[gameType]} 버그 내용` : '버그 내용';
+    }
+    if (category === 'GAME_REQUEST') return '어떤 게임을 원하시나요?';
+    return '어떤 내용인가요?';
+  };
 
-  if (step === 'info') {
-    return (
-      <S.Container>
-        <S.InfoBox>
-          <S.InfoTitle>ZZOL 정보</S.InfoTitle>
-          <S.InfoRow>
-            <S.InfoLabel>서비스</S.InfoLabel>
-            <S.InfoValue>zzol.site</S.InfoValue>
-          </S.InfoRow>
-          <S.Divider />
-          <S.InfoLinkButton
-            href={EXTERNAL_LINKS.GITHUB}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span>GitHub 보기</span>
-            <span>↗</span>
-          </S.InfoLinkButton>
-        </S.InfoBox>
-        <S.BackButton onClick={handleReset}>← 돌아가기</S.BackButton>
-      </S.Container>
-    );
-  }
+  const showBackButton = step !== 'category' && step !== 'success';
 
   return (
     <S.Container>
-      {step === 'category' && (
-        <S.CategoryWrapper>
-          <S.StepLabel>무엇을 알려주실건가요?</S.StepLabel>
-          <S.ChipGrid>
-            {CATEGORIES.map(({ key, label, icon, fullWidth }) => (
-              <S.CategoryChip key={key} $fullWidth={fullWidth} onClick={() => handleCategorySelect(key)}>
-                <S.ChipIcon>{icon}</S.ChipIcon>
-                <S.ChipLabel>{label}</S.ChipLabel>
-              </S.CategoryChip>
-            ))}
-          </S.ChipGrid>
-        </S.CategoryWrapper>
+      {showBackButton && (
+        <S.BackButton onClick={handleBack}>← 돌아가기</S.BackButton>
       )}
+      <S.CenterWrapper>
+        {step === 'category' && (
+          <>
+            <S.StepLabel>무엇을 알려주실건가요?</S.StepLabel>
+            <S.ChipGrid>
+              {CATEGORIES.map(({ key, label, icon, fullWidth }) => (
+                <S.CategoryChip key={key} $fullWidth={fullWidth} onClick={() => handleCategorySelect(key)}>
+                  <S.ChipIcon>{icon}</S.ChipIcon>
+                  <S.ChipLabel>{label}</S.ChipLabel>
+                </S.CategoryChip>
+              ))}
+            </S.ChipGrid>
+          </>
+        )}
 
-      {step === 'game-select' && (
-        <S.CategoryWrapper>
-          <S.StepHeader>
-            <S.BackButton onClick={handleReset}>← 돌아가기</S.BackButton>
+        {step === 'game-select' && (
+          <>
             <S.StepLabel>어떤 게임에서 발생했나요?</S.StepLabel>
-          </S.StepHeader>
-          <S.ChipGrid>
-            {GAME_OPTIONS.map(([key, name]) => (
-              <S.CategoryChip key={key} onClick={() => handleGameSelect(key)}>
-                <S.ChipLabel>{name}</S.ChipLabel>
+            <S.ChipGrid>
+              {GAME_OPTIONS.map(([key, name]) => (
+                <S.CategoryChip key={key} onClick={() => handleGameSelect(key)}>
+                  <S.ChipLabel>{name}</S.ChipLabel>
+                </S.CategoryChip>
+              ))}
+              <S.CategoryChip onClick={() => { setGameType(null); setStep('form'); }}>
+                <S.ChipLabel>게임 외 (로비/룰렛)</S.ChipLabel>
               </S.CategoryChip>
-            ))}
-            <S.CategoryChip onClick={() => { setGameType(null); setStep('form'); }}>
-              <S.ChipLabel>게임 외 (로비/룰렛)</S.ChipLabel>
-            </S.CategoryChip>
-          </S.ChipGrid>
-        </S.CategoryWrapper>
-      )}
+            </S.ChipGrid>
+          </>
+        )}
 
-      {step === 'form' && (
-        <S.FormWrapper>
-          <S.StepHeader>
-            <S.BackButton
-              onClick={() => {
-                if (category === 'BUG') {
-                  setStep('game-select');
-                } else {
-                  handleReset();
-                }
-              }}
-            >
-              ← 돌아가기
-            </S.BackButton>
+        {step === 'form' && (
+          <>
             <S.StepLabel>{getFormLabel()}</S.StepLabel>
-          </S.StepHeader>
-          <S.Textarea
-            placeholder="자유롭게 작성해주세요 (최대 200자)"
-            maxLength={200}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
-          <S.CharCount>{content.length}/200</S.CharCount>
-          <S.SubmitButton
-            disabled={content.trim().length === 0}
-            onClick={handleSubmit}
-          >
-            제출하기
-          </S.SubmitButton>
-        </S.FormWrapper>
-      )}
+            <S.Textarea
+              placeholder="자유롭게 작성해주세요 (최대 200자)"
+              maxLength={200}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+            <S.CharCount>{content.length}/200</S.CharCount>
+            <S.SubmitButton disabled={content.trim().length === 0} onClick={handleSubmit}>
+              제출하기
+            </S.SubmitButton>
+          </>
+        )}
+
+        {step === 'info' && (
+          <S.InfoBox>
+            <S.InfoTitle>ZZOL 정보</S.InfoTitle>
+            <S.InfoRow>
+              <S.InfoLabel>서비스</S.InfoLabel>
+              <S.InfoValue>zzol.site</S.InfoValue>
+            </S.InfoRow>
+            <S.Divider />
+            <S.InfoLinkButton href={EXTERNAL_LINKS.GITHUB} target="_blank" rel="noopener noreferrer">
+              <span>GitHub 보기</span>
+              <span>↗</span>
+            </S.InfoLinkButton>
+          </S.InfoBox>
+        )}
+
+        {step === 'success' && (
+          <>
+            <S.SuccessIcon>✅</S.SuccessIcon>
+            <S.SuccessTitle>전달되었습니다!</S.SuccessTitle>
+            <S.SuccessDesc>소중한 의견 감사해요.</S.SuccessDesc>
+            <S.ResetButton onClick={handleReset}>다시 작성하기</S.ResetButton>
+          </>
+        )}
+      </S.CenterWrapper>
     </S.Container>
   );
 };

@@ -13,6 +13,7 @@ import Layout from '@/layouts/Layout';
 import { useTheme } from '@emotion/react';
 import { useRef, useState } from 'react';
 import { useRoomManagement } from './hooks/useRoomManagement';
+import useRecentNicknames from './hooks/useRecentNicknames';
 import * as S from './EntryNamePage.styled';
 
 const MAX_NAME_LENGTH = 10;
@@ -34,6 +35,7 @@ const EntryNamePage = () => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { proceedToRoom, isLoading } = useRoomManagement();
   const theme = useTheme();
+  const { recentNicknames, addNickname, removeNickname } = useRecentNicknames();
 
   const checkGuestNameQuery = new URLSearchParams({
     joinCode: joinCode ?? '',
@@ -80,6 +82,7 @@ const EntryNamePage = () => {
       }
     }
 
+    addNickname(name);
     setMyName(name);
     await proceedToRoom(name);
   };
@@ -119,13 +122,35 @@ const EntryNamePage = () => {
               }}
               data-testid="player-name-input"
             />
-            <S.ProgressWrapper>
+            <S.ProgressWrapper $hasRecent={recentNicknames.length > 0}>
+              {recentNicknames.length > 0 && (
+                <S.RecentNicknamesLabel>최근 사용한 닉네임</S.RecentNicknamesLabel>
+              )}
               <ProgressCounter
                 current={name.length}
                 total={MAX_NAME_LENGTH}
                 ariaLabel={`${MAX_NAME_LENGTH}글자 중 ${name.length}글자 입력하였습니다`}
               />
             </S.ProgressWrapper>
+            {recentNicknames.length > 0 && (
+              <S.NicknameChipList>
+                {recentNicknames.map((nickname) => (
+                  <S.NicknameChip key={nickname} onClick={() => setName(nickname)}>
+                    <S.NicknameChipText>{nickname}</S.NicknameChipText>
+                    <S.NicknameChipDeleteButton
+                      type="button"
+                      aria-label={`${nickname} 삭제`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeNickname(nickname);
+                      }}
+                    >
+                      ✕
+                    </S.NicknameChipDeleteButton>
+                  </S.NicknameChip>
+                ))}
+              </S.NicknameChipList>
+            )}
           </S.Wrapper>
         </S.Container>
       </Layout.Content>

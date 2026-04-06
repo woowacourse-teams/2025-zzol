@@ -73,9 +73,9 @@ redisson:
 oracle:
   cloud:
     objectstorage:
-      region: ap-chuncheon-1
-      namespace: ax9wq4bhn4cn
-      bucket: zzol-public
+      region: ${ORACLE_REGION:ap-chuncheon-1}
+      namespace: ${ORACLE_NAMESPACE}
+      bucket: ${ORACLE_BUCKET}
 
 card-game:
   timing:

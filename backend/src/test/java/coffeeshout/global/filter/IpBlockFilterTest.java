@@ -10,6 +10,8 @@ import static org.mockito.Mockito.never;
 
 import coffeeshout.global.ratelimit.IpBlockStore;
 import coffeeshout.global.ratelimit.MaliciousPathMatcher;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletResponse;
 import org.assertj.core.api.SoftAssertions;
@@ -44,7 +46,8 @@ class IpBlockFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new IpBlockFilter(ipBlockStore, maliciousPathMatcher);
+        final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        filter = new IpBlockFilter(ipBlockStore, maliciousPathMatcher, objectMapper);
     }
 
     @Nested

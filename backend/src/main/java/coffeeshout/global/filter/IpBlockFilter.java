@@ -1,18 +1,22 @@
 package coffeeshout.global.filter;
 
+import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.ratelimit.IpBlockStore;
 import coffeeshout.global.ratelimit.MaliciousPathMatcher;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -35,11 +39,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class IpBlockFilter extends OncePerRequestFilter {
 
-    private static final String BLOCKED_RESPONSE_BODY = """
-            {"status":429,"detail":"비정상적인 접근으로 일시적으로 차단되었습니다.","errorCode":"IP_BLOCKED"}""";
-
     private final IpBlockStore ipBlockStore;
     private final MaliciousPathMatcher maliciousPathMatcher;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
@@ -78,9 +80,15 @@ public class IpBlockFilter extends OncePerRequestFilter {
     }
 
     private void writeBlockedResponse(HttpServletResponse response) throws IOException {
+        final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.TOO_MANY_REQUESTS, GlobalErrorCode.IP_BLOCKED.getMessage());
+        problemDetail.setProperty("errorCode", GlobalErrorCode.IP_BLOCKED.getCode());
+        problemDetail.setProperty("timestamp", LocalDateTime.now());
+        problemDetail.setProperty("exception", IpBlockFilter.class.getSimpleName());
+
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(BLOCKED_RESPONSE_BODY);
+        objectMapper.writeValue(response.getWriter(), problemDetail);
     }
 }

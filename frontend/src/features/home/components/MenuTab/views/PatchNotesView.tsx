@@ -16,7 +16,8 @@ const TYPE_LABEL: Record<ChangeType, string> = {
 };
 
 // TODO: API 연동 시 /patch-notes 엔드포인트로 교체 (docs/tab-api-todo.md 참고)
-const IS_IN_DEVELOPMENT = true;
+const IS_IN_DEVELOPMENT =
+  typeof process !== 'undefined' ? process.env.NODE_ENV !== 'production' : false;
 
 const PATCH_NOTES: PatchNote[] = [
   {

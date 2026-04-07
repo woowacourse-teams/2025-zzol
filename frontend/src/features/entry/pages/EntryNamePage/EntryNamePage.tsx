@@ -82,9 +82,9 @@ const EntryNamePage = () => {
       }
     }
 
+    await proceedToRoom(name);
     addNickname(name);
     setMyName(name);
-    await proceedToRoom(name);
   };
 
   const isButtonDisabled = name.length === 0;

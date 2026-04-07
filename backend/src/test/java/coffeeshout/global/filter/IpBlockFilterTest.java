@@ -157,6 +157,42 @@ class IpBlockFilterTest {
             then(ipBlockStore).shouldHaveNoInteractions();
             then(filterChain).should().doFilter(any(), any());
         }
+
+        @Test
+        void 헤더_엔트리_사이의_공백을_제거하고_마지막_IP를_사용한다() throws Exception {
+            given(ipBlockStore.isBlocked(anyString())).willReturn(true);
+
+            final MockHttpServletRequest request = 요청("172.16.0.1", NORMAL_PATH);
+            request.addHeader("X-Forwarded-For", "  10.0.0.1 ,  192.168.1.1  ");
+
+            filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should().isBlocked("192.168.1.1");
+        }
+
+        @Test
+        void X_Forwarded_For_헤더가_단일_IP이면_해당_IP를_사용한다() throws Exception {
+            given(ipBlockStore.isBlocked("10.0.0.1")).willReturn(true);
+
+            final MockHttpServletRequest request = 요청("172.16.0.1", NORMAL_PATH);
+            request.addHeader("X-Forwarded-For", "10.0.0.1");
+
+            filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should().isBlocked("10.0.0.1");
+        }
+
+        @Test
+        void X_Forwarded_For_헤더가_빈_문자열이면_RemoteAddr를_사용한다() throws Exception {
+            given(ipBlockStore.isBlocked(REMOTE_IP)).willReturn(true);
+
+            final MockHttpServletRequest request = 요청(REMOTE_IP, NORMAL_PATH);
+            request.addHeader("X-Forwarded-For", "");
+
+            filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should().isBlocked(REMOTE_IP);
+        }
     }
 
     private MockHttpServletRequest 요청(String remoteAddr, String uri) {

@@ -33,7 +33,17 @@ public class MaliciousPathMatcher {
     );
 
     public boolean isMalicious(String path) {
-        final String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        if (path == null || path.isBlank()) {
+            return false;
+        }
+
+        String decodedPath = path;
+        try {
+            decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            // 잘못된 URL 인코딩일 경우 원본 문자열을 그대로 사용합니다.
+        }
+
         final String lowerPath = decodedPath.toLowerCase();
         return MALICIOUS_PREFIXES.stream().anyMatch(lowerPath::startsWith);
     }

@@ -2,6 +2,7 @@ package coffeeshout.global.ratelimit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -75,6 +76,31 @@ class MaliciousPathMatcherTest {
         })
         void 정상_경로는_false를_반환한다(final String path) {
             assertThat(matcher.isMalicious(path)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("엣지 케이스")
+    class 엣지_케이스 {
+
+        @Test
+        void null이_입력되면_false를_반환한다() {
+            assertThat(matcher.isMalicious(null)).isFalse();
+        }
+
+        @Test
+        void 빈_문자열이_입력되면_false를_반환한다() {
+            assertThat(matcher.isMalicious("")).isFalse();
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @ValueSource(strings = {
+                "/%2eenv",
+                "/.git%2fconfig",
+                "/%77p-admin" // 'w'의 URL 인코딩
+        })
+        void URL_인코딩된_악성_경로를_감지한다(final String path) {
+            assertThat(matcher.isMalicious(path)).isTrue();
         }
     }
 }

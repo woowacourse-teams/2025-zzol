@@ -30,8 +30,13 @@ public class ReportService {
                 ReportEntity.create(category, gameType, joinCode, content)
         );
         eventPublisher.publishEvent(
-                new ReportSubmittedEvent(saved.getId(), category, gameType, joinCode, content)
-        );
+                new ReportSubmittedEvent(
+                        saved.getId(),
+                        saved.getCategory(),
+                        saved.getGameType(),
+                        saved.getJoinCode(),
+                        saved.getContent()
+                ));
         return saved.getId();
     }
 }

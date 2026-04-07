@@ -43,9 +43,9 @@ public class IpBlockFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            final HttpServletRequest request,
-            final HttpServletResponse response,
-            final FilterChain filterChain
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
     ) throws ServletException, IOException {
         final String ip = extractIp(request);
 
@@ -69,7 +69,7 @@ public class IpBlockFilter extends OncePerRequestFilter {
         }
     }
 
-    private String extractIp(final HttpServletRequest request) {
+    private String extractIp(HttpServletRequest request) {
         final String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
             return forwarded.split(",")[0].trim();
@@ -77,7 +77,7 @@ public class IpBlockFilter extends OncePerRequestFilter {
         return request.getRemoteAddr();
     }
 
-    private void writeBlockedResponse(final HttpServletResponse response) throws IOException {
+    private void writeBlockedResponse(HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");

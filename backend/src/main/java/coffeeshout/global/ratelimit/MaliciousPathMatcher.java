@@ -29,7 +29,7 @@ public class MaliciousPathMatcher {
             "/install.php"
     );
 
-    public boolean isMalicious(final String path) {
+    public boolean isMalicious(String path) {
         final String lowerPath = path.toLowerCase();
         return MALICIOUS_PREFIXES.stream().anyMatch(lowerPath::startsWith);
     }

@@ -34,11 +34,11 @@ public class IpBlockStore {
 
     private final StringRedisTemplate stringRedisTemplate;
 
-    public boolean isBlocked(final String ip) {
+    public boolean isBlocked(String ip) {
         return Boolean.TRUE.equals(stringRedisTemplate.hasKey(BLOCKED_IP_PREFIX + ip));
     }
 
-    public void blockImmediately(final String ip) {
+    public void blockImmediately(String ip) {
         stringRedisTemplate.opsForValue().set(BLOCKED_IP_PREFIX + ip, "1", BLOCK_TTL);
         log.warn("IP 차단 등록: ip={} ttl={}h", ip, BLOCK_TTL.toHours());
     }
@@ -47,7 +47,7 @@ public class IpBlockStore {
      * 404 카운터를 증가시키고, 임계값 이상이면 IP를 차단한다.
      * 카운터 키가 처음 생성될 때 TTL을 설정해 Fixed Window를 구현한다.
      */
-    public void incrementNotFoundAndBlockIfExceeded(final String ip) {
+    public void incrementNotFoundAndBlockIfExceeded(String ip) {
         final String key = NOT_FOUND_COUNTER_PREFIX + ip;
         final Long count = stringRedisTemplate.opsForValue().increment(key);
         if (count == null) {

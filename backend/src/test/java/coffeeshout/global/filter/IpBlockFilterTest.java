@@ -150,7 +150,7 @@ class IpBlockFilterTest {
         }
     }
 
-    private MockHttpServletRequest 요청(final String remoteAddr, final String uri) {
+    private MockHttpServletRequest 요청(String remoteAddr, String uri) {
         final MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr(remoteAddr);
         request.setRequestURI(uri);

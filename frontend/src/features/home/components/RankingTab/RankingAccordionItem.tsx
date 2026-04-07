@@ -21,10 +21,23 @@ const RankingAccordionItem = ({ category }: Props) => {
   });
 
   const handleToggle = async () => {
-    if (!isOpen && items.length === 0) {
-      await execute();
+    if (isOpen) {
+      setIsOpen(false);
+      return;
     }
-    setIsOpen((prev) => !prev);
+
+    if (items.length > 0) {
+      setIsOpen(true);
+      return;
+    }
+
+    const result = await execute();
+
+    if (result == null) {
+      return;
+    }
+
+    setIsOpen(true);
   };
 
   return (

@@ -2,9 +2,11 @@ package coffeeshout.global.ratelimit;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Duration;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,6 +28,18 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class IpBlockStore {
+
+    /**
+     * INCR와 최초 생성 시 EXPIRE를 원자적으로 수행하는 Lua 스크립트.
+     * TTL이 없는 카운터 키가 남아 영구 누적되는 경우를 방지한다.
+     */
+    private static final RedisScript<Long> INCREMENT_WITH_EXPIRE_SCRIPT = RedisScript.of("""
+            local count = redis.call('INCR', KEYS[1])
+            if count == 1 then
+                redis.call('EXPIRE', KEYS[1], ARGV[1])
+            end
+            return count
+            """, Long.class);
 
     private static final String NOT_FOUND_COUNTER_PREFIX = "block:404:";
     private static final String BLOCKED_IP_PREFIX = "block:ip:";
@@ -63,21 +77,15 @@ public class IpBlockStore {
     @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "incrementNotFoundFallback")
     public void incrementNotFoundAndBlockIfExceeded(String ip) {
         final String key = NOT_FOUND_COUNTER_PREFIX + ip;
-        final Long count = stringRedisTemplate.opsForValue().increment(key);
-        
-        if (count == null) {
-            return;
-        }
-        if (count == 1) {
-            stringRedisTemplate.expire(key, NOT_FOUND_WINDOW);
-        }
+        final Long count = stringRedisTemplate.execute(
+                INCREMENT_WITH_EXPIRE_SCRIPT,
+                List.of(key),
+                String.valueOf(NOT_FOUND_WINDOW.getSeconds())
+        );
+
         if (count >= NOT_FOUND_THRESHOLD) {
             log.warn("404 임계값 초과 → IP 차단: ip={} count={}", ip, count);
-            
-            // 참고: 내부 메서드 호출이므로 blockImmediately의 프록시를 타진 않지만,
-            // 여기서 예외가 발생하면 현재 메서드의 incrementNotFoundFallback이 동작하므로 안전합니다.
-            stringRedisTemplate.opsForValue().set(BLOCKED_IP_PREFIX + ip, "1", BLOCK_TTL);
-            log.warn("IP 차단 등록: ip={} ttl={}h", ip, BLOCK_TTL.toHours());
+            blockImmediately(ip);
         }
     }
 

@@ -118,4 +118,3 @@ export const ResetButton = styled.button`
   text-decoration: underline;
   text-align: center;
 `;
-

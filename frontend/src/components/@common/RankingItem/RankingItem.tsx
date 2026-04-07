@@ -22,7 +22,10 @@ const RankingItem = ({ rank, name, count, unit = '회' }: Props) => {
       </S.RankNumber>
       <S.Content>
         <Headline4>{name}</Headline4>
-        <Headline4>{count}{unit}</Headline4>
+        <Headline4>
+          {count}
+          {unit}
+        </Headline4>
       </S.Content>
     </S.Container>
   );

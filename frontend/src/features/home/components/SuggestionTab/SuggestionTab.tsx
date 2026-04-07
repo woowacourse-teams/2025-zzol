@@ -90,9 +90,7 @@ const SuggestionTab = ({ onBackToMenu }: Props) => {
 
   return (
     <S.Container>
-      {showBackButton && (
-        <BackButton onClick={handleBack} text="돌아가기" />
-      )}
+      {showBackButton && <BackButton onClick={handleBack} text="돌아가기" />}
       <S.CenterWrapper>
         {step === 'category' && (
           <>
@@ -117,7 +115,13 @@ const SuggestionTab = ({ onBackToMenu }: Props) => {
                   <S.ChipLabel>{name}</S.ChipLabel>
                 </S.CategoryChip>
               ))}
-              <S.CategoryChip $fullWidth onClick={() => { setGameType(null); setStep('form'); }}>
+              <S.CategoryChip
+                $fullWidth
+                onClick={() => {
+                  setGameType(null);
+                  setStep('form');
+                }}
+              >
                 <S.ChipLabel>게임 외 (로비/룰렛)</S.ChipLabel>
               </S.CategoryChip>
             </S.ChipGrid>

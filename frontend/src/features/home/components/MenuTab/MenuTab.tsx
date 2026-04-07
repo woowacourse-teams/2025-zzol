@@ -33,7 +33,6 @@ const MENU_ITEMS: {
   },
 ];
 
-
 const MenuTab = () => {
   const [activeView, setActiveView] = useState<MenuView | null>(null);
 
@@ -46,9 +45,7 @@ const MenuTab = () => {
           </S.SubViewHeader>
         )}
         <S.SubViewContent>
-          {activeView === 'report' && (
-            <SuggestionTab onBackToMenu={() => setActiveView(null)} />
-          )}
+          {activeView === 'report' && <SuggestionTab onBackToMenu={() => setActiveView(null)} />}
           {activeView === 'patch-notes' && <PatchNotesView />}
           {activeView === 'service-info' && <ServiceInfoView />}
         </S.SubViewContent>

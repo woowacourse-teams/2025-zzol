@@ -1,30 +1,47 @@
 import { MINI_GAME_NAME_MAP, type MiniGameType } from '@/types/miniGame/common';
 import { useState } from 'react';
-import { EXTERNAL_LINKS } from '@/constants/external';
+import { storageManager, STORAGE_KEYS } from '@/utils/StorageManager';
+import useMutation from '@/apis/rest/useMutation';
 import BackButton from '@/components/@common/BackButton/BackButton';
 import Button from '@/components/@common/Button/Button';
-import Divider from '@/components/@common/Divider/Divider';
 import Headline4 from '@/components/@common/Headline4/Headline4';
 import * as S from './SuggestionTab.styled';
 
-type SuggestionCategory = 'BUG' | 'SUGGESTION' | 'GAME_REQUEST' | 'OTHER' | 'INFO';
-type SuggestionStep = 'category' | 'game-select' | 'form' | 'info' | 'success';
+type SuggestionCategory = 'BUG' | 'SUGGESTION' | 'GAME_REQUEST' | 'OTHER';
+type SuggestionStep = 'category' | 'game-select' | 'form' | 'success';
 
-const CATEGORIES: { key: SuggestionCategory; label: string; icon: string; fullWidth?: boolean }[] = [
+const CATEGORIES: { key: SuggestionCategory; label: string; icon: string }[] = [
   { key: 'BUG', label: '버그 신고', icon: '🐛' },
   { key: 'SUGGESTION', label: '건의사항', icon: '💡' },
   { key: 'GAME_REQUEST', label: '게임 추가', icon: '🕹️' },
   { key: 'OTHER', label: '기타', icon: '🔧' },
-  { key: 'INFO', label: '정보', icon: 'ℹ️', fullWidth: true },
 ];
 
 const GAME_OPTIONS = Object.entries(MINI_GAME_NAME_MAP) as [MiniGameType, string][];
 
-const SuggestionTab = () => {
+type ReportBody = {
+  category: SuggestionCategory;
+  gameType: MiniGameType | null;
+  joinCode: string | null;
+  content: string;
+};
+
+type Props = {
+  onBackToMenu?: () => void;
+};
+
+const SuggestionTab = ({ onBackToMenu }: Props) => {
   const [step, setStep] = useState<SuggestionStep>('category');
   const [category, setCategory] = useState<SuggestionCategory | null>(null);
   const [gameType, setGameType] = useState<MiniGameType | null>(null);
   const [content, setContent] = useState('');
+
+  const { mutate: submitReport, loading } = useMutation<void, ReportBody>({
+    endpoint: '/reports',
+    method: 'POST',
+    onSuccess: () => setStep('success'),
+    errorDisplayMode: 'toast',
+  });
 
   const handleReset = () => {
     setStep('category');
@@ -35,8 +52,7 @@ const SuggestionTab = () => {
 
   const handleCategorySelect = (selected: SuggestionCategory) => {
     setCategory(selected);
-    if (selected === 'INFO') setStep('info');
-    else if (selected === 'BUG') setStep('game-select');
+    if (selected === 'BUG') setStep('game-select');
     else setStep('form');
   };
 
@@ -46,13 +62,19 @@ const SuggestionTab = () => {
   };
 
   const handleSubmit = () => {
-    // TODO: POST /reports API 연결 필요 (docs/api-todo.md 참고)
-    console.log({ category, gameType, content });
-    setStep('success');
+    if (!category) return;
+    const lastJoinCode = storageManager.getItem(STORAGE_KEYS.LAST_JOIN_CODE, 'localStorage');
+    submitReport({
+      category,
+      gameType: category === 'BUG' ? gameType : null,
+      joinCode: category === 'BUG' ? lastJoinCode : null,
+      content,
+    });
   };
 
   const handleBack = () => {
-    if (step === 'form' && category === 'BUG') setStep('game-select');
+    if (step === 'category') onBackToMenu?.();
+    else if (step === 'form' && category === 'BUG') setStep('game-select');
     else handleReset();
   };
 
@@ -64,7 +86,7 @@ const SuggestionTab = () => {
     return '어떤 내용인가요?';
   };
 
-  const showBackButton = step !== 'category' && step !== 'success';
+  const showBackButton = step !== 'success';
 
   return (
     <S.Container>
@@ -76,8 +98,8 @@ const SuggestionTab = () => {
           <>
             <Headline4>무엇을 알려주실건가요?</Headline4>
             <S.ChipGrid>
-              {CATEGORIES.map(({ key, label, icon, fullWidth }) => (
-                <S.CategoryChip key={key} $fullWidth={fullWidth} onClick={() => handleCategorySelect(key)}>
+              {CATEGORIES.map(({ key, label, icon }) => (
+                <S.CategoryChip key={key} onClick={() => handleCategorySelect(key)}>
                   <S.ChipIcon>{icon}</S.ChipIcon>
                   <S.ChipLabel>{label}</S.ChipLabel>
                 </S.CategoryChip>
@@ -95,7 +117,7 @@ const SuggestionTab = () => {
                   <S.ChipLabel>{name}</S.ChipLabel>
                 </S.CategoryChip>
               ))}
-              <S.CategoryChip onClick={() => { setGameType(null); setStep('form'); }}>
+              <S.CategoryChip $fullWidth onClick={() => { setGameType(null); setStep('form'); }}>
                 <S.ChipLabel>게임 외 (로비/룰렛)</S.ChipLabel>
               </S.CategoryChip>
             </S.ChipGrid>
@@ -113,27 +135,12 @@ const SuggestionTab = () => {
             />
             <S.CharCount>{content.length}/200</S.CharCount>
             <Button
-              variant={content.trim().length === 0 ? 'disabled' : 'primary'}
+              variant={content.trim().length === 0 || loading ? 'disabled' : 'primary'}
               onClick={handleSubmit}
             >
-              제출하기
+              {loading ? '전송 중...' : '제출하기'}
             </Button>
           </>
-        )}
-
-        {step === 'info' && (
-          <S.InfoBox>
-            <Headline4 color="gray-800">ZZOL 정보</Headline4>
-            <S.InfoRow>
-              <S.InfoLabel>서비스</S.InfoLabel>
-              <S.InfoValue>zzol.site</S.InfoValue>
-            </S.InfoRow>
-            <Divider color="gray-200" height="1px" />
-            <S.InfoLinkButton href={EXTERNAL_LINKS.GITHUB} target="_blank" rel="noopener noreferrer">
-              <span>GitHub 보기</span>
-              <span>↗</span>
-            </S.InfoLinkButton>
-          </S.InfoBox>
         )}
 
         {step === 'success' && (

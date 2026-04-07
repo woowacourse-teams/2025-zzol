@@ -50,10 +50,13 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
   }, []);
 
   const clearIdentifier = useCallback(() => {
+    if (joinCode) {
+      storageManager.setItem(STORAGE_KEYS.LAST_JOIN_CODE, joinCode, 'localStorage');
+    }
     clearJoinCode();
     clearMyName();
     clearQrCodeUrl();
-  }, [clearJoinCode, clearMyName, clearQrCodeUrl]);
+  }, [joinCode, clearJoinCode, clearMyName, clearQrCodeUrl]);
 
   return (
     <IdentifierContext.Provider

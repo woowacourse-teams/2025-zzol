@@ -1,7 +1,9 @@
 package coffeeshout.report.ui;
 
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.application.ReportAdminService;
 import coffeeshout.report.application.ReportAdminService.ReportRow;
+import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,14 +25,20 @@ public class ReportAdminController {
     @GetMapping
     public String dashboard(
             @RequestParam(required = false) ReportStatus status,
+            @RequestParam(required = false) ReportCategory category,
+            @RequestParam(required = false) MiniGameType gameType,
             @RequestParam(defaultValue = "0") int page,
             Model model
     ) {
-        final Page<ReportRow> reports = reportAdminService.list(status, page);
+        final Page<ReportRow> reports = reportAdminService.list(status, category, gameType, page);
 
         if (!reports.isEmpty() || reports.getTotalPages() == 0) {
             model.addAttribute("reports", reports);
             model.addAttribute("statusFilter", status);
+            model.addAttribute("categoryFilter", category);
+            model.addAttribute("gameTypeFilter", gameType);
+            model.addAttribute("categories", ReportCategory.values());
+            model.addAttribute("gameTypes", MiniGameType.values());
             model.addAttribute("pendingCount", reportAdminService.countPending());
             model.addAttribute("currentPage", page);
             model.addAttribute("pageStart", Math.max(0, page - 2));
@@ -38,17 +46,26 @@ public class ReportAdminController {
             return "admin/report";
         }
 
-        return "redirect:/admin/reports?status=" + (status != null ? status : "") + "&page=" + (reports.getTotalPages() - 1);
+        return buildRedirect(reports.getTotalPages() - 1, status, category, gameType);
     }
 
     @PostMapping("/{id}/resolve")
     public String resolve(
             @PathVariable Long id,
             @RequestParam(required = false) ReportStatus status,
+            @RequestParam(required = false) ReportCategory category,
+            @RequestParam(required = false) MiniGameType gameType,
             @RequestParam(defaultValue = "0") int page
     ) {
         reportAdminService.resolve(id);
-        final String statusParam = status != null ? "&status=" + status : "";
-        return "redirect:/admin/reports?page=" + page + statusParam;
+        return buildRedirect(page, status, category, gameType);
+    }
+
+    private String buildRedirect(int page, ReportStatus status, ReportCategory category, MiniGameType gameType) {
+        final StringBuilder url = new StringBuilder("redirect:/admin/reports?page=").append(page);
+        if (status != null) url.append("&status=").append(status);
+        if (category != null) url.append("&category=").append(category);
+        if (gameType != null) url.append("&gameType=").append(gameType);
+        return url.toString();
     }
 }

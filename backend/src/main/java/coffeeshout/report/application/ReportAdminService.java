@@ -5,15 +5,14 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportStatus;
-import coffeeshout.report.infra.persistence.JpaReportRepository;
 import coffeeshout.report.infra.persistence.ReportEntity;
+import coffeeshout.report.domain.repository.ReportRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,27 +22,24 @@ public class ReportAdminService {
 
     private static final int PAGE_SIZE = 20;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
-    private static final Sort CREATED_AT_DESC = Sort.by("createdAt").descending();
 
-    private final JpaReportRepository jpaReportRepository;
+    private final ReportRepository reportRepository;
 
     @Transactional(readOnly = true)
-    public Page<ReportRow> list(ReportStatus statusFilter, int page) {
-        final PageRequest pageRequest = PageRequest.of(page, PAGE_SIZE, CREATED_AT_DESC);
-        final Page<ReportEntity> entities = statusFilter == null
-                ? jpaReportRepository.findAllByOrderByCreatedAtDesc(pageRequest)
-                : jpaReportRepository.findByStatusOrderByCreatedAtDesc(statusFilter, pageRequest);
-        return entities.map(this::toRow);
+    public Page<ReportRow> list(ReportStatus status, ReportCategory category, MiniGameType gameType, int page) {
+        return reportRepository
+                .findWithFilters(status, category, gameType, PageRequest.of(page, PAGE_SIZE))
+                .map(this::toRow);
     }
 
     @Transactional(readOnly = true)
     public long countPending() {
-        return jpaReportRepository.countByStatus(ReportStatus.PENDING);
+        return reportRepository.countByStatus(ReportStatus.PENDING);
     }
 
     @Transactional
     public void resolve(Long id) {
-        final ReportEntity report = jpaReportRepository.findById(id)
+        final ReportEntity report = reportRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "신고를 찾을 수 없습니다."));
         report.resolve();
     }

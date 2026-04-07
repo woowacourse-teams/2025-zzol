@@ -205,6 +205,17 @@ resilience4j:
   circuitbreaker:
     circuit-breaker-aspect-order: 1
     instances:
+      reportRateLimiter:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - java.lang.RuntimeException
+        ignoreExceptions:
+          - coffeeshout.global.exception.custom.BusinessException
       oracleStorage:
         slidingWindowType: COUNT_BASED
         slidingWindowSize: 10

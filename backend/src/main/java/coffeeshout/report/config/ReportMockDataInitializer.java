@@ -2,8 +2,8 @@ package coffeeshout.report.config;
 
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
-import coffeeshout.report.infra.persistence.JpaReportRepository;
 import coffeeshout.report.infra.persistence.ReportEntity;
+import coffeeshout.report.domain.repository.ReportRepository;
 import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -27,18 +27,18 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ReportMockDataInitializer implements ApplicationRunner {
 
-    private final JpaReportRepository jpaReportRepository;
+    private final ReportRepository reportRepository;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (jpaReportRepository.count() > 0) {
+        if (reportRepository.count() > 0) {
             log.debug("[ReportMockDataInitializer] 이미 데이터가 존재하므로 건너뜁니다.");
             return;
         }
 
         final List<ReportEntity> entities = buildMockData();
-        jpaReportRepository.saveAll(entities);
+        reportRepository.saveAll(entities);
         log.info("[ReportMockDataInitializer] mock 신고 데이터 {}건 삽입 완료", entities.size());
     }
 

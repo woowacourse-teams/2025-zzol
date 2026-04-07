@@ -1,10 +1,13 @@
 package coffeeshout.report.application;
 
+import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.ratelimit.ReportRateLimitStore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.application.event.ReportSubmittedEvent;
 import coffeeshout.report.domain.ReportCategory;
-import coffeeshout.report.infra.persistence.JpaReportRepository;
+import coffeeshout.report.exception.ReportErrorCode;
 import coffeeshout.report.infra.persistence.ReportEntity;
+import coffeeshout.report.domain.repository.ReportRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -14,12 +17,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ReportService {
 
-    private final JpaReportRepository jpaReportRepository;
+    private final ReportRepository reportRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ReportRateLimitStore rateLimitStore;
 
     @Transactional
-    public long submit(ReportCategory category, MiniGameType gameType, String joinCode, String content) {
-        final ReportEntity saved = jpaReportRepository.save(
+    public long submit(String ip, ReportCategory category, MiniGameType gameType, String joinCode, String content) {
+        if (!rateLimitStore.tryAcquire(ip)) {
+            throw new BusinessException(ReportErrorCode.REPORT_RATE_LIMITED, ReportErrorCode.REPORT_RATE_LIMITED.getMessage());
+        }
+        final ReportEntity saved = reportRepository.save(
                 ReportEntity.create(category, gameType, joinCode, content)
         );
         eventPublisher.publishEvent(
@@ -28,3 +35,4 @@ public class ReportService {
         return saved.getId();
     }
 }
+

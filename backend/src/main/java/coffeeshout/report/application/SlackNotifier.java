@@ -20,6 +20,22 @@ import org.springframework.web.client.RestClient;
 @EnableConfigurationProperties(SlackProperties.class)
 public class SlackNotifier {
 
+    private static final Map<String, String> CATEGORY_LABELS = Map.of(
+            "BUG", "버그",
+            "SUGGESTION", "건의사항",
+            "GAME_REQUEST", "게임 요청",
+            "OTHER", "기타"
+    );
+
+    private static final Map<String, String> GAME_TYPE_LABELS = Map.of(
+            "CARD_GAME", "카드게임",
+            "RACING_GAME", "레이싱",
+            "SPEED_TOUCH", "스피드터치",
+            "BLIND_TIMER", "블라인드타이머",
+            "BOMB_RELAY", "폭탄릴레이",
+            "BLOCK_STACKING", "블록쌓기"
+    );
+
     private final SlackProperties slackProperties;
     private final RestClient restClient = RestClient.create();
 
@@ -46,8 +62,10 @@ public class SlackNotifier {
     }
 
     private Map<String, Object> buildMessage(ReportSubmittedEvent event) {
+        final String categoryLabel = CATEGORY_LABELS.getOrDefault(event.category().name(), event.category().name());
+        
         final String gameInfo = event.gameType() != null
-                ? String.format(" | 게임: `%s`", event.gameType())
+                ? String.format(" | 게임: `%s`", GAME_TYPE_LABELS.getOrDefault(event.gameType().name(), event.gameType().name()))
                 : "";
         final String joinCodeInfo = event.joinCode() != null
                 ? String.format(" | 방코드: `%s`", event.joinCode())
@@ -56,7 +74,7 @@ public class SlackNotifier {
         final String text = String.format(
                 "*[신고 #%d]* `%s`%s%s\n>%s",
                 event.reportId(),
-                event.category(),
+                categoryLabel,
                 gameInfo,
                 joinCodeInfo,
                 event.content()

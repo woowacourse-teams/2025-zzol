@@ -14,6 +14,7 @@ public enum GlobalErrorCode implements ErrorCode {
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."),
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "유효하지 않은 요청입니다."),
     CONSTRAINT_VIOLATION(HttpStatus.BAD_REQUEST, "요청 파라미터가 유효하지 않습니다."),
+    IP_BLOCKED(HttpStatus.TOO_MANY_REQUESTS, "비정상적인 접근으로 일시적으로 차단되었습니다."),
     ;
 
     private final HttpStatus httpStatus;

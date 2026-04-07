@@ -15,10 +15,15 @@ public final class ClientIpExtractor {
 
     public static String extract(HttpServletRequest request) {
         final String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor == null || xForwardedFor.isBlank() || "unknown".equalsIgnoreCase(xForwardedFor)) {
+        // 신뢰 경계가 설정된 환경에서만 사용, 마지막 토큰 검증
+        if (xForwardedFor == null || xForwardedFor.isBlank()) {
             return request.getRemoteAddr();
         }
         final String[] ips = xForwardedFor.split(",");
-        return ips[ips.length - 1].trim();
+        final String candidate = ips[ips.length - 1].trim();
+        if (candidate.isBlank() || "unknown".equalsIgnoreCase(candidate)) {
+            return request.getRemoteAddr();
+        }
+        return candidate;
     }
 }

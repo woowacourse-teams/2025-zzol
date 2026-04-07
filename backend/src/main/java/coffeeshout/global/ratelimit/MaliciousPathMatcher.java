@@ -1,5 +1,7 @@
 package coffeeshout.global.ratelimit;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -26,11 +28,13 @@ public class MaliciousPathMatcher {
             "/admin.php",
             "/config.php",
             "/setup.php",
-            "/install.php"
+            "/install.php",
+            "/graphql"
     );
 
     public boolean isMalicious(String path) {
-        final String lowerPath = path.toLowerCase();
+        final String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        final String lowerPath = decodedPath.toLowerCase();
         return MALICIOUS_PREFIXES.stream().anyMatch(lowerPath::startsWith);
     }
 }

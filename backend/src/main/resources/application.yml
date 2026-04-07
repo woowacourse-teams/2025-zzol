@@ -186,6 +186,7 @@ management:
         enabled: true
 
 server:
+  forward-headers-strategy: native
   shutdown: graceful
   tomcat:
     threads:
@@ -193,6 +194,9 @@ server:
       min-spare: 30
     max-connections: 700
     accept-count: 300
+    remoteip:
+      remote-ip-header: X-Forwarded-For
+      protocol-header: X-Forwarded-Proto
 
 resilience4j:
   circuitbreaker:

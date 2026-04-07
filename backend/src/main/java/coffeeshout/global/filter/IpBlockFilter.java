@@ -10,8 +10,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -39,17 +41,30 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class IpBlockFilter extends OncePerRequestFilter {
 
+    private static final Pattern IPV4_PATTERN = Pattern.compile(
+            "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$"
+    );
+    private static final Pattern IPV6_PATTERN = Pattern.compile(
+            "^[0-9a-fA-F]{0,4}(:[0-9a-fA-F]{0,4}){2,7}$"
+    );
+
     private final IpBlockStore ipBlockStore;
     private final MaliciousPathMatcher maliciousPathMatcher;
     private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        final String ip = extractIp(request);
+        final String ip = getClientIp(request);
+
+        if (!isValidIp(ip)) {
+            log.debug("유효하지 않은 IP 형식, 필터 처리 건너뜀: ip={}", ip);
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (ipBlockStore.isBlocked(ip)) {
             log.warn("차단된 IP 접근 시도: ip={} uri={}", ip, request.getRequestURI());
@@ -71,14 +86,6 @@ public class IpBlockFilter extends OncePerRequestFilter {
         }
     }
 
-    private String extractIp(HttpServletRequest request) {
-        final String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
-
     private void writeBlockedResponse(HttpServletResponse response) throws IOException {
         final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.TOO_MANY_REQUESTS, GlobalErrorCode.IP_BLOCKED.getMessage());
@@ -90,5 +97,21 @@ public class IpBlockFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getWriter(), problemDetail);
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor == null || xForwardedFor.isBlank() || "unknown".equalsIgnoreCase(xForwardedFor)) {
+            return request.getRemoteAddr();
+        }
+        String[] ips = xForwardedFor.split(",");
+        return ips[ips.length - 1].trim();
+    }
+
+    private boolean isValidIp(String ip) {
+        if (ip == null || ip.isBlank()) {
+            return false;
+        }
+        return IPV4_PATTERN.matcher(ip).matches() || IPV6_PATTERN.matcher(ip).matches();
     }
 }

@@ -1,6 +1,5 @@
 package coffeeshout.global.filter;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -51,7 +50,6 @@ class IpBlockFilterTest {
     }
 
     @Nested
-    @DisplayName("차단된 IP 접근")
     class 차단된_IP_접근 {
 
         @Test
@@ -72,7 +70,6 @@ class IpBlockFilterTest {
     }
 
     @Nested
-    @DisplayName("악성 경로 접근")
     class 악성_경로_접근 {
 
         @BeforeEach
@@ -98,7 +95,6 @@ class IpBlockFilterTest {
     }
 
     @Nested
-    @DisplayName("정상 요청의 404 누적")
     class 정상_요청의_404_누적 {
 
         @BeforeEach
@@ -128,19 +124,18 @@ class IpBlockFilterTest {
     }
 
     @Nested
-    @DisplayName("IP 추출")
     class IP_추출 {
 
         @Test
-        void X_Forwarded_For_헤더의_첫_번째_IP를_사용한다() throws Exception {
-            given(ipBlockStore.isBlocked("10.0.0.1")).willReturn(true);
+        void X_Forwarded_For_헤더의_마지막_IP를_사용한다() throws Exception {
+            given(ipBlockStore.isBlocked(anyString())).willReturn(true);
 
             final MockHttpServletRequest request = 요청("172.16.0.1", NORMAL_PATH);
             request.addHeader("X-Forwarded-For", "10.0.0.1, 192.168.1.1");
 
             filter.doFilter(request, new MockHttpServletResponse(), filterChain);
 
-            then(ipBlockStore).should().isBlocked("10.0.0.1");
+            then(ipBlockStore).should().isBlocked("192.168.1.1");
         }
 
         @Test
@@ -150,6 +145,17 @@ class IpBlockFilterTest {
             filter.doFilter(요청(REMOTE_IP, NORMAL_PATH), new MockHttpServletResponse(), filterChain);
 
             then(ipBlockStore).should().isBlocked(REMOTE_IP);
+        }
+
+        @Test
+        void 유효하지_않은_IP면_필터_처리를_건너뛴다() throws Exception {
+            final MockHttpServletRequest request = 요청("1.2.3.4", NORMAL_PATH);
+            request.addHeader("X-Forwarded-For", "192.168.1.1, unknown");
+
+            filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).shouldHaveNoInteractions();
+            then(filterChain).should().doFilter(any(), any());
         }
     }
 

@@ -1,5 +1,6 @@
 package coffeeshout.global.ratelimit;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,22 +35,36 @@ public class IpBlockStore {
 
     private final StringRedisTemplate stringRedisTemplate;
 
+    @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "isBlockedFallback")
     public boolean isBlocked(String ip) {
-        return Boolean.TRUE.equals(stringRedisTemplate.hasKey(BLOCKED_IP_PREFIX + ip));
+        Boolean hasKey = stringRedisTemplate.hasKey(BLOCKED_IP_PREFIX + ip);
+        return Boolean.TRUE.equals(hasKey);
     }
 
+    private boolean isBlockedFallback(String ip, Throwable t) {
+        log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 IP 차단 여부를 확인할 수 없습니다. Fail-open 처리합니다. ip={} error={}", ip, t.getMessage());
+        return false; // Redis 장애 시 차단하지 않고 통과시킴
+    }
+
+    @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "blockImmediatelyFallback")
     public void blockImmediately(String ip) {
         stringRedisTemplate.opsForValue().set(BLOCKED_IP_PREFIX + ip, "1", BLOCK_TTL);
         log.warn("IP 차단 등록: ip={} ttl={}h", ip, BLOCK_TTL.toHours());
+    }
+
+    private void blockImmediatelyFallback(String ip, Throwable t) {
+        log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 IP를 차단할 수 없습니다. ip={} error={}", ip, t.getMessage());
     }
 
     /**
      * 404 카운터를 증가시키고, 임계값 이상이면 IP를 차단한다.
      * 카운터 키가 처음 생성될 때 TTL을 설정해 Fixed Window를 구현한다.
      */
+    @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "incrementNotFoundFallback")
     public void incrementNotFoundAndBlockIfExceeded(String ip) {
         final String key = NOT_FOUND_COUNTER_PREFIX + ip;
         final Long count = stringRedisTemplate.opsForValue().increment(key);
+        
         if (count == null) {
             return;
         }
@@ -58,7 +73,15 @@ public class IpBlockStore {
         }
         if (count >= NOT_FOUND_THRESHOLD) {
             log.warn("404 임계값 초과 → IP 차단: ip={} count={}", ip, count);
-            blockImmediately(ip);
+            
+            // 참고: 내부 메서드 호출이므로 blockImmediately의 프록시를 타진 않지만,
+            // 여기서 예외가 발생하면 현재 메서드의 incrementNotFoundFallback이 동작하므로 안전합니다.
+            stringRedisTemplate.opsForValue().set(BLOCKED_IP_PREFIX + ip, "1", BLOCK_TTL);
+            log.warn("IP 차단 등록: ip={} ttl={}h", ip, BLOCK_TTL.toHours());
         }
+    }
+
+    private void incrementNotFoundFallback(String ip, Throwable t) {
+        log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 404 카운터를 처리할 수 없습니다. ip={} error={}", ip, t.getMessage());
     }
 }

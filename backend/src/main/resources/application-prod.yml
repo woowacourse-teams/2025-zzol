@@ -25,3 +25,8 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
+
+server:
+  tomcat:
+    remoteip:
+      internal-proxies: "172\\.20\\.0\\.\\d{1,3}"

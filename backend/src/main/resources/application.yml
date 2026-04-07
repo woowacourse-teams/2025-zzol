@@ -129,6 +129,8 @@ admin:
 
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL:}
+  connect-timeout: 3s
+  read-timeout: 5s
 
 nickname-audit:
   gemini-api-key: ${GEMINI_API_KEY}   # local/test 프로파일에서는 NoOpNicknameAuditor가 대신 동작

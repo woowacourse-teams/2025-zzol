@@ -22,7 +22,7 @@ const ServiceInfoView = () => {
         </S.InfoRow>
         <S.InfoRow>
           <S.InfoLabel>버전</S.InfoLabel>
-          <S.InfoValue>v1.2.0</S.InfoValue>
+          <S.InfoValue>v{process.env.VERSION || '1.0.0'}</S.InfoValue>
         </S.InfoRow>
         <S.InfoRow>
           <S.InfoLabel>개발팀</S.InfoLabel>

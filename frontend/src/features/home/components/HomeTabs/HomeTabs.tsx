@@ -1,11 +1,11 @@
 import * as S from './HomeTabs.styled';
 
-export type HomeTabType = 'game' | 'ranking' | 'suggestion';
+export type HomeTabType = 'game' | 'ranking' | 'menu';
 
 const TABS: { key: HomeTabType; label: string }[] = [
   { key: 'game', label: '게임' },
   { key: 'ranking', label: '랭킹' },
-  { key: 'suggestion', label: '건의사항' },
+  { key: 'menu', label: '메뉴' },
 ];
 
 type Props = {

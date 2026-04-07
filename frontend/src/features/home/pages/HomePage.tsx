@@ -11,7 +11,7 @@ import EnterRoomModal from '../components/EnterRoomModal/EnterRoomModal';
 import Splash from '../components/Splash/Splash';
 import HomeTabs, { type HomeTabType } from '../components/HomeTabs/HomeTabs';
 import RankingTab from '../components/RankingTab/RankingTab';
-import SuggestionTab from '../components/SuggestionTab/SuggestionTab';
+import MenuTab from '../components/MenuTab/MenuTab';
 import * as S from './HomePage.styled';
 import DashBoard from '../components/DashBoard/DashBoard';
 
@@ -99,7 +99,7 @@ const HomePage = () => {
           </S.GameTabContent>
         )}
         {activeTab === 'ranking' && <RankingTab />}
-        {activeTab === 'suggestion' && <SuggestionTab />}
+        {activeTab === 'menu' && <MenuTab />}
       </S.ContentArea>
       <HomeTabs activeTab={activeTab} onTabChange={setActiveTab} />
     </Layout>

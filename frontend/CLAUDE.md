@@ -21,6 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |------|------|
 | `docs/home-tabs-architecture.md` | 홈 탭 구조 설계 (하단 탭바 구현 방식, 랭킹 카테고리 추가 방법, 건의사항 step 플로우) |
 | `docs/tab-api-todo.md` | 홈 탭 관련 미구현 API 연동 가이드 (건의사항 POST /reports 등) |
+| `docs/api-design-menu-tab.md` | 메뉴 탭 API 설계 — 백엔드 협의용 (POST /reports, GET /patch-notes Request/Response 스펙) |
 | `docs/feature-backlog.md` | 구현 보류 중인 기능 목록 (게임 추가 게시판 등) |
 
 ## 커맨드

@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -64,6 +65,15 @@ public class RestExceptionHandler {
     ) {
         logError(exception, request);
         return getProblemDetail(exception.getErrorCode().getHttpStatus(), exception, exception.getErrorCode());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException exception,
+            HttpServletRequest request
+    ) {
+        logWarning(exception, request);
+        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, GlobalErrorCode.VALIDATION_ERROR);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

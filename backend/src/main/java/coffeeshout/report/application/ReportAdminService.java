@@ -1,0 +1,79 @@
+package coffeeshout.report.application;
+
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.report.domain.ReportCategory;
+import coffeeshout.report.domain.ReportStatus;
+import coffeeshout.report.infra.persistence.JpaReportRepository;
+import coffeeshout.report.infra.persistence.ReportEntity;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class ReportAdminService {
+
+    private static final int PAGE_SIZE = 20;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final Sort CREATED_AT_DESC = Sort.by("createdAt").descending();
+
+    private final JpaReportRepository jpaReportRepository;
+
+    @Transactional(readOnly = true)
+    public Page<ReportRow> list(ReportStatus statusFilter, int page) {
+        final PageRequest pageRequest = PageRequest.of(page, PAGE_SIZE, CREATED_AT_DESC);
+        final Page<ReportEntity> entities = statusFilter == null
+                ? jpaReportRepository.findAllByOrderByCreatedAtDesc(pageRequest)
+                : jpaReportRepository.findByStatusOrderByCreatedAtDesc(statusFilter, pageRequest);
+        return entities.map(this::toRow);
+    }
+
+    @Transactional(readOnly = true)
+    public long countPending() {
+        return jpaReportRepository.countByStatus(ReportStatus.PENDING);
+    }
+
+    @Transactional
+    public void resolve(Long id) {
+        final ReportEntity report = jpaReportRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "신고를 찾을 수 없습니다."));
+        report.resolve();
+    }
+
+    private ReportRow toRow(ReportEntity e) {
+        return new ReportRow(
+                e.getId(),
+                e.getCategory(),
+                e.getGameType(),
+                e.getJoinCode(),
+                e.getContent(),
+                e.getStatus(),
+                toKst(e.getCreatedAt()),
+                e.getResolvedAt() != null ? toKst(e.getResolvedAt()) : null
+        );
+    }
+
+    private LocalDateTime toKst(Instant instant) {
+        return LocalDateTime.ofInstant(instant, KST);
+    }
+
+    public record ReportRow(
+            Long id,
+            ReportCategory category,
+            MiniGameType gameType,
+            String joinCode,
+            String content,
+            ReportStatus status,
+            LocalDateTime createdAt,
+            LocalDateTime resolvedAt
+    ) {
+    }
+}

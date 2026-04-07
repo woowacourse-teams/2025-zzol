@@ -74,8 +74,8 @@ oracle:
   cloud:
     objectstorage:
       region: ${ORACLE_REGION:ap-chuncheon-1}
-      namespace: ${ORACLE_NAMESPACE}
-      bucket: ${ORACLE_BUCKET}
+      namespace: ${ORACLE_NAMESPACE:unused}
+      bucket: ${ORACLE_BUCKET:unused}
 
 card-game:
   timing:
@@ -126,6 +126,9 @@ outbox:
 admin:
   username: ${ADMIN_USERNAME}
   password: ${ADMIN_PASSWORD}
+
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL:}
 
 nickname-audit:
   gemini-api-key: ${GEMINI_API_KEY}   # local/test 프로파일에서는 NoOpNicknameAuditor가 대신 동작

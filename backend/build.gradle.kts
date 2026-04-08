@@ -65,6 +65,7 @@ dependencies {
 
     // --- Utils ---
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+    developmentOnly("me.paulschwarz:spring-dotenv:4.0.0")
     implementation("io.github.20hyeonsulee:websocket-docs-generator:${websocketDocsVersion}")
 
     implementation("com.google.zxing:core:${zxingVersion}")

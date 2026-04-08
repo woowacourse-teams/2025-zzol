@@ -3,6 +3,7 @@ package coffeeshout.global.ratelimit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.IntegrationTestSupport;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,6 +22,9 @@ class IpBlockStoreTest extends IntegrationTestSupport {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private MeterRegistry meterRegistry;
 
     @Nested
     @DisplayName("isBlocked")
@@ -100,6 +104,54 @@ class IpBlockStoreTest extends IntegrationTestSupport {
             }
 
             assertThat(ipBlockStore.isBlocked(IP)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("메트릭")
+    class 메트릭 {
+
+        @Test
+        void 차단된_IP_확인_시_blockedRequest_카운터가_증가한다() {
+            ipBlockStore.blockImmediately("9.9.9.1");
+            double before = meterRegistry.find("ip.block.request.blocked.total").counter().count();
+
+            ipBlockStore.isBlocked("9.9.9.1");
+
+            assertThat(meterRegistry.find("ip.block.request.blocked.total").counter().count() - before)
+                    .isEqualTo(1.0);
+        }
+
+        @Test
+        void 차단되지_않은_IP_확인_시_blockedRequest_카운터가_증가하지_않는다() {
+            double before = meterRegistry.find("ip.block.request.blocked.total").counter().count();
+
+            ipBlockStore.isBlocked("9.9.9.2");
+
+            assertThat(meterRegistry.find("ip.block.request.blocked.total").counter().count() - before)
+                    .isEqualTo(0.0);
+        }
+
+        @Test
+        void IP_즉시_차단_시_newIpBlock_카운터가_증가한다() {
+            double before = meterRegistry.find("ip.block.new.total").counter().count();
+
+            ipBlockStore.blockImmediately("9.9.9.3");
+
+            assertThat(meterRegistry.find("ip.block.new.total").counter().count() - before)
+                    .isEqualTo(1.0);
+        }
+
+        @Test
+        void 임계값_초과_시_newIpBlock_카운터가_증가한다() {
+            double before = meterRegistry.find("ip.block.new.total").counter().count();
+
+            for (int i = 0; i < 5; i++) {
+                ipBlockStore.incrementNotFoundAndBlockIfExceeded("9.9.9.4");
+            }
+
+            assertThat(meterRegistry.find("ip.block.new.total").counter().count() - before)
+                    .isEqualTo(1.0);
         }
     }
 }

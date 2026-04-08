@@ -100,12 +100,7 @@ public class IpBlockFilter extends OncePerRequestFilter {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor == null || xForwardedFor.isBlank() || "unknown".equalsIgnoreCase(xForwardedFor)) {
-            return request.getRemoteAddr();
-        }
-        String[] ips = xForwardedFor.split(",");
-        return ips[ips.length - 1].trim();
+        return request.getRemoteAddr();
     }
 
     private boolean isValidIp(String ip) {

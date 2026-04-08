@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/admin/login")
                         .loginProcessingUrl("/admin/login")
-                        .defaultSuccessUrl("/admin/playername-audit")
+                        .defaultSuccessUrl("/admin")
                         .permitAll()
                 )
                 .logout(logout -> logout

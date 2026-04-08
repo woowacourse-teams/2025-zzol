@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>건의사항/신고 대시보드 — 커피빵</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+<header>
+    <h1>건의사항/신고 대시보드</h1>
+    <form th:action="@{/admin/logout}" method="post">
+        <button type="submit" class="logout-btn">로그아웃</button>
+    </form>
+</header>
+
+<main>
+    <a th:href="@{/admin}" class="nav-back">← 대시보드로</a>
+
+    <div class="section-header">
+        <span class="section-title">신고 목록</span>
+        <span class="badge badge-pending" th:text="${pendingCount}">0</span>
+        <span style="font-size:0.8rem;color:#9ca3af;">미처리 건</span>
+    </div>
+
+    <div class="filter-group">
+        <!-- 상태 필터 -->
+        <div class="filter-bar">
+            <span class="filter-label">상태</span>
+            <a th:href="@{/admin/reports(category=${categoryFilter}, gameType=${gameTypeFilter})}"
+               th:classappend="${statusFilter == null} ? ' active'" class="filter-btn">전체</a>
+            <a th:href="@{/admin/reports(status='PENDING', category=${categoryFilter}, gameType=${gameTypeFilter})}"
+               th:classappend="${statusFilter?.name() == 'PENDING'} ? ' active'" class="filter-btn">미처리</a>
+            <a th:href="@{/admin/reports(status='RESOLVED', category=${categoryFilter}, gameType=${gameTypeFilter})}"
+               th:classappend="${statusFilter?.name() == 'RESOLVED'} ? ' active'" class="filter-btn">처리 완료</a>
+        </div>
+
+        <!-- 카테고리 필터 -->
+        <div class="filter-bar">
+            <span class="filter-label">카테고리</span>
+            <a th:href="@{/admin/reports(status=${statusFilter}, gameType=${gameTypeFilter})}"
+               th:classappend="${categoryFilter == null} ? ' active'" class="filter-btn">전체</a>
+            <th:block th:each="cat : ${categories}">
+                <a th:href="@{/admin/reports(status=${statusFilter}, category=${cat}, gameType=${gameTypeFilter})}"
+                   th:classappend="${categoryFilter?.name() == cat.name()} ? ' active'"
+                   th:text="${cat.label}"
+                   class="filter-btn"></a>
+            </th:block>
+        </div>
+
+        <!-- 게임 필터 -->
+        <div class="filter-bar">
+            <span class="filter-label">게임</span>
+            <a th:href="@{/admin/reports(status=${statusFilter}, category=${categoryFilter})}"
+               th:classappend="${gameTypeFilter == null} ? ' active'" class="filter-btn">전체</a>
+            <th:block th:each="gameType : ${gameTypes}">
+                <a th:href="@{/admin/reports(status=${statusFilter}, category=${categoryFilter}, gameType=${gameType})}"
+                   th:classappend="${gameTypeFilter?.name() == gameType.name()} ? ' active'"
+                   th:text="${gameType.label}"
+                   class="filter-btn"></a>
+            </th:block>
+        </div>
+    </div>
+
+    <div th:if="${reports.empty}" class="empty">조회된 신고가 없습니다.</div>
+
+    <div th:if="${!reports.empty}" class="pagination-strip">
+        <span>
+            총 <strong th:text="${reports.totalElements}" style="color:var(--text-primary);">0</strong>건
+            &nbsp;·&nbsp;
+            <span th:text="${reports.pageable.offset + 1}">1</span>–<span th:text="${reports.pageable.offset + reports.numberOfElements}">20</span>번째 표시
+        </span>
+        <div class="pagination-compact" th:if="${reports.totalPages > 1}">
+            <a class="page-btn" th:if="${!reports.first}"
+               th:href="@{/admin/reports(page=${reports.number - 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">‹ 이전</a>
+            <span class="page-current" th:text="${reports.number + 1}"></span>
+            <span class="page-info">/ <span th:text="${reports.totalPages}"></span></span>
+            <a class="page-btn" th:if="${!reports.last}"
+               th:href="@{/admin/reports(page=${reports.number + 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">다음 ›</a>
+        </div>
+    </div>
+
+    <div th:if="${!reports.empty}" class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>카테고리</th>
+                <th>게임</th>
+                <th>방코드</th>
+                <th>내용</th>
+                <th>접수일시</th>
+                <th>상태</th>
+                <th>처리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${reports.content}">
+                <td th:text="${r.id}" style="color:#9ca3af;font-size:0.8rem;"></td>
+                <td><span class="tag" th:text="${r.category.label}"></span></td>
+                <td>
+                    <span th:if="${r.gameType != null}" class="tag" th:text="${r.gameType.label}"></span>
+                    <span th:if="${r.gameType == null}" style="color:#d1d5db;">—</span>
+                </td>
+                <td>
+                    <span th:if="${r.joinCode != null}" th:text="${r.joinCode}" style="font-family:monospace;"></span>
+                    <span th:if="${r.joinCode == null}" style="color:#d1d5db;">—</span>
+                </td>
+                <td class="content-cell" th:text="${r.content}"></td>
+                <td class="date" th:text="${#temporals.format(r.createdAt, 'MM-dd HH:mm')}"></td>
+                <td>
+                    <span th:if="${r.status.name() == 'PENDING'}" class="badge badge-pending-status">미처리</span>
+                    <span th:if="${r.status.name() == 'RESOLVED'}" class="badge badge-resolved">처리 완료</span>
+                </td>
+                <td>
+                    <form th:if="${r.status.name() == 'PENDING'}"
+                          th:action="@{/admin/reports/{id}/resolve(id=${r.id})}" method="post">
+                        <input type="hidden" name="page" th:value="${currentPage}">
+                        <input type="hidden" name="status" th:value="${statusFilter}">
+                        <input type="hidden" name="category" th:value="${categoryFilter}">
+                        <input type="hidden" name="gameType" th:value="${gameTypeFilter}">
+                        <button type="submit" class="btn btn-resolve">처리 완료</button>
+                    </form>
+                    <span th:if="${r.status.name() == 'RESOLVED'}" class="date"
+                          th:text="${r.resolvedAt != null ? #temporals.format(r.resolvedAt, 'MM-dd HH:mm') : ''}"></span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="pagination" th:if="${reports.totalPages > 1}">
+            <a class="page-btn" th:if="${!reports.first}"
+               th:href="@{/admin/reports(page=${reports.number - 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">← 이전</a>
+            <a class="page-btn" th:if="${pageStart > 0}"
+               th:href="@{/admin/reports(page=0, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">1</a>
+            <span class="page-ellipsis" th:if="${pageStart > 1}">…</span>
+            <th:block th:each="p : ${#numbers.sequence(pageStart, pageEnd)}">
+                <span th:if="${p == reports.number}" class="page-current" th:text="${p + 1}"></span>
+                <a th:unless="${p == reports.number}" class="page-btn"
+                   th:href="@{/admin/reports(page=${p}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}"
+                   th:text="${p + 1}"></a>
+            </th:block>
+            <span class="page-ellipsis" th:if="${pageEnd < reports.totalPages - 2}">…</span>
+            <a class="page-btn" th:if="${pageEnd < reports.totalPages - 1}"
+               th:href="@{/admin/reports(page=${reports.totalPages - 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}"
+               th:text="${reports.totalPages}"></a>
+            <a class="page-btn" th:if="${!reports.last}"
+               th:href="@{/admin/reports(page=${reports.number + 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">다음 →</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,74 @@
+/* ── Table ── */
+.table-wrap {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 0.845rem; }
+
+thead th {
+  background: #f6f7fb;
+  border-bottom: 1px solid var(--border);
+  padding: 0.68rem 1.1rem;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+tbody td {
+  padding: 0.75rem 1.1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+
+tbody tr { transition: background var(--dur) var(--ease); }
+
+tbody tr:hover td { background: var(--surface-hover); }
+
+tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* ── Cell types ── */
+.nickname { font-weight: 700; font-size: 0.9rem; }
+
+.content-cell {
+  max-width: 320px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.conf-wrap { display: flex; align-items: center; gap: 0.55rem; }
+
+.conf-bar-bg {
+  width: 64px; height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.conf-bar-fill { height: 100%; border-radius: 3px; }
+.fill-high { background: linear-gradient(90deg, #f87171, #ef4444); }
+.fill-mid  { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+
+.conf-text { font-size: 0.76rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.reason    { color: var(--text-secondary); max-width: 280px; line-height: 1.45; }
+
+.date {
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-family: 'JetBrains Mono', monospace;
+}

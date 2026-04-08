@@ -1,6 +1,9 @@
 package coffeeshout.global.ratelimit;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -48,11 +51,29 @@ public class IpBlockStore {
     private static final Duration BLOCK_TTL = Duration.ofHours(24);
 
     private final StringRedisTemplate stringRedisTemplate;
+    private final MeterRegistry meterRegistry;
+
+    private Counter blockedRequestCounter;
+    private Counter newIpBlockCounter;
+
+    @PostConstruct
+    private void initMetrics() {
+        blockedRequestCounter = Counter.builder("ip.block.request.blocked.total")
+                .description("IP 차단에 의해 거절된 요청 수")
+                .register(meterRegistry);
+        newIpBlockCounter = Counter.builder("ip.block.new.total")
+                .description("새로 차단된 IP 수")
+                .register(meterRegistry);
+    }
 
     @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "isBlockedFallback")
     public boolean isBlocked(String ip) {
         Boolean hasKey = stringRedisTemplate.hasKey(BLOCKED_IP_PREFIX + ip);
-        return Boolean.TRUE.equals(hasKey);
+        boolean blocked = Boolean.TRUE.equals(hasKey);
+        if (blocked) {
+            blockedRequestCounter.increment();
+        }
+        return blocked;
     }
 
     private boolean isBlockedFallback(String ip, Throwable t) {
@@ -63,6 +84,7 @@ public class IpBlockStore {
     @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "blockImmediatelyFallback")
     public void blockImmediately(String ip) {
         stringRedisTemplate.opsForValue().set(BLOCKED_IP_PREFIX + ip, "1", BLOCK_TTL);
+        newIpBlockCounter.increment();
         log.warn("IP 차단 등록: ip={} ttl={}h", ip, BLOCK_TTL.toHours());
     }
 

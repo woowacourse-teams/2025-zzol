@@ -26,6 +26,16 @@
 
 `WebSocketIntegrationTestSupport`를 상속하면 STOMP 세션 유틸(`createSession`, `assertMessage` 등)이 제공된다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다. `@IntegrationTest`를 함께 붙이면 설정이 중복되므로 사용하지 않는다.
 
+## 비동기·시간 의존 검증
+
+`Thread.sleep`은 사용하지 않는다. 고정 대기는 실행 환경에 따라 테스트가 flaky해지는 원인이 된다.
+시간이 지난 뒤 상태 변화를 검증해야 할 때는 Awaitility를 사용한다.
+
+```java
+await().atMost(Duration.ofSeconds(3))
+        .until(() -> store.tryAcquire(ip));
+```
+
 ## 예외 검증
 
 `CoffeeShoutException` 계열 예외는 `ExceptionAssertions.assertCoffeeShoutException`을 사용한다.

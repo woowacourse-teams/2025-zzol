@@ -100,7 +100,7 @@ public class IpBlockFilter extends OncePerRequestFilter {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        return ClientIpExtractor.extract(request);
+        return request.getRemoteAddr();
     }
 
     private boolean isValidIp(String ip) {

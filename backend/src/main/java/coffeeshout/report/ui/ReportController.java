@@ -1,6 +1,5 @@
 package coffeeshout.report.ui;
 
-import coffeeshout.global.filter.ClientIpExtractor;
 import coffeeshout.report.application.ReportService;
 import coffeeshout.report.ui.request.CreateReportRequest;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +22,7 @@ public class ReportController implements ReportApi {
 
     @PostMapping
     public ResponseEntity<Void> submit(@Valid @RequestBody CreateReportRequest request, HttpServletRequest httpRequest) {
-        final String ip = ClientIpExtractor.extract(httpRequest);
+        final String ip = httpRequest.getRemoteAddr();
         final long id = reportService.submit(ip, request.category(), request.gameType(), request.joinCode(), request.content());
         final URI location = UriComponentsBuilder.fromPath("/reports/{id}").buildAndExpand(id).toUri();
         return ResponseEntity.created(location).build();

@@ -4,26 +4,15 @@ import coffeeshout.global.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.domain.repository.MiniGameResultSavePort;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
-import coffeeshout.minigame.infra.persistence.MiniGameEntity;
-import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
-import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
-import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.service.RoomQueryService;
-import coffeeshout.room.infra.persistence.PlayerEntity;
-import coffeeshout.room.infra.persistence.PlayerJpaRepository;
-import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -34,10 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MiniGameResultSaveEventListener {
 
-    private final RoomJpaRepository roomJpaRepository;
-    private final PlayerJpaRepository playerJpaRepository;
-    private final MiniGameJpaRepository miniGameJpaRepository;
-    private final MiniGameResultJpaRepository miniGameResultJpaRepository;
+    private final MiniGameResultSavePort miniGameResultSavePort;
     private final RoomQueryService roomQueryService;
 
     @EventListener
@@ -50,54 +36,15 @@ public class MiniGameResultSaveEventListener {
             leaseTime = 5000
     )
     public void handle(MiniGameFinishedEvent event) {
-        final RoomEntity roomEntity = roomJpaRepository.findFirstByJoinCodeOrderByCreatedAtDesc(event.joinCode())
-                .orElseThrow(() -> new IllegalArgumentException("방이 존재하지 않습니다: " + event.joinCode()));
         final MiniGameType miniGameType = MiniGameType.valueOf(event.miniGameType());
-
-        final MiniGameEntity miniGameEntity = miniGameJpaRepository
-                .findByRoomSessionAndMiniGameType(roomEntity, miniGameType)
-                .orElseThrow(() -> new IllegalArgumentException("미니게임 엔티티가 존재하지 않습니다: " + event.joinCode()));
-
         final Room room = roomQueryService.getByJoinCode(new JoinCode(event.joinCode()));
         final Playable miniGame = room.findMiniGame(miniGameType);
 
         final MiniGameResult result = miniGame.getResult();
         final Map<Player, MiniGameScore> scores = miniGame.getScores();
 
-        final List<String> playerNames = room.getPlayers().stream()
-                .map(player -> player.getName().value())
-                .toList();
+        miniGameResultSavePort.saveResults(event.joinCode(), miniGameType, room.getPlayers(), result, scores);
 
-        final Map<String, PlayerEntity> playerEntityMap = playerJpaRepository
-                .findByRoomSessionAndPlayerNameIn(roomEntity, playerNames)
-                .stream()
-                .collect(Collectors.toMap(
-                        PlayerEntity::getPlayerName,
-                        Function.identity(),
-                        (existing, replacement) -> existing
-                ));
-
-        final List<MiniGameResultEntity> resultEntities = new ArrayList<>();
-
-        for (Player player : room.getPlayers()) {
-            final PlayerEntity playerEntity = playerEntityMap.get(player.getName().value());
-            if (playerEntity == null) {
-                throw new IllegalArgumentException("플레이어가 존재하지 않습니다: " + player.getName().value());
-            }
-
-            final Integer rank = result.getPlayerRank(player);
-            final Long score = scores.get(player).getValue();
-
-            resultEntities.add(new MiniGameResultEntity(
-                    miniGameEntity,
-                    playerEntity,
-                    rank,
-                    score
-            ));
-        }
-
-        miniGameResultJpaRepository.bulkInsert(resultEntities);
-
-        log.info("미니게임 결과 벌크 저장 완료: joinCode={}, playerCount={}", event.joinCode(), resultEntities.size());
+        log.info("미니게임 결과 저장 완료: joinCode={}, miniGameType={}", event.joinCode(), miniGameType);
     }
 }

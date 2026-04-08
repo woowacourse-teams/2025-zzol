@@ -17,15 +17,18 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "mini_game_result")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MiniGameResultEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -44,9 +47,11 @@ public class MiniGameResultEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
+    @Setter(AccessLevel.NONE)
     private MiniGameType miniGameType;
 
     @Column(nullable = false)
+    @Setter(AccessLevel.NONE)
     private LocalDateTime createdAt;
 
     public MiniGameResultEntity(MiniGameEntity miniGamePlay, PlayerEntity player, Integer rank, Long score) {
@@ -55,6 +60,12 @@ public class MiniGameResultEntity {
         this.rank = rank;
         this.score = score;
         this.miniGameType = miniGamePlay.getMiniGameType();
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // MapStruct @AfterMapping에서 miniGameType, createdAt 초기화에 사용
+    public void initAfterMapping() {
+        this.miniGameType = this.miniGamePlay.getMiniGameType();
         this.createdAt = LocalDateTime.now();
     }
 }

@@ -18,16 +18,19 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "player",
        indexes = @Index(name = "idx_player_player_name", columnList = "player_name"))
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlayerEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -42,12 +45,18 @@ public class PlayerEntity {
     private PlayerType playerType;
 
     @Column(nullable = false)
+    @Setter(AccessLevel.NONE)
     private LocalDateTime createdAt;
 
     public PlayerEntity(RoomEntity roomSession, String playerName, PlayerType playerType) {
         this.roomSession = roomSession;
         this.playerName = playerName;
         this.playerType = playerType;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // MapStruct @AfterMapping에서 createdAt 초기화에 사용
+    public void initCreatedAt() {
         this.createdAt = LocalDateTime.now();
     }
 

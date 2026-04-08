@@ -88,6 +88,11 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
+    // --- MapStruct ---
+    val mapStructVersion = "1.6.3"
+    implementation("org.mapstruct:mapstruct:$mapStructVersion")
+    annotationProcessor("org.mapstruct:mapstruct-processor:$mapStructVersion")
+
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.micrometer:micrometer-tracing-test")

@@ -1,7 +1,7 @@
 package coffeeshout.minigame.infra.persistence.adapter;
 
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.domain.repository.MiniGamePersistencePort;
+import coffeeshout.minigame.domain.repository.MiniGamePersistence;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.room.domain.RoomState;
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-public class MiniGamePersistenceJpaAdapter implements MiniGamePersistencePort {
+public class MiniGameJpaPersistence implements MiniGamePersistence {
 
     private final RoomJpaRepository roomJpaRepository;
     private final MiniGameJpaRepository miniGameJpaRepository;

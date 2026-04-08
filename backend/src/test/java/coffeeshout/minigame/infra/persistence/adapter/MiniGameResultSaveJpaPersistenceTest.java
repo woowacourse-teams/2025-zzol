@@ -9,7 +9,7 @@ import coffeeshout.global.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.domain.repository.MiniGameResultSavePort;
+import coffeeshout.minigame.domain.repository.MiniGameResultSavePersistence;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.room.domain.player.Player;
@@ -26,10 +26,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-class MiniGameResultSaveJpaAdapterTest extends ServiceTest {
+class MiniGameResultSaveJpaPersistenceTest extends ServiceTest {
 
     @Autowired
-    private MiniGameResultSavePort miniGameResultSavePort;
+    private MiniGameResultSavePersistence miniGameResultSavePersistence;
 
     @Autowired
     private RoomJpaRepository roomJpaRepository;
@@ -80,7 +80,7 @@ class MiniGameResultSaveJpaAdapterTest extends ServiceTest {
             );
 
             // when
-            miniGameResultSavePort.saveResults("ABCD", MiniGameType.CARD_GAME, players, result, scores);
+            miniGameResultSavePersistence.saveResults("ABCD", MiniGameType.CARD_GAME, players, result, scores);
 
             // then - bulkInsert는 JDBC 직접 저장이므로 flush 없이 바로 조회 가능
             final int savedCount = jdbcTemplate.queryForObject(
@@ -105,7 +105,7 @@ class MiniGameResultSaveJpaAdapterTest extends ServiceTest {
             );
 
             // when
-            miniGameResultSavePort.saveResults("ABCD", MiniGameType.CARD_GAME, List.of(한스, 꾹이), result, scores);
+            miniGameResultSavePersistence.saveResults("ABCD", MiniGameType.CARD_GAME, List.of(한스, 꾹이), result, scores);
 
             // then - 한스(rank=1, score=500), 꾹이(rank=2, score=300) 검증
             final List<Map<String, Object>> rows = jdbcTemplate.queryForList(
@@ -147,7 +147,7 @@ class MiniGameResultSaveJpaAdapterTest extends ServiceTest {
 
             // when & then
             assertThatThrownBy(() ->
-                    miniGameResultSavePort.saveResults(
+                    miniGameResultSavePersistence.saveResults(
                             "ABCD", MiniGameType.CARD_GAME,
                             List.of(한스, 존재하지않는플레이어),
                             result, scores

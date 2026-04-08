@@ -4,7 +4,7 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Winner;
-import coffeeshout.room.domain.repository.RouletteResultPort;
+import coffeeshout.room.domain.repository.RouletteResultPersistence;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 public class RouletteService {
 
     private final RoomQueryService roomQueryService;
-    private final RouletteResultPort rouletteResultPort;
+    private final RouletteResultPersistence rouletteResultPersistence;
     private final ApplicationEventPublisher eventPublisher;
 
     public RoomState showRoulette(String joinCode) {
@@ -28,13 +28,13 @@ public class RouletteService {
     }
 
     public void updateRoomStatusToRoulette(String joinCode) {
-        rouletteResultPort.updateRoomStatusToRoulette(joinCode);
+        rouletteResultPersistence.updateRoomStatusToRoulette(joinCode);
 
         log.info("RoomEntity 상태 업데이트 완료: joinCode={}, status=ROULETTE", joinCode);
     }
 
     public void saveRouletteResult(String joinCode, Winner winner) {
-        rouletteResultPort.finishRoomAndSaveResult(joinCode, winner);
+        rouletteResultPersistence.finishRoomAndSaveResult(joinCode, winner);
         eventPublisher.publishEvent(new PlayerNameAuditRequestedEvent(winner.name().value()));
     }
 }

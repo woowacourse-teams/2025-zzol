@@ -1,7 +1,7 @@
 package coffeeshout.room.infra.persistence.adapter;
 
 import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.repository.PlayerSavePort;
+import coffeeshout.room.domain.repository.PlayerSavePersistence;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-public class PlayerSaveJpaAdapter implements PlayerSavePort {
+public class PlayerSaveJpaPersistence implements PlayerSavePersistence {
 
     private final RoomJpaRepository roomJpaRepository;
     private final PlayerJpaRepository playerJpaRepository;

@@ -3,7 +3,7 @@ package coffeeshout.minigame.infra.persistence.adapter;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.domain.repository.MiniGameResultSavePort;
+import coffeeshout.minigame.domain.repository.MiniGameResultSavePersistence;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MiniGameResultSaveJpaAdapter implements MiniGameResultSavePort {
+public class MiniGameResultSaveJpaPersistence implements MiniGameResultSavePersistence {
 
     private final RoomJpaRepository roomJpaRepository;
     private final PlayerJpaRepository playerJpaRepository;

@@ -2,11 +2,11 @@ package coffeeshout.minigame.application;
 
 import coffeeshout.global.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.domain.repository.MiniGamePersistencePort;
+import coffeeshout.minigame.domain.repository.MiniGamePersistence;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.repository.PlayerSavePort;
+import coffeeshout.room.domain.repository.PlayerSavePersistence;
 import coffeeshout.room.domain.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,8 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class MiniGamePersistenceService {
 
     private final RoomQueryService roomQueryService;
-    private final MiniGamePersistencePort miniGamePersistencePort;
-    private final PlayerSavePort playerSavePort;
+    private final MiniGamePersistence miniGamePersistence;
+    private final PlayerSavePersistence playerSavePersistence;
 
     @RedisLock(
             key = "#event.eventId()",
@@ -32,10 +32,10 @@ public class MiniGamePersistenceService {
         final JoinCode roomJoinCode = new JoinCode(event.joinCode());
         final Room room = roomQueryService.getByJoinCode(roomJoinCode);
 
-        miniGamePersistencePort.saveGameStart(event.joinCode(), miniGameType);
+        miniGamePersistence.saveGameStart(event.joinCode(), miniGameType);
 
         if (room.isFirstStarted()) {
-            playerSavePort.saveAll(event.joinCode(), room.getPlayers());
+            playerSavePersistence.saveAll(event.joinCode(), room.getPlayers());
         }
     }
 }

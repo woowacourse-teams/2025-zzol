@@ -6,7 +6,7 @@ import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.global.ServiceTest;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerType;
-import coffeeshout.room.domain.repository.PlayerSavePort;
+import coffeeshout.room.domain.repository.PlayerSavePersistence;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
@@ -17,10 +17,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class PlayerSaveJpaAdapterTest extends ServiceTest {
+class PlayerSaveJpaPersistenceTest extends ServiceTest {
 
     @Autowired
-    private PlayerSavePort playerSavePort;
+    private PlayerSavePersistence playerSavePersistence;
 
     @Autowired
     private RoomJpaRepository roomJpaRepository;
@@ -42,7 +42,7 @@ class PlayerSaveJpaAdapterTest extends ServiceTest {
             );
 
             // when
-            playerSavePort.saveAll("ABCD", players);
+            playerSavePersistence.saveAll("ABCD", players);
 
             // then
             final List<PlayerEntity> saved = playerJpaRepository.findAllByRoomSession(room);
@@ -57,7 +57,7 @@ class PlayerSaveJpaAdapterTest extends ServiceTest {
             final Player 꾹이 = PlayerFixture.게스트꾹이();
 
             // when
-            playerSavePort.saveAll("ABCD", List.of(한스, 꾹이));
+            playerSavePersistence.saveAll("ABCD", List.of(한스, 꾹이));
 
             // then - MapStruct 매핑 결과 검증
             final List<PlayerEntity> saved = playerJpaRepository.findAllByRoomSession(room);
@@ -84,7 +84,7 @@ class PlayerSaveJpaAdapterTest extends ServiceTest {
             );
 
             // when
-            playerSavePort.saveAll("ABCD", players);
+            playerSavePersistence.saveAll("ABCD", players);
 
             // then
             final List<PlayerEntity> saved = playerJpaRepository.findAllByRoomSession(room);

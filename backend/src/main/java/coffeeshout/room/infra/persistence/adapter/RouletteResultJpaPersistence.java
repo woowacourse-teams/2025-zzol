@@ -2,7 +2,7 @@ package coffeeshout.room.infra.persistence.adapter;
 
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Winner;
-import coffeeshout.room.domain.repository.RouletteResultPort;
+import coffeeshout.room.domain.repository.RouletteResultPersistence;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RouletteResultJpaAdapter implements RouletteResultPort {
+public class RouletteResultJpaPersistence implements RouletteResultPersistence {
 
     private final RoomJpaRepository roomJpaRepository;
     private final PlayerJpaRepository playerJpaRepository;

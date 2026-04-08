@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.global.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.domain.repository.MiniGamePersistencePort;
+import coffeeshout.minigame.domain.repository.MiniGamePersistence;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.room.domain.RoomState;
@@ -16,10 +16,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class MiniGamePersistenceJpaAdapterTest extends ServiceTest {
+class MiniGameJpaPersistenceTest extends ServiceTest {
 
     @Autowired
-    private MiniGamePersistencePort miniGamePersistencePort;
+    private MiniGamePersistence miniGamePersistence;
 
     @Autowired
     private RoomJpaRepository roomJpaRepository;
@@ -36,7 +36,7 @@ class MiniGamePersistenceJpaAdapterTest extends ServiceTest {
             roomJpaRepository.save(new RoomEntity("ABCD"));
 
             // when
-            miniGamePersistencePort.saveGameStart("ABCD", MiniGameType.CARD_GAME);
+            miniGamePersistence.saveGameStart("ABCD", MiniGameType.CARD_GAME);
 
             // then
             final RoomEntity updatedRoom = roomJpaRepository
@@ -58,8 +58,8 @@ class MiniGamePersistenceJpaAdapterTest extends ServiceTest {
             roomJpaRepository.save(new RoomEntity("ABCD"));
 
             // when
-            miniGamePersistencePort.saveGameStart("ABCD", MiniGameType.CARD_GAME);
-            miniGamePersistencePort.saveGameStart("ABCD", MiniGameType.RACING_GAME);
+            miniGamePersistence.saveGameStart("ABCD", MiniGameType.CARD_GAME);
+            miniGamePersistence.saveGameStart("ABCD", MiniGameType.RACING_GAME);
 
             // then
             final RoomEntity room = roomJpaRepository

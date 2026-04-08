@@ -4,7 +4,7 @@ import coffeeshout.global.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.domain.repository.MiniGameResultSavePort;
+import coffeeshout.minigame.domain.repository.MiniGameResultSavePersistence;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Playable;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MiniGameResultSaveEventListener {
 
-    private final MiniGameResultSavePort miniGameResultSavePort;
+    private final MiniGameResultSavePersistence miniGameResultSavePersistence;
     private final RoomQueryService roomQueryService;
 
     @EventListener
@@ -43,7 +43,7 @@ public class MiniGameResultSaveEventListener {
         final MiniGameResult result = miniGame.getResult();
         final Map<Player, MiniGameScore> scores = miniGame.getScores();
 
-        miniGameResultSavePort.saveResults(event.joinCode(), miniGameType, room.getPlayers(), result, scores);
+        miniGameResultSavePersistence.saveResults(event.joinCode(), miniGameType, room.getPlayers(), result, scores);
 
         log.info("미니게임 결과 저장 완료: joinCode={}, miniGameType={}", event.joinCode(), miniGameType);
     }

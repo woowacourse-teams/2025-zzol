@@ -2,7 +2,7 @@ package coffeeshout.room.domain.repository;
 
 import coffeeshout.room.domain.player.Winner;
 
-public interface RouletteResultPort {
+public interface RouletteResultPersistence {
 
     void updateRoomStatusToRoulette(String joinCode);
 

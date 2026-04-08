@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Clock;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -54,23 +55,31 @@ public class ReportEntity {
         this.resolvedAt = Instant.now();
     }
 
-    public static ReportEntity create(
-            ReportCategory category,
-            MiniGameType gameType,
-            String joinCode,
-            String content
-    ) {
+    public static ReportEntity createBugReport(MiniGameType gameType, String joinCode, String content, Clock clock) {
+        return createBugReport(gameType, joinCode, content, Instant.now(clock));
+    }
+
+    public static ReportEntity createBugReport(MiniGameType gameType, String joinCode, String content, Instant createdAt) {
+        final ReportEntity entity = new ReportEntity();
+        entity.category = ReportCategory.BUG;
+        entity.gameType = gameType;
+        entity.joinCode = joinCode;
+        entity.content = content;
+        entity.status = ReportStatus.PENDING;
+        entity.createdAt = createdAt;
+        return entity;
+    }
+
+    public static ReportEntity createGeneralReport(ReportCategory category, String content, Clock clock) {
+        return createGeneralReport(category, content, Instant.now(clock));
+    }
+
+    public static ReportEntity createGeneralReport(ReportCategory category, String content, Instant createdAt) {
         final ReportEntity entity = new ReportEntity();
         entity.category = category;
         entity.content = content;
         entity.status = ReportStatus.PENDING;
-        entity.createdAt = Instant.now();
-
-        if (category == ReportCategory.BUG) {
-            entity.gameType = gameType;
-            entity.joinCode = joinCode;
-        }
-
+        entity.createdAt = createdAt;
         return entity;
     }
 }

@@ -9,7 +9,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ReportErrorCode implements ErrorCode {
 
-    REPORT_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "신고는 일정 시간 내 제한된 횟수만 제출할 수 있습니다.");
+    REPORT_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "신고는 일정 시간 내 제한된 횟수만 제출할 수 있습니다."),
+    INVALID_CLIENT_IP(HttpStatus.BAD_REQUEST, "클라이언트 IP를 확인할 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

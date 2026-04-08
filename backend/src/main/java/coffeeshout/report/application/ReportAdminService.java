@@ -5,8 +5,8 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportStatus;
-import coffeeshout.report.infra.persistence.ReportEntity;
 import coffeeshout.report.domain.repository.ReportRepository;
+import coffeeshout.report.infra.persistence.ReportEntity;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -41,6 +41,10 @@ public class ReportAdminService {
     public void resolve(Long id) {
         final ReportEntity report = reportRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "신고를 찾을 수 없습니다."));
+
+        if (report.getStatus() == ReportStatus.RESOLVED) {
+            return;
+        }
         report.resolve();
     }
 

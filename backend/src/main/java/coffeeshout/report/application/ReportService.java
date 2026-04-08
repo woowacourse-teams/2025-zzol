@@ -8,6 +8,7 @@ import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.exception.ReportErrorCode;
 import coffeeshout.report.infra.persistence.ReportEntity;
 import coffeeshout.report.domain.repository.ReportRepository;
+import java.time.Clock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -20,15 +21,20 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final ReportRateLimitStore rateLimitStore;
+    private final Clock clock;
 
     @Transactional
     public long submit(String ip, ReportCategory category, MiniGameType gameType, String joinCode, String content) {
+        if (ip == null || ip.isBlank()) {
+            throw new BusinessException(ReportErrorCode.INVALID_CLIENT_IP, ReportErrorCode.INVALID_CLIENT_IP.getMessage());
+        }
         if (!rateLimitStore.tryAcquire(ip)) {
             throw new BusinessException(ReportErrorCode.REPORT_RATE_LIMITED, ReportErrorCode.REPORT_RATE_LIMITED.getMessage());
         }
-        final ReportEntity saved = reportRepository.save(
-                ReportEntity.create(category, gameType, joinCode, content)
-        );
+        final ReportEntity entity = category == ReportCategory.BUG
+                ? ReportEntity.createBugReport(gameType, joinCode, content, clock)
+                : ReportEntity.createGeneralReport(category, content, clock);
+        final ReportEntity saved = reportRepository.save(entity);
         eventPublisher.publishEvent(
                 new ReportSubmittedEvent(
                         saved.getId(),

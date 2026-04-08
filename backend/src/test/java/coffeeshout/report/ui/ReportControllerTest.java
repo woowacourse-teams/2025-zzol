@@ -1,17 +1,22 @@
 package coffeeshout.report.ui;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.global.ratelimit.ReportRateLimitStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureMockMvc
@@ -23,6 +28,14 @@ class ReportControllerTest extends IntegrationTestSupport {
 
     @Autowired
     ObjectMapper objectMapper;
+
+    @MockitoBean
+    ReportRateLimitStore rateLimitStore;
+
+    @BeforeEach
+    void setUp() {
+        when(rateLimitStore.tryAcquire(any())).thenReturn(true);
+    }
 
     @Nested
     @DisplayName("POST /reports")
@@ -117,6 +130,21 @@ class ReportControllerTest extends IntegrationTestSupport {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(body)))
                     .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void 레이트_리밋_초과_시_429를_반환한다() throws Exception {
+            when(rateLimitStore.tryAcquire(any())).thenReturn(false);
+
+            final Map<String, Object> body = Map.of(
+                    "category", "SUGGESTION",
+                    "content", "건의합니다."
+            );
+
+            mockMvc.perform(post("/reports")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(body)))
+                    .andExpect(status().isTooManyRequests());
         }
     }
 }

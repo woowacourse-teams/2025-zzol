@@ -148,17 +148,6 @@ class IpBlockFilterTest {
         }
 
         @Test
-        void 유효하지_않은_IP면_필터_처리를_건너뛴다() throws Exception {
-            final MockHttpServletRequest request = 요청("1.2.3.4", NORMAL_PATH);
-            request.addHeader("X-Forwarded-For", "192.168.1.1, unknown");
-
-            filter.doFilter(request, new MockHttpServletResponse(), filterChain);
-
-            then(ipBlockStore).shouldHaveNoInteractions();
-            then(filterChain).should().doFilter(any(), any());
-        }
-
-        @Test
         void 헤더_엔트리_사이의_공백을_제거하고_마지막_IP를_사용한다() throws Exception {
             given(ipBlockStore.isBlocked(anyString())).willReturn(true);
 

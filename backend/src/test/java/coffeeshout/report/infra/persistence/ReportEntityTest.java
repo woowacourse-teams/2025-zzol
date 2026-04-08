@@ -5,36 +5,37 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class ReportEntityTest {
 
+    private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2025-01-01T00:00:00Z"), ZoneOffset.UTC);
+
     @Nested
-    @DisplayName("BUG 카테고리 생성")
-    class BugCategory {
+    @DisplayName("createBugReport")
+    class CreateBugReport {
 
         @Test
         void gameType과_joinCode가_그대로_저장된다() {
-            final ReportEntity entity = ReportEntity.create(
-                    ReportCategory.BUG, MiniGameType.CARD_GAME, "ABC12", "카드게임이 멈춰요."
-            );
+            final ReportEntity entity = ReportEntity.createBugReport(MiniGameType.CARD_GAME, "ABC12", "카드게임이 멈춰요.", FIXED_CLOCK);
 
             assertSoftly(softly -> {
                 softly.assertThat(entity.getCategory()).isEqualTo(ReportCategory.BUG);
                 softly.assertThat(entity.getGameType()).isEqualTo(MiniGameType.CARD_GAME);
                 softly.assertThat(entity.getJoinCode()).isEqualTo("ABC12");
                 softly.assertThat(entity.getContent()).isEqualTo("카드게임이 멈춰요.");
-                softly.assertThat(entity.getCreatedAt()).isNotNull();
+                softly.assertThat(entity.getCreatedAt()).isEqualTo(Instant.now(FIXED_CLOCK));
             });
         }
 
         @Test
         void gameType과_joinCode가_null이어도_정상_생성된다() {
-            final ReportEntity entity = ReportEntity.create(
-                    ReportCategory.BUG, null, null, "게임 외 버그입니다."
-            );
+            final ReportEntity entity = ReportEntity.createBugReport(null, null, "게임 외 버그입니다.", FIXED_CLOCK);
 
             assertSoftly(softly -> {
                 softly.assertThat(entity.getCategory()).isEqualTo(ReportCategory.BUG);
@@ -45,41 +46,38 @@ class ReportEntityTest {
     }
 
     @Nested
-    @DisplayName("BUG 외 카테고리 생성")
-    class NonBugCategory {
+    @DisplayName("createGeneralReport")
+    class CreateGeneralReport {
 
         @Test
-        void SUGGESTION_카테고리는_gameType과_joinCode를_null로_저장한다() {
-            final ReportEntity entity = ReportEntity.create(
-                    ReportCategory.SUGGESTION, MiniGameType.CARD_GAME, "ABC12", "건의합니다."
-            );
+        void SUGGESTION_카테고리와_content가_저장된다() {
+            final ReportEntity entity = ReportEntity.createGeneralReport(ReportCategory.SUGGESTION, "건의합니다.", FIXED_CLOCK);
 
             assertSoftly(softly -> {
                 softly.assertThat(entity.getCategory()).isEqualTo(ReportCategory.SUGGESTION);
                 softly.assertThat(entity.getGameType()).isNull();
                 softly.assertThat(entity.getJoinCode()).isNull();
+                softly.assertThat(entity.getContent()).isEqualTo("건의합니다.");
             });
         }
 
         @Test
-        void GAME_REQUEST_카테고리는_gameType과_joinCode를_null로_저장한다() {
-            final ReportEntity entity = ReportEntity.create(
-                    ReportCategory.GAME_REQUEST, MiniGameType.RACING_GAME, "XYZ99", "새 게임 요청합니다."
-            );
+        void GAME_REQUEST_카테고리와_content가_저장된다() {
+            final ReportEntity entity = ReportEntity.createGeneralReport(ReportCategory.GAME_REQUEST, "새 게임 요청합니다.", FIXED_CLOCK);
 
             assertSoftly(softly -> {
+                softly.assertThat(entity.getCategory()).isEqualTo(ReportCategory.GAME_REQUEST);
                 softly.assertThat(entity.getGameType()).isNull();
                 softly.assertThat(entity.getJoinCode()).isNull();
             });
         }
 
         @Test
-        void OTHER_카테고리는_gameType과_joinCode를_null로_저장한다() {
-            final ReportEntity entity = ReportEntity.create(
-                    ReportCategory.OTHER, MiniGameType.SPEED_TOUCH, "ZZZ11", "기타 내용입니다."
-            );
+        void OTHER_카테고리와_content가_저장된다() {
+            final ReportEntity entity = ReportEntity.createGeneralReport(ReportCategory.OTHER, "기타 내용입니다.", FIXED_CLOCK);
 
             assertSoftly(softly -> {
+                softly.assertThat(entity.getCategory()).isEqualTo(ReportCategory.OTHER);
                 softly.assertThat(entity.getGameType()).isNull();
                 softly.assertThat(entity.getJoinCode()).isNull();
             });
@@ -94,20 +92,16 @@ class ReportEntityTest {
         void content는_입력값_그대로_저장된다() {
             final String content = "테스트 내용입니다.";
 
-            final ReportEntity entity = ReportEntity.create(
-                    ReportCategory.SUGGESTION, null, null, content
-            );
+            final ReportEntity entity = ReportEntity.createGeneralReport(ReportCategory.SUGGESTION, content, FIXED_CLOCK);
 
             assertThat(entity.getContent()).isEqualTo(content);
         }
 
         @Test
-        void createdAt은_null이_아니다() {
-            final ReportEntity entity = ReportEntity.create(
-                    ReportCategory.SUGGESTION, null, null, "내용"
-            );
+        void createdAt은_Clock이_반환하는_시각으로_설정된다() {
+            final ReportEntity entity = ReportEntity.createGeneralReport(ReportCategory.SUGGESTION, "내용", FIXED_CLOCK);
 
-            assertThat(entity.getCreatedAt()).isNotNull();
+            assertThat(entity.getCreatedAt()).isEqualTo(Instant.now(FIXED_CLOCK));
         }
     }
 }

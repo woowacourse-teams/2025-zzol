@@ -13,6 +13,9 @@ class ReportRateLimitStoreTest extends ServiceTest {
     @Autowired
     private ReportRateLimitStore rateLimitStore;
 
+    @Autowired
+    private ReportRateLimitProperties rateLimitProperties;
+
     private static final String TEST_IP = "1.2.3.4";
     private static final String ANOTHER_IP = "5.6.7.8";
 
@@ -22,14 +25,14 @@ class ReportRateLimitStoreTest extends ServiceTest {
 
         @Test
         void 임계값_이내_요청은_토큰을_획득한다() {
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < rateLimitProperties.rate(); i++) {
                 assertThat(rateLimitStore.tryAcquire(TEST_IP)).isTrue();
             }
         }
 
         @Test
         void 임계값_초과_요청은_토큰_획득에_실패한다() {
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < rateLimitProperties.rate(); i++) {
                 rateLimitStore.tryAcquire(TEST_IP);
             }
 
@@ -38,7 +41,7 @@ class ReportRateLimitStoreTest extends ServiceTest {
 
         @Test
         void 다른_IP는_카운트가_별도로_관리된다() {
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < rateLimitProperties.rate(); i++) {
                 rateLimitStore.tryAcquire(TEST_IP);
             }
 

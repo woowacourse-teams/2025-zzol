@@ -44,7 +44,7 @@ tbody tr:hover td:first-child {
 .content-cell {
   max-width: 320px;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: break-word;
   line-height: 1.5;
   color: var(--text-secondary);
 }

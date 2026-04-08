@@ -4,9 +4,9 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RRateLimiter;
-import org.redisson.api.RateIntervalUnit;
 import org.redisson.api.RateType;
 import org.redisson.api.RedissonClient;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,14 +24,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@EnableConfigurationProperties(ReportRateLimitProperties.class)
 public class ReportRateLimitStore {
 
     private static final String KEY_PREFIX = "report:submit:";
-    private static final long RATE = 5;
-    private static final long RATE_INTERVAL = 1;
-    private static final RateIntervalUnit RATE_INTERVAL_UNIT = RateIntervalUnit.HOURS;
 
     private final RedissonClient redissonClient;
+    private final ReportRateLimitProperties properties;
 
     /**
      * 토큰을 획득 시도한다. 한도 초과 시 {@code false}를 반환한다.
@@ -41,7 +40,7 @@ public class ReportRateLimitStore {
     @CircuitBreaker(name = "reportRateLimiter", fallbackMethod = "tryAcquireFallback")
     public boolean tryAcquire(String ip) {
         final RRateLimiter rateLimiter = redissonClient.getRateLimiter(KEY_PREFIX + ip);
-        rateLimiter.trySetRate(RateType.OVERALL, RATE, RATE_INTERVAL, RATE_INTERVAL_UNIT);
+        rateLimiter.trySetRate(RateType.OVERALL, properties.rate(), properties.rateInterval(), properties.rateIntervalUnit());
         return rateLimiter.tryAcquire();
     }
 

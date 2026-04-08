@@ -5,10 +5,12 @@ import coffeeshout.report.application.ReportAdminService;
 import coffeeshout.report.application.ReportAdminService.ReportRow;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportStatus;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/admin/reports")
+@Validated
 @RequiredArgsConstructor
 public class ReportAdminController {
 
@@ -27,7 +30,7 @@ public class ReportAdminController {
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = false) ReportCategory category,
             @RequestParam(required = false) MiniGameType gameType,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
             Model model
     ) {
         final Page<ReportRow> reports = reportAdminService.list(status, category, gameType, page);

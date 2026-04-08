@@ -31,7 +31,7 @@ public class ReportRepositoryImpl implements ReportAdminQueryRepository {
         final List<ReportEntity> content = queryFactory
                 .selectFrom(REPORT)
                 .where(statusEq(status), categoryEq(category), gameTypeEq(gameType))
-                .orderBy(REPORT.createdAt.desc())
+                .orderBy(REPORT.createdAt.desc(), REPORT.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

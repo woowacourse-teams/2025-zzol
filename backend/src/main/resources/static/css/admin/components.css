@@ -43,7 +43,7 @@
 .badge-pending       { background: var(--amber-bg);  color: var(--amber-text); }
 .badge-resolved      { background: var(--green-bg);  color: var(--green-text); }
 .badge-pending-status { background: var(--amber-bg); color: var(--amber-text); }
-.badge-auto-blocked  { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; }
+.badge-auto-blocked  { background: var(--red-bg); color: var(--red-text-dark); border: 1px solid var(--red-border); }
 
 /* ── Tags ── */
 .tag {

@@ -2,6 +2,8 @@ package coffeeshout.report.application;
 
 import coffeeshout.report.application.event.ReportSubmittedEvent;
 import coffeeshout.report.config.SlackProperties;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,24 +50,26 @@ public class SlackNotifier {
     }
 
     private Map<String, Object> buildMessage(ReportSubmittedEvent event) {
-        final String categoryLabel = event.category().label;
+        final List<Map<String, Object>> fields = new ArrayList<>();
+        fields.add(mrkdwnField("*카테고리*", event.category().label));
+        if (event.gameType() != null) {
+            fields.add(mrkdwnField("*게임*", event.gameType().label));
+        }
+        if (event.joinCode() != null) {
+            fields.add(mrkdwnField("*방코드*", "`" + event.joinCode() + "`"));
+        }
 
-        final String gameInfo = event.gameType() != null
-                ? String.format(" | 게임: `%s`", event.gameType().label)
-                : "";
-        final String joinCodeInfo = event.joinCode() != null
-                ? String.format(" | 방코드: `%s`", event.joinCode())
-                : "";
+        return Map.of("blocks", List.of(
+                Map.of("type", "header",
+                        "text", Map.of("type", "plain_text", "text", "📋 신고 접수 #" + event.reportId())),
+                Map.of("type", "section", "fields", fields),
+                Map.of("type", "section",
+                        "text", Map.of("type", "plain_text", "text", event.content())),
+                Map.of("type", "divider")
+        ));
+    }
 
-        final String text = String.format(
-                "*[신고 #%d]* `%s`%s%s\n>%s",
-                event.reportId(),
-                categoryLabel,
-                gameInfo,
-                joinCodeInfo,
-                event.content()
-        );
-
-        return Map.of("text", text);
+    private Map<String, Object> mrkdwnField(String title, String value) {
+        return Map.of("type", "mrkdwn", "text", title + "\n" + value);
     }
 }

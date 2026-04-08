@@ -127,6 +127,12 @@ admin:
   username: ${ADMIN_USERNAME}
   password: ${ADMIN_PASSWORD}
 
+report:
+  rate-limit:
+    rate: 5
+    rate-interval: 1
+    rate-interval-unit: HOURS
+
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL:}
   connect-timeout: 3s

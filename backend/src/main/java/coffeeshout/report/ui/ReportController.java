@@ -5,12 +5,14 @@ import coffeeshout.report.application.ReportService;
 import coffeeshout.report.ui.request.CreateReportRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/reports")
@@ -22,7 +24,8 @@ public class ReportController implements ReportApi {
     @PostMapping
     public ResponseEntity<Void> submit(@Valid @RequestBody CreateReportRequest request, HttpServletRequest httpRequest) {
         final String ip = ClientIpExtractor.extract(httpRequest);
-        reportService.submit(ip, request.category(), request.gameType(), request.joinCode(), request.content());
-        return ResponseEntity.status(201).build();
+        final long id = reportService.submit(ip, request.category(), request.gameType(), request.joinCode(), request.content());
+        final URI location = UriComponentsBuilder.fromPath("/reports/{id}").buildAndExpand(id).toUri();
+        return ResponseEntity.created(location).build();
     }
 }

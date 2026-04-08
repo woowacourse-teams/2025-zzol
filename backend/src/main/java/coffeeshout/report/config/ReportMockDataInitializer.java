@@ -4,7 +4,7 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.infra.persistence.ReportEntity;
 import coffeeshout.report.domain.repository.ReportRepository;
-import java.lang.reflect.Field;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReportMockDataInitializer implements ApplicationRunner {
 
     private final ReportRepository reportRepository;
+    private final Clock clock;
 
     @Override
     @Transactional
@@ -44,7 +45,7 @@ public class ReportMockDataInitializer implements ApplicationRunner {
 
     private List<ReportEntity> buildMockData() {
         final List<ReportEntity> list = new ArrayList<>();
-        final Instant base = Instant.now();
+        final Instant base = Instant.now(clock);
 
         // 1. BUG — 카드게임 (15건)
         list.add(bug(MiniGameType.CARD_GAME, "ABC12", "카드게임 시작 후 5초 만에 앱이 강제 종료됩니다.", base, 0));
@@ -115,36 +116,18 @@ public class ReportMockDataInitializer implements ApplicationRunner {
     }
 
     private ReportEntity bug(MiniGameType gameType, String joinCode, String content, Instant base, int offsetHours) {
-        ReportEntity e = ReportEntity.create(ReportCategory.BUG, gameType, joinCode, content);
-        setCreatedAt(e, base.minus(offsetHours, ChronoUnit.HOURS));
-        return e;
+        return ReportEntity.createBugReport(gameType, joinCode, content, base.minus(offsetHours, ChronoUnit.HOURS));
     }
 
     private ReportEntity suggestion(String content, Instant base, int offsetHours) {
-        ReportEntity e = ReportEntity.create(ReportCategory.SUGGESTION, null, null, content);
-        setCreatedAt(e, base.minus(offsetHours, ChronoUnit.HOURS));
-        return e;
+        return ReportEntity.createGeneralReport(ReportCategory.SUGGESTION, content, base.minus(offsetHours, ChronoUnit.HOURS));
     }
 
     private ReportEntity gameRequest(String content, Instant base, int offsetHours) {
-        ReportEntity e = ReportEntity.create(ReportCategory.GAME_REQUEST, null, null, content);
-        setCreatedAt(e, base.minus(offsetHours, ChronoUnit.HOURS));
-        return e;
+        return ReportEntity.createGeneralReport(ReportCategory.GAME_REQUEST, content, base.minus(offsetHours, ChronoUnit.HOURS));
     }
 
     private ReportEntity other(String content, Instant base, int offsetHours) {
-        ReportEntity e = ReportEntity.create(ReportCategory.OTHER, null, null, content);
-        setCreatedAt(e, base.minus(offsetHours, ChronoUnit.HOURS));
-        return e;
-    }
-
-    private void setCreatedAt(ReportEntity entity, Instant instant) {
-        try {
-            Field field = ReportEntity.class.getDeclaredField("createdAt");
-            field.setAccessible(true);
-            field.set(entity, instant);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new IllegalStateException("ReportEntity.createdAt 필드 접근 실패", e);
-        }
+        return ReportEntity.createGeneralReport(ReportCategory.OTHER, content, base.minus(offsetHours, ChronoUnit.HOURS));
     }
 }

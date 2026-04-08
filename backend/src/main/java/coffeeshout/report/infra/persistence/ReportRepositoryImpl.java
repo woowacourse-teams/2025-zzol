@@ -3,7 +3,6 @@ package coffeeshout.report.infra.persistence;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportStatus;
-import coffeeshout.report.domain.repository.ReportAdminQueryRepository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -17,18 +16,18 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class ReportRepositoryImpl implements ReportAdminQueryRepository {
 
-    private static final QReportEntity REPORT = QReportEntity.reportEntity;
+    private static final QReport REPORT = QReport.report;
 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<ReportEntity> findWithFilters(
+    public Page<Report> findWithFilters(
             ReportStatus status,
             ReportCategory category,
             MiniGameType gameType,
             Pageable pageable
     ) {
-        final List<ReportEntity> content = queryFactory
+        final List<Report> content = queryFactory
                 .selectFrom(REPORT)
                 .where(statusEq(status), categoryEq(category), gameTypeEq(gameType))
                 .orderBy(REPORT.createdAt.desc(), REPORT.id.desc())

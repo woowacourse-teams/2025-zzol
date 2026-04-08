@@ -1,6 +1,9 @@
 package coffeeshout.global.ratelimit;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RRateLimiter;
@@ -31,6 +34,16 @@ public class ReportRateLimitStore {
 
     private final RedissonClient redissonClient;
     private final ReportRateLimitProperties properties;
+    private final MeterRegistry meterRegistry;
+
+    private Counter droppedCounter;
+
+    @PostConstruct
+    private void initMetrics() {
+        droppedCounter = Counter.builder("report.ratelimit.dropped.total")
+                .description("신고 Rate Limit에 의해 거절된 요청 수")
+                .register(meterRegistry);
+    }
 
     /**
      * 토큰을 획득 시도한다. 한도 초과 시 {@code false}를 반환한다.
@@ -41,7 +54,11 @@ public class ReportRateLimitStore {
     public boolean tryAcquire(String ip) {
         final RRateLimiter rateLimiter = redissonClient.getRateLimiter(KEY_PREFIX + ip);
         rateLimiter.trySetRate(RateType.OVERALL, properties.rate(), properties.rateInterval(), properties.rateIntervalUnit());
-        return rateLimiter.tryAcquire();
+        boolean acquired = rateLimiter.tryAcquire();
+        if (!acquired) {
+            droppedCounter.increment();
+        }
+        return acquired;
     }
 
     private boolean tryAcquireFallback(String ip, Throwable t) {

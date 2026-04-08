@@ -3,6 +3,7 @@ package coffeeshout.global.ratelimit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.global.ServiceTest;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,9 @@ class ReportRateLimitStoreTest extends ServiceTest {
 
     @Autowired
     private ReportRateLimitProperties rateLimitProperties;
+
+    @Autowired
+    private MeterRegistry meterRegistry;
 
     private static final String TEST_IP = "1.2.3.4";
     private static final String ANOTHER_IP = "5.6.7.8";
@@ -46,6 +50,36 @@ class ReportRateLimitStoreTest extends ServiceTest {
             }
 
             assertThat(rateLimitStore.tryAcquire(ANOTHER_IP)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("메트릭")
+    class 메트릭 {
+
+        @Test
+        void Rate_Limit_초과_시_dropped_카운터가_증가한다() {
+            String ip = "10.0.0.1";
+            for (int i = 0; i < rateLimitProperties.rate(); i++) {
+                rateLimitStore.tryAcquire(ip);
+            }
+            double before = meterRegistry.find("report.ratelimit.dropped.total").counter().count();
+
+            rateLimitStore.tryAcquire(ip);
+
+            assertThat(meterRegistry.find("report.ratelimit.dropped.total").counter().count() - before)
+                    .isEqualTo(1.0);
+        }
+
+        @Test
+        void Rate_Limit_이내에서는_dropped_카운터가_증가하지_않는다() {
+            String ip = "10.0.0.2";
+            double before = meterRegistry.find("report.ratelimit.dropped.total").counter().count();
+
+            rateLimitStore.tryAcquire(ip);
+
+            assertThat(meterRegistry.find("report.ratelimit.dropped.total").counter().count() - before)
+                    .isEqualTo(0.0);
         }
     }
 }

@@ -1,13 +1,10 @@
 package coffeeshout.report.application;
 
-import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.ratelimit.ReportRateLimitStore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.application.event.ReportSubmittedEvent;
+import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;
-import coffeeshout.report.exception.ReportErrorCode;
-import coffeeshout.report.infra.persistence.ReportEntity;
-import coffeeshout.report.domain.repository.ReportRepository;
+import coffeeshout.report.infra.persistence.ReportRepository;
 import java.time.Clock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -20,21 +17,14 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final ReportRateLimitStore rateLimitStore;
     private final Clock clock;
 
     @Transactional
-    public long submit(String ip, ReportCategory category, MiniGameType gameType, String joinCode, String content) {
-        if (ip == null || ip.isBlank()) {
-            throw new BusinessException(ReportErrorCode.INVALID_CLIENT_IP, ReportErrorCode.INVALID_CLIENT_IP.getMessage());
-        }
-        final ReportEntity entity = category == ReportCategory.BUG
-                ? ReportEntity.createBugReport(gameType, joinCode, content, clock)
-                : ReportEntity.createGeneralReport(category, content, clock);
-        if (!rateLimitStore.tryAcquire(ip)) {
-            throw new BusinessException(ReportErrorCode.REPORT_RATE_LIMITED, ReportErrorCode.REPORT_RATE_LIMITED.getMessage());
-        }
-        final ReportEntity saved = reportRepository.save(entity);
+    public long submit(ReportCategory category, MiniGameType gameType, String joinCode, String content) {
+        final Report entity = category == ReportCategory.BUG
+                ? Report.createBugReport(gameType, joinCode, content, clock)
+                : Report.createGeneralReport(category, content, clock);
+        final Report saved = reportRepository.save(entity);
         eventPublisher.publishEvent(
                 new ReportSubmittedEvent(
                         saved.getId(),

@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "report")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ReportEntity {
+public class Report {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,12 +55,12 @@ public class ReportEntity {
         this.resolvedAt = Instant.now();
     }
 
-    public static ReportEntity createBugReport(MiniGameType gameType, String joinCode, String content, Clock clock) {
+    public static Report createBugReport(MiniGameType gameType, String joinCode, String content, Clock clock) {
         return createBugReport(gameType, joinCode, content, Instant.now(clock));
     }
 
-    public static ReportEntity createBugReport(MiniGameType gameType, String joinCode, String content, Instant createdAt) {
-        final ReportEntity entity = new ReportEntity();
+    public static Report createBugReport(MiniGameType gameType, String joinCode, String content, Instant createdAt) {
+        final Report entity = new Report();
         entity.category = ReportCategory.BUG;
         entity.gameType = gameType;
         entity.joinCode = joinCode;
@@ -70,12 +70,12 @@ public class ReportEntity {
         return entity;
     }
 
-    public static ReportEntity createGeneralReport(ReportCategory category, String content, Clock clock) {
+    public static Report createGeneralReport(ReportCategory category, String content, Clock clock) {
         return createGeneralReport(category, content, Instant.now(clock));
     }
 
-    public static ReportEntity createGeneralReport(ReportCategory category, String content, Instant createdAt) {
-        final ReportEntity entity = new ReportEntity();
+    public static Report createGeneralReport(ReportCategory category, String content, Instant createdAt) {
+        final Report entity = new Report();
         entity.category = category;
         entity.content = content;
         entity.status = ReportStatus.PENDING;

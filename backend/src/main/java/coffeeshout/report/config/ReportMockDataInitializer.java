@@ -1,9 +1,9 @@
 package coffeeshout.report.config;
 
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;
-import coffeeshout.report.infra.persistence.ReportEntity;
-import coffeeshout.report.domain.repository.ReportRepository;
+import coffeeshout.report.infra.persistence.ReportRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -38,13 +38,13 @@ public class ReportMockDataInitializer implements ApplicationRunner {
             return;
         }
 
-        final List<ReportEntity> entities = buildMockData();
+        final List<Report> entities = buildMockData();
         reportRepository.saveAll(entities);
         log.info("[ReportMockDataInitializer] mock 신고 데이터 {}건 삽입 완료", entities.size());
     }
 
-    private List<ReportEntity> buildMockData() {
-        final List<ReportEntity> list = new ArrayList<>();
+    private List<Report> buildMockData() {
+        final List<Report> list = new ArrayList<>();
         final Instant base = Instant.now(clock);
 
         // 1. BUG — 카드게임 (15건)
@@ -88,15 +88,15 @@ public class ReportMockDataInitializer implements ApplicationRunner {
         list.add(gameRequest("사다리타기 게임을 추가해주세요.", base, 33));
         list.add(gameRequest("스피드 퀴즈 기능이 필요합니다.", base, 34));
 
-        ReportEntity resolved1 = bug(MiniGameType.CARD_GAME, "RSV01", "(처리 완료) 카드게임 로딩 버그 — 패치됨.", base, 35);
+        Report resolved1 = bug(MiniGameType.CARD_GAME, "RSV01", "(처리 완료) 카드게임 로딩 버그 — 패치됨.", base, 35);
         resolved1.resolve();
         list.add(resolved1);
 
-        ReportEntity resolved2 = suggestion("(처리 완료) 다크모드 — 다음 업데이트에 반영 예정.", base, 36);
+        Report resolved2 = suggestion("(처리 완료) 다크모드 — 다음 업데이트에 반영 예정.", base, 36);
         resolved2.resolve();
         list.add(resolved2);
 
-        ReportEntity resolved3 = gameRequest("(처리 완료) 블록 쌓기 게임 추가 완료.", base, 37);
+        Report resolved3 = gameRequest("(처리 완료) 블록 쌓기 게임 추가 완료.", base, 37);
         resolved3.resolve();
         list.add(resolved3);
 
@@ -106,7 +106,7 @@ public class ReportMockDataInitializer implements ApplicationRunner {
         list.add(other("광고 문의는 어디로 하나요?", base, 41));
         list.add(other("피드백 감사합니다. 계속 발전해주세요!", base, 42));
 
-        ReportEntity resolved4 = other("(처리 완료) 이용약관 링크 수정 완료.", base, 43);
+        Report resolved4 = other("(처리 완료) 이용약관 링크 수정 완료.", base, 43);
         resolved4.resolve();
         list.add(resolved4);
 
@@ -115,19 +115,19 @@ public class ReportMockDataInitializer implements ApplicationRunner {
         return list;
     }
 
-    private ReportEntity bug(MiniGameType gameType, String joinCode, String content, Instant base, int offsetHours) {
-        return ReportEntity.createBugReport(gameType, joinCode, content, base.minus(offsetHours, ChronoUnit.HOURS));
+    private Report bug(MiniGameType gameType, String joinCode, String content, Instant base, int offsetHours) {
+        return Report.createBugReport(gameType, joinCode, content, base.minus(offsetHours, ChronoUnit.HOURS));
     }
 
-    private ReportEntity suggestion(String content, Instant base, int offsetHours) {
-        return ReportEntity.createGeneralReport(ReportCategory.SUGGESTION, content, base.minus(offsetHours, ChronoUnit.HOURS));
+    private Report suggestion(String content, Instant base, int offsetHours) {
+        return Report.createGeneralReport(ReportCategory.SUGGESTION, content, base.minus(offsetHours, ChronoUnit.HOURS));
     }
 
-    private ReportEntity gameRequest(String content, Instant base, int offsetHours) {
-        return ReportEntity.createGeneralReport(ReportCategory.GAME_REQUEST, content, base.minus(offsetHours, ChronoUnit.HOURS));
+    private Report gameRequest(String content, Instant base, int offsetHours) {
+        return Report.createGeneralReport(ReportCategory.GAME_REQUEST, content, base.minus(offsetHours, ChronoUnit.HOURS));
     }
 
-    private ReportEntity other(String content, Instant base, int offsetHours) {
-        return ReportEntity.createGeneralReport(ReportCategory.OTHER, content, base.minus(offsetHours, ChronoUnit.HOURS));
+    private Report other(String content, Instant base, int offsetHours) {
+        return Report.createGeneralReport(ReportCategory.OTHER, content, base.minus(offsetHours, ChronoUnit.HOURS));
     }
 }

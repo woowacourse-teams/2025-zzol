@@ -3,10 +3,10 @@ package coffeeshout.report.application;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportStatus;
-import coffeeshout.report.domain.repository.ReportRepository;
-import coffeeshout.report.infra.persistence.ReportEntity;
+import coffeeshout.report.infra.persistence.ReportRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -39,7 +39,7 @@ public class ReportAdminService {
 
     @Transactional
     public void resolve(Long id) {
-        final ReportEntity report = reportRepository.findById(id)
+        final Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "신고를 찾을 수 없습니다."));
 
         if (report.getStatus() == ReportStatus.RESOLVED) {
@@ -48,7 +48,7 @@ public class ReportAdminService {
         report.resolve();
     }
 
-    private ReportRow toRow(ReportEntity e) {
+    private ReportRow toRow(Report e) {
         return new ReportRow(
                 e.getId(),
                 e.getCategory(),

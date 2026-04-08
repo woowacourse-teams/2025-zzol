@@ -2,6 +2,7 @@ package coffeeshout.global.ratelimit;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.time.Duration;
 import org.redisson.api.RateIntervalUnit;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -11,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 public record ReportRateLimitProperties(
         @Positive long rate,
         @Positive long rateInterval,
-        @NotNull RateIntervalUnit rateIntervalUnit
+        @NotNull RateIntervalUnit rateIntervalUnit,
+        @NotNull Duration ttl
 ) {
 }

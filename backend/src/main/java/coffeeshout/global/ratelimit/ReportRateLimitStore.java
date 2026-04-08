@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>Redis Key 설계:
  * <ul>
- *   <li>{@code report:submit:{ip}} — RRateLimiter 메타 키 (Redisson 내부 관리)</li>
+ *   <li>{@code report:submit:{ip}} — RRateLimiter 메타 키 (Redisson 내부 관리), TTL: {@code report.rate-limit.ttl}</li>
  * </ul>
  *
  * <p>Redis 장애 시 서킷 브레이커가 열리며 fail-open으로 처리한다.
@@ -53,7 +53,10 @@ public class ReportRateLimitStore {
     @CircuitBreaker(name = "reportRateLimiter", fallbackMethod = "tryAcquireFallback")
     public boolean tryAcquire(String ip) {
         final RRateLimiter rateLimiter = redissonClient.getRateLimiter(KEY_PREFIX + ip);
-        rateLimiter.trySetRate(RateType.OVERALL, properties.rate(), properties.rateInterval(), properties.rateIntervalUnit());
+        boolean isNew = rateLimiter.trySetRate(RateType.OVERALL, properties.rate(), properties.rateInterval(), properties.rateIntervalUnit());
+        if (isNew) {
+            rateLimiter.expire(properties.ttl());
+        }
         boolean acquired = rateLimiter.tryAcquire();
         if (!acquired) {
             droppedCounter.increment();

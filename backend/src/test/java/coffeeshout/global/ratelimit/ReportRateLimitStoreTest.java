@@ -1,12 +1,15 @@
 package coffeeshout.global.ratelimit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import coffeeshout.global.ServiceTest;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.time.Duration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class ReportRateLimitStoreTest extends ServiceTest {
@@ -20,6 +23,10 @@ class ReportRateLimitStoreTest extends ServiceTest {
     @Autowired
     private MeterRegistry meterRegistry;
 
+    @Autowired
+    private RedissonClient redissonClient;
+
+    private static final String KEY_PREFIX = "report:submit:";
     private static final String TEST_IP = "1.2.3.4";
     private static final String ANOTHER_IP = "5.6.7.8";
 
@@ -80,6 +87,32 @@ class ReportRateLimitStoreTest extends ServiceTest {
 
             assertThat(meterRegistry.find("report.ratelimit.dropped.total").counter().count() - before)
                     .isEqualTo(0.0);
+        }
+    }
+
+    @Nested
+    @DisplayName("TTL")
+    class TTL {
+
+        @Test
+        void 신규_RateLimiter_생성_시_TTL이_설정된다() {
+            String ip = "172.16.0.1";
+            rateLimitStore.tryAcquire(ip);
+
+            long remainTimeToLive = redissonClient.getRateLimiter(KEY_PREFIX + ip).remainTimeToLive();
+            assertThat(remainTimeToLive).isGreaterThan(0);
+        }
+
+        @Test
+        void TTL_만료_후_Rate_Limit이_초기화된다() {
+            String ip = "172.16.0.2";
+            for (int i = 0; i < rateLimitProperties.rate(); i++) {
+                rateLimitStore.tryAcquire(ip);
+            }
+            assertThat(rateLimitStore.tryAcquire(ip)).isFalse();
+
+            await().atMost(Duration.ofSeconds(3))
+                    .until(() -> rateLimitStore.tryAcquire(ip));
         }
     }
 }

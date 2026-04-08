@@ -132,6 +132,7 @@ report:
     rate: 5
     rate-interval: 1
     rate-interval-unit: HOURS
+    ttl: 1h
 
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL:}

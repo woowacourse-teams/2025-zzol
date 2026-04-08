@@ -28,12 +28,12 @@ public class ReportService {
         if (ip == null || ip.isBlank()) {
             throw new BusinessException(ReportErrorCode.INVALID_CLIENT_IP, ReportErrorCode.INVALID_CLIENT_IP.getMessage());
         }
-        if (!rateLimitStore.tryAcquire(ip)) {
-            throw new BusinessException(ReportErrorCode.REPORT_RATE_LIMITED, ReportErrorCode.REPORT_RATE_LIMITED.getMessage());
-        }
         final ReportEntity entity = category == ReportCategory.BUG
                 ? ReportEntity.createBugReport(gameType, joinCode, content, clock)
                 : ReportEntity.createGeneralReport(category, content, clock);
+        if (!rateLimitStore.tryAcquire(ip)) {
+            throw new BusinessException(ReportErrorCode.REPORT_RATE_LIMITED, ReportErrorCode.REPORT_RATE_LIMITED.getMessage());
+        }
         final ReportEntity saved = reportRepository.save(entity);
         eventPublisher.publishEvent(
                 new ReportSubmittedEvent(

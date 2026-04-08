@@ -1,18 +1,16 @@
 package coffeeshout.global.ratelimit;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import org.redisson.api.RateIntervalUnit;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @ConfigurationProperties(prefix = "report.rate-limit")
 public record ReportRateLimitProperties(
-        long rate,
-        long rateInterval,
-        RateIntervalUnit rateIntervalUnit
+        @Positive long rate,
+        @Positive long rateInterval,
+        @NotNull RateIntervalUnit rateIntervalUnit
 ) {
-
-    public ReportRateLimitProperties {
-        if (rate <= 0) rate = 5;
-        if (rateInterval <= 0) rateInterval = 1;
-        if (rateIntervalUnit == null) rateIntervalUnit = RateIntervalUnit.HOURS;
-    }
 }

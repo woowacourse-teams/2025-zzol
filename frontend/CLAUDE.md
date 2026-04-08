@@ -17,6 +17,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 작업 기록 및 의사결정 배경은 `docs/` 폴더에 정리되어 있다. 특정 기능이나 설정의 맥락이 필요할 때 먼저 확인한다.
 
+| 파일 | 내용 |
+|------|------|
+| `docs/todo/planned.md` | 구현 예정 작업 목록 |
+| `docs/todo/backlog.md` | 방향 미확정 · 우선순위 보류 항목 |
+| `docs/todo/done.md` | 완료된 작업 기록 |
+| `docs/home-tabs-architecture.md` | 홈 탭 구조 설계 (하단 탭바 구현 방식, 랭킹 카테고리 추가 방법, 건의사항 step 플로우) |
+| `docs/api-design-menu-tab.md` | 메뉴 탭 API 설계 — 백엔드 협의용 (POST /reports, GET /patch-notes Request/Response 스펙) |
+
 ## 커맨드
 
 ```bash

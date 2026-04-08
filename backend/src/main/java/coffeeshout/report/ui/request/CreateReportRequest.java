@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
 public record CreateReportRequest(
         @NotNull ReportCategory category,
         MiniGameType gameType,
-        String joinCode,
+        @Size(max = 10) String joinCode,
         @NotBlank @Size(max = 200) String content
 ) {
 }

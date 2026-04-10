@@ -1,4 +1,9 @@
-import type { TopWinner, GamePlayCount, LowestProbabilityWinner, BlockStackingTopPlayer } from '@/types/dashBoard';
+import type {
+  TopWinner,
+  GamePlayCount,
+  LowestProbabilityWinner,
+  BlockStackingTopPlayer,
+} from '@/types/dashBoard';
 import { MINI_GAME_NAME_MAP, type MiniGameType } from '@/types/miniGame/common';
 
 export type RankingItem = {

@@ -15,9 +15,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [문서 작성 컨벤션](docs/conventions-docs.md) — Markdown 린트 규칙 (MD040, MD031, MD022)
 - [ADR 인덱스](docs/adr/index.md) — 주요 기술 의사결정 한 줄 요약 목록 (`/adr [주제]`로 새 ADR 작성, 상세 내용은 개별 파일 참조)
 
+## 코드 탐색
+
+프로젝트 루트의 `tags` 파일에 모든 Java 클래스·메서드·필드의 위치가 인덱싱되어 있다.
+파일을 Read하기 전에 **반드시 먼저 Grep으로 `tags`를 조회해** 정확한 파일·줄 번호를 확인한다.
+
+```bash
+# 클래스/메서드 위치 조회 예시
+grep "^CardGameFlowOrchestrator	" tags   # 클래스 정의
+grep "^startRound	" tags                 # 메서드 정의
+```
+
+결과 형식: `심볼명\t파일경로\t패턴\t필드(line:N)` → 해당 파일을 line:N 기준으로 Read한다.
+`tags`가 없거나 오래됐으면 `./gradlew generateCtags` 또는 `./gradlew compileJava`로 재생성한다.
+
 ## 작업 규칙
 
 - 프로덕션 코드(`src/main/java/`) 작성 또는 수정 완료 시 `/write-tests`를 실행한다
+- `code-reviewer`, `test-verifier` agent는 항상 `run_in_background: true` 로 실행한다
+- 테스트 실행(`./gradlew test`) 후 실패 분석 시 콘솔 출력은 읽지 않는다. 반드시 `build/test-results/**/*.xml` 에서 `<failure>` 또는 `<error>` 태그를 포함한 파일만 찾아 읽는다
+- 이미 읽은 파일은 다시 읽지 않는다 diff를 통해 변경된 줄만 확인한다.
+- 불필요한 도구 호출은 하지 않는다
+- 독립적인 도구 호출은 항상 동시에 실행한다
+- 20줄 이상의 대량 출력이 예상되는 탐색·분석 작업은 서브에이전트에 위임한다
+- **사용자가 이미 설명한 내용은 다시 반복하지 않는다**
 - 코드 작성 전 `docs/adr/index.md`의 **영향 범위** 컬럼을 작업 중인 패키지/주제와 비교한다. 겹치는 ADR이 있으면 해당 파일을 읽어 **핵심 제약**과 충돌 여부를 확인하고, 충돌 시 작업 전에 사용자에게 경고한다
 - `docs/` 내 Markdown 파일 작성 또는 수정 시 `docs/conventions-docs.md`의 린트 규칙을 따른다
 

@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: 프로덕션 코드를 conventions-production.md, architecture.md, ADR 기준으로 독립적 시각에서 리뷰한다. 수정 제안만 출력하며 프로덕션 코드는 직접 수정하지 않는다.
-model: claude-opus-4-6
+model: claude-sonnet-4-6
 tools: Bash, Read, Glob, Grep, Edit
 ---
 

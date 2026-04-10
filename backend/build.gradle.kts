@@ -116,6 +116,33 @@ dependencies {
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 }
 
+tasks.register("generateCtags") {
+    description = "Universal Ctags로 Java 심볼 인덱스(tags 파일)를 생성한다"
+    val workDir = projectDir
+    doLast {
+        try {
+            ProcessBuilder(
+                "ctags",
+                "--languages=Java",
+                "--fields=+n",
+                "--extras=+q",
+                "-R",
+                "-f", "tags",
+                "src/main/java"
+            )
+                .directory(workDir)
+                .start()
+                .waitFor()
+        } catch (e: Exception) {
+            logger.warn("ctags를 찾을 수 없어 tags 파일 생성을 건너뜁니다: ${e.message}")
+        }
+    }
+}
+
+tasks.named("compileJava") {
+    finalizedBy("generateCtags")
+}
+
 tasks.register<Exec>("pruneStaleTestContainers") {
     commandLine(
         "docker", "container", "prune", "-f",

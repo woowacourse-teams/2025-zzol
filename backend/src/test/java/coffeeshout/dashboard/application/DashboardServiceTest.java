@@ -3,6 +3,7 @@ package coffeeshout.dashboard.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
@@ -10,6 +11,8 @@ import coffeeshout.global.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
+import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
+import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
@@ -39,6 +42,9 @@ class DashboardServiceTest extends ServiceTest {
 
     @Autowired
     private MiniGameJpaRepository miniGameJpaRepository;
+
+    @Autowired
+    private MiniGameResultJpaRepository miniGameResultJpaRepository;
 
     @Nested
     @DisplayName("getTop5Winners 테스트")
@@ -334,6 +340,122 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("getBlockStackingTopPlayers 테스트")
+    class GetBlockStackingTopPlayersTest {
+
+        @Test
+        void 이번달_블록쌓기_최고_층수_기준_상위_5명을_내림차순으로_조회한다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("MMNN"));
+            final MiniGameEntity miniGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.BLOCK_STACKING)
+            );
+
+            final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
+            final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
+            final PlayerEntity 민수 = playerJpaRepository.save(new PlayerEntity(room, "민수", PlayerType.GUEST));
+
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수, 1, 30L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 영희, 2, 20L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 민수, 3, 10L));
+
+            // when
+            final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
+
+            // then
+            assertThat(result).hasSize(3);
+            assertThat(result.get(0).playerName()).isEqualTo("철수");
+            assertThat(result.get(0).maxFloor()).isEqualTo(30L);
+            assertThat(result.get(1).playerName()).isEqualTo("영희");
+            assertThat(result.get(2).playerName()).isEqualTo("민수");
+        }
+
+        @Test
+        void 이번달_블록쌓기_기록이_없으면_빈_리스트를_반환한다() {
+            // when
+            final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
+
+            // then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        void 같은_플레이어의_여러_게임_중_최고_층수만_반영한다() {
+            // given
+            final RoomEntity room1 = roomJpaRepository.save(new RoomEntity("PPQQ"));
+            final RoomEntity room2 = roomJpaRepository.save(new RoomEntity("RRSS"));
+            final MiniGameEntity miniGame1 = miniGameJpaRepository.save(
+                    new MiniGameEntity(room1, MiniGameType.BLOCK_STACKING)
+            );
+            final MiniGameEntity miniGame2 = miniGameJpaRepository.save(
+                    new MiniGameEntity(room2, MiniGameType.BLOCK_STACKING)
+            );
+
+            final PlayerEntity 철수1 = playerJpaRepository.save(new PlayerEntity(room1, "철수", PlayerType.HOST));
+            final PlayerEntity 철수2 = playerJpaRepository.save(new PlayerEntity(room2, "철수", PlayerType.HOST));
+
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame1, 철수1, 1, 15L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame2, 철수2, 1, 25L));
+
+            // when
+            final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().playerName()).isEqualTo("철수");
+            assertThat(result.getFirst().maxFloor()).isEqualTo(25L);
+        }
+
+        @Test
+        void 다섯명_초과이면_상위_5명만_반환한다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("TTUV"));
+            final MiniGameEntity miniGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.BLOCK_STACKING)
+            );
+
+            for (int i = 1; i <= 10; i++) {
+                final PlayerEntity player = playerJpaRepository.save(
+                        new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST)
+                );
+                miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, player, i, (long) i * 10));
+            }
+
+            // when
+            final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
+
+            // then
+            assertThat(result).hasSize(5);
+            assertThat(result.getFirst().maxFloor()).isEqualTo(100L);
+        }
+
+        @Test
+        void 다른_게임_타입의_결과는_포함하지_않는다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("WWXX"));
+            final MiniGameEntity blockStackingGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.BLOCK_STACKING)
+            );
+            final MiniGameEntity racingGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.RACING_GAME)
+            );
+
+            final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
+            final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
+
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(blockStackingGame, 철수, 1, 20L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(racingGame, 영희, 1, 5000L));
+
+            // when
+            final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().playerName()).isEqualTo("철수");
         }
     }
 }

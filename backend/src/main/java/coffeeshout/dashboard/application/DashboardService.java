@@ -1,5 +1,6 @@
 package coffeeshout.dashboard.application;
 
+import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
@@ -46,6 +47,13 @@ public class DashboardService {
         final LocalDateTime endOfMonth = getEndOfMonth();
 
         return dashboardStatisticsRepository.findRacingGameTopPlayers(startOfMonth, endOfMonth, 5);
+    }
+
+    public List<BlockStackingTopPlayerResponse> getBlockStackingTopPlayers() {
+        final LocalDateTime startOfMonth = getStartOfMonth();
+        final LocalDateTime endOfMonth = getEndOfMonth();
+
+        return dashboardStatisticsRepository.findBlockStackingTopPlayers(startOfMonth, endOfMonth, 5);
     }
 
     private LocalDateTime getStartOfMonth() {

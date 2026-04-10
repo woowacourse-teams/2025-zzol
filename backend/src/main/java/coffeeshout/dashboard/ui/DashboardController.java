@@ -1,6 +1,7 @@
 package coffeeshout.dashboard.ui;
 
 import coffeeshout.dashboard.application.DashboardService;
+import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
@@ -37,5 +38,10 @@ public class DashboardController implements DashboardApi {
     @GetMapping("/racing-game-top-players")
     public ResponseEntity<List<RacingGameTopPlayerResponse>> getRacingGameTopPlayers() {
         return ResponseEntity.ok(dashboardService.getRacingGameTopPlayers());
+    }
+
+    @GetMapping("/blockstacking-top-players")
+    public ResponseEntity<List<BlockStackingTopPlayerResponse>> getBlockStackingTopPlayers() {
+        return ResponseEntity.ok(dashboardService.getBlockStackingTopPlayers());
     }
 }

@@ -12,3 +12,8 @@ export type GamePlayCount = {
   gameType: string;
   playCount: number;
 };
+
+export type BlockStackingTopPlayer = {
+  playerName: string;
+  maxFloor: number;
+};

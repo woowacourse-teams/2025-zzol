@@ -1,3 +1,4 @@
+import PlayerIcon from '@/components/@composition/PlayerIcon/PlayerIcon';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useMyStats } from '@/features/home/hooks/useMyStats';
 import * as S from './MyInfoView.styled';
@@ -9,7 +10,7 @@ const MyInfoView = () => {
   return (
     <S.Container>
       <S.ProfileHeader>
-        <S.ProfileIcon>😎</S.ProfileIcon>
+        <PlayerIcon color="#FF6B6B" />
         <S.ProfileInfo>
           <S.WelcomeMessage>{myName || '익명의 사용자'}님</S.WelcomeMessage>
           <S.UserStatus>오늘도 쫄깃한 승부를 즐겨보세요!</S.UserStatus>

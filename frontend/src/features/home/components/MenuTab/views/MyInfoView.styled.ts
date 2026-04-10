@@ -17,19 +17,6 @@ export const ProfileHeader = styled.div`
   border-radius: 20px;
 `;
 
-export const ProfileIcon = styled.div`
-  width: 60px;
-  height: 60px;
-  border-radius: 18px;
-  background: ${({ theme }) => theme.color.white};
-  border: 1px solid ${({ theme }) => theme.color.point[200]};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  flex-shrink: 0;
-  box-shadow: ${({ theme }) => `0 4px 12px ${theme.color.point[300]}1A`};
-`;
 
 export const ProfileInfo = styled.div`
   display: flex;

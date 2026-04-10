@@ -1,4 +1,4 @@
-import { PropsWithChildren, useCallback, useEffect, useState } from 'react';
+import { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
 import { storageManager, STORAGE_KEYS } from '@/utils/StorageManager';
 import { IdentifierContext } from './IdentifierContext';
 
@@ -12,6 +12,16 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>(() => {
     return storageManager.getItem(STORAGE_KEYS.QR_CODE_URL, 'sessionStorage', '') as string;
   });
+
+  const joinCodeRef = useRef(joinCode);
+  const myNameRef = useRef(myName);
+  const qrCodeUrlRef = useRef(qrCodeUrl);
+
+  useEffect(() => {
+    joinCodeRef.current = joinCode;
+    myNameRef.current = myName;
+    qrCodeUrlRef.current = qrCodeUrl;
+  }, [joinCode, myName, qrCodeUrl]);
 
   useEffect(() => {
     if (joinCode) {
@@ -50,13 +60,14 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
   }, []);
 
   const clearIdentifier = useCallback(() => {
-    if (joinCode) {
-      storageManager.setItem(STORAGE_KEYS.LAST_JOIN_CODE, joinCode, 'localStorage');
+    const currentJoinCode = joinCodeRef.current;
+    if (currentJoinCode) {
+      storageManager.setItem(STORAGE_KEYS.LAST_JOIN_CODE, currentJoinCode, 'localStorage');
     }
     clearJoinCode();
     clearMyName();
     clearQrCodeUrl();
-  }, [joinCode, clearJoinCode, clearMyName, clearQrCodeUrl]);
+  }, [clearJoinCode, clearMyName, clearQrCodeUrl]);
 
   return (
     <IdentifierContext.Provider

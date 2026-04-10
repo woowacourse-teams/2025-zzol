@@ -235,10 +235,9 @@ export const useBlockStackingGame = (
     scoreRef.current = newScore;
     setScore(newScore);
 
-    // 다음 블록 준비 (위치와 크기 고정)
+    // 다음 블록 준비 (위치와 크기 고정, 방향은 유지)
     currentBlockRef.current.x = newBlock.x;
     currentBlockRef.current.width = newBlock.width;
-    currentBlockRef.current.direction = 1;
 
     // 서버로 현재 진행 상황 보고 (실시간 랭킹용)
     onBlockPlacedRef.current({

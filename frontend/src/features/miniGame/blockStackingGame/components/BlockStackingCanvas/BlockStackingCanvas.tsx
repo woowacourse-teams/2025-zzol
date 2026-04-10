@@ -40,8 +40,21 @@ const BlockStackingCanvas = () => {
 
     updateSize();
     window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        handleTap();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('resize', updateSize);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleTap]);
 
   const handleMutePointerDown = useCallback((e: PointerEvent<HTMLButtonElement>) => {
     // 래퍼의 pointerdown으로 버블링되어 handleTap이 호출되지 않도록 차단

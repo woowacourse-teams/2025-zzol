@@ -17,7 +17,6 @@ export const ProfileHeader = styled.div`
   border-radius: 20px;
 `;
 
-
 export const ProfileInfo = styled.div`
   display: flex;
   flex-direction: column;

@@ -5,7 +5,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 작업 원칙
 
 - `code-reviewer`, `test-verifier` 에이전트는 항상 `run_in_background: true`로 실행한다
-- 테스트 실패 분석 시 콘솔 출력은 읽지 않는다. `build/test-results/**/*.xml`에서 `<failure>` 또는 `<error>` 태그를 포함한 파일만 찾아 읽는다
 - 이미 읽은 파일은 다시 읽지 않는다. diff를 통해 변경된 줄만 확인한다
 - 불필요한 도구 호출은 하지 않는다
 - 독립적인 도구 호출은 항상 동시에 실행한다

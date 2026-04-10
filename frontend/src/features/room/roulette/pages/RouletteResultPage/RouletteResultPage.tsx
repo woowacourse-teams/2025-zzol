@@ -12,13 +12,15 @@ import * as S from './RouletteResultPage.styled';
 
 const RouletteResultPage = () => {
   const navigate = useReplaceNavigate();
-  const location = useLocation();
+  const { state } = useLocation() as ReturnType<typeof useLocation> & {
+    state: { winner?: string } | null;
+  };
   const { myName } = useIdentifier();
-  const winner = location.state?.winner ?? '알 수 없는 사용자';
+  const winner = state?.winner ?? '알 수 없는 사용자';
   const hasUpdatedStats = useRef(false);
 
   useEffect(() => {
-    if (hasUpdatedStats.current || !winner || winner === '알 수 없는 사용자') return;
+    if (hasUpdatedStats.current || winner === '알 수 없는 사용자') return;
 
     const currentWinCount = Number(
       storageManager.getItem(STORAGE_KEYS.WIN_COUNT, 'localStorage', '0')
@@ -49,7 +51,7 @@ const RouletteResultPage = () => {
     <Layout color="point-400">
       <Layout.Content>
         <S.Container>
-          <S.Logo src={BreadLogoWhiteIcon} />
+          <S.Logo src={BreadLogoWhiteIcon} alt="" />
           <Headline1 color="white">{winner}</Headline1>
           <Headline3 color="white">님이 당첨되었습니다!</Headline3>
         </S.Container>

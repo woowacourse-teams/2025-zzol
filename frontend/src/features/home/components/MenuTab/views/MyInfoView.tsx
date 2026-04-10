@@ -1,12 +1,10 @@
-import { storageManager, STORAGE_KEYS } from '@/utils/StorageManager';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
+import { useMyStats } from '@/features/home/hooks/useMyStats';
 import * as S from './MyInfoView.styled';
 
 const MyInfoView = () => {
   const { myName } = useIdentifier();
-
-  const winCount = storageManager.getItem(STORAGE_KEYS.WIN_COUNT, 'localStorage', '0');
-  const streak = storageManager.getItem(STORAGE_KEYS.NON_WIN_STREAK, 'localStorage', '0');
+  const { winCount, streak } = useMyStats();
 
   return (
     <S.Container>
@@ -32,12 +30,12 @@ const MyInfoView = () => {
       <S.InfoSection>
         <S.SectionTitle>통계 안내</S.SectionTitle>
         <S.TooltipCard>
-          <S.TooltipText>
-            • 당첨 횟수는 룰렛에서 최종적으로 선택된 횟수입니다.
-            <br />
-            • 연속 안걸린 횟수는 마지막 당첨 이후 성공적으로 대기를 피한 횟수입니다.
-            <br />• 통계 데이터는 현재 브라우저의 로컬 스토리지에 저장됩니다.
-          </S.TooltipText>
+          <S.TooltipList>
+            <li>• 당첨 횟수는 룰렛에서 최종적으로 선택된 횟수입니다.</li>
+            <li>• 연속 안걸린 횟수는 마지막 당첨 이후 성공적으로 대기를 피한 횟수입니다.</li>
+            <li>• 통계 데이터는 현재 브라우저의 로컬 스토리지에 저장됩니다.</li>
+          </S.TooltipList>
+          <S.ComingSoonText>차후 로그인을 통해서 상세한 통계를 지원할 예정입니다.</S.ComingSoonText>
         </S.TooltipCard>
       </S.InfoSection>
     </S.Container>

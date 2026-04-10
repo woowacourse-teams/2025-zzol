@@ -28,7 +28,7 @@ export const ProfileIcon = styled.div`
   justify-content: center;
   font-size: 32px;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
+  box-shadow: ${({ theme }) => `0 4px 12px ${theme.color.point[300]}1A`};
 `;
 
 export const ProfileInfo = styled.div`
@@ -103,9 +103,23 @@ export const TooltipCard = styled.div`
   border: 1px dashed ${({ theme }) => theme.color.gray[300]};
 `;
 
-export const TooltipText = styled.p`
+export const TooltipList = styled.ul`
   ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.gray[500]};
   line-height: 1.5;
+  list-style: none;
   margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+export const ComingSoonText = styled.p`
+  ${({ theme }) => theme.typography.small}
+  color: ${({ theme }) => theme.color.point[400]};
+  font-weight: 500;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid ${({ theme }) => theme.color.gray[200]};
 `;

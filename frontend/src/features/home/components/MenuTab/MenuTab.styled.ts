@@ -15,14 +15,18 @@ export const MenuList = styled.ul`
   flex-direction: column;
 `;
 
-export const MenuItem = styled.li`
+export const MenuItemButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
   padding: 14px 20px;
+  border: none;
   border-radius: 12px;
+  background: transparent;
   cursor: pointer;
   transition: background 0.15s ease;
+  text-align: left;
 
   &:hover {
     background: ${({ theme }) => theme.color.gray[50]};

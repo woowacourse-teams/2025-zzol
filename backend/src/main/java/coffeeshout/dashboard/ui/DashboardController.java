@@ -40,7 +40,7 @@ public class DashboardController implements DashboardApi {
         return ResponseEntity.ok(dashboardService.getRacingGameTopPlayers());
     }
 
-    @GetMapping("/blockstacking-top-players")
+    @GetMapping("/block-stacking-top-players")
     public ResponseEntity<List<BlockStackingTopPlayerResponse>> getBlockStackingTopPlayers() {
         return ResponseEntity.ok(dashboardService.getBlockStackingTopPlayers());
     }

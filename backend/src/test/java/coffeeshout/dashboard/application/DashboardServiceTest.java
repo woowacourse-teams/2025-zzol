@@ -3,6 +3,8 @@ package coffeeshout.dashboard.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.assertj.core.api.SoftAssertions;
+
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
@@ -368,10 +370,12 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).hasSize(3);
-            assertThat(result.get(0).playerName()).isEqualTo("철수");
-            assertThat(result.get(0).maxFloor()).isEqualTo(30L);
-            assertThat(result.get(1).playerName()).isEqualTo("영희");
-            assertThat(result.get(2).playerName()).isEqualTo("민수");
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(0).maxFloor()).isEqualTo(30L);
+                softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
+                softly.assertThat(result.get(2).playerName()).isEqualTo("민수");
+            });
         }
 
         @Test

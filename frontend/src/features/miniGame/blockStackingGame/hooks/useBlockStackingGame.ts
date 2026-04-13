@@ -135,12 +135,12 @@ export const useBlockStackingGame = (
   const scoreRef = useRef(0);
   const cameraYRef = useRef(0);
 
-  // 화면에 점수와 시간을 표시하기 위한 State (렌더링 트리거용)
-  const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
 
   // --- 2. Closure Avoidance (클로저 문제 해결) ---
   // 아래 Ref들은 handleTap이나 루프 내부에서 최신 Props/Callbacks에 접근할 수 있게 합니다.
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
   const soundsRef = useRef(sounds);
   soundsRef.current = sounds;
   const setLocalGameOverRef = useRef(setLocalGameOver);
@@ -159,7 +159,7 @@ export const useBlockStackingGame = (
    */
   const handleTap = useCallback(() => {
     // 게임 중이 아니거나 이미 탈락한 경우 무시
-    if (gameState !== 'PLAYING' || isLocalGameOverRef.current) return;
+    if (gameStateRef.current !== 'PLAYING' || isLocalGameOverRef.current) return;
 
     soundsRef.current.ensureAudioContext();
 
@@ -237,7 +237,6 @@ export const useBlockStackingGame = (
     const prevScore = scoreRef.current;
     const newScore = prevScore + 1;
     scoreRef.current = newScore;
-    setScore(newScore);
 
     // 다음 블록 준비 (위치와 크기 고정, 방향은 유지)
     currentBlockRef.current.x = newBlock.x;
@@ -264,7 +263,7 @@ export const useBlockStackingGame = (
     if (getBlockSpeed(prevScore) !== getBlockSpeed(newScore)) {
       soundsRef.current.playSpeedUp();
     }
-  }, [gameState]);
+  }, []);
 
   // --- 4. Effects (생명주기 및 동기화) ---
 
@@ -301,7 +300,6 @@ export const useBlockStackingGame = (
 
     // 게임 시작 시 초기값 설정
     scoreRef.current = 0;
-    setScore(0);
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -399,16 +397,16 @@ export const useBlockStackingGame = (
       ctx.restore(); // scale restore
 
       // 서버 대기 모드(DONE)가 되기 전까지 애니메이션 루프 유지
-      if (gameState === 'PLAYING') {
+      if (gameStateRef.current === 'PLAYING') {
         rafId = requestAnimationFrame(draw);
       }
     };
 
     rafId = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(rafId);
-  }, [gameState, canvasRef]);
+  }, [gameState]);
 
-  return { score, timeLeft, handleTap };
+  return { timeLeft, handleTap };
 };
 
 // 외부에서 CANVAS_WIDTH를 참조할 수 있도록 재-export

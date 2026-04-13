@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 type BlockStackingSounds = {
   ensureAudioContext: () => void;
@@ -6,6 +6,8 @@ type BlockStackingSounds = {
   playPerfect: () => void;
   playGameOver: () => void;
   playSpeedUp: () => void;
+  muted: boolean;
+  toggleMute: () => void;
 };
 
 type OscType = 'sine' | 'square' | 'sawtooth' | 'triangle';
@@ -36,7 +38,10 @@ const playOscillator = (
   osc.stop(ctx.currentTime + durationMs / 1000);
 };
 
-export const useBlockStackingSounds = (muted: boolean): BlockStackingSounds => {
+export const useBlockStackingSounds = (): BlockStackingSounds => {
+  const [muted, setMuted] = useState(false);
+  const toggleMute = useCallback(() => setMuted((prev) => !prev), []);
+
   const audioCtxRef = useRef<AudioContext | null>(null);
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
@@ -88,5 +93,5 @@ export const useBlockStackingSounds = (muted: boolean): BlockStackingSounds => {
     playOscillator(ctx, 600, 900, 100, 'sine', 0.1);
   }, [getCtx]);
 
-  return { ensureAudioContext, playLand, playPerfect, playGameOver, playSpeedUp };
+  return { ensureAudioContext, playLand, playPerfect, playGameOver, playSpeedUp, muted, toggleMute };
 };

@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.bombrelay.domain.BombRelayGame;
-import coffeeshout.bombrelay.domain.BombRelayGameState;
 import coffeeshout.bombrelay.domain.KoreanCharUtils;
 import coffeeshout.bombrelay.domain.event.BombRelayProgressEvent;
 import coffeeshout.bombrelay.domain.event.WordResultEvent;

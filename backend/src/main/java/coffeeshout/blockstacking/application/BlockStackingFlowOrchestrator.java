@@ -7,12 +7,14 @@ import static coffeeshout.blockstacking.domain.BlockStackingGameStep.START_PLAY;
 import coffeeshout.blockstacking.config.BlockStackingTimingProperties;
 import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.blockstacking.domain.BlockStackingGameStep;
+import coffeeshout.global.flow.EarlyFinishTrigger;
 import coffeeshout.global.flow.FlowScheduler;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.room.domain.Room;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,13 +30,32 @@ public class BlockStackingFlowOrchestrator {
     private final BlockStackingNotifier notifier;
     private final ApplicationEventPublisher eventPublisher;
 
+    private final ConcurrentHashMap<String, EarlyFinishTrigger> earlyFinishTriggers = new ConcurrentHashMap<>();
+
     public void startFlow(BlockStackingGame game, Room room) {
         final String joinCode = room.getJoinCode().getValue();
+        final EarlyFinishTrigger trigger = blockStackingFlowScheduler.createEarlyFinishTrigger();
 
         blockStackingFlowScheduler.schedule(step(game, room, PREPARE), Duration.ZERO)
-                .andThen(startPlay(game, room), timing.prepare())
-                .andThen(finishGame(game, room), timing.playing())
-                .onError(ex -> log.error("BlockStacking flow 실패: joinCode={}", joinCode, ex));
+                .andThen(startPlay(game, room, trigger), timing.prepare())
+                .raceTimeout(timing.playing(), trigger, timing.allFailedDelay())
+                .andThen(finishGame(game, room), Duration.ZERO)
+                .onError(ex -> {
+                    earlyFinishTriggers.remove(joinCode);
+                    log.error("BlockStacking flow 실패: joinCode={}", joinCode, ex);
+                });
+    }
+
+    public void triggerEarlyFinishIfAllFailed(String joinCode, BlockStackingGame game) {
+        if (!game.isAllPlayersFailed()) {
+            return;
+        }
+        final EarlyFinishTrigger trigger = earlyFinishTriggers.get(joinCode);
+        if (trigger == null || trigger.isCompleted()) {
+            return;
+        }
+        log.info("전원 실패 — 조기 종료 트리거: joinCode={}", joinCode);
+        trigger.complete();
     }
 
     private Runnable step(BlockStackingGame game, Room room, BlockStackingGameStep gameStep) {
@@ -49,21 +70,24 @@ public class BlockStackingFlowOrchestrator {
         };
     }
 
-    private Runnable startPlay(BlockStackingGame game, Room room) {
+    private Runnable startPlay(BlockStackingGame game, Room room, EarlyFinishTrigger trigger) {
         return () -> {
+            final String joinCode = room.getJoinCode().getValue();
+            earlyFinishTriggers.put(joinCode, trigger);
             START_PLAY.execute(game, room);
             final Instant playingEndTime = Instant.now().plus(timing.playing());
             try {
                 notifier.notifyPlayingStarted(room, playingEndTime);
             } catch (Exception e) {
-                log.warn("BlockStacking PLAYING 알림 실패: joinCode={}", room.getJoinCode().getValue(), e);
+                log.warn("BlockStacking PLAYING 알림 실패: joinCode={}", joinCode, e);
             }
         };
     }
 
     private Runnable finishGame(BlockStackingGame game, Room room) {
+        final String joinCode = room.getJoinCode().getValue();
         return () -> {
-            final String joinCode = room.getJoinCode().getValue();
+            earlyFinishTriggers.remove(joinCode);
             FINISH_GAME.execute(game, room);
             try {
                 notifier.notifyStateChanged(game, room);

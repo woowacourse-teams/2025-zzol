@@ -37,12 +37,25 @@ public class BlockStackingService implements MiniGameService {
                 joinCode, playerName, floor);
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final BlockStackingGame game = (BlockStackingGame) room.findMiniGame(MiniGameType.BLOCK_STACKING);
-        final Player player = game.findPlayerByName(new PlayerName(playerName));
+        final BlockStackingGame game = getGame(room);
+        final Player player = findPlayer(game, playerName);
 
         final boolean updated = game.recordProgress(player, floor, movingBlockX, stackTopX, stackTopWidth);
         if (updated) {
             notifier.notifyProgressUpdated(game, room);
+        }
+    }
+
+    public void recordFailure(String joinCode, String playerName) {
+        log.debug("블록 쌓기 실패 처리 시작: joinCode={}, playerName={}", joinCode, playerName);
+
+        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
+        final BlockStackingGame game = getGame(room);
+        final Player player = findPlayer(game, playerName);
+
+        final boolean recorded = game.recordFailure(player);
+        if (recorded) {
+            flowOrchestrator.triggerEarlyFinishIfAllFailed(joinCode, game);
         }
     }
 
@@ -53,5 +66,9 @@ public class BlockStackingService implements MiniGameService {
 
     private BlockStackingGame getGame(Room room) {
         return (BlockStackingGame) room.findMiniGame(MiniGameType.BLOCK_STACKING);
+    }
+
+    private Player findPlayer(BlockStackingGame game, String playerName) {
+        return game.findPlayerByName(new PlayerName(playerName));
     }
 }

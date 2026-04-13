@@ -8,7 +8,6 @@ import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,20 +20,16 @@ import lombok.extern.slf4j.Slf4j;
 public class BlockStackingGame implements Playable {
 
     private volatile BlockStackingGameState state;
-    private Map<Player, BlockStackingPlayerProgress> playerProgresses;
+    private final ConcurrentHashMap<Player, BlockStackingPlayerProgress> playerProgresses = new ConcurrentHashMap<>();
 
     public BlockStackingGame() {
         this.state = BlockStackingGameState.READY;
-        this.playerProgresses = new ConcurrentHashMap<>();
     }
 
     @Override
     public void setUp(List<Player> players) {
-        this.playerProgresses = players.stream()
-                .collect(Collectors.toConcurrentMap(
-                        p -> p,
-                        p -> BlockStackingPlayerProgress.initial(p.getName())
-                ));
+        playerProgresses.clear();
+        players.forEach(p -> playerProgresses.put(p, BlockStackingPlayerProgress.initial(p.getName())));
     }
 
     public void prepare() {
@@ -76,6 +71,13 @@ public class BlockStackingGame implements Playable {
             );
         }
 
+        if (progress.failed()) {
+            log.warn("[{}] 이미 실패한 플레이어의 진행 이벤트 수신 — 무시: player={}",
+                    BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
+                    player.getName().value());
+            return false;
+        }
+
         if (!isValidFloorSequence(floor, progress.currentFloor())) {
             log.warn("[{}] 비연속적 층수 수신 — 무시: player={}, expected={}, received={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
@@ -93,6 +95,41 @@ public class BlockStackingGame implements Playable {
 
         playerProgresses.put(player, progress.advanceTo(floor));
         return true;
+    }
+
+    /**
+     * 플레이어의 실패를 기록한다.
+     *
+     * @return 실패 상태로 전환됐으면 true, 이미 실패한 상태였으면 false
+     * @throws BusinessException 게임이 PLAYING 상태가 아닐 때, 또는 등록되지 않은 플레이어일 때
+     */
+    public synchronized boolean recordFailure(Player player) {
+        if (state != BlockStackingGameState.PLAYING) {
+            throw new BusinessException(
+                    BlockStackingGameErrorCode.NOT_PLAYING_STATE,
+                    "현재 게임이 진행중인 상태가 아닙니다. state=" + state
+            );
+        }
+
+        final BlockStackingPlayerProgress progress = playerProgresses.get(player);
+        if (progress == null) {
+            throw new BusinessException(
+                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
+                    "등록되지 않은 플레이어입니다: " + player.getName().value()
+            );
+        }
+
+        if (progress.failed()) {
+            return false;
+        }
+        playerProgresses.put(player, progress.fail());
+        log.info("플레이어 실패 기록: player={}, floor={}", player.getName().value(), progress.currentFloor());
+        return true;
+    }
+
+    public boolean isAllPlayersFailed() {
+        return !playerProgresses.isEmpty()
+                && playerProgresses.values().stream().allMatch(BlockStackingPlayerProgress::failed);
     }
 
     public List<BlockStackingPlayerRankInfo> getRanking() {

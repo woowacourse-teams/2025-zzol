@@ -36,6 +36,31 @@ await().atMost(Duration.ofSeconds(3))
         .until(() -> store.tryAcquire(ip));
 ```
 
+## 검증 스타일
+
+검증이 여러 개일 때는 subject(대상)가 같은지 다른지에 따라 스타일을 선택한다.
+
+**같은 subject에 대한 복수 검증 → 체이닝**
+
+```java
+assertThat(result.getFirst())
+        .returns("철수", BlockStackingTopPlayerResponse::playerName)
+        .returns(25L, BlockStackingTopPlayerResponse::maxFloor);
+```
+
+**다른 subject에 대한 복수 검증 → `SoftAssertions`**
+
+```java
+SoftAssertions.assertSoftly(softly -> {
+    softly.assertThat(result).hasSize(3);
+    softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+    softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
+});
+```
+
+`assertSoftly`는 람다 종료 시 자동으로 `assertAll()`을 호출해 실패를 누적 보고한다.
+단일 검증이거나 체이닝으로 표현 가능한 경우에는 `SoftAssertions`를 쓰지 않는다.
+
 ## 예외 검증
 
 `CoffeeShoutException` 계열 예외는 `ExceptionAssertions.assertCoffeeShoutException`을 사용한다.

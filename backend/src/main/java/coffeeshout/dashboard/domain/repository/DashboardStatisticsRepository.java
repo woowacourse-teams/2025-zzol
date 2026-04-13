@@ -1,5 +1,6 @@
 package coffeeshout.dashboard.domain.repository;
 
+import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
@@ -25,6 +26,12 @@ public interface DashboardStatisticsRepository {
     List<GamePlayCountResponse> findGamePlayCountByMonth(LocalDateTime startDate, LocalDateTime endDate);
 
     List<RacingGameTopPlayerResponse> findRacingGameTopPlayers(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int limit
+    );
+
+    List<BlockStackingTopPlayerResponse> findBlockStackingTopPlayers(
             LocalDateTime startDate,
             LocalDateTime endDate,
             int limit

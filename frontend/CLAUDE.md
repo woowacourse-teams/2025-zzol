@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 작업 원칙
+
+- `code-reviewer`, `test-verifier` 에이전트는 항상 `run_in_background: true`로 실행한다
+- 이미 읽은 파일은 다시 읽지 않는다. diff를 통해 변경된 줄만 확인한다
+- 불필요한 도구 호출은 하지 않는다
+- 독립적인 도구 호출은 항상 동시에 실행한다
+- 20줄 이상의 대량 출력이 예상되는 탐색·분석 작업은 서브에이전트에 위임한다
+- **사용자가 이미 설명한 내용은 다시 반복하지 않는다**
+
 ## 역할
 
 이 레포지토리에서 작업할 때는 **프론트엔드 시니어 개발자** 역할을 맡는다. 코드 리뷰, 아키텍처 결정, 구현 방향에 대해 경험 있는 프론트엔드 엔지니어 관점으로 조언하고 작업한다.

@@ -3,9 +3,10 @@ import BackButton from '@/components/@common/BackButton/BackButton';
 import SuggestionTab from '../SuggestionTab/SuggestionTab';
 import PatchNotesView from './views/PatchNotesView';
 import ServiceInfoView from './views/ServiceInfoView';
+import MyInfoView from './views/MyInfoView';
 import * as S from './MenuTab.styled';
 
-type MenuView = 'report' | 'patch-notes' | 'service-info';
+type MenuView = 'my-info' | 'report' | 'patch-notes' | 'service-info';
 
 const MENU_ITEMS: {
   key: MenuView;
@@ -13,6 +14,12 @@ const MENU_ITEMS: {
   title: string;
   desc: string;
 }[] = [
+  {
+    key: 'my-info',
+    icon: '👤',
+    title: '내 정보',
+    desc: '누적 통계 및 활동 내역',
+  },
   {
     key: 'report',
     icon: '🐛',
@@ -48,6 +55,7 @@ const MenuTab = () => {
           {activeView === 'report' && <SuggestionTab onBackToMenu={() => setActiveView(null)} />}
           {activeView === 'patch-notes' && <PatchNotesView />}
           {activeView === 'service-info' && <ServiceInfoView />}
+          {activeView === 'my-info' && <MyInfoView />}
         </S.SubViewContent>
       </S.SubViewContainer>
     );
@@ -57,16 +65,18 @@ const MenuTab = () => {
     <S.Container>
       <S.MenuList>
         {MENU_ITEMS.map(({ key, icon, title, desc }) => (
-          <S.MenuItem key={key} onClick={() => setActiveView(key)}>
-            <S.MenuItemLeft>
-              <S.MenuItemIcon>{icon}</S.MenuItemIcon>
-              <S.MenuItemTexts>
-                <S.MenuItemTitle>{title}</S.MenuItemTitle>
-                <S.MenuItemDesc>{desc}</S.MenuItemDesc>
-              </S.MenuItemTexts>
-            </S.MenuItemLeft>
-            <S.MenuItemChevron>›</S.MenuItemChevron>
-          </S.MenuItem>
+          <li key={key}>
+            <S.MenuItemButton onClick={() => setActiveView(key)}>
+              <S.MenuItemLeft>
+                <S.MenuItemIcon>{icon}</S.MenuItemIcon>
+                <S.MenuItemTexts>
+                  <S.MenuItemTitle>{title}</S.MenuItemTitle>
+                  <S.MenuItemDesc>{desc}</S.MenuItemDesc>
+                </S.MenuItemTexts>
+              </S.MenuItemLeft>
+              <S.MenuItemChevron aria-hidden="true">›</S.MenuItemChevron>
+            </S.MenuItemButton>
+          </li>
         ))}
       </S.MenuList>
     </S.Container>

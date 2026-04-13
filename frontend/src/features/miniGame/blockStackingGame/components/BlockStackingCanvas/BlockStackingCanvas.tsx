@@ -42,17 +42,18 @@ const BlockStackingCanvas = () => {
     window.addEventListener('resize', updateSize);
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'Enter') {
+      if (e.code === 'Space' || e.key === 'Enter') {
+        // 게임 컨테이너가 보이거나 플레이 중일 때만 동작하도록 추가적인 조건이 필요하다면 여기에 추가
         e.preventDefault();
         handleTap();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('resize', updateSize);
-      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleTap]);
 

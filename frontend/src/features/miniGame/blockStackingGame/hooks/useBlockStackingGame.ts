@@ -88,13 +88,13 @@ const drawFallingPieces = (ctx: CanvasRenderingContext2D, pieces: FallingPiece[]
   ctx.globalAlpha = 1;
 };
 
-const updateFallingPieces = (pieces: FallingPiece[], H: number) => {
+const updateFallingPieces = (pieces: FallingPiece[], H: number, dt60: number) => {
   return pieces
     .map((p) => ({
       ...p,
-      y: p.y + p.vy,
-      vy: p.vy + GRAVITY,
-      opacity: Math.max(0, p.opacity - OPACITY_DECAY),
+      y: p.y + p.vy * dt60,
+      vy: p.vy + GRAVITY * dt60,
+      opacity: Math.max(0, p.opacity - OPACITY_DECAY * dt60),
     }))
     .filter((p) => p.opacity > 0 && p.y < H + 100);
 };
@@ -319,12 +319,18 @@ export const useBlockStackingGame = (
     shakeRef.current = { intensity: 0, startTime: 0, duration: 0 };
     cameraYRef.current = virtualHeight - 2 * BLOCK_HEIGHT;
 
+    let prevTime = 0;
     let rafId: number;
 
     /**
      * 프레임 드로우 함수 (Main Loop)
      */
     const draw = (time: number) => {
+      // 델타 타임 계산 후 60fps 기준으로 정규화
+      // 탭 전환 등 장시간 중단 후 첫 프레임은 1프레임으로 처리, 최대 3프레임으로 제한
+      const deltaMs = prevTime > 0 ? time - prevTime : 1000 / 60;
+      prevTime = time;
+      const dt60 = Math.min((deltaMs / 1000) * 60, 3);
       // 매 프레임 스케일 재계산 (창 크기 조절 대응)
       const currentScale = canvas.width / CANVAS_WIDTH;
       const W = CANVAS_WIDTH;
@@ -355,7 +361,7 @@ export const useBlockStackingGame = (
       if (!isGameOver) {
         const cur = currentBlockRef.current;
         const speed = getBlockSpeed(scoreRef.current);
-        let nx = cur.x + speed * cur.direction;
+        let nx = cur.x + speed * dt60 * cur.direction;
         let nd = cur.direction;
         if (nx <= 0) {
           nx = 0;
@@ -370,7 +376,7 @@ export const useBlockStackingGame = (
 
       // [Camera Logic] 카메라 팔로우 부드럽게 이동
       const targetCameraY = Math.max(H / 2, H - (stack.length + 1) * BLOCK_HEIGHT);
-      cameraYRef.current += (targetCameraY - cameraYRef.current) * 0.1;
+      cameraYRef.current += (targetCameraY - cameraYRef.current) * 0.1 * dt60;
       const movingBlockY = cameraYRef.current;
 
       // [Drawing Logic] 쌓여있는 블록들 렌더링
@@ -384,7 +390,7 @@ export const useBlockStackingGame = (
       }
 
       // 낙하 중인 조각들 업데이트 및 렌더링
-      fallingPiecesRef.current = updateFallingPieces(fallingPiecesRef.current, H);
+      fallingPiecesRef.current = updateFallingPieces(fallingPiecesRef.current, H, dt60);
       drawFallingPieces(ctx, fallingPiecesRef.current);
 
       // 스코어 텍스트 표시

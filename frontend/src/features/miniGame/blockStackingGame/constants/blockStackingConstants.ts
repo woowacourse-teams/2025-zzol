@@ -11,12 +11,12 @@ export const GAME_DURATION = 20; // 20 seconds limit
 export const GRAVITY = 0.4;
 export const OPACITY_DECAY = 0.025;
 
-export const INITIAL_SPEED = 2.2;
+export const INITIAL_SPEED = 3.3;
 export const SPEED_INCREMENT = 1.05; // 5% per floor
 
 export const getBlockSpeed = (floor: number): number => {
   const speed = INITIAL_SPEED * Math.pow(SPEED_INCREMENT, floor);
-  return Math.min(speed, 12.0); // Safety cap at 12.0
+  return Math.min(speed, 18.0); // Safety cap at 18.0
 };
 
 export const BLOCK_COLORS = [

@@ -35,7 +35,6 @@ val queryDslVersion = "5.0.0"
 val websocketDocsVersion = "1.0.7"
 val googleGenAiVersion = "1.44.0"
 val testcontainersVersion = "2.0.4"
-val testcontainersModuleVersion = "1.20.4"
 val reflectionsVersion = "0.10.2"
 val resilience4jVersion = "2.2.0"
 
@@ -96,8 +95,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.h2database:h2")
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
-    testImplementation("org.testcontainers:mysql:${testcontainersModuleVersion}")
-    testImplementation("org.testcontainers:junit-jupiter:${testcontainersModuleVersion}")
+    testImplementation("org.testcontainers:mysql:${testcontainersVersion}")
+    testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
 
     // --- Reflections (클래스패스 스캔) ---
     implementation("org.reflections:reflections:${reflectionsVersion}")
@@ -163,7 +162,7 @@ tasks.named("compileJava") {
 
 tasks.register<Exec>("pruneStaleTestContainers") {
     group = "verification"
-    description = "테스트 종료 후 남은 TestContainers 컨테이너를 정리한다"
+    description = "테스트 시작 전 이전 실행에서 남은 TestContainers 컨테이너를 정리한다"
     commandLine(
         "docker", "container", "prune", "-f",
         "--filter", "label=org.testcontainers=true"

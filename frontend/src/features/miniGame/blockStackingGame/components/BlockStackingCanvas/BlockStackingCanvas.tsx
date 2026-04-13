@@ -56,11 +56,14 @@ const BlockStackingCanvas = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleTap]);
 
-  const handleMutePointerDown = useCallback((e: PointerEvent<HTMLButtonElement>) => {
-    // 래퍼의 pointerdown으로 버블링되어 handleTap이 호출되지 않도록 차단
-    e.stopPropagation();
-    toggleMute();
-  }, [toggleMute]);
+  const handleMutePointerDown = useCallback(
+    (e: PointerEvent<HTMLButtonElement>) => {
+      // 래퍼의 pointerdown으로 버블링되어 handleTap이 호출되지 않도록 차단
+      e.stopPropagation();
+      toggleMute();
+    },
+    [toggleMute]
+  );
 
   return (
     <S.Wrapper>

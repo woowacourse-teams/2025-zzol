@@ -417,7 +417,7 @@ export const useBlockStackingGame = (
 
     rafId = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(rafId);
-  }, [gameState]);
+  }, [gameState, canvasRef]);
 
   return { timeLeft, handleTap };
 };

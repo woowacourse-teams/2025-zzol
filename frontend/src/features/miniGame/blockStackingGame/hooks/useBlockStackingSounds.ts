@@ -93,5 +93,13 @@ export const useBlockStackingSounds = (): BlockStackingSounds => {
     playOscillator(ctx, 600, 900, 100, 'sine', 0.1);
   }, [getCtx]);
 
-  return { ensureAudioContext, playLand, playPerfect, playGameOver, playSpeedUp, muted, toggleMute };
+  return {
+    ensureAudioContext,
+    playLand,
+    playPerfect,
+    playGameOver,
+    playSpeedUp,
+    muted,
+    toggleMute,
+  };
 };

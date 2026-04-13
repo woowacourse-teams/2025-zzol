@@ -1,7 +1,7 @@
 # 0002. BlockStacking 게임 서버 설계
 
 - 날짜: 2026-04-03
-- 상태: 승인
+- 상태: 승인 (2026-04-13 §2, §8 수정 — 전원 실패 조기 종료 추가)
 
 ## 컨텍스트
 
@@ -31,9 +31,17 @@ overlap ≤ 0이거나 floor 값이 비연속적으로 증가하면 **해당 이
 - 서버가 reject 응답을 보낼 시점에 블록 위치가 이미 달라져 재현 불가능하다
 - 파티 게임 특성상 단일 이벤트 거부가 게임 흐름 전체를 방해해선 안 된다
 
-### 2. 게임 종료 기준 — 서버 20초 타이머 단일 기준
+### 2. 게임 종료 기준 — 20초 타이머 기본, 전원 실패 시 조기 종료
 
-전원 제출을 기다리는 `EarlyFinishTrigger` 패턴을 적용하지 않는다. 타이머 만료 시점에 서버가 보유한 각 플레이어의 `currentFloor`를 최종 점수로 확정한다. 별도 `submit` 커맨드도 두지 않는다. 플레이어 블록이 이탈해도 이후 progress를 보내지 않으면 그 층수가 자연스럽게 최종값이 된다.
+타이머 만료 시점에 서버가 보유한 각 플레이어의 `currentFloor`를 최종 점수로 확정한다. 별도 `submit` 커맨드는 두지 않는다. 플레이어 블록이 이탈해도 이후 progress를 보내지 않으면 그 층수가 자연스럽게 최종값이 된다.
+
+단, **모든 플레이어가 실패(블록 이탈)를 명시적으로 신고하면 타이머 잔여 시간과 무관하게 `allFailedDelay`(기본 2초) 후 게임을 종료**한다. 플레이어는 `/app/room/{joinCode}/block-stacking/fail` 엔드포인트로 실패를 신고한다.
+
+조기 종료에 `EarlyFinishTrigger` 패턴을 도입한 이유:
+
+- BlockStacking은 CardGame처럼 `submit` 커맨드가 없으므로 `EarlyFinishTrigger`를 CardGame처럼 "전원 제출 대기"로 사용하지 않는다
+- "전원 실패"는 더 이상 게임이 진행될 수 없는 상태이므로 UX 측면에서 즉시 결과를 보여주는 것이 적합하다
+- 미실패 플레이어 대기 문제가 없다 — 실패한 경우만 신호를 보내기 때문이다
 
 ### 3. 플레이어 진행 상태 — 단일 객체로 관리
 
@@ -97,16 +105,17 @@ PLAYING 상태로 전환할 때 서버 기준 게임 종료 시각을 함께 전
 
 PREPARE / PLAYING / DONE 세 가지 상태 전환 알림을 단일 `BlockStackingStateResponse`로 통일한다. 별도 complete 토픽(`/block-stacking/complete`)을 두지 않는다. 게임 최종 결과는 `room.applyMiniGameResult()`로 Room Score에 반영되므로 DONE 알림에 랭킹 데이터를 포함할 필요가 없다.
 
-### 8. FlowOrchestrator — 단일 체인
+### 8. FlowOrchestrator — 단일 체인 (조기 종료 포함)
 
 ```text
 startFlow()
   → [즉시] PREPARE
-  → [prepare 3초] PLAYING
-  → [playing 20초] FINISH_GAME → MiniGameFinishedEvent 발행
+  → [prepare 3초] PLAYING  ← EarlyFinishTrigger 등록
+  → raceTimeout(playing 20초, allFailedTrigger, allFailedDelay 2초)
+  → [즉시] FINISH_GAME → MiniGameFinishedEvent 발행
 ```
 
-라운드 반복, 조기 종료 트리거 없음.
+라운드 반복 없음. 조기 종료는 전원 실패 시 `allFailedDelay` 후 진행.
 
 ## 고려한 대안
 
@@ -114,7 +123,7 @@ startFlow()
 |---------------------------------------------|-------------------|--------------------------------------|
 | 잘못된 값 수신 시 에러 응답 + 재전송 요청                   | 서버-클라이언트 상태 동기화   | 낙관적 업데이트와 충돌, 재현 불가                  |
 | 잘못된 값 수신 시 WebSocket 연결 끊기                  | 강력한 치팅 차단         | 파티 게임에 과도한 제재, UX 파괴                 |
-| 전원 제출 완료 시 조기 종료 (EarlyFinishTrigger)       | 전원 완료 즉시 결과 확인 가능 | 미제출 플레이어로 인한 대기, 별도 제출 커맨드 필요        |
+| 전원 실패 시 조기 종료 (EarlyFinishTrigger) — **§2에서 채택** | 모두 실패한 이후 불필요한 대기 제거 | 클라이언트가 fail 신호를 명시적으로 전송해야 함 |
 | currentFloors / finalFloors 분리 관리           | 제출 전후 상태 명시적 구분   | 두 Map 동기화 부담, 클래스 외부에서 관리 규칙 추론 필요   |
 | FlowScheduler를 각 게임 패키지에 유지                 | 게임별 완전 독립         | 동일 패턴 중복, 의존성 방향 불명확                 |
 | progress 이벤트를 공유 CommandType 라우터 사용         | 기존 인프라 재사용        | 게임별 독립 진화 어려움, payload 구조 공유 라우터에 노출 |
@@ -149,4 +158,6 @@ startFlow()
 - 랭킹 알림 토픽: `/topic/room/{joinCode}/block-stacking/progress`
 - PLAYING 전환 시 `endTimeEpochMs` (UTC epoch ms) 포함
 - 검증 실패 시 warn 로그 기록 위치: `BlockStackingGame.recordProgress()`
-- 타이밍 설정: `block-stacking.timing.prepare=3s`, `block-stacking.timing.playing=20s`
+- 타이밍 설정: `block-stacking.timing.prepare=3s`, `block-stacking.timing.playing=20s`, `block-stacking.timing.all-failed-delay=2s`
+- 실패 신고 엔드포인트: `/app/room/{joinCode}/block-stacking/fail`
+- 실패 이벤트 흐름: `BlockStackingWebSocketController → BLOCK_STACKING_EVENTS → BlockStackingFailEventConsumer → BlockStackingService.recordFailure() → BlockStackingFlowOrchestrator.triggerEarlyFinishIfAllFailed()`

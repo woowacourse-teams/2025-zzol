@@ -2,7 +2,7 @@ package coffeeshout.blockstacking.domain;
 
 import coffeeshout.room.domain.player.PlayerName;
 
-public record BlockStackingPlayerProgress(PlayerName playerName, int currentFloor) {
+public record BlockStackingPlayerProgress(PlayerName playerName, int currentFloor, boolean failed) {
 
     public BlockStackingPlayerProgress {
         if (currentFloor < 0) {
@@ -11,7 +11,7 @@ public record BlockStackingPlayerProgress(PlayerName playerName, int currentFloo
     }
 
     public static BlockStackingPlayerProgress initial(PlayerName playerName) {
-        return new BlockStackingPlayerProgress(playerName, 0);
+        return new BlockStackingPlayerProgress(playerName, 0, false);
     }
 
     public BlockStackingPlayerProgress advanceTo(int floor) {
@@ -19,6 +19,10 @@ public record BlockStackingPlayerProgress(PlayerName playerName, int currentFloo
             throw new IllegalArgumentException(
                     "floor는 currentFloor(" + currentFloor + ") 이상이어야 합니다: " + floor);
         }
-        return new BlockStackingPlayerProgress(playerName, floor);
+        return new BlockStackingPlayerProgress(playerName, floor, false);
+    }
+
+    public BlockStackingPlayerProgress fail() {
+        return new BlockStackingPlayerProgress(playerName, currentFloor, true);
     }
 }

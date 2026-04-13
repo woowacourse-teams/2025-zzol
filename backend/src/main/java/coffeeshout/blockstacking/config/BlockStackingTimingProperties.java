@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "block-stacking.timing")
 public record BlockStackingTimingProperties(
         @NotNull @DurationMin(nanos = 1) Duration prepare,
-        @NotNull @DurationMin(nanos = 1) Duration playing
+        @NotNull @DurationMin(nanos = 1) Duration playing,
+        @NotNull @DurationMin(nanos = 1) Duration allFailedDelay
 ) {
 }

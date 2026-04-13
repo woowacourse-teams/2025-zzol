@@ -46,6 +46,17 @@ public class BlockStackingService implements MiniGameService {
         }
     }
 
+    public void recordFailure(String joinCode, String playerName) {
+        log.debug("블록 쌓기 실패 처리 시작: joinCode={}, playerName={}", joinCode, playerName);
+
+        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
+        final BlockStackingGame game = getGame(room);
+        final Player player = game.findPlayerByName(new PlayerName(playerName));
+
+        game.recordFailure(player);
+        flowOrchestrator.triggerEarlyFinishIfAllFailed(joinCode, game);
+    }
+
     @Override
     public MiniGameType getMiniGameType() {
         return MiniGameType.BLOCK_STACKING;

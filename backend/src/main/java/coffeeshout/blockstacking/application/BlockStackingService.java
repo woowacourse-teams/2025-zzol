@@ -53,8 +53,10 @@ public class BlockStackingService implements MiniGameService {
         final BlockStackingGame game = getGame(room);
         final Player player = game.findPlayerByName(new PlayerName(playerName));
 
-        game.recordFailure(player);
-        flowOrchestrator.triggerEarlyFinishIfAllFailed(joinCode, game);
+        final boolean recorded = game.recordFailure(player);
+        if (recorded) {
+            flowOrchestrator.triggerEarlyFinishIfAllFailed(joinCode, game);
+        }
     }
 
     @Override

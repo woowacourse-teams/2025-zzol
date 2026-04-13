@@ -22,5 +22,9 @@ export const useBlockStackingActions = () => {
     [joinCode, send]
   );
 
-  return { publishProgress };
+  const publishFail = useCallback(() => {
+    send(`/room/${joinCode}/block-stacking/fail`, {});
+  }, [joinCode, send]);
+
+  return { publishProgress, publishFail };
 };

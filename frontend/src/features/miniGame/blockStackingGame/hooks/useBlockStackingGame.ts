@@ -88,13 +88,13 @@ const drawFallingPieces = (ctx: CanvasRenderingContext2D, pieces: FallingPiece[]
   ctx.globalAlpha = 1;
 };
 
-const updateFallingPieces = (pieces: FallingPiece[], H: number) => {
+const updateFallingPieces = (pieces: FallingPiece[], H: number, dt60: number) => {
   return pieces
     .map((p) => ({
       ...p,
-      y: p.y + p.vy,
-      vy: p.vy + GRAVITY,
-      opacity: Math.max(0, p.opacity - OPACITY_DECAY),
+      y: p.y + p.vy * dt60,
+      vy: p.vy + GRAVITY * dt60,
+      opacity: Math.max(0, p.opacity - OPACITY_DECAY * dt60),
     }))
     .filter((p) => p.opacity > 0 && p.y < H + 100);
 };
@@ -118,9 +118,10 @@ export const useBlockStackingGame = (
     setLocalGameOver: () => void;
     sounds: ReturnType<typeof useBlockStackingSounds>;
     onBlockPlaced: (payload: BlockStackingProgressPayload) => void;
+    onFail: () => void;
   }
 ) => {
-  const { setLocalGameOver, sounds, onBlockPlaced } = options;
+  const { setLocalGameOver, sounds, onBlockPlaced, onFail } = options;
 
   // --- 1. Game State & Refs (내부 상태 관리) ---
   const stackRef = useRef<StackedBlock[]>([]);
@@ -134,18 +135,20 @@ export const useBlockStackingGame = (
   const scoreRef = useRef(0);
   const cameraYRef = useRef(0);
 
-  // 화면에 점수와 시간을 표시하기 위한 State (렌더링 트리거용)
-  const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
 
   // --- 2. Closure Avoidance (클로저 문제 해결) ---
   // 아래 Ref들은 handleTap이나 루프 내부에서 최신 Props/Callbacks에 접근할 수 있게 합니다.
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
   const soundsRef = useRef(sounds);
   soundsRef.current = sounds;
   const setLocalGameOverRef = useRef(setLocalGameOver);
   setLocalGameOverRef.current = setLocalGameOver;
   const onBlockPlacedRef = useRef(onBlockPlaced);
   onBlockPlacedRef.current = onBlockPlaced;
+  const onFailRef = useRef(onFail);
+  onFailRef.current = onFail;
   const isLocalGameOverRef = useRef(isLocalGameOver);
   isLocalGameOverRef.current = isLocalGameOver;
 
@@ -156,7 +159,7 @@ export const useBlockStackingGame = (
    */
   const handleTap = useCallback(() => {
     // 게임 중이 아니거나 이미 탈락한 경우 무시
-    if (gameState !== 'PLAYING' || isLocalGameOverRef.current) return;
+    if (gameStateRef.current !== 'PLAYING' || isLocalGameOverRef.current) return;
 
     soundsRef.current.ensureAudioContext();
 
@@ -187,6 +190,7 @@ export const useBlockStackingGame = (
       shakeRef.current = { intensity: 12, startTime: performance.now(), duration: 500 };
       soundsRef.current.playGameOver();
       setLocalGameOverRef.current();
+      onFailRef.current();
       return;
     }
 
@@ -233,7 +237,6 @@ export const useBlockStackingGame = (
     const prevScore = scoreRef.current;
     const newScore = prevScore + 1;
     scoreRef.current = newScore;
-    setScore(newScore);
 
     // 다음 블록 준비 (위치와 크기 고정, 방향은 유지)
     currentBlockRef.current.x = newBlock.x;
@@ -260,7 +263,7 @@ export const useBlockStackingGame = (
     if (getBlockSpeed(prevScore) !== getBlockSpeed(newScore)) {
       soundsRef.current.playSpeedUp();
     }
-  }, [gameState]);
+  }, []);
 
   // --- 4. Effects (생명주기 및 동기화) ---
 
@@ -297,7 +300,6 @@ export const useBlockStackingGame = (
 
     // 게임 시작 시 초기값 설정
     scoreRef.current = 0;
-    setScore(0);
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -317,12 +319,24 @@ export const useBlockStackingGame = (
     shakeRef.current = { intensity: 0, startTime: 0, duration: 0 };
     cameraYRef.current = virtualHeight - 2 * BLOCK_HEIGHT;
 
+    let prevTime = 0;
     let rafId: number;
 
     /**
      * 프레임 드로우 함수 (Main Loop)
      */
     const draw = (time: number) => {
+      // 탭 전환 복귀 시 prevTime 리셋 — 장시간 중단 후 첫 프레임을 정상 처리
+      if (document.hidden) {
+        prevTime = 0;
+        rafId = requestAnimationFrame(draw);
+        return;
+      }
+      // 델타 타임 계산 후 60fps 기준으로 정규화
+      // 첫 프레임은 1프레임으로 처리, 최대 3프레임으로 제한
+      const deltaMs = prevTime > 0 ? time - prevTime : 1000 / 60;
+      prevTime = time;
+      const dt60 = Math.min((deltaMs / 1000) * 60, 3);
       // 매 프레임 스케일 재계산 (창 크기 조절 대응)
       const currentScale = canvas.width / CANVAS_WIDTH;
       const W = CANVAS_WIDTH;
@@ -353,7 +367,7 @@ export const useBlockStackingGame = (
       if (!isGameOver) {
         const cur = currentBlockRef.current;
         const speed = getBlockSpeed(scoreRef.current);
-        let nx = cur.x + speed * cur.direction;
+        let nx = cur.x + speed * dt60 * cur.direction;
         let nd = cur.direction;
         if (nx <= 0) {
           nx = 0;
@@ -367,8 +381,9 @@ export const useBlockStackingGame = (
       }
 
       // [Camera Logic] 카메라 팔로우 부드럽게 이동
+      // exponential decay: 프레임 독립적 lerp (단순 * dt60은 고FPS/탭복귀 시 오버슈팅 발생)
       const targetCameraY = Math.max(H / 2, H - (stack.length + 1) * BLOCK_HEIGHT);
-      cameraYRef.current += (targetCameraY - cameraYRef.current) * 0.1;
+      cameraYRef.current += (targetCameraY - cameraYRef.current) * (1 - Math.pow(0.9, dt60));
       const movingBlockY = cameraYRef.current;
 
       // [Drawing Logic] 쌓여있는 블록들 렌더링
@@ -382,7 +397,7 @@ export const useBlockStackingGame = (
       }
 
       // 낙하 중인 조각들 업데이트 및 렌더링
-      fallingPiecesRef.current = updateFallingPieces(fallingPiecesRef.current, H);
+      fallingPiecesRef.current = updateFallingPieces(fallingPiecesRef.current, H, dt60);
       drawFallingPieces(ctx, fallingPiecesRef.current);
 
       // 스코어 텍스트 표시
@@ -395,7 +410,7 @@ export const useBlockStackingGame = (
       ctx.restore(); // scale restore
 
       // 서버 대기 모드(DONE)가 되기 전까지 애니메이션 루프 유지
-      if (gameState === 'PLAYING') {
+      if (gameStateRef.current === 'PLAYING') {
         rafId = requestAnimationFrame(draw);
       }
     };
@@ -404,7 +419,7 @@ export const useBlockStackingGame = (
     return () => cancelAnimationFrame(rafId);
   }, [gameState, canvasRef]);
 
-  return { score, timeLeft, handleTap };
+  return { timeLeft, handleTap };
 };
 
 // 외부에서 CANVAS_WIDTH를 참조할 수 있도록 재-export

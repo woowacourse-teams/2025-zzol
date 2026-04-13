@@ -21,7 +21,57 @@ class BlockStackingPlayerProgressTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(progress.playerName()).isEqualTo(플레이어명);
                 softly.assertThat(progress.currentFloor()).isZero();
+                softly.assertThat(progress.failed()).isFalse();
             });
+        }
+    }
+
+    @Nested
+    class 실패_처리_테스트 {
+
+        @Test
+        void fail_호출_시_새_인스턴스를_반환한다() {
+            final BlockStackingPlayerProgress original = BlockStackingPlayerProgress.initial(플레이어명);
+
+            final BlockStackingPlayerProgress failed = original.fail();
+
+            assertThat(failed).isNotSameAs(original);
+        }
+
+        @Test
+        void fail_호출_후_failed가_true이다() {
+            final BlockStackingPlayerProgress progress = BlockStackingPlayerProgress.initial(플레이어명).fail();
+
+            assertThat(progress.failed()).isTrue();
+        }
+
+        @Test
+        void fail_호출_후_playerName과_currentFloor는_유지된다() {
+            final BlockStackingPlayerProgress original = BlockStackingPlayerProgress.initial(플레이어명).advanceTo(3);
+
+            final BlockStackingPlayerProgress failed = original.fail();
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(failed.playerName()).isEqualTo(플레이어명);
+                softly.assertThat(failed.currentFloor()).isEqualTo(3);
+            });
+        }
+
+        @Test
+        void fail_호출_후_원본_인스턴스의_failed는_변경되지_않는다() {
+            final BlockStackingPlayerProgress original = BlockStackingPlayerProgress.initial(플레이어명);
+            original.fail();
+
+            assertThat(original.failed()).isFalse();
+        }
+
+        @Test
+        void 실패_상태에서_advanceTo_호출_후_failed_상태가_유지된다() {
+            final BlockStackingPlayerProgress progress = BlockStackingPlayerProgress.initial(플레이어명)
+                    .fail()
+                    .advanceTo(1);
+
+            assertThat(progress.failed()).isTrue();
         }
     }
 

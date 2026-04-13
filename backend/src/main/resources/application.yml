@@ -90,6 +90,7 @@ block-stacking:
   timing:
     prepare: 3000ms
     playing: 20000ms
+    all-failed-delay: 2000ms
   scheduler:
     pool-size: 2
 

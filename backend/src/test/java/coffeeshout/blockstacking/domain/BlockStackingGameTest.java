@@ -173,6 +173,19 @@ class BlockStackingGameTest {
         }
 
         @Test
+        void 이미_실패한_플레이어의_진행_이벤트_수신_시_false를_반환하고_floor가_갱신되지_않는다() {
+            game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordFailure(꾹이);
+
+            final boolean recorded = game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(recorded).isFalse();
+                softly.assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(1L);
+            });
+        }
+
+        @Test
         void 각_플레이어는_독립적으로_floor를_쌓는다() {
             game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
             game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
@@ -236,6 +249,100 @@ class BlockStackingGameTest {
                     () -> game.findPlayerByName(new PlayerName("없는플레이어")),
                     BlockStackingGameErrorCode.PLAYER_NOT_FOUND
             );
+        }
+    }
+
+    @Nested
+    class 실패_기록_테스트 {
+
+        @BeforeEach
+        void 게임_시작() {
+            game.prepare();
+            game.startPlay();
+        }
+
+        @Test
+        void 플레이어_실패_기록_시_해당_플레이어의_failed가_true가_된다() {
+            final boolean recorded = game.recordFailure(꾹이);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(recorded).isTrue();
+                softly.assertThat(game.getPlayerProgresses().get(꾹이).failed()).isTrue();
+            });
+        }
+
+        @Test
+        void 실패_기록_시_쌓은_층수는_유지된다() {
+            game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+
+            game.recordFailure(꾹이);
+
+            assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(2L);
+        }
+
+        @Test
+        void 이미_실패한_플레이어에게_중복_실패_기록_시_false를_반환하고_상태가_유지된다() {
+            game.recordFailure(꾹이);
+            final boolean second = game.recordFailure(꾹이);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(second).isFalse();
+                softly.assertThat(game.getPlayerProgresses().get(꾹이).failed()).isTrue();
+            });
+        }
+
+        @Test
+        void PLAYING_상태가_아닐_때_recordFailure_호출_시_예외를_던진다() {
+            game.finish();
+
+            assertCoffeeShoutException(
+                    () -> game.recordFailure(꾹이),
+                    BlockStackingGameErrorCode.NOT_PLAYING_STATE
+            );
+        }
+
+        @Test
+        void 등록되지_않은_플레이어의_실패_기록_시_예외를_던진다() {
+            final Player 미등록플레이어 = PlayerFixture.호스트유령();
+
+            assertCoffeeShoutException(
+                    () -> game.recordFailure(미등록플레이어),
+                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND
+            );
+        }
+    }
+
+    @Nested
+    class 전원_실패_여부_테스트 {
+
+        @BeforeEach
+        void 게임_시작() {
+            game.prepare();
+            game.startPlay();
+        }
+
+        @Test
+        void 아무도_실패하지_않은_경우_false를_반환한다() {
+            assertThat(game.isAllPlayersFailed()).isFalse();
+        }
+
+        @Test
+        void 일부만_실패한_경우_false를_반환한다() {
+            game.recordFailure(꾹이);
+            game.recordFailure(루키);
+
+            assertThat(game.isAllPlayersFailed()).isFalse();
+        }
+
+        @Test
+        void 모든_플레이어가_실패하면_true를_반환한다() {
+            game.recordFailure(꾹이);
+            game.recordFailure(루키);
+            game.recordFailure(엠제이);
+            game.recordFailure(한스);
+
+            assertThat(game.isAllPlayersFailed()).isTrue();
         }
     }
 

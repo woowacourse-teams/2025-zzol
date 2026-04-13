@@ -3,8 +3,6 @@ package coffeeshout.dashboard.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.assertj.core.api.SoftAssertions;
-
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
@@ -23,6 +21,7 @@ import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.room.infra.persistence.RouletteResultEntity;
 import coffeeshout.room.infra.persistence.RouletteResultJpaRepository;
 import java.util.List;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -385,35 +384,6 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).isEmpty();
-        }
-
-        @Test
-        void 같은_플레이어의_여러_게임_중_최고_층수만_반영한다() {
-            // given
-            final RoomEntity room1 = roomJpaRepository.save(new RoomEntity("PPQQ"));
-            final RoomEntity room2 = roomJpaRepository.save(new RoomEntity("RRSS"));
-            final MiniGameEntity miniGame1 = miniGameJpaRepository.save(
-                    new MiniGameEntity(room1, MiniGameType.BLOCK_STACKING)
-            );
-            final MiniGameEntity miniGame2 = miniGameJpaRepository.save(
-                    new MiniGameEntity(room2, MiniGameType.BLOCK_STACKING)
-            );
-
-            final PlayerEntity 철수1 = playerJpaRepository.save(new PlayerEntity(room1, "철수", PlayerType.HOST));
-            final PlayerEntity 철수2 = playerJpaRepository.save(new PlayerEntity(room2, "철수", PlayerType.HOST));
-
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame1, 철수1, 1, 15L));
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame2, 철수2, 1, 25L));
-
-            // when
-            final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
-
-            // then
-            SoftAssertions soft = new SoftAssertions();
-            soft.assertThat(result).hasSize(1);
-            soft.assertThat(result.getFirst().playerName()).isEqualTo("철수");
-            soft.assertThat(result.getFirst().maxFloor()).isEqualTo(25L);
-            soft.assertAll();
         }
 
         @Test

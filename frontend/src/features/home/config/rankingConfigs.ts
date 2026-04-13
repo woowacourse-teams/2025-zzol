@@ -1,4 +1,9 @@
-import type { TopWinner, GamePlayCount, LowestProbabilityWinner } from '@/types/dashBoard';
+import type {
+  TopWinner,
+  GamePlayCount,
+  LowestProbabilityWinner,
+  BlockStackingTopPlayer,
+} from '@/types/dashBoard';
 import { MINI_GAME_NAME_MAP, type MiniGameType } from '@/types/miniGame/common';
 
 export type RankingItem = {
@@ -36,6 +41,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
     endpoint: '/dashboard/lowest-probability-winner',
     transformData: (raw) => {
       const data = raw as LowestProbabilityWinner;
+      if (!data?.playerNames?.length) return [];
       const probability = Math.round(data.probability * 10) / 10;
       return data.playerNames.map((name, i) => ({
         rank: i + 1,
@@ -44,6 +50,19 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
         unit: '%',
       }));
     },
+  },
+  {
+    key: 'blockstacking-top-players',
+    label: '블록쌓기 최고 기록',
+    icon: '🧱',
+    endpoint: '/dashboard/block-stacking-top-players',
+    transformData: (raw) =>
+      (raw as BlockStackingTopPlayer[]).map((p, i) => ({
+        rank: i + 1,
+        name: p.playerName,
+        count: p.maxFloor,
+        unit: '층',
+      })),
   },
   {
     key: 'game-play-counts',

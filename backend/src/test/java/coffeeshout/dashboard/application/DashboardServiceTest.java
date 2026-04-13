@@ -409,9 +409,11 @@ class DashboardServiceTest extends ServiceTest {
             final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
 
             // then
-            assertThat(result).hasSize(1);
-            assertThat(result.getFirst().playerName()).isEqualTo("철수");
-            assertThat(result.getFirst().maxFloor()).isEqualTo(25L);
+            SoftAssertions soft = new SoftAssertions();
+            soft.assertThat(result).hasSize(1);
+            soft.assertThat(result.getFirst().playerName()).isEqualTo("철수");
+            soft.assertThat(result.getFirst().maxFloor()).isEqualTo(25L);
+            soft.assertAll();
         }
 
         @Test
@@ -433,8 +435,10 @@ class DashboardServiceTest extends ServiceTest {
             final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
 
             // then
-            assertThat(result).hasSize(5);
-            assertThat(result.getFirst().maxFloor()).isEqualTo(100L);
+            SoftAssertions soft = new SoftAssertions();
+            soft.assertThat(result).hasSize(5);
+            soft.assertThat(result.getFirst().maxFloor()).isEqualTo(100L);
+            soft.assertAll();
         }
 
         @Test
@@ -458,8 +462,10 @@ class DashboardServiceTest extends ServiceTest {
             final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
 
             // then
-            assertThat(result).hasSize(1);
-            assertThat(result.getFirst().playerName()).isEqualTo("철수");
+            SoftAssertions soft = new SoftAssertions();
+            soft.assertThat(result).hasSize(1);
+            soft.assertThat(result.getFirst().playerName()).isEqualTo("철수");
+            soft.assertAll();
         }
     }
 }

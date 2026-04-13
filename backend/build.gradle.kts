@@ -118,10 +118,12 @@ dependencies {
 
 tasks.register("generateCtags") {
     description = "Universal Ctags로 Java 심볼 인덱스(tags 파일)를 생성한다"
+    onlyIf { System.getenv("CI") == null }
     val workDir = projectDir
     doLast {
+        val process: Process
         try {
-            ProcessBuilder(
+            process = ProcessBuilder(
                 "ctags",
                 "--languages=Java",
                 "--fields=+n",
@@ -132,9 +134,23 @@ tasks.register("generateCtags") {
             )
                 .directory(workDir)
                 .start()
-                .waitFor()
-        } catch (e: Exception) {
+        } catch (e: java.io.IOException) {
             logger.warn("ctags를 찾을 수 없어 tags 파일 생성을 건너뜁니다: ${e.message}")
+            return@doLast
+        }
+
+        try {
+            val finished = process.waitFor(10L, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                logger.warn("ctags가 10초 내에 완료되지 않아 강제 종료했습니다")
+            } else if (process.exitValue() != 0) {
+                val stderr = process.errorStream.bufferedReader().readText().trim()
+                logger.warn("ctags가 비정상 종료했습니다 (exit=${process.exitValue()}): $stderr")
+            }
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            logger.warn("ctags 대기 중 인터럽트가 발생했습니다: ${e.message}")
         }
     }
 }

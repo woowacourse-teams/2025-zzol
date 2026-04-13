@@ -19,7 +19,7 @@ public record BlockStackingPlayerProgress(PlayerName playerName, int currentFloo
             throw new IllegalArgumentException(
                     "floor는 currentFloor(" + currentFloor + ") 이상이어야 합니다: " + floor);
         }
-        return new BlockStackingPlayerProgress(playerName, floor, false);
+        return new BlockStackingPlayerProgress(playerName, floor, failed);
     }
 
     public BlockStackingPlayerProgress fail() {

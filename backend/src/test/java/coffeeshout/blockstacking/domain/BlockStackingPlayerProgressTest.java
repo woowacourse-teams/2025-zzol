@@ -66,12 +66,12 @@ class BlockStackingPlayerProgressTest {
         }
 
         @Test
-        void advanceTo_호출_후_failed는_false이다() {
+        void 실패_상태에서_advanceTo_호출_후_failed_상태가_유지된다() {
             final BlockStackingPlayerProgress progress = BlockStackingPlayerProgress.initial(플레이어명)
                     .fail()
                     .advanceTo(1);
 
-            assertThat(progress.failed()).isFalse();
+            assertThat(progress.failed()).isTrue();
         }
     }
 

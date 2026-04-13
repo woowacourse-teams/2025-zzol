@@ -24,7 +24,7 @@ paths:
 | 도메인 서비스             | `{Domain}CommandService`   |
 | 커맨드 핸들러             | `{Action}CommandHandler`   |
 | Redis Consumer      | `{Event}Consumer`          |
-| JPA 영속성 객체          | `{Domain}Row`              |
+| JPA 영속성 객체          | `{Domain}Entity`           |
 | ErrorCode           | `{Domain}ErrorCode`        |
 
 ## 예외 계층

@@ -326,8 +326,14 @@ export const useBlockStackingGame = (
      * 프레임 드로우 함수 (Main Loop)
      */
     const draw = (time: number) => {
+      // 탭 전환 복귀 시 prevTime 리셋 — 장시간 중단 후 첫 프레임을 정상 처리
+      if (document.hidden) {
+        prevTime = 0;
+        rafId = requestAnimationFrame(draw);
+        return;
+      }
       // 델타 타임 계산 후 60fps 기준으로 정규화
-      // 탭 전환 등 장시간 중단 후 첫 프레임은 1프레임으로 처리, 최대 3프레임으로 제한
+      // 첫 프레임은 1프레임으로 처리, 최대 3프레임으로 제한
       const deltaMs = prevTime > 0 ? time - prevTime : 1000 / 60;
       prevTime = time;
       const dt60 = Math.min((deltaMs / 1000) * 60, 3);
@@ -375,8 +381,9 @@ export const useBlockStackingGame = (
       }
 
       // [Camera Logic] 카메라 팔로우 부드럽게 이동
+      // exponential decay: 프레임 독립적 lerp (단순 * dt60은 고FPS/탭복귀 시 오버슈팅 발생)
       const targetCameraY = Math.max(H / 2, H - (stack.length + 1) * BLOCK_HEIGHT);
-      cameraYRef.current += (targetCameraY - cameraYRef.current) * 0.1 * dt60;
+      cameraYRef.current += (targetCameraY - cameraYRef.current) * (1 - Math.pow(0.9, dt60));
       const movingBlockY = cameraYRef.current;
 
       // [Drawing Logic] 쌓여있는 블록들 렌더링

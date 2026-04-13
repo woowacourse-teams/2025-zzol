@@ -118,9 +118,10 @@ export const useBlockStackingGame = (
     setLocalGameOver: () => void;
     sounds: ReturnType<typeof useBlockStackingSounds>;
     onBlockPlaced: (payload: BlockStackingProgressPayload) => void;
+    onFail: () => void;
   }
 ) => {
-  const { setLocalGameOver, sounds, onBlockPlaced } = options;
+  const { setLocalGameOver, sounds, onBlockPlaced, onFail } = options;
 
   // --- 1. Game State & Refs (내부 상태 관리) ---
   const stackRef = useRef<StackedBlock[]>([]);
@@ -146,6 +147,8 @@ export const useBlockStackingGame = (
   setLocalGameOverRef.current = setLocalGameOver;
   const onBlockPlacedRef = useRef(onBlockPlaced);
   onBlockPlacedRef.current = onBlockPlaced;
+  const onFailRef = useRef(onFail);
+  onFailRef.current = onFail;
   const isLocalGameOverRef = useRef(isLocalGameOver);
   isLocalGameOverRef.current = isLocalGameOver;
 
@@ -187,6 +190,7 @@ export const useBlockStackingGame = (
       shakeRef.current = { intensity: 12, startTime: performance.now(), duration: 500 };
       soundsRef.current.playGameOver();
       setLocalGameOverRef.current();
+      onFailRef.current();
       return;
     }
 

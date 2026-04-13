@@ -13,7 +13,7 @@ const BlockStackingCanvas = () => {
   const [muted, setMuted] = useState(false);
 
   const sounds = useBlockStackingSounds(muted);
-  const { publishProgress } = useBlockStackingActions();
+  const { publishProgress, publishFail } = useBlockStackingActions();
   const { handleTap, timeLeft } = useBlockStackingGame(
     canvasRef,
     gameState,
@@ -23,6 +23,7 @@ const BlockStackingCanvas = () => {
       setLocalGameOver,
       sounds,
       onBlockPlaced: publishProgress,
+      onFail: publishFail,
     }
   );
 

@@ -34,7 +34,8 @@ val zxingVersion = "3.5.3"
 val queryDslVersion = "5.0.0"
 val websocketDocsVersion = "1.0.7"
 val googleGenAiVersion = "1.44.0"
-val testcontainersVersion = "2.0.2"
+val testcontainersVersion = "2.0.4"
+val testcontainersModuleVersion = "1.20.4"
 val reflectionsVersion = "0.10.2"
 val resilience4jVersion = "2.2.0"
 
@@ -95,8 +96,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.h2database:h2")
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
-    testImplementation("org.testcontainers:mysql:1.20.4")
-    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+    testImplementation("org.testcontainers:mysql:${testcontainersModuleVersion}")
+    testImplementation("org.testcontainers:junit-jupiter:${testcontainersModuleVersion}")
 
     // --- Reflections (클래스패스 스캔) ---
     implementation("org.reflections:reflections:${reflectionsVersion}")
@@ -117,6 +118,7 @@ dependencies {
 }
 
 tasks.register("generateCtags") {
+    group = "build"
     description = "Universal Ctags로 Java 심볼 인덱스(tags 파일)를 생성한다"
     onlyIf { System.getenv("CI") == null }
     val workDir = projectDir
@@ -160,6 +162,8 @@ tasks.named("compileJava") {
 }
 
 tasks.register<Exec>("pruneStaleTestContainers") {
+    group = "verification"
+    description = "테스트 종료 후 남은 TestContainers 컨테이너를 정리한다"
     commandLine(
         "docker", "container", "prune", "-f",
         "--filter", "label=org.testcontainers=true"

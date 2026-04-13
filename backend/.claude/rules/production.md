@@ -29,7 +29,7 @@ paths:
 
 ## 예외 계층
 
-```
+```text
 CoffeeShoutException
 ├── BusinessException       — 도메인 규칙 위반
 ├── InfrastructureException — Redis, DB 오류

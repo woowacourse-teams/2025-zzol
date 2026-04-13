@@ -96,8 +96,7 @@ dependencies {
     testImplementation("com.h2database:h2")
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
     testImplementation("org.testcontainers:mysql:${testcontainersVersion}")
-    testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
-
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter:${testcontainersVersion}")
     // --- Reflections (클래스패스 스캔) ---
     implementation("org.reflections:reflections:${reflectionsVersion}")
 

@@ -119,6 +119,9 @@ tasks.register("generateCtags") {
     group = "build"
     description = "Universal Ctags로 Java 심볼 인덱스(tags 파일)를 생성한다"
     onlyIf { System.getenv("CI") == null }
+    inputs.dir("src/main/java")
+    inputs.dir("src/test/java")
+    outputs.file("tags")
     val workDir = projectDir
     doLast {
         val process: Process
@@ -130,7 +133,8 @@ tasks.register("generateCtags") {
                 "--extras=+q",
                 "-R",
                 "-f", "tags",
-                "src/main/java"
+                "src/main/java",
+                "src/test/java"
             )
                 .directory(workDir)
                 .start()

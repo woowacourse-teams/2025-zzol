@@ -47,8 +47,8 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
         {loading ? (
           <GameActionButtonSkeleton />
         ) : (
-          miniGames
-            ?.filter((miniGame) => !HIDDEN_MINI_GAMES.includes(miniGame))
+          (miniGames ?? [])
+            .filter((miniGame) => !HIDDEN_MINI_GAMES.includes(miniGame))
             .map((miniGame) => (
               <GameActionButton
                 key={miniGame}

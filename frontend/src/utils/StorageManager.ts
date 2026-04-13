@@ -5,6 +5,10 @@ export const STORAGE_KEYS = {
   MY_NAME: 'zzol-my-name',
   QR_CODE_URL: 'zzol-qr-code-url',
   PLAYER_TYPE: 'zzol-player-type',
+  RECENT_NICKNAMES: 'zzol-recent-nicknames',
+  LAST_JOIN_CODE: 'zzol-last-join-code',
+  WIN_COUNT: 'zzol-win-count',
+  NON_WIN_STREAK: 'zzol-non-win-streak',
 } as const;
 
 type StorageType = 'localStorage' | 'sessionStorage';

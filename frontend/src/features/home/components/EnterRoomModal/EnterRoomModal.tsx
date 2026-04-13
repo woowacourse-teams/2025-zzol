@@ -49,17 +49,15 @@ const EnterRoomModal = ({ onClose }: Props) => {
   };
 
   const handleJoinCodeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const upperValue = value.toUpperCase();
-    const lastChar = upperValue.slice(-1);
+    const value = e.target.value.toUpperCase();
 
-    const isTooLong = upperValue.length > JOIN_CODE_LENGTH;
-    const isNotEmpty = upperValue.length > 0;
-    const isInvalidChar = isNotEmpty && !/^[A-Z0-9]$/.test(lastChar);
+    const isTooLong = value.length > JOIN_CODE_LENGTH;
+    const isNotEmpty = value.length > 0;
+    const isInvalid = isNotEmpty && !/^[A-Z0-9]+$/.test(value);
 
-    if (isTooLong || isInvalidChar) return;
+    if (isTooLong || isInvalid) return;
 
-    setJoinCode(value.toUpperCase());
+    setJoinCode(value);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {

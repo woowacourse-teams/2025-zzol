@@ -2,7 +2,7 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
+import coffeeshout.global.flow.FlowScheduler;
 import coffeeshout.fixture.TestContainerSupport;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
@@ -42,10 +42,15 @@ class OutboxE2ETest extends TestContainerSupport {
     @TestConfiguration
     static class OutboxE2ETestConfig {
 
-        @Bean
+        @Bean(name = "cardGameFlowScheduler")
         @Primary
-        public CardGameFlowScheduler mockCardGameFlowScheduler() {
-            return Mockito.mock(CardGameFlowScheduler.class);
+        public FlowScheduler mockCardGameFlowScheduler() {
+            return Mockito.mock(FlowScheduler.class);
+        }
+
+        @Bean(name = "blockStackingFlowScheduler")
+        public FlowScheduler mockBlockStackingFlowScheduler() {
+            return Mockito.mock(FlowScheduler.class);
         }
 
         @Bean(name = "cardGameTaskScheduler")

@@ -117,15 +117,17 @@ jobs:
           cat > .env << EOF
           REGISTRY=ghcr.io/${{ env.REPO_OWNER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
-          S3_QR_KEY_PREFIX=${{ secrets.S3_QR_KEY_PREFIX }}
-          AWS_REGION=${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          ORACLE_NAMESPACE=${{ secrets.ORACLE_NAMESPACE }}
+          ORACLE_BUCKET=${{ secrets.ORACLE_BUCKET }}
+          STDICT_API_KEY=${{ secrets.STDICT_API_KEY }}
+          ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
           TEMPO_URL=${{ secrets.TEMPO_URL }}
           TRACE_SAMPLING_PROBABILITY=${{ secrets.TRACE_SAMPLING_PROBABILITY }}
           EOF
           # IMAGE_TAG는 deploy-application.sh 인자로 전달 (Blue/Green 색상별 관리)
+          # ORACLE_REGION은 ap-chuncheon-1 기본값 사용 (변경 필요 시 시크릿으로 추가)
 
       - name: Transfer files via SCP
         uses: appleboy/scp-action@v1

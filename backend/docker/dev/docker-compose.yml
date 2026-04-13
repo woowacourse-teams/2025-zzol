@@ -11,9 +11,15 @@ x-dev-app: &dev-app
     - MYSQL_PASSWORD=${DB_PASSWORD}
     - REDIS_HOST=dev-redis
     - REDIS_PORT=6379
+    - ORACLE_REGION=${ORACLE_REGION:-ap-chuncheon-1}
+    - ORACLE_NAMESPACE=${ORACLE_NAMESPACE}
+    - ORACLE_BUCKET=${ORACLE_BUCKET}
     - TEMPO_URL=${TEMPO_URL:-http://tempo:4318/v1/traces}
     - TRACE_SAMPLING_PROBABILITY=${TRACE_SAMPLING_PROBABILITY:-1.0}
     - STDICT_API_KEY=${STDICT_API_KEY}
+    - ADMIN_USERNAME=${ADMIN_USERNAME}
+    - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    - GEMINI_API_KEY=${GEMINI_API_KEY}
     - TZ=Asia/Seoul
   volumes:
     - dev-app-logs:/app/logs

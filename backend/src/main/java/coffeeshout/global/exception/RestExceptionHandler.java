@@ -2,11 +2,9 @@ package coffeeshout.global.exception;
 
 import static coffeeshout.global.log.LogAspect.NOTIFICATION_MARKER;
 
-import coffeeshout.global.exception.custom.InvalidArgumentException;
-import coffeeshout.global.exception.custom.InvalidStateException;
-import coffeeshout.global.exception.custom.NotExistElementException;
-import coffeeshout.global.exception.custom.QRCodeGenerationException;
-import coffeeshout.global.exception.custom.StorageServiceException;
+import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.global.exception.custom.SystemException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
@@ -14,6 +12,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -29,17 +28,7 @@ public class RestExceptionHandler {
             HttpServletRequest request
     ) {
         logError(exception, request);
-        return getProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception, new ErrorCode() {
-            @Override
-            public String getCode() {
-                return "INTERNAL_SERVER_ERROR";
-            }
-
-            @Override
-            public String getMessage() {
-                return "서버 오류가 발생했습니다.";
-            }
-        });
+        return getProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception, GlobalErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
@@ -48,58 +37,43 @@ public class RestExceptionHandler {
             HttpServletRequest request
     ) {
         logWarning(exception, request);
-        return getProblemDetail(HttpStatus.NOT_FOUND, exception, new ErrorCode() {
-            @Override
-            public String getCode() {
-                return "RESOURCE_NOT_FOUND";
-            }
-
-            @Override
-            public String getMessage() {
-                return "요청한 리소스를 찾을 수 없습니다.";
-            }
-        });
+        return getProblemDetail(HttpStatus.NOT_FOUND, exception, GlobalErrorCode.RESOURCE_NOT_FOUND);
     }
 
-    @ExceptionHandler(InvalidArgumentException.class)
-    public ProblemDetail handleInvalidArgumentException(
-            InvalidArgumentException exception,
+    @ExceptionHandler(BusinessException.class)
+    public ProblemDetail handleBusinessException(
+            BusinessException exception,
             HttpServletRequest request
     ) {
         logWarning(exception, request);
-        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, exception.getErrorCode());
+        return getProblemDetail(exception.getErrorCode().getHttpStatus(), exception, exception.getErrorCode());
     }
 
-    @ExceptionHandler(InvalidStateException.class)
-    public ProblemDetail handleInvalidStateException(
-            InvalidStateException exception,
+    @ExceptionHandler(SystemException.class)
+    public ProblemDetail handleSystemException(
+            SystemException exception,
             HttpServletRequest request
     ) {
-        logWarning(exception, request);
-        return getProblemDetail(HttpStatus.CONFLICT, exception, exception.getErrorCode());
-    }
-
-    @ExceptionHandler(NotExistElementException.class)
-    public ProblemDetail handleNotExistElementException(
-            NotExistElementException exception,
-            HttpServletRequest request
-    ) {
-        logWarning(exception, request);
-        return getProblemDetail(HttpStatus.NOT_FOUND, exception, exception.getErrorCode());
-    }
-
-    @ExceptionHandler(QRCodeGenerationException.class)
-    public ProblemDetail handleQRCodeGenerationException(QRCodeGenerationException exception,
-                                                         HttpServletRequest request) {
         logError(exception, request);
-        return getProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception, exception.getErrorCode());
+        return getProblemDetail(exception.getErrorCode().getHttpStatus(), exception, exception.getErrorCode());
     }
 
-    @ExceptionHandler(StorageServiceException.class)
-    public ProblemDetail handleStorageServiceException(StorageServiceException exception,
-                                                       HttpServletRequest request) {
+    @ExceptionHandler(InfrastructureException.class)
+    public ProblemDetail handleInfrastructureException(
+            InfrastructureException exception,
+            HttpServletRequest request
+    ) {
         logError(exception, request);
-        return getProblemDetail(HttpStatus.SERVICE_UNAVAILABLE, exception, exception.getErrorCode());
+        return getProblemDetail(exception.getErrorCode().getHttpStatus(), exception, exception.getErrorCode());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException exception,
+            HttpServletRequest request
+    ) {
+        logWarning(exception, request);
+        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, GlobalErrorCode.VALIDATION_ERROR);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -114,19 +88,13 @@ public class RestExceptionHandler {
                 .stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .reduce((msg1, msg2) -> msg1 + ", " + msg2)
-                .orElse("유효하지 않은 요청입니다.");
+                .orElse(GlobalErrorCode.VALIDATION_ERROR.getMessage());
 
-        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, new ErrorCode() {
-            @Override
-            public String getCode() {
-                return "VALIDATION_ERROR";
-            }
-
-            @Override
-            public String getMessage() {
-                return errorMessage;
-            }
-        });
+        return getProblemDetail(
+                HttpStatus.BAD_REQUEST,
+                exception,
+                getErrorCode(errorMessage, GlobalErrorCode.VALIDATION_ERROR)
+        );
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -141,17 +109,10 @@ public class RestExceptionHandler {
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .collect(Collectors.joining(", "));
 
-        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, new ErrorCode() {
-            @Override
-            public String getCode() {
-                return "CONSTRAINT_VIOLATION";
-            }
-
-            @Override
-            public String getMessage() {
-                return errorMessage.isBlank() ? "요청 파라미터가 유효하지 않습니다." : errorMessage;
-            }
-        });
+        return getProblemDetail(HttpStatus.BAD_REQUEST,
+                exception,
+                getErrorCode(errorMessage, GlobalErrorCode.CONSTRAINT_VIOLATION)
+        );
     }
 
     private static ProblemDetail getProblemDetail(HttpStatus status, Exception exception, ErrorCode errorCode) {
@@ -162,6 +123,25 @@ public class RestExceptionHandler {
         problemDetail.setProperty("exception", exception.getClass().getSimpleName());
 
         return problemDetail;
+    }
+
+    private static ErrorCode getErrorCode(String errorMessage, GlobalErrorCode globalErrorCode) {
+        return new ErrorCode() {
+            @Override
+            public String getCode() {
+                return globalErrorCode.getCode();
+            }
+
+            @Override
+            public String getMessage() {
+                return errorMessage.isBlank() ? globalErrorCode.getMessage() : errorMessage;
+            }
+
+            @Override
+            public org.springframework.http.HttpStatus getHttpStatus() {
+                return globalErrorCode.getHttpStatus();
+            }
+        };
     }
 
     private void logError(
@@ -192,4 +172,3 @@ public class RestExceptionHandler {
         log.warn(logMessage, e);
     }
 }
-

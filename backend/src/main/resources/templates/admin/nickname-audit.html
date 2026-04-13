@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      lang="ko">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>닉네임 검열 대시보드 — 커피빵</title>
-    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
     <script>
         function confirmRelease(form) {
             const nickname = form.dataset.nickname;
@@ -23,6 +22,17 @@
 </header>
 
 <main>
+    <a href="/admin" class="nav-back">← 대시보드로</a>
+
+    <div class="filter-bar" style="margin-bottom: 1.5rem;">
+        <span class="filter-label">섹션</span>
+        <a href="#flagged" class="filter-btn">
+            FLAGGED <span class="badge badge-flagged" th:text="${flagged.totalElements}" style="margin-left:0.3rem;">0</span>
+        </a>
+        <a href="#pending" class="filter-btn">
+            PENDING <span class="badge badge-pending" th:text="${pending.totalElements}" style="margin-left:0.3rem;">0</span>
+        </a>
+    </div>
 
     <!-- FLAGGED -->
     <div id="flagged" class="section-header">

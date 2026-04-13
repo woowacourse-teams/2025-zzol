@@ -1,7 +1,7 @@
 package coffeeshout.global.config;
 
-import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
-import coffeeshout.cardgame.infra.scheduler.CompletableFutureFlowScheduler;
+import coffeeshout.global.flow.CompletableFutureFlowScheduler;
+import coffeeshout.global.flow.FlowScheduler;
 import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -25,10 +25,21 @@ public class IntegrationTestConfig {
         return new ShutDownTestScheduler();
     }
 
-    @Bean
-    public CardGameFlowScheduler cardGameFlowScheduler(
+    @Bean(name = "cardGameFlowScheduler")
+    public FlowScheduler cardGameFlowScheduler(
             ShutDownTestScheduler cardGameExecutorScheduler) {
         return new CompletableFutureFlowScheduler(cardGameExecutorScheduler);
+    }
+
+    @Bean(name = "blockStackingExecutorScheduler")
+    public ShutDownTestScheduler blockStackingExecutorScheduler() {
+        return new ShutDownTestScheduler();
+    }
+
+    @Bean(name = "blockStackingFlowScheduler")
+    public FlowScheduler blockStackingFlowScheduler(
+            ShutDownTestScheduler blockStackingExecutorScheduler) {
+        return new CompletableFutureFlowScheduler(blockStackingExecutorScheduler);
     }
 
     @Bean(name = "delayRemovalScheduler")

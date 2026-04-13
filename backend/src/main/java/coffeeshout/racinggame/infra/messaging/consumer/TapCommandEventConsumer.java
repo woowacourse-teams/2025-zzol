@@ -1,6 +1,6 @@
 package coffeeshout.racinggame.infra.messaging.consumer;
 
-import coffeeshout.global.exception.custom.InvalidStateException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.racinggame.application.RacingGameService;
 import coffeeshout.racinggame.domain.event.TapCommandEvent;
 import java.util.function.Consumer;
@@ -23,7 +23,7 @@ public class TapCommandEventConsumer implements Consumer<TapCommandEvent> {
                     event.playerName(),
                     event.tapCount()
             );
-        } catch (InvalidStateException e) {
+        } catch (BusinessException e) {
             log.warn("탭 이벤트 처리 중 상태 오류: eventId={}, joinCode={}",
                     event.eventId(), event.joinCode(), e);
         } catch (Exception e) {

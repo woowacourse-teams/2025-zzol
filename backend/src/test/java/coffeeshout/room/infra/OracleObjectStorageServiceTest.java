@@ -1,5 +1,6 @@
 package coffeeshout.room.infra;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -9,8 +10,6 @@ import static org.mockito.Mockito.when;
 
 import coffeeshout.global.config.properties.OracleObjectStorageProperties;
 import coffeeshout.room.config.QrProperties;
-import coffeeshout.global.exception.custom.StorageServiceException;
-import coffeeshout.room.domain.RoomErrorCode;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
 import com.oracle.bmc.objectstorage.responses.PutObjectResponse;
@@ -121,9 +120,10 @@ class OracleObjectStorageServiceTest {
         byte[] emptyData = new byte[0];
 
         // when & then
-        assertThatThrownBy(() -> oracleObjectStorageService.upload(contents, emptyData))
-                .isInstanceOf(StorageServiceException.class)
-                .hasMessageContaining("QR 이미지 바이트가 비어 있습니다.");
+        assertCoffeeShoutException(
+                () -> oracleObjectStorageService.upload(contents, emptyData),
+                QrCodeErrorCode.QR_CODE_UPLOAD_FAILED
+        );
     }
 
     @Test
@@ -137,7 +137,7 @@ class OracleObjectStorageServiceTest {
 
         // when & then
         // 서킷 브레이커 적용 후 원본 예외를 그대로 던지도록 변경됨
-        // fallback에서 StorageServiceException으로 래핑하지만, 단위 테스트에서는 어노테이션이 동작하지 않음
+        // fallback에서 InfrastructureException으로 래핑하지만, 단위 테스트에서는 어노테이션이 동작하지 않음
         assertThatThrownBy(() -> oracleObjectStorageService.upload(contents, qrCodeImage))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Upload failed");
@@ -167,9 +167,10 @@ class OracleObjectStorageServiceTest {
         String storageKey = null;
 
         // when & then
-        assertThatThrownBy(() -> oracleObjectStorageService.getUrl(storageKey))
-                .isInstanceOf(StorageServiceException.class)
-                .hasMessageContaining(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
+        assertCoffeeShoutException(
+                () -> oracleObjectStorageService.getUrl(storageKey),
+                QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED
+        );
 
         // 실패 메트릭 검증
         Counter urlGenerationFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.generation.failed")
@@ -185,9 +186,10 @@ class OracleObjectStorageServiceTest {
         String storageKey = "   ";
 
         // when & then
-        assertThatThrownBy(() -> oracleObjectStorageService.getUrl(storageKey))
-                .isInstanceOf(StorageServiceException.class)
-                .hasMessageContaining(RoomErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
+        assertCoffeeShoutException(
+                () -> oracleObjectStorageService.getUrl(storageKey),
+                QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED
+        );
 
         // 실패 메트릭 검증
         Counter urlGenerationFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.generation.failed")

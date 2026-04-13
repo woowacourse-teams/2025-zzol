@@ -34,7 +34,7 @@ val zxingVersion = "3.5.3"
 val queryDslVersion = "5.0.0"
 val websocketDocsVersion = "1.0.7"
 val googleGenAiVersion = "1.44.0"
-val testcontainersVersion = "2.0.2"
+val testcontainersVersion = "2.0.4"
 val reflectionsVersion = "0.10.2"
 val resilience4jVersion = "2.2.0"
 
@@ -65,6 +65,7 @@ dependencies {
 
     // --- Utils ---
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+    developmentOnly("me.paulschwarz:spring-dotenv:4.0.0")
     implementation("io.github.20hyeonsulee:websocket-docs-generator:${websocketDocsVersion}")
 
     implementation("com.google.zxing:core:${zxingVersion}")
@@ -94,9 +95,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.h2database:h2")
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
-    testImplementation("org.testcontainers:mysql:1.20.4")
-    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
-
+    testImplementation("org.testcontainers:testcontainers-mysql:${testcontainersVersion}")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter:${testcontainersVersion}")
     // --- Reflections (클래스패스 스캔) ---
     implementation("org.reflections:reflections:${reflectionsVersion}")
 
@@ -115,7 +115,66 @@ dependencies {
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 }
 
+tasks.register("generateCtags") {
+    group = "build"
+    description = "Universal Ctags로 Java 심볼 인덱스(tags 파일)를 생성한다"
+    onlyIf { System.getenv("CI") == null }
+    inputs.dir("src/main/java")
+    inputs.dir("src/test/java")
+    outputs.file("tags")
+    val workDir = projectDir
+    doLast {
+        val process: Process
+        try {
+            process = ProcessBuilder(
+                "ctags",
+                "--languages=Java",
+                "--fields=+n",
+                "--extras=+q",
+                "-R",
+                "-f", "tags",
+                "src/main/java",
+                "src/test/java"
+            )
+                .directory(workDir)
+                .start()
+        } catch (e: java.io.IOException) {
+            logger.warn("ctags를 찾을 수 없어 tags 파일 생성을 건너뜁니다: ${e.message}")
+            return@doLast
+        }
+
+        try {
+            val finished = process.waitFor(10L, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                logger.warn("ctags가 10초 내에 완료되지 않아 강제 종료했습니다")
+            } else if (process.exitValue() != 0) {
+                val stderr = process.errorStream.bufferedReader().readText().trim()
+                logger.warn("ctags가 비정상 종료했습니다 (exit=${process.exitValue()}): $stderr")
+            }
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            logger.warn("ctags 대기 중 인터럽트가 발생했습니다: ${e.message}")
+        }
+    }
+}
+
+tasks.named("compileJava") {
+    finalizedBy("generateCtags")
+}
+
+tasks.register<Exec>("pruneStaleTestContainers") {
+    group = "verification"
+    description = "테스트 시작 전 이전 실행에서 남은 TestContainers 컨테이너를 정리한다"
+    commandLine(
+        "docker", "container", "prune", "-f",
+        "--filter", "label=org.testcontainers=true"
+    )
+    isIgnoreExitValue = true
+}
+
 tasks.withType<Test> {
+    dependsOn("pruneStaleTestContainers")
     useJUnitPlatform()
     // 성능 테스트는 CI에서 제외 (수동 실행용)
     exclude("**/QueryPerformanceTest.class")

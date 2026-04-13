@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>어드민 대시보드 — 커피빵</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem 2rem 1.75rem;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow var(--dur) var(--ease),
+                        transform var(--dur) var(--ease),
+                        border-color var(--dur) var(--ease);
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent-dim) 0%, transparent 65%);
+            opacity: 0;
+            transition: opacity var(--dur) var(--ease);
+            pointer-events: none;
+        }
+        .card::after {
+            content: '→';
+            position: absolute;
+            bottom: 1.5rem; right: 1.75rem;
+            font-size: 1.1rem;
+            color: var(--accent-light);
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+        }
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
+            border-color: var(--accent-border);
+        }
+        .card:hover::before { opacity: 1; }
+        .card:hover::after  { opacity: 1; transform: translateX(0); }
+        .card-icon {
+            font-size: 2.25rem;
+            margin-bottom: 1rem;
+            display: block;
+            line-height: 1;
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            letter-spacing: -0.01em;
+        }
+        .card-desc {
+            font-size: 0.83rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>어드민 대시보드</h1>
+    <form th:action="@{/admin/logout}" method="post">
+        <button type="submit" class="logout-btn">로그아웃</button>
+    </form>
+</header>
+<main>
+    <div class="cards">
+        <a th:href="@{/admin/playername-audit}" class="card">
+            <div class="card-icon">🔍</div>
+            <div class="card-title">닉네임 검열</div>
+            <div class="card-desc">AI 검열 결과 확인 및 운영자 판단 처리</div>
+        </a>
+        <a th:href="@{/admin/reports}" class="card">
+            <div class="card-icon">📋</div>
+            <div class="card-title">건의사항 / 신고</div>
+            <div class="card-desc">유저 제출 버그 신고 및 건의사항 확인</div>
+        </a>
+    </div>
+</main>
+</body>
+</html>

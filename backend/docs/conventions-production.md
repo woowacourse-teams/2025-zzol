@@ -44,10 +44,9 @@
 
 ```
 CoffeeShoutException (abstract)
-├── InvalidArgumentException   — 입력값 검증 실패
-├── InvalidStateException      — 잘못된 상태에서의 연산
-├── NotExistElementException   — 존재하지 않는 엔티티 조회
-└── StorageServiceException    — 외부 스토리지 오류
+├── BusinessException        — 도메인 규칙 위반, 잘못된 상태, 존재하지 않는 엔티티 등 비즈니스 로직 예외
+├── InfrastructureException  — Redis, DB 등 외부 인프라 연동 오류
+└── SystemException          — 시스템 레벨 예외
 ```
 
 ---

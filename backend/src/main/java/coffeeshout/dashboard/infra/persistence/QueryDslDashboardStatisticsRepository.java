@@ -1,5 +1,6 @@
 package coffeeshout.dashboard.infra.persistence;
 
+import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
@@ -162,5 +163,29 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         tuple.get(MINI_GAME_RESULT.score.sum())
                 ))
                 .toList();
+    }
+
+    @Override
+    public List<BlockStackingTopPlayerResponse> findBlockStackingTopPlayers(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int limit
+    ) {
+        return queryFactory
+                .select(Projections.constructor(
+                        BlockStackingTopPlayerResponse.class,
+                        PLAYER.playerName,
+                        MINI_GAME_RESULT.score.max()
+                ))
+                .from(MINI_GAME_RESULT)
+                .join(MINI_GAME_RESULT.player, PLAYER)
+                .where(
+                        MINI_GAME_RESULT.miniGameType.eq(MiniGameType.BLOCK_STACKING),
+                        MINI_GAME_RESULT.createdAt.between(startDate, endDate)
+                )
+                .groupBy(PLAYER.playerName)
+                .orderBy(MINI_GAME_RESULT.score.max().desc())
+                .limit(limit)
+                .fetch();
     }
 }

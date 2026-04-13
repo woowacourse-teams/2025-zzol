@@ -1,5 +1,6 @@
 package coffeeshout.dashboard.ui;
 
+import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
@@ -23,4 +24,7 @@ public interface DashboardApi {
 
     @Operation(summary = "레이싱 게임 TOP 플레이어 조회", description = "이번 달 레이싱 게임 평균 순위 기준 상위 5명을 조회합니다.")
     ResponseEntity<List<RacingGameTopPlayerResponse>> getRacingGameTopPlayers();
+
+    @Operation(summary = "블록 쌓기 TOP 플레이어 조회", description = "이번 달 블록 쌓기 게임 최고 층수 기준 상위 5명을 조회합니다.")
+    ResponseEntity<List<BlockStackingTopPlayerResponse>> getBlockStackingTopPlayers();
 }

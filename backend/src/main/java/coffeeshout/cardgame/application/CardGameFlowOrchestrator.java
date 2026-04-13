@@ -6,9 +6,9 @@ import static coffeeshout.cardgame.domain.CardGameStep.PREPARE;
 import static coffeeshout.cardgame.domain.CardGameStep.START_PLAY;
 import static coffeeshout.cardgame.domain.CardGameStep.START_ROUND;
 
-import coffeeshout.cardgame.application.port.CardGameFlowScheduler;
-import coffeeshout.cardgame.application.port.EarlyFinishTrigger;
-import coffeeshout.cardgame.application.port.FlowHandle;
+import coffeeshout.global.flow.EarlyFinishTrigger;
+import coffeeshout.global.flow.FlowHandle;
+import coffeeshout.global.flow.FlowScheduler;
 import coffeeshout.cardgame.config.CardGameTimingProperties;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.CardGameState;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CardGameFlowOrchestrator {
 
-    private final CardGameFlowScheduler flowScheduler;
+    private final FlowScheduler cardGameFlowScheduler;
     private final CardGameTimingProperties timing;
     private final CardGameNotifier notifier;
     private final ApplicationEventPublisher eventPublisher;
@@ -39,10 +39,10 @@ public class CardGameFlowOrchestrator {
         final String joinCode = room.getJoinCode().getValue();
         final int totalRounds = cardGame.getTotalRounds();
 
-        FlowHandle flow = flowScheduler.schedule(step(cardGame, room, START_ROUND), Duration.ZERO);
+        FlowHandle flow = cardGameFlowScheduler.schedule(step(cardGame, room, START_ROUND), Duration.ZERO);
 
         for (int i = 0; i < totalRounds; i++) {
-            EarlyFinishTrigger trigger = flowScheduler.createEarlyFinishTrigger();
+            EarlyFinishTrigger trigger = cardGameFlowScheduler.createEarlyFinishTrigger();
             flow = (i == 0)
                     ? chainFirstRound(flow, cardGame, room, trigger)
                     : chainSubsequentRound(flow, cardGame, room, trigger);

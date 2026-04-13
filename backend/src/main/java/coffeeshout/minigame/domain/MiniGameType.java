@@ -1,6 +1,7 @@
 package coffeeshout.minigame.domain;
 
 import coffeeshout.blindtimer.domain.BlindTimerGame;
+import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.bombrelay.domain.BombRelayGame;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
@@ -13,12 +14,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum MiniGameType {
 
-    CARD_GAME,
-    RACING_GAME,
-    SPEED_TOUCH,
-    BLIND_TIMER,
-    BOMB_RELAY,
+    CARD_GAME("카드게임"),
+    RACING_GAME("레이싱"),
+    SPEED_TOUCH("스피드터치"),
+    BLIND_TIMER("블라인드타이머"),
+    BOMB_RELAY("폭탄릴레이"),
+    BLOCK_STACKING("블록쌓기"),
     ;
+
+    public final String label;
 
     public Playable createMiniGame(String joinCode) {
         Objects.requireNonNull(joinCode, "joinCode는 null이 아니어야 합니다.");
@@ -31,6 +35,7 @@ public enum MiniGameType {
             case SPEED_TOUCH -> new SpeedTouchGame();
             case BLIND_TIMER -> new BlindTimerGame();
             case BOMB_RELAY -> new BombRelayGame();
+            case BLOCK_STACKING -> new BlockStackingGame();
         };
     }
 }

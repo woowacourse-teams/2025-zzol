@@ -51,6 +51,10 @@ resilience4j:
         limit-refresh-period: 1s
         timeout-duration: 5s
 
+report:
+  rate-limit:
+    ttl: 1s
+
 room:
   qr:
     prefix: https://coffee-shout.com/join/
@@ -69,6 +73,11 @@ websocket:
     max-length: 100
     stream-ttl-seconds: 3600
     dedup-ttl-seconds: 1
+
+block-stacking:
+  timing:
+    prepare: 500ms
+    playing: 2000ms
 
 card-game:
   timing:

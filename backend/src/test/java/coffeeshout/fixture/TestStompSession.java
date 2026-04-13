@@ -87,6 +87,21 @@ public class TestStompSession {
         public boolean isEmpty() {
             return queue.isEmpty();
         }
+
+        public void assertNoMessage() {
+            assertNoMessage(1, TimeUnit.SECONDS);
+        }
+
+        public void assertNoMessage(long timeout, TimeUnit unit) {
+            try {
+                String message = queue.poll(timeout, unit);
+                if (message != null) {
+                    throw new AssertionError("예상치 않은 메시지를 수신했습니다: " + message);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private static class MessageCollectorStompFrameHandler implements StompFrameHandler {

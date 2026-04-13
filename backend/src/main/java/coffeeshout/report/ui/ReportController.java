@@ -1,0 +1,30 @@
+package coffeeshout.report.ui;
+
+import coffeeshout.report.application.ReportFacade;
+import coffeeshout.report.ui.request.CreateReportRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import java.net.URI;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@RestController
+@RequestMapping("/reports")
+@RequiredArgsConstructor
+public class ReportController implements ReportApi {
+
+    private final ReportFacade reportFacade;
+
+    @PostMapping
+    public ResponseEntity<Void> submit(@Valid @RequestBody CreateReportRequest request, HttpServletRequest httpRequest) {
+        final String ip = httpRequest.getRemoteAddr();
+        final long id = reportFacade.submit(ip, request.category(), request.gameType(), request.joinCode(), request.content());
+        final URI location = UriComponentsBuilder.fromPath("/reports/{id}").buildAndExpand(id).toUri();
+        return ResponseEntity.created(location).build();
+    }
+}

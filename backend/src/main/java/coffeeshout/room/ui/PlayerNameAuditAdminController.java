@@ -1,7 +1,7 @@
 package coffeeshout.room.ui;
 
-import coffeeshout.room.application.service.nickname.PlayerNameAuditService;
-import coffeeshout.room.application.service.nickname.PlayerNameFeedbackService;
+import coffeeshout.room.application.service.player.name.PlayerNameAuditService;
+import coffeeshout.room.application.service.player.name.PlayerNameFeedbackService;
 import coffeeshout.room.domain.audit.AiConfidence;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;

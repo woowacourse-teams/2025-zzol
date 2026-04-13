@@ -55,7 +55,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
     key: 'blockstacking-top-players',
     label: '블록쌓기 최고 기록',
     icon: '🧱',
-    endpoint: '/dashboard/blockstacking-top-players',
+    endpoint: '/dashboard/block-stacking-top-players',
     transformData: (raw) =>
       (raw as BlockStackingTopPlayer[]).map((p, i) => ({
         rank: i + 1,

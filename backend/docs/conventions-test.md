@@ -51,14 +51,14 @@ assertThat(result.getFirst())
 **다른 subject에 대한 복수 검증 → `SoftAssertions`**
 
 ```java
-SoftAssertions soft = new SoftAssertions();
-soft.assertThat(result).hasSize(3);
-soft.assertThat(result.get(0).playerName()).isEqualTo("철수");
-soft.assertThat(result.get(1).playerName()).isEqualTo("영희");
-soft.assertAll();
+SoftAssertions.assertSoftly(softly -> {
+    softly.assertThat(result).hasSize(3);
+    softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+    softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
+});
 ```
 
-`SoftAssertions`는 `assertAll()` 호출 전까지 실패를 누적해 전체 결과를 한 번에 보고한다.
+`assertSoftly`는 람다 종료 시 자동으로 `assertAll()`을 호출해 실패를 누적 보고한다.
 단일 검증이거나 체이닝으로 표현 가능한 경우에는 `SoftAssertions`를 쓰지 않는다.
 
 ## 예외 검증

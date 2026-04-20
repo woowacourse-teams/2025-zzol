@@ -12,7 +12,7 @@ export const GRAVITY = 0.4;
 export const OPACITY_DECAY = 0.025;
 
 export const INITIAL_SPEED = 3.3;
-export const SPEED_INCREMENT = 1.08; // 8% per floor
+export const SPEED_INCREMENT = 1.06; // 6% per floor
 
 export const getBlockSpeed = (floor: number): number => {
   const speed = INITIAL_SPEED * Math.pow(SPEED_INCREMENT, floor);

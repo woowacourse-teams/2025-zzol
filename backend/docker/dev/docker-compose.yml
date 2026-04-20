@@ -20,6 +20,7 @@ x-dev-app: &dev-app
     - ADMIN_USERNAME=${ADMIN_USERNAME}
     - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     - GEMINI_API_KEY=${GEMINI_API_KEY}
+    - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
     - TZ=Asia/Seoul
   volumes:
     - dev-app-logs:/app/logs

@@ -62,6 +62,8 @@ redis:
         thread-pool-name: concurrent
       "[blockstacking]":
         thread-pool-name: concurrent
+      "[laddergame]":
+        thread-pool-name: concurrent
 
 redisson:
   enabled: true
@@ -91,6 +93,15 @@ block-stacking:
     prepare: 3000ms
     playing: 20000ms
     all-failed-delay: 2000ms
+  scheduler:
+    pool-size: 2
+
+ladder:
+  timing:
+    description: 5000ms
+    prepare: 3000ms
+    drawing: 5000ms
+    result: 5000ms
   scheduler:
     pool-size: 2
 

@@ -1,0 +1,62 @@
+package coffeeshout.laddergame.domain;
+
+import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class Poles {
+
+    private final List<Pole> poles;
+
+    private Poles(List<Pole> poles) {
+        this.poles = List.copyOf(poles);
+    }
+
+    public static Poles assign(List<Player> players) {
+        final List<Player> shuffled = new ArrayList<>(players);
+        Collections.shuffle(shuffled);
+        final List<Pole> assigned = new ArrayList<>();
+        for (int i = 0; i < shuffled.size(); i++) {
+            assigned.add(new Pole(i, shuffled.get(i)));
+        }
+        return new Poles(assigned);
+    }
+
+    public int getPoleIndex(PlayerName playerName) {
+        return poles.stream()
+                .filter(p -> p.player().sameName(playerName))
+                .mapToInt(Pole::index)
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(
+                        LadderGameErrorCode.PLAYER_NOT_FOUND,
+                        "플레이어를 찾을 수 없습니다: " + playerName.value()
+                ));
+    }
+
+    public Player getPlayer(int poleIndex) {
+        return poles.stream()
+                .filter(p -> p.index() == poleIndex)
+                .map(Pole::player)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("기둥 인덱스가 유효하지 않습니다: " + poleIndex));
+    }
+
+    public int size() {
+        return poles.size();
+    }
+
+    public boolean isValidSegment(int segmentIndex) {
+        return segmentIndex >= 0 && segmentIndex <= size() - 2;
+    }
+
+    public boolean contains(PlayerName playerName) {
+        return poles.stream().anyMatch(p -> p.player().sameName(playerName));
+    }
+
+    public List<Pole> getAll() {
+        return poles;
+    }
+}

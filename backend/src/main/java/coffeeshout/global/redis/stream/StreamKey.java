@@ -16,6 +16,7 @@ public enum StreamKey {
     BLIND_TIMER_EVENTS("blindtimer"),
     BOMB_RELAY_EVENTS("bombrelay"),
     BLOCK_STACKING_EVENTS("blockstacking"),
+    LADDER_EVENTS("laddergame"),
     ;
 
     private final String redisKey;

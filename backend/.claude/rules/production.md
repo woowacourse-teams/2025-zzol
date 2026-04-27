@@ -35,3 +35,12 @@ CoffeeShoutException
 ├── InfrastructureException — Redis, DB 오류
 └── SystemException         — 시스템 레벨
 ```
+
+## WebSocket 복구
+
+웹소켓 재접속 복구는 `global/websocket/GameRecoveryService`가 담당한다.
+Notifier에서 메시지를 브로드캐스트할 때 `LoggingSimpMessagingTemplate`이 내부적으로
+`GameRecoveryService.save()`를 호출해 Redis Stream에 메시지를 백업한다.
+클라이언트는 재접속 후 `POST /api/rooms/{joinCode}/recovery?playerName=&lastId=` 로
+유실 메시지를 일괄 수신한다.
+새 미니게임 Notifier를 작성할 때 별도 복구 로직을 추가하지 않아도 된다.

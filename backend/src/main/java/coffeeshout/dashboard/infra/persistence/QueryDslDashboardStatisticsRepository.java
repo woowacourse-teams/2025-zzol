@@ -122,8 +122,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
         final List<com.querydsl.core.Tuple> aggregations = queryFactory
                 .select(
                         MINI_GAME_RESULT.player.id,
-                        MINI_GAME_RESULT.rank.avg(),
-                        MINI_GAME_RESULT.score.sum()
+                        MINI_GAME_RESULT.score.min()
                 )
                 .from(MINI_GAME_RESULT)
                 .where(
@@ -131,7 +130,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         MINI_GAME_RESULT.createdAt.between(startDate, endDate)
                 )
                 .groupBy(MINI_GAME_RESULT.player.id)
-                .orderBy(MINI_GAME_RESULT.rank.avg().asc())
+                .orderBy(MINI_GAME_RESULT.score.min().asc())
                 .limit(limit)
                 .fetch();
 
@@ -159,8 +158,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
         return aggregations.stream()
                 .map(tuple -> new RacingGameTopPlayerResponse(
                         playerNameMap.get(tuple.get(MINI_GAME_RESULT.player.id)),
-                        tuple.get(MINI_GAME_RESULT.rank.avg()),
-                        tuple.get(MINI_GAME_RESULT.score.sum())
+                        tuple.get(MINI_GAME_RESULT.score.min())
                 ))
                 .toList();
     }

@@ -32,6 +32,11 @@ public class ServiceTestConfig {
         return Mockito.mock(FlowScheduler.class);
     }
 
+    @Bean(name = "ladderFlowScheduler")
+    public FlowScheduler mockLadderFlowScheduler() {
+        return Mockito.mock(FlowScheduler.class);
+    }
+
     @Bean(name = "delayRemovalScheduler")
     public TaskScheduler testDelayRemovalScheduler() {
         return new ShutDownTestScheduler();

@@ -79,6 +79,13 @@ block-stacking:
     prepare: 500ms
     playing: 2000ms
 
+ladder:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    drawing: 1000ms
+    result: 500ms
+
 card-game:
   timing:
     first-loading: 500ms

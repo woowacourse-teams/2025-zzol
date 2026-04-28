@@ -35,9 +35,11 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent
 - [ ] public 메서드 네이밍에 의도가 드러남
 
 완료 후:
-1. `/write-tests`를 호출해 도메인 단위 테스트를 작성한다
-2. `test-verifier` agent를 `run_in_background: true`로 실행한다
-3. 사용자에게 Phase 1 완료를 알리고 Phase 2 진행 여부를 확인한다
+1. **이 시점에서 즉시 멈춘다. Phase 2 코드를 미리 작성하지 않는다.**
+2. `/write-tests`를 호출해 도메인 단위 테스트를 작성한다
+3. 테스트가 **모두 통과**한 것을 확인한다 (`./gradlew test --tests "해당패키지.*"`)
+4. `test-verifier` agent를 `run_in_background: true`로 실행한다
+5. 사용자에게 Phase 1 완료를 알리고 Phase 2 진행 여부를 확인한다
 
 ---
 
@@ -56,9 +58,11 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent
 - [ ] 도메인 이벤트 발행 위치가 서비스 계층 이하
 
 완료 후:
-1. `/write-tests`를 호출해 서비스 단위 테스트를 작성한다
-2. `test-verifier` agent를 `run_in_background: true`로 실행한다
-3. 사용자에게 Phase 2 완료를 알리고 Phase 3 진행 여부를 확인한다
+1. **이 시점에서 즉시 멈춘다. Phase 3 코드를 미리 작성하지 않는다.**
+2. `/write-tests`를 호출해 서비스 단위 테스트를 작성한다
+3. 테스트가 **모두 통과**한 것을 확인한다 (`./gradlew test --tests "해당패키지.*"`)
+4. `test-verifier` agent를 `run_in_background: true`로 실행한다
+5. 사용자에게 Phase 2 완료를 알리고 Phase 3 진행 여부를 확인한다
 
 ---
 

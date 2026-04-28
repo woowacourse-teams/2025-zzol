@@ -53,15 +53,11 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
             )}
             <S.InfoSlideBody>
               <S.InfoStepNumber>{i + 1}</S.InfoStepNumber>
-              <S.InfoSlideText>
-                {slide.textLines.join(' ')}
-              </S.InfoSlideText>
+              <S.InfoSlideText>{slide.textLines.join(' ')}</S.InfoSlideText>
             </S.InfoSlideBody>
           </S.InfoSlide>
         ))}
-        {descriptions.length > 0 && (
-          <S.InfoSummary>{descriptions.join(' ')}</S.InfoSummary>
-        )}
+        {descriptions.length > 0 && <S.InfoSummary>{descriptions.join(' ')}</S.InfoSummary>}
       </S.InfoContent>,
       {
         title: name,
@@ -104,5 +100,3 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
     </>
   );
 };
-
-

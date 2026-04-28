@@ -70,7 +70,9 @@ const MenuTab = () => {
           <li key={key}>
             <S.MenuItemButton onClick={() => setActiveView(key)}>
               <S.MenuItemLeft>
-                <S.MenuItemIcon><Icon /></S.MenuItemIcon>
+                <S.MenuItemIcon>
+                  <Icon />
+                </S.MenuItemIcon>
                 <S.MenuItemTexts>
                   <S.MenuItemTitle>{title}</S.MenuItemTitle>
                   <S.MenuItemDesc>{desc}</S.MenuItemDesc>

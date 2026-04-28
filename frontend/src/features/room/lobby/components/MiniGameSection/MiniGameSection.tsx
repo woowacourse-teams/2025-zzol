@@ -100,5 +100,3 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
     </>
   );
 };
-
-

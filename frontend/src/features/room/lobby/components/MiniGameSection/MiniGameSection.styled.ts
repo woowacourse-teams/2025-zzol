@@ -74,36 +74,3 @@ export const InfoSummary = styled.p`
   padding: 4px 0;
   margin: 0;
 `;
-
-export const InfoSlideBody = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-`;
-
-export const InfoSlideText = styled.p`
-  ${({ theme }) => theme.typography.small}
-  color: ${({ theme }) => theme.color.gray[800]};
-  line-height: 1.5;
-  margin: 0;
-  text-align: center;
-`;
-
-export const InfoSlideImage = styled.img`
-  width: 100%;
-  max-height: 140px;
-  object-fit: contain;
-  border-radius: 8px;
-`;
-
-export const InfoSummary = styled.p`
-  ${({ theme }) => theme.typography.small}
-  color: ${({ theme }) => theme.color.gray[500]};
-  text-align: center;
-  padding: 4px 0;
-  margin: 0;
-`;
-
-

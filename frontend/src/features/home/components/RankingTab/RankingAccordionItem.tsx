@@ -40,13 +40,11 @@ const RankingAccordionItem = ({ category }: Props) => {
     setIsOpen(true);
   };
 
-  const Icon = category.icon;
-
   return (
     <S.AccordionItem>
       <S.AccordionHeader onClick={handleToggle} aria-expanded={isOpen}>
         <S.AccordionTitle>
-          <Icon />
+          <span>{category.icon}</span>
           <span>{category.label}</span>
         </S.AccordionTitle>
         <S.ChevronIcon $isOpen={isOpen}>▾</S.ChevronIcon>

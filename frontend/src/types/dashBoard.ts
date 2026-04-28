@@ -17,8 +17,3 @@ export type BlockStackingTopPlayer = {
   playerName: string;
   maxFloor: number;
 };
-
-export type RacingGameTopPlayer = {
-  playerName: string;
-  bestTime: number;
-};

@@ -1,4 +1,5 @@
-import { ComponentProps, MouseEvent, ReactElement } from 'react';
+import { ComponentProps, ReactElement } from 'react';
+import Headline4 from '../Headline4/Headline4';
 import * as S from './GameActionButton.styled';
 
 type Props = {
@@ -6,11 +7,9 @@ type Props = {
   isSelected: boolean;
   isDisabled: boolean;
   gameName: string;
-  description?: string[];
+  description: string[];
   icon: ReactElement;
   orderNumber?: number;
-  onInfoClick?: () => void;
-  onSettingClick?: () => void;
 } & Omit<ComponentProps<'button'>, 'onClick'>;
 
 const GameActionButton = ({
@@ -18,10 +17,9 @@ const GameActionButton = ({
   isSelected,
   isDisabled,
   gameName,
+  description,
   icon,
   orderNumber,
-  onInfoClick,
-  onSettingClick,
   ...rest
 }: Props) => {
   const handleClick = () => {
@@ -29,38 +27,19 @@ const GameActionButton = ({
     onClick();
   };
 
-  const handleInfoClick = (e: MouseEvent) => {
-    e.stopPropagation();
-    onInfoClick?.();
-  };
-
-  const handleSettingClick = (e: MouseEvent) => {
-    e.stopPropagation();
-    onSettingClick?.();
-  };
-
   return (
     <S.Container onClick={handleClick} $isSelected={isSelected} $disabled={isDisabled} {...rest}>
-      {isSelected && orderNumber && <S.NumberBadge>{orderNumber}</S.NumberBadge>}
-      <S.InfoButton
-        $isSelected={isSelected}
-        onClick={handleInfoClick}
-        aria-label={`${gameName} 정보`}
-      >
-        i
-      </S.InfoButton>
+      <S.Wrapper>
+        <Headline4 color={isSelected ? 'white' : 'point-400'}>{gameName}</Headline4>
+        <S.DescriptionWrapper $isSelected={isSelected}>
+          {description &&
+            description.map((desc, index) => <S.Description key={index}>{desc}</S.Description>)}
+        </S.DescriptionWrapper>
+      </S.Wrapper>
       <S.GameIcon $isSelected={isSelected}>{icon}</S.GameIcon>
-      <S.GameName $isSelected={isSelected}>{gameName}</S.GameName>
-      <S.SettingsButton
-        $isSelected={isSelected}
-        onClick={handleSettingClick}
-        aria-label={`${gameName} 설정`}
-      >
-        ⚙
-      </S.SettingsButton>
+      {isSelected && orderNumber && <S.NumberBadge>{orderNumber}</S.NumberBadge>}
     </S.Container>
   );
 };
 
 export default GameActionButton;
-

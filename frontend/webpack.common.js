@@ -106,11 +106,11 @@ export default (_, argv) => {
           },
           ...(process.env.ENABLE_DEVTOOLS === 'true'
             ? [
-              {
-                from: 'public/devtools',
-                to: 'devtools',
-              },
-            ]
+                {
+                  from: 'public/devtools',
+                  to: 'devtools',
+                },
+              ]
             : []),
         ],
       }),

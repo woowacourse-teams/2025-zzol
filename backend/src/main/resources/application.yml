@@ -146,6 +146,12 @@ report:
     rate-interval-unit: HOURS
     ttl: 1h
 
+security:
+  ip-block:
+    not-found-threshold: 5
+    not-found-window: 1h
+    block-ttl: 24h
+
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL:}
   connect-timeout: 3s

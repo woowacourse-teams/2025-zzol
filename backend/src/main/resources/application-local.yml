@@ -65,3 +65,9 @@ logging:
 admin:
   username: admin
   password: "1234"
+
+security:
+  ip-block:
+    not-found-threshold: 999
+    not-found-window: 1h
+    block-ttl: 24h

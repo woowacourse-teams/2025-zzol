@@ -3,7 +3,7 @@ package coffeeshout.laddergame.ui;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.websocket.PlayerKey;
-import coffeeshout.laddergame.domain.event.LadderDrawEvent;
+import coffeeshout.laddergame.domain.event.LadderDrawCommandEvent;
 import coffeeshout.laddergame.ui.request.LadderDrawRequest;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -28,7 +28,7 @@ public class LadderWebSocketController {
             Principal principal
     ) {
         final String playerName = PlayerKey.parse(principal.getName()).playerName();
-        final LadderDrawEvent event = LadderDrawEvent.of(joinCode, playerName, request);
+        final LadderDrawCommandEvent event = LadderDrawCommandEvent.of(joinCode, playerName, request);
         streamPublisher.publish(StreamKey.LADDER_EVENTS, event);
 
         log.debug("사다리게임 선 그리기 이벤트 발행: joinCode={}, playerName={}, segmentIndex={}, eventId={}",

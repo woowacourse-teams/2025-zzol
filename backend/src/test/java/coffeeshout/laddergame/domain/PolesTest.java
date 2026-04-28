@@ -2,9 +2,9 @@ package coffeeshout.laddergame.domain;
 
 import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.laddergame.domain.LadderGameErrorCode;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
@@ -91,8 +91,10 @@ class PolesTest {
 
         @Test
         void 유효하지_않은_인덱스_조회_시_예외를_던진다() {
-            assertThatThrownBy(() -> poles.getPlayer(99))
-                    .isInstanceOf(IllegalArgumentException.class);
+            assertCoffeeShoutException(
+                    () -> poles.getPlayer(99),
+                    LadderGameErrorCode.INVALID_POLE_INDEX
+            );
         }
     }
 

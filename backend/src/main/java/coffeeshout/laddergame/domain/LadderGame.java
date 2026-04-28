@@ -72,6 +72,9 @@ public class LadderGame implements Playable {
     }
 
     public Map<String, Integer> getRankingsForBroadcast() {
+        if (finalRanks == null) {
+            throw new IllegalStateException("tracePaths()가 먼저 호출되어야 합니다.");
+        }
         return finalRanks.entrySet().stream()
                 .collect(Collectors.toMap(
                         e -> e.getKey().getName().value(),
@@ -86,6 +89,9 @@ public class LadderGame implements Playable {
 
     @Override
     public Map<Player, MiniGameScore> getScores() {
+        if (finalRanks == null) {
+            throw new IllegalStateException("tracePaths()가 먼저 호출되어야 합니다.");
+        }
         return finalRanks.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,

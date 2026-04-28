@@ -41,7 +41,10 @@ public class Poles {
                 .filter(p -> p.index() == poleIndex)
                 .map(Pole::player)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("기둥 인덱스가 유효하지 않습니다: " + poleIndex));
+                .orElseThrow(() -> new BusinessException(
+                        LadderGameErrorCode.INVALID_POLE_INDEX,
+                        "기둥 인덱스가 유효하지 않습니다: " + poleIndex
+                ));
     }
 
     public int size() {

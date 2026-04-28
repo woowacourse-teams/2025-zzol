@@ -2,7 +2,7 @@ package coffeeshout.laddergame.infra.messaging.consumer;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.laddergame.application.LadderService;
-import coffeeshout.laddergame.domain.event.LadderDrawEvent;
+import coffeeshout.laddergame.domain.event.LadderDrawCommandEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,12 +11,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class LadderDrawEventConsumer implements Consumer<LadderDrawEvent> {
+public class LadderDrawCommandEventConsumer implements Consumer<LadderDrawCommandEvent> {
 
     private final LadderService ladderService;
 
     @Override
-    public void accept(LadderDrawEvent event) {
+    public void accept(LadderDrawCommandEvent event) {
         try {
             ladderService.drawLine(event.joinCode(), event.playerName(), event.segmentIndex());
         } catch (BusinessException e) {

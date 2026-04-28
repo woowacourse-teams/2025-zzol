@@ -1,4 +1,4 @@
-package coffeeshout.laddergame.application;
+package coffeeshout.laddergame.domain.service;
 
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.LadderGameState;

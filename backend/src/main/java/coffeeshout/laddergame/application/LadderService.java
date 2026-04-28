@@ -1,6 +1,7 @@
 package coffeeshout.laddergame.application;
 
 import coffeeshout.laddergame.domain.LadderGame;
+import coffeeshout.laddergame.domain.service.LadderCommandService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;

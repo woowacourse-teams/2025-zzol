@@ -8,7 +8,7 @@ import coffeeshout.laddergame.ui.request.LadderDrawRequest;
 import java.time.Instant;
 import java.util.UUID;
 
-public record LadderDrawEvent(
+public record LadderDrawCommandEvent(
         String eventId,
         String joinCode,
         String playerName,
@@ -17,8 +17,8 @@ public record LadderDrawEvent(
         TraceInfo traceInfo
 ) implements BaseEvent, Traceable {
 
-    public static LadderDrawEvent of(String joinCode, String playerName, LadderDrawRequest request) {
-        return new LadderDrawEvent(
+    public static LadderDrawCommandEvent of(String joinCode, String playerName, LadderDrawRequest request) {
+        return new LadderDrawCommandEvent(
                 UUID.randomUUID().toString(),
                 joinCode,
                 playerName,

@@ -1,40 +1,42 @@
 import { useState } from 'react';
+import type { ComponentType } from 'react';
 import BackButton from '@/components/@common/BackButton/BackButton';
 import SuggestionTab from '../SuggestionTab/SuggestionTab';
 import PatchNotesView from './views/PatchNotesView';
 import ServiceInfoView from './views/ServiceInfoView';
 import MyInfoView from './views/MyInfoView';
 import * as S from './MenuTab.styled';
+import { PersonIcon, BubbleIcon, ClipboardIcon, InfoIcon } from './menuIcons';
 
 type MenuView = 'my-info' | 'report' | 'patch-notes' | 'service-info';
 
 const MENU_ITEMS: {
   key: MenuView;
-  icon: string;
+  icon: ComponentType;
   title: string;
   desc: string;
 }[] = [
   {
     key: 'my-info',
-    icon: '👤',
+    icon: PersonIcon,
     title: '내 정보',
     desc: '누적 통계 및 활동 내역',
   },
   {
     key: 'report',
-    icon: '🐛',
+    icon: BubbleIcon,
     title: '건의사항 / 신고',
     desc: '버그 신고, 게임 추가 요청, 기타 건의',
   },
   {
     key: 'patch-notes',
-    icon: '📋',
+    icon: ClipboardIcon,
     title: '패치 내역',
     desc: '업데이트 및 변경 사항',
   },
   {
     key: 'service-info',
-    icon: 'ℹ️',
+    icon: InfoIcon,
     title: '서비스 정보',
     desc: '쫄(ZZOL) 소개 및 링크',
   },
@@ -64,11 +66,11 @@ const MenuTab = () => {
   return (
     <S.Container>
       <S.MenuList>
-        {MENU_ITEMS.map(({ key, icon, title, desc }) => (
+        {MENU_ITEMS.map(({ key, icon: Icon, title, desc }) => (
           <li key={key}>
             <S.MenuItemButton onClick={() => setActiveView(key)}>
               <S.MenuItemLeft>
-                <S.MenuItemIcon>{icon}</S.MenuItemIcon>
+                <S.MenuItemIcon><Icon /></S.MenuItemIcon>
                 <S.MenuItemTexts>
                   <S.MenuItemTitle>{title}</S.MenuItemTitle>
                   <S.MenuItemDesc>{desc}</S.MenuItemDesc>

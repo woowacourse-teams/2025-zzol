@@ -26,14 +26,14 @@ tools: Bash, Read, Glob, Grep
 
 - [ ] 계층별 위치가 올바른가
 
-  | 계층 | 위치 | 용도 |
-  |------|------|------|
-  | 원자 컴포넌트 | `src/components/@common/` | 디자인 시스템 단위 (Button, Modal, Toast 등) |
-  | 조합 컴포넌트 | `src/components/@composition/` | 중간 조합 단위 (PlayerCard, ProbabilityList 등) |
-  | 기능 컴포넌트 | `src/features/<domain>/components/` | 특정 도메인 로직을 담은 UI |
-  | 페이지 | `src/features/<domain>/pages/` | 라우트와 1:1 매핑 |
-  | 범용 훅 | `src/hooks/` | 도메인 무관 재사용 훅 |
-  | 기능 훅 | `src/features/<domain>/hooks/` | 특정 도메인 훅 |
+  | 계층          | 위치                                | 용도                                            |
+  | ------------- | ----------------------------------- | ----------------------------------------------- |
+  | 원자 컴포넌트 | `src/components/@common/`           | 디자인 시스템 단위 (Button, Modal, Toast 등)    |
+  | 조합 컴포넌트 | `src/components/@composition/`      | 중간 조합 단위 (PlayerCard, ProbabilityList 등) |
+  | 기능 컴포넌트 | `src/features/<domain>/components/` | 특정 도메인 로직을 담은 UI                      |
+  | 페이지        | `src/features/<domain>/pages/`      | 라우트와 1:1 매핑                               |
+  | 범용 훅       | `src/hooks/`                        | 도메인 무관 재사용 훅                           |
+  | 기능 훅       | `src/features/<domain>/hooks/`      | 특정 도메인 훅                                  |
 
 - [ ] 스타일 파일이 `.styled.ts` 컨벤션을 따르는가
 - [ ] 스타일을 `* as S from './Component.styled'` 패턴으로 임포트하는가
@@ -103,7 +103,7 @@ tools: Bash, Read, Glob, Grep
 
 ## 출력 형식
 
-```
+````
 ## 코드 리뷰 결과
 
 ### [파일명] — [계층: @common / @composition / feature / page / hook / util]
@@ -138,7 +138,8 @@ tools: Bash, Read, Glob, Grep
 **개선 제안**
 ```tsx
 // 구체적인 코드 스니펫
-```
+````
+
 ```
 
 체크리스트 항목이 해당 파일에 적용되지 않으면 그 섹션은 출력에서 생략한다.
@@ -148,3 +149,4 @@ tools: Bash, Read, Glob, Grep
 
 `src/` 하위 파일은 **절대 수정하지 않는다**.
 수정 제안은 출력으로만 전달한다.
+```

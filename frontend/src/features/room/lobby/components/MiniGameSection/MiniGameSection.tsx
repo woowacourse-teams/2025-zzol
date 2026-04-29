@@ -45,7 +45,18 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
 
     openModal(
       <S.InfoContent>
-        <GameInfoCarousel slides={slides} name={name} />
+        {slides.map((slide, i) => (
+          <S.InfoSlide key={i}>
+            {slide.imageSrc && (
+              <S.InfoSlideImage src={slide.imageSrc} alt={`${name} 설명 ${i + 1}`} />
+            )}
+            <S.InfoSlideBody>
+              <S.InfoStepNumber>{i + 1}</S.InfoStepNumber>
+              <S.InfoSlideText>{slide.textLines.join(' ')}</S.InfoSlideText>
+            </S.InfoSlideBody>
+          </S.InfoSlide>
+        ))}
+        {descriptions.length > 0 && <S.InfoSummary>{descriptions.join(' ')}</S.InfoSummary>}
       </S.InfoContent>,
       {
         title: name,

@@ -6,7 +6,6 @@ import useModal from '@/components/@common/Modal/useModal';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import {
   HIDDEN_MINI_GAMES,
-  MINI_GAME_DESCRIPTION_MAP,
   MINI_GAME_ICON_MAP,
   MINI_GAME_NAME_MAP,
   MiniGameType,

@@ -54,4 +54,3 @@ export const BottomCloseButton = styled.button`
     opacity: 0.85;
   }
 `;
-

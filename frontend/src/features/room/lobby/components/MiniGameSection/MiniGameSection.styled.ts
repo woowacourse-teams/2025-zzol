@@ -74,5 +74,3 @@ export const InfoSummary = styled.p`
   padding: 4px 0;
   margin: 0;
 `;
-
-

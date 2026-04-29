@@ -54,8 +54,7 @@ export const GameName = styled.span<Pick<Props, '$isSelected'>>`
   ${({ theme }) => theme.typography.h4}
   font-size: 14px;
   font-weight: 700;
-  color: ${({ theme, $isSelected }) =>
-    $isSelected ? theme.color.white : theme.color.point[400]};
+  color: ${({ theme, $isSelected }) => ($isSelected ? theme.color.white : theme.color.point[400])};
   text-align: center;
   word-break: keep-all;
 `;
@@ -90,8 +89,7 @@ export const InfoButton = styled.button<Pick<Props, '$isSelected'>>`
   border-radius: 50%;
   background-color: ${({ theme, $isSelected }) =>
     $isSelected ? 'rgba(255, 255, 255, 0.25)' : theme.color.gray[100]};
-  color: ${({ theme, $isSelected }) =>
-    $isSelected ? theme.color.white : theme.color.gray[500]};
+  color: ${({ theme, $isSelected }) => ($isSelected ? theme.color.white : theme.color.gray[500])};
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -118,8 +116,7 @@ export const SettingsButton = styled.button<Pick<Props, '$isSelected'>>`
   border-radius: 50%;
   background-color: ${({ theme, $isSelected }) =>
     $isSelected ? 'rgba(255, 255, 255, 0.25)' : theme.color.gray[100]};
-  color: ${({ theme, $isSelected }) =>
-    $isSelected ? theme.color.white : theme.color.gray[400]};
+  color: ${({ theme, $isSelected }) => ($isSelected ? theme.color.white : theme.color.gray[400])};
   font-size: 16px;
   cursor: pointer;
   line-height: 1;
@@ -141,5 +138,3 @@ export const Icon = styled.img`
 export const Wrapper = styled.div``;
 export const DescriptionWrapper = styled.div<Props>``;
 export const Description = styled.p``;
-
-

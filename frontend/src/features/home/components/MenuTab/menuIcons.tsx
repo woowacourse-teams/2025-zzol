@@ -14,11 +14,7 @@ export const PersonIcon = () => (
     <ellipse cx="9.5" cy="12" rx="1.1" ry="1.7" fill="black" />
     <ellipse cx="16.5" cy="12" rx="1.1" ry="1.7" fill="black" />
     {/* 빨대 */}
-    <rect
-      x="12" y="-1" width="2.5" height="10"
-      fill="white" rx="1"
-      transform="rotate(25 13 4)"
-    />
+    <rect x="12" y="-1" width="2.5" height="10" fill="white" rx="1" transform="rotate(25 13 4)" />
   </svg>
 );
 
@@ -33,7 +29,13 @@ export const BubbleIcon = () => (
     <ellipse cx="10" cy="10.5" rx="1.1" ry="1.7" fill="white" />
     <ellipse cx="16" cy="10.5" rx="1.1" ry="1.7" fill="white" />
     {/* 웃는 입 */}
-    <path d="M10 14 Q13 16 16 14" stroke="white" strokeWidth="0.9" strokeLinecap="round" fill="none" />
+    <path
+      d="M10 14 Q13 16 16 14"
+      stroke="white"
+      strokeWidth="0.9"
+      strokeLinecap="round"
+      fill="none"
+    />
   </svg>
 );
 
@@ -49,7 +51,10 @@ export const ClipboardIcon = () => (
     <path d="M8 15 H18" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
     <path d="M8 19 H14" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
     {/* 별표 (업데이트 느낌) */}
-    <path d="M17 18.5 L17.5 20 L19 19.5 L17.8 20.5 L18.5 22 L17 21 L15.5 22 L16.2 20.5 L15 19.5 L16.5 20 Z" fill="white" />
+    <path
+      d="M17 18.5 L17.5 20 L19 19.5 L17.8 20.5 L18.5 22 L17 21 L15.5 22 L16.2 20.5 L15 19.5 L16.5 20 Z"
+      fill="white"
+    />
   </svg>
 );
 

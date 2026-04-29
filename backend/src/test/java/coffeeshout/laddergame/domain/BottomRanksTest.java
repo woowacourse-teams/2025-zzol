@@ -1,5 +1,6 @@
 package coffeeshout.laddergame.domain;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
@@ -52,10 +53,13 @@ class BottomRanksTest {
         }
 
         @Test
-        void 존재하지_않는_기둥_인덱스는_0을_반환한다() {
+        void 존재하지_않는_기둥_인덱스는_예외를_던진다() {
             final BottomRanks ranks = BottomRanks.generate(3);
 
-            assertThat(ranks.getRank(99)).isZero();
+            assertCoffeeShoutException(
+                    () -> ranks.getRank(99),
+                    LadderGameErrorCode.INVALID_POLE_INDEX
+            );
         }
     }
 }

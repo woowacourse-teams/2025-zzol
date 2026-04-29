@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.IntStream;
 
 public class BottomRanks {
@@ -17,11 +18,15 @@ public class BottomRanks {
     }
 
     public static BottomRanks generate(int n) {
+        return generate(n, new Random());
+    }
+
+    public static BottomRanks generate(int n, Random random) {
         if (n <= 0) {
-            throw new BusinessException(LadderGameErrorCode.INVALID_PLAYER_COUNT, "n must be > 0");
+            throw new BusinessException(LadderGameErrorCode.INVALID_PLAYER_COUNT, "플레이어 수는 1 이상이어야 합니다");
         }
         final List<Integer> rankList = new ArrayList<>(IntStream.rangeClosed(1, n).boxed().toList());
-        Collections.shuffle(rankList);
+        Collections.shuffle(rankList, random);
         final Map<Integer, Integer> ranks = new HashMap<>();
         for (int i = 0; i < n; i++) {
             ranks.put(i, rankList.get(i));

@@ -13,6 +13,8 @@ paths:
 - 비즈니스 로직은 도메인 객체 안에. 서비스는 조합만
 - 조정 가능한 값은 `application.yml` + `@ConfigurationProperties`. 하드코딩 금지
 - 식별자·핵심 개념은 record(Value Object). 원시 타입을 시그니처에 직접 노출 금지
+- 도메인 계층은 DTO·UI 계층에 의존하지 않는다. 도메인 메서드의 매개변수·반환 타입에 Request/Response DTO를 사용 금지
+- 예외 메시지는 한국어로 작성한다
 
 ## 계층별 클래스 네이밍
 

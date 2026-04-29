@@ -5,6 +5,8 @@ argument-hint: "[기능명] [--from=domain|service|controller]"
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent
 ---
 
+# impl
+
 `$ARGUMENTS`에서 기능명과 시작 단계(`--from=`)를 파싱한다. `--from`이 없으면 `domain`부터 시작한다.
 
 ## 사전 작업
@@ -39,7 +41,8 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent
 2. `/write-tests`를 호출해 도메인 단위 테스트를 작성한다
 3. 테스트가 **모두 통과**한 것을 확인한다 (`./gradlew test --tests "해당패키지.*"`)
 4. `test-verifier` agent를 `run_in_background: true`로 실행한다
-5. 사용자에게 Phase 1 완료를 알리고 Phase 2 진행 여부를 확인한다
+5. 도메인 계층 코드와 테스트를 커밋한다 (`feat: [기능명] 도메인 계층 구현`)
+6. 사용자에게 Phase 1 완료를 알리고 Phase 2 진행 여부를 확인한다
 
 ---
 
@@ -62,7 +65,8 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent
 2. `/write-tests`를 호출해 서비스 단위 테스트를 작성한다
 3. 테스트가 **모두 통과**한 것을 확인한다 (`./gradlew test --tests "해당패키지.*"`)
 4. `test-verifier` agent를 `run_in_background: true`로 실행한다
-5. 사용자에게 Phase 2 완료를 알리고 Phase 3 진행 여부를 확인한다
+5. 서비스/Orchestrator 계층 코드와 테스트를 커밋한다 (`feat: [기능명] 서비스 계층 구현`)
+6. 사용자에게 Phase 2 완료를 알리고 Phase 3 진행 여부를 확인한다
 
 ---
 
@@ -73,7 +77,6 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent
 구현 대상:
 - REST Controller
 - Request/Response DTO
-- 통합 테스트 (`@SpringBootTest` 또는 `@WebMvcTest`)
 
 완료 기준:
 - [ ] Controller는 요청 파싱·응답 직렬화·서비스 위임만 담당
@@ -81,8 +84,12 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent
 - [ ] API 응답 형식이 기존 컨벤션과 일치
 
 완료 후:
-1. `/write-tests`를 호출해 통합 테스트를 포함한 테스트를 작성한다
-2. `test-verifier` agent를 `run_in_background: true`로 실행한다
+1. `/write-tests`를 호출해 통합 테스트를 작성한다
+   - REST: `@IntegrationTest` 사용 (`@WebMvcTest` 사용 금지)
+   - WebSocket: `WebSocketIntegrationTestSupport` 상속
+2. 테스트가 **모두 통과**한 것을 확인한다 (`./gradlew test --tests "해당패키지.*"`)
+3. `test-verifier` agent를 `run_in_background: true`로 실행한다
+4. 컨트롤러 계층 코드와 테스트를 커밋한다 (`feat: [기능명] 컨트롤러 계층 구현`)
 
 ---
 

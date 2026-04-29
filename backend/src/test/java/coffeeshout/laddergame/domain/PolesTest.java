@@ -16,17 +16,17 @@ import org.junit.jupiter.api.Test;
 class PolesTest {
 
     Player 꾹이;
-    Player 철수;
-    Player 영희;
+    Player 루키;
+    Player 엠제이;
     List<Player> players;
     Poles poles;
 
     @BeforeEach
     void setUp() {
         꾹이 = PlayerFixture.호스트꾹이();
-        철수 = PlayerFixture.게스트루키();
-        영희 = PlayerFixture.게스트엠제이();
-        players = List.of(꾹이, 철수, 영희);
+        루키 = PlayerFixture.게스트루키();
+        엠제이 = PlayerFixture.게스트엠제이();
+        players = List.of(꾹이, 루키, 엠제이);
         poles = Poles.assign(players);
     }
 

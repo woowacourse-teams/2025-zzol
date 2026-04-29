@@ -100,7 +100,7 @@ ladder:
   timing:
     description: 4000ms
     prepare: 2000ms
-    drawing: 5000ms
+    drawing: 8000ms
     result: 5000ms
   scheduler:
     pool-size: 2

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export function useServiceWorkerUpdate() {
+export const useServiceWorkerUpdate = () => {
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
 
   useEffect(() => {
@@ -35,4 +35,4 @@ export function useServiceWorkerUpdate() {
   }, [waitingWorker]);
 
   return { updateReady: waitingWorker !== null, applyUpdate };
-}
+};

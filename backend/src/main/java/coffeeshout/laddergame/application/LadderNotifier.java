@@ -47,7 +47,8 @@ public class LadderNotifier {
                 WebSocketResponse.success(new LadderLineResponse(
                         line.playerName().value(),
                         line.segmentIndex(),
-                        line.row()
+                        line.row(),
+                        room.findPlayer(line.playerName()).getColorIndex()
                 ))
         );
     }

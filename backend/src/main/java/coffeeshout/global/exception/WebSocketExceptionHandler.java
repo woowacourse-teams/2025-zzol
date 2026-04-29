@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.support.MethodArgumentNotValidException;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
 @ControllerAdvice
@@ -39,12 +41,15 @@ public class WebSocketExceptionHandler {
             Principal user,
             @Header("simpDestination") String destination
     ) {
-        final String errors = e.getBindingResult().getFieldErrors().stream()
-                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+        final String errors = e.getBindingResult().getAllErrors().stream()
+                .map(error -> error instanceof FieldError fe
+                        ? fe.getField() + ": " + fe.getDefaultMessage()
+                        : (error.getCode() != null ? error.getCode() : error.getObjectName()) + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
-        log.warn("WebSocket ValidationException: destination={}, errors={}", destination, errors);
+        final String message = errors.isBlank() ? "입력값이 유효하지 않습니다." : errors;
+        log.warn("WebSocket ValidationException: destination={}, errors={}", destination, message);
 
-        messagingTemplate.convertAndSendError(user.getName(), errors);
+        messagingTemplate.convertAndSendError(user.getName(), message);
     }
 
     @MessageExceptionHandler(Exception.class)

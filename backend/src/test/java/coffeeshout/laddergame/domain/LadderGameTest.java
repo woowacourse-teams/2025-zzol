@@ -141,6 +141,16 @@ class LadderGameTest {
                     LadderGameErrorCode.PLAYER_NOT_FOUND
             );
         }
+
+        @Test
+        void 이미_선을_그은_플레이어가_다시_그으면_예외를_던진다() {
+            game.drawLine(꾹이.getName(), 0);
+
+            assertCoffeeShoutException(
+                    () -> game.drawLine(꾹이.getName(), 0),
+                    LadderGameErrorCode.ALREADY_DREW
+            );
+        }
     }
 
     @Nested

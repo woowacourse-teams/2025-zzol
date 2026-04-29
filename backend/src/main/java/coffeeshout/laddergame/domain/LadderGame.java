@@ -1,5 +1,6 @@
 package coffeeshout.laddergame.domain;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -58,7 +59,11 @@ public class LadderGame implements Playable {
     }
 
     public LadderLine drawLine(PlayerName playerName, int segmentIndex) {
-        poles.getPoleIndex(playerName); // validates player exists
+        poles.getPoleIndex(playerName);
+        if (lines.hasDrawn(playerName)) {
+            throw new BusinessException(LadderGameErrorCode.ALREADY_DREW,
+                    "이미 선을 그은 플레이어입니다: " + playerName.value());
+        }
         return lines.add(playerName, segmentIndex);
     }
 

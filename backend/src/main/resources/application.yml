@@ -58,8 +58,6 @@ redis:
         thread-pool-name: concurrent
       "[blindtimer]":
         thread-pool-name: concurrent
-      "[bombrelay]":
-        thread-pool-name: concurrent
       "[blockstacking]":
         thread-pool-name: concurrent
       "[laddergame]":
@@ -118,18 +116,6 @@ blind-timer:
     blind-delay: 3000ms
     timeout-buffer: 3000ms
     result-delay: 2000ms
-
-bomb-relay:
-  timing:
-    description: 4000ms
-    prepare: 2000ms
-    min-bomb-timer: 18000ms
-    max-bomb-timer: 40000ms
-    round-result-delay: 4000ms
-    result-delay: 2000ms
-  dictionary:
-    api-url: https://krdict.korean.go.kr/api/search
-    api-key: ${STDICT_API_KEY:}
 
 outbox:
   relay:

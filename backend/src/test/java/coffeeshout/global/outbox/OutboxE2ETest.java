@@ -78,11 +78,6 @@ class OutboxE2ETest extends TestContainerSupport {
             return new coffeeshout.global.config.ShutDownTestScheduler();
         }
 
-        @Bean(name = "bombRelayGameScheduler")
-        public TaskScheduler bombRelayGameScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
-        }
-
         /**
          * 기본 taskScheduler를 no-op으로 덮어써서 @Scheduled 메서드 실행을 막는다.
          * OutboxRelayWorker의 relay(), recoverStaleEvents(), cleanup()이

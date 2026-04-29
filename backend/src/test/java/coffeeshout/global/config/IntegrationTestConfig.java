@@ -62,8 +62,4 @@ public class IntegrationTestConfig {
         return new ShutDownTestScheduler();
     }
 
-    @Bean(name = "bombRelayGameScheduler")
-    public TaskScheduler testIntegrationBombRelayGameScheduler() {
-        return new ShutDownTestScheduler();
-    }
 }

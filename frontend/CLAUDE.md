@@ -26,13 +26,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 작업 기록 및 의사결정 배경은 `docs/` 폴더에 정리되어 있다. 특정 기능이나 설정의 맥락이 필요할 때 먼저 확인한다.
 
-| 파일 | 내용 |
-|------|------|
-| `docs/todo/planned.md` | 구현 예정 작업 목록 |
-| `docs/todo/backlog.md` | 방향 미확정 · 우선순위 보류 항목 |
-| `docs/todo/done.md` | 완료된 작업 기록 |
-| `docs/home-tabs-architecture.md` | 홈 탭 구조 설계 (하단 탭바 구현 방식, 랭킹 카테고리 추가 방법, 건의사항 step 플로우) |
-| `docs/api-design-menu-tab.md` | 메뉴 탭 API 설계 — 백엔드 협의용 (POST /reports, GET /patch-notes Request/Response 스펙) |
+| 파일                             | 내용                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------- |
+| `docs/todo/planned.md`           | 구현 예정 작업 목록                                                                      |
+| `docs/todo/backlog.md`           | 방향 미확정 · 우선순위 보류 항목                                                         |
+| `docs/todo/done.md`              | 완료된 작업 기록                                                                         |
+| `docs/home-tabs-architecture.md` | 홈 탭 구조 설계 (하단 탭바 구현 방식, 랭킹 카테고리 추가 방법, 건의사항 step 플로우)     |
+| `docs/api-design-menu-tab.md`    | 메뉴 탭 API 설계 — 백엔드 협의용 (POST /reports, GET /patch-notes Request/Response 스펙) |
 
 ## 커맨드
 
@@ -67,6 +67,7 @@ Node 버전은 `.nvmrc`에 명시 (22.18.0).
 ### 라우팅 (`src/router.tsx`)
 
 React Router v7, 페이지는 모두 lazy-load. 주요 라우트 구조:
+
 - `/` — 홈페이지
 - `/entry/name` — 닉네임 입력 페이지
 - `/room/:joinCode` — RoomLayout (WebSocket 컨텍스트 경계)
@@ -78,6 +79,7 @@ React Router v7, 페이지는 모두 lazy-load. 주요 라우트 구조:
 ### Provider 계층 (`src/App.tsx`)
 
 아래 순서로 중첩:
+
 1. ThemeProvider (Emotion)
 2. IdentifierProvider (참가 코드, 닉네임 — sessionStorage 영속)
 3. ParticipantsProvider
@@ -92,6 +94,7 @@ React Router v7, 페이지는 모두 lazy-load. 주요 라우트 구조:
 ### 상태 관리
 
 외부 상태 라이브러리 없이 React Context API만 사용:
+
 - **IdentifierProvider** — 참가 코드, 닉네임, QR URL (sessionStorage)
 - **ParticipantsProvider** — 참가자 목록
 - **WebSocketProvider** — STOMP 연결, 자동 재연결, 메시지 복구
@@ -99,6 +102,7 @@ React Router v7, 페이지는 모두 lazy-load. 주요 라우트 구조:
 ### WebSocket 레이어 (`src/apis/websocket/`)
 
 `@stomp/stompjs` + `sockjs-client` 기반 STOMP 프로토콜:
+
 - `useWebSocketConnection` — 연결 라이프사이클
 - `useWebSocketMessaging` — publish/subscribe
 - `useWebSocketReconnection` — 구독 레지스트리 기반 자동 복구
@@ -107,6 +111,7 @@ React Router v7, 페이지는 모두 lazy-load. 주요 라우트 구조:
 ### REST API 레이어 (`src/apis/rest/`)
 
 fetch를 래핑한 커스텀 훅:
+
 - `useFetch` — 즉시 GET
 - `useLazyFetch` — 지연 GET
 - `useMutation` — POST/PUT/PATCH/DELETE (에러 시 Toast 알림)
@@ -123,6 +128,7 @@ fetch를 래핑한 커스텀 훅:
 ### 미니게임 패턴
 
 각 미니게임은 `src/features/miniGame/<gameName>/` 하위에 동일한 구조를 가진다:
+
 - `context/` — 게임별 상태 프로바이더
 - `pages/` — Ready, Play, Result 페이지
 - `components/` — 게임별 UI 컴포넌트

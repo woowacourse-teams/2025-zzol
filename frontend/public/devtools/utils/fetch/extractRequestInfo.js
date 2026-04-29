@@ -12,4 +12,3 @@ export const extractRequestInfo = (input, init) => {
   }
   return { method: 'GET', url: String(input) };
 };
-

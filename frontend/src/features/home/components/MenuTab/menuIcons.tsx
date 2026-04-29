@@ -70,6 +70,25 @@ export const InfoIcon = () => (
   </svg>
 );
 
+export const DownloadIcon = () => (
+  <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* 배경 동그라미 */}
+    <circle cx="13" cy="13" r="11" fill="#4a0f0b" />
+    {/* 아래 화살표 */}
+    <path d="M13 8 L13 16" stroke="white" strokeWidth="2" strokeLinecap="round" />
+    <path
+      d="M9.5 13 L13 16.5 L16.5 13"
+      stroke="white"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+    />
+    {/* 바닥 선 */}
+    <path d="M9 19 H17" stroke="white" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
 export const GameIcon = () => (
   <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
     {/* 컨트롤러 메인 바디 (채워진 브라운) */}

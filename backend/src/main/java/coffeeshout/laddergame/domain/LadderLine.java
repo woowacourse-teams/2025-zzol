@@ -1,17 +1,22 @@
 package coffeeshout.laddergame.domain;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.player.PlayerName;
-import java.util.Objects;
 
 public record LadderLine(PlayerName playerName, int segmentIndex, int row) {
 
     public LadderLine {
-        Objects.requireNonNull(playerName, "playerName must not be null");
+        if (playerName == null) {
+            throw new BusinessException(LadderGameErrorCode.PLAYER_NOT_FOUND,
+                    "playerName은 null일 수 없습니다.");
+        }
         if (segmentIndex < 0) {
-            throw new IllegalArgumentException("segmentIndex must be >= 0: " + segmentIndex);
+            throw new BusinessException(LadderGameErrorCode.INVALID_SEGMENT_INDEX,
+                    "segmentIndex는 0 이상이어야 합니다: " + segmentIndex);
         }
         if (row < 1) {
-            throw new IllegalArgumentException("row must be >= 1: " + row);
+            throw new BusinessException(LadderGameErrorCode.INVALID_LINE_ROW,
+                    "row는 1 이상이어야 합니다: " + row);
         }
     }
 }

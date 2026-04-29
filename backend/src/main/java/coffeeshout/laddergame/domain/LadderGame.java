@@ -11,9 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.Getter;
 
-@Getter
 public class LadderGame implements Playable {
 
     private volatile LadderGameState state;
@@ -24,6 +22,22 @@ public class LadderGame implements Playable {
 
     public LadderGame() {
         this.state = LadderGameState.DESCRIPTION;
+    }
+
+    public LadderGameState getState() {
+        return state;
+    }
+
+    public Poles getPoles() {
+        return poles;
+    }
+
+    public LadderLines getLines() {
+        return lines;
+    }
+
+    public BottomRanks getBottomRanks() {
+        return bottomRanks;
     }
 
     @Override
@@ -53,7 +67,8 @@ public class LadderGame implements Playable {
 
     private void transition(LadderGameState next) {
         if (!state.canTransitionTo(next)) {
-            throw new IllegalStateException(state + " → " + next + " 전환은 허용되지 않습니다.");
+            throw new BusinessException(LadderGameErrorCode.INVALID_STATE_TRANSITION,
+                    state + " → " + next + " 전환은 허용되지 않습니다.");
         }
         this.state = next;
     }
@@ -83,7 +98,8 @@ public class LadderGame implements Playable {
 
     public Map<String, Integer> getRankingsForBroadcast() {
         if (finalRanks == null) {
-            throw new IllegalStateException("tracePaths()가 먼저 호출되어야 합니다.");
+            throw new BusinessException(LadderGameErrorCode.PATH_NOT_TRACED,
+                    "tracePaths()가 먼저 호출되어야 합니다.");
         }
         return finalRanks.entrySet().stream()
                 .collect(Collectors.toMap(
@@ -100,7 +116,8 @@ public class LadderGame implements Playable {
     @Override
     public Map<Player, MiniGameScore> getScores() {
         if (finalRanks == null) {
-            throw new IllegalStateException("tracePaths()가 먼저 호출되어야 합니다.");
+            throw new BusinessException(LadderGameErrorCode.PATH_NOT_TRACED,
+                    "tracePaths()가 먼저 호출되어야 합니다.");
         }
         return finalRanks.entrySet().stream()
                 .collect(Collectors.toMap(

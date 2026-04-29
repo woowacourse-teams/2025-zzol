@@ -73,8 +73,10 @@ class LadderGameTest {
         void 허용되지_않은_상태_전환_시_예외를_던진다() {
             assertThat(game.getState()).isEqualTo(LadderGameState.DESCRIPTION);
 
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> game.changeToDrawing())
-                    .isInstanceOf(IllegalStateException.class);
+            assertCoffeeShoutException(
+                    () -> game.changeToDrawing(),
+                    LadderGameErrorCode.INVALID_STATE_TRANSITION
+            );
         }
 
         @Test

@@ -8,7 +8,6 @@ import CardGameProvider from '@/contexts/CardGame/CardGameProvider';
 import RacingGameProvider from '@/contexts/RacingGame/RacingGameProvider';
 import SpeedTouchGameProvider from '@/contexts/SpeedTouchGame/SpeedTouchGameProvider';
 import BlindTimerGameProvider from '@/contexts/BlindTimerGame/BlindTimerGameProvider';
-import BombRelayGameProvider from '@/contexts/BombRelayGame/BombRelayGameProvider';
 import BlockStackingGameProvider from '@/contexts/BlockStackingGame/BlockStackingGameProvider';
 import { MiniGameType } from '@/types/miniGame/common';
 import { ComponentType, PropsWithChildren } from 'react';
@@ -16,12 +15,10 @@ import CardGameReadyPage from '../cardGame/pages/CardGameReadyPage';
 import RacingGameReadyPage from '../racingGame/pages/RacingGameReadyPage';
 import SpeedTouchGameReadyPage from '../speedTouchGame/pages/SpeedTouchGameReadyPage';
 import BlindTimerGameReadyPage from '../blindTimerGame/pages/BlindTimerGameReadyPage';
-import BombRelayGameReadyPage from '../bombRelayGame/pages/BombRelayGameReadyPage';
 import CardGamePlayPage from '../cardGame/pages/CardGamePlayPage';
 import RacingGamePlayPage from '../racingGame/pages/RacingGamePlayPage';
 import SpeedTouchGamePlayPage from '../speedTouchGame/pages/SpeedTouchGamePlayPage';
 import BlindTimerGamePlayPage from '../blindTimerGame/pages/BlindTimerGamePlayPage';
-import BombRelayGamePlayPage from '../bombRelayGame/pages/BombRelayGamePlayPage';
 import BlockStackingGameReadyPage from '../blockStackingGame/pages/BlockStackingGameReadyPage';
 import BlockStackingGamePlayPage from '../blockStackingGame/pages/BlockStackingGamePlayPage';
 
@@ -102,21 +99,6 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
       },
     ],
     PlayPage: BlindTimerGamePlayPage,
-  },
-  BOMB_RELAY: {
-    Provider: BombRelayGameProvider,
-    ReadyPage: BombRelayGameReadyPage,
-    slides: [
-      {
-        textLines: ['끝말잇기로', '폭탄을 다음 사람에게 넘기세요!'],
-        className: 'slide-first',
-      },
-      {
-        textLines: ['폭탄이 터지면 탈락!', '마지막까지 살아남으세요'],
-        className: 'slide-second',
-      },
-    ],
-    PlayPage: BombRelayGamePlayPage,
   },
   BLOCK_STACKING: {
     Provider: BlockStackingGameProvider,

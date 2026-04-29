@@ -28,7 +28,7 @@ public class LadderWebSocketController {
             Principal principal
     ) {
         final String playerName = PlayerKey.parse(principal.getName()).playerName();
-        final LadderDrawCommandEvent event = LadderDrawCommandEvent.of(joinCode, playerName, request);
+        final LadderDrawCommandEvent event = LadderDrawCommandEvent.of(joinCode, playerName, request.segmentIndex());
         streamPublisher.publish(StreamKey.LADDER_EVENTS, event);
 
         log.debug("사다리게임 선 그리기 이벤트 발행: joinCode={}, playerName={}, segmentIndex={}, eventId={}",

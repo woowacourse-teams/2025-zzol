@@ -130,7 +130,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         MINI_GAME_RESULT.createdAt.between(startDate, endDate)
                 )
                 .groupBy(MINI_GAME_RESULT.player.id)
-                .orderBy(MINI_GAME_RESULT.score.min().asc())
+                .orderBy(MINI_GAME_RESULT.score.min().asc(), MINI_GAME_RESULT.player.id.asc())
                 .limit(limit)
                 .fetch();
 

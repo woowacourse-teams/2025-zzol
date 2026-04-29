@@ -36,7 +36,6 @@ public class LadderFlowOrchestrator {
 
     private Runnable description(LadderGame game, Room room) {
         return () -> {
-            game.changeToDescription();
             try {
                 notifier.notifyDescription(room);
             } catch (Exception e) {
@@ -70,8 +69,8 @@ public class LadderFlowOrchestrator {
 
     private Runnable result(LadderGame game, Room room) {
         return () -> {
-            game.tracePaths();
             game.changeToResult();
+            game.tracePaths();
             try {
                 notifier.notifyResult(game, room, timing.result().toMillis());
             } catch (Exception e) {

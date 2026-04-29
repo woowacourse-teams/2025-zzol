@@ -70,11 +70,11 @@ class LadderGameTest {
     class 상태_전환_테스트 {
 
         @Test
-        void changeToDescription_호출_시_DESCRIPTION_상태가_된다() {
-            game.changeToPrepare();
-            game.changeToDescription();
-
+        void 허용되지_않은_상태_전환_시_예외를_던진다() {
             assertThat(game.getState()).isEqualTo(LadderGameState.DESCRIPTION);
+
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> game.changeToDrawing())
+                    .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -86,6 +86,7 @@ class LadderGameTest {
 
         @Test
         void changeToDrawing_호출_시_DRAWING_상태가_된다() {
+            game.changeToPrepare();
             game.changeToDrawing();
 
             assertThat(game.getState()).isEqualTo(LadderGameState.DRAWING);
@@ -93,6 +94,8 @@ class LadderGameTest {
 
         @Test
         void changeToResult_호출_시_RESULT_상태가_된다() {
+            game.changeToPrepare();
+            game.changeToDrawing();
             game.changeToResult();
 
             assertThat(game.getState()).isEqualTo(LadderGameState.RESULT);
@@ -100,6 +103,9 @@ class LadderGameTest {
 
         @Test
         void changeToDone_호출_시_DONE_상태가_된다() {
+            game.changeToPrepare();
+            game.changeToDrawing();
+            game.changeToResult();
             game.changeToDone();
 
             assertThat(game.getState()).isEqualTo(LadderGameState.DONE);
@@ -111,6 +117,7 @@ class LadderGameTest {
 
         @BeforeEach
         void DRAWING_상태로_전환() {
+            game.changeToPrepare();
             game.changeToDrawing();
         }
 
@@ -141,6 +148,7 @@ class LadderGameTest {
 
         @BeforeEach
         void DRAWING_상태로_전환() {
+            game.changeToPrepare();
             game.changeToDrawing();
         }
 
@@ -162,6 +170,7 @@ class LadderGameTest {
 
         @Test
         void tracePaths_호출_후_모든_플레이어의_순위가_계산된다() {
+            game.changeToPrepare();
             game.changeToDrawing();
             game.tracePaths();
 
@@ -177,6 +186,7 @@ class LadderGameTest {
 
         @Test
         void 순위는_1부터_n까지_각각_하나씩_배정된다() {
+            game.changeToPrepare();
             game.changeToDrawing();
             game.tracePaths();
 
@@ -192,6 +202,7 @@ class LadderGameTest {
         @Test
         void 선이_없으면_각_플레이어는_자기_기둥_바닥의_순위를_받는다() {
             // 선 없음 → trace(i) = i → BottomRanks에서 직접 순위 할당
+            game.changeToPrepare();
             game.changeToDrawing();
             game.tracePaths();
 
@@ -210,6 +221,7 @@ class LadderGameTest {
         void getResult는_fromAscending으로_순위를_계산한다() {
             // 선 없이 tracePaths → BottomRanks가 1,2,3을 기둥에 배정
             // fromAscending: rank 1(최소값) = 1위
+            game.changeToPrepare();
             game.changeToDrawing();
             game.tracePaths();
 
@@ -226,6 +238,7 @@ class LadderGameTest {
         @Test
         void 사다리_순위_1위가_게임_결과_1위가_된다() {
             // BottomRanks를 통제할 수 없으므로 tracePaths 후 getRankings로 비교
+            game.changeToPrepare();
             game.changeToDrawing();
             game.tracePaths();
 

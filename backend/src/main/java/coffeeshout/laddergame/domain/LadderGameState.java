@@ -5,5 +5,15 @@ public enum LadderGameState {
     PREPARE,
     DRAWING,
     RESULT,
-    DONE
+    DONE;
+
+    public boolean canTransitionTo(LadderGameState next) {
+        return switch (this) {
+            case DESCRIPTION -> next == PREPARE;
+            case PREPARE -> next == DRAWING;
+            case DRAWING -> next == RESULT;
+            case RESULT -> next == DONE;
+            case DONE -> false;
+        };
+    }
 }

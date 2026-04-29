@@ -4,7 +4,6 @@ import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.trace.TraceInfo;
 import coffeeshout.global.trace.TraceInfoExtractor;
 import coffeeshout.global.trace.Traceable;
-import coffeeshout.laddergame.ui.request.LadderDrawRequest;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -17,12 +16,12 @@ public record LadderDrawCommandEvent(
         TraceInfo traceInfo
 ) implements BaseEvent, Traceable {
 
-    public static LadderDrawCommandEvent of(String joinCode, String playerName, LadderDrawRequest request) {
+    public static LadderDrawCommandEvent of(String joinCode, String playerName, int segmentIndex) {
         return new LadderDrawCommandEvent(
                 UUID.randomUUID().toString(),
                 joinCode,
                 playerName,
-                request.segmentIndex(),
+                segmentIndex,
                 Instant.now(),
                 TraceInfoExtractor.extract()
         );

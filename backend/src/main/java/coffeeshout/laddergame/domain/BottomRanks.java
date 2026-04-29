@@ -1,5 +1,6 @@
 package coffeeshout.laddergame.domain;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +17,9 @@ public class BottomRanks {
     }
 
     public static BottomRanks generate(int n) {
+        if (n <= 0) {
+            throw new BusinessException(LadderGameErrorCode.INVALID_PLAYER_COUNT, "n must be > 0");
+        }
         final List<Integer> rankList = new ArrayList<>(IntStream.rangeClosed(1, n).boxed().toList());
         Collections.shuffle(rankList);
         final Map<Integer, Integer> ranks = new HashMap<>();
@@ -26,7 +30,11 @@ public class BottomRanks {
     }
 
     public int getRank(int poleIndex) {
-        return ranks.getOrDefault(poleIndex, 0);
+        if (!ranks.containsKey(poleIndex)) {
+            throw new BusinessException(LadderGameErrorCode.INVALID_POLE_INDEX,
+                    "유효하지 않은 기둥 인덱스입니다: " + poleIndex);
+        }
+        return ranks.get(poleIndex);
     }
 
     public Map<Integer, Integer> getAll() {

@@ -15,11 +15,11 @@ public class LadderLines {
         return line;
     }
 
-    public boolean hasDrawn(PlayerName playerName) {
+    public synchronized boolean hasDrawn(PlayerName playerName) {
         return lines.stream().anyMatch(l -> l.playerName().equals(playerName));
     }
 
-    public int trace(int startPoleIndex) {
+    public synchronized int trace(int startPoleIndex) {
         final List<LadderLine> sorted = lines.stream()
                 .sorted(Comparator.comparingInt(LadderLine::row))
                 .toList();

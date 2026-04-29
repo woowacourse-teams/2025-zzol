@@ -44,6 +44,7 @@ class LadderServiceTest extends ServiceTest {
         game = new LadderGame();
         room.addMiniGame(new PlayerName(HOST_NAME), game);
         room.startNextGame(HOST_NAME);
+        game.changeToPrepare();
         game.changeToDrawing();
 
         roomRepository.save(room);

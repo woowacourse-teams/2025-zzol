@@ -3,10 +3,12 @@ package coffeeshout.global.exception;
 import coffeeshout.global.exception.custom.CoffeeShoutException;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import java.security.Principal;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
+import org.springframework.messaging.handler.annotation.support.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
 @ControllerAdvice
@@ -29,6 +31,20 @@ public class WebSocketExceptionHandler {
                 user.getName(),
                 e.getErrorCode().getMessage()
         );
+    }
+
+    @MessageExceptionHandler(MethodArgumentNotValidException.class)
+    public void handleValidationException(
+            MethodArgumentNotValidException e,
+            Principal user,
+            @Header("simpDestination") String destination
+    ) {
+        final String errors = e.getBindingResult().getFieldErrors().stream()
+                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        log.warn("WebSocket ValidationException: destination={}, errors={}", destination, errors);
+
+        messagingTemplate.convertAndSendError(user.getName(), errors);
     }
 
     @MessageExceptionHandler(Exception.class)

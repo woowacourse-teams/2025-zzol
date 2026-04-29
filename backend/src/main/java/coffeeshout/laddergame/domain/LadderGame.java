@@ -17,7 +17,7 @@ public class LadderGame implements Playable {
 
     private volatile LadderGameState state;
     private Poles poles;
-    private final LadderLines lines = new LadderLines();
+    private LadderLines lines = new LadderLines();
     private BottomRanks bottomRanks;
     private Map<Player, Integer> finalRanks;
 
@@ -27,29 +27,34 @@ public class LadderGame implements Playable {
 
     @Override
     public void setUp(List<Player> players) {
+        this.state = LadderGameState.DESCRIPTION;
+        this.lines = new LadderLines();
         this.poles = Poles.assign(players);
         this.bottomRanks = BottomRanks.generate(players.size());
         this.finalRanks = null;
     }
 
-    public void changeToDescription() {
-        this.state = LadderGameState.DESCRIPTION;
-    }
-
     public void changeToPrepare() {
-        this.state = LadderGameState.PREPARE;
+        transition(LadderGameState.PREPARE);
     }
 
     public void changeToDrawing() {
-        this.state = LadderGameState.DRAWING;
+        transition(LadderGameState.DRAWING);
     }
 
     public void changeToResult() {
-        this.state = LadderGameState.RESULT;
+        transition(LadderGameState.RESULT);
     }
 
     public void changeToDone() {
-        this.state = LadderGameState.DONE;
+        transition(LadderGameState.DONE);
+    }
+
+    private void transition(LadderGameState next) {
+        if (!state.canTransitionTo(next)) {
+            throw new IllegalStateException(state + " → " + next + " 전환은 허용되지 않습니다.");
+        }
+        this.state = next;
     }
 
     public LadderLine drawLine(PlayerName playerName, int segmentIndex) {

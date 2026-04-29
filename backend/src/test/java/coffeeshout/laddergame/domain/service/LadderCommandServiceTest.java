@@ -18,18 +18,19 @@ class LadderCommandServiceTest {
     LadderCommandService commandService;
     LadderGame game;
     Player 꾹이;
-    Player 철수;
-    Player 영희;
+    Player 루키;
+    Player 엠제이;
 
     @BeforeEach
     void setUp() {
         commandService = new LadderCommandService();
         꾹이 = PlayerFixture.호스트꾹이();
-        철수 = PlayerFixture.게스트루키();
-        영희 = PlayerFixture.게스트엠제이();
+        루키 = PlayerFixture.게스트루키();
+        엠제이 = PlayerFixture.게스트엠제이();
 
         game = new LadderGame();
-        game.setUp(List.of(꾹이, 철수, 영희));
+        game.setUp(List.of(꾹이, 루키, 엠제이));
+        game.changeToPrepare();
         game.changeToDrawing();
     }
 
@@ -66,9 +67,10 @@ class LadderCommandServiceTest {
 
         @Test
         void DESCRIPTION_상태에서도_빈_Optional을_반환한다() {
-            game.changeToDescription();
+            final LadderGame descriptionGame = new LadderGame();
+            descriptionGame.setUp(List.of(꾹이, 루키, 엠제이));
 
-            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0);
+            final Optional<LadderLine> result = commandService.drawLine(descriptionGame, "꾹이", 0);
 
             assertThat(result).isEmpty();
         }

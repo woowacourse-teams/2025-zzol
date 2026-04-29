@@ -110,10 +110,21 @@ public class IpBlockFilter extends OncePerRequestFilter {
         final String origin = request.getHeader("Origin");
         if (origin != null) {
             response.setHeader("Access-Control-Allow-Origin", origin);
-            response.setHeader("Access-Control-Allow-Methods", "*");
-            response.setHeader("Access-Control-Allow-Headers", "*");
+            response.setHeader("Access-Control-Allow-Methods",
+                    resolveOrDefault(request.getHeader("Access-Control-Request-Method"),
+                            "GET, POST, PUT, PATCH, DELETE, OPTIONS"));
+            response.setHeader("Access-Control-Allow-Headers",
+                    resolveOrDefault(request.getHeader("Access-Control-Request-Headers"),
+                            "Authorization, Content-Type, Accept, Origin, X-Requested-With"));
             response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.addHeader("Vary", "Origin");
+            response.addHeader("Vary", "Access-Control-Request-Method");
+            response.addHeader("Vary", "Access-Control-Request-Headers");
         }
+    }
+
+    private String resolveOrDefault(String value, String fallback) {
+        return value != null && !value.isBlank() ? value : fallback;
     }
 
     private String getClientIp(HttpServletRequest request) {

@@ -49,38 +49,16 @@ class LadderLinesTest {
         }
 
         @Test
-        void 인접_구간_동일_row_충돌_시_아래로_밀린다() {
-            // 구간 0에 row=1 배치
-            lines.add(꾹이, 0);
+        void 서로_다른_구간을_눌러도_누른_순서대로_row가_증가한다() {
+            final LadderLine first = lines.add(꾹이, 0);
+            final LadderLine second = lines.add(철수, 2);
+            final LadderLine third = lines.add(영희, 1);
 
-            // 구간 1의 초기 후보는 row=1이지만 인접 구간 0에 row=1이 있어 row=2로 밀린다
-            final LadderLine line = lines.add(철수, 1);
-
-            assertThat(line.row()).isEqualTo(2);
-        }
-
-        @Test
-        void 왼쪽_인접_구간과_충돌_시_아래로_밀린다() {
-            // 구간 2에 row=1
-            lines.add(꾹이, 2);
-
-            // 구간 1의 초기 후보 row=1이지만 오른쪽 인접 구간 2와 충돌 → row=2
-            final LadderLine line = lines.add(철수, 1);
-
-            assertThat(line.row()).isEqualTo(2);
-        }
-
-        @Test
-        void 충돌이_연속될_경우_충돌_없는_row까지_밀어_올린다() {
-            // 구간 0: row=1, 구간 2: row=2 (구간 1과 인접하지 않으므로 row=1은 괜찮음)
-            // 구간 1 추가 시: 후보 row=1 → 구간 0 row=1 충돌 → row=2 → 구간 2 row=2 충돌 → row=3
-            lines.add(꾹이, 0);   // 구간0 → row=1
-            lines.add(영희, 2);   // 구간2 → row=1 (구간0과 비인접, 충돌 없음)
-            lines.add(철수, 2);   // 구간2 → row=2
-
-            final LadderLine line = lines.add(꾹이, 1);  // 구간1: row=1 충돌(구간0), row=2 충돌(구간2) → row=3
-
-            assertThat(line.row()).isEqualTo(3);
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(first.row()).isEqualTo(1);
+                softly.assertThat(second.row()).isEqualTo(2);
+                softly.assertThat(third.row()).isEqualTo(3);
+            });
         }
 
         @Test
@@ -152,30 +130,20 @@ class LadderLinesTest {
 
         @Test
         void 여러_선을_row_순서대로_따라간다() {
-            // 기둥 배치: 0-1-2-3
-            // row=1: 구간 0 (기둥 0→1)
-            // row=2: 구간 1 (기둥 1→2) → 충돌 없음 (구간 0과 비인접)
-            // 기둥 0에서 출발: row=1에서 오른쪽(→기둥1), row=2에서 오른쪽(→기둥2)
-            lines.add(꾹이, 0);   // row=1
-            lines.add(철수, 2);   // row=1 (구간2, 구간0과 비인접)
+            lines.add(꾹이, 0);   // 1번째 → row=1, 구간0
+            lines.add(철수, 2);   // 2번째 → row=2, 구간2
 
-            // 기둥 0: row=1에서 구간0→기둥1 이동, 기둥1: row=1에서 구간2는 관계없음 → 기둥1 유지
+            // 기둥0: row=1 구간0 만남→기둥1 이동, row=2 구간2는 관계없음→기둥1 유지
             assertThat(lines.trace(0)).isEqualTo(1);
         }
 
         @Test
         void 여러_구간의_선을_순서대로_따라가며_올바른_경로를_계산한다() {
-            // 구간0: row=1(꾹이), row=2(영희)
-            // 구간1: row=1 충돌(구간0,row=1) → row=2 충돌(구간0,row=2) → row=3(철수)
-            lines.add(꾹이, 0);   // row=1, 구간0
-            lines.add(영희, 0);   // row=2, 구간0
-            lines.add(철수, 1);   // row=3, 구간1
+            lines.add(꾹이, 0);   // 1번째 → row=1, 구간0
+            lines.add(영희, 0);   // 2번째 → row=2, 구간0
+            lines.add(철수, 1);   // 3번째 → row=3, 구간1
 
-            // 기둥1에서 출발:
-            // row=1(구간0): seg+1=1 == 1 → 왼쪽(기둥0)
-            // row=2(구간0): seg=0 == 0 → 오른쪽(기둥1)
-            // row=3(구간1): seg=1 == 1 → 오른쪽(기둥2)
-            // 결과: 기둥2
+            // 기둥1: row=1 구간0(seg+1=1) → 기둥0, row=2 구간0(seg=0) → 기둥1, row=3 구간1(seg=1) → 기둥2
             assertThat(lines.trace(1)).isEqualTo(2);
         }
     }

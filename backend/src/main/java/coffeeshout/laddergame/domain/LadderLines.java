@@ -10,17 +10,7 @@ public class LadderLines {
     private final List<LadderLine> lines = new ArrayList<>();
 
     public synchronized LadderLine add(PlayerName playerName, int segmentIndex) {
-        int candidate = lines.stream()
-                .filter(l -> l.segmentIndex() == segmentIndex)
-                .mapToInt(LadderLine::row)
-                .max()
-                .orElse(0) + 1;
-
-        while (hasAdjacentLineAtRow(segmentIndex, candidate)) {
-            candidate++;
-        }
-
-        final LadderLine line = new LadderLine(playerName, segmentIndex, candidate);
+        final LadderLine line = new LadderLine(playerName, segmentIndex, lines.size() + 1);
         lines.add(line);
         return line;
     }
@@ -52,10 +42,4 @@ public class LadderLines {
         return List.copyOf(lines);
     }
 
-    private boolean hasAdjacentLineAtRow(int segmentIndex, int row) {
-        return lines.stream().anyMatch(l ->
-                (l.segmentIndex() == segmentIndex - 1 || l.segmentIndex() == segmentIndex + 1)
-                        && l.row() == row
-        );
-    }
 }

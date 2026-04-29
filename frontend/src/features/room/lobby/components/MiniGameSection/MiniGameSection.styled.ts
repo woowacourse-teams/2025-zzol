@@ -66,11 +66,3 @@ export const InfoSlideImage = styled.img`
   object-fit: contain;
   border-radius: 8px;
 `;
-
-export const InfoSummary = styled.p`
-  ${({ theme }) => theme.typography.small}
-  color: ${({ theme }) => theme.color.gray[500]};
-  text-align: center;
-  padding: 4px 0;
-  margin: 0;
-`;

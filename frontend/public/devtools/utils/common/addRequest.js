@@ -34,4 +34,3 @@ export const addRequest = (collector, data) => {
   collector.add(request);
   return request;
 };
-

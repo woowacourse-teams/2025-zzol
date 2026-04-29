@@ -24,21 +24,21 @@ Content-Type: application/json
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| `category` | `string` | ✅ | `BUG` \| `SUGGESTION` \| `GAME_REQUEST` \| `OTHER` |
-| `gameType` | `string \| null` | ❌ | `category=BUG`일 때만 의미 있음. `CARD_GAME` \| `RACING_GAME` \| `SPEED_TOUCH` \| `BLIND_TIMER` \| `BOMB_RELAY` \| `BLOCK_STACKING` \| `null` (게임 외 버그) |
-| `joinCode` | `string \| null` | ❌ | `category=BUG`일 때만 포함. 사용자가 마지막으로 참여한 방 코드. 서버 측 게임 세션 로그 조회에 활용 |
-| `content` | `string` | ✅ | 1자 이상 200자 이하 |
+| 필드       | 타입             | 필수 | 설명                                                                                                                                                         |
+| ---------- | ---------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `category` | `string`         | ✅   | `BUG` \| `SUGGESTION` \| `GAME_REQUEST` \| `OTHER`                                                                                                           |
+| `gameType` | `string \| null` | ❌   | `category=BUG`일 때만 의미 있음. `CARD_GAME` \| `RACING_GAME` \| `SPEED_TOUCH` \| `BLIND_TIMER` \| `BOMB_RELAY` \| `BLOCK_STACKING` \| `null` (게임 외 버그) |
+| `joinCode` | `string \| null` | ❌   | `category=BUG`일 때만 포함. 사용자가 마지막으로 참여한 방 코드. 서버 측 게임 세션 로그 조회에 활용                                                           |
+| `content`  | `string`         | ✅   | 1자 이상 200자 이하                                                                                                                                          |
 
 **카테고리별 포함 필드 정리:**
 
-| category | gameType | joinCode | content |
-|----------|----------|----------|---------|
-| `BUG` | 있을 수도 없을 수도 | 있을 수도 없을 수도 | ✅ |
-| `SUGGESTION` | 없음 | 없음 | ✅ |
-| `GAME_REQUEST` | 없음 | 없음 | ✅ |
-| `OTHER` | 없음 | 없음 | ✅ |
+| category       | gameType            | joinCode            | content |
+| -------------- | ------------------- | ------------------- | ------- |
+| `BUG`          | 있을 수도 없을 수도 | 있을 수도 없을 수도 | ✅      |
+| `SUGGESTION`   | 없음                | 없음                | ✅      |
+| `GAME_REQUEST` | 없음                | 없음                | ✅      |
+| `OTHER`        | 없음                | 없음                | ✅      |
 
 #### Response
 
@@ -54,11 +54,11 @@ Content-Type: application/json
 
 **실패**
 
-| 상태 코드 | 상황 | `message` 예시 |
-|-----------|------|---------------|
-| `400` | content 비어 있음 / 200자 초과 / 유효하지 않은 category·gameType | `"content는 1자 이상 200자 이하여야 합니다"` |
-| `429` | 단시간 내 동일 IP 중복 제출 (선택 구현) | `"잠시 후 다시 시도해주세요"` |
-| `500` | 서버 내부 오류 | `"서버 오류가 발생했습니다"` |
+| 상태 코드 | 상황                                                             | `message` 예시                               |
+| --------- | ---------------------------------------------------------------- | -------------------------------------------- |
+| `400`     | content 비어 있음 / 200자 초과 / 유효하지 않은 category·gameType | `"content는 1자 이상 200자 이하여야 합니다"` |
+| `429`     | 단시간 내 동일 IP 중복 제출 (선택 구현)                          | `"잠시 후 다시 시도해주세요"`                |
+| `500`     | 서버 내부 오류                                                   | `"서버 오류가 발생했습니다"`                 |
 
 에러 응답 envelope:
 
@@ -112,18 +112,18 @@ GET /patch-notes
 ]
 ```
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `version` | `string` | 버전 문자열. `v{major}.{minor}.{patch}` 형식 권장 |
-| `releasedAt` | `string` | ISO 8601 날짜 (`YYYY-MM-DD`) |
-| `changes[].type` | `string` | `NEW` \| `FIX` \| `IMPROVE` |
-| `changes[].description` | `string` | 변경 내용 한 줄 요약 |
+| 필드                    | 타입     | 설명                                              |
+| ----------------------- | -------- | ------------------------------------------------- |
+| `version`               | `string` | 버전 문자열. `v{major}.{minor}.{patch}` 형식 권장 |
+| `releasedAt`            | `string` | ISO 8601 날짜 (`YYYY-MM-DD`)                      |
+| `changes[].type`        | `string` | `NEW` \| `FIX` \| `IMPROVE`                       |
+| `changes[].description` | `string` | 변경 내용 한 줄 요약                              |
 
 **실패**
 
-| 상태 코드 | 상황 |
-|-----------|------|
-| `500` | 서버 내부 오류 |
+| 상태 코드 | 상황           |
+| --------- | -------------- |
+| `500`     | 서버 내부 오류 |
 
 ---
 

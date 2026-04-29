@@ -60,4 +60,3 @@ export const createWebSocketMessage = (rawData, type) => {
     stompBody: undefined,
   };
 };
-

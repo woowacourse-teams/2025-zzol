@@ -11,7 +11,7 @@ import {
   MiniGameType,
 } from '@/types/miniGame/common';
 import { GAME_CONFIGS } from '@/features/miniGame/config/gameConfigs';
-import GameInfoCarousel from '../GameInfoCarousel/GameInfoCarousel';
+
 import * as S from './MiniGameSection.styled';
 import { useMiniGameScreenReader } from './useMiniGameScreenReader';
 
@@ -56,7 +56,6 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
             </S.InfoSlideBody>
           </S.InfoSlide>
         ))}
-        {descriptions.length > 0 && <S.InfoSummary>{descriptions.join(' ')}</S.InfoSummary>}
       </S.InfoContent>,
       {
         title: name,

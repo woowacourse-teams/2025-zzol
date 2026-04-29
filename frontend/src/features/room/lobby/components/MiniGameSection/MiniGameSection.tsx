@@ -6,13 +6,12 @@ import useModal from '@/components/@common/Modal/useModal';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import {
   HIDDEN_MINI_GAMES,
-  MINI_GAME_DESCRIPTION_MAP,
   MINI_GAME_ICON_MAP,
   MINI_GAME_NAME_MAP,
   MiniGameType,
 } from '@/types/miniGame/common';
 import { GAME_CONFIGS } from '@/features/miniGame/config/gameConfigs';
-import GameInfoCarousel from '../GameInfoCarousel/GameInfoCarousel';
+
 import * as S from './MiniGameSection.styled';
 import { useMiniGameScreenReader } from './useMiniGameScreenReader';
 
@@ -46,7 +45,17 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
 
     openModal(
       <S.InfoContent>
-        <GameInfoCarousel slides={slides} name={name} />
+        {slides.map((slide, i) => (
+          <S.InfoSlide key={i}>
+            {slide.imageSrc && (
+              <S.InfoSlideImage src={slide.imageSrc} alt={`${name} 설명 ${i + 1}`} />
+            )}
+            <S.InfoSlideBody>
+              <S.InfoStepNumber>{i + 1}</S.InfoStepNumber>
+              <S.InfoSlideText>{slide.textLines.join(' ')}</S.InfoSlideText>
+            </S.InfoSlideBody>
+          </S.InfoSlide>
+        ))}
       </S.InfoContent>,
       {
         title: name,

@@ -26,20 +26,21 @@ const tracePaths = (
   topY: number,
   bottomY: number
 ) =>
-  poles.map((pole) => {
+  poles.map((pole, i) => {
     const points: [number, number][] = [];
-    let current = pole.index;
+    let current = i;
     points.push([poleX(current), topY]);
 
     for (const line of sortedLines) {
       const y = rowY(line.row);
-      if (current === line.segmentIndex) {
+      const segIdx = Number(line.segmentIndex);
+      if (current === segIdx) {
         points.push([poleX(current), y]);
-        current = line.segmentIndex + 1;
+        current = segIdx + 1;
         points.push([poleX(current), y]);
-      } else if (current === line.segmentIndex + 1) {
+      } else if (current === segIdx + 1) {
         points.push([poleX(current), y]);
-        current = line.segmentIndex;
+        current = segIdx;
         points.push([poleX(current), y]);
       }
     }
@@ -47,7 +48,7 @@ const tracePaths = (
 
     return {
       playerName: pole.playerName,
-      d: points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' '),
+      d: points.map(([x, y], idx) => `${idx === 0 ? 'M' : 'L'}${x},${y}`).join(' '),
       color: getPoleColor(pole.index),
     };
   });
@@ -79,9 +80,10 @@ const LadderBoard = () => {
   const poleGap = poleCount > 1 ? usableWidth / (poleCount - 1) : usableWidth;
 
   // poleCount 기반으로 고정: 선이 추가될 때마다 rowHeight가 바뀌어 기존 선 위치가 이동하는 현상 방지
-  const rowHeight = usableHeight > 0 && poleCount > 0
-    ? Math.max(usableHeight / (poleCount + 1), MIN_ROW_HEIGHT)
-    : MIN_ROW_HEIGHT;
+  const rowHeight =
+    usableHeight > 0 && poleCount > 0
+      ? Math.max(usableHeight / (poleCount + 1), MIN_ROW_HEIGHT)
+      : MIN_ROW_HEIGHT;
 
   const TOP_Y = PAD_Y_TOP;
   const BOTTOM_Y = PAD_Y_TOP + usableHeight;

@@ -49,7 +49,7 @@ const tracePaths = (
     return {
       playerName: pole.playerName,
       d: points.map(([x, y], idx) => `${idx === 0 ? 'M' : 'L'}${x},${y}`).join(' '),
-      color: getPoleColor(pole.index),
+      color: getPoleColor(pole.colorIndex ?? pole.index),
     };
   });
 
@@ -156,7 +156,7 @@ const LadderBoard = () => {
               y1={TOP_Y}
               x2={poleX(i)}
               y2={BOTTOM_Y}
-              stroke={getPoleColor(i)}
+              stroke={getPoleColor(pole.colorIndex ?? pole.index)}
               strokeWidth={isMe ? POLE_WIDTH + 1 : POLE_WIDTH}
               opacity={isMe ? 1 : 0.6}
             />
@@ -174,7 +174,7 @@ const LadderBoard = () => {
               textAnchor="middle"
               fontSize={isMe ? 14 : 12}
               fontWeight={isMe ? 700 : 400}
-              fill={isMe ? getPoleColor(i) : '#888'}
+              fill={isMe ? getPoleColor(pole.colorIndex ?? pole.index) : '#888'}
             >
               {truncateName(pole.playerName)}
             </text>
@@ -207,7 +207,9 @@ const LadderBoard = () => {
             y1={rowY(line.row)}
             x2={poleX(line.segmentIndex + 1)}
             y2={rowY(line.row)}
-            stroke={getPoleColor(poles.find((p) => p.playerName === line.playerName)?.index ?? 0)}
+            stroke={getPoleColor(
+              line.colorIndex ?? poles.find((p) => p.playerName === line.playerName)?.index ?? 0
+            )}
             strokeWidth={LINE_WIDTH}
             strokeLinecap="round"
           />
@@ -220,7 +222,9 @@ const LadderBoard = () => {
             y1={ghostY}
             x2={poleX(ghostSegmentIndex + 1)}
             y2={ghostY}
-            stroke={myPoleIndex >= 0 ? getPoleColor(myPoleIndex) : '#aaa'}
+            stroke={
+              myPoleIndex >= 0 ? getPoleColor(poles[myPoleIndex].colorIndex ?? myPoleIndex) : '#aaa'
+            }
             strokeWidth={LINE_WIDTH}
             strokeLinecap="round"
             opacity={0.35}

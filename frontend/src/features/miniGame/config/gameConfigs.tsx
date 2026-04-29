@@ -10,6 +10,7 @@ import SpeedTouchGameProvider from '@/contexts/SpeedTouchGame/SpeedTouchGameProv
 import BlindTimerGameProvider from '@/contexts/BlindTimerGame/BlindTimerGameProvider';
 import BombRelayGameProvider from '@/contexts/BombRelayGame/BombRelayGameProvider';
 import BlockStackingGameProvider from '@/contexts/BlockStackingGame/BlockStackingGameProvider';
+import LadderGameProvider from '@/contexts/LadderGame/LadderGameProvider';
 import { MiniGameType } from '@/types/miniGame/common';
 import { ComponentType, PropsWithChildren } from 'react';
 import CardGameReadyPage from '../cardGame/pages/CardGameReadyPage';
@@ -24,6 +25,10 @@ import BlindTimerGamePlayPage from '../blindTimerGame/pages/BlindTimerGamePlayPa
 import BombRelayGamePlayPage from '../bombRelayGame/pages/BombRelayGamePlayPage';
 import BlockStackingGameReadyPage from '../blockStackingGame/pages/BlockStackingGameReadyPage';
 import BlockStackingGamePlayPage from '../blockStackingGame/pages/BlockStackingGamePlayPage';
+import LadderGameDescription1 from '@/assets/ladder_game_desc1.svg';
+import LadderGameDescription2 from '@/assets/ladder_game_desc2.svg';
+import LadderGameReadyPage from '../ladderGame/pages/LadderGameReadyPage';
+import LadderGamePlayPage from '../ladderGame/pages/LadderGamePlayPage';
 
 export type SlideConfig = {
   textLines: string[];
@@ -134,5 +139,22 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
       },
     ],
     PlayPage: BlockStackingGamePlayPage,
+  },
+  LADDER_GAME: {
+    Provider: LadderGameProvider,
+    ReadyPage: LadderGameReadyPage,
+    slides: [
+      {
+        textLines: ['사다리를 타서', '순위를 결정합니다'],
+        imageSrc: LadderGameDescription1,
+        className: 'slide-first',
+      },
+      {
+        textLines: ['기둥 사이를 터치해서', '선을 하나 그을 수 있어요'],
+        imageSrc: LadderGameDescription2,
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: LadderGamePlayPage,
   },
 };

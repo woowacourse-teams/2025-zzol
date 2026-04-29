@@ -19,9 +19,13 @@ export const TimerBarWrapper = styled.div`
   overflow: hidden;
 `;
 
-export const TimerBarFill = styled.div<{ $ratio: number }>`
+export const TimerBarFill = styled.div<{ $timeLeft: number; $totalTime: number }>`
   height: 100%;
-  width: ${({ $ratio }) => $ratio * 100}%;
-  background: ${({ theme }) => theme.color.point[400]};
-  transition: width 0.05s linear;
+  width: ${({ $timeLeft, $totalTime }) => ($timeLeft / $totalTime) * 100}%;
+  background: ${({ $timeLeft }) =>
+    $timeLeft < 5
+      ? 'linear-gradient(to right, #ff4d4d, #ff9f43)'
+      : 'linear-gradient(to right, #48dbfb, #1dd1a1)'};
+  box-shadow: 0 0 8px
+    ${({ $timeLeft }) => ($timeLeft < 5 ? 'rgba(255, 77, 77, 0.5)' : 'rgba(72, 219, 251, 0.3)')};
 `;

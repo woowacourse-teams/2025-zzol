@@ -5,19 +5,32 @@ export const TrophyIcon = () => (
     <path d="M14 5h2a2 2 0 1 1 0 4h-2" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
     <rect x="9" y="9" width="2" height="4" fill="#FBBF24" />
     <rect x="6" y="13" width="8" height="2.5" rx="1.25" fill="#FBBF24" />
-    <path d="M10 4.5 l.6 1.8H12.4l-1.5 1.1.6 1.8L10 8.1l-1.5 1.1.6-1.8L7.6 6.3h1.8z" fill="white" opacity="0.7" />
+    <path
+      d="M10 4.5 l.6 1.8H12.4l-1.5 1.1.6 1.8L10 8.1l-1.5 1.1.6-1.8L7.6 6.3h1.8z"
+      fill="white"
+      opacity="0.7"
+    />
   </svg>
 );
 
 export const SkullIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
     {/* 두개골 */}
-    <path d="M10 2C6.13 2 3 5.13 3 9c0 2.3 1.1 4.34 2.8 5.64V16a1 1 0 0 0 1 1h6.4a1 1 0 0 0 1-1v-1.36A6.99 6.99 0 0 0 17 9c0-3.87-3.13-7-7-7z" fill="#6B7280" />
+    <path
+      d="M10 2C6.13 2 3 5.13 3 9c0 2.3 1.1 4.34 2.8 5.64V16a1 1 0 0 0 1 1h6.4a1 1 0 0 0 1-1v-1.36A6.99 6.99 0 0 0 17 9c0-3.87-3.13-7-7-7z"
+      fill="#6B7280"
+    />
     {/* 눈 */}
     <circle cx="7.5" cy="9" r="1.8" fill="#1F2937" />
     <circle cx="12.5" cy="9" r="1.8" fill="#1F2937" />
     {/* 코 */}
-    <path d="M9.5 11.5 L10 12.5 L10.5 11.5" stroke="#1F2937" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" />
+    <path
+      d="M9.5 11.5 L10 12.5 L10.5 11.5"
+      stroke="#1F2937"
+      strokeWidth="0.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
     {/* 이빨 */}
     <rect x="6.5" y="16" width="2" height="2" rx="0.3" fill="#1F2937" />
     <rect x="9" y="16" width="2" height="2" rx="0.3" fill="#1F2937" />

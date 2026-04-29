@@ -109,20 +109,9 @@ blind-timer:
     timeout-buffer: 3000ms
     result-delay: 500ms
 
-bomb-relay:
-  timing:
-    description: 500ms
-    prepare: 500ms
-    min-bomb-timer: 3000ms
-    max-bomb-timer: 5000ms
-    round-result-delay: 1000ms
-    result-delay: 500ms
-  dictionary:
-    api-url: https://stdict.korean.go.kr/api/search
-    api-key: test-key
-
 security:
   ip-block:
     not-found-threshold: 5
     not-found-window: 1h
     block-ttl: 24h
+

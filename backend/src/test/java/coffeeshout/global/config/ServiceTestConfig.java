@@ -57,11 +57,6 @@ public class ServiceTestConfig {
         return new TestTaskScheduler();
     }
 
-    @Bean(name = "bombRelayGameScheduler")
-    public TaskScheduler testBombRelayGameScheduler() {
-        return new TestTaskScheduler();
-    }
-
     @Bean
     @Primary
     public SimpMessagingTemplate mockMessagingTemplate() {

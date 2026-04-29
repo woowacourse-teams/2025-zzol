@@ -8,7 +8,6 @@ export default (env, argv) =>
     plugins: [
       new GenerateSW({
         clientsClaim: true,
-        skipWaiting: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/cdn\.jsdelivr\.net\//,

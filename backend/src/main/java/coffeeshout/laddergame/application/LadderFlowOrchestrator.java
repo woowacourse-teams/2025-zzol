@@ -26,7 +26,7 @@ public class LadderFlowOrchestrator {
     public void startFlow(LadderGame game, Room room) {
         final String joinCode = room.getJoinCode().getValue();
 
-        ladderFlowScheduler.schedule(description(game, room), Duration.ZERO)
+        ladderFlowScheduler.schedule(description(room), Duration.ZERO)
                 .andThen(prepare(game, room), timing.description())
                 .andThen(drawing(game, room), timing.prepare())
                 .andThen(result(game, room), timing.drawing())
@@ -34,7 +34,7 @@ public class LadderFlowOrchestrator {
                 .onError(ex -> log.error("사다리게임 flow 실패: joinCode={}", joinCode, ex));
     }
 
-    private Runnable description(LadderGame game, Room room) {
+    private Runnable description(Room room) {
         return () -> {
             try {
                 notifier.notifyDescription(room);

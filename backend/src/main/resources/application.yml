@@ -98,8 +98,8 @@ block-stacking:
 
 ladder:
   timing:
-    description: 5000ms
-    prepare: 3000ms
+    description: 4000ms
+    prepare: 2000ms
     drawing: 5000ms
     result: 5000ms
   scheduler:

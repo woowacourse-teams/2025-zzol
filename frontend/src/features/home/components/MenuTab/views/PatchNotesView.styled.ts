@@ -3,8 +3,29 @@ import styled from '@emotion/styled';
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 20px 16px 32px;
   gap: 10px;
+`;
+
+export const PageHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 4px;
+`;
+
+export const PageTitle = styled.h3`
+  font-size: 17px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.color.gray[900]};
+  letter-spacing: -0.02em;
+  margin: 0;
+`;
+
+export const PageSub = styled.p`
+  font-size: 13px;
+  color: ${({ theme }) => theme.color.gray[400]};
+  margin: 0;
 `;
 
 /* 개발중 placeholder */
@@ -13,38 +34,49 @@ export const PlaceholderCard = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 48px 24px;
-  border-radius: 14px;
-  border: 1px solid ${({ theme }) => theme.color.gray[200]};
-  background: ${({ theme }) => theme.color.gray[50]};
+  gap: 10px;
+  padding: 52px 24px;
+  border-radius: 16px;
+  background: ${({ theme }) => theme.color.white};
+  border: 1px solid ${({ theme }) => theme.color.gray[100]};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 `;
 
-export const PlaceholderIcon = styled.span`
-  font-size: 32px;
+export const PlaceholderIconWrap = styled.div`
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: ${({ theme }) => theme.color.point[50]};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
   line-height: 1;
 `;
 
 export const PlaceholderTitle = styled.p`
-  ${({ theme }) => theme.typography.paragraph}
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: ${({ theme }) => theme.color.gray[700]};
   margin: 0;
+  letter-spacing: -0.01em;
 `;
 
 export const PlaceholderSub = styled.p`
-  ${({ theme }) => theme.typography.small}
+  font-size: 12px;
   color: ${({ theme }) => theme.color.gray[400]};
   margin: 0;
   text-align: center;
+  line-height: 1.5;
 `;
 
 /* 아코디언 카드 */
 export const AccordionCard = styled.div`
-  border: 1px solid ${({ theme }) => theme.color.gray[200]};
-  border-radius: 14px;
+  border: 1px solid ${({ theme }) => theme.color.gray[100]};
+  border-radius: 16px;
   overflow: hidden;
   background: ${({ theme }) => theme.color.white};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 `;
 
 export const AccordionHeader = styled.button<{ $open: boolean }>`
@@ -52,7 +84,7 @@ export const AccordionHeader = styled.button<{ $open: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 16px 18px;
   background: ${({ theme, $open }) => ($open ? theme.color.point[50] : theme.color.white)};
   border: none;
   cursor: pointer;
@@ -65,18 +97,18 @@ export const AccordionHeader = styled.button<{ $open: boolean }>`
 
 export const AccordionHeaderLeft = styled.div`
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
 `;
 
 export const VersionBadge = styled.span`
-  ${({ theme }) => theme.typography.paragraph}
+  font-size: 14px;
   font-weight: 700;
-  color: ${({ theme }) => theme.color.point[400]};
+  color: ${({ theme }) => theme.color.point[500]};
 `;
 
 export const VersionDate = styled.span`
-  ${({ theme }) => theme.typography.small}
+  font-size: 12px;
   color: ${({ theme }) => theme.color.gray[400]};
 `;
 
@@ -97,26 +129,27 @@ export const ChangeItem = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 11px 16px;
+  padding: 12px 18px;
 
   &:not(:last-child) {
-    border-bottom: 1px solid ${({ theme }) => theme.color.gray[100]};
+    border-bottom: 1px solid ${({ theme }) => theme.color.gray[50]};
   }
 `;
 
 export const ChangeType = styled.span<{ $type: 'new' | 'fix' | 'improve' }>`
-  ${({ theme }) => theme.typography.small}
-  font-weight: 600;
-  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
   border-radius: 6px;
   flex-shrink: 0;
-  margin-top: 1px;
+  margin-top: 2px;
+  letter-spacing: 0.03em;
 
   ${({ theme, $type }) => {
     if ($type === 'new') {
       return `
         background: ${theme.color.point[50]};
-        color: ${theme.color.point[400]};
+        color: ${theme.color.point[500]};
         border: 1px solid ${theme.color.point[100]};
       `;
     }
@@ -136,7 +169,7 @@ export const ChangeType = styled.span<{ $type: 'new' | 'fix' | 'improve' }>`
 `;
 
 export const ChangeText = styled.span`
-  ${({ theme }) => theme.typography.small}
+  font-size: 13px;
   color: ${({ theme }) => theme.color.gray[700]};
   line-height: 1.6;
 `;

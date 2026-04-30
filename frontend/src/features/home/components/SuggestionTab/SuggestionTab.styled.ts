@@ -3,19 +3,18 @@ import styled from '@emotion/styled';
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 20px 16px;
   gap: 16px;
   height: 100%;
 `;
 
-/* 모든 step 공통 — 수직 중앙 정렬 */
 export const CenterWrapper = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: stretch;
   flex: 1;
-  gap: 16px;
+  gap: 14px;
 `;
 
 export const ChipGrid = styled.div`
@@ -31,90 +30,106 @@ export const CategoryChip = styled.button<{ $fullWidth?: boolean }>`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 16px 12px;
-  border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.color.gray[200]};
-  background: ${({ theme }) => theme.color.gray[50]};
+  gap: 8px;
+  padding: 20px 12px;
+  border-radius: 16px;
+  border: 1.5px solid ${({ theme }) => theme.color.gray[100]};
+  background: ${({ theme }) => theme.color.white};
   cursor: pointer;
   transition: all 0.15s ease;
-
-  &:hover {
-    border-color: ${({ theme }) => theme.color.point[300]};
-    background: ${({ theme }) => theme.color.point[50]};
-  }
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
   &:active {
+    border-color: ${({ theme }) => theme.color.point[300]};
+    background: ${({ theme }) => theme.color.point[50]};
     transform: scale(0.97);
   }
 `;
 
 export const ChipIcon = styled.img`
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
 `;
 
 export const ChipLabel = styled.span`
-  ${({ theme }) => theme.typography.small}
+  font-size: 13px;
   font-weight: 600;
   color: ${({ theme }) => theme.color.gray[700]};
 `;
 
 export const Textarea = styled.textarea`
   width: 100%;
-  min-height: 120px;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid ${({ theme }) => theme.color.gray[200]};
-  background: ${({ theme }) => theme.color.gray[50]};
+  min-height: 130px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1.5px solid ${({ theme }) => theme.color.gray[100]};
+  background: ${({ theme }) => theme.color.white};
   resize: none;
   outline: none;
-  ${({ theme }) => theme.typography.paragraph}
+  font-size: 14px;
+  line-height: 1.6;
   color: ${({ theme }) => theme.color.gray[800]};
   box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
   &::placeholder {
     color: ${({ theme }) => theme.color.gray[400]};
   }
 
   &:focus {
-    border-color: ${({ theme }) => theme.color.point[300]};
+    border-color: ${({ theme }) => theme.color.point[400]};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.color.point[50]};
   }
 `;
 
 export const CharCount = styled.span`
-  ${({ theme }) => theme.typography.small}
+  font-size: 12px;
   color: ${({ theme }) => theme.color.gray[400]};
   text-align: right;
-  margin-top: -8px;
+  margin-top: -6px;
 `;
 
 /* Success */
-export const SuccessIcon = styled.img`
-  width: 48px;
-  height: 48px;
+export const SuccessIconWrap = styled.div`
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: ${({ theme }) => theme.color.point[50]};
+  display: flex;
+  align-items: center;
+  justify-content: center;
   align-self: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+`;
+
+export const SuccessIcon = styled.img`
+  width: 36px;
+  height: 36px;
 `;
 
 export const SuccessTitle = styled.p`
-  ${({ theme }) => theme.typography.h3}
-  color: ${({ theme }) => theme.color.gray[800]};
+  font-size: 20px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.color.gray[900]};
   text-align: center;
+  letter-spacing: -0.02em;
+  margin: 0;
 `;
 
 export const SuccessDesc = styled.p`
-  ${({ theme }) => theme.typography.paragraph}
-  color: ${({ theme }) => theme.color.gray[500]};
+  font-size: 14px;
+  color: ${({ theme }) => theme.color.gray[400]};
   text-align: center;
+  margin: 0;
 `;
 
 export const ResetButton = styled.button`
-  margin-top: 12px;
+  margin-top: 8px;
   border: none;
   background: transparent;
-  ${({ theme }) => theme.typography.small}
+  font-size: 13px;
+  font-weight: 600;
   color: ${({ theme }) => theme.color.point[400]};
   cursor: pointer;
   text-decoration: underline;

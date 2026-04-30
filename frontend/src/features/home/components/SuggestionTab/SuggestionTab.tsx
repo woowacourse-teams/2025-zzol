@@ -154,7 +154,9 @@ const SuggestionTab = ({ onBackToMenu }: Props) => {
 
         {step === 'success' && (
           <>
-            <S.SuccessIcon src={CheckIcon} alt="성공" />
+            <S.SuccessIconWrap>
+              <S.SuccessIcon src={CheckIcon} alt="성공" />
+            </S.SuccessIconWrap>
             <S.SuccessTitle>전달되었습니다!</S.SuccessTitle>
             <S.SuccessDesc>소중한 의견 감사해요.</S.SuccessDesc>
             <S.ResetButton onClick={handleReset}>다시 작성하기</S.ResetButton>

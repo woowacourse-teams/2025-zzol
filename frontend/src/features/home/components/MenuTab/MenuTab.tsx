@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ComponentType } from 'react';
 import BackButton from '@/components/@common/BackButton/BackButton';
 import SuggestionTab from '../SuggestionTab/SuggestionTab';
+import AccountSection from '../tabs/MenuTab/AccountSection/AccountSection';
 import PatchNotesView from './views/PatchNotesView';
 import ServiceInfoView from './views/ServiceInfoView';
 import MyInfoView from './views/MyInfoView';
@@ -77,7 +78,7 @@ const MenuTab = () => {
       <S.SubViewContainer>
         {activeView !== 'report' && (
           <S.SubViewHeader>
-            <BackButton onClick={() => setActiveView(null)} text="메뉴로 가기" />
+            <BackButton onClick={() => setActiveView(null)} text="돌아가기" />
           </S.SubViewHeader>
         )}
         <S.SubViewContent>
@@ -94,7 +95,10 @@ const MenuTab = () => {
 
   return (
     <S.Container>
-      <S.MenuList>
+      <AccountSection />
+      <S.SectionLabel>서비스</S.SectionLabel>
+      <S.MenuCard>
+        <S.MenuList>
         {MENU_ITEMS.map(({ key, icon: Icon, title, desc }) => (
           <li key={key}>
             <S.MenuItemButton onClick={() => setActiveView(key)}>
@@ -111,7 +115,9 @@ const MenuTab = () => {
             </S.MenuItemButton>
           </li>
         ))}
-      </S.MenuList>
+        </S.MenuList>
+      </S.MenuCard>
+      <S.VersionText>ZZOL · v1.0.0</S.VersionText>
     </S.Container>
   );
 };

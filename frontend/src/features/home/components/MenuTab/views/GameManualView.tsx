@@ -30,7 +30,10 @@ const GameManualView = () => {
 
   return (
     <S.Container>
-      <S.Title>게임 설명</S.Title>
+      <S.Header>
+        <S.Title>게임 설명</S.Title>
+        <S.Subtitle>게임을 탭하면 자세한 규칙을 볼 수 있어요</S.Subtitle>
+      </S.Header>
       <MS.Wrapper>
         {gameTypes.map((type) => (
           <GameActionButton

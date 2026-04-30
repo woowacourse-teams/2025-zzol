@@ -17,7 +17,7 @@ CREATE TABLE oauth_account (
     email VARCHAR(255),
     linked_at DATETIME(6) NOT NULL,
     UNIQUE KEY uk_oauth_provider_user (provider, provider_user_id),
-    CONSTRAINT fk_oauth_account_user FOREIGN KEY (user_id) REFERENCES app_user(id)
+    CONSTRAINT fk_oauth_account_user FOREIGN KEY (user_id) REFERENCES app_user(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 기존 player 테이블에 회원 식별자 추가 (NULLABLE: 익명 참여 허용)

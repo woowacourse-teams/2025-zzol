@@ -1,8 +1,10 @@
 package coffeeshout.user.ui;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.application.service.AuthTokenService.TokenPair;
 import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.user.exception.UserErrorCode;
 import coffeeshout.user.ui.resolver.AuthUser;
 import coffeeshout.user.ui.response.AuthTokenResponse;
 import java.util.Map;
@@ -24,6 +26,9 @@ public class AuthRestController {
     @PostMapping("/refresh")
     public ResponseEntity<AuthTokenResponse> refresh(@RequestBody Map<String, String> body) {
         final String refreshToken = body.get("refreshToken");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new BusinessException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND, "리프레시 토큰이 없습니다.");
+        }
         final TokenPair tokens = authTokenService.rotate(refreshToken);
         return ResponseEntity.ok(new AuthTokenResponse(tokens.accessToken(), tokens.refreshToken()));
     }

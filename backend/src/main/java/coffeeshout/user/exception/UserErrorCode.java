@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 public enum UserErrorCode implements ErrorCode {
 
     USER_CODE_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "사용자 식별 코드 생성에 실패했습니다."),
+    USER_CODE_INVALID(HttpStatus.BAD_REQUEST, "유효하지 않은 사용자 식별 코드입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."),
     NICKNAME_BLANK(HttpStatus.BAD_REQUEST, "닉네임은 공백일 수 없습니다."),
     NICKNAME_TOO_LONG(HttpStatus.BAD_REQUEST, "닉네임은 10자 이하여야 합니다."),

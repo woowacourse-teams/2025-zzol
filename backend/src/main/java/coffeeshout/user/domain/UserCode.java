@@ -35,20 +35,20 @@ public record UserCode(String value) {
 
     private void validateNotNull(String value) {
         if (value == null) {
-            throw new BusinessException(UserErrorCode.NICKNAME_INVALID, "사용자 코드는 null일 수 없습니다.");
+            throw new BusinessException(UserErrorCode.USER_CODE_INVALID, "사용자 코드는 null일 수 없습니다.");
         }
     }
 
     private void validateLength(String value) {
         if (value.length() != CODE_LENGTH) {
-            throw new BusinessException(UserErrorCode.NICKNAME_INVALID,
+            throw new BusinessException(UserErrorCode.USER_CODE_INVALID,
                     CODE_LENGTH + "자리 코드여야 합니다. 현재 길이: " + value.length());
         }
     }
 
     private void validateCharacters(String value) {
         if (value.chars().anyMatch(c -> CHARSET.indexOf(c) < 0)) {
-            throw new BusinessException(UserErrorCode.NICKNAME_INVALID,
+            throw new BusinessException(UserErrorCode.USER_CODE_INVALID,
                     "허용되지 않는 문자가 포함되어 있습니다. 현재 코드: " + value);
         }
     }

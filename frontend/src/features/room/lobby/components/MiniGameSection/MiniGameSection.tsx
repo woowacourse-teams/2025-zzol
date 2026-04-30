@@ -77,7 +77,9 @@ export const MiniGameSection = ({ selectedMiniGames, handleMiniGameClick }: Prop
                 isDisabled={playerType === 'GUEST'}
                 gameName={MINI_GAME_NAME_MAP[miniGame]}
                 onClick={() => handleClick(miniGame)}
-                icon={<S.Icon src={MINI_GAME_ICON_MAP[miniGame]} alt={miniGame} />}
+                icon={
+                  <S.Icon src={MINI_GAME_ICON_MAP[miniGame]} alt={MINI_GAME_NAME_MAP[miniGame]} />
+                }
                 orderNumber={selectedMiniGames.indexOf(miniGame) + 1}
                 onInfoClick={() => handleInfoClick(miniGame)}
                 data-testid={`game-action-${miniGame}`}

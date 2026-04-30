@@ -3,6 +3,7 @@ import RacingIcon from '@/assets/racing-icon.svg';
 import SpeedTouchIcon from '@/assets/speed-touch-icon.svg';
 import BlindTimerIcon from '@/assets/blind-timer-icon.svg';
 import BlockStackingIcon from '@/assets/block-stacking-icon.svg';
+import LadderGameIcon from '@/assets/ladder-game-icon.svg';
 
 /**
  * 전체 미니 게임 공통 타입
@@ -14,6 +15,7 @@ export const MINI_GAME_NAME_MAP = {
   SPEED_TOUCH: '1 to 25',
   BLIND_TIMER: '뇌피셜 초시계',
   BLOCK_STACKING: '블록 쌓기',
+  LADDER_GAME: '사다리 게임',
 } as const;
 
 export type MiniGameType = keyof typeof MINI_GAME_NAME_MAP;
@@ -26,6 +28,7 @@ export const MINI_GAME_DESCRIPTION_MAP: Record<MiniGameType, string[]> = {
   SPEED_TOUCH: ['1부터 25까지 순서대로 터치해서', '가장 빠르게 완주하세요!'],
   BLIND_TIMER: ['목표 시간에 정확히 맞춰', 'STOP을 눌러보세요!'],
   BLOCK_STACKING: ['블록을 정확히 쌓아올리세요!'],
+  LADDER_GAME: ['사다리를 타고 순위를 결정하세요!'],
 };
 
 export const MINI_GAME_ICON_MAP: Record<MiniGameType, string> = {
@@ -34,4 +37,5 @@ export const MINI_GAME_ICON_MAP: Record<MiniGameType, string> = {
   SPEED_TOUCH: SpeedTouchIcon,
   BLIND_TIMER: BlindTimerIcon,
   BLOCK_STACKING: BlockStackingIcon,
+  LADDER_GAME: LadderGameIcon,
 };

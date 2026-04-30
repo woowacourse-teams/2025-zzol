@@ -126,6 +126,9 @@ const getScoreTextByGameType = ({
     case 'BLOCK_STACKING': {
       return scoreValue + '층';
     }
+    case 'LADDER_GAME': {
+      return scoreValue + '위';
+    }
     default:
       return null;
   }

@@ -99,22 +99,22 @@ const MenuTab = () => {
       <S.SectionLabel>서비스</S.SectionLabel>
       <S.MenuCard>
         <S.MenuList>
-        {MENU_ITEMS.map(({ key, icon: Icon, title, desc }) => (
-          <li key={key}>
-            <S.MenuItemButton onClick={() => setActiveView(key)}>
-              <S.MenuItemLeft>
-                <S.MenuItemIcon>
-                  <Icon />
-                </S.MenuItemIcon>
-                <S.MenuItemTexts>
-                  <S.MenuItemTitle>{title}</S.MenuItemTitle>
-                  <S.MenuItemDesc>{desc}</S.MenuItemDesc>
-                </S.MenuItemTexts>
-              </S.MenuItemLeft>
-              <S.MenuItemChevron aria-hidden="true">›</S.MenuItemChevron>
-            </S.MenuItemButton>
-          </li>
-        ))}
+          {MENU_ITEMS.map(({ key, icon: Icon, title, desc }) => (
+            <li key={key}>
+              <S.MenuItemButton onClick={() => setActiveView(key)}>
+                <S.MenuItemLeft>
+                  <S.MenuItemIcon>
+                    <Icon />
+                  </S.MenuItemIcon>
+                  <S.MenuItemTexts>
+                    <S.MenuItemTitle>{title}</S.MenuItemTitle>
+                    <S.MenuItemDesc>{desc}</S.MenuItemDesc>
+                  </S.MenuItemTexts>
+                </S.MenuItemLeft>
+                <S.MenuItemChevron aria-hidden="true">›</S.MenuItemChevron>
+              </S.MenuItemButton>
+            </li>
+          ))}
         </S.MenuList>
       </S.MenuCard>
       <S.VersionText>ZZOL · v1.0.0</S.VersionText>

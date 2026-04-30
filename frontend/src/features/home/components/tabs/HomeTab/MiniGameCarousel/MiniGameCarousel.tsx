@@ -11,7 +11,6 @@ import {
 } from '@/types/miniGame/common';
 import * as S from './MiniGameCarousel.styled';
 
-
 const GAME_TYPES = (Object.keys(MINI_GAME_NAME_MAP) as MiniGameType[]).filter(
   (type) => !HIDDEN_MINI_GAMES.includes(type)
 );

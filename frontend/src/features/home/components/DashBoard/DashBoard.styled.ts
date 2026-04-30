@@ -6,4 +6,3 @@ export const Container = styled.div`
   gap: 12px;
   padding: 0 16px 16px;
 `;
-

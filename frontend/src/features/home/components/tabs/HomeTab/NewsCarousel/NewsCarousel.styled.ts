@@ -128,7 +128,8 @@ export const Dot = styled.span<{ $active: boolean }>`
   width: ${({ $active }) => ($active ? '16px' : '5px')};
   height: 5px;
   border-radius: 3px;
-  background: ${({ theme, $active }) =>
-    $active ? theme.color.point[400] : theme.color.gray[200]};
-  transition: width 0.2s ease, background 0.2s ease;
+  background: ${({ theme, $active }) => ($active ? theme.color.point[400] : theme.color.gray[200])};
+  transition:
+    width 0.2s ease,
+    background 0.2s ease;
 `;

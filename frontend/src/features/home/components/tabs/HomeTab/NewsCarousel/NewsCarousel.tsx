@@ -1,6 +1,9 @@
 import { useRef, useState } from 'react';
 import useModal from '@/components/@common/Modal/useModal';
-import usePatchNotes, { type PatchNote, type PatchNoteChangeType } from '@/features/home/hooks/usePatchNotes';
+import usePatchNotes, {
+  type PatchNote,
+  type PatchNoteChangeType,
+} from '@/features/home/hooks/usePatchNotes';
 import * as S from './NewsCarousel.styled';
 
 const TAG_LABEL: Record<PatchNoteChangeType, string> = {

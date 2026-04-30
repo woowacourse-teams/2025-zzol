@@ -17,7 +17,9 @@ export const GameCard = styled.button`
   cursor: pointer;
   text-align: left;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: background 0.15s ease, transform 0.12s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease;
 
   &:active {
     background: ${({ theme }) => theme.color.gray[50]};

@@ -13,8 +13,11 @@ import coffeeshout.room.ui.response.RandomNicknameResponse;
 import coffeeshout.room.ui.response.RemainingMiniGameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
+import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.user.ui.resolver.AuthUser;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +48,11 @@ public class RoomRestController implements RoomApi {
     }
 
     @PostMapping
-    public ResponseEntity<RoomCreateResponse> createRoom(@Valid @RequestBody RoomEnterRequest request) {
-        final Room room = roomService.createRoom(request.playerName());
+    public ResponseEntity<RoomCreateResponse> createRoom(
+            @AuthUser Optional<AuthenticatedUser> authUser,
+            @Valid @RequestBody RoomEnterRequest request
+    ) {
+        final Room room = roomService.createRoom(request.playerName(), authUser);
 
         return ResponseEntity.ok(RoomCreateResponse.from(room));
     }
@@ -54,9 +60,10 @@ public class RoomRestController implements RoomApi {
     @PostMapping("/{joinCode}")
     public CompletableFuture<ResponseEntity<RoomEnterResponse>> enterRoom(
             @PathVariable String joinCode,
+            @AuthUser Optional<AuthenticatedUser> authUser,
             @Valid @RequestBody RoomEnterRequest request
     ) {
-        return roomService.enterRoomAsync(joinCode, request.playerName())
+        return roomService.enterRoomAsync(joinCode, request.playerName(), authUser)
                 .thenApply(room -> ResponseEntity.ok(RoomEnterResponse.from(room)))
                 .exceptionally(throwable -> {
                     // 원래 예외 추출

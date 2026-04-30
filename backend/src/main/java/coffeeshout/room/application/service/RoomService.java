@@ -38,10 +38,13 @@ import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.room.infra.persistence.RoulettePersistenceService;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
+import coffeeshout.user.application.service.UserProfileService;
+import coffeeshout.user.domain.AuthenticatedUser;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -73,21 +76,34 @@ public class RoomService {
     private final OutboxEventRecorder outboxEventRecorder;
     private final StreamPublisher streamPublisher;
     private final ApplicationEventPublisher eventPublisher;
+    private final UserProfileService userProfileService;
 
     @Value("${room.event.timeout:PT5S}")
     private Duration eventTimeout;
 
     @Transactional
     public Room createRoom(String hostName) {
-        final PlayerName playerName = new PlayerName(hostName);
-        playerNameValidator.validate(playerName);
+        return createRoom(hostName, Optional.empty());
+    }
+
+    @Transactional
+    public Room createRoom(String hostName, Optional<AuthenticatedUser> authUser) {
+        final String resolvedName = authUser
+                .map(u -> userProfileService.findById(u.userId()).getNickname().value())
+                .orElse(hostName);
+        final Long userId = authUser.map(AuthenticatedUser::userId).orElse(null);
+
+        final PlayerName playerName = new PlayerName(resolvedName);
+        if (userId == null) {
+            playerNameValidator.validate(playerName);
+        }
         final JoinCode joinCode = joinCodeGenerator.generate();
 
         // 방 생성 (QR 코드는 PENDING 상태로 시작)
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, playerName);
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, playerName, userId);
 
         // 방 생성 후 이벤트 전달
-        final BaseEvent event = new RoomCreateEvent(hostName, joinCode.getValue());
+        final BaseEvent event = new RoomCreateEvent(resolvedName, joinCode.getValue());
 
         // 방 생성 이벤트: DB 저장과 원자적으로 묶기 위해 Outbox 경로 사용
         // 트랜잭션 커밋 직후 AFTER_COMMIT으로 즉시 발행 (0ms 지연)
@@ -99,24 +115,36 @@ public class RoomService {
 
         saveRoomEntity(joinCode.getValue());
 
-        log.info("방 생성 이벤트 처리 완료 (DB 저장): eventId={}, joinCode={}",
-                event.eventId(), joinCode.getValue());
+        log.info("방 생성 이벤트 처리 완료 (DB 저장): eventId={}, joinCode={}, hostName={}",
+                event.eventId(), joinCode.getValue(), resolvedName);
 
         // 해당 방 정보 수신
         return room;
     }
 
     public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName) {
-        playerNameValidator.validate(new PlayerName(guestName));
-        final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName);
+        return enterRoomAsync(joinCode, guestName, Optional.empty());
+    }
+
+    public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName,
+                                                    Optional<AuthenticatedUser> authUser) {
+        final String resolvedName = authUser
+                .map(u -> userProfileService.findById(u.userId()).getNickname().value())
+                .orElse(guestName);
+        final Long userId = authUser.map(AuthenticatedUser::userId).orElse(null);
+
+        if (userId == null) {
+            playerNameValidator.validate(new PlayerName(resolvedName));
+        }
+        final RoomJoinEvent event = new RoomJoinEvent(joinCode, resolvedName, userId);
 
         return processEventAsync(
                 event.eventId(),
                 // 방 참가는 결과를 CompletableFuture로 기다리는 요청-응답 패턴이므로 즉시 발행
                 () -> streamPublisher.publish(StreamKey.ROOM_JOIN, event),
                 "방 참가",
-                String.format("joinCode=%s, guestName=%s", joinCode, guestName),
-                room -> String.format("joinCode=%s, guestName=%s", joinCode, guestName)
+                String.format("joinCode=%s, guestName=%s", joinCode, resolvedName),
+                room -> String.format("joinCode=%s, guestName=%s", joinCode, resolvedName)
         );
     }
 
@@ -284,7 +312,8 @@ public class RoomService {
         try {
             final Room room = roomCommandService.joinGuest(
                     new JoinCode(event.joinCode()),
-                    new PlayerName(event.guestName())
+                    new PlayerName(event.guestName()),
+                    event.userId()
             );
 
             roomEventWaitManager.notifySuccess(event.eventId(), room);

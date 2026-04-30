@@ -44,11 +44,19 @@ public class PlayerEntity {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "user_id")
+    private Long userId;
+
     public PlayerEntity(RoomEntity roomSession, String playerName, PlayerType playerType) {
+        this(roomSession, playerName, playerType, null);
+    }
+
+    public PlayerEntity(RoomEntity roomSession, String playerName, PlayerType playerType, Long userId) {
         this.roomSession = roomSession;
         this.playerName = playerName;
         this.playerType = playerType;
         this.createdAt = LocalDateTime.now();
+        this.userId = userId;
     }
 
     public void updatePlayerName(PlayerName playerName) {

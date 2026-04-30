@@ -8,10 +8,12 @@ import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.RandomNicknameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
+import coffeeshout.user.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.http.ResponseEntity;
 
@@ -19,11 +21,12 @@ import org.springframework.http.ResponseEntity;
 public interface RoomApi {
 
     @Operation(summary = "방 생성", description = "새로운 방을 생성합니다.")
-    ResponseEntity<RoomCreateResponse> createRoom(RoomEnterRequest request);
+    ResponseEntity<RoomCreateResponse> createRoom(Optional<AuthenticatedUser> authUser, RoomEnterRequest request);
 
     @Operation(summary = "방 참가", description = "joinCode를 사용하여 방에 참가합니다.")
     CompletableFuture<ResponseEntity<RoomEnterResponse>> enterRoom(
             @Parameter(description = "방 입장 코드", required = true) String joinCode,
+            Optional<AuthenticatedUser> authUser,
             RoomEnterRequest request
     );
 

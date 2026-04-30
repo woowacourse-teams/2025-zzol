@@ -1,6 +1,9 @@
 package coffeeshout.global.websocket.interceptor;
 
 import coffeeshout.global.websocket.PlayerKey;
+import coffeeshout.user.application.service.AuthTokenService;
+import coffeeshout.user.domain.AuthenticatedUser;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -12,7 +15,12 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class StompPrincipalInterceptor implements ChannelInterceptor {
+
+    private static final String BEARER_PREFIX = "Bearer ";
+
+    private final AuthTokenService authTokenService;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -33,9 +41,25 @@ public class StompPrincipalInterceptor implements ChannelInterceptor {
             userName = PlayerKey.of(joinCode, playerName).toString();
         }
 
+        verifyTokenIfPresent(accessor);
+
         accessor.setUser(() -> userName);
         log.debug("STOMP Principal 설정: {}", userName);
 
         return message;
+    }
+
+    private void verifyTokenIfPresent(StompHeaderAccessor accessor) {
+        final String authorization = accessor.getFirstNativeHeader("Authorization");
+        if (authorization == null || !authorization.startsWith(BEARER_PREFIX)) {
+            return;
+        }
+        final String token = authorization.substring(BEARER_PREFIX.length());
+        try {
+            final AuthenticatedUser user = authTokenService.verify(token);
+            log.debug("STOMP 인증 성공: userId={}", user.userId());
+        } catch (Exception e) {
+            log.warn("STOMP Access Token 검증 실패: {}", e.getMessage());
+        }
     }
 }

@@ -9,7 +9,7 @@ const UpdateBanner = () => {
   return (
     <S.Banner role="status" aria-live="polite">
       <S.Message>새로운 버전이 준비됐습니다</S.Message>
-      <S.UpdateButton onClick={applyUpdate}>업데이트</S.UpdateButton>
+      <S.UpdateButton type="button" onClick={applyUpdate}>업데이트</S.UpdateButton>
     </S.Banner>
   );
 };

@@ -72,6 +72,12 @@ public class ServiceTestConfig {
 
     @Bean
     @Primary
+    public Clock testClock() {
+        return Clock.systemDefaultZone();
+    }
+
+    @Bean
+    @Primary
     public ApplicationEventPublisher mockEventPublisher() {
         return Mockito.mock(ApplicationEventPublisher.class);
     }

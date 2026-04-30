@@ -49,7 +49,7 @@ class UserCodeTest {
         void null이면_예외가_발생한다() {
             assertCoffeeShoutException(
                     () -> new UserCode(null),
-                    UserErrorCode.NICKNAME_INVALID
+                    UserErrorCode.USER_CODE_INVALID
             );
         }
 
@@ -58,7 +58,7 @@ class UserCodeTest {
         void 길이가_5가_아니면_예외가_발생한다(String value) {
             assertCoffeeShoutException(
                     () -> new UserCode(value),
-                    UserErrorCode.NICKNAME_INVALID
+                    UserErrorCode.USER_CODE_INVALID
             );
         }
 
@@ -67,7 +67,7 @@ class UserCodeTest {
         void 허용되지_않는_문자가_포함되면_예외가_발생한다(String value) {
             assertCoffeeShoutException(
                     () -> new UserCode(value),
-                    UserErrorCode.NICKNAME_INVALID
+                    UserErrorCode.USER_CODE_INVALID
             );
         }
     }

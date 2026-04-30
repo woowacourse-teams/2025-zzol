@@ -1,43 +1,20 @@
 import styled from '@emotion/styled';
 
-export const Banner = styled.div`
-  height: 100%;
-  padding: 40px;
-  line-height: 30px;
-  position: relative;
-`;
-
-export const Logo = styled.img`
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  -webkit-user-drag: none;
-  user-select: none;
-  width: 50%;
-
-  @media (max-height: 650px) {
-    width: 45%;
-  }
-
-  @media (max-height: 580px) {
-    width: 35%;
-  }
-
-  @media (max-height: 500px) {
-    width: 25%;
-  }
-`;
-
-export const ContentArea = styled.div`
-  flex: 1;
-  overflow-y: auto;
-`;
-
-export const GameTabContent = styled.section`
+export const PageContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-top: 16px;
+  width: 100%;
+  height: 100dvh;
+  max-width: 430px;
+  margin: 0 auto;
+  background: ${({ theme }) => theme.color.gray[50]};
+  overflow: hidden;
+`;
+
+export const ScrollArea = styled.main`
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 `;
 
 export const VisuallyHidden = styled.div`

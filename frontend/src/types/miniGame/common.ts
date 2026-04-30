@@ -23,10 +23,10 @@ export type MiniGameType = keyof typeof MINI_GAME_NAME_MAP;
 export const HIDDEN_MINI_GAMES: MiniGameType[] = [];
 
 export const MINI_GAME_DESCRIPTION_MAP: Record<MiniGameType, string[]> = {
-  CARD_GAME: ['2라운드 동안 매번 카드 1장씩 뒤집어', '가장 높은 점수를 내보세요!'],
-  RACING_GAME: ['화면을 클릭해 속도를 높여서', '가장 먼저 도착하세요!'],
-  SPEED_TOUCH: ['1부터 25까지 순서대로 터치해서', '가장 빠르게 완주하세요!'],
-  BLIND_TIMER: ['목표 시간에 정확히 맞춰', 'STOP을 눌러보세요!'],
+  CARD_GAME: ['카드를 뒤집어 가장 높은 점수를 내보세요!'],
+  RACING_GAME: ['클릭해서 속도를 높여 가장 먼저 도착하세요!'],
+  SPEED_TOUCH: ['1부터 25까지 순서대로 빠르게 터치하세요!'],
+  BLIND_TIMER: ['목표 시간에 정확히 맞춰 STOP을 눌러보세요!'],
   BLOCK_STACKING: ['블록을 정확히 쌓아올리세요!'],
   LADDER_GAME: ['사다리를 타고 순위를 결정하세요!'],
 };

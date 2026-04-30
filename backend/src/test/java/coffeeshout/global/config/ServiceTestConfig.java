@@ -1,6 +1,7 @@
 package coffeeshout.global.config;
 
 import coffeeshout.global.flow.FlowScheduler;
+import java.time.Clock;
 import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -14,6 +15,12 @@ import org.springframework.scheduling.TaskScheduler;
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
 public class ServiceTestConfig {
+
+    @Bean
+    @Primary
+    public Clock clock() {
+        return Clock.systemDefaultZone();
+    }
 
     @Bean(name = "taskScheduler")
     @Primary

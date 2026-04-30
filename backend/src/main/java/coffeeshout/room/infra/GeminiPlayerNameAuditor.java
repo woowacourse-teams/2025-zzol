@@ -78,25 +78,48 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
     @RateLimiter(name = "geminiAudit")
     public List<PlayerNameAuditResult> audit(List<String> nicknames) {
         final String prompt = buildPrompt(nicknames);
+        final List<String> models = properties.models();
 
-        try {
-            final GenerateContentResponse response = apiCallTimer.recordCallable(() ->
-                    geminiClient.models.generateContent(
-                            properties.model(),
-                            prompt,
-                            GenerateContentConfig.builder()
-                                    .responseMimeType("application/json")
-                                    .build()
-                    ));
-
-            if (response == null) {
-                return List.of();
+        Exception lastRateLimitError = null;
+        for (int i = 0; i < models.size(); i++) {
+            final String model = models.get(i);
+            try {
+                final GenerateContentResponse response = apiCallTimer.recordCallable(() ->
+                        geminiClient.models.generateContent(
+                                model,
+                                prompt,
+                                GenerateContentConfig.builder()
+                                        .responseMimeType("application/json")
+                                        .build()
+                        ));
+                if (response == null) {
+                    return List.of();
+                }
+                return parseResults(response.text(), nicknames);
+            } catch (Exception e) {
+                if (!isRateLimitError(e)) {
+                    throw new RuntimeException("Gemini API 호출 실패", e);
+                }
+                lastRateLimitError = e;
+                if (i < models.size() - 1) {
+                    log.warn("모델 {} 요청 한도 초과, 폴백: {}", model, models.get(i + 1));
+                }
             }
-
-            return parseResults(response.text(), nicknames);
-        } catch (Exception e) {
-            throw new RuntimeException("Gemini API 호출 실패", e);
         }
+        throw new RuntimeException("모든 모델 요청 한도 초과", lastRateLimitError);
+    }
+
+    private boolean isRateLimitError(Exception e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            final String message = t.getMessage();
+            if (message != null && (
+                    message.contains("429") ||
+                    message.contains("RESOURCE_EXHAUSTED") ||
+                    message.contains("Too Many Requests"))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String buildPrompt(List<String> nicknames) {

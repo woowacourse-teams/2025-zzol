@@ -11,6 +11,9 @@ import jest from 'eslint-plugin-jest';
 import cypress from 'eslint-plugin-cypress';
 
 export default [
+  {
+    ignores: ['dist', 'node_modules', 'coverage', '.storybook/publish'],
+  },
   js.configs.recommended,
   {
     files: ['webpack.common.js', 'webpack.prod.js', 'webpack.dev.js'],
@@ -119,7 +122,7 @@ export default [
 
   ...storybook.configs['flat/recommended'],
   {
-    files: ['jest.config.js', 'cypress.config.ts'],
+    files: ['jest.config.js', 'cypress.config.ts', 'scripts/**/*.mjs'],
     languageOptions: {
       globals: {
         ...globals.node,

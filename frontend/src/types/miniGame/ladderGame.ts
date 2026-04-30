@@ -8,7 +8,7 @@ export type Pole = {
 
 export type LadderLine = {
   playerName: string;
-  segmentIndex: number;
+  segmentIndex: number | string;
   row: number;
   colorIndex?: number;
 };

@@ -4,6 +4,7 @@ import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { LadderLine, Pole } from '@/types/miniGame/ladderGame';
 import useToast from '@/components/@common/Toast/useToast';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { theme } from '@/styles/theme';
 import * as S from './LadderBoard.styled';
 
 const PAD_X = 20;
@@ -17,6 +18,10 @@ const TOUCH_HIT_EXPANSION = 8;
 const truncateName = (name: string) => name.slice(0, 3);
 
 const getPoleColor = (poleIndex: number) => colorList[poleIndex % colorList.length];
+
+const resolveColorIndex = (pole: Pole) => pole.colorIndex ?? pole.index;
+const resolveLineColorIndex = (line: LadderLine, poles: Pole[]) =>
+  line.colorIndex ?? poles.find((p) => p.playerName === line.playerName)?.index ?? 0;
 
 const tracePaths = (
   poles: Pole[],
@@ -49,7 +54,7 @@ const tracePaths = (
     return {
       playerName: pole.playerName,
       d: points.map(([x, y], idx) => `${idx === 0 ? 'M' : 'L'}${x},${y}`).join(' '),
-      color: getPoleColor(pole.colorIndex ?? pole.index),
+      color: getPoleColor(resolveColorIndex(pole)),
     };
   });
 
@@ -156,7 +161,7 @@ const LadderBoard = () => {
               y1={TOP_Y}
               x2={poleX(i)}
               y2={BOTTOM_Y}
-              stroke={getPoleColor(pole.colorIndex ?? pole.index)}
+              stroke={getPoleColor(resolveColorIndex(pole))}
               strokeWidth={isMe ? POLE_WIDTH + 1 : POLE_WIDTH}
               opacity={isMe ? 1 : 0.6}
             />
@@ -174,7 +179,7 @@ const LadderBoard = () => {
               textAnchor="middle"
               fontSize={isMe ? 14 : 12}
               fontWeight={isMe ? 700 : 400}
-              fill={isMe ? getPoleColor(pole.colorIndex ?? pole.index) : '#888'}
+              fill={isMe ? getPoleColor(resolveColorIndex(pole)) : theme.color.gray[400]}
             >
               {truncateName(pole.playerName)}
             </text>
@@ -192,7 +197,7 @@ const LadderBoard = () => {
               textAnchor="middle"
               fontSize={13}
               fontWeight={600}
-              fill="#555"
+              fill={theme.color.gray[600]}
             >
               {rank}위
             </text>
@@ -200,16 +205,14 @@ const LadderBoard = () => {
         })}
 
         {/* 확정 선 */}
-        {sortedLines.map((line, i) => (
+        {sortedLines.map((line) => (
           <line
-            key={`line-${i}`}
-            x1={poleX(line.segmentIndex)}
+            key={`line-${line.playerName}-${line.row}-${line.segmentIndex}`}
+            x1={poleX(Number(line.segmentIndex))}
             y1={rowY(line.row)}
-            x2={poleX(line.segmentIndex + 1)}
+            x2={poleX(Number(line.segmentIndex) + 1)}
             y2={rowY(line.row)}
-            stroke={getPoleColor(
-              line.colorIndex ?? poles.find((p) => p.playerName === line.playerName)?.index ?? 0
-            )}
+            stroke={getPoleColor(resolveLineColorIndex(line, poles))}
             strokeWidth={LINE_WIDTH}
             strokeLinecap="round"
           />
@@ -223,7 +226,9 @@ const LadderBoard = () => {
             x2={poleX(ghostSegmentIndex + 1)}
             y2={ghostY}
             stroke={
-              myPoleIndex >= 0 ? getPoleColor(poles[myPoleIndex].colorIndex ?? myPoleIndex) : '#aaa'
+              myPoleIndex >= 0
+                ? getPoleColor(resolveColorIndex(poles[myPoleIndex]))
+                : theme.color.gray[300]
             }
             strokeWidth={LINE_WIDTH}
             strokeLinecap="round"

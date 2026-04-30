@@ -44,6 +44,9 @@ const RouletteResultPage = lazy(
 const QRJoinPage = lazy(
   () => import(/*webpackChunkName: "qrJoinPage"*/ './features/join/pages/QRJoinPage')
 );
+const OAuthCallbackPage = lazy(
+  () => import(/*webpackChunkName: "oauthCallbackPage"*/ './features/auth/pages/OAuthCallbackPage')
+);
 
 const router = createBrowserRouter([
   {
@@ -83,6 +86,10 @@ const router = createBrowserRouter([
       {
         path: 'join/:joinCode',
         element: <QRJoinPage />,
+      },
+      {
+        path: 'auth/callback',
+        element: <OAuthCallbackPage />,
       },
       {
         path: '*',

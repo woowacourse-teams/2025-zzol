@@ -5,6 +5,7 @@ import { WebSocketProvider } from './apis/websocket/contexts/WebSocketProvider';
 import GlobalErrorBoundary from './components/@common/ErrorBoundary/GlobalErrorBoundary';
 import { ModalProvider } from './components/@common/Modal/ModalContext';
 import { ToastProvider } from './components/@common/Toast/ToastContext';
+import { AuthProvider } from './features/auth/contexts/AuthProvider';
 import { IdentifierProvider } from './contexts/Identifier/IdentifierProvider';
 import { ParticipantsProvider } from './contexts/Participants/ParticipantsProvider';
 import { PlayerTypeProvider } from './contexts/PlayerType/PlayerTypeProvider';
@@ -23,25 +24,27 @@ const App = () => {
       {process.env.ENABLE_DEVTOOLS && <DevToolsWrapper />}
       <UpdateBanner />
 
-      <IdentifierProvider>
-        <ParticipantsProvider>
-          <WebSocketProvider>
-            <PlayerTypeProvider>
-              <ProbabilityHistoryProvider>
-                <GlobalErrorBoundary>
-                  <ToastProvider>
-                    <ModalProvider>
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Outlet />
-                      </Suspense>
-                    </ModalProvider>
-                  </ToastProvider>
-                </GlobalErrorBoundary>
-              </ProbabilityHistoryProvider>
-            </PlayerTypeProvider>
-          </WebSocketProvider>
-        </ParticipantsProvider>
-      </IdentifierProvider>
+      <AuthProvider>
+        <IdentifierProvider>
+          <ParticipantsProvider>
+            <WebSocketProvider>
+              <PlayerTypeProvider>
+                <ProbabilityHistoryProvider>
+                  <GlobalErrorBoundary>
+                    <ToastProvider>
+                      <ModalProvider>
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <Outlet />
+                        </Suspense>
+                      </ModalProvider>
+                    </ToastProvider>
+                  </GlobalErrorBoundary>
+                </ProbabilityHistoryProvider>
+              </PlayerTypeProvider>
+            </WebSocketProvider>
+          </ParticipantsProvider>
+        </IdentifierProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 };

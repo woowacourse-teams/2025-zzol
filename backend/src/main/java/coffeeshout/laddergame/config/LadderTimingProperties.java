@@ -1,0 +1,17 @@
+package coffeeshout.laddergame.config;
+
+import jakarta.validation.constraints.NotNull;
+import java.time.Duration;
+import org.hibernate.validator.constraints.time.DurationMin;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
+
+@Validated
+@ConfigurationProperties(prefix = "ladder.timing")
+public record LadderTimingProperties(
+        @NotNull @DurationMin(nanos = 1) Duration description,
+        @NotNull @DurationMin(nanos = 1) Duration prepare,
+        @NotNull @DurationMin(nanos = 1) Duration drawing,
+        @NotNull @DurationMin(nanos = 1) Duration result
+) {
+}

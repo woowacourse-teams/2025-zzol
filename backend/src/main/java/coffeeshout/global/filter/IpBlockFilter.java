@@ -68,14 +68,14 @@ public class IpBlockFilter extends OncePerRequestFilter {
 
         if (ipBlockStore.isBlocked(ip)) {
             log.warn("차단된 IP 접근 시도: ip={} uri={}", ip, request.getRequestURI());
-            writeBlockedResponse(response);
+            writeBlockedResponse(request, response);
             return;
         }
 
         if (maliciousPathMatcher.isMalicious(request.getRequestURI())) {
             log.warn("악성 경로 접근 감지 → IP 즉시 차단: ip={} uri={}", ip, request.getRequestURI());
             ipBlockStore.blockImmediately(ip);
-            writeBlockedResponse(response);
+            writeBlockedResponse(request, response);
             return;
         }
 
@@ -86,7 +86,14 @@ public class IpBlockFilter extends OncePerRequestFilter {
         }
     }
 
-    private void writeBlockedResponse(HttpServletResponse response) throws IOException {
+    private void writeBlockedResponse(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        addCorsHeaders(request, response);
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatus(HttpStatus.NO_CONTENT.value());
+            return;
+        }
+
         final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.TOO_MANY_REQUESTS, GlobalErrorCode.IP_BLOCKED.getMessage());
         problemDetail.setProperty("errorCode", GlobalErrorCode.IP_BLOCKED.getCode());
@@ -97,6 +104,27 @@ public class IpBlockFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getWriter(), problemDetail);
+    }
+
+    private void addCorsHeaders(HttpServletRequest request, HttpServletResponse response) {
+        final String origin = request.getHeader("Origin");
+        if (origin != null) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+            response.setHeader("Access-Control-Allow-Methods",
+                    resolveOrDefault(request.getHeader("Access-Control-Request-Method"),
+                            "GET, POST, PUT, PATCH, DELETE, OPTIONS"));
+            response.setHeader("Access-Control-Allow-Headers",
+                    resolveOrDefault(request.getHeader("Access-Control-Request-Headers"),
+                            "Authorization, Content-Type, Accept, Origin, X-Requested-With"));
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.addHeader("Vary", "Origin");
+            response.addHeader("Vary", "Access-Control-Request-Method");
+            response.addHeader("Vary", "Access-Control-Request-Headers");
+        }
+    }
+
+    private String resolveOrDefault(String value, String fallback) {
+        return value != null && !value.isBlank() ? value : fallback;
     }
 
     private String getClientIp(HttpServletRequest request) {

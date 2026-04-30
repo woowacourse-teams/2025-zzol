@@ -66,6 +66,12 @@ admin:
   username: admin
   password: "1234"
 
+security:
+  ip-block:
+    not-found-threshold: 999
+    not-found-window: 1h
+    block-ttl: 24h
+
 user:
   jwt:
     secret: "local-dev-secret-key-must-be-at-least-256-bits-for-hs256-algorithm"

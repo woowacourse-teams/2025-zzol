@@ -42,6 +42,17 @@ public class IntegrationTestConfig {
         return new CompletableFutureFlowScheduler(blockStackingExecutorScheduler);
     }
 
+    @Bean(name = "ladderExecutorScheduler")
+    public ShutDownTestScheduler ladderExecutorScheduler() {
+        return new ShutDownTestScheduler();
+    }
+
+    @Bean(name = "ladderFlowScheduler")
+    public FlowScheduler ladderFlowScheduler(
+            ShutDownTestScheduler ladderExecutorScheduler) {
+        return new CompletableFutureFlowScheduler(ladderExecutorScheduler);
+    }
+
     @Bean(name = "delayRemovalScheduler")
     public TaskScheduler testIntegrationDelayRemovalScheduler() {
         return new ShutDownTestScheduler();

@@ -1,8 +1,8 @@
 package coffeeshout.report.config;
 
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;
+import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.infra.persistence.ReportRepository;
 import java.time.Clock;
 import java.time.Instant;
@@ -18,8 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 로컬 개발 환경에서 페이지 디자인 확인용 mock 신고 데이터를 생성합니다.
- * PAGE_SIZE=20 기준 3페이지(총 45건)를 삽입합니다.
+ * 로컬 개발 환경에서 페이지 디자인 확인용 mock 신고 데이터를 생성합니다. PAGE_SIZE=20 기준 3페이지(총 43건)를 삽입합니다.
  */
 @Slf4j
 @Profile("local")
@@ -47,19 +46,17 @@ public class ReportMockDataInitializer implements ApplicationRunner {
         final List<Report> list = new ArrayList<>();
         final Instant base = Instant.now(clock);
 
-        // 1. BUG — 카드게임 (15건)
+        // 1. BUG — 미니게임 버그 (13건)
         list.add(bug(MiniGameType.CARD_GAME, "ABC12", "카드게임 시작 후 5초 만에 앱이 강제 종료됩니다.", base, 0));
         list.add(bug(MiniGameType.CARD_GAME, "XYZ99", "상대방 카드가 화면에 표시되지 않아요.", base, 1));
         list.add(bug(MiniGameType.RACING_GAME, "QWE34", "레이싱 게임 결과 화면에서 점수가 0으로 나옵니다.", base, 2));
         list.add(bug(MiniGameType.SPEED_TOUCH, "RTY56", "스피드 터치 버튼이 가끔 반응하지 않습니다.", base, 3));
         list.add(bug(MiniGameType.BLIND_TIMER, "UIO78", "블라인드 타이머가 0초에서 멈추지 않아요.", base, 4));
-        list.add(bug(MiniGameType.BOMB_RELAY, "PAS90", "폭탄 릴레이에서 마지막 플레이어가 폭탄을 받지 못합니다.", base, 5));
-        list.add(bug(MiniGameType.BLOCK_STACKING, "DFG11", "블록 쌓기 중 화면이 갑자기 하얗게 변합니다.", base, 6));
-        list.add(bug(MiniGameType.CARD_GAME, "HJK22", "카드 뒤집기 애니메이션이 재생되지 않습니다.", base, 7));
-        list.add(bug(MiniGameType.RACING_GAME, "LZX33", "레이싱 게임 BGM이 게임 종료 후에도 계속 재생됩니다.", base, 8));
-        list.add(bug(MiniGameType.SPEED_TOUCH, "CVB44", "스피드 터치 시작 카운트다운이 보이지 않아요.", base, 9));
-        list.add(bug(MiniGameType.BOMB_RELAY, "NMQ55", "폭탄 릴레이에서 내 닉네임이 다른 사람 이름으로 표시됩니다.", base, 10));
-        list.add(bug(MiniGameType.CARD_GAME, "WER66", "카드게임 방 입장 시 무한 로딩이 발생합니다.", base, 11));
+        list.add(bug(MiniGameType.BLOCK_STACKING, "DFG11", "블록 쌓기 중 화면이 갑자기 하얗게 변합니다.", base, 5));
+        list.add(bug(MiniGameType.CARD_GAME, "HJK22", "카드 뒤집기 애니메이션이 재생되지 않습니다.", base, 6));
+        list.add(bug(MiniGameType.RACING_GAME, "LZX33", "레이싱 게임 BGM이 게임 종료 후에도 계속 재생됩니다.", base, 7));
+        list.add(bug(MiniGameType.SPEED_TOUCH, "CVB44", "스피드 터치 시작 카운트다운이 보이지 않아요.", base, 8));
+        list.add(bug(MiniGameType.CARD_GAME, "WER66", "카드게임 방 입장 시 무한 로딩이 발생합니다.", base, 9));
         list.add(bug(MiniGameType.BLOCK_STACKING, "TYU77", "블록 쌓기 최고 점수가 갱신되지 않습니다.", base, 12));
         list.add(bug(MiniGameType.BLIND_TIMER, "IOP88", "블라인드 타이머 힌트 기능이 동작하지 않아요.", base, 13));
         list.add(bug(MiniGameType.RACING_GAME, "ASD01", "레이싱 게임 조이스틱 입력이 씹힙니다.", base, 14));
@@ -120,11 +117,13 @@ public class ReportMockDataInitializer implements ApplicationRunner {
     }
 
     private Report suggestion(String content, Instant base, int offsetHours) {
-        return Report.createGeneralReport(ReportCategory.SUGGESTION, content, base.minus(offsetHours, ChronoUnit.HOURS));
+        return Report.createGeneralReport(ReportCategory.SUGGESTION, content,
+                base.minus(offsetHours, ChronoUnit.HOURS));
     }
 
     private Report gameRequest(String content, Instant base, int offsetHours) {
-        return Report.createGeneralReport(ReportCategory.GAME_REQUEST, content, base.minus(offsetHours, ChronoUnit.HOURS));
+        return Report.createGeneralReport(ReportCategory.GAME_REQUEST, content,
+                base.minus(offsetHours, ChronoUnit.HOURS));
     }
 
     private Report other(String content, Instant base, int offsetHours) {

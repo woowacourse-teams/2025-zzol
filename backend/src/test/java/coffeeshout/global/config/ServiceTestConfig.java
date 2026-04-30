@@ -1,6 +1,7 @@
 package coffeeshout.global.config;
 
 import coffeeshout.global.flow.FlowScheduler;
+import java.time.Clock;
 import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -32,6 +33,11 @@ public class ServiceTestConfig {
         return Mockito.mock(FlowScheduler.class);
     }
 
+    @Bean(name = "ladderFlowScheduler")
+    public FlowScheduler mockLadderFlowScheduler() {
+        return Mockito.mock(FlowScheduler.class);
+    }
+
     @Bean(name = "delayRemovalScheduler")
     public TaskScheduler testDelayRemovalScheduler() {
         return new ShutDownTestScheduler();
@@ -52,11 +58,6 @@ public class ServiceTestConfig {
         return new TestTaskScheduler();
     }
 
-    @Bean(name = "bombRelayGameScheduler")
-    public TaskScheduler testBombRelayGameScheduler() {
-        return new TestTaskScheduler();
-    }
-
     @Bean
     @Primary
     public SimpMessagingTemplate mockMessagingTemplate() {
@@ -67,5 +68,11 @@ public class ServiceTestConfig {
     @Primary
     public ApplicationEventPublisher mockEventPublisher() {
         return Mockito.mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    @Primary
+    public Clock testClock() {
+        return Clock.systemDefaultZone();
     }
 }

@@ -58,9 +58,9 @@ redis:
         thread-pool-name: concurrent
       "[blindtimer]":
         thread-pool-name: concurrent
-      "[bombrelay]":
-        thread-pool-name: concurrent
       "[blockstacking]":
+        thread-pool-name: concurrent
+      "[laddergame]":
         thread-pool-name: concurrent
 
 redisson:
@@ -94,6 +94,15 @@ block-stacking:
   scheduler:
     pool-size: 2
 
+ladder:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    drawing: 8000ms
+    result: 5000ms
+  scheduler:
+    pool-size: 2
+
 speed-touch:
   timing:
     description: 4000ms
@@ -107,18 +116,6 @@ blind-timer:
     blind-delay: 3000ms
     timeout-buffer: 3000ms
     result-delay: 2000ms
-
-bomb-relay:
-  timing:
-    description: 4000ms
-    prepare: 2000ms
-    min-bomb-timer: 18000ms
-    max-bomb-timer: 40000ms
-    round-result-delay: 4000ms
-    result-delay: 2000ms
-  dictionary:
-    api-url: https://krdict.korean.go.kr/api/search
-    api-key: ${STDICT_API_KEY:}
 
 outbox:
   relay:
@@ -134,6 +131,12 @@ report:
     rate-interval: 1
     rate-interval-unit: HOURS
     ttl: 1h
+
+security:
+  ip-block:
+    not-found-threshold: 5
+    not-found-window: 1h
+    block-ttl: 24h
 
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL:}

@@ -67,6 +67,41 @@ class IpBlockFilterTest {
             });
             then(filterChain).shouldHaveNoInteractions();
         }
+
+        @Test
+        void 차단된_IP_접근_시_Origin_헤더가_있으면_CORS_헤더를_추가한다() throws Exception {
+            given(ipBlockStore.isBlocked(REMOTE_IP)).willReturn(true);
+
+            final String origin = "https://example.com";
+            final MockHttpServletRequest request = 요청(REMOTE_IP, NORMAL_PATH);
+            request.addHeader("Origin", origin);
+            final MockHttpServletResponse response = new MockHttpServletResponse();
+
+            filter.doFilter(request, response, filterChain);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getStatus()).isEqualTo(429);
+                softly.assertThat(response.getHeader("Access-Control-Allow-Origin")).isEqualTo(origin);
+                softly.assertThat(response.getHeader("Access-Control-Allow-Credentials")).isEqualTo("true");
+            });
+        }
+
+        @Test
+        void 차단된_IP_접근_시_OPTIONS_메서드면_204를_반환한다() throws Exception {
+            given(ipBlockStore.isBlocked(REMOTE_IP)).willReturn(true);
+
+            final MockHttpServletRequest request = 요청(REMOTE_IP, NORMAL_PATH);
+            request.setMethod("OPTIONS");
+            request.addHeader("Origin", "https://example.com");
+            final MockHttpServletResponse response = new MockHttpServletResponse();
+
+            filter.doFilter(request, response, filterChain);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getStatus()).isEqualTo(204);
+                softly.assertThat(response.getHeader("Access-Control-Allow-Origin")).isEqualTo("https://example.com");
+            });
+        }
     }
 
     @Nested

@@ -1,6 +1,7 @@
 package coffeeshout.global.config;
 
 import coffeeshout.global.flow.FlowScheduler;
+import java.time.Clock;
 import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -67,5 +68,11 @@ public class ServiceTestConfig {
     @Primary
     public ApplicationEventPublisher mockEventPublisher() {
         return Mockito.mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    @Primary
+    public Clock testClock() {
+        return Clock.systemDefaultZone();
     }
 }

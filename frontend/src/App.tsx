@@ -10,6 +10,7 @@ import { ParticipantsProvider } from './contexts/Participants/ParticipantsProvid
 import { PlayerTypeProvider } from './contexts/PlayerType/PlayerTypeProvider';
 import ProbabilityHistoryProvider from './contexts/ProbabilityHistory/ProbabilityHistoryProvider';
 import { theme } from './styles/theme';
+import UpdateBanner from './components/@common/UpdateBanner/UpdateBanner';
 import { DevToolsWrapper } from './devtools/common/components/DevToolsWrapper/DevToolsWrapper';
 
 const App = () => {
@@ -20,6 +21,7 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       {process.env.ENABLE_DEVTOOLS && <DevToolsWrapper />}
+      <UpdateBanner />
 
       <IdentifierProvider>
         <ParticipantsProvider>

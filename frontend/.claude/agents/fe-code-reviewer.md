@@ -12,6 +12,7 @@ tools: Bash, Read, Glob, Grep
 
 1. 다음 문서를 읽어 프로젝트 기준을 파악한다
    - `CLAUDE.md`
+   - `.claude/rules/principles.md` — 프로젝트 특화 원칙 (스타일링, 작업 방식 등)
    - `src/styles/theme.ts` — 디자인 토큰 구조
    - `src/apis/rest/docs.md` — REST API 훅 사용법
 2. 검토할 파일을 확정한다
@@ -74,7 +75,7 @@ tools: Bash, Read, Glob, Grep
 
 ### 스타일링
 
-- [ ] 하드코딩된 색상값 대신 `theme.color.*` 토큰을 사용하는가
+- [ ] 하드코딩된 색상값 대신 `theme.color.*` 토큰을 사용하는가 — styled 컴포넌트 내부뿐 아니라 JSX prop(`fill`, `stroke`, `color`, `backgroundColor` 등 인라인 속성)도 포함. `'#888'`, `'#fff'` 같은 hex 리터럴은 위치 무관하게 금지
 - [ ] 하드코딩된 타이포그래피 대신 `theme.typography.*` 토큰을 사용하는가
 - [ ] 인라인 스타일(`style={{}}`)을 피하고 Emotion styled 컴포넌트를 사용하는가
 - [ ] 매직 넘버(근거 없는 px 값 등)가 없는가 — 디자인 토큰 또는 named constant 사용

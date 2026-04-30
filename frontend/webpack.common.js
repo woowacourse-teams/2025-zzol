@@ -106,6 +106,10 @@ export default (_, argv) => {
             from: 'public/manifest.json',
             to: 'manifest.json',
           },
+          {
+            from: 'public/icons',
+            to: 'icons',
+          },
           ...(process.env.ENABLE_DEVTOOLS === 'true'
             ? [
                 {

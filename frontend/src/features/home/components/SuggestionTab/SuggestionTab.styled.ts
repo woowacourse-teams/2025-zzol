@@ -49,9 +49,10 @@ export const CategoryChip = styled.button<{ $fullWidth?: boolean }>`
   }
 `;
 
-export const ChipIcon = styled.span`
-  font-size: 24px;
-  line-height: 1;
+export const ChipIcon = styled.img`
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 `;
 
 export const ChipLabel = styled.span`
@@ -90,10 +91,11 @@ export const CharCount = styled.span`
 `;
 
 /* Success */
-export const SuccessIcon = styled.span`
-  font-size: 40px;
-  text-align: center;
-  margin-bottom: 4px;
+export const SuccessIcon = styled.img`
+  width: 48px;
+  height: 48px;
+  align-self: center;
+  margin-bottom: 8px;
 `;
 
 export const SuccessTitle = styled.p`

@@ -9,4 +9,3 @@ export const initializeSnippet = (win) => {
   win[MARKERS.SNIPPET] = true;
   win.console && win.console.log('[DEV SNIPPET] active');
 };
-

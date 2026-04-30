@@ -6,15 +6,20 @@ import BackButton from '@/components/@common/BackButton/BackButton';
 import Button from '@/components/@common/Button/Button';
 import Headline4 from '@/components/@common/Headline4/Headline4';
 import * as S from './SuggestionTab.styled';
+import BugIcon from '@/assets/bug-icon.svg';
+import SuggestionIcon from '@/assets/suggestion-icon.svg';
+import GameRequestIcon from '@/assets/game-request-icon.svg';
+import OtherIcon from '@/assets/other-icon.svg';
+import CheckIcon from '@/assets/check-icon.svg';
 
 type SuggestionCategory = 'BUG' | 'SUGGESTION' | 'GAME_REQUEST' | 'OTHER';
 type SuggestionStep = 'category' | 'game-select' | 'form' | 'success';
 
 const CATEGORIES: { key: SuggestionCategory; label: string; icon: string }[] = [
-  { key: 'BUG', label: '버그 신고', icon: '🐛' },
-  { key: 'SUGGESTION', label: '건의사항', icon: '💡' },
-  { key: 'GAME_REQUEST', label: '게임 추가', icon: '🕹️' },
-  { key: 'OTHER', label: '기타', icon: '🔧' },
+  { key: 'BUG', label: '버그 신고', icon: BugIcon },
+  { key: 'SUGGESTION', label: '건의사항', icon: SuggestionIcon },
+  { key: 'GAME_REQUEST', label: '게임 추가', icon: GameRequestIcon },
+  { key: 'OTHER', label: '기타', icon: OtherIcon },
 ];
 
 const GAME_OPTIONS = Object.entries(MINI_GAME_NAME_MAP) as [MiniGameType, string][];
@@ -98,7 +103,7 @@ const SuggestionTab = ({ onBackToMenu }: Props) => {
             <S.ChipGrid>
               {CATEGORIES.map(({ key, label, icon }) => (
                 <S.CategoryChip key={key} onClick={() => handleCategorySelect(key)}>
-                  <S.ChipIcon>{icon}</S.ChipIcon>
+                  <S.ChipIcon src={icon} alt={label} />
                   <S.ChipLabel>{label}</S.ChipLabel>
                 </S.CategoryChip>
               ))}
@@ -149,7 +154,7 @@ const SuggestionTab = ({ onBackToMenu }: Props) => {
 
         {step === 'success' && (
           <>
-            <S.SuccessIcon>✅</S.SuccessIcon>
+            <S.SuccessIcon src={CheckIcon} alt="성공" />
             <S.SuccessTitle>전달되었습니다!</S.SuccessTitle>
             <S.SuccessDesc>소중한 의견 감사해요.</S.SuccessDesc>
             <S.ResetButton onClick={handleReset}>다시 작성하기</S.ResetButton>

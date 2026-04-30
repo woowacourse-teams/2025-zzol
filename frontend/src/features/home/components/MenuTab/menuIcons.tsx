@@ -69,3 +69,22 @@ export const InfoIcon = () => (
     <rect x="11.5" y="11.5" width="3" height="7.5" rx="1.5" fill="white" />
   </svg>
 );
+
+export const GameIcon = () => (
+  <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* 컨트롤러 메인 바디 (채워진 브라운) */}
+    <path
+      d="M7 8H19C21.5 8 24 10 24 13.5C24 17 22 19.5 19.5 19.5C18 19.5 17 18.5 16 17H10C9 18.5 8 19.5 6.5 19.5C4 19.5 2 17 2 13.5C2 10 4.5 8 7 8Z"
+      fill="#4a0f0b"
+    />
+    {/* 왼쪽 십자키 (반전: 화이트) */}
+    <path d="M6 13.5H9M7.5 12V15" stroke="white" strokeWidth="1.6" strokeLinecap="round" />
+    {/* 오른쪽 버튼들 (반전: 화이트) */}
+    <circle cx="17.5" cy="12" r="1.1" fill="white" />
+    <circle cx="16" cy="13.5" r="1.1" fill="white" />
+    <circle cx="19" cy="13.5" r="1.1" fill="white" />
+    <circle cx="17.5" cy="15" r="1.1" fill="white" />
+    {/* 중앙 옵션 버튼 (반전: 화이트) */}
+    <rect x="12" y="10.5" width="2" height="1" rx="0.5" fill="white" opacity="0.6" />
+  </svg>
+);

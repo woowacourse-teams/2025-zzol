@@ -5,10 +5,11 @@ import SuggestionTab from '../SuggestionTab/SuggestionTab';
 import PatchNotesView from './views/PatchNotesView';
 import ServiceInfoView from './views/ServiceInfoView';
 import MyInfoView from './views/MyInfoView';
+import GameManualView from './views/GameManualView';
 import * as S from './MenuTab.styled';
-import { PersonIcon, BubbleIcon, ClipboardIcon, InfoIcon } from './menuIcons';
+import { PersonIcon, BubbleIcon, ClipboardIcon, InfoIcon, GameIcon } from './menuIcons';
 
-type MenuView = 'my-info' | 'report' | 'patch-notes' | 'service-info';
+type MenuView = 'my-info' | 'game-manual' | 'report' | 'patch-notes' | 'service-info';
 
 const MENU_ITEMS: {
   key: MenuView;
@@ -21,6 +22,12 @@ const MENU_ITEMS: {
     icon: PersonIcon,
     title: '내 정보',
     desc: '누적 통계 및 활동 내역',
+  },
+  {
+    key: 'game-manual',
+    icon: GameIcon,
+    title: '게임 설명',
+    desc: '각 미니게임의 방법과 규칙',
   },
   {
     key: 'report',
@@ -58,6 +65,7 @@ const MenuTab = () => {
           {activeView === 'patch-notes' && <PatchNotesView />}
           {activeView === 'service-info' && <ServiceInfoView />}
           {activeView === 'my-info' && <MyInfoView />}
+          {activeView === 'game-manual' && <GameManualView />}
         </S.SubViewContent>
       </S.SubViewContainer>
     );

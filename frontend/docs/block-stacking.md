@@ -7,6 +7,7 @@
 겹치지 않는 부분은 떨어진다. 완전히 벗어나면 게임 오버.
 
 **핵심 규칙**
+
 - 층수가 높을수록 룰렛 당첨 확률 증가
 - 점수 = 성공적으로 쌓은 층수
 - 블록 너비는 층이 올라갈수록 점점 좁아짐 (겹친 부분만 유지)
@@ -83,8 +84,8 @@ src/
 ```typescript
 // 쌓인 블록 한 층
 type StackedBlock = {
-  x: number;       // canvas 내 좌측 시작 x
-  width: number;   // 현재 층 너비
+  x: number; // canvas 내 좌측 시작 x
+  width: number; // 현재 층 너비
   // y 위치는 별도 필드로 저장하지 않고 카메라/스택 인덱스로 계산
 };
 
@@ -101,23 +102,19 @@ type FallingPiece = {
   x: number;
   y: number;
   width: number;
-  vy: number;      // 낙하 속도
+  vy: number; // 낙하 속도
   opacity: number;
 };
 
 // 게임의 단계 자체는 문자열 유니온으로 관리
-type BlockStackingGameState =
-  | 'DESCRIPTION'
-  | 'PREPARE'
-  | 'PLAYING'
-  | 'DONE';
+type BlockStackingGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
 
 // Context가 별도로 제공하는 게임 데이터
 type BlockStackingGameContextValue = {
   gameState: BlockStackingGameState;
-  score: number;              // 현재 층수
-  timeLeft: number;           // 남은 시간 (초)
-  stack: StackedBlock[];      // 쌓인 블록 목록
+  score: number; // 현재 층수
+  timeLeft: number; // 남은 시간 (초)
+  stack: StackedBlock[]; // 쌓인 블록 목록
   currentBlock: CurrentBlock;
   fallingPieces: FallingPiece[];
 };
@@ -140,6 +137,7 @@ useBlockStackingGame(canvasRef, { phase, stack, currentBlock, fallingPieces, onT
 ```
 
 탭 발생 시:
+
 1. 현재 블록 x와 스택 최상단 블록의 overlap 계산
 2. overlap === 0 → `onGameOver()` 호출
 3. overlap > 0 → 새 `StackedBlock` 추가, 잘린 부분 `FallingPiece` 추가, 속도 증가
@@ -162,6 +160,7 @@ export const getBlockSpeed = (floor: number): number => {
 ```
 
 > **백엔드 연동 시 설계**: 속도 계산 로직을 서버와 동기화하거나, 서버에서 직접 속도 값을 내려주어 모든 플레이어가 동일한 난이도를 경험하도록 설계 권장.
+
 ```
 
 ---
@@ -198,11 +197,13 @@ export const getBlockSpeed = (floor: number): number => {
 Canvas Context의 `save()` / `translate()` / `restore()`로 처리. CSS `transform`이 아닌 canvas 내부 변환을 사용해 게임 렌더링과 분리.
 
 ```
+
 useScreenShake(intensity, duration)
-  └── shakeOffset: { x, y } 반환
-        └── rAF 루프에서 ctx.translate(shakeOffset.x, shakeOffset.y) 적용
-              └── 매 프레임 랜덤 offset, duration 경과 후 0으로 수렴
-```
+└── shakeOffset: { x, y } 반환
+└── rAF 루프에서 ctx.translate(shakeOffset.x, shakeOffset.y) 적용
+└── 매 프레임 랜덤 offset, duration 경과 후 0으로 수렴
+
+````
 
 ```typescript
 type ShakeConfig = {
@@ -215,7 +216,7 @@ ctx.save();
 ctx.translate(shakeX, shakeY); // shakeX = (Math.random() * 2 - 1) * intensity * progress
 // ... 전체 드로우
 ctx.restore();
-```
+````
 
 ---
 
@@ -225,12 +226,12 @@ ctx.restore();
 
 ### 사운드 종류
 
-| 이벤트 | 효과음 |
-|--------|--------|
-| 블록 안착 | 짧고 높은 타격음 (440Hz → 880Hz, 100ms) |
-| 퍼펙트 안착 | 밝은 상승 효과음 (C5 → E5 → G5 아르페지오) |
-| 게임 오버 | 낮게 떨어지는 하강음 (300Hz → 100Hz, 400ms) |
-| 속도 구간 진입 | 짧은 알림음 (새 구간 도달 시 1회) |
+| 이벤트         | 효과음                                      |
+| -------------- | ------------------------------------------- |
+| 블록 안착      | 짧고 높은 타격음 (440Hz → 880Hz, 100ms)     |
+| 퍼펙트 안착    | 밝은 상승 효과음 (C5 → E5 → G5 아르페지오)  |
+| 게임 오버      | 낮게 떨어지는 하강음 (300Hz → 100Hz, 400ms) |
+| 속도 구간 진입 | 짧은 알림음 (새 구간 도달 시 1회)           |
 
 ### 구조
 
@@ -285,7 +286,7 @@ BLOCK_STACKING: {
 
 ## 실시간 랭킹 (Real-time Ranking)
 
-게임 화면 **우측 상단**에 수직 리스트 형태로 각 플레이어의 현재 층수를 실시간 표시합니다. 
+게임 화면 **우측 상단**에 수직 리스트 형태로 각 플레이어의 현재 층수를 실시간 표시합니다.
 `RacingRanks`와 유사한 스타일로 구현되었으며, 본인의 경우 하이라이트 처리가 됩니다.
 
 ### UI 구조
@@ -382,7 +383,7 @@ BLOCK_STACKING: {
 
 #### 3. 게임 오버 — 최종 점수 제출 (Optional)
 
-클라이언트는 게임 오버(블록 이탈 또는 타이머 만료) 시 최종 상태를 기록합니다. 
+클라이언트는 게임 오버(블록 이탈 또는 타이머 만료) 시 최종 상태를 기록합니다.
 이미 매 탭마다 `progress` 토픽을 통해 실시간 검증 및 점수 기록이 이루어지고 있으므로, 별도의 누적 로그 제출은 생략합니다.
 
 #### 4. 전체 완료 브로드캐스트
@@ -449,6 +450,7 @@ BLOCK_STACKING: {
 ## 구현 단계
 
 ### Phase 1 — 게임 코어 (프론트 전용)
+
 - [x] `blockStackingConstants.ts` (속도 구간 테이블 포함)
 - [x] `BlockStackingGameContext.ts` + `BlockStackingGameProvider.tsx` (로컬 상태 → WebSocket 연동 완료)
 - [x] `useBlockStackingGame.ts` (canvas rAF 루프 + 슬라이싱 로직, 흔들림 효과 내장)
@@ -456,6 +458,7 @@ BLOCK_STACKING: {
 - [x] `BlockStackingCanvas.tsx`
 
 ### Phase 2 — UI 조립 + 프레임워크 편입
+
 - [x] `BlockStackingGamePlayPage.tsx` (음소거 토글 포함)
 - [x] `BlockStackingGameReadyPage.tsx`
 - [x] `EliminatedOverlay.tsx` (탈락 시 전용 오버레이)
@@ -464,6 +467,7 @@ BLOCK_STACKING: {
 - [x] `MiniGameType` 확장 + `MiniGameSection` 통합
 
 ### Phase 3 — 백엔드 연동
+
 - [x] Provider에 WebSocket 구독 추가 (`state`, `progress`, `complete`) 및 타임스탬프 동기화
 - [x] `BlockStackingGameContext.ts` 및 `BlockStackingGameProvider.tsx` 연동 완료
 - [x] `useBlockStackingActions.ts` 구현 (progress publish)
@@ -473,6 +477,7 @@ BLOCK_STACKING: {
 - [x] REST 최종 랭킹 연동 (기존 `MiniGameResultPage` 재사용)
 
 #### 백엔드 작업 (프론트 연동 전 완료 필요)
+
 → 아래 **백엔드 구현 요구사항** 섹션 참고
 
 ---
@@ -502,6 +507,7 @@ BLOCK_STACKING: {
 #### 게임 상태 브로드캐스트 (`/room/{joinCode}/block-stacking/state`)
 
 호스트가 게임을 시작하면 서버가 모든 클라이언트에 순서대로 브로드캐스트:
+
 1. `PREPARE` (카운트다운 시작) + `"countdown": 3`
 2. `PLAYING` (게임 시작)
 3. `DONE` (타이머 만료 또는 전원 제출 완료 시)
@@ -516,6 +522,7 @@ BLOCK_STACKING: {
 - 수신 후 전체 플레이어 랭킹을 동일 토픽으로 브로드캐스트
 
 수신 페이로드:
+
 ```json
 {
   "playerName": "string",
@@ -528,6 +535,7 @@ BLOCK_STACKING: {
 ```
 
 브로드캐스트 페이로드:
+
 ```json
 {
   "players": [
@@ -543,10 +551,11 @@ BLOCK_STACKING: {
 
 #### 최종 점수 제출 수신
 
-이미 매 탭마다 `progress` 토픽을 통해 실시간 검증 및 점수 기록이 이루어지고 있으므로, 별도의 누적 로그 제출은 생략 가능합니다. 
+이미 매 탭마다 `progress` 토픽을 통해 실시간 검증 및 점수 기록이 이루어지고 있으므로, 별도의 누적 로그 제출은 생략 가능합니다.
 모든 플레이어 제출 완료(또는 20초 타이머 만료) 시 complete 브로드캐스트를 수행합니다.
 
 **Publish** `/room/{joinCode}/block-stacking/complete`
+
 ```json
 { "state": "DONE" }
 ```
@@ -557,10 +566,10 @@ BLOCK_STACKING: {
 
 기존 미니게임 공통 엔드포인트를 재사용하며, `gameType: "BLOCK_STACKING"` 필터링만 추가하면 됨.
 
-| 엔드포인트 | 용도 |
-|-----------|------|
-| `GET /minigames/ranks?joinCode={joinCode}` | 최종 랭킹 조회 |
-| `GET /minigames/scores?joinCode={joinCode}&playerName={name}` | 내 점수 조회 |
+| 엔드포인트                                                                         | 용도             |
+| ---------------------------------------------------------------------------------- | ---------------- |
+| `GET /minigames/ranks?joinCode={joinCode}`                                         | 최종 랭킹 조회   |
+| `GET /minigames/scores?joinCode={joinCode}&playerName={name}`                      | 내 점수 조회     |
 | `POST /rooms/{joinCode}/minigame/start` (body: `{ "gameType": "BLOCK_STACKING" }`) | 호스트 게임 시작 |
 
 ---
@@ -569,10 +578,10 @@ BLOCK_STACKING: {
 
 현재 프론트에서 상수로 관리 중인 값들. 멀티플레이어 공정성을 위해 서버에서 게임 시작 시 내려주는 방식으로 확장 가능 (현재는 프론트 고정값 사용).
 
-| 파라미터 | 현재 프론트 값 | 설명 |
-|---------|--------------|------|
-| `gameDuration` | 20초 | 총 제한 시간 |
-| `initialSpeed` | 2.2 | 초기 블록 이동 속도 (px/frame) |
-| `speedIncrement` | 1.05 | 층당 속도 배율 (5% 증가) |
-| `maxSpeed` | 12.0 | 최고 속도 상한 |
-| `initialBlockWidth` | 150px | 첫 번째 층 블록 너비 |
+| 파라미터            | 현재 프론트 값 | 설명                           |
+| ------------------- | -------------- | ------------------------------ |
+| `gameDuration`      | 20초           | 총 제한 시간                   |
+| `initialSpeed`      | 2.2            | 초기 블록 이동 속도 (px/frame) |
+| `speedIncrement`    | 1.05           | 층당 속도 배율 (5% 증가)       |
+| `maxSpeed`          | 12.0           | 최고 속도 상한                 |
+| `initialBlockWidth` | 150px          | 첫 번째 층 블록 너비           |

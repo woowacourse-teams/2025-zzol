@@ -1,5 +1,7 @@
 package coffeeshout.user.domain;
 
+import java.util.Objects;
+
 public class User {
 
     private final Long id;
@@ -8,6 +10,9 @@ public class User {
     private final OAuthAccount oAuthAccount;
 
     public User(Long id, UserCode userCode, UserNickname nickname, OAuthAccount oAuthAccount) {
+        Objects.requireNonNull(userCode, "userCode는 null일 수 없습니다.");
+        Objects.requireNonNull(nickname, "nickname은 null일 수 없습니다.");
+        Objects.requireNonNull(oAuthAccount, "oAuthAccount는 null일 수 없습니다.");
         this.id = id;
         this.userCode = userCode;
         this.nickname = nickname;

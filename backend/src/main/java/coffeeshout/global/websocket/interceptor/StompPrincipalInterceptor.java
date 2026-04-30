@@ -1,5 +1,6 @@
 package coffeeshout.global.websocket.interceptor;
 
+import coffeeshout.global.exception.custom.CoffeeShoutException;
 import coffeeshout.global.websocket.PlayerKey;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.AuthenticatedUser;
@@ -58,7 +59,7 @@ public class StompPrincipalInterceptor implements ChannelInterceptor {
         try {
             final AuthenticatedUser user = authTokenService.verify(token);
             log.debug("STOMP 인증 성공: userId={}", user.userId());
-        } catch (Exception e) {
+        } catch (CoffeeShoutException e) {
             log.warn("STOMP Access Token 검증 실패: {}", e.getMessage());
         }
     }

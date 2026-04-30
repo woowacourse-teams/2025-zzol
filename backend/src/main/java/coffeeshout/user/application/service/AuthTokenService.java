@@ -69,6 +69,11 @@ public class AuthTokenService {
         if (parts.length != 2) {
             throw new BusinessException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND, "유효하지 않은 리프레시 토큰입니다.");
         }
+        try {
+            Long.parseLong(parts[0]);
+        } catch (NumberFormatException e) {
+            throw new BusinessException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND, "유효하지 않은 리프레시 토큰입니다.");
+        }
         return parts;
     }
 }

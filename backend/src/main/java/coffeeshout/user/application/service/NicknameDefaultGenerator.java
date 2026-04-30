@@ -1,5 +1,6 @@
 package coffeeshout.user.application.service;
 
+import coffeeshout.user.domain.UserNickname;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.stereotype.Component;
@@ -21,7 +22,7 @@ public class NicknameDefaultGenerator {
         final String adjective = pick(ADJECTIVES);
         final String noun = pick(NOUNS);
         final String candidate = adjective + noun;
-        if (candidate.length() > 10) {
+        if (candidate.length() > UserNickname.MAX_LENGTH) {
             return noun;
         }
         return candidate;

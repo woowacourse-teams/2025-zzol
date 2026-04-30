@@ -50,7 +50,18 @@ const NewsCarousel = () => {
     <S.Wrapper>
       <S.Track ref={trackRef} onScroll={handleScroll}>
         {items.map((item) => (
-          <S.Card key={item.id} onClick={() => handleCardClick(item)} role="button" tabIndex={0}>
+          <S.Card
+            key={item.id}
+            onClick={() => handleCardClick(item)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCardClick(item);
+              }
+            }}
+          >
             <S.Tag>{TAG_LABEL[item.changes[0]?.type ?? 'new']}</S.Tag>
             <S.CardTop>
               <S.Title>{item.title}</S.Title>

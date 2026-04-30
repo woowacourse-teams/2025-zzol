@@ -101,12 +101,42 @@ export const apiRequest = async <T, TData>(
           });
 
           if (!retryResponse.ok) {
-            authInterceptor.onExpired();
-            throw new ApiError({
+            if (retryResponse.status === 401) {
+              authInterceptor.onExpired();
+              throw new ApiError({
+                status: 401,
+                message: '세션이 만료되었습니다. 다시 로그인해 주세요.',
+                displayMode: 'toast',
+              });
+            }
+
+            let errorData = null;
+            let errorMessage = `HTTP ${retryResponse.status} Error`;
+            try {
+              const contentType = retryResponse.headers.get('content-type');
+              if (
+                contentType &&
+                (contentType.includes('application/json') ||
+                  contentType.includes('application/problem+json'))
+              ) {
+                errorData = await retryResponse.json();
+                errorMessage = errorData.detail;
+              } else {
+                const textError = await retryResponse.text();
+                errorMessage = textError || errorMessage;
+              }
+            } catch (parseError) {
+              console.warn('응답 메시지 파싱 실패', parseError);
+            }
+
+            const apiError = new ApiError({
               status: retryResponse.status,
-              message: '세션이 만료되었습니다. 다시 로그인해 주세요.',
-              displayMode: 'toast',
+              message: errorMessage,
+              data: errorData,
+              displayMode: errorDisplayMode,
             });
+            reportApiError(apiError);
+            throw apiError;
           }
 
           if (retryResponse.status === 204) return {} as T;

@@ -49,7 +49,7 @@ const EntryNamePage = () => {
     proceedToRoom(user!.nickname).catch(() => {
       navigate('/');
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAutoHost, navigate, proceedToRoom, setMyName, user]);
 
   const checkGuestNameQuery = new URLSearchParams({
     joinCode: joinCode ?? '',

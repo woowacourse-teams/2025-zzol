@@ -6,7 +6,7 @@ type Props = {
 };
 
 const LowestProbabilitySlide = ({ WinnerNames, probability }: Props) => {
-  const pct = (probability * 100).toFixed(1);
+  const pct = probability.toFixed(1);
 
   return (
     <S.Card>

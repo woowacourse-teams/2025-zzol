@@ -14,7 +14,7 @@ export default (env, argv) =>
             handler: 'CacheFirst',
             options: {
               cacheName: 'cdn-fonts',
-              expiration: { maxAgeSeconds: 60 * 60 * 24 * 365 },
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
             },
           },
           {
@@ -22,7 +22,7 @@ export default (env, argv) =>
             handler: 'CacheFirst',
             options: {
               cacheName: 'local-fonts',
-              expiration: { maxAgeSeconds: 60 * 60 * 24 * 365 },
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
             },
           },
           {
@@ -30,13 +30,16 @@ export default (env, argv) =>
             handler: 'CacheFirst',
             options: {
               cacheName: 'images',
-              expiration: { maxAgeSeconds: 60 * 60 * 24 * 30 },
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
           {
             urlPattern: ({ request }) => request.mode === 'navigate',
             handler: 'NetworkFirst',
-            options: { cacheName: 'pages' },
+            options: {
+              cacheName: 'pages',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
+            },
           },
         ],
       }),

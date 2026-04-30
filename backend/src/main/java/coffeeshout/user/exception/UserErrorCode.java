@@ -18,7 +18,8 @@ public enum UserErrorCode implements ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다."),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "존재하지 않는 리프레시 토큰입니다."),
-    OAUTH_PROVIDER_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "지원하지 않는 OAuth 제공자입니다.");
+    OAUTH_PROVIDER_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "지원하지 않는 OAuth 제공자입니다."),
+    OAUTH_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, "OAuth 제공자로부터 필수 정보를 가져올 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

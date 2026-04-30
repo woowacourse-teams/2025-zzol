@@ -187,10 +187,10 @@ user:
     max-retry: 100
   jwt:
     secret: ${JWT_SECRET}
-  oauth:
-    frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI}
     access-token-expiration-seconds: 1800       # 30분
     refresh-token-expiration-seconds: 1209600   # 14일
+  oauth:
+    frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI}
 
 room:
   removalDelay: 1h

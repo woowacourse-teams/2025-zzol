@@ -80,6 +80,7 @@ user:
   oauth:
     frontend-redirect-uri: "http://localhost:3000/auth/callback"
 
+spring:
   security:
     oauth2:
       client:

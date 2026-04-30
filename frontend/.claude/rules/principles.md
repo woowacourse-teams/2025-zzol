@@ -19,3 +19,5 @@
 ## Storybook 주의사항
 
 CI에서 Storybook 빌드 실패가 발생할 수 있다. `src/components/@common/` 또는 `src/components/@composition/` 하위 컴포넌트를 수정하거나 추가할 때는 관련 Story 파일(`.stories.tsx`)도 함께 확인하고, 로컬에서 `npm run build-storybook`으로 빌드 성공 여부를 검증한 후 PR을 올린다.
+
+- `@storybook/test`는 미설치 패키지다. Story에서 `fn()` 등을 import하지 않는다. 클릭 핸들러가 필요하면 `() => {}`를 사용한다.

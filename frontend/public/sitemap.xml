@@ -12,4 +12,12 @@
     <priority>1.0</priority>
   </url>
 
+  <!-- 개인정보 처리방침 -->
+  <url>
+    <loc>https://www.zzol.site/privacy</loc>
+    <lastmod>2026-05-01</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
 </urlset>

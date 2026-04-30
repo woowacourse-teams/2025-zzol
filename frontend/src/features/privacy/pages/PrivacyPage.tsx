@@ -48,7 +48,9 @@ const PrivacyPage = () => {
                 </tr>
               </tbody>
             </S.Table>
-            <S.Body>수집 방법: 소셜 로그인 OAuth 인증, 이용자 직접 입력, 자동 수집(Sentry SDK)</S.Body>
+            <S.Body>
+              수집 방법: 소셜 로그인 OAuth 인증, 이용자 직접 입력, 자동 수집(Sentry SDK)
+            </S.Body>
           </S.Section>
 
           <S.Section>

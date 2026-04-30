@@ -6,31 +6,41 @@ export const useServiceWorkerUpdate = () => {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
+    let cancelled = false;
+    let reg: ServiceWorkerRegistration | undefined;
+    let installingWorker: ServiceWorker | undefined;
+
+    const handleStateChange = () => {
+      if (installingWorker?.state === 'installed' && navigator.serviceWorker.controller) {
+        setWaitingWorker(installingWorker);
+      }
+    };
+
+    const handleUpdateFound = () => {
+      installingWorker = reg?.installing ?? undefined;
+      installingWorker?.addEventListener('statechange', handleStateChange);
+    };
+
     navigator.serviceWorker.ready.then((registration) => {
+      if (cancelled) return;
+
       if (registration.waiting && navigator.serviceWorker.controller) {
         setWaitingWorker(registration.waiting);
         return;
       }
-
-      const handleUpdateFound = () => {
-        const newWorker = registration.installing;
-        if (!newWorker) return;
-
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            setWaitingWorker(newWorker);
-          }
-        });
-      };
-
-      registration.addEventListener('updatefound', handleUpdateFound);
-      return () => registration.removeEventListener('updatefound', handleUpdateFound);
+      reg = registration;
+      reg.addEventListener('updatefound', handleUpdateFound);
     });
+
+    return () => {
+      cancelled = true;
+      reg?.removeEventListener('updatefound', handleUpdateFound);
+      installingWorker?.removeEventListener('statechange', handleStateChange);
+    };
   }, []);
 
   const applyUpdate = useCallback(() => {
     if (!waitingWorker) return;
-    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
     window.location.reload();
   }, [waitingWorker]);
 

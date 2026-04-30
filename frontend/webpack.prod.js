@@ -8,6 +8,7 @@ export default (env, argv) =>
     plugins: [
       new GenerateSW({
         clientsClaim: true,
+        skipWaiting: true,
         navigateFallback: '/index.html',
         runtimeCaching: [
           {

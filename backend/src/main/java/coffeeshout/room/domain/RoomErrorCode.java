@@ -21,6 +21,8 @@ public enum RoomErrorCode implements ErrorCode {
     DUPLICATE_PLAYER_NAME(HttpStatus.CONFLICT, "중복된 닉네임은 들어올 수 없습니다."),
     NO_EXIST_PLAYER(HttpStatus.NOT_FOUND, "플레이어가 존재하지 않습니다."),
     NO_EXIST_PLAYER_NAME_AUDIT(HttpStatus.NOT_FOUND, "플레이어 검열 항목을 찾을 수 없습니다."),
+    GEMINI_API_CALL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Gemini API 호출 실패"),
+    GEMINI_API_RATE_LIMIT_EXHAUSTED(HttpStatus.SERVICE_UNAVAILABLE, "모든 Gemini 모델 요청 한도 초과"),
     ;
 
     private final HttpStatus httpStatus;

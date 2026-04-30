@@ -16,12 +16,6 @@ import org.springframework.scheduling.TaskScheduler;
 @Profile("test")
 public class ServiceTestConfig {
 
-    @Bean
-    @Primary
-    public Clock clock() {
-        return Clock.systemDefaultZone();
-    }
-
     @Bean(name = "taskScheduler")
     @Primary
     public TaskScheduler noOpTaskScheduler() {
@@ -72,13 +66,13 @@ public class ServiceTestConfig {
 
     @Bean
     @Primary
-    public Clock testClock() {
-        return Clock.systemDefaultZone();
+    public ApplicationEventPublisher mockEventPublisher() {
+        return Mockito.mock(ApplicationEventPublisher.class);
     }
 
     @Bean
     @Primary
-    public ApplicationEventPublisher mockEventPublisher() {
-        return Mockito.mock(ApplicationEventPublisher.class);
+    public Clock testClock() {
+        return Clock.systemDefaultZone();
     }
 }

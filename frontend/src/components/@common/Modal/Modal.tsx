@@ -11,6 +11,7 @@ type Props = {
   title?: string;
   showCloseButton?: boolean;
   closeOnBackdropClick?: boolean;
+  showBottomCloseButton?: boolean;
 } & PropsWithChildren;
 
 const Modal = ({
@@ -20,6 +21,7 @@ const Modal = ({
   title,
   showCloseButton = true,
   closeOnBackdropClick = true,
+  showBottomCloseButton = false,
 }: Props) => {
   useEscapeKey({ onEscape: onClose, enabled: isOpen });
 
@@ -55,10 +57,13 @@ const Modal = ({
               id={titleId}
               title={title}
               onClose={onClose}
-              showCloseButton={showCloseButton}
+              showCloseButton={showCloseButton && !showBottomCloseButton}
             />
           )}
-          <div id={contentId}>{children}</div>
+          <S.ScrollContent id={contentId}>{children}</S.ScrollContent>
+          {showBottomCloseButton && (
+            <S.BottomCloseButton onClick={onClose}>닫기</S.BottomCloseButton>
+          )}
         </S.Container>
       </S.Backdrop>
     </Portal>

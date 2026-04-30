@@ -11,8 +11,8 @@
     "build:prod": "webpack --config webpack.prod.js",
     "preview:dev": "npm run build:dev && npx serve -s dist -p 5000",
     "preview:prod": "npm run build:prod && npx serve -s dist -p 5001",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
@@ -20,7 +20,8 @@
     "build-storybook": "storybook build",
     "test:jest": "jest --passWithNoTests --config jest.config.cjs",
     "test:cypress": "cypress open",
-    "chromatic": "chromatic --exit-zero-on-changes"
+    "chromatic": "chromatic --exit-zero-on-changes",
+    "generate:icons": "node scripts/generate-icons.mjs"
   },
   "sideEffects": [
     "*.css",
@@ -70,6 +71,7 @@
     "jest": "^30.0.4",
     "jest-environment-jsdom": "^30.0.4",
     "prettier": "^3.6.2",
+    "sharp": "^0.34.5",
     "storybook": "^9.0.16",
     "style-loader": "^4.0.0",
     "ts-jest": "^29.4.0",
@@ -78,7 +80,8 @@
     "webpack": "^5.99.9",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.2",
-    "webpack-merge": "^6.0.1"
+    "webpack-merge": "^6.0.1",
+    "workbox-webpack-plugin": "^7.4.0"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

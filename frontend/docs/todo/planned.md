@@ -10,6 +10,7 @@
 `MenuTab/views/PatchNotesView.tsx`에 정적 데이터 하드코딩 중.
 
 **변경 파일**: `src/features/home/components/MenuTab/views/PatchNotesView.tsx`
+
 - 파일 상단 `PATCH_NOTES` 상수 제거
 - `useFetch` 훅으로 교체
 

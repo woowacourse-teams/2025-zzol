@@ -24,4 +24,3 @@ export const defineHookedProperty = (win, key, newValue) => {
   const marker = `__DEV_${key.toUpperCase()}_WRAPPED__`;
   win[marker] = true;
 };
-

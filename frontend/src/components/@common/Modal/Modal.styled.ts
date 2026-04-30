@@ -17,8 +17,10 @@ export const Backdrop = styled.div`
 `;
 
 export const Container = styled.div`
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  max-height: 90%;
+  max-height: 80%;
   margin: 0 24px;
   padding: 16px;
   background-color: ${({ theme }) => theme.color.white};
@@ -26,4 +28,29 @@ export const Container = styled.div`
   box-shadow:
     0 3px 6px rgba(0, 0, 0, 0.16),
     0 3px 6px rgba(0, 0, 0, 0.23);
+`;
+
+export const ScrollContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+`;
+
+export const BottomCloseButton = styled.button`
+  flex-shrink: 0;
+  width: 100%;
+  padding: 12px 0;
+  margin-top: 12px;
+  border: none;
+  border-radius: 10px;
+  background-color: ${({ theme }) => theme.color.point[400]};
+  color: ${({ theme }) => theme.color.white};
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+
+  &:active {
+    opacity: 0.85;
+  }
 `;

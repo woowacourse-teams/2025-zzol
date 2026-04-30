@@ -1,42 +1,71 @@
 import { useState } from 'react';
+import type { ComponentType } from 'react';
 import BackButton from '@/components/@common/BackButton/BackButton';
 import SuggestionTab from '../SuggestionTab/SuggestionTab';
 import PatchNotesView from './views/PatchNotesView';
 import ServiceInfoView from './views/ServiceInfoView';
 import MyInfoView from './views/MyInfoView';
+import GameManualView from './views/GameManualView';
+import AppInstallView from './views/AppInstallView';
 import * as S from './MenuTab.styled';
+import {
+  PersonIcon,
+  BubbleIcon,
+  ClipboardIcon,
+  InfoIcon,
+  GameIcon,
+  DownloadIcon,
+} from './menuIcons';
 
-type MenuView = 'my-info' | 'report' | 'patch-notes' | 'service-info';
+type MenuView =
+  | 'my-info'
+  | 'game-manual'
+  | 'report'
+  | 'patch-notes'
+  | 'service-info'
+  | 'app-install';
 
 const MENU_ITEMS: {
   key: MenuView;
-  icon: string;
+  icon: ComponentType;
   title: string;
   desc: string;
 }[] = [
   {
     key: 'my-info',
-    icon: '👤',
+    icon: PersonIcon,
     title: '내 정보',
     desc: '누적 통계 및 활동 내역',
   },
   {
+    key: 'game-manual',
+    icon: GameIcon,
+    title: '게임 설명',
+    desc: '각 미니게임의 방법과 규칙',
+  },
+  {
     key: 'report',
-    icon: '🐛',
+    icon: BubbleIcon,
     title: '건의사항 / 신고',
     desc: '버그 신고, 게임 추가 요청, 기타 건의',
   },
   {
     key: 'patch-notes',
-    icon: '📋',
+    icon: ClipboardIcon,
     title: '패치 내역',
     desc: '업데이트 및 변경 사항',
   },
   {
     key: 'service-info',
-    icon: 'ℹ️',
+    icon: InfoIcon,
     title: '서비스 정보',
     desc: '쫄(ZZOL) 소개 및 링크',
+  },
+  {
+    key: 'app-install',
+    icon: DownloadIcon,
+    title: '앱 설치',
+    desc: '홈 화면에 추가하여 앱처럼 사용',
   },
 ];
 
@@ -56,6 +85,8 @@ const MenuTab = () => {
           {activeView === 'patch-notes' && <PatchNotesView />}
           {activeView === 'service-info' && <ServiceInfoView />}
           {activeView === 'my-info' && <MyInfoView />}
+          {activeView === 'game-manual' && <GameManualView />}
+          {activeView === 'app-install' && <AppInstallView />}
         </S.SubViewContent>
       </S.SubViewContainer>
     );
@@ -64,11 +95,13 @@ const MenuTab = () => {
   return (
     <S.Container>
       <S.MenuList>
-        {MENU_ITEMS.map(({ key, icon, title, desc }) => (
+        {MENU_ITEMS.map(({ key, icon: Icon, title, desc }) => (
           <li key={key}>
             <S.MenuItemButton onClick={() => setActiveView(key)}>
               <S.MenuItemLeft>
-                <S.MenuItemIcon>{icon}</S.MenuItemIcon>
+                <S.MenuItemIcon>
+                  <Icon />
+                </S.MenuItemIcon>
                 <S.MenuItemTexts>
                   <S.MenuItemTitle>{title}</S.MenuItemTitle>
                   <S.MenuItemDesc>{desc}</S.MenuItemDesc>

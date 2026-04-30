@@ -103,19 +103,19 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
                         ));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new InfrastructureException(RoomErrorCode.GEMINI_API_CALL_FAILED, "Gemini API 호출 중 인터럽트", e);
+                throw new InfrastructureException(RoomErrorCode.PLAYER_NAME_AUDIT_CALL_FAILED, "Gemini API 호출 중 인터럽트", e);
             } catch (RuntimeException e) {
                 if (!isRateLimitError(e)) {
-                    throw new InfrastructureException(RoomErrorCode.GEMINI_API_CALL_FAILED, "Gemini API 호출 실패", e);
+                    throw new InfrastructureException(RoomErrorCode.PLAYER_NAME_AUDIT_CALL_FAILED, "Gemini API 호출 실패", e);
                 }
                 if (i < models.size() - 1) {
                     log.warn("모델 {} 요청 한도 초과, 폴백: {}", model, models.get(i + 1));
                 }
             } catch (Exception e) {
-                throw new InfrastructureException(RoomErrorCode.GEMINI_API_CALL_FAILED, "Gemini API 호출 실패", e);
+                throw new InfrastructureException(RoomErrorCode.PLAYER_NAME_AUDIT_CALL_FAILED, "Gemini API 호출 실패", e);
             }
         }
-        throw new InfrastructureException(RoomErrorCode.GEMINI_API_RATE_LIMIT_EXHAUSTED, "모든 Gemini 모델 요청 한도 초과");
+        throw new InfrastructureException(RoomErrorCode.PLAYER_NAME_AUDIT_RATE_LIMIT_EXHAUSTED, "모든 Gemini 모델 요청 한도 초과");
     }
 
     private boolean isRateLimitError(Exception e) {
@@ -158,14 +158,14 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
                 prompt.append("\n운영자 피드백 기반 추가 예시:\n")
                         .append(objectMapper.writeValueAsString(examples)).append("\n");
             } catch (JsonProcessingException e) {
-                throw new SystemException(RoomErrorCode.GEMINI_API_CALL_FAILED, "피드백 예시 직렬화 실패", e);
+                throw new SystemException(RoomErrorCode.PLAYER_NAME_AUDIT_CALL_FAILED, "피드백 예시 직렬화 실패", e);
             }
         }
 
         try {
             prompt.append("\n검열할 닉네임 목록:\n").append(objectMapper.writeValueAsString(nicknames));
         } catch (JsonProcessingException e) {
-            throw new SystemException(RoomErrorCode.GEMINI_API_CALL_FAILED, "닉네임 목록 직렬화 실패", e);
+            throw new SystemException(RoomErrorCode.PLAYER_NAME_AUDIT_CALL_FAILED, "닉네임 목록 직렬화 실패", e);
         }
         return prompt.toString();
     }

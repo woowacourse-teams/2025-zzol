@@ -175,7 +175,7 @@ tasks.register<Exec>("pruneStaleTestContainers") {
     group = "verification"
     description = "테스트 시작 전 이전 실행에서 남은 TestContainers 컨테이너를 정리한다"
     commandLine(
-        "/usr/local/bin/docker", "container", "prune", "-f",
+        "docker", "container", "prune", "-f",
         "--filter", "label=org.testcontainers=true"
     )
     isIgnoreExitValue = true

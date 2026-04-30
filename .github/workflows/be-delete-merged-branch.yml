@@ -1,0 +1,92 @@
+name: be-delete-merged-branch.yml
+
+on:
+  pull_request:
+    branches:
+      - be/dev
+    types:
+      - closed
+
+jobs:
+  delete-branch:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Get branch name
+        id: branch-name
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "Merged branch: $BRANCH_NAME"
+
+      - name: Delete merged branch
+        run: |
+          BRANCH_NAME="${{ steps.branch-name.outputs.branch }}"
+          
+          # 보호된 브랜치들은 삭제하지 않음 (main, master, develop, be/dev 등)
+          PROTECTED_BRANCHES=("main" "fe/dev" "fe/prod" "be/dev" "be/prod")
+          
+          for protected in "${PROTECTED_BRANCHES[@]}"; do
+            if [[ "$BRANCH_NAME" == "$protected" ]]; then
+              echo "⚠️  Protected branch '$BRANCH_NAME' will not be deleted"
+              exit 0
+            fi
+          done
+          
+          # 브랜치가 존재하는지 확인
+          if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
+            echo "🗑️  Deleting branch: $BRANCH_NAME"
+            git push origin --delete "$BRANCH_NAME"
+            echo "✅ Branch '$BRANCH_NAME' has been deleted successfully"
+          else
+            echo "ℹ️  Branch '$BRANCH_NAME' does not exist or already deleted"
+          fi
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = '${{ steps.branch-name.outputs.branch }}';
+            
+            // 보호된 브랜치 체크
+            const protectedBranches = ['main', 'fe/prod', 'fe/dev', 'be/dev', 'be/prod'];
+            
+            if (protectedBranches.includes(branchName)) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `⚠️ Protected branch \`${branchName}\` was not deleted automatically.`
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `🗑️ Branch \`${branchName}\` has been automatically deleted after merge.`
+              });
+            }
+
+  # 선택사항: 삭제된 브랜치들을 추적하는 잡
+  log-deleted-branch:
+    if: github.event.pull_request.merged == true
+    needs: delete-branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Log deletion
+        run: |
+          echo "Branch deletion completed for PR #${{ github.event.number }}"
+          echo "- PR Title: ${{ github.event.pull_request.title }}"
+          echo "- Author: ${{ github.event.pull_request.user.login }}"
+          echo "- Merged branch: ${{ github.head_ref }}"
+          echo "- Target branch: ${{ github.base_ref }}"
+          echo "- Merge time: $(date -u)"
+          

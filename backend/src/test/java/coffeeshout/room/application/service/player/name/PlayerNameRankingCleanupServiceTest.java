@@ -129,7 +129,7 @@ class PlayerNameRankingCleanupServiceTest {
             given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
                     .willReturn(List.of());
             given(dashboardRepository.findRacingGameTopPlayers(any(), any(), anyInt()))
-                    .willReturn(List.of(new RacingGameTopPlayerResponse("씨발", 1.5, 100L)));
+                    .willReturn(List.of(new RacingGameTopPlayerResponse("씨발", 100L)));
             given(playerRepository.findAllByPlayerName("씨발"))
                     .willReturn(List.of(player));
             given(player.getRoomSession()).willReturn(room);

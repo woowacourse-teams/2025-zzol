@@ -46,12 +46,10 @@ public class IpBlockStore {
 
     private static final String NOT_FOUND_COUNTER_PREFIX = "block:404:";
     private static final String BLOCKED_IP_PREFIX = "block:ip:";
-    private static final int NOT_FOUND_THRESHOLD = 5;
-    private static final Duration NOT_FOUND_WINDOW = Duration.ofHours(1);
-    private static final Duration BLOCK_TTL = Duration.ofHours(24);
 
     private final StringRedisTemplate stringRedisTemplate;
     private final MeterRegistry meterRegistry;
+    private final IpBlockProperties properties;
 
     private Counter blockedRequestCounter;
     private Counter newIpBlockCounter;
@@ -83,9 +81,9 @@ public class IpBlockStore {
 
     @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "blockImmediatelyFallback")
     public void blockImmediately(String ip) {
-        stringRedisTemplate.opsForValue().set(BLOCKED_IP_PREFIX + ip, "1", BLOCK_TTL);
+        stringRedisTemplate.opsForValue().set(BLOCKED_IP_PREFIX + ip, "1", properties.blockTtl());
         newIpBlockCounter.increment();
-        log.warn("IP 차단 등록: ip={} ttl={}h", ip, BLOCK_TTL.toHours());
+        log.warn("IP 차단 등록: ip={} ttl={}h", ip, properties.blockTtl().toHours());
     }
 
     private void blockImmediatelyFallback(String ip, Throwable t) {
@@ -102,10 +100,10 @@ public class IpBlockStore {
         final Long count = stringRedisTemplate.execute(
                 INCREMENT_WITH_EXPIRE_SCRIPT,
                 List.of(key),
-                String.valueOf(NOT_FOUND_WINDOW.getSeconds())
+                String.valueOf(properties.notFoundWindow().getSeconds())
         );
 
-        if (count >= NOT_FOUND_THRESHOLD) {
+        if (count >= properties.notFoundThreshold()) {
             log.warn("404 임계값 초과 → IP 차단: ip={} count={}", ip, count);
             blockImmediately(ip);
         }

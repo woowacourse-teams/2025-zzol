@@ -4,6 +4,7 @@ import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
+import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.room.domain.Playable;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
@@ -18,6 +19,7 @@ public enum MiniGameType {
     SPEED_TOUCH("스피드터치"),
     BLIND_TIMER("블라인드타이머"),
     BLOCK_STACKING("블록쌓기"),
+    LADDER_GAME("사다리타기"),
     ;
 
     public final String label;
@@ -33,6 +35,7 @@ public enum MiniGameType {
             case SPEED_TOUCH -> new SpeedTouchGame();
             case BLIND_TIMER -> new BlindTimerGame();
             case BLOCK_STACKING -> new BlockStackingGame();
+            case LADDER_GAME -> new LadderGame();
         };
     }
 }

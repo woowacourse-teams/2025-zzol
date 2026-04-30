@@ -60,6 +60,8 @@ redis:
         thread-pool-name: concurrent
       "[blockstacking]":
         thread-pool-name: concurrent
+      "[laddergame]":
+        thread-pool-name: concurrent
 
 redisson:
   enabled: true
@@ -92,6 +94,15 @@ block-stacking:
   scheduler:
     pool-size: 2
 
+ladder:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    drawing: 8000ms
+    result: 5000ms
+  scheduler:
+    pool-size: 2
+
 speed-touch:
   timing:
     description: 4000ms
@@ -120,6 +131,12 @@ report:
     rate-interval: 1
     rate-interval-unit: HOURS
     ttl: 1h
+
+security:
+  ip-block:
+    not-found-threshold: 5
+    not-found-window: 1h
+    block-ttl: 24h
 
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL:}

@@ -116,3 +116,24 @@ export const LinkIcon = styled.span`
   font-size: 16px;
   color: ${({ theme }) => theme.color.point[400]};
 `;
+
+export const InternalLinkRow = styled.button`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid ${({ theme }) => theme.color.gray[50]};
+  }
+
+  &:active {
+    background: ${({ theme }) => theme.color.point[50]};
+  }
+`;

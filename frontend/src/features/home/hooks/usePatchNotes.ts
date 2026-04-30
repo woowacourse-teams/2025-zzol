@@ -22,7 +22,7 @@ const MOCK_PATCH_NOTES: PatchNote[] = [
   {
     id: '3',
     version: 'v1.2.0',
-    date: '2025.07',
+    date: '2026.05.01',
     title: '홈 화면 UI 전면 개편',
     summary:
       '더 쾌적한 경험을 위해 홈 화면 레이아웃을 새롭게 개편했어요. 미니게임 소개와 서비스 소식을 한눈에 확인할 수 있어요.',
@@ -34,7 +34,7 @@ const MOCK_PATCH_NOTES: PatchNote[] = [
   {
     id: '2',
     version: 'v1.1.0',
-    date: '2025.06',
+    date: '2026.06',
     title: '레이싱 게임 랭킹 시스템 출시',
     summary:
       '이제 레이싱 게임의 전국 랭킹을 확인할 수 있어요. 랭킹 탭에서 이번 달 상위 플레이어를 만나보세요.',
@@ -48,7 +48,7 @@ const MOCK_PATCH_NOTES: PatchNote[] = [
   {
     id: '1',
     version: 'v1.0.0',
-    date: '2025.06',
+    date: '2026.06',
     title: '쫄(ZZOL) 서비스 오픈',
     summary:
       '커피내기, 밥값 내기, 당번 정하기. 매번 반복되는 결정을 쫄깃한 미니게임으로 해결해보세요.',

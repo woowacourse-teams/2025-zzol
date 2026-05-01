@@ -6,6 +6,7 @@ import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.ui.request.RoomEnterRequest;
+import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
 import coffeeshout.room.ui.response.ProbabilityResponse;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -115,6 +117,15 @@ public class RoomRestController implements RoomApi {
         final List<MiniGameType> result = roomService.getSelectedMiniGames(joinCode);
 
         return ResponseEntity.ok(result);
+    }
+
+    @PatchMapping("/{joinCode}/settings")
+    public ResponseEntity<Void> updateRoomSettings(
+            @PathVariable String joinCode,
+            @Valid @RequestBody UpdateRoomSettingsRequest request
+    ) {
+        roomService.updateAdjustmentWeight(joinCode, request.hostName(), request.adjustmentWeight());
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{joinCode}/players/{playerName}")

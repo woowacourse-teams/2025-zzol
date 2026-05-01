@@ -182,6 +182,14 @@ public class RoomService {
         return room.getSelectedMiniGameTypes();
     }
 
+    public void updateAdjustmentWeight(String joinCode, String hostName, double adjustmentWeight) {
+        roomCommandService.updateAdjustmentWeight(
+                new JoinCode(joinCode),
+                new PlayerName(hostName),
+                adjustmentWeight
+        );
+    }
+
     public boolean isReadyState(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         return room.isReadyState();

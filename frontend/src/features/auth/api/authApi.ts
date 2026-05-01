@@ -1,3 +1,4 @@
+import { apiRequest } from '@/apis/rest/apiRequest';
 import { User, Tokens } from '../types';
 
 const API_URL = process.env.API_URL;
@@ -36,8 +37,5 @@ export const authApi = {
   logout: (): Promise<void> => authFetch('/auth/logout', { method: 'POST' }),
 
   updateNickname: (nickname: string): Promise<User> =>
-    authFetch('/users/me', {
-      method: 'PATCH',
-      body: JSON.stringify({ nickname }),
-    }),
+    apiRequest('/users/me', { method: 'PATCH', body: { nickname } }),
 };

@@ -6,10 +6,9 @@ import { AuthService } from './AuthService';
 // Spring Security 표준 OAuth2 Client 방식
 // 프론트 → /oauth2/authorization/{provider} redirect
 //        → provider 인증 → 백엔드 /login/oauth2/code/{provider} 콜백
-//        → OAuthSuccessHandler → 프론트 /auth/callback 으로 redirect (토큰 포함)
-//
-// ※ 프론트/백엔드 origin이 다를 때는 백엔드가 프론트 도메인으로 redirect해야 함.
-//   백엔드 OAuthSuccessHandler에서 프론트 URL로 redirect 로직 필요.
+//        → OAuthSuccessHandler → 프론트 /callback?code=xxx 으로 redirect
+//        → 프론트가 POST /auth/token { code } 호출 → accessToken 수신
+//           (refreshToken은 HttpOnly 쿠키로 자동 설정됨)
 export class BackendRedirectAuthService implements AuthService {
   constructor(private readonly tokenStore: TokenStore) {}
 
@@ -18,21 +17,18 @@ export class BackendRedirectAuthService implements AuthService {
   }
 
   async handleCallback(params: URLSearchParams): Promise<void> {
-    const accessToken = params.get('accessToken');
-    const refreshToken = params.get('refreshToken');
+    const code = params.get('code');
 
-    if (!accessToken || !refreshToken) {
-      throw new Error('OAuth callback에 토큰이 없습니다');
+    if (!code) {
+      throw new Error('OAuth callback에 code가 없습니다');
     }
 
-    this.tokenStore.setTokens({ accessToken, refreshToken });
+    const tokens = await authApi.token(code);
+    this.tokenStore.setTokens(tokens);
   }
 
   async refresh(): Promise<void> {
-    const refreshToken = this.tokenStore.getRefreshToken();
-    if (!refreshToken) throw new Error('refresh token 없음');
-
-    const tokens = await authApi.refresh(refreshToken);
+    const tokens = await authApi.refresh();
     this.tokenStore.setTokens(tokens);
   }
 

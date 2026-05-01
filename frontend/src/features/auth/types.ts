@@ -8,5 +8,4 @@ export type User = {
 
 export type Tokens = {
   accessToken: string;
-  refreshToken: string;
 };

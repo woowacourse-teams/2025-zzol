@@ -24,10 +24,7 @@ export class MockAuthService implements AuthService {
 
   startOAuth(provider: OAuthProvider): void {
     this.lastProvider = provider;
-    this.tokenStore.setTokens({
-      accessToken: `mock-access-token-${provider}`,
-      refreshToken: `mock-refresh-token-${provider}`,
-    });
+    this.tokenStore.setTokens({ accessToken: `mock-access-token-${provider}` });
     this.callbacks.onLogin(MOCK_USERS[provider]);
   }
 
@@ -38,10 +35,7 @@ export class MockAuthService implements AuthService {
 
   async refresh(): Promise<void> {
     if (!this.lastProvider) return;
-    this.tokenStore.setTokens({
-      accessToken: `mock-access-token-refreshed-${this.lastProvider}`,
-      refreshToken: `mock-refresh-token-refreshed-${this.lastProvider}`,
-    });
+    this.tokenStore.setTokens({ accessToken: `mock-access-token-refreshed-${this.lastProvider}` });
   }
 
   async logout(): Promise<void> {

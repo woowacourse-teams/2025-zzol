@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import useToast from '@/components/@common/Toast/useToast';
 import { useAuth } from '../contexts/AuthContext';
 import { tokenStore } from '../tokens';
+import { authApi } from '../api/authApi';
 
-// 백엔드 redirect 후 도착 페이지 — URL params에서 토큰 추출 → 세션 복원 → 홈으로 이동
+// 백엔드 redirect 후 도착 페이지 — code로 토큰 교환 → 세션 복원 → 홈으로 이동
 const OAuthCallbackPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -17,8 +18,7 @@ const OAuthCallbackPage = () => {
     handledRef.current = true;
 
     const handle = async () => {
-      const accessToken = searchParams.get('accessToken');
-      const refreshToken = searchParams.get('refreshToken');
+      const code = searchParams.get('code');
       const error = searchParams.get('error');
 
       if (error) {
@@ -27,14 +27,15 @@ const OAuthCallbackPage = () => {
         return;
       }
 
-      if (!accessToken || !refreshToken) {
+      if (!code) {
         showToast({ message: '인증 정보를 찾을 수 없습니다.', type: 'error' });
         navigate('/', { replace: true });
         return;
       }
 
       try {
-        tokenStore.setTokens({ accessToken, refreshToken });
+        const tokens = await authApi.token(code);
+        tokenStore.setTokens(tokens);
         await refreshUser();
         navigate('/', { replace: true });
       } catch {

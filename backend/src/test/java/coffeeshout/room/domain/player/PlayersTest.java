@@ -30,7 +30,7 @@ class PlayersTest {
         MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 3, 엠제이, 4));
 
         // when
-        players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 5));
+        players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 5, 0.7));
 
         // then
         assertThat(players.getPlayer(PlayerFixture.호스트한스().getName()).getProbability())
@@ -61,7 +61,7 @@ class PlayersTest {
             MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 2));
 
             // when
-            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(3, 1));
+            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(3, 1, 0.7));
 
             // then
             // 한스 1등, 루키/꾹이 2등 동점 (2명이므로 확률 조정량을 2로 나눔)
@@ -94,7 +94,7 @@ class PlayersTest {
             MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 2, 엠제이, 4));
 
             // when
-            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 1));
+            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 1, 0.7));
 
             // then
             // 한스 1등, 루키/꾹이 2등 동점 (2명이므로 확률 조정량을 2로 나눔)
@@ -134,7 +134,7 @@ class PlayersTest {
             MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 3, 엠제이, 3));
 
             // when
-            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 1));
+            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 1, 0.7));
 
             SoftAssertions.assertSoftly(
                     softly -> {
@@ -167,7 +167,7 @@ class PlayersTest {
             MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 2, 엠제이, 2));
 
             // when
-            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 1));
+            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 1, 0.7));
 
             // then
             SoftAssertions.assertSoftly(
@@ -209,7 +209,7 @@ class PlayersTest {
                     호스트유령, 5
             ));
 
-            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(5, 1));
+            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(5, 1, 0.7));
 
             // then
             SoftAssertions.assertSoftly(

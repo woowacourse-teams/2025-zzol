@@ -33,20 +33,22 @@ public class Room {
 
     private Player host;
     private RoomState roomState;
+    private double adjustmentWeight;
 
-    public Room(JoinCode joinCode, PlayerName hostName) {
+    public Room(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
         this.joinCode = joinCode;
         this.host = Player.createHost(hostName);
         this.players = new Players(joinCode.getValue());
         this.roomState = RoomState.READY;
         this.miniGames = new LinkedList<>();
         this.finishedGames = new ArrayList<>();
+        this.adjustmentWeight = adjustmentWeight;
 
         join(host);
     }
 
-    public static Room createNewRoom(JoinCode joinCode, PlayerName hostName) {
-        return new Room(joinCode, hostName);
+    public static Room createNewRoom(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
+        return new Room(joinCode, hostName, adjustmentWeight);
     }
 
     public void joinGuest(PlayerName guestName) {
@@ -71,10 +73,18 @@ public class Room {
     public void applyMiniGameResult(MiniGameResult miniGameResult) {
         final ProbabilityCalculator probabilityCalculator = new ProbabilityCalculator(
                 players.getPlayerCount(),
-                calculateMiniGameCount()
+                calculateMiniGameCount(),
+                adjustmentWeight
         );
         this.roomState = RoomState.SCORE_BOARD;
         players.adjustProbabilities(miniGameResult, probabilityCalculator);
+    }
+
+    public void updateAdjustmentWeight(PlayerName hostName, double adjustmentWeight) {
+        validateHost(hostName);
+        validateRoomReady();
+        validateAdjustmentWeight(adjustmentWeight);
+        this.adjustmentWeight = adjustmentWeight;
     }
 
     private int calculateMiniGameCount() {
@@ -224,6 +234,21 @@ public class Room {
             throw new BusinessException(
                     RoomErrorCode.DUPLICATE_PLAYER_NAME,
                     "중복된 닉네임은 들어올 수 없습니다. 닉네임: " + guestName.value()
+            );
+        }
+    }
+
+    private void validateHost(PlayerName hostName) {
+        if (!host.sameName(hostName)) {
+            throw new BusinessException(RoomErrorCode.NOT_HOST, "호스트만 가중치를 변경할 수 있습니다.");
+        }
+    }
+
+    private void validateAdjustmentWeight(double adjustmentWeight) {
+        if (adjustmentWeight < 0.1 || adjustmentWeight > 0.9) {
+            throw new BusinessException(
+                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT,
+                    "가중치는 0.1 이상 0.9 이하여야 합니다. 입력값: " + adjustmentWeight
             );
         }
     }

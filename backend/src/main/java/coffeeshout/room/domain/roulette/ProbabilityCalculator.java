@@ -12,16 +12,16 @@ import java.util.stream.IntStream;
  */
 public class ProbabilityCalculator {
 
-    protected static final double ADJUSTMENT_WEIGHT = 0.7;
-
     private final Integer playerCount;
     private final Integer roundCount;
+    private final double adjustmentWeight;
     private final Map<Integer, Integer> probabilityChangeRangeMap;
 
-    public ProbabilityCalculator(Integer playerCount, Integer roundCount) {
-        validate(playerCount, roundCount);
+    public ProbabilityCalculator(Integer playerCount, Integer roundCount, double adjustmentWeight) {
+        validate(playerCount, roundCount, adjustmentWeight);
         this.playerCount = playerCount;
         this.roundCount = roundCount;
+        this.adjustmentWeight = adjustmentWeight;
         this.probabilityChangeRangeMap = processProbabilityChangeRangeMap();
     }
 
@@ -43,7 +43,7 @@ public class ProbabilityCalculator {
 
     private Probability computeAdjustmentStep() {
         final Probability maxAdjustment = computeInitialProbability().divide(roundCount);
-        return maxAdjustment.divide(countAdjustableRanks()).multiple(ADJUSTMENT_WEIGHT);
+        return maxAdjustment.divide(countAdjustableRanks()).multiple(adjustmentWeight);
     }
 
     private Probability computeInitialProbability() {
@@ -54,9 +54,10 @@ public class ProbabilityCalculator {
         return playerCount / 2;
     }
 
-    private void validate(Integer playerCount, Integer roundCount) {
+    private void validate(Integer playerCount, Integer roundCount, double adjustmentWeight) {
         isTrue(playerCount >= 2, "플레이어는 2명 이상이어야 합니다.");
         isTrue(roundCount > 0, "라운드 수는 양수여야 합니다.");
+        isTrue(adjustmentWeight >= 0.1 && adjustmentWeight <= 0.9, "가중치는 0.1 이상 0.9 이하여야 합니다.");
     }
 
     private Map<Integer, Integer> processProbabilityChangeRangeMap() {
@@ -67,7 +68,6 @@ public class ProbabilityCalculator {
                         this::processProbabilityChange
                 ));
     }
-
 
     private Integer processProbabilityChange(int rank) {
         final MiniGameResultType resultType = MiniGameResultType.of(playerCount, rank);

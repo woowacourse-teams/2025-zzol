@@ -32,6 +32,7 @@ import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.domain.service.PlayerNameValidator;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.config.RouletteProperties;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
@@ -59,6 +60,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class RoomService {
 
+    private final RouletteProperties rouletteProperties;
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
     private final DelayedRoomRemovalService delayedRoomRemovalService;
@@ -84,7 +86,7 @@ public class RoomService {
         final JoinCode joinCode = joinCodeGenerator.generate();
 
         // 방 생성 (QR 코드는 PENDING 상태로 시작)
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, playerName);
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, playerName, rouletteProperties.defaultAdjustmentWeight());
 
         // 방 생성 후 이벤트 전달
         final BaseEvent event = new RoomCreateEvent(hostName, joinCode.getValue());
@@ -269,7 +271,8 @@ public class RoomService {
 
         roomCommandService.saveIfAbsentRoom(
                 new JoinCode(event.joinCode()),
-                new PlayerName(event.hostName())
+                new PlayerName(event.hostName()),
+                rouletteProperties.defaultAdjustmentWeight()
         );
 
         delayedRoomRemovalService.scheduleRemoveRoom(new JoinCode(event.joinCode()));

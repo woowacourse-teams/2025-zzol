@@ -59,7 +59,7 @@ public class RoomCommandService {
         return save(room);
     }
 
-    public Room saveIfAbsentRoom(JoinCode joinCode, PlayerName hostName) {
+    public Room saveIfAbsentRoom(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
         if (roomRepository.existsByJoinCode(joinCode)) {
             log.warn("JoinCode[{}] 방 생성 실패 - 이미 존재하는 방", joinCode);
             return roomQueryService.getByJoinCode(joinCode);
@@ -67,9 +67,15 @@ public class RoomCommandService {
 
         log.info("JoinCode[{}] 방 생성 - 호스트 이름: {} ", joinCode, hostName);
 
-        final Room room = Room.createNewRoom(joinCode, hostName);
+        final Room room = Room.createNewRoom(joinCode, hostName, adjustmentWeight);
 
         return save(room);
+    }
+
+    public void updateAdjustmentWeight(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
+        final Room room = roomQueryService.getByJoinCode(joinCode);
+        room.updateAdjustmentWeight(hostName, adjustmentWeight);
+        save(room);
     }
 
     public void assignQrCode(JoinCode joinCode, String qrCodeUrl) {

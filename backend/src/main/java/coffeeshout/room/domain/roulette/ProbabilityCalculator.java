@@ -26,11 +26,9 @@ public class ProbabilityCalculator {
     }
 
     public int calculateProbabilityChange(int rank, int tieCount) {
-        int sum = 0;
-        for (int i = rank; i < rank + tieCount; i++) {
-            Integer probabilityChange = probabilityChangeRangeMap.getOrDefault(i, 0);
-            sum += probabilityChange;
-        }
+        final int sum = IntStream.range(rank, rank + tieCount)
+                .map(i -> probabilityChangeRangeMap.getOrDefault(i, 0))
+                .sum();
         return sum / tieCount;
     }
 

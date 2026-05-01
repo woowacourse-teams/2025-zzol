@@ -50,7 +50,6 @@ export const MyInfoCard = styled.div`
   overflow: hidden;
 `;
 
-
 export const MyInfoStatGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -115,7 +114,12 @@ export const ScrollChevron = styled.span`
   animation: bounce 1.4s ease-in-out infinite;
 
   @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(4px); }
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(4px);
+    }
   }
 `;

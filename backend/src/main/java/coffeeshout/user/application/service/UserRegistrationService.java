@@ -1,8 +1,7 @@
 package coffeeshout.user.application.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.domain.service.PlayerNameValidator;
+import coffeeshout.global.nickname.NameValidator;
 import coffeeshout.user.config.UserCodeProperties;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.OAuthProvider;
@@ -26,7 +25,7 @@ public class UserRegistrationService {
     private final UserRepository userRepository;
     private final UserCreateAttemptHelper createAttemptHelper;
     private final UserCodeProperties userCodeProperties;
-    private final PlayerNameValidator playerNameValidator;
+    private final NameValidator nameValidator;
     private final NicknameDefaultGenerator nicknameDefaultGenerator;
 
     public User registerOrLogin(OAuthProvider provider, String providerUserId, String email, String suggestedNickname) {
@@ -67,7 +66,7 @@ public class UserRegistrationService {
                 : suggested;
 
         try {
-            playerNameValidator.validate(new PlayerName(trimmed));
+            nameValidator.validate(trimmed);
             return new UserNickname(trimmed);
         } catch (BusinessException e) {
             log.debug("제안된 닉네임이 검증 실패, 자동 생성으로 대체: suggested={}", suggested);

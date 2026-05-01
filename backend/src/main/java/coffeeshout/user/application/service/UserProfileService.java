@@ -1,14 +1,14 @@
 package coffeeshout.user.application.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.room.application.service.player.name.PlayerNameAuditService;
-import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.domain.service.PlayerNameValidator;
+import coffeeshout.global.nickname.NameValidator;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
+import coffeeshout.user.domain.event.UserNicknameRegisteredEvent;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.exception.UserErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,13 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserProfileService {
 
     private final UserRepository userRepository;
-    private final PlayerNameValidator playerNameValidator;
-    private final PlayerNameAuditService playerNameAuditService;
+    private final NameValidator nameValidator;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public User changeNickname(Long userId, String rawNickname) {
         final UserNickname newNickname = new UserNickname(rawNickname);
-        playerNameValidator.validate(new PlayerName(newNickname.value()));
+        nameValidator.validate(newNickname.value());
 
         final User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND,
@@ -32,7 +32,7 @@ public class UserProfileService {
         user.changeNickname(newNickname);
         final User updated = userRepository.save(user);
 
-        playerNameAuditService.register(newNickname.value());
+        eventPublisher.publishEvent(new UserNicknameRegisteredEvent(newNickname.value()));
         return updated;
     }
 

@@ -28,4 +28,13 @@ public final class UserFixture {
                 new OAuthAccount(OAuthProvider.KAKAO, "kakao-uid-1", "rookie@example.com")
         );
     }
+
+    public static User 저장된_회원(Long id, String nickname) {
+        return new User(
+                id,
+                new UserCode("AB3CD"),
+                new UserNickname(nickname),
+                new OAuthAccount(OAuthProvider.GOOGLE, "google-uid-" + id, "user" + id + "@example.com")
+        );
+    }
 }

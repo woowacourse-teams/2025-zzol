@@ -3,8 +3,10 @@ package coffeeshout.user.infra.persistence;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.User;
+import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.exception.UserErrorCode;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -66,5 +68,14 @@ public class UserRepositoryImpl implements UserRepository {
         return oAuthAccountJpaRepository
                 .findByProviderAndProviderUserIdWithUser(provider, providerUserId)
                 .map(oAuth -> oAuth.getUser().toDomain(oAuth));
+    }
+
+    @Override
+    public List<User> findAllByNickname(UserNickname nickname) {
+        return userJpaRepository.findAllByNickname(nickname.value()).stream()
+                .flatMap(userEntity -> oAuthAccountJpaRepository.findByUser_Id(userEntity.getId())
+                        .map(userEntity::toDomain)
+                        .stream())
+                .toList();
     }
 }

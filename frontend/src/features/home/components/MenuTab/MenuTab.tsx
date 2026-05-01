@@ -8,24 +8,10 @@ import PatchNotesView from './views/PatchNotesView';
 import ServiceInfoView from './views/ServiceInfoView';
 import MyInfoView from './views/MyInfoView';
 import GameManualView from './views/GameManualView';
-import AppInstallView from './views/AppInstallView';
 import * as S from './MenuTab.styled';
-import {
-  PersonIcon,
-  BubbleIcon,
-  ClipboardIcon,
-  InfoIcon,
-  GameIcon,
-  DownloadIcon,
-} from './menuIcons';
+import { PersonIcon, BubbleIcon, ClipboardIcon, InfoIcon, GameIcon } from './menuIcons';
 
-type MenuView =
-  | 'my-info'
-  | 'game-manual'
-  | 'report'
-  | 'patch-notes'
-  | 'service-info'
-  | 'app-install';
+type MenuView = 'my-info' | 'game-manual' | 'report' | 'patch-notes' | 'service-info' | 'app-install';
 
 const VIEW_TITLE: Record<MenuView, string> = {
   'my-info': '내 정보',
@@ -33,6 +19,7 @@ const VIEW_TITLE: Record<MenuView, string> = {
   report: '건의사항 / 신고',
   'patch-notes': '패치 내역',
   'service-info': '서비스 정보',
+  'app-install': '앱 설치',
 };
 
 const MENU_ITEMS: {
@@ -71,12 +58,6 @@ const MENU_ITEMS: {
     title: '서비스 정보',
     desc: '쫄(ZZOL) 소개 및 링크',
   },
-  {
-    key: 'app-install',
-    icon: DownloadIcon,
-    title: '앱 설치',
-    desc: '홈 화면에 추가하여 앱처럼 사용',
-  },
 ];
 
 const MenuTab = () => {
@@ -95,7 +76,6 @@ const MenuTab = () => {
           {activeView === 'service-info' && <ServiceInfoView />}
           {activeView === 'my-info' && <MyInfoView />}
           {activeView === 'game-manual' && <GameManualView />}
-          {activeView === 'app-install' && <AppInstallView />}
         </S.SubViewContent>
       </S.SubViewContainer>
     );

@@ -115,9 +115,11 @@ export const SubViewContainer = styled.div`
   height: 100%;
 `;
 
-export const SubViewHeader = styled.div`
-  padding: 8px 20px 0;
-  flex-shrink: 0;
+export const SubViewTitle = styled.span`
+  font-size: 15px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.color.gray[900]};
+  letter-spacing: -0.02em;
 `;
 
 export const SubViewContent = styled.div`

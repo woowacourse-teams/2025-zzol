@@ -49,9 +49,8 @@ export const StatGrid = styled.div`
 export const StatCard = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 20px 12px;
+  gap: 10px;
+  padding: 18px 20px 20px;
   background: ${({ theme }) => theme.color.white};
   border: 1px solid ${({ theme }) => theme.color.gray[100]};
   border-radius: 16px;
@@ -59,18 +58,31 @@ export const StatCard = styled.div`
 `;
 
 export const StatLabel = styled.span`
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: ${({ theme }) => theme.color.gray[400]};
-  text-align: center;
+  letter-spacing: -0.01em;
 `;
 
-export const StatValue = styled.span`
-  font-size: 28px;
+export const StatValueRow = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+`;
+
+export const StatNumber = styled.span`
+  font-size: 30px;
   font-weight: 800;
-  color: ${({ theme }) => theme.color.point[500]};
-  letter-spacing: -0.03em;
+  color: ${({ theme }) => theme.color.gray[900]};
+  letter-spacing: -0.04em;
   line-height: 1;
+`;
+
+export const StatUnit = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.color.gray[500]};
+  letter-spacing: -0.02em;
 `;
 
 export const InfoSection = styled.div`
@@ -81,16 +93,18 @@ export const InfoSection = styled.div`
 `;
 
 export const SectionTitle = styled.h4`
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: ${({ theme }) => theme.color.gray[400]};
   padding-left: 4px;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0;
 `;
 
 export const TooltipCard = styled.div`
   padding: 16px;
-  background: ${({ theme }) => theme.color.white};
+  background: ${({ theme }) => theme.color.gray[50]};
   border: 1px solid ${({ theme }) => theme.color.gray[100]};
   border-radius: 14px;
 `;
@@ -104,14 +118,5 @@ export const TooltipList = styled.ul`
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-`;
-
-export const ComingSoonText = styled.p`
-  font-size: 12px;
-  font-weight: 500;
-  color: ${({ theme }) => theme.color.point[400]};
-  margin: 10px 0 0;
-  padding-top: 10px;
-  border-top: 1px solid ${({ theme }) => theme.color.gray[100]};
+  gap: 4px;
 `;

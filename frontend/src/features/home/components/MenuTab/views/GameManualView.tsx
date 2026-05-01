@@ -37,10 +37,9 @@ const GameManualView = () => {
 
   return (
     <S.Container>
-      <S.Header>
-        <S.Title>게임 설명</S.Title>
+      <S.HintBanner>
         <S.Subtitle>게임을 탭하면 자세한 규칙을 볼 수 있어요</S.Subtitle>
-      </S.Header>
+      </S.HintBanner>
       <MC.Grid>
         {GAME_TYPES.map((type) => (
           <MC.GameCard key={type} type="button" onClick={() => handleGameClick(type)}>

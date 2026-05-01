@@ -2,9 +2,7 @@ import { MINI_GAME_NAME_MAP, type MiniGameType } from '@/types/miniGame/common';
 import { useState } from 'react';
 import { storageManager, STORAGE_KEYS } from '@/utils/StorageManager';
 import useMutation from '@/apis/rest/useMutation';
-import BackButton from '@/components/@common/BackButton/BackButton';
 import Button from '@/components/@common/Button/Button';
-import Headline4 from '@/components/@common/Headline4/Headline4';
 import * as S from './SuggestionTab.styled';
 import BugIcon from '@/assets/bug-icon.svg';
 import SuggestionIcon from '@/assets/suggestion-icon.svg';
@@ -13,7 +11,6 @@ import OtherIcon from '@/assets/other-icon.svg';
 import CheckIcon from '@/assets/check-icon.svg';
 
 type SuggestionCategory = 'BUG' | 'SUGGESTION' | 'GAME_REQUEST' | 'OTHER';
-type SuggestionStep = 'category' | 'game-select' | 'form' | 'success';
 
 const CATEGORIES: { key: SuggestionCategory; label: string; icon: string }[] = [
   { key: 'BUG', label: '버그 신고', icon: BugIcon },
@@ -31,43 +28,37 @@ type ReportBody = {
   content: string;
 };
 
-type Props = {
-  onBackToMenu?: () => void;
-};
-
-const SuggestionTab = ({ onBackToMenu }: Props) => {
-  const [step, setStep] = useState<SuggestionStep>('category');
-  const [category, setCategory] = useState<SuggestionCategory | null>(null);
+const SuggestionTab = () => {
+  const [category, setCategory] = useState<SuggestionCategory>('BUG');
   const [gameType, setGameType] = useState<MiniGameType | null>(null);
+  const [isOtherGame, setIsOtherGame] = useState(false);
   const [content, setContent] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
   const { mutate: submitReport, loading } = useMutation<void, ReportBody>({
     endpoint: '/reports',
     method: 'POST',
-    onSuccess: () => setStep('success'),
+    onSuccess: () => setSubmitted(true),
     errorDisplayMode: 'toast',
   });
 
-  const handleReset = () => {
-    setStep('category');
-    setCategory(null);
+  const handleCategoryChange = (cat: SuggestionCategory) => {
+    setCategory(cat);
     setGameType(null);
-    setContent('');
+    setIsOtherGame(false);
   };
 
-  const handleCategorySelect = (selected: SuggestionCategory) => {
-    setCategory(selected);
-    if (selected === 'BUG') setStep('game-select');
-    else setStep('form');
+  const handleGamePillClick = (key: MiniGameType) => {
+    setGameType((prev) => (prev === key ? null : key));
+    setIsOtherGame(false);
   };
 
-  const handleGameSelect = (selected: MiniGameType) => {
-    setGameType(selected);
-    setStep('form');
+  const handleOtherGameClick = () => {
+    setGameType(null);
+    setIsOtherGame((prev) => !prev);
   };
 
   const handleSubmit = () => {
-    if (!category) return;
     const lastJoinCode = storageManager.getItem(STORAGE_KEYS.LAST_JOIN_CODE, 'localStorage');
     submitReport({
       category,
@@ -77,10 +68,11 @@ const SuggestionTab = ({ onBackToMenu }: Props) => {
     });
   };
 
-  const handleBack = () => {
-    if (step === 'category') onBackToMenu?.();
-    else if (step === 'form' && category === 'BUG') setStep('game-select');
-    else handleReset();
+  const handleReset = () => {
+    setContent('');
+    setGameType(null);
+    setIsOtherGame(false);
+    setSubmitted(false);
   };
 
   const getFormLabel = () => {
@@ -91,78 +83,73 @@ const SuggestionTab = ({ onBackToMenu }: Props) => {
     return '어떤 내용인가요?';
   };
 
-  const showBackButton = step !== 'success';
+  if (submitted) {
+    return (
+      <S.SuccessContainer>
+        <S.SuccessIconWrap>
+          <img src={CheckIcon} alt="성공" />
+        </S.SuccessIconWrap>
+        <S.SuccessTitle>전달되었습니다!</S.SuccessTitle>
+        <S.SuccessDesc>소중한 의견 감사해요.</S.SuccessDesc>
+        <S.ResetButton onClick={handleReset}>다시 보내기</S.ResetButton>
+      </S.SuccessContainer>
+    );
+  }
 
   return (
     <S.Container>
-      {showBackButton && <BackButton onClick={handleBack} text="돌아가기" />}
-      <S.CenterWrapper>
-        {step === 'category' && (
-          <>
-            <Headline4>무엇을 알려주실건가요?</Headline4>
-            <S.ChipGrid>
-              {CATEGORIES.map(({ key, label, icon }) => (
-                <S.CategoryChip key={key} onClick={() => handleCategorySelect(key)}>
-                  <S.ChipIcon src={icon} alt={label} />
-                  <S.ChipLabel>{label}</S.ChipLabel>
-                </S.CategoryChip>
-              ))}
-            </S.ChipGrid>
-          </>
-        )}
+      <S.CategoryGrid>
+        {CATEGORIES.map(({ key, label, icon }) => (
+          <S.CategoryTab
+            key={key}
+            $active={category === key}
+            onClick={() => handleCategoryChange(key)}
+          >
+            <S.TabIcon src={icon} alt="" aria-hidden="true" $active={category === key} />
+            <S.TabLabel $active={category === key}>{label}</S.TabLabel>
+          </S.CategoryTab>
+        ))}
+      </S.CategoryGrid>
 
-        {step === 'game-select' && (
-          <>
-            <Headline4>어떤 게임에서 발생했나요?</Headline4>
-            <S.ChipGrid>
-              {GAME_OPTIONS.map(([key, name]) => (
-                <S.CategoryChip key={key} onClick={() => handleGameSelect(key)}>
-                  <S.ChipLabel>{name}</S.ChipLabel>
-                </S.CategoryChip>
-              ))}
-              <S.CategoryChip
-                $fullWidth
-                onClick={() => {
-                  setGameType(null);
-                  setStep('form');
-                }}
+      {category === 'BUG' && (
+        <S.GameSection>
+          <S.GameSectionLabel>어떤 게임에서 발생했나요? (선택)</S.GameSectionLabel>
+          <S.GamePillRow>
+            {GAME_OPTIONS.map(([key, name]) => (
+              <S.GamePill
+                key={key}
+                $active={gameType === key}
+                onClick={() => handleGamePillClick(key)}
               >
-                <S.ChipLabel>게임 외 (로비/룰렛)</S.ChipLabel>
-              </S.CategoryChip>
-            </S.ChipGrid>
-          </>
-        )}
+                {name}
+              </S.GamePill>
+            ))}
+            <S.GamePill $active={isOtherGame} onClick={handleOtherGameClick}>
+              게임 외
+            </S.GamePill>
+          </S.GamePillRow>
+        </S.GameSection>
+      )}
 
-        {step === 'form' && (
-          <>
-            <Headline4>{getFormLabel()}</Headline4>
-            <S.Textarea
-              placeholder="자유롭게 작성해주세요 (최대 200자)"
-              maxLength={200}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            />
-            <S.CharCount>{content.length}/200</S.CharCount>
-            <Button
-              variant={content.trim().length === 0 || loading ? 'disabled' : 'primary'}
-              onClick={handleSubmit}
-            >
-              {loading ? '전송 중...' : '제출하기'}
-            </Button>
-          </>
-        )}
+      <S.FormSection>
+        <S.FormLabel>{getFormLabel()}</S.FormLabel>
+        <S.Textarea
+          placeholder="자유롭게 작성해주세요 (최대 200자)"
+          maxLength={200}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+        />
+        <S.FormFooter>
+          <S.CharCount $warn={content.length > 180}>{content.length}/200</S.CharCount>
+        </S.FormFooter>
+      </S.FormSection>
 
-        {step === 'success' && (
-          <>
-            <S.SuccessIconWrap>
-              <S.SuccessIcon src={CheckIcon} alt="성공" />
-            </S.SuccessIconWrap>
-            <S.SuccessTitle>전달되었습니다!</S.SuccessTitle>
-            <S.SuccessDesc>소중한 의견 감사해요.</S.SuccessDesc>
-            <S.ResetButton onClick={handleReset}>다시 작성하기</S.ResetButton>
-          </>
-        )}
-      </S.CenterWrapper>
+      <Button
+        variant={content.trim().length === 0 || loading ? 'disabled' : 'primary'}
+        onClick={handleSubmit}
+      >
+        {loading ? '전송 중...' : '제출하기'}
+      </Button>
     </S.Container>
   );
 };

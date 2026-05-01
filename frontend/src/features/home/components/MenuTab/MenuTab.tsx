@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ComponentType } from 'react';
 import BackButton from '@/components/@common/BackButton/BackButton';
+import TopBar from '@/layouts/TopBar/TopBar';
 import SuggestionTab from '../SuggestionTab/SuggestionTab';
 import AccountSection from '../tabs/MenuTab/AccountSection/AccountSection';
 import PatchNotesView from './views/PatchNotesView';
@@ -25,6 +26,14 @@ type MenuView =
   | 'patch-notes'
   | 'service-info'
   | 'app-install';
+
+const VIEW_TITLE: Record<MenuView, string> = {
+  'my-info': '내 정보',
+  'game-manual': '게임 설명',
+  report: '건의사항 / 신고',
+  'patch-notes': '패치 내역',
+  'service-info': '서비스 정보',
+};
 
 const MENU_ITEMS: {
   key: MenuView;
@@ -76,13 +85,12 @@ const MenuTab = () => {
   if (activeView !== null) {
     return (
       <S.SubViewContainer>
-        {activeView !== 'report' && (
-          <S.SubViewHeader>
-            <BackButton onClick={() => setActiveView(null)} text="돌아가기" />
-          </S.SubViewHeader>
-        )}
+        <TopBar
+          left={<BackButton onClick={() => setActiveView(null)} />}
+          center={<S.SubViewTitle>{VIEW_TITLE[activeView]}</S.SubViewTitle>}
+        />
         <S.SubViewContent>
-          {activeView === 'report' && <SuggestionTab onBackToMenu={() => setActiveView(null)} />}
+          {activeView === 'report' && <SuggestionTab />}
           {activeView === 'patch-notes' && <PatchNotesView />}
           {activeView === 'service-info' && <ServiceInfoView />}
           {activeView === 'my-info' && <MyInfoView />}

@@ -7,22 +7,20 @@ export const Container = styled.div`
   padding: 20px 16px 32px;
 `;
 
-export const Header = styled.div`
+export const HintBanner = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-`;
-
-export const Title = styled.h3`
-  font-size: 17px;
-  font-weight: 800;
-  color: ${({ theme }) => theme.color.gray[900]};
-  letter-spacing: -0.02em;
-  margin: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: ${({ theme }) => theme.color.point[50]};
+  border-radius: 12px;
+  border-left: 3px solid ${({ theme }) => theme.color.point[400]};
 `;
 
 export const Subtitle = styled.p`
   font-size: 13px;
-  color: ${({ theme }) => theme.color.gray[400]};
+  font-weight: 500;
+  color: ${({ theme }) => theme.color.point[500]};
   margin: 0;
+  line-height: 1.5;
 `;

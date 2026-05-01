@@ -114,7 +114,8 @@ export const LinkLabel = styled.span`
 
 export const LinkIcon = styled.span`
   font-size: 16px;
-  color: ${({ theme }) => theme.color.point[400]};
+  font-weight: 300;
+  color: ${({ theme }) => theme.color.gray[300]};
 `;
 
 export const InternalLinkRow = styled.button`

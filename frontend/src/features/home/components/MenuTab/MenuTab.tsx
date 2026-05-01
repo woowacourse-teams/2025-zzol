@@ -10,9 +10,22 @@ import MyInfoView from './views/MyInfoView';
 import GameManualView from './views/GameManualView';
 import AppInstallView from './views/AppInstallView';
 import * as S from './MenuTab.styled';
-import { PersonIcon, BubbleIcon, ClipboardIcon, InfoIcon, GameIcon, DownloadIcon } from './menuIcons';
+import {
+  PersonIcon,
+  BubbleIcon,
+  ClipboardIcon,
+  InfoIcon,
+  GameIcon,
+  DownloadIcon,
+} from './menuIcons';
 
-type MenuView = 'my-info' | 'game-manual' | 'report' | 'patch-notes' | 'service-info' | 'app-install';
+type MenuView =
+  | 'my-info'
+  | 'game-manual'
+  | 'report'
+  | 'patch-notes'
+  | 'service-info'
+  | 'app-install';
 
 const VIEW_TITLE: Record<MenuView, string> = {
   'my-info': '내 정보',

@@ -11,7 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,13 +33,13 @@ public class UserEntity {
     private String nickname;
 
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     public UserEntity(String userCode, String nickname) {
-        final LocalDateTime now = LocalDateTime.now();
+        final Instant now = Instant.now();
         this.userCode = userCode;
         this.nickname = nickname;
         this.createdAt = now;
@@ -48,7 +48,7 @@ public class UserEntity {
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = Instant.now();
     }
 
     public User toDomain(OAuthAccountEntity oAuthAccountEntity) {

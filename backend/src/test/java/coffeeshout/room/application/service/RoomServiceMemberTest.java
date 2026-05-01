@@ -10,7 +10,6 @@ import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
-import java.util.Optional;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -39,7 +38,7 @@ class RoomServiceMemberTest extends ServiceTest {
 
         @Test
         void 요청_닉네임_무시하고_프로필_닉네임으로_방이_생성된다() {
-            final Room room = roomService.createRoom("다른이름", Optional.of(엠제이_인증));
+            final Room room = roomService.createRoom(엠제이_인증);
 
             final Player host = room.findPlayer(new PlayerName("엠제이"));
 
@@ -55,7 +54,7 @@ class RoomServiceMemberTest extends ServiceTest {
 
         @Test
         void 요청_닉네임으로_방이_생성된다() {
-            final Room room = roomService.createRoom("익명호스트", Optional.empty());
+            final Room room = roomService.createRoom("익명호스트");
 
             final Player host = room.findPlayer(new PlayerName("익명호스트"));
 

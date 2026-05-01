@@ -2,14 +2,18 @@ package coffeeshout.user.ui;
 
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.application.service.UserRegistrationService;
+import coffeeshout.user.config.JwtProperties;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.infra.oauth.CustomOAuth2UserService.CustomOAuth2User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -18,8 +22,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
 
+    static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+
     private final UserRegistrationService userRegistrationService;
     private final AuthTokenService authTokenService;
+    private final JwtProperties jwtProperties;
 
     @Value("${user.oauth.frontend-redirect-uri}")
     private String frontendRedirectUri;
@@ -42,10 +49,16 @@ public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
 
         final AuthTokenService.TokenPair tokens = authTokenService.issue(user);
 
-        final String redirectUrl = frontendRedirectUri
-                + "?accessToken=" + tokens.accessToken()
-                + "&refreshToken=" + tokens.refreshToken();
+        final ResponseCookie refreshTokenCookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, tokens.refreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(Duration.ofSeconds(jwtProperties.refreshTokenExpirationSeconds()))
+                .sameSite("None")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
+        final String redirectUrl = frontendRedirectUri + "?accessToken=" + tokens.accessToken();
         response.sendRedirect(redirectUrl);
     }
 }

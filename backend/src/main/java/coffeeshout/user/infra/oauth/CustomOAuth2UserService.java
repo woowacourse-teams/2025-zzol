@@ -2,8 +2,10 @@ package coffeeshout.user.infra.oauth;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.exception.UserErrorCode;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.springframework.security.core.GrantedAuthority;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -50,7 +52,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         @Override
-        public java.util.Collection<? extends org.springframework.security.core.GrantedAuthority> getAuthorities() {
+        public Collection<? extends GrantedAuthority> getAuthorities() {
             return delegate.getAuthorities();
         }
 

@@ -52,7 +52,9 @@ public class RoomRestController implements RoomApi {
             @AuthUser Optional<AuthenticatedUser> authUser,
             @Valid @RequestBody RoomEnterRequest request
     ) {
-        final Room room = roomService.createRoom(request.playerName(), authUser);
+        final Room room = authUser.isPresent()
+                ? roomService.createRoom(authUser.get())
+                : roomService.createRoom(request.playerName());
 
         return ResponseEntity.ok(RoomCreateResponse.from(room));
     }
@@ -63,10 +65,13 @@ public class RoomRestController implements RoomApi {
             @AuthUser Optional<AuthenticatedUser> authUser,
             @Valid @RequestBody RoomEnterRequest request
     ) {
-        return roomService.enterRoomAsync(joinCode, request.playerName(), authUser)
+        final CompletableFuture<Room> future = authUser.isPresent()
+                ? roomService.enterRoomAsync(joinCode, authUser.get())
+                : roomService.enterRoomAsync(joinCode, request.playerName());
+
+        return future
                 .thenApply(room -> ResponseEntity.ok(RoomEnterResponse.from(room)))
                 .exceptionally(throwable -> {
-                    // 원래 예외 추출
                     final Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
                     if (cause instanceof RuntimeException runtimeException) {
                         throw runtimeException;

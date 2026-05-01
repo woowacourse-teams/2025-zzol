@@ -3,15 +3,18 @@ package coffeeshout.user.application.service;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameValidator;
+import coffeeshout.user.config.UserCodeProperties;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
-import coffeeshout.user.domain.service.UserCodeGenerator;
+import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.infra.persistence.UserCreateAttemptHelper;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,11 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserRegistrationService {
 
     private final UserRepository userRepository;
-    private final UserCodeGenerator userCodeGenerator;
+    private final UserCreateAttemptHelper createAttemptHelper;
+    private final UserCodeProperties userCodeProperties;
     private final PlayerNameValidator playerNameValidator;
     private final NicknameDefaultGenerator nicknameDefaultGenerator;
 
-    @Transactional
     public User registerOrLogin(OAuthProvider provider, String providerUserId, String email, String suggestedNickname) {
         final Optional<User> existing = userRepository.findByProviderAndProviderUserId(
                 provider.getRegistrationId(), providerUserId);
@@ -35,15 +38,23 @@ public class UserRegistrationService {
         }
 
         final UserNickname nickname = resolveNickname(suggestedNickname);
-        final User newUser = new User(
-                null,
-                userCodeGenerator.generate(),
-                nickname,
-                new OAuthAccount(provider, providerUserId, email)
-        );
-        final User savedUser = userRepository.save(newUser);
-        log.debug("신규 회원 가입: userCode={}, provider={}", savedUser.getUserCode(), provider);
-        return savedUser;
+        final OAuthAccount oAuthAccount = new OAuthAccount(provider, providerUserId, email);
+
+        return saveNewUserWithRetry(nickname, oAuthAccount, provider);
+    }
+
+    private User saveNewUserWithRetry(UserNickname nickname, OAuthAccount oAuthAccount, OAuthProvider provider) {
+        for (int attempt = 0; attempt < userCodeProperties.maxRetry(); attempt++) {
+            try {
+                final User savedUser = createAttemptHelper.attempt(nickname, oAuthAccount);
+                log.debug("신규 회원 가입: userCode={}, provider={}", savedUser.getUserCode(), provider);
+                return savedUser;
+            } catch (DataIntegrityViolationException e) {
+                log.debug("UserCode 중복 발생, 재시도: {}/{}", attempt + 1, userCodeProperties.maxRetry());
+            }
+        }
+        throw new BusinessException(UserErrorCode.USER_CODE_GENERATION_FAILED,
+                "사용자 식별 코드 생성에 실패했습니다. 최대 시도 횟수를 초과했습니다.");
     }
 
     private UserNickname resolveNickname(String suggested) {

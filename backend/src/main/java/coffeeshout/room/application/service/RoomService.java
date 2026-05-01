@@ -44,7 +44,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -83,68 +82,49 @@ public class RoomService {
 
     @Transactional
     public Room createRoom(String hostName) {
-        return createRoom(hostName, Optional.empty());
+        final PlayerName playerName = new PlayerName(hostName);
+        playerNameValidator.validate(playerName);
+        return doCreateRoom(hostName, null);
     }
 
     @Transactional
-    public Room createRoom(String hostName, Optional<AuthenticatedUser> authUser) {
-        final String resolvedName = authUser
-                .map(u -> userProfileService.findById(u.userId()).getNickname().value())
-                .orElse(hostName);
-        final Long userId = authUser.map(AuthenticatedUser::userId).orElse(null);
+    public Room createRoom(AuthenticatedUser authUser) {
+        final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
+        return doCreateRoom(nickname, authUser.userId());
+    }
 
-        final PlayerName playerName = new PlayerName(resolvedName);
-        if (userId == null) {
-            playerNameValidator.validate(playerName);
-        }
+    private Room doCreateRoom(String resolvedName, Long userId) {
         final JoinCode joinCode = joinCodeGenerator.generate();
-
-        // 방 생성 (QR 코드는 PENDING 상태로 시작)
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, playerName, userId);
-
-        // 방 생성 후 이벤트 전달
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(resolvedName), userId);
         final BaseEvent event = new RoomCreateEvent(resolvedName, joinCode.getValue());
 
-        // 방 생성 이벤트: DB 저장과 원자적으로 묶기 위해 Outbox 경로 사용
-        // 트랜잭션 커밋 직후 AFTER_COMMIT으로 즉시 발행 (0ms 지연)
-        // Redis 장애 시에만 Worker가 500ms 후 재시도
         outboxEventRecorder.record(StreamKey.ROOM_BROADCAST, event);
-
-        // QR 코드 비동기 생성 시작
         qrCodeService.generateQrCodeAsync(joinCode.getValue());
-
         saveRoomEntity(joinCode.getValue());
 
         log.info("방 생성 이벤트 처리 완료 (DB 저장): eventId={}, joinCode={}, hostName={}",
                 event.eventId(), joinCode.getValue(), resolvedName);
-
-        // 해당 방 정보 수신
         return room;
     }
 
     public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName) {
-        return enterRoomAsync(joinCode, guestName, Optional.empty());
+        playerNameValidator.validate(new PlayerName(guestName));
+        return doEnterRoomAsync(joinCode, guestName, null);
     }
 
-    public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName,
-                                                    Optional<AuthenticatedUser> authUser) {
-        final String resolvedName = authUser
-                .map(u -> userProfileService.findById(u.userId()).getNickname().value())
-                .orElse(guestName);
-        final Long userId = authUser.map(AuthenticatedUser::userId).orElse(null);
+    public CompletableFuture<Room> enterRoomAsync(String joinCode, AuthenticatedUser authUser) {
+        final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
+        return doEnterRoomAsync(joinCode, nickname, authUser.userId());
+    }
 
-        if (userId == null) {
-            playerNameValidator.validate(new PlayerName(resolvedName));
-        }
+    private CompletableFuture<Room> doEnterRoomAsync(String joinCode, String resolvedName, Long userId) {
         final RoomJoinEvent event = new RoomJoinEvent(joinCode, resolvedName, userId);
-
         return processEventAsync(
                 event.eventId(),
-                // 방 참가는 결과를 CompletableFuture로 기다리는 요청-응답 패턴이므로 즉시 발행
                 () -> streamPublisher.publish(StreamKey.ROOM_JOIN, event),
                 "방 참가",
-                String.format("joinCode=%s, guestName=%s", joinCode, resolvedName),
-                room -> String.format("joinCode=%s, guestName=%s", joinCode, resolvedName)
+                String.format("joinCode=%s, playerName=%s", joinCode, resolvedName),
+                room -> String.format("joinCode=%s, playerName=%s", joinCode, resolvedName)
         );
     }
 

@@ -1,9 +1,10 @@
 package coffeeshout.user.infra.persistence;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.User;
-import coffeeshout.user.domain.UserCode;
 import coffeeshout.user.domain.repository.UserRepository;
+import coffeeshout.user.exception.UserErrorCode;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -14,11 +15,6 @@ public class UserRepositoryImpl implements UserRepository {
 
     private final UserJpaRepository userJpaRepository;
     private final OAuthAccountJpaRepository oAuthAccountJpaRepository;
-
-    @Override
-    public boolean existsByUserCode(UserCode userCode) {
-        return userJpaRepository.existsByUserCode(userCode.value());
-    }
 
     @Override
     public User save(User user) {
@@ -49,13 +45,13 @@ public class UserRepositoryImpl implements UserRepository {
 
     private User updateNickname(User user) {
         final UserEntity userEntity = userJpaRepository.findById(user.getId())
-                .orElseThrow();
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
         userEntity.updateNickname(user.getNickname().value());
         final UserEntity savedUser = userJpaRepository.save(userEntity);
 
         return oAuthAccountJpaRepository.findByUser_Id(savedUser.getId())
                 .map(savedUser::toDomain)
-                .orElseThrow();
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
     }
 
     @Override

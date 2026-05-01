@@ -1,6 +1,5 @@
 package coffeeshout.user.config;
 
-import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.AuthenticatedUser;
 import jakarta.servlet.FilterChain;
@@ -9,11 +8,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+@Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -41,8 +42,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(
                             user, null, AuthorityUtils.NO_AUTHORITIES);
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        } catch (BusinessException ignored) {
+        } catch (Exception e) {
             // 유효하지 않은 토큰은 익명으로 처리 (이후 엔드포인트에서 인증 필요 여부 판단)
+            log.debug("JWT 인증 실패, 익명 처리: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

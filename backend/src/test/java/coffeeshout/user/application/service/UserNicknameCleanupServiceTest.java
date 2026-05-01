@@ -64,7 +64,7 @@ class UserNicknameCleanupServiceTest {
             void setUp() {
                 사용자1 = UserFixture.저장된_회원(1L, "나쁜말");
                 사용자2 = UserFixture.저장된_회원(2L, "나쁜말");
-                given(userRepository.findAllByNickname(UserFixture.닉네임("나쁜말")))
+                given(userRepository.findAllByNickname(new UserNickname("나쁜말")))
                         .willReturn(List.of(사용자1, 사용자2));
                 given(nicknameDefaultGenerator.generate()).willReturn("용감한호랑이", "귀여운여우");
                 given(userRepository.save(any())).willAnswer(inv -> inv.getArgument(0));

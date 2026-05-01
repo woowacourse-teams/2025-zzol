@@ -19,7 +19,8 @@ const HomePage = () => {
   useEffect(() => {
     if (isConnected) stopSocket();
     clearIdentifier();
-  }, [clearIdentifier, isConnected, stopSocket]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const hasVisited = storageManager.getItem(STORAGE_KEYS.VISITED, 'sessionStorage');

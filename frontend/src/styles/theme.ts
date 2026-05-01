@@ -78,6 +78,13 @@ const typography = {
       "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
     lineHeight: 1.6,
   },
+  caption: {
+    fontSize: DESIGN_TOKENS.typography.caption,
+    fontWeight: 400,
+    fontFamily:
+      "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    lineHeight: 1.6,
+  },
 } as const;
 
 export const theme = {

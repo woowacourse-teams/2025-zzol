@@ -27,7 +27,7 @@ export const KakaoIcon = (props: IconProps) => (
   <svg viewBox="0 0 24 24" width="20" height="20" {...props}>
     <path
       d="M12 3C6.48 3 2 6.48 2 11c0 2.94 1.65 5.5 4.12 7.02L5.04 21l4.03-1.78C10.31 19.72 11.15 20 12 20c5.52 0 10-3.48 10-8s-4.48-9-10-9z"
-      fill="#3C1E1E"
+      fill="#000000"
     />
   </svg>
 );

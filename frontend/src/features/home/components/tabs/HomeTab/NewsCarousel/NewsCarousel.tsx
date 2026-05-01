@@ -44,7 +44,9 @@ const NewsCarousel = () => {
     });
   };
 
-  if (loading || !items.length) return null;
+  if (loading) return <S.SkeletonCard />;
+
+  if (!items.length) return null;
 
   return (
     <S.Wrapper>
@@ -74,8 +76,8 @@ const NewsCarousel = () => {
       </S.Track>
       {items.length > 1 && (
         <S.Dots>
-          {items.map((_, i) => (
-            <S.Dot key={i} $active={i === activeIndex} />
+          {items.map((item, i) => (
+            <S.Dot key={item.id} $active={i === activeIndex} />
           ))}
         </S.Dots>
       )}

@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
 
 export const Wrapper = styled.div`
   display: flex;
@@ -44,7 +45,7 @@ export const Tag = styled.span`
   align-items: center;
   padding: 3px 8px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: ${({ theme }) => theme.typography.caption.fontSize};
   font-weight: 700;
   letter-spacing: 0.03em;
   width: fit-content;
@@ -133,4 +134,23 @@ export const Dot = styled.span<{ $active: boolean }>`
   transition:
     width 0.2s ease,
     background 0.2s ease;
+`;
+
+const shimmer = keyframes`
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+`;
+
+export const SkeletonCard = styled.div`
+  width: 100%;
+  height: 110px;
+  border-radius: 16px;
+  background: linear-gradient(
+    90deg,
+    ${({ theme }) => theme.color.gray[100]} 25%,
+    ${({ theme }) => theme.color.gray[50]} 50%,
+    ${({ theme }) => theme.color.gray[100]} 75%
+  );
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.4s infinite linear;
 `;

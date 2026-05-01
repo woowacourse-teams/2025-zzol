@@ -77,7 +77,7 @@ class PlayerNameRankingCleanupServiceTest {
             given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
             given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
-                    .willReturn(List.of(new TopWinnerResponse("용감한호랑이", 5L)));
+                    .willReturn(List.of(new TopWinnerResponse("용감한호랑이", "ABCDF", 5L)));
             given(dashboardRepository.findRacingGameTopPlayers(any(), any(), anyInt()))
                     .willReturn(List.of());
 
@@ -99,7 +99,7 @@ class PlayerNameRankingCleanupServiceTest {
             given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
             given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
-                    .willReturn(List.of(new TopWinnerResponse("씨발", 3L)));
+                    .willReturn(List.of(new TopWinnerResponse("씨발", "ABCDF", 3L)));
             given(dashboardRepository.findRacingGameTopPlayers(any(), any(), anyInt()))
                     .willReturn(List.of());
             given(playerRepository.findAllByPlayerName("씨발"))
@@ -154,7 +154,7 @@ class PlayerNameRankingCleanupServiceTest {
             given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
             given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
-                    .willReturn(List.of(new TopWinnerResponse("씨발", 2L)));
+                    .willReturn(List.of(new TopWinnerResponse("씨발", "ABCDF", 3L)));
             given(dashboardRepository.findRacingGameTopPlayers(any(), any(), anyInt()))
                     .willReturn(List.of());
             given(playerRepository.findAllByPlayerName("씨발"))

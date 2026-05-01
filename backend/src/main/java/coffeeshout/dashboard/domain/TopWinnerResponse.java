@@ -1,7 +1,8 @@
 package coffeeshout.dashboard.domain;
 
 public record TopWinnerResponse(
-        String playerName,
+        String nickname,
+        String userCode,
         Long winCount
 ) {
 }

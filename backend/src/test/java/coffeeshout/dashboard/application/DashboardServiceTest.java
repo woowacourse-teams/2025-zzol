@@ -20,6 +20,8 @@ import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.room.infra.persistence.RouletteResultEntity;
 import coffeeshout.room.infra.persistence.RouletteResultJpaRepository;
+import coffeeshout.user.infra.persistence.UserEntity;
+import coffeeshout.user.infra.persistence.UserJpaRepository;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -42,6 +44,9 @@ class DashboardServiceTest extends ServiceTest {
     private RouletteResultJpaRepository rouletteResultJpaRepository;
 
     @Autowired
+    private UserJpaRepository userJpaRepository;
+
+    @Autowired
     private MiniGameJpaRepository miniGameJpaRepository;
 
     @Autowired
@@ -52,31 +57,30 @@ class DashboardServiceTest extends ServiceTest {
     class GetTop5WinnersTest {
 
         @Test
-        void 이번달_가장_많이_당첨된_닉네임_상위_5개를_조회한다() {
+        void 이번달_가장_많이_당첨된_로그인_사용자_상위_3명을_조회한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("ABCD"));
 
+            final UserEntity user1 = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
+            final UserEntity user2 = userJpaRepository.save(new UserEntity("XY4ZQ", "영희"));
+            final UserEntity user3 = userJpaRepository.save(new UserEntity("GH7KL", "민수"));
+
             final PlayerEntity player1 = playerJpaRepository.save(
-                    new PlayerEntity(room, "철수", PlayerType.HOST)
+                    new PlayerEntity(room, "철수", PlayerType.HOST, user1.getId())
             );
             final PlayerEntity player2 = playerJpaRepository.save(
-                    new PlayerEntity(room, "영희", PlayerType.GUEST)
+                    new PlayerEntity(room, "영희", PlayerType.GUEST, user2.getId())
             );
             final PlayerEntity player3 = playerJpaRepository.save(
-                    new PlayerEntity(room, "민수", PlayerType.GUEST)
+                    new PlayerEntity(room, "민수", PlayerType.GUEST, user3.getId())
             );
 
-            // 철수 5번 당첨
             for (int i = 0; i < 5; i++) {
                 rouletteResultJpaRepository.save(new RouletteResultEntity(room, player1, 50));
             }
-
-            // 영희 3번 당첨
             for (int i = 0; i < 3; i++) {
                 rouletteResultJpaRepository.save(new RouletteResultEntity(room, player2, 30));
             }
-
-            // 민수 2번 당첨
             for (int i = 0; i < 2; i++) {
                 rouletteResultJpaRepository.save(new RouletteResultEntity(room, player3, 20));
             }
@@ -86,11 +90,11 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).hasSize(3);
-            assertThat(result.getFirst().playerName()).isEqualTo("철수");
+            assertThat(result.getFirst().nickname()).isEqualTo("철수");
             assertThat(result.getFirst().winCount()).isEqualTo(5);
-            assertThat(result.get(1).playerName()).isEqualTo("영희");
+            assertThat(result.get(1).nickname()).isEqualTo("영희");
             assertThat(result.get(1).winCount()).isEqualTo(3);
-            assertThat(result.get(2).playerName()).isEqualTo("민수");
+            assertThat(result.get(2).nickname()).isEqualTo("민수");
             assertThat(result.get(2).winCount()).isEqualTo(2);
         }
 
@@ -104,16 +108,41 @@ class DashboardServiceTest extends ServiceTest {
         }
 
         @Test
-        void 같은_닉네임의_당첨은_합산된다() {
+        void 로그인하지_않은_게스트의_당첨은_집계에서_제외된다() {
             // given
-            final RoomEntity room1 = roomJpaRepository.save(new RoomEntity("AAAA"));
-            final RoomEntity room2 = roomJpaRepository.save(new RoomEntity("BBBB"));
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("AAAA"));
 
+            final UserEntity user = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
+            final PlayerEntity loginPlayer = playerJpaRepository.save(
+                    new PlayerEntity(room, "철수", PlayerType.HOST, user.getId())
+            );
+            final PlayerEntity guestPlayer = playerJpaRepository.save(
+                    new PlayerEntity(room, "게스트", PlayerType.GUEST)
+            );
+
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, loginPlayer, 50));
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, guestPlayer, 30));
+
+            // when
+            final List<TopWinnerResponse> result = dashboardService.getTop5Winners();
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().nickname()).isEqualTo("철수");
+        }
+
+        @Test
+        void 같은_userId의_당첨은_여러_방에서도_합산된다() {
+            // given
+            final RoomEntity room1 = roomJpaRepository.save(new RoomEntity("BBBB"));
+            final RoomEntity room2 = roomJpaRepository.save(new RoomEntity("CCCC"));
+
+            final UserEntity user = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
             final PlayerEntity player1 = playerJpaRepository.save(
-                    new PlayerEntity(room1, "철수", PlayerType.HOST)
+                    new PlayerEntity(room1, "철수", PlayerType.HOST, user.getId())
             );
             final PlayerEntity player2 = playerJpaRepository.save(
-                    new PlayerEntity(room2, "철수", PlayerType.HOST)
+                    new PlayerEntity(room2, "철수", PlayerType.HOST, user.getId())
             );
 
             rouletteResultJpaRepository.save(new RouletteResultEntity(room1, player1, 50));
@@ -124,20 +153,21 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.getFirst().playerName()).isEqualTo("철수");
             assertThat(result.getFirst().winCount()).isEqualTo(2);
         }
 
         @Test
         void 다섯개_이상이면_상위_5개만_반환한다() {
             // given
-            final RoomEntity room = roomJpaRepository.save(new RoomEntity("CCCC"));
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("DDDD"));
 
             for (int i = 1; i <= 10; i++) {
-                final PlayerEntity player = playerJpaRepository.save(
-                        new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST)
+                final UserEntity user = userJpaRepository.save(
+                        new UserEntity(String.format("U%04d", i), "플레이어" + i)
                 );
-
+                final PlayerEntity player = playerJpaRepository.save(
+                        new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST, user.getId())
+                );
                 for (int j = 0; j < i; j++) {
                     rouletteResultJpaRepository.save(new RouletteResultEntity(room, player, 10));
                 }
@@ -148,13 +178,11 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result).hasSize(5);
-            assertThat(result.getFirst().playerName()).isEqualTo("플레이어10");
+            assertThat(result.getFirst().nickname()).isEqualTo("플레이어10");
             assertThat(result.getFirst().winCount()).isEqualTo(10);
-            assertThat(result.get(4).playerName()).isEqualTo("플레이어6");
+            assertThat(result.get(4).nickname()).isEqualTo("플레이어6");
             assertThat(result.get(4).winCount()).isEqualTo(6);
         }
-
-
     }
 
     @Nested

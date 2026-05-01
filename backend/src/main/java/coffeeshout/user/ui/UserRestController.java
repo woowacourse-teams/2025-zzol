@@ -38,6 +38,16 @@ public class UserRestController {
         return ResponseEntity.ok(UserMeResponse.from(found));
     }
 
+    @PatchMapping("/me")
+    public ResponseEntity<UserMeResponse> updateMe(
+            @AuthUser Optional<AuthenticatedUser> authUser,
+            @Valid @RequestBody UpdateNicknameRequest request
+    ) {
+        final AuthenticatedUser user = requireAuthenticated(authUser);
+        final User updated = userProfileService.changeNickname(user.userId(), request.nickname());
+        return ResponseEntity.ok(UserMeResponse.from(updated));
+    }
+
     @PatchMapping("/me/nickname")
     public ResponseEntity<UserMeResponse> updateNickname(
             @AuthUser Optional<AuthenticatedUser> authUser,

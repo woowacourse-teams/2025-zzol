@@ -1,6 +1,8 @@
 import useModal from '@/components/@common/Modal/useModal';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
+import { useAuth } from '@/features/auth/contexts/AuthContext';
+import { useMyStats } from '@/features/home/hooks/useMyStats';
 import EnterRoomModal from '../../EnterRoomModal/EnterRoomModal';
 import HeroCard from './HeroCard/HeroCard';
 import JoinByCodeCard from './JoinByCodeCard/JoinByCodeCard';
@@ -12,6 +14,8 @@ const HomeTab = () => {
   const navigate = useReplaceNavigate();
   const { openModal, closeModal } = useModal();
   const { setHost, setGuest } = usePlayerType();
+  const { isAuthenticated } = useAuth();
+  const { winCount, streak } = useMyStats();
 
   const handleClickHost = () => {
     setHost();
@@ -28,14 +32,41 @@ const HomeTab = () => {
 
   return (
     <S.Container>
-      <S.CardGrid>
-        <HeroCard onClick={handleClickHost} />
-        <JoinByCodeCard onClick={handleClickGuest} />
-      </S.CardGrid>
-
       <S.Section>
         <S.SectionTitle>서비스 소식</S.SectionTitle>
         <NewsCarousel />
+      </S.Section>
+
+      {isAuthenticated && (
+        <S.Section>
+          <S.SectionTitle>내 정보</S.SectionTitle>
+          <S.MyInfoCard>
+            <S.MyInfoStatGrid>
+              <S.MyInfoStat>
+                <S.MyInfoLabel>누적 당첨 횟수</S.MyInfoLabel>
+                <S.MyInfoValueRow>
+                  <S.MyInfoNumber>{winCount}</S.MyInfoNumber>
+                  <S.MyInfoUnit>회</S.MyInfoUnit>
+                </S.MyInfoValueRow>
+              </S.MyInfoStat>
+              <S.MyInfoStat>
+                <S.MyInfoLabel>연속 생존</S.MyInfoLabel>
+                <S.MyInfoValueRow>
+                  <S.MyInfoNumber>{streak}</S.MyInfoNumber>
+                  <S.MyInfoUnit>번</S.MyInfoUnit>
+                </S.MyInfoValueRow>
+              </S.MyInfoStat>
+            </S.MyInfoStatGrid>
+          </S.MyInfoCard>
+        </S.Section>
+      )}
+
+      <S.Section>
+        <S.SectionTitle>게임 시작</S.SectionTitle>
+        <S.CardGrid>
+          <HeroCard onClick={handleClickHost} />
+          <JoinByCodeCard onClick={handleClickGuest} />
+        </S.CardGrid>
       </S.Section>
 
       <S.Section>
@@ -45,6 +76,10 @@ const HomeTab = () => {
         </S.SectionHeader>
         <MiniGameCarousel />
       </S.Section>
+
+      <S.ScrollIndicator>
+        <S.ScrollChevron>⌄</S.ScrollChevron>
+      </S.ScrollIndicator>
     </S.Container>
   );
 };

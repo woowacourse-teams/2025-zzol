@@ -8,6 +8,7 @@ export const Wrapper = styled.div`
 
 export const Track = styled.div`
   display: flex;
+  width: 100%;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;

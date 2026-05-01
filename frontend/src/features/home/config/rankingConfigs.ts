@@ -39,7 +39,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
     transformData: (raw) =>
       (raw as TopWinner[]).map((w, i) => ({
         rank: i + 1,
-        name: w.playerName,
+        name: w.nickname,
         count: w.winCount,
       })),
   },

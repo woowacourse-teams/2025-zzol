@@ -14,11 +14,3 @@ export const Logo = styled.div`
   display: flex;
   align-items: center;
 `;
-
-export const LogoText = styled.span`
-  font-size: 22px;
-  font-weight: 900;
-  color: ${({ theme }) => theme.color.point[500]};
-  letter-spacing: -0.04em;
-  line-height: 1;
-`;

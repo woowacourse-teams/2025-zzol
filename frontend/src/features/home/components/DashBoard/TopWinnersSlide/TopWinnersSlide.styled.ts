@@ -62,14 +62,28 @@ export const Rank = styled.span<{ $rank: number }>`
   border: ${({ $rank, theme }) => ($rank > 3 ? `1px solid ${theme.color.gray[200]}` : 'none')};
 `;
 
-export const Name = styled.span`
+export const NameWrapper = styled.div`
   flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+`;
+
+export const Name = styled.span`
   font-size: 14px;
   font-weight: 600;
   color: ${({ theme }) => theme.color.gray[800]};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+`;
+
+export const UserCode = styled.span`
+  font-size: 11px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.color.gray[400]};
+  flex-shrink: 0;
 `;
 
 export const Count = styled.span`

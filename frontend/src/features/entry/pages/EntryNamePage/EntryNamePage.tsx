@@ -40,16 +40,16 @@ const EntryNamePage = () => {
   const { user, isAuthenticated } = useAuth();
 
   const hasAutoProceeded = useRef(false);
-  const isAutoHost = isAuthenticated && !!user && playerType === 'HOST';
+  const isAutoProceeed = isAuthenticated && !!user;
 
   useEffect(() => {
-    if (!isAutoHost || hasAutoProceeded.current) return;
+    if (!isAutoProceeed || hasAutoProceeded.current) return;
     hasAutoProceeded.current = true;
     setMyName(user!.nickname);
     proceedToRoom(user!.nickname).catch(() => {
       navigate('/');
     });
-  }, [isAutoHost, navigate, proceedToRoom, setMyName, user]);
+  }, [isAutoProceeed, navigate, proceedToRoom, setMyName, user]);
 
   const checkGuestNameQuery = new URLSearchParams({
     joinCode: joinCode ?? '',
@@ -71,7 +71,7 @@ const EntryNamePage = () => {
       errorDisplayMode: 'toast',
     });
 
-  if (isAutoHost) return null;
+  if (isAutoProceeed) return null;
 
   const handleNavigateToHome = () => {
     navigate('/');

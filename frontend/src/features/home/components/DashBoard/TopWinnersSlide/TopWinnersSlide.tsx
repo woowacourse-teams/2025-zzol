@@ -14,9 +14,12 @@ const TopWinnersSlide = ({ winners, displayCount = 5 }: Props) => (
     ) : (
       <S.List>
         {winners.slice(0, displayCount).map((winner, index) => (
-          <S.Item key={winner.playerName}>
+          <S.Item key={winner.nickname}>
             <S.Rank $rank={index + 1}>{index + 1}</S.Rank>
-            <S.Name>{winner.playerName}</S.Name>
+            <S.NameWrapper>
+              <S.Name>{winner.nickname}</S.Name>
+              <S.UserCode>#{winner.userCode}</S.UserCode>
+            </S.NameWrapper>
             <S.Count>{winner.winCount}회</S.Count>
           </S.Item>
         ))}

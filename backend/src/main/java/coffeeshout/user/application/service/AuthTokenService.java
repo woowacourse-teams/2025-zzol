@@ -4,6 +4,7 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.config.JwtProperties;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.User;
+import coffeeshout.user.domain.repository.OAuthCodeRepository;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
 import coffeeshout.user.domain.service.JwtIssuer;
 import coffeeshout.user.exception.UserErrorCode;
@@ -15,11 +16,27 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthTokenService {
 
+    private static final long OAUTH_CODE_TTL_SECONDS = 30;
+
     private final JwtIssuer jwtIssuer;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final OAuthCodeRepository oAuthCodeRepository;
     private final JwtProperties jwtProperties;
 
     public record TokenPair(String accessToken, String refreshToken) {
+    }
+
+    public String issueCode(User user) {
+        final TokenPair tokens = issue(user);
+        final String code = UUID.randomUUID().toString();
+        oAuthCodeRepository.save(code, tokens, OAUTH_CODE_TTL_SECONDS);
+        return code;
+    }
+
+    public TokenPair exchangeCode(String code) {
+        return oAuthCodeRepository.findAndDelete(code)
+                .orElseThrow(() -> new BusinessException(
+                        UserErrorCode.OAUTH_CODE_NOT_FOUND, "유효하지 않거나 만료된 인증 코드입니다."));
     }
 
     public TokenPair issue(User user) {

@@ -4,6 +4,7 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportStatus;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -50,11 +51,8 @@ public class Report {
 
     private Instant resolvedAt;
 
-    @Column(name = "user_id")
-    private Long userId;
-
-    @Column(name = "user_code", length = 5)
-    private String userCode;
+    @Embedded
+    private Reporter author;
 
     public void resolve() {
         this.status = ReportStatus.RESOLVED;
@@ -62,20 +60,20 @@ public class Report {
     }
 
     public static Report createBugReport(MiniGameType gameType, String joinCode, String content, Clock clock) {
-        return createBugReport(gameType, joinCode, content, Instant.now(clock));
+        return createBugReport(gameType, joinCode, content, Instant.now(clock), null);
     }
 
     public static Report createBugReport(MiniGameType gameType, String joinCode, String content, Instant createdAt) {
-        return createBugReport(gameType, joinCode, content, createdAt, null, null);
+        return createBugReport(gameType, joinCode, content, createdAt, null);
     }
 
     public static Report createBugReport(MiniGameType gameType, String joinCode, String content, Clock clock,
-                                         Long userId, String userCode) {
-        return createBugReport(gameType, joinCode, content, Instant.now(clock), userId, userCode);
+                                         Reporter author) {
+        return createBugReport(gameType, joinCode, content, Instant.now(clock), author);
     }
 
     public static Report createBugReport(MiniGameType gameType, String joinCode, String content, Instant createdAt,
-                                         Long userId, String userCode) {
+                                         Reporter author) {
         final Report entity = new Report();
         entity.category = ReportCategory.BUG;
         entity.gameType = gameType;
@@ -83,33 +81,31 @@ public class Report {
         entity.content = content;
         entity.status = ReportStatus.PENDING;
         entity.createdAt = createdAt;
-        entity.userId = userId;
-        entity.userCode = userCode;
+        entity.author = author;
         return entity;
     }
 
     public static Report createGeneralReport(ReportCategory category, String content, Clock clock) {
-        return createGeneralReport(category, content, Instant.now(clock));
+        return createGeneralReport(category, content, Instant.now(clock), null);
     }
 
     public static Report createGeneralReport(ReportCategory category, String content, Instant createdAt) {
-        return createGeneralReport(category, content, createdAt, null, null);
+        return createGeneralReport(category, content, createdAt, null);
     }
 
     public static Report createGeneralReport(ReportCategory category, String content, Clock clock,
-                                             Long userId, String userCode) {
-        return createGeneralReport(category, content, Instant.now(clock), userId, userCode);
+                                             Reporter author) {
+        return createGeneralReport(category, content, Instant.now(clock), author);
     }
 
     public static Report createGeneralReport(ReportCategory category, String content, Instant createdAt,
-                                             Long userId, String userCode) {
+                                             Reporter author) {
         final Report entity = new Report();
         entity.category = category;
         entity.content = content;
         entity.status = ReportStatus.PENDING;
         entity.createdAt = createdAt;
-        entity.userId = userId;
-        entity.userCode = userCode;
+        entity.author = author;
         return entity;
     }
 }

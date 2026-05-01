@@ -5,6 +5,7 @@ import coffeeshout.global.ratelimit.ReportRateLimitStore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.exception.ReportErrorCode;
+import coffeeshout.report.infra.persistence.Reporter;
 import coffeeshout.user.domain.AuthenticatedUser;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +35,9 @@ public class ReportFacade {
         if (!rateLimitStore.tryAcquire(ip)) {
             throw new BusinessException(ReportErrorCode.REPORT_RATE_LIMITED, ReportErrorCode.REPORT_RATE_LIMITED.getMessage());
         }
-        final Long userId = authUser.map(AuthenticatedUser::userId).orElse(null);
-        final String userCode = authUser.map(AuthenticatedUser::userCode).orElse(null);
-        return reportService.submit(category, gameType, joinCode, content, userId, userCode);
+        final Reporter author = authUser
+                .map(u -> new Reporter(u.userId(), u.userCode()))
+                .orElse(null);
+        return reportService.submit(category, gameType, joinCode, content, author);
     }
 }

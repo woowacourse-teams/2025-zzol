@@ -30,7 +30,7 @@ class PlayerNameValidatorTest {
 
         @Test
         void null_PlayerName은_NullPointerException을_던진다() {
-            assertThatThrownBy(() -> playerNameValidator.validate(null))
+            assertThatThrownBy(() -> playerNameValidator.validate((PlayerName) null))
                     .isInstanceOf(NullPointerException.class);
         }
 

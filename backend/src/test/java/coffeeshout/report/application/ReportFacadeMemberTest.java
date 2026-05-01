@@ -41,8 +41,8 @@ class ReportFacadeMemberTest extends ServiceTest {
 
             final Report saved = reportRepository.findById(id).orElseThrow();
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(saved.getUserId()).isEqualTo(1L);
-                softly.assertThat(saved.getUserCode()).isEqualTo("AB3CD");
+                softly.assertThat(saved.getAuthor().getUserId()).isEqualTo(1L);
+                softly.assertThat(saved.getAuthor().getUserCode()).isEqualTo("AB3CD");
             });
         }
     }
@@ -63,8 +63,7 @@ class ReportFacadeMemberTest extends ServiceTest {
 
             final Report saved = reportRepository.findById(id).orElseThrow();
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(saved.getUserId()).isNull();
-                softly.assertThat(saved.getUserCode()).isNull();
+                softly.assertThat(saved.getAuthor()).isNull();
             });
         }
     }

@@ -2,8 +2,9 @@ package coffeeshout.report.application;
 
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.application.event.ReportSubmittedEvent;
-import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;
+import coffeeshout.report.infra.persistence.Report;
+import coffeeshout.report.infra.persistence.Reporter;
 import coffeeshout.report.infra.persistence.ReportRepository;
 import java.time.Clock;
 import lombok.RequiredArgsConstructor;
@@ -21,15 +22,15 @@ public class ReportService {
 
     @Transactional
     public long submit(ReportCategory category, MiniGameType gameType, String joinCode, String content) {
-        return submit(category, gameType, joinCode, content, null, null);
+        return submit(category, gameType, joinCode, content, null);
     }
 
     @Transactional
     public long submit(ReportCategory category, MiniGameType gameType, String joinCode, String content,
-                       Long userId, String userCode) {
+                       Reporter author) {
         final Report entity = category == ReportCategory.BUG
-                ? Report.createBugReport(gameType, joinCode, content, clock, userId, userCode)
-                : Report.createGeneralReport(category, content, clock, userId, userCode);
+                ? Report.createBugReport(gameType, joinCode, content, clock, author)
+                : Report.createGeneralReport(category, content, clock, author);
         final Report saved = reportRepository.save(entity);
         eventPublisher.publishEvent(
                 new ReportSubmittedEvent(

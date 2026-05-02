@@ -1,6 +1,7 @@
 import { type KeyboardEvent, useRef, useState } from 'react';
 import useModal from '@/components/@common/Modal/useModal';
 import useToast from '@/components/@common/Toast/useToast';
+import { ApiError } from '@/apis/rest/error';
 import { useAuth } from '@/features/auth/contexts/AuthContext';
 import LoginSheet from '@/features/auth/components/LoginSheet/LoginSheet';
 import * as S from './AccountSection.styled';
@@ -48,8 +49,10 @@ const AccountSection = () => {
       await updateNickname(trimmed);
       showToast({ message: '닉네임이 변경되었습니다.', type: 'success' });
       setIsEditing(false);
-    } catch {
-      showToast({ message: '닉네임 변경에 실패했습니다.', type: 'error' });
+    } catch (e) {
+      const message =
+        e instanceof ApiError && e.status === 400 ? e.message : '닉네임 변경에 실패했습니다.';
+      showToast({ message, type: 'error' });
     } finally {
       setIsSaving(false);
     }

@@ -29,7 +29,7 @@ public class LadderFlowOrchestrator {
         ladderFlowScheduler.schedule(description(room), Duration.ZERO)
                 .andThen(prepare(game, room), timing.description())
                 .andThen(drawing(game, room), timing.prepare())
-                .andThen(result(game, room), timing.drawing())
+                .andThen(result(game, room), timing.drawing().plus(timing.drawingGracePeriod()))
                 .andThen(done(game, room), timing.result())
                 .onError(ex -> log.error("사다리게임 flow 실패: joinCode={}", joinCode, ex));
     }

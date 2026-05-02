@@ -84,6 +84,7 @@ ladder:
     description: 500ms
     prepare: 500ms
     drawing: 1000ms
+    drawing-grace-period: 300ms
     result: 500ms
 
 card-game:

@@ -19,6 +19,23 @@ allowed-tools: Read, Bash, Glob
 - type 종류: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 - `$ARGUMENTS`에 제목이 주어지면 그대로 사용, 없으면 커밋 내용을 분석해 자동 생성
 
+## 라벨 & Assignee
+
+**라벨** — type에 따라 자동 선택 (중복 가능):
+
+| type | 라벨 |
+|------|------|
+| feat | `✨feat`, `BE` 또는 `FE` |
+| fix | `🐞bug`, `BE` 또는 `FE` |
+| refactor | `🛠️refactor`, `BE` 또는 `FE` |
+| chore | `⚙️chore` |
+| docs | `📝docs` |
+| test | `🧪 test` |
+
+우선순위 라벨(`p-*`)은 `$ARGUMENTS`에 명시된 경우에만 추가한다.
+
+**Assignee** — `gh api user --jq '.login'`으로 현재 git 사용자 GitHub 로그인을 조회해 자동 지정한다.
+
 ## 템플릿 작성 규칙
 
 `.github/pull_request_template.md`의 섹션을 그대로 유지하고 아래 기준으로 채운다.
@@ -33,9 +50,14 @@ allowed-tools: Read, Bash, Glob
 ## 실행
 
 ```bash
+# assignee 조회
+gh api user --jq '.login'
+
 gh pr create \
   --title "[type] 제목" \
   --base be/dev \
+  --label "라벨1,라벨2" \
+  --assignee "$(gh api user --jq '.login')" \
   --body "$(cat <<'EOF'
 <템플릿 채운 내용>
 EOF

@@ -11,6 +11,7 @@ export const STORAGE_KEYS = {
   NON_WIN_STREAK: 'zzol-non-win-streak',
   ACCESS_TOKEN: 'zzol-access-token',
   REFRESH_TOKEN: 'zzol-refresh-token',
+  TEMP_TOKEN: 'zzol-temp-token',
 } as const;
 
 type StorageType = 'localStorage' | 'sessionStorage';

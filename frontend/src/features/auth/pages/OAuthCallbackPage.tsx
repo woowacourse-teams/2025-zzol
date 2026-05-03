@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useToast from '@/components/@common/Toast/useToast';
+import { storageManager, STORAGE_KEYS } from '@/utils/StorageManager';
 import { useAuth } from '../contexts/AuthContext';
 import { tokenStore } from '../tokens';
 import { authApi } from '../api/authApi';
@@ -34,10 +35,15 @@ const OAuthCallbackPage = () => {
       }
 
       try {
-        const tokens = await authApi.token(code);
-        tokenStore.setTokens(tokens);
-        await refreshUser();
-        navigate('/', { replace: true });
+        const result = await authApi.token(code);
+        if (result.isNewUser) {
+          storageManager.setItem(STORAGE_KEYS.TEMP_TOKEN, result.tempToken, 'sessionStorage');
+          navigate('/auth/terms', { replace: true });
+        } else {
+          tokenStore.setTokens({ accessToken: result.accessToken });
+          await refreshUser();
+          navigate('/', { replace: true });
+        }
       } catch {
         showToast({ message: '로그인 처리 중 오류가 발생했습니다.', type: 'error' });
         navigate('/', { replace: true });

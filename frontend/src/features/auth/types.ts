@@ -9,3 +9,7 @@ export type User = {
 export type Tokens = {
   accessToken: string;
 };
+
+export type OAuthCallbackResponse =
+  | { isNewUser: false; accessToken: string; refreshToken: string }
+  | { isNewUser: true; tempToken: string; accessToken: null; refreshToken: null };

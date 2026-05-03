@@ -190,18 +190,22 @@ class DashboardServiceTest extends ServiceTest {
     class GetLowestProbabilityWinnerTest {
 
         @Test
-        void 이번달_최소_확률로_당첨된_닉네임을_조회한다() {
+        void 이번달_최소_확률로_당첨된_로그인_사용자_닉네임을_조회한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("DDDD"));
 
+            final UserEntity user1 = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
+            final UserEntity user2 = userJpaRepository.save(new UserEntity("XY4ZQ", "영희"));
+            final UserEntity user3 = userJpaRepository.save(new UserEntity("GH7KL", "민수"));
+
             final PlayerEntity player1 = playerJpaRepository.save(
-                    new PlayerEntity(room, "철수", PlayerType.HOST)
+                    new PlayerEntity(room, "철수", PlayerType.HOST, user1.getId())
             );
             final PlayerEntity player2 = playerJpaRepository.save(
-                    new PlayerEntity(room, "영희", PlayerType.GUEST)
+                    new PlayerEntity(room, "영희", PlayerType.GUEST, user2.getId())
             );
             final PlayerEntity player3 = playerJpaRepository.save(
-                    new PlayerEntity(room, "민수", PlayerType.GUEST)
+                    new PlayerEntity(room, "민수", PlayerType.GUEST, user3.getId())
             );
 
             rouletteResultJpaRepository.save(new RouletteResultEntity(room, player1, 50));
@@ -217,18 +221,22 @@ class DashboardServiceTest extends ServiceTest {
         }
 
         @Test
-        void 같은_최소_확률로_당첨된_사람이_여러명이면_모두_조회한다() {
+        void 같은_최소_확률로_당첨된_로그인_사용자가_여러명이면_모두_조회한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("GGGG"));
 
+            final UserEntity user1 = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
+            final UserEntity user2 = userJpaRepository.save(new UserEntity("XY4ZQ", "영희"));
+            final UserEntity user3 = userJpaRepository.save(new UserEntity("GH7KL", "민수"));
+
             final PlayerEntity player1 = playerJpaRepository.save(
-                    new PlayerEntity(room, "철수", PlayerType.HOST)
+                    new PlayerEntity(room, "철수", PlayerType.HOST, user1.getId())
             );
             final PlayerEntity player2 = playerJpaRepository.save(
-                    new PlayerEntity(room, "영희", PlayerType.GUEST)
+                    new PlayerEntity(room, "영희", PlayerType.GUEST, user2.getId())
             );
             final PlayerEntity player3 = playerJpaRepository.save(
-                    new PlayerEntity(room, "민수", PlayerType.GUEST)
+                    new PlayerEntity(room, "민수", PlayerType.GUEST, user3.getId())
             );
 
             rouletteResultJpaRepository.save(new RouletteResultEntity(room, player1, 50));
@@ -247,10 +255,12 @@ class DashboardServiceTest extends ServiceTest {
         void 최소_확률_당첨자가_5명_이상이면_5명만_반환한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("HHHH"));
+            final String[] codes = {"AB3C", "AB4C", "AB6C", "AB7C", "AB8C", "AB9C", "AC3D", "AC4D", "AC6D", "AC7D"};
 
-            for (int i = 1; i <= 10; i++) {
+            for (int i = 0; i < 10; i++) {
+                final UserEntity user = userJpaRepository.save(new UserEntity(codes[i], "플레이어" + (i + 1)));
                 final PlayerEntity player = playerJpaRepository.save(
-                        new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST)
+                        new PlayerEntity(room, "플레이어" + (i + 1), PlayerType.GUEST, user.getId())
                 );
                 rouletteResultJpaRepository.save(new RouletteResultEntity(room, player, 1));
             }
@@ -269,14 +279,18 @@ class DashboardServiceTest extends ServiceTest {
             final RoomEntity room1 = roomJpaRepository.save(new RoomEntity("EEEE"));
             final RoomEntity room2 = roomJpaRepository.save(new RoomEntity("FFFF"));
 
+            final UserEntity user1 = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
+            final UserEntity user2 = userJpaRepository.save(new UserEntity("XY4ZQ", "영희"));
+            final UserEntity user3 = userJpaRepository.save(new UserEntity("GH7KL", "민수"));
+
             final PlayerEntity player1 = playerJpaRepository.save(
-                    new PlayerEntity(room1, "철수", PlayerType.HOST)
+                    new PlayerEntity(room1, "철수", PlayerType.HOST, user1.getId())
             );
             final PlayerEntity player2 = playerJpaRepository.save(
-                    new PlayerEntity(room2, "영희", PlayerType.HOST)
+                    new PlayerEntity(room2, "영희", PlayerType.HOST, user2.getId())
             );
             final PlayerEntity player3 = playerJpaRepository.save(
-                    new PlayerEntity(room2, "민수", PlayerType.GUEST)
+                    new PlayerEntity(room2, "민수", PlayerType.GUEST, user3.getId())
             );
 
             rouletteResultJpaRepository.save(new RouletteResultEntity(room1, player1, 20));
@@ -289,6 +303,32 @@ class DashboardServiceTest extends ServiceTest {
             // then
             assertThat(result.probability()).isEqualTo(0.03);
             assertThat(result.playerNames()).containsExactly("민수");
+        }
+
+        @Test
+        void 게스트_플레이어의_당첨은_최소_확률_집계에서_제외된다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("PPQQ"));
+
+            final UserEntity user = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
+            final PlayerEntity loginPlayer = playerJpaRepository.save(
+                    new PlayerEntity(room, "철수", PlayerType.HOST, user.getId())
+            );
+            final PlayerEntity guestPlayer = playerJpaRepository.save(
+                    new PlayerEntity(room, "게스트", PlayerType.GUEST)
+            );
+
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, loginPlayer, 30));
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, guestPlayer, 1));
+
+            // when
+            final LowestProbabilityWinnerResponse result = dashboardService.getLowestProbabilityWinner();
+
+            // then: 게스트(확률 1)는 제외되고, 로그인 사용자(확률 30)만 집계됨
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.probability()).isEqualTo(0.30);
+                softly.assertThat(result.playerNames()).containsExactly("철수");
+            });
         }
 
         @Test

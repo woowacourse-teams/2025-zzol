@@ -64,8 +64,10 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
             LocalDateTime endDate,
             int limit
     ) {
-        // 서브쿼리로 최소 확률 찾기
+        // 서브쿼리로 최소 확률 찾기 (로그인 사용자 한정)
         final QRouletteResultEntity subRouletteResult = new QRouletteResultEntity("subRouletteResult");
+        final QPlayerEntity subPlayer = new QPlayerEntity("subPlayer");
+        final QUserEntity subUser = new QUserEntity("subUser");
 
         final List<com.querydsl.core.Tuple> results = queryFactory
                 .select(
@@ -74,12 +76,15 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 )
                 .from(ROULETTE_RESULT)
                 .join(ROULETTE_RESULT.winner, PLAYER)
+                .join(USER).on(USER.id.eq(PLAYER.userId))
                 .where(
                         ROULETTE_RESULT.createdAt.between(startDate, endDate),
                         ROULETTE_RESULT.winnerProbability.eq(
                                 queryFactory
                                         .select(subRouletteResult.winnerProbability.min())
                                         .from(subRouletteResult)
+                                        .join(subRouletteResult.winner, subPlayer)
+                                        .join(subUser).on(subUser.id.eq(subPlayer.userId))
                                         .where(subRouletteResult.createdAt.between(startDate, endDate))
                         )
                 )

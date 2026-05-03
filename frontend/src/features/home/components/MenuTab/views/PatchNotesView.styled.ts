@@ -6,58 +6,63 @@ import { type PatchNoteCategory } from '@/features/home/hooks/usePatchNotes';
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px 16px 48px;
+  gap: 12px;
+  padding: 16px 16px 56px;
 `;
 
-export const ListHeader = styled.p`
-  font-size: 12px;
-  font-weight: 500;
-  color: ${({ theme }) => theme.color.gray[400]};
-  margin: 0 0 4px;
+export const ListSummary = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 8px;
+`;
+
+export const SummaryText = styled.p`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.color.gray[500]};
   letter-spacing: -0.01em;
 `;
 
 /* Note card */
 export const NoteCard = styled.div<{ $category: PatchNoteCategory }>`
   background: ${({ theme }) => theme.color.white};
-  border-radius: 16px;
-  border: 1px solid ${({ theme }) => theme.color.gray[100]};
-  border-left: 3px solid
-    ${({ theme, $category }) => {
-      if ($category === 'UPDATE') return theme.color.point[400];
-      if ($category === 'NOTICE') return theme.color.blue;
-      if ($category === 'EVENT') return theme.color.yellow;
-      return theme.color.gray[300];
-    }};
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    transform 0.12s ease;
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
 
   &:active {
-    background-color: ${({ theme }) => theme.color.gray[50]};
-    transform: scale(0.99);
+    transform: scale(0.985);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
   }
+`;
+
+export const CardInner = styled.div`
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 `;
 
 export const CardMeta = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 `;
 
 export const CategoryChip = styled.span<{ $category: PatchNoteCategory }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 20px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 
   ${({ theme, $category }) => {
     if ($category === 'UPDATE')
@@ -70,10 +75,21 @@ export const CategoryChip = styled.span<{ $category: PatchNoteCategory }>`
   }}
 `;
 
+export const NewBadge = styled.span`
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 20px;
+  background: ${({ theme }) => theme.color.point[400]};
+  color: ${({ theme }) => theme.color.white};
+  letter-spacing: 0.04em;
+`;
+
 export const MetaDate = styled.span`
   font-size: 11px;
   color: ${({ theme }) => theme.color.gray[400]};
   margin-left: auto;
+  letter-spacing: -0.01em;
 `;
 
 export const CardTitle = styled.h3`
@@ -87,8 +103,8 @@ export const CardTitle = styled.h3`
 
 export const CardPreview = styled.p`
   font-size: 13px;
-  color: ${({ theme }) => theme.color.gray[600]};
-  line-height: 1.75;
+  color: ${({ theme }) => theme.color.gray[500]};
+  line-height: 1.7;
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -96,11 +112,17 @@ export const CardPreview = styled.p`
   overflow: hidden;
 `;
 
+export const CardFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2px;
+`;
+
 export const CardReadMore = styled.span`
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: ${({ theme }) => theme.color.point[400]};
-  align-self: flex-end;
+  letter-spacing: -0.01em;
 `;
 
 /* Modal detail */
@@ -173,10 +195,13 @@ const shimmer = keyframes`
 
 export const SkeletonCard = styled.div`
   background: ${({ theme }) => theme.color.white};
-  border-radius: 16px;
-  border: 1px solid ${({ theme }) => theme.color.gray[100]};
-  border-left: 3px solid ${({ theme }) => theme.color.gray[200]};
-  padding: 16px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+`;
+
+export const SkeletonInner = styled.div`
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;

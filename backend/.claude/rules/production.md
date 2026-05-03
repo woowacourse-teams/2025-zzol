@@ -16,6 +16,7 @@ paths:
 - 도메인 계층은 DTO·UI 계층에 의존하지 않는다. 도메인 메서드의 매개변수·반환 타입에 Request/Response DTO를 사용 금지
 - 예외 메시지는 한국어로 작성한다
 - 도메인에서 던지는 예외는 반드시 `BusinessException(${Domain}ErrorCode, 메시지)` 형태로 작성한다. `IllegalStateException`, `IllegalArgumentException` 등 JDK 표준 예외를 직접 사용 금지
+- 데이터베이스 엔티티의 시간 필드는 `LocalDateTime` 대신 `Instant`를 사용한다
 
 ## 계층별 클래스 네이밍
 

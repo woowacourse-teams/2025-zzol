@@ -10,7 +10,9 @@ import NewsCarousel from './NewsCarousel/NewsCarousel';
 import MiniGameCarousel from './MiniGameCarousel/MiniGameCarousel';
 import * as S from './HomeTab.styled';
 
-const HomeTab = () => {
+type Props = { onNavigateToPatchNotes: () => void };
+
+const HomeTab = ({ onNavigateToPatchNotes }: Props) => {
   const navigate = useReplaceNavigate();
   const { openModal, closeModal } = useModal();
   const { setHost, setGuest } = usePlayerType();
@@ -34,7 +36,7 @@ const HomeTab = () => {
     <S.Container>
       <S.Section>
         <S.SectionTitle>서비스 소식</S.SectionTitle>
-        <NewsCarousel />
+        <NewsCarousel onMoreClick={onNavigateToPatchNotes} />
       </S.Section>
 
       {isAuthenticated && (

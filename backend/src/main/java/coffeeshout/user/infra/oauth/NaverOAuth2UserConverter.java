@@ -27,7 +27,7 @@ public class NaverOAuth2UserConverter implements OAuth2UserConverter {
 
     @Override
     public String extractNickname(OAuth2User oAuth2User) {
-        return (String) getResponse(oAuth2User).get("nickname");
+        return (String) getResponse(oAuth2User).get("name");
     }
 
     private Map<String, Object> getResponse(OAuth2User oAuth2User) {

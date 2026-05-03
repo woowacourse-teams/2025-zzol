@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>운영자 로그인 — 커피빵</title>
+    <title>운영자 로그인 — ZZOL</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #f0f2f5;
@@ -14,24 +19,28 @@
             justify-content: center;
             min-height: 100vh;
         }
+
         .card {
             background: #fff;
             border-radius: 10px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.1);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .1);
             padding: 2.5rem 2rem;
             width: 100%;
             max-width: 360px;
         }
+
         h1 {
             font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 0.25rem;
         }
+
         .subtitle {
             font-size: 0.85rem;
             color: #888;
             margin-bottom: 1.75rem;
         }
+
         label {
             display: block;
             font-size: 0.85rem;
@@ -39,6 +48,7 @@
             margin-bottom: 0.35rem;
             color: #333;
         }
+
         input[type="text"],
         input[type="password"] {
             width: 100%;
@@ -50,7 +60,11 @@
             transition: border-color .15s;
             margin-bottom: 1rem;
         }
-        input:focus { border-color: #4f46e5; }
+
+        input:focus {
+            border-color: #4f46e5;
+        }
+
         button[type="submit"] {
             width: 100%;
             padding: 0.65rem;
@@ -63,15 +77,29 @@
             cursor: pointer;
             transition: background .15s;
         }
-        button[type="submit"]:hover { background: #4338ca; }
+
+        button[type="submit"]:hover {
+            background: #4338ca;
+        }
+
         .alert {
             padding: 0.6rem 0.75rem;
             border-radius: 6px;
             font-size: 0.85rem;
             margin-bottom: 1rem;
         }
-        .alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-        .alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
     </style>
 </head>
 <body>

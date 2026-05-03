@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${patchNote != null} ? '패치노트 수정 — 커피빵' : '패치노트 작성 — 커피빵'">패치노트 — 커피빵</title>
+    <title th:text="${patchNote != null} ? '패치노트 수정 — ZZOL' : '패치노트 작성 — ZZOL'">패치노트 — ZZOL</title>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
     <style>
         .form-card {
@@ -14,9 +14,11 @@
             padding: 2rem;
             max-width: 720px;
         }
+
         .form-group {
             margin-bottom: 1.25rem;
         }
+
         .form-label {
             display: block;
             font-size: 0.8rem;
@@ -26,6 +28,7 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
+
         .form-control {
             width: 100%;
             padding: 0.5rem 0.75rem;
@@ -38,20 +41,24 @@
             box-sizing: border-box;
             transition: border-color var(--dur) var(--ease);
         }
+
         .form-control:focus {
             outline: none;
             border-color: var(--accent-border);
         }
+
         textarea.form-control {
             resize: vertical;
             min-height: 240px;
             line-height: 1.6;
         }
+
         .form-actions {
             display: flex;
             gap: 0.75rem;
             margin-top: 1.75rem;
         }
+
         .btn-submit {
             background: var(--accent);
             color: #fff;
@@ -64,7 +71,12 @@
             cursor: pointer;
             transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
         }
-        .btn-submit:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
         .btn-cancel {
             background: var(--surface);
             color: var(--text-secondary);
@@ -119,7 +131,8 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn-submit"
-                        th:text="${patchNote != null} ? '수정하기' : '작성하기'">작성하기</button>
+                        th:text="${patchNote != null} ? '수정하기' : '작성하기'">작성하기
+                </button>
                 <a th:href="@{/admin/patch-notes}" class="btn-cancel">취소</a>
             </div>
         </form>

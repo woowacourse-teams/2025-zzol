@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>어드민 대시보드 — 커피빵</title>
+    <title>어드민 대시보드 — ZZOL</title>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
     <style>
         .cards {
@@ -11,6 +11,7 @@
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 1.5rem;
         }
+
         .card {
             background: var(--surface);
             border-radius: var(--radius);
@@ -23,9 +24,10 @@
             position: relative;
             overflow: hidden;
             transition: box-shadow var(--dur) var(--ease),
-                        transform var(--dur) var(--ease),
-                        border-color var(--dur) var(--ease);
+            transform var(--dur) var(--ease),
+            border-color var(--dur) var(--ease);
         }
+
         .card::before {
             content: '';
             position: absolute;
@@ -35,35 +37,48 @@
             transition: opacity var(--dur) var(--ease);
             pointer-events: none;
         }
+
         .card::after {
             content: '→';
             position: absolute;
-            bottom: 1.5rem; right: 1.75rem;
+            bottom: 1.5rem;
+            right: 1.75rem;
             font-size: 1.1rem;
             color: var(--accent-light);
             opacity: 0;
             transform: translateX(-6px);
             transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
         }
+
         .card:hover {
             box-shadow: var(--shadow-lg);
             transform: translateY(-3px);
             border-color: var(--accent-border);
         }
-        .card:hover::before { opacity: 1; }
-        .card:hover::after  { opacity: 1; transform: translateX(0); }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card:hover::after {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
         .card-icon {
             font-size: 2.25rem;
             margin-bottom: 1rem;
             display: block;
             line-height: 1;
         }
+
         .card-title {
             font-size: 1rem;
             font-weight: 700;
             margin-bottom: 0.4rem;
             letter-spacing: -0.01em;
         }
+
         .card-desc {
             font-size: 0.83rem;
             color: var(--text-secondary);

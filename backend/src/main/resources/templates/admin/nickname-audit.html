@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>닉네임 검열 대시보드 — 커피빵</title>
+    <title>닉네임 검열 대시보드 — ZZOL</title>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
     <script>
         function confirmRelease(form) {
@@ -27,10 +27,12 @@
     <div class="filter-bar" style="margin-bottom: 1.5rem;">
         <span class="filter-label">섹션</span>
         <a href="#flagged" class="filter-btn">
-            FLAGGED <span class="badge badge-flagged" th:text="${flagged.totalElements}" style="margin-left:0.3rem;">0</span>
+            FLAGGED <span class="badge badge-flagged" th:text="${flagged.totalElements}"
+                          style="margin-left:0.3rem;">0</span>
         </a>
         <a href="#pending" class="filter-btn">
-            PENDING <span class="badge badge-pending" th:text="${pending.totalElements}" style="margin-left:0.3rem;">0</span>
+            PENDING <span class="badge badge-pending" th:text="${pending.totalElements}"
+                          style="margin-left:0.3rem;">0</span>
         </a>
     </div>
 
@@ -47,7 +49,13 @@
         <table>
             <thead>
             <tr>
-                <th>ID</th><th>닉네임</th><th>신뢰도</th><th>AI 판단 사유</th><th>등록</th><th>검열</th><th>처리</th>
+                <th>ID</th>
+                <th>닉네임</th>
+                <th>신뢰도</th>
+                <th>AI 판단 사유</th>
+                <th>등록</th>
+                <th>검열</th>
+                <th>처리</th>
             </tr>
             </thead>
             <tbody>
@@ -63,12 +71,14 @@
                             <div class="conf-bar-fill fill-high"
                                  th:style="|width:${item.confidence.value().movePointRight(2).intValue()}%|"></div>
                         </div>
-                        <span class="conf-text" th:text="${#numbers.formatDecimal(item.confidence.value(), 1, 2)}"></span>
+                        <span class="conf-text"
+                              th:text="${#numbers.formatDecimal(item.confidence.value(), 1, 2)}"></span>
                     </div>
                 </td>
                 <td class="reason" th:text="${item.reason}"></td>
                 <td class="date" th:text="${#temporals.format(item.createdAt, 'MM-dd HH:mm')}"></td>
-                <td class="date" th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
+                <td class="date"
+                    th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
                 <td>
                     <form th:action="@{/admin/playername-audit/{id}/allow(id=${item.id})}" method="post"
                           th:data-nickname="${item.playerName}" onsubmit="return confirmRelease(this)">
@@ -82,7 +92,8 @@
         </table>
         <div class="pagination" th:if="${flagged.totalPages > 1}">
             <a class="page-btn" th:if="${!flagged.first}"
-               th:href="@{/admin/playername-audit(flaggedPage=${flagged.number - 1}, pendingPage=${pendingPage})} + '#flagged'">← 이전</a>
+               th:href="@{/admin/playername-audit(flaggedPage=${flagged.number - 1}, pendingPage=${pendingPage})} + '#flagged'">←
+                이전</a>
             <a class="page-btn" th:if="${flaggedPageStart > 0}"
                th:href="@{/admin/playername-audit(flaggedPage=0, pendingPage=${pendingPage})} + '#flagged'">1</a>
             <span class="page-ellipsis" th:if="${flaggedPageStart > 1}">…</span>
@@ -97,7 +108,8 @@
                th:href="@{/admin/playername-audit(flaggedPage=${flagged.totalPages - 1}, pendingPage=${pendingPage})} + '#flagged'"
                th:text="${flagged.totalPages}"></a>
             <a class="page-btn" th:if="${!flagged.last}"
-               th:href="@{/admin/playername-audit(flaggedPage=${flagged.number + 1}, pendingPage=${pendingPage})} + '#flagged'">다음 →</a>
+               th:href="@{/admin/playername-audit(flaggedPage=${flagged.number + 1}, pendingPage=${pendingPage})} + '#flagged'">다음
+                →</a>
         </div>
     </div>
 
@@ -114,7 +126,13 @@
         <table>
             <thead>
             <tr>
-                <th>ID</th><th>닉네임</th><th>신뢰도</th><th>AI 판단 사유</th><th>등록</th><th>검열</th><th>처리</th>
+                <th>ID</th>
+                <th>닉네임</th>
+                <th>신뢰도</th>
+                <th>AI 판단 사유</th>
+                <th>등록</th>
+                <th>검열</th>
+                <th>처리</th>
             </tr>
             </thead>
             <tbody>
@@ -127,12 +145,14 @@
                             <div class="conf-bar-fill fill-mid"
                                  th:style="|width:${item.confidence.value().movePointRight(2).intValue()}%|"></div>
                         </div>
-                        <span class="conf-text" th:text="${#numbers.formatDecimal(item.confidence.value(), 1, 2)}"></span>
+                        <span class="conf-text"
+                              th:text="${#numbers.formatDecimal(item.confidence.value(), 1, 2)}"></span>
                     </div>
                 </td>
                 <td class="reason" th:text="${item.reason}"></td>
                 <td class="date" th:text="${#temporals.format(item.createdAt, 'MM-dd HH:mm')}"></td>
-                <td class="date" th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
+                <td class="date"
+                    th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
                 <td>
                     <div class="actions">
                         <form th:action="@{/admin/playername-audit/{id}/allow(id=${item.id})}" method="post">
@@ -152,7 +172,8 @@
         </table>
         <div class="pagination" th:if="${pending.totalPages > 1}">
             <a class="page-btn" th:if="${!pending.first}"
-               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number - 1})} + '#pending'">← 이전</a>
+               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number - 1})} + '#pending'">←
+                이전</a>
             <a class="page-btn" th:if="${pendingPageStart > 0}"
                th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=0)} + '#pending'">1</a>
             <span class="page-ellipsis" th:if="${pendingPageStart > 1}">…</span>
@@ -167,7 +188,8 @@
                th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.totalPages - 1})} + '#pending'"
                th:text="${pending.totalPages}"></a>
             <a class="page-btn" th:if="${!pending.last}"
-               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number + 1})} + '#pending'">다음 →</a>
+               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number + 1})} + '#pending'">다음
+                →</a>
         </div>
     </div>
 

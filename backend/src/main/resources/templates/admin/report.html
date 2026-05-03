@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>건의사항/신고 대시보드 — 커피빵</title>
+    <title>건의사항/신고 대시보드 — ZZOL</title>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>
@@ -68,15 +68,18 @@
         <span>
             총 <strong th:text="${reports.totalElements}" style="color:var(--text-primary);">0</strong>건
             &nbsp;·&nbsp;
-            <span th:text="${reports.pageable.offset + 1}">1</span>–<span th:text="${reports.pageable.offset + reports.numberOfElements}">20</span>번째 표시
+            <span th:text="${reports.pageable.offset + 1}">1</span>–<span
+                th:text="${reports.pageable.offset + reports.numberOfElements}">20</span>번째 표시
         </span>
         <div class="pagination-compact" th:if="${reports.totalPages > 1}">
             <a class="page-btn" th:if="${!reports.first}"
-               th:href="@{/admin/reports(page=${reports.number - 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">‹ 이전</a>
+               th:href="@{/admin/reports(page=${reports.number - 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">‹
+                이전</a>
             <span class="page-current" th:text="${reports.number + 1}"></span>
             <span class="page-info">/ <span th:text="${reports.totalPages}"></span></span>
             <a class="page-btn" th:if="${!reports.last}"
-               th:href="@{/admin/reports(page=${reports.number + 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">다음 ›</a>
+               th:href="@{/admin/reports(page=${reports.number + 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">다음
+                ›</a>
         </div>
     </div>
 
@@ -130,7 +133,8 @@
 
         <div class="pagination" th:if="${reports.totalPages > 1}">
             <a class="page-btn" th:if="${!reports.first}"
-               th:href="@{/admin/reports(page=${reports.number - 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">← 이전</a>
+               th:href="@{/admin/reports(page=${reports.number - 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">←
+                이전</a>
             <a class="page-btn" th:if="${pageStart > 0}"
                th:href="@{/admin/reports(page=0, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">1</a>
             <span class="page-ellipsis" th:if="${pageStart > 1}">…</span>
@@ -145,7 +149,8 @@
                th:href="@{/admin/reports(page=${reports.totalPages - 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}"
                th:text="${reports.totalPages}"></a>
             <a class="page-btn" th:if="${!reports.last}"
-               th:href="@{/admin/reports(page=${reports.number + 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">다음 →</a>
+               th:href="@{/admin/reports(page=${reports.number + 1}, status=${statusFilter}, category=${categoryFilter}, gameType=${gameTypeFilter})}">다음
+                →</a>
         </div>
     </div>
 </main>

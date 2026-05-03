@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>패치노트 대시보드 — 커피빵</title>
+    <title>패치노트 대시보드 — ZZOL</title>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
     <style>
         .list-header-actions {
@@ -11,6 +11,7 @@
             align-items: center;
             gap: 1rem;
         }
+
         .btn-primary {
             background: var(--accent);
             color: #fff;
@@ -25,17 +26,24 @@
             cursor: pointer;
             transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
         }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
         .btn-edit {
             background: var(--surface);
             color: var(--accent);
             border: 1px solid var(--accent-border);
         }
+
         .btn-delete {
             background: var(--red-bg);
             color: var(--red-text);
-            border-color: rgba(239,68,68,.2);
+            border-color: rgba(239, 68, 68, .2);
         }
+
         .content-preview {
             max-width: 300px;
             overflow: hidden;

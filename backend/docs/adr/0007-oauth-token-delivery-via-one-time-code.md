@@ -29,7 +29,7 @@ OAuth 성공 시 토큰을 직접 전달하지 않고 **일회용 코드(one-tim
 https://zzol.site/oauth/callback?code=550e8400-e29b-41d4-a716-446655440000
 ```
 
-3. 프론트엔드가 `POST /auth/token { "code": "..." }` 를 호출하면 서버는 Redis에서 코드를 **getAndDelete**(원자적 조회 후 삭제)하고 응답한다.
+1. 프론트엔드가 `POST /auth/token { "code": "..." }` 를 호출하면 서버는 Redis에서 코드를 **getAndDelete**(원자적 조회 후 삭제)하고 응답한다.
    - Access Token: 응답 바디
    - Refresh Token: `HttpOnly; Secure; SameSite=None` 쿠키
 

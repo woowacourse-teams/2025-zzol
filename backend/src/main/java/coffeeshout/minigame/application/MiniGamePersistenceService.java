@@ -49,7 +49,8 @@ public class MiniGamePersistenceService {
                 final PlayerEntity playerEntity = new PlayerEntity(
                         roomEntity,
                         player.getName().value(),
-                        player.getPlayerType()
+                        player.getPlayerType(),
+                        player.getUserId()
                 );
                 playerJpaRepository.save(playerEntity);
             });

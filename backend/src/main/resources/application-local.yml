@@ -71,3 +71,25 @@ security:
     not-found-threshold: 999
     not-found-window: 1h
     block-ttl: 24h
+
+user:
+  jwt:
+    secret: "local-dev-secret-key-must-be-at-least-256-bits-for-hs256-algorithm"
+    access-token-expiration-seconds: 1800
+    refresh-token-expiration-seconds: 1209600
+  oauth:
+    frontend-redirect-uri: "http://localhost:3000/auth/callback"
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: "로컬-테스트용-구글-클라이언트-id"
+            client-secret: "로컬-테스트용-구글-클라이언트-secret"
+          kakao:
+            client-id: "로컬-테스트용-카카오-클라이언트-id"
+            client-secret: "로컬-테스트용-카카오-클라이언트-secret"
+          naver:
+            client-id: "로컬-테스트용-네이버-클라이언트-id"
+            client-secret: "로컬-테스트용-네이버-클라이언트-secret"

@@ -1,0 +1,3 @@
+ALTER TABLE app_user
+    MODIFY COLUMN created_at TIMESTAMP(6) NOT NULL,
+    MODIFY COLUMN updated_at TIMESTAMP(6) NOT NULL;

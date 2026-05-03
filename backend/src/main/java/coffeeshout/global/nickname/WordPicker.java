@@ -1,4 +1,4 @@
-package coffeeshout.room.domain.service;
+package coffeeshout.global.nickname;
 
 import java.util.List;
 

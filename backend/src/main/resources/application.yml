@@ -131,6 +131,7 @@ ladder:
     description: 4000ms
     prepare: 2000ms
     drawing: 8000ms
+    drawing-grace-period: 300ms
     result: 5000ms
   scheduler:
     pool-size: 2

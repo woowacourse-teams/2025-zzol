@@ -1,8 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import { EXTERNAL_LINKS } from '@/constants/external';
 import ProfileRedSvg from '@/assets/profile-red.svg';
 import * as S from './ServiceInfoView.styled';
 
 const ServiceInfoView = () => {
+  const navigate = useNavigate();
+
   return (
     <S.Container>
       <S.AppHeader>
@@ -35,6 +38,10 @@ const ServiceInfoView = () => {
           <S.LinkLabel>GitHub 보기</S.LinkLabel>
           <S.LinkIcon>↗</S.LinkIcon>
         </S.LinkRow>
+        <S.InternalLinkRow onClick={() => navigate('/privacy')}>
+          <S.LinkLabel>개인정보 처리방침</S.LinkLabel>
+          <S.LinkIcon>›</S.LinkIcon>
+        </S.InternalLinkRow>
       </S.InfoCard>
     </S.Container>
   );

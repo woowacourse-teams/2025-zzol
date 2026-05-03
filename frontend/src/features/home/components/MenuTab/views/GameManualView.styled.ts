@@ -3,12 +3,24 @@ import styled from '@emotion/styled';
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 10px 4px;
+  gap: 12px;
+  padding: 20px 16px 32px;
 `;
 
-export const Title = styled.h3`
-  ${({ theme }) => theme.typography.h3}
-  color: ${({ theme }) => theme.color.gray[800]};
+export const HintBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: ${({ theme }) => theme.color.point[50]};
+  border-radius: 12px;
+  border-left: 3px solid ${({ theme }) => theme.color.point[400]};
+`;
+
+export const Subtitle = styled.p`
+  font-size: 13px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.color.point[500]};
   margin: 0;
+  line-height: 1.5;
 `;

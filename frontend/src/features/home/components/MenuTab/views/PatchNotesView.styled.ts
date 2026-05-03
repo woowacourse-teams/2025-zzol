@@ -1,122 +1,165 @@
 import styled from '@emotion/styled';
 
-export const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  gap: 10px;
-`;
-
-/* 개발중 placeholder */
-export const PlaceholderCard = styled.div`
+/* Empty state */
+export const EmptyContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 48px 24px;
-  border-radius: 14px;
-  border: 1px solid ${({ theme }) => theme.color.gray[200]};
-  background: ${({ theme }) => theme.color.gray[50]};
+  height: 100%;
+  padding: 40px 32px 80px;
+  gap: 12px;
 `;
 
-export const PlaceholderIcon = styled.span`
-  font-size: 32px;
-  line-height: 1;
-`;
-
-export const PlaceholderTitle = styled.p`
-  ${({ theme }) => theme.typography.paragraph}
-  font-weight: 600;
-  color: ${({ theme }) => theme.color.gray[700]};
-  margin: 0;
-`;
-
-export const PlaceholderSub = styled.p`
-  ${({ theme }) => theme.typography.small}
-  color: ${({ theme }) => theme.color.gray[400]};
-  margin: 0;
-  text-align: center;
-`;
-
-/* 아코디언 카드 */
-export const AccordionCard = styled.div`
-  border: 1px solid ${({ theme }) => theme.color.gray[200]};
-  border-radius: 14px;
-  overflow: hidden;
-  background: ${({ theme }) => theme.color.white};
-`;
-
-export const AccordionHeader = styled.button<{ $open: boolean }>`
-  width: 100%;
+export const EmptyIconWrap = styled.div`
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  background: ${({ theme }) => theme.color.point[50]};
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  background: ${({ theme, $open }) => ($open ? theme.color.point[50] : theme.color.white)};
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s ease;
+  justify-content: center;
+  font-size: 36px;
+  margin-bottom: 8px;
+`;
 
-  &:active {
-    background: ${({ theme }) => theme.color.point[50]};
+export const EmptyTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.color.gray[900]};
+  letter-spacing: -0.03em;
+  margin: 0;
+`;
+
+export const EmptyDesc = styled.p`
+  font-size: 14px;
+  color: ${({ theme }) => theme.color.gray[400]};
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-line;
+`;
+
+export const VersionPill = styled.span`
+  margin-top: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: ${({ theme }) => theme.color.gray[100]};
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.color.gray[500]};
+`;
+
+/* Timeline (live) */
+export const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px 40px;
+`;
+
+export const LoadingText = styled.p`
+  font-size: 13px;
+  color: ${({ theme }) => theme.color.gray[400]};
+  text-align: center;
+  padding: 20px 0;
+  margin: 0;
+`;
+
+export const TimelineEntry = styled.div`
+  display: flex;
+  gap: 16px;
+  padding-bottom: 32px;
+
+  &:last-child {
+    padding-bottom: 0;
+
+    & > div:first-of-type > div:last-child {
+      display: none;
+    }
   }
 `;
 
-export const AccordionHeaderLeft = styled.div`
+export const TimelineLeft = styled.div`
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 3px;
 `;
 
-export const VersionBadge = styled.span`
-  ${({ theme }) => theme.typography.paragraph}
-  font-weight: 700;
-  color: ${({ theme }) => theme.color.point[400]};
+export const VersionDot = styled.div`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.color.point[500]};
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px ${({ theme }) => theme.color.point[100]};
+`;
+
+export const TimelineLine = styled.div`
+  width: 2px;
+  flex: 1;
+  background: ${({ theme }) => theme.color.gray[100]};
+  margin-top: 6px;
+`;
+
+export const TimelineRight = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 4px;
+`;
+
+export const TimelineHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 16px;
+`;
+
+export const VersionTag = styled.span`
+  font-size: 15px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.color.point[500]};
+  letter-spacing: -0.02em;
 `;
 
 export const VersionDate = styled.span`
-  ${({ theme }) => theme.typography.small}
+  font-size: 12px;
   color: ${({ theme }) => theme.color.gray[400]};
 `;
 
-export const ChevronIcon = styled.span<{ $open: boolean }>`
-  color: ${({ theme }) => theme.color.gray[400]};
-  font-size: 18px;
-  transition: transform 0.2s ease;
-  transform: ${({ $open }) => ($open ? 'rotate(90deg)' : 'rotate(0deg)')};
-  display: inline-block;
-  line-height: 1;
-`;
-
-export const AccordionBody = styled.div`
-  border-top: 1px solid ${({ theme }) => theme.color.gray[100]};
+export const ChangeList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: ${({ theme }) => theme.color.white};
+  border: 1px solid ${({ theme }) => theme.color.gray[100]};
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 `;
 
 export const ChangeItem = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 11px 16px;
-
-  &:not(:last-child) {
-    border-bottom: 1px solid ${({ theme }) => theme.color.gray[100]};
-  }
 `;
 
 export const ChangeType = styled.span<{ $type: 'new' | 'fix' | 'improve' }>`
-  ${({ theme }) => theme.typography.small}
-  font-weight: 600;
-  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
   border-radius: 6px;
   flex-shrink: 0;
-  margin-top: 1px;
+  margin-top: 2px;
+  letter-spacing: 0.03em;
 
   ${({ theme, $type }) => {
     if ($type === 'new') {
       return `
         background: ${theme.color.point[50]};
-        color: ${theme.color.point[400]};
+        color: ${theme.color.point[500]};
         border: 1px solid ${theme.color.point[100]};
       `;
     }
@@ -136,7 +179,7 @@ export const ChangeType = styled.span<{ $type: 'new' | 'fix' | 'improve' }>`
 `;
 
 export const ChangeText = styled.span`
-  ${({ theme }) => theme.typography.small}
+  font-size: 13px;
   color: ${({ theme }) => theme.color.gray[700]};
   line-height: 1.6;
 `;

@@ -1,9 +1,4 @@
-import CarouselSlide from '../CarouselSlide/CarouselSlide';
-import ProbabilityTag from '@/components/@common/ProbabilityTag/ProbabilityTag';
-import Headline1 from '@/components/@common/Headline1/Headline1';
 import * as S from './LowestProbabilitySlide.styled';
-import FadeInItem from '@/components/@common/FadeInItem/FadeInItem';
-import { useWidthDifference } from '@/hooks/useWidthDifference';
 
 type Props = {
   WinnerNames: string[];
@@ -11,25 +6,27 @@ type Props = {
 };
 
 const LowestProbabilitySlide = ({ WinnerNames, probability }: Props) => {
-  const { containerRef, wrapperRef: namesRef, slideDistance } = useWidthDifference();
+  const pct = probability.toFixed(1);
 
   return (
-    <CarouselSlide title="최저 확률 당첨자">
-      <S.Wrapper ref={containerRef}>
-        <S.NamesContainer ref={namesRef}>
-          <FadeInItem index={0} delay={0}>
-            <S.WinnerName $slideDistance={slideDistance}>
-              <Headline1 color="white">{WinnerNames.join(', ')}</Headline1>
-            </S.WinnerName>
-          </FadeInItem>
-        </S.NamesContainer>
-        <FadeInItem index={1} delay={400}>
-          <S.ProbabilityWrapper>
-            <ProbabilityTag probability={probability} />
-          </S.ProbabilityWrapper>
-        </FadeInItem>
-      </S.Wrapper>
-    </CarouselSlide>
+    <S.Card>
+      <S.Header>
+        <S.CardTitle>최저 확률 당첨</S.CardTitle>
+        <S.Sub>이번달 가장 짜릿한 역전</S.Sub>
+      </S.Header>
+      {WinnerNames.length === 0 ? (
+        <S.Empty>아직 당첨자가 없어요</S.Empty>
+      ) : (
+        <S.Content>
+          <S.ProbRow>
+            <S.BigProb>{pct}%</S.BigProb>
+            <S.ProbLabel>당첨 확률</S.ProbLabel>
+          </S.ProbRow>
+          <S.Divider />
+          <S.Names>{WinnerNames.join(', ')}</S.Names>
+        </S.Content>
+      )}
+    </S.Card>
   );
 };
 

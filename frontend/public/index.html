@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>쫄 - 똥손도 즐기는 미니게임 추첨 서비스</title>
     <meta
@@ -41,18 +41,11 @@
 
     <link
       rel="preload"
-      as="style"
+      href="/fonts/PretendardVariable.woff2"
+      as="font"
+      type="font/woff2"
       crossorigin
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-      onload="this.onload=null;this.rel='stylesheet'"
     />
-    <noscript>
-      <link
-        rel="stylesheet"
-        crossorigin
-        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-      />
-    </noscript>
     <link
       rel="preload"
       href="/fonts/PartialSansKR-Regular.woff2"
@@ -69,6 +62,13 @@
     />
     <base href="/" />
     <style>
+      @font-face {
+        font-family: 'Pretendard Variable';
+        src: url('/fonts/PretendardVariable.woff2') format('woff2-variations');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+      }
       @font-face {
         font-family: 'PartialSansKR-Regular';
         src: url('/fonts/PartialSansKR-Regular.woff2') format('woff2');

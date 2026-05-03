@@ -1,5 +1,6 @@
 export type TopWinner = {
-  playerName: string;
+  nickname: string;
+  userCode: string;
   winCount: number;
 };
 

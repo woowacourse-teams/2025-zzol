@@ -22,7 +22,8 @@ class ReportFacadeMemberTest extends ServiceTest {
     @Autowired
     ReportRepository reportRepository;
 
-    private static final String VALID_IP = "127.0.0.1";
+    private static final String 회원_IP = "127.0.0.1";
+    private static final String 익명_IP = "127.0.0.2";
     private static final AuthenticatedUser 회원_인증 = new AuthenticatedUser(1L, "AB3CD");
 
     @Nested
@@ -31,7 +32,7 @@ class ReportFacadeMemberTest extends ServiceTest {
         @Test
         void userId와_userCode가_저장된다() {
             final long id = reportFacade.submit(
-                    VALID_IP,
+                    회원_IP,
                     ReportCategory.BUG,
                     MiniGameType.CARD_GAME,
                     "ABC12",
@@ -53,7 +54,7 @@ class ReportFacadeMemberTest extends ServiceTest {
         @Test
         void userId와_userCode가_null이다() {
             final long id = reportFacade.submit(
-                    VALID_IP,
+                    익명_IP,
                     ReportCategory.SUGGESTION,
                     null,
                     null,

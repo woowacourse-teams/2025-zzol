@@ -163,7 +163,7 @@ class DashboardServiceTest extends ServiceTest {
 
             for (int i = 1; i <= 10; i++) {
                 final UserEntity user = userJpaRepository.save(
-                        new UserEntity(String.format("U%04d", i), "플레이어" + i)
+                        new UserEntity("AB" + "CDFGHJKLMN".charAt(i - 1) + "3D", "플레이어" + i)
                 );
                 final PlayerEntity player = playerJpaRepository.save(
                         new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST, user.getId())

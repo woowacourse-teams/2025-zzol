@@ -1,15 +1,14 @@
 package coffeeshout.user.infra.oauth;
 
-import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.user.exception.UserErrorCode;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import org.springframework.security.core.GrantedAuthority;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -27,8 +26,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         final OAuth2UserConverter converter = converters.stream()
                 .filter(c -> c.provider().getRegistrationId().equals(registrationId))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        UserErrorCode.OAUTH_PROVIDER_NOT_SUPPORTED,
+                .orElseThrow(() -> new OAuth2AuthenticationException(
+                        new OAuth2Error("provider_not_supported"),
                         "지원하지 않는 OAuth 제공자입니다: " + registrationId));
 
         final String providerUserId = converter.extractProviderUserId(oAuth2User);

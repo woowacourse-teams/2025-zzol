@@ -25,12 +25,14 @@ class UserCodeTest {
         }
 
         @RepeatedTest(5)
-        void 반복_생성해도_동일한_코드가_아닐_수_있다() {
+        void 반복_생성된_코드는_매번_다를_수_있다() {
             final UserCode code1 = UserCode.generate();
             final UserCode code2 = UserCode.generate();
 
-            assertThat(code1).isNotNull();
-            assertThat(code2).isNotNull();
+            assertThat(code1.value()).hasSize(5);
+            assertThat(code2.value()).hasSize(5);
+            assertThat(code1.value().chars()).allMatch(c -> UserCode.CHARSET.indexOf(c) >= 0);
+            assertThat(code2.value().chars()).allMatch(c -> UserCode.CHARSET.indexOf(c) >= 0);
         }
     }
 

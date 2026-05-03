@@ -7,7 +7,9 @@ import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.exception.UserErrorCode;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -72,9 +74,17 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public List<User> findAllByNickname(UserNickname nickname) {
-        return userJpaRepository.findAllByNickname(nickname.value()).stream()
-                .flatMap(userEntity -> oAuthAccountJpaRepository.findByUser_Id(userEntity.getId())
-                        .map(userEntity::toDomain)
+        final List<UserEntity> users = userJpaRepository.findAllByNickname(nickname.value());
+        if (users.isEmpty()) {
+            return List.of();
+        }
+        final List<Long> userIds = users.stream().map(UserEntity::getId).toList();
+        final Map<Long, OAuthAccountEntity> oauthByUserId = oAuthAccountJpaRepository
+                .findAllByUser_IdIn(userIds).stream()
+                .collect(Collectors.toMap(o -> o.getUser().getId(), o -> o));
+        return users.stream()
+                .flatMap(u -> Optional.ofNullable(oauthByUserId.get(u.getId()))
+                        .map(u::toDomain)
                         .stream())
                 .toList();
     }

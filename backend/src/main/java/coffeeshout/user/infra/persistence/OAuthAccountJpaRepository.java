@@ -1,5 +1,6 @@
 package coffeeshout.user.infra.persistence;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,4 +15,6 @@ public interface OAuthAccountJpaRepository extends JpaRepository<OAuthAccountEnt
     );
 
     Optional<OAuthAccountEntity> findByUser_Id(Long userId);
+
+    List<OAuthAccountEntity> findAllByUser_IdIn(List<Long> userIds);
 }

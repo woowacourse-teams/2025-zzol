@@ -2,18 +2,19 @@ package coffeeshout.user.ui;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.application.service.AuthTokenService;
-import coffeeshout.user.application.service.AuthTokenService.TokenPair;
 import coffeeshout.user.config.JwtProperties;
 import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.ui.request.ExchangeCodeRequest;
 import coffeeshout.user.ui.resolver.AuthUser;
 import coffeeshout.user.ui.response.AuthTokenResponse;
 import jakarta.servlet.http.Cookie;
+import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -36,14 +37,10 @@ public class AuthRestController {
 
     @PostMapping("/token")
     public ResponseEntity<AuthTokenResponse> exchangeCode(
-            @RequestBody Map<String, String> body,
+            @Valid @RequestBody ExchangeCodeRequest request,
             HttpServletResponse response
     ) {
-        final String code = body.get("code");
-        if (code == null || code.isBlank()) {
-            throw new BusinessException(UserErrorCode.OAUTH_CODE_NOT_FOUND, "인증 코드가 없습니다.");
-        }
-        final TokenPair tokens = authTokenService.exchangeCode(code);
+        final TokenPair tokens = authTokenService.exchangeCode(request.code());
         setRefreshTokenCookie(response, tokens.refreshToken());
         return ResponseEntity.ok(new AuthTokenResponse(tokens.accessToken(), null));
     }
@@ -60,8 +57,12 @@ public class AuthRestController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthUser Optional<AuthenticatedUser> authUser) {
+    public ResponseEntity<Void> logout(
+            @AuthUser Optional<AuthenticatedUser> authUser,
+            HttpServletResponse response
+    ) {
         authUser.ifPresent(user -> authTokenService.revoke(user.userId()));
+        clearRefreshTokenCookie(response);
         return ResponseEntity.noContent().build();
     }
 
@@ -75,6 +76,17 @@ public class AuthRestController {
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
                         UserErrorCode.REFRESH_TOKEN_NOT_FOUND, "리프레시 토큰이 없습니다."));
+    }
+
+    private void clearRefreshTokenCookie(HttpServletResponse response) {
+        final ResponseCookie cookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0)
+                .sameSite("None")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {

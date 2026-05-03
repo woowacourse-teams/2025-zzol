@@ -16,7 +16,7 @@ public class UserNicknameAuditListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onUserNicknameRegistered(UserNicknameRegisteredEvent event) {
-        log.debug("사용자 닉네임 AI 검열 등록: nickname={}", event.nickname());
+        log.debug("사용자 닉네임 AI 검열 등록 요청 수신");
         playerNameAuditService.register(event.nickname());
     }
 }

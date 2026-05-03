@@ -12,7 +12,7 @@ public class UserStatsService {
 
     private final UserStatsRepository userStatsRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserStats getStats(Long userId) {
         return userStatsRepository.findOrCreateByUserId(userId);
     }

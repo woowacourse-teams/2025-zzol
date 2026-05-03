@@ -32,7 +32,7 @@ public final class UserFixture {
     public static User 저장된_회원(Long id, String nickname) {
         return new User(
                 id,
-                new UserCode("AB3CD"),
+                new UserCode("GH6KL"),
                 new UserNickname(nickname),
                 new OAuthAccount(OAuthProvider.GOOGLE, "google-uid-" + id, "user" + id + "@example.com")
         );

@@ -1,8 +1,10 @@
 package coffeeshout.room.ui;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.PlayerService;
 import coffeeshout.room.application.service.RoomService;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.ui.request.RoomEnterRequest;
@@ -50,11 +52,11 @@ public class RoomRestController implements RoomApi {
     @PostMapping
     public ResponseEntity<RoomCreateResponse> createRoom(
             @AuthUser Optional<AuthenticatedUser> authUser,
-            @Valid @RequestBody RoomEnterRequest request
+            @RequestBody(required = false) @Valid RoomEnterRequest request
     ) {
         final Room room = authUser.isPresent()
                 ? roomService.createRoom(authUser.get())
-                : roomService.createRoom(request.playerName());
+                : roomService.createRoom(requirePlayerName(request));
 
         return ResponseEntity.ok(RoomCreateResponse.from(room));
     }
@@ -63,11 +65,11 @@ public class RoomRestController implements RoomApi {
     public CompletableFuture<ResponseEntity<RoomEnterResponse>> enterRoom(
             @PathVariable String joinCode,
             @AuthUser Optional<AuthenticatedUser> authUser,
-            @Valid @RequestBody RoomEnterRequest request
+            @RequestBody(required = false) @Valid RoomEnterRequest request
     ) {
         final CompletableFuture<Room> future = authUser.isPresent()
                 ? roomService.enterRoomAsync(joinCode, authUser.get())
-                : roomService.enterRoomAsync(joinCode, request.playerName());
+                : roomService.enterRoomAsync(joinCode, requirePlayerName(request));
 
         return future
                 .thenApply(room -> ResponseEntity.ok(RoomEnterResponse.from(room)))
@@ -78,6 +80,13 @@ public class RoomRestController implements RoomApi {
                     }
                     throw new RuntimeException("방 참가 실패", cause);
                 });
+    }
+
+    private String requirePlayerName(RoomEnterRequest request) {
+        if (request == null || request.playerName() == null || request.playerName().isBlank()) {
+            throw new BusinessException(RoomErrorCode.PLAYER_NAME_BLANK, "플레이어 이름이 없습니다.");
+        }
+        return request.playerName();
     }
 
     @GetMapping("/nickname/random")

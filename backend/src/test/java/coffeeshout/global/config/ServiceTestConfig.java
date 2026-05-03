@@ -2,6 +2,8 @@ package coffeeshout.global.config;
 
 import coffeeshout.global.flow.FlowScheduler;
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -73,6 +75,6 @@ public class ServiceTestConfig {
     @Bean
     @Primary
     public Clock testClock() {
-        return Clock.systemDefaultZone();
+        return Clock.fixed(Instant.parse("2025-01-01T00:00:00Z"), ZoneOffset.UTC);
     }
 }

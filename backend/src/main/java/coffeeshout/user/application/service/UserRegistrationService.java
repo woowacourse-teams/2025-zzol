@@ -49,11 +49,20 @@ public class UserRegistrationService {
                 log.debug("신규 회원 가입: userCode={}, provider={}", savedUser.getUserCode(), provider);
                 return savedUser;
             } catch (DataIntegrityViolationException e) {
+                if (!isUserCodeViolation(e)) {
+                    throw e;
+                }
                 log.debug("UserCode 중복 발생, 재시도: {}/{}", attempt + 1, userCodeProperties.maxRetry());
             }
         }
         throw new BusinessException(UserErrorCode.USER_CODE_GENERATION_FAILED,
                 "사용자 식별 코드 생성에 실패했습니다. 최대 시도 횟수를 초과했습니다.");
+    }
+
+    private boolean isUserCodeViolation(DataIntegrityViolationException e) {
+        final Throwable cause = e.getCause() != null ? e.getCause() : e;
+        final String message = cause.getMessage() != null ? cause.getMessage().toLowerCase() : "";
+        return message.contains("user_code");
     }
 
     private UserNickname resolveNickname(String suggested) {

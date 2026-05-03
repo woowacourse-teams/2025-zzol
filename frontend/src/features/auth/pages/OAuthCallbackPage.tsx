@@ -37,7 +37,7 @@ const OAuthCallbackPage = () => {
       try {
         const result = await authApi.token(code);
         if (result.isNewUser) {
-          storageManager.setItem(STORAGE_KEYS.TEMP_TOKEN, result.tempToken, 'sessionStorage');
+          storageManager.setItem(STORAGE_KEYS.TEMP_TOKEN, result.accessToken, 'sessionStorage');
           navigate('/auth/terms', { replace: true });
         } else {
           tokenStore.setTokens({ accessToken: result.accessToken });

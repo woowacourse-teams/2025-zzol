@@ -12,4 +12,4 @@ export type Tokens = {
 
 export type OAuthCallbackResponse =
   | { isNewUser: false; accessToken: string; refreshToken: string }
-  | { isNewUser: true; tempToken: string; accessToken: null; refreshToken: null };
+  | { isNewUser: true; accessToken: string; refreshToken: null };

@@ -12,3 +12,4 @@
 | [0004](0004-oauth2-login-and-user-domain.md)                  | OAuth2 로그인 도입과 User 도메인 분리 | 승인 | `user/`, `room/infra/persistence/`, `auth/` | Player-User는 nullable FK로 분리, 회원 입장 시 프로필 닉네임 강제, 익명 흐름 그대로 유지 |
 | [0005](0005-jwt-refresh-token-policy.md)                      | Access(JWT) + Refresh(Redis) 인증 토큰 정책 | 승인 | `user/config/`, `user/application/service/`, `user/infra/redis/` | Refresh token은 `{userId}:{tokenId}` 형식, 재사용 감지 시 family 전체 폐기 |
 | [0006](0006-user-code-policy.md)                              | 5자리 사용자 식별 코드(UserCode) 정책 | 승인 | `user/domain/`, `user/domain/service/` | UserCode는 가입 시 1회 발급 후 불변, INSERT-then-catch + 최대 100회 재시도 |
+| [0007](0007-oauth-token-delivery-via-one-time-code.md)        | OAuth 로그인 토큰 전달 — 일회용 코드 교환 방식 | 승인 | `user/ui/`, `user/application/service/`, `user/infra/redis/` | OAuth 성공 후 토큰은 URL에 직접 노출 금지, 반드시 `/auth/token` 코드 교환을 경유해야 함 |

@@ -43,6 +43,7 @@ public class PatchNoteEntity {
     private Instant updatedAt;
 
     public static PatchNoteEntity create(PatchNoteCategory category, String title, String content) {
+        validateCategory(category);
         validateTitle(title);
         validateContent(content);
         final PatchNoteEntity entity = new PatchNoteEntity();
@@ -55,12 +56,19 @@ public class PatchNoteEntity {
     }
 
     public void update(PatchNoteCategory category, String title, String content) {
+        validateCategory(category);
         validateTitle(title);
         validateContent(content);
         this.category = category;
         this.title = title;
         this.content = content;
         this.updatedAt = Instant.now();
+    }
+
+    private static void validateCategory(PatchNoteCategory category) {
+        if (category == null) {
+            throw new BusinessException(PatchNoteErrorCode.INVALID_CATEGORY, PatchNoteErrorCode.INVALID_CATEGORY.getMessage());
+        }
     }
 
     private static void validateTitle(String title) {
@@ -72,6 +80,9 @@ public class PatchNoteEntity {
     private static void validateContent(String content) {
         if (content == null || content.isBlank()) {
             throw new BusinessException(PatchNoteErrorCode.INVALID_CONTENT, PatchNoteErrorCode.INVALID_CONTENT.getMessage());
+        }
+        if (content.length() > 5000) {
+            throw new BusinessException(PatchNoteErrorCode.INVALID_CONTENT_LENGTH, PatchNoteErrorCode.INVALID_CONTENT_LENGTH.getMessage());
         }
     }
 }

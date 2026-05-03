@@ -62,6 +62,14 @@ class PatchNoteEntityTest {
             assertThat(entity.getTitle()).hasSize(100);
         }
 
+        @Test
+        void 카테고리가_null이면_예외가_발생한다() {
+            assertCoffeeShoutException(
+                    () -> PatchNoteEntity.create(null, "제목", "본문입니다."),
+                    PatchNoteErrorCode.INVALID_CATEGORY
+            );
+        }
+
         @ParameterizedTest
         @NullAndEmptySource
         @ValueSource(strings = {"   "})
@@ -70,6 +78,25 @@ class PatchNoteEntityTest {
                     () -> PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", content),
                     PatchNoteErrorCode.INVALID_CONTENT
             );
+        }
+
+        @Test
+        void 본문이_5000자를_초과하면_예외가_발생한다() {
+            final String longContent = "가".repeat(5001);
+
+            assertCoffeeShoutException(
+                    () -> PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", longContent),
+                    PatchNoteErrorCode.INVALID_CONTENT_LENGTH
+            );
+        }
+
+        @Test
+        void 본문이_정확히_5000자이면_정상_생성된다() {
+            final String content = "가".repeat(5000);
+
+            final PatchNoteEntity entity = PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", content);
+
+            assertThat(entity.getContent()).hasSize(5000);
         }
     }
 
@@ -126,6 +153,17 @@ class PatchNoteEntityTest {
             );
         }
 
+        @Test
+        void 카테고리가_null이면_예외가_발생한다() {
+            final PatchNoteEntity entity = PatchNoteEntity.create(
+                    PatchNoteCategory.NOTICE, "제목", "본문");
+
+            assertCoffeeShoutException(
+                    () -> entity.update(null, "제목", "본문"),
+                    PatchNoteErrorCode.INVALID_CATEGORY
+            );
+        }
+
         @ParameterizedTest
         @NullAndEmptySource
         @ValueSource(strings = {"   "})
@@ -136,6 +174,18 @@ class PatchNoteEntityTest {
             assertCoffeeShoutException(
                     () -> entity.update(PatchNoteCategory.NOTICE, "제목", content),
                     PatchNoteErrorCode.INVALID_CONTENT
+            );
+        }
+
+        @Test
+        void 본문이_5000자를_초과하면_예외가_발생한다() {
+            final PatchNoteEntity entity = PatchNoteEntity.create(
+                    PatchNoteCategory.NOTICE, "제목", "본문");
+            final String longContent = "가".repeat(5001);
+
+            assertCoffeeShoutException(
+                    () -> entity.update(PatchNoteCategory.NOTICE, "제목", longContent),
+                    PatchNoteErrorCode.INVALID_CONTENT_LENGTH
             );
         }
     }

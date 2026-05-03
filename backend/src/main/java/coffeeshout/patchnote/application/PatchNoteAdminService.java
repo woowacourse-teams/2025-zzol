@@ -50,9 +50,6 @@ public class PatchNoteAdminService {
 
     @Transactional
     public void delete(Long id) {
-        if (patchNoteJpaRepository.findById(id).isEmpty()) {
-            return;
-        }
         patchNoteJpaRepository.deleteById(id);
     }
 

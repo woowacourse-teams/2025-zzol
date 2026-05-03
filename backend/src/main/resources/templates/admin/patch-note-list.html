@@ -85,8 +85,8 @@
                 <td><span class="tag" th:text="${n.category.name() + '(' + n.category.label + ')'}"></span></td>
                 <td th:text="${n.title}"></td>
                 <td class="content-preview" th:text="${n.content}"></td>
-                <td class="date" th:text="${#temporals.format(n.createdAt, 'yy-MM-dd HH:mm')}"></td>
-                <td class="date" th:text="${#temporals.format(n.updatedAt, 'yy-MM-dd HH:mm')}"></td>
+                <td class="date" th:text="${#temporals.format(n.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                <td class="date" th:text="${#temporals.format(n.updatedAt, 'yyyy-MM-dd HH:mm')}"></td>
                 <td>
                     <div class="actions">
                         <a th:href="@{/admin/patch-notes/{id}/edit(id=${n.id})}" class="btn btn-edit">수정</a>

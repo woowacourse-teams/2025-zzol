@@ -30,6 +30,16 @@ grep "^startRound	" tags                 # 메서드 정의
 결과 형식: `심볼명\t파일경로\t패턴\t필드(line:N)` → 해당 파일을 line:N 기준으로 Read한다.
 `tags`가 없거나 오래됐으면 `./gradlew generateCtags` 또는 `./gradlew compileJava`로 재생성한다.
 
+## PR 작성 규칙
+
+PR 생성 시 `/create-pr`를 사용한다. 직접 `gh pr create`를 호출할 때도 아래 규칙을 따른다.
+
+- **제목 형식**: `[type] 한국어 설명` (예: `[fix] 사다리게임 grace period 추가`)
+  - type: `feat` / `fix` / `refactor` / `chore` / `docs` / `test`
+- **본문**: `.github/pull_request_template.md` 섹션을 반드시 유지하고 채운다
+- **base 브랜치**: 기본 `be/dev`. 프론트엔드 작업은 `fe/dev`
+- **브랜치 네이밍**: `be/{type}/{이슈번호}-{설명}` (이슈 없으면 설명만)
+
 ## 작업 규칙
 
 - 프로덕션 코드(`src/main/java/`) 작성 또는 수정 완료 시 `/write-tests`를 실행한다

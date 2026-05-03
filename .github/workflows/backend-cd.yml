@@ -126,6 +126,14 @@ jobs:
           SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}
           TEMPO_URL=${{ secrets.TEMPO_URL }}
           TRACE_SAMPLING_PROBABILITY=${{ secrets.TRACE_SAMPLING_PROBABILITY }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
+          NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          OAUTH_FRONTEND_REDIRECT_URI=${{ secrets.OAUTH_FRONTEND_REDIRECT_URI }}
           EOF
           # IMAGE_TAG는 deploy-application.sh 인자로 전달 (Blue/Green 색상별 관리)
           # ORACLE_REGION은 ap-chuncheon-1 기본값 사용 (변경 필요 시 시크릿으로 추가)

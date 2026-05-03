@@ -68,7 +68,7 @@ public class PlayerNameRankingCleanupService {
 
         dashboardRepository.findTopWinnersBetween(start, end, RANKING_LIMIT)
                 .stream()
-                .map(TopWinnerResponse::playerName)
+                .map(TopWinnerResponse::nickname)
                 .forEach(nicknames::add);
 
         dashboardRepository.findRacingGameTopPlayers(start, end, RANKING_LIMIT)

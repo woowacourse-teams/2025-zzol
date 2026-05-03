@@ -18,6 +18,7 @@ import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import coffeeshout.user.application.service.UserStatsService;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ public class MiniGameResultSaveEventListener {
     private final MiniGameJpaRepository miniGameJpaRepository;
     private final MiniGameResultJpaRepository miniGameResultJpaRepository;
     private final RoomQueryService roomQueryService;
+    private final UserStatsService userStatsService;
 
     @EventListener
     @Transactional
@@ -97,6 +99,13 @@ public class MiniGameResultSaveEventListener {
         }
 
         miniGameResultJpaRepository.bulkInsert(resultEntities);
+
+        resultEntities.stream()
+                .filter(entity -> entity.getPlayer().getUserId() != null)
+                .forEach(entity -> userStatsService.updateStats(
+                        entity.getPlayer().getUserId(),
+                        entity.getRank() == 1
+                ));
 
         log.info("미니게임 결과 벌크 저장 완료: joinCode={}, playerCount={}", event.joinCode(), resultEntities.size());
     }

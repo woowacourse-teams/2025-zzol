@@ -3,8 +3,8 @@ package coffeeshout.room.domain;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.state;
 
-import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -35,9 +35,13 @@ public class Room {
     private RoomState roomState;
     private double adjustmentWeight;
 
-    public Room(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
+    public Room(JoinCode joinCode, PlayerName hostName) {
+        this(joinCode, hostName, null);
+    }
+
+    public Room(JoinCode joinCode, PlayerName hostName, Long userId, double adjustmentWeight) {
         this.joinCode = joinCode;
-        this.host = Player.createHost(hostName);
+        this.host = Player.createHost(hostName, userId);
         this.players = new Players(joinCode.getValue());
         this.roomState = RoomState.READY;
         this.miniGames = new LinkedList<>();
@@ -47,15 +51,19 @@ public class Room {
         join(host);
     }
 
-    public static Room createNewRoom(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
-        return new Room(joinCode, hostName, adjustmentWeight);
+    public static Room createNewRoom(JoinCode joinCode, PlayerName hostName, Long userId, double adjustmentWeight) {
+        return new Room(joinCode, hostName, userId, adjustmentWeight);
     }
 
     public void joinGuest(PlayerName guestName) {
+        joinGuest(guestName, null);
+    }
+
+    public void joinGuest(PlayerName guestName, Long userId) {
         validateRoomReady();
         validateCanJoin();
         validatePlayerNameNotDuplicate(guestName);
-        join(Player.createGuest(guestName));
+        join(Player.createGuest(guestName, userId));
     }
 
     public void addMiniGame(PlayerName hostName, Playable miniGame) {

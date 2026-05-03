@@ -39,6 +39,8 @@ import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.room.infra.persistence.RoulettePersistenceService;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
+import coffeeshout.user.application.service.UserProfileService;
+import coffeeshout.user.domain.AuthenticatedUser;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -75,6 +77,7 @@ public class RoomService {
     private final OutboxEventRecorder outboxEventRecorder;
     private final StreamPublisher streamPublisher;
     private final ApplicationEventPublisher eventPublisher;
+    private final UserProfileService userProfileService;
 
     @Value("${room.event.timeout:PT5S}")
     private Duration eventTimeout;
@@ -83,42 +86,47 @@ public class RoomService {
     public Room createRoom(String hostName) {
         final PlayerName playerName = new PlayerName(hostName);
         playerNameValidator.validate(playerName);
+        return doCreateRoom(hostName, null);
+    }
+
+    @Transactional
+    public Room createRoom(AuthenticatedUser authUser) {
+        final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
+        return doCreateRoom(nickname, authUser.userId());
+    }
+
+    private Room doCreateRoom(String resolvedName, Long userId) {
         final JoinCode joinCode = joinCodeGenerator.generate();
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(resolvedName), userId, rouletteProperties.defaultAdjustmentWeight());
+        final BaseEvent event = new RoomCreateEvent(resolvedName, joinCode.getValue());
 
-        // 방 생성 (QR 코드는 PENDING 상태로 시작)
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, playerName, rouletteProperties.defaultAdjustmentWeight());
-
-        // 방 생성 후 이벤트 전달
-        final BaseEvent event = new RoomCreateEvent(hostName, joinCode.getValue());
-
-        // 방 생성 이벤트: DB 저장과 원자적으로 묶기 위해 Outbox 경로 사용
-        // 트랜잭션 커밋 직후 AFTER_COMMIT으로 즉시 발행 (0ms 지연)
-        // Redis 장애 시에만 Worker가 500ms 후 재시도
         outboxEventRecorder.record(StreamKey.ROOM_BROADCAST, event);
-
-        // QR 코드 비동기 생성 시작
         qrCodeService.generateQrCodeAsync(joinCode.getValue());
-
         saveRoomEntity(joinCode.getValue());
 
-        log.info("방 생성 이벤트 처리 완료 (DB 저장): eventId={}, joinCode={}",
-                event.eventId(), joinCode.getValue());
-
-        // 해당 방 정보 수신
+        log.info("방 생성 이벤트 처리 완료 (DB 저장): eventId={}, joinCode={}, hostName={}",
+                event.eventId(), joinCode.getValue(), resolvedName);
         return room;
     }
 
     public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName) {
         playerNameValidator.validate(new PlayerName(guestName));
-        final RoomJoinEvent event = new RoomJoinEvent(joinCode, guestName);
+        return doEnterRoomAsync(joinCode, guestName, null);
+    }
 
+    public CompletableFuture<Room> enterRoomAsync(String joinCode, AuthenticatedUser authUser) {
+        final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
+        return doEnterRoomAsync(joinCode, nickname, authUser.userId());
+    }
+
+    private CompletableFuture<Room> doEnterRoomAsync(String joinCode, String resolvedName, Long userId) {
+        final RoomJoinEvent event = new RoomJoinEvent(joinCode, resolvedName, userId);
         return processEventAsync(
                 event.eventId(),
-                // 방 참가는 결과를 CompletableFuture로 기다리는 요청-응답 패턴이므로 즉시 발행
                 () -> streamPublisher.publish(StreamKey.ROOM_JOIN, event),
                 "방 참가",
-                String.format("joinCode=%s, guestName=%s", joinCode, guestName),
-                room -> String.format("joinCode=%s, guestName=%s", joinCode, guestName)
+                String.format("joinCode=%s, playerName=%s", joinCode, resolvedName),
+                room -> String.format("joinCode=%s, playerName=%s", joinCode, resolvedName)
         );
     }
 
@@ -295,7 +303,8 @@ public class RoomService {
         try {
             final Room room = roomCommandService.joinGuest(
                     new JoinCode(event.joinCode()),
-                    new PlayerName(event.guestName())
+                    new PlayerName(event.guestName()),
+                    event.userId()
             );
 
             roomEventWaitManager.notifySuccess(event.eventId(), room);

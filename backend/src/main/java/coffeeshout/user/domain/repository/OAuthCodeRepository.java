@@ -1,6 +1,6 @@
 package coffeeshout.user.domain.repository;
 
-import coffeeshout.user.application.service.AuthTokenService.TokenPair;
+import coffeeshout.user.domain.TokenPair;
 import java.util.Optional;
 
 public interface OAuthCodeRepository {

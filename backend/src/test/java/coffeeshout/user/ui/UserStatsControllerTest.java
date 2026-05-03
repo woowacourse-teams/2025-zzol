@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.user.application.service.AuthTokenService;
-import coffeeshout.user.application.service.AuthTokenService.TokenPair;
+import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;

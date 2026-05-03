@@ -3,6 +3,7 @@ package coffeeshout.user.application.service;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.config.JwtProperties;
 import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.OAuthCodeRepository;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
@@ -22,9 +23,6 @@ public class AuthTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final OAuthCodeRepository oAuthCodeRepository;
     private final JwtProperties jwtProperties;
-
-    public record TokenPair(String accessToken, String refreshToken) {
-    }
 
     public String issueCode(User user) {
         final TokenPair tokens = issue(user);

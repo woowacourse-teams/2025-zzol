@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.global.ServiceTest;
-import coffeeshout.user.application.service.AuthTokenService.TokenPair;
+import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;

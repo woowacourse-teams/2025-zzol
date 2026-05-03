@@ -1,6 +1,6 @@
 package coffeeshout.user.infra.redis;
 
-import coffeeshout.user.application.service.AuthTokenService.TokenPair;
+import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.repository.OAuthCodeRepository;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +31,9 @@ public class RedisOAuthCodeRepository implements OAuthCodeRepository {
             return Optional.empty();
         }
         final int delimIdx = value.indexOf(DELIMITER);
+        if (delimIdx < 0) {
+            return Optional.empty();
+        }
         final String accessToken = value.substring(0, delimIdx);
         final String refreshToken = value.substring(delimIdx + DELIMITER.length());
         return Optional.of(new TokenPair(accessToken, refreshToken));

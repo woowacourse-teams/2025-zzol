@@ -5,13 +5,13 @@ export const Card = styled.div`
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   padding: 20px;
   background: linear-gradient(
     135deg,
     ${({ theme }) => theme.color.point[500]} 0%,
     ${({ theme }) => theme.color.point[400]} 70%,
-    #ff8c7a 100%
+    ${({ theme }) => theme.color.point[300]} 100%
   );
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(255, 75, 75, 0.25);
@@ -56,47 +56,89 @@ export const CardTitle = styled.h3`
 export const Sub = styled.p`
   font-size: 12px;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.6);
 `;
 
+/* Main content: probability (left) | divider | winner (right) */
 export const Content = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: stretch;
+  gap: 20px;
 `;
 
-export const ProbRow = styled.div`
+export const ProbSection = styled.div`
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
 `;
 
 export const BigProb = styled.span`
-  font-size: 40px;
+  font-size: 44px;
   font-weight: 900;
   color: ${({ theme }) => theme.color.white};
-  letter-spacing: -0.04em;
+  letter-spacing: -0.05em;
   line-height: 1;
 `;
 
 export const ProbLabel = styled.span`
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.02em;
 `;
 
-export const Divider = styled.div`
-  height: 1px;
-  background: rgba(255, 255, 255, 0.2);
+export const VerticalDivider = styled.div`
+  width: 1px;
+  background: rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
 `;
 
-export const Names = styled.p`
-  font-size: 15px;
-  font-weight: 700;
+export const WinnerSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+`;
+
+export const WinnerLabel = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.01em;
+`;
+
+export const WinnerRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+export const WinnerName = styled.span`
+  font-size: 20px;
+  font-weight: 800;
   color: ${({ theme }) => theme.color.white};
+  letter-spacing: -0.03em;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+`;
+
+export const WinnerCode = styled.span`
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.01em;
+`;
+
+export const MultiWinnerList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
 export const Empty = styled.p`

@@ -50,11 +50,11 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
     endpoint: '/dashboard/lowest-probability-winner',
     transformData: (raw) => {
       const data = raw as LowestProbabilityWinner;
-      if (!data?.playerNames?.length) return [];
+      if (!data?.players?.length) return [];
       const probability = Math.round(data.probability * 10) / 10;
-      return data.playerNames.map((name, i) => ({
+      return data.players.map((p, i) => ({
         rank: i + 1,
-        name,
+        name: `${p.nickname} (${p.userCode})`,
         count: probability,
         unit: '%',
       }));

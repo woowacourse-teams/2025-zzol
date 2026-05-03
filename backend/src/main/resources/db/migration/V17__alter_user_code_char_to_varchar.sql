@@ -1,0 +1,2 @@
+ALTER TABLE app_user
+    MODIFY COLUMN user_code VARCHAR(5) NOT NULL;

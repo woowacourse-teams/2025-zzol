@@ -16,7 +16,7 @@ public class TracerProvider {
     private final Tracer tracer;
 
     public void executeWithTraceContext(TraceInfo traceInfo, Runnable task, BaseEvent event) {
-        if (!traceInfo.traceable()) {
+        if (traceInfo == null || !traceInfo.traceable()) {
             task.run();
             return;
         }

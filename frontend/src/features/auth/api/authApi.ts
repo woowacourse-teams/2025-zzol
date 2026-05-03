@@ -26,7 +26,7 @@ const authFetch = async <T>(
 };
 
 export const authApi = {
-  me: (): Promise<User> => authFetch('/users/me'),
+  me: (): Promise<User> => apiRequest('/users/me'),
 
   // code를 accessToken으로 교환 — refreshToken은 HttpOnly 쿠키로 자동 설정됨
   token: (code: string): Promise<Tokens> =>

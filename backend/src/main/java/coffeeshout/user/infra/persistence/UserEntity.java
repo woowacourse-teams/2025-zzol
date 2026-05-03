@@ -55,7 +55,9 @@ public class UserEntity {
     }
 
     public void agreeTerms() {
-        this.termsAgreedAt = Instant.now();
+        if (this.termsAgreedAt == null) {
+            this.termsAgreedAt = Instant.now();
+        }
     }
 
     public User toDomain(OAuthAccountEntity oAuthAccountEntity) {

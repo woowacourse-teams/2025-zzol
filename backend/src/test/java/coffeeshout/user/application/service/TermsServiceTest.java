@@ -8,7 +8,6 @@ import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.infra.persistence.UserEntity;
 import coffeeshout.user.infra.persistence.UserJpaRepository;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,7 @@ class TermsServiceTest extends ServiceTest {
         }
 
         @Test
-        void 약관_동의를_여러_번_호출해도_최신_시각으로_갱신된다() {
+        void 약관_동의를_여러_번_호출해도_최초_동의_시각이_유지된다() {
             termsService.agreeTerms(userId);
             final UserEntity afterFirst = userJpaRepository.findById(userId).orElseThrow();
             final var firstAgreedAt = afterFirst.getTermsAgreedAt();
@@ -53,10 +52,7 @@ class TermsServiceTest extends ServiceTest {
             termsService.agreeTerms(userId);
             final UserEntity afterSecond = userJpaRepository.findById(userId).orElseThrow();
 
-            SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(afterSecond.getTermsAgreedAt()).isNotNull();
-                softly.assertThat(afterSecond.getTermsAgreedAt()).isAfterOrEqualTo(firstAgreedAt);
-            });
+            assertThat(afterSecond.getTermsAgreedAt()).isEqualTo(firstAgreedAt);
         }
     }
 }

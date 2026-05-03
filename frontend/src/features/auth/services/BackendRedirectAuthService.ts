@@ -23,8 +23,10 @@ export class BackendRedirectAuthService implements AuthService {
       throw new Error('OAuth callback에 code가 없습니다');
     }
 
-    const tokens = await authApi.token(code);
-    this.tokenStore.setTokens(tokens);
+    const result = await authApi.token(code);
+    if (!result.isNewUser) {
+      this.tokenStore.setTokens({ accessToken: result.accessToken });
+    }
   }
 
   async refresh(): Promise<void> {

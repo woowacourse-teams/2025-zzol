@@ -1,12 +1,24 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "qmd update 2>/dev/null || true",
+            "async": true,
+            "statusMessage": "qmd 인덱스 갱신 중..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "input=$(cat); f=$(node -e \"process.stdout.write(JSON.parse(process.argv[1]).tool_input.file_path||'')\" \"$input\"); [[ \"$f\" == *.ts || \"$f\" == *.tsx ]] && qmd collection update zzol-fe 2>/dev/null || true",
+            "command": "input=$(cat); f=$(node -e \"process.stdout.write(JSON.parse(process.argv[1]).tool_input.file_path||'')\" \"$input\"); [[ \"$f\" == *.ts || \"$f\" == *.tsx ]] && qmd update 2>/dev/null || true",
             "async": true
           }
         ]

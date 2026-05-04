@@ -5,9 +5,9 @@ import coffeeshout.patchnote.domain.PatchNoteCategory;
 import coffeeshout.patchnote.exception.PatchNoteErrorCode;
 import coffeeshout.patchnote.infra.persistence.PatchNoteEntity;
 import coffeeshout.patchnote.infra.persistence.PatchNoteJpaRepository;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,8 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PatchNoteAdminService {
 
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
-
+    private final Clock clock;
     private final PatchNoteJpaRepository patchNoteJpaRepository;
 
     @Transactional(readOnly = true)

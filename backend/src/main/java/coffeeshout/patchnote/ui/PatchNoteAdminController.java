@@ -1,7 +1,7 @@
 package coffeeshout.patchnote.ui;
 
+import coffeeshout.patchnote.application.AdminRow;
 import coffeeshout.patchnote.application.PatchNoteAdminService;
-import coffeeshout.patchnote.application.PatchNoteAdminService.AdminRow;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import coffeeshout.patchnote.ui.request.CreatePatchNoteRequest;
 import coffeeshout.patchnote.ui.request.UpdatePatchNoteRequest;

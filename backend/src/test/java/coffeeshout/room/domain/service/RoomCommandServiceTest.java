@@ -49,7 +49,7 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트");
 
             // when
-            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName);
+            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -66,8 +66,8 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName2 = new PlayerName("호스트2");
 
             // when
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName1);
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName2);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName1, 0.7);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName2, 0.7);
 
             // then
             Room room = roomQueryService.getByJoinCode(joinCode);
@@ -87,7 +87,7 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트");
             PlayerName guestName = new PlayerName("게스트");
 
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
 
             // when
             Room room = roomCommandService.joinGuest(joinCode, guestName);
@@ -107,7 +107,7 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName guest2 = new PlayerName("게스트2");
             PlayerName guest3 = new PlayerName("게스트3");
 
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
 
             // when
             roomCommandService.joinGuest(joinCode, guest1);
@@ -155,7 +155,7 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트짱");
             JoinCode testJoinCode = joinCodeGenerator.generate();
 
-            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName);
+            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName, 0.7);
 
             // when
             roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트1"));
@@ -174,7 +174,7 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트짱");
             JoinCode testJoinCode = joinCodeGenerator.generate();
 
-            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName);
+            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName, 0.7);
 
             // 최대 9명까지니까 8명 더 넣어보기
             for (int i = 2; i <= 9; i++) {
@@ -194,7 +194,7 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트짱");
             JoinCode testJoinCode = joinCodeGenerator.generate();
 
-            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName);
+            roomCommandService.saveIfAbsentRoom(testJoinCode, hostName, 0.7);
             roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트"));
 
             // when & then
@@ -212,7 +212,7 @@ class RoomCommandServiceTest extends ServiceTest {
         void 미니게임을_선택한다() {
             // given
             PlayerName hostName = new PlayerName("호스트");
-            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName);
+            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
 
             // when
             List<MiniGameType> selectedMiniGames = roomCommandService.updateMiniGames(room.getJoinCode(),
@@ -230,7 +230,7 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트");
             PlayerName guest1 = new PlayerName("게스트1");
 
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
             roomCommandService.joinGuest(joinCode, guest1);
 
             List<MiniGameType> miniGameTypes = List.of(MiniGameType.CARD_GAME);
@@ -248,7 +248,7 @@ class RoomCommandServiceTest extends ServiceTest {
             PlayerName hostName = new PlayerName("호스트");
             PlayerName guest1 = new PlayerName("게스트1");
 
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName);
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
             roomCommandService.joinGuest(joinCode, guest1);
 
             roomCommandService.updateMiniGames(joinCode, hostName, List.of(MiniGameType.CARD_GAME));

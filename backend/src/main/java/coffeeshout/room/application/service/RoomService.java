@@ -32,6 +32,7 @@ import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.domain.service.PlayerNameValidator;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.config.RouletteProperties;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
@@ -61,6 +62,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class RoomService {
 
+    private final RouletteProperties rouletteProperties;
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
     private final DelayedRoomRemovalService delayedRoomRemovalService;
@@ -95,7 +97,7 @@ public class RoomService {
 
     private Room doCreateRoom(String resolvedName, Long userId) {
         final JoinCode joinCode = joinCodeGenerator.generate();
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(resolvedName), userId);
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(resolvedName), userId, rouletteProperties.defaultAdjustmentWeight());
         final BaseEvent event = new RoomCreateEvent(resolvedName, joinCode.getValue());
 
         outboxEventRecorder.record(StreamKey.ROOM_BROADCAST, event);
@@ -188,6 +190,14 @@ public class RoomService {
         return room.getSelectedMiniGameTypes();
     }
 
+    public void updateAdjustmentWeight(String joinCode, String hostName, double adjustmentWeight) {
+        roomCommandService.updateAdjustmentWeight(
+                new JoinCode(joinCode),
+                new PlayerName(hostName),
+                adjustmentWeight
+        );
+    }
+
     public boolean isReadyState(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         return room.isReadyState();
@@ -277,7 +287,8 @@ public class RoomService {
 
         roomCommandService.saveIfAbsentRoom(
                 new JoinCode(event.joinCode()),
-                new PlayerName(event.hostName())
+                new PlayerName(event.hostName()),
+                rouletteProperties.defaultAdjustmentWeight()
         );
 
         delayedRoomRemovalService.scheduleRemoveRoom(new JoinCode(event.joinCode()));

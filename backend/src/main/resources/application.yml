@@ -183,6 +183,9 @@ nickname-audit:
   batch-size: 100                      # API 호출 1회당 처리량 (RPM 5 기준 100개씩 5회 = 500개/min)
   feedback-injection-threshold: 20
 
+roulette:
+  default-adjustment-weight: 0.7
+
 user:
   code:
     max-retry: 100

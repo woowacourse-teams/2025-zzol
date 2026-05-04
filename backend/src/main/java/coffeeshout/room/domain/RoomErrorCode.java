@@ -21,6 +21,11 @@ public enum RoomErrorCode implements ErrorCode {
     DUPLICATE_PLAYER_NAME(HttpStatus.CONFLICT, "중복된 닉네임은 들어올 수 없습니다."),
     NO_EXIST_PLAYER(HttpStatus.NOT_FOUND, "플레이어가 존재하지 않습니다."),
     NO_EXIST_PLAYER_NAME_AUDIT(HttpStatus.NOT_FOUND, "플레이어 검열 항목을 찾을 수 없습니다."),
+    NOT_HOST(HttpStatus.FORBIDDEN, "호스트만 수행할 수 있습니다."),
+    INVALID_ADJUSTMENT_WEIGHT(HttpStatus.BAD_REQUEST, "가중치는 0.1 이상 0.9 이하여야 합니다."),
+    ROOM_NOT_READY_TO_UPDATE(HttpStatus.CONFLICT, "READY 상태에서만 설정을 변경할 수 있습니다."),
+    INSUFFICIENT_PLAYER_COUNT(HttpStatus.BAD_REQUEST, "플레이어는 2명 이상이어야 합니다."),
+    INVALID_ROUND_COUNT(HttpStatus.BAD_REQUEST, "라운드 수는 양수여야 합니다."),
     ;
 
     private final HttpStatus httpStatus;

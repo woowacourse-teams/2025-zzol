@@ -23,9 +23,11 @@ public class LokiQueryTool implements ZzolBotTool {
     private static final int LOG_LIMIT = 50;
 
     private final RestClient restClient;
+    private final String environment;
 
     public LokiQueryTool(ZzolBotProperties properties, RestClient.Builder restClientBuilder) {
         this.restClient = restClientBuilder.baseUrl(properties.monitoring().lokiUrl()).build();
+        this.environment = properties.monitoring().environment();
     }
 
     @Override
@@ -68,7 +70,7 @@ public class LokiQueryTool implements ZzolBotTool {
         final Instant end = Instant.now();
         final Instant start = end.minus(lookBackMinutes, ChronoUnit.MINUTES);
 
-        final String logqlQuery = String.format("{app=\"zzol-backend\"} |= \"%s\"", joinCodeValue);
+        final String logqlQuery = String.format("{environment=\"%s\"} |= \"%s\"", environment, joinCodeValue);
         final long startNano = start.toEpochMilli() * 1_000_000L;
         final long endNano = end.toEpochMilli() * 1_000_000L;
         final String encodedUri = String.format(

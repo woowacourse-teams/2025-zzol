@@ -349,3 +349,4 @@ zzol-bot:
     loki-url: ${LOKI_URL:http://loki:3100}
     tempo-url: ${ZZOL_BOT_TEMPO_URL:http://tempo:3200}
     prometheus-url: ${PROMETHEUS_URL:http://prometheus:9090}
+    environment: ${SPRING_PROFILES_ACTIVE:local}

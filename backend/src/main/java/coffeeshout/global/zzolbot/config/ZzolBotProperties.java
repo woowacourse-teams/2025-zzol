@@ -19,6 +19,7 @@ public record ZzolBotProperties(
     public record MonitoringProperties(
             @NotBlank String lokiUrl,
             @NotBlank String tempoUrl,
-            @NotBlank String prometheusUrl
+            @NotBlank String prometheusUrl,
+            @NotBlank String environment
     ) {}
 }

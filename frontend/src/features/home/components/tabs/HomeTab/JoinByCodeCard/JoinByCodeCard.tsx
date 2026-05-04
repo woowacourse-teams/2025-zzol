@@ -5,7 +5,7 @@ type Props = {
 };
 
 const JoinByCodeCard = ({ onClick }: Props) => (
-  <S.Card type="button" onClick={onClick}>
+  <S.Card type="button" data-testid="join-room-button" onClick={onClick}>
     <S.Top>
       <S.IconCircle>#</S.IconCircle>
       <S.Title>코드로{'\n'}참가하기</S.Title>

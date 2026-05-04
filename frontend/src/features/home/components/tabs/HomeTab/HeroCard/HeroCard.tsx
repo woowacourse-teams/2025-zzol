@@ -5,7 +5,7 @@ type Props = {
 };
 
 const HeroCard = ({ onClick }: Props) => (
-  <S.Card type="button" onClick={onClick}>
+  <S.Card type="button" data-testid="create-room-button" onClick={onClick}>
     <S.Top>
       <S.IconCircle>＋</S.IconCircle>
       <S.Title>새 방 만들기</S.Title>

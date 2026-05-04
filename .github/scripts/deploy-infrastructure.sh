@@ -136,6 +136,16 @@ deploy_redis() {
     return 0
 }
 
+ensure_monitoring_network() {
+    if ! docker network inspect monitoring-network &>/dev/null; then
+        log_info "Creating monitoring-network..."
+        docker network create monitoring-network
+        log_success "monitoring-network created"
+    else
+        log_success "monitoring-network already exists"
+    fi
+}
+
 main() {
     print_script_info "Deploy Infrastructure" "Deploying MySQL and Redis for $ENVIRONMENT environment"
 
@@ -145,6 +155,8 @@ main() {
         log_error ".env file not found in ${DEPLOY_DIR}"
         exit 1
     fi
+
+    ensure_monitoring_network
 
     if ! deploy_mysql; then
         log_error "MySQL deployment failed"

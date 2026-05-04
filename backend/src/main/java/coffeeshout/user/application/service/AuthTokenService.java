@@ -3,6 +3,7 @@ package coffeeshout.user.application.service;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.config.JwtProperties;
 import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.user.domain.OAuthCodeEntry;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.OAuthCodeRepository;
@@ -24,14 +25,14 @@ public class AuthTokenService {
     private final OAuthCodeRepository oAuthCodeRepository;
     private final JwtProperties jwtProperties;
 
-    public String issueCode(User user) {
-        final TokenPair tokens = issue(user);
+    public String issueCode(LoginResult loginResult) {
+        final TokenPair tokens = issue(loginResult.user());
         final String code = UUID.randomUUID().toString();
-        oAuthCodeRepository.save(code, tokens, OAUTH_CODE_TTL_SECONDS);
+        oAuthCodeRepository.save(code, tokens, loginResult.isNewUser(), OAUTH_CODE_TTL_SECONDS);
         return code;
     }
 
-    public TokenPair exchangeCode(String code) {
+    public OAuthCodeEntry exchangeCode(String code) {
         return oAuthCodeRepository.findAndDelete(code)
                 .orElseThrow(() -> new BusinessException(
                         UserErrorCode.OAUTH_CODE_NOT_FOUND, "유효하지 않거나 만료된 인증 코드입니다."));

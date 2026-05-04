@@ -25,7 +25,7 @@ class UserStatsServiceTest extends ServiceTest {
     @BeforeEach
     void setUp() {
         final User user = userRegistrationService.registerOrLogin(
-                OAuthProvider.GOOGLE, "google-uid-stats", "stats@example.com", "통계유저");
+                OAuthProvider.GOOGLE, "google-uid-stats", "stats@example.com", "통계유저").user();
         userId = user.getId();
     }
 

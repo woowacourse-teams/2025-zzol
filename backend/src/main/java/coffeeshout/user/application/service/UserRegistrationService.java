@@ -28,18 +28,19 @@ public class UserRegistrationService {
     private final NameValidator nameValidator;
     private final NicknameDefaultGenerator nicknameDefaultGenerator;
 
-    public User registerOrLogin(OAuthProvider provider, String providerUserId, String email, String suggestedNickname) {
+    public LoginResult registerOrLogin(OAuthProvider provider, String providerUserId, String email, String suggestedNickname) {
         final Optional<User> existing = userRepository.findByProviderAndProviderUserId(
                 provider.getRegistrationId(), providerUserId);
         if (existing.isPresent()) {
             log.debug("기존 회원 로그인: provider={}, providerUserId={}", provider, providerUserId);
-            return existing.get();
+            return new LoginResult(existing.get(), false);
         }
 
         final UserNickname nickname = resolveNickname(suggestedNickname);
         final OAuthAccount oAuthAccount = new OAuthAccount(provider, providerUserId, email);
+        final User newUser = saveNewUserWithRetry(nickname, oAuthAccount, provider);
 
-        return saveNewUserWithRetry(nickname, oAuthAccount, provider);
+        return new LoginResult(newUser, true);
     }
 
     private User saveNewUserWithRetry(UserNickname nickname, OAuthAccount oAuthAccount, OAuthProvider provider) {

@@ -38,6 +38,9 @@ public class UserEntity {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "terms_agreed_at")
+    private Instant termsAgreedAt;
+
     public UserEntity(String userCode, String nickname) {
         final Instant now = Instant.now();
         this.userCode = userCode;
@@ -49,6 +52,12 @@ public class UserEntity {
     public void updateNickname(String nickname) {
         this.nickname = nickname;
         this.updatedAt = Instant.now();
+    }
+
+    public void agreeTerms() {
+        if (this.termsAgreedAt == null) {
+            this.termsAgreedAt = Instant.now();
+        }
     }
 
     public User toDomain(OAuthAccountEntity oAuthAccountEntity) {

@@ -1,9 +1,9 @@
 package coffeeshout.user.ui;
 
 import coffeeshout.user.application.service.AuthTokenService;
+import coffeeshout.user.application.service.LoginResult;
 import coffeeshout.user.application.service.UserRegistrationService;
 import coffeeshout.user.domain.OAuthProvider;
-import coffeeshout.user.domain.User;
 import coffeeshout.user.infra.oauth.CustomOAuth2UserService.CustomOAuth2User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,14 +33,14 @@ public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
         final CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
         final OAuthProvider provider = OAuthProvider.from(oAuth2User.registrationId());
 
-        final User user = userRegistrationService.registerOrLogin(
+        final LoginResult loginResult = userRegistrationService.registerOrLogin(
                 provider,
                 oAuth2User.providerUserId(),
                 oAuth2User.email(),
                 oAuth2User.nickname()
         );
 
-        final String code = authTokenService.issueCode(user);
+        final String code = authTokenService.issueCode(loginResult);
         response.sendRedirect(frontendRedirectUri + "?code=" + code);
     }
 }

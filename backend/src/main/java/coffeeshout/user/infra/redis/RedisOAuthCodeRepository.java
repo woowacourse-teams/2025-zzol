@@ -1,5 +1,6 @@
 package coffeeshout.user.infra.redis;
 
+import coffeeshout.user.domain.OAuthCodeEntry;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.repository.OAuthCodeRepository;
 import java.util.Optional;
@@ -18,24 +19,24 @@ public class RedisOAuthCodeRepository implements OAuthCodeRepository {
     private final StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public void save(String code, TokenPair tokens, long ttlSeconds) {
-        final String value = tokens.accessToken() + DELIMITER + tokens.refreshToken();
+    public void save(String code, TokenPair tokens, boolean isNewUser, long ttlSeconds) {
+        final String value = tokens.accessToken() + DELIMITER + tokens.refreshToken() + DELIMITER + isNewUser;
         stringRedisTemplate.opsForValue().set(KEY_PREFIX + code, value, ttlSeconds, TimeUnit.SECONDS);
     }
 
     @Override
-    public Optional<TokenPair> findAndDelete(String code) {
+    public Optional<OAuthCodeEntry> findAndDelete(String code) {
         final String key = KEY_PREFIX + code;
         final String value = stringRedisTemplate.opsForValue().getAndDelete(key);
         if (value == null) {
             return Optional.empty();
         }
-        final int delimIdx = value.indexOf(DELIMITER);
-        if (delimIdx < 0) {
+        final String[] parts = value.split("\\|\\|", 3);
+        if (parts.length != 3) {
             return Optional.empty();
         }
-        final String accessToken = value.substring(0, delimIdx);
-        final String refreshToken = value.substring(delimIdx + DELIMITER.length());
-        return Optional.of(new TokenPair(accessToken, refreshToken));
+        final TokenPair tokenPair = new TokenPair(parts[0], parts[1]);
+        final boolean isNewUser = Boolean.parseBoolean(parts[2]);
+        return Optional.of(new OAuthCodeEntry(tokenPair, isNewUser));
     }
 }

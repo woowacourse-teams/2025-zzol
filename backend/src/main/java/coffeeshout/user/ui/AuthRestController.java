@@ -4,6 +4,7 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.config.JwtProperties;
 import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.user.domain.OAuthCodeEntry;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.exception.UserErrorCode;
 import coffeeshout.user.ui.request.ExchangeCodeRequest;
@@ -40,9 +41,9 @@ public class AuthRestController {
             @Valid @RequestBody ExchangeCodeRequest request,
             HttpServletResponse response
     ) {
-        final TokenPair tokens = authTokenService.exchangeCode(request.code());
-        setRefreshTokenCookie(response, tokens.refreshToken());
-        return ResponseEntity.ok(new AuthTokenResponse(tokens.accessToken(), null));
+        final OAuthCodeEntry entry = authTokenService.exchangeCode(request.code());
+        setRefreshTokenCookie(response, entry.tokenPair().refreshToken());
+        return ResponseEntity.ok(new AuthTokenResponse(entry.tokenPair().accessToken(), null, entry.isNewUser()));
     }
 
     @PostMapping("/refresh")
@@ -53,7 +54,7 @@ public class AuthRestController {
         final String refreshToken = extractRefreshTokenCookie(request);
         final TokenPair tokens = authTokenService.rotate(refreshToken);
         setRefreshTokenCookie(response, tokens.refreshToken());
-        return ResponseEntity.ok(new AuthTokenResponse(tokens.accessToken(), null));
+        return ResponseEntity.ok(new AuthTokenResponse(tokens.accessToken(), null, false));
     }
 
     @PostMapping("/logout")

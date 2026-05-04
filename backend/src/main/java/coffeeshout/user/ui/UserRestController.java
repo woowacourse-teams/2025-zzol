@@ -1,6 +1,7 @@
 package coffeeshout.user.ui;
 
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.user.application.service.TermsService;
 import coffeeshout.user.application.service.UserProfileService;
 import coffeeshout.user.application.service.UserStatsService;
 import coffeeshout.user.domain.AuthenticatedUser;
@@ -30,6 +31,7 @@ public class UserRestController {
 
     private final UserProfileService userProfileService;
     private final UserStatsService userStatsService;
+    private final TermsService termsService;
 
     @GetMapping("/me")
     public ResponseEntity<UserMeResponse> getMe(@AuthUser Optional<AuthenticatedUser> authUser) {
@@ -63,6 +65,13 @@ public class UserRestController {
         final AuthenticatedUser user = requireAuthenticated(authUser);
         final UserStats stats = userStatsService.getStats(user.userId());
         return ResponseEntity.ok(UserStatsResponse.from(stats));
+    }
+
+    @PostMapping("/me/terms")
+    public ResponseEntity<Void> agreeTerms(@AuthUser Optional<AuthenticatedUser> authUser) {
+        final AuthenticatedUser user = requireAuthenticated(authUser);
+        termsService.agreeTerms(user.userId());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/me/stats")

@@ -54,6 +54,9 @@ public class OutboxTool implements ZzolBotTool {
     @Transactional(readOnly = true)
     public ToolExecutionResult execute(Map<String, Object> params) {
         final String joinCodeValue = (String) params.get("joinCode");
+        if (joinCodeValue == null || !joinCodeValue.matches("[A-Z0-9]{4}")) {
+            return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식: " + joinCodeValue);
+        }
         try {
             final List<OutboxEvent> events = outboxRepository.findRecentByStatusInAndPayloadContaining(
                     List.of(OutboxStatus.PENDING, OutboxStatus.DEAD_LETTER),
@@ -66,6 +69,9 @@ public class OutboxTool implements ZzolBotTool {
         } catch (JsonProcessingException e) {
             log.warn("[ZzolBot] outbox_events 직렬화 실패. joinCode={}", joinCodeValue, e);
             return ToolExecutionResult.fail(TOOL_NAME, "Outbox 이벤트 직렬화 실패");
+        } catch (Exception e) {
+            log.warn("[ZzolBot] outbox_events 조회 실패. joinCode={}", joinCodeValue, e);
+            return ToolExecutionResult.fail(TOOL_NAME, "Outbox 이벤트 조회 실패");
         }
     }
 

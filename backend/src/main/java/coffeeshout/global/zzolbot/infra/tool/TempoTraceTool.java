@@ -51,6 +51,9 @@ public class TempoTraceTool implements ZzolBotTool {
     @Override
     public ToolExecutionResult execute(Map<String, Object> params) {
         final String joinCodeValue = (String) params.get("joinCode");
+        if (joinCodeValue == null || !joinCodeValue.matches("[A-Z0-9]{4}")) {
+            return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식: " + joinCodeValue);
+        }
         try {
             final String response = restClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -63,7 +66,7 @@ public class TempoTraceTool implements ZzolBotTool {
             return ToolExecutionResult.ok(TOOL_NAME, response != null ? response : "트레이스 없음");
         } catch (RestClientException e) {
             log.warn("[ZzolBot] Tempo 조회 실패. joinCode={}", joinCodeValue, e);
-            return ToolExecutionResult.fail(TOOL_NAME, "Tempo 조회 실패: " + e.getMessage());
+            return ToolExecutionResult.fail(TOOL_NAME, "Tempo 조회 실패");
         }
     }
 }

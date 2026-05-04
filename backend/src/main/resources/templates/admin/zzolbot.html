@@ -282,7 +282,12 @@
         msg.className = 'message bot';
         const p = document.createElement('div');
         p.className = 'progress-bubble';
-        p.innerHTML = `<div class="spinner"></div><span>${toolLabel(toolName)} 조회 중...</span>`;
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        const span = document.createElement('span');
+        span.textContent = toolLabel(toolName) + ' 조회 중...';
+        p.appendChild(spinner);
+        p.appendChild(span);
         msg.appendChild(p);
         chatBox.appendChild(msg);
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -356,7 +361,25 @@
             const reader  = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
-            let lastEventName = '';
+            let currentEvent = '';
+            let dataLines = [];
+
+            const dispatchEvent = () => {
+                const data = dataLines.join('\n');
+                if (currentEvent === 'progress') {
+                    progressNodes.push(appendProgress(data));
+                } else if (currentEvent === 'sessionId') {
+                    currentSessionId = Number(data);
+                } else if (currentEvent === 'result') {
+                    progressNodes.forEach(n => n.remove());
+                    progressNodes.length = 0;
+                    const botMsg = appendMessage('bot', data);
+                    if (currentSessionId) appendFeedbackRow(currentSessionId, botMsg);
+                    loadHistory();
+                }
+                currentEvent = '';
+                dataLines = [];
+            };
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -367,21 +390,11 @@
 
                 for (const line of lines) {
                     if (line.startsWith('event:')) {
-                        lastEventName = line.slice(6).trim();
+                        currentEvent = line.slice(6).trim();
                     } else if (line.startsWith('data:')) {
-                        const data = line.slice(5).trim();
-                        if (lastEventName === 'progress') {
-                            progressNodes.push(appendProgress(data));
-                        } else if (lastEventName === 'sessionId') {
-                            currentSessionId = Number(data);
-                        } else if (lastEventName === 'result') {
-                            progressNodes.forEach(n => n.remove());
-                            progressNodes.length = 0;
-                            const botMsg = appendMessage('bot', data);
-                            if (currentSessionId) appendFeedbackRow(currentSessionId, botMsg);
-                            loadHistory();
-                        }
-                        lastEventName = '';
+                        dataLines.push(line.slice(5).trim());
+                    } else if (line === '' && currentEvent) {
+                        dispatchEvent();
                     }
                 }
             }
@@ -409,16 +422,37 @@
             return;
         }
 
-        container.innerHTML = list.map(s => `
-            <div class="history-item" onclick="loadSession(${JSON.stringify(s.question)}, ${JSON.stringify(s.answer)})">
-                <div class="history-question">${escapeHtml(s.question)}</div>
-                <div class="history-meta">
-                    <span>${s.createdAt}</span>
-                    ${s.feedback === 'GOOD' ? '<span class="badge-good">✓ 좋아요</span>' : ''}
-                    ${s.feedback === 'BAD'  ? '<span class="badge-bad">✗ 틀렸어요</span>' : ''}
-                </div>
-            </div>
-        `).join('');
+        container.innerHTML = '';
+        list.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'history-question';
+            questionDiv.textContent = s.question;
+
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'history-meta';
+            const timeSpan = document.createElement('span');
+            timeSpan.textContent = s.createdAt;
+            metaDiv.appendChild(timeSpan);
+            if (s.feedback === 'GOOD') {
+                const badge = document.createElement('span');
+                badge.className = 'badge-good';
+                badge.textContent = '✓ 좋아요';
+                metaDiv.appendChild(badge);
+            } else if (s.feedback === 'BAD') {
+                const badge = document.createElement('span');
+                badge.className = 'badge-bad';
+                badge.textContent = '✗ 틀렸어요';
+                metaDiv.appendChild(badge);
+            }
+
+            item.appendChild(questionDiv);
+            item.appendChild(metaDiv);
+            item.addEventListener('click', () => loadSession(s.question, s.answer));
+            container.appendChild(item);
+        });
     }
 
     function loadSession(question, answer) {

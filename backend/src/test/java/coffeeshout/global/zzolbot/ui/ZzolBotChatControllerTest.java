@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.zzolbot.application.ZzolBotChatService;
 import coffeeshout.global.zzolbot.domain.ZzolBotChatResult;
+import java.util.concurrent.Executors;
 import coffeeshout.global.zzolbot.domain.ZzolBotFeedback;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
 import java.security.Principal;
@@ -41,7 +42,7 @@ class ZzolBotChatControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new ZzolBotChatController(chatService);
+        controller = new ZzolBotChatController(chatService, Executors.newVirtualThreadPerTaskExecutor());
         given(principal.getName()).willReturn("admin");
     }
 

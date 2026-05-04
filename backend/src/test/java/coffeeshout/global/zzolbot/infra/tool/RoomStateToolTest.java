@@ -75,5 +75,19 @@ class RoomStateToolTest {
 
             assertThat(result.success()).isFalse();
         }
+
+        @Test
+        void joinCode_파라미터가_누락되면_실패_결과를_반환한다() {
+            final ToolExecutionResult result = roomStateTool.execute(Map.of());
+
+            assertThat(result.success()).isFalse();
+        }
+
+        @Test
+        void joinCode_파라미터가_문자열이_아니면_실패_결과를_반환한다() {
+            final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", 123));
+
+            assertThat(result.success()).isFalse();
+        }
     }
 }

@@ -26,6 +26,9 @@ class ZzolBotPromptTemplateTest {
             softly.assertThat(prompt).contains("room_state");
             softly.assertThat(prompt).contains("outbox_events");
             softly.assertThat(prompt).contains("loki_logs");
+            softly.assertThat(prompt).contains("redis_stream_status");
+            softly.assertThat(prompt).contains("tempo_traces");
+            softly.assertThat(prompt).contains("prometheus_query");
             softly.assertThat(prompt).contains("RoomState");
             softly.assertThat(prompt).contains("DEAD_LETTER");
         });

@@ -51,6 +51,9 @@ public class PrometheusQueryTool implements ZzolBotTool {
     @Override
     public ToolExecutionResult execute(Map<String, Object> params) {
         final String query = (String) params.get("query");
+        if (query == null || query.isBlank()) {
+            return ToolExecutionResult.fail(TOOL_NAME, "query 파라미터가 누락되었습니다.");
+        }
         try {
             final String response = restClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -62,7 +65,7 @@ public class PrometheusQueryTool implements ZzolBotTool {
             return ToolExecutionResult.ok(TOOL_NAME, response != null ? response : "메트릭 없음");
         } catch (RestClientException e) {
             log.warn("[ZzolBot] Prometheus 조회 실패. query={}", query, e);
-            return ToolExecutionResult.fail(TOOL_NAME, "Prometheus 조회 실패: " + e.getMessage());
+            return ToolExecutionResult.fail(TOOL_NAME, "Prometheus 조회 실패");
         }
     }
 }

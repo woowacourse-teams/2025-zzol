@@ -60,6 +60,9 @@ public class LokiQueryTool implements ZzolBotTool {
     @Override
     public ToolExecutionResult execute(Map<String, Object> params) {
         final String joinCodeValue = (String) params.get("joinCode");
+        if (!isValidJoinCode(joinCodeValue)) {
+            return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식: " + joinCodeValue);
+        }
         final int lookBackMinutes = parseLookBackMinutes((String) params.getOrDefault("since", "1h"));
 
         final Instant end = Instant.now();
@@ -82,19 +85,26 @@ public class LokiQueryTool implements ZzolBotTool {
             return ToolExecutionResult.ok(TOOL_NAME, response != null ? response : "로그 없음");
         } catch (RestClientException e) {
             log.warn("[ZzolBot] Loki 조회 실패. joinCode={}", joinCodeValue, e);
-            return ToolExecutionResult.fail(TOOL_NAME, "Loki 조회 실패: " + e.getMessage());
+            return ToolExecutionResult.fail(TOOL_NAME, "Loki 조회 실패");
         }
+    }
+
+    private boolean isValidJoinCode(String joinCode) {
+        return joinCode != null && joinCode.matches("[A-Z0-9]{4}");
     }
 
     private int parseLookBackMinutes(String since) {
         if (since == null || since.isBlank()) {
             return DEFAULT_LOOK_BACK_MINUTES;
         }
-        if (since.endsWith("h")) {
-            return Integer.parseInt(since.replace("h", "")) * 60;
-        }
-        if (since.endsWith("m")) {
-            return Integer.parseInt(since.replace("m", ""));
+        try {
+            if (since.endsWith("h")) {
+                return Integer.parseInt(since.replace("h", "")) * 60;
+            }
+            if (since.endsWith("m")) {
+                return Integer.parseInt(since.replace("m", ""));
+            }
+        } catch (NumberFormatException ignored) {
         }
         return DEFAULT_LOOK_BACK_MINUTES;
     }

@@ -14,8 +14,12 @@ public class ZzolBotConfig {
     @Bean("zzolBotClient")
     @Profile("!local & !test")
     public Client zzolBotClient(ZzolBotProperties properties) {
+        final String apiKey = properties.geminiApiKey();
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("GEMINI_ZZOL_BOT_API_KEY가 설정되지 않았습니다.");
+        }
         return Client.builder()
-                .apiKey(properties.geminiApiKey())
+                .apiKey(apiKey)
                 .build();
     }
 }

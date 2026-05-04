@@ -55,7 +55,9 @@ public class RoomStateTool implements ZzolBotTool {
     @Override
     @Transactional(readOnly = true)
     public ToolExecutionResult execute(Map<String, Object> params) {
-        final String joinCodeValue = (String) params.get("joinCode");
+        if (!(params.get("joinCode") instanceof String joinCodeValue)) {
+            return ToolExecutionResult.fail(TOOL_NAME, "joinCode 파라미터가 누락되었거나 올바르지 않습니다.");
+        }
         try {
             final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCodeValue));
             return ToolExecutionResult.ok(TOOL_NAME, objectMapper.writeValueAsString(buildSummary(room)));

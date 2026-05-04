@@ -66,7 +66,7 @@ class GeminiZzolBotClientTest {
         }
 
         @Test
-        void function_call이_있으면_ToolCallResponse를_반환한다() {
+        void function_call이_있으면_ToolCallsResponse를_반환한다() {
             final FunctionCall functionCall = mock(FunctionCall.class);
             given(functionCall.name()).willReturn(Optional.of("room_state"));
             given(functionCall.args()).willReturn(Optional.of(Map.of("joinCode", "ABC1")));
@@ -80,12 +80,13 @@ class GeminiZzolBotClientTest {
                     List.of()
             );
 
-            assertThat(result).isInstanceOf(ZzolBotLlmResponse.ToolCallResponse.class);
-            final ZzolBotLlmResponse.ToolCallResponse toolCall =
-                    (ZzolBotLlmResponse.ToolCallResponse) result;
+            assertThat(result).isInstanceOf(ZzolBotLlmResponse.ToolCallsResponse.class);
+            final ZzolBotLlmResponse.ToolCallsResponse toolCalls =
+                    (ZzolBotLlmResponse.ToolCallsResponse) result;
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(toolCall.toolName()).isEqualTo("room_state");
-                softly.assertThat(toolCall.args()).containsKey("joinCode");
+                softly.assertThat(toolCalls.calls()).hasSize(1);
+                softly.assertThat(toolCalls.calls().get(0).toolName()).isEqualTo("room_state");
+                softly.assertThat(toolCalls.calls().get(0).args()).containsKey("joinCode");
             });
         }
 

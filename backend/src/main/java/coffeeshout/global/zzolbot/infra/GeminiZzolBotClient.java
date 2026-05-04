@@ -72,11 +72,15 @@ public class GeminiZzolBotClient implements ZzolBotLlmClient {
         final List<FunctionCall> functionCalls = response.functionCalls();
 
         if (!functionCalls.isEmpty()) {
-            final FunctionCall fc = functionCalls.get(0);
-            final String toolName = fc.name().orElse("");
-            final Map<String, Object> args = fc.args().orElse(Collections.emptyMap());
-            log.debug("[ZzolBot] tool 호출 요청: toolName={}, args={}", toolName, args);
-            return new ZzolBotLlmResponse.ToolCallResponse(toolName, args);
+            final List<ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem> calls = functionCalls.stream()
+                    .map(fc -> new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem(
+                            fc.name().orElse(""),
+                            fc.args().orElse(Collections.emptyMap())
+                    ))
+                    .toList();
+            log.debug("[ZzolBot] tool 호출 요청: count={}, tools={}", calls.size(),
+                    calls.stream().map(ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem::toolName).toList());
+            return new ZzolBotLlmResponse.ToolCallsResponse(calls);
         }
 
         return new ZzolBotLlmResponse.TextResponse(response.text());

@@ -91,6 +91,8 @@ class ZzolBotSchemaConverterTest {
                 softly.assertThat(result).isNotNull();
                 softly.assertThat(result.description()).isPresent();
                 softly.assertThat(result.description().get()).isEqualTo("PromQL 표현식");
+                softly.assertThat(result.type()).isPresent();
+                softly.assertThat(result.type().get().toString()).containsIgnoringCase("string");
             });
         }
     }

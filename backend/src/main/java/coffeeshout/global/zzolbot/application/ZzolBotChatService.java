@@ -64,18 +64,20 @@ public class ZzolBotChatService {
                 return saveSession(question, text.text(), adminUsername);
             }
 
-            if (response instanceof ZzolBotLlmResponse.ToolCallResponse toolCall) {
-                progressCallback.accept(toolCall.toolName());
-                log.debug("[ZzolBot] tool 실행. name={}, iteration={}", toolCall.toolName(), i + 1);
+            if (response instanceof ZzolBotLlmResponse.ToolCallsResponse toolCalls) {
+                for (final ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem call : toolCalls.calls()) {
+                    progressCallback.accept(call.toolName());
+                    log.debug("[ZzolBot] tool 실행. name={}, iteration={}", call.toolName(), i + 1);
 
-                conversation.add(Content.builder()
-                        .role("model")
-                        .parts(Part.fromFunctionCall(toolCall.toolName(), toolCall.args()))
-                        .build());
+                    conversation.add(Content.builder()
+                            .role("model")
+                            .parts(Part.fromFunctionCall(call.toolName(), call.args()))
+                            .build());
 
-                final ToolExecutionResult result = executeTool(toolCall.toolName(), toolCall.args());
-                final String maskedContent = piiMasker.mask(result.content());
-                conversation.add(llmClient.buildFunctionResponseContent(toolCall.toolName(), maskedContent));
+                    final ToolExecutionResult result = safeExecuteTool(call.toolName(), call.args());
+                    final String maskedContent = piiMasker.mask(result.content());
+                    conversation.add(llmClient.buildFunctionResponseContent(call.toolName(), maskedContent));
+                }
             }
         }
 
@@ -95,10 +97,12 @@ public class ZzolBotChatService {
     }
 
     private ZzolBotChatResult saveSession(String question, String answer, String adminUsername) {
+        final String maskedQuestion = piiMasker.mask(question);
+        final String maskedAnswer = piiMasker.mask(answer);
         final ZzolBotSessionEntity session = sessionRepository.save(
-                ZzolBotSessionEntity.create(question, answer, adminUsername)
+                ZzolBotSessionEntity.create(maskedQuestion, maskedAnswer, adminUsername)
         );
-        return new ZzolBotChatResult(session.getId(), answer);
+        return new ZzolBotChatResult(session.getId(), maskedAnswer);
     }
 
     private List<Content> initConversation(String question) {
@@ -136,11 +140,16 @@ public class ZzolBotChatService {
         return prompt.toString();
     }
 
-    private ToolExecutionResult executeTool(String toolName, Map<String, Object> args) {
-        final ZzolBotTool tool = toolsByName.get(toolName);
-        if (tool == null) {
-            return ToolExecutionResult.fail(toolName, "알 수 없는 tool: " + toolName);
+    private ToolExecutionResult safeExecuteTool(String toolName, Map<String, Object> args) {
+        try {
+            final ZzolBotTool tool = toolsByName.get(toolName);
+            if (tool == null) {
+                return ToolExecutionResult.fail(toolName, "알 수 없는 tool: " + toolName);
+            }
+            return tool.execute(args);
+        } catch (Exception e) {
+            log.warn("[ZzolBot] tool 실행 중 예외 발생. toolName={}", toolName, e);
+            return ToolExecutionResult.fail(toolName, "tool 실행 실패: " + toolName);
         }
-        return tool.execute(args);
     }
 }

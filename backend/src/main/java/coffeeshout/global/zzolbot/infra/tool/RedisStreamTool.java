@@ -56,7 +56,7 @@ public class RedisStreamTool implements ZzolBotTool {
             return ToolExecutionResult.fail(TOOL_NAME, "Redis Stream 상태 직렬화 실패");
         } catch (Exception e) {
             log.warn("[ZzolBot] redis_stream_status 조회 실패", e);
-            return ToolExecutionResult.fail(TOOL_NAME, "Redis Stream 조회 실패: " + e.getMessage());
+            return ToolExecutionResult.fail(TOOL_NAME, "Redis Stream 조회 실패");
         }
     }
 }

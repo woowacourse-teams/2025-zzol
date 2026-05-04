@@ -138,7 +138,8 @@ class ZzolBotChatServiceTest {
             );
 
             given(llmClient.generate(anyList(), anyList()))
-                    .willReturn(new ZzolBotLlmResponse.ToolCallResponse("room_state", Map.of("joinCode", "A4BX")))
+                    .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
+                            new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("room_state", Map.of("joinCode", "A4BX")))))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("방 A4BX: PLAYING 상태, 플레이어 3명"));
 
             final ZzolBotChatResult result = chatService.ask("A4BX 방 상태 알려줘", "admin", progressCallback);
@@ -168,7 +169,8 @@ class ZzolBotChatServiceTest {
             );
 
             given(llmClient.generate(anyList(), anyList()))
-                    .willReturn(new ZzolBotLlmResponse.ToolCallResponse("room_state", Map.of("joinCode", "A4BX")))
+                    .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
+                            new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("room_state", Map.of("joinCode", "A4BX")))))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("완료"));
 
             chatService.ask("A4BX 방 상태", "admin", progressCallback);
@@ -186,7 +188,8 @@ class ZzolBotChatServiceTest {
             given(llmClient.buildFunctionResponseContent(anyString(), anyString()))
                     .willReturn(Content.fromParts(Part.fromText("unknown tool result")));
             given(llmClient.generate(anyList(), anyList()))
-                    .willReturn(new ZzolBotLlmResponse.ToolCallResponse("unknown_tool", Map.of()))
+                    .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
+                            new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("unknown_tool", Map.of()))))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("처리 완료"));
 
             final ZzolBotChatResult result = chatService.ask("알 수 없는 요청", "admin", progressCallback);
@@ -197,7 +200,8 @@ class ZzolBotChatServiceTest {
         @Test
         void maxLoopIterations_초과_시_안내_메시지를_반환한다() {
             given(llmClient.generate(anyList(), anyList()))
-                    .willReturn(new ZzolBotLlmResponse.ToolCallResponse("room_state", Map.of("joinCode", "A4BX")));
+                    .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
+                            new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("room_state", Map.of("joinCode", "A4BX")))));
             given(llmClient.buildFunctionResponseContent(anyString(), anyString()))
                     .willReturn(Content.fromParts(Part.fromText("tool result")));
 

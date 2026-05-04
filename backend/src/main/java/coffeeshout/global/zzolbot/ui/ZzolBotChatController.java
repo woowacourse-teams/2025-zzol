@@ -4,16 +4,21 @@ import coffeeshout.global.zzolbot.application.ZzolBotChatService;
 import coffeeshout.global.zzolbot.domain.ZzolBotChatResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotFeedback;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.security.Principal;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,6 +29,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
 @Controller
+@Validated
 @RequestMapping("/admin/zzolbot")
 @RequiredArgsConstructor
 public class ZzolBotChatController {
@@ -33,6 +39,7 @@ public class ZzolBotChatController {
             DateTimeFormatter.ofPattern("MM/dd HH:mm").withZone(ZoneId.of("Asia/Seoul"));
 
     private final ZzolBotChatService chatService;
+    private final ExecutorService virtualThreadExecutor;
 
     @GetMapping
     public String page() {
@@ -41,11 +48,11 @@ public class ZzolBotChatController {
 
     @PostMapping("/ask")
     @ResponseBody
-    public SseEmitter ask(@RequestBody AskRequest request, Principal principal) {
+    public SseEmitter ask(@RequestBody @Valid AskRequest request, Principal principal) {
         final SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
         final String adminUsername = principal != null ? principal.getName() : "admin";
 
-        CompletableFuture.runAsync(() -> {
+        virtualThreadExecutor.execute(() -> {
             try {
                 final ZzolBotChatResult result = chatService.ask(
                         request.question(),
@@ -74,7 +81,7 @@ public class ZzolBotChatController {
     @ResponseBody
     public ResponseEntity<Void> feedback(
             @PathVariable Long id,
-            @RequestBody FeedbackRequest request
+            @RequestBody @Valid FeedbackRequest request
     ) {
         chatService.applyFeedback(id, request.feedback());
         return ResponseEntity.ok().build();
@@ -94,9 +101,9 @@ public class ZzolBotChatController {
                 .toList();
     }
 
-    record AskRequest(String question) {}
+    record AskRequest(@NotBlank String question) {}
 
-    record FeedbackRequest(ZzolBotFeedback feedback) {}
+    record FeedbackRequest(@NotNull ZzolBotFeedback feedback) {}
 
     record SessionResponse(Long id, String question, String answer, String feedback, String createdAt) {}
 }

@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface ZzolBotOutboxRepository extends JpaRepository<OutboxEvent, Long> {
 
-    @Query("SELECT o FROM OutboxEvent o WHERE o.status IN :statuses AND o.payload LIKE :pattern ORDER BY o.createdAt DESC")
+    @Query("SELECT o FROM OutboxEvent o WHERE o.status IN :statuses AND o.payload LIKE :pattern ORDER BY o.createdAt DESC LIMIT 50")
     List<OutboxEvent> findRecentByStatusInAndPayloadContaining(
             @Param("statuses") List<OutboxStatus> statuses,
             @Param("pattern") String pattern

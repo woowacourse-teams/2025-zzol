@@ -1,8 +1,9 @@
 package coffeeshout.room.domain.roulette;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import coffeeshout.room.domain.RoomErrorCode;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,15 +25,19 @@ class ProbabilityCalculatorTest {
     @ParameterizedTest
     @ValueSource(ints = {0, 1, -1, Integer.MIN_VALUE})
     void 플레이어_수가_2보다_작으면_예외가_발생한다(int invalidPlayerCount) {
-        assertThatThrownBy(() -> new ProbabilityCalculator(invalidPlayerCount, 5, 0.7))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertCoffeeShoutException(
+                () -> new ProbabilityCalculator(invalidPlayerCount, 5, 0.7),
+                RoomErrorCode.INSUFFICIENT_PLAYER_COUNT
+        );
     }
 
     @ParameterizedTest
     @ValueSource(ints = {0, -1, -5, Integer.MIN_VALUE})
     void 라운드_수가_0보다_작거나_같으면_예외가_발생한다(int invalidRoundCount) {
-        assertThatThrownBy(() -> new ProbabilityCalculator(4, invalidRoundCount, 0.7))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertCoffeeShoutException(
+                () -> new ProbabilityCalculator(4, invalidRoundCount, 0.7),
+                RoomErrorCode.INVALID_ROUND_COUNT
+        );
     }
 
     @Test
@@ -44,7 +49,7 @@ class ProbabilityCalculatorTest {
         int probabilityChange = calculator.calculateProbabilityChange(3, 1); // 5명에서 3등은 UNDECIDED
 
         // then
-        assertThat(probabilityChange).isEqualTo(0);
+        assertThat(probabilityChange).isZero();
     }
 
     @Test
@@ -56,7 +61,7 @@ class ProbabilityCalculatorTest {
         int probabilityChangeFor2_3Tie = calculator.calculateProbabilityChange(2, 2);
 
         // then
-        assertThat(probabilityChangeFor2_3Tie).isEqualTo(0); // (-350 + 350) / 2 = 0
+        assertThat(probabilityChangeFor2_3Tie).isZero(); // (-350 + 350) / 2 = 0
     }
 
     @Test
@@ -90,20 +95,6 @@ class ProbabilityCalculatorTest {
 
     @Nested
     class 가중치_유효성_검증 {
-
-        @ParameterizedTest
-        @ValueSource(doubles = {0.0, 0.09, -0.1, -1.0})
-        void 가중치가_0_1_미만이면_예외가_발생한다(double invalidWeight) {
-            assertThatThrownBy(() -> new ProbabilityCalculator(4, 5, invalidWeight))
-                    .isInstanceOf(IllegalArgumentException.class);
-        }
-
-        @ParameterizedTest
-        @ValueSource(doubles = {0.91, 1.0, 2.0})
-        void 가중치가_0_9_초과이면_예외가_발생한다(double invalidWeight) {
-            assertThatThrownBy(() -> new ProbabilityCalculator(4, 5, invalidWeight))
-                    .isInstanceOf(IllegalArgumentException.class);
-        }
 
         @Test
         void 경계값_0_1과_0_9는_정상_생성된다() {

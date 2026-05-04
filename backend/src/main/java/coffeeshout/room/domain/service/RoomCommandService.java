@@ -81,6 +81,8 @@ public class RoomCommandService {
     }
 
     public void updateAdjustmentWeight(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
+        log.info("JoinCode[{}] 조정 가중치 변경 - 호스트: {}, 가중치: {}", joinCode, hostName, adjustmentWeight);
+
         final Room room = roomQueryService.getByJoinCode(joinCode);
         room.updateAdjustmentWeight(hostName, adjustmentWeight);
         save(room);

@@ -352,7 +352,7 @@ class RoomTest {
             room.updateAdjustmentWeight(호스트_한스, 0.5);
 
             // then
-            assertThat(ReflectionTestUtils.getField(room, "adjustmentWeight")).isEqualTo(0.5);
+            assertThat(room.getAdjustmentWeight()).isEqualTo(0.5);
         }
 
         @Test
@@ -383,7 +383,7 @@ class RoomTest {
             // when & then
             assertCoffeeShoutException(
                     () -> room.updateAdjustmentWeight(호스트_한스, 0.5),
-                    RoomErrorCode.ROOM_NOT_READY_TO_JOIN
+                    RoomErrorCode.ROOM_NOT_READY_TO_UPDATE
             );
         }
 
@@ -403,6 +403,32 @@ class RoomTest {
                     () -> room.updateAdjustmentWeight(호스트_한스, invalidWeight),
                     RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
             );
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {0.0, 0.09, -0.1, -1.0})
+        void 생성_시_가중치가_0_1_미만이면_예외가_발생한다(double invalidWeight) {
+            assertCoffeeShoutException(
+                    () -> new Room(joinCode, 호스트_한스, invalidWeight),
+                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
+            );
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {0.91, 1.0, 2.0})
+        void 생성_시_가중치가_0_9_초과이면_예외가_발생한다(double invalidWeight) {
+            assertCoffeeShoutException(
+                    () -> new Room(joinCode, 호스트_한스, invalidWeight),
+                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
+            );
+        }
+
+        @Test
+        void 생성_시_경계값_0_1과_0_9는_정상_생성된다() {
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThatCode(() -> new Room(new JoinCode("EFXG"), 호스트_한스, 0.1)).doesNotThrowAnyException();
+                softly.assertThatCode(() -> new Room(new JoinCode("HX3J"), 호스트_한스, 0.9)).doesNotThrowAnyException();
+            });
         }
     }
 }

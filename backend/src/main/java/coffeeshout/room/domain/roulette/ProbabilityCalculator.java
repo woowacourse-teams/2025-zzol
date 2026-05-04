@@ -1,8 +1,8 @@
 package coffeeshout.room.domain.roulette;
 
-import static org.springframework.util.Assert.isTrue;
-
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResultType;
+import coffeeshout.room.domain.RoomErrorCode;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -18,7 +18,7 @@ public class ProbabilityCalculator {
     private final Map<Integer, Integer> probabilityChangeRangeMap;
 
     public ProbabilityCalculator(Integer playerCount, Integer roundCount, double adjustmentWeight) {
-        validate(playerCount, roundCount, adjustmentWeight);
+        validate(playerCount, roundCount);
         this.playerCount = playerCount;
         this.roundCount = roundCount;
         this.adjustmentWeight = adjustmentWeight;
@@ -52,10 +52,13 @@ public class ProbabilityCalculator {
         return playerCount / 2;
     }
 
-    private void validate(Integer playerCount, Integer roundCount, double adjustmentWeight) {
-        isTrue(playerCount >= 2, "플레이어는 2명 이상이어야 합니다.");
-        isTrue(roundCount > 0, "라운드 수는 양수여야 합니다.");
-        isTrue(adjustmentWeight >= 0.1 && adjustmentWeight <= 0.9, "가중치는 0.1 이상 0.9 이하여야 합니다.");
+    private void validate(Integer playerCount, Integer roundCount) {
+        if (playerCount < 2) {
+            throw new BusinessException(RoomErrorCode.INSUFFICIENT_PLAYER_COUNT, "플레이어는 2명 이상이어야 합니다.");
+        }
+        if (roundCount <= 0) {
+            throw new BusinessException(RoomErrorCode.INVALID_ROUND_COUNT, "라운드 수는 양수여야 합니다.");
+        }
     }
 
     private Map<Integer, Integer> processProbabilityChangeRangeMap() {

@@ -58,7 +58,7 @@ RouletteProperties (application.yml 기본값)
 
 - `room/config/RouletteProperties.java` 추가 (`roulette.default-adjustment-weight`, 기본 0.7)
 - `Room.adjustmentWeight` 필드 추가, 생성 시 기본값 주입
-- `Room.updateAdjustmentWeight(double)` 메서드 추가 (READY 상태 검증 포함)
+- `Room.updateAdjustmentWeight(PlayerName hostName, double adjustmentWeight)` 메서드 추가 (호스트 본인 검증 및 READY 상태 검증 포함)
 - `ProbabilityCalculator(int playerCount, int roundCount, double adjustmentWeight)` 생성자로 변경
 - HTTP 엔드포인트: `PATCH /rooms/{joinCode}/settings` — `adjustmentWeight` 필드, 호스트 전용, READY 상태에서만 허용
 - 영향 범위: `room/domain/roulette/`, `room/domain/`, `room/config/`, `room/ui/`

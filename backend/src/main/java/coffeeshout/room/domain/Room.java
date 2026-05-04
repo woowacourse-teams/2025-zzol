@@ -40,6 +40,7 @@ public class Room {
     }
 
     public Room(JoinCode joinCode, PlayerName hostName, Long userId, double adjustmentWeight) {
+        validateAdjustmentWeight(adjustmentWeight);
         this.joinCode = joinCode;
         this.host = Player.createHost(hostName, userId);
         this.players = new Players(joinCode.getValue());
@@ -90,7 +91,7 @@ public class Room {
 
     public void updateAdjustmentWeight(PlayerName hostName, double adjustmentWeight) {
         validateHost(hostName);
-        validateRoomReady();
+        validateRoomUpdatable();
         validateAdjustmentWeight(adjustmentWeight);
         this.adjustmentWeight = adjustmentWeight;
     }
@@ -224,6 +225,15 @@ public class Room {
             throw new BusinessException(
                     RoomErrorCode.ROOM_NOT_READY_TO_JOIN,
                     "READY 상태에서만 참여 가능합니다. 현재 상태: " + roomState
+            );
+        }
+    }
+
+    private void validateRoomUpdatable() {
+        if (roomState != RoomState.READY) {
+            throw new BusinessException(
+                    RoomErrorCode.ROOM_NOT_READY_TO_UPDATE,
+                    "READY 상태에서만 설정을 변경할 수 있습니다. 현재 상태: " + roomState
             );
         }
     }

@@ -17,6 +17,7 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
@@ -36,6 +37,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureMockMvc
@@ -558,6 +560,23 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void READY_상태가_아닌_방에_요청하면_409를_반환한다() throws Exception {
+            // given
+            String joinCode = createRoomAndGetJoinCode("호스트");
+            Room room = roomRepository.findByJoinCode(new JoinCode(joinCode)).orElseThrow();
+            ReflectionTestUtils.setField(room, "roomState", RoomState.PLAYING);
+            roomRepository.save(room);
+
+            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest("호스트", 0.5);
+
+            // when & then
+            mockMvc.perform(patch("/rooms/{joinCode}/settings", joinCode)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isConflict());
         }
     }
 

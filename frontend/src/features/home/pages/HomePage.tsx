@@ -4,6 +4,7 @@ import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { storageManager, STORAGE_KEYS } from '@/utils/StorageManager';
 import HomeHeader from '../components/HomeHeader/HomeHeader';
 import HomeBottomTab, { type HomeTabType } from '../components/HomeBottomTab/HomeBottomTab';
+import { type MenuView } from '../components/MenuTab/MenuTab';
 import HomeTab from '../components/tabs/HomeTab/HomeTab';
 import RankingTab from '../components/RankingTab/RankingTab';
 import MenuTab from '../components/MenuTab/MenuTab';
@@ -13,6 +14,7 @@ import * as S from './HomePage.styled';
 const HomePage = () => {
   const [showSplash, setShowSplash] = useState(false);
   const [activeTab, setActiveTab] = useState<HomeTabType>('home');
+  const [menuInitialView, setMenuInitialView] = useState<MenuView | null>(null);
   const { clearIdentifier } = useIdentifier();
   const { isConnected, stopSocket } = useWebSocket();
 
@@ -21,6 +23,11 @@ const HomePage = () => {
     clearIdentifier();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 메뉴 탭을 벗어나면 initialView 초기화 (다음 번 직접 진입 시 루트 메뉴로 복귀)
+  useEffect(() => {
+    if (activeTab !== 'menu') setMenuInitialView(null);
+  }, [activeTab]);
 
   useEffect(() => {
     const hasVisited = storageManager.getItem(STORAGE_KEYS.VISITED, 'sessionStorage');
@@ -46,9 +53,16 @@ const HomePage = () => {
       </S.VisuallyHidden>
       <HomeHeader />
       <S.ScrollArea>
-        {activeTab === 'home' && <HomeTab />}
+        {activeTab === 'home' && (
+          <HomeTab
+            onNavigateToPatchNotes={() => {
+              setMenuInitialView('patch-notes');
+              setActiveTab('menu');
+            }}
+          />
+        )}
         {activeTab === 'ranking' && <RankingTab />}
-        {activeTab === 'menu' && <MenuTab />}
+        {activeTab === 'menu' && <MenuTab initialView={menuInitialView} />}
       </S.ScrollArea>
       <HomeBottomTab activeTab={activeTab} onTabChange={setActiveTab} />
     </S.PageContainer>

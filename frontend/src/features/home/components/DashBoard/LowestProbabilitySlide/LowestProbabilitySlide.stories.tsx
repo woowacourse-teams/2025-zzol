@@ -12,11 +12,9 @@ const meta: Meta<typeof LowestProbabilitySlide> = {
     (Story) => (
       <div
         style={{
-          background: '#ff6b6b',
           padding: '2rem',
           borderRadius: '20px',
           width: '375px',
-          height: '400px',
         }}
       >
         <Story />
@@ -24,17 +22,17 @@ const meta: Meta<typeof LowestProbabilitySlide> = {
     ),
   ],
   argTypes: {
-    WinnerNames: {
+    players: {
       control: 'object',
-      description: '우승자 이름 배열',
+      description: '당첨자 배열 (nickname, userCode)',
     },
     probability: {
-      control: { type: 'range', min: 1, max: 100, step: 1 },
+      control: { type: 'range', min: 0.1, max: 100, step: 0.1 },
       description: '확률 (%)',
     },
   },
   args: {
-    WinnerNames: ['세라'],
+    players: [{ nickname: '세라', userCode: 'A1B2' }],
     probability: 5,
   },
 };
@@ -44,23 +42,27 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const DifferentProbabilities: Story = {
+export const LowProbability: Story = {
   args: {
-    WinnerNames: ['세라'],
+    players: [{ nickname: '세라', userCode: 'A1B2' }],
     probability: 1,
   },
 };
 
 export const MultipleWinners: Story = {
   args: {
-    WinnerNames: ['세라', '민수', '지영'],
+    players: [
+      { nickname: '세라', userCode: 'A1B2' },
+      { nickname: '민수', userCode: 'C3D4' },
+      { nickname: '지영', userCode: 'E5F6' },
+    ],
     probability: 3,
   },
 };
 
-export const SingleWinner: Story = {
+export const Empty: Story = {
   args: {
-    WinnerNames: ['김우승'],
-    probability: 0.5,
+    players: [],
+    probability: 0,
   },
 };

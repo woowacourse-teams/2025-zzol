@@ -20,7 +20,7 @@ const DashBoard = () => {
     <S.Container>
       <TopWinnersSlide winners={topWinners || []} displayCount={5} />
       <LowestProbabilitySlide
-        WinnerNames={lowestProbabilityWinner?.playerNames || []}
+        players={lowestProbabilityWinner?.players || []}
         probability={lowestProbabilityWinner?.probability || 0}
       />
       <GamePlayCountSlide games={gamePlayCounts || []} />

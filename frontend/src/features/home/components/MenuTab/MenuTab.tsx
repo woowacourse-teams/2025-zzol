@@ -19,7 +19,7 @@ import {
   DownloadIcon,
 } from './menuIcons';
 
-type MenuView =
+export type MenuView =
   | 'my-info'
   | 'game-manual'
   | 'report'
@@ -80,8 +80,10 @@ const MENU_ITEMS: {
   },
 ];
 
-const MenuTab = () => {
-  const [activeView, setActiveView] = useState<MenuView | null>(null);
+type Props = { initialView?: MenuView | null };
+
+const MenuTab = ({ initialView }: Props) => {
+  const [activeView, setActiveView] = useState<MenuView | null>(initialView ?? null);
 
   if (activeView !== null) {
     return (

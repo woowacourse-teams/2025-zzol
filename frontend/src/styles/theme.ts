@@ -29,6 +29,22 @@ const color = {
   white: '#FFFFFF',
   black: '#000000',
   yellow: '#FFDF20',
+
+  oauth: {
+    google: {
+      bg: '#FFFFFF',
+      text: '#1F1F1F',
+      border: '#747775',
+    },
+    kakao: {
+      bg: '#FEE500',
+      text: '#191919',
+    },
+    naver: {
+      bg: '#03A94D',
+      text: '#FFFFFF',
+    },
+  },
 } as const;
 
 const typography = {

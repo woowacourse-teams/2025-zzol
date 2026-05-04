@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>ZzolBot — ZZOL 운영 어시스턴트</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .chat-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-empty {
+            color: var(--text-secondary);
+            text-align: center;
+            margin: auto;
+            font-size: 0.9rem;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .message.user {
+            align-items: flex-end;
+        }
+
+        .message.bot {
+            align-items: flex-start;
+        }
+
+        .bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            max-width: 85%;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message.user .bubble {
+            background: var(--accent);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .bubble {
+            background: var(--surface-hover, #f4f4f5);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .progress-bubble {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.25rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .input-row {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .input-row input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            background: var(--surface);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .input-row input:focus {
+            border-color: var(--accent);
+        }
+
+        .input-row input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-send {
+            padding: 0.75rem 1.5rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .hint {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+<header>
+    <a th:href="@{/admin}" class="logo">ZZOL Admin</a>
+    <nav>
+        <a th:href="@{/admin/zzolbot}" class="active">ZzolBot</a>
+        <a th:href="@{/admin/playername-audit}">닉네임 검열</a>
+        <a th:href="@{/admin/reports}">신고</a>
+        <a th:href="@{/admin/patch-notes}">패치노트</a>
+    </nav>
+    <form th:action="@{/admin/logout}" method="post" style="margin:0">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <button type="submit" class="btn-logout">로그아웃</button>
+    </form>
+</header>
+<main>
+    <h2 style="margin-bottom:1.5rem;">🤖 ZzolBot — 운영 어시스턴트</h2>
+
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox">
+            <div class="chat-empty" id="emptyHint">
+                joinCode를 포함해 질문해보세요.<br>
+                예: "A4BX 방에서 뭔가 잘못됐어", "방금 에러 났는데 A4BX 확인해줘"
+            </div>
+        </div>
+
+        <div class="input-row">
+            <input type="text" id="questionInput" placeholder="질문을 입력하세요..."
+                   autocomplete="off" autofocus/>
+            <button class="btn-send" id="sendBtn" onclick="sendQuestion()">전송</button>
+        </div>
+
+        <p class="hint">Shift+Enter 또는 버튼으로 전송 · 분석 중에는 입력이 잠깁니다</p>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+    const chatBox = document.getElementById('chatBox');
+    const input = document.getElementById('questionInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendQuestion();
+        }
+    });
+
+    function setLoading(loading) {
+        input.disabled = loading;
+        sendBtn.disabled = loading;
+    }
+
+    function appendMessage(role, text) {
+        document.getElementById('emptyHint')?.remove();
+        const msg = document.createElement('div');
+        msg.className = `message ${role}`;
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = text;
+        msg.appendChild(bubble);
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return bubble;
+    }
+
+    function appendProgress(toolName) {
+        document.getElementById('emptyHint')?.remove();
+        const msg = document.createElement('div');
+        msg.className = 'message bot';
+        const bubble = document.createElement('div');
+        bubble.className = 'progress-bubble';
+        bubble.innerHTML = `<div class="spinner"></div><span>${toolLabel(toolName)} 조회 중...</span>`;
+        msg.appendChild(bubble);
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return msg;
+    }
+
+    function toolLabel(name) {
+        const labels = {
+            room_state: '방 상태',
+            outbox_events: 'Outbox 이벤트',
+            redis_stream_status: 'Redis Stream',
+            loki_logs: 'Loki 로그',
+            tempo_traces: 'Tempo 트레이스',
+            prometheus_query: 'Prometheus 메트릭',
+        };
+        return labels[name] ?? name;
+    }
+
+    const progressNodes = [];
+
+    async function sendQuestion() {
+        const question = input.value.trim();
+        if (!question) return;
+
+        input.value = '';
+        setLoading(true);
+        progressNodes.length = 0;
+
+        appendMessage('user', question);
+        const thinkingNode = appendProgress('분석');
+
+        try {
+            const response = await fetch('/admin/zzolbot/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken,
+                },
+                body: JSON.stringify({question}),
+            });
+
+            if (!response.ok) {
+                throw new Error(`서버 오류: ${response.status}`);
+            }
+
+            thinkingNode.remove();
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, {stream: true});
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (line.startsWith('event:')) {
+                        const eventName = line.slice(6).trim();
+                        const dataLine = lines[lines.indexOf(line) + 1] ?? '';
+                        const data = dataLine.startsWith('data:') ? dataLine.slice(5).trim() : '';
+
+                        if (eventName === 'progress') {
+                            progressNodes.push(appendProgress(data));
+                        } else if (eventName === 'result') {
+                            progressNodes.forEach(n => n.remove());
+                            progressNodes.length = 0;
+                            appendMessage('bot', data);
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            thinkingNode?.remove();
+            progressNodes.forEach(n => n.remove());
+            appendMessage('bot', '오류가 발생했습니다: ' + e.message);
+        } finally {
+            setLoading(false);
+            input.focus();
+        }
+    }
+</script>
+</body>
+</html>

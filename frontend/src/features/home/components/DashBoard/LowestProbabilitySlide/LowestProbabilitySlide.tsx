@@ -32,14 +32,14 @@ const LowestProbabilitySlide = ({ players, probability }: Props) => {
             {players.length === 1 ? (
               <S.WinnerRow>
                 <S.WinnerName>{players[0].nickname}</S.WinnerName>
-                <S.WinnerCode>({players[0].userCode})</S.WinnerCode>
+                <S.WinnerCode>#{players[0].userCode}</S.WinnerCode>
               </S.WinnerRow>
             ) : (
               <S.MultiWinnerList>
                 {players.map((p) => (
                   <S.WinnerRow key={p.userCode}>
                     <S.WinnerName>{p.nickname}</S.WinnerName>
-                    <S.WinnerCode>({p.userCode})</S.WinnerCode>
+                    <S.WinnerCode>#{p.userCode}</S.WinnerCode>
                   </S.WinnerRow>
                 ))}
               </S.MultiWinnerList>

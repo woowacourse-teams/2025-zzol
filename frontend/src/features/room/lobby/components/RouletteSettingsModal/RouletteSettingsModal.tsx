@@ -15,7 +15,12 @@ type Props = {
   onSave?: (weight: number) => void;
 };
 
-const RouletteSettingsModal = ({ isOpen, onClose, currentWeight = DEFAULT_WEIGHT, onSave }: Props) => {
+const RouletteSettingsModal = ({
+  isOpen,
+  onClose,
+  currentWeight = DEFAULT_WEIGHT,
+  onSave,
+}: Props) => {
   const [weight, setWeight] = useState(currentWeight);
 
   useEffect(() => {

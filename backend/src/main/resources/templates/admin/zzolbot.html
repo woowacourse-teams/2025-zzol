@@ -204,20 +204,13 @@
 </head>
 <body>
 <header>
-    <a th:href="@{/admin}" class="logo">ZZOL Admin</a>
-    <nav>
-        <a th:href="@{/admin/zzolbot}" class="active">ZzolBot</a>
-        <a th:href="@{/admin/playername-audit}">닉네임 검열</a>
-        <a th:href="@{/admin/reports}">신고</a>
-        <a th:href="@{/admin/patch-notes}">패치노트</a>
-    </nav>
-    <form th:action="@{/admin/logout}" method="post" style="margin:0">
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-        <button type="submit" class="btn-logout">로그아웃</button>
+    <h1>ZzolBot 운영 어시스턴트</h1>
+    <form th:action="@{/admin/logout}" method="post">
+        <button type="submit" class="logout-btn">로그아웃</button>
     </form>
 </header>
 <main>
-    <h2 style="margin-bottom:1.5rem;">🤖 ZzolBot — 운영 어시스턴트</h2>
+    <a th:href="@{/admin}" class="nav-back">← 대시보드로</a>
 
     <div class="zzolbot-layout">
         <!-- 챗 영역 -->

@@ -1,5 +1,5 @@
 import Modal from '@/components/@common/Modal/Modal';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import useUpdateAdjustmentWeight from '../../hooks/useUpdateAdjustmentWeight';
 import * as S from './RouletteSettingsModal.styled';
 
@@ -12,9 +12,10 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   currentWeight?: number;
+  onSave?: (weight: number) => void;
 };
 
-const RouletteSettingsModal = ({ isOpen, onClose, currentWeight = DEFAULT_WEIGHT }: Props) => {
+const RouletteSettingsModal = ({ isOpen, onClose, currentWeight = DEFAULT_WEIGHT, onSave }: Props) => {
   const [weight, setWeight] = useState(currentWeight);
 
   useEffect(() => {
@@ -23,7 +24,12 @@ const RouletteSettingsModal = ({ isOpen, onClose, currentWeight = DEFAULT_WEIGHT
     }
   }, [isOpen, currentWeight]);
 
-  const { updateAdjustmentWeight, loading } = useUpdateAdjustmentWeight(onClose);
+  const handleSuccess = useCallback(() => {
+    onSave?.(weight);
+    onClose();
+  }, [onSave, weight, onClose]);
+
+  const { updateAdjustmentWeight, loading } = useUpdateAdjustmentWeight(handleSuccess);
 
   const fillPercent = Math.round(((weight - MIN) / (MAX - MIN)) * 100);
 

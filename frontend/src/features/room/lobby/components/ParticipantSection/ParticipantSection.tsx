@@ -19,11 +19,13 @@ export const ParticipantSection = ({ participants }: Props) => {
   const { myName } = useIdentifier();
   const { playerType } = usePlayerType();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [savedWeight, setSavedWeight] = useState<number | undefined>(undefined);
 
   const isHost = playerType === 'HOST';
 
   const handleSettingsOpen = useCallback(() => setIsSettingsOpen(true), []);
   const handleSettingsClose = useCallback(() => setIsSettingsOpen(false), []);
+  const handleWeightSave = useCallback((weight: number) => setSavedWeight(weight), []);
 
   const mySelect = participants.find((participant) => participant.playerName === myName);
   const myColor = mySelect ? colorList[mySelect.colorIndex] : colorList[0];
@@ -85,7 +87,12 @@ export const ParticipantSection = ({ participants }: Props) => {
       </S.ScrollableWrapper>
       <S.BottomGap />
 
-      <RouletteSettingsModal isOpen={isSettingsOpen} onClose={handleSettingsClose} />
+      <RouletteSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={handleSettingsClose}
+        currentWeight={savedWeight}
+        onSave={handleWeightSave}
+      />
     </>
   );
 };

@@ -47,6 +47,10 @@ const QRJoinPage = lazy(
 const OAuthCallbackPage = lazy(
   () => import(/*webpackChunkName: "oauthCallbackPage"*/ './features/auth/pages/OAuthCallbackPage')
 );
+const TermsAgreementPage = lazy(
+  () =>
+    import(/*webpackChunkName: "termsAgreementPage"*/ './features/auth/pages/TermsAgreementPage')
+);
 const PrivacyPage = lazy(
   () => import(/*webpackChunkName: "privacyPage"*/ './features/privacy/pages/PrivacyPage')
 );
@@ -93,6 +97,10 @@ const router = createBrowserRouter([
       {
         path: 'auth/callback',
         element: <OAuthCallbackPage />,
+      },
+      {
+        path: 'auth/terms',
+        element: <TermsAgreementPage />,
       },
       {
         path: 'privacy',

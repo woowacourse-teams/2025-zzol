@@ -48,7 +48,7 @@ class RoomActiveMetricServiceTest {
     @Test
     void Room_생성_시_READY_상태_Gauge가_증가한다() {
         // given
-        Room room = Room.createNewRoom(new JoinCode("ABC4"), new PlayerName("host1"), 0.7);
+        Room room = Room.createNewRoom(new JoinCode("ABC4"), new PlayerName("host1"), null, 0.7);
         memoryRoomRepository.save(room);
 
         // when
@@ -65,8 +65,8 @@ class RoomActiveMetricServiceTest {
     @Test
     void 여러_Room의_상태별_Gauge가_정확히_집계된다() {
         // given
-        Room room1 = Room.createNewRoom(new JoinCode("ABC6"), new PlayerName("host1"), 0.7);
-        Room room2 = Room.createNewRoom(new JoinCode("D7F4"), new PlayerName("host2"), 0.7);
+        Room room1 = Room.createNewRoom(new JoinCode("ABC6"), new PlayerName("host1"), null, 0.7);
+        Room room2 = Room.createNewRoom(new JoinCode("D7F4"), new PlayerName("host2"), null, 0.7);
 
         memoryRoomRepository.save(room1);
         memoryRoomRepository.save(room2);
@@ -86,7 +86,7 @@ class RoomActiveMetricServiceTest {
     void Room_삭제_시_Gauge가_감소한다() {
         // given
         JoinCode joinCode = new JoinCode("ABC4");
-        Room room = Room.createNewRoom(joinCode, new PlayerName("host1"), 0.7);
+        Room room = Room.createNewRoom(joinCode, new PlayerName("host1"), null, 0.7);
         memoryRoomRepository.save(room);
 
         // when

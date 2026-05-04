@@ -14,7 +14,7 @@ class RoomUserIdTest {
 
         @Test
         void 회원_호스트_userId가_플레이어에_저장된다() {
-            final Room room = Room.createNewRoom(new JoinCode("A4BX"), new PlayerName("꾹이"), 7L);
+            final Room room = Room.createNewRoom(new JoinCode("A4BX"), new PlayerName("꾹이"), 7L, 0.7);
 
             final Player host = room.findPlayer(new PlayerName("꾹이"));
 
@@ -23,7 +23,7 @@ class RoomUserIdTest {
 
         @Test
         void 익명_호스트_userId는_null이다() {
-            final Room room = Room.createNewRoom(new JoinCode("B4CX"), new PlayerName("꾹이"));
+            final Room room = Room.createNewRoom(new JoinCode("B4CX"), new PlayerName("꾹이"), null, 0.7);
 
             final Player host = room.findPlayer(new PlayerName("꾹이"));
 
@@ -36,7 +36,7 @@ class RoomUserIdTest {
 
         @Test
         void 회원_게스트_userId가_플레이어에_저장된다() {
-            final Room room = Room.createNewRoom(new JoinCode("C4DX"), new PlayerName("꾹이"));
+            final Room room = Room.createNewRoom(new JoinCode("C4DX"), new PlayerName("꾹이"), null, 0.7);
 
             room.joinGuest(new PlayerName("루키"), 55L);
 
@@ -46,7 +46,7 @@ class RoomUserIdTest {
 
         @Test
         void 익명_게스트_userId는_null이다() {
-            final Room room = Room.createNewRoom(new JoinCode("D4FX"), new PlayerName("꾹이"));
+            final Room room = Room.createNewRoom(new JoinCode("D4FX"), new PlayerName("꾹이"), null, 0.7);
 
             room.joinGuest(new PlayerName("루키"));
 

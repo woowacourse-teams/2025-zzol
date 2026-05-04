@@ -35,8 +35,8 @@ public class Room {
     private RoomState roomState;
     private double adjustmentWeight;
 
-    public Room(JoinCode joinCode, PlayerName hostName) {
-        this(joinCode, hostName, null);
+    public Room(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
+        this(joinCode, hostName, null, adjustmentWeight);
     }
 
     public Room(JoinCode joinCode, PlayerName hostName, Long userId, double adjustmentWeight) {

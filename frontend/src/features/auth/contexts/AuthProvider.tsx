@@ -7,6 +7,7 @@ import { tokenStore } from '../tokens';
 import { User } from '../types';
 import { AuthContext } from './AuthContext';
 import { setAuthInterceptor } from '@/apis/rest/apiRequest';
+import { isTopWindow } from '@/devtools/common/utils/isTopWindow';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -48,6 +49,13 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     // 페이지 로드 시 기존 세션 복원
     const bootstrap = async () => {
+      // iframe(devtools)은 항상 익명 상태로 시작 — shared localStorage 토큰이 onExpired를 트리거해
+      // 부모 창의 토큰을 지우는 사이드이펙트를 방지
+      if (!isTopWindow()) {
+        setIsLoading(false);
+        return;
+      }
+
       const hasToken = Boolean(tokenStore.getAccessToken());
       // CookieTokenStore는 메모리 초기화라 항상 null → cookie 존재 여부 판단 불가
       // 항상 /auth/me 시도 → 실패 시 조용히 익명 상태 유지

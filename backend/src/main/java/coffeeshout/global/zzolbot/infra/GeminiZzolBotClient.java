@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile("!local & !test")
 @RequiredArgsConstructor
-public class GeminiZzolBotClient {
+public class GeminiZzolBotClient implements ZzolBotLlmClient {
 
     private final @Qualifier("zzolBotClient") Client zzolBotClient;
     private final ZzolBotProperties properties;

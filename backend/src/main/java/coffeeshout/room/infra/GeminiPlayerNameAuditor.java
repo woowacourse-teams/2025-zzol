@@ -1,6 +1,7 @@
 package coffeeshout.room.infra;
 
 import coffeeshout.room.config.PlayerNameAuditProperties;
+import org.springframework.beans.factory.annotation.Qualifier;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity;
@@ -50,7 +51,7 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
             ]
             """;
 
-    private final Client geminiClient;
+    private final @Qualifier("nicknameAuditClient") Client geminiClient;
     private final ObjectMapper objectMapper;
     private final PlayerNameAuditProperties properties;
     private final PlayerNameFeedbackJpaRepository feedbackRepository;

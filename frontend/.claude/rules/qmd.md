@@ -40,8 +40,13 @@ qmd query "룰렛 확률 계산" --collection zzol-fe -n 5
 
 ### 인덱스 갱신
 
-컬렉션이 오래된 경우 (`qmd collection list`로 Updated 날짜 확인):
+세션 시작 시 자동으로 `qmd update`가 실행된다 (settings.json SessionStart hook).
+수동으로 강제 갱신이 필요하면:
 ```
-qmd collection update zzol-fe
-qmd collection update zzol-docs
+qmd update
+```
+
+컬렉션 상태 확인:
+```
+qmd collection list
 ```

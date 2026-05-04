@@ -347,5 +347,5 @@ zzol-bot:
   max-loop-iterations: 8
   monitoring:
     loki-url: ${LOKI_URL:http://loki:3100}
-    tempo-url: ${TEMPO_URL:http://tempo:3200}
+    tempo-url: ${ZZOL_BOT_TEMPO_URL:http://tempo:3200}
     prometheus-url: ${PROMETHEUS_URL:http://prometheus:9090}

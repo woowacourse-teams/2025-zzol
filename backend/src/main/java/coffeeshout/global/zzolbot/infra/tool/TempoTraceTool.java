@@ -50,9 +50,8 @@ public class TempoTraceTool implements ZzolBotTool {
 
     @Override
     public ToolExecutionResult execute(Map<String, Object> params) {
-        final String joinCodeValue = (String) params.get("joinCode");
-        if (joinCodeValue == null || !joinCodeValue.matches("[A-Z0-9]{4}")) {
-            return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식: " + joinCodeValue);
+        if (!(params.get("joinCode") instanceof String joinCodeValue) || !joinCodeValue.matches("[A-Z0-9]{4}")) {
+            return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식");
         }
         try {
             final String response = restClient.get()

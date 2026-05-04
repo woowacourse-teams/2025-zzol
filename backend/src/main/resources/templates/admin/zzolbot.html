@@ -308,7 +308,8 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
             body: JSON.stringify({ feedback })
-        }).then(() => {
+        }).then(res => {
+            if (!res.ok) throw new Error(`피드백 저장 실패: ${res.status}`);
             [...row.querySelectorAll('.btn-feedback')].forEach(b => {
                 b.classList.remove('active-good', 'active-bad');
                 b.disabled = true;
@@ -316,6 +317,8 @@
             const btn = row.children[feedback === 'GOOD' ? 0 : 1];
             btn.classList.add(feedback === 'GOOD' ? 'active-good' : 'active-bad');
             loadHistory();
+        }).catch(e => {
+            console.error('[ZzolBot] 피드백 저장 실패:', e);
         });
     }
 
@@ -356,6 +359,7 @@
             let buffer = '';
             let currentEvent = '';
             let dataLines = [];
+            let resultReceived = false;
 
             const dispatchEvent = () => {
                 const data = dataLines.join('\n');
@@ -364,6 +368,7 @@
                 } else if (currentEvent === 'sessionId') {
                     currentSessionId = Number(data);
                 } else if (currentEvent === 'result') {
+                    resultReceived = true;
                     progressNodes.forEach(n => n.remove());
                     progressNodes.length = 0;
                     const botMsg = appendMessage('bot', data);
@@ -391,6 +396,12 @@
                     }
                 }
             }
+
+            if (!resultReceived) {
+                progressNodes.forEach(n => n.remove());
+                progressNodes.length = 0;
+                appendMessage('bot', '응답을 받지 못했습니다. 다시 시도해주세요.');
+            }
         } catch (e) {
             thinkingNode?.remove();
             progressNodes.forEach(n => n.remove());
@@ -403,8 +414,15 @@
 
     /* 이력 패널 */
     async function loadHistory() {
-        const res  = await fetch('/admin/zzolbot/sessions');
-        const list = await res.json();
+        let list;
+        try {
+            const res = await fetch('/admin/zzolbot/sessions');
+            if (!res.ok) throw new Error(`${res.status}`);
+            list = await res.json();
+        } catch (e) {
+            console.error('[ZzolBot] 이력 로드 실패:', e);
+            return;
+        }
         const container = document.getElementById('historyList');
         const count     = document.getElementById('historyCount');
 

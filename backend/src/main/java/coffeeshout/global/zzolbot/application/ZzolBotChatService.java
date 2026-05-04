@@ -131,10 +131,12 @@ public class ZzolBotChatService {
 
         if (!goodExamples.isEmpty()) {
             prompt.append("\n## 운영자가 좋은 진단으로 평가한 예시\n");
-            goodExamples.forEach(example -> prompt
-                    .append("\n질문: ").append(example.getQuestion())
-                    .append("\n답변 요약: ").append(example.getAnswer(), 0, Math.min(example.getAnswer().length(), 200))
-                    .append("...\n"));
+            goodExamples.forEach(example -> {
+                final String answer = example.getAnswer() != null ? example.getAnswer() : "";
+                prompt.append("\n질문: ").append(example.getQuestion())
+                        .append("\n답변 요약: ").append(answer, 0, Math.min(answer.length(), 200))
+                        .append("...\n");
+            });
         }
 
         return prompt.toString();

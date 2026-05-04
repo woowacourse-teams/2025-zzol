@@ -61,9 +61,8 @@ public class LokiQueryTool implements ZzolBotTool {
 
     @Override
     public ToolExecutionResult execute(Map<String, Object> params) {
-        final String joinCodeValue = (String) params.get("joinCode");
-        if (!isValidJoinCode(joinCodeValue)) {
-            return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식: " + joinCodeValue);
+        if (!(params.get("joinCode") instanceof String joinCodeValue) || !isValidJoinCode(joinCodeValue)) {
+            return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식");
         }
         final int lookBackMinutes = parseLookBackMinutes((String) params.getOrDefault("since", "1h"));
 

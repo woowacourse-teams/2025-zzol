@@ -1,6 +1,7 @@
 package coffeeshout.global.zzolbot.infra.tool;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.BDDMockito.given;
@@ -40,7 +41,7 @@ class OutboxToolTest {
         void joinCode_관련_실패_이벤트가_있으면_목록을_반환한다() {
             final OutboxEvent event = OutboxEvent.create("room", "{\"joinCode\":\"A4BX\",\"type\":\"JOIN\"}");
             given(outboxRepository.findRecentByStatusInAndPayloadContaining(
-                    anyList(), contains("A4BX")))
+                    anyList(), contains("A4BX"), any()))
                     .willReturn(List.of(event));
 
             final ToolExecutionResult result = outboxTool.execute(Map.of("joinCode", "A4BX"));
@@ -56,7 +57,7 @@ class OutboxToolTest {
         @Test
         void 관련_이벤트가_없으면_빈_배열을_반환한다() {
             given(outboxRepository.findRecentByStatusInAndPayloadContaining(
-                    anyList(), contains("A4BX")))
+                    anyList(), contains("A4BX"), any()))
                     .willReturn(List.of());
 
             final ToolExecutionResult result = outboxTool.execute(Map.of("joinCode", "A4BX"));

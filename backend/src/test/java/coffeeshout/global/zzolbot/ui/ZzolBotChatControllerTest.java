@@ -10,13 +10,15 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.zzolbot.application.ZzolBotChatService;
 import coffeeshout.global.zzolbot.domain.ZzolBotChatResult;
-import java.util.concurrent.Executors;
 import coffeeshout.global.zzolbot.domain.ZzolBotFeedback;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
 import java.security.Principal;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,11 +41,18 @@ class ZzolBotChatControllerTest {
     private Principal principal;
 
     private ZzolBotChatController controller;
+    private ExecutorService executor;
 
     @BeforeEach
     void setUp() {
-        controller = new ZzolBotChatController(chatService, Executors.newVirtualThreadPerTaskExecutor());
+        executor = Executors.newVirtualThreadPerTaskExecutor();
+        controller = new ZzolBotChatController(chatService, executor);
         given(principal.getName()).willReturn("admin");
+    }
+
+    @AfterEach
+    void tearDown() {
+        executor.shutdownNow();
     }
 
     @Nested

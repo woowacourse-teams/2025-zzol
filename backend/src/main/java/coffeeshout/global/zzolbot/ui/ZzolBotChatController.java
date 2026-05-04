@@ -50,7 +50,10 @@ public class ZzolBotChatController {
     @ResponseBody
     public SseEmitter ask(@RequestBody @Valid AskRequest request, Principal principal) {
         final SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
-        final String adminUsername = principal != null ? principal.getName() : "admin";
+        if (principal == null) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
+        final String adminUsername = principal.getName();
 
         virtualThreadExecutor.execute(() -> {
             try {

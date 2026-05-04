@@ -31,7 +31,11 @@ class ZzolBotSchemaConverterTest {
 
             final Schema result = converter.convert(schema);
 
-            assertThat(result).isNotNull();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).isNotNull();
+                softly.assertThat(result.type()).isPresent();
+                softly.assertThat(result.type().get().toString()).containsIgnoringCase("object");
+            });
         }
 
         @Test
@@ -74,6 +78,7 @@ class ZzolBotSchemaConverterTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.properties()).isPresent();
                 softly.assertThat(result.properties().get()).hasSize(2);
+                softly.assertThat(result.required()).isPresent();
                 softly.assertThat(result.required().get()).containsExactly("joinCode");
             });
         }

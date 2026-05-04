@@ -137,12 +137,13 @@ deploy_redis() {
 }
 
 ensure_monitoring_network() {
-    if ! docker network inspect monitoring-network &>/dev/null; then
-        log_info "Creating monitoring-network..."
-        docker network create monitoring-network
-        log_success "monitoring-network created"
+    log_info "Ensuring monitoring-network exists..."
+    docker network create monitoring-network 2>/dev/null || true
+    if docker network inspect monitoring-network &>/dev/null; then
+        log_success "monitoring-network is ready"
     else
-        log_success "monitoring-network already exists"
+        log_error "monitoring-network could not be created or verified"
+        return 1
     fi
 }
 

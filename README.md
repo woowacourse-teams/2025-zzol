@@ -35,10 +35,10 @@
 ## 📌 Infra Design 
 
 ### CI / CD
-<img width="1000" height="1530" alt="image" src="https://github.com/user-attachments/assets/7c52feab-d94e-432a-bc3f-453d6f902e14" />
+<img width="1000" height="833" alt="image" src="https://github.com/user-attachments/assets/7c52feab-d94e-432a-bc3f-453d6f902e14" />
 
 ### Application
-<img width="1000" height="1692" alt="image" src="https://github.com/user-attachments/assets/52f80fd5-c77a-43b8-a988-159e0c8866c6" />
+<img width="1000" height="1055" alt="image" src="https://github.com/user-attachments/assets/52f80fd5-c77a-43b8-a988-159e0c8866c6" />
 
 
 ## 👥 멤버

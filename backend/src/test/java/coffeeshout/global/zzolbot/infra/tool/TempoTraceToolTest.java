@@ -28,7 +28,8 @@ class TempoTraceToolTest {
                 new ZzolBotProperties.MonitoringProperties(
                         "http://loki",
                         wmInfo.getHttpBaseUrl(),
-                        "http://prometheus"
+                        "http://prometheus",
+                        "local"
                 )
         );
         return new TempoTraceTool(props, RestClient.builder());

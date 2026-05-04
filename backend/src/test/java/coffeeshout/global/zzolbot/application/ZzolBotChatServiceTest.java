@@ -49,7 +49,8 @@ class ZzolBotChatServiceTest {
             new ZzolBotProperties.MonitoringProperties(
                     "http://loki:3100",
                     "http://tempo:3200",
-                    "http://prometheus:9090"
+                    "http://prometheus:9090",
+                    "local"
             )
     );
 

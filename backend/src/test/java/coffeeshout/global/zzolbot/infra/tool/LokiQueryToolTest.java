@@ -28,7 +28,8 @@ class LokiQueryToolTest {
                 new ZzolBotProperties.MonitoringProperties(
                         wmInfo.getHttpBaseUrl(),
                         "http://tempo",
-                        "http://prometheus"
+                        "http://prometheus",
+                        "local"
                 )
         );
         return new LokiQueryTool(props, RestClient.builder());

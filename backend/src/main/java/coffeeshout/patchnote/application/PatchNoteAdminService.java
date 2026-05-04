@@ -65,16 +65,6 @@ public class PatchNoteAdminService {
     }
 
     private LocalDateTime toKst(Instant instant) {
-        return LocalDateTime.ofInstant(instant, KST);
-    }
-
-    public record AdminRow(
-            Long id,
-            PatchNoteCategory category,
-            String title,
-            String content,
-            LocalDateTime createdAt,
-            LocalDateTime updatedAt
-    ) {
+        return LocalDateTime.ofInstant(instant, clock.getZone());
     }
 }

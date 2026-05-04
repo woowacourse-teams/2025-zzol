@@ -42,7 +42,7 @@ class GeminiPlayerNameAuditorConnectivityTest {
 
         PlayerNameAuditProperties properties = new PlayerNameAuditProperties(
                 apiKey,
-                "gemini-2.5-flash",
+                List.of("gemini-2.5-flash"),
                 0.85,
                 50,
                 20

@@ -22,7 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 class GeminiPlayerNameAuditorParseTest {
 
     private static final PlayerNameAuditProperties PROPERTIES =
-            new PlayerNameAuditProperties(null, "gemini-2.5-flash", 0.85, 10, 5);
+            new PlayerNameAuditProperties(null, List.of("gemini-2.5-flash"), 0.85, 10, 5);
 
     @Mock
     PlayerNameFeedbackJpaRepository feedbackRepository;

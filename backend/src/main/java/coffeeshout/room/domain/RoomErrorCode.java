@@ -21,6 +21,8 @@ public enum RoomErrorCode implements ErrorCode {
     DUPLICATE_PLAYER_NAME(HttpStatus.CONFLICT, "중복된 닉네임은 들어올 수 없습니다."),
     NO_EXIST_PLAYER(HttpStatus.NOT_FOUND, "플레이어가 존재하지 않습니다."),
     NO_EXIST_PLAYER_NAME_AUDIT(HttpStatus.NOT_FOUND, "플레이어 검열 항목을 찾을 수 없습니다."),
+    PLAYER_NAME_AUDIT_CALL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "닉네임 검열 API 호출 실패"),
+    PLAYER_NAME_AUDIT_RATE_LIMIT_EXHAUSTED(HttpStatus.SERVICE_UNAVAILABLE, "닉네임 검열 API 요청 한도 초과"),
     ;
 
     private final HttpStatus httpStatus;

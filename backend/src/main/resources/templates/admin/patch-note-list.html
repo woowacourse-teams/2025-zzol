@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>패치노트 대시보드 — ZZOL</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        .list-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            text-decoration: none;
+            display: inline-block;
+            padding: 0.35rem 0.9rem;
+            border-radius: var(--radius-xs);
+            font-size: 0.78rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-edit {
+            background: var(--surface);
+            color: var(--accent);
+            border: 1px solid var(--accent-border);
+        }
+
+        .btn-delete {
+            background: var(--red-bg);
+            color: var(--red-text);
+            border-color: rgba(239, 68, 68, .2);
+        }
+
+        .content-preview {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>패치노트 대시보드</h1>
+    <form th:action="@{/admin/logout}" method="post">
+        <button type="submit" class="logout-btn">로그아웃</button>
+    </form>
+</header>
+
+<main>
+    <a th:href="@{/admin}" class="nav-back">← 대시보드로</a>
+
+    <div class="section-header list-header-actions">
+        <span class="section-title">패치노트 목록</span>
+        <span class="badge badge-pending" th:text="${totalCount}">0</span>
+        <span style="font-size:0.8rem;color:#9ca3af;">건</span>
+        <a th:href="@{/admin/patch-notes/new}" class="btn-primary" style="margin-left:auto;">+ 새 글 작성</a>
+    </div>
+
+    <div th:if="${patchNotes.empty}" class="empty">작성된 패치노트가 없습니다.</div>
+
+    <div th:if="${!patchNotes.empty}" class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>카테고리</th>
+                <th>제목</th>
+                <th>본문 미리보기</th>
+                <th>작성일시</th>
+                <th>수정일시</th>
+                <th>액션</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="n : ${patchNotes}">
+                <td th:text="${n.id}" style="color:#9ca3af;font-size:0.8rem;"></td>
+                <td><span class="tag" th:text="${n.category.name() + '(' + n.category.label + ')'}"></span></td>
+                <td th:text="${n.title}"></td>
+                <td class="content-preview" th:text="${n.content}"></td>
+                <td class="date" th:text="${#temporals.format(n.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                <td class="date" th:text="${#temporals.format(n.updatedAt, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                    <div class="actions">
+                        <a th:href="@{/admin/patch-notes/{id}/edit(id=${n.id})}" class="btn btn-edit">수정</a>
+                        <form th:action="@{/admin/patch-notes/{id}/delete(id=${n.id})}" method="post"
+                              onsubmit="return confirm('이 패치노트를 삭제하시겠습니까?')">
+                            <button type="submit" class="btn btn-delete">삭제</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

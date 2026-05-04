@@ -9,19 +9,18 @@
     <title>ZzolBot — ZZOL 운영 어시스턴트</title>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
     <style>
-        .chat-container {
-            max-width: 800px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
+        .zzolbot-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
             gap: 1.5rem;
+            align-items: start;
         }
 
         .chat-box {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            min-height: 400px;
+            min-height: 420px;
             max-height: 600px;
             overflow-y: auto;
             padding: 1.5rem;
@@ -37,19 +36,9 @@
             font-size: 0.9rem;
         }
 
-        .message {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .message.user {
-            align-items: flex-end;
-        }
-
-        .message.bot {
-            align-items: flex-start;
-        }
+        .message { display: flex; flex-direction: column; gap: 0.35rem; }
+        .message.user { align-items: flex-end; }
+        .message.bot  { align-items: flex-start; }
 
         .bubble {
             padding: 0.75rem 1rem;
@@ -73,12 +62,33 @@
             border-bottom-left-radius: 4px;
         }
 
+        .feedback-row {
+            display: flex;
+            gap: 0.4rem;
+            padding-left: 0.25rem;
+        }
+
+        .btn-feedback {
+            font-size: 1rem;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.15rem 0.5rem;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            line-height: 1.4;
+        }
+
+        .btn-feedback:hover { background: var(--surface-hover, #f4f4f5); }
+        .btn-feedback.active-good { background: #dcfce7; border-color: #4ade80; }
+        .btn-feedback.active-bad  { background: #fee2e2; border-color: #f87171; }
+
         .progress-bubble {
             background: transparent;
             border: none;
             color: var(--text-secondary);
             font-size: 0.8rem;
-            padding: 0.25rem 0;
+            padding: 0.2rem 0;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -94,14 +104,9 @@
             flex-shrink: 0;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .input-row {
-            display: flex;
-            gap: 0.75rem;
-        }
+        .input-row { display: flex; gap: 0.75rem; margin-top: 1rem; }
 
         .input-row input {
             flex: 1;
@@ -115,14 +120,8 @@
             transition: border-color 0.15s;
         }
 
-        .input-row input:focus {
-            border-color: var(--accent);
-        }
-
-        .input-row input:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .input-row input:focus { border-color: var(--accent); }
+        .input-row input:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .btn-send {
             padding: 0.75rem 1.5rem;
@@ -137,14 +136,69 @@
             white-space: nowrap;
         }
 
-        .btn-send:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .hint { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+        /* 이력 패널 */
+        .history-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
         }
 
-        .hint {
-            font-size: 0.8rem;
+        .history-header {
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-list {
+            max-height: 560px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.12s;
+            font-size: 0.82rem;
+        }
+
+        .history-item:last-child { border-bottom: none; }
+        .history-item:hover { background: var(--surface-hover, #f4f4f5); }
+
+        .history-question {
+            font-weight: 500;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-meta {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.2rem;
             color: var(--text-secondary);
+            font-size: 0.75rem;
+            align-items: center;
+        }
+
+        .badge-good { color: #16a34a; font-size: 0.7rem; }
+        .badge-bad  { color: #dc2626; font-size: 0.7rem; }
+
+        .history-empty {
+            padding: 1.5rem 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
         }
     </style>
 </head>
@@ -165,43 +219,49 @@
 <main>
     <h2 style="margin-bottom:1.5rem;">🤖 ZzolBot — 운영 어시스턴트</h2>
 
-    <div class="chat-container">
-        <div class="chat-box" id="chatBox">
-            <div class="chat-empty" id="emptyHint">
-                joinCode를 포함해 질문해보세요.<br>
-                예: "A4BX 방에서 뭔가 잘못됐어", "방금 에러 났는데 A4BX 확인해줘"
+    <div class="zzolbot-layout">
+        <!-- 챗 영역 -->
+        <div>
+            <div class="chat-box" id="chatBox">
+                <div class="chat-empty" id="emptyHint">
+                    joinCode를 포함해 질문해보세요.<br>
+                    예: "A4BX 방에서 뭔가 잘못됐어", "방금 에러 났는데 A4BX 확인해줘"
+                </div>
+            </div>
+            <div class="input-row">
+                <input type="text" id="questionInput" placeholder="질문을 입력하세요..."
+                       autocomplete="off" autofocus/>
+                <button class="btn-send" id="sendBtn" onclick="sendQuestion()">전송</button>
+            </div>
+            <p class="hint">Enter 전송 · 분석 중에는 입력이 잠깁니다</p>
+        </div>
+
+        <!-- 이력 패널 -->
+        <div class="history-panel">
+            <div class="history-header">
+                <span>📋 최근 진단 이력</span>
+                <span id="historyCount" style="font-weight:400;color:var(--text-secondary)"></span>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty">이력 불러오는 중...</div>
             </div>
         </div>
-
-        <div class="input-row">
-            <input type="text" id="questionInput" placeholder="질문을 입력하세요..."
-                   autocomplete="off" autofocus/>
-            <button class="btn-send" id="sendBtn" onclick="sendQuestion()">전송</button>
-        </div>
-
-        <p class="hint">Shift+Enter 또는 버튼으로 전송 · 분석 중에는 입력이 잠깁니다</p>
     </div>
 </main>
 
 <script th:inline="javascript">
-    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfToken  = document.querySelector('meta[name="_csrf"]').content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 
     const chatBox = document.getElementById('chatBox');
-    const input = document.getElementById('questionInput');
+    const input   = document.getElementById('questionInput');
     const sendBtn = document.getElementById('sendBtn');
 
     input.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendQuestion();
-        }
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuestion(); }
     });
 
-    function setLoading(loading) {
-        input.disabled = loading;
-        sendBtn.disabled = loading;
-    }
+    function setLoading(v) { input.disabled = v; sendBtn.disabled = v; }
 
     function appendMessage(role, text) {
         document.getElementById('emptyHint')?.remove();
@@ -213,43 +273,72 @@
         msg.appendChild(bubble);
         chatBox.appendChild(msg);
         chatBox.scrollTop = chatBox.scrollHeight;
-        return bubble;
+        return msg;
     }
 
     function appendProgress(toolName) {
         document.getElementById('emptyHint')?.remove();
         const msg = document.createElement('div');
         msg.className = 'message bot';
-        const bubble = document.createElement('div');
-        bubble.className = 'progress-bubble';
-        bubble.innerHTML = `<div class="spinner"></div><span>${toolLabel(toolName)} 조회 중...</span>`;
-        msg.appendChild(bubble);
+        const p = document.createElement('div');
+        p.className = 'progress-bubble';
+        p.innerHTML = `<div class="spinner"></div><span>${toolLabel(toolName)} 조회 중...</span>`;
+        msg.appendChild(p);
         chatBox.appendChild(msg);
         chatBox.scrollTop = chatBox.scrollHeight;
         return msg;
     }
 
-    function toolLabel(name) {
-        const labels = {
-            room_state: '방 상태',
-            outbox_events: 'Outbox 이벤트',
-            redis_stream_status: 'Redis Stream',
-            loki_logs: 'Loki 로그',
-            tempo_traces: 'Tempo 트레이스',
-            prometheus_query: 'Prometheus 메트릭',
-        };
-        return labels[name] ?? name;
+    function appendFeedbackRow(sessionId, botMsg) {
+        const row = document.createElement('div');
+        row.className = 'feedback-row';
+
+        ['👍', '👎'].forEach((emoji, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-feedback';
+            btn.textContent = emoji;
+            btn.title = i === 0 ? '도움이 됐어요' : '틀렸어요';
+            btn.onclick = () => submitFeedback(sessionId, i === 0 ? 'GOOD' : 'BAD', row);
+            row.appendChild(btn);
+        });
+
+        botMsg.appendChild(row);
     }
 
-    const progressNodes = [];
+    function submitFeedback(sessionId, feedback, row) {
+        fetch(`/admin/zzolbot/sessions/${sessionId}/feedback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+            body: JSON.stringify({ feedback })
+        }).then(() => {
+            [...row.querySelectorAll('.btn-feedback')].forEach(b => {
+                b.classList.remove('active-good', 'active-bad');
+                b.disabled = true;
+            });
+            const btn = row.children[feedback === 'GOOD' ? 0 : 1];
+            btn.classList.add(feedback === 'GOOD' ? 'active-good' : 'active-bad');
+            loadHistory();
+        });
+    }
+
+    function toolLabel(name) {
+        return {
+            room_state: '방 상태', outbox_events: 'Outbox 이벤트',
+            redis_stream_status: 'Redis Stream', loki_logs: 'Loki 로그',
+            tempo_traces: 'Tempo 트레이스', prometheus_query: 'Prometheus 메트릭',
+        }[name] ?? name;
+    }
+
+    let currentSessionId = null;
+    const progressNodes  = [];
 
     async function sendQuestion() {
         const question = input.value.trim();
         if (!question) return;
-
         input.value = '';
         setLoading(true);
         progressNodes.length = 0;
+        currentSessionId = null;
 
         appendMessage('user', question);
         const thinkingNode = appendProgress('분석');
@@ -257,44 +346,42 @@
         try {
             const response = await fetch('/admin/zzolbot/ask', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    [csrfHeader]: csrfToken,
-                },
-                body: JSON.stringify({question}),
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ question }),
             });
-
-            if (!response.ok) {
-                throw new Error(`서버 오류: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`서버 오류: ${response.status}`);
 
             thinkingNode.remove();
 
-            const reader = response.body.getReader();
+            const reader  = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
+            let lastEventName = '';
 
             while (true) {
-                const {done, value} = await reader.read();
+                const { done, value } = await reader.read();
                 if (done) break;
-
-                buffer += decoder.decode(value, {stream: true});
+                buffer += decoder.decode(value, { stream: true });
                 const lines = buffer.split('\n');
                 buffer = lines.pop();
 
                 for (const line of lines) {
                     if (line.startsWith('event:')) {
-                        const eventName = line.slice(6).trim();
-                        const dataLine = lines[lines.indexOf(line) + 1] ?? '';
-                        const data = dataLine.startsWith('data:') ? dataLine.slice(5).trim() : '';
-
-                        if (eventName === 'progress') {
+                        lastEventName = line.slice(6).trim();
+                    } else if (line.startsWith('data:')) {
+                        const data = line.slice(5).trim();
+                        if (lastEventName === 'progress') {
                             progressNodes.push(appendProgress(data));
-                        } else if (eventName === 'result') {
+                        } else if (lastEventName === 'sessionId') {
+                            currentSessionId = Number(data);
+                        } else if (lastEventName === 'result') {
                             progressNodes.forEach(n => n.remove());
                             progressNodes.length = 0;
-                            appendMessage('bot', data);
+                            const botMsg = appendMessage('bot', data);
+                            if (currentSessionId) appendFeedbackRow(currentSessionId, botMsg);
+                            loadHistory();
                         }
+                        lastEventName = '';
                     }
                 }
             }
@@ -307,6 +394,44 @@
             input.focus();
         }
     }
+
+    /* 이력 패널 */
+    async function loadHistory() {
+        const res  = await fetch('/admin/zzolbot/sessions');
+        const list = await res.json();
+        const container = document.getElementById('historyList');
+        const count     = document.getElementById('historyCount');
+
+        count.textContent = `${list.length}건`;
+
+        if (list.length === 0) {
+            container.innerHTML = '<div class="history-empty">아직 진단 이력이 없습니다</div>';
+            return;
+        }
+
+        container.innerHTML = list.map(s => `
+            <div class="history-item" onclick="loadSession(${JSON.stringify(s.question)}, ${JSON.stringify(s.answer)})">
+                <div class="history-question">${escapeHtml(s.question)}</div>
+                <div class="history-meta">
+                    <span>${s.createdAt}</span>
+                    ${s.feedback === 'GOOD' ? '<span class="badge-good">✓ 좋아요</span>' : ''}
+                    ${s.feedback === 'BAD'  ? '<span class="badge-bad">✗ 틀렸어요</span>' : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function loadSession(question, answer) {
+        document.getElementById('emptyHint')?.remove();
+        appendMessage('user', question);
+        appendMessage('bot', answer);
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    loadHistory();
 </script>
 </body>
 </html>

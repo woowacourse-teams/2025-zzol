@@ -31,7 +31,10 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   }, []);
 
   useEffect(() => {
-    // interceptor 등록: apiRequest에서 토큰 주입 + 401 시 refresh 위임
+    // iframe(devtools)에서는 interceptor 미등록 — onExpired가 same-origin localStorage를 지워
+    // 부모 창 토큰을 삭제하는 사이드이펙트 방지
+    if (!isTopWindow()) return;
+
     setAuthInterceptor({
       getAccessToken: () => tokenStore.getAccessToken(),
       refresh: async () => {

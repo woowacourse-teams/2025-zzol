@@ -326,3 +326,12 @@ websocket:
       title: "커피빵 WebSocket API 명세서"
       version: "1.0.0"
       description: "실시간 웹소켓 통신 API 문서"
+
+zzol-bot:
+  gemini-api-key: ${GEMINI_ZZOL_BOT_API_KEY:}
+  model: gemini-2.0-flash
+  max-loop-iterations: 8
+  monitoring:
+    loki-url: ${LOKI_URL:http://loki:3100}
+    tempo-url: ${TEMPO_URL:http://tempo:3200}
+    prometheus-url: ${PROMETHEUS_URL:http://prometheus:9090}

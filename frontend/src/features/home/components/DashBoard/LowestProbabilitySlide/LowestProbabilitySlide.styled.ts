@@ -113,8 +113,9 @@ export const WinnerLabel = styled.span`
 
 export const WinnerRow = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
 `;
 
 export const WinnerName = styled.span`
@@ -126,13 +127,15 @@ export const WinnerName = styled.span`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 `;
 
 export const WinnerCode = styled.span`
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.6);
   letter-spacing: 0.01em;
+  flex-shrink: 0;
 `;
 
 export const MultiWinnerList = styled.div`

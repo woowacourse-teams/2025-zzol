@@ -426,8 +426,8 @@ class RoomTest {
         @Test
         void 생성_시_경계값_0_1과_0_9는_정상_생성된다() {
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThatCode(() -> new Room(new JoinCode("EFXG"), 호스트_한스, 0.1)).doesNotThrowAnyException();
-                softly.assertThatCode(() -> new Room(new JoinCode("HX3J"), 호스트_한스, 0.9)).doesNotThrowAnyException();
+                softly.assertThatCode(() -> new Room(joinCode, 호스트_한스, 0.1)).doesNotThrowAnyException();
+                softly.assertThatCode(() -> new Room(joinCode, 호스트_한스, 0.9)).doesNotThrowAnyException();
             });
         }
     }

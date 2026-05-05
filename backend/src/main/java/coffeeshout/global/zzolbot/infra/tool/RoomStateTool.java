@@ -1,6 +1,7 @@
 package coffeeshout.global.zzolbot.infra.tool;
 
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotTool;
 import coffeeshout.room.domain.JoinCode;
@@ -54,7 +55,7 @@ public class RoomStateTool implements ZzolBotTool {
 
     @Override
     @Transactional(readOnly = true)
-    public ToolExecutionResult execute(Map<String, Object> params) {
+    public ToolExecutionResult execute(Map<String, Object> params, AskContext ctx) {
         if (!(params.get("joinCode") instanceof String joinCodeValue)) {
             return ToolExecutionResult.fail(TOOL_NAME, "joinCode 파라미터가 누락되었거나 올바르지 않습니다.");
         }

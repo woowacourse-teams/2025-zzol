@@ -1,6 +1,7 @@
 package coffeeshout.global.zzolbot.infra.tool;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotTool;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -56,7 +57,7 @@ public class TempoTraceTool implements ZzolBotTool {
     }
 
     @Override
-    public ToolExecutionResult execute(Map<String, Object> params) {
+    public ToolExecutionResult execute(Map<String, Object> params, AskContext ctx) {
         if (!(params.get("joinCode") instanceof String joinCodeValue) || !joinCodeValue.matches("[A-Z0-9]{4}")) {
             return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식");
         }

@@ -1,11 +1,17 @@
 package coffeeshout.global.zzolbot.application;
 
+import coffeeshout.global.zzolbot.config.ZzolBotProperties;
+import coffeeshout.global.zzolbot.domain.AskContext;
+import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class ZzolBotPromptTemplate {
 
-    private static final String SYSTEM_PROMPT = """
+    private static final String SYSTEM_PROMPT_BASE = """
             너는 zzol 서비스의 운영 디버깅 어시스턴트 'ZzolBot'이다.
             운영자가 특정 방(joinCode)에서 발생한 문제를 진단할 수 있도록 도와준다.
 
@@ -26,6 +32,9 @@ public class ZzolBotPromptTemplate {
             - tempo_traces: 요청 흐름과 소요 시간 분석
             - prometheus_query: 메트릭 수치 조회 (예: stream lag, 활성 방 수)
 
+            ## 도구 결과 충돌 우선순위
+            room_state > outbox_events > redis_stream_status > prometheus_query > loki_logs > tempo_traces
+
             ## 행동 원칙
             - joinCode가 주어지면 room_state 도구를 먼저 실행한다
             - 도구 결과가 불충분하면 추가 도구를 실행한다
@@ -33,7 +42,37 @@ public class ZzolBotPromptTemplate {
             - 답변 형식: **진단 결과** → **조회 기준** → **추정 원인**
             """;
 
-    public String build() {
-        return SYSTEM_PROMPT;
+    private final ZzolBotProperties properties;
+
+    public String build(AskContext ctx, List<ZzolBotSessionEntity> goodExamples) {
+        final StringBuilder prompt = new StringBuilder(SYSTEM_PROMPT_BASE);
+
+        prompt.append(String.format("""
+
+                ## 분석 기준 시각(asOf)
+                %s
+
+                ## 윈도우 규칙
+                도구 결과의 timestamp는 asOf 기준 ±%d분 윈도우만 신뢰한다.
+
+                ## 답변 schema 강제
+                **진단 결과** → **조회 기준(asOf: %s, 요청ID: %s, 사용한 도구 목록)** → **추정 원인**
+                """,
+                ctx.asOf().toString(),
+                properties.defaultWindowMinutes(),
+                ctx.asOf().toString(),
+                ctx.requestId()));
+
+        if (!goodExamples.isEmpty()) {
+            prompt.append("\n## 운영자가 좋은 진단으로 평가한 예시\n");
+            goodExamples.forEach(example -> {
+                final String answer = example.getAnswer() != null ? example.getAnswer() : "";
+                prompt.append("\n질문: ").append(example.getQuestion())
+                        .append("\n답변 요약: ").append(answer, 0, Math.min(answer.length(), 200))
+                        .append("...\n");
+            });
+        }
+
+        return prompt.toString();
     }
 }

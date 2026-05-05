@@ -2,6 +2,7 @@ package coffeeshout.global.zzolbot.infra.tool;
 
 import coffeeshout.global.outbox.OutboxEvent;
 import coffeeshout.global.outbox.OutboxStatus;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotTool;
 import coffeeshout.global.zzolbot.infra.ZzolBotOutboxRepository;
@@ -52,7 +53,7 @@ public class OutboxTool implements ZzolBotTool {
 
     @Override
     @Transactional(readOnly = true)
-    public ToolExecutionResult execute(Map<String, Object> params) {
+    public ToolExecutionResult execute(Map<String, Object> params, AskContext ctx) {
         if (!(params.get("joinCode") instanceof String joinCodeValue) || !joinCodeValue.matches("[A-Z0-9]{4}")) {
             return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식");
         }

@@ -10,12 +10,16 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ZzolBotLlmResponse;
 import coffeeshout.global.zzolbot.domain.ZzolBotMessage;
 import com.google.common.collect.ImmutableList;
 import com.google.genai.types.FunctionCall;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,8 +42,13 @@ class GeminiZzolBotClientTest {
                     "http://tempo:3200",
                     "http://prometheus:9090",
                     "local"
-            )
+            ),
+            new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
+            60,
+            10000L
     );
+
+    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     @Spy
     private GeminiZzolBotClient geminiZzolBotClient =
@@ -58,7 +67,8 @@ class GeminiZzolBotClientTest {
             final ZzolBotLlmResponse result = geminiZzolBotClient.generate(
                     List.of(new ZzolBotMessage.UserMessage("ABC1 방 상태 알려줘")),
                     List.of(),
-                    "시스템 지시사항"
+                    "시스템 지시사항",
+                    CTX
             );
 
             assertThat(result).isInstanceOf(ZzolBotLlmResponse.TextResponse.class);
@@ -78,7 +88,8 @@ class GeminiZzolBotClientTest {
             final ZzolBotLlmResponse result = geminiZzolBotClient.generate(
                     List.of(new ZzolBotMessage.UserMessage("ABC1 방 상태")),
                     List.of(),
-                    "시스템 지시사항"
+                    "시스템 지시사항",
+                    CTX
             );
 
             assertThat(result).isInstanceOf(ZzolBotLlmResponse.ToolCallsResponse.class);
@@ -99,7 +110,8 @@ class GeminiZzolBotClientTest {
             assertThatThrownBy(() -> geminiZzolBotClient.generate(
                     List.of(new ZzolBotMessage.UserMessage("질문")),
                     List.of(),
-                    "시스템 지시사항"
+                    "시스템 지시사항",
+                    CTX
             )).isInstanceOf(RuntimeException.class);
         }
     }

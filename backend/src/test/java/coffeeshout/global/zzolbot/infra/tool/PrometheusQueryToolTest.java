@@ -8,10 +8,15 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
@@ -20,6 +25,8 @@ import org.springframework.web.client.RestClient;
 
 @WireMockTest
 class PrometheusQueryToolTest {
+
+    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     private PrometheusQueryTool createTool(WireMockRuntimeInfo wmInfo) {
         final ZzolBotProperties props = new ZzolBotProperties(
@@ -31,7 +38,10 @@ class PrometheusQueryToolTest {
                         "http://tempo",
                         wmInfo.getHttpBaseUrl(),
                         "local"
-                )
+                ),
+                new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
+                60,
+                10000L
         );
         return new PrometheusQueryTool(props, RestClient.builder(), new ObjectMapper());
     }
@@ -45,7 +55,7 @@ class PrometheusQueryToolTest {
                     .willReturn(ok().withBody("{\"status\":\"success\",\"data\":{\"resultType\":\"vector\",\"result\":[]}}")));
 
             final ToolExecutionResult result = createTool(wmInfo)
-                    .execute(Map.of("query", "redis_stream_lag_seconds"));
+                    .execute(Map.of("query", "redis_stream_lag_seconds"), CTX);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.success()).isTrue();
@@ -60,7 +70,7 @@ class PrometheusQueryToolTest {
                     .willReturn(serverError()));
 
             final ToolExecutionResult result = createTool(wmInfo)
-                    .execute(Map.of("query", "redis_stream_lag_seconds"));
+                    .execute(Map.of("query", "redis_stream_lag_seconds"), CTX);
 
             assertThat(result.success()).isFalse();
         }

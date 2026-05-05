@@ -1,6 +1,7 @@
 package coffeeshout.global.zzolbot.infra.tool;
 
 import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotTool;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -43,7 +44,7 @@ public class RedisStreamTool implements ZzolBotTool {
     }
 
     @Override
-    public ToolExecutionResult execute(Map<String, Object> params) {
+    public ToolExecutionResult execute(Map<String, Object> params, AskContext ctx) {
         try {
             final Map<String, Object> result = new LinkedHashMap<>();
             Arrays.stream(StreamKey.values()).forEach(key -> {

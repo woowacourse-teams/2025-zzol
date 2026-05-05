@@ -1,6 +1,7 @@
 package coffeeshout.global.zzolbot.infra;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ZzolBotLlmResponse;
 import coffeeshout.global.zzolbot.domain.ZzolBotMessage;
 import coffeeshout.global.zzolbot.domain.ZzolBotTool;
@@ -35,8 +36,8 @@ public class GeminiZzolBotClient implements ZzolBotLlmClient {
 
     @Retry(name = "zzolBotGemini")
     @RateLimiter(name = "zzolBotGemini")
-    public ZzolBotLlmResponse generate(List<ZzolBotMessage> conversation, List<ZzolBotTool> tools, String systemInstruction) {
-        final GenerateContentConfig config = buildConfig(tools, systemInstruction);
+    public ZzolBotLlmResponse generate(List<ZzolBotMessage> conversation, List<ZzolBotTool> tools, String systemInstruction, AskContext ctx) {
+        final GenerateContentConfig config = buildConfig(tools, systemInstruction, ctx);
         final List<Content> contents = conversation.stream().map(this::toContent).toList();
         final GenerateContentResponse response = callApi(contents, config);
         return parseResponse(response);
@@ -50,7 +51,7 @@ public class GeminiZzolBotClient implements ZzolBotLlmClient {
         }
     }
 
-    private GenerateContentConfig buildConfig(List<ZzolBotTool> tools, String systemInstruction) {
+    private GenerateContentConfig buildConfig(List<ZzolBotTool> tools, String systemInstruction, AskContext ctx) {
         final List<FunctionDeclaration> declarations = tools.stream()
                 .map(this::toFunctionDeclaration)
                 .toList();
@@ -60,6 +61,9 @@ public class GeminiZzolBotClient implements ZzolBotLlmClient {
                 .tools(List.of(Tool.builder()
                         .functionDeclarations(declarations)
                         .build()))
+                .temperature((float) properties.determinism().temperature())
+                .topP((float) properties.determinism().topP())
+                .seed((int) (ctx.seed() & Integer.MAX_VALUE))
                 .build();
     }
 

@@ -10,5 +10,5 @@ public interface ZzolBotTool {
 
     Map<String, Object> parameterSchema();
 
-    ToolExecutionResult execute(Map<String, Object> params);
+    ToolExecutionResult execute(Map<String, Object> params, AskContext ctx);
 }

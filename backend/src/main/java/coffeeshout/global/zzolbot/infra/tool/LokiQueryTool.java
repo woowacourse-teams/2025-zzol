@@ -1,6 +1,7 @@
 package coffeeshout.global.zzolbot.infra.tool;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotTool;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -69,13 +70,13 @@ public class LokiQueryTool implements ZzolBotTool {
     }
 
     @Override
-    public ToolExecutionResult execute(Map<String, Object> params) {
+    public ToolExecutionResult execute(Map<String, Object> params, AskContext ctx) {
         if (!(params.get("joinCode") instanceof String joinCodeValue) || !isValidJoinCode(joinCodeValue)) {
             return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식");
         }
         final int lookBackMinutes = parseLookBackMinutes((String) params.getOrDefault("since", "1h"));
 
-        final Instant end = Instant.now();
+        final Instant end = ctx.asOf();
         final Instant start = end.minus(lookBackMinutes, ChronoUnit.MINUTES);
 
         final String logqlQuery = String.format("{environment=\"%s\"} |= \"%s\"", environment, joinCodeValue);

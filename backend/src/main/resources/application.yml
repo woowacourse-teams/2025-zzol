@@ -345,8 +345,13 @@ zzol-bot:
   gemini-api-key: ${GEMINI_ZZOL_BOT_API_KEY:}
   model: gemini-2.0-flash
   max-loop-iterations: 8
+  default-window-minutes: 60
+  tool-timeout-millis: 10000
   monitoring:
     loki-url: ${LOKI_URL:http://loki:3100}
     tempo-url: ${ZZOL_BOT_TEMPO_URL:http://tempo:3200}
     prometheus-url: ${PROMETHEUS_URL:http://prometheus:9090}
     environment: ${SPRING_PROFILES_ACTIVE:local}
+  determinism:
+    temperature: 0.1
+    top-p: 0.1

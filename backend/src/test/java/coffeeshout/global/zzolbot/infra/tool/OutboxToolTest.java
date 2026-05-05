@@ -8,8 +8,12 @@ import static org.mockito.BDDMockito.given;
 
 import coffeeshout.global.outbox.OutboxEvent;
 import coffeeshout.global.outbox.OutboxStatus;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.infra.ZzolBotOutboxRepository;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +27,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class OutboxToolTest {
+
+    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     @Mock
     private ZzolBotOutboxRepository outboxRepository;
@@ -44,7 +50,7 @@ class OutboxToolTest {
                     eq("A4BX"), anyList(), any()))
                     .willReturn(List.of(event));
 
-            final ToolExecutionResult result = outboxTool.execute(Map.of("joinCode", "A4BX"));
+            final ToolExecutionResult result = outboxTool.execute(Map.of("joinCode", "A4BX"), CTX);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.success()).isTrue();
@@ -60,7 +66,7 @@ class OutboxToolTest {
                     eq("A4BX"), anyList(), any()))
                     .willReturn(List.of());
 
-            final ToolExecutionResult result = outboxTool.execute(Map.of("joinCode", "A4BX"));
+            final ToolExecutionResult result = outboxTool.execute(Map.of("joinCode", "A4BX"), CTX);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.success()).isTrue();

@@ -7,7 +7,11 @@ import static org.mockito.BDDMockito.willThrow;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.service.RoomQueryService;
@@ -20,10 +24,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Map;
 
 @ExtendWith(MockitoExtension.class)
 class RoomStateToolTest {
+
+    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     @Mock
     private RoomQueryService roomQueryService;
@@ -44,7 +51,7 @@ class RoomStateToolTest {
             final Room room = RoomFixture.호스트_꾹이(joinCode);
             given(roomQueryService.getByJoinCode(joinCode)).willReturn(room);
 
-            final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", "A4BX"));
+            final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", "A4BX"), CTX);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.success()).isTrue();
@@ -60,7 +67,7 @@ class RoomStateToolTest {
             given(roomQueryService.getByJoinCode(new JoinCode("A4BX")))
                     .willThrow(new BusinessException(GlobalErrorCode.NOT_EXIST, "방이 존재하지 않습니다."));
 
-            final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", "A4BX"));
+            final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", "A4BX"), CTX);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.success()).isFalse();
@@ -71,21 +78,21 @@ class RoomStateToolTest {
 
         @Test
         void 유효하지_않은_joinCode_형식이면_실패_결과를_반환한다() {
-            final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", "INVALID!!"));
+            final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", "INVALID!!"), CTX);
 
             assertThat(result.success()).isFalse();
         }
 
         @Test
         void joinCode_파라미터가_누락되면_실패_결과를_반환한다() {
-            final ToolExecutionResult result = roomStateTool.execute(Map.of());
+            final ToolExecutionResult result = roomStateTool.execute(Map.of(), CTX);
 
             assertThat(result.success()).isFalse();
         }
 
         @Test
         void joinCode_파라미터가_문자열이_아니면_실패_결과를_반환한다() {
-            final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", 123));
+            final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", 123), CTX);
 
             assertThat(result.success()).isFalse();
         }

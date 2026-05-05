@@ -1,21 +1,21 @@
 package coffeeshout.global.zzolbot.application;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.PiiMasker;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotChatResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotFeedback;
 import coffeeshout.global.zzolbot.domain.ZzolBotLlmResponse;
 import coffeeshout.global.zzolbot.domain.ZzolBotMessage;
-import coffeeshout.global.zzolbot.domain.ZzolBotTool;
 import coffeeshout.global.zzolbot.infra.ZzolBotLlmClient;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionRepository;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -23,65 +23,58 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ZzolBotChatService {
 
-    private static final int FEEDBACK_EXAMPLE_LIMIT = 5;
+    private static final int FEEDBACK_POOL_SIZE = 20;
 
-    private final Map<String, ZzolBotTool> toolsByName;
     private final ZzolBotLlmClient llmClient;
     private final ZzolBotProperties properties;
     private final ZzolBotPromptTemplate promptTemplate;
     private final PiiMasker piiMasker;
     private final ZzolBotSessionRepository sessionRepository;
-
-    public ZzolBotChatService(
-            List<ZzolBotTool> tools,
-            ZzolBotLlmClient llmClient,
-            ZzolBotProperties properties,
-            ZzolBotPromptTemplate promptTemplate,
-            PiiMasker piiMasker,
-            ZzolBotSessionRepository sessionRepository
-    ) {
-        this.toolsByName = tools.stream()
-                .collect(Collectors.toUnmodifiableMap(ZzolBotTool::name, t -> t));
-        this.llmClient = llmClient;
-        this.properties = properties;
-        this.promptTemplate = promptTemplate;
-        this.piiMasker = piiMasker;
-        this.sessionRepository = sessionRepository;
-    }
+    private final ToolExecutor toolExecutor;
+    private final FewShotSelector fewShotSelector;
+    private final Clock clock;
 
     public ZzolBotChatResult ask(String question, String adminUsername, Consumer<String> progressCallback) {
-        final String maskedQuestion = piiMasker.mask(question);
-        final List<ZzolBotMessage> conversation = initConversation(maskedQuestion);
-        final String systemInstruction = buildPromptWithFeedback();
+        final FewShotSelector.Selection selection = fewShotSelector.select(question,
+                sessionRepository.findByFeedbackOrderByCreatedAtDesc(
+                        ZzolBotFeedback.GOOD, PageRequest.of(0, FEEDBACK_POOL_SIZE)));
+        final AskContext ctx = AskContext.stamp(question, selection.ids(), clock);
+
+        final List<ZzolBotMessage> conversation = initConversation(question);
+        final String systemInstruction = promptTemplate.build(ctx, selection.examples());
 
         for (int i = 0; i < properties.maxLoopIterations(); i++) {
             final ZzolBotLlmResponse response = llmClient.generate(
-                    conversation, List.copyOf(toolsByName.values()), systemInstruction);
+                    conversation, toolExecutor.tools(), systemInstruction, ctx);
 
             if (response instanceof ZzolBotLlmResponse.TextResponse text) {
                 log.debug("[ZzolBot] 최종 응답 완료. iterations={}", i + 1);
-                return saveSession(maskedQuestion, text.text(), adminUsername);
+                return saveSession(question, text.text(), adminUsername, ctx);
             }
 
             if (response instanceof ZzolBotLlmResponse.ToolCallsResponse toolCalls) {
-                for (final ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem call : toolCalls.calls()) {
-                    progressCallback.accept(call.toolName());
-                    log.debug("[ZzolBot] tool 실행. name={}, iteration={}", call.toolName(), i + 1);
+                final List<ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem> calls = toolCalls.calls();
+                calls.forEach(call -> progressCallback.accept(call.toolName()));
+                log.debug("[ZzolBot] tool 병렬 실행. count={}, iteration={}", calls.size(), i + 1);
 
+                final List<ToolExecutionResult> results = toolExecutor.executeAll(calls, ctx);
+
+                for (int j = 0; j < calls.size(); j++) {
+                    final ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem call = calls.get(j);
+                    final ToolExecutionResult result = results.get(j);
                     conversation.add(new ZzolBotMessage.ToolCallMessage(call.toolName(), call.args()));
-
-                    final ToolExecutionResult result = safeExecuteTool(call.toolName(), call.args());
-                    final String maskedContent = piiMasker.mask(result.content());
+                    final String maskedContent = piiMasker.mask(result.content(), ctx.piiSession());
                     conversation.add(new ZzolBotMessage.ToolResultMessage(call.toolName(), maskedContent));
                 }
             }
         }
 
-        log.warn("[ZzolBot] maxLoopIterations 초과. question={}", maskedQuestion);
+        log.warn("[ZzolBot] maxLoopIterations 초과. question={}", question);
         final String fallback = "분석이 복잡하여 완료하지 못했습니다. 질문을 더 구체적으로 해주세요.";
-        return saveSession(maskedQuestion, fallback, adminUsername);
+        return saveSession(question, fallback, adminUsername, ctx);
     }
 
     @Transactional
@@ -94,9 +87,9 @@ public class ZzolBotChatService {
         return sessionRepository.findTop20ByOrderByCreatedAtDesc();
     }
 
-    private ZzolBotChatResult saveSession(String question, String answer, String adminUsername) {
-        final String maskedQuestion = piiMasker.mask(question);
-        final String maskedAnswer = piiMasker.mask(answer);
+    private ZzolBotChatResult saveSession(String question, String answer, String adminUsername, AskContext ctx) {
+        final String maskedQuestion = piiMasker.mask(question, ctx.piiSession());
+        final String maskedAnswer = piiMasker.mask(answer, ctx.piiSession());
         final ZzolBotSessionEntity session = sessionRepository.save(
                 ZzolBotSessionEntity.create(maskedQuestion, maskedAnswer, adminUsername)
         );
@@ -108,38 +101,5 @@ public class ZzolBotChatService {
         conversation.add(new ZzolBotMessage.AssistantMessage("네, zzol 운영 어시스턴트입니다. 무엇을 도와드릴까요?"));
         conversation.add(new ZzolBotMessage.UserMessage(question));
         return conversation;
-    }
-
-    private String buildPromptWithFeedback() {
-        final StringBuilder prompt = new StringBuilder(promptTemplate.build());
-
-        final List<ZzolBotSessionEntity> goodExamples = sessionRepository.findByFeedbackOrderByCreatedAtDesc(
-                ZzolBotFeedback.GOOD, PageRequest.of(0, FEEDBACK_EXAMPLE_LIMIT)
-        );
-
-        if (!goodExamples.isEmpty()) {
-            prompt.append("\n## 운영자가 좋은 진단으로 평가한 예시\n");
-            goodExamples.forEach(example -> {
-                final String answer = example.getAnswer() != null ? example.getAnswer() : "";
-                prompt.append("\n질문: ").append(example.getQuestion())
-                        .append("\n답변 요약: ").append(answer, 0, Math.min(answer.length(), 200))
-                        .append("...\n");
-            });
-        }
-
-        return prompt.toString();
-    }
-
-    private ToolExecutionResult safeExecuteTool(String toolName, Map<String, Object> args) {
-        try {
-            final ZzolBotTool tool = toolsByName.get(toolName);
-            if (tool == null) {
-                return ToolExecutionResult.fail(toolName, "알 수 없는 tool: " + toolName);
-            }
-            return tool.execute(args);
-        } catch (Exception e) {
-            log.warn("[ZzolBot] tool 실행 중 예외 발생. toolName={}", toolName, e);
-            return ToolExecutionResult.fail(toolName, "tool 실행 실패: " + toolName);
-        }
     }
 }

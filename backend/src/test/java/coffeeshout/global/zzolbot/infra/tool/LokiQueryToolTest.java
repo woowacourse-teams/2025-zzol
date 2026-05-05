@@ -8,10 +8,15 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
@@ -20,6 +25,8 @@ import org.springframework.web.client.RestClient;
 
 @WireMockTest
 class LokiQueryToolTest {
+
+    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     private LokiQueryTool createTool(WireMockRuntimeInfo wmInfo) {
         final ZzolBotProperties props = new ZzolBotProperties(
@@ -31,7 +38,10 @@ class LokiQueryToolTest {
                         "http://tempo",
                         "http://prometheus",
                         "local"
-                )
+                ),
+                new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
+                60,
+                10000L
         );
         return new LokiQueryTool(props, RestClient.builder(), new ObjectMapper());
     }
@@ -44,7 +54,7 @@ class LokiQueryToolTest {
             stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
                     .willReturn(ok().withBody("{\"status\":\"success\",\"data\":{}}")));
 
-            final ToolExecutionResult result = createTool(wmInfo).execute(Map.of("joinCode", "A4BX"));
+            final ToolExecutionResult result = createTool(wmInfo).execute(Map.of("joinCode", "A4BX"), CTX);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.success()).isTrue();
@@ -58,7 +68,7 @@ class LokiQueryToolTest {
             stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
                     .willReturn(serverError()));
 
-            final ToolExecutionResult result = createTool(wmInfo).execute(Map.of("joinCode", "A4BX"));
+            final ToolExecutionResult result = createTool(wmInfo).execute(Map.of("joinCode", "A4BX"), CTX);
 
             assertThat(result.success()).isFalse();
         }
@@ -68,7 +78,7 @@ class LokiQueryToolTest {
             stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
                     .willReturn(ok().withBody("{\"status\":\"success\"}")));
 
-            final ToolExecutionResult result = createTool(wmInfo).execute(Map.of("joinCode", "A4BX"));
+            final ToolExecutionResult result = createTool(wmInfo).execute(Map.of("joinCode", "A4BX"), CTX);
 
             assertThat(result.success()).isTrue();
         }
@@ -79,7 +89,7 @@ class LokiQueryToolTest {
                     .willReturn(ok().withBody("{\"status\":\"success\"}")));
 
             final ToolExecutionResult result = createTool(wmInfo)
-                    .execute(Map.of("joinCode", "A4BX", "since", "30m"));
+                    .execute(Map.of("joinCode", "A4BX", "since", "30m"), CTX);
 
             assertThat(result.success()).isTrue();
         }
@@ -90,7 +100,7 @@ class LokiQueryToolTest {
                     .willReturn(ok().withBody("{\"status\":\"success\"}")));
 
             final ToolExecutionResult result = createTool(wmInfo)
-                    .execute(Map.of("joinCode", "A4BX", "since", "999h"));
+                    .execute(Map.of("joinCode", "A4BX", "since", "999h"), CTX);
 
             assertThat(result.success()).isTrue();
         }
@@ -101,7 +111,7 @@ class LokiQueryToolTest {
                     .willReturn(ok().withBody("{\"status\":\"success\"}")));
 
             final ToolExecutionResult result = createTool(wmInfo)
-                    .execute(Map.of("joinCode", "A4BX", "since", "-30m"));
+                    .execute(Map.of("joinCode", "A4BX", "since", "-30m"), CTX);
 
             assertThat(result.success()).isTrue();
         }

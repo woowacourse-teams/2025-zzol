@@ -3,24 +3,21 @@ package coffeeshout.global.zzolbot.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.PiiMasker;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotChatResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotFeedback;
 import coffeeshout.global.zzolbot.domain.ZzolBotLlmResponse;
-import coffeeshout.global.zzolbot.domain.ZzolBotTool;
 import coffeeshout.global.zzolbot.infra.ZzolBotLlmClient;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionRepository;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +47,10 @@ class ZzolBotChatServiceTest {
                     "http://tempo:3200",
                     "http://prometheus:9090",
                     "local"
-            )
+            ),
+            new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
+            60,
+            10000L
     );
 
     @Mock
@@ -58,6 +58,12 @@ class ZzolBotChatServiceTest {
 
     @Mock
     private ZzolBotSessionRepository sessionRepository;
+
+    @Mock
+    private ToolExecutor toolExecutor;
+
+    @Mock
+    private FewShotSelector fewShotSelector;
 
     private ZzolBotChatService chatService;
     private List<String> progressLog;
@@ -72,14 +78,18 @@ class ZzolBotChatServiceTest {
         ReflectionTestUtils.setField(savedSession, "id", 1L);
         given(sessionRepository.save(any())).willReturn(savedSession);
         given(sessionRepository.findByFeedbackOrderByCreatedAtDesc(any(), any())).willReturn(List.of());
+        given(fewShotSelector.select(any(), any())).willReturn(new FewShotSelector.Selection(List.of(), List.of()));
+        given(toolExecutor.tools()).willReturn(List.of());
 
         chatService = new ZzolBotChatService(
-                List.of(),
                 llmClient,
                 PROPERTIES,
-                new ZzolBotPromptTemplate(),
+                new ZzolBotPromptTemplate(PROPERTIES),
                 new PiiMasker(),
-                sessionRepository
+                sessionRepository,
+                toolExecutor,
+                fewShotSelector,
+                Clock.systemUTC()
         );
     }
 
@@ -88,7 +98,7 @@ class ZzolBotChatServiceTest {
 
         @Test
         void LLM이_즉시_텍스트를_반환하면_답변을_포함한_결과를_반환한다() {
-            given(llmClient.generate(anyList(), anyList(), anyString()))
+            given(llmClient.generate(anyList(), anyList(), anyString(), any(AskContext.class)))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("방 A4BX는 현재 PLAYING 상태입니다."));
 
             final ZzolBotChatResult result = chatService.ask("A4BX 방 상태 알려줘", "admin", progressCallback);
@@ -98,7 +108,7 @@ class ZzolBotChatServiceTest {
 
         @Test
         void 세션이_DB에_저장되고_ID를_포함한_결과를_반환한다() {
-            given(llmClient.generate(anyList(), anyList(), anyString()))
+            given(llmClient.generate(anyList(), anyList(), anyString(), any(AskContext.class)))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("PLAYING 상태입니다."));
 
             final ZzolBotChatResult result = chatService.ask("A4BX 방 상태", "admin", progressCallback);
@@ -111,7 +121,7 @@ class ZzolBotChatServiceTest {
 
         @Test
         void 텍스트_응답_시_progressCallback이_호출되지_않는다() {
-            given(llmClient.generate(anyList(), anyList(), anyString()))
+            given(llmClient.generate(anyList(), anyList(), anyString(), any(AskContext.class)))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("정상입니다."));
 
             chatService.ask("질문", "admin", progressCallback);
@@ -121,21 +131,10 @@ class ZzolBotChatServiceTest {
 
         @Test
         void tool_호출_후_텍스트_응답이_오면_최종_결과를_반환한다() {
-            final ZzolBotTool mockTool = mock(ZzolBotTool.class);
-            given(mockTool.name()).willReturn("room_state");
-            given(mockTool.execute(anyMap()))
-                    .willReturn(ToolExecutionResult.ok("room_state", "{\"roomState\":\"PLAYING\"}"));
+            given(toolExecutor.executeAll(anyList(), any(AskContext.class)))
+                    .willReturn(List.of(ToolExecutionResult.ok("room_state", "{\"roomState\":\"PLAYING\"}")));
 
-            chatService = new ZzolBotChatService(
-                    List.of(mockTool),
-                    llmClient,
-                    PROPERTIES,
-                    new ZzolBotPromptTemplate(),
-                    new PiiMasker(),
-                    sessionRepository
-            );
-
-            given(llmClient.generate(anyList(), anyList(), anyString()))
+            given(llmClient.generate(anyList(), anyList(), anyString(), any(AskContext.class)))
                     .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
                             new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("room_state", Map.of("joinCode", "A4BX")))))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("방 A4BX: PLAYING 상태, 플레이어 3명"));
@@ -150,53 +149,33 @@ class ZzolBotChatServiceTest {
 
         @Test
         void tool_실행_결과에서_PII가_마스킹된_후_LLM에_전달된다() {
-            final ZzolBotTool mockTool = mock(ZzolBotTool.class);
-            given(mockTool.name()).willReturn("room_state");
-            given(mockTool.execute(anyMap()))
-                    .willReturn(ToolExecutionResult.ok("room_state", "email=admin@zzol.site, ip=10.0.0.1"));
+            given(toolExecutor.executeAll(anyList(), any(AskContext.class)))
+                    .willReturn(List.of(ToolExecutionResult.ok("room_state", "email=admin@zzol.site, ip=10.0.0.1")));
 
-            chatService = new ZzolBotChatService(
-                    List.of(mockTool),
-                    llmClient,
-                    PROPERTIES,
-                    new ZzolBotPromptTemplate(),
-                    new PiiMasker(),
-                    sessionRepository
-            );
-
-            given(llmClient.generate(anyList(), anyList(), anyString()))
+            given(llmClient.generate(anyList(), anyList(), anyString(), any(AskContext.class)))
                     .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
                             new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("room_state", Map.of("joinCode", "A4BX")))))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("완료"));
 
             chatService.ask("A4BX 방 상태", "admin", progressCallback);
 
-            verify(llmClient, org.mockito.Mockito.atLeast(2)).generate(
+            org.mockito.Mockito.verify(llmClient, org.mockito.Mockito.atLeast(2)).generate(
                     argThat(conversation -> conversation.stream()
                             .filter(m -> m instanceof coffeeshout.global.zzolbot.domain.ZzolBotMessage.ToolResultMessage)
                             .map(m -> ((coffeeshout.global.zzolbot.domain.ZzolBotMessage.ToolResultMessage) m).result())
                             .noneMatch(r -> r.contains("admin@zzol.site") || r.contains("10.0.0.1"))
                     ),
                     anyList(),
-                    anyString()
+                    anyString(),
+                    any(AskContext.class)
             );
         }
 
         @Test
-        void 알_수_없는_tool_이름이면_fail_결과로_처리하고_계속_진행한다() {
-            given(llmClient.generate(anyList(), anyList(), anyString()))
-                    .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
-                            new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("unknown_tool", Map.of()))))
-                    .willReturn(new ZzolBotLlmResponse.TextResponse("처리 완료"));
-
-            final ZzolBotChatResult result = chatService.ask("알 수 없는 요청", "admin", progressCallback);
-
-            assertThat(result.answer()).isEqualTo("처리 완료");
-        }
-
-        @Test
         void maxLoopIterations_초과_시_안내_메시지를_반환한다() {
-            given(llmClient.generate(anyList(), anyList(), anyString()))
+            given(toolExecutor.executeAll(anyList(), any(AskContext.class)))
+                    .willReturn(List.of(ToolExecutionResult.fail("room_state", "실패")));
+            given(llmClient.generate(anyList(), anyList(), anyString(), any(AskContext.class)))
                     .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
                             new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("room_state", Map.of("joinCode", "A4BX")))));
 
@@ -210,19 +189,18 @@ class ZzolBotChatServiceTest {
             final ZzolBotSessionEntity goodSession = ZzolBotSessionEntity.create(
                     "A4BX 방 상태", "PLAYING 상태입니다.", "admin"
             );
-            given(sessionRepository.findByFeedbackOrderByCreatedAtDesc(eq(ZzolBotFeedback.GOOD), any()))
-                    .willReturn(List.of(goodSession));
-            given(llmClient.generate(anyList(), anyList(), anyString()))
+            given(fewShotSelector.select(any(), any()))
+                    .willReturn(new FewShotSelector.Selection(List.of(goodSession), List.of()));
+            given(llmClient.generate(anyList(), anyList(), anyString(), any(AskContext.class)))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("응답"));
 
             chatService.ask("질문", "admin", progressCallback);
 
-            verify(llmClient).generate(
+            org.mockito.Mockito.verify(llmClient).generate(
                     anyList(),
                     anyList(),
-                    org.mockito.ArgumentMatchers.argThat(instruction ->
-                            instruction.contains("운영자가 좋은 진단으로 평가한 예시")
-                    )
+                    argThat(instruction -> instruction.contains("운영자가 좋은 진단으로 평가한 예시")),
+                    any(AskContext.class)
             );
         }
     }

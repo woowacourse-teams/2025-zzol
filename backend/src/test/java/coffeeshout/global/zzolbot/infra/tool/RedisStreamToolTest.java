@@ -6,7 +6,12 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 import coffeeshout.global.redis.stream.StreamKey;
+import java.util.List;
+import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -21,6 +26,8 @@ import org.springframework.data.redis.core.StreamOperations;
 
 @ExtendWith(MockitoExtension.class)
 class RedisStreamToolTest {
+
+    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
@@ -42,7 +49,7 @@ class RedisStreamToolTest {
             given(redisTemplate.opsForStream()).willReturn(streamOps);
             given(streamOps.size(anyString())).willReturn(5L);
 
-            final ToolExecutionResult result = redisStreamTool.execute(Map.of());
+            final ToolExecutionResult result = redisStreamTool.execute(Map.of(), CTX);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.success()).isTrue();
@@ -60,7 +67,7 @@ class RedisStreamToolTest {
             given(redisTemplate.opsForStream()).willReturn(streamOps);
             given(streamOps.size(anyString())).willThrow(new RuntimeException("Redis 연결 실패"));
 
-            final ToolExecutionResult result = redisStreamTool.execute(Map.of());
+            final ToolExecutionResult result = redisStreamTool.execute(Map.of(), CTX);
 
             assertThat(result.success()).isFalse();
         }

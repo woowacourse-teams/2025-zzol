@@ -15,5 +15,5 @@ public interface UserRepository {
 
     List<User> findAllByNickname(UserNickname nickname);
 
-    void deleteById(Long id);
+    void softDeleteById(Long userId);
 }

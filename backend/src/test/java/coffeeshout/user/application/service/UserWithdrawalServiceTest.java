@@ -12,8 +12,11 @@ import coffeeshout.report.infra.persistence.Reporter;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.infra.persistence.OAuthAccountJpaRepository;
+import coffeeshout.user.infra.persistence.UserEntity;
 import coffeeshout.user.infra.persistence.UserJpaRepository;
 import java.time.Instant;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,6 +32,9 @@ class UserWithdrawalServiceTest extends ServiceTest {
 
     @Autowired
     UserJpaRepository userJpaRepository;
+
+    @Autowired
+    OAuthAccountJpaRepository oAuthAccountJpaRepository;
 
     @Autowired
     ReportRepository reportRepository;
@@ -47,10 +53,30 @@ class UserWithdrawalServiceTest extends ServiceTest {
     class 회원_탈퇴 {
 
         @Test
-        void 탈퇴_후_회원_정보가_삭제된다() {
+        void 탈퇴_후_회원_엔티티는_soft_delete되고_닉네임이_익명화된다() {
+            final Instant before = Instant.now();
             userWithdrawalService.withdraw(userId);
 
-            assertThat(userJpaRepository.findById(userId)).isEmpty();
+            final UserEntity entity = userJpaRepository.findById(userId).orElseThrow();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(entity.isDeleted()).isTrue();
+                softly.assertThat(entity.getNickname()).isEqualTo("탈퇴한 사용자");
+                softly.assertThat(entity.getDeletedAt()).isNotNull().isAfterOrEqualTo(before);
+            });
+        }
+
+        @Test
+        void 탈퇴_후_도메인_조회에서_찾을_수_없다() {
+            userWithdrawalService.withdraw(userId);
+
+            assertThat(userRepository.findById(userId)).isEmpty();
+        }
+
+        @Test
+        void 탈퇴_후_OAuth_계정이_hard_delete된다() {
+            userWithdrawalService.withdraw(userId);
+
+            assertThat(oAuthAccountJpaRepository.findByUser_Id(userId)).isEmpty();
         }
 
         @Test

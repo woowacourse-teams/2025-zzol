@@ -41,6 +41,9 @@ public class UserEntity {
     @Column(name = "terms_agreed_at")
     private Instant termsAgreedAt;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     public UserEntity(String userCode, String nickname) {
         final Instant now = Instant.now();
         this.userCode = userCode;
@@ -58,6 +61,19 @@ public class UserEntity {
         if (this.termsAgreedAt == null) {
             this.termsAgreedAt = Instant.now();
         }
+    }
+
+    public void anonymize() {
+        this.nickname = "탈퇴한 사용자";
+        this.updatedAt = Instant.now();
+    }
+
+    public void softDelete() {
+        this.deletedAt = Instant.now();
+    }
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
     }
 
     public User toDomain(OAuthAccountEntity oAuthAccountEntity) {

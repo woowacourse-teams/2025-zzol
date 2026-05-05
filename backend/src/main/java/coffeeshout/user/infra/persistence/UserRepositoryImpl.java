@@ -60,7 +60,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Optional<User> findById(Long id) {
-        return userJpaRepository.findById(id)
+        return userJpaRepository.findByIdAndDeletedAtIsNull(id)
                 .flatMap(userEntity -> oAuthAccountJpaRepository.findByUser_Id(id)
                         .map(userEntity::toDomain));
     }
@@ -73,8 +73,13 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public void deleteById(Long id) {
-        userJpaRepository.deleteById(id);
+    public void softDeleteById(Long userId) {
+        final UserEntity userEntity = userJpaRepository.findByIdAndDeletedAtIsNull(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
+        oAuthAccountJpaRepository.deleteByUser_Id(userId);
+        userEntity.anonymize();
+        userEntity.softDelete();
+        userJpaRepository.save(userEntity);
     }
 
     @Override

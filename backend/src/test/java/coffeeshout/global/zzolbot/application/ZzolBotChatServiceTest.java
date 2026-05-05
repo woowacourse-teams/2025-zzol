@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -20,8 +21,6 @@ import coffeeshout.global.zzolbot.domain.ZzolBotTool;
 import coffeeshout.global.zzolbot.infra.ZzolBotLlmClient;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionRepository;
-import com.google.genai.types.Content;
-import com.google.genai.types.Part;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +88,7 @@ class ZzolBotChatServiceTest {
 
         @Test
         void LLM이_즉시_텍스트를_반환하면_답변을_포함한_결과를_반환한다() {
-            given(llmClient.generate(anyList(), anyList()))
+            given(llmClient.generate(anyList(), anyList(), anyString()))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("방 A4BX는 현재 PLAYING 상태입니다."));
 
             final ZzolBotChatResult result = chatService.ask("A4BX 방 상태 알려줘", "admin", progressCallback);
@@ -99,7 +98,7 @@ class ZzolBotChatServiceTest {
 
         @Test
         void 세션이_DB에_저장되고_ID를_포함한_결과를_반환한다() {
-            given(llmClient.generate(anyList(), anyList()))
+            given(llmClient.generate(anyList(), anyList(), anyString()))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("PLAYING 상태입니다."));
 
             final ZzolBotChatResult result = chatService.ask("A4BX 방 상태", "admin", progressCallback);
@@ -112,7 +111,7 @@ class ZzolBotChatServiceTest {
 
         @Test
         void 텍스트_응답_시_progressCallback이_호출되지_않는다() {
-            given(llmClient.generate(anyList(), anyList()))
+            given(llmClient.generate(anyList(), anyList(), anyString()))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("정상입니다."));
 
             chatService.ask("질문", "admin", progressCallback);
@@ -126,8 +125,6 @@ class ZzolBotChatServiceTest {
             given(mockTool.name()).willReturn("room_state");
             given(mockTool.execute(anyMap()))
                     .willReturn(ToolExecutionResult.ok("room_state", "{\"roomState\":\"PLAYING\"}"));
-            given(llmClient.buildFunctionResponseContent(anyString(), anyString()))
-                    .willReturn(Content.fromParts(Part.fromText("tool result")));
 
             chatService = new ZzolBotChatService(
                     List.of(mockTool),
@@ -138,7 +135,7 @@ class ZzolBotChatServiceTest {
                     sessionRepository
             );
 
-            given(llmClient.generate(anyList(), anyList()))
+            given(llmClient.generate(anyList(), anyList(), anyString()))
                     .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
                             new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("room_state", Map.of("joinCode", "A4BX")))))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("방 A4BX: PLAYING 상태, 플레이어 3명"));
@@ -157,8 +154,6 @@ class ZzolBotChatServiceTest {
             given(mockTool.name()).willReturn("room_state");
             given(mockTool.execute(anyMap()))
                     .willReturn(ToolExecutionResult.ok("room_state", "email=admin@zzol.site, ip=10.0.0.1"));
-            given(llmClient.buildFunctionResponseContent(anyString(), anyString()))
-                    .willReturn(Content.fromParts(Part.fromText("masked")));
 
             chatService = new ZzolBotChatService(
                     List.of(mockTool),
@@ -169,26 +164,27 @@ class ZzolBotChatServiceTest {
                     sessionRepository
             );
 
-            given(llmClient.generate(anyList(), anyList()))
+            given(llmClient.generate(anyList(), anyList(), anyString()))
                     .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
                             new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("room_state", Map.of("joinCode", "A4BX")))))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("완료"));
 
             chatService.ask("A4BX 방 상태", "admin", progressCallback);
 
-            verify(llmClient).buildFunctionResponseContent(
-                    anyString(),
-                    org.mockito.ArgumentMatchers.argThat(content ->
-                            !content.contains("admin@zzol.site") && !content.contains("10.0.0.1")
-                    )
+            verify(llmClient, org.mockito.Mockito.atLeast(2)).generate(
+                    argThat(conversation -> conversation.stream()
+                            .filter(m -> m instanceof coffeeshout.global.zzolbot.domain.ZzolBotMessage.ToolResultMessage)
+                            .map(m -> ((coffeeshout.global.zzolbot.domain.ZzolBotMessage.ToolResultMessage) m).result())
+                            .noneMatch(r -> r.contains("admin@zzol.site") || r.contains("10.0.0.1"))
+                    ),
+                    anyList(),
+                    anyString()
             );
         }
 
         @Test
         void 알_수_없는_tool_이름이면_fail_결과로_처리하고_계속_진행한다() {
-            given(llmClient.buildFunctionResponseContent(anyString(), anyString()))
-                    .willReturn(Content.fromParts(Part.fromText("unknown tool result")));
-            given(llmClient.generate(anyList(), anyList()))
+            given(llmClient.generate(anyList(), anyList(), anyString()))
                     .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
                             new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("unknown_tool", Map.of()))))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("처리 완료"));
@@ -200,11 +196,9 @@ class ZzolBotChatServiceTest {
 
         @Test
         void maxLoopIterations_초과_시_안내_메시지를_반환한다() {
-            given(llmClient.generate(anyList(), anyList()))
+            given(llmClient.generate(anyList(), anyList(), anyString()))
                     .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
                             new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("room_state", Map.of("joinCode", "A4BX")))));
-            given(llmClient.buildFunctionResponseContent(anyString(), anyString()))
-                    .willReturn(Content.fromParts(Part.fromText("tool result")));
 
             final ZzolBotChatResult result = chatService.ask("복잡한 질문", "admin", progressCallback);
 
@@ -212,24 +206,23 @@ class ZzolBotChatServiceTest {
         }
 
         @Test
-        void GOOD_피드백_세션이_있으면_프롬프트에_예시로_주입된다() {
+        void GOOD_피드백_세션이_있으면_systemInstruction에_예시로_주입된다() {
             final ZzolBotSessionEntity goodSession = ZzolBotSessionEntity.create(
                     "A4BX 방 상태", "PLAYING 상태입니다.", "admin"
             );
             given(sessionRepository.findByFeedbackOrderByCreatedAtDesc(eq(ZzolBotFeedback.GOOD), any()))
                     .willReturn(List.of(goodSession));
-            given(llmClient.generate(anyList(), anyList()))
+            given(llmClient.generate(anyList(), anyList(), anyString()))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("응답"));
 
             chatService.ask("질문", "admin", progressCallback);
 
             verify(llmClient).generate(
-                    org.mockito.ArgumentMatchers.argThat(conversation ->
-                            conversation.stream().anyMatch(c ->
-                                    c.text().contains("운영자가 좋은 진단으로 평가한 예시")
-                            )
-                    ),
-                    anyList()
+                    anyList(),
+                    anyList(),
+                    org.mockito.ArgumentMatchers.argThat(instruction ->
+                            instruction.contains("운영자가 좋은 진단으로 평가한 예시")
+                    )
             );
         }
     }

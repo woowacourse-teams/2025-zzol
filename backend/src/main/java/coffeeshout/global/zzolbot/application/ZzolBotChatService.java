@@ -6,12 +6,11 @@ import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotChatResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotFeedback;
 import coffeeshout.global.zzolbot.domain.ZzolBotLlmResponse;
+import coffeeshout.global.zzolbot.domain.ZzolBotMessage;
 import coffeeshout.global.zzolbot.domain.ZzolBotTool;
 import coffeeshout.global.zzolbot.infra.ZzolBotLlmClient;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionRepository;
-import com.google.genai.types.Content;
-import com.google.genai.types.Part;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,12 +51,13 @@ public class ZzolBotChatService {
         this.sessionRepository = sessionRepository;
     }
 
-    @Transactional
     public ZzolBotChatResult ask(String question, String adminUsername, Consumer<String> progressCallback) {
-        final List<Content> conversation = initConversation(question);
+        final List<ZzolBotMessage> conversation = initConversation(question);
+        final String systemInstruction = buildPromptWithFeedback();
 
         for (int i = 0; i < properties.maxLoopIterations(); i++) {
-            final ZzolBotLlmResponse response = llmClient.generate(conversation, List.copyOf(toolsByName.values()));
+            final ZzolBotLlmResponse response = llmClient.generate(
+                    conversation, List.copyOf(toolsByName.values()), systemInstruction);
 
             if (response instanceof ZzolBotLlmResponse.TextResponse text) {
                 log.debug("[ZzolBot] 최종 응답 완료. iterations={}", i + 1);
@@ -69,14 +69,11 @@ public class ZzolBotChatService {
                     progressCallback.accept(call.toolName());
                     log.debug("[ZzolBot] tool 실행. name={}, iteration={}", call.toolName(), i + 1);
 
-                    conversation.add(Content.builder()
-                            .role("model")
-                            .parts(Part.fromFunctionCall(call.toolName(), call.args()))
-                            .build());
+                    conversation.add(new ZzolBotMessage.ToolCallMessage(call.toolName(), call.args()));
 
                     final ToolExecutionResult result = safeExecuteTool(call.toolName(), call.args());
                     final String maskedContent = piiMasker.mask(result.content());
-                    conversation.add(llmClient.buildFunctionResponseContent(call.toolName(), maskedContent));
+                    conversation.add(new ZzolBotMessage.ToolResultMessage(call.toolName(), maskedContent));
                 }
             }
         }
@@ -105,20 +102,10 @@ public class ZzolBotChatService {
         return new ZzolBotChatResult(session.getId(), maskedAnswer);
     }
 
-    private List<Content> initConversation(String question) {
-        final List<Content> conversation = new ArrayList<>();
-        conversation.add(Content.builder()
-                .role("user")
-                .parts(Part.fromText(buildPromptWithFeedback()))
-                .build());
-        conversation.add(Content.builder()
-                .role("model")
-                .parts(Part.fromText("네, zzol 운영 어시스턴트입니다. 무엇을 도와드릴까요?"))
-                .build());
-        conversation.add(Content.builder()
-                .role("user")
-                .parts(Part.fromText(question))
-                .build());
+    private List<ZzolBotMessage> initConversation(String question) {
+        final List<ZzolBotMessage> conversation = new ArrayList<>();
+        conversation.add(new ZzolBotMessage.AssistantMessage("네, zzol 운영 어시스턴트입니다. 무엇을 도와드릴까요?"));
+        conversation.add(new ZzolBotMessage.UserMessage(question));
         return conversation;
     }
 

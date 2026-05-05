@@ -1,11 +1,24 @@
 import PlayerIcon from '@/components/@composition/PlayerIcon/PlayerIcon';
+import useModal from '@/components/@common/Modal/useModal';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
+import { useAuth } from '@/features/auth/contexts/AuthContext';
+import DeleteAccountSheet from '@/features/auth/components/DeleteAccountSheet/DeleteAccountSheet';
 import { useMyStats } from '@/features/home/hooks/useMyStats';
 import * as S from './MyInfoView.styled';
 
 const MyInfoView = () => {
   const { myName } = useIdentifier();
   const { winCount, streak } = useMyStats();
+  const { isAuthenticated } = useAuth();
+  const { openModal } = useModal();
+
+  const handleDeleteAccount = () => {
+    openModal(<DeleteAccountSheet />, {
+      title: '회원 탈퇴',
+      showCloseButton: true,
+      closeOnBackdropClick: true,
+    });
+  };
 
   return (
     <S.Container>
@@ -44,6 +57,15 @@ const MyInfoView = () => {
           </S.TooltipList>
         </S.TooltipCard>
       </S.InfoSection>
+
+      {isAuthenticated && (
+        <S.DangerCard>
+          <S.DangerRow type="button" onClick={handleDeleteAccount}>
+            <S.DangerLabel>회원 탈퇴하기</S.DangerLabel>
+            <S.DangerIcon>›</S.DangerIcon>
+          </S.DangerRow>
+        </S.DangerCard>
+      )}
     </S.Container>
   );
 };

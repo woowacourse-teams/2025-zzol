@@ -8,6 +8,8 @@ import coffeeshout.user.exception.UserErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -21,9 +23,13 @@ public class UserWithdrawalService {
     public void withdraw(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
-        // Redis는 트랜잭션 외부: 삭제 성공 후 DB 실패 시 토큰만 소멸된 채 롤백됨 (재로그인으로 복구 가능, 의도된 순서)
-        refreshTokenRepository.deleteAllByUserId(userId);
         reportAnonymizationRepository.clearUserCodeByUserId(userId);
         userRepository.deleteById(userId);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                refreshTokenRepository.deleteAllByUserId(userId);
+            }
+        });
     }
 }

@@ -14,7 +14,7 @@ public interface ReportRepository extends JpaRepository<Report, Long>, ReportAdm
     long countByStatus(ReportStatus status);
 
     @Override
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query("UPDATE Report r SET r.author.userCode = null WHERE r.author.userId = :userId")
     void clearUserCodeByUserId(@Param("userId") Long userId);

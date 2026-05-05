@@ -2,7 +2,7 @@ package coffeeshout.user.ui;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.application.service.AuthTokenService;
-import coffeeshout.user.config.JwtProperties;
+import coffeeshout.user.config.RefreshTokenCookieHelper;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.OAuthCodeEntry;
 import coffeeshout.user.domain.TokenPair;
@@ -14,12 +14,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,10 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthRestController {
 
-    static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
-
     private final AuthTokenService authTokenService;
-    private final JwtProperties jwtProperties;
+    private final RefreshTokenCookieHelper cookieHelper;
 
     @PostMapping("/token")
     public ResponseEntity<AuthTokenResponse> exchangeCode(
@@ -42,7 +37,7 @@ public class AuthRestController {
             HttpServletResponse response
     ) {
         final OAuthCodeEntry entry = authTokenService.exchangeCode(request.code());
-        setRefreshTokenCookie(response, entry.tokenPair().refreshToken());
+        cookieHelper.set(response, entry.tokenPair().refreshToken());
         return ResponseEntity.ok(new AuthTokenResponse(entry.tokenPair().accessToken(), null, entry.isNewUser()));
     }
 
@@ -53,7 +48,7 @@ public class AuthRestController {
     ) {
         final String refreshToken = extractRefreshTokenCookie(request);
         final TokenPair tokens = authTokenService.rotate(refreshToken);
-        setRefreshTokenCookie(response, tokens.refreshToken());
+        cookieHelper.set(response, tokens.refreshToken());
         return ResponseEntity.ok(new AuthTokenResponse(tokens.accessToken(), null, false));
     }
 
@@ -63,7 +58,7 @@ public class AuthRestController {
             HttpServletResponse response
     ) {
         authUser.ifPresent(user -> authTokenService.revoke(user.userId()));
-        clearRefreshTokenCookie(response);
+        cookieHelper.clear(response);
         return ResponseEntity.noContent().build();
     }
 
@@ -72,32 +67,10 @@ public class AuthRestController {
             throw new BusinessException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND, "리프레시 토큰이 없습니다.");
         }
         return Arrays.stream(request.getCookies())
-                .filter(c -> REFRESH_TOKEN_COOKIE_NAME.equals(c.getName()))
+                .filter(c -> RefreshTokenCookieHelper.COOKIE_NAME.equals(c.getName()))
                 .map(Cookie::getValue)
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
                         UserErrorCode.REFRESH_TOKEN_NOT_FOUND, "리프레시 토큰이 없습니다."));
-    }
-
-    private void clearRefreshTokenCookie(HttpServletResponse response) {
-        final ResponseCookie cookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(0)
-                .sameSite("None")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-    }
-
-    private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
-        final ResponseCookie cookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(Duration.ofSeconds(jwtProperties.refreshTokenExpirationSeconds()))
-                .sameSite("None")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }

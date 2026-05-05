@@ -5,6 +5,7 @@ import coffeeshout.user.application.service.TermsService;
 import coffeeshout.user.application.service.UserProfileService;
 import coffeeshout.user.application.service.UserStatsService;
 import coffeeshout.user.application.service.UserWithdrawalService;
+import coffeeshout.user.config.RefreshTokenCookieHelper;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserStats;
@@ -14,6 +15,7 @@ import coffeeshout.user.ui.request.UpdateStatsRequest;
 import coffeeshout.user.ui.resolver.AuthUser;
 import coffeeshout.user.ui.response.UserMeResponse;
 import coffeeshout.user.ui.response.UserStatsResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ public class UserRestController {
     private final UserStatsService userStatsService;
     private final TermsService termsService;
     private final UserWithdrawalService userWithdrawalService;
+    private final RefreshTokenCookieHelper cookieHelper;
 
     @GetMapping("/me")
     public ResponseEntity<UserMeResponse> getMe(@AuthUser Optional<AuthenticatedUser> authUser) {
@@ -71,9 +74,13 @@ public class UserRestController {
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteMe(@AuthUser Optional<AuthenticatedUser> authUser) {
+    public ResponseEntity<Void> deleteMe(
+            @AuthUser Optional<AuthenticatedUser> authUser,
+            HttpServletResponse response
+    ) {
         final AuthenticatedUser user = requireAuthenticated(authUser);
         userWithdrawalService.withdraw(user.userId());
+        cookieHelper.clear(response);
         return ResponseEntity.noContent().build();
     }
 

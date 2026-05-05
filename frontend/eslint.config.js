@@ -12,7 +12,7 @@ import cypress from 'eslint-plugin-cypress';
 
 export default [
   {
-    ignores: ['dist', 'node_modules', 'coverage', '.storybook/publish'],
+    ignores: ['dist', 'node_modules', 'coverage', '.storybook/publish', 'storybook-static'],
   },
   js.configs.recommended,
   {

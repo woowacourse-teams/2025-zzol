@@ -30,8 +30,7 @@ public class PlayerNameAuditPromptTemplate {
             ]
             """;
 
-    private static final double EXAMPLE_FLAGGED_CONFIDENCE = 0.99;
-    private static final double EXAMPLE_CLEAN_CONFIDENCE = 0.01;
+    private static final double EXAMPLE_CONFIDENCE = 0.99;
 
     private final ObjectMapper objectMapper;
 
@@ -52,7 +51,7 @@ public class PlayerNameAuditPromptTemplate {
                     return Map.<String, Object>of(
                             "playerName", fb.getPlayerName(),
                             "flagged", flagged,
-                            "confidence", flagged ? EXAMPLE_FLAGGED_CONFIDENCE : EXAMPLE_CLEAN_CONFIDENCE,
+                            "confidence", EXAMPLE_CONFIDENCE,
                             "reason", "운영자 피드백"
                     );
                 })

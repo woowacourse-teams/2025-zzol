@@ -63,8 +63,10 @@ public class UserEntity {
         }
     }
 
+    private static final String ANONYMIZED_NICKNAME = "탈퇴한 사용자";
+
     public void anonymize() {
-        this.nickname = "탈퇴한 사용자";
+        this.nickname = ANONYMIZED_NICKNAME;
         this.updatedAt = Instant.now();
     }
 

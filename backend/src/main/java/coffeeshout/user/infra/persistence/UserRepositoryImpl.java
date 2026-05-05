@@ -76,15 +76,15 @@ public class UserRepositoryImpl implements UserRepository {
     public void softDeleteById(Long userId) {
         final UserEntity userEntity = userJpaRepository.findByIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
-        oAuthAccountJpaRepository.deleteByUser_Id(userId);
         userEntity.anonymize();
         userEntity.softDelete();
         userJpaRepository.save(userEntity);
+        oAuthAccountJpaRepository.deleteByUser_Id(userId);
     }
 
     @Override
     public List<User> findAllByNickname(UserNickname nickname) {
-        final List<UserEntity> users = userJpaRepository.findAllByNickname(nickname.value());
+        final List<UserEntity> users = userJpaRepository.findAllByNicknameAndDeletedAtIsNull(nickname.value());
         if (users.isEmpty()) {
             return List.of();
         }

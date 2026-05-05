@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
 
-    Optional<UserEntity> findByUserCode(String userCode);
+    Optional<UserEntity> findByUserCodeAndDeletedAtIsNull(String userCode);
 
-    List<UserEntity> findAllByNickname(String nickname);
+    List<UserEntity> findAllByNicknameAndDeletedAtIsNull(String nickname);
 
     Optional<UserEntity> findByIdAndDeletedAtIsNull(Long id);
 }

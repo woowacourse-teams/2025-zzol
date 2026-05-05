@@ -57,9 +57,9 @@ public class OutboxTool implements ZzolBotTool {
             return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식");
         }
         try {
-            final List<OutboxEvent> events = outboxRepository.findRecentByStatusInAndPayloadContaining(
+            final List<OutboxEvent> events = outboxRepository.findByJoinCodeAndStatusInOrderByCreatedAtDesc(
+                    joinCodeValue,
                     List.of(OutboxStatus.PENDING, OutboxStatus.DEAD_LETTER),
-                    "%" + joinCodeValue + "%",
                     org.springframework.data.domain.PageRequest.of(0, 50)
             );
             final List<Map<String, Object>> summaries = events.stream()

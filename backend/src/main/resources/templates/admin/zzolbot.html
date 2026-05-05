@@ -467,7 +467,7 @@
     }
 
     function loadSession(question, answer) {
-        document.getElementById('emptyHint')?.remove();
+        chatBox.innerHTML = '';
         appendMessage('user', question);
         appendMessage('bot', answer);
     }

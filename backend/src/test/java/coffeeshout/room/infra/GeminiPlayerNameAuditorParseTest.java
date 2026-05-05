@@ -124,7 +124,13 @@ class GeminiPlayerNameAuditorParseTest {
 
             final List<PlayerNameAuditResult> results = parse(responseText, List.of("닉1", "닉2"));
 
-            assertThat(results).allSatisfy(r -> assertThat(r.status()).isEqualTo(PlayerNameAuditStatus.PENDING));
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(results).hasSize(2);
+                softly.assertThat(results).extracting(PlayerNameAuditResult::playerName)
+                        .containsExactlyInAnyOrder("닉1", "닉2");
+                softly.assertThat(results).allSatisfy(r ->
+                        softly.assertThat(r.status()).isEqualTo(PlayerNameAuditStatus.PENDING));
+            });
         }
     }
 

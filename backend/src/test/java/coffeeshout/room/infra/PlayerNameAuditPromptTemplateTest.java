@@ -1,10 +1,15 @@
 package coffeeshout.room.infra;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity.OperatorDecision;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +23,35 @@ class PlayerNameAuditPromptTemplateTest {
     @BeforeEach
     void setUp() {
         template = new PlayerNameAuditPromptTemplate(new ObjectMapper());
+    }
+
+    @Nested
+    class 직렬화_실패 {
+
+        @Test
+        void 피드백_예시_직렬화_실패_시_IllegalStateException을_던진다() throws Exception {
+            final ObjectMapper mockMapper = mock(ObjectMapper.class);
+            when(mockMapper.writeValueAsString(any())).thenThrow(new JsonMappingException(null, "직렬화 실패"));
+            final PlayerNameAuditPromptTemplate failTemplate = new PlayerNameAuditPromptTemplate(mockMapper);
+            final PlayerNameFeedbackEntity feedback = new PlayerNameFeedbackEntity(
+                    "씨발", true, null, OperatorDecision.BLOCKED, "욕설"
+            );
+
+            assertThatThrownBy(() -> failTemplate.buildUserMessage(List.of("씨발"), List.of(feedback)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("피드백 예시 직렬화 실패");
+        }
+
+        @Test
+        void 닉네임_목록_직렬화_실패_시_IllegalStateException을_던진다() throws Exception {
+            final ObjectMapper mockMapper = mock(ObjectMapper.class);
+            when(mockMapper.writeValueAsString(any())).thenThrow(new JsonMappingException(null, "직렬화 실패"));
+            final PlayerNameAuditPromptTemplate failTemplate = new PlayerNameAuditPromptTemplate(mockMapper);
+
+            assertThatThrownBy(() -> failTemplate.buildUserMessage(List.of("닉네임"), List.of()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("닉네임 목록 직렬화 실패");
+        }
     }
 
     @Nested

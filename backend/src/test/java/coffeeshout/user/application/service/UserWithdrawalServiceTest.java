@@ -57,7 +57,7 @@ class UserWithdrawalServiceTest extends ServiceTest {
             final Instant before = Instant.now();
             userWithdrawalService.withdraw(userId);
 
-            final UserEntity entity = userJpaRepository.findById(userId).orElseThrow();
+            final UserEntity entity = userJpaRepository.findByIdIgnoringDeletedAt(userId).orElseThrow();
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(entity.isDeleted()).isTrue();
                 softly.assertThat(entity.getNickname()).isEqualTo("탈퇴한 사용자");

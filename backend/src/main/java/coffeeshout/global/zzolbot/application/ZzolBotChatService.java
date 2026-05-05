@@ -52,7 +52,8 @@ public class ZzolBotChatService {
     }
 
     public ZzolBotChatResult ask(String question, String adminUsername, Consumer<String> progressCallback) {
-        final List<ZzolBotMessage> conversation = initConversation(question);
+        final String maskedQuestion = piiMasker.mask(question);
+        final List<ZzolBotMessage> conversation = initConversation(maskedQuestion);
         final String systemInstruction = buildPromptWithFeedback();
 
         for (int i = 0; i < properties.maxLoopIterations(); i++) {
@@ -61,7 +62,7 @@ public class ZzolBotChatService {
 
             if (response instanceof ZzolBotLlmResponse.TextResponse text) {
                 log.debug("[ZzolBot] 최종 응답 완료. iterations={}", i + 1);
-                return saveSession(question, text.text(), adminUsername);
+                return saveSession(maskedQuestion, text.text(), adminUsername);
             }
 
             if (response instanceof ZzolBotLlmResponse.ToolCallsResponse toolCalls) {
@@ -78,9 +79,9 @@ public class ZzolBotChatService {
             }
         }
 
-        log.warn("[ZzolBot] maxLoopIterations 초과. question={}", question);
+        log.warn("[ZzolBot] maxLoopIterations 초과. question={}", maskedQuestion);
         final String fallback = "분석이 복잡하여 완료하지 못했습니다. 질문을 더 구체적으로 해주세요.";
-        return saveSession(question, fallback, adminUsername);
+        return saveSession(maskedQuestion, fallback, adminUsername);
     }
 
     @Transactional

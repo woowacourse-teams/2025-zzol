@@ -16,24 +16,22 @@ public class RefreshTokenCookieHelper {
     private final JwtProperties jwtProperties;
 
     public void set(HttpServletResponse response, String token) {
-        final ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, token)
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
+        final ResponseCookie cookie = base(token)
                 .maxAge(Duration.ofSeconds(jwtProperties.refreshTokenExpirationSeconds()))
-                .sameSite("None")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     public void clear(HttpServletResponse response) {
-        final ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, "")
+        final ResponseCookie cookie = base("").maxAge(0).build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private ResponseCookie.ResponseCookieBuilder base(String value) {
+        return ResponseCookie.from(COOKIE_NAME, value)
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
-                .maxAge(0)
-                .sameSite("None")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+                .sameSite("None");
     }
 }

@@ -13,6 +13,7 @@ import coffeeshout.global.zzolbot.domain.ZzolBotChatResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotFeedback;
 import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
 import java.security.Principal;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -46,7 +47,7 @@ class ZzolBotChatControllerTest {
     @BeforeEach
     void setUp() {
         executor = Executors.newVirtualThreadPerTaskExecutor();
-        controller = new ZzolBotChatController(chatService, executor);
+        controller = new ZzolBotChatController(chatService, executor, Clock.systemDefaultZone());
         given(principal.getName()).willReturn("admin");
     }
 

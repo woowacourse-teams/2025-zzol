@@ -9,11 +9,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.security.Principal;
-import java.time.ZoneId;
+import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import lombok.RequiredArgsConstructor;
+import java.util.concurrent.RejectedExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -31,15 +31,23 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @Controller
 @Validated
 @RequestMapping("/admin/zzolbot")
-@RequiredArgsConstructor
 public class ZzolBotChatController {
 
     private static final long SSE_TIMEOUT_MS = 120_000L;
-    private static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("MM/dd HH:mm").withZone(ZoneId.of("Asia/Seoul"));
 
     private final ZzolBotChatService chatService;
     private final ExecutorService virtualThreadExecutor;
+    private final DateTimeFormatter formatter;
+
+    public ZzolBotChatController(
+            ZzolBotChatService chatService,
+            @Qualifier("virtualThreadExecutor") ExecutorService virtualThreadExecutor,
+            Clock clock
+    ) {
+        this.chatService = chatService;
+        this.virtualThreadExecutor = virtualThreadExecutor;
+        this.formatter = DateTimeFormatter.ofPattern("MM/dd HH:mm").withZone(clock.getZone());
+    }
 
     @GetMapping
     public String page() {
@@ -50,32 +58,42 @@ public class ZzolBotChatController {
     @ResponseBody
     public SseEmitter ask(@RequestBody @Valid AskRequest request, Principal principal) {
         final SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
+        emitter.onTimeout(() -> {
+            log.warn("[ZzolBot] SSE 타임아웃 발생");
+            emitter.complete();
+        });
+
         if (principal == null) {
             throw new IllegalStateException("인증 정보가 없습니다.");
         }
         final String adminUsername = principal.getName();
 
-        virtualThreadExecutor.execute(() -> {
-            try {
-                final ZzolBotChatResult result = chatService.ask(
-                        request.question(),
-                        adminUsername,
-                        toolName -> {
-                            try {
-                                emitter.send(SseEmitter.event().name("progress").data(toolName));
-                            } catch (IOException e) {
-                                log.warn("[ZzolBot] SSE progress 전송 실패. toolName={}", toolName, e);
+        try {
+            virtualThreadExecutor.execute(() -> {
+                try {
+                    final ZzolBotChatResult result = chatService.ask(
+                            request.question(),
+                            adminUsername,
+                            toolName -> {
+                                try {
+                                    emitter.send(SseEmitter.event().name("progress").data(toolName));
+                                } catch (IOException e) {
+                                    log.warn("[ZzolBot] SSE progress 전송 실패. toolName={}", toolName, e);
+                                }
                             }
-                        }
-                );
-                emitter.send(SseEmitter.event().name("sessionId").data(result.sessionId()));
-                emitter.send(SseEmitter.event().name("result").data(result.answer()));
-                emitter.complete();
-            } catch (Exception e) {
-                log.warn("[ZzolBot] SSE 처리 중 오류 발생", e);
-                emitter.completeWithError(e);
-            }
-        });
+                    );
+                    emitter.send(SseEmitter.event().name("sessionId").data(result.sessionId()));
+                    emitter.send(SseEmitter.event().name("result").data(result.answer()));
+                    emitter.complete();
+                } catch (Exception e) {
+                    log.warn("[ZzolBot] SSE 처리 중 오류 발생", e);
+                    emitter.completeWithError(e);
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            log.warn("[ZzolBot] 가상 스레드 실행 거부", e);
+            emitter.completeWithError(e);
+        }
 
         return emitter;
     }
@@ -99,7 +117,7 @@ public class ZzolBotChatController {
                         s.getQuestion(),
                         s.getAnswer(),
                         s.getFeedback() != null ? s.getFeedback().name() : null,
-                        FORMATTER.format(s.getCreatedAt())
+                        formatter.format(s.getCreatedAt())
                 ))
                 .toList();
     }

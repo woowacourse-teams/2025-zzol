@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import java.util.Map;
@@ -32,7 +33,7 @@ class LokiQueryToolTest {
                         "local"
                 )
         );
-        return new LokiQueryTool(props, RestClient.builder());
+        return new LokiQueryTool(props, RestClient.builder(), new ObjectMapper());
     }
 
     @Nested

@@ -3,6 +3,11 @@ package coffeeshout.global.zzolbot.infra.tool;
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotTool;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -24,10 +29,12 @@ public class LokiQueryTool implements ZzolBotTool {
 
     private final RestClient restClient;
     private final String environment;
+    private final ObjectMapper objectMapper;
 
-    public LokiQueryTool(ZzolBotProperties properties, RestClient.Builder restClientBuilder) {
+    public LokiQueryTool(ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
         this.restClient = restClientBuilder.baseUrl(properties.monitoring().lokiUrl()).build();
         this.environment = properties.monitoring().environment();
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -83,10 +90,47 @@ public class LokiQueryTool implements ZzolBotTool {
                     .uri(encodedUri)
                     .retrieve()
                     .body(String.class);
-            return ToolExecutionResult.ok(TOOL_NAME, response != null ? response : "로그 없음");
+            return ToolExecutionResult.ok(TOOL_NAME, parseLokiResponse(response));
         } catch (RestClientException e) {
             log.warn("[ZzolBot] Loki 조회 실패. joinCode={}", joinCodeValue, e);
             return ToolExecutionResult.fail(TOOL_NAME, "Loki 조회 실패");
+        }
+    }
+
+    private String parseLokiResponse(String raw) {
+        if (raw == null) {
+            return "로그 없음";
+        }
+        try {
+            final JsonNode root = objectMapper.readTree(raw);
+            final String status = root.path("status").asText("unknown");
+            final ArrayNode logs = objectMapper.createArrayNode();
+
+            final JsonNode results = root.path("data").path("result");
+            if (results.isArray()) {
+                for (final JsonNode stream : results) {
+                    final JsonNode values = stream.path("values");
+                    if (values.isArray()) {
+                        for (final JsonNode entry : values) {
+                            if (entry.isArray() && entry.size() >= 2) {
+                                final ObjectNode log = objectMapper.createObjectNode();
+                                log.put("time", Instant.ofEpochMilli(entry.get(0).asLong() / 1_000_000).toString());
+                                log.put("message", entry.get(1).asText());
+                                logs.add(log);
+                            }
+                        }
+                    }
+                }
+            }
+
+            final ObjectNode summary = objectMapper.createObjectNode();
+            summary.put("status", status);
+            summary.put("logCount", logs.size());
+            summary.set("logs", logs);
+            return objectMapper.writeValueAsString(summary);
+        } catch (JsonProcessingException e) {
+            log.warn("[ZzolBot] Loki 응답 파싱 실패, raw 응답 반환");
+            return raw;
         }
     }
 

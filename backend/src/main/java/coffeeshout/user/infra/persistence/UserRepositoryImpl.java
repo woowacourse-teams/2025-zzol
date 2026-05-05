@@ -73,6 +73,11 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public void deleteById(Long id) {
+        userJpaRepository.deleteById(id);
+    }
+
+    @Override
     public List<User> findAllByNickname(UserNickname nickname) {
         final List<UserEntity> users = userJpaRepository.findAllByNickname(nickname.value());
         if (users.isEmpty()) {

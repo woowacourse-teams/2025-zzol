@@ -33,8 +33,7 @@ export const KakaoIcon = (props: IconProps) => (
 );
 
 export const NaverIcon = (props: IconProps) => (
-  <svg viewBox="0 0 24 24" width="20" height="20" {...props}>
-    <rect width="24" height="24" rx="2" fill="#03C75A" />
+  <svg viewBox="0 0 24 24" width="25" height="25" {...props}>
     <path d="M13.75 12.3L10.1 6H7v12h3.25V11.7L13.9 18H17V6h-3.25v6.3z" fill="white" />
   </svg>
 );

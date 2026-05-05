@@ -25,6 +25,8 @@ public class LokiQueryTool implements ZzolBotTool {
 
     static final String TOOL_NAME = "loki_logs";
     private static final int DEFAULT_LOOK_BACK_MINUTES = 60;
+    private static final int MIN_LOOK_BACK_MINUTES = 1;
+    private static final int MAX_LOOK_BACK_MINUTES = 1440;
     private static final int LOG_LIMIT = 50;
 
     private final RestClient restClient;
@@ -143,12 +145,15 @@ public class LokiQueryTool implements ZzolBotTool {
             return DEFAULT_LOOK_BACK_MINUTES;
         }
         try {
+            final int minutes;
             if (since.endsWith("h")) {
-                return Integer.parseInt(since.replace("h", "")) * 60;
+                minutes = Integer.parseInt(since.replace("h", "")) * 60;
+            } else if (since.endsWith("m")) {
+                minutes = Integer.parseInt(since.replace("m", ""));
+            } else {
+                return DEFAULT_LOOK_BACK_MINUTES;
             }
-            if (since.endsWith("m")) {
-                return Integer.parseInt(since.replace("m", ""));
-            }
+            return Math.max(MIN_LOOK_BACK_MINUTES, Math.min(MAX_LOOK_BACK_MINUTES, minutes));
         } catch (NumberFormatException ignored) {
         }
         return DEFAULT_LOOK_BACK_MINUTES;

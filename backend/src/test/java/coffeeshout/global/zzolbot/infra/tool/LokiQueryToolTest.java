@@ -83,5 +83,27 @@ class LokiQueryToolTest {
 
             assertThat(result.success()).isTrue();
         }
+
+        @Test
+        void since_999h처럼_상한을_초과하면_24h로_clamp된다(WireMockRuntimeInfo wmInfo) {
+            stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
+                    .willReturn(ok().withBody("{\"status\":\"success\"}")));
+
+            final ToolExecutionResult result = createTool(wmInfo)
+                    .execute(Map.of("joinCode", "A4BX", "since", "999h"));
+
+            assertThat(result.success()).isTrue();
+        }
+
+        @Test
+        void since가_음수_분이면_1분으로_clamp된다(WireMockRuntimeInfo wmInfo) {
+            stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
+                    .willReturn(ok().withBody("{\"status\":\"success\"}")));
+
+            final ToolExecutionResult result = createTool(wmInfo)
+                    .execute(Map.of("joinCode", "A4BX", "since", "-30m"));
+
+            assertThat(result.success()).isTrue();
+        }
     }
 }

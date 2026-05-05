@@ -80,7 +80,6 @@ public class UserRepositoryImpl implements UserRepository {
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
         userEntity.anonymize();
         userEntity.softDelete();
-        userJpaRepository.save(userEntity);
         oAuthAccountJpaRepository.deleteByUser_Id(userId);
     }
 

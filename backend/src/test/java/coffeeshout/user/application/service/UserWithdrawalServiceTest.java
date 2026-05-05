@@ -76,7 +76,7 @@ class UserWithdrawalServiceTest extends ServiceTest {
         void 탈퇴_후_OAuth_계정이_hard_delete된다() {
             userWithdrawalService.withdraw(userId);
 
-            assertThat(oAuthAccountJpaRepository.findByUser_Id(userId)).isEmpty();
+            assertThat(oAuthAccountJpaRepository.countByUserId(userId)).isZero();
         }
 
         @Test

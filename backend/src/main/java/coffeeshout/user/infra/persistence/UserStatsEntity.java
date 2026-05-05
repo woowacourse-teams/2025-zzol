@@ -25,7 +25,7 @@ public class UserStatsEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true,
-            foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES app_user(id) ON DELETE CASCADE"))
+            foreignKey = @ForeignKey(name = "fk_user_stats_user", foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES app_user(id) ON DELETE CASCADE"))
     private UserEntity user;
 
     @Column(nullable = false)

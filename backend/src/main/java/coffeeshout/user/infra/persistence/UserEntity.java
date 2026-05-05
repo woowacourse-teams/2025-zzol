@@ -24,6 +24,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserEntity {
 
+    private static final String ANONYMIZED_NICKNAME = "탈퇴한 사용자";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -64,8 +66,6 @@ public class UserEntity {
             this.termsAgreedAt = Instant.now();
         }
     }
-
-    private static final String ANONYMIZED_NICKNAME = "탈퇴한 사용자";
 
     public void anonymize() {
         this.nickname = ANONYMIZED_NICKNAME;

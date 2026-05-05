@@ -23,7 +23,11 @@ public class UserWithdrawalService {
     public void withdraw(Long userId) {
         reportAnonymizationRepository.clearUserCodeByUserId(userId);
         userRepository.softDeleteById(userId);
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        TransactionSynchronizationManager.registerSynchronization(deleteRefreshTokenAfterCommit(userId));
+    }
+
+    private TransactionSynchronization deleteRefreshTokenAfterCommit(Long userId) {
+        return new TransactionSynchronization() {
             @Override
             public void afterCommit() {
                 try {
@@ -32,6 +36,6 @@ public class UserWithdrawalService {
                     log.error("회원 탈퇴 후 리프레시 토큰 삭제 실패 userId={}: {}", userId, e.getMessage(), e);
                 }
             }
-        });
+        };
     }
 }

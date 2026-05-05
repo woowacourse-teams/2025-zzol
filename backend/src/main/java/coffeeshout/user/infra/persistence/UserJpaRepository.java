@@ -12,6 +12,7 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
 
     List<UserEntity> findAllByNickname(String nickname);
 
+    // @SQLRestriction을 우회하여 soft delete된 사용자를 포함해 조회한다 (테스트 및 어드민 전용)
     @Query(value = "SELECT * FROM app_user WHERE id = :id", nativeQuery = true)
     Optional<UserEntity> findByIdIgnoringDeletedAt(@Param("id") Long id);
 }

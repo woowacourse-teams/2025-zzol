@@ -11,17 +11,15 @@ import static org.mockito.Mockito.mock;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
 import coffeeshout.global.zzolbot.domain.ZzolBotLlmResponse;
+import coffeeshout.global.zzolbot.domain.ZzolBotMessage;
 import com.google.common.collect.ImmutableList;
-import com.google.genai.types.Content;
 import com.google.genai.types.FunctionCall;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
-import com.google.genai.types.Part;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,8 +56,9 @@ class GeminiZzolBotClientTest {
             doReturn(response).when(geminiZzolBotClient).callApi(anyList(), any(GenerateContentConfig.class));
 
             final ZzolBotLlmResponse result = geminiZzolBotClient.generate(
-                    List.of(Content.fromParts(Part.fromText("ABC1 방 상태 알려줘"))),
-                    List.of()
+                    List.of(new ZzolBotMessage.UserMessage("ABC1 방 상태 알려줘")),
+                    List.of(),
+                    "시스템 지시사항"
             );
 
             assertThat(result).isInstanceOf(ZzolBotLlmResponse.TextResponse.class);
@@ -77,8 +76,9 @@ class GeminiZzolBotClientTest {
             doReturn(response).when(geminiZzolBotClient).callApi(anyList(), any(GenerateContentConfig.class));
 
             final ZzolBotLlmResponse result = geminiZzolBotClient.generate(
-                    List.of(Content.fromParts(Part.fromText("ABC1 방 상태"))),
-                    List.of()
+                    List.of(new ZzolBotMessage.UserMessage("ABC1 방 상태")),
+                    List.of(),
+                    "시스템 지시사항"
             );
 
             assertThat(result).isInstanceOf(ZzolBotLlmResponse.ToolCallsResponse.class);
@@ -97,22 +97,10 @@ class GeminiZzolBotClientTest {
                     .when(geminiZzolBotClient).callApi(anyList(), any(GenerateContentConfig.class));
 
             assertThatThrownBy(() -> geminiZzolBotClient.generate(
-                    List.of(Content.fromParts(Part.fromText("질문"))),
-                    List.of()
+                    List.of(new ZzolBotMessage.UserMessage("질문")),
+                    List.of(),
+                    "시스템 지시사항"
             )).isInstanceOf(RuntimeException.class);
-        }
-    }
-
-    @Nested
-    class buildFunctionResponseContent_메서드 {
-
-        @Test
-        void tool_이름과_결과로_Content를_생성한다() {
-            final Content content = geminiZzolBotClient.buildFunctionResponseContent(
-                    "room_state", "{\"roomState\":\"PLAYING\"}"
-            );
-
-            assertThat(content).isNotNull();
         }
     }
 }

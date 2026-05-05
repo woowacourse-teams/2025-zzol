@@ -2,6 +2,7 @@ package coffeeshout.global.zzolbot.infra;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
 import coffeeshout.global.zzolbot.domain.ZzolBotLlmResponse;
+import coffeeshout.global.zzolbot.domain.ZzolBotMessage;
 import coffeeshout.global.zzolbot.domain.ZzolBotTool;
 import com.google.genai.Client;
 import com.google.genai.types.Content;
@@ -34,30 +35,45 @@ public class GeminiZzolBotClient implements ZzolBotLlmClient {
 
     @Retry(name = "zzolBotGemini")
     @RateLimiter(name = "zzolBotGemini")
-    public ZzolBotLlmResponse generate(List<Content> conversation, List<ZzolBotTool> tools) {
-        final GenerateContentConfig config = buildConfig(tools);
-        final GenerateContentResponse response = callApi(conversation, config);
+    public ZzolBotLlmResponse generate(List<ZzolBotMessage> conversation, List<ZzolBotTool> tools, String systemInstruction) {
+        final GenerateContentConfig config = buildConfig(tools, systemInstruction);
+        final List<Content> contents = conversation.stream().map(this::toContent).toList();
+        final GenerateContentResponse response = callApi(contents, config);
         return parseResponse(response);
     }
 
-    protected GenerateContentResponse callApi(List<Content> conversation, GenerateContentConfig config) {
+    protected GenerateContentResponse callApi(List<Content> contents, GenerateContentConfig config) {
         try {
-            return zzolBotClient.models.generateContent(properties.model(), conversation, config);
+            return zzolBotClient.models.generateContent(properties.model(), contents, config);
         } catch (Exception e) {
             throw new RuntimeException("Gemini API 호출 실패: " + e.getMessage(), e);
         }
     }
 
-    private GenerateContentConfig buildConfig(List<ZzolBotTool> tools) {
+    private GenerateContentConfig buildConfig(List<ZzolBotTool> tools, String systemInstruction) {
         final List<FunctionDeclaration> declarations = tools.stream()
                 .map(this::toFunctionDeclaration)
                 .toList();
 
         return GenerateContentConfig.builder()
+                .systemInstruction(Content.fromParts(Part.fromText(systemInstruction)))
                 .tools(List.of(Tool.builder()
                         .functionDeclarations(declarations)
                         .build()))
                 .build();
+    }
+
+    private Content toContent(ZzolBotMessage message) {
+        return switch (message) {
+            case ZzolBotMessage.UserMessage m ->
+                    Content.builder().role("user").parts(Part.fromText(m.text())).build();
+            case ZzolBotMessage.AssistantMessage m ->
+                    Content.builder().role("model").parts(Part.fromText(m.text())).build();
+            case ZzolBotMessage.ToolCallMessage m ->
+                    Content.builder().role("model").parts(Part.fromFunctionCall(m.toolName(), m.args())).build();
+            case ZzolBotMessage.ToolResultMessage m ->
+                    Content.fromParts(Part.fromFunctionResponse(m.toolName(), Map.of("result", m.result())));
+        };
     }
 
     private FunctionDeclaration toFunctionDeclaration(ZzolBotTool tool) {
@@ -84,11 +100,5 @@ public class GeminiZzolBotClient implements ZzolBotLlmClient {
         }
 
         return new ZzolBotLlmResponse.TextResponse(response.text());
-    }
-
-    public Content buildFunctionResponseContent(String toolName, String result) {
-        return Content.fromParts(
-                Part.fromFunctionResponse(toolName, Map.of("result", result))
-        );
     }
 }

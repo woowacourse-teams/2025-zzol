@@ -34,13 +34,13 @@ class GeminiPlayerNameAuditorConnectivityTest {
 
     @BeforeEach
     void setUp() {
-        String apiKey = System.getenv("GEMINI_API_KEY");
+        final String apiKey = System.getenv("GEMINI_API_KEY");
         assumeThat(apiKey)
                 .as("GEMINI_API_KEY 환경변수가 설정되지 않아 테스트를 건너뜁니다.")
                 .isNotNull()
                 .isNotBlank();
 
-        PlayerNameAuditProperties properties = new PlayerNameAuditProperties(
+        final PlayerNameAuditProperties properties = new PlayerNameAuditProperties(
                 apiKey,
                 "gemini-2.5-flash",
                 0.85,
@@ -48,24 +48,26 @@ class GeminiPlayerNameAuditorConnectivityTest {
                 20
         );
 
-        PlayerNameFeedbackJpaRepository feedbackRepository = mock(PlayerNameFeedbackJpaRepository.class);
+        final PlayerNameFeedbackJpaRepository feedbackRepository = mock(PlayerNameFeedbackJpaRepository.class);
         when(feedbackRepository.findRecentFeedbacks(any(Pageable.class))).thenReturn(List.of());
 
+        final ObjectMapper objectMapper = new ObjectMapper();
         auditor = new GeminiPlayerNameAuditor(
                 Client.builder().apiKey(apiKey).build(),
-                new ObjectMapper(),
+                objectMapper,
                 properties,
                 feedbackRepository,
+                new PlayerNameAuditPromptTemplate(objectMapper),
                 new SimpleMeterRegistry()
         );
     }
 
     @Test
     void 명확한_비속어는_FLAGGED로_판정한다() {
-        List<PlayerNameAuditResult> results = auditor.audit(List.of("씨발놈", "용감한호랑이"));
+        final List<PlayerNameAuditResult> results = auditor.audit(List.of("씨발놈", "용감한호랑이"));
 
-        PlayerNameAuditResult profanity = findByNickname(results, "씨발놈");
-        PlayerNameAuditResult normal = findByNickname(results, "용감한호랑이");
+        final PlayerNameAuditResult profanity = findByNickname(results, "씨발놈");
+        final PlayerNameAuditResult normal = findByNickname(results, "용감한호랑이");
 
         assertThat(profanity.status()).isEqualTo(PlayerNameAuditStatus.FLAGGED);
         assertThat(normal.status()).isEqualTo(PlayerNameAuditStatus.CLEAN);
@@ -73,17 +75,17 @@ class GeminiPlayerNameAuditorConnectivityTest {
 
     @Test
     void 특수문자_우회_비속어는_탐지한다() {
-        List<PlayerNameAuditResult> results = auditor.audit(List.of("씨b알", "빠른여우"));
+        final List<PlayerNameAuditResult> results = auditor.audit(List.of("씨b알", "빠른여우"));
 
-        PlayerNameAuditResult bypassed = findByNickname(results, "씨b알");
+        final PlayerNameAuditResult bypassed = findByNickname(results, "씨b알");
         assertThat(bypassed.status()).isIn(PlayerNameAuditStatus.FLAGGED, PlayerNameAuditStatus.PENDING);
     }
 
     @Test
     void 모든_닉네임에_대해_결과가_반환된다() {
-        List<String> playerNames = List.of("용감한호랑이", "빠른여우", "작은곰");
+        final List<String> playerNames = List.of("용감한호랑이", "빠른여우", "작은곰");
 
-        List<PlayerNameAuditResult> results = auditor.audit(playerNames);
+        final List<PlayerNameAuditResult> results = auditor.audit(playerNames);
 
         assertThat(results).hasSize(playerNames.size())
                 .allSatisfy(result -> {

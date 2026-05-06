@@ -1,27 +1,31 @@
 package coffeeshout.room.infra;
 
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.room.config.PlayerNameAuditProperties;
+import coffeeshout.room.domain.audit.AiConfidence;
+import coffeeshout.room.domain.audit.PlayerNameAuditErrorCode;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
+import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackJpaRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
-import java.util.Map;
 import com.google.genai.Client;
+import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
+import com.google.genai.types.Part;
+import com.google.genai.types.Schema;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
@@ -31,44 +35,55 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @Profile("!local & !test")
-@RequiredArgsConstructor
 public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
 
-    private static final String BASE_SYSTEM_PROMPT = """
-            너는 한국어 닉네임 검열 전문가다.
-            아래 닉네임 목록을 검토하고 각 항목에 대해 JSON 배열로만 응답하라. 반드시 다른 텍스트는 포함하지 마라.
-            
-            비속어 판단 기준:
-            - 직접적 욕설뿐 아니라 자모 분리, 특수문자 삽입, 유사 발음 대체로 우회한 경우 포함
-            - 문화적 맥락을 고려한다 (예: "미쳤다"는 일반 감탄사로 사용되므로 flagged=false)
-            - 판단이 애매한 경우 confidence를 낮게 설정한다
-            
-            응답 형식:
-            [
-              { "playerName": "씨b알",     "flagged": true,  "confidence": 0.97, "reason": "비속어 우회 (특수문자 삽입)" },
-              { "playerName": "용감한호랑이", "flagged": false, "confidence": 0.99, "reason": "일반 닉네임" }
-            ]
-            """;
+    private static final Content SYSTEM_INSTRUCTION = Content.fromParts(
+            Part.fromText(PlayerNameAuditPromptTemplate.SYSTEM_INSTRUCTION)
+    );
+
+    private static final Schema RESPONSE_SCHEMA = Schema.builder()
+            .type("ARRAY")
+            .items(Schema.builder()
+                    .type("OBJECT")
+                    .properties(Map.of(
+                            "playerName", Schema.builder().type("STRING").build(),
+                            "flagged", Schema.builder().type("BOOLEAN").build(),
+                            "confidence", Schema.builder().type("NUMBER").build(),
+                            "reason", Schema.builder().type("STRING").build()
+                    ))
+                    .required(List.of("playerName", "flagged", "confidence", "reason"))
+                    .build())
+            .build();
 
     private final Client geminiClient;
     private final ObjectMapper objectMapper;
     private final PlayerNameAuditProperties properties;
     private final PlayerNameFeedbackJpaRepository feedbackRepository;
-    private final MeterRegistry meterRegistry;
+    private final PlayerNameAuditPromptTemplate promptTemplate;
+    private final Timer apiCallTimer;
+    private final Counter parseFailureCounter;
+    private final Counter itemParseFailureCounter;
 
-    private Timer apiCallTimer;
-    private Counter parseFailureCounter;
-    private Counter itemParseFailureCounter;
-
-    @PostConstruct
-    void initMetrics() {
-        apiCallTimer = Timer.builder("playerName.audit.gemini.call.duration")
+    public GeminiPlayerNameAuditor(
+            Client geminiClient,
+            ObjectMapper objectMapper,
+            PlayerNameAuditProperties properties,
+            PlayerNameFeedbackJpaRepository feedbackRepository,
+            PlayerNameAuditPromptTemplate promptTemplate,
+            MeterRegistry meterRegistry
+    ) {
+        this.geminiClient = geminiClient;
+        this.objectMapper = objectMapper;
+        this.properties = properties;
+        this.feedbackRepository = feedbackRepository;
+        this.promptTemplate = promptTemplate;
+        this.apiCallTimer = Timer.builder("playerName.audit.gemini.call.duration")
                 .description("Gemini API 호출 소요 시간")
                 .register(meterRegistry);
-        parseFailureCounter = Counter.builder("playerName.audit.gemini.parse.failures")
+        this.parseFailureCounter = Counter.builder("playerName.audit.gemini.parse.failures")
                 .description("Gemini 응답 JSON 파싱 실패 횟수")
                 .register(meterRegistry);
-        itemParseFailureCounter = Counter.builder("playerName.audit.gemini.item.parse.failures")
+        this.itemParseFailureCounter = Counter.builder("playerName.audit.gemini.item.parse.failures")
                 .description("Gemini 응답 항목 단위 파싱 실패 횟수")
                 .register(meterRegistry);
     }
@@ -77,78 +92,61 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
     @Retry(name = "geminiAudit")
     @RateLimiter(name = "geminiAudit")
     public List<PlayerNameAuditResult> audit(List<String> nicknames) {
-        final String prompt = buildPrompt(nicknames);
+        final String userMessage = buildUserMessage(nicknames);
 
+        final GenerateContentResponse response;
         try {
-            final GenerateContentResponse response = apiCallTimer.recordCallable(() ->
+            response = apiCallTimer.recordCallable(() ->
                     geminiClient.models.generateContent(
                             properties.model(),
-                            prompt,
+                            userMessage,
                             GenerateContentConfig.builder()
+                                    .systemInstruction(SYSTEM_INSTRUCTION)
                                     .responseMimeType("application/json")
+                                    .responseSchema(RESPONSE_SCHEMA)
                                     .build()
                     ));
-
-            if (response == null) {
-                return List.of();
-            }
-
-            return parseResults(response.text(), nicknames);
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Gemini API 호출 실패", e);
+            throw new InfrastructureException(PlayerNameAuditErrorCode.AI_CALL_FAILED, "닉네임 검열 AI 호출 실패", e);
         }
+
+        if (response == null || response.text() == null) {
+            throw new InfrastructureException(PlayerNameAuditErrorCode.AI_EMPTY_RESPONSE, "닉네임 검열 AI가 빈 응답을 반환했습니다.");
+        }
+
+        return parseResults(response.text(), nicknames);
     }
 
-    private String buildPrompt(List<String> nicknames) {
-        final StringBuilder prompt = new StringBuilder(BASE_SYSTEM_PROMPT);
+    private String buildUserMessage(List<String> nicknames) {
+        final List<PlayerNameFeedbackEntity> examples = loadFeedbackExamples();
+        return promptTemplate.buildUserMessage(nicknames, examples);
+    }
 
+    private List<PlayerNameFeedbackEntity> loadFeedbackExamples() {
         final List<PlayerNameFeedbackEntity> feedbacks = feedbackRepository.findRecentFeedbacks(
                 PageRequest.of(0, properties.feedbackInjectionThreshold(), Sort.by("createdAt").descending())
         );
-
-        if (feedbacks.size() >= properties.feedbackInjectionThreshold()) {
-            final List<Map<String, Object>> examples = feedbacks.stream()
-                    .map(feedback -> {
-                        boolean operatorFlagged =
-                                feedback.getOperatorDecision() == PlayerNameFeedbackEntity.OperatorDecision.BLOCKED;
-                        double exampleConfidence = operatorFlagged ? 0.99 : 0.01;
-                        return Map.<String, Object>of(
-                                "playerName", feedback.getPlayerName(),
-                                "flagged", operatorFlagged,
-                                "confidence", exampleConfidence,
-                                "reason", "운영자 피드백"
-                        );
-                    })
-                    .toList();
-            try {
-                prompt.append("\n운영자 피드백 기반 추가 예시:\n")
-                        .append(objectMapper.writeValueAsString(examples)).append("\n");
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("피드백 예시 직렬화 실패", e);
-            }
+        if (feedbacks.size() < properties.feedbackInjectionThreshold()) {
+            return List.of();
         }
-
-        try {
-            prompt.append("\n검열할 닉네임 목록:\n").append(objectMapper.writeValueAsString(nicknames));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("닉네임 목록 직렬화 실패", e);
-        }
-        return prompt.toString();
+        return feedbacks;
     }
 
     private List<PlayerNameAuditResult> parseResults(String responseText, List<String> requestedNicknames) {
-        List<JsonNode> nodes;
+        final List<JsonNode> nodes;
         try {
             nodes = objectMapper.readValue(responseText, new TypeReference<>() {});
         } catch (Exception e) {
             parseFailureCounter.increment();
-            log.warn("Gemini 응답 JSON 파싱 실패, 해당 배치 skip ({}건). responseText={}",
+            log.warn("[PlayerNameAudit] Gemini 응답 JSON 파싱 실패 ({}건). responseText={}",
                     requestedNicknames.size(), responseText, e);
-            return List.of();
+            throw new InfrastructureException(PlayerNameAuditErrorCode.AI_RESPONSE_PARSE_FAILED, "닉네임 검열 AI 응답 파싱 실패", e);
         }
 
         final List<PlayerNameAuditResult> results = new ArrayList<>();
-        for (JsonNode node : nodes) {
+        for (final JsonNode node : nodes) {
             try {
                 final GeminiAuditItem item = objectMapper.treeToValue(node, GeminiAuditItem.class);
                 results.add(PlayerNameAuditResult.of(
@@ -157,12 +155,15 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
                 ));
             } catch (Exception e) {
                 itemParseFailureCounter.increment();
-                log.warn("Gemini 응답 항목 파싱 실패, 해당 항목 skip. node={}", node, e);
+                log.warn("[PlayerNameAudit] Gemini 응답 항목 파싱 실패, PENDING 처리. node={}", node, e);
+                final String playerName = node.path("playerName").asText("unknown");
+                results.add(new PlayerNameAuditResult(
+                        playerName, PlayerNameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 파싱 실패"
+                ));
             }
         }
         return results;
     }
 
-    private record GeminiAuditItem(String playerName, boolean flagged, double confidence, String reason) {
-    }
+    private record GeminiAuditItem(String playerName, boolean flagged, double confidence, String reason) {}
 }

@@ -2,6 +2,7 @@ package coffeeshout.global.websocket.interceptor;
 
 import coffeeshout.global.exception.custom.CoffeeShoutException;
 import coffeeshout.global.websocket.PlayerKey;
+import coffeeshout.global.websocket.UserPrincipal;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
@@ -31,23 +32,38 @@ public class StompPrincipalInterceptor implements ChannelInterceptor {
             return message;
         }
 
-        String joinCode = accessor.getFirstNativeHeader("joinCode");
-        String playerName = accessor.getFirstNativeHeader("playerName");
+        final String joinCode = accessor.getFirstNativeHeader("joinCode");
+        final String playerName = accessor.getFirstNativeHeader("playerName");
 
-        String userName;
-        if (joinCode == null || playerName == null) {
-            log.warn("STOMP CONNECT 헤더 누락으로 sessionId를 Principal로 사용: sessionId={}", accessor.getSessionId());
-            userName = accessor.getSessionId();
-        } else {
+        final String userName;
+        if (joinCode != null && playerName != null) {
             userName = PlayerKey.of(joinCode, playerName).toString();
+            verifyTokenIfPresent(accessor);
+        } else {
+            userName = resolveUserPrincipal(accessor);
         }
-
-        verifyTokenIfPresent(accessor);
 
         accessor.setUser(() -> userName);
         log.debug("STOMP Principal 설정: {}", userName);
 
         return message;
+    }
+
+    private String resolveUserPrincipal(StompHeaderAccessor accessor) {
+        final String authorization = accessor.getFirstNativeHeader("Authorization");
+        if (authorization == null || !authorization.startsWith(BEARER_PREFIX)) {
+            log.warn("STOMP CONNECT 헤더 누락으로 sessionId를 Principal로 사용: sessionId={}", accessor.getSessionId());
+            return accessor.getSessionId();
+        }
+        final String token = authorization.substring(BEARER_PREFIX.length());
+        try {
+            final AuthenticatedUser user = authTokenService.verify(token);
+            log.debug("STOMP 사용자 인증 성공: userId={}", user.userId());
+            return UserPrincipal.of(user.userId());
+        } catch (CoffeeShoutException e) {
+            log.warn("STOMP Access Token 검증 실패: {}", e.getMessage());
+            return accessor.getSessionId();
+        }
     }
 
     private void verifyTokenIfPresent(StompHeaderAccessor accessor) {

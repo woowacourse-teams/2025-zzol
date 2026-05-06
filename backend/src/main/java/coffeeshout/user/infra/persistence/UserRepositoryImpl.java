@@ -3,6 +3,7 @@ package coffeeshout.user.infra.persistence;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.User;
+import coffeeshout.user.domain.UserCode;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.exception.UserErrorCode;
@@ -70,6 +71,13 @@ public class UserRepositoryImpl implements UserRepository {
         return oAuthAccountJpaRepository
                 .findByProviderAndProviderUserIdWithUser(provider, providerUserId)
                 .map(oAuth -> oAuth.getUser().toDomain(oAuth));
+    }
+
+    @Override
+    public Optional<User> findByUserCode(UserCode userCode) {
+        return userJpaRepository.findByUserCode(userCode.value())
+                .flatMap(userEntity -> oAuthAccountJpaRepository.findByUser_Id(userEntity.getId())
+                        .map(userEntity::toDomain));
     }
 
     @Override

@@ -23,6 +23,19 @@ spring:
         format_sql: true
   flyway:
     enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+          naver:
+            client-id: ${NAVER_CLIENT_ID}
+            client-secret: ${NAVER_CLIENT_SECRET}
 
 management:
   endpoint:
@@ -80,16 +93,3 @@ user:
   oauth:
     frontend-redirect-uri: "http://localhost:3000/auth/callback"
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: "로컬-테스트용-구글-클라이언트-id"
-            client-secret: "로컬-테스트용-구글-클라이언트-secret"
-          kakao:
-            client-id: "로컬-테스트용-카카오-클라이언트-id"
-            client-secret: "로컬-테스트용-카카오-클라이언트-secret"
-          naver:
-            client-id: "로컬-테스트용-네이버-클라이언트-id"
-            client-secret: "로컬-테스트용-네이버-클라이언트-secret"

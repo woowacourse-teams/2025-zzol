@@ -17,7 +17,7 @@ const GamePlayCountSlide = ({ games }: Props) => {
       ) : (
         <S.List>
           {games.map((game, index) => (
-            <S.Item key={game.gameType}>
+            <S.Item key={game.gameType} $index={index}>
               <S.GameRank>{index + 1}</S.GameRank>
               <S.GameInfo>
                 <S.GameName>

@@ -15,6 +15,7 @@ export const ScrollArea = styled.main`
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  scroll-behavior: smooth;
 `;
 
 export const VisuallyHidden = styled.div`

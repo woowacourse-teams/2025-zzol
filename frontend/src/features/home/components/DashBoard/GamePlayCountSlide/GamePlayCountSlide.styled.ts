@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
 
 export const Card = styled.div`
   display: flex;
@@ -12,7 +13,7 @@ export const Card = styled.div`
 `;
 
 export const CardTitle = styled.h3`
-  font-size: 15px;
+  ${({ theme }) => theme.typography.paragraph}
   font-weight: 700;
   color: ${({ theme }) => theme.color.gray[800]};
   letter-spacing: -0.01em;
@@ -27,15 +28,22 @@ export const List = styled.ul`
   margin: 0;
 `;
 
-export const Item = styled.li`
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to   { opacity: 1; }
+`;
+
+export const Item = styled.li<{ $index: number }>`
   display: flex;
   align-items: center;
   gap: 10px;
+  animation: ${fadeIn} 0.3s ease both;
+  animation-delay: ${({ $index }) => `${$index * 0.08}s`};
 `;
 
 export const GameRank = styled.span`
   width: 18px;
-  font-size: 12px;
+  ${({ theme }) => theme.typography.caption}
   font-weight: 700;
   color: ${({ theme }) => theme.color.gray[400]};
   flex-shrink: 0;
@@ -51,7 +59,7 @@ export const GameInfo = styled.div`
 `;
 
 export const GameName = styled.span`
-  font-size: 13px;
+  ${({ theme }) => theme.typography.small}
   font-weight: 500;
   color: ${({ theme }) => theme.color.gray[800]};
   white-space: nowrap;
@@ -80,7 +88,7 @@ export const BarFill = styled.div<{ $ratio: number }>`
 `;
 
 export const PlayCount = styled.span`
-  font-size: 12px;
+  ${({ theme }) => theme.typography.caption}
   font-weight: 600;
   color: ${({ theme }) => theme.color.gray[500]};
   flex-shrink: 0;
@@ -89,7 +97,7 @@ export const PlayCount = styled.span`
 `;
 
 export const Empty = styled.p`
-  font-size: 13px;
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.gray[400]};
   text-align: center;
   padding: 16px 0;

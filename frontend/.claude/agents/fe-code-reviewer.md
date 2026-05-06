@@ -12,8 +12,10 @@ tools: Bash, Read, Glob, Grep
 
 1. 다음 문서를 읽어 프로젝트 기준을 파악한다
    - `CLAUDE.md`
-   - `.claude/rules/principles.md` — 프로젝트 특화 원칙 (스타일링, 작업 방식 등)
+   - `.claude/rules/principles.md` — 프로젝트 특화 원칙 (작업 방식 등)
+   - `.claude/rules/style.md` — 스타일링 상세 규칙 (토큰, Emotion 패턴, 금지 항목)
    - `src/styles/theme.ts` — 디자인 토큰 구조
+   - `src/constants/zIndex.ts` — z-index 상수
    - `src/apis/rest/docs.md` — REST API 훅 사용법
 2. 검토할 파일을 확정한다
    - 사용자가 파일을 명시했으면 해당 파일 사용

@@ -111,6 +111,26 @@ export const StopButton = styled.button`
   }
 `;
 
+type UpdateBannerButtonProps = {
+  $active: boolean;
+};
+
+export const UpdateBannerButton = styled.button<UpdateBannerButtonProps>`
+  appearance: none;
+  border: 1px solid ${({ $active }) => ($active ? '#FD6C6E' : 'rgba(0, 0, 0, 0.12)')};
+  background: ${({ $active }) => ($active ? '#FD6C6E' : '#ffffff')};
+  color: ${({ $active }) => ($active ? '#ffffff' : '#222')};
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: ${({ $active }) => ($active ? '#F53E41' : '#f6f6f6')};
+  }
+`;
+
 type GameSelectionContainerProps = {
   $isExpanded: boolean;
 };

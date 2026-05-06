@@ -24,7 +24,12 @@ const padding = Math.round((512 - iconSize) / 2);
 const iconBuffer = await sharp(svgBuffer).resize(iconSize, iconSize).png().toBuffer();
 
 await sharp({
-  create: { width: 512, height: 512, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } },
+  create: {
+    width: 512,
+    height: 512,
+    channels: 4,
+    background: { r: 255, g: 255, b: 255, alpha: 1 },
+  },
 })
   .composite([{ input: iconBuffer, left: padding, top: padding }])
   .png()

@@ -1,6 +1,6 @@
 ---
 description: PR 템플릿을 읽어 GitHub Pull Request를 생성한다.
-argument-hint: "[PR 제목 (선택)] [--base=브랜치명 (기본: fe/dev)]"
+argument-hint: '[PR 제목 (선택)] [--base=브랜치명 (기본: fe/dev)]'
 allowed-tools: Read, Bash, Glob
 ---
 
@@ -22,14 +22,14 @@ allowed-tools: Read, Bash, Glob
 
 **라벨** — type에 따라 자동 선택 (중복 가능):
 
-| type | 라벨 |
-|------|------|
-| feat | `✨feat`, `FE` |
-| fix | `🐞bug`, `FE` |
+| type     | 라벨               |
+| -------- | ------------------ |
+| feat     | `✨feat`, `FE`     |
+| fix      | `🐞bug`, `FE`      |
 | refactor | `🛠️refactor`, `FE` |
-| chore | `⚙️chore` |
-| docs | `📝docs` |
-| test | `🧪 test` |
+| chore    | `⚙️chore`          |
+| docs     | `📝docs`           |
+| test     | `🧪 test`          |
 
 우선순위 라벨(`p-*`)은 `$ARGUMENTS`에 명시된 경우에만 추가한다.
 
@@ -39,12 +39,12 @@ allowed-tools: Read, Bash, Glob
 
 `../.github/pull_request_template.md`의 섹션을 그대로 유지하고 아래 기준으로 채운다.
 
-| 섹션         | 작성 기준                                         |
-|------------|-----------------------------------------------|
-| ✅ 체크리스트    | base 브랜치 확인 후 `[x]`로 체크                   |
-| 🔥 연관 이슈   | `$ARGUMENTS`에 이슈 번호가 있으면 `close #N`, 없으면 `없음` |
-| 🚀 작업 내용   | 변경된 파일·커밋을 분석해 번호 목록으로 작성                     |
-| 💬 리뷰 중점사항 | 리뷰어가 특히 확인해야 할 설계 결정, 트레이드오프, 주의 사항           |
+| 섹션             | 작성 기준                                                    |
+| ---------------- | ------------------------------------------------------------ |
+| ✅ 체크리스트    | base 브랜치 확인 후 `[x]`로 체크                             |
+| 🔥 연관 이슈     | `$ARGUMENTS`에 이슈 번호가 있으면 `close #N`, 없으면 `없음`  |
+| 🚀 작업 내용     | 변경된 파일·커밋을 분석해 번호 목록으로 작성                 |
+| 💬 리뷰 중점사항 | 리뷰어가 특히 확인해야 할 설계 결정, 트레이드오프, 주의 사항 |
 
 ## 실행
 

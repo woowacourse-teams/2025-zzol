@@ -347,7 +347,7 @@ websocket:
 
 zzol-bot:
   gemini-api-key: ${GEMINI_ZZOL_BOT_API_KEY:}
-  model: gemini-2.0-flash
+  model: gemini-2.5-flash
   max-loop-iterations: 8
   default-window-minutes: 60
   tool-timeout-millis: 10000

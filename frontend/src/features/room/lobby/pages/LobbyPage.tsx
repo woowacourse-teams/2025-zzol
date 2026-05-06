@@ -16,6 +16,8 @@ import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import { useProbabilityHistory } from '@/contexts/ProbabilityHistory/ProbabilityHistoryContext';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useFriends } from '@/features/friends/hooks/useFriends';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import Layout from '@/layouts/Layout';
 import { MiniGameType } from '@/types/miniGame/common';
@@ -29,6 +31,7 @@ import GameStartButton from '../components/GameStartButton/GameStartButton';
 import GuideModal from '../components/GuideModal/GuideModal';
 import HostWaitingButton from '../components/HostWaitingButton/HostWaitingButton';
 import InvitationModal from '../components/InvitationModal/InvitationModal';
+import InviteFriendModal from '../components/InviteFriendModal/InviteFriendModal';
 import { MiniGameSection } from '../components/MiniGameSection/MiniGameSection';
 import { ParticipantSection } from '../components/ParticipantSection/ParticipantSection';
 import { RouletteSection } from '../components/RouletteSection/RouletteSection';
@@ -44,6 +47,8 @@ const LobbyPage = () => {
   const { myName, joinCode, setQrCodeUrl } = useIdentifier();
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
+  const { isAuthenticated } = useAuth();
+  const { friends } = useFriends();
   const { playerType, setPlayerType } = usePlayerType();
   const { probabilityHistory, updateCurrentProbabilities } = useProbabilityHistory();
   const { participants, setParticipants, isAllReady, checkPlayerReady } = useParticipants();
@@ -211,6 +216,26 @@ const LobbyPage = () => {
     });
   };
 
+  const handleFriendInvite = () => {
+    if (!isAuthenticated) {
+      showToast({ message: '로그인 후 이용 가능합니다', type: 'info' });
+      return;
+    }
+    const participantNames = new Set(participants.map((p) => p.playerName));
+    openModal(
+      <InviteFriendModal
+        joinCode={joinCode}
+        friends={friends}
+        participantNames={participantNames}
+        onClose={closeModal}
+      />,
+      {
+        title: '온라인 친구 초대',
+        showCloseButton: true,
+      }
+    );
+  };
+
   const handleMiniGameClick = (miniGameType: MiniGameType) => {
     if (playerType === 'GUEST') return;
 
@@ -303,10 +328,15 @@ const LobbyPage = () => {
         </S.Container>
       </Layout.Content>
 
-      <Layout.ButtonBar flexRatios={[5.5, 1]}>
+      <Layout.ButtonBar flexRatios={[5, 1, 1]} gap="8px">
         {renderGameButton()}
-        <Button variant="primary" onClick={handleShare} aria-label="친구 초대하기">
+        <Button variant="primary" onClick={handleShare} aria-label="링크 공유">
           <img src={ShareIcon} aria-hidden="true" alt="" />
+        </Button>
+        <Button variant="primary" onClick={handleFriendInvite} aria-label="온라인 친구 초대">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+          </svg>
         </Button>
       </Layout.ButtonBar>
       <ScreenReaderOnly aria-live="assertive">{announcement}</ScreenReaderOnly>

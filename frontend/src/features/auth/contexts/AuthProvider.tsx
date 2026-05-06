@@ -2,7 +2,6 @@ import { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'rea
 import * as Sentry from '@sentry/react';
 import { authApi } from '../api/authApi';
 import { BackendRedirectAuthService } from '../services/BackendRedirectAuthService';
-import { MockAuthService } from '../services/MockAuthService';
 import { tokenStore } from '../tokens';
 import { User } from '../types';
 import { AuthContext } from './AuthContext';
@@ -15,14 +14,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const authServiceRef = useRef(
-    isDev
-      ? new MockAuthService(tokenStore, {
-          onLogin: (u) => setUser(u),
-          onLogout: () => setUser(null),
-        })
-      : new BackendRedirectAuthService(tokenStore)
-  );
+  const authServiceRef = useRef(new BackendRedirectAuthService(tokenStore));
 
   const handleLogout = useCallback(async () => {
     await authServiceRef.current.logout();

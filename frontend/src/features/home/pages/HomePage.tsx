@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
+import { useFriends } from '@/features/friends/hooks/useFriends';
 import { storageManager, STORAGE_KEYS } from '@/utils/StorageManager';
 import HomeHeader from '../components/HomeHeader/HomeHeader';
 import HomeBottomTab, { type HomeTabType } from '../components/HomeBottomTab/HomeBottomTab';
@@ -8,6 +9,7 @@ import { type MenuView } from '../components/MenuTab/MenuTab';
 import HomeTab from '../components/tabs/HomeTab/HomeTab';
 import RankingTab from '../components/RankingTab/RankingTab';
 import MenuTab from '../components/MenuTab/MenuTab';
+import FriendsTab from '../components/FriendsTab/FriendsTab';
 import Splash from '../components/Splash/Splash';
 import * as S from './HomePage.styled';
 
@@ -17,6 +19,7 @@ const HomePage = () => {
   const [menuInitialView, setMenuInitialView] = useState<MenuView | null>(null);
   const { clearIdentifier } = useIdentifier();
   const { isConnected, stopSocket } = useWebSocket();
+  const { pendingReceivedCount } = useFriends();
 
   useEffect(() => {
     if (isConnected) stopSocket();
@@ -62,9 +65,14 @@ const HomePage = () => {
           />
         )}
         {activeTab === 'ranking' && <RankingTab />}
+        {activeTab === 'friends' && <FriendsTab />}
         {activeTab === 'menu' && <MenuTab initialView={menuInitialView} />}
       </S.ScrollArea>
-      <HomeBottomTab activeTab={activeTab} onTabChange={setActiveTab} />
+      <HomeBottomTab
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        friendsBadgeCount={pendingReceivedCount}
+      />
     </S.PageContainer>
   );
 };

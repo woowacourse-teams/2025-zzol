@@ -30,6 +30,11 @@ const color = {
   black: '#000000',
   yellow: '#FFDF20',
 
+  status: {
+    online: '#1FCD7E',
+    offline: '#D1D5DC',
+  },
+
   oauth: {
     google: {
       bg: '#FFFFFF',

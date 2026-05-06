@@ -2,10 +2,12 @@ import { ThemeProvider } from '@emotion/react';
 import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { WebSocketProvider } from './apis/websocket/contexts/WebSocketProvider';
+import { UserSocketProvider } from './apis/websocket/contexts/UserSocketProvider';
 import GlobalErrorBoundary from './components/@common/ErrorBoundary/GlobalErrorBoundary';
 import { ModalProvider } from './components/@common/Modal/ModalContext';
 import { ToastProvider } from './components/@common/Toast/ToastContext';
 import { AuthProvider } from './features/auth/contexts/AuthProvider';
+import { FriendsProvider } from './features/friends/contexts/FriendsProvider';
 import { IdentifierProvider } from './contexts/Identifier/IdentifierProvider';
 import { ParticipantsProvider } from './contexts/Participants/ParticipantsProvider';
 import { PlayerTypeProvider } from './contexts/PlayerType/PlayerTypeProvider';
@@ -25,25 +27,29 @@ const App = () => {
       <UpdateBanner />
 
       <AuthProvider>
-        <IdentifierProvider>
-          <ParticipantsProvider>
-            <WebSocketProvider>
-              <PlayerTypeProvider>
-                <ProbabilityHistoryProvider>
-                  <GlobalErrorBoundary>
-                    <ToastProvider>
-                      <ModalProvider>
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <Outlet />
-                        </Suspense>
-                      </ModalProvider>
-                    </ToastProvider>
-                  </GlobalErrorBoundary>
-                </ProbabilityHistoryProvider>
-              </PlayerTypeProvider>
-            </WebSocketProvider>
-          </ParticipantsProvider>
-        </IdentifierProvider>
+        <UserSocketProvider>
+          <IdentifierProvider>
+            <ParticipantsProvider>
+              <WebSocketProvider>
+                <PlayerTypeProvider>
+                  <ProbabilityHistoryProvider>
+                    <GlobalErrorBoundary>
+                      <ToastProvider>
+                        <ModalProvider>
+                          <FriendsProvider>
+                            <Suspense fallback={<div>Loading...</div>}>
+                              <Outlet />
+                            </Suspense>
+                          </FriendsProvider>
+                        </ModalProvider>
+                      </ToastProvider>
+                    </GlobalErrorBoundary>
+                  </ProbabilityHistoryProvider>
+                </PlayerTypeProvider>
+              </WebSocketProvider>
+            </ParticipantsProvider>
+          </IdentifierProvider>
+        </UserSocketProvider>
       </AuthProvider>
     </ThemeProvider>
   );

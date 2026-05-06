@@ -19,7 +19,7 @@ public interface OAuthAccountJpaRepository extends JpaRepository<OAuthAccountEnt
 
     List<OAuthAccountEntity> findAllByUser_IdIn(List<Long> userIds);
 
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query("DELETE FROM OAuthAccountEntity o WHERE o.user.id = :userId")
     void deleteByUser_Id(@Param("userId") Long userId);
 

@@ -262,7 +262,11 @@
         msg.className = `message ${role}`;
         const bubble = document.createElement('div');
         bubble.className = 'bubble';
-        bubble.textContent = text;
+        if (role === 'bot' && typeof marked !== 'undefined') {
+            bubble.innerHTML = marked.parse(text);
+        } else {
+            bubble.textContent = text;
+        }
         msg.appendChild(bubble);
         chatBox.appendChild(msg);
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -478,5 +482,6 @@
 
     loadHistory();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </body>
 </html>

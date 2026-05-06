@@ -12,6 +12,22 @@ import * as S from './IframePreviewToggle.styled';
 const IframePreviewToggle = () => {
   const location = useLocation();
   const [open, setOpen] = useState<boolean>(false);
+  const [devUpdateActive, setDevUpdateActive] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      if (e instanceof CustomEvent && typeof e.detail === 'boolean') {
+        setDevUpdateActive(e.detail);
+      }
+    };
+    window.addEventListener('dev:updateReady', handler);
+    return () => window.removeEventListener('dev:updateReady', handler);
+  }, []);
+
+  const handleToggleUpdateBanner = () => {
+    const next = !devUpdateActive;
+    window.dispatchEvent(new CustomEvent('dev:updateReady', { detail: next }));
+  };
 
   const topWindow = isTopWindow();
   const isTouchDevice = useMemo(() => checkIsTouchDevice(), []);
@@ -71,6 +87,7 @@ const IframePreviewToggle = () => {
           isRunning,
           isPaused,
         }}
+        updateBanner={{ active: devUpdateActive, onToggle: handleToggleUpdateBanner }}
       />
       {open && (
         <IframePreviewList

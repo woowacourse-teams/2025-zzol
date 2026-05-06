@@ -1,5 +1,6 @@
-package coffeeshout.user.config;
+package coffeeshout.user.ui;
 
+import coffeeshout.user.config.JwtProperties;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;

@@ -2,7 +2,6 @@ package coffeeshout.user.ui;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.application.service.AuthTokenService;
-import coffeeshout.user.config.RefreshTokenCookieHelper;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.OAuthCodeEntry;
 import coffeeshout.user.domain.TokenPair;

@@ -5,7 +5,6 @@ import coffeeshout.user.application.service.TermsService;
 import coffeeshout.user.application.service.UserProfileService;
 import coffeeshout.user.application.service.UserStatsService;
 import coffeeshout.user.application.service.UserWithdrawalService;
-import coffeeshout.user.config.RefreshTokenCookieHelper;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserStats;

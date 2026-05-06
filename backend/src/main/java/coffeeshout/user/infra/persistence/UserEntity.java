@@ -1,5 +1,7 @@
 package coffeeshout.user.infra.persistence;
 
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
@@ -24,8 +26,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserEntity {
 
-    private static final String ANONYMIZED_NICKNAME = "탈퇴한 사용자";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,7 +33,7 @@ public class UserEntity {
     @Column(name = "user_code", nullable = false, unique = true, updatable = false, length = 5)
     private String userCode;
 
-    @Column(nullable = false, length = 10)
+    @Column(length = 10)
     private String nickname;
 
     @Column(nullable = false)
@@ -68,7 +68,7 @@ public class UserEntity {
     }
 
     public void anonymize() {
-        this.nickname = ANONYMIZED_NICKNAME;
+        this.nickname = null;
         this.updatedAt = Instant.now();
     }
 
@@ -81,6 +81,9 @@ public class UserEntity {
     }
 
     public User toDomain(OAuthAccountEntity oAuthAccountEntity) {
+        if (isDeleted()) {
+            throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "탈퇴한 사용자를 도메인 객체로 변환하려 했습니다. userId: " + id);
+        }
         final OAuthAccount oAuthAccount = new OAuthAccount(
                 OAuthProvider.from(oAuthAccountEntity.getProvider()),
                 oAuthAccountEntity.getProviderUserId(),

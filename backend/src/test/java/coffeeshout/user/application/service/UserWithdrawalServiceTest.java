@@ -60,7 +60,7 @@ class UserWithdrawalServiceTest extends ServiceTest {
             final UserEntity entity = userJpaRepository.findByIdIgnoringDeletedAt(userId).orElseThrow();
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(entity.isDeleted()).isTrue();
-                softly.assertThat(entity.getNickname()).isEqualTo("탈퇴한 사용자");
+                softly.assertThat(entity.getNickname()).isNull();
                 softly.assertThat(entity.getDeletedAt()).isNotNull().isAfterOrEqualTo(before);
             });
         }

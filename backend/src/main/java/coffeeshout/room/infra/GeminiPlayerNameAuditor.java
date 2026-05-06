@@ -106,6 +106,8 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
                                     .responseSchema(RESPONSE_SCHEMA)
                                     .build()
                     ));
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new InfrastructureException(PlayerNameAuditErrorCode.AI_CALL_FAILED, "닉네임 검열 AI 호출 실패", e);
         }

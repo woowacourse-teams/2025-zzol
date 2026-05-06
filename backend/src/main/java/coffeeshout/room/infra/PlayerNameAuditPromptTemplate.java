@@ -1,5 +1,7 @@
 package coffeeshout.room.infra;
 
+import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.room.domain.audit.PlayerNameAuditErrorCode;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,7 +61,7 @@ public class PlayerNameAuditPromptTemplate {
                     .append(objectMapper.writeValueAsString(exampleMaps))
                     .append("\n\n");
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("피드백 예시 직렬화 실패", e);
+            throw new InfrastructureException(PlayerNameAuditErrorCode.PROMPT_BUILD_FAILED, "피드백 예시 직렬화 실패", e);
         }
     }
 
@@ -68,7 +70,7 @@ public class PlayerNameAuditPromptTemplate {
             message.append("검열할 닉네임 목록:\n")
                     .append(objectMapper.writeValueAsString(nicknames));
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("닉네임 목록 직렬화 실패", e);
+            throw new InfrastructureException(PlayerNameAuditErrorCode.PROMPT_BUILD_FAILED, "닉네임 목록 직렬화 실패", e);
         }
     }
 }

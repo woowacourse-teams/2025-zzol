@@ -14,4 +14,6 @@ public interface UserRepository {
     Optional<User> findByProviderAndProviderUserId(String provider, String providerUserId);
 
     List<User> findAllByNickname(UserNickname nickname);
+
+    void softDeleteById(Long userId);
 }

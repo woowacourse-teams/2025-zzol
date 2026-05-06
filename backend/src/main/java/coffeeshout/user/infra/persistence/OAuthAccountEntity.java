@@ -9,7 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,13 +38,13 @@ public class OAuthAccountEntity {
     private String email;
 
     @Column(nullable = false)
-    private LocalDateTime linkedAt;
+    private Instant linkedAt;
 
     public OAuthAccountEntity(UserEntity user, String provider, String providerUserId, String email) {
         this.user = user;
         this.provider = provider;
         this.providerUserId = providerUserId;
         this.email = email;
-        this.linkedAt = LocalDateTime.now();
+        this.linkedAt = Instant.now();
     }
 }

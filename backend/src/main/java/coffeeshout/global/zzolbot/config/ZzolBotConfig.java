@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
 public class ZzolBotConfig {
 
     @Bean("zzolBotClient")
-    @Profile("!local & !test")
+    @Profile("!test")
     public Client zzolBotClient(ZzolBotProperties properties) {
         final String apiKey = properties.geminiApiKey();
         if (apiKey == null || apiKey.isBlank()) {

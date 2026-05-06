@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@Profile("!local & !test")
+@Profile("!test")
 @RequiredArgsConstructor
 public class GeminiZzolBotClient implements ZzolBotLlmClient {
 

@@ -183,6 +183,9 @@ nickname-audit:
   batch-size: 100                      # API 호출 1회당 처리량 (RPM 5 기준 100개씩 5회 = 500개/min)
   feedback-injection-threshold: 20
 
+roulette:
+  default-adjustment-weight: 0.7
+
 user:
   code:
     max-retry: 100
@@ -303,6 +306,7 @@ resilience4j:
           - java.lang.RuntimeException   # SDK가 rate limit/서버 오류 시 RuntimeException으로 래핑
         ignore-exceptions:
           - io.github.resilience4j.ratelimiter.RequestNotPermitted  # RateLimiter 초과는 재시도하지 않음
+          - coffeeshout.global.exception.custom.InfrastructureException  # 결정론적 실패(프롬프트 빌드, 빈 응답, 파싱 실패)는 재시도하지 않음
       zzolBotGemini:
         max-attempts: 3
         wait-duration: 2s

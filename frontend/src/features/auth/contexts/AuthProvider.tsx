@@ -98,6 +98,13 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     Sentry.setUser({ id: updated.userCode, username: updated.provider });
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    await authApi.deleteMe();
+    tokenStore.clearTokens();
+    setUser(null);
+    Sentry.setUser(null);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -108,6 +115,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         logout: handleLogout,
         refreshUser,
         updateNickname,
+        deleteAccount,
       }}
     >
       {children}

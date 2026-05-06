@@ -9,6 +9,7 @@ type AuthContextType = {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateNickname: (nickname: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);

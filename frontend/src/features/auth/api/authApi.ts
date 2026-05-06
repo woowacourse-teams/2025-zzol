@@ -48,4 +48,6 @@ export const authApi = {
 
   updateNickname: (nickname: string): Promise<User> =>
     apiRequest('/users/me', { method: 'PATCH', body: { nickname } }),
+
+  deleteMe: (): Promise<void> => apiRequest('/users/me', { method: 'DELETE' }),
 };

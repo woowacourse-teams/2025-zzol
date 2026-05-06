@@ -120,3 +120,43 @@ export const TooltipList = styled.ul`
   flex-direction: column;
   gap: 4px;
 `;
+
+export const DangerCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  border: 1px solid ${({ theme }) => theme.color.gray[100]};
+  border-radius: 16px;
+  overflow: hidden;
+  background: ${({ theme }) => theme.color.white};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-top: 12px;
+`;
+
+export const DangerRow = styled.button`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+
+  &:active {
+    background: ${({ theme }) => theme.color.point[50]};
+  }
+`;
+
+export const DangerLabel = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.color.point[500]};
+`;
+
+export const DangerIcon = styled.span`
+  font-size: 16px;
+  font-weight: 300;
+  color: ${({ theme }) => theme.color.point[200]};
+`;

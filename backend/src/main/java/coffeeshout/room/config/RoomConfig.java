@@ -16,7 +16,7 @@ public class RoomConfig {
         return new BadWordFiltering();
     }
 
-    @Bean
+    @Bean("nicknameAuditClient")
     @Profile("!local & !test")
     public Client geminiClient(PlayerNameAuditProperties properties) {
         return Client.builder()

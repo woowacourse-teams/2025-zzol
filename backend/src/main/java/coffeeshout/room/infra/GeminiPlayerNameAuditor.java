@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -65,7 +66,7 @@ public class GeminiPlayerNameAuditor implements PlayerNameAuditor {
     private final Counter itemParseFailureCounter;
 
     public GeminiPlayerNameAuditor(
-            Client geminiClient,
+            @Qualifier("nicknameAuditClient") Client geminiClient,
             ObjectMapper objectMapper,
             PlayerNameAuditProperties properties,
             PlayerNameFeedbackJpaRepository feedbackRepository,

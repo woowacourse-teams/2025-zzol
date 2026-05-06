@@ -121,6 +121,7 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:${jjwtVersion}")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:${jjwtVersion}")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.wiremock:wiremock-standalone:3.9.2")
 }
 
 tasks.register("generateCtags") {

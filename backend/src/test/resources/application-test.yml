@@ -158,3 +158,5 @@ security:
     not-found-window: 1h
     block-ttl: 24h
 
+roulette:
+  default-adjustment-weight: 0.7

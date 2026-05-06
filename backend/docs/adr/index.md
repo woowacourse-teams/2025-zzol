@@ -13,3 +13,4 @@
 | [0005](0005-jwt-refresh-token-policy.md)                      | Access(JWT) + Refresh(Redis) 인증 토큰 정책 | 승인 | `user/config/`, `user/application/service/`, `user/infra/redis/` | Refresh token은 `{userId}:{tokenId}` 형식, 재사용 감지 시 family 전체 폐기 |
 | [0006](0006-user-code-policy.md)                              | 5자리 사용자 식별 코드(UserCode) 정책 | 승인 | `user/domain/`, `user/domain/service/` | UserCode는 가입 시 1회 발급 후 불변, INSERT-then-catch + 최대 100회 재시도 |
 | [0007](0007-oauth-token-delivery-via-one-time-code.md)        | OAuth 로그인 토큰 전달 — 일회용 코드 교환 방식 | 승인 | `user/ui/`, `user/application/service/`, `user/infra/redis/` | OAuth 성공 후 토큰은 URL에 직접 노출 금지, 반드시 `/auth/token` 코드 교환을 경유해야 함 |
+| [0008](0008-roulette-adjustment-weight-http-configuration.md) | 룰렛 확률 조정 가중치(ADJUSTMENT_WEIGHT) HTTP 설정 가능화 | 승인 | `room/domain/roulette/`, `room/domain/`, `room/config/`, `room/ui/` | 가중치는 READY 상태에서만 변경 가능, 유효 범위 0.1 이상 0.9 이하 |

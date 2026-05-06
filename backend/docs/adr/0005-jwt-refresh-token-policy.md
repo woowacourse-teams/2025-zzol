@@ -1,4 +1,4 @@
-# 0004. Access(JWT) + Refresh(Redis) 인증 토큰 정책
+# 0005. Access(JWT) + Refresh(Redis) 인증 토큰 정책
 
 - 날짜: 2026-04-30
 - 상태: 승인

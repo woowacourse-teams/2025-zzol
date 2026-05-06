@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
@@ -70,6 +71,16 @@ public class UserRepositoryImpl implements UserRepository {
         return oAuthAccountJpaRepository
                 .findByProviderAndProviderUserIdWithUser(provider, providerUserId)
                 .map(oAuth -> oAuth.getUser().toDomain(oAuth));
+    }
+
+    @Override
+    @Transactional
+    public void softDeleteById(Long userId) {
+        final UserEntity userEntity = userJpaRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
+        userEntity.anonymize();
+        userEntity.softDelete();
+        oAuthAccountJpaRepository.deleteByUser_Id(userId);
     }
 
     @Override

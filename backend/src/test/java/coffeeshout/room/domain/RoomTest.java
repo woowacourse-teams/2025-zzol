@@ -1,5 +1,6 @@
 package coffeeshout.room.domain;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -15,8 +16,12 @@ import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.roulette.Roulette;
 import java.util.LinkedList;
 import java.util.List;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class RoomTest {
@@ -32,7 +37,7 @@ class RoomTest {
 
     @BeforeEach
     void setUp() {
-        room = new Room(joinCode, 호스트_한스);
+        room = new Room(joinCode, 호스트_한스, 0.7);
     }
 
     @Test
@@ -336,5 +341,94 @@ class RoomTest {
         assertThat(removed).isFalse();
         assertThat(room.getPlayers()).hasSize(1);
         assertThat(room.getHost().getName()).isEqualTo(호스트_한스);
+    }
+
+    @Nested
+    class 가중치_설정 {
+
+        @Test
+        void 호스트는_READY_상태에서_가중치를_변경할_수_있다() {
+            // when
+            room.updateAdjustmentWeight(호스트_한스, 0.5);
+
+            // then
+            assertThat(room.getAdjustmentWeight()).isEqualTo(0.5);
+        }
+
+        @Test
+        void 경계값_0_1과_0_9는_정상_변경된다() {
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThatCode(() -> room.updateAdjustmentWeight(호스트_한스, 0.1)).doesNotThrowAnyException();
+                softly.assertThatCode(() -> room.updateAdjustmentWeight(호스트_한스, 0.9)).doesNotThrowAnyException();
+            });
+        }
+
+        @Test
+        void 비호스트는_가중치를_변경할_수_없다() {
+            // given
+            room.joinGuest(게스트_꾹이);
+
+            // when & then
+            assertCoffeeShoutException(
+                    () -> room.updateAdjustmentWeight(게스트_꾹이, 0.5),
+                    RoomErrorCode.NOT_HOST
+            );
+        }
+
+        @Test
+        void READY_상태가_아니면_가중치를_변경할_수_없다() {
+            // given
+            ReflectionTestUtils.setField(room, "roomState", RoomState.PLAYING);
+
+            // when & then
+            assertCoffeeShoutException(
+                    () -> room.updateAdjustmentWeight(호스트_한스, 0.5),
+                    RoomErrorCode.ROOM_NOT_READY_TO_UPDATE
+            );
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {0.0, 0.09, -0.1, -1.0})
+        void 가중치가_0_1_미만이면_예외가_발생한다(double invalidWeight) {
+            assertCoffeeShoutException(
+                    () -> room.updateAdjustmentWeight(호스트_한스, invalidWeight),
+                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
+            );
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {0.91, 1.0, 2.0})
+        void 가중치가_0_9_초과이면_예외가_발생한다(double invalidWeight) {
+            assertCoffeeShoutException(
+                    () -> room.updateAdjustmentWeight(호스트_한스, invalidWeight),
+                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
+            );
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {0.0, 0.09, -0.1, -1.0})
+        void 생성_시_가중치가_0_1_미만이면_예외가_발생한다(double invalidWeight) {
+            assertCoffeeShoutException(
+                    () -> new Room(joinCode, 호스트_한스, invalidWeight),
+                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
+            );
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {0.91, 1.0, 2.0})
+        void 생성_시_가중치가_0_9_초과이면_예외가_발생한다(double invalidWeight) {
+            assertCoffeeShoutException(
+                    () -> new Room(joinCode, 호스트_한스, invalidWeight),
+                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
+            );
+        }
+
+        @Test
+        void 생성_시_경계값_0_1과_0_9는_정상_생성된다() {
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThatCode(() -> new Room(joinCode, 호스트_한스, 0.1)).doesNotThrowAnyException();
+                softly.assertThatCode(() -> new Room(joinCode, 호스트_한스, 0.9)).doesNotThrowAnyException();
+            });
+        }
     }
 }

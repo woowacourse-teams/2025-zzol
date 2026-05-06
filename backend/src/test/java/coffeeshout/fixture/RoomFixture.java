@@ -16,7 +16,8 @@ public final class RoomFixture {
     public static Room 호스트_꾹이(JoinCode joinCode) {
         final Room room = new Room(
                 joinCode,
-                PlayerFixture.호스트꾹이().getName()
+                PlayerFixture.호스트꾹이().getName(),
+                0.7
         );
         final Players players = PlayersFixture.루키_엠제이_한스_리스트;
         players.getPlayers().forEach(player -> room.joinGuest(player.getName()));

@@ -20,7 +20,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "friendship")
+@Table(
+        name = "friendship",
+        uniqueConstraints = @jakarta.persistence.UniqueConstraint(
+                name = "uk_friendship_pair",
+                columnNames = {"requester_id", "addressee_id"}
+        )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FriendshipEntity {

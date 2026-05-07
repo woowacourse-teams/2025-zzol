@@ -11,6 +11,8 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.exception.UserErrorCode;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -63,39 +65,44 @@ public class FriendshipService {
 
     @Transactional(readOnly = true)
     public List<FriendRequestWithUser> findReceivedPending(Long userId) {
-        return friendshipRepository.findReceivedPending(userId).stream()
-                .map(f -> {
-                    final var requester = findUser(f.getRequesterId());
-                    return new FriendRequestWithUser(f.getId(), requester, f.getCreatedAt());
-                })
+        final List<Friendship> friendships = friendshipRepository.findReceivedPending(userId);
+        final List<Long> requesterIds = friendships.stream().map(Friendship::getRequesterId).toList();
+        final Map<Long, coffeeshout.user.domain.User> userById = userRepository.findAllByIds(requesterIds).stream()
+                .collect(Collectors.toMap(coffeeshout.user.domain.User::getId, u -> u));
+        return friendships.stream()
+                .map(f -> new FriendRequestWithUser(f.getId(), userById.get(f.getRequesterId()), f.getCreatedAt()))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<FriendRequestWithUser> findSentPending(Long userId) {
-        return friendshipRepository.findSentPending(userId).stream()
-                .map(f -> {
-                    final var addressee = findUser(f.getAddresseeId());
-                    return new FriendRequestWithUser(f.getId(), addressee, f.getCreatedAt());
-                })
+        final List<Friendship> friendships = friendshipRepository.findSentPending(userId);
+        final List<Long> addresseeIds = friendships.stream().map(Friendship::getAddresseeId).toList();
+        final Map<Long, coffeeshout.user.domain.User> userById = userRepository.findAllByIds(addresseeIds).stream()
+                .collect(Collectors.toMap(coffeeshout.user.domain.User::getId, u -> u));
+        return friendships.stream()
+                .map(f -> new FriendRequestWithUser(f.getId(), userById.get(f.getAddresseeId()), f.getCreatedAt()))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<FriendWithUser> findFriends(Long userId) {
-        return friendshipRepository.findAcceptedOf(userId).stream()
-                .map(f -> new FriendWithUser(findUser(f.counterpartOf(userId)), f.getUpdatedAt()))
+        final List<Friendship> friendships = friendshipRepository.findAcceptedOf(userId);
+        final List<Long> counterpartIds = friendships.stream().map(f -> f.counterpartOf(userId)).toList();
+        final Map<Long, coffeeshout.user.domain.User> userById = userRepository.findAllByIds(counterpartIds).stream()
+                .collect(Collectors.toMap(coffeeshout.user.domain.User::getId, u -> u));
+        return friendships.stream()
+                .map(f -> new FriendWithUser(userById.get(f.counterpartOf(userId)), f.getUpdatedAt()))
                 .toList();
     }
 
     private coffeeshout.user.domain.User findUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다. id=" + userId));
     }
 
     private void validateUserExists(Long userId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다. id=" + userId));
+        findUser(userId);
     }
 
     private void validateNoExistingRelation(Long requesterId, Long targetUserId) {

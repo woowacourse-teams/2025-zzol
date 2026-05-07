@@ -19,4 +19,6 @@ public interface FriendshipRepository {
     List<Friendship> findAcceptedOf(Long userId);
 
     void delete(Friendship friendship);
+
+    List<Friendship> findAllBetween(Long myId, List<Long> targetUserIds);
 }

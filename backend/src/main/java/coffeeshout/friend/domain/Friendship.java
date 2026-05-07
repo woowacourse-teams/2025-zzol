@@ -56,7 +56,10 @@ public class Friendship {
         if (requesterId.equals(userId)) {
             return addresseeId;
         }
-        return requesterId;
+        if (addresseeId.equals(userId)) {
+            return requesterId;
+        }
+        throw new BusinessException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND, "해당 친구 관계에 포함되지 않은 사용자입니다.");
     }
 
     public boolean isPending() {
@@ -69,7 +72,7 @@ public class Friendship {
 
     private void validateAddresseeIs(Long userId) {
         if (!addresseeId.equals(userId)) {
-            throw new BusinessException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND, "존재하지 않는 친구 요청입니다.");
+            throw new BusinessException(FriendErrorCode.FRIEND_REQUEST_FORBIDDEN, "해당 친구 요청을 처리할 권한이 없습니다.");
         }
     }
 

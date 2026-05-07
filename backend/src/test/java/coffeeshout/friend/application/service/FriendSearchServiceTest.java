@@ -107,6 +107,17 @@ class FriendSearchServiceTest extends ServiceTest {
     class 닉네임으로_검색 {
 
         @Test
+        void 이미_친구인_사용자는_FRIEND_상태로_반환된다() {
+            friendshipRepository.save(FriendshipFixture.accepted(me.getId(), other.getId()));
+
+            final List<UserSearchResult> results = friendSearchService.searchByNickname(
+                    me.getId(), other.getNickname().value()
+            );
+
+            assertThat(results.get(0).relationStatus()).isEqualTo(RelationStatus.FRIEND);
+        }
+
+        @Test
         void 존재하는_닉네임으로_검색하면_결과를_반환한다() {
             final List<UserSearchResult> results = friendSearchService.searchByNickname(
                     me.getId(), other.getNickname().value()

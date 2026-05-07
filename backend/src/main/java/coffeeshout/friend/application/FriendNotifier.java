@@ -43,7 +43,7 @@ public class FriendNotifier {
                             requester.getId(),
                             requester.getUserCode().value(),
                             requester.getNickname().value(),
-                            Instant.now()
+                            event.timestamp()
                     );
                     sendToUser(event.addresseeId(), FRIEND_REQUESTS_QUEUE, payload);
                 },

@@ -6,8 +6,10 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
+import coffeeshout.friend.domain.event.FriendRemovedEvent;
 import coffeeshout.friend.domain.event.FriendRequestAcceptedEvent;
 import coffeeshout.friend.domain.event.FriendRequestCreatedEvent;
+import coffeeshout.friend.domain.event.FriendRequestRejectedEvent;
 
 import coffeeshout.fixture.FriendshipFixture;
 import coffeeshout.fixture.UserFixture;
@@ -76,6 +78,16 @@ class FriendshipServiceTest extends ServiceTest {
         }
 
         @Test
+        void 역방향_PENDING이_있을_때_요청하면_예외가_발생한다() {
+            friendshipRepository.save(FriendshipFixture.pending(addressee.getId(), requester.getId()));
+
+            assertCoffeeShoutException(
+                    () -> friendshipService.sendRequest(requester.getId(), addressee.getId()),
+                    FriendErrorCode.FRIEND_REQUEST_ALREADY_SENT
+            );
+        }
+
+        @Test
         void 정상_요청시_PENDING_상태로_저장되고_이벤트가_발행된다() {
             final Friendship saved = friendshipService.sendRequest(requester.getId(), addressee.getId());
 
@@ -98,7 +110,7 @@ class FriendshipServiceTest extends ServiceTest {
 
             assertCoffeeShoutException(
                     () -> friendshipService.accept(requester.getId(), pending.getId()),
-                    FriendErrorCode.FRIEND_REQUEST_NOT_FOUND
+                    FriendErrorCode.FRIEND_REQUEST_FORBIDDEN
             );
         }
 
@@ -122,17 +134,18 @@ class FriendshipServiceTest extends ServiceTest {
 
             assertCoffeeShoutException(
                     () -> friendshipService.reject(requester.getId(), pending.getId()),
-                    FriendErrorCode.FRIEND_REQUEST_NOT_FOUND
+                    FriendErrorCode.FRIEND_REQUEST_FORBIDDEN
             );
         }
 
         @Test
-        void 수신자가_거절하면_요청이_삭제된다() {
+        void 수신자가_거절하면_요청이_삭제되고_이벤트가_발행된다() {
             final Friendship pending = friendshipRepository.save(FriendshipFixture.pending(requester.getId(), addressee.getId()));
 
             friendshipService.reject(addressee.getId(), pending.getId());
 
             assertThat(friendshipRepository.findById(pending.getId())).isEmpty();
+            verify(eventPublisher).publishEvent(any(FriendRequestRejectedEvent.class));
         }
     }
 
@@ -158,12 +171,13 @@ class FriendshipServiceTest extends ServiceTest {
         }
 
         @Test
-        void 친구_끊기를_하면_관계가_삭제된다() {
+        void 친구_끊기를_하면_관계가_삭제되고_이벤트가_발행된다() {
             friendshipRepository.save(FriendshipFixture.accepted(requester.getId(), addressee.getId()));
 
             friendshipService.unfriend(requester.getId(), addressee.getId());
 
             assertThat(friendshipRepository.findBetween(requester.getId(), addressee.getId())).isEmpty();
+            verify(eventPublisher).publishEvent(any(FriendRemovedEvent.class));
         }
     }
 }

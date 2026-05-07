@@ -68,7 +68,7 @@ public class PresenceTracker {
             return;
         }
 
-        final int count = counter.decrementAndGet();
+        final int count = counter.updateAndGet(c -> Math.max(0, c - 1));
         if (count > 0) {
             return;
         }

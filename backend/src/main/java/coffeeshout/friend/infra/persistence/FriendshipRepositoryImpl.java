@@ -22,9 +22,6 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
 
     @Override
     public Friendship save(Friendship friendship) {
-        final UserEntity requester = findUserEntityById(friendship.getRequesterId());
-        final UserEntity addressee = findUserEntityById(friendship.getAddresseeId());
-
         if (friendship.getId() != null) {
             final FriendshipEntity entity = friendshipJpaRepository.findById(friendship.getId())
                     .orElseThrow(() -> new BusinessException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND, "존재하지 않는 친구 요청입니다."));
@@ -34,6 +31,8 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
             return friendshipJpaRepository.save(entity).toDomain();
         }
 
+        final UserEntity requester = findUserEntityById(friendship.getRequesterId());
+        final UserEntity addressee = findUserEntityById(friendship.getAddresseeId());
         final FriendshipEntity entity = new FriendshipEntity(
                 requester, addressee, friendship.getStatus(),
                 friendship.getCreatedAt(), friendship.getUpdatedAt()
@@ -71,7 +70,7 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
 
     @Override
     public List<Friendship> findAcceptedOf(Long userId) {
-        return friendshipJpaRepository.findAllAcceptedOf(userId)
+        return friendshipJpaRepository.findAllAcceptedOf(userId, FriendshipStatus.ACCEPTED)
                 .stream()
                 .map(FriendshipEntity::toDomain)
                 .toList();
@@ -80,6 +79,16 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
     @Override
     public void delete(Friendship friendship) {
         friendshipJpaRepository.deleteById(friendship.getId());
+    }
+
+    @Override
+    public List<Friendship> findAllBetween(Long myId, List<Long> targetUserIds) {
+        if (targetUserIds.isEmpty()) {
+            return List.of();
+        }
+        return friendshipJpaRepository.findAllBetween(myId, targetUserIds).stream()
+                .map(FriendshipEntity::toDomain)
+                .toList();
     }
 
     private UserEntity findUserEntityById(Long userId) {

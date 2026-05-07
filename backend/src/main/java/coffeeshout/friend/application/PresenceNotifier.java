@@ -22,15 +22,20 @@ public class PresenceNotifier {
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
     @EventListener
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public void onPresenceChanged(PresenceChangedEvent event) {
         final PresencePayload payload = new PresencePayload(event.userId(), event.online());
 
         friendshipRepository.findAcceptedOf(event.userId()).forEach(friendship -> {
-            final Long friendId = friendship.counterpartOf(event.userId());
-            messagingTemplate.convertAndSendToUser(
-                    UserPrincipal.of(friendId), PRESENCE_QUEUE, WebSocketResponse.success(payload)
-            );
-            log.debug("Presence 알림: userId={}, online={}, friendId={}", event.userId(), event.online(), friendId);
+            try {
+                final Long friendId = friendship.counterpartOf(event.userId());
+                messagingTemplate.convertAndSendToUser(
+                        UserPrincipal.of(friendId), PRESENCE_QUEUE, WebSocketResponse.success(payload)
+                );
+                log.debug("Presence 알림: userId={}, online={}, friendId={}", event.userId(), event.online(), friendId);
+            } catch (Exception e) {
+                log.warn("Presence 알림 전송 실패: userId={}, 원인={}", event.userId(), e.getMessage());
+            }
         });
     }
 }

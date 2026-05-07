@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/rooms")
 @RequiredArgsConstructor
-public class RoomInvitationRestController {
+public class RoomInvitationRestController extends AuthenticatedController {
 
     private final RoomInvitationService roomInvitationService;
 
@@ -33,8 +33,4 @@ public class RoomInvitationRestController {
         return ResponseEntity.noContent().build();
     }
 
-    private AuthenticatedUser requireAuthenticated(Optional<AuthenticatedUser> authUser) {
-        return authUser.orElseThrow(() -> new BusinessException(
-                UserErrorCode.UNAUTHORIZED, "인증이 필요합니다."));
-    }
 }

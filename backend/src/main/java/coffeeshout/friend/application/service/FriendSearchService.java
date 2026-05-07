@@ -7,6 +7,7 @@ import coffeeshout.user.domain.UserCode;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,9 +31,24 @@ public class FriendSearchService {
 
     @Transactional(readOnly = true)
     public List<UserSearchResult> searchByNickname(Long myId, String rawNickname) {
-        return userRepository.findAllByNickname(new UserNickname(rawNickname)).stream()
+        final List<User> users = userRepository.findAllByNickname(new UserNickname(rawNickname)).stream()
                 .filter(user -> !user.getId().equals(myId))
-                .map(user -> toSearchResult(myId, user))
+                .toList();
+        return toSearchResults(myId, users);
+    }
+
+    private List<UserSearchResult> toSearchResults(Long myId, List<User> users) {
+        if (users.isEmpty()) {
+            return List.of();
+        }
+        final List<Long> userIds = users.stream().map(User::getId).toList();
+        final Map<Long, Friendship> friendshipByUserId = friendshipRepository.findAllBetween(myId, userIds).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        f -> f.counterpartOf(myId),
+                        f -> f
+                ));
+        return users.stream()
+                .map(user -> new UserSearchResult(user, determineRelationStatus(myId, Optional.ofNullable(friendshipByUserId.get(user.getId())))))
                 .toList();
     }
 

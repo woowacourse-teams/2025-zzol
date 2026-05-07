@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-public class FriendshipRestController {
+public class FriendshipRestController extends AuthenticatedController {
 
     private final FriendshipService friendshipService;
     private final FriendSearchService friendSearchService;
@@ -128,8 +128,4 @@ public class FriendshipRestController {
         return ResponseEntity.noContent().build();
     }
 
-    private AuthenticatedUser requireAuthenticated(Optional<AuthenticatedUser> authUser) {
-        return authUser.orElseThrow(() -> new BusinessException(
-                UserErrorCode.UNAUTHORIZED, "인증이 필요합니다."));
-    }
 }

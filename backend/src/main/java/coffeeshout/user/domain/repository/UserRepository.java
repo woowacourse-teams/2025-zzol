@@ -17,4 +17,6 @@ public interface UserRepository {
     List<User> findAllByNickname(UserNickname nickname);
 
     Optional<User> findByUserCode(UserCode userCode);
+
+    List<User> findAllByIds(List<Long> ids);
 }

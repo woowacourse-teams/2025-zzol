@@ -23,7 +23,16 @@ public interface FriendshipJpaRepository extends JpaRepository<FriendshipEntity,
     @Query("""
             SELECT f FROM FriendshipEntity f
             WHERE (f.requester.id = :userId OR f.addressee.id = :userId)
-              AND f.status = 'ACCEPTED'
+              AND f.status = :status
             """)
-    List<FriendshipEntity> findAllAcceptedOf(@Param("userId") Long userId);
+    List<FriendshipEntity> findAllAcceptedOf(@Param("userId") Long userId,
+                                             @Param("status") FriendshipStatus status);
+
+    @Query("""
+            SELECT f FROM FriendshipEntity f
+            WHERE (f.requester.id = :myId AND f.addressee.id IN :targetIds)
+               OR (f.addressee.id = :myId AND f.requester.id IN :targetIds)
+            """)
+    List<FriendshipEntity> findAllBetween(@Param("myId") Long myId,
+                                          @Param("targetIds") List<Long> targetIds);
 }

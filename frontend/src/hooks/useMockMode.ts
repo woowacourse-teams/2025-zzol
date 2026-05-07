@@ -20,12 +20,10 @@ export const useMockMode = () => {
 
   const toggle = () => {
     if (!isDev) return;
-    setEnabled((prev) => {
-      const next = !prev;
-      localStorage.setItem(STORAGE_KEY, String(next));
-      window.dispatchEvent(new CustomEvent<boolean>(EVENT_KEY, { detail: next }));
-      return next;
-    });
+    const next = !enabled;
+    localStorage.setItem(STORAGE_KEY, String(next));
+    setEnabled(next);
+    window.dispatchEvent(new CustomEvent<boolean>(EVENT_KEY, { detail: next }));
   };
 
   return { mockEnabled: enabled, toggle };

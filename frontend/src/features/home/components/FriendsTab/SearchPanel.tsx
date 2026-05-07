@@ -69,6 +69,8 @@ const ActionButton = ({ user, onRelationChange }: ActionProps) => {
       const code = getErrorCode(err);
       if (code === 'FRIEND_REQUEST_NOT_FOUND') {
         showToast({ message: '친구 요청을 찾을 수 없습니다', type: 'error' });
+      } else if (code === 'FRIEND_REQUEST_FORBIDDEN') {
+        showToast({ message: '수락 권한이 없습니다', type: 'error' });
       } else if (code === 'FRIEND_REQUEST_INVALID_STATE') {
         showToast({ message: '이미 처리된 요청입니다', type: 'error' });
       } else {
@@ -91,6 +93,8 @@ const ActionButton = ({ user, onRelationChange }: ActionProps) => {
       const code = getErrorCode(err);
       if (code === 'FRIEND_REQUEST_NOT_FOUND') {
         showToast({ message: '친구 요청을 찾을 수 없습니다', type: 'error' });
+      } else if (code === 'FRIEND_REQUEST_FORBIDDEN') {
+        showToast({ message: '거절 권한이 없습니다', type: 'error' });
       } else if (code === 'FRIEND_REQUEST_INVALID_STATE') {
         showToast({ message: '이미 처리된 요청입니다', type: 'error' });
       } else {

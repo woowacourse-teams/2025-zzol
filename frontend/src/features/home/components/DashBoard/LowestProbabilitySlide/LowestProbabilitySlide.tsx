@@ -31,7 +31,7 @@ const LowestProbabilitySlide = ({ players, probability }: Props) => {
         return;
       }
       const eased = 1 - Math.pow(1 - progress, 5);
-      setDisplayPct(100 - (100 - target) * eased);
+      setDisplayPct(Math.round(100 - (100 - target) * eased));
       rafRef.current = requestAnimationFrame(tick);
     };
 
@@ -41,7 +41,7 @@ const LowestProbabilitySlide = ({ players, probability }: Props) => {
     };
   }, [probability]);
 
-  const pct = displayPct.toFixed(1);
+  const pct = Number.isInteger(displayPct) ? String(displayPct) : displayPct.toFixed(1);
 
   return (
     <S.Card>

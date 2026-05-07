@@ -14,17 +14,27 @@ const withDevFallback = <T>(data: T[] | undefined, mock: T[]): T[] => {
 };
 
 export const useDashboardData = () => {
-  const { data: topWinners } = useFetch<TopWinner[]>({ endpoint: '/dashboard/top-winners' });
-  const { data: lowestProbabilityWinner } = useFetch<LowestProbabilityWinner>({
-    endpoint: '/dashboard/lowest-probability-winner',
+  const { data: topWinners, loading: l1 } = useFetch<TopWinner[]>({
+    endpoint: '/dashboard/top-winners',
+    errorDisplayMode: 'toast',
   });
-  const { data: gamePlayCounts } = useFetch<GamePlayCount[]>({
+  const { data: lowestProbabilityWinner, loading: l2 } = useFetch<LowestProbabilityWinner>({
+    endpoint: '/dashboard/lowest-probability-winner',
+    errorDisplayMode: 'toast',
+  });
+  const { data: gamePlayCounts, loading: l3 } = useFetch<GamePlayCount[]>({
     endpoint: '/dashboard/game-play-counts',
+    errorDisplayMode: 'toast',
   });
 
   return {
     topWinners: withDevFallback(topWinners, MOCK_TOP_WINNERS),
-    lowestProbabilityWinner: lowestProbabilityWinner ?? (isDev ? MOCK_LOWEST_PROBABILITY : null),
+    lowestProbabilityWinner: lowestProbabilityWinner?.players?.length
+      ? lowestProbabilityWinner
+      : isDev
+        ? MOCK_LOWEST_PROBABILITY
+        : null,
     gamePlayCounts: withDevFallback(gamePlayCounts, MOCK_GAME_PLAY_COUNTS),
+    loading: l1 || l2 || l3,
   };
 };

@@ -16,7 +16,7 @@ const RankingAccordionItem = ({ category }: Props) => {
 
   const handleTransitionEnd = () => {
     if (!isOpen || !bodyRef.current) return;
-    const container = bodyRef.current.closest<HTMLElement>('main');
+    const container = bodyRef.current.closest<HTMLElement>('[data-scroll-container]');
     if (!container) return;
     const { bottom: bodyBottom } = bodyRef.current.getBoundingClientRect();
     const { bottom: containerBottom } = container.getBoundingClientRect();
@@ -59,7 +59,11 @@ const RankingAccordionItem = ({ category }: Props) => {
 
   return (
     <S.AccordionItem>
-      <S.AccordionHeader onClick={handleToggle} aria-expanded={isOpen}>
+      <S.AccordionHeader
+        onClick={handleToggle}
+        aria-expanded={isOpen}
+        aria-controls={`accordion-body-${category.label}`}
+      >
         <S.AccordionTitle>
           <Icon />
           <span>{category.label}</span>
@@ -68,7 +72,12 @@ const RankingAccordionItem = ({ category }: Props) => {
           ▾
         </S.ChevronIcon>
       </S.AccordionHeader>
-      <S.AccordionBody ref={bodyRef} $isOpen={isOpen} onTransitionEnd={handleTransitionEnd}>
+      <S.AccordionBody
+        ref={bodyRef}
+        id={`accordion-body-${category.label}`}
+        $isOpen={isOpen}
+        onTransitionEnd={handleTransitionEnd}
+      >
         <S.AccordionContent key={openKey}>
           {loading && <S.Spinner role="status" aria-label="로딩 중" />}
           {!loading && items.length === 0 && isOpen && (

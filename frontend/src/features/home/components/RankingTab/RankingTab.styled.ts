@@ -130,13 +130,6 @@ export const Spinner = styled.div`
   margin: 12px auto;
 `;
 
-export const LoadingText = styled.p`
-  ${({ theme }) => theme.typography.small}
-  color: ${({ theme }) => theme.color.gray[400]};
-  text-align: center;
-  padding: 12px 0;
-`;
-
 export const EmptyText = styled.p`
   ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.gray[400]};

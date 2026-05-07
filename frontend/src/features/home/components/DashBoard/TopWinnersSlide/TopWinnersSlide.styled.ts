@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
+import { rankColorMap, type RankColorKey } from '@/constants/color';
 
 export const Card = styled.div`
   display: flex;
@@ -45,16 +46,13 @@ export const Item = styled.li<{ $index: number }>`
   animation-delay: ${({ $index }) => `${$index * 0.16}s`};
 
   &:first-of-type {
-    background: rgba(245, 166, 35, 0.06);
+    background: ${rankColorMap[1]}0F;
   }
 
   &:last-of-type {
     border-bottom: none;
   }
 `;
-
-/** 1~3위 메달 색상 — 테마 토큰 미정의, 디자인 의도적 예외 */
-const RANK_COLORS = ['#F5A623', '#9EAAB8', '#BE8C5A'] as const;
 
 export const Rank = styled.span<{ $rank: number }>`
   display: flex;
@@ -66,8 +64,8 @@ export const Rank = styled.span<{ $rank: number }>`
   ${({ theme }) => theme.typography.caption}
   font-weight: 800;
   flex-shrink: 0;
-  background: ${({ $rank }) => ($rank <= 3 ? RANK_COLORS[$rank - 1] : 'transparent')};
-  color: ${({ $rank, theme }) => ($rank <= 3 ? theme.color.white : theme.color.gray[400])};
+  background: ${({ $rank }) => rankColorMap[$rank as RankColorKey] ?? 'transparent'};
+  color: ${({ $rank, theme }) => ($rank <= 3 ? theme.color.white : theme.color.gray[900])};
   border: ${({ $rank, theme }) => ($rank > 3 ? `1px solid ${theme.color.gray[200]}` : 'none')};
 `;
 

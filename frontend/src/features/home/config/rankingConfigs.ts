@@ -14,6 +14,13 @@ import {
   GamepadIcon,
   RacingCarIcon,
 } from '../components/RankingTab/rankingIcons';
+import {
+  MOCK_TOP_WINNERS,
+  MOCK_LOWEST_PROBABILITY,
+  MOCK_GAME_PLAY_COUNTS,
+  MOCK_BLOCK_STACKING_TOP_PLAYERS,
+  MOCK_RACING_GAME_TOP_PLAYERS,
+} from './dashboardMock';
 
 export type RankingItem = {
   rank: number;
@@ -28,6 +35,7 @@ export type RankingCategory = {
   icon: ComponentType;
   endpoint: string;
   transformData: (raw: unknown) => RankingItem[];
+  mockRaw?: unknown;
 };
 
 export const RANKING_CATEGORIES: RankingCategory[] = [
@@ -36,6 +44,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
     label: '이번 달 당첨 랭킹',
     icon: TrophyIcon,
     endpoint: '/dashboard/top-winners',
+    mockRaw: MOCK_TOP_WINNERS,
     transformData: (raw) =>
       (raw as TopWinner[]).map((w, i) => ({
         rank: i + 1,
@@ -48,6 +57,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
     label: '최저 확률 당첨자',
     icon: SkullIcon,
     endpoint: '/dashboard/lowest-probability-winner',
+    mockRaw: MOCK_LOWEST_PROBABILITY,
     transformData: (raw) => {
       const data = raw as LowestProbabilityWinner;
       if (!data?.players?.length) return [];
@@ -65,6 +75,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
     label: '블록쌓기 최고 기록',
     icon: BlocksIcon,
     endpoint: '/dashboard/block-stacking-top-players',
+    mockRaw: MOCK_BLOCK_STACKING_TOP_PLAYERS,
     transformData: (raw) =>
       (raw as BlockStackingTopPlayer[]).map((p, i) => ({
         rank: i + 1,
@@ -78,6 +89,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
     label: '레이싱게임 최단 기록',
     icon: RacingCarIcon,
     endpoint: '/dashboard/racing-game-top-players',
+    mockRaw: MOCK_RACING_GAME_TOP_PLAYERS,
     transformData: (raw) =>
       (raw as RacingGameTopPlayer[]).map((p, i) => ({
         rank: i + 1,
@@ -91,6 +103,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
     label: '게임 인기 순위',
     icon: GamepadIcon,
     endpoint: '/dashboard/game-play-counts',
+    mockRaw: MOCK_GAME_PLAY_COUNTS,
     transformData: (raw) =>
       (raw as GamePlayCount[]).map((g, i) => ({
         rank: i + 1,

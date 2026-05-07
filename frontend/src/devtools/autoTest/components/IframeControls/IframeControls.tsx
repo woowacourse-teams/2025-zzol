@@ -66,7 +66,7 @@ const IframeControls = ({
         {updateBanner.active ? '배너 숨기기' : '업데이트 배너'}
       </S.UpdateBannerButton>
       <S.MockModeButton type="button" $active={mockMode.active} onClick={mockMode.onToggle}>
-        {mockMode.active ? 'Mock OFF' : 'Mock ON'}
+        {mockMode.active ? '대시보드 Mock OFF' : '대시보드 Mock ON'}
       </S.MockModeButton>
       {open && (
         <>

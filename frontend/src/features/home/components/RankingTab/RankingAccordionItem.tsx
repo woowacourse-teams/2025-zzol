@@ -1,6 +1,7 @@
 import useLazyFetch from '@/apis/rest/useLazyFetch';
 import RankingItem from '@/components/@common/RankingItem/RankingItem';
-import { useRef, useState } from 'react';
+import { useMockMode } from '@/hooks/useMockMode';
+import { useEffect, useRef, useState } from 'react';
 import type { RankingCategory } from '../../config/rankingConfigs';
 import * as S from './RankingTab.styled';
 
@@ -9,10 +10,16 @@ type Props = {
 };
 
 const RankingAccordionItem = ({ category }: Props) => {
+  const { mockEnabled } = useMockMode();
   const [isOpen, setIsOpen] = useState(false);
   const [openKey, setOpenKey] = useState(0);
   const [items, setItems] = useState<ReturnType<RankingCategory['transformData']>>([]);
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setItems([]);
+    setIsOpen(false);
+  }, [mockEnabled]);
 
   const handleTransitionEnd = () => {
     if (!isOpen || !bodyRef.current) return;
@@ -36,6 +43,13 @@ const RankingAccordionItem = ({ category }: Props) => {
   const handleToggle = async () => {
     if (isOpen) {
       setIsOpen(false);
+      return;
+    }
+
+    if (mockEnabled && category.mockRaw !== undefined) {
+      setItems(category.transformData(category.mockRaw));
+      setIsOpen(true);
+      setOpenKey((k) => k + 1);
       return;
     }
 

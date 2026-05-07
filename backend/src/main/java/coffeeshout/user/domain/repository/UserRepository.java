@@ -19,4 +19,6 @@ public interface UserRepository {
     Optional<User> findByUserCode(UserCode userCode);
 
     List<User> findAllByIds(List<Long> ids);
+
+    void softDeleteById(Long userId);
 }

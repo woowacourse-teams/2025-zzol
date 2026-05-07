@@ -20,28 +20,51 @@ const LowestProbabilitySlide = ({ players, probability }: Props) => {
       return;
     }
 
+    let cancelled = false;
     const target = Math.min(probability, 100);
-    const duration = 900;
+    const PHASE1_DURATION = 300;
+    const PHASE2_DURATION = 900;
     const start = performance.now();
 
     const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1);
-      if (progress >= 1) {
+      if (cancelled) return;
+
+      const elapsed = now - start;
+
+      if (elapsed >= PHASE1_DURATION + PHASE2_DURATION) {
         setDisplayPct(target);
         return;
       }
-      const eased = 1 - Math.pow(1 - progress, 5);
-      setDisplayPct(Math.round(100 - (100 - target) * eased));
+
+      let raw: number;
+      if (elapsed < PHASE1_DURATION) {
+        const p = elapsed / PHASE1_DURATION;
+        raw = 100 - 50 * p;
+      } else {
+        const p = (elapsed - PHASE1_DURATION) / PHASE2_DURATION;
+        const eased = 1 - Math.pow(1 - p, 3);
+        raw = 50 - (50 - target) * eased;
+      }
+
+      const snapped =
+        raw > Math.ceil(target) || Number.isInteger(target)
+          ? Math.round(raw)
+          : Math.round(raw * 10) / 10;
+      setDisplayPct(snapped);
       rafRef.current = requestAnimationFrame(tick);
     };
 
     rafRef.current = requestAnimationFrame(tick);
     return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      cancelled = true;
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
   }, [probability]);
 
-  const pct = Number.isInteger(displayPct) ? String(displayPct) : displayPct.toFixed(1);
+  const pct = displayPct.toFixed(1).replace(/\.0$/, '');
 
   return (
     <S.Card>

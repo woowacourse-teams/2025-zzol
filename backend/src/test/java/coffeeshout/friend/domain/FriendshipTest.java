@@ -44,7 +44,7 @@ class FriendshipTest {
 
             assertCoffeeShoutException(
                     () -> friendship.acceptBy(1L),
-                    FriendErrorCode.FRIEND_REQUEST_NOT_FOUND
+                    FriendErrorCode.FRIEND_REQUEST_FORBIDDEN
             );
         }
 
@@ -77,7 +77,7 @@ class FriendshipTest {
 
             assertCoffeeShoutException(
                     () -> friendship.validateRejectableBy(1L),
-                    FriendErrorCode.FRIEND_REQUEST_NOT_FOUND
+                    FriendErrorCode.FRIEND_REQUEST_FORBIDDEN
             );
         }
 

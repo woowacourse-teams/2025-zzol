@@ -9,6 +9,7 @@ import HomeTab from '../components/tabs/HomeTab/HomeTab';
 import RankingTab from '../components/RankingTab/RankingTab';
 import MenuTab from '../components/MenuTab/MenuTab';
 import Splash from '../components/Splash/Splash';
+import MockModeBanner from '@/components/@common/MockModeBanner/MockModeBanner';
 import * as S from './HomePage.styled';
 
 const HomePage = () => {
@@ -64,6 +65,7 @@ const HomePage = () => {
         {activeTab === 'ranking' && <RankingTab />}
         {activeTab === 'menu' && <MenuTab initialView={menuInitialView} />}
       </S.ScrollArea>
+      <MockModeBanner />
       <HomeBottomTab activeTab={activeTab} onTabChange={setActiveTab} />
     </S.PageContainer>
   );

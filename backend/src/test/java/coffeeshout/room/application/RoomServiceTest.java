@@ -68,7 +68,7 @@ class RoomServiceTest extends ServiceTest {
 
         @Test
         void joinCode_있으면_기존_플레이어와_중복되지_않는_닉네임을_생성한다() {
-            Room createdRoom = roomService.createRoom("호스트");
+            Room createdRoom = roomService.createRoom("호스트").room();
             joinGuest(createdRoom.getJoinCode(), "게스트1");
             joinGuest(createdRoom.getJoinCode(), "게스트2");
 
@@ -105,7 +105,7 @@ class RoomServiceTest extends ServiceTest {
 
         @Test
         void 비속어_게스트_닉네임으로_방_입장이_실패한다() {
-            Room createdRoom = roomService.createRoom("호스트");
+            Room createdRoom = roomService.createRoom("호스트").room();
 
             String joinCode = createdRoom.getJoinCode().getValue();
             assertCoffeeShoutException(
@@ -121,7 +121,7 @@ class RoomServiceTest extends ServiceTest {
         String hostName = "호스트짱";
 
         // when
-        Room room = roomService.createRoom(hostName);
+        Room room = roomService.createRoom(hostName).room();
 
         // then
         assertThat(room).isNotNull();
@@ -138,7 +138,7 @@ class RoomServiceTest extends ServiceTest {
         // given
         String hostName = "호스트";
         String guestName = "게스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         joinGuest(createdRoom.getJoinCode(), guestName);
 
         // when
@@ -165,7 +165,7 @@ class RoomServiceTest extends ServiceTest {
     void 방이_존재하는지_확인한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
 
         // when & then
@@ -177,7 +177,7 @@ class RoomServiceTest extends ServiceTest {
     void 중복된_이름의_플레이어가_존재하는지_확인한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
 
         PlayerName guestName = new PlayerName("게스트1");
@@ -192,7 +192,7 @@ class RoomServiceTest extends ServiceTest {
     void 룰렛을_돌려서_당첨자를_선택한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         joinGuest(createdRoom.getJoinCode(), "게스트1");
         joinGuest(createdRoom.getJoinCode(), "게스트2");
         ReflectionTestUtils.setField(createdRoom, "roomState", RoomState.ROULETTE);
@@ -209,7 +209,7 @@ class RoomServiceTest extends ServiceTest {
     void 미니게임의_점수를_반환한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
         joinGuest(joinCode, "게스트1");
         joinGuest(joinCode, "게스트2");
@@ -234,7 +234,7 @@ class RoomServiceTest extends ServiceTest {
     void 미니게임의_순위를_반환한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
         joinGuest(joinCode, "게스트1");
         joinGuest(joinCode, "게스트2");
@@ -256,7 +256,7 @@ class RoomServiceTest extends ServiceTest {
     void 선택된_미니게임의_목록을_반환한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
         joinGuest(joinCode, "게스트1");
         joinGuest(joinCode, "게스트2");
@@ -279,7 +279,7 @@ class RoomServiceTest extends ServiceTest {
         String hostName = "호스트";
 
         // when
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
 
         // then
@@ -300,7 +300,7 @@ class RoomServiceTest extends ServiceTest {
     void QR코드_상태를_조회한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         String joinCode = createdRoom.getJoinCode().getValue();
 
         // when

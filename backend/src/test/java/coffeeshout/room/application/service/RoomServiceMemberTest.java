@@ -38,7 +38,7 @@ class RoomServiceMemberTest extends ServiceTest {
 
         @Test
         void 요청_닉네임_무시하고_프로필_닉네임으로_방이_생성된다() {
-            final Room room = roomService.createRoom(엠제이_인증);
+            final Room room = roomService.createRoom(엠제이_인증).room();
 
             final Player host = room.findPlayer(new PlayerName("엠제이"));
 
@@ -54,7 +54,7 @@ class RoomServiceMemberTest extends ServiceTest {
 
         @Test
         void 요청_닉네임으로_방이_생성된다() {
-            final Room room = roomService.createRoom("익명호스트");
+            final Room room = roomService.createRoom("익명호스트").room();
 
             final Player host = room.findPlayer(new PlayerName("익명호스트"));
 

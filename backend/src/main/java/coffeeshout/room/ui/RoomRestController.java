@@ -1,14 +1,13 @@
 package coffeeshout.room.ui;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.websocket.auth.RoomSessionTokenService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.PlayerService;
+import coffeeshout.room.application.service.RoomCreateResult;
 import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.Playable;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
@@ -45,7 +44,6 @@ public class RoomRestController implements RoomApi {
 
     private final RoomService roomService;
     private final PlayerService playerService;
-    private final RoomSessionTokenService roomSessionTokenService;
 
     @GetMapping("/{joinCode}/miniGames/remaining")
     public ResponseEntity<RemainingMiniGameResponse> getRemainingMiniGames(@PathVariable String joinCode) {
@@ -59,14 +57,11 @@ public class RoomRestController implements RoomApi {
             @AuthUser Optional<AuthenticatedUser> authUser,
             @RequestBody(required = false) @Valid RoomEnterRequest request
     ) {
-        final Room room = authUser.isPresent()
+        final RoomCreateResult result = authUser.isPresent()
                 ? roomService.createRoom(authUser.get())
                 : roomService.createRoom(requirePlayerName(request));
 
-        final String hostName = room.getHost().getName().value();
-        final Long userId = authUser.map(AuthenticatedUser::userId).orElse(null);
-        final String token = roomSessionTokenService.issue(room.getJoinCode().getValue(), hostName, userId);
-        return ResponseEntity.ok(RoomCreateResponse.of(room, token));
+        return ResponseEntity.ok(RoomCreateResponse.of(result));
     }
 
     @PostMapping("/{joinCode}")
@@ -79,13 +74,8 @@ public class RoomRestController implements RoomApi {
                 ? roomService.enterRoomAsync(joinCode, authUser.get())
                 : roomService.enterRoomAsync(joinCode, requirePlayerName(request));
 
-        final Long userId = authUser.map(AuthenticatedUser::userId).orElse(null);
         return future
-                .thenApply(result -> {
-                    final String token = roomSessionTokenService.issue(
-                            result.room().getJoinCode().getValue(), result.playerName(), userId);
-                    return ResponseEntity.ok(RoomEnterResponse.of(result.room(), token));
-                })
+                .thenApply(result -> ResponseEntity.ok(RoomEnterResponse.of(result)))
                 .exceptionally(throwable -> {
                     final Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
                     if (cause instanceof RuntimeException runtimeException) {

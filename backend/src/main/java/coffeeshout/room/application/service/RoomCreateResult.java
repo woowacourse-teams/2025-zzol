@@ -2,5 +2,5 @@ package coffeeshout.room.application.service;
 
 import coffeeshout.room.domain.Room;
 
-public record RoomEnterResult(Room room, String playerName, String roomSessionToken) {
+public record RoomCreateResult(Room room, String roomSessionToken) {
 }

@@ -38,11 +38,11 @@ STOMP CONNECT 헤더 변경은 다음과 같다.
 |--------------------------------------------|-------------------------|
 | `joinCode: ABCD`                           | 제거                      |
 | `playerName: 홍길동`                          | 제거                      |
-| `Authorization: Bearer {accessToken}` (선택) | 유지 (선택)                 |
+| `Authorization: Bearer {accessToken}` (선택) | 서버에서 무시 (검증 제외)         |
 | —                                          | `roomToken: {RST}` (필수) |
 
 `StompPrincipalInterceptor`는 CONNECT 수신 시 RST를 검증하고, 클레임에서 `joinCode:playerName` Principal을 설정한다.
-로그인 사용자의 경우 `Authorization` 헤더가 함께 오면 Access Token도 검증하며, RST의 `userId`와 일치 여부를 확인한다.
+`Authorization` 헤더는 별도로 검증하지 않는다. RST 서명이 단일 인증 수단이며, `Authorization` 헤더와 RST의 `userId` 교차 검증은 우회 가능성(헤더 생략)이 있어 보안 효과가 미미하다고 판단해 제외했다.
 
 ## 고려한 대안
 
@@ -86,7 +86,7 @@ STOMP CONNECT 헤더 변경은 다음과 같다.
 
 ```json
 {
-  "playerName": "홍길동",
+  "joinCode": "ABCD",
   "roomSessionToken": "eyJhbGciOiJIUzI1NiJ9..."
 }
 ```
@@ -105,7 +105,6 @@ STOMP CONNECT 헤더 변경은 다음과 같다.
 
 변경 후:
   roomToken: {roomSessionToken}        ← 필수
-  Authorization: Bearer {accessToken}  ← 로그인 시만 포함
 ```
 
 #### 3. 재접속(reconnect) 처리

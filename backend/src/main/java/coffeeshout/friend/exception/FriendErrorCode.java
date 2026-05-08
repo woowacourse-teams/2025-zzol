@@ -15,10 +15,7 @@ public enum FriendErrorCode implements ErrorCode {
     FRIEND_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 친구 요청입니다."),
     FRIEND_REQUEST_INVALID_STATE(HttpStatus.CONFLICT, "처리할 수 없는 상태의 친구 요청입니다."),
     NOT_FRIEND(HttpStatus.FORBIDDEN, "친구 관계가 아닌 사용자입니다."),
-    FRIEND_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 친구 요청을 처리할 권한이 없습니다."),
-    ROOM_INVITATION_NOT_LOBBY(HttpStatus.BAD_REQUEST, "방이 로비 상태일 때만 초대할 수 있습니다."),
-    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 방입니다."),
-    INVITER_NOT_IN_ROOM(HttpStatus.FORBIDDEN, "방에 참여 중인 사용자만 초대할 수 있습니다.");
+    FRIEND_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 친구 요청을 처리할 권한이 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

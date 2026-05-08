@@ -7,6 +7,7 @@ import coffeeshout.friend.exception.FriendErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
@@ -32,7 +33,7 @@ public class RoomInvitationService {
         validateUserExists(targetUserId);
 
         final Room room = roomRepository.findByJoinCode(new JoinCode(rawJoinCode))
-                .orElseThrow(() -> new BusinessException(FriendErrorCode.ROOM_NOT_FOUND, "존재하지 않는 방입니다."));
+                .orElseThrow(() -> new BusinessException(RoomErrorCode.ROOM_NOT_FOUND, "존재하지 않는 방입니다."));
 
         validateRoomIsLobby(room);
         validateInviterInRoom(room, inviterUserId);
@@ -50,7 +51,7 @@ public class RoomInvitationService {
 
     private void validateRoomIsLobby(Room room) {
         if (!room.isReadyState()) {
-            throw new BusinessException(FriendErrorCode.ROOM_INVITATION_NOT_LOBBY, "방이 로비 상태일 때만 초대할 수 있습니다.");
+            throw new BusinessException(RoomErrorCode.ROOM_NOT_READY_TO_JOIN, "방이 로비 상태일 때만 초대할 수 있습니다.");
         }
     }
 
@@ -58,7 +59,7 @@ public class RoomInvitationService {
         final boolean inRoom = room.getPlayers().stream()
                 .anyMatch(player -> inviterUserId.equals(player.getUserId()));
         if (!inRoom) {
-            throw new BusinessException(FriendErrorCode.INVITER_NOT_IN_ROOM, "방에 참여 중인 사용자만 초대할 수 있습니다.");
+            throw new BusinessException(RoomErrorCode.INVITER_NOT_IN_ROOM, "방에 참여 중인 사용자만 초대할 수 있습니다.");
         }
     }
 

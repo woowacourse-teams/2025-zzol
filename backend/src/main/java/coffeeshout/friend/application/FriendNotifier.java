@@ -89,8 +89,12 @@ public class FriendNotifier {
     }
 
     private void sendToUser(Long userId, String destination, Object payload) {
-        final String principal = UserPrincipal.of(userId);
-        messagingTemplate.convertAndSendToUser(principal, destination, WebSocketResponse.success(payload));
-        log.debug("STOMP 개인 알림 전송: userId={}, destination={}", userId, destination);
+        try {
+            final String principal = UserPrincipal.of(userId);
+            messagingTemplate.convertAndSendToUser(principal, destination, WebSocketResponse.success(payload));
+            log.debug("STOMP 개인 알림 전송: userId={}, destination={}", userId, destination);
+        } catch (Exception e) {
+            log.warn("STOMP 개인 알림 전송 실패: userId={}, destination={}, 원인={}", userId, destination, e.getMessage());
+        }
     }
 }

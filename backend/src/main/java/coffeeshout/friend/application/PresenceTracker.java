@@ -23,13 +23,20 @@ public class PresenceTracker {
 
     private final Map<Long, AtomicInteger> sessionCounts = new ConcurrentHashMap<>();
     private final Map<Long, ScheduledFuture<?>> pendingOffline = new ConcurrentHashMap<>();
-    private final ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+    private final ScheduledThreadPoolExecutor scheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final long gracePeriodSeconds;
 
     public PresenceTracker(ApplicationEventPublisher eventPublisher, FriendPresenceProperties properties) {
         this.eventPublisher = eventPublisher;
         this.gracePeriodSeconds = properties.gracePeriodSeconds();
+        this.scheduler = new ScheduledThreadPoolExecutor(1);
+        this.scheduler.setRemoveOnCancelPolicy(true);
+    }
+
+    @jakarta.annotation.PreDestroy
+    public void shutdown() {
+        scheduler.shutdown();
     }
 
     @EventListener
@@ -93,13 +100,6 @@ public class PresenceTracker {
     }
 
     private Long extractUserId(Principal principal) {
-        if (principal == null || !principal.getName().startsWith(UserPrincipal.PREFIX)) {
-            return null;
-        }
-        try {
-            return Long.parseLong(principal.getName().substring(UserPrincipal.PREFIX.length()));
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        return UserPrincipal.extractUserId(principal);
     }
 }

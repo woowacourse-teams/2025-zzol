@@ -13,4 +13,15 @@ public final class UserPrincipal {
         Objects.requireNonNull(userId, "userId는 null일 수 없습니다.");
         return PREFIX + userId;
     }
+
+    public static Long extractUserId(java.security.Principal principal) {
+        if (principal == null || !principal.getName().startsWith(PREFIX)) {
+            return null;
+        }
+        try {
+            return Long.parseLong(principal.getName().substring(PREFIX.length()));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 }

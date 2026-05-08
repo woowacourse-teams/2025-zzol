@@ -118,6 +118,28 @@ class FriendSearchServiceTest extends ServiceTest {
         }
 
         @Test
+        void 내가_요청한_PENDING은_PENDING_OUTGOING으로_반환된다() {
+            friendshipRepository.save(FriendshipFixture.pending(me.getId(), other.getId()));
+
+            final List<UserSearchResult> results = friendSearchService.searchByNickname(
+                    me.getId(), other.getNickname().value()
+            );
+
+            assertThat(results.get(0).relationStatus()).isEqualTo(RelationStatus.PENDING_OUTGOING);
+        }
+
+        @Test
+        void 상대가_요청한_PENDING은_PENDING_INCOMING으로_반환된다() {
+            friendshipRepository.save(FriendshipFixture.pending(other.getId(), me.getId()));
+
+            final List<UserSearchResult> results = friendSearchService.searchByNickname(
+                    me.getId(), other.getNickname().value()
+            );
+
+            assertThat(results.get(0).relationStatus()).isEqualTo(RelationStatus.PENDING_INCOMING);
+        }
+
+        @Test
         void 존재하는_닉네임으로_검색하면_결과를_반환한다() {
             final List<UserSearchResult> results = friendSearchService.searchByNickname(
                     me.getId(), other.getNickname().value()

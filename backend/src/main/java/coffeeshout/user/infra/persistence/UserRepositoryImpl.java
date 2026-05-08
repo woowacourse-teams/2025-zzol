@@ -79,15 +79,7 @@ public class UserRepositoryImpl implements UserRepository {
         if (ids.isEmpty()) {
             return List.of();
         }
-        final List<UserEntity> users = userJpaRepository.findAllById(ids);
-        final Map<Long, OAuthAccountEntity> oauthByUserId = oAuthAccountJpaRepository
-                .findAllByUser_IdIn(ids).stream()
-                .collect(Collectors.toMap(o -> o.getUser().getId(), o -> o));
-        return users.stream()
-                .flatMap(u -> Optional.ofNullable(oauthByUserId.get(u.getId()))
-                        .map(u::toDomain)
-                        .stream())
-                .toList();
+        return toDomains(userJpaRepository.findAllById(ids));
     }
 
     @Override
@@ -113,6 +105,10 @@ public class UserRepositoryImpl implements UserRepository {
         if (users.isEmpty()) {
             return List.of();
         }
+        return toDomains(users);
+    }
+
+    private List<User> toDomains(List<UserEntity> users) {
         final List<Long> userIds = users.stream().map(UserEntity::getId).toList();
         final Map<Long, OAuthAccountEntity> oauthByUserId = oAuthAccountJpaRepository
                 .findAllByUser_IdIn(userIds).stream()

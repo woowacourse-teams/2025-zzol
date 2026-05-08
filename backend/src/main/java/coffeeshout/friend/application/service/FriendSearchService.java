@@ -45,7 +45,8 @@ public class FriendSearchService {
         final Map<Long, Friendship> friendshipByUserId = friendshipRepository.findAllBetween(myId, userIds).stream()
                 .collect(java.util.stream.Collectors.toMap(
                         f -> f.counterpartOf(myId),
-                        f -> f
+                        f -> f,
+                        (a, b) -> a
                 ));
         return users.stream()
                 .map(user -> new UserSearchResult(user, determineRelationStatus(myId, Optional.ofNullable(friendshipByUserId.get(user.getId())))))

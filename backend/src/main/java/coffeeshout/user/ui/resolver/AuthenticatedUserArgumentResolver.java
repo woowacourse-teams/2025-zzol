@@ -1,6 +1,8 @@
 package coffeeshout.user.ui.resolver;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.user.exception.UserErrorCode;
 import java.util.Optional;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
@@ -16,8 +18,9 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterType().equals(Optional.class)
-               && parameter.hasParameterAnnotation(AuthUser.class);
+        return parameter.hasParameterAnnotation(AuthUser.class)
+               && (parameter.getParameterType().equals(Optional.class)
+                   || parameter.getParameterType().equals(AuthenticatedUser.class));
     }
 
     @Override
@@ -28,9 +31,19 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
             WebDataBinderFactory binderFactory
     ) {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof AuthenticatedUser user)) {
+        final boolean isAuthenticated = authentication != null
+                && authentication.getPrincipal() instanceof AuthenticatedUser;
+
+        if (parameter.getParameterType().equals(AuthenticatedUser.class)) {
+            if (!isAuthenticated) {
+                throw new BusinessException(UserErrorCode.UNAUTHORIZED, "인증이 필요합니다.");
+            }
+            return (AuthenticatedUser) authentication.getPrincipal();
+        }
+
+        if (!isAuthenticated) {
             return Optional.empty();
         }
-        return Optional.of(user);
+        return Optional.of((AuthenticatedUser) authentication.getPrincipal());
     }
 }

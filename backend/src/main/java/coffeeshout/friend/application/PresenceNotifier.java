@@ -1,9 +1,8 @@
 package coffeeshout.friend.application;
 
 import coffeeshout.friend.application.dto.PresencePayload;
-import coffeeshout.friend.domain.Friendship;
+import coffeeshout.friend.application.service.FriendshipService;
 import coffeeshout.friend.domain.event.PresenceChangedEvent;
-import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.global.websocket.UserPrincipal;
 import coffeeshout.global.websocket.ui.WebSocketResponse;
@@ -23,7 +22,7 @@ public class PresenceNotifier {
     private static final String PRESENCE_QUEUE = "/queue/friends/presence";
     private static final String PRESENCE_SUBSCRIBE_DEST = "/user/queue/friends/presence";
 
-    private final FriendshipRepository friendshipRepository;
+    private final FriendshipService friendshipService;
     private final LoggingSimpMessagingTemplate messagingTemplate;
     private final PresenceTracker presenceTracker;
 
@@ -32,9 +31,8 @@ public class PresenceNotifier {
     public void onPresenceChanged(PresenceChangedEvent event) {
         final PresencePayload payload = new PresencePayload(event.userId(), event.online());
 
-        friendshipRepository.findAcceptedOf(event.userId()).forEach(friendship -> {
+        friendshipService.findAcceptedFriendIds(event.userId()).forEach(friendId -> {
             try {
-                final Long friendId = friendship.counterpartOf(event.userId());
                 messagingTemplate.convertAndSendToUser(
                         UserPrincipal.of(friendId), PRESENCE_QUEUE, WebSocketResponse.success(payload)
                 );
@@ -61,10 +59,9 @@ public class PresenceNotifier {
             return;
         }
 
-        friendshipRepository.findAcceptedOf(userId).stream()
-                .filter(f -> presenceTracker.isOnline(f.counterpartOf(userId)))
-                .forEach(f -> {
-                    final Long friendId = f.counterpartOf(userId);
+        friendshipService.findAcceptedFriendIds(userId).stream()
+                .filter(presenceTracker::isOnline)
+                .forEach(friendId -> {
                     try {
                         messagingTemplate.convertAndSendToUser(
                                 UserPrincipal.of(userId),

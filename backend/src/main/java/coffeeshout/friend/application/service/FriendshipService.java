@@ -105,6 +105,13 @@ public class FriendshipService {
     }
 
     @Transactional(readOnly = true)
+    public List<Long> findAcceptedFriendIds(Long userId) {
+        return friendshipRepository.findAcceptedOf(userId).stream()
+                .map(f -> f.counterpartOf(userId))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<FriendWithUser> findFriends(Long userId) {
         final List<Friendship> friendships = friendshipRepository.findAcceptedOf(userId);
         final List<Long> counterpartIds = friendships.stream().map(f -> f.counterpartOf(userId)).toList();

@@ -7,10 +7,10 @@ import { friendsApi } from '@/features/friends/api/friendsApi';
 import { useFriends } from '@/features/friends/hooks/useFriends';
 import { ReceivedRequest } from '@/features/friends/types';
 import { theme } from '@/styles/theme';
+import FriendRow from './FriendRow';
 
 const getErrorCode = (err: unknown): string | undefined =>
   err instanceof ApiError ? (err.data as { errorCode?: string } | null)?.errorCode : undefined;
-import FriendRow from './FriendRow';
 
 const RequestItem = ({ request }: { request: ReceivedRequest }) => {
   const { showToast } = useToast();

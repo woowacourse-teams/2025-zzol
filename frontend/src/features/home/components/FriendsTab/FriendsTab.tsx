@@ -34,6 +34,7 @@ const FriendsTab = () => {
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchIdRef = useRef(0);
 
   const doSearch = useCallback(async (query: string, mode: SearchMode) => {
     if (!query.trim()) {
@@ -42,17 +43,18 @@ const FriendsTab = () => {
     }
     if (mode === '유저코드' && query.trim().length !== 5) return;
 
+    const id = ++searchIdRef.current;
     try {
       setSearchLoading(true);
       const results =
         mode === '닉네임'
           ? await friendsApi.searchByNickname(query.trim())
           : await friendsApi.searchByUserCode(query.trim());
-      setSearchResults(results);
+      if (id === searchIdRef.current) setSearchResults(results);
     } catch {
-      setSearchResults([]);
+      if (id === searchIdRef.current) setSearchResults([]);
     } finally {
-      setSearchLoading(false);
+      if (id === searchIdRef.current) setSearchLoading(false);
     }
   }, []);
 

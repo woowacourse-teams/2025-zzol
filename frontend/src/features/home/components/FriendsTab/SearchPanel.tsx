@@ -29,6 +29,10 @@ const ActionButton = ({ user, onRelationChange }: ActionProps) => {
   const [localStatus, setLocalStatus] = useState<RelationStatus>(user.relationStatus);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    setLocalStatus(user.relationStatus);
+  }, [user.relationStatus]);
+
   const incomingRequest = receivedRequests.find((r) => r.userId === user.userId);
 
   const handleSendRequest = async () => {

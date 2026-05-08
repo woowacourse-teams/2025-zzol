@@ -36,7 +36,7 @@ class SpeedTouchGameIntegrationTest extends WebSocketIntegrationTestSupport {
         game = new SpeedTouchGame();
         room.addMiniGame(new PlayerName(host.getName().value()), game);
         roomRepository.save(room);
-        session = createSession(joinCode.getValue(), host.getName().value());
+        session = createSession(joinCode, host.getName());
     }
 
     @Test

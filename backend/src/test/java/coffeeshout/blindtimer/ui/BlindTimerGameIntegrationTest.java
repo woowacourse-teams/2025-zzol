@@ -36,7 +36,7 @@ class BlindTimerGameIntegrationTest extends WebSocketIntegrationTestSupport {
         game = new BlindTimerGame(Duration.ofSeconds(10));
         room.addMiniGame(new PlayerName(host.getName().value()), game);
         roomRepository.save(room);
-        session = createSession(joinCode.getValue(), host.getName().value());
+        session = createSession(joinCode, host.getName());
     }
 
     @Test

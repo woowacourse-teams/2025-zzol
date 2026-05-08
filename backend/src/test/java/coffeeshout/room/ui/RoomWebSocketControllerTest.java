@@ -68,7 +68,7 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
             });
         });
 
-        session = createSession(joinCode.getValue(), host.getName().value());
+        session = createSession(joinCode, host.getName());
     }
 
     @Test

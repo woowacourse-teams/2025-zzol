@@ -4,6 +4,8 @@ import static org.skyscreamer.jsonassert.JSONCompareMode.LENIENT;
 
 import coffeeshout.global.MessageResponse;
 import coffeeshout.global.websocket.auth.RoomSessionTokenService;
+import coffeeshout.room.domain.JoinCode;
+import coffeeshout.room.domain.player.PlayerName;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -62,6 +64,11 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
     protected TestStompSession createSession() throws InterruptedException, ExecutionException, TimeoutException {
         final String token = roomSessionTokenService.issue(SMOKE_JOIN_CODE, SMOKE_PLAYER_NAME, null);
         return createSessionWithRoomToken(token);
+    }
+
+    protected TestStompSession createSession(JoinCode joinCode, PlayerName playerName)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        return createSession(joinCode.getValue(), playerName.value());
     }
 
     protected TestStompSession createSession(String joinCode, String playerName)

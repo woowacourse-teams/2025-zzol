@@ -101,6 +101,8 @@ tracing:
     probability: 1.0
 
 websocket:
+  room-session-token:
+    secret: "test-room-session-token-secret-key-must-be-at-least-256-bits-long"
   recovery:
     max-length: 100
     stream-ttl-seconds: 3600

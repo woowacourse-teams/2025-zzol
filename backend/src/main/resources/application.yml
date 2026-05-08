@@ -196,6 +196,10 @@ user:
   oauth:
     frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI}
 
+websocket:
+  room-session-token:
+    secret: ${ROOM_SESSION_TOKEN_SECRET}
+
 room:
   removalDelay: 1h
   qr:

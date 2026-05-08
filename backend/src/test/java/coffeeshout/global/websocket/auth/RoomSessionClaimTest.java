@@ -43,6 +43,24 @@ class RoomSessionClaimTest {
     }
 
     @Nested
+    class ofAnonymous_생성_실패 {
+
+        @Test
+        void joinCode가_null이면_예외가_발생한다() {
+            assertThatThrownBy(() -> RoomSessionClaim.ofAnonymous(null, "홍길동"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("joinCode");
+        }
+
+        @Test
+        void playerName이_null이면_예외가_발생한다() {
+            assertThatThrownBy(() -> RoomSessionClaim.ofAnonymous("ABCD", null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("playerName");
+        }
+    }
+
+    @Nested
     class 생성_실패 {
 
         @Test

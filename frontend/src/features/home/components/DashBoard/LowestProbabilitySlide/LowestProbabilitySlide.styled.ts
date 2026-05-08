@@ -75,11 +75,14 @@ export const ProbSection = styled.div`
 `;
 
 export const BigProb = styled.span`
+  display: block;
+  min-width: 2.8em;
   font-size: 44px;
   font-weight: 900;
   color: ${({ theme }) => theme.color.white};
   letter-spacing: -0.05em;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 `;
 
 export const ProbLabel = styled.span`

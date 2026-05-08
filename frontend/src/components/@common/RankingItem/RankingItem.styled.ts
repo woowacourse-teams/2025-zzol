@@ -21,7 +21,8 @@ export const RankNumber = styled.div<Props>`
   width: 35px;
   height: 35px;
   border-radius: 12px;
-  background-color: ${({ $rank }) => rankColorMap[$rank as RankColorKey] ?? '#ffffff'};
+  background-color: ${({ $rank, theme }) =>
+    rankColorMap[$rank as RankColorKey] ?? theme.color.white};
   flex-shrink: 0;
 `;
 

@@ -1,29 +1,20 @@
-import useFetch from '@/apis/rest/useFetch';
-import type { TopWinner, LowestProbabilityWinner, GamePlayCount } from '@/types/dashBoard';
+import { useDashboardData } from '../../hooks/useDashboardData';
 import TopWinnersSlide from './TopWinnersSlide/TopWinnersSlide';
 import LowestProbabilitySlide from './LowestProbabilitySlide/LowestProbabilitySlide';
 import GamePlayCountSlide from './GamePlayCountSlide/GamePlayCountSlide';
 import * as S from './DashBoard.styled';
 
 const DashBoard = () => {
-  const { data: topWinners } = useFetch<TopWinner[]>({
-    endpoint: '/dashboard/top-winners',
-  });
-  const { data: lowestProbabilityWinner } = useFetch<LowestProbabilityWinner>({
-    endpoint: '/dashboard/lowest-probability-winner',
-  });
-  const { data: gamePlayCounts } = useFetch<GamePlayCount[]>({
-    endpoint: '/dashboard/game-play-counts',
-  });
+  const { topWinners, lowestProbabilityWinner, gamePlayCounts } = useDashboardData();
 
   return (
     <S.Container>
-      <TopWinnersSlide winners={topWinners || []} displayCount={5} />
+      <TopWinnersSlide winners={topWinners} displayCount={5} />
       <LowestProbabilitySlide
-        players={lowestProbabilityWinner?.players || []}
-        probability={lowestProbabilityWinner?.probability || 0}
+        players={lowestProbabilityWinner?.players ?? []}
+        probability={lowestProbabilityWinner?.probability ?? 0}
       />
-      <GamePlayCountSlide games={gamePlayCounts || []} />
+      <GamePlayCountSlide games={gamePlayCounts} />
     </S.Container>
   );
 };

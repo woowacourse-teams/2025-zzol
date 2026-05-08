@@ -131,6 +131,22 @@ export const UpdateBannerButton = styled.button<UpdateBannerButtonProps>`
   }
 `;
 
+export const MockModeButton = styled.button<{ $active: boolean }>`
+  appearance: none;
+  border: 1px solid ${({ $active }) => ($active ? '#22c55e' : 'rgba(0, 0, 0, 0.12)')};
+  background: ${({ $active }) => ($active ? '#22c55e' : '#ffffff')};
+  color: ${({ $active }) => ($active ? '#ffffff' : '#222')};
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: ${({ $active }) => ($active ? '#16a34a' : '#f6f6f6')};
+  }
+`;
+
 type GameSelectionContainerProps = {
   $isExpanded: boolean;
 };

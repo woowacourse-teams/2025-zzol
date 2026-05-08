@@ -52,7 +52,7 @@ const HomePage = () => {
         </p>
       </S.VisuallyHidden>
       <HomeHeader />
-      <S.ScrollArea>
+      <S.ScrollArea data-scroll-container>
         {activeTab === 'home' && (
           <HomeTab
             onNavigateToPatchNotes={() => {

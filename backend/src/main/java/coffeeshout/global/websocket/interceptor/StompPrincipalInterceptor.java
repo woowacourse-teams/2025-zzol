@@ -1,9 +1,10 @@
 package coffeeshout.global.websocket.interceptor;
 
-import coffeeshout.global.exception.custom.CoffeeShoutException;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.websocket.PlayerKey;
-import coffeeshout.user.application.service.AuthTokenService;
-import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.global.websocket.auth.RoomSessionClaim;
+import coffeeshout.global.websocket.auth.RoomSessionTokenErrorCode;
+import coffeeshout.global.websocket.auth.RoomSessionTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -19,48 +20,27 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class StompPrincipalInterceptor implements ChannelInterceptor {
 
-    private static final String BEARER_PREFIX = "Bearer ";
-
-    private final AuthTokenService authTokenService;
+    private final RoomSessionTokenService roomSessionTokenService;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        final StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
         if (accessor == null || accessor.getCommand() != StompCommand.CONNECT) {
             return message;
         }
 
-        String joinCode = accessor.getFirstNativeHeader("joinCode");
-        String playerName = accessor.getFirstNativeHeader("playerName");
-
-        String userName;
-        if (joinCode == null || playerName == null) {
-            log.warn("STOMP CONNECT 헤더 누락으로 sessionId를 Principal로 사용: sessionId={}", accessor.getSessionId());
-            userName = accessor.getSessionId();
-        } else {
-            userName = PlayerKey.of(joinCode, playerName).toString();
+        final String roomToken = accessor.getFirstNativeHeader("roomToken");
+        if (roomToken == null) {
+            throw new BusinessException(RoomSessionTokenErrorCode.ROOM_TOKEN_MISSING, "roomToken 헤더가 없습니다.");
         }
 
-        verifyTokenIfPresent(accessor);
+        final RoomSessionClaim claim = roomSessionTokenService.verify(roomToken);
+        final String userName = PlayerKey.of(claim.joinCode(), claim.playerName()).toString();
 
         accessor.setUser(() -> userName);
         log.debug("STOMP Principal 설정: {}", userName);
 
         return message;
-    }
-
-    private void verifyTokenIfPresent(StompHeaderAccessor accessor) {
-        final String authorization = accessor.getFirstNativeHeader("Authorization");
-        if (authorization == null || !authorization.startsWith(BEARER_PREFIX)) {
-            return;
-        }
-        final String token = authorization.substring(BEARER_PREFIX.length());
-        try {
-            final AuthenticatedUser user = authTokenService.verify(token);
-            log.debug("STOMP 인증 성공: userId={}", user.userId());
-        } catch (CoffeeShoutException e) {
-            log.warn("STOMP Access Token 검증 실패: {}", e.getMessage());
-        }
     }
 }

@@ -196,10 +196,6 @@ user:
   oauth:
     frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI}
 
-websocket:
-  room-session-token:
-    secret: ${ROOM_SESSION_TOKEN_SECRET}
-
 room:
   removalDelay: 1h
   qr:
@@ -332,6 +328,8 @@ resilience4j:
         limit-refresh-period: 60s
         timeout-duration: 30s
 websocket:
+  room-session-token:
+    secret: ${ROOM_SESSION_TOKEN_SECRET}
   rate-limit:
     max-messages-per-second: 20
   recovery:

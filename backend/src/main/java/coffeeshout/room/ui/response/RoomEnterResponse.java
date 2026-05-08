@@ -1,12 +1,10 @@
 package coffeeshout.room.ui.response;
 
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 
-public record RoomEnterResponse(String joinCode) {
+public record RoomEnterResponse(String joinCode, String roomSessionToken) {
 
-    public static RoomEnterResponse from(Room room) {
-        JoinCode joinCode = room.getJoinCode();
-        return new RoomEnterResponse(joinCode.getValue());
+    public static RoomEnterResponse of(Room room, String roomSessionToken) {
+        return new RoomEnterResponse(room.getJoinCode().getValue(), roomSessionToken);
     }
 }

@@ -1,8 +1,10 @@
 package coffeeshout.room.ui;
 
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.websocket.auth.RoomSessionTokenService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.PlayerService;
+import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.Playable;
@@ -43,6 +45,7 @@ public class RoomRestController implements RoomApi {
 
     private final RoomService roomService;
     private final PlayerService playerService;
+    private final RoomSessionTokenService roomSessionTokenService;
 
     @GetMapping("/{joinCode}/miniGames/remaining")
     public ResponseEntity<RemainingMiniGameResponse> getRemainingMiniGames(@PathVariable String joinCode) {
@@ -60,7 +63,10 @@ public class RoomRestController implements RoomApi {
                 ? roomService.createRoom(authUser.get())
                 : roomService.createRoom(requirePlayerName(request));
 
-        return ResponseEntity.ok(RoomCreateResponse.from(room));
+        final String hostName = room.getHost().getName().value();
+        final Long userId = authUser.map(AuthenticatedUser::userId).orElse(null);
+        final String token = roomSessionTokenService.issue(room.getJoinCode().getValue(), hostName, userId);
+        return ResponseEntity.ok(RoomCreateResponse.of(room, token));
     }
 
     @PostMapping("/{joinCode}")
@@ -69,12 +75,17 @@ public class RoomRestController implements RoomApi {
             @AuthUser Optional<AuthenticatedUser> authUser,
             @RequestBody(required = false) @Valid RoomEnterRequest request
     ) {
-        final CompletableFuture<Room> future = authUser.isPresent()
+        final CompletableFuture<RoomEnterResult> future = authUser.isPresent()
                 ? roomService.enterRoomAsync(joinCode, authUser.get())
                 : roomService.enterRoomAsync(joinCode, requirePlayerName(request));
 
+        final Long userId = authUser.map(AuthenticatedUser::userId).orElse(null);
         return future
-                .thenApply(room -> ResponseEntity.ok(RoomEnterResponse.from(room)))
+                .thenApply(result -> {
+                    final String token = roomSessionTokenService.issue(
+                            result.room().getJoinCode().getValue(), result.playerName(), userId);
+                    return ResponseEntity.ok(RoomEnterResponse.of(result.room(), token));
+                })
                 .exceptionally(throwable -> {
                     final Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
                     if (cause instanceof RuntimeException runtimeException) {

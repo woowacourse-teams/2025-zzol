@@ -10,11 +10,10 @@ import coffeeshout.global.websocket.event.session.SessionRegisteredEvent;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.service.RoomQueryService;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
@@ -39,28 +38,23 @@ public class SessionConnectEventListener {
     @EventListener
     public void handleSessionConnected(SessionConnectedEvent event) {
         final String sessionId = event.getMessage().getHeaders().get("simpSessionId", String.class);
+        final Principal principal = event.getUser();
 
-        // simpConnectMessage에서 원래 CONNECT 메시지 가져오기
-        final Message<?> connectMessage = (Message<?>) event.getMessage().getHeaders().get("simpConnectMessage");
-
-        if (connectMessage == null) {
-            log.warn("simpConnectMessage가 없음: sessionId={}", sessionId);
+        if (principal == null) {
+            log.warn("Principal 없음 — roomToken 미검증 연결: sessionId={}", sessionId);
             return;
         }
 
-        final StompHeaderAccessor accessor = StompHeaderAccessor.wrap(connectMessage);
-        final String joinCode = accessor.getFirstNativeHeader("joinCode");
-        final String playerName = accessor.getFirstNativeHeader("playerName");
-
-        log.info("웹소켓 연결 완료: sessionId={}, joinCode={}, playerName={}", sessionId, joinCode, playerName);
-
-        // 헤더 정보 검증
-        if (joinCode == null || playerName == null) {
-            log.warn("헤더 정보 누락: sessionId={}, joinCode={}, playerName={}", sessionId, joinCode, playerName);
+        final String playerKey = principal.getName();
+        if (!PlayerKey.isValid(playerKey)) {
+            log.warn("유효하지 않은 Principal 형식: sessionId={}, principal={}", sessionId, playerKey);
             return;
         }
 
-        processPlayerConnection(sessionId, joinCode, playerName);
+        final PlayerKey parsed = PlayerKey.parse(playerKey);
+        log.info("웹소켓 연결 완료: sessionId={}, joinCode={}, playerName={}", sessionId, parsed.joinCode(), parsed.playerName());
+
+        processPlayerConnection(sessionId, parsed.joinCode(), parsed.playerName());
         webSocketMetricService.completeConnection(sessionId);
     }
 

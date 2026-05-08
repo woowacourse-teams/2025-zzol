@@ -87,7 +87,7 @@ STOMP CONNECT 헤더 변경은 다음과 같다.
 ```json
 {
   "joinCode": "ABCD",
-  "roomSessionToken": "eyJhbGciOiJIUzI1NiJ9..."
+  "roomSessionToken": "<ROOM_SESSION_TOKEN_JWT>"
 }
 ```
 

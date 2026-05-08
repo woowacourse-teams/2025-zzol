@@ -18,6 +18,7 @@ class StompPrincipalInterceptorTest extends WebSocketIntegrationTestSupport {
             final TestStompSession session = createSession("ABCD", "홍길동");
 
             assertThat(session.isConnected()).isTrue();
+            assertThat(session.getPrincipalName()).isEqualTo("ABCD:홍길동");
 
             session.disconnect();
         }

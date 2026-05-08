@@ -113,9 +113,15 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
         final StompHeaders connectHeaders = new StompHeaders();
         connectHeaders.add("roomToken", roomToken);
 
+        final String[] principalHolder = new String[1];
         final StompSession session = stompClient
                 .connectAsync(
                         url, new WebSocketHttpHeaders(), connectHeaders, new StompSessionHandlerAdapter() {
+
+                            @Override
+                            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                                principalHolder[0] = connectedHeaders.getFirst("user-name");
+                            }
 
                             @Override
                             public void handleTransportError(StompSession session, Throwable exception) {
@@ -137,7 +143,9 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
                         }
                 )
                 .get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        return new TestStompSession(session, objectMapper);
+        final TestStompSession testSession = new TestStompSession(session, objectMapper);
+        testSession.setPrincipalName(principalHolder[0]);
+        return testSession;
     }
 
     protected void assertMessage(MessageResponse response, String payload) throws JSONException {

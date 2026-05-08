@@ -102,6 +102,19 @@ const AccountSection = () => {
                 </S.NicknameRow>
               )}
               <S.Provider>{PROVIDER_LABEL[user.provider] ?? user.provider}</S.Provider>
+              <S.UserCodeRow>
+                <S.UserCode># {user.userCode}</S.UserCode>
+                <S.CopyButton
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(user.userCode);
+                    showToast({ message: '유저코드가 복사되었습니다', type: 'success' });
+                  }}
+                  aria-label="유저코드 복사"
+                >
+                  복사
+                </S.CopyButton>
+              </S.UserCodeRow>
             </S.UserInfo>
             {!isEditing && (
               <S.LogoutButton type="button" onClick={() => logout()}>

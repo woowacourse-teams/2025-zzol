@@ -29,6 +29,24 @@ export const TabButton = styled.button<{ $active: boolean }>`
   }
 `;
 
+export const IconWrap = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+export const TabBadge = styled.div`
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.color.point[400]};
+  border: 2px solid ${({ theme }) => theme.color.white};
+`;
+
 export const TabLabel = styled.span<{ $active: boolean }>`
   font-size: 10px;
   font-weight: ${({ $active }) => ($active ? 600 : 500)};

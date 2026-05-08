@@ -149,6 +149,36 @@ export const Provider = styled.span`
   color: ${({ theme }) => theme.color.gray[400]};
 `;
 
+export const UserCodeRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+`;
+
+export const UserCode = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.color.gray[500]};
+  letter-spacing: 0.04em;
+`;
+
+export const CopyButton = styled.button`
+  padding: 1px 7px;
+  border: 1px solid ${({ theme }) => theme.color.gray[200]};
+  border-radius: 5px;
+  background: transparent;
+  color: ${({ theme }) => theme.color.gray[400]};
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:active {
+    background: ${({ theme }) => theme.color.gray[50]};
+  }
+`;
+
 export const LogoutButton = styled.button`
   padding: 7px 14px;
   border: 1px solid ${({ theme }) => theme.color.gray[200]};

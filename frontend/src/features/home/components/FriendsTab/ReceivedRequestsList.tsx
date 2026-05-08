@@ -15,11 +15,11 @@ const getErrorCode = (err: unknown): string | undefined =>
 const RequestItem = ({ request }: { request: ReceivedRequest }) => {
   const { showToast } = useToast();
   const { removeReceivedRequest, addFriend } = useFriends();
-  const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<'accept' | 'reject' | null>(null);
 
   const handleAccept = async () => {
     try {
-      setLoading(true);
+      setLoadingAction('accept');
       const result = await friendsApi.acceptRequest(request.requestId);
       addFriend({
         userId: result.friendUserId,
@@ -42,13 +42,13 @@ const RequestItem = ({ request }: { request: ReceivedRequest }) => {
         showToast({ message: '수락에 실패했습니다', type: 'error' });
       }
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleReject = async () => {
     try {
-      setLoading(true);
+      setLoadingAction('reject');
       await friendsApi.rejectRequest(request.requestId);
       removeReceivedRequest(request.requestId);
     } catch (err) {
@@ -63,7 +63,7 @@ const RequestItem = ({ request }: { request: ReceivedRequest }) => {
         showToast({ message: '거절에 실패했습니다', type: 'error' });
       }
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
@@ -76,7 +76,7 @@ const RequestItem = ({ request }: { request: ReceivedRequest }) => {
           <Button
             variant="primary"
             onClick={handleAccept}
-            isLoading={loading}
+            isLoading={loadingAction === 'accept'}
             width="60px"
             height="small"
           >
@@ -85,7 +85,7 @@ const RequestItem = ({ request }: { request: ReceivedRequest }) => {
           <Button
             variant="secondary"
             onClick={handleReject}
-            isLoading={loading}
+            isLoading={loadingAction === 'reject'}
             width="60px"
             height="small"
           >

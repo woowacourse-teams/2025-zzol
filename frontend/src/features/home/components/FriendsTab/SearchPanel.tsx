@@ -139,6 +139,9 @@ const ActionButton = ({ user, onRelationChange }: ActionProps) => {
     return <S.StatusChip $color="gray">요청됨</S.StatusChip>;
   }
   if (localStatus === 'PENDING_INCOMING') {
+    if (!incomingRequest) {
+      return <S.StatusChip $color="gray">요청됨</S.StatusChip>;
+    }
     return (
       <>
         <S.AcceptButton onClick={handleAccept} disabled={loading}>

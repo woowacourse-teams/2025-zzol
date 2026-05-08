@@ -52,8 +52,8 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
             setLoading(true);
             await friendsApi.removeFriend(friend.userId);
             removeFriendFromStore(friend.userId);
-            closeModal();
             showToast({ message: '친구를 삭제했습니다', type: 'info' });
+            closeModal();
           } catch (err) {
             const code = getErrorCode(err);
             if (code === 'NOT_FRIEND') {
@@ -61,7 +61,6 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
             } else {
               showToast({ message: '친구 삭제에 실패했습니다', type: 'error' });
             }
-          } finally {
             setLoading(false);
           }
         }}

@@ -71,6 +71,9 @@ export type RoomInvitationEvent = {
 };
 
 export type FriendPresenceEvent = {
-  userId: number;
-  online: boolean;
+  success: boolean;
+  data: {
+    userId: number;
+    online: boolean;
+  };
 };

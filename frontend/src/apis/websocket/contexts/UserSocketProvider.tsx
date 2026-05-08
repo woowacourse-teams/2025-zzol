@@ -33,9 +33,9 @@ export const UserSocketProvider = ({ children }: PropsWithChildren) => {
     setClient(stompClient);
   }, []);
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
     if (clientRef.current) {
-      clientRef.current.deactivate();
+      await clientRef.current.deactivate();
       clientRef.current = null;
       setClient(null);
       setIsConnected(false);
@@ -46,9 +46,11 @@ export const UserSocketProvider = ({ children }: PropsWithChildren) => {
     if (isAuthenticated) {
       connect();
     } else {
-      disconnect();
+      void disconnect();
     }
-    return disconnect;
+    return () => {
+      void disconnect();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
@@ -76,9 +78,8 @@ export const UserSocketProvider = ({ children }: PropsWithChildren) => {
   );
 
   // 토큰 갱신 후 새 토큰으로 STOMP 재연결
-  const reconnect = useCallback(() => {
-    console.log('🔄 [UserSocket] 토큰 갱신으로 인한 재연결');
-    disconnect();
+  const reconnect = useCallback(async () => {
+    await disconnect();
     connect();
   }, [disconnect, connect]);
 

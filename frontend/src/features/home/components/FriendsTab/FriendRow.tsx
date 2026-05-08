@@ -44,13 +44,19 @@ const S = {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: ${theme.color.point[100]};
-    color: ${theme.color.point[500]};
+    background: linear-gradient(
+      135deg,
+      ${theme.color.point[200]} 0%,
+      ${theme.color.point[400]} 100%
+    );
+    color: ${theme.color.white};
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 16px;
+    letter-spacing: -0.02em;
+    box-shadow: 0 2px 6px rgba(253, 108, 110, 0.3);
   `,
 
   OnlineDot: styled.div<{ $online: boolean }>`

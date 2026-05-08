@@ -3,6 +3,7 @@ package coffeeshout.friend.application;
 import coffeeshout.friend.config.FriendPresenceProperties;
 import coffeeshout.friend.domain.event.PresenceChangedEvent;
 import coffeeshout.global.websocket.UserPrincipal;
+import jakarta.annotation.PreDestroy;
 import java.security.Principal;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +35,7 @@ public class PresenceTracker {
         this.scheduler.setRemoveOnCancelPolicy(true);
     }
 
-    @jakarta.annotation.PreDestroy
+    @PreDestroy
     public void shutdown() {
         scheduler.shutdown();
     }
@@ -81,7 +82,10 @@ public class PresenceTracker {
         final ScheduledFuture<?> future = scheduler.schedule(
                 () -> handleOffline(userId), gracePeriodSeconds, TimeUnit.SECONDS
         );
-        pendingOffline.put(userId, future);
+        final ScheduledFuture<?> previous = pendingOffline.put(userId, future);
+        if (previous != null) {
+            previous.cancel(false);
+        }
     }
 
     public boolean isOnline(Long userId) {

@@ -9,10 +9,14 @@ public record FriendRequestCreatedEvent(
         Instant timestamp,
         Long requestId,
         Long requesterId,
+        String requesterUserCode,
+        String requesterNickname,
         Long addresseeId
 ) implements BaseEvent {
 
-    public FriendRequestCreatedEvent(Long requestId, Long requesterId, Long addresseeId) {
-        this(UUID.randomUUID().toString(), Instant.now(), requestId, requesterId, addresseeId);
+    public FriendRequestCreatedEvent(Long requestId, Long requesterId, String requesterUserCode,
+                                     String requesterNickname, Long addresseeId) {
+        this(UUID.randomUUID().toString(), Instant.now(), requestId, requesterId,
+                requesterUserCode, requesterNickname, addresseeId);
     }
 }

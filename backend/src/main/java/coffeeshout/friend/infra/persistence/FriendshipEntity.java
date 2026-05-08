@@ -2,18 +2,15 @@ package coffeeshout.friend.infra.persistence;
 
 import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.FriendshipStatus;
-import coffeeshout.user.infra.persistence.UserEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "friendship",
-        uniqueConstraints = @jakarta.persistence.UniqueConstraint(
+        uniqueConstraints = @UniqueConstraint(
                 name = "uk_friendship_pair",
                 columnNames = {"requester_id", "addressee_id"}
         )
@@ -35,13 +32,11 @@ public class FriendshipEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requester_id", nullable = false, updatable = false)
-    private UserEntity requester;
+    @Column(name = "requester_id", nullable = false, updatable = false)
+    private Long requesterId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "addressee_id", nullable = false, updatable = false)
-    private UserEntity addressee;
+    @Column(name = "addressee_id", nullable = false, updatable = false)
+    private Long addresseeId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -53,10 +48,10 @@ public class FriendshipEntity {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    public FriendshipEntity(UserEntity requester, UserEntity addressee, FriendshipStatus status,
+    public FriendshipEntity(Long requesterId, Long addresseeId, FriendshipStatus status,
                             Instant createdAt, Instant updatedAt) {
-        this.requester = requester;
-        this.addressee = addressee;
+        this.requesterId = requesterId;
+        this.addresseeId = addresseeId;
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -68,6 +63,6 @@ public class FriendshipEntity {
     }
 
     public Friendship toDomain() {
-        return new Friendship(id, requester.getId(), addressee.getId(), status, createdAt, updatedAt);
+        return new Friendship(id, requesterId, addresseeId, status, createdAt, updatedAt);
     }
 }

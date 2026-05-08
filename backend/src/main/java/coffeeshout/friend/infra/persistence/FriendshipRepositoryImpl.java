@@ -5,9 +5,6 @@ import coffeeshout.friend.domain.FriendshipStatus;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.friend.exception.FriendErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.user.exception.UserErrorCode;
-import coffeeshout.user.infra.persistence.UserEntity;
-import coffeeshout.user.infra.persistence.UserJpaRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +15,6 @@ import org.springframework.stereotype.Repository;
 public class FriendshipRepositoryImpl implements FriendshipRepository {
 
     private final FriendshipJpaRepository friendshipJpaRepository;
-    private final UserJpaRepository userJpaRepository;
 
     @Override
     public Friendship save(Friendship friendship) {
@@ -31,49 +27,39 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
             return friendshipJpaRepository.save(entity).toDomain();
         }
 
-        final UserEntity requester = findUserEntityById(friendship.getRequesterId());
-        final UserEntity addressee = findUserEntityById(friendship.getAddresseeId());
         final FriendshipEntity entity = new FriendshipEntity(
-                requester, addressee, friendship.getStatus(),
-                friendship.getCreatedAt(), friendship.getUpdatedAt()
+                friendship.getRequesterId(), friendship.getAddresseeId(),
+                friendship.getStatus(), friendship.getCreatedAt(), friendship.getUpdatedAt()
         );
         return friendshipJpaRepository.save(entity).toDomain();
     }
 
     @Override
     public Optional<Friendship> findById(Long id) {
-        return friendshipJpaRepository.findById(id)
-                .map(FriendshipEntity::toDomain);
+        return friendshipJpaRepository.findById(id).map(FriendshipEntity::toDomain);
     }
 
     @Override
     public Optional<Friendship> findBetween(Long userA, Long userB) {
-        return friendshipJpaRepository.findBetween(userA, userB)
-                .map(FriendshipEntity::toDomain);
+        return friendshipJpaRepository.findBetween(userA, userB).map(FriendshipEntity::toDomain);
     }
 
     @Override
     public List<Friendship> findReceivedPending(Long userId) {
-        return friendshipJpaRepository.findAllByAddressee_IdAndStatus(userId, FriendshipStatus.PENDING)
-                .stream()
-                .map(FriendshipEntity::toDomain)
-                .toList();
+        return friendshipJpaRepository.findAllByAddresseeIdAndStatus(userId, FriendshipStatus.PENDING)
+                .stream().map(FriendshipEntity::toDomain).toList();
     }
 
     @Override
     public List<Friendship> findSentPending(Long userId) {
-        return friendshipJpaRepository.findAllByRequester_IdAndStatus(userId, FriendshipStatus.PENDING)
-                .stream()
-                .map(FriendshipEntity::toDomain)
-                .toList();
+        return friendshipJpaRepository.findAllByRequesterIdAndStatus(userId, FriendshipStatus.PENDING)
+                .stream().map(FriendshipEntity::toDomain).toList();
     }
 
     @Override
     public List<Friendship> findAcceptedOf(Long userId) {
         return friendshipJpaRepository.findAllAcceptedOf(userId, FriendshipStatus.ACCEPTED)
-                .stream()
-                .map(FriendshipEntity::toDomain)
-                .toList();
+                .stream().map(FriendshipEntity::toDomain).toList();
     }
 
     @Override
@@ -86,13 +72,7 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
         if (targetUserIds.isEmpty()) {
             return List.of();
         }
-        return friendshipJpaRepository.findAllBetween(myId, targetUserIds).stream()
-                .map(FriendshipEntity::toDomain)
-                .toList();
-    }
-
-    private UserEntity findUserEntityById(Long userId) {
-        return userJpaRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 사용자입니다. id=" + userId));
+        return friendshipJpaRepository.findAllBetween(myId, targetUserIds)
+                .stream().map(FriendshipEntity::toDomain).toList();
     }
 }

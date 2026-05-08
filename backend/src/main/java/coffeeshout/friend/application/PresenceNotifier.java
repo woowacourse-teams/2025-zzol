@@ -4,6 +4,7 @@ import coffeeshout.friend.application.dto.PresencePayload;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.friend.domain.event.PresenceChangedEvent;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import coffeeshout.global.websocket.UserPrincipal;
 import coffeeshout.global.websocket.ui.WebSocketResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class PresenceNotifier {
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
     @EventListener
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public void onPresenceChanged(PresenceChangedEvent event) {
         final PresencePayload payload = new PresencePayload(event.userId(), event.online());
 

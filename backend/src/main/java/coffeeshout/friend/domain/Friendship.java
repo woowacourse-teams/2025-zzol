@@ -1,5 +1,6 @@
 package coffeeshout.friend.domain;
 
+import coffeeshout.friend.application.service.RelationStatus;
 import coffeeshout.friend.exception.FriendErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import java.time.Instant;
@@ -59,7 +60,14 @@ public class Friendship {
         if (addresseeId.equals(userId)) {
             return requesterId;
         }
-        throw new BusinessException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND, "해당 친구 관계에 포함되지 않은 사용자입니다.");
+        throw new BusinessException(FriendErrorCode.FRIEND_REQUEST_FORBIDDEN, "해당 친구 관계에 포함되지 않은 사용자입니다.");
+    }
+
+    public RelationStatus statusFrom(Long myId) {
+        if (isAccepted()) {
+            return RelationStatus.FRIEND;
+        }
+        return requesterId.equals(myId) ? RelationStatus.PENDING_OUTGOING : RelationStatus.PENDING_INCOMING;
     }
 
     public boolean isPending() {

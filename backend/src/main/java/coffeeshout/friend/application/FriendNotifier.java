@@ -12,9 +12,6 @@ import coffeeshout.friend.domain.event.RoomInvitationSentEvent;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.global.websocket.UserPrincipal;
 import coffeeshout.global.websocket.ui.WebSocketResponse;
-import coffeeshout.user.domain.User;
-import coffeeshout.user.domain.repository.UserRepository;
-import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,40 +29,41 @@ public class FriendNotifier {
     private static final String ROOM_INVITATIONS_QUEUE = "/queue/rooms/invitations";
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
-    private final UserRepository userRepository;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onFriendRequestCreated(FriendRequestCreatedEvent event) {
-        userRepository.findById(event.requesterId()).ifPresentOrElse(
-                requester -> {
-                    final FriendRequestPayload payload = new FriendRequestPayload(
-                            event.requestId(),
-                            requester.getId(),
-                            requester.getUserCode().value(),
-                            requester.getNickname().value(),
-                            event.timestamp()
-                    );
-                    sendToUser(event.addresseeId(), FRIEND_REQUESTS_QUEUE, payload);
-                },
-                () -> log.warn("친구 요청 알림 실패 — 요청자 없음: requesterId={}", event.requesterId())
+        final FriendRequestPayload payload = new FriendRequestPayload(
+                event.requestId(),
+                event.requesterId(),
+                event.requesterUserCode(),
+                event.requesterNickname(),
+                event.timestamp()
         );
+        sendToUser(event.addresseeId(), FRIEND_REQUESTS_QUEUE, payload);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onFriendRequestAccepted(FriendRequestAcceptedEvent event) {
-        userRepository.findById(event.addresseeId()).ifPresent(addressee ->
-                sendFriendResponse(event.requestId(), event.requesterId(), addressee, true)
+        final FriendResponsePayload toRequester = new FriendResponsePayload(
+                event.requestId(), true,
+                event.addresseeId(), event.addresseeUserCode(), event.addresseeNickname()
         );
-        userRepository.findById(event.requesterId()).ifPresent(requester ->
-                sendFriendResponse(event.requestId(), event.addresseeId(), requester, true)
+        sendToUser(event.requesterId(), FRIEND_RESPONSES_QUEUE, toRequester);
+
+        final FriendResponsePayload toAddressee = new FriendResponsePayload(
+                event.requestId(), true,
+                event.requesterId(), event.requesterUserCode(), event.requesterNickname()
         );
+        sendToUser(event.addresseeId(), FRIEND_RESPONSES_QUEUE, toAddressee);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onFriendRequestRejected(FriendRequestRejectedEvent event) {
-        userRepository.findById(event.addresseeId()).ifPresent(addressee ->
-                sendFriendResponse(event.requestId(), event.requesterId(), addressee, false)
+        final FriendResponsePayload payload = new FriendResponsePayload(
+                event.requestId(), false,
+                event.addresseeId(), event.addresseeUserCode(), event.addresseeNickname()
         );
+        sendToUser(event.requesterId(), FRIEND_RESPONSES_QUEUE, payload);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -76,16 +74,6 @@ public class FriendNotifier {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onRoomInvitationSent(RoomInvitationSentEvent event) {
         sendToUser(event.targetUserId(), ROOM_INVITATIONS_QUEUE, RoomInvitationPayload.from(event));
-    }
-
-    private void sendFriendResponse(Long requestId, Long targetUserId, User counterpart, boolean accepted) {
-        final FriendResponsePayload payload = new FriendResponsePayload(
-                requestId, accepted,
-                counterpart.getId(),
-                counterpart.getUserCode().value(),
-                counterpart.getNickname().value()
-        );
-        sendToUser(targetUserId, FRIEND_RESPONSES_QUEUE, payload);
     }
 
     private void sendToUser(Long userId, String destination, Object payload) {

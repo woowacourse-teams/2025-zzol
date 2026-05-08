@@ -9,10 +9,18 @@ public record FriendRequestAcceptedEvent(
         Instant timestamp,
         Long requestId,
         Long requesterId,
-        Long addresseeId
+        String requesterUserCode,
+        String requesterNickname,
+        Long addresseeId,
+        String addresseeUserCode,
+        String addresseeNickname
 ) implements BaseEvent {
 
-    public FriendRequestAcceptedEvent(Long requestId, Long requesterId, Long addresseeId) {
-        this(UUID.randomUUID().toString(), Instant.now(), requestId, requesterId, addresseeId);
+    public FriendRequestAcceptedEvent(Long requestId,
+                                      Long requesterId, String requesterUserCode, String requesterNickname,
+                                      Long addresseeId, String addresseeUserCode, String addresseeNickname) {
+        this(UUID.randomUUID().toString(), Instant.now(), requestId,
+                requesterId, requesterUserCode, requesterNickname,
+                addresseeId, addresseeUserCode, addresseeNickname);
     }
 }

@@ -9,10 +9,14 @@ public record FriendRequestRejectedEvent(
         Instant timestamp,
         Long requestId,
         Long requesterId,
-        Long addresseeId
+        Long addresseeId,
+        String addresseeUserCode,
+        String addresseeNickname
 ) implements BaseEvent {
 
-    public FriendRequestRejectedEvent(Long requestId, Long requesterId, Long addresseeId) {
-        this(UUID.randomUUID().toString(), Instant.now(), requestId, requesterId, addresseeId);
+    public FriendRequestRejectedEvent(Long requestId, Long requesterId, Long addresseeId,
+                                      String addresseeUserCode, String addresseeNickname) {
+        this(UUID.randomUUID().toString(), Instant.now(), requestId, requesterId,
+                addresseeId, addresseeUserCode, addresseeNickname);
     }
 }

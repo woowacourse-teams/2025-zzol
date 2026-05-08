@@ -11,18 +11,18 @@ public interface FriendshipJpaRepository extends JpaRepository<FriendshipEntity,
 
     @Query("""
             SELECT f FROM FriendshipEntity f
-            WHERE (f.requester.id = :userA AND f.addressee.id = :userB)
-               OR (f.requester.id = :userB AND f.addressee.id = :userA)
+            WHERE (f.requesterId = :userA AND f.addresseeId = :userB)
+               OR (f.requesterId = :userB AND f.addresseeId = :userA)
             """)
     Optional<FriendshipEntity> findBetween(@Param("userA") Long userA, @Param("userB") Long userB);
 
-    List<FriendshipEntity> findAllByAddressee_IdAndStatus(Long addresseeId, FriendshipStatus status);
+    List<FriendshipEntity> findAllByAddresseeIdAndStatus(Long addresseeId, FriendshipStatus status);
 
-    List<FriendshipEntity> findAllByRequester_IdAndStatus(Long requesterId, FriendshipStatus status);
+    List<FriendshipEntity> findAllByRequesterIdAndStatus(Long requesterId, FriendshipStatus status);
 
     @Query("""
             SELECT f FROM FriendshipEntity f
-            WHERE (f.requester.id = :userId OR f.addressee.id = :userId)
+            WHERE (f.requesterId = :userId OR f.addresseeId = :userId)
               AND f.status = :status
             """)
     List<FriendshipEntity> findAllAcceptedOf(@Param("userId") Long userId,
@@ -30,8 +30,8 @@ public interface FriendshipJpaRepository extends JpaRepository<FriendshipEntity,
 
     @Query("""
             SELECT f FROM FriendshipEntity f
-            WHERE (f.requester.id = :myId AND f.addressee.id IN :targetIds)
-               OR (f.addressee.id = :myId AND f.requester.id IN :targetIds)
+            WHERE (f.requesterId = :myId AND f.addresseeId IN :targetIds)
+               OR (f.addresseeId = :myId AND f.requesterId IN :targetIds)
             """)
     List<FriendshipEntity> findAllBetween(@Param("myId") Long myId,
                                           @Param("targetIds") List<Long> targetIds);

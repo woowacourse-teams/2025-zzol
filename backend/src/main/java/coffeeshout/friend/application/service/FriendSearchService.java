@@ -8,7 +8,7 @@ import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +26,7 @@ public class FriendSearchService {
                 .filter(user -> !user.getId().equals(myId))
                 .map(user -> toSearchResult(myId, user))
                 .map(List::of)
-                .orElse(List.of());
+                .orElseGet(List::of);
     }
 
     @Transactional(readOnly = true)
@@ -43,33 +43,25 @@ public class FriendSearchService {
         }
         final List<Long> userIds = users.stream().map(User::getId).toList();
         final Map<Long, Friendship> friendshipByUserId = friendshipRepository.findAllBetween(myId, userIds).stream()
-                .collect(java.util.stream.Collectors.toMap(
+                .collect(Collectors.toMap(
                         f -> f.counterpartOf(myId),
                         f -> f,
                         (a, b) -> a
                 ));
         return users.stream()
-                .map(user -> new UserSearchResult(user, determineRelationStatus(myId, Optional.ofNullable(friendshipByUserId.get(user.getId())))))
+                .map(user -> {
+                    final Friendship friendship = friendshipByUserId.get(user.getId());
+                    final RelationStatus status = friendship == null
+                            ? RelationStatus.NONE
+                            : friendship.statusFrom(myId);
+                    return new UserSearchResult(user, status);
+                })
                 .toList();
     }
 
     private UserSearchResult toSearchResult(Long myId, User user) {
-        final Optional<Friendship> friendship = friendshipRepository.findBetween(myId, user.getId());
-        final RelationStatus status = determineRelationStatus(myId, friendship);
-        return new UserSearchResult(user, status);
-    }
-
-    private RelationStatus determineRelationStatus(Long myId, Optional<Friendship> friendship) {
-        if (friendship.isEmpty()) {
-            return RelationStatus.NONE;
-        }
-        final Friendship f = friendship.get();
-        if (f.isAccepted()) {
-            return RelationStatus.FRIEND;
-        }
-        if (f.getRequesterId().equals(myId)) {
-            return RelationStatus.PENDING_OUTGOING;
-        }
-        return RelationStatus.PENDING_INCOMING;
+        return friendshipRepository.findBetween(myId, user.getId())
+                .map(f -> new UserSearchResult(user, f.statusFrom(myId)))
+                .orElse(new UserSearchResult(user, RelationStatus.NONE));
     }
 }

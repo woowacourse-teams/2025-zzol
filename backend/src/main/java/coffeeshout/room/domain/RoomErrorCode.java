@@ -26,6 +26,8 @@ public enum RoomErrorCode implements ErrorCode {
     ROOM_NOT_READY_TO_UPDATE(HttpStatus.CONFLICT, "READY 상태에서만 설정을 변경할 수 있습니다."),
     INSUFFICIENT_PLAYER_COUNT(HttpStatus.BAD_REQUEST, "플레이어는 2명 이상이어야 합니다."),
     INVALID_ROUND_COUNT(HttpStatus.BAD_REQUEST, "라운드 수는 양수여야 합니다."),
+    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 방입니다."),
+    INVITER_NOT_IN_ROOM(HttpStatus.FORBIDDEN, "방에 참여 중인 사용자만 초대할 수 있습니다."),
     ;
 
     private final HttpStatus httpStatus;

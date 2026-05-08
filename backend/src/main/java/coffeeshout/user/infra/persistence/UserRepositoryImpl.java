@@ -3,6 +3,7 @@ package coffeeshout.user.infra.persistence;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.User;
+import coffeeshout.user.domain.UserCode;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.exception.UserErrorCode;
@@ -74,6 +75,21 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public List<User> findAllByIds(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return toDomains(userJpaRepository.findAllById(ids));
+    }
+
+    @Override
+    public Optional<User> findByUserCode(UserCode userCode) {
+        return userJpaRepository.findByUserCode(userCode.value())
+                .flatMap(userEntity -> oAuthAccountJpaRepository.findByUser_Id(userEntity.getId())
+                        .map(userEntity::toDomain));
+    }
+
+    @Override
     @Transactional
     public void softDeleteById(Long userId) {
         final UserEntity userEntity = userJpaRepository.findById(userId)
@@ -89,6 +105,10 @@ public class UserRepositoryImpl implements UserRepository {
         if (users.isEmpty()) {
             return List.of();
         }
+        return toDomains(users);
+    }
+
+    private List<User> toDomains(List<UserEntity> users) {
         final List<Long> userIds = users.stream().map(UserEntity::getId).toList();
         final Map<Long, OAuthAccountEntity> oauthByUserId = oAuthAccountJpaRepository
                 .findAllByUser_IdIn(userIds).stream()

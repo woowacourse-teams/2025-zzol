@@ -347,6 +347,10 @@ websocket:
       version: "1.0.0"
       description: "실시간 웹소켓 통신 API 문서"
 
+friend:
+  presence:
+    grace-period-seconds: 10
+
 zzol-bot:
   gemini-api-key: ${GEMINI_ZZOL_BOT_API_KEY:}
   model: gemini-2.5-flash

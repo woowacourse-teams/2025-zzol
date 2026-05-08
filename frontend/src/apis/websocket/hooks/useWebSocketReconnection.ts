@@ -4,7 +4,7 @@ import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 type Props = {
   isConnected: boolean;
-  startSocket: (joinCode: string, myName: string) => void;
+  startSocket: (roomToken: string) => void;
   stopSocket: () => void;
   onReconnected?: () => void;
 };
@@ -16,7 +16,7 @@ export const useWebSocketReconnection = ({
   onReconnected,
 }: Props) => {
   const { isVisible } = usePageVisibility();
-  const { joinCode, myName } = useIdentifier();
+  const { roomSessionToken } = useIdentifier();
   const reconnectTimerRef = useRef<number | null>(null);
   const wasBackgrounded = useRef(false);
   const hasCheckedRefresh = useRef(false);
@@ -33,9 +33,9 @@ export const useWebSocketReconnection = ({
     clearReconnectTimer();
     wasDisconnectedRef.current = true;
     reconnectTimerRef.current = window.setTimeout(() => {
-      if (joinCode && myName) startSocket(joinCode, myName);
+      if (roomSessionToken) startSocket(roomSessionToken);
     }, 200);
-  }, [joinCode, myName, startSocket, clearReconnectTimer]);
+  }, [roomSessionToken, startSocket, clearReconnectTimer]);
 
   useEffect(() => {
     if (isConnected && wasDisconnectedRef.current) {
@@ -60,13 +60,13 @@ export const useWebSocketReconnection = ({
       isReload = document.referrer === window.location.href;
     }
 
-    if (isReload && !isConnected && joinCode && myName && startSocket) {
-      console.log('🔄 새로고침 감지 - 웹소켓 재연결 시도:', { myName, joinCode });
+    if (isReload && !isConnected && roomSessionToken && startSocket) {
+      console.log('🔄 새로고침 감지 - 웹소켓 재연결 시도');
       hasCheckedRefresh.current = true;
       wasDisconnectedRef.current = true;
-      startSocket(joinCode, myName);
+      startSocket(roomSessionToken);
     }
-  }, [myName, joinCode, isConnected, startSocket]);
+  }, [roomSessionToken, isConnected, startSocket]);
 
   useEffect(() => {
     if (!isVisible && isConnected) {

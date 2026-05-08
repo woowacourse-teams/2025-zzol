@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ApiError } from '@/apis/rest/error';
 import Button from '@/components/@common/Button/Button';
 import useToast from '@/components/@common/Toast/useToast';
+import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
 import { friendsApi } from '@/features/friends/api/friendsApi';
 import { Friend } from '@/features/friends/types';
 import { theme } from '@/styles/theme';
@@ -13,7 +14,6 @@ const getErrorCode = (err: unknown): string | undefined =>
 type Props = {
   joinCode: string;
   friends: Friend[];
-  participantNames: Set<string>;
   onClose: () => void;
 };
 
@@ -41,7 +41,7 @@ const FriendInviteRow = ({
       const code = getErrorCode(err);
       if (code === 'ROOM_FULL') {
         showToast({ message: '방이 가득 찼습니다', type: 'error' });
-      } else if (code === 'ROOM_INVITATION_NOT_LOBBY') {
+      } else if (code === 'ROOM_NOT_READY_TO_JOIN') {
         showToast({ message: '게임이 시작된 방에는 초대할 수 없습니다', type: 'error' });
       } else if (code === 'NOT_FRIEND') {
         showToast({ message: '친구 관계가 아닙니다', type: 'error' });
@@ -71,7 +71,7 @@ const FriendInviteRow = ({
         </Button>
       ) : invited ? (
         <Button variant="disabled" width="72px" height="small">
-          초대됨
+          초대완료
         </Button>
       ) : (
         <Button
@@ -88,7 +88,9 @@ const FriendInviteRow = ({
   );
 };
 
-const InviteFriendModal = ({ joinCode, friends, participantNames, onClose }: Props) => {
+const InviteFriendModal = ({ joinCode, friends, onClose }: Props) => {
+  const { participants } = useParticipants();
+  const participantUserIds = new Set(participants.map((p) => p.userId));
   const sorted = [...friends].sort((a, b) => Number(b.online) - Number(a.online));
 
   if (sorted.length === 0) {
@@ -111,7 +113,7 @@ const InviteFriendModal = ({ joinCode, friends, participantNames, onClose }: Pro
             <FriendInviteRow
               friend={friend}
               joinCode={joinCode}
-              isParticipant={participantNames.has(friend.nickname)}
+              isParticipant={participantUserIds.has(friend.userId)}
             />
           </S.Item>
         ))}

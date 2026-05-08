@@ -221,19 +221,10 @@ const LobbyPage = () => {
       showToast({ message: '로그인 후 이용 가능합니다', type: 'info' });
       return;
     }
-    const participantNames = new Set(participants.map((p) => p.playerName));
-    openModal(
-      <InviteFriendModal
-        joinCode={joinCode}
-        friends={friends}
-        participantNames={participantNames}
-        onClose={closeModal}
-      />,
-      {
-        title: '온라인 친구 초대',
-        showCloseButton: true,
-      }
-    );
+    openModal(<InviteFriendModal joinCode={joinCode} friends={friends} onClose={closeModal} />, {
+      title: '온라인 친구 초대',
+      showCloseButton: true,
+    });
   };
 
   const handleMiniGameClick = (miniGameType: MiniGameType) => {

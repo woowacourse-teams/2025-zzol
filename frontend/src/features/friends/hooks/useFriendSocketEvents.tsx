@@ -18,6 +18,7 @@ type Actions = {
   setReceivedRequests: Dispatch<SetStateAction<ReceivedRequest[]>>;
   setSentRequests: Dispatch<SetStateAction<ReceivedRequest[]>>;
   isAuthenticated: boolean;
+  isFriendsLoaded: boolean;
   isInRoomRef: MutableRefObject<boolean>;
 };
 
@@ -26,6 +27,7 @@ export const useFriendSocketEvents = ({
   setReceivedRequests,
   setSentRequests,
   isAuthenticated,
+  isFriendsLoaded,
   isInRoomRef,
 }: Actions) => {
   const { showToast } = useToast();
@@ -121,6 +123,7 @@ export const useFriendSocketEvents = ({
   );
 
   // 친구 온라인/오프라인 전이
+  // REST 완료(isFriendsLoaded) 후 구독 — 서버 일괄 푸시가 friends 배열에 정상 반영되도록 순서 보장
   useUserSocketSubscription<FriendPresenceEvent>(
     '/user/queue/friends/presence',
     useCallback(
@@ -132,6 +135,6 @@ export const useFriendSocketEvents = ({
       },
       [setFriends]
     ),
-    isAuthenticated
+    isAuthenticated && isFriendsLoaded
   );
 };

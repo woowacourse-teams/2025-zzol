@@ -13,8 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
@@ -36,7 +34,7 @@ public class PresenceTracker {
 
     @EventListener
     public void onConnected(SessionConnectedEvent event) {
-        final Long userId = extractUserId(event.getMessage());
+        final Long userId = extractUserId(event.getUser());
         if (userId == null) {
             return;
         }
@@ -58,7 +56,7 @@ public class PresenceTracker {
 
     @EventListener
     public void onDisconnected(SessionDisconnectEvent event) {
-        final Long userId = extractUserId(event.getMessage());
+        final Long userId = extractUserId(event.getUser());
         if (userId == null) {
             return;
         }
@@ -94,9 +92,7 @@ public class PresenceTracker {
         }
     }
 
-    private Long extractUserId(Message<?> message) {
-        final StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        final Principal principal = accessor.getUser();
+    private Long extractUserId(Principal principal) {
         if (principal == null || !principal.getName().startsWith(UserPrincipal.PREFIX)) {
             return null;
         }

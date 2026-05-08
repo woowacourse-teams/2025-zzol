@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.concurrent.ExecutionException;
+import org.springframework.messaging.simp.stomp.ConnectionLostException;
+
 class StompPrincipalInterceptorTest extends WebSocketIntegrationTestSupport {
 
     @Nested
@@ -30,13 +33,15 @@ class StompPrincipalInterceptorTest extends WebSocketIntegrationTestSupport {
         @Test
         void roomToken_헤더가_없으면_연결이_거부된다() {
             assertThatThrownBy(() -> createSessionWithoutRoomToken())
-                    .isInstanceOf(Exception.class);
+                    .isInstanceOf(ExecutionException.class)
+                    .hasCauseInstanceOf(ConnectionLostException.class);
         }
 
         @Test
         void 위조된_토큰으로_연결하면_거부된다() {
             assertThatThrownBy(() -> createSessionWithRoomToken("invalid.token.value"))
-                    .isInstanceOf(Exception.class);
+                    .isInstanceOf(ExecutionException.class)
+                    .hasCauseInstanceOf(ConnectionLostException.class);
         }
     }
 }

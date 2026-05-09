@@ -32,7 +32,8 @@ class ToolExecutorTest {
             new ZzolBotProperties.MonitoringProperties("http://loki", "http://tempo", "http://prometheus", "local"),
             new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
             60,
-            10000L
+            10000L,
+            new ZzolBotProperties.SqlProperties(List.of(), 100, 3)
     );
 
     private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));

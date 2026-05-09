@@ -50,7 +50,8 @@ class ZzolBotChatServiceTest {
             ),
             new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
             60,
-            10000L
+            10000L,
+            new ZzolBotProperties.SqlProperties(List.of(), 100, 3)
     );
 
     @Mock

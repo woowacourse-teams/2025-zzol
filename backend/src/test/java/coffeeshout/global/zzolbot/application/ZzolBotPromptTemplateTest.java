@@ -10,6 +10,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class ZzolBotPromptTemplateTest {
@@ -26,7 +27,19 @@ class ZzolBotPromptTemplateTest {
             ),
             new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
             60,
-            10000L
+            10000L,
+            new ZzolBotProperties.SqlProperties(
+                    List.of(
+                            new ZzolBotProperties.TableSchema(
+                                    "app_user",
+                                    List.of("id", "nickname", "created_at"),
+                                    List.of("provider_user_id"),
+                                    "회원 정보"
+                            )
+                    ),
+                    100,
+                    3
+            )
     );
 
     private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
@@ -75,5 +88,28 @@ class ZzolBotPromptTemplateTest {
         final String prompt2 = promptTemplate.build(CTX, List.of());
 
         assertThat(prompt1).isEqualTo(prompt2);
+    }
+
+    @Nested
+    class sql_query_도구_스키마_섹션 {
+
+        @Test
+        void sql_query_도구와_허용_테이블_스키마가_포함된다() {
+            final String prompt = promptTemplate.build(CTX, List.of());
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(prompt).contains("sql_query");
+                softly.assertThat(prompt).contains("app_user");
+                softly.assertThat(prompt).contains("id, nickname, created_at");
+                softly.assertThat(prompt).contains("회원 정보");
+            });
+        }
+
+        @Test
+        void joinCode_없는_통계_질문에_sql_query를_사용하라는_행동_원칙이_포함된다() {
+            final String prompt = promptTemplate.build(CTX, List.of());
+
+            assertThat(prompt).contains("통계");
+        }
     }
 }

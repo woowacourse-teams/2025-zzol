@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.zzolbot.domain.AskContext;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotErrorCode;
@@ -110,7 +111,7 @@ class SqlQueryToolTest {
         @Test
         void 실행_중_예외가_발생하면_실패_결과를_반환한다() {
             given(validator.validate(any())).willReturn("SELECT id FROM app_user LIMIT 100");
-            willThrow(new BusinessException(ZzolBotErrorCode.SQL_EXECUTION_FAILED, "타임아웃"))
+            willThrow(new InfrastructureException(ZzolBotErrorCode.SQL_EXECUTION_FAILED, "타임아웃"))
                     .given(runner).run(any());
 
             final ToolExecutionResult result = tool.execute(Map.of("sql", "SELECT id FROM app_user"), CTX);

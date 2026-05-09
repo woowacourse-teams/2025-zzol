@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SqlQueryTool implements ZzolBotTool {
 
-    static final String TOOL_NAME = "sql_query"; // 같은 패키지 테스트에서 참조
+    static final String TOOL_NAME = "sql_query";
 
     private final SqlQueryValidator validator;
     private final SqlQueryRunner runner;

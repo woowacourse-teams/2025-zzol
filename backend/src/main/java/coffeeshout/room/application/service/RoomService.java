@@ -116,16 +116,20 @@ public class RoomService {
 
     public CompletableFuture<RoomEnterResult> enterRoomAsync(String joinCode, String guestName) {
         playerNameValidator.validate(new PlayerName(guestName));
-        final String token = roomSessionTokenService.issue(joinCode, guestName, null);
         return doEnterRoomAsync(joinCode, guestName, null)
-                .thenApply(room -> new RoomEnterResult(room, guestName, token));
+                .thenApply(room -> {
+                    final String token = roomSessionTokenService.issue(joinCode, guestName, null);
+                    return new RoomEnterResult(room, guestName, token);
+                });
     }
 
     public CompletableFuture<RoomEnterResult> enterRoomAsync(String joinCode, AuthenticatedUser authUser) {
         final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
-        final String token = roomSessionTokenService.issue(joinCode, nickname, authUser.userId());
         return doEnterRoomAsync(joinCode, nickname, authUser.userId())
-                .thenApply(room -> new RoomEnterResult(room, nickname, token));
+                .thenApply(room -> {
+                    final String token = roomSessionTokenService.issue(joinCode, nickname, authUser.userId());
+                    return new RoomEnterResult(room, nickname, token);
+                });
     }
 
     private CompletableFuture<Room> doEnterRoomAsync(String joinCode, String resolvedName, Long userId) {

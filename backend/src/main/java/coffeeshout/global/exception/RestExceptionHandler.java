@@ -49,10 +49,12 @@ public class RestExceptionHandler {
             HttpServletRequest request
     ) {
         logWarning(exception, request);
-        if (exception.getErrorCode().getHttpStatus() == HttpStatus.NOT_FOUND) {
+        final ErrorCode errorCode = exception.getErrorCode();
+        final HttpStatus httpStatus = errorCode.getHttpStatus();
+        if (httpStatus == HttpStatus.NOT_FOUND) {
             request.setAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND, true);
         }
-        return getProblemDetail(exception.getErrorCode().getHttpStatus(), exception, exception.getErrorCode());
+        return getProblemDetail(httpStatus, exception, errorCode);
     }
 
     @ExceptionHandler(SystemException.class)

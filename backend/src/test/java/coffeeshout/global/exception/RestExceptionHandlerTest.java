@@ -9,7 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @DisplayName("RestExceptionHandler")
 class RestExceptionHandlerTest {
@@ -50,9 +52,8 @@ class RestExceptionHandlerTest {
 
         @Test
         void 미등록_경로_접근_시_IP_차단_스킵_속성을_설정하지_않는다() {
-            final org.springframework.web.servlet.resource.NoResourceFoundException exception =
-                    new org.springframework.web.servlet.resource.NoResourceFoundException(
-                            org.springframework.http.HttpMethod.GET, "/random-probe");
+            final NoResourceFoundException exception =
+                    new NoResourceFoundException(HttpMethod.GET, "/random-probe");
             final MockHttpServletRequest request = new MockHttpServletRequest();
 
             handler.handleNoResourceFoundException(exception, request);

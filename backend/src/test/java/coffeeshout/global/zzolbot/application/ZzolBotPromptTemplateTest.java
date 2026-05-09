@@ -76,4 +76,26 @@ class ZzolBotPromptTemplateTest {
 
         assertThat(prompt1).isEqualTo(prompt2);
     }
+
+    @Test
+    void joinCode_있을때와_없을때_행동_원칙이_모두_포함된다() {
+        final String prompt = promptTemplate.build(CTX, List.of());
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(prompt).contains("joinCode가 없으면");
+            softly.assertThat(prompt).contains("되묻지 않는다");
+            softly.assertThat(prompt).contains("room_state, outbox_events 도구는 호출하지 않는다");
+        });
+    }
+
+    @Test
+    void 도구별_joinCode_의존성이_명시된다() {
+        final String prompt = promptTemplate.build(CTX, List.of());
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(prompt).contains("joinCode 필수");
+            softly.assertThat(prompt).contains("joinCode 선택");
+            softly.assertThat(prompt).contains("joinCode 무관");
+        });
+    }
 }

@@ -45,9 +45,12 @@ public class LokiQueryTool implements ZzolBotTool {
         return TOOL_NAME;
     }
 
+    private static final String GLOBAL_LOG_FILTER = "|~ \"ERROR|WARN\"";
+
     @Override
     public String description() {
-        return "Loki에서 joinCode가 포함된 최근 로그를 조회한다. " +
+        return "Loki에서 로그를 조회한다. " +
+                "joinCode가 있으면 해당 방으로 필터링하고, 없으면 전체 환경에서 ERROR/WARN 레벨을 조회한다. " +
                 "since 파라미터로 조회 기간을 지정한다 (예: 30m, 1h, 2h). 기본값은 1h.";
     }
 
@@ -58,28 +61,32 @@ public class LokiQueryTool implements ZzolBotTool {
                 "properties", Map.of(
                         "joinCode", Map.of(
                                 "type", "string",
-                                "description", "4자리 방 입장 코드"
+                                "description", "4자리 방 입장 코드. 생략하면 전체 환경 조회"
                         ),
                         "since", Map.of(
                                 "type", "string",
                                 "description", "조회 기간 (예: 30m, 1h, 2h). 기본값 1h"
                         )
                 ),
-                "required", List.of("joinCode")
+                "required", List.of()
         );
     }
 
     @Override
     public ToolExecutionResult execute(Map<String, Object> params, AskContext ctx) {
-        if (!(params.get("joinCode") instanceof String joinCodeValue) || !isValidJoinCode(joinCodeValue)) {
+        final Object rawJoinCode = params.get("joinCode");
+        if (rawJoinCode instanceof String joinCodeValue && !joinCodeValue.isBlank() && !isValidJoinCode(joinCodeValue)) {
             return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식");
         }
+        final String joinCodeValue = (rawJoinCode instanceof String s && isValidJoinCode(s)) ? s : null;
         final int lookBackMinutes = parseLookBackMinutes((String) params.getOrDefault("since", "1h"));
 
         final Instant end = ctx.asOf();
         final Instant start = end.minus(lookBackMinutes, ChronoUnit.MINUTES);
 
-        final String logqlQuery = String.format("{environment=\"%s\"} |= \"%s\"", environment, joinCodeValue);
+        final String logqlQuery = joinCodeValue != null
+                ? String.format("{environment=\"%s\"} |= \"%s\"", environment, joinCodeValue)
+                : String.format("{environment=\"%s\"} %s", environment, GLOBAL_LOG_FILTER);
         final long startNano = start.toEpochMilli() * 1_000_000L;
         final long endNano = end.toEpochMilli() * 1_000_000L;
         final String encodedUri = String.format(

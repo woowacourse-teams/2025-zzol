@@ -69,8 +69,8 @@ public class ZzolBotPromptTemplate {
                 ## 윈도우 규칙
                 도구 결과의 timestamp는 asOf 기준 ±%d분 윈도우만 신뢰한다.
 
-                ## 답변 schema 강제
-                **진단 결과** → **조회 기준(asOf: %s, 요청ID: %s, 사용한 도구 목록)** → **추정 원인**
+                ## 공통 조회 기준 (모든 답변에 포함)
+                asOf: %s, 요청ID: %s, 사용한 도구 목록
                 """.formatted(
                 ctx.asOf(),
                 properties.defaultWindowMinutes(),

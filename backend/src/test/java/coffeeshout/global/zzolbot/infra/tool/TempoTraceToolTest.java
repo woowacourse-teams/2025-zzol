@@ -42,7 +42,7 @@ class TempoTraceToolTest {
                 new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
                 60,
                 10000L,
-                new ZzolBotProperties.SqlProperties(java.util.List.of(), 100, 3)
+                new ZzolBotProperties.SqlProperties(List.of(), 100, 3)
         );
         return new TempoTraceTool(props, RestClient.builder(), new ObjectMapper());
     }

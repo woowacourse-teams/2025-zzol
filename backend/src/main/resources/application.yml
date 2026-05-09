@@ -363,3 +363,71 @@ zzol-bot:
   determinism:
     temperature: 0.1
     top-p: 0.1
+  sql:
+    max-rows: 1000
+    query-timeout-seconds: 5
+    allowed-tables:
+      - name: app_user
+        description: "회원 정보 (soft-delete 적용 — 활성 회원 집계 시 deleted_at IS NULL 필터 필요)"
+        columns: [id, user_code, nickname, created_at, deleted_at]
+        blocked-columns: [provider_user_id]
+      - name: oauth_account
+        description: "OAuth 연동 계정 (provider/email 수준만 노출)"
+        columns: [id, user_id, provider, email, linked_at]
+        blocked-columns: [provider_user_id]
+      - name: room_session
+        description: "완료된 방 세션 기록 (방 상태는 Redis, 영속 기록은 이 테이블)"
+        columns: [id, join_code, room_status, created_at, finished_at]
+        blocked-columns: []
+      - name: player
+        description: "방 세션별 플레이어 참여 기록"
+        columns: [id, room_session_id, player_name, player_type, user_id, created_at]
+        blocked-columns: []
+      - name: mini_game_play
+        description: "방 세션 내 미니게임 진행 기록"
+        columns: [id, room_session_id, mini_game_type]
+        blocked-columns: []
+      - name: mini_game_result
+        description: "미니게임 참가자별 결과 (순위, 점수)"
+        columns: [id, mini_game_play_id, player_id, player_rank, score, created_at]
+        blocked-columns: []
+      - name: roulette_result
+        description: "룰렛 당첨자 기록"
+        columns: [id, room_session_id, winner_id, winner_probability, created_at]
+        blocked-columns: []
+      - name: user_stats
+        description: "회원별 게임 통계 (승리 횟수, 생존 연속)"
+        columns: [id, user_id, win_count, survival_streak]
+        blocked-columns: []
+      - name: friendship
+        description: "친구 관계 (PENDING/ACCEPTED)"
+        columns: [id, requester_id, addressee_id, status, created_at, updated_at]
+        blocked-columns: []
+      - name: report
+        description: "신고 내역"
+        columns: [id, category, game_type, join_code, content, created_at]
+        blocked-columns: []
+      - name: outbox_event
+        description: "아웃박스 이벤트 (Redis Stream 발행 재시도용)"
+        columns: [id, status, join_code, created_at]
+        blocked-columns: []
+      - name: patch_note
+        description: "운영자 패치노트"
+        columns: [id, category, title, content, created_at, updated_at]
+        blocked-columns: []
+      - name: nickname_audit
+        description: "플레이어명 AI 검열 결과"
+        columns: [id, nickname, status, confidence, reason, created_at, audited_at]
+        blocked-columns: []
+      - name: nickname_feedback
+        description: "플레이어명 검열에 대한 운영자 피드백"
+        columns: [id, nickname, ai_flagged, ai_confidence, operator_decision, reason, created_at]
+        blocked-columns: []
+      - name: custom_profanity
+        description: "커스텀 비속어 목록"
+        columns: [id, word, source, created_at]
+        blocked-columns: []
+      - name: zzolbot_session
+        description: "ZzolBot 대화 이력 (질문/답변/피드백)"
+        columns: [id, question, answer, feedback, admin_username, created_at]
+        blocked-columns: []

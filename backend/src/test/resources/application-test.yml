@@ -160,3 +160,42 @@ security:
 
 roulette:
   default-adjustment-weight: 0.7
+
+zzol-bot:
+  gemini-api-key: test-key
+  model: gemini-test
+  max-loop-iterations: 3
+  default-window-minutes: 60
+  tool-timeout-millis: 5000
+  monitoring:
+    loki-url: http://loki:3100
+    tempo-url: http://tempo:3200
+    prometheus-url: http://prometheus:9090
+    environment: test
+  determinism:
+    temperature: 0.1
+    top-p: 0.1
+  sql:
+    max-rows: 100
+    query-timeout-seconds: 3
+    allowed-tables:
+      - name: app_user
+        description: "회원 정보"
+        columns: [id, user_code, nickname, created_at, deleted_at]
+        blocked-columns: [provider_user_id]
+      - name: room_session
+        description: "완료된 방 세션 기록"
+        columns: [id, join_code, room_status, created_at, finished_at]
+        blocked-columns: []
+      - name: mini_game_result
+        description: "미니게임 결과"
+        columns: [id, mini_game_play_id, player_id, player_rank, score, created_at]
+        blocked-columns: []
+      - name: outbox_event
+        description: "아웃박스 이벤트"
+        columns: [id, status, join_code, created_at]
+        blocked-columns: []
+
+friend:
+  presence:
+    grace-period-seconds: 1

@@ -81,7 +81,8 @@ public class IpBlockFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
 
-        if (response.getStatus() == HttpStatus.NOT_FOUND.value()) {
+        if (response.getStatus() == HttpStatus.NOT_FOUND.value()
+                && !Boolean.TRUE.equals(request.getAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND))) {
             ipBlockStore.incrementNotFoundAndBlockIfExceeded(ip);
         }
     }

@@ -17,14 +17,12 @@ public class SqlQueryRunner {
 
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate readOnlyTx;
-    private final int maxRows;
 
     public SqlQueryRunner(
             JdbcTemplate jdbcTemplate,
             PlatformTransactionManager txManager,
             ZzolBotProperties properties) {
         this.jdbcTemplate = jdbcTemplate;
-        this.maxRows = properties.sql().maxRows();
         this.readOnlyTx = new TransactionTemplate(txManager);
         this.readOnlyTx.setReadOnly(true);
         this.readOnlyTx.setTimeout(properties.sql().queryTimeoutSeconds());

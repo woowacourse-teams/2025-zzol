@@ -69,7 +69,7 @@ STOMP CONNECT 헤더 변경은 다음과 같다.
   탈취 시 공격 흐름 예시:
 
   1. 공격자가 플레이어 A의 RST를 획득한다.
-  2. RST로 WebSocket CONNECT → `joinCode:A` Principal로 인증된다.
+  2. RST로 WebSocket CONNECT → `ABCD:홍길동` Principal로 인증된다.
   3. 같은 방에 A가 이미 접속 중이면 중복 세션이 형성되거나, 구현에 따라 A의 기존 세션이 강제 종료된다.
   4. TTL이 남아 있는 한 공격자는 A로 위장한 채 접속을 유지할 수 있다.
 

@@ -190,7 +190,7 @@ class DashboardServiceTest extends ServiceTest {
     class GetLowestProbabilityWinnerTest {
 
         @Test
-        void 이번달_최소_확률로_당첨된_로그인_사용자_닉네임을_조회한다() {
+        void 이번달_최소_확률로_당첨된_로그인_사용자_닉네임과_유저코드를_조회한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("DDDD"));
 
@@ -216,8 +216,12 @@ class DashboardServiceTest extends ServiceTest {
             final LowestProbabilityWinnerResponse result = dashboardService.getLowestProbabilityWinner();
 
             // then
-            assertThat(result.probability()).isEqualTo(0.05);
-            assertThat(result.playerNames()).containsExactly("민수");
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.probability()).isEqualTo(0.05);
+                softly.assertThat(result.players()).hasSize(1);
+                softly.assertThat(result.players().getFirst().nickname()).isEqualTo("민수");
+                softly.assertThat(result.players().getFirst().userCode()).isEqualTo("GH7KL");
+            });
         }
 
         @Test
@@ -248,7 +252,9 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result.probability()).isEqualTo(0.03);
-            assertThat(result.playerNames()).containsExactlyInAnyOrder("영희", "민수");
+            assertThat(result.players())
+                    .extracting(LowestProbabilityWinnerResponse.PlayerInfo::nickname)
+                    .containsExactlyInAnyOrder("영희", "민수");
         }
 
         @Test
@@ -270,7 +276,7 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result.probability()).isEqualTo(0.01);
-            assertThat(result.playerNames()).hasSize(5);
+            assertThat(result.players()).hasSize(5);
         }
 
         @Test
@@ -302,7 +308,9 @@ class DashboardServiceTest extends ServiceTest {
 
             // then
             assertThat(result.probability()).isEqualTo(0.03);
-            assertThat(result.playerNames()).containsExactly("민수");
+            assertThat(result.players())
+                    .extracting(LowestProbabilityWinnerResponse.PlayerInfo::nickname)
+                    .containsExactly("민수");
         }
 
         @Test
@@ -327,17 +335,22 @@ class DashboardServiceTest extends ServiceTest {
             // then: 게스트(확률 1)는 제외되고, 로그인 사용자(확률 30)만 집계됨
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.probability()).isEqualTo(0.30);
-                softly.assertThat(result.playerNames()).containsExactly("철수");
+                softly.assertThat(result.players())
+                        .extracting(LowestProbabilityWinnerResponse.PlayerInfo::nickname)
+                        .containsExactly("철수");
             });
         }
 
         @Test
-        void 이번달_당첨_기록이_없으면_null을_반환한다() {
+        void 이번달_당첨_기록이_없으면_빈_구조체를_반환한다() {
             // when
             final LowestProbabilityWinnerResponse result = dashboardService.getLowestProbabilityWinner();
 
             // then
-            assertThat(result).isNull();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.probability()).isEqualTo(0.0);
+                softly.assertThat(result.players()).isEmpty();
+            });
         }
     }
 

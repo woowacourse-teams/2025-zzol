@@ -80,7 +80,8 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
         final List<Tuple> results = queryFactory
                 .select(
                         ROULETTE_RESULT.winnerProbability,
-                        PLAYER.playerName
+                        USER.nickname,
+                        USER.userCode
                 )
                 .from(ROULETTE_RESULT)
                 .join(ROULETTE_RESULT.winner, PLAYER)
@@ -90,15 +91,18 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         ROULETTE_RESULT.winnerProbability.eq(minProbability)
                 )
                 .distinct()
-                .orderBy(PLAYER.playerName.asc())
+                .orderBy(USER.nickname.asc())
                 .limit(limit)
                 .fetch();
 
-        final List<String> nicknames = results.stream()
-                .map(tuple -> tuple.get(PLAYER.playerName))
+        final List<LowestProbabilityWinnerResponse.PlayerInfo> players = results.stream()
+                .map(tuple -> new LowestProbabilityWinnerResponse.PlayerInfo(
+                        tuple.get(USER.nickname),
+                        tuple.get(USER.userCode)
+                ))
                 .toList();
 
-        return Optional.of(LowestProbabilityWinnerResponse.of(minProbability, nicknames));
+        return Optional.of(LowestProbabilityWinnerResponse.of(minProbability, players));
     }
 
     @Override

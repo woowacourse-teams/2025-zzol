@@ -8,7 +8,6 @@ paths:
 
 ## 자주 놓치는 항목
 
-- 인스턴스 변수·지역 변수는 `final`. 매개변수는 제외
 - `if-else` 금지 → early return
 - 비즈니스 로직은 도메인 객체 안에. 서비스는 조합만
 - 조정 가능한 값은 `application.yml` + `@ConfigurationProperties`. 하드코딩 금지

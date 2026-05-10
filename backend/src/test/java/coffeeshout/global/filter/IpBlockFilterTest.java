@@ -139,7 +139,7 @@ class IpBlockFilterTest {
         }
 
         @Test
-        void _404_응답_시_카운터를_증가시킨다() throws Exception {
+        void 미등록_경로의_404_응답_시_카운터를_증가시킨다() throws Exception {
             doAnswer(invocation -> {
                 ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
                 return null;
@@ -148,6 +148,37 @@ class IpBlockFilterTest {
             filter.doFilter(요청(REMOTE_IP, "/not-found"), new MockHttpServletResponse(), filterChain);
 
             then(ipBlockStore).should().incrementNotFoundAndBlockIfExceeded(REMOTE_IP);
+        }
+
+        @Test
+        void 비즈니스_예외_속성이_설정된_404_응답_시_카운터를_증가시키지_않는다() throws Exception {
+            final MockHttpServletRequest request = 요청(REMOTE_IP, "/users/999");
+            request.setAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND, true);
+
+            doAnswer(invocation -> {
+                ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
+                return null;
+            }).when(filterChain).doFilter(any(), any());
+
+            filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should(never()).incrementNotFoundAndBlockIfExceeded(any());
+        }
+
+        @Test
+        void 비즈니스_예외_속성이_설정된_404_응답이_반복되어도_카운터를_증가시키지_않는다() throws Exception {
+            doAnswer(invocation -> {
+                ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
+                return null;
+            }).when(filterChain).doFilter(any(), any());
+
+            for (int i = 0; i < 10; i++) {
+                final MockHttpServletRequest request = 요청(REMOTE_IP, "/users/999");
+                request.setAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND, true);
+                filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+            }
+
+            then(ipBlockStore).should(never()).incrementNotFoundAndBlockIfExceeded(any());
         }
 
         @Test

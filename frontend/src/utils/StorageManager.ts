@@ -12,6 +12,7 @@ export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'zzol-access-token',
   REFRESH_TOKEN: 'zzol-refresh-token',
   TEMP_TOKEN: 'zzol-temp-token',
+  ROOM_SESSION_TOKEN: 'zzol-room-session-token',
 } as const;
 
 type StorageType = 'localStorage' | 'sessionStorage';

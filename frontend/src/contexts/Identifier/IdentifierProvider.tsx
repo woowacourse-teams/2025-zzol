@@ -12,6 +12,9 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>(() => {
     return storageManager.getItem(STORAGE_KEYS.QR_CODE_URL, 'sessionStorage', '') as string;
   });
+  const [roomSessionToken, setRoomSessionToken] = useState<string>(() => {
+    return storageManager.getItem(STORAGE_KEYS.ROOM_SESSION_TOKEN, 'sessionStorage', '') as string;
+  });
 
   const joinCodeRef = useRef(joinCode);
   const myNameRef = useRef(myName);
@@ -47,6 +50,14 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
     }
   }, [qrCodeUrl]);
 
+  useEffect(() => {
+    if (roomSessionToken) {
+      storageManager.setItem(STORAGE_KEYS.ROOM_SESSION_TOKEN, roomSessionToken, 'sessionStorage');
+    } else {
+      storageManager.removeItem(STORAGE_KEYS.ROOM_SESSION_TOKEN, 'sessionStorage');
+    }
+  }, [roomSessionToken]);
+
   const clearJoinCode = useCallback(() => {
     setJoinCode('');
   }, []);
@@ -59,6 +70,10 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
     setQrCodeUrl('');
   }, []);
 
+  const clearRoomSessionToken = useCallback(() => {
+    setRoomSessionToken('');
+  }, []);
+
   const clearIdentifier = useCallback(() => {
     const currentJoinCode = joinCodeRef.current;
     if (currentJoinCode) {
@@ -67,7 +82,8 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
     clearJoinCode();
     clearMyName();
     clearQrCodeUrl();
-  }, [clearJoinCode, clearMyName, clearQrCodeUrl]);
+    clearRoomSessionToken();
+  }, [clearJoinCode, clearMyName, clearQrCodeUrl, clearRoomSessionToken]);
 
   return (
     <IdentifierContext.Provider
@@ -81,6 +97,9 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
         qrCodeUrl,
         setQrCodeUrl,
         clearQrCodeUrl,
+        roomSessionToken,
+        setRoomSessionToken,
+        clearRoomSessionToken,
         clearIdentifier,
       }}
     >

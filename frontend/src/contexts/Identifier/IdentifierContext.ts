@@ -13,6 +13,10 @@ type IdentifierContextType = {
   setQrCodeUrl: (qrCodeUrl: string) => void;
   clearQrCodeUrl: () => void;
 
+  roomSessionToken: string;
+  setRoomSessionToken: (token: string) => void;
+  clearRoomSessionToken: () => void;
+
   clearIdentifier: () => void;
 };
 

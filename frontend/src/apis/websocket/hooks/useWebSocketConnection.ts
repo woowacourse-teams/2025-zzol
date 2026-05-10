@@ -35,8 +35,8 @@ export const useWebSocketConnection = () => {
   }, []);
 
   const setupStompClient = useCallback(
-    (joinCode: string, myName: string): Client => {
-      const stompClient = createStompClient({ joinCode, playerName: myName });
+    (roomToken: string): Client => {
+      const stompClient = createStompClient({ roomToken });
       stompClient.onConnect = (frame) => handleConnect(frame);
       stompClient.onDisconnect = handleDisconnect;
       stompClient.onStompError = handleStompError;
@@ -59,22 +59,19 @@ export const useWebSocketConnection = () => {
     return true;
   }, [client, isConnected]);
 
-  const validateConnectionParams = useCallback((joinCode: string, myName: string) => {
-    if (!joinCode || !myName) {
-      console.error('❌ WebSocket 연결 실패: 참여코드 또는 이름이 없습니다.', {
-        joinCode,
-        myName,
-      });
+  const validateConnectionParams = useCallback((roomToken: string) => {
+    if (!roomToken) {
+      console.error('❌ WebSocket 연결 실패: roomToken이 없습니다.');
       return false;
     }
     return true;
   }, []);
 
   const startSocket = useCallback(
-    (joinCode: string, myName: string) => {
-      if (!validateClient() || !validateConnectionParams(joinCode, myName)) return;
-      console.log('🚀 WebSocket 연결 시작', { joinCode, myName });
-      const stompClient = setupStompClient(joinCode, myName);
+    (roomToken: string) => {
+      if (!validateClient() || !validateConnectionParams(roomToken)) return;
+      console.log('🚀 WebSocket 연결 시작');
+      const stompClient = setupStompClient(roomToken);
       setClient(stompClient);
       stompClient.activate();
     },

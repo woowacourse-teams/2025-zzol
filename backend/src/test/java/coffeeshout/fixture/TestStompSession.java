@@ -18,6 +18,7 @@ public class TestStompSession {
 
     private final StompSession session;
     private final ObjectMapper objectMapper;
+    private String principalName;
 
     protected TestStompSession(StompSession session, ObjectMapper objectMapper) {
         this.session = session;
@@ -49,6 +50,14 @@ public class TestStompSession {
 
     public boolean isConnected() {
         return session.isConnected();
+    }
+
+    public String getPrincipalName() {
+        return principalName;
+    }
+
+    void setPrincipalName(String principalName) {
+        this.principalName = principalName;
     }
 
     public void disconnect() {

@@ -85,6 +85,10 @@ security:
     not-found-window: 1h
     block-ttl: 24h
 
+websocket:
+  room-session-token:
+    secret: "local-dev-room-session-token-secret-key-must-be-at-least-256-bits"
+
 user:
   jwt:
     secret: "local-dev-secret-key-must-be-at-least-256-bits-for-hs256-algorithm"

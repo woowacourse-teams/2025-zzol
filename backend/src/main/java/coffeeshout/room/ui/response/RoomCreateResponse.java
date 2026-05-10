@@ -1,16 +1,10 @@
 package coffeeshout.room.ui.response;
 
-import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Room;
+import coffeeshout.room.application.service.RoomCreateResult;
 
-public record RoomCreateResponse(
-        String joinCode
-) {
+public record RoomCreateResponse(String joinCode, String roomSessionToken) {
 
-    public static RoomCreateResponse from(Room room) {
-        final JoinCode joinCode = room.getJoinCode();
-        return new RoomCreateResponse(
-                joinCode.getValue()
-        );
+    public static RoomCreateResponse of(RoomCreateResult result) {
+        return new RoomCreateResponse(result.room().getJoinCode().getValue(), result.roomSessionToken());
     }
 }

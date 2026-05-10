@@ -3,10 +3,11 @@ package coffeeshout.room.ui;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.PlayerService;
+import coffeeshout.room.application.service.RoomCreateResult;
+import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.Playable;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
@@ -56,11 +57,11 @@ public class RoomRestController implements RoomApi {
             @AuthUser Optional<AuthenticatedUser> authUser,
             @RequestBody(required = false) @Valid RoomEnterRequest request
     ) {
-        final Room room = authUser.isPresent()
+        final RoomCreateResult result = authUser.isPresent()
                 ? roomService.createRoom(authUser.get())
                 : roomService.createRoom(requirePlayerName(request));
 
-        return ResponseEntity.ok(RoomCreateResponse.from(room));
+        return ResponseEntity.ok(RoomCreateResponse.of(result));
     }
 
     @PostMapping("/{joinCode}")
@@ -69,12 +70,12 @@ public class RoomRestController implements RoomApi {
             @AuthUser Optional<AuthenticatedUser> authUser,
             @RequestBody(required = false) @Valid RoomEnterRequest request
     ) {
-        final CompletableFuture<Room> future = authUser.isPresent()
+        final CompletableFuture<RoomEnterResult> future = authUser.isPresent()
                 ? roomService.enterRoomAsync(joinCode, authUser.get())
                 : roomService.enterRoomAsync(joinCode, requirePlayerName(request));
 
         return future
-                .thenApply(room -> ResponseEntity.ok(RoomEnterResponse.from(room)))
+                .thenApply(result -> ResponseEntity.ok(RoomEnterResponse.of(result)))
                 .exceptionally(throwable -> {
                     final Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
                     if (cause instanceof RuntimeException runtimeException) {

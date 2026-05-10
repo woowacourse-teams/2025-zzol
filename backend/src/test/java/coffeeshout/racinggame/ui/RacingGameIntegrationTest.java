@@ -32,7 +32,7 @@ class RacingGameIntegrationTest extends WebSocketIntegrationTestSupport {
         racingGame = new RacingGame();
         room.addMiniGame(new PlayerName(host.getName().value()), racingGame);
         roomRepository.save(room);
-        session = createSession();
+        session = createSession(joinCode, host.getName());
     }
 
     @Test
@@ -79,7 +79,7 @@ class RacingGameIntegrationTest extends WebSocketIntegrationTestSupport {
 
     @Test
     void 게임이_완주되면_FINISHED_상태가_전송된다() throws Exception {
-        TestStompSession singleSession = createSession();
+        TestStompSession singleSession = createSession(joinCode, host.getName());
         String joinCodeValue = joinCode.getValue();
         String subscribeStateUrl = String.format("/topic/room/%s/racing-game/state", joinCodeValue);
         String startRequestUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);

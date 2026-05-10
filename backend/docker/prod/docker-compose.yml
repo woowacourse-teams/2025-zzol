@@ -33,6 +33,7 @@ x-prod-app: &prod-app
     - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
     - JWT_SECRET=${JWT_SECRET}
     - OAUTH_FRONTEND_REDIRECT_URI=${OAUTH_FRONTEND_REDIRECT_URI}
+    - ROOM_SESSION_TOKEN_SECRET=${ROOM_SESSION_TOKEN_SECRET}
     - TZ=Asia/Seoul
   volumes:
     - prod-app-logs:/app/logs

@@ -1,6 +1,7 @@
 package coffeeshout.global.zzolbot.infra.sql;
 
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
 import coffeeshout.global.zzolbot.config.ZzolBotProperties.TableSchema;
 import coffeeshout.global.zzolbot.domain.ZzolBotErrorCode;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
@@ -58,9 +60,12 @@ public class SqlQueryValidator {
             return statements;
         } catch (BusinessException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (JSQLParserException e) {
             throw new BusinessException(ZzolBotErrorCode.INVALID_SQL,
                     "SQL 파싱에 실패했습니다: " + e.getMessage());
+        } catch (Exception e) {
+            throw new InfrastructureException(ZzolBotErrorCode.SQL_EXECUTION_FAILED,
+                    "SQL 파서 내부 오류가 발생했습니다: " + e.getMessage());
         }
     }
 
@@ -126,42 +131,46 @@ public class SqlQueryValidator {
     }
 
     private void validateBlockedColumns(PlainSelect select) {
-        final Map<String, Set<String>> blockedByTable = properties.sql().allowedTables().stream()
-                .filter(schema -> schema.blockedColumns() != null && !schema.blockedColumns().isEmpty())
+        final Map<String, Set<String>> blockedByTable = buildBlockedByTable();
+        if (blockedByTable.isEmpty()) {
+            return;
+        }
+        select.getSelectItems().stream()
+                .map(item -> item.getExpression())
+                .filter(expr -> expr instanceof Column)
+                .map(expr -> (Column) expr)
+                .forEach(col -> checkBlockedColumn(col, blockedByTable));
+    }
+
+    private Map<String, Set<String>> buildBlockedByTable() {
+        return properties.sql().allowedTables().stream()
+                .filter(schema -> !schema.blockedColumns().isEmpty())
                 .collect(Collectors.toMap(
                         schema -> schema.name().toLowerCase(),
                         schema -> schema.blockedColumns().stream()
                                 .map(String::toLowerCase)
                                 .collect(Collectors.toSet())
                 ));
+    }
 
-        if (blockedByTable.isEmpty()) {
+    private void checkBlockedColumn(Column column, Map<String, Set<String>> blockedByTable) {
+        final String colName = column.getColumnName().toLowerCase();
+        final String tableName = column.getTable() != null
+                ? column.getTable().getName().toLowerCase()
+                : null;
+        if (tableName != null) {
+            final Set<String> blocked = blockedByTable.get(tableName);
+            if (blocked != null && blocked.contains(colName)) {
+                throw new BusinessException(ZzolBotErrorCode.SQL_COLUMN_BLOCKED,
+                        "조회가 차단된 컬럼입니다: " + tableName + "." + colName);
+            }
             return;
         }
-
-        for (final var item : select.getSelectItems()) {
-            if (!(item.getExpression() instanceof Column column)) {
-                continue;
-            }
-            final String colName = column.getColumnName().toLowerCase();
-            final String tableName = column.getTable() != null
-                    ? column.getTable().getName().toLowerCase()
-                    : null;
-
-            if (tableName != null) {
-                final Set<String> blocked = blockedByTable.get(tableName);
-                if (blocked != null && blocked.contains(colName)) {
-                    throw new BusinessException(ZzolBotErrorCode.SQL_COLUMN_BLOCKED,
-                            "조회가 차단된 컬럼입니다: " + tableName + "." + colName);
-                }
-            } else {
-                final boolean isBlockedAnywhere = blockedByTable.values().stream()
-                        .anyMatch(blockedSet -> blockedSet.contains(colName));
-                if (isBlockedAnywhere) {
-                    throw new BusinessException(ZzolBotErrorCode.SQL_COLUMN_BLOCKED,
-                            "조회가 차단된 컬럼입니다: " + colName);
-                }
-            }
+        final boolean isBlockedAnywhere = blockedByTable.values().stream()
+                .anyMatch(blockedSet -> blockedSet.contains(colName));
+        if (isBlockedAnywhere) {
+            throw new BusinessException(ZzolBotErrorCode.SQL_COLUMN_BLOCKED,
+                    "조회가 차단된 컬럼입니다: " + colName);
         }
     }
 

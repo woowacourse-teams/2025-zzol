@@ -17,14 +17,20 @@
 
 `global/`은 도메인을 가로지르는 횡단 관심사를 담는다:
 
-| 패키지          | 역할                               |
-|--------------|----------------------------------|
-| `redis/`     | Redis Stream 클라이언트 추상화           |
-| `outbox/`    | Transactional Outbox (이벤트 유실 방지) |
-| `lock/`      | Redisson 기반 분산 락                 |
-| `exception/` | ErrorCode 인터페이스, 전역 예외 핸들러       |
-| `log/`       | 공유 로그 마커 (NotificationMarker 등)  |
-| `trace/`     | OpenTelemetry 연동                 |
+| 패키지          | 역할                                          |
+|--------------|---------------------------------------------|
+| `config/`    | 프레임워크 Bean 등록 (Async, Clock, WebMvc, Swagger 등) |
+| `aspect/`    | 횡단 관심사 AOP (MessageMappingTracingAspect)    |
+| `redis/`     | Redis Stream 인프라, Redisson, 커넥션 설정          |
+| `ipblock/`   | IP 차단 (필터, 저장소, 악성 경로 감지, 설정)              |
+| `metric/`    | HTTP·Redis Stream Micrometer 메트릭 수집         |
+| `trace/`     | OpenTelemetry 연동, Observation 필터            |
+| `outbox/`    | Transactional Outbox (이벤트 유실 방지)            |
+| `lock/`      | Redisson 기반 분산 락                            |
+| `exception/` | ErrorCode 인터페이스, 전역 예외 핸들러                  |
+| `health/`    | Spring Actuator 헬스 인디케이터                    |
+| `log/`       | 공유 로그 마커 (NotificationMarker 등)             |
+| `nickname/`  | 닉네임 유틸 (NameValidator 등, `common/`에서 흡수)    |
 
 최상위 공통 패키지:
 

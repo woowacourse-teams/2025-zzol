@@ -37,6 +37,7 @@ val googleGenAiVersion = "1.44.0"
 val testcontainersVersion = "2.0.4"
 val reflectionsVersion = "0.10.2"
 val resilience4jVersion = "2.2.0"
+val jjwtVersion = "0.12.6"
 
 dependencies {
     // --- Spring Boot Starters (버전 생략: Boot가 관리) ---
@@ -109,10 +110,21 @@ dependencies {
     // --- Gemini AI ---
     implementation("com.google.genai:google-genai:${googleGenAiVersion}")
 
+    // --- SQL AST 파싱 (ZzolBot sql_query 도구 보안 검증용) ---
+    implementation("com.github.jsqlparser:jsqlparser:5.0")
+
     // --- 운영자 대시보드 ---
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
+
+    // --- OAuth2 / JWT ---
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("io.jsonwebtoken:jjwt-api:${jjwtVersion}")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:${jjwtVersion}")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:${jjwtVersion}")
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.wiremock:wiremock-standalone:3.9.2")
 }
 
 tasks.register("generateCtags") {

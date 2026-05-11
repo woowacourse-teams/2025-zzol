@@ -1,11 +1,15 @@
 package coffeeshout.room.ui;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.PlayerService;
+import coffeeshout.room.application.service.RoomCreateResult;
+import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomService;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.Playable;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.ui.request.RoomEnterRequest;
+import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
 import coffeeshout.room.ui.response.ProbabilityResponse;
@@ -13,14 +17,18 @@ import coffeeshout.room.ui.response.RandomNicknameResponse;
 import coffeeshout.room.ui.response.RemainingMiniGameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
+import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.user.ui.resolver.AuthUser;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,27 +53,43 @@ public class RoomRestController implements RoomApi {
     }
 
     @PostMapping
-    public ResponseEntity<RoomCreateResponse> createRoom(@Valid @RequestBody RoomEnterRequest request) {
-        final Room room = roomService.createRoom(request.playerName());
+    public ResponseEntity<RoomCreateResponse> createRoom(
+            @AuthUser Optional<AuthenticatedUser> authUser,
+            @RequestBody(required = false) @Valid RoomEnterRequest request
+    ) {
+        final RoomCreateResult result = authUser.isPresent()
+                ? roomService.createRoom(authUser.get())
+                : roomService.createRoom(requirePlayerName(request));
 
-        return ResponseEntity.ok(RoomCreateResponse.from(room));
+        return ResponseEntity.ok(RoomCreateResponse.of(result));
     }
 
     @PostMapping("/{joinCode}")
     public CompletableFuture<ResponseEntity<RoomEnterResponse>> enterRoom(
             @PathVariable String joinCode,
-            @Valid @RequestBody RoomEnterRequest request
+            @AuthUser Optional<AuthenticatedUser> authUser,
+            @RequestBody(required = false) @Valid RoomEnterRequest request
     ) {
-        return roomService.enterRoomAsync(joinCode, request.playerName())
-                .thenApply(room -> ResponseEntity.ok(RoomEnterResponse.from(room)))
+        final CompletableFuture<RoomEnterResult> future = authUser.isPresent()
+                ? roomService.enterRoomAsync(joinCode, authUser.get())
+                : roomService.enterRoomAsync(joinCode, requirePlayerName(request));
+
+        return future
+                .thenApply(result -> ResponseEntity.ok(RoomEnterResponse.of(result)))
                 .exceptionally(throwable -> {
-                    // 원래 예외 추출
                     final Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
                     if (cause instanceof RuntimeException runtimeException) {
                         throw runtimeException;
                     }
                     throw new RuntimeException("방 참가 실패", cause);
                 });
+    }
+
+    private String requirePlayerName(RoomEnterRequest request) {
+        if (request == null || request.playerName() == null || request.playerName().isBlank()) {
+            throw new BusinessException(RoomErrorCode.PLAYER_NAME_BLANK, "플레이어 이름이 없습니다.");
+        }
+        return request.playerName();
     }
 
     @GetMapping("/nickname/random")
@@ -115,6 +139,15 @@ public class RoomRestController implements RoomApi {
         final List<MiniGameType> result = roomService.getSelectedMiniGames(joinCode);
 
         return ResponseEntity.ok(result);
+    }
+
+    @PatchMapping("/{joinCode}/settings")
+    public ResponseEntity<Void> updateRoomSettings(
+            @PathVariable String joinCode,
+            @Valid @RequestBody UpdateRoomSettingsRequest request
+    ) {
+        roomService.updateAdjustmentWeight(joinCode, request.hostName(), request.adjustmentWeight());
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{joinCode}/players/{playerName}")

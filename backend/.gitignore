@@ -56,3 +56,7 @@ docker/monitoring/dashboards/
 docker/monitoring/provisioning/*
 !docker/monitoring/provisioning/alerting
 !docker/monitoring/provisioning/alerting/**
+
+
+# TEST
+/test_output.log

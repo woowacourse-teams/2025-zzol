@@ -2,9 +2,12 @@ package coffeeshout.report.ui;
 
 import coffeeshout.report.application.ReportFacade;
 import coffeeshout.report.ui.request.CreateReportRequest;
+import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.user.ui.resolver.AuthUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,9 +24,14 @@ public class ReportController implements ReportApi {
     private final ReportFacade reportFacade;
 
     @PostMapping
-    public ResponseEntity<Void> submit(@Valid @RequestBody CreateReportRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<Void> submit(
+            @AuthUser Optional<AuthenticatedUser> authUser,
+            @Valid @RequestBody CreateReportRequest request,
+            HttpServletRequest httpRequest
+    ) {
         final String ip = httpRequest.getRemoteAddr();
-        final long id = reportFacade.submit(ip, request.category(), request.gameType(), request.joinCode(), request.content());
+        final long id = reportFacade.submit(ip, request.category(), request.gameType(), request.joinCode(),
+                request.content(), authUser);
         final URI location = UriComponentsBuilder.fromPath("/reports/{id}").buildAndExpand(id).toUri();
         return ResponseEntity.created(location).build();
     }

@@ -39,7 +39,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
         void 호스트를_제거할_때_플레이어가_없다면_방을_제거한다() {
             // given
             String hostName = "호스트";
-            Room createdRoom = roomService.createRoom(hostName);
+            Room createdRoom = roomService.createRoom(hostName).room();
             JoinCode joinCode = createdRoom.getJoinCode();
 
             // when
@@ -54,7 +54,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
         void 호스트를_제거할_때_게스트가_있다면_방을_제거하지_않는다() {
             // given
             String hostName = "호스트";
-            Room createdRoom = roomService.createRoom(hostName);
+            Room createdRoom = roomService.createRoom(hostName).room();
             JoinCode joinCode = createdRoom.getJoinCode();
 
             joinGuest(joinCode, "게스트1");
@@ -74,7 +74,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
                 // given
                 String hostName = "호스트";
                 String guestName = "게스트";
-                Room createdRoom = roomService.createRoom(hostName);
+                Room createdRoom = roomService.createRoom(hostName).room();
                 JoinCode joinCode = createdRoom.getJoinCode();
                 joinGuest(joinCode, guestName);
 
@@ -93,7 +93,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             void 존재하지_않는_게스트_제거_시도_시_false를_반환한다() {
                 // given
                 String hostName = "호스트";
-                Room createdRoom = roomService.createRoom(hostName);
+                Room createdRoom = roomService.createRoom(hostName).room();
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when
@@ -107,7 +107,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             void null_플레이어_이름으로_제거_시도_시_예외가_발생한다() {
                 // given
                 String hostName = "호스트";
-                Room createdRoom = roomService.createRoom(hostName);
+                Room createdRoom = roomService.createRoom(hostName).room();
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when & then
@@ -146,7 +146,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             // given
             String hostName = "호스트";
             String guestName = "게스트";
-            Room createdRoom = roomService.createRoom(hostName);
+            Room createdRoom = roomService.createRoom(hostName).room();
             joinGuest(createdRoom.getJoinCode(), guestName);
 
             // when
@@ -162,7 +162,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
         void 빈_방에서_플레이어_조회_시_예외가_발생한다() {
             // given
             String hostName = "호스트";
-            Room createdRoom = roomService.createRoom(hostName);
+            Room createdRoom = roomService.createRoom(hostName).room();
             JoinCode joinCode = createdRoom.getJoinCode();
 
             // 모든 플레이어 제거 (방도 제거됨)

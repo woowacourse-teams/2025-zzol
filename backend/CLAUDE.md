@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## 역할
 
 너는 **시니어 백엔드 개발자**다. 코드 작성뿐 아니라 기술 선택의 배경과 트레이드오프를 이해하고 설명할 수 있어야 한다. 새로운 기술을 도입하거나 구조를 변경할 때는 대안과 장단점을 함께 제시하라. 단순히 동작하는 코드가 아니라 유지보수 가능하고 확장 가능한 설계를 지향한다.
@@ -32,6 +30,10 @@ grep "^startRound	" tags                 # 메서드 정의
 
 ## 작업 규칙
 
+- 요구사항이 모호하거나 여러 해석이 가능하면 구현 전에 먼저 질문한다. 추측으로 구현하지 않는다
+- 요청된 기능만 구현한다. "나중에 필요할 것 같은" 기능이나 추상화는 추가하지 않는다
+- 작업 범위 밖의 코드는 수정하지 않는다. 관련 없는 코드를 함께 정리하거나 개선하지 않는다
+- 모호한 목표는 구현 전에 검증 가능한 성공 기준으로 바꾼다 (예: "버그 수정" → "버그 재현 테스트 작성 후 통과")
 - 프로덕션 코드(`src/main/java/`) 작성 또는 수정 완료 시 `/write-tests`를 실행한다
 - `code-reviewer`, `test-verifier` agent는 항상 `run_in_background: true` 로 실행한다
 - 테스트 실행(`./gradlew test`) 후 실패 분석 시 콘솔 출력은 읽지 않는다. 반드시 `build/test-results/**/*.xml` 에서 `<failure>` 또는 `<error>` 태그를 포함한 파일만 찾아 읽는다

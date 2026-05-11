@@ -20,13 +20,27 @@ x-dev-app: &dev-app
     - ADMIN_USERNAME=${ADMIN_USERNAME}
     - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     - GEMINI_API_KEY=${GEMINI_API_KEY}
+    - GEMINI_ZZOL_BOT_API_KEY=${GEMINI_ZZOL_BOT_API_KEY}
+    - LOKI_URL=http://loki:3100
+    - ZZOL_BOT_TEMPO_URL=http://tempo:3200
+    - PROMETHEUS_URL=http://prometheus:9090
     - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+    - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+    - KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET}
+    - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
+    - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
+    - JWT_SECRET=${JWT_SECRET}
+    - OAUTH_FRONTEND_REDIRECT_URI=${OAUTH_FRONTEND_REDIRECT_URI}
+    - ROOM_SESSION_TOKEN_SECRET=${ROOM_SESSION_TOKEN_SECRET}
     - TZ=Asia/Seoul
   volumes:
     - dev-app-logs:/app/logs
   networks:
     - zzol-network
     - dev-network
+    - monitoring-network
   depends_on:
     dev-mysql:
       condition: service_healthy
@@ -222,6 +236,8 @@ networks:
     driver: bridge
     name: dev-network
   zzol-network:
+    external: true
+  monitoring-network:
     external: true
 
 # ============================================

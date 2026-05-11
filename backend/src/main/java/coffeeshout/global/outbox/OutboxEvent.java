@@ -17,7 +17,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "outbox_event",
-        indexes = @Index(name = "idx_outbox_status_id", columnList = "status, id")
+        indexes = {
+                @Index(name = "idx_outbox_status_id", columnList = "status, id"),
+                @Index(name = "idx_outbox_join_code_status", columnList = "join_code, status")
+        }
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -33,6 +36,9 @@ public class OutboxEvent {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String payload;
 
+    @Column(length = 4)
+    private String joinCode;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private OutboxStatus status;
@@ -47,9 +53,14 @@ public class OutboxEvent {
     private Instant updatedAt;
 
     public static OutboxEvent create(String streamKey, String payload) {
+        return create(streamKey, payload, null);
+    }
+
+    public static OutboxEvent create(String streamKey, String payload, String joinCode) {
         final OutboxEvent event = new OutboxEvent();
         event.streamKey = streamKey;
         event.payload = payload;
+        event.joinCode = joinCode;
         event.status = OutboxStatus.PENDING;
         event.retryCount = 0;
         event.createdAt = Instant.now();

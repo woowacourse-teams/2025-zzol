@@ -3,6 +3,9 @@ package coffeeshout.fixture;
 import static org.skyscreamer.jsonassert.JSONCompareMode.LENIENT;
 
 import coffeeshout.global.MessageResponse;
+import coffeeshout.global.websocket.auth.RoomSessionTokenService;
+import coffeeshout.room.domain.JoinCode;
+import coffeeshout.room.domain.player.PlayerName;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -36,12 +39,17 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
     static final int CONNECT_TIMEOUT_SECONDS = 1;
     static final String WEBSOCKET_BASE_URL_FORMAT = "ws://localhost:%d/ws";
     private static final Logger log = LoggerFactory.getLogger(WebSocketIntegrationTestSupport.class);
+    private static final String SMOKE_JOIN_CODE = "SMOK";
+    private static final String SMOKE_PLAYER_NAME = "smoketest";
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
     private RedisMessageListenerContainer redisMessageListenerContainer;
+
+    @Autowired
+    private RoomSessionTokenService roomSessionTokenService;
 
     @LocalServerPort
     private int port;
@@ -54,30 +62,66 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
     }
 
     protected TestStompSession createSession() throws InterruptedException, ExecutionException, TimeoutException {
-        return createSession(null, null);
+        final String token = roomSessionTokenService.issue(SMOKE_JOIN_CODE, SMOKE_PLAYER_NAME, null);
+        return createSessionWithRoomToken(token);
+    }
+
+    protected TestStompSession createSession(JoinCode joinCode, PlayerName playerName)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        return createSession(joinCode.getValue(), playerName.value());
     }
 
     protected TestStompSession createSession(String joinCode, String playerName)
             throws InterruptedException, ExecutionException, TimeoutException {
-        SockJsClient sockJsClient = new SockJsClient(List.of(
+        final String token = roomSessionTokenService.issue(joinCode, playerName, null);
+        return createSessionWithRoomToken(token);
+    }
+
+    protected TestStompSession createSessionWithoutRoomToken()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        final SockJsClient sockJsClient = new SockJsClient(List.of(
+                new WebSocketTransport(new StandardWebSocketClient())
+        ));
+        final WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
+        final MappingJackson2MessageConverter messageConverter = new MappingJackson2MessageConverter(objectMapper);
+        messageConverter.setStrictContentTypeMatch(false);
+        stompClient.setMessageConverter(messageConverter);
+
+        final StompSession session = stompClient
+                .connectAsync(
+                        String.format(WEBSOCKET_BASE_URL_FORMAT, port),
+                        new WebSocketHttpHeaders(),
+                        new StompHeaders(),
+                        new StompSessionHandlerAdapter() {}
+                )
+                .get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        return new TestStompSession(session, objectMapper);
+    }
+
+    protected TestStompSession createSessionWithRoomToken(String roomToken)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        final SockJsClient sockJsClient = new SockJsClient(List.of(
                 new WebSocketTransport(new StandardWebSocketClient())
         ));
 
-        WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
-        MappingJackson2MessageConverter messageConverter = new MappingJackson2MessageConverter(objectMapper);
+        final WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
+        final MappingJackson2MessageConverter messageConverter = new MappingJackson2MessageConverter(objectMapper);
         messageConverter.setStrictContentTypeMatch(false);
         stompClient.setMessageConverter(messageConverter);
-        String url = String.format(WEBSOCKET_BASE_URL_FORMAT, port);
+        final String url = String.format(WEBSOCKET_BASE_URL_FORMAT, port);
 
-        StompHeaders connectHeaders = new StompHeaders();
-        if (joinCode != null && playerName != null) {
-            connectHeaders.add("joinCode", joinCode);
-            connectHeaders.add("playerName", playerName);
-        }
+        final StompHeaders connectHeaders = new StompHeaders();
+        connectHeaders.add("roomToken", roomToken);
 
-        StompSession session = stompClient
+        final String[] principalHolder = new String[1];
+        final StompSession session = stompClient
                 .connectAsync(
                         url, new WebSocketHttpHeaders(), connectHeaders, new StompSessionHandlerAdapter() {
+
+                            @Override
+                            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                                principalHolder[0] = connectedHeaders.getFirst("user-name");
+                            }
 
                             @Override
                             public void handleTransportError(StompSession session, Throwable exception) {
@@ -99,7 +143,9 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
                         }
                 )
                 .get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        return new TestStompSession(session, objectMapper);
+        final TestStompSession testSession = new TestStompSession(session, objectMapper);
+        testSession.setPrincipalName(principalHolder[0]);
+        return testSession;
     }
 
     protected void assertMessage(MessageResponse response, String payload) throws JSONException {

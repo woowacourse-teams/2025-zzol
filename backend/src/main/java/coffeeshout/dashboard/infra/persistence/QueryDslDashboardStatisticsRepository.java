@@ -12,6 +12,8 @@ import coffeeshout.minigame.infra.persistence.QMiniGameResultEntity;
 import coffeeshout.room.infra.persistence.QPlayerEntity;
 import coffeeshout.room.infra.persistence.QRoomEntity;
 import coffeeshout.room.infra.persistence.QRouletteResultEntity;
+import coffeeshout.user.infra.persistence.QUserEntity;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
@@ -27,6 +29,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
 
     private static final QRouletteResultEntity ROULETTE_RESULT = QRouletteResultEntity.rouletteResultEntity;
     private static final QPlayerEntity PLAYER = QPlayerEntity.playerEntity;
+    private static final QUserEntity USER = QUserEntity.userEntity;
     private static final QMiniGameEntity MINI_GAME = QMiniGameEntity.miniGameEntity;
     private static final QMiniGameResultEntity MINI_GAME_RESULT = QMiniGameResultEntity.miniGameResultEntity;
     private static final QRoomEntity ROOM = QRoomEntity.roomEntity;
@@ -42,13 +45,15 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
         return queryFactory
                 .select(Projections.constructor(
                         TopWinnerResponse.class,
-                        PLAYER.playerName,
+                        USER.nickname,
+                        USER.userCode,
                         ROULETTE_RESULT.count()
                 ))
                 .from(ROULETTE_RESULT)
                 .join(ROULETTE_RESULT.winner, PLAYER)
+                .join(USER).on(USER.id.eq(PLAYER.userId))
                 .where(ROULETTE_RESULT.createdAt.between(startDate, endDate))
-                .groupBy(PLAYER.playerName)
+                .groupBy(PLAYER.userId)
                 .orderBy(ROULETTE_RESULT.count().desc())
                 .limit(limit)
                 .fetch();
@@ -60,40 +65,44 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
             LocalDateTime endDate,
             int limit
     ) {
-        // 서브쿼리로 최소 확률 찾기
-        final QRouletteResultEntity subRouletteResult = new QRouletteResultEntity("subRouletteResult");
-
-        final List<com.querydsl.core.Tuple> results = queryFactory
-                .select(
-                        ROULETTE_RESULT.winnerProbability,
-                        PLAYER.playerName
-                )
+        final Integer minProbability = queryFactory
+                .select(ROULETTE_RESULT.winnerProbability.min())
                 .from(ROULETTE_RESULT)
                 .join(ROULETTE_RESULT.winner, PLAYER)
-                .where(
-                        ROULETTE_RESULT.createdAt.between(startDate, endDate),
-                        ROULETTE_RESULT.winnerProbability.eq(
-                                queryFactory
-                                        .select(subRouletteResult.winnerProbability.min())
-                                        .from(subRouletteResult)
-                                        .where(subRouletteResult.createdAt.between(startDate, endDate))
-                        )
-                )
-                .distinct()
-                .orderBy(PLAYER.playerName.asc())
-                .limit(limit)
-                .fetch();
+                .join(USER).on(USER.id.eq(PLAYER.userId))
+                .where(ROULETTE_RESULT.createdAt.between(startDate, endDate))
+                .fetchOne();
 
-        if (results.isEmpty()) {
+        if (minProbability == null) {
             return Optional.empty();
         }
 
-        final Integer minProbability = results.getFirst().get(ROULETTE_RESULT.winnerProbability);
-        final List<String> nicknames = results.stream()
-                .map(tuple -> tuple.get(PLAYER.playerName))
+        final List<Tuple> results = queryFactory
+                .select(
+                        ROULETTE_RESULT.winnerProbability,
+                        USER.nickname,
+                        USER.userCode
+                )
+                .from(ROULETTE_RESULT)
+                .join(ROULETTE_RESULT.winner, PLAYER)
+                .join(USER).on(USER.id.eq(PLAYER.userId))
+                .where(
+                        ROULETTE_RESULT.createdAt.between(startDate, endDate),
+                        ROULETTE_RESULT.winnerProbability.eq(minProbability)
+                )
+                .distinct()
+                .orderBy(USER.nickname.asc())
+                .limit(limit)
+                .fetch();
+
+        final List<LowestProbabilityWinnerResponse.PlayerInfo> players = results.stream()
+                .map(tuple -> new LowestProbabilityWinnerResponse.PlayerInfo(
+                        tuple.get(USER.nickname),
+                        tuple.get(USER.userCode)
+                ))
                 .toList();
 
-        return Optional.of(LowestProbabilityWinnerResponse.of(minProbability, nicknames));
+        return Optional.of(LowestProbabilityWinnerResponse.of(minProbability, players));
     }
 
     @Override
@@ -119,7 +128,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
             int limit
     ) {
         // 1단계: player_id로 GROUP BY하여 집계 (JOIN 없이)
-        final List<com.querydsl.core.Tuple> aggregations = queryFactory
+        final List<Tuple> aggregations = queryFactory
                 .select(
                         MINI_GAME_RESULT.player.id,
                         MINI_GAME_RESULT.score.min()

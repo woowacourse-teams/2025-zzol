@@ -16,12 +16,12 @@ public class TestDataHelper {
     private RoomRepository roomRepository;
 
     public Room createDummyRoom(JoinCode joinCode, PlayerName hostName) {
-        Room room = new Room(joinCode, hostName);
+        Room room = new Room(joinCode, hostName, 0.7);
         return roomRepository.save(room);
     }
 
     public Room createDummyPlayingRoom(JoinCode joinCode, PlayerName hostName) {
-        Room room = new Room(joinCode, hostName);
+        Room room = new Room(joinCode, hostName, 0.7);
         ReflectionTestUtils.setField(room, "roomState", RoomState.PLAYING);
         return roomRepository.save(room);
     }

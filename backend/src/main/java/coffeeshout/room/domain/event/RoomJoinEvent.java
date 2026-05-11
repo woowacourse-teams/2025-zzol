@@ -12,16 +12,22 @@ public record RoomJoinEvent(
         TraceInfo traceInfo,
         Instant timestamp,
         String joinCode,
-        String guestName
+        String guestName,
+        Long userId
 ) implements BaseEvent, Traceable {
 
     public RoomJoinEvent(String joinCode, String guestName) {
+        this(joinCode, guestName, null);
+    }
+
+    public RoomJoinEvent(String joinCode, String guestName, Long userId) {
         this(
                 UUID.randomUUID().toString(),
                 TraceInfoExtractor.extract(),
                 Instant.now(),
                 joinCode,
-                guestName
+                guestName,
+                userId
         );
     }
 }

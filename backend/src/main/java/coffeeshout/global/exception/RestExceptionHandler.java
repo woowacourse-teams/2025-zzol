@@ -5,6 +5,7 @@ import static coffeeshout.global.log.LogAspect.NOTIFICATION_MARKER;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.exception.custom.SystemException;
+import coffeeshout.global.filter.IpBlockAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
@@ -37,6 +38,8 @@ public class RestExceptionHandler {
             HttpServletRequest request
     ) {
         logWarning(exception, request);
+        // 미등록 경로 탐색(스캐너·봇)으로 간주해 IpBlockFilter의 404 카운터 집계 대상으로 둔다.
+        // BusinessException(404)와 달리 BUSINESS_NOT_FOUND 속성을 설정하지 않는다.
         return getProblemDetail(HttpStatus.NOT_FOUND, exception, GlobalErrorCode.RESOURCE_NOT_FOUND);
     }
 
@@ -46,7 +49,12 @@ public class RestExceptionHandler {
             HttpServletRequest request
     ) {
         logWarning(exception, request);
-        return getProblemDetail(exception.getErrorCode().getHttpStatus(), exception, exception.getErrorCode());
+        final ErrorCode errorCode = exception.getErrorCode();
+        final HttpStatus httpStatus = errorCode.getHttpStatus();
+        if (httpStatus == HttpStatus.NOT_FOUND) {
+            request.setAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND, true);
+        }
+        return getProblemDetail(httpStatus, exception, errorCode);
     }
 
     @ExceptionHandler(SystemException.class)

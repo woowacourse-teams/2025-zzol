@@ -23,6 +23,19 @@ spring:
         format_sql: true
   flyway:
     enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+          naver:
+            client-id: ${NAVER_CLIENT_ID}
+            client-secret: ${NAVER_CLIENT_SECRET}
 
 management:
   endpoint:
@@ -71,3 +84,16 @@ security:
     not-found-threshold: 999
     not-found-window: 1h
     block-ttl: 24h
+
+websocket:
+  room-session-token:
+    secret: "local-dev-room-session-token-secret-key-must-be-at-least-256-bits"
+
+user:
+  jwt:
+    secret: "local-dev-secret-key-must-be-at-least-256-bits-for-hs256-algorithm"
+    access-token-expiration-seconds: 1800
+    refresh-token-expiration-seconds: 1209600
+  oauth:
+    frontend-redirect-uri: "http://localhost:3000/auth/callback"
+

@@ -5,15 +5,21 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 
 import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.global.ServiceTest;
 import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.websocket.auth.RoomSessionClaim;
+import coffeeshout.global.websocket.auth.RoomSessionTokenService;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;
+import coffeeshout.room.application.service.RoomCreateResult;
+import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.QrCodeStatus;
@@ -25,10 +31,12 @@ import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -44,15 +52,57 @@ class RoomServiceTest extends ServiceTest {
     @MockitoSpyBean
     DelayedRoomRemovalService delayedRoomRemovalService;
 
+    @MockitoSpyBean
+    RoomEventWaitManager roomEventWaitManager;
+
     @Autowired
     RoomQueryService roomQueryService;
 
     @Autowired
     RoomCommandService roomCommandService;
 
+    @Autowired
+    RoomSessionTokenService roomSessionTokenService;
+
     // 테스트 헬퍼 메서드: enterRoom 대체
     private void joinGuest(JoinCode joinCode, String guestName) {
         roomCommandService.joinGuest(joinCode, new PlayerName(guestName));
+    }
+
+    @Nested
+    class 방_생성_시_RST {
+
+        @Test
+        void 게스트_방_생성_RST에는_올바른_클레임이_담겨있다() {
+            final RoomCreateResult result = roomService.createRoom("호스트");
+            final RoomSessionClaim claim = roomSessionTokenService.verify(result.roomSessionToken());
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(claim.joinCode()).isEqualTo(result.room().getJoinCode().getValue());
+                softly.assertThat(claim.playerName()).isEqualTo("호스트");
+                softly.assertThat(claim.userId()).isNull();
+            });
+        }
+    }
+
+    @Nested
+    class 방_입장_시_RST {
+
+        @Test
+        void 게스트_방_입장_RST에는_올바른_클레임이_담겨있다() throws Exception {
+            final Room room = roomService.createRoom("호스트").room();
+            final String joinCode = room.getJoinCode().getValue();
+            doReturn(CompletableFuture.completedFuture(room)).when(roomEventWaitManager).registerWait(anyString());
+
+            final RoomEnterResult result = roomService.enterRoomAsync(joinCode, "게스트").get();
+            final RoomSessionClaim claim = roomSessionTokenService.verify(result.roomSessionToken());
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(claim.joinCode()).isEqualTo(joinCode);
+                softly.assertThat(claim.playerName()).isEqualTo("게스트");
+                softly.assertThat(claim.userId()).isNull();
+            });
+        }
     }
 
     @Nested
@@ -68,7 +118,7 @@ class RoomServiceTest extends ServiceTest {
 
         @Test
         void joinCode_있으면_기존_플레이어와_중복되지_않는_닉네임을_생성한다() {
-            Room createdRoom = roomService.createRoom("호스트");
+            Room createdRoom = roomService.createRoom("호스트").room();
             joinGuest(createdRoom.getJoinCode(), "게스트1");
             joinGuest(createdRoom.getJoinCode(), "게스트2");
 
@@ -105,7 +155,7 @@ class RoomServiceTest extends ServiceTest {
 
         @Test
         void 비속어_게스트_닉네임으로_방_입장이_실패한다() {
-            Room createdRoom = roomService.createRoom("호스트");
+            Room createdRoom = roomService.createRoom("호스트").room();
 
             String joinCode = createdRoom.getJoinCode().getValue();
             assertCoffeeShoutException(
@@ -121,7 +171,7 @@ class RoomServiceTest extends ServiceTest {
         String hostName = "호스트짱";
 
         // when
-        Room room = roomService.createRoom(hostName);
+        Room room = roomService.createRoom(hostName).room();
 
         // then
         assertThat(room).isNotNull();
@@ -138,7 +188,7 @@ class RoomServiceTest extends ServiceTest {
         // given
         String hostName = "호스트";
         String guestName = "게스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         joinGuest(createdRoom.getJoinCode(), guestName);
 
         // when
@@ -165,7 +215,7 @@ class RoomServiceTest extends ServiceTest {
     void 방이_존재하는지_확인한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
 
         // when & then
@@ -177,7 +227,7 @@ class RoomServiceTest extends ServiceTest {
     void 중복된_이름의_플레이어가_존재하는지_확인한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
 
         PlayerName guestName = new PlayerName("게스트1");
@@ -192,7 +242,7 @@ class RoomServiceTest extends ServiceTest {
     void 룰렛을_돌려서_당첨자를_선택한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         joinGuest(createdRoom.getJoinCode(), "게스트1");
         joinGuest(createdRoom.getJoinCode(), "게스트2");
         ReflectionTestUtils.setField(createdRoom, "roomState", RoomState.ROULETTE);
@@ -209,7 +259,7 @@ class RoomServiceTest extends ServiceTest {
     void 미니게임의_점수를_반환한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
         joinGuest(joinCode, "게스트1");
         joinGuest(joinCode, "게스트2");
@@ -234,7 +284,7 @@ class RoomServiceTest extends ServiceTest {
     void 미니게임의_순위를_반환한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
         joinGuest(joinCode, "게스트1");
         joinGuest(joinCode, "게스트2");
@@ -256,7 +306,7 @@ class RoomServiceTest extends ServiceTest {
     void 선택된_미니게임의_목록을_반환한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
         joinGuest(joinCode, "게스트1");
         joinGuest(joinCode, "게스트2");
@@ -279,7 +329,7 @@ class RoomServiceTest extends ServiceTest {
         String hostName = "호스트";
 
         // when
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         JoinCode joinCode = createdRoom.getJoinCode();
 
         // then
@@ -300,7 +350,7 @@ class RoomServiceTest extends ServiceTest {
     void QR코드_상태를_조회한다() {
         // given
         String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName);
+        Room createdRoom = roomService.createRoom(hostName).room();
         String joinCode = createdRoom.getJoinCode().getValue();
 
         // when

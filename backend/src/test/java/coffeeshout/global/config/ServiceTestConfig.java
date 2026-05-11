@@ -73,6 +73,6 @@ public class ServiceTestConfig {
     @Bean
     @Primary
     public Clock testClock() {
-        return Clock.systemDefaultZone();
+        return Clock.systemUTC();
     }
 }

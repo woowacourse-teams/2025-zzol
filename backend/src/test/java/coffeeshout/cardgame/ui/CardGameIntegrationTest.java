@@ -58,7 +58,7 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
         RoomEntity roomEntity = new RoomEntity(joinCode.getValue());
         roomJpaRepository.save(roomEntity);
 
-        session = createSession();
+        session = createSession(joinCode, host.getName());
     }
 
     @Test

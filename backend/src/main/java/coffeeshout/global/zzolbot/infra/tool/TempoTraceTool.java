@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.UriBuilder;
 
 @Slf4j
 @Component
@@ -59,16 +60,16 @@ public class TempoTraceTool implements ZzolBotTool {
     @Override
     public ToolExecutionResult execute(Map<String, Object> params, AskContext ctx) {
         final Object rawJoinCode = params.get("joinCode");
-        if (rawJoinCode instanceof String joinCodeValue && !joinCodeValue.isBlank() && !joinCodeValue.matches("[A-Z0-9]{4}")) {
+        if (rawJoinCode instanceof String s && !s.isBlank() && !s.matches("[A-Z0-9]{4}")) {
             return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식");
         }
-        final String joinCodeValue = (rawJoinCode instanceof String s && s.matches("[A-Z0-9]{4}")) ? s : null;
+        final String joinCode = (rawJoinCode instanceof String s && s.matches("[A-Z0-9]{4}")) ? s : null;
         try {
             final String response = restClient.get()
                     .uri(uriBuilder -> {
-                        final var builder = uriBuilder.path("/api/search").queryParam("limit", TRACE_LIMIT);
-                        if (joinCodeValue != null) {
-                            builder.queryParam("tags", "joinCode=" + joinCodeValue);
+                        final UriBuilder builder = uriBuilder.path("/api/search").queryParam("limit", TRACE_LIMIT);
+                        if (joinCode != null) {
+                            builder.queryParam("tags", "joinCode=" + joinCode);
                         }
                         return builder.build();
                     })
@@ -76,7 +77,7 @@ public class TempoTraceTool implements ZzolBotTool {
                     .body(String.class);
             return ToolExecutionResult.ok(TOOL_NAME, parseTempoResponse(response));
         } catch (RestClientException e) {
-            log.warn("[ZzolBot] Tempo 조회 실패. joinCode={}", joinCodeValue, e);
+            log.warn("[ZzolBot] Tempo 조회 실패. joinCode={}", joinCode, e);
             return ToolExecutionResult.fail(TOOL_NAME, "Tempo 조회 실패");
         }
     }

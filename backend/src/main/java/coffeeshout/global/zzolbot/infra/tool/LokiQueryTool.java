@@ -75,23 +75,23 @@ public class LokiQueryTool implements ZzolBotTool {
     @Override
     public ToolExecutionResult execute(Map<String, Object> params, AskContext ctx) {
         final Object rawJoinCode = params.get("joinCode");
-        if (rawJoinCode instanceof String joinCodeValue && !joinCodeValue.isBlank() && !isValidJoinCode(joinCodeValue)) {
+        if (rawJoinCode instanceof String s && !s.isBlank() && !isValidJoinCode(s)) {
             return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식");
         }
-        final String joinCodeValue = (rawJoinCode instanceof String s && isValidJoinCode(s)) ? s : null;
+        final String joinCode = (rawJoinCode instanceof String s && isValidJoinCode(s)) ? s : null;
         final int lookBackMinutes = parseLookBackMinutes((String) params.getOrDefault("since", "1h"));
 
         final Instant end = ctx.asOf();
         final Instant start = end.minus(lookBackMinutes, ChronoUnit.MINUTES);
 
-        final String logqlQuery = joinCodeValue != null
-                ? String.format("{environment=\"%s\"} |= \"%s\"", environment, joinCodeValue)
+        final String lokiQuery = joinCode != null
+                ? String.format("{environment=\"%s\"} |= \"%s\"", environment, joinCode)
                 : String.format("{environment=\"%s\"} %s", environment, GLOBAL_LOG_FILTER);
         final long startNano = start.toEpochMilli() * 1_000_000L;
         final long endNano = end.toEpochMilli() * 1_000_000L;
         final String encodedUri = String.format(
                 "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d",
-                URLEncoder.encode(logqlQuery, StandardCharsets.UTF_8),
+                URLEncoder.encode(lokiQuery, StandardCharsets.UTF_8),
                 startNano, endNano, LOG_LIMIT
         );
 
@@ -102,7 +102,7 @@ public class LokiQueryTool implements ZzolBotTool {
                     .body(String.class);
             return ToolExecutionResult.ok(TOOL_NAME, parseLokiResponse(response));
         } catch (RestClientException e) {
-            log.warn("[ZzolBot] Loki 조회 실패. joinCode={}", joinCodeValue, e);
+            log.warn("[ZzolBot] Loki 조회 실패. joinCode={}", joinCode, e);
             return ToolExecutionResult.fail(TOOL_NAME, "Loki 조회 실패");
         }
     }

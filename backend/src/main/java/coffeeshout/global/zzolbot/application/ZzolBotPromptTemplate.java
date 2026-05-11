@@ -2,7 +2,7 @@ package coffeeshout.global.zzolbot.application;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
 import coffeeshout.global.zzolbot.domain.AskContext;
-import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
+import coffeeshout.global.zzolbot.domain.FewShotExample;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -52,7 +52,7 @@ public class ZzolBotPromptTemplate {
 
     private final ZzolBotProperties properties;
 
-    public String build(AskContext ctx, List<ZzolBotSessionEntity> goodExamples) {
+    public String build(AskContext ctx, List<FewShotExample> goodExamples) {
         final StringBuilder prompt = new StringBuilder(SYSTEM_PROMPT_BASE);
 
         prompt.append(String.format("""
@@ -74,8 +74,8 @@ public class ZzolBotPromptTemplate {
         if (!goodExamples.isEmpty()) {
             prompt.append("\n## 운영자가 좋은 진단으로 평가한 예시\n");
             goodExamples.forEach(example -> {
-                final String answer = example.getAnswer() != null ? example.getAnswer() : "";
-                prompt.append("\n질문: ").append(example.getQuestion())
+                final String answer = example.answer() != null ? example.answer() : "";
+                prompt.append("\n질문: ").append(example.question())
                         .append("\n답변 요약: ").append(answer, 0, Math.min(answer.length(), 200))
                         .append("...\n");
             });

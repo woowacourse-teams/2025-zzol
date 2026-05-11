@@ -33,6 +33,7 @@ x-dev-app: &dev-app
     - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
     - JWT_SECRET=${JWT_SECRET}
     - OAUTH_FRONTEND_REDIRECT_URI=${OAUTH_FRONTEND_REDIRECT_URI}
+    - ROOM_SESSION_TOKEN_SECRET=${ROOM_SESSION_TOKEN_SECRET}
     - TZ=Asia/Seoul
   volumes:
     - dev-app-logs:/app/logs

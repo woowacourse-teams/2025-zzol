@@ -116,5 +116,28 @@ class LokiQueryToolTest {
 
             assertThat(result.success()).isTrue();
         }
+
+        @Test
+        void joinCode_없이_호출하면_전역_로그_조회에_성공한다(WireMockRuntimeInfo wmInfo) {
+            stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
+                    .willReturn(ok().withBody("{\"status\":\"success\",\"data\":{}}")));
+
+            final ToolExecutionResult result = createTool(wmInfo).execute(Map.of(), CTX);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.success()).isTrue();
+                softly.assertThat(result.toolName()).isEqualTo(LokiQueryTool.TOOL_NAME);
+            });
+        }
+
+        @Test
+        void joinCode_형식이_잘못된_경우_실패를_반환한다(WireMockRuntimeInfo wmInfo) {
+            final ToolExecutionResult result = createTool(wmInfo).execute(Map.of("joinCode", "invalid!"), CTX);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.success()).isFalse();
+                softly.assertThat(result.content()).contains("유효하지 않은 joinCode 형식");
+            });
+        }
     }
 }

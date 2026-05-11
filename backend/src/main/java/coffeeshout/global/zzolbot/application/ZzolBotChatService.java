@@ -2,6 +2,7 @@ package coffeeshout.global.zzolbot.application;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
 import coffeeshout.global.zzolbot.domain.AskContext;
+import coffeeshout.global.zzolbot.domain.FewShotExample;
 import coffeeshout.global.zzolbot.domain.PiiMasker;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotChatResult;
@@ -38,9 +39,12 @@ public class ZzolBotChatService {
     private final Clock clock;
 
     public ZzolBotChatResult ask(String question, String adminUsername, Consumer<String> progressCallback) {
-        final FewShotSelector.Selection selection = fewShotSelector.select(question,
-                sessionRepository.findByFeedbackOrderByCreatedAtDesc(
-                        ZzolBotFeedback.GOOD, PageRequest.of(0, FEEDBACK_POOL_SIZE)));
+        final List<FewShotExample> pool = sessionRepository.findByFeedbackOrderByCreatedAtDesc(
+                        ZzolBotFeedback.GOOD, PageRequest.of(0, FEEDBACK_POOL_SIZE))
+                .stream()
+                .map(e -> new FewShotExample(e.getId(), e.getQuestion(), e.getAnswer()))
+                .toList();
+        final FewShotSelector.Selection selection = fewShotSelector.select(question, pool);
         final AskContext ctx = AskContext.stamp(question, selection.ids(), clock);
 
         final List<ZzolBotMessage> conversation = initConversation(question);

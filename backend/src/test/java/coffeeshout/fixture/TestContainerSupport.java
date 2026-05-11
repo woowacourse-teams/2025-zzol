@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisServerCommands.FlushOption;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -25,7 +26,8 @@ public abstract class TestContainerSupport {
             .withDatabaseName("coffee_shout_test")
             .withUsername("test")
             .withPassword("test")
-            .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci")
+            .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci",
+                    "--max_connections=500")
             .withReuse(true);
 
     protected static final GenericContainer<?> valkey = new GenericContainer<>(
@@ -60,7 +62,7 @@ public abstract class TestContainerSupport {
     @BeforeEach
     void cleanRedis() {
         try (var connection = redisConnectionFactory.getConnection()) {
-            connection.serverCommands().flushAll();
+            connection.serverCommands().flushAll(FlushOption.SYNC);
             log.debug("Redis flushed");
         } catch (Exception e) {
             log.warn("Failed to flush Redis: {}", e.getMessage());

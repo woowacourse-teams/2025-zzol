@@ -76,6 +76,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
 
             RoomCreateResponse roomCreateResponse = objectMapper.readValue(response, RoomCreateResponse.class);
             assertThat(roomRepository.existsByJoinCode(new JoinCode(roomCreateResponse.joinCode()))).isTrue();
+            assertThat(roomCreateResponse.roomSessionToken()).isNotBlank();
         }
 
         @Test
@@ -150,6 +151,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
             Room room = roomRepository.findByJoinCode(new JoinCode(joinCode)).get();
 
             assertThat(roomEnterResponse.joinCode()).isEqualTo(joinCode);
+            assertThat(roomEnterResponse.roomSessionToken()).isNotBlank();
             assertThat(room.getPlayers())
                     .extracting(player -> player.getName().value())
                     .containsExactlyInAnyOrder("호스트", "게스트");

@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.UriBuilder;
 
 @Slf4j
 @Component
@@ -38,8 +39,8 @@ public class TempoTraceTool implements ZzolBotTool {
 
     @Override
     public String description() {
-        return "Tempo에서 joinCode 태그로 분산 트레이스를 조회한다. " +
-                "특정 방에서 발생한 요청의 전체 흐름과 소요 시간을 확인할 수 있다.";
+        return "Tempo에서 분산 트레이스를 조회한다. " +
+                "joinCode가 있으면 해당 방의 요청 흐름을 조회하고, 없으면 최근 전체 트레이스를 조회한다.";
     }
 
     @Override
@@ -49,30 +50,34 @@ public class TempoTraceTool implements ZzolBotTool {
                 "properties", Map.of(
                         "joinCode", Map.of(
                                 "type", "string",
-                                "description", "4자리 방 입장 코드"
+                                "description", "4자리 방 입장 코드. 생략하면 전체 트레이스 조회"
                         )
                 ),
-                "required", List.of("joinCode")
+                "required", List.of()
         );
     }
 
     @Override
     public ToolExecutionResult execute(Map<String, Object> params, AskContext ctx) {
-        if (!(params.get("joinCode") instanceof String joinCodeValue) || !joinCodeValue.matches("[A-Z0-9]{4}")) {
+        final Object rawJoinCode = params.get("joinCode");
+        if (rawJoinCode instanceof String s && !s.isBlank() && !s.matches("[A-Z0-9]{4}")) {
             return ToolExecutionResult.fail(TOOL_NAME, "유효하지 않은 joinCode 형식");
         }
+        final String joinCode = (rawJoinCode instanceof String s && s.matches("[A-Z0-9]{4}")) ? s : null;
         try {
             final String response = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/search")
-                            .queryParam("tags", "joinCode=" + joinCodeValue)
-                            .queryParam("limit", TRACE_LIMIT)
-                            .build())
+                    .uri(uriBuilder -> {
+                        final UriBuilder builder = uriBuilder.path("/api/search").queryParam("limit", TRACE_LIMIT);
+                        if (joinCode != null) {
+                            builder.queryParam("tags", "joinCode=" + joinCode);
+                        }
+                        return builder.build();
+                    })
                     .retrieve()
                     .body(String.class);
             return ToolExecutionResult.ok(TOOL_NAME, parseTempoResponse(response));
         } catch (RestClientException e) {
-            log.warn("[ZzolBot] Tempo 조회 실패. joinCode={}", joinCodeValue, e);
+            log.warn("[ZzolBot] Tempo 조회 실패. joinCode={}", joinCode, e);
             return ToolExecutionResult.fail(TOOL_NAME, "Tempo 조회 실패");
         }
     }

@@ -4,6 +4,7 @@ import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.global.websocket.auth.RoomSessionTokenService;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -78,21 +79,25 @@ public class RoomService {
     private final StreamPublisher streamPublisher;
     private final ApplicationEventPublisher eventPublisher;
     private final UserProfileService userProfileService;
+    private final RoomSessionTokenService roomSessionTokenService;
 
     @Value("${room.event.timeout:PT5S}")
     private Duration eventTimeout;
 
     @Transactional
-    public Room createRoom(String hostName) {
-        final PlayerName playerName = new PlayerName(hostName);
-        playerNameValidator.validate(playerName);
-        return doCreateRoom(hostName, null);
+    public RoomCreateResult createRoom(String hostName) {
+        playerNameValidator.validate(new PlayerName(hostName));
+        final Room room = doCreateRoom(hostName, null);
+        final String token = roomSessionTokenService.issue(room.getJoinCode().getValue(), hostName, null);
+        return new RoomCreateResult(room, token);
     }
 
     @Transactional
-    public Room createRoom(AuthenticatedUser authUser) {
+    public RoomCreateResult createRoom(AuthenticatedUser authUser) {
         final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
-        return doCreateRoom(nickname, authUser.userId());
+        final Room room = doCreateRoom(nickname, authUser.userId());
+        final String token = roomSessionTokenService.issue(room.getJoinCode().getValue(), nickname, authUser.userId());
+        return new RoomCreateResult(room, token);
     }
 
     private Room doCreateRoom(String resolvedName, Long userId) {
@@ -109,14 +114,22 @@ public class RoomService {
         return room;
     }
 
-    public CompletableFuture<Room> enterRoomAsync(String joinCode, String guestName) {
+    public CompletableFuture<RoomEnterResult> enterRoomAsync(String joinCode, String guestName) {
         playerNameValidator.validate(new PlayerName(guestName));
-        return doEnterRoomAsync(joinCode, guestName, null);
+        return doEnterRoomAsync(joinCode, guestName, null)
+                .thenApply(room -> {
+                    final String token = roomSessionTokenService.issue(joinCode, guestName, null);
+                    return new RoomEnterResult(room, guestName, token);
+                });
     }
 
-    public CompletableFuture<Room> enterRoomAsync(String joinCode, AuthenticatedUser authUser) {
+    public CompletableFuture<RoomEnterResult> enterRoomAsync(String joinCode, AuthenticatedUser authUser) {
         final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
-        return doEnterRoomAsync(joinCode, nickname, authUser.userId());
+        return doEnterRoomAsync(joinCode, nickname, authUser.userId())
+                .thenApply(room -> {
+                    final String token = roomSessionTokenService.issue(joinCode, nickname, authUser.userId());
+                    return new RoomEnterResult(room, nickname, token);
+                });
     }
 
     private CompletableFuture<Room> doEnterRoomAsync(String joinCode, String resolvedName, Long userId) {

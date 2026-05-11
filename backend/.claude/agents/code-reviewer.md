@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: 프로덕션 코드를 conventions-production.md, architecture.md, ADR 기준으로 독립적 시각에서 리뷰한다. 수정 제안만 출력하며 프로덕션 코드는 직접 수정하지 않는다.
-model: claude-sonnet-4-6
+model: opus
 tools: Bash, Read, Glob, Grep, Edit
 ---
 
@@ -28,17 +28,17 @@ tools: Bash, Read, Glob, Grep, Edit
 
 - [ ] 계층별 클래스 네이밍 패턴을 따르는가
 
-  | 계층 | 패턴 |
-  |------|------|
-  | Application Service | `{Domain}Service` |
-  | 플로우 오케스트레이터 | `{Domain}FlowOrchestrator` |
-  | WebSocket 알림 | `{Domain}Notifier` |
-  | 도메인 서비스 | `{Domain}CommandService` |
-  | WebSocket 컨트롤러 | `{Domain}WebSocketController` |
-  | 커맨드 핸들러 | `{Action}CommandHandler` |
-  | Redis Consumer | `{Event}Consumer` |
-  | JPA 엔티티 | `{Domain}Entity` |
-  | ErrorCode | `{Domain}ErrorCode` |
+  | 계층                  | 패턴                            |
+  |---------------------|-------------------------------|
+  | Application Service | `{Domain}Service`             |
+  | 플로우 오케스트레이터         | `{Domain}FlowOrchestrator`    |
+  | WebSocket 알림        | `{Domain}Notifier`            |
+  | 도메인 서비스             | `{Domain}CommandService`      |
+  | WebSocket 컨트롤러      | `{Domain}WebSocketController` |
+  | 커맨드 핸들러             | `{Action}CommandHandler`      |
+  | Redis Consumer      | `{Event}Consumer`             |
+  | JPA 엔티티             | `{Domain}Entity`              |
+  | ErrorCode           | `{Domain}ErrorCode`           |
 
 - [ ] 식별자·핵심 개념이 원시 타입 대신 record(Value Object) 로 정의되는가
 

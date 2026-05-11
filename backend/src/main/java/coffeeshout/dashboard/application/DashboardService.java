@@ -36,7 +36,7 @@ public class DashboardService {
         final LocalDateTime endOfMonth = getEndOfMonth();
 
         return dashboardStatisticsRepository.findLowestProbabilityWinner(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT)
-                .orElse(null);
+                .orElse(LowestProbabilityWinnerResponse.empty());
     }
 
     public List<GamePlayCountResponse> getGamePlayCounts() {

@@ -46,7 +46,7 @@ class LadderIntegrationTest extends WebSocketIntegrationTestSupport {
         roomRepository.save(room);
         roomJpaRepository.save(new RoomEntity(joinCode.getValue()));
 
-        session = createSession(joinCode.getValue(), host.getName().value());
+        session = createSession(joinCode, host.getName());
     }
 
     @Nested

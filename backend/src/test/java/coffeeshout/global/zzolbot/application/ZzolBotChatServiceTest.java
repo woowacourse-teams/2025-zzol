@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.given;
 
 import coffeeshout.global.zzolbot.config.ZzolBotProperties;
 import coffeeshout.global.zzolbot.domain.AskContext;
+import coffeeshout.global.zzolbot.domain.FewShotExample;
 import coffeeshout.global.zzolbot.domain.PiiMasker;
 import coffeeshout.global.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.global.zzolbot.domain.ZzolBotChatResult;
@@ -186,11 +187,9 @@ class ZzolBotChatServiceTest {
 
         @Test
         void GOOD_피드백_세션이_있으면_systemInstruction에_예시로_주입된다() {
-            final ZzolBotSessionEntity goodSession = ZzolBotSessionEntity.create(
-                    "A4BX 방 상태", "PLAYING 상태입니다.", "admin"
-            );
+            final FewShotExample goodExample = new FewShotExample(1L, "A4BX 방 상태", "PLAYING 상태입니다.");
             given(fewShotSelector.select(any(), any()))
-                    .willReturn(new FewShotSelector.Selection(List.of(goodSession), List.of()));
+                    .willReturn(new FewShotSelector.Selection(List.of(goodExample), List.of()));
             given(llmClient.generate(anyList(), anyList(), anyString(), any(AskContext.class)))
                     .willReturn(new ZzolBotLlmResponse.TextResponse("응답"));
 

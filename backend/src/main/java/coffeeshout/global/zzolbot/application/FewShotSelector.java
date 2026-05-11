@@ -1,6 +1,6 @@
 package coffeeshout.global.zzolbot.application;
 
-import coffeeshout.global.zzolbot.infra.ZzolBotSessionEntity;
+import coffeeshout.global.zzolbot.domain.FewShotExample;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,21 +12,21 @@ public class FewShotSelector {
 
     private static final int EXAMPLE_LIMIT = 5;
 
-    public record Selection(List<ZzolBotSessionEntity> examples, List<Long> ids) {}
+    public record Selection(List<FewShotExample> examples, List<Long> ids) {}
 
-    public Selection select(String question, List<ZzolBotSessionEntity> pool) {
+    public Selection select(String question, List<FewShotExample> pool) {
         if (pool.isEmpty()) {
             return new Selection(List.of(), List.of());
         }
 
-        final List<ZzolBotSessionEntity> shuffled = new ArrayList<>(pool);
+        final List<FewShotExample> shuffled = new ArrayList<>(pool);
         Collections.shuffle(shuffled, new Random((long) question.hashCode()));
 
-        final List<ZzolBotSessionEntity> selected = List.copyOf(
+        final List<FewShotExample> selected = List.copyOf(
                 shuffled.subList(0, Math.min(EXAMPLE_LIMIT, shuffled.size()))
         );
         final List<Long> ids = selected.stream()
-                .map(ZzolBotSessionEntity::getId)
+                .map(FewShotExample::id)
                 .sorted()
                 .toList();
         return new Selection(selected, ids);

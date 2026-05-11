@@ -1,35 +1,31 @@
-import CarouselSlide from '../CarouselSlide/CarouselSlide';
-import RankingItem from '@/components/@common/RankingItem/RankingItem';
-import FadeInUpList from '@/components/@composition/FadeInUpList/FadeInUpList';
-import { useHeightDifference } from '@/hooks/useHeightDifference';
-import * as S from './TopWinnersSlide.styled';
 import type { TopWinner } from '@/types/dashBoard';
+import * as S from './TopWinnersSlide.styled';
 
 type Props = {
   winners: TopWinner[];
   displayCount?: number;
 };
 
-const TopWinnersSlide = ({ winners, displayCount = 3 }: Props) => {
-  const { containerRef, wrapperRef, heightDifference } = useHeightDifference({
-    fadeInOffset: 20,
-    dependencies: [winners],
-  });
-
-  return (
-    <CarouselSlide title={`이번달 TOP${displayCount} 당첨자`}>
-      <S.SlideContainer ref={containerRef}>
-        <S.Wrapper ref={wrapperRef} $slideDistance={heightDifference}>
-          <FadeInUpList
-            items={winners.slice(0, displayCount)}
-            renderItem={(winner, index) => (
-              <RankingItem rank={index + 1} name={winner.playerName} count={winner.winCount} />
-            )}
-          />
-        </S.Wrapper>
-      </S.SlideContainer>
-    </CarouselSlide>
-  );
-};
+const TopWinnersSlide = ({ winners, displayCount = 5 }: Props) => (
+  <S.Card>
+    <S.CardTitle>이달의 TOP{displayCount} 당첨자</S.CardTitle>
+    {winners.length === 0 ? (
+      <S.Empty>아직 당첨자가 없어요</S.Empty>
+    ) : (
+      <S.List>
+        {winners.slice(0, displayCount).map((winner, index) => (
+          <S.Item key={winner.userCode} $index={index}>
+            <S.Rank $rank={index + 1}>{index + 1}</S.Rank>
+            <S.NameWrapper>
+              <S.Name>{winner.nickname}</S.Name>
+              <S.UserCode>#{winner.userCode}</S.UserCode>
+            </S.NameWrapper>
+            <S.Count>{winner.winCount}회</S.Count>
+          </S.Item>
+        ))}
+      </S.List>
+    )}
+  </S.Card>
+);
 
 export default TopWinnersSlide;

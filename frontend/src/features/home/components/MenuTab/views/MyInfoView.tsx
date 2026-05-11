@@ -1,11 +1,24 @@
 import PlayerIcon from '@/components/@composition/PlayerIcon/PlayerIcon';
+import useModal from '@/components/@common/Modal/useModal';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
+import { useAuth } from '@/features/auth/contexts/AuthContext';
+import DeleteAccountSheet from '@/features/auth/components/DeleteAccountSheet/DeleteAccountSheet';
 import { useMyStats } from '@/features/home/hooks/useMyStats';
 import * as S from './MyInfoView.styled';
 
 const MyInfoView = () => {
   const { myName } = useIdentifier();
   const { winCount, streak } = useMyStats();
+  const { isAuthenticated } = useAuth();
+  const { openModal } = useModal();
+
+  const handleDeleteAccount = () => {
+    openModal(<DeleteAccountSheet />, {
+      title: '회원 탈퇴',
+      showCloseButton: true,
+      closeOnBackdropClick: true,
+    });
+  };
 
   return (
     <S.Container>
@@ -20,11 +33,17 @@ const MyInfoView = () => {
       <S.StatGrid>
         <S.StatCard>
           <S.StatLabel>누적 당첨 횟수</S.StatLabel>
-          <S.StatValue>{winCount}회</S.StatValue>
+          <S.StatValueRow>
+            <S.StatNumber>{winCount}</S.StatNumber>
+            <S.StatUnit>회</S.StatUnit>
+          </S.StatValueRow>
         </S.StatCard>
         <S.StatCard>
           <S.StatLabel>연속 안걸린 횟수</S.StatLabel>
-          <S.StatValue>{streak}회</S.StatValue>
+          <S.StatValueRow>
+            <S.StatNumber>{streak}</S.StatNumber>
+            <S.StatUnit>회</S.StatUnit>
+          </S.StatValueRow>
         </S.StatCard>
       </S.StatGrid>
 
@@ -36,9 +55,17 @@ const MyInfoView = () => {
             <li>• 연속 안걸린 횟수는 마지막 당첨 이후 성공적으로 대기를 피한 횟수입니다.</li>
             <li>• 통계 데이터는 현재 브라우저의 로컬 스토리지에 저장됩니다.</li>
           </S.TooltipList>
-          <S.ComingSoonText>차후 로그인을 통해서 상세한 통계를 지원할 예정입니다.</S.ComingSoonText>
         </S.TooltipCard>
       </S.InfoSection>
+
+      {isAuthenticated && (
+        <S.DangerCard>
+          <S.DangerRow type="button" onClick={handleDeleteAccount}>
+            <S.DangerLabel>회원 탈퇴하기</S.DangerLabel>
+            <S.DangerIcon>›</S.DangerIcon>
+          </S.DangerRow>
+        </S.DangerCard>
+      )}
     </S.Container>
   );
 };

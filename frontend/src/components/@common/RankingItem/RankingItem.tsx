@@ -10,10 +10,7 @@ type Props = {
 };
 
 const RankingItem = ({ rank, name, count, unit = '회' }: Props) => {
-  const getRankTextColor = (rank: number): ColorKey => {
-    if (rank <= 3) return 'white';
-    return 'gray-700';
-  };
+  const getRankTextColor = (rank: number): ColorKey => (rank <= 3 ? 'white' : 'gray-900');
 
   return (
     <S.Container>

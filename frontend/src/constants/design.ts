@@ -9,6 +9,7 @@ export const DESIGN_TOKENS = {
     h4: responsiveWidth(14, 16),
     paragraph: responsiveWidth(14, 16),
     small: responsiveWidth(12, 14),
+    caption: responsiveWidth(11, 12),
   },
 
   // 카드

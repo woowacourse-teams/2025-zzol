@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useMockMode } from '@/hooks/useMockMode';
 import { checkIsTouchDevice } from '../../../../utils/checkIsTouchDevice';
 import { isTopWindow } from '@/devtools/common/utils/isTopWindow';
 import { useIframeRegistry } from '@/devtools/autoTest/hooks/useIframeRegistry';
@@ -12,6 +13,24 @@ import * as S from './IframePreviewToggle.styled';
 const IframePreviewToggle = () => {
   const location = useLocation();
   const [open, setOpen] = useState<boolean>(false);
+  const [devUpdateActive, setDevUpdateActive] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      if (e instanceof CustomEvent && typeof e.detail === 'boolean') {
+        setDevUpdateActive(e.detail);
+      }
+    };
+    window.addEventListener('dev:updateReady', handler);
+    return () => window.removeEventListener('dev:updateReady', handler);
+  }, []);
+
+  const handleToggleUpdateBanner = () => {
+    const next = !devUpdateActive;
+    window.dispatchEvent(new CustomEvent('dev:updateReady', { detail: next }));
+  };
+
+  const { mockEnabled, toggle: toggleMockMode } = useMockMode();
 
   const topWindow = isTopWindow();
   const isTouchDevice = useMemo(() => checkIsTouchDevice(), []);
@@ -71,6 +90,8 @@ const IframePreviewToggle = () => {
           isRunning,
           isPaused,
         }}
+        updateBanner={{ active: devUpdateActive, onToggle: handleToggleUpdateBanner }}
+        mockMode={{ active: mockEnabled, onToggle: toggleMockMode }}
       />
       {open && (
         <IframePreviewList

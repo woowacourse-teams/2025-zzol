@@ -23,13 +23,31 @@ type TestControls = {
   onStop: () => void;
 };
 
+type UpdateBannerControls = {
+  active: boolean;
+  onToggle: () => void;
+};
+
+type MockModeControls = {
+  active: boolean;
+  onToggle: () => void;
+};
+
 export type IframeControlsProps = {
   panel: PanelControls;
   gameSelection: GameSelectionControls;
   test: TestControls;
+  updateBanner: UpdateBannerControls;
+  mockMode: MockModeControls;
 };
 
-const IframeControls = ({ panel, gameSelection, test }: IframeControlsProps) => {
+const IframeControls = ({
+  panel,
+  gameSelection,
+  test,
+  updateBanner,
+  mockMode,
+}: IframeControlsProps) => {
   const { open, onToggleOpen } = panel;
   const { isExpanded, gameSequence, availableGames, onToggleExpanded, onToggleGame } =
     gameSelection;
@@ -40,6 +58,16 @@ const IframeControls = ({ panel, gameSelection, test }: IframeControlsProps) => 
       <S.ToggleButton type="button" onClick={onToggleOpen}>
         {open ? 'Hide iframes' : 'Show iframes'}
       </S.ToggleButton>
+      <S.UpdateBannerButton
+        type="button"
+        $active={updateBanner.active}
+        onClick={updateBanner.onToggle}
+      >
+        {updateBanner.active ? '배너 숨기기' : '업데이트 배너'}
+      </S.UpdateBannerButton>
+      <S.MockModeButton type="button" $active={mockMode.active} onClick={mockMode.onToggle}>
+        {mockMode.active ? '대시보드 Mock OFF' : '대시보드 Mock ON'}
+      </S.MockModeButton>
       {open && (
         <>
           <S.GameSelectionContainer $isExpanded={isExpanded}>

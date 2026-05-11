@@ -15,6 +15,8 @@ export const Container = styled.header<ContainerProps>`
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   flex-shrink: 0;
+  padding: 0 16px;
+  box-sizing: border-box;
 `;
 
 export const LeftSection = styled.div<SectionProps>`

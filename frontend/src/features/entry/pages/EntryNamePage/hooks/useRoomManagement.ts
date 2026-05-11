@@ -13,13 +13,14 @@ type RoomRequest = {
 
 type RoomResponse = {
   joinCode: string;
+  roomSessionToken: string;
 };
 
 export const useRoomManagement = () => {
   const navigate = useReplaceNavigate();
   const { startSocket } = useWebSocket();
   const { playerType } = usePlayerType();
-  const { joinCode, setJoinCode } = useIdentifier();
+  const { joinCode, setJoinCode, setRoomSessionToken } = useIdentifier();
   const { showToast } = useToast();
 
   const endpoint = useMemo(() => getRoomEndpoint(playerType, joinCode), [playerType, joinCode]);
@@ -27,10 +28,11 @@ export const useRoomManagement = () => {
   const createOrJoinRoom = useMutation<RoomResponse, RoomRequest>({
     endpoint,
     method: 'POST',
-    onSuccess: (data, variables) => {
-      const { joinCode } = data;
+    onSuccess: (data) => {
+      const { joinCode, roomSessionToken } = data;
       setJoinCode(joinCode);
-      startSocket(joinCode, variables.playerName);
+      setRoomSessionToken(roomSessionToken);
+      startSocket(roomSessionToken);
       if (joinCode) navigate(`/room/${joinCode}/lobby`);
     },
     errorDisplayMode: 'toast',

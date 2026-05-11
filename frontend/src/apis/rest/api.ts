@@ -1,4 +1,4 @@
-import { ApiConfig, apiRequest, ApiRequestOptions } from './apiRequest';
+import { apiRequest, ApiRequestOptions } from './apiRequest';
 
 export const api = {
   get: <T>(url: string, options: Omit<ApiRequestOptions<T>, 'method' | 'data'> = {}) =>
@@ -24,10 +24,4 @@ export const api = {
 
   delete: <T>(url: string, options: Omit<ApiRequestOptions<T>, 'method' | 'data'> = {}) =>
     apiRequest<T, undefined>(url, { ...options, method: 'DELETE', body: undefined }),
-
-  setDefaultConfig: (config: ApiConfig) => {
-    api.defaultConfig = { ...api.defaultConfig, ...config };
-  },
-
-  defaultConfig: {},
 };

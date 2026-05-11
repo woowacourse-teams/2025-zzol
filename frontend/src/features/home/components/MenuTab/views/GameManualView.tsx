@@ -1,18 +1,27 @@
-import { MINI_GAME_ICON_MAP, MINI_GAME_NAME_MAP, MiniGameType } from '@/types/miniGame/common';
+import {
+  HIDDEN_MINI_GAMES,
+  MINI_GAME_DESCRIPTION_MAP,
+  MINI_GAME_ICON_MAP,
+  MINI_GAME_NAME_MAP,
+  type MiniGameType,
+} from '@/types/miniGame/common';
 import { GAME_CONFIGS } from '@/features/miniGame/config/gameConfigs';
 import useModal from '@/components/@common/Modal/useModal';
-import GameActionButton from '@/components/@common/GameActionButton/GameActionButton';
 import GameInfoCarousel from '@/features/room/lobby/components/GameInfoCarousel/GameInfoCarousel';
-import * as S from './GameManualView.styled';
 import * as MS from '@/features/room/lobby/components/MiniGameSection/MiniGameSection.styled';
+import * as MC from '@/features/home/components/tabs/HomeTab/MiniGameCarousel/MiniGameCarousel.styled';
+import * as S from './GameManualView.styled';
+
+const GAME_TYPES = (Object.keys(MINI_GAME_NAME_MAP) as MiniGameType[]).filter(
+  (type) => !HIDDEN_MINI_GAMES.includes(type)
+);
 
 const GameManualView = () => {
   const { openModal } = useModal();
 
-  const handleGameClick = (miniGame: MiniGameType) => {
-    const name = MINI_GAME_NAME_MAP[miniGame];
-    const slides = GAME_CONFIGS[miniGame]?.slides ?? [];
-
+  const handleGameClick = (type: MiniGameType) => {
+    const name = MINI_GAME_NAME_MAP[type];
+    const slides = GAME_CONFIGS[type]?.slides ?? [];
     openModal(
       <MS.InfoContent>
         <GameInfoCarousel slides={slides} name={name} />
@@ -26,24 +35,24 @@ const GameManualView = () => {
     );
   };
 
-  const gameTypes = Object.keys(MINI_GAME_NAME_MAP) as MiniGameType[];
-
   return (
     <S.Container>
-      <S.Title>게임 설명</S.Title>
-      <MS.Wrapper>
-        {gameTypes.map((type) => (
-          <GameActionButton
-            key={type}
-            isSelected={false}
-            isDisabled={false}
-            gameName={MINI_GAME_NAME_MAP[type]}
-            onClick={() => handleGameClick(type)}
-            onInfoClick={() => handleGameClick(type)}
-            icon={<MS.Icon src={MINI_GAME_ICON_MAP[type]} alt={type} />}
-          />
+      <S.HintBanner>
+        <S.Subtitle>게임을 탭하면 자세한 규칙을 볼 수 있어요</S.Subtitle>
+      </S.HintBanner>
+      <MC.Grid>
+        {GAME_TYPES.map((type) => (
+          <MC.GameCard key={type} type="button" onClick={() => handleGameClick(type)}>
+            <MC.IconWrapper>
+              <MC.GameIcon src={MINI_GAME_ICON_MAP[type]} alt="" aria-hidden="true" />
+            </MC.IconWrapper>
+            <MC.GameMeta>
+              <MC.GameName>{MINI_GAME_NAME_MAP[type]}</MC.GameName>
+              <MC.GameDesc>{MINI_GAME_DESCRIPTION_MAP[type][0]}</MC.GameDesc>
+            </MC.GameMeta>
+          </MC.GameCard>
         ))}
-      </MS.Wrapper>
+      </MC.Grid>
     </S.Container>
   );
 };

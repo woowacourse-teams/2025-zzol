@@ -29,6 +29,27 @@ const color = {
   white: '#FFFFFF',
   black: '#000000',
   yellow: '#FFDF20',
+
+  status: {
+    online: '#1FCD7E',
+    offline: '#D1D5DC',
+  },
+
+  oauth: {
+    google: {
+      bg: '#FFFFFF',
+      text: '#1F1F1F',
+      border: '#747775',
+    },
+    kakao: {
+      bg: '#FEE500',
+      text: '#191919',
+    },
+    naver: {
+      bg: '#03A94D',
+      text: '#FFFFFF',
+    },
+  },
 } as const;
 
 const typography = {
@@ -73,6 +94,13 @@ const typography = {
 
   small: {
     fontSize: DESIGN_TOKENS.typography.small,
+    fontWeight: 400,
+    fontFamily:
+      "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    lineHeight: 1.6,
+  },
+  caption: {
+    fontSize: DESIGN_TOKENS.typography.caption,
     fontWeight: 400,
     fontFamily:
       "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import type { ComponentType } from 'react';
 import BackButton from '@/components/@common/BackButton/BackButton';
+import TopBar from '@/layouts/TopBar/TopBar';
 import SuggestionTab from '../SuggestionTab/SuggestionTab';
+import AccountSection from '../tabs/MenuTab/AccountSection/AccountSection';
 import PatchNotesView from './views/PatchNotesView';
 import ServiceInfoView from './views/ServiceInfoView';
 import MyInfoView from './views/MyInfoView';
@@ -17,13 +19,22 @@ import {
   DownloadIcon,
 } from './menuIcons';
 
-type MenuView =
+export type MenuView =
   | 'my-info'
   | 'game-manual'
   | 'report'
   | 'patch-notes'
   | 'service-info'
   | 'app-install';
+
+const VIEW_TITLE: Record<MenuView, string> = {
+  'my-info': '내 정보',
+  'game-manual': '게임 설명',
+  report: '건의사항 / 신고',
+  'patch-notes': '패치 내역',
+  'service-info': '서비스 정보',
+  'app-install': '앱 설치',
+};
 
 const MENU_ITEMS: {
   key: MenuView;
@@ -69,19 +80,20 @@ const MENU_ITEMS: {
   },
 ];
 
-const MenuTab = () => {
-  const [activeView, setActiveView] = useState<MenuView | null>(null);
+type Props = { initialView?: MenuView | null };
+
+const MenuTab = ({ initialView }: Props) => {
+  const [activeView, setActiveView] = useState<MenuView | null>(initialView ?? null);
 
   if (activeView !== null) {
     return (
       <S.SubViewContainer>
-        {activeView !== 'report' && (
-          <S.SubViewHeader>
-            <BackButton onClick={() => setActiveView(null)} text="메뉴로 가기" />
-          </S.SubViewHeader>
-        )}
+        <TopBar
+          left={<BackButton onClick={() => setActiveView(null)} />}
+          center={<S.SubViewTitle>{VIEW_TITLE[activeView]}</S.SubViewTitle>}
+        />
         <S.SubViewContent>
-          {activeView === 'report' && <SuggestionTab onBackToMenu={() => setActiveView(null)} />}
+          {activeView === 'report' && <SuggestionTab />}
           {activeView === 'patch-notes' && <PatchNotesView />}
           {activeView === 'service-info' && <ServiceInfoView />}
           {activeView === 'my-info' && <MyInfoView />}
@@ -94,24 +106,29 @@ const MenuTab = () => {
 
   return (
     <S.Container>
-      <S.MenuList>
-        {MENU_ITEMS.map(({ key, icon: Icon, title, desc }) => (
-          <li key={key}>
-            <S.MenuItemButton onClick={() => setActiveView(key)}>
-              <S.MenuItemLeft>
-                <S.MenuItemIcon>
-                  <Icon />
-                </S.MenuItemIcon>
-                <S.MenuItemTexts>
-                  <S.MenuItemTitle>{title}</S.MenuItemTitle>
-                  <S.MenuItemDesc>{desc}</S.MenuItemDesc>
-                </S.MenuItemTexts>
-              </S.MenuItemLeft>
-              <S.MenuItemChevron aria-hidden="true">›</S.MenuItemChevron>
-            </S.MenuItemButton>
-          </li>
-        ))}
-      </S.MenuList>
+      <AccountSection />
+      <S.SectionLabel>서비스</S.SectionLabel>
+      <S.MenuCard>
+        <S.MenuList>
+          {MENU_ITEMS.map(({ key, icon: Icon, title, desc }) => (
+            <li key={key}>
+              <S.MenuItemButton onClick={() => setActiveView(key)}>
+                <S.MenuItemLeft>
+                  <S.MenuItemIcon>
+                    <Icon />
+                  </S.MenuItemIcon>
+                  <S.MenuItemTexts>
+                    <S.MenuItemTitle>{title}</S.MenuItemTitle>
+                    <S.MenuItemDesc>{desc}</S.MenuItemDesc>
+                  </S.MenuItemTexts>
+                </S.MenuItemLeft>
+                <S.MenuItemChevron aria-hidden="true">›</S.MenuItemChevron>
+              </S.MenuItemButton>
+            </li>
+          ))}
+        </S.MenuList>
+      </S.MenuCard>
+      <S.VersionText>ZZOL · v1.0.0</S.VersionText>
     </S.Container>
   );
 };

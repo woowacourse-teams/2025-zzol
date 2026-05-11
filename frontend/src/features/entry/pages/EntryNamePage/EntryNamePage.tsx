@@ -11,7 +11,8 @@ import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import Layout from '@/layouts/Layout';
 import { useTheme } from '@emotion/react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/features/auth/contexts/AuthContext';
 import { useRoomManagement } from './hooks/useRoomManagement';
 import useRecentNicknames from './hooks/useRecentNicknames';
 import * as S from './EntryNamePage.styled';
@@ -36,6 +37,19 @@ const EntryNamePage = () => {
   const { proceedToRoom, isLoading } = useRoomManagement();
   const theme = useTheme();
   const { recentNicknames, addNickname, removeNickname } = useRecentNicknames();
+  const { user, isAuthenticated } = useAuth();
+
+  const hasAutoProceeded = useRef(false);
+  const isAutoProceeed = isAuthenticated && !!user;
+
+  useEffect(() => {
+    if (!isAutoProceeed || hasAutoProceeded.current) return;
+    hasAutoProceeded.current = true;
+    setMyName(user!.nickname);
+    proceedToRoom(user!.nickname).catch(() => {
+      navigate('/');
+    });
+  }, [isAutoProceeed, navigate, proceedToRoom, setMyName, user]);
 
   const checkGuestNameQuery = new URLSearchParams({
     joinCode: joinCode ?? '',
@@ -56,6 +70,8 @@ const EntryNamePage = () => {
       endpoint: randomNicknameEndpoint,
       errorDisplayMode: 'toast',
     });
+
+  if (isAutoProceeed) return null;
 
   const handleNavigateToHome = () => {
     navigate('/');

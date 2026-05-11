@@ -14,6 +14,20 @@ export type ApiRequestOptions<TData> = {
     delay: number;
   };
   errorDisplayMode?: ErrorDisplayMode;
+  bypassAuth?: boolean;
+};
+
+type AuthInterceptor = {
+  getAccessToken: () => string | null;
+  refresh: () => Promise<string | null>;
+  onExpired: () => void;
+};
+
+let authInterceptor: AuthInterceptor | null = null;
+let refreshingPromise: Promise<string | null> | null = null;
+
+export const setAuthInterceptor = (interceptor: AuthInterceptor) => {
+  authInterceptor = interceptor;
 };
 
 export type ApiConfig = {
@@ -32,26 +46,112 @@ export const apiRequest = async <T, TData>(
     body = null,
     retry = { count: 0, delay: 1000 },
     errorDisplayMode = options.errorDisplayMode || (method === 'GET' ? 'fallback' : 'toast'),
+    bypassAuth = false,
   } = options;
 
   let requestUrl = API_URL + url;
 
-  const defaultHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...headers,
+  const buildHeaders = (): Record<string, string> => {
+    const base: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...headers,
+    };
+    if (!bypassAuth && authInterceptor) {
+      const token = authInterceptor.getAccessToken();
+      if (token) base['Authorization'] = `Bearer ${token}`;
+    }
+    return base;
   };
 
   const parsedBody = body ? JSON.stringify(body) : null;
 
   const makeRequest = async (retryCount = 0): Promise<T> => {
     try {
-      const fetchOptions: ApiConfig = {
+      const fetchOptions = {
         method: method,
-        headers: defaultHeaders,
+        headers: buildHeaders(),
         body: method !== 'GET' && parsedBody ? parsedBody : null,
+        credentials: 'include' as const,
       };
 
       const response = await fetch(requestUrl, fetchOptions);
+
+      if (response.status === 401 && !bypassAuth && authInterceptor) {
+        try {
+          if (!refreshingPromise) {
+            refreshingPromise = authInterceptor.refresh().finally(() => {
+              refreshingPromise = null;
+            });
+          }
+          const newToken = await refreshingPromise;
+
+          if (!newToken) {
+            authInterceptor.onExpired();
+            throw new ApiError({
+              status: 401,
+              message: '세션이 만료되었습니다. 다시 로그인해 주세요.',
+              displayMode: 'toast',
+            });
+          }
+
+          // 새 토큰으로 원 요청 1회 재시도
+          const retryResponse = await fetch(requestUrl, {
+            ...fetchOptions,
+            headers: { ...buildHeaders(), Authorization: `Bearer ${newToken}` },
+          });
+
+          if (!retryResponse.ok) {
+            if (retryResponse.status === 401) {
+              authInterceptor.onExpired();
+              throw new ApiError({
+                status: 401,
+                message: '세션이 만료되었습니다. 다시 로그인해 주세요.',
+                displayMode: 'toast',
+              });
+            }
+
+            let errorData = null;
+            let errorMessage = `HTTP ${retryResponse.status} Error`;
+            try {
+              const contentType = retryResponse.headers.get('content-type');
+              if (
+                contentType &&
+                (contentType.includes('application/json') ||
+                  contentType.includes('application/problem+json'))
+              ) {
+                errorData = await retryResponse.json();
+                errorMessage = errorData.detail;
+              } else {
+                const textError = await retryResponse.text();
+                errorMessage = textError || errorMessage;
+              }
+            } catch (parseError) {
+              console.warn('응답 메시지 파싱 실패', parseError);
+            }
+
+            const apiError = new ApiError({
+              status: retryResponse.status,
+              message: errorMessage,
+              data: errorData,
+              displayMode: errorDisplayMode,
+            });
+            reportApiError(apiError);
+            throw apiError;
+          }
+
+          if (retryResponse.status === 204) return {} as T;
+          const retryText = await retryResponse.text();
+          return retryText ? JSON.parse(retryText) : ({} as T);
+        } catch (refreshError) {
+          if (refreshError instanceof ApiError) throw refreshError;
+          authInterceptor.onExpired();
+          throw new ApiError({
+            status: 401,
+            message: '세션이 만료되었습니다. 다시 로그인해 주세요.',
+            displayMode: 'toast',
+          });
+        }
+      }
 
       if (!response.ok) {
         let errorData = null;

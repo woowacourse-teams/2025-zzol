@@ -1,10 +1,11 @@
 export type TopWinner = {
-  playerName: string;
+  nickname: string;
+  userCode: string;
   winCount: number;
 };
 
 export type LowestProbabilityWinner = {
-  playerNames: string[];
+  players: { nickname: string; userCode: string }[];
   probability: number;
 };
 

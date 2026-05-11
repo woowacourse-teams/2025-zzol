@@ -3,11 +3,10 @@ import SockJS from 'sockjs-client';
 import { getWebSocketUrl } from './getWebSocketUrl';
 
 type Props = {
-  joinCode: string;
-  playerName: string;
+  roomToken: string;
 };
 
-export const createStompClient = ({ joinCode, playerName }: Props) => {
+export const createStompClient = ({ roomToken }: Props) => {
   const wsUrl = getWebSocketUrl();
 
   const client = new Client({
@@ -18,7 +17,7 @@ export const createStompClient = ({ joinCode, playerName }: Props) => {
     maxReconnectDelay: 30000,
     heartbeatIncoming: 4000,
     heartbeatOutgoing: 4000,
-    connectHeaders: { joinCode, playerName },
+    connectHeaders: { roomToken },
   });
 
   return client;

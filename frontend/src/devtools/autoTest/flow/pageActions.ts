@@ -36,7 +36,7 @@ const homePageHostAction = async () => {
     console.warn('[AutoTest] Create room button not found');
     return;
   }
-  await clickElement(createButton);
+  await clickElementWithClickEvent(createButton);
 };
 
 const homePageGuestAction = async (context: PageActionContext) => {
@@ -45,7 +45,7 @@ const homePageGuestAction = async (context: PageActionContext) => {
     console.warn('[AutoTest] Join room button not found');
     return;
   }
-  await clickElement(joinButton);
+  await clickElementWithClickEvent(joinButton);
 
   // joinCode 입력 처리 (모달이 열림)
   await wait(DELAY_BETWEEN_ACTIONS);

@@ -4,7 +4,7 @@ import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.global.websocket.auth.RoomSessionTokenService;
+import coffeeshout.websocket.auth.RoomSessionTokenService;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;

@@ -1,7 +1,7 @@
 package coffeeshout.global.config;
 
-import coffeeshout.global.flow.CompletableFutureFlowScheduler;
-import coffeeshout.global.flow.FlowScheduler;
+import coffeeshout.gamecommon.flow.CompletableFutureFlowScheduler;
+import coffeeshout.gamecommon.flow.FlowScheduler;
 import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;

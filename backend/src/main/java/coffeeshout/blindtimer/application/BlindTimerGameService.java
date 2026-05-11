@@ -6,7 +6,7 @@ import coffeeshout.blindtimer.domain.BlindTimerGameState;
 import coffeeshout.blindtimer.domain.event.BlindTimerFinishedEvent;
 import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
 import coffeeshout.blindtimer.domain.event.BlindTimerStateChangedEvent;
-import coffeeshout.global.metric.GameDurationMetricService;
+import coffeeshout.gamecommon.metric.GameDurationMetricService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;

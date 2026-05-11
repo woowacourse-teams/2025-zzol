@@ -1,7 +1,7 @@
 package coffeeshout.racinggame.infra.messaging;
 
-import coffeeshout.global.websocket.ui.WebSocketResponse;
-import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.websocket.ui.WebSocketResponse;
+import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.racinggame.domain.RacingGameState;
 import coffeeshout.racinggame.domain.event.RaceFinishedEvent;
 import coffeeshout.racinggame.domain.event.RaceStateChangedEvent;

@@ -1,6 +1,6 @@
 package coffeeshout.fixture;
 
-import coffeeshout.global.websocket.auth.RoomSessionClaim;
+import coffeeshout.websocket.auth.RoomSessionClaim;
 
 public class RoomSessionClaimFixture {
 

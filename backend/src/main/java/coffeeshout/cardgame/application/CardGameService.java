@@ -2,7 +2,7 @@ package coffeeshout.cardgame.application;
 
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.service.CardGameCommandService;
-import coffeeshout.global.metric.GameDurationMetricService;
+import coffeeshout.gamecommon.metric.GameDurationMetricService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;

@@ -1,6 +1,6 @@
 package coffeeshout.speedtouch.application;
 
-import coffeeshout.global.metric.GameDurationMetricService;
+import coffeeshout.gamecommon.metric.GameDurationMetricService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;

@@ -1,7 +1,7 @@
 package coffeeshout.speedtouch.infra.messaging;
 
-import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
-import coffeeshout.global.websocket.ui.WebSocketResponse;
+import coffeeshout.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.speedtouch.domain.event.SpeedTouchFinishedEvent;
 import coffeeshout.speedtouch.domain.event.SpeedTouchProgressEvent;
 import coffeeshout.speedtouch.domain.event.SpeedTouchStateChangedEvent;

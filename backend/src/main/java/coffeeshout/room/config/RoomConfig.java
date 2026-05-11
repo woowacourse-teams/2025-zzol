@@ -1,6 +1,6 @@
 package coffeeshout.room.config;
 
-import coffeeshout.global.nickname.WordPicker;
+import coffeeshout.common.nickname.WordPicker;
 import com.google.genai.Client;
 import com.vane.badwordfiltering.BadWordFiltering;
 import java.util.concurrent.ThreadLocalRandom;

@@ -1,7 +1,7 @@
 package coffeeshout.laddergame.config;
 
-import coffeeshout.global.flow.CompletableFutureFlowScheduler;
-import coffeeshout.global.flow.FlowScheduler;
+import coffeeshout.gamecommon.flow.CompletableFutureFlowScheduler;
+import coffeeshout.gamecommon.flow.FlowScheduler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

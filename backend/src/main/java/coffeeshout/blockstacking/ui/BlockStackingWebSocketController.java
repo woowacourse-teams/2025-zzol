@@ -5,7 +5,7 @@ import coffeeshout.blockstacking.domain.event.BlockStackingFailEvent;
 import coffeeshout.blockstacking.ui.request.BlockStackingProgressRequest;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.global.websocket.PlayerKey;
+import coffeeshout.websocket.PlayerKey;
 import generator.annotaions.MessageResponse;
 import generator.annotaions.Operation;
 import jakarta.validation.Valid;

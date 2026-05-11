@@ -1,7 +1,7 @@
 package coffeeshout.cardgame.config;
 
-import coffeeshout.global.flow.CompletableFutureFlowScheduler;
-import coffeeshout.global.flow.FlowScheduler;
+import coffeeshout.gamecommon.flow.CompletableFutureFlowScheduler;
+import coffeeshout.gamecommon.flow.FlowScheduler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

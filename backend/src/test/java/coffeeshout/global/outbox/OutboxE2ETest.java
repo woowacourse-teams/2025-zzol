@@ -2,7 +2,7 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.flow.FlowScheduler;
+import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.fixture.TestContainerSupport;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;

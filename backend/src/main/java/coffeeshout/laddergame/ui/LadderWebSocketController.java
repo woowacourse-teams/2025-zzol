@@ -2,7 +2,7 @@ package coffeeshout.laddergame.ui;
 
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.global.websocket.PlayerKey;
+import coffeeshout.websocket.PlayerKey;
 import coffeeshout.laddergame.domain.event.LadderDrawCommandEvent;
 import coffeeshout.laddergame.ui.request.LadderDrawRequest;
 import jakarta.validation.Valid;

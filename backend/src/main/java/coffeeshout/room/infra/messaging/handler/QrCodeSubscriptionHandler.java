@@ -1,7 +1,7 @@
 package coffeeshout.room.infra.messaging.handler;
 
-import coffeeshout.global.websocket.ui.WebSocketResponse;
-import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.websocket.ui.WebSocketResponse;
+import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import java.util.Map;

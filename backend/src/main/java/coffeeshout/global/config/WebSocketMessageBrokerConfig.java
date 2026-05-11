@@ -1,11 +1,11 @@
 package coffeeshout.global.config;
 
 
-import coffeeshout.global.websocket.interceptor.ShutdownAwareHandshakeInterceptor;
-import coffeeshout.global.websocket.interceptor.StompPrincipalInterceptor;
-import coffeeshout.global.websocket.interceptor.WebSocketInboundMetricInterceptor;
-import coffeeshout.global.websocket.interceptor.WebSocketOutboundMetricInterceptor;
-import coffeeshout.global.websocket.interceptor.WebSocketRateLimitInterceptor;
+import coffeeshout.websocket.interceptor.ShutdownAwareHandshakeInterceptor;
+import coffeeshout.websocket.interceptor.StompPrincipalInterceptor;
+import coffeeshout.websocket.interceptor.WebSocketInboundMetricInterceptor;
+import coffeeshout.websocket.interceptor.WebSocketOutboundMetricInterceptor;
+import coffeeshout.websocket.interceptor.WebSocketRateLimitInterceptor;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.observation.Observation;

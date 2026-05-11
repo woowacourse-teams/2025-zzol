@@ -1,7 +1,7 @@
 package coffeeshout.report.application;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.ratelimit.ReportRateLimitStore;
+import coffeeshout.report.ratelimit.ReportRateLimitStore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.exception.ReportErrorCode;

@@ -6,8 +6,8 @@ import static org.mockito.Mockito.doReturn;
 
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.global.ServiceTest;
-import coffeeshout.global.websocket.auth.RoomSessionClaim;
-import coffeeshout.global.websocket.auth.RoomSessionTokenService;
+import coffeeshout.websocket.auth.RoomSessionClaim;
+import coffeeshout.websocket.auth.RoomSessionTokenService;
 import coffeeshout.room.application.service.RoomCreateResult;
 import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.domain.Room;

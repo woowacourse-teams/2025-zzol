@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.infra.sql;
+package coffeeshout.zzolbot.infra.sql;
 
 import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;

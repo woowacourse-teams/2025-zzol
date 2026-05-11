@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.infra.tool;
+package coffeeshout.zzolbot.infra.tool;
 
 import coffeeshout.global.outbox.OutboxEvent;
 import coffeeshout.global.outbox.OutboxStatus;

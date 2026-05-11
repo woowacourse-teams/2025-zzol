@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.infra.sql;
+package coffeeshout.zzolbot.infra.sql;
 
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.zzolbot.config.ZzolBotProperties;

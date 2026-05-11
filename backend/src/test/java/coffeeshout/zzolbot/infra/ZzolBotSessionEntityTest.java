@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.infra;
+package coffeeshout.zzolbot.infra;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

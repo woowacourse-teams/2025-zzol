@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.config;
+package coffeeshout.zzolbot.config;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;

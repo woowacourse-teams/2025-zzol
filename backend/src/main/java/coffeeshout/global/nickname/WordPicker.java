@@ -1,4 +1,4 @@
-﻿package coffeeshout.global.nickname;
+package coffeeshout.global.nickname;
 
 import java.util.List;
 

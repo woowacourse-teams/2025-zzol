@@ -1,4 +1,4 @@
-﻿package coffeeshout.room.config;
+package coffeeshout.room.config;
 
 import coffeeshout.global.nickname.WordPicker;
 import com.google.genai.Client;

@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.ui;
+package coffeeshout.zzolbot.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;

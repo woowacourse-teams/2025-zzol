@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.infra.tool;
+package coffeeshout.zzolbot.infra.tool;
 
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.zzolbot.domain.AskContext;

@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.infra.tool;
+package coffeeshout.zzolbot.infra.tool;
 
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import coffeeshout.zzolbot.domain.AskContext;

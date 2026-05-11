@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.domain;
+package coffeeshout.zzolbot.domain;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;

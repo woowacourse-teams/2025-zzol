@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.infra.tool;
+package coffeeshout.zzolbot.infra.tool;
 
 import coffeeshout.global.exception.custom.CoffeeShoutException;
 import coffeeshout.zzolbot.domain.AskContext;

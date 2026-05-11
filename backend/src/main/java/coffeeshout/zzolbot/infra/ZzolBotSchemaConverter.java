@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.infra;
+package coffeeshout.zzolbot.infra;
 
 import com.google.genai.types.Schema;
 import com.google.genai.types.Type;

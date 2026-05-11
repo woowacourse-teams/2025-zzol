@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.application;
+package coffeeshout.zzolbot.application;
 
 import coffeeshout.zzolbot.domain.FewShotExample;
 import java.util.ArrayList;

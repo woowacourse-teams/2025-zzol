@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.domain;
+package coffeeshout.zzolbot.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

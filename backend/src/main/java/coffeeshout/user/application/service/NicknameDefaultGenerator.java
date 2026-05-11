@@ -1,4 +1,4 @@
-﻿package coffeeshout.user.application.service;
+package coffeeshout.user.application.service;
 
 import coffeeshout.global.nickname.RandomNameWordPool;
 import coffeeshout.global.nickname.WordPicker;

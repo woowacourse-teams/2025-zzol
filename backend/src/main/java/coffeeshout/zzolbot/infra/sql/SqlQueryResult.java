@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.infra.sql;
+package coffeeshout.zzolbot.infra.sql;
 
 import java.util.List;
 import java.util.Map;

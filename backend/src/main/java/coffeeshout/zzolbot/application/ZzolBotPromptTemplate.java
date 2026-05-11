@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.application;
+package coffeeshout.zzolbot.application;
 
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import coffeeshout.zzolbot.config.ZzolBotProperties.TableSchema;

@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.domain;
+package coffeeshout.zzolbot.domain;
 
 import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-﻿package coffeeshout.room.domain.service;
+package coffeeshout.room.domain.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.nickname.NameValidator;

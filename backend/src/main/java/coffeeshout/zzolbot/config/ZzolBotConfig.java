@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.config;
+package coffeeshout.zzolbot.config;
 
 import com.google.genai.Client;
 import org.springframework.beans.factory.annotation.Qualifier;

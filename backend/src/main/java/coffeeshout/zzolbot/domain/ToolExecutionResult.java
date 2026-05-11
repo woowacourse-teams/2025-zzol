@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.domain;
+package coffeeshout.zzolbot.domain;
 
 public record ToolExecutionResult(
         String toolName,

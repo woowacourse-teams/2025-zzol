@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.infra.tool;
+package coffeeshout.zzolbot.infra.tool;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;

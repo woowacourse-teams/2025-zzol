@@ -1,4 +1,4 @@
-﻿package coffeeshout.zzolbot.ui;
+package coffeeshout.zzolbot.ui;
 
 import coffeeshout.zzolbot.application.ZzolBotChatService;
 import coffeeshout.zzolbot.domain.ZzolBotChatResult;

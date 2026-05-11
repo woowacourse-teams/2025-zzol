@@ -1,5 +1,4 @@
-package coffeeshout.global.config;
-
+package coffeeshout.websocket.config;
 
 import coffeeshout.websocket.interceptor.ShutdownAwareHandshakeInterceptor;
 import coffeeshout.websocket.interceptor.StompPrincipalInterceptor;

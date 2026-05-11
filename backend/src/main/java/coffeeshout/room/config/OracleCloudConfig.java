@@ -1,6 +1,5 @@
-package coffeeshout.global.config.oracle;
+package coffeeshout.room.config;
 
-import coffeeshout.global.config.properties.OracleObjectStorageProperties;
 import com.oracle.bmc.Region;
 import com.oracle.bmc.auth.InstancePrincipalsAuthenticationDetailsProvider;
 import com.oracle.bmc.objectstorage.ObjectStorage;

@@ -1,4 +1,4 @@
-package coffeeshout.global.config.properties;
+package coffeeshout.global.redis.config;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

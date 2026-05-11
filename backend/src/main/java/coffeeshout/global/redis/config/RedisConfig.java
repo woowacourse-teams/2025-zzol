@@ -1,6 +1,6 @@
 package coffeeshout.global.redis.config;
 
-import coffeeshout.global.config.properties.RedisProperties;
+import coffeeshout.global.redis.config.RedisProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;

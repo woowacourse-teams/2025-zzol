@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.websocket.GameRecoveryService;
 import coffeeshout.websocket.StompSessionManager;
-import coffeeshout.room.domain.JoinCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,7 +35,7 @@ class GameRecoveryControllerTest extends IntegrationTestSupport {
     @AfterEach
     void tearDown() {
         stompSessionManager.removeSession(TEST_SESSION_ID);
-        gameRecoveryService.cleanup(new JoinCode(TEST_JOIN_CODE));
+        gameRecoveryService.cleanup(TEST_JOIN_CODE);
     }
 
     @Test
@@ -45,7 +44,7 @@ class GameRecoveryControllerTest extends IntegrationTestSupport {
         stompSessionManager.registerPlayerSession(TEST_JOIN_CODE, TEST_PLAYER_NAME, TEST_SESSION_ID);
 
         WebSocketResponse<String> response = WebSocketResponse.success("Test Message");
-        String savedStreamId = gameRecoveryService.save(new JoinCode(TEST_JOIN_CODE), TEST_DESTINATION, response);
+        String savedStreamId = gameRecoveryService.save(TEST_JOIN_CODE, TEST_DESTINATION, response);
 
         // when & then
         mockMvc.perform(post("/api/rooms/{joinCode}/recovery", TEST_JOIN_CODE)

@@ -21,8 +21,8 @@ class WebSocketConnectionTest extends WebSocketIntegrationTestSupport {
     }
 
     @Test
-    void RST_없이_연결하면_연결이_거부된다() {
-        assertThatThrownBy(() -> createSessionWithoutRoomToken())
+    void 위조된_RST로_연결하면_거부된다() {
+        assertThatThrownBy(() -> createSessionWithRoomToken("invalid.token.value"))
                 .isInstanceOf(ExecutionException.class)
                 .hasCauseInstanceOf(ConnectionLostException.class);
     }

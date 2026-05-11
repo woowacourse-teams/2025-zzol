@@ -1,8 +1,6 @@
-package coffeeshout.global.filter;
+package coffeeshout.global.ipblock;
 
 import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.ratelimit.IpBlockStore;
-import coffeeshout.global.ratelimit.MaliciousPathMatcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,4 +1,4 @@
-package coffeeshout.global.ratelimit;
+package coffeeshout.global.ipblock;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;

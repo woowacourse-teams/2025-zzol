@@ -1,6 +1,5 @@
-package coffeeshout.global.filter;
+package coffeeshout.global.metric;
 
-import coffeeshout.global.metric.HttpMetricService;
 import jakarta.servlet.AsyncEvent;
 import jakarta.servlet.AsyncListener;
 import jakarta.servlet.FilterChain;
@@ -23,7 +22,7 @@ public class HttpMetricFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        
+
         httpMetricService.incrementConcurrentRequests();
 
         try {

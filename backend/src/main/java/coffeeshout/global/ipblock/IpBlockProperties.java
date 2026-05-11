@@ -1,4 +1,4 @@
-package coffeeshout.global.ratelimit;
+package coffeeshout.global.ipblock;
 
 import jakarta.validation.constraints.Min;
 import java.time.Duration;

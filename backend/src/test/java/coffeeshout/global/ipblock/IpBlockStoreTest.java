@@ -1,4 +1,4 @@
-package coffeeshout.global.ratelimit;
+package coffeeshout.global.ipblock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

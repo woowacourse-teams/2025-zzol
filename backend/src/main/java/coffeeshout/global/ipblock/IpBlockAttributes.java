@@ -1,4 +1,4 @@
-package coffeeshout.global.filter;
+package coffeeshout.global.ipblock;
 
 public final class IpBlockAttributes {
 

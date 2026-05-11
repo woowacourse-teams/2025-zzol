@@ -1,4 +1,4 @@
-package coffeeshout.global.filter;
+package coffeeshout.global.ipblock;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -7,8 +7,6 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 
-import coffeeshout.global.ratelimit.IpBlockStore;
-import coffeeshout.global.ratelimit.MaliciousPathMatcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.FilterChain;

@@ -3,7 +3,7 @@ package coffeeshout.global.exception;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.exception.custom.SystemException;
-import coffeeshout.global.filter.IpBlockAttributes;
+import coffeeshout.global.ipblock.IpBlockAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;

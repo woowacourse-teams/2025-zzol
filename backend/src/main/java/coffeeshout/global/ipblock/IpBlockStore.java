@@ -1,4 +1,4 @@
-package coffeeshout.global.ratelimit;
+package coffeeshout.global.ipblock;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.micrometer.core.instrument.Counter;

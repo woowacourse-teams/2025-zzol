@@ -110,6 +110,9 @@ dependencies {
     // --- Gemini AI ---
     implementation("com.google.genai:google-genai:${googleGenAiVersion}")
 
+    // --- SQL AST 파싱 (ZzolBot sql_query 도구 보안 검증용) ---
+    implementation("com.github.jsqlparser:jsqlparser:5.0")
+
     // --- 운영자 대시보드 ---
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")

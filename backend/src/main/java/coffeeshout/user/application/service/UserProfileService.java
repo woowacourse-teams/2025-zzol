@@ -1,7 +1,7 @@
-package coffeeshout.user.application.service;
+﻿package coffeeshout.user.application.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.common.nickname.NameValidator;
+import coffeeshout.global.nickname.NameValidator;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.event.UserNicknameRegisteredEvent;

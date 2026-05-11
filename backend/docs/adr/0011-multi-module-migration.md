@@ -110,7 +110,7 @@ Gradle 모듈 경계와 패키지 경계를 일치시키는 사전 작업이다.
 
 남은 항목:
 
-- [ ] `common/` → `global/` 흡수 (NameValidator 등 3개 클래스)
+- [x] `common/` → `global/` 흡수 (NameValidator 등 3개 클래스)
 
 ### Phase 1 — Gradle 멀티 모듈 골격 구성
 

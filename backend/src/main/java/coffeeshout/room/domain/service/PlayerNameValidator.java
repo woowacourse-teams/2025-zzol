@@ -1,7 +1,7 @@
-package coffeeshout.room.domain.service;
+﻿package coffeeshout.room.domain.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.common.nickname.NameValidator;
+import coffeeshout.global.nickname.NameValidator;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Objects;

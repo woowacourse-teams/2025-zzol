@@ -1,7 +1,7 @@
-package coffeeshout.user.application.service;
+﻿package coffeeshout.user.application.service;
 
-import coffeeshout.common.nickname.RandomNameWordPool;
-import coffeeshout.common.nickname.WordPicker;
+import coffeeshout.global.nickname.RandomNameWordPool;
+import coffeeshout.global.nickname.WordPicker;
 import coffeeshout.user.domain.UserNickname;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

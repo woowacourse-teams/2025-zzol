@@ -1,9 +1,9 @@
-package coffeeshout.room.domain.service;
+﻿package coffeeshout.room.domain.service;
 
 import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.common.nickname.WordPicker;
+import coffeeshout.global.nickname.WordPicker;
 import coffeeshout.room.domain.RoomErrorCode;
 import java.util.List;
 import java.util.Set;

@@ -1,4 +1,4 @@
-package coffeeshout.common.nickname;
+﻿package coffeeshout.global.nickname;
 
 public interface NameValidator {
 

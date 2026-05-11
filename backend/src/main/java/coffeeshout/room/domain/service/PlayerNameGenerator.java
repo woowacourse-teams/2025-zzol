@@ -1,8 +1,8 @@
-package coffeeshout.room.domain.service;
+﻿package coffeeshout.room.domain.service;
 
 import coffeeshout.global.exception.custom.SystemException;
-import coffeeshout.common.nickname.RandomNameWordPool;
-import coffeeshout.common.nickname.WordPicker;
+import coffeeshout.global.nickname.RandomNameWordPool;
+import coffeeshout.global.nickname.WordPicker;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Set;

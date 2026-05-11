@@ -79,6 +79,18 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
 
     protected TestStompSession createSessionWithoutRoomToken()
             throws InterruptedException, ExecutionException, TimeoutException {
+        return createSessionWithConnectHeaders(new StompHeaders());
+    }
+
+    protected TestStompSession createSessionWithAuthorizationToken(String accessToken)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        final StompHeaders headers = new StompHeaders();
+        headers.add("Authorization", "Bearer " + accessToken);
+        return createSessionWithConnectHeaders(headers);
+    }
+
+    private TestStompSession createSessionWithConnectHeaders(StompHeaders connectHeaders)
+            throws InterruptedException, ExecutionException, TimeoutException {
         final SockJsClient sockJsClient = new SockJsClient(List.of(
                 new WebSocketTransport(new StandardWebSocketClient())
         ));
@@ -87,15 +99,23 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
         messageConverter.setStrictContentTypeMatch(false);
         stompClient.setMessageConverter(messageConverter);
 
+        final String[] principalHolder = new String[1];
         final StompSession session = stompClient
                 .connectAsync(
                         String.format(WEBSOCKET_BASE_URL_FORMAT, port),
                         new WebSocketHttpHeaders(),
-                        new StompHeaders(),
-                        new StompSessionHandlerAdapter() {}
+                        connectHeaders,
+                        new StompSessionHandlerAdapter() {
+                            @Override
+                            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                                principalHolder[0] = connectedHeaders.getFirst("user-name");
+                            }
+                        }
                 )
                 .get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        return new TestStompSession(session, objectMapper);
+        final TestStompSession testSession = new TestStompSession(session, objectMapper);
+        testSession.setPrincipalName(principalHolder[0]);
+        return testSession;
     }
 
     protected TestStompSession createSessionWithRoomToken(String roomToken)

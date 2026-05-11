@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.config.RedisStreamProperties;
 import java.util.List;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
@@ -28,15 +28,23 @@ import org.springframework.data.redis.core.StreamOperations;
 class RedisStreamToolTest {
 
     private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+    private static final Map<String, RedisStreamProperties.StreamConfig> STREAM_KEYS = Map.of(
+            "room", mock(RedisStreamProperties.StreamConfig.class),
+            "racinggame", mock(RedisStreamProperties.StreamConfig.class)
+    );
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private RedisStreamProperties redisStreamProperties;
 
     private RedisStreamTool redisStreamTool;
 
     @BeforeEach
     void setUp() {
-        redisStreamTool = new RedisStreamTool(redisTemplate, new ObjectMapper());
+        given(redisStreamProperties.keys()).willReturn(STREAM_KEYS);
+        redisStreamTool = new RedisStreamTool(redisTemplate, new ObjectMapper(), redisStreamProperties);
     }
 
     @Nested
@@ -54,8 +62,8 @@ class RedisStreamToolTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.success()).isTrue();
                 softly.assertThat(result.toolName()).isEqualTo(RedisStreamTool.TOOL_NAME);
-                for (StreamKey key : StreamKey.values()) {
-                    softly.assertThat(result.content()).contains(key.getRedisKey());
+                for (String redisKey : STREAM_KEYS.keySet()) {
+                    softly.assertThat(result.content()).contains(redisKey);
                 }
             });
         }

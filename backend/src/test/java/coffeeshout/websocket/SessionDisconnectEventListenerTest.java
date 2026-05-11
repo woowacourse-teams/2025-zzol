@@ -6,7 +6,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import coffeeshout.websocket.metric.WebSocketMetricService;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.websocket.event.SessionDisconnectEventListener;
 import coffeeshout.websocket.ratelimit.WebSocketRateLimiter;
@@ -73,7 +73,7 @@ class SessionDisconnectEventListenerTest {
 
             // then
             then(streamPublisher).should()
-                    .publish(eq(StreamKey.ROOM_BROADCAST), any());
+                    .publish(eq(RoomStreamKey.BROADCAST), any());
         }
 
         @Test

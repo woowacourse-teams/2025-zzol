@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.global.StreamMockedServiceTest;
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +38,7 @@ class OutboxEventRecorderTest extends StreamMockedServiceTest {
         BaseEvent event = new PlayerListUpdateEvent("test-join-code");
 
         // when
-        outboxEventRecorder.record(StreamKey.ROOM_BROADCAST, event);
+        outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
 
         // then
         List<OutboxEvent> events = outboxEventRepository.findAll();
@@ -57,7 +57,7 @@ class OutboxEventRecorderTest extends StreamMockedServiceTest {
         BaseEvent event = new PlayerListUpdateEvent("test-join-code");
 
         // when
-        outboxEventRecorder.record(StreamKey.ROOM_BROADCAST, event);
+        outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
 
         // then — @Transactional 테스트이므로 커밋 안 됨 → AFTER_COMMIT 미실행 → Redis 미호출
         Mockito.verifyNoInteractions(streamPublisher);

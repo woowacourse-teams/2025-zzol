@@ -1,15 +1,13 @@
 package coffeeshout.websocket.event;
 
-import coffeeshout.websocket.metric.WebSocketMetricService;
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.websocket.PlayerKey;
-import coffeeshout.websocket.StompSessionManager;
-import coffeeshout.websocket.event.session.SessionRegisteredEvent;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
+import coffeeshout.websocket.PlayerKey;
+import coffeeshout.websocket.event.session.SessionRegisteredEvent;
+import coffeeshout.websocket.metric.WebSocketMetricService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -23,7 +21,6 @@ import org.springframework.web.socket.messaging.SessionConnectedEvent;
 public class SessionConnectEventListener {
 
     private final WebSocketMetricService webSocketMetricService;
-    private final StompSessionManager sessionManager;
     private final StreamPublisher streamPublisher;
     private final RoomQueryService roomQueryService;
 
@@ -58,7 +55,7 @@ public class SessionConnectEventListener {
     private void publishSessionRegisteredEvent(String sessionId, String joinCode, String playerName) {
         final String playerKey = PlayerKey.of(joinCode, playerName).toString();
         final BaseEvent event = SessionRegisteredEvent.create(playerKey, sessionId);
-        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        streamPublisher.publish(RoomStreamKey.BROADCAST, event);
 
         log.info("세션 등록 이벤트 발행: playerKey={}, sessionId={}", playerKey, sessionId);
     }

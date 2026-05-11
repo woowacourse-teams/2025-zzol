@@ -1,6 +1,6 @@
 package coffeeshout.websocket.event;
 
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
@@ -37,6 +37,6 @@ public class RoomStateUpdateEventListener {
 
     private void sendPlayerStatus(String joinCode) {
         final PlayerListUpdateEvent event = new PlayerListUpdateEvent(joinCode);
-        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        streamPublisher.publish(RoomStreamKey.BROADCAST, event);
     }
 }

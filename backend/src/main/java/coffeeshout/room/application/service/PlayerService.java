@@ -1,6 +1,6 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.event.PlayerKickEvent;
@@ -32,7 +32,7 @@ public class PlayerService {
 
         if (exists) {
             final PlayerKickEvent event = new PlayerKickEvent(joinCode, playerName);
-            streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+            streamPublisher.publish(RoomStreamKey.BROADCAST, event);
         }
 
         return exists;

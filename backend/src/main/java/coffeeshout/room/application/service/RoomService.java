@@ -2,7 +2,7 @@ package coffeeshout.room.application.service;
 
 import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.websocket.auth.RoomSessionTokenService;
 import coffeeshout.minigame.domain.MiniGameResult;
@@ -105,7 +105,7 @@ public class RoomService {
         final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(resolvedName), userId, rouletteProperties.defaultAdjustmentWeight());
         final BaseEvent event = new RoomCreateEvent(resolvedName, joinCode.getValue());
 
-        outboxEventRecorder.record(StreamKey.ROOM_BROADCAST, event);
+        outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
         qrCodeService.generateQrCodeAsync(joinCode.getValue());
         saveRoomEntity(joinCode.getValue());
 
@@ -136,7 +136,7 @@ public class RoomService {
         final RoomJoinEvent event = new RoomJoinEvent(joinCode, resolvedName, userId);
         return processEventAsync(
                 event.eventId(),
-                () -> streamPublisher.publish(StreamKey.ROOM_JOIN, event),
+                () -> streamPublisher.publish(RoomStreamKey.JOIN, event),
                 "방 참가",
                 String.format("joinCode=%s, playerName=%s", joinCode, resolvedName),
                 room -> String.format("joinCode=%s, playerName=%s", joinCode, resolvedName)

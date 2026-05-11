@@ -2,7 +2,7 @@ package coffeeshout.websocket.event;
 
 import coffeeshout.websocket.metric.WebSocketMetricService;
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.websocket.StompSessionManager;
 import coffeeshout.websocket.SubscriptionInfoService;
@@ -56,7 +56,7 @@ public class SessionDisconnectEventListener {
             // 플레이어 연결 해제 이벤트 발행
             final BaseEvent playerDisconnectedEvent = PlayerDisconnectedEvent.create(
                     playerKey, sessionId, "SESSION_DISCONNECT");
-            streamPublisher.publish(StreamKey.ROOM_BROADCAST, playerDisconnectedEvent);
+            streamPublisher.publish(RoomStreamKey.BROADCAST, playerDisconnectedEvent);
         }
 
         webSocketMetricService.recordDisconnection(sessionId, CLIENT_DISCONNECT);

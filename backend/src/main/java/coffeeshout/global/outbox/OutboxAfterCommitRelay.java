@@ -1,7 +1,6 @@
 package coffeeshout.global.outbox;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -56,10 +55,7 @@ public class OutboxAfterCommitRelay {
             final BaseEvent baseEvent = objectMapper.readValue(
                     savedEvent.payload(), BaseEvent.class
             );
-            streamPublisher.publish(
-                    StreamKey.fromRedisKey(savedEvent.streamKey()),
-                    baseEvent
-            );
+            streamPublisher.publish(savedEvent.streamKey(), baseEvent);
 
             // 즉시 발행 성공 → PUBLISHED로 전환 (REQUIRES_NEW 트랜잭션)
             eventProcessor.markPublished(savedEvent.outboxEventId());

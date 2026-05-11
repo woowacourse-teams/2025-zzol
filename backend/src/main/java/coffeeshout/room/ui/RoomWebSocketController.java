@@ -1,7 +1,7 @@
 package coffeeshout.room.ui;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.RoomService;
@@ -47,7 +47,7 @@ public class RoomWebSocketController {
     )
     public void broadcastPlayers(@DestinationVariable String joinCode) {
         final BaseEvent event = new PlayerListUpdateEvent(joinCode);
-        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        streamPublisher.publish(RoomStreamKey.BROADCAST, event);
     }
 
     @MessageMapping("/room/{joinCode}/update-ready")
@@ -66,7 +66,7 @@ public class RoomWebSocketController {
     )
     public void broadcastReady(@DestinationVariable String joinCode, ReadyChangeMessage message) {
         final BaseEvent event = new PlayerReadyEvent(joinCode, message.playerName(), message.isReady());
-        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        streamPublisher.publish(RoomStreamKey.BROADCAST, event);
     }
 
     @MessageMapping("/room/{joinCode}/update-minigames")
@@ -86,7 +86,7 @@ public class RoomWebSocketController {
     public void broadcastMiniGames(@DestinationVariable String joinCode, MiniGameSelectMessage message) {
         final BaseEvent event = new MiniGameSelectEvent(joinCode, message.hostName(),
                 message.miniGameTypes());
-        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        streamPublisher.publish(RoomStreamKey.BROADCAST, event);
     }
 
     @MessageMapping("/room/{joinCode}/show-roulette")
@@ -102,7 +102,7 @@ public class RoomWebSocketController {
     )
     public void broadcastShowRoulette(@DestinationVariable String joinCode) {
         final BaseEvent event = new RouletteShowEvent(joinCode);
-        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        streamPublisher.publish(RoomStreamKey.BROADCAST, event);
     }
 
     @MessageMapping("/room/{joinCode}/spin-roulette")
@@ -119,6 +119,6 @@ public class RoomWebSocketController {
     public void broadcastRouletteSpin(@DestinationVariable String joinCode, RouletteSpinMessage message) {
         final Winner winner = roomService.spinRoulette(joinCode, message.hostName());
         final BaseEvent event = new RouletteSpinEvent(joinCode, message.hostName(), winner);
-        streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+        streamPublisher.publish(RoomStreamKey.BROADCAST, event);
     }
 }

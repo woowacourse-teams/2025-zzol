@@ -1,12 +1,11 @@
 package coffeeshout.zzolbot.infra.tool;
 
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.zzolbot.domain.ZzolBotTool;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +22,7 @@ public class RedisStreamTool implements ZzolBotTool {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final RedisStreamProperties redisStreamProperties;
 
     @Override
     public String name() {
@@ -47,9 +47,9 @@ public class RedisStreamTool implements ZzolBotTool {
     public ToolExecutionResult execute(Map<String, Object> params, AskContext ctx) {
         try {
             final Map<String, Object> result = new LinkedHashMap<>();
-            Arrays.stream(StreamKey.values()).forEach(key -> {
-                final Long size = redisTemplate.opsForStream().size(key.getRedisKey());
-                result.put(key.getRedisKey(), size != null ? size : 0L);
+            redisStreamProperties.keys().forEach((redisKey, config) -> {
+                final Long size = redisTemplate.opsForStream().size(redisKey);
+                result.put(redisKey, size != null ? size : 0L);
             });
             return ToolExecutionResult.ok(TOOL_NAME, objectMapper.writeValueAsString(result));
         } catch (JsonProcessingException e) {

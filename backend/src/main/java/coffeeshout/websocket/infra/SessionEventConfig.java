@@ -1,6 +1,6 @@
 package coffeeshout.websocket.infra;
 
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.websocket.StompSessionManager;
 import coffeeshout.websocket.event.player.PlayerReconnectedEvent;
@@ -32,7 +32,7 @@ public class SessionEventConfig {
                 log.info("플레이어 재연결 감지: playerKey={}, sessionId={}", playerKey, sessionId);
 
                 final PlayerReconnectedEvent playerReconnectedEvent = PlayerReconnectedEvent.create(playerKey, sessionId);
-                streamPublisher.publish(StreamKey.ROOM_BROADCAST, playerReconnectedEvent);
+                streamPublisher.publish(RoomStreamKey.BROADCAST, playerReconnectedEvent);
             }
 
             sessionManager.registerPlayerSession(playerKey, sessionId);

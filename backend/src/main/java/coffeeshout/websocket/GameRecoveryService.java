@@ -4,7 +4,6 @@ import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.websocket.ui.dto.RecoveryMessage;
-import coffeeshout.room.domain.JoinCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
@@ -101,7 +100,7 @@ public class GameRecoveryService {
      * @param response    WebSocketResponse
      * @return Redis Stream Entry ID (예: "1234567890-0"), 중복인 경우에도 기존 streamId 반환
      */
-    public String save(JoinCode joinCode, String destination, WebSocketResponse<?> response) {
+    public String save(String joinCode, String destination, WebSocketResponse<?> response) {
         final String messageId = generateMessageId(destination, response);
         final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
         final String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode);
@@ -144,7 +143,7 @@ public class GameRecoveryService {
      * @param lastStreamId 클라이언트가 마지막으로 받은 Redis Stream Entry ID (예: "1234567890-0")
      * @return 복구 메시지 리스트
      */
-    public List<RecoveryMessage> getMessagesSince(JoinCode joinCode, String lastStreamId) {
+    public List<RecoveryMessage> getMessagesSince(String joinCode, String lastStreamId) {
         validateStreamId(lastStreamId);
 
         final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
@@ -179,9 +178,9 @@ public class GameRecoveryService {
      *
      * @param joinCode 방 코드
      */
-    public void cleanup(JoinCode joinCode) {
-        final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode.getValue());
-        final String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode.getValue());
+    public void cleanup(String joinCode) {
+        final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
+        final String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode);
 
         try {
             Long deleted = stringRedisTemplate.delete(List.of(streamKey, idMapKey));

@@ -52,7 +52,7 @@ public class DelayedRoomRemovalService {
     private void executeRoomRemoval(JoinCode joinCode) {
         try {
             roomCommandService.delete(joinCode);
-            gameRecoveryService.cleanup(joinCode);
+            gameRecoveryService.cleanup(joinCode.getValue());
             log.info("방 삭제 완료: joinCode={}", joinCode.getValue());
         } catch (Exception e) {
             log.warn("방 삭제 중 오류 발생: joinCode={}", joinCode.getValue(), e);

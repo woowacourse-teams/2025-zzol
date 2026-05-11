@@ -1,7 +1,5 @@
 package coffeeshout.global.exception;
 
-import static coffeeshout.global.log.LogAspect.NOTIFICATION_MARKER;
-
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.exception.custom.SystemException;
@@ -11,6 +9,8 @@ import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -22,6 +22,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 @Slf4j
 public class RestExceptionHandler {
+
+    private static final Marker NOTIFICATION_MARKER = MarkerFactory.getMarker("[NOTIFICATION]");
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleException(

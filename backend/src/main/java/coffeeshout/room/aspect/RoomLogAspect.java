@@ -1,4 +1,4 @@
-package coffeeshout.global.log;
+package coffeeshout.room.aspect;
 
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Aspect
 @Slf4j
-public class LogAspect {
+public class RoomLogAspect {
 
     public static final Marker NOTIFICATION_MARKER = MarkerFactory.getMarker("[NOTIFICATION]");
 

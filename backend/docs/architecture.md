@@ -4,25 +4,35 @@
 
 각 도메인(`cardgame`, `racinggame`, `speedtouch`, `room` 등)은 동일한 계층 구조를 따른다.
 
-```
+```text
 {domain}/
   application/   # 유스케이스 서비스, 외부 진입점, 플로우 오케스트레이션
   domain/        # 핵심 비즈니스 로직, 엔티티, 도메인 서비스, 도메인 이벤트
   infra/         # 영속성(JPA), 메시징(Redis Stream) 구현체, 스케줄러 구현체
   ui/            # WebSocket 메시지 핸들러, STOMP 엔드포인트
   config/        # 도메인별 스프링 설정 (타이밍, 스레드풀 등)
+  aspect/        # 도메인 전용 AOP 로깅 (선택)
+  metric/        # 도메인 전용 Micrometer 메트릭 (선택)
 ```
 
 `global/`은 도메인을 가로지르는 횡단 관심사를 담는다:
 
-| 패키지          | 역할                                |
-|--------------|-----------------------------------|
-| `websocket/` | STOMP 인터셉터, 세션 추적, 레이트 리밋, 메시지 복구 |
-| `redis/`     | Redis Stream 클라이언트 추상화            |
-| `outbox/`    | Transactional Outbox (이벤트 유실 방지)  |
-| `lock/`      | Redisson 기반 분산 락                  |
-| `exception/` | ErrorCode 인터페이스, 전역 예외 핸들러        |
-| `trace/`     | OpenTelemetry 연동                  |
+| 패키지          | 역할                               |
+|--------------|----------------------------------|
+| `redis/`     | Redis Stream 클라이언트 추상화           |
+| `outbox/`    | Transactional Outbox (이벤트 유실 방지) |
+| `lock/`      | Redisson 기반 분산 락                 |
+| `exception/` | ErrorCode 인터페이스, 전역 예외 핸들러       |
+| `log/`       | 공유 로그 마커 (NotificationMarker 등)  |
+| `trace/`     | OpenTelemetry 연동                 |
+
+최상위 공통 패키지:
+
+| 패키지           | 역할                                                       |
+|---------------|----------------------------------------------------------|
+| `websocket/`  | STOMP 인터셉터, 세션 추적, 인증, 레이트 리밋, 메시지 복구 (멀티 모듈 분리 예약)      |
+| `gamecommon/` | 게임 플로우 추상화 (`FlowScheduler`, `EarlyFinishTrigger`), 공통 메트릭 |
+| `common/`     | 도메인 간 공유 유틸 (닉네임 생성기 등, 멀티 모듈 분리 예약)                     |
 
 ---
 

@@ -1,33 +1,35 @@
 package coffeeshout.room.aspect;
 
+import coffeeshout.global.log.NotificationMarker;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Winner;
+import java.time.Clock;
 import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 @Aspect
 @Slf4j
+@RequiredArgsConstructor
 public class RoomLogAspect {
 
-    public static final Marker NOTIFICATION_MARKER = MarkerFactory.getMarker("[NOTIFICATION]");
+    private final Clock clock;
 
     @AfterReturning(
             value = "execution(* coffeeshout.room.application.service.RoomService.createRoom(..))",
             returning = "room"
     )
     public void logRoomCreation(Room room) {
-        log.info(NOTIFICATION_MARKER, "JoinCode[{}] 방 생성 완료 - host: {}, createdAt: {}",
+        log.info(NotificationMarker.INSTANCE, "JoinCode[{}] 방 생성 완료 - host: {}, createdAt: {}",
                 room.getJoinCode().getValue(),
                 room.getHost().getName().value(),
-                LocalDateTime.now());
+                LocalDateTime.now(clock));
     }
 
     @AfterReturning(
@@ -36,7 +38,7 @@ public class RoomLogAspect {
             argNames = "joinCode,hostName,winner"
     )
     public void logSpinRoulette(String joinCode, String hostName, Winner winner) {
-        log.info(NOTIFICATION_MARKER, "JoinCode[{}] 룰렛 추첨 완료 - 당첨자: {}, 호스트 : {}",
+        log.info(NotificationMarker.INSTANCE, "JoinCode[{}] 룰렛 추첨 완료 - 당첨자: {}, 호스트 : {}",
                 joinCode,
                 winner.name().value(),
                 hostName);

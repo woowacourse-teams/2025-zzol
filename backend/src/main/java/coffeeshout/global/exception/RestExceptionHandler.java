@@ -9,8 +9,7 @@ import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
+import coffeeshout.global.log.NotificationMarker;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -23,7 +22,6 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @Slf4j
 public class RestExceptionHandler {
 
-    private static final Marker NOTIFICATION_MARKER = MarkerFactory.getMarker("[NOTIFICATION]");
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleException(
@@ -165,7 +163,7 @@ public class RestExceptionHandler {
                 e.getClass().getSimpleName(),
                 e.getMessage()
         );
-        log.error(NOTIFICATION_MARKER, logMessage, e);
+        log.error(NotificationMarker.INSTANCE, logMessage, e);
     }
 
     private void logWarning(

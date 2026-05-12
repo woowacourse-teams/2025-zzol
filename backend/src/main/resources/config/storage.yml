@@ -1,0 +1,6 @@
+oracle:
+  cloud:
+    objectstorage:
+      region: ${ORACLE_REGION:ap-chuncheon-1}
+      namespace: ${ORACLE_NAMESPACE:unused}
+      bucket: ${ORACLE_BUCKET:unused}

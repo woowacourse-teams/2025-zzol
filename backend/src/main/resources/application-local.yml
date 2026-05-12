@@ -23,20 +23,6 @@ spring:
         format_sql: true
   flyway:
     enabled: false
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-          kakao:
-            client-id: ${KAKAO_CLIENT_ID}
-            client-secret: ${KAKAO_CLIENT_SECRET}
-          naver:
-            client-id: ${NAVER_CLIENT_ID}
-            client-secret: ${NAVER_CLIENT_SECRET}
-
 management:
   endpoint:
     health:
@@ -57,9 +43,6 @@ management:
   metrics:
     enable:
       tomcat: true
-
-redisson:
-  enabled: true
 
 room:
   qr:

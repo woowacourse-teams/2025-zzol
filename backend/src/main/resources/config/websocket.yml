@@ -1,0 +1,19 @@
+websocket:
+  room-session-token:
+    secret: ${ROOM_SESSION_TOKEN_SECRET}
+  rate-limit:
+    max-messages-per-second: 20
+  recovery:
+    max-length: 1000
+    stream-ttl-seconds: 3600
+    dedup-ttl-seconds: 1
+  docs:
+    enabled: true
+    base-package: "coffeeshout"
+    app-path: "/app"
+    topic-path: "/topic"
+    server-url: "http://localhost:8080/ws"
+    info:
+      title: "커피빵 WebSocket API 명세서"
+      version: "1.0.0"
+      description: "실시간 웹소켓 통신 API 문서"

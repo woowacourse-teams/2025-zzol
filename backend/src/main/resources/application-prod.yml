@@ -9,9 +9,6 @@ spring:
     enabled: true
     baseline-on-migrate: true
 
-redisson:
-  enabled: true
-
 room:
   qr:
     prefix: "https://www.zzol.site/join/"

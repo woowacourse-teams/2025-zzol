@@ -1,0 +1,54 @@
+spring:
+  data:
+    redis:
+      port: 6379
+      ssl:
+        enabled: false
+      host: localhost
+
+redis:
+  stream:
+    # 공통 기본 설정 (각 스트림에서 오버라이드 가능)
+    common-settings:
+      max-length: 100
+      batch-size: 10
+      poll-timeout: 2s
+    # 공유 스레드풀
+    thread-pools:
+      concurrent:
+        core-size: 8
+        max-size: 16
+        queue-capacity: 1024
+    # 스트림 설정 (key가 식별자)
+    keys:
+      "[room]":
+        thread-pool-name: concurrent
+      "[room:join]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 1024
+      "[cardgame:select]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 1024
+      "[minigame]":
+        thread-pool-name: concurrent
+      "[racinggame]":
+        thread-pool-name: concurrent
+      "[speedtouch]":
+        thread-pool-name: concurrent
+      "[blindtimer]":
+        thread-pool-name: concurrent
+      "[blockstacking]":
+        thread-pool-name: concurrent
+      "[laddergame]":
+        thread-pool-name: concurrent
+
+redisson:
+  enabled: true
+  timeout: 1000
+  connect-timeout: 3000
+  retry-attempts: 1
+  retry-interval: 500

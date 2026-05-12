@@ -1,3 +1,4 @@
+# Actuator 엔드포인트, OTLP/Tempo 트레이싱, 로깅 패턴, Slack 알림
 management:
   endpoint:
     health:

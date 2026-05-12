@@ -1,3 +1,4 @@
+# 서버 라이프사이클 (graceful shutdown), Tomcat 스레드/연결 수, 프록시 헤더
 spring:
   lifecycle:
     timeout-per-shutdown-phase: 5m

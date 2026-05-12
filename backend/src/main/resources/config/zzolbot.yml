@@ -1,3 +1,4 @@
+# ZzolBot — Gemini AI 챗봇, 모니터링 도구, SQL 쿼리 허용 테이블 정의
 zzol-bot:
   gemini-api-key: ${GEMINI_ZZOL_BOT_API_KEY:}
   model: gemini-2.5-flash

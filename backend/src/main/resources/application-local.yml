@@ -40,10 +40,6 @@ management:
       endpoint: http://localhost:4318/v1/traces
       export:
         enabled: false
-  metrics:
-    enable:
-      tomcat: true
-
 room:
   qr:
     prefix: http://localhost:8080/join/

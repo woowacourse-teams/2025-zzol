@@ -1,3 +1,4 @@
+# 미니게임 타이밍 및 스케줄러 설정 (card-game, block-stacking, ladder, speed-touch, blind-timer, roulette)
 card-game:
   timing:
     first-loading: 4000ms

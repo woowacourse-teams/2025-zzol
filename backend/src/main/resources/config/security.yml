@@ -1,3 +1,4 @@
+# Spring Security OAuth2 (Google/Kakao/Naver), IP 차단 정책, 관리자 계정, 사용자 JWT/OAuth
 spring:
   security:
     oauth2:
@@ -43,8 +44,6 @@ admin:
   password: ${ADMIN_PASSWORD}
 
 user:
-  code:
-    max-retry: 100
   jwt:
     secret: ${JWT_SECRET}
     access-token-expiration-seconds: 1800       # 30분

@@ -1,3 +1,8 @@
+# 서비스 도메인 설정 (user, room, player, friend, outbox, report, nickname-audit)
+user:
+  code:
+    max-retry: 100
+
 room:
   removalDelay: 1h
   qr:

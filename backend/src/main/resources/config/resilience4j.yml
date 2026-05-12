@@ -1,3 +1,4 @@
+# Circuit Breaker, Retry, Rate Limiter (reportRateLimiter, oracleStorage, geminiAudit, zzolBotGemini)
 resilience4j:
   circuitbreaker:
     circuit-breaker-aspect-order: 1

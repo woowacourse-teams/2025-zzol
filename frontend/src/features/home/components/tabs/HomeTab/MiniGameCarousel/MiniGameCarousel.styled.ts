@@ -1,4 +1,16 @@
 import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
+
+const fadeSlideUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 export const Grid = styled.div`
   display: grid;
@@ -6,7 +18,10 @@ export const Grid = styled.div`
   gap: 10px;
 `;
 
-export const GameCard = styled.button`
+export const GameCard = styled.button<{ $index: number }>`
+  animation: ${fadeSlideUp} 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: ${({ $index }) => `${$index * 0.07}s`};
+
   display: flex;
   flex-direction: column;
   gap: 12px;

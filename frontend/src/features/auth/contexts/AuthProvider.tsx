@@ -1,4 +1,4 @@
-import { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
+import { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { authApi } from '../api/authApi';
 import { BackendRedirectAuthService } from '../services/BackendRedirectAuthService';
@@ -7,8 +7,6 @@ import { User } from '../types';
 import { AuthContext } from './AuthContext';
 import { setAuthInterceptor } from '@/apis/rest/apiRequest';
 import { isTopWindow } from '@/devtools/common/utils/isTopWindow';
-
-const isDev = process.env.NODE_ENV !== 'production';
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<User | null>(null);
@@ -52,10 +50,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       }
 
       const hasToken = Boolean(tokenStore.getAccessToken());
-      // CookieTokenStore는 메모리 초기화라 항상 null → cookie 존재 여부 판단 불가
-      // 항상 /auth/me 시도 → 실패 시 조용히 익명 상태 유지
       try {
-        if (hasToken || !isDev) {
+        if (hasToken) {
           const me = await authApi.me();
           setUser(me);
           Sentry.setUser({ id: me.userCode, username: me.provider });
@@ -97,20 +93,19 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     Sentry.setUser(null);
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: user !== null,
-        isLoading,
-        login,
-        logout: handleLogout,
-        refreshUser,
-        updateNickname,
-        deleteAccount,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      isAuthenticated: user !== null,
+      isLoading,
+      login,
+      logout: handleLogout,
+      refreshUser,
+      updateNickname,
+      deleteAccount,
+    }),
+    [user, isLoading, login, handleLogout, refreshUser, updateNickname, deleteAccount]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

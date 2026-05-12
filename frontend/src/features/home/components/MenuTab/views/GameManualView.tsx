@@ -41,8 +41,8 @@ const GameManualView = () => {
         <S.Subtitle>게임을 탭하면 자세한 규칙을 볼 수 있어요</S.Subtitle>
       </S.HintBanner>
       <MC.Grid>
-        {GAME_TYPES.map((type) => (
-          <MC.GameCard key={type} type="button" onClick={() => handleGameClick(type)}>
+        {GAME_TYPES.map((type, index) => (
+          <MC.GameCard key={type} type="button" $index={index} onClick={() => handleGameClick(type)}>
             <MC.IconWrapper>
               <MC.GameIcon src={MINI_GAME_ICON_MAP[type]} alt="" aria-hidden="true" />
             </MC.IconWrapper>

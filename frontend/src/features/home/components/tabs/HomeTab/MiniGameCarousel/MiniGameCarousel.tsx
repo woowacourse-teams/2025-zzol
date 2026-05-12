@@ -36,8 +36,8 @@ const MiniGameCarousel = () => {
 
   return (
     <S.Grid>
-      {GAME_TYPES.map((type) => (
-        <S.GameCard key={type} type="button" onClick={() => handleGameClick(type)}>
+      {GAME_TYPES.map((type, index) => (
+        <S.GameCard key={type} type="button" $index={index} onClick={() => handleGameClick(type)}>
           <S.IconWrapper>
             <S.GameIcon src={MINI_GAME_ICON_MAP[type]} alt="" aria-hidden="true" />
           </S.IconWrapper>

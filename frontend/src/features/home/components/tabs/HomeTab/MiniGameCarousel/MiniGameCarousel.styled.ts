@@ -20,7 +20,7 @@ export const Grid = styled.div`
 
 export const GameCard = styled.button<{ $index: number }>`
   animation: ${fadeSlideUp} 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: ${({ $index }) => `${$index * 0.07}s`};
+  animation-delay: ${({ $index }) => `${Math.min($index, 7) * 0.07}s`};
 
   display: flex;
   flex-direction: column;

@@ -7,7 +7,6 @@ import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.service.RoomQueryService;
-import java.security.Principal;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -23,6 +22,7 @@ import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -119,6 +119,22 @@ class SessionConnectEventListenerTest {
             listener.handleSessionConnected(event);
 
             verify(streamPublisher, never()).publish(any(), any());
+            verify(webSocketMetricService).completeConnection("session-1");
+        }
+    }
+
+    @Nested
+    class 인프라_예외가_발생한_경우 {
+
+        @Test
+        void 예외가_전파되더라도_메트릭_완료는_반드시_호출된다() {
+            willThrow(new RuntimeException("Redis publish 실패"))
+                    .given(streamPublisher).publish(any(), any());
+            final SessionConnectedEvent event = eventWith("ABCD:홍길동");
+
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> listener.handleSessionConnected(event))
+                    .isInstanceOf(RuntimeException.class);
+
             verify(webSocketMetricService).completeConnection("session-1");
         }
     }

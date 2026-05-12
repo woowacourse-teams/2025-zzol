@@ -49,8 +49,11 @@ public class SessionConnectEventListener {
 
         final PlayerKey parsed = PlayerKey.parse(principalName);
         log.info("웹소켓 연결 완료: sessionId={}, joinCode={}, playerName={}", sessionId, parsed.joinCode(), parsed.playerName());
-        processPlayerConnection(sessionId, parsed.joinCode(), parsed.playerName());
-        webSocketMetricService.completeConnection(sessionId);
+        try {
+            processPlayerConnection(sessionId, parsed.joinCode(), parsed.playerName());
+        } finally {
+            webSocketMetricService.completeConnection(sessionId);
+        }
     }
 
     private void processPlayerConnection(String sessionId, String joinCode, String playerName) {

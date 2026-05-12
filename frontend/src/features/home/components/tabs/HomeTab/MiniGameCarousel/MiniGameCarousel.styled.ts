@@ -66,18 +66,15 @@ export const GameMeta = styled.div`
 `;
 
 export const GameName = styled.span`
-  font-size: 13px;
+  ${({ theme }) => theme.typography.small};
   font-weight: 700;
   color: ${({ theme }) => theme.color.gray[900]};
-  line-height: 1.3;
   letter-spacing: -0.01em;
 `;
 
 export const GameDesc = styled.span`
-  font-size: 11px;
-  font-weight: 400;
+  ${({ theme }) => theme.typography.caption};
   color: ${({ theme }) => theme.color.gray[400]};
-  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

@@ -102,6 +102,10 @@ websocket:
     dedup-ttl-seconds: 1
 
 
+admin:
+  username: admin
+  password: "1234"
+
 user:
   jwt:
     secret: "test-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm"

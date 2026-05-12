@@ -4,11 +4,11 @@ import coffeeshout.global.metric.WebSocketMetricService;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.websocket.PlayerKey;
-import coffeeshout.global.websocket.StompSessionManager;
+import coffeeshout.global.websocket.UserPrincipal;
 import coffeeshout.global.websocket.event.session.SessionRegisteredEvent;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,6 @@ import org.springframework.web.socket.messaging.SessionConnectedEvent;
 public class SessionConnectEventListener {
 
     private final WebSocketMetricService webSocketMetricService;
-    private final StompSessionManager sessionManager;
     private final StreamPublisher streamPublisher;
     private final RoomQueryService roomQueryService;
 
@@ -37,10 +36,19 @@ public class SessionConnectEventListener {
     @EventListener
     public void handleSessionConnected(SessionConnectedEvent event) {
         final String sessionId = event.getMessage().getHeaders().get("simpSessionId", String.class);
-        final String playerKey = event.getUser().getName();
-        final PlayerKey parsed = PlayerKey.parse(playerKey);
-        log.info("웹소켓 연결 완료: sessionId={}, joinCode={}, playerName={}", sessionId, parsed.joinCode(), parsed.playerName());
+        if (event.getUser() == null) {
+            webSocketMetricService.completeConnection(sessionId);
+            return;
+        }
+        final String principalName = event.getUser().getName();
 
+        if (principalName.startsWith(UserPrincipal.PREFIX) || !PlayerKey.isValid(principalName)) {
+            webSocketMetricService.completeConnection(sessionId);
+            return;
+        }
+
+        final PlayerKey parsed = PlayerKey.parse(principalName);
+        log.info("웹소켓 연결 완료: sessionId={}, joinCode={}, playerName={}", sessionId, parsed.joinCode(), parsed.playerName());
         processPlayerConnection(sessionId, parsed.joinCode(), parsed.playerName());
         webSocketMetricService.completeConnection(sessionId);
     }
@@ -49,8 +57,7 @@ public class SessionConnectEventListener {
         try {
             roomQueryService.getByJoinCode(new JoinCode(joinCode));
             publishSessionRegisteredEvent(sessionId, joinCode, playerName);
-
-        } catch (Exception e) {
+        } catch (BusinessException e) {
             log.warn("플레이어 연결 실패: joinCode={}, playerName={}, error={}", joinCode, playerName, e.getMessage());
         }
     }

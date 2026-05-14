@@ -8,21 +8,16 @@
     />
     <title>쫄 - 똥손도 즐기는 미니게임 내기 서비스</title>
     <meta
-      name=”description”
-      content=”커피 내기, 점심 내기, 당번 정하기를 미니게임으로! 내기 게임과 룰렛으로 긴장감 있게 결정하세요. 가위바위보는 그만, 쫄(ZZOL)에서 똥손 탈출에 도전해보세요!”
+      name="description"
+      content="커피 내기, 점심 내기, 당번 정하기를 미니게임으로! 내기 게임과 룰렛으로 긴장감 있게 결정하세요. 가위바위보는 그만, 쫄(ZZOL)에서 똥손 탈출에 도전해보세요!"
     />
-    <meta
-      name="keywords"
-      content="내기, 점심내기, 커피내기, 커피 내기, 내기 게임, 복불복, 복불복 게임, 게임, 룰렛게임, 룰렛 게임, 룰렛 내기, 미니게임, 직장인 게임, 당번 정하기, 점심 메뉴, 랜덤 뽑기, 랜덤 추첨, 온라인 추첨, 제비뽑기, 쫄, zzol"
-    />
-    <meta name="author" content="쫄 (ZZOL)" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.zzol.site/" />
     <meta property="og:title" content="쫄 - 똥손도 즐기는 미니게임 내기 서비스" />
     <meta
-      property=”og:description”
-      content=”커피 내기, 점심 내기, 당번 정하기를 미니게임으로! 내기 게임과 룰렛으로 긴장감 있게 결정하세요. 가위바위보는 그만, 쫄(ZZOL)에서 똥손 탈출에 도전해보세요!”
+      property="og:description"
+      content="커피 내기, 점심 내기, 당번 정하기를 미니게임으로! 내기 게임과 룰렛으로 긴장감 있게 결정하세요. 가위바위보는 그만, 쫄(ZZOL)에서 똥손 탈출에 도전해보세요!"
     />
     <meta property="og:image" content="https://www.zzol.site/logo/og_image.png" />
     <meta property="og:image:width" content="1200" />
@@ -31,8 +26,6 @@
     <meta property="og:locale" content="ko_KR" />
 
     <link rel="canonical" href="https://www.zzol.site/" />
-    <link rel="alternate" hreflang="ko" href="https://www.zzol.site/" />
-    <link rel="alternate" hreflang="x-default" href="https://www.zzol.site/" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -121,7 +114,16 @@
     <%= DEV_SNIPPET %>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:24px;font-family:sans-serif;text-align:center;">
+        <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:12px;">쫄 — 커피 내기·점심 내기를 미니게임으로</h1>
+        <p style="font-size:1rem;line-height:1.7;max-width:400px;color:#555;">
+          내기 게임, 복불복 게임을 더 재밌게! QR코드로 방에 입장하고 미니게임 결과로
+          룰렛 당첨 확률을 정하세요. 커피 내기, 점심 메뉴 정하기, 당번 뽑기까지
+          가위바위보 대신 쫄(ZZOL)로 해결하세요.
+        </p>
+      </main>
+    </div>
     <div id="modal-root"></div>
     <div id="toast-root"></div>
   </body>

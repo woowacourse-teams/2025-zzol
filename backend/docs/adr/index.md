@@ -16,3 +16,4 @@
 | [0008](0008-roulette-adjustment-weight-http-configuration.md) | 룰렛 확률 조정 가중치(ADJUSTMENT_WEIGHT) HTTP 설정 가능화 | 승인 | `room/domain/roulette/`, `room/domain/`, `room/config/`, `room/ui/` | 가중치는 READY 상태에서만 변경 가능, 유효 범위 0.1 이상 0.9 이하 |
 | [0009](0009-websocket-room-session-token-auth.md) | WebSocket 인증 — Room Session Token 도입 | 승인 | `global/websocket/interceptor/`, `room/ui/`, `room/application/` | STOMP CONNECT 시 `roomToken` 헤더(RST) 검증 필수, `joinCode`/`playerName` 헤더 직접 신뢰 금지 |
 | [0010](0010-stomp-session-manager-redis.md) | StompSessionManager — 인메모리에서 Redis 기반으로 전환 | 보류 | `global/websocket/`, `global/websocket/infra/`, `global/websocket/event/` | 세션 조회·등록은 반드시 Redis 경유, 로컬 인메모리 맵 사용 금지 |
+| [0011](0011-websocket-catalog-discovery.md) | WebSocket 컨트랙트 디스커버리 — `@WsTopic` + `/dev/ws-catalog` | 보류 | `global/websocket/docs/`, 9개 도메인 컨트롤러/Publisher | 신규 컨트롤러/Publisher 는 `@WsTopic` 사용, legacy `@MessageResponse`/`@Operation` 금지 |

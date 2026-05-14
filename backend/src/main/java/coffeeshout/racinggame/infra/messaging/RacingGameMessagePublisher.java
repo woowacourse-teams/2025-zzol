@@ -1,14 +1,13 @@
 package coffeeshout.racinggame.infra.messaging;
 
-import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
-import coffeeshout.racinggame.domain.RacingGameState;
+import coffeeshout.global.websocket.docs.WsTopic;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.racinggame.domain.event.RaceFinishedEvent;
 import coffeeshout.racinggame.domain.event.RaceStateChangedEvent;
 import coffeeshout.racinggame.domain.event.RunnersMovedEvent;
 import coffeeshout.racinggame.ui.response.RacingGameRunnersStateResponse;
 import coffeeshout.racinggame.ui.response.RacingGameStateResponse;
-import generator.annotaions.MessageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -22,9 +21,10 @@ public class RacingGameMessagePublisher {
     private final LoggingSimpMessagingTemplate loggingSimpMessagingTemplate;
 
     @EventListener
-    @MessageResponse(
+    @WsTopic(
             path = "/room/{joinCode}/racing-game",
-            returnType = RacingGameRunnersStateResponse.class
+            payload = RacingGameRunnersStateResponse.class,
+            description = "레이싱 게임 러너 위치 브로드캐스트"
     )
     public void publishRunnersPosition(RunnersMovedEvent runnersMovedEvent) {
         loggingSimpMessagingTemplate.convertAndSend(
@@ -36,9 +36,10 @@ public class RacingGameMessagePublisher {
     }
 
     @EventListener
-    @MessageResponse(
+    @WsTopic(
             path = "/room/{joinCode}/racing-game/state",
-            returnType = RacingGameStateResponse.class
+            payload = RacingGameStateResponse.class,
+            description = "레이싱 게임 상태 변경 브로드캐스트"
     )
     public void publishRacingGameStart(RaceStateChangedEvent raceStateChangedEvent) {
         loggingSimpMessagingTemplate.convertAndSend(
@@ -48,10 +49,10 @@ public class RacingGameMessagePublisher {
     }
 
     @EventListener
-    @MessageResponse(
+    @WsTopic(
             path = "/room/{joinCode}/racing-game/state",
-            returnType = WebSocketResponse.class,
-            genericType = RacingGameState.class
+            payload = RacingGameStateResponse.class,
+            description = "레이싱 게임 종료 브로드캐스트"
     )
     public void publishRacingGameFinish(RaceFinishedEvent raceFinishedEvent) {
         loggingSimpMessagingTemplate.convertAndSend(

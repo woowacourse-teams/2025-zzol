@@ -8,6 +8,12 @@
             "command": "qmd update 2>/dev/null || true",
             "async": true,
             "statusMessage": "qmd 인덱스 갱신 중..."
+          },
+          {
+            "type": "command",
+            "command": "qmd embed 2>/dev/null || true",
+            "async": true,
+            "statusMessage": "qmd 임베딩 생성 중..."
           }
         ]
       }

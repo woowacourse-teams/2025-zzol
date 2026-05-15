@@ -2,6 +2,7 @@ package coffeeshout.global.websocket.docs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.fixture.TestContainerSupport;
 import coffeeshout.support.test.IntegrationTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 
 @IntegrationTest
 @DisplayName("WsCatalogController")
-class WsCatalogControllerTest {
+class WsCatalogControllerTest extends TestContainerSupport {
 
     @Autowired
     private TestRestTemplate restTemplate;

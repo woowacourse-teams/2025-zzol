@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface WsReceive {
 
-    String[] triggersTopics() default {};
+    String[] respondsOnTopics() default {};
 
     String description() default "";
 }

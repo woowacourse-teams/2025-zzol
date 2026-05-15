@@ -25,7 +25,7 @@ public class BlockStackingWebSocketController {
 
     @MessageMapping("/room/{joinCode}/block-stacking/progress")
     @WsReceive(
-            triggersTopics = "/room/{joinCode}/block-stacking/progress",
+            respondsOnTopics = "/room/{joinCode}/block-stacking/progress",
             description = "블록 쌓기 진행 이벤트 — overlap 을 재계산하여 유효한 안착만 인정 후 랭킹 브로드캐스트"
     )
     public void recordProgress(

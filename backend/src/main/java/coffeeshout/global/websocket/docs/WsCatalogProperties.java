@@ -4,7 +4,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "websocket.docs")
 public record WsCatalogProperties(
-        boolean enabled,
         String appPath,
         String topicPath,
         String queuePath,

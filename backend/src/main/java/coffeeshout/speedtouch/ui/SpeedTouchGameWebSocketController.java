@@ -23,7 +23,7 @@ public class SpeedTouchGameWebSocketController {
 
     @MessageMapping("/room/{joinCode}/speed-touch/touch")
     @WsReceive(
-            triggersTopics = "/room/{joinCode}/speed-touch/progress",
+            respondsOnTopics = "/room/{joinCode}/speed-touch/progress",
             description = "스피드 터치 게임 터치 — 1 to 25 스피드 터치에서 숫자를 터치하는 웹소켓 요청"
     )
     public void touch(@DestinationVariable String joinCode, @Payload @Valid TouchCommand command) {

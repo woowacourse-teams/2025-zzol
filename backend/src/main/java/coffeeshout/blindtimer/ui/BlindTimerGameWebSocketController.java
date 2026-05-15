@@ -23,7 +23,7 @@ public class BlindTimerGameWebSocketController {
 
     @MessageMapping("/room/{joinCode}/blind-timer/stop")
     @WsReceive(
-            triggersTopics = "/room/{joinCode}/blind-timer/progress",
+            respondsOnTopics = "/room/{joinCode}/blind-timer/progress",
             description = "블라인드 타이머 게임 STOP 버튼"
     )
     public void stop(@DestinationVariable String joinCode, @Payload @Valid StopCommand command) {

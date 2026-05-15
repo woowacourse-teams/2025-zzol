@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
-import coffeeshout.global.websocket.docs.WsReceive;
 
 class WsCatalogBuilderTest {
 
@@ -28,7 +28,6 @@ class WsCatalogBuilderTest {
     void setUp() {
         applicationContext = mock(ApplicationContext.class);
         properties = new WsCatalogProperties(
-                true,
                 "/app",
                 "/topic",
                 "/queue",
@@ -46,7 +45,7 @@ class WsCatalogBuilderTest {
     class WsTopic_과_MessageMapping_이_함께_선언된_컨트롤러 {
 
         @Test
-        @DisplayName("토픽과 send 모두 카탈로그에 포함되고 send 는 triggersTopic 이 채워진다")
+        @DisplayName("토픽과 send 모두 카탈로그에 포함되고 send 는 triggersTopics 가 채워진다")
         void 토픽과_send_가_모두_포함된다() {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureWebSocketController()));
@@ -77,8 +76,8 @@ class WsCatalogBuilderTest {
     class WsReceive_가_선언된_컨트롤러 {
 
         @Test
-        @DisplayName("TopicEntry 없이 SendEntry 만 생성되고 triggersTopics 가 채워진다")
-        void send_만_포함되고_triggersTopics_가_채워진다() {
+        @DisplayName("TopicEntry 없이 SendEntry 만 생성되고 respondsOnTopics 가 채워진다")
+        void send_만_포함되고_respondsOnTopics_가_채워진다() {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureReceiveController()));
 
@@ -143,7 +142,7 @@ class WsCatalogBuilderTest {
 
         @MessageMapping("/test/{joinCode}/action")
         @WsTopic(path = "/test/{joinCode}/result", payload = FixturePayload.class, description = "테스트 토픽")
-        public void doAction(@DestinationVariable String joinCode, FixtureRequest request) {
+        public void doAction(@DestinationVariable String joinCode, @Payload FixtureRequest request) {
         }
     }
 
@@ -151,8 +150,8 @@ class WsCatalogBuilderTest {
     static class FixtureReceiveController {
 
         @MessageMapping("/test/{joinCode}/command")
-        @WsReceive(triggersTopics = "/test/{joinCode}/result", description = "테스트 수신 엔드포인트")
-        public void handleCommand(@DestinationVariable String joinCode, FixtureRequest request) {
+        @WsReceive(respondsOnTopics = "/test/{joinCode}/result", description = "테스트 수신 엔드포인트")
+        public void handleCommand(@DestinationVariable String joinCode, @Payload FixtureRequest request) {
         }
     }
 

@@ -1,6 +1,7 @@
 package coffeeshout.global.websocket.docs;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.RecordComponent;
 import java.lang.reflect.Type;
@@ -14,15 +15,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @Profile("!prod")
 public class WsCatalogBuilder {
@@ -48,14 +50,15 @@ public class WsCatalogBuilder {
         topics.sort(Comparator.comparing(WsCatalog.TopicEntry::path));
         sends.sort(Comparator.comparing(WsCatalog.SendEntry::destination));
 
-        final List<WsCatalog.TopicEntry> deduped = topics.stream()
-                .collect(Collectors.toMap(
-                        WsCatalog.TopicEntry::path,
-                        t -> t,
-                        (a, b) -> a,
-                        LinkedHashMap::new
-                ))
-                .values().stream().toList();
+        final Map<String, WsCatalog.TopicEntry> byPath = new LinkedHashMap<>();
+        for (final WsCatalog.TopicEntry topic : topics) {
+            final WsCatalog.TopicEntry existing = byPath.putIfAbsent(topic.path(), topic);
+            if (existing != null && !existing.source().equals(topic.source())) {
+                log.warn("동일 토픽 path 에 다중 publisher 선언: path={}, kept={}, dropped={}",
+                        topic.path(), existing.source(), topic.source());
+            }
+        }
+        final List<WsCatalog.TopicEntry> deduped = List.copyOf(byPath.values());
 
         final Map<String, WsCatalog.SchemaEntry> schemas = expandSchemas(referenced);
 
@@ -121,7 +124,7 @@ public class WsCatalogBuilder {
             triggersTopics.add(properties.topicPath() + wsTopic.path());
         }
         if (wsReceive != null) {
-            for (final String path : wsReceive.triggersTopics()) {
+            for (final String path : wsReceive.respondsOnTopics()) {
                 triggersTopics.add(properties.topicPath() + path);
             }
         }
@@ -136,36 +139,22 @@ public class WsCatalogBuilder {
             return null;
         }
         if (generic == Void.class) {
-            registerIfDomain(payload, referenced);
+            registerIfDescribable(payload, referenced);
             return properties.envelopeType() + "<" + payload.getSimpleName() + ">";
         }
-        registerIfDomain(generic, referenced);
+        registerIfDescribable(generic, referenced);
         return properties.envelopeType() + "<" + payload.getSimpleName() + "<" + generic.getSimpleName() + ">>";
     }
 
     private String findRequestPayload(Method method, Set<Class<?>> referenced) {
-        for (final java.lang.reflect.Parameter parameter : method.getParameters()) {
+        for (final Parameter parameter : method.getParameters()) {
             if (parameter.isAnnotationPresent(Payload.class)) {
-                registerIfDomain(parameter.getType(), referenced);
-                return parameter.getType().getSimpleName();
-            }
-        }
-        for (final java.lang.reflect.Parameter parameter : method.getParameters()) {
-            if (!isFrameworkParameter(parameter)) {
-                registerIfDomain(parameter.getType(), referenced);
-                return parameter.getType().getSimpleName();
+                final Class<?> type = parameter.getType();
+                registerIfDescribable(type, referenced);
+                return type.getSimpleName();
             }
         }
         return null;
-    }
-
-    private boolean isFrameworkParameter(java.lang.reflect.Parameter parameter) {
-        if (parameter.isAnnotationPresent(DestinationVariable.class)) {
-            return true;
-        }
-        final String pkg = parameter.getType().getPackageName();
-        return pkg.startsWith("java.") || pkg.startsWith("javax.")
-                || pkg.startsWith("jakarta.") || pkg.startsWith("org.springframework.");
     }
 
     private Map<String, WsCatalog.SchemaEntry> expandSchemas(Set<Class<?>> seeds) {
@@ -211,7 +200,7 @@ public class WsCatalogBuilder {
 
     private String describeFieldType(Type type, Deque<Class<?>> pending) {
         if (type instanceof Class<?> cls) {
-            registerIfDomain(cls, pending);
+            registerIfDescribable(cls, pending);
             return cls.getSimpleName();
         }
         if (type instanceof ParameterizedType parameterizedType) {
@@ -229,13 +218,13 @@ public class WsCatalogBuilder {
         return type.getTypeName();
     }
 
-    private void registerIfDomain(Class<?> cls, Set<Class<?>> referenced) {
+    private void registerIfDescribable(Class<?> cls, Set<Class<?>> referenced) {
         if (cls.isRecord() || cls.isEnum()) {
             referenced.add(cls);
         }
     }
 
-    private void registerIfDomain(Class<?> cls, Deque<Class<?>> pending) {
+    private void registerIfDescribable(Class<?> cls, Deque<Class<?>> pending) {
         if (cls.isRecord() || cls.isEnum()) {
             pending.push(cls);
         }

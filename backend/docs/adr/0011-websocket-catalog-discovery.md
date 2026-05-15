@@ -44,6 +44,21 @@ public @interface WsTopic {
 순수 Java 어노테이션으로 외부 라이브러리/Spring 의존성을 0으로 유지한다.
 멀티 모듈 분리가 시작되면 이 어노테이션만 `ws-contract` 모듈로 떼어내 모든 도메인 모듈이 의존하도록 한다.
 
+**`@WsReceive` 어노테이션 시그니처** (`coffeeshout.global.websocket.docs.WsReceive`)
+
+```java
+@Target(METHOD) @Retention(RUNTIME)
+public @interface WsReceive {
+    String[] respondsOnTopics() default {};  // 후속 발행 토픽 경로 (선언적 문서화 전용)
+    String description() default "";
+}
+```
+
+`@MessageMapping`만 있는 핸들러 — 즉 직접 토픽을 발행하지 않고 Redis Stream 이벤트를 발행해 비동기로 응답이 나가는 핸들러 — 에 사용한다.
+`@WsTopic(payload = Object.class)` 형식의 회피 코드를 막기 위해 도입되었다.
+`respondsOnTopics`로 이 send 처리 결과가 어떤 토픽으로 최종 발행되는지 선언적으로 표시해 FE가 send→topic 인과 관계를 파악할 수 있도록 한다.
+request payload 식별은 `@Payload` 어노테이션을 통해 명시한다 — `@Payload` 없는 매개변수는 카탈로그에서 `requestType=null` 로 표시된다.
+
 **`WsCatalogBuilder`** (`coffeeshout.global.websocket.docs.WsCatalogBuilder`)
 
 - `ApplicationContext.getBeansWithAnnotation(Component.class)`로 빈을 스캔한다. `@WsTopic`을 붙이는 주체가 `@Controller` 뿐 아니라 `RoomMessagePublisher` 같은 `@Component` Publisher도 있기 때문이다 (패키지 prefix 의존 금지).

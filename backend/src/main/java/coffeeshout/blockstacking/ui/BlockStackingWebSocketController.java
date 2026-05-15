@@ -6,7 +6,7 @@ import coffeeshout.blockstacking.ui.request.BlockStackingProgressRequest;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.websocket.PlayerKey;
-import coffeeshout.global.websocket.docs.WsTopic;
+import coffeeshout.global.websocket.docs.WsReceive;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +24,8 @@ public class BlockStackingWebSocketController {
     private final StreamPublisher streamPublisher;
 
     @MessageMapping("/room/{joinCode}/block-stacking/progress")
-    @WsTopic(
-            path = "/room/{joinCode}/block-stacking/progress",
-            payload = Object.class,
+    @WsReceive(
+            triggersTopics = "/room/{joinCode}/block-stacking/progress",
             description = "블록 쌓기 진행 이벤트 — overlap 을 재계산하여 유효한 안착만 인정 후 랭킹 브로드캐스트"
     )
     public void recordProgress(

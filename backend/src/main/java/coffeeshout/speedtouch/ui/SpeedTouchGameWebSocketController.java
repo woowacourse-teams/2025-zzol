@@ -3,7 +3,7 @@ package coffeeshout.speedtouch.ui;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.global.websocket.docs.WsTopic;
+import coffeeshout.global.websocket.docs.WsReceive;
 import coffeeshout.speedtouch.domain.event.TouchProgressCommandEvent;
 import coffeeshout.speedtouch.ui.request.TouchCommand;
 import jakarta.validation.Valid;
@@ -22,9 +22,8 @@ public class SpeedTouchGameWebSocketController {
     private final StreamPublisher streamPublisher;
 
     @MessageMapping("/room/{joinCode}/speed-touch/touch")
-    @WsTopic(
-            path = "/room/{joinCode}/speed-touch/progress",
-            payload = Object.class,
+    @WsReceive(
+            triggersTopics = "/room/{joinCode}/speed-touch/progress",
             description = "스피드 터치 게임 터치 — 1 to 25 스피드 터치에서 숫자를 터치하는 웹소켓 요청"
     )
     public void touch(@DestinationVariable String joinCode, @Payload @Valid TouchCommand command) {

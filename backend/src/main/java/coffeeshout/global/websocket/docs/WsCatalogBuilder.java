@@ -13,22 +13,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 @Component
 @Profile("!prod")
 public class WsCatalogBuilder {
-
-    private static final String STOMP_ENDPOINT = "/ws";
-    private static final String QUEUE_PREFIX = "/queue";
-    private static final String ERROR_TOPIC = "/queue/errors";
-    private static final String ENVELOPE_TYPE = "WebSocketResponse";
-    private static final String DOMAIN_PACKAGE_PREFIX = "coffeeshout";
 
     private final ApplicationContext applicationContext;
     private final WsCatalogProperties properties;
@@ -51,19 +48,28 @@ public class WsCatalogBuilder {
         topics.sort(Comparator.comparing(WsCatalog.TopicEntry::path));
         sends.sort(Comparator.comparing(WsCatalog.SendEntry::destination));
 
+        final List<WsCatalog.TopicEntry> deduped = topics.stream()
+                .collect(Collectors.toMap(
+                        WsCatalog.TopicEntry::path,
+                        t -> t,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ))
+                .values().stream().toList();
+
         final Map<String, WsCatalog.SchemaEntry> schemas = expandSchemas(referenced);
 
         return new WsCatalog(
-                STOMP_ENDPOINT,
+                properties.stompEndpoint(),
                 properties.appPath(),
                 properties.topicPath(),
-                QUEUE_PREFIX,
+                properties.queuePath(),
                 toInfo(properties.info()),
                 buildEnvelope(),
-                topics,
+                deduped,
                 sends,
                 schemas,
-                new WsCatalog.ErrorShape(ERROR_TOPIC, ENVELOPE_TYPE + "<String>")
+                new WsCatalog.ErrorShape(properties.errorTopic(), properties.envelopeType() + "<String>")
         );
     }
 
@@ -77,7 +83,9 @@ public class WsCatalogBuilder {
         for (final Method method : targetClass.getDeclaredMethods()) {
             final WsTopic[] wsTopics = method.getAnnotationsByType(WsTopic.class);
             final MessageMapping messageMapping = AnnotationUtils.findAnnotation(method, MessageMapping.class);
-            if (wsTopics.length == 0 && messageMapping == null) {
+            final WsReceive wsReceive = AnnotationUtils.findAnnotation(method, WsReceive.class);
+
+            if (wsTopics.length == 0 && messageMapping == null && wsReceive == null) {
                 continue;
             }
             final WsCatalog.Source source = new WsCatalog.Source(targetClass.getSimpleName(), method.getName());
@@ -85,7 +93,7 @@ public class WsCatalogBuilder {
                 topics.add(toTopicEntry(wsTopic, source, referenced));
             }
             if (messageMapping != null) {
-                sends.add(toSendEntry(method, messageMapping, wsTopics, source, referenced));
+                sends.add(toSendEntry(method, messageMapping, wsTopics, wsReceive, source, referenced));
             }
         }
     }
@@ -100,6 +108,7 @@ public class WsCatalogBuilder {
             Method method,
             MessageMapping mapping,
             WsTopic[] wsTopics,
+            WsReceive wsReceive,
             WsCatalog.Source source,
             Set<Class<?>> referenced
     ) {
@@ -111,7 +120,14 @@ public class WsCatalogBuilder {
         for (final WsTopic wsTopic : wsTopics) {
             triggersTopics.add(properties.topicPath() + wsTopic.path());
         }
-        final String description = wsTopics.length == 0 ? "" : wsTopics[0].description();
+        if (wsReceive != null) {
+            for (final String path : wsReceive.triggersTopics()) {
+                triggersTopics.add(properties.topicPath() + path);
+            }
+        }
+        final String description = wsTopics.length > 0 ? wsTopics[0].description()
+                : wsReceive != null ? wsReceive.description()
+                : "";
         return new WsCatalog.SendEntry(fullDest, description, requestType, triggersTopics, source);
     }
 
@@ -121,21 +137,35 @@ public class WsCatalogBuilder {
         }
         if (generic == Void.class) {
             registerIfDomain(payload, referenced);
-            return ENVELOPE_TYPE + "<" + payload.getSimpleName() + ">";
+            return properties.envelopeType() + "<" + payload.getSimpleName() + ">";
         }
         registerIfDomain(generic, referenced);
-        return ENVELOPE_TYPE + "<" + payload.getSimpleName() + "<" + generic.getSimpleName() + ">>";
+        return properties.envelopeType() + "<" + payload.getSimpleName() + "<" + generic.getSimpleName() + ">>";
     }
 
     private String findRequestPayload(Method method, Set<Class<?>> referenced) {
         for (final java.lang.reflect.Parameter parameter : method.getParameters()) {
-            final Class<?> type = parameter.getType();
-            if (type.getPackageName().startsWith(DOMAIN_PACKAGE_PREFIX)) {
-                registerIfDomain(type, referenced);
-                return type.getSimpleName();
+            if (parameter.isAnnotationPresent(Payload.class)) {
+                registerIfDomain(parameter.getType(), referenced);
+                return parameter.getType().getSimpleName();
+            }
+        }
+        for (final java.lang.reflect.Parameter parameter : method.getParameters()) {
+            if (!isFrameworkParameter(parameter)) {
+                registerIfDomain(parameter.getType(), referenced);
+                return parameter.getType().getSimpleName();
             }
         }
         return null;
+    }
+
+    private boolean isFrameworkParameter(java.lang.reflect.Parameter parameter) {
+        if (parameter.isAnnotationPresent(DestinationVariable.class)) {
+            return true;
+        }
+        final String pkg = parameter.getType().getPackageName();
+        return pkg.startsWith("java.") || pkg.startsWith("javax.")
+                || pkg.startsWith("jakarta.") || pkg.startsWith("org.springframework.");
     }
 
     private Map<String, WsCatalog.SchemaEntry> expandSchemas(Set<Class<?>> seeds) {
@@ -145,9 +175,6 @@ public class WsCatalogBuilder {
         while (!stack.isEmpty()) {
             final Class<?> cls = stack.pop();
             if (!visited.add(cls)) {
-                continue;
-            }
-            if (result.containsKey(cls.getSimpleName())) {
                 continue;
             }
             result.put(cls.getSimpleName(), describeClass(cls, stack));
@@ -203,13 +230,13 @@ public class WsCatalogBuilder {
     }
 
     private void registerIfDomain(Class<?> cls, Set<Class<?>> referenced) {
-        if (cls.getPackageName().startsWith(DOMAIN_PACKAGE_PREFIX)) {
+        if (cls.isRecord() || cls.isEnum()) {
             referenced.add(cls);
         }
     }
 
     private void registerIfDomain(Class<?> cls, Deque<Class<?>> pending) {
-        if (cls.getPackageName().startsWith(DOMAIN_PACKAGE_PREFIX)) {
+        if (cls.isRecord() || cls.isEnum()) {
             pending.push(cls);
         }
     }
@@ -222,7 +249,7 @@ public class WsCatalogBuilder {
                 new WsCatalog.FieldEntry("id", "String")
         );
         return new WsCatalog.Envelope(
-                ENVELOPE_TYPE + "<T>",
+                properties.envelopeType() + "<T>",
                 fields,
                 "모든 토픽 페이로드는 이 envelope 으로 감싸 전송됩니다."
         );

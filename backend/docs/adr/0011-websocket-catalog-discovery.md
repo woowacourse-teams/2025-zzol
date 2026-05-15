@@ -46,7 +46,7 @@ public @interface WsTopic {
 
 **`WsCatalogBuilder`** (`coffeeshout.global.websocket.docs.WsCatalogBuilder`)
 
-- `ApplicationContext.getBeansWithAnnotation(Controller.class)`로 컨트롤러를 빈 단위로 스캔한다 (패키지 prefix 의존 금지).
+- `ApplicationContext.getBeansWithAnnotation(Component.class)`로 빈을 스캔한다. `@WsTopic`을 붙이는 주체가 `@Controller` 뿐 아니라 `RoomMessagePublisher` 같은 `@Component` Publisher도 있기 때문이다 (패키지 prefix 의존 금지).
 - `@MessageMapping` 메서드의 send destination 과 `@WsTopic` 메서드의 response topic 메타데이터를 함께 수집한다.
 - Jackson `JavaType` introspection 으로 페이로드 스키마(필드명/타입)를 1단계까지 추출하고, 그 이상의 중첩은 `"$ref": "ClassName"` 으로 표기한다.
 

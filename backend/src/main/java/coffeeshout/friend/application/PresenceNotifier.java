@@ -5,6 +5,7 @@ import coffeeshout.friend.application.service.FriendshipService;
 import coffeeshout.friend.domain.event.PresenceChangedEvent;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.global.websocket.UserPrincipal;
+import coffeeshout.global.websocket.docs.WsQueue;
 import coffeeshout.global.websocket.ui.WebSocketResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,8 @@ public class PresenceNotifier {
 
     @EventListener
     @Transactional(readOnly = true)
+    @WsQueue(path = PRESENCE_QUEUE, payload = PresencePayload.class,
+            description = "친구 접속 상태 변경 알림")
     public void onPresenceChanged(PresenceChangedEvent event) {
         final PresencePayload payload = new PresencePayload(event.userId(), event.online());
 

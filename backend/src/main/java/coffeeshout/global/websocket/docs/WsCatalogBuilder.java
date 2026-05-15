@@ -39,15 +39,17 @@ public class WsCatalogBuilder {
 
     public WsCatalog build() {
         final List<WsCatalog.TopicEntry> topics = new ArrayList<>();
+        final List<WsCatalog.QueueEntry> queues = new ArrayList<>();
         final List<WsCatalog.SendEntry> sends = new ArrayList<>();
         final Set<Class<?>> referenced = new HashSet<>();
 
         final Map<String, Object> beans = applicationContext.getBeansWithAnnotation(Component.class);
         for (final Object bean : beans.values()) {
-            collectFromBean(bean, topics, sends, referenced);
+            collectFromBean(bean, topics, queues, sends, referenced);
         }
 
         topics.sort(Comparator.comparing(WsCatalog.TopicEntry::path));
+        queues.sort(Comparator.comparing(WsCatalog.QueueEntry::path));
         sends.sort(Comparator.comparing(WsCatalog.SendEntry::destination));
 
         final Map<String, WsCatalog.TopicEntry> byPath = new LinkedHashMap<>();
@@ -60,6 +62,12 @@ public class WsCatalogBuilder {
         }
         final List<WsCatalog.TopicEntry> deduped = List.copyOf(byPath.values());
 
+        final Map<String, WsCatalog.QueueEntry> byQueuePath = new LinkedHashMap<>();
+        for (final WsCatalog.QueueEntry queue : queues) {
+            byQueuePath.putIfAbsent(queue.path(), queue);
+        }
+        final List<WsCatalog.QueueEntry> dedupedQueues = List.copyOf(byQueuePath.values());
+
         final Map<String, WsCatalog.SchemaEntry> schemas = expandSchemas(referenced);
 
         return new WsCatalog(
@@ -70,6 +78,7 @@ public class WsCatalogBuilder {
                 toInfo(properties.info()),
                 buildEnvelope(),
                 deduped,
+                dedupedQueues,
                 sends,
                 schemas,
                 new WsCatalog.ErrorShape(properties.errorTopic(), properties.envelopeType() + "<String>")
@@ -79,26 +88,46 @@ public class WsCatalogBuilder {
     private void collectFromBean(
             Object bean,
             List<WsCatalog.TopicEntry> topics,
+            List<WsCatalog.QueueEntry> queues,
             List<WsCatalog.SendEntry> sends,
             Set<Class<?>> referenced
     ) {
         final Class<?> targetClass = AopUtils.getTargetClass(bean);
         for (final Method method : targetClass.getDeclaredMethods()) {
             final WsTopic[] wsTopics = method.getAnnotationsByType(WsTopic.class);
+            final WsQueue[] wsQueues = method.getAnnotationsByType(WsQueue.class);
             final MessageMapping messageMapping = AnnotationUtils.findAnnotation(method, MessageMapping.class);
             final WsReceive wsReceive = AnnotationUtils.findAnnotation(method, WsReceive.class);
 
-            if (wsTopics.length == 0 && messageMapping == null && wsReceive == null) {
+            if (wsTopics.length == 0 && wsQueues.length == 0 && messageMapping == null && wsReceive == null) {
                 continue;
             }
             final WsCatalog.Source source = new WsCatalog.Source(targetClass.getSimpleName(), method.getName());
             for (final WsTopic wsTopic : wsTopics) {
                 topics.add(toTopicEntry(wsTopic, source, referenced));
             }
+            for (final WsQueue wsQueue : wsQueues) {
+                queues.add(toQueueEntry(wsQueue, source, referenced));
+            }
             if (messageMapping != null) {
                 sends.addAll(toSendEntries(method, messageMapping, wsTopics, wsReceive, source, referenced));
             }
         }
+    }
+
+    private WsCatalog.QueueEntry toQueueEntry(WsQueue wsQueue, WsCatalog.Source source, Set<Class<?>> referenced) {
+        if (wsQueue.path().isBlank()) {
+            throw new IllegalArgumentException(
+                    "@WsQueue.path 가 비어 있습니다: %s#%s".formatted(source.className(), source.methodName()));
+        }
+        if (wsQueue.payload() == Void.class) {
+            throw new IllegalArgumentException(
+                    "@WsQueue.payload 가 Void.class 입니다: %s#%s path=%s".formatted(
+                            source.className(), source.methodName(), wsQueue.path()));
+        }
+        final String fullPath = properties.userDestinationPrefix() + wsQueue.path();
+        final String payloadType = describePayloadType(wsQueue.payload(), wsQueue.generic(), referenced);
+        return new WsCatalog.QueueEntry(fullPath, wsQueue.description(), payloadType, source);
     }
 
     private WsCatalog.TopicEntry toTopicEntry(WsTopic wsTopic, WsCatalog.Source source, Set<Class<?>> referenced) {

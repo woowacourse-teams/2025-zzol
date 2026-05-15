@@ -23,10 +23,14 @@ public class CardGameNotifier {
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
+    @WsTopic(path = "/room/{joinCode}/gameState", payload = MiniGameStateMessage.class,
+            description = "카드게임 단계 완료 시 게임 상태 브로드캐스트")
     public void notifyStepCompleted(CardGame cardGame, Room room) {
         sendGameState(cardGame, room.getJoinCode());
     }
 
+    @WsTopic(path = "/room/{joinCode}/gameState", payload = MiniGameStateMessage.class,
+            description = "카드 선택 시 게임 상태 브로드캐스트")
     public void notifyCardSelected(JoinCode joinCode, CardGame cardGame) {
         sendGameState(cardGame, joinCode);
     }

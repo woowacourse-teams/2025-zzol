@@ -1,7 +1,7 @@
 # 0011. WebSocket 컨트랙트 디스커버리 — `@WsTopic` + `/dev/ws-catalog`
 
 - 날짜: 2026-05-14
-- 상태: 보류
+- 상태: 보류 (2026-05-16 개정 — `@WsQueue` 추가)
 
 ## 컨텍스트
 
@@ -59,10 +59,28 @@ public @interface WsReceive {
 `respondsOnTopics`로 이 send 처리 결과가 어떤 토픽으로 최종 발행되는지 선언적으로 표시해 FE가 send→topic 인과 관계를 파악할 수 있도록 한다.
 request payload 식별은 `@Payload` 어노테이션을 통해 명시한다 — `@Payload` 없는 매개변수는 카탈로그에서 `requestType=null` 로 표시된다.
 
+**`@WsQueue` 어노테이션 시그니처** (`coffeeshout.global.websocket.docs.WsQueue`)
+
+```java
+@Target(METHOD) @Retention(RUNTIME)
+@Repeatable(WsQueues.class)
+public @interface WsQueue {
+    String path();                          // convertAndSendToUser 에 전달하는 큐 경로 (e.g. "/queue/friends/requests")
+    Class<?> payload();                     // 페이로드 DTO
+    Class<?> generic() default Void.class;  // List<X> 등의 X
+    String description() default "";
+}
+```
+
+`convertAndSendToUser` 기반의 개인 큐 발행 메서드에 사용한다.
+`path` 는 `convertAndSendToUser` 에 전달하는 값 그대로 적는다 — 빌더가 `websocket.docs.user-destination-prefix`(`/user`)를 자동으로 prepend 해 FE 구독 경로(`/user/queue/...`)를 생성한다.
+`@WsTopic.path` 가 `/topic/` 을 제외한 상대 경로인 것과 달리, `@WsQueue.path` 는 `/queue/` 를 포함한 경로를 그대로 기재한다 (코드 상수와 1:1 대응 우선).
+
 **`WsCatalogBuilder`** (`coffeeshout.global.websocket.docs.WsCatalogBuilder`)
 
 - `ApplicationContext.getBeansWithAnnotation(Component.class)`로 빈을 스캔한다. `@WsTopic`을 붙이는 주체가 `@Controller` 뿐 아니라 `RoomMessagePublisher` 같은 `@Component` Publisher도 있기 때문이다 (패키지 prefix 의존 금지).
 - `@MessageMapping` 메서드의 send destination 과 `@WsTopic` 메서드의 response topic 메타데이터를 함께 수집한다.
+- `@WsQueue` 메서드를 스캔해 `userDestinationPrefix + path` 로 FE 구독 경로를 구성하고 `WsCatalog.queues` 배열에 포함한다. 동일 path 의 중복은 silent dedupe (첫 번째 선언 유지).
 - Jackson `JavaType` introspection 으로 페이로드 스키마(필드명/타입)를 1단계까지 추출하고, 그 이상의 중첩은 `"$ref": "ClassName"` 으로 표기한다.
 
 **`WsCatalogController`** (`coffeeshout.global.websocket.docs.WsCatalogController`)
@@ -101,9 +119,11 @@ request payload 식별은 `@Payload` 어노테이션을 통해 명시한다 — 
 
 ## 결과
 
-- `coffeeshout.global.websocket.docs` 패키지에 4개 신규 클래스 추가.
-- 9개 도메인 컨트롤러/Publisher 가 새 어노테이션을 사용한다.
+- `coffeeshout.global.websocket.docs` 패키지에 6개 신규 클래스 추가 (`@WsTopic`, `@WsTopics`, `@WsReceive`, `@WsQueue`, `@WsQueues`, `WsCatalogBuilder`, `WsCatalogController`, `WsCatalogProperties`, `WsCatalog`).
+- 9개 도메인 컨트롤러/Publisher 가 `@WsTopic`/`@WsReceive` 를 사용한다.
+- `FriendNotifier`, `PresenceNotifier` 가 `@WsQueue` 를 사용한다.
 - `build.gradle.kts` 에서 legacy 의존성 라인 1개 제거.
+- `application.yml` 에 `websocket.docs.user-destination-prefix` 키 추가 (`/user` — Spring STOMP user destination prefix 와 일치).
 - `application.yml` 의 `websocket.docs.*` 키는 유지하되 `enabled` 키만 우리 컨트롤러의 활성화 플래그로 의미가 변경된다 (Profile 가드와 함께 이중 토글).
 - 후속 PR 에서 Node MCP 서버 (`tools/ws-mcp/`) 와 `frontend/CLAUDE.md` 가이드를 추가한다.
-- 멀티 모듈 마이그레이션이 시작되면 `@WsTopic` 만 별도 `ws-contract` 모듈로 떼어내 모든 도메인 모듈에서 의존한다.
+- 멀티 모듈 마이그레이션이 시작되면 `@WsTopic`/`@WsQueue` 만 별도 `ws-contract` 모듈로 떼어내 모든 도메인 모듈에서 의존한다.

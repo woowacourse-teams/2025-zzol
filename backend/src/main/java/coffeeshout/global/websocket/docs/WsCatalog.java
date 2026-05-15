@@ -11,6 +11,7 @@ public record WsCatalog(
         Info info,
         Envelope envelope,
         List<TopicEntry> topics,
+        List<QueueEntry> queues,
         List<SendEntry> sends,
         Map<String, SchemaEntry> schemas,
         ErrorShape errors
@@ -23,6 +24,9 @@ public record WsCatalog(
     }
 
     public record TopicEntry(String path, String description, String payloadType, Source source) {
+    }
+
+    public record QueueEntry(String path, String description, String payloadType, Source source) {
     }
 
     public record SendEntry(String destination, String description, String requestType, List<String> triggersTopics, Source source) {

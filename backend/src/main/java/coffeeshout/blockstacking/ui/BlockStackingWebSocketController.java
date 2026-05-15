@@ -42,6 +42,8 @@ public class BlockStackingWebSocketController {
     }
 
     @MessageMapping("/room/{joinCode}/block-stacking/fail")
+    @WsReceive(respondsOnTopics = "/room/{joinCode}/block-stacking/state",
+            description = "블록 쌓기 실패 이벤트 — 상태 변경 브로드캐스트")
     public void recordFail(
             @DestinationVariable String joinCode,
             Principal principal

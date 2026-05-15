@@ -12,6 +12,7 @@ public record WsCatalogProperties(
         @NotBlank String appPath,
         @NotBlank String topicPath,
         @NotBlank String queuePath,
+        @NotBlank String userDestinationPrefix,
         @NotBlank String stompEndpoint,
         @NotBlank String errorTopic,
         @NotBlank String envelopeType,

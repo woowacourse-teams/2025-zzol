@@ -1,5 +1,6 @@
 package coffeeshout.global.websocket.docs;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -17,7 +18,6 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
 
 class WsCatalogBuilderTest {
 
@@ -32,6 +32,7 @@ class WsCatalogBuilderTest {
                 "/app",
                 "/topic",
                 "/queue",
+                "/user",
                 "/ws",
                 "/queue/errors",
                 "WebSocketResponse",
@@ -160,6 +161,92 @@ class WsCatalogBuilderTest {
     }
 
     @Nested
+    @DisplayName("@WsQueue 가 선언된 Notifier")
+    class WsQueue_가_선언된_Notifier {
+
+        @Test
+        @DisplayName("queues 에 엔트리가 생성되고 path 에 /user prefix 가 붙는다")
+        void 큐_엔트리가_생성된다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureQueueNotifier()));
+
+            final WsCatalog catalog = builder.build();
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(catalog.queues()).hasSize(1);
+                softly.assertThat(catalog.queues().get(0).path()).isEqualTo("/user/queue/friends/requests");
+                softly.assertThat(catalog.queues().get(0).payloadType())
+                        .isEqualTo("WebSocketResponse<FixturePayload>");
+                softly.assertThat(catalog.queues().get(0).description()).isEqualTo("친구 요청 알림");
+                softly.assertThat(catalog.topics()).isEmpty();
+            });
+        }
+    }
+
+    @Nested
+    @DisplayName("동일 path 의 @WsQueue 가 여러 메서드에 선언된 Notifier")
+    class 동일_path의_WsQueue가_여러_메서드에_선언된_Notifier {
+
+        @Test
+        @DisplayName("중복 제거 후 하나의 QueueEntry 만 남는다")
+        void 중복_제거된다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureDuplicateQueueNotifier()));
+
+            final WsCatalog catalog = builder.build();
+
+            assertThat(catalog.queues())
+                    .hasSize(1)
+                    .extracting(WsCatalog.QueueEntry::path)
+                    .containsExactly("/user/queue/friends/responses");
+        }
+    }
+
+    @Nested
+    @DisplayName("generic payload 가 선언된 @WsQueue")
+    class generic_payload가_선언된_WsQueue {
+
+        @Test
+        @DisplayName("payloadType 이 WebSocketResponse<List<X>> 형식으로 표기된다")
+        void generic이_표기된다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureGenericQueueNotifier()));
+
+            final WsCatalog catalog = builder.build();
+
+            assertThat(catalog.queues().get(0).payloadType())
+                    .isEqualTo("WebSocketResponse<List<FixturePayload>>");
+        }
+    }
+
+    @Nested
+    @DisplayName("잘못된 @WsQueue 어노테이션")
+    class 잘못된_WsQueue_어노테이션 {
+
+        @Test
+        @DisplayName("path 가 비어 있으면 빌드가 실패한다")
+        void path_가_비어_있으면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureBlankPathQueueNotifier()));
+
+            assertThatThrownBy(() -> builder.build())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("@WsQueue.path");
+        }
+
+        @Test
+        @DisplayName("payload 가 Void.class 이면 빌드가 실패한다")
+        void payload_가_Void_이면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureVoidPayloadQueueNotifier()));
+
+            assertThatThrownBy(() -> builder.build())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("@WsQueue.payload");
+        }
+    }
+
+    @Nested
     @DisplayName("잘못된 @WsTopic 어노테이션")
     class 잘못된_WsTopic_어노테이션 {
 
@@ -186,7 +273,31 @@ class WsCatalogBuilderTest {
         }
     }
 
-    @Controller
+    static class FixtureQueueNotifier {
+
+        @WsQueue(path = "/queue/friends/requests", payload = FixturePayload.class, description = "친구 요청 알림")
+        public void onRequest() {
+        }
+    }
+
+    static class FixtureDuplicateQueueNotifier {
+
+        @WsQueue(path = "/queue/friends/responses", payload = FixturePayload.class, description = "수락")
+        public void onAccepted() {
+        }
+
+        @WsQueue(path = "/queue/friends/responses", payload = FixturePayload.class, description = "거절")
+        public void onRejected() {
+        }
+    }
+
+    static class FixtureGenericQueueNotifier {
+
+        @WsQueue(path = "/queue/friends/list", payload = List.class, generic = FixturePayload.class)
+        public void onListChanged() {
+        }
+    }
+
     static class FixtureWebSocketController {
 
         @MessageMapping("/test/{joinCode}/action")
@@ -195,7 +306,6 @@ class WsCatalogBuilderTest {
         }
     }
 
-    @Controller
     static class FixtureReceiveController {
 
         @MessageMapping("/test/{joinCode}/command")
@@ -204,7 +314,6 @@ class WsCatalogBuilderTest {
         }
     }
 
-    @Controller
     static class FixtureGenericPublisher {
 
         @WsTopic(
@@ -216,7 +325,6 @@ class WsCatalogBuilderTest {
         }
     }
 
-    @Component
     static class FixtureMultiTopicPublisher {
 
         @WsTopic(path = "/test/a", payload = FixturePayload.class)
@@ -225,7 +333,20 @@ class WsCatalogBuilderTest {
         }
     }
 
-    @Component
+    static class FixtureBlankPathQueueNotifier {
+
+        @WsQueue(path = "", payload = FixturePayload.class)
+        public void onEvent() {
+        }
+    }
+
+    static class FixtureVoidPayloadQueueNotifier {
+
+        @WsQueue(path = "/queue/test", payload = Void.class)
+        public void onEvent() {
+        }
+    }
+
     static class FixtureBlankPathPublisher {
 
         @WsTopic(path = "", payload = FixturePayload.class)
@@ -233,7 +354,6 @@ class WsCatalogBuilderTest {
         }
     }
 
-    @Component
     static class FixtureVoidPayloadPublisher {
 
         @WsTopic(path = "/test/void", payload = Void.class)

@@ -340,6 +340,7 @@ websocket:
     app-path: "/app"
     topic-path: "/topic"
     queue-path: "/queue"
+    user-destination-prefix: "/user"
     stomp-endpoint: "/ws"
     error-topic: "/queue/errors"
     envelope-type: "WebSocketResponse"

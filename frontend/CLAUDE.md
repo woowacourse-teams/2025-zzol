@@ -13,9 +13,7 @@
 | 파일 | 내용 |
 | --- | --- |
 | `docs/architecture.md` | 라우팅, Provider 계층, 상태관리, WebSocket, REST API, 컴포넌트 계층, 빌드, 배포 |
-| `docs/todo/planned.md` | 구현 예정 작업 목록 |
-| `docs/todo/backlog.md` | 방향 미확정 · 우선순위 보류 항목 |
-| `docs/todo/done.md` | 완료된 작업 기록 |
+| `docs/adr/` | 설계 결정 기록 — 결정 근거·대안·영향 (ADR) |
 | `docs/block-stacking.md` | 블록 쌓기 미니게임 설계 |
 | `docs/seo-optimization.md` | SEO 최적화 작업 기록 |
 | `docs/api-design-menu-tab.md` | 메뉴 탭 API 설계 — 백엔드 협의용 (POST /reports, GET /patch-notes Request/Response 스펙) |
@@ -49,6 +47,7 @@
 
 | 커맨드 | 설명 |
 | --- | --- |
+| `/adr` | 코드 작업 전 설계 결정 논의 및 ADR 문서 저장 |
 | `/create-pr` | PR 템플릿 기반 GitHub Pull Request 생성 |
 | `/style-audit` | 변경 파일 전체 스타일 규칙 일괄 감사 |
 

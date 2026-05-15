@@ -344,7 +344,6 @@ websocket:
     stomp-endpoint: "/ws"
     error-topic: "/queue/errors"
     envelope-type: "WebSocketResponse"
-    server-url: "http://localhost:8080/ws"
     info:
       title: "커피빵 WebSocket API 명세서"
       version: "1.0.0"

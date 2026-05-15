@@ -36,7 +36,6 @@ class WsCatalogBuilderTest {
                 "/ws",
                 "/queue/errors",
                 "WebSocketResponse",
-                "http://localhost:8080/ws",
                 new WsCatalogProperties.Info("테스트 타이틀", "1.0.0", "테스트 설명")
         );
         builder = new WsCatalogBuilder(applicationContext, properties);
@@ -59,8 +58,13 @@ class WsCatalogBuilderTest {
                 softly.assertThat(catalog.topics().get(0).path()).isEqualTo("/topic/test/{joinCode}/result");
                 softly.assertThat(catalog.topics().get(0).payloadType())
                         .isEqualTo("WebSocketResponse<FixturePayload>");
-                softly.assertThat(catalog.topics().get(0).source().className()).isEqualTo("FixtureWebSocketController");
-                softly.assertThat(catalog.topics().get(0).source().methodName()).isEqualTo("doAction");
+                softly.assertThat(catalog.topics().get(0).publishers()).hasSize(1);
+                softly.assertThat(catalog.topics().get(0).publishers().get(0).description())
+                        .isEqualTo("테스트 토픽");
+                softly.assertThat(catalog.topics().get(0).publishers().get(0).source().className())
+                        .isEqualTo("FixtureWebSocketController");
+                softly.assertThat(catalog.topics().get(0).publishers().get(0).source().methodName())
+                        .isEqualTo("doAction");
 
                 softly.assertThat(catalog.sends()).hasSize(1);
                 softly.assertThat(catalog.sends().get(0).destination()).isEqualTo("/app/test/{joinCode}/action");
@@ -177,7 +181,9 @@ class WsCatalogBuilderTest {
                 softly.assertThat(catalog.queues().get(0).path()).isEqualTo("/user/queue/friends/requests");
                 softly.assertThat(catalog.queues().get(0).payloadType())
                         .isEqualTo("WebSocketResponse<FixturePayload>");
-                softly.assertThat(catalog.queues().get(0).description()).isEqualTo("친구 요청 알림");
+                softly.assertThat(catalog.queues().get(0).publishers()).hasSize(1);
+                softly.assertThat(catalog.queues().get(0).publishers().get(0).description())
+                        .isEqualTo("친구 요청 알림");
                 softly.assertThat(catalog.topics()).isEmpty();
             });
         }
@@ -188,17 +194,45 @@ class WsCatalogBuilderTest {
     class 동일_path의_WsQueue가_여러_메서드에_선언된_Notifier {
 
         @Test
-        @DisplayName("중복 제거 후 하나의 QueueEntry 만 남는다")
-        void 중복_제거된다() {
+        @DisplayName("하나의 QueueEntry 로 묶이고 publishers 에 각 메서드의 description 이 보존된다")
+        void 다중_발행자가_보존된다() {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureDuplicateQueueNotifier()));
 
             final WsCatalog catalog = builder.build();
 
-            assertThat(catalog.queues())
-                    .hasSize(1)
-                    .extracting(WsCatalog.QueueEntry::path)
-                    .containsExactly("/user/queue/friends/responses");
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(catalog.queues()).hasSize(1);
+                softly.assertThat(catalog.queues().get(0).path()).isEqualTo("/user/queue/friends/responses");
+                softly.assertThat(catalog.queues().get(0).publishers())
+                        .extracting(WsCatalog.Publisher::description)
+                        .containsExactlyInAnyOrder("수락", "거절");
+                softly.assertThat(catalog.queues().get(0).publishers())
+                        .extracting(p -> p.source().methodName())
+                        .containsExactlyInAnyOrder("onAccepted", "onRejected");
+            });
+        }
+    }
+
+    @Nested
+    @DisplayName("동일 path 의 @WsTopic 이 여러 Publisher 에 선언된 경우")
+    class 동일_path의_WsTopic이_여러_Publisher에_선언된_경우 {
+
+        @Test
+        @DisplayName("하나의 TopicEntry 로 묶이고 publishers 에 각 메서드가 보존된다")
+        void 다중_발행자가_보존된다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureSamePathTopicPublisher()));
+
+            final WsCatalog catalog = builder.build();
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(catalog.topics()).hasSize(1);
+                softly.assertThat(catalog.topics().get(0).path()).isEqualTo("/topic/test/state");
+                softly.assertThat(catalog.topics().get(0).publishers())
+                        .extracting(p -> p.source().methodName())
+                        .containsExactlyInAnyOrder("publishStart", "publishFinish");
+            });
         }
     }
 
@@ -246,6 +280,17 @@ class WsCatalogBuilderTest {
         }
 
         @Test
+        @DisplayName("payload 가 Object.class 이면 빌드가 실패한다")
+        void payload_가_Object_이면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureObjectPayloadQueueNotifier()));
+
+            assertThatThrownBy(() -> builder.build())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Object.class");
+        }
+
+        @Test
         @DisplayName("path 가 '/' 로 시작하지 않으면 빌드가 실패한다")
         void path_가_슬래시로_시작하지_않으면_실패한다() {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
@@ -281,6 +326,17 @@ class WsCatalogBuilderTest {
             assertThatThrownBy(() -> builder.build())
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("@WsTopic.payload");
+        }
+
+        @Test
+        @DisplayName("payload 가 Object.class 이면 빌드가 실패한다")
+        void payload_가_Object_이면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureObjectPayloadPublisher()));
+
+            assertThatThrownBy(() -> builder.build())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Object.class");
         }
 
         @Test
@@ -352,6 +408,31 @@ class WsCatalogBuilderTest {
         @WsTopic(path = "/test/a", payload = FixturePayload.class)
         @WsTopic(path = "/test/b", payload = FixturePayload.class)
         public void publish() {
+        }
+    }
+
+    static class FixtureSamePathTopicPublisher {
+
+        @WsTopic(path = "/test/state", payload = FixturePayload.class, description = "시작")
+        public void publishStart() {
+        }
+
+        @WsTopic(path = "/test/state", payload = FixturePayload.class, description = "종료")
+        public void publishFinish() {
+        }
+    }
+
+    static class FixtureObjectPayloadPublisher {
+
+        @WsTopic(path = "/test/object", payload = Object.class)
+        public void publish() {
+        }
+    }
+
+    static class FixtureObjectPayloadQueueNotifier {
+
+        @WsQueue(path = "/queue/object", payload = Object.class)
+        public void onEvent() {
         }
     }
 

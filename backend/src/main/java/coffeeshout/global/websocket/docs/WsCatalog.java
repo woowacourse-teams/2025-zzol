@@ -23,13 +23,16 @@ public record WsCatalog(
     public record Envelope(String type, List<FieldEntry> fields, String note) {
     }
 
-    public record TopicEntry(String path, String description, String payloadType, Source source) {
+    public record TopicEntry(String path, String payloadType, List<Publisher> publishers) {
     }
 
-    public record QueueEntry(String path, String description, String payloadType, Source source) {
+    public record QueueEntry(String path, String payloadType, List<Publisher> publishers) {
     }
 
     public record SendEntry(String destination, String description, String requestType, List<String> triggersTopics, Source source) {
+    }
+
+    public record Publisher(String description, Source source) {
     }
 
     public record Source(String className, String methodName) {

@@ -29,14 +29,15 @@ class WsCatalogControllerTest extends TestContainerSupport {
         @DisplayName("GET /dev/ws-catalog 가 200 으로 카탈로그를 반환한다")
         void 카탈로그를_반환한다() {
             final ResponseEntity<WsCatalog> response = restTemplate.getForEntity("/dev/ws-catalog", WsCatalog.class);
+            final WsCatalog body = response.getBody();
+            assertThat(body).isNotNull();
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-                softly.assertThat(response.getBody()).isNotNull();
-                softly.assertThat(response.getBody().stompEndpoint()).isEqualTo("/ws");
-                softly.assertThat(response.getBody().app()).isEqualTo("/app");
-                softly.assertThat(response.getBody().topicPrefix()).isEqualTo("/topic");
-                softly.assertThat(response.getBody().envelope().type()).isEqualTo("WebSocketResponse<T>");
+                softly.assertThat(body.stompEndpoint()).isEqualTo("/ws");
+                softly.assertThat(body.app()).isEqualTo("/app");
+                softly.assertThat(body.topicPrefix()).isEqualTo("/topic");
+                softly.assertThat(body.envelope().type()).isEqualTo("WebSocketResponse<T>");
             });
         }
     }

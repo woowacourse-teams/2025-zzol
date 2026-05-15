@@ -4,7 +4,7 @@ paths:
 - "docs/**/*.md"
 ---
 
-전체 컨벤션: `docs/conventions-docs.md`
+# 전체 컨벤션: `docs/conventions-docs.md`
 
 ## MD040 — 코드 블록에 언어 지정 필수
 

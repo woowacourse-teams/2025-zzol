@@ -7,14 +7,17 @@ import java.lang.reflect.RecordComponent;
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
@@ -52,21 +55,8 @@ public class WsCatalogBuilder {
         queues.sort(Comparator.comparing(WsCatalog.QueueEntry::path));
         sends.sort(Comparator.comparing(WsCatalog.SendEntry::destination));
 
-        final Map<String, WsCatalog.TopicEntry> byPath = new LinkedHashMap<>();
-        for (final WsCatalog.TopicEntry topic : topics) {
-            final WsCatalog.TopicEntry existing = byPath.putIfAbsent(topic.path(), topic);
-            if (existing != null && !existing.source().equals(topic.source())) {
-                log.warn("동일 토픽 path 에 다중 publisher 선언: path={}, kept={}, dropped={}",
-                        topic.path(), existing.source(), topic.source());
-            }
-        }
-        final List<WsCatalog.TopicEntry> deduped = List.copyOf(byPath.values());
-
-        final Map<String, WsCatalog.QueueEntry> byQueuePath = new LinkedHashMap<>();
-        for (final WsCatalog.QueueEntry queue : queues) {
-            byQueuePath.putIfAbsent(queue.path(), queue);
-        }
-        final List<WsCatalog.QueueEntry> dedupedQueues = List.copyOf(byQueuePath.values());
+        final List<WsCatalog.TopicEntry> deduped = deduplicateTopics(topics);
+        final List<WsCatalog.QueueEntry> dedupedQueues = deduplicateQueues(queues);
 
         final Map<String, WsCatalog.SchemaEntry> schemas = expandSchemas(referenced);
 
@@ -115,6 +105,45 @@ public class WsCatalogBuilder {
         }
     }
 
+    private List<WsCatalog.TopicEntry> deduplicateTopics(List<WsCatalog.TopicEntry> topics) {
+        final Map<String, WsCatalog.TopicEntry> byPath = new LinkedHashMap<>();
+        for (final WsCatalog.TopicEntry topic : topics) {
+            final WsCatalog.TopicEntry existing = byPath.putIfAbsent(topic.path(), topic);
+            if (existing != null && !existing.source().equals(topic.source())) {
+                log.warn("동일 토픽 path 에 다중 publisher 선언: path={}, kept={}, dropped={}",
+                        topic.path(), existing.source(), topic.source());
+            }
+        }
+        return List.copyOf(byPath.values());
+    }
+
+    private List<WsCatalog.QueueEntry> deduplicateQueues(List<WsCatalog.QueueEntry> queues) {
+        final Map<String, WsCatalog.QueueEntry> byPath = new LinkedHashMap<>();
+        for (final WsCatalog.QueueEntry queue : queues) {
+            byPath.putIfAbsent(queue.path(), queue);
+        }
+        return List.copyOf(byPath.values());
+    }
+
+    private List<String> collectTriggerTopics(WsTopic[] wsTopics, WsReceive wsReceive, WsCatalog.Source source) {
+        final Stream<String> fromTopics = Arrays.stream(wsTopics)
+                .map(t -> properties.topicPath() + t.path());
+        final Stream<String> fromReceive = Optional.ofNullable(wsReceive)
+                .stream()
+                .flatMap(r -> Arrays.stream(r.respondsOnTopics()))
+                .map(path -> validatedTopicPath(path, source));
+        return Stream.concat(fromTopics, fromReceive).collect(Collectors.toList());
+    }
+
+    private String validatedTopicPath(String path, WsCatalog.Source source) {
+        if (path == null || path.isBlank()) {
+            throw new IllegalArgumentException(
+                    "@WsReceive.respondsOnTopics 에 빈 경로가 포함되어 있습니다: %s#%s".formatted(
+                            source.className(), source.methodName()));
+        }
+        return properties.topicPath() + path;
+    }
+
     private WsCatalog.QueueEntry toQueueEntry(WsQueue wsQueue, WsCatalog.Source source, Set<Class<?>> referenced) {
         if (wsQueue.path().isBlank()) {
             throw new IllegalArgumentException(
@@ -154,15 +183,7 @@ public class WsCatalogBuilder {
             Set<Class<?>> referenced
     ) {
         final String requestType = findRequestPayload(method, referenced);
-        final List<String> triggersTopics = new ArrayList<>();
-        for (final WsTopic wsTopic : wsTopics) {
-            triggersTopics.add(properties.topicPath() + wsTopic.path());
-        }
-        if (wsReceive != null) {
-            for (final String path : wsReceive.respondsOnTopics()) {
-                triggersTopics.add(properties.topicPath() + path);
-            }
-        }
+        final List<String> triggersTopics = collectTriggerTopics(wsTopics, wsReceive, source);
         final String description = resolveDescription(wsTopics, wsReceive);
         final String[] values = mapping.value();
         final String[] destinations = values.length == 0 ? new String[]{""} : values;

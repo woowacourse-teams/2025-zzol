@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 @ConditionalOnProperty(prefix = "websocket.docs", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class WsCatalogController {
 
-    private final WsCatalogBuilder builder;
+    private final WsCatalog catalog;
 
     public WsCatalogController(WsCatalogBuilder builder) {
-        this.builder = builder;
+        this.catalog = builder.build();
     }
 
     @GetMapping("/dev/ws-catalog")
     public WsCatalog catalog() {
-        return builder.build();
+        return catalog;
     }
 }

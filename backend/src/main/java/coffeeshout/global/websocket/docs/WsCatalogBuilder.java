@@ -96,18 +96,27 @@ public class WsCatalogBuilder {
                 topics.add(toTopicEntry(wsTopic, source, referenced));
             }
             if (messageMapping != null) {
-                sends.add(toSendEntry(method, messageMapping, wsTopics, wsReceive, source, referenced));
+                sends.addAll(toSendEntries(method, messageMapping, wsTopics, wsReceive, source, referenced));
             }
         }
     }
 
     private WsCatalog.TopicEntry toTopicEntry(WsTopic wsTopic, WsCatalog.Source source, Set<Class<?>> referenced) {
+        if (wsTopic.path().isBlank()) {
+            throw new IllegalArgumentException(
+                    "@WsTopic.path 가 비어 있습니다: %s#%s".formatted(source.className(), source.methodName()));
+        }
+        if (wsTopic.payload() == Void.class) {
+            throw new IllegalArgumentException(
+                    "@WsTopic.payload 가 Void.class 입니다: %s#%s path=%s".formatted(
+                            source.className(), source.methodName(), wsTopic.path()));
+        }
         final String fullPath = properties.topicPath() + wsTopic.path();
         final String payloadType = describePayloadType(wsTopic.payload(), wsTopic.generic(), referenced);
         return new WsCatalog.TopicEntry(fullPath, wsTopic.description(), payloadType, source);
     }
 
-    private WsCatalog.SendEntry toSendEntry(
+    private List<WsCatalog.SendEntry> toSendEntries(
             Method method,
             MessageMapping mapping,
             WsTopic[] wsTopics,
@@ -115,9 +124,6 @@ public class WsCatalogBuilder {
             WsCatalog.Source source,
             Set<Class<?>> referenced
     ) {
-        final String[] values = mapping.value();
-        final String mappingPath = values.length == 0 ? "" : values[0];
-        final String fullDest = properties.appPath() + mappingPath;
         final String requestType = findRequestPayload(method, referenced);
         final List<String> triggersTopics = new ArrayList<>();
         for (final WsTopic wsTopic : wsTopics) {
@@ -128,10 +134,24 @@ public class WsCatalogBuilder {
                 triggersTopics.add(properties.topicPath() + path);
             }
         }
-        final String description = wsTopics.length > 0 ? wsTopics[0].description()
-                : wsReceive != null ? wsReceive.description()
-                : "";
-        return new WsCatalog.SendEntry(fullDest, description, requestType, triggersTopics, source);
+        final String description = resolveDescription(wsTopics, wsReceive);
+        final String[] values = mapping.value();
+        final String[] destinations = values.length == 0 ? new String[]{""} : values;
+        final List<WsCatalog.SendEntry> entries = new ArrayList<>();
+        for (final String mappingPath : destinations) {
+            entries.add(new WsCatalog.SendEntry(properties.appPath() + mappingPath, description, requestType, triggersTopics, source));
+        }
+        return entries;
+    }
+
+    private String resolveDescription(WsTopic[] wsTopics, WsReceive wsReceive) {
+        if (wsTopics.length > 0) {
+            return wsTopics[0].description();
+        }
+        if (wsReceive != null) {
+            return wsReceive.description();
+        }
+        return "";
     }
 
     private String describePayloadType(Class<?> payload, Class<?> generic, Set<Class<?>> referenced) {
@@ -142,6 +162,7 @@ public class WsCatalogBuilder {
             registerIfDescribable(payload, referenced);
             return properties.envelopeType() + "<" + payload.getSimpleName() + ">";
         }
+        registerIfDescribable(payload, referenced);
         registerIfDescribable(generic, referenced);
         return properties.envelopeType() + "<" + payload.getSimpleName() + "<" + generic.getSimpleName() + ">>";
     }

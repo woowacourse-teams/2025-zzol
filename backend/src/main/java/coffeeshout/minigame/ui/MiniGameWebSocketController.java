@@ -1,11 +1,9 @@
 package coffeeshout.minigame.ui;
 
-import coffeeshout.global.websocket.docs.WsTopic;
+import coffeeshout.global.websocket.docs.WsReceive;
 import coffeeshout.minigame.ui.command.MiniGameCommand;
 import coffeeshout.minigame.ui.command.MiniGameCommandDispatcher;
 import coffeeshout.minigame.ui.request.MiniGameMessage;
-import coffeeshout.minigame.ui.response.MiniGameStartMessage;
-import coffeeshout.minigame.ui.response.MiniGameStateMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -21,18 +19,12 @@ public class MiniGameWebSocketController {
     private final ObjectMapper objectMapper;
 
     @MessageMapping("/room/{joinCode}/minigame/command")
-    @WsTopic(
-            path = "/room/{joinCode}/round",
-            payload = MiniGameStartMessage.class,
-            description = "StartMiniGameCommand 처리 시 발행"
-    )
-    @WsTopic(
-            path = "/room/{joinCode}/gameState",
-            payload = MiniGameStateMessage.class,
-            description = "SelectCardCommand 처리 시 발행"
+    @WsReceive(
+            respondsOnTopics = {"/room/{joinCode}/round", "/room/{joinCode}/gameState"},
+            description = "StartMiniGameCommand → round 발행, SelectCardCommand → gameState 발행"
     )
     public void commandGame(@DestinationVariable String joinCode, @Payload MiniGameMessage command) {
-        MiniGameCommand miniGameCommand = command.toCommand(objectMapper);
+        final MiniGameCommand miniGameCommand = command.toCommand(objectMapper);
         miniGameCommandDispatcher.dispatch(joinCode, miniGameCommand);
     }
 }

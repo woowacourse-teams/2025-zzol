@@ -39,12 +39,12 @@ public class RacingGameMessagePublisher {
     @WsTopic(
             path = "/room/{joinCode}/racing-game/state",
             payload = RacingGameStateResponse.class,
-            description = "레이싱 게임 상태 변경 브로드캐스트"
+            description = "레이싱 게임 상태 변경 브로드캐스트 — state: DESCRIPTION(규칙 설명) | PREPARE(준비) | PLAYING(진행 중) | DONE(종료)"
     )
     public void publishRacingGameStart(RaceStateChangedEvent raceStateChangedEvent) {
         loggingSimpMessagingTemplate.convertAndSend(
                 String.format(RACING_GAME_STATE_DESTINATION_FORMAT, raceStateChangedEvent.joinCode()),
-                WebSocketResponse.success(new RacingGameStateResponse(raceStateChangedEvent.state().name()))
+                WebSocketResponse.success(new RacingGameStateResponse(raceStateChangedEvent.state()))
         );
     }
 
@@ -52,12 +52,12 @@ public class RacingGameMessagePublisher {
     @WsTopic(
             path = "/room/{joinCode}/racing-game/state",
             payload = RacingGameStateResponse.class,
-            description = "레이싱 게임 종료 브로드캐스트"
+            description = "레이싱 게임 종료 브로드캐스트 — state: DESCRIPTION(규칙 설명) | PREPARE(준비) | PLAYING(진행 중) | DONE(종료)"
     )
     public void publishRacingGameFinish(RaceFinishedEvent raceFinishedEvent) {
         loggingSimpMessagingTemplate.convertAndSend(
                 String.format(RACING_GAME_STATE_DESTINATION_FORMAT, raceFinishedEvent.joinCode()),
-                WebSocketResponse.success(new RacingGameStateResponse(raceFinishedEvent.state().name()))
+                WebSocketResponse.success(new RacingGameStateResponse(raceFinishedEvent.state()))
         );
     }
 }

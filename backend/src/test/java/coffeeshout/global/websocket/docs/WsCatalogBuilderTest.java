@@ -1,5 +1,6 @@
 package coffeeshout.global.websocket.docs;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -76,8 +77,8 @@ class WsCatalogBuilderTest {
     class WsReceive_가_선언된_컨트롤러 {
 
         @Test
-        @DisplayName("TopicEntry 없이 SendEntry 만 생성되고 respondsOnTopics 가 채워진다")
-        void send_만_포함되고_respondsOnTopics_가_채워진다() {
+        @DisplayName("TopicEntry 없이 SendEntry 만 생성되고 triggersTopics 가 채워진다")
+        void send_만_포함되고_triggersTopics_가_채워진다() {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureReceiveController()));
 
@@ -137,6 +138,54 @@ class WsCatalogBuilderTest {
         }
     }
 
+    @Nested
+    @DisplayName("동일 메서드에 @WsTopic 이 여러 개 선언된 Publisher")
+    class 동일_메서드에_WsTopic_이_여러_개_선언된_Publisher {
+
+        @Test
+        @DisplayName("선언한 수만큼 TopicEntry 가 생성된다")
+        void 토픽_여러_개가_생성된다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureMultiTopicPublisher()));
+
+            final WsCatalog catalog = builder.build();
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(catalog.topics()).hasSize(2);
+                softly.assertThat(catalog.topics())
+                        .extracting(WsCatalog.TopicEntry::path)
+                        .containsExactlyInAnyOrder("/topic/test/a", "/topic/test/b");
+            });
+        }
+    }
+
+    @Nested
+    @DisplayName("잘못된 @WsTopic 어노테이션")
+    class 잘못된_WsTopic_어노테이션 {
+
+        @Test
+        @DisplayName("path 가 비어 있으면 빌드가 실패한다")
+        void path_가_비어_있으면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureBlankPathPublisher()));
+
+            assertThatThrownBy(() -> builder.build())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("@WsTopic.path");
+        }
+
+        @Test
+        @DisplayName("payload 가 Void.class 이면 빌드가 실패한다")
+        void payload_가_Void_이면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureVoidPayloadPublisher()));
+
+            assertThatThrownBy(() -> builder.build())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("@WsTopic.payload");
+        }
+    }
+
     @Controller
     static class FixtureWebSocketController {
 
@@ -164,6 +213,31 @@ class WsCatalogBuilderTest {
                 generic = FixturePayload.class
         )
         public void publishList() {
+        }
+    }
+
+    @Component
+    static class FixtureMultiTopicPublisher {
+
+        @WsTopic(path = "/test/a", payload = FixturePayload.class)
+        @WsTopic(path = "/test/b", payload = FixturePayload.class)
+        public void publish() {
+        }
+    }
+
+    @Component
+    static class FixtureBlankPathPublisher {
+
+        @WsTopic(path = "", payload = FixturePayload.class)
+        public void publish() {
+        }
+    }
+
+    @Component
+    static class FixtureVoidPayloadPublisher {
+
+        @WsTopic(path = "/test/void", payload = Void.class)
+        public void publish() {
         }
     }
 

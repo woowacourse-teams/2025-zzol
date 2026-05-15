@@ -43,7 +43,7 @@ STOMP CONNECT 헤더 변경은 다음과 같다.
 
 `StompPrincipalInterceptor`는 CONNECT 수신 시 아래 순서로 인증을 처리한다.
 
-```
+```text
 1. roomToken 헤더 존재
    → RST 검증 → PlayerKey("joinCode:playerName") Principal 설정
 

@@ -337,7 +337,6 @@ websocket:
     stream-ttl-seconds: 3600
     dedup-ttl-seconds: 1
   docs:
-    enabled: true
     app-path: "/app"
     topic-path: "/topic"
     queue-path: "/queue"

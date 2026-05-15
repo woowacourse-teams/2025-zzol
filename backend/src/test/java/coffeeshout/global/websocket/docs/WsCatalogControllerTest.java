@@ -1,15 +1,18 @@
 package coffeeshout.global.websocket.docs;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import coffeeshout.fixture.TestContainerSupport;
 import coffeeshout.support.test.IntegrationTest;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
 @DisplayName("WsCatalogController")
@@ -18,16 +21,39 @@ class WsCatalogControllerTest extends TestContainerSupport {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    @Test
-    @DisplayName("dev 환경에서 GET /dev/ws-catalog 가 200 으로 카탈로그를 반환한다")
-    void 카탈로그를_반환한다() {
-        final ResponseEntity<WsCatalog> response = restTemplate.getForEntity("/dev/ws-catalog", WsCatalog.class);
+    @Nested
+    @DisplayName("dev 환경")
+    class dev_환경 {
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stompEndpoint()).isEqualTo("/ws");
-        assertThat(response.getBody().app()).isEqualTo("/app");
-        assertThat(response.getBody().topicPrefix()).isEqualTo("/topic");
-        assertThat(response.getBody().envelope().type()).isEqualTo("WebSocketResponse<T>");
+        @Test
+        @DisplayName("GET /dev/ws-catalog 가 200 으로 카탈로그를 반환한다")
+        void 카탈로그를_반환한다() {
+            final ResponseEntity<WsCatalog> response = restTemplate.getForEntity("/dev/ws-catalog", WsCatalog.class);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+                softly.assertThat(response.getBody()).isNotNull();
+                softly.assertThat(response.getBody().stompEndpoint()).isEqualTo("/ws");
+                softly.assertThat(response.getBody().app()).isEqualTo("/app");
+                softly.assertThat(response.getBody().topicPrefix()).isEqualTo("/topic");
+                softly.assertThat(response.getBody().envelope().type()).isEqualTo("WebSocketResponse<T>");
+            });
+        }
+    }
+
+    @Nested
+    @DisplayName("prod 가드")
+    class prod_가드 {
+
+        @Test
+        @DisplayName("WsCatalogController 는 @Profile(!prod) 로 운영 환경 노출을 방지한다")
+        void prod_프로파일_가드가_선언되어_있다() {
+            final Profile profile = WsCatalogController.class.getAnnotation(Profile.class);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(profile).isNotNull();
+                softly.assertThat(profile.value()).containsExactly("!prod");
+            });
+        }
     }
 }

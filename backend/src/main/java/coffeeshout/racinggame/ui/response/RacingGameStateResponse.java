@@ -1,4 +1,6 @@
 package coffeeshout.racinggame.ui.response;
 
-public record RacingGameStateResponse(String state) {
+import coffeeshout.racinggame.domain.RacingGameState;
+
+public record RacingGameStateResponse(RacingGameState state) {
 }

@@ -1,8 +1,7 @@
 package coffeeshout.racinggame.ui;
 
-import coffeeshout.global.websocket.docs.WsTopic;
+import coffeeshout.global.websocket.docs.WsReceive;
 import coffeeshout.racinggame.application.RacingGameFacade;
-import coffeeshout.racinggame.domain.event.RaceStateChangedEvent;
 import coffeeshout.racinggame.ui.request.TapCommand;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +19,8 @@ public class RacingGameWebSocketController {
     private final RacingGameFacade racingGameFacade;
 
     @MessageMapping("/room/{joinCode}/racing-game/tap")
-    @WsTopic(
-            path = "/room/{joinCode}/racing-game/state",
-            payload = RaceStateChangedEvent.class,
+    @WsReceive(
+            respondsOnTopics = {"/room/{joinCode}/racing-game/state"},
             description = "레이싱 게임 탭"
     )
     public void tap(@DestinationVariable String joinCode, @Payload @Valid TapCommand command) {

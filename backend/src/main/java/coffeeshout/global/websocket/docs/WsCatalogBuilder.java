@@ -149,6 +149,11 @@ public class WsCatalogBuilder {
             throw new IllegalArgumentException(
                     "@WsQueue.path 가 비어 있습니다: %s#%s".formatted(source.className(), source.methodName()));
         }
+        if (!wsQueue.path().startsWith("/")) {
+            throw new IllegalArgumentException(
+                    "@WsQueue.path 는 '/' 로 시작해야 합니다: %s#%s path=%s".formatted(
+                            source.className(), source.methodName(), wsQueue.path()));
+        }
         if (wsQueue.payload() == Void.class) {
             throw new IllegalArgumentException(
                     "@WsQueue.payload 가 Void.class 입니다: %s#%s path=%s".formatted(
@@ -163,6 +168,11 @@ public class WsCatalogBuilder {
         if (wsTopic.path().isBlank()) {
             throw new IllegalArgumentException(
                     "@WsTopic.path 가 비어 있습니다: %s#%s".formatted(source.className(), source.methodName()));
+        }
+        if (!wsTopic.path().startsWith("/")) {
+            throw new IllegalArgumentException(
+                    "@WsTopic.path 는 '/' 로 시작해야 합니다: %s#%s path=%s".formatted(
+                            source.className(), source.methodName(), wsTopic.path()));
         }
         if (wsTopic.payload() == Void.class) {
             throw new IllegalArgumentException(

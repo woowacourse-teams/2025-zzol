@@ -119,7 +119,7 @@ public @interface WsQueue {
 
 ## 결과
 
-- `coffeeshout.global.websocket.docs` 패키지에 6개 신규 클래스 추가 (`@WsTopic`, `@WsTopics`, `@WsReceive`, `@WsQueue`, `@WsQueues`, `WsCatalogBuilder`, `WsCatalogController`, `WsCatalogProperties`, `WsCatalog`).
+- `coffeeshout.global.websocket.docs` 패키지에 9개 신규 클래스 추가 (`@WsTopic`, `@WsTopics`, `@WsReceive`, `@WsQueue`, `@WsQueues`, `WsCatalogBuilder`, `WsCatalogController`, `WsCatalogProperties`, `WsCatalog`).
 - 9개 도메인 컨트롤러/Publisher 가 `@WsTopic`/`@WsReceive` 를 사용한다.
 - `FriendNotifier`, `PresenceNotifier` 가 `@WsQueue` 를 사용한다.
 - `build.gradle.kts` 에서 legacy 의존성 라인 1개 제거.

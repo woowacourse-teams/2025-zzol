@@ -244,6 +244,17 @@ class WsCatalogBuilderTest {
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("@WsQueue.payload");
         }
+
+        @Test
+        @DisplayName("path 가 '/' 로 시작하지 않으면 빌드가 실패한다")
+        void path_가_슬래시로_시작하지_않으면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureNoSlashPathQueueNotifier()));
+
+            assertThatThrownBy(() -> builder.build())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("@WsQueue.path");
+        }
     }
 
     @Nested
@@ -270,6 +281,17 @@ class WsCatalogBuilderTest {
             assertThatThrownBy(() -> builder.build())
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("@WsTopic.payload");
+        }
+
+        @Test
+        @DisplayName("path 가 '/' 로 시작하지 않으면 빌드가 실패한다")
+        void path_가_슬래시로_시작하지_않으면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureNoSlashPathPublisher()));
+
+            assertThatThrownBy(() -> builder.build())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("@WsTopic.path");
         }
     }
 
@@ -358,6 +380,20 @@ class WsCatalogBuilderTest {
 
         @WsTopic(path = "/test/void", payload = Void.class)
         public void publish() {
+        }
+    }
+
+    static class FixtureNoSlashPathPublisher {
+
+        @WsTopic(path = "test/result", payload = FixturePayload.class)
+        public void publish() {
+        }
+    }
+
+    static class FixtureNoSlashPathQueueNotifier {
+
+        @WsQueue(path = "queue/test", payload = FixturePayload.class)
+        public void onEvent() {
         }
     }
 

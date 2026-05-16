@@ -26,20 +26,19 @@ export const SectionHeader = styled.div`
 `;
 
 export const SectionTitle = styled.h2`
-  font-size: 16px;
+  ${({ theme }) => theme.typography.h4};
   font-weight: 800;
   color: ${({ theme }) => theme.color.gray[900]};
   letter-spacing: -0.02em;
 `;
 
 export const SectionSub = styled.span`
-  font-size: 11px;
+  ${({ theme }) => theme.typography.caption};
   font-weight: 600;
   color: ${({ theme }) => theme.color.gray[500]};
   background: ${({ theme }) => theme.color.gray[100]};
   padding: 3px 10px;
   border-radius: 20px;
-  line-height: 1.4;
 `;
 
 export const MyInfoCard = styled.div`

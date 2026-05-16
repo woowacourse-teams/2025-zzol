@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 
-const isDev = process.env.NODE_ENV === 'development';
+const isDevToolsEnabled = Boolean(process.env.ENABLE_DEVTOOLS);
 
 export const useServiceWorkerUpdate = () => {
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
   const [devForced, setDevForced] = useState(false);
 
   useEffect(() => {
-    if (!isDev) return;
+    if (!isDevToolsEnabled) return;
     const handler = (e: Event) => {
       if (e instanceof CustomEvent && typeof e.detail === 'boolean') {
         setDevForced(e.detail);
@@ -36,16 +36,18 @@ export const useServiceWorkerUpdate = () => {
       installingWorker?.addEventListener('statechange', handleStateChange);
     };
 
-    navigator.serviceWorker.ready.then((registration) => {
-      if (cancelled) return;
+    navigator.serviceWorker.ready
+      .then((registration) => {
+        if (cancelled) return;
 
-      if (registration.waiting && navigator.serviceWorker.controller) {
-        setWaitingWorker(registration.waiting);
-        return;
-      }
-      reg = registration;
-      reg.addEventListener('updatefound', handleUpdateFound);
-    });
+        if (registration.waiting && navigator.serviceWorker.controller) {
+          setWaitingWorker(registration.waiting);
+          return;
+        }
+        reg = registration;
+        reg.addEventListener('updatefound', handleUpdateFound);
+      })
+      .catch(() => {});
 
     return () => {
       cancelled = true;
@@ -55,7 +57,7 @@ export const useServiceWorkerUpdate = () => {
   }, []);
 
   const applyUpdate = useCallback(() => {
-    if (isDev && devForced) {
+    if (isDevToolsEnabled && devForced) {
       window.dispatchEvent(new CustomEvent('dev:updateReady', { detail: false }));
       return;
     }

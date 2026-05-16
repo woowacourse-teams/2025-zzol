@@ -8,7 +8,6 @@ public record WsCatalog(
         String app,
         String topicPrefix,
         String queuePrefix,
-        Info info,
         Envelope envelope,
         List<TopicEntry> topics,
         List<QueueEntry> queues,
@@ -16,9 +15,6 @@ public record WsCatalog(
         Map<String, SchemaEntry> schemas,
         ErrorShape errors
 ) {
-
-    public record Info(String title, String version, String description) {
-    }
 
     public record Envelope(String type, List<FieldEntry> fields, String note) {
     }

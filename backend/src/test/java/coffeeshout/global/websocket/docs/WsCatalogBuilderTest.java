@@ -1,11 +1,12 @@
 package coffeeshout.global.websocket.docs;
 
+import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -35,8 +36,7 @@ class WsCatalogBuilderTest {
                 "/user",
                 "/ws",
                 "/queue/errors",
-                "WebSocketResponse",
-                new WsCatalogProperties.Info("테스트 타이틀", "1.0.0", "테스트 설명")
+                WebSocketResponse.class
         );
         builder = new WsCatalogBuilder(applicationContext, properties);
     }
@@ -138,7 +138,6 @@ class WsCatalogBuilderTest {
                 softly.assertThat(catalog.envelope().fields()).extracting(WsCatalog.FieldEntry::name)
                         .containsExactly("success", "data", "errorMessage", "id");
                 softly.assertThat(catalog.errors().topic()).isEqualTo("/queue/errors");
-                softly.assertThat(catalog.info().title()).isEqualTo("테스트 타이틀");
             });
         }
     }
@@ -263,9 +262,7 @@ class WsCatalogBuilderTest {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureBlankPathQueueNotifier()));
 
-            assertThatThrownBy(() -> builder.build())
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("@WsQueue.path");
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_BLANK_PATH);
         }
 
         @Test
@@ -274,9 +271,7 @@ class WsCatalogBuilderTest {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureVoidPayloadQueueNotifier()));
 
-            assertThatThrownBy(() -> builder.build())
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("@WsQueue.payload");
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_VOID_PAYLOAD);
         }
 
         @Test
@@ -285,9 +280,7 @@ class WsCatalogBuilderTest {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureObjectPayloadQueueNotifier()));
 
-            assertThatThrownBy(() -> builder.build())
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Object.class");
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_OBJECT_PAYLOAD);
         }
 
         @Test
@@ -296,9 +289,7 @@ class WsCatalogBuilderTest {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureNoSlashPathQueueNotifier()));
 
-            assertThatThrownBy(() -> builder.build())
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("@WsQueue.path");
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT);
         }
     }
 
@@ -312,9 +303,7 @@ class WsCatalogBuilderTest {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureBlankPathPublisher()));
 
-            assertThatThrownBy(() -> builder.build())
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("@WsTopic.path");
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_BLANK_PATH);
         }
 
         @Test
@@ -323,9 +312,7 @@ class WsCatalogBuilderTest {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureVoidPayloadPublisher()));
 
-            assertThatThrownBy(() -> builder.build())
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("@WsTopic.payload");
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_VOID_PAYLOAD);
         }
 
         @Test
@@ -334,9 +321,7 @@ class WsCatalogBuilderTest {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureObjectPayloadPublisher()));
 
-            assertThatThrownBy(() -> builder.build())
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Object.class");
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_OBJECT_PAYLOAD);
         }
 
         @Test
@@ -345,9 +330,7 @@ class WsCatalogBuilderTest {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureNoSlashPathPublisher()));
 
-            assertThatThrownBy(() -> builder.build())
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("@WsTopic.path");
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT);
         }
     }
 

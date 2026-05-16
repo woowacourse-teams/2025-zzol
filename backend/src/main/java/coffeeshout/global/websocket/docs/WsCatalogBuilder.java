@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import coffeeshout.global.exception.custom.SystemException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
@@ -62,13 +64,12 @@ public class WsCatalogBuilder {
                 properties.appPath(),
                 properties.topicPath(),
                 properties.queuePath(),
-                toInfo(properties.info()),
                 buildEnvelope(),
                 topics,
                 queues,
                 sends,
                 schemas,
-                new WsCatalog.ErrorShape(properties.errorTopic(), properties.envelopeType() + "<String>")
+                new WsCatalog.ErrorShape(properties.errorTopic(), properties.envelopeClass().getSimpleName() + "<String>")
         );
     }
 
@@ -114,11 +115,11 @@ public class WsCatalogBuilder {
     }
 
     private WsCatalog.TopicEntry mergeTopicGroup(String path, List<RawTopic> group) {
-        warnIfPayloadConflict("토픽", path, group, RawTopic::payloadType, RawTopic::source);
+        warnIfPayloadConflict("토픽", path, group);
         final List<WsCatalog.Publisher> publishers = group.stream()
                 .map(r -> new WsCatalog.Publisher(r.description(), r.source()))
                 .toList();
-        return new WsCatalog.TopicEntry(path, group.get(0).payloadType(), publishers);
+        return new WsCatalog.TopicEntry(path, group.getFirst().payloadType(), publishers);
     }
 
     private List<WsCatalog.QueueEntry> mergeQueues(List<RawQueue> raw) {
@@ -133,26 +134,20 @@ public class WsCatalogBuilder {
     }
 
     private WsCatalog.QueueEntry mergeQueueGroup(String path, List<RawQueue> group) {
-        warnIfPayloadConflict("큐", path, group, RawQueue::payloadType, RawQueue::source);
+        warnIfPayloadConflict("큐", path, group);
         final List<WsCatalog.Publisher> publishers = group.stream()
                 .map(r -> new WsCatalog.Publisher(r.description(), r.source()))
                 .toList();
-        return new WsCatalog.QueueEntry(path, group.get(0).payloadType(), publishers);
+        return new WsCatalog.QueueEntry(path, group.getFirst().payloadType(), publishers);
     }
 
-    private <T> void warnIfPayloadConflict(
-            String kind,
-            String path,
-            List<T> group,
-            java.util.function.Function<T, String> payloadOf,
-            java.util.function.Function<T, WsCatalog.Source> sourceOf
-    ) {
-        final Set<String> payloads = group.stream().map(payloadOf).collect(Collectors.toSet());
+    private void warnIfPayloadConflict(String kind, String path, List<? extends RawEntry> group) {
+        final Set<String> payloads = group.stream().map(RawEntry::payloadType).collect(Collectors.toSet());
         if (payloads.size() <= 1) {
             return;
         }
         final List<String> sources = group.stream()
-                .map(item -> sourceOf.apply(item) + " → " + payloadOf.apply(item))
+                .map(r -> r.source() + " → " + r.payloadType())
                 .toList();
         log.warn("동일 {} path 에 서로 다른 payload 가 선언되었습니다: path={}, sources={}", kind, path, sources);
     }
@@ -164,12 +159,12 @@ public class WsCatalogBuilder {
                 .stream()
                 .flatMap(r -> Arrays.stream(r.respondsOnTopics()))
                 .map(path -> validatedTopicPath(path, source));
-        return Stream.concat(fromTopics, fromReceive).collect(Collectors.toList());
+        return Stream.concat(fromTopics, fromReceive).toList();
     }
 
     private String validatedTopicPath(String path, WsCatalog.Source source) {
         if (path == null || path.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new SystemException(WsCatalogErrorCode.ANNOTATION_BLANK_TOPIC_PATH,
                     "@WsReceive.respondsOnTopics 에 빈 경로가 포함되어 있습니다: %s#%s".formatted(
                             source.className(), source.methodName()));
         }
@@ -194,11 +189,11 @@ public class WsCatalogBuilder {
 
     private void validatePath(String label, String path, WsCatalog.Source source) {
         if (path.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new SystemException(WsCatalogErrorCode.ANNOTATION_BLANK_PATH,
                     "%s 가 비어 있습니다: %s#%s".formatted(label, source.className(), source.methodName()));
         }
         if (!path.startsWith("/")) {
-            throw new IllegalArgumentException(
+            throw new SystemException(WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT,
                     "%s 는 '/' 로 시작해야 합니다: %s#%s path=%s".formatted(
                             label, source.className(), source.methodName(), path));
         }
@@ -206,12 +201,12 @@ public class WsCatalogBuilder {
 
     private void validatePayload(String label, Class<?> payload, String path, WsCatalog.Source source) {
         if (payload == Void.class) {
-            throw new IllegalArgumentException(
+            throw new SystemException(WsCatalogErrorCode.ANNOTATION_VOID_PAYLOAD,
                     "%s 가 Void.class 입니다: %s#%s path=%s".formatted(
                             label, source.className(), source.methodName(), path));
         }
         if (payload == Object.class) {
-            throw new IllegalArgumentException(
+            throw new SystemException(WsCatalogErrorCode.ANNOTATION_OBJECT_PAYLOAD,
                     "%s 에 Object.class 는 허용되지 않습니다 — @WsReceive 를 사용하거나 명시적 payload 타입을 지정하세요: %s#%s path=%s"
                             .formatted(label, source.className(), source.methodName(), path));
         }
@@ -251,11 +246,11 @@ public class WsCatalogBuilder {
     private String describePayloadType(Class<?> payload, Class<?> generic, Set<Class<?>> referenced) {
         if (generic == Void.class) {
             registerIfDescribable(payload, referenced);
-            return properties.envelopeType() + "<" + payload.getSimpleName() + ">";
+            return properties.envelopeClass().getSimpleName() + "<" + payload.getSimpleName() + ">";
         }
         registerIfDescribable(payload, referenced);
         registerIfDescribable(generic, referenced);
-        return properties.envelopeType() + "<" + payload.getSimpleName() + "<" + generic.getSimpleName() + ">>";
+        return properties.envelopeClass().getSimpleName() + "<" + payload.getSimpleName() + "<" + generic.getSimpleName() + ">>";
     }
 
     private String findRequestPayload(Method method, Set<Class<?>> referenced) {
@@ -330,42 +325,36 @@ public class WsCatalogBuilder {
         return type.getTypeName();
     }
 
-    private void registerIfDescribable(Class<?> cls, Set<Class<?>> referenced) {
+    private void registerIfDescribable(Class<?> cls, Collection<Class<?>> target) {
         if (cls.isRecord() || cls.isEnum()) {
-            referenced.add(cls);
-        }
-    }
-
-    private void registerIfDescribable(Class<?> cls, Deque<Class<?>> pending) {
-        if (cls.isRecord() || cls.isEnum()) {
-            pending.push(cls);
+            target.add(cls);
         }
     }
 
     private WsCatalog.Envelope buildEnvelope() {
-        final List<WsCatalog.FieldEntry> fields = List.of(
-                new WsCatalog.FieldEntry("success", "boolean"),
-                new WsCatalog.FieldEntry("data", "T"),
-                new WsCatalog.FieldEntry("errorMessage", "String"),
-                new WsCatalog.FieldEntry("id", "String")
-        );
+        final Class<?> envelopeClass = properties.envelopeClass();
+        if (!envelopeClass.isRecord()) {
+            throw new SystemException(WsCatalogErrorCode.INVALID_ENVELOPE_CLASS,
+                    "envelope-class 는 record 타입이어야 합니다: " + envelopeClass.getName());
+        }
+        final WsCatalog.SchemaEntry schema = describeRecord(envelopeClass, new ArrayDeque<>());
         return new WsCatalog.Envelope(
-                properties.envelopeType() + "<T>",
-                fields,
+                envelopeClass.getSimpleName() + "<T>",
+                schema.fields(),
                 "모든 토픽 페이로드는 이 envelope 으로 감싸 전송됩니다."
         );
     }
 
-    private WsCatalog.Info toInfo(WsCatalogProperties.Info src) {
-        if (src == null) {
-            return new WsCatalog.Info(null, null, null);
-        }
-        return new WsCatalog.Info(src.title(), src.version(), src.description());
+    private sealed interface RawEntry permits RawTopic, RawQueue {
+        String payloadType();
+        WsCatalog.Source source();
     }
 
-    private record RawTopic(String path, String description, String payloadType, WsCatalog.Source source) {
+    private record RawTopic(String path, String description, String payloadType, WsCatalog.Source source)
+            implements RawEntry {
     }
 
-    private record RawQueue(String path, String description, String payloadType, WsCatalog.Source source) {
+    private record RawQueue(String path, String description, String payloadType, WsCatalog.Source source)
+            implements RawEntry {
     }
 }

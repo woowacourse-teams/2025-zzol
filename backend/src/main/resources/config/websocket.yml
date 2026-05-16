@@ -15,8 +15,4 @@ websocket:
     user-destination-prefix: "/user"
     stomp-endpoint: "/ws"
     error-topic: "/queue/errors"
-    envelope-type: "WebSocketResponse"
-    info:
-      title: "커피빵 WebSocket API 명세서"
-      version: "1.0.0"
-      description: "실시간 웹소켓 통신 API 문서"
+    envelope-class: "coffeeshout.global.websocket.ui.WebSocketResponse"

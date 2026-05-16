@@ -1,6 +1,5 @@
 package coffeeshout.global.websocket.docs;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -15,14 +14,6 @@ public record WsCatalogProperties(
         @NotBlank String userDestinationPrefix,
         @NotBlank String stompEndpoint,
         @NotBlank String errorTopic,
-        @NotBlank String envelopeType,
-        @Valid @NotNull Info info
+        @NotNull Class<?> envelopeClass
 ) {
-
-    public record Info(
-            @NotBlank String title,
-            @NotBlank String version,
-            @NotBlank String description
-    ) {
-    }
 }

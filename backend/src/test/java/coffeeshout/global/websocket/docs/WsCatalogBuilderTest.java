@@ -253,6 +253,20 @@ class WsCatalogBuilderTest {
     }
 
     @Nested
+    @DisplayName("잘못된 @WsReceive 어노테이션")
+    class 잘못된_WsReceive_어노테이션 {
+
+        @Test
+        @DisplayName("respondsOnTopics 경로가 '/' 로 시작하지 않으면 빌드가 실패한다")
+        void respondsOnTopics_가_슬래시로_시작하지_않으면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureNoSlashReceiveController()));
+
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT);
+        }
+    }
+
+    @Nested
     @DisplayName("잘못된 @WsQueue 어노테이션")
     class 잘못된_WsQueue_어노테이션 {
 
@@ -458,6 +472,14 @@ class WsCatalogBuilderTest {
 
         @WsQueue(path = "queue/test", payload = FixturePayload.class)
         public void onEvent() {
+        }
+    }
+
+    static class FixtureNoSlashReceiveController {
+
+        @MessageMapping("/test/{joinCode}/command")
+        @WsReceive(respondsOnTopics = "test/{joinCode}/result")
+        public void handleCommand(@Payload FixtureRequest request) {
         }
     }
 

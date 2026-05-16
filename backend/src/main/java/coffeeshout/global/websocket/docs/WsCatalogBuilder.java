@@ -168,6 +168,11 @@ public class WsCatalogBuilder {
                     "@WsReceive.respondsOnTopics 에 빈 경로가 포함되어 있습니다: %s#%s".formatted(
                             source.className(), source.methodName()));
         }
+        if (!path.startsWith("/")) {
+            throw new SystemException(WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT,
+                    "@WsReceive.respondsOnTopics 는 '/' 로 시작해야 합니다: %s#%s path=%s".formatted(
+                            source.className(), source.methodName(), path));
+        }
         return properties.topicPath() + path;
     }
 

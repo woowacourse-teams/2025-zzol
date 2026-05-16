@@ -1,0 +1,68 @@
+# Circuit Breaker, Retry, Rate Limiter (reportRateLimiter, oracleStorage, geminiAudit, zzolBotGemini)
+resilience4j:
+  circuitbreaker:
+    circuit-breaker-aspect-order: 1
+    instances:
+      reportRateLimiter:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - java.lang.RuntimeException
+        ignoreExceptions:
+          - coffeeshout.global.exception.custom.BusinessException
+      oracleStorage:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - java.io.IOException
+          - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
+  retry:
+    retry-aspect-order: 2
+    instances:
+      oracleStorage:
+        maxAttempts: 2
+        waitDuration: 500ms
+        retryExceptions:
+          - java.io.IOException
+          - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
+      geminiAudit:
+        max-attempts: 4                         # 최초 1회 + 재시도 3회
+        wait-duration: 2s                       # 초기 대기
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2       # 2s → 4s → 8s
+        exponential-max-wait-duration: 30s      # 상한선 (rate limit 대응)
+        retry-exceptions:
+          - java.lang.RuntimeException   # SDK가 rate limit/서버 오류 시 RuntimeException으로 래핑
+        ignore-exceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted  # RateLimiter 초과는 재시도하지 않음
+          - coffeeshout.global.exception.custom.InfrastructureException  # 결정론적 실패(프롬프트 빌드, 빈 응답, 파싱 실패)는 재시도하지 않음
+      zzolBotGemini:
+        max-attempts: 3
+        wait-duration: 2s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        exponential-max-wait-duration: 16s
+        retry-exceptions:
+          - java.lang.RuntimeException
+        ignore-exceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
+  ratelimiter:
+    instances:
+      geminiAudit:
+        limit-for-period: 1                     # 주기당 허용 요청 수
+        limit-refresh-period: 13s               # 13초마다 1개씩 (RPM 4.6 안전 수치)
+        timeout-duration: 60s                   # 허용량을 기다릴 최대 시간 (배치이므로 넉넉히)
+      zzolBotGemini:
+        limit-for-period: 10                    # 분당 10회 (운영자 대화 기준)
+        limit-refresh-period: 60s
+        timeout-duration: 30s

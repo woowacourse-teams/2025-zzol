@@ -28,6 +28,13 @@ grep "^startRound	" tags                 # 메서드 정의
 결과 형식: `심볼명\t파일경로\t패턴\t필드(line:N)` → 해당 파일을 line:N 기준으로 Read한다.
 `tags`가 없거나 오래됐으면 `./gradlew generateCtags` 또는 `./gradlew compileJava`로 재생성한다.
 
+## 브랜치 전략
+
+- 작업 브랜치는 **`be/dev`에서 체크아웃**한다
+- PR 타깃은 `be/dev`이다
+- `main`은 GitHub Actions 워크플로우·CodeRabbit 설정 등 GitHub 관련 파일 전용이다. 백엔드 코드 작업에 사용하지 않는다
+- 브랜치 네이밍: `be/feat/...`, `be/fix/...`, `be/chore/...`, `be/refactor/...`
+
 ## 작업 규칙
 
 - 요구사항이 모호하거나 여러 해석이 가능하면 구현 전에 먼저 질문한다. 추측으로 구현하지 않는다

@@ -4,6 +4,7 @@ import useToast from '@/components/@common/Toast/useToast';
 import { ApiError } from '@/apis/rest/error';
 import { useAuth } from '@/features/auth/contexts/AuthContext';
 import LoginSheet from '@/features/auth/components/LoginSheet/LoginSheet';
+import CopyIcon from '@/components/icons/CopyIcon';
 import * as S from './AccountSection.styled';
 
 const PROVIDER_LABEL: Record<string, string> = {
@@ -96,31 +97,31 @@ const AccountSection = () => {
               ) : (
                 <S.NicknameRow>
                   <S.Nickname>{user.nickname}</S.Nickname>
-                  <S.EditButton type="button" onClick={handleEditStart} aria-label="닉네임 수정">
-                    수정
-                  </S.EditButton>
+                  <S.UserCode
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(user.userCode);
+                      showToast({ message: '유저코드가 복사되었습니다', type: 'success' });
+                    }}
+                    aria-label="유저코드 복사"
+                  >
+                    #{user.userCode}
+                    <CopyIcon size={12} />
+                  </S.UserCode>
                 </S.NicknameRow>
               )}
-              <S.Provider>{PROVIDER_LABEL[user.provider] ?? user.provider}</S.Provider>
-              <S.UserCodeRow>
-                <S.UserCode># {user.userCode}</S.UserCode>
-                <S.CopyButton
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(user.userCode);
-                    showToast({ message: '유저코드가 복사되었습니다', type: 'success' });
-                  }}
-                  aria-label="유저코드 복사"
-                >
-                  복사
-                </S.CopyButton>
-              </S.UserCodeRow>
+              {!isEditing && (
+                <S.InfoRow>
+                  <S.Provider>{PROVIDER_LABEL[user.provider] ?? user.provider}</S.Provider>
+                  <S.EditButton type="button" onClick={handleEditStart} aria-label="닉네임 변경">
+                    닉네임 변경
+                  </S.EditButton>
+                  <S.LogoutButton type="button" onClick={() => logout()}>
+                    로그아웃
+                  </S.LogoutButton>
+                </S.InfoRow>
+              )}
             </S.UserInfo>
-            {!isEditing && (
-              <S.LogoutButton type="button" onClick={() => logout()}>
-                로그아웃
-              </S.LogoutButton>
-            )}
           </S.UserRow>
         </S.Card>
       </S.Section>

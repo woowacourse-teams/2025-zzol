@@ -48,12 +48,12 @@ export const UserInfo = styled.div`
 
 export const NicknameRow = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: baseline;
+  gap: 6px;
 `;
 
 export const Nickname = styled.span`
-  ${({ theme }) => theme.typography.h4};
+  ${({ theme }) => theme.typography.h2}
   color: ${({ theme }) => theme.color.gray[900]};
   white-space: nowrap;
   overflow: hidden;
@@ -61,13 +61,13 @@ export const Nickname = styled.span`
 `;
 
 export const EditButton = styled.button`
-  padding: 2px 8px;
+  padding: 3px 10px;
   border: 1px solid ${({ theme }) => theme.color.gray[200]};
   border-radius: 6px;
   background: transparent;
   color: ${({ theme }) => theme.color.gray[500]};
-  font-size: 11px;
-  font-weight: 600;
+  font-size: ${({ theme }) => theme.typography.caption.fontSize};
+  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.15s ease;
@@ -144,49 +144,55 @@ export const CancelButton = styled.button`
   }
 `;
 
-export const Provider = styled.span`
-  font-size: 12px;
-  color: ${({ theme }) => theme.color.gray[400]};
-`;
-
-export const UserCodeRow = styled.div`
+export const InfoRow = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: 2px;
 `;
 
-export const UserCode = styled.span`
-  font-size: 12px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.color.gray[500]};
-  letter-spacing: 0.04em;
-`;
-
-export const CopyButton = styled.button`
-  padding: 1px 7px;
-  border: 1px solid ${({ theme }) => theme.color.gray[200]};
-  border-radius: 5px;
-  background: transparent;
+export const Provider = styled.span`
+  font-size: ${({ theme }) => theme.typography.caption.fontSize};
   color: ${({ theme }) => theme.color.gray[400]};
-  font-size: 10px;
-  font-weight: 600;
+  flex: 1;
+`;
+
+export const UserCode = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: ${({ theme }) => theme.typography.caption.fontSize};
+  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
+  color: ${({ theme }) => theme.color.gray[400]};
+  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: all 0.12s;
+  transition: opacity 0.12s;
+
+  svg {
+    margin-bottom: 1px;
+    flex-shrink: 0;
+
+    rect:last-of-type {
+      fill: ${({ theme }) => theme.color.white};
+    }
+  }
 
   &:active {
-    background: ${({ theme }) => theme.color.gray[50]};
+    opacity: 0.6;
   }
 `;
 
 export const LogoutButton = styled.button`
-  padding: 7px 14px;
+  padding: 3px 10px;
   border: 1px solid ${({ theme }) => theme.color.gray[200]};
-  border-radius: 8px;
+  border-radius: 6px;
   background: ${({ theme }) => theme.color.white};
   color: ${({ theme }) => theme.color.gray[600]};
-  font-size: 13px;
-  font-weight: 600;
+  font-size: ${({ theme }) => theme.typography.caption.fontSize};
+  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
   cursor: pointer;
   flex-shrink: 0;
   transition: background-color 0.15s ease;

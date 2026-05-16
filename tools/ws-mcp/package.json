@@ -1,0 +1,32 @@
+{
+  "name": "@zzol/ws-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the zzol WebSocket catalog (/dev/ws-catalog) + STOMP connection helpers",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "dist/server.js",
+  "bin": {
+    "ws-mcp": "dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@stomp/stompjs": "^7.0.0",
+    "ws": "^8.18.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@types/ws": "^8.5.12",
+    "msw": "^2.4.9",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  }
+}

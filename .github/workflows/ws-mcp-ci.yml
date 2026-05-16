@@ -1,0 +1,42 @@
+name: ws-mcp CI
+
+on:
+  pull_request:
+    paths:
+      - 'tools/ws-mcp/**'
+      - 'backend/src/test/resources/__fixtures__/ws-catalog.json'
+      - '.github/workflows/ws-mcp-ci.yml'
+  push:
+    branches:
+      - be/dev
+    paths:
+      - 'tools/ws-mcp/**'
+      - 'backend/src/test/resources/__fixtures__/ws-catalog.json'
+      - '.github/workflows/ws-mcp-ci.yml'
+
+jobs:
+  ws-mcp:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/ws-mcp
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tools/ws-mcp/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test (L1 단위 + L2 컨트랙트)
+        run: npm test
+
+      - name: Build
+        run: npm run build

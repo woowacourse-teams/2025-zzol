@@ -1,0 +1,62 @@
+{
+  "stompEndpoint" : "/ws",
+  "app" : "/app",
+  "topicPrefix" : "/topic",
+  "queuePrefix" : "/queue",
+  "envelope" : {
+    "type" : "WebSocketResponse<T>",
+    "fields" : [
+      { "name" : "success", "type" : "boolean" },
+      { "name" : "data", "type" : "T" },
+      { "name" : "errorMessage", "type" : "String" },
+      { "name" : "id", "type" : "String" }
+    ],
+    "note" : "모든 토픽 페이로드는 이 envelope 으로 감싸 전송됩니다."
+  },
+  "topics" : [
+    {
+      "path" : "/topic/room/{joinCode}",
+      "payloadType" : "WebSocketResponse<List<PlayerResponse>>",
+      "publishers" : [
+        {
+          "description" : "플레이어 목록 변경 브로드캐스트",
+          "source" : { "className" : "RoomMessagePublisher", "methodName" : "onPlayerListChanged" }
+        }
+      ]
+    }
+  ],
+  "queues" : [
+    {
+      "path" : "/user/queue/friends/requests",
+      "payloadType" : "WebSocketResponse<FriendRequestPayload>",
+      "publishers" : [
+        {
+          "description" : "친구 요청 수신 알림",
+          "source" : { "className" : "FriendNotifier", "methodName" : "onFriendRequestCreated" }
+        }
+      ]
+    }
+  ],
+  "sends" : [
+    {
+      "destination" : "/app/room/{joinCode}/update-ready",
+      "description" : "플레이어 준비 상태 변경 및 브로드캐스트",
+      "requestType" : "ReadyChangeMessage",
+      "triggersTopics" : [ "/topic/room/{joinCode}" ],
+      "source" : { "className" : "RoomWebSocketController", "methodName" : "broadcastReady" }
+    }
+  ],
+  "schemas" : {
+    "PlayerResponse" : {
+      "kind" : "record",
+      "fields" : [
+        { "name" : "name", "type" : "String" }
+      ],
+      "values" : null
+    }
+  },
+  "errors" : {
+    "topic" : "/queue/errors",
+    "payloadType" : "WebSocketResponse<String>"
+  }
+}

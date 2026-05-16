@@ -11,6 +11,7 @@ import coffeeshout.friend.domain.event.FriendRequestRejectedEvent;
 import coffeeshout.friend.domain.event.RoomInvitationSentEvent;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.global.websocket.UserPrincipal;
+import coffeeshout.global.websocket.docs.WsQueue;
 import coffeeshout.global.websocket.ui.WebSocketResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,8 @@ public class FriendNotifier {
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @WsQueue(path = FRIEND_REQUESTS_QUEUE, payload = FriendRequestPayload.class,
+            description = "친구 요청 수신 알림")
     public void onFriendRequestCreated(FriendRequestCreatedEvent event) {
         final FriendRequestPayload payload = new FriendRequestPayload(
                 event.requestId(),
@@ -43,6 +46,8 @@ public class FriendNotifier {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @WsQueue(path = FRIEND_RESPONSES_QUEUE, payload = FriendResponsePayload.class,
+            description = "친구 요청 수락 알림 (요청자·수신자 양방향)")
     public void onFriendRequestAccepted(FriendRequestAcceptedEvent event) {
         final FriendResponsePayload toRequester = new FriendResponsePayload(
                 event.requestId(), true,
@@ -58,6 +63,8 @@ public class FriendNotifier {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @WsQueue(path = FRIEND_RESPONSES_QUEUE, payload = FriendResponsePayload.class,
+            description = "친구 요청 거절 알림")
     public void onFriendRequestRejected(FriendRequestRejectedEvent event) {
         final FriendResponsePayload payload = new FriendResponsePayload(
                 event.requestId(), false,
@@ -67,11 +74,15 @@ public class FriendNotifier {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @WsQueue(path = FRIEND_REMOVED_QUEUE, payload = FriendRemovedPayload.class,
+            description = "친구 삭제 알림")
     public void onFriendRemoved(FriendRemovedEvent event) {
         sendToUser(event.targetUserId(), FRIEND_REMOVED_QUEUE, new FriendRemovedPayload(event.removedByUserId()));
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @WsQueue(path = ROOM_INVITATIONS_QUEUE, payload = RoomInvitationPayload.class,
+            description = "방 초대 알림")
     public void onRoomInvitationSent(RoomInvitationSentEvent event) {
         sendToUser(event.targetUserId(), ROOM_INVITATIONS_QUEUE, RoomInvitationPayload.from(event));
     }

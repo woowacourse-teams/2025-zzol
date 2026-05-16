@@ -3,13 +3,13 @@ package coffeeshout.cardgame.application;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.event.dto.MiniGameStartedEvent;
 import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.global.websocket.docs.WsTopic;
 import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.ui.response.MiniGameStartMessage;
 import coffeeshout.minigame.ui.response.MiniGameStateMessage;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import generator.annotaions.MessageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -23,18 +23,23 @@ public class CardGameNotifier {
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
+    @WsTopic(path = "/room/{joinCode}/gameState", payload = MiniGameStateMessage.class,
+            description = "카드게임 단계 완료 시 게임 상태 브로드캐스트")
     public void notifyStepCompleted(CardGame cardGame, Room room) {
         sendGameState(cardGame, room.getJoinCode());
     }
 
+    @WsTopic(path = "/room/{joinCode}/gameState", payload = MiniGameStateMessage.class,
+            description = "카드 선택 시 게임 상태 브로드캐스트")
     public void notifyCardSelected(JoinCode joinCode, CardGame cardGame) {
         sendGameState(cardGame, joinCode);
     }
 
     @EventListener
-    @MessageResponse(
+    @WsTopic(
             path = "/room/{joinCode}/round",
-            returnType = MiniGameStartMessage.class
+            payload = MiniGameStartMessage.class,
+            description = "미니게임 시작 브로드캐스트"
     )
     public void notifyGameStarted(MiniGameStartedEvent event) {
         final MiniGameType miniGameType = MiniGameType.valueOf(event.gameType());

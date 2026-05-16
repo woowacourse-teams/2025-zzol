@@ -3,6 +3,7 @@ package coffeeshout.laddergame.ui;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.websocket.PlayerKey;
+import coffeeshout.global.websocket.docs.WsReceive;
 import coffeeshout.laddergame.domain.event.LadderDrawCommandEvent;
 import coffeeshout.laddergame.ui.request.LadderDrawRequest;
 import jakarta.validation.Valid;
@@ -22,6 +23,8 @@ public class LadderWebSocketController {
     private final StreamPublisher streamPublisher;
 
     @MessageMapping("/room/{joinCode}/ladder/draw")
+    @WsReceive(respondsOnTopics = "/room/{joinCode}/ladder/line",
+            description = "사다리 선 그리기 이벤트 발행 — 선 브로드캐스트")
     public void draw(
             @DestinationVariable String joinCode,
             @Payload @Valid LadderDrawRequest request,

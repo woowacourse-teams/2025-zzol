@@ -6,8 +6,7 @@ import coffeeshout.blockstacking.ui.request.BlockStackingProgressRequest;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.websocket.PlayerKey;
-import generator.annotaions.MessageResponse;
-import generator.annotaions.Operation;
+import coffeeshout.global.websocket.docs.WsReceive;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
@@ -25,19 +24,9 @@ public class BlockStackingWebSocketController {
     private final StreamPublisher streamPublisher;
 
     @MessageMapping("/room/{joinCode}/block-stacking/progress")
-    @Operation(
-            summary = "블록 쌓기 진행 이벤트 전송",
-            description = """
-                    플레이어가 블록을 탭할 때마다 서버로 진행 정보를 전송하는 웹소켓 요청입니다.
-                    서버는 overlap을 재계산하여 유효한 안착만 인정하고,
-                    전체 플레이어의 랭킹을 /topic/room/{joinCode}/block-stacking/progress 로 브로드캐스트합니다.
-
-                    유효하지 않은 이벤트(비연속 층수, overlap ≤ 0)는 서버에서 무시됩니다.
-                    """
-    )
-    @MessageResponse(
-            path = "/topic/room/{joinCode}/block-stacking/progress",
-            returnType = Object.class
+    @WsReceive(
+            respondsOnTopics = "/room/{joinCode}/block-stacking/progress",
+            description = "블록 쌓기 진행 이벤트 — overlap 을 재계산하여 유효한 안착만 인정 후 랭킹 브로드캐스트"
     )
     public void recordProgress(
             @DestinationVariable String joinCode,
@@ -53,13 +42,8 @@ public class BlockStackingWebSocketController {
     }
 
     @MessageMapping("/room/{joinCode}/block-stacking/fail")
-    @Operation(
-            summary = "블록 쌓기 실패 이벤트 전송",
-            description = """
-                    플레이어가 블록을 쌓지 못하고 실패했을 때 서버로 전송하는 웹소켓 요청입니다.
-                    모든 플레이어가 실패하면 남은 플레이 시간과 무관하게 2초 뒤 결과 화면으로 전환됩니다.
-                    """
-    )
+    @WsReceive(respondsOnTopics = "/room/{joinCode}/block-stacking/state",
+            description = "블록 쌓기 실패 이벤트 — 상태 변경 브로드캐스트")
     public void recordFail(
             @DestinationVariable String joinCode,
             Principal principal

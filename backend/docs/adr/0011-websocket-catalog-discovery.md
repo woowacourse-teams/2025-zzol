@@ -93,7 +93,7 @@ public @interface WsQueue {
 **`WsCatalogSecurityConfig`** (`coffeeshout.global.websocket.docs.WsCatalogSecurityConfig`)
 
 - `@Configuration` + `@Profile("!prod")` + `@Order(0)` 으로 `/dev/**` 경로에 IP 허용 목록 기반 접근 제어를 추가한다.
-- `websocket.docs.allowed-ips` 에 허용할 IP/CIDR 목록을 명시한다 (로컬 개발 환경 기본값: `127.0.0.1`).
+- `websocket.docs.allowed-ips` 에 허용할 IP/CIDR 목록을 명시한다 (로컬 개발 환경 기본값: `127.0.0.1`, `::1`, `0:0:0:0:0:0:0:1`).
 - `@Profile("!prod")` 가 비-prod 환경 노출을 차단하는 1차 가드이고, `WsCatalogSecurityConfig` 의 IP 필터는 스테이징 환경에서의 불필요한 노출을 막는 2차 가드다.
 - `IpAddressMatcher` 인스턴스는 `@PostConstruct` 에서 한 번 생성해 재사용한다 (요청마다 재생성 방지).
 

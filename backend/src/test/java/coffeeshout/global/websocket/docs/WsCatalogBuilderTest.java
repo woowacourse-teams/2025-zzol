@@ -56,21 +56,21 @@ class WsCatalogBuilderTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.topics()).hasSize(1);
-                softly.assertThat(catalog.topics().get(0).path()).isEqualTo("/topic/test/{joinCode}/result");
-                softly.assertThat(catalog.topics().get(0).payloadType())
+                softly.assertThat(catalog.topics().getFirst().path()).isEqualTo("/topic/test/{joinCode}/result");
+                softly.assertThat(catalog.topics().getFirst().payloadType())
                         .isEqualTo("WebSocketResponse<FixturePayload>");
-                softly.assertThat(catalog.topics().get(0).publishers()).hasSize(1);
-                softly.assertThat(catalog.topics().get(0).publishers().get(0).description())
+                softly.assertThat(catalog.topics().getFirst().publishers()).hasSize(1);
+                softly.assertThat(catalog.topics().getFirst().publishers().getFirst().description())
                         .isEqualTo("테스트 토픽");
-                softly.assertThat(catalog.topics().get(0).publishers().get(0).source().className())
+                softly.assertThat(catalog.topics().getFirst().publishers().getFirst().source().className())
                         .isEqualTo("FixtureWebSocketController");
-                softly.assertThat(catalog.topics().get(0).publishers().get(0).source().methodName())
+                softly.assertThat(catalog.topics().getFirst().publishers().getFirst().source().methodName())
                         .isEqualTo("doAction");
 
                 softly.assertThat(catalog.sends()).hasSize(1);
-                softly.assertThat(catalog.sends().get(0).destination()).isEqualTo("/app/test/{joinCode}/action");
-                softly.assertThat(catalog.sends().get(0).requestType()).isEqualTo("FixtureRequest");
-                softly.assertThat(catalog.sends().get(0).triggersTopics())
+                softly.assertThat(catalog.sends().getFirst().destination()).isEqualTo("/app/test/{joinCode}/action");
+                softly.assertThat(catalog.sends().getFirst().requestType()).isEqualTo("FixtureRequest");
+                softly.assertThat(catalog.sends().getFirst().triggersTopics())
                         .containsExactly("/topic/test/{joinCode}/result");
 
                 softly.assertThat(catalog.schemas()).containsKeys("FixturePayload", "FixtureRequest");
@@ -93,10 +93,10 @@ class WsCatalogBuilderTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.topics()).isEmpty();
                 softly.assertThat(catalog.sends()).hasSize(1);
-                softly.assertThat(catalog.sends().get(0).destination()).isEqualTo("/app/test/{joinCode}/command");
-                softly.assertThat(catalog.sends().get(0).triggersTopics())
+                softly.assertThat(catalog.sends().getFirst().destination()).isEqualTo("/app/test/{joinCode}/command");
+                softly.assertThat(catalog.sends().getFirst().triggersTopics())
                         .containsExactly("/topic/test/{joinCode}/result");
-                softly.assertThat(catalog.sends().get(0).requestType()).isEqualTo("FixtureRequest");
+                softly.assertThat(catalog.sends().getFirst().requestType()).isEqualTo("FixtureRequest");
             });
         }
     }
@@ -115,7 +115,7 @@ class WsCatalogBuilderTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.topics()).hasSize(1);
-                softly.assertThat(catalog.topics().get(0).payloadType())
+                softly.assertThat(catalog.topics().getFirst().payloadType())
                         .isEqualTo("WebSocketResponse<List<FixturePayload>>");
                 softly.assertThat(catalog.schemas()).containsKey("FixturePayload");
             });
@@ -178,11 +178,11 @@ class WsCatalogBuilderTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.queues()).hasSize(1);
-                softly.assertThat(catalog.queues().get(0).path()).isEqualTo("/user/queue/friends/requests");
-                softly.assertThat(catalog.queues().get(0).payloadType())
+                softly.assertThat(catalog.queues().getFirst().path()).isEqualTo("/user/queue/friends/requests");
+                softly.assertThat(catalog.queues().getFirst().payloadType())
                         .isEqualTo("WebSocketResponse<FixturePayload>");
-                softly.assertThat(catalog.queues().get(0).publishers()).hasSize(1);
-                softly.assertThat(catalog.queues().get(0).publishers().get(0).description())
+                softly.assertThat(catalog.queues().getFirst().publishers()).hasSize(1);
+                softly.assertThat(catalog.queues().getFirst().publishers().getFirst().description())
                         .isEqualTo("친구 요청 알림");
                 softly.assertThat(catalog.topics()).isEmpty();
             });
@@ -203,11 +203,11 @@ class WsCatalogBuilderTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.queues()).hasSize(1);
-                softly.assertThat(catalog.queues().get(0).path()).isEqualTo("/user/queue/friends/responses");
-                softly.assertThat(catalog.queues().get(0).publishers())
+                softly.assertThat(catalog.queues().getFirst().path()).isEqualTo("/user/queue/friends/responses");
+                softly.assertThat(catalog.queues().getFirst().publishers())
                         .extracting(WsCatalog.Publisher::description)
                         .containsExactlyInAnyOrder("수락", "거절");
-                softly.assertThat(catalog.queues().get(0).publishers())
+                softly.assertThat(catalog.queues().getFirst().publishers())
                         .extracting(p -> p.source().methodName())
                         .containsExactlyInAnyOrder("onAccepted", "onRejected");
             });
@@ -228,8 +228,8 @@ class WsCatalogBuilderTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.topics()).hasSize(1);
-                softly.assertThat(catalog.topics().get(0).path()).isEqualTo("/topic/test/state");
-                softly.assertThat(catalog.topics().get(0).publishers())
+                softly.assertThat(catalog.topics().getFirst().path()).isEqualTo("/topic/test/state");
+                softly.assertThat(catalog.topics().getFirst().publishers())
                         .extracting(p -> p.source().methodName())
                         .containsExactlyInAnyOrder("publishStart", "publishFinish");
             });
@@ -248,7 +248,7 @@ class WsCatalogBuilderTest {
 
             final WsCatalog catalog = builder.build();
 
-            assertThat(catalog.queues().get(0).payloadType())
+            assertThat(catalog.queues().getFirst().payloadType())
                     .isEqualTo("WebSocketResponse<List<FixturePayload>>");
         }
     }

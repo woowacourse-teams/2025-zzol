@@ -1,5 +1,7 @@
 package coffeeshout.global.websocket.docs;
 
+import coffeeshout.global.exception.custom.SystemException;
+import jakarta.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
@@ -20,7 +22,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import coffeeshout.global.exception.custom.SystemException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
@@ -37,21 +38,19 @@ public class WsCatalogBuilder {
 
     private final ApplicationContext applicationContext;
     private final WsCatalogProperties properties;
-    private volatile WsCatalog cached;
+    private WsCatalog cached;
 
     public WsCatalogBuilder(ApplicationContext applicationContext, WsCatalogProperties properties) {
         this.applicationContext = applicationContext;
         this.properties = properties;
     }
 
+    @PostConstruct
+    private void init() {
+        cached = buildInternal();
+    }
+
     public WsCatalog build() {
-        if (cached == null) {
-            synchronized (this) {
-                if (cached == null) {
-                    cached = buildInternal();
-                }
-            }
-        }
         return cached;
     }
 
@@ -288,13 +287,13 @@ public class WsCatalogBuilder {
     }
 
     private String describePayloadType(Class<?> payload, Class<?> generic, Set<Class<?>> referenced) {
-        if (generic == Void.class) {
-            registerIfDescribable(payload, referenced);
-            return properties.envelopeClass().getSimpleName() + "<" + payload.getSimpleName() + ">";
-        }
         registerIfDescribable(payload, referenced);
+        final String envelopeName = properties.envelopeClass().getSimpleName();
+        if (generic == Void.class) {
+            return envelopeName + "<" + payload.getSimpleName() + ">";
+        }
         registerIfDescribable(generic, referenced);
-        return properties.envelopeClass().getSimpleName() + "<" + payload.getSimpleName() + "<" + generic.getSimpleName() + ">>";
+        return envelopeName + "<" + payload.getSimpleName() + "<" + generic.getSimpleName() + ">>";
     }
 
     private List<String> collectPayloadSchemas(Class<?> payload, Class<?> generic) {
@@ -319,91 +318,100 @@ public class WsCatalogBuilder {
 
     private List<String> findRequestSchemas(Method method) {
         for (final Parameter parameter : method.getParameters()) {
-            if (parameter.isAnnotationPresent(Payload.class)) {
-                final Class<?> type = parameter.getType();
-                if (type.isRecord() || type.isEnum()) {
-                    return List.of(type.getSimpleName());
-                }
-                return List.of();
+            if (!parameter.isAnnotationPresent(Payload.class)) {
+                continue;
             }
+            final Class<?> type = parameter.getType();
+            return (type.isRecord() || type.isEnum()) ? List.of(type.getSimpleName()) : List.of();
         }
         return List.of();
     }
 
     private Map<String, WsCatalog.SchemaEntry> expandSchemas(Set<Class<?>> seeds) {
-        final Map<String, WsCatalog.SchemaEntry> result = new LinkedHashMap<>();
-        final Map<String, Class<?>> seenByName = new LinkedHashMap<>();
-        final Deque<Class<?>> stack = new ArrayDeque<>(seeds);
-        final Set<Class<?>> visited = new HashSet<>();
-        while (!stack.isEmpty()) {
-            processSchema(stack.pop(), visited, seenByName, result, stack);
-        }
-        return result;
+        return new SchemaExpander().expand(seeds);
     }
 
-    private void processSchema(
-            Class<?> cls,
-            Set<Class<?>> visited,
-            Map<String, Class<?>> seenByName,
-            Map<String, WsCatalog.SchemaEntry> result,
-            Deque<Class<?>> pending
-    ) {
-        if (!visited.add(cls)) {
-            return;
+    private class SchemaExpander {
+        private final Map<String, WsCatalog.SchemaEntry> result = new LinkedHashMap<>();
+        private final Map<String, Class<?>> seenByName = new LinkedHashMap<>();
+        private final Deque<Class<?>> pending = new ArrayDeque<>();
+        private final Set<Class<?>> visited = new HashSet<>();
+
+        Map<String, WsCatalog.SchemaEntry> expand(Set<Class<?>> seeds) {
+            pending.addAll(seeds);
+            while (!pending.isEmpty()) {
+                process(pending.pop());
+            }
+            return result;
         }
-        final String simpleName = cls.getSimpleName();
-        if (seenByName.containsKey(simpleName)) {
-            log.warn("스키마 simpleName 충돌: '{}' — {} vs {} (첫 선언 유지)",
-                    simpleName, seenByName.get(simpleName).getName(), cls.getName());
-            return;
+
+        private void process(Class<?> cls) {
+            if (!visited.add(cls)) {
+                return;
+            }
+            final String simpleName = cls.getSimpleName();
+            if (seenByName.containsKey(simpleName)) {
+                log.warn("스키마 simpleName 충돌: '{}' — {} vs {} (첫 선언 유지)",
+                        simpleName, seenByName.get(simpleName).getName(), cls.getName());
+                return;
+            }
+            seenByName.put(simpleName, cls);
+            result.put(simpleName, describe(cls));
         }
-        seenByName.put(simpleName, cls);
-        result.put(simpleName, describeClass(cls, pending));
+
+        private WsCatalog.SchemaEntry describe(Class<?> cls) {
+            if (cls.isEnum()) {
+                return describeEnum(cls);
+            }
+            if (cls.isRecord()) {
+                return describeRecord(cls);
+            }
+            return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.OBJECT, List.of(), null);
+        }
+
+        private WsCatalog.SchemaEntry describeEnum(Class<?> cls) {
+            final List<String> values = new ArrayList<>();
+            for (final Object constant : cls.getEnumConstants()) {
+                values.add(((Enum<?>) constant).name());
+            }
+            return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.ENUM, null, values);
+        }
+
+        private WsCatalog.SchemaEntry describeRecord(Class<?> cls) {
+            final List<WsCatalog.FieldEntry> fields = new ArrayList<>();
+            for (final RecordComponent component : cls.getRecordComponents()) {
+                fields.add(
+                        new WsCatalog.FieldEntry(component.getName(), describeFieldType(component.getGenericType())));
+            }
+            return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.RECORD, fields, null);
+        }
+
+        private String describeFieldType(Type type) {
+            registerTypes(type);
+            return typeNameOf(type);
+        }
+
+        private void registerTypes(Type type) {
+            if (type instanceof Class<?> cls) {
+                registerIfDescribable(cls, pending);
+                return;
+            }
+            if (type instanceof ParameterizedType pt) {
+                Arrays.stream(pt.getActualTypeArguments()).forEach(this::registerTypes);
+                return;
+            }
+        }
     }
 
-    private WsCatalog.SchemaEntry describeClass(Class<?> cls, Deque<Class<?>> pending) {
-        if (cls.isEnum()) {
-            return describeEnum(cls);
-        }
-        if (cls.isRecord()) {
-            return describeRecord(cls, pending);
-        }
-        return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.OBJECT, List.of(), null);
-    }
-
-    private WsCatalog.SchemaEntry describeEnum(Class<?> cls) {
-        final List<String> values = new ArrayList<>();
-        for (final Object constant : cls.getEnumConstants()) {
-            values.add(((Enum<?>) constant).name());
-        }
-        return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.ENUM, null, values);
-    }
-
-    private WsCatalog.SchemaEntry describeRecord(Class<?> cls, Deque<Class<?>> pending) {
-        final List<WsCatalog.FieldEntry> fields = new ArrayList<>();
-        for (final RecordComponent component : cls.getRecordComponents()) {
-            final String typeRef = describeFieldType(component.getGenericType(), pending);
-            fields.add(new WsCatalog.FieldEntry(component.getName(), typeRef));
-        }
-        return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.RECORD, fields, null);
-    }
-
-    private String describeFieldType(Type type, Deque<Class<?>> pending) {
+    private static String typeNameOf(Type type) {
         if (type instanceof Class<?> cls) {
-            registerIfDescribable(cls, pending);
             return cls.getSimpleName();
         }
-        if (type instanceof ParameterizedType parameterizedType) {
-            final Class<?> raw = (Class<?>) parameterizedType.getRawType();
-            final Type[] args = parameterizedType.getActualTypeArguments();
-            final StringBuilder sb = new StringBuilder(raw.getSimpleName()).append("<");
-            for (int i = 0; i < args.length; i++) {
-                if (i > 0) {
-                    sb.append(", ");
-                }
-                sb.append(describeFieldType(args[i], pending));
-            }
-            return sb.append(">").toString();
+        if (type instanceof ParameterizedType pt) {
+            final String args = Arrays.stream(pt.getActualTypeArguments())
+                    .map(WsCatalogBuilder::typeNameOf)
+                    .collect(Collectors.joining(", "));
+            return ((Class<?>) pt.getRawType()).getSimpleName() + "<" + args + ">";
         }
         return type.getTypeName();
     }
@@ -420,10 +428,13 @@ public class WsCatalogBuilder {
             throw new SystemException(WsCatalogErrorCode.INVALID_ENVELOPE_CLASS,
                     "envelope-class 는 record 타입이어야 합니다: " + envelopeClass.getName());
         }
-        final WsCatalog.SchemaEntry schema = describeRecord(envelopeClass, new ArrayDeque<>());
+        final List<WsCatalog.FieldEntry> fields = new ArrayList<>();
+        for (final RecordComponent component : envelopeClass.getRecordComponents()) {
+            fields.add(new WsCatalog.FieldEntry(component.getName(), typeNameOf(component.getGenericType())));
+        }
         return new WsCatalog.Envelope(
                 envelopeClass.getSimpleName() + "<T>",
-                schema.fields(),
+                fields,
                 "모든 토픽 페이로드는 이 envelope 으로 감싸 전송됩니다."
         );
     }

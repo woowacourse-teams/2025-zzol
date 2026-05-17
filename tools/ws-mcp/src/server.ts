@@ -38,17 +38,13 @@ async function main(): Promise<void> {
 
   const server = new Server({ name: 'ws-mcp', version: '0.1.0' }, { capabilities: { tools: {} } });
 
-  server.setRequestHandler(
-    ListToolsRequestSchema,
-    async () =>
-      ({
-        tools: TOOLS.map((t) => ({
-          name: t.name,
-          description: t.description,
-          inputSchema: t.inputSchema,
-        })),
-      })
-  );
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: TOOLS.map((t) => ({
+      name: t.name,
+      description: t.description,
+      inputSchema: t.inputSchema,
+    })),
+  }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const tool = TOOLS.find((t) => t.name === request.params.name);
@@ -71,7 +67,6 @@ async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
-
 
 main().catch((error: unknown) => {
   process.stderr.write(

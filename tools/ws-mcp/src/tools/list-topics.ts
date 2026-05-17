@@ -29,7 +29,12 @@ export const wsListTopicsTool: ToolDefinition = {
       !args.kind || args.kind === 'topic'
         ? catalog.topics
             .filter((t) =>
-              matches(args.q, t.path, t.publishers.map((p) => p.description).join(' '), t.payloadType ?? '')
+              matches(
+                args.q,
+                t.path,
+                t.publishers.map((p) => p.description).join(' '),
+                t.payloadType ?? ''
+              )
             )
             .map(projectTopic)
         : [];
@@ -37,13 +42,20 @@ export const wsListTopicsTool: ToolDefinition = {
       !args.kind || args.kind === 'queue'
         ? catalog.queues
             .filter((q) =>
-              matches(args.q, q.path, q.publishers.map((p) => p.description).join(' '), q.payloadType ?? '')
+              matches(
+                args.q,
+                q.path,
+                q.publishers.map((p) => p.description).join(' '),
+                q.payloadType ?? ''
+              )
             )
             .map(projectQueue)
         : [];
     const sends =
       !args.kind || args.kind === 'send'
-        ? catalog.sends.filter((s) => matches(args.q, s.destination, s.description)).map(projectSend)
+        ? catalog.sends
+            .filter((s) => matches(args.q, s.destination, s.description))
+            .map(projectSend)
         : [];
 
     return ok({

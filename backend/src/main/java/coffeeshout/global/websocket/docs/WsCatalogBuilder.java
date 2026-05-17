@@ -39,6 +39,7 @@ public class WsCatalogBuilder {
     private final ApplicationContext applicationContext;
     private final WsCatalogProperties properties;
     private WsCatalog cached;
+    private String cachedEtag;
 
     public WsCatalogBuilder(ApplicationContext applicationContext, WsCatalogProperties properties) {
         this.applicationContext = applicationContext;
@@ -48,10 +49,15 @@ public class WsCatalogBuilder {
     @PostConstruct
     private void init() {
         cached = buildInternal();
+        cachedEtag = "\"" + Integer.toHexString(cached.hashCode()) + "\"";
     }
 
     public WsCatalog build() {
         return cached;
+    }
+
+    public String getEtag() {
+        return cachedEtag;
     }
 
     private WsCatalog buildInternal() {

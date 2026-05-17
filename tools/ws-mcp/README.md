@@ -63,16 +63,20 @@ ESLint 는 `typescript-eslint` 의 `strictTypeChecked` + `stylisticTypeChecked` 
 
 ## 동작 확인 (MCP Inspector)
 
+터미널을 두 개 열어 실행한다 (bootRun 은 포그라운드를 점유함):
+
 ```bash
-# 1. BE 띄우기
+# Terminal 1 — BE 띄우기
 cd ../../backend && ./gradlew bootRun
+```
 
-# 2. 카탈로그 응답 확인
+```bash
+# Terminal 2 — 카탈로그 응답 확인 및 Inspector 실행
 curl localhost:8080/dev/ws-catalog | jq .
-
-# 3. Inspector 로 GUI 호출
 npx @modelcontextprotocol/inspector node ./tools/ws-mcp/dist/server.js
 ```
+
+백그라운드로 실행하려면: `cd ../../backend && ./gradlew bootRun &`
 
 ## 컨트랙트 fixture
 
@@ -82,8 +86,8 @@ BE 카탈로그 시그니처를 바꿨다면 BE 테스트 한 번 돌려 fixture
 
 ```bash
 cd backend && ./gradlew test --tests WsCatalogFixtureExportTest
-git status __fixtures__/ws-catalog.json
-git add backend/src/test/resources/__fixtures__/ws-catalog.json
+git status src/test/resources/__fixtures__/ws-catalog.json
+git add src/test/resources/__fixtures__/ws-catalog.json
 ```
 
 fixture 가 갱신되면 GitHub Actions 의 `ws-mcp-ci` 워크플로우가 자동 트리거되어 MCP 의 zod 스키마와 일치 여부를 검증합니다.

@@ -31,8 +31,10 @@ export class CatalogFetcher {
     let previous: CachedCatalog | null = null;
     try {
       previous = await this.cache.read();
-    } catch {
-      // 캐시 파일 손상 — 미스로 처리
+    } catch (error) {
+      process.stderr.write(
+        `catalog cache 손상 — live fetch 로 폴백합니다: ${String(error)}\n`
+      );
     }
 
     const headers: Record<string, string> = { accept: 'application/json' };

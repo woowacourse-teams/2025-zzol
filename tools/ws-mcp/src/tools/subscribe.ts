@@ -35,12 +35,14 @@ export const wsSubscribeTool: ToolDefinition = {
     const args = rawArgs as SubscribeArgs;
     if (!args.topic) return fail('topic 은 필수입니다');
     if (!args.roomToken) return fail('roomToken 은 필수입니다');
+    const topic: string = args.topic;
+    const roomToken: string = args.roomToken;
 
     const duration = args.durationMs ?? DEFAULT_DURATION_MS;
     const maxMessages = args.maxMessages ?? DEFAULT_MAX_MESSAGES;
     const session = await StompSession.connect({
       brokerUrl: ctx.brokerUrl,
-      roomToken: args.roomToken,
+      roomToken,
       ...(args.joinCode ? { joinCode: args.joinCode } : {}),
       ...(args.playerName ? { playerName: args.playerName } : {}),
     });
@@ -49,7 +51,7 @@ export const wsSubscribeTool: ToolDefinition = {
     let unsubscribe: (() => void) | undefined;
     try {
       await new Promise<void>((resolve) => {
-        unsubscribe = session.subscribe(args.topic, (message) => {
+        unsubscribe = session.subscribe(topic, (message) => {
           if (messages.length >= maxMessages) return;
           messages.push({
             receivedAt: new Date().toISOString(),

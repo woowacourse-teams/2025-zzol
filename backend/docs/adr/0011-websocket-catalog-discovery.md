@@ -1,7 +1,7 @@
 # 0011. WebSocket 컨트랙트 디스커버리 — `@WsTopic`/`@WsQueue`/`@WsReceive` + `/dev/ws-catalog`
 
 - 날짜: 2026-05-14
-- 상태: 보류 (2026-05-16 개정 — `@WsQueue`/`@WsReceive` 추가, 다중 발행자 표시 방식 정리, `envelope-class` 도입 및 `info` 섹션 제거; 2026-05-17 개정 — `WsCatalogSecurityConfig` IP 허용 목록 가드 추가, `generic=Object.class` 거부 보완)
+- 상태: 보류 (2026-05-16 개정 — `@WsQueue`/`@WsReceive` 추가, 다중 발행자 표시 방식 정리, `envelope-class` 도입 및 `info` 섹션 제거; 2026-05-17 개정 — `WsCatalogSecurityConfig` IP 허용 목록 가드 추가, `generic=Object.class` 거부 보완, fixture 스냅샷 검증 테스트 제거)
 
 ## 컨텍스트
 
@@ -142,3 +142,5 @@ public @interface WsQueue {
 - Node MCP 서버 (`tools/ws-mcp/`)는 커밋 726a51f0 에서 6종 도구(ws_connect, ws_describe, ws_list_topics, ws_send, ws_source, ws_subscribe)로 추가되었다. roomToken 발급 흐름은 ADR-0009(POST /api/rooms/{joinCode}/session-token) 를 따른다.
 - MCP 등록 파일(`.mcp.json`)은 **각 서브프로젝트 폴더**(`backend/.mcp.json`, `frontend/.mcp.json`)에 둔다. Claude Code 는 실행 디렉토리의 `.mcp.json` 만 인식하고 개발자가 보통 `cd backend && claude` / `cd frontend && claude` 흐름으로 띄우므로 모노레포 루트 `.mcp.json` 은 두지 않는다. `args` 의 상대 경로는 `../tools/ws-mcp/dist/server.js` 를 공통 사용한다.
 - `frontend/CLAUDE.md` 와 `frontend/.mcp.json` 가이드는 별도 PR(fe/dev 베이스)에서 추가한다.
+- `ws-catalog.json` fixture 는 `WsCatalogFixtureGeneratorTest`(`-DupdateFixture=true` 실행)로 재생성한다. 스냅샷 동등 검증 테스트는 두지 않는다 — MCP 서버가 라이브 엔드포인트를 직접 소비하므로 fixture 스냅샷이 계약을 강제할 근거가 없고, OS별 줄바꿈 차이로 인한 불안정성 비용이 더 크다.
+- `WsCatalogBuilder` 는 publishers(`className#methodName` 사전순)와 schemas(이름 사전순)를 안정 정렬해 카탈로그 JSON 출력이 결정적임을 보장한다. JVM HashSet/HashMap 의 비결정적 순서가 출력에 새지 않도록 막아 호출마다 동일한 바이트열을 유지한다. 이는 `WsCatalogController` 의 ETag 캐시(`hashCode` 기반 약한 지문)가 의미를 갖기 위한 전제 조건이다.

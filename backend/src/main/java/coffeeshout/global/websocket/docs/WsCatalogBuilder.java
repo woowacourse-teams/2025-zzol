@@ -147,14 +147,7 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
 
     private WsCatalog.TopicEntry mergeTopicGroup(String path, List<RawTopic> group) {
         warnIfPayloadConflict("토픽", path, group);
-        final List<WsCatalog.Publisher> publishers = group.stream()
-                .map(r -> new WsCatalog.Publisher(r.description(), r.source()))
-                .toList();
-        final List<String> referencedSchemas = group.stream()
-                .flatMap(r -> r.referencedSchemas().stream())
-                .distinct()
-                .toList();
-        return new WsCatalog.TopicEntry(path, group.getFirst().payloadType(), publishers, referencedSchemas);
+        return new WsCatalog.TopicEntry(path, group.getFirst().payloadType(), buildPublishers(group), collectReferencedSchemas(group));
     }
 
     private List<WsCatalog.QueueEntry> mergeQueues(List<RawQueue> raw) {
@@ -170,14 +163,21 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
 
     private WsCatalog.QueueEntry mergeQueueGroup(String path, List<RawQueue> group) {
         warnIfPayloadConflict("큐", path, group);
-        final List<WsCatalog.Publisher> publishers = group.stream()
+        return new WsCatalog.QueueEntry(path, group.getFirst().payloadType(), buildPublishers(group), collectReferencedSchemas(group));
+    }
+
+    private List<WsCatalog.Publisher> buildPublishers(List<? extends RawEntry> group) {
+        return group.stream()
                 .map(r -> new WsCatalog.Publisher(r.description(), r.source()))
+                .sorted(Comparator.comparing(p -> p.source().className() + "#" + p.source().methodName()))
                 .toList();
-        final List<String> referencedSchemas = group.stream()
+    }
+
+    private List<String> collectReferencedSchemas(List<? extends RawEntry> group) {
+        return group.stream()
                 .flatMap(r -> r.referencedSchemas().stream())
                 .distinct()
                 .toList();
-        return new WsCatalog.QueueEntry(path, group.getFirst().payloadType(), publishers, referencedSchemas);
     }
 
     private void warnIfPayloadConflict(String kind, String path, List<? extends RawEntry> group) {
@@ -353,11 +353,14 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
         private final Set<Class<?>> visited = new HashSet<>();
 
         Map<String, WsCatalog.SchemaEntry> expand(Set<Class<?>> seeds) {
-            pending.addAll(seeds);
+            seeds.stream().sorted(Comparator.comparing(Class::getName)).forEach(pending::addLast);
             while (!pending.isEmpty()) {
                 process(pending.pop());
             }
-            return result;
+            return result.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new));
         }
 
         private void process(Class<?> cls) {
@@ -413,7 +416,6 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
             }
             if (type instanceof ParameterizedType pt) {
                 Arrays.stream(pt.getActualTypeArguments()).forEach(this::registerTypes);
-                return;
             }
         }
     }
@@ -455,8 +457,11 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
     }
 
     private sealed interface RawEntry permits RawTopic, RawQueue {
+        String path();
+        String description();
         String payloadType();
         WsCatalog.Source source();
+        List<String> referencedSchemas();
     }
 
     private record RawTopic(String path, String description, String payloadType, WsCatalog.Source source, List<String> referencedSchemas)

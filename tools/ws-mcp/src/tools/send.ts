@@ -1,15 +1,16 @@
+import { z } from 'zod';
 import { StompSession } from '../stomp/client.js';
 import { fail, ok, type ToolDefinition } from './types.js';
 
-interface SendArgs {
-  destination?: string;
-  payload?: unknown;
-  roomToken?: string;
-  joinCode?: string;
-  playerName?: string;
-  waitForResponseTopic?: string;
-  waitMs?: number;
-}
+const SendArgsSchema = z.object({
+  destination: z.string({ required_error: 'destination 은 필수입니다' }),
+  roomToken: z.string({ required_error: 'roomToken 은 필수입니다' }),
+  payload: z.unknown().optional(),
+  joinCode: z.string().optional(),
+  playerName: z.string().optional(),
+  waitForResponseTopic: z.string().optional(),
+  waitMs: z.number().min(100).max(30_000).optional(),
+});
 
 const DEFAULT_WAIT_MS = 3_000;
 const MAX_CAPTURED = 100;
@@ -34,9 +35,9 @@ export const wsSendTool: ToolDefinition = {
     additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
-    const args = rawArgs as SendArgs;
-    if (!args.destination) return fail('destination 은 필수입니다');
-    if (!args.roomToken) return fail('roomToken 은 필수입니다');
+    const parsed = SendArgsSchema.safeParse(rawArgs);
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? '잘못된 인수');
+    const args = parsed.data;
 
     const session = await StompSession.connect({
       brokerUrl: ctx.brokerUrl,
@@ -46,25 +47,29 @@ export const wsSendTool: ToolDefinition = {
     });
 
     const captured: { receivedAt: string; body: unknown }[] = [];
-    let unsubscribe: (() => void) | null = null;
+    let unsubscribe: (() => void) | undefined;
     try {
       if (args.waitForResponseTopic) {
-        unsubscribe = session.subscribe(args.waitForResponseTopic, (message) => {
-          if (captured.length >= MAX_CAPTURED) {
-            unsubscribe?.();
-            return;
-          }
-          captured.push({
-            receivedAt: new Date().toISOString(),
-            body: tryParseJson(message.body),
+        const responseTopic = args.waitForResponseTopic;
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+        await new Promise<void>((resolve) => {
+          unsubscribe = session.subscribe(responseTopic, (message) => {
+            if (captured.length >= MAX_CAPTURED) return;
+            captured.push({
+              receivedAt: new Date().toISOString(),
+              body: tryParseJson(message.body),
+            });
+            if (captured.length >= MAX_CAPTURED) {
+              clearTimeout(timeoutId);
+              unsubscribe?.();
+              resolve();
+            }
           });
+          session.send(args.destination, args.payload ?? {});
+          timeoutId = setTimeout(resolve, args.waitMs ?? DEFAULT_WAIT_MS);
         });
-      }
-
-      session.send(args.destination, args.payload ?? {});
-
-      if (args.waitForResponseTopic) {
-        await new Promise((resolve) => setTimeout(resolve, args.waitMs ?? DEFAULT_WAIT_MS));
+      } else {
+        session.send(args.destination, args.payload ?? {});
       }
     } finally {
       unsubscribe?.();
@@ -76,6 +81,7 @@ export const wsSendTool: ToolDefinition = {
       sent: true,
       responseTopic: args.waitForResponseTopic ?? null,
       captured,
+      truncated: captured.length >= MAX_CAPTURED,
     });
   },
 };

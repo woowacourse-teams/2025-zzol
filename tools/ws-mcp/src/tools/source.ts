@@ -1,8 +1,9 @@
+import { z } from 'zod';
 import { fail, ok, type ToolDefinition } from './types.js';
 
-interface SourceArgs {
-  path: string;
-}
+const SourceArgsSchema = z.object({
+  path: z.string({ required_error: 'path 는 필수입니다' }),
+});
 
 export const wsSourceTool: ToolDefinition = {
   name: 'ws_source',
@@ -16,10 +17,9 @@ export const wsSourceTool: ToolDefinition = {
     additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
-    const args = rawArgs as Partial<SourceArgs>;
-    if (!args.path) {
-      return fail('path 는 필수입니다');
-    }
+    const parsed = SourceArgsSchema.safeParse(rawArgs);
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? '잘못된 인수');
+    const args = parsed.data;
     const { catalog } = await ctx.catalog.load();
     const sources: { kind: string; className: string; methodName: string }[] = [];
 

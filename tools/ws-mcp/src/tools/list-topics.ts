@@ -1,9 +1,10 @@
-import { ok, type ToolDefinition } from './types.js';
+import { z } from 'zod';
+import { fail, ok, type ToolDefinition } from './types.js';
 
-interface ListArgs {
-  kind?: 'topic' | 'queue' | 'send';
-  q?: string;
-}
+const ListArgsSchema = z.object({
+  kind: z.enum(['topic', 'queue', 'send']).optional(),
+  q: z.string().optional(),
+});
 
 export const wsListTopicsTool: ToolDefinition = {
   name: 'ws_list_topics',
@@ -18,7 +19,9 @@ export const wsListTopicsTool: ToolDefinition = {
     additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
-    const args = rawArgs as ListArgs;
+    const parsed = ListArgsSchema.safeParse(rawArgs);
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? '잘못된 인수');
+    const args = parsed.data;
     const { catalog, source, fetchedAt } = await ctx.catalog.load();
 
     const topics =

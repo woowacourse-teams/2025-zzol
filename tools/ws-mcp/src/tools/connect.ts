@@ -1,11 +1,12 @@
+import { z } from 'zod';
 import { StompSession } from '../stomp/client.js';
 import { fail, ok, type ToolDefinition } from './types.js';
 
-interface ConnectArgs {
-  joinCode?: string;
-  roomToken?: string;
-  playerName?: string;
-}
+const ConnectArgsSchema = z.object({
+  roomToken: z.string({ required_error: 'roomToken 은 필수입니다' }),
+  joinCode: z.string().optional(),
+  playerName: z.string().optional(),
+});
 
 export const wsConnectTool: ToolDefinition = {
   name: 'ws_connect',
@@ -21,10 +22,9 @@ export const wsConnectTool: ToolDefinition = {
     additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
-    const args = rawArgs as ConnectArgs;
-    if (!args.roomToken) {
-      return fail('roomToken 은 필수입니다');
-    }
+    const parsed = ConnectArgsSchema.safeParse(rawArgs);
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? '잘못된 인수');
+    const args = parsed.data;
     try {
       const session = await StompSession.connect({
         brokerUrl: ctx.brokerUrl,

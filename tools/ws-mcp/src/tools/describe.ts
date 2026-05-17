@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type {
   QueueEntry,
   SchemaEntry,
@@ -7,9 +8,9 @@ import type {
 } from '../catalog/types.js';
 import { fail, ok, type ToolDefinition } from './types.js';
 
-interface DescribeArgs {
-  path: string;
-}
+const DescribeArgsSchema = z.object({
+  path: z.string({ required_error: 'path 는 필수입니다' }),
+});
 
 export const wsDescribeTool: ToolDefinition = {
   name: 'ws_describe',
@@ -29,15 +30,12 @@ export const wsDescribeTool: ToolDefinition = {
     additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
-    const args = rawArgs as Partial<DescribeArgs>;
-    if (!args.path) {
-      return fail('path 는 필수입니다');
-    }
+    const parsed = DescribeArgsSchema.safeParse(rawArgs);
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? '잘못된 인수');
+    const args = parsed.data;
     const { catalog, source, fetchedAt } = await ctx.catalog.load();
     const matched = match(catalog, args.path);
-    if (!matched) {
-      return fail(`path ${args.path} 에 해당하는 토픽/큐/send 가 없습니다`);
-    }
+    if (!matched) return fail(`path ${args.path} 에 해당하는 토픽/큐/send 가 없습니다`);
     const referencedSchemas = collectSchemas(catalog, matched);
     return ok({
       ...matched,

@@ -1,14 +1,15 @@
+import { z } from 'zod';
 import { StompSession } from '../stomp/client.js';
 import { fail, ok, type ToolDefinition } from './types.js';
 
-interface SubscribeArgs {
-  topic?: string;
-  roomToken?: string;
-  joinCode?: string;
-  playerName?: string;
-  durationMs?: number;
-  maxMessages?: number;
-}
+const SubscribeArgsSchema = z.object({
+  topic: z.string({ required_error: 'topic 은 필수입니다' }),
+  roomToken: z.string({ required_error: 'roomToken 은 필수입니다' }),
+  joinCode: z.string().optional(),
+  playerName: z.string().optional(),
+  durationMs: z.number().min(100).max(60_000).optional(),
+  maxMessages: z.number().min(1).max(10_000).optional(),
+});
 
 const DEFAULT_DURATION_MS = 10_000;
 const DEFAULT_MAX_MESSAGES = 1_000;
@@ -32,17 +33,15 @@ export const wsSubscribeTool: ToolDefinition = {
     additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
-    const args = rawArgs as SubscribeArgs;
-    if (!args.topic) return fail('topic 은 필수입니다');
-    if (!args.roomToken) return fail('roomToken 은 필수입니다');
-    const topic: string = args.topic;
-    const roomToken: string = args.roomToken;
+    const parsed = SubscribeArgsSchema.safeParse(rawArgs);
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? '잘못된 인수');
+    const args = parsed.data;
 
     const duration = args.durationMs ?? DEFAULT_DURATION_MS;
     const maxMessages = args.maxMessages ?? DEFAULT_MAX_MESSAGES;
     const session = await StompSession.connect({
       brokerUrl: ctx.brokerUrl,
-      roomToken,
+      roomToken: args.roomToken,
       ...(args.joinCode ? { joinCode: args.joinCode } : {}),
       ...(args.playerName ? { playerName: args.playerName } : {}),
     });
@@ -50,8 +49,9 @@ export const wsSubscribeTool: ToolDefinition = {
     const messages: { receivedAt: string; body: unknown; headers: Record<string, string> }[] = [];
     let unsubscribe: (() => void) | undefined;
     try {
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
       await new Promise<void>((resolve) => {
-        unsubscribe = session.subscribe(topic, (message) => {
+        unsubscribe = session.subscribe(args.topic, (message) => {
           if (messages.length >= maxMessages) return;
           messages.push({
             receivedAt: new Date().toISOString(),
@@ -59,18 +59,25 @@ export const wsSubscribeTool: ToolDefinition = {
             headers: Object.assign({}, message.headers),
           });
           if (messages.length >= maxMessages) {
+            clearTimeout(timeoutId);
             unsubscribe?.();
             resolve();
           }
         });
-        setTimeout(resolve, duration);
+        timeoutId = setTimeout(resolve, duration);
       });
     } finally {
       unsubscribe?.();
       await session.close();
     }
 
-    return ok({ topic: args.topic, durationMs: duration, captured: messages.length, messages });
+    return ok({
+      topic: args.topic,
+      durationMs: duration,
+      captured: messages.length,
+      truncated: messages.length >= maxMessages,
+      messages,
+    });
   },
 };
 

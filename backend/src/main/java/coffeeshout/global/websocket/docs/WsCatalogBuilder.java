@@ -1,7 +1,6 @@
 package coffeeshout.global.websocket.docs;
 
 import coffeeshout.global.exception.custom.SystemException;
-import jakarta.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
@@ -24,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @Profile("!prod")
-public class WsCatalogBuilder {
+public class WsCatalogBuilder implements SmartInitializingSingleton {
 
     private final ApplicationContext applicationContext;
     private final WsCatalogProperties properties;
@@ -46,8 +46,8 @@ public class WsCatalogBuilder {
         this.properties = properties;
     }
 
-    @PostConstruct
-    private void init() {
+    @Override
+    public void afterSingletonsInstantiated() {
         cached = buildInternal();
         cachedEtag = "\"" + Integer.toHexString(cached.hashCode()) + "\"";
     }

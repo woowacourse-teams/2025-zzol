@@ -12,7 +12,12 @@ const FIXTURE =
 
 describe('contract drift', () => {
   it('BE /dev/ws-catalog 응답 fixture 가 zod 스키마와 일치한다', async () => {
-    const raw = await readFile(FIXTURE, 'utf-8');
+    let raw: string;
+    try {
+      raw = await readFile(FIXTURE, 'utf-8');
+    } catch (err) {
+      throw new Error(`fixture 파일을 읽을 수 없습니다: ${FIXTURE}\n${err instanceof Error ? err.message : String(err)}`, { cause: err });
+    }
     const json = JSON.parse(raw);
     const parsed = WsCatalogSchema.safeParse(json);
     if (!parsed.success) {

@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { z } from "zod";
 
 export type CachedCatalog = {
   body: unknown;
@@ -8,6 +9,13 @@ export type CachedCatalog = {
   lastModified: string | null;
   fetchedAt: string;
 };
+
+const CachedCatalogSchema = z.object({
+  body: z.unknown(),
+  etag: z.string().nullable(),
+  lastModified: z.string().nullable(),
+  fetchedAt: z.string(),
+});
 
 const DEFAULT_CACHE_PATH = join(homedir(), ".zzol-mcp", "catalog.json");
 
@@ -17,7 +25,7 @@ export class CatalogCache {
   async read(): Promise<CachedCatalog | null> {
     try {
       const raw = await readFile(this.path, "utf-8");
-      return JSON.parse(raw) as CachedCatalog;
+      return CachedCatalogSchema.parse(JSON.parse(raw)) as CachedCatalog;
     } catch (error) {
       if (isNotFound(error)) {
         return null;

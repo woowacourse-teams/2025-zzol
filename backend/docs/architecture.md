@@ -17,12 +17,13 @@
 
 | 패키지          | 역할                                |
 |--------------|-----------------------------------|
-| `websocket/` | STOMP 인터셉터, 세션 추적, 레이트 리밋, 메시지 복구 |
-| `redis/`     | Redis Stream 클라이언트 추상화            |
-| `outbox/`    | Transactional Outbox (이벤트 유실 방지)  |
-| `lock/`      | Redisson 기반 분산 락                  |
-| `exception/` | ErrorCode 인터페이스, 전역 예외 핸들러        |
-| `trace/`     | OpenTelemetry 연동                  |
+| `websocket/`      | STOMP 인터셉터, 세션 추적, 레이트 리밋, 메시지 복구                               |
+| `websocket/docs/` | `@WsTopic`/`@WsQueue`/`@WsReceive` 어노테이션 및 `/dev/ws-catalog` 카탈로그 |
+| `redis/`          | Redis Stream 클라이언트 추상화                                           |
+| `outbox/`         | Transactional Outbox (이벤트 유실 방지)                                  |
+| `lock/`           | Redisson 기반 분산 락                                                  |
+| `exception/`      | ErrorCode 인터페이스, 전역 예외 핸들러                                        |
+| `trace/`          | OpenTelemetry 연동                                                   |
 
 ---
 
@@ -85,11 +86,7 @@ FlowOrchestrator
 
 ## WebSocket 엔드포인트
 
-| 방향 | 경로                                        | 설명              |
-|----|-------------------------------------------|-----------------|
-| 구독 | `/topic/room/{joinCode}/gameState`        | 게임 상태 변경 브로드캐스트 |
-| 구독 | `/topic/room/{joinCode}/participants`     | 참여자 목록 업데이트     |
-| 발행 | `/app/room/{joinCode}/minigame/command`   | 미니게임 커맨드        |
-| 발행 | `/app/room/{joinCode}/player/select-card` | 카드 선택           |
+전체 컨트랙트(토픽·큐·send destination·페이로드 스키마)는 `/dev/ws-catalog`(비운영 환경 전용)를 SoT로 사용한다.
+MCP 도구 `ws_list_topics` / `ws_describe`로 조회 가능하다.
 
 STOMP 연결 엔드포인트: `/ws` (SockJS 폴백 지원)

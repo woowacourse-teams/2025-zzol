@@ -15,6 +15,7 @@ export const wsListTopicsTool: ToolDefinition = {
       kind: { type: "string", enum: ["topic", "queue", "send"] },
       q: { type: "string" },
     },
+    additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
     const args = rawArgs as ListArgs;
@@ -23,7 +24,7 @@ export const wsListTopicsTool: ToolDefinition = {
     const topics =
       !args.kind || args.kind === "topic"
         ? catalog.topics
-            .filter((t) => matches(args.q, t.path, t.publishers.map((p) => p.description).join(" ")))
+            .filter((t) => matches(args.q, t.path, t.publishers.map((p) => p.description).join(" "), t.payloadType ?? ""))
             .map((t) => ({
               path: t.path,
               payloadType: t.payloadType,
@@ -33,7 +34,7 @@ export const wsListTopicsTool: ToolDefinition = {
     const queues =
       !args.kind || args.kind === "queue"
         ? catalog.queues
-            .filter((q) => matches(args.q, q.path, q.publishers.map((p) => p.description).join(" ")))
+            .filter((q) => matches(args.q, q.path, q.publishers.map((p) => p.description).join(" "), q.payloadType ?? ""))
             .map((q) => ({
               path: q.path,
               payloadType: q.payloadType,

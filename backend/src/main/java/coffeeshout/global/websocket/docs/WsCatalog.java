@@ -1,5 +1,6 @@
 package coffeeshout.global.websocket.docs;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.List;
 import java.util.Map;
 
@@ -16,16 +17,25 @@ public record WsCatalog(
         ErrorShape errors
 ) {
 
+    public enum SchemaKind {
+        RECORD, ENUM, OBJECT;
+
+        @JsonValue
+        public String wire() {
+            return name().toLowerCase();
+        }
+    }
+
     public record Envelope(String type, List<FieldEntry> fields, String note) {
     }
 
-    public record TopicEntry(String path, String payloadType, List<Publisher> publishers) {
+    public record TopicEntry(String path, String payloadType, List<Publisher> publishers, List<String> referencedSchemas) {
     }
 
-    public record QueueEntry(String path, String payloadType, List<Publisher> publishers) {
+    public record QueueEntry(String path, String payloadType, List<Publisher> publishers, List<String> referencedSchemas) {
     }
 
-    public record SendEntry(String destination, String description, String requestType, List<String> triggersTopics, Source source) {
+    public record SendEntry(String destination, String description, String requestType, List<String> triggersTopics, Source source, List<String> referencedSchemas) {
     }
 
     public record Publisher(String description, Source source) {
@@ -34,7 +44,7 @@ public record WsCatalog(
     public record Source(String className, String methodName) {
     }
 
-    public record SchemaEntry(String kind, List<FieldEntry> fields, List<String> values) {
+    public record SchemaEntry(SchemaKind kind, List<FieldEntry> fields, List<String> values) {
     }
 
     public record FieldEntry(String name, String type) {

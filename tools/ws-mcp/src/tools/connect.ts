@@ -19,6 +19,7 @@ export const wsConnectTool: ToolDefinition = {
       playerName: { type: "string" },
     },
     required: ["roomToken"],
+    additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
     const args = rawArgs as ConnectArgs;

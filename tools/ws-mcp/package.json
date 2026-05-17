@@ -12,6 +12,7 @@
     "ws-mcp": "dist/server.js"
   },
   "scripts": {
+    "prepare": "npm run build",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

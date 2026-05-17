@@ -12,6 +12,7 @@ export const wsSourceTool: ToolDefinition = {
       path: { type: "string" },
     },
     required: ["path"],
+    additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
     const args = rawArgs as Partial<SourceArgs>;

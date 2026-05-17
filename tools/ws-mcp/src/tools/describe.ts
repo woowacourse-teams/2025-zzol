@@ -18,6 +18,7 @@ export const wsDescribeTool: ToolDefinition = {
       },
     },
     required: ["path"],
+    additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
     const args = rawArgs as Partial<DescribeArgs>;
@@ -54,32 +55,12 @@ function match(catalog: WsCatalog, path: string): Matched | null {
 }
 
 function collectSchemas(catalog: WsCatalog, matched: Matched): Record<string, SchemaEntry> {
-  const names = extractTypeNames(matched);
   const result: Record<string, SchemaEntry> = {};
-  for (const name of names) {
+  for (const name of matched.entry.referencedSchemas) {
     const schema = catalog.schemas[name];
     if (schema) {
       result[name] = schema;
     }
   }
   return result;
-}
-
-function extractTypeNames(matched: Matched): string[] {
-  const sources: string[] = [];
-  if (matched.kind === "topic" || matched.kind === "queue") {
-    if (matched.entry.payloadType) sources.push(matched.entry.payloadType);
-  }
-  if (matched.kind === "send" && matched.entry.requestType) {
-    sources.push(matched.entry.requestType);
-  }
-  const collected = new Set<string>();
-  for (const text of sources) {
-    for (const token of text.split(/[<>,\s]+/)) {
-      if (token && /^[A-Z]/.test(token)) {
-        collected.add(token);
-      }
-    }
-  }
-  return [...collected];
 }

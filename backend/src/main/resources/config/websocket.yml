@@ -16,3 +16,7 @@ websocket:
     stomp-endpoint: "/ws"
     error-topic: "/queue/errors"
     envelope-class: "coffeeshout.global.websocket.ui.WebSocketResponse"
+    allowed-ips:
+      - "127.0.0.1"
+      - "::1"
+      - "0:0:0:0:0:0:0:1"

@@ -16,12 +16,13 @@ const DEFAULT_WAIT_MS = 3_000;
 export const wsSendTool: ToolDefinition = {
   name: "ws_send",
   description:
-    "destination 으로 메시지를 보내고, waitForResponseTopic 이 주어지면 waitMs 동안 후속 응답을 캡처합니다.",
+    "destination 으로 메시지를 보내고, waitForResponseTopic 이 주어지면 waitMs 동안 후속 응답을 캡처합니다. " +
+    "roomToken 은 POST /api/rooms/{joinCode}/session-token (ADR-0009) 로 발급받습니다.",
   inputSchema: {
     type: "object",
     properties: {
       destination: { type: "string" },
-      payload: {},
+      payload: { description: "전송 body — JSON 직렬화 가능한 값" },
       roomToken: { type: "string" },
       joinCode: { type: "string" },
       playerName: { type: "string" },
@@ -29,6 +30,7 @@ export const wsSendTool: ToolDefinition = {
       waitMs: { type: "number", minimum: 100, maximum: 30_000 },
     },
     required: ["destination", "roomToken"],
+    additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
     const args = rawArgs as SendArgs;
@@ -44,22 +46,25 @@ export const wsSendTool: ToolDefinition = {
 
     const captured: Array<{ receivedAt: string; body: unknown }> = [];
     let unsubscribe: (() => void) | null = null;
-    if (args.waitForResponseTopic) {
-      unsubscribe = session.subscribe(args.waitForResponseTopic, (message) => {
-        captured.push({
-          receivedAt: new Date().toISOString(),
-          body: tryParseJson(message.body),
+    try {
+      if (args.waitForResponseTopic) {
+        unsubscribe = session.subscribe(args.waitForResponseTopic, (message) => {
+          captured.push({
+            receivedAt: new Date().toISOString(),
+            body: tryParseJson(message.body),
+          });
         });
-      });
-    }
+      }
 
-    session.send(args.destination, args.payload ?? {});
+      session.send(args.destination, args.payload ?? {});
 
-    if (args.waitForResponseTopic) {
-      await new Promise((resolve) => setTimeout(resolve, args.waitMs ?? DEFAULT_WAIT_MS));
+      if (args.waitForResponseTopic) {
+        await new Promise((resolve) => setTimeout(resolve, args.waitMs ?? DEFAULT_WAIT_MS));
+      }
+    } finally {
       unsubscribe?.();
+      await session.close();
     }
-    await session.close();
 
     return ok({
       destination: args.destination,

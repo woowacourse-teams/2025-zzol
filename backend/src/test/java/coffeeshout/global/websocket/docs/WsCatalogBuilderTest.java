@@ -36,7 +36,8 @@ class WsCatalogBuilderTest {
                 "/user",
                 "/ws",
                 "/queue/errors",
-                WebSocketResponse.class
+                WebSocketResponse.class,
+                List.of("127.0.0.1")
         );
         builder = new WsCatalogBuilder(applicationContext, properties);
     }
@@ -339,12 +340,43 @@ class WsCatalogBuilderTest {
         }
 
         @Test
+        @DisplayName("generic 이 Object.class 이면 빌드가 실패한다")
+        void generic_이_Object_이면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureObjectGenericPublisher()));
+
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_OBJECT_PAYLOAD);
+        }
+
+        @Test
         @DisplayName("path 가 '/' 로 시작하지 않으면 빌드가 실패한다")
         void path_가_슬래시로_시작하지_않으면_실패한다() {
             when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
                     .thenReturn(Map.of("fixture", new FixtureNoSlashPathPublisher()));
 
             assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT);
+        }
+    }
+
+    @Nested
+    @DisplayName("envelope-class 검증")
+    class envelope_class_검증 {
+
+        @Test
+        @DisplayName("envelope-class 가 record 가 아니면 빌드가 실패한다")
+        void envelope_class_가_record_가_아니면_실패한다() {
+            final WsCatalogProperties invalidProperties = new WsCatalogProperties(
+                    "/app", "/topic", "/queue", "/user", "/ws", "/queue/errors",
+                    NonRecordEnvelope.class,
+                    List.of("127.0.0.1")
+            );
+            final WsCatalogBuilder invalidBuilder = new WsCatalogBuilder(applicationContext, invalidProperties);
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class))).thenReturn(Map.of());
+
+            assertCoffeeShoutException(() -> invalidBuilder.build(), WsCatalogErrorCode.INVALID_ENVELOPE_CLASS);
+        }
+
+        static class NonRecordEnvelope {
         }
     }
 
@@ -422,6 +454,13 @@ class WsCatalogBuilderTest {
     static class FixtureObjectPayloadPublisher {
 
         @WsTopic(path = "/test/object", payload = Object.class)
+        public void publish() {
+        }
+    }
+
+    static class FixtureObjectGenericPublisher {
+
+        @WsTopic(path = "/test/obj-generic", payload = List.class, generic = Object.class)
         public void publish() {
         }
     }

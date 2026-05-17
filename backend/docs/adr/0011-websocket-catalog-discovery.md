@@ -1,7 +1,7 @@
 # 0011. WebSocket 컨트랙트 디스커버리 — `@WsTopic`/`@WsQueue`/`@WsReceive` + `/dev/ws-catalog`
 
 - 날짜: 2026-05-14
-- 상태: 보류 (2026-05-16 개정 — `@WsQueue`/`@WsReceive` 추가, 다중 발행자 표시 방식 정리, `envelope-class` 도입 및 `info` 섹션 제거)
+- 상태: 보류 (2026-05-16 개정 — `@WsQueue`/`@WsReceive` 추가, 다중 발행자 표시 방식 정리, `envelope-class` 도입 및 `info` 섹션 제거; 2026-05-17 개정 — `WsCatalogSecurityConfig` IP 허용 목록 가드 추가, `generic=Object.class` 거부 보완)
 
 ## 컨텍스트
 
@@ -80,7 +80,7 @@ public @interface WsQueue {
 - `@MessageMapping` 메서드의 send destination 과 `@WsTopic` 메서드의 response topic 메타데이터를 함께 수집한다.
 - `@WsQueue` 메서드를 스캔해 `userDestinationPrefix + path` 로 FE 구독 경로를 구성한다.
 - 페이로드 스키마는 JDK reflection 으로 추출한다. `cls.isRecord()` 인 경우 `getRecordComponents()` 로 필드명/제네릭 타입을 펼치고, `cls.isEnum()` 인 경우 `getEnumConstants()` 로 enum 값을 나열한다. record/enum 이 아닌 도메인 클래스는 `{kind: "object"}` 로만 표시한다.
-- payload validation: `path` 가 비어 있거나 `/` 로 시작하지 않거나 `payload` 가 `Void.class` / `Object.class` 인 경우 `SystemException(WsCatalogErrorCode, ...)` 으로 빌드를 실패시킨다 (`Object.class` 회피 차단). `envelope-class` 가 record 타입이 아닌 경우도 동일하게 실패한다.
+- payload validation: `path` 가 비어 있거나 `/` 로 시작하지 않거나 `payload` 또는 `generic` 이 `Void.class` / `Object.class` 인 경우 `SystemException(WsCatalogErrorCode, ...)` 으로 빌드를 실패시킨다 (`Object.class` 회피 차단 — `generic=Object.class` 도 동일 적용). `envelope-class` 가 record 타입이 아닌 경우도 동일하게 실패한다.
 - **다중 발행자 표시**: 동일 `path` 를 발행하는 메서드가 여러 개인 경우 (예: `FRIEND_RESPONSES_QUEUE` 가 수락/거절 양쪽에서 발행) 하나의 `TopicEntry`/`QueueEntry` 로 묶고 각 메서드의 `description` + `source` 를 `publishers` 배열에 보존한다. 동일 path 에 서로 다른 payload type 이 선언되면 warn 로그를 남긴다 (첫 선언만 노출).
 
 **`WsCatalogController`** (`coffeeshout.global.websocket.docs.WsCatalogController`)
@@ -88,6 +88,13 @@ public @interface WsQueue {
 - `@RestController` + `@Profile("!prod")` 단일 가드로 운영 환경 노출을 방지한다.
 - `GET /dev/ws-catalog` 가 카탈로그 JSON 을 반환한다.
 - `application.yml` 의 `websocket.docs.*` path/envelope 값을 `@ConfigurationProperties("websocket.docs")` 로 바인딩한다. envelope record 타입은 `envelope-class` 키에 FQCN 으로 명시하고 `Class<?>` 로 바인딩되어, 빌더가 reflection 으로 필드/스키마를 자동 추출한다.
+
+**`WsCatalogSecurityConfig`** (`coffeeshout.global.websocket.docs.WsCatalogSecurityConfig`)
+
+- `@Configuration` + `@Profile("!prod")` + `@Order(0)` 으로 `/dev/**` 경로에 IP 허용 목록 기반 접근 제어를 추가한다.
+- `websocket.docs.allowed-ips` 에 허용할 IP/CIDR 목록을 명시한다 (로컬 개발 환경 기본값: `127.0.0.1`).
+- `@Profile("!prod")` 가 비-prod 환경 노출을 차단하는 1차 가드이고, `WsCatalogSecurityConfig` 의 IP 필터는 스테이징 환경에서의 불필요한 노출을 막는 2차 가드다.
+- `IpAddressMatcher` 인스턴스는 `@PostConstruct` 에서 한 번 생성해 재사용한다 (요청마다 재생성 방지).
 
 **legacy 의존성 제거**
 
@@ -97,13 +104,13 @@ public @interface WsQueue {
 
 ## 고려한 대안
 
-| 대안 | 장점 | 단점 |
-|-----|----|----|
-| legacy 라이브러리 유지 | 변경 없음 | 비관리 외부 라이브러리, 정적 HTML, FE 워크플로우 미통합 |
-| Springdoc / AsyncAPI 도입 | 표준 스펙 | 도입 비용 크고 STOMP 매핑/Redis Stream 트리거 등 자체 컨벤션을 표현하기 어려움 |
-| 자체 `@WsTopic`/`@WsQueue` + JSON 엔드포인트 + MCP | 메타데이터 자체 소유, MCP 로 FE/Claude 둘 다 소비 | 어노테이션 마이그레이션 비용 |
-| 동일 path 다중 publisher: silent dedupe | 단순 | `FRIEND_RESPONSES_QUEUE` 처럼 한 큐에 여러 발행 시나리오가 정상인 경우 description/source 정보 손실 |
-| 동일 path 다중 publisher: `publishers` 배열로 묶음 | 정보 보존 | TopicEntry/QueueEntry 모델이 조금 복잡 |
+| 대안                                          | 장점                                  | 단점                                                                           |
+|---------------------------------------------|-------------------------------------|------------------------------------------------------------------------------|
+| legacy 라이브러리 유지                             | 변경 없음                               | 비관리 외부 라이브러리, 정적 HTML, FE 워크플로우 미통합                                          |
+| Springdoc / AsyncAPI 도입                     | 표준 스펙                               | 도입 비용 크고 STOMP 매핑/Redis Stream 트리거 등 자체 컨벤션을 표현하기 어려움                        |
+| 자체 `@WsTopic`/`@WsQueue` + JSON 엔드포인트 + MCP | 메타데이터 자체 소유, MCP 로 FE/Claude 둘 다 소비 | 어노테이션 마이그레이션 비용                                                              |
+| 동일 path 다중 publisher: silent dedupe         | 단순                                  | `FRIEND_RESPONSES_QUEUE` 처럼 한 큐에 여러 발행 시나리오가 정상인 경우 description/source 정보 손실 |
+| 동일 path 다중 publisher: `publishers` 배열로 묶음   | 정보 보존                               | TopicEntry/QueueEntry 모델이 조금 복잡                                              |
 
 ## 트레이드오프
 
@@ -123,12 +130,13 @@ public @interface WsQueue {
 
 ## 결과
 
-- `coffeeshout.global.websocket.docs` 패키지에 9개 신규 클래스 추가 (`@WsTopic`, `@WsTopics`, `@WsReceive`, `@WsQueue`, `@WsQueues`, `WsCatalogBuilder`, `WsCatalogController`, `WsCatalogProperties`, `WsCatalog`).
+- `coffeeshout.global.websocket.docs` 패키지에 11개 신규 클래스 추가 (`@WsTopic`, `@WsTopics`, `@WsReceive`, `@WsQueue`, `@WsQueues`, `WsCatalogBuilder`, `WsCatalogController`, `WsCatalogProperties`, `WsCatalog`, `WsCatalogErrorCode`, `WsCatalogSecurityConfig`).
 - 어노테이션 부착 컴포넌트 (총 15개):
     - `@WsTopic`: `RoomWebSocketController`, `RoomMessagePublisher`, `CardGameNotifier`, `RacingGameWebSocketController`, `RacingGameMessagePublisher`, `LadderWebSocketController`, `LadderNotifier`, `BlindTimerGameMessagePublisher`, `BlockStackingNotifier`, `SpeedTouchGameMessagePublisher`
     - `@WsReceive`: `BlindTimerGameWebSocketController`, `BlockStackingWebSocketController`, `SpeedTouchGameWebSocketController`, `MiniGameWebSocketController`
     - `@WsQueue`: `FriendNotifier`, `PresenceNotifier`
 - `build.gradle.kts` 에서 legacy 의존성 라인 1개 제거.
-- `application.yml` 의 `websocket.docs.*` 키를 재구성한다. `app-path`, `topic-path`, `queue-path`, `user-destination-prefix`, `stomp-endpoint`, `error-topic`, `envelope-class` 만 남기며 `enabled` / `base-package` / `server-url` / `info` 키는 제거한다 (`@Profile("!prod")` 가 dev 가드 단일 책임을 지므로 별도 `info` 메타가 필요 없다).
+- `application.yml` 의 `websocket.docs.*` 키를 재구성한다. `app-path`, `topic-path`, `queue-path`, `user-destination-prefix`, `stomp-endpoint`, `error-topic`, `envelope-class`, `allowed-ips` 를 사용하며 `enabled` / `base-package` / `server-url` / `info` 키는 제거한다 (`@Profile("!prod")` 가 dev 가드 단일 책임을 지므로 별도 `info` 메타가 필요 없다).
 - 멀티 모듈 분리(`@WsTopic`/`@WsQueue` 등 어노테이션의 별도 모듈 추출)는 본 ADR 범위 밖으로, 멀티 모듈 마이그레이션이 실제로 시작되는 시점에 별도 ADR 로 다룬다.
-- 후속 PR 에서 Node MCP 서버 (`tools/ws-mcp/`) 와 `frontend/CLAUDE.md` 가이드를 추가한다.
+- Node MCP 서버 (`tools/ws-mcp/`)는 커밋 726a51f0 에서 6종 도구(ws_connect, ws_describe, ws_list_topics, ws_send, ws_source, ws_subscribe)로 추가되었다. roomToken 발급 흐름은 ADR-0009(POST /api/rooms/{joinCode}/session-token) 를 따른다.
+- `frontend/CLAUDE.md` 가이드는 별도 PR 에서 추가한다.

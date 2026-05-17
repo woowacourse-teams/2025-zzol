@@ -7,6 +7,7 @@ export type CatalogResult = {
   catalog: WsCatalog;
   source: CatalogSource;
   fetchedAt: string;
+  fallbackReason?: string;
 };
 
 export type CatalogFetcherOptions = {
@@ -67,7 +68,7 @@ export class CatalogFetcher {
         `카탈로그를 ${this.url} 에서 가져오지 못했고 캐시도 비어 있습니다. 원인: ${reason}`,
       );
     }
-    return toResult(previous, "cache");
+    return { ...toResult(previous, "cache"), fallbackReason: reason };
   }
 }
 

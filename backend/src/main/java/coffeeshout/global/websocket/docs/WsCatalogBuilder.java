@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +37,7 @@ public class WsCatalogBuilder {
 
     private final ApplicationContext applicationContext;
     private final WsCatalogProperties properties;
+    private volatile WsCatalog cached;
 
     public WsCatalogBuilder(ApplicationContext applicationContext, WsCatalogProperties properties) {
         this.applicationContext = applicationContext;
@@ -43,6 +45,17 @@ public class WsCatalogBuilder {
     }
 
     public WsCatalog build() {
+        if (cached == null) {
+            synchronized (this) {
+                if (cached == null) {
+                    cached = buildInternal();
+                }
+            }
+        }
+        return cached;
+    }
+
+    private WsCatalog buildInternal() {
         final List<RawTopic> rawTopics = new ArrayList<>();
         final List<RawQueue> rawQueues = new ArrayList<>();
         final List<WsCatalog.SendEntry> sends = new ArrayList<>();
@@ -90,6 +103,10 @@ public class WsCatalogBuilder {
             if (wsTopics.length == 0 && wsQueues.length == 0 && messageMapping == null && wsReceive == null) {
                 continue;
             }
+            if (messageMapping != null && wsTopics.length == 0 && wsReceive == null) {
+                log.warn("@MessageMapping 메서드에 @WsTopic 또는 @WsReceive 가 없습니다: {}#{}",
+                        targetClass.getSimpleName(), method.getName());
+            }
             final WsCatalog.Source source = new WsCatalog.Source(targetClass.getSimpleName(), method.getName());
             for (final WsTopic wsTopic : wsTopics) {
                 rawTopics.add(toRawTopic(wsTopic, source, referenced));
@@ -119,7 +136,11 @@ public class WsCatalogBuilder {
         final List<WsCatalog.Publisher> publishers = group.stream()
                 .map(r -> new WsCatalog.Publisher(r.description(), r.source()))
                 .toList();
-        return new WsCatalog.TopicEntry(path, group.getFirst().payloadType(), publishers);
+        final List<String> referencedSchemas = group.stream()
+                .flatMap(r -> r.referencedSchemas().stream())
+                .distinct()
+                .toList();
+        return new WsCatalog.TopicEntry(path, group.getFirst().payloadType(), publishers, referencedSchemas);
     }
 
     private List<WsCatalog.QueueEntry> mergeQueues(List<RawQueue> raw) {
@@ -138,7 +159,11 @@ public class WsCatalogBuilder {
         final List<WsCatalog.Publisher> publishers = group.stream()
                 .map(r -> new WsCatalog.Publisher(r.description(), r.source()))
                 .toList();
-        return new WsCatalog.QueueEntry(path, group.getFirst().payloadType(), publishers);
+        final List<String> referencedSchemas = group.stream()
+                .flatMap(r -> r.referencedSchemas().stream())
+                .distinct()
+                .toList();
+        return new WsCatalog.QueueEntry(path, group.getFirst().payloadType(), publishers, referencedSchemas);
     }
 
     private void warnIfPayloadConflict(String kind, String path, List<? extends RawEntry> group) {
@@ -177,22 +202,30 @@ public class WsCatalogBuilder {
     }
 
     private RawQueue toRawQueue(WsQueue wsQueue, WsCatalog.Source source, Set<Class<?>> referenced) {
-        validatePath("@WsQueue.path", wsQueue.path(), source);
+        validatePath("@WsQueue.path", wsQueue.path(), properties.userDestinationPrefix(), source);
         validatePayload("@WsQueue.payload", wsQueue.payload(), wsQueue.path(), source);
+        if (wsQueue.generic() != Void.class) {
+            validatePayload("@WsQueue.generic", wsQueue.generic(), wsQueue.path(), source);
+        }
         final String fullPath = properties.userDestinationPrefix() + wsQueue.path();
         final String payloadType = describePayloadType(wsQueue.payload(), wsQueue.generic(), referenced);
-        return new RawQueue(fullPath, wsQueue.description(), payloadType, source);
+        final List<String> refSchemas = collectPayloadSchemas(wsQueue.payload(), wsQueue.generic());
+        return new RawQueue(fullPath, wsQueue.description(), payloadType, source, refSchemas);
     }
 
     private RawTopic toRawTopic(WsTopic wsTopic, WsCatalog.Source source, Set<Class<?>> referenced) {
-        validatePath("@WsTopic.path", wsTopic.path(), source);
+        validatePath("@WsTopic.path", wsTopic.path(), properties.topicPath(), source);
         validatePayload("@WsTopic.payload", wsTopic.payload(), wsTopic.path(), source);
+        if (wsTopic.generic() != Void.class) {
+            validatePayload("@WsTopic.generic", wsTopic.generic(), wsTopic.path(), source);
+        }
         final String fullPath = properties.topicPath() + wsTopic.path();
         final String payloadType = describePayloadType(wsTopic.payload(), wsTopic.generic(), referenced);
-        return new RawTopic(fullPath, wsTopic.description(), payloadType, source);
+        final List<String> refSchemas = collectPayloadSchemas(wsTopic.payload(), wsTopic.generic());
+        return new RawTopic(fullPath, wsTopic.description(), payloadType, source, refSchemas);
     }
 
-    private void validatePath(String label, String path, WsCatalog.Source source) {
+    private void validatePath(String label, String path, String prefixToReject, WsCatalog.Source source) {
         if (path.isBlank()) {
             throw new SystemException(WsCatalogErrorCode.ANNOTATION_BLANK_PATH,
                     "%s 가 비어 있습니다: %s#%s".formatted(label, source.className(), source.methodName()));
@@ -201,6 +234,11 @@ public class WsCatalogBuilder {
             throw new SystemException(WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT,
                     "%s 는 '/' 로 시작해야 합니다: %s#%s path=%s".formatted(
                             label, source.className(), source.methodName(), path));
+        }
+        if (path.startsWith(prefixToReject + "/") || path.equals(prefixToReject)) {
+            throw new SystemException(WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT,
+                    "%s 에 prefix('%s')가 이미 포함되어 있습니다 — 상대 경로만 입력하세요: %s#%s path=%s".formatted(
+                            label, prefixToReject, source.className(), source.methodName(), path));
         }
     }
 
@@ -226,6 +264,7 @@ public class WsCatalogBuilder {
             Set<Class<?>> referenced
     ) {
         final String requestType = findRequestPayload(method, referenced);
+        final List<String> requestSchemas = findRequestSchemas(method);
         final List<String> triggersTopics = collectTriggerTopics(wsTopics, wsReceive, source);
         final String description = resolveDescription(wsTopics, wsReceive);
         final String[] values = mapping.value();
@@ -233,7 +272,7 @@ public class WsCatalogBuilder {
         final List<WsCatalog.SendEntry> entries = new ArrayList<>();
         for (final String mappingPath : destinations) {
             entries.add(new WsCatalog.SendEntry(
-                    properties.appPath() + mappingPath, description, requestType, triggersTopics, source));
+                    properties.appPath() + mappingPath, description, requestType, triggersTopics, source, requestSchemas));
         }
         return entries;
     }
@@ -258,6 +297,15 @@ public class WsCatalogBuilder {
         return properties.envelopeClass().getSimpleName() + "<" + payload.getSimpleName() + "<" + generic.getSimpleName() + ">>";
     }
 
+    private List<String> collectPayloadSchemas(Class<?> payload, Class<?> generic) {
+        final Set<Class<?>> local = new LinkedHashSet<>();
+        registerIfDescribable(payload, local);
+        if (generic != Void.class) {
+            registerIfDescribable(generic, local);
+        }
+        return local.stream().map(Class::getSimpleName).toList();
+    }
+
     private String findRequestPayload(Method method, Set<Class<?>> referenced) {
         for (final Parameter parameter : method.getParameters()) {
             if (parameter.isAnnotationPresent(Payload.class)) {
@@ -269,8 +317,22 @@ public class WsCatalogBuilder {
         return null;
     }
 
+    private List<String> findRequestSchemas(Method method) {
+        for (final Parameter parameter : method.getParameters()) {
+            if (parameter.isAnnotationPresent(Payload.class)) {
+                final Class<?> type = parameter.getType();
+                if (type.isRecord() || type.isEnum()) {
+                    return List.of(type.getSimpleName());
+                }
+                return List.of();
+            }
+        }
+        return List.of();
+    }
+
     private Map<String, WsCatalog.SchemaEntry> expandSchemas(Set<Class<?>> seeds) {
         final Map<String, WsCatalog.SchemaEntry> result = new LinkedHashMap<>();
+        final Map<String, Class<?>> seenByName = new LinkedHashMap<>();
         final Deque<Class<?>> stack = new ArrayDeque<>(seeds);
         final Set<Class<?>> visited = new HashSet<>();
         while (!stack.isEmpty()) {
@@ -278,7 +340,14 @@ public class WsCatalogBuilder {
             if (!visited.add(cls)) {
                 continue;
             }
-            result.put(cls.getSimpleName(), describeClass(cls, stack));
+            final String simpleName = cls.getSimpleName();
+            if (seenByName.containsKey(simpleName)) {
+                log.warn("스키마 simpleName 충돌: '{}' — {} vs {} (첫 선언 유지)",
+                        simpleName, seenByName.get(simpleName).getName(), cls.getName());
+                continue;
+            }
+            seenByName.put(simpleName, cls);
+            result.put(simpleName, describeClass(cls, stack));
         }
         return result;
     }
@@ -290,7 +359,7 @@ public class WsCatalogBuilder {
         if (cls.isRecord()) {
             return describeRecord(cls, pending);
         }
-        return new WsCatalog.SchemaEntry("object", List.of(), null);
+        return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.OBJECT, List.of(), null);
     }
 
     private WsCatalog.SchemaEntry describeEnum(Class<?> cls) {
@@ -298,7 +367,7 @@ public class WsCatalogBuilder {
         for (final Object constant : cls.getEnumConstants()) {
             values.add(((Enum<?>) constant).name());
         }
-        return new WsCatalog.SchemaEntry("enum", null, values);
+        return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.ENUM, null, values);
     }
 
     private WsCatalog.SchemaEntry describeRecord(Class<?> cls, Deque<Class<?>> pending) {
@@ -307,7 +376,7 @@ public class WsCatalogBuilder {
             final String typeRef = describeFieldType(component.getGenericType(), pending);
             fields.add(new WsCatalog.FieldEntry(component.getName(), typeRef));
         }
-        return new WsCatalog.SchemaEntry("record", fields, null);
+        return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.RECORD, fields, null);
     }
 
     private String describeFieldType(Type type, Deque<Class<?>> pending) {
@@ -355,11 +424,11 @@ public class WsCatalogBuilder {
         WsCatalog.Source source();
     }
 
-    private record RawTopic(String path, String description, String payloadType, WsCatalog.Source source)
+    private record RawTopic(String path, String description, String payloadType, WsCatalog.Source source, List<String> referencedSchemas)
             implements RawEntry {
     }
 
-    private record RawQueue(String path, String description, String payloadType, WsCatalog.Source source)
+    private record RawQueue(String path, String description, String payloadType, WsCatalog.Source source, List<String> referencedSchemas)
             implements RawEntry {
     }
 }

@@ -2,6 +2,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { CatalogCache } from "./catalog/cache.js";
 import { CatalogFetcher } from "./catalog/fetch.js";
 import { wsConnectTool } from "./tools/connect.js";
 import { wsDescribeTool } from "./tools/describe.js";
@@ -23,9 +24,13 @@ const TOOLS: ToolDefinition[] = [
 async function main(): Promise<void> {
   const catalogUrl = process.env.WS_MCP_CATALOG_URL ?? "http://localhost:8080/dev/ws-catalog";
   const brokerUrl = process.env.WS_MCP_BROKER_URL ?? deriveBrokerUrl(catalogUrl);
+  const cachePath = process.env.WS_MCP_CACHE_PATH;
 
   const context: ToolContext = {
-    catalog: new CatalogFetcher({ url: catalogUrl }),
+    catalog: new CatalogFetcher({
+      url: catalogUrl,
+      ...(cachePath ? { cache: new CatalogCache(cachePath) } : {}),
+    }),
     brokerUrl,
   };
 

@@ -21,16 +21,20 @@ const EnvelopeSchema = z.object({
   note: z.string(),
 });
 
+const SchemaKindSchema = z.enum(["record", "enum", "object"]);
+
 const TopicEntrySchema = z.object({
   path: z.string(),
   payloadType: z.string().nullable(),
   publishers: z.array(PublisherSchema),
+  referencedSchemas: z.array(z.string()),
 });
 
 const QueueEntrySchema = z.object({
   path: z.string(),
   payloadType: z.string().nullable(),
   publishers: z.array(PublisherSchema),
+  referencedSchemas: z.array(z.string()),
 });
 
 const SendEntrySchema = z.object({
@@ -39,10 +43,11 @@ const SendEntrySchema = z.object({
   requestType: z.string().nullable(),
   triggersTopics: z.array(z.string()),
   source: SourceSchema,
+  referencedSchemas: z.array(z.string()),
 });
 
 const SchemaEntrySchema = z.object({
-  kind: z.enum(["record", "enum", "object"]),
+  kind: SchemaKindSchema,
   fields: z.array(FieldEntrySchema).nullable(),
   values: z.array(z.string()).nullable(),
 });

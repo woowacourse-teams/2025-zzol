@@ -53,6 +53,9 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
     }
 
     public WsCatalog build() {
+        if (cached == null) {
+            afterSingletonsInstantiated();
+        }
         return cached;
     }
 

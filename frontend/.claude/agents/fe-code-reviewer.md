@@ -81,6 +81,16 @@ tools: Bash, Read, Glob, Grep
 - [ ] `api` 객체를 컴포넌트 내부에서 직접 호출하지 않는가 (훅을 통해 사용)
 - [ ] 하드코딩된 API 엔드포인트 문자열이 아닌 상수나 타입으로 관리되는가
 
+### WebSocket 컨트랙트
+
+WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할 때는 `ws-mcp` 도구로 BE 카탈로그와 일치 여부를 확인한다. 도구는 `frontend/.mcp.json` 으로 자동 등록되어 있다.
+
+- [ ] destination 에 prefix(`/topic`, `/app`, `/user`)가 중복으로 들어가 있지 않은가 — FE wrapper 가 자동 추가하므로 path 에서 제거해야 한다 (`.claude/rules/websocket.md` 참조)
+- [ ] 사용한 destination 이 `ws_list_topics` 또는 `ws_describe` 카탈로그에 존재하는가 — 존재하지 않으면 BE 측 `@WsTopic` 추가 필요. 임의 신설 금지
+- [ ] 카탈로그의 `payloadType` 과 onData 콜백 타입이 일치하는가 (특히 `WebSocketResponse<List<X>>` 같은 envelope 의 데이터 부분 매핑)
+- [ ] 동일 `path` 의 publishers 가 여러 개인 경우(예: `/queue/friends/responses` 의 수락/거절) 각 발행 시나리오를 모두 다루는가
+- [ ] 구독은 Provider 또는 훅에서만 — 컴포넌트에서 직접 `useWebSocket().subscribe` 호출 금지
+
 ### 스타일링
 
 - [ ] 하드코딩된 색상값 대신 `theme.color.*` 토큰을 사용하는가 — styled 컴포넌트 내부뿐 아니라 JSX prop(`fill`, `stroke`, `color`, `backgroundColor` 등 인라인 속성)도 포함. `'#888'`, `'#fff'` 같은 hex 리터럴은 위치 무관하게 금지
@@ -140,6 +150,9 @@ tools: Bash, Read, Glob, Grep
 
 **API 레이어**
 - ✅/❌ 항목명: 설명 (해당 파일에 API 호출이 없으면 생략)
+
+**WebSocket 컨트랙트**
+- ✅/❌ 항목명: 설명 (해당 파일에 useWebSocketSubscription/send 호출이 없으면 생략)
 
 **스타일링**
 - ✅/❌ 항목명: 설명 (`.styled.ts` 없으면 생략)

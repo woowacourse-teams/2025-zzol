@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const SourceSchema = z.object({
   className: z.string(),
@@ -21,7 +21,7 @@ const EnvelopeSchema = z.object({
   note: z.string(),
 });
 
-const SchemaKindSchema = z.enum(["record", "enum", "object"]);
+const SchemaKindSchema = z.enum(['record', 'enum', 'object']);
 
 const TopicEntrySchema = z.object({
   path: z.string(),

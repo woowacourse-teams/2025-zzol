@@ -1,7 +1,7 @@
-import { StompSession } from "../stomp/client.js";
-import { fail, ok, type ToolDefinition } from "./types.js";
+import { StompSession } from '../stomp/client.js';
+import { fail, ok, type ToolDefinition } from './types.js';
 
-type SendArgs = {
+interface SendArgs {
   destination?: string;
   payload?: unknown;
   roomToken?: string;
@@ -9,34 +9,34 @@ type SendArgs = {
   playerName?: string;
   waitForResponseTopic?: string;
   waitMs?: number;
-};
+}
 
 const DEFAULT_WAIT_MS = 3_000;
 const MAX_CAPTURED = 100;
 
 export const wsSendTool: ToolDefinition = {
-  name: "ws_send",
+  name: 'ws_send',
   description:
-    "destination 으로 메시지를 보내고, waitForResponseTopic 이 주어지면 waitMs 동안 후속 응답을 캡처합니다. " +
-    "roomToken 은 POST /api/rooms/{joinCode}/session-token (ADR-0009) 로 발급받습니다.",
+    'destination 으로 메시지를 보내고, waitForResponseTopic 이 주어지면 waitMs 동안 후속 응답을 캡처합니다. ' +
+    'roomToken 은 POST /api/rooms/{joinCode}/session-token (ADR-0009) 로 발급받습니다.',
   inputSchema: {
-    type: "object",
+    type: 'object',
     properties: {
-      destination: { type: "string" },
-      payload: { description: "전송 body — JSON 직렬화 가능한 값" },
-      roomToken: { type: "string" },
-      joinCode: { type: "string" },
-      playerName: { type: "string" },
-      waitForResponseTopic: { type: "string" },
-      waitMs: { type: "number", minimum: 100, maximum: 30_000 },
+      destination: { type: 'string' },
+      payload: { description: '전송 body — JSON 직렬화 가능한 값' },
+      roomToken: { type: 'string' },
+      joinCode: { type: 'string' },
+      playerName: { type: 'string' },
+      waitForResponseTopic: { type: 'string' },
+      waitMs: { type: 'number', minimum: 100, maximum: 30_000 },
     },
-    required: ["destination", "roomToken"],
+    required: ['destination', 'roomToken'],
     additionalProperties: false,
   },
   handler: async (rawArgs, ctx) => {
     const args = rawArgs as SendArgs;
-    if (!args.destination) return fail("destination 은 필수입니다");
-    if (!args.roomToken) return fail("roomToken 은 필수입니다");
+    if (!args.destination) return fail('destination 은 필수입니다');
+    if (!args.roomToken) return fail('roomToken 은 필수입니다');
 
     const session = await StompSession.connect({
       brokerUrl: ctx.brokerUrl,
@@ -45,7 +45,7 @@ export const wsSendTool: ToolDefinition = {
       ...(args.playerName ? { playerName: args.playerName } : {}),
     });
 
-    const captured: Array<{ receivedAt: string; body: unknown }> = [];
+    const captured: { receivedAt: string; body: unknown }[] = [];
     let unsubscribe: (() => void) | null = null;
     try {
       if (args.waitForResponseTopic) {

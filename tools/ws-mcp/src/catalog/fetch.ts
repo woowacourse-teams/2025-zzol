@@ -1,20 +1,20 @@
-import { CatalogCache, type CachedCatalog } from "./cache.js";
-import { WsCatalogSchema, type WsCatalog } from "./types.js";
+import { CatalogCache, type CachedCatalog } from './cache.js';
+import { WsCatalogSchema, type WsCatalog } from './types.js';
 
-export type CatalogSource = "live" | "cache";
+export type CatalogSource = 'live' | 'cache';
 
-export type CatalogResult = {
+export interface CatalogResult {
   catalog: WsCatalog;
   source: CatalogSource;
   fetchedAt: string;
   fallbackReason?: string;
-};
+}
 
-export type CatalogFetcherOptions = {
+export interface CatalogFetcherOptions {
   url: string;
   cache?: CatalogCache;
   fetchImpl?: typeof fetch;
-};
+}
 
 export class CatalogFetcher {
   private readonly url: string;
@@ -35,50 +35,52 @@ export class CatalogFetcher {
       // 캐시 파일 손상 — 미스로 처리
     }
 
-    const headers: Record<string, string> = { accept: "application/json" };
+    const headers: Record<string, string> = { accept: 'application/json' };
     if (previous?.etag) {
-      headers["if-none-match"] = previous.etag;
+      headers['if-none-match'] = previous.etag;
     }
     if (previous?.lastModified) {
-      headers["if-modified-since"] = previous.lastModified;
+      headers['if-modified-since'] = previous.lastModified;
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 10_000);
     try {
       const response = await this.fetchImpl(this.url, { headers, signal: controller.signal });
 
       if (response.status === 304 && previous) {
-        return toResult(previous, "cache");
+        return toResult(previous, 'cache');
       }
       if (!response.ok) {
-        return await this.fallback(previous, `HTTP ${response.status} ${response.statusText}`);
+        return this.fallback(previous, `HTTP ${String(response.status)} ${response.statusText}`);
       }
 
-      const body = await response.json();
+      const body: unknown = await response.json();
       const catalog = WsCatalogSchema.parse(body);
       const cached: CachedCatalog = {
         body,
-        etag: response.headers.get("etag"),
-        lastModified: response.headers.get("last-modified"),
+        etag: response.headers.get('etag'),
+        lastModified: response.headers.get('last-modified'),
         fetchedAt: new Date().toISOString(),
       };
       await this.cache.write(cached);
-      return { catalog, source: "live", fetchedAt: cached.fetchedAt };
+      return { catalog, source: 'live', fetchedAt: cached.fetchedAt };
     } catch (error) {
-      return await this.fallback(previous, errorMessage(error));
+      return this.fallback(previous, errorMessage(error));
     } finally {
       clearTimeout(timeoutId);
     }
   }
 
-  private async fallback(previous: CachedCatalog | null, reason: string): Promise<CatalogResult> {
+  private fallback(previous: CachedCatalog | null, reason: string): CatalogResult {
     if (!previous) {
       throw new Error(
-        `카탈로그를 ${this.url} 에서 가져오지 못했고 캐시도 비어 있습니다. 원인: ${reason}`,
+        `카탈로그를 ${this.url} 에서 가져오지 못했고 캐시도 비어 있습니다. 원인: ${reason}`
       );
     }
-    return { ...toResult(previous, "cache"), fallbackReason: reason };
+    return { ...toResult(previous, 'cache'), fallbackReason: reason };
   }
 }
 

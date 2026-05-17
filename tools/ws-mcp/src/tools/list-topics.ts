@@ -1,19 +1,19 @@
-import { ok, type ToolDefinition } from "./types.js";
+import { ok, type ToolDefinition } from './types.js';
 
-type ListArgs = {
-  kind?: "topic" | "queue" | "send";
+interface ListArgs {
+  kind?: 'topic' | 'queue' | 'send';
   q?: string;
-};
+}
 
 export const wsListTopicsTool: ToolDefinition = {
-  name: "ws_list_topics",
+  name: 'ws_list_topics',
   description:
-    "카탈로그의 topics/queues/sends 를 나열합니다. kind 로 필터링, q 로 path/description substring 검색.",
+    '카탈로그의 topics/queues/sends 를 나열합니다. kind 로 필터링, q 로 path/description substring 검색.',
   inputSchema: {
-    type: "object",
+    type: 'object',
     properties: {
-      kind: { type: "string", enum: ["topic", "queue", "send"] },
-      q: { type: "string" },
+      kind: { type: 'string', enum: ['topic', 'queue', 'send'] },
+      q: { type: 'string' },
     },
     additionalProperties: false,
   },
@@ -22,9 +22,16 @@ export const wsListTopicsTool: ToolDefinition = {
     const { catalog, source, fetchedAt } = await ctx.catalog.load();
 
     const topics =
-      !args.kind || args.kind === "topic"
+      !args.kind || args.kind === 'topic'
         ? catalog.topics
-            .filter((t) => matches(args.q, t.path, t.publishers.map((p) => p.description).join(" "), t.payloadType ?? ""))
+            .filter((t) =>
+              matches(
+                args.q,
+                t.path,
+                t.publishers.map((p) => p.description).join(' '),
+                t.payloadType ?? ''
+              )
+            )
             .map((t) => ({
               path: t.path,
               payloadType: t.payloadType,
@@ -32,9 +39,16 @@ export const wsListTopicsTool: ToolDefinition = {
             }))
         : [];
     const queues =
-      !args.kind || args.kind === "queue"
+      !args.kind || args.kind === 'queue'
         ? catalog.queues
-            .filter((q) => matches(args.q, q.path, q.publishers.map((p) => p.description).join(" "), q.payloadType ?? ""))
+            .filter((q) =>
+              matches(
+                args.q,
+                q.path,
+                q.publishers.map((p) => p.description).join(' '),
+                q.payloadType ?? ''
+              )
+            )
             .map((q) => ({
               path: q.path,
               payloadType: q.payloadType,
@@ -42,7 +56,7 @@ export const wsListTopicsTool: ToolDefinition = {
             }))
         : [];
     const sends =
-      !args.kind || args.kind === "send"
+      !args.kind || args.kind === 'send'
         ? catalog.sends
             .filter((s) => matches(args.q, s.destination, s.description))
             .map((s) => ({

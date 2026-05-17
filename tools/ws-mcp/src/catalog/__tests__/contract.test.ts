@@ -16,7 +16,10 @@ describe('contract drift', () => {
     try {
       raw = await readFile(FIXTURE, 'utf-8');
     } catch (err) {
-      throw new Error(`fixture 파일을 읽을 수 없습니다: ${FIXTURE}\n${err instanceof Error ? err.message : String(err)}`, { cause: err });
+      throw new Error(
+        `fixture 파일을 읽을 수 없습니다: ${FIXTURE}\n${err instanceof Error ? err.message : String(err)}`,
+        { cause: err }
+      );
     }
     const json = JSON.parse(raw);
     const parsed = WsCatalogSchema.safeParse(json);

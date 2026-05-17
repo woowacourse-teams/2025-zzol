@@ -119,10 +119,10 @@
     "path" : "/topic/room/{joinCode}/ladder/state",
     "payloadType" : "WebSocketResponse<LadderStateResponse>",
     "publishers" : [ {
-      "description" : "사다리게임 결과 브로드캐스트",
+      "description" : "사다리게임 완료 브로드캐스트",
       "source" : {
         "className" : "LadderNotifier",
-        "methodName" : "notifyResult"
+        "methodName" : "notifyDone"
       }
     }, {
       "description" : "사다리게임 그리기 상태 브로드캐스트",
@@ -131,10 +131,10 @@
         "methodName" : "notifyDrawing"
       }
     }, {
-      "description" : "사다리게임 설명 상태 브로드캐스트",
+      "description" : "사다리게임 결과 브로드캐스트",
       "source" : {
         "className" : "LadderNotifier",
-        "methodName" : "notifyDescription"
+        "methodName" : "notifyResult"
       }
     }, {
       "description" : "사다리게임 준비 상태 브로드캐스트",
@@ -143,10 +143,10 @@
         "methodName" : "notifyPrepare"
       }
     }, {
-      "description" : "사다리게임 완료 브로드캐스트",
+      "description" : "사다리게임 설명 상태 브로드캐스트",
       "source" : {
         "className" : "LadderNotifier",
-        "methodName" : "notifyDone"
+        "methodName" : "notifyDescription"
       }
     } ],
     "referencedSchemas" : [ "LadderStateResponse" ]
@@ -299,16 +299,16 @@
     "path" : "/user/queue/friends/responses",
     "payloadType" : "WebSocketResponse<FriendResponsePayload>",
     "publishers" : [ {
-      "description" : "친구 요청 거절 알림",
-      "source" : {
-        "className" : "FriendNotifier",
-        "methodName" : "onFriendRequestRejected"
-      }
-    }, {
       "description" : "친구 요청 수락 알림 (요청자·수신자 양방향)",
       "source" : {
         "className" : "FriendNotifier",
         "methodName" : "onFriendRequestAccepted"
+      }
+    }, {
+      "description" : "친구 요청 거절 알림",
+      "source" : {
+        "className" : "FriendNotifier",
+        "methodName" : "onFriendRequestRejected"
       }
     } ],
     "referencedSchemas" : [ "FriendResponsePayload" ]
@@ -446,6 +446,17 @@
     "referencedSchemas" : [ "ReadyChangeMessage" ]
   } ],
   "schemas" : {
+    "RoomStatusResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "joinCode",
+        "type" : "String"
+      }, {
+        "name" : "roomState",
+        "type" : "RoomState"
+      } ],
+      "values" : null
+    },
     "TouchCommand" : {
       "kind" : "record",
       "fields" : [ {
@@ -454,99 +465,6 @@
       }, {
         "name" : "touchedNumber",
         "type" : "int"
-      } ],
-      "values" : null
-    },
-    "FriendRequestPayload" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "requestId",
-        "type" : "Long"
-      }, {
-        "name" : "fromUserId",
-        "type" : "Long"
-      }, {
-        "name" : "fromUserCode",
-        "type" : "String"
-      }, {
-        "name" : "fromNickname",
-        "type" : "String"
-      }, {
-        "name" : "createdAt",
-        "type" : "Instant"
-      } ],
-      "values" : null
-    },
-    "WinnerResponse" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "playerName",
-        "type" : "String"
-      }, {
-        "name" : "colorIndex",
-        "type" : "Integer"
-      }, {
-        "name" : "randomAngle",
-        "type" : "Integer"
-      } ],
-      "values" : null
-    },
-    "SpeedTouchStateResponse" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "state",
-        "type" : "String"
-      } ],
-      "values" : null
-    },
-    "BlindTimerStateResponse" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "state",
-        "type" : "String"
-      }, {
-        "name" : "targetTimeMillis",
-        "type" : "long"
-      }, {
-        "name" : "blindDelayMillis",
-        "type" : "long"
-      } ],
-      "values" : null
-    },
-    "RoomInvitationPayload" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "inviterUserId",
-        "type" : "Long"
-      }, {
-        "name" : "inviterNickname",
-        "type" : "String"
-      }, {
-        "name" : "joinCode",
-        "type" : "String"
-      } ],
-      "values" : null
-    },
-    "PlayerResponse" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "userId",
-        "type" : "Long"
-      }, {
-        "name" : "playerName",
-        "type" : "String"
-      }, {
-        "name" : "playerType",
-        "type" : "PlayerType"
-      }, {
-        "name" : "isReady",
-        "type" : "Boolean"
-      }, {
-        "name" : "colorIndex",
-        "type" : "Integer"
-      }, {
-        "name" : "probability",
-        "type" : "Double"
       } ],
       "values" : null
     },
@@ -573,6 +491,70 @@
       } ],
       "values" : null
     },
+    "FriendRemovedPayload" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "removedByUserId",
+        "type" : "Long"
+      } ],
+      "values" : null
+    },
+    "QrCodeStatusResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "status",
+        "type" : "QrCodeStatus"
+      }, {
+        "name" : "qrCodeUrl",
+        "type" : "String"
+      } ],
+      "values" : null
+    },
+    "BlockStackingProgressResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "players",
+        "type" : "List<BlockStackingPlayerRankInfo>"
+      } ],
+      "values" : null
+    },
+    "PlayerResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "userId",
+        "type" : "Long"
+      }, {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "playerType",
+        "type" : "PlayerType"
+      }, {
+        "name" : "isReady",
+        "type" : "Boolean"
+      }, {
+        "name" : "colorIndex",
+        "type" : "Integer"
+      }, {
+        "name" : "probability",
+        "type" : "Double"
+      } ],
+      "values" : null
+    },
+    "BlindTimerStateResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "state",
+        "type" : "String"
+      }, {
+        "name" : "targetTimeMillis",
+        "type" : "long"
+      }, {
+        "name" : "blindDelayMillis",
+        "type" : "long"
+      } ],
+      "values" : null
+    },
     "LadderLineResponse" : {
       "kind" : "record",
       "fields" : [ {
@@ -590,25 +572,14 @@
       } ],
       "values" : null
     },
-    "ReadyChangeMessage" : {
+    "BlockStackingStateResponse" : {
       "kind" : "record",
       "fields" : [ {
-        "name" : "joinCode",
-        "type" : "String"
+        "name" : "state",
+        "type" : "BlockStackingGameState"
       }, {
-        "name" : "playerName",
-        "type" : "String"
-      }, {
-        "name" : "isReady",
-        "type" : "Boolean"
-      } ],
-      "values" : null
-    },
-    "StopCommand" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "playerName",
-        "type" : "String"
+        "name" : "endTimeEpochMs",
+        "type" : "Long"
       } ],
       "values" : null
     },
@@ -623,22 +594,66 @@
       } ],
       "values" : null
     },
-    "BlockStackingProgressResponse" : {
+    "SpeedTouchProgressResponse" : {
       "kind" : "record",
       "fields" : [ {
         "name" : "players",
-        "type" : "List<BlockStackingPlayerRankInfo>"
+        "type" : "List<PlayerProgress>"
       } ],
       "values" : null
     },
-    "BlockStackingStateResponse" : {
+    "PresencePayload" : {
       "kind" : "record",
       "fields" : [ {
-        "name" : "state",
-        "type" : "BlockStackingGameState"
-      }, {
-        "name" : "endTimeEpochMs",
+        "name" : "userId",
         "type" : "Long"
+      }, {
+        "name" : "online",
+        "type" : "boolean"
+      } ],
+      "values" : null
+    },
+    "RouletteSpinMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "hostName",
+        "type" : "String"
+      } ],
+      "values" : null
+    },
+    "StopCommand" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "playerName",
+        "type" : "String"
+      } ],
+      "values" : null
+    },
+    "ReadyChangeMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "joinCode",
+        "type" : "String"
+      }, {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "isReady",
+        "type" : "Boolean"
+      } ],
+      "values" : null
+    },
+    "WinnerResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "colorIndex",
+        "type" : "Integer"
+      }, {
+        "name" : "randomAngle",
+        "type" : "Integer"
       } ],
       "values" : null
     },
@@ -650,31 +665,11 @@
       } ],
       "values" : null
     },
-    "RacingGameRunnersStateResponse" : {
+    "SpeedTouchStateResponse" : {
       "kind" : "record",
       "fields" : [ {
-        "name" : "distance",
-        "type" : "RacingRange"
-      }, {
-        "name" : "players",
-        "type" : "List<RunnerPosition>"
-      } ],
-      "values" : null
-    },
-    "BlockStackingProgressRequest" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "floor",
-        "type" : "int"
-      }, {
-        "name" : "movingBlockX",
-        "type" : "double"
-      }, {
-        "name" : "stackTopX",
-        "type" : "double"
-      }, {
-        "name" : "stackTopWidth",
-        "type" : "double"
+        "name" : "state",
+        "type" : "String"
       } ],
       "values" : null
     },
@@ -694,11 +689,14 @@
       } ],
       "values" : null
     },
-    "RouletteSpinMessage" : {
+    "MiniGameMessage" : {
       "kind" : "record",
       "fields" : [ {
-        "name" : "hostName",
-        "type" : "String"
+        "name" : "commandType",
+        "type" : "CommandType"
+      }, {
+        "name" : "commandRequest",
+        "type" : "JsonNode"
       } ],
       "values" : null
     },
@@ -719,82 +717,20 @@
       } ],
       "values" : null
     },
-    "FriendRemovedPayload" : {
+    "BlockStackingProgressRequest" : {
       "kind" : "record",
       "fields" : [ {
-        "name" : "removedByUserId",
-        "type" : "Long"
-      } ],
-      "values" : null
-    },
-    "RoomStatusResponse" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "joinCode",
-        "type" : "String"
+        "name" : "floor",
+        "type" : "int"
       }, {
-        "name" : "roomState",
-        "type" : "RoomState"
-      } ],
-      "values" : null
-    },
-    "QrCodeStatusResponse" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "status",
-        "type" : "QrCodeStatus"
+        "name" : "movingBlockX",
+        "type" : "double"
       }, {
-        "name" : "qrCodeUrl",
-        "type" : "String"
-      } ],
-      "values" : null
-    },
-    "RacingGameStateResponse" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "state",
-        "type" : "RacingGameState"
-      } ],
-      "values" : null
-    },
-    "MiniGameMessage" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "commandType",
-        "type" : "CommandType"
+        "name" : "stackTopX",
+        "type" : "double"
       }, {
-        "name" : "commandRequest",
-        "type" : "JsonNode"
-      } ],
-      "values" : null
-    },
-    "PresencePayload" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "userId",
-        "type" : "Long"
-      }, {
-        "name" : "online",
-        "type" : "boolean"
-      } ],
-      "values" : null
-    },
-    "MiniGameSelectMessage" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "hostName",
-        "type" : "String"
-      }, {
-        "name" : "miniGameTypes",
-        "type" : "List<MiniGameType>"
-      } ],
-      "values" : null
-    },
-    "SpeedTouchProgressResponse" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "players",
-        "type" : "List<PlayerProgress>"
+        "name" : "stackTopWidth",
+        "type" : "double"
       } ],
       "values" : null
     },
@@ -818,10 +754,74 @@
       } ],
       "values" : null
     },
-    "PlayerType" : {
+    "FriendRequestPayload" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "requestId",
+        "type" : "Long"
+      }, {
+        "name" : "fromUserId",
+        "type" : "Long"
+      }, {
+        "name" : "fromUserCode",
+        "type" : "String"
+      }, {
+        "name" : "fromNickname",
+        "type" : "String"
+      }, {
+        "name" : "createdAt",
+        "type" : "Instant"
+      } ],
+      "values" : null
+    },
+    "MiniGameSelectMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "hostName",
+        "type" : "String"
+      }, {
+        "name" : "miniGameTypes",
+        "type" : "List<MiniGameType>"
+      } ],
+      "values" : null
+    },
+    "RacingGameRunnersStateResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "distance",
+        "type" : "RacingRange"
+      }, {
+        "name" : "players",
+        "type" : "List<RunnerPosition>"
+      } ],
+      "values" : null
+    },
+    "RoomInvitationPayload" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "inviterUserId",
+        "type" : "Long"
+      }, {
+        "name" : "inviterNickname",
+        "type" : "String"
+      }, {
+        "name" : "joinCode",
+        "type" : "String"
+      } ],
+      "values" : null
+    },
+    "RacingGameStateResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "state",
+        "type" : "RacingGameState"
+      } ],
+      "values" : null
+    },
+    "RoomState" : {
       "kind" : "enum",
       "fields" : null,
-      "values" : [ "HOST", "GUEST" ]
+      "values" : [ "READY", "PLAYING", "SCORE_BOARD", "ROULETTE", "DONE" ]
     },
     "LadderGameState" : {
       "kind" : "enum",
@@ -842,6 +842,11 @@
       } ],
       "values" : null
     },
+    "QrCodeStatus" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "PENDING", "SUCCESS", "ERROR" ]
+    },
     "BlockStackingPlayerRankInfo" : {
       "kind" : "record",
       "fields" : [ {
@@ -853,15 +858,59 @@
       } ],
       "values" : null
     },
+    "PlayerType" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "HOST", "GUEST" ]
+    },
     "BlockStackingGameState" : {
       "kind" : "enum",
       "fields" : null,
       "values" : [ "READY", "PREPARE", "PLAYING", "DONE" ]
     },
+    "PlayerProgress" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "currentNumber",
+        "type" : "int"
+      }, {
+        "name" : "finished",
+        "type" : "boolean"
+      } ],
+      "values" : null
+    },
     "MiniGameType" : {
       "kind" : "enum",
       "fields" : null,
       "values" : [ "CARD_GAME", "RACING_GAME", "SPEED_TOUCH", "BLIND_TIMER", "BLOCK_STACKING", "LADDER_GAME" ]
+    },
+    "CommandType" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "START_MINI_GAME", "SELECT_CARD" ]
+    },
+    "CardInfoMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "cardType",
+        "type" : "String"
+      }, {
+        "name" : "value",
+        "type" : "int"
+      }, {
+        "name" : "selected",
+        "type" : "boolean"
+      }, {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "colorIndex",
+        "type" : "Integer"
+      } ],
+      "values" : null
     },
     "RacingRange" : {
       "kind" : "record",
@@ -888,59 +937,10 @@
       } ],
       "values" : null
     },
-    "PlayerProgress" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "playerName",
-        "type" : "String"
-      }, {
-        "name" : "stopped",
-        "type" : "boolean"
-      }, {
-        "name" : "timedOut",
-        "type" : "boolean"
-      } ],
-      "values" : null
-    },
-    "CardInfoMessage" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "cardType",
-        "type" : "String"
-      }, {
-        "name" : "value",
-        "type" : "int"
-      }, {
-        "name" : "selected",
-        "type" : "boolean"
-      }, {
-        "name" : "playerName",
-        "type" : "String"
-      }, {
-        "name" : "colorIndex",
-        "type" : "Integer"
-      } ],
-      "values" : null
-    },
-    "RoomState" : {
-      "kind" : "enum",
-      "fields" : null,
-      "values" : [ "READY", "PLAYING", "SCORE_BOARD", "ROULETTE", "DONE" ]
-    },
-    "QrCodeStatus" : {
-      "kind" : "enum",
-      "fields" : null,
-      "values" : [ "PENDING", "SUCCESS", "ERROR" ]
-    },
     "RacingGameState" : {
       "kind" : "enum",
       "fields" : null,
       "values" : [ "DESCRIPTION", "PREPARE", "PLAYING", "DONE" ]
-    },
-    "CommandType" : {
-      "kind" : "enum",
-      "fields" : null,
-      "values" : [ "START_MINI_GAME", "SELECT_CARD" ]
     }
   },
   "errors" : {

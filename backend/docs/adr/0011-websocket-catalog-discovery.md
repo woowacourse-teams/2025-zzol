@@ -80,13 +80,14 @@ public @interface WsQueue {
 - `@MessageMapping` 메서드의 send destination 과 `@WsTopic` 메서드의 response topic 메타데이터를 함께 수집한다.
 - `@WsQueue` 메서드를 스캔해 `userDestinationPrefix + path` 로 FE 구독 경로를 구성한다.
 - 페이로드 스키마는 JDK reflection 으로 추출한다. `cls.isRecord()` 인 경우 `getRecordComponents()` 로 필드명/제네릭 타입을 펼치고, `cls.isEnum()` 인 경우 `getEnumConstants()` 로 enum 값을 나열한다. record/enum 이 아닌 도메인 클래스는 `{kind: "object"}` 로만 표시한다.
+- 각 `TopicEntry`/`QueueEntry`/`SendEntry` 에 빌더 시점에 계산된 `referencedSchemas: List<String>` 을 동봉한다. MCP/FE 소비자가 payloadType 문자열을 정규식으로 파싱할 필요 없이 해당 엔트리가 참조하는 schema key 들을 그대로 얻어 `WsCatalog.schemas[name]` 으로 조회한다.
 - payload validation: `path` 가 비어 있거나 `/` 로 시작하지 않거나 `payload` 또는 `generic` 이 `Void.class` / `Object.class` 인 경우 `SystemException(WsCatalogErrorCode, ...)` 으로 빌드를 실패시킨다 (`Object.class` 회피 차단 — `generic=Object.class` 도 동일 적용). `envelope-class` 가 record 타입이 아닌 경우도 동일하게 실패한다.
 - **다중 발행자 표시**: 동일 `path` 를 발행하는 메서드가 여러 개인 경우 (예: `FRIEND_RESPONSES_QUEUE` 가 수락/거절 양쪽에서 발행) 하나의 `TopicEntry`/`QueueEntry` 로 묶고 각 메서드의 `description` + `source` 를 `publishers` 배열에 보존한다. 동일 path 에 서로 다른 payload type 이 선언되면 warn 로그를 남긴다 (첫 선언만 노출).
 
 **`WsCatalogController`** (`coffeeshout.global.websocket.docs.WsCatalogController`)
 
 - `@RestController` + `@Profile("!prod")` 단일 가드로 운영 환경 노출을 방지한다.
-- `GET /dev/ws-catalog` 가 카탈로그 JSON 을 반환한다.
+- `GET /dev/ws-catalog` 가 카탈로그 JSON 을 반환한다. 응답에 `body.hashCode()` 기반 ETag 헤더를 부착해 MCP 캐시의 `If-None-Match` → 304 Not Modified 조회를 지원한다 (`WsCatalog` record 의 hashCode 는 모든 필드의 deterministic 합산이므로 동일 카탈로그 → 동일 ETag).
 - `application.yml` 의 `websocket.docs.*` path/envelope 값을 `@ConfigurationProperties("websocket.docs")` 로 바인딩한다. envelope record 타입은 `envelope-class` 키에 FQCN 으로 명시하고 `Class<?>` 로 바인딩되어, 빌더가 reflection 으로 필드/스키마를 자동 추출한다.
 
 **`WsCatalogSecurityConfig`** (`coffeeshout.global.websocket.docs.WsCatalogSecurityConfig`)
@@ -139,4 +140,5 @@ public @interface WsQueue {
 - `application.yml` 의 `websocket.docs.*` 키를 재구성한다. `app-path`, `topic-path`, `queue-path`, `user-destination-prefix`, `stomp-endpoint`, `error-topic`, `envelope-class`, `allowed-ips` 를 사용하며 `enabled` / `base-package` / `server-url` / `info` 키는 제거한다 (`@Profile("!prod")` 가 dev 가드 단일 책임을 지므로 별도 `info` 메타가 필요 없다).
 - 멀티 모듈 분리(`@WsTopic`/`@WsQueue` 등 어노테이션의 별도 모듈 추출)는 본 ADR 범위 밖으로, 멀티 모듈 마이그레이션이 실제로 시작되는 시점에 별도 ADR 로 다룬다.
 - Node MCP 서버 (`tools/ws-mcp/`)는 커밋 726a51f0 에서 6종 도구(ws_connect, ws_describe, ws_list_topics, ws_send, ws_source, ws_subscribe)로 추가되었다. roomToken 발급 흐름은 ADR-0009(POST /api/rooms/{joinCode}/session-token) 를 따른다.
-- `frontend/CLAUDE.md` 가이드는 별도 PR 에서 추가한다.
+- MCP 등록 파일(`.mcp.json`)은 **각 서브프로젝트 폴더**(`backend/.mcp.json`, `frontend/.mcp.json`)에 둔다. Claude Code 는 실행 디렉토리의 `.mcp.json` 만 인식하고 개발자가 보통 `cd backend && claude` / `cd frontend && claude` 흐름으로 띄우므로 모노레포 루트 `.mcp.json` 은 두지 않는다. `args` 의 상대 경로는 `../tools/ws-mcp/dist/server.js` 를 공통 사용한다.
+- `frontend/CLAUDE.md` 와 `frontend/.mcp.json` 가이드는 별도 PR(fe/dev 베이스)에서 추가한다.

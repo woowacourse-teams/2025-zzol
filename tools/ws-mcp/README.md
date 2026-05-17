@@ -24,14 +24,18 @@ zzol WebSocket 컨트랙트 디스커버리용 MCP 서버. `GET /dev/ws-catalog`
 
 카탈로그를 한 번 받아 `~/.zzol-mcp/catalog.json` 에 캐싱합니다. BE 가 안 켜져 있어도 캐시가 있으면 디스커버리 도구는 동작합니다.
 
-## 등록 — 모노레포 루트 `.mcp.json`
+## 등록 — 서브프로젝트별 `.mcp.json`
+
+Claude Code 는 **실행한 디렉토리**의 `.mcp.json` 만 자동 인식합니다. 모노레포 루트 `.mcp.json` 은 `cd backend && claude` / `cd frontend && claude` 흐름에서 인식되지 않으므로 두지 않고, **각 서브프로젝트 폴더**(`backend/.mcp.json`, `frontend/.mcp.json`) 에 각자 둡니다.
+
+`backend/.mcp.json` 예시:
 
 ```json
 {
   "mcpServers": {
     "ws": {
       "command": "node",
-      "args": ["./tools/ws-mcp/dist/server.js"],
+      "args": ["../tools/ws-mcp/dist/server.js"],
       "env": {
         "WS_MCP_CATALOG_URL": "http://localhost:8080/dev/ws-catalog"
       }
@@ -40,7 +44,7 @@ zzol WebSocket 컨트랙트 디스커버리용 MCP 서버. `GET /dev/ws-catalog`
 }
 ```
 
-Claude Code 가 자동 인식합니다. `npm run build` 후 사용.
+`frontend/.mcp.json` 도 동일한 내용(상대 경로 `../tools/ws-mcp/dist/server.js`). `npm run build` 후 사용.
 
 ## 개발
 

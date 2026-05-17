@@ -1,7 +1,8 @@
 package coffeeshout.global.websocket.docs;
 
-import coffeeshout.fixture.TestContainerSupport;
-import coffeeshout.support.test.IntegrationTest;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import coffeeshout.fixture.IntegrationTestSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.nio.file.Files;
@@ -9,15 +10,15 @@ import java.nio.file.Path;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import static org.assertj.core.api.Assertions.assertThat;
 
-@IntegrationTest
-@DisplayName("WsCatalog 컨트랙트 fixture export")
-class WsCatalogFixtureExportTest extends TestContainerSupport {
+@DisplayName("WsCatalog 컨트랙트 fixture")
+class WsCatalogFixtureExportTest extends IntegrationTestSupport {
 
     private static final Path FIXTURE_PATH = Path.of(
             "src", "test", "resources", "__fixtures__", "ws-catalog.json"
@@ -30,8 +31,25 @@ class WsCatalogFixtureExportTest extends TestContainerSupport {
     private ObjectMapper objectMapper;
 
     @Test
-    @DisplayName("dev 카탈로그 응답을 tools/ws-mcp 가 zod 로 검증할 수 있도록 fixture 파일로 저장한다")
-    void 카탈로그_응답을_fixture_로_저장한다() throws Exception {
+    @DisabledIfSystemProperty(named = "updateFixture", matches = "true")
+    void 카탈로그_응답이_fixture_와_일치한다() throws Exception {
+        assertThat(FIXTURE_PATH)
+                .withFailMessage("ws-catalog.json 픽스처가 없습니다. -DupdateFixture=true 로 먼저 생성하세요.")
+                .exists();
+        assertThat(fetchCatalogContent())
+                .as("ws-catalog.json 이 최신 카탈로그와 다릅니다. -DupdateFixture=true 로 갱신하세요.")
+                .isEqualTo(Files.readString(FIXTURE_PATH));
+    }
+
+    @Test
+    @EnabledIfSystemProperty(named = "updateFixture", matches = "true")
+    void 카탈로그_응답을_fixture_로_갱신한다() throws Exception {
+        final String content = fetchCatalogContent();
+        Files.createDirectories(FIXTURE_PATH.getParent());
+        Files.writeString(FIXTURE_PATH, content);
+    }
+
+    private String fetchCatalogContent() throws Exception {
         final ResponseEntity<WsCatalog> response = restTemplate.getForEntity("/dev/ws-catalog", WsCatalog.class);
 
         SoftAssertions.assertSoftly(softly -> {
@@ -42,15 +60,6 @@ class WsCatalogFixtureExportTest extends TestContainerSupport {
         final String json = objectMapper.copy()
                 .enable(SerializationFeature.INDENT_OUTPUT)
                 .writeValueAsString(response.getBody());
-        final String content = json + System.lineSeparator();
-
-        if (Boolean.getBoolean("updateFixture")) {
-            Files.createDirectories(FIXTURE_PATH.getParent());
-            Files.writeString(FIXTURE_PATH, content);
-        } else {
-            assertThat(Files.readString(FIXTURE_PATH))
-                    .as("ws-catalog.json 이 최신 카탈로그와 다릅니다. -DupdateFixture=true 로 갱신하세요.")
-                    .isEqualTo(content);
-        }
+        return json + System.lineSeparator();
     }
 }

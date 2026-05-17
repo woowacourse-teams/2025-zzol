@@ -32,13 +32,16 @@ export class StompSession {
       client.onConnect = () => {
         resolve();
       };
-      client.onStompError = (frame) => {
+      client.onStompError = async (frame) => {
+        await client.deactivate();
         reject(new Error(frame.headers.message ?? 'STOMP error'));
       };
-      client.onWebSocketError = (event) => {
+      client.onWebSocketError = async (event) => {
+        await client.deactivate();
         reject(new Error(String(event)));
       };
-      client.onWebSocketClose = (event: { code?: number }) => {
+      client.onWebSocketClose = async (event: { code?: number }) => {
+        await client.deactivate();
         reject(
           new Error(`WebSocket closed before connect (code=${String(event.code ?? 'unknown')})`)
         );

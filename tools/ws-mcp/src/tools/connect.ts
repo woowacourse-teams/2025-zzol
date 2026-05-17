@@ -32,7 +32,11 @@ export const wsConnectTool: ToolDefinition = {
         ...(args.joinCode ? { joinCode: args.joinCode } : {}),
         ...(args.playerName ? { playerName: args.playerName } : {}),
       });
-      await session.close();
+      try {
+        await session.close();
+      } catch {
+        // close 실패는 연결 성공 여부에 영향을 주지 않음
+      }
       return ok({ connected: true, brokerUrl: ctx.brokerUrl });
     } catch (error) {
       return ok({

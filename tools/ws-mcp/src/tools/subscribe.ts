@@ -48,16 +48,21 @@ export const wsSubscribeTool: ToolDefinition = {
     const messages: { receivedAt: string; body: unknown; headers: Record<string, string> }[] = [];
     let unsubscribe: (() => void) | undefined;
     try {
-      unsubscribe = session.subscribe(args.topic, (message) => {
-        if (messages.length < maxMessages) {
+      await new Promise<void>((resolve) => {
+        unsubscribe = session.subscribe(args.topic, (message) => {
+          if (messages.length >= maxMessages) return;
           messages.push({
             receivedAt: new Date().toISOString(),
             body: tryParseJson(message.body),
             headers: Object.assign({}, message.headers),
           });
-        }
+          if (messages.length >= maxMessages) {
+            unsubscribe?.();
+            resolve();
+          }
+        });
+        setTimeout(resolve, duration);
       });
-      await new Promise((resolve) => setTimeout(resolve, duration));
     } finally {
       unsubscribe?.();
       await session.close();

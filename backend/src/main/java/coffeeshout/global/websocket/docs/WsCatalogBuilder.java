@@ -336,20 +336,29 @@ public class WsCatalogBuilder {
         final Deque<Class<?>> stack = new ArrayDeque<>(seeds);
         final Set<Class<?>> visited = new HashSet<>();
         while (!stack.isEmpty()) {
-            final Class<?> cls = stack.pop();
-            if (!visited.add(cls)) {
-                continue;
-            }
-            final String simpleName = cls.getSimpleName();
-            if (seenByName.containsKey(simpleName)) {
-                log.warn("스키마 simpleName 충돌: '{}' — {} vs {} (첫 선언 유지)",
-                        simpleName, seenByName.get(simpleName).getName(), cls.getName());
-                continue;
-            }
-            seenByName.put(simpleName, cls);
-            result.put(simpleName, describeClass(cls, stack));
+            processSchema(stack.pop(), visited, seenByName, result, stack);
         }
         return result;
+    }
+
+    private void processSchema(
+            Class<?> cls,
+            Set<Class<?>> visited,
+            Map<String, Class<?>> seenByName,
+            Map<String, WsCatalog.SchemaEntry> result,
+            Deque<Class<?>> pending
+    ) {
+        if (!visited.add(cls)) {
+            return;
+        }
+        final String simpleName = cls.getSimpleName();
+        if (seenByName.containsKey(simpleName)) {
+            log.warn("스키마 simpleName 충돌: '{}' — {} vs {} (첫 선언 유지)",
+                    simpleName, seenByName.get(simpleName).getName(), cls.getName());
+            return;
+        }
+        seenByName.put(simpleName, cls);
+        result.put(simpleName, describeClass(cls, pending));
     }
 
     private WsCatalog.SchemaEntry describeClass(Class<?> cls, Deque<Class<?>> pending) {

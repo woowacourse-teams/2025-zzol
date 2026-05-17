@@ -13,6 +13,7 @@ import { wsListTopicsTool } from './tools/list-topics.js';
 import { wsSendTool } from './tools/send.js';
 import { wsSourceTool } from './tools/source.js';
 import { wsSubscribeTool } from './tools/subscribe.js';
+import { loadConfig } from './config.js';
 import type { ToolContext, ToolDefinition } from './tools/types.js';
 
 const TOOLS: ToolDefinition[] = [
@@ -25,9 +26,7 @@ const TOOLS: ToolDefinition[] = [
 ];
 
 async function main(): Promise<void> {
-  const catalogUrl = process.env.WS_MCP_CATALOG_URL ?? 'http://localhost:8080/dev/ws-catalog';
-  const brokerUrl = process.env.WS_MCP_BROKER_URL ?? deriveBrokerUrl(catalogUrl);
-  const cachePath = process.env.WS_MCP_CACHE_PATH;
+  const { catalogUrl, brokerUrl, cachePath } = loadConfig();
 
   const context: ToolContext = {
     catalog: new CatalogFetcher({
@@ -73,11 +72,6 @@ async function main(): Promise<void> {
   await server.connect(transport);
 }
 
-function deriveBrokerUrl(catalogUrl: string): string {
-  const url = new URL(catalogUrl);
-  const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${wsProtocol}//${url.host}/ws`;
-}
 
 main().catch((error: unknown) => {
   process.stderr.write(

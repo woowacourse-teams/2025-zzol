@@ -21,27 +21,17 @@ export const wsSourceTool: ToolDefinition = {
     if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? '잘못된 인수');
     const args = parsed.data;
     const { catalog } = await ctx.catalog.load();
-    const sources: { kind: string; className: string; methodName: string }[] = [];
-
-    for (const topic of catalog.topics) {
-      if (topic.path === args.path) {
-        for (const p of topic.publishers) {
-          sources.push({ kind: 'topic', ...p.source });
-        }
-      }
-    }
-    for (const queue of catalog.queues) {
-      if (queue.path === args.path) {
-        for (const p of queue.publishers) {
-          sources.push({ kind: 'queue', ...p.source });
-        }
-      }
-    }
-    for (const send of catalog.sends) {
-      if (send.destination === args.path) {
-        sources.push({ kind: 'send', ...send.source });
-      }
-    }
+    const sources = [
+      ...catalog.topics
+        .filter((t) => t.path === args.path)
+        .flatMap((t) => t.publishers.map((p) => ({ kind: 'topic' as const, ...p.source }))),
+      ...catalog.queues
+        .filter((q) => q.path === args.path)
+        .flatMap((q) => q.publishers.map((p) => ({ kind: 'queue' as const, ...p.source }))),
+      ...catalog.sends
+        .filter((s) => s.destination === args.path)
+        .map((s) => ({ kind: 'send' as const, ...s.source })),
+    ];
 
     if (sources.length === 0) {
       return fail(`path ${args.path} 에 해당하는 소스가 없습니다`);

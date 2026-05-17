@@ -14,17 +14,20 @@ export interface CatalogFetcherOptions {
   url: string;
   cache?: CatalogCache;
   fetchImpl?: typeof fetch;
+  timeoutMs?: number;
 }
 
 export class CatalogFetcher {
   private readonly url: string;
   private readonly cache: CatalogCache;
   private readonly fetchImpl: typeof fetch;
+  private readonly timeoutMs: number;
 
   constructor(options: CatalogFetcherOptions) {
     this.url = options.url;
     this.cache = options.cache ?? new CatalogCache();
     this.fetchImpl = options.fetchImpl ?? fetch;
+    this.timeoutMs = options.timeoutMs ?? 10_000;
   }
 
   async load(): Promise<CatalogResult> {
@@ -48,7 +51,7 @@ export class CatalogFetcher {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-    }, 10_000);
+    }, this.timeoutMs);
     try {
       const response = await this.fetchImpl(this.url, { headers, signal: controller.signal });
 

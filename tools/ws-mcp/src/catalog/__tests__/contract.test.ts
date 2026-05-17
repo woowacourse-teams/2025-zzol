@@ -5,11 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { WsCatalogSchema } from '../types.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const FIXTURE = resolve(
-  HERE,
-  '../../../../..',
-  'backend/src/test/resources/__fixtures__/ws-catalog.json'
-);
+const REPO_ROOT = resolve(HERE, '../../../../..'); // src/catalog/__tests__ → repo root
+const FIXTURE =
+  process.env.WS_CATALOG_FIXTURE ??
+  resolve(REPO_ROOT, 'backend/src/test/resources/__fixtures__/ws-catalog.json');
 
 describe('contract drift', () => {
   it('BE /dev/ws-catalog 응답 fixture 가 zod 스키마와 일치한다', async () => {

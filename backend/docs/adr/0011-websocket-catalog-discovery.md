@@ -87,7 +87,7 @@ public @interface WsQueue {
 **`WsCatalogController`** (`coffeeshout.global.websocket.docs.WsCatalogController`)
 
 - `@RestController` + `@Profile("!prod")` 단일 가드로 운영 환경 노출을 방지한다.
-- `GET /dev/ws-catalog` 가 카탈로그 JSON 을 반환한다. 응답에 `body.hashCode()` 기반 ETag 헤더를 부착해 MCP 캐시의 `If-None-Match` → 304 Not Modified 조회를 지원한다 (`WsCatalog` record 의 hashCode 는 모든 필드의 deterministic 합산이므로 동일 카탈로그 → 동일 ETag).
+- `GET /dev/ws-catalog` 가 카탈로그 JSON 을 반환한다. 응답에 `body.hashCode()` 기반 ETag 헤더를 부착해 MCP 캐시의 `If-None-Match` → 304 Not Modified 조회를 지원한다. 이 ETag 는 약한 지문(weak validator) 으로, `WsCatalog` record 의 `hashCode()` 는 JVM 구현에 따라 실행마다 달라질 수 있고 서로 다른 카탈로그가 동일한 해시를 생성하는 충돌 가능성이 있다. 강한 유일성이 필요하다면 SHA-256 같은 암호학적 해시로 교체해야 한다. 현재 구현은 "변경 감지용 캐시 최적화" 용도로만 사용하며, 강한 식별자로 오용해서는 안 된다.
 - `application.yml` 의 `websocket.docs.*` path/envelope 값을 `@ConfigurationProperties("websocket.docs")` 로 바인딩한다. envelope record 타입은 `envelope-class` 키에 FQCN 으로 명시하고 `Class<?>` 로 바인딩되어, 빌더가 reflection 으로 필드/스키마를 자동 추출한다.
 
 **`WsCatalogSecurityConfig`** (`coffeeshout.global.websocket.docs.WsCatalogSecurityConfig`)

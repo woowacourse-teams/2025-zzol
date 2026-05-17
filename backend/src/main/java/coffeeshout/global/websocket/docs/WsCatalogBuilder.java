@@ -38,8 +38,8 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
 
     private final ApplicationContext applicationContext;
     private final WsCatalogProperties properties;
-    private WsCatalog cached;
-    private String cachedEtag;
+    private volatile WsCatalog cached;
+    private volatile String cachedEtag;
 
     public WsCatalogBuilder(ApplicationContext applicationContext, WsCatalogProperties properties) {
         this.applicationContext = applicationContext;
@@ -48,18 +48,24 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
 
     @Override
     public void afterSingletonsInstantiated() {
-        cached = buildInternal();
-        cachedEtag = "\"" + Integer.toHexString(cached.hashCode()) + "\"";
+        build();
     }
 
     public WsCatalog build() {
         if (cached == null) {
-            afterSingletonsInstantiated();
+            synchronized (this) {
+                if (cached == null) {
+                    final WsCatalog built = buildInternal();
+                    cachedEtag = "\"" + Integer.toHexString(built.hashCode()) + "\"";
+                    cached = built;
+                }
+            }
         }
         return cached;
     }
 
     public String getEtag() {
+        build();
         return cachedEtag;
     }
 

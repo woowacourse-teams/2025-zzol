@@ -28,7 +28,13 @@ export class CatalogFetcher {
   }
 
   async load(): Promise<CatalogResult> {
-    const previous = await this.cache.read();
+    let previous: CachedCatalog | null = null;
+    try {
+      previous = await this.cache.read();
+    } catch {
+      // 캐시 파일 손상 — 미스로 처리
+    }
+
     const headers: Record<string, string> = { accept: "application/json" };
     if (previous?.etag) {
       headers["if-none-match"] = previous.etag;
@@ -37,8 +43,10 @@ export class CatalogFetcher {
       headers["if-modified-since"] = previous.lastModified;
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
     try {
-      const response = await this.fetchImpl(this.url, { headers });
+      const response = await this.fetchImpl(this.url, { headers, signal: controller.signal });
 
       if (response.status === 304 && previous) {
         return toResult(previous, "cache");
@@ -59,6 +67,8 @@ export class CatalogFetcher {
       return { catalog, source: "live", fetchedAt: cached.fetchedAt };
     } catch (error) {
       return await this.fallback(previous, errorMessage(error));
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

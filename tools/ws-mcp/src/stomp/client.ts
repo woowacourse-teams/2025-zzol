@@ -32,6 +32,7 @@ export class StompSession {
       client.onConnect = () => resolve();
       client.onStompError = (frame) => reject(new Error(frame.headers.message ?? "STOMP error"));
       client.onWebSocketError = (event) => reject(new Error(String(event)));
+      client.onWebSocketClose = (event) => reject(new Error(`WebSocket closed before connect (code=${event.code})`));
       client.activate();
     });
 

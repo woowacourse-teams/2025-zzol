@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
 @DisplayName("WsCatalog 컨트랙트 fixture export")
@@ -41,8 +42,15 @@ class WsCatalogFixtureExportTest extends TestContainerSupport {
         final String json = objectMapper.copy()
                 .enable(SerializationFeature.INDENT_OUTPUT)
                 .writeValueAsString(response.getBody());
+        final String content = json + System.lineSeparator();
 
-        Files.createDirectories(FIXTURE_PATH.getParent());
-        Files.writeString(FIXTURE_PATH, json + System.lineSeparator());
+        if (Boolean.getBoolean("updateFixture")) {
+            Files.createDirectories(FIXTURE_PATH.getParent());
+            Files.writeString(FIXTURE_PATH, content);
+        } else {
+            assertThat(Files.readString(FIXTURE_PATH))
+                    .as("ws-catalog.json 이 최신 카탈로그와 다릅니다. -DupdateFixture=true 로 갱신하세요.")
+                    .isEqualTo(content);
+        }
     }
 }

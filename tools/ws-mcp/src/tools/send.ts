@@ -12,6 +12,7 @@ type SendArgs = {
 };
 
 const DEFAULT_WAIT_MS = 3_000;
+const MAX_CAPTURED = 100;
 
 export const wsSendTool: ToolDefinition = {
   name: "ws_send",
@@ -49,6 +50,10 @@ export const wsSendTool: ToolDefinition = {
     try {
       if (args.waitForResponseTopic) {
         unsubscribe = session.subscribe(args.waitForResponseTopic, (message) => {
+          if (captured.length >= MAX_CAPTURED) {
+            unsubscribe?.();
+            return;
+          }
           captured.push({
             receivedAt: new Date().toISOString(),
             body: tryParseJson(message.body),

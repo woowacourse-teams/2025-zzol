@@ -80,6 +80,53 @@
         font-style: normal;
         font-display: swap;
       }
+      @keyframes zzol-pulse {
+        0%, 100% { opacity: 0.2; transform: scale(0.75); }
+        50%       { opacity: 1;   transform: scale(1); }
+      }
+      #zzol-splash {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        min-height: 100dvh;
+        background: #ffffff;
+        text-align: center;
+      }
+      #zzol-splash h1 {
+        font-family: 'Pretendard Variable', sans-serif;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: #888;
+        margin: 0;
+        line-height: 1.5;
+      }
+      #zzol-splash p {
+        font-family: 'Pretendard Variable', sans-serif;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        color: #aaa;
+        line-height: 1.75;
+        max-width: 260px;
+        margin: 0;
+      }
+      #zzol-dots {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin-top: 8px;
+      }
+      #zzol-dots span {
+        display: block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #F53E41;
+        animation: zzol-pulse 1.2s ease-in-out infinite;
+      }
+      #zzol-dots span:nth-child(2) { animation-delay: 0.4s; }
+      #zzol-dots span:nth-child(3) { animation-delay: 0.8s; }
     </style>
     <script type="application/ld+json">
       {
@@ -123,13 +170,17 @@
   </head>
   <body>
     <div id="root">
-      <main style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:24px;font-family:sans-serif;text-align:center;">
-        <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:12px;">쫄 — 커피 내기·점심 내기를 미니게임으로</h1>
-        <p style="font-size:1rem;line-height:1.7;max-width:400px;color:#555;">
-          내기 게임, 복불복 게임을 더 재밌게! QR코드로 방에 입장하고 미니게임 결과로
-          룰렛 당첨 확률을 정하세요. 커피 내기, 점심 메뉴 정하기, 당번 뽑기까지
-          가위바위보 대신 쫄(ZZOL)로 해결하세요.
-        </p>
+      <main id="zzol-splash">
+        <svg width="120" height="31" viewBox="0 0 206 53" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="쫄 (ZZOL)">
+          <path d="M49.2 51.6H-1.95601e-06L19.08 18H0.899998V1.2H49.8L30.72 34.8H49.2V51.6ZM99.0047 51.6H49.8047L68.8847 18H50.7047V1.2L99.6047 1.2L80.5247 34.8H99.0047V51.6ZM130.209 52.8C112.389 52.8 100.809 42.78 100.209 27.54H121.269C121.689 31.44 124.869 34.8 130.209 34.8C135.909 34.8 139.209 30.84 139.209 26.34C139.209 21.84 135.969 18 130.209 18C124.809 18 121.329 21.42 121.269 26.94L100.209 25.14C100.869 9.96 112.449 2.38419e-08 130.209 2.38419e-08C148.449 2.38419e-08 160.209 10.5 160.209 26.4C160.209 42.3 148.449 52.8 130.209 52.8ZM205.181 34.2V51.6H161.981V1.2H182.381V34.2H205.181Z" fill="#FD6C6E"/>
+        </svg>
+        <h1>커피 내기 · 점심 내기를 미니게임으로</h1>
+        <p>내기 게임·복불복을 미니게임으로!<br/>커피 내기, 술 내기, 점심 메뉴, 당번 뽑기까지<br/>가위바위보 대신 쫄(ZZOL)로.</p>
+        <div id="zzol-dots" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </main>
     </div>
     <div id="modal-root"></div>

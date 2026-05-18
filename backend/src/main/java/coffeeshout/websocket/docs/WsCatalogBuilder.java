@@ -1,4 +1,4 @@
-package coffeeshout.global.websocket.docs;
+package coffeeshout.websocket.docs;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;

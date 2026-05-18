@@ -1,4 +1,4 @@
-package coffeeshout.global.websocket.docs;
+package coffeeshout.websocket.docs;
 
 import java.util.List;
 import java.util.Map;

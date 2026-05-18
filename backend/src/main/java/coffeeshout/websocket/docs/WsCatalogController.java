@@ -1,4 +1,4 @@
-package coffeeshout.global.websocket.docs;
+package coffeeshout.websocket.docs;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;

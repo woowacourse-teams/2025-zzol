@@ -1,4 +1,4 @@
-package coffeeshout.global.websocket.docs;
+package coffeeshout.websocket.docs;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

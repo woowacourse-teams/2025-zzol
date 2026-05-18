@@ -5,7 +5,7 @@ import coffeeshout.blindtimer.ui.request.StopCommand;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.blindtimer.infra.BlindTimerStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.global.websocket.docs.WsReceive;
+import coffeeshout.websocket.docs.WsReceive;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

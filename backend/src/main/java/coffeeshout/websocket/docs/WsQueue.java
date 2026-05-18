@@ -1,4 +1,4 @@
-package coffeeshout.global.websocket.docs;
+package coffeeshout.websocket.docs;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;

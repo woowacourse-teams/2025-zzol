@@ -1,7 +1,9 @@
-package coffeeshout.global.websocket.docs;
+package coffeeshout.websocket.docs;
 
 import coffeeshout.fixture.TestContainerSupport;
 import coffeeshout.support.test.IntegrationTest;
+import coffeeshout.websocket.docs.WsCatalog;
+import coffeeshout.websocket.docs.WsCatalogController;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

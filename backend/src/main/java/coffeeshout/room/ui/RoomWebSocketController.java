@@ -3,7 +3,7 @@ package coffeeshout.room.ui;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.global.websocket.docs.WsReceive;
+import coffeeshout.websocket.docs.WsReceive;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;

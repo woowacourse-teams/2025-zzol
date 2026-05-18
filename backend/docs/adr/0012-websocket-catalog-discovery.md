@@ -29,7 +29,7 @@ ADR-0010 으로 `StompSessionManager`가 Redis 기반으로 전환된 뒤 세션
 자체 `@WsTopic`/`@WsQueue`/`@WsReceive` 어노테이션과 dev 전용 카탈로그 엔드포인트 `GET /dev/ws-catalog`를 도입한다.
 Node 기반 MCP 서버(`tools/ws-mcp/`)가 이 엔드포인트를 소비해 컨트랙트 디스커버리와 연결 검증을 한 번에 제공한다.
 
-**`@WsTopic` 어노테이션 시그니처** (`coffeeshout.global.websocket.docs.WsTopic`)
+**`@WsTopic` 어노테이션 시그니처** (`coffeeshout.websocket.docs.WsTopic`)
 
 ```java
 @Target(METHOD) @Retention(RUNTIME) @Repeatable(WsTopics.class)
@@ -43,7 +43,7 @@ public @interface WsTopic {
 
 순수 Java 어노테이션으로 외부 라이브러리/Spring 의존성을 0으로 유지한다.
 
-**`@WsReceive` 어노테이션 시그니처** (`coffeeshout.global.websocket.docs.WsReceive`)
+**`@WsReceive` 어노테이션 시그니처** (`coffeeshout.websocket.docs.WsReceive`)
 
 ```java
 @Target(METHOD) @Retention(RUNTIME)
@@ -58,7 +58,7 @@ public @interface WsReceive {
 `respondsOnTopics`로 이 send 처리 결과가 어떤 토픽으로 최종 발행되는지 선언적으로 표시해 FE가 send→topic 인과 관계를 파악할 수 있도록 한다.
 request payload 식별은 `@Payload` 어노테이션을 통해 명시한다 — `@Payload` 없는 매개변수는 카탈로그에서 `requestType=null` 로 표시된다.
 
-**`@WsQueue` 어노테이션 시그니처** (`coffeeshout.global.websocket.docs.WsQueue`)
+**`@WsQueue` 어노테이션 시그니처** (`coffeeshout.websocket.docs.WsQueue`)
 
 ```java
 @Target(METHOD) @Retention(RUNTIME) @Repeatable(WsQueues.class)
@@ -74,7 +74,7 @@ public @interface WsQueue {
 `path` 는 `convertAndSendToUser` 에 전달하는 값 그대로 적는다 — 빌더가 `websocket.docs.user-destination-prefix`(`/user`)를 자동으로 prepend 해 FE 구독 경로(`/user/queue/...`)를 생성한다.
 `@WsTopic.path` 가 `/topic/` 을 제외한 상대 경로인 것과 달리, `@WsQueue.path` 는 `/queue/` 를 포함한 경로를 그대로 기재한다 (코드 상수와 1:1 대응 우선).
 
-**`WsCatalogBuilder`** (`coffeeshout.global.websocket.docs.WsCatalogBuilder`)
+**`WsCatalogBuilder`** (`coffeeshout.websocket.docs.WsCatalogBuilder`)
 
 - `ApplicationContext.getBeansWithAnnotation(Component.class)`로 빈을 스캔한다. `@WsTopic`을 붙이는 주체가 `@Controller` 뿐 아니라 `RoomMessagePublisher` 같은 `@Component` Publisher도 있기 때문이다 (패키지 prefix 의존 금지).
 - `@MessageMapping` 메서드의 send destination 과 `@WsTopic` 메서드의 response topic 메타데이터를 함께 수집한다.
@@ -83,7 +83,7 @@ public @interface WsQueue {
 - payload validation: `path` 가 비어 있거나 `/` 로 시작하지 않거나 `payload` 가 `Void.class` / `Object.class` 인 경우 `SystemException(WsCatalogErrorCode, ...)` 으로 빌드를 실패시킨다 (`Object.class` 회피 차단). `envelope-class` 가 record 타입이 아닌 경우도 동일하게 실패한다.
 - **다중 발행자 표시**: 동일 `path` 를 발행하는 메서드가 여러 개인 경우 (예: `FRIEND_RESPONSES_QUEUE` 가 수락/거절 양쪽에서 발행) 하나의 `TopicEntry`/`QueueEntry` 로 묶고 각 메서드의 `description` + `source` 를 `publishers` 배열에 보존한다. 동일 path 에 서로 다른 payload type 이 선언되면 warn 로그를 남긴다 (첫 선언만 노출).
 
-**`WsCatalogController`** (`coffeeshout.global.websocket.docs.WsCatalogController`)
+**`WsCatalogController`** (`coffeeshout.websocket.docs.WsCatalogController`)
 
 - `@RestController` + `@Profile("!prod")` 단일 가드로 운영 환경 노출을 방지한다.
 - `GET /dev/ws-catalog` 가 카탈로그 JSON 을 반환한다.
@@ -123,7 +123,7 @@ public @interface WsQueue {
 
 ## 결과
 
-- `coffeeshout.global.websocket.docs` 패키지에 9개 신규 클래스 추가 (`@WsTopic`, `@WsTopics`, `@WsReceive`, `@WsQueue`, `@WsQueues`, `WsCatalogBuilder`, `WsCatalogController`, `WsCatalogProperties`, `WsCatalog`).
+- `coffeeshout.websocket.docs` 패키지에 9개 신규 클래스 추가 (`@WsTopic`, `@WsTopics`, `@WsReceive`, `@WsQueue`, `@WsQueues`, `WsCatalogBuilder`, `WsCatalogController`, `WsCatalogProperties`, `WsCatalog`).
 - 어노테이션 부착 컴포넌트 (총 15개):
     - `@WsTopic`: `RoomWebSocketController`, `RoomMessagePublisher`, `CardGameNotifier`, `RacingGameWebSocketController`, `RacingGameMessagePublisher`, `LadderWebSocketController`, `LadderNotifier`, `BlindTimerGameMessagePublisher`, `BlockStackingNotifier`, `SpeedTouchGameMessagePublisher`
     - `@WsReceive`: `BlindTimerGameWebSocketController`, `BlockStackingWebSocketController`, `SpeedTouchGameWebSocketController`, `MiniGameWebSocketController`

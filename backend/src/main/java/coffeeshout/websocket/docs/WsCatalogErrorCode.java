@@ -1,4 +1,4 @@
-package coffeeshout.global.websocket.docs;
+package coffeeshout.websocket.docs;
 
 import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;

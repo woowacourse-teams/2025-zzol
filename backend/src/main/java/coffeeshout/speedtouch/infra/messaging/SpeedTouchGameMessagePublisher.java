@@ -1,7 +1,8 @@
 package coffeeshout.speedtouch.infra.messaging;
 
-import coffeeshout.websocket.LoggingSimpMessagingTemplate;
-import coffeeshout.websocket.ui.WebSocketResponse;
+import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.global.websocket.docs.WsTopic;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.speedtouch.domain.event.SpeedTouchFinishedEvent;
 import coffeeshout.speedtouch.domain.event.SpeedTouchProgressEvent;
 import coffeeshout.speedtouch.domain.event.SpeedTouchStateChangedEvent;
@@ -21,6 +22,8 @@ public class SpeedTouchGameMessagePublisher {
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
     @EventListener
+    @WsTopic(path = "/room/{joinCode}/speed-touch/progress", payload = SpeedTouchProgressResponse.class,
+            description = "스피드터치 진행 상황 브로드캐스트")
     public void publishProgress(SpeedTouchProgressEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(PROGRESS_DESTINATION_FORMAT, event.joinCode()),
@@ -29,6 +32,8 @@ public class SpeedTouchGameMessagePublisher {
     }
 
     @EventListener
+    @WsTopic(path = "/room/{joinCode}/speed-touch/state", payload = SpeedTouchStateResponse.class,
+            description = "스피드터치 게임 상태 변경 브로드캐스트")
     public void publishStateChanged(SpeedTouchStateChangedEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(STATE_DESTINATION_FORMAT, event.joinCode()),
@@ -37,6 +42,8 @@ public class SpeedTouchGameMessagePublisher {
     }
 
     @EventListener
+    @WsTopic(path = "/room/{joinCode}/speed-touch/state", payload = SpeedTouchStateResponse.class,
+            description = "스피드터치 게임 종료 브로드캐스트")
     public void publishFinished(SpeedTouchFinishedEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(STATE_DESTINATION_FORMAT, event.joinCode()),

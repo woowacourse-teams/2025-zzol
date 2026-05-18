@@ -3,8 +3,9 @@ package coffeeshout.blockstacking.application;
 import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.blockstacking.ui.response.BlockStackingProgressResponse;
 import coffeeshout.blockstacking.ui.response.BlockStackingStateResponse;
-import coffeeshout.websocket.LoggingSimpMessagingTemplate;
-import coffeeshout.websocket.ui.WebSocketResponse;
+import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.global.websocket.docs.WsTopic;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.room.domain.Room;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,8 @@ public class BlockStackingNotifier {
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
+    @WsTopic(path = "/room/{joinCode}/block-stacking/state", payload = BlockStackingStateResponse.class,
+            description = "블록 쌓기 상태 변경 브로드캐스트")
     public void notifyStateChanged(BlockStackingGame game, Room room) {
         final String joinCode = room.getJoinCode().getValue();
         messagingTemplate.convertAndSend(
@@ -27,6 +30,8 @@ public class BlockStackingNotifier {
         );
     }
 
+    @WsTopic(path = "/room/{joinCode}/block-stacking/state", payload = BlockStackingStateResponse.class,
+            description = "블록 쌓기 플레이 시작 브로드캐스트")
     public void notifyPlayingStarted(Room room, Instant playingEndTime) {
         final String joinCode = room.getJoinCode().getValue();
         messagingTemplate.convertAndSend(
@@ -37,6 +42,8 @@ public class BlockStackingNotifier {
         );
     }
 
+    @WsTopic(path = "/room/{joinCode}/block-stacking/progress", payload = BlockStackingProgressResponse.class,
+            description = "블록 쌓기 진행 상황 브로드캐스트")
     public void notifyProgressUpdated(BlockStackingGame game, Room room) {
         final String joinCode = room.getJoinCode().getValue();
         messagingTemplate.convertAndSend(

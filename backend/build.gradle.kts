@@ -32,7 +32,6 @@ val ociSdkVersion = "3.74.1"
 val redissonVersion = "3.27.2"
 val zxingVersion = "3.5.3"
 val queryDslVersion = "5.0.0"
-val websocketDocsVersion = "1.0.7"
 val googleGenAiVersion = "1.44.0"
 val testcontainersVersion = "2.0.4"
 val reflectionsVersion = "0.10.2"
@@ -67,7 +66,6 @@ dependencies {
     // --- Utils ---
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     developmentOnly("me.paulschwarz:spring-dotenv:4.0.0")
-    implementation("io.github.20hyeonsulee:websocket-docs-generator:${websocketDocsVersion}")
 
     implementation("com.google.zxing:core:${zxingVersion}")
     implementation("com.google.zxing:javase:${zxingVersion}")

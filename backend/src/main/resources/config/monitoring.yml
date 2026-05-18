@@ -1,0 +1,42 @@
+# Actuator 엔드포인트, OTLP/Tempo 트레이싱, 로깅 패턴, Slack 알림
+management:
+  endpoint:
+    health:
+      show-details: always
+      group:
+        liveness:
+          include: "ping"
+          show-details: always
+        readiness:
+          include: "db,redis,gracefulShutdown,redisStream"
+          show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus,tracing,circuitbreakers,retries"
+  tracing:
+    enabled: true
+    sampling:
+      probability: ${TRACE_SAMPLING_PROBABILITY}
+  otlp:
+    tracing:
+      endpoint: ${TEMPO_URL}
+  metrics:
+    enable:
+      tomcat: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+logging:
+  level:
+    root: info
+    io.opentelemetry.exporter.logging.LoggingSpanExporter: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL:}
+  connect-timeout: 3s
+  read-timeout: 5s

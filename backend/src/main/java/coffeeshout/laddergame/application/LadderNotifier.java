@@ -1,7 +1,8 @@
 package coffeeshout.laddergame.application;
 
-import coffeeshout.websocket.LoggingSimpMessagingTemplate;
-import coffeeshout.websocket.ui.WebSocketResponse;
+import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.global.websocket.docs.WsTopic;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.LadderLine;
 import coffeeshout.laddergame.ui.response.LadderLineResponse;
@@ -20,26 +21,38 @@ public class LadderNotifier {
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
+    @WsTopic(path = "/room/{joinCode}/ladder/state", payload = LadderStateResponse.class,
+            description = "사다리게임 설명 상태 브로드캐스트")
     public void notifyDescription(Room room) {
         sendState(room, LadderStateResponse.ofDescription());
     }
 
+    @WsTopic(path = "/room/{joinCode}/ladder/state", payload = LadderStateResponse.class,
+            description = "사다리게임 준비 상태 브로드캐스트")
     public void notifyPrepare(LadderGame game, Room room) {
         sendState(room, LadderStateResponse.ofPrepare(game.getPoles(), game.getBottomRanks()));
     }
 
+    @WsTopic(path = "/room/{joinCode}/ladder/state", payload = LadderStateResponse.class,
+            description = "사다리게임 그리기 상태 브로드캐스트")
     public void notifyDrawing(Room room, Instant endTime) {
         sendState(room, LadderStateResponse.ofDrawing(endTime.toEpochMilli()));
     }
 
+    @WsTopic(path = "/room/{joinCode}/ladder/state", payload = LadderStateResponse.class,
+            description = "사다리게임 결과 브로드캐스트")
     public void notifyResult(LadderGame game, Room room, long animationDurationMs) {
         sendState(room, LadderStateResponse.ofResult(game.getRankingsForBroadcast(), animationDurationMs));
     }
 
+    @WsTopic(path = "/room/{joinCode}/ladder/state", payload = LadderStateResponse.class,
+            description = "사다리게임 완료 브로드캐스트")
     public void notifyDone(Room room) {
         sendState(room, LadderStateResponse.ofDone());
     }
 
+    @WsTopic(path = "/room/{joinCode}/ladder/line", payload = LadderLineResponse.class,
+            description = "사다리 선 그리기 브로드캐스트")
     public void notifyLineDrawn(LadderLine line, Room room) {
         final String joinCode = room.getJoinCode().getValue();
         messagingTemplate.convertAndSend(

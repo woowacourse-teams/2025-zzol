@@ -1,7 +1,8 @@
 package coffeeshout.room.ui.messaging;
 
-import coffeeshout.websocket.ui.WebSocketResponse;
-import coffeeshout.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.global.websocket.docs.WsTopic;
+import coffeeshout.global.websocket.ui.WebSocketResponse;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
@@ -13,7 +14,6 @@ import coffeeshout.room.ui.response.PlayerResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import coffeeshout.room.ui.response.RoomStatusResponse;
 import coffeeshout.room.ui.response.WinnerResponse;
-import generator.annotaions.MessageResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +35,11 @@ public class RoomMessagePublisher {
     private final RoomQueryService roomQueryService;
 
     @EventListener
-    @MessageResponse(
+    @WsTopic(
             path = "/room/{joinCode}",
-            returnType = List.class,
-            genericType = PlayerResponse.class
+            payload = List.class,
+            generic = PlayerResponse.class,
+            description = "플레이어 목록 변경 브로드캐스트"
     )
     public void onPlayerListChanged(PlayerListUpdateEvent event) {
         log.debug("플레이어 목록 변경 이벤트 수신: joinCode={}",
@@ -56,10 +57,11 @@ public class RoomMessagePublisher {
     }
 
     @EventListener
-    @MessageResponse(
+    @WsTopic(
             path = "/room/{joinCode}/minigame",
-            returnType = List.class,
-            genericType = String.class
+            payload = List.class,
+            generic = String.class,
+            description = "미니게임 목록 변경 브로드캐스트"
     )
     public void onMiniGameListChanged(MiniGameSelectEvent event) {
         log.debug("미니게임 목록 변경 이벤트 수신: joinCode={}, gameCount={}",
@@ -72,9 +74,10 @@ public class RoomMessagePublisher {
     }
 
     @EventListener
-    @MessageResponse(
+    @WsTopic(
             path = "/room/{joinCode}/roulette",
-            returnType = RoomStatusResponse.class
+            payload = RoomStatusResponse.class,
+            description = "룰렛 화면 전환 브로드캐스트"
     )
     public void onRouletteShown(RouletteShownEvent event) {
         log.debug("룰렛 화면 표시 이벤트 수신: joinCode={}, roomState={}",
@@ -88,9 +91,10 @@ public class RoomMessagePublisher {
     }
 
     @EventListener
-    @MessageResponse(
+    @WsTopic(
             path = "/room/{joinCode}/winner",
-            returnType = WinnerResponse.class
+            payload = WinnerResponse.class,
+            description = "룰렛 당첨자 브로드캐스트"
     )
     public void onRouletteWinnerSelected(RouletteWinnerEvent event) {
         log.debug("룰렛 당첨자 선택 이벤트 수신: joinCode={}, winner={}",
@@ -105,9 +109,10 @@ public class RoomMessagePublisher {
     }
 
     @EventListener
-    @MessageResponse(
+    @WsTopic(
             path = "/room/{joinCode}/qr-code",
-            returnType = QrCodeStatusResponse.class
+            payload = QrCodeStatusResponse.class,
+            description = "QR 코드 상태 변경 브로드캐스트"
     )
     public void onQrCodeStatusChanged(QrCodeStatusEvent event) {
         log.debug("QR 코드 상태 변경 이벤트 수신: joinCode={}, status={}",

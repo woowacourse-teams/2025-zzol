@@ -1,0 +1,17 @@
+# 서버 라이프사이클 (graceful shutdown), Tomcat 스레드/연결 수, 프록시 헤더
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 5m
+
+server:
+  forward-headers-strategy: native
+  shutdown: graceful
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 30
+    max-connections: 700
+    accept-count: 300
+    remoteip:
+      remote-ip-header: X-Forwarded-For
+      protocol-header: X-Forwarded-Proto

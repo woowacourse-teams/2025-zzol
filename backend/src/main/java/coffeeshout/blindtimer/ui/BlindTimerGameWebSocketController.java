@@ -5,8 +5,7 @@ import coffeeshout.blindtimer.ui.request.StopCommand;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.blindtimer.infra.BlindTimerStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import generator.annotaions.MessageResponse;
-import generator.annotaions.Operation;
+import coffeeshout.global.websocket.docs.WsReceive;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,13 +22,9 @@ public class BlindTimerGameWebSocketController {
     private final StreamPublisher streamPublisher;
 
     @MessageMapping("/room/{joinCode}/blind-timer/stop")
-    @Operation(
-            summary = "블라인드 타이머 게임 STOP",
-            description = "블라인드 타이머 게임에서 플레이어가 STOP 버튼을 누르는 웹소켓 요청입니다."
-    )
-    @MessageResponse(
-            path = "/topic/room/{joinCode}/blind-timer/progress",
-            returnType = Object.class
+    @WsReceive(
+            respondsOnTopics = "/room/{joinCode}/blind-timer/progress",
+            description = "블라인드 타이머 게임 STOP 버튼"
     )
     public void stop(@DestinationVariable String joinCode, @Payload @Valid StopCommand command) {
         final BaseEvent event = StopCommandEvent.create(joinCode, command.playerName());

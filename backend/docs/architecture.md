@@ -17,26 +17,26 @@
 
 `global/`은 도메인을 가로지르는 횡단 관심사를 담는다:
 
-| 패키지          | 역할                                          |
-|--------------|---------------------------------------------|
+| 패키지          | 역할                                              |
+|--------------|-------------------------------------------------|
 | `config/`    | 프레임워크 Bean 등록 (Async, Clock, WebMvc, Swagger 등) |
-| `aspect/`    | 횡단 관심사 AOP (MessageMappingTracingAspect)    |
-| `redis/`     | Redis Stream 인프라, Redisson, 커넥션 설정          |
-| `ipblock/`   | IP 차단 (필터, 저장소, 악성 경로 감지, 설정)              |
-| `metric/`    | HTTP·Redis Stream Micrometer 메트릭 수집         |
-| `trace/`     | OpenTelemetry 연동, Observation 필터            |
-| `outbox/`    | Transactional Outbox (이벤트 유실 방지)            |
-| `lock/`      | Redisson 기반 분산 락                            |
-| `exception/` | ErrorCode 인터페이스, 전역 예외 핸들러                  |
-| `health/`    | Spring Actuator 헬스 인디케이터                    |
-| `log/`       | 공유 로그 마커 (NotificationMarker 등)             |
-| `nickname/`  | 닉네임 유틸 (NameValidator 등, `common/`에서 흡수)    |
+| `aspect/`    | 횡단 관심사 AOP (MessageMappingTracingAspect)        |
+| `redis/`     | Redis Stream 인프라, Redisson, 커넥션 설정              |
+| `ipblock/`   | IP 차단 (필터, 저장소, 악성 경로 감지, 설정)                   |
+| `metric/`    | HTTP·Redis Stream Micrometer 메트릭 수집             |
+| `trace/`     | OpenTelemetry 연동, Observation 필터                |
+| `outbox/`    | Transactional Outbox (이벤트 유실 방지)                |
+| `lock/`      | Redisson 기반 분산 락                                |
+| `exception/` | ErrorCode 인터페이스, 전역 예외 핸들러                      |
+| `health/`    | Spring Actuator 헬스 인디케이터                        |
+| `log/`       | 공유 로그 마커 (NotificationMarker 등)                 |
+| `nickname/`  | 닉네임 유틸 (NameValidator 등, `common/`에서 흡수)        |
 
 최상위 공통 패키지:
 
-| 패키지           | 역할                                                       |
-|---------------|----------------------------------------------------------|
-| `websocket/`  | STOMP 인터셉터, 세션 추적, 인증, 레이트 리밋, 메시지 복구 (멀티 모듈 분리 예약)      |
+| 패키지           | 역할                                                         |
+|---------------|------------------------------------------------------------|
+| `websocket/`  | STOMP 인터셉터, 세션 추적, 인증, 레이트 리밋, 메시지 복구 (멀티 모듈 분리 예약)        |
 | `gamecommon/` | 게임 플로우 추상화 (`FlowScheduler`, `EarlyFinishTrigger`), 공통 메트릭 |
 
 ---
@@ -98,13 +98,46 @@ FlowOrchestrator
 
 ---
 
-## WebSocket 엔드포인트
+## WebSocket 패키지 구조
 
-| 방향 | 경로                                        | 설명              |
-|----|-------------------------------------------|-----------------|
-| 구독 | `/topic/room/{joinCode}/gameState`        | 게임 상태 변경 브로드캐스트 |
-| 구독 | `/topic/room/{joinCode}/participants`     | 참여자 목록 업데이트     |
-| 발행 | `/app/room/{joinCode}/minigame/command`   | 미니게임 커맨드        |
-| 발행 | `/app/room/{joinCode}/player/select-card` | 카드 선택           |
+`coffeeshout.websocket/`는 STOMP 기반 WebSocket 인프라 전체를 담는다.
+
+| 서브패키지          | 역할                                                                                           |
+|----------------|----------------------------------------------------------------------------------------------|
+| (루트)           | `StompSessionManager`, `PlayerKey`, `UserPrincipal`, `LoggingSimpMessagingTemplate` 등 핵심 서비스 |
+| `auth/`        | JWT 기반 룸 세션 토큰 발급·검증 (`RoomSessionTokenService`, `JjwtRoomSessionTokenIssuer`)               |
+| `config/`      | STOMP 브로커 설정 (`WebSocketMessageBrokerConfig`)                                                |
+| `docs/`        | WebSocket 컨트랙트 디스커버리 (애너테이션 + `/dev/ws-catalog`)                                             |
+| `event/`       | Spring 이벤트 리스너 — 세션 접속·구독·해제, 룸 상태 변경, 플레이어 재접속                                              |
+| `infra/`       | Redis Stream 이벤트 설정 (`PlayerEventConfig`, `SessionEventConfig`)                              |
+| `interceptor/` | STOMP 인터셉터 — 인증, 레이트 리밋, 메트릭, Graceful Shutdown                                              |
+| `lifecycle/`   | `WebSocketGracefulShutdownHandler`                                                           |
+| `metric/`      | `WebSocketMetricService`                                                                     |
+| `ratelimit/`   | `WebSocketRateLimiter`                                                                       |
+| `ui/`          | `GameRecoveryController` (`POST /api/rooms/{joinCode}/recovery`)                             |
 
 STOMP 연결 엔드포인트: `/ws` (SockJS 폴백 지원)
+
+---
+
+## WebSocket 컨트랙트 디스커버리
+
+`coffeeshout.websocket.docs` 패키지는 WebSocket 엔드포인트 명세를 런타임에 자동 수집한다.
+
+### 애너테이션
+
+| 애너테이션        | 부착 위치        | 의미                      |
+|--------------|--------------|-------------------------|
+| `@WsTopic`   | Notifier 메서드 | 서버 → 클라이언트 broadcast 토픽 |
+| `@WsQueue`   | Notifier 메서드 | 서버 → 클라이언트 유저별 큐        |
+| `@WsReceive` | Handler 메서드  | 클라이언트 → 서버 수신 경로        |
+
+각 애너테이션은 `path`, `payload` (메시지 타입), `description` 속성을 가진다.
+`@WsTopic` / `@WsQueue`는 repeatable이다 (`@WsTopics` / `@WsQueues` 컨테이너).
+
+### 카탈로그 조회
+
+`GET /dev/ws-catalog` (`!prod` 프로파일에서만 활성화)
+
+`WsCatalogBuilder`가 `ApplicationContext`를 스캔하여 애너테이션이 붙은 모든 Bean을 수집하고 JSON으로 직렬화한다.
+클라이언트 개발·QA 시 이 엔드포인트를 통해 현행 WebSocket 명세를 확인한다.

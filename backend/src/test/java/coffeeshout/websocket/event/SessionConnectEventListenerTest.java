@@ -1,12 +1,21 @@
-package coffeeshout.global.websocket.event;
+package coffeeshout.websocket.event;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.metric.WebSocketMetricService;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
+import coffeeshout.websocket.metric.WebSocketMetricService;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -18,13 +27,6 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class SessionConnectEventListenerTest {
@@ -59,7 +61,7 @@ class SessionConnectEventListenerTest {
             listener.handleSessionConnected(event);
 
             verify(roomQueryService).getByJoinCode(any());
-            verify(streamPublisher).publish(eq(StreamKey.ROOM_BROADCAST), any(BaseEvent.class));
+            verify(streamPublisher).publish(eq(RoomStreamKey.BROADCAST), any(BaseEvent.class));
             verify(webSocketMetricService).completeConnection("session-1");
         }
     }
@@ -74,7 +76,7 @@ class SessionConnectEventListenerTest {
             listener.handleSessionConnected(event);
 
             verify(roomQueryService, never()).getByJoinCode(any());
-            verify(streamPublisher, never()).publish(any(), any());
+            verify(streamPublisher, never()).publish(any(StreamKey.class), any(BaseEvent.class));
             verify(webSocketMetricService).completeConnection("session-1");
         }
     }
@@ -89,7 +91,7 @@ class SessionConnectEventListenerTest {
             listener.handleSessionConnected(event);
 
             verify(roomQueryService, never()).getByJoinCode(any());
-            verify(streamPublisher, never()).publish(any(), any());
+            verify(streamPublisher, never()).publish(any(StreamKey.class), any(BaseEvent.class));
             verify(webSocketMetricService).completeConnection("session-1");
         }
 
@@ -102,7 +104,7 @@ class SessionConnectEventListenerTest {
             listener.handleSessionConnected(event);
 
             verify(roomQueryService, never()).getByJoinCode(any());
-            verify(streamPublisher, never()).publish(any(), any());
+            verify(streamPublisher, never()).publish(any(StreamKey.class), any(BaseEvent.class));
             verify(webSocketMetricService).completeConnection("session-1");
         }
     }
@@ -118,7 +120,7 @@ class SessionConnectEventListenerTest {
 
             listener.handleSessionConnected(event);
 
-            verify(streamPublisher, never()).publish(any(), any());
+            verify(streamPublisher, never()).publish(any(StreamKey.class), any(BaseEvent.class));
             verify(webSocketMetricService).completeConnection("session-1");
         }
     }
@@ -129,10 +131,10 @@ class SessionConnectEventListenerTest {
         @Test
         void 예외가_전파되더라도_메트릭_완료는_반드시_호출된다() {
             willThrow(new RuntimeException("Redis publish 실패"))
-                    .given(streamPublisher).publish(any(), any());
+                    .given(streamPublisher).publish(any(RoomStreamKey.class), any(BaseEvent.class));
             final SessionConnectedEvent event = eventWith("ABCD:홍길동");
 
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> listener.handleSessionConnected(event))
+            assertThatThrownBy(() -> listener.handleSessionConnected(event))
                     .isInstanceOf(RuntimeException.class);
 
             verify(webSocketMetricService).completeConnection("session-1");

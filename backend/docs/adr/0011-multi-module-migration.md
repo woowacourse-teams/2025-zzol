@@ -198,11 +198,11 @@ classes().that().areAnnotatedWith(Service.class)
 
 **Gradle 멀티 모듈과의 역할 분담**
 
-| 위반 유형 | Gradle | ArchUnit |
-|-----------|--------|----------|
-| `:game`이 `:user`를 import | 컴파일 오류 | — |
-| `game.infra`가 `game.domain`을 역참조 | 통과 | 테스트 실패 |
-| `Service`가 `Repository` 구현체를 직접 new | 통과 | 테스트 실패 |
+| 위반 유형                               | Gradle | ArchUnit |
+|-------------------------------------|--------|----------|
+| `:game`이 `:user`를 import            | 컴파일 오류 | —        |
+| `game.infra`가 `game.domain`을 역참조    | 통과     | 테스트 실패   |
+| `Service`가 `Repository` 구현체를 직접 new | 통과     | 테스트 실패   |
 
 ArchUnit 테스트는 CI에서 단위 테스트와 함께 실행된다. 피드백 시점이 컴파일러보다 늦지만, Gradle 멀티 모듈만으로는 강제할 수 없는 모듈 내 계층 규칙을 자동으로 검증한다.
 
@@ -243,16 +243,16 @@ Gradle 모듈 경계와 패키지 경계를 일치시키는 사전 작업이다.
 
 목표: 각 모듈이 실제로 필요한 의존성만 선언하고, 모듈 내 계층 규칙을 자동 검증한다.
 
-| 모듈           | 의존 모듈                            | 주요 외부 의존성                               |
-|--------------|----------------------------------|-----------------------------------------|
-| `:global`    | 없음                               | Spring Core, Redis, JPA, Redisson, OTel |
-| `:websocket` | `:global`                        | Spring WebSocket, STOMP                 |
-| `:user`      | `:global`, `:websocket`          | Spring Security, OAuth2, JWT            |
-| `:room`      | `:global`, `:websocket`, `:user` | Spring Web                              |
-| `:game`      | `:global`, `:websocket`, `:room` |                                         |
-| `:admin`     | `:global`, `:websocket`, `:room`, `:user` | Thymeleaf, Spring Security       |
-| `:zzolbot`   | `:global`, `:room`               | Gemini AI, JSqlParser, Resilience4j     |
-| `:app`       | 모든 모듈                            | Spring Boot 플러그인, Flyway, DB 드라이버       |
+| 모듈           | 의존 모듈                                     | 주요 외부 의존성                               |
+|--------------|-------------------------------------------|-----------------------------------------|
+| `:global`    | 없음                                        | Spring Core, Redis, JPA, Redisson, OTel |
+| `:websocket` | `:global`                                 | Spring WebSocket, STOMP                 |
+| `:user`      | `:global`, `:websocket`                   | Spring Security, OAuth2, JWT            |
+| `:room`      | `:global`, `:websocket`, `:user`          | Spring Web                              |
+| `:game`      | `:global`, `:websocket`, `:room`          |                                         |
+| `:admin`     | `:global`, `:websocket`, `:room`, `:user` | Thymeleaf, Spring Security              |
+| `:zzolbot`   | `:global`, `:room`                        | Gemini AI, JSqlParser, Resilience4j     |
+| `:app`       | 모든 모듈                                     | Spring Boot 플러그인, Flyway, DB 드라이버       |
 
 의존성 정제 완료 후 ArchUnit 도입 (§10):
 
@@ -312,15 +312,15 @@ Phase 1에서는 파일 이동 시 패키지 이름을 변경하지 않았으나
 
 **`:global` → `:websocket`** (websocket 타입 참조로 인한 이동)
 
-| 원래 파일 경로                                             | 계획 모듈     | 실제 모듈        | 이유                                                                    |
-|------------------------------------------------------|-----------|--------------|-----------------------------------------------------------------------|
-| `global/exception/WebSocketExceptionHandler.java`    | `:global` | `:websocket` | `coffeeshout.websocket.LoggingSimpMessagingTemplate` 참조. 패키지도 `coffeeshout.websocket.exception`으로 변경 |
+| 원래 파일 경로                                          | 계획 모듈     | 실제 모듈        | 이유                                                                                                   |
+|---------------------------------------------------|-----------|--------------|------------------------------------------------------------------------------------------------------|
+| `global/exception/WebSocketExceptionHandler.java` | `:global` | `:websocket` | `coffeeshout.websocket.LoggingSimpMessagingTemplate` 참조. 패키지도 `coffeeshout.websocket.exception`으로 변경 |
 
 **`:global` 유지 — 포트 추출 또는 의존성 이동으로 역전** (Phase 1 이후 구조 개선)
 
-| 원래 파일 경로                                             | Phase 1 위치   | 최종 위치     | 해소 방법                                                                                                   |
-|------------------------------------------------------|-------------|-----------|----------------------------------------------------------------------------------------------------------|
-| `global/config/SwaggerConfig.java`                   | `:websocket` | `:global` | SpringDoc 의존성을 `:global`로 이동. `api` 선언으로 전이되어 하위 모듈 별도 선언 불필요                                          |
+| 원래 파일 경로                                             | Phase 1 위치   | 최종 위치     | 해소 방법                                                                                                               |
+|------------------------------------------------------|--------------|-----------|---------------------------------------------------------------------------------------------------------------------|
+| `global/config/SwaggerConfig.java`                   | `:websocket` | `:global` | SpringDoc 의존성을 `:global`로 이동. `api` 선언으로 전이되어 하위 모듈 별도 선언 불필요                                                       |
 | `global/health/GracefulShutdownHealthIndicator.java` | `:websocket` | `:global` | `ShutdownStateReader` 포트를 `:global.health`에 신규 선언. `WebSocketGracefulShutdownHandler`가 구현. Health Indicator는 포트만 의존 |
 
 **`:global` → `:user`** (user 타입 참조로 인한 이동)
@@ -338,11 +338,11 @@ Phase 1에서는 파일 이동 시 패키지 이름을 변경하지 않았으나
 
 **`:user` → `:room`** (room 타입 참조로 인한 이동)
 
-| 원래 파일 경로                                                   | 계획 모듈   | 실제 모듈   | 이유                                                                     |
-|------------------------------------------------------------|---------|---------|------------------------------------------------------------------------|
+| 원래 파일 경로                                                   | 계획 모듈   | 실제 모듈   | 이유                                                                                                                           |
+|------------------------------------------------------------|---------|---------|------------------------------------------------------------------------------------------------------------------------------|
 | `user/application/service/UserNicknameCleanupService.java` | `:user` | `:room` | `ProfanityWordBlockedEvent` 참조. 패키지도 `coffeeshout.room.application.user`로 변경 — room 이벤트에 반응해 user 데이터를 정리하는 room 오케스트레이션 서비스 |
-| `friend/application/service/RoomInvitationService.java`    | `:user` | `:room` | `coffeeshout.room.domain.*`, `coffeeshout.room.domain.repository.*` 참조 |
-| `friend/ui/RoomInvitationRestController.java`              | `:user` | `:room` | `RoomInvitationService`가 `:room`으로 이동했으므로 함께 이동                        |
+| `friend/application/service/RoomInvitationService.java`    | `:user` | `:room` | `coffeeshout.room.domain.*`, `coffeeshout.room.domain.repository.*` 참조                                                       |
+| `friend/ui/RoomInvitationRestController.java`              | `:user` | `:room` | `RoomInvitationService`가 `:room`으로 이동했으므로 함께 이동                                                                              |
 
 **`:user` → `:admin`** (report/admin 타입 참조로 인한 이동)
 
@@ -364,10 +364,10 @@ Phase 1에서는 파일 이동 시 패키지 이름을 변경하지 않았으나
 그러나 `:admin`으로 이동하면 서비스·스케줄러가 room 도메인 파일임에도 admin 모듈에 묶이는 문제가 발생한다.
 대신 `§7`의 포트 패턴(인터페이스를 하위 모듈에 선언, 구현체를 상위 모듈에 배치)을 적용해 두 파일을 `:room`에 유지했다.
 
-| 원래 파일 경로                                                                    | 계획 모듈   | 실제 모듈   | 해소 방법                                             |
-|-----------------------------------------------------------------------------|---------|---------|---------------------------------------------------|
+| 원래 파일 경로                                                                    | 계획 모듈   | 실제 모듈   | 해소 방법                                                                                               |
+|-----------------------------------------------------------------------------|---------|---------|-----------------------------------------------------------------------------------------------------|
 | `room/application/service/player/name/PlayerNameRankingCleanupService.java` | `:room` | `:room` | `RankedNicknameReader` 포트를 `:room.domain`에 신규 선언, `DashboardRankedNicknameReader` 구현체를 `:admin`에 배치 |
-| `room/infra/PlayerNameRankingCleanupScheduler.java`                         | `:room` | `:room` | 위 서비스가 `:room`에 유지되었으므로 스케줄러도 함께 유지              |
+| `room/infra/PlayerNameRankingCleanupScheduler.java`                         | `:room` | `:room` | 위 서비스가 `:room`에 유지되었으므로 스케줄러도 함께 유지                                                                 |
 
 **`:game` → `:room`** (모듈 의존 방향 교정)
 
@@ -381,10 +381,10 @@ Phase 1에서는 파일 이동 시 패키지 이름을 변경하지 않았으나
 그러나 두 파일은 `coffeeshout.room.domain.*` 타입을 참조하는 room 도메인 인프라 파일이며, `:zzolbot`에 위치하는 것은 의존 방향 위반이다.
 `room/build.gradle.kts`에 `google-genai` 의존성을 추가한 뒤 `:room.infra`로 복귀했다.
 
-| 파일                                  | Phase 1 위치  | 최종 위치   | 이유                                              |
-|-------------------------------------|-------------|---------|--------------------------------------------------|
-| `room/infra/GeminiPlayerNameAuditor.java` | `:zzolbot` | `:room` | room 도메인 타입 참조 — `:zzolbot` 배치는 의존 방향 위반        |
-| `room/config/GeminiAuditConfig.java` | `:zzolbot`  | `:room` | `GeminiPlayerNameAuditor`와 같은 이유로 함께 복귀         |
+| 파일                                        | Phase 1 위치 | 최종 위치   | 이유                                       |
+|-------------------------------------------|------------|---------|------------------------------------------|
+| `room/infra/GeminiPlayerNameAuditor.java` | `:zzolbot` | `:room` | room 도메인 타입 참조 — `:zzolbot` 배치는 의존 방향 위반 |
+| `room/config/GeminiAuditConfig.java`      | `:zzolbot` | `:room` | `GeminiPlayerNameAuditor`와 같은 이유로 함께 복귀  |
 
 ### 파일 이동 외 코드 변경
 
@@ -431,7 +431,7 @@ Phase 1에서는 파일 이동 시 패키지 이름을 변경하지 않았으나
 | `minigame/domain/MiniGameType.java`                 | `createMiniGame()`이 6개 게임 도메인 직접 인스턴스화                              | `createMiniGame()` 제거, 순수 enum 상수만 유지. `PlayableFactory` 인터페이스를 `:room`에 신규 선언, 구현체 `PlayableFactoryImpl`을 `:game`에 `@Component`로 신규 생성. `RoomCommandService`가 `PlayableFactory`를 주입받아 사용하도록 변경 |
 | `minigame/domain/MiniGameResult.java`               | `CardGameScore.INF`(`:game`)을 sentinel 초기값으로 사용                     | `prevScore = null`로 교체. `MiniGameScore.equals(null)`이 `false`를 반환하므로 동작 동일                                                                                                                      |
 | `minigame/application/MiniGameEventService.java`    | `coffeeshout.cardgame.domain.event.dto.MiniGameStartedEvent` import | `MiniGameStartedEvent`를 cardgame 패키지에서 `coffeeshout.minigame.event` 패키지(`:room`)로 이동. 수신 측 `CardGameNotifier`(`:game`)의 import도 함께 수정                                                           |
-| `room/infra/PlayerNameRankingCleanupScheduler.java` | `PlayerNameRankingCleanupService`가 `dashboard.domain.*`을 직접 참조 | `RankedNicknameReader` 포트를 `:room.domain`에 신규 선언, `DashboardRankedNicknameReader` 구현체를 `:admin.infra`에 신규 생성. 서비스·스케줄러 모두 `:room`에 유지 |
+| `room/infra/PlayerNameRankingCleanupScheduler.java` | `PlayerNameRankingCleanupService`가 `dashboard.domain.*`을 직접 참조      | `RankedNicknameReader` 포트를 `:room.domain`에 신규 선언, `DashboardRankedNicknameReader` 구현체를 `:admin.infra`에 신규 생성. 서비스·스케줄러 모두 `:room`에 유지                                                           |
 
 ### Phase 1 최종 상태 (2026-05-19)
 

@@ -23,6 +23,9 @@ springdoc:
   swagger-ui:
     enabled: false
 
+cors:
+  allowed-origins: "https://www.zzol.site"
+
 server:
   tomcat:
     remoteip:

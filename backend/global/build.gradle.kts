@@ -4,6 +4,7 @@ val zxingVersion: String by rootProject.extra
 val reflectionsVersion: String by rootProject.extra
 val resilience4jVersion: String by rootProject.extra
 val testcontainersVersion: String by rootProject.extra
+val springDocVersion: String by rootProject.extra
 
 dependencies {
     api("org.springframework.boot:spring-boot-starter-web")
@@ -25,6 +26,8 @@ dependencies {
     api("io.micrometer:micrometer-tracing-bridge-otel")
     api("io.opentelemetry:opentelemetry-exporter-otlp")
     api("io.micrometer:context-propagation")
+
+    api("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
 
     implementation("org.reflections:reflections:$reflectionsVersion")
     api("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")

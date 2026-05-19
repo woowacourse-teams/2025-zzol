@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import coffeeshout.global.health.ShutdownStateReader;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
  */
 @Slf4j
 @Component
-public class WebSocketGracefulShutdownHandler implements SmartLifecycle {
+public class WebSocketGracefulShutdownHandler implements SmartLifecycle, ShutdownStateReader {
 
     private static final Duration STATUS_CHECK_INTERVAL = Duration.ofSeconds(5);
 

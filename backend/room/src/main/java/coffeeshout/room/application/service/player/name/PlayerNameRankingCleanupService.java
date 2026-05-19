@@ -10,7 +10,6 @@ import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,10 +53,9 @@ public class PlayerNameRankingCleanupService {
         }
 
         log.info("[RankingCleanup] 교체 대상 {}건: {}", targets.size(), targets);
-        int replaced = 0;
-        for (String nickname : targets) {
-            replaced += replaceNickname(nickname);
-        }
+        final int replaced = targets.stream()
+                .mapToInt(this::replaceNickname)
+                .sum();
         log.info("[RankingCleanup] 닉네임 교체 완료: 총 {}건", replaced);
     }
 
@@ -77,12 +75,12 @@ public class PlayerNameRankingCleanupService {
                         Collectors.mapping(PlayerEntity::getPlayerName, Collectors.toSet())
                 ));
 
-        for (PlayerEntity player : targets) {
+        targets.forEach(player -> {
             final Set<String> existingNamesInRoom = namesByRoom.getOrDefault(player.getRoomSession(), Set.of());
             final PlayerName newName = nicknameGenerator.generate(existingNamesInRoom);
             log.debug("[RankingCleanup] {} → {} (playerId={})", nickname, newName, player.getId());
             player.updatePlayerName(newName);
-        }
+        });
         return targets.size();
     }
 }

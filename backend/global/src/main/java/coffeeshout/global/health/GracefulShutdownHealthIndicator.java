@@ -1,6 +1,5 @@
 package coffeeshout.global.health;
 
-import coffeeshout.websocket.lifecycle.WebSocketGracefulShutdownHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -21,7 +20,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GracefulShutdownHealthIndicator implements HealthIndicator {
 
-    private final WebSocketGracefulShutdownHandler shutdownHandler;
+    private final ShutdownStateReader shutdownHandler;
 
     @Override
     public Health health() {

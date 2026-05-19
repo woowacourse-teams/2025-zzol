@@ -1,4 +1,4 @@
-package coffeeshout.global.exception;
+package coffeeshout.websocket.exception;
 
 import coffeeshout.global.exception.custom.CoffeeShoutException;
 import coffeeshout.websocket.LoggingSimpMessagingTemplate;

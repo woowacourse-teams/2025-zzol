@@ -17,7 +17,7 @@ import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
+import coffeeshout.room.infra.nickname.persistence.PlayerNameAuditJpaRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;

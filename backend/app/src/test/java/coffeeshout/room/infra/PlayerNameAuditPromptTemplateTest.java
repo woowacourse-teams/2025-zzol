@@ -7,8 +7,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.room.domain.audit.PlayerNameAuditErrorCode;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity.OperatorDecision;
+import coffeeshout.room.infra.nickname.audit.PlayerNameAuditPromptTemplate;
+import coffeeshout.room.infra.nickname.persistence.PlayerNameFeedbackEntity;
+import coffeeshout.room.infra.nickname.persistence.PlayerNameFeedbackEntity.OperatorDecision;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import java.util.List;

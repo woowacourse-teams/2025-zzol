@@ -1,7 +1,7 @@
 package coffeeshout.room.application.service;
 
 import coffeeshout.room.domain.service.ProfanityChecker;
-import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
+import coffeeshout.room.infra.nickname.persistence.CustomProfanityJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;

@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 
 import coffeeshout.room.config.OracleObjectStorageProperties;
 import coffeeshout.room.config.QrProperties;
+import coffeeshout.room.infra.qr.OracleObjectStorageService;
+import coffeeshout.room.infra.qr.QrCodeErrorCode;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
 import com.oracle.bmc.objectstorage.responses.PutObjectResponse;

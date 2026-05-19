@@ -2,9 +2,9 @@ package coffeeshout.room.application.service.player.name;
 
 import coffeeshout.room.config.PlayerNameAuditProperties;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
-import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
+import coffeeshout.room.infra.nickname.event.PlayerNameAuditRequestedEvent;
+import coffeeshout.room.infra.nickname.persistence.PlayerNameAuditEntity;
+import coffeeshout.room.infra.nickname.persistence.PlayerNameAuditJpaRepository;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;

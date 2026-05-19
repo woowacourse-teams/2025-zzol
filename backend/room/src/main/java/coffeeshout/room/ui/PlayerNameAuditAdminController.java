@@ -4,7 +4,7 @@ import coffeeshout.room.application.service.player.name.PlayerNameAuditService;
 import coffeeshout.room.application.service.player.name.PlayerNameFeedbackService;
 import coffeeshout.room.domain.audit.AiConfidence;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
+import coffeeshout.room.infra.nickname.persistence.PlayerNameAuditEntity;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;

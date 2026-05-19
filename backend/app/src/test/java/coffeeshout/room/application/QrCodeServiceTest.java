@@ -16,7 +16,7 @@ import coffeeshout.room.config.QrProperties;
 import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.service.QrCodeGenerator;
-import coffeeshout.room.infra.QrCodeErrorCode;
+import coffeeshout.room.infra.qr.QrCodeErrorCode;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;

@@ -6,7 +6,7 @@ import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.port.StorageService;
 import coffeeshout.room.domain.QrCodeStatus;
-import coffeeshout.room.infra.QrCodeErrorCode;
+import coffeeshout.room.infra.qr.QrCodeErrorCode;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.service.QrCodeGenerator;
 import io.micrometer.core.instrument.MeterRegistry;

@@ -2,6 +2,7 @@ package coffeeshout.room.infra;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.room.infra.nickname.profanity.VaneProfanityChecker;
 import com.vane.badwordfiltering.BadWordFiltering;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;

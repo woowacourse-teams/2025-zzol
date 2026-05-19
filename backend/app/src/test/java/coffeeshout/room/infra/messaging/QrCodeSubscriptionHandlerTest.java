@@ -13,7 +13,7 @@ import static org.mockito.Mockito.times;
 import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.room.application.service.RoomService;
-import coffeeshout.room.infra.messaging.handler.QrCodeSubscriptionHandler;
+import coffeeshout.room.infra.qr.QrCodeSubscriptionHandler;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

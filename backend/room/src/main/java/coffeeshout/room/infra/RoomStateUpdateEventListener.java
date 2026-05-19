@@ -3,6 +3,7 @@ package coffeeshout.room.infra;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
+import coffeeshout.room.infra.event.RoomStateUpdateEvent;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

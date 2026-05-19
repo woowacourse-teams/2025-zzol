@@ -1,6 +1,6 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.room.infra.RoomStateUpdateEvent;
+import coffeeshout.room.infra.event.RoomStateUpdateEvent;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomCommandService;

@@ -325,8 +325,8 @@ Phase 1에서는 파일 이동 시 패키지 이름을 변경하지 않았으나
 
 **`:global` → `:user`** (user 타입 참조로 인한 이동)
 
-| 원래 파일 경로                          | 계획 모듈     | 실제 모듈   | 이유                                                                  |
-|-----------------------------------|-----------|---------|---------------------------------------------------------------------|
+| 원래 파일 경로                          | 계획 모듈     | 실제 모듈   | 이유                                                                                                                                                                    |
+|-----------------------------------|-----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `global/config/WebMvcConfig.java` | `:global` | `:user` | `AuthenticatedUserArgumentResolver` 참조. 패키지도 `coffeeshout.user.config`으로 변경. CORS 설정은 `CorsConfig`로 분리해 `:global`에 신규 생성 — `cors.allowed-origins` 프로퍼티로 환경별 허용 오리진 설정 |
 
 **`:websocket` → `:user`** (user 타입 참조로 인한 이동)
@@ -443,6 +443,21 @@ Phase 1에서는 파일 이동 시 패키지 이름을 변경하지 않았으나
 ```
 
 테스트 실행(`./gradlew build`)은 Docker(TestContainers) 환경에서 별도 검증 필요.
+
+### Phase 1 후속 — WebSocketMessageBrokerConfig :user → :app 이동 (2026-05-20)
+
+`WebSocketMessageBrokerConfig`는 `:websocket`이 예정 모듈이었으나, `StompPrincipalInterceptor`가 `:user`로 이동하면서 함께 `:user`로 임시 배치되었다.
+설정 클래스 자체는 user 도메인과 무관한 순수 WebSocket 인프라 와이어링이므로 `:user`에 두는 것은 의미상 오류다.
+
+`:app`은 모든 모듈에 의존하므로 `:websocket`(나머지 인터셉터)과 `:user`(`StompPrincipalInterceptor`) 양쪽 빈을 모두 주입받을 수 있다.
+모듈 간 와이어링 책임을 `:app`이 담당하는 자연스러운 위치로 이동했다.
+
+| 파일 | 변경 전 모듈 | 변경 후 모듈 | 비고 |
+|------|------------|------------|------|
+| `websocket/config/WebSocketMessageBrokerConfig.java` | `:user` | `:app` | 패키지 `coffeeshout.websocket.config` 유지 |
+| `websocket/interceptor/StompPrincipalInterceptor.java` | `:user` (`coffeeshout.websocket.interceptor`) | `:user` (모듈 동일) | 패키지 → `coffeeshout.user.websocket.interceptor`로 변경 |
+
+`StompPrincipalInterceptor`는 `AuthTokenService` · `AuthenticatedUser` 참조로 인해 `:user`에 유지하되, 물리 위치와 패키지명 일치를 위해 패키지를 `coffeeshout.user.websocket.interceptor`로 변경했다.
 
 ### Phase 1 후속 — room invitation 패키지 정합성 (2026-05-20)
 

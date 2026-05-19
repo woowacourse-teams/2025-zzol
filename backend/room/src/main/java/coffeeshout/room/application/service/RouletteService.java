@@ -10,7 +10,7 @@ import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.room.infra.persistence.RouletteResultEntity;
-import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
+import coffeeshout.room.infra.nickname.event.PlayerNameAuditRequestedEvent;
 import coffeeshout.room.infra.persistence.RouletteResultJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

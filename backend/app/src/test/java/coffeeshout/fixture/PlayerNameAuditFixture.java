@@ -2,7 +2,7 @@ package coffeeshout.fixture;
 
 import coffeeshout.room.domain.audit.AiConfidence;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
+import coffeeshout.room.infra.nickname.persistence.PlayerNameAuditEntity;
 import java.math.BigDecimal;
 
 public class PlayerNameAuditFixture {

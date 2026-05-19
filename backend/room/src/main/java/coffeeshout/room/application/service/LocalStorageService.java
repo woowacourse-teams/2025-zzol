@@ -2,7 +2,7 @@ package coffeeshout.room.application.service;
 
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.room.application.port.StorageService;
-import coffeeshout.room.infra.QrCodeErrorCode;
+import coffeeshout.room.infra.qr.QrCodeErrorCode;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Base64;
 import lombok.extern.slf4j.Slf4j;

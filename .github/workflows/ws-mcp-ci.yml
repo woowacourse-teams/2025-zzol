@@ -30,6 +30,15 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Fetch ws-catalog fixture (contract test)
+        run: |
+          mkdir -p backend/src/test/resources/__fixtures__
+          curl -sf ${{ secrets.API_URL }}/dev/ws-catalog \
+            -o backend/src/test/resources/__fixtures__/ws-catalog.json \
+            || echo "⚠ BE 서버 미응답 — contract 테스트 skip됨"
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}
+
       - name: Format check (Prettier)
         run: npm run format:check
 

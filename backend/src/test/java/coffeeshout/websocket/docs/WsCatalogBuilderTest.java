@@ -2,16 +2,10 @@ package coffeeshout.websocket.docs;
 
 import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.websocket.docs.WsCatalog;
-import coffeeshout.websocket.docs.WsCatalogBuilder;
-import coffeeshout.websocket.docs.WsCatalogErrorCode;
-import coffeeshout.websocket.docs.WsCatalogProperties;
-import coffeeshout.websocket.docs.WsQueue;
-import coffeeshout.websocket.docs.WsReceive;
-import coffeeshout.websocket.docs.WsTopic;
 import coffeeshout.websocket.ui.WebSocketResponse;
 import java.util.List;
 import java.util.Map;

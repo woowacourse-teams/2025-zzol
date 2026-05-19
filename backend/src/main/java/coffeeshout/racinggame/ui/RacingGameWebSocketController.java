@@ -1,6 +1,6 @@
 package coffeeshout.racinggame.ui;
 
-import coffeeshout.global.websocket.docs.WsReceive;
+import coffeeshout.websocket.docs.WsReceive;
 import coffeeshout.racinggame.application.RacingGameFacade;
 import coffeeshout.racinggame.ui.request.TapCommand;
 import jakarta.validation.Valid;

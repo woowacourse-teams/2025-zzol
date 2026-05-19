@@ -1,8 +1,8 @@
 package coffeeshout.laddergame.application;
 
-import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
-import coffeeshout.global.websocket.docs.WsTopic;
-import coffeeshout.global.websocket.ui.WebSocketResponse;
+import coffeeshout.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.websocket.docs.WsTopic;
+import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.LadderLine;
 import coffeeshout.laddergame.ui.response.LadderLineResponse;

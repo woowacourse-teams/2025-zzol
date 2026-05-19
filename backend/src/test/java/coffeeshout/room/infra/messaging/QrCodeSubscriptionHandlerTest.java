@@ -10,8 +10,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 
-import coffeeshout.global.websocket.ui.WebSocketResponse;
-import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.websocket.ui.WebSocketResponse;
+import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.infra.messaging.handler.QrCodeSubscriptionHandler;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;

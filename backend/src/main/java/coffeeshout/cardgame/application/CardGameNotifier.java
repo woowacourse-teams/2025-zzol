@@ -2,9 +2,9 @@ package coffeeshout.cardgame.application;
 
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.event.dto.MiniGameStartedEvent;
-import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
-import coffeeshout.global.websocket.docs.WsTopic;
-import coffeeshout.global.websocket.ui.WebSocketResponse;
+import coffeeshout.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.websocket.docs.WsTopic;
+import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.ui.response.MiniGameStartMessage;
 import coffeeshout.minigame.ui.response.MiniGameStateMessage;

@@ -15,4 +15,4 @@ websocket:
     user-destination-prefix: "/user"
     stomp-endpoint: "/ws"
     error-topic: "/queue/errors"
-    envelope-class: "coffeeshout.global.websocket.ui.WebSocketResponse"
+    envelope-class: "coffeeshout.websocket.ui.WebSocketResponse"

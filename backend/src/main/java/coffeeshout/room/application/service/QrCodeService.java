@@ -2,7 +2,7 @@ package coffeeshout.room.application.service;
 
 import coffeeshout.room.config.QrProperties;
 import coffeeshout.global.exception.custom.InfrastructureException;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.port.StorageService;
 import coffeeshout.room.domain.QrCodeStatus;
@@ -62,12 +62,12 @@ public class QrCodeService {
             final String qrCodeUrl = getQrCodeUrl(joinCode);
 
             // 3. Room에 저장
-            streamPublisher.publish(StreamKey.ROOM_BROADCAST, new QrCodeStatusEvent(joinCode, QrCodeStatus.SUCCESS, qrCodeUrl));
+            streamPublisher.publish(RoomStreamKey.BROADCAST, new QrCodeStatusEvent(joinCode, QrCodeStatus.SUCCESS, qrCodeUrl));
             log.info("QR 코드 생성 완료: joinCode={}, url={}", joinCode, qrCodeUrl);
         } catch (Exception e) {
             log.error("QR 코드 생성 실패: joinCode={}, error={}", joinCode, e.getMessage(), e);
 
-            streamPublisher.publish(StreamKey.ROOM_BROADCAST, new QrCodeStatusEvent(joinCode, QrCodeStatus.ERROR, null));
+            streamPublisher.publish(RoomStreamKey.BROADCAST, new QrCodeStatusEvent(joinCode, QrCodeStatus.ERROR, null));
         }
     }
 

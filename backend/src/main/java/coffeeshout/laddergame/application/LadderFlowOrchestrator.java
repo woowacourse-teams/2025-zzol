@@ -1,6 +1,6 @@
 package coffeeshout.laddergame.application;
 
-import coffeeshout.global.flow.FlowScheduler;
+import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.laddergame.config.LadderTimingProperties;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.minigame.domain.MiniGameType;

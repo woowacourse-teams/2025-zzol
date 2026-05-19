@@ -1,6 +1,6 @@
 package coffeeshout.minigame.ui;
 
-import coffeeshout.global.websocket.docs.WsReceive;
+import coffeeshout.websocket.docs.WsReceive;
 import coffeeshout.minigame.ui.command.MiniGameCommand;
 import coffeeshout.minigame.ui.command.MiniGameCommandDispatcher;
 import coffeeshout.minigame.ui.request.MiniGameMessage;

@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,7 +55,7 @@ class OutboxAfterCommitRelayTest {
             outboxAfterCommitRelay.onOutboxSaved(savedEvent);
 
             // then
-            verify(streamPublisher).publish(eq(StreamKey.ROOM_BROADCAST), any());
+            verify(streamPublisher).publish(eq("room"), any());
             verify(eventProcessor).markPublished(1L);
         }
 
@@ -69,7 +68,7 @@ class OutboxAfterCommitRelayTest {
             org.mockito.BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
                     .willReturn(mockEvent);
             doThrow(new RuntimeException("Redis connection refused"))
-                    .when(streamPublisher).publish(any(), any());
+                    .when(streamPublisher).publish(any(String.class), any());
 
             // when — 예외가 밖으로 나가면 안 된다
             outboxAfterCommitRelay.onOutboxSaved(savedEvent);

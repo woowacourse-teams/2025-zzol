@@ -1,4 +1,4 @@
-package coffeeshout.user.application.service;
+package coffeeshout.room.application.user;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;

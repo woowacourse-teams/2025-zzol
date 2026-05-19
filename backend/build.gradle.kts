@@ -80,27 +80,28 @@ subprojects {
     }
 }
 
-val ctagsSourceDirs: List<String> = subprojects.flatMap { p ->
-    listOf(
-        p.file("src/main/java").absolutePath,
-        p.file("src/test/java").absolutePath
-    )
-}
-val ctagsWorkDir = projectDir
-
 tasks.register("generateCtags") {
     group = "build"
     description = "Universal Ctags로 Java 심볼 인덱스(tags 파일)를 생성한다"
     onlyIf { System.getenv("CI") == null }
+
+    val sourceDirs: List<String> = project.subprojects.flatMap { p ->
+        listOf(
+            p.file("src/main/java").absolutePath,
+            p.file("src/test/java").absolutePath
+        )
+    }
+    val workDir: File = project.projectDir
+
     inputs.files(
-        fileTree(".") {
+        layout.projectDirectory.asFileTree.matching {
             include("**/src/main/java/**/*.java", "**/src/test/java/**/*.java")
             exclude("**/build/**")
         }
     )
     outputs.file(layout.projectDirectory.file("tags"))
     doLast {
-        val existingDirs = ctagsSourceDirs.filter { java.io.File(it).exists() }
+        val existingDirs = sourceDirs.filter { java.io.File(it).exists() }
         if (existingDirs.isEmpty()) {
             logger.warn("ctags: 소스 디렉토리를 찾을 수 없습니다")
             return@doLast
@@ -111,7 +112,7 @@ tasks.register("generateCtags") {
             process = ProcessBuilder(
                 listOf("ctags", "--languages=Java", "--fields=+n", "--extras=+q", "-R", "-f", "tags") + existingDirs
             )
-                .directory(ctagsWorkDir)
+                .directory(workDir)
                 .start()
         } catch (e: java.io.IOException) {
             logger.warn("ctags를 찾을 수 없어 tags 파일 생성을 건너뜁니다: ${e.message}")

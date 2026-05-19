@@ -188,3 +188,6 @@ zzol-bot:
 friend:
   presence:
     grace-period-seconds: 1
+
+cors:
+  allowed-origins: "http://localhost:3000"

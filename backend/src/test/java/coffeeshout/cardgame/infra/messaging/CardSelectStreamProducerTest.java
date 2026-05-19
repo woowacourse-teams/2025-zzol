@@ -9,7 +9,7 @@ import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.cardgame.infra.CardGameStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -56,7 +56,7 @@ class CardSelectStreamProducerTest extends IntegrationTestSupport {
         roomRepository.save(room);
         joinCode = room.getJoinCode();
 
-        cardGameStreamKey = StreamKey.CARD_GAME_SELECT_BROADCAST.getRedisKey();
+        cardGameStreamKey = CardGameStreamKey.SELECT_BROADCAST.getRedisKey();
 
     }
 
@@ -72,7 +72,7 @@ class CardSelectStreamProducerTest extends IntegrationTestSupport {
                     joinCode.getValue(), playerName, cardIndex);
 
             // when
-            streamPublisher.publish(StreamKey.CARD_GAME_SELECT_BROADCAST, event);
+            streamPublisher.publish(CardGameStreamKey.SELECT_BROADCAST, event);
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
@@ -92,7 +92,7 @@ class CardSelectStreamProducerTest extends IntegrationTestSupport {
             for (int i = 0; i < playerNames.length; i++) {
                 SelectCardCommandEvent event = new SelectCardCommandEvent(
                         joinCode.getValue(), playerNames[i], cardIndexes[i]);
-                streamPublisher.publish(StreamKey.CARD_GAME_SELECT_BROADCAST, event);
+                streamPublisher.publish(CardGameStreamKey.SELECT_BROADCAST, event);
             }
 
             // then

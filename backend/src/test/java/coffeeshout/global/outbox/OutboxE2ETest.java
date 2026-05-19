@@ -2,10 +2,10 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.flow.FlowScheduler;
+import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.fixture.TestContainerSupport;
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -116,7 +116,7 @@ class OutboxE2ETest extends TestContainerSupport {
         void record_호출_후_트랜잭션_커밋_시_즉시_PUBLISHED로_전환된다() {
             // given & when — record() 호출 → 자체 @Transactional 커밋 → AFTER_COMMIT 즉시 발행
             final BaseEvent event = new PlayerListUpdateEvent("test-join-code");
-            outboxEventRecorder.record(StreamKey.ROOM_BROADCAST, event);
+            outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
 
             // then — AFTER_COMMIT이 즉시 실행되어 이미 PUBLISHED
             final List<OutboxEvent> events = outboxEventRepository.findAll();
@@ -129,7 +129,7 @@ class OutboxE2ETest extends TestContainerSupport {
             // given & when
             IntStream.range(0, 5).forEach(i -> {
                 final BaseEvent event = new PlayerListUpdateEvent("join-code-" + i);
-                outboxEventRecorder.record(StreamKey.ROOM_BROADCAST, event);
+                outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
             });
 
             // then

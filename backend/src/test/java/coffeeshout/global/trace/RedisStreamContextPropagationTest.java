@@ -8,7 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -99,7 +99,7 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
                 publisherTraceId.set(tracer.currentSpan().context().traceId());
 
                 RoomJoinEvent event = new RoomJoinEvent(joinCode, "E2E전파");
-                streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+                streamPublisher.publish(RoomStreamKey.BROADCAST, event);
             } finally {
                 observation.stop();
             }
@@ -155,7 +155,7 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
                                 capturedTraceIds.add(event.traceInfo().traceId());
                             }
 
-                            streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+                            streamPublisher.publish(RoomStreamKey.BROADCAST, event);
                         } finally {
                             observation.stop();
                         }
@@ -219,7 +219,7 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
             RoomJoinEvent event = new RoomJoinEvent(joinCode, "노트레이스처리");
             assertThat(event.traceInfo().traceable()).isFalse();
 
-            streamPublisher.publish(StreamKey.ROOM_BROADCAST, event);
+            streamPublisher.publish(RoomStreamKey.BROADCAST, event);
 
             // then — trace 없어도 비즈니스 로직은 돌아야 한다
             await().atMost(Duration.ofSeconds(5))

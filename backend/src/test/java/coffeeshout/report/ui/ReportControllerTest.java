@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import coffeeshout.fixture.IntegrationTestSupport;
-import coffeeshout.global.ratelimit.ReportRateLimitStore;
+import coffeeshout.report.ratelimit.ReportRateLimitStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;

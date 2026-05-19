@@ -1,6 +1,6 @@
 package coffeeshout.room.infra;
 
-import coffeeshout.global.config.properties.OracleObjectStorageProperties;
+import coffeeshout.room.config.OracleObjectStorageProperties;
 import coffeeshout.room.config.QrProperties;
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.room.application.port.StorageService;

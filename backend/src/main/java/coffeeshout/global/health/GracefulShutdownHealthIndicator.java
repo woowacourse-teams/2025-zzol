@@ -1,6 +1,6 @@
 package coffeeshout.global.health;
 
-import coffeeshout.global.websocket.lifecycle.WebSocketGracefulShutdownHandler;
+import coffeeshout.websocket.lifecycle.WebSocketGracefulShutdownHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;

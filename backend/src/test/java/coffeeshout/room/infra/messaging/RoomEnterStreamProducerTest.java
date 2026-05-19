@@ -5,7 +5,7 @@ import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -43,7 +43,7 @@ class RoomEnterStreamProducerTest extends IntegrationTestSupport {
             // given
             String playerName = "인원 추가";
 
-            streamPublisher.publish(StreamKey.ROOM_BROADCAST, new RoomJoinEvent(joinCode, playerName));
+            streamPublisher.publish(RoomStreamKey.BROADCAST, new RoomJoinEvent(joinCode, playerName));
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
@@ -64,7 +64,7 @@ class RoomEnterStreamProducerTest extends IntegrationTestSupport {
 
             for (String playerName : playerNames) {
                 RoomJoinEvent roomJoinEvent = new RoomJoinEvent(joinCode, playerName);
-                streamPublisher.publish(StreamKey.ROOM_BROADCAST, roomJoinEvent);
+                streamPublisher.publish(RoomStreamKey.BROADCAST, roomJoinEvent);
             }
 
             // then
@@ -83,7 +83,7 @@ class RoomEnterStreamProducerTest extends IntegrationTestSupport {
             String playerName = "JSON테스트";
 
             // when
-            streamPublisher.publish(StreamKey.ROOM_BROADCAST, new RoomJoinEvent(joinCode, playerName));
+            streamPublisher.publish(RoomStreamKey.BROADCAST, new RoomJoinEvent(joinCode, playerName));
 
             // then
             await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))

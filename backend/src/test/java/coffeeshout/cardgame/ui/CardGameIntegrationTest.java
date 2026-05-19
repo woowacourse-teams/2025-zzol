@@ -62,7 +62,7 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
     }
 
     @Test
-    void 카드게임을_실행한다() throws JSONException {
+    void ㅁㅁㅁ카드게임을_실행한다() throws JSONException {
         String joinCodeValue = joinCode.getValue();
         String subscribeUrl = String.format("/topic/room/%s/gameState", joinCodeValue);
         String requestUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);

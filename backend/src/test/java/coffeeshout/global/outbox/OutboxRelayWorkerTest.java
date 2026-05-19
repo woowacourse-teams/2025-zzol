@@ -8,7 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,7 +63,7 @@ class OutboxRelayWorkerTest {
             outboxRelayWorker.relay();
 
             // then
-            verify(streamPublisher, never()).publish(any(), any());
+            verify(streamPublisher, never()).publish(any(String.class), any());
             verify(eventProcessor, never()).markPublished(any());
         }
 
@@ -81,7 +80,7 @@ class OutboxRelayWorkerTest {
 
             // then
             verify(eventProcessor).fetchAndMarkInProgress(50);
-            verify(streamPublisher).publish(eq(StreamKey.ROOM_BROADCAST), any());
+            verify(streamPublisher).publish(eq("room"), any());
             verify(eventProcessor).markPublished(1L);
         }
 
@@ -93,7 +92,7 @@ class OutboxRelayWorkerTest {
             given(objectMapper.readValue(event.getPayload(), BaseEvent.class))
                     .willReturn(new PlayerListUpdateEvent("test"));
             doThrow(new RuntimeException("Redis connection refused"))
-                    .when(streamPublisher).publish(any(), any());
+                    .when(streamPublisher).publish(any(String.class), any());
 
             // when
             outboxRelayWorker.relay();
@@ -120,7 +119,7 @@ class OutboxRelayWorkerTest {
             doThrow(new RuntimeException("timeout"))
                     .doNothing()
                     .doNothing()
-                    .when(streamPublisher).publish(any(), any());
+                    .when(streamPublisher).publish(any(String.class), any());
 
             // when
             outboxRelayWorker.relay();

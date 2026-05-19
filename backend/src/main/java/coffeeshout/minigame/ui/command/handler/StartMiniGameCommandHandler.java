@@ -1,7 +1,7 @@
 package coffeeshout.minigame.ui.command.handler;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.minigame.infra.MinigameStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
 import coffeeshout.minigame.ui.command.MiniGameCommandHandler;
@@ -20,7 +20,7 @@ public class StartMiniGameCommandHandler implements MiniGameCommandHandler<Start
     @Override
     public void handle(String joinCode, StartMiniGameCommand command) {
         final BaseEvent event = new StartMiniGameCommandEvent(joinCode, command.hostName());
-        streamPublisher.publish(StreamKey.MINIGAME_EVENTS, event);
+        streamPublisher.publish(MinigameStreamKey.EVENTS, event);
     }
 
     @Override

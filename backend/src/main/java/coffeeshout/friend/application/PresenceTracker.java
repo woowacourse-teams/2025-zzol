@@ -2,7 +2,7 @@ package coffeeshout.friend.application;
 
 import coffeeshout.friend.config.FriendPresenceProperties;
 import coffeeshout.friend.domain.event.PresenceChangedEvent;
-import coffeeshout.global.websocket.UserPrincipal;
+import coffeeshout.websocket.UserPrincipal;
 import jakarta.annotation.PreDestroy;
 import java.security.Principal;
 import java.util.Map;

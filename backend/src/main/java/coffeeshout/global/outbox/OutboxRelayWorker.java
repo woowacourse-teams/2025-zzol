@@ -1,7 +1,6 @@
 package coffeeshout.global.outbox;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
@@ -72,10 +71,7 @@ public class OutboxRelayWorker {
                 final BaseEvent baseEvent = objectMapper.readValue(
                         event.getPayload(), BaseEvent.class
                 );
-                streamPublisher.publish(
-                        StreamKey.fromRedisKey(event.getStreamKey()),
-                        baseEvent
-                );
+                streamPublisher.publish(event.getStreamKey(), baseEvent);
 
                 // 3단계: 단건 DB 트랜잭션 — PUBLISHED 전환
                 eventProcessor.markPublished(event.getId());

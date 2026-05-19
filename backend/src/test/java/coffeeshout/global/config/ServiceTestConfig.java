@@ -1,6 +1,6 @@
 package coffeeshout.global.config;
 
-import coffeeshout.global.flow.FlowScheduler;
+import coffeeshout.gamecommon.flow.FlowScheduler;
 import java.time.Clock;
 import org.mockito.Answers;
 import org.mockito.Mockito;

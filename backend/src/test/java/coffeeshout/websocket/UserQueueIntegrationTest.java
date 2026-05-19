@@ -8,6 +8,7 @@ import coffeeshout.fixture.TestStompSession;
 import coffeeshout.fixture.TestStompSession.MessageCollector;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
 import coffeeshout.global.MessageResponse;
+import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.ui.request.ReadyChangeMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,7 +43,7 @@ class UserQueueIntegrationTest extends WebSocketIntegrationTestSupport {
     void 일반_Exception_발생_시_기본_에러_메시지를_수신한다() throws Exception {
         // given
         willThrow(new RuntimeException("예상치 못한 서버 오류"))
-                .given(streamPublisher).publish(any(), any());
+                .given(streamPublisher).publish(any(StreamKey.class), any());
 
         TestStompSession session = createSession("TEST_CODE", "testPlayer");
         MessageCollector errorCollector = session.subscribe("/user/queue/errors");

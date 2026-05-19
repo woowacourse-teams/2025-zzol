@@ -1,7 +1,7 @@
 package coffeeshout.global.exception;
 
 import coffeeshout.global.exception.custom.CoffeeShoutException;
-import coffeeshout.global.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import java.security.Principal;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;

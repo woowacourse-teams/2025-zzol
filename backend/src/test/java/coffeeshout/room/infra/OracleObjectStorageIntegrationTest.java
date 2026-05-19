@@ -7,7 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.fixture.IntegrationTestSupport;
-import coffeeshout.global.config.properties.OracleObjectStorageProperties;
+import coffeeshout.room.config.OracleObjectStorageProperties;
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.room.config.QrProperties;
 import com.oracle.bmc.model.BmcException;

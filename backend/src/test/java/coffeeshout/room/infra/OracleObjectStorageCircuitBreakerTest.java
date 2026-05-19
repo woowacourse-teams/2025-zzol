@@ -7,7 +7,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.global.config.properties.OracleObjectStorageProperties;
+import coffeeshout.room.config.OracleObjectStorageProperties;
 import coffeeshout.room.config.QrProperties;
 import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.objectstorage.ObjectStorage;

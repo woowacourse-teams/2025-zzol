@@ -1,4 +1,4 @@
-package coffeeshout.friend.application.service;
+package coffeeshout.room.application.service;
 
 import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.repository.FriendshipRepository;

@@ -1,4 +1,4 @@
-package coffeeshout.friend.ui.request;
+package coffeeshout.room.ui.request;
 
 import jakarta.validation.constraints.NotNull;
 

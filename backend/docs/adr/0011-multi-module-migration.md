@@ -443,3 +443,15 @@ Phase 1에서는 파일 이동 시 패키지 이름을 변경하지 않았으나
 ```
 
 테스트 실행(`./gradlew build`)은 Docker(TestContainers) 환경에서 별도 검증 필요.
+
+### Phase 1 후속 — room invitation 패키지 정합성 (2026-05-20)
+
+Phase 1에서 `:user → :room`으로 이동한 `RoomInvitationService` · `RoomInvitationRestController`의 패키지명이 `coffeeshout.friend.*`로 남아있어 물리 위치와 불일치했다. 이를 `:room` 모듈 패키지 체계에 맞게 정리했다.
+
+| 파일 | 변경 전 패키지 | 변경 후 패키지 | 비고 |
+|------|--------------|--------------|------|
+| `RoomInvitationService.java` | `coffeeshout.friend.application.service` (`:room`) | `coffeeshout.room.application.service` (`:room`) | 패키지 이동 |
+| `RoomInvitationRestController.java` | `coffeeshout.friend.ui` (`:room`) | `coffeeshout.room.ui` (`:room`) | 패키지 이동 |
+| `SendRoomInvitationRequest.java` | `coffeeshout.friend.ui.request` (`:user`) | `coffeeshout.room.ui.request` (`:room`) | 모듈 + 패키지 이동 |
+
+`SendRoomInvitationRequest`는 `:room` 컨트롤러가 단독으로 사용하는 요청 DTO이므로 `:user`에 남아있을 이유가 없어 함께 이동했다.

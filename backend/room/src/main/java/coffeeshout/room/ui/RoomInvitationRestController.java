@@ -1,7 +1,7 @@
-package coffeeshout.friend.ui;
+package coffeeshout.room.ui;
 
-import coffeeshout.friend.application.service.RoomInvitationService;
-import coffeeshout.friend.ui.request.SendRoomInvitationRequest;
+import coffeeshout.room.application.service.RoomInvitationService;
+import coffeeshout.room.ui.request.SendRoomInvitationRequest;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.ui.resolver.AuthUser;
 import jakarta.validation.Valid;

@@ -1,5 +1,6 @@
 val ociSdkVersion: String by rootProject.extra
 val springDocVersion: String by rootProject.extra
+val googleGenAiVersion: String by rootProject.extra
 
 dependencies {
     api(project(":global"))
@@ -11,6 +12,7 @@ dependencies {
     implementation("com.oracle.oci.sdk:oci-java-sdk-common")
     implementation("com.oracle.oci.sdk:oci-java-sdk-common-httpclient-jersey3")
 
+    implementation("com.google.genai:google-genai:$googleGenAiVersion")
     implementation("io.github.vaneproject:badwordfiltering:1.0.0")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
 }

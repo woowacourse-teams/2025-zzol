@@ -1,17 +1,15 @@
 package coffeeshout.room.application.service.player.name;
 
-import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
-import coffeeshout.dashboard.domain.TopWinnerResponse;
-import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.domain.player.RankedNicknameReader;
 import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
+import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import coffeeshout.room.infra.persistence.RoomEntity;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +28,7 @@ public class PlayerNameRankingCleanupService {
     private static final int RANKING_LIMIT = 50;
 
     private final Clock clock;
-    private final DashboardStatisticsRepository dashboardRepository;
+    private final RankedNicknameReader rankedPlayerNicknamePort;
     private final PlayerNameAuditJpaRepository auditRepository;
     private final PlayerJpaRepository playerRepository;
     private final PlayerNameGenerator nicknameGenerator;
@@ -46,7 +44,7 @@ public class PlayerNameRankingCleanupService {
         final LocalDateTime now = LocalDateTime.now(clock);
         final LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
 
-        final Set<String> rankingNicknames = collectRankingNicknames(startOfMonth, now);
+        final Set<String> rankingNicknames = rankedPlayerNicknamePort.findRankedNicknames(startOfMonth, now, RANKING_LIMIT);
         final Set<String> targets = new HashSet<>(rankingNicknames);
         targets.retainAll(blockedNicknames);
 
@@ -61,22 +59,6 @@ public class PlayerNameRankingCleanupService {
             replaced += replaceNickname(nickname);
         }
         log.info("[RankingCleanup] 닉네임 교체 완료: 총 {}건", replaced);
-    }
-
-    private Set<String> collectRankingNicknames(LocalDateTime start, LocalDateTime end) {
-        final Set<String> nicknames = new HashSet<>();
-
-        dashboardRepository.findTopWinnersBetween(start, end, RANKING_LIMIT)
-                .stream()
-                .map(TopWinnerResponse::nickname)
-                .forEach(nicknames::add);
-
-        dashboardRepository.findRacingGameTopPlayers(start, end, RANKING_LIMIT)
-                .stream()
-                .map(RacingGameTopPlayerResponse::playerName)
-                .forEach(nicknames::add);
-
-        return nicknames;
     }
 
     private int replaceNickname(String nickname) {

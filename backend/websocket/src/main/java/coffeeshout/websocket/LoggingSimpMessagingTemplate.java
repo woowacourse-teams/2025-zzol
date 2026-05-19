@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class LoggingSimpMessagingTemplate {
 
     private final SimpMessagingTemplate messagingTemplate;
-    private final MessageRecoveryPort gameRecoveryService;
+    private final RecoveryMessageStore gameRecoveryService;
 
     // destination 패턴: /topic/room/{joinCode} 또는 /topic/room/{joinCode}/...
     private static final Pattern ROOM_DESTINATION_PATTERN = Pattern.compile("/topic/room/([^/]+)(?:/.*)?");

@@ -25,7 +25,7 @@ import org.springframework.util.DigestUtils;
  */
 @Slf4j
 @Service
-public class GameRecoveryService implements MessageRecoveryPort {
+public class GameRecoveryService implements RecoveryMessageStore {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;

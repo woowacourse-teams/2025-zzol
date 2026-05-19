@@ -68,10 +68,11 @@ root
 ├── :websocket  # STOMP 인터셉터, 세션 추적, 메트릭
 │               # (room 관련 이벤트 핸들러는 :room으로 이동 — §8 참조)
 ├── :user       # user/, auth/, friend/
-├── :room       # room/ + gamecommon/ + minigame/
+├── :room       # room/ + minigame/
 │               # + websocket room 핸들러 (SessionConnectEventListener 등)
 ├── :game       # blockstacking/, cardgame/, laddergame/,
 │               # racinggame/, speedtouch/, blindtimer/
+│               # + gamecommon/ (flow, metric — §5 참조)
 ├── :admin      # dashboard/, patchnote/, report/
 ├── :zzolbot    # zzolbot/
 └── :app        # CoffeeShoutApplication — 진입점, 모든 모듈 조합
@@ -106,11 +107,15 @@ root
 - 순수 도메인 단위 테스트는 Spring Context 없이 모킹으로 처리하므로 모듈 경계로 강제할 필요가 없다.
 - 모듈 수와 `build.gradle.kts` 파일만 늘어난다.
 
-### 5. `gamecommon/`을 `:room`에 포함하는 이유
+### 5. `gamecommon/`을 `:game`에 포함하는 이유
 
-`gamecommon.flow/`(`FlowScheduler`, `EarlyFinishTrigger`)와 `minigame/`(`MiniGameType`)은 `room.domain.JoinCode` 등 room 타입을 참조한다. 별도 `:gamecommon` 모듈로 분리하면 `:gamecommon` → `:room` 의존이 생기는데, 그러면 `:room`이 게임 플로우 추상화에 의존할 수 없어 `RoomService.startMinigame()` 같은 메서드를 구현할 수 없다.
+초안에서는 `gamecommon/`을 `:room`에 두기로 했으나, Phase 1 실행 후 코드 탐색 결과 이 판단의 근거가 잘못됐음이 확인됐다.
 
-`:room`이 `gamecommon/ + minigame/`을 포함하면 이 의존을 모듈 내부로 해소한다.
+**초안 근거 (잘못됨)**: "`gamecommon.flow/`가 `room.domain.JoinCode` 등 room 타입을 참조한다" — 실제로는 `gamecommon/` 전체가 Spring/Micrometer/JDK 외에 아무 도메인 타입도 참조하지 않는다. room 타입 참조는 `minigame/`에만 해당하는 설명이었다.
+
+**실제 의존 관계**: `gamecommon/`을 참조하는 쪽은 `:game` 6개 서비스 전부이며, `:room` 내부에서는 아무도 참조하지 않는다. `gamecommon/`을 `:room`에 두면 `:game` → `:room` 의존이 생기고, 이는 게임 플로우 인프라를 위해 room 모듈 전체를 재빌드해야 하는 불필요한 결합이 된다.
+
+`gamecommon/`은 `:game`으로 이동한다. `minigame/`은 `room.domain.JoinCode` 참조가 실재하므로 `:room`에 계속 유지한다.
 
 ### 6. `:game` 분리 효과
 

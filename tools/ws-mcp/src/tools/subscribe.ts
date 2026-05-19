@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { StompSession } from '../stomp/client.js';
-import { fail, ok, type ToolDefinition } from './types.js';
+import { fail, ok, tryParseJson, type ToolDefinition } from './types.js';
 
 const SubscribeArgsSchema = z.object({
   topic: z.string({ required_error: 'topic 은 필수입니다' }),
@@ -80,11 +80,3 @@ export const wsSubscribeTool: ToolDefinition = {
     });
   },
 };
-
-function tryParseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
-}

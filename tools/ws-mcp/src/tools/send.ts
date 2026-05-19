@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { StompSession } from '../stomp/client.js';
-import { fail, ok, type ToolDefinition } from './types.js';
+import { fail, ok, tryParseJson, type ToolDefinition } from './types.js';
 
 const SendArgsSchema = z.object({
   destination: z.string({ required_error: 'destination 은 필수입니다' }),
@@ -85,11 +85,3 @@ export const wsSendTool: ToolDefinition = {
     });
   },
 };
-
-function tryParseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
-}

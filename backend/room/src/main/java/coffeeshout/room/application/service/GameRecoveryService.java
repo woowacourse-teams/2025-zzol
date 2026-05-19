@@ -1,9 +1,10 @@
-package coffeeshout.websocket;
+package coffeeshout.room.application.service;
 
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.room.ui.dto.RecoveryMessage;
+import coffeeshout.websocket.RecoveryMessageStore;
 import coffeeshout.websocket.ui.WebSocketResponse;
-import coffeeshout.websocket.ui.dto.RecoveryMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
@@ -20,9 +21,6 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
-/**
- * 웹소켓 메시지 복구 서비스 Redis Stream을 활용하여 메시지를 백업하고 복구 기능을 제공합니다.
- */
 @Slf4j
 @Service
 public class GameRecoveryService implements RecoveryMessageStore {
@@ -50,9 +48,6 @@ public class GameRecoveryService implements RecoveryMessageStore {
     public static final String STREAM_KEY_FORMAT = "room:%s:recovery";
     public static final String ID_MAP_KEY_FORMAT = "room:%s:recovery:ids";
 
-    // Lua Script for atomic save with deduplication (HSET 방식)
-    // idMapKey: 중복 방지용 (짧은 TTL, 1초)
-    // streamKey: 메시지 복구용 (긴 TTL, 1시간)
     private static final String SAVE_SCRIPT = """
             local idMapKey = KEYS[1]
             local streamKey = KEYS[2]
@@ -63,43 +58,34 @@ public class GameRecoveryService implements RecoveryMessageStore {
             local maxLen = tonumber(ARGV[5])
             local streamTtl = tonumber(ARGV[6])
             local dedupTtl = tonumber(ARGV[7])
-            
+
             -- 중복 체크: 이미 저장된 메시지인지 확인
             local existingStreamId = redis.call('HGET', idMapKey, messageId)
             if existingStreamId then
                 return existingStreamId  -- 기존 streamId 반환
             end
-            
+
             -- Stream에 저장
             local streamId = redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*',
                 'destination', destination,
                 'payload', payloadJson,
                 'timestamp', timestamp
             )
-            
+
             -- messageId → streamId 매핑 저장 (짧은 TTL로 중복 방지)
             redis.call('HSET', idMapKey, messageId, streamId)
             redis.call('EXPIRE', idMapKey, dedupTtl)
-            
+
             -- Stream TTL 설정 (처음 생성 시에만)
             if redis.call('TTL', streamKey) == -1 then
                 redis.call('EXPIRE', streamKey, streamTtl)
             end
-            
+
             return streamId
             """;
 
     private static final String STREAM_ID_PATTERN = "^\\d+-\\d+$";
 
-
-    /**
-     * 메시지를 Recovery Stream에 저장 (중복 방지)
-     *
-     * @param joinCode    방 코드
-     * @param destination 웹소켓 destination
-     * @param response    WebSocketResponse
-     * @return Redis Stream Entry ID (예: "1234567890-0"), 중복인 경우에도 기존 streamId 반환
-     */
     public String save(String joinCode, String destination, WebSocketResponse<?> response) {
         final String messageId = generateMessageId(destination, response);
         final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
@@ -136,20 +122,12 @@ public class GameRecoveryService implements RecoveryMessageStore {
         }
     }
 
-    /**
-     * lastStreamId 이후의 메시지 조회 (XRANGE 활용)
-     *
-     * @param joinCode     방 코드
-     * @param lastStreamId 클라이언트가 마지막으로 받은 Redis Stream Entry ID (예: "1234567890-0")
-     * @return 복구 메시지 리스트
-     */
     public List<RecoveryMessage> getMessagesSince(String joinCode, String lastStreamId) {
         validateStreamId(lastStreamId);
 
         final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
 
         try {
-            // lastStreamId 이후 메시지만 조회 (exclusive)
             List<MapRecord<String, Object, Object>> records =
                     stringRedisTemplate.opsForStream()
                             .range(streamKey, Range.open(lastStreamId, "+"));
@@ -173,11 +151,6 @@ public class GameRecoveryService implements RecoveryMessageStore {
         }
     }
 
-    /**
-     * Recovery Stream 정리 (방 종료 시)
-     *
-     * @param joinCode 방 코드
-     */
     public void cleanup(String joinCode) {
         final String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
         final String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode);
@@ -190,9 +163,6 @@ public class GameRecoveryService implements RecoveryMessageStore {
         }
     }
 
-    /**
-     * Redis Stream Record를 RecoveryMessage로 변환
-     */
     private RecoveryMessage deserializeMessage(MapRecord<String, Object, Object> mapRecord) {
         try {
             final String streamId = mapRecord.getId().getValue();

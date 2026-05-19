@@ -1,6 +1,6 @@
-package coffeeshout.websocket.ui;
+package coffeeshout.room.ui;
 
-import coffeeshout.websocket.ui.dto.RecoveryResponse;
+import coffeeshout.room.ui.dto.RecoveryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,7 +19,7 @@ public interface GameRecoveryApi {
     @Operation(summary = "메시지 복구 요청", description = "웹소켓 연결이 끊어진 동안 유실된 메시지를 복구합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "복구 성공"),
-            @ApiResponse(responseCode = "409", description = "웹소켓 미연결 상태 (복구 불가)", 
+            @ApiResponse(responseCode = "409", description = "웹소켓 미연결 상태 (복구 불가)",
                          content = @Content(schema = @Schema(implementation = RecoveryResponse.class)))
     })
     ResponseEntity<RecoveryResponse> requestRecovery(

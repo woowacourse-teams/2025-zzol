@@ -2,6 +2,7 @@ package coffeeshout.websocket;
 
 import static org.mockito.BDDMockito.then;
 
+import coffeeshout.room.application.service.PlayerDisconnectionService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomCommandService;

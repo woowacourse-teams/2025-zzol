@@ -1,9 +1,9 @@
-package coffeeshout.websocket.ui;
+package coffeeshout.room.ui;
 
-import coffeeshout.websocket.GameRecoveryService;
+import coffeeshout.room.application.service.GameRecoveryService;
+import coffeeshout.room.ui.dto.RecoveryMessage;
+import coffeeshout.room.ui.dto.RecoveryResponse;
 import coffeeshout.websocket.StompSessionManager;
-import coffeeshout.websocket.ui.dto.RecoveryMessage;
-import coffeeshout.websocket.ui.dto.RecoveryResponse;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 웹소켓 메시지 복구 API
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/rooms/{joinCode}/recovery")

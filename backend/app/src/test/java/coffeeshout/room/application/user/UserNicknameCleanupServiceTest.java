@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import coffeeshout.fixture.UserFixture;
+import coffeeshout.user.application.service.NicknameDefaultGenerator;
 import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;

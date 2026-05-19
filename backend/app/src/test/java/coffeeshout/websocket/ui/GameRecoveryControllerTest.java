@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import coffeeshout.fixture.IntegrationTestSupport;
-import coffeeshout.websocket.GameRecoveryService;
+import coffeeshout.room.application.service.GameRecoveryService;
 import coffeeshout.websocket.StompSessionManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

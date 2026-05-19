@@ -1,17 +1,15 @@
-package coffeeshout.websocket;
+package coffeeshout.room.application.service;
 
-import coffeeshout.websocket.event.RoomStateUpdateEvent;
+import coffeeshout.room.infra.RoomStateUpdateEvent;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomCommandService;
+import coffeeshout.websocket.PlayerKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-/**
- * 플레이어 연결 해제 관련 로직을 담당하는 서비스
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -29,9 +27,6 @@ public class PlayerDisconnectionService {
         log.info("삭제 대기된 플레이어 ready 상태 변경 완료: joinCode={}, playerName={}", playerKey.joinCode(), playerKey.playerName());
     }
 
-    /**
-     * 플레이어 연결 해제 처리
-     */
     public void handlePlayerDisconnection(String playerKeyStr, String sessionId, String reason) {
         try {
             if (!PlayerKey.isValid(playerKeyStr)) {
@@ -52,7 +47,6 @@ public class PlayerDisconnectionService {
 
     private void removePlayerFromRoom(String joinCode, String playerName) {
         try {
-            // 방에서 플레이어 제거
             boolean removed = roomCommandService.removePlayer(new JoinCode(joinCode), new PlayerName(playerName));
 
             if (removed) {

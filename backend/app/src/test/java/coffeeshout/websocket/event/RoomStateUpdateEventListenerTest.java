@@ -6,6 +6,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.room.infra.RoomStateUpdateEvent;
+import coffeeshout.room.infra.RoomStateUpdateEventListener;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;

@@ -1,16 +1,8 @@
-package coffeeshout.websocket.ui.dto;
+package coffeeshout.room.ui.dto;
 
 import coffeeshout.websocket.ui.WebSocketResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * 복구용 메시지 DTO
- *
- * @param streamId Redis Stream Entry ID (복구 요청 시 lastId로 사용)
- * @param destination 원래 웹소켓 destination (프론트 라우팅용)
- * @param response WebSocketResponse 객체
- * @param timestamp 메시지 생성 시간 (epoch millis)
- */
 @Schema(description = "복구용 메시지 정보")
 public record RecoveryMessage(
         @Schema(description = "Redis Stream Entry ID (복구 요청 시 lastId로 사용)", example = "1769155902692-0")

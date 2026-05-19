@@ -2,8 +2,8 @@ package coffeeshout.websocket;
 
 import static coffeeshout.cardgame.application.CardGameNotifier.CARD_GAME_STATE_DESTINATION_FORMAT;
 import static coffeeshout.cardgame.application.CardGameNotifier.GAME_START_DESTINATION_FORMAT;
-import static coffeeshout.websocket.GameRecoveryService.ID_MAP_KEY_FORMAT;
-import static coffeeshout.websocket.GameRecoveryService.STREAM_KEY_FORMAT;
+import static coffeeshout.room.application.service.GameRecoveryService.ID_MAP_KEY_FORMAT;
+import static coffeeshout.room.application.service.GameRecoveryService.STREAM_KEY_FORMAT;
 import static coffeeshout.racinggame.infra.messaging.RacingGameMessagePublisher.RACING_GAME_PLAYERS_POSITION_DESTINATION_FORMAT;
 import static coffeeshout.racinggame.infra.messaging.RacingGameMessagePublisher.RACING_GAME_STATE_DESTINATION_FORMAT;
 import static coffeeshout.room.ui.messaging.RoomMessagePublisher.MINI_GAME_TOPIC_FORMAT;
@@ -17,8 +17,9 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.global.ServiceTest;
+import coffeeshout.room.application.service.GameRecoveryService;
 import coffeeshout.websocket.ui.WebSocketResponse;
-import coffeeshout.websocket.ui.dto.RecoveryMessage;
+import coffeeshout.room.ui.dto.RecoveryMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;

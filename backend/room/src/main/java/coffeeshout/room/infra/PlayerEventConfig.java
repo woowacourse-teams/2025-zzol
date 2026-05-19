@@ -1,6 +1,6 @@
-package coffeeshout.websocket.infra;
+package coffeeshout.room.infra;
 
-import coffeeshout.websocket.DelayedPlayerRemovalService;
+import coffeeshout.room.application.service.DelayedPlayerRemovalService;
 import coffeeshout.websocket.event.player.PlayerDisconnectedEvent;
 import coffeeshout.websocket.event.player.PlayerReconnectedEvent;
 import java.util.function.Consumer;
@@ -39,9 +39,7 @@ public class PlayerEventConfig {
             log.info("플레이어 재연결 이벤트 처리: playerKey={}, sessionId={}",
                     playerKey, sessionId);
 
-            // 지연 삭제 취소
             delayedPlayerRemovalService.cancelScheduledRemoval(playerKey);
         };
     }
-
 }

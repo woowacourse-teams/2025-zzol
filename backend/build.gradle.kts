@@ -188,4 +188,5 @@ tasks.withType<Test> {
     useJUnitPlatform()
     // 성능 테스트는 CI에서 제외 (수동 실행용)
     exclude("**/QueryPerformanceTest.class")
+    systemProperty("updateFixture", System.getProperty("updateFixture", "false"))
 }

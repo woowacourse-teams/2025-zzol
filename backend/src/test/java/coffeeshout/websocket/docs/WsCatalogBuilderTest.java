@@ -2,16 +2,10 @@ package coffeeshout.websocket.docs;
 
 import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.websocket.docs.WsCatalog;
-import coffeeshout.websocket.docs.WsCatalogBuilder;
-import coffeeshout.websocket.docs.WsCatalogErrorCode;
-import coffeeshout.websocket.docs.WsCatalogProperties;
-import coffeeshout.websocket.docs.WsQueue;
-import coffeeshout.websocket.docs.WsReceive;
-import coffeeshout.websocket.docs.WsTopic;
 import coffeeshout.websocket.ui.WebSocketResponse;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +36,8 @@ class WsCatalogBuilderTest {
                 "/user",
                 "/ws",
                 "/queue/errors",
-                WebSocketResponse.class
+                WebSocketResponse.class,
+                List.of("127.0.0.1")
         );
         builder = new WsCatalogBuilder(applicationContext, properties);
     }
@@ -61,21 +56,21 @@ class WsCatalogBuilderTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.topics()).hasSize(1);
-                softly.assertThat(catalog.topics().get(0).path()).isEqualTo("/topic/test/{joinCode}/result");
-                softly.assertThat(catalog.topics().get(0).payloadType())
+                softly.assertThat(catalog.topics().getFirst().path()).isEqualTo("/topic/test/{joinCode}/result");
+                softly.assertThat(catalog.topics().getFirst().payloadType())
                         .isEqualTo("WebSocketResponse<FixturePayload>");
-                softly.assertThat(catalog.topics().get(0).publishers()).hasSize(1);
-                softly.assertThat(catalog.topics().get(0).publishers().get(0).description())
+                softly.assertThat(catalog.topics().getFirst().publishers()).hasSize(1);
+                softly.assertThat(catalog.topics().getFirst().publishers().getFirst().description())
                         .isEqualTo("테스트 토픽");
-                softly.assertThat(catalog.topics().get(0).publishers().get(0).source().className())
+                softly.assertThat(catalog.topics().getFirst().publishers().getFirst().source().className())
                         .isEqualTo("FixtureWebSocketController");
-                softly.assertThat(catalog.topics().get(0).publishers().get(0).source().methodName())
+                softly.assertThat(catalog.topics().getFirst().publishers().getFirst().source().methodName())
                         .isEqualTo("doAction");
 
                 softly.assertThat(catalog.sends()).hasSize(1);
-                softly.assertThat(catalog.sends().get(0).destination()).isEqualTo("/app/test/{joinCode}/action");
-                softly.assertThat(catalog.sends().get(0).requestType()).isEqualTo("FixtureRequest");
-                softly.assertThat(catalog.sends().get(0).triggersTopics())
+                softly.assertThat(catalog.sends().getFirst().destination()).isEqualTo("/app/test/{joinCode}/action");
+                softly.assertThat(catalog.sends().getFirst().requestType()).isEqualTo("FixtureRequest");
+                softly.assertThat(catalog.sends().getFirst().triggersTopics())
                         .containsExactly("/topic/test/{joinCode}/result");
 
                 softly.assertThat(catalog.schemas()).containsKeys("FixturePayload", "FixtureRequest");
@@ -98,10 +93,10 @@ class WsCatalogBuilderTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.topics()).isEmpty();
                 softly.assertThat(catalog.sends()).hasSize(1);
-                softly.assertThat(catalog.sends().get(0).destination()).isEqualTo("/app/test/{joinCode}/command");
-                softly.assertThat(catalog.sends().get(0).triggersTopics())
+                softly.assertThat(catalog.sends().getFirst().destination()).isEqualTo("/app/test/{joinCode}/command");
+                softly.assertThat(catalog.sends().getFirst().triggersTopics())
                         .containsExactly("/topic/test/{joinCode}/result");
-                softly.assertThat(catalog.sends().get(0).requestType()).isEqualTo("FixtureRequest");
+                softly.assertThat(catalog.sends().getFirst().requestType()).isEqualTo("FixtureRequest");
             });
         }
     }
@@ -120,7 +115,7 @@ class WsCatalogBuilderTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.topics()).hasSize(1);
-                softly.assertThat(catalog.topics().get(0).payloadType())
+                softly.assertThat(catalog.topics().getFirst().payloadType())
                         .isEqualTo("WebSocketResponse<List<FixturePayload>>");
                 softly.assertThat(catalog.schemas()).containsKey("FixturePayload");
             });
@@ -183,11 +178,11 @@ class WsCatalogBuilderTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.queues()).hasSize(1);
-                softly.assertThat(catalog.queues().get(0).path()).isEqualTo("/user/queue/friends/requests");
-                softly.assertThat(catalog.queues().get(0).payloadType())
+                softly.assertThat(catalog.queues().getFirst().path()).isEqualTo("/user/queue/friends/requests");
+                softly.assertThat(catalog.queues().getFirst().payloadType())
                         .isEqualTo("WebSocketResponse<FixturePayload>");
-                softly.assertThat(catalog.queues().get(0).publishers()).hasSize(1);
-                softly.assertThat(catalog.queues().get(0).publishers().get(0).description())
+                softly.assertThat(catalog.queues().getFirst().publishers()).hasSize(1);
+                softly.assertThat(catalog.queues().getFirst().publishers().getFirst().description())
                         .isEqualTo("친구 요청 알림");
                 softly.assertThat(catalog.topics()).isEmpty();
             });
@@ -208,11 +203,11 @@ class WsCatalogBuilderTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.queues()).hasSize(1);
-                softly.assertThat(catalog.queues().get(0).path()).isEqualTo("/user/queue/friends/responses");
-                softly.assertThat(catalog.queues().get(0).publishers())
+                softly.assertThat(catalog.queues().getFirst().path()).isEqualTo("/user/queue/friends/responses");
+                softly.assertThat(catalog.queues().getFirst().publishers())
                         .extracting(WsCatalog.Publisher::description)
                         .containsExactlyInAnyOrder("수락", "거절");
-                softly.assertThat(catalog.queues().get(0).publishers())
+                softly.assertThat(catalog.queues().getFirst().publishers())
                         .extracting(p -> p.source().methodName())
                         .containsExactlyInAnyOrder("onAccepted", "onRejected");
             });
@@ -233,8 +228,8 @@ class WsCatalogBuilderTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.topics()).hasSize(1);
-                softly.assertThat(catalog.topics().get(0).path()).isEqualTo("/topic/test/state");
-                softly.assertThat(catalog.topics().get(0).publishers())
+                softly.assertThat(catalog.topics().getFirst().path()).isEqualTo("/topic/test/state");
+                softly.assertThat(catalog.topics().getFirst().publishers())
                         .extracting(p -> p.source().methodName())
                         .containsExactlyInAnyOrder("publishStart", "publishFinish");
             });
@@ -253,7 +248,7 @@ class WsCatalogBuilderTest {
 
             final WsCatalog catalog = builder.build();
 
-            assertThat(catalog.queues().get(0).payloadType())
+            assertThat(catalog.queues().getFirst().payloadType())
                     .isEqualTo("WebSocketResponse<List<FixturePayload>>");
         }
     }
@@ -345,12 +340,43 @@ class WsCatalogBuilderTest {
         }
 
         @Test
+        @DisplayName("generic 이 Object.class 이면 빌드가 실패한다")
+        void generic_이_Object_이면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class)))
+                    .thenReturn(Map.of("fixture", new FixtureObjectGenericPublisher()));
+
+            assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_OBJECT_PAYLOAD);
+        }
+
+        @Test
         @DisplayName("path 가 '/' 로 시작하지 않으면 빌드가 실패한다")
         void path_가_슬래시로_시작하지_않으면_실패한다() {
             when(applicationContext.getBeansWithAnnotation(Component.class))
                     .thenReturn(Map.of("fixture", new FixtureNoSlashPathPublisher()));
 
             assertCoffeeShoutException(() -> builder.build(), WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT);
+        }
+    }
+
+    @Nested
+    @DisplayName("envelope-class 검증")
+    class envelope_class_검증 {
+
+        @Test
+        @DisplayName("envelope-class 가 record 가 아니면 빌드가 실패한다")
+        void envelope_class_가_record_가_아니면_실패한다() {
+            final WsCatalogProperties invalidProperties = new WsCatalogProperties(
+                    "/app", "/topic", "/queue", "/user", "/ws", "/queue/errors",
+                    NonRecordEnvelope.class,
+                    List.of("127.0.0.1")
+            );
+            final WsCatalogBuilder invalidBuilder = new WsCatalogBuilder(applicationContext, invalidProperties);
+            when(applicationContext.getBeansWithAnnotation(eq(Component.class))).thenReturn(Map.of());
+
+            assertCoffeeShoutException(() -> invalidBuilder.build(), WsCatalogErrorCode.INVALID_ENVELOPE_CLASS);
+        }
+
+        static class NonRecordEnvelope {
         }
     }
 
@@ -428,6 +454,13 @@ class WsCatalogBuilderTest {
     static class FixtureObjectPayloadPublisher {
 
         @WsTopic(path = "/test/object", payload = Object.class)
+        public void publish() {
+        }
+    }
+
+    static class FixtureObjectGenericPublisher {
+
+        @WsTopic(path = "/test/obj-generic", payload = List.class, generic = Object.class)
         public void publish() {
         }
     }

@@ -20,7 +20,7 @@ public class FewShotSelector {
         }
 
         final List<FewShotExample> shuffled = new ArrayList<>(pool);
-        Collections.shuffle(shuffled, new Random((long) question.hashCode()));
+        Collections.shuffle(shuffled, new Random(question.hashCode()));
 
         final List<FewShotExample> selected = List.copyOf(
                 shuffled.subList(0, Math.min(EXAMPLE_LIMIT, shuffled.size()))

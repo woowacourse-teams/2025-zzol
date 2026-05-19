@@ -18,7 +18,22 @@
 | ErrorCode           | `{Domain}ErrorCode`                      | `CardGameErrorCode`              |
 | 요청 객체               | `{Action}Request` / `{Action}Message`    | `RoomEnterRequest`               |
 
+### WebSocket 컨트랙트 어노테이션
+
+WebSocket 메시지를 발행하는 메서드에는 반드시 아래 어노테이션을 붙여야 한다.
+어노테이션이 누락되면 `/dev/ws-catalog` 카탈로그에서 해당 컨트랙트가 노출되지 않는다.
+
+| 어노테이션 | 사용 위치 | 설명 |
+|---------|---------|------|
+| `@WsTopic` | `convertAndSend` 로 토픽을 브로드캐스트하는 메서드 | 응답 토픽 경로와 페이로드 타입 선언 |
+| `@WsQueue` | `convertAndSendToUser` 로 개인 큐에 전송하는 메서드 | 큐 경로(`/queue/...`)와 페이로드 타입 선언 |
+| `@WsReceive` | `@MessageMapping` 핸들러 중 Redis Stream 으로 비동기 응답이 나가는 경우 | send→topic 인과 관계 선언 |
+
+`@WsTopic.path` 는 `/topic/` prefix 를 제외한 상대 경로를 적는다 (예: `/room/{joinCode}`).
+`@WsQueue.path` 는 `/queue/` 를 포함한 경로를 적는다 (예: `/queue/friends/requests`).
+
 ### 값 객체(Value Object)
+
 도메인의 식별자와 핵심 개념은 record로 정의한다. 원시 타입(`String`, `int`)을 도메인 메서드 시그니처에 그대로 노출하지 않는다.
 
 ---

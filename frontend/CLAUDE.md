@@ -18,6 +18,25 @@
 | `docs/seo-optimization.md` | SEO 최적화 작업 기록 |
 | `docs/api-design-menu-tab.md` | 메뉴 탭 API 설계 — 백엔드 협의용 (POST /reports, GET /patch-notes Request/Response 스펙) |
 
+## WebSocket 컨트랙트 조회 (MCP)
+
+BE 의 `GET /dev/ws-catalog` 에 모든 토픽/큐/send destination 의 path·payloadType·publisher 위치가 노출되어 있다. 직접 `curl` 로 받아도 되지만, 본 레포는 `tools/ws-mcp/` MCP 서버를 통해 Claude Code 에서 바로 조회한다.
+
+| 도구 | 용도 |
+| --- | --- |
+| `ws_list_topics` | 전체 토픽/큐/send 목록 + path/description substring 검색 |
+| `ws_describe` | 특정 path 의 풀 컨트랙트 (payloadType + publishers + 참조 schema) |
+| `ws_source` | 특정 path 의 발행 메서드 위치 (className#methodName) |
+| `ws_connect` / `ws_subscribe` / `ws_send` | STOMP 세션을 짧게 띄워 연결/구독/송신 검증 (`roomToken` 필요 — ADR-0009 참조) |
+
+**등록**: `frontend/.mcp.json` 에 이미 정의되어 있다. `cd frontend && claude` 로 띄우면 자동 인식.
+
+**MCP 빌드**: 최초 1회 `cd ../tools/ws-mcp && npm install && npm run build` 가 필요하다. 이후 BE 시그니처가 변경되면 BE 측에서 `WsCatalogFixtureExportTest` 가 fixture 를 갱신하고 MCP CI 가 zod 스키마 일치를 자동 검증한다.
+
+**prefix 주의사항**: MCP 카탈로그의 path 는 prefix 를 포함(`/topic/room/...`, `/user/queue/...`, `/app/...`)하지만, FE 의 `useWebSocketSubscription`/`send` 는 wrapper 가 prefix 를 자동 추가하므로 path 에서 `/topic`·`/app` 부분을 제거해 전달한다 (자세한 규칙은 `.claude/rules/websocket.md`).
+
+상세 도구 명세·환경 변수·동작 검증(MCP Inspector) 은 `../tools/ws-mcp/README.md` 참조.
+
 ## .claude 리소스
 
 ### Rules

@@ -37,7 +37,7 @@ public class LadderService implements MiniGameService {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final LadderGame game = getGame(joinCode);
         commandService.drawLine(game, playerName, segmentIndex)
-                .ifPresent(line -> notifier.notifyLineDrawn(line, room));
+                .ifPresent(line -> notifier.notifyLineDrawn(line, room.getJoinCode(), room.toColorIndexMap()));
     }
 
     @Override

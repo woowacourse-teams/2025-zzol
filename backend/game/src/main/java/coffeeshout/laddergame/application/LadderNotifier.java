@@ -4,7 +4,10 @@ import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.LadderLine;
 import coffeeshout.laddergame.ui.response.LadderLineResponse;
 import coffeeshout.laddergame.ui.response.LadderStateResponse;
+import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.PlayerName;
+import java.util.Map;
 import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.websocket.docs.WsTopic;
 import coffeeshout.websocket.ui.WebSocketResponse;
@@ -30,7 +33,7 @@ public class LadderNotifier {
     @WsTopic(path = "/room/{joinCode}/ladder/state", payload = LadderStateResponse.class,
             description = "사다리게임 준비 상태 브로드캐스트")
     public void notifyPrepare(LadderGame game, Room room) {
-        sendState(room, LadderStateResponse.ofPrepare(game.getPoles(), game.getBottomRanks()));
+        sendState(room, LadderStateResponse.ofPrepare(game.getPoles(), game.getBottomRanks(), room.toColorIndexMap()));
     }
 
     @WsTopic(path = "/room/{joinCode}/ladder/state", payload = LadderStateResponse.class,
@@ -53,15 +56,14 @@ public class LadderNotifier {
 
     @WsTopic(path = "/room/{joinCode}/ladder/line", payload = LadderLineResponse.class,
             description = "사다리 선 그리기 브로드캐스트")
-    public void notifyLineDrawn(LadderLine line, Room room) {
-        final String joinCode = room.getJoinCode().getValue();
+    public void notifyLineDrawn(LadderLine line, JoinCode joinCode, Map<PlayerName, Integer> colorMap) {
         messagingTemplate.convertAndSend(
-                String.format(LINE_DESTINATION_FORMAT, joinCode),
+                String.format(LINE_DESTINATION_FORMAT, joinCode.getValue()),
                 WebSocketResponse.success(new LadderLineResponse(
                         line.playerName().value(),
                         line.segmentIndex(),
                         line.row(),
-                        room.findPlayer(line.playerName()).getColorIndex()
+                        colorMap.get(line.playerName())
                 ))
         );
     }

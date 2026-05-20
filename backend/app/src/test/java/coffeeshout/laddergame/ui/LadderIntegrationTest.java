@@ -18,6 +18,8 @@ import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.SoftAssertions;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -217,6 +219,48 @@ class LadderIntegrationTest extends WebSocketIntegrationTestSupport {
             session.send(drawCommandUrl(), drawRequest(3));
 
             lineResponses.assertNoMessage();
+        }
+
+        @Test
+        void 선_그리기_응답의_colorIndex는_PREPARE_poles의_colorIndex와_일치한다() throws Exception {
+            final var stateResponses = session.subscribe(stateUrl());
+            final var lineResponses = session.subscribe(lineUrl());
+
+            session.send(startCommandUrl(), hostStartCommand());
+
+            stateResponses.get(); // DESCRIPTION
+            final MessageResponse prepare = stateResponses.get(2, TimeUnit.SECONDS);
+            stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
+
+            session.send(drawCommandUrl(), drawRequest(0));
+            final MessageResponse lineResponse = lineResponses.get();
+
+            final JSONArray poles = new JSONObject(prepare.payload())
+                    .getJSONObject("data")
+                    .getJSONArray("poles");
+
+            final String hostName = host.getName().value();
+            int 호스트ColorIndexTemp = -1;
+            for (int i = 0; i < poles.length(); i++) {
+                final JSONObject pole = poles.getJSONObject(i);
+                if (hostName.equals(pole.getString("playerName"))) {
+                    호스트ColorIndexTemp = pole.getInt("colorIndex");
+                    break;
+                }
+            }
+            assertThat(호스트ColorIndexTemp)
+                    .as("PREPARE poles에 호스트 '%s'가 존재해야 함", hostName)
+                    .isNotEqualTo(-1);
+            final int 호스트ColorIndex = 호스트ColorIndexTemp;
+
+            final int lineColorIndex = new JSONObject(lineResponse.payload())
+                    .getJSONObject("data")
+                    .getInt("colorIndex");
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(호스트ColorIndex).as("PREPARE colorIndex는 0~8 범위여야 함").isBetween(0, 8);
+                softly.assertThat(lineColorIndex).as("LINE colorIndex는 PREPARE colorIndex와 일치해야 함").isEqualTo(호스트ColorIndex);
+            });
         }
 
         @Test

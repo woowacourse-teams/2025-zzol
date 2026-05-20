@@ -1,6 +1,6 @@
-package coffeeshout.room.infra.messaging.consumer;
+package coffeeshout.minigame.infra.messaging.consumer;
 
-import coffeeshout.room.application.service.RoomService;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MiniGameSelectConsumer implements Consumer<MiniGameSelectEvent> {
 
-    private final RoomService roomService;
+    private final GameSessionService gameSessionService;
 
     @Override
     public void accept(MiniGameSelectEvent event) {
-        roomService.updateMiniGames(event);
+        gameSessionService.updateGames(event);
     }
 }

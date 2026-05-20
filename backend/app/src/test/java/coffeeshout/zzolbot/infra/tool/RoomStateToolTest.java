@@ -7,11 +7,13 @@ import static org.mockito.BDDMockito.willThrow;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.exception.GlobalErrorCode;
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.service.RoomQueryService;
@@ -35,11 +37,14 @@ class RoomStateToolTest {
     @Mock
     private RoomQueryService roomQueryService;
 
+    @Mock
+    private GameSessionService gameSessionService;
+
     private RoomStateTool roomStateTool;
 
     @BeforeEach
     void setUp() {
-        roomStateTool = new RoomStateTool(roomQueryService, new ObjectMapper());
+        roomStateTool = new RoomStateTool(roomQueryService, gameSessionService, new ObjectMapper());
     }
 
     @Nested
@@ -50,6 +55,7 @@ class RoomStateToolTest {
             final JoinCode joinCode = new JoinCode("A4BX");
             final Room room = RoomFixture.호스트_꾹이(joinCode);
             given(roomQueryService.getByJoinCode(joinCode)).willReturn(room);
+            given(gameSessionService.getOrCreateSession(joinCode)).willReturn(new GameSession(joinCode));
 
             final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", "A4BX"), CTX);
 

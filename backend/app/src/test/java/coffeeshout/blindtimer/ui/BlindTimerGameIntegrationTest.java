@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.blindtimer.domain.BlindTimerGame;
+import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.fixture.TestStompSession;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
 import coffeeshout.MessageResponse;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -28,13 +30,14 @@ class BlindTimerGameIntegrationTest extends WebSocketIntegrationTestSupport {
     BlindTimerGame game;
 
     @BeforeEach
-    void setUp(@Autowired RoomRepository roomRepository) throws Exception {
+    void setUp(@Autowired RoomRepository roomRepository,
+               @Autowired GameSessionRepository gameSessionRepository) throws Exception {
         joinCode = new JoinCode("A4BX");
         room = RoomFixture.호스트_꾹이();
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         host = room.getHost();
         game = new BlindTimerGame(Duration.ofSeconds(10));
-        room.addMiniGame(new PlayerName(host.getName().value()), game);
+        gameSessionRepository.save(GameSessionFixture.게임세션_게임대기(joinCode, game, host.getName()));
         roomRepository.save(room);
         session = createSession(joinCode, host.getName());
     }

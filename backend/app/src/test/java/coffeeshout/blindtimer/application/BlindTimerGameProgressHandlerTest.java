@@ -8,8 +8,10 @@ import static org.mockito.Mockito.verify;
 import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.BlindTimerGameState;
 import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
+import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
@@ -23,6 +25,9 @@ class BlindTimerGameProgressHandlerTest extends ServiceTest {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private GameSessionRepository gameSessionRepository;
 
     @Autowired
     private BlindTimerGameProgressHandler progressHandler;
@@ -39,11 +44,11 @@ class BlindTimerGameProgressHandlerTest extends ServiceTest {
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         roomRepository.save(room);
         game = new BlindTimerGame(Duration.ofSeconds(10));
-        room.addMiniGame(new PlayerName(HOST_NAME), game);
-        room.startNextGame(HOST_NAME);
+        gameSessionRepository.save(
+                GameSessionFixture.게임세션_게임시작됨(
+                        room.getJoinCode(), game, new PlayerName(HOST_NAME), room.getPlayers()));
         joinCode = room.getJoinCode().getValue();
 
-        game.setUp(room.getPlayers());
         game.startPlaying();
     }
 

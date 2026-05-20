@@ -5,8 +5,10 @@ import static org.awaitility.Awaitility.await;
 
 import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.BlindTimerGameState;
+import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
@@ -20,6 +22,9 @@ class BlindTimerGameServiceTest extends ServiceTest {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private GameSessionRepository gameSessionRepository;
 
     @Autowired
     private BlindTimerGameService blindTimerGameService;
@@ -40,8 +45,9 @@ class BlindTimerGameServiceTest extends ServiceTest {
     @Test
     void 블라인드타이머_게임을_시작하면_타임아웃으로_DONE까지_전환된다() {
         // given
-        room.addMiniGame(new PlayerName(HOST_NAME), game);
-        room.startNextGame(HOST_NAME);
+        gameSessionRepository.save(
+                GameSessionFixture.게임세션_게임시작됨(
+                        room.getJoinCode(), game, new PlayerName(HOST_NAME), room.getPlayers()));
 
         // when
         blindTimerGameService.start(room.getJoinCode().getValue(), HOST_NAME);

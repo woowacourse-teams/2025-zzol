@@ -3,17 +3,13 @@ package coffeeshout.cardgame.infra.messaging;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import coffeeshout.cardgame.domain.CardGame;
-import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
-import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.cardgame.infra.CardGameStreamKey;
 import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.repository.RoomRepository;
 import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,25 +35,9 @@ class CardSelectStreamProducerTest extends IntegrationTestSupport {
     @BeforeEach
     void setUp() {
         Room room = RoomFixture.호스트_꾹이();
-        Player host = room.getHost();
-
-        // 카드 게임을 start 상태로 전환한다.
-        CardGame cardGame = new CardGameFake(new CardGameRandomDeckGenerator());
-        cardGame.startPlay();
-
-        room.addMiniGame(host.getName(), cardGame);
-
-                // 모든 플레이어를 Ready 상태로 전환 후 시작한다.
-        for (final Player player : room.getPlayers()) {
-            player.updateReadyState(true);
-        }
-        room.startNextGame(host.getName().value());
-
         roomRepository.save(room);
         joinCode = room.getJoinCode();
-
         cardGameStreamKey = CardGameStreamKey.SELECT_BROADCAST.getRedisKey();
-
     }
 
     @Nested

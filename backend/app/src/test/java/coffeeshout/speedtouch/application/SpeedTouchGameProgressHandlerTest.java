@@ -5,8 +5,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
+import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
@@ -24,6 +26,9 @@ class SpeedTouchGameProgressHandlerTest extends ServiceTest {
     private RoomRepository roomRepository;
 
     @Autowired
+    private GameSessionRepository gameSessionRepository;
+
+    @Autowired
     private SpeedTouchGameProgressHandler progressHandler;
 
     private static final String HOST_NAME = "꾹이";
@@ -38,12 +43,12 @@ class SpeedTouchGameProgressHandlerTest extends ServiceTest {
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         roomRepository.save(room);
         game = new SpeedTouchGame();
-        room.addMiniGame(new PlayerName(HOST_NAME), game);
-        room.startNextGame(HOST_NAME);
+        gameSessionRepository.save(
+                GameSessionFixture.게임세션_게임시작됨(
+                        room.getJoinCode(), game, new PlayerName(HOST_NAME), room.getPlayers()));
         joinCode = room.getJoinCode().getValue();
 
         // TestTaskScheduler를 우회하여 직접 PLAYING 상태로 세팅
-        game.setUp(room.getPlayers());
         game.startPlaying();
     }
 

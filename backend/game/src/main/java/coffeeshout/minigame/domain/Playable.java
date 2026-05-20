@@ -1,8 +1,5 @@
-package coffeeshout.room.domain;
+package coffeeshout.minigame.domain;
 
-import coffeeshout.minigame.domain.MiniGameResult;
-import coffeeshout.minigame.domain.MiniGameScore;
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
 import java.util.List;
 import java.util.Map;

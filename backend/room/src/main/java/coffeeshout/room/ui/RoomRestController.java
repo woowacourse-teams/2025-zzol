@@ -1,20 +1,17 @@
 package coffeeshout.room.ui;
 
 import coffeeshout.exception.custom.BusinessException;
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.PlayerService;
 import coffeeshout.room.application.service.RoomCreateResult;
 import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.RoomErrorCode;
-import coffeeshout.room.domain.Playable;
 import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.RandomNicknameResponse;
-import coffeeshout.room.ui.response.RemainingMiniGameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
 import coffeeshout.user.domain.AuthenticatedUser;
@@ -44,13 +41,6 @@ public class RoomRestController implements RoomApi {
 
     private final RoomService roomService;
     private final PlayerService playerService;
-
-    @GetMapping("/{joinCode}/miniGames/remaining")
-    public ResponseEntity<RemainingMiniGameResponse> getRemainingMiniGames(@PathVariable String joinCode) {
-        final List<Playable> miniGames = roomService.getRemainingMiniGames(joinCode);
-
-        return ResponseEntity.ok(RemainingMiniGameResponse.from(miniGames));
-    }
 
     @PostMapping
     public ResponseEntity<RoomCreateResponse> createRoom(
@@ -125,20 +115,6 @@ public class RoomRestController implements RoomApi {
         final List<ProbabilityResponse> responses = roomService.getProbabilities(joinCode);
 
         return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/minigames")
-    public ResponseEntity<List<MiniGameType>> getMiniGames() {
-        final List<MiniGameType> responses = roomService.getAllMiniGames();
-
-        return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/minigames/selected")
-    public ResponseEntity<List<MiniGameType>> getSelectedMiniGames(@RequestParam String joinCode) {
-        final List<MiniGameType> result = roomService.getSelectedMiniGames(joinCode);
-
-        return ResponseEntity.ok(result);
     }
 
     @PatchMapping("/{joinCode}/settings")

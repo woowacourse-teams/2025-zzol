@@ -4,6 +4,7 @@ val resilience4jVersion: String by rootProject.extra
 dependencies {
     api(project(":global"))
     api(project(":room"))
+    api(project(":game"))
 
     implementation("com.google.genai:google-genai:$googleGenAiVersion")
     implementation("com.github.jsqlparser:jsqlparser:5.0")

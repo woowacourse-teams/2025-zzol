@@ -1,13 +1,13 @@
 package coffeeshout.room.domain.player;
 
 import coffeeshout.exception.custom.BusinessException;
-import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.roulette.ProbabilityCalculator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import lombok.Getter;
 
@@ -32,13 +32,11 @@ public class Players {
         return getPlayer(player.getName());
     }
 
-    public void adjustProbabilities(MiniGameResult miniGameResult, ProbabilityCalculator probabilityCalculator) {
+    public void adjustProbabilities(Map<PlayerName, Integer> rankByPlayer, ProbabilityCalculator probabilityCalculator) {
         for (Player player : players) {
-            final int rank = miniGameResult.getPlayerRank(player);
-            final int probabilityChange = probabilityCalculator.calculateProbabilityChange(
-                    rank,
-                    miniGameResult.getTieCountByRank(rank)
-            );
+            final int rank = rankByPlayer.get(player.getName());
+            final long tieCount = rankByPlayer.values().stream().filter(r -> r == rank).count();
+            final int probabilityChange = probabilityCalculator.calculateProbabilityChange(rank, (int) tieCount);
             final Probability adjustedProbability = player.getProbability().plus(probabilityChange);
             player.updateProbability(adjustedProbability);
         }

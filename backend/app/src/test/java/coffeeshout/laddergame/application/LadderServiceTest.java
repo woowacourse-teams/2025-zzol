@@ -6,9 +6,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
 import coffeeshout.laddergame.domain.LadderGame;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
@@ -23,6 +25,9 @@ class LadderServiceTest extends ServiceTest {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private GameSessionRepository gameSessionRepository;
 
     @Autowired
     private LadderService service;
@@ -42,8 +47,9 @@ class LadderServiceTest extends ServiceTest {
         room.getPlayers().forEach(player -> player.updateReadyState(true));
 
         game = new LadderGame();
-        room.addMiniGame(new PlayerName(HOST_NAME), game);
-        room.startNextGame(HOST_NAME);
+        gameSessionRepository.save(
+                GameSessionFixture.게임세션_게임시작됨(
+                        room.getJoinCode(), game, new PlayerName(HOST_NAME), room.getPlayers()));
         game.changeToPrepare();
         game.changeToDrawing();
 

@@ -18,7 +18,6 @@ public record MiniGameRanksMessage(List<MiniGameRankMessage> ranks) {
         }
     }
 
-
     public static MiniGameRanksMessage from(@NonNull MiniGameResult miniGameResult) {
         final List<MiniGameRankMessage> message = miniGameResult.getRank().entrySet()
                 .stream()

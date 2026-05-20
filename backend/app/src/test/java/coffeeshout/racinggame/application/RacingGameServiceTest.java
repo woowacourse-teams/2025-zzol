@@ -3,8 +3,10 @@ package coffeeshout.racinggame.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.racinggame.domain.RacingGameState;
 import coffeeshout.room.domain.Room;
@@ -19,6 +21,9 @@ class RacingGameServiceTest extends ServiceTest {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private GameSessionRepository gameSessionRepository;
 
     @Autowired
     private RacingGameService racingGameService;
@@ -37,8 +42,9 @@ class RacingGameServiceTest extends ServiceTest {
     @Test
     void 레이싱_게임을_시작하면_DESCRIPTION_PREPARE_PLAYING_순서로_상태가_전환된다() {
         // given
-        room.addMiniGame(new PlayerName(HOST_NAME), racingGame);
-        room.startNextGame(HOST_NAME);
+        gameSessionRepository.save(
+                GameSessionFixture.게임세션_게임시작됨(
+                        room.getJoinCode(), racingGame, new PlayerName(HOST_NAME), room.getPlayers()));
 
         // when
         racingGameService.start(room.getJoinCode().getValue(), HOST_NAME);

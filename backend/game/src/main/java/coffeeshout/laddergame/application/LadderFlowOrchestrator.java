@@ -83,7 +83,6 @@ public class LadderFlowOrchestrator {
         final String joinCode = room.getJoinCode().getValue();
         return () -> {
             game.changeToDone();
-            room.applyMiniGameResult(game.getResult());
             try {
                 notifier.notifyDone(room);
             } catch (Exception e) {

@@ -1,6 +1,7 @@
 package coffeeshout.minigame.application;
 
 import coffeeshout.lock.RedisLock;
+import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
@@ -34,7 +35,7 @@ public class MiniGamePersistenceService {
             leaseTime = 5000
     )
     @Transactional
-    public void saveGameEntities(StartMiniGameCommandEvent event, MiniGameType miniGameType) {
+    public void saveGameEntities(StartMiniGameCommandEvent event, MiniGameType miniGameType, GameSession session) {
         final JoinCode roomJoinCode = new JoinCode(event.joinCode());
         final Room room = roomQueryService.getByJoinCode(roomJoinCode);
 
@@ -44,7 +45,7 @@ public class MiniGamePersistenceService {
         final MiniGameEntity miniGameEntity = new MiniGameEntity(roomEntity, miniGameType);
         miniGameJpaRepository.save(miniGameEntity);
 
-        if (room.isFirstStarted()) {
+        if (session.isFirstGame()) {
             room.getPlayers().forEach(player -> {
                 final PlayerEntity playerEntity = new PlayerEntity(
                         roomEntity,

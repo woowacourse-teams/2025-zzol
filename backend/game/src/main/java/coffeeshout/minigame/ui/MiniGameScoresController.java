@@ -1,11 +1,12 @@
 package coffeeshout.minigame.ui;
 
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.ui.response.MiniGameRanksResponse;
 import coffeeshout.minigame.ui.response.MiniGameScoresResponse;
-import coffeeshout.room.application.service.RoomService;
+import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.Player;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -18,18 +19,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/minigames")
 @RequiredArgsConstructor
-public class MiniGameRestController implements MiniGameApi {
+public class MiniGameScoresController {
 
-    private final RoomService roomService;
+    private final GameSessionService gameSessionService;
 
     @GetMapping("/scores")
     public ResponseEntity<MiniGameScoresResponse> getScores(
             @RequestParam String joinCode,
             @RequestParam MiniGameType miniGameType
     ) {
-        Map<Player, MiniGameScore> result = roomService.getMiniGameScores(joinCode, miniGameType);
-
-        return ResponseEntity.ok(MiniGameScoresResponse.from(result));
+        final Map<Player, MiniGameScore> scores = gameSessionService.getScores(
+                new JoinCode(joinCode), miniGameType);
+        return ResponseEntity.ok(MiniGameScoresResponse.from(scores));
     }
 
     @GetMapping("/ranks")
@@ -37,8 +38,8 @@ public class MiniGameRestController implements MiniGameApi {
             @RequestParam String joinCode,
             @RequestParam MiniGameType miniGameType
     ) {
-        final MiniGameResult result = roomService.getMiniGameRanks(joinCode, miniGameType);
-
+        final MiniGameResult result = gameSessionService.getRanks(
+                new JoinCode(joinCode), miniGameType);
         return ResponseEntity.ok(MiniGameRanksResponse.from(result));
     }
 }

@@ -1,6 +1,8 @@
 package coffeeshout.zzolbot.infra.tool;
 
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.zzolbot.domain.ZzolBotTool;
@@ -25,6 +27,7 @@ public class RoomStateTool implements ZzolBotTool {
     static final String TOOL_NAME = "room_state";
 
     private final RoomQueryService roomQueryService;
+    private final GameSessionService gameSessionService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -60,8 +63,10 @@ public class RoomStateTool implements ZzolBotTool {
             return ToolExecutionResult.fail(TOOL_NAME, "joinCode 파라미터가 누락되었거나 올바르지 않습니다.");
         }
         try {
-            final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCodeValue));
-            return ToolExecutionResult.ok(TOOL_NAME, objectMapper.writeValueAsString(buildSummary(room)));
+            final JoinCode joinCode = new JoinCode(joinCodeValue);
+            final Room room = roomQueryService.getByJoinCode(joinCode);
+            final GameSession session = gameSessionService.getOrCreateSession(joinCode);
+            return ToolExecutionResult.ok(TOOL_NAME, objectMapper.writeValueAsString(buildSummary(room, session)));
         } catch (BusinessException e) {
             return ToolExecutionResult.fail(TOOL_NAME, "방을 찾을 수 없습니다: " + joinCodeValue);
         } catch (JsonProcessingException e) {
@@ -70,7 +75,7 @@ public class RoomStateTool implements ZzolBotTool {
         }
     }
 
-    private Map<String, Object> buildSummary(Room room) {
+    private Map<String, Object> buildSummary(Room room, GameSession session) {
         final Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("joinCode", room.getJoinCode().getValue());
         summary.put("roomState", room.getRoomState().name());
@@ -79,10 +84,10 @@ public class RoomStateTool implements ZzolBotTool {
         summary.put("players", room.getPlayers().stream()
                 .map(p -> p.getName().value())
                 .toList());
-        summary.put("pendingMiniGames", room.getMiniGames().stream()
+        summary.put("pendingMiniGames", session.getPendingGamesView().stream()
                 .map(g -> g.getMiniGameType().name())
                 .toList());
-        summary.put("finishedMiniGames", room.getFinishedGames().stream()
+        summary.put("finishedMiniGames", session.getCompletedGames().stream()
                 .map(g -> g.getMiniGameType().name())
                 .toList());
         return summary;

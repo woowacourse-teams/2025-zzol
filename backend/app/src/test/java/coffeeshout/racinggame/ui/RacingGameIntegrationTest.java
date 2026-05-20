@@ -1,9 +1,11 @@
 package coffeeshout.racinggame.ui;
 
+import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.fixture.TestStompSession;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
 import coffeeshout.MessageResponse;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -24,13 +26,14 @@ class RacingGameIntegrationTest extends WebSocketIntegrationTestSupport {
     RacingGame racingGame;
 
     @BeforeEach
-    void setUp(@Autowired RoomRepository roomRepository) throws Exception {
+    void setUp(@Autowired RoomRepository roomRepository,
+               @Autowired GameSessionRepository gameSessionRepository) throws Exception {
         joinCode = new JoinCode("A4BX");
         room = RoomFixture.호스트_꾹이();
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         host = room.getHost();
         racingGame = new RacingGame();
-        room.addMiniGame(new PlayerName(host.getName().value()), racingGame);
+        gameSessionRepository.save(GameSessionFixture.게임세션_게임대기(joinCode, racingGame, host.getName()));
         roomRepository.save(room);
         session = createSession(joinCode, host.getName());
     }

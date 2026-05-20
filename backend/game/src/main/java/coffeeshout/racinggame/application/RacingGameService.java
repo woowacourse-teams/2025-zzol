@@ -1,5 +1,6 @@
 package coffeeshout.racinggame.application;
 
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
@@ -29,17 +30,20 @@ import org.springframework.stereotype.Service;
 public class RacingGameService implements MiniGameService {
 
     private final RoomQueryService roomQueryService;
+    private final GameSessionRepository gameSessionRepository;
     private final TaskScheduler taskScheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final SpeedCalculator speedCalculator;
 
     public RacingGameService(
             RoomQueryService roomQueryService,
+            GameSessionRepository gameSessionRepository,
             @Qualifier("racingGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
             SpeedCalculator speedCalculator
     ) {
         this.roomQueryService = roomQueryService;
+        this.gameSessionRepository = gameSessionRepository;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
         this.speedCalculator = speedCalculator;
@@ -48,7 +52,7 @@ public class RacingGameService implements MiniGameService {
     @Override
     public void start(String joinCode, String hostName) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final RacingGame racingGame = getRacingGame(room);
+        final RacingGame racingGame = getRacingGame(joinCode);
 
         processDescription(joinCode, racingGame);
 
@@ -63,7 +67,7 @@ public class RacingGameService implements MiniGameService {
 
     public void tap(String joinCode, String playerName, int tapCount) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final RacingGame racingGame = getRacingGame(room);
+        final RacingGame racingGame = getRacingGame(joinCode);
         final Player player = room.findPlayer(new PlayerName(playerName));
         racingGame.updateSpeed(player, tapCount, speedCalculator, Instant.now());
 
@@ -116,8 +120,6 @@ public class RacingGameService implements MiniGameService {
 
     private void handleRaceFinished(RacingGame racingGame, String joinCode) {
         racingGame.updateState(RacingGameState.DONE);
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        room.applyMiniGameResult(racingGame.getResult());
         taskScheduler.schedule(() -> eventPublisher.publishEvent(RaceFinishedEvent.of(racingGame, joinCode)),
                 Instant.now().plusSeconds(2));
         eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.RACING_GAME.name()));
@@ -134,7 +136,8 @@ public class RacingGameService implements MiniGameService {
         racingGame.stopAutoMove();
     }
 
-    private RacingGame getRacingGame(Room room) {
-        return (RacingGame) room.findMiniGame(MiniGameType.RACING_GAME);
+    private RacingGame getRacingGame(String joinCode) {
+        return (RacingGame) gameSessionRepository.getByJoinCode(new JoinCode(joinCode))
+                .findCompletedGame(MiniGameType.RACING_GAME);
     }
 }

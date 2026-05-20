@@ -1,18 +1,21 @@
 package coffeeshout.minigame.event;
 
 import coffeeshout.lock.RedisLock;
+import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.domain.Playable;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
@@ -40,6 +43,8 @@ public class MiniGameResultSaveEventListener {
     private final MiniGameJpaRepository miniGameJpaRepository;
     private final MiniGameResultJpaRepository miniGameResultJpaRepository;
     private final RoomQueryService roomQueryService;
+    private final RoomCommandService roomCommandService;
+    private final GameSessionService gameSessionService;
     private final UserStatsService userStatsService;
 
     @EventListener
@@ -52,19 +57,22 @@ public class MiniGameResultSaveEventListener {
             leaseTime = 5000
     )
     public void handle(MiniGameFinishedEvent event) {
-        final RoomEntity roomEntity = roomJpaRepository.findFirstByJoinCodeOrderByCreatedAtDesc(event.joinCode())
-                .orElseThrow(() -> new IllegalArgumentException("방이 존재하지 않습니다: " + event.joinCode()));
+        final JoinCode joinCode = new JoinCode(event.joinCode());
         final MiniGameType miniGameType = MiniGameType.valueOf(event.miniGameType());
 
+        final RoomEntity roomEntity = roomJpaRepository.findFirstByJoinCodeOrderByCreatedAtDesc(event.joinCode())
+                .orElseThrow(() -> new IllegalArgumentException("방이 존재하지 않습니다: " + event.joinCode()));
         final MiniGameEntity miniGameEntity = miniGameJpaRepository
                 .findByRoomSessionAndMiniGameType(roomEntity, miniGameType)
                 .orElseThrow(() -> new IllegalArgumentException("미니게임 엔티티가 존재하지 않습니다: " + event.joinCode()));
 
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(event.joinCode()));
-        final Playable miniGame = room.findMiniGame(miniGameType);
+        final GameSession session = gameSessionService.getOrCreateSession(joinCode);
+        final Playable miniGame = session.findCompletedGame(miniGameType);
 
         final MiniGameResult result = miniGame.getResult();
         final Map<Player, MiniGameScore> scores = miniGame.getScores();
+
+        final Room room = roomQueryService.getByJoinCode(joinCode);
 
         final List<String> playerNames = room.getPlayers().stream()
                 .map(player -> player.getName().value())
@@ -106,6 +114,8 @@ public class MiniGameResultSaveEventListener {
                         entity.getPlayer().getUserId(),
                         entity.getRank() == 1
                 ));
+
+        roomCommandService.applyGameResult(joinCode, result.toRankMap(), session.getTotalGameCount());
 
         log.info("미니게임 결과 벌크 저장 완료: joinCode={}, playerCount={}", event.joinCode(), resultEntities.size());
     }

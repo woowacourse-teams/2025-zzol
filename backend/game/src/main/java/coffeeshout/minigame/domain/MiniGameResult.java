@@ -1,6 +1,7 @@
 package coffeeshout.minigame.domain;
 
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -70,5 +71,13 @@ public class MiniGameResult {
                 .stream()
                 .filter(value -> value.equals(rank))
                 .count();
+    }
+
+    public Map<PlayerName, Integer> toRankMap() {
+        return rank.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey().getName(),
+                        Entry::getValue
+                ));
     }
 }

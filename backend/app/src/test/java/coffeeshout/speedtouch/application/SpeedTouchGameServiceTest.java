@@ -3,8 +3,10 @@ package coffeeshout.speedtouch.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
@@ -20,6 +22,9 @@ class SpeedTouchGameServiceTest extends ServiceTest {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private GameSessionRepository gameSessionRepository;
 
     @Autowired
     private SpeedTouchGameService speedTouchGameService;
@@ -40,8 +45,9 @@ class SpeedTouchGameServiceTest extends ServiceTest {
     @Test
     void 스피드터치_게임을_시작하면_타임아웃으로_DONE까지_전환된다() {
         // given
-        room.addMiniGame(new PlayerName(HOST_NAME), game);
-        room.startNextGame(HOST_NAME);
+        gameSessionRepository.save(
+                GameSessionFixture.게임세션_게임시작됨(
+                        room.getJoinCode(), game, new PlayerName(HOST_NAME), room.getPlayers()));
 
         // when - TestTaskScheduler는 모든 schedule을 즉시 실행하므로
         // DESCRIPTION → PREPARE → PLAYING → timeout → DONE까지 한번에 진행됨

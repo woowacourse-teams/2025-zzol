@@ -8,7 +8,7 @@ import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.domain.PlayableFactory;
 import coffeeshout.racinggame.domain.RacingGame;
-import coffeeshout.room.domain.Playable;
+import coffeeshout.minigame.domain.Playable;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import java.util.Objects;
 import org.springframework.stereotype.Component;

@@ -9,12 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import coffeeshout.cardgame.domain.CardGame;
-import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
@@ -23,7 +19,6 @@ import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
-import coffeeshout.room.ui.response.RemainingMiniGameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -367,67 +362,6 @@ class RoomRestControllerTest extends IntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("미니게임 조회 테스트")
-    class MiniGameTest {
-
-        @Test
-        void 전체_미니게임_목록을_조회할_수_있다() throws Exception {
-            // when & then
-            String response = mockMvc.perform(get("/rooms/minigames"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andReturn()
-                    .getResponse()
-                    .getContentAsString();
-
-            List<MiniGameType> miniGameTypes = objectMapper.readValue(response,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, MiniGameType.class));
-
-            assertThat(miniGameTypes).isNotEmpty()
-                    .contains(MiniGameType.CARD_GAME);
-        }
-
-        @Test
-        void 특정_방의_선택된_미니게임_목록을_조회할_수_있다() throws Exception {
-            // given - 방 생성
-            RoomEnterRequest request = new RoomEnterRequest("호스트");
-
-            String createResponse = mockMvc.perform(post("/rooms")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andReturn()
-                    .getResponse()
-                    .getContentAsString();
-
-            RoomCreateResponse roomCreateResponse = objectMapper.readValue(createResponse, RoomCreateResponse.class);
-            String joinCode = roomCreateResponse.joinCode();
-
-            // when & then
-            String response = mockMvc.perform(get("/rooms/minigames/selected")
-                            .param("joinCode", joinCode))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andReturn()
-                    .getResponse()
-                    .getContentAsString();
-
-            List<MiniGameType> selectedGames = objectMapper.readValue(response,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, MiniGameType.class));
-
-            assertThat(selectedGames).isNotNull();
-        }
-
-        @Test
-        void 존재하지_않는_방의_선택된_미니게임_조회_시_404_에러를_반환한다() throws Exception {
-            // when & then
-            mockMvc.perform(get("/rooms/minigames/selected")
-                            .param("joinCode", INVALID_JOIN_CODE))
-                    .andExpect(status().isNotFound());
-        }
-    }
-
-    @Nested
     @DisplayName("랜덤 닉네임 생성 테스트")
     class RandomNicknameTest {
 
@@ -582,24 +516,4 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         }
     }
 
-    @Test
-    void 현재_남은_게임을_조회한다() throws Exception {
-        // given
-        Room 호스트_꾹이 = RoomFixture.호스트_꾹이();
-        roomRepository.save(호스트_꾹이);
-        호스트_꾹이.addMiniGame(호스트_꾹이.getHost().getName(), new CardGame(new CardGameRandomDeckGenerator(), 0));
-        호스트_꾹이.addMiniGame(호스트_꾹이.getHost().getName(), new RacingGame());
-
-        // when
-        var remainingMiniGamesResponse = objectMapper.readValue(mockMvc.perform(
-                        (get("/rooms/{joinCode}/miniGames/remaining", 호스트_꾹이.getJoinCode())
-                                .contentType(MediaType.APPLICATION_JSON)))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString(), RemainingMiniGameResponse.class);
-
-        // then
-        assertThat(remainingMiniGamesResponse.remaining()).containsExactly("CARD_GAME", "RACING_GAME");
-    }
 }

@@ -2,10 +2,7 @@ package coffeeshout.blindtimer.application;
 
 import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
-import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.domain.service.RoomQueryService;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,13 +14,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BlindTimerGameProgressHandler {
 
-    private final RoomQueryService roomQueryService;
     private final BlindTimerGameService blindTimerGameService;
     private final ApplicationEventPublisher eventPublisher;
 
     public void handleStop(String joinCode, String playerName) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final BlindTimerGame game = blindTimerGameService.getBlindTimerGame(room);
+        final BlindTimerGame game = blindTimerGameService.getBlindTimerGame(joinCode);
 
         final boolean accepted = game.stop(new PlayerName(playerName), Instant.now());
         if (!accepted) {

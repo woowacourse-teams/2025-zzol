@@ -10,17 +10,20 @@ import static org.mockito.Mockito.when;
 
 import coffeeshout.cardgame.domain.CardGameScore;
 import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.domain.Playable;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
@@ -53,6 +56,10 @@ class MiniGameResultSaveEventListenerTest {
     MiniGameResultJpaRepository miniGameResultJpaRepository;
     @Mock
     RoomQueryService roomQueryService;
+    @Mock
+    RoomCommandService roomCommandService;
+    @Mock
+    GameSessionService gameSessionService;
     @Mock
     UserStatsService userStatsService;
 
@@ -158,9 +165,12 @@ class MiniGameResultSaveEventListenerTest {
         when(miniGame.getResult()).thenReturn(result);
         when(miniGame.getScores()).thenReturn(scores);
 
+        GameSession session = mock(GameSession.class);
+        when(session.findCompletedGame(MiniGameType.CARD_GAME)).thenReturn(miniGame);
+        when(gameSessionService.getOrCreateSession(new JoinCode(JOIN_CODE))).thenReturn(session);
+
         Room room = mock(Room.class);
         when(room.getPlayers()).thenReturn(players);
-        when(room.findMiniGame(MiniGameType.CARD_GAME)).thenReturn(miniGame);
         when(roomQueryService.getByJoinCode(new JoinCode(JOIN_CODE))).thenReturn(room);
     }
 

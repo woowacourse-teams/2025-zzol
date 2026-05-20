@@ -5,10 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
+import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.fixture.TestStompSession;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
 import coffeeshout.MessageResponse;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -44,14 +46,15 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
     @BeforeEach
     void setUp(@Autowired RoomRepository roomRepository,
                @Autowired RoomJpaRepository roomJpaRepository,
-               @Autowired JoinCodeGenerator joinCodeGenerator
+               @Autowired JoinCodeGenerator joinCodeGenerator,
+               @Autowired GameSessionRepository gameSessionRepository
     ) throws Exception {
         joinCode = joinCodeGenerator.generate();
         Room room = RoomFixture.호스트_꾹이(joinCode);
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         host = room.getHost();
         cardGame = new CardGameFake(new CardGameDeckStub());
-        room.addMiniGame(host.getName(), cardGame);
+        gameSessionRepository.save(GameSessionFixture.게임세션_게임대기(joinCode, cardGame, host.getName()));
 
         roomRepository.save(room);
 

@@ -65,10 +65,10 @@ public class RoomMessagePublisher {
     )
     public void onMiniGameListChanged(MiniGameSelectEvent event) {
         log.debug("미니게임 목록 변경 이벤트 수신: joinCode={}, gameCount={}",
-                event.joinCode(), event.miniGameTypes().size());
+                event.joinCode(), event.miniGameTypeNames().size());
 
         final String destination = String.format(MINI_GAME_TOPIC_FORMAT, event.joinCode());
-        messagingTemplate.convertAndSend(destination, WebSocketResponse.success(event.miniGameTypes()));
+        messagingTemplate.convertAndSend(destination, WebSocketResponse.success(event.miniGameTypeNames()));
 
         log.debug("미니게임 목록 브로드캐스트 완료: joinCode={}", event.joinCode());
     }

@@ -4,7 +4,6 @@ import coffeeshout.redis.BaseEvent;
 import coffeeshout.trace.TraceInfo;
 import coffeeshout.trace.TraceInfoExtractor;
 import coffeeshout.trace.Traceable;
-import coffeeshout.minigame.domain.MiniGameType;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -15,17 +14,17 @@ public record MiniGameSelectEvent(
         Instant timestamp,
         String joinCode,
         String hostName,
-        List<MiniGameType> miniGameTypes
+        List<String> miniGameTypeNames
 ) implements BaseEvent, Traceable {
 
-    public MiniGameSelectEvent(String joinCode, String hostName, List<MiniGameType> miniGameTypes) {
+    public MiniGameSelectEvent(String joinCode, String hostName, List<String> miniGameTypeNames) {
         this(
                 UUID.randomUUID().toString(),
                 TraceInfoExtractor.extract(),
                 Instant.now(),
                 joinCode,
                 hostName,
-                miniGameTypes
+                miniGameTypeNames
         );
     }
 

@@ -10,8 +10,8 @@ import coffeeshout.gamecommon.metric.GameDurationMetricService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.service.RoomQueryService;
 import java.time.Duration;
 import java.time.Instant;
@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 public class BlindTimerGameService implements MiniGameService {
 
     private final RoomQueryService roomQueryService;
+    private final GameSessionRepository gameSessionRepository;
     private final TaskScheduler taskScheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final BlindTimerGameTimingProperties timing;
@@ -34,12 +35,14 @@ public class BlindTimerGameService implements MiniGameService {
 
     public BlindTimerGameService(
             RoomQueryService roomQueryService,
+            GameSessionRepository gameSessionRepository,
             @Qualifier("blindTimerGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
             BlindTimerGameTimingProperties timing,
             GameDurationMetricService gameDurationMetricService
     ) {
         this.roomQueryService = roomQueryService;
+        this.gameSessionRepository = gameSessionRepository;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
         this.timing = timing;
@@ -48,8 +51,7 @@ public class BlindTimerGameService implements MiniGameService {
 
     @Override
     public void start(String joinCode, String hostName) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final BlindTimerGame game = getBlindTimerGame(room);
+        final BlindTimerGame game = getBlindTimerGame(joinCode);
 
         scheduleDescription(game, joinCode);
 
@@ -68,9 +70,6 @@ public class BlindTimerGameService implements MiniGameService {
         }
         game.cancelTimeout();
 
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        room.applyMiniGameResult(game.getResult());
-
         eventPublisher.publishEvent(BlindTimerProgressEvent.of(game, joinCode));
         taskScheduler.schedule(
                 () -> eventPublisher.publishEvent(BlindTimerFinishedEvent.of(game, joinCode)),
@@ -80,8 +79,9 @@ public class BlindTimerGameService implements MiniGameService {
         log.info("블라인드 타이머 게임 종료: joinCode={}", joinCode);
     }
 
-    public BlindTimerGame getBlindTimerGame(Room room) {
-        return (BlindTimerGame) room.findMiniGame(MiniGameType.BLIND_TIMER);
+    public BlindTimerGame getBlindTimerGame(String joinCode) {
+        return (BlindTimerGame) gameSessionRepository.getByJoinCode(new JoinCode(joinCode))
+                .findCompletedGame(MiniGameType.BLIND_TIMER);
     }
 
     private void scheduleDescription(BlindTimerGame game, String joinCode) {

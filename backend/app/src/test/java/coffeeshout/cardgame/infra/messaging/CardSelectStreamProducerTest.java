@@ -10,7 +10,7 @@ import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.cardgame.infra.CardGameStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;

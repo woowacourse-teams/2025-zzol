@@ -5,8 +5,7 @@ import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.room.infra.messaging.RoomStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;

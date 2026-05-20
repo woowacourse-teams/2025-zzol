@@ -1,6 +1,6 @@
 package coffeeshout.friend.application.service;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,7 +16,7 @@ import coffeeshout.fixture.UserFixture;
 import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.friend.exception.FriendErrorCode;
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;

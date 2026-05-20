@@ -1,9 +1,9 @@
 package coffeeshout.cardgame.domain.event;
 
-import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.trace.TraceInfo;
-import coffeeshout.global.trace.TraceInfoExtractor;
-import coffeeshout.global.trace.Traceable;
+import coffeeshout.redis.BaseEvent;
+import coffeeshout.trace.TraceInfo;
+import coffeeshout.trace.TraceInfoExtractor;
+import coffeeshout.trace.Traceable;
 import java.time.Instant;
 import java.util.UUID;
 

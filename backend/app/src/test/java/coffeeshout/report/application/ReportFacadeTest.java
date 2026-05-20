@@ -1,9 +1,9 @@
 package coffeeshout.report.application;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.exception.ReportErrorCode;

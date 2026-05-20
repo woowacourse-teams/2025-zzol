@@ -1,6 +1,6 @@
 package coffeeshout.patchnote.infra.persistence;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 

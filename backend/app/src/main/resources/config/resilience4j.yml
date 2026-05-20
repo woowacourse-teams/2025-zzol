@@ -13,7 +13,7 @@ resilience4j:
         recordExceptions:
           - java.lang.RuntimeException
         ignoreExceptions:
-          - coffeeshout.global.exception.custom.BusinessException
+          - coffeeshout.exception.custom.BusinessException
       oracleStorage:
         slidingWindowType: COUNT_BASED
         slidingWindowSize: 10
@@ -45,7 +45,7 @@ resilience4j:
           - java.lang.RuntimeException   # SDK가 rate limit/서버 오류 시 RuntimeException으로 래핑
         ignore-exceptions:
           - io.github.resilience4j.ratelimiter.RequestNotPermitted  # RateLimiter 초과는 재시도하지 않음
-          - coffeeshout.global.exception.custom.InfrastructureException  # 결정론적 실패(프롬프트 빌드, 빈 응답, 파싱 실패)는 재시도하지 않음
+          - coffeeshout.exception.custom.InfrastructureException  # 결정론적 실패(프롬프트 빌드, 빈 응답, 파싱 실패)는 재시도하지 않음
       zzolBotGemini:
         max-attempts: 3
         wait-duration: 2s

@@ -1,7 +1,7 @@
 package coffeeshout.user.infra.persistence;
 
-import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.exception.custom.SystemException;
+import coffeeshout.exception.GlobalErrorCode;
+import coffeeshout.exception.custom.SystemException;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;

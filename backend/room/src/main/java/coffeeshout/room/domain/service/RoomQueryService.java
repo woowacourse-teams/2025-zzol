@@ -1,7 +1,7 @@
 package coffeeshout.room.domain.service;
 
-import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.GlobalErrorCode;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;

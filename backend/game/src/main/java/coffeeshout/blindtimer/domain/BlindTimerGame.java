@@ -1,6 +1,6 @@
 package coffeeshout.blindtimer.domain;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;

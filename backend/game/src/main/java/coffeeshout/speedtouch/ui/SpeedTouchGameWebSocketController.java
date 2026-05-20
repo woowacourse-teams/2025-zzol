@@ -1,8 +1,8 @@
 package coffeeshout.speedtouch.ui;
 
-import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.redis.BaseEvent;
 import coffeeshout.speedtouch.infra.SpeedTouchStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.websocket.docs.WsReceive;
 import coffeeshout.speedtouch.domain.event.TouchProgressCommandEvent;
 import coffeeshout.speedtouch.ui.request.TouchCommand;

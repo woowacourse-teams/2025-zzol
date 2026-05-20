@@ -1,9 +1,9 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.global.outbox.OutboxEventRecorder;
-import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.outbox.OutboxEventRecorder;
+import coffeeshout.redis.BaseEvent;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.websocket.auth.RoomSessionTokenService;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;

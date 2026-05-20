@@ -1,7 +1,7 @@
 package coffeeshout.room.application.service;
 
 import coffeeshout.room.infra.messaging.RoomStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.event.PlayerKickEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;

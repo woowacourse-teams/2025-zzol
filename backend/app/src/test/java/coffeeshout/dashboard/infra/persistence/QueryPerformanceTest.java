@@ -1,7 +1,7 @@
 package coffeeshout.dashboard.infra.persistence;
 
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
-import coffeeshout.global.config.QueryDslConfig;
+import coffeeshout.config.QueryDslConfig;
 import coffeeshout.minigame.domain.MiniGameType;
 import jakarta.persistence.EntityManager;
 import java.sql.Connection;

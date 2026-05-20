@@ -7,7 +7,7 @@ import coffeeshout.cardgame.domain.card.AdditionCard;
 import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.cardgame.domain.card.MultiplierCard;
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;

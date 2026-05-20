@@ -1,6 +1,6 @@
 package coffeeshout.patchnote.infra.persistence;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import coffeeshout.patchnote.exception.PatchNoteErrorCode;
 import jakarta.persistence.Column;

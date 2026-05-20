@@ -1,6 +1,6 @@
 package coffeeshout.room.domain;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

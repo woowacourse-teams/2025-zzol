@@ -1,7 +1,7 @@
 package coffeeshout.report.application;
 
-import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.GlobalErrorCode;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;

@@ -3,7 +3,7 @@ package coffeeshout.cardgame.domain;
 import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.cardgame.domain.card.CardGameDeckGenerator;
 import coffeeshout.cardgame.domain.card.Deck;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;

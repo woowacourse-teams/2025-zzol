@@ -8,7 +8,7 @@ import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.fixture.TestStompSession;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
-import coffeeshout.global.MessageResponse;
+import coffeeshout.MessageResponse;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;

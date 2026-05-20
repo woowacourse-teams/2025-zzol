@@ -1,6 +1,6 @@
 package coffeeshout.user.domain;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.user.exception.UserErrorCode;
 
 public record UserNickname(String value) {

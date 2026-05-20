@@ -1,6 +1,6 @@
 package coffeeshout.user.infra.persistence;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserCode;

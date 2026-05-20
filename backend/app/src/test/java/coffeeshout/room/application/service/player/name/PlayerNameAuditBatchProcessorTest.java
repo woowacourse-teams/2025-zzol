@@ -6,7 +6,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.PlayerNameAuditFixture;
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;

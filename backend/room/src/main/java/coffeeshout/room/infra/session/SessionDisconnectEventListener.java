@@ -1,7 +1,7 @@
 package coffeeshout.room.infra.session;
 
-import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.BaseEvent;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.StompSessionManager;
 import coffeeshout.websocket.SubscriptionInfoService;

@@ -1,6 +1,6 @@
 package coffeeshout.minigame.application;
 
-import coffeeshout.global.lock.RedisLock;
+import coffeeshout.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;

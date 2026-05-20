@@ -1,7 +1,7 @@
 package coffeeshout.user.application.service;
 
-import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.nickname.NameValidator;
+import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.nickname.NameValidator;
 import coffeeshout.user.config.UserCodeProperties;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.OAuthProvider;
@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service

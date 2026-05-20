@@ -1,6 +1,6 @@
 package coffeeshout.zzolbot.infra.tool;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.zzolbot.domain.ZzolBotTool;

@@ -1,6 +1,6 @@
 package coffeeshout.room.aspect;
 
-import coffeeshout.global.log.NotificationMarker;
+import coffeeshout.log.NotificationMarker;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Winner;

@@ -1,6 +1,6 @@
 package coffeeshout.room.domain;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -8,7 +8,7 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.RouletteFixture;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;

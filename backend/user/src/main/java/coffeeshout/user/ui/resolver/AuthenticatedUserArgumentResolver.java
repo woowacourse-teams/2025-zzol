@@ -1,6 +1,6 @@
 package coffeeshout.user.ui.resolver;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.exception.UserErrorCode;
 import java.util.Optional;

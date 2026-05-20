@@ -1,6 +1,6 @@
 package coffeeshout.websocket.event.session;
 
-import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.redis.BaseEvent;
 import java.time.Instant;
 import java.util.UUID;
 

@@ -2,9 +2,9 @@ package coffeeshout.blindtimer.ui;
 
 import coffeeshout.blindtimer.domain.event.StopCommandEvent;
 import coffeeshout.blindtimer.ui.request.StopCommand;
-import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.redis.BaseEvent;
 import coffeeshout.blindtimer.infra.BlindTimerStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.websocket.docs.WsReceive;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

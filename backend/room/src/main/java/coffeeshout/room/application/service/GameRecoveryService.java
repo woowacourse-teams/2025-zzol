@@ -1,7 +1,7 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.GlobalErrorCode;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.ui.dto.RecoveryMessage;
 import coffeeshout.websocket.RecoveryMessageStore;
 import coffeeshout.websocket.ui.WebSocketResponse;

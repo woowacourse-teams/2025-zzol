@@ -1,6 +1,6 @@
 package coffeeshout.room.config;
 
-import coffeeshout.global.nickname.WordPicker;
+import coffeeshout.nickname.WordPicker;
 import com.vane.badwordfiltering.BadWordFiltering;
 import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.context.annotation.Bean;

@@ -1,6 +1,6 @@
 package coffeeshout.room.application.user;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.infra.nickname.event.ProfanityWordBlockedEvent;
 import coffeeshout.user.application.service.NicknameDefaultGenerator;
 import coffeeshout.user.domain.User;

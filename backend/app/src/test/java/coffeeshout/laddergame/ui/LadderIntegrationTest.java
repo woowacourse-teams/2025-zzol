@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.fixture.TestStompSession;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
-import coffeeshout.global.MessageResponse;
+import coffeeshout.MessageResponse;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;

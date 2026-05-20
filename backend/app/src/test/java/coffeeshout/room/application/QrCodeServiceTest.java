@@ -1,15 +1,15 @@
 package coffeeshout.room.application;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.global.exception.custom.InfrastructureException;
-import coffeeshout.global.redis.stream.StreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.exception.custom.InfrastructureException;
+import coffeeshout.redis.stream.StreamKey;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.application.port.StorageService;
 import coffeeshout.room.application.service.QrCodeService;
 import coffeeshout.room.config.QrProperties;

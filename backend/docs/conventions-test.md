@@ -66,7 +66,7 @@ SoftAssertions.assertSoftly(softly -> {
 `CoffeeShoutException` 계열 예외는 `ExceptionAssertions.assertCoffeeShoutException`을 사용한다.
 
 ```java
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 
 assertCoffeeShoutException(
         () -> service.someMethod(),

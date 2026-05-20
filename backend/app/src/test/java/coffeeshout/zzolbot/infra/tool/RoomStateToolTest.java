@@ -5,8 +5,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.GlobalErrorCode;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import java.time.Clock;

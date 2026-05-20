@@ -4,7 +4,7 @@ import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.FriendshipStatus;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.friend.exception.FriendErrorCode;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

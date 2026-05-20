@@ -2,7 +2,7 @@ package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserStats;

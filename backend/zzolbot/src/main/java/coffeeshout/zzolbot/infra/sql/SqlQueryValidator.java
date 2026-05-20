@@ -1,7 +1,7 @@
 package coffeeshout.zzolbot.infra.sql;
 
-import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.exception.custom.InfrastructureException;
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import coffeeshout.zzolbot.config.ZzolBotProperties.TableSchema;
 import coffeeshout.zzolbot.domain.ZzolBotErrorCode;

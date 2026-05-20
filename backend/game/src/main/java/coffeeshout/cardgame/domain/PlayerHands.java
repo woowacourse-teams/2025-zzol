@@ -1,7 +1,7 @@
 package coffeeshout.cardgame.domain;
 
 import coffeeshout.cardgame.domain.card.Card;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.Player;

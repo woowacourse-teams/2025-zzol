@@ -7,7 +7,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import coffeeshout.websocket.metric.WebSocketMetricService;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.infra.session.SessionDisconnectEventListener;
 import coffeeshout.websocket.ratelimit.WebSocketRateLimiter;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,7 +1,7 @@
 package coffeeshout.zzolbot.infra;
 
-import coffeeshout.global.outbox.OutboxEvent;
-import coffeeshout.global.outbox.OutboxStatus;
+import coffeeshout.outbox.OutboxEvent;
+import coffeeshout.outbox.OutboxStatus;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

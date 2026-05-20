@@ -1,6 +1,6 @@
 package coffeeshout.websocket.docs;
 
-import coffeeshout.global.exception.custom.SystemException;
+import coffeeshout.exception.custom.SystemException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;

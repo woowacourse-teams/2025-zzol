@@ -1,6 +1,6 @@
 package coffeeshout.blindtimer.infra;
 
-import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.redis.stream.StreamKey;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

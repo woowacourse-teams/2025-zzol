@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameValidator;

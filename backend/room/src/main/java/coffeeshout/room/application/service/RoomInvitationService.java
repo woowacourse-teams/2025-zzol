@@ -4,7 +4,7 @@ import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.friend.domain.event.RoomInvitationSentEvent;
 import coffeeshout.friend.exception.FriendErrorCode;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;

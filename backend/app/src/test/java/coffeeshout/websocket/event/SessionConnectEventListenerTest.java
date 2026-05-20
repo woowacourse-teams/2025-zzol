@@ -8,10 +8,10 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.redis.BaseEvent;
+import coffeeshout.redis.stream.StreamKey;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomStreamKey;

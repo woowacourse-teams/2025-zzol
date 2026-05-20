@@ -1,6 +1,6 @@
 package coffeeshout.user.infra.oauth;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.exception.UserErrorCode;
 import java.util.Map;

@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-import coffeeshout.global.redis.config.RedisStreamProperties;
+import coffeeshout.redis.config.RedisStreamProperties;
 import java.util.List;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;

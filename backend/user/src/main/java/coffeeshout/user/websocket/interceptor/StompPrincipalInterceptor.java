@@ -1,6 +1,6 @@
 package coffeeshout.user.websocket.interceptor;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.UserPrincipal;
 import coffeeshout.websocket.auth.RoomSessionClaim;

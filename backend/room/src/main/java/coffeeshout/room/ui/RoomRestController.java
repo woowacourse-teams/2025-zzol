@@ -1,6 +1,6 @@
 package coffeeshout.room.ui;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.PlayerService;
 import coffeeshout.room.application.service.RoomCreateResult;

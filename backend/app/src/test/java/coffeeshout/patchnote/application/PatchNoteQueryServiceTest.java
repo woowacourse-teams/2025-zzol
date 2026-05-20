@@ -2,7 +2,7 @@ package coffeeshout.patchnote.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import coffeeshout.patchnote.infra.persistence.PatchNoteEntity;
 import java.util.List;

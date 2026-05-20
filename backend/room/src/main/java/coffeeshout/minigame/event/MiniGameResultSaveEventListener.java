@@ -1,6 +1,6 @@
 package coffeeshout.minigame.event;
 
-import coffeeshout.global.lock.RedisLock;
+import coffeeshout.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;

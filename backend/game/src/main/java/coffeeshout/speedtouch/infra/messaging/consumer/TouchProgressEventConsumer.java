@@ -1,6 +1,6 @@
 package coffeeshout.speedtouch.infra.messaging.consumer;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.speedtouch.application.SpeedTouchGameProgressHandler;
 import coffeeshout.speedtouch.domain.event.TouchProgressCommandEvent;
 import java.util.function.Consumer;

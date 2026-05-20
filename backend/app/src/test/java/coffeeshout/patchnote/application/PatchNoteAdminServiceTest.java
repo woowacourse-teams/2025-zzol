@@ -1,10 +1,10 @@
 package coffeeshout.patchnote.application;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import coffeeshout.patchnote.exception.PatchNoteErrorCode;
 import coffeeshout.patchnote.infra.persistence.PatchNoteJpaRepository;

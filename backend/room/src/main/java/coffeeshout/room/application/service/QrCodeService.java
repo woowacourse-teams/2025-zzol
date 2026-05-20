@@ -1,9 +1,9 @@
 package coffeeshout.room.application.service;
 
 import coffeeshout.room.config.QrProperties;
-import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.exception.custom.InfrastructureException;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.application.port.StorageService;
 import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.infra.qr.QrCodeErrorCode;

@@ -1,10 +1,10 @@
 package coffeeshout.room.application.service;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.StreamMockedServiceTest;
-import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.StreamMockedServiceTest;
+import coffeeshout.exception.GlobalErrorCode;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;

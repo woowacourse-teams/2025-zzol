@@ -1,10 +1,9 @@
 package coffeeshout.laddergame.domain;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.laddergame.domain.LadderGameErrorCode;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;

@@ -1,7 +1,7 @@
 package coffeeshout.zzolbot.infra.tool;
 
-import coffeeshout.global.outbox.OutboxEvent;
-import coffeeshout.global.outbox.OutboxStatus;
+import coffeeshout.outbox.OutboxEvent;
+import coffeeshout.outbox.OutboxStatus;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.zzolbot.domain.ZzolBotTool;

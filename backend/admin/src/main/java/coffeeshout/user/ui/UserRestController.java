@@ -1,6 +1,6 @@
 package coffeeshout.user.ui;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.user.application.service.TermsService;
 import coffeeshout.user.application.service.UserProfileService;
 import coffeeshout.user.application.service.UserStatsService;

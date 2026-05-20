@@ -1,10 +1,10 @@
 package coffeeshout.user.application.service;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.User;

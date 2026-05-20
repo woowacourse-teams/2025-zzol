@@ -1,8 +1,8 @@
 package coffeeshout.minigame.ui.command.handler;
 
-import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.redis.BaseEvent;
 import coffeeshout.minigame.infra.MinigameStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
 import coffeeshout.minigame.ui.command.MiniGameCommandHandler;
 import coffeeshout.minigame.ui.request.command.StartMiniGameCommand;

@@ -1,8 +1,8 @@
 package coffeeshout.room.infra.session;
 
-import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.redis.BaseEvent;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomStreamKey;

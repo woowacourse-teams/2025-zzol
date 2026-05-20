@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.TestContainerSupport;
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.global.config.ServiceTestConfig;
+import coffeeshout.config.ServiceTestConfig;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
 import coffeeshout.user.domain.repository.UserRepository;

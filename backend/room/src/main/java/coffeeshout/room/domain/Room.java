@@ -3,9 +3,9 @@ package coffeeshout.room.domain;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.state;
 
-import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.exception.custom.SystemException;
+import coffeeshout.exception.GlobalErrorCode;
+import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.exception.custom.SystemException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;

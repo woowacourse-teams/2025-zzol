@@ -1,6 +1,6 @@
 package coffeeshout.room.infra.nickname.audit;
 
-import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.exception.custom.InfrastructureException;
 import coffeeshout.room.config.PlayerNameAuditProperties;
 import coffeeshout.room.domain.audit.AiConfidence;
 import coffeeshout.room.domain.audit.PlayerNameAuditErrorCode;

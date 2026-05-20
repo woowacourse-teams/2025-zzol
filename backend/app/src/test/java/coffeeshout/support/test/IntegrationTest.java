@@ -1,6 +1,6 @@
 package coffeeshout.support.test;
 
-import coffeeshout.global.config.IntegrationTestConfig;
+import coffeeshout.config.IntegrationTestConfig;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

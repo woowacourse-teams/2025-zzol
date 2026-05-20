@@ -1,6 +1,6 @@
 package coffeeshout.user.application.service;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.user.exception.UserErrorCode;
 import coffeeshout.user.infra.persistence.UserEntity;
 import coffeeshout.user.infra.persistence.UserJpaRepository;

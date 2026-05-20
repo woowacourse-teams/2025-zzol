@@ -1,6 +1,6 @@
 package coffeeshout.patchnote.application;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import coffeeshout.patchnote.exception.PatchNoteErrorCode;
 import coffeeshout.patchnote.infra.persistence.PatchNoteEntity;

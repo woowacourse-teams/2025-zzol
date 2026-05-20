@@ -1,12 +1,12 @@
 package coffeeshout.room.domain.service;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.TestDataHelper;
-import coffeeshout.global.ServiceTest;
-import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.ServiceTest;
+import coffeeshout.exception.GlobalErrorCode;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;

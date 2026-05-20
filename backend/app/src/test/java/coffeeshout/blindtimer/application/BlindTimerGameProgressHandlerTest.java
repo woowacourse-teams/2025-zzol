@@ -9,7 +9,7 @@ import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.BlindTimerGameState;
 import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;

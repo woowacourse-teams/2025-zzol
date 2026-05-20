@@ -6,8 +6,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
-import coffeeshout.global.outbox.OutboxEvent;
-import coffeeshout.global.outbox.OutboxStatus;
+import coffeeshout.outbox.OutboxEvent;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.zzolbot.infra.ZzolBotOutboxRepository;

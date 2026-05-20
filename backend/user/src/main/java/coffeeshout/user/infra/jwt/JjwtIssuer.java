@@ -1,6 +1,6 @@
 package coffeeshout.user.infra.jwt;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.user.config.JwtProperties;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.service.JwtIssuer;

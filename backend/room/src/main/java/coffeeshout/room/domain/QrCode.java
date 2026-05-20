@@ -1,7 +1,7 @@
 package coffeeshout.room.domain;
 
-import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.exception.custom.SystemException;
+import coffeeshout.exception.GlobalErrorCode;
+import coffeeshout.exception.custom.SystemException;
 import lombok.Getter;
 
 @Getter

@@ -1,6 +1,6 @@
 package coffeeshout.room.domain.player;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.roulette.Probability;

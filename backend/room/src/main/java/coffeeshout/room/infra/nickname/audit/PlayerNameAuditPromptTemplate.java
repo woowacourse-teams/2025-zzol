@@ -1,6 +1,6 @@
 package coffeeshout.room.infra.nickname.audit;
 
-import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.exception.custom.InfrastructureException;
 import coffeeshout.room.domain.audit.PlayerNameAuditErrorCode;
 import coffeeshout.room.infra.nickname.persistence.PlayerNameFeedbackEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;

@@ -1,6 +1,6 @@
 package coffeeshout.zzolbot.infra.sql;
 
-import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.exception.custom.InfrastructureException;
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import coffeeshout.zzolbot.domain.ZzolBotErrorCode;
 import java.util.List;

@@ -1,9 +1,9 @@
 package coffeeshout.user.infra.persistence;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.mockito.Mockito.mock;
 
-import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.exception.GlobalErrorCode;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 

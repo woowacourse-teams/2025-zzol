@@ -1,6 +1,6 @@
 package coffeeshout.room.domain.roulette;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResultType;
 import coffeeshout.room.domain.RoomErrorCode;
 import java.util.Map;

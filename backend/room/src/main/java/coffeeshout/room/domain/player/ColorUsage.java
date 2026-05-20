@@ -1,6 +1,6 @@
 package coffeeshout.room.domain.player;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;

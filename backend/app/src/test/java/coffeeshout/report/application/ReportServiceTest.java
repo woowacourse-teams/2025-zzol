@@ -2,7 +2,7 @@ package coffeeshout.report.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;

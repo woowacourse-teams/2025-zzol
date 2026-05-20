@@ -5,11 +5,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.websocket.auth.RoomSessionClaim;
 import coffeeshout.websocket.auth.RoomSessionTokenService;
-import coffeeshout.room.application.service.RoomCreateResult;
-import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;

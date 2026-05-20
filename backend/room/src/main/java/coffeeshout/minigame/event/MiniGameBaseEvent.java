@@ -1,6 +1,6 @@
 package coffeeshout.minigame.event;
 
-import coffeeshout.global.trace.TraceInfo;
+import coffeeshout.trace.TraceInfo;
 import java.time.Instant;
 
 public interface MiniGameBaseEvent {

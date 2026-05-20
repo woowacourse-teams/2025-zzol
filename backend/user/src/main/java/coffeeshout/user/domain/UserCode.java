@@ -1,6 +1,6 @@
 package coffeeshout.user.domain;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.user.exception.UserErrorCode;
 import java.util.ArrayList;
 import java.util.Collections;

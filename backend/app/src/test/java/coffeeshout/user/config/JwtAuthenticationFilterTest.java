@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.exception.UserErrorCode;

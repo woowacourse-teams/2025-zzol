@@ -1,6 +1,6 @@
 package coffeeshout.laddergame.domain;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.domain.player.Player;
 
 public record Pole(int index, Player player) {

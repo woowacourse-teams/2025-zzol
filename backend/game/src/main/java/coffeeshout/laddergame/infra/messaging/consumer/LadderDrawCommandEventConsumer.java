@@ -1,6 +1,6 @@
 package coffeeshout.laddergame.infra.messaging.consumer;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.laddergame.application.LadderService;
 import coffeeshout.laddergame.domain.event.LadderDrawCommandEvent;
 import java.util.function.Consumer;

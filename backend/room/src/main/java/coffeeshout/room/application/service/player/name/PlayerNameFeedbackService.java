@@ -1,6 +1,6 @@
 package coffeeshout.room.application.service.player.name;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.nickname.event.ProfanityWordAllowedEvent;

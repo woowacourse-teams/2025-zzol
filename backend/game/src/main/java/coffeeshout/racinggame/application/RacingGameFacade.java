@@ -1,8 +1,8 @@
 package coffeeshout.racinggame.application;
 
-import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.redis.BaseEvent;
 import coffeeshout.racinggame.infra.RacingGameStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.racinggame.domain.event.TapCommandEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

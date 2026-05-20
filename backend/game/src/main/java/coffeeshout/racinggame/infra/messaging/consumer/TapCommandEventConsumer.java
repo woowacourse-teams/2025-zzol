@@ -1,6 +1,6 @@
 package coffeeshout.racinggame.infra.messaging.consumer;
 
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.racinggame.application.RacingGameService;
 import coffeeshout.racinggame.domain.event.TapCommandEvent;
 import java.util.function.Consumer;

@@ -7,7 +7,7 @@ import coffeeshout.friend.domain.event.FriendRequestAcceptedEvent;
 import coffeeshout.friend.domain.event.FriendRequestCreatedEvent;
 import coffeeshout.friend.domain.event.FriendRequestRejectedEvent;
 import coffeeshout.friend.exception.FriendErrorCode;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.exception.UserErrorCode;

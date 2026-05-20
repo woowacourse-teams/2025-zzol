@@ -2,7 +2,7 @@ package coffeeshout.blindtimer.infra.messaging.consumer;
 
 import coffeeshout.blindtimer.application.BlindTimerGameProgressHandler;
 import coffeeshout.blindtimer.domain.event.StopCommandEvent;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.exception.custom.BusinessException;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

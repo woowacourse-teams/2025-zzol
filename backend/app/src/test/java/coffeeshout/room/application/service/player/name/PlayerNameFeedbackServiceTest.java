@@ -1,13 +1,13 @@
 package coffeeshout.room.application.service.player.name;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.PlayerNameAuditFixture;
-import coffeeshout.global.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.nickname.event.ProfanityWordAllowedEvent;

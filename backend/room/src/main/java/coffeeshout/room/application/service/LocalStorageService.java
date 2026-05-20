@@ -1,6 +1,6 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.exception.custom.InfrastructureException;
 import coffeeshout.room.application.port.StorageService;
 import coffeeshout.room.infra.qr.QrCodeErrorCode;
 import io.micrometer.core.instrument.MeterRegistry;

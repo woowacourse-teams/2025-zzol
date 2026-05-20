@@ -1,6 +1,6 @@
 package coffeeshout.room.application;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -10,8 +10,8 @@ import static org.mockito.Mockito.doReturn;
 
 import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.global.ServiceTest;
-import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.ServiceTest;
+import coffeeshout.exception.GlobalErrorCode;
 import coffeeshout.websocket.auth.RoomSessionClaim;
 import coffeeshout.websocket.auth.RoomSessionTokenService;
 import coffeeshout.minigame.domain.MiniGameResult;

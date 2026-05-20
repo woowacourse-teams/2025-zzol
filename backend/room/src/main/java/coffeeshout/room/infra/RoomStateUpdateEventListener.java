@@ -1,6 +1,6 @@
 package coffeeshout.room.infra;
 
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.infra.event.RoomStateUpdateEvent;

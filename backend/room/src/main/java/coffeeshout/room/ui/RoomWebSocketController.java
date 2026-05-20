@@ -1,8 +1,8 @@
 package coffeeshout.room.ui;
 
-import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.redis.BaseEvent;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
-import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.websocket.docs.WsReceive;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;

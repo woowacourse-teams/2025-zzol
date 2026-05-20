@@ -50,6 +50,12 @@ public class GameSessionService {
                 .toList();
     }
 
+    public void initSession(JoinCode joinCode, PlayerName hostName) {
+        if (!gameSessionRepository.existsByJoinCode(joinCode)) {
+            gameSessionRepository.save(new GameSession(joinCode, hostName));
+        }
+    }
+
     public GameSession getOrCreateSession(JoinCode joinCode, PlayerName hostName) {
         if (gameSessionRepository.existsByJoinCode(joinCode)) {
             return gameSessionRepository.getByJoinCode(joinCode);

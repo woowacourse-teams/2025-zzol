@@ -1,6 +1,6 @@
 package coffeeshout.room.ui;
 
-import coffeeshout.room.application.service.GameRecoveryService;
+import coffeeshout.room.application.service.RoomRecoveryService;
 import coffeeshout.room.ui.dto.RecoveryMessage;
 import coffeeshout.room.ui.dto.RecoveryResponse;
 import coffeeshout.websocket.StompSessionManager;
@@ -22,9 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/rooms/{joinCode}/recovery")
 @RequiredArgsConstructor
 @Validated
-public class GameRecoveryController implements GameRecoveryApi {
+public class RoomRecoveryController implements RoomRecoveryApi {
 
-    private final GameRecoveryService gameRecoveryService;
+    private final RoomRecoveryService roomRecoveryService;
     private final StompSessionManager stompSessionManager;
 
     @Override
@@ -40,7 +40,7 @@ public class GameRecoveryController implements GameRecoveryApi {
                     .body(RecoveryResponse.error("웹소켓 미연결"));
         }
 
-        final List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, lastId);
+        final List<RecoveryMessage> messages = roomRecoveryService.getMessagesSince(joinCode, lastId);
 
         log.info("메시지 복구 완료: joinCode={}, playerName={}, lastId={}, count={}",
                 joinCode, playerName, lastId, messages.size());

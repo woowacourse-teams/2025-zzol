@@ -1,12 +1,14 @@
 package coffeeshout.room.application.service;
 
 import coffeeshout.room.domain.JoinCode;
+import coffeeshout.room.domain.event.RoomRemovedEvent;
 import coffeeshout.room.domain.service.RoomCommandService;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -17,18 +19,21 @@ public class DelayedRoomRemovalService {
     private final TaskScheduler taskScheduler;
     private final Duration removeDuration;
     private final RoomCommandService roomCommandService;
-    private final GameRecoveryService gameRecoveryService;
+    private final RoomRecoveryService roomRecoveryService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public DelayedRoomRemovalService(
             @Qualifier("delayRemovalScheduler") TaskScheduler taskScheduler,
             @Value("${room.removalDelay}") Duration removalDelay,
             RoomCommandService roomCommandService,
-            GameRecoveryService gameRecoveryService) {
+            RoomRecoveryService roomRecoveryService,
+            ApplicationEventPublisher eventPublisher) {
         validateRemovalDuration(removalDelay);
         this.taskScheduler = taskScheduler;
         this.removeDuration = removalDelay;
         this.roomCommandService = roomCommandService;
-        this.gameRecoveryService = gameRecoveryService;
+        this.roomRecoveryService = roomRecoveryService;
+        this.eventPublisher = eventPublisher;
     }
 
     private void validateRemovalDuration(Duration removalDelay) {
@@ -51,7 +56,8 @@ public class DelayedRoomRemovalService {
     private void executeRoomRemoval(JoinCode joinCode) {
         try {
             roomCommandService.delete(joinCode);
-            gameRecoveryService.cleanup(joinCode.getValue());
+            roomRecoveryService.cleanup(joinCode.getValue());
+            eventPublisher.publishEvent(new RoomRemovedEvent(joinCode.getValue()));
             log.info("방 삭제 완료: joinCode={}", joinCode.getValue());
         } catch (Exception e) {
             log.warn("방 삭제 중 오류 발생: joinCode={}", joinCode.getValue(), e);

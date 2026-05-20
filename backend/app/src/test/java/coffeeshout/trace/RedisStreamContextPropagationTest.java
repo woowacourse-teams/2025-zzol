@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
@@ -63,6 +64,9 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
         Room testRoom = RoomFixture.호스트_꾹이();
         roomRepository.save(testRoom);
         joinCode = testRoom.getJoinCode().getValue();
+        // 컨테이너 재사용(withReuse=true) + StreamOffset.fromStart 조합으로 이전 실행의 이벤트가
+        // 스트림에 누적되어 spy 호출 이력이 오염되는 것을 방지한다.
+        Mockito.clearInvocations(tracerProvider);
     }
 
     @Nested

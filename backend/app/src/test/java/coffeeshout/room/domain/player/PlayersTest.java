@@ -27,7 +27,7 @@ class PlayersTest {
         players.join(꾹이);
         players.join(엠제이);
 
-        MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 3, 엠제이, 4));
+        MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 4));
 
         // when
         players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(4, 5, 0.7));
@@ -58,7 +58,7 @@ class PlayersTest {
             players.join(루키);
             players.join(꾹이);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 2));
+            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2));
 
             // when
             players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(3, 1, 0.7));
@@ -91,7 +91,7 @@ class PlayersTest {
             players.join(꾹이);
             players.join(엠제이);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 2, 엠제이, 4));
+            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 4));
 
             // when
             players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(4, 1, 0.7));
@@ -131,7 +131,7 @@ class PlayersTest {
             players.join(엠제이);
             players.join(루키);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 3, 엠제이, 3));
+            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 3));
 
             // when
             players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(4, 1, 0.7));
@@ -164,7 +164,7 @@ class PlayersTest {
             players.join(꾹이);
             players.join(엠제이);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 2, 엠제이, 2));
+            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 2));
 
             // when
             players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(4, 1, 0.7));
@@ -202,11 +202,11 @@ class PlayersTest {
             players.join(호스트유령);
 
             MiniGameResult miniGameResult = new MiniGameResult(Map.of(
-                    한스, 1,
-                    루키, 1,
-                    꾹이, 3,
-                    엠제이, 3,
-                    호스트유령, 5
+                    한스.getName(), 1,
+                    루키.getName(), 1,
+                    꾹이.getName(), 3,
+                    엠제이.getName(), 3,
+                    호스트유령.getName(), 5
             ));
 
             players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(5, 1, 0.7));

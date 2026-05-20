@@ -5,7 +5,6 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.domain.Playable;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Comparator;
 import java.util.List;
@@ -20,16 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 public class BlockStackingGame implements Playable {
 
     private volatile BlockStackingGameState state;
-    private final ConcurrentHashMap<Player, BlockStackingPlayerProgress> playerProgresses = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<PlayerName, BlockStackingPlayerProgress> playerProgresses = new ConcurrentHashMap<>();
 
     public BlockStackingGame() {
         this.state = BlockStackingGameState.READY;
     }
 
     @Override
-    public void setUp(List<Player> players) {
+    public void setUp(List<PlayerName> players) {
         playerProgresses.clear();
-        players.forEach(p -> playerProgresses.put(p, BlockStackingPlayerProgress.initial(p.getName())));
+        players.forEach(p -> playerProgresses.put(p, BlockStackingPlayerProgress.initial(p)));
     }
 
     public void prepare() {
@@ -50,7 +49,7 @@ public class BlockStackingGame implements Playable {
      * @return 유효한 이벤트면 true, 검증 실패로 무시됐으면 false
      */
     public synchronized boolean recordProgress(
-            Player player, int floor,
+            PlayerName playerName, int floor,
             double movingBlockX, double stackTopX, double stackTopWidth
     ) {
         if (state != BlockStackingGameState.PLAYING) {
@@ -60,28 +59,28 @@ public class BlockStackingGame implements Playable {
             );
         }
 
-        final BlockStackingPlayerProgress progress = playerProgresses.get(player);
+        final BlockStackingPlayerProgress progress = playerProgresses.get(playerName);
         if (progress == null) {
             log.warn("[{}] 등록되지 않은 플레이어의 진행 이벤트 수신 — 무시: player={}",
                     BlockStackingGameErrorCode.PLAYER_NOT_FOUND.getCode(),
-                    player.getName().value());
+                    playerName.value());
             throw new BusinessException(
                     BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
-                    "등록되지 않은 플레이어입니다: " + player.getName().value()
+                    "등록되지 않은 플레이어입니다: " + playerName.value()
             );
         }
 
         if (progress.failed()) {
             log.warn("[{}] 이미 실패한 플레이어의 진행 이벤트 수신 — 무시: player={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
-                    player.getName().value());
+                    playerName.value());
             return false;
         }
 
         if (!isValidFloorSequence(floor, progress.currentFloor())) {
             log.warn("[{}] 비연속적 층수 수신 — 무시: player={}, expected={}, received={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
-                    player.getName().value(), progress.currentFloor() + 1, floor);
+                    playerName.value(), progress.currentFloor() + 1, floor);
             return false;
         }
 
@@ -89,11 +88,11 @@ public class BlockStackingGame implements Playable {
         if (overlap <= 0) {
             log.warn("[{}] 유효하지 않은 overlap — 무시: player={}, floor={}, overlap={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
-                    player.getName().value(), floor, overlap);
+                    playerName.value(), floor, overlap);
             return false;
         }
 
-        playerProgresses.put(player, progress.advanceTo(floor));
+        playerProgresses.put(playerName, progress.advanceTo(floor));
         return true;
     }
 
@@ -103,7 +102,7 @@ public class BlockStackingGame implements Playable {
      * @return 실패 상태로 전환됐으면 true, 이미 실패한 상태였으면 false
      * @throws BusinessException 게임이 PLAYING 상태가 아닐 때, 또는 등록되지 않은 플레이어일 때
      */
-    public synchronized boolean recordFailure(Player player) {
+    public synchronized boolean recordFailure(PlayerName playerName) {
         if (state != BlockStackingGameState.PLAYING) {
             throw new BusinessException(
                     BlockStackingGameErrorCode.NOT_PLAYING_STATE,
@@ -111,19 +110,19 @@ public class BlockStackingGame implements Playable {
             );
         }
 
-        final BlockStackingPlayerProgress progress = playerProgresses.get(player);
+        final BlockStackingPlayerProgress progress = playerProgresses.get(playerName);
         if (progress == null) {
             throw new BusinessException(
                     BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
-                    "등록되지 않은 플레이어입니다: " + player.getName().value()
+                    "등록되지 않은 플레이어입니다: " + playerName.value()
             );
         }
 
         if (progress.failed()) {
             return false;
         }
-        playerProgresses.put(player, progress.fail());
-        log.info("플레이어 실패 기록: player={}, floor={}", player.getName().value(), progress.currentFloor());
+        playerProgresses.put(playerName, progress.fail());
+        log.info("플레이어 실패 기록: player={}, floor={}", playerName.value(), progress.currentFloor());
         return true;
     }
 
@@ -140,14 +139,14 @@ public class BlockStackingGame implements Playable {
                 .toList();
     }
 
-    public Player findPlayerByName(PlayerName playerName) {
-        return playerProgresses.keySet().stream()
-                .filter(p -> p.sameName(playerName))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
-                        "플레이어를 찾을 수 없습니다: " + playerName.value()
-                ));
+    public PlayerName findPlayerByName(PlayerName playerName) {
+        if (!playerProgresses.containsKey(playerName)) {
+            throw new BusinessException(
+                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
+                    "플레이어를 찾을 수 없습니다: " + playerName.value()
+            );
+        }
+        return playerName;
     }
 
     @Override
@@ -156,7 +155,7 @@ public class BlockStackingGame implements Playable {
     }
 
     @Override
-    public Map<Player, MiniGameScore> getScores() {
+    public Map<PlayerName, MiniGameScore> getScores() {
         return playerProgresses.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,

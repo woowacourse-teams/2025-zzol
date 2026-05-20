@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,9 @@ class RunnersTest {
 
     private final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> 30;
 
-    final List<Player> players = List.of(PlayerFixture.호스트한스(), PlayerFixture.게스트꾹이());
+    final Player 한스 = PlayerFixture.호스트한스();
+    final Player 꾹이 = PlayerFixture.게스트꾹이();
+    final List<PlayerName> players = List.of(한스.getName(), 꾹이.getName());
     final Runners runners = new Runners(players);
 
     @Test
@@ -48,7 +51,7 @@ class RunnersTest {
         final Runner winner = runners.findWinner().get();
 
         // then
-        assertThat(winner.getPlayer()).isEqualTo(players.getFirst());
+        assertThat(winner.getPlayerName()).isEqualTo(players.getFirst());
     }
 
     @Test

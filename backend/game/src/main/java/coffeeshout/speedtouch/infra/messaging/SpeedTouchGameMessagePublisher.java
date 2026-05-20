@@ -1,13 +1,13 @@
 package coffeeshout.speedtouch.infra.messaging;
 
-import coffeeshout.websocket.LoggingSimpMessagingTemplate;
-import coffeeshout.websocket.docs.WsTopic;
-import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.speedtouch.domain.event.SpeedTouchFinishedEvent;
 import coffeeshout.speedtouch.domain.event.SpeedTouchProgressEvent;
 import coffeeshout.speedtouch.domain.event.SpeedTouchStateChangedEvent;
 import coffeeshout.speedtouch.ui.response.SpeedTouchProgressResponse;
 import coffeeshout.speedtouch.ui.response.SpeedTouchStateResponse;
+import coffeeshout.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.websocket.docs.WsTopic;
+import coffeeshout.websocket.ui.WebSocketResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;

@@ -3,24 +3,23 @@ package coffeeshout.minigame.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.cardgame.domain.CardGameScore;
-import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.racinggame.domain.RacingGameScore;
-import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
 class MiniGameResultTest {
 
-    private final Player 호스트_한스 = PlayerFixture.호스트한스();
-    private final Player 게스트_루키 = PlayerFixture.호스트루키();
-    private final Player 게스트_꾹이 = PlayerFixture.호스트꾹이();
-    private final Player 게스트_엠제이 = PlayerFixture.호스트엠제이();
+    private final PlayerName 호스트_한스 = new PlayerName("한스");
+    private final PlayerName 게스트_루키 = new PlayerName("루키");
+    private final PlayerName 게스트_꾹이 = new PlayerName("꾹이");
+    private final PlayerName 게스트_엠제이 = new PlayerName("엠제이");
 
     @Test
     void 순위_목록을_반환한다() {
         // given
-        Map<Player, MiniGameScore> playerScores = Map.of(
+        Map<PlayerName, MiniGameScore> playerScores = Map.of(
                 게스트_엠제이, new CardGameScore(80),
                 호스트_한스, new CardGameScore(40),
                 게스트_루키, new CardGameScore(10),
@@ -49,7 +48,7 @@ class MiniGameResultTest {
     @Test
     void 해당_플레이어의_순위를_반환한다() {
         // given
-        Map<Player, MiniGameScore> playerScores = Map.of(
+        Map<PlayerName, MiniGameScore> playerScores = Map.of(
                 게스트_엠제이, new CardGameScore(80),
                 호스트_한스, new CardGameScore(40),
                 게스트_루키, new CardGameScore(10),

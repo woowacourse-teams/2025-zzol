@@ -11,7 +11,7 @@ public record RunnersMovedEvent(String joinCode, RacingRange racingRange, List<R
         final RacingRange distance = new RacingRange(RacingGame.START_LINE, RacingGame.FINISH_LINE);
         final List<RunnerPosition> positions = racingGame.getRunners().stream()
                 .map(runner -> new RunnerPosition(
-                        runner.getPlayer().getName().value(),
+                        runner.getPlayerName().value(),
                         runner.getPosition(),
                         runner.getSpeed()
                 )).toList();

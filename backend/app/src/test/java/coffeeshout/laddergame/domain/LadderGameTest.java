@@ -10,6 +10,7 @@ import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -21,17 +22,17 @@ class LadderGameTest {
     Player 꾹이;
     Player 철수;
     Player 영희;
-    List<Player> players;
+    List<PlayerName> playerNames;
 
     @BeforeEach
     void setUp() {
         꾹이 = PlayerFixture.호스트꾹이();
         철수 = PlayerFixture.게스트루키();
         영희 = PlayerFixture.게스트엠제이();
-        players = List.of(꾹이, 철수, 영희);
+        playerNames = List.of(꾹이.getName(), 철수.getName(), 영희.getName());
 
         game = new LadderGame();
-        game.setUp(players);
+        game.setUp(playerNames);
     }
 
     @Nested
@@ -241,9 +242,9 @@ class LadderGameTest {
 
             // 모든 플레이어에게 게임 순위가 부여됨
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(result.getPlayerRank(꾹이)).isNotNull();
-                softly.assertThat(result.getPlayerRank(철수)).isNotNull();
-                softly.assertThat(result.getPlayerRank(영희)).isNotNull();
+                softly.assertThat(result.getPlayerRank(꾹이.getName())).isNotNull();
+                softly.assertThat(result.getPlayerRank(철수.getName())).isNotNull();
+                softly.assertThat(result.getPlayerRank(영희.getName())).isNotNull();
             });
         }
 
@@ -258,8 +259,8 @@ class LadderGameTest {
             final MiniGameResult result = game.getResult();
 
             // 사다리 순위 1을 받은 플레이어가 getResult에서도 1위
-            final Player ladderWinner = players.stream()
-                    .filter(p -> ladderRankings.get(p.getName().value()) == 1)
+            final PlayerName ladderWinner = playerNames.stream()
+                    .filter(p -> ladderRankings.get(p.value()) == 1)
                     .findFirst()
                     .orElseThrow();
 

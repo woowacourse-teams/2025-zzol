@@ -2,7 +2,6 @@ package coffeeshout.minigame.ui.response;
 
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.Card;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Arrays;
 import java.util.List;
@@ -47,10 +46,8 @@ public record MiniGameStateMessage(
         public static List<CardInfoMessage> from(@NonNull CardGame cardGame) {
             return cardGame.getDeck().getCards().stream()
                     .map(card -> {
-                        Optional<Player> player = cardGame.findCardOwnerInCurrentRound(card);
-                        PlayerName name = player.map(Player::getName).orElse(null);
-                        Integer colorIndex = player.map(Player::getColorIndex).orElse(null);
-                        return CardInfoMessage.of(card, player.isPresent(), name, colorIndex);
+                        Optional<PlayerName> owner = cardGame.findCardOwnerInCurrentRound(card);
+                        return CardInfoMessage.of(card, owner.isPresent(), owner.orElse(null), null);
                     }).toList();
         }
 

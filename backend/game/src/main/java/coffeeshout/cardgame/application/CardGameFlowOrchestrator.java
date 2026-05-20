@@ -6,13 +6,13 @@ import static coffeeshout.cardgame.domain.CardGameStep.PREPARE;
 import static coffeeshout.cardgame.domain.CardGameStep.START_PLAY;
 import static coffeeshout.cardgame.domain.CardGameStep.START_ROUND;
 
-import coffeeshout.gamecommon.flow.EarlyFinishTrigger;
-import coffeeshout.gamecommon.flow.FlowHandle;
-import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.cardgame.config.CardGameTimingProperties;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.CardGameState;
 import coffeeshout.cardgame.domain.CardGameStep;
+import coffeeshout.gamecommon.flow.EarlyFinishTrigger;
+import coffeeshout.gamecommon.flow.FlowHandle;
+import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.room.domain.Room;

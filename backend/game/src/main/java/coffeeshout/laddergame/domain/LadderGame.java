@@ -5,7 +5,6 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.domain.Playable;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.HashMap;
 import java.util.List;
@@ -18,7 +17,7 @@ public class LadderGame implements Playable {
     private Poles poles;
     private LadderLines lines = new LadderLines();
     private BottomRanks bottomRanks;
-    private Map<Player, Integer> finalRanks;
+    private Map<PlayerName, Integer> finalRanks;
 
     public LadderGame() {
         this.state = LadderGameState.DESCRIPTION;
@@ -41,7 +40,7 @@ public class LadderGame implements Playable {
     }
 
     @Override
-    public void setUp(List<Player> players) {
+    public void setUp(List<PlayerName> players) {
         this.state = LadderGameState.DESCRIPTION;
         this.lines = new LadderLines();
         this.poles = Poles.assign(players);
@@ -87,11 +86,11 @@ public class LadderGame implements Playable {
     }
 
     public void tracePaths() {
-        final Map<Player, Integer> ranks = new HashMap<>();
+        final Map<PlayerName, Integer> ranks = new HashMap<>();
         for (int i = 0; i < poles.size(); i++) {
-            final Player player = poles.getPlayer(i);
+            final PlayerName playerName = poles.getPlayerName(i);
             final int finalPoleIndex = lines.trace(i);
-            ranks.put(player, bottomRanks.getRank(finalPoleIndex));
+            ranks.put(playerName, bottomRanks.getRank(finalPoleIndex));
         }
         this.finalRanks = Map.copyOf(ranks);
     }
@@ -103,7 +102,7 @@ public class LadderGame implements Playable {
         }
         return finalRanks.entrySet().stream()
                 .collect(Collectors.toMap(
-                        e -> e.getKey().getName().value(),
+                        e -> e.getKey().value(),
                         Map.Entry::getValue
                 ));
     }
@@ -114,7 +113,7 @@ public class LadderGame implements Playable {
     }
 
     @Override
-    public Map<Player, MiniGameScore> getScores() {
+    public Map<PlayerName, MiniGameScore> getScores() {
         if (finalRanks == null) {
             throw new BusinessException(LadderGameErrorCode.PATH_NOT_TRACED,
                     "tracePaths()가 먼저 호출되어야 합니다.");

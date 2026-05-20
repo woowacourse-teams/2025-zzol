@@ -9,6 +9,7 @@ import coffeeshout.ServiceTest;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
@@ -47,7 +48,8 @@ class SpeedTouchGameServiceTest extends ServiceTest {
         // given
         gameSessionRepository.save(
                 GameSessionFixture.게임세션_게임시작됨(
-                        room.getJoinCode(), game, new PlayerName(HOST_NAME), room.getPlayers()));
+                        room.getJoinCode(), game, new PlayerName(HOST_NAME),
+                        room.getPlayers().stream().map(Player::getName).toList()));
 
         // when - TestTaskScheduler는 모든 schedule을 즉시 실행하므로
         // DESCRIPTION → PREPARE → PLAYING → timeout → DONE까지 한번에 진행됨

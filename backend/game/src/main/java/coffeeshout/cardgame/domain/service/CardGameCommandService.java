@@ -5,7 +5,6 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +24,7 @@ public class CardGameCommandService {
 
         final CardGame cardGame = (CardGame) gameSessionRepository.getByJoinCode(joinCode)
                 .findCompletedGame(MiniGameType.CARD_GAME);
-        final Player player = cardGame.findPlayerByName(playerName);
-        final boolean roundFinished = cardGame.selectCard(player, cardIndex);
+        final boolean roundFinished = cardGame.selectCard(playerName, cardIndex);
 
         notifier.notifyCardSelected(joinCode, cardGame);
         return roundFinished;

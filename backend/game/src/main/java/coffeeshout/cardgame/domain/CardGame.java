@@ -8,7 +8,7 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.domain.Playable;
-import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Map;
@@ -48,12 +48,12 @@ public class CardGame implements Playable {
     }
 
     @Override
-    public void setUp(List<Player> players) {
+    public void setUp(List<PlayerName> players) {
         playerHands = new PlayerHands(players);
     }
 
     @Override
-    public Map<Player, MiniGameScore> getScores() {
+    public Map<PlayerName, MiniGameScore> getScores() {
         return playerHands.scoreByPlayer();
     }
 
@@ -73,7 +73,7 @@ public class CardGame implements Playable {
         this.state = CardGameState.PLAYING;
     }
 
-    public boolean selectCard(Player player, Integer cardIndex) {
+    public boolean selectCard(PlayerName playerName, Integer cardIndex) {
         if (state != CardGameState.PLAYING) {
             throw new BusinessException(
                     CardGameErrorCode.NOT_PLAYING_STATE,
@@ -81,7 +81,7 @@ public class CardGame implements Playable {
             );
         }
 
-        playerHands.put(player, deck.pick(cardIndex));
+        playerHands.putByName(playerName, deck.pick(cardIndex));
         return playerHands.isRoundFinished(this.round);
     }
 
@@ -101,22 +101,28 @@ public class CardGame implements Playable {
         return round.getTotalRounds();
     }
 
-    public Player findPlayerByName(PlayerName name) {
-        return playerHands.findPlayerByName(name);
+    public PlayerName findPlayerByName(PlayerName name) {
+        if (!playerHands.containsPlayer(name)) {
+            throw new BusinessException(
+                    RoomErrorCode.NO_EXIST_PLAYER,
+                    "해당 플레이어를 찾을 수 없습니다. name: " + name
+            );
+        }
+        return name;
     }
 
     public void assignRandomCardsToUnselectedPlayers() {
-        final List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(round);
+        final List<PlayerName> unselectedPlayers = playerHands.getUnselectedPlayerNames(round);
         // 라운드 정보를 포함한 시드로 일관된 랜덤 생성
         final Random random = new Random(seed + round.toIndex());
 
-        for (Player player : unselectedPlayers) {
+        for (PlayerName playerName : unselectedPlayers) {
             final Card card = deck.pickRandom(random);
-            playerHands.put(player, card);
+            playerHands.putByName(playerName, card);
         }
     }
 
-    public Optional<Player> findCardOwnerInCurrentRound(Card card) {
+    public Optional<PlayerName> findCardOwnerInCurrentRound(Card card) {
         return playerHands.findCardOwner(card, round);
     }
 

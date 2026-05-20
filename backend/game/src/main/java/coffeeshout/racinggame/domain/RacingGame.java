@@ -5,7 +5,7 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.domain.Playable;
-import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -35,7 +35,7 @@ public class RacingGame implements Playable {
     private ScheduledFuture<?> autoMoveFuture;
 
     @Override
-    public void setUp(List<Player> players) {
+    public void setUp(List<PlayerName> players) {
         this.runners = new Runners(players);
         this.state = RacingGameState.DESCRIPTION;
     }
@@ -60,9 +60,9 @@ public class RacingGame implements Playable {
         }
     }
 
-    public void updateSpeed(Player player, int tapCount, SpeedCalculator speedCalculator, Instant now) {
+    public void updateSpeed(PlayerName playerName, int tapCount, SpeedCalculator speedCalculator, Instant now) {
         validatePlaying();
-        runners.updateSpeed(player, tapCount, speedCalculator, now);
+        runners.updateSpeed(playerName, tapCount, speedCalculator, now);
     }
 
     private void validatePlaying() {
@@ -80,8 +80,11 @@ public class RacingGame implements Playable {
     }
 
     @Override
-    public Map<Player, MiniGameScore> getScores() {
-        return runners.stream().collect(Collectors.toMap(Runner::getPlayer, this::convertScore));
+    public Map<PlayerName, MiniGameScore> getScores() {
+        return runners.stream().collect(Collectors.toMap(
+                Runner::getPlayerName,
+                this::convertScore
+        ));
     }
 
     @Override

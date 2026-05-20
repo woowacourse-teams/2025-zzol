@@ -12,7 +12,6 @@ import coffeeshout.racinggame.domain.event.RaceStateChangedEvent;
 import coffeeshout.racinggame.domain.event.RunnersMovedEvent;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomQueryService;
 import java.time.Duration;
@@ -66,10 +65,8 @@ public class RacingGameService implements MiniGameService {
     }
 
     public void tap(String joinCode, String playerName, int tapCount) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final RacingGame racingGame = getRacingGame(joinCode);
-        final Player player = room.findPlayer(new PlayerName(playerName));
-        racingGame.updateSpeed(player, tapCount, speedCalculator, Instant.now());
+        racingGame.updateSpeed(new PlayerName(playerName), tapCount, speedCalculator, Instant.now());
 
         log.debug("탭 처리 완료: joinCode={}, playerName={}, tapCount={}", joinCode, playerName, tapCount);
     }

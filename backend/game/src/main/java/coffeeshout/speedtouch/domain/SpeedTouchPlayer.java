@@ -1,6 +1,6 @@
 package coffeeshout.speedtouch.domain;
 
-import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.Getter;
@@ -11,12 +11,12 @@ public class SpeedTouchPlayer {
     public static final int LAST_NUMBER = 25;
 
     @Getter
-    private final Player player;
+    private final PlayerName playerName;
     private int currentNumber;
     private Instant finishTime;
 
-    public SpeedTouchPlayer(Player player) {
-        this.player = player;
+    public SpeedTouchPlayer(PlayerName playerName) {
+        this.playerName = playerName;
         this.currentNumber = FIRST_NUMBER;
     }
 

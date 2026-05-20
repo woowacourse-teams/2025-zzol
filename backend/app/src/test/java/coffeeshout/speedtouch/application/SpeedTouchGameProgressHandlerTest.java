@@ -10,6 +10,7 @@ import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
@@ -45,7 +46,8 @@ class SpeedTouchGameProgressHandlerTest extends ServiceTest {
         game = new SpeedTouchGame();
         gameSessionRepository.save(
                 GameSessionFixture.게임세션_게임시작됨(
-                        room.getJoinCode(), game, new PlayerName(HOST_NAME), room.getPlayers()));
+                        room.getJoinCode(), game, new PlayerName(HOST_NAME),
+                        room.getPlayers().stream().map(Player::getName).toList()));
         joinCode = room.getJoinCode().getValue();
 
         // TestTaskScheduler를 우회하여 직접 PLAYING 상태로 세팅

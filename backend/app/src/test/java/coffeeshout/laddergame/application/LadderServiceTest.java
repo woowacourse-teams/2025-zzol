@@ -13,6 +13,7 @@ import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +50,8 @@ class LadderServiceTest extends ServiceTest {
         game = new LadderGame();
         gameSessionRepository.save(
                 GameSessionFixture.게임세션_게임시작됨(
-                        room.getJoinCode(), game, new PlayerName(HOST_NAME), room.getPlayers()));
+                        room.getJoinCode(), game, new PlayerName(HOST_NAME),
+                        room.getPlayers().stream().map(Player::getName).toList()));
         game.changeToPrepare();
         game.changeToDrawing();
 

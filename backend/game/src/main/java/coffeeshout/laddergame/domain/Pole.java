@@ -1,12 +1,12 @@
 package coffeeshout.laddergame.domain;
 
 import coffeeshout.exception.custom.BusinessException;
-import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 
-public record Pole(int index, Player player) {
+public record Pole(int index, PlayerName playerName) {
 
     public Pole {
-        if (player == null) {
+        if (playerName == null) {
             throw new BusinessException(LadderGameErrorCode.PLAYER_NOT_FOUND, "플레이어는 null일 수 없습니다");
         }
         if (index < 0) {

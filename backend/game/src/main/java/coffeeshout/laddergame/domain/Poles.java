@@ -1,7 +1,6 @@
 package coffeeshout.laddergame.domain;
 
 import coffeeshout.exception.custom.BusinessException;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,8 +14,8 @@ public class Poles {
         this.poles = List.copyOf(poles);
     }
 
-    public static Poles assign(List<Player> players) {
-        final List<Player> shuffled = new ArrayList<>(players);
+    public static Poles assign(List<PlayerName> playerNames) {
+        final List<PlayerName> shuffled = new ArrayList<>(playerNames);
         Collections.shuffle(shuffled);
         final List<Pole> assigned = new ArrayList<>();
         for (int i = 0; i < shuffled.size(); i++) {
@@ -27,7 +26,7 @@ public class Poles {
 
     public int getPoleIndex(PlayerName playerName) {
         return poles.stream()
-                .filter(p -> p.player().sameName(playerName))
+                .filter(p -> p.playerName().equals(playerName))
                 .mapToInt(Pole::index)
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
@@ -36,10 +35,10 @@ public class Poles {
                 ));
     }
 
-    public Player getPlayer(int poleIndex) {
+    public PlayerName getPlayerName(int poleIndex) {
         return poles.stream()
                 .filter(p -> p.index() == poleIndex)
-                .map(Pole::player)
+                .map(Pole::playerName)
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
                         LadderGameErrorCode.INVALID_POLE_INDEX,
@@ -56,7 +55,7 @@ public class Poles {
     }
 
     public boolean contains(PlayerName playerName) {
-        return poles.stream().anyMatch(p -> p.player().sameName(playerName));
+        return poles.stream().anyMatch(p -> p.playerName().equals(playerName));
     }
 
     public List<Pole> getAll() {

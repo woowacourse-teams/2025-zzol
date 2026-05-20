@@ -7,6 +7,7 @@ import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.LadderGameState;
 import coffeeshout.laddergame.domain.LadderLine;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +30,7 @@ class LadderCommandServiceTest {
         엠제이 = PlayerFixture.게스트엠제이();
 
         game = new LadderGame();
-        game.setUp(List.of(꾹이, 루키, 엠제이));
+        game.setUp(List.of(꾹이.getName(), 루키.getName(), 엠제이.getName()));
         game.changeToPrepare();
         game.changeToDrawing();
     }
@@ -68,7 +69,7 @@ class LadderCommandServiceTest {
         @Test
         void DESCRIPTION_상태에서도_빈_Optional을_반환한다() {
             final LadderGame descriptionGame = new LadderGame();
-            descriptionGame.setUp(List.of(꾹이, 루키, 엠제이));
+            descriptionGame.setUp(List.of(꾹이.getName(), 루키.getName(), 엠제이.getName()));
 
             final Optional<LadderLine> result = commandService.drawLine(descriptionGame, "꾹이", 0);
 

@@ -3,8 +3,6 @@ package coffeeshout.laddergame.domain;
 import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
@@ -14,17 +12,17 @@ import org.junit.jupiter.api.Test;
 
 class PolesTest {
 
-    Player 꾹이;
-    Player 루키;
-    Player 엠제이;
-    List<Player> players;
+    PlayerName 꾹이;
+    PlayerName 루키;
+    PlayerName 엠제이;
+    List<PlayerName> players;
     Poles poles;
 
     @BeforeEach
     void setUp() {
-        꾹이 = PlayerFixture.호스트꾹이();
-        루키 = PlayerFixture.게스트루키();
-        엠제이 = PlayerFixture.게스트엠제이();
+        꾹이 = new PlayerName("꾹이");
+        루키 = new PlayerName("루키");
+        엠제이 = new PlayerName("엠제이");
         players = List.of(꾹이, 루키, 엠제이);
         poles = Poles.assign(players);
     }
@@ -50,7 +48,7 @@ class PolesTest {
         @Test
         void 각_기둥에_플레이어가_하나씩_배정된다() {
             final long distinctPlayers = poles.getAll().stream()
-                    .map(p -> p.player().getName().value())
+                    .map(p -> p.playerName().value())
                     .distinct()
                     .count();
 
@@ -78,20 +76,20 @@ class PolesTest {
     }
 
     @Nested
-    class getPlayer_테스트 {
+    class getPlayerName_테스트 {
 
         @Test
-        void 기둥_인덱스로_플레이어를_가져온다() {
+        void 기둥_인덱스로_플레이어_이름을_가져온다() {
             final int index = poles.getPoleIndex(new PlayerName("꾹이"));
-            final Player found = poles.getPlayer(index);
+            final PlayerName found = poles.getPlayerName(index);
 
-            assertThat(found.getName().value()).isEqualTo("꾹이");
+            assertThat(found.value()).isEqualTo("꾹이");
         }
 
         @Test
         void 유효하지_않은_인덱스_조회_시_예외를_던진다() {
             assertCoffeeShoutException(
-                    () -> poles.getPlayer(99),
+                    () -> poles.getPlayerName(99),
                     LadderGameErrorCode.INVALID_POLE_INDEX
             );
         }

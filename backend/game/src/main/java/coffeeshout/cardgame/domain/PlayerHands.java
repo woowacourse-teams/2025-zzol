@@ -15,17 +15,28 @@ import java.util.stream.Collectors;
 
 public class PlayerHands {
 
-    private final Map<Player, CardHand> playerHands;
+    private final Map<PlayerName, CardHand> playerHands;
 
-    public PlayerHands(List<Player> players) {
-        this.playerHands = players.stream().collect(Collectors.toMap(
-                player -> player,
-                player -> new CardHand()
+    public PlayerHands(List<PlayerName> playerNames) {
+        this.playerHands = playerNames.stream().collect(Collectors.toMap(
+                playerName -> playerName,
+                playerName -> new CardHand()
         ));
     }
 
     public void put(Player player, Card card) {
-        playerHands.get(player).put(card);
+        putByName(player.getName(), card);
+    }
+
+    public void putByName(PlayerName playerName, Card card) {
+        final CardHand hand = playerHands.get(playerName);
+        if (hand == null) {
+            throw new BusinessException(
+                    RoomErrorCode.NO_EXIST_PLAYER,
+                    "해당 플레이어를 찾을 수 없습니다. name: " + playerName
+            );
+        }
+        hand.put(card);
     }
 
     public int totalHandSize() {
@@ -43,34 +54,28 @@ public class PlayerHands {
                 .allMatch(hand -> hand.isSelected(round));
     }
 
-    public Player findPlayerByName(PlayerName name) {
-        return playerHands.keySet().stream()
-                .filter(player -> player.sameName(name))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        RoomErrorCode.NO_EXIST_PLAYER,
-                        "해당 플레이어를 찾을 수 없습니다. name: " + name)
-                );
+    public boolean containsPlayer(PlayerName name) {
+        return playerHands.containsKey(name);
     }
 
-    public Map<Player, MiniGameScore> scoreByPlayer() {
+    public Map<PlayerName, MiniGameScore> scoreByPlayer() {
         return playerHands.entrySet().stream().collect(Collectors.toMap(
                 Entry::getKey,
                 entry -> entry.getValue().calculateCardGameScore()
         ));
     }
 
-    public List<Player> getUnselectedPlayers(CardGameRound round) {
-        final List<Player> players = new ArrayList<>();
-        playerHands.forEach((player, hand) -> {
+    public List<PlayerName> getUnselectedPlayerNames(CardGameRound round) {
+        final List<PlayerName> names = new ArrayList<>();
+        playerHands.forEach((name, hand) -> {
             if (!hand.isSelected(round)) {
-                players.add(player);
+                names.add(name);
             }
         });
-        return players;
+        return names;
     }
 
-    public Optional<Player> findCardOwner(Card card, CardGameRound round) {
+    public Optional<PlayerName> findCardOwner(Card card, CardGameRound round) {
         return playerHands.entrySet().stream()
                 .filter(entry -> entry.getValue().isAssign(card, round))
                 .findFirst()

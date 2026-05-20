@@ -7,7 +7,7 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.ui.response.MiniGameRanksResponse;
 import coffeeshout.minigame.ui.response.MiniGameScoresResponse;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +28,7 @@ public class MiniGameScoresController {
             @RequestParam String joinCode,
             @RequestParam MiniGameType miniGameType
     ) {
-        final Map<Player, MiniGameScore> scores = gameSessionService.getScores(
+        final Map<PlayerName, MiniGameScore> scores = gameSessionService.getScores(
                 new JoinCode(joinCode), miniGameType);
         return ResponseEntity.ok(MiniGameScoresResponse.from(scores));
     }

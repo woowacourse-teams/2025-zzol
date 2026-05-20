@@ -3,8 +3,6 @@ package coffeeshout.speedtouch.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.time.Instant;
 import java.util.List;
@@ -14,14 +12,12 @@ import org.junit.jupiter.api.Test;
 
 class SpeedTouchPlayersTest {
 
-    private Player 한스;
-    private Player 꾹이;
+    private final PlayerName 한스 = new PlayerName("한스");
+    private final PlayerName 꾹이 = new PlayerName("꾹이");
     private SpeedTouchPlayers players;
 
     @BeforeEach
     void setUp() {
-        한스 = PlayerFixture.게스트한스();
-        꾹이 = PlayerFixture.게스트꾹이();
         players = new SpeedTouchPlayers(List.of(한스, 꾹이));
     }
 
@@ -34,7 +30,7 @@ class SpeedTouchPlayersTest {
             final SpeedTouchPlayer found = players.findByName(new PlayerName("한스"));
 
             // then
-            assertThat(found.getPlayer()).isEqualTo(한스);
+            assertThat(found.getPlayerName()).isEqualTo(한스);
         }
 
         @Test
@@ -95,7 +91,7 @@ class SpeedTouchPlayersTest {
         }
 
         @Test
-        void toPlayerMap으로_Player_키_맵을_생성할_수_있다() {
+        void toPlayerMap으로_PlayerName_키_맵을_생성할_수_있다() {
             // when
             final var map = players.toPlayerMap();
 

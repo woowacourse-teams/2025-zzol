@@ -5,7 +5,7 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.domain.Playable;
-import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Map;
 
@@ -17,10 +17,10 @@ public class MiniGameDummy implements Playable {
     }
 
     @Override
-    public Map<Player, MiniGameScore> getScores() {
+    public Map<PlayerName, MiniGameScore> getScores() {
         return Map.of(
-                PlayerFixture.호스트꾹이(), new CardGameScore(20),
-                PlayerFixture.게스트루키(), new CardGameScore(-10)
+                new PlayerName("꾹이"), new CardGameScore(20),
+                new PlayerName("루키"), new CardGameScore(-10)
         );
     }
 
@@ -30,6 +30,6 @@ public class MiniGameDummy implements Playable {
     }
 
     @Override
-    public void setUp(List<Player> players) {
+    public void setUp(List<PlayerName> players) {
     }
 }

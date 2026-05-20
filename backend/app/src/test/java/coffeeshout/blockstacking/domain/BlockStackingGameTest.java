@@ -3,7 +3,6 @@ package coffeeshout.blockstacking.domain;
 import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.fixture.PlayersFixture;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -27,19 +26,20 @@ class BlockStackingGameTest {
     static final double STACK_TOP_WIDTH = 150.0;
 
     BlockStackingGame game;
-    Player 꾹이;
-    Player 루키;
-    Player 엠제이;
-    Player 한스;
-    List<Player> players;
+    PlayerName 꾹이;
+    PlayerName 루키;
+    PlayerName 엠제이;
+    PlayerName 한스;
+    List<PlayerName> players;
 
     @BeforeEach
     void setUp() {
-        꾹이 = PlayerFixture.호스트꾹이();
-        루키 = PlayerFixture.게스트루키();
-        엠제이 = PlayerFixture.게스트엠제이();
-        한스 = PlayerFixture.게스트한스();
-        players = PlayersFixture.호스트꾹이_루키_엠제이_한스.getPlayers();
+        꾹이 = new PlayerName("꾹이");
+        루키 = new PlayerName("루키");
+        엠제이 = new PlayerName("엠제이");
+        한스 = new PlayerName("한스");
+        players = PlayersFixture.호스트꾹이_루키_엠제이_한스.getPlayers().stream()
+                .map(Player::getName).toList();
 
         game = new BlockStackingGame();
         game.setUp(players);
@@ -58,7 +58,7 @@ class BlockStackingGameTest {
             game.prepare();
             game.startPlay();
 
-            final Map<Player, MiniGameScore> scores = game.getScores();
+            final Map<PlayerName, MiniGameScore> scores = game.getScores();
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(scores).hasSize(4);
@@ -238,7 +238,7 @@ class BlockStackingGameTest {
 
         @Test
         void 이름으로_플레이어를_찾는다() {
-            final Player found = game.findPlayerByName(new PlayerName("꾹이"));
+            final PlayerName found = game.findPlayerByName(new PlayerName("꾹이"));
 
             assertThat(found).isEqualTo(꾹이);
         }
@@ -304,7 +304,7 @@ class BlockStackingGameTest {
 
         @Test
         void 등록되지_않은_플레이어의_실패_기록_시_예외를_던진다() {
-            final Player 미등록플레이어 = PlayerFixture.호스트유령();
+            final PlayerName 미등록플레이어 = new PlayerName("유령");
 
             assertCoffeeShoutException(
                     () -> game.recordFailure(미등록플레이어),
@@ -361,7 +361,7 @@ class BlockStackingGameTest {
 
         @Test
         void getScores_가_각_플레이어의_현재_층수를_반환한다() {
-            final Map<Player, MiniGameScore> scores = game.getScores();
+            final Map<PlayerName, MiniGameScore> scores = game.getScores();
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(scores.get(꾹이).getValue()).isEqualTo(2L);

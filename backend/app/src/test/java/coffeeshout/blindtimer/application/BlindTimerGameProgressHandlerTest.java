@@ -13,6 +13,7 @@ import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
 import java.time.Duration;
@@ -46,7 +47,8 @@ class BlindTimerGameProgressHandlerTest extends ServiceTest {
         game = new BlindTimerGame(Duration.ofSeconds(10));
         gameSessionRepository.save(
                 GameSessionFixture.게임세션_게임시작됨(
-                        room.getJoinCode(), game, new PlayerName(HOST_NAME), room.getPlayers()));
+                        room.getJoinCode(), game, new PlayerName(HOST_NAME),
+                        room.getPlayers().stream().map(Player::getName).toList()));
         joinCode = room.getJoinCode().getValue();
 
         game.startPlaying();

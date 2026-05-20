@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,9 @@ import org.junit.jupiter.api.Test;
 class RacingGameTest {
 
     final RacingGame racingGame = new RacingGame();
-    final List<Player> players = List.of(PlayerFixture.호스트한스(), PlayerFixture.게스트꾹이());
+    final Player 한스 = PlayerFixture.호스트한스();
+    final Player 꾹이 = PlayerFixture.게스트꾹이();
+    final List<PlayerName> players = List.of(한스.getName(), 꾹이.getName());
 
     @Test
     void 게임_시작을_위해_준비한다() {

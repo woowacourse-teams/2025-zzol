@@ -1,6 +1,6 @@
 package coffeeshout.minigame.domain;
 
-import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Map;
 
@@ -8,9 +8,9 @@ public interface Playable {
 
     MiniGameResult getResult();
 
-    Map<Player, MiniGameScore> getScores();
+    Map<PlayerName, MiniGameScore> getScores();
 
     MiniGameType getMiniGameType();
 
-    void setUp(List<Player> players);
+    void setUp(List<PlayerName> players);
 }

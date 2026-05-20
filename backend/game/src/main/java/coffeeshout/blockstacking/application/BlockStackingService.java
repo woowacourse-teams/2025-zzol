@@ -6,7 +6,6 @@ import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
@@ -40,9 +39,8 @@ public class BlockStackingService implements MiniGameService {
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final BlockStackingGame game = getGame(joinCode);
-        final Player player = findPlayer(game, playerName);
 
-        final boolean updated = game.recordProgress(player, floor, movingBlockX, stackTopX, stackTopWidth);
+        final boolean updated = game.recordProgress(new PlayerName(playerName), floor, movingBlockX, stackTopX, stackTopWidth);
         if (updated) {
             notifier.notifyProgressUpdated(game, room);
         }
@@ -53,9 +51,8 @@ public class BlockStackingService implements MiniGameService {
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final BlockStackingGame game = getGame(joinCode);
-        final Player player = findPlayer(game, playerName);
 
-        final boolean recorded = game.recordFailure(player);
+        final boolean recorded = game.recordFailure(new PlayerName(playerName));
         if (recorded) {
             flowOrchestrator.triggerEarlyFinishIfAllFailed(joinCode, game);
         }
@@ -71,7 +68,4 @@ public class BlockStackingService implements MiniGameService {
                 .findCompletedGame(MiniGameType.BLOCK_STACKING);
     }
 
-    private Player findPlayer(BlockStackingGame game, String playerName) {
-        return game.findPlayerByName(new PlayerName(playerName));
-    }
 }

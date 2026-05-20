@@ -3,11 +3,9 @@ package coffeeshout.blindtimer.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,16 +19,13 @@ class BlindTimerGameTest {
     private static final Duration TARGET_TIME = Duration.ofSeconds(10);
 
     private BlindTimerGame game;
-    private Player 한스;
-    private Player 꾹이;
-    private Player 루키;
+    private final PlayerName 한스 = new PlayerName("한스");
+    private final PlayerName 꾹이 = new PlayerName("꾹이");
+    private final PlayerName 루키 = new PlayerName("루키");
 
     @BeforeEach
     void setUp() {
         game = new BlindTimerGame(TARGET_TIME);
-        한스 = PlayerFixture.게스트한스();
-        꾹이 = PlayerFixture.게스트꾹이();
-        루키 = PlayerFixture.게스트루키();
         game.setUp(List.of(한스, 꾹이, 루키));
         game.startPlaying();
     }

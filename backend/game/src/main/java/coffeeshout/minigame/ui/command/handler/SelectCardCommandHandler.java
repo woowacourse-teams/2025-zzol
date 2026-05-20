@@ -1,7 +1,7 @@
 package coffeeshout.minigame.ui.command.handler;
 
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
-import coffeeshout.cardgame.infra.CardGameStreamKey;
+import coffeeshout.gamecommon.infra.GameStreamKey;
 import coffeeshout.minigame.ui.command.MiniGameCommandHandler;
 import coffeeshout.minigame.ui.request.command.SelectCardCommand;
 import coffeeshout.redis.BaseEvent;
@@ -20,7 +20,7 @@ public class SelectCardCommandHandler implements MiniGameCommandHandler<SelectCa
     @Override
     public void handle(String joinCode, SelectCardCommand command) {
         final BaseEvent event = new SelectCardCommandEvent(joinCode, command.playerName(), command.cardIndex());
-        streamPublisher.publish(CardGameStreamKey.SELECT_BROADCAST, event);
+        streamPublisher.publish(GameStreamKey.CARDGAME_SELECT_BROADCAST, event);
         log.info("카드 선택 이벤트 발행: joinCode={}, playerName={}, cardIndex={}, eventId={}",
                 joinCode, command.playerName(), command.cardIndex(), event.eventId());
     }

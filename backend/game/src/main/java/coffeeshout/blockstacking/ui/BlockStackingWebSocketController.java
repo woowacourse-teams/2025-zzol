@@ -2,7 +2,7 @@ package coffeeshout.blockstacking.ui;
 
 import coffeeshout.blockstacking.domain.event.BlockStackingCommandEvent;
 import coffeeshout.blockstacking.domain.event.BlockStackingFailEvent;
-import coffeeshout.blockstacking.infra.BlockStackingStreamKey;
+import coffeeshout.gamecommon.infra.GameStreamKey;
 import coffeeshout.blockstacking.ui.request.BlockStackingProgressRequest;
 import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.websocket.PlayerKey;
@@ -35,7 +35,7 @@ public class BlockStackingWebSocketController {
     ) {
         final String authenticatedPlayerName = PlayerKey.parse(principal.getName()).playerName();
         final BlockStackingCommandEvent event = BlockStackingCommandEvent.of(joinCode, authenticatedPlayerName, request);
-        streamPublisher.publish(BlockStackingStreamKey.EVENTS, event);
+        streamPublisher.publish(GameStreamKey.BLOCKSTACKING_EVENTS, event);
 
         log.debug("블록 쌓기 진행 이벤트 발행: joinCode={}, playerName={}, floor={}, eventId = {}",
                 joinCode, authenticatedPlayerName, request.floor(), event.eventId());
@@ -50,7 +50,7 @@ public class BlockStackingWebSocketController {
     ) {
         final String authenticatedPlayerName = PlayerKey.parse(principal.getName()).playerName();
         final BlockStackingFailEvent event = BlockStackingFailEvent.of(joinCode, authenticatedPlayerName);
-        streamPublisher.publish(BlockStackingStreamKey.EVENTS, event);
+        streamPublisher.publish(GameStreamKey.BLOCKSTACKING_EVENTS, event);
 
         log.debug("블록 쌓기 실패 이벤트 발행: joinCode={}, playerName={}, eventId={}",
                 joinCode, authenticatedPlayerName, event.eventId());

@@ -1,7 +1,7 @@
 package coffeeshout.blindtimer.ui;
 
 import coffeeshout.blindtimer.domain.event.StopCommandEvent;
-import coffeeshout.blindtimer.infra.BlindTimerStreamKey;
+import coffeeshout.gamecommon.infra.GameStreamKey;
 import coffeeshout.blindtimer.ui.request.StopCommand;
 import coffeeshout.redis.BaseEvent;
 import coffeeshout.redis.stream.StreamPublisher;
@@ -28,7 +28,7 @@ public class BlindTimerGameWebSocketController {
     )
     public void stop(@DestinationVariable String joinCode, @Payload @Valid StopCommand command) {
         final BaseEvent event = StopCommandEvent.create(joinCode, command.playerName());
-        streamPublisher.publish(BlindTimerStreamKey.EVENTS, event);
+        streamPublisher.publish(GameStreamKey.BLINDTIMER_EVENTS, event);
         log.debug("STOP 이벤트 발행: joinCode={}, player={}, eventId={}",
                 joinCode, command.playerName(), event.eventId());
     }

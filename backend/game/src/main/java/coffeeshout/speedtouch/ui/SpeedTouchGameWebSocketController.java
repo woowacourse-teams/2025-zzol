@@ -3,7 +3,7 @@ package coffeeshout.speedtouch.ui;
 import coffeeshout.redis.BaseEvent;
 import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.speedtouch.domain.event.TouchProgressCommandEvent;
-import coffeeshout.speedtouch.infra.SpeedTouchStreamKey;
+import coffeeshout.gamecommon.infra.GameStreamKey;
 import coffeeshout.speedtouch.ui.request.TouchCommand;
 import coffeeshout.websocket.docs.WsReceive;
 import jakarta.validation.Valid;
@@ -30,7 +30,7 @@ public class SpeedTouchGameWebSocketController {
         final BaseEvent event = TouchProgressCommandEvent.create(
                 joinCode, command.playerName(), command.touchedNumber()
         );
-        streamPublisher.publish(SpeedTouchStreamKey.EVENTS, event);
+        streamPublisher.publish(GameStreamKey.SPEEDTOUCH_EVENTS, event);
         log.debug("터치 이벤트 발행: joinCode={}, player={}, number={}, eventId={}",
                 joinCode, command.playerName(), command.touchedNumber(), event.eventId());
     }

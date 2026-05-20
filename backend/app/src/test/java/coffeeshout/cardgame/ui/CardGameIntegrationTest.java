@@ -18,6 +18,7 @@ import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.json.JSONException;
 import org.junit.jupiter.api.BeforeEach;
@@ -152,7 +153,7 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
                               "value":2,
                               "selected":true,
                               "playerName":"꾹이",
-                              "colorIndex":null
+                              "colorIndex":0
                           },
                           {
                               "cardType":"ADDITION",
@@ -275,10 +276,11 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
 
     private static Customization getColorIndexCustomization() {
         return new Customization("colorIndex", (actual, expect) -> {
-            if (expect instanceof Integer value) {
-                return value >= 0 && value <= 9;
+            if (expect instanceof Integer) {
+                return actual instanceof Integer value && value >= 0 && value <= 8;
             }
-            return true;
+            // JSON null은 JSONObject.NULL(싱글턴)로 전달 — Objects.equals로 null 비교
+            return Objects.equals(actual, expect);
         });
     }
 }

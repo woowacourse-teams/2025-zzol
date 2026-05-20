@@ -120,7 +120,7 @@ public class CardGameFlowOrchestrator {
         return () -> {
             step.execute(cardGame, room);
             try {
-                notifier.notifyStepCompleted(cardGame, room);
+                notifier.notifyStepCompleted(room.getJoinCode(), cardGame, room.toColorIndexMap());
             } catch (Exception e) {
                 log.warn("CardGame step 알림 실패: joinCode={}, step={}", room.getJoinCode().getValue(), step, e);
             }

@@ -5,6 +5,7 @@ import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.NonNull;
 
@@ -43,12 +44,16 @@ public record MiniGameStateMessage(
             Integer colorIndex
     ) {
 
-        public static List<CardInfoMessage> from(@NonNull CardGame cardGame) {
+        public static List<CardInfoMessage> from(@NonNull CardGame cardGame, Map<PlayerName, Integer> colorMap) {
             return cardGame.getDeck().getCards().stream()
-                    .map(card -> {
-                        Optional<PlayerName> owner = cardGame.findCardOwnerInCurrentRound(card);
-                        return CardInfoMessage.of(card, owner.isPresent(), owner.orElse(null), null);
-                    }).toList();
+                    .map(card -> toMessage(cardGame, card, colorMap))
+                    .toList();
+        }
+
+        private static CardInfoMessage toMessage(CardGame cardGame, Card card, Map<PlayerName, Integer> colorMap) {
+            final Optional<PlayerName> owner = cardGame.findCardOwnerInCurrentRound(card);
+            final Integer colorIndex = owner.map(colorMap::get).orElse(null);
+            return CardInfoMessage.of(card, owner.isPresent(), owner.orElse(null), colorIndex);
         }
 
         public static CardInfoMessage of(@NonNull Card card, boolean isSelected, PlayerName name, Integer colorIndex) {
@@ -62,11 +67,11 @@ public record MiniGameStateMessage(
         }
     }
 
-    public static MiniGameStateMessage from(@NonNull CardGame cardGame) {
+    public static MiniGameStateMessage from(@NonNull CardGame cardGame, Map<PlayerName, Integer> colorMap) {
         return new MiniGameStateMessage(
                 cardGame.getState().name(),
                 RoundLabel.from(cardGame.getRound().toIndex()).name(),
-                CardInfoMessage.from(cardGame),
+                CardInfoMessage.from(cardGame, colorMap),
                 cardGame.isFinishedThisRound()
         );
     }

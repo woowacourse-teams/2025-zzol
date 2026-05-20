@@ -1,7 +1,6 @@
 package coffeeshout.cardgame.application;
 
 import coffeeshout.cardgame.domain.CardGame;
-import coffeeshout.cardgame.domain.service.CardGameCommandService;
 import coffeeshout.gamecommon.metric.GameDurationMetricService;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameService;
@@ -10,6 +9,7 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomQueryService;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,8 +21,8 @@ public class CardGameService implements MiniGameService {
 
     private final RoomQueryService roomQueryService;
     private final GameSessionRepository gameSessionRepository;
-    private final CardGameCommandService cardGameCommandService;
     private final CardGameFlowOrchestrator flowOrchestrator;
+    private final CardGameNotifier notifier;
     private final GameDurationMetricService gameDurationMetricService;
 
     @Override
@@ -34,8 +34,15 @@ public class CardGameService implements MiniGameService {
     }
 
     public void selectCard(String joinCode, String playerName, Integer cardIndex) {
+        log.info("카드 선택 처리 시작: joinCode={}, playerName={}, cardIndex={}", joinCode, playerName, cardIndex);
+
         final JoinCode code = new JoinCode(joinCode);
-        final boolean roundFinished = cardGameCommandService.selectCard(code, new PlayerName(playerName), cardIndex);
+        final CardGame cardGame = getCardGame(joinCode);
+        final boolean roundFinished = cardGame.selectCard(new PlayerName(playerName), cardIndex);
+
+        final Map<PlayerName, Integer> colorMap = roomQueryService.getColorIndexMap(code);
+        notifier.notifyCardSelected(code, cardGame, colorMap);
+
         if (roundFinished) {
             flowOrchestrator.triggerEarlyRoundFinish(joinCode);
         }

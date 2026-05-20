@@ -1,8 +1,8 @@
-import { type KeyboardEvent, useRef, useState } from 'react';
+import { useTheme } from '@emotion/react';
 import useModal from '@/components/@common/Modal/useModal';
 import useToast from '@/components/@common/Toast/useToast';
-import { ApiError } from '@/apis/rest/error';
 import { useAuth } from '@/features/auth/contexts/AuthContext';
+import { MAX_NICKNAME_LENGTH, useNicknameEdit } from '@/features/auth/hooks/useNicknameEdit';
 import LoginSheet from '@/features/auth/components/LoginSheet/LoginSheet';
 import CopyIcon from '@/components/icons/CopyIcon';
 import * as S from './AccountSection.styled';
@@ -13,59 +13,25 @@ const PROVIDER_LABEL: Record<string, string> = {
   naver: '네이버 계정',
 };
 
-const MAX_NICKNAME_LENGTH = 10;
-
 const AccountSection = () => {
-  const { user, isAuthenticated, logout, updateNickname } = useAuth();
+  const theme = useTheme();
+  const { user, isAuthenticated, logout } = useAuth();
   const { openModal } = useModal();
   const { showToast } = useToast();
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const {
+    isEditing,
+    editValue,
+    setEditValue,
+    isSaving,
+    inputRef,
+    handleEditStart,
+    handleEditSave,
+    handleEditCancel,
+    handleKeyDown,
+  } = useNicknameEdit();
 
   const handleLoginClick = () => {
     openModal(<LoginSheet />, { showCloseButton: false, closeOnBackdropClick: true });
-  };
-
-  const handleEditStart = () => {
-    setEditValue(user!.nickname);
-    setIsEditing(true);
-    setTimeout(() => inputRef.current?.focus(), 0);
-  };
-
-  const handleEditSave = async () => {
-    const trimmed = editValue.trim();
-    if (!trimmed) {
-      showToast({ message: '닉네임을 입력해주세요.', type: 'error' });
-      return;
-    }
-    if (trimmed === user!.nickname) {
-      setIsEditing(false);
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await updateNickname(trimmed);
-      showToast({ message: '닉네임이 변경되었습니다.', type: 'success' });
-      setIsEditing(false);
-    } catch (e) {
-      const message =
-        e instanceof ApiError && e.status === 400 ? e.message : '닉네임 변경에 실패했습니다.';
-      showToast({ message, type: 'error' });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleEditCancel = () => {
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter') handleEditSave();
-    if (e.key === 'Escape') handleEditCancel();
   };
 
   if (isAuthenticated && user) {
@@ -79,6 +45,7 @@ const AccountSection = () => {
                 <S.EditRow>
                   <S.NicknameInput
                     ref={inputRef}
+                    aria-label="닉네임"
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value.slice(0, MAX_NICKNAME_LENGTH))}
                     onKeyDown={handleKeyDown}
@@ -134,8 +101,11 @@ const AccountSection = () => {
         <S.LoginLeft>
           <S.LoginAvatar>
             <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
-              <circle cx="12" cy="8" r="3.5" fill="#9CA3AF" />
-              <path d="M3.5 20.5C3.5 16.91 7.36 14 12 14s8.5 2.91 8.5 6.5H3.5z" fill="#9CA3AF" />
+              <circle cx="12" cy="8" r="3.5" fill={theme.color.gray[400]} />
+              <path
+                d="M3.5 20.5C3.5 16.91 7.36 14 12 14s8.5 2.91 8.5 6.5H3.5z"
+                fill={theme.color.gray[400]}
+              />
             </svg>
           </S.LoginAvatar>
           <S.LoginTextGroup>

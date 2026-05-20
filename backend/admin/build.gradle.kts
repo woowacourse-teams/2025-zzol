@@ -4,7 +4,7 @@ dependencies {
     api(project(":global"))
     api(project(":websocket"))
     api(project(":room"))
-    api(project(":game"))
+    implementation(project(":game"))
     api(project(":user"))
 
     implementation("org.springframework.boot:spring-boot-starter-security")

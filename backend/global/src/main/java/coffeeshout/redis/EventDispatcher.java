@@ -3,6 +3,7 @@ package coffeeshout.redis;
 import coffeeshout.metric.RedisStreamLatencyMetricService;
 import coffeeshout.trace.Traceable;
 import coffeeshout.trace.TracerProvider;
+import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,7 @@ public class EventDispatcher {
     private <T extends BaseEvent> Consumer<T> getConsumer(Class<T> eventType) {
         final ResolvableType type = ResolvableType.forClassWithGenerics(Consumer.class, eventType);
         final ObjectProvider<Consumer<T>> provider = applicationContext.getBeanProvider(type);
-        return provider.getObject();
+        final List<Consumer<T>> consumers = provider.stream().toList();
+        return event -> consumers.forEach(c -> c.accept(event));
     }
 }

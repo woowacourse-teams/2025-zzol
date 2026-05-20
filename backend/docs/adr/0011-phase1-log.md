@@ -178,3 +178,40 @@ Phase 1에서 `:user → :room`으로 이동한 `RoomInvitationService` · `Room
 | `SendRoomInvitationRequest.java` | `coffeeshout.friend.ui.request` (`:user`) | `coffeeshout.room.ui.request` (`:room`) | 모듈 + 패키지 이동 |
 
 `SendRoomInvitationRequest`는 `:room` 컨트롤러가 단독으로 사용하는 요청 DTO이므로 `:user`에 남아있을 이유가 없어 함께 이동했다.
+
+## Phase 1 후속 — 게임 엔티티·서비스 소유권 `:game`으로 이전 (2026-05-20)
+
+Phase 1에서 `MiniGameEntity` · `MiniGameResultEntity`와 관련 레포지토리, 오케스트레이션 서비스가 `:room`에 남아있었다.
+`:admin` 대시보드가 이들 Q클래스를 `:room` 경유로 접근하는 구조였는데, 게임 결과 데이터는 게임 도메인이 소유하는 것이 타당하므로 `:game`으로 이전했다.
+
+**이전 파일 목록 (`:room` → `:game`, 패키지명 `coffeeshout.minigame.*` 유지, import 변경 없음)**
+
+| 파일 | 분류 |
+|---|---|
+| `minigame/infra/persistence/MiniGameEntity.java` | JPA 엔티티 |
+| `minigame/infra/persistence/MiniGameResultEntity.java` | JPA 엔티티 |
+| `minigame/infra/persistence/MiniGameJpaRepository.java` | 레포지토리 |
+| `minigame/infra/persistence/MiniGameResultJpaRepository.java` | 레포지토리 |
+| `minigame/infra/persistence/MiniGameResultBulkRepository.java` | 레포지토리 |
+| `minigame/infra/persistence/MiniGameResultBulkRepositoryImpl.java` | 레포지토리 구현 |
+| `minigame/application/MiniGameEventService.java` | 게임 시작 오케스트레이션 |
+| `minigame/application/MiniGamePersistenceService.java` | 게임 엔티티 저장 |
+| `minigame/event/MiniGameResultSaveEventListener.java` | 결과 저장 이벤트 리스너 |
+| `minigame/infra/messaging/consumer/StartMiniGameCommandEventConsumer.java` | Redis 스트림 컨슈머 |
+
+**`:room` 유지 파일 (이벤트 계약·스트림 키)**
+
+`MinigameStreamKey`, `MiniGameStartedEvent`, `MiniGameFinishedEvent`, `StartMiniGameCommandEvent` 등 이벤트 레코드는 `:room`의 계약으로 유지한다.
+`:game`이 `:room`에 의존하므로 이들 타입은 `:game`에서도 접근 가능하다.
+
+**build.gradle.kts 변경**
+
+| 모듈 | 변경 내용 | 이유 |
+|---|---|---|
+| `:admin` | `api(project(":game"))` 추가 | `QMiniGameEntity` · `QMiniGameResultEntity` Q클래스를 `:game` 경유로 접근 |
+
+**결과 의존 계층**
+
+```text
+:admin → :game → :room → :global, :websocket, :user
+```

@@ -1,150 +1,116 @@
+import java.util.concurrent.TimeUnit
+
 plugins {
-    java
-    id("org.springframework.boot") version "3.5.3"
-    id("io.spring.dependency-management") version "1.1.7"
+    id("org.springframework.boot") version "3.5.3" apply false
+    id("io.spring.dependency-management") version "1.1.7" apply false
 }
 
-group = "coffeeshout"
-version = "0.0.1-SNAPSHOT"
+val springBootVersion = "3.5.3"
+val springDocVersion by extra("2.8.3")
+val ociSdkVersion by extra("3.74.1")
+val redissonVersion by extra("3.27.2")
+val zxingVersion by extra("3.5.3")
+val queryDslVersion by extra("5.0.0")
+val googleGenAiVersion by extra("1.44.0")
+val testcontainersVersion by extra("2.0.4")
+val reflectionsVersion by extra("0.10.2")
+val resilience4jVersion by extra("2.2.0")
+val jjwtVersion by extra("0.12.6")
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+allprojects {
+    group = "coffeeshout"
+    version = "0.0.1-SNAPSHOT"
+
+    repositories {
+        mavenCentral()
     }
 }
 
-tasks.jar {
-    enabled = false
-}
+subprojects {
+    apply(plugin = "java-library")
+    apply(plugin = "io.spring.dependency-management")
 
-configurations {
-    compileOnly {
-        extendsFrom(configurations.annotationProcessor.get())
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
     }
-}
 
-repositories {
-    mavenCentral()
-}
+    extensions.getByType<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension>().apply {
+        imports {
+            mavenBom("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
+        }
+    }
 
-val springDocVersion = "2.8.3"
-val ociSdkVersion = "3.74.1"
-val redissonVersion = "3.27.2"
-val zxingVersion = "3.5.3"
-val queryDslVersion = "5.0.0"
-val googleGenAiVersion = "1.44.0"
-val testcontainersVersion = "2.0.4"
-val reflectionsVersion = "0.10.2"
-val resilience4jVersion = "2.2.0"
-val jjwtVersion = "0.12.6"
+    configurations {
+        "compileOnly" {
+            extendsFrom(configurations["annotationProcessor"])
+        }
+    }
 
-dependencies {
-    // --- Spring Boot Starters (버전 생략: Boot가 관리) ---
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-websocket")
-    implementation("org.springframework.boot:spring-boot-starter-aop")
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    dependencies {
+        "compileOnly"("org.projectlombok:lombok")
+        "annotationProcessor"("org.projectlombok:lombok")
+        "annotationProcessor"("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
+        "annotationProcessor"("jakarta.annotation:jakarta.annotation-api")
+        "annotationProcessor"("jakarta.persistence:jakarta.persistence-api")
+        "testImplementation"("org.springframework.boot:spring-boot-starter-test")
+        "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
+    }
 
-    // --- Database & Migration ---
-    implementation("org.flywaydb:flyway-core")
-    implementation("org.flywaydb:flyway-mysql")
-    implementation("com.mysql:mysql-connector-j")
+    tasks.register<Exec>("pruneStaleTestContainers") {
+        group = "verification"
+        description = "테스트 시작 전 이전 실행에서 남은 TestContainers 컨테이너를 정리한다"
+        commandLine(
+            "docker", "container", "prune", "-f",
+            "--filter", "label=org.testcontainers=true"
+        )
+        isIgnoreExitValue = true
+    }
 
-    // Redisson (Boot가 관리하지 않음 -> 변수 사용)
-    implementation("org.redisson:redisson-spring-boot-starter:${redissonVersion}")
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("-parameters")
+    }
 
-    // --- QueryDSL ---
-    // Jakarta 분류가 필요하므로 버전 명시가 안전할 수 있음
-    implementation("com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta")
-    annotationProcessor("com.querydsl:querydsl-apt:${queryDslVersion}:jakarta")
-    annotationProcessor("jakarta.annotation:jakarta.annotation-api")
-    annotationProcessor("jakarta.persistence:jakarta.persistence-api")
-
-    // --- Utils ---
-    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
-    developmentOnly("me.paulschwarz:spring-dotenv:4.0.0")
-
-    implementation("com.google.zxing:core:${zxingVersion}")
-    implementation("com.google.zxing:javase:${zxingVersion}")
-
-    // --- Oracle Cloud Infrastructure (BOM 활용) ---
-    implementation(platform("com.oracle.oci.sdk:oci-java-sdk-bom:${ociSdkVersion}"))
-    implementation("com.oracle.oci.sdk:oci-java-sdk-objectstorage")
-    implementation("com.oracle.oci.sdk:oci-java-sdk-common")
-    implementation("com.oracle.oci.sdk:oci-java-sdk-common-httpclient-jersey3")
-
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}")
-
-    // --- Metrics ---
-    implementation("io.micrometer:micrometer-registry-prometheus")
-    implementation("io.micrometer:micrometer-observation")
-    implementation("io.micrometer:micrometer-tracing-bridge-otel")
-    implementation("io.opentelemetry:opentelemetry-exporter-otlp")
-    implementation("io.micrometer:context-propagation")
-
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
-
-    // --- Test ---
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.micrometer:micrometer-tracing-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("com.h2database:h2")
-    testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
-    testImplementation("org.testcontainers:testcontainers-mysql:${testcontainersVersion}")
-    testImplementation("org.testcontainers:testcontainers-junit-jupiter:${testcontainersVersion}")
-    // --- Reflections (클래스패스 스캔) ---
-    implementation("org.reflections:reflections:${reflectionsVersion}")
-
-    // --- Resilience4j (서킷 브레이커, 리트라이) ---
-    implementation("io.github.resilience4j:resilience4j-spring-boot3:${resilience4jVersion}")
-
-    // --- 비속어 필터 ---
-    implementation("io.github.vaneproject:badwordfiltering:1.0.0")
-
-    // --- Gemini AI ---
-    implementation("com.google.genai:google-genai:${googleGenAiVersion}")
-
-    // --- SQL AST 파싱 (ZzolBot sql_query 도구 보안 검증용) ---
-    implementation("com.github.jsqlparser:jsqlparser:5.0")
-
-    // --- 운영자 대시보드 ---
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-    implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
-
-    // --- OAuth2 / JWT ---
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-    implementation("io.jsonwebtoken:jjwt-api:${jjwtVersion}")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:${jjwtVersion}")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:${jjwtVersion}")
-    testImplementation("org.springframework.security:spring-security-test")
-    testImplementation("org.wiremock:wiremock-standalone:3.9.2")
+    tasks.withType<Test> {
+        dependsOn("pruneStaleTestContainers")
+        useJUnitPlatform()
+        exclude("**/QueryPerformanceTest.class")
+        systemProperty("updateFixture", System.getProperty("updateFixture", "false"))
+    }
 }
 
 tasks.register("generateCtags") {
     group = "build"
     description = "Universal Ctags로 Java 심볼 인덱스(tags 파일)를 생성한다"
     onlyIf { System.getenv("CI") == null }
-    inputs.dir("src/main/java")
-    inputs.dir("src/test/java")
-    outputs.file("tags")
-    val workDir = projectDir
+
+    val sourceDirs: List<String> = project.subprojects.flatMap { p ->
+        listOf(
+            p.file("src/main/java").absolutePath,
+            p.file("src/test/java").absolutePath
+        )
+    }
+    val workDir: File = project.projectDir
+
+    inputs.files(
+        layout.projectDirectory.asFileTree.matching {
+            include("**/src/main/java/**/*.java", "**/src/test/java/**/*.java")
+            exclude("**/build/**")
+        }
+    )
+    outputs.file(layout.projectDirectory.file("tags"))
     doLast {
+        val existingDirs = sourceDirs.filter { java.io.File(it).exists() }
+        if (existingDirs.isEmpty()) {
+            logger.warn("ctags: 소스 디렉토리를 찾을 수 없습니다")
+            return@doLast
+        }
+
         val process: Process
         try {
             process = ProcessBuilder(
-                "ctags",
-                "--languages=Java",
-                "--fields=+n",
-                "--extras=+q",
-                "-R",
-                "-f", "tags",
-                "src/main/java",
-                "src/test/java"
+                listOf("ctags", "--languages=Java", "--fields=+n", "--extras=+q", "-R", "-f", "tags") + existingDirs
             )
                 .directory(workDir)
                 .start()
@@ -167,26 +133,4 @@ tasks.register("generateCtags") {
             logger.warn("ctags 대기 중 인터럽트가 발생했습니다: ${e.message}")
         }
     }
-}
-
-tasks.named("compileJava") {
-    finalizedBy("generateCtags")
-}
-
-tasks.register<Exec>("pruneStaleTestContainers") {
-    group = "verification"
-    description = "테스트 시작 전 이전 실행에서 남은 TestContainers 컨테이너를 정리한다"
-    commandLine(
-        "docker", "container", "prune", "-f",
-        "--filter", "label=org.testcontainers=true"
-    )
-    isIgnoreExitValue = true
-}
-
-tasks.withType<Test> {
-    dependsOn("pruneStaleTestContainers")
-    useJUnitPlatform()
-    // 성능 테스트는 CI에서 제외 (수동 실행용)
-    exclude("**/QueryPerformanceTest.class")
-    systemProperty("updateFixture", System.getProperty("updateFixture", "false"))
 }

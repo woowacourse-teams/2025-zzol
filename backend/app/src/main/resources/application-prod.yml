@@ -1,0 +1,32 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+room:
+  qr:
+    prefix: "https://www.zzol.site/join/"
+
+websocket:
+  docs:
+    enabled: false
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+cors:
+  allowed-origins: "https://www.zzol.site"
+
+server:
+  tomcat:
+    remoteip:
+      internal-proxies: "172\\.20\\.0\\.\\d{1,3}"

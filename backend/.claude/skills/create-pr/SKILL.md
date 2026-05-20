@@ -23,14 +23,14 @@ allowed-tools: Read, Bash, Glob
 
 **라벨** — type에 따라 자동 선택 (중복 가능):
 
-| type | 라벨 |
-|------|------|
-| feat | `✨feat`, `BE` 또는 `FE` |
-| fix | `🐞bug`, `BE` 또는 `FE` |
+| type     | 라벨                          |
+|----------|-----------------------------|
+| feat     | `✨feat`, `BE` 또는 `FE`       |
+| fix      | `🐞bug`, `BE` 또는 `FE`       |
 | refactor | `🛠️refactor`, `BE` 또는 `FE` |
-| chore | `⚙️chore` |
-| docs | `📝docs` |
-| test | `🧪 test` |
+| chore    | `⚙️chore`                   |
+| docs     | `📝docs`                    |
+| test     | `🧪 test`                   |
 
 우선순위 라벨(`p-*`)은 `$ARGUMENTS`에 명시된 경우에만 추가한다.
 

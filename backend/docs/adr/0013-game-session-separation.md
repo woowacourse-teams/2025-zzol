@@ -269,3 +269,17 @@ WebSocket 프로토콜(`MiniGameSelectEvent`)이 변경 시마다 현재 선택 
 **`EventDispatcher` 팬아웃 방식 전환**
 
 `RoomCreateEvent`를 기존 `RoomCreateConsumer`와 신규 `GameSessionInitConsumer`가 동시에 처리해야 하는 상황이 생겼다. 기존 `EventDispatcher`는 동일 타입 Consumer를 하나만 지원했으므로, `ApplicationContext.getBeanProvider().stream()`으로 전체 Consumer를 수집한 뒤 순차 실행하는 방식으로 변경했다.
+
+**Notifier 의존성 최소화 — `Room` 전달 → `colorMap` 전달**
+
+`CardGameNotifier`, `LadderNotifier`가 알림 시 `Room` 전체를 받는 대신
+`Map<PlayerName, Integer>` colorMap만 수신하도록 변경했다.
+브로드캐스트에 필요한 정보는 `colorIndex` 뿐이므로 Room 의존을 끊어 `:game` ↔ `:room` 결합을 낮춘다.
+colorMap 생성 책임은 `Room.toColorIndexMap()` 도메인 메서드로 응집했고,
+`RoomQueryService.getColorIndexMap()`은 이 메서드에 위임한다.
+
+**`CardGameCommandService` 제거**
+
+`CardGameCommandService`(도메인 서비스)의 실질적 역할이 `selectCard()` 단일 메서드로 축소됐고,
+colorMap 조회가 서비스 계층 책임으로 정리됨에 따라 `CardGameService`로 직접 흡수했다.
+`LadderCommandService`는 현재 유지 중으로, 추후 일괄 정리 여부를 별도 검토한다.

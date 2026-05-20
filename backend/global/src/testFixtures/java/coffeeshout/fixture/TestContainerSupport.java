@@ -16,7 +16,6 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
-
 public abstract class TestContainerSupport {
 
     private static final Logger log = LoggerFactory.getLogger(TestContainerSupport.class);

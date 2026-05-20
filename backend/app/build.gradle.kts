@@ -30,6 +30,8 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     developmentOnly("me.paulschwarz:spring-dotenv:4.0.0")
 
+    testImplementation(testFixtures(project(":global")))
+
     testImplementation(platform("com.oracle.oci.sdk:oci-java-sdk-bom:$ociSdkVersion"))
     testImplementation("com.oracle.oci.sdk:oci-java-sdk-objectstorage")
     testImplementation("com.oracle.oci.sdk:oci-java-sdk-common")

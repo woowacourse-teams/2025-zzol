@@ -1,3 +1,7 @@
+plugins {
+    `java-test-fixtures`
+}
+
 val redissonVersion: String by rootProject.extra
 val queryDslVersion: String by rootProject.extra
 val zxingVersion: String by rootProject.extra
@@ -38,4 +42,12 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-mysql:$testcontainersVersion")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter:$testcontainersVersion")
     testImplementation("io.micrometer:micrometer-tracing-test")
+
+    testFixturesImplementation("org.springframework.boot:spring-boot-starter-test")
+    testFixturesImplementation("org.springframework.boot:spring-boot-starter-data-redis")
+    testFixturesImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    testFixturesImplementation("com.mysql:mysql-connector-j")
+    testFixturesImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
+    testFixturesImplementation("org.testcontainers:testcontainers-mysql:$testcontainersVersion")
+    testFixturesImplementation("org.testcontainers:testcontainers-junit-jupiter:$testcontainersVersion")
 }

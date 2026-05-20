@@ -3,6 +3,7 @@ package coffeeshout.minigame.ui;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.ui.response.RemainingMiniGameResponse;
 import coffeeshout.room.domain.JoinCode;
 import java.util.Arrays;
 import java.util.List;
@@ -33,12 +34,11 @@ public class MiniGameRestController {
     }
 
     @GetMapping("/{joinCode}/miniGames/remaining")
-    public ResponseEntity<List<String>> getRemainingMiniGames(@PathVariable String joinCode) {
+    public ResponseEntity<RemainingMiniGameResponse> getRemainingMiniGames(@PathVariable String joinCode) {
         final GameSession session = gameSessionService.getSession(new JoinCode(joinCode));
-        return ResponseEntity.ok(
-                session.getPendingGamesView().stream()
-                        .map(g -> g.getMiniGameType().name())
-                        .toList()
-        );
+        final List<String> names = session.getPendingGamesView().stream()
+                .map(g -> g.getMiniGameType().name())
+                .toList();
+        return ResponseEntity.ok(RemainingMiniGameResponse.of(names));
     }
 }

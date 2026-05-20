@@ -1,5 +1,7 @@
 package coffeeshout.user.application.service;
 
+// TODO(phase2): UserWithdrawalService가 :admin 모듈에 존재하여 :user 단독 모듈로 이동 불가.
+//  :admin 모듈 테스트로 이동 예정.
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.support.TestContainerSupport;

@@ -27,8 +27,6 @@ dependencies {
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
-    testImplementation("org.springframework.boot:spring-boot-starter-security")
-    testImplementation("com.mysql:mysql-connector-j")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.wiremock:wiremock-standalone:3.9.2")
     testImplementation(project(":test-support"))

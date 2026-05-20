@@ -15,6 +15,7 @@ import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
@@ -66,11 +67,11 @@ public class MiniGameResultSaveEventListener {
                 .findByRoomSessionAndMiniGameType(roomEntity, miniGameType)
                 .orElseThrow(() -> new IllegalArgumentException("미니게임 엔티티가 존재하지 않습니다: " + event.joinCode()));
 
-        final GameSession session = gameSessionService.getOrCreateSession(joinCode);
+        final GameSession session = gameSessionService.getSession(joinCode);
         final Playable miniGame = session.findCompletedGame(miniGameType);
 
         final MiniGameResult result = miniGame.getResult();
-        final Map<Player, MiniGameScore> scores = miniGame.getScores();
+        final Map<PlayerName, MiniGameScore> scores = miniGame.getScores();
 
         final Room room = roomQueryService.getByJoinCode(joinCode);
 
@@ -95,8 +96,8 @@ public class MiniGameResultSaveEventListener {
                 throw new IllegalArgumentException("플레이어가 존재하지 않습니다: " + player.getName().value());
             }
 
-            final Integer rank = result.getPlayerRank(player);
-            final Long score = scores.get(player).getValue();
+            final Integer rank = result.getPlayerRank(player.getName());
+            final Long score = scores.get(player.getName()).getValue();
 
             resultEntities.add(new MiniGameResultEntity(
                     miniGameEntity,

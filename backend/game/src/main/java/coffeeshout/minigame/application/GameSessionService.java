@@ -9,10 +9,10 @@ import coffeeshout.minigame.domain.Playable;
 import coffeeshout.minigame.domain.PlayableFactory;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,14 +34,12 @@ public class GameSessionService {
         final JoinCode joinCode = new JoinCode(event.joinCode());
         final PlayerName hostName = new PlayerName(event.hostName());
 
-        final GameSession session = getOrCreateSession(joinCode);
-        session.clearPendingGames();
+        final GameSession session = getOrCreateSession(joinCode, hostName);
 
-        event.miniGameTypeNames().forEach(typeName -> {
-            final MiniGameType type = MiniGameType.valueOf(typeName);
-            final Playable game = playableFactory.create(type, event.joinCode());
-            session.addGame(hostName, game);
-        });
+        final List<Playable> games = event.miniGameTypeNames().stream()
+                .map(typeName -> playableFactory.create(MiniGameType.valueOf(typeName), event.joinCode()))
+                .toList();
+        session.replaceGames(hostName, games);
 
         gameSessionRepository.save(session);
 
@@ -52,11 +50,22 @@ public class GameSessionService {
                 .toList();
     }
 
-    public GameSession getOrCreateSession(JoinCode joinCode) {
+    public GameSession getOrCreateSession(JoinCode joinCode, PlayerName hostName) {
         if (gameSessionRepository.existsByJoinCode(joinCode)) {
             return gameSessionRepository.getByJoinCode(joinCode);
         }
-        return new GameSession(joinCode);
+        return new GameSession(joinCode, hostName);
+    }
+
+    public GameSession getSession(JoinCode joinCode) {
+        return gameSessionRepository.getByJoinCode(joinCode);
+    }
+
+    public Optional<GameSession> findSession(JoinCode joinCode) {
+        if (!gameSessionRepository.existsByJoinCode(joinCode)) {
+            return Optional.empty();
+        }
+        return Optional.of(gameSessionRepository.getByJoinCode(joinCode));
     }
 
     public void deleteSession(JoinCode joinCode) {
@@ -65,7 +74,7 @@ public class GameSessionService {
         }
     }
 
-    public Map<Player, MiniGameScore> getScores(JoinCode joinCode, MiniGameType miniGameType) {
+    public Map<PlayerName, MiniGameScore> getScores(JoinCode joinCode, MiniGameType miniGameType) {
         final GameSession session = gameSessionRepository.getByJoinCode(joinCode);
         return session.findCompletedGame(miniGameType).getScores();
     }

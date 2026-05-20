@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -65,8 +66,9 @@ public class RoomStateTool implements ZzolBotTool {
         try {
             final JoinCode joinCode = new JoinCode(joinCodeValue);
             final Room room = roomQueryService.getByJoinCode(joinCode);
-            final GameSession session = gameSessionService.getOrCreateSession(joinCode);
-            return ToolExecutionResult.ok(TOOL_NAME, objectMapper.writeValueAsString(buildSummary(room, session)));
+            final Map<String, Object> summary = buildRoomSummary(room);
+            addSessionSummary(summary, gameSessionService.findSession(joinCode));
+            return ToolExecutionResult.ok(TOOL_NAME, objectMapper.writeValueAsString(summary));
         } catch (BusinessException e) {
             return ToolExecutionResult.fail(TOOL_NAME, "방을 찾을 수 없습니다: " + joinCodeValue);
         } catch (JsonProcessingException e) {
@@ -75,7 +77,7 @@ public class RoomStateTool implements ZzolBotTool {
         }
     }
 
-    private Map<String, Object> buildSummary(Room room, GameSession session) {
+    private Map<String, Object> buildRoomSummary(Room room) {
         final Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("joinCode", room.getJoinCode().getValue());
         summary.put("roomState", room.getRoomState().name());
@@ -84,12 +86,15 @@ public class RoomStateTool implements ZzolBotTool {
         summary.put("players", room.getPlayers().stream()
                 .map(p -> p.getName().value())
                 .toList());
-        summary.put("pendingMiniGames", session.getPendingGamesView().stream()
-                .map(g -> g.getMiniGameType().name())
-                .toList());
-        summary.put("finishedMiniGames", session.getCompletedGames().stream()
-                .map(g -> g.getMiniGameType().name())
-                .toList());
         return summary;
+    }
+
+    private void addSessionSummary(Map<String, Object> summary, Optional<GameSession> sessionOpt) {
+        summary.put("pendingMiniGames", sessionOpt.map(s -> s.getPendingGamesView().stream()
+                .map(g -> g.getMiniGameType().name())
+                .toList()).orElseGet(List::of));
+        summary.put("finishedMiniGames", sessionOpt.map(s -> s.getCompletedGames().stream()
+                .map(g -> g.getMiniGameType().name())
+                .toList()).orElseGet(List::of));
     }
 }

@@ -16,6 +16,7 @@ import java.time.ZoneOffset;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomQueryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.api.SoftAssertions;
@@ -28,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class RoomStateToolTest {
@@ -55,7 +57,8 @@ class RoomStateToolTest {
             final JoinCode joinCode = new JoinCode("A4BX");
             final Room room = RoomFixture.호스트_꾹이(joinCode);
             given(roomQueryService.getByJoinCode(joinCode)).willReturn(room);
-            given(gameSessionService.getOrCreateSession(joinCode)).willReturn(new GameSession(joinCode));
+            given(gameSessionService.findSession(joinCode))
+                    .willReturn(Optional.of(new GameSession(joinCode, new PlayerName("꾹이"))));
 
             final ToolExecutionResult result = roomStateTool.execute(Map.of("joinCode", "A4BX"), CTX);
 

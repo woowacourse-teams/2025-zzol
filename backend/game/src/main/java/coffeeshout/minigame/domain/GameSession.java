@@ -1,7 +1,7 @@
 package coffeeshout.minigame.domain;
 
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -9,41 +9,39 @@ import java.util.List;
 import java.util.Queue;
 import lombok.Getter;
 
-import static org.springframework.util.Assert.isTrue;
-import static org.springframework.util.Assert.state;
-
 @Getter
 public class GameSession {
 
-    private static final int MAX_GAME_COUNT = 5;
-
     private final JoinCode joinCode;
+    private final PlayerName hostName;
     private final Queue<Playable> pendingGames;
     private final List<Playable> completedGames;
 
-    public GameSession(JoinCode joinCode) {
+    public GameSession(JoinCode joinCode, PlayerName hostName) {
         this.joinCode = joinCode;
+        this.hostName = hostName;
         this.pendingGames = new LinkedList<>();
         this.completedGames = new ArrayList<>();
     }
 
-    public void addGame(PlayerName hostName, Playable game) {
-        state(pendingGames.size() <= MAX_GAME_COUNT, "미니게임은 5개 이하여야 합니다.");
-        pendingGames.add(game);
-    }
-
-    public void removeGame(PlayerName hostName, MiniGameType type) {
-        isTrue(pendingGames.stream().anyMatch(g -> g.getMiniGameType() == type),
-                "해당 미니게임이 존재하지 않습니다.");
-        pendingGames.removeIf(g -> g.getMiniGameType() == type);
-    }
-
-    public void clearPendingGames() {
+    public void replaceGames(PlayerName hostName, List<Playable> games) {
+        validateHost(hostName);
+        final long distinctCount = games.stream()
+                .map(Playable::getMiniGameType)
+                .distinct()
+                .count();
+        if (distinctCount != games.size()) {
+            throw new BusinessException(GameSessionErrorCode.DUPLICATE_GAME, "동일한 게임을 중복으로 선택할 수 없습니다.");
+        }
         pendingGames.clear();
+        pendingGames.addAll(games);
     }
 
-    public Playable startNextGame(PlayerName hostName, List<Player> players) {
-        state(!pendingGames.isEmpty(), "시작할 게임이 없습니다.");
+    public Playable startNextGame(PlayerName hostName, List<PlayerName> players) {
+        validateHost(hostName);
+        if (pendingGames.isEmpty()) {
+            throw new BusinessException(GameSessionErrorCode.NO_PENDING_GAMES, "시작할 게임이 없습니다.");
+        }
         final Playable game = pendingGames.poll();
         game.setUp(players);
         completedGames.add(game);
@@ -54,7 +52,13 @@ public class GameSession {
         return completedGames.stream()
                 .filter(g -> g.getMiniGameType() == type)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("완료된 미니게임이 없습니다: " + type));
+                .orElseThrow(() -> new BusinessException(GameSessionErrorCode.GAME_NOT_FOUND, "완료된 미니게임이 없습니다: " + type));
+    }
+
+    private void validateHost(PlayerName hostName) {
+        if (!this.hostName.equals(hostName)) {
+            throw new BusinessException(GameSessionErrorCode.NOT_HOST, "호스트만 게임 세션을 관리할 수 있습니다.");
+        }
     }
 
     public List<MiniGameType> getSelectedTypes() {

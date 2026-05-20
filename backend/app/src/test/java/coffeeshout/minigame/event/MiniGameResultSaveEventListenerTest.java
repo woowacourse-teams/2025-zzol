@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.cardgame.domain.CardGameScore;
-import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.MiniGameResult;
@@ -23,6 +22,7 @@ import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomCommandService;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
@@ -70,11 +70,11 @@ class MiniGameResultSaveEventListenerTest {
 
         @Test
         void 회원_플레이어는_1위면_isWinner_true로_UserStats가_업데이트된다() {
-            Player 한스 = PlayerFixture.호스트한스();
-            Player 루키 = PlayerFixture.게스트루키();
+            PlayerName 한스 = new PlayerName("한스");
+            PlayerName 루키 = new PlayerName("루키");
 
             MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<Player, MiniGameScore> scores = Map.of(
+            Map<PlayerName, MiniGameScore> scores = Map.of(
                     한스, new CardGameScore(100),
                     루키, new CardGameScore(80)
             );
@@ -96,11 +96,11 @@ class MiniGameResultSaveEventListenerTest {
 
         @Test
         void 게스트_플레이어는_userId가_null이므로_UserStats_업데이트에서_제외된다() {
-            Player 한스 = PlayerFixture.호스트한스();
-            Player 루키 = PlayerFixture.게스트루키();
+            PlayerName 한스 = new PlayerName("한스");
+            PlayerName 루키 = new PlayerName("루키");
 
             MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<Player, MiniGameScore> scores = Map.of(
+            Map<PlayerName, MiniGameScore> scores = Map.of(
                     한스, new CardGameScore(100),
                     루키, new CardGameScore(80)
             );
@@ -122,11 +122,11 @@ class MiniGameResultSaveEventListenerTest {
 
         @Test
         void 전원_게스트인_방은_UserStats_업데이트가_발생하지_않는다() {
-            Player 한스 = PlayerFixture.호스트한스();
-            Player 루키 = PlayerFixture.게스트루키();
+            PlayerName 한스 = new PlayerName("한스");
+            PlayerName 루키 = new PlayerName("루키");
 
             MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<Player, MiniGameScore> scores = Map.of(
+            Map<PlayerName, MiniGameScore> scores = Map.of(
                     한스, new CardGameScore(100),
                     루키, new CardGameScore(80)
             );
@@ -160,14 +160,18 @@ class MiniGameResultSaveEventListenerTest {
                 .thenReturn(Optional.of(miniGameEntity));
     }
 
-    private void 도메인룸_설정(List<Player> players, MiniGameResult result, Map<Player, MiniGameScore> scores) {
+    private void 도메인룸_설정(List<PlayerName> playerNames, MiniGameResult result, Map<PlayerName, MiniGameScore> scores) {
         Playable miniGame = mock(Playable.class);
         when(miniGame.getResult()).thenReturn(result);
         when(miniGame.getScores()).thenReturn(scores);
 
         GameSession session = mock(GameSession.class);
         when(session.findCompletedGame(MiniGameType.CARD_GAME)).thenReturn(miniGame);
-        when(gameSessionService.getOrCreateSession(new JoinCode(JOIN_CODE))).thenReturn(session);
+        when(gameSessionService.getSession(new JoinCode(JOIN_CODE))).thenReturn(session);
+
+        List<Player> players = playerNames.stream()
+                .map(Player::createGuest)
+                .toList();
 
         Room room = mock(Room.class);
         when(room.getPlayers()).thenReturn(players);

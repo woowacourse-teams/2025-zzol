@@ -198,7 +198,7 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 - 게임 종료 후 `roomCommandService.applyGameResult(joinCode, rankMap)` 호출
 - `RoomCommandService.updateMiniGames()`가 GameSession을 사용하도록 변경
 
-### Step 5 — 컴파일 및 테스트 검증
+### Step 5 — 컴파일 및 테스트 검증 ✅
 
 ```bash
 ./gradlew :room:compileJava    # Playable import 없어야 함
@@ -206,6 +206,27 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 ./gradlew :room:test
 ./gradlew :game:test
 ```
+
+### Step 6 — GameSession 생명주기 자동 관리 ✅
+
+- `RoomRemovedEvent` 신설 (`room.domain.event`): 방 삭제 완료 시 발행
+- `DelayedRoomRemovalService`: 방 삭제 후 `RoomRemovedEvent` 발행 추가
+- `GameSessionCleanupListener` (`:game`): `RoomRemovedEvent` 수신 시 `GameSessionService.deleteSession()` 호출
+- `GameSessionInitConsumer` (`:game`): `RoomCreateEvent` 수신 시 `GameSessionService.initSession()` 호출
+- `EventDispatcher`: 동일 이벤트 타입에 여러 Consumer 등록 가능하도록 단일 → 팬아웃 방식으로 변경
+
+### Step 7 — 삭제된 REST 엔드포인트 `:game` 모듈로 복구 ✅
+
+ADR-0013 적용 시 `:room` 모듈의 세 엔드포인트가 `Playable`/`MiniGameType` 의존으로 인해 삭제됐다.
+`MiniGameRestController` (`:game`)에서 `GameSession` 기반으로 재구현했다.
+
+| 엔드포인트 | 이전 위치 | 복구 위치 | 변경 사항 |
+|---|---|---|---|
+| `GET /rooms/minigames` | `:room` `RoomRestController` | `:game` `MiniGameRestController` | 없음 |
+| `GET /rooms/minigames/selected` | `:room` `RoomRestController` | `:game` `MiniGameRestController` | `Room` → `GameSession.getSelectedTypes()` |
+| `GET /rooms/{joinCode}/miniGames/remaining` | `:room` `RoomRestController` | `:game` `MiniGameRestController` | 응답을 `RemainingMiniGameResponse` 래퍼로 복원 |
+
+`RemainingMiniGameResponse`는 `room.ui.response`에서 `game.minigame.ui.response`로 이전했다. 팩토리 메서드도 `from(List<Playable>)` → `of(List<String>)` 로 변경해 `Playable` 의존을 제거했다.
 
 ## 구현 기록
 
@@ -239,3 +260,12 @@ WebSocket 프로토콜(`MiniGameSelectEvent`)이 변경 시마다 현재 선택 
 | `getOrCreateSession(JoinCode, PlayerName)` | 게임 시작 시 세션 생성 또는 조회 |
 | `getSession(JoinCode)` | 읽기 전용 조회 (세션 반드시 존재) |
 | `findSession(JoinCode)` | 세션 유무 불확실할 때 Optional 반환 |
+| `initSession(JoinCode, PlayerName)` | 방 생성 시 세션 사전 초기화 (이미 존재하면 무시) |
+
+**`GameRecoveryService` → `RoomRecoveryService` 리네이밍**
+
+`GameRecoveryService`는 실제로 WebSocket 재연결 시 방 상태를 복구하는 역할로, 게임 복구가 아닌 방 복구 서비스다. 이름을 `RoomRecoveryService`로 정정했다. 컨트롤러(`GameRecoveryController` → `RoomRecoveryController`)와 API 인터페이스도 함께 변경됐다.
+
+**`EventDispatcher` 팬아웃 방식 전환**
+
+`RoomCreateEvent`를 기존 `RoomCreateConsumer`와 신규 `GameSessionInitConsumer`가 동시에 처리해야 하는 상황이 생겼다. 기존 `EventDispatcher`는 동일 타입 Consumer를 하나만 지원했으므로, `ApplicationContext.getBeanProvider().stream()`으로 전체 Consumer를 수집한 뒤 순차 실행하는 방식으로 변경했다.

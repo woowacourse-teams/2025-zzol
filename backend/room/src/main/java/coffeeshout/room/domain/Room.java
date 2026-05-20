@@ -14,6 +14,7 @@ import coffeeshout.room.domain.roulette.ProbabilityCalculator;
 import coffeeshout.room.domain.roulette.Roulette;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.Getter;
 
 @Getter
@@ -99,6 +100,11 @@ public class Room {
 
     public List<Player> getPlayers() {
         return players.getPlayers();
+    }
+
+    public Map<PlayerName, Integer> toColorIndexMap() {
+        return players.getPlayers().stream()
+                .collect(Collectors.toUnmodifiableMap(Player::getName, Player::getColorIndex));
     }
 
     public Player findPlayer(PlayerName playerName) {

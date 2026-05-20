@@ -5,8 +5,10 @@ import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
 import java.util.List;
+import java.util.Map;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,7 +33,11 @@ public class RoomQueryService {
         return List.copyOf(room.getPlayers());
     }
 
-    public boolean existsPlayer(@NonNull JoinCode joinCode, @NonNull coffeeshout.room.domain.player.PlayerName playerName) {
+    public Map<PlayerName, Integer> getColorIndexMap(@NonNull JoinCode joinCode) {
+        return getByJoinCode(joinCode).toColorIndexMap();
+    }
+
+    public boolean existsPlayer(@NonNull JoinCode joinCode, @NonNull PlayerName playerName) {
         return roomRepository.findByJoinCode(joinCode)
                 .map(room -> room.getPlayers().stream()
                         .anyMatch(player -> player.sameName(playerName)))

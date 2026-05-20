@@ -7,7 +7,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
-import coffeeshout.room.application.service.GameRecoveryService;
+import coffeeshout.room.application.service.RoomRecoveryService;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.service.RoomCommandService;
@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.TaskScheduler;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,7 +33,10 @@ class DelayedRoomRemovalServiceTest {
     TaskScheduler taskScheduler;
 
     @Mock
-    GameRecoveryService gameRecoveryService;
+    RoomRecoveryService roomRecoveryService;
+
+    @Mock
+    ApplicationEventPublisher eventPublisher;
 
     @SuppressWarnings({"rawtypes"})
     ScheduledFuture scheduledFuture = mock(ScheduledFuture.class);
@@ -49,7 +53,8 @@ class DelayedRoomRemovalServiceTest {
                 taskScheduler,
                 removalDelay,
                 roomCommandService,
-                gameRecoveryService
+                roomRecoveryService,
+                eventPublisher
         );
 
         joinCode = new JoinCode("ABCD");

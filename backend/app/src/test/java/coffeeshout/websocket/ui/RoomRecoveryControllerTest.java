@@ -16,7 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureMockMvc
-class GameRecoveryControllerTest extends IntegrationTestSupport {
+class RoomRecoveryControllerTest extends IntegrationTestSupport {
 
     private static final String TEST_JOIN_CODE = "T3ST";
     private static final String TEST_PLAYER_NAME = "Tester";

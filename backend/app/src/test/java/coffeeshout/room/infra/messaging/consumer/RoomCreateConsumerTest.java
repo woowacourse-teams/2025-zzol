@@ -15,11 +15,13 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 class RoomCreateConsumerTest extends ServiceTest {
 
     @Autowired
+    @Qualifier("roomCreateConsumer")
     Consumer<RoomCreateEvent> roomCreateEventConsumer;
 
     @Autowired

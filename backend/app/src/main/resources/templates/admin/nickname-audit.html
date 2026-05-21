@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>닉네임 검열 대시보드 — ZZOL</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <script>
+        function confirmRelease(form) {
+            const nickname = form.dataset.nickname;
+            return confirm('\'' + nickname + '\' 의 차단을 해제합니다.\nAI 오판으로 판단하시겠습니까?');
+        }
+    </script>
+</head>
+<body>
+
+<header>
+    <h1>닉네임 검열 대시보드</h1>
+    <form th:action="@{/admin/logout}" method="post">
+        <button type="submit" class="logout-btn">로그아웃</button>
+    </form>
+</header>
+
+<main>
+    <a href="/admin" class="nav-back">← 대시보드로</a>
+
+    <div class="filter-bar" style="margin-bottom: 1.5rem;">
+        <span class="filter-label">섹션</span>
+        <a href="#flagged" class="filter-btn">
+            FLAGGED <span class="badge badge-flagged" th:text="${flagged.totalElements}"
+                          style="margin-left:0.3rem;">0</span>
+        </a>
+        <a href="#pending" class="filter-btn">
+            PENDING <span class="badge badge-pending" th:text="${pending.totalElements}"
+                          style="margin-left:0.3rem;">0</span>
+        </a>
+    </div>
+
+    <!-- FLAGGED -->
+    <div id="flagged" class="section-header">
+        <span class="section-title">FLAGGED</span>
+        <span class="badge badge-flagged" th:text="${flagged.totalElements}">0</span>
+        <span style="font-size:0.8rem;color:#9ca3af;">신뢰도 ≥ 0.85 — 자동 차단됨, 오판 시 해제</span>
+    </div>
+
+    <div th:if="${flagged.empty}" class="empty">처리할 FLAGGED 항목이 없습니다.</div>
+
+    <div th:if="${!flagged.empty}" class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>닉네임</th>
+                <th>신뢰도</th>
+                <th>AI 판단 사유</th>
+                <th>등록</th>
+                <th>검열</th>
+                <th>처리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${flagged.content}">
+                <td th:text="${item.id}" style="color:#9ca3af;font-size:0.8rem;"></td>
+                <td>
+                    <span class="nickname" th:text="${item.playerName}"></span>
+                    <span class="badge badge-auto-blocked" style="margin-left:0.4rem;">자동 차단됨</span>
+                </td>
+                <td>
+                    <div class="conf-wrap">
+                        <div class="conf-bar-bg">
+                            <div class="conf-bar-fill fill-high"
+                                 th:style="|width:${item.confidence.value().movePointRight(2).intValue()}%|"></div>
+                        </div>
+                        <span class="conf-text"
+                              th:text="${#numbers.formatDecimal(item.confidence.value(), 1, 2)}"></span>
+                    </div>
+                </td>
+                <td class="reason" th:text="${item.reason}"></td>
+                <td class="date" th:text="${#temporals.format(item.createdAt, 'MM-dd HH:mm')}"></td>
+                <td class="date"
+                    th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
+                <td>
+                    <form th:action="@{/admin/playername-audit/{id}/allow(id=${item.id})}" method="post"
+                          th:data-nickname="${item.playerName}" onsubmit="return confirmRelease(this)">
+                        <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
+                        <input type="hidden" name="pendingPage" th:value="${pendingPage}">
+                        <button type="submit" class="btn btn-allow">차단 해제</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination" th:if="${flagged.totalPages > 1}">
+            <a class="page-btn" th:if="${!flagged.first}"
+               th:href="@{/admin/playername-audit(flaggedPage=${flagged.number - 1}, pendingPage=${pendingPage})} + '#flagged'">←
+                이전</a>
+            <a class="page-btn" th:if="${flaggedPageStart > 0}"
+               th:href="@{/admin/playername-audit(flaggedPage=0, pendingPage=${pendingPage})} + '#flagged'">1</a>
+            <span class="page-ellipsis" th:if="${flaggedPageStart > 1}">…</span>
+            <th:block th:each="p : ${#numbers.sequence(flaggedPageStart, flaggedPageEnd)}">
+                <span th:if="${p == flagged.number}" class="page-current" th:text="${p + 1}"></span>
+                <a th:unless="${p == flagged.number}" class="page-btn"
+                   th:href="@{/admin/playername-audit(flaggedPage=${p}, pendingPage=${pendingPage})} + '#flagged'"
+                   th:text="${p + 1}"></a>
+            </th:block>
+            <span class="page-ellipsis" th:if="${flaggedPageEnd < flagged.totalPages - 2}">…</span>
+            <a class="page-btn" th:if="${flaggedPageEnd < flagged.totalPages - 1}"
+               th:href="@{/admin/playername-audit(flaggedPage=${flagged.totalPages - 1}, pendingPage=${pendingPage})} + '#flagged'"
+               th:text="${flagged.totalPages}"></a>
+            <a class="page-btn" th:if="${!flagged.last}"
+               th:href="@{/admin/playername-audit(flaggedPage=${flagged.number + 1}, pendingPage=${pendingPage})} + '#flagged'">다음
+                →</a>
+        </div>
+    </div>
+
+    <!-- PENDING -->
+    <div id="pending" class="section-header">
+        <span class="section-title">PENDING</span>
+        <span class="badge badge-pending" th:text="${pending.totalElements}">0</span>
+        <span style="font-size:0.8rem;color:#9ca3af;">신뢰도 &lt; 0.85 — 운영자 판단 필요</span>
+    </div>
+
+    <div th:if="${pending.empty}" class="empty">처리할 PENDING 항목이 없습니다.</div>
+
+    <div th:if="${!pending.empty}" class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>닉네임</th>
+                <th>신뢰도</th>
+                <th>AI 판단 사유</th>
+                <th>등록</th>
+                <th>검열</th>
+                <th>처리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${pending.content}">
+                <td th:text="${item.id}" style="color:#9ca3af;font-size:0.8rem;"></td>
+                <td class="nickname" th:text="${item.playerName}"></td>
+                <td>
+                    <div class="conf-wrap">
+                        <div class="conf-bar-bg">
+                            <div class="conf-bar-fill fill-mid"
+                                 th:style="|width:${item.confidence.value().movePointRight(2).intValue()}%|"></div>
+                        </div>
+                        <span class="conf-text"
+                              th:text="${#numbers.formatDecimal(item.confidence.value(), 1, 2)}"></span>
+                    </div>
+                </td>
+                <td class="reason" th:text="${item.reason}"></td>
+                <td class="date" th:text="${#temporals.format(item.createdAt, 'MM-dd HH:mm')}"></td>
+                <td class="date"
+                    th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
+                <td>
+                    <div class="actions">
+                        <form th:action="@{/admin/playername-audit/{id}/allow(id=${item.id})}" method="post">
+                            <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
+                            <input type="hidden" name="pendingPage" th:value="${pendingPage}">
+                            <button type="submit" class="btn btn-allow">허용</button>
+                        </form>
+                        <form th:action="@{/admin/playername-audit/{id}/block(id=${item.id})}" method="post">
+                            <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
+                            <input type="hidden" name="pendingPage" th:value="${pendingPage}">
+                            <button type="submit" class="btn btn-block">차단</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="pagination" th:if="${pending.totalPages > 1}">
+            <a class="page-btn" th:if="${!pending.first}"
+               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number - 1})} + '#pending'">←
+                이전</a>
+            <a class="page-btn" th:if="${pendingPageStart > 0}"
+               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=0)} + '#pending'">1</a>
+            <span class="page-ellipsis" th:if="${pendingPageStart > 1}">…</span>
+            <th:block th:each="p : ${#numbers.sequence(pendingPageStart, pendingPageEnd)}">
+                <span th:if="${p == pending.number}" class="page-current" th:text="${p + 1}"></span>
+                <a th:unless="${p == pending.number}" class="page-btn"
+                   th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${p})} + '#pending'"
+                   th:text="${p + 1}"></a>
+            </th:block>
+            <span class="page-ellipsis" th:if="${pendingPageEnd < pending.totalPages - 2}">…</span>
+            <a class="page-btn" th:if="${pendingPageEnd < pending.totalPages - 1}"
+               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.totalPages - 1})} + '#pending'"
+               th:text="${pending.totalPages}"></a>
+            <a class="page-btn" th:if="${!pending.last}"
+               th:href="@{/admin/playername-audit(flaggedPage=${flaggedPage}, pendingPage=${pending.number + 1})} + '#pending'">다음
+                →</a>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

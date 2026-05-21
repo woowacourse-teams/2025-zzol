@@ -1,0 +1,5 @@
+@import 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap';
+@import 'admin/base.css';
+@import 'admin/components.css';
+@import 'admin/table.css';
+@import 'admin/pagination.css';

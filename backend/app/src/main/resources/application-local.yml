@@ -1,0 +1,78 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:33061/coffee_shout?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    username: root
+    password: coffee-shout_123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  docker:
+    compose:
+      enabled: true
+      file: docker-compose.yml
+      lifecycle-management: start_and_stop
+  data:
+    redis:
+      host: localhost
+      ssl:
+        enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+  flyway:
+    enabled: false
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus,tracing"
+  tracing:
+    enabled: false
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+      export:
+        enabled: false
+room:
+  qr:
+    prefix: http://localhost:8080/join/
+
+outbox:
+  relay:
+    delay: 5000  # 로컬에서는 5초마다 폴링 (기본값 500ms)
+
+logging:
+  level:
+    coffeeshout: DEBUG
+    coffeeshout.global.outbox: WARN
+    org.springframework.web: INFO
+
+admin:
+  username: admin
+  password: "1234"
+
+security:
+  ip-block:
+    not-found-threshold: 999
+    not-found-window: 1h
+    block-ttl: 24h
+
+websocket:
+  room-session-token:
+    secret: "local-dev-room-session-token-secret-key-must-be-at-least-256-bits"
+
+user:
+  jwt:
+    secret: "local-dev-secret-key-must-be-at-least-256-bits-for-hs256-algorithm"
+    access-token-expiration-seconds: 1800
+    refresh-token-expiration-seconds: 1209600
+  oauth:
+    frontend-redirect-uri: "http://localhost:3000/auth/callback"
+

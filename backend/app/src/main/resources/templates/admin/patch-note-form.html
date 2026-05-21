@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${patchNote != null} ? '패치노트 수정 — ZZOL' : '패치노트 작성 — ZZOL'">패치노트 — ZZOL</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        .form-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            max-width: 720px;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            font-family: inherit;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            background: var(--bg);
+            box-sizing: border-box;
+            transition: border-color var(--dur) var(--ease);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-border);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 240px;
+            line-height: 1.6;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.75rem;
+        }
+
+        .btn-submit {
+            background: var(--accent);
+            color: #fff;
+            border: 1px solid var(--accent);
+            padding: 0.45rem 1.25rem;
+            border-radius: var(--radius-xs);
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-cancel {
+            background: var(--surface);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 0.45rem 1.25rem;
+            border-radius: var(--radius-xs);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1 th:text="${patchNote != null} ? '패치노트 수정' : '패치노트 작성'">패치노트</h1>
+    <form th:action="@{/admin/logout}" method="post">
+        <button type="submit" class="logout-btn">로그아웃</button>
+    </form>
+</header>
+
+<main>
+    <a th:href="@{/admin/patch-notes}" class="nav-back">← 패치노트 목록으로</a>
+
+    <div class="form-card">
+        <form th:action="${formAction}" method="post">
+            <div class="form-group">
+                <label class="form-label" for="category">카테고리</label>
+                <select id="category" name="category" class="form-control">
+                    <th:block th:each="cat : ${categories}">
+                        <option th:value="${cat.name()}"
+                                th:text="${cat.name() + '(' + cat.label + ')'}"
+                                th:selected="${patchNote != null and patchNote.category == cat}"></option>
+                    </th:block>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="title">제목</label>
+                <input id="title" name="title" type="text" class="form-control"
+                       maxlength="100" placeholder="제목을 입력하세요 (최대 100자)"
+                       th:value="${patchNote?.title}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="content">본문</label>
+                <textarea id="content" name="content" class="form-control"
+                          placeholder="본문을 입력하세요" maxlength="5000"
+                          th:text="${patchNote?.content}"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-submit"
+                        th:text="${patchNote != null} ? '수정하기' : '작성하기'">작성하기
+                </button>
+                <a th:href="@{/admin/patch-notes}" class="btn-cancel">취소</a>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

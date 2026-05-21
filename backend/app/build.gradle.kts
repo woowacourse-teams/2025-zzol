@@ -15,6 +15,8 @@ dependencies {
     implementation(project(":admin"))
     implementation(project(":zzolbot"))
 
+    implementation("org.springframework.boot:spring-boot-starter-web")
+
     // --- Database & Migration ---
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")

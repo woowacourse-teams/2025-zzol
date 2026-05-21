@@ -1,0 +1,120 @@
+:root {
+  --accent:        #6366f1;
+  --accent-light:  #818cf8;
+  --accent-dim:    rgba(99, 102, 241, 0.10);
+  --accent-border: rgba(99, 102, 241, 0.28);
+
+  --bg:            #f4f5f9;
+  --surface:       #ffffff;
+  --surface-hover: #f8f9ff;
+  --border:        #e6e8ef;
+  --border-subtle: #f0f1f7;
+
+  --text-primary:   #0d0f18;
+  --text-secondary: #4b5263;
+  --text-muted:     #9ca3af;
+
+  --header-bg: #0d0f18;
+
+  --red-bg:    #fef2f2; --red-text:   #991b1b; --red-border: #fecaca; --red-text-dark: #7f1d1d;
+  --amber-bg:  #fffbeb; --amber-text: #92400e;
+  --green-bg:  #f0fdf4; --green-text: #166534;
+
+  --radius:    10px;
+  --radius-sm:  6px;
+  --radius-xs:  4px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 14px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,.13), 0 4px 8px rgba(0,0,0,.06);
+  --shadow-accent: 0 2px 10px rgba(99,102,241,.35);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur: 0.18s;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ── */
+header {
+  background: var(--header-bg);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  padding: 0 2rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 24px rgba(0,0,0,.25);
+}
+
+header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-light), transparent);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+header h1 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  position: relative;
+}
+
+header h1::before {
+  content: '';
+  width: 7px; height: 7px;
+  background: var(--accent-light);
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px var(--accent-light);
+  animation: pulse-dot 3s var(--ease) infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-light); }
+  50%       { opacity: 0.45; box-shadow: 0 0 3px var(--accent-light); }
+}
+
+.logout-btn {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--radius-sm);
+  padding: 0.32rem 0.85rem;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  color: rgba(255,255,255,.7);
+  transition: background var(--dur) var(--ease),
+              color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease);
+}
+
+.logout-btn:hover {
+  background: rgba(255,255,255,.13);
+  color: #fff;
+  border-color: rgba(255,255,255,.22);
+}
+
+/* ── Main ── */
+main { max-width: 1140px; margin: 0 auto; padding: 2.25rem 1.75rem; }

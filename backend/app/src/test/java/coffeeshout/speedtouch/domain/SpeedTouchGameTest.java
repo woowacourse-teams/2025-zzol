@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.PlayerName;
@@ -23,7 +24,7 @@ class SpeedTouchGameTest {
     @BeforeEach
     void setUp() {
         game = new SpeedTouchGame();
-        game.setUp(List.of(한스, 꾹이, 루키));
+        game.setUp(List.of(new Gamer(한스, null), new Gamer(꾹이, null), new Gamer(루키, null)));
         game.startPlaying();
     }
 
@@ -60,7 +61,7 @@ class SpeedTouchGameTest {
         void PLAYING_상태가_아니면_터치시_예외가_발생한다() {
             // given
             final SpeedTouchGame newGame = new SpeedTouchGame();
-            newGame.setUp(List.of(한스));
+            newGame.setUp(List.of(new Gamer(한스, null)));
 
             // when & then
             assertThatThrownBy(() -> newGame.touch(new PlayerName("한스"), SpeedTouchPlayer.FIRST_NUMBER, Instant.now()))

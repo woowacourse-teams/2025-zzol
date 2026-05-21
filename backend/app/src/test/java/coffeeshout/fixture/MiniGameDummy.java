@@ -1,6 +1,7 @@
 package coffeeshout.fixture;
 
 import coffeeshout.cardgame.domain.CardGameScore;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -30,6 +31,6 @@ public class MiniGameDummy implements Playable {
     }
 
     @Override
-    public void setUp(List<PlayerName> players) {
+    public void setUp(List<Gamer> gamers) {
     }
 }

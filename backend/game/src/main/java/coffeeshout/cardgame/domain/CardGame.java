@@ -4,6 +4,7 @@ import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.cardgame.domain.card.CardGameDeckGenerator;
 import coffeeshout.cardgame.domain.card.Deck;
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -48,8 +49,8 @@ public class CardGame implements Playable {
     }
 
     @Override
-    public void setUp(List<PlayerName> players) {
-        playerHands = new PlayerHands(players);
+    public void setUp(List<Gamer> gamers) {
+        playerHands = new PlayerHands(gamers.stream().map(Gamer::name).toList());
     }
 
     @Override

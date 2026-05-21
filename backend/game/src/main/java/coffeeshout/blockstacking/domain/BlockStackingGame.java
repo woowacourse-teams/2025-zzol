@@ -1,6 +1,7 @@
 package coffeeshout.blockstacking.domain;
 
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -26,9 +27,10 @@ public class BlockStackingGame implements Playable {
     }
 
     @Override
-    public void setUp(List<PlayerName> players) {
+    public void setUp(List<Gamer> gamers) {
         playerProgresses.clear();
-        players.forEach(p -> playerProgresses.put(p, BlockStackingPlayerProgress.initial(p)));
+        gamers.stream().map(Gamer::name)
+                .forEach(name -> playerProgresses.put(name, BlockStackingPlayerProgress.initial(name)));
     }
 
     public void prepare() {

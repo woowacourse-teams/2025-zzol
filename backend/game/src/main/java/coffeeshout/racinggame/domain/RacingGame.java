@@ -1,6 +1,7 @@
 package coffeeshout.racinggame.domain;
 
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -35,8 +36,8 @@ public class RacingGame implements Playable {
     private ScheduledFuture<?> autoMoveFuture;
 
     @Override
-    public void setUp(List<PlayerName> players) {
-        this.runners = new Runners(players);
+    public void setUp(List<Gamer> gamers) {
+        this.runners = new Runners(gamers.stream().map(Gamer::name).toList());
         this.state = RacingGameState.DESCRIPTION;
     }
 

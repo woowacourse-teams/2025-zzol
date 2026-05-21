@@ -9,6 +9,7 @@ import coffeeshout.cardgame.domain.card.CardGameDeckGenerator;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.PlayersFixture;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.room.domain.player.Player;
@@ -33,7 +34,7 @@ class CardGameTest {
         players = PlayersFixture.호스트꾹이_루키_엠제이_한스;
 
         cardGame = new CardGameFake(deckGenerator);
-        cardGame.setUp(players.getPlayers().stream().map(Player::getName).toList());
+        cardGame.setUp(players.getPlayers().stream().map(p -> new Gamer(p.getName(), null)).toList());
     }
 
     @Nested

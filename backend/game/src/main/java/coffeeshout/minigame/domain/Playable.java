@@ -4,6 +4,7 @@ import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Map;
 
+
 public interface Playable {
 
     MiniGameResult getResult();
@@ -12,5 +13,5 @@ public interface Playable {
 
     MiniGameType getMiniGameType();
 
-    void setUp(List<PlayerName> players);
+    void setUp(List<Gamer> gamers);
 }

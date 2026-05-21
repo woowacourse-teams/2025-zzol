@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.PlayerName;
@@ -26,7 +27,7 @@ class BlindTimerGameTest {
     @BeforeEach
     void setUp() {
         game = new BlindTimerGame(TARGET_TIME);
-        game.setUp(List.of(한스, 꾹이, 루키));
+        game.setUp(List.of(new Gamer(한스, null), new Gamer(꾹이, null), new Gamer(루키, null)));
         game.startPlaying();
     }
 
@@ -79,7 +80,7 @@ class BlindTimerGameTest {
         void PLAYING_상태가_아니면_STOP시_예외가_발생한다() {
             // given
             final BlindTimerGame newGame = new BlindTimerGame(TARGET_TIME);
-            newGame.setUp(List.of(한스));
+            newGame.setUp(List.of(new Gamer(한스, null)));
 
             // when & then
             assertThatThrownBy(() -> newGame.stop(new PlayerName("한스"), Instant.now()))

@@ -3,6 +3,7 @@ package coffeeshout.laddergame.domain.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.LadderGameState;
 import coffeeshout.laddergame.domain.LadderLine;
@@ -30,7 +31,7 @@ class LadderCommandServiceTest {
         엠제이 = PlayerFixture.게스트엠제이();
 
         game = new LadderGame();
-        game.setUp(List.of(꾹이.getName(), 루키.getName(), 엠제이.getName()));
+        game.setUp(List.of(new Gamer(꾹이.getName(), null), new Gamer(루키.getName(), null), new Gamer(엠제이.getName(), null)));
         game.changeToPrepare();
         game.changeToDrawing();
     }
@@ -69,7 +70,7 @@ class LadderCommandServiceTest {
         @Test
         void DESCRIPTION_상태에서도_빈_Optional을_반환한다() {
             final LadderGame descriptionGame = new LadderGame();
-            descriptionGame.setUp(List.of(꾹이.getName(), 루키.getName(), 엠제이.getName()));
+            descriptionGame.setUp(List.of(new Gamer(꾹이.getName(), null), new Gamer(루키.getName(), null), new Gamer(엠제이.getName(), null)));
 
             final Optional<LadderLine> result = commandService.drawLine(descriptionGame, "꾹이", 0);
 

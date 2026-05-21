@@ -4,6 +4,7 @@ import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
@@ -32,7 +33,7 @@ class LadderGameTest {
         playerNames = List.of(꾹이.getName(), 철수.getName(), 영희.getName());
 
         game = new LadderGame();
-        game.setUp(playerNames);
+        game.setUp(playerNames.stream().map(name -> new Gamer(name, null)).toList());
     }
 
     @Nested

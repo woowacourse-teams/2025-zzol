@@ -4,6 +4,7 @@ import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayersFixture;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
@@ -42,7 +43,7 @@ class BlockStackingGameTest {
                 .map(Player::getName).toList();
 
         game = new BlockStackingGame();
-        game.setUp(players);
+        game.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
     }
 
     @Nested

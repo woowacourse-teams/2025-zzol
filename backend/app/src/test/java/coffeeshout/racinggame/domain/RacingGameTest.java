@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.time.Instant;
@@ -22,7 +23,7 @@ class RacingGameTest {
     @Test
     void 게임_시작을_위해_준비한다() {
         // when
-        racingGame.setUp(players);
+        racingGame.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
 
         // then
         assertThat(racingGame.getState()).isEqualTo(RacingGameState.DESCRIPTION);
@@ -32,7 +33,7 @@ class RacingGameTest {
     @Test
     void 모든_러너를_이동시킬_수_있다() {
         // given
-        racingGame.setUp(players);
+        racingGame.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
         racingGame.updateState(RacingGameState.PLAYING);
 
         racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
@@ -49,7 +50,7 @@ class RacingGameTest {
     @Test
     void 모든_러너가_결승선에_도착한다() {
         // given
-        racingGame.setUp(players);
+        racingGame.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
         racingGame.updateState(RacingGameState.PLAYING);
 
         racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
@@ -67,7 +68,7 @@ class RacingGameTest {
     @Test
     void 러너의_속도를_조절한다() {
         // given
-        racingGame.setUp(players);
+        racingGame.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
         racingGame.updateState(RacingGameState.PLAYING);
 
         racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
@@ -81,7 +82,7 @@ class RacingGameTest {
     void 게임이_진행_중이_아니면_속도_조정시_예외가_발생한다() {
         // given
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> 10;
-        racingGame.setUp(players);
+        racingGame.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
 
         // when && then
         assertThatThrownBy(() -> racingGame.updateSpeed(players.getFirst(), 10, speedCalculator, Instant.now()))
@@ -91,7 +92,7 @@ class RacingGameTest {
     @Test
     void 게임_결과를_조회할_수_있다() throws InterruptedException {
         // given
-        racingGame.setUp(players);
+        racingGame.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
         racingGame.updateState(RacingGameState.PLAYING);
         racingGame.setUpStart();
         racingGame.setAutoMoveFuture(null);

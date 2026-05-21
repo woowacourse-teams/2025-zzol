@@ -1,5 +1,6 @@
 package coffeeshout.fixture;
 
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.Playable;
 import coffeeshout.room.domain.JoinCode;
@@ -20,7 +21,7 @@ public final class GameSessionFixture {
     public static GameSession 게임세션_게임시작됨(JoinCode joinCode, Playable game, PlayerName hostName, List<PlayerName> players) {
         GameSession session = new GameSession(joinCode, hostName);
         session.replaceGames(hostName, List.of(game));
-        session.startNextGame(hostName, players);
+        session.startNextGame(hostName, players.stream().map(name -> new Gamer(name, null)).toList());
         return session;
     }
 }

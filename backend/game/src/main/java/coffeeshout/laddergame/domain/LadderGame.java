@@ -1,6 +1,7 @@
 package coffeeshout.laddergame.domain;
 
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -40,11 +41,12 @@ public class LadderGame implements Playable {
     }
 
     @Override
-    public void setUp(List<PlayerName> players) {
+    public void setUp(List<Gamer> gamers) {
         this.state = LadderGameState.DESCRIPTION;
         this.lines = new LadderLines();
-        this.poles = Poles.assign(players);
-        this.bottomRanks = BottomRanks.generate(players.size());
+        final List<PlayerName> playerNames = gamers.stream().map(Gamer::name).toList();
+        this.poles = Poles.assign(playerNames);
+        this.bottomRanks = BottomRanks.generate(gamers.size());
         this.finalRanks = null;
     }
 

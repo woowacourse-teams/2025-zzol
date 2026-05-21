@@ -1,6 +1,7 @@
 package coffeeshout.blindtimer.domain;
 
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -45,8 +46,8 @@ public class BlindTimerGame implements Playable {
     }
 
     @Override
-    public void setUp(List<PlayerName> playerList) {
-        this.players = new BlindTimerPlayers(playerList);
+    public void setUp(List<Gamer> gamers) {
+        this.players = new BlindTimerPlayers(gamers.stream().map(Gamer::name).toList());
     }
 
     @Override

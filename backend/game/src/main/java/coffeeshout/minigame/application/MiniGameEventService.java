@@ -1,5 +1,6 @@
 package coffeeshout.minigame.application;
 
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -59,7 +60,7 @@ public class MiniGameEventService {
         final GameSession session = gameSessionService.getOrCreateSession(joinCode, hostName);
 
         final Playable playable = session.startNextGame(hostName,
-                room.getPlayers().stream().map(Player::getName).toList());
+                room.getPlayers().stream().map(p -> new Gamer(p.getName(), p.getUserId())).toList());
         final MiniGameType miniGameType = playable.getMiniGameType();
 
         roomCommandService.markPlaying(joinCode, hostName);

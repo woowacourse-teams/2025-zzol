@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import lombok.AccessLevel;
 import lombok.Getter;
 
 @Getter
@@ -14,7 +15,11 @@ public class GameSession {
 
     private final JoinCode joinCode;
     private final PlayerName hostName;
+
+    @Getter(AccessLevel.NONE)
     private final Queue<Playable> pendingGames;
+
+    @Getter(AccessLevel.NONE)
     private final List<Playable> completedGames;
 
     public GameSession(JoinCode joinCode, PlayerName hostName) {
@@ -24,7 +29,7 @@ public class GameSession {
         this.completedGames = new ArrayList<>();
     }
 
-    public void replaceGames(PlayerName hostName, List<Playable> games) {
+    public synchronized void replaceGames(PlayerName hostName, List<Playable> games) {
         validateHost(hostName);
         final long distinctCount = games.stream()
                 .map(Playable::getMiniGameType)
@@ -37,49 +42,53 @@ public class GameSession {
         pendingGames.addAll(games);
     }
 
-    public Playable startNextGame(PlayerName hostName, List<PlayerName> players) {
+    public synchronized Playable startNextGame(PlayerName hostName, List<Gamer> gamers) {
         validateHost(hostName);
         if (pendingGames.isEmpty()) {
             throw new BusinessException(GameSessionErrorCode.NO_PENDING_GAMES, "시작할 게임이 없습니다.");
         }
         final Playable game = pendingGames.poll();
-        game.setUp(players);
+        game.setUp(gamers);
         completedGames.add(game);
         return game;
     }
 
-    public Playable findCompletedGame(MiniGameType type) {
+    public synchronized Playable findCompletedGame(MiniGameType type) {
         return completedGames.stream()
                 .filter(g -> g.getMiniGameType() == type)
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(GameSessionErrorCode.GAME_NOT_FOUND, "완료된 미니게임이 없습니다: " + type));
     }
 
-    private void validateHost(PlayerName hostName) {
-        if (!this.hostName.equals(hostName)) {
-            throw new BusinessException(GameSessionErrorCode.NOT_HOST, "호스트만 게임 세션을 관리할 수 있습니다.");
-        }
-    }
-
-    public List<MiniGameType> getSelectedTypes() {
+    public synchronized List<MiniGameType> getSelectedTypes() {
         return pendingGames.stream()
                 .map(Playable::getMiniGameType)
                 .toList();
     }
 
-    public List<Playable> getPendingGamesView() {
+    public synchronized List<Playable> getPendingGamesView() {
         return List.copyOf(pendingGames);
     }
 
-    public int getTotalGameCount() {
+    public synchronized List<Playable> getCompletedGames() {
+        return List.copyOf(completedGames);
+    }
+
+    public synchronized int getTotalGameCount() {
         return pendingGames.size() + completedGames.size();
     }
 
-    public boolean isFirstGame() {
+    public synchronized boolean isFirstGame() {
         return completedGames.size() == 1;
     }
 
-    public boolean hasPendingGames() {
+    public synchronized boolean hasPendingGames() {
         return !pendingGames.isEmpty();
+    }
+
+    private void validateHost(PlayerName hostName) {
+        if (!this.hostName.equals(hostName)) {
+            throw new BusinessException(GameSessionErrorCode.NOT_HOST, "호스트만 게임 세션을 관리할 수 있습니다.");
+        }
     }
 }

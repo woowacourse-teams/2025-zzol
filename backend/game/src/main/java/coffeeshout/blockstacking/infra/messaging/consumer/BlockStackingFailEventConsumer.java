@@ -18,7 +18,7 @@ public class BlockStackingFailEventConsumer implements Consumer<BlockStackingFai
     @Override
     public void accept(BlockStackingFailEvent event) {
         try {
-            blockStackingService.recordFailure(event.joinCode(), event.playerName());
+            blockStackingService.recordFailure(event.joinCode(), event.playerName(), event.userId());
         } catch (BusinessException e) {
             log.warn(
                     "블록 쌓기 실패 이벤트 처리 중 비즈니스 예외 발생: joinCode={}, playerName={}",

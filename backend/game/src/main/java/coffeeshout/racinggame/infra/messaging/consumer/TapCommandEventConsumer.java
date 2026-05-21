@@ -21,6 +21,7 @@ public class TapCommandEventConsumer implements Consumer<TapCommandEvent> {
             racingGameService.tap(
                     event.joinCode(),
                     event.playerName(),
+                    event.userId(),
                     event.tapCount()
             );
         } catch (BusinessException e) {

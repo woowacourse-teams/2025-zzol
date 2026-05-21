@@ -5,8 +5,10 @@ import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.speedtouch.domain.event.TouchProgressCommandEvent;
 import coffeeshout.gamecommon.infra.GameStreamKey;
 import coffeeshout.speedtouch.ui.request.TouchCommand;
+import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.docs.WsReceive;
 import jakarta.validation.Valid;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -26,12 +28,17 @@ public class SpeedTouchGameWebSocketController {
             respondsOnTopics = "/room/{joinCode}/speed-touch/progress",
             description = "스피드 터치 게임 터치 — 1 to 25 스피드 터치에서 숫자를 터치하는 웹소켓 요청"
     )
-    public void touch(@DestinationVariable String joinCode, @Payload @Valid TouchCommand command) {
+    public void touch(
+            @DestinationVariable String joinCode,
+            @Payload @Valid TouchCommand command,
+            Principal principal
+    ) {
+        final PlayerKey playerKey = PlayerKey.requireFrom(principal);
         final BaseEvent event = TouchProgressCommandEvent.create(
-                joinCode, command.playerName(), command.touchedNumber()
+                joinCode, playerKey.playerName(), playerKey.userId(), command.touchedNumber()
         );
         streamPublisher.publish(GameStreamKey.SPEEDTOUCH_EVENTS, event);
         log.debug("터치 이벤트 발행: joinCode={}, player={}, number={}, eventId={}",
-                joinCode, command.playerName(), command.touchedNumber(), event.eventId());
+                joinCode, playerKey.playerName(), command.touchedNumber(), event.eventId());
     }
 }

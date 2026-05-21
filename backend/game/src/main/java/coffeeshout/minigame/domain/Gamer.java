@@ -20,6 +20,14 @@ public record Gamer(PlayerName name, Long userId) {
         return new Gamer(name, userId);
     }
 
+    public static Gamer of(PlayerName name, Long userId) {
+        return userId != null ? loggedIn(name, userId) : guest(name);
+    }
+
+    public static Gamer of(String playerName, Long userId) {
+        return of(new PlayerName(playerName), userId);
+    }
+
     public boolean isLoggedIn() {
         return userId != null;
     }

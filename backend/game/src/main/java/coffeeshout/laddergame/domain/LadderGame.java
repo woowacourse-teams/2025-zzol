@@ -11,7 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.Getter;
 
+
+@Getter
 public class LadderGame implements Playable {
 
     private volatile LadderGameState state;
@@ -19,35 +22,26 @@ public class LadderGame implements Playable {
     private LadderLines lines = new LadderLines();
     private BottomRanks bottomRanks;
     private Map<PlayerName, Integer> finalRanks;
+    private List<Gamer> gamers;
 
     public LadderGame() {
         this.state = LadderGameState.DESCRIPTION;
     }
 
-    public LadderGameState getState() {
-        return state;
-    }
-
-    public Poles getPoles() {
-        return poles;
-    }
-
-    public LadderLines getLines() {
-        return lines;
-    }
-
-    public BottomRanks getBottomRanks() {
-        return bottomRanks;
-    }
-
     @Override
     public void setUp(List<Gamer> gamers) {
+        this.gamers = List.copyOf(gamers);
         this.state = LadderGameState.DESCRIPTION;
         this.lines = new LadderLines();
         final List<PlayerName> playerNames = gamers.stream().map(Gamer::name).toList();
         this.poles = Poles.assign(playerNames);
         this.bottomRanks = BottomRanks.generate(gamers.size());
         this.finalRanks = null;
+    }
+
+    @Override
+    public List<Gamer> getGamers() {
+        return gamers;
     }
 
     public void changeToPrepare() {
@@ -74,13 +68,14 @@ public class LadderGame implements Playable {
         this.state = next;
     }
 
-    public LadderLine drawLine(PlayerName playerName, int segmentIndex) {
-        poles.getPoleIndex(playerName);
-        if (lines.hasDrawn(playerName)) {
+    public LadderLine drawLine(Gamer gamer, int segmentIndex) {
+        gamer.validateAgainst(this.gamers);
+        poles.getPoleIndex(gamer.name());
+        if (lines.hasDrawn(gamer.name())) {
             throw new BusinessException(LadderGameErrorCode.ALREADY_DREW,
-                    "이미 선을 그은 플레이어입니다: " + playerName.value());
+                    "이미 선을 그은 플레이어입니다: " + gamer.name().value());
         }
-        return lines.add(playerName, segmentIndex);
+        return lines.add(gamer.name(), segmentIndex);
     }
 
     public boolean isAlreadyDrew(PlayerName playerName) {
@@ -115,14 +110,16 @@ public class LadderGame implements Playable {
     }
 
     @Override
-    public Map<PlayerName, MiniGameScore> getScores() {
+    public Map<Gamer, MiniGameScore> getScores() {
         if (finalRanks == null) {
             throw new BusinessException(LadderGameErrorCode.PATH_NOT_TRACED,
                     "tracePaths()가 먼저 호출되어야 합니다.");
         }
+        final Map<PlayerName, Gamer> nameToGamer = gamers.stream()
+                .collect(Collectors.toMap(Gamer::name, g -> g));
         return finalRanks.entrySet().stream()
                 .collect(Collectors.toMap(
-                        Map.Entry::getKey,
+                        e -> nameToGamer.get(e.getKey()),
                         e -> new LadderGameScore(e.getValue())
                 ));
     }

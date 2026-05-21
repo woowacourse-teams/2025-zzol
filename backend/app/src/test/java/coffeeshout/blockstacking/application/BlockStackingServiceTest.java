@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.blockstacking.domain.BlockStackingGameErrorCode;
+import coffeeshout.minigame.domain.GamerErrorCode;
 import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
@@ -66,7 +67,7 @@ class BlockStackingServiceTest extends ServiceTest {
 
         @Test
         void 유효한_블록_안착_이벤트가_플레이어_floor를_갱신한다() {
-            service.recordProgress(joinCode.getValue(), HOST_NAME,
+            service.recordProgress(joinCode.getValue(), HOST_NAME, null,
                     1, 100.0, 85.0, 150.0);
 
             assertThat(floorOf(HOST_NAME)).isEqualTo(1);
@@ -74,9 +75,9 @@ class BlockStackingServiceTest extends ServiceTest {
 
         @Test
         void 연속된_floor를_전송하면_순차적으로_갱신된다() {
-            service.recordProgress(joinCode.getValue(), HOST_NAME,
+            service.recordProgress(joinCode.getValue(), HOST_NAME, null,
                     1, 100.0, 85.0, 150.0);
-            service.recordProgress(joinCode.getValue(), HOST_NAME,
+            service.recordProgress(joinCode.getValue(), HOST_NAME, null,
                     2, 100.0, 85.0, 135.0);
 
             assertThat(floorOf(HOST_NAME)).isEqualTo(2);
@@ -84,9 +85,9 @@ class BlockStackingServiceTest extends ServiceTest {
 
         @Test
         void 유효한_이벤트마다_notifier를_호출한다() {
-            service.recordProgress(joinCode.getValue(), HOST_NAME,
+            service.recordProgress(joinCode.getValue(), HOST_NAME, null,
                     1, 100.0, 85.0, 150.0);
-            service.recordProgress(joinCode.getValue(), HOST_NAME,
+            service.recordProgress(joinCode.getValue(), HOST_NAME, null,
                     2, 100.0, 85.0, 135.0);
 
             verify(notifier, times(2)).notifyProgressUpdated(any(), any());
@@ -99,7 +100,7 @@ class BlockStackingServiceTest extends ServiceTest {
         @Test
         void 비연속적_floor_이벤트는_floor를_갱신하지_않는다() {
             // floor=1 을 건너뛰고 floor=2 전송
-            service.recordProgress(joinCode.getValue(), HOST_NAME,
+            service.recordProgress(joinCode.getValue(), HOST_NAME, null,
                     2, 100.0, 85.0, 150.0);
 
             assertThat(floorOf(HOST_NAME)).isZero();
@@ -108,7 +109,7 @@ class BlockStackingServiceTest extends ServiceTest {
         @Test
         void overlap이_0_이하인_이벤트는_floor를_갱신하지_않는다() {
             // movingBlockX=300 → stackTop 범위(85~235) 완전 이탈, overlap < 0
-            service.recordProgress(joinCode.getValue(), HOST_NAME,
+            service.recordProgress(joinCode.getValue(), HOST_NAME, null,
                     1, 300.0, 85.0, 150.0);
 
             assertThat(floorOf(HOST_NAME)).isZero();
@@ -116,7 +117,7 @@ class BlockStackingServiceTest extends ServiceTest {
 
         @Test
         void 유효하지_않은_이벤트는_notifier를_호출하지_않는다() {
-            service.recordProgress(joinCode.getValue(), HOST_NAME,
+            service.recordProgress(joinCode.getValue(), HOST_NAME, null,
                     1, 300.0, 85.0, 150.0);
 
             verify(notifier, never()).notifyProgressUpdated(any(), any());
@@ -127,11 +128,11 @@ class BlockStackingServiceTest extends ServiceTest {
     class 예외_상황 {
 
         @Test
-        void 존재하지_않는_플레이어_이름이면_PLAYER_NOT_FOUND_예외가_발생한다() {
+        void 존재하지_않는_플레이어_이름이면_UNAUTHORIZED_GAMER_예외가_발생한다() {
             assertCoffeeShoutException(
-                    () -> service.recordProgress(joinCode.getValue(), "없는플레이어",
+                    () -> service.recordProgress(joinCode.getValue(), "없는플레이어", null,
                             1, 100.0, 85.0, 150.0),
-                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND
+                    GamerErrorCode.UNAUTHORIZED_GAMER
             );
         }
 
@@ -140,7 +141,7 @@ class BlockStackingServiceTest extends ServiceTest {
             game.finish(); // state = DONE
 
             assertCoffeeShoutException(
-                    () -> service.recordProgress(joinCode.getValue(), HOST_NAME,
+                    () -> service.recordProgress(joinCode.getValue(), HOST_NAME, null,
                             1, 100.0, 85.0, 150.0),
                     BlockStackingGameErrorCode.NOT_PLAYING_STATE
             );

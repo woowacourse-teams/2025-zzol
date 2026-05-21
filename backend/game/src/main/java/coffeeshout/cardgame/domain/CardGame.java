@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -30,6 +31,7 @@ public class CardGame implements Playable {
     private PlayerHands playerHands;
     private CardGameRound round;
     private CardGameState state;
+    private List<Gamer> gamers;
 
     public CardGame(@NonNull CardGameDeckGenerator deckGenerator, long seed) {
         this.round = CardGameRound.ready(TOTAL_ROUNDS);
@@ -50,12 +52,24 @@ public class CardGame implements Playable {
 
     @Override
     public void setUp(List<Gamer> gamers) {
+        this.gamers = List.copyOf(gamers);
         playerHands = new PlayerHands(gamers.stream().map(Gamer::name).toList());
     }
 
     @Override
-    public Map<PlayerName, MiniGameScore> getScores() {
-        return playerHands.scoreByPlayer();
+    public List<Gamer> getGamers() {
+        return gamers;
+    }
+
+    @Override
+    public Map<Gamer, MiniGameScore> getScores() {
+        final Map<PlayerName, Gamer> nameToGamer = gamers.stream()
+                .collect(Collectors.toMap(Gamer::name, g -> g));
+        return playerHands.scoreByPlayer().entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> nameToGamer.get(e.getKey()),
+                        Map.Entry::getValue
+                ));
     }
 
     public void startRound() {
@@ -74,15 +88,15 @@ public class CardGame implements Playable {
         this.state = CardGameState.PLAYING;
     }
 
-    public boolean selectCard(PlayerName playerName, Integer cardIndex) {
+    public boolean selectCard(Gamer gamer, Integer cardIndex) {
         if (state != CardGameState.PLAYING) {
             throw new BusinessException(
                     CardGameErrorCode.NOT_PLAYING_STATE,
                     "현재 게임이 진행중인 상태가 아닙니다. state=" + state
             );
         }
-
-        playerHands.putByName(playerName, deck.pick(cardIndex));
+        gamer.validateAgainst(this.gamers);
+        playerHands.putByName(gamer.name(), deck.pick(cardIndex));
         return playerHands.isRoundFinished(this.round);
     }
 

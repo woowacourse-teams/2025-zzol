@@ -11,8 +11,11 @@ import coffeeshout.minigame.domain.PlayableFactory;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.user.application.service.UserProfileService;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,7 @@ public class GameSessionService {
     private final GameSessionRepository gameSessionRepository;
     private final PlayableFactory playableFactory;
     private final ApplicationEventPublisher eventPublisher;
+    private final UserProfileService userProfileService;
 
     public List<String> updateGames(MiniGameSelectEvent event) {
         log.info("JoinCode[{}] 게임 세션 업데이트 - 호스트: {}, 게임 목록: {}",
@@ -89,5 +93,16 @@ public class GameSessionService {
     public MiniGameResult getRanks(JoinCode joinCode, MiniGameType miniGameType) {
         final GameSession session = gameSessionRepository.getByJoinCode(joinCode);
         return session.findCompletedGame(miniGameType).getResult();
+    }
+
+    public Map<Long, String> resolveUserCodes(Collection<Gamer> gamers) {
+        final List<Long> userIds = gamers.stream()
+                .map(Gamer::userId)
+                .filter(Objects::nonNull)
+                .toList();
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        return userProfileService.findUserCodesByIds(userIds);
     }
 }

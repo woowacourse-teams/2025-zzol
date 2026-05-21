@@ -2,7 +2,7 @@ package coffeeshout.blindtimer.application;
 
 import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.minigame.domain.Gamer;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,10 +17,11 @@ public class BlindTimerGameProgressHandler {
     private final BlindTimerGameService blindTimerGameService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public void handleStop(String joinCode, String playerName) {
+    public void handleStop(String joinCode, String playerName, Long userId) {
         final BlindTimerGame game = blindTimerGameService.getBlindTimerGame(joinCode);
 
-        final boolean accepted = game.stop(new PlayerName(playerName), Instant.now());
+        final Gamer gamer = Gamer.of(playerName, userId);
+        final boolean accepted = game.stop(gamer, Instant.now());
         if (!accepted) {
             log.debug("STOP 무시 (이미 멈춤): joinCode={}, player={}", joinCode, playerName);
             return;

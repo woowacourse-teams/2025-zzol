@@ -23,6 +23,13 @@ public record PlayerKey(@NonNull String joinCode, @NonNull String playerName, Lo
         }
     }
 
+    public static PlayerKey requireFrom(Principal principal) {
+        if (principal == null) {
+            throw new BusinessException(PlayerKeyErrorCode.UNAUTHENTICATED, "인증되지 않은 연결입니다");
+        }
+        return parse(principal.getName());
+    }
+
     public static PlayerKey of(@NonNull String joinCode, @NonNull String playerName) {
         return new PlayerKey(joinCode, playerName, null);
     }

@@ -17,6 +17,7 @@ public class SelectCardCommandEventConsumer implements Consumer<SelectCardComman
         cardGameService.selectCard(
                 event.joinCode(),
                 event.playerName(),
+                event.userId(),
                 event.cardIndex()
         );
     }

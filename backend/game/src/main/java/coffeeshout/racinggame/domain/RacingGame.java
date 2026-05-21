@@ -31,14 +31,21 @@ public class RacingGame implements Playable {
     private Instant startTime;
     private Runners runners;
     private RacingGameState state;
+    private List<Gamer> gamers;
 
     @Setter
     private ScheduledFuture<?> autoMoveFuture;
 
     @Override
     public void setUp(List<Gamer> gamers) {
+        this.gamers = List.copyOf(gamers);
         this.runners = new Runners(gamers.stream().map(Gamer::name).toList());
         this.state = RacingGameState.DESCRIPTION;
+    }
+
+    @Override
+    public List<Gamer> getGamers() {
+        return gamers;
     }
 
     public void setUpStart() {
@@ -61,9 +68,10 @@ public class RacingGame implements Playable {
         }
     }
 
-    public void updateSpeed(PlayerName playerName, int tapCount, SpeedCalculator speedCalculator, Instant now) {
+    public void updateSpeed(Gamer gamer, int tapCount, SpeedCalculator speedCalculator, Instant now) {
         validatePlaying();
-        runners.updateSpeed(playerName, tapCount, speedCalculator, now);
+        gamer.validateAgainst(this.gamers);
+        runners.updateSpeed(gamer.name(), tapCount, speedCalculator, now);
     }
 
     private void validatePlaying() {
@@ -81,9 +89,11 @@ public class RacingGame implements Playable {
     }
 
     @Override
-    public Map<PlayerName, MiniGameScore> getScores() {
+    public Map<Gamer, MiniGameScore> getScores() {
+        final Map<PlayerName, Gamer> nameToGamer = gamers.stream()
+                .collect(Collectors.toMap(Gamer::name, g -> g));
         return runners.stream().collect(Collectors.toMap(
-                Runner::getPlayerName,
+                r -> nameToGamer.get(r.getPlayerName()),
                 this::convertScore
         ));
     }

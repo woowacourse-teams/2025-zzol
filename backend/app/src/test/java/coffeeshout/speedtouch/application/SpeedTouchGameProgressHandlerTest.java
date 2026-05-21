@@ -60,7 +60,7 @@ class SpeedTouchGameProgressHandlerTest extends ServiceTest {
         @Test
         void 올바른_번호를_터치하면_진행도_이벤트가_발행된다() {
             // when
-            progressHandler.handleTouch(joinCode, "꾹이", 1);
+            progressHandler.handleTouch(joinCode, "꾹이", null, 1);
 
             // then
             verify(eventPublisher, atLeastOnce()).publishEvent(any(SpeedTouchProgressEvent.class));
@@ -69,7 +69,7 @@ class SpeedTouchGameProgressHandlerTest extends ServiceTest {
         @Test
         void 잘못된_번호를_터치하면_진행도가_변하지_않는다() {
             // when
-            progressHandler.handleTouch(joinCode, "꾹이", 10);
+            progressHandler.handleTouch(joinCode, "꾹이", null, 10);
 
             // then
             final var player = game.findPlayer(new PlayerName("꾹이"));
@@ -86,7 +86,7 @@ class SpeedTouchGameProgressHandlerTest extends ServiceTest {
             for (var player : room.getPlayers()) {
                 final String name = player.getName().value();
                 for (int i = 1; i <= 25; i++) {
-                    progressHandler.handleTouch(joinCode, name, i);
+                    progressHandler.handleTouch(joinCode, name, null, i);
                 }
             }
 

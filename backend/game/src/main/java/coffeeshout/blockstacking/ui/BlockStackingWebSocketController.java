@@ -33,8 +33,9 @@ public class BlockStackingWebSocketController {
             @Payload @Valid BlockStackingProgressRequest request,
             Principal principal
     ) {
-        final String authenticatedPlayerName = PlayerKey.parse(principal.getName()).playerName();
-        final BlockStackingCommandEvent event = BlockStackingCommandEvent.of(joinCode, authenticatedPlayerName, request);
+        final PlayerKey playerKey = PlayerKey.requireFrom(principal);
+        final String authenticatedPlayerName = playerKey.playerName();
+        final BlockStackingCommandEvent event = BlockStackingCommandEvent.of(joinCode, authenticatedPlayerName, playerKey.userId(), request);
         streamPublisher.publish(GameStreamKey.BLOCKSTACKING_EVENTS, event);
 
         log.debug("블록 쌓기 진행 이벤트 발행: joinCode={}, playerName={}, floor={}, eventId = {}",
@@ -48,8 +49,9 @@ public class BlockStackingWebSocketController {
             @DestinationVariable String joinCode,
             Principal principal
     ) {
-        final String authenticatedPlayerName = PlayerKey.parse(principal.getName()).playerName();
-        final BlockStackingFailEvent event = BlockStackingFailEvent.of(joinCode, authenticatedPlayerName);
+        final PlayerKey playerKey = PlayerKey.requireFrom(principal);
+        final String authenticatedPlayerName = playerKey.playerName();
+        final BlockStackingFailEvent event = BlockStackingFailEvent.of(joinCode, authenticatedPlayerName, playerKey.userId());
         streamPublisher.publish(GameStreamKey.BLOCKSTACKING_EVENTS, event);
 
         log.debug("블록 쌓기 실패 이벤트 발행: joinCode={}, playerName={}, eventId={}",

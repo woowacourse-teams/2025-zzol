@@ -18,7 +18,7 @@ public class LadderDrawCommandEventConsumer implements Consumer<LadderDrawComman
     @Override
     public void accept(LadderDrawCommandEvent event) {
         try {
-            ladderService.drawLine(event.joinCode(), event.playerName(), event.segmentIndex());
+            ladderService.drawLine(event.joinCode(), event.playerName(), event.userId(), event.segmentIndex());
         } catch (BusinessException e) {
             // LadderCommandService에서 이미 warn 로그를 남기므로 Consumer는 debug만 기록
             log.debug("사다리 선 그리기 검증 실패 — 무시: joinCode={}, playerName={}, eventId={}",

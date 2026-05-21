@@ -4,7 +4,9 @@ import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayersFixture;
+import coffeeshout.fixture.GamerFixture;
 import coffeeshout.minigame.domain.Gamer;
+import coffeeshout.minigame.domain.GamerErrorCode;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
@@ -59,14 +61,14 @@ class BlockStackingGameTest {
             game.prepare();
             game.startPlay();
 
-            final Map<PlayerName, MiniGameScore> scores = game.getScores();
+            final Map<Gamer, MiniGameScore> scores = game.getScores();
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(scores).hasSize(4);
-                softly.assertThat(scores.get(꾹이).getValue()).isZero();
-                softly.assertThat(scores.get(루키).getValue()).isZero();
-                softly.assertThat(scores.get(엠제이).getValue()).isZero();
-                softly.assertThat(scores.get(한스).getValue()).isZero();
+                softly.assertThat(scores.get(GamerFixture.게스트꾹이()).getValue()).isZero();
+                softly.assertThat(scores.get(GamerFixture.게스트루키()).getValue()).isZero();
+                softly.assertThat(scores.get(GamerFixture.게스트엠제이()).getValue()).isZero();
+                softly.assertThat(scores.get(GamerFixture.게스트한스()).getValue()).isZero();
             });
         }
 
@@ -115,21 +117,21 @@ class BlockStackingGameTest {
 
         @Test
         void 유효한_탭_이벤트_기록_시_true를_반환하고_floor가_증가한다() {
-            final boolean recorded = game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            final boolean recorded = game.recordProgress(Gamer.guest(꾹이),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isTrue();
-                softly.assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(1L);
+                softly.assertThat(game.getScores().get(GamerFixture.게스트꾹이()).getValue()).isEqualTo(1L);
             });
         }
 
         @Test
         void 여러_층을_순서대로_쌓을_수_있다() {
-            game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
-            game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
-            game.recordProgress(꾹이, 3, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),3, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
 
-            assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(3L);
+            assertThat(game.getScores().get(GamerFixture.게스트꾹이()).getValue()).isEqualTo(3L);
         }
 
         @Test
@@ -137,7 +139,7 @@ class BlockStackingGameTest {
             game.finish();
 
             assertCoffeeShoutException(
-                    () -> game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH),
+                    () -> game.recordProgress(Gamer.guest(꾹이),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH),
                     BlockStackingGameErrorCode.NOT_PLAYING_STATE
             );
         }
@@ -145,11 +147,11 @@ class BlockStackingGameTest {
         @Test
         void 비연속적인_floor_수신_시_false를_반환하고_floor가_갱신되지_않는다() {
             // floor=1을 건너뛰고 floor=2 전송
-            final boolean recorded = game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            final boolean recorded = game.recordProgress(Gamer.guest(꾹이),2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isFalse();
-                softly.assertThat(game.getScores().get(꾹이).getValue()).isZero();
+                softly.assertThat(game.getScores().get(GamerFixture.게스트꾹이()).getValue()).isZero();
             });
         }
 
@@ -157,45 +159,45 @@ class BlockStackingGameTest {
         void overlap이_0인_경우_false를_반환하고_floor가_갱신되지_않는다() {
             // movingBlock이 stackTop과 전혀 겹치지 않는 좌표
             // movingBlockX=300, stackTopX=85, stackTopWidth=150 → stackTop right=235, movingBlock left=300 → overlap<0
-            final boolean recorded = game.recordProgress(꾹이, 1, 300.0, STACK_TOP_X, STACK_TOP_WIDTH);
+            final boolean recorded = game.recordProgress(Gamer.guest(꾹이),1, 300.0, STACK_TOP_X, STACK_TOP_WIDTH);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isFalse();
-                softly.assertThat(game.getScores().get(꾹이).getValue()).isZero();
+                softly.assertThat(game.getScores().get(GamerFixture.게스트꾹이()).getValue()).isZero();
             });
         }
 
         @Test
         void overlap이_음수인_경우_false를_반환한다() {
             // movingBlock이 stackTop 좌측으로 완전히 벗어남
-            final boolean recorded = game.recordProgress(꾹이, 1, -100.0, STACK_TOP_X, STACK_TOP_WIDTH);
+            final boolean recorded = game.recordProgress(Gamer.guest(꾹이),1, -100.0, STACK_TOP_X, STACK_TOP_WIDTH);
 
             assertThat(recorded).isFalse();
         }
 
         @Test
         void 이미_실패한_플레이어의_진행_이벤트_수신_시_false를_반환하고_floor가_갱신되지_않는다() {
-            game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
-            game.recordFailure(꾹이);
+            game.recordProgress(Gamer.guest(꾹이),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordFailure(Gamer.guest(꾹이));
 
-            final boolean recorded = game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            final boolean recorded = game.recordProgress(Gamer.guest(꾹이),2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isFalse();
-                softly.assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(1L);
+                softly.assertThat(game.getScores().get(GamerFixture.게스트꾹이()).getValue()).isEqualTo(1L);
             });
         }
 
         @Test
         void 각_플레이어는_독립적으로_floor를_쌓는다() {
-            game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
-            game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
-            game.recordProgress(루키, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(루키),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(2L);
-                softly.assertThat(game.getScores().get(루키).getValue()).isEqualTo(1L);
-                softly.assertThat(game.getScores().get(엠제이).getValue()).isZero();
+                softly.assertThat(game.getScores().get(GamerFixture.게스트꾹이()).getValue()).isEqualTo(2L);
+                softly.assertThat(game.getScores().get(GamerFixture.게스트루키()).getValue()).isEqualTo(1L);
+                softly.assertThat(game.getScores().get(GamerFixture.게스트엠제이()).getValue()).isZero();
             });
         }
     }
@@ -211,9 +213,9 @@ class BlockStackingGameTest {
 
         @Test
         void 층수_내림차순으로_랭킹을_반환한다() {
-            game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
-            game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
-            game.recordProgress(루키, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(루키),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
 
             final List<BlockStackingPlayerRankInfo> ranking = game.getRanking();
 
@@ -264,7 +266,7 @@ class BlockStackingGameTest {
 
         @Test
         void 플레이어_실패_기록_시_해당_플레이어의_failed가_true가_된다() {
-            final boolean recorded = game.recordFailure(꾹이);
+            final boolean recorded = game.recordFailure(Gamer.guest(꾹이));
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isTrue();
@@ -274,18 +276,18 @@ class BlockStackingGameTest {
 
         @Test
         void 실패_기록_시_쌓은_층수는_유지된다() {
-            game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
-            game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
 
-            game.recordFailure(꾹이);
+            game.recordFailure(Gamer.guest(꾹이));
 
-            assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(2L);
+            assertThat(game.getScores().get(GamerFixture.게스트꾹이()).getValue()).isEqualTo(2L);
         }
 
         @Test
         void 이미_실패한_플레이어에게_중복_실패_기록_시_false를_반환하고_상태가_유지된다() {
-            game.recordFailure(꾹이);
-            final boolean second = game.recordFailure(꾹이);
+            game.recordFailure(Gamer.guest(꾹이));
+            final boolean second = game.recordFailure(Gamer.guest(꾹이));
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(second).isFalse();
@@ -298,7 +300,7 @@ class BlockStackingGameTest {
             game.finish();
 
             assertCoffeeShoutException(
-                    () -> game.recordFailure(꾹이),
+                    () -> game.recordFailure(Gamer.guest(꾹이)),
                     BlockStackingGameErrorCode.NOT_PLAYING_STATE
             );
         }
@@ -308,8 +310,8 @@ class BlockStackingGameTest {
             final PlayerName 미등록플레이어 = new PlayerName("유령");
 
             assertCoffeeShoutException(
-                    () -> game.recordFailure(미등록플레이어),
-                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND
+                    () -> game.recordFailure(Gamer.guest(미등록플레이어)),
+                    GamerErrorCode.UNAUTHORIZED_GAMER
             );
         }
     }
@@ -330,18 +332,18 @@ class BlockStackingGameTest {
 
         @Test
         void 일부만_실패한_경우_false를_반환한다() {
-            game.recordFailure(꾹이);
-            game.recordFailure(루키);
+            game.recordFailure(Gamer.guest(꾹이));
+            game.recordFailure(Gamer.guest(루키));
 
             assertThat(game.isAllPlayersFailed()).isFalse();
         }
 
         @Test
         void 모든_플레이어가_실패하면_true를_반환한다() {
-            game.recordFailure(꾹이);
-            game.recordFailure(루키);
-            game.recordFailure(엠제이);
-            game.recordFailure(한스);
+            game.recordFailure(Gamer.guest(꾹이));
+            game.recordFailure(Gamer.guest(루키));
+            game.recordFailure(Gamer.guest(엠제이));
+            game.recordFailure(Gamer.guest(한스));
 
             assertThat(game.isAllPlayersFailed()).isTrue();
         }
@@ -355,20 +357,20 @@ class BlockStackingGameTest {
             game.prepare();
             game.startPlay();
 
-            game.recordProgress(꾹이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
-            game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
-            game.recordProgress(루키, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(꾹이),2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(루키),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
         }
 
         @Test
         void getScores_가_각_플레이어의_현재_층수를_반환한다() {
-            final Map<PlayerName, MiniGameScore> scores = game.getScores();
+            final Map<Gamer, MiniGameScore> scores = game.getScores();
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(scores.get(꾹이).getValue()).isEqualTo(2L);
-                softly.assertThat(scores.get(루키).getValue()).isEqualTo(1L);
-                softly.assertThat(scores.get(엠제이).getValue()).isZero();
-                softly.assertThat(scores.get(한스).getValue()).isZero();
+                softly.assertThat(scores.get(GamerFixture.게스트꾹이()).getValue()).isEqualTo(2L);
+                softly.assertThat(scores.get(GamerFixture.게스트루키()).getValue()).isEqualTo(1L);
+                softly.assertThat(scores.get(GamerFixture.게스트엠제이()).getValue()).isZero();
+                softly.assertThat(scores.get(GamerFixture.게스트한스()).getValue()).isZero();
             });
         }
 
@@ -377,21 +379,21 @@ class BlockStackingGameTest {
             final var result = game.getResult();
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(result.getPlayerRank(꾹이)).isEqualTo(1);
-                softly.assertThat(result.getPlayerRank(루키)).isEqualTo(2);
+                softly.assertThat(result.getPlayerRank(GamerFixture.게스트꾹이())).isEqualTo(1);
+                softly.assertThat(result.getPlayerRank(GamerFixture.게스트루키())).isEqualTo(2);
             });
         }
 
         @Test
         void 층수가_같은_플레이어는_동일_순위를_받는다() {
-            game.recordProgress(엠제이, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+            game.recordProgress(Gamer.guest(엠제이),1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
             // 루키=1층, 엠제이=1층 → 공동 2위
 
             final var result = game.getResult();
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(result.getPlayerRank(루키)).isEqualTo(2);
-                softly.assertThat(result.getPlayerRank(엠제이)).isEqualTo(2);
+                softly.assertThat(result.getPlayerRank(GamerFixture.게스트루키())).isEqualTo(2);
+                softly.assertThat(result.getPlayerRank(GamerFixture.게스트엠제이())).isEqualTo(2);
             });
         }
     }

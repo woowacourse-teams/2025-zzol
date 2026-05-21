@@ -20,6 +20,7 @@ import lombok.Setter;
 public class SpeedTouchGame implements Playable {
 
     private SpeedTouchPlayers players;
+    private List<Gamer> gamers;
     private final AtomicReference<SpeedTouchGameState> state =
             new AtomicReference<>(SpeedTouchGameState.DESCRIPTION);
     private volatile Instant startTime;
@@ -29,7 +30,13 @@ public class SpeedTouchGame implements Playable {
 
     @Override
     public void setUp(List<Gamer> gamers) {
+        this.gamers = List.copyOf(gamers);
         this.players = new SpeedTouchPlayers(gamers.stream().map(Gamer::name).toList());
+    }
+
+    @Override
+    public List<Gamer> getGamers() {
+        return gamers;
     }
 
     @Override
@@ -38,10 +45,12 @@ public class SpeedTouchGame implements Playable {
     }
 
     @Override
-    public Map<PlayerName, MiniGameScore> getScores() {
+    public Map<Gamer, MiniGameScore> getScores() {
+        final Map<PlayerName, Gamer> nameToGamer = gamers.stream()
+                .collect(Collectors.toMap(Gamer::name, g -> g));
         return players.stream()
                 .collect(Collectors.toMap(
-                        SpeedTouchPlayer::getPlayerName,
+                        p -> nameToGamer.get(p.getPlayerName()),
                         this::calculateScore
                 ));
     }
@@ -51,9 +60,10 @@ public class SpeedTouchGame implements Playable {
         return MiniGameType.SPEED_TOUCH;
     }
 
-    public boolean touch(PlayerName playerName, int number, Instant now) {
+    public boolean touch(Gamer gamer, int number, Instant now) {
         validatePlaying();
-        final SpeedTouchPlayer player = players.findByName(playerName);
+        gamer.validateAgainst(this.gamers);
+        final SpeedTouchPlayer player = players.findByName(gamer.name());
         return player.touch(number, now);
     }
 

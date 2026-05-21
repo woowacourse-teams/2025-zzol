@@ -11,17 +11,19 @@ public record TapCommandEvent(
         String eventId,
         String joinCode,
         String playerName,
+        Long userId,
         int tapCount,
         Instant timestamp,
         TraceInfo traceInfo
 ) implements BaseEvent, Traceable {
 
-    public static TapCommandEvent create(String joinCode, String playerName, int tapCount) {
+    public static TapCommandEvent create(String joinCode, String playerName, Long userId, int tapCount) {
         final String eventId = UUID.randomUUID().toString();
         return new TapCommandEvent(
                 eventId,
                 joinCode,
                 playerName,
+                userId,
                 tapCount,
                 Instant.now(),
                 TraceInfoExtractor.extract()

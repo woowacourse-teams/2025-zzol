@@ -49,7 +49,7 @@ class CardSelectStreamProducerTest extends IntegrationTestSupport {
             String playerName = "꾹이";
             Integer cardIndex = 0;
             SelectCardCommandEvent event = new SelectCardCommandEvent(
-                    joinCode.getValue(), playerName, cardIndex);
+                    joinCode.getValue(), playerName, null, cardIndex);
 
             // when
             streamPublisher.publish(GameStreamKey.CARDGAME_SELECT_BROADCAST, event);
@@ -71,7 +71,7 @@ class CardSelectStreamProducerTest extends IntegrationTestSupport {
             // when
             for (int i = 0; i < playerNames.length; i++) {
                 SelectCardCommandEvent event = new SelectCardCommandEvent(
-                        joinCode.getValue(), playerNames[i], cardIndexes[i]);
+                        joinCode.getValue(), playerNames[i], null, cardIndexes[i]);
                 streamPublisher.publish(GameStreamKey.CARDGAME_SELECT_BROADCAST, event);
             }
 

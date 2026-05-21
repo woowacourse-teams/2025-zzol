@@ -60,7 +60,7 @@ class BlindTimerGameProgressHandlerTest extends ServiceTest {
         @Test
         void STOP하면_진행도_이벤트가_발행된다() {
             // when
-            progressHandler.handleStop(joinCode, "꾹이");
+            progressHandler.handleStop(joinCode, "꾹이", null);
 
             // then
             verify(eventPublisher, atLeastOnce()).publishEvent(any(BlindTimerProgressEvent.class));
@@ -69,10 +69,10 @@ class BlindTimerGameProgressHandlerTest extends ServiceTest {
         @Test
         void 이미_STOP한_플레이어가_다시_STOP하면_무시된다() {
             // given
-            progressHandler.handleStop(joinCode, "꾹이");
+            progressHandler.handleStop(joinCode, "꾹이", null);
 
             // when
-            progressHandler.handleStop(joinCode, "꾹이");
+            progressHandler.handleStop(joinCode, "꾹이", null);
 
             // then
             assertThat(game.findPlayer(new PlayerName("꾹이")).isStopped()).isTrue();
@@ -86,7 +86,7 @@ class BlindTimerGameProgressHandlerTest extends ServiceTest {
         void 모든_플레이어가_STOP하면_게임이_종료된다() {
             // given
             for (var player : room.getPlayers()) {
-                progressHandler.handleStop(joinCode, player.getName().value());
+                progressHandler.handleStop(joinCode, player.getName().value(), null);
             }
 
             // then

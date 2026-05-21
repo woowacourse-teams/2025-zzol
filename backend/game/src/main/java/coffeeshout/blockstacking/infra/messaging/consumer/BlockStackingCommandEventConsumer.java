@@ -18,7 +18,7 @@ public class BlockStackingCommandEventConsumer implements Consumer<BlockStacking
     @Override
     public void accept(BlockStackingCommandEvent event) {
         try {
-            blockStackingService.recordProgress(event.joinCode(), event.playerName(), event.floor(),
+            blockStackingService.recordProgress(event.joinCode(), event.playerName(), event.userId(), event.floor(),
                     event.movingBlockX(), event.stackTopX(), event.stackTopWidth());
         } catch (BusinessException e) {
             log.warn(

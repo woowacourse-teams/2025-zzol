@@ -31,7 +31,7 @@ public class MiniGameWebSocketController {
             Principal principal
     ) {
         final MiniGameCommand miniGameCommand = command.toCommand(objectMapper);
-        final PlayerKey playerKey = PlayerKey.parse(principal.getName());
+        final PlayerKey playerKey = PlayerKey.requireFrom(principal);
         miniGameCommandDispatcher.dispatch(joinCode, miniGameCommand, playerKey);
     }
 }

@@ -6,7 +6,7 @@ import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.room.domain.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,7 @@ public class BlockStackingService implements MiniGameService {
     }
 
     public void recordProgress(
-            String joinCode, String playerName, int floor,
+            String joinCode, String playerName, Long userId, int floor,
             double movingBlockX, double stackTopX, double stackTopWidth
     ) {
         log.debug("블록 쌓기 진행 처리 시작: joinCode={}, playerName={}, floor={}",
@@ -40,19 +40,21 @@ public class BlockStackingService implements MiniGameService {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final BlockStackingGame game = getGame(joinCode);
 
-        final boolean updated = game.recordProgress(new PlayerName(playerName), floor, movingBlockX, stackTopX, stackTopWidth);
+        final Gamer gamer = Gamer.of(playerName, userId);
+        final boolean updated = game.recordProgress(gamer, floor, movingBlockX, stackTopX, stackTopWidth);
         if (updated) {
             notifier.notifyProgressUpdated(game, room);
         }
     }
 
-    public void recordFailure(String joinCode, String playerName) {
+    public void recordFailure(String joinCode, String playerName, Long userId) {
         log.debug("블록 쌓기 실패 처리 시작: joinCode={}, playerName={}", joinCode, playerName);
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final BlockStackingGame game = getGame(joinCode);
 
-        final boolean recorded = game.recordFailure(new PlayerName(playerName));
+        final Gamer gamer = Gamer.of(playerName, userId);
+        final boolean recorded = game.recordFailure(gamer);
         if (recorded) {
             flowOrchestrator.triggerEarlyFinishIfAllFailed(joinCode, game);
         }

@@ -26,6 +26,7 @@ public class BlindTimerGame implements Playable {
     private static final Duration TARGET_MAX = Duration.ofMillis(19990);
 
     private BlindTimerPlayers players;
+    private List<Gamer> gamers;
     @Getter(AccessLevel.NONE)
     private final AtomicReference<BlindTimerGameState> state =
             new AtomicReference<>(BlindTimerGameState.DESCRIPTION);
@@ -47,7 +48,13 @@ public class BlindTimerGame implements Playable {
 
     @Override
     public void setUp(List<Gamer> gamers) {
+        this.gamers = List.copyOf(gamers);
         this.players = new BlindTimerPlayers(gamers.stream().map(Gamer::name).toList());
+    }
+
+    @Override
+    public List<Gamer> getGamers() {
+        return gamers;
     }
 
     @Override
@@ -56,10 +63,12 @@ public class BlindTimerGame implements Playable {
     }
 
     @Override
-    public Map<PlayerName, MiniGameScore> getScores() {
+    public Map<Gamer, MiniGameScore> getScores() {
+        final Map<PlayerName, Gamer> nameToGamer = gamers.stream()
+                .collect(Collectors.toMap(Gamer::name, g -> g));
         return players.stream()
                 .collect(Collectors.toMap(
-                        BlindTimerPlayer::getPlayerName,
+                        p -> nameToGamer.get(p.getPlayerName()),
                         this::calculateScore
                 ));
     }
@@ -69,9 +78,10 @@ public class BlindTimerGame implements Playable {
         return MiniGameType.BLIND_TIMER;
     }
 
-    public boolean stop(PlayerName playerName, Instant now) {
+    public boolean stop(Gamer gamer, Instant now) {
         validatePlaying();
-        final BlindTimerPlayer player = players.findByName(playerName);
+        gamer.validateAgainst(this.gamers);
+        final BlindTimerPlayer player = players.findByName(gamer.name());
         final Duration elapsed = Duration.between(startTime, now);
         return player.stop(elapsed);
     }

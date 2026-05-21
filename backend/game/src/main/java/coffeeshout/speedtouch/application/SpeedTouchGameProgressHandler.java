@@ -1,6 +1,6 @@
 package coffeeshout.speedtouch.application;
 
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import coffeeshout.speedtouch.domain.event.SpeedTouchProgressEvent;
 import java.time.Instant;
@@ -17,10 +17,11 @@ public class SpeedTouchGameProgressHandler {
     private final SpeedTouchGameService speedTouchGameService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public void handleTouch(String joinCode, String playerName, int touchedNumber) {
+    public void handleTouch(String joinCode, String playerName, Long userId, int touchedNumber) {
         final SpeedTouchGame game = speedTouchGameService.getSpeedTouchGame(joinCode);
 
-        final boolean accepted = game.touch(new PlayerName(playerName), touchedNumber, Instant.now());
+        final Gamer gamer = Gamer.of(playerName, userId);
+        final boolean accepted = game.touch(gamer, touchedNumber, Instant.now());
         if (!accepted) {
             log.debug("터치 무시: joinCode={}, player={}, number={}", joinCode, playerName, touchedNumber);
             return;

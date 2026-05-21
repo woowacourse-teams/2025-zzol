@@ -18,7 +18,7 @@ public class StopCommandEventConsumer implements Consumer<StopCommandEvent> {
     @Override
     public void accept(StopCommandEvent event) {
         try {
-            progressHandler.handleStop(event.joinCode(), event.playerName());
+            progressHandler.handleStop(event.joinCode(), event.playerName(), event.userId());
         } catch (BusinessException e) {
             log.warn("STOP 이벤트 처리 중 비즈니스 예외: eventId={}, joinCode={}, errorCode={}",
                     event.eventId(), event.joinCode(), e.getErrorCode(), e);

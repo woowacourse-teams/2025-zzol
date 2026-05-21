@@ -21,6 +21,7 @@ public class TouchProgressEventConsumer implements Consumer<TouchProgressCommand
             progressHandler.handleTouch(
                     event.joinCode(),
                     event.playerName(),
+                    event.userId(),
                     event.touchedNumber()
             );
         } catch (BusinessException e) {

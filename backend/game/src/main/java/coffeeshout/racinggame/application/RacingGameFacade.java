@@ -15,10 +15,10 @@ public class RacingGameFacade {
 
     private final StreamPublisher streamPublisher;
 
-    public void tap(String joinCode, String hostName, int tapCount) {
-        final BaseEvent event = TapCommandEvent.create(joinCode, hostName, tapCount);
+    public void tap(String joinCode, String playerName, Long userId, int tapCount) {
+        final BaseEvent event = TapCommandEvent.create(joinCode, playerName, userId, tapCount);
         streamPublisher.publish(GameStreamKey.RACINGGAME_EVENTS, event);
         log.debug("탭 이벤트 발행: joinCode={}, playerName={}, tapCount={}, eventId={}",
-                joinCode, hostName, tapCount, event.eventId());
+                joinCode, playerName, tapCount, event.eventId());
     }
 }

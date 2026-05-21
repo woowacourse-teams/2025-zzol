@@ -64,22 +64,22 @@ class LadderServiceTest extends ServiceTest {
 
         @Test
         void 유효한_선_긋기_요청은_notifier를_호출한다() {
-            service.drawLine(joinCode.getValue(), HOST_NAME, 0);
+            service.drawLine(joinCode.getValue(), HOST_NAME, null, 0);
 
             verify(notifier, times(1)).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
         void 각_플레이어가_독립적으로_선을_그을_수_있다() {
-            service.drawLine(joinCode.getValue(), HOST_NAME, 0);
-            service.drawLine(joinCode.getValue(), "루키", 1);
+            service.drawLine(joinCode.getValue(), HOST_NAME, null, 0);
+            service.drawLine(joinCode.getValue(), "루키", null, 1);
 
             verify(notifier, times(2)).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
         void 선_긋기_후_lines_size가_증가한다() {
-            service.drawLine(joinCode.getValue(), HOST_NAME, 0);
+            service.drawLine(joinCode.getValue(), HOST_NAME, null, 0);
 
             assertThat(game.getLines().size()).isEqualTo(1);
         }
@@ -92,23 +92,23 @@ class LadderServiceTest extends ServiceTest {
         void DRAWING_상태가_아니면_notifier를_호출하지_않는다() {
             game.changeToResult();
 
-            service.drawLine(joinCode.getValue(), HOST_NAME, 0);
+            service.drawLine(joinCode.getValue(), HOST_NAME, null, 0);
 
             verify(notifier, never()).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
         void 이미_선을_그은_플레이어_재요청은_notifier를_호출하지_않는다() {
-            service.drawLine(joinCode.getValue(), HOST_NAME, 0);
+            service.drawLine(joinCode.getValue(), HOST_NAME, null, 0);
 
-            service.drawLine(joinCode.getValue(), HOST_NAME, 1);
+            service.drawLine(joinCode.getValue(), HOST_NAME, null, 1);
 
             verify(notifier, times(1)).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
         void 미참여자_요청은_notifier를_호출하지_않는다() {
-            service.drawLine(joinCode.getValue(), "없는플레이어", 0);
+            service.drawLine(joinCode.getValue(), "없는플레이어", null, 0);
 
             verify(notifier, never()).notifyLineDrawn(any(), any(), any());
         }
@@ -116,7 +116,7 @@ class LadderServiceTest extends ServiceTest {
         @Test
         void 유효하지_않은_segmentIndex는_notifier를_호출하지_않는다() {
             // 기둥 4개(꾹이+루키+엠제이+한스) → 유효한 구간: 0,1,2 → 3은 유효하지 않음
-            service.drawLine(joinCode.getValue(), HOST_NAME, 3);
+            service.drawLine(joinCode.getValue(), HOST_NAME, null, 3);
 
             verify(notifier, never()).notifyLineDrawn(any(), any(), any());
         }

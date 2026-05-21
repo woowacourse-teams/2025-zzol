@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import coffeeshout.minigame.ui.command.MiniGameCommand;
 import coffeeshout.minigame.ui.command.MiniGameCommandDispatcher;
 import coffeeshout.minigame.ui.command.MiniGameCommandHandler;
+import coffeeshout.websocket.PlayerKey;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -25,10 +26,11 @@ class MiniGameCommandDispatcherTest {
         MiniGameCommandDispatcher dispatcher = new MiniGameCommandDispatcher(List.of(mockHandler));
 
         // when
-        dispatcher.dispatch(joinCode, command);
+        PlayerKey playerKey = new PlayerKey(joinCode, "테스터", null);
+        dispatcher.dispatch(joinCode, command, playerKey);
 
         // then
-        verify(mockHandler).handle(joinCode, command);
+        verify(mockHandler).handle(joinCode, command, playerKey);
     }
 
 
@@ -41,7 +43,7 @@ class MiniGameCommandDispatcherTest {
         MiniGameCommandDispatcher dispatcher = new MiniGameCommandDispatcher(List.of());
 
         // when & then
-        assertThatThrownBy(() -> dispatcher.dispatch(joinCode, invalidCommand))
+        assertThatThrownBy(() -> dispatcher.dispatch(joinCode, invalidCommand, new PlayerKey(joinCode, "테스터", null)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("해당하는 요청에 대한 게임이 존재하지 않습니다.");
     }

@@ -4,7 +4,9 @@ import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.fixture.GamerFixture;
 import coffeeshout.minigame.domain.Gamer;
+import coffeeshout.minigame.domain.GamerErrorCode;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
@@ -129,7 +131,7 @@ class LadderGameTest {
         void drawLine_호출_시_LadderLine을_반환한다() {
             final int validSegment = 0;
 
-            final LadderLine line = game.drawLine(꾹이.getName(), validSegment);
+            final LadderLine line = game.drawLine(Gamer.guest(꾹이.getName()),validSegment);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(line).isNotNull();
@@ -141,17 +143,17 @@ class LadderGameTest {
         @Test
         void 미등록_플레이어_선_긋기_시_예외를_던진다() {
             assertCoffeeShoutException(
-                    () -> game.drawLine(new PlayerName("미등록"), 0),
-                    LadderGameErrorCode.PLAYER_NOT_FOUND
+                    () -> game.drawLine(Gamer.guest(new PlayerName("미등록")), 0),
+                    GamerErrorCode.UNAUTHORIZED_GAMER
             );
         }
 
         @Test
         void 이미_선을_그은_플레이어가_다시_그으면_예외를_던진다() {
-            game.drawLine(꾹이.getName(), 0);
+            game.drawLine(Gamer.guest(꾹이.getName()),0);
 
             assertCoffeeShoutException(
-                    () -> game.drawLine(꾹이.getName(), 0),
+                    () -> game.drawLine(Gamer.guest(꾹이.getName()),0),
                     LadderGameErrorCode.ALREADY_DREW
             );
         }
@@ -173,7 +175,7 @@ class LadderGameTest {
 
         @Test
         void 선을_그은_플레이어는_true를_반환한다() {
-            game.drawLine(꾹이.getName(), 0);
+            game.drawLine(Gamer.guest(꾹이.getName()),0);
 
             assertThat(game.isAlreadyDrew(꾹이.getName())).isTrue();
         }
@@ -243,9 +245,9 @@ class LadderGameTest {
 
             // 모든 플레이어에게 게임 순위가 부여됨
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(result.getPlayerRank(꾹이.getName())).isNotNull();
-                softly.assertThat(result.getPlayerRank(철수.getName())).isNotNull();
-                softly.assertThat(result.getPlayerRank(영희.getName())).isNotNull();
+                softly.assertThat(result.getPlayerRank(GamerFixture.게스트꾹이())).isNotNull();
+                softly.assertThat(result.getPlayerRank(GamerFixture.게스트루키())).isNotNull();
+                softly.assertThat(result.getPlayerRank(GamerFixture.게스트엠제이())).isNotNull();
             });
         }
 
@@ -265,7 +267,7 @@ class LadderGameTest {
                     .findFirst()
                     .orElseThrow();
 
-            assertThat(result.getPlayerRank(ladderWinner)).isEqualTo(1);
+            assertThat(result.getPlayerRank(Gamer.guest(ladderWinner))).isEqualTo(1);
         }
     }
 }

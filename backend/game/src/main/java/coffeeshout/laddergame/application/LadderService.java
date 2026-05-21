@@ -2,6 +2,7 @@ package coffeeshout.laddergame.application;
 
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.service.LadderCommandService;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -30,13 +31,14 @@ public class LadderService implements MiniGameService {
         flowOrchestrator.startFlow(game, room);
     }
 
-    public void drawLine(String joinCode, String playerName, int segmentIndex) {
+    public void drawLine(String joinCode, String playerName, Long userId, int segmentIndex) {
         log.debug("사다리게임 선 그리기 처리 시작: joinCode={}, playerName={}, segmentIndex={}",
                 joinCode, playerName, segmentIndex);
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final LadderGame game = getGame(joinCode);
-        commandService.drawLine(game, playerName, segmentIndex)
+        final Gamer gamer = Gamer.of(playerName, userId);
+        commandService.drawLine(game, gamer, segmentIndex)
                 .ifPresent(line -> notifier.notifyLineDrawn(line, room.getJoinCode(), room.toColorIndexMap()));
     }
 

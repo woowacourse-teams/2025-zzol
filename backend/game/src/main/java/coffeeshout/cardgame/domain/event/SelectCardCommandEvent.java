@@ -13,16 +13,18 @@ public record SelectCardCommandEvent(
         Instant timestamp,
         String joinCode,
         String playerName,
+        Long userId,
         Integer cardIndex
 ) implements BaseEvent, Traceable {
 
-    public SelectCardCommandEvent(String joinCode, String playerName, Integer cardIndex) {
+    public SelectCardCommandEvent(String joinCode, String playerName, Long userId, Integer cardIndex) {
         this(
                 UUID.randomUUID().toString(),
                 TraceInfoExtractor.extract(),
                 Instant.now(),
                 joinCode,
                 playerName,
+                userId,
                 cardIndex
         );
     }

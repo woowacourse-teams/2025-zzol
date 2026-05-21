@@ -3,6 +3,7 @@ package coffeeshout.racinggame.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import coffeeshout.fixture.GamerFixture;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.Gamer;
@@ -36,8 +37,8 @@ class RacingGameTest {
         racingGame.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
-        racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(Gamer.guest(players.getFirst()),10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(Gamer.guest(players.get(1)),10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
 
         // when
         racingGame.moveAll();
@@ -53,8 +54,8 @@ class RacingGameTest {
         racingGame.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
-        racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
+        racingGame.updateSpeed(Gamer.guest(players.getFirst()),10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
+        racingGame.updateSpeed(Gamer.guest(players.get(1)),10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
 
         // when
         for (int i = 0; i < 101; ++i) {
@@ -71,8 +72,8 @@ class RacingGameTest {
         racingGame.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
-        racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(Gamer.guest(players.getFirst()),10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(Gamer.guest(players.get(1)),10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
 
         // then
         assertThat(racingGame.getRunners().getSpeeds().values()).allMatch(value -> value == 10);
@@ -85,7 +86,7 @@ class RacingGameTest {
         racingGame.setUp(players.stream().map(name -> new Gamer(name, null)).toList());
 
         // when && then
-        assertThatThrownBy(() -> racingGame.updateSpeed(players.getFirst(), 10, speedCalculator, Instant.now()))
+        assertThatThrownBy(() -> racingGame.updateSpeed(Gamer.guest(players.getFirst()),10, speedCalculator, Instant.now()))
                 .isInstanceOf(BusinessException.class);
     }
 
@@ -98,15 +99,15 @@ class RacingGameTest {
         racingGame.setAutoMoveFuture(null);
 
         for (int i = 0; i < 100; i++) {
-            racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
-            racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+            racingGame.updateSpeed(Gamer.guest(players.get(1)),10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
+            racingGame.updateSpeed(Gamer.guest(players.getFirst()),10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
             racingGame.moveAll();
         }
 
         Thread.sleep(2);
 
         for (int i = 0; i < 200; i++) {
-            racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+            racingGame.updateSpeed(Gamer.guest(players.getFirst()),10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
             racingGame.moveAll();
         }
 
@@ -115,7 +116,7 @@ class RacingGameTest {
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getRank().get(players.getFirst())).isEqualTo(2);
-        assertThat(result.getRank().get(players.get(1))).isEqualTo(1);
+        assertThat(result.getRank().get(Gamer.guest(players.getFirst()))).isEqualTo(2);
+        assertThat(result.getRank().get(Gamer.guest(players.get(1)))).isEqualTo(1);
     }
 }

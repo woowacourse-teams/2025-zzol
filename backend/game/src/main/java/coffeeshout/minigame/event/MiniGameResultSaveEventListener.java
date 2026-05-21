@@ -12,7 +12,9 @@ import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.Gamer;
+import coffeeshout.minigame.domain.GamerErrorCode;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -132,7 +134,8 @@ public class MiniGameResultSaveEventListener {
                 .filter(g -> g.name().equals(player.getName())
                         && Objects.equals(g.userId(), player.getUserId()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new BusinessException(
+                        GamerErrorCode.GAMER_NOT_FOUND,
                         "Gamer를 찾을 수 없습니다: " + player.getName().value()));
     }
 }

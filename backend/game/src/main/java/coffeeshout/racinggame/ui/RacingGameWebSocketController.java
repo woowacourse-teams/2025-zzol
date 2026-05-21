@@ -2,8 +2,10 @@ package coffeeshout.racinggame.ui;
 
 import coffeeshout.racinggame.application.RacingGameFacade;
 import coffeeshout.racinggame.ui.request.TapCommand;
+import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.docs.WsReceive;
 import jakarta.validation.Valid;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -23,7 +25,12 @@ public class RacingGameWebSocketController {
             respondsOnTopics = {"/room/{joinCode}/racing-game/state"},
             description = "레이싱 게임 탭"
     )
-    public void tap(@DestinationVariable String joinCode, @Payload @Valid TapCommand command) {
-        racingGameFacade.tap(joinCode, command.playerName(), command.tapCount());
+    public void tap(
+            @DestinationVariable String joinCode,
+            @Payload @Valid TapCommand command,
+            Principal principal
+    ) {
+        final PlayerKey playerKey = PlayerKey.requireFrom(principal);
+        racingGameFacade.tap(joinCode, playerKey.playerName(), playerKey.userId(), command.tapCount());
     }
 }

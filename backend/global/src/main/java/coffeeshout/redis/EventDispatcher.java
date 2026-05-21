@@ -52,6 +52,11 @@ public class EventDispatcher {
         final ResolvableType type = ResolvableType.forClassWithGenerics(Consumer.class, eventType);
         final ObjectProvider<Consumer<T>> provider = applicationContext.getBeanProvider(type);
         final List<Consumer<T>> consumers = provider.stream().toList();
+
+        if (consumers.isEmpty()) {
+            log.error("이벤트 타입에 등록된 Consumer가 없습니다: eventType={}", eventType.getSimpleName());
+        }
+
         return event -> consumers.forEach(c -> c.accept(event));
     }
 }

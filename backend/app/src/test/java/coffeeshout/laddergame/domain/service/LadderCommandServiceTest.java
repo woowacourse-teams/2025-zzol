@@ -3,6 +3,7 @@ package coffeeshout.laddergame.domain.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.laddergame.application.LadderCommandService;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.LadderGameState;
 import coffeeshout.laddergame.domain.LadderLine;

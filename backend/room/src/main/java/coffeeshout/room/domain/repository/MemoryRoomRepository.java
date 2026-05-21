@@ -5,11 +5,15 @@ import static org.springframework.util.Assert.notNull;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
+import org.springframework.stereotype.Repository;
 import java.util.Map;
+import org.springframework.stereotype.Repository;
 import java.util.Optional;
+import org.springframework.stereotype.Repository;
 import java.util.concurrent.ConcurrentHashMap;
 
 
+@Repository
 public class MemoryRoomRepository implements RoomRepository {
 
     private final Map<JoinCode, Room> rooms;

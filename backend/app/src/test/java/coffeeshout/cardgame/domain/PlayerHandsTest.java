@@ -9,6 +9,7 @@ import coffeeshout.cardgame.domain.card.MultiplierCard;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameScore;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Players;
@@ -182,7 +183,7 @@ class PlayerHandsTest {
             playerHands.put(player2, MultiplierCard.INVERT);
 
             // when
-            Map<Player, MiniGameScore> scores = playerHands.scoreByPlayer();
+            Map<PlayerView, MiniGameScore> scores = playerHands.scoreByPlayer();
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -195,7 +196,7 @@ class PlayerHandsTest {
         @Test
         void 카드가_없는_플레이어의_점수는_0이다() {
             // when
-            Map<Player, MiniGameScore> scores = playerHands.scoreByPlayer();
+            Map<PlayerView, MiniGameScore> scores = playerHands.scoreByPlayer();
 
             // then
             scores.values().forEach(score ->

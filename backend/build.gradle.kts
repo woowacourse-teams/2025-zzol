@@ -86,5 +86,6 @@ subprojects {
         useJUnitPlatform()
         exclude("**/QueryPerformanceTest.class")
         systemProperty("updateFixture", System.getProperty("updateFixture", "false"))
+        jvmArgs("-Xmx1g", "-XX:+HeapDumpOnOutOfMemoryError")
     }
 }

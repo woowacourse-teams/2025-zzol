@@ -9,8 +9,7 @@ import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-
-
+@Service
 public class LadderCommandService {
 
     public Optional<LadderLine> drawLine(LadderGame game, String playerName, int segmentIndex) {

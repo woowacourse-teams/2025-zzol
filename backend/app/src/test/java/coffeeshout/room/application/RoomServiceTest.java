@@ -26,6 +26,7 @@ import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.RoomState;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
@@ -268,7 +269,7 @@ class RoomServiceTest extends ServiceTest {
         ReflectionTestUtils.setField(createdRoom, "finishedGames", miniGames);
 
         // when
-        Map<Player, MiniGameScore> miniGameScores = roomService.getMiniGameScores(
+        Map<PlayerView, MiniGameScore> miniGameScores = roomService.getMiniGameScores(
                 joinCode.getValue(),
                 MiniGameType.CARD_GAME
         );

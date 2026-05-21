@@ -185,7 +185,7 @@ public class RoomService {
                 .toList();
     }
 
-    public Map<? extends PlayerView, MiniGameScore> getMiniGameScores(String joinCode, MiniGameType miniGameType) {
+    public Map<PlayerView, MiniGameScore> getMiniGameScores(String joinCode, MiniGameType miniGameType) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final Playable miniGame = room.findMiniGame(miniGameType);
 

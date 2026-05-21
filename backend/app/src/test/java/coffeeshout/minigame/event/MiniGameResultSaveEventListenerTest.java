@@ -20,6 +20,7 @@ import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.domain.Room;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
@@ -67,7 +68,7 @@ class MiniGameResultSaveEventListenerTest {
             Player 루키 = PlayerFixture.게스트루키();
 
             MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<Player, MiniGameScore> scores = Map.of(
+            Map<PlayerView, MiniGameScore> scores = Map.of(
                     한스, new CardGameScore(100),
                     루키, new CardGameScore(80)
             );
@@ -93,7 +94,7 @@ class MiniGameResultSaveEventListenerTest {
             Player 루키 = PlayerFixture.게스트루키();
 
             MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<Player, MiniGameScore> scores = Map.of(
+            Map<PlayerView, MiniGameScore> scores = Map.of(
                     한스, new CardGameScore(100),
                     루키, new CardGameScore(80)
             );
@@ -119,7 +120,7 @@ class MiniGameResultSaveEventListenerTest {
             Player 루키 = PlayerFixture.게스트루키();
 
             MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<Player, MiniGameScore> scores = Map.of(
+            Map<PlayerView, MiniGameScore> scores = Map.of(
                     한스, new CardGameScore(100),
                     루키, new CardGameScore(80)
             );
@@ -153,7 +154,7 @@ class MiniGameResultSaveEventListenerTest {
                 .thenReturn(Optional.of(miniGameEntity));
     }
 
-    private void 도메인룸_설정(List<Player> players, MiniGameResult result, Map<Player, MiniGameScore> scores) {
+    private void 도메인룸_설정(List<Player> players, MiniGameResult result, Map<PlayerView, MiniGameScore> scores) {
         Playable miniGame = mock(Playable.class);
         when(miniGame.getResult()).thenReturn(result);
         when(miniGame.getScores()).thenReturn(scores);

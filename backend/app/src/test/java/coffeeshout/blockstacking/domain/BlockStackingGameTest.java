@@ -7,6 +7,7 @@ import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.fixture.PlayersFixture;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
@@ -58,7 +59,7 @@ class BlockStackingGameTest {
             game.prepare();
             game.startPlay();
 
-            final Map<Player, MiniGameScore> scores = game.getScores();
+            final Map<PlayerView, MiniGameScore> scores = game.getScores();
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(scores).hasSize(4);
@@ -361,7 +362,7 @@ class BlockStackingGameTest {
 
         @Test
         void getScores_가_각_플레이어의_현재_층수를_반환한다() {
-            final Map<Player, MiniGameScore> scores = game.getScores();
+            final Map<PlayerView, MiniGameScore> scores = game.getScores();
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(scores.get(꾹이).getValue()).isEqualTo(2L);

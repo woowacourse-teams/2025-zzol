@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.cardgame.domain.CardGameScore;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.racinggame.domain.RacingGameScore;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -20,7 +21,7 @@ class MiniGameResultTest {
     @Test
     void 순위_목록을_반환한다() {
         // given
-        Map<Player, MiniGameScore> playerScores = Map.of(
+        Map<PlayerView, MiniGameScore> playerScores = Map.of(
                 게스트_엠제이, new CardGameScore(80),
                 호스트_한스, new CardGameScore(40),
                 게스트_루키, new CardGameScore(10),
@@ -49,7 +50,7 @@ class MiniGameResultTest {
     @Test
     void 해당_플레이어의_순위를_반환한다() {
         // given
-        Map<Player, MiniGameScore> playerScores = Map.of(
+        Map<PlayerView, MiniGameScore> playerScores = Map.of(
                 게스트_엠제이, new CardGameScore(80),
                 호스트_한스, new CardGameScore(40),
                 게스트_루키, new CardGameScore(10),

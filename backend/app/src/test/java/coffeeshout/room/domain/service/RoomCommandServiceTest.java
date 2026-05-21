@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.global.ServiceTest;
+import coffeeshout.room.application.service.RoomCommandService;
+import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.minigame.domain.MiniGameType;

@@ -8,8 +8,8 @@ import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -22,20 +22,37 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
-@RequiredArgsConstructor
 public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfigurer {
 
     /**
-     * 도메인 모듈(:user, :room 등)이 등록한 ChannelInterceptor 빈을 수집한다.
-     * StompPrincipalInterceptor 등 도메인 인터셉터는 해당 모듈에서 @Component로 등록.
+     * room 모듈에서 @Component로 등록된 StompPrincipalInterceptor.
+     * :websocket이 :room을 모르므로 ChannelInterceptor 타입 + @Qualifier로 식별.
      */
-    private final List<ChannelInterceptor> channelInterceptors;
+    private final ChannelInterceptor stompPrincipalInterceptor;
     private final WebSocketRateLimitInterceptor webSocketRateLimitInterceptor;
     private final WebSocketInboundMetricInterceptor webSocketInboundMetricInterceptor;
     private final WebSocketOutboundMetricInterceptor webSocketOutboundMetricInterceptor;
     private final ShutdownAwareHandshakeInterceptor shutdownAwareHandshakeInterceptor;
     private final ObservationRegistry observationRegistry;
     private final ContextSnapshotFactory snapshotFactory;
+
+    public WebSocketMessageBrokerConfig(
+            @Qualifier("stompPrincipalInterceptor") ChannelInterceptor stompPrincipalInterceptor,
+            WebSocketRateLimitInterceptor webSocketRateLimitInterceptor,
+            WebSocketInboundMetricInterceptor webSocketInboundMetricInterceptor,
+            WebSocketOutboundMetricInterceptor webSocketOutboundMetricInterceptor,
+            ShutdownAwareHandshakeInterceptor shutdownAwareHandshakeInterceptor,
+            ObservationRegistry observationRegistry,
+            ContextSnapshotFactory snapshotFactory
+    ) {
+        this.stompPrincipalInterceptor = stompPrincipalInterceptor;
+        this.webSocketRateLimitInterceptor = webSocketRateLimitInterceptor;
+        this.webSocketInboundMetricInterceptor = webSocketInboundMetricInterceptor;
+        this.webSocketOutboundMetricInterceptor = webSocketOutboundMetricInterceptor;
+        this.shutdownAwareHandshakeInterceptor = shutdownAwareHandshakeInterceptor;
+        this.observationRegistry = observationRegistry;
+        this.snapshotFactory = snapshotFactory;
+    }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -61,15 +78,8 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        final ChannelInterceptor[] domainInterceptors = channelInterceptors.stream()
-                .filter(i -> !(i instanceof WebSocketRateLimitInterceptor)
-                        && !(i instanceof WebSocketInboundMetricInterceptor)
-                        && !(i instanceof WebSocketOutboundMetricInterceptor))
-                .toArray(ChannelInterceptor[]::new);
-
         registration
-                .interceptors(domainInterceptors)
-                .interceptors(webSocketRateLimitInterceptor, webSocketInboundMetricInterceptor)
+                .interceptors(stompPrincipalInterceptor, webSocketRateLimitInterceptor, webSocketInboundMetricInterceptor)
                 .taskExecutor()
                 .corePoolSize(32)
                 .maxPoolSize(32)

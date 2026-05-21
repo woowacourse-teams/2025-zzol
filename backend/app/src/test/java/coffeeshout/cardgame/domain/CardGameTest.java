@@ -11,6 +11,7 @@ import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.PlayersFixture;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.minigame.domain.MiniGameScore;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Players;
@@ -157,7 +158,7 @@ class CardGameTest {
             cardGame.selectCard(player4, 3);
 
             // when
-            Map<Player, MiniGameScore> scores = cardGame.getScores();
+            Map<PlayerView, MiniGameScore> scores = cardGame.getScores();
 
             // then - 점수가 계산되는지 확인 (shuffle에 의해 실제 값은 변할 수 있음)
             SoftAssertions.assertSoftly(softly -> {
@@ -188,7 +189,7 @@ class CardGameTest {
             assertThat(roundFinished).isTrue();
 
             // then - 점수가 계산되는지 확인
-            Map<Player, MiniGameScore> scores = cardGame.getScores();
+            Map<PlayerView, MiniGameScore> scores = cardGame.getScores();
             assertThat(scores).hasSize(4);
         }
     }

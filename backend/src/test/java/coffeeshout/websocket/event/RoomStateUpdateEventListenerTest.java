@@ -9,6 +9,8 @@ import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
+import coffeeshout.room.infra.websocket.event.RoomStateUpdateEvent;
+import coffeeshout.room.infra.websocket.event.RoomStateUpdateEventListener;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

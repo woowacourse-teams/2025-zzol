@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.then;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.RoomCommandService;
+import coffeeshout.room.infra.websocket.PlayerDisconnectionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

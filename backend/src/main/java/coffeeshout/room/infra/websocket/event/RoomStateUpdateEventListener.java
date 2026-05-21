@@ -1,9 +1,9 @@
-package coffeeshout.websocket.event;
+package coffeeshout.room.infra.websocket.event;
 
-import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

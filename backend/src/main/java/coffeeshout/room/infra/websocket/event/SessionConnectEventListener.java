@@ -1,14 +1,14 @@
-package coffeeshout.websocket.event;
+package coffeeshout.room.infra.websocket.event;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.websocket.PlayerKey;
-import coffeeshout.websocket.UserPrincipal;
-import coffeeshout.websocket.event.session.SessionRegisteredEvent;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
+import coffeeshout.websocket.PlayerKey;
+import coffeeshout.websocket.UserPrincipal;
+import coffeeshout.websocket.event.session.SessionRegisteredEvent;
 import coffeeshout.websocket.metric.WebSocketMetricService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,4 +73,3 @@ public class SessionConnectEventListener {
         log.info("세션 등록 이벤트 발행: playerKey={}, sessionId={}", playerKey, sessionId);
     }
 }
-

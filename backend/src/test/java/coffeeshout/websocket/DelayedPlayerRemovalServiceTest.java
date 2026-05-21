@@ -8,6 +8,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import coffeeshout.room.application.service.RoomService;
+import coffeeshout.room.infra.websocket.DelayedPlayerRemovalService;
+import coffeeshout.room.infra.websocket.PlayerDisconnectionService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ScheduledFuture;

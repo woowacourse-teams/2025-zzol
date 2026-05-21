@@ -1,6 +1,6 @@
 package coffeeshout.websocket.infra;
 
-import coffeeshout.websocket.DelayedPlayerRemovalService;
+import coffeeshout.room.infra.websocket.DelayedPlayerRemovalService;
 import coffeeshout.websocket.event.player.PlayerDisconnectedEvent;
 import coffeeshout.websocket.event.player.PlayerReconnectedEvent;
 import java.util.function.Consumer;

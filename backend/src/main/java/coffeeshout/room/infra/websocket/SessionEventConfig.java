@@ -1,7 +1,7 @@
-package coffeeshout.websocket.infra;
+package coffeeshout.room.infra.websocket;
 
-import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.StompSessionManager;
 import coffeeshout.websocket.event.player.PlayerReconnectedEvent;
 import coffeeshout.websocket.event.session.SessionRegisteredEvent;
@@ -46,9 +46,7 @@ public class SessionEventConfig {
 
             log.info("세션 제거 이벤트 처리: sessionId={}", sessionId);
 
-            // 모든 인스턴스가 세션 매핑 제거
             sessionManager.removeSession(sessionId);
         };
     }
-
 }

@@ -1,12 +1,12 @@
-package coffeeshout.websocket.event;
+package coffeeshout.room.infra.websocket.event;
 
-import coffeeshout.websocket.metric.WebSocketMetricService;
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.StompSessionManager;
 import coffeeshout.websocket.SubscriptionInfoService;
 import coffeeshout.websocket.event.player.PlayerDisconnectedEvent;
+import coffeeshout.websocket.metric.WebSocketMetricService;
 import coffeeshout.websocket.ratelimit.WebSocketRateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,24 +36,18 @@ public class SessionDisconnectEventListener {
         log.info("세션 연결 해제 감지: sessionId={}, closeStatus={}, reason={}",
                 sessionId, closeStatus, closeStatus.getReason());
 
-        // 구독 정보 정리
         subscriptionInfoService.removeAllSubscriptions(sessionId);
-
-        // Rate Limiter 세션 카운터 정리
         webSocketRateLimiter.removeSession(sessionId);
 
-        // 중복 처리 방지
         if (sessionManager.isDisconnectionProcessed(sessionId)) {
             log.debug("이미 처리된 연결 해제 무시: sessionId={}", sessionId);
             return;
         }
 
-        // 플레이어 세션인지 확인
         if (sessionManager.hasPlayerKey(sessionId)) {
             final String playerKey = sessionManager.getPlayerKey(sessionId);
             log.info("플레이어 세션 해제 감지: playerKey={}, sessionId={}", playerKey, sessionId);
 
-            // 플레이어 연결 해제 이벤트 발행
             final BaseEvent playerDisconnectedEvent = PlayerDisconnectedEvent.create(
                     playerKey, sessionId, "SESSION_DISCONNECT");
             streamPublisher.publish(RoomStreamKey.BROADCAST, playerDisconnectedEvent);

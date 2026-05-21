@@ -1,6 +1,6 @@
 package coffeeshout.user.infra.persistence;
 
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.fixture.ExceptionAssertions.assertCoffeeShoutException;
 import static org.mockito.Mockito.mock;
 
 import coffeeshout.global.exception.GlobalErrorCode;

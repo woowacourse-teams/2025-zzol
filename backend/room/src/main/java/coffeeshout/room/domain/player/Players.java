@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import lombok.Getter;
 
@@ -60,7 +61,7 @@ public class Players {
         return players.size();
     }
 
-    public boolean hasDuplicateName(PlayerName playerName) {
+    public boolean hasDuplicateNameForGuest(PlayerName playerName) {
         return players.stream().anyMatch(player -> player.sameName(playerName));
     }
 
@@ -71,15 +72,26 @@ public class Players {
         return players.stream().anyMatch(p -> userId.equals(p.getUserId()));
     }
 
-    public synchronized void removePlayerByUserId(Long userId) {
-        players.removeIf(p -> {
+    public synchronized boolean removePlayerByUserId(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        final boolean removed = players.removeIf(p -> {
             if (userId.equals(p.getUserId())) {
                 colorUsage.release(p.getColorIndex());
                 return true;
             }
             return false;
         });
-        adjustInitialPlayerProbabilities();
+        if (removed && !players.isEmpty()) {
+            adjustInitialPlayerProbabilities();
+        }
+        return removed;
+    }
+
+    public boolean hasDuplicateNameExceptUserId(PlayerName name, Long userId) {
+        return players.stream()
+                .anyMatch(p -> p.sameName(name) && !Objects.equals(p.getUserId(), userId));
     }
 
     public boolean isAllReady() {
@@ -88,14 +100,17 @@ public class Players {
     }
 
     public synchronized boolean removePlayer(PlayerName playerName) {
-        return players.removeIf(player -> {
+        final boolean removed = players.removeIf(player -> {
             if (player.sameName(playerName)) {
                 colorUsage.release(player.getColorIndex());
-                adjustInitialPlayerProbabilities();
                 return true;
             }
             return false;
         });
+        if (removed && !players.isEmpty()) {
+            adjustInitialPlayerProbabilities();
+        }
+        return removed;
     }
 
     public boolean existsByName(PlayerName playerName) {

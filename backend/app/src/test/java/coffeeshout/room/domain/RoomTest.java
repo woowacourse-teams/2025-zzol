@@ -2,6 +2,7 @@ package coffeeshout.room.domain;
 
 import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.RouletteFixture;
@@ -271,6 +272,56 @@ class RoomTest {
                     () -> room.joinGuest(게스트_꾹이),
                     RoomErrorCode.DUPLICATE_PLAYER_NAME
             );
+        }
+
+        @Test
+        void 호스트가_재입장하면_호스트_자격이_유지된다() {
+            // given - 호스트를 userId=1로 생성
+            room = new Room(joinCode, 호스트_한스, 1L, 0.7);
+            room.joinGuest(게스트_꾹이, 2L);
+
+            // when
+            room.joinGuest(new PlayerName("새이름"), 1L);
+
+            // then
+            final Player rejoinedHost = room.findPlayer(new PlayerName("새이름"));
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(room.getHost().getName()).isEqualTo(new PlayerName("새이름"));
+                softly.assertThat(room.isHost(rejoinedHost)).isTrue();
+            });
+        }
+
+        @Test
+        void 재입장_시_다른_플레이어의_닉네임으로_변경하면_예외() {
+            // given - 호스트(userId=1)와 게스트(userId=2, 닉네임=꾹이) 입장
+            room = new Room(joinCode, 호스트_한스, 1L, 0.7);
+            room.joinGuest(게스트_꾹이, 2L);
+
+            // when & then — 호스트가 재입장하면서 다른 플레이어 닉네임(꾹이) 사용 시도
+            assertCoffeeShoutException(
+                    () -> room.joinGuest(게스트_꾹이, 1L),
+                    RoomErrorCode.DUPLICATE_PLAYER_NAME
+            );
+        }
+
+        @Test
+        void 로그인_사용자는_동일_닉네임으로_입장할_수_있다() {
+            // given - userId=100인 플레이어가 꾹이 닉네임으로 이미 입장
+            room.joinGuest(게스트_꾹이, 100L);
+
+            // when & then — 다른 userId=200인 사용자가 같은 닉네임으로 입장 가능
+            assertThatCode(() -> room.joinGuest(게스트_꾹이, 200L)).doesNotThrowAnyException();
+            assertThat(room.getPlayers()).hasSize(3);
+        }
+
+        @Test
+        void 로그인_사용자는_비로그인이_선점한_닉네임으로도_입장할_수_있다() {
+            // given - 비로그인 사용자가 꾹이 닉네임으로 입장
+            room.joinGuest(게스트_꾹이);
+
+            // when & then — 로그인 사용자가 같은 닉네임으로 입장 가능
+            assertThatCode(() -> room.joinGuest(게스트_꾹이, 200L)).doesNotThrowAnyException();
+            assertThat(room.getPlayers()).hasSize(3);
         }
     }
 

@@ -3,7 +3,6 @@ package coffeeshout.room.domain.player;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.roulette.ProbabilityCalculator;
 import java.util.Map;
@@ -29,10 +28,8 @@ class PlayersTest {
         players.join(꾹이);
         players.join(엠제이);
 
-        MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 4));
-
         // when
-        players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(4, 5, 0.7));
+        players.adjustProbabilities(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 4), new ProbabilityCalculator(4, 5, 0.7));
 
         // then
         assertThat(players.getPlayer(PlayerFixture.호스트한스().getName()).getProbability())
@@ -60,10 +57,8 @@ class PlayersTest {
             players.join(루키);
             players.join(꾹이);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2));
-
             // when
-            players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(3, 1, 0.7));
+            players.adjustProbabilities(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2), new ProbabilityCalculator(3, 1, 0.7));
 
             // then
             // 한스 1등, 루키/꾹이 2등 동점 (2명이므로 확률 조정량을 2로 나눔)
@@ -93,10 +88,8 @@ class PlayersTest {
             players.join(꾹이);
             players.join(엠제이);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 4));
-
             // when
-            players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(4, 1, 0.7));
+            players.adjustProbabilities(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 4), new ProbabilityCalculator(4, 1, 0.7));
 
             // then
             // 한스 1등, 루키/꾹이 2등 동점 (2명이므로 확률 조정량을 2로 나눔)
@@ -133,10 +126,8 @@ class PlayersTest {
             players.join(엠제이);
             players.join(루키);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 3));
-
             // when
-            players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(4, 1, 0.7));
+            players.adjustProbabilities(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 3), new ProbabilityCalculator(4, 1, 0.7));
 
             SoftAssertions.assertSoftly(
                     softly -> {
@@ -166,10 +157,8 @@ class PlayersTest {
             players.join(꾹이);
             players.join(엠제이);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 2));
-
             // when
-            players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(4, 1, 0.7));
+            players.adjustProbabilities(Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 2), new ProbabilityCalculator(4, 1, 0.7));
 
             // then
             SoftAssertions.assertSoftly(
@@ -203,15 +192,13 @@ class PlayersTest {
             players.join(엠제이);
             players.join(호스트유령);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(
+            players.adjustProbabilities(Map.of(
                     한스.getName(), 1,
                     루키.getName(), 1,
                     꾹이.getName(), 3,
                     엠제이.getName(), 3,
                     호스트유령.getName(), 5
-            ));
-
-            players.adjustProbabilities(miniGameResult.toRankMap(), new ProbabilityCalculator(5, 1, 0.7));
+            ), new ProbabilityCalculator(5, 1, 0.7));
 
             // then
             SoftAssertions.assertSoftly(
@@ -273,6 +260,74 @@ class PlayersTest {
                 softly.assertThat(players.existsByUserId(200L)).isTrue();
                 softly.assertThat(players.getPlayerCount()).isEqualTo(1);
             });
+        }
+    }
+
+    @Nested
+    class userId_기반_제거_반환값 {
+
+        @Test
+        void 존재하는_userId로_제거하면_true를_반환한다() {
+            // given
+            final Players players = new Players("ABCD");
+            players.join(Player.createGuest(new PlayerName("한스"), 100L));
+
+            // when & then
+            assertThat(players.removePlayerByUserId(100L)).isTrue();
+        }
+
+        @Test
+        void userId가_null이면_false를_반환한다() {
+            // given
+            final Players players = new Players("ABCD");
+            players.join(Player.createGuest(new PlayerName("한스"), 100L));
+
+            // when & then
+            assertThat(players.removePlayerByUserId(null)).isFalse();
+        }
+
+        @Test
+        void 존재하지_않는_userId로_제거하면_false를_반환한다() {
+            // given
+            final Players players = new Players("ABCD");
+            players.join(Player.createGuest(new PlayerName("한스"), 100L));
+
+            // when & then
+            assertThat(players.removePlayerByUserId(999L)).isFalse();
+        }
+    }
+
+    @Nested
+    class 닉네임_중복_검사 {
+
+        @Test
+        void 동일_닉네임_다른_userId면_중복이다() {
+            // given
+            final Players players = new Players("ABCD");
+            players.join(Player.createGuest(new PlayerName("한스"), 100L));
+
+            // when & then — userId=200인 사람이 "한스" 닉네임 사용 시도
+            assertThat(players.hasDuplicateNameExceptUserId(new PlayerName("한스"), 200L)).isTrue();
+        }
+
+        @Test
+        void 동일_닉네임_같은_userId면_본인이므로_중복이_아니다() {
+            // given
+            final Players players = new Players("ABCD");
+            players.join(Player.createGuest(new PlayerName("한스"), 100L));
+
+            // when & then — 재입장 시 본인 닉네임 그대로 유지
+            assertThat(players.hasDuplicateNameExceptUserId(new PlayerName("한스"), 100L)).isFalse();
+        }
+
+        @Test
+        void 다른_닉네임이면_중복이_아니다() {
+            // given
+            final Players players = new Players("ABCD");
+            players.join(Player.createGuest(new PlayerName("한스"), 100L));
+
+            // when & then
+            assertThat(players.hasDuplicateNameExceptUserId(new PlayerName("루키"), 200L)).isFalse();
         }
     }
 }

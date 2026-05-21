@@ -14,6 +14,7 @@ import coffeeshout.room.domain.roulette.ProbabilityCalculator;
 import coffeeshout.room.domain.roulette.Roulette;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.Getter;
 
@@ -55,13 +56,40 @@ public class Room {
 
     public void joinGuest(PlayerName guestName, Long userId) {
         validateRoomReady();
-        if (userId != null && players.existsByUserId(userId)) {
-            players.removePlayerByUserId(userId);
-        } else {
-            validateCanJoin();
+        if (isRejoin(userId)) {
+            rejoinGuest(guestName, userId);
+            return;
+        }
+        validateCanJoin();
+        if (userId == null) {
             validatePlayerNameNotDuplicate(guestName);
         }
         join(Player.createGuest(guestName, userId));
+    }
+
+    private boolean isRejoin(Long userId) {
+        return userId != null && players.existsByUserId(userId);
+    }
+
+    private void rejoinGuest(PlayerName newName, Long userId) {
+        if (players.hasDuplicateNameExceptUserId(newName, userId)) {
+            throw new BusinessException(
+                    RoomErrorCode.DUPLICATE_PLAYER_NAME,
+                    "중복된 닉네임은 들어올 수 없습니다. 닉네임: " + newName.value()
+            );
+        }
+        players.removePlayerByUserId(userId);
+        if (Objects.equals(host.getUserId(), userId)) {
+            rejoinAsHost(newName, userId);
+        } else {
+            join(Player.createGuest(newName, userId));
+        }
+    }
+
+    private void rejoinAsHost(PlayerName newName, Long userId) {
+        final Player rejoined = Player.createHost(newName, userId);
+        join(rejoined);
+        this.host = rejoined;
     }
 
     public void markPlaying(PlayerName hostName) {
@@ -155,7 +183,7 @@ public class Room {
     }
 
     public boolean hasDuplicatePlayerName(PlayerName guestName) {
-        return players.hasDuplicateName(guestName);
+        return players.hasDuplicateNameForGuest(guestName);
     }
 
     private boolean isPlayableState() {

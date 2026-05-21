@@ -2,7 +2,7 @@ package coffeeshout.room.infra;
 
 import coffeeshout.room.domain.service.ProfanityChecker;
 import coffeeshout.room.infra.event.ProfanityWordAllowedEvent;
-import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
+import coffeeshout.global.event.ProfanityWordBlockedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

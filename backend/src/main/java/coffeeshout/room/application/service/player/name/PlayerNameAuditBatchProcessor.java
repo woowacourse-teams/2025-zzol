@@ -3,7 +3,7 @@ package coffeeshout.room.application.service.player.name;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;
-import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
+import coffeeshout.global.event.ProfanityWordBlockedEvent;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity.Source;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;

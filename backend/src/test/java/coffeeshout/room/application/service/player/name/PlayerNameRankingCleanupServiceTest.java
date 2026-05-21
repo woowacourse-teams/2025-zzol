@@ -10,9 +10,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
-import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
-import coffeeshout.dashboard.domain.TopWinnerResponse;
-import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
+import coffeeshout.room.application.port.RankingNicknameProvider;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameGenerator;
@@ -40,7 +38,7 @@ class PlayerNameRankingCleanupServiceTest {
             Instant.parse("2026-03-21T12:00:00Z"), ZoneOffset.UTC
     );
 
-    @Mock DashboardStatisticsRepository dashboardRepository;
+    @Mock RankingNicknameProvider rankingNicknameProvider;
     @Mock PlayerNameAuditJpaRepository auditRepository;
     @Mock PlayerJpaRepository playerRepository;
     @Mock PlayerNameGenerator playerNameGenerator;
@@ -50,7 +48,7 @@ class PlayerNameRankingCleanupServiceTest {
     @BeforeEach
     void setUp() {
         cleanupService = new PlayerNameRankingCleanupService(
-                FIXED_CLOCK, dashboardRepository, auditRepository, playerRepository, playerNameGenerator
+                FIXED_CLOCK, rankingNicknameProvider, auditRepository, playerRepository, playerNameGenerator
         );
     }
 
@@ -64,7 +62,7 @@ class PlayerNameRankingCleanupServiceTest {
 
             cleanupService.cleanupBlockedNicknames();
 
-            then(dashboardRepository).shouldHaveNoInteractions();
+            then(rankingNicknameProvider).shouldHaveNoInteractions();
             then(playerRepository).shouldHaveNoInteractions();
         }
     }
@@ -76,10 +74,8 @@ class PlayerNameRankingCleanupServiceTest {
         void 교체_없이_종료한다() {
             given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
-            given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
-                    .willReturn(List.of(new TopWinnerResponse("용감한호랑이", "ABCDF", 5L)));
-            given(dashboardRepository.findRacingGameTopPlayers(any(), any(), anyInt()))
-                    .willReturn(List.of());
+            given(rankingNicknameProvider.findRankingNicknamesBetween(any(), any(), anyInt()))
+                    .willReturn(Set.of("용감한호랑이"));
 
             cleanupService.cleanupBlockedNicknames();
 
@@ -98,10 +94,8 @@ class PlayerNameRankingCleanupServiceTest {
 
             given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
-            given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
-                    .willReturn(List.of(new TopWinnerResponse("씨발", "ABCDF", 3L)));
-            given(dashboardRepository.findRacingGameTopPlayers(any(), any(), anyInt()))
-                    .willReturn(List.of());
+            given(rankingNicknameProvider.findRankingNicknamesBetween(any(), any(), anyInt()))
+                    .willReturn(Set.of("씨발"));
             given(playerRepository.findAllByPlayerName("씨발"))
                     .willReturn(List.of(player));
             given(player.getRoomSession()).willReturn(room);
@@ -126,10 +120,8 @@ class PlayerNameRankingCleanupServiceTest {
 
             given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
-            given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
-                    .willReturn(List.of());
-            given(dashboardRepository.findRacingGameTopPlayers(any(), any(), anyInt()))
-                    .willReturn(List.of(new RacingGameTopPlayerResponse("씨발", 100L)));
+            given(rankingNicknameProvider.findRankingNicknamesBetween(any(), any(), anyInt()))
+                    .willReturn(Set.of("씨발"));
             given(playerRepository.findAllByPlayerName("씨발"))
                     .willReturn(List.of(player));
             given(player.getRoomSession()).willReturn(room);
@@ -153,10 +145,8 @@ class PlayerNameRankingCleanupServiceTest {
 
             given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
-            given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
-                    .willReturn(List.of(new TopWinnerResponse("씨발", "ABCDF", 3L)));
-            given(dashboardRepository.findRacingGameTopPlayers(any(), any(), anyInt()))
-                    .willReturn(List.of());
+            given(rankingNicknameProvider.findRankingNicknamesBetween(any(), any(), anyInt()))
+                    .willReturn(Set.of("씨발"));
             given(playerRepository.findAllByPlayerName("씨발"))
                     .willReturn(List.of(player1, player2));
             given(player1.getRoomSession()).willReturn(room1);
@@ -180,17 +170,13 @@ class PlayerNameRankingCleanupServiceTest {
 
             given(auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED))
                     .willReturn(Set.of("씨발"));
-            given(dashboardRepository.findTopWinnersBetween(any(), any(), anyInt()))
-                    .willReturn(List.of());
-            given(dashboardRepository.findRacingGameTopPlayers(any(), any(), anyInt()))
-                    .willReturn(List.of());
+            given(rankingNicknameProvider.findRankingNicknamesBetween(any(), any(), anyInt()))
+                    .willReturn(Set.of());
 
             cleanupService.cleanupBlockedNicknames();
 
-            then(dashboardRepository).should()
-                    .findTopWinnersBetween(eq(startOfMonth), eq(now), anyInt());
-            then(dashboardRepository).should()
-                    .findRacingGameTopPlayers(eq(startOfMonth), eq(now), anyInt());
+            then(rankingNicknameProvider).should()
+                    .findRankingNicknamesBetween(eq(startOfMonth), eq(now), anyInt());
         }
     }
 }

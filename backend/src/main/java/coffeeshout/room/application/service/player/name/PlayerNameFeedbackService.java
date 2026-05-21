@@ -4,7 +4,7 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.event.ProfanityWordAllowedEvent;
-import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
+import coffeeshout.global.event.ProfanityWordBlockedEvent;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;

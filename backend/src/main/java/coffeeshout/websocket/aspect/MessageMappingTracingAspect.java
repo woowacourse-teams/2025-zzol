@@ -1,4 +1,4 @@
-package coffeeshout.global.aspect;
+package coffeeshout.websocket.aspect;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;

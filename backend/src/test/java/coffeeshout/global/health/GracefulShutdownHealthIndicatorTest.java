@@ -3,6 +3,7 @@ package coffeeshout.global.health;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
+import coffeeshout.websocket.lifecycle.GracefulShutdownHealthIndicator;
 import coffeeshout.websocket.lifecycle.WebSocketGracefulShutdownHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

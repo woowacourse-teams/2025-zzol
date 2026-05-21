@@ -1,4 +1,4 @@
-package coffeeshout.global.exception;
+package coffeeshout.websocket.exception;
 
 import coffeeshout.global.exception.custom.CoffeeShoutException;
 import coffeeshout.websocket.LoggingSimpMessagingTemplate;
@@ -10,7 +10,6 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.support.MethodArgumentNotValidException;
 import org.springframework.validation.FieldError;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
 @ControllerAdvice

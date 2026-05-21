@@ -2,7 +2,7 @@ package coffeeshout.room.domain.roulette;
 
 import static org.springframework.util.Assert.state;
 
-import coffeeshout.minigame.domain.MiniGameResultType;
+import coffeeshout.gamecommon.MiniGameResultType;
 
 /*
     - 확률은 100.00 형태에 100을 곱해서 소수점을 없앤 형태로 사용한다.

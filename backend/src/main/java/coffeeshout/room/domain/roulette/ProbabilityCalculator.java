@@ -1,7 +1,7 @@
 package coffeeshout.room.domain.roulette;
 
+import coffeeshout.gamecommon.MiniGameResultType;
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.minigame.domain.MiniGameResultType;
 import coffeeshout.room.domain.RoomErrorCode;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -72,9 +72,16 @@ public class ProbabilityCalculator {
 
     private Integer processProbabilityChange(int rank) {
         final MiniGameResultType resultType = MiniGameResultType.of(playerCount, rank);
-        final Probability probability = resultType.adjustProbability(countAdjustableRanks(), relativeRank(rank),
+        final Probability probability = adjustProbability(resultType, countAdjustableRanks(), relativeRank(rank),
                 computeAdjustmentStep());
-
         return probability.getProbabilityChange(resultType);
+    }
+
+    private static Probability adjustProbability(MiniGameResultType resultType, int rankCount, int relativeRank,
+                                                  Probability step) {
+        if (resultType == MiniGameResultType.UNDECIDED) {
+            return Probability.ZERO;
+        }
+        return step.multiple(rankCount - relativeRank + 1);
     }
 }

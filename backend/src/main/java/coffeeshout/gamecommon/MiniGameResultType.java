@@ -1,6 +1,4 @@
-package coffeeshout.minigame.domain;
-
-import coffeeshout.room.domain.roulette.Probability;
+package coffeeshout.gamecommon;
 
 public enum MiniGameResultType {
 
@@ -17,13 +15,6 @@ public enum MiniGameResultType {
             return UNDECIDED;
         }
         return LOSER;
-    }
-
-    public Probability adjustProbability(int rankCount, int relativeRank, Probability step) {
-        if (this == UNDECIDED) {
-            return Probability.ZERO;
-        }
-        return step.multiple(rankCount - relativeRank + 1);
     }
 
     private static boolean isWinner(int playerCount, int rank) {

@@ -61,3 +61,8 @@ dependencies {
     // ArchUnit — 아키텍처 규칙 테스트
     testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
 }
+
+tasks.withType<Test> {
+    // :app 통합 테스트는 Spring context를 여러 개 띄우므로 힙을 더 크게 잡는다
+    jvmArgs("-Xmx2g", "-XX:MaxMetaspaceSize=512m")
+}

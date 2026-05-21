@@ -14,7 +14,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.application.service.RoomQueryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;

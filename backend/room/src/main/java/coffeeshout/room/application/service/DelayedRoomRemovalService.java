@@ -2,7 +2,7 @@ package coffeeshout.room.application.service;
 
 import coffeeshout.websocket.GameRecoveryService;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.service.RoomCommandService;
+import coffeeshout.room.application.service.RoomCommandService;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;

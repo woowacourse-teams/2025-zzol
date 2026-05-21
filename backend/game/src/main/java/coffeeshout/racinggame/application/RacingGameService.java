@@ -13,7 +13,7 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.application.service.RoomQueryService;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

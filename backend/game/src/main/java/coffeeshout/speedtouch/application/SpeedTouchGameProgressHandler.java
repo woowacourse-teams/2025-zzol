@@ -3,7 +3,7 @@ package coffeeshout.speedtouch.application;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import coffeeshout.speedtouch.domain.event.SpeedTouchProgressEvent;
 import java.time.Instant;

@@ -11,7 +11,7 @@ import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.event.PlayerKickEvent;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.domain.service.RoomCommandService;
+import coffeeshout.room.application.service.RoomCommandService;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

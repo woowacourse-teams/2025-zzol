@@ -13,7 +13,7 @@ import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.RoomErrorCode;
-import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.infra.websocket.event.SessionConnectEventListener;
 import coffeeshout.websocket.metric.WebSocketMetricService;

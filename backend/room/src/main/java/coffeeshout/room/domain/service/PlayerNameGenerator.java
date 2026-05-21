@@ -6,11 +6,12 @@ import coffeeshout.global.nickname.WordPicker;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
-@Service
+
 @RequiredArgsConstructor
+@Service
 public class PlayerNameGenerator {
 
     private static final int MAX_RETRY = 50;

@@ -1,4 +1,4 @@
-package coffeeshout.room.domain.service;
+package coffeeshout.room.application.service;
 
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;

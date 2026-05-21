@@ -1,15 +1,16 @@
-package coffeeshout.laddergame.domain.service;
+package coffeeshout.laddergame.application;
 
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.LadderGameState;
 import coffeeshout.laddergame.domain.LadderLine;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Optional;
+import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
+
+
 public class LadderCommandService {
 
     public Optional<LadderLine> drawLine(LadderGame game, String playerName, int segmentIndex) {

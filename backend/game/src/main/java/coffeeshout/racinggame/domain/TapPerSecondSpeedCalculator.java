@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import org.springframework.stereotype.Component;
 
-@Component
+
 public class TapPerSecondSpeedCalculator implements SpeedCalculator {
 
     @Override

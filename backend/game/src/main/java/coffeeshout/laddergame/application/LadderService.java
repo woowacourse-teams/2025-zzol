@@ -1,12 +1,12 @@
 package coffeeshout.laddergame.application;
 
 import coffeeshout.laddergame.domain.LadderGame;
-import coffeeshout.laddergame.domain.service.LadderCommandService;
+import coffeeshout.laddergame.application.LadderCommandService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.application.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

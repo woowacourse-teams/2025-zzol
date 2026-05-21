@@ -10,7 +10,7 @@ import static org.mockito.Mockito.times;
 import coffeeshout.websocket.GameRecoveryService;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.service.RoomCommandService;
+import coffeeshout.room.application.service.RoomCommandService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ScheduledFuture;

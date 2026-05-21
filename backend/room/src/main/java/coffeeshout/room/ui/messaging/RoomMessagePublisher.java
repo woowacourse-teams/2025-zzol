@@ -9,7 +9,7 @@ import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.event.RouletteShownEvent;
 import coffeeshout.room.domain.event.RouletteWinnerEvent;
-import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.ui.response.PlayerResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import coffeeshout.room.ui.response.RoomStatusResponse;

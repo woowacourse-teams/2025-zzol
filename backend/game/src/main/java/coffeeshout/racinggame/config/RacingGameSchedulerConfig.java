@@ -1,5 +1,6 @@
 package coffeeshout.racinggame.config;
 
+import coffeeshout.racinggame.domain.TapPerSecondSpeedCalculator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +13,11 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @EnableScheduling
 @Slf4j
 public class RacingGameSchedulerConfig {
+
+    @Bean
+    public TapPerSecondSpeedCalculator tapPerSecondSpeedCalculator() {
+        return new TapPerSecondSpeedCalculator();
+    }
 
     @Bean(name = "racingGameScheduler")
     @Profile("!test")

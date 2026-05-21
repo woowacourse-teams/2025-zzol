@@ -21,7 +21,7 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.service.RoomQueryService;
+import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;

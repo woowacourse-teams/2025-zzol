@@ -32,4 +32,7 @@ dependencies {
     "testFixturesImplementation"(project(":user"))
     "testFixturesCompileOnly"("org.projectlombok:lombok")
     "testFixturesAnnotationProcessor"("org.projectlombok:lombok")
+
+    testImplementation(testFixtures(project(":common")))
+    testImplementation(testFixtures(project(":user")))
 }

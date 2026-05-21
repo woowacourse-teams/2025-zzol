@@ -43,4 +43,6 @@ dependencies {
     "testFixturesImplementation"(project(":game-api"))
     "testFixturesCompileOnly"("org.projectlombok:lombok")
     "testFixturesAnnotationProcessor"("org.projectlombok:lombok")
+
+    testImplementation(testFixtures(project(":common")))
 }

@@ -23,4 +23,8 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:$jjwtVersion")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
+
+    testImplementation(testFixtures(project(":common")))
+    testImplementation(project(":room"))
+    testImplementation(testFixtures(project(":room")))
 }

@@ -37,4 +37,6 @@ dependencies {
 
     val resilience4jVersion = rootProject.extra["resilience4j"] as String
     implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
+
+    testImplementation("io.micrometer:micrometer-tracing-test")
 }

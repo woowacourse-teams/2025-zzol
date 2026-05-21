@@ -1,5 +1,7 @@
 package coffeeshout.minigame.event;
 
+import coffeeshout.gamecommon.Playable;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.global.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
@@ -10,7 +12,6 @@ import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.service.RoomQueryService;
@@ -64,7 +65,7 @@ public class MiniGameResultSaveEventListener {
         final Playable miniGame = room.findMiniGame(miniGameType);
 
         final MiniGameResult result = miniGame.getResult();
-        final Map<Player, MiniGameScore> scores = miniGame.getScores();
+        final Map<PlayerView, MiniGameScore> scores = miniGame.getScores();
 
         final List<String> playerNames = room.getPlayers().stream()
                 .map(player -> player.getName().value())

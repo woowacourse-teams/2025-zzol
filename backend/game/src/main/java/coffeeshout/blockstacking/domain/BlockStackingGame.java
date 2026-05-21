@@ -5,6 +5,7 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.gamecommon.Playable;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Comparator;
@@ -27,9 +28,11 @@ public class BlockStackingGame implements Playable {
     }
 
     @Override
-    public void setUp(List<Player> players) {
+    public void setUp(List<? extends PlayerView> players) {
         playerProgresses.clear();
-        players.forEach(p -> playerProgresses.put(p, BlockStackingPlayerProgress.initial(p.getName())));
+        @SuppressWarnings("unchecked")
+        final List<Player> playerList = (List<Player>) (List<?>) players;
+        playerList.forEach(p -> playerProgresses.put(p, BlockStackingPlayerProgress.initial(p.getName())));
     }
 
     public void prepare() {
@@ -156,10 +159,10 @@ public class BlockStackingGame implements Playable {
     }
 
     @Override
-    public Map<Player, MiniGameScore> getScores() {
+    public Map<PlayerView, MiniGameScore> getScores() {
         return playerProgresses.entrySet().stream()
                 .collect(Collectors.toMap(
-                        Map.Entry::getKey,
+                        e -> (PlayerView) e.getKey(),
                         e -> new BlockStackingScore(e.getValue().currentFloor())
                 ));
     }

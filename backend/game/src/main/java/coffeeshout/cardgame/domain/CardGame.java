@@ -8,8 +8,10 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.gamecommon.Playable;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,13 +50,15 @@ public class CardGame implements Playable {
     }
 
     @Override
-    public void setUp(List<Player> players) {
-        playerHands = new PlayerHands(players);
+    public void setUp(List<? extends PlayerView> players) {
+        @SuppressWarnings("unchecked")
+        final List<Player> playerList = (List<Player>) (List<?>) players;
+        playerHands = new PlayerHands(playerList);
     }
 
     @Override
-    public Map<Player, MiniGameScore> getScores() {
-        return playerHands.scoreByPlayer();
+    public Map<PlayerView, MiniGameScore> getScores() {
+        return new HashMap<>(playerHands.scoreByPlayer());
     }
 
     public void startRound() {

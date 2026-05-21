@@ -5,6 +5,7 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.gamecommon.Playable;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.HashMap;
@@ -41,10 +42,12 @@ public class LadderGame implements Playable {
     }
 
     @Override
-    public void setUp(List<Player> players) {
+    public void setUp(List<? extends PlayerView> players) {
         this.state = LadderGameState.DESCRIPTION;
         this.lines = new LadderLines();
-        this.poles = Poles.assign(players);
+        @SuppressWarnings("unchecked")
+        final List<Player> playerList = (List<Player>) (List<?>) players;
+        this.poles = Poles.assign(playerList);
         this.bottomRanks = BottomRanks.generate(players.size());
         this.finalRanks = null;
     }
@@ -114,14 +117,14 @@ public class LadderGame implements Playable {
     }
 
     @Override
-    public Map<Player, MiniGameScore> getScores() {
+    public Map<PlayerView, MiniGameScore> getScores() {
         if (finalRanks == null) {
             throw new BusinessException(LadderGameErrorCode.PATH_NOT_TRACED,
                     "tracePaths()가 먼저 호출되어야 합니다.");
         }
         return finalRanks.entrySet().stream()
                 .collect(Collectors.toMap(
-                        Map.Entry::getKey,
+                        e -> (PlayerView) e.getKey(),
                         e -> new LadderGameScore(e.getValue())
                 ));
     }

@@ -4,5 +4,5 @@ public interface PlayerView {
 
     String getNameValue();
 
-    int getColorIndex();
+    Integer getColorIndex();
 }

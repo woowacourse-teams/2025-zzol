@@ -5,6 +5,7 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.gamecommon.Playable;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.time.Duration;
@@ -46,8 +47,10 @@ public class BlindTimerGame implements Playable {
     }
 
     @Override
-    public void setUp(List<Player> playerList) {
-        this.players = new BlindTimerPlayers(playerList);
+    public void setUp(List<? extends PlayerView> playerList) {
+        @SuppressWarnings("unchecked")
+        final List<Player> castList = (List<Player>) (List<?>) playerList;
+        this.players = new BlindTimerPlayers(castList);
     }
 
     @Override
@@ -56,10 +59,10 @@ public class BlindTimerGame implements Playable {
     }
 
     @Override
-    public Map<Player, MiniGameScore> getScores() {
+    public Map<PlayerView, MiniGameScore> getScores() {
         return players.stream()
                 .collect(Collectors.toMap(
-                        BlindTimerPlayer::getPlayer,
+                        p -> (PlayerView) p.getPlayer(),
                         this::calculateScore
                 ));
     }

@@ -4,11 +4,12 @@ import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.websocket.auth.RoomSessionTokenService;
+import coffeeshout.room.infra.auth.RoomSessionTokenService;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
@@ -184,7 +185,7 @@ public class RoomService {
                 .toList();
     }
 
-    public Map<Player, MiniGameScore> getMiniGameScores(String joinCode, MiniGameType miniGameType) {
+    public Map<? extends PlayerView, MiniGameScore> getMiniGameScores(String joinCode, MiniGameType miniGameType) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final Playable miniGame = room.findMiniGame(miniGameType);
 

@@ -1,8 +1,6 @@
 package coffeeshout.room.application.service.player.name;
 
-import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
-import coffeeshout.dashboard.domain.TopWinnerResponse;
-import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
+import coffeeshout.room.application.port.RankingNicknameProvider;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameGenerator;
@@ -30,7 +28,7 @@ public class PlayerNameRankingCleanupService {
     private static final int RANKING_LIMIT = 50;
 
     private final Clock clock;
-    private final DashboardStatisticsRepository dashboardRepository;
+    private final RankingNicknameProvider rankingNicknameProvider;
     private final PlayerNameAuditJpaRepository auditRepository;
     private final PlayerJpaRepository playerRepository;
     private final PlayerNameGenerator nicknameGenerator;
@@ -64,19 +62,7 @@ public class PlayerNameRankingCleanupService {
     }
 
     private Set<String> collectRankingNicknames(LocalDateTime start, LocalDateTime end) {
-        final Set<String> nicknames = new HashSet<>();
-
-        dashboardRepository.findTopWinnersBetween(start, end, RANKING_LIMIT)
-                .stream()
-                .map(TopWinnerResponse::nickname)
-                .forEach(nicknames::add);
-
-        dashboardRepository.findRacingGameTopPlayers(start, end, RANKING_LIMIT)
-                .stream()
-                .map(RacingGameTopPlayerResponse::playerName)
-                .forEach(nicknames::add);
-
-        return nicknames;
+        return rankingNicknameProvider.findRankingNicknamesBetween(start, end, RANKING_LIMIT);
     }
 
     private int replaceNickname(String nickname) {

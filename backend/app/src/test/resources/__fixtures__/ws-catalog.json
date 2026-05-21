@@ -1,0 +1,950 @@
+{
+  "stompEndpoint" : "/ws",
+  "app" : "/app",
+  "topicPrefix" : "/topic",
+  "queuePrefix" : "/queue",
+  "envelope" : {
+    "type" : "WebSocketResponse<T>",
+    "fields" : [ {
+      "name" : "success",
+      "type" : "boolean"
+    }, {
+      "name" : "data",
+      "type" : "T"
+    }, {
+      "name" : "errorMessage",
+      "type" : "String"
+    }, {
+      "name" : "id",
+      "type" : "String"
+    } ],
+    "note" : "모든 토픽 페이로드는 이 envelope 으로 감싸 전송됩니다."
+  },
+  "topics" : [ {
+    "path" : "/topic/room/{joinCode}",
+    "payloadType" : "WebSocketResponse<List<PlayerResponse>>",
+    "publishers" : [ {
+      "description" : "플레이어 목록 변경 브로드캐스트",
+      "source" : {
+        "className" : "RoomMessagePublisher",
+        "methodName" : "onPlayerListChanged"
+      }
+    } ],
+    "referencedSchemas" : [ "PlayerResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/blind-timer/progress",
+    "payloadType" : "WebSocketResponse<BlindTimerProgressResponse>",
+    "publishers" : [ {
+      "description" : "블라인드 타이머 진행 상황 브로드캐스트",
+      "source" : {
+        "className" : "BlindTimerGameMessagePublisher",
+        "methodName" : "publishProgress"
+      }
+    } ],
+    "referencedSchemas" : [ "BlindTimerProgressResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/blind-timer/state",
+    "payloadType" : "WebSocketResponse<BlindTimerStateResponse>",
+    "publishers" : [ {
+      "description" : "블라인드 타이머 종료 브로드캐스트",
+      "source" : {
+        "className" : "BlindTimerGameMessagePublisher",
+        "methodName" : "publishFinished"
+      }
+    }, {
+      "description" : "블라인드 타이머 상태 변경 브로드캐스트",
+      "source" : {
+        "className" : "BlindTimerGameMessagePublisher",
+        "methodName" : "publishStateChanged"
+      }
+    } ],
+    "referencedSchemas" : [ "BlindTimerStateResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/block-stacking/progress",
+    "payloadType" : "WebSocketResponse<BlockStackingProgressResponse>",
+    "publishers" : [ {
+      "description" : "블록 쌓기 진행 상황 브로드캐스트",
+      "source" : {
+        "className" : "BlockStackingNotifier",
+        "methodName" : "notifyProgressUpdated"
+      }
+    } ],
+    "referencedSchemas" : [ "BlockStackingProgressResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/block-stacking/state",
+    "payloadType" : "WebSocketResponse<BlockStackingStateResponse>",
+    "publishers" : [ {
+      "description" : "블록 쌓기 플레이 시작 브로드캐스트",
+      "source" : {
+        "className" : "BlockStackingNotifier",
+        "methodName" : "notifyPlayingStarted"
+      }
+    }, {
+      "description" : "블록 쌓기 상태 변경 브로드캐스트",
+      "source" : {
+        "className" : "BlockStackingNotifier",
+        "methodName" : "notifyStateChanged"
+      }
+    } ],
+    "referencedSchemas" : [ "BlockStackingStateResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/gameState",
+    "payloadType" : "WebSocketResponse<MiniGameStateMessage>",
+    "publishers" : [ {
+      "description" : "카드 선택 시 게임 상태 브로드캐스트",
+      "source" : {
+        "className" : "CardGameNotifier",
+        "methodName" : "notifyCardSelected"
+      }
+    }, {
+      "description" : "카드게임 단계 완료 시 게임 상태 브로드캐스트",
+      "source" : {
+        "className" : "CardGameNotifier",
+        "methodName" : "notifyStepCompleted"
+      }
+    } ],
+    "referencedSchemas" : [ "MiniGameStateMessage" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/ladder/line",
+    "payloadType" : "WebSocketResponse<LadderLineResponse>",
+    "publishers" : [ {
+      "description" : "사다리 선 그리기 브로드캐스트",
+      "source" : {
+        "className" : "LadderNotifier",
+        "methodName" : "notifyLineDrawn"
+      }
+    } ],
+    "referencedSchemas" : [ "LadderLineResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/ladder/state",
+    "payloadType" : "WebSocketResponse<LadderStateResponse>",
+    "publishers" : [ {
+      "description" : "사다리게임 설명 상태 브로드캐스트",
+      "source" : {
+        "className" : "LadderNotifier",
+        "methodName" : "notifyDescription"
+      }
+    }, {
+      "description" : "사다리게임 완료 브로드캐스트",
+      "source" : {
+        "className" : "LadderNotifier",
+        "methodName" : "notifyDone"
+      }
+    }, {
+      "description" : "사다리게임 그리기 상태 브로드캐스트",
+      "source" : {
+        "className" : "LadderNotifier",
+        "methodName" : "notifyDrawing"
+      }
+    }, {
+      "description" : "사다리게임 준비 상태 브로드캐스트",
+      "source" : {
+        "className" : "LadderNotifier",
+        "methodName" : "notifyPrepare"
+      }
+    }, {
+      "description" : "사다리게임 결과 브로드캐스트",
+      "source" : {
+        "className" : "LadderNotifier",
+        "methodName" : "notifyResult"
+      }
+    } ],
+    "referencedSchemas" : [ "LadderStateResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/minigame",
+    "payloadType" : "WebSocketResponse<List<String>>",
+    "publishers" : [ {
+      "description" : "미니게임 목록 변경 브로드캐스트",
+      "source" : {
+        "className" : "RoomMessagePublisher",
+        "methodName" : "onMiniGameListChanged"
+      }
+    } ],
+    "referencedSchemas" : [ ]
+  }, {
+    "path" : "/topic/room/{joinCode}/qr-code",
+    "payloadType" : "WebSocketResponse<QrCodeStatusResponse>",
+    "publishers" : [ {
+      "description" : "QR 코드 상태 변경 브로드캐스트",
+      "source" : {
+        "className" : "RoomMessagePublisher",
+        "methodName" : "onQrCodeStatusChanged"
+      }
+    } ],
+    "referencedSchemas" : [ "QrCodeStatusResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/racing-game",
+    "payloadType" : "WebSocketResponse<RacingGameRunnersStateResponse>",
+    "publishers" : [ {
+      "description" : "레이싱 게임 러너 위치 브로드캐스트",
+      "source" : {
+        "className" : "RacingGameMessagePublisher",
+        "methodName" : "publishRunnersPosition"
+      }
+    } ],
+    "referencedSchemas" : [ "RacingGameRunnersStateResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/racing-game/state",
+    "payloadType" : "WebSocketResponse<RacingGameStateResponse>",
+    "publishers" : [ {
+      "description" : "레이싱 게임 종료 브로드캐스트 — state: DESCRIPTION(규칙 설명) | PREPARE(준비) | PLAYING(진행 중) | DONE(종료)",
+      "source" : {
+        "className" : "RacingGameMessagePublisher",
+        "methodName" : "publishRacingGameFinish"
+      }
+    }, {
+      "description" : "레이싱 게임 상태 변경 브로드캐스트 — state: DESCRIPTION(규칙 설명) | PREPARE(준비) | PLAYING(진행 중) | DONE(종료)",
+      "source" : {
+        "className" : "RacingGameMessagePublisher",
+        "methodName" : "publishRacingGameStart"
+      }
+    } ],
+    "referencedSchemas" : [ "RacingGameStateResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/roulette",
+    "payloadType" : "WebSocketResponse<RoomStatusResponse>",
+    "publishers" : [ {
+      "description" : "룰렛 화면 전환 브로드캐스트",
+      "source" : {
+        "className" : "RoomMessagePublisher",
+        "methodName" : "onRouletteShown"
+      }
+    } ],
+    "referencedSchemas" : [ "RoomStatusResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/round",
+    "payloadType" : "WebSocketResponse<MiniGameStartMessage>",
+    "publishers" : [ {
+      "description" : "미니게임 시작 브로드캐스트",
+      "source" : {
+        "className" : "CardGameNotifier",
+        "methodName" : "notifyGameStarted"
+      }
+    } ],
+    "referencedSchemas" : [ "MiniGameStartMessage" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/speed-touch/progress",
+    "payloadType" : "WebSocketResponse<SpeedTouchProgressResponse>",
+    "publishers" : [ {
+      "description" : "스피드터치 진행 상황 브로드캐스트",
+      "source" : {
+        "className" : "SpeedTouchGameMessagePublisher",
+        "methodName" : "publishProgress"
+      }
+    } ],
+    "referencedSchemas" : [ "SpeedTouchProgressResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/speed-touch/state",
+    "payloadType" : "WebSocketResponse<SpeedTouchStateResponse>",
+    "publishers" : [ {
+      "description" : "스피드터치 게임 종료 브로드캐스트",
+      "source" : {
+        "className" : "SpeedTouchGameMessagePublisher",
+        "methodName" : "publishFinished"
+      }
+    }, {
+      "description" : "스피드터치 게임 상태 변경 브로드캐스트",
+      "source" : {
+        "className" : "SpeedTouchGameMessagePublisher",
+        "methodName" : "publishStateChanged"
+      }
+    } ],
+    "referencedSchemas" : [ "SpeedTouchStateResponse" ]
+  }, {
+    "path" : "/topic/room/{joinCode}/winner",
+    "payloadType" : "WebSocketResponse<WinnerResponse>",
+    "publishers" : [ {
+      "description" : "룰렛 당첨자 브로드캐스트",
+      "source" : {
+        "className" : "RoomMessagePublisher",
+        "methodName" : "onRouletteWinnerSelected"
+      }
+    } ],
+    "referencedSchemas" : [ "WinnerResponse" ]
+  } ],
+  "queues" : [ {
+    "path" : "/user/queue/friends/presence",
+    "payloadType" : "WebSocketResponse<PresencePayload>",
+    "publishers" : [ {
+      "description" : "친구 접속 상태 변경 알림",
+      "source" : {
+        "className" : "PresenceNotifier",
+        "methodName" : "onPresenceChanged"
+      }
+    } ],
+    "referencedSchemas" : [ "PresencePayload" ]
+  }, {
+    "path" : "/user/queue/friends/removed",
+    "payloadType" : "WebSocketResponse<FriendRemovedPayload>",
+    "publishers" : [ {
+      "description" : "친구 삭제 알림",
+      "source" : {
+        "className" : "FriendNotifier",
+        "methodName" : "onFriendRemoved"
+      }
+    } ],
+    "referencedSchemas" : [ "FriendRemovedPayload" ]
+  }, {
+    "path" : "/user/queue/friends/requests",
+    "payloadType" : "WebSocketResponse<FriendRequestPayload>",
+    "publishers" : [ {
+      "description" : "친구 요청 수신 알림",
+      "source" : {
+        "className" : "FriendNotifier",
+        "methodName" : "onFriendRequestCreated"
+      }
+    } ],
+    "referencedSchemas" : [ "FriendRequestPayload" ]
+  }, {
+    "path" : "/user/queue/friends/responses",
+    "payloadType" : "WebSocketResponse<FriendResponsePayload>",
+    "publishers" : [ {
+      "description" : "친구 요청 수락 알림 (요청자·수신자 양방향)",
+      "source" : {
+        "className" : "FriendNotifier",
+        "methodName" : "onFriendRequestAccepted"
+      }
+    }, {
+      "description" : "친구 요청 거절 알림",
+      "source" : {
+        "className" : "FriendNotifier",
+        "methodName" : "onFriendRequestRejected"
+      }
+    } ],
+    "referencedSchemas" : [ "FriendResponsePayload" ]
+  }, {
+    "path" : "/user/queue/rooms/invitations",
+    "payloadType" : "WebSocketResponse<RoomInvitationPayload>",
+    "publishers" : [ {
+      "description" : "방 초대 알림",
+      "source" : {
+        "className" : "FriendNotifier",
+        "methodName" : "onRoomInvitationSent"
+      }
+    } ],
+    "referencedSchemas" : [ "RoomInvitationPayload" ]
+  } ],
+  "sends" : [ {
+    "destination" : "/app/room/{joinCode}/blind-timer/stop",
+    "description" : "블라인드 타이머 게임 STOP 버튼",
+    "requestType" : "StopCommand",
+    "triggersTopics" : [ "/topic/room/{joinCode}/blind-timer/progress" ],
+    "source" : {
+      "className" : "BlindTimerGameWebSocketController",
+      "methodName" : "stop"
+    },
+    "referencedSchemas" : [ "StopCommand" ]
+  }, {
+    "destination" : "/app/room/{joinCode}/block-stacking/fail",
+    "description" : "블록 쌓기 실패 이벤트 — 상태 변경 브로드캐스트",
+    "requestType" : null,
+    "triggersTopics" : [ "/topic/room/{joinCode}/block-stacking/state" ],
+    "source" : {
+      "className" : "BlockStackingWebSocketController",
+      "methodName" : "recordFail"
+    },
+    "referencedSchemas" : [ ]
+  }, {
+    "destination" : "/app/room/{joinCode}/block-stacking/progress",
+    "description" : "블록 쌓기 진행 이벤트 — overlap 을 재계산하여 유효한 안착만 인정 후 랭킹 브로드캐스트",
+    "requestType" : "BlockStackingProgressRequest",
+    "triggersTopics" : [ "/topic/room/{joinCode}/block-stacking/progress" ],
+    "source" : {
+      "className" : "BlockStackingWebSocketController",
+      "methodName" : "recordProgress"
+    },
+    "referencedSchemas" : [ "BlockStackingProgressRequest" ]
+  }, {
+    "destination" : "/app/room/{joinCode}/ladder/draw",
+    "description" : "사다리 선 그리기 이벤트 발행 — 선 브로드캐스트",
+    "requestType" : "LadderDrawRequest",
+    "triggersTopics" : [ "/topic/room/{joinCode}/ladder/line" ],
+    "source" : {
+      "className" : "LadderWebSocketController",
+      "methodName" : "draw"
+    },
+    "referencedSchemas" : [ "LadderDrawRequest" ]
+  }, {
+    "destination" : "/app/room/{joinCode}/minigame/command",
+    "description" : "StartMiniGameCommand → round 발행, SelectCardCommand → gameState 발행",
+    "requestType" : "MiniGameMessage",
+    "triggersTopics" : [ "/topic/room/{joinCode}/round", "/topic/room/{joinCode}/gameState" ],
+    "source" : {
+      "className" : "MiniGameWebSocketController",
+      "methodName" : "commandGame"
+    },
+    "referencedSchemas" : [ "MiniGameMessage" ]
+  }, {
+    "destination" : "/app/room/{joinCode}/racing-game/tap",
+    "description" : "레이싱 게임 탭",
+    "requestType" : "TapCommand",
+    "triggersTopics" : [ "/topic/room/{joinCode}/racing-game/state" ],
+    "source" : {
+      "className" : "RacingGameWebSocketController",
+      "methodName" : "tap"
+    },
+    "referencedSchemas" : [ "TapCommand" ]
+  }, {
+    "destination" : "/app/room/{joinCode}/show-roulette",
+    "description" : "룰렛 페이지로 이동",
+    "requestType" : null,
+    "triggersTopics" : [ "/topic/room/{joinCode}/roulette" ],
+    "source" : {
+      "className" : "RoomWebSocketController",
+      "methodName" : "broadcastShowRoulette"
+    },
+    "referencedSchemas" : [ ]
+  }, {
+    "destination" : "/app/room/{joinCode}/speed-touch/touch",
+    "description" : "스피드 터치 게임 터치 — 1 to 25 스피드 터치에서 숫자를 터치하는 웹소켓 요청",
+    "requestType" : "TouchCommand",
+    "triggersTopics" : [ "/topic/room/{joinCode}/speed-touch/progress" ],
+    "source" : {
+      "className" : "SpeedTouchGameWebSocketController",
+      "methodName" : "touch"
+    },
+    "referencedSchemas" : [ "TouchCommand" ]
+  }, {
+    "destination" : "/app/room/{joinCode}/spin-roulette",
+    "description" : "룰렛 게임 실행 및 당첨자 발표",
+    "requestType" : "RouletteSpinMessage",
+    "triggersTopics" : [ "/topic/room/{joinCode}/winner" ],
+    "source" : {
+      "className" : "RoomWebSocketController",
+      "methodName" : "broadcastRouletteSpin"
+    },
+    "referencedSchemas" : [ "RouletteSpinMessage" ]
+  }, {
+    "destination" : "/app/room/{joinCode}/update-minigames",
+    "description" : "미니게임 목록 업데이트 및 브로드캐스트",
+    "requestType" : "MiniGameSelectMessage",
+    "triggersTopics" : [ "/topic/room/{joinCode}/minigame" ],
+    "source" : {
+      "className" : "RoomWebSocketController",
+      "methodName" : "broadcastMiniGames"
+    },
+    "referencedSchemas" : [ "MiniGameSelectMessage" ]
+  }, {
+    "destination" : "/app/room/{joinCode}/update-players",
+    "description" : "플레이어 목록 업데이트 및 브로드캐스트",
+    "requestType" : null,
+    "triggersTopics" : [ "/topic/room/{joinCode}" ],
+    "source" : {
+      "className" : "RoomWebSocketController",
+      "methodName" : "broadcastPlayers"
+    },
+    "referencedSchemas" : [ ]
+  }, {
+    "destination" : "/app/room/{joinCode}/update-ready",
+    "description" : "플레이어 준비 상태 변경 및 브로드캐스트",
+    "requestType" : "ReadyChangeMessage",
+    "triggersTopics" : [ "/topic/room/{joinCode}" ],
+    "source" : {
+      "className" : "RoomWebSocketController",
+      "methodName" : "broadcastReady"
+    },
+    "referencedSchemas" : [ "ReadyChangeMessage" ]
+  } ],
+  "schemas" : {
+    "BlindTimerProgressResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "players",
+        "type" : "List<PlayerProgress>"
+      } ],
+      "values" : null
+    },
+    "BlindTimerStateResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "state",
+        "type" : "String"
+      }, {
+        "name" : "targetTimeMillis",
+        "type" : "long"
+      }, {
+        "name" : "blindDelayMillis",
+        "type" : "long"
+      } ],
+      "values" : null
+    },
+    "BlockStackingGameState" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "READY", "PREPARE", "PLAYING", "DONE" ]
+    },
+    "BlockStackingPlayerRankInfo" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "name",
+        "type" : "String"
+      }, {
+        "name" : "floor",
+        "type" : "int"
+      } ],
+      "values" : null
+    },
+    "BlockStackingProgressRequest" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "floor",
+        "type" : "int"
+      }, {
+        "name" : "movingBlockX",
+        "type" : "double"
+      }, {
+        "name" : "stackTopX",
+        "type" : "double"
+      }, {
+        "name" : "stackTopWidth",
+        "type" : "double"
+      } ],
+      "values" : null
+    },
+    "BlockStackingProgressResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "players",
+        "type" : "List<BlockStackingPlayerRankInfo>"
+      } ],
+      "values" : null
+    },
+    "BlockStackingStateResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "state",
+        "type" : "BlockStackingGameState"
+      }, {
+        "name" : "endTimeEpochMs",
+        "type" : "Long"
+      } ],
+      "values" : null
+    },
+    "CardInfoMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "cardType",
+        "type" : "String"
+      }, {
+        "name" : "value",
+        "type" : "int"
+      }, {
+        "name" : "selected",
+        "type" : "boolean"
+      }, {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "colorIndex",
+        "type" : "Integer"
+      } ],
+      "values" : null
+    },
+    "CommandType" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "START_MINI_GAME", "SELECT_CARD" ]
+    },
+    "FriendRemovedPayload" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "removedByUserId",
+        "type" : "Long"
+      } ],
+      "values" : null
+    },
+    "FriendRequestPayload" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "requestId",
+        "type" : "Long"
+      }, {
+        "name" : "fromUserId",
+        "type" : "Long"
+      }, {
+        "name" : "fromUserCode",
+        "type" : "String"
+      }, {
+        "name" : "fromNickname",
+        "type" : "String"
+      }, {
+        "name" : "createdAt",
+        "type" : "Instant"
+      } ],
+      "values" : null
+    },
+    "FriendResponsePayload" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "requestId",
+        "type" : "Long"
+      }, {
+        "name" : "accepted",
+        "type" : "boolean"
+      }, {
+        "name" : "counterpartUserId",
+        "type" : "Long"
+      }, {
+        "name" : "counterpartUserCode",
+        "type" : "String"
+      }, {
+        "name" : "counterpartNickname",
+        "type" : "String"
+      } ],
+      "values" : null
+    },
+    "LadderDrawRequest" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "segmentIndex",
+        "type" : "int"
+      } ],
+      "values" : null
+    },
+    "LadderGameState" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "DESCRIPTION", "PREPARE", "DRAWING", "RESULT", "DONE" ]
+    },
+    "LadderLineResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "segmentIndex",
+        "type" : "int"
+      }, {
+        "name" : "row",
+        "type" : "int"
+      }, {
+        "name" : "colorIndex",
+        "type" : "Integer"
+      } ],
+      "values" : null
+    },
+    "LadderStateResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "state",
+        "type" : "LadderGameState"
+      }, {
+        "name" : "poles",
+        "type" : "List<PoleInfo>"
+      }, {
+        "name" : "bottomRanks",
+        "type" : "Map<Integer, Integer>"
+      }, {
+        "name" : "endTimeEpochMs",
+        "type" : "Long"
+      }, {
+        "name" : "rankings",
+        "type" : "Map<String, Integer>"
+      }, {
+        "name" : "animationDurationMs",
+        "type" : "Long"
+      } ],
+      "values" : null
+    },
+    "MiniGameMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "commandType",
+        "type" : "CommandType"
+      }, {
+        "name" : "commandRequest",
+        "type" : "JsonNode"
+      } ],
+      "values" : null
+    },
+    "MiniGameSelectMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "hostName",
+        "type" : "String"
+      }, {
+        "name" : "miniGameTypes",
+        "type" : "List<MiniGameType>"
+      } ],
+      "values" : null
+    },
+    "MiniGameStartMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "miniGameType",
+        "type" : "MiniGameType"
+      } ],
+      "values" : null
+    },
+    "MiniGameStateMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "cardGameState",
+        "type" : "String"
+      }, {
+        "name" : "currentRound",
+        "type" : "String"
+      }, {
+        "name" : "cardInfoMessages",
+        "type" : "List<CardInfoMessage>"
+      }, {
+        "name" : "allSelected",
+        "type" : "Boolean"
+      } ],
+      "values" : null
+    },
+    "MiniGameType" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "CARD_GAME", "RACING_GAME", "SPEED_TOUCH", "BLIND_TIMER", "BLOCK_STACKING", "LADDER_GAME" ]
+    },
+    "PlayerProgress" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "stopped",
+        "type" : "boolean"
+      }, {
+        "name" : "timedOut",
+        "type" : "boolean"
+      } ],
+      "values" : null
+    },
+    "PlayerResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "userId",
+        "type" : "Long"
+      }, {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "playerType",
+        "type" : "PlayerType"
+      }, {
+        "name" : "isReady",
+        "type" : "Boolean"
+      }, {
+        "name" : "colorIndex",
+        "type" : "Integer"
+      }, {
+        "name" : "probability",
+        "type" : "Double"
+      } ],
+      "values" : null
+    },
+    "PlayerType" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "HOST", "GUEST" ]
+    },
+    "PoleInfo" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "index",
+        "type" : "int"
+      }, {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "colorIndex",
+        "type" : "Integer"
+      } ],
+      "values" : null
+    },
+    "PresencePayload" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "userId",
+        "type" : "Long"
+      }, {
+        "name" : "online",
+        "type" : "boolean"
+      } ],
+      "values" : null
+    },
+    "QrCodeStatus" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "PENDING", "SUCCESS", "ERROR" ]
+    },
+    "QrCodeStatusResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "status",
+        "type" : "QrCodeStatus"
+      }, {
+        "name" : "qrCodeUrl",
+        "type" : "String"
+      } ],
+      "values" : null
+    },
+    "RacingGameRunnersStateResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "distance",
+        "type" : "RacingRange"
+      }, {
+        "name" : "players",
+        "type" : "List<RunnerPosition>"
+      } ],
+      "values" : null
+    },
+    "RacingGameState" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "DESCRIPTION", "PREPARE", "PLAYING", "DONE" ]
+    },
+    "RacingGameStateResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "state",
+        "type" : "RacingGameState"
+      } ],
+      "values" : null
+    },
+    "RacingRange" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "start",
+        "type" : "int"
+      }, {
+        "name" : "end",
+        "type" : "int"
+      } ],
+      "values" : null
+    },
+    "ReadyChangeMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "joinCode",
+        "type" : "String"
+      }, {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "isReady",
+        "type" : "Boolean"
+      } ],
+      "values" : null
+    },
+    "RoomInvitationPayload" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "inviterUserId",
+        "type" : "Long"
+      }, {
+        "name" : "inviterNickname",
+        "type" : "String"
+      }, {
+        "name" : "joinCode",
+        "type" : "String"
+      } ],
+      "values" : null
+    },
+    "RoomState" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [ "READY", "PLAYING", "SCORE_BOARD", "ROULETTE", "DONE" ]
+    },
+    "RoomStatusResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "joinCode",
+        "type" : "String"
+      }, {
+        "name" : "roomState",
+        "type" : "RoomState"
+      } ],
+      "values" : null
+    },
+    "RouletteSpinMessage" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "hostName",
+        "type" : "String"
+      } ],
+      "values" : null
+    },
+    "RunnerPosition" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "position",
+        "type" : "int"
+      }, {
+        "name" : "speed",
+        "type" : "int"
+      } ],
+      "values" : null
+    },
+    "SpeedTouchProgressResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "players",
+        "type" : "List<PlayerProgress>"
+      } ],
+      "values" : null
+    },
+    "SpeedTouchStateResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "state",
+        "type" : "String"
+      } ],
+      "values" : null
+    },
+    "StopCommand" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "playerName",
+        "type" : "String"
+      } ],
+      "values" : null
+    },
+    "TapCommand" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "tapCount",
+        "type" : "int"
+      } ],
+      "values" : null
+    },
+    "TouchCommand" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "touchedNumber",
+        "type" : "int"
+      } ],
+      "values" : null
+    },
+    "WinnerResponse" : {
+      "kind" : "record",
+      "fields" : [ {
+        "name" : "playerName",
+        "type" : "String"
+      }, {
+        "name" : "colorIndex",
+        "type" : "Integer"
+      }, {
+        "name" : "randomAngle",
+        "type" : "Integer"
+      } ],
+      "values" : null
+    }
+  },
+  "errors" : {
+    "topic" : "/queue/errors",
+    "payloadType" : "WebSocketResponse<String>"
+  }
+}

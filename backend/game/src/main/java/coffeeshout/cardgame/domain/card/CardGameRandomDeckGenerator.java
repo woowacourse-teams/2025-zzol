@@ -2,7 +2,9 @@ package coffeeshout.cardgame.domain.card;
 
 import java.util.List;
 import java.util.Random;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CardGameRandomDeckGenerator implements CardGameDeckGenerator {
 
     private static final AdditionCards ADDITION_CARDS = new AdditionCards();

@@ -1,0 +1,66 @@
+management:
+  tracing:
+    enabled: false
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+
+# 운영 설정과 동일하게 맞춤
+resilience4j:
+  circuitbreaker:
+    circuit-breaker-aspect-order: 1
+    instances:
+      oracleStorage:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - java.io.IOException
+          - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
+  retry:
+    retry-aspect-order: 2
+    instances:
+      oracleStorage:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - java.io.IOException
+          - com.oracle.bmc.model.BmcException
+          - java.lang.RuntimeException
+
+redis:
+  stream:
+    common-settings:
+      max-length: 100
+      batch-size: 10
+      poll-timeout: 2s
+    thread-pools:
+      concurrent:
+        core-size: 2
+        max-size: 4
+        queue-capacity: 100
+    keys:
+      "[room]":
+        thread-pool-name: concurrent
+
+room:
+  removalDelay: 1h
+  qr:
+    prefix: "https://test.com/join"
+    width: 150
+    height: 150
+    presignedUrl:
+      expirationHours: 1
+    storage-key-prefix: qr-code
+  event:
+    timeout: 5s
+
+websocket:
+  recovery:
+    max-length: 100
+    stream-ttl-seconds: 3600
+    dedup-ttl-seconds: 1

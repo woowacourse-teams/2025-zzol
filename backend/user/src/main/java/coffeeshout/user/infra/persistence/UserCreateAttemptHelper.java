@@ -1,5 +1,6 @@
 package coffeeshout.user.infra.persistence;
 
+import coffeeshout.user.application.port.UserCreationPort;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserCode;
@@ -10,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-public class UserCreateAttemptHelper {
+public class UserCreateAttemptHelper implements UserCreationPort {
 
     private final UserJpaRepository userJpaRepository;
     private final OAuthAccountJpaRepository oAuthAccountJpaRepository;

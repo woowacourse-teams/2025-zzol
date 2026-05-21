@@ -9,7 +9,7 @@ import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.domain.UserErrorCode;
-import coffeeshout.user.infra.persistence.UserCreateAttemptHelper;
+import coffeeshout.user.application.port.UserCreationPort;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserRegistrationService {
 
     private final UserRepository userRepository;
-    private final UserCreateAttemptHelper createAttemptHelper;
+    private final UserCreationPort userCreationPort;
     private final UserCodeProperties userCodeProperties;
     private final NameValidator nameValidator;
     private final NicknameDefaultGenerator nicknameDefaultGenerator;
@@ -46,7 +46,7 @@ public class UserRegistrationService {
     private User saveNewUserWithRetry(UserNickname nickname, OAuthAccount oAuthAccount, OAuthProvider provider) {
         for (int attempt = 0; attempt < userCodeProperties.maxRetry(); attempt++) {
             try {
-                final User savedUser = createAttemptHelper.attempt(nickname, oAuthAccount);
+                final User savedUser = userCreationPort.attempt(nickname, oAuthAccount);
                 log.debug("신규 회원 가입: userCode={}, provider={}", savedUser.getUserCode(), provider);
                 return savedUser;
             } catch (DataIntegrityViolationException e) {

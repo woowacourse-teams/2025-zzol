@@ -66,6 +66,46 @@ public class LayerArchitectureTest {
             .as("user.domain은 user.ui를 참조할 수 없다");
 
     // ─────────────────────────────────────────
+    // room application.service (port 인터페이스는 엔티티 참조 허용)
+    // ─────────────────────────────────────────
+
+    /**
+     * application/port/ 는 JPA 엔티티를 메서드 시그니처에 사용하는 것이 설계상 허용됨.
+     * (포트가 인프라 어댑터에게 entity 타입을 강제하는 구조)
+     * application/service/ 는 infra.persistence를 직접 참조하면 안 됨.
+     *
+     * [기술부채] 아래 서비스들은 R10 DIP 리팩토링이 완전히 적용되지 않아 예외 처리:
+     *   RouletteService, RoomService, PlayerNameAuditService,
+     *   PlayerNameFeedbackService, PlayerNameAuditBatchProcessor, PlayerNameRankingCleanupService
+     * 해소 방향: 각 서비스가 사용하는 entity → port 인터페이스로 추상화
+     */
+    @ArchTest
+    static final ArchRule room_service는_infra_persistence를_직접_참조할_수_없다 = noClasses()
+            .that().resideInAPackage("coffeeshout.room.application.service..")
+            .and().haveSimpleNameNotContaining("RoulettePersistenceService")
+            .and().haveSimpleNameNotContaining("RouletteService")
+            .and().haveSimpleNameNotContaining("RoomService")
+            .and().haveSimpleNameNotContaining("PlayerNameAuditService")
+            .and().haveSimpleNameNotContaining("PlayerNameFeedbackService")
+            .and().haveSimpleNameNotContaining("PlayerNameAuditBatchProcessor")
+            .and().haveSimpleNameNotContaining("PlayerNameRankingCleanupService")
+            .should().dependOnClassesThat()
+            .resideInAPackage("coffeeshout.room.infra.persistence..")
+            .as("room.application.service(기술부채 목록 제외)는 room.infra.persistence를 직접 참조할 수 없다");
+
+    // ─────────────────────────────────────────
+    // user application
+    // ─────────────────────────────────────────
+
+    @ArchTest
+    static final ArchRule user_application은_infra_persistence를_직접_참조할_수_없다 = noClasses()
+            .that().resideInAPackage("coffeeshout.user.application..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("coffeeshout.user.infra.persistence..")
+            .as("user.application은 user.infra.persistence를 직접 참조할 수 없다 — " +
+                    "UserCreationPort 등 port 인터페이스를 통해 접근해야 한다");
+
+    // ─────────────────────────────────────────
     // friend 도메인 (user 모듈 내)
     // ─────────────────────────────────────────
 
@@ -75,4 +115,11 @@ public class LayerArchitectureTest {
             .should().dependOnClassesThat()
             .resideInAPackage("coffeeshout.friend.infra..")
             .as("friend.domain은 friend.infra를 참조할 수 없다");
+
+    @ArchTest
+    static final ArchRule friend_application은_infra를_직접_참조할_수_없다 = noClasses()
+            .that().resideInAPackage("coffeeshout.friend.application..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("coffeeshout.friend.infra..")
+            .as("friend.application은 friend.infra를 직접 참조할 수 없다");
 }

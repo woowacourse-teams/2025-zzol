@@ -16,4 +16,9 @@ public class RoomStatusAdapter implements RoomStatusPort {
         roomJpaRepository.findFirstByJoinCodeOrderByCreatedAtDesc(joinCode)
                 .ifPresent(entity -> entity.updateRoomStatus(state));
     }
+
+    @Override
+    public void updateStatus(RoomEntity roomEntity, RoomState state) {
+        roomEntity.updateRoomStatus(state);
+    }
 }

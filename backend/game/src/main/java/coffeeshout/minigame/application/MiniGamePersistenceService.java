@@ -40,9 +40,9 @@ public class MiniGamePersistenceService {
         final JoinCode roomJoinCode = new JoinCode(event.joinCode());
         final Room room = roomQueryService.getByJoinCode(roomJoinCode);
 
-        roomStatusPort.updateStatus(event.joinCode(), RoomState.PLAYING);
-
+        // getRoomEntity()로 먼저 엔티티를 가져와 오버로드에 넘김 — 조회 1회로 통합
         final RoomEntity roomEntity = getRoomEntity(event.joinCode());
+        roomStatusPort.updateStatus(roomEntity, RoomState.PLAYING);
         final MiniGameEntity miniGameEntity = new MiniGameEntity(roomEntity, miniGameType);
         miniGameEntityRepository.save(miniGameEntity);
 

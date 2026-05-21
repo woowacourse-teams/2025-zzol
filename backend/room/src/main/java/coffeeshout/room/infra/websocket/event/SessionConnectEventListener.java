@@ -9,9 +9,11 @@ import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.UserPrincipal;
 import coffeeshout.websocket.event.session.SessionRegisteredEvent;
+import coffeeshout.websocket.event.user.UserSessionConnectedEvent;
 import coffeeshout.websocket.metric.WebSocketMetricService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
@@ -25,6 +27,8 @@ public class SessionConnectEventListener {
     private final WebSocketMetricService webSocketMetricService;
     private final StreamPublisher streamPublisher;
     private final RoomQueryService roomQueryService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final coffeeshout.websocket.StompSessionManager sessionManager;
 
     @EventListener
     public void handleSessionConnect(SessionConnectEvent event) {
@@ -42,7 +46,18 @@ public class SessionConnectEventListener {
         }
         final String principalName = event.getUser().getName();
 
-        if (principalName.startsWith(UserPrincipal.PREFIX) || !PlayerKey.isValid(principalName)) {
+        if (principalName.startsWith(UserPrincipal.PREFIX)) {
+            final Long userId = UserPrincipal.extractUserId(event.getUser());
+            if (userId != null) {
+                sessionManager.registerUserSession(userId, sessionId);
+                eventPublisher.publishEvent(new UserSessionConnectedEvent(userId, sessionId));
+                log.debug("유저 세션 연결 이벤트 발행: userId={}, sessionId={}", userId, sessionId);
+            }
+            webSocketMetricService.completeConnection(sessionId);
+            return;
+        }
+
+        if (!PlayerKey.isValid(principalName)) {
             webSocketMetricService.completeConnection(sessionId);
             return;
         }

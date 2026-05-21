@@ -38,12 +38,16 @@ class SessionConnectEventListenerTest {
     private StreamPublisher streamPublisher;
     @Mock
     private RoomQueryService roomQueryService;
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+    @Mock
+    private coffeeshout.websocket.StompSessionManager sessionManager;
 
     private SessionConnectEventListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new SessionConnectEventListener(webSocketMetricService, streamPublisher, roomQueryService);
+        listener = new SessionConnectEventListener(webSocketMetricService, streamPublisher, roomQueryService, eventPublisher, sessionManager);
     }
 
     private SessionConnectedEvent eventWith(String principalName) {

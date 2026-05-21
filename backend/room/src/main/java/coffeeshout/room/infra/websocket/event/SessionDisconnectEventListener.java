@@ -6,10 +6,12 @@ import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.StompSessionManager;
 import coffeeshout.websocket.SubscriptionInfoService;
 import coffeeshout.websocket.event.player.PlayerDisconnectedEvent;
+import coffeeshout.websocket.event.user.UserSessionDisconnectedEvent;
 import coffeeshout.websocket.metric.WebSocketMetricService;
 import coffeeshout.websocket.ratelimit.WebSocketRateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -27,6 +29,7 @@ public class SessionDisconnectEventListener {
     private final SubscriptionInfoService subscriptionInfoService;
     private final WebSocketMetricService webSocketMetricService;
     private final WebSocketRateLimiter webSocketRateLimiter;
+    private final ApplicationEventPublisher eventPublisher;
 
     @EventListener
     public void handleSessionDisconnectEvent(SessionDisconnectEvent event) {
@@ -51,6 +54,12 @@ public class SessionDisconnectEventListener {
             final BaseEvent playerDisconnectedEvent = PlayerDisconnectedEvent.create(
                     playerKey, sessionId, "SESSION_DISCONNECT");
             streamPublisher.publish(RoomStreamKey.BROADCAST, playerDisconnectedEvent);
+        } else {
+            final Long userId = sessionManager.getUserId(sessionId);
+            if (userId != null) {
+                eventPublisher.publishEvent(new UserSessionDisconnectedEvent(userId, sessionId));
+                log.debug("유저 세션 해제 이벤트 발행: userId={}, sessionId={}", userId, sessionId);
+            }
         }
 
         webSocketMetricService.recordDisconnection(sessionId, CLIENT_DISCONNECT);

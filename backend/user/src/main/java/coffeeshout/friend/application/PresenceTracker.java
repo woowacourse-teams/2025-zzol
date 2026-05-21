@@ -2,9 +2,9 @@ package coffeeshout.friend.application;
 
 import coffeeshout.friend.config.FriendPresenceProperties;
 import coffeeshout.friend.domain.event.PresenceChangedEvent;
-import coffeeshout.websocket.UserPrincipal;
+import coffeeshout.websocket.event.user.UserSessionConnectedEvent;
+import coffeeshout.websocket.event.user.UserSessionDisconnectedEvent;
 import jakarta.annotation.PreDestroy;
-import java.security.Principal;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -15,8 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.messaging.SessionConnectEvent;
-import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 @Slf4j
 @Component
@@ -41,11 +39,8 @@ public class PresenceTracker {
     }
 
     @EventListener
-    public void onConnected(SessionConnectEvent event) {
-        final Long userId = extractUserId(event.getUser());
-        if (userId == null) {
-            return;
-        }
+    public void onConnected(UserSessionConnectedEvent event) {
+        final Long userId = event.userId();
 
         final ScheduledFuture<?> pending = pendingOffline.remove(userId);
         if (pending != null) {
@@ -63,11 +58,8 @@ public class PresenceTracker {
     }
 
     @EventListener
-    public void onDisconnected(SessionDisconnectEvent event) {
-        final Long userId = extractUserId(event.getUser());
-        if (userId == null) {
-            return;
-        }
+    public void onDisconnected(UserSessionDisconnectedEvent event) {
+        final Long userId = event.userId();
 
         final AtomicInteger counter = sessionCounts.get(userId);
         if (counter == null) {
@@ -101,9 +93,5 @@ public class PresenceTracker {
             log.debug("사용자 오프라인: userId={}", userId);
             eventPublisher.publishEvent(new PresenceChangedEvent(userId, false));
         }
-    }
-
-    private Long extractUserId(Principal principal) {
-        return UserPrincipal.extractUserId(principal);
     }
 }

@@ -7,7 +7,7 @@ import coffeeshout.websocket.docs.WsTopic;
 import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.ui.response.MiniGameStartMessage;
-import coffeeshout.cardgame.ui.response.MiniGameStateMessage;
+import coffeeshout.cardgame.application.response.MiniGameStateMessage;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import lombok.RequiredArgsConstructor;

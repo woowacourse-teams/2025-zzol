@@ -1,7 +1,10 @@
-package coffeeshout.laddergame.ui.response;
+package coffeeshout.laddergame.application.response;
 
+import coffeeshout.laddergame.application.response.PoleInfo;
 import coffeeshout.laddergame.domain.BottomRanks;
+import coffeeshout.laddergame.application.response.PoleInfo;
 import coffeeshout.laddergame.domain.LadderGameState;
+import coffeeshout.laddergame.application.response.PoleInfo;
 import coffeeshout.laddergame.domain.Poles;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

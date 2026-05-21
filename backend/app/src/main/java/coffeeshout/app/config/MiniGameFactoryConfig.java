@@ -1,4 +1,4 @@
-package coffeeshout.room.config;
+package coffeeshout.app.config;
 
 import coffeeshout.gamecommon.MiniGameFactory;
 import coffeeshout.minigame.domain.MiniGameType;

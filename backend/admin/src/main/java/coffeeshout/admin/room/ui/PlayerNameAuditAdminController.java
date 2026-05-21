@@ -1,4 +1,4 @@
-package coffeeshout.room.ui;
+package coffeeshout.admin.room.ui;
 
 import coffeeshout.room.application.service.player.name.PlayerNameAuditService;
 import coffeeshout.room.application.service.player.name.PlayerNameFeedbackService;

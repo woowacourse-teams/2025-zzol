@@ -1,4 +1,4 @@
-package coffeeshout.laddergame.ui.response;
+package coffeeshout.laddergame.application.response;
 
 public record PoleInfo(int index, String playerName, Integer colorIndex) {
 }

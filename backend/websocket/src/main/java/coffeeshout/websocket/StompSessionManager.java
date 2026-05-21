@@ -19,9 +19,21 @@ public class StompSessionManager {
     private final ConcurrentHashMap<String, String> playerSessionMap; // "joinCode:playerName" -> sessionId
     private final ConcurrentHashMap<String, String> sessionPlayerMap; // sessionId -> "joinCode:playerName"
 
+    // 사용자 세션 매핑 관리 (userId → sessionId 역방향)
+    private final ConcurrentHashMap<String, Long> sessionUserMap; // sessionId -> userId
+
     public StompSessionManager() {
         this.playerSessionMap = new ConcurrentHashMap<>();
         this.sessionPlayerMap = new ConcurrentHashMap<>();
+        this.sessionUserMap = new ConcurrentHashMap<>();
+    }
+
+    public void registerUserSession(@NonNull Long userId, @NonNull String sessionId) {
+        sessionUserMap.put(sessionId, userId);
+    }
+
+    public Long getUserId(@NonNull String sessionId) {
+        return sessionUserMap.get(sessionId);
     }
 
     /**
@@ -99,6 +111,8 @@ public class StompSessionManager {
             playerSessionMap.remove(playerKey);
             log.info("세션 매핑 제거: playerKey={}, sessionId={}", playerKey, sessionId);
         }
+
+        sessionUserMap.remove(sessionId);
 
         // 중복 disconnect 방지 세트 정리(메모리 누수 방지 목적)
         processedDisconnections.remove(sessionId);

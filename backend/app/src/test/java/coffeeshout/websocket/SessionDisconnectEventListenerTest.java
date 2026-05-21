@@ -43,8 +43,9 @@ class SessionDisconnectEventListenerTest {
     @BeforeEach
     void setUp() {
         sessionManager = new StompSessionManager();
+        final var publisher = org.mockito.Mockito.mock(org.springframework.context.ApplicationEventPublisher.class);
         listener = new SessionDisconnectEventListener(sessionManager, streamPublisher,
-                subscriptionInfoService, metricService, webSocketRateLimiter);
+                subscriptionInfoService, metricService, webSocketRateLimiter, publisher);
     }
 
     @Nested

@@ -6,7 +6,6 @@ import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.roulette.ProbabilityCalculator;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import lombok.Getter;
@@ -20,11 +19,11 @@ public class Players {
     private final ColorUsage colorUsage;
 
     public Players(String joinCode) {
-        this.players = Collections.synchronizedList(new ArrayList<>());
+        this.players = new ArrayList<>();
         this.colorUsage = new ColorUsage(joinCode);
     }
 
-    public synchronized Player join(Player player) {
+    public Player join(Player player) {
         player.assignColorIndex(colorUsage.pickRandomOne());
         player.updateProbability(Probability.ZERO);
         this.players.add(player);
@@ -71,7 +70,7 @@ public class Players {
                 .allMatch(Player::getIsReady);
     }
 
-    public synchronized boolean removePlayer(PlayerName playerName) {
+    public boolean removePlayer(PlayerName playerName) {
         return players.removeIf(player -> {
             if (player.sameName(playerName)) {
                 colorUsage.release(player.getColorIndex());

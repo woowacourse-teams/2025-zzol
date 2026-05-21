@@ -38,9 +38,9 @@ public class StompPrincipalInterceptor implements ChannelInterceptor {
         final String roomToken = accessor.getFirstNativeHeader("roomToken");
         if (roomToken != null) {
             final RoomSessionClaim claim = roomSessionTokenService.verify(roomToken);
-            final String userName = PlayerKey.of(claim.joinCode(), claim.playerName()).toString();
-            accessor.setUser(() -> userName);
-            log.debug("STOMP Room Principal 설정: {}", userName);
+            final String playerKey = PlayerKey.of(claim.joinCode(), claim.playerName(), claim.userId()).toString();
+            accessor.setUser(() -> playerKey);
+            log.debug("STOMP Room Principal 설정: {}", playerKey);
             return message;
         }
 

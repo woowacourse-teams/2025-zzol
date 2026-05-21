@@ -7,6 +7,9 @@ import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.event.UserNicknameRegisteredEvent;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.exception.UserErrorCode;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -41,5 +44,11 @@ public class UserProfileService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND,
                         "존재하지 않는 회원입니다. id=" + userId));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, String> findUserCodesByIds(List<Long> userIds) {
+        return userRepository.findAllByIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u.getUserCode().value()));
     }
 }

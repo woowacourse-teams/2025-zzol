@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import coffeeshout.cardgame.domain.CardGameScore;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.GameSession;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -70,18 +71,18 @@ class MiniGameResultSaveEventListenerTest {
 
         @Test
         void 회원_플레이어는_1위면_isWinner_true로_UserStats가_업데이트된다() {
-            PlayerName 한스 = new PlayerName("한스");
-            PlayerName 루키 = new PlayerName("루키");
+            Gamer 한스_게이머 = Gamer.guest(new PlayerName("한스"));
+            Gamer 루키_게이머 = Gamer.guest(new PlayerName("루키"));
 
-            MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<PlayerName, MiniGameScore> scores = Map.of(
-                    한스, new CardGameScore(100),
-                    루키, new CardGameScore(80)
+            MiniGameResult result = new MiniGameResult(Map.of(한스_게이머, 1, 루키_게이머, 2));
+            Map<Gamer, MiniGameScore> scores = Map.of(
+                    한스_게이머, new CardGameScore(100),
+                    루키_게이머, new CardGameScore(80)
             );
 
             RoomEntity roomEntity = 룸엔티티_설정();
             미니게임엔티티_설정(roomEntity);
-            도메인룸_설정(List.of(한스, 루키), result, scores);
+            도메인룸_설정(List.of(한스_게이머, 루키_게이머), result, scores);
 
             PlayerEntity 한스Entity = 플레이어엔티티("한스", 1L);
             PlayerEntity 루키Entity = 플레이어엔티티("루키", 2L);
@@ -96,18 +97,18 @@ class MiniGameResultSaveEventListenerTest {
 
         @Test
         void 게스트_플레이어는_userId가_null이므로_UserStats_업데이트에서_제외된다() {
-            PlayerName 한스 = new PlayerName("한스");
-            PlayerName 루키 = new PlayerName("루키");
+            Gamer 한스_게이머 = Gamer.guest(new PlayerName("한스"));
+            Gamer 루키_게이머 = Gamer.guest(new PlayerName("루키"));
 
-            MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<PlayerName, MiniGameScore> scores = Map.of(
-                    한스, new CardGameScore(100),
-                    루키, new CardGameScore(80)
+            MiniGameResult result = new MiniGameResult(Map.of(한스_게이머, 1, 루키_게이머, 2));
+            Map<Gamer, MiniGameScore> scores = Map.of(
+                    한스_게이머, new CardGameScore(100),
+                    루키_게이머, new CardGameScore(80)
             );
 
             RoomEntity roomEntity = 룸엔티티_설정();
             미니게임엔티티_설정(roomEntity);
-            도메인룸_설정(List.of(한스, 루키), result, scores);
+            도메인룸_설정(List.of(한스_게이머, 루키_게이머), result, scores);
 
             PlayerEntity 한스Entity = 플레이어엔티티("한스", 1L);   // 회원
             PlayerEntity 루키Entity = 플레이어엔티티("루키", null);  // 게스트
@@ -122,18 +123,18 @@ class MiniGameResultSaveEventListenerTest {
 
         @Test
         void 전원_게스트인_방은_UserStats_업데이트가_발생하지_않는다() {
-            PlayerName 한스 = new PlayerName("한스");
-            PlayerName 루키 = new PlayerName("루키");
+            Gamer 한스_게이머 = Gamer.guest(new PlayerName("한스"));
+            Gamer 루키_게이머 = Gamer.guest(new PlayerName("루키"));
 
-            MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<PlayerName, MiniGameScore> scores = Map.of(
-                    한스, new CardGameScore(100),
-                    루키, new CardGameScore(80)
+            MiniGameResult result = new MiniGameResult(Map.of(한스_게이머, 1, 루키_게이머, 2));
+            Map<Gamer, MiniGameScore> scores = Map.of(
+                    한스_게이머, new CardGameScore(100),
+                    루키_게이머, new CardGameScore(80)
             );
 
             RoomEntity roomEntity = 룸엔티티_설정();
             미니게임엔티티_설정(roomEntity);
-            도메인룸_설정(List.of(한스, 루키), result, scores);
+            도메인룸_설정(List.of(한스_게이머, 루키_게이머), result, scores);
 
             PlayerEntity 한스Entity = 플레이어엔티티("한스", null);
             PlayerEntity 루키Entity = 플레이어엔티티("루키", null);
@@ -160,17 +161,18 @@ class MiniGameResultSaveEventListenerTest {
                 .thenReturn(Optional.of(miniGameEntity));
     }
 
-    private void 도메인룸_설정(List<PlayerName> playerNames, MiniGameResult result, Map<PlayerName, MiniGameScore> scores) {
+    private void 도메인룸_설정(List<Gamer> gamers, MiniGameResult result, Map<Gamer, MiniGameScore> scores) {
         Playable miniGame = mock(Playable.class);
         when(miniGame.getResult()).thenReturn(result);
         when(miniGame.getScores()).thenReturn(scores);
+        when(miniGame.getGamers()).thenReturn(gamers);
 
         GameSession session = mock(GameSession.class);
         when(session.findCompletedGame(MiniGameType.CARD_GAME)).thenReturn(miniGame);
         when(gameSessionService.getSession(new JoinCode(JOIN_CODE))).thenReturn(session);
 
-        List<Player> players = playerNames.stream()
-                .map(Player::createGuest)
+        List<Player> players = gamers.stream()
+                .map(g -> Player.createGuest(g.name()))
                 .toList();
 
         Room room = mock(Room.class);

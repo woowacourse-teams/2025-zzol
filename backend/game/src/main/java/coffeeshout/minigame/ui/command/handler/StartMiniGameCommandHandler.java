@@ -18,7 +18,7 @@ public class StartMiniGameCommandHandler implements MiniGameCommandHandler<Start
     private final StreamPublisher streamPublisher;
 
     @Override
-    public void handle(String joinCode, StartMiniGameCommand command) {
+    public void handle(String joinCode, StartMiniGameCommand command, coffeeshout.websocket.PlayerKey playerKey) {
         final BaseEvent event = new StartMiniGameCommandEvent(joinCode, command.hostName());
         streamPublisher.publish(MinigameStreamKey.EVENTS, event);
     }

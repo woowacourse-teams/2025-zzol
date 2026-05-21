@@ -1,7 +1,7 @@
 package coffeeshout.minigame.ui.response;
 
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameScore;
-import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Map;
 import lombok.NonNull;
@@ -10,21 +10,30 @@ public record MiniGameScoresResponse(List<MiniGameScoreResponse> scores) {
 
     public record MiniGameScoreResponse(
             String playerName,
+            String userCode,
             Long score
     ) {
 
-        public static MiniGameScoreResponse from(@NonNull Map.Entry<PlayerName, MiniGameScore> scoreEntry) {
+        public static MiniGameScoreResponse from(
+                @NonNull Map.Entry<Gamer, MiniGameScore> scoreEntry,
+                @NonNull Map<Long, String> userCodes
+        ) {
+            final Gamer gamer = scoreEntry.getKey();
             return new MiniGameScoreResponse(
-                    scoreEntry.getKey().value(),
+                    gamer.name().value(),
+                    gamer.userId() != null ? userCodes.get(gamer.userId()) : null,
                     scoreEntry.getValue().getValue()
             );
         }
     }
 
-    public static MiniGameScoresResponse from(Map<PlayerName, MiniGameScore> miniGameScores) {
+    public static MiniGameScoresResponse from(
+            @NonNull Map<Gamer, MiniGameScore> scores,
+            @NonNull Map<Long, String> userCodes
+    ) {
         return new MiniGameScoresResponse(
-                miniGameScores.entrySet().stream()
-                        .map(MiniGameScoreResponse::from)
+                scores.entrySet().stream()
+                        .map(e -> MiniGameScoreResponse.from(e, userCodes))
                         .toList());
     }
 }

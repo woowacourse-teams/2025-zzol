@@ -1,6 +1,5 @@
 package coffeeshout.minigame.domain;
 
-import coffeeshout.room.domain.player.PlayerName;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -13,26 +12,26 @@ import lombok.NonNull;
 @Getter
 public class MiniGameResult {
 
-    private final Map<PlayerName, Integer> rank;
+    private final Map<Gamer, Integer> rank;
 
-    public MiniGameResult(Map<PlayerName, Integer> rank) {
+    public MiniGameResult(Map<Gamer, Integer> rank) {
         this.rank = rank;
     }
 
-    public Integer getPlayerRank(PlayerName playerName) {
-        return rank.get(playerName);
+    public Integer getPlayerRank(Gamer gamer) {
+        return rank.get(gamer);
     }
 
-    public static MiniGameResult fromDescending(@NonNull Map<PlayerName, MiniGameScore> playerScores) {
+    public static MiniGameResult fromDescending(@NonNull Map<Gamer, MiniGameScore> playerScores) {
         return of(playerScores, Comparator.reverseOrder());
     }
 
-    public static MiniGameResult fromAscending(@NonNull Map<PlayerName, MiniGameScore> playerScores) {
+    public static MiniGameResult fromAscending(@NonNull Map<Gamer, MiniGameScore> playerScores) {
         return of(playerScores, Comparator.naturalOrder());
     }
 
     public static MiniGameResult of(
-            @NonNull Map<PlayerName, MiniGameScore> playerScores,
+            @NonNull Map<Gamer, MiniGameScore> playerScores,
             Comparator<MiniGameScore> comparator
     ) {
         final List<MiniGameScore> sortedScores = playerScores.values().stream()
@@ -72,7 +71,7 @@ public class MiniGameResult {
                 .count();
     }
 
-    public Map<PlayerName, Integer> toRankMap() {
+    public Map<Gamer, Integer> toRankMap() {
         return Map.copyOf(rank);
     }
 }

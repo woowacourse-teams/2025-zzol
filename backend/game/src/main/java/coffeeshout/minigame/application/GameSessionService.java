@@ -2,6 +2,7 @@ package coffeeshout.minigame.application;
 
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.GameSessionRepository;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -80,7 +81,7 @@ public class GameSessionService {
         }
     }
 
-    public Map<PlayerName, MiniGameScore> getScores(JoinCode joinCode, MiniGameType miniGameType) {
+    public Map<Gamer, MiniGameScore> getScores(JoinCode joinCode, MiniGameType miniGameType) {
         final GameSession session = gameSessionRepository.getByJoinCode(joinCode);
         return session.findCompletedGame(miniGameType).getScores();
     }

@@ -12,6 +12,7 @@ import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -27,6 +28,7 @@ import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -71,7 +73,8 @@ public class MiniGameResultSaveEventListener {
         final Playable miniGame = session.findCompletedGame(miniGameType);
 
         final MiniGameResult result = miniGame.getResult();
-        final Map<PlayerName, MiniGameScore> scores = miniGame.getScores();
+        final Map<Gamer, MiniGameScore> scores = miniGame.getScores();
+        final List<Gamer> allGamers = miniGame.getGamers();
 
         final Room room = roomQueryService.getByJoinCode(joinCode);
 
@@ -96,8 +99,9 @@ public class MiniGameResultSaveEventListener {
                 throw new IllegalArgumentException("플레이어가 존재하지 않습니다: " + player.getName().value());
             }
 
-            final Integer rank = result.getPlayerRank(player.getName());
-            final Long score = scores.get(player.getName()).getValue();
+            final Gamer gamer = findGamer(allGamers, player);
+            final Integer rank = result.getPlayerRank(gamer);
+            final Long score = scores.get(gamer).getValue();
 
             resultEntities.add(new MiniGameResultEntity(
                     miniGameEntity,
@@ -116,8 +120,19 @@ public class MiniGameResultSaveEventListener {
                         entity.getRank() == 1
                 ));
 
-        roomCommandService.applyGameResult(joinCode, result.toRankMap(), session.getTotalGameCount());
+        final Map<PlayerName, Integer> rankByPlayerName = result.toRankMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey().name(), Map.Entry::getValue));
+        roomCommandService.applyGameResult(joinCode, rankByPlayerName, session.getTotalGameCount());
 
         log.info("미니게임 결과 벌크 저장 완료: joinCode={}, playerCount={}", event.joinCode(), resultEntities.size());
+    }
+
+    private Gamer findGamer(List<Gamer> gamers, Player player) {
+        return gamers.stream()
+                .filter(g -> g.name().equals(player.getName())
+                        && Objects.equals(g.userId(), player.getUserId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Gamer를 찾을 수 없습니다: " + player.getName().value()));
     }
 }

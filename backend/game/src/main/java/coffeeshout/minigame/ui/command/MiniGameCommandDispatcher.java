@@ -1,5 +1,6 @@
 package coffeeshout.minigame.ui.command;
 
+import coffeeshout.websocket.PlayerKey;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,11 +19,11 @@ public class MiniGameCommandDispatcher {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends MiniGameCommand> void dispatch(String joinCode, T command) {
+    public <T extends MiniGameCommand> void dispatch(String joinCode, T command, PlayerKey playerKey) {
         final MiniGameCommandHandler<T> handler = (MiniGameCommandHandler<T>) handlers.get(command.getClass());
         if (handler == null) {
             throw new IllegalArgumentException("해당하는 요청에 대한 게임이 존재하지 않습니다.");
         }
-        handler.handle(joinCode, command);
+        handler.handle(joinCode, command, playerKey);
     }
 }

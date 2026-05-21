@@ -1,12 +1,15 @@
 package coffeeshout.websocket;
 
+import coffeeshout.exception.custom.BusinessException;
+import java.security.Principal;
 import lombok.NonNull;
 
 /**
- * 플레이어 식별 키 (joinCode:playerName)
+ * 플레이어 식별 키 (joinCode:playerName[:userId])
  * <p>웹소켓 세션 매핑, Principal 설정 등에서 공통으로 사용</p>
+ * <p>로그인 사용자는 userId를 포함해 Principal을 구성한다.</p>
  */
-public record PlayerKey(@NonNull String joinCode, @NonNull String playerName) {
+public record PlayerKey(@NonNull String joinCode, @NonNull String playerName, Long userId) {
 
     private static final String DELIMITER = ":";
 
@@ -21,16 +24,36 @@ public record PlayerKey(@NonNull String joinCode, @NonNull String playerName) {
     }
 
     public static PlayerKey of(@NonNull String joinCode, @NonNull String playerName) {
-        return new PlayerKey(joinCode, playerName);
+        return new PlayerKey(joinCode, playerName, null);
+    }
+
+    public static PlayerKey of(@NonNull String joinCode, @NonNull String playerName, Long userId) {
+        return new PlayerKey(joinCode, playerName, userId);
     }
 
     public static PlayerKey parse(@NonNull String playerKey) {
-        String[] parts = playerKey.split(DELIMITER);
-        if (parts.length != 2 || parts[0].isEmpty() || parts[1].isEmpty()) {
-            throw new IllegalArgumentException(
-                    "플레이어 키 형식이 잘못되었습니다. 예상: joinCode" + DELIMITER + "playerName, 실제: " + playerKey);
+        final String[] parts = playerKey.split(DELIMITER, -1);
+        if (parts.length == 2) {
+            if (parts[0].isEmpty() || parts[1].isEmpty()) {
+                throw new BusinessException(PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT,
+                        "플레이어 키 형식이 잘못되었습니다: " + playerKey);
+            }
+            return new PlayerKey(parts[0], parts[1], null);
         }
-        return new PlayerKey(parts[0], parts[1]);
+        if (parts.length == 3) {
+            if (parts[0].isEmpty() || parts[1].isEmpty() || parts[2].isEmpty()) {
+                throw new BusinessException(PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT,
+                        "플레이어 키 형식이 잘못되었습니다: " + playerKey);
+            }
+            try {
+                return new PlayerKey(parts[0], parts[1], Long.parseLong(parts[2]));
+            } catch (NumberFormatException e) {
+                throw new BusinessException(PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT,
+                        "플레이어 키 형식이 잘못되었습니다. userId는 숫자여야 합니다: " + playerKey);
+            }
+        }
+        throw new BusinessException(PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT,
+                "플레이어 키 형식이 잘못되었습니다: " + playerKey);
     }
 
     public static String prefix(@NonNull String joinCode) {
@@ -38,15 +61,22 @@ public record PlayerKey(@NonNull String joinCode, @NonNull String playerName) {
     }
 
     public static boolean isValid(String playerKey) {
-        if (playerKey == null || !playerKey.contains(DELIMITER)) {
+        if (playerKey == null) {
             return false;
         }
-        String[] parts = playerKey.split(DELIMITER);
-        return parts.length == 2 && !parts[0].isEmpty() && !parts[1].isEmpty();
+        try {
+            parse(playerKey);
+            return true;
+        } catch (BusinessException e) {
+            return false;
+        }
     }
 
     @Override
     public String toString() {
+        if (userId != null) {
+            return joinCode + DELIMITER + playerName + DELIMITER + userId;
+        }
         return joinCode + DELIMITER + playerName;
     }
 }

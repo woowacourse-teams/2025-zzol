@@ -1,8 +1,10 @@
 package coffeeshout.websocket;
 
+import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import coffeeshout.websocket.PlayerKeyErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -45,17 +47,19 @@ class StompSessionManagerTest {
     @Test
     void joinCode에_구분자가_포함된_경우_예외_발생() {
         // when & then
-        assertThatThrownBy(() -> PlayerKey.of("ABC:23", "player1"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("구분자");
+        assertCoffeeShoutException(
+                () -> PlayerKey.of("ABC:23", "player1"),
+                PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT
+        );
     }
 
     @Test
     void playerName에_구분자가_포함된_경우_예외_발생() {
         // when & then
-        assertThatThrownBy(() -> PlayerKey.of("ABC23", "play:er1"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("구분자");
+        assertCoffeeShoutException(
+                () -> PlayerKey.of("ABC23", "play:er1"),
+                PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT
+        );
     }
 
     @Test
@@ -92,25 +96,28 @@ class StompSessionManagerTest {
     @Test
     void 구분자가_없는_플레이어_키로_parse_시_예외_발생() {
         // when & then
-        assertThatThrownBy(() -> PlayerKey.parse("ABC23player1"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("형식이 잘못되었습니다");
+        assertCoffeeShoutException(
+                () -> PlayerKey.parse("ABC23player1"),
+                PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT
+        );
     }
 
     @Test
     void 잘못된_형식의_플레이어_키로_parse_시_예외_발생() {
         // when & then
-        assertThatThrownBy(() -> PlayerKey.parse("ABC23:player1:extra"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("형식이 잘못되었습니다");
+        assertCoffeeShoutException(
+                () -> PlayerKey.parse("ABC23:player1:extra"),
+                PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT
+        );
     }
 
     @Test
     void 빈_joinCode가_있는_플레이어_키_parse_시_예외_발생() {
         // when & then
-        assertThatThrownBy(() -> PlayerKey.parse(":player1"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("형식이 잘못되었습니다");
+        assertCoffeeShoutException(
+                () -> PlayerKey.parse(":player1"),
+                PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT
+        );
     }
 
     @Test

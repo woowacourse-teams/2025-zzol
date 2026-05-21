@@ -1,3 +1,0 @@
-ALTER TABLE report
-    ADD COLUMN status      VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
-    ADD COLUMN resolved_at TIMESTAMP(6);

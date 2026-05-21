@@ -1,1 +1,0 @@
-ALTER TABLE room_session ADD COLUMN version BIGINT NOT NULL DEFAULT 0;

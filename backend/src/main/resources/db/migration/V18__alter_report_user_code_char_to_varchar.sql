@@ -1,2 +1,0 @@
-ALTER TABLE report
-    MODIFY COLUMN user_code VARCHAR(5);

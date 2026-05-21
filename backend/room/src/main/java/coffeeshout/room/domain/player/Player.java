@@ -63,10 +63,6 @@ public class Player {
         return Gamer.of(name.value(), userId);
     }
 
-    public String getNameValue() {
-        return name.value();
-    }
-
     @Override
     public boolean equals(final Object object) {
         if (this == object) {

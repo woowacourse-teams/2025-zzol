@@ -1,5 +1,6 @@
 package coffeeshout.room.domain.service;
 
+import coffeeshout.gamecommon.MiniGameFactory;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.gamecommon.Playable;
@@ -10,6 +11,7 @@ import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.domain.repository.RoomRepository;
 import java.util.List;
+import java.util.Map;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class RoomCommandService {
 
     private final RoomRepository roomRepository;
     private final RoomQueryService roomQueryService;
+    private final Map<MiniGameType, MiniGameFactory> miniGameFactoryMap;
 
     public Room save(Room room) {
         return roomRepository.save(room);
@@ -138,7 +141,7 @@ public class RoomCommandService {
         room.clearMiniGames();
 
         miniGameTypes.forEach(miniGameType -> {
-            final Playable miniGame = miniGameType.createMiniGame(joinCode.getValue());
+            final Playable miniGame = miniGameFactoryMap.get(miniGameType).create(joinCode.getValue());
             room.addMiniGame(hostName, miniGame);
         });
 

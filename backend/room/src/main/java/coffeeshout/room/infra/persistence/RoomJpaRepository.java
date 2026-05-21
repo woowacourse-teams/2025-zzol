@@ -1,13 +1,7 @@
 package coffeeshout.room.infra.persistence;
 
-import java.util.Optional;
+import coffeeshout.room.application.port.RoomEntityRepository;
 import org.springframework.data.repository.Repository;
 
-public interface RoomJpaRepository extends Repository<RoomEntity, Long> {
-
-    RoomEntity save(RoomEntity roomEntity);
-
-    RoomEntity saveAndFlush(RoomEntity roomEntity);
-
-    Optional<RoomEntity> findFirstByJoinCodeOrderByCreatedAtDesc(String joinCode);
+public interface RoomJpaRepository extends Repository<RoomEntity, Long>, RoomEntityRepository {
 }

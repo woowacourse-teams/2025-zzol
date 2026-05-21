@@ -36,8 +36,8 @@ import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.config.RouletteProperties;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
+import coffeeshout.room.application.port.RoomEntityRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.room.infra.persistence.RoulettePersistenceService;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
@@ -73,7 +73,7 @@ public class RoomService {
     private final PlayerNameGenerator playerNameGenerator;
     private final JoinCodeGenerator joinCodeGenerator;
     private final RoomEventWaitManager roomEventWaitManager;
-    private final RoomJpaRepository roomJpaRepository;
+    private final RoomEntityRepository roomEntityRepository;
     private final RoulettePersistenceService roulettePersistenceService;
     private final RouletteService rouletteService;
     private final OutboxEventRecorder outboxEventRecorder;
@@ -378,6 +378,6 @@ public class RoomService {
 
     private void saveRoomEntity(String joinCodeValue) {
         final RoomEntity roomEntity = new RoomEntity(joinCodeValue);
-        roomJpaRepository.save(roomEntity);
+        roomEntityRepository.save(roomEntity);
     }
 }

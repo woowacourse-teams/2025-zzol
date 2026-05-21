@@ -1,7 +1,7 @@
 package coffeeshout.room.application.service;
 
 import coffeeshout.room.domain.service.ProfanityChecker;
-import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
+import coffeeshout.room.application.port.CustomProfanityRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -18,7 +18,7 @@ public class CustomProfanityLoader implements ApplicationRunner {
 
     private static final int CHUNK_SIZE = 500;
 
-    private final CustomProfanityJpaRepository customProfanityRepository;
+    private final CustomProfanityRepository customProfanityRepository;
     private final ProfanityChecker profanityChecker;
 
     @Override

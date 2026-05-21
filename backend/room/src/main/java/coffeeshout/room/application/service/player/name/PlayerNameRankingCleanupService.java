@@ -4,9 +4,9 @@ import coffeeshout.room.application.port.RankingNicknameProvider;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameGenerator;
+import coffeeshout.room.application.port.PlayerEntityRepository;
+import coffeeshout.room.application.port.PlayerNameAuditRepository;
 import coffeeshout.room.infra.persistence.PlayerEntity;
-import coffeeshout.room.infra.persistence.PlayerJpaRepository;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import coffeeshout.room.infra.persistence.RoomEntity;
@@ -29,8 +29,8 @@ public class PlayerNameRankingCleanupService {
 
     private final Clock clock;
     private final RankingNicknameProvider rankingNicknameProvider;
-    private final PlayerNameAuditJpaRepository auditRepository;
-    private final PlayerJpaRepository playerRepository;
+    private final PlayerNameAuditRepository auditRepository;
+    private final PlayerEntityRepository playerRepository;
     private final PlayerNameGenerator nicknameGenerator;
 
     @Transactional

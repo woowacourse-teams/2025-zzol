@@ -1,21 +1,12 @@
 package coffeeshout.room.infra.persistence;
 
-import java.util.List;
-import java.util.Optional;
+import coffeeshout.room.application.port.PlayerEntityRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
-public interface PlayerJpaRepository extends Repository<PlayerEntity, Long> {
-    PlayerEntity save(PlayerEntity playerEntity);
+public interface PlayerJpaRepository extends Repository<PlayerEntity, Long>, PlayerEntityRepository {
 
-    Optional<PlayerEntity> findByRoomSessionAndPlayerName(RoomEntity roomSession, String playerName);
-
-    List<PlayerEntity> findByRoomSessionAndPlayerNameIn(RoomEntity roomSession, List<String> playerNames);
-
+    @Override
     @Query("SELECT p FROM PlayerEntity p JOIN FETCH p.roomSession WHERE p.playerName = :playerName")
-    List<PlayerEntity> findAllByPlayerName(String playerName);
-
-    List<PlayerEntity> findAllByRoomSession(RoomEntity roomSession);
-
-    List<PlayerEntity> findAllByRoomSessionIn(List<RoomEntity> roomSessions);
+    java.util.List<PlayerEntity> findAllByPlayerName(String playerName);
 }

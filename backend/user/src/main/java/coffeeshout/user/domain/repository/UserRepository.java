@@ -21,4 +21,6 @@ public interface UserRepository {
     List<User> findAllByIds(List<Long> ids);
 
     void softDeleteById(Long userId);
+
+    void agreeTerms(Long userId);
 }

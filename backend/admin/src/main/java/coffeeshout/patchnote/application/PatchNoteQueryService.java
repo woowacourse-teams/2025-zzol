@@ -1,7 +1,7 @@
 package coffeeshout.patchnote.application;
 
+import coffeeshout.patchnote.domain.PatchNoteRepository;
 import coffeeshout.patchnote.infra.persistence.PatchNoteEntity;
-import coffeeshout.patchnote.infra.persistence.PatchNoteJpaRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -12,15 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PatchNoteQueryService {
 
-    private final PatchNoteJpaRepository patchNoteJpaRepository;
+    private final PatchNoteRepository patchNoteRepository;
 
     @Transactional(readOnly = true)
     public List<PatchNoteEntity> findAll() {
-        return patchNoteJpaRepository.findAllByOrderByCreatedAtDesc();
+        return patchNoteRepository.findAllByOrderByCreatedAtDesc();
     }
 
     @Transactional(readOnly = true)
     public Optional<PatchNoteEntity> findLatest() {
-        return patchNoteJpaRepository.findFirstByOrderByCreatedAtDesc();
+        return patchNoteRepository.findFirstByOrderByCreatedAtDesc();
     }
 }

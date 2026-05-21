@@ -100,6 +100,14 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    @Transactional
+    public void agreeTerms(Long userId) {
+        final UserEntity userEntity = userJpaRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+        userEntity.agreeTerms();
+    }
+
+    @Override
     public List<User> findAllByNickname(UserNickname nickname) {
         final List<UserEntity> users = userJpaRepository.findAllByNickname(nickname.value());
         if (users.isEmpty()) {

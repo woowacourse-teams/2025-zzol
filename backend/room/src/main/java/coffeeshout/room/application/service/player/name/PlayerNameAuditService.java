@@ -3,8 +3,8 @@ package coffeeshout.room.application.service.player.name;
 import coffeeshout.room.config.PlayerNameAuditProperties;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
+import coffeeshout.room.application.port.PlayerNameAuditRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -27,7 +27,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class PlayerNameAuditService {
 
-    private final PlayerNameAuditJpaRepository auditRepository;
+    private final PlayerNameAuditRepository auditRepository;
     private final PlayerNameAuditBatchProcessor batchProcessor;
     private final PlayerNameAuditProperties properties;
     private final MeterRegistry meterRegistry;

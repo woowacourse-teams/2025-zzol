@@ -5,11 +5,11 @@ import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.event.ProfanityWordAllowedEvent;
 import coffeeshout.global.event.ProfanityWordBlockedEvent;
-import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
+import coffeeshout.room.application.port.CustomProfanityRepository;
+import coffeeshout.room.application.port.PlayerNameAuditRepository;
+import coffeeshout.room.application.port.PlayerNameFeedbackRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackEntity;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameFeedbackJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,9 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PlayerNameFeedbackService {
 
-    private final PlayerNameAuditJpaRepository auditRepository;
-    private final PlayerNameFeedbackJpaRepository feedbackRepository;
-    private final CustomProfanityJpaRepository customProfanityRepository;
+    private final PlayerNameAuditRepository auditRepository;
+    private final PlayerNameFeedbackRepository feedbackRepository;
+    private final CustomProfanityRepository customProfanityRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional

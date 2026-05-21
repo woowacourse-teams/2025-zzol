@@ -4,10 +4,10 @@ import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;
 import coffeeshout.global.event.ProfanityWordBlockedEvent;
+import coffeeshout.room.application.port.CustomProfanityRepository;
+import coffeeshout.room.application.port.PlayerNameAuditRepository;
 import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity.Source;
-import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -26,9 +26,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 @RequiredArgsConstructor
 public class PlayerNameAuditBatchProcessor {
 
-    private final PlayerNameAuditJpaRepository auditRepository;
+    private final PlayerNameAuditRepository auditRepository;
     private final PlayerNameAuditor playerNameAuditor;
-    private final CustomProfanityJpaRepository customProfanityRepository;
+    private final CustomProfanityRepository customProfanityRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final MeterRegistry meterRegistry;
     private final TransactionTemplate transactionTemplate;

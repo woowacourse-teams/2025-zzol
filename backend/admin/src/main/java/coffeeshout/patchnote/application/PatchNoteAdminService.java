@@ -3,8 +3,8 @@ package coffeeshout.patchnote.application;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import coffeeshout.patchnote.exception.PatchNoteErrorCode;
+import coffeeshout.patchnote.domain.PatchNoteRepository;
 import coffeeshout.patchnote.infra.persistence.PatchNoteEntity;
-import coffeeshout.patchnote.infra.persistence.PatchNoteJpaRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -18,18 +18,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class PatchNoteAdminService {
 
     private final Clock clock;
-    private final PatchNoteJpaRepository patchNoteJpaRepository;
+    private final PatchNoteRepository patchNoteRepository;
 
     @Transactional(readOnly = true)
     public List<AdminRow> findAll() {
-        return patchNoteJpaRepository.findAllByOrderByCreatedAtDesc().stream()
+        return patchNoteRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::toRow)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public AdminRow findById(Long id) {
-        return patchNoteJpaRepository.findById(id)
+        return patchNoteRepository.findById(id)
                 .map(this::toRow)
                 .orElseThrow(() -> new BusinessException(PatchNoteErrorCode.NOT_FOUND, PatchNoteErrorCode.NOT_FOUND.getMessage()));
     }
@@ -37,19 +37,19 @@ public class PatchNoteAdminService {
     @Transactional
     public Long create(PatchNoteCategory category, String title, String content) {
         final PatchNoteEntity entity = PatchNoteEntity.create(category, title, content);
-        return patchNoteJpaRepository.save(entity).getId();
+        return patchNoteRepository.save(entity).getId();
     }
 
     @Transactional
     public void update(Long id, PatchNoteCategory category, String title, String content) {
-        final PatchNoteEntity entity = patchNoteJpaRepository.findById(id)
+        final PatchNoteEntity entity = patchNoteRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(PatchNoteErrorCode.NOT_FOUND, PatchNoteErrorCode.NOT_FOUND.getMessage()));
         entity.update(category, title, content);
     }
 
     @Transactional
     public void delete(Long id) {
-        patchNoteJpaRepository.deleteById(id);
+        patchNoteRepository.deleteById(id);
     }
 
     private AdminRow toRow(PatchNoteEntity entity) {

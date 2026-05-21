@@ -4,14 +4,14 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Winner;
+import coffeeshout.room.application.port.PlayerEntityRepository;
+import coffeeshout.room.application.port.RoomEntityRepository;
+import coffeeshout.room.application.port.RouletteResultEntityRepository;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
-import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.room.infra.persistence.RouletteResultEntity;
 import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
-import coffeeshout.room.infra.persistence.RouletteResultJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,9 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class RouletteService {
 
     private final RoomQueryService roomQueryService;
-    private final RoomJpaRepository roomJpaRepository;
-    private final PlayerJpaRepository playerJpaRepository;
-    private final RouletteResultJpaRepository rouletteResultJpaRepository;
+    private final RoomEntityRepository roomEntityRepository;
+    private final PlayerEntityRepository playerEntityRepository;
+    private final RouletteResultEntityRepository rouletteResultEntityRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public RoomState showRoulette(String joinCode) {
@@ -53,7 +53,7 @@ public class RouletteService {
         }
 
         roomEntity.finish();
-        roomJpaRepository.saveAndFlush(roomEntity);
+        roomEntityRepository.saveAndFlush(roomEntity);
 
         final PlayerEntity playerEntity = getPlayerEntity(roomEntity, winner.name().value());
 
@@ -62,7 +62,7 @@ public class RouletteService {
                 playerEntity,
                 winner.probability()
         );
-        rouletteResultJpaRepository.save(rouletteResult);
+        rouletteResultEntityRepository.save(rouletteResult);
         eventPublisher.publishEvent(new PlayerNameAuditRequestedEvent(winner.name().value()));
 
         log.info("RouletteResultEntity 저장 완료: joinCode={}, winner={}, probability={}",
@@ -70,12 +70,12 @@ public class RouletteService {
     }
 
     private RoomEntity getRoomEntity(String joinCode) {
-        return roomJpaRepository.findFirstByJoinCodeOrderByCreatedAtDesc(joinCode)
+        return roomEntityRepository.findFirstByJoinCodeOrderByCreatedAtDesc(joinCode)
                 .orElseThrow(() -> new IllegalArgumentException("RoomEntity를 찾을 수 없습니다: " + joinCode));
     }
 
     private PlayerEntity getPlayerEntity(RoomEntity roomEntity, String playerName) {
-        return playerJpaRepository.findByRoomSessionAndPlayerName(roomEntity, playerName)
+        return playerEntityRepository.findByRoomSessionAndPlayerName(roomEntity, playerName)
                 .orElseThrow(() -> new IllegalArgumentException("PlayerEntity를 찾을 수 없습니다: " + playerName));
     }
 }

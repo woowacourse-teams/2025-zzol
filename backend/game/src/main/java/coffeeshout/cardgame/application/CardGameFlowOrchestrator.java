@@ -13,9 +13,13 @@ import coffeeshout.cardgame.domain.CardGameStep;
 import coffeeshout.gamecommon.flow.EarlyFinishTrigger;
 import coffeeshout.gamecommon.flow.FlowHandle;
 import coffeeshout.gamecommon.flow.FlowScheduler;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.Player;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
@@ -116,11 +120,21 @@ public class CardGameFlowOrchestrator {
         };
     }
 
+    private static Map<Gamer, Integer> buildGamerColorMap(Room room) {
+        return room.getPlayers().stream()
+                .collect(Collectors.toUnmodifiableMap(
+                        player -> player.getUserId() != null
+                                  ? Gamer.loggedIn(player.getName(), player.getUserId())
+                                  : Gamer.guest(player.getName()),
+                        Player::getColorIndex
+                ));
+    }
+
     private Runnable step(CardGame cardGame, Room room, CardGameStep step) {
         return () -> {
             step.execute(cardGame, room);
             try {
-                notifier.notifyStepCompleted(room.getJoinCode(), cardGame, room.toColorIndexMap());
+                notifier.notifyStepCompleted(room.getJoinCode(), cardGame, buildGamerColorMap(room));
             } catch (Exception e) {
                 log.warn("CardGame step 알림 실패: joinCode={}, step={}", room.getJoinCode().getValue(), step, e);
             }

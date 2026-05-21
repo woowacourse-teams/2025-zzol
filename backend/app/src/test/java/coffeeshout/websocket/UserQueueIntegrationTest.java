@@ -48,7 +48,7 @@ class UserQueueIntegrationTest extends WebSocketIntegrationTestSupport {
         TestStompSession session = createSession("TEST_CODE", "testPlayer");
         MessageCollector errorCollector = session.subscribe("/user/queue/errors");
 
-        ReadyChangeMessage readyChangeMessage = new ReadyChangeMessage("ABCD", "testPlayer", true);
+        ReadyChangeMessage readyChangeMessage = new ReadyChangeMessage(true);
         String body = objectMapper.writeValueAsString(readyChangeMessage);
 
         // when - streamPublisher.publish()에서 RuntimeException 발생

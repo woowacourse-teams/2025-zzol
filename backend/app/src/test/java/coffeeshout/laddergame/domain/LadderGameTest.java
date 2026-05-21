@@ -63,9 +63,9 @@ class LadderGameTest {
         @Test
         void setUp_후_기둥에_모든_플레이어가_배정된다() {
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(game.getPoles().contains(꾹이.getName())).isTrue();
-                softly.assertThat(game.getPoles().contains(철수.getName())).isTrue();
-                softly.assertThat(game.getPoles().contains(영희.getName())).isTrue();
+                softly.assertThat(game.getPoles().contains(Gamer.guest(꾹이.getName()))).isTrue();
+                softly.assertThat(game.getPoles().contains(Gamer.guest(철수.getName()))).isTrue();
+                softly.assertThat(game.getPoles().contains(Gamer.guest(영희.getName()))).isTrue();
             });
         }
     }
@@ -170,14 +170,14 @@ class LadderGameTest {
 
         @Test
         void 선을_그지_않은_플레이어는_false를_반환한다() {
-            assertThat(game.isAlreadyDrew(꾹이.getName())).isFalse();
+            assertThat(game.isAlreadyDrew(Gamer.guest(꾹이.getName()))).isFalse();
         }
 
         @Test
         void 선을_그은_플레이어는_true를_반환한다() {
             game.drawLine(Gamer.guest(꾹이.getName()),0);
 
-            assertThat(game.isAlreadyDrew(꾹이.getName())).isTrue();
+            assertThat(game.isAlreadyDrew(Gamer.guest(꾹이.getName()))).isTrue();
         }
     }
 

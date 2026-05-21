@@ -11,7 +11,7 @@ public record BlindTimerProgressEvent(String joinCode, List<PlayerProgress> play
     public static BlindTimerProgressEvent of(BlindTimerGame game, String joinCode) {
         final List<PlayerProgress> progresses = game.getPlayers().stream()
                 .map(p -> new PlayerProgress(
-                        p.getPlayerName().value(),
+                        p.getGamer().name().value(),
                         p.isStopped(),
                         p.isTimedOut()
                 ))

@@ -66,13 +66,31 @@ Map<Gamer, MiniGameScore> getScores();
 동일 닉네임·다른 userId 플레이어가 존재할 때 `Map<PlayerName, ...>`은 키 충돌로 점수가 소실된다.
 키를 `Gamer`로 교체해 복합 식별을 보장한다.
 
-### 4. 점수/순위 응답 DTO에 userId 포함
+### 4. 응답 DTO에 userCode 포함 (당초 userId → userCode로 변경)
 
-프론트엔드에서 동명 플레이어를 구분 표시할 수 있도록 응답 DTO에 `userId`(nullable)를 추가한다.
+프론트엔드에서 동명 플레이어를 구분 표시할 수 있도록 응답 DTO에 식별자를 추가한다.
+
+당초 결정에서는 `userId(Long)`를 노출할 계획이었으나, DB 내부 키 노출을 피하고 클라이언트 식별에 더 적합한 `userCode(String)`로 교체하기로 변경했다. 비로그인 게스트는 `userCode`가 `null`이다.
+
+**Room 레이어 (구현 완료):**
+
+`Player`에 `String userCode` 필드를 추가하고, `PlayerResponse`와 `WinnerResponse`에서 `userCode`를 노출한다.
+
+```java
+// PlayerResponse
+record PlayerResponse(String userCode, String playerName, PlayerType playerType, ...) {}
+
+// WinnerResponse
+record WinnerResponse(String playerName, Integer colorIndex, Integer randomAngle, String userCode) {}
+```
+
+**Game 레이어 (미구현 — 별도 작업 브랜치):**
+
+게임별 점수/순위 응답 DTO에도 `userId` 대신 `userCode`를 포함한다.
 
 ```java
 // 예시 — 게임별 구체적 DTO는 구현 시 확정
-record PlayerScoreDto(String playerName, Long userId, int score) {}
+record PlayerScoreDto(String playerName, String userCode, int score) {}
 ```
 
 ## 변경 파일 목록
@@ -96,9 +114,16 @@ record PlayerScoreDto(String playerName, Long userId, int score) {}
 - `Playable.java` — `getScores()` 반환 타입 변경
 - 6개 게임 구현체 — `getScores()` 구현 변경
 
-### 응답 DTO (6개 게임)
+### Room 레이어 응답 DTO (구현 완료)
 
-- 게임별 점수/순위 응답 DTO — `userId` 필드 추가 (nullable)
+- `Player.java` — `String userCode` 필드 추가
+- `Winner.java` — `String userCode` 필드 추가
+- `PlayerResponse.java` — `Long userId` → `String userCode` 교체
+- `WinnerResponse.java` — `String userCode` 추가
+
+### 게임 레이어 응답 DTO (미구현 — 별도 작업 브랜치)
+
+- 게임별 점수/순위 응답 DTO — `userCode` 필드 추가 (nullable)
 
 ## 검토한 대안
 
@@ -120,7 +145,47 @@ record PlayerScoreDto(String playerName, Long userId, int score) {}
 - 비로그인 게스트끼리는 여전히 닉네임 중복이 불가하다.
 - 게임 컬렉션의 PlayerName 기반 직접 조회는 허용하지 않는다. 반드시 Gamer 기반으로 조회한다.
 - `getScores()` 반환 타입이 `Map<Gamer, MiniGameScore>`로 변경되므로 이를 소비하는 응답 DTO도 함께 수정한다.
-- 프론트엔드에 userId가 노출되므로 사전 협의 후 배포한다.
+- 응답 DTO에는 `userId(Long)` 대신 `userCode(String)`를 사용한다. DB 내부 키를 클라이언트에 노출하지 않는다.
+- 비로그인 게스트는 `userCode`가 `null`이다.
+
+## 구현 중 발견된 추가 이슈
+
+### 1. `SessionConnectEventListener` — WebSocket 세션 키에서 userId 누락
+
+**증상**: 같은 닉네임을 가진 두 플레이어가 WebSocket에 연결하면 두 번째 플레이어가 첫 번째 플레이어의 세션을 덮어써서 하나로 통합되는 현상.
+
+**원인**: `SessionConnectEventListener.publishSessionRegisteredEvent()`에서 `PlayerKey.parse(principal)`로 userId를 올바르게 파싱했음에도, 세션 등록 이벤트 발행 시 userId를 버리고 `PlayerKey.of(joinCode, playerName)`(userId 없음)으로 키를 생성했다.
+
+```java
+// 수정 전 — userId 누락
+final String playerKey = PlayerKey.of(joinCode, playerName).toString();
+// "ABCD:꾹이" → 게스트와 로그인 사용자 키 동일 → 세션 덮어씀
+
+// 수정 후 — parsed PlayerKey 그대로 사용
+final String playerKeyStr = playerKey.toString();
+// 게스트:       "ABCD:꾹이"
+// 로그인 사용자: "ABCD:꾹이:100"
+```
+
+`StompPrincipalInterceptor`는 토큰에서 userId를 포함한 principal(`"ABCD:꾹이:100"`)을 이미 올바르게 설정하고 있었다. `SessionConnectEventListener`만 이를 무시하고 있었던 것.
+
+**수정 파일**: `room/src/main/java/coffeeshout/room/infra/session/SessionConnectEventListener.java`
+
+### 2. `toColorIndexMap()` — 동일 PlayerName 키 충돌 시 IllegalStateException
+
+**증상**: 같은 닉네임의 두 플레이어가 방에 존재하는 상태에서 `toColorIndexMap()`이 호출되면 런타임 예외 발생.
+
+**원인**: `Collectors.toUnmodifiableMap(keyMapper, valueMapper)`는 merge function이 없는 버전으로, 중복 키 발생 시 `IllegalStateException`을 던진다.
+
+```java
+public Map<PlayerName, Integer> toColorIndexMap() {
+    return players.getPlayers().stream()
+            .collect(Collectors.toUnmodifiableMap(Player::getName, Player::getColorIndex));
+    // PlayerName("꾹이")가 두 번 등장하면 IllegalStateException
+}
+```
+
+**상태**: 미수정. 이 메서드의 호출 경로 및 필요한 수정 방향(PlayerName → Gamer 키 전환 또는 merge function 추가)을 별도로 검토해야 한다.
 
 ## 작업 브랜치
 

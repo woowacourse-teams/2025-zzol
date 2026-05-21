@@ -9,6 +9,7 @@ import coffeeshout.room.ui.response.RandomNicknameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
 import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.websocket.auth.RoomSessionClaim;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -54,12 +55,14 @@ public interface RoomApi {
     @Operation(summary = "방 설정 변경", description = "호스트가 룰렛 가중치 등 방 설정을 변경합니다.")
     ResponseEntity<Void> updateRoomSettings(
             @Parameter(description = "방 입장 코드", required = true) String joinCode,
+            @Parameter(hidden = true) RoomSessionClaim claim,
             UpdateRoomSettingsRequest request
     );
 
     @Operation(summary = "플레이어 강퇴", description = "방에서 특정 플레이어를 강퇴합니다.")
     ResponseEntity<Void> kickPlayer(
             @Parameter(description = "방 입장 코드", required = true) String joinCode,
-            @Parameter(description = "플레이어 이름", required = true) String playerName
+            @Parameter(description = "플레이어 이름", required = true) String playerName,
+            @Parameter(hidden = true) RoomSessionClaim claim
     );
 }

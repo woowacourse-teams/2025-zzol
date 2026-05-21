@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.room.application.service.RoomRecoveryService;
 import coffeeshout.websocket.StompSessionManager;
+import coffeeshout.websocket.auth.RoomSessionTokenService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -32,10 +33,17 @@ class RoomRecoveryControllerTest extends IntegrationTestSupport {
     @Autowired
     RoomRecoveryService roomRecoveryService;
 
+    @Autowired
+    RoomSessionTokenService roomSessionTokenService;
+
     @AfterEach
     void tearDown() {
         stompSessionManager.removeSession(TEST_SESSION_ID);
         roomRecoveryService.cleanup(TEST_JOIN_CODE);
+    }
+
+    private String issueRoomToken(String joinCode, String playerName) {
+        return roomSessionTokenService.issue(joinCode, playerName, null);
     }
 
     @Test
@@ -47,8 +55,8 @@ class RoomRecoveryControllerTest extends IntegrationTestSupport {
         String savedStreamId = roomRecoveryService.save(TEST_JOIN_CODE, TEST_DESTINATION, response);
 
         // when & then
-        mockMvc.perform(post("/api/rooms/{joinCode}/recovery", TEST_JOIN_CODE)
-                        .param("playerName", TEST_PLAYER_NAME)
+        mockMvc.perform(post("/rooms/{joinCode}/recovery", TEST_JOIN_CODE)
+                        .header("roomToken", issueRoomToken(TEST_JOIN_CODE, TEST_PLAYER_NAME))
                         .param("lastId", "0-0"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -66,8 +74,8 @@ class RoomRecoveryControllerTest extends IntegrationTestSupport {
         String playerName = "Unknown";
 
         // when & then
-        mockMvc.perform(post("/api/rooms/{joinCode}/recovery", joinCode)
-                        .param("playerName", playerName)
+        mockMvc.perform(post("/rooms/{joinCode}/recovery", joinCode)
+                        .header("roomToken", issueRoomToken(joinCode, playerName))
                         .param("lastId", "0-0"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
@@ -78,32 +86,29 @@ class RoomRecoveryControllerTest extends IntegrationTestSupport {
     @Test
     void 유효하지_않은_Stream_ID_형식일_경우_400_에러를_반환한다() throws Exception {
         // given
-        String invalidLastId = "invalid-stream-id";
         stompSessionManager.registerPlayerSession(TEST_JOIN_CODE, TEST_PLAYER_NAME, TEST_SESSION_ID);
 
         // when & then
-        mockMvc.perform(post("/api/rooms/{joinCode}/recovery", TEST_JOIN_CODE)
-                        .param("playerName", TEST_PLAYER_NAME)
-                        .param("lastId", invalidLastId))
+        mockMvc.perform(post("/rooms/{joinCode}/recovery", TEST_JOIN_CODE)
+                        .header("roomToken", issueRoomToken(TEST_JOIN_CODE, TEST_PLAYER_NAME))
+                        .param("lastId", "invalid-stream-id"))
                 .andExpect(status().isBadRequest());
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"", " "})
-    void playerName이_공백일_경우_400_에러를_반환한다(String blankValue) throws Exception {
+    @Test
+    void roomToken이_없으면_401_에러를_반환한다() throws Exception {
         // when & then
-        mockMvc.perform(post("/api/rooms/{joinCode}/recovery", TEST_JOIN_CODE)
-                        .param("playerName", blankValue)
+        mockMvc.perform(post("/rooms/{joinCode}/recovery", TEST_JOIN_CODE)
                         .param("lastId", "0-0"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"", " "})
     void lastId가_공백일_경우_400_에러를_반환한다(String blankValue) throws Exception {
         // when & then
-        mockMvc.perform(post("/api/rooms/{joinCode}/recovery", TEST_JOIN_CODE)
-                        .param("playerName", TEST_PLAYER_NAME)
+        mockMvc.perform(post("/rooms/{joinCode}/recovery", TEST_JOIN_CODE)
+                        .header("roomToken", issueRoomToken(TEST_JOIN_CODE, TEST_PLAYER_NAME))
                         .param("lastId", blankValue))
                 .andExpect(status().isBadRequest());
     }

@@ -3,7 +3,7 @@ package coffeeshout.laddergame.ui.response;
 import coffeeshout.laddergame.domain.BottomRanks;
 import coffeeshout.laddergame.domain.LadderGameState;
 import coffeeshout.laddergame.domain.Poles;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.minigame.domain.Gamer;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.util.List;
@@ -24,11 +24,11 @@ public record LadderStateResponse(
     }
 
     public static LadderStateResponse ofPrepare(Poles poles, BottomRanks bottomRanks,
-                                                Map<PlayerName, Integer> colorMap) {
+                                                Map<Gamer, Integer> colorMap) {
         final List<PoleInfo> poleInfos = poles.getAll().stream()
                 .map(p -> {
-                    final PlayerName playerName = p.playerName();
-                    return new PoleInfo(p.index(), playerName.value(), colorMap.get(playerName));
+                    final Gamer gamer = p.gamer();
+                    return new PoleInfo(p.index(), gamer.name().value(), colorMap.get(gamer));
                 })
                 .toList();
         return new LadderStateResponse(LadderGameState.PREPARE, poleInfos, bottomRanks.getAll(), null, null, null);

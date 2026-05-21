@@ -2,6 +2,7 @@ package coffeeshout.room.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -407,7 +408,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
     @DisplayName("가중치 설정 테스트")
     class 가중치_설정_테스트 {
 
-        private String createRoomAndGetJoinCode(String hostName) throws Exception {
+        private RoomCreateResponse createRoom(String hostName) throws Exception {
             RoomEnterRequest request = new RoomEnterRequest(hostName);
             String response = mockMvc.perform(post("/rooms")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -416,17 +417,31 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                     .andReturn()
                     .getResponse()
                     .getContentAsString();
-            return objectMapper.readValue(response, RoomCreateResponse.class).joinCode();
+            return objectMapper.readValue(response, RoomCreateResponse.class);
+        }
+
+        private String enterRoomAndGetToken(String joinCode, String playerName) throws Exception {
+            RoomEnterRequest enterRequest = new RoomEnterRequest(playerName);
+            var asyncResult = mockMvc.perform(post("/rooms/{joinCode}", joinCode)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(enterRequest)))
+                    .andExpect(request().asyncStarted())
+                    .andReturn();
+            String response = mockMvc.perform(asyncDispatch(asyncResult))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            return objectMapper.readValue(response, RoomEnterResponse.class).roomSessionToken();
         }
 
         @Test
         void 호스트가_유효한_가중치로_요청하면_204를_반환한다() throws Exception {
             // given
-            String joinCode = createRoomAndGetJoinCode("호스트");
-            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest("호스트", 0.5);
+            RoomCreateResponse room = createRoom("호스트");
+            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest(0.5);
 
             // when & then
-            mockMvc.perform(patch("/rooms/{joinCode}/settings", joinCode)
+            mockMvc.perform(patch("/rooms/{joinCode}/settings", room.joinCode())
+                            .header("roomToken", room.roomSessionToken())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNoContent());
@@ -435,50 +450,55 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         @Test
         void 비호스트가_요청하면_403을_반환한다() throws Exception {
             // given
-            String joinCode = createRoomAndGetJoinCode("호스트");
-            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest("게스트", 0.5);
+            RoomCreateResponse room = createRoom("호스트");
+            String guestToken = enterRoomAndGetToken(room.joinCode(), "게스트");
+            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest(0.5);
 
             // when & then
-            mockMvc.perform(patch("/rooms/{joinCode}/settings", joinCode)
+            mockMvc.perform(patch("/rooms/{joinCode}/settings", room.joinCode())
+                            .header("roomToken", guestToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isForbidden());
         }
 
         @Test
-        void 존재하지_않는_방에_요청하면_404를_반환한다() throws Exception {
+        void roomToken이_없으면_401을_반환한다() throws Exception {
             // given
-            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest("호스트", 0.5);
+            RoomCreateResponse room = createRoom("호스트");
+            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest(0.5);
 
             // when & then
-            mockMvc.perform(patch("/rooms/{joinCode}/settings", INVALID_JOIN_CODE)
+            mockMvc.perform(patch("/rooms/{joinCode}/settings", room.joinCode())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isUnauthorized());
         }
 
         @Test
-        void hostName이_빈값이면_400을_반환한다() throws Exception {
+        void 존재하지_않는_방에_요청하면_404를_반환한다() throws Exception {
             // given
-            String joinCode = createRoomAndGetJoinCode("호스트");
-            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest("", 0.5);
+            RoomCreateResponse room = createRoom("호스트");
+            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest(0.5);
 
             // when & then
-            mockMvc.perform(patch("/rooms/{joinCode}/settings", joinCode)
+            mockMvc.perform(patch("/rooms/{joinCode}/settings", INVALID_JOIN_CODE)
+                            .header("roomToken", room.roomSessionToken())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isNotFound());
         }
 
         @ParameterizedTest
         @ValueSource(doubles = {0.0, 0.09})
         void 가중치가_0_1_미만이면_400을_반환한다(double invalidWeight) throws Exception {
             // given
-            String joinCode = createRoomAndGetJoinCode("호스트");
-            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest("호스트", invalidWeight);
+            RoomCreateResponse room = createRoom("호스트");
+            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest(invalidWeight);
 
             // when & then
-            mockMvc.perform(patch("/rooms/{joinCode}/settings", joinCode)
+            mockMvc.perform(patch("/rooms/{joinCode}/settings", room.joinCode())
+                            .header("roomToken", room.roomSessionToken())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -488,11 +508,12 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         @ValueSource(doubles = {0.91, 1.0})
         void 가중치가_0_9_초과이면_400을_반환한다(double invalidWeight) throws Exception {
             // given
-            String joinCode = createRoomAndGetJoinCode("호스트");
-            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest("호스트", invalidWeight);
+            RoomCreateResponse room = createRoom("호스트");
+            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest(invalidWeight);
 
             // when & then
-            mockMvc.perform(patch("/rooms/{joinCode}/settings", joinCode)
+            mockMvc.perform(patch("/rooms/{joinCode}/settings", room.joinCode())
+                            .header("roomToken", room.roomSessionToken())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -501,18 +522,92 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         @Test
         void READY_상태가_아닌_방에_요청하면_409를_반환한다() throws Exception {
             // given
-            String joinCode = createRoomAndGetJoinCode("호스트");
-            Room room = roomRepository.findByJoinCode(new JoinCode(joinCode)).orElseThrow();
-            ReflectionTestUtils.setField(room, "roomState", RoomState.PLAYING);
-            roomRepository.save(room);
+            RoomCreateResponse room = createRoom("호스트");
+            Room roomEntity = roomRepository.findByJoinCode(new JoinCode(room.joinCode())).orElseThrow();
+            ReflectionTestUtils.setField(roomEntity, "roomState", RoomState.PLAYING);
+            roomRepository.save(roomEntity);
 
-            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest("호스트", 0.5);
+            UpdateRoomSettingsRequest request = new UpdateRoomSettingsRequest(0.5);
 
             // when & then
-            mockMvc.perform(patch("/rooms/{joinCode}/settings", joinCode)
+            mockMvc.perform(patch("/rooms/{joinCode}/settings", room.joinCode())
+                            .header("roomToken", room.roomSessionToken())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isConflict());
+        }
+    }
+
+    @Nested
+    @DisplayName("플레이어 강퇴 테스트")
+    class 플레이어_강퇴_테스트 {
+
+        private RoomCreateResponse createRoom(String hostName) throws Exception {
+            RoomEnterRequest request = new RoomEnterRequest(hostName);
+            String response = mockMvc.perform(post("/rooms")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            return objectMapper.readValue(response, RoomCreateResponse.class);
+        }
+
+        private String enterRoomAndGetToken(String joinCode, String playerName) throws Exception {
+            RoomEnterRequest enterRequest = new RoomEnterRequest(playerName);
+            var asyncResult = mockMvc.perform(post("/rooms/{joinCode}", joinCode)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(enterRequest)))
+                    .andExpect(request().asyncStarted())
+                    .andReturn();
+            String response = mockMvc.perform(asyncDispatch(asyncResult))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            return objectMapper.readValue(response, RoomEnterResponse.class).roomSessionToken();
+        }
+
+        @Test
+        void 호스트가_게스트를_강퇴하면_204를_반환한다() throws Exception {
+            // given
+            RoomCreateResponse room = createRoom("호스트");
+            enterRoomAndGetToken(room.joinCode(), "게스트");
+
+            // when & then
+            mockMvc.perform(delete("/rooms/{joinCode}/players/{playerName}", room.joinCode(), "게스트")
+                            .header("roomToken", room.roomSessionToken()))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void 비호스트가_강퇴_요청하면_403을_반환한다() throws Exception {
+            // given
+            RoomCreateResponse room = createRoom("호스트");
+            String guestToken = enterRoomAndGetToken(room.joinCode(), "게스트");
+
+            // when & then
+            mockMvc.perform(delete("/rooms/{joinCode}/players/{playerName}", room.joinCode(), "호스트")
+                            .header("roomToken", guestToken))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void 존재하지_않는_플레이어를_강퇴하면_404를_반환한다() throws Exception {
+            // given
+            RoomCreateResponse room = createRoom("호스트");
+
+            // when & then
+            mockMvc.perform(delete("/rooms/{joinCode}/players/{playerName}", room.joinCode(), "없는게스트")
+                            .header("roomToken", room.roomSessionToken()))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void roomToken이_없으면_401을_반환한다() throws Exception {
+            // given
+            RoomCreateResponse room = createRoom("호스트");
+
+            // when & then
+            mockMvc.perform(delete("/rooms/{joinCode}/players/{playerName}", room.joinCode(), "게스트"))
+                    .andExpect(status().isUnauthorized());
         }
     }
 

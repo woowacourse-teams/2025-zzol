@@ -2,6 +2,7 @@ package coffeeshout.blindtimer.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.room.domain.player.PlayerName;
 import java.time.Duration;
 import org.junit.jupiter.api.Nested;
@@ -15,7 +16,7 @@ class BlindTimerPlayerTest {
         @Test
         void STOP하면_경과시간이_기록된다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(new PlayerName("한스"));
+            final BlindTimerPlayer player = new BlindTimerPlayer(Gamer.guest(new PlayerName("한스")));
 
             // when
             final boolean result = player.stop(Duration.ofMillis(7500));
@@ -29,7 +30,7 @@ class BlindTimerPlayerTest {
         @Test
         void 이미_STOP한_플레이어는_다시_STOP할_수_없다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(new PlayerName("한스"));
+            final BlindTimerPlayer player = new BlindTimerPlayer(Gamer.guest(new PlayerName("한스")));
             player.stop(Duration.ofMillis(7500));
 
             // when
@@ -43,7 +44,7 @@ class BlindTimerPlayerTest {
         @Test
         void 타임아웃된_플레이어는_STOP할_수_없다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(new PlayerName("한스"));
+            final BlindTimerPlayer player = new BlindTimerPlayer(Gamer.guest(new PlayerName("한스")));
             player.markTimedOut();
 
             // when
@@ -61,7 +62,7 @@ class BlindTimerPlayerTest {
         @Test
         void 타임아웃_처리되면_timedOut이_true이다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(new PlayerName("한스"));
+            final BlindTimerPlayer player = new BlindTimerPlayer(Gamer.guest(new PlayerName("한스")));
 
             // when
             player.markTimedOut();
@@ -75,7 +76,7 @@ class BlindTimerPlayerTest {
         @Test
         void 이미_STOP한_플레이어는_타임아웃되지_않는다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(new PlayerName("한스"));
+            final BlindTimerPlayer player = new BlindTimerPlayer(Gamer.guest(new PlayerName("한스")));
             player.stop(Duration.ofMillis(7500));
 
             // when
@@ -93,7 +94,7 @@ class BlindTimerPlayerTest {
         @Test
         void 생성_직후에는_멈추지_않은_상태이다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(new PlayerName("한스"));
+            final BlindTimerPlayer player = new BlindTimerPlayer(Gamer.guest(new PlayerName("한스")));
 
             // when & then
             assertThat(player.isStopped()).isFalse();

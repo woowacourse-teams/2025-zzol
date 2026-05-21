@@ -176,4 +176,38 @@ class StompSessionManagerTest {
         // then
         assertThat(count).isEqualTo(2);
     }
+
+    @Test
+    void 같은_닉네임이라도_userId가_다르면_별도의_세션으로_관리된다() {
+        // given - 비로그인 게스트와 로그인 사용자가 동일 닉네임으로 각각 WebSocket 연결
+        String joinCode = "ABC23";
+        String playerName = "꾹이";
+        String guestKey = PlayerKey.of(joinCode, playerName).toString();           // "ABC23:꾹이"
+        String loggedInKey = PlayerKey.of(joinCode, playerName, 100L).toString(); // "ABC23:꾹이:100"
+
+        // when - SessionConnectEventListener가 parsed PlayerKey를 그대로 사용해 등록
+        sessionManager.registerPlayerSession(guestKey, "session-guest");
+        sessionManager.registerPlayerSession(loggedInKey, "session-100");
+
+        // then - 두 세션이 독립적으로 유지 (게스트 세션이 덮어써지지 않음)
+        assertThat(sessionManager.getPlayerKey("session-guest")).isEqualTo(guestKey);
+        assertThat(sessionManager.getPlayerKey("session-100")).isEqualTo(loggedInKey);
+        assertThat(sessionManager.getConnectedPlayerCountByJoinCode(joinCode)).isEqualTo(2);
+    }
+
+    @Test
+    void userId_없이_같은_닉네임으로_등록하면_세션이_덮어써진다() {
+        // 이 테스트는 fix 이전의 잘못된 동작을 문서화한다.
+        // SessionConnectEventListener가 userId를 버리고 "joinCode:playerName"만으로 등록하면
+        // 동일 닉네임의 두 번째 플레이어가 첫 번째 플레이어 세션을 덮어쓴다.
+        String joinCode = "ABC23";
+        String keyWithoutUserId = PlayerKey.of(joinCode, "꾹이").toString(); // "ABC23:꾹이"
+
+        sessionManager.registerPlayerSession(keyWithoutUserId, "session-guest");
+        sessionManager.registerPlayerSession(keyWithoutUserId, "session-100"); // 덮어씀
+
+        // 게스트 세션은 사라지고 session-100만 남는다
+        assertThat(sessionManager.getConnectedPlayerCountByJoinCode(joinCode)).isEqualTo(1);
+        assertThat(sessionManager.getPlayerKey("session-100")).isEqualTo(keyWithoutUserId);
+    }
 }

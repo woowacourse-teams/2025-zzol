@@ -148,6 +148,22 @@ class RoomTest {
         assertThat(room.isHost(Player.createGuest(게스트_꾹이))).isFalse();
     }
 
+    @Nested
+    class 이름으로_호스트_판별 {
+
+        @Test
+        void 호스트_이름이면_true를_반환한다() {
+            assertThat(room.isHostByName(호스트_한스)).isTrue();
+        }
+
+        @Test
+        void 게스트_이름이면_false를_반환한다() {
+            room.joinGuest(게스트_꾹이);
+
+            assertThat(room.isHostByName(게스트_꾹이)).isFalse();
+        }
+    }
+
     @Test
     void 호스트가_나가면_남은_플레이어_중_랜덤으로_새_호스트가_된다() {
         // given
@@ -321,6 +337,16 @@ class RoomTest {
 
             // when & then — 로그인 사용자가 같은 닉네임으로 입장 가능
             assertThatCode(() -> room.joinGuest(게스트_꾹이, 200L)).doesNotThrowAnyException();
+            assertThat(room.getPlayers()).hasSize(3);
+        }
+
+        @Test
+        void 비로그인_사용자는_로그인_사용자가_선점한_닉네임으로_입장할_수_있다() {
+            // given - 로그인 사용자(userId=100)가 꾹이 닉네임으로 입장
+            room.joinGuest(게스트_꾹이, 100L);
+
+            // when & then — 비로그인 사용자가 같은 닉네임으로 입장 가능 (Gamer 기반 구분)
+            assertThatCode(() -> room.joinGuest(게스트_꾹이)).doesNotThrowAnyException();
             assertThat(room.getPlayers()).hasSize(3);
         }
     }

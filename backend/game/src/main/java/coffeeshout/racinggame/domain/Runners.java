@@ -1,6 +1,6 @@
 package coffeeshout.racinggame.domain;
 
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.minigame.domain.Gamer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,13 +17,13 @@ public class Runners {
 
     private final List<Runner> runners;
 
-    public Runners(List<PlayerName> playerNames) {
+    public Runners(List<Gamer> gamers) {
         this.runners = Collections.synchronizedList(new ArrayList<>());
-        playerNames.forEach(name -> runners.add(new Runner(name)));
+        gamers.forEach(gamer -> runners.add(new Runner(gamer)));
     }
 
-    public void updateSpeed(PlayerName playerName, int tapCount, SpeedCalculator speedCalculator, Instant now) {
-        final Runner runner = findRunnerByPlayerName(playerName);
+    public void updateSpeed(Gamer gamer, int tapCount, SpeedCalculator speedCalculator, Instant now) {
+        final Runner runner = findRunnerByGamer(gamer);
         runner.updateSpeed(tapCount, speedCalculator, now);
     }
 
@@ -69,9 +69,9 @@ public class Runners {
         return runners.stream();
     }
 
-    private Runner findRunnerByPlayerName(PlayerName playerName) {
+    private Runner findRunnerByGamer(Gamer gamer) {
         return runners.stream()
-                .filter(runner -> runner.getPlayerName().equals(playerName))
+                .filter(runner -> runner.getGamer().equals(gamer))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("해당 플레이어의 러너를 찾을 수 없습니다."));
     }

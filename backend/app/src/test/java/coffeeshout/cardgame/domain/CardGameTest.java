@@ -271,21 +271,20 @@ class CardGameTest {
             String playerName = "꾹이";
 
             // when
-            PlayerName foundPlayer = cardGame.findPlayerByName(new PlayerName(playerName));
+            Gamer foundGamer = cardGame.findGamer(Gamer.guest(new PlayerName(playerName)));
 
             // then
-            assertThat(foundPlayer.value()).isEqualTo(playerName);
+            assertThat(foundGamer.name().value()).isEqualTo(playerName);
         }
 
         @Test
         void 존재하지_않는_플레이어_조회시_예외_발생() {
             // given
-            String nonExistentName = "존재하지않는플레이어";
+            Gamer gamer = Gamer.guest(new PlayerName("존재하지않는플레이어"));
 
-            PlayerName playerName = new PlayerName(nonExistentName);
             // when & then
             assertCoffeeShoutException(
-                    () -> cardGame.findPlayerByName(playerName),
+                    () -> cardGame.findGamer(gamer),
                     RoomErrorCode.NO_EXIST_PLAYER
             );
         }
@@ -372,12 +371,12 @@ class CardGameTest {
             Card selectedCard = cardGame.getDeck().getCards().getFirst();
 
             // when
-            Optional<PlayerName> cardOwner = cardGame.findCardOwnerInCurrentRound(selectedCard);
+            Optional<Gamer> cardOwner = cardGame.findCardOwnerInCurrentRound(selectedCard);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(cardOwner).isPresent();
-                softly.assertThat(cardOwner.get()).isEqualTo(player);
+                softly.assertThat(cardOwner.get().name()).isEqualTo(player);
             });
         }
 
@@ -387,7 +386,7 @@ class CardGameTest {
             Card unselectedCard = cardGame.getDeck().getCards().get(5);
 
             // when
-            Optional<PlayerName> cardOwner = cardGame.findCardOwnerInCurrentRound(unselectedCard);
+            Optional<Gamer> cardOwner = cardGame.findCardOwnerInCurrentRound(unselectedCard);
 
             // then
             assertThat(cardOwner).isEmpty();

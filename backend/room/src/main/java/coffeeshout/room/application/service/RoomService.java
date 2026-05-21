@@ -89,14 +89,18 @@ public class RoomService {
     @Transactional
     public RoomCreateResult createRoom(AuthenticatedUser authUser) {
         final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
-        final Room room = doCreateRoom(nickname, authUser.userId());
+        final Room room = doCreateRoom(nickname, authUser.userId(), authUser.userCode());
         final String token = roomSessionTokenService.issue(room.getJoinCode().getValue(), nickname, authUser.userId());
         return new RoomCreateResult(room, token);
     }
 
     private Room doCreateRoom(String resolvedName, Long userId) {
+        return doCreateRoom(resolvedName, userId, null);
+    }
+
+    private Room doCreateRoom(String resolvedName, Long userId, String userCode) {
         final JoinCode joinCode = joinCodeGenerator.generate();
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(resolvedName), userId, rouletteProperties.defaultAdjustmentWeight());
+        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(resolvedName), userId, userCode, rouletteProperties.defaultAdjustmentWeight());
         final BaseEvent event = new RoomCreateEvent(resolvedName, joinCode.getValue());
 
         outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
@@ -119,7 +123,7 @@ public class RoomService {
 
     public CompletableFuture<RoomEnterResult> enterRoomAsync(String joinCode, AuthenticatedUser authUser) {
         final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
-        return doEnterRoomAsync(joinCode, nickname, authUser.userId())
+        return doEnterRoomAsync(joinCode, nickname, authUser.userId(), authUser.userCode())
                 .thenApply(room -> {
                     final String token = roomSessionTokenService.issue(joinCode, nickname, authUser.userId());
                     return new RoomEnterResult(room, nickname, token);
@@ -127,7 +131,11 @@ public class RoomService {
     }
 
     private CompletableFuture<Room> doEnterRoomAsync(String joinCode, String resolvedName, Long userId) {
-        final RoomJoinEvent event = new RoomJoinEvent(joinCode, resolvedName, userId);
+        return doEnterRoomAsync(joinCode, resolvedName, userId, null);
+    }
+
+    private CompletableFuture<Room> doEnterRoomAsync(String joinCode, String resolvedName, Long userId, String userCode) {
+        final RoomJoinEvent event = new RoomJoinEvent(joinCode, resolvedName, userId, userCode);
         return processEventAsync(
                 event.eventId(),
                 () -> streamPublisher.publish(RoomStreamKey.JOIN, event),
@@ -205,6 +213,7 @@ public class RoomService {
 
         roomCommandService.readyPlayer(new JoinCode(event.joinCode()),
                 new PlayerName(event.playerName()),
+                event.userId(),
                 event.isReady()
         );
 
@@ -266,7 +275,8 @@ public class RoomService {
             final Room room = roomCommandService.joinGuest(
                     new JoinCode(event.joinCode()),
                     new PlayerName(event.guestName()),
-                    event.userId()
+                    event.userId(),
+                    event.userCode()
             );
 
             roomEventWaitManager.notifySuccess(event.eventId(), room);

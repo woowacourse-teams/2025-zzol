@@ -3,6 +3,7 @@ package coffeeshout.laddergame.domain;
 import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
@@ -12,19 +13,19 @@ import org.junit.jupiter.api.Test;
 
 class PolesTest {
 
-    PlayerName 꾹이;
-    PlayerName 루키;
-    PlayerName 엠제이;
-    List<PlayerName> players;
+    Gamer 꾹이;
+    Gamer 루키;
+    Gamer 엠제이;
+    List<Gamer> gamers;
     Poles poles;
 
     @BeforeEach
     void setUp() {
-        꾹이 = new PlayerName("꾹이");
-        루키 = new PlayerName("루키");
-        엠제이 = new PlayerName("엠제이");
-        players = List.of(꾹이, 루키, 엠제이);
-        poles = Poles.assign(players);
+        꾹이 = Gamer.guest(new PlayerName("꾹이"));
+        루키 = Gamer.guest(new PlayerName("루키"));
+        엠제이 = Gamer.guest(new PlayerName("엠제이"));
+        gamers = List.of(꾹이, 루키, 엠제이);
+        poles = Poles.assign(gamers);
     }
 
     @Nested
@@ -48,7 +49,7 @@ class PolesTest {
         @Test
         void 각_기둥에_플레이어가_하나씩_배정된다() {
             final long distinctPlayers = poles.getAll().stream()
-                    .map(p -> p.playerName().value())
+                    .map(p -> p.gamer().name().value())
                     .distinct()
                     .count();
 
@@ -61,7 +62,7 @@ class PolesTest {
 
         @Test
         void 등록된_플레이어의_기둥_인덱스를_반환한다() {
-            final int index = poles.getPoleIndex(new PlayerName("꾹이"));
+            final int index = poles.getPoleIndex(꾹이);
 
             assertThat(index).isBetween(0, 2);
         }
@@ -69,27 +70,27 @@ class PolesTest {
         @Test
         void 미등록_플레이어_조회_시_예외를_던진다() {
             assertCoffeeShoutException(
-                    () -> poles.getPoleIndex(new PlayerName("없는플레이어")),
+                    () -> poles.getPoleIndex(Gamer.guest(new PlayerName("없는플레이어"))),
                     LadderGameErrorCode.PLAYER_NOT_FOUND
             );
         }
     }
 
     @Nested
-    class getPlayerName_테스트 {
+    class getGamer_테스트 {
 
         @Test
-        void 기둥_인덱스로_플레이어_이름을_가져온다() {
-            final int index = poles.getPoleIndex(new PlayerName("꾹이"));
-            final PlayerName found = poles.getPlayerName(index);
+        void 기둥_인덱스로_Gamer를_가져온다() {
+            final int index = poles.getPoleIndex(꾹이);
+            final Gamer found = poles.getGamer(index);
 
-            assertThat(found.value()).isEqualTo("꾹이");
+            assertThat(found.name().value()).isEqualTo("꾹이");
         }
 
         @Test
         void 유효하지_않은_인덱스_조회_시_예외를_던진다() {
             assertCoffeeShoutException(
-                    () -> poles.getPlayerName(99),
+                    () -> poles.getGamer(99),
                     LadderGameErrorCode.INVALID_POLE_INDEX
             );
         }
@@ -123,12 +124,12 @@ class PolesTest {
 
         @Test
         void 등록된_플레이어는_true를_반환한다() {
-            assertThat(poles.contains(new PlayerName("꾹이"))).isTrue();
+            assertThat(poles.contains(꾹이)).isTrue();
         }
 
         @Test
         void 미등록_플레이어는_false를_반환한다() {
-            assertThat(poles.contains(new PlayerName("없는플레이어"))).isFalse();
+            assertThat(poles.contains(Gamer.guest(new PlayerName("없는플레이어")))).isFalse();
         }
     }
 

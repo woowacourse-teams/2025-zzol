@@ -15,10 +15,11 @@ public record PlayerKey(@NonNull String joinCode, @NonNull String playerName, Lo
 
     public PlayerKey {
         if (joinCode.isEmpty() || playerName.isEmpty()) {
-            throw new IllegalArgumentException("joinCode와 playerName은 비어있을 수 없습니다");
+            throw new BusinessException(PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT,
+                    "joinCode와 playerName은 비어있을 수 없습니다");
         }
         if (joinCode.contains(DELIMITER) || playerName.contains(DELIMITER)) {
-            throw new IllegalArgumentException(
+            throw new BusinessException(PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT,
                     "joinCode와 playerName에 구분자('" + DELIMITER + "')가 포함될 수 없습니다");
         }
     }

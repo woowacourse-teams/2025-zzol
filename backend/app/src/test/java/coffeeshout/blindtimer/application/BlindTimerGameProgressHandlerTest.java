@@ -13,6 +13,7 @@ import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.Room;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
@@ -75,7 +76,7 @@ class BlindTimerGameProgressHandlerTest extends ServiceTest {
             progressHandler.handleStop(joinCode, "꾹이", null);
 
             // then
-            assertThat(game.findPlayer(new PlayerName("꾹이")).isStopped()).isTrue();
+            assertThat(game.findPlayer(Gamer.of("꾹이", null)).isStopped()).isTrue();
         }
     }
 

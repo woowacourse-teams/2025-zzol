@@ -60,7 +60,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             joinGuest(joinCode, "게스트1");
 
             // when
-            playerService.checkAndKickPlayer(joinCode.getValue(), hostName);
+            playerService.checkAndKickPlayer(joinCode.getValue(), hostName, hostName);
 
             // then
             assertThat(roomService.roomExists(joinCode.getValue())).isTrue();
@@ -97,7 +97,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
                 JoinCode joinCode = createdRoom.getJoinCode();
 
                 // when
-                boolean result = playerService.checkAndKickPlayer(joinCode.getValue(), "없는게스트");
+                boolean result = playerService.checkAndKickPlayer(joinCode.getValue(), hostName, "없는게스트");
 
                 // then
                 assertThat(result).isFalse();
@@ -112,8 +112,23 @@ class PlayerServiceTest extends StreamMockedServiceTest {
 
                 // when & then
                 assertCoffeeShoutException(
-                        () -> playerService.checkAndKickPlayer(joinCode.getValue(), null),
+                        () -> playerService.checkAndKickPlayer(joinCode.getValue(), hostName, null),
                         RoomErrorCode.PLAYER_NAME_BLANK
+                );
+            }
+
+            @Test
+            void 비호스트가_강퇴_시도_시_예외가_발생한다() {
+                // given
+                String hostName = "호스트";
+                Room createdRoom = roomService.createRoom(hostName).room();
+                JoinCode joinCode = createdRoom.getJoinCode();
+                joinGuest(joinCode, "게스트");
+
+                // when & then
+                assertCoffeeShoutException(
+                        () -> playerService.checkAndKickPlayer(joinCode.getValue(), "게스트", hostName),
+                        RoomErrorCode.NOT_HOST
                 );
             }
         }
@@ -132,7 +147,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
         void null_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
             assertCoffeeShoutException(
-                    () -> playerService.checkAndKickPlayer(null, "플레이어"),
+                    () -> playerService.checkAndKickPlayer(null, "호스트", "플레이어"),
                     RoomErrorCode.JOIN_CODE_NULL
             );
         }

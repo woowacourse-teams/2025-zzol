@@ -2,7 +2,7 @@ package coffeeshout.minigame.ui.response;
 
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.Card;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.minigame.domain.Gamer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -44,30 +44,30 @@ public record MiniGameStateMessage(
             Integer colorIndex
     ) {
 
-        public static List<CardInfoMessage> from(@NonNull CardGame cardGame, Map<PlayerName, Integer> colorMap) {
+        public static List<CardInfoMessage> from(@NonNull CardGame cardGame, Map<Gamer, Integer> colorMap) {
             return cardGame.getDeck().getCards().stream()
                     .map(card -> toMessage(cardGame, card, colorMap))
                     .toList();
         }
 
-        private static CardInfoMessage toMessage(CardGame cardGame, Card card, Map<PlayerName, Integer> colorMap) {
-            final Optional<PlayerName> owner = cardGame.findCardOwnerInCurrentRound(card);
+        private static CardInfoMessage toMessage(CardGame cardGame, Card card, Map<Gamer, Integer> colorMap) {
+            final Optional<Gamer> owner = cardGame.findCardOwnerInCurrentRound(card);
             final Integer colorIndex = owner.map(colorMap::get).orElse(null);
             return CardInfoMessage.of(card, owner.isPresent(), owner.orElse(null), colorIndex);
         }
 
-        public static CardInfoMessage of(@NonNull Card card, boolean isSelected, PlayerName name, Integer colorIndex) {
+        public static CardInfoMessage of(@NonNull Card card, boolean isSelected, Gamer gamer, Integer colorIndex) {
             return new CardInfoMessage(
                     card.getType().name(),
                     card.getValue(),
                     isSelected,
-                    name == null ? null : name.value(),
+                    gamer == null ? null : gamer.name().value(),
                     colorIndex
             );
         }
     }
 
-    public static MiniGameStateMessage from(@NonNull CardGame cardGame, Map<PlayerName, Integer> colorMap) {
+    public static MiniGameStateMessage from(@NonNull CardGame cardGame, Map<Gamer, Integer> colorMap) {
         return new MiniGameStateMessage(
                 cardGame.getState().name(),
                 RoundLabel.from(cardGame.getRound().toIndex()).name(),

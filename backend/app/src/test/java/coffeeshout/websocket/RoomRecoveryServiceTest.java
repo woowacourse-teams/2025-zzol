@@ -213,7 +213,7 @@ class RoomRecoveryServiceTest extends ServiceTest {
         }
 
         @ParameterizedTest
-        @MethodSource("coffeeshout.websocket.GameRecoveryServiceTest#다양한_lastStreamId_시나리오")
+        @MethodSource("coffeeshout.websocket.RoomRecoveryServiceTest#다양한_lastStreamId_시나리오")
         void 다양한_lastStreamId로_메시지를_복구한다(int skipCount, int expectedCount) {
             // given
             String destination = "/topic/room/" + joinCode;
@@ -636,7 +636,7 @@ class RoomRecoveryServiceTest extends ServiceTest {
     class 실제_MessagePublisher_destination_테스트 {
 
         @ParameterizedTest
-        @MethodSource("coffeeshout.websocket.GameRecoveryServiceTest#allMessagePublisherDestinations")
+        @MethodSource("coffeeshout.websocket.RoomRecoveryServiceTest#allMessagePublisherDestinations")
         void 모든_MessagePublisher_destination에서_메시지가_정상_저장된다(String destinationFormat, String testData) {
             // given
             String destination = String.format(destinationFormat, joinCode);
@@ -749,7 +749,7 @@ class RoomRecoveryServiceTest extends ServiceTest {
         }
 
         @ParameterizedTest
-        @MethodSource("coffeeshout.websocket.GameRecoveryServiceTest#allDestinationFormats")
+        @MethodSource("coffeeshout.websocket.RoomRecoveryServiceTest#allDestinationFormats")
         void 모든_destination_형식에서_joinCode가_올바르게_포함된다(String destinationFormat) {
             // given
             String testJoinCode = "T3ST";

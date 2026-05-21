@@ -1,6 +1,7 @@
 package coffeeshout.room.ui;
 
 import coffeeshout.room.ui.dto.RecoveryResponse;
+import coffeeshout.websocket.auth.RoomSessionClaim;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,7 +25,7 @@ public interface RoomRecoveryApi {
     })
     ResponseEntity<RecoveryResponse> requestRecovery(
             @Parameter(description = "방 입장 코드", required = true) @PathVariable @NotBlank String joinCode,
-            @Parameter(description = "플레이어 이름", required = true) @RequestParam @NotBlank String playerName,
+            @Parameter(hidden = true) RoomSessionClaim claim,
             @Parameter(description = "마지막으로 수신한 메시지 ID (Redis Stream ID)", required = true) @RequestParam @NotBlank String lastId
     );
 }

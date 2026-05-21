@@ -6,9 +6,13 @@ import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.service.RoomQueryService;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,12 +43,22 @@ public class LadderService implements MiniGameService {
         final LadderGame game = getGame(joinCode);
         final Gamer gamer = Gamer.of(playerName, userId);
         commandService.drawLine(game, gamer, segmentIndex)
-                .ifPresent(line -> notifier.notifyLineDrawn(line, room.getJoinCode(), room.toColorIndexMap()));
+                .ifPresent(line -> notifier.notifyLineDrawn(line, room.getJoinCode(), buildGamerColorMap(room)));
     }
 
     @Override
     public MiniGameType getMiniGameType() {
         return MiniGameType.LADDER_GAME;
+    }
+
+    private static Map<Gamer, Integer> buildGamerColorMap(Room room) {
+        return room.getPlayers().stream()
+                .collect(Collectors.toUnmodifiableMap(
+                        player -> player.getUserId() != null
+                                  ? Gamer.loggedIn(player.getName(), player.getUserId())
+                                  : Gamer.guest(player.getName()),
+                        Player::getColorIndex
+                ));
     }
 
     private LadderGame getGame(String joinCode) {

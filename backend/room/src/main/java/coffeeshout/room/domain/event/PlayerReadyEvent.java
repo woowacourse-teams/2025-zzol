@@ -13,16 +13,18 @@ public record PlayerReadyEvent(
         Instant timestamp,
         String joinCode,
         String playerName,
+        Long userId,
         Boolean isReady
 ) implements BaseEvent, Traceable {
 
-    public PlayerReadyEvent(String joinCode, String playerName, Boolean isReady) {
+    public PlayerReadyEvent(String joinCode, String playerName, Long userId, Boolean isReady) {
         this(
                 UUID.randomUUID().toString(),
                 TraceInfoExtractor.extract(),
                 Instant.now(),
                 joinCode,
                 playerName,
+                userId,
                 isReady
         );
     }

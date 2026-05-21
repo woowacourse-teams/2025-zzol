@@ -49,23 +49,31 @@ public class RoomCommandService {
     }
 
     public Room joinGuest(JoinCode joinCode, PlayerName playerName) {
-        return joinGuest(joinCode, playerName, null);
+        return joinGuest(joinCode, playerName, null, null);
     }
 
     public Room joinGuest(JoinCode joinCode, PlayerName playerName, Long userId) {
+        return joinGuest(joinCode, playerName, userId, null);
+    }
+
+    public Room joinGuest(JoinCode joinCode, PlayerName playerName, Long userId, String userCode) {
         log.info("JoinCode[{}] 게스트 입장 - 게스트 이름: {} ", joinCode, playerName);
         final Room room = roomQueryService.getByJoinCode(joinCode);
 
-        room.joinGuest(playerName, userId);
+        room.joinGuest(playerName, userId, userCode);
 
         return save(room);
     }
 
     public Room saveIfAbsentRoom(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
-        return saveIfAbsentRoom(joinCode, hostName, null, adjustmentWeight);
+        return saveIfAbsentRoom(joinCode, hostName, null, null, adjustmentWeight);
     }
 
     public Room saveIfAbsentRoom(JoinCode joinCode, PlayerName hostName, Long userId, double adjustmentWeight) {
+        return saveIfAbsentRoom(joinCode, hostName, userId, null, adjustmentWeight);
+    }
+
+    public Room saveIfAbsentRoom(JoinCode joinCode, PlayerName hostName, Long userId, String userCode, double adjustmentWeight) {
         if (roomRepository.existsByJoinCode(joinCode)) {
             log.warn("JoinCode[{}] 방 생성 실패 - 이미 존재하는 방", joinCode);
             return roomQueryService.getByJoinCode(joinCode);
@@ -73,7 +81,7 @@ public class RoomCommandService {
 
         log.info("JoinCode[{}] 방 생성 - 호스트 이름: {} ", joinCode, hostName);
 
-        final Room room = Room.createNewRoom(joinCode, hostName, userId, adjustmentWeight);
+        final Room room = Room.createNewRoom(joinCode, hostName, userId, userCode, adjustmentWeight);
 
         return save(room);
     }
@@ -125,10 +133,10 @@ public class RoomCommandService {
         log.info("QR 코드 ERROR 상태로 변경: joinCode={}", joinCode);
     }
 
-    public Room readyPlayer(JoinCode joinCode, PlayerName playerName, Boolean isReady) {
+    public Room readyPlayer(JoinCode joinCode, PlayerName playerName, Long userId, Boolean isReady) {
         log.info("JoinCode[{}] 플레이어 준비 상태 변경 - 플레이어 이름: {}, 준비 상태: {}", joinCode, playerName, isReady);
         final Room room = roomQueryService.getByJoinCode(joinCode);
-        final Player player = room.findPlayer(playerName);
+        final Player player = room.findPlayer(playerName, userId);
 
         if (player.getPlayerType() == PlayerType.HOST) {
             return room;

@@ -819,12 +819,6 @@
     "ReadyChangeMessage" : {
       "kind" : "record",
       "fields" : [ {
-        "name" : "joinCode",
-        "type" : "String"
-      }, {
-        "name" : "playerName",
-        "type" : "String"
-      }, {
         "name" : "isReady",
         "type" : "Boolean"
       } ],

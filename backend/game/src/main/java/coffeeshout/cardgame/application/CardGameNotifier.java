@@ -1,12 +1,12 @@
 package coffeeshout.cardgame.application;
 
 import coffeeshout.cardgame.domain.CardGame;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.MiniGameStartedEvent;
 import coffeeshout.minigame.ui.response.MiniGameStartMessage;
 import coffeeshout.minigame.ui.response.MiniGameStateMessage;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.player.PlayerName;
 import java.util.Map;
 import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.websocket.docs.WsTopic;
@@ -26,13 +26,13 @@ public class CardGameNotifier {
 
     @WsTopic(path = "/room/{joinCode}/gameState", payload = MiniGameStateMessage.class,
             description = "카드게임 단계 완료 시 게임 상태 브로드캐스트")
-    public void notifyStepCompleted(JoinCode joinCode, CardGame cardGame, Map<PlayerName, Integer> colorMap) {
+    public void notifyStepCompleted(JoinCode joinCode, CardGame cardGame, Map<Gamer, Integer> colorMap) {
         sendGameState(cardGame, joinCode, colorMap);
     }
 
     @WsTopic(path = "/room/{joinCode}/gameState", payload = MiniGameStateMessage.class,
             description = "카드 선택 시 게임 상태 브로드캐스트")
-    public void notifyCardSelected(JoinCode joinCode, CardGame cardGame, Map<PlayerName, Integer> colorMap) {
+    public void notifyCardSelected(JoinCode joinCode, CardGame cardGame, Map<Gamer, Integer> colorMap) {
         sendGameState(cardGame, joinCode, colorMap);
     }
 
@@ -50,7 +50,7 @@ public class CardGameNotifier {
         );
     }
 
-    private void sendGameState(CardGame cardGame, JoinCode joinCode, Map<PlayerName, Integer> colorMap) {
+    private void sendGameState(CardGame cardGame, JoinCode joinCode, Map<Gamer, Integer> colorMap) {
         messagingTemplate.convertAndSend(
                 String.format(CARD_GAME_STATE_DESTINATION_FORMAT, joinCode.getValue()),
                 WebSocketResponse.success(MiniGameStateMessage.from(cardGame, colorMap))

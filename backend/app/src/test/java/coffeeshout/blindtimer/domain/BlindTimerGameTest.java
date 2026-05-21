@@ -150,9 +150,9 @@ class BlindTimerGameTest {
             game.markAllTimedOut();
 
             // then
-            assertThat(game.findPlayer(new PlayerName("한스")).isTimedOut()).isFalse();
-            assertThat(game.findPlayer(new PlayerName("꾹이")).isTimedOut()).isTrue();
-            assertThat(game.findPlayer(new PlayerName("루키")).isTimedOut()).isTrue();
+            assertThat(game.findPlayer(Gamer.guest(한스)).isTimedOut()).isFalse();
+            assertThat(game.findPlayer(Gamer.guest(꾹이)).isTimedOut()).isTrue();
+            assertThat(game.findPlayer(Gamer.guest(루키)).isTimedOut()).isTrue();
             assertThat(game.isAllStopped()).isTrue();
         }
     }

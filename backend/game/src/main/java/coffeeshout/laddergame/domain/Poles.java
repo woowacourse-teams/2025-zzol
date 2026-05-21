@@ -1,7 +1,7 @@
 package coffeeshout.laddergame.domain;
 
 import coffeeshout.exception.custom.BusinessException;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.minigame.domain.Gamer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,8 +14,8 @@ public class Poles {
         this.poles = List.copyOf(poles);
     }
 
-    public static Poles assign(List<PlayerName> playerNames) {
-        final List<PlayerName> shuffled = new ArrayList<>(playerNames);
+    public static Poles assign(List<Gamer> gamers) {
+        final List<Gamer> shuffled = new ArrayList<>(gamers);
         Collections.shuffle(shuffled);
         final List<Pole> assigned = new ArrayList<>();
         for (int i = 0; i < shuffled.size(); i++) {
@@ -24,21 +24,21 @@ public class Poles {
         return new Poles(assigned);
     }
 
-    public int getPoleIndex(PlayerName playerName) {
+    public int getPoleIndex(Gamer gamer) {
         return poles.stream()
-                .filter(p -> p.playerName().equals(playerName))
+                .filter(p -> p.gamer().equals(gamer))
                 .mapToInt(Pole::index)
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
                         LadderGameErrorCode.PLAYER_NOT_FOUND,
-                        "플레이어를 찾을 수 없습니다: " + playerName.value()
+                        "플레이어를 찾을 수 없습니다: " + gamer.name().value()
                 ));
     }
 
-    public PlayerName getPlayerName(int poleIndex) {
+    public Gamer getGamer(int poleIndex) {
         return poles.stream()
                 .filter(p -> p.index() == poleIndex)
-                .map(Pole::playerName)
+                .map(Pole::gamer)
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
                         LadderGameErrorCode.INVALID_POLE_INDEX,
@@ -54,8 +54,8 @@ public class Poles {
         return segmentIndex >= 0 && segmentIndex <= size() - 2;
     }
 
-    public boolean contains(PlayerName playerName) {
-        return poles.stream().anyMatch(p -> p.playerName().equals(playerName));
+    public boolean contains(Gamer gamer) {
+        return poles.stream().anyMatch(p -> p.gamer().equals(gamer));
     }
 
     public List<Pole> getAll() {

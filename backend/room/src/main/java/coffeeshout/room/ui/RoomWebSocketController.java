@@ -3,8 +3,10 @@ package coffeeshout.room.ui;
 import coffeeshout.redis.BaseEvent;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.redis.stream.StreamPublisher;
+import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.docs.WsReceive;
 import coffeeshout.room.application.service.RoomService;
+import java.security.Principal;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.PlayerReadyEvent;
@@ -42,8 +44,9 @@ public class RoomWebSocketController {
             respondsOnTopics = {"/room/{joinCode}"},
             description = "플레이어 준비 상태 변경 및 브로드캐스트"
     )
-    public void broadcastReady(@DestinationVariable String joinCode, @Payload ReadyChangeMessage message) {
-        final BaseEvent event = new PlayerReadyEvent(joinCode, message.playerName(), message.isReady());
+    public void broadcastReady(@DestinationVariable String joinCode, @Payload ReadyChangeMessage message, Principal principal) {
+        final PlayerKey playerKey = PlayerKey.requireFrom(principal);
+        final BaseEvent event = new PlayerReadyEvent(joinCode, playerKey.playerName(), playerKey.userId(), message.isReady());
         streamPublisher.publish(RoomStreamKey.BROADCAST, event);
     }
 

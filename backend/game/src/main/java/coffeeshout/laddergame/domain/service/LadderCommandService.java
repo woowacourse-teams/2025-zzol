@@ -22,12 +22,12 @@ public class LadderCommandService {
             return Optional.empty();
         }
 
-        if (!game.getPoles().contains(name)) {
+        if (!game.getPoles().contains(gamer)) {
             log.warn("미참여자 선 그리기 요청 — 무시: playerName={}", name);
             return Optional.empty();
         }
 
-        if (game.isAlreadyDrew(name)) {
+        if (game.isAlreadyDrew(gamer)) {
             log.warn("이미 선을 그은 플레이어 재요청 — 무시: playerName={}", name);
             return Optional.empty();
         }

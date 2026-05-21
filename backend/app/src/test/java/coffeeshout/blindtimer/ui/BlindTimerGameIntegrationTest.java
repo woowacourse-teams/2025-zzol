@@ -9,6 +9,7 @@ import coffeeshout.fixture.RoomFixture;
 import coffeeshout.fixture.TestStompSession;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
 import coffeeshout.MessageResponse;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -119,7 +120,7 @@ class BlindTimerGameIntegrationTest extends WebSocketIntegrationTestSupport {
     }
 
     @Test
-    void 전원_STOP하면_DONE_상태가_전송된다() {
+    void 전원_STOP하면_DONE_상태가_전송된다() throws Exception {
         // given
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/blind-timer/state", joinCodeValue);
@@ -145,10 +146,11 @@ class BlindTimerGameIntegrationTest extends WebSocketIntegrationTestSupport {
         progressResponses.get(6, TimeUnit.SECONDS); // initial progress
         stateResponses.get(4, TimeUnit.SECONDS); // PLAYING
 
-        // when - 모든 플레이어 STOP
+        // when - 모든 플레이어 각자 세션으로 STOP (principal 기반 인증이므로 각 플레이어별 세션 필요)
         for (Player player : room.getPlayers()) {
             final String playerName = player.getName().value();
-            session.send(stopUrl, String.format("""
+            final TestStompSession playerSession = createSession(joinCode, player.getName());
+            playerSession.send(stopUrl, String.format("""
                     {
                       "playerName": "%s"
                     }
@@ -157,7 +159,7 @@ class BlindTimerGameIntegrationTest extends WebSocketIntegrationTestSupport {
             await().atMost(Duration.ofSeconds(5))
                     .pollInterval(Duration.ofMillis(50))
                     .untilAsserted(() ->
-                            assertThat(game.findPlayer(new PlayerName(playerName)).isStopped()).isTrue()
+                            assertThat(game.findPlayer(Gamer.of(playerName, null)).isStopped()).isTrue()
                     );
         }
 

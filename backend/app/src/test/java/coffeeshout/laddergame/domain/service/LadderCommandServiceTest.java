@@ -55,7 +55,7 @@ class LadderCommandServiceTest {
             final LadderLine line = commandService.drawLine(game, gamer꾹이, 1).orElseThrow();
 
             assertThat(line.segmentIndex()).isEqualTo(1);
-            assertThat(line.playerName().value()).isEqualTo("꾹이");
+            assertThat(line.gamer().name().value()).isEqualTo("꾹이");
         }
     }
 

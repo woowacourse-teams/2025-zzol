@@ -1,6 +1,6 @@
 package coffeeshout.laddergame.domain;
 
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.minigame.domain.Gamer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -9,14 +9,14 @@ public class LadderLines {
 
     private final List<LadderLine> lines = new ArrayList<>();
 
-    public synchronized LadderLine add(PlayerName playerName, int segmentIndex) {
-        final LadderLine line = new LadderLine(playerName, segmentIndex, lines.size() + 1);
+    public synchronized LadderLine add(Gamer gamer, int segmentIndex) {
+        final LadderLine line = new LadderLine(gamer, segmentIndex, lines.size() + 1);
         lines.add(line);
         return line;
     }
 
-    public synchronized boolean hasDrawn(PlayerName playerName) {
-        return lines.stream().anyMatch(l -> l.playerName().equals(playerName));
+    public synchronized boolean hasDrawn(Gamer gamer) {
+        return lines.stream().anyMatch(l -> l.gamer().equals(gamer));
     }
 
     public synchronized int trace(int startPoleIndex) {
@@ -41,5 +41,4 @@ public class LadderLines {
     public List<LadderLine> getAll() {
         return List.copyOf(lines);
     }
-
 }

@@ -2,6 +2,7 @@ package coffeeshout.room.domain.service;
 
 import static coffeeshout.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.TestDataHelper;
@@ -201,6 +202,34 @@ class RoomCommandServiceTest extends ServiceTest {
                     () -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트")),
                     RoomErrorCode.DUPLICATE_PLAYER_NAME
             );
+        }
+
+        @Test
+        void 비로그인이_선점한_닉네임으로_로그인_사용자가_입장할_수_있다() {
+            // given - 비로그인 사용자가 "꾹이" 닉네임으로 먼저 입장 (userId=null)
+            roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName("호스트"), 0.7);
+            roomCommandService.joinGuest(joinCode, new PlayerName("꾹이"));
+
+            // when & then — 로그인 사용자(userId=100)가 같은 닉네임으로 입장 가능
+            assertThatCode(() -> roomCommandService.joinGuest(joinCode, new PlayerName("꾹이"), 100L))
+                    .doesNotThrowAnyException();
+
+            Room room = roomQueryService.getByJoinCode(joinCode);
+            assertThat(room.getPlayers()).hasSize(3);
+        }
+
+        @Test
+        void 로그인_사용자끼리는_동일_닉네임으로_입장할_수_있다() {
+            // given - userId=100인 사용자가 "꾹이" 닉네임으로 입장
+            roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName("호스트"), 0.7);
+            roomCommandService.joinGuest(joinCode, new PlayerName("꾹이"), 100L);
+
+            // when & then — userId=200인 다른 사용자가 같은 닉네임으로 입장 가능
+            assertThatCode(() -> roomCommandService.joinGuest(joinCode, new PlayerName("꾹이"), 200L))
+                    .doesNotThrowAnyException();
+
+            Room room = roomQueryService.getByJoinCode(joinCode);
+            assertThat(room.getPlayers()).hasSize(3);
         }
 
     }

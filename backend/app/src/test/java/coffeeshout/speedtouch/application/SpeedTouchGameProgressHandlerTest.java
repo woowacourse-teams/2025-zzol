@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import coffeeshout.fixture.GameSessionFixture;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.ServiceTest;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -72,7 +73,7 @@ class SpeedTouchGameProgressHandlerTest extends ServiceTest {
             progressHandler.handleTouch(joinCode, "꾹이", null, 10);
 
             // then
-            final var player = game.findPlayer(new PlayerName("꾹이"));
+            final var player = game.findPlayer(Gamer.of("꾹이", null));
             assertThat(player.getCurrentNumber()).isEqualTo(1);
         }
     }

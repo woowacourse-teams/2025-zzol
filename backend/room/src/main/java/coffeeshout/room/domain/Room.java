@@ -15,7 +15,6 @@ import coffeeshout.room.domain.roulette.Roulette;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.Getter;
 
 @Getter
@@ -32,13 +31,17 @@ public class Room {
     private double adjustmentWeight;
 
     public Room(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
-        this(joinCode, hostName, null, adjustmentWeight);
+        this(joinCode, hostName, null, null, adjustmentWeight);
     }
 
     public Room(JoinCode joinCode, PlayerName hostName, Long userId, double adjustmentWeight) {
+        this(joinCode, hostName, userId, null, adjustmentWeight);
+    }
+
+    public Room(JoinCode joinCode, PlayerName hostName, Long userId, String userCode, double adjustmentWeight) {
         validateAdjustmentWeight(adjustmentWeight);
         this.joinCode = joinCode;
-        this.host = Player.createHost(hostName, userId);
+        this.host = Player.createHost(hostName, userId, userCode);
         this.players = new Players(joinCode.getValue());
         this.roomState = RoomState.READY;
         this.adjustmentWeight = adjustmentWeight;
@@ -47,31 +50,39 @@ public class Room {
     }
 
     public static Room createNewRoom(JoinCode joinCode, PlayerName hostName, Long userId, double adjustmentWeight) {
-        return new Room(joinCode, hostName, userId, adjustmentWeight);
+        return new Room(joinCode, hostName, userId, null, adjustmentWeight);
+    }
+
+    public static Room createNewRoom(JoinCode joinCode, PlayerName hostName, Long userId, String userCode, double adjustmentWeight) {
+        return new Room(joinCode, hostName, userId, userCode, adjustmentWeight);
     }
 
     public void joinGuest(PlayerName guestName) {
-        joinGuest(guestName, null);
+        joinGuest(guestName, null, null);
     }
 
     public void joinGuest(PlayerName guestName, Long userId) {
+        joinGuest(guestName, userId, null);
+    }
+
+    public void joinGuest(PlayerName guestName, Long userId, String userCode) {
         validateRoomReady();
         if (isRejoin(userId)) {
-            rejoinGuest(guestName, userId);
+            rejoinGuest(guestName, userId, userCode);
             return;
         }
         validateCanJoin();
         if (userId == null) {
             validatePlayerNameNotDuplicate(guestName);
         }
-        join(Player.createGuest(guestName, userId));
+        join(Player.createGuest(guestName, userId, userCode));
     }
 
     private boolean isRejoin(Long userId) {
         return userId != null && players.existsByUserId(userId);
     }
 
-    private void rejoinGuest(PlayerName newName, Long userId) {
+    private void rejoinGuest(PlayerName newName, Long userId, String userCode) {
         if (players.hasDuplicateNameExceptUserId(newName, userId)) {
             throw new BusinessException(
                     RoomErrorCode.DUPLICATE_PLAYER_NAME,
@@ -80,14 +91,14 @@ public class Room {
         }
         players.removePlayerByUserId(userId);
         if (Objects.equals(host.getUserId(), userId)) {
-            rejoinAsHost(newName, userId);
+            rejoinAsHost(newName, userId, userCode);
         } else {
-            join(Player.createGuest(newName, userId));
+            join(Player.createGuest(newName, userId, userCode));
         }
     }
 
-    private void rejoinAsHost(PlayerName newName, Long userId) {
-        final Player rejoined = Player.createHost(newName, userId);
+    private void rejoinAsHost(PlayerName newName, Long userId, String userCode) {
+        final Player rejoined = Player.createHost(newName, userId, userCode);
         join(rejoined);
         this.host = rejoined;
     }
@@ -130,17 +141,20 @@ public class Room {
         return host.equals(player);
     }
 
+    public boolean isHostByName(PlayerName playerName) {
+        return host.sameName(playerName);
+    }
+
     public List<Player> getPlayers() {
         return players.getPlayers();
     }
 
-    public Map<PlayerName, Integer> toColorIndexMap() {
-        return players.getPlayers().stream()
-                .collect(Collectors.toUnmodifiableMap(Player::getName, Player::getColorIndex));
-    }
-
     public Player findPlayer(PlayerName playerName) {
         return players.getPlayer(playerName);
+    }
+
+    public Player findPlayer(PlayerName playerName, Long userId) {
+        return players.getPlayer(playerName, userId);
     }
 
     private void join(Player player) {

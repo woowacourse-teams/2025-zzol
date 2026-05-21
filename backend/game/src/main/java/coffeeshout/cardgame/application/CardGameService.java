@@ -3,14 +3,15 @@ package coffeeshout.cardgame.application;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.gamecommon.metric.GameDurationMetricService;
 import coffeeshout.minigame.domain.GameSessionRepository;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.minigame.domain.Gamer;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.service.RoomQueryService;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,8 +43,8 @@ public class CardGameService implements MiniGameService {
         final Gamer gamer = Gamer.of(playerName, userId);
         final boolean roundFinished = cardGame.selectCard(gamer, cardIndex);
 
-        final Map<PlayerName, Integer> colorMap = roomQueryService.getColorIndexMap(code);
-        notifier.notifyCardSelected(code, cardGame, colorMap);
+        final Room room = roomQueryService.getByJoinCode(code);
+        notifier.notifyCardSelected(code, cardGame, buildGamerColorMap(room));
 
         if (roundFinished) {
             flowOrchestrator.triggerEarlyRoundFinish(joinCode);
@@ -53,6 +54,16 @@ public class CardGameService implements MiniGameService {
     @Override
     public MiniGameType getMiniGameType() {
         return MiniGameType.CARD_GAME;
+    }
+
+    private static Map<Gamer, Integer> buildGamerColorMap(Room room) {
+        return room.getPlayers().stream()
+                .collect(Collectors.toUnmodifiableMap(
+                        player -> player.getUserId() != null
+                                  ? Gamer.loggedIn(player.getName(), player.getUserId())
+                                  : Gamer.guest(player.getName()),
+                        Player::getColorIndex
+                ));
     }
 
     private CardGame getCardGame(String joinCode) {

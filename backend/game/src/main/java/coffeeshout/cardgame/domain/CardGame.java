@@ -10,12 +10,10 @@ import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.domain.Playable;
 import coffeeshout.room.domain.RoomErrorCode;
-import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -53,7 +51,7 @@ public class CardGame implements Playable {
     @Override
     public void setUp(List<Gamer> gamers) {
         this.gamers = List.copyOf(gamers);
-        playerHands = new PlayerHands(gamers.stream().map(Gamer::name).toList());
+        playerHands = new PlayerHands(gamers);
     }
 
     @Override
@@ -63,13 +61,7 @@ public class CardGame implements Playable {
 
     @Override
     public Map<Gamer, MiniGameScore> getScores() {
-        final Map<PlayerName, Gamer> nameToGamer = gamers.stream()
-                .collect(Collectors.toMap(Gamer::name, g -> g));
-        return playerHands.scoreByPlayer().entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> nameToGamer.get(e.getKey()),
-                        Map.Entry::getValue
-                ));
+        return playerHands.scoreByGamer();
     }
 
     public void startRound() {
@@ -96,7 +88,7 @@ public class CardGame implements Playable {
             );
         }
         gamer.validateAgainst(this.gamers);
-        playerHands.putByName(gamer.name(), deck.pick(cardIndex));
+        playerHands.putByGamer(gamer, deck.pick(cardIndex));
         return playerHands.isRoundFinished(this.round);
     }
 
@@ -116,28 +108,28 @@ public class CardGame implements Playable {
         return round.getTotalRounds();
     }
 
-    public PlayerName findPlayerByName(PlayerName name) {
-        if (!playerHands.containsPlayer(name)) {
+    public Gamer findGamer(Gamer gamer) {
+        if (!playerHands.containsGamer(gamer)) {
             throw new BusinessException(
                     RoomErrorCode.NO_EXIST_PLAYER,
-                    "해당 플레이어를 찾을 수 없습니다. name: " + name
+                    "해당 플레이어를 찾을 수 없습니다. name: " + gamer.name()
             );
         }
-        return name;
+        return gamer;
     }
 
     public void assignRandomCardsToUnselectedPlayers() {
-        final List<PlayerName> unselectedPlayers = playerHands.getUnselectedPlayerNames(round);
+        final List<Gamer> unselectedGamers = playerHands.getUnselectedGamers(round);
         // 라운드 정보를 포함한 시드로 일관된 랜덤 생성
         final Random random = new Random(seed + round.toIndex());
 
-        for (PlayerName playerName : unselectedPlayers) {
+        for (Gamer gamer : unselectedGamers) {
             final Card card = deck.pickRandom(random);
-            playerHands.putByName(playerName, card);
+            playerHands.putByGamer(gamer, card);
         }
     }
 
-    public Optional<PlayerName> findCardOwnerInCurrentRound(Card card) {
+    public Optional<Gamer> findCardOwnerInCurrentRound(Card card) {
         return playerHands.findCardOwner(card, round);
     }
 

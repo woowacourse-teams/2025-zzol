@@ -57,12 +57,27 @@ public class Players {
                 ));
     }
 
+    public Player getPlayer(PlayerName playerName, Long userId) {
+        if (userId != null) {
+            return players.stream()
+                    .filter(p -> userId.equals(p.getUserId()))
+                    .findFirst()
+                    .orElseThrow(() -> new BusinessException(
+                            RoomErrorCode.NO_EXIST_PLAYER,
+                            "사용자가 존재하지 않습니다. userId = " + userId
+                    ));
+        }
+        return getPlayer(playerName);
+    }
+
     public int getPlayerCount() {
         return players.size();
     }
 
     public boolean hasDuplicateNameForGuest(PlayerName playerName) {
-        return players.stream().anyMatch(player -> player.sameName(playerName));
+        return players.stream()
+                .filter(p -> p.getUserId() == null)
+                .anyMatch(player -> player.sameName(playerName));
     }
 
     public boolean existsByUserId(Long userId) {

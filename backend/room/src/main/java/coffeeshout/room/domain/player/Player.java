@@ -9,32 +9,42 @@ public class Player {
 
     private final PlayerName name;
     private final Long userId;
+    private final String userCode;
     private PlayerType playerType;
     private Boolean isReady;
     private Integer colorIndex;
     private Probability probability;
 
-    private Player(PlayerName name, Long userId, Boolean isReady, PlayerType playerType) {
+    private Player(PlayerName name, Long userId, String userCode, Boolean isReady, PlayerType playerType) {
         this.name = name;
         this.userId = userId;
+        this.userCode = userCode;
         this.playerType = playerType;
         this.isReady = isReady;
     }
 
     public static Player createHost(PlayerName name) {
-        return new Player(name, null, true, PlayerType.HOST);
+        return new Player(name, null, null, true, PlayerType.HOST);
     }
 
     public static Player createHost(PlayerName name, Long userId) {
-        return new Player(name, userId, true, PlayerType.HOST);
+        return new Player(name, userId, null, true, PlayerType.HOST);
+    }
+
+    public static Player createHost(PlayerName name, Long userId, String userCode) {
+        return new Player(name, userId, userCode, true, PlayerType.HOST);
     }
 
     public static Player createGuest(PlayerName name) {
-        return new Player(name, null, false, PlayerType.GUEST);
+        return new Player(name, null, null, false, PlayerType.GUEST);
     }
 
     public static Player createGuest(PlayerName name, Long userId) {
-        return new Player(name, userId, false, PlayerType.GUEST);
+        return new Player(name, userId, null, false, PlayerType.GUEST);
+    }
+
+    public static Player createGuest(PlayerName name, Long userId, String userCode) {
+        return new Player(name, userId, userCode, false, PlayerType.GUEST);
     }
 
     public boolean sameName(PlayerName playerName) {

@@ -223,7 +223,7 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
      * 룸 구성: 꾹이(호스트), 루키, 엠제이, 한스
      */
     @Test
-    void 전원_카드선택_완료시_조기_라운드전환() {
+    void 전원_카드선택_완료시_조기_라운드전환() throws Exception {
         String subscribeUrl = String.format("/topic/room/%s/gameState", joinCode.getValue());
         String requestUrl = String.format("/app/room/%s/minigame/command", joinCode.getValue());
 
@@ -240,23 +240,28 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
         responses.get(); // PREPARE
         responses.get(); // PLAYING
 
-        // 4명 모두 카드 선택 (인덱스는 서로 달라야 함)
+        // 4명 모두 카드 선택 (principal 기반 인증이므로 각 플레이어별 세션 필요)
+        TestStompSession 루키Session = createSession(joinCode.getValue(), "루키");
+        TestStompSession 엠제이Session = createSession(joinCode.getValue(), "엠제이");
+        TestStompSession 한스Session = createSession(joinCode.getValue(), "한스");
+
+        // 꾹이는 기존 host session 사용
         session.send(requestUrl, """
                 { "commandType": "SELECT_CARD", "commandRequest": { "playerName": "꾹이", "cardIndex": 0 } }
                 """);
         responses.get(); // 꾹이 선택 알림 (allSelected:false)
 
-        session.send(requestUrl, """
+        루키Session.send(requestUrl, """
                 { "commandType": "SELECT_CARD", "commandRequest": { "playerName": "루키", "cardIndex": 1 } }
                 """);
         responses.get(); // 루키 선택 알림 (allSelected:false)
 
-        session.send(requestUrl, """
+        엠제이Session.send(requestUrl, """
                 { "commandType": "SELECT_CARD", "commandRequest": { "playerName": "엠제이", "cardIndex": 2 } }
                 """);
         responses.get(); // 엠제이 선택 알림 (allSelected:false)
 
-        session.send(requestUrl, """
+        한스Session.send(requestUrl, """
                 { "commandType": "SELECT_CARD", "commandRequest": { "playerName": "한스", "cardIndex": 3 } }
                 """);
         MessageResponse lastSelection = responses.get(); // 한스 선택 알림 (allSelected:true)

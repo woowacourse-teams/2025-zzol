@@ -6,7 +6,6 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.domain.Playable;
-import coffeeshout.room.domain.player.PlayerName;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,7 @@ public class LadderGame implements Playable {
     private Poles poles;
     private LadderLines lines = new LadderLines();
     private BottomRanks bottomRanks;
-    private Map<PlayerName, Integer> finalRanks;
+    private Map<Gamer, Integer> finalRanks;
     private List<Gamer> gamers;
 
     public LadderGame() {
@@ -33,8 +32,7 @@ public class LadderGame implements Playable {
         this.gamers = List.copyOf(gamers);
         this.state = LadderGameState.DESCRIPTION;
         this.lines = new LadderLines();
-        final List<PlayerName> playerNames = gamers.stream().map(Gamer::name).toList();
-        this.poles = Poles.assign(playerNames);
+        this.poles = Poles.assign(gamers);
         this.bottomRanks = BottomRanks.generate(gamers.size());
         this.finalRanks = null;
     }
@@ -70,24 +68,24 @@ public class LadderGame implements Playable {
 
     public LadderLine drawLine(Gamer gamer, int segmentIndex) {
         gamer.validateAgainst(this.gamers);
-        poles.getPoleIndex(gamer.name());
-        if (lines.hasDrawn(gamer.name())) {
+        poles.getPoleIndex(gamer);
+        if (lines.hasDrawn(gamer)) {
             throw new BusinessException(LadderGameErrorCode.ALREADY_DREW,
                     "이미 선을 그은 플레이어입니다: " + gamer.name().value());
         }
-        return lines.add(gamer.name(), segmentIndex);
+        return lines.add(gamer, segmentIndex);
     }
 
-    public boolean isAlreadyDrew(PlayerName playerName) {
-        return lines.hasDrawn(playerName);
+    public boolean isAlreadyDrew(Gamer gamer) {
+        return lines.hasDrawn(gamer);
     }
 
     public void tracePaths() {
-        final Map<PlayerName, Integer> ranks = new HashMap<>();
+        final Map<Gamer, Integer> ranks = new HashMap<>();
         for (int i = 0; i < poles.size(); i++) {
-            final PlayerName playerName = poles.getPlayerName(i);
+            final Gamer gamer = poles.getGamer(i);
             final int finalPoleIndex = lines.trace(i);
-            ranks.put(playerName, bottomRanks.getRank(finalPoleIndex));
+            ranks.put(gamer, bottomRanks.getRank(finalPoleIndex));
         }
         this.finalRanks = Map.copyOf(ranks);
     }
@@ -99,7 +97,7 @@ public class LadderGame implements Playable {
         }
         return finalRanks.entrySet().stream()
                 .collect(Collectors.toMap(
-                        e -> e.getKey().value(),
+                        e -> e.getKey().name().value(),
                         Map.Entry::getValue
                 ));
     }
@@ -115,11 +113,9 @@ public class LadderGame implements Playable {
             throw new BusinessException(LadderGameErrorCode.PATH_NOT_TRACED,
                     "tracePaths()가 먼저 호출되어야 합니다.");
         }
-        final Map<PlayerName, Gamer> nameToGamer = gamers.stream()
-                .collect(Collectors.toMap(Gamer::name, g -> g));
         return finalRanks.entrySet().stream()
                 .collect(Collectors.toMap(
-                        e -> nameToGamer.get(e.getKey()),
+                        Map.Entry::getKey,
                         e -> new LadderGameScore(e.getValue())
                 ));
     }

@@ -106,10 +106,16 @@ class RacingGameIntegrationTest extends WebSocketIntegrationTestSupport {
 
         /*
          100ms마다 moveAll → 최고속도(30)로 달린다고 가정하면 결승점(3000)까지 10000ms걸림
+         principal 기반 인증이므로 각 플레이어별 세션 필요
         */
+        java.util.Map<String, TestStompSession> playerSessions = new java.util.HashMap<>();
+        for (Player player : room.getPlayers()) {
+            playerSessions.put(player.getName().value(), createSession(joinCode, player.getName()));
+        }
+
         for (int i = 0; i < 100; i++) {
             for (Player player : room.getPlayers()) {
-                singleSession.send(tapRequestUrl, String.format("""
+                playerSessions.get(player.getName().value()).send(tapRequestUrl, String.format("""
                         {
                           "playerName": "%s",
                           "tapCount": 10

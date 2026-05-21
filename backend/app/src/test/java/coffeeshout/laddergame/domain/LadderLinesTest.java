@@ -2,6 +2,7 @@ package coffeeshout.laddergame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.room.domain.player.PlayerName;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,9 +11,9 @@ import org.junit.jupiter.api.Test;
 
 class LadderLinesTest {
 
-    static final PlayerName 꾹이 = new PlayerName("꾹이");
-    static final PlayerName 철수 = new PlayerName("철수");
-    static final PlayerName 영희 = new PlayerName("영희");
+    static final Gamer 꾹이 = Gamer.guest(new PlayerName("꾹이"));
+    static final Gamer 철수 = Gamer.guest(new PlayerName("철수"));
+    static final Gamer 영희 = Gamer.guest(new PlayerName("영희"));
 
     LadderLines lines;
 
@@ -62,11 +63,11 @@ class LadderLinesTest {
         }
 
         @Test
-        void 반환된_LadderLine에_playerName과_segmentIndex가_포함된다() {
+        void 반환된_LadderLine에_gamer와_segmentIndex가_포함된다() {
             final LadderLine line = lines.add(꾹이, 2);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(line.playerName()).isEqualTo(꾹이);
+                softly.assertThat(line.gamer().name()).isEqualTo(꾹이.name());
                 softly.assertThat(line.segmentIndex()).isEqualTo(2);
             });
         }

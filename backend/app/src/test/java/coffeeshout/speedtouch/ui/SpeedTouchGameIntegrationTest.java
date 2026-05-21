@@ -8,6 +8,7 @@ import coffeeshout.fixture.RoomFixture;
 import coffeeshout.fixture.TestStompSession;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
 import coffeeshout.MessageResponse;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -119,7 +120,7 @@ class SpeedTouchGameIntegrationTest extends WebSocketIntegrationTestSupport {
     }
 
     @Test
-    void 전원_완주하면_DONE_상태가_전송된다() {
+    void 전원_완주하면_DONE_상태가_전송된다() throws Exception {
         // given
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/speed-touch/state", joinCodeValue);
@@ -145,13 +146,13 @@ class SpeedTouchGameIntegrationTest extends WebSocketIntegrationTestSupport {
         progressResponses.get(6, TimeUnit.SECONDS); // initial progress
         stateResponses.get(4, TimeUnit.SECONDS); // PLAYING
 
-        // when - 모든 플레이어 1~25 터치
-        // 각 플레이어별로 1~25를 순차 전송하되, 이전 터치 처리 완료를 Awaitility로 확인
+        // when - 모든 플레이어 1~25 터치 (principal 기반 인증이므로 각 플레이어별 세션 필요)
         for (Player player : room.getPlayers()) {
             final String playerName = player.getName().value();
+            final TestStompSession playerSession = createSession(joinCode, player.getName());
             for (int i = 1; i <= 25; i++) {
                 final int expectedNext = i + 1;
-                session.send(touchUrl, String.format("""
+                playerSession.send(touchUrl, String.format("""
                         {
                           "playerName": "%s",
                           "touchedNumber": %d
@@ -162,7 +163,7 @@ class SpeedTouchGameIntegrationTest extends WebSocketIntegrationTestSupport {
                 await().atMost(Duration.ofSeconds(5))
                         .pollInterval(Duration.ofMillis(50))
                         .untilAsserted(() ->
-                                assertThat(game.findPlayer(new PlayerName(playerName)).getCurrentNumber())
+                                assertThat(game.findPlayer(Gamer.of(playerName, null)).getCurrentNumber())
                                         .isGreaterThanOrEqualTo(expectedNext)
                         );
             }

@@ -16,6 +16,8 @@ import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.ui.resolver.AuthUser;
+import coffeeshout.user.ui.resolver.RoomSession;
+import coffeeshout.websocket.auth.RoomSessionClaim;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
@@ -120,18 +122,20 @@ public class RoomRestController implements RoomApi {
     @PatchMapping("/{joinCode}/settings")
     public ResponseEntity<Void> updateRoomSettings(
             @PathVariable String joinCode,
+            @RoomSession RoomSessionClaim claim,
             @Valid @RequestBody UpdateRoomSettingsRequest request
     ) {
-        roomService.updateAdjustmentWeight(joinCode, request.hostName(), request.adjustmentWeight());
+        roomService.updateAdjustmentWeight(joinCode, claim.playerName(), request.adjustmentWeight());
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{joinCode}/players/{playerName}")
     public ResponseEntity<Void> kickPlayer(
             @PathVariable String joinCode,
-            @PathVariable String playerName
+            @PathVariable String playerName,
+            @RoomSession RoomSessionClaim claim
     ) {
-        final boolean exists = playerService.checkAndKickPlayer(joinCode, playerName);
+        final boolean exists = playerService.checkAndKickPlayer(joinCode, claim.playerName(), playerName);
 
         if (exists) {
             return ResponseEntity.noContent().build();

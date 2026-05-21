@@ -48,28 +48,28 @@ public class SessionConnectEventListener {
         }
 
         final PlayerKey parsed = PlayerKey.parse(principalName);
-        log.info("웹소켓 연결 완료: sessionId={}, joinCode={}, playerName={}", sessionId, parsed.joinCode(), parsed.playerName());
+        log.info("웹소켓 연결 완료: sessionId={}, joinCode={}, playerName={}, userId={}", sessionId, parsed.joinCode(), parsed.playerName(), parsed.userId());
         try {
-            processPlayerConnection(sessionId, parsed.joinCode(), parsed.playerName());
+            processPlayerConnection(sessionId, parsed);
         } finally {
             webSocketMetricService.completeConnection(sessionId);
         }
     }
 
-    private void processPlayerConnection(String sessionId, String joinCode, String playerName) {
+    private void processPlayerConnection(String sessionId, PlayerKey playerKey) {
         try {
-            roomQueryService.getByJoinCode(new JoinCode(joinCode));
-            publishSessionRegisteredEvent(sessionId, joinCode, playerName);
+            roomQueryService.getByJoinCode(new JoinCode(playerKey.joinCode()));
+            publishSessionRegisteredEvent(sessionId, playerKey);
         } catch (BusinessException e) {
-            log.warn("플레이어 연결 실패: joinCode={}, playerName={}, error={}", joinCode, playerName, e.getMessage());
+            log.warn("플레이어 연결 실패: joinCode={}, playerName={}, error={}", playerKey.joinCode(), playerKey.playerName(), e.getMessage());
         }
     }
 
-    private void publishSessionRegisteredEvent(String sessionId, String joinCode, String playerName) {
-        final String playerKey = PlayerKey.of(joinCode, playerName).toString();
-        final BaseEvent event = SessionRegisteredEvent.create(playerKey, sessionId);
+    private void publishSessionRegisteredEvent(String sessionId, PlayerKey playerKey) {
+        final String playerKeyStr = playerKey.toString();
+        final BaseEvent event = SessionRegisteredEvent.create(playerKeyStr, sessionId);
         streamPublisher.publish(RoomStreamKey.BROADCAST, event);
 
-        log.info("세션 등록 이벤트 발행: playerKey={}, sessionId={}", playerKey, sessionId);
+        log.info("세션 등록 이벤트 발행: playerKey={}, sessionId={}", playerKeyStr, sessionId);
     }
 }

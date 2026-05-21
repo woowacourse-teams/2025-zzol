@@ -21,7 +21,7 @@ public class PlayerDisconnectionService {
     public void cancelReady(String playerKeyStr) {
         final PlayerKey playerKey = PlayerKey.parse(playerKeyStr);
 
-        roomCommandService.readyPlayer(new JoinCode(playerKey.joinCode()), new PlayerName(playerKey.playerName()), false);
+        roomCommandService.readyPlayer(new JoinCode(playerKey.joinCode()), new PlayerName(playerKey.playerName()), playerKey.userId(), false);
 
         eventPublisher.publishEvent(new RoomStateUpdateEvent(playerKey.joinCode(), "PLAYER_SET_READY_FALSE"));
         log.info("삭제 대기된 플레이어 ready 상태 변경 완료: joinCode={}, playerName={}", playerKey.joinCode(), playerKey.playerName());

@@ -3,7 +3,9 @@ package coffeeshout.room.ui;
 import coffeeshout.room.application.service.RoomRecoveryService;
 import coffeeshout.room.ui.dto.RecoveryMessage;
 import coffeeshout.room.ui.dto.RecoveryResponse;
+import coffeeshout.user.ui.resolver.RoomSession;
 import coffeeshout.websocket.StompSessionManager;
+import coffeeshout.websocket.auth.RoomSessionClaim;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/rooms/{joinCode}/recovery")
+@RequestMapping("/rooms/{joinCode}/recovery")
 @RequiredArgsConstructor
 @Validated
 public class RoomRecoveryController implements RoomRecoveryApi {
@@ -31,9 +33,11 @@ public class RoomRecoveryController implements RoomRecoveryApi {
     @PostMapping
     public ResponseEntity<RecoveryResponse> requestRecovery(
             @PathVariable @NotBlank String joinCode,
-            @RequestParam @NotBlank String playerName,
+            @RoomSession RoomSessionClaim claim,
             @RequestParam @NotBlank String lastId
     ) {
+        final String playerName = claim.playerName();
+
         if (!stompSessionManager.hasSessionId(joinCode, playerName)) {
             log.warn("복구 요청 실패: 웹소켓 미연결 - joinCode={}, playerName={}", joinCode, playerName);
             return ResponseEntity.status(HttpStatus.CONFLICT)

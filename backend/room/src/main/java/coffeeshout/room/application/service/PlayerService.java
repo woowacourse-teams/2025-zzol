@@ -1,8 +1,11 @@
 package coffeeshout.room.application.service;
 
+import coffeeshout.exception.custom.BusinessException;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
+import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.event.PlayerKickEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.player.Player;
@@ -25,14 +28,22 @@ public class PlayerService {
     private final ApplicationEventPublisher eventPublisher;
     private final StreamPublisher streamPublisher;
 
-    public boolean checkAndKickPlayer(String joinCode, String playerName) {
-        log.info("JoinCode[{}] 플레이어 강퇴 명령 처리 - 플레이어: {}", joinCode, playerName);
+    public boolean checkAndKickPlayer(String joinCode, String callerPlayerName, String targetPlayerName) {
+        log.info("JoinCode[{}] 플레이어 강퇴 명령 처리 - 요청자: {}, 대상: {}", joinCode, callerPlayerName, targetPlayerName);
 
-        final boolean exists = roomQueryService.existsPlayer(new JoinCode(joinCode), new PlayerName(playerName));
+        final JoinCode code = new JoinCode(joinCode);
+        final Room room = roomQueryService.getByJoinCode(code);
+
+        if (!room.isHostByName(new PlayerName(callerPlayerName))) {
+            throw new BusinessException(RoomErrorCode.NOT_HOST, "호스트만 강퇴할 수 있습니다.");
+        }
+
+        final PlayerName target = new PlayerName(targetPlayerName);
+        final boolean exists = room.getPlayers().stream()
+                .anyMatch(player -> player.sameName(target));
 
         if (exists) {
-            final PlayerKickEvent event = new PlayerKickEvent(joinCode, playerName);
-            streamPublisher.publish(RoomStreamKey.BROADCAST, event);
+            streamPublisher.publish(RoomStreamKey.BROADCAST, new PlayerKickEvent(joinCode, targetPlayerName));
         }
 
         return exists;

@@ -241,15 +241,15 @@ class BlockStackingGameTest {
 
         @Test
         void 이름으로_플레이어를_찾는다() {
-            final PlayerName found = game.findPlayerByName(new PlayerName("꾹이"));
+            final Gamer found = game.findGamer(new Gamer(꾹이, null));
 
-            assertThat(found).isEqualTo(꾹이);
+            assertThat(found.name()).isEqualTo(꾹이);
         }
 
         @Test
         void 존재하지_않는_플레이어_조회_시_예외를_던진다() {
             assertCoffeeShoutException(
-                    () -> game.findPlayerByName(new PlayerName("없는플레이어")),
+                    () -> game.findGamer(new Gamer(new PlayerName("없는플레이어"), null)),
                     BlockStackingGameErrorCode.PLAYER_NOT_FOUND
             );
         }
@@ -270,7 +270,7 @@ class BlockStackingGameTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isTrue();
-                softly.assertThat(game.getPlayerProgresses().get(꾹이).failed()).isTrue();
+                softly.assertThat(game.getPlayerProgresses().get(Gamer.guest(꾹이)).failed()).isTrue();
             });
         }
 
@@ -291,7 +291,7 @@ class BlockStackingGameTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(second).isFalse();
-                softly.assertThat(game.getPlayerProgresses().get(꾹이).failed()).isTrue();
+                softly.assertThat(game.getPlayerProgresses().get(Gamer.guest(꾹이)).failed()).isTrue();
             });
         }
 

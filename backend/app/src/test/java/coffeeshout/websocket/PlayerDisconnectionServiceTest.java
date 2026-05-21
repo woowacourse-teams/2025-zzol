@@ -39,6 +39,6 @@ class PlayerDisconnectionServiceTest {
         playerDisconnectionService.cancelReady(playerKey);
 
         // then
-        then(roomCommandService).should().readyPlayer(new JoinCode(joinCode), new PlayerName(playerName), false);
+        then(roomCommandService).should().readyPlayer(new JoinCode(joinCode), new PlayerName(playerName), null, false);
     }
 }

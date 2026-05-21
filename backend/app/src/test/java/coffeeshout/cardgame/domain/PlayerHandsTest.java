@@ -6,10 +6,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.cardgame.domain.card.AdditionCard;
 import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.cardgame.domain.card.MultiplierCard;
-import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.fixture.GamerFixture;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameScore;
-import coffeeshout.room.domain.RoomErrorCode;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Map;
@@ -25,21 +24,19 @@ class PlayerHandsTest {
     private static final CardGameRound ROUND_SECOND = CardGameRound.roundOf(2, 2);
 
     private PlayerHands playerHands;
-    private Player 꾹이;
-    private Player 루키;
-    private Player 한스;
-    private Player 엠제이;
+    private Gamer 꾹이;
+    private Gamer 루키;
+    private Gamer 한스;
+    private Gamer 엠제이;
 
     @BeforeEach
     void setUp() {
-        꾹이 = PlayerFixture.호스트꾹이();
-        루키 = PlayerFixture.호스트루키();
-        한스 = PlayerFixture.호스트한스();
-        엠제이 = PlayerFixture.호스트엠제이();
+        꾹이 = GamerFixture.게스트꾹이();
+        루키 = GamerFixture.게스트루키();
+        한스 = GamerFixture.게스트한스();
+        엠제이 = GamerFixture.게스트엠제이();
 
-        playerHands = new PlayerHands(List.of(
-                꾹이.getName(), 루키.getName(), 한스.getName(), 엠제이.getName()
-        ));
+        playerHands = new PlayerHands(List.of(꾹이, 루키, 한스, 엠제이));
     }
 
     @Nested
@@ -64,7 +61,7 @@ class PlayerHandsTest {
             Card card = AdditionCard.PLUS_40;
 
             // when
-            playerHands.put(꾹이, card);
+            playerHands.putByGamer(꾹이, card);
 
             // then
             assertThat(playerHands.totalHandSize()).isEqualTo(1);
@@ -73,8 +70,8 @@ class PlayerHandsTest {
         @Test
         void 여러_플레이어에게_카드를_추가한다() {
             // when
-            playerHands.put(꾹이, AdditionCard.PLUS_40);
-            playerHands.put(루키, AdditionCard.PLUS_30);
+            playerHands.putByGamer(꾹이, AdditionCard.PLUS_40);
+            playerHands.putByGamer(루키, AdditionCard.PLUS_30);
 
             // then
             assertThat(playerHands.totalHandSize()).isEqualTo(2);
@@ -83,8 +80,8 @@ class PlayerHandsTest {
         @Test
         void 한_플레이어에게_여러_카드를_추가한다() {
             // when
-            playerHands.put(꾹이, AdditionCard.PLUS_40);
-            playerHands.put(꾹이, MultiplierCard.DOUBLE);
+            playerHands.putByGamer(꾹이, AdditionCard.PLUS_40);
+            playerHands.putByGamer(꾹이, MultiplierCard.DOUBLE);
 
             // then
             assertThat(playerHands.totalHandSize()).isEqualTo(2);
@@ -103,13 +100,13 @@ class PlayerHandsTest {
         @Test
         void 첫번째_라운드가_끝났는지_확인한다() {
             // given
-            playerHands.put(꾹이, AdditionCard.PLUS_40);
-            playerHands.put(루키, AdditionCard.PLUS_30);
-            playerHands.put(한스, AdditionCard.PLUS_20);
+            playerHands.putByGamer(꾹이, AdditionCard.PLUS_40);
+            playerHands.putByGamer(루키, AdditionCard.PLUS_30);
+            playerHands.putByGamer(한스, AdditionCard.PLUS_20);
             assertThat(playerHands.isRoundFinished(ROUND_FIRST)).isFalse();
 
             // when
-            playerHands.put(엠제이, AdditionCard.PLUS_10);
+            playerHands.putByGamer(엠제이, AdditionCard.PLUS_10);
 
             // then
             assertThat(playerHands.isRoundFinished(ROUND_FIRST)).isTrue();
@@ -118,17 +115,17 @@ class PlayerHandsTest {
         @Test
         void 두번째_라운드가_끝났는지_확인한다() {
             // given - 첫 번째 라운드
-            playerHands.put(꾹이, AdditionCard.PLUS_40);
-            playerHands.put(루키, AdditionCard.PLUS_30);
-            playerHands.put(한스, AdditionCard.PLUS_20);
-            playerHands.put(엠제이, AdditionCard.PLUS_10);
+            playerHands.putByGamer(꾹이, AdditionCard.PLUS_40);
+            playerHands.putByGamer(루키, AdditionCard.PLUS_30);
+            playerHands.putByGamer(한스, AdditionCard.PLUS_20);
+            playerHands.putByGamer(엠제이, AdditionCard.PLUS_10);
 
             // when - 두 번째 라운드
-            playerHands.put(꾹이, MultiplierCard.DOUBLE);
-            playerHands.put(루키, MultiplierCard.QUADRUPLE);
-            playerHands.put(한스, MultiplierCard.INVERT);
+            playerHands.putByGamer(꾹이, MultiplierCard.DOUBLE);
+            playerHands.putByGamer(루키, MultiplierCard.QUADRUPLE);
+            playerHands.putByGamer(한스, MultiplierCard.INVERT);
             assertThat(playerHands.isRoundFinished(ROUND_SECOND)).isFalse();
-            playerHands.put(엠제이, AdditionCard.ZERO);
+            playerHands.putByGamer(엠제이, AdditionCard.ZERO);
 
             // then
             assertThat(playerHands.isRoundFinished(ROUND_SECOND)).isTrue();
@@ -140,12 +137,12 @@ class PlayerHandsTest {
 
         @Test
         void 등록된_플레이어는_true를_반환한다() {
-            assertThat(playerHands.containsPlayer(new PlayerName("꾹이"))).isTrue();
+            assertThat(playerHands.containsGamer(꾹이)).isTrue();
         }
 
         @Test
         void 존재하지_않는_플레이어_이름으로_확인하면_false를_반환한다() {
-            assertThat(playerHands.containsPlayer(new PlayerName("존재하지않는플레이어"))).isFalse();
+            assertThat(playerHands.containsGamer(Gamer.guest(new PlayerName("존재하지않는플레이어")))).isFalse();
         }
     }
 
@@ -155,18 +152,18 @@ class PlayerHandsTest {
         @Test
         void 플레이어별_점수를_계산한다() {
             // given
-            playerHands.put(꾹이, AdditionCard.PLUS_40);
-            playerHands.put(꾹이, MultiplierCard.DOUBLE);
-            playerHands.put(루키, AdditionCard.PLUS_30);
-            playerHands.put(루키, MultiplierCard.INVERT);
+            playerHands.putByGamer(꾹이, AdditionCard.PLUS_40);
+            playerHands.putByGamer(꾹이, MultiplierCard.DOUBLE);
+            playerHands.putByGamer(루키, AdditionCard.PLUS_30);
+            playerHands.putByGamer(루키, MultiplierCard.INVERT);
 
             // when
-            Map<PlayerName, MiniGameScore> scores = playerHands.scoreByPlayer();
+            Map<Gamer, MiniGameScore> scores = playerHands.scoreByGamer();
 
             // then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(scores.get(꾹이.getName()).getValue()).isEqualTo(80);
-                softly.assertThat(scores.get(루키.getName()).getValue()).isEqualTo(-30);
+                softly.assertThat(scores.get(꾹이).getValue()).isEqualTo(80);
+                softly.assertThat(scores.get(루키).getValue()).isEqualTo(-30);
                 softly.assertThat(scores).hasSize(4);
             });
         }
@@ -174,7 +171,7 @@ class PlayerHandsTest {
         @Test
         void 카드가_없는_플레이어의_점수는_0이다() {
             // when
-            Map<PlayerName, MiniGameScore> scores = playerHands.scoreByPlayer();
+            Map<Gamer, MiniGameScore> scores = playerHands.scoreByGamer();
 
             // then
             scores.values().forEach(score ->
@@ -189,53 +186,53 @@ class PlayerHandsTest {
         @Test
         void 첫번째_라운드에서_선택하지_않은_플레이어를_조회한다() {
             // given
-            playerHands.put(꾹이, AdditionCard.PLUS_40);
-            playerHands.put(루키, AdditionCard.PLUS_30);
+            playerHands.putByGamer(꾹이, AdditionCard.PLUS_40);
+            playerHands.putByGamer(루키, AdditionCard.PLUS_30);
 
             // when
-            List<PlayerName> unselectedPlayers = playerHands.getUnselectedPlayerNames(ROUND_FIRST);
+            List<Gamer> unselectedGamers = playerHands.getUnselectedGamers(ROUND_FIRST);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(unselectedPlayers).hasSize(2);
-                softly.assertThat(unselectedPlayers).contains(한스.getName(), 엠제이.getName());
+                softly.assertThat(unselectedGamers).hasSize(2);
+                softly.assertThat(unselectedGamers).contains(한스, 엠제이);
             });
         }
 
         @Test
         void 두번째_라운드에서_선택하지_않은_플레이어를_조회한다() {
             // given - 첫 번째 라운드 완료
-            playerHands.put(꾹이, AdditionCard.PLUS_40);
-            playerHands.put(루키, AdditionCard.PLUS_30);
-            playerHands.put(한스, AdditionCard.PLUS_20);
-            playerHands.put(엠제이, AdditionCard.PLUS_10);
+            playerHands.putByGamer(꾹이, AdditionCard.PLUS_40);
+            playerHands.putByGamer(루키, AdditionCard.PLUS_30);
+            playerHands.putByGamer(한스, AdditionCard.PLUS_20);
+            playerHands.putByGamer(엠제이, AdditionCard.PLUS_10);
 
             // 두 번째 라운드 일부 선택
-            playerHands.put(꾹이, MultiplierCard.DOUBLE);
+            playerHands.putByGamer(꾹이, MultiplierCard.DOUBLE);
 
             // when
-            List<PlayerName> unselectedPlayers = playerHands.getUnselectedPlayerNames(ROUND_SECOND);
+            List<Gamer> unselectedGamers = playerHands.getUnselectedGamers(ROUND_SECOND);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(unselectedPlayers).hasSize(3);
-                softly.assertThat(unselectedPlayers).contains(루키.getName(), 한스.getName(), 엠제이.getName());
+                softly.assertThat(unselectedGamers).hasSize(3);
+                softly.assertThat(unselectedGamers).contains(루키, 한스, 엠제이);
             });
         }
 
         @Test
         void 모든_플레이어가_선택했으면_빈_리스트를_반환한다() {
             // given
-            playerHands.put(꾹이, AdditionCard.PLUS_40);
-            playerHands.put(루키, AdditionCard.PLUS_30);
-            playerHands.put(한스, AdditionCard.PLUS_20);
-            playerHands.put(엠제이, AdditionCard.PLUS_10);
+            playerHands.putByGamer(꾹이, AdditionCard.PLUS_40);
+            playerHands.putByGamer(루키, AdditionCard.PLUS_30);
+            playerHands.putByGamer(한스, AdditionCard.PLUS_20);
+            playerHands.putByGamer(엠제이, AdditionCard.PLUS_10);
 
             // when
-            List<PlayerName> unselectedPlayers = playerHands.getUnselectedPlayerNames(ROUND_FIRST);
+            List<Gamer> unselectedGamers = playerHands.getUnselectedGamers(ROUND_FIRST);
 
             // then
-            assertThat(unselectedPlayers).isEmpty();
+            assertThat(unselectedGamers).isEmpty();
         }
     }
 
@@ -246,32 +243,32 @@ class PlayerHandsTest {
         void 첫번째_라운드에서_카드_소유자를_찾는다() {
             // given
             Card card = AdditionCard.PLUS_40;
-            playerHands.put(꾹이, card);
+            playerHands.putByGamer(꾹이, card);
 
             // when
-            Optional<PlayerName> cardOwner = playerHands.findCardOwner(card, ROUND_FIRST);
+            Optional<Gamer> cardOwner = playerHands.findCardOwner(card, ROUND_FIRST);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(cardOwner).isPresent();
-                softly.assertThat(cardOwner.get()).isEqualTo(꾹이.getName());
+                softly.assertThat(cardOwner.get()).isEqualTo(꾹이);
             });
         }
 
         @Test
         void 두번째_라운드에서_카드_소유자를_찾는다() {
             // given
-            playerHands.put(꾹이, AdditionCard.PLUS_40); // 첫 번째 라운드
+            playerHands.putByGamer(꾹이, AdditionCard.PLUS_40); // 첫 번째 라운드
             Card secondRoundCard = MultiplierCard.DOUBLE;
-            playerHands.put(꾹이, secondRoundCard); // 두 번째 라운드
+            playerHands.putByGamer(꾹이, secondRoundCard); // 두 번째 라운드
 
             // when
-            Optional<PlayerName> cardOwner = playerHands.findCardOwner(secondRoundCard, ROUND_SECOND);
+            Optional<Gamer> cardOwner = playerHands.findCardOwner(secondRoundCard, ROUND_SECOND);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(cardOwner).isPresent();
-                softly.assertThat(cardOwner.get()).isEqualTo(꾹이.getName());
+                softly.assertThat(cardOwner.get()).isEqualTo(꾹이);
             });
         }
 
@@ -281,7 +278,7 @@ class PlayerHandsTest {
             Card nonExistentCard = AdditionCard.PLUS_40;
 
             // when
-            Optional<PlayerName> cardOwner = playerHands.findCardOwner(nonExistentCard, ROUND_FIRST);
+            Optional<Gamer> cardOwner = playerHands.findCardOwner(nonExistentCard, ROUND_FIRST);
 
             // then
             assertThat(cardOwner).isEmpty();
@@ -291,10 +288,10 @@ class PlayerHandsTest {
         void 잘못된_라운드로_카드_소유자를_찾으면_빈_Optional을_반환한다() {
             // given
             Card card = AdditionCard.PLUS_40;
-            playerHands.put(꾹이, card); // 첫 번째 라운드
+            playerHands.putByGamer(꾹이, card); // 첫 번째 라운드
 
             // when - 두 번째 라운드에서 첫 번째 라운드 카드를 찾음
-            Optional<PlayerName> cardOwner = playerHands.findCardOwner(card, ROUND_SECOND);
+            Optional<Gamer> cardOwner = playerHands.findCardOwner(card, ROUND_SECOND);
 
             // then
             assertThat(cardOwner).isEmpty();

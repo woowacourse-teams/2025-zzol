@@ -2,10 +2,9 @@ package coffeeshout.cardgame.domain;
 
 import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.exception.custom.BusinessException;
+import coffeeshout.minigame.domain.Gamer;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.room.domain.RoomErrorCode;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,25 +14,21 @@ import java.util.stream.Collectors;
 
 public class PlayerHands {
 
-    private final Map<PlayerName, CardHand> playerHands;
+    private final Map<Gamer, CardHand> playerHands;
 
-    public PlayerHands(List<PlayerName> playerNames) {
-        this.playerHands = playerNames.stream().collect(Collectors.toMap(
-                playerName -> playerName,
-                playerName -> new CardHand()
+    public PlayerHands(List<Gamer> gamers) {
+        this.playerHands = gamers.stream().collect(Collectors.toMap(
+                gamer -> gamer,
+                gamer -> new CardHand()
         ));
     }
 
-    public void put(Player player, Card card) {
-        putByName(player.getName(), card);
-    }
-
-    public void putByName(PlayerName playerName, Card card) {
-        final CardHand hand = playerHands.get(playerName);
+    public void putByGamer(Gamer gamer, Card card) {
+        final CardHand hand = playerHands.get(gamer);
         if (hand == null) {
             throw new BusinessException(
                     RoomErrorCode.NO_EXIST_PLAYER,
-                    "해당 플레이어를 찾을 수 없습니다. name: " + playerName
+                    "해당 플레이어를 찾을 수 없습니다. name: " + gamer.name()
             );
         }
         hand.put(card);
@@ -54,28 +49,28 @@ public class PlayerHands {
                 .allMatch(hand -> hand.isSelected(round));
     }
 
-    public boolean containsPlayer(PlayerName name) {
-        return playerHands.containsKey(name);
+    public boolean containsGamer(Gamer gamer) {
+        return playerHands.containsKey(gamer);
     }
 
-    public Map<PlayerName, MiniGameScore> scoreByPlayer() {
+    public Map<Gamer, MiniGameScore> scoreByGamer() {
         return playerHands.entrySet().stream().collect(Collectors.toMap(
                 Entry::getKey,
                 entry -> entry.getValue().calculateCardGameScore()
         ));
     }
 
-    public List<PlayerName> getUnselectedPlayerNames(CardGameRound round) {
-        final List<PlayerName> names = new ArrayList<>();
-        playerHands.forEach((name, hand) -> {
+    public List<Gamer> getUnselectedGamers(CardGameRound round) {
+        final List<Gamer> unselected = new ArrayList<>();
+        playerHands.forEach((gamer, hand) -> {
             if (!hand.isSelected(round)) {
-                names.add(name);
+                unselected.add(gamer);
             }
         });
-        return names;
+        return unselected;
     }
 
-    public Optional<PlayerName> findCardOwner(Card card, CardGameRound round) {
+    public Optional<Gamer> findCardOwner(Card card, CardGameRound round) {
         return playerHands.entrySet().stream()
                 .filter(entry -> entry.getValue().isAssign(card, round))
                 .findFirst()

@@ -1,14 +1,14 @@
 package coffeeshout.laddergame.domain;
 
 import coffeeshout.exception.custom.BusinessException;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.minigame.domain.Gamer;
 
-public record LadderLine(PlayerName playerName, int segmentIndex, int row) {
+public record LadderLine(Gamer gamer, int segmentIndex, int row) {
 
     public LadderLine {
-        if (playerName == null) {
+        if (gamer == null) {
             throw new BusinessException(LadderGameErrorCode.PLAYER_NOT_FOUND,
-                    "playerName은 null일 수 없습니다.");
+                    "gamer는 null일 수 없습니다.");
         }
         if (segmentIndex < 0) {
             throw new BusinessException(LadderGameErrorCode.INVALID_SEGMENT_INDEX,

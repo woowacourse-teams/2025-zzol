@@ -4,9 +4,10 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
-import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -36,9 +37,10 @@ public class RacingGame implements Playable {
     private ScheduledFuture<?> autoMoveFuture;
 
     @Override
-    public void setUp(List<? extends PlayerView> players) {
-        @SuppressWarnings("unchecked")
-        final List<Player> playerList = (List<Player>) (List<?>) players;
+    public void setUp(List<Gamer> gamers) {
+        final List<Player> playerList = gamers.stream()
+                .map(g -> Player.createGuest(new PlayerName(g.name()), g.userId()))
+                .toList();
         this.runners = new Runners(playerList);
         this.state = RacingGameState.DESCRIPTION;
     }
@@ -83,8 +85,8 @@ public class RacingGame implements Playable {
     }
 
     @Override
-    public Map<PlayerView, MiniGameScore> getScores() {
-        return runners.stream().collect(Collectors.toMap(r -> (PlayerView) r.getPlayer(), this::convertScore));
+    public Map<Gamer, MiniGameScore> getScores() {
+        return runners.stream().collect(Collectors.toMap(r -> r.getPlayer().toGamer(), this::convertScore));
     }
 
     @Override

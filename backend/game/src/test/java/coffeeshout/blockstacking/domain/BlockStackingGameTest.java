@@ -7,7 +7,7 @@ import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.fixture.PlayersFixture;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.gamecommon.PlayerView;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
@@ -43,7 +43,7 @@ class BlockStackingGameTest {
         players = PlayersFixture.호스트꾹이_루키_엠제이_한스.getPlayers();
 
         game = new BlockStackingGame();
-        game.setUp(players);
+        game.setUp(players.stream().map(p -> p.toGamer()).toList());
     }
 
     @Nested
@@ -59,14 +59,14 @@ class BlockStackingGameTest {
             game.prepare();
             game.startPlay();
 
-            final Map<PlayerView, MiniGameScore> scores = game.getScores();
+            final Map<Gamer, MiniGameScore> scores = game.getScores();
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(scores).hasSize(4);
-                softly.assertThat(scores.get(꾹이).getValue()).isZero();
-                softly.assertThat(scores.get(루키).getValue()).isZero();
-                softly.assertThat(scores.get(엠제이).getValue()).isZero();
-                softly.assertThat(scores.get(한스).getValue()).isZero();
+                softly.assertThat(scores.get(꾹이.toGamer()).getValue()).isZero();
+                softly.assertThat(scores.get(루키.toGamer()).getValue()).isZero();
+                softly.assertThat(scores.get(엠제이.toGamer()).getValue()).isZero();
+                softly.assertThat(scores.get(한스.toGamer()).getValue()).isZero();
             });
         }
 
@@ -119,7 +119,7 @@ class BlockStackingGameTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isTrue();
-                softly.assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(1L);
+                softly.assertThat(game.getScores().get(꾹이.toGamer()).getValue()).isEqualTo(1L);
             });
         }
 
@@ -129,7 +129,7 @@ class BlockStackingGameTest {
             game.recordProgress(꾹이, 2, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
             game.recordProgress(꾹이, 3, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
 
-            assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(3L);
+            assertThat(game.getScores().get(꾹이.toGamer()).getValue()).isEqualTo(3L);
         }
 
         @Test
@@ -149,7 +149,7 @@ class BlockStackingGameTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isFalse();
-                softly.assertThat(game.getScores().get(꾹이).getValue()).isZero();
+                softly.assertThat(game.getScores().get(꾹이.toGamer()).getValue()).isZero();
             });
         }
 
@@ -161,7 +161,7 @@ class BlockStackingGameTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isFalse();
-                softly.assertThat(game.getScores().get(꾹이).getValue()).isZero();
+                softly.assertThat(game.getScores().get(꾹이.toGamer()).getValue()).isZero();
             });
         }
 
@@ -182,7 +182,7 @@ class BlockStackingGameTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isFalse();
-                softly.assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(1L);
+                softly.assertThat(game.getScores().get(꾹이.toGamer()).getValue()).isEqualTo(1L);
             });
         }
 
@@ -193,9 +193,9 @@ class BlockStackingGameTest {
             game.recordProgress(루키, 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(2L);
-                softly.assertThat(game.getScores().get(루키).getValue()).isEqualTo(1L);
-                softly.assertThat(game.getScores().get(엠제이).getValue()).isZero();
+                softly.assertThat(game.getScores().get(꾹이.toGamer()).getValue()).isEqualTo(2L);
+                softly.assertThat(game.getScores().get(루키.toGamer()).getValue()).isEqualTo(1L);
+                softly.assertThat(game.getScores().get(엠제이.toGamer()).getValue()).isZero();
             });
         }
     }
@@ -279,7 +279,7 @@ class BlockStackingGameTest {
 
             game.recordFailure(꾹이);
 
-            assertThat(game.getScores().get(꾹이).getValue()).isEqualTo(2L);
+            assertThat(game.getScores().get(꾹이.toGamer()).getValue()).isEqualTo(2L);
         }
 
         @Test
@@ -362,13 +362,13 @@ class BlockStackingGameTest {
 
         @Test
         void getScores_가_각_플레이어의_현재_층수를_반환한다() {
-            final Map<PlayerView, MiniGameScore> scores = game.getScores();
+            final Map<Gamer, MiniGameScore> scores = game.getScores();
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(scores.get(꾹이).getValue()).isEqualTo(2L);
-                softly.assertThat(scores.get(루키).getValue()).isEqualTo(1L);
-                softly.assertThat(scores.get(엠제이).getValue()).isZero();
-                softly.assertThat(scores.get(한스).getValue()).isZero();
+                softly.assertThat(scores.get(꾹이.toGamer()).getValue()).isEqualTo(2L);
+                softly.assertThat(scores.get(루키.toGamer()).getValue()).isEqualTo(1L);
+                softly.assertThat(scores.get(엠제이.toGamer()).getValue()).isZero();
+                softly.assertThat(scores.get(한스.toGamer()).getValue()).isZero();
             });
         }
 
@@ -377,8 +377,8 @@ class BlockStackingGameTest {
             final var result = game.getResult();
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(result.getPlayerRank(꾹이)).isEqualTo(1);
-                softly.assertThat(result.getPlayerRank(루키)).isEqualTo(2);
+                softly.assertThat(result.getPlayerRank(꾹이.toGamer())).isEqualTo(1);
+                softly.assertThat(result.getPlayerRank(루키.toGamer())).isEqualTo(2);
             });
         }
 
@@ -390,8 +390,8 @@ class BlockStackingGameTest {
             final var result = game.getResult();
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(result.getPlayerRank(루키)).isEqualTo(2);
-                softly.assertThat(result.getPlayerRank(엠제이)).isEqualTo(2);
+                softly.assertThat(result.getPlayerRank(루키.toGamer())).isEqualTo(2);
+                softly.assertThat(result.getPlayerRank(엠제이.toGamer())).isEqualTo(2);
             });
         }
     }

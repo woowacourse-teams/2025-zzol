@@ -1,6 +1,6 @@
 package coffeeshout.minigame.ui;
 
-import coffeeshout.gamecommon.PlayerView;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -27,7 +27,7 @@ public class MiniGameRestController implements MiniGameApi {
             @RequestParam String joinCode,
             @RequestParam MiniGameType miniGameType
     ) {
-        Map<? extends PlayerView, MiniGameScore> result = roomService.getMiniGameScores(joinCode, miniGameType);
+        Map<Gamer, MiniGameScore> result = roomService.getMiniGameScores(joinCode, miniGameType);
 
         return ResponseEntity.ok(MiniGameScoresResponse.from(result));
     }

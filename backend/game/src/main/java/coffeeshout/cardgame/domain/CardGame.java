@@ -7,8 +7,8 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
-import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.HashMap;
@@ -50,14 +50,15 @@ public class CardGame implements Playable {
     }
 
     @Override
-    public void setUp(List<? extends PlayerView> players) {
-        @SuppressWarnings("unchecked")
-        final List<Player> playerList = (List<Player>) (List<?>) players;
+    public void setUp(List<Gamer> gamers) {
+        final List<Player> playerList = gamers.stream()
+                .map(g -> Player.createGuest(new PlayerName(g.name()), g.userId()))
+                .toList();
         playerHands = new PlayerHands(playerList);
     }
 
     @Override
-    public Map<PlayerView, MiniGameScore> getScores() {
+    public Map<Gamer, MiniGameScore> getScores() {
         return new HashMap<>(playerHands.scoreByPlayer());
     }
 

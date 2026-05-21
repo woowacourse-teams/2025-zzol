@@ -1,7 +1,7 @@
 package coffeeshout.cardgame.domain;
 
 import coffeeshout.cardgame.domain.card.Card;
-import coffeeshout.gamecommon.PlayerView;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.room.domain.RoomErrorCode;
@@ -54,9 +54,9 @@ public class PlayerHands {
                 );
     }
 
-    public Map<PlayerView, MiniGameScore> scoreByPlayer() {
+    public Map<Gamer, MiniGameScore> scoreByPlayer() {
         return playerHands.entrySet().stream().collect(Collectors.toMap(
-                Entry::getKey,
+                e -> e.getKey().toGamer(),
                 entry -> entry.getValue().calculateCardGameScore()
         ));
     }

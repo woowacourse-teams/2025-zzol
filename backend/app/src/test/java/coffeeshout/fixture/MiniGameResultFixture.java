@@ -15,7 +15,7 @@ public final class MiniGameResultFixture {
         Player 꾹이 = PlayerFixture.게스트꾹이();
         Player 엠제이 = PlayerFixture.게스트엠제이();
 
-        return new MiniGameResult(Map.of(한스, 1, 루키, 2, 꾹이, 3, 엠제이, 4));
+        return new MiniGameResult(Map.of(한스.toGamer(), 1, 루키.toGamer(), 2, 꾹이.toGamer(), 3, 엠제이.toGamer(), 4));
     }
 }
 

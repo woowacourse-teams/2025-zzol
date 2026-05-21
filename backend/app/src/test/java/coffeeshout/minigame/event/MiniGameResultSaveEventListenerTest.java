@@ -20,7 +20,7 @@ import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.domain.Room;
-import coffeeshout.gamecommon.PlayerView;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
@@ -67,10 +67,10 @@ class MiniGameResultSaveEventListenerTest {
             Player 한스 = PlayerFixture.호스트한스();
             Player 루키 = PlayerFixture.게스트루키();
 
-            MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<PlayerView, MiniGameScore> scores = Map.of(
-                    한스, new CardGameScore(100),
-                    루키, new CardGameScore(80)
+            MiniGameResult result = new MiniGameResult(Map.of(한스.toGamer(), 1, 루키.toGamer(), 2));
+            Map<Gamer, MiniGameScore> scores = Map.of(
+                    한스.toGamer(), new CardGameScore(100),
+                    루키.toGamer(), new CardGameScore(80)
             );
 
             RoomEntity roomEntity = 룸엔티티_설정();
@@ -93,10 +93,10 @@ class MiniGameResultSaveEventListenerTest {
             Player 한스 = PlayerFixture.호스트한스();
             Player 루키 = PlayerFixture.게스트루키();
 
-            MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<PlayerView, MiniGameScore> scores = Map.of(
-                    한스, new CardGameScore(100),
-                    루키, new CardGameScore(80)
+            MiniGameResult result = new MiniGameResult(Map.of(한스.toGamer(), 1, 루키.toGamer(), 2));
+            Map<Gamer, MiniGameScore> scores = Map.of(
+                    한스.toGamer(), new CardGameScore(100),
+                    루키.toGamer(), new CardGameScore(80)
             );
 
             RoomEntity roomEntity = 룸엔티티_설정();
@@ -119,10 +119,10 @@ class MiniGameResultSaveEventListenerTest {
             Player 한스 = PlayerFixture.호스트한스();
             Player 루키 = PlayerFixture.게스트루키();
 
-            MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
-            Map<PlayerView, MiniGameScore> scores = Map.of(
-                    한스, new CardGameScore(100),
-                    루키, new CardGameScore(80)
+            MiniGameResult result = new MiniGameResult(Map.of(한스.toGamer(), 1, 루키.toGamer(), 2));
+            Map<Gamer, MiniGameScore> scores = Map.of(
+                    한스.toGamer(), new CardGameScore(100),
+                    루키.toGamer(), new CardGameScore(80)
             );
 
             RoomEntity roomEntity = 룸엔티티_설정();
@@ -154,7 +154,7 @@ class MiniGameResultSaveEventListenerTest {
                 .thenReturn(Optional.of(miniGameEntity));
     }
 
-    private void 도메인룸_설정(List<Player> players, MiniGameResult result, Map<PlayerView, MiniGameScore> scores) {
+    private void 도메인룸_설정(List<Player> players, MiniGameResult result, Map<Gamer, MiniGameScore> scores) {
         Playable miniGame = mock(Playable.class);
         when(miniGame.getResult()).thenReturn(result);
         when(miniGame.getScores()).thenReturn(scores);

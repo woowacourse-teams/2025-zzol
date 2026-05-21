@@ -11,7 +11,7 @@ import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.PlayersFixture;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.minigame.domain.MiniGameScore;
-import coffeeshout.gamecommon.PlayerView;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Players;
@@ -33,7 +33,7 @@ class CardGameTest {
         players = PlayersFixture.호스트꾹이_루키_엠제이_한스;
 
         cardGame = new CardGameFake(deckGenerator);
-        cardGame.setUp(players.getPlayers());
+        cardGame.setUp(players.getPlayers().stream().map(coffeeshout.room.domain.player.Player::toGamer).toList());
     }
 
     @Nested
@@ -158,15 +158,15 @@ class CardGameTest {
             cardGame.selectCard(player4, 3);
 
             // when
-            Map<PlayerView, MiniGameScore> scores = cardGame.getScores();
+            Map<Gamer, MiniGameScore> scores = cardGame.getScores();
 
             // then - 점수가 계산되는지 확인 (shuffle에 의해 실제 값은 변할 수 있음)
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(scores).hasSize(4);
-                softly.assertThat(scores.get(player1)).isNotNull();
-                softly.assertThat(scores.get(player2)).isNotNull();
-                softly.assertThat(scores.get(player3)).isNotNull();
-                softly.assertThat(scores.get(player4)).isNotNull();
+                softly.assertThat(scores.get(player1.toGamer())).isNotNull();
+                softly.assertThat(scores.get(player2.toGamer())).isNotNull();
+                softly.assertThat(scores.get(player3.toGamer())).isNotNull();
+                softly.assertThat(scores.get(player4.toGamer())).isNotNull();
             });
         }
 
@@ -189,7 +189,7 @@ class CardGameTest {
             assertThat(roundFinished).isTrue();
 
             // then - 점수가 계산되는지 확인
-            Map<PlayerView, MiniGameScore> scores = cardGame.getScores();
+            Map<Gamer, MiniGameScore> scores = cardGame.getScores();
             assertThat(scores).hasSize(4);
         }
     }

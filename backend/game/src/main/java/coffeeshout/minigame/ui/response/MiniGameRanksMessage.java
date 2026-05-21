@@ -1,6 +1,6 @@
 package coffeeshout.minigame.ui.response;
 
-import coffeeshout.gamecommon.PlayerView;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import java.util.List;
 import java.util.Map.Entry;
@@ -13,8 +13,8 @@ public record MiniGameRanksMessage(List<MiniGameRankMessage> ranks) {
             Integer rank
     ) {
 
-        public static MiniGameRankMessage from(@NonNull Entry<PlayerView, Integer> rankEntry) {
-            return new MiniGameRankMessage(rankEntry.getKey().getNameValue(), rankEntry.getValue());
+        public static MiniGameRankMessage from(@NonNull Entry<Gamer, Integer> rankEntry) {
+            return new MiniGameRankMessage(rankEntry.getKey().name(), rankEntry.getValue());
         }
     }
 

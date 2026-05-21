@@ -31,7 +31,7 @@ class LadderGameTest {
         players = List.of(꾹이, 철수, 영희);
 
         game = new LadderGame();
-        game.setUp(players);
+        game.setUp(players.stream().map(p -> p.toGamer()).toList());
     }
 
     @Nested
@@ -241,9 +241,9 @@ class LadderGameTest {
 
             // 모든 플레이어에게 게임 순위가 부여됨
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(result.getPlayerRank(꾹이)).isNotNull();
-                softly.assertThat(result.getPlayerRank(철수)).isNotNull();
-                softly.assertThat(result.getPlayerRank(영희)).isNotNull();
+                softly.assertThat(result.getPlayerRank(꾹이.toGamer())).isNotNull();
+                softly.assertThat(result.getPlayerRank(철수.toGamer())).isNotNull();
+                softly.assertThat(result.getPlayerRank(영희.toGamer())).isNotNull();
             });
         }
 
@@ -263,7 +263,7 @@ class LadderGameTest {
                     .findFirst()
                     .orElseThrow();
 
-            assertThat(result.getPlayerRank(ladderWinner)).isEqualTo(1);
+            assertThat(result.getPlayerRank(ladderWinner.toGamer())).isEqualTo(1);
         }
     }
 }

@@ -1,12 +1,12 @@
 package coffeeshout.room.domain.player;
 
-import coffeeshout.gamecommon.PlayerView;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.room.domain.roulette.Probability;
 import java.util.Objects;
 import lombok.Getter;
 
 @Getter
-public class Player implements PlayerView {
+public class Player {
 
     private final PlayerName name;
     private final Long userId;
@@ -59,7 +59,10 @@ public class Player implements PlayerView {
         this.colorIndex = colorIndex;
     }
 
-    @Override
+    public Gamer toGamer() {
+        return Gamer.of(name.value(), userId);
+    }
+
     public String getNameValue() {
         return name.value();
     }

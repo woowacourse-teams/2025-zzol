@@ -30,7 +30,7 @@ class LadderCommandServiceTest {
         엠제이 = PlayerFixture.게스트엠제이();
 
         game = new LadderGame();
-        game.setUp(List.of(꾹이, 루키, 엠제이));
+        game.setUp(List.of(꾹이.toGamer(), 루키.toGamer(), 엠제이.toGamer()));
         game.changeToPrepare();
         game.changeToDrawing();
     }
@@ -69,7 +69,7 @@ class LadderCommandServiceTest {
         @Test
         void DESCRIPTION_상태에서도_빈_Optional을_반환한다() {
             final LadderGame descriptionGame = new LadderGame();
-            descriptionGame.setUp(List.of(꾹이, 루키, 엠제이));
+            descriptionGame.setUp(List.of(꾹이.toGamer(), 루키.toGamer(), 엠제이.toGamer()));
 
             final Optional<LadderLine> result = commandService.drawLine(descriptionGame, "꾹이", 0);
 

@@ -31,7 +31,7 @@ class BlindTimerGameTest {
         한스 = PlayerFixture.게스트한스();
         꾹이 = PlayerFixture.게스트꾹이();
         루키 = PlayerFixture.게스트루키();
-        game.setUp(List.of(한스, 꾹이, 루키));
+        game.setUp(List.of(한스.toGamer(), 꾹이.toGamer(), 루키.toGamer()));
         game.startPlaying();
     }
 
@@ -84,7 +84,7 @@ class BlindTimerGameTest {
         void PLAYING_상태가_아니면_STOP시_예외가_발생한다() {
             // given
             final BlindTimerGame newGame = new BlindTimerGame(TARGET_TIME);
-            newGame.setUp(List.of(한스));
+            newGame.setUp(List.of(한스.toGamer()));
 
             // when & then
             assertThatThrownBy(() -> newGame.stop(new PlayerName("한스"), Instant.now()))
@@ -172,9 +172,9 @@ class BlindTimerGameTest {
             final MiniGameResult result = game.getResult();
 
             // then
-            assertThat(result.getPlayerRank(한스)).isEqualTo(1);
-            assertThat(result.getPlayerRank(꾹이)).isEqualTo(2);
-            assertThat(result.getPlayerRank(루키)).isEqualTo(3);
+            assertThat(result.getPlayerRank(한스.toGamer())).isEqualTo(1);
+            assertThat(result.getPlayerRank(꾹이.toGamer())).isEqualTo(2);
+            assertThat(result.getPlayerRank(루키.toGamer())).isEqualTo(3);
         }
 
         @Test
@@ -187,7 +187,7 @@ class BlindTimerGameTest {
             final MiniGameResult result = game.getResult();
 
             // then
-            assertThat(result.getPlayerRank(한스)).isEqualTo(1);
+            assertThat(result.getPlayerRank(한스.toGamer())).isEqualTo(1);
         }
 
         @Test
@@ -199,9 +199,9 @@ class BlindTimerGameTest {
             final MiniGameResult result = game.getResult();
 
             // then
-            assertThat(result.getPlayerRank(한스)).isEqualTo(1);
-            assertThat(result.getPlayerRank(꾹이)).isEqualTo(1);
-            assertThat(result.getPlayerRank(루키)).isEqualTo(1);
+            assertThat(result.getPlayerRank(한스.toGamer())).isEqualTo(1);
+            assertThat(result.getPlayerRank(꾹이.toGamer())).isEqualTo(1);
+            assertThat(result.getPlayerRank(루키.toGamer())).isEqualTo(1);
         }
     }
 

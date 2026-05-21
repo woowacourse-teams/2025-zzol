@@ -1,9 +1,9 @@
 package coffeeshout.fixture;
 
 import coffeeshout.cardgame.domain.CardGameScore;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.MiniGameFactory;
 import coffeeshout.gamecommon.Playable;
-import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -19,10 +19,10 @@ public class MiniGameDummy implements Playable {
     }
 
     @Override
-    public Map<PlayerView, MiniGameScore> getScores() {
-        final Map<PlayerView, MiniGameScore> scores = new HashMap<>();
-        scores.put(PlayerFixture.호스트꾹이(), new CardGameScore(20));
-        scores.put(PlayerFixture.게스트루키(), new CardGameScore(-10));
+    public Map<Gamer, MiniGameScore> getScores() {
+        final Map<Gamer, MiniGameScore> scores = new HashMap<>();
+        scores.put(Gamer.of("꾹이", null), new CardGameScore(20));
+        scores.put(Gamer.of("루키", null), new CardGameScore(-10));
         return scores;
     }
 
@@ -32,7 +32,7 @@ public class MiniGameDummy implements Playable {
     }
 
     @Override
-    public void setUp(List<? extends PlayerView> players) {
+    public void setUp(List<Gamer> gamers) {
     }
 
     public static class Factory implements MiniGameFactory {

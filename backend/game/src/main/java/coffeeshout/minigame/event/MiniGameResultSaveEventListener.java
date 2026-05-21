@@ -1,7 +1,7 @@
 package coffeeshout.minigame.event;
 
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
-import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.global.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
@@ -65,7 +65,7 @@ public class MiniGameResultSaveEventListener {
         final Playable miniGame = room.findMiniGame(miniGameType);
 
         final MiniGameResult result = miniGame.getResult();
-        final Map<PlayerView, MiniGameScore> scores = miniGame.getScores();
+        final Map<Gamer, MiniGameScore> scores = miniGame.getScores();
 
         final List<String> playerNames = room.getPlayers().stream()
                 .map(player -> player.getName().value())
@@ -88,8 +88,9 @@ public class MiniGameResultSaveEventListener {
                 throw new IllegalArgumentException("플레이어가 존재하지 않습니다: " + player.getName().value());
             }
 
-            final Integer rank = result.getPlayerRank(player);
-            final Long score = scores.get(player).getValue();
+            final Gamer gamer = player.toGamer();
+            final Integer rank = result.getPlayerRank(gamer);
+            final Long score = scores.get(gamer).getValue();
 
             resultEntities.add(new MiniGameResultEntity(
                     miniGameEntity,

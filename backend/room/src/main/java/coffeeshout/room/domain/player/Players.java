@@ -33,7 +33,7 @@ public class Players {
 
     public void adjustProbabilities(MiniGameResult miniGameResult, ProbabilityCalculator probabilityCalculator) {
         for (Player player : players) {
-            final int rank = miniGameResult.getPlayerRank(player);
+            final int rank = miniGameResult.getPlayerRank(player.toGamer());
             final int probabilityChange = probabilityCalculator.calculateProbabilityChange(
                     rank,
                     miniGameResult.getTieCountByRank(rank)

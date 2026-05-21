@@ -3,6 +3,7 @@ package coffeeshout.room.domain;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.state;
 
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
@@ -152,7 +153,10 @@ public class Room {
 
         final Playable currentGame = miniGames.poll();
 
-        currentGame.setUp(players.getPlayers());
+        final java.util.List<Gamer> gamers = players.getPlayers().stream()
+                .map(coffeeshout.room.domain.player.Player::toGamer)
+                .toList();
+        currentGame.setUp(gamers);
 
         roomState = RoomState.PLAYING;
 

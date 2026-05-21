@@ -10,9 +10,9 @@ public interface Playable {
 
     MiniGameResult getResult();
 
-    Map<PlayerView, MiniGameScore> getScores();
+    Map<Gamer, MiniGameScore> getScores();
 
     MiniGameType getMiniGameType();
 
-    void setUp(List<? extends PlayerView> players);
+    void setUp(List<Gamer> gamers);
 }

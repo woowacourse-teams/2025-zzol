@@ -26,7 +26,7 @@ import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.RoomState;
-import coffeeshout.gamecommon.PlayerView;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
@@ -269,15 +269,15 @@ class RoomServiceTest extends ServiceTest {
         ReflectionTestUtils.setField(createdRoom, "finishedGames", miniGames);
 
         // when
-        Map<PlayerView, MiniGameScore> miniGameScores = roomService.getMiniGameScores(
+        Map<Gamer, MiniGameScore> miniGameScores = roomService.getMiniGameScores(
                 joinCode.getValue(),
                 MiniGameType.CARD_GAME
         );
 
         // then
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(miniGameScores.get(PlayerFixture.호스트꾹이()).getValue()).isEqualTo(20);
-            softly.assertThat(miniGameScores.get(PlayerFixture.게스트루키()).getValue()).isEqualTo(-10);
+            softly.assertThat(miniGameScores.get(PlayerFixture.호스트꾹이().toGamer()).getValue()).isEqualTo(20);
+            softly.assertThat(miniGameScores.get(PlayerFixture.게스트루키().toGamer()).getValue()).isEqualTo(-10);
         });
     }
 
@@ -298,8 +298,8 @@ class RoomServiceTest extends ServiceTest {
 
         // then
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(miniGameRanks.getPlayerRank(PlayerFixture.호스트꾹이())).isEqualTo(1);
-            softly.assertThat(miniGameRanks.getPlayerRank(PlayerFixture.게스트루키())).isEqualTo(2);
+            softly.assertThat(miniGameRanks.getPlayerRank(PlayerFixture.호스트꾹이().toGamer())).isEqualTo(1);
+            softly.assertThat(miniGameRanks.getPlayerRank(PlayerFixture.게스트루키().toGamer())).isEqualTo(2);
         });
     }
 

@@ -9,7 +9,7 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.gamecommon.PlayerView;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
@@ -185,7 +185,7 @@ public class RoomService {
                 .toList();
     }
 
-    public Map<PlayerView, MiniGameScore> getMiniGameScores(String joinCode, MiniGameType miniGameType) {
+    public Map<Gamer, MiniGameScore> getMiniGameScores(String joinCode, MiniGameType miniGameType) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final Playable miniGame = room.findMiniGame(miniGameType);
 

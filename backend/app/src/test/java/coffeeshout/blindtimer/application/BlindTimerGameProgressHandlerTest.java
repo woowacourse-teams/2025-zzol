@@ -43,7 +43,7 @@ class BlindTimerGameProgressHandlerTest extends ServiceTest {
         room.startNextGame(HOST_NAME);
         joinCode = room.getJoinCode().getValue();
 
-        game.setUp(room.getPlayers());
+        game.setUp(room.getPlayers().stream().map(p -> p.toGamer()).toList());
         game.startPlaying();
     }
 

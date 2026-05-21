@@ -43,7 +43,7 @@ class SpeedTouchGameProgressHandlerTest extends ServiceTest {
         joinCode = room.getJoinCode().getValue();
 
         // TestTaskScheduler를 우회하여 직접 PLAYING 상태로 세팅
-        game.setUp(room.getPlayers());
+        game.setUp(room.getPlayers().stream().map(p -> p.toGamer()).toList());
         game.startPlaying();
     }
 

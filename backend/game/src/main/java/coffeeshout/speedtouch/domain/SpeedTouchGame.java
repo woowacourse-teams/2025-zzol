@@ -4,8 +4,8 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
-import coffeeshout.gamecommon.PlayerView;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import java.time.Instant;
@@ -29,9 +29,10 @@ public class SpeedTouchGame implements Playable {
     private ScheduledFuture<?> timeoutFuture;
 
     @Override
-    public void setUp(List<? extends PlayerView> playerList) {
-        @SuppressWarnings("unchecked")
-        final List<Player> castList = (List<Player>) (List<?>) playerList;
+    public void setUp(List<Gamer> gamers) {
+        final List<Player> castList = gamers.stream()
+                .map(g -> Player.createGuest(new PlayerName(g.name()), g.userId()))
+                .toList();
         this.players = new SpeedTouchPlayers(castList);
     }
 
@@ -41,10 +42,10 @@ public class SpeedTouchGame implements Playable {
     }
 
     @Override
-    public Map<PlayerView, MiniGameScore> getScores() {
+    public Map<Gamer, MiniGameScore> getScores() {
         return players.stream()
                 .collect(Collectors.toMap(
-                        p -> (PlayerView) p.getPlayer(),
+                        p -> p.getPlayer().toGamer(),
                         this::calculateScore
                 ));
     }

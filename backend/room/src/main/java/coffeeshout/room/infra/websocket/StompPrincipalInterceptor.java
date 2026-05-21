@@ -1,10 +1,10 @@
-package coffeeshout.user.infra.websocket;
+package coffeeshout.room.infra.websocket;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.UserPrincipal;
-import coffeeshout.websocket.auth.RoomSessionClaim;
-import coffeeshout.websocket.auth.RoomSessionTokenService;
+import coffeeshout.room.infra.auth.RoomSessionClaim;
+import coffeeshout.room.infra.auth.RoomSessionTokenService;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;

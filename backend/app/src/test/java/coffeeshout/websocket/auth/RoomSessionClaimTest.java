@@ -1,5 +1,6 @@
 package coffeeshout.websocket.auth;
 
+import coffeeshout.room.infra.auth.RoomSessionClaim;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

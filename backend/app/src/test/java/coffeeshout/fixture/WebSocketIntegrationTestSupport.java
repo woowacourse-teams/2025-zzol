@@ -3,7 +3,7 @@ package coffeeshout.fixture;
 import static org.skyscreamer.jsonassert.JSONCompareMode.LENIENT;
 
 import coffeeshout.global.MessageResponse;
-import coffeeshout.websocket.auth.RoomSessionTokenService;
+import coffeeshout.room.infra.auth.RoomSessionTokenService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
 import com.fasterxml.jackson.databind.ObjectMapper;

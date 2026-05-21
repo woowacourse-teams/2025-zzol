@@ -1,4 +1,4 @@
-package coffeeshout.websocket.auth;
+package coffeeshout.room.infra.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

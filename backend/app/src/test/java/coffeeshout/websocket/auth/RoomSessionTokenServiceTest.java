@@ -1,5 +1,12 @@
 package coffeeshout.websocket.auth;
 
+import coffeeshout.room.infra.auth.RoomSessionClaim;
+import coffeeshout.room.infra.auth.RoomSessionTokenService;
+import coffeeshout.room.infra.auth.RoomSessionTokenIssuer;
+import coffeeshout.room.infra.auth.JjwtRoomSessionTokenIssuer;
+import coffeeshout.room.infra.auth.RoomSessionTokenProperties;
+import coffeeshout.room.infra.auth.RoomSessionTokenErrorCode;
+
 import coffeeshout.fixture.RoomSessionClaimFixture;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package coffeeshout.websocket.auth;
+package coffeeshout.room.infra.auth;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import io.jsonwebtoken.Claims;

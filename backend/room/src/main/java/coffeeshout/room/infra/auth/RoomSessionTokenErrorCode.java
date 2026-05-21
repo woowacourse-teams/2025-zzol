@@ -1,4 +1,4 @@
-package coffeeshout.websocket.auth;
+package coffeeshout.room.infra.auth;
 
 import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package coffeeshout.websocket.auth;
+package coffeeshout.room.infra.auth;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

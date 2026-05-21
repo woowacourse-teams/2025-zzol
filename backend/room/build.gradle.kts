@@ -1,6 +1,5 @@
 // :room — Room aggregate + Player + Roulette + RoomSessionToken
 
-plugins { `java-test-fixtures` }
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
@@ -50,13 +49,5 @@ dependencies {
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
-    "testFixturesImplementation"(project(":room"))
-    "testFixturesImplementation"(project(":game-api"))
-    "testFixturesCompileOnly"("org.projectlombok:lombok")
-    "testFixturesAnnotationProcessor"("org.projectlombok:lombok")
-
-    testImplementation(testFixtures(project(":common")))
-    testImplementation(testFixtures(project(":room")))
     testImplementation(project(":game"))
-    testImplementation(testFixtures(project(":game")))
 }

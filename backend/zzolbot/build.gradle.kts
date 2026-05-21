@@ -22,5 +22,4 @@ dependencies {
     implementation("com.github.jsqlparser:jsqlparser:5.0")
     implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
 
-    testImplementation(testFixtures(project(":common")))
 }

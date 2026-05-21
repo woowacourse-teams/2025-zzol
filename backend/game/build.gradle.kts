@@ -1,6 +1,5 @@
 // :game — 6게임 + orchestration (이전 minigame)
 
-plugins { `java-test-fixtures` }
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
@@ -26,14 +25,4 @@ dependencies {
     annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
-    "testFixturesImplementation"(project(":game"))
-    "testFixturesImplementation"(project(":room"))
-    "testFixturesImplementation"(testFixtures(project(":room")))
-    "testFixturesImplementation"(project(":game-api"))
-    "testFixturesCompileOnly"("org.projectlombok:lombok")
-    "testFixturesAnnotationProcessor"("org.projectlombok:lombok")
-
-    testImplementation(testFixtures(project(":common")))
-    testImplementation(testFixtures(project(":room")))
-    testImplementation(testFixtures(project(":game")))
 }

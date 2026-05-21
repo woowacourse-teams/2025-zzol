@@ -5,7 +5,7 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.room.domain.service.ProfanityChecker;
 import coffeeshout.room.infra.event.ProfanityWordAllowedEvent;
-import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
+import coffeeshout.global.event.ProfanityWordBlockedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

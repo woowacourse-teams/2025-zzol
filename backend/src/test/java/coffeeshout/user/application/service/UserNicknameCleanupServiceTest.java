@@ -8,7 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.room.infra.event.ProfanityWordBlockedEvent;
+import coffeeshout.global.event.ProfanityWordBlockedEvent;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;

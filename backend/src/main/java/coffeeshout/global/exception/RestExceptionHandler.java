@@ -22,35 +22,23 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @Slf4j
 public class RestExceptionHandler {
 
-
     @ExceptionHandler(Exception.class)
-    public ProblemDetail handleException(
-            Exception exception,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleException(Exception exception, HttpServletRequest request) {
         logError(exception, request);
         return getProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception, GlobalErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ProblemDetail handleNoResourceFoundException(
-            NoResourceFoundException exception,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleNoResourceFoundException(NoResourceFoundException exception, HttpServletRequest request) {
         logWarning(exception, request);
-        // 미등록 경로 탐색(스캐너·봇)으로 간주해 IpBlockFilter의 404 카운터 집계 대상으로 둔다.
-        // BusinessException(404)와 달리 BUSINESS_NOT_FOUND 속성을 설정하지 않는다.
         return getProblemDetail(HttpStatus.NOT_FOUND, exception, GlobalErrorCode.RESOURCE_NOT_FOUND);
     }
 
     @ExceptionHandler(BusinessException.class)
-    public ProblemDetail handleBusinessException(
-            BusinessException exception,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleBusinessException(BusinessException exception, HttpServletRequest request) {
         logWarning(exception, request);
         final ErrorCode errorCode = exception.getErrorCode();
-        final HttpStatus httpStatus = errorCode.getHttpStatus();
+        final HttpStatus httpStatus = HttpStatus.resolve(errorCode.getHttpStatusCode());
         if (httpStatus == HttpStatus.NOT_FOUND) {
             request.setAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND, true);
         }
@@ -58,125 +46,69 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(SystemException.class)
-    public ProblemDetail handleSystemException(
-            SystemException exception,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleSystemException(SystemException exception, HttpServletRequest request) {
         logError(exception, request);
-        return getProblemDetail(exception.getErrorCode().getHttpStatus(), exception, exception.getErrorCode());
+        return getProblemDetail(toStatus(exception.getErrorCode()), exception, exception.getErrorCode());
     }
 
     @ExceptionHandler(InfrastructureException.class)
-    public ProblemDetail handleInfrastructureException(
-            InfrastructureException exception,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleInfrastructureException(InfrastructureException exception, HttpServletRequest request) {
         logError(exception, request);
-        return getProblemDetail(exception.getErrorCode().getHttpStatus(), exception, exception.getErrorCode());
+        return getProblemDetail(toStatus(exception.getErrorCode()), exception, exception.getErrorCode());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ProblemDetail handleHttpMessageNotReadableException(
-            HttpMessageNotReadableException exception,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleHttpMessageNotReadableException(HttpMessageNotReadableException exception, HttpServletRequest request) {
         logWarning(exception, request);
         return getProblemDetail(HttpStatus.BAD_REQUEST, exception, GlobalErrorCode.VALIDATION_ERROR);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleMethodArgumentNotValidException(
-            MethodArgumentNotValidException exception,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleMethodArgumentNotValidException(MethodArgumentNotValidException exception, HttpServletRequest request) {
         logWarning(exception, request);
-
-        String errorMessage = exception.getBindingResult()
-                .getFieldErrors()
-                .stream()
+        final String errorMessage = exception.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .reduce((msg1, msg2) -> msg1 + ", " + msg2)
                 .orElse(GlobalErrorCode.VALIDATION_ERROR.getMessage());
-
-        return getProblemDetail(
-                HttpStatus.BAD_REQUEST,
-                exception,
-                getErrorCode(errorMessage, GlobalErrorCode.VALIDATION_ERROR)
-        );
+        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, toErrorCode(errorMessage, GlobalErrorCode.VALIDATION_ERROR));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ProblemDetail handleConstraintViolationException(
-            ConstraintViolationException exception,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleConstraintViolationException(ConstraintViolationException exception, HttpServletRequest request) {
         logWarning(exception, request);
-
-        final String errorMessage = exception.getConstraintViolations()
-                .stream()
+        final String errorMessage = exception.getConstraintViolations().stream()
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .collect(Collectors.joining(", "));
+        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, toErrorCode(errorMessage, GlobalErrorCode.CONSTRAINT_VIOLATION));
+    }
 
-        return getProblemDetail(HttpStatus.BAD_REQUEST,
-                exception,
-                getErrorCode(errorMessage, GlobalErrorCode.CONSTRAINT_VIOLATION)
-        );
+    private static HttpStatus toStatus(ErrorCode errorCode) {
+        return HttpStatus.resolve(errorCode.getHttpStatusCode());
     }
 
     private static ProblemDetail getProblemDetail(HttpStatus status, Exception exception, ErrorCode errorCode) {
         final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, errorCode.getMessage());
-
         problemDetail.setProperty("errorCode", errorCode.getCode());
         problemDetail.setProperty("timestamp", LocalDateTime.now());
         problemDetail.setProperty("exception", exception.getClass().getSimpleName());
-
         return problemDetail;
     }
 
-    private static ErrorCode getErrorCode(String errorMessage, GlobalErrorCode globalErrorCode) {
+    private static ErrorCode toErrorCode(String errorMessage, GlobalErrorCode fallback) {
         return new ErrorCode() {
-            @Override
-            public String getCode() {
-                return globalErrorCode.getCode();
-            }
-
-            @Override
-            public String getMessage() {
-                return errorMessage.isBlank() ? globalErrorCode.getMessage() : errorMessage;
-            }
-
-            @Override
-            public org.springframework.http.HttpStatus getHttpStatus() {
-                return globalErrorCode.getHttpStatus();
-            }
+            @Override public String getCode() { return fallback.getCode(); }
+            @Override public String getMessage() { return errorMessage.isBlank() ? fallback.getMessage() : errorMessage; }
+            @Override public int getHttpStatusCode() { return fallback.getHttpStatusCode(); }
         };
     }
 
-    private void logError(
-            final Exception e,
-            final HttpServletRequest request
-    ) {
-        final String logMessage = String.format(
-                "method=%s uri=%s exception=%s message=%s",
-                request.getMethod(),
-                request.getRequestURI(),
-                e.getClass().getSimpleName(),
-                e.getMessage()
-        );
-        log.error(NotificationMarker.INSTANCE, logMessage, e);
+    private void logError(Exception e, HttpServletRequest request) {
+        log.error(NotificationMarker.INSTANCE, "method={} uri={} exception={} message={}",
+                request.getMethod(), request.getRequestURI(), e.getClass().getSimpleName(), e.getMessage(), e);
     }
 
-    private void logWarning(
-            final Exception e,
-            final HttpServletRequest request
-    ) {
-        final String logMessage = String.format(
-                "method=%s uri=%s exception=%s message=%s",
-                request.getMethod(),
-                request.getRequestURI(),
-                e.getClass().getSimpleName(),
-                e.getMessage()
-        );
-        log.warn(logMessage, e);
+    private void logWarning(Exception e, HttpServletRequest request) {
+        log.warn("method={} uri={} exception={} message={}",
+                request.getMethod(), request.getRequestURI(), e.getClass().getSimpleName(), e.getMessage());
     }
 }

@@ -3,16 +3,16 @@ package coffeeshout.room.domain.player;
 import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+
 
 @RequiredArgsConstructor
 @Getter
 public enum ColorErrorCode implements ErrorCode {
 
-    NO_AVAILABLE_COLOR(HttpStatus.CONFLICT, "사용가능한 색깔이 없습니다."),
-    INVALID_COLOR_INDEX(HttpStatus.BAD_REQUEST, "색깔 Index가 잘못됐습니다.");
+    NO_AVAILABLE_COLOR(409, "사용가능한 색깔이 없습니다."),
+    INVALID_COLOR_INDEX(400, "색깔 Index가 잘못됐습니다.");
 
-    private final HttpStatus httpStatus;
+    private final int httpStatusCode;
     private final String message;
 
     @Override

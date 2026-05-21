@@ -8,6 +8,7 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -99,7 +100,10 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
         messageConverter.setStrictContentTypeMatch(false);
         stompClient.setMessageConverter(messageConverter);
 
-        final String[] principalHolder = new String[1];
+        // CompletableFuture로 principal 수신 — Spring의 DefaultStompSession은
+        // sessionFuture.complete() 후 afterConnected()를 호출하므로 String[]이면
+        // 테스트 스레드가 .get() 반환 시 principalHolder가 아직 null일 수 있다.
+        final CompletableFuture<String> principalFuture = new CompletableFuture<>();
         final StompSession session = stompClient
                 .connectAsync(
                         String.format(WEBSOCKET_BASE_URL_FORMAT, port),
@@ -108,13 +112,13 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
                         new StompSessionHandlerAdapter() {
                             @Override
                             public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
-                                principalHolder[0] = connectedHeaders.getFirst("user-name");
+                                principalFuture.complete(connectedHeaders.getFirst("user-name"));
                             }
                         }
                 )
                 .get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         final TestStompSession testSession = new TestStompSession(session, objectMapper);
-        testSession.setPrincipalName(principalHolder[0]);
+        testSession.setPrincipalName(principalFuture.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
         return testSession;
     }
 
@@ -133,19 +137,20 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
         final StompHeaders connectHeaders = new StompHeaders();
         connectHeaders.add("roomToken", roomToken);
 
-        final String[] principalHolder = new String[1];
+        final CompletableFuture<String> principalFuture = new CompletableFuture<>();
         final StompSession session = stompClient
                 .connectAsync(
                         url, new WebSocketHttpHeaders(), connectHeaders, new StompSessionHandlerAdapter() {
 
                             @Override
                             public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
-                                principalHolder[0] = connectedHeaders.getFirst("user-name");
+                                principalFuture.complete(connectedHeaders.getFirst("user-name"));
                             }
 
                             @Override
                             public void handleTransportError(StompSession session, Throwable exception) {
                                 log.error("STOMP TRANSPORT ERROR: " + exception.getMessage());
+                                principalFuture.completeExceptionally(exception);
                                 throw new RuntimeException(exception);
                             }
 
@@ -158,13 +163,14 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
                                     Throwable exception
                             ) {
                                 log.error("STOMP EXCEPTION: " + exception.getMessage());
+                                principalFuture.completeExceptionally(exception);
                                 throw new RuntimeException(exception);
                             }
                         }
                 )
                 .get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         final TestStompSession testSession = new TestStompSession(session, objectMapper);
-        testSession.setPrincipalName(principalHolder[0]);
+        testSession.setPrincipalName(principalFuture.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
         return testSession;
     }
 

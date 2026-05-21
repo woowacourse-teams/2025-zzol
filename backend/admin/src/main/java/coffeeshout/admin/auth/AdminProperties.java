@@ -1,4 +1,4 @@
-package coffeeshout.auth;
+package coffeeshout.admin.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;

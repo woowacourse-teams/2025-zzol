@@ -2,8 +2,11 @@ package coffeeshout.websocket.event;
 
 import coffeeshout.websocket.StompSessionManager;
 import coffeeshout.websocket.SubscriptionInfoService;
+import coffeeshout.websocket.UserPrincipal;
+import coffeeshout.websocket.event.user.UserQueueSubscribedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
@@ -17,6 +20,7 @@ public class SessionSubscribeEventListener {
 
     private final StompSessionManager sessionManager;
     private final SubscriptionInfoService subscriptionInfoService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @EventListener
     public void handleSessionSubscribe(SessionSubscribeEvent event) {
@@ -25,11 +29,13 @@ public class SessionSubscribeEventListener {
         final String destination = accessor.getDestination();
         final String subscriptionId = accessor.getSubscriptionId();
 
-        // 구독 정보 추가
         subscriptionInfoService.addSubscription(sessionId, destination, subscriptionId);
-
-        // INFO 레벨에서도 상세 구독 정보 로깅 (구독자 수 포함)
         subscriptionInfoService.logSubscriptionInfo(destination);
+
+        final Long userId = UserPrincipal.extractUserId(event.getUser());
+        if (userId != null && destination != null) {
+            eventPublisher.publishEvent(new UserQueueSubscribedEvent(userId, destination));
+        }
     }
 
     @EventListener

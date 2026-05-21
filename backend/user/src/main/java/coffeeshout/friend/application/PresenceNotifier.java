@@ -6,14 +6,13 @@ import coffeeshout.friend.domain.event.PresenceChangedEvent;
 import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.websocket.UserPrincipal;
 import coffeeshout.websocket.docs.WsQueue;
+import coffeeshout.websocket.event.user.UserQueueSubscribedEvent;
 import coffeeshout.websocket.ui.WebSocketResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
 @Slf4j
 @Component
@@ -48,19 +47,12 @@ public class PresenceNotifier {
 
     @EventListener
     @Transactional(readOnly = true)
-    public void onPresenceQueueSubscribe(SessionSubscribeEvent event) {
-        final StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        final String destination = accessor.getDestination();
-        log.debug("STOMP 구독 감지: destination={}, user={}", destination, event.getUser());
-
-        if (!PRESENCE_SUBSCRIBE_DEST.equals(destination)) {
+    public void onPresenceQueueSubscribe(UserQueueSubscribedEvent event) {
+        if (!PRESENCE_SUBSCRIBE_DEST.equals(event.destination())) {
             return;
         }
 
-        final Long userId = UserPrincipal.extractUserId(event.getUser());
-        if (userId == null) {
-            return;
-        }
+        final Long userId = event.userId();
 
         friendshipService.findAcceptedFriendIds(userId).stream()
                 .filter(presenceTracker::isOnline)

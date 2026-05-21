@@ -1,7 +1,8 @@
-package coffeeshout.auth;
+package coffeeshout.admin.auth;
 
+import coffeeshout.admin.auth.AdminProperties;
 import coffeeshout.user.application.service.AuthTokenService;
-import coffeeshout.user.config.JwtAuthenticationFilter;
+import coffeeshout.user.auth.JwtAuthenticationFilter;
 import coffeeshout.user.infra.oauth.CustomOAuth2UserService;
 import coffeeshout.user.ui.OAuthSuccessHandler;
 import lombok.RequiredArgsConstructor;

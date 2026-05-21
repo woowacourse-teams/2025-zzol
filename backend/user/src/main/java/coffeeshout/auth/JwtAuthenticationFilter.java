@@ -1,4 +1,4 @@
-package coffeeshout.user.config;
+package coffeeshout.user.auth;
 
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.AuthenticatedUser;

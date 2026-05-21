@@ -1,5 +1,4 @@
-package coffeeshout.user.config;
-
+package coffeeshout.user.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;

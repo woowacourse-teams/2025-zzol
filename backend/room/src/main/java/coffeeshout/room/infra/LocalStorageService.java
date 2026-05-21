@@ -1,4 +1,4 @@
-package coffeeshout.room.application.service;
+package coffeeshout.room.infra;
 
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.room.application.port.StorageService;

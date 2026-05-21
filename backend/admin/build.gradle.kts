@@ -25,6 +25,7 @@ dependencies {
     implementation("com.querydsl:querydsl-jpa:$queryDslVersion2:jakarta")
 
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
     implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")

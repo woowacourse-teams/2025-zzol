@@ -38,7 +38,7 @@ import coffeeshout.room.config.RouletteProperties;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.application.port.RoomEntityRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoulettePersistenceService;
+import coffeeshout.room.application.service.RoulettePersistenceService;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import coffeeshout.user.application.service.UserProfileService;

@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.fixture.MiniGameDummy;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.fixture.RouletteFixture;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;

@@ -1,6 +1,5 @@
 package coffeeshout.minigame.domain;
 
-import coffeeshout.cardgame.domain.CardGameScore;
 import coffeeshout.room.domain.player.Player;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -50,20 +49,16 @@ public class MiniGameResult {
         final Map<MiniGameScore, Integer> ranks = new HashMap<>();
         int rank = 1;
         int count = 0;
-        MiniGameScore prevScore = CardGameScore.INF;
+        MiniGameScore prevScore = null;
         for (MiniGameScore score : sortedScores) {
             count++;
-            if (!isTieScore(score, prevScore)) {
+            if (prevScore == null || !score.equals(prevScore)) {
                 rank = count;
                 prevScore = score;
             }
             ranks.put(score, rank);
         }
         return ranks;
-    }
-
-    private static boolean isTieScore(MiniGameScore score, MiniGameScore prevScore) {
-        return score.equals(prevScore);
     }
 
     public int getTieCountByRank(int rank) {

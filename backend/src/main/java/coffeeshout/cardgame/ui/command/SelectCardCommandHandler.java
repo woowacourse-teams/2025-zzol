@@ -1,8 +1,8 @@
-package coffeeshout.minigame.ui.command.handler;
+package coffeeshout.cardgame.ui.command;
 
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
-import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.cardgame.infra.CardGameStreamKey;
+import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.ui.command.MiniGameCommandHandler;
 import coffeeshout.minigame.ui.request.command.SelectCardCommand;

@@ -1,6 +1,6 @@
 package coffeeshout.minigame.application;
 
-import coffeeshout.cardgame.domain.event.dto.MiniGameStartedEvent;
+import coffeeshout.minigame.event.MiniGameStartedEvent;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;

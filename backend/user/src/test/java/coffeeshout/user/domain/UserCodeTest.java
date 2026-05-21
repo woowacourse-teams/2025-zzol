@@ -3,7 +3,7 @@ package coffeeshout.user.domain;
 import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;

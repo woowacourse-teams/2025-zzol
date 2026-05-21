@@ -4,7 +4,7 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.report.ratelimit.ReportRateLimitStore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
-import coffeeshout.report.exception.ReportErrorCode;
+import coffeeshout.report.domain.ReportErrorCode;
 import coffeeshout.report.infra.persistence.Reporter;
 import coffeeshout.user.domain.AuthenticatedUser;
 import java.util.Optional;

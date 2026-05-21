@@ -2,7 +2,7 @@ package coffeeshout.patchnote.infra.persistence;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
-import coffeeshout.patchnote.exception.PatchNoteErrorCode;
+import coffeeshout.patchnote.domain.PatchNoteErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

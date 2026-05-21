@@ -2,7 +2,7 @@ package coffeeshout.patchnote.application;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
-import coffeeshout.patchnote.exception.PatchNoteErrorCode;
+import coffeeshout.patchnote.domain.PatchNoteErrorCode;
 import coffeeshout.patchnote.domain.PatchNoteRepository;
 import coffeeshout.patchnote.infra.persistence.PatchNoteEntity;
 import java.time.Clock;

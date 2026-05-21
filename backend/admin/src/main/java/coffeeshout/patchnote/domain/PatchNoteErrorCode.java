@@ -1,4 +1,4 @@
-package coffeeshout.patchnote.exception;
+package coffeeshout.patchnote.domain;
 
 import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;

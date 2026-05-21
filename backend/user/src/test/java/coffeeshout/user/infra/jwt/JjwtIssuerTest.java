@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.user.config.JwtProperties;
 import coffeeshout.user.domain.AuthenticatedUser;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

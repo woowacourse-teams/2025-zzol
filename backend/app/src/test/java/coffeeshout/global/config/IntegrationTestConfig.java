@@ -1,6 +1,6 @@
 package coffeeshout.global.config;
 
-import coffeeshout.gamecommon.flow.CompletableFutureFlowScheduler;
+import coffeeshout.game.flow.CompletableFutureFlowScheduler;
 import coffeeshout.gamecommon.flow.FlowScheduler;
 import org.mockito.Answers;
 import org.mockito.Mockito;

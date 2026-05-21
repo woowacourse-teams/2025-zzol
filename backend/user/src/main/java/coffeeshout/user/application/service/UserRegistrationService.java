@@ -8,7 +8,7 @@ import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import coffeeshout.user.infra.persistence.UserCreateAttemptHelper;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

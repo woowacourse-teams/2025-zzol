@@ -2,7 +2,7 @@ package coffeeshout.user.ui.resolver;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.domain.AuthenticatedUser;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import java.util.Optional;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;

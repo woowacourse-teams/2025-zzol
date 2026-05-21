@@ -5,7 +5,7 @@ import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.OAuthCodeEntry;
 import coffeeshout.user.domain.TokenPair;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import coffeeshout.user.ui.request.ExchangeCodeRequest;
 import coffeeshout.user.ui.resolver.AuthUser;
 import coffeeshout.user.ui.response.AuthTokenResponse;

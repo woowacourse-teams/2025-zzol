@@ -1,5 +1,6 @@
-package coffeeshout.gamecommon.flow;
+package coffeeshout.game.flow;
 
+import coffeeshout.gamecommon.flow.EarlyFinishTrigger;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 

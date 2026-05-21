@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.global.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
-import coffeeshout.report.exception.ReportErrorCode;
+import coffeeshout.report.domain.ReportErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

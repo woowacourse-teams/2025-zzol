@@ -1,7 +1,7 @@
 package coffeeshout.friend.domain;
 
 import coffeeshout.friend.application.service.RelationStatus;
-import coffeeshout.friend.exception.FriendErrorCode;
+import coffeeshout.friend.domain.FriendErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import java.time.Instant;
 

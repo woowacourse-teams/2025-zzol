@@ -1,6 +1,6 @@
 package coffeeshout.blockstacking.config;
 
-import coffeeshout.gamecommon.flow.CompletableFutureFlowScheduler;
+import coffeeshout.game.flow.CompletableFutureFlowScheduler;
 import coffeeshout.gamecommon.flow.FlowScheduler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

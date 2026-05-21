@@ -11,7 +11,7 @@ import coffeeshout.report.infra.persistence.ReportRepository;
 import coffeeshout.report.infra.persistence.Reporter;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import coffeeshout.user.infra.persistence.OAuthAccountJpaRepository;
 import coffeeshout.user.infra.persistence.UserEntity;
 import coffeeshout.user.infra.persistence.UserJpaRepository;

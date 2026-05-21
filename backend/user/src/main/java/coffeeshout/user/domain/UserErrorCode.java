@@ -1,4 +1,4 @@
-package coffeeshout.user.exception;
+package coffeeshout.user.domain;
 
 import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;

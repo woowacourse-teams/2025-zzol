@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.ipblock.IpBlockAttributes;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

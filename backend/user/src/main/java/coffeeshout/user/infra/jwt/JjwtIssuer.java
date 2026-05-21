@@ -4,7 +4,7 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.config.JwtProperties;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.service.JwtIssuer;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;

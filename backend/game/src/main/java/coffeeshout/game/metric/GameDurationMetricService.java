@@ -1,4 +1,4 @@
-package coffeeshout.gamecommon.metric;
+package coffeeshout.game.metric;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;

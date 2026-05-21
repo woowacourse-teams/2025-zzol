@@ -6,7 +6,7 @@ import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.event.UserNicknameRegisteredEvent;
 import coffeeshout.user.domain.repository.UserRepository;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;

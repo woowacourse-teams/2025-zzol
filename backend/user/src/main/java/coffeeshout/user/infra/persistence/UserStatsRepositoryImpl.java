@@ -3,7 +3,7 @@ package coffeeshout.user.infra.persistence;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.domain.UserStats;
 import coffeeshout.user.domain.repository.UserStatsRepository;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;

@@ -10,7 +10,7 @@ import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
 import coffeeshout.user.domain.repository.UserRepository;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;

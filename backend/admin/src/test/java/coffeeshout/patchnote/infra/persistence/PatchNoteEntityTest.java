@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import coffeeshout.patchnote.domain.PatchNoteCategory;
-import coffeeshout.patchnote.exception.PatchNoteErrorCode;
+import coffeeshout.patchnote.domain.PatchNoteErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

@@ -15,7 +15,7 @@ import coffeeshout.fixture.FriendshipFixture;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
-import coffeeshout.friend.exception.FriendErrorCode;
+import coffeeshout.friend.domain.FriendErrorCode;
 import coffeeshout.global.ServiceTest;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;

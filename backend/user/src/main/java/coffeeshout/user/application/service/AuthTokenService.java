@@ -9,7 +9,7 @@ import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.OAuthCodeRepository;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
 import coffeeshout.user.domain.service.JwtIssuer;
-import coffeeshout.user.exception.UserErrorCode;
+import coffeeshout.user.domain.UserErrorCode;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

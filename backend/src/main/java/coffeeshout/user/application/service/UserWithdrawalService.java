@@ -1,6 +1,6 @@
 package coffeeshout.user.application.service;
 
-import coffeeshout.report.domain.ReportAnonymizationRepository;
+import coffeeshout.user.application.port.ReportAnonymizationPort;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
 import coffeeshout.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +16,12 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class UserWithdrawalService {
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private final ReportAnonymizationRepository reportAnonymizationRepository;
+    private final ReportAnonymizationPort reportAnonymizationPort;
     private final UserRepository userRepository;
 
     @Transactional
     public void withdraw(Long userId) {
-        reportAnonymizationRepository.clearUserCodeByUserId(userId);
+        reportAnonymizationPort.clearUserCodeByUserId(userId);
         userRepository.softDeleteById(userId);
         TransactionSynchronizationManager.registerSynchronization(deleteRefreshTokenAfterCommit(userId));
     }

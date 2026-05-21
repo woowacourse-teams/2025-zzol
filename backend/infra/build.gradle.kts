@@ -34,4 +34,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
 
     implementation("org.reflections:reflections:$reflectionsVersion")
+
+    val resilience4jVersion = rootProject.extra["resilience4j"] as String
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
 }

@@ -7,4 +7,6 @@ tasks.jar { enabled = true }
 dependencies {
     implementation(project(":common"))
     implementation(project(":infra"))
+
+    implementation("io.micrometer:micrometer-core")
 }

@@ -283,3 +283,41 @@ colorMap 생성 책임은 `Room.toColorIndexMap()` 도메인 메서드로 응집
 `CardGameCommandService`(도메인 서비스)의 실질적 역할이 `selectCard()` 단일 메서드로 축소됐고,
 colorMap 조회가 서비스 계층 책임으로 정리됨에 따라 `CardGameService`로 직접 흡수했다.
 `LadderCommandService`는 현재 유지 중으로, 추후 일괄 정리 여부를 별도 검토한다.
+
+**`List<PlayerName>` → `List<Gamer>` — `Gamer` 값 객체 도입**
+
+Step 1·2 설계 시 `Playable.setUp` / `GameSession.startNextGame` 시그니처를
+`List<PlayerName>`으로 명시했으나, 구현 시 `List<Gamer>`로 변경됐다.
+
+```java
+// 설계
+void setUp(List<PlayerName> playerNames);
+Playable startNextGame(PlayerName hostName, List<PlayerName> playerNames);
+
+// 구현
+void setUp(List<Gamer> gamers);
+Playable startNextGame(PlayerName hostName, List<Gamer> gamers);
+```
+
+변경 이유: 게임 레이어가 플레이어를 식별할 때 `PlayerName`만으로는 로그인 사용자와
+비로그인 사용자를 구분할 수 없다. 향후 게임 액션 수신 시 "이 WebSocket 메시지가
+실제 해당 플레이어 본인에게서 왔는가"를 검증하려면 `userId` 정보가 게임 도메인까지
+전달돼야 한다. `Gamer(PlayerName name, Long userId)` 값 객체를 도입해 `setUp`에서
+부터 `userId`를 보유하도록 했다. `userId`는 비로그인 사용자의 경우 `null`이며,
+`isLoggedIn()`으로 구분한다.
+
+**PlayerKey Principal에 userId 포함 — WebSocket 인증 1단계**
+
+`RoomSessionClaim`은 처음부터 `userId`를 포함했으나, `StompPrincipalInterceptor`에서
+Principal을 `PlayerKey(joinCode, playerName)`로만 설정하고 있어 userId가 소실됐다.
+
+게임 레이어의 사용자 검증은 2단계로 나뉜다.
+
+- **1단계 (완료)** — PlayerKey Principal에 userId를 포함해 WebSocket 메시지 수신 시
+  컨트롤러가 `PlayerKey.parse(principal.getName()).userId()`로 꺼낼 수 있게 한다.
+  `PlayerKey` 포맷: `joinCode:playerName`(비로그인) / `joinCode:playerName:userId`(로그인).
+- **2단계 (미구현)** — 게임 컨트롤러·서비스에서 Principal의 `userId`를 `Gamer.userId`와
+  대조해 "발신자 = 해당 게임 슬롯 소유자"를 검증한다.
+
+이 변경은 WebSocket 인증 흐름(ADR-0009)에도 영향을 주므로 ADR-0009 핵심 제약에
+"로그인 방 연결: `PlayerKey` Principal 포맷 `joinCode:playerName:userId`"를 반영해야 한다.

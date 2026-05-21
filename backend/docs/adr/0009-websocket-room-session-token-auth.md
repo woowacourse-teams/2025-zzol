@@ -1,7 +1,7 @@
 # 0009. WebSocket 인증 — Room Session Token 도입
 
 - 날짜: 2026-05-08
-- 상태: 승인 (2026-05-15 부분 개정 — 인증 분기 정책 확장)
+- 상태: 승인 (2026-05-15 부분 개정 — 인증 분기 정책 확장 / 2026-05-21 부분 개정 — PlayerKey Principal에 userId 포함)
 
 ## 컨텍스트
 
@@ -34,18 +34,20 @@ RST는 HS256 서명 JWT이며, 클레임은 다음과 같다.
 
 STOMP CONNECT 헤더 변경은 다음과 같다.
 
-| 변경 전                                       | 변경 후                                    |
-|--------------------------------------------|------------------------------------------|
-| `joinCode: ABCD`                           | 제거                                      |
-| `playerName: 홍길동`                          | 제거                                      |
-| `Authorization: Bearer {accessToken}` (선택) | `roomToken` 부재 시 User Principal 인증에 사용  |
-| —                                          | `roomToken: {RST}` (방 연결 시 필수)          |
+| 변경 전                                       | 변경 후                                   |
+|--------------------------------------------|----------------------------------------|
+| `joinCode: ABCD`                           | 제거                                     |
+| `playerName: 홍길동`                          | 제거                                     |
+| `Authorization: Bearer {accessToken}` (선택) | `roomToken` 부재 시 User Principal 인증에 사용 |
+| —                                          | `roomToken: {RST}` (방 연결 시 필수)         |
 
 `StompPrincipalInterceptor`는 CONNECT 수신 시 아래 순서로 인증을 처리한다.
 
 ```text
 1. roomToken 헤더 존재
-   → RST 검증 → PlayerKey("joinCode:playerName") Principal 설정
+   → RST 검증
+   → 로그인 사용자(userId 있음): PlayerKey("joinCode:playerName:userId") Principal 설정
+   → 비로그인 사용자(userId null): PlayerKey("joinCode:playerName") Principal 설정
 
 2. roomToken 헤더 없음 + Authorization: Bearer 헤더 존재
    → Access Token 검증 → UserPrincipal("user:{userId}") Principal 설정
@@ -56,11 +58,15 @@ STOMP CONNECT 헤더 변경은 다음과 같다.
 
 **연결 타입 구분**
 
-| 연결 타입      | 사용 헤더              | Principal 형식          | 예시 사용처           |
-|------------|--------------------|-----------------------|------------------|
-| 방 연결       | `roomToken` (필수)   | `joinCode:playerName` | 게임 진행, 룸 이벤트     |
-| 사용자 연결     | `Authorization`    | `user:{userId}`       | 친구 알림, 사용자 이벤트   |
-| 익명 연결      | 없음                 | `{sessionId}`         | 미인증 클라이언트        |
+| 연결 타입      | 사용 헤더            | Principal 형식                 | 예시 사용처         |
+|------------|------------------|------------------------------|----------------|
+| 방 연결 (로그인) | `roomToken` (필수) | `joinCode:playerName:userId` | 게임 진행, 룸 이벤트   |
+| 방 연결 (익명)  | `roomToken` (필수) | `joinCode:playerName`        | 게임 진행, 룸 이벤트   |
+| 사용자 연결     | `Authorization`  | `user:{userId}`              | 친구 알림, 사용자 이벤트 |
+| 익명 연결      | 없음               | `{sessionId}`                | 미인증 클라이언트      |
+
+`PlayerKey.isValid(principalName)`은 두 포맷(`2-part`, `3-part`)을 모두 유효로 판정한다.
+`PlayerKey.parse(principalName).userId()`로 userId를 꺼낼 수 있으며, 비로그인이면 `null`이다.
 
 > **주의**: `roomToken`과 `Authorization`을 교차 검증하지 않는다. `roomToken`이 있으면 RST 클레임의 `userId`와 Access Token의 `userId` 일치 여부를 확인하지 않는다. RST 단독으로 방 연결을 승인하고, 사용자 연결은 Access Token 단독으로 승인한다.
 
@@ -174,3 +180,23 @@ STOMP CONNECT 헤더 변경은 다음과 같다.
 - sessionId 폴백은 방 수준 권한이 없는 연결에만 적용되므로 방 이벤트 수신은 불가하다.
 
 **영향 범위**: `StompPrincipalInterceptor`, 친구 알림 구독 경로
+
+### 2026-05-21 — PlayerKey Principal에 userId 포함
+
+**배경**: `RoomSessionClaim`은 처음부터 `userId`를 포함했으나, `StompPrincipalInterceptor`에서
+RST claim의 `userId`를 무시하고 Principal을 `joinCode:playerName`으로만 설정하고 있었다.
+게임 레이어(`Gamer.userId`)에서 사용자 신원 검증이 필요해졌으므로 Principal에 userId를 포함시켰다.
+
+**변경 내용**
+
+- 로그인 사용자의 방 연결 Principal 포맷: `joinCode:playerName` → `joinCode:playerName:userId`
+- `PlayerKey` 레코드에 `userId(Long, nullable)` 필드 추가. `toString()`/`parse()`/`isValid()`가 두 포맷을 모두 지원
+- `PlayerKeyErrorCode.INVALID_PLAYER_KEY_FORMAT` 신설 — parse 실패 시 `BusinessException` 발행
+- `StompPrincipalInterceptor`: `PlayerKey.of(claim.joinCode(), claim.playerName(), claim.userId())` 호출
+
+**보안 분석**
+
+- RST 검증 로직은 변경 없다. userId는 RST 클레임에서 추출하므로 클라이언트가 임의로 지정할 수 없다.
+- `PlayerKey.isValid()`는 3번째 파트가 숫자(Long)인 경우에만 유효로 판정하므로 비정상 포맷 주입이 차단된다.
+
+**영향 범위**: `PlayerKey`, `StompPrincipalInterceptor`, `SessionConnectEventListener`(parse 호환성 자동 유지)

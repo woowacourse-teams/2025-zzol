@@ -1,0 +1,127 @@
+# 0015. 닉네임 중복 허용 + 게임 컬렉션 식별 키 PlayerName → Gamer 전환
+
+- 날짜: 2026-05-21
+- 상태: 승인
+
+## 컨텍스트
+
+ADR-0014로 게임 액션 메서드 파라미터는 `Gamer`로 전환됐고, 컨트롤러도 Principal에서 userId를 추출한다.
+그러나 게임 내부 컬렉션(PlayerHands, BlockStackingGame의 Progress 맵, SpeedTouchPlayers 등)은
+여전히 `PlayerName`을 식별 키로 사용한다.
+
+현재 Room은 로그인/비로그인 구분 없이 **모든 닉네임 중복을 차단**한다.
+이 정책이 유지되는 한 PlayerName은 방 내 유일 식별자로 작동하지만, 다음 요구사항이 발생했다.
+
+**새 요구사항**: 로그인 사용자는 userId로 식별 가능하므로 **닉네임 중복을 허용**한다.
+
+닉네임 중복이 허용되면 `PlayerName`은 더 이상 게임 내 유일 식별자가 될 수 없다.
+`Map<PlayerName, ...>` 구조에서 동일 닉네임의 두 플레이어가 들어오면 마지막 put이 덮어쓴다.
+
+## 결정
+
+### 1. Room 레이어 닉네임 중복 정책 변경
+
+새 입장 규칙:
+
+| 입장 조합                    | 허용 여부             |
+|--------------------------|-------------------|
+| 비로그인 ↔ 비로그인 동일 닉네임       | ❌ 불가              |
+| 로그인 ↔ 로그인 동일 닉네임         | ✅ 허용 (userId로 식별) |
+| 비로그인 선점 닉네임 ↔ 로그인 동일 닉네임 | ✅ 로그인 사용자 허용      |
+
+**변경 위치:**
+
+- `Players.hasDuplicateName()` → `hasDuplicateNameForGuest(PlayerName)` (비로그인에게만 적용)
+- `Room.validatePlayerNameNotDuplicate()` → userId가 있는 로그인 사용자는 닉네임 검사 스킵
+
+### 2. 게임 컬렉션 식별 키 PlayerName → Gamer 전환
+
+닉네임 중복 허용 후 `PlayerName` 기반 컬렉션은 충돌 가능성이 생긴다.
+모든 게임 내부 컬렉션의 키/조회 기준을 `Gamer`로 교체한다.
+
+`Gamer` record의 기본 `equals()`/`hashCode()`는 `name + userId` 복합이므로
+동일 닉네임·다른 userId 플레이어를 구분할 수 있다.
+
+**영향 범위:**
+
+| 클래스                      | 현재                                        | 변경 후                                 |
+|--------------------------|-------------------------------------------|--------------------------------------|
+| `PlayerHands` (CardGame) | `Map<PlayerName, CardHand>`               | `Map<Gamer, CardHand>`               |
+| `BlockStackingGame`      | `ConcurrentHashMap<PlayerName, Progress>` | `ConcurrentHashMap<Gamer, Progress>` |
+| `SpeedTouchPlayers`      | `List<SpeedTouchPlayer>` (PlayerName 조회)  | `List<SpeedTouchPlayer>` (Gamer 조회)  |
+| `BlindTimerPlayers`      | PlayerName 기반 조회                          | Gamer 기반 조회                          |
+| `Runners` (RacingGame)   | PlayerName 기반 조회                          | Gamer 기반 조회                          |
+| `Poles` (LadderGame)     | `List<Pole>` (PlayerName 보관)              | Gamer 보관                             |
+
+### 3. `Playable.getScores()` 반환 타입 변경
+
+```java
+// 변경 전
+Map<PlayerName, MiniGameScore> getScores();
+
+// 변경 후
+Map<Gamer, MiniGameScore> getScores();
+```
+
+동일 닉네임·다른 userId 플레이어가 존재할 때 `Map<PlayerName, ...>`은 키 충돌로 점수가 소실된다.
+키를 `Gamer`로 교체해 복합 식별을 보장한다.
+
+### 4. 점수/순위 응답 DTO에 userId 포함
+
+프론트엔드에서 동명 플레이어를 구분 표시할 수 있도록 응답 DTO에 `userId`(nullable)를 추가한다.
+
+```java
+// 예시 — 게임별 구체적 DTO는 구현 시 확정
+record PlayerScoreDto(String playerName, Long userId, int score) {}
+```
+
+## 변경 파일 목록
+
+### Room 레이어
+
+- `Players.java` — `hasDuplicateNameForGuest(PlayerName)` 추가, 기존 `hasDuplicateName()` 제거 또는 내부 전용으로 변경
+- `Room.java` — 로그인 입장 시 닉네임 중복 검사 스킵 로직 추가
+
+### 게임 도메인 (6개 게임 × 컬렉션 클래스)
+
+- `PlayerHands.java`
+- `BlockStackingGame.java` (또는 내부 Progress 맵)
+- `SpeedTouchPlayers.java`
+- `BlindTimerPlayers.java`
+- `Runners.java`
+- `Poles.java`
+
+### Playable 인터페이스 + 6개 구현체
+
+- `Playable.java` — `getScores()` 반환 타입 변경
+- 6개 게임 구현체 — `getScores()` 구현 변경
+
+### 응답 DTO (6개 게임)
+
+- 게임별 점수/순위 응답 DTO — `userId` 필드 추가 (nullable)
+
+## 검토한 대안
+
+**대안 A: 닉네임에 suffix 붙임 ("Alice#2")**
+
+중복 입장 시 닉네임을 자동으로 변경한다.
+
+채택하지 않은 이유: 도메인 로직에 표현 로직이 침투하고, 프론트엔드와 닉네임 계약이 깨진다.
+
+**대안 B: `List<GamerScore>` 반환**
+
+`getScores()`를 `List<GamerScore>` 형태로 변경한다.
+
+채택하지 않은 이유: 인터페이스 변경 범위가 크고, 기존 `Map` 기반 처리 로직을 모두 수정해야 한다.
+`Map<Gamer, MiniGameScore>` 유지가 더 적은 변경으로 동일한 효과를 낸다.
+
+## 핵심 제약
+
+- 비로그인 게스트끼리는 여전히 닉네임 중복이 불가하다.
+- 게임 컬렉션의 PlayerName 기반 직접 조회는 허용하지 않는다. 반드시 Gamer 기반으로 조회한다.
+- `getScores()` 반환 타입이 `Map<Gamer, MiniGameScore>`로 변경되므로 이를 소비하는 응답 DTO도 함께 수정한다.
+- 프론트엔드에 userId가 노출되므로 사전 협의 후 배포한다.
+
+## 작업 브랜치
+
+`be/feat/duplicate-nickname-game-key`

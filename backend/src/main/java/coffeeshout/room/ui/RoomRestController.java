@@ -7,7 +7,7 @@ import coffeeshout.room.application.service.RoomCreateResult;
 import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.RoomErrorCode;
-import coffeeshout.room.domain.Playable;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;

@@ -5,7 +5,7 @@ import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Playable;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.service.RoomQueryService;
 import java.util.EnumMap;

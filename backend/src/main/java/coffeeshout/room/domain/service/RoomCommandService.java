@@ -2,7 +2,7 @@ package coffeeshout.room.domain.service;
 
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Playable;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;

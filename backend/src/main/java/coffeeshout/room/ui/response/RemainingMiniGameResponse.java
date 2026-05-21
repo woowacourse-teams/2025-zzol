@@ -1,6 +1,6 @@
 package coffeeshout.room.ui.response;
 
-import coffeeshout.room.domain.Playable;
+import coffeeshout.gamecommon.Playable;
 import java.util.List;
 
 public record RemainingMiniGameResponse(List<String> remaining) {

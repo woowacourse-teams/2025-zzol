@@ -6,7 +6,7 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.racinggame.domain.RacingGame;
-import coffeeshout.room.domain.Playable;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;

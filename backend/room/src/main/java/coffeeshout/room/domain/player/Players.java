@@ -64,6 +64,24 @@ public class Players {
         return players.stream().anyMatch(player -> player.sameName(playerName));
     }
 
+    public boolean existsByUserId(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        return players.stream().anyMatch(p -> userId.equals(p.getUserId()));
+    }
+
+    public synchronized void removePlayerByUserId(Long userId) {
+        players.removeIf(p -> {
+            if (userId.equals(p.getUserId())) {
+                colorUsage.release(p.getColorIndex());
+                return true;
+            }
+            return false;
+        });
+        adjustInitialPlayerProbabilities();
+    }
+
     public boolean isAllReady() {
         return players.stream()
                 .allMatch(Player::getIsReady);

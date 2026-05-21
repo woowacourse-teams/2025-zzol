@@ -55,8 +55,12 @@ public class Room {
 
     public void joinGuest(PlayerName guestName, Long userId) {
         validateRoomReady();
-        validateCanJoin();
-        validatePlayerNameNotDuplicate(guestName);
+        if (userId != null && players.existsByUserId(userId)) {
+            players.removePlayerByUserId(userId);
+        } else {
+            validateCanJoin();
+            validatePlayerNameNotDuplicate(guestName);
+        }
         join(Player.createGuest(guestName, userId));
     }
 

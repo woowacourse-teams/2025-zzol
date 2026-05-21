@@ -222,6 +222,59 @@ class RoomTest {
     }
 
     @Nested
+    class 로그인_사용자_재입장 {
+
+        @Test
+        void 같은_userId로_재입장하면_기존_플레이어가_교체된다() {
+            // given
+            room.joinGuest(게스트_꾹이, 100L);
+
+            // when
+            room.joinGuest(new PlayerName("새이름"), 100L);
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(room.getPlayers()).hasSize(2);
+                softly.assertThat(room.getPlayers()).extracting(Player::getName)
+                        .contains(호스트_한스, new PlayerName("새이름"))
+                        .doesNotContain(게스트_꾹이);
+            });
+        }
+
+        @Test
+        void 재입장_시_방이_가득_찬_상태에서도_허용된다() {
+            // given - userId=100인 사람 포함해 방을 9명으로 채움
+            room.joinGuest(게스트_꾹이, 100L);
+            for (int i = 1; i <= 7; i++) {
+                room.joinGuest(new PlayerName("guest" + i));
+            }
+
+            // when - 같은 userId로 재입장 (validateCanJoin 생략)
+            room.joinGuest(new PlayerName("새이름"), 100L);
+
+            // then - 기존 꾹이가 새이름으로 교체되어 여전히 9명
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(room.getPlayers()).hasSize(9);
+                softly.assertThat(room.getPlayers()).extracting(Player::getName)
+                        .contains(new PlayerName("새이름"))
+                        .doesNotContain(게스트_꾹이);
+            });
+        }
+
+        @Test
+        void 비로그인_사용자는_같은_닉네임으로_재입장할_수_없다() {
+            // given
+            room.joinGuest(게스트_꾹이);
+
+            // when & then
+            assertCoffeeShoutException(
+                    () -> room.joinGuest(게스트_꾹이),
+                    RoomErrorCode.DUPLICATE_PLAYER_NAME
+            );
+        }
+    }
+
+    @Nested
     class 가중치_설정 {
 
         @Test

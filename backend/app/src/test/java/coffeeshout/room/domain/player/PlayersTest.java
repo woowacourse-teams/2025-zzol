@@ -10,6 +10,8 @@ import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerName;
 
 class PlayersTest {
 
@@ -226,6 +228,51 @@ class PlayersTest {
                                 .isEqualTo(new Probability(2000 + 1400));
                     }
             );
+        }
+    }
+
+    @Nested
+    class userId_기반_조회 {
+
+        @Test
+        void userId로_플레이어_존재_여부를_확인한다() {
+            // given
+            final Players players = new Players("ABCD");
+            players.join(Player.createGuest(new PlayerName("한스"), 100L));
+
+            // when & then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(players.existsByUserId(100L)).isTrue();
+                softly.assertThat(players.existsByUserId(999L)).isFalse();
+            });
+        }
+
+        @Test
+        void userId가_null이면_항상_false를_반환한다() {
+            // given
+            final Players players = new Players("ABCD");
+            players.join(Player.createGuest(new PlayerName("한스"), null));
+
+            // when & then
+            assertThat(players.existsByUserId(null)).isFalse();
+        }
+
+        @Test
+        void userId로_플레이어를_제거하면_해당_플레이어만_삭제된다() {
+            // given
+            final Players players = new Players("ABCD");
+            players.join(Player.createGuest(new PlayerName("한스"), 100L));
+            players.join(Player.createGuest(new PlayerName("꾹이"), 200L));
+
+            // when
+            players.removePlayerByUserId(100L);
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(players.existsByUserId(100L)).isFalse();
+                softly.assertThat(players.existsByUserId(200L)).isTrue();
+                softly.assertThat(players.getPlayerCount()).isEqualTo(1);
+            });
         }
     }
 }

@@ -1,7 +1,7 @@
 package coffeeshout.racinggame.ui;
 
 import coffeeshout.websocket.docs.WsReceive;
-import coffeeshout.racinggame.application.RacingGameFacade;
+import coffeeshout.racinggame.infra.messaging.RacingGameCommandPublisher;
 import coffeeshout.racinggame.ui.request.TapCommand;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 public class RacingGameWebSocketController {
 
-    private final RacingGameFacade racingGameFacade;
+    private final RacingGameCommandPublisher racingGameCommandPublisher;
 
     @MessageMapping("/room/{joinCode}/racing-game/tap")
     @WsReceive(
@@ -24,6 +24,6 @@ public class RacingGameWebSocketController {
             description = "레이싱 게임 탭"
     )
     public void tap(@DestinationVariable String joinCode, @Payload @Valid TapCommand command) {
-        racingGameFacade.tap(joinCode, command.playerName(), command.tapCount());
+        racingGameCommandPublisher.tap(joinCode, command.playerName(), command.tapCount());
     }
 }

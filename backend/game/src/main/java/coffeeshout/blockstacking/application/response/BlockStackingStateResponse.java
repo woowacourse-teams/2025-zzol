@@ -1,4 +1,4 @@
-package coffeeshout.blockstacking.ui.response;
+package coffeeshout.blockstacking.application.response;
 
 import coffeeshout.blockstacking.domain.BlockStackingGameState;
 import com.fasterxml.jackson.annotation.JsonInclude;

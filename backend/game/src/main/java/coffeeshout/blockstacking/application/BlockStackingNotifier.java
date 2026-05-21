@@ -1,8 +1,8 @@
 package coffeeshout.blockstacking.application;
 
 import coffeeshout.blockstacking.domain.BlockStackingGame;
-import coffeeshout.blockstacking.ui.response.BlockStackingProgressResponse;
-import coffeeshout.blockstacking.ui.response.BlockStackingStateResponse;
+import coffeeshout.blockstacking.application.response.BlockStackingProgressResponse;
+import coffeeshout.blockstacking.application.response.BlockStackingStateResponse;
 import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.websocket.docs.WsTopic;
 import coffeeshout.websocket.ui.WebSocketResponse;

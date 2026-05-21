@@ -7,6 +7,7 @@ import coffeeshout.minigame.application.port.MiniGameEntityRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
+import coffeeshout.room.application.port.RoomStatusPort;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
@@ -25,6 +26,7 @@ public class MiniGamePersistenceService {
     private final RoomEntityRepository roomEntityRepository;
     private final PlayerEntityRepository playerEntityRepository;
     private final MiniGameEntityRepository miniGameEntityRepository;
+    private final RoomStatusPort roomStatusPort;
 
     @RedisLock(
             key = "#event.eventId()",
@@ -38,9 +40,9 @@ public class MiniGamePersistenceService {
         final JoinCode roomJoinCode = new JoinCode(event.joinCode());
         final Room room = roomQueryService.getByJoinCode(roomJoinCode);
 
-        final RoomEntity roomEntity = getRoomEntity(event.joinCode());
-        roomEntity.updateRoomStatus(RoomState.PLAYING);
+        roomStatusPort.updateStatus(event.joinCode(), RoomState.PLAYING);
 
+        final RoomEntity roomEntity = getRoomEntity(event.joinCode());
         final MiniGameEntity miniGameEntity = new MiniGameEntity(roomEntity, miniGameType);
         miniGameEntityRepository.save(miniGameEntity);
 

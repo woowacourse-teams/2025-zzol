@@ -87,6 +87,27 @@ public class GameLayerArchitectureTest {
             .as("racinggame.application은 racinggame.ui를 참조할 수 없다");
 
     @ArchTest
+    static final ArchRule blockstacking_application은_ui를_참조할_수_없다 = noClasses()
+            .that().resideInAPackage("coffeeshout.blockstacking.application..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("coffeeshout.blockstacking.ui..")
+            .as("blockstacking.application은 blockstacking.ui를 참조할 수 없다");
+
+    @ArchTest
+    static final ArchRule speedtouch_application은_ui를_참조할_수_없다 = noClasses()
+            .that().resideInAPackage("coffeeshout.speedtouch.application..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("coffeeshout.speedtouch.ui..")
+            .as("speedtouch.application은 speedtouch.ui를 참조할 수 없다");
+
+    @ArchTest
+    static final ArchRule blindtimer_application은_ui를_참조할_수_없다 = noClasses()
+            .that().resideInAPackage("coffeeshout.blindtimer.application..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("coffeeshout.blindtimer.ui..")
+            .as("blindtimer.application은 blindtimer.ui를 참조할 수 없다");
+
+    @ArchTest
     static final ArchRule minigame_application은_ui를_참조할_수_없다 = noClasses()
             .that().resideInAPackage("coffeeshout.minigame.application..")
             .should().dependOnClassesThat()

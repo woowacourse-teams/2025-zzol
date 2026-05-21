@@ -1,4 +1,4 @@
-package coffeeshout.racinggame.application;
+package coffeeshout.racinggame.infra.messaging;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.racinggame.infra.RacingGameStreamKey;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RacingGameFacade {
+public class RacingGameCommandPublisher {
 
     private final StreamPublisher streamPublisher;
 

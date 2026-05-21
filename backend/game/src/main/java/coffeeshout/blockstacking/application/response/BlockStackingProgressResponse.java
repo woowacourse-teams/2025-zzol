@@ -1,4 +1,4 @@
-package coffeeshout.blockstacking.ui.response;
+package coffeeshout.blockstacking.application.response;
 
 import coffeeshout.blockstacking.domain.BlockStackingPlayerRankInfo;
 import java.util.List;

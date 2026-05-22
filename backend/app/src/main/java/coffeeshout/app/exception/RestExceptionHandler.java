@@ -1,5 +1,7 @@
-package coffeeshout.global.exception;
+package coffeeshout.app.exception;
 
+import coffeeshout.global.exception.ErrorCode;
+import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.exception.custom.SystemException;

@@ -5,7 +5,6 @@ tasks.jar { enabled = true }
 
 dependencies {
     implementation(project(":common"))
-    implementation(project(":infra"))
 
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.springframework.boot:spring-boot-starter-actuator")

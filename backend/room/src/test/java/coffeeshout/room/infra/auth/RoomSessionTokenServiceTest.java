@@ -1,4 +1,4 @@
-package coffeeshout.websocket.auth;
+package coffeeshout.room.infra.auth;
 
 import coffeeshout.room.infra.auth.RoomSessionClaim;
 import coffeeshout.room.infra.auth.RoomSessionTokenService;

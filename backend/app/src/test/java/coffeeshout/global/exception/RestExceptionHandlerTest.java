@@ -2,6 +2,7 @@ package coffeeshout.global.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.app.exception.RestExceptionHandler;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.ipblock.IpBlockAttributes;
 import coffeeshout.user.domain.UserErrorCode;

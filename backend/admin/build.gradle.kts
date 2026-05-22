@@ -15,7 +15,6 @@ dependencies {
     implementation(project(":game"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     val redissonVersion = rootProject.extra["redisson"] as String
     implementation("org.redisson:redisson-spring-boot-starter:$redissonVersion")

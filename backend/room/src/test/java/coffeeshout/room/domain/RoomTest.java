@@ -4,8 +4,6 @@ import static coffeeshout.fixture.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.cardgame.domain.CardGame;
-import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.fixture.RouletteFixture;
@@ -135,7 +133,7 @@ class RoomTest {
     @Test
     void 미니게임을_제거한다() {
         // given
-        CardGame cardGame = new CardGame(new CardGameRandomDeckGenerator(), 1234L);
+        Playable cardGame = new MiniGameDummy();
         room.addMiniGame(호스트_한스, cardGame);
 
         // when
@@ -230,7 +228,7 @@ class RoomTest {
     @Test
     void 호스트가_아니면_미니게임을_제거할_수_없다() {
         // given
-        CardGame cardGame = new CardGame(new CardGameRandomDeckGenerator(), 1234L);
+        Playable cardGame = new MiniGameDummy();
         room.addMiniGame(호스트_한스, cardGame);
         room.joinGuest(게스트_꾹이);
 
@@ -242,7 +240,7 @@ class RoomTest {
     @Test
     void 미니게임을_시작한다() {
         // given
-        CardGame cardGame = new CardGame(new CardGameRandomDeckGenerator(), 1234L);
+        Playable cardGame = new MiniGameDummy();
         room.addMiniGame(호스트_한스, cardGame);
         room.joinGuest(게스트_꾹이);
         Player host = room.getHost();
@@ -259,7 +257,7 @@ class RoomTest {
     @Test
     void 게임_시작_시_모든_플레이어가_레디_상태가_아니면_예외가_발생한다() {
         // given
-        CardGame cardGame = new CardGame(new CardGameRandomDeckGenerator(), 1234L);
+        Playable cardGame = new MiniGameDummy();
         room.addMiniGame(호스트_한스, cardGame);
         room.joinGuest(게스트_꾹이);
         Player host = room.getHost();

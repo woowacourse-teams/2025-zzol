@@ -1,14 +1,12 @@
 package coffeeshout.room.application.service.player.name;
 
-import coffeeshout.room.application.port.RankingNicknameProvider;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.room.domain.event.RankingNicknamesCollectedEvent;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.PlayerNameAuditRepository;
 import coffeeshout.room.infra.persistence.PlayerEntity;
-import java.time.Clock;
-import java.time.LocalDateTime;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,27 +24,20 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PlayerNameRankingCleanupService {
 
-    private static final int RANKING_LIMIT = 50;
-
-    private final Clock clock;
-    private final RankingNicknameProvider rankingNicknameProvider;
     private final PlayerNameAuditRepository auditRepository;
     private final PlayerEntityRepository playerRepository;
     private final PlayerNameGenerator nicknameGenerator;
 
+    @EventListener
     @Transactional
-    public void cleanupBlockedNicknames() {
+    public void onRankingNicknamesCollected(RankingNicknamesCollectedEvent event) {
         final Set<String> blockedNicknames = auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED);
         if (blockedNicknames.isEmpty()) {
             log.info("[RankingCleanup] BLOCKED 닉네임 없음, 종료");
             return;
         }
 
-        final LocalDateTime now = LocalDateTime.now(clock);
-        final LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-
-        final Set<String> rankingNicknames = collectRankingNicknames(startOfMonth, now);
-        final Set<String> targets = new HashSet<>(rankingNicknames);
+        final Set<String> targets = new HashSet<>(event.nicknames());
         targets.retainAll(blockedNicknames);
 
         if (targets.isEmpty()) {
@@ -59,10 +51,6 @@ public class PlayerNameRankingCleanupService {
             replaced += replaceNickname(nickname);
         }
         log.info("[RankingCleanup] 닉네임 교체 완료: 총 {}건", replaced);
-    }
-
-    private Set<String> collectRankingNicknames(LocalDateTime start, LocalDateTime end) {
-        return rankingNicknameProvider.findRankingNicknamesBetween(start, end, RANKING_LIMIT);
     }
 
     private int replaceNickname(String nickname) {

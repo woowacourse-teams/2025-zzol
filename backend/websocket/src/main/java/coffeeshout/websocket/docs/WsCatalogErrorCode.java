@@ -16,7 +16,7 @@ public enum WsCatalogErrorCode implements ErrorCode {
     ANNOTATION_BLANK_TOPIC_PATH(500, "respondsOnTopics 에 빈 경로가 포함되어 있습니다."),
     INVALID_ENVELOPE_CLASS(500, "envelope-class 는 record 타입이어야 합니다.");
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

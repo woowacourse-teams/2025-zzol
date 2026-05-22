@@ -17,7 +17,7 @@ public enum GlobalErrorCode implements ErrorCode {
     IP_BLOCKED(429, "비정상적인 접근으로 일시적으로 차단되었습니다."),
     ;
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

@@ -12,7 +12,7 @@ public enum CardGameErrorCode implements ErrorCode {
     NOT_PLAYING_STATE(409, "현재 게임이 진행중인 상태가 아닙니다."),
     ;
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

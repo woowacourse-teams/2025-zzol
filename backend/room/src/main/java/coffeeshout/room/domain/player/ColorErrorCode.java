@@ -12,7 +12,7 @@ public enum ColorErrorCode implements ErrorCode {
     NO_AVAILABLE_COLOR(409, "사용가능한 색깔이 없습니다."),
     INVALID_COLOR_INDEX(400, "색깔 Index가 잘못됐습니다.");
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

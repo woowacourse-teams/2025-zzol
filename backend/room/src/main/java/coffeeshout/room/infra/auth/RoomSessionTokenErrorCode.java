@@ -13,7 +13,7 @@ public enum RoomSessionTokenErrorCode implements ErrorCode {
     ROOM_TOKEN_INVALID(401, "유효하지 않은 Room Session Token입니다."),
     ROOM_TOKEN_EXPIRED(401, "만료된 Room Session Token입니다.");
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

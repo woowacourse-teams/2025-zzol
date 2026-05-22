@@ -14,7 +14,7 @@ public enum QrCodeErrorCode implements ErrorCode {
     QR_CODE_URL_SIGNING_FAILED(503, "QR 코드 URL 생성에 실패했습니다."),
     ;
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

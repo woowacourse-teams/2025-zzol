@@ -17,7 +17,7 @@ public enum FriendErrorCode implements ErrorCode {
     NOT_FRIEND(403, "친구 관계가 아닌 사용자입니다."),
     FRIEND_REQUEST_FORBIDDEN(403, "해당 친구 요청을 처리할 권한이 없습니다.");
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

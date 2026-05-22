@@ -14,7 +14,7 @@ public enum BlockStackingGameErrorCode implements ErrorCode {
     INVALID_PROGRESS(400, "유효하지 않은 진행 데이터입니다."),
     ;
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

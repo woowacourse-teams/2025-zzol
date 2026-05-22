@@ -38,7 +38,7 @@ public class RestExceptionHandler {
     public ProblemDetail handleBusinessException(BusinessException exception, HttpServletRequest request) {
         logWarning(exception, request);
         final ErrorCode errorCode = exception.getErrorCode();
-        final HttpStatus httpStatus = HttpStatus.resolve(errorCode.getHttpStatusCode());
+        final HttpStatus httpStatus = HttpStatus.resolve(errorCode.getStatusCode());
         if (httpStatus == HttpStatus.NOT_FOUND) {
             request.setAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND, true);
         }
@@ -83,7 +83,7 @@ public class RestExceptionHandler {
     }
 
     private static HttpStatus toStatus(ErrorCode errorCode) {
-        return HttpStatus.resolve(errorCode.getHttpStatusCode());
+        return HttpStatus.resolve(errorCode.getStatusCode());
     }
 
     private static ProblemDetail getProblemDetail(HttpStatus status, Exception exception, ErrorCode errorCode) {
@@ -98,7 +98,7 @@ public class RestExceptionHandler {
         return new ErrorCode() {
             @Override public String getCode() { return fallback.getCode(); }
             @Override public String getMessage() { return errorMessage.isBlank() ? fallback.getMessage() : errorMessage; }
-            @Override public int getHttpStatusCode() { return fallback.getHttpStatusCode(); }
+            @Override public int getStatusCode() { return fallback.getStatusCode(); }
         };
     }
 

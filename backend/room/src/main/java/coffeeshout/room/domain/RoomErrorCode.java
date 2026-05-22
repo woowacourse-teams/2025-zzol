@@ -30,7 +30,7 @@ public enum RoomErrorCode implements ErrorCode {
     INVITER_NOT_IN_ROOM(403, "방에 참여 중인 사용자만 초대할 수 있습니다."),
     ;
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

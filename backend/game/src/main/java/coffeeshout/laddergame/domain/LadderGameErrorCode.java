@@ -19,7 +19,7 @@ public enum LadderGameErrorCode implements ErrorCode {
     INVALID_LINE_ROW(500, "유효하지 않은 행 번호입니다."),
     ;
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

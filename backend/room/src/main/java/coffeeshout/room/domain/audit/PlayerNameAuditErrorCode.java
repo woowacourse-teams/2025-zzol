@@ -16,5 +16,5 @@ public enum PlayerNameAuditErrorCode implements ErrorCode {
 
     private final String code;
     private final String message;
-    private final int httpStatusCode;
+    private final int statusCode;
 }

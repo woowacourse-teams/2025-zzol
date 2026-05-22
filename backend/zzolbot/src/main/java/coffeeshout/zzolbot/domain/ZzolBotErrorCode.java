@@ -16,7 +16,7 @@ public enum ZzolBotErrorCode implements ErrorCode {
     SQL_EXECUTION_FAILED(500, "SQL 실행 중 오류가 발생했습니다."),
     ;
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

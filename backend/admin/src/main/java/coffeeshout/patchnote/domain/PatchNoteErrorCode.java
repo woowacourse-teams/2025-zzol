@@ -16,7 +16,7 @@ public enum PatchNoteErrorCode implements ErrorCode {
     INVALID_CATEGORY(400, "카테고리는 필수입니다."),
     ;
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

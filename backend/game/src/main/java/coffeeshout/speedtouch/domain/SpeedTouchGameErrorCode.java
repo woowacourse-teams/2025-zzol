@@ -14,7 +14,7 @@ public enum SpeedTouchGameErrorCode implements ErrorCode {
     ALREADY_FINISHED(409, "이미 완주한 플레이어입니다."),
     ;
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

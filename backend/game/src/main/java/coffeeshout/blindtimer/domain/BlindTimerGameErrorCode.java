@@ -13,7 +13,7 @@ public enum BlindTimerGameErrorCode implements ErrorCode {
     ALREADY_STOPPED(409, "이미 멈춘 플레이어입니다."),
     ;
 
-    private final int httpStatusCode;
+    private final int statusCode;
     private final String message;
 
     @Override

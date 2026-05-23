@@ -5,7 +5,10 @@ import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import java.math.BigDecimal;
 
-public class PlayerNameAuditFixture {
+public final class PlayerNameAuditFixture {
+
+    private PlayerNameAuditFixture() {
+    }
 
     public static PlayerNameAuditEntity 검열대기(String playerName) {
         return new PlayerNameAuditEntity(playerName);

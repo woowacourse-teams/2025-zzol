@@ -9,6 +9,7 @@ import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.BlindTimerGameState;
 import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
 import coffeeshout.fixture.RoomFixture;
+import coffeeshout.room.domain.player.Player;
 import coffeeshout.support.ServiceTest;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
@@ -43,7 +44,7 @@ class BlindTimerGameProgressHandlerTest extends ServiceTest {
         room.startNextGame(HOST_NAME);
         joinCode = room.getJoinCode().getValue();
 
-        game.setUp(room.getPlayers().stream().map(p -> p.toGamer()).toList());
+        game.setUp(room.getPlayers().stream().map(Player::toGamer).toList());
         game.startPlaying();
     }
 

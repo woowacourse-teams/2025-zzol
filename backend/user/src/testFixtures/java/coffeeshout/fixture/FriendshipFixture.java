@@ -4,7 +4,10 @@ import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.FriendshipStatus;
 import java.time.Instant;
 
-public class FriendshipFixture {
+public final class FriendshipFixture {
+
+    private FriendshipFixture() {
+    }
 
     public static final Long REQUESTER_ID = 1L;
     public static final Long ADDRESSEE_ID = 2L;

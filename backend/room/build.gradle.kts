@@ -1,5 +1,7 @@
 // :room — Room aggregate + Player + Roulette + RoomSessionToken
 
+apply(plugin = "java-test-fixtures")
+
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
@@ -46,6 +48,7 @@ dependencies {
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
     testImplementation(project(":test-support"))
+    testImplementation(testFixtures(project(":user")))
 
     val testcontainersVersion = rootProject.extra["testcontainers"] as String
     testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")

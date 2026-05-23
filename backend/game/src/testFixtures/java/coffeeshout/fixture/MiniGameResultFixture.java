@@ -2,7 +2,6 @@ package coffeeshout.fixture;
 
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
-import coffeeshout.room.domain.player.Player;
 import java.util.Map;
 
 public final class MiniGameResultFixture {

@@ -2,6 +2,7 @@ package coffeeshout.room.application.service.player.name;
 
 import coffeeshout.profanity.application.ProfanityWordManagementService;
 import coffeeshout.profanity.domain.Language;
+import coffeeshout.profanity.domain.ProfanityErrorCode;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.global.event.ProfanityWordBlockedEvent;
 import coffeeshout.global.exception.custom.BusinessException;
@@ -39,8 +40,19 @@ public class PlayerNameFeedbackService {
                 PlayerNameFeedbackEntity.OperatorDecision.ALLOWED,
                 null
         ));
-        profanityWordManagementService.deactivate(nickname);
+        tryDeactivate(nickname);
         log.info("닉네임 허용 처리: auditId={}, nickname={}", auditId, nickname);
+    }
+
+    private void tryDeactivate(String nickname) {
+        try {
+            profanityWordManagementService.deactivate(nickname);
+        } catch (BusinessException e) {
+            if (e.getErrorCode() != ProfanityErrorCode.WORD_NOT_FOUND) {
+                throw e;
+            }
+            log.debug("비속어 목록에 없는 닉네임 허용 — 비활성화 생략: {}", nickname);
+        }
     }
 
     @Transactional

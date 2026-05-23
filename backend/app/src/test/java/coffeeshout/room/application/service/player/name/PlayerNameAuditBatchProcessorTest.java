@@ -7,11 +7,14 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.PlayerNameAuditFixture;
 import coffeeshout.global.ServiceTest;
+import coffeeshout.global.event.ProfanityWordBlockedEvent;
+import coffeeshout.profanity.application.ProfanityWordManagementService;
+import coffeeshout.profanity.domain.Language;
+import coffeeshout.profanity.domain.WordSource;
+import coffeeshout.profanity.infra.persistence.ProfanityWordJpaRepository;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;
-import coffeeshout.global.event.ProfanityWordBlockedEvent;
-import coffeeshout.room.infra.persistence.nickname.CustomProfanityJpaRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditJpaRepository;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -20,7 +23,6 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PlayerNameAuditBatchProcessorTest extends ServiceTest {
@@ -33,7 +35,9 @@ class PlayerNameAuditBatchProcessorTest extends ServiceTest {
     @Autowired
     PlayerNameAuditJpaRepository auditRepository;
     @Autowired
-    CustomProfanityJpaRepository customProfanityRepository;
+    ProfanityWordJpaRepository profanityWordJpaRepository;
+    @Autowired
+    ProfanityWordManagementService profanityWordManagementService;
     @Autowired
     MeterRegistry meterRegistry;
 
@@ -55,13 +59,13 @@ class PlayerNameAuditBatchProcessorTest extends ServiceTest {
     class FLAGGED_자동_차단 {
 
         @Test
-        void 기준치_이상이면_custom_profanity에_등록된다() {
+        void 기준치_이상이면_비속어_목록에_등록된다() {
             final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("욕설닉네임"));
             given(playerNameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
 
             batchProcessor.process(List.of(entity));
 
-            assertThat(customProfanityRepository.existsByWord("욕설닉네임")).isTrue();
+            assertThat(profanityWordJpaRepository.existsByWord("욕설닉네임")).isTrue();
         }
 
         @Test
@@ -86,18 +90,19 @@ class PlayerNameAuditBatchProcessorTest extends ServiceTest {
         }
 
         @Nested
-        class 이미_custom_profanity에_등록된_경우 {
+        class 이미_비속어_목록에_등록된_경우 {
 
             @Test
             void 중복_등록하지_않는다() {
-                customProfanityRepository.insertIgnore("욕설닉네임", "OPERATOR_MANUAL");
+                profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL);
                 final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("욕설닉네임"));
                 given(playerNameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
 
                 batchProcessor.process(List.of(entity));
 
-                assertThat(customProfanityRepository.findWords(Pageable.unpaged()).getContent())
-                        .containsExactly("욕설닉네임");
+                assertThat(profanityWordJpaRepository.findAll().stream()
+                        .filter(e -> e.getWord().equals("욕설닉네임"))
+                        .count()).isEqualTo(1);
             }
         }
     }
@@ -106,28 +111,28 @@ class PlayerNameAuditBatchProcessorTest extends ServiceTest {
     class 비_FLAGGED_결과 {
 
         @Test
-        void PENDING이면_custom_profanity에_등록하지_않는다() {
+        void PENDING이면_비속어_목록에_등록하지_않는다() {
             final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("애매한닉네임"));
             given(playerNameAuditor.audit(anyList())).willReturn(List.of(pendingResult("애매한닉네임")));
 
             batchProcessor.process(List.of(entity));
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(customProfanityRepository.existsByWord("애매한닉네임")).isFalse();
+                softly.assertThat(profanityWordJpaRepository.existsByWord("애매한닉네임")).isFalse();
                 softly.assertThat(auditRepository.findById(entity.getId()).orElseThrow().getStatus())
                         .isEqualTo(PlayerNameAuditStatus.PENDING);
             });
         }
 
         @Test
-        void CLEAN이면_custom_profanity에_등록하지_않는다() {
+        void CLEAN이면_비속어_목록에_등록하지_않는다() {
             final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("용감한호랑이"));
             given(playerNameAuditor.audit(anyList())).willReturn(List.of(cleanResult("용감한호랑이")));
 
             batchProcessor.process(List.of(entity));
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(customProfanityRepository.existsByWord("용감한호랑이")).isFalse();
+                softly.assertThat(profanityWordJpaRepository.existsByWord("용감한호랑이")).isFalse();
                 softly.assertThat(auditRepository.findById(entity.getId()).orElseThrow().getStatus())
                         .isEqualTo(PlayerNameAuditStatus.CLEAN);
             });

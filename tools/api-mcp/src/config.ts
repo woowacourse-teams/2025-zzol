@@ -2,15 +2,23 @@ export interface ServerConfig {
   catalogUrl: string;
   brokerUrl: string;
   cachePath: string | undefined;
+  baseUrl: string;
 }
 
 export function loadConfig(): ServerConfig {
   const catalogUrl = process.env.WS_MCP_CATALOG_URL ?? 'http://localhost:8080/dev/ws-catalog';
+  const baseUrl = process.env.HTTP_MCP_BASE_URL ?? deriveBaseUrl(catalogUrl);
   return {
     catalogUrl,
     brokerUrl: process.env.WS_MCP_BROKER_URL ?? deriveBrokerUrl(catalogUrl),
     cachePath: process.env.WS_MCP_CACHE_PATH,
+    baseUrl,
   };
+}
+
+function deriveBaseUrl(catalogUrl: string): string {
+  const url = new URL(catalogUrl);
+  return `${url.protocol}//${url.host}`;
 }
 
 function deriveBrokerUrl(catalogUrl: string): string {

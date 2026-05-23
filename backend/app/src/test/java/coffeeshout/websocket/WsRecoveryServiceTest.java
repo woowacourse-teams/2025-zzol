@@ -2,8 +2,8 @@ package coffeeshout.websocket;
 
 import static coffeeshout.cardgame.application.CardGameNotifier.CARD_GAME_STATE_DESTINATION_FORMAT;
 import static coffeeshout.cardgame.application.CardGameNotifier.GAME_START_DESTINATION_FORMAT;
-import static coffeeshout.websocket.GameRecoveryService.ID_MAP_KEY_FORMAT;
-import static coffeeshout.websocket.GameRecoveryService.STREAM_KEY_FORMAT;
+import static coffeeshout.websocket.WsRecoveryService.ID_MAP_KEY_FORMAT;
+import static coffeeshout.websocket.WsRecoveryService.STREAM_KEY_FORMAT;
 import static coffeeshout.racinggame.infra.messaging.RacingGameMessagePublisher.RACING_GAME_PLAYERS_POSITION_DESTINATION_FORMAT;
 import static coffeeshout.racinggame.infra.messaging.RacingGameMessagePublisher.RACING_GAME_STATE_DESTINATION_FORMAT;
 import static coffeeshout.room.ui.messaging.RoomMessagePublisher.MINI_GAME_TOPIC_FORMAT;
@@ -35,10 +35,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-class GameRecoveryServiceTest extends ServiceTest {
+class WsRecoveryServiceTest extends ServiceTest {
 
     @Autowired
-    GameRecoveryService gameRecoveryService;
+    WsRecoveryService wsRecoveryService;
 
     @Autowired
     StringRedisTemplate stringRedisTemplate;
@@ -69,7 +69,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<String> response = WebSocketResponse.success("game started");
 
             // when
-            String streamId = gameRecoveryService.save(joinCode, destination, response);
+            String streamId = wsRecoveryService.save(joinCode, destination, response);
 
             // then
             assertThat(streamId).isNotBlank().matches("\\d+-\\d+"); //Redis Stream ID 형식: 1234567890-0
@@ -82,8 +82,8 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<String> response = WebSocketResponse.success("game started");
 
             // when
-            String streamId1 = gameRecoveryService.save(joinCode, destination, response);
-            String streamId2 = gameRecoveryService.save(joinCode, destination, response);
+            String streamId1 = wsRecoveryService.save(joinCode, destination, response);
+            String streamId2 = wsRecoveryService.save(joinCode, destination, response);
 
             // then
             assertThat(streamId1).isEqualTo(streamId2);
@@ -97,8 +97,8 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<String> response2 = WebSocketResponse.success("message2");
 
             // when
-            String streamId1 = gameRecoveryService.save(joinCode, destination, response1);
-            String streamId2 = gameRecoveryService.save(joinCode, destination, response2);
+            String streamId1 = wsRecoveryService.save(joinCode, destination, response1);
+            String streamId2 = wsRecoveryService.save(joinCode, destination, response2);
 
             // then
             assertThat(streamId1).isNotEqualTo(streamId2);
@@ -114,7 +114,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             String previousStreamId = "0-0";
             for (int i = 0; i < messageCount; i++) {
                 WebSocketResponse<String> response = WebSocketResponse.success("message" + i);
-                String streamId = gameRecoveryService.save(joinCode, destination, response);
+                String streamId = wsRecoveryService.save(joinCode, destination, response);
 
                 assertThat(streamId).isNotBlank();
                 assertThat(streamId.compareTo(previousStreamId)).isGreaterThan(0);
@@ -129,7 +129,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<String> response = WebSocketResponse.success("test");
 
             // when
-            gameRecoveryService.save(joinCode, destination, response);
+            wsRecoveryService.save(joinCode, destination, response);
 
             // then
             String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode);
@@ -152,7 +152,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             String streamId3 = saveMessage(destination, "message3");
 
             // when - streamId1 이후의 메시지 조회
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, streamId1);
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, streamId1);
 
             // then
             assertThat(messages).hasSize(2);
@@ -171,7 +171,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             }
 
             // when - 처음부터 모든 메시지 조회
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
 
             // then
             assertThat(messages).hasSize(messageCount);
@@ -183,7 +183,7 @@ class GameRecoveryServiceTest extends ServiceTest {
         @Test
         void 복구할_메시지가_없으면_빈_리스트를_반환한다() {
             // when
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
 
             // then
             assertThat(messages).isEmpty();
@@ -196,7 +196,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             String lastStreamId = saveMessage(destination, "last message");
 
             // when
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, lastStreamId);
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, lastStreamId);
 
             // then
             assertThat(messages).isEmpty();
@@ -205,7 +205,7 @@ class GameRecoveryServiceTest extends ServiceTest {
         @Test
         void 존재하지_않는_방의_메시지를_조회하면_빈_리스트를_반환한다() {
             // when
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince("ZZZZ", "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince("ZZZZ", "0-0");
 
             // then
             assertThat(messages).isEmpty();
@@ -224,7 +224,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             String lastStreamId = skipCount == 0 ? "0-0" : streamIds[skipCount - 1];
 
             // when
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, lastStreamId);
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, lastStreamId);
 
             // then
             assertThat(messages).hasSize(expectedCount);
@@ -238,7 +238,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             saveMessage(destination, testData);
 
             // when
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
 
             // then
             assertThat(messages).hasSize(1);
@@ -265,7 +265,7 @@ class GameRecoveryServiceTest extends ServiceTest {
 
             // when - 첫 번째 streamId 이후의 메시지들 복구
             String firstStreamId = streamIds.getFirst();
-            List<RecoveryMessage> recoveredMessages = gameRecoveryService.getMessagesSince(joinCode, firstStreamId);
+            List<RecoveryMessage> recoveredMessages = wsRecoveryService.getMessagesSince(joinCode, firstStreamId);
 
             // then
             assertThat(recoveredMessages).hasSize(totalMessages - 1);
@@ -281,7 +281,7 @@ class GameRecoveryServiceTest extends ServiceTest {
 
         private String saveMessage(String destination, String data) {
             WebSocketResponse<String> response = WebSocketResponse.success(data);
-            return gameRecoveryService.save(joinCode, destination, response);
+            return wsRecoveryService.save(joinCode, destination, response);
         }
     }
 
@@ -303,7 +303,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             // given
             String destination = "/topic/room/" + joinCode;
             WebSocketResponse<String> response = WebSocketResponse.success("test");
-            gameRecoveryService.save(joinCode, destination, response);
+            wsRecoveryService.save(joinCode, destination, response);
 
             String streamKey = String.format(STREAM_KEY_FORMAT, joinCode);
             String idMapKey = String.format(ID_MAP_KEY_FORMAT, joinCode);
@@ -313,7 +313,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             assertThat(stringRedisTemplate.hasKey(idMapKey)).isTrue();
 
             // when
-            gameRecoveryService.cleanup(joinCode);
+            wsRecoveryService.cleanup(joinCode);
 
             // then
             assertThat(stringRedisTemplate.hasKey(streamKey)).isFalse();
@@ -325,11 +325,11 @@ class GameRecoveryServiceTest extends ServiceTest {
             // given
             String destination = "/topic/room/" + joinCode;
             WebSocketResponse<String> response = WebSocketResponse.success("test");
-            gameRecoveryService.save(joinCode, destination, response);
+            wsRecoveryService.save(joinCode, destination, response);
 
             // when
-            gameRecoveryService.cleanup(joinCode);
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            wsRecoveryService.cleanup(joinCode);
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
 
             // then
             assertThat(messages).isEmpty();
@@ -341,7 +341,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             String nonExistentJoinCode = "ZZZZ";
 
             // when & then - 예외 없이 정상 수행
-            assertThatCode(() -> gameRecoveryService.cleanup(nonExistentJoinCode))
+            assertThatCode(() -> wsRecoveryService.cleanup(nonExistentJoinCode))
                     .doesNotThrowAnyException();
         }
 
@@ -353,10 +353,10 @@ class GameRecoveryServiceTest extends ServiceTest {
             cleanupRedis(jc);
             String destination = "/topic/room/" + code;
             WebSocketResponse<String> response = WebSocketResponse.success("test");
-            gameRecoveryService.save(jc, destination, response);
+            wsRecoveryService.save(jc, destination, response);
 
             // when
-            gameRecoveryService.cleanup(jc);
+            wsRecoveryService.cleanup(jc);
 
             // then
             String streamKey = String.format(STREAM_KEY_FORMAT, code);
@@ -386,7 +386,7 @@ class GameRecoveryServiceTest extends ServiceTest {
         @Test
         void idMapKey는_짧은_TTL_후_만료된다() {
             // given - 짧은 dedup TTL(2초)로 GameRecoveryService 생성
-            GameRecoveryService shortTtlService = new GameRecoveryService(
+            WsRecoveryService shortTtlService = new WsRecoveryService(
                     stringRedisTemplate,
                     objectMapper,
                     MAX_LENGTH,
@@ -419,7 +419,7 @@ class GameRecoveryServiceTest extends ServiceTest {
         @Test
         void 중복_방지_TTL_만료_후_같은_메시지를_다시_저장할_수_있다() {
             // given
-            GameRecoveryService shortTtlService = new GameRecoveryService(
+            WsRecoveryService shortTtlService = new WsRecoveryService(
                     stringRedisTemplate,
                     objectMapper,
                     MAX_LENGTH,
@@ -455,7 +455,7 @@ class GameRecoveryServiceTest extends ServiceTest {
         @Test
         void 중복_방지_TTL_내에서는_같은_메시지가_중복_저장되지_않는다() {
             // given
-            GameRecoveryService shortTtlService = new GameRecoveryService(
+            WsRecoveryService shortTtlService = new WsRecoveryService(
                     stringRedisTemplate,
                     objectMapper,
                     MAX_LENGTH,
@@ -480,7 +480,7 @@ class GameRecoveryServiceTest extends ServiceTest {
         @Test
         void streamKey와_idMapKey의_TTL이_서로_다르게_설정된다() {
             // given
-            GameRecoveryService shortTtlService = new GameRecoveryService(
+            WsRecoveryService shortTtlService = new WsRecoveryService(
                     stringRedisTemplate,
                     objectMapper,
                     MAX_LENGTH,
@@ -521,12 +521,12 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<String> response = WebSocketResponse.success(data);
 
             // when
-            String streamId = gameRecoveryService.save(joinCode, destination, response);
+            String streamId = wsRecoveryService.save(joinCode, destination, response);
 
             // then
             assertThat(streamId).isNotBlank();
 
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
             assertThat(messages).hasSize(1);
         }
 
@@ -538,12 +538,12 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<String> response = WebSocketResponse.success(dataWithSpecialChars);
 
             // when
-            String streamId = gameRecoveryService.save(joinCode, destination, response);
+            String streamId = wsRecoveryService.save(joinCode, destination, response);
 
             // then
             assertThat(streamId).isNotBlank();
 
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
             assertThat(messages).hasSize(1);
         }
 
@@ -555,11 +555,11 @@ class GameRecoveryServiceTest extends ServiceTest {
 
             for (int i = 0; i < largeMessageCount; i++) {
                 WebSocketResponse<String> response = WebSocketResponse.success("message" + i);
-                gameRecoveryService.save(joinCode, destination, response);
+                wsRecoveryService.save(joinCode, destination, response);
             }
 
             // when
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
 
             // then
             // maxLength 설정에 따라 일부만 유지될 수 있음
@@ -573,8 +573,8 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<String> errorResponse = WebSocketResponse.error("게임 시작 실패");
 
             // when
-            String streamId = gameRecoveryService.save(joinCode, destination, errorResponse);
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            String streamId = wsRecoveryService.save(joinCode, destination, errorResponse);
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
 
             // then
             assertThat(streamId).isNotBlank();
@@ -591,11 +591,11 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<List<String>> response = WebSocketResponse.success(complexData);
 
             // when
-            String streamId = gameRecoveryService.save(joinCode, destination, response);
+            String streamId = wsRecoveryService.save(joinCode, destination, response);
 
             // then
             assertThat(streamId).isNotBlank();
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
             assertThat(messages).hasSize(1);
         }
 
@@ -613,15 +613,15 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<String> response1 = WebSocketResponse.success("room1 message");
             WebSocketResponse<String> response2 = WebSocketResponse.success("room2 message");
 
-            gameRecoveryService.save(joinCode1, destination1, response1);
-            gameRecoveryService.save(joinCode2, destination2, response2);
+            wsRecoveryService.save(joinCode1, destination1, response1);
+            wsRecoveryService.save(joinCode2, destination2, response2);
 
             // when
-            gameRecoveryService.cleanup(joinCode1);
+            wsRecoveryService.cleanup(joinCode1);
 
             // then
-            List<RecoveryMessage> room1Messages = gameRecoveryService.getMessagesSince(joinCode1, "0-0");
-            List<RecoveryMessage> room2Messages = gameRecoveryService.getMessagesSince(joinCode2, "0-0");
+            List<RecoveryMessage> room1Messages = wsRecoveryService.getMessagesSince(joinCode1, "0-0");
+            List<RecoveryMessage> room2Messages = wsRecoveryService.getMessagesSince(joinCode2, "0-0");
 
             assertThat(room1Messages).isEmpty();
             assertThat(room2Messages).hasSize(1);
@@ -642,11 +642,11 @@ class GameRecoveryServiceTest extends ServiceTest {
             WebSocketResponse<String> response = WebSocketResponse.success(testData);
 
             // when
-            String streamId = gameRecoveryService.save(joinCode, destination, response);
+            String streamId = wsRecoveryService.save(joinCode, destination, response);
 
             // then
             assertThat(streamId).isNotBlank();
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
             assertThat(messages).hasSize(1);
             assertThat(messages.getFirst().destination()).isEqualTo(destination);
 
@@ -670,7 +670,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             saveMessage(racingGameDest, "racing game data");
 
             // when
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(joinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
 
             // then
             assertThat(messages).hasSize(5);
@@ -704,8 +704,8 @@ class GameRecoveryServiceTest extends ServiceTest {
             saveMessageToRoom(joinCode2, dest2, "room2 player list");
 
             // when - joinCode1으로만 복구
-            List<RecoveryMessage> room1Messages = gameRecoveryService.getMessagesSince(joinCode1, "0-0");
-            List<RecoveryMessage> room2Messages = gameRecoveryService.getMessagesSince(joinCode2, "0-0");
+            List<RecoveryMessage> room1Messages = wsRecoveryService.getMessagesSince(joinCode1, "0-0");
+            List<RecoveryMessage> room2Messages = wsRecoveryService.getMessagesSince(joinCode2, "0-0");
 
             // then
             assertThat(room1Messages).hasSize(1);
@@ -729,7 +729,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             saveMessageToRoom(testJoinCode, destination, "roulette winner");
 
             // when
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(testJoinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(testJoinCode, "0-0");
 
             // then
             assertThat(messages).hasSize(1);
@@ -758,7 +758,7 @@ class GameRecoveryServiceTest extends ServiceTest {
             saveMessageToRoom(testJoinCode, destination, "test data");
 
             // when
-            List<RecoveryMessage> messages = gameRecoveryService.getMessagesSince(testJoinCode, "0-0");
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(testJoinCode, "0-0");
 
             // then
             assertThat(messages).hasSize(1);
@@ -777,12 +777,12 @@ class GameRecoveryServiceTest extends ServiceTest {
 
         private void saveMessage(String destination, String data) {
             WebSocketResponse<String> response = WebSocketResponse.success(data);
-            gameRecoveryService.save(joinCode, destination, response);
+            wsRecoveryService.save(joinCode, destination, response);
         }
 
         private void saveMessageToRoom(String roomJoinCode, String destination, String data) {
             WebSocketResponse<String> response = WebSocketResponse.success(data);
-            gameRecoveryService.save(roomJoinCode, destination, response);
+            wsRecoveryService.save(roomJoinCode, destination, response);
         }
     }
 

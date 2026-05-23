@@ -13,8 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "GameRecovery", description = "게임 복구 API")
-public interface GameRecoveryApi {
+@Tag(name = "WebSocketRecovery", description = "웹소켓 복구 API")
+public interface WsRecoveryApi {
 
     @Operation(summary = "메시지 복구 요청", description = "웹소켓 연결이 끊어진 동안 유실된 메시지를 복구합니다.")
     @ApiResponses(value = {

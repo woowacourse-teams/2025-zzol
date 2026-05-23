@@ -25,7 +25,7 @@ import org.springframework.util.DigestUtils;
  */
 @Slf4j
 @Service
-public class GameRecoveryService {
+public class WsRecoveryService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
@@ -33,7 +33,7 @@ public class GameRecoveryService {
     private final int streamTtlSeconds;
     private final int dedupTtlSeconds;
 
-    public GameRecoveryService(
+    public WsRecoveryService(
             StringRedisTemplate stringRedisTemplate,
             @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
             @Value("${websocket.recovery.max-length}") int maxLength,

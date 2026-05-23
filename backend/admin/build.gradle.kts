@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":infra"))
     implementation(project(":user"))
     implementation(project(":room"))
+    implementation(project(":profanity"))
     implementation(project(":game-api"))
     implementation(project(":game"))
 

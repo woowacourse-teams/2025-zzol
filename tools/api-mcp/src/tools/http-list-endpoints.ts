@@ -20,7 +20,7 @@ export const httpListEndpointsTool: ToolDefinition = {
     properties: {
       method: {
         type: 'string',
-        enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
         description: '메서드 필터',
       },
       tag: { type: 'string', description: '태그 필터 (예: room, admin)' },

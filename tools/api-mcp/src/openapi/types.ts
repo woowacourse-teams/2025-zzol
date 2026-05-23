@@ -29,7 +29,7 @@ export interface OperationObject {
 }
 
 export interface SchemaObject {
-  type?: string;
+  type?: string | string[]; // OpenAPI 3.1: type 배열 가능 (예: ["string", "null"])
   format?: string;
   description?: string;
   properties?: Record<string, SchemaObject>;

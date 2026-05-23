@@ -3,6 +3,8 @@ import type { ToolDefinition, ToolContext } from './types.js';
 import { ok, fail } from './types.js';
 import type { OperationObject, OpenApiSpec } from '../openapi/types.js';
 
+const HTTP_METHODS = ['get', 'post', 'put', 'delete', 'patch', 'head', 'options'] as const;
+
 const InputSchema = z.object({
   method: z.string(),
   path: z.string(),
@@ -60,10 +62,16 @@ export const httpDescribeTool: ToolDefinition = {
     }
 
     const { method, path } = parsed.data;
+
+    const m = method.toLowerCase();
+    if (!(HTTP_METHODS as readonly string[]).includes(m)) {
+      return fail(`지원하지 않는 메서드: ${method.toUpperCase()}`);
+    }
+
     const pathItem = spec.paths[path];
     if (!pathItem) return fail(`경로를 찾을 수 없습니다: ${path}`);
 
-    const op = pathItem[method.toLowerCase()] as OperationObject | undefined;
+    const op = pathItem[m] as OperationObject | undefined;
     if (!op) return fail(`${method.toUpperCase()} ${path} 를 찾을 수 없습니다`);
 
     const schemas = collectRefs({ requestBody: op.requestBody, responses: op.responses }, spec);

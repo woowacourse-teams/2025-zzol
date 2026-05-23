@@ -43,6 +43,11 @@ export const httpRequestTool: ToolDefinition = {
 
     const { method, path, headers = {}, body, queryParams } = parsed.data;
 
+    const BODY_FORBIDDEN = ['GET', 'HEAD', 'OPTIONS'];
+    if (body != null && BODY_FORBIDDEN.includes(method)) {
+      return fail(`${method} 요청에는 body를 포함할 수 없습니다`);
+    }
+
     const url = new URL(path, ctx.baseUrl);
     if (queryParams) {
       for (const [k, v] of Object.entries(queryParams)) url.searchParams.set(k, v);
@@ -81,7 +86,9 @@ export const httpRequestTool: ToolDefinition = {
         responseBody = null;
       }
     } else {
-      responseBody = await response.text();
+      const text = await response.text();
+      const MAX_TEXT = 2000;
+      responseBody = text.length > MAX_TEXT ? `${text.slice(0, MAX_TEXT)}...(truncated)` : text;
     }
 
     return ok({

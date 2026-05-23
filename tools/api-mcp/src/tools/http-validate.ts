@@ -3,6 +3,8 @@ import type { ToolDefinition, ToolContext } from './types.js';
 import { ok, fail } from './types.js';
 import type { OperationObject, SchemaObject } from '../openapi/types.js';
 
+const HTTP_METHODS = ['get', 'post', 'put', 'delete', 'patch', 'head', 'options'] as const;
+
 const InputSchema = z.object({
   method: z.string(),
   path: z.string(),
@@ -16,17 +18,21 @@ interface ValidationError {
   message: string;
 }
 
+// 체인된 $ref도 완전히 해소 (순환 참조 가드 포함)
 function resolveSchema(
   schema: SchemaObject,
   components: Record<string, unknown> | undefined
 ): SchemaObject {
-  if (schema.$ref) {
-    const match = /^#\/components\/schemas\/(.+)$/.exec(schema.$ref);
-    if (match?.[1] && components) {
-      return (components[match[1]] as SchemaObject | undefined) ?? schema;
-    }
+  let current = schema;
+  const seen = new Set<string>();
+  while (current.$ref && components) {
+    if (seen.has(current.$ref)) break;
+    seen.add(current.$ref);
+    const match = /^#\/components\/schemas\/(.+)$/.exec(current.$ref);
+    if (!match?.[1]) break;
+    current = (components[match[1]] as SchemaObject | undefined) ?? current;
   }
-  return schema;
+  return current;
 }
 
 function validate(
@@ -38,7 +44,11 @@ function validate(
 ): void {
   const resolved = resolveSchema(schema, components);
 
-  if (resolved.nullable && value === null) return;
+  // nullable 처리 (OpenAPI 3.0: nullable:true / 3.1: type 배열에 "null" 포함)
+  const types = Array.isArray(resolved.type) ? resolved.type : resolved.type ? [resolved.type] : [];
+  const allowsNull = resolved.nullable === true || types.includes('null');
+  if (allowsNull && value === null) return;
+
   if (value === null || value === undefined) {
     errors.push({ path, message: 'null/undefined 입니다' });
     return;
@@ -49,8 +59,9 @@ function validate(
     return;
   }
 
-  if (resolved.oneOf ?? resolved.anyOf) {
-    const variants = resolved.oneOf ?? resolved.anyOf ?? [];
+  // 빈 배열은 유효한 분기 없음으로 간주하지 않고 건너뜀
+  const variants = resolved.oneOf ?? resolved.anyOf;
+  if (variants && variants.length > 0) {
     const anyValid = variants.some((sub) => {
       const tmp: ValidationError[] = [];
       validate(value, sub, path, components, tmp);
@@ -62,12 +73,15 @@ function validate(
 
   const actualType = Array.isArray(value) ? 'array' : typeof value;
 
-  if (resolved.type) {
-    const expectedType = resolved.type === 'integer' ? 'number' : resolved.type;
-    if (actualType !== expectedType) {
+  if (types.length > 0) {
+    // null 제외한 타입으로 비교, integer는 number로 정규화
+    const nonNullTypes = types
+      .filter((t) => t !== 'null')
+      .map((t) => (t === 'integer' ? 'number' : t));
+    if (nonNullTypes.length > 0 && !nonNullTypes.includes(actualType)) {
       errors.push({
         path,
-        message: `타입 불일치: 기대=${resolved.type}, 실제=${actualType}`,
+        message: `타입 불일치: 기대=${types.join('|')}, 실제=${actualType}`,
       });
       return;
     }
@@ -80,7 +94,7 @@ function validate(
     });
   }
 
-  if (resolved.properties || resolved.type === 'object') {
+  if (resolved.properties || types.includes('object') || resolved.type === 'object') {
     const obj = value as Record<string, unknown>;
     for (const req of resolved.required ?? []) {
       if (!(req in obj)) errors.push({ path: `${path}.${req}`, message: 'required 필드 누락' });
@@ -89,10 +103,21 @@ function validate(
       for (const [k, subSchema] of Object.entries(resolved.properties)) {
         if (k in obj) validate(obj[k], subSchema, `${path}.${k}`, components, errors);
       }
+      // additionalProperties: false 이면 스키마에 없는 키 리포트
+      if (resolved.additionalProperties === false) {
+        for (const k of Object.keys(obj)) {
+          if (!(k in resolved.properties)) {
+            errors.push({ path: `${path}.${k}`, message: '스키마에 정의되지 않은 필드' });
+          }
+        }
+      }
     }
   }
 
-  if ((resolved.type === 'array' || Array.isArray(value)) && resolved.items) {
+  if (
+    (types.includes('array') || resolved.type === 'array' || Array.isArray(value)) &&
+    resolved.items
+  ) {
     const items = resolved.items;
     const arr = value as unknown[];
     arr.forEach((item, i) => {
@@ -130,10 +155,16 @@ export const httpValidateTool: ToolDefinition = {
     }
 
     const { method, path, requestBody, responseBody, responseStatus } = parsed.data;
+
+    const m = method.toLowerCase();
+    if (!(HTTP_METHODS as readonly string[]).includes(m)) {
+      return fail(`지원하지 않는 메서드: ${method.toUpperCase()}`);
+    }
+
     const pathItem = spec.paths[path];
     if (!pathItem) return fail(`경로를 찾을 수 없습니다: ${path}`);
 
-    const op = pathItem[method.toLowerCase()] as OperationObject | undefined;
+    const op = pathItem[m] as OperationObject | undefined;
     if (!op) return fail(`${method.toUpperCase()} ${path} 를 찾을 수 없습니다`);
 
     const components = spec.components?.schemas;

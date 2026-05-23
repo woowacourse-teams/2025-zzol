@@ -112,6 +112,31 @@ class ProfanityWordTest {
     }
 
     @Nested
+    class 모든_출처_조합 {
+
+        @Test
+        void VANE_출처로_생성된다() {
+            final ProfanityWord word = ProfanityWordFixture.한국어_VANE_욕설();
+
+            assertThat(word.source()).isEqualTo(WordSource.VANE);
+        }
+
+        @Test
+        void LDNOOBW_출처로_생성된다() {
+            final ProfanityWord word = ProfanityWordFixture.영어_LDNOOBW_욕설();
+
+            assertThat(word.source()).isEqualTo(WordSource.LDNOOBW);
+        }
+
+        @Test
+        void AI_FLAGGED_출처로_생성된다() {
+            final ProfanityWord word = new ProfanityWord("욕설", Language.KOREAN, WordSource.AI_FLAGGED);
+
+            assertThat(word.source()).isEqualTo(WordSource.AI_FLAGGED);
+        }
+    }
+
+    @Nested
     class 동등성 {
 
         @Test
@@ -128,6 +153,14 @@ class ProfanityWordTest {
             final ProfanityWord upper = new ProfanityWord("BAD", Language.ENGLISH, WordSource.MANUAL);
 
             assertThat(lower).isEqualTo(upper);
+        }
+
+        @Test
+        void 공백과_대소문자_혼합도_정규화_후_동일하다() {
+            final ProfanityWord a = new ProfanityWord("  BAD  ", Language.ENGLISH, WordSource.MANUAL);
+            final ProfanityWord b = new ProfanityWord("bad", Language.ENGLISH, WordSource.MANUAL);
+
+            assertThat(a).isEqualTo(b);
         }
     }
 }

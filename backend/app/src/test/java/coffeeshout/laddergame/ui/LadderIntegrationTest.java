@@ -1,11 +1,11 @@
-package coffeeshout.laddergame.ui;
+﻿package coffeeshout.laddergame.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.fixture.TestStompSession;
+import coffeeshout.support.TestStompSession;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
-import coffeeshout.global.MessageResponse;
+import coffeeshout.support.MessageResponse;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;

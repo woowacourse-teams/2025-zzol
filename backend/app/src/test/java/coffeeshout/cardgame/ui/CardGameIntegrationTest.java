@@ -1,4 +1,4 @@
-package coffeeshout.cardgame.ui;
+﻿package coffeeshout.cardgame.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -6,9 +6,9 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.fixture.TestStompSession;
+import coffeeshout.support.TestStompSession;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
-import coffeeshout.global.MessageResponse;
+import coffeeshout.support.MessageResponse;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;

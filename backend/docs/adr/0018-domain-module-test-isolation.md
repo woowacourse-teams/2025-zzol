@@ -87,14 +87,11 @@ Report rate-limit(`:admin`) 등 도메인 한정 설정도 현재는 base에 두
 
 ### TestContainers 버전 고정
 
-Spring Boot BOM 이 트랜지티브 의존으로 `testcontainers` 를 1.x 로 다운그레이드한다.
-1.x 는 Windows Named Pipe Docker 연결을 지원하지 않아 `Could not find a valid Docker environment` 오류가 발생한다.
-
-각 도메인 모듈의 `build.gradle.kts` 에서 직접 선언해 BOM 보다 우선 적용되도록 한다.
+Spring Boot BOM 이 관리하는 testcontainers 버전은 프로젝트에서 요구하는 버전(현재 2.0.5)보다 낮다.
+모든 모듈이 일관된 버전을 사용하도록 루트 `build.gradle.kts` 의 `subprojects` 블록에서 BOM 버전 프로퍼티를 오버라이드한다.
 
 ```kotlin
-val testcontainersVersion = rootProject.extra["testcontainers"] as String
-testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
+extra["testcontainers.version"] = rootProject.extra["testcontainers"] as String
 ```
 
 `resolutionStrategy.force` 는 `io.spring.dependency-management` 플러그인에 의해 무시되므로 사용하지 않는다.

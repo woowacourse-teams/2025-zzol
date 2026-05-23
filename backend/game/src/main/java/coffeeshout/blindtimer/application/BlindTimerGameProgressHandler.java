@@ -1,0 +1,42 @@
+package coffeeshout.blindtimer.application;
+
+import coffeeshout.blindtimer.domain.BlindTimerGame;
+import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
+import coffeeshout.room.domain.JoinCode;
+import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.application.service.RoomQueryService;
+import java.time.Instant;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class BlindTimerGameProgressHandler {
+
+    private final RoomQueryService roomQueryService;
+    private final BlindTimerGameService blindTimerGameService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public void handleStop(String joinCode, String playerName) {
+        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
+        final BlindTimerGame game = blindTimerGameService.getBlindTimerGame(room);
+
+        final boolean accepted = game.stop(new PlayerName(playerName), Instant.now());
+        if (!accepted) {
+            log.debug("STOP 무시 (이미 멈춤): joinCode={}, player={}", joinCode, playerName);
+            return;
+        }
+
+        eventPublisher.publishEvent(BlindTimerProgressEvent.of(game, joinCode));
+        log.debug("STOP 처리: joinCode={}, player={}", joinCode, playerName);
+
+        if (game.isAllStopped()) {
+            log.info("전원 STOP - 게임 종료: joinCode={}", joinCode);
+            blindTimerGameService.finishGame(game, joinCode);
+        }
+    }
+}

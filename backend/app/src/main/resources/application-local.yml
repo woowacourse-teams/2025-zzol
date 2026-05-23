@@ -40,6 +40,12 @@ management:
       endpoint: http://localhost:4318/v1/traces
       export:
         enabled: false
+web:
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:5173
+
 room:
   qr:
     prefix: http://localhost:8080/join/

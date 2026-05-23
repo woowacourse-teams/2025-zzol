@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.support.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.racinggame.domain.RacingGame;

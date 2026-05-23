@@ -1,11 +1,10 @@
 package coffeeshout.room.application.service.player.name;
 
-import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
+import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.room.domain.event.RankingNicknamesCollectedEvent;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.application.port.PlayerEntityRepository;
-import coffeeshout.room.application.port.PlayerNameAuditRepository;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import java.util.HashSet;
@@ -24,14 +23,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PlayerNameRankingCleanupService {
 
-    private final PlayerNameAuditRepository auditRepository;
+    private final ProfanityWordRepository profanityWordRepository;
     private final PlayerEntityRepository playerRepository;
     private final PlayerNameGenerator nicknameGenerator;
 
     @EventListener
     @Transactional
     public void onRankingNicknamesCollected(RankingNicknamesCollectedEvent event) {
-        final Set<String> blockedNicknames = auditRepository.findPlayerNamesByStatus(PlayerNameAuditStatus.BLOCKED);
+        final Set<String> blockedNicknames = profanityWordRepository.findAllActive().stream()
+                .map(w -> w.word())
+                .collect(Collectors.toSet());
         if (blockedNicknames.isEmpty()) {
             log.info("[RankingCleanup] BLOCKED 닉네임 없음, 종료");
             return;

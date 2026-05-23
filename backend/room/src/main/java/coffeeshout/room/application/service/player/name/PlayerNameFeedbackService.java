@@ -1,11 +1,12 @@
 package coffeeshout.room.application.service.player.name;
 
+import coffeeshout.profanity.application.ProfanityWordManagementService;
+import coffeeshout.profanity.domain.Language;
+import coffeeshout.profanity.domain.WordSource;
+import coffeeshout.global.event.ProfanityWordBlockedEvent;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
-import coffeeshout.room.infra.event.ProfanityWordAllowedEvent;
-import coffeeshout.global.event.ProfanityWordBlockedEvent;
-import coffeeshout.room.application.port.CustomProfanityRepository;
 import coffeeshout.room.application.port.PlayerNameAuditRepository;
 import coffeeshout.room.application.port.PlayerNameFeedbackRepository;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
@@ -23,7 +24,7 @@ public class PlayerNameFeedbackService {
 
     private final PlayerNameAuditRepository auditRepository;
     private final PlayerNameFeedbackRepository feedbackRepository;
-    private final CustomProfanityRepository customProfanityRepository;
+    private final ProfanityWordManagementService profanityWordManagementService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -38,10 +39,7 @@ public class PlayerNameFeedbackService {
                 PlayerNameFeedbackEntity.OperatorDecision.ALLOWED,
                 null
         ));
-        final int deleted = customProfanityRepository.deleteAiAuditByWord(nickname);
-        if (deleted > 0) {
-            eventPublisher.publishEvent(new ProfanityWordAllowedEvent(nickname));
-        }
+        profanityWordManagementService.deactivate(nickname);
         log.info("닉네임 허용 처리: auditId={}, nickname={}", auditId, nickname);
     }
 
@@ -57,7 +55,7 @@ public class PlayerNameFeedbackService {
                 PlayerNameFeedbackEntity.OperatorDecision.BLOCKED,
                 null
         ));
-        customProfanityRepository.upsertOperatorManual(nickname);
+        profanityWordManagementService.add(nickname, Language.KOREAN, WordSource.MANUAL);
         eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
         log.info("닉네임 차단 처리: auditId={}, nickname={}", auditId, nickname);
     }

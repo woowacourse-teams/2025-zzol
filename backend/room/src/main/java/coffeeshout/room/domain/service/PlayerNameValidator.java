@@ -2,11 +2,12 @@ package coffeeshout.room.domain.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.nickname.NameValidator;
+import coffeeshout.profanity.domain.ProfanityChecker;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Objects;
-import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 
 @RequiredArgsConstructor

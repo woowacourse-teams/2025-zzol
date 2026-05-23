@@ -43,7 +43,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
 
     implementation("com.google.genai:google-genai:$googleGenAiVersion")
-    implementation("io.github.vaneproject:badwordfiltering:1.0.0")
+    implementation(project(":profanity"))
 
     annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")

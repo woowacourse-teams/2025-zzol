@@ -1,12 +1,13 @@
 package coffeeshout.room.application.service.player.name;
 
+import coffeeshout.profanity.application.ProfanityWordManagementService;
+import coffeeshout.profanity.domain.Language;
+import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
 import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
 import coffeeshout.room.domain.audit.PlayerNameAuditor;
 import coffeeshout.global.event.ProfanityWordBlockedEvent;
-import coffeeshout.room.application.port.CustomProfanityRepository;
 import coffeeshout.room.application.port.PlayerNameAuditRepository;
-import coffeeshout.room.infra.persistence.nickname.CustomProfanityEntity.Source;
 import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -28,7 +29,7 @@ public class PlayerNameAuditBatchProcessor {
 
     private final PlayerNameAuditRepository auditRepository;
     private final PlayerNameAuditor playerNameAuditor;
-    private final CustomProfanityRepository customProfanityRepository;
+    private final ProfanityWordManagementService profanityWordManagementService;
     private final ApplicationEventPublisher eventPublisher;
     private final MeterRegistry meterRegistry;
     private final TransactionTemplate transactionTemplate;
@@ -77,8 +78,7 @@ public class PlayerNameAuditBatchProcessor {
     }
 
     private void autoBlock(String playerName) {
-        final int inserted = customProfanityRepository.insertIgnore(playerName, Source.AI_AUDIT.name());
-        if (inserted == 0) return;
+        profanityWordManagementService.add(playerName, Language.KOREAN, WordSource.AI_FLAGGED);
         eventPublisher.publishEvent(new ProfanityWordBlockedEvent(playerName));
         log.info("FLAGGED 자동 차단: {}", playerName);
     }

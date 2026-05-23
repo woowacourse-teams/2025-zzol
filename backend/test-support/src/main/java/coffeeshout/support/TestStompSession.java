@@ -31,7 +31,7 @@ public class TestStompSession {
     }
 
     public void send(String sendEndpoint, Object bodyMessage) {
-        session.send(String.format(sendEndpoint), bodyMessage);
+        session.send(sendEndpoint, bodyMessage);
     }
 
     public void send(String sendEndpoint, String jsonString) {

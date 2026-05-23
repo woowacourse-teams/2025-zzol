@@ -152,13 +152,13 @@ extra["testcontainers.version"] = rootProject.extra["testcontainers"] as String
 
 ### 부정적 효과 / 트레이드오프
 
-- `RestExceptionHandler` mock 은 ADR-0019(`:web` 모듈) 구현 전까지 각 모듈 테스트에 분산된다.
-  HTTP 응답 정책이 바뀌면 프로덕션 핸들러와 테스트 mock 을 함께 수정해야 한다.
+- `RestExceptionHandler` mock 은 ADR-0019(`:web` 모듈) 적용으로 해소됐다.
+  각 도메인 모듈은 `:web`의 실제 핸들러를 사용한다.
 - `MiniGameFactoryConfig` mock 은 `:room` 이 `:game-api` 추상만 알고 `:game` 구체 팩토리를
   모르는 ADR-0011 OCP 원칙을 테스트 레벨에서 유지하기 위한 비용이다.
   `MiniGameDummy` 의 `CardGameScore`(`:game`) 의존을 익명 `MiniGameScore` 서브클래스(`:game-api`)로
   교체하고 `testImplementation(project(":game"))` 을 제거하여 OCP 위반이 해소됐다.
-- TestContainers 버전을 도메인 모듈마다 직접 선언해야 한다.
+- TestContainers 버전은 루트 `build.gradle.kts`의 `subprojects` 블록에서 일괄 오버라이드하므로 도메인 모듈마다 별도 선언이 불필요하다.
 
 ### 미적용 모듈
 

@@ -49,7 +49,7 @@ RestExceptionHandler
 ```
 
 `:web`은 `:infra`에 의존하고, REST 엔드포인트를 노출하는 모든 도메인 모듈은 `:web`에 의존한다.
-`:websocket`도 REST 엔드포인트(`GameRecoveryController` 등)를 노출하므로 `:web`에 의존한다.
+`:websocket`도 REST 엔드포인트(`WsRecoveryController` 등)를 노출하므로 `:web`에 의존한다.
 
 ### `:web`의 책임
 

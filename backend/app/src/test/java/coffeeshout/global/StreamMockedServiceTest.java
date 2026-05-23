@@ -1,5 +1,6 @@
 package coffeeshout.global;
 
+import coffeeshout.support.ServiceTest;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;

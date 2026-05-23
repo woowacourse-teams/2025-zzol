@@ -16,7 +16,7 @@ import coffeeshout.fixture.UserFixture;
 import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.friend.domain.FriendErrorCode;
-import coffeeshout.global.ServiceTest;
+import coffeeshout.support.ServiceTest;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;

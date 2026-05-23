@@ -55,27 +55,27 @@ class OutboxE2ETest extends TestContainerSupport {
 
         @Bean(name = "cardGameTaskScheduler")
         public TaskScheduler cardGameTaskScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return new coffeeshout.support.ShutDownTestScheduler();
         }
 
         @Bean(name = "delayRemovalScheduler")
         public TaskScheduler delayRemovalScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return new coffeeshout.support.ShutDownTestScheduler();
         }
 
         @Bean(name = "racingGameScheduler")
         public TaskScheduler racingGameScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return new coffeeshout.support.ShutDownTestScheduler();
         }
 
         @Bean(name = "speedTouchGameScheduler")
         public TaskScheduler speedTouchGameScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return new coffeeshout.support.ShutDownTestScheduler();
         }
 
         @Bean(name = "blindTimerGameScheduler")
         public TaskScheduler blindTimerGameScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return new coffeeshout.support.ShutDownTestScheduler();
         }
 
         /**

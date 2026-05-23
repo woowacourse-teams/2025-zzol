@@ -1,5 +1,6 @@
 package coffeeshout.global.config;
 
+import coffeeshout.support.ShutDownTestScheduler;
 import coffeeshout.game.flow.CompletableFutureFlowScheduler;
 import coffeeshout.gamecommon.flow.FlowScheduler;
 import org.mockito.Answers;

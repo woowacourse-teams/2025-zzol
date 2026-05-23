@@ -35,7 +35,7 @@ export const NavChevron = styled.button`
   border: 1px solid ${({ theme }) => theme.color.gray[200]};
   background: ${({ theme }) => theme.color.white};
   color: ${({ theme }) => theme.color.gray[400]};
-  font-size: 14px;
+  font-size: ${({ theme }) => theme.typography.h4.fontSize};
   line-height: 1;
   cursor: pointer;
   flex-shrink: 0;
@@ -88,8 +88,7 @@ export const Tag = styled.span`
   align-items: center;
   padding: 3px 8px;
   border-radius: 20px;
-  font-size: ${({ theme }) => theme.typography.caption.fontSize};
-  font-weight: 700;
+  ${({ theme }) => theme.typography.caption}
   letter-spacing: 0.03em;
   width: fit-content;
   background: ${({ theme }) => theme.color.point[50]};
@@ -104,24 +103,21 @@ export const CardTop = styled.div`
 `;
 
 export const Title = styled.span`
-  font-size: 15px;
-  font-weight: 700;
+  ${({ theme }) => theme.typography.h4}
   color: ${({ theme }) => theme.color.gray[900]};
   line-height: 1.4;
   letter-spacing: -0.01em;
 `;
 
 export const Date = styled.span`
-  font-size: 12px;
-  font-weight: 400;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[400]};
   flex-shrink: 0;
   padding-top: 2px;
 `;
 
 export const Body = styled.p`
-  font-size: 13px;
-  font-weight: 400;
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.gray[500]};
   line-height: 1.7;
   margin: 0;
@@ -132,8 +128,7 @@ export const Body = styled.p`
 `;
 
 export const ReadMore = styled.span`
-  font-size: 12px;
-  font-weight: 600;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.point[400]};
   margin-top: 2px;
   align-self: flex-end;
@@ -193,28 +188,26 @@ export const MoreIconCircle = styled.div`
   border-radius: 10px;
   background: ${({ theme }) => theme.color.point[50]};
   color: ${({ theme }) => theme.color.point[500]};
-  font-size: 18px;
+  font-size: ${({ theme }) => theme.typography.h3.fontSize};
   margin-bottom: 6px;
   flex-shrink: 0;
 `;
 
 export const MoreTitle = styled.span`
-  font-size: 17px;
-  font-weight: 800;
+  ${({ theme }) => theme.typography.h3}
   color: ${({ theme }) => theme.color.gray[900]};
   letter-spacing: -0.03em;
   line-height: 1.2;
 `;
 
 export const MoreSub = styled.span`
-  font-size: 13px;
-  font-weight: 400;
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.gray[400]};
 `;
 
 export const MoreArrow = styled.span`
   align-self: flex-end;
-  font-size: 20px;
+  font-size: ${({ theme }) => theme.typography.h2.fontSize};
   color: ${({ theme }) => theme.color.gray[300]};
 `;
 
@@ -232,13 +225,12 @@ export const DetailMeta = styled.div`
 `;
 
 export const DetailDate = styled.span`
-  font-size: 12px;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[400]};
 `;
 
 export const DetailBody = styled.p`
-  font-size: 15px;
-  font-weight: 400;
+  ${({ theme }) => theme.typography.paragraph}
   color: ${({ theme }) => theme.color.gray[700]};
   line-height: 1.8;
   white-space: pre-wrap;

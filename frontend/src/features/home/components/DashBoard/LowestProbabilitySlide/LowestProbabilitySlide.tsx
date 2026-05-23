@@ -70,7 +70,7 @@ const LowestProbabilitySlide = ({ players, probability }: Props) => {
     <S.Card>
       <S.Header>
         <S.CardTitle>최저 확률 당첨</S.CardTitle>
-        <S.Sub>이번달 가장 짜릿한 역전</S.Sub>
+        <S.Sub>이번 달 가장 행복한 당첨자~</S.Sub>
       </S.Header>
       {players.length === 0 ? (
         <S.Empty>아직 당첨자가 없어요</S.Empty>

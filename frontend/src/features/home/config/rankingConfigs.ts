@@ -1,26 +1,7 @@
 import type { ComponentType } from 'react';
-import type {
-  TopWinner,
-  GamePlayCount,
-  LowestProbabilityWinner,
-  BlockStackingTopPlayer,
-  RacingGameTopPlayer,
-} from '@/types/dashBoard';
-import { MINI_GAME_NAME_MAP, type MiniGameType } from '@/types/miniGame/common';
-import {
-  TrophyIcon,
-  SkullIcon,
-  BlocksIcon,
-  GamepadIcon,
-  RacingCarIcon,
-} from '../components/RankingTab/rankingIcons';
-import {
-  MOCK_TOP_WINNERS,
-  MOCK_LOWEST_PROBABILITY,
-  MOCK_GAME_PLAY_COUNTS,
-  MOCK_BLOCK_STACKING_TOP_PLAYERS,
-  MOCK_RACING_GAME_TOP_PLAYERS,
-} from './dashboardMock';
+import type { BlockStackingTopPlayer, RacingGameTopPlayer } from '@/types/dashBoard';
+import { BlocksIcon, RacingCarIcon } from '../components/RankingTab/rankingIcons';
+import { MOCK_BLOCK_STACKING_TOP_PLAYERS, MOCK_RACING_GAME_TOP_PLAYERS } from './dashboardMock';
 
 export type RankingItem = {
   rank: number;
@@ -39,37 +20,6 @@ export type RankingCategory = {
 };
 
 export const RANKING_CATEGORIES: RankingCategory[] = [
-  {
-    key: 'top-winners',
-    label: '이번 달 당첨 랭킹',
-    icon: TrophyIcon,
-    endpoint: '/dashboard/top-winners',
-    mockRaw: MOCK_TOP_WINNERS,
-    transformData: (raw) =>
-      (raw as TopWinner[]).map((w, i) => ({
-        rank: i + 1,
-        name: w.nickname,
-        count: w.winCount,
-      })),
-  },
-  {
-    key: 'lowest-probability',
-    label: '최저 확률 당첨자',
-    icon: SkullIcon,
-    endpoint: '/dashboard/lowest-probability-winner',
-    mockRaw: MOCK_LOWEST_PROBABILITY,
-    transformData: (raw) => {
-      const data = raw as LowestProbabilityWinner;
-      if (!data?.players?.length) return [];
-      const probability = Math.round(data.probability * 10) / 10;
-      return data.players.map((p, i) => ({
-        rank: i + 1,
-        name: `${p.nickname} (${p.userCode})`,
-        count: probability,
-        unit: '%',
-      }));
-    },
-  },
   {
     key: 'blockstacking-top-players',
     label: '블록쌓기 최고 기록',
@@ -96,19 +46,6 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
         name: p.playerName,
         count: Math.round(p.bestTime / 10) / 100,
         unit: '초',
-      })),
-  },
-  {
-    key: 'game-play-counts',
-    label: '게임 인기 순위',
-    icon: GamepadIcon,
-    endpoint: '/dashboard/game-play-counts',
-    mockRaw: MOCK_GAME_PLAY_COUNTS,
-    transformData: (raw) =>
-      (raw as GamePlayCount[]).map((g, i) => ({
-        rank: i + 1,
-        name: MINI_GAME_NAME_MAP[g.gameType as MiniGameType] || g.gameType,
-        count: g.playCount,
       })),
   },
 ];

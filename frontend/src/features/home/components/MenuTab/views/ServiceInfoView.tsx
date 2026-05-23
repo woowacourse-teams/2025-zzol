@@ -14,7 +14,7 @@ const ServiceInfoView = () => {
         </S.AppIcon>
         <S.AppMeta>
           <S.AppName>쫄 (ZZOL)</S.AppName>
-          <S.AppTagline>미니게임 기반 당첨자 추첨 서비스</S.AppTagline>
+          <S.AppTagline>미니게임 기반 내기 서비스</S.AppTagline>
         </S.AppMeta>
       </S.AppHeader>
 

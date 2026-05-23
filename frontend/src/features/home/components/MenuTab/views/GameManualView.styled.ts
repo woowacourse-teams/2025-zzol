@@ -18,8 +18,7 @@ export const HintBanner = styled.div`
 `;
 
 export const Subtitle = styled.p`
-  font-size: 13px;
-  font-weight: 500;
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.point[500]};
   margin: 0;
   line-height: 1.5;

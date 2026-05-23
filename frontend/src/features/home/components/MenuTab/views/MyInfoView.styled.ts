@@ -56,8 +56,7 @@ export const StatCard = styled.div`
 `;
 
 export const StatLabel = styled.span`
-  font-size: ${({ theme }) => theme.typography.caption.fontSize};
-  font-weight: ${({ theme }) => theme.typography.paragraph.fontWeight};
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[400]};
   letter-spacing: -0.01em;
 `;
@@ -89,8 +88,7 @@ export const InfoSection = styled.div`
 `;
 
 export const SectionTitle = styled.h4`
-  font-size: ${({ theme }) => theme.typography.caption.fontSize};
-  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[400]};
   padding-left: 4px;
   letter-spacing: 0.06em;
@@ -106,7 +104,7 @@ export const TooltipCard = styled.div`
 `;
 
 export const TooltipList = styled.ul`
-  font-size: ${({ theme }) => theme.typography.small.fontSize};
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[500]};
   line-height: 1.7;
   list-style: none;
@@ -146,13 +144,11 @@ export const DangerRow = styled.button`
 `;
 
 export const DangerLabel = styled.span`
-  font-size: ${({ theme }) => theme.typography.small.fontSize};
-  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.point[500]};
 `;
 
 export const DangerIcon = styled.span`
-  font-size: ${({ theme }) => theme.typography.paragraph.fontSize};
-  font-weight: 300;
+  ${({ theme }) => theme.typography.paragraph}
   color: ${({ theme }) => theme.color.point[200]};
 `;

@@ -18,8 +18,7 @@ export const ListSummary = styled.div`
 `;
 
 export const SummaryText = styled.p`
-  font-size: 13px;
-  font-weight: 600;
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.gray[500]};
   letter-spacing: -0.01em;
 `;
@@ -58,8 +57,7 @@ export const CategoryChip = styled.span<{ $category: PatchNoteCategory }>`
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
-  font-weight: 700;
+  ${({ theme }) => theme.typography.caption}
   padding: 3px 8px;
   border-radius: 20px;
   letter-spacing: 0.01em;
@@ -76,8 +74,7 @@ export const CategoryChip = styled.span<{ $category: PatchNoteCategory }>`
 `;
 
 export const NewBadge = styled.span`
-  font-size: 10px;
-  font-weight: 800;
+  ${({ theme }) => theme.typography.caption}
   padding: 2px 6px;
   border-radius: 20px;
   background: ${({ theme }) => theme.color.point[400]};
@@ -86,15 +83,14 @@ export const NewBadge = styled.span`
 `;
 
 export const MetaDate = styled.span`
-  font-size: 11px;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[400]};
   margin-left: auto;
   letter-spacing: -0.01em;
 `;
 
 export const CardTitle = styled.h3`
-  font-size: 16px;
-  font-weight: 800;
+  ${({ theme }) => theme.typography.h4}
   color: ${({ theme }) => theme.color.gray[900]};
   letter-spacing: -0.03em;
   line-height: 1.35;
@@ -102,7 +98,7 @@ export const CardTitle = styled.h3`
 `;
 
 export const CardPreview = styled.p`
-  font-size: 13px;
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.gray[500]};
   line-height: 1.7;
   margin: 0;
@@ -119,8 +115,7 @@ export const CardFooter = styled.div`
 `;
 
 export const CardReadMore = styled.span`
-  font-size: 12px;
-  font-weight: 700;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.point[400]};
   letter-spacing: -0.01em;
 `;
@@ -140,7 +135,7 @@ export const DetailMeta = styled.div`
 `;
 
 export const DetailBody = styled.p`
-  font-size: 15px;
+  ${({ theme }) => theme.typography.paragraph}
   color: ${({ theme }) => theme.color.gray[700]};
   line-height: 1.8;
   margin: 0;
@@ -166,20 +161,19 @@ export const EmptyIconWrap = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 36px;
+  font-size: ${({ theme }) => theme.typography.h1.fontSize};
   margin-bottom: 8px;
 `;
 
 export const EmptyTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 800;
+  ${({ theme }) => theme.typography.h2}
   color: ${({ theme }) => theme.color.gray[900]};
   letter-spacing: -0.03em;
   margin: 0;
 `;
 
 export const EmptyDesc = styled.p`
-  font-size: 14px;
+  ${({ theme }) => theme.typography.paragraph}
   color: ${({ theme }) => theme.color.gray[400]};
   text-align: center;
   line-height: 1.6;

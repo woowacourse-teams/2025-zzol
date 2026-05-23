@@ -25,7 +25,7 @@ export const AppIcon = styled.div`
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.22);
+  background: ${({ theme }) => theme.color.white}38;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,15 +46,14 @@ export const AppMeta = styled.div`
 `;
 
 export const AppName = styled.span`
-  font-size: 17px;
-  font-weight: 800;
+  ${({ theme }) => theme.typography.h3}
   color: ${({ theme }) => theme.color.white};
   letter-spacing: -0.02em;
 `;
 
 export const AppTagline = styled.span`
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
+  ${({ theme }) => theme.typography.caption}
+  color: ${({ theme }) => theme.color.white}B8;
 `;
 
 export const InfoCard = styled.div`
@@ -79,13 +78,13 @@ export const InfoRow = styled.div`
 `;
 
 export const InfoLabel = styled.span`
-  font-size: 13px;
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.gray[500]};
 `;
 
 export const InfoValue = styled.span`
-  font-size: 13px;
-  font-weight: 600;
+  ${({ theme }) => theme.typography.small}
+  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
   color: ${({ theme }) => theme.color.gray[800]};
 `;
 
@@ -107,14 +106,12 @@ export const LinkRow = styled.a`
 `;
 
 export const LinkLabel = styled.span`
-  font-size: 13px;
-  font-weight: 600;
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.gray[800]};
 `;
 
 export const LinkIcon = styled.span`
-  font-size: 16px;
-  font-weight: 300;
+  ${({ theme }) => theme.typography.paragraph}
   color: ${({ theme }) => theme.color.gray[300]};
 `;
 

@@ -122,4 +122,29 @@ public class LayerArchitectureTest {
             .should().dependOnClassesThat()
             .resideInAPackage("coffeeshout.friend.infra..")
             .as("friend.application은 friend.infra를 직접 참조할 수 없다");
+
+    // ─────────────────────────────────────────
+    // profanity 도메인
+    // ─────────────────────────────────────────
+
+    @ArchTest
+    static final ArchRule profanity_domain은_infra를_참조할_수_없다 = noClasses()
+            .that().resideInAPackage("coffeeshout.profanity.domain..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("coffeeshout.profanity.infra..")
+            .as("profanity.domain은 profanity.infra를 참조할 수 없다");
+
+    @ArchTest
+    static final ArchRule profanity_domain은_application을_참조할_수_없다 = noClasses()
+            .that().resideInAPackage("coffeeshout.profanity.domain..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("coffeeshout.profanity.application..")
+            .as("profanity.domain은 profanity.application을 참조할 수 없다");
+
+    @ArchTest
+    static final ArchRule profanity_application은_infra를_직접_참조할_수_없다 = noClasses()
+            .that().resideInAPackage("coffeeshout.profanity.application..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("coffeeshout.profanity.infra..")
+            .as("profanity.application은 profanity.infra를 직접 참조할 수 없다");
 }

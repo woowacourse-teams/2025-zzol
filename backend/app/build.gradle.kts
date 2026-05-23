@@ -59,6 +59,8 @@ dependencies {
     testRuntimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
     testRuntimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
 
+    testImplementation(project(":profanity"))
+
     // ArchUnit — 아키텍처 규칙 테스트
     testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
 }

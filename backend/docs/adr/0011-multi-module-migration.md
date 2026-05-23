@@ -126,8 +126,8 @@ root
 ### 9. 테스트 배치
 
 - 각 모듈의 `src/test/java/`는 해당 모듈 내 테스트를 담는다
-- 도메인 픽스처(`RoomFixture` 등)는 각 모듈의 `src/test/java/coffeeshout/fixture/`에 위치
-- 여러 모듈이 동일 픽스처가 필요한 경우 해당 모듈 `src/test/`에 복사본을 둔다
+- 도메인 픽스처(`RoomFixture` 등)는 각 모듈의 `src/testFixtures/java/coffeeshout/fixture/`에 위치 (ADR-0015)
+- 여러 모듈이 동일 픽스처가 필요한 경우 fixture를 소유한 모듈의 `testFixtures`를 `testImplementation(testFixtures(project(":module")))`으로 소비한다. 복사본을 두지 않는다
 - TestContainers 부트스트랩은 `:app/src/test/`에 위치 (Spring context 전체 필요)
 
 ### 10. ArchUnit으로 모듈 내 계층 의존성 강제

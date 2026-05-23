@@ -1,4 +1,4 @@
-# ADR-0018: 도메인 모듈 테스트 독립 실행 전략
+# ADR-0013: 도메인 모듈 테스트 독립 실행 전략
 
 ## 상태
 
@@ -64,7 +64,7 @@ mock 빈의 경쟁 대상(`:admin` 구현체, `:app` `MiniGameFactoryConfig`)은
 |---|---|---|
 | `:admin` — `ReportAnonymizationPort` 구현체 | `:room` → `:admin` 순환 의존 불가 | `Mockito.mock()` |
 | `:app` — `MiniGameFactoryConfig` | `:app` 은 `:room` 의 상위 모듈 | 각 `MiniGameType` 에 mock 팩토리 등록 |
-| `:app` — `RestExceptionHandler` | 동일 이유 | `:web` 모듈의 실제 핸들러로 대체됨 (ADR-0019 적용 완료) |
+| `:app` — `RestExceptionHandler` | 동일 이유 | `:web` 모듈의 실제 핸들러로 대체됨 (ADR-0014 적용 완료) |
 
 ### 공통 설정 — `application-test-base.yml`
 
@@ -110,7 +110,7 @@ extra["testcontainers.version"] = rootProject.extra["testcontainers"] as String
 - **`:infra`**: `:infra` 는 이미 Spring에 의존하나, JPA·Redis·Outbox 등 저장소 계층이 목적이다.
   HTTP 예외 처리를 같이 두면 웹 컨텍스트 없이 `:infra` 만 쓰는 모듈(배치, 컨슈머)에
   불필요한 Spring MVC 의존이 포함된다.
-- **신설 `:web` 모듈**: `:infra` 위에 위치하는 공유 HTTP 인프라 모듈로 ADR-0019에 별도 제안.
+- **신설 `:web` 모듈**: `:infra` 위에 위치하는 공유 HTTP 인프라 모듈로 ADR-0014에 별도 제안.
   이 방안이 채택되면 `TestRestExceptionHandler` 는 제거된다.
 
 ### 대안 C: `@WebMvcTest` 슬라이스 테스트로 교체
@@ -140,7 +140,7 @@ extra["testcontainers.version"] = rootProject.extra["testcontainers"] as String
   ADR-0011 OCP 원칙(`:room` 은 `:game-api` 추상만 알아야 함)을 테스트 수준에서 위반하고 있다.
   이 방안은 해당 위반을 해소하는 가장 자연스러운 경로이며, 다른 도메인 모듈 마이그레이션 시점에 함께 도입을 검토한다.
 - **`:web` 모듈과의 유사성**: `:web` 이 HTTP 횡단 관심사를 공유 모듈로 빼내어 각 도메인 모듈의 test stub 복제를
-  방지하는 것과 동일한 원리다 (ADR-0019 참조).
+  방지하는 것과 동일한 원리다 (ADR-0014 참조).
 
 ## 결과
 
@@ -152,7 +152,7 @@ extra["testcontainers.version"] = rootProject.extra["testcontainers"] as String
 
 ### 부정적 효과 / 트레이드오프
 
-- `RestExceptionHandler` mock 은 ADR-0019(`:web` 모듈) 적용으로 해소됐다.
+- `RestExceptionHandler` mock 은 ADR-0014(`:web` 모듈) 적용으로 해소됐다.
   각 도메인 모듈은 `:web`의 실제 핸들러를 사용한다.
 - `MiniGameFactoryConfig` mock 은 `:room` 이 `:game-api` 추상만 알고 `:game` 구체 팩토리를
   모르는 ADR-0011 OCP 원칙을 테스트 레벨에서 유지하기 위한 비용이다.

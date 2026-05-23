@@ -9,12 +9,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProfanityTrieRefreshPublisher implements TrieRefreshPort {
 
-    static final String CHANNEL = "profanity:trie:refresh";
-
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public void publish() {
-        redisTemplate.convertAndSend(CHANNEL, "refresh");
+        redisTemplate.convertAndSend(ProfanityRedisChannel.TRIE_REFRESH, "refresh");
     }
 }

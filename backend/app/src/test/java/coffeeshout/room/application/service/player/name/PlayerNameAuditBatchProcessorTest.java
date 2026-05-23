@@ -8,7 +8,7 @@ import static org.mockito.Mockito.verify;
 import coffeeshout.fixture.PlayerNameAuditFixture;
 import coffeeshout.global.ServiceTest;
 import coffeeshout.global.event.ProfanityWordBlockedEvent;
-import coffeeshout.profanity.application.ProfanityWordManagementService;
+import coffeeshout.profanity.domain.ProfanityWordCommandPort;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.infra.persistence.ProfanityWordJpaRepository;
@@ -37,7 +37,7 @@ class PlayerNameAuditBatchProcessorTest extends ServiceTest {
     @Autowired
     ProfanityWordJpaRepository profanityWordJpaRepository;
     @Autowired
-    ProfanityWordManagementService profanityWordManagementService;
+    ProfanityWordCommandPort profanityWordCommandPort;
     @Autowired
     MeterRegistry meterRegistry;
 
@@ -94,7 +94,7 @@ class PlayerNameAuditBatchProcessorTest extends ServiceTest {
 
             @Test
             void 중복_등록하지_않는다() {
-                profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL);
+                profanityWordCommandPort.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL);
                 final PlayerNameAuditEntity entity = auditRepository.save(PlayerNameAuditFixture.검열대기("욕설닉네임"));
                 given(playerNameAuditor.audit(anyList())).willReturn(List.of(flaggedResult("욕설닉네임")));
 

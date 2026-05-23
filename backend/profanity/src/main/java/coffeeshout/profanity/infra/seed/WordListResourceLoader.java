@@ -5,7 +5,8 @@ import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.global.exception.custom.BusinessException;
-import jakarta.annotation.PostConstruct;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +28,7 @@ public class WordListResourceLoader {
 
     private final ProfanityWordRepository wordRepository;
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void load() {
         int korean = seed(KOREAN_RESOURCE, Language.KOREAN, WordSource.VANE);

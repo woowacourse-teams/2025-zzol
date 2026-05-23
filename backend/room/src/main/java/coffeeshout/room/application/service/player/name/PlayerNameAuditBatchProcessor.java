@@ -1,6 +1,6 @@
 package coffeeshout.room.application.service.player.name;
 
-import coffeeshout.profanity.application.ProfanityWordManagementService;
+import coffeeshout.profanity.domain.ProfanityWordCommandPort;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.room.domain.audit.PlayerNameAuditResult;
@@ -29,7 +29,7 @@ public class PlayerNameAuditBatchProcessor {
 
     private final PlayerNameAuditRepository auditRepository;
     private final PlayerNameAuditor playerNameAuditor;
-    private final ProfanityWordManagementService profanityWordManagementService;
+    private final ProfanityWordCommandPort profanityWordCommandPort;
     private final ApplicationEventPublisher eventPublisher;
     private final MeterRegistry meterRegistry;
     private final TransactionTemplate transactionTemplate;
@@ -78,7 +78,7 @@ public class PlayerNameAuditBatchProcessor {
     }
 
     private void autoBlock(String playerName) {
-        profanityWordManagementService.add(playerName, Language.KOREAN, WordSource.AI_FLAGGED);
+        profanityWordCommandPort.add(playerName, Language.KOREAN, WordSource.AI_FLAGGED);
         eventPublisher.publishEvent(new ProfanityWordBlockedEvent(playerName));
         log.info("FLAGGED 자동 차단: {}", playerName);
     }

@@ -20,8 +20,8 @@ public class ProfanityTrieRefreshSubscriber implements MessageListener {
 
     @PostConstruct
     public void register() {
-        container.addMessageListener(this, new PatternTopic(ProfanityTrieRefreshPublisher.CHANNEL));
-        log.info("비속어 트라이 갱신 구독 등록 완료 — channel: {}", ProfanityTrieRefreshPublisher.CHANNEL);
+        container.addMessageListener(this, new PatternTopic(ProfanityRedisChannel.TRIE_REFRESH));
+        log.info("비속어 트라이 갱신 구독 등록 완료 — channel: {}", ProfanityRedisChannel.TRIE_REFRESH);
     }
 
     @Override

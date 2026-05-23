@@ -7,7 +7,7 @@ public record ProfanityWord(String word, Language language, WordSource source) {
     public static final int MAX_WORD_LENGTH = 200;
 
     public ProfanityWord {
-        word = normalize(word);
+        word = normalizeWord(word);
         validate(word, language, source);
     }
 
@@ -15,8 +15,8 @@ public record ProfanityWord(String word, Language language, WordSource source) {
         return new ProfanityWord(word, language, source);
     }
 
-    private static String normalize(String word) {
-        return word == null ? null : word.strip().toLowerCase();
+    public static String normalizeWord(String raw) {
+        return raw == null ? "" : raw.strip().toLowerCase();
     }
 
     private static void validate(String word, Language language, WordSource source) {

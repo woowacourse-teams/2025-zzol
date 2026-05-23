@@ -1,8 +1,8 @@
 package coffeeshout.room.application.service.player.name;
 
-import coffeeshout.profanity.application.ProfanityWordManagementService;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityErrorCode;
+import coffeeshout.profanity.domain.ProfanityWordCommandPort;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.global.event.ProfanityWordBlockedEvent;
 import coffeeshout.global.exception.custom.BusinessException;
@@ -25,7 +25,7 @@ public class PlayerNameFeedbackService {
 
     private final PlayerNameAuditRepository auditRepository;
     private final PlayerNameFeedbackRepository feedbackRepository;
-    private final ProfanityWordManagementService profanityWordManagementService;
+    private final ProfanityWordCommandPort profanityWordCommandPort;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -46,7 +46,7 @@ public class PlayerNameFeedbackService {
 
     private void tryDeactivate(String nickname) {
         try {
-            profanityWordManagementService.deactivate(nickname);
+            profanityWordCommandPort.deactivate(nickname);
         } catch (BusinessException e) {
             if (e.getErrorCode() != ProfanityErrorCode.WORD_NOT_FOUND) {
                 throw e;
@@ -67,7 +67,7 @@ public class PlayerNameFeedbackService {
                 PlayerNameFeedbackEntity.OperatorDecision.BLOCKED,
                 null
         ));
-        profanityWordManagementService.add(nickname, Language.KOREAN, WordSource.MANUAL);
+        profanityWordCommandPort.add(nickname, Language.KOREAN, WordSource.MANUAL);
         eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
         log.info("닉네임 차단 처리: auditId={}, nickname={}", auditId, nickname);
     }

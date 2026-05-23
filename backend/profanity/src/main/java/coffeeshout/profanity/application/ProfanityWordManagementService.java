@@ -4,6 +4,7 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityErrorCode;
 import coffeeshout.profanity.domain.ProfanityWord;
+import coffeeshout.profanity.domain.ProfanityWordCommandPort;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.TrieRefreshPort;
 import coffeeshout.profanity.domain.WordSource;
@@ -18,11 +19,12 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ProfanityWordManagementService {
+public class ProfanityWordManagementService implements ProfanityWordCommandPort {
 
     private final ProfanityWordRepository wordRepository;
     private final TrieRefreshPort trieRefreshPort;
 
+    @Override
     @Transactional
     public void add(String rawWord, Language language, WordSource source) {
         final ProfanityWord word = new ProfanityWord(rawWord, language, source);
@@ -31,9 +33,10 @@ public class ProfanityWordManagementService {
         log.info("비속어 등록: word={}, lang={}, source={}", word.word(), language, source);
     }
 
+    @Override
     @Transactional
     public void deactivate(String rawWord) {
-        final String normalized = rawWord == null ? "" : rawWord.strip().toLowerCase();
+        final String normalized = ProfanityWord.normalizeWord(rawWord);
         wordRepository.findByWord(normalized)
                 .orElseThrow(() -> new BusinessException(ProfanityErrorCode.WORD_NOT_FOUND, "비속어를 찾을 수 없습니다: " + normalized));
         wordRepository.deactivate(normalized);

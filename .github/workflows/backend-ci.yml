@@ -103,6 +103,6 @@ jobs:
         with:
           name: build-artifacts
           path: |
-            backend/build/libs
+            backend/app/build/libs
             backend/docker
             .github/scripts

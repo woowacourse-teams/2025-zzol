@@ -52,7 +52,7 @@ tasks.register<Exec>("pruneStaleTestContainers") {
 
 // 모든 서브프로젝트 공통 설정
 subprojects {
-    apply(plugin = "java")
+    apply(plugin = "java-library")
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
 

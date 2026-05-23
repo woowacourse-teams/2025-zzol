@@ -7,6 +7,7 @@ tasks.named("jar") { enabled = false }
 dependencies {
     implementation(project(":common"))
     implementation(project(":infra"))
+    implementation(project(":web"))
     implementation(project(":websocket"))
     implementation(project(":game-api"))
     implementation(project(":user"))
@@ -14,9 +15,6 @@ dependencies {
     implementation(project(":game"))
     implementation(project(":admin"))
     implementation(project(":zzolbot"))
-
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-web")
 
     // --- Database & Migration ---
     implementation("org.flywaydb:flyway-core")
@@ -37,7 +35,6 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-data-redis")
     testImplementation("org.springframework.boot:spring-boot-starter-websocket")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    testImplementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-aop")
     testImplementation("io.micrometer:micrometer-core")
     val ociSdkVersion = rootProject.extra["ociSdk"] as String

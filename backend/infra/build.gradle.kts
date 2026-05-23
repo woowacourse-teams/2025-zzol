@@ -30,9 +30,6 @@ dependencies {
     implementation("io.opentelemetry:opentelemetry-exporter-otlp")
     implementation("io.micrometer:context-propagation")
 
-    val springDocVersion = rootProject.extra["springDoc"] as String
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
-
     implementation("org.reflections:reflections:$reflectionsVersion")
 
     val resilience4jVersion = rootProject.extra["resilience4j"] as String

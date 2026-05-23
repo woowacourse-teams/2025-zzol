@@ -5,4 +5,9 @@ tasks.jar { enabled = true }
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":infra"))
+
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.ahocorasick:ahocorasick:0.6.3")
 }

@@ -1,0 +1,9 @@
+# English profanity list (LDNOOBW - List of Dirty, Naughty, Obscene, and Otherwise Bad Words)
+# Source: https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words
+# This file is seeded into DB once at startup. Subsequent changes go through the management API.
+# Format: one word per line, lines starting with # are comments
+fuck
+shit
+ass
+bitch
+bastard

@@ -16,17 +16,19 @@
 
 ## 코드 탐색
 
-프로젝트 루트의 `tags` 파일에 모든 Java 클래스·메서드·필드의 위치가 인덱싱되어 있다.
-파일을 Read하기 전에 **반드시 먼저 Grep으로 `tags`를 조회해** 정확한 파일·줄 번호를 확인한다.
+파일을 Read하기 전에 **반드시 먼저 Grep으로 파일 경로와 줄 번호를 확인**한 뒤, `offset`과 `limit`을 지정해 필요한 범위만 읽는다.
 
 ```bash
-# 클래스/메서드 위치 조회 예시
-grep "^CardGameFlowOrchestrator	" tags   # 클래스 정의
-grep "^startRound	" tags                 # 메서드 정의
+# 1단계: 파일 경로 + 줄 번호 획득 (내용은 읽지 않음)
+grep -rn "class CardGameFlowOrchestrator" src/
+grep -rn "void startRound" src/
+
+# 2단계: 해당 범위만 읽기 — 전체 파일 Read 금지
+Read(file, offset=N, limit=40)
 ```
 
-결과 형식: `심볼명\t파일경로\t패턴\t필드(line:N)` → 해당 파일을 line:N 기준으로 Read한다.
-`tags`가 없거나 오래됐으면 `./gradlew generateCtags` 또는 `./gradlew compileJava`로 재생성한다.
+- 구조 파악이 목적이면 `grep -n "public\|private\|class\|interface" 파일` 로 메서드 목록만 먼저 확인한다
+- Java는 파일명 = 클래스명 규칙이 강제되므로 클래스명을 알면 경로를 예측해 Grep 없이 바로 Read할 수 있다
 
 ## 브랜치 전략
 

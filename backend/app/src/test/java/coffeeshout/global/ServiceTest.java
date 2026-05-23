@@ -1,6 +1,6 @@
 package coffeeshout.global;
 
-import coffeeshout.fixture.TestContainerSupport;
+import coffeeshout.support.TestContainerSupport;
 import coffeeshout.global.config.ServiceTestConfig;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;

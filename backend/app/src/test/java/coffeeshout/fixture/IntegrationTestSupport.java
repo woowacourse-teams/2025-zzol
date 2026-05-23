@@ -1,5 +1,6 @@
 package coffeeshout.fixture;
 
+import coffeeshout.support.TestContainerSupport;
 import coffeeshout.support.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 

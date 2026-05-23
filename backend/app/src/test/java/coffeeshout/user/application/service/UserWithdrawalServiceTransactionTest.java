@@ -2,7 +2,7 @@ package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.fixture.TestContainerSupport;
+import coffeeshout.support.TestContainerSupport;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.global.config.ServiceTestConfig;
 import coffeeshout.user.domain.User;

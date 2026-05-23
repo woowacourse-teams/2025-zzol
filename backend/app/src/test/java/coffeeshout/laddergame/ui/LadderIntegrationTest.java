@@ -1,4 +1,4 @@
-﻿package coffeeshout.laddergame.ui;
+package coffeeshout.laddergame.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

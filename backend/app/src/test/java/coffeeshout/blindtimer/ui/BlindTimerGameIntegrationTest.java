@@ -1,4 +1,4 @@
-﻿package coffeeshout.blindtimer.ui;
+package coffeeshout.blindtimer.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;

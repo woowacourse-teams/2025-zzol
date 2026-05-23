@@ -1,4 +1,4 @@
-﻿package coffeeshout.websocket.interceptor;
+package coffeeshout.websocket.interceptor;
 
 import coffeeshout.support.TestStompSession;
 import coffeeshout.fixture.UserFixture;

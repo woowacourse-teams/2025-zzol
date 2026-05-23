@@ -1,4 +1,4 @@
-﻿package coffeeshout.websocket;
+package coffeeshout.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

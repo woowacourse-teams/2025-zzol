@@ -1,4 +1,4 @@
-﻿package coffeeshout.blockstacking.ui;
+package coffeeshout.blockstacking.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

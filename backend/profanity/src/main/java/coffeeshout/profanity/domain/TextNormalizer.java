@@ -1,4 +1,4 @@
-package coffeeshout.profanity.infra.filter;
+package coffeeshout.profanity.domain;
 
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
@@ -13,10 +13,9 @@ public class TextNormalizer {
         if (text == null) {
             return "";
         }
-        String result = Normalizer.normalize(text, Form.NFC);
-        result = applyLeetSubstitutions(result);
-        result = result.replaceAll(SPECIAL_CHARS_PATTERN, "");
-        return result.toLowerCase();
+        final String nfc = Normalizer.normalize(text, Form.NFC);
+        final String deLeet = applyLeetSubstitutions(nfc);
+        return deLeet.replaceAll(SPECIAL_CHARS_PATTERN, "").toLowerCase();
     }
 
     private String applyLeetSubstitutions(String text) {

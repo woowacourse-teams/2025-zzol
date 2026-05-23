@@ -3,7 +3,6 @@ package coffeeshout.profanity.application;
 import static coffeeshout.fixture.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -14,8 +13,8 @@ import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityErrorCode;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
+import coffeeshout.profanity.domain.TrieRefreshPort;
 import coffeeshout.profanity.domain.WordSource;
-import coffeeshout.profanity.infra.redis.ProfanityTrieRefreshPublisher;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,14 +24,14 @@ import org.junit.jupiter.api.Test;
 class ProfanityWordManagementServiceTest {
 
     private ProfanityWordRepository wordRepository;
-    private ProfanityTrieRefreshPublisher refreshPublisher;
+    private TrieRefreshPort trieRefreshPort;
     private ProfanityWordManagementService service;
 
     @BeforeEach
     void setUp() {
         wordRepository = mock(ProfanityWordRepository.class);
-        refreshPublisher = mock(ProfanityTrieRefreshPublisher.class);
-        service = new ProfanityWordManagementService(wordRepository, refreshPublisher);
+        trieRefreshPort = mock(TrieRefreshPort.class);
+        service = new ProfanityWordManagementService(wordRepository, trieRefreshPort);
     }
 
     @Nested
@@ -43,7 +42,7 @@ class ProfanityWordManagementServiceTest {
             service.add("욕설", Language.KOREAN, WordSource.MANUAL);
 
             then(wordRepository).should().save(any(ProfanityWord.class));
-            then(refreshPublisher).should().publish();
+            then(trieRefreshPort).should().publish();
         }
 
         @Test
@@ -72,7 +71,7 @@ class ProfanityWordManagementServiceTest {
             service.deactivate("욕설");
 
             then(wordRepository).should().deactivate("욕설");
-            then(refreshPublisher).should().publish();
+            then(trieRefreshPort).should().publish();
         }
 
         @Test
@@ -104,7 +103,7 @@ class ProfanityWordManagementServiceTest {
             } catch (Exception ignored) {
             }
 
-            then(refreshPublisher).should(never()).publish();
+            then(trieRefreshPort).should(never()).publish();
         }
     }
 
@@ -122,7 +121,7 @@ class ProfanityWordManagementServiceTest {
 
             then(wordRepository).should().save(words.get(0));
             then(wordRepository).should().save(words.get(1));
-            then(refreshPublisher).should().publish();
+            then(trieRefreshPort).should().publish();
         }
     }
 

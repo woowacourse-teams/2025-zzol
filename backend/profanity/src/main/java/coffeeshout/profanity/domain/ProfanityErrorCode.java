@@ -6,7 +6,9 @@ public enum ProfanityErrorCode implements ErrorCode {
 
     WORD_BLANK("P001", "비속어는 공백일 수 없습니다.", 400),
     WORD_TOO_LONG("P002", "비속어는 " + ProfanityWord.MAX_WORD_LENGTH + "자 이하여야 합니다.", 400),
-    WORD_NOT_FOUND("P003", "등록되지 않은 비속어입니다.", 404);
+    WORD_NOT_FOUND("P003", "등록되지 않은 비속어입니다.", 404),
+    LANGUAGE_REQUIRED("P004", "language는 null일 수 없습니다.", 400),
+    SOURCE_REQUIRED("P005", "source는 null일 수 없습니다.", 400);
 
     private final String code;
     private final String message;

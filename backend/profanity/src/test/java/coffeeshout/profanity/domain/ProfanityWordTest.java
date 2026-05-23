@@ -99,14 +99,18 @@ class ProfanityWordTest {
 
             @Test
             void language가_null이면_예외가_발생한다() {
-                assertThatThrownBy(() -> new ProfanityWord("욕설", null, WordSource.MANUAL))
-                        .isInstanceOf(IllegalArgumentException.class);
+                assertCoffeeShoutException(
+                        () -> new ProfanityWord("욕설", null, WordSource.MANUAL),
+                        ProfanityErrorCode.LANGUAGE_REQUIRED
+                );
             }
 
             @Test
             void source가_null이면_예외가_발생한다() {
-                assertThatThrownBy(() -> new ProfanityWord("욕설", Language.KOREAN, null))
-                        .isInstanceOf(IllegalArgumentException.class);
+                assertCoffeeShoutException(
+                        () -> new ProfanityWord("욕설", Language.KOREAN, null),
+                        ProfanityErrorCode.SOURCE_REQUIRED
+                );
             }
         }
     }

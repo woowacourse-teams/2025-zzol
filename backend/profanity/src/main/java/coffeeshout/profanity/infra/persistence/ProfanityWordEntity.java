@@ -10,6 +10,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.AccessLevel;
@@ -49,6 +51,17 @@ public class ProfanityWordEntity {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @PrePersist
+    private void prePersist() {
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    @PreUpdate
+    private void preUpdate() {
+        this.updatedAt = Instant.now();
+    }
+
     public static ProfanityWordEntity from(ProfanityWord domain) {
         final ProfanityWordEntity entity = new ProfanityWordEntity();
         entity.word = domain.word();
@@ -56,8 +69,6 @@ public class ProfanityWordEntity {
         entity.source = domain.source();
         entity.isActive = true;
         entity.matchCount = 0L;
-        entity.createdAt = Instant.now();
-        entity.updatedAt = Instant.now();
         return entity;
     }
 
@@ -67,16 +78,13 @@ public class ProfanityWordEntity {
 
     public void reactivate() {
         this.isActive = true;
-        this.updatedAt = Instant.now();
     }
 
     public void deactivate() {
         this.isActive = false;
-        this.updatedAt = Instant.now();
     }
 
     public void incrementMatchCount() {
         this.matchCount++;
-        this.updatedAt = Instant.now();
     }
 }

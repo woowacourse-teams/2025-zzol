@@ -3,7 +3,7 @@ package coffeeshout.profanity.application;
 import coffeeshout.profanity.domain.ProfanityChecker;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
-import coffeeshout.profanity.infra.filter.TextNormalizer;
+import coffeeshout.profanity.domain.TextNormalizer;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,7 +39,7 @@ public class ProfanityFilterService implements ProfanityChecker {
     public void rebuildTrie() {
         final List<ProfanityWord> words = wordRepository.findAllActive();
         final Trie.TrieBuilder builder = Trie.builder().ignoreOverlaps().ignoreCase();
-        words.forEach(w -> builder.addKeyword(w.word()));
+        words.forEach(w -> builder.addKeyword(textNormalizer.normalize(w.word())));
         trieRef.set(builder.build());
         log.info("비속어 트라이 재구성 완료 — {}건", words.size());
     }

@@ -29,10 +29,10 @@ public record ProfanityWord(String word, Language language, WordSource source) {
                     "비속어는 " + MAX_WORD_LENGTH + "자 이하여야 합니다. 현재 길이: " + word.length());
         }
         if (language == null) {
-            throw new IllegalArgumentException("language는 null일 수 없습니다.");
+            throw new BusinessException(ProfanityErrorCode.LANGUAGE_REQUIRED, "language는 null일 수 없습니다.");
         }
         if (source == null) {
-            throw new IllegalArgumentException("source는 null일 수 없습니다.");
+            throw new BusinessException(ProfanityErrorCode.SOURCE_REQUIRED, "source는 null일 수 없습니다.");
         }
     }
 }

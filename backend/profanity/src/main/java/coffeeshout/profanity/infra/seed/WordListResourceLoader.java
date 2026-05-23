@@ -4,6 +4,7 @@ import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.WordSource;
+import coffeeshout.global.exception.custom.BusinessException;
 import jakarta.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class WordListResourceLoader {
                         wordRepository.save(word);
                         count++;
                     }
-                } catch (Exception e) {
+                } catch (BusinessException e) {
                     log.debug("단어 시드 스킵 ({}): {}", e.getMessage(), line);
                 }
             }

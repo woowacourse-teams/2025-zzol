@@ -9,7 +9,7 @@ import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.WordSource;
-import coffeeshout.profanity.infra.filter.TextNormalizer;
+import coffeeshout.profanity.domain.TextNormalizer;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;

@@ -23,8 +23,8 @@ ADR-0011 멀티 모듈 전환 이후 `RestExceptionHandler`가 `:app` 모듈에 
 ```text
 RestExceptionHandler
   → coffeeshout.global.exception.*   (:common)
-  → coffeeshout.global.ipblock.*     (:infra)
-  → coffeeshout.global.log.*         (:infra)
+  → coffeeshout.global.ipblock.*     (:common)
+  → coffeeshout.global.log.*         (:common)
   → Spring MVC (ProblemDetail, @RestControllerAdvice 등)
 ```
 
@@ -39,8 +39,6 @@ RestExceptionHandler
 ```text
 :common
   ↑
-:infra
-  ↑
 :web          ← 신설 (Spring MVC, HTTP 횡단 관심사)
   ↑
 :websocket  :room  :user  :admin  :zzolbot  ...
@@ -48,7 +46,7 @@ RestExceptionHandler
 :app
 ```
 
-`:web`은 `:infra`에 의존하고, REST 엔드포인트를 노출하는 모든 도메인 모듈은 `:web`에 의존한다.
+`:web`은 `:common`에 의존하고, REST 엔드포인트를 노출하는 모든 도메인 모듈은 `:web`에 의존한다.
 `:websocket`도 REST 엔드포인트(`GameRecoveryController` 등)를 노출하므로 `:web`에 의존한다.
 
 ### `:web`의 책임

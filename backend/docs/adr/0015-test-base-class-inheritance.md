@@ -23,7 +23,7 @@ ADR-0013에서 도메인 모듈 독립 테스트 실행 전략을 도입했다.
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-@Import(CommonTestSchedulerConfig.class)
+@Import({CommonTestSchedulerConfig.class, MockEventPublisherConfig.class})
 public abstract class ServiceTest extends TestContainerSupport {
     @MockitoBean
     protected ApplicationEventPublisher eventPublisher;
@@ -73,8 +73,8 @@ Java 언어 레벨에서 `@Import`는 `@Inherited`가 없으므로 서브클래�
 
 ```text
 :app ServiceTest 가 extends coffeeshout.support.ServiceTest 할 때 적용되는 @Import:
-  - coffeeshout.support.ServiceTest    → @Import(CommonTestSchedulerConfig.class)
-  - coffeeshout.global.ServiceTest     → @Import(ServiceTestConfig.class)
+  - coffeeshout.support.ServiceTest      → @Import({CommonTestSchedulerConfig, MockEventPublisherConfig})
+  - coffeeshout.support.app.ServiceTest  → @Import(ServiceTestConfig.class)
   → 두 Config 모두 컨텍스트에 등록됨
 ```
 
@@ -95,12 +95,12 @@ Spring TestContext Framework는 테스트 클래스 및 **모든 상위 클래�
 ```text
 TestContainerSupport (MySQL + Redis 컨테이너 관리)
   │
-  ├── coffeeshout.support.ServiceTest          ← :test-support
+  ├── coffeeshout.support.ServiceTest              ← :test-support
   │     @SpringBootTest, @Transactional
-  │     @Import(CommonTestSchedulerConfig)     ← taskScheduler, delayRemovalScheduler mock
+  │     @Import({CommonTestSchedulerConfig, MockEventPublisherConfig})
   │     @MockitoBean ApplicationEventPublisher
   │     │
-  │     ├── coffeeshout.global.ServiceTest     ← :app (게임 빈 mock 추가)
+  │     ├── coffeeshout.support.app.ServiceTest  ← :app (게임 빈 mock 추가)
   │     │     @Import(ServiceTestConfig)       ← FlowScheduler, SimpMessagingTemplate mock
   │     │
   │     └── :room, :user, ... 테스트 직접 상속  ← 게임 빈 없이 공통 인프라만
@@ -110,7 +110,7 @@ TestContainerSupport (MySQL + Redis 컨테이너 관리)
         @Import(CommonTestSchedulerConfig)
         @BeforeEach cleanDatabase()
         │
-        └── coffeeshout.fixture.IntegrationTestSupport  ← :app (게임 빈 mock 추가)
+        └── coffeeshout.support.app.IntegrationTestSupport  ← :app (게임 빈 mock 추가)
               @Import(IntegrationTestConfig)
 ```
 

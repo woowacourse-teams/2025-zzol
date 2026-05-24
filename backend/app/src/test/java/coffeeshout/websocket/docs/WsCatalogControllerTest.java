@@ -1,6 +1,6 @@
 package coffeeshout.websocket.docs;
 
-import coffeeshout.fixture.TestContainerSupport;
+import coffeeshout.support.TestContainerSupport;
 import coffeeshout.support.test.IntegrationTest;
 import coffeeshout.websocket.docs.WsCatalog;
 import coffeeshout.websocket.docs.WsCatalogController;

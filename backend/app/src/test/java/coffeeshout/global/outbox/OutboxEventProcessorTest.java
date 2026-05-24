@@ -41,8 +41,8 @@ class OutboxEventProcessorTest extends StreamMockedServiceTest {
             List<OutboxEvent> result = outboxEventProcessor.fetchAndMarkInProgress(10);
 
             // then
-            assertThat(result).hasSize(2);
-            assertThat(result).allSatisfy(event ->
+            assertThat(result).hasSize(2)
+                    .allSatisfy(event ->
                     assertThat(event.getStatus()).isEqualTo(OutboxStatus.IN_PROGRESS)
             );
         }

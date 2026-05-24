@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.blockstacking.domain.BlockStackingGameErrorCode;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.global.ServiceTest;
+import coffeeshout.support.ServiceTest;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;

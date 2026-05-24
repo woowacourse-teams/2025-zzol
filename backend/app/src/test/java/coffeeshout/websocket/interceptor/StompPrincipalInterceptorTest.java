@@ -1,6 +1,6 @@
 package coffeeshout.websocket.interceptor;
 
-import coffeeshout.fixture.TestStompSession;
+import coffeeshout.support.TestStompSession;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;
 import coffeeshout.user.application.service.AuthTokenService;

@@ -26,9 +26,6 @@ dependencies {
     // ExceptionAssertions — CoffeeShoutException, ErrorCode
     api(project(":common"))
 
-    // BaseServiceTestConfig / BaseIntegrationTestConfig — FlowScheduler 인터페이스 mock
-    api(project(":game-api"))
-
     api("com.mysql:mysql-connector-j")
     api("com.h2database:h2")
 }

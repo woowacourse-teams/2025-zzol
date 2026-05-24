@@ -1,8 +1,6 @@
 package coffeeshout.support.config;
 
-import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.support.ShutDownTestScheduler;
-import coffeeshout.support.TestTaskScheduler;
 import java.time.Clock;
 import org.mockito.Answers;
 import org.mockito.Mockito;
@@ -24,40 +22,9 @@ public class BaseServiceTestConfig {
         return Mockito.mock(TaskScheduler.class, Answers.RETURNS_MOCKS);
     }
 
-    @Bean(name = "cardGameFlowScheduler")
-    @Primary
-    public FlowScheduler mockCardGameFlowScheduler() {
-        return Mockito.mock(FlowScheduler.class);
-    }
-
-    @Bean(name = "blockStackingFlowScheduler")
-    public FlowScheduler mockBlockStackingFlowScheduler() {
-        return Mockito.mock(FlowScheduler.class);
-    }
-
-    @Bean(name = "ladderFlowScheduler")
-    public FlowScheduler mockLadderFlowScheduler() {
-        return Mockito.mock(FlowScheduler.class);
-    }
-
     @Bean(name = "delayRemovalScheduler")
     public TaskScheduler testDelayRemovalScheduler() {
         return new ShutDownTestScheduler();
-    }
-
-    @Bean(name = "racingGameScheduler")
-    public TaskScheduler testRacingGameScheduler() {
-        return new TestTaskScheduler();
-    }
-
-    @Bean(name = "speedTouchGameScheduler")
-    public TaskScheduler testSpeedTouchGameScheduler() {
-        return new TestTaskScheduler();
-    }
-
-    @Bean(name = "blindTimerGameScheduler")
-    public TaskScheduler testBlindTimerGameScheduler() {
-        return new TestTaskScheduler();
     }
 
     @Bean

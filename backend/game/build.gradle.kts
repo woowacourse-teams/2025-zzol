@@ -26,6 +26,7 @@ dependencies {
 
     "testFixturesImplementation"(project(":game-api"))
     "testFixturesImplementation"(testFixtures(project(":room")))
+    "testFixturesImplementation"(project(":test-support"))
 
     testImplementation(testFixtures(project(":room")))
     testImplementation(project(":test-support"))

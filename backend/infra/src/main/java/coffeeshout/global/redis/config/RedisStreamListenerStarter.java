@@ -8,10 +8,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
@@ -26,7 +29,8 @@ import org.springframework.stereotype.Component;
 public class RedisStreamListenerStarter {
 
     public static final String STREAM_CONTAINER_BEAN_NAME_FORMAT = "stream-container-%s";
-    
+
+    private final AtomicBoolean stopping = new AtomicBoolean(false);
     private final RedisStreamProperties properties;
     private final RedisConnectionFactory redisConnectionFactory;
     private final ObjectMapper redisObjectMapper;
@@ -87,8 +91,13 @@ public class RedisStreamListenerStarter {
         return applicationContext.getBean(RedisStreamThreadPoolConfig.convertBeanName(streamKey), Executor.class);
     }
 
+    @EventListener
+    public void onContextClosed(ContextClosedEvent event) {
+        stopping.set(true);
+    }
+
     private void handleStreamError(Throwable t) {
-        if (isCausedByConnectionClosed(t)) {
+        if (stopping.get() && isCausedByConnectionClosed(t)) {
             log.debug("Redis Stream 연결이 종료됐습니다 (정상 종료)");
             return;
         }

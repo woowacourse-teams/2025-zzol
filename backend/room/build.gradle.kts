@@ -1,5 +1,9 @@
 // :room — Room aggregate + Player + Roulette + RoomSessionToken
 
+plugins {
+    `java-test-fixtures`
+}
+
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 

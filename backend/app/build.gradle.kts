@@ -25,6 +25,10 @@ dependencies {
     developmentOnly("me.paulschwarz:spring-dotenv:4.0.0")
 
     testImplementation(project(":test-support"))
+    testImplementation(testFixtures(project(":room")))
+    testImplementation(testFixtures(project(":user")))
+    testImplementation(testFixtures(project(":game")))
+    testImplementation(testFixtures(project(":admin")))
     testImplementation("io.micrometer:micrometer-tracing-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.wiremock:wiremock-standalone:3.9.2")

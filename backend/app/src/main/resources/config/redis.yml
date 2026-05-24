@@ -6,6 +6,8 @@ spring:
       ssl:
         enabled: false
       host: localhost
+      lettuce:
+        shutdown-timeout: 300ms
 
 redis:
   stream:

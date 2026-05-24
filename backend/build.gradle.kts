@@ -21,31 +21,9 @@ val versions = mapOf(
 )
 versions.forEach { (k, v) -> extra[k] = v }
 
-tasks.register("generateCtags") {
-    group = "build"
-    description = "Universal Ctags로 Java 심볼 인덱스(tags 파일)를 생성한다"
-    onlyIf { System.getenv("CI") == null }
-    outputs.file("tags")
-    val workDir = projectDir
-    doLast {
-        val process: Process
-        try {
-            process = ProcessBuilder("ctags", "--languages=Java", "--fields=+n", "--extras=+q", "-R", "-f", "tags", "src", "common/src", "infra/src", "websocket/src", "game-api/src", "user/src", "room/src", "game/src", "admin/src", "zzolbot/src", "app/src")
-                .directory(workDir).start()
-        } catch (e: java.io.IOException) {
-            logger.warn("ctags를 찾을 수 없어 tags 파일 생성을 건너뜁니다: ${e.message}")
-            return@doLast
-        }
-        try {
-            if (!process.waitFor(10L, TimeUnit.SECONDS)) process.destroyForcibly()
-        } catch (e: InterruptedException) {
-            Thread.currentThread().interrupt()
-        }
-    }
-}
-
 tasks.register<Exec>("pruneStaleTestContainers") {
     group = "verification"
+    description = "종료된 Testcontainers 컨테이너를 제거한다. reuse 캐시 초기화 시 사용."
     commandLine("docker", "container", "prune", "-f", "--filter", "label=org.testcontainers=true")
     isIgnoreExitValue = true
 }

@@ -14,20 +14,6 @@
 - [ADR 인덱스](docs/adr/index.md) — 주요 기술 의사결정 한 줄 요약 목록 (`/adr [주제]`로 새 ADR 작성, 상세 내용은 개별 파일 참조)
 - [Notion 워크스페이스](docs/notion-workspace.md) — Notion 주요 페이지 URL, WebSocket 명세서 DB 구조 및 작업 흐름
 
-## 코드 탐색
-
-프로젝트 루트의 `tags` 파일에 모든 Java 클래스·메서드·필드의 위치가 인덱싱되어 있다.
-파일을 Read하기 전에 **반드시 먼저 Grep으로 `tags`를 조회해** 정확한 파일·줄 번호를 확인한다.
-
-```bash
-# 클래스/메서드 위치 조회 예시
-grep "^CardGameFlowOrchestrator	" tags   # 클래스 정의
-grep "^startRound	" tags                 # 메서드 정의
-```
-
-결과 형식: `심볼명\t파일경로\t패턴\t필드(line:N)` → 해당 파일을 line:N 기준으로 Read한다.
-`tags`가 없거나 오래됐으면 `./gradlew generateCtags` 또는 `./gradlew compileJava`로 재생성한다.
-
 ## 브랜치 전략
 
 - 작업 브랜치는 **`be/dev`에서 체크아웃**한다

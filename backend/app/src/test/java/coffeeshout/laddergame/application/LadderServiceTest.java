@@ -7,7 +7,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.ServiceTest;
+import coffeeshout.global.ServiceTest;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;

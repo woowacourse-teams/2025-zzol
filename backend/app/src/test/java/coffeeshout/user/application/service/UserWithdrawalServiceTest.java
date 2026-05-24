@@ -4,7 +4,7 @@ import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.support.ServiceTest;
+import coffeeshout.global.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.infra.persistence.ReportRepository;

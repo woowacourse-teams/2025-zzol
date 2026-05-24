@@ -1,4 +1,4 @@
-package coffeeshout.support.config;
+package coffeeshout.global.config;
 
 import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.support.ShutDownTestScheduler;
@@ -16,7 +16,7 @@ import org.springframework.scheduling.TaskScheduler;
 
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
-public class BaseServiceTestConfig {
+public class ServiceTestConfig {
 
     @Bean(name = "taskScheduler")
     @Primary

@@ -6,7 +6,7 @@ import static org.awaitility.Awaitility.await;
 import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.BlindTimerGameState;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.ServiceTest;
+import coffeeshout.global.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;

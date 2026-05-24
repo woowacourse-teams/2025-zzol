@@ -6,7 +6,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.ServiceTest;
+import coffeeshout.global.ServiceTest;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;

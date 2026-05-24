@@ -3,7 +3,7 @@ package coffeeshout.report.application;
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.support.ServiceTest;
+import coffeeshout.global.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportErrorCode;

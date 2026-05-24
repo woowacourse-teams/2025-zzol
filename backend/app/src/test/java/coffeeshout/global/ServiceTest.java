@@ -1,6 +1,7 @@
-package coffeeshout.support;
+package coffeeshout.global;
 
-import coffeeshout.support.config.BaseServiceTestConfig;
+import coffeeshout.support.TestContainerSupport;
+import coffeeshout.global.config.ServiceTestConfig;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
@@ -9,7 +10,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
-@Import(BaseServiceTestConfig.class)
+@Import(ServiceTestConfig.class)
 @ActiveProfiles("test")
 @Transactional
 public abstract class ServiceTest extends TestContainerSupport {

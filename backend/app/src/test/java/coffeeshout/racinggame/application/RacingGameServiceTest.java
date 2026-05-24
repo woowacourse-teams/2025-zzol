@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.ServiceTest;
+import coffeeshout.global.ServiceTest;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.racinggame.domain.RacingGameState;
 import coffeeshout.room.domain.Room;

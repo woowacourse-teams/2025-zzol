@@ -10,16 +10,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 
-// 비-game 모듈 통합 테스트용: FlowScheduler는 mock, 나머지 스케줄러는 실제 구현
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
-public class BaseIntegrationTestConfig {
-
-    @Bean(name = "taskScheduler")
-    @Primary
-    public TaskScheduler noOpTaskScheduler() {
-        return new ShutDownTestScheduler();
-    }
+public class MockFlowSchedulerConfig {
 
     @Bean(name = "cardGameFlowScheduler")
     @Primary
@@ -38,22 +31,22 @@ public class BaseIntegrationTestConfig {
     }
 
     @Bean(name = "delayRemovalScheduler")
-    public TaskScheduler testIntegrationDelayRemovalScheduler() {
+    public TaskScheduler testDelayRemovalScheduler() {
         return new ShutDownTestScheduler();
     }
 
     @Bean(name = "racingGameScheduler")
-    public TaskScheduler testIntegrationRacingGameScheduler() {
+    public TaskScheduler testRacingGameScheduler() {
         return new TestTaskScheduler();
     }
 
     @Bean(name = "speedTouchGameScheduler")
-    public TaskScheduler testIntegrationSpeedTouchGameScheduler() {
+    public TaskScheduler testSpeedTouchGameScheduler() {
         return new TestTaskScheduler();
     }
 
     @Bean(name = "blindTimerGameScheduler")
-    public TaskScheduler testIntegrationBlindTimerGameScheduler() {
+    public TaskScheduler testBlindTimerGameScheduler() {
         return new TestTaskScheduler();
     }
 }

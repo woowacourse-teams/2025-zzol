@@ -6,7 +6,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import coffeeshout.fixture.FriendshipFixture;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
-import coffeeshout.support.ServiceTest;
+import coffeeshout.global.ServiceTest;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import java.util.List;

@@ -1,5 +1,9 @@
 // :user — User + Auth + Friend (OAuth2, JWT, Security)
 
+plugins {
+    `java-test-fixtures`
+}
+
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
@@ -26,4 +30,5 @@ dependencies {
 
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.wiremock:wiremock-standalone:3.9.2")
+    testImplementation(project(":test-support"))
 }

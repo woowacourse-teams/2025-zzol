@@ -20,4 +20,5 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
 
+    testImplementation(project(":test-support"))
 }

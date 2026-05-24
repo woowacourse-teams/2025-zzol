@@ -26,7 +26,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "coffeeshout.friend",
         "coffeeshout.websocket",
         "coffeeshout.global",
-        "coffeeshout.web"
+        "coffeeshout.web",
+        "coffeeshout.fixture"
 })
 public class RoomTestApplication {
 

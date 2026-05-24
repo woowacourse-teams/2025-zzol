@@ -1,4 +1,4 @@
-package coffeeshout.room.ui;
+package coffeeshout.room;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.fixture.WebSocketIntegrationTestSupport;

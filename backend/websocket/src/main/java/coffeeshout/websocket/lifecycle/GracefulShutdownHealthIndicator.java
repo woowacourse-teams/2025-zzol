@@ -3,6 +3,7 @@ package coffeeshout.websocket.lifecycle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
  * 종료 중인 서버를 재시작하면 종료 과정(세션 드레이닝)이 중단되므로,
  * "서비스 중단 중이지만 장애는 아님"을 표현하는 OUT_OF_SERVICE가 적합하다.
  */
+@Profile("!test")
 @Component
 @RequiredArgsConstructor
 public class GracefulShutdownHealthIndicator implements HealthIndicator {

@@ -67,6 +67,11 @@ management:
   otlp:
     tracing:
       endpoint: http://localhost:4318
+  endpoint:
+    health:
+      group:
+        readiness:
+          include: "db,redis,redisStream"
 
 resilience4j:
   ratelimiter:

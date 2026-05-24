@@ -13,8 +13,8 @@
 |----------------------------|---------------------------------------------|---------------------------------------------------------------------------------------------------|
 | 순수 단위 테스트                  | 없음 (순수 Java)                                | 스프링 컨텍스트 없이 도메인 로직만 검증                                                                            |
 | 서비스 테스트                    | `ServiceTest` 추상 클래스 상속                     | `@SpringBootTest` + `test` 프로파일 + `@Transactional`. `ApplicationEventPublisher`는 MockitoBean으로 제공 |
-| WebSocket 통합 테스트           | `WebSocketIntegrationTestSupport` 추상 클래스 상속 | `RANDOM_PORT` + `test` 프로파일 + `@Transactional` 포함. `@IntegrationTest` 추가 불필요                      |
-| 일반 통합 테스트 (REST, Stream 등) | `@IntegrationTest` 어노테이션                    | `RANDOM_PORT` + `test` 프로파일 + `@Transactional`                                                    |
+| WebSocket 통합 테스트           | `WebSocketIntegrationTestSupport` 추상 클래스 상속 | `RANDOM_PORT` + `test` 프로파일 + `@Transactional` 포함                                                 |
+| 일반 통합 테스트 (REST, Stream 등) | `IntegrationTestSupport` 추상 클래스 상속          | `RANDOM_PORT` + `test` 프로파일 + `@BeforeEach` DB cleanup                                             |
 
 모든 베이스는 `TestContainerConfig`를 import하므로 Valkey TestContainer가 자동으로 구동된다.
 
@@ -24,7 +24,7 @@
 
 ## 통합 테스트 (WebSocket)
 
-`WebSocketIntegrationTestSupport`를 상속하면 STOMP 세션 유틸(`createSession`, `assertMessage` 등)이 제공된다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다. `@IntegrationTest`를 함께 붙이면 설정이 중복되므로 사용하지 않는다.
+`WebSocketIntegrationTestSupport`를 상속하면 STOMP 세션 유틸(`createSession`, `assertMessage` 등)이 제공된다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다.
 
 ## 비동기·시간 의존 검증
 
@@ -82,6 +82,6 @@ assertCoffeeShoutException(
 
 `test` 프로파일 적용 시 `application-test.yml`이 자동 적용된다.
 - 타이밍 값이 500ms~2s로 단축됨
-- DB: H2 인메모리 사용 (Flyway 비활성화)
+- DB: MySQL TestContainer 사용 (Flyway 비활성화)
 - Valkey(Redis): TestContainers로 실제 컨테이너 구동 (`TestContainerConfig`)
 - Redisson 제외

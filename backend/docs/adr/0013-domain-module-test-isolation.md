@@ -109,12 +109,12 @@ public class CommonTestSchedulerConfig {
 }
 ```
 
-`CommonTestSchedulerConfig`는 `:game` 의존이 없으므로 `:test-support` 이동 대상 후보이나, 현재는 게임별 스케줄러(`IntegrationTestConfig`)와 동일한 `:app:test` 패키지에 유지한다. `:app` 독립 테스트 패턴 도입 시 함께 검토한다.
+`CommonTestSchedulerConfig`는 `:game` 의존이 없으므로 `:test-support`로 이동했다. `ServiceTest`와 `IntegrationTestSupport` 베이스 클래스에서 `@Import(CommonTestSchedulerConfig.class)`로 가져오므로, 이를 상속하는 모든 도메인 모듈 테스트에서 `taskScheduler`·`delayRemovalScheduler` 빈이 자동으로 제공된다. `IntegrationTestConfig`와 `ServiceTestConfig`에서 중복 `@Import`는 제거했다.
 
-### `@IntegrationTest` — DB 격리를 위한 `@AfterEach` cleanup
+### 통합 테스트 — DB 격리를 위한 `@BeforeEach` cleanup
 
 통합 테스트에서 여러 테스트 메서드가 DB 상태를 공유하여 실행 순서에 따라 결과가 달라지는 문제가 발생했다.
-`@AfterEach`를 `@IntegrationTest` 베이스 클래스(`:test-support`)에 추가해 각 테스트 메서드 종료 후 DB를 초기화한다.
+`@BeforeEach`를 `IntegrationTestSupport` 베이스 클래스(`:test-support`)에 추가해 각 테스트 메서드 시작 전 DB를 초기화한다. 직전 테스트 잔여물에 영향받지 않고 항상 깨끗한 상태에서 시작하도록 보장한다.
 
 `@Transactional` 롤백 방식은 Redis Stream·비동기 이벤트처럼 트랜잭션 외부에서 발생하는 부수효과를 롤백하지 못하므로 사용하지 않는다.
 
@@ -122,7 +122,9 @@ public class CommonTestSchedulerConfig {
 
 `:test-support`는 초기에 게임 관련 테스트 설정(FlowScheduler 빈 등)을 포함하고 있었다. 이는 `:test-support` → `:game` 의존을 유발해 공통 테스트 인프라 모듈이 특정 도메인을 알게 되는 구조였다.
 
-게임 도메인 설정을 `:app:test`의 `IntegrationTestConfig`로 이동해 `:test-support`가 도메인 무관 공통 인프라(어노테이션, 베이스 클래스, `application-test-base.yml`)만 제공하도록 정리했다. 함께 미사용 상태였던 `MockFlowSchedulerConfig`도 삭제했다.
+게임 도메인 설정을 `:app:test`의 `IntegrationTestConfig`로 이동해 `:test-support`가 도메인 무관 공통 인프라(베이스 클래스, `application-test-base.yml`)만 제공하도록 정리했다. 함께 미사용 상태였던 `MockFlowSchedulerConfig`도 삭제했다.
+
+`@IntegrationTest` 합성 어노테이션은 삭제했다. 기존에 이 어노테이션이 담당하던 `@SpringBootTest(RANDOM_PORT) + @ActiveProfiles("test")`는 `:test-support`의 `IntegrationTestSupport` 베이스 클래스가 제공하고, `@Import(IntegrationTestConfig.class)`는 `:app`의 `IntegrationTestSupport`가 직접 선언한다. 테스트 클래스는 어노테이션 합성 대신 베이스 클래스 상속으로 설정을 획득한다.
 
 ### TestContainers 버전 고정
 

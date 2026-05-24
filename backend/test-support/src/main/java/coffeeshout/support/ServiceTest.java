@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-@Import(CommonTestSchedulerConfig.class)
+@Import({CommonTestSchedulerConfig.class, MockEventPublisherConfig.class})
 public abstract class ServiceTest extends TestContainerSupport {
 
     @MockitoBean

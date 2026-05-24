@@ -1,4 +1,4 @@
-package coffeeshout.fixture;
+package coffeeshout.support.app;
 
 import static org.skyscreamer.jsonassert.JSONCompareMode.LENIENT;
 

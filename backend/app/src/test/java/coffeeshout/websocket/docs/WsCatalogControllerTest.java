@@ -1,6 +1,6 @@
 package coffeeshout.websocket.docs;
 
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.support.app.IntegrationTestSupport;
 import coffeeshout.websocket.docs.WsCatalog;
 import coffeeshout.websocket.docs.WsCatalogController;
 import org.assertj.core.api.SoftAssertions;

@@ -5,7 +5,7 @@ import static org.awaitility.Awaitility.await;
 
 import coffeeshout.support.TestStompSession;
 import coffeeshout.support.TestStompSession.MessageCollector;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.support.app.WebSocketIntegrationTestSupport;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 

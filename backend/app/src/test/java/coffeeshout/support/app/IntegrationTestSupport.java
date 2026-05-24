@@ -1,6 +1,6 @@
-package coffeeshout.fixture;
+package coffeeshout.support.app;
 
-import coffeeshout.global.config.IntegrationTestConfig;
+import coffeeshout.support.app.config.IntegrationTestConfig;
 import org.springframework.context.annotation.Import;
 
 @Import(IntegrationTestConfig.class)

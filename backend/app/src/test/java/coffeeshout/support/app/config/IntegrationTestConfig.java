@@ -1,4 +1,4 @@
-package coffeeshout.global.config;
+package coffeeshout.support.app.config;
 
 import coffeeshout.game.flow.CompletableFutureFlowScheduler;
 import coffeeshout.gamecommon.flow.FlowScheduler;

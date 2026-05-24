@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
 
-import coffeeshout.global.ServiceTest;
+import coffeeshout.support.app.ServiceTest;
 import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.websocket.ui.dto.RecoveryMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package coffeeshout.global;
+package coffeeshout.support.app;
 
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;

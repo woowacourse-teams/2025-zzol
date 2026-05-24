@@ -1,6 +1,6 @@
-package coffeeshout.global;
+package coffeeshout.support.app;
 
-import coffeeshout.global.config.ServiceTestConfig;
+import coffeeshout.support.app.config.ServiceTestConfig;
 import org.springframework.context.annotation.Import;
 
 @Import(ServiceTestConfig.class)

@@ -53,13 +53,13 @@ RestExceptionHandler
 
 ### `:web`의 책임
 
-| 구성요소 | 이동 전 위치 | 비고 |
-|---|---|---|
-| `RestExceptionHandler` | `:app` | 도메인 예외 → HTTP 상태 코드 변환 |
-| `WebMvcConfig` + `CorsProperties` | `:app` | 환경별 CORS 허용 출처 설정 |
-| `SwaggerConfig` | `:infra` | OpenAPI Bean 정의 |
-| `spring-boot-starter-web` | 각 도메인 모듈 | `api`로 노출, 도메인 모듈 중복 선언 제거 |
-| `spring-boot-starter-validation` | 각 도메인 모듈 | `api`로 노출, 도메인 모듈 중복 선언 제거 |
+| 구성요소                                  | 이동 전 위치  | 비고                         |
+|---------------------------------------|----------|----------------------------|
+| `RestExceptionHandler`                | `:app`   | 도메인 예외 → HTTP 상태 코드 변환     |
+| `WebMvcConfig` + `CorsProperties`     | `:app`   | 환경별 CORS 허용 출처 설정          |
+| `SwaggerConfig`                       | `:infra` | OpenAPI Bean 정의            |
+| `spring-boot-starter-web`             | 각 도메인 모듈 | `api`로 노출, 도메인 모듈 중복 선언 제거 |
+| `spring-boot-starter-validation`      | 각 도메인 모듈 | `api`로 노출, 도메인 모듈 중복 선언 제거 |
 | `springdoc-openapi-starter-webmvc-ui` | 각 도메인 모듈 | `api`로 노출, 도메인 모듈 중복 선언 제거 |
 
 `java-library` 플러그인의 `api` 설정을 사용하므로 루트 `build.gradle.kts`에서 `java` → `java-library`로 전환한다.

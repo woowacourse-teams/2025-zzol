@@ -1,4 +1,4 @@
-package coffeeshout.global.config;
+package coffeeshout.support.app.config;
 
 import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.support.TestTaskScheduler;

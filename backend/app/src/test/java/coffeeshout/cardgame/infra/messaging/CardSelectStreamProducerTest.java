@@ -7,7 +7,7 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
 import coffeeshout.fixture.CardGameFake;
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.support.app.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.cardgame.infra.CardGameStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;

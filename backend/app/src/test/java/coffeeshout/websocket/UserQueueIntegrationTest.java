@@ -6,7 +6,7 @@ import static org.mockito.BDDMockito.willThrow;
 
 import coffeeshout.support.TestStompSession;
 import coffeeshout.support.TestStompSession.MessageCollector;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.support.app.WebSocketIntegrationTestSupport;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;

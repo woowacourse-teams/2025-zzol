@@ -6,7 +6,7 @@ import static org.awaitility.Awaitility.await;
 import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.support.TestStompSession;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.support.app.WebSocketIntegrationTestSupport;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;

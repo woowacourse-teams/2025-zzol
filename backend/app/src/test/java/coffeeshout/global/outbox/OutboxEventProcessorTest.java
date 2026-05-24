@@ -2,7 +2,7 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.StreamMockedServiceTest;
+import coffeeshout.support.app.StreamMockedServiceTest;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;

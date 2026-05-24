@@ -1,7 +1,7 @@
 package coffeeshout.room;
 
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.support.app.WebSocketIntegrationTestSupport;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.room.domain.JoinCode;

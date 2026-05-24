@@ -2,7 +2,7 @@ package coffeeshout.websocket.interceptor;
 
 import coffeeshout.support.TestStompSession;
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.support.app.WebSocketIntegrationTestSupport;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.User;

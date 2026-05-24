@@ -4,7 +4,7 @@ import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
-import coffeeshout.global.ServiceTest;
+import coffeeshout.support.app.ServiceTest;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import coffeeshout.patchnote.domain.PatchNoteErrorCode;
 import coffeeshout.patchnote.infra.persistence.PatchNoteJpaRepository;

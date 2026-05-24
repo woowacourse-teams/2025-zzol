@@ -2,7 +2,7 @@ package coffeeshout.websocket.docs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.support.app.IntegrationTestSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.nio.file.Files;

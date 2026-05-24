@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import org.awaitility.Awaitility;
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
@@ -75,17 +76,12 @@ public class TestStompSession {
         }
 
         public MessageResponse get(long timeout, TimeUnit unit) {
-            try {
-                long start = System.currentTimeMillis();
-                String message = queue.poll(timeout, unit);
-                if (message == null) {
-                    throw new RuntimeException("메시지 수신 대기 시간을 초과했습니다");
-                }
-                long end = System.currentTimeMillis();
-                return new MessageResponse(end - start, message);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            long start = System.currentTimeMillis();
+            Awaitility.await()
+                .atMost(timeout, unit)
+                .until(() -> !queue.isEmpty());
+            long end = System.currentTimeMillis();
+            return new MessageResponse(end - start, queue.poll());
         }
 
         public int size() {
@@ -101,14 +97,10 @@ public class TestStompSession {
         }
 
         public void assertNoMessage(long timeout, TimeUnit unit) {
-            try {
-                String message = queue.poll(timeout, unit);
-                if (message != null) {
-                    throw new AssertionError("예상치 않은 메시지를 수신했습니다: " + message);
-                }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            Awaitility.await()
+                .during(timeout, unit)
+                .atMost(unit.toMillis(timeout) + 200, TimeUnit.MILLISECONDS)
+                .until(() -> queue.isEmpty());
         }
     }
 
@@ -126,14 +118,8 @@ public class TestStompSession {
 
         @Override
         public void handleFrame(StompHeaders headers, Object payload) {
-            synchronized (messageCollector) {
-                try {
-                    String jsonString = new String((byte[]) payload, StandardCharsets.UTF_8);
-                    messageCollector.add(jsonString);
-                } catch (Exception e) {
-                    throw new RuntimeException("메시지 변환 실패: " + payload, e);
-                }
-            }
+            String jsonString = new String((byte[]) payload, StandardCharsets.UTF_8);
+            messageCollector.add(jsonString);
         }
     }
 }

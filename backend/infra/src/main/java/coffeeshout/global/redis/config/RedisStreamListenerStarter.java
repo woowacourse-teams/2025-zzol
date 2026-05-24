@@ -97,17 +97,21 @@ public class RedisStreamListenerStarter {
     }
 
     private void handleStreamError(Throwable t) {
-        if (stopping.get() && isCausedByConnectionClosed(t)) {
+        if (stopping.get() && isShutdownRelated(t)) {
             log.debug("Redis Stream 연결이 종료됐습니다 (정상 종료)");
             return;
         }
         log.error("Redis Stream 처리 중 오류가 발생했습니다.", t);
     }
 
-    private boolean isCausedByConnectionClosed(Throwable t) {
+    private static final String CONNECTION_CLOSED = "Connection closed";
+    private static final String FACTORY_STOPPING = "is STOPPING";
+
+    private boolean isShutdownRelated(Throwable t) {
         Throwable current = t;
         while (current != null) {
-            if (current.getMessage() != null && current.getMessage().contains("Connection closed")) {
+            final String msg = current.getMessage();
+            if (msg != null && (msg.contains(CONNECTION_CLOSED) || msg.contains(FACTORY_STOPPING))) {
                 return true;
             }
             current = current.getCause();

@@ -3,23 +3,16 @@ package coffeeshout.global.config;
 import coffeeshout.game.flow.CompletableFutureFlowScheduler;
 import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.support.ShutDownTestScheduler;
-import org.mockito.Answers;
-import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
+@Import(CommonTestSchedulerConfig.class)
 public class IntegrationTestConfig {
-
-    @Bean(name = "taskScheduler")
-    @Primary
-    public TaskScheduler noOpTaskScheduler() {
-        return Mockito.mock(TaskScheduler.class, Answers.RETURNS_MOCKS);
-    }
 
     @Bean(name = "cardGameExecutorScheduler")
     public ShutDownTestScheduler cardGameExecutorScheduler() {
@@ -52,11 +45,6 @@ public class IntegrationTestConfig {
     public FlowScheduler ladderFlowScheduler(
             ShutDownTestScheduler ladderExecutorScheduler) {
         return new CompletableFutureFlowScheduler(ladderExecutorScheduler);
-    }
-
-    @Bean(name = "delayRemovalScheduler")
-    public TaskScheduler testIntegrationDelayRemovalScheduler() {
-        return new ShutDownTestScheduler();
     }
 
     @Bean(name = "racingGameScheduler")

@@ -29,6 +29,9 @@ dependencies {
     // BaseServiceTestConfig / BaseIntegrationTestConfig — FlowScheduler 인터페이스 mock
     api(project(":game-api"))
 
+    // WebTestConfig — RestExceptionHandler를 test context에 등록 (도메인 모듈 독립 테스트 지원)
+    api(project(":web"))
+
     api("com.mysql:mysql-connector-j")
     api("com.h2database:h2")
 }

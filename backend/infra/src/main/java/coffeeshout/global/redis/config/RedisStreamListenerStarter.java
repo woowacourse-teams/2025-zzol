@@ -87,6 +87,14 @@ public class RedisStreamListenerStarter {
         return applicationContext.getBean(RedisStreamThreadPoolConfig.convertBeanName(streamKey), Executor.class);
     }
 
+    private void handleStreamError(Throwable t) {
+        if (t.getMessage() != null && t.getMessage().contains("Connection closed")) {
+            log.debug("Redis Stream 연결이 종료됐습니다 (정상 종료)");
+            return;
+        }
+        log.error("Redis Stream 처리 중 오류가 발생했습니다.", t);
+    }
+
     private void onMessage(ObjectRecord<String, String> message) {
         try {
             final BaseEvent event = redisObjectMapper.readValue(message.getValue(), BaseEvent.class);
@@ -114,6 +122,7 @@ public class RedisStreamListenerStarter {
                         .executor(executor)
                         .pollTimeout(streamConfig.getPollTimeout(properties.commonSettings()))
                         .targetType(String.class)
+                        .errorHandler(this::handleStreamError)
                         .build();
 
         final StreamMessageListenerContainer<String, ObjectRecord<String, String>> container =

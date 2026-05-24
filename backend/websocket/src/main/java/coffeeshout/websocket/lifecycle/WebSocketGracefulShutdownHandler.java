@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
@@ -25,6 +26,7 @@ import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
  * </p>
  */
 @Slf4j
+@Profile("!test")
 @Component
 public class WebSocketGracefulShutdownHandler implements SmartLifecycle {
 

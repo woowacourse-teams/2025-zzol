@@ -126,13 +126,11 @@ public class TestStompSession {
 
         @Override
         public void handleFrame(StompHeaders headers, Object payload) {
-            synchronized (messageCollector) {
-                try {
-                    String jsonString = new String((byte[]) payload, StandardCharsets.UTF_8);
-                    messageCollector.add(jsonString);
-                } catch (Exception e) {
-                    throw new RuntimeException("메시지 변환 실패: " + payload, e);
-                }
+            try {
+                String jsonString = new String((byte[]) payload, StandardCharsets.UTF_8);
+                messageCollector.add(jsonString);
+            } catch (Exception e) {
+                throw new RuntimeException("메시지 변환 실패: " + payload, e);
             }
         }
     }

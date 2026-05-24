@@ -27,6 +27,7 @@ public class DelayRemovalSchedulerConfig {
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         scheduler.setAwaitTerminationSeconds(30);
 
+        scheduler.setPhase(Integer.MAX_VALUE - 1);
         scheduler.initialize();
         scheduler.getScheduledThreadPoolExecutor().setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         return scheduler;

@@ -13,8 +13,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @ConfigurationPropertiesScan(basePackages = {
         "coffeeshout.room",
         "coffeeshout.user",
-        "coffeeshout.auth",
-        "coffeeshout.friend",
         "coffeeshout.websocket",
         "coffeeshout.global",
         "coffeeshout.web"
@@ -22,8 +20,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication(scanBasePackages = {
         "coffeeshout.room",
         "coffeeshout.user",
-        "coffeeshout.auth",
-        "coffeeshout.friend",
         "coffeeshout.websocket",
         "coffeeshout.global",
         "coffeeshout.web"

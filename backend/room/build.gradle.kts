@@ -47,6 +47,7 @@ dependencies {
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
+    "testFixturesImplementation"(project(":test-support"))
     testImplementation(project(":test-support"))
     testImplementation(testFixtures(project(":user")))
 

@@ -10,6 +10,7 @@ public class ShutDownTestScheduler extends ThreadPoolTaskScheduler {
         this.setDaemon(false);
         this.setWaitForTasksToCompleteOnShutdown(false);
         this.setAwaitTerminationSeconds(10);
+        this.setPhase(Integer.MAX_VALUE - 1);
         this.initialize();
     }
 }

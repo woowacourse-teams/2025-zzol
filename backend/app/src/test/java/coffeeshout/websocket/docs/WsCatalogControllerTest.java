@@ -1,7 +1,6 @@
 package coffeeshout.websocket.docs;
 
-import coffeeshout.support.TestContainerSupport;
-import coffeeshout.support.test.IntegrationTest;
+import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.websocket.docs.WsCatalog;
 import coffeeshout.websocket.docs.WsCatalogController;
 import org.assertj.core.api.SoftAssertions;
@@ -16,9 +15,8 @@ import org.springframework.http.ResponseEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@IntegrationTest
 @DisplayName("WsCatalogController")
-class WsCatalogControllerTest extends TestContainerSupport {
+class WsCatalogControllerTest extends IntegrationTestSupport {
 
     @Autowired
     private TestRestTemplate restTemplate;

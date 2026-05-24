@@ -6,7 +6,6 @@ import java.time.Clock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -14,7 +13,6 @@ import org.springframework.scheduling.TaskScheduler;
 
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
-@Import(CommonTestSchedulerConfig.class)
 public class ServiceTestConfig {
 
     @Bean(name = "cardGameFlowScheduler")

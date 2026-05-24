@@ -106,12 +106,13 @@ public class RedisStreamListenerStarter {
 
     private static final String CONNECTION_CLOSED = "Connection closed";
     private static final String FACTORY_STOPPING = "is STOPPING";
+    private static final String FACTORY_STOPPED = "has been STOPPED";
 
     private boolean isShutdownRelated(Throwable t) {
         Throwable current = t;
         while (current != null) {
             final String msg = current.getMessage();
-            if (msg != null && (msg.contains(CONNECTION_CLOSED) || msg.contains(FACTORY_STOPPING))) {
+            if (msg != null && (msg.contains(CONNECTION_CLOSED) || msg.contains(FACTORY_STOPPING) || msg.contains(FACTORY_STOPPED))) {
                 return true;
             }
             current = current.getCause();

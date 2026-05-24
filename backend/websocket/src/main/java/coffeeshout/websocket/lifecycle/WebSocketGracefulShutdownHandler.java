@@ -171,9 +171,9 @@ public class WebSocketGracefulShutdownHandler implements SmartLifecycle {
 
     @Override
     public int getPhase() {
-        // SmartLifecycle의 phase 값
-        // 값이 클수록 나중에 종료됨 (WebSocket은 가장 마지막에 종료되어야 함)
-        return Integer.MAX_VALUE;
+        // WebServerGracefulShutdownLifecycle(MAX_VALUE)이 먼저 Tomcat을 닫은 뒤
+        // 이 핸들러가 남은 WS 세션을 드레인한다
+        return Integer.MAX_VALUE - 1;
     }
 
     private int getWebSocketSessionCount() {

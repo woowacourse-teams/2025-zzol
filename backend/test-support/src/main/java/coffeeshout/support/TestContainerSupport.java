@@ -61,7 +61,7 @@ public abstract class TestContainerSupport {
     @BeforeEach
     void cleanRedis() {
         try (var connection = redisConnectionFactory.getConnection()) {
-            connection.serverCommands().flushAll(FlushOption.SYNC);
+            connection.flushAll(FlushOption.SYNC);
             log.debug("Redis flushed");
         } catch (Exception e) {
             log.warn("Failed to flush Redis: {}", e.getMessage());

@@ -3,15 +3,14 @@ package coffeeshout.room.application.service;
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.room.StreamMockedServiceTest;
 import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.room.StreamMockedServiceTest;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.event.PlayerKickEvent;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.application.service.RoomCommandService;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

@@ -6,7 +6,7 @@ import static org.mockito.BDDMockito.willThrow;
 
 import coffeeshout.support.TestStompSession;
 import coffeeshout.support.TestStompSession.MessageCollector;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.fixture.RoomWebSocketTestSupport;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-class UserQueueIntegrationTest extends WebSocketIntegrationTestSupport {
+class UserQueueIntegrationTest extends RoomWebSocketTestSupport {
 
     @Autowired
     private ObjectMapper objectMapper;

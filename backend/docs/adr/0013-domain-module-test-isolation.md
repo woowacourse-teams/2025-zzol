@@ -25,17 +25,17 @@ ADR-0011의 멀티 모듈 전환 이후, 통합 테스트가 모두 `:app:test` 
 @EntityScan(basePackages = "coffeeshout")
 @EnableJpaRepositories(basePackages = "coffeeshout")
 @ConfigurationPropertiesScan(basePackages = {
-        "coffeeshout.room", "coffeeshout.user", "coffeeshout.auth",
-        "coffeeshout.friend", "coffeeshout.websocket", "coffeeshout.global"
+        "coffeeshout.room", "coffeeshout.user",
+        "coffeeshout.websocket", "coffeeshout.global", "coffeeshout.web"
 })
 @SpringBootApplication(scanBasePackages = {
-        "coffeeshout.room", "coffeeshout.user", "coffeeshout.auth",
-        "coffeeshout.friend", "coffeeshout.websocket", "coffeeshout.global"
+        "coffeeshout.room", "coffeeshout.user",
+        "coffeeshout.websocket", "coffeeshout.global", "coffeeshout.web"
 })
 public class RoomTestApplication { ... }
 ```
 
-- `scanBasePackages`: 해당 도메인 + 공통 의존 모듈만 지정한다.
+- `scanBasePackages`: 해당 도메인 + **실제로 필요한** 의존 모듈만 지정한다. 테스트를 실행해 컨텍스트 로드 실패가 없음을 확인한 패키지만 포함한다. `coffeeshout.auth`, `coffeeshout.friend` 는 제거 후 전체 테스트 통과를 확인했다.
 - `@EntityScan` / `@EnableJpaRepositories`: `"coffeeshout"` 루트 전체를 스캔해 JPA 엔티티·리포지토리를 찾는다. `scanBasePackages` 와 범위가 다르므로 별도 명시가 필요하다.
 - `@ConfigurationPropertiesScan`: `scanBasePackages` 와 동일한 범위로 제한한다. 루트 `"coffeeshout"` 로 설정하면 `:game` JAR의 `BlindTimerProperties` 같은 다른 모듈 설정이 유효성 검사 실패를 일으킨다.
 

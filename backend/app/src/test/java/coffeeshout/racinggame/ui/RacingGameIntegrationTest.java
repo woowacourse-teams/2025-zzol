@@ -2,7 +2,7 @@ package coffeeshout.racinggame.ui;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.support.TestStompSession;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.fixture.RoomWebSocketTestSupport;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.room.domain.JoinCode;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class RacingGameIntegrationTest extends WebSocketIntegrationTestSupport {
+class RacingGameIntegrationTest extends RoomWebSocketTestSupport {
 
     JoinCode joinCode;
     Player host;

@@ -5,14 +5,14 @@ import static org.awaitility.Awaitility.await;
 
 import coffeeshout.support.TestStompSession;
 import coffeeshout.support.TestStompSession.MessageCollector;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.fixture.RoomWebSocketTestSupport;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 /**
  * 간단한 웹소켓 연결 및 E2E 테스트 실제 데이터 없이도 웹소켓 연결과 메시지 전송을 테스트
  */
-class WebSocketSimpleTest extends WebSocketIntegrationTestSupport {
+class WebSocketSimpleTest extends RoomWebSocketTestSupport {
 
     @Test
     void SockJS_STOMP_엔드포인트_연결_테스트() throws Exception {

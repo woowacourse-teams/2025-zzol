@@ -3,10 +3,11 @@ package coffeeshout.global.outbox;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.gamecommon.flow.FlowScheduler;
-import coffeeshout.support.TestContainerSupport;
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
+import coffeeshout.support.ShutDownTestScheduler;
+import coffeeshout.support.TestContainerSupport;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,27 +56,27 @@ class OutboxE2ETest extends TestContainerSupport {
 
         @Bean(name = "cardGameTaskScheduler")
         public TaskScheduler cardGameTaskScheduler() {
-            return new coffeeshout.support.ShutDownTestScheduler();
+            return new ShutDownTestScheduler();
         }
 
         @Bean(name = "delayRemovalScheduler")
         public TaskScheduler delayRemovalScheduler() {
-            return new coffeeshout.support.ShutDownTestScheduler();
+            return new ShutDownTestScheduler();
         }
 
         @Bean(name = "racingGameScheduler")
         public TaskScheduler racingGameScheduler() {
-            return new coffeeshout.support.ShutDownTestScheduler();
+            return new ShutDownTestScheduler();
         }
 
         @Bean(name = "speedTouchGameScheduler")
         public TaskScheduler speedTouchGameScheduler() {
-            return new coffeeshout.support.ShutDownTestScheduler();
+            return new ShutDownTestScheduler();
         }
 
         @Bean(name = "blindTimerGameScheduler")
         public TaskScheduler blindTimerGameScheduler() {
-            return new coffeeshout.support.ShutDownTestScheduler();
+            return new ShutDownTestScheduler();
         }
 
         /**

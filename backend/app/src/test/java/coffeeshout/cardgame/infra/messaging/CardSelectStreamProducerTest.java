@@ -6,10 +6,10 @@ import static org.awaitility.Awaitility.await;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
-import coffeeshout.fixture.CardGameFake;
-import coffeeshout.fixture.IntegrationTestSupport;
-import coffeeshout.fixture.RoomFixture;
 import coffeeshout.cardgame.infra.CardGameStreamKey;
+import coffeeshout.fixture.CardGameFake;
+import coffeeshout.fixture.RoomFixture;
+import coffeeshout.fixture.RoomWebSocketTestSupport;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 
-class CardSelectStreamProducerTest extends IntegrationTestSupport {
+class CardSelectStreamProducerTest extends RoomWebSocketTestSupport {
 
     @Autowired
     RoomRepository roomRepository;

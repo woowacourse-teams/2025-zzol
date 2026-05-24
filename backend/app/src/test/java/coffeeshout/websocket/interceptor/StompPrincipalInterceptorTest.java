@@ -2,7 +2,7 @@ package coffeeshout.websocket.interceptor;
 
 import coffeeshout.support.TestStompSession;
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.fixture.RoomWebSocketTestSupport;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.User;
@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.concurrent.ExecutionException;
 import org.springframework.messaging.simp.stomp.ConnectionLostException;
 
-class StompPrincipalInterceptorTest extends WebSocketIntegrationTestSupport {
+class StompPrincipalInterceptorTest extends RoomWebSocketTestSupport {
 
     @Autowired
     private UserRepository userRepository;

@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.support.TestStompSession;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.fixture.RoomWebSocketTestSupport;
 import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.stomp.ConnectionLostException;
 
-class WebSocketConnectionTest extends WebSocketIntegrationTestSupport {
+class WebSocketConnectionTest extends RoomWebSocketTestSupport {
 
     @Test
     void 유효한_RST로_연결하면_성공한다() throws Exception {

@@ -2,7 +2,7 @@ package coffeeshout.global.ipblock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.support.IntegrationTestSupport;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;

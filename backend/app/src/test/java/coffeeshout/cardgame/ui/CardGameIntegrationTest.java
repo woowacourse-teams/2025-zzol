@@ -6,9 +6,7 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.TestStompSession;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
-import coffeeshout.support.MessageResponse;
+import coffeeshout.fixture.GameWebSocketIntegrationTestSupport;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -16,6 +14,8 @@ import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import coffeeshout.support.MessageResponse;
+import coffeeshout.support.TestStompSession;
 import java.util.concurrent.TimeUnit;
 import org.json.JSONException;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * 타이밍 설정 (application-test.yml): firstLoading=500ms, prepare=500ms, playing=2000ms, scoreBoard=500ms, loading=500ms,
  * earlyFinishDelay=500ms
  */
-class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
+class CardGameIntegrationTest extends GameWebSocketIntegrationTestSupport {
 
     // application-test.yml 타이밍 값과 일치해야 함
     private static final long FIRST_LOADING_MS = 500L;
@@ -62,7 +62,7 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
     }
 
     @Test
-    void ㅁㅁㅁ카드게임을_실행한다() throws JSONException {
+    void 카드게임을_실행한다() throws JSONException {
         String joinCodeValue = joinCode.getValue();
         String subscribeUrl = String.format("/topic/room/%s/gameState", joinCodeValue);
         String requestUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);

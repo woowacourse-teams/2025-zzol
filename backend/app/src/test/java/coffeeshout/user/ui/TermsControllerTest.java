@@ -3,8 +3,8 @@ package coffeeshout.user.ui;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.UserFixture;
+import coffeeshout.support.IntegrationTestSupport;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.User;

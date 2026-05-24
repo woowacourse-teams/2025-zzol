@@ -6,14 +6,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 
-import coffeeshout.fixture.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;
 import coffeeshout.room.domain.repository.RoomRepository;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
+import coffeeshout.support.IntegrationTestSupport;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;

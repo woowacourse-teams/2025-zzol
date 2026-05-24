@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.support.TestStompSession;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.fixture.GameWebSocketIntegrationTestSupport;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.room.domain.JoinCode;
@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * 타이밍 설정 (application-test.yml): description=500ms, prepare=500ms, drawing=1000ms, result=500ms
  */
-class LadderIntegrationTest extends WebSocketIntegrationTestSupport {
+class LadderIntegrationTest extends GameWebSocketIntegrationTestSupport {
 
     JoinCode joinCode;
     Player host;

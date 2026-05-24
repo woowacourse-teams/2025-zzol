@@ -1,7 +1,7 @@
 package coffeeshout.room.ui;
 
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.fixture.RoomWebSocketTestSupport;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.room.domain.JoinCode;
@@ -24,7 +24,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
-class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
+class RoomWebSocketControllerTest extends RoomWebSocketTestSupport {
 
     JoinCode joinCode;
 

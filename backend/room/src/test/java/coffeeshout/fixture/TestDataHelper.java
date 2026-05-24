@@ -1,4 +1,4 @@
-package coffeeshout.room.fixture;
+package coffeeshout.fixture;
 
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;

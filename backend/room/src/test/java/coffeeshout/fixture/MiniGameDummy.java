@@ -1,4 +1,4 @@
-package coffeeshout.room.fixture;
+package coffeeshout.fixture;
 
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.MiniGameFactory;

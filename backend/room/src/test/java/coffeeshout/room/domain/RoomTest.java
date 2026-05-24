@@ -4,7 +4,7 @@ import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.room.fixture.MiniGameDummy;
+import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.fixture.RouletteFixture;
 import coffeeshout.global.exception.custom.BusinessException;

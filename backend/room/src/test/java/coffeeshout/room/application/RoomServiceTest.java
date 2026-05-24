@@ -8,7 +8,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
-import coffeeshout.room.fixture.MiniGameDummy;
+import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.support.ServiceTest;
 import coffeeshout.global.exception.GlobalErrorCode;

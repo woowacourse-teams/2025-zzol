@@ -4,7 +4,7 @@ import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.room.fixture.TestDataHelper;
+import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.support.ServiceTest;
 import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.application.service.RoomQueryService;

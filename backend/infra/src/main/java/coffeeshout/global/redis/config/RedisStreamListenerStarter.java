@@ -88,11 +88,22 @@ public class RedisStreamListenerStarter {
     }
 
     private void handleStreamError(Throwable t) {
-        if (t.getMessage() != null && t.getMessage().contains("Connection closed")) {
+        if (isCausedByConnectionClosed(t)) {
             log.debug("Redis Stream 연결이 종료됐습니다 (정상 종료)");
             return;
         }
         log.error("Redis Stream 처리 중 오류가 발생했습니다.", t);
+    }
+
+    private boolean isCausedByConnectionClosed(Throwable t) {
+        Throwable current = t;
+        while (current != null) {
+            if (current.getMessage() != null && current.getMessage().contains("Connection closed")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private void onMessage(ObjectRecord<String, String> message) {

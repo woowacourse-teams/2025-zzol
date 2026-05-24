@@ -1,8 +1,8 @@
-# ADR-0018: 도메인 모듈 테스트 독립 실행 전략
+# ADR-0013: 도메인 모듈 테스트 독립 실행 전략
 
 ## 상태
 
-적용됨 (2026-05-23)
+적용됨 (2026-05-23, 보강 2026-05-24)
 
 ## 컨텍스트
 
@@ -64,7 +64,7 @@ mock 빈의 경쟁 대상(`:admin` 구현체, `:app` `MiniGameFactoryConfig`)은
 |---|---|---|
 | `:admin` — `ReportAnonymizationPort` 구현체 | `:room` → `:admin` 순환 의존 불가 | `Mockito.mock()` |
 | `:app` — `MiniGameFactoryConfig` | `:app` 은 `:room` 의 상위 모듈 | 각 `MiniGameType` 에 mock 팩토리 등록 |
-| `:app` — `RestExceptionHandler` | 동일 이유 | `:web` 모듈의 실제 핸들러로 대체됨 (ADR-0019 적용 완료) |
+| `:app` — `RestExceptionHandler` | 동일 이유 | `:web` 모듈의 실제 핸들러로 대체됨 (ADR-0014 적용 완료) |
 
 ### 공통 설정 — `application-test-base.yml`
 
@@ -84,6 +84,45 @@ spring:
 base에 일괄 포함한다. 게임별 스트림 키(`:game`), Oracle Object Storage(`:room`),
 Report rate-limit(`:admin`) 등 도메인 한정 설정도 현재는 base에 두어 누락으로 인한
 컨텍스트 로드 실패를 방지한다. 각 모듈 마이그레이션 완료 후 점진적으로 모듈별 yml로 이동한다.
+
+### 공통 테스트 스케줄러 설정 — `CommonTestSchedulerConfig`
+
+도메인 모듈 수가 늘어나면서 `IntegrationTestConfig`와 `ServiceTestConfig` 양쪽에 동일한 `TaskScheduler` mock 빈(noOp `taskScheduler`, `delayRemovalScheduler`)이 중복 정의되는 문제가 발생했다.
+
+공통 부분을 `CommonTestSchedulerConfig`로 추출하고 각 Config에서 `@Import(CommonTestSchedulerConfig.class)`로 재사용한다.
+
+```java
+@TestConfiguration(proxyBeanMethods = false)
+@Profile("test")
+public class CommonTestSchedulerConfig {
+
+    @Bean(name = "taskScheduler")
+    @Primary
+    public TaskScheduler noOpTaskScheduler() {
+        return Mockito.mock(TaskScheduler.class, Answers.RETURNS_MOCKS);
+    }
+
+    @Bean(name = "delayRemovalScheduler")
+    public TaskScheduler testDelayRemovalScheduler() {
+        return new ShutDownTestScheduler();
+    }
+}
+```
+
+`CommonTestSchedulerConfig`는 `:game` 의존이 없으므로 `:test-support` 이동 대상 후보이나, 현재는 게임별 스케줄러(`IntegrationTestConfig`)와 동일한 `:app:test` 패키지에 유지한다. `:app` 독립 테스트 패턴 도입 시 함께 검토한다.
+
+### `@IntegrationTest` — DB 격리를 위한 `@AfterEach` cleanup
+
+통합 테스트에서 여러 테스트 메서드가 DB 상태를 공유하여 실행 순서에 따라 결과가 달라지는 문제가 발생했다.
+`@AfterEach`를 `@IntegrationTest` 베이스 클래스(`:test-support`)에 추가해 각 테스트 메서드 종료 후 DB를 초기화한다.
+
+`@Transactional` 롤백 방식은 Redis Stream·비동기 이벤트처럼 트랜잭션 외부에서 발생하는 부수효과를 롤백하지 못하므로 사용하지 않는다.
+
+### `:test-support`에서 게임 도메인 의존 제거
+
+`:test-support`는 초기에 게임 관련 테스트 설정(FlowScheduler 빈 등)을 포함하고 있었다. 이는 `:test-support` → `:game` 의존을 유발해 공통 테스트 인프라 모듈이 특정 도메인을 알게 되는 구조였다.
+
+게임 도메인 설정을 `:app:test`의 `IntegrationTestConfig`로 이동해 `:test-support`가 도메인 무관 공통 인프라(어노테이션, 베이스 클래스, `application-test-base.yml`)만 제공하도록 정리했다. 함께 미사용 상태였던 `MockFlowSchedulerConfig`도 삭제했다.
 
 ### TestContainers 버전 고정
 
@@ -113,7 +152,7 @@ testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
 - **`:infra`**: `:infra` 는 이미 Spring에 의존하나, JPA·Redis·Outbox 등 저장소 계층이 목적이다.
   HTTP 예외 처리를 같이 두면 웹 컨텍스트 없이 `:infra` 만 쓰는 모듈(배치, 컨슈머)에
   불필요한 Spring MVC 의존이 포함된다.
-- **신설 `:web` 모듈**: `:infra` 위에 위치하는 공유 HTTP 인프라 모듈로 ADR-0019에 별도 제안.
+- **신설 `:web` 모듈**: `:infra` 위에 위치하는 공유 HTTP 인프라 모듈로 ADR-0014에 별도 제안.
   이 방안이 채택되면 `TestRestExceptionHandler` 는 제거된다.
 
 ### 대안 C: `@WebMvcTest` 슬라이스 테스트로 교체
@@ -143,7 +182,7 @@ testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
   ADR-0011 OCP 원칙(`:room` 은 `:game-api` 추상만 알아야 함)을 테스트 수준에서 위반하고 있다.
   이 방안은 해당 위반을 해소하는 가장 자연스러운 경로이며, 다른 도메인 모듈 마이그레이션 시점에 함께 도입을 검토한다.
 - **`:web` 모듈과의 유사성**: `:web` 이 HTTP 횡단 관심사를 공유 모듈로 빼내어 각 도메인 모듈의 test stub 복제를
-  방지하는 것과 동일한 원리다 (ADR-0019 참조).
+  방지하는 것과 동일한 원리다 (ADR-0014 참조).
 
 ## 결과
 
@@ -155,7 +194,7 @@ testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
 
 ### 부정적 효과 / 트레이드오프
 
-- `RestExceptionHandler` mock 은 ADR-0019(`:web` 모듈) 구현 전까지 각 모듈 테스트에 분산된다.
+- `RestExceptionHandler` mock 은 ADR-0014(`:web` 모듈) 구현 전까지 각 모듈 테스트에 분산된다.
   HTTP 응답 정책이 바뀌면 프로덕션 핸들러와 테스트 mock 을 함께 수정해야 한다.
 - `MiniGameFactoryConfig` mock 은 `:room` 이 `:game-api` 추상만 알고 `:game` 구체 팩토리를
   모르는 ADR-0011 OCP 원칙을 테스트 레벨에서 유지하기 위한 비용이다.

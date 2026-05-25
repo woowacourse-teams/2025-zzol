@@ -7,6 +7,7 @@ import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.global.exception.custom.BusinessException;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class WordListResourceLoader {
 
@@ -49,7 +51,7 @@ public class WordListResourceLoader {
         }
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             final List<String> lines = reader.lines()
-                    .map(String::trim)
+                    .map(line -> line.replace("\uFEFF", "").trim())
                     .filter(line -> !line.isEmpty() && !line.startsWith("#"))
                     .toList();
             int count = 0;

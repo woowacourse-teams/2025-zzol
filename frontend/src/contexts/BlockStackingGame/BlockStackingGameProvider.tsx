@@ -1,9 +1,9 @@
 import { useWebSocketSubscription } from '@/apis/websocket/hooks/useWebSocketSubscription';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { BlockStackingGameState } from '@/types/miniGame/blockStackingGame';
-import { PropsWithChildren, useCallback, useState } from 'react';
+import { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 import { BlockStackingGameContext } from './BlockStackingGameContext';
-import { GAME_DURATION } from '@/features/miniGame/blockStackingGame/constants/blockStackingConstants';
+import { GAME_DURATION } from '@/features/miniGame/blockStackingGame/constants/blockStackingBalance';
 
 type BlockStackingRanking = { name: string; floor: number };
 
@@ -43,19 +43,20 @@ const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
     }, [])
   );
 
+  const value = useMemo(
+    () => ({
+      gameState,
+      rankings,
+      isLocalGameOver,
+      setLocalGameOver,
+      endTimeEpochMs,
+      totalTimeSeconds,
+    }),
+    [gameState, rankings, isLocalGameOver, setLocalGameOver, endTimeEpochMs, totalTimeSeconds]
+  );
+
   return (
-    <BlockStackingGameContext.Provider
-      value={{
-        gameState,
-        rankings,
-        isLocalGameOver,
-        setLocalGameOver,
-        endTimeEpochMs,
-        totalTimeSeconds,
-      }}
-    >
-      {children}
-    </BlockStackingGameContext.Provider>
+    <BlockStackingGameContext.Provider value={value}>{children}</BlockStackingGameContext.Provider>
   );
 };
 

@@ -4,9 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.racinggame.domain.RacingGame;
-import coffeeshout.racinggame.domain.Runner;
-import coffeeshout.racinggame.domain.SpeedCalculator;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

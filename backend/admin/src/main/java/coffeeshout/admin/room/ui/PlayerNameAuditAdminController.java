@@ -1,10 +1,10 @@
 package coffeeshout.admin.room.ui;
 
-import coffeeshout.room.application.service.player.name.PlayerNameAuditService;
-import coffeeshout.room.application.service.player.name.PlayerNameFeedbackService;
-import coffeeshout.room.domain.audit.AiConfidence;
-import coffeeshout.room.domain.audit.PlayerNameAuditStatus;
-import coffeeshout.room.infra.persistence.nickname.PlayerNameAuditEntity;
+import coffeeshout.profanity.application.NicknameAuditService;
+import coffeeshout.profanity.application.NicknameFeedbackService;
+import coffeeshout.profanity.domain.audit.AiConfidence;
+import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
+import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +28,8 @@ public class PlayerNameAuditAdminController {
     private static final int PAGE_SIZE = 10;
     private static final Sort AUDITED_AT_DESC = Sort.by("auditedAt").descending();
 
-    private final PlayerNameAuditService playerNameAuditService;
-    private final PlayerNameFeedbackService playerNameFeedbackService;
+    private final NicknameAuditService playerNameAuditService;
+    private final NicknameFeedbackService playerNameFeedbackService;
 
     @GetMapping
     public String dashboard(
@@ -38,7 +38,7 @@ public class PlayerNameAuditAdminController {
             Model model) {
 
         final Page<AuditRow> flagged = playerNameAuditService
-                .listByStatus(PlayerNameAuditStatus.FLAGGED, PageRequest.of(flaggedPage, PAGE_SIZE, AUDITED_AT_DESC))
+                .listByStatus(NicknameAuditStatus.FLAGGED, PageRequest.of(flaggedPage, PAGE_SIZE, AUDITED_AT_DESC))
                 .map(this::toRow);
 
         if (flagged.isEmpty() && flagged.getTotalPages() > 0) {
@@ -46,7 +46,7 @@ public class PlayerNameAuditAdminController {
         }
 
         final Page<AuditRow> pending = playerNameAuditService
-                .listByStatus(PlayerNameAuditStatus.PENDING, PageRequest.of(pendingPage, PAGE_SIZE, AUDITED_AT_DESC))
+                .listByStatus(NicknameAuditStatus.PENDING, PageRequest.of(pendingPage, PAGE_SIZE, AUDITED_AT_DESC))
                 .map(this::toRow);
 
         if (pending.isEmpty() && pending.getTotalPages() > 0) {
@@ -86,10 +86,10 @@ public class PlayerNameAuditAdminController {
         return "redirect:/admin/playername-audit?flaggedPage=" + flaggedPage + "&pendingPage=" + pendingPage;
     }
 
-    private AuditRow toRow(PlayerNameAuditEntity e) {
+    private AuditRow toRow(NicknameAuditEntity e) {
         return new AuditRow(
                 e.getId(),
-                e.getPlayerName(),
+                e.getNickname(),
                 e.getConfidence() != null ? e.getConfidence() : AiConfidence.UNKNOWN,
                 e.getReason() != null ? e.getReason() : "",
                 LocalDateTime.ofInstant(e.getCreatedAt(), KST),

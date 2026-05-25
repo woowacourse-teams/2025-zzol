@@ -27,24 +27,30 @@ jobs:
           echo "Merged branch: $BRANCH_NAME"
 
       - name: Delete merged branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME="${{ steps.branch-name.outputs.branch }}"
-          
+
           # 보호된 브랜치들은 삭제하지 않음 (main, master, develop, be/dev 등)
           PROTECTED_BRANCHES=("main" "fe/dev" "fe/prod" "be/dev" "be/prod")
-          
+
           for protected in "${PROTECTED_BRANCHES[@]}"; do
             if [[ "$BRANCH_NAME" == "$protected" ]]; then
               echo "⚠️  Protected branch '$BRANCH_NAME' will not be deleted"
               exit 0
             fi
           done
-          
+
           # 브랜치가 존재하는지 확인
           if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
             echo "🗑️  Deleting branch: $BRANCH_NAME"
-            git push origin --delete "$BRANCH_NAME"
-            echo "✅ Branch '$BRANCH_NAME' has been deleted successfully"
+            if gh api --method DELETE "repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME"; then
+              echo "✅ Branch '$BRANCH_NAME' has been deleted successfully via API"
+            else
+              echo "⚠️  API deletion failed, falling back to git push --delete"
+              git push origin --delete "$BRANCH_NAME" || echo "⚠️  Both methods failed, skipping branch deletion"
+            fi
           else
             echo "ℹ️  Branch '$BRANCH_NAME' does not exist or already deleted"
           fi

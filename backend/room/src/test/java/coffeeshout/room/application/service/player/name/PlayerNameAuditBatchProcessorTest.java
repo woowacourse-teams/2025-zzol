@@ -6,7 +6,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.PlayerNameAuditFixture;
-import coffeeshout.global.ServiceTest;
 import coffeeshout.global.event.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.domain.ProfanityWordCommandPort;
 import coffeeshout.profanity.domain.Language;

@@ -10,25 +10,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 // JPA Repository/Entity 스캔과 ConfigurationProperties 스캔은 별도로 명시한다.
 @EntityScan(basePackages = "coffeeshout")
 @EnableJpaRepositories(basePackages = "coffeeshout")
-@ConfigurationPropertiesScan(basePackages = {
-        "coffeeshout.room",
-        "coffeeshout.user",
-        "coffeeshout.auth",
-        "coffeeshout.friend",
-        "coffeeshout.websocket",
-        "coffeeshout.global",
-        "coffeeshout.web"
-})
-@SpringBootApplication(scanBasePackages = {
-        "coffeeshout.room",
-        "coffeeshout.user",
-        "coffeeshout.auth",
-        "coffeeshout.friend",
-        "coffeeshout.websocket",
-        "coffeeshout.global",
-        "coffeeshout.web",
-        "coffeeshout.fixture"
-})
+@ConfigurationPropertiesScan(basePackages = "coffeeshout")
+@SpringBootApplication(scanBasePackages = "coffeeshout")
 public class RoomTestApplication {
 
     public static void main(String[] args) {

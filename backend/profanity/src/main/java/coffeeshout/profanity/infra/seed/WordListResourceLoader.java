@@ -1,5 +1,6 @@
 package coffeeshout.profanity.infra.seed;
 
+import coffeeshout.profanity.application.ProfanityFilterService;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
@@ -27,12 +28,16 @@ public class WordListResourceLoader {
     private static final String ENGLISH_RESOURCE = "/profanity/english-badwords.txt";
 
     private final ProfanityWordRepository wordRepository;
+    private final ProfanityFilterService filterService;
 
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void load() {
         int korean = seed(KOREAN_RESOURCE, Language.KOREAN, WordSource.VANE);
         int english = seed(ENGLISH_RESOURCE, Language.ENGLISH, WordSource.LDNOOBW);
+        if (korean + english > 0) {
+            filterService.rebuildTrie();
+        }
         log.info("비속어 단어 시드 완료 — 한국어 {}건, 영어 {}건 신규 등록", korean, english);
     }
 

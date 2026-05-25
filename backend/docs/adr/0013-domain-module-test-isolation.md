@@ -131,12 +131,17 @@ public class CommonTestSchedulerConfig {
 Spring Boot BOM 이 트랜지티브 의존으로 `testcontainers` 를 1.x 로 다운그레이드한다.
 1.x 는 Windows Named Pipe Docker 연결을 지원하지 않아 `Could not find a valid Docker environment` 오류가 발생한다.
 
-각 도메인 모듈의 `build.gradle.kts` 에서 직접 선언해 BOM 보다 우선 적용되도록 한다.
+`:test-support` 의 `build.gradle.kts` 에서 `api` 로 선언해 BOM 보다 우선 적용되도록 하고, 도메인 모듈은 전이 의존으로 획득한다.
 
 ```kotlin
+// :test-support/build.gradle.kts
 val testcontainersVersion = rootProject.extra["testcontainers"] as String
-testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
+api("org.testcontainers:testcontainers:$testcontainersVersion")
+api("org.testcontainers:mysql:$testcontainersVersion")
+api("org.testcontainers:junit-jupiter:$testcontainersVersion")
 ```
+
+도메인 모듈은 별도 선언 없이 `testImplementation(project(":test-support"))` 전이 의존으로 testcontainers 를 획득한다.
 
 `resolutionStrategy.force` 는 `io.spring.dependency-management` 플러그인에 의해 무시되므로 사용하지 않는다.
 
@@ -202,7 +207,7 @@ testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
   모르는 ADR-0011 OCP 원칙을 테스트 레벨에서 유지하기 위한 비용이다.
   `MiniGameDummy` 의 `CardGameScore`(`:game`) 의존을 익명 `MiniGameScore` 서브클래스(`:game-api`)로
   교체하고 `testImplementation(project(":game"))` 을 제거하여 OCP 위반이 해소됐다.
-- TestContainers 버전을 도메인 모듈마다 직접 선언해야 한다.
+- TestContainers 버전은 `:test-support` 한 곳에서 관리되므로, 신규 도메인 모듈 추가 시 버전 선언을 누락하면 BOM 다운그레이드가 발생할 수 있다. `:test-support` 의존을 반드시 포함해야 한다.
 
 ### 미적용 모듈
 

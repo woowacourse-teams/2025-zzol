@@ -27,6 +27,22 @@
 - **사용자가 이미 설명한 내용은 다시 반복하지 않는다**
 - 코드 작성 전 `docs/adr/index.md`의 **영향 범위** 컬럼을 작업 중인 패키지/주제와 비교한다. 겹치는 ADR이 있으면 해당 파일을 읽어 **핵심 제약**과 충돌 여부를 확인하고, 충돌 시 작업 전에 사용자에게 경고한다
 
+## 코드 탐색
+
+파일을 Read하기 전에 **반드시 먼저 Grep으로 파일 경로와 줄 번호를 확인**한 뒤, `offset`과 `limit`을 지정해 필요한 범위만 읽는다.
+
+```bash
+# 1단계: 파일 경로 + 줄 번호 획득 (내용은 읽지 않음)
+grep -rn "class CardGameFlowOrchestrator" src/
+grep -rn "void startRound" src/
+
+# 2단계: 해당 범위만 읽기 — 전체 파일 Read 금지
+Read(file, offset=N, limit=40)
+```
+
+- 구조 파악이 목적이면 `grep -n "public\|private\|class\|interface" 파일` 로 메서드 목록만 먼저 확인한다
+- Java는 파일명 = 클래스명 규칙이 강제되므로 클래스명을 알면 경로를 예측해 Grep 없이 바로 Read할 수 있다
+
 ## 아키텍처 핵심 제약
 
 위반하면 구조 파괴 또는 런타임 버그로 직결되는 불변 규칙이다.

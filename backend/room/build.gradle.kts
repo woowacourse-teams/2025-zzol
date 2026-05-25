@@ -50,7 +50,5 @@ dependencies {
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
     testImplementation(project(":test-support"))
-
-    val testcontainersVersion = rootProject.extra["testcontainers"] as String
-    testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
+    testImplementation(testFixtures(project(":user")))
 }

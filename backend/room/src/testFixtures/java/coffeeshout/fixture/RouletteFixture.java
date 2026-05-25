@@ -9,7 +9,7 @@ public final class RouletteFixture {
     }
 
     public static Roulette 고정_끝값_반환() {
-        final Roulette roulette = new Roulette(new FixedLastValueGenerator());
+        final Roulette roulette = new Roulette(new StubRandomPicker());
         return roulette;
     }
 

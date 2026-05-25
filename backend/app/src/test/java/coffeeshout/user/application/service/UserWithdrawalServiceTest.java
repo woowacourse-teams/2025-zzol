@@ -1,10 +1,10 @@
 package coffeeshout.user.application.service;
 
-import static coffeeshout.fixture.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.global.ServiceTest;
+import coffeeshout.support.app.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.infra.persistence.ReportRepository;

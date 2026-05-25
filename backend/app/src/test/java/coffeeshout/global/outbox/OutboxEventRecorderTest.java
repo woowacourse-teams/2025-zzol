@@ -2,7 +2,7 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.global.StreamMockedServiceTest;
+import coffeeshout.support.app.StreamMockedServiceTest;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;

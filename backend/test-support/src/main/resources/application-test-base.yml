@@ -1,0 +1,191 @@
+# 모든 도메인 모듈 테스트에서 공통으로 사용하는 기본 설정
+# 각 모듈의 application-test.yml에서 spring.config.import로 임포트한다
+# 모듈별 도메인 설정(room.*, player.*, card-game.* 등)은 각 모듈의 yml에 선언한다
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 0
+      idle-timeout: 10000
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client-id
+            client-secret: test-google-client-secret
+            scope: profile,email
+          kakao:
+            client-id: test-kakao-client-id
+            client-secret: test-kakao-client-secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-authentication-method: client_secret_post
+            scope: profile_nickname,account_email
+          naver:
+            client-id: test-naver-client-id
+            client-secret: test-naver-client-secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: name,email
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+          naver:
+            authorization-uri: https://nid.naver.com/oauth2.0/authorize
+            token-uri: https://nid.naver.com/oauth2.0/token
+            user-info-uri: https://openapi.naver.com/v1/nid/me
+            user-name-attribute: response
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+  lifecycle:
+    timeout-per-shutdown-phase: 1s
+  flyway:
+    enabled: false
+  data:
+    redis:
+      ssl:
+        enabled: false
+  autoconfigure:
+    exclude:
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+
+server:
+  shutdown: immediate
+
+redisson:
+  enabled: true
+  timeout: 1000
+  connect-timeout: 3000
+  retry-attempts: 1
+  retry-interval: 500
+
+redis:
+  stream:
+    common-settings:
+      max-length: 100
+      batch-size: 10
+      poll-timeout: 2s
+    thread-pools:
+      concurrent:
+        core-size: 2
+        max-size: 4
+        queue-capacity: 128
+    keys:
+      "[room]":
+        thread-pool-name: concurrent
+      "[room:join]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 128
+      "[cardgame:select]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 128
+      "[minigame]":
+        thread-pool-name: concurrent
+      "[racinggame]":
+        thread-pool-name: concurrent
+      "[speedtouch]":
+        thread-pool-name: concurrent
+      "[blindtimer]":
+        thread-pool-name: concurrent
+      "[blockstacking]":
+        thread-pool-name: concurrent
+      "[laddergame]":
+        thread-pool-name: concurrent
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318
+
+resilience4j:
+  ratelimiter:
+    instances:
+      geminiAudit:
+        limit-for-period: 100
+        limit-refresh-period: 1s
+        timeout-duration: 5s
+
+oracle:
+  cloud:
+    objectstorage:
+      region: ap-chuncheon-1
+      namespace: unused
+      bucket: unused
+
+security:
+  ip-block:
+    not-found-threshold: 5
+    not-found-window: 1h
+    block-ttl: 24h
+
+admin:
+  username: admin
+  password: "1234"
+
+user:
+  code:
+    max-retry: 100
+  jwt:
+    secret: "test-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm"
+    access-token-expiration-seconds: 1800
+    refresh-token-expiration-seconds: 1209600
+  oauth:
+    frontend-redirect-uri: "http://localhost:3000/auth/callback"
+
+outbox:
+  relay:
+    delay: 500
+
+report:
+  rate-limit:
+    rate: 5
+    rate-interval: 1
+    rate-interval-unit: HOURS
+    ttl: 1s
+
+websocket:
+  room-session-token:
+    secret: "test-room-session-token-secret-key-must-be-at-least-256-bits-long"
+  rate-limit:
+    max-messages-per-second: 20
+  recovery:
+    max-length: 100
+    stream-ttl-seconds: 3600
+    dedup-ttl-seconds: 1
+  docs:
+    app-path: "/app"
+    topic-path: "/topic"
+    queue-path: "/queue"
+    user-destination-prefix: "/user"
+    stomp-endpoint: "/ws"
+    error-topic: "/queue/errors"
+    envelope-class: "coffeeshout.websocket.ui.WebSocketResponse"
+    allowed-ips:
+      - "127.0.0.1"
+      - "::1"
+      - "0:0:0:0:0:0:0:1"
+
+friend:
+  presence:
+    grace-period-seconds: 1
+
+web:
+  cors:
+    allowed-origins:
+      - http://localhost:3000

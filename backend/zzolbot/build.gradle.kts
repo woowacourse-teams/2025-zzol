@@ -9,11 +9,10 @@ val resilience4jVersion = rootProject.extra["resilience4j"] as String
 dependencies {
     implementation(project(":common"))
     implementation(project(":infra"))
+    implementation(project(":web"))
     implementation(project(":game-api"))
     implementation(project(":room"))
 
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -22,4 +21,5 @@ dependencies {
     implementation("com.github.jsqlparser:jsqlparser:5.0")
     implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
 
+    testImplementation(project(":test-support"))
 }

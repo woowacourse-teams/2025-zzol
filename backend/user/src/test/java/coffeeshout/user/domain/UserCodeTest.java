@@ -1,6 +1,6 @@
 package coffeeshout.user.domain;
 
-import static coffeeshout.fixture.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.user.domain.UserErrorCode;

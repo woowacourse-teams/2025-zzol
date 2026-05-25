@@ -14,7 +14,7 @@ val versions = mapOf(
     "zxing"         to "3.5.3",
     "queryDsl"      to "5.0.0",
     "googleGenAi"   to "1.44.0",
-    "testcontainers" to "2.0.4",
+    "testcontainers" to "2.0.5",
     "reflections"   to "0.10.2",
     "resilience4j"  to "2.2.0",
     "jjwt"          to "0.12.6",
@@ -23,15 +23,19 @@ versions.forEach { (k, v) -> extra[k] = v }
 
 tasks.register<Exec>("pruneStaleTestContainers") {
     group = "verification"
+    description = "종료된 Testcontainers 컨테이너를 제거한다. reuse 캐시 초기화 시 사용."
     commandLine("docker", "container", "prune", "-f", "--filter", "label=org.testcontainers=true")
     isIgnoreExitValue = true
 }
 
 // 모든 서브프로젝트 공통 설정
 subprojects {
-    apply(plugin = "java")
+    apply(plugin = "java-library")
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
+
+    // Spring Boot BOM이 testcontainers 코어를 1.x로 다운그레이드하지 못하도록 오버라이드
+    extra["testcontainers.version"] = rootProject.extra["testcontainers"] as String
 
     // Spring Boot bootJar 기본 비활성화 (라이브러리 모듈은 jar만, :app이 override)
     tasks.named("bootJar") { enabled = false }

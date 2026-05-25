@@ -50,8 +50,8 @@ class ColorUsageTest {
         }
 
         // then
-        assertThat(pickedColors).hasSize(9);
-        assertThat(pickedColors).containsExactlyInAnyOrder(0, 1, 2, 3, 4, 5, 6, 7, 8);
+        assertThat(pickedColors).hasSize(9)
+                .containsExactlyInAnyOrder(0, 1, 2, 3, 4, 5, 6, 7, 8);
     }
 
     @Test

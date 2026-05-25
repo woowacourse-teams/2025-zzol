@@ -3,8 +3,8 @@ package coffeeshout.websocket;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.fixture.TestStompSession;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.support.TestStompSession;
+import coffeeshout.support.app.WebSocketIntegrationTestSupport;
 import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.stomp.ConnectionLostException;

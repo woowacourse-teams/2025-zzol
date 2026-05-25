@@ -21,4 +21,4 @@ paths:
 | 순수 단위 테스트        | 없음 (순수 Java)                                                    |
 | 서비스 테스트          | `ServiceTest` 상속                                                |
 | WebSocket 통합     | `WebSocketIntegrationTestSupport` 상속 (`@IntegrationTest` 중복 금지) |
-| REST / Stream 통합 | `@IntegrationTest`                                              |
+| REST / Stream 통합 | `IntegrationTestSupport` 상속                                   |

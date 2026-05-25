@@ -13,10 +13,10 @@
 |----------------------------|---------------------------------------------|---------------------------------------------------------------------------------------------------|
 | 순수 단위 테스트                  | 없음 (순수 Java)                                | 스프링 컨텍스트 없이 도메인 로직만 검증                                                                            |
 | 서비스 테스트                    | `ServiceTest` 추상 클래스 상속                     | `@SpringBootTest` + `test` 프로파일 + `@Transactional`. `ApplicationEventPublisher`는 MockitoBean으로 제공 |
-| WebSocket 통합 테스트           | `WebSocketIntegrationTestSupport` 추상 클래스 상속 | `RANDOM_PORT` + `test` 프로파일 + `@Transactional` 포함                                                 |
-| 일반 통합 테스트 (REST, Stream 등) | `IntegrationTestSupport` 추상 클래스 상속          | `RANDOM_PORT` + `test` 프로파일 + `@BeforeEach` DB cleanup                                            |
+| WebSocket 통합 테스트           | `WebSocketIntegrationTestSupport` 추상 클래스 상속 | `RANDOM_PORT` + `test` 프로파일 + `@BeforeEach` Redis listener 재시작                                    |
+| 일반 통합 테스트 (REST, Stream 등) | `IntegrationTestSupport` 추상 클래스 상속          | `RANDOM_PORT` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup                               |
 
-모든 베이스는 `TestContainerConfig`를 import하므로 Valkey TestContainer가 자동으로 구동된다.
+모든 베이스는 `TestContainerSupport`를 상속하므로 MySQL·Valkey TestContainer가 자동으로 구동된다.
 
 ## 픽스처
 
@@ -29,13 +29,13 @@
 
 ### 유형별 네이밍
 
-| 유형 | 클래스명 패턴 | 특징 |
-|---|---|---|
-| 도메인 객체 팩토리 | `*Fixture` | 순수 Java 정적 팩토리, 스프링 컨텍스트 불필요 |
-| DB 영속화 헬퍼 | `TestDataHelper` | `@Component`, 통합 테스트에서 DI로 사용 |
-| 경량 대체 구현 | `*Fake` | 실제 로직을 갖지만 외부 의존을 제거한 구현 |
-| 최소 더미 구현 | `*Dummy` | 인터페이스 계약을 최소한으로 충족, 로직 없음 |
-| 반환값 제어 | `Stub*` | 특정 메서드의 반환값을 고정하거나 무력화 |
+| 유형         | 클래스명 패턴          | 특징                            |
+|------------|------------------|-------------------------------|
+| 도메인 객체 팩토리 | `*Fixture`       | 순수 Java 정적 팩토리, 스프링 컨텍스트 불필요  |
+| DB 영속화 헬퍼  | `TestDataHelper` | `@Component`, 통합 테스트에서 DI로 사용 |
+| 경량 대체 구현   | `*Fake`          | 실제 로직을 갖지만 외부 의존을 제거한 구현      |
+| 최소 더미 구현   | `*Dummy`         | 인터페이스 계약을 최소한으로 충족, 로직 없음     |
+| 반환값 제어     | `Stub*`          | 특정 메서드의 반환값을 고정하거나 무력화        |
 
 위 5가지 패턴 외 클래스명은 사용하지 않는다.
 

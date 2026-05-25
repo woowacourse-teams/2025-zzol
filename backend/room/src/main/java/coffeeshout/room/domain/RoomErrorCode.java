@@ -20,7 +20,6 @@ public enum RoomErrorCode implements ErrorCode {
     ROOM_FULL(409, "방에는 최대 9명만 입장 가능합니다."),
     DUPLICATE_PLAYER_NAME(409, "중복된 닉네임은 들어올 수 없습니다."),
     NO_EXIST_PLAYER(404, "플레이어가 존재하지 않습니다."),
-    NO_EXIST_PLAYER_NAME_AUDIT(404, "플레이어 검열 항목을 찾을 수 없습니다."),
     NOT_HOST(403, "호스트만 수행할 수 있습니다."),
     INVALID_ADJUSTMENT_WEIGHT(400, "가중치는 0.1 이상 0.9 이하여야 합니다."),
     ROOM_NOT_READY_TO_UPDATE(409, "READY 상태에서만 설정을 변경할 수 있습니다."),

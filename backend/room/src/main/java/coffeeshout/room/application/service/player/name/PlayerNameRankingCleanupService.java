@@ -1,5 +1,6 @@
 package coffeeshout.room.application.service.player.name;
 
+import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.room.domain.event.RankingNicknamesCollectedEvent;
 import coffeeshout.room.domain.player.PlayerName;
@@ -31,7 +32,7 @@ public class PlayerNameRankingCleanupService {
     @Transactional
     public void onRankingNicknamesCollected(RankingNicknamesCollectedEvent event) {
         final Set<String> blockedNicknames = profanityWordRepository.findAllActive().stream()
-                .map(w -> w.word())
+                .map(ProfanityWord::word)
                 .collect(Collectors.toSet());
         if (blockedNicknames.isEmpty()) {
             log.info("[RankingCleanup] BLOCKED 닉네임 없음, 종료");

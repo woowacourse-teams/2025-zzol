@@ -1,22 +1,12 @@
 package coffeeshout.room.config;
 
 import coffeeshout.global.nickname.WordPicker;
-import com.google.genai.Client;
 import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 @Configuration
 public class RoomConfig {
-
-    @Bean("nicknameAuditClient")
-    @Profile("!local & !test")
-    public Client geminiClient(PlayerNameAuditProperties properties) {
-        return Client.builder()
-                .apiKey(properties.geminiApiKey())
-                .build();
-    }
 
     @Bean
     public WordPicker wordPicker() {

@@ -11,7 +11,6 @@ val ociSdkVersion = rootProject.extra["ociSdk"] as String
 val zxingVersion = rootProject.extra["zxing"] as String
 val jjwtVersion = rootProject.extra["jjwt"] as String
 val queryDslVersion = rootProject.extra["queryDsl"] as String
-val googleGenAiVersion = rootProject.extra["googleGenAi"] as String
 
 dependencies {
     implementation(project(":common"))
@@ -42,7 +41,6 @@ dependencies {
     val resilience4jVersion = rootProject.extra["resilience4j"] as String
     implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
 
-    implementation("com.google.genai:google-genai:$googleGenAiVersion")
     implementation(project(":profanity"))
 
     annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")

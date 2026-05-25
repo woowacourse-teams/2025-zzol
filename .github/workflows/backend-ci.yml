@@ -8,6 +8,7 @@ on:
       - be/prod
     paths:
       - "backend/**"
+      - "!backend/**/*.md"
       - ".github/workflows/backend-ci.yml"
 
   # 2. 다른 워크플로우(Deploy)에서 호출 가능하도록 설정

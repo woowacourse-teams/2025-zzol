@@ -2,9 +2,10 @@ package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.fixture.TestContainerSupport;
+import coffeeshout.support.TestContainerSupport;
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.global.config.ServiceTestConfig;
+import coffeeshout.support.CommonTestSchedulerConfig;
+import coffeeshout.support.app.config.ServiceTestConfig;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
 import coffeeshout.user.domain.repository.UserRepository;
@@ -17,7 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@Import(ServiceTestConfig.class)
+@Import({CommonTestSchedulerConfig.class, ServiceTestConfig.class})
 @ActiveProfiles("test")
 class UserWithdrawalServiceTransactionTest extends TestContainerSupport {
 

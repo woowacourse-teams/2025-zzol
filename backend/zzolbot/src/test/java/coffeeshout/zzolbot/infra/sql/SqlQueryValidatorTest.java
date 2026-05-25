@@ -1,6 +1,6 @@
 package coffeeshout.zzolbot.infra.sql;
 
-import static coffeeshout.fixture.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.zzolbot.config.ZzolBotProperties;

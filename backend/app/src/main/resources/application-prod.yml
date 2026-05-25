@@ -9,6 +9,12 @@ spring:
     enabled: true
     baseline-on-migrate: true
 
+web:
+  cors:
+    allowed-origins:
+      - https://zzol.site
+      - https://www.zzol.site
+
 room:
   qr:
     prefix: "https://www.zzol.site/join/"

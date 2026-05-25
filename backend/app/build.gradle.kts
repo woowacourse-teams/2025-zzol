@@ -7,6 +7,7 @@ tasks.named("jar") { enabled = false }
 dependencies {
     implementation(project(":common"))
     implementation(project(":infra"))
+    implementation(project(":web"))
     implementation(project(":websocket"))
     implementation(project(":game-api"))
     implementation(project(":user"))
@@ -14,9 +15,6 @@ dependencies {
     implementation(project(":game"))
     implementation(project(":admin"))
     implementation(project(":zzolbot"))
-
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-web")
 
     // --- Database & Migration ---
     implementation("org.flywaydb:flyway-core")
@@ -26,18 +24,14 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     developmentOnly("me.paulschwarz:spring-dotenv:4.0.0")
 
-    val testcontainersVersion = rootProject.extra["testcontainers"] as String
-    testImplementation("com.h2database:h2")
-    testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
-    testImplementation("org.testcontainers:testcontainers-mysql:$testcontainersVersion")
-    testImplementation("org.testcontainers:testcontainers-junit-jupiter:$testcontainersVersion")
+    testImplementation(project(":test-support"))
+    testImplementation(testFixtures(project(":room")))
+    testImplementation(testFixtures(project(":user")))
+    testImplementation(testFixtures(project(":game")))
+    testImplementation(testFixtures(project(":admin")))
     testImplementation("io.micrometer:micrometer-tracing-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.wiremock:wiremock-standalone:3.9.2")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-redis")
-    testImplementation("org.springframework.boot:spring-boot-starter-websocket")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    testImplementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-aop")
     testImplementation("io.micrometer:micrometer-core")
     val ociSdkVersion = rootProject.extra["ociSdk"] as String

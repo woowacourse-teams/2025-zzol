@@ -31,9 +31,9 @@ public class ShutdownAwareHandshakeInterceptor implements HandshakeInterceptor {
                                    ServerHttpResponse response,
                                    WebSocketHandler wsHandler,
                                    Map<String, Object> attributes) {
-        final WebSocketGracefulShutdownHandler shutdownHandler = shutdownHandlerProvider.getObject();
+        final WebSocketGracefulShutdownHandler shutdownHandler = shutdownHandlerProvider.getIfAvailable();
 
-        if (shutdownHandler.isShuttingDown()) {
+        if (shutdownHandler != null && shutdownHandler.isShuttingDown()) {
             log.warn("🚫 WebSocket Handshake 거부: 서버 Graceful Shutdown 진행 중 (from: {})",
                     Objects.toString(request.getRemoteAddress(), "unknown"));
             return false;

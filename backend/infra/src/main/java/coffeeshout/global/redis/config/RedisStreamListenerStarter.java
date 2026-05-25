@@ -8,10 +8,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
@@ -26,7 +29,8 @@ import org.springframework.stereotype.Component;
 public class RedisStreamListenerStarter {
 
     public static final String STREAM_CONTAINER_BEAN_NAME_FORMAT = "stream-container-%s";
-    
+
+    private final AtomicBoolean stopping = new AtomicBoolean(false);
     private final RedisStreamProperties properties;
     private final RedisConnectionFactory redisConnectionFactory;
     private final ObjectMapper redisObjectMapper;
@@ -87,6 +91,35 @@ public class RedisStreamListenerStarter {
         return applicationContext.getBean(RedisStreamThreadPoolConfig.convertBeanName(streamKey), Executor.class);
     }
 
+    @EventListener
+    public void onContextClosed(ContextClosedEvent event) {
+        stopping.set(true);
+    }
+
+    private void handleStreamError(Throwable t) {
+        if (stopping.get() && isShutdownRelated(t)) {
+            log.debug("Redis Stream 연결이 종료됐습니다 (정상 종료)");
+            return;
+        }
+        log.error("Redis Stream 처리 중 오류가 발생했습니다.", t);
+    }
+
+    private static final String CONNECTION_CLOSED = "Connection closed";
+    private static final String FACTORY_STOPPING = "is STOPPING";
+    private static final String FACTORY_STOPPED = "has been STOPPED";
+
+    private boolean isShutdownRelated(Throwable t) {
+        Throwable current = t;
+        while (current != null) {
+            final String msg = current.getMessage();
+            if (msg != null && (msg.contains(CONNECTION_CLOSED) || msg.contains(FACTORY_STOPPING) || msg.contains(FACTORY_STOPPED))) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
     private void onMessage(ObjectRecord<String, String> message) {
         try {
             final BaseEvent event = redisObjectMapper.readValue(message.getValue(), BaseEvent.class);
@@ -114,6 +147,7 @@ public class RedisStreamListenerStarter {
                         .executor(executor)
                         .pollTimeout(streamConfig.getPollTimeout(properties.commonSettings()))
                         .targetType(String.class)
+                        .errorHandler(this::handleStreamError)
                         .build();
 
         final StreamMessageListenerContainer<String, ObjectRecord<String, String>> container =

@@ -1,6 +1,5 @@
 package coffeeshout.fixture;
 
-import coffeeshout.cardgame.domain.CardGameScore;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.MiniGameFactory;
 import coffeeshout.gamecommon.Playable;
@@ -21,8 +20,8 @@ public class MiniGameDummy implements Playable {
     @Override
     public Map<Gamer, MiniGameScore> getScores() {
         final Map<Gamer, MiniGameScore> scores = new HashMap<>();
-        scores.put(Gamer.of("꾹이", null), new CardGameScore(20));
-        scores.put(Gamer.of("루키", null), new CardGameScore(-10));
+        scores.put(Gamer.of("꾹이", null), score(20));
+        scores.put(Gamer.of("루키", null), score(-10));
         return scores;
     }
 
@@ -45,5 +44,14 @@ public class MiniGameDummy implements Playable {
         public Playable create(String joinCode) {
             return new MiniGameDummy();
         }
+    }
+
+    private static MiniGameScore score(long value) {
+        return new MiniGameScore() {
+            @Override
+            public long getValue() {
+                return value;
+            }
+        };
     }
 }

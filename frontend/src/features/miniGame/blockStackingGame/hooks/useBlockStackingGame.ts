@@ -13,10 +13,12 @@ import {
   GRAVITY,
   INITIAL_BLOCK_WIDTH,
   OPACITY_DECAY,
-  PERFECT_THRESHOLD,
+} from '@/features/miniGame/blockStackingGame/constants/blockStackingConstants';
+import {
   GAME_DURATION,
+  PERFECT_THRESHOLD,
   getBlockSpeed,
-} from '../constants/blockStackingConstants';
+} from '@/features/miniGame/blockStackingGame/constants/blockStackingBalance';
 import { BlockStackingProgressPayload } from './useBlockStackingActions';
 import { useBlockStackingSounds } from './useBlockStackingSounds';
 
@@ -99,6 +101,55 @@ const updateFallingPieces = (pieces: FallingPiece[], H: number, dt60: number) =>
     .filter((p) => p.opacity > 0 && p.y < H + 100);
 };
 
+/** cur 를 in-place 로 변이한다 (RAF 루프 alloc 회피). */
+const updateCurrentBlock = (cur: CurrentBlock, speed: number, dt60: number, W: number) => {
+  let nx = cur.x + speed * dt60 * cur.direction;
+  let nd = cur.direction;
+  if (nx <= 0) {
+    nx = 0;
+    nd = 1;
+  } else if (nx + cur.width >= W) {
+    nx = W - cur.width;
+    nd = -1;
+  }
+  cur.x = nx;
+  cur.direction = nd;
+};
+
+const toFallingPiece = (x: number, y: number, width: number, color: string): FallingPiece => ({
+  x,
+  y,
+  width,
+  vy: 1,
+  opacity: 1,
+  color,
+});
+
+const createOverhangPieces = ({
+  blockX,
+  blockWidth,
+  leftEdge,
+  rightEdge,
+  y,
+  color,
+}: {
+  blockX: number;
+  blockWidth: number;
+  leftEdge: number;
+  rightEdge: number;
+  y: number;
+  color: string;
+}): FallingPiece[] => {
+  const pieces: FallingPiece[] = [];
+  if (blockX < leftEdge) {
+    pieces.push(toFallingPiece(blockX, y, leftEdge - blockX, color));
+  }
+  if (blockX + blockWidth > rightEdge) {
+    pieces.push(toFallingPiece(rightEdge, y, blockX + blockWidth - rightEdge, color));
+  }
+  return pieces;
+};
+
 /**
  * 블록 쌓기 게임의 핵심 로직을 담당하는 커스텀 훅
  * 캔버스 렌더링, 물리 연산, 게임 상태 관리, 타이머 동기화 등을 수행합니다.
@@ -178,14 +229,9 @@ export const useBlockStackingGame = (
 
     // [Case A] 완전히 빗나간 경우: 게임 오버 처리
     if (overlap <= 0) {
-      fallingPiecesRef.current.push({
-        x: cur.x,
-        y: cameraYRef.current,
-        width: cur.width,
-        vy: 1,
-        opacity: 1,
-        color: currentColor,
-      });
+      fallingPiecesRef.current.push(
+        toFallingPiece(cur.x, cameraYRef.current, cur.width, currentColor)
+      );
 
       shakeRef.current = { intensity: 12, startTime: performance.now(), duration: 500 };
       soundsRef.current.playGameOver();
@@ -201,28 +247,14 @@ export const useBlockStackingGame = (
 
     // 퍼펙트가 아닐 경우 잘려나가는 조각들 생성
     if (!isPerfect) {
-      const newPieces: FallingPiece[] = [];
-      const currentY = cameraYRef.current;
-      if (cur.x < leftEdge) {
-        newPieces.push({
-          x: cur.x,
-          y: currentY,
-          width: leftEdge - cur.x,
-          vy: 1,
-          opacity: 1,
-          color: currentColor,
-        });
-      }
-      if (cur.x + cur.width > rightEdge) {
-        newPieces.push({
-          x: rightEdge,
-          y: currentY,
-          width: cur.x + cur.width - rightEdge,
-          vy: 1,
-          opacity: 1,
-          color: currentColor,
-        });
-      }
+      const newPieces = createOverhangPieces({
+        blockX: cur.x,
+        blockWidth: cur.width,
+        leftEdge,
+        rightEdge,
+        y: cameraYRef.current,
+        color: currentColor,
+      });
       fallingPiecesRef.current = [...fallingPiecesRef.current, ...newPieces];
     }
 
@@ -365,19 +397,7 @@ export const useBlockStackingGame = (
 
       // [Update Logic] 게임 중일 때만 블록 이동
       if (!isGameOver) {
-        const cur = currentBlockRef.current;
-        const speed = getBlockSpeed(scoreRef.current);
-        let nx = cur.x + speed * dt60 * cur.direction;
-        let nd = cur.direction;
-        if (nx <= 0) {
-          nx = 0;
-          nd = 1;
-        } else if (nx + cur.width >= W) {
-          nx = W - cur.width;
-          nd = -1;
-        }
-        currentBlockRef.current.x = nx;
-        currentBlockRef.current.direction = nd;
+        updateCurrentBlock(currentBlockRef.current, getBlockSpeed(scoreRef.current), dt60, W);
       }
 
       // [Camera Logic] 카메라 팔로우 부드럽게 이동

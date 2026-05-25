@@ -15,9 +15,7 @@ export const useBlockStackingActions = () => {
 
   const publishProgress = useCallback(
     (payload: BlockStackingProgressPayload) => {
-      send(`/room/${joinCode}/block-stacking/progress`, {
-        ...payload,
-      });
+      send(`/room/${joinCode}/block-stacking/progress`, payload);
     },
     [joinCode, send]
   );

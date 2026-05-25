@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.support.app.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;

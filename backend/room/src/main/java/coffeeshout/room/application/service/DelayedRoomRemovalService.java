@@ -1,8 +1,7 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.websocket.GameRecoveryService;
+import coffeeshout.websocket.WsRecoveryService;
 import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.application.service.RoomCommandService;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
@@ -18,18 +17,18 @@ public class DelayedRoomRemovalService {
     private final TaskScheduler taskScheduler;
     private final Duration removeDuration;
     private final RoomCommandService roomCommandService;
-    private final GameRecoveryService gameRecoveryService;
+    private final WsRecoveryService wsRecoveryService;
 
     public DelayedRoomRemovalService(
             @Qualifier("delayRemovalScheduler") TaskScheduler taskScheduler,
             @Value("${room.removalDelay}") Duration removalDelay,
             RoomCommandService roomCommandService,
-            GameRecoveryService gameRecoveryService) {
+            WsRecoveryService wsRecoveryService) {
         validateRemovalDuration(removalDelay);
         this.taskScheduler = taskScheduler;
         this.removeDuration = removalDelay;
         this.roomCommandService = roomCommandService;
-        this.gameRecoveryService = gameRecoveryService;
+        this.wsRecoveryService = wsRecoveryService;
     }
 
     private void validateRemovalDuration(Duration removalDelay) {
@@ -52,7 +51,7 @@ public class DelayedRoomRemovalService {
     private void executeRoomRemoval(JoinCode joinCode) {
         try {
             roomCommandService.delete(joinCode);
-            gameRecoveryService.cleanup(joinCode.getValue());
+            wsRecoveryService.cleanup(joinCode.getValue());
             log.info("방 삭제 완료: joinCode={}", joinCode.getValue());
         } catch (Exception e) {
             log.warn("방 삭제 중 오류 발생: joinCode={}", joinCode.getValue(), e);

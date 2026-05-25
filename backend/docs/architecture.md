@@ -1,36 +1,40 @@
-# 아키텍처
+# 아키텍처 레퍼런스
 
-## 모듈 구조
+> **핵심 제약**(의존 방향 규칙, Redis Stream 경유 필수, 구조 규칙)은 `CLAUDE.md`의 "아키텍처 핵심 제약" 섹션을 참조한다.
+> 이 문서는 패키지 구조 상세, WebSocket 컨트랙트, Game SPI, Flow 스케줄링 등 배경 레퍼런스를 담는다.
 
-프로젝트는 10개 Gradle 모듈로 구성된다.
+---
+
+## 모듈 구성
+
+프로젝트는 12개 Gradle 모듈로 구성된다.
 
 ```text
-:common     — Spring 무관 순수 추상 (ErrorCode, BaseEvent, TraceInfo, VO)
-:infra      — Spring + JPA + Redis + Outbox + Lock + IpBlock + Health + Metric
-:websocket  — STOMP 플랫폼 (도메인 무지)
-:game-api   — 게임 SPI (Playable, MiniGameFactory, FlowScheduler, Gamer)
-:user       — User + Auth + Friend
-:room       — Room aggregate + Player + Roulette + RoomSessionToken
-:game       — 6게임 구현체 + minigame orchestration
-:admin      — dashboard + patchnote + report
-:zzolbot    — AI 운영자 어시스턴트
-:app        — Spring Boot 진입점, 모든 모듈 조합
+:common       — Spring 무관 순수 추상 (ErrorCode, BaseEvent, TraceInfo, VO)
+:infra        — Spring + JPA + Redis + Outbox + Lock + IpBlock + Health + Metric
+:web          — 공유 HTTP 인프라 (RestExceptionHandler, CORS, SpringDoc)
+:websocket    — STOMP 플랫폼 (도메인 무지)
+:game-api     — 게임 SPI (Playable, MiniGameFactory, FlowScheduler, Gamer)
+:user         — User + Auth + Friend
+:room         — Room aggregate + Player + Roulette + RoomSessionToken
+:game         — 6게임 구현체 + minigame orchestration
+:admin        — dashboard + patchnote + report
+:zzolbot      — AI 운영자 어시스턴트
+:app          — Spring Boot 진입점, 모든 모듈 조합
+:test-support — 통합/서비스 테스트 공통 인프라 (testImplementation 전용)
 ```
 
 의존 방향 (단방향, 순환 없음):
 
 ```text
-:common → :infra → :websocket
-                 → :user
-                 → :game-api → :room → :game → :admin
-                                             → :zzolbot
-                 (모두) → :app
+:common → :infra
+        → :web       (:game-api 제외 전 도메인 모듈 공통 기반)
+        → :game-api → :room → :game → :admin
+                                    → :zzolbot
+        :infra + :web → :websocket → :user
+        (모두) → :app
+:test-support — testImplementation 전용
 ```
-
-핵심 설계 원칙:
-- `:room`은 `:game-api`만 알고 `:game` 구체 클래스를 모른다 — 새 게임 추가 시 room 코드 무수정 (OCP)
-- `:common`은 Spring 의존이 없어 모든 모듈이 안전하게 import 가능
-- ArchUnit이 모듈 내부 계층 역방향(domain→infra 등)을 CI에서 차단
 
 ---
 
@@ -49,25 +53,37 @@
 
 `:common` 모듈이 담는 것:
 
-| 패키지          | 역할                                              |
-|--------------|-------------------------------------------------|
-| `exception/` | ErrorCode 인터페이스, BusinessException 계층           |
-| `trace/`     | TraceInfo, Traceable                            |
-| `nickname/`  | NameValidator, WordPicker 등 닉네임 유틸              |
-| `redis/`     | BaseEvent, StreamKey 인터페이스                      |
-| `log/`       | NotificationMarker                              |
+| 패키지          | 역할                                                  |
+|--------------|-----------------------------------------------------|
+| `event/`     | ProfanityWordBlockedEvent, BaseEvent                |
+| `exception/` | ErrorCode 인터페이스, BusinessException 계층               |
+| `trace/`     | TraceInfo, Traceable                                |
+| `nickname/`  | NameValidator, WordPicker 등 닉네임 유틸                  |
+| `redis/`     | BaseEvent, StreamKey 인터페이스                          |
+| `log/`       | NotificationMarker                                  |
+| `ipblock/`   | IpBlockAttributes (속성 VO만 — 필터·저장소는 `:infra`)       |
 
 `:infra` 모듈이 담는 것:
 
 | 패키지          | 역할                                              |
 |--------------|-------------------------------------------------|
-| `config/`    | 프레임워크 Bean 등록 (Async, Clock, Swagger 등)         |
+| `config/`    | 프레임워크 Bean 등록 (Async, Clock, QueryDsl 등)        |
 | `redis/`     | Redis Stream 인프라, Redisson, 커넥션 설정              |
 | `ipblock/`   | IP 차단 (필터, 저장소, 악성 경로 감지)                       |
 | `metric/`    | HTTP·Redis Stream Micrometer 메트릭 수집             |
 | `outbox/`    | Transactional Outbox (이벤트 유실 방지)                |
 | `lock/`      | Redisson 기반 분산 락                                |
 | `health/`    | Spring Actuator 헬스 인디케이터                        |
+| `trace/`     | OTel 트레이싱 설정, ObservationRegistry 프로바이더         |
+
+`:web` 모듈이 담는 것:
+
+| 패키지          | 역할                                          |
+|--------------|---------------------------------------------|
+| `config/`    | CorsProperties, SwaggerConfig, WebMvcConfig |
+| `exception/` | RestExceptionHandler (전역 HTTP 예외 처리)        |
+
+> ADR-0014: `:web`은 `:common` 위에 위치한다. `spring-boot-starter-web`, `spring-boot-starter-validation`, `springdoc-openapi`는 `:web`이 `api`로 노출하므로 REST 엔드포인트 모듈은 `:web`에만 의존하면 된다.
 
 ---
 
@@ -153,16 +169,19 @@ FlowOrchestrator
 
 `coffeeshout.websocket/`는 STOMP 기반 WebSocket 인프라 전체를 담는다.
 
-| 서브패키지          | 역할                                                                                           |
-|----------------|----------------------------------------------------------------------------------------------|
-| (루트)           | `StompSessionManager`, `PlayerKey`, `UserPrincipal`, `LoggingSimpMessagingTemplate` 등 핵심 서비스 |
-| `config/`      | STOMP 브로커 설정 (`WebSocketMessageBrokerConfig`)                                                |
-| `docs/`        | WebSocket 컨트랙트 디스커버리 (애너테이션 + `/dev/ws-catalog`)                                             |
-| `event/`       | Spring 이벤트 리스너 — 세션 구독·해제 처리                                                                 |
-| `interceptor/` | STOMP 인터셉터 — 레이트 리밋, 메트릭, Graceful Shutdown                                                  |
-| `lifecycle/`   | `WebSocketGracefulShutdownHandler`                                                           |
-| `metric/`      | `WebSocketMetricService`                                                                     |
-| `ratelimit/`   | `WebSocketRateLimiter`                                                                       |
+| 서브패키지          | 역할                                                                                                                      |
+|----------------|-------------------------------------------------------------------------------------------------------------------------|
+| (루트)           | `StompSessionManager`, `SubscriptionInfoService`, `PlayerKey`, `UserPrincipal`, `LoggingSimpMessagingTemplate` 등 핵심 서비스 |
+| `aspect/`      | `MessageMappingTracingAspect` — 메시지 핸들러 트레이싱                                                                            |
+| `config/`      | STOMP 브로커 설정 (`WebSocketMessageBrokerConfig`)                                                                           |
+| `docs/`        | WebSocket 컨트랙트 디스커버리 (애너테이션 + `/dev/ws-catalog`)                                                                        |
+| `event/`       | Spring 이벤트 리스너 — 세션 구독·해제 처리                                                                                            |
+| `exception/`   | `WebSocketExceptionHandler`                                                                                             |
+| `interceptor/` | STOMP 인터셉터 — 레이트 리밋, 메트릭, Graceful Shutdown                                                                             |
+| `lifecycle/`   | `WebSocketGracefulShutdownHandler`, `GracefulShutdownHealthIndicator`                                                   |
+| `metric/`      | `WebSocketMetricService`                                                                                                |
+| `ratelimit/`   | `WebSocketRateLimiter`                                                                                                  |
+| `ui/`          | `WsRecoveryController`, `WsRecoveryApi` — 세션 복구 REST 엔드포인트                                                              |
 
 Room 세션 인증(`RoomSessionToken*`)과 접속/해제 이벤트 처리는 `:room.infra.websocket`, `:room.infra.auth`에 위치한다.
 

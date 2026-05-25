@@ -4,7 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.support.app.IntegrationTestSupport;
 import coffeeshout.patchnote.application.PatchNoteAdminService;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import org.junit.jupiter.api.DisplayName;

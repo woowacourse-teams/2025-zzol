@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willThrow;
 
-import coffeeshout.fixture.TestStompSession;
-import coffeeshout.fixture.TestStompSession.MessageCollector;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
-import coffeeshout.global.MessageResponse;
+import coffeeshout.support.TestStompSession;
+import coffeeshout.support.TestStompSession.MessageCollector;
+import coffeeshout.support.app.WebSocketIntegrationTestSupport;
+import coffeeshout.support.MessageResponse;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.ui.request.ReadyChangeMessage;

@@ -3,9 +3,9 @@ package coffeeshout.websocket;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import coffeeshout.fixture.TestStompSession;
-import coffeeshout.fixture.TestStompSession.MessageCollector;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
+import coffeeshout.support.TestStompSession;
+import coffeeshout.support.TestStompSession.MessageCollector;
+import coffeeshout.support.app.WebSocketIntegrationTestSupport;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 

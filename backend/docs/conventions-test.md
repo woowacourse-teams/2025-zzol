@@ -13,18 +13,35 @@
 |----------------------------|---------------------------------------------|---------------------------------------------------------------------------------------------------|
 | 순수 단위 테스트                  | 없음 (순수 Java)                                | 스프링 컨텍스트 없이 도메인 로직만 검증                                                                            |
 | 서비스 테스트                    | `ServiceTest` 추상 클래스 상속                     | `@SpringBootTest` + `test` 프로파일 + `@Transactional`. `ApplicationEventPublisher`는 MockitoBean으로 제공 |
-| WebSocket 통합 테스트           | `WebSocketIntegrationTestSupport` 추상 클래스 상속 | `RANDOM_PORT` + `test` 프로파일 + `@Transactional` 포함. `@IntegrationTest` 추가 불필요                      |
-| 일반 통합 테스트 (REST, Stream 등) | `@IntegrationTest` 어노테이션                    | `RANDOM_PORT` + `test` 프로파일 + `@Transactional`                                                    |
+| WebSocket 통합 테스트           | `WebSocketIntegrationTestSupport` 추상 클래스 상속 | `RANDOM_PORT` + `test` 프로파일 + `@BeforeEach` Redis listener 재시작                                    |
+| 일반 통합 테스트 (REST, Stream 등) | `IntegrationTestSupport` 추상 클래스 상속          | `RANDOM_PORT` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup                               |
 
-모든 베이스는 `TestContainerConfig`를 import하므로 Valkey TestContainer가 자동으로 구동된다.
+모든 베이스는 `TestContainerSupport`를 상속하므로 MySQL·Valkey TestContainer가 자동으로 구동된다.
 
 ## 픽스처
 
-`src/test/java/coffeeshout/fixture/`에 픽스처 클래스를 모아 관리한다. 테스트 데이터를 직접 생성하지 않고 픽스처를 통해 재사용한다. 메서드명은 한글 도메인 용어를 사용한다.
+테스트 데이터를 직접 생성하지 않고 픽스처를 통해 재사용한다. 메서드명은 한글 도메인 용어를 사용한다.
+
+### 위치
+
+- 모듈 간 공유: `src/testFixtures/java/coffeeshout/fixture/`
+- 모듈 내부 전용: `src/test/java/coffeeshout/fixture/`
+
+### 유형별 네이밍
+
+| 유형         | 클래스명 패턴          | 특징                            |
+|------------|------------------|-------------------------------|
+| 도메인 객체 팩토리 | `*Fixture`       | 순수 Java 정적 팩토리, 스프링 컨텍스트 불필요  |
+| DB 영속화 헬퍼  | `TestDataHelper` | `@Component`, 통합 테스트에서 DI로 사용 |
+| 경량 대체 구현   | `*Fake`          | 실제 로직을 갖지만 외부 의존을 제거한 구현      |
+| 최소 더미 구현   | `*Dummy`         | 인터페이스 계약을 최소한으로 충족, 로직 없음     |
+| 반환값 제어     | `Stub*`          | 특정 메서드의 반환값을 고정하거나 무력화        |
+
+위 5가지 패턴 외 클래스명은 사용하지 않는다.
 
 ## 통합 테스트 (WebSocket)
 
-`WebSocketIntegrationTestSupport`를 상속하면 STOMP 세션 유틸(`createSession`, `assertMessage` 등)이 제공된다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다. `@IntegrationTest`를 함께 붙이면 설정이 중복되므로 사용하지 않는다.
+`WebSocketIntegrationTestSupport`를 상속하면 STOMP 세션 유틸(`createSession`, `assertMessage` 등)이 제공된다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다.
 
 ## 비동기·시간 의존 검증
 
@@ -82,6 +99,6 @@ assertCoffeeShoutException(
 
 `test` 프로파일 적용 시 `application-test.yml`이 자동 적용된다.
 - 타이밍 값이 500ms~2s로 단축됨
-- DB: H2 인메모리 사용 (Flyway 비활성화)
+- DB: MySQL TestContainer 사용 (Flyway 비활성화)
 - Valkey(Redis): TestContainers로 실제 컨테이너 구동 (`TestContainerConfig`)
 - Redisson 제외

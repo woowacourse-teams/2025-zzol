@@ -3,7 +3,7 @@ package coffeeshout.global.outbox;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.gamecommon.flow.FlowScheduler;
-import coffeeshout.fixture.TestContainerSupport;
+import coffeeshout.support.TestContainerSupport;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
@@ -55,27 +55,27 @@ class OutboxE2ETest extends TestContainerSupport {
 
         @Bean(name = "cardGameTaskScheduler")
         public TaskScheduler cardGameTaskScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return new coffeeshout.support.ShutDownTestScheduler();
         }
 
         @Bean(name = "delayRemovalScheduler")
         public TaskScheduler delayRemovalScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return new coffeeshout.support.ShutDownTestScheduler();
         }
 
         @Bean(name = "racingGameScheduler")
         public TaskScheduler racingGameScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return new coffeeshout.support.ShutDownTestScheduler();
         }
 
         @Bean(name = "speedTouchGameScheduler")
         public TaskScheduler speedTouchGameScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return new coffeeshout.support.ShutDownTestScheduler();
         }
 
         @Bean(name = "blindTimerGameScheduler")
         public TaskScheduler blindTimerGameScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
+            return new coffeeshout.support.ShutDownTestScheduler();
         }
 
         /**

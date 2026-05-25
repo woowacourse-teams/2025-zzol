@@ -6,9 +6,9 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.fixture.TestStompSession;
-import coffeeshout.fixture.WebSocketIntegrationTestSupport;
-import coffeeshout.global.MessageResponse;
+import coffeeshout.support.TestStompSession;
+import coffeeshout.support.app.WebSocketIntegrationTestSupport;
+import coffeeshout.support.MessageResponse;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -62,7 +62,7 @@ class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
     }
 
     @Test
-    void ㅁㅁㅁ카드게임을_실행한다() throws JSONException {
+    void 카드게임을_실행한다() throws JSONException {
         String joinCodeValue = joinCode.getValue();
         String subscribeUrl = String.format("/topic/room/%s/gameState", joinCodeValue);
         String requestUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);

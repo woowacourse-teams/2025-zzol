@@ -13,7 +13,6 @@
 
 - 한국어 + 영어 비속어를 함께 관리해야 한다 (오픈소스 목록 통합: vane, LDNOOBW 등)
 - 관리자가 런타임에 단어를 추가·수정·비활성화할 수 있어야 한다
-- 비속어 감지 이력(match_count)을 기반으로 목록을 정제할 수 있어야 한다
 - AI 기반 닉네임 검열(Gemini)은 `:profanity` 모듈 내 `domain/audit` 패키지에 통합한다
 
 ## 결정
@@ -40,7 +39,7 @@
 
 ```text
 domain/
-  ProfanityWord        — 비속어 단어 (word, language, source, is_active, match_count)
+  ProfanityWord        — 비속어 단어 (word, language, source, is_active); 검증만 담당, 정규화는 TextNormalizer 독점
   ProfanityChecker     — 인터페이스 (:common으로 이관)
   ProfanityWordRepository
   Language             — KOREAN / ENGLISH
@@ -76,6 +75,7 @@ infra/
 | `LDNOOBW` | 영어 | List of Dirty, Naughty, Obscene, and Otherwise Bad Words |
 | `MANUAL` | 한/영 | 관리자 직접 등록 |
 | `AI_FLAGGED` | 한/영 | Gemini 검열에서 FLAGGED 판정된 닉네임이 자동 등록 |
+| `OPERATOR_ALLOWED` | 한/영 | 관리자가 AI 오판 닉네임을 허용 처리할 때 등록; MANUAL만 재차단 가능 |
 
 ### 다중 인스턴스 동기화
 
@@ -95,9 +95,8 @@ profanity_word (
   id          BIGINT AUTO_INCREMENT PRIMARY KEY,
   word        VARCHAR(200) NOT NULL,
   language    VARCHAR(10)  NOT NULL,  -- KOREAN | ENGLISH
-  source      VARCHAR(20)  NOT NULL,  -- VANE | LDNOOBW | MANUAL | AI_FLAGGED
+  source      VARCHAR(20)  NOT NULL,  -- VANE | LDNOOBW | MANUAL | AI_FLAGGED | OPERATOR_ALLOWED
   is_active   BOOLEAN      NOT NULL DEFAULT TRUE,
-  match_count BIGINT       NOT NULL DEFAULT 0,
   created_at  TIMESTAMP    NOT NULL,
   updated_at  TIMESTAMP    NOT NULL,
   UNIQUE KEY uk_profanity_word (word)
@@ -142,12 +141,12 @@ player_name_feedback (
 - `ProfanityWordBlockedEvent`가 `:common`에 남아 있어 패키지 순수성이 완전하지 않다.
   `:user`를 `:profanity`에 의존시키는 것보다 현실적인 절충이다.
 - TextNormalizer가 놓치는 우회 패턴(초성 단독, 이모지 조합 등)은 ADR 0001의 AI 감사 레이어에서 보완한다.
+- `match_count` 기반 목록 정제는 초기 요구사항이었으나, 실제 운영 데이터 없이는 통계 의미가 없다고 판단해 컬럼 자체를 제거했다(V29 마이그레이션). 필요 시 별도 테이블로 재도입한다.
 
 **얻은 것들**
 
 - 한국어·영어 비속어를 단일 DB 테이블에서 관리하고 언어·출처별로 필터링·정제할 수 있다.
 - Redis pub/sub으로 다중 인스턴스 간 즉시 동기화된다.
-- `match_count` 통계로 잘 감지되지 않는 단어를 식별해 목록 품질을 높일 수 있다.
 - AI 검열 레이어는 `:profanity-ai` 별도 모듈 대신 `:profanity` 내부 `domain/audit` 패키지로 통합했다. 초기 설계에서는 Perspective API 기반 Phase 2로 분리 예정이었으나, Gemini 기반 구현이 `:profanity`의 응집도를 높이는 방향이라 판단해 통합을 선택했다. AI 의존이 커질 경우 패키지 → 모듈 분리는 여전히 가능하다.
 
 ## 결과

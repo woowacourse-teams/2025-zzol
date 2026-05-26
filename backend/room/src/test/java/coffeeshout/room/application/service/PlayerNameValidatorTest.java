@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.profanity.domain.ProfanityChecker;
+import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.room.domain.service.PlayerNameValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;

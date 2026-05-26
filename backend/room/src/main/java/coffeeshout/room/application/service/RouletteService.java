@@ -11,7 +11,7 @@ import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RouletteResultEntity;
-import coffeeshout.profanity.domain.audit.NicknameSubmittedEvent;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

@@ -1,7 +1,7 @@
 package coffeeshout.room.domain.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.profanity.domain.ProfanityChecker;
+import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Objects;

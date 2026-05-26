@@ -9,11 +9,9 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
-import coffeeshout.profanity.domain.Language;
-import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
-import coffeeshout.profanity.domain.WordSource;
-import coffeeshout.room.domain.event.RankingNicknamesCollectedEvent;
+import coffeeshout.profanity.domain.TextNormalizer;
+import coffeeshout.global.nickname.NicknamesCollectedEvent;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.application.port.PlayerEntityRepository;
@@ -32,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class PlayerNameRankingCleanupServiceTest {
 
     @Mock ProfanityWordRepository profanityWordRepository;
+    @Mock TextNormalizer textNormalizer;
     @Mock PlayerEntityRepository playerRepository;
     @Mock PlayerNameGenerator playerNameGenerator;
 
@@ -40,37 +39,31 @@ class PlayerNameRankingCleanupServiceTest {
     @BeforeEach
     void setUp() {
         cleanupService = new PlayerNameRankingCleanupService(
-                profanityWordRepository, playerRepository, playerNameGenerator
+                profanityWordRepository, textNormalizer, playerRepository, playerNameGenerator
         );
-    }
-
-    private ProfanityWord word(String w) {
-        return new ProfanityWord(w, Language.KOREAN, WordSource.MANUAL);
+        // 한글 닉네임은 TextNormalizer가 변환 없이 그대로 반환 (리트스피크·특수문자 없음)
+        given(textNormalizer.normalize(anyString())).willAnswer(inv -> inv.getArgument(0));
     }
 
     @Nested
-    class 활성_비속어가_없는_경우 {
+    class 랭킹_닉네임이_비속어_목록에_없는_경우 {
 
         @Test
         void 교체_없이_종료한다() {
-            given(profanityWordRepository.findAllActive()).willReturn(List.of());
+            given(profanityWordRepository.findAllActiveIn(any())).willReturn(Set.of());
 
-            cleanupService.onRankingNicknamesCollected(
-                    new RankingNicknamesCollectedEvent(Set.of("용감한호랑이")));
+            cleanupService.onNicknamesCollected(
+                    new NicknamesCollectedEvent(Set.of("용감한호랑이")));
 
             then(playerRepository).shouldHaveNoInteractions();
         }
-    }
-
-    @Nested
-    class 비속어가_랭킹에_없는_경우 {
 
         @Test
-        void 교체_없이_종료한다() {
-            given(profanityWordRepository.findAllActive()).willReturn(List.of(word("씨발")));
+        void playerRepository_findAllByPlayerName을_호출하지_않는다() {
+            given(profanityWordRepository.findAllActiveIn(any())).willReturn(Set.of());
 
-            cleanupService.onRankingNicknamesCollected(
-                    new RankingNicknamesCollectedEvent(Set.of("용감한호랑이")));
+            cleanupService.onNicknamesCollected(
+                    new NicknamesCollectedEvent(Set.of("용감한호랑이")));
 
             then(playerRepository).should(never()).findAllByPlayerName(anyString());
         }
@@ -85,7 +78,7 @@ class PlayerNameRankingCleanupServiceTest {
             PlayerEntity player = mock(PlayerEntity.class);
             PlayerEntity roommate = mock(PlayerEntity.class);
 
-            given(profanityWordRepository.findAllActive()).willReturn(List.of(word("씨발")));
+            given(profanityWordRepository.findAllActiveIn(any())).willReturn(Set.of("씨발"));
             given(playerRepository.findAllByPlayerName("씨발")).willReturn(List.of(player));
             given(player.getRoomSession()).willReturn(room);
             given(roommate.getRoomSession()).willReturn(room);
@@ -94,8 +87,8 @@ class PlayerNameRankingCleanupServiceTest {
             given(roommate.getPlayerName()).willReturn("용감한호랑이");
             given(playerNameGenerator.generate(Set.of("씨발", "용감한호랑이"))).willReturn(new PlayerName("빠른여우"));
 
-            cleanupService.onRankingNicknamesCollected(
-                    new RankingNicknamesCollectedEvent(Set.of("씨발")));
+            cleanupService.onNicknamesCollected(
+                    new NicknamesCollectedEvent(Set.of("씨발")));
 
             then(player).should().updatePlayerName(new PlayerName("빠른여우"));
             then(roommate).should(never()).updatePlayerName(any(PlayerName.class));
@@ -108,7 +101,7 @@ class PlayerNameRankingCleanupServiceTest {
             PlayerEntity player1 = mock(PlayerEntity.class);
             PlayerEntity player2 = mock(PlayerEntity.class);
 
-            given(profanityWordRepository.findAllActive()).willReturn(List.of(word("씨발")));
+            given(profanityWordRepository.findAllActiveIn(any())).willReturn(Set.of("씨발"));
             given(playerRepository.findAllByPlayerName("씨발")).willReturn(List.of(player1, player2));
             given(player1.getRoomSession()).willReturn(room1);
             given(player2.getRoomSession()).willReturn(room2);
@@ -117,8 +110,8 @@ class PlayerNameRankingCleanupServiceTest {
             given(player2.getPlayerName()).willReturn("씨발");
             given(playerNameGenerator.generate(eq(Set.of("씨발")))).willReturn(new PlayerName("빠른여우"), new PlayerName("용감한호랑이"));
 
-            cleanupService.onRankingNicknamesCollected(
-                    new RankingNicknamesCollectedEvent(Set.of("씨발")));
+            cleanupService.onNicknamesCollected(
+                    new NicknamesCollectedEvent(Set.of("씨발")));
 
             then(player1).should().updatePlayerName(new PlayerName("빠른여우"));
             then(player2).should().updatePlayerName(new PlayerName("용감한호랑이"));

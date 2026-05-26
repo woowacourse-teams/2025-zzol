@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비속어 관리 — ZZOL</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <script>
+        function confirmRelease(form) {
+            const nickname = form.dataset.nickname;
+            return confirm('\'' + nickname + '\' 의 차단을 해제합니다.\nAI 오판으로 판단하시겠습니까?');
+        }
+    </script>
+</head>
+<body>
+
+<header>
+    <h1>비속어 관리</h1>
+    <form th:action="@{/admin/logout}" method="post">
+        <button type="submit" class="logout-btn">로그아웃</button>
+    </form>
+</header>
+
+<main>
+    <a href="/admin" class="nav-back">← 대시보드로</a>
+
+    <div class="filter-bar" style="margin: 1.25rem 0 1.75rem;">
+        <span class="filter-label">탭</span>
+        <a th:href="@{/admin/profanity(tab='audit')}"
+           th:classappend="${tab == 'audit'} ? ' active' : ''"
+           class="filter-btn">검열 현황
+            <span th:if="${flagged != null}"
+                  class="badge badge-flagged"
+                  th:text="${flagged.totalElements}"
+                  style="margin-left:0.3rem;">0</span>
+        </a>
+        <a th:href="@{/admin/profanity(tab='words')}"
+           th:classappend="${tab == 'words'} ? ' active' : ''"
+           class="filter-btn">단어 사전
+            <span th:if="${words != null}"
+                  class="badge badge-flagged"
+                  th:text="${words.totalElements}"
+                  style="margin-left:0.3rem;">0</span>
+        </a>
+    </div>
+
+    <!-- ── 검열 현황 탭 ── -->
+    <div th:if="${tab == 'audit'}">
+
+        <div class="filter-bar" style="margin-bottom: 1.5rem;">
+            <span class="filter-label">섹션</span>
+            <a href="#flagged" class="filter-btn">
+                FLAGGED <span class="badge badge-flagged" th:text="${flagged.totalElements}"
+                              style="margin-left:0.3rem;">0</span>
+            </a>
+            <a href="#pending" class="filter-btn">
+                PENDING <span class="badge badge-pending" th:text="${pending.totalElements}"
+                              style="margin-left:0.3rem;">0</span>
+            </a>
+        </div>
+
+        <!-- FLAGGED -->
+        <div id="flagged" class="section-header">
+            <span class="section-title">FLAGGED</span>
+            <span class="badge badge-flagged" th:text="${flagged.totalElements}">0</span>
+            <span style="font-size:0.8rem;color:#9ca3af;">신뢰도 ≥ 0.85 — 자동 차단됨, 오판 시 해제</span>
+        </div>
+
+        <div th:if="${flagged.empty}" class="empty">처리할 FLAGGED 항목이 없습니다.</div>
+
+        <div th:if="${!flagged.empty}" class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>닉네임</th>
+                    <th>신뢰도</th>
+                    <th>AI 판단 사유</th>
+                    <th>등록</th>
+                    <th>검열</th>
+                    <th>처리</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${flagged.content}">
+                    <td th:text="${item.id}" style="color:#9ca3af;font-size:0.8rem;"></td>
+                    <td>
+                        <span class="nickname" th:text="${item.playerName}"></span>
+                        <span class="badge badge-auto-blocked" style="margin-left:0.4rem;">자동 차단됨</span>
+                    </td>
+                    <td>
+                        <div class="conf-wrap">
+                            <div class="conf-bar-bg">
+                                <div class="conf-bar-fill fill-high"
+                                     th:style="|width:${item.confidence.value().movePointRight(2).intValue()}%|"></div>
+                            </div>
+                            <span class="conf-text"
+                                  th:text="${#numbers.formatDecimal(item.confidence.value(), 1, 2)}"></span>
+                        </div>
+                    </td>
+                    <td class="reason" th:text="${item.reason}"></td>
+                    <td class="date" th:text="${#temporals.format(item.createdAt, 'MM-dd HH:mm')}"></td>
+                    <td class="date"
+                        th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
+                    <td>
+                        <form th:action="@{/admin/profanity/audit/{id}/allow(id=${item.id})}" method="post"
+                              th:data-nickname="${item.playerName}" onsubmit="return confirmRelease(this)">
+                            <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
+                            <input type="hidden" name="pendingPage" th:value="${pendingPage}">
+                            <button type="submit" class="btn btn-allow">차단 해제</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="pagination" th:if="${flagged.totalPages > 1}">
+                <a class="page-btn" th:if="${!flagged.first}"
+                   th:href="@{/admin/profanity(tab='audit',flaggedPage=${flagged.number - 1},pendingPage=${pendingPage})} + '#flagged'">← 이전</a>
+                <a class="page-btn" th:if="${flaggedPageStart > 0}"
+                   th:href="@{/admin/profanity(tab='audit',flaggedPage=0,pendingPage=${pendingPage})} + '#flagged'">1</a>
+                <span class="page-ellipsis" th:if="${flaggedPageStart > 1}">…</span>
+                <th:block th:each="p : ${#numbers.sequence(flaggedPageStart, flaggedPageEnd)}">
+                    <span th:if="${p == flagged.number}" class="page-current" th:text="${p + 1}"></span>
+                    <a th:unless="${p == flagged.number}" class="page-btn"
+                       th:href="@{/admin/profanity(tab='audit',flaggedPage=${p},pendingPage=${pendingPage})} + '#flagged'"
+                       th:text="${p + 1}"></a>
+                </th:block>
+                <span class="page-ellipsis" th:if="${flaggedPageEnd < flagged.totalPages - 2}">…</span>
+                <a class="page-btn" th:if="${flaggedPageEnd < flagged.totalPages - 1}"
+                   th:href="@{/admin/profanity(tab='audit',flaggedPage=${flagged.totalPages - 1},pendingPage=${pendingPage})} + '#flagged'"
+                   th:text="${flagged.totalPages}"></a>
+                <a class="page-btn" th:if="${!flagged.last}"
+                   th:href="@{/admin/profanity(tab='audit',flaggedPage=${flagged.number + 1},pendingPage=${pendingPage})} + '#flagged'">다음 →</a>
+            </div>
+        </div>
+
+        <!-- PENDING -->
+        <div id="pending" class="section-header">
+            <span class="section-title">PENDING</span>
+            <span class="badge badge-pending" th:text="${pending.totalElements}">0</span>
+            <span style="font-size:0.8rem;color:#9ca3af;">신뢰도 &lt; 0.85 — 운영자 판단 필요</span>
+        </div>
+
+        <div th:if="${pending.empty}" class="empty">처리할 PENDING 항목이 없습니다.</div>
+
+        <div th:if="${!pending.empty}" class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>닉네임</th>
+                    <th>신뢰도</th>
+                    <th>AI 판단 사유</th>
+                    <th>등록</th>
+                    <th>검열</th>
+                    <th>처리</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${pending.content}">
+                    <td th:text="${item.id}" style="color:#9ca3af;font-size:0.8rem;"></td>
+                    <td class="nickname" th:text="${item.playerName}"></td>
+                    <td>
+                        <div class="conf-wrap">
+                            <div class="conf-bar-bg">
+                                <div class="conf-bar-fill fill-mid"
+                                     th:style="|width:${item.confidence.value().movePointRight(2).intValue()}%|"></div>
+                            </div>
+                            <span class="conf-text"
+                                  th:text="${#numbers.formatDecimal(item.confidence.value(), 1, 2)}"></span>
+                        </div>
+                    </td>
+                    <td class="reason" th:text="${item.reason}"></td>
+                    <td class="date" th:text="${#temporals.format(item.createdAt, 'MM-dd HH:mm')}"></td>
+                    <td class="date"
+                        th:text="${item.auditedAt != null ? #temporals.format(item.auditedAt, 'MM-dd HH:mm') : '-'}"></td>
+                    <td>
+                        <div class="actions">
+                            <form th:action="@{/admin/profanity/audit/{id}/allow(id=${item.id})}" method="post">
+                                <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
+                                <input type="hidden" name="pendingPage" th:value="${pendingPage}">
+                                <button type="submit" class="btn btn-allow">허용</button>
+                            </form>
+                            <form th:action="@{/admin/profanity/audit/{id}/block(id=${item.id})}" method="post">
+                                <input type="hidden" name="flaggedPage" th:value="${flaggedPage}">
+                                <input type="hidden" name="pendingPage" th:value="${pendingPage}">
+                                <button type="submit" class="btn btn-block">차단</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="pagination" th:if="${pending.totalPages > 1}">
+                <a class="page-btn" th:if="${!pending.first}"
+                   th:href="@{/admin/profanity(tab='audit',flaggedPage=${flaggedPage},pendingPage=${pending.number - 1})} + '#pending'">← 이전</a>
+                <a class="page-btn" th:if="${pendingPageStart > 0}"
+                   th:href="@{/admin/profanity(tab='audit',flaggedPage=${flaggedPage},pendingPage=0)} + '#pending'">1</a>
+                <span class="page-ellipsis" th:if="${pendingPageStart > 1}">…</span>
+                <th:block th:each="p : ${#numbers.sequence(pendingPageStart, pendingPageEnd)}">
+                    <span th:if="${p == pending.number}" class="page-current" th:text="${p + 1}"></span>
+                    <a th:unless="${p == pending.number}" class="page-btn"
+                       th:href="@{/admin/profanity(tab='audit',flaggedPage=${flaggedPage},pendingPage=${p})} + '#pending'"
+                       th:text="${p + 1}"></a>
+                </th:block>
+                <span class="page-ellipsis" th:if="${pendingPageEnd < pending.totalPages - 2}">…</span>
+                <a class="page-btn" th:if="${pendingPageEnd < pending.totalPages - 1}"
+                   th:href="@{/admin/profanity(tab='audit',flaggedPage=${flaggedPage},pendingPage=${pending.totalPages - 1})} + '#pending'"
+                   th:text="${pending.totalPages}"></a>
+                <a class="page-btn" th:if="${!pending.last}"
+                   th:href="@{/admin/profanity(tab='audit',flaggedPage=${flaggedPage},pendingPage=${pending.number + 1})} + '#pending'">다음 →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 단어 사전 탭 ── -->
+    <div th:if="${tab == 'words'}">
+
+        <div class="section-header" style="margin-top: 0.25rem;">
+            <span class="section-title">단어 추가</span>
+        </div>
+
+        <div class="form-card">
+            <form th:action="@{/admin/profanity/words}" method="post">
+                <input type="hidden" name="search" th:value="${search}">
+                <input type="hidden" name="language" th:value="${language}">
+                <input type="hidden" name="source" th:value="${source}">
+                <input type="hidden" name="activeFilter" th:value="${activeFilter}">
+                <input type="hidden" name="wordsPage" th:value="${wordsPage}">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label class="form-label">단어</label>
+                        <input class="form-input" type="text" name="word" required maxlength="200"
+                               placeholder="차단할 단어 입력" style="width:220px;">
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">언어</label>
+                        <select class="form-select" name="language">
+                            <option th:each="lang : ${languages}" th:value="${lang}" th:text="${lang}"></option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">추가</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="section-header" style="margin-bottom:1rem;">
+            <span class="section-title">비속어 목록</span>
+            <span class="badge badge-flagged" th:text="${words.totalElements}">0</span>
+        </div>
+
+        <!-- 검색·필터 폼 -->
+        <form th:action="@{/admin/profanity}" method="get"
+              style="margin-bottom:1.25rem; display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
+            <input type="hidden" name="tab" value="words">
+            <input type="hidden" name="wordsPage" value="0">
+            <input class="form-input" type="text" name="search" th:value="${search}"
+                   placeholder="단어 검색..." style="width:200px;">
+            <select class="form-select" name="language">
+                <option value="" th:selected="${language == ''}">언어 전체</option>
+                <option th:each="lang : ${languages}"
+                        th:value="${lang}"
+                        th:text="${lang}"
+                        th:selected="${lang.name() == language}"></option>
+            </select>
+            <select class="form-select" name="source">
+                <option value="" th:selected="${source == ''}">출처 전체</option>
+                <option th:each="src : ${sources}"
+                        th:value="${src}"
+                        th:text="${src}"
+                        th:selected="${src.name() == source}"></option>
+            </select>
+            <select class="form-select" name="activeFilter">
+                <option value="" th:selected="${activeFilter == ''}">상태 전체</option>
+                <option value="active" th:selected="${activeFilter == 'active'}">활성</option>
+                <option value="inactive" th:selected="${activeFilter == 'inactive'}">비활성</option>
+            </select>
+            <button type="submit" class="btn-primary">검색</button>
+            <a th:href="@{/admin/profanity(tab='words')}" class="btn-secondary">초기화</a>
+        </form>
+
+        <div th:if="${words.empty}" class="empty">
+            <span th:if="${search != null and !search.isEmpty()}">
+                '<span th:text="${search}"></span>' 검색 결과가 없습니다.
+            </span>
+            <span th:if="${search == null or search.isEmpty()}">등록된 비속어가 없습니다.</span>
+        </div>
+
+        <div th:if="${!words.empty}" class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>단어</th>
+                    <th>언어</th>
+                    <th>출처</th>
+                    <th>상태</th>
+                    <th>처리</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${words.content}"
+                    th:style="${!item.isActive()} ? 'opacity:0.5;' : ''">
+                    <td class="nickname" th:text="${item.word()}"></td>
+                    <td th:text="${item.language()}"></td>
+                    <td th:text="${item.source()}"></td>
+                    <td>
+                        <span th:if="${item.isActive()}" class="badge badge-flagged">활성</span>
+                        <span th:unless="${item.isActive()}" class="badge badge-pending">비활성</span>
+                    </td>
+                    <td>
+                        <form th:if="${item.isActive()}"
+                              th:action="@{/admin/profanity/words/deactivate}" method="post"
+                              onsubmit="return confirm('이 단어를 비활성화하시겠습니까?')">
+                            <input type="hidden" name="word" th:value="${item.word()}">
+                            <input type="hidden" name="search" th:value="${search}">
+                            <input type="hidden" name="language" th:value="${language}">
+                            <input type="hidden" name="source" th:value="${source}">
+                            <input type="hidden" name="activeFilter" th:value="${activeFilter}">
+                            <input type="hidden" name="wordsPage" th:value="${wordsPage}">
+                            <button type="submit" class="btn btn-allow">비활성화</button>
+                        </form>
+                        <form th:unless="${item.isActive()}"
+                              th:action="@{/admin/profanity/words/activate}" method="post"
+                              onsubmit="return confirm('이 단어를 활성화하시겠습니까?')">
+                            <input type="hidden" name="word" th:value="${item.word()}">
+                            <input type="hidden" name="search" th:value="${search}">
+                            <input type="hidden" name="language" th:value="${language}">
+                            <input type="hidden" name="source" th:value="${source}">
+                            <input type="hidden" name="activeFilter" th:value="${activeFilter}">
+                            <input type="hidden" name="wordsPage" th:value="${wordsPage}">
+                            <button type="submit" class="btn btn-block">활성화</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- 페이지네이션 -->
+            <div class="pagination" th:if="${words.totalPages > 1}">
+                <a class="page-btn" th:if="${!words.first}"
+                   th:href="@{/admin/profanity(tab='words',search=${search},language=${language},source=${source},activeFilter=${activeFilter},wordsPage=${words.number - 1})}">← 이전</a>
+                <a class="page-btn" th:if="${wordsPageStart > 0}"
+                   th:href="@{/admin/profanity(tab='words',search=${search},language=${language},source=${source},activeFilter=${activeFilter},wordsPage=0)}">1</a>
+                <span class="page-ellipsis" th:if="${wordsPageStart > 1}">…</span>
+                <th:block th:each="p : ${#numbers.sequence(wordsPageStart, wordsPageEnd)}">
+                    <span th:if="${p == words.number}" class="page-current" th:text="${p + 1}"></span>
+                    <a th:unless="${p == words.number}" class="page-btn"
+                       th:href="@{/admin/profanity(tab='words',search=${search},language=${language},source=${source},activeFilter=${activeFilter},wordsPage=${p})}"
+                       th:text="${p + 1}"></a>
+                </th:block>
+                <span class="page-ellipsis" th:if="${wordsPageEnd < words.totalPages - 2}">…</span>
+                <a class="page-btn" th:if="${wordsPageEnd < words.totalPages - 1}"
+                   th:href="@{/admin/profanity(tab='words',search=${search},language=${language},source=${source},activeFilter=${activeFilter},wordsPage=${words.totalPages - 1})}"
+                   th:text="${words.totalPages}"></a>
+                <a class="page-btn" th:if="${!words.last}"
+                   th:href="@{/admin/profanity(tab='words',search=${search},language=${language},source=${source},activeFilter=${activeFilter},wordsPage=${words.number + 1})}">다음 →</a>
+            </div>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

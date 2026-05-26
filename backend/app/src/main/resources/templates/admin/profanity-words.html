@@ -18,28 +18,28 @@
 <main>
     <a href="/admin" class="nav-back">← 대시보드로</a>
 
-    <div class="section-header" style="margin-top: 1.5rem;">
+    <div class="section-header" style="margin-top: 0;">
         <span class="section-title">단어 추가</span>
     </div>
 
-    <form th:action="@{/admin/profanity/words}" method="post" style="margin-bottom: 2rem;">
-        <div style="display:flex; gap:0.75rem; align-items:flex-end;">
-            <div>
-                <label style="display:block; font-size:0.85rem; margin-bottom:0.25rem;">단어</label>
-                <input type="text" name="word" required maxlength="200"
-                       placeholder="차단할 단어 입력"
-                       style="padding:0.5rem 0.75rem; border:1px solid #374151; border-radius:4px; background:#1f2937; color:#f9fafb; width:220px;">
+    <div class="form-card">
+        <form th:action="@{/admin/profanity/words}" method="post">
+            <div class="form-row">
+                <div class="form-field">
+                    <label class="form-label">단어</label>
+                    <input class="form-input" type="text" name="word" required maxlength="200"
+                           placeholder="차단할 단어 입력" style="width:220px;">
+                </div>
+                <div class="form-field">
+                    <label class="form-label">언어</label>
+                    <select class="form-select" name="language">
+                        <option th:each="lang : ${languages}" th:value="${lang}" th:text="${lang}"></option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">추가</button>
             </div>
-            <div>
-                <label style="display:block; font-size:0.85rem; margin-bottom:0.25rem;">언어</label>
-                <select name="language"
-                        style="padding:0.5rem 0.75rem; border:1px solid #374151; border-radius:4px; background:#1f2937; color:#f9fafb;">
-                    <option th:each="lang : ${languages}" th:value="${lang}" th:text="${lang}"></option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-block">추가</button>
-        </div>
-    </form>
+        </form>
+    </div>
 
     <div class="section-header">
         <span class="section-title">활성 비속어 목록</span>
@@ -62,12 +62,12 @@
             <tr th:each="item : ${words}">
                 <td class="nickname" th:text="${item.word()}"></td>
                 <td th:text="${item.language()}"></td>
-                <td th:text="${item.source()}"></td>
+                <td><span class="tag-source" th:text="${item.source()}"></span></td>
                 <td>
                     <form th:action="@{/admin/profanity/words/deactivate(word=${item.word()})}"
                           method="post"
                           onsubmit="return confirm('이 단어를 비활성화하시겠습니까?')">
-                        <button type="submit" class="btn btn-allow">비활성화</button>
+                        <button type="submit" class="btn btn-block">비활성화</button>
                     </form>
                 </td>
             </tr>

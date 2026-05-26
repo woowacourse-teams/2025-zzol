@@ -2,15 +2,12 @@ package coffeeshout.profanity.domain;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ProfanityWordRepository {
 
     List<ProfanityWord> findAllActive();
-
-    Set<String> findAllActiveIn(Set<String> candidates);
 
     boolean existsByWord(String word);
 

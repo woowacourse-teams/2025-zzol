@@ -19,6 +19,14 @@ public class ProfanityWordQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
+    public List<ProfanityWordEntity> findAllActive() {
+        return queryFactory
+                .selectFrom(profanityWordEntity)
+                .where(profanityWordEntity.isActive.isTrue()
+                        .and(profanityWordEntity.source.ne(WordSource.OPERATOR_ALLOWED)))
+                .fetch();
+    }
+
     public Page<ProfanityWordEntity> findAllPaged(
             String search, Language language, WordSource source, Boolean activeOnly, Pageable pageable) {
 

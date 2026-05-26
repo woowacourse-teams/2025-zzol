@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,14 +25,9 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
 
     @Override
     public List<ProfanityWord> findAllActive() {
-        return jpaRepository.findAllActive().stream()
+        return queryRepository.findAllActive().stream()
                 .map(ProfanityWordEntity::toDomain)
                 .toList();
-    }
-
-    @Override
-    public Set<String> findAllActiveIn(Set<String> candidates) {
-        return jpaRepository.findAllActiveIn(candidates);
     }
 
     @Override

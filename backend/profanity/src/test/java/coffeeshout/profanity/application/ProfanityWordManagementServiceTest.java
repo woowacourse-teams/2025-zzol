@@ -13,7 +13,7 @@ import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityErrorCode;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
-import coffeeshout.profanity.domain.TrieRefreshPort;
+import coffeeshout.profanity.domain.TrieRefreshNotifier;
 import coffeeshout.profanity.domain.WordSource;
 import java.util.List;
 import java.util.Optional;
@@ -24,13 +24,13 @@ import org.junit.jupiter.api.Test;
 class ProfanityWordManagementServiceTest {
 
     private ProfanityWordRepository wordRepository;
-    private TrieRefreshPort trieRefreshPort;
+    private TrieRefreshNotifier trieRefreshPort;
     private ProfanityWordManagementService service;
 
     @BeforeEach
     void setUp() {
         wordRepository = mock(ProfanityWordRepository.class);
-        trieRefreshPort = mock(TrieRefreshPort.class);
+        trieRefreshPort = mock(TrieRefreshNotifier.class);
         service = new ProfanityWordManagementService(wordRepository, trieRefreshPort);
     }
 

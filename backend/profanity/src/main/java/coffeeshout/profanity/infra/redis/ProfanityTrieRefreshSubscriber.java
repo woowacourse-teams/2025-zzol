@@ -4,6 +4,7 @@ import coffeeshout.profanity.application.ProfanityFilterService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.PatternTopic;
@@ -25,7 +26,7 @@ public class ProfanityTrieRefreshSubscriber implements MessageListener {
     }
 
     @Override
-    public void onMessage(Message message, byte[] pattern) {
+    public void onMessage(@NonNull Message message, byte[] pattern) {
         log.debug("비속어 트라이 갱신 신호 수신");
         filterService.rebuildTrie();
     }

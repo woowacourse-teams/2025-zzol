@@ -1,6 +1,6 @@
 package coffeeshout.profanity.domain;
 
-public interface TrieRefreshPort {
+public interface TrieRefreshNotifier {
 
     void publish();
 }

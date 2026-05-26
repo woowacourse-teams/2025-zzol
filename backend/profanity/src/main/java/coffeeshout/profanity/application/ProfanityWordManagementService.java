@@ -5,7 +5,7 @@ import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityErrorCode;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
-import coffeeshout.profanity.domain.TrieRefreshPort;
+import coffeeshout.profanity.domain.TrieRefreshNotifier;
 import coffeeshout.profanity.domain.WordSource;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class ProfanityWordManagementService {
 
     private final ProfanityWordRepository wordRepository;
-    private final TrieRefreshPort trieRefreshPort;
+    private final TrieRefreshNotifier trieRefreshPort;
 
     @Transactional
     public boolean add(String rawWord, Language language, WordSource source) {

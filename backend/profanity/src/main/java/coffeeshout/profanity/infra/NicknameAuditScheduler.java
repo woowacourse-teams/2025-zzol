@@ -1,6 +1,6 @@
 package coffeeshout.profanity.infra;
 
-import coffeeshout.profanity.application.NicknameAuditService;
+import coffeeshout.profanity.application.ProfanityAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class NicknameAuditScheduler {
 
-    private final NicknameAuditService nicknameAuditService;
+    private final ProfanityAuditService nicknameAuditService;
 
     @Scheduled(cron = "0 0 0/12 * * *")
     public void auditPendingNicknames() {

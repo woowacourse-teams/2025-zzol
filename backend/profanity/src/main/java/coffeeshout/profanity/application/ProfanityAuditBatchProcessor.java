@@ -24,7 +24,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NicknameAuditBatchProcessor {
+public class ProfanityAuditBatchProcessor {
 
     private final NicknameAuditRepository auditRepository;
     private final NicknameAuditor nicknameAuditor;
@@ -77,8 +77,9 @@ public class NicknameAuditBatchProcessor {
     }
 
     private void autoBlock(String nickname) {
-        profanityWordManagementService.add(nickname, Language.KOREAN, WordSource.AI_FLAGGED);
-        eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
-        log.info("FLAGGED 자동 차단: {}", nickname);
+        if (profanityWordManagementService.add(nickname, Language.KOREAN, WordSource.AI_FLAGGED)) {
+            eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
+            log.info("FLAGGED 자동 차단: {}", nickname);
+        }
     }
 }

@@ -3,6 +3,7 @@ package coffeeshout.profanity.application;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
+import coffeeshout.profanity.domain.audit.NicknameSubmittedEvent;
 import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -11,19 +12,21 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NicknameAuditService {
+public class ProfanityAuditService {
 
     private final NicknameAuditRepository auditRepository;
-    private final NicknameAuditBatchProcessor batchProcessor;
+    private final ProfanityAuditBatchProcessor batchProcessor;
     private final NicknameAuditProperties properties;
     private final MeterRegistry meterRegistry;
 
@@ -34,6 +37,13 @@ public class NicknameAuditService {
         Gauge.builder("nickname.audit.unaudited.queue", unauditedQueueDepth, AtomicLong::get)
                 .description("스케줄러 실행 시점의 UNAUDITED 닉네임 적체량")
                 .register(meterRegistry);
+    }
+
+    @EventListener
+    @Transactional
+    public void onNicknameSubmitted(NicknameSubmittedEvent event) {
+        log.debug("닉네임 검열 등록 요청 수신: {}", event.nickname());
+        register(event.nickname());
     }
 
     public Page<NicknameAuditEntity> listByStatus(NicknameAuditStatus status, Pageable pageable) {

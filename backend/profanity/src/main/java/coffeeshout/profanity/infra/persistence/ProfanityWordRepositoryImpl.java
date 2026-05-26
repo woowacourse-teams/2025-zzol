@@ -26,12 +26,13 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
     }
 
     @Override
-    public void save(ProfanityWord word) {
-        jpaRepository.findByWord(word.word())
-                .ifPresentOrElse(
-                        entity -> entity.reactivate(),
-                        () -> jpaRepository.save(ProfanityWordEntity.from(word))
-                );
+    public boolean save(ProfanityWord word) {
+        final Optional<ProfanityWordEntity> existing = jpaRepository.findByWord(word.word());
+        if (existing.isPresent()) {
+            return existing.get().reactivate();
+        }
+        jpaRepository.save(ProfanityWordEntity.from(word));
+        return true;
     }
 
     @Override

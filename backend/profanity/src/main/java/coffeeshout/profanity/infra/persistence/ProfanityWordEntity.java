@@ -76,8 +76,12 @@ public class ProfanityWordEntity {
         return ProfanityWord.of(word, language, source);
     }
 
-    public void reactivate() {
+    public boolean reactivate() {
+        if (this.isActive) {
+            return false;
+        }
         this.isActive = true;
+        return true;
     }
 
     public void deactivate() {

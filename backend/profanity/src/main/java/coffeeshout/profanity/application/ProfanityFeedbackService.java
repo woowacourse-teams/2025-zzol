@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NicknameFeedbackService {
+public class ProfanityFeedbackService {
 
     private final NicknameAuditRepository auditRepository;
     private final NicknameFeedbackRepository feedbackRepository;
@@ -55,8 +55,9 @@ public class NicknameFeedbackService {
                 NicknameFeedbackEntity.OperatorDecision.BLOCKED,
                 null
         ));
-        profanityWordManagementService.add(nickname, Language.KOREAN, WordSource.MANUAL);
-        eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
+        if (profanityWordManagementService.add(nickname, Language.KOREAN, WordSource.MANUAL)) {
+            eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
+        }
         log.info("닉네임 차단 처리: auditId={}, nickname={}", auditId, nickname);
     }
 

@@ -17,21 +17,21 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 
-class NicknameAuditServiceTest {
+class ProfanityAuditServiceTest {
 
     private NicknameAuditRepository auditRepository;
-    private NicknameAuditBatchProcessor batchProcessor;
-    private NicknameAuditService service;
+    private ProfanityAuditBatchProcessor batchProcessor;
+    private ProfanityAuditService service;
 
     @BeforeEach
     void setUp() {
         auditRepository = mock(NicknameAuditRepository.class);
-        batchProcessor = mock(NicknameAuditBatchProcessor.class);
+        batchProcessor = mock(ProfanityAuditBatchProcessor.class);
 
         final NicknameAuditProperties properties = new NicknameAuditProperties(
                 "api-key", "gemini-2.0-flash", 0.8, 10, 5
         );
-        service = new NicknameAuditService(auditRepository, batchProcessor, properties, new SimpleMeterRegistry());
+        service = new ProfanityAuditService(auditRepository, batchProcessor, properties, new SimpleMeterRegistry());
         service.initMetrics();
     }
 

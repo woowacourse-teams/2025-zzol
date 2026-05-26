@@ -24,11 +24,14 @@ public class ProfanityWordManagementService {
     private final TrieRefreshPort trieRefreshPort;
 
     @Transactional
-    public void add(String rawWord, Language language, WordSource source) {
+    public boolean add(String rawWord, Language language, WordSource source) {
         final ProfanityWord word = new ProfanityWord(rawWord, language, source);
-        wordRepository.save(word);
-        afterCommit(trieRefreshPort::publish);
-        log.info("비속어 등록: word={}, lang={}, source={}", word.word(), language, source);
+        final boolean changed = wordRepository.save(word);
+        if (changed) {
+            afterCommit(trieRefreshPort::publish);
+            log.info("비속어 등록: word={}, lang={}, source={}", word.word(), language, source);
+        }
+        return changed;
     }
 
     @Transactional
@@ -43,7 +46,7 @@ public class ProfanityWordManagementService {
 
     @Transactional
     public void saveAll(List<ProfanityWord> words) {
-        words.forEach(wordRepository::save);
+        words.forEach(w -> wordRepository.save(w));
         afterCommit(trieRefreshPort::publish);
         log.info("비속어 일괄 등록: {}건", words.size());
     }

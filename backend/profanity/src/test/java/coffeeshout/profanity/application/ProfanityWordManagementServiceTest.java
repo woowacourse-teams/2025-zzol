@@ -39,10 +39,21 @@ class ProfanityWordManagementServiceTest {
 
         @Test
         void 유효한_단어를_저장하고_트라이_갱신을_발행한다() {
+            given(wordRepository.save(any(ProfanityWord.class))).willReturn(true);
+
             service.add("욕설", Language.KOREAN, WordSource.MANUAL);
 
             then(wordRepository).should().save(any(ProfanityWord.class));
             then(trieRefreshPort).should().publish();
+        }
+
+        @Test
+        void 이미_활성화된_단어는_트라이_갱신을_발행하지_않는다() {
+            given(wordRepository.save(any(ProfanityWord.class))).willReturn(false);
+
+            service.add("욕설", Language.KOREAN, WordSource.MANUAL);
+
+            then(trieRefreshPort).should(never()).publish();
         }
 
         @Test

@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -26,16 +25,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.AbstractPlatformTransactionManager;
+import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 
-class NicknameAuditBatchProcessorTest {
+class ProfanityAuditBatchProcessorTest {
 
     private NicknameAuditRepository auditRepository;
     private NicknameAuditor nicknameAuditor;
     private ProfanityWordManagementService profanityWordManagementService;
     private ApplicationEventPublisher eventPublisher;
     private TransactionTemplate transactionTemplate;
-    private NicknameAuditBatchProcessor processor;
+    private ProfanityAuditBatchProcessor processor;
 
     @BeforeEach
     void setUp() {
@@ -43,16 +45,14 @@ class NicknameAuditBatchProcessorTest {
         nicknameAuditor = mock(NicknameAuditor.class);
         profanityWordManagementService = mock(ProfanityWordManagementService.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
-        transactionTemplate = mock(TransactionTemplate.class);
+        transactionTemplate = new TransactionTemplate(new AbstractPlatformTransactionManager() {
+            @Override protected Object doGetTransaction() { return new Object(); }
+            @Override protected void doBegin(Object tx, TransactionDefinition def) {}
+            @Override protected void doCommit(DefaultTransactionStatus status) {}
+            @Override protected void doRollback(DefaultTransactionStatus status) {}
+        });
 
-        // TransactionTemplate을 실행 즉시 콜백 호출하도록 stub
-        willAnswer(inv -> {
-            ((java.util.function.Consumer<org.springframework.transaction.TransactionStatus>) inv.getArgument(0))
-                    .accept(mock(org.springframework.transaction.TransactionStatus.class));
-            return null;
-        }).given(transactionTemplate).executeWithoutResult(any());
-
-        processor = new NicknameAuditBatchProcessor(
+        processor = new ProfanityAuditBatchProcessor(
                 auditRepository, nicknameAuditor, profanityWordManagementService,
                 eventPublisher, new SimpleMeterRegistry(), transactionTemplate
         );
@@ -68,11 +68,25 @@ class NicknameAuditBatchProcessorTest {
             given(nicknameAuditor.audit(List.of("욕설닉네임"))).willReturn(List.of(
                     new NicknameAuditResult("욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")
             ));
+            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED)).willReturn(true);
 
             processor.process(List.of(entity));
 
             then(profanityWordManagementService).should().add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED);
             then(eventPublisher).should().publishEvent(any(ProfanityWordBlockedEvent.class));
+        }
+
+        @Test
+        void 이미_등록된_단어는_차단_이벤트를_발행하지_않는다() {
+            final NicknameAuditEntity entity = new NicknameAuditEntity("욕설닉네임");
+            given(nicknameAuditor.audit(List.of("욕설닉네임"))).willReturn(List.of(
+                    new NicknameAuditResult("욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")
+            ));
+            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED)).willReturn(false);
+
+            processor.process(List.of(entity));
+
+            then(eventPublisher).should(never()).publishEvent(any());
         }
 
         @Test

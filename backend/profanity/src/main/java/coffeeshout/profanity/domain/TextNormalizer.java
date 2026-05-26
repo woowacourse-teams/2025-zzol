@@ -2,12 +2,13 @@ package coffeeshout.profanity.domain;
 
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TextNormalizer {
 
-    private static final String SPECIAL_CHARS_PATTERN = "[^\\p{L}\\p{N}]";
+    private static final Pattern SPECIAL_CHARS_PATTERN = Pattern.compile("[^\\p{L}\\p{N}]");
 
     public String normalize(String text) {
         if (text == null) {
@@ -15,7 +16,7 @@ public class TextNormalizer {
         }
         final String nfc = Normalizer.normalize(text, Form.NFC);
         final String deLeet = applyLeetSubstitutions(nfc);
-        return deLeet.replaceAll(SPECIAL_CHARS_PATTERN, "").toLowerCase();
+        return SPECIAL_CHARS_PATTERN.matcher(deLeet).replaceAll("").toLowerCase();
     }
 
     private String applyLeetSubstitutions(String text) {

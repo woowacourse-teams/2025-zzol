@@ -9,7 +9,7 @@ public interface ProfanityWordRepository {
 
     boolean existsByWord(String word);
 
-    void save(ProfanityWord word);
+    boolean save(ProfanityWord word);
 
     void deactivate(String word);
 

@@ -27,13 +27,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
 
-class NicknameFeedbackServiceTest {
+class ProfanityFeedbackServiceTest {
 
     private NicknameAuditRepository auditRepository;
     private NicknameFeedbackRepository feedbackRepository;
     private ProfanityWordManagementService profanityWordManagementService;
     private ApplicationEventPublisher eventPublisher;
-    private NicknameFeedbackService service;
+    private ProfanityFeedbackService service;
 
     @BeforeEach
     void setUp() {
@@ -41,7 +41,7 @@ class NicknameFeedbackServiceTest {
         feedbackRepository = mock(NicknameFeedbackRepository.class);
         profanityWordManagementService = mock(ProfanityWordManagementService.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
-        service = new NicknameFeedbackService(auditRepository, feedbackRepository, profanityWordManagementService, eventPublisher);
+        service = new ProfanityFeedbackService(auditRepository, feedbackRepository, profanityWordManagementService, eventPublisher);
     }
 
     @Nested
@@ -91,12 +91,25 @@ class NicknameFeedbackServiceTest {
             final NicknameAuditEntity audit = auditEntityWith("욕설닉네임");
             given(auditRepository.findById(1L)).willReturn(Optional.of(audit));
             given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL)).willReturn(true);
 
             service.block(1L);
 
             assertThat(audit.getStatus()).isEqualTo(NicknameAuditStatus.BLOCKED);
             then(profanityWordManagementService).should().add("욕설닉네임", Language.KOREAN, WordSource.MANUAL);
             then(eventPublisher).should().publishEvent(any(ProfanityWordBlockedEvent.class));
+        }
+
+        @Test
+        void 이미_등록된_단어_차단_시_이벤트를_발행하지_않는다() {
+            final NicknameAuditEntity audit = auditEntityWith("욕설닉네임");
+            given(auditRepository.findById(1L)).willReturn(Optional.of(audit));
+            given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL)).willReturn(false);
+
+            service.block(1L);
+
+            then(eventPublisher).should(never()).publishEvent(any());
         }
 
         @Test

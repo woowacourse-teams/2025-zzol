@@ -23,29 +23,31 @@
 ### 모듈 의존 관계
 
 ```text
-:common  ←  ProfanityWordBlockedEvent 유지 (cross-module 이벤트)
+:common  ←  ProfanityWordBlockedEvent, ProfanityChecker, NicknameSubmittedEvent 유지 (cross-module 계약)
 :profanity  →  :common
-:room  →  :profanity   (ProfanityChecker 인터페이스 이관)
+:room  →  :profanity   (ProfanityWordRepository 직접 쿼리)
 :admin  →  :profanity  (단어 관리 CRUD)
-:user  →  :common      (이벤트 구독만, :profanity 의존 없음)
+:user  →  :common      (:profanity 의존 없음)
 ```
 
-`ProfanityWordBlockedEvent`는 `:common`에 유지한다.
-`:user`가 닉네임 교체 하나를 위해 `:profanity` 전체를 의존하지 않아도 되도록
-이벤트 계약만 `:common`에서 공유한다.
+`ProfanityChecker` 인터페이스와 `NicknameSubmittedEvent`는 `:common`에 둔다.
+`:user`와 `:room` 모두 `:profanity`를 거치지 않고 닉네임 검사·이벤트 발행을 수행할 수 있도록
+계약만 `:common`에서 공유한다.
+`:user`는 닉네임 변경 시 `NicknameSubmittedEvent`를 직접 발행하며,
+`:room`의 relay 리스너(`UserNicknameAuditListener`)는 제거됐다.
 
 ### `:profanity` 내부 구조
 
 ```text
 domain/
   ProfanityWord        — 비속어 단어 (word, language, source, is_active, match_count)
-  ProfanityChecker     — 인터페이스 (:room에서 이관)
+  ProfanityChecker     — 인터페이스 (:common으로 이관)
   ProfanityWordRepository
   Language             — KOREAN / ENGLISH
   audit/
     NicknameAuditor    — AI 검열 포트 인터페이스
     NicknameAuditResult / NicknameAuditStatus / AiConfidence — 검열 결과 도메인
-    NicknameSubmittedEvent — in-process 이벤트 (Spring ApplicationEvent)
+    NicknameSubmittedEvent — :common으로 이관 (cross-module 이벤트)
 
 application/
   ProfanityFilterService          — ProfanityChecker 구현, Aho-Corasick + TextNormalizer 조합
@@ -151,7 +153,9 @@ player_name_feedback (
 ## 결과
 
 - `io.github.vaneproject:badwordfiltering` 의존을 `:room`과 `:app`(testImplementation)에서 모두 제거한다
-- `ProfanityChecker` 인터페이스를 `coffeeshout.room.domain.service` → `coffeeshout.profanity.domain`으로 이관한다
+- `ProfanityChecker` 인터페이스를 `coffeeshout.room.domain.service` → `coffeeshout.global.nickname`으로 이관한다
+- `NicknameSubmittedEvent`를 `coffeeshout.profanity.domain.audit` → `coffeeshout.global.nickname`으로 이관한다
+- `:user` 닉네임 변경 시 `NicknameSubmittedEvent`를 직접 발행하도록 변경하고, relay 역할의 `UserNicknameAuditListener`(:room)를 제거한다
 - `VaneProfanityChecker`, `ProfanityCheckerSyncListener`, `CustomProfanityLoader`를 제거하고 `:profanity` 구현체로 대체한다
 - `PlayerNameRankingCleanupService`의 차단 단어 조회를 `ProfanityWordRepository`로 교체한다
 - `:admin` 모듈에 비속어 관리 CRUD REST API(`/admin/profanity/words`)를 추가한다

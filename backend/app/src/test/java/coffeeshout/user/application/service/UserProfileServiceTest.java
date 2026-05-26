@@ -4,6 +4,9 @@ import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.UserFixture;
+import coffeeshout.profanity.application.ProfanityFilterService;
+import coffeeshout.profanity.domain.ProfanityWordRepository;
+import coffeeshout.profanity.fixture.ProfanityTestDataSeeder;
 import coffeeshout.support.app.ServiceTest;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserErrorCode;
@@ -21,11 +24,18 @@ class UserProfileServiceTest extends ServiceTest {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    ProfanityWordRepository profanityWordRepository;
+
+    @Autowired
+    ProfanityFilterService profanityFilterService;
+
     Long userId;
 
     @BeforeEach
     void setUp() {
         userId = userRepository.save(UserFixture.회원_엠제이()).getId();
+        new ProfanityTestDataSeeder(profanityWordRepository, profanityFilterService).seedForTest();
     }
 
     @Nested

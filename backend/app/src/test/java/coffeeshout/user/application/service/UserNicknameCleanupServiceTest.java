@@ -8,12 +8,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.global.event.ProfanityWordBlockedEvent;
+import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
 import java.util.List;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

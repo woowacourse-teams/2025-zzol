@@ -44,19 +44,22 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
     @Override
     public boolean save(ProfanityWord word) {
         final Optional<ProfanityWordEntity> existing = jpaRepository.findByWord(word.word());
-        if (existing.isPresent()) {
-            final ProfanityWordEntity entity = existing.get();
-            if (entity.getSource() == WordSource.OPERATOR_ALLOWED) {
-                // 운영자 명시 허용 단어는 MANUAL 재차단만 허용, AI_FLAGGED 등은 무시
-                if (word.source() == WordSource.MANUAL) {
-                    entity.overrideSource(WordSource.MANUAL);
-                    return true;
-                }
-                return false;
-            }
+        if (existing.isEmpty()) {
+            jpaRepository.save(ProfanityWordEntity.from(word));
+            return true;
+        }
+        return saveExisting(existing.get(), word);
+    }
+
+    private boolean saveExisting(ProfanityWordEntity entity, ProfanityWord word) {
+        if (entity.getSource() != WordSource.OPERATOR_ALLOWED) {
             return entity.reactivate();
         }
-        jpaRepository.save(ProfanityWordEntity.from(word));
+        // 운영자 명시 허용 단어는 MANUAL 재차단만 허용, AI_FLAGGED 등은 무시
+        if (word.source() != WordSource.MANUAL) {
+            return false;
+        }
+        entity.overrideSource(WordSource.MANUAL);
         return true;
     }
 

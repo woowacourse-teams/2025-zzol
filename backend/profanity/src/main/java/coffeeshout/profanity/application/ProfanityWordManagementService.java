@@ -51,7 +51,7 @@ public class ProfanityWordManagementService {
 
     @Transactional
     public void saveAll(List<ProfanityWord> words) {
-        words.forEach(w -> wordRepository.save(w));
+        words.forEach(wordRepository::save);
         afterCommit(trieRefreshNotifier::publish);
         log.info("비속어 일괄 등록: {}건", words.size());
     }

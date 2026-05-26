@@ -69,13 +69,13 @@ infra/
 
 ### 단어 목록 구성
 
-| source | 언어 | 설명 |
-|--------|------|------|
-| `VANE` | 한국어 | vane 라이브러리 내장 목록 추출 |
-| `LDNOOBW` | 영어 | List of Dirty, Naughty, Obscene, and Otherwise Bad Words |
-| `MANUAL` | 한/영 | 관리자 직접 등록 |
-| `AI_FLAGGED` | 한/영 | Gemini 검열에서 FLAGGED 판정된 닉네임이 자동 등록 |
-| `OPERATOR_ALLOWED` | 한/영 | 관리자가 AI 오판 닉네임을 허용 처리할 때 등록; MANUAL만 재차단 가능 |
+| source             | 언어  | 설명                                                       |
+|--------------------|-----|----------------------------------------------------------|
+| `VANE`             | 한국어 | vane 라이브러리 내장 목록 추출                                      |
+| `LDNOOBW`          | 영어  | List of Dirty, Naughty, Obscene, and Otherwise Bad Words |
+| `MANUAL`           | 한/영 | 관리자 직접 등록                                                |
+| `AI_FLAGGED`       | 한/영 | Gemini 검열에서 FLAGGED 판정된 닉네임이 자동 등록                       |
+| `OPERATOR_ALLOWED` | 한/영 | 관리자가 AI 오판 닉네임을 허용 처리할 때 등록; MANUAL만 재차단 가능              |
 
 ### 다중 인스턴스 동기화
 

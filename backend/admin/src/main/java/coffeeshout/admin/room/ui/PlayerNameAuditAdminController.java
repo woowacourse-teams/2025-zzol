@@ -1,7 +1,7 @@
 package coffeeshout.admin.room.ui;
 
-import coffeeshout.profanity.application.NicknameAuditService;
-import coffeeshout.profanity.application.NicknameFeedbackService;
+import coffeeshout.profanity.application.ProfanityAuditService;
+import coffeeshout.profanity.application.ProfanityFeedbackService;
 import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
@@ -28,8 +28,8 @@ public class PlayerNameAuditAdminController {
     private static final int PAGE_SIZE = 10;
     private static final Sort AUDITED_AT_DESC = Sort.by("auditedAt").descending();
 
-    private final NicknameAuditService playerNameAuditService;
-    private final NicknameFeedbackService playerNameFeedbackService;
+    private final ProfanityAuditService playerNameAuditService;
+    private final ProfanityFeedbackService playerNameFeedbackService;
 
     @GetMapping
     public String dashboard(

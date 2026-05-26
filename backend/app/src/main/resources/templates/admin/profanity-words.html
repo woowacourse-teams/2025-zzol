@@ -64,7 +64,7 @@
                 <td th:text="${item.language()}"></td>
                 <td th:text="${item.source()}"></td>
                 <td>
-                    <form th:action="@{/admin/profanity/words/{word}/deactivate(word=${item.word()})}"
+                    <form th:action="@{/admin/profanity/words/deactivate(word=${item.word()})}"
                           method="post"
                           onsubmit="return confirm('이 단어를 비활성화하시겠습니까?')">
                         <button type="submit" class="btn btn-allow">비활성화</button>

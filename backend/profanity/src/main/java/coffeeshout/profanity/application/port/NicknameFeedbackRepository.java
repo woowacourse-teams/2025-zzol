@@ -1,14 +1,14 @@
 package coffeeshout.profanity.application.port;
 
-import coffeeshout.profanity.infra.persistence.audit.NicknameFeedbackEntity;
+import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 
 public interface NicknameFeedbackRepository {
 
-    NicknameFeedbackEntity save(NicknameFeedbackEntity entity);
+    NicknameFeedback save(NicknameFeedback entity);
 
     long count();
 
-    List<NicknameFeedbackEntity> findRecentFeedbacks(Pageable pageable);
+    List<NicknameFeedback> findRecentFeedbacks(Pageable pageable);
 }

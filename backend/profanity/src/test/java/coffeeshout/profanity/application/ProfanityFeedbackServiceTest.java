@@ -19,8 +19,8 @@ import coffeeshout.profanity.domain.ProfanityErrorCode;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
-import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
-import coffeeshout.profanity.infra.persistence.audit.NicknameFeedbackEntity;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
+import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -49,19 +49,19 @@ class ProfanityFeedbackServiceTest {
 
         @Test
         void 검열_항목을_ALLOWED로_변경하고_피드백을_저장한다() {
-            final NicknameAuditEntity audit = auditEntityWith("용감한호랑이");
+            final NicknameAudit audit = auditEntityWith("용감한호랑이");
             given(auditRepository.findById(1L)).willReturn(Optional.of(audit));
             given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
             service.allow(1L);
 
             assertThat(audit.getStatus()).isEqualTo(NicknameAuditStatus.ALLOWED);
-            then(feedbackRepository).should().save(any(NicknameFeedbackEntity.class));
+            then(feedbackRepository).should().save(any(NicknameFeedback.class));
         }
 
         @Test
         void 비속어_목록에_없는_닉네임도_허용_처리된다() {
-            final NicknameAuditEntity audit = auditEntityWith("용감한호랑이");
+            final NicknameAudit audit = auditEntityWith("용감한호랑이");
             given(auditRepository.findById(1L)).willReturn(Optional.of(audit));
             given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
             willThrow(new BusinessException(ProfanityErrorCode.WORD_NOT_FOUND, "없음"))
@@ -88,7 +88,7 @@ class ProfanityFeedbackServiceTest {
 
         @Test
         void 검열_항목을_BLOCKED로_변경하고_비속어로_등록한다() {
-            final NicknameAuditEntity audit = auditEntityWith("욕설닉네임");
+            final NicknameAudit audit = auditEntityWith("욕설닉네임");
             given(auditRepository.findById(1L)).willReturn(Optional.of(audit));
             given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
             given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL)).willReturn(true);
@@ -102,7 +102,7 @@ class ProfanityFeedbackServiceTest {
 
         @Test
         void 이미_등록된_단어_차단_시_이벤트를_발행하지_않는다() {
-            final NicknameAuditEntity audit = auditEntityWith("욕설닉네임");
+            final NicknameAudit audit = auditEntityWith("욕설닉네임");
             given(auditRepository.findById(1L)).willReturn(Optional.of(audit));
             given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
             given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL)).willReturn(false);
@@ -114,13 +114,13 @@ class ProfanityFeedbackServiceTest {
 
         @Test
         void 차단_시_피드백이_저장된다() {
-            final NicknameAuditEntity audit = auditEntityWith("욕설닉네임");
+            final NicknameAudit audit = auditEntityWith("욕설닉네임");
             given(auditRepository.findById(1L)).willReturn(Optional.of(audit));
             given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
             service.block(1L);
 
-            then(feedbackRepository).should().save(any(NicknameFeedbackEntity.class));
+            then(feedbackRepository).should().save(any(NicknameFeedback.class));
         }
 
         @Test
@@ -146,7 +146,7 @@ class ProfanityFeedbackServiceTest {
         }
     }
 
-    private NicknameAuditEntity auditEntityWith(String nickname) {
-        return new NicknameAuditEntity(nickname);
+    private NicknameAudit auditEntityWith(String nickname) {
+        return new NicknameAudit(nickname);
     }
 }

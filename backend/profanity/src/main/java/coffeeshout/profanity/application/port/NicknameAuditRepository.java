@@ -1,7 +1,7 @@
 package coffeeshout.profanity.application.port;
 
+import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
-import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -10,19 +10,19 @@ import org.springframework.data.domain.Pageable;
 
 public interface NicknameAuditRepository {
 
-    NicknameAuditEntity save(NicknameAuditEntity entity);
+    NicknameAudit save(NicknameAudit entity);
 
-    List<NicknameAuditEntity> saveAll(Iterable<NicknameAuditEntity> entities);
+    List<NicknameAudit> saveAll(Iterable<NicknameAudit> entities);
 
-    Optional<NicknameAuditEntity> findById(Long id);
+    Optional<NicknameAudit> findById(Long id);
 
     long countByStatusAndAuditedAtIsNull(NicknameAuditStatus status);
 
     long countByStatus(NicknameAuditStatus status);
 
-    List<NicknameAuditEntity> findByStatusAndAuditedAtIsNull(NicknameAuditStatus status, Pageable pageable);
+    List<NicknameAudit> findByStatusAndAuditedAtIsNull(NicknameAuditStatus status, Pageable pageable);
 
-    Page<NicknameAuditEntity> findByStatus(NicknameAuditStatus status, Pageable pageable);
+    Page<NicknameAudit> findByStatus(NicknameAuditStatus status, Pageable pageable);
 
     Set<String> findNicknamesByStatus(NicknameAuditStatus status);
 

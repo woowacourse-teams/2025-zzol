@@ -4,7 +4,7 @@ import coffeeshout.profanity.application.ProfanityAuditService;
 import coffeeshout.profanity.application.ProfanityFeedbackService;
 import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
-import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
@@ -86,7 +86,7 @@ public class PlayerNameAuditAdminController {
         return "redirect:/admin/playername-audit?flaggedPage=" + flaggedPage + "&pendingPage=" + pendingPage;
     }
 
-    private AuditRow toRow(NicknameAuditEntity e) {
+    private AuditRow toRow(NicknameAudit e) {
         return new AuditRow(
                 e.getId(),
                 e.getNickname(),

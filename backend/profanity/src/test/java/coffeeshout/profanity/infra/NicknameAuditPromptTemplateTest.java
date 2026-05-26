@@ -3,7 +3,7 @@ package coffeeshout.profanity.infra;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.profanity.domain.audit.AiConfidence;
-import coffeeshout.profanity.infra.persistence.audit.NicknameFeedbackEntity;
+import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
@@ -36,7 +36,7 @@ class NicknameAuditPromptTemplateTest {
 
         @Test
         void BLOCKED_피드백은_flagged_true로_포함된다() {
-            final NicknameFeedbackEntity feedback = blockedFeedback("욕설닉네임");
+            final NicknameFeedback feedback = blockedFeedback("욕설닉네임");
             final String message = template.buildUserMessage(List.of("욕설닉네임"), List.of(feedback));
 
             SoftAssertions.assertSoftly(softly -> {
@@ -47,7 +47,7 @@ class NicknameAuditPromptTemplateTest {
 
         @Test
         void ALLOWED_피드백은_flagged_false로_포함된다() {
-            final NicknameFeedbackEntity feedback = allowedFeedback("용감한호랑이");
+            final NicknameFeedback feedback = allowedFeedback("용감한호랑이");
             final String message = template.buildUserMessage(List.of("용감한호랑이"), List.of(feedback));
 
             SoftAssertions.assertSoftly(softly -> {
@@ -64,13 +64,13 @@ class NicknameAuditPromptTemplateTest {
         }
     }
 
-    private NicknameFeedbackEntity blockedFeedback(String nickname) {
-        return new NicknameFeedbackEntity(nickname, true, AiConfidence.of(0.95),
-                NicknameFeedbackEntity.OperatorDecision.BLOCKED, null);
+    private NicknameFeedback blockedFeedback(String nickname) {
+        return new NicknameFeedback(nickname, true, AiConfidence.of(0.95),
+                NicknameFeedback.OperatorDecision.BLOCKED, null);
     }
 
-    private NicknameFeedbackEntity allowedFeedback(String nickname) {
-        return new NicknameFeedbackEntity(nickname, false, AiConfidence.UNKNOWN,
-                NicknameFeedbackEntity.OperatorDecision.ALLOWED, null);
+    private NicknameFeedback allowedFeedback(String nickname) {
+        return new NicknameFeedback(nickname, false, AiConfidence.UNKNOWN,
+                NicknameFeedback.OperatorDecision.ALLOWED, null);
     }
 }

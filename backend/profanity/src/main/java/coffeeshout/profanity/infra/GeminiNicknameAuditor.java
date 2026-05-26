@@ -8,7 +8,7 @@ import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
-import coffeeshout.profanity.infra.persistence.audit.NicknameFeedbackEntity;
+import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -119,12 +119,12 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
     }
 
     private String buildUserMessage(List<String> nicknames) {
-        final List<NicknameFeedbackEntity> examples = loadFeedbackExamples();
+        final List<NicknameFeedback> examples = loadFeedbackExamples();
         return promptTemplate.buildUserMessage(nicknames, examples);
     }
 
-    private List<NicknameFeedbackEntity> loadFeedbackExamples() {
-        final List<NicknameFeedbackEntity> feedbacks = feedbackRepository.findRecentFeedbacks(
+    private List<NicknameFeedback> loadFeedbackExamples() {
+        final List<NicknameFeedback> feedbacks = feedbackRepository.findRecentFeedbacks(
                 PageRequest.of(0, properties.feedbackInjectionThreshold(), Sort.by("createdAt").descending())
         );
         if (feedbacks.size() < properties.feedbackInjectionThreshold()) {

@@ -9,7 +9,7 @@ import static org.mockito.Mockito.never;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
-import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +45,7 @@ class ProfanityAuditServiceTest {
 
             service.register("새닉네임");
 
-            then(auditRepository).should().save(any(NicknameAuditEntity.class));
+            then(auditRepository).should().save(any(NicknameAudit.class));
         }
 
         @Test
@@ -75,7 +75,7 @@ class ProfanityAuditServiceTest {
 
         @Test
         void UNAUDITED_닉네임이_있으면_배치_처리가_수행된다() {
-            final NicknameAuditEntity entity = new NicknameAuditEntity("욕설닉네임");
+            final NicknameAudit entity = new NicknameAudit("욕설닉네임");
             given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED)).willReturn(1L);
             given(auditRepository.findByStatusAndAuditedAtIsNull(
                     any(NicknameAuditStatus.class), any(Pageable.class)))

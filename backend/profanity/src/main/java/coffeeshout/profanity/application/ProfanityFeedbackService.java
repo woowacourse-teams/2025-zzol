@@ -9,8 +9,8 @@ import coffeeshout.profanity.domain.ProfanityErrorCode;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
-import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
-import coffeeshout.profanity.infra.persistence.audit.NicknameFeedbackEntity;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
+import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -29,14 +29,14 @@ public class ProfanityFeedbackService {
 
     @Transactional
     public void allow(Long auditId) {
-        final NicknameAuditEntity audit = getAuditEntity(auditId);
+        final NicknameAudit audit = getAuditEntity(auditId);
         final String nickname = audit.getNickname();
         audit.updateStatus(NicknameAuditStatus.ALLOWED);
-        feedbackRepository.save(new NicknameFeedbackEntity(
+        feedbackRepository.save(new NicknameFeedback(
                 nickname,
                 true,
                 audit.getConfidence(),
-                NicknameFeedbackEntity.OperatorDecision.ALLOWED,
+                NicknameFeedback.OperatorDecision.ALLOWED,
                 null
         ));
         tryDeactivate(nickname);
@@ -45,14 +45,14 @@ public class ProfanityFeedbackService {
 
     @Transactional
     public void block(Long auditId) {
-        final NicknameAuditEntity audit = getAuditEntity(auditId);
+        final NicknameAudit audit = getAuditEntity(auditId);
         final String nickname = audit.getNickname();
         audit.updateStatus(NicknameAuditStatus.BLOCKED);
-        feedbackRepository.save(new NicknameFeedbackEntity(
+        feedbackRepository.save(new NicknameFeedback(
                 nickname,
                 true,
                 audit.getConfidence(),
-                NicknameFeedbackEntity.OperatorDecision.BLOCKED,
+                NicknameFeedback.OperatorDecision.BLOCKED,
                 null
         ));
         if (profanityWordManagementService.add(nickname, Language.KOREAN, WordSource.MANUAL)) {
@@ -72,7 +72,7 @@ public class ProfanityFeedbackService {
         }
     }
 
-    private NicknameAuditEntity getAuditEntity(Long auditId) {
+    private NicknameAudit getAuditEntity(Long auditId) {
         return auditRepository.findById(auditId)
                 .orElseThrow(() -> new BusinessException(
                         NicknameAuditErrorCode.AUDIT_NOT_FOUND, "검열 항목을 찾을 수 없습니다: " + auditId));

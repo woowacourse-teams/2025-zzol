@@ -4,7 +4,7 @@ import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameSubmittedEvent;
-import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -46,7 +46,7 @@ public class ProfanityAuditService {
         register(event.nickname());
     }
 
-    public Page<NicknameAuditEntity> listByStatus(NicknameAuditStatus status, Pageable pageable) {
+    public Page<NicknameAudit> listByStatus(NicknameAuditStatus status, Pageable pageable) {
         return auditRepository.findByStatus(status, pageable);
     }
 
@@ -55,7 +55,7 @@ public class ProfanityAuditService {
             log.debug("이미 UNAUDITED 상태로 등록된 닉네임: {}", nickname);
             return;
         }
-        auditRepository.save(new NicknameAuditEntity(nickname));
+        auditRepository.save(new NicknameAudit(nickname));
     }
 
     public void auditPending() {
@@ -64,7 +64,7 @@ public class ProfanityAuditService {
         log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
 
         final Pageable pageable = PageRequest.of(0, properties.batchSize(), Sort.by("createdAt").ascending());
-        List<NicknameAuditEntity> batch = auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+        List<NicknameAudit> batch = auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
         int processedTotal = 0;
 
         while (!batch.isEmpty()) {

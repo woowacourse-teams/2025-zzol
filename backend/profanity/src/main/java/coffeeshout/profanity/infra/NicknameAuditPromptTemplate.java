@@ -2,7 +2,7 @@ package coffeeshout.profanity.infra;
 
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
-import coffeeshout.profanity.infra.persistence.audit.NicknameFeedbackEntity;
+import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -34,20 +34,20 @@ public class NicknameAuditPromptTemplate {
 
     private final ObjectMapper objectMapper;
 
-    public String buildUserMessage(List<String> nicknames, List<NicknameFeedbackEntity> feedbackExamples) {
+    public String buildUserMessage(List<String> nicknames, List<NicknameFeedback> feedbackExamples) {
         final StringBuilder message = new StringBuilder();
         appendFeedbackExamples(message, feedbackExamples);
         appendNicknameList(message, nicknames);
         return message.toString();
     }
 
-    private void appendFeedbackExamples(StringBuilder message, List<NicknameFeedbackEntity> examples) {
+    private void appendFeedbackExamples(StringBuilder message, List<NicknameFeedback> examples) {
         if (examples.isEmpty()) {
             return;
         }
         final List<Map<String, Object>> exampleMaps = examples.stream()
                 .map(fb -> {
-                    final boolean flagged = fb.getOperatorDecision() == NicknameFeedbackEntity.OperatorDecision.BLOCKED;
+                    final boolean flagged = fb.getOperatorDecision() == NicknameFeedback.OperatorDecision.BLOCKED;
                     return Map.<String, Object>of(
                             "nickname", fb.getNickname(),
                             "flagged", flagged,

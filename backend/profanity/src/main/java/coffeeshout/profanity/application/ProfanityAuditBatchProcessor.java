@@ -7,7 +7,7 @@ import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
-import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -42,9 +42,9 @@ public class ProfanityAuditBatchProcessor {
                 .register(meterRegistry);
     }
 
-    public int process(List<NicknameAuditEntity> batch) {
+    public int process(List<NicknameAudit> batch) {
         final List<String> nicknames = batch.stream()
-                .map(NicknameAuditEntity::getNickname)
+                .map(NicknameAudit::getNickname)
                 .distinct()
                 .toList();
 
@@ -67,7 +67,7 @@ public class ProfanityAuditBatchProcessor {
         return batch.size();
     }
 
-    private void applyResult(NicknameAuditEntity entity, NicknameAuditResult result) {
+    private void applyResult(NicknameAudit entity, NicknameAuditResult result) {
         if (result == null) return;
         entity.complete(result.status(), result.confidence(), result.reason());
         meterRegistry.counter("nickname.audit.result", "status", result.status().name()).increment();

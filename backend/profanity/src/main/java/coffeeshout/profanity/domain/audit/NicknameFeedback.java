@@ -1,6 +1,5 @@
-package coffeeshout.profanity.infra.persistence.audit;
+package coffeeshout.profanity.domain.audit;
 
-import coffeeshout.profanity.domain.audit.AiConfidence;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "player_name_feedback") // :room에서 이전 시 기존 테이블 유지 — 스키마 마이그레이션 없이 호환
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class NicknameFeedbackEntity {
+public class NicknameFeedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,8 +42,8 @@ public class NicknameFeedbackEntity {
     @Column(nullable = false)
     private Instant createdAt;
 
-    public NicknameFeedbackEntity(String nickname, boolean aiFlagged, AiConfidence aiConfidence,
-                                   OperatorDecision operatorDecision, String reason) {
+    public NicknameFeedback(String nickname, boolean aiFlagged, AiConfidence aiConfidence,
+                            OperatorDecision operatorDecision, String reason) {
         this.nickname = nickname;
         this.aiFlagged = aiFlagged;
         this.aiConfidence = aiConfidence != null ? aiConfidence : AiConfidence.UNKNOWN;

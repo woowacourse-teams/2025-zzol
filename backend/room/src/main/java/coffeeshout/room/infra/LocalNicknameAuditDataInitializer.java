@@ -2,7 +2,7 @@ package coffeeshout.room.infra;
 
 import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
-import coffeeshout.profanity.infra.persistence.audit.NicknameAuditEntity;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.infra.persistence.audit.NicknameAuditJpaRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
             return;
         }
 
-        final List<NicknameAuditEntity> flaggedData = List.of(
+        final List<NicknameAudit> flaggedData = List.of(
                 flagged("씨b알",       0.97, "비속어 우회 (특수문자 삽입)"),
                 flagged("ㅅㅂ놈아",    0.95, "초성 비속어"),
                 flagged("개새끼야",    0.99, "직접적 욕설"),
@@ -63,7 +63,7 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
                 flagged("바보새X야",   0.88, "복합 모욕 우회 표현")
         );
 
-        final List<NicknameAuditEntity> pendingData = List.of(
+        final List<NicknameAudit> pendingData = List.of(
                 pending("열받네",      0.62, "감탄사로도 쓰이나 문맥 의존적"),
                 pending("빡친호랑이",  0.71, "비속어 경계 표현"),
                 pending("킹받는곰",    0.68, "신조어, 판단 불명확"),
@@ -102,14 +102,14 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
                 flaggedData.size(), pendingData.size());
     }
 
-    private NicknameAuditEntity flagged(String nickname, double confidence, String reason) {
-        final NicknameAuditEntity entity = new NicknameAuditEntity(nickname);
+    private NicknameAudit flagged(String nickname, double confidence, String reason) {
+        final NicknameAudit entity = new NicknameAudit(nickname);
         entity.complete(NicknameAuditStatus.FLAGGED, AiConfidence.of(confidence), reason);
         return entity;
     }
 
-    private NicknameAuditEntity pending(String nickname, double confidence, String reason) {
-        final NicknameAuditEntity entity = new NicknameAuditEntity(nickname);
+    private NicknameAudit pending(String nickname, double confidence, String reason) {
+        final NicknameAudit entity = new NicknameAudit(nickname);
         entity.complete(NicknameAuditStatus.PENDING, AiConfidence.of(confidence), reason);
         return entity;
     }

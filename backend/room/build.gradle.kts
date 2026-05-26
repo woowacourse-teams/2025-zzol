@@ -50,5 +50,6 @@ dependencies {
     testFixturesImplementation(project(":game-api"))
     testFixturesImplementation("org.springframework.boot:spring-boot-test")
     testImplementation(project(":test-support"))
+    testImplementation(testFixtures(project(":profanity")))
     testImplementation(testFixtures(project(":user")))
 }

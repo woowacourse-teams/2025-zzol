@@ -11,8 +11,8 @@ import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import jakarta.validation.Valid;
+import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.data.domain.Page;
@@ -33,11 +33,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequiredArgsConstructor
 public class ProfanityAdminController {
 
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int PAGE_SIZE = 10;
     private static final int WORDS_PAGE_SIZE = 20;
     private static final Sort AUDITED_AT_DESC = Sort.by("auditedAt").descending();
 
+    private final Clock clock;
     private final ProfanityAuditService auditService;
     private final ProfanityFeedbackService feedbackService;
     private final ProfanityWordManagementService managementService;
@@ -189,8 +189,8 @@ public class ProfanityAdminController {
                 e.getNickname(),
                 e.getConfidence() != null ? e.getConfidence() : AiConfidence.UNKNOWN,
                 e.getReason() != null ? e.getReason() : "",
-                LocalDateTime.ofInstant(e.getCreatedAt(), KST),
-                e.getAuditedAt() != null ? LocalDateTime.ofInstant(e.getAuditedAt(), KST) : null
+                LocalDateTime.ofInstant(e.getCreatedAt(), clock.getZone()),
+                e.getAuditedAt() != null ? LocalDateTime.ofInstant(e.getAuditedAt(), clock.getZone()) : null
         );
     }
 

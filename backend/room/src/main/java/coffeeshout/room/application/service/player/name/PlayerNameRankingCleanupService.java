@@ -1,8 +1,7 @@
 package coffeeshout.room.application.service.player.name;
 
-import coffeeshout.profanity.domain.ProfanityWordRepository;
-import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.global.nickname.NicknamesCollectedEvent;
+import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.service.PlayerNameGenerator;
 import coffeeshout.room.application.port.PlayerEntityRepository;
@@ -23,29 +22,21 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PlayerNameRankingCleanupService {
 
-    private final ProfanityWordRepository profanityWordRepository;
-    private final TextNormalizer textNormalizer;
+    private final ProfanityChecker profanityChecker;
     private final PlayerEntityRepository playerRepository;
     private final PlayerNameGenerator nicknameGenerator;
 
     @EventListener
     @Transactional
     public void onNicknamesCollected(NicknamesCollectedEvent event) {
-        // DB 저장 정규화(TextNormalizer)와 동일하게 적용해 매칭 키를 맞춘다.
-        // 원본 닉네임은 이후 findAllByPlayerName 조회에 사용하므로 정규화값→원본 매핑을 보존한다.
-        final Map<String, List<String>> normalizedToOriginals = event.nicknames().stream()
-                .collect(Collectors.groupingBy(textNormalizer::normalize));
+        final List<String> originalTargets = event.nicknames().stream()
+                .filter(profanityChecker::contains)
+                .toList();
 
-        final Set<String> blocked = profanityWordRepository.findAllActiveIn(normalizedToOriginals.keySet());
-
-        if (blocked.isEmpty()) {
+        if (originalTargets.isEmpty()) {
             log.info("[RankingCleanup] 랭킹 내 BLOCKED 닉네임 없음, 종료");
             return;
         }
-
-        final List<String> originalTargets = blocked.stream()
-                .flatMap(key -> normalizedToOriginals.getOrDefault(key, List.of()).stream())
-                .toList();
 
         log.info("[RankingCleanup] 교체 대상 {}건: {}", originalTargets.size(), originalTargets);
         int replaced = 0;

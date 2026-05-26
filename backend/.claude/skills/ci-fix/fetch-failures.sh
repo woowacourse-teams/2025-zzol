@@ -8,20 +8,6 @@ if [ -z "$PR" ]; then
   exit 1
 fi
 
-CONCLUSION=$(gh pr checks "$PR" --json name,status,conclusion 2>/dev/null \
-  | jq -r '[.[] | select(.name == "Backend Test Results")] | first | .conclusion' || true)
-
-if [ -z "$CONCLUSION" ]; then
-  echo "Backend Test Results 체크를 찾을 수 없습니다." >&2
-  exit 1
-elif [ "$CONCLUSION" = "success" ]; then
-  echo "CI가 통과 상태입니다 (conclusion: success)"
-  exit 0
-elif [ "$CONCLUSION" != "failure" ]; then
-  echo "CI 상태: ${CONCLUSION} — 아직 완료되지 않았거나 취소된 상태입니다." >&2
-  exit 1
-fi
-
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 HEAD_SHA=$(gh pr view "$PR" --json headRefOid -q .headRefOid)
 
@@ -29,7 +15,20 @@ CHECK_RUN_ID=$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs" \
   --jq '[.check_runs[] | select(.name == "Backend Test Results")] | first | .id')
 
 if [ -z "$CHECK_RUN_ID" ] || [ "$CHECK_RUN_ID" = "null" ]; then
-  echo "Backend Test Results 체크 런을 찾을 수 없습니다." >&2
+  echo "Backend Test Results 체크를 찾을 수 없습니다." >&2
+  exit 1
+fi
+
+CONCLUSION=$(gh api "repos/${REPO}/check-runs/${CHECK_RUN_ID}" --jq '.conclusion')
+
+if [ "$CONCLUSION" = "success" ]; then
+  echo "CI가 통과 상태입니다 (conclusion: success)"
+  exit 0
+elif [ "$CONCLUSION" = "null" ] || [ -z "$CONCLUSION" ]; then
+  echo "CI 상태: 아직 완료되지 않은 상태입니다." >&2
+  exit 1
+elif [ "$CONCLUSION" != "failure" ]; then
+  echo "CI 상태: ${CONCLUSION} — 실패가 아닙니다." >&2
   exit 1
 fi
 

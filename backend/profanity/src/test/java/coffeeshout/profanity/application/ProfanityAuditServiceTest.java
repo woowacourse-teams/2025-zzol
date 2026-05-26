@@ -21,17 +21,19 @@ class ProfanityAuditServiceTest {
 
     private NicknameAuditRepository auditRepository;
     private ProfanityAuditBatchProcessor batchProcessor;
+    private ProfanityWordManagementService profanityWordManagementService;
     private ProfanityAuditService service;
 
     @BeforeEach
     void setUp() {
         auditRepository = mock(NicknameAuditRepository.class);
         batchProcessor = mock(ProfanityAuditBatchProcessor.class);
+        profanityWordManagementService = mock(ProfanityWordManagementService.class);
 
         final NicknameAuditProperties properties = new NicknameAuditProperties(
                 "api-key", "gemini-2.0-flash", 0.8, 10, 5
         );
-        service = new ProfanityAuditService(auditRepository, batchProcessor, properties, new SimpleMeterRegistry());
+        service = new ProfanityAuditService(auditRepository, batchProcessor, profanityWordManagementService, properties, new SimpleMeterRegistry());
         service.initMetrics();
     }
 
@@ -54,6 +56,18 @@ class ProfanityAuditServiceTest {
                     .willReturn(true);
 
             service.register("이미등록된닉네임");
+
+            then(auditRepository).should(never()).save(any());
+        }
+
+        @Test
+        void 운영자_허용_닉네임은_검열_등록이_생략된다() {
+            given(auditRepository.existsByNicknameAndStatus("허용닉네임", NicknameAuditStatus.UNAUDITED))
+                    .willReturn(false);
+            given(profanityWordManagementService.isOperatorAllowed("허용닉네임"))
+                    .willReturn(true);
+
+            service.register("허용닉네임");
 
             then(auditRepository).should(never()).save(any());
         }

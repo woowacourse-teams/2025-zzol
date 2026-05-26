@@ -25,6 +25,13 @@ class NicknameAuditResultTest {
         }
 
         @Test
+        void flagged가_false이면_낮은_신뢰도에서도_CLEAN으로_결정된다() {
+            final NicknameAuditResult result = NicknameAuditResult.of("용감한호랑이", false, 0.1, "일반 닉네임", THRESHOLD);
+
+            assertThat(result.status()).isEqualTo(NicknameAuditStatus.CLEAN);
+        }
+
+        @Test
         void flagged이고_confidence가_임계값_이상이면_FLAGGED로_결정된다() {
             final NicknameAuditResult result = NicknameAuditResult.of("씨발", true, 0.95, "직접 욕설", THRESHOLD);
 

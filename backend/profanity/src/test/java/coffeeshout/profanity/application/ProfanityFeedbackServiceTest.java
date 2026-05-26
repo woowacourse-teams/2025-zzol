@@ -5,17 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
-import coffeeshout.global.event.ProfanityWordBlockedEvent;
-import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.fixture.ProfanityWordFixture;
+import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
 import coffeeshout.profanity.domain.Language;
-import coffeeshout.profanity.domain.ProfanityErrorCode;
-
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
@@ -60,16 +57,14 @@ class ProfanityFeedbackServiceTest {
         }
 
         @Test
-        void 비속어_목록에_없는_닉네임도_허용_처리된다() {
-            final NicknameAudit audit = auditEntityWith("용감한호랑이");
+        void 허용_시_source_무관하게_operatorAllow가_호출된다() {
+            final NicknameAudit audit = auditEntityWith("욕설닉네임");
             given(auditRepository.findById(1L)).willReturn(Optional.of(audit));
             given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
-            willThrow(new BusinessException(ProfanityErrorCode.WORD_NOT_FOUND, "없음"))
-                    .given(profanityWordManagementService).deactivate("용감한호랑이");
 
             service.allow(1L);
 
-            assertThat(audit.getStatus()).isEqualTo(NicknameAuditStatus.ALLOWED);
+            then(profanityWordManagementService).should().operatorAllow("욕설닉네임");
         }
 
         @Test
@@ -121,6 +116,18 @@ class ProfanityFeedbackServiceTest {
             service.block(1L);
 
             then(feedbackRepository).should().save(any(NicknameFeedback.class));
+        }
+
+        @Test
+        void 영어_닉네임은_ENGLISH_언어로_등록된다() {
+            final NicknameAudit audit = auditEntityWith("badword");
+            given(auditRepository.findById(2L)).willReturn(Optional.of(audit));
+            given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+            given(profanityWordManagementService.add("badword", Language.ENGLISH, WordSource.MANUAL)).willReturn(true);
+
+            service.block(2L);
+
+            then(profanityWordManagementService).should().add("badword", Language.ENGLISH, WordSource.MANUAL);
         }
 
         @Test

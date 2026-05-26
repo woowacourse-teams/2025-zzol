@@ -1,11 +1,10 @@
 package coffeeshout.profanity.application;
 
-import coffeeshout.global.event.ProfanityWordBlockedEvent;
+import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
 import coffeeshout.profanity.domain.Language;
-import coffeeshout.profanity.domain.ProfanityErrorCode;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
@@ -39,7 +38,7 @@ public class ProfanityFeedbackService {
                 NicknameFeedback.OperatorDecision.ALLOWED,
                 null
         ));
-        tryDeactivate(nickname);
+        profanityWordManagementService.operatorAllow(nickname);
         log.info("닉네임 허용 처리: auditId={}, nickname={}", auditId, nickname);
     }
 
@@ -55,21 +54,10 @@ public class ProfanityFeedbackService {
                 NicknameFeedback.OperatorDecision.BLOCKED,
                 null
         ));
-        if (profanityWordManagementService.add(nickname, Language.KOREAN, WordSource.MANUAL)) {
+        if (profanityWordManagementService.add(nickname, Language.detect(nickname), WordSource.MANUAL)) {
             eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
         }
         log.info("닉네임 차단 처리: auditId={}, nickname={}", auditId, nickname);
-    }
-
-    private void tryDeactivate(String nickname) {
-        try {
-            profanityWordManagementService.deactivate(nickname);
-        } catch (BusinessException e) {
-            if (e.getErrorCode() != ProfanityErrorCode.WORD_NOT_FOUND) {
-                throw e;
-            }
-            log.debug("비속어 목록에 없는 닉네임 허용 — 비활성화 생략: {}", nickname);
-        }
     }
 
     private NicknameAudit getAuditEntity(Long auditId) {

@@ -1,6 +1,6 @@
 package coffeeshout.profanity.application;
 
-import coffeeshout.profanity.domain.ProfanityChecker;
+import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.TextNormalizer;

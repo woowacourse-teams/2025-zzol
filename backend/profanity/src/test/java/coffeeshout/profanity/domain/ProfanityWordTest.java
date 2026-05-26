@@ -58,7 +58,7 @@ class ProfanityWordTest {
             @Test
             void null이면_예외가_발생한다() {
                 assertCoffeeShoutException(
-                        () -> new ProfanityWord(null, Language.KOREAN, WordSource.MANUAL),
+                        () -> ProfanityWord.of(null, Language.KOREAN, WordSource.MANUAL),
                         ProfanityErrorCode.WORD_BLANK
                 );
             }
@@ -66,7 +66,7 @@ class ProfanityWordTest {
             @Test
             void 빈_문자열이면_예외가_발생한다() {
                 assertCoffeeShoutException(
-                        () -> new ProfanityWord("", Language.KOREAN, WordSource.MANUAL),
+                        () -> ProfanityWord.of("", Language.KOREAN, WordSource.MANUAL),
                         ProfanityErrorCode.WORD_BLANK
                 );
             }
@@ -74,7 +74,7 @@ class ProfanityWordTest {
             @Test
             void 공백만_있으면_예외가_발생한다() {
                 assertCoffeeShoutException(
-                        () -> new ProfanityWord("   ", Language.KOREAN, WordSource.MANUAL),
+                        () -> ProfanityWord.of("   ", Language.KOREAN, WordSource.MANUAL),
                         ProfanityErrorCode.WORD_BLANK
                 );
             }
@@ -88,7 +88,7 @@ class ProfanityWordTest {
                 final String tooLong = ProfanityWordFixture.최대_길이_초과_단어();
 
                 assertCoffeeShoutException(
-                        () -> new ProfanityWord(tooLong, Language.KOREAN, WordSource.MANUAL),
+                        () -> ProfanityWord.of(tooLong, Language.KOREAN, WordSource.MANUAL),
                         ProfanityErrorCode.WORD_TOO_LONG
                 );
             }
@@ -100,7 +100,7 @@ class ProfanityWordTest {
             @Test
             void language가_null이면_예외가_발생한다() {
                 assertCoffeeShoutException(
-                        () -> new ProfanityWord("욕설", null, WordSource.MANUAL),
+                        () -> ProfanityWord.of("욕설", null, WordSource.MANUAL),
                         ProfanityErrorCode.LANGUAGE_REQUIRED
                 );
             }
@@ -108,7 +108,7 @@ class ProfanityWordTest {
             @Test
             void source가_null이면_예외가_발생한다() {
                 assertCoffeeShoutException(
-                        () -> new ProfanityWord("욕설", Language.KOREAN, null),
+                        () -> ProfanityWord.of("욕설", Language.KOREAN, null),
                         ProfanityErrorCode.SOURCE_REQUIRED
                 );
             }

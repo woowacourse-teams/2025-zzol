@@ -4,6 +4,7 @@ import coffeeshout.profanity.application.ProfanityFilterService;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
+import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.global.exception.custom.BusinessException;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -31,6 +32,7 @@ public class WordListResourceLoader {
 
     private final ProfanityWordRepository wordRepository;
     private final ProfanityFilterService filterService;
+    private final TextNormalizer textNormalizer;
 
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
@@ -57,7 +59,7 @@ public class WordListResourceLoader {
             int count = 0;
             for (String line : lines) {
                 try {
-                    final ProfanityWord word = new ProfanityWord(line, language, source);
+                    final ProfanityWord word = ProfanityWord.of(textNormalizer.normalize(line), language, source);
                     if (!wordRepository.existsByWord(word.word())) {
                         wordRepository.save(word);
                         count++;

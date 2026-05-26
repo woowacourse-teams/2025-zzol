@@ -13,6 +13,7 @@ import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityErrorCode;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
+import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.TrieRefreshNotifier;
 import coffeeshout.profanity.domain.WordSource;
 import java.util.List;
@@ -24,14 +25,14 @@ import org.junit.jupiter.api.Test;
 class ProfanityWordManagementServiceTest {
 
     private ProfanityWordRepository wordRepository;
-    private TrieRefreshNotifier trieRefreshPort;
+    private TrieRefreshNotifier trieRefreshNotifier;
     private ProfanityWordManagementService service;
 
     @BeforeEach
     void setUp() {
         wordRepository = mock(ProfanityWordRepository.class);
-        trieRefreshPort = mock(TrieRefreshNotifier.class);
-        service = new ProfanityWordManagementService(wordRepository, trieRefreshPort);
+        trieRefreshNotifier = mock(TrieRefreshNotifier.class);
+        service = new ProfanityWordManagementService(wordRepository, trieRefreshNotifier, new TextNormalizer());
     }
 
     @Nested
@@ -44,7 +45,7 @@ class ProfanityWordManagementServiceTest {
             service.add("욕설", Language.KOREAN, WordSource.MANUAL);
 
             then(wordRepository).should().save(any(ProfanityWord.class));
-            then(trieRefreshPort).should().publish();
+            then(trieRefreshNotifier).should().publish();
         }
 
         @Test
@@ -53,7 +54,7 @@ class ProfanityWordManagementServiceTest {
 
             service.add("욕설", Language.KOREAN, WordSource.MANUAL);
 
-            then(trieRefreshPort).should(never()).publish();
+            then(trieRefreshNotifier).should(never()).publish();
         }
 
         @Test
@@ -69,6 +70,13 @@ class ProfanityWordManagementServiceTest {
 
             then(wordRepository).should().save(new ProfanityWord("badword", Language.ENGLISH, WordSource.LDNOOBW));
         }
+
+        @Test
+        void 리트_문자가_치환되어_저장된다() {
+            service.add("h3ll0", Language.ENGLISH, WordSource.MANUAL);
+
+            then(wordRepository).should().save(new ProfanityWord("hello", Language.ENGLISH, WordSource.MANUAL));
+        }
     }
 
     @Nested
@@ -82,7 +90,7 @@ class ProfanityWordManagementServiceTest {
             service.deactivate("욕설");
 
             then(wordRepository).should().deactivate("욕설");
-            then(trieRefreshPort).should().publish();
+            then(trieRefreshNotifier).should().publish();
         }
 
         @Test
@@ -114,7 +122,7 @@ class ProfanityWordManagementServiceTest {
             } catch (Exception ignored) {
             }
 
-            then(trieRefreshPort).should(never()).publish();
+            then(trieRefreshNotifier).should(never()).publish();
         }
     }
 
@@ -132,7 +140,88 @@ class ProfanityWordManagementServiceTest {
 
             then(wordRepository).should().save(words.get(0));
             then(wordRepository).should().save(words.get(1));
-            then(trieRefreshPort).should().publish();
+            then(trieRefreshNotifier).should().publish();
+        }
+    }
+
+    @Nested
+    class findByWord_단어_조회 {
+
+        @Test
+        void 존재하는_단어를_반환한다() {
+            final ProfanityWord word = ProfanityWordFixture.한국어_수동_욕설();
+            given(wordRepository.findByWord("욕설")).willReturn(Optional.of(word));
+
+            assertThat(service.findByWord("욕설")).contains(word);
+        }
+
+        @Test
+        void 존재하지_않는_단어는_빈_Optional을_반환한다() {
+            given(wordRepository.findByWord(any())).willReturn(Optional.empty());
+
+            assertThat(service.findByWord("없는단어")).isEmpty();
+        }
+
+        @Test
+        void 조회_시_단어가_정규화된다() {
+            final ProfanityWord word = ProfanityWordFixture.영어_LDNOOBW_욕설();
+            given(wordRepository.findByWord("badword")).willReturn(Optional.of(word));
+
+            assertThat(service.findByWord("BADWORD")).contains(word);
+        }
+    }
+
+    @Nested
+    class operatorAllow_운영자_허용 {
+
+        @Test
+        void repository에_위임하고_트라이_갱신을_발행한다() {
+            service.operatorAllow("허용닉네임");
+
+            then(wordRepository).should().operatorAllow("허용닉네임", Language.KOREAN);
+            then(trieRefreshNotifier).should().publish();
+        }
+
+        @Test
+        void 정규화된_단어로_repository에_위임한다() {
+            service.operatorAllow("  HELLO  ");
+
+            then(wordRepository).should().operatorAllow("hello", Language.ENGLISH);
+        }
+    }
+
+    @Nested
+    class isOperatorAllowed_운영자_허용_여부 {
+
+        @Test
+        void OPERATOR_ALLOWED_source_단어는_true를_반환한다() {
+            given(wordRepository.findByWord("허용닉네임"))
+                    .willReturn(Optional.of(ProfanityWordFixture.운영자_허용_단어()));
+
+            assertThat(service.isOperatorAllowed("허용닉네임")).isTrue();
+        }
+
+        @Test
+        void MANUAL_source_단어는_false를_반환한다() {
+            given(wordRepository.findByWord("욕설"))
+                    .willReturn(Optional.of(ProfanityWordFixture.한국어_수동_욕설()));
+
+            assertThat(service.isOperatorAllowed("욕설")).isFalse();
+        }
+
+        @Test
+        void AI_FLAGGED_source_단어는_false를_반환한다() {
+            given(wordRepository.findByWord("욕설닉네임"))
+                    .willReturn(Optional.of(ProfanityWordFixture.한국어_AI_FLAGGED_욕설()));
+
+            assertThat(service.isOperatorAllowed("욕설닉네임")).isFalse();
+        }
+
+        @Test
+        void 존재하지_않는_단어는_false를_반환한다() {
+            given(wordRepository.findByWord(any())).willReturn(Optional.empty());
+
+            assertThat(service.isOperatorAllowed("없는단어")).isFalse();
         }
     }
 

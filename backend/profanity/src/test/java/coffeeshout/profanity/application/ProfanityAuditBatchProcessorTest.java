@@ -9,7 +9,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
-import coffeeshout.global.event.ProfanityWordBlockedEvent;
+import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.domain.Language;
 
@@ -74,6 +74,19 @@ class ProfanityAuditBatchProcessorTest {
 
             then(profanityWordManagementService).should().add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED);
             then(eventPublisher).should().publishEvent(any(ProfanityWordBlockedEvent.class));
+        }
+
+        @Test
+        void 영어_닉네임은_ENGLISH_언어로_등록된다() {
+            final NicknameAudit entity = new NicknameAudit("badword");
+            given(nicknameAuditor.audit(List.of("badword"))).willReturn(List.of(
+                    new NicknameAuditResult("badword", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "영어 비속어")
+            ));
+            given(profanityWordManagementService.add("badword", Language.ENGLISH, WordSource.AI_FLAGGED)).willReturn(true);
+
+            processor.process(List.of(entity));
+
+            then(profanityWordManagementService).should().add("badword", Language.ENGLISH, WordSource.AI_FLAGGED);
         }
 
         @Test

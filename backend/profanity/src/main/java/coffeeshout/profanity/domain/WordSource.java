@@ -4,5 +4,6 @@ public enum WordSource {
     VANE,
     LDNOOBW,
     MANUAL,
-    AI_FLAGGED
+    AI_FLAGGED,
+    OPERATOR_ALLOWED
 }

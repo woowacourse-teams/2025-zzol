@@ -11,11 +11,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class NicknameAuditScheduler {
 
-    private final ProfanityAuditService nicknameAuditService;
+    private final ProfanityAuditService profanityAuditService;
 
     @Scheduled(cron = "0 0 0/12 * * *")
     public void auditPendingNicknames() {
         log.info("닉네임 AI 검열 스케줄러 시작");
-        nicknameAuditService.auditPending();
+        profanityAuditService.auditPending();
     }
 }

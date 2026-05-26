@@ -8,11 +8,12 @@ public record ProfanityWord(String word, Language language, WordSource source) {
 
     public ProfanityWord {
         word = normalizeWord(word);
-        validate(word, language, source);
     }
 
     public static ProfanityWord of(String word, Language language, WordSource source) {
-        return new ProfanityWord(word, language, source);
+        ProfanityWord pw = new ProfanityWord(word, language, source);
+        validate(pw.word(), pw.language(), pw.source());
+        return pw;
     }
 
     public static String normalizeWord(String raw) {

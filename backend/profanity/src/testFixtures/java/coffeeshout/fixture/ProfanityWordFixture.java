@@ -17,8 +17,16 @@ public final class ProfanityWordFixture {
         return new ProfanityWord("badword", Language.ENGLISH, WordSource.LDNOOBW);
     }
 
+    public static ProfanityWord 한국어_AI_FLAGGED_욕설() {
+        return new ProfanityWord("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED);
+    }
+
     public static ProfanityWord 한국어_VANE_욕설() {
         return new ProfanityWord("비속어", Language.KOREAN, WordSource.VANE);
+    }
+
+    public static ProfanityWord 운영자_허용_단어() {
+        return new ProfanityWord("허용닉네임", Language.KOREAN, WordSource.OPERATOR_ALLOWED);
     }
 
     public static String 최대_길이_초과_단어() {

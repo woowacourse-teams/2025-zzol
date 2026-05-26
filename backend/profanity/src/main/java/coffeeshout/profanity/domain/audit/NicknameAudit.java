@@ -23,7 +23,7 @@ public class NicknameAudit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 10)
+    @Column(name = "player_name", nullable = false, length = 10)
     private String nickname;
 
     @Enumerated(EnumType.STRING)

@@ -144,8 +144,16 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
             throw new InfrastructureException(NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED, "닉네임 검열 AI 응답 파싱 실패", e);
         }
 
+        if (nodes.size() != requestedNicknames.size()) {
+            log.error("[NicknameAudit] 응답 항목 수 불일치: expected={}, actual={}",
+                    requestedNicknames.size(), nodes.size());
+        }
+
+        final int processCount = Math.min(nodes.size(), requestedNicknames.size());
         final List<NicknameAuditResult> results = new ArrayList<>();
-        for (final JsonNode node : nodes) {
+
+        for (int i = 0; i < processCount; i++) {
+            final JsonNode node = nodes.get(i);
             try {
                 final GeminiAuditItem item = objectMapper.treeToValue(node, GeminiAuditItem.class);
                 results.add(NicknameAuditResult.of(
@@ -154,13 +162,20 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
                 ));
             } catch (Exception e) {
                 itemParseFailureCounter.increment();
-                log.warn("[NicknameAudit] Gemini 응답 항목 파싱 실패, PENDING 처리. node={}", node, e);
-                final String nickname = node.path("nickname").asText("unknown");
+                log.warn("[NicknameAudit] Gemini 응답 항목 파싱 실패, PENDING 처리. index={}, node={}", i, node, e);
                 results.add(new NicknameAuditResult(
-                        nickname, NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 파싱 실패"
+                        requestedNicknames.get(i), NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 파싱 실패"
                 ));
             }
         }
+
+        for (int i = processCount; i < requestedNicknames.size(); i++) {
+            log.warn("[NicknameAudit] 응답 누락 닉네임 PENDING 처리. index={}, nickname={}", i, requestedNicknames.get(i));
+            results.add(new NicknameAuditResult(
+                    requestedNicknames.get(i), NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 항목 수 불일치"
+            ));
+        }
+
         return results;
     }
 

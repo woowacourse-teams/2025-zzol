@@ -13,7 +13,7 @@ public record NicknameAuditResult(
         if (!flagged) {
             return new NicknameAuditResult(nickname, NicknameAuditStatus.CLEAN, aiConfidence, reason);
         }
-        if (confidence >= flaggedThreshold) {
+        if (aiConfidence.value().doubleValue() >= flaggedThreshold) {
             return new NicknameAuditResult(nickname, NicknameAuditStatus.FLAGGED, aiConfidence, reason);
         }
         return new NicknameAuditResult(nickname, NicknameAuditStatus.PENDING, aiConfidence, reason);

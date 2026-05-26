@@ -1,9 +1,12 @@
 package coffeeshout.profanity.infra.persistence;
 
+import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
+import coffeeshout.profanity.domain.WordSource;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -21,6 +24,11 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
     }
 
     @Override
+    public Set<String> findAllActiveIn(Set<String> candidates) {
+        return jpaRepository.findAllActiveIn(candidates);
+    }
+
+    @Override
     public boolean existsByWord(String word) {
         return jpaRepository.existsByWord(word);
     }
@@ -29,7 +37,16 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
     public boolean save(ProfanityWord word) {
         final Optional<ProfanityWordEntity> existing = jpaRepository.findByWord(word.word());
         if (existing.isPresent()) {
-            return existing.get().reactivate();
+            final ProfanityWordEntity entity = existing.get();
+            if (entity.getSource() == WordSource.OPERATOR_ALLOWED) {
+                // 운영자 명시 허용 단어는 MANUAL 재차단만 허용, AI_FLAGGED 등은 무시
+                if (word.source() == WordSource.MANUAL) {
+                    entity.overrideSource(WordSource.MANUAL);
+                    return true;
+                }
+                return false;
+            }
+            return entity.reactivate();
         }
         jpaRepository.save(ProfanityWordEntity.from(word));
         return true;
@@ -38,6 +55,15 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
     @Override
     public void deactivate(String word) {
         jpaRepository.findByWord(word).ifPresent(ProfanityWordEntity::deactivate);
+    }
+
+    @Override
+    public void operatorAllow(String word, Language language) {
+        jpaRepository.findByWord(word)
+                .ifPresentOrElse(
+                        ProfanityWordEntity::operatorAllow,
+                        () -> jpaRepository.save(ProfanityWordEntity.fromOperatorAllowed(word, language))
+                );
     }
 
     @Override

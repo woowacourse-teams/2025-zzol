@@ -3,7 +3,7 @@ package coffeeshout.profanity.application;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
-import coffeeshout.profanity.domain.audit.NicknameSubmittedEvent;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -12,13 +12,15 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Service
@@ -27,6 +29,7 @@ public class ProfanityAuditService {
 
     private final NicknameAuditRepository auditRepository;
     private final ProfanityAuditBatchProcessor batchProcessor;
+    private final ProfanityWordManagementService profanityWordManagementService;
     private final NicknameAuditProperties properties;
     private final MeterRegistry meterRegistry;
 
@@ -39,8 +42,8 @@ public class ProfanityAuditService {
                 .register(meterRegistry);
     }
 
-    @EventListener
-    @Transactional
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onNicknameSubmitted(NicknameSubmittedEvent event) {
         log.debug("닉네임 검열 등록 요청 수신: {}", event.nickname());
         register(event.nickname());
@@ -51,6 +54,10 @@ public class ProfanityAuditService {
     }
 
     public void register(String nickname) {
+        if (profanityWordManagementService.isOperatorAllowed(nickname)) {
+            log.debug("운영자 허용 닉네임 — 검열 등록 생략: {}", nickname);
+            return;
+        }
         if (auditRepository.existsByNicknameAndStatus(nickname, NicknameAuditStatus.UNAUDITED)) {
             log.debug("이미 UNAUDITED 상태로 등록된 닉네임: {}", nickname);
             return;
@@ -68,10 +75,11 @@ public class ProfanityAuditService {
         int processedTotal = 0;
 
         while (!batch.isEmpty()) {
-            processedTotal += batchProcessor.process(batch);
+            int processed = batchProcessor.process(batch);
+            processedTotal += processed;
             log.info("닉네임 검열 진행: 이번 배치 {}건, 누적 {}건", batch.size(), processedTotal);
 
-            if (batch.size() < properties.batchSize()) {
+            if (processed == 0 || batch.size() < properties.batchSize()) {
                 break;
             }
             batch = auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);

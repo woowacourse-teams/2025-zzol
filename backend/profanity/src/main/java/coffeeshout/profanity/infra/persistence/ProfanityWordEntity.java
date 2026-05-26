@@ -43,9 +43,6 @@ public class ProfanityWordEntity {
     private boolean isActive;
 
     @Column(nullable = false)
-    private long matchCount;
-
-    @Column(nullable = false)
     private Instant createdAt;
 
     @Column(nullable = false)
@@ -68,12 +65,20 @@ public class ProfanityWordEntity {
         entity.language = domain.language();
         entity.source = domain.source();
         entity.isActive = true;
-        entity.matchCount = 0L;
+        return entity;
+    }
+
+    public static ProfanityWordEntity fromOperatorAllowed(String word, Language language) {
+        final ProfanityWordEntity entity = new ProfanityWordEntity();
+        entity.word = word;
+        entity.language = language;
+        entity.source = WordSource.OPERATOR_ALLOWED;
+        entity.isActive = true;
         return entity;
     }
 
     public ProfanityWord toDomain() {
-        return ProfanityWord.of(word, language, source);
+        return new ProfanityWord(word, language, source);
     }
 
     public boolean reactivate() {
@@ -88,7 +93,16 @@ public class ProfanityWordEntity {
         this.isActive = false;
     }
 
-    public void incrementMatchCount() {
-        this.matchCount++;
+    public void operatorAllow() {
+        this.source = WordSource.OPERATOR_ALLOWED;
+        this.isActive = true;
     }
+
+    // OPERATOR_ALLOWED 단어를 운영자가 명시적으로 재차단(MANUAL)할 때만 사용
+    public void overrideSource(WordSource newSource) {
+        this.source = newSource;
+        this.isActive = true;
+    }
+
+
 }

@@ -1,6 +1,6 @@
 package coffeeshout.profanity.application;
 
-import coffeeshout.global.event.ProfanityWordBlockedEvent;
+import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.WordSource;
@@ -77,7 +77,7 @@ public class ProfanityAuditBatchProcessor {
     }
 
     private void autoBlock(String nickname) {
-        if (profanityWordManagementService.add(nickname, Language.KOREAN, WordSource.AI_FLAGGED)) {
+        if (profanityWordManagementService.add(nickname, Language.detect(nickname), WordSource.AI_FLAGGED)) {
             eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
             log.info("FLAGGED 자동 차단: {}", nickname);
         }

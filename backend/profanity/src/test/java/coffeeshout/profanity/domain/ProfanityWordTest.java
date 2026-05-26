@@ -26,24 +26,17 @@ class ProfanityWordTest {
         }
 
         @Test
-        void 대문자_단어는_소문자로_정규화된다() {
-            final ProfanityWord word = new ProfanityWord("BADWORD", Language.ENGLISH, WordSource.LDNOOBW);
+        void 생성자는_입력값을_정규화하지_않는다() {
+            final ProfanityWord word = new ProfanityWord("BADWORD", Language.ENGLISH, WordSource.MANUAL, true);
 
-            assertThat(word.word()).isEqualTo("badword");
-        }
-
-        @Test
-        void 앞뒤_공백이_제거된다() {
-            final ProfanityWord word = new ProfanityWord("  욕설  ", Language.KOREAN, WordSource.MANUAL);
-
-            assertThat(word.word()).isEqualTo("욕설");
+            assertThat(word.word()).isEqualTo("BADWORD");
         }
 
         @Test
         void 최대_길이_단어는_정상_생성된다() {
             final String maxLengthWord = "가".repeat(ProfanityWord.MAX_WORD_LENGTH);
 
-            final ProfanityWord word = new ProfanityWord(maxLengthWord, Language.KOREAN, WordSource.MANUAL);
+            final ProfanityWord word = new ProfanityWord(maxLengthWord, Language.KOREAN, WordSource.MANUAL, true);
 
             assertThat(word.word()).hasSize(ProfanityWord.MAX_WORD_LENGTH);
         }
@@ -134,7 +127,7 @@ class ProfanityWordTest {
 
         @Test
         void AI_FLAGGED_출처로_생성된다() {
-            final ProfanityWord word = new ProfanityWord("욕설", Language.KOREAN, WordSource.AI_FLAGGED);
+            final ProfanityWord word = new ProfanityWord("욕설", Language.KOREAN, WordSource.AI_FLAGGED, true);
 
             assertThat(word.source()).isEqualTo(WordSource.AI_FLAGGED);
         }
@@ -145,26 +138,11 @@ class ProfanityWordTest {
 
         @Test
         void 같은_단어_언어_출처면_동일하다() {
-            final ProfanityWord a = new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL);
-            final ProfanityWord b = new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL);
+            final ProfanityWord a = new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true);
+            final ProfanityWord b = new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true);
 
             assertThat(a).isEqualTo(b);
         }
 
-        @Test
-        void 정규화_후_동일한_단어는_같다() {
-            final ProfanityWord lower = new ProfanityWord("bad", Language.ENGLISH, WordSource.MANUAL);
-            final ProfanityWord upper = new ProfanityWord("BAD", Language.ENGLISH, WordSource.MANUAL);
-
-            assertThat(lower).isEqualTo(upper);
-        }
-
-        @Test
-        void 공백과_대소문자_혼합도_정규화_후_동일하다() {
-            final ProfanityWord a = new ProfanityWord("  BAD  ", Language.ENGLISH, WordSource.MANUAL);
-            final ProfanityWord b = new ProfanityWord("bad", Language.ENGLISH, WordSource.MANUAL);
-
-            assertThat(a).isEqualTo(b);
-        }
     }
 }

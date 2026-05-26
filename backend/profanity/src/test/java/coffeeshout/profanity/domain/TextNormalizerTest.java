@@ -63,6 +63,30 @@ class TextNormalizerTest {
     }
 
     @Nested
+    class 유니코드_호환_문자_정규화 {
+
+        @Test
+        void 원문자_소문자는_일반_알파벳으로_변환된다() {
+            assertThat(normalizer.normalize("ⓑⓞⓩⓘ")).isEqualTo("bozi");
+        }
+
+        @Test
+        void 괄호_알파벳은_일반_알파벳으로_변환된다() {
+            assertThat(normalizer.normalize("⒮⒠⒳")).isEqualTo("sex");
+        }
+
+        @Test
+        void 원문자와_일반_문자_혼합도_정규화된다() {
+            assertThat(normalizer.normalize("SⓔX")).isEqualTo("sex");
+        }
+
+        @Test
+        void 원문자_대문자는_소문자로_변환된다() {
+            assertThat(normalizer.normalize("ⓢEX")).isEqualTo("sex");
+        }
+    }
+
+    @Nested
     class 리트스피크_치환 {
 
         @Test

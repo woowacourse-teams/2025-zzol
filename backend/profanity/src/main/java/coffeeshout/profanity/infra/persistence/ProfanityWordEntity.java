@@ -64,7 +64,7 @@ public class ProfanityWordEntity {
         entity.word = domain.word();
         entity.language = domain.language();
         entity.source = domain.source();
-        entity.isActive = true;
+        entity.isActive = domain.isActive();
         return entity;
     }
 
@@ -78,7 +78,7 @@ public class ProfanityWordEntity {
     }
 
     public ProfanityWord toDomain() {
-        return new ProfanityWord(word, language, source);
+        return new ProfanityWord(word, language, source, isActive);
     }
 
     public boolean reactivate() {

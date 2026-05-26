@@ -4,10 +4,16 @@ import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.WordSource;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -15,6 +21,8 @@ import org.springframework.stereotype.Repository;
 public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
 
     private final ProfanityWordJpaRepository jpaRepository;
+    private final ProfanityWordQueryRepository queryRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public List<ProfanityWord> findAllActive() {
@@ -53,6 +61,23 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
     }
 
     @Override
+    public int bulkInsertIgnore(List<ProfanityWord> words) {
+        if (words.isEmpty()) {
+            return 0;
+        }
+        final Instant now = Instant.now();
+        final String sql = "INSERT IGNORE INTO profanity_word (word, language, source, is_active, created_at, updated_at) VALUES (?, ?, ?, true, ?, ?)";
+        final int[][] counts = jdbcTemplate.batchUpdate(sql, words, 500, (ps, word) -> {
+            ps.setString(1, word.word());
+            ps.setString(2, word.language().name());
+            ps.setString(3, word.source().name());
+            ps.setTimestamp(4, Timestamp.from(now));
+            ps.setTimestamp(5, Timestamp.from(now));
+        });
+        return Arrays.stream(counts).mapToInt(batch -> Arrays.stream(batch).sum()).sum();
+    }
+
+    @Override
     public void deactivate(String word) {
         jpaRepository.findByWord(word).ifPresent(ProfanityWordEntity::deactivate);
     }
@@ -76,5 +101,16 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
         return jpaRepository.findAll().stream()
                 .map(ProfanityWordEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Page<ProfanityWord> findAllPaged(String search, Language language, WordSource source, Boolean activeOnly, Pageable pageable) {
+        return queryRepository.findAllPaged(search, language, source, activeOnly, pageable)
+                .map(ProfanityWordEntity::toDomain);
+    }
+
+    @Override
+    public void activate(String word) {
+        jpaRepository.findByWord(word).ifPresent(ProfanityWordEntity::reactivate);
     }
 }

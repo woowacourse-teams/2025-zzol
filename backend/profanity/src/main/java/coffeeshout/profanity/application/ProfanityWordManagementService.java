@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -78,6 +80,21 @@ public class ProfanityWordManagementService {
 
     public Optional<ProfanityWord> findByWord(String rawWord) {
         return wordRepository.findByWord(textNormalizer.normalize(rawWord));
+    }
+
+    @Transactional
+    public void activate(String rawWord) {
+        final String normalized = textNormalizer.normalize(rawWord);
+        wordRepository.findByWord(normalized)
+                .orElseThrow(() -> new BusinessException(ProfanityErrorCode.WORD_NOT_FOUND, "비속어를 찾을 수 없습니다: " + normalized));
+        wordRepository.activate(normalized);
+        afterCommit(trieRefreshNotifier::publish);
+        log.info("비속어 활성화: word={}", normalized);
+    }
+
+    public Page<ProfanityWord> findAllPaged(String search, Language language, WordSource source, Boolean activeOnly, int page, int size) {
+        final String searchTerm = (search == null) ? "" : search.strip();
+        return wordRepository.findAllPaged(searchTerm, language, source, activeOnly, PageRequest.of(page, size));
     }
 
     private void afterCommit(Runnable action) {

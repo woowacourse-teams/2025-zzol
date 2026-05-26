@@ -91,7 +91,7 @@ class ProfanityFilterServiceTest {
         @Test
         void 트라이_재구성_후_새로운_단어를_감지한다() {
             given(wordRepository.findAllActive()).willReturn(List.of(
-                    new ProfanityWord("신규욕설", Language.KOREAN, WordSource.MANUAL)
+                    new ProfanityWord("신규욕설", Language.KOREAN, WordSource.MANUAL, true)
             ));
             service.rebuildTrie();
 

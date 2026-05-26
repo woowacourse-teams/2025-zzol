@@ -14,8 +14,8 @@ public class TextNormalizer {
         if (text == null) {
             return "";
         }
-        final String nfc = Normalizer.normalize(text, Form.NFC);
-        final String deLeet = applyLeetSubstitutions(nfc);
+        final String nfkc = Normalizer.normalize(text, Form.NFKC);
+        final String deLeet = applyLeetSubstitutions(nfkc);
         return SPECIAL_CHARS_PATTERN.matcher(deLeet).replaceAll("").toLowerCase();
     }
 

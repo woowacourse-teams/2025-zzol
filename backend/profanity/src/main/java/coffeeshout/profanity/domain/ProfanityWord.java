@@ -2,22 +2,16 @@ package coffeeshout.profanity.domain;
 
 import coffeeshout.global.exception.custom.BusinessException;
 
-public record ProfanityWord(String word, Language language, WordSource source) {
+public record ProfanityWord(String word, Language language, WordSource source, boolean isActive) {
 
     public static final int MAX_WORD_LENGTH = 200;
 
     public ProfanityWord {
-        word = normalizeWord(word);
+        validate(word, language, source);
     }
 
     public static ProfanityWord of(String word, Language language, WordSource source) {
-        ProfanityWord pw = new ProfanityWord(word, language, source);
-        validate(pw.word(), pw.language(), pw.source());
-        return pw;
-    }
-
-    public static String normalizeWord(String raw) {
-        return raw == null ? "" : raw.strip().toLowerCase();
+        return new ProfanityWord(word, language, source, true);
     }
 
     private static void validate(String word, Language language, WordSource source) {

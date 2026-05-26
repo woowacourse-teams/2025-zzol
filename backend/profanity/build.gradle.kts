@@ -31,4 +31,10 @@ dependencies {
     testFixturesImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
+    val queryDslVersion = rootProject.extra["queryDsl"] as String
+    implementation("com.querydsl:querydsl-jpa:$queryDslVersion:jakarta")
+    annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
+    annotationProcessor("jakarta.annotation:jakarta.annotation-api")
+    annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 }

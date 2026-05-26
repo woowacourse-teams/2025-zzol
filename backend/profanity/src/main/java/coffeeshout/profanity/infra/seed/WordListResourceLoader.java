@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -52,23 +53,19 @@ public class WordListResourceLoader {
             return 0;
         }
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            final List<String> lines = reader.lines()
-                    .map(line -> line.replace("\uFEFF", "").trim())
+            final List<ProfanityWord> words = reader.lines()
+                    .map(line -> line.replace("﻿", "").trim())
                     .filter(line -> !line.isEmpty() && !line.startsWith("#"))
+                    .flatMap(line -> {
+                        try {
+                            return Stream.of(ProfanityWord.of(textNormalizer.normalize(line), language, source));
+                        } catch (BusinessException e) {
+                            log.debug("단어 시드 스킵 ({}): {}", e.getMessage(), line);
+                            return Stream.empty();
+                        }
+                    })
                     .toList();
-            int count = 0;
-            for (String line : lines) {
-                try {
-                    final ProfanityWord word = ProfanityWord.of(textNormalizer.normalize(line), language, source);
-                    if (!wordRepository.existsByWord(word.word())) {
-                        wordRepository.save(word);
-                        count++;
-                    }
-                } catch (BusinessException e) {
-                    log.debug("단어 시드 스킵 ({}): {}", e.getMessage(), line);
-                }
-            }
-            return count;
+            return wordRepository.bulkInsertIgnore(words);
         } catch (IOException e) {
             log.error("비속어 리소스 파일 읽기 실패: {}", resourcePath, e);
             return 0;

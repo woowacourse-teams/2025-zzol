@@ -9,10 +9,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface ProfanityWordJpaRepository extends JpaRepository<ProfanityWordEntity, Long> {
 
-    @Query("SELECT e FROM ProfanityWordEntity e WHERE e.isActive = true AND e.source != 'OPERATOR_ALLOWED'")
+    @Query("SELECT e FROM ProfanityWordEntity e WHERE e.isActive = true AND e.source != coffeeshout.profanity.domain.WordSource.OPERATOR_ALLOWED")
     List<ProfanityWordEntity> findAllActive();
 
-    @Query("SELECT e.word FROM ProfanityWordEntity e WHERE e.isActive = true AND e.source != 'OPERATOR_ALLOWED' AND e.word IN :candidates")
+    @Query("SELECT e.word FROM ProfanityWordEntity e WHERE e.isActive = true AND e.source != coffeeshout.profanity.domain.WordSource.OPERATOR_ALLOWED AND e.word IN :candidates")
     Set<String> findAllActiveIn(@Param("candidates") Set<String> candidates);
 
     Optional<ProfanityWordEntity> findByWord(String word);

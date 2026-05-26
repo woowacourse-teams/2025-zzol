@@ -24,15 +24,15 @@
 ```text
 :common  ←  ProfanityWordBlockedEvent, ProfanityChecker, NicknameSubmittedEvent 유지 (cross-module 계약)
 :profanity  →  :common
-:room  →  :profanity   (ProfanityWordRepository 직접 쿼리)
+:room  →  :common      (:profanity 의존 없음, ProfanityChecker 계약만 참조)
 :admin  →  :profanity  (단어 관리 CRUD)
 :user  →  :common      (:profanity 의존 없음)
 ```
 
 `ProfanityChecker` 인터페이스와 `NicknameSubmittedEvent`는 `:common`에 둔다.
-`:user`와 `:room` 모두 `:profanity`를 거치지 않고 닉네임 검사·이벤트 발행을 수행할 수 있도록
-계약만 `:common`에서 공유한다.
+`:room`과 `:user` 모두 `:profanity`를 거치지 않고 `ProfanityChecker` 계약만 `:common`에서 참조한다.
 `:user`는 닉네임 변경 시 `NicknameSubmittedEvent`를 직접 발행하며,
+`:room`은 `PlayerNameRankingCleanupService`에서 `ProfanityChecker`를 주입받아 사용한다.
 `:room`의 relay 리스너(`UserNicknameAuditListener`)는 제거됐다.
 
 ### `:profanity` 내부 구조

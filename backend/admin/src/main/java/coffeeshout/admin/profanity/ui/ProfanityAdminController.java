@@ -82,9 +82,9 @@ public class ProfanityAdminController {
         model.addAttribute("flaggedPage", flaggedPage);
         model.addAttribute("pendingPage", pendingPage);
         model.addAttribute("flaggedPageStart", Math.max(0, flaggedPage - 2));
-        model.addAttribute("flaggedPageEnd", Math.min(flagged.getTotalPages() - 1, flaggedPage + 2));
+        model.addAttribute("flaggedPageEnd", Math.min(Math.max(0, flagged.getTotalPages() - 1), flaggedPage + 2));
         model.addAttribute("pendingPageStart", Math.max(0, pendingPage - 2));
-        model.addAttribute("pendingPageEnd", Math.min(pending.getTotalPages() - 1, pendingPage + 2));
+        model.addAttribute("pendingPageEnd", Math.min(Math.max(0, pending.getTotalPages() - 1), pendingPage + 2));
         return "admin/profanity";
     }
 
@@ -110,7 +110,7 @@ public class ProfanityAdminController {
     public String addWord(@Valid @ModelAttribute AddProfanityWordRequest request,
                           BindingResult bindingResult,
                           @RequestParam(defaultValue = "") String search,
-                          @RequestParam(defaultValue = "") String language,
+                          @RequestParam(name = "filterLanguage", defaultValue = "") String language,
                           @RequestParam(defaultValue = "") String source,
                           @RequestParam(defaultValue = "") String activeFilter,
                           @RequestParam(defaultValue = "0") int wordsPage,
@@ -165,8 +165,8 @@ public class ProfanityAdminController {
 
     private void populateWordsModel(Model model, String search, String language, String source,
                                     String activeFilter, int wordsPage) {
-        final Language langFilter = language.isBlank() ? null : Language.valueOf(language);
-        final WordSource sourceFilter = source.isBlank() ? null : WordSource.valueOf(source);
+        final Language langFilter = parseEnum(Language.class, language);
+        final WordSource sourceFilter = parseEnum(WordSource.class, source);
         final Boolean activeOnly = "active".equals(activeFilter) ? Boolean.TRUE
                 : "inactive".equals(activeFilter) ? Boolean.FALSE : null;
         final Page<ProfanityWord> words =
@@ -178,7 +178,7 @@ public class ProfanityAdminController {
         model.addAttribute("activeFilter", activeFilter);
         model.addAttribute("wordsPage", wordsPage);
         model.addAttribute("wordsPageStart", Math.max(0, wordsPage - 2));
-        model.addAttribute("wordsPageEnd", Math.min(words.getTotalPages() - 1, wordsPage + 2));
+        model.addAttribute("wordsPageEnd", Math.min(Math.max(0, words.getTotalPages() - 1), wordsPage + 2));
         model.addAttribute("languages", Language.values());
         model.addAttribute("sources", WordSource.values());
     }
@@ -192,6 +192,17 @@ public class ProfanityAdminController {
                 LocalDateTime.ofInstant(e.getCreatedAt(), KST),
                 e.getAuditedAt() != null ? LocalDateTime.ofInstant(e.getAuditedAt(), KST) : null
         );
+    }
+
+    private static <E extends Enum<E>> E parseEnum(Class<E> type, String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(type, value);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public record AuditRow(

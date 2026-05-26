@@ -26,11 +26,11 @@ public class ProfanityTrieRefreshSubscriber implements MessageListener {
 
     @PostConstruct
     public void register() {
-        container.addMessageListener(this, new PatternTopic(ProfanityRedisChannel.TRIE_REFRESH));
-        log.info("비속어 트라이 갱신 구독 등록 완료 — channel: {}", ProfanityRedisChannel.TRIE_REFRESH);
         rebuildFailureCounter = Counter.builder("profanity.trie.rebuild.failure")
                 .description("비속어 트라이 재빌드 실패 횟수")
                 .register(meterRegistry);
+        container.addMessageListener(this, new PatternTopic(ProfanityRedisChannel.TRIE_REFRESH));
+        log.info("비속어 트라이 갱신 구독 등록 완료 — channel: {}", ProfanityRedisChannel.TRIE_REFRESH);
     }
 
     @Override

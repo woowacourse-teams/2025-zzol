@@ -40,9 +40,6 @@ dependencies {
 
     val resilience4jVersion = rootProject.extra["resilience4j"] as String
     implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
-
-    implementation(project(":profanity"))
-
     annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
@@ -52,4 +49,5 @@ dependencies {
     testImplementation(project(":test-support"))
     testImplementation(testFixtures(project(":profanity")))
     testImplementation(testFixtures(project(":user")))
+    testImplementation(project(":profanity"))
 }

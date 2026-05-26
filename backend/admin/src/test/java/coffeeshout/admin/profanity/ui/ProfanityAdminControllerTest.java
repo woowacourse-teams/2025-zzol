@@ -17,6 +17,7 @@ import coffeeshout.profanity.application.ProfanityWordManagementService;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.WordSource;
+import java.time.Clock;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -38,6 +39,7 @@ class ProfanityAdminControllerTest {
     void setUp() {
         managementService = mock(ProfanityWordManagementService.class);
         controller = new ProfanityAdminController(
+                Clock.systemDefaultZone(),
                 mock(ProfanityAuditService.class),
                 mock(ProfanityFeedbackService.class),
                 managementService

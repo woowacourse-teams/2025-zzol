@@ -1,6 +1,5 @@
 package coffeeshout.room.application.service.player.name;
 
-import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.global.nickname.NicknamesCollectedEvent;
@@ -32,11 +31,10 @@ public class PlayerNameRankingCleanupService {
     @EventListener
     @Transactional
     public void onNicknamesCollected(NicknamesCollectedEvent event) {
-        // DB 저장 정규화(TextNormalizer + normalizeWord)와 동일하게 적용해 매칭 키를 맞춘다.
+        // DB 저장 정규화(TextNormalizer)와 동일하게 적용해 매칭 키를 맞춘다.
         // 원본 닉네임은 이후 findAllByPlayerName 조회에 사용하므로 정규화값→원본 매핑을 보존한다.
         final Map<String, List<String>> normalizedToOriginals = event.nicknames().stream()
-                .collect(Collectors.groupingBy(
-                        n -> ProfanityWord.normalizeWord(textNormalizer.normalize(n))));
+                .collect(Collectors.groupingBy(textNormalizer::normalize));
 
         final Set<String> blocked = profanityWordRepository.findAllActiveIn(normalizedToOriginals.keySet());
 

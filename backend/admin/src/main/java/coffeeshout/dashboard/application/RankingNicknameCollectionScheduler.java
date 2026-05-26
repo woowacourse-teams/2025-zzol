@@ -3,7 +3,7 @@ package coffeeshout.dashboard.application;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
-import coffeeshout.room.domain.event.RankingNicknamesCollectedEvent;
+import coffeeshout.global.nickname.NicknamesCollectedEvent;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -34,7 +34,7 @@ public class RankingNicknameCollectionScheduler {
             final LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
 
             final Set<String> nicknames = collectRankingNicknames(startOfMonth, now);
-            eventPublisher.publishEvent(new RankingNicknamesCollectedEvent(nicknames));
+            eventPublisher.publishEvent(new NicknamesCollectedEvent(nicknames));
 
             log.info("랭킹 닉네임 수집 완료 ({}건, {}ms)", nicknames.size(), System.currentTimeMillis() - start);
         } catch (Exception e) {

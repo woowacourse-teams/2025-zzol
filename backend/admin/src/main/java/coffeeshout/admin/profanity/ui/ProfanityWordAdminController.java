@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,7 +30,13 @@ public class ProfanityWordAdminController {
     }
 
     @PostMapping
-    public String add(@Valid @ModelAttribute AddProfanityWordRequest request) {
+    public String add(@Valid @ModelAttribute AddProfanityWordRequest request,
+                      BindingResult bindingResult, Model model) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("words", managementService.findAllActive());
+            model.addAttribute("languages", Language.values());
+            return "admin/profanity-words";
+        }
         managementService.add(request.word(), request.language(), WordSource.MANUAL);
         return "redirect:/admin/profanity/words";
     }

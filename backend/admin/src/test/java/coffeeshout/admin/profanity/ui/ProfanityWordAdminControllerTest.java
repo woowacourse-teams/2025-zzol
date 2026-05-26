@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 
 import coffeeshout.admin.profanity.ui.request.AddProfanityWordRequest;
+import org.springframework.validation.BindingResult;
 import coffeeshout.fixture.ProfanityWordFixture;
 import coffeeshout.profanity.application.ProfanityWordManagementService;
 import coffeeshout.profanity.domain.Language;
@@ -65,8 +66,9 @@ class ProfanityWordAdminControllerTest {
         @Test
         void 서비스에_단어를_추가하고_목록으로_리다이렉트한다() {
             AddProfanityWordRequest request = new AddProfanityWordRequest("욕설", Language.KOREAN);
+            BindingResult bindingResult = mock(BindingResult.class);
 
-            String viewName = controller.add(request);
+            String viewName = controller.add(request, bindingResult, model);
 
             then(managementService).should().add("욕설", Language.KOREAN, WordSource.MANUAL);
             assertThat(viewName).isEqualTo("redirect:/admin/profanity/words");
@@ -75,8 +77,9 @@ class ProfanityWordAdminControllerTest {
         @Test
         void 영어_단어_추가_시_MANUAL_출처로_등록한다() {
             AddProfanityWordRequest request = new AddProfanityWordRequest("badword", Language.ENGLISH);
+            BindingResult bindingResult = mock(BindingResult.class);
 
-            controller.add(request);
+            controller.add(request, bindingResult, model);
 
             then(managementService).should().add("badword", Language.ENGLISH, WordSource.MANUAL);
         }

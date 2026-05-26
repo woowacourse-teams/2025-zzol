@@ -26,4 +26,8 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
 
     implementation("com.google.genai:google-genai:$googleGenAiVersion")
+
+    testFixturesImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
+
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }

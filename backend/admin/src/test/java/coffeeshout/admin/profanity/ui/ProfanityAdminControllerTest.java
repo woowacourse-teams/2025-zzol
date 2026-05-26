@@ -28,7 +28,7 @@ import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 
-class ProfanityWordAdminControllerTest {
+class ProfanityAdminControllerTest {
 
     private ProfanityWordManagementService managementService;
     private ProfanityAdminController controller;

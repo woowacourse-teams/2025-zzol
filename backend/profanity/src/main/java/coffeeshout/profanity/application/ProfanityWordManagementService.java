@@ -50,21 +50,6 @@ public class ProfanityWordManagementService {
     }
 
     @Transactional
-    public void saveAll(List<ProfanityWord> words) {
-        words.forEach(wordRepository::save);
-        afterCommit(trieRefreshNotifier::publish);
-        log.info("비속어 일괄 등록: {}건", words.size());
-    }
-
-    public List<ProfanityWord> findAll() {
-        return wordRepository.findAll();
-    }
-
-    public List<ProfanityWord> findAllActive() {
-        return wordRepository.findAllActive();
-    }
-
-    @Transactional
     public void operatorAllow(String rawWord) {
         final String normalized = textNormalizer.normalize(rawWord);
         wordRepository.operatorAllow(normalized, Language.detect(normalized));

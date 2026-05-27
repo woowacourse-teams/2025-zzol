@@ -134,24 +134,6 @@ class ProfanityWordManagementServiceTest {
     }
 
     @Nested
-    class saveAll_일괄_등록 {
-
-        @Test
-        void 여러_단어를_일괄_저장하고_트라이_갱신을_한_번_발행한다() {
-            final List<ProfanityWord> words = List.of(
-                    ProfanityWordFixture.한국어_수동_욕설(),
-                    ProfanityWordFixture.영어_LDNOOBW_욕설()
-            );
-
-            service.saveAll(words);
-
-            then(wordRepository).should().save(words.get(0));
-            then(wordRepository).should().save(words.get(1));
-            then(trieRefreshNotifier).should().publish();
-        }
-    }
-
-    @Nested
     class findByWord_단어_조회 {
 
         @Test
@@ -229,26 +211,6 @@ class ProfanityWordManagementServiceTest {
             given(wordRepository.findByWord(any())).willReturn(Optional.empty());
 
             assertThat(service.isOperatorAllowed("없는단어")).isFalse();
-        }
-    }
-
-    @Nested
-    class findAll_조회 {
-
-        @Test
-        void 전체_단어_목록을_반환한다() {
-            final List<ProfanityWord> expected = List.of(ProfanityWordFixture.한국어_수동_욕설());
-            given(wordRepository.findAll()).willReturn(expected);
-
-            assertThat(service.findAll()).isEqualTo(expected);
-        }
-
-        @Test
-        void 활성_단어_목록을_반환한다() {
-            final List<ProfanityWord> expected = List.of(ProfanityWordFixture.한국어_수동_욕설());
-            given(wordRepository.findAllActive()).willReturn(expected);
-
-            assertThat(service.findAllActive()).isEqualTo(expected);
         }
     }
 

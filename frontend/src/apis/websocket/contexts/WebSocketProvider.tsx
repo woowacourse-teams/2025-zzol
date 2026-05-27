@@ -1,4 +1,4 @@
-import { PropsWithChildren, useCallback, useRef, useSyncExternalStore } from 'react';
+import { PropsWithChildren, useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   fetchRecoveryMessages,
@@ -16,10 +16,18 @@ import { WebSocketContext, WebSocketContextType } from './WebSocketContext';
 
 const TOPIC_PREFIX = '/topic';
 
-const SCREEN_TRANSITION_PATTERNS = ['/roulette', '/winner', '/round'] as const;
+const RECOVERY_INITIAL_DELAY_MS = 500;
+const RECOVERY_RETRY_DELAY_MS = 300;
+const RECOVERY_COMPLETE_DELAY_MS = 2000;
+
+const SCREEN_TRANSITION_PATTERNS = {
+  WINNER: '/winner',
+  ROULETTE: '/roulette',
+  ROUND: '/round',
+} as const;
 
 const isScreenTransitionMessage = (destination: string): boolean => {
-  return SCREEN_TRANSITION_PATTERNS.some((pattern) => destination.includes(pattern));
+  return Object.values(SCREEN_TRANSITION_PATTERNS).some((pattern) => destination.includes(pattern));
 };
 
 const extractSubscriptionPath = (destination: string): string => {
@@ -56,25 +64,30 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
 
   const { client, isConnected, startSocket, stopSocket, connectedFrame } = useWebSocketConnection();
   const { sessionId } = useStompSessionWatcher(client, connectedFrame);
-  const { subscribe, send } = useWebSocketMessaging({ client, isConnected, playerName: myName });
+  const { subscribe, send } = useWebSocketMessaging({
+    client,
+    isConnected,
+    playerName: myName,
+    joinCode,
+  });
 
   const routeRecoveryMessage = useCallback(
     (destination: string) => {
       const navOptions = { replace: true, state: { fromInternal: true } };
 
-      if (destination.includes('/roulette') && !destination.includes('/winner')) {
-        console.log('🔄 복구: 룰렛 화면으로 이동');
-        navigate(`/room/${joinCode}/roulette/play`, navOptions);
-        return true;
-      }
-
-      if (destination.includes('/winner')) {
+      if (destination.includes(SCREEN_TRANSITION_PATTERNS.WINNER)) {
         console.log('🔄 복구: 당첨자 화면으로 이동');
         navigate(`/room/${joinCode}/roulette/result`, navOptions);
         return true;
       }
 
-      if (destination.includes('/round')) {
+      if (destination.includes(SCREEN_TRANSITION_PATTERNS.ROULETTE)) {
+        console.log('🔄 복구: 룰렛 화면으로 이동');
+        navigate(`/room/${joinCode}/roulette/play`, navOptions);
+        return true;
+      }
+
+      if (destination.includes(SCREEN_TRANSITION_PATTERNS.ROUND)) {
         console.log('🔄 복구: 게임 시작 - 핸들러에게 위임');
         return false;
       }
@@ -113,7 +126,9 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
     // 동기적으로 설정
     setIsRecoveringGlobal(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, RECOVERY_INITIAL_DELAY_MS));
+
+    if (!joinCode) return;
 
     console.log('🔄 메시지 복구 시작:', { joinCode, myName, lastStreamId });
 
@@ -128,7 +143,8 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
       }
 
       console.log(`🔄 복구 재시도 ${attempt + 1}/${MAX_RETRY}`);
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, RECOVERY_RETRY_DELAY_MS));
+      if (!joinCode) return;
     }
 
     if (messages.length === 0) {
@@ -170,8 +186,18 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
 
     recoveryTimeoutRef.current = setTimeout(() => {
       setIsRecoveringGlobal(false);
-    }, 2000);
+    }, RECOVERY_COMPLETE_DELAY_MS);
   }, [joinCode, myName, routeRecoveryMessage, dispatchToSubscribers]);
+
+  useEffect(() => {
+    if (!joinCode) {
+      setIsRecoveringGlobal(false);
+      if (recoveryTimeoutRef.current) {
+        clearTimeout(recoveryTimeoutRef.current);
+        recoveryTimeoutRef.current = null;
+      }
+    }
+  }, [joinCode]);
 
   useWebSocketReconnection({
     isConnected,

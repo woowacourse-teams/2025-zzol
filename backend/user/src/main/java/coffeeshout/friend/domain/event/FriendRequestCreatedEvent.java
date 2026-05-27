@@ -1,6 +1,5 @@
 package coffeeshout.friend.domain.event;
 
-import coffeeshout.global.redis.BaseEvent;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -12,7 +11,7 @@ public record FriendRequestCreatedEvent(
         String requesterUserCode,
         String requesterNickname,
         Long addresseeId
-) implements BaseEvent {
+) {
 
     public FriendRequestCreatedEvent(Long requestId, Long requesterId, String requesterUserCode,
                                      String requesterNickname, Long addresseeId) {

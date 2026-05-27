@@ -1,6 +1,5 @@
 package coffeeshout.friend.domain.event;
 
-import coffeeshout.global.redis.BaseEvent;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,7 +8,7 @@ public record FriendRemovedEvent(
         Instant timestamp,
         Long removedByUserId,
         Long targetUserId
-) implements BaseEvent {
+) {
 
     public FriendRemovedEvent(Long removedByUserId, Long targetUserId) {
         this(UUID.randomUUID().toString(), Instant.now(), removedByUserId, targetUserId);

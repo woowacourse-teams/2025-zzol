@@ -1,6 +1,5 @@
 package coffeeshout.room.domain.event;
 
-import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.trace.TraceInfo;
 import coffeeshout.global.trace.TraceInfoExtractor;
 import coffeeshout.global.trace.Traceable;
@@ -14,7 +13,7 @@ public record RouletteShownEvent(
         Instant timestamp,
         String joinCode,
         RoomState roomState
-) implements BaseEvent, Traceable {
+) implements Traceable {
 
     public RouletteShownEvent(String joinCode, RoomState roomState) {
         this(

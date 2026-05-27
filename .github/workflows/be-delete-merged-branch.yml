@@ -14,6 +14,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      issues: write
 
     steps:
       - name: Checkout repository
@@ -30,6 +31,7 @@ jobs:
           echo "Merged branch: $BRANCH_NAME"
 
       - name: Delete merged branch
+        id: delete-branch-step
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -40,6 +42,7 @@ jobs:
           for protected in "${PROTECTED_BRANCHES[@]}"; do
             if [[ "$BRANCH_NAME" == "$protected" ]]; then
               echo "⚠️  Protected branch '$BRANCH_NAME' will not be deleted"
+              echo "result=protected" >> $GITHUB_OUTPUT
               exit 0
             fi
           done
@@ -49,14 +52,17 @@ jobs:
             for i in 1 2 3; do
               if gh api --method DELETE "repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME"; then
                 echo "✅ Branch '$BRANCH_NAME' has been deleted successfully (attempt $i)"
+                echo "result=deleted" >> $GITHUB_OUTPUT
                 exit 0
               fi
               echo "⚠️  Attempt $i failed, retrying in $((i * 3))s..."
               sleep $((i * 3))
             done
             echo "::warning::Failed to delete branch $BRANCH_NAME after 3 attempts"
+            echo "result=failed" >> $GITHUB_OUTPUT
           else
             echo "ℹ️  Branch '$BRANCH_NAME' does not exist or already deleted"
+            echo "result=not_found" >> $GITHUB_OUTPUT
           fi
 
       - name: Comment on PR
@@ -64,23 +70,23 @@ jobs:
         with:
           script: |
             const branchName = '${{ steps.branch-name.outputs.branch }}';
-            const protectedBranches = ['main', 'fe/dev', 'fe/prod', 'be/dev', 'be/prod'];
+            const result = '${{ steps.delete-branch-step.outputs.result }}';
 
-            if (protectedBranches.includes(branchName)) {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `⚠️ Protected branch \`${branchName}\` was not deleted automatically.`
-              });
-            } else {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `🗑️ Branch \`${branchName}\` has been automatically deleted after merge.`
-              });
-            }
+            const messages = {
+              deleted:   `🗑️ 브랜치 \`${branchName}\` 가 머지 후 자동으로 삭제되었습니다.`,
+              not_found: `ℹ️ 브랜치 \`${branchName}\` 는 이미 존재하지 않아 삭제를 건너뛰었습니다.`,
+              protected: `⚠️ 보호된 브랜치 \`${branchName}\` 는 자동 삭제 대상이 아닙니다.`,
+              failed:    `❌ 브랜치 \`${branchName}\` 삭제를 3회 시도했지만 모두 실패했습니다. 수동으로 삭제해 주세요.`,
+            };
+
+            const body = messages[result] ?? `⚠️ 브랜치 \`${branchName}\` 처리 결과를 확인할 수 없습니다. (result: ${result})`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
 
   log-deleted-branch:
     if: github.event.pull_request.merged == true

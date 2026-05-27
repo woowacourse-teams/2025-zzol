@@ -11,13 +11,16 @@ jobs:
   delete-branch:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Get branch name
         id: branch-name
@@ -27,24 +30,31 @@ jobs:
           echo "Merged branch: $BRANCH_NAME"
 
       - name: Delete merged branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME="${{ steps.branch-name.outputs.branch }}"
-          
-          # 보호된 브랜치들은 삭제하지 않음 (main, master, develop, be/dev 등)
+
           PROTECTED_BRANCHES=("main" "fe/dev" "fe/prod" "be/dev" "be/prod")
-          
+
           for protected in "${PROTECTED_BRANCHES[@]}"; do
             if [[ "$BRANCH_NAME" == "$protected" ]]; then
               echo "⚠️  Protected branch '$BRANCH_NAME' will not be deleted"
               exit 0
             fi
           done
-          
-          # 브랜치가 존재하는지 확인
-          if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
+
+          if [ -n "$(git ls-remote --heads origin "refs/heads/$BRANCH_NAME")" ]; then
             echo "🗑️  Deleting branch: $BRANCH_NAME"
-            git push origin --delete "$BRANCH_NAME"
-            echo "✅ Branch '$BRANCH_NAME' has been deleted successfully"
+            for i in 1 2 3; do
+              if gh api --method DELETE "repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME"; then
+                echo "✅ Branch '$BRANCH_NAME' has been deleted successfully (attempt $i)"
+                exit 0
+              fi
+              echo "⚠️  Attempt $i failed, retrying in $((i * 3))s..."
+              sleep $((i * 3))
+            done
+            echo "::warning::Failed to delete branch $BRANCH_NAME after 3 attempts"
           else
             echo "ℹ️  Branch '$BRANCH_NAME' does not exist or already deleted"
           fi
@@ -54,10 +64,8 @@ jobs:
         with:
           script: |
             const branchName = '${{ steps.branch-name.outputs.branch }}';
-            
-            // 보호된 브랜치 체크
-            const protectedBranches = ['main', 'fe/prod', 'fe/dev', 'be/dev', 'be/prod'];
-            
+            const protectedBranches = ['main', 'fe/dev', 'fe/prod', 'be/dev', 'be/prod'];
+
             if (protectedBranches.includes(branchName)) {
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -74,7 +82,6 @@ jobs:
               });
             }
 
-  # 선택사항: 삭제된 브랜치들을 추적하는 잡
   log-deleted-branch:
     if: github.event.pull_request.merged == true
     needs: delete-branch
@@ -89,4 +96,3 @@ jobs:
           echo "- Merged branch: ${{ github.head_ref }}"
           echo "- Target branch: ${{ github.base_ref }}"
           echo "- Merge time: $(date -u)"
-          

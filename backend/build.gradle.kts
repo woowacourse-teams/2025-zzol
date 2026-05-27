@@ -13,7 +13,7 @@ val versions = mapOf(
     "redisson"      to "3.27.2",
     "zxing"         to "3.5.3",
     "queryDsl"      to "5.0.0",
-    "googleGenAi"   to "1.44.0",
+    "googleGenAi"   to "1.55.0",
     "testcontainers" to "2.0.5",
     "reflections"   to "0.10.2",
     "resilience4j"  to "2.2.0",

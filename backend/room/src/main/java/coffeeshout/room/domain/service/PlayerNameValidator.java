@@ -1,17 +1,17 @@
 package coffeeshout.room.domain.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.nickname.NameValidator;
+import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.Objects;
-import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 
 @RequiredArgsConstructor
 @Service
-public class PlayerNameValidator implements NameValidator {
+public class PlayerNameValidator {
 
     private final ProfanityChecker profanityChecker;
 
@@ -24,10 +24,5 @@ public class PlayerNameValidator implements NameValidator {
                     "비속어가 포함된 닉네임입니다. 입력값: '" + playerName + "'"
             );
         }
-    }
-
-    @Override
-    public void validate(String name) {
-        validate(new PlayerName(name));
     }
 }

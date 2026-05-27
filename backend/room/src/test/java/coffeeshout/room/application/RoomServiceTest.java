@@ -10,6 +10,9 @@ import static org.mockito.Mockito.doReturn;
 
 import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.profanity.application.ProfanityFilterService;
+import coffeeshout.profanity.domain.ProfanityWordRepository;
+import coffeeshout.profanity.fixture.ProfanityTestDataSeeder;
 import coffeeshout.support.ServiceTest;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.room.infra.auth.RoomSessionClaim;
@@ -39,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +68,12 @@ class RoomServiceTest extends ServiceTest {
 
     @Autowired
     RoomSessionTokenService roomSessionTokenService;
+
+    @Autowired
+    ProfanityWordRepository profanityWordRepository;
+
+    @Autowired
+    ProfanityFilterService profanityFilterService;
 
     // 테스트 헬퍼 메서드: enterRoom 대체
     private void joinGuest(JoinCode joinCode, String guestName) {
@@ -131,6 +141,11 @@ class RoomServiceTest extends ServiceTest {
 
     @Nested
     class 닉네임_비속어_검증 {
+
+        @BeforeEach
+        void seedProfanityWords() {
+            new ProfanityTestDataSeeder(profanityWordRepository, profanityFilterService).seedForTest();
+        }
 
         @Test
         void 정상_닉네임으로_방을_생성한다() {

@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":web"))
     implementation(project(":user"))
     implementation(project(":room"))
+    implementation(project(":profanity"))
     implementation(project(":game-api"))
     implementation(project(":game"))
 
@@ -39,4 +40,5 @@ dependencies {
 
     testFixturesImplementation(project(":game-api"))
     testImplementation(project(":test-support"))
+    testImplementation(testFixtures(project(":profanity")))
 }

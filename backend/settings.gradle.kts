@@ -10,6 +10,7 @@ include(
     ":user",
     ":room",
     ":game",
+    ":profanity",
     ":admin",
     ":zzolbot",
     ":app",

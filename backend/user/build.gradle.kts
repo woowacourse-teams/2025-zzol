@@ -14,7 +14,6 @@ dependencies {
     implementation(project(":infra"))
     implementation(project(":web"))
     implementation(project(":websocket"))
-
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

@@ -1,7 +1,7 @@
 package coffeeshout.user.application.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.nickname.NameValidator;
+import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.user.config.UserCodeProperties;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.OAuthProvider;
@@ -25,7 +25,7 @@ public class UserRegistrationService {
     private final UserRepository userRepository;
     private final UserCreationPort userCreationPort;
     private final UserCodeProperties userCodeProperties;
-    private final NameValidator nameValidator;
+    private final ProfanityChecker profanityChecker;
     private final NicknameDefaultGenerator nicknameDefaultGenerator;
 
     public LoginResult registerOrLogin(OAuthProvider provider, String providerUserId, String email, String suggestedNickname) {
@@ -76,7 +76,10 @@ public class UserRegistrationService {
                 : suggested;
 
         try {
-            nameValidator.validate(trimmed);
+            if (profanityChecker.contains(trimmed)) {
+                throw new BusinessException(UserErrorCode.NICKNAME_CONTAINS_PROFANITY,
+                        "비속어가 포함된 닉네임입니다. 입력값: '" + trimmed + "'");
+            }
             return new UserNickname(trimmed);
         } catch (BusinessException e) {
             log.debug("제안된 닉네임이 검증 실패, 자동 생성으로 대체: suggested={}", suggested);

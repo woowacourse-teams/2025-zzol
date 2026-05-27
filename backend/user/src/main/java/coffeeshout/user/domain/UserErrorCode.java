@@ -15,6 +15,7 @@ public enum UserErrorCode implements ErrorCode {
     NICKNAME_BLANK(400, "닉네임은 공백일 수 없습니다."),
     NICKNAME_TOO_LONG(400, "닉네임은 10자 이하여야 합니다."),
     NICKNAME_INVALID(400, "허용되지 않는 닉네임입니다."),
+    NICKNAME_CONTAINS_PROFANITY(400, "비속어가 포함된 닉네임은 사용할 수 없습니다."),
     UNAUTHORIZED(401, "인증이 필요합니다."),
     INVALID_TOKEN(401, "유효하지 않은 토큰입니다."),
     TOKEN_EXPIRED(401, "만료된 토큰입니다."),

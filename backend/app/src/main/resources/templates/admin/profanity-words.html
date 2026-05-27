@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비속어 관리 — ZZOL</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<header>
+    <h1>비속어 관리</h1>
+    <form th:action="@{/admin/logout}" method="post">
+        <button type="submit" class="logout-btn">로그아웃</button>
+    </form>
+</header>
+
+<main>
+    <a href="/admin" class="nav-back">← 대시보드로</a>
+
+    <div class="section-header" style="margin-top: 0;">
+        <span class="section-title">단어 추가</span>
+    </div>
+
+    <div class="form-card">
+        <form th:action="@{/admin/profanity/words}" method="post">
+            <div class="form-row">
+                <div class="form-field">
+                    <label class="form-label">단어</label>
+                    <input class="form-input" type="text" name="word" required maxlength="200"
+                           placeholder="차단할 단어 입력" style="width:220px;">
+                </div>
+                <div class="form-field">
+                    <label class="form-label">언어</label>
+                    <select class="form-select" name="language">
+                        <option th:each="lang : ${languages}" th:value="${lang}" th:text="${lang}"></option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">추가</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="section-header">
+        <span class="section-title">활성 비속어 목록</span>
+        <span class="badge badge-flagged" th:text="${words.size()}">0</span>
+    </div>
+
+    <div th:if="${words.empty}" class="empty">등록된 활성 비속어가 없습니다.</div>
+
+    <div th:if="${!words.empty}" class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>단어</th>
+                <th>언어</th>
+                <th>출처</th>
+                <th>처리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${words}">
+                <td class="nickname" th:text="${item.word()}"></td>
+                <td th:text="${item.language()}"></td>
+                <td><span class="tag-source" th:text="${item.source()}"></span></td>
+                <td>
+                    <form th:action="@{/admin/profanity/words/deactivate(word=${item.word()})}"
+                          method="post"
+                          onsubmit="return confirm('이 단어를 비활성화하시겠습니까?')">
+                        <button type="submit" class="btn btn-block">비활성화</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</main>
+</body>
+</html>

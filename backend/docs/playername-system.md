@@ -237,7 +237,7 @@ public class SecurityConfig {
             )
             .formLogin(form -> form
                 .loginPage("/admin/login")
-                .defaultSuccessUrl("/admin/playername-audit")
+                .defaultSuccessUrl("/admin/profanity")
                 .permitAll()
             )
             .csrf(AbstractHttpConfigurer::disable);  // REST API + 내부망 admin
@@ -389,8 +389,8 @@ nickname_audit_unaudited_queue
 - [x] `AdminProperties` — 환경변수 기반 InMemoryUserDetails 설정
 - [x] `LoginAdminController` — `/admin/login` 폼 렌더링
 - [x] `templates/admin/login.html` — 로그인 페이지
-- [x] 운영자 대시보드 (`/admin/playername-audit`) — FLAGGED·PENDING 목록 조회 / 허용 / 차단 / 페이지네이션
-- [x] `PlayerNameAuditAdminController` — 대시보드 GET·POST, 빈 페이지 자동 clamp redirect
+- [x] 운영자 대시보드 (`/admin/profanity`) — FLAGGED·PENDING 목록 조회 / 허용 / 차단 / 페이지네이션
+- [x] `ProfanityAdminController` — 대시보드 GET·POST, 빈 페이지 자동 clamp redirect
 
 ### Feature 3 후속: FLAGGED 자동 차단 + 어드민 해제
 

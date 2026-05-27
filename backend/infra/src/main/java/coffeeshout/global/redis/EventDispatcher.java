@@ -25,7 +25,11 @@ public class EventDispatcher {
         try {
             recordLatency(event);
 
-            final Consumer<BaseEvent> consumer = (Consumer<BaseEvent>) getConsumer(event.getClass());
+            final Consumer<BaseEvent> consumer = (Consumer<BaseEvent>) findConsumer(event.getClass());
+            if (consumer == null) {
+                log.warn("등록된 Consumer 없음, 이벤트를 건너뜁니다: eventType={}", event.getClass().getSimpleName());
+                return;
+            }
             final Runnable handling = () -> consumer.accept(event);
 
             if (event instanceof Traceable traceable) {
@@ -47,9 +51,9 @@ public class EventDispatcher {
         }
     }
 
-    private <T extends BaseEvent> Consumer<T> getConsumer(Class<T> eventType) {
+    private <T extends BaseEvent> Consumer<T> findConsumer(Class<T> eventType) {
         final ResolvableType type = ResolvableType.forClassWithGenerics(Consumer.class, eventType);
         final ObjectProvider<Consumer<T>> provider = applicationContext.getBeanProvider(type);
-        return provider.getObject();
+        return provider.getIfAvailable();
     }
 }

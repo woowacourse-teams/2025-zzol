@@ -8,14 +8,10 @@ type Props = {
   client: Client | null;
   isConnected: boolean;
   playerName: string | null;
+  joinCode: string;
 };
 
-const extractJoinCodeFromDestination = (destination: string): string | null => {
-  const match = destination.match(/\/room\/([^/]+)/);
-  return match ? match[1] : null;
-};
-
-export const useWebSocketMessaging = ({ client, isConnected, playerName }: Props) => {
+export const useWebSocketMessaging = ({ client, isConnected, playerName, joinCode }: Props) => {
   const subscribe = useCallback(
     <T>(url: string, onData: (data: T) => void, onError?: (error: Error) => void) => {
       if (!client || !isConnected) {
@@ -45,11 +41,8 @@ export const useWebSocketMessaging = ({ client, isConnected, playerName }: Props
             return;
           }
 
-          if (parsedMessage.id && playerName) {
-            const joinCode = extractJoinCodeFromDestination(url);
-            if (joinCode) {
-              saveLastStreamId(joinCode, playerName, parsedMessage.id);
-            }
+          if (parsedMessage.id && joinCode && playerName) {
+            saveLastStreamId(joinCode, playerName, parsedMessage.id);
           }
 
           onData(parsedMessage.data);
@@ -63,7 +56,7 @@ export const useWebSocketMessaging = ({ client, isConnected, playerName }: Props
         }
       });
     },
-    [client, isConnected, playerName]
+    [client, isConnected, playerName, joinCode]
   );
 
   const send = useCallback(

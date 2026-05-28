@@ -7,16 +7,51 @@
 - 복수 검증은 `SoftAssertions`를 사용한다
 - `@SpringBootTest` 없이 순수 Java로 작성한다 (아래 베이스 클래스/어노테이션 사용 시 제외)
 
+## :test-support 모듈
+
+테스트 인프라(TestContainers, 베이스 클래스, 공용 유틸)는 `:test-support` 모듈에서 제공한다.
+각 도메인 모듈의 `build.gradle.kts`에 아래를 추가하면 MySQL·Valkey TestContainer, 베이스 클래스, `ExceptionAssertions`, `TestStompSession` 등을 전이 의존성으로 사용할 수 있다.
+
+```kotlin
+testImplementation(project(":test-support"))
+```
+
+공통 테스트 설정은 `:test-support`의 `application-test-base.yml`에 정의되며, 각 모듈의 `application-test.yml`과 함께 `test` 프로파일 적용 시 자동으로 로드된다.
+
 ## 테스트 종류별 베이스
 
-| 종류                         | 베이스                                         | 특징                                                                                                |
-|----------------------------|---------------------------------------------|---------------------------------------------------------------------------------------------------|
-| 순수 단위 테스트                  | 없음 (순수 Java)                                | 스프링 컨텍스트 없이 도메인 로직만 검증                                                                            |
-| 서비스 테스트                    | `ServiceTest` 추상 클래스 상속                     | `@SpringBootTest` + `test` 프로파일 + `@Transactional`. `ApplicationEventPublisher`는 MockitoBean으로 제공 |
-| WebSocket 통합 테스트           | `WebSocketIntegrationTestSupport` 추상 클래스 상속 | `RANDOM_PORT` + `test` 프로파일 + `@BeforeEach` Redis listener 재시작                                    |
-| 일반 통합 테스트 (REST, Stream 등) | `IntegrationTestSupport` 추상 클래스 상속          | `RANDOM_PORT` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup                               |
+| 종류 | 베이스 | 특징 |
+|------|--------|------|
+| 순수 단위 테스트 | 없음 (순수 Java) | 스프링 컨텍스트 없이 도메인 로직만 검증 |
+| 서비스 테스트 | 모듈 로컬 `{Module}ServiceTest` 상속 | `coffeeshout.support.ServiceTest` 확장. `@SpringBootTest` + `@ActiveProfiles("test")` + `@Transactional` 상속. 모듈별 `ServiceTestConfig`에 외부 의존 Mock 선언 |
+| WebSocket 통합 테스트 | 모듈 로컬 `{Module}IntegrationTest` 상속 + `TestStompSession` 사용 | `coffeeshout.support.IntegrationTestSupport` 확장. `RANDOM_PORT` + `test` 프로파일. `TestStompSession`으로 STOMP 구독·전송·메시지 수집 |
+| 일반 통합 테스트 (REST, Stream 등) | 모듈 로컬 `{Module}IntegrationTest` 상속 | `coffeeshout.support.IntegrationTestSupport` 확장. `RANDOM_PORT` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup |
 
-모든 베이스는 `TestContainerSupport`를 상속하므로 MySQL·Valkey TestContainer가 자동으로 구동된다.
+모든 모듈 로컬 베이스는 `coffeeshout.support.ServiceTest` 또는 `coffeeshout.support.IntegrationTestSupport`를 통해 `TestContainerSupport`를 상속하므로 MySQL·Valkey TestContainer가 자동으로 구동된다.
+
+### 모듈 로컬 베이스 클래스
+
+각 도메인 모듈은 `src/test/java/coffeeshout/` 아래에 두 개의 베이스 클래스를 정의한다.
+
+**서비스 테스트용** — `@SpringBootTest`·`@ActiveProfiles`·`@Transactional`·`MockEventPublisherConfig` 모두 부모에서 상속한다.
+
+```java
+@Import(ServiceTestConfig.class)
+public abstract class {Module}ServiceTest extends coffeeshout.support.ServiceTest {
+}
+```
+
+**통합 테스트용** — 부모의 auto-detection을 대신해 모듈 테스트 앱 클래스를 명시한다.
+
+```java
+@SpringBootTest(classes = {Module}TestApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@Import(ServiceTestConfig.class)
+public abstract class {Module}IntegrationTest extends coffeeshout.support.IntegrationTestSupport {
+}
+```
+
+모듈 외부 의존(인터페이스 구현체가 없는 포트 등)은 `src/test/java/coffeeshout/config/ServiceTestConfig.java`에 `@TestConfiguration`으로 선언한다.
+`ApplicationEventPublisher` Mock은 부모(`coffeeshout.support.ServiceTest`)가 `@MockitoBean`으로 이미 제공하므로 `ServiceTestConfig`에 재선언하지 않는다.
 
 ## 픽스처
 
@@ -41,7 +76,19 @@
 
 ## 통합 테스트 (WebSocket)
 
-`WebSocketIntegrationTestSupport`를 상속하면 STOMP 세션 유틸(`createSession`, `assertMessage` 등)이 제공된다. `assertMessage`는 JSONAssert(lenient mode)로 비교한다.
+`IntegrationTestSupport`를 상속하고 `TestStompSession`(`coffeeshout.support`)을 직접 생성해서 사용한다.
+`subscribe()`는 `MessageCollector`를 반환하며, `get()`으로 메시지를 Awaitility 기반으로 대기한다.
+
+```java
+TestStompSession session = new TestStompSession(stompSession, principalName);
+MessageCollector collector = session.subscribe("/topic/...");
+session.send("/app/...", requestPayload);
+
+MessageResponse response = collector.get();          // 기본 5초 대기
+MessageResponse response = collector.get(3, TimeUnit.SECONDS);
+
+collector.assertNoMessage();                         // 메시지 없음 검증 (기본 1초)
+```
 
 ## 비동기·시간 의존 검증
 
@@ -83,7 +130,7 @@ SoftAssertions.assertSoftly(softly -> {
 `CoffeeShoutException` 계열 예외는 `ExceptionAssertions.assertCoffeeShoutException`을 사용한다.
 
 ```java
-import static coffeeshout.global.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 
 assertCoffeeShoutException(
         () -> service.someMethod(),
@@ -97,8 +144,9 @@ assertCoffeeShoutException(
 
 ## 테스트 프로파일
 
-`test` 프로파일 적용 시 `application-test.yml`이 자동 적용된다.
+`test` 프로파일 적용 시 `:test-support`의 `application-test-base.yml`과 각 모듈의 `application-test.yml`이 자동 적용된다.
+
 - 타이밍 값이 500ms~2s로 단축됨
 - DB: MySQL TestContainer 사용 (Flyway 비활성화)
-- Valkey(Redis): TestContainers로 실제 컨테이너 구동 (`TestContainerConfig`)
+- Valkey(Redis): TestContainers로 실제 컨테이너 구동
 - Redisson 제외

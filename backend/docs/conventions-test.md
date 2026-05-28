@@ -24,8 +24,8 @@ testImplementation(project(":test-support"))
 |------|--------|------|
 | 순수 단위 테스트 | 없음 (순수 Java) | 스프링 컨텍스트 없이 도메인 로직만 검증 |
 | 서비스 테스트 | 모듈 로컬 `{Module}ServiceTest` 상속 | `coffeeshout.support.ServiceTest` 확장. `@SpringBootTest` + `@ActiveProfiles("test")` + `@Transactional` 상속. 모듈별 `ServiceTestConfig`에 외부 의존 Mock 선언 |
-| WebSocket 통합 테스트 | 모듈 로컬 `{Module}IntegrationTest` 상속 + `TestStompSession` 사용 | `coffeeshout.support.IntegrationTestSupport` 확장. `RANDOM_PORT` + `test` 프로파일. `TestStompSession`으로 STOMP 구독·전송·메시지 수집 |
-| 일반 통합 테스트 (REST, Stream 등) | 모듈 로컬 `{Module}IntegrationTest` 상속 | `coffeeshout.support.IntegrationTestSupport` 확장. `RANDOM_PORT` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup |
+| WebSocket 통합 테스트 | 모듈 로컬 `{Module}IntegrationTest` 상속 + `TestStompSession` 사용 | `coffeeshout.support.IntegrationTestSupport` 확장. `RANDOM_PORT` 명시 오버라이드 + `test` 프로파일. `TestStompSession`으로 STOMP 구독·전송·메시지 수집 |
+| 일반 통합 테스트 (REST, Stream 등) | 모듈 로컬 `{Module}IntegrationTest` 상속 | `coffeeshout.support.IntegrationTestSupport` 확장. 기본 `MOCK` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup |
 
 모든 모듈 로컬 베이스는 `coffeeshout.support.ServiceTest` 또는 `coffeeshout.support.IntegrationTestSupport`를 통해 `TestContainerSupport`를 상속하므로 MySQL·Valkey TestContainer가 자동으로 구동된다.
 
@@ -41,7 +41,16 @@ public abstract class {Module}ServiceTest extends coffeeshout.support.ServiceTes
 }
 ```
 
-**통합 테스트용** — 부모의 auto-detection을 대신해 모듈 테스트 앱 클래스를 명시한다.
+**통합 테스트용** — 부모의 auto-detection을 대신해 모듈 테스트 앱 클래스를 명시한다. 기본값은 `MOCK`이며, WebSocket/STOMP·`TestRestTemplate`·`WebTestClient` 등 실제 TCP 소켓이 필요한 경우에만 `RANDOM_PORT`로 오버라이드한다.
+
+```java
+@SpringBootTest(classes = {Module}TestApplication.class, webEnvironment = WebEnvironment.MOCK)
+@Import(ServiceTestConfig.class)
+public abstract class {Module}IntegrationTest extends coffeeshout.support.IntegrationTestSupport {
+}
+```
+
+WebSocket/STOMP 또는 `TestRestTemplate` · `WebTestClient`를 사용하는 모듈은 `RANDOM_PORT`로 명시 오버라이드한다.
 
 ```java
 @SpringBootTest(classes = {Module}TestApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)

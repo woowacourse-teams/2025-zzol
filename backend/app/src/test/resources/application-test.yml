@@ -1,58 +1,13 @@
 spring:
+  config:
+    import: "classpath:application-test-base.yml"
   datasource:
     url: jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
-    hikari:
-      maximum-pool-size: 5
-      minimum-idle: 0
-      idle-timeout: 10000
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: test-google-client-id
-            client-secret: test-google-client-secret
-            scope: profile,email
-          kakao:
-            client-id: test-kakao-client-id
-            client-secret: test-kakao-client-secret
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            client-authentication-method: client_secret_post
-            scope: profile_nickname,account_email
-          naver:
-            client-id: test-naver-client-id
-            client-secret: test-naver-client-secret
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: name,email
   jpa:
-    hibernate:
-      # create: 기동 시 DROP 후 재생성 — withReuse 환경에서 잔여 스키마를 정리한다
-      ddl-auto: create
     properties:
       hibernate:
-        format_sql: true
-        show_sql: false
         hbm2ddl:
           halt_on_error: false
-  lifecycle:
-    timeout-per-shutdown-phase: 1s
-  flyway:
-    enabled: false
-  data:
-    redis:
-      ssl:
-        enabled: false
-  autoconfigure:
-    exclude:
-      - org.redisson.spring.starter.RedissonAutoConfigurationV2
-
-server:
-  shutdown: immediate
-
-redisson:
-  enabled: true
 
 logging:
   level:
@@ -63,29 +18,11 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
 management:
-  tracing:
-    sampling:
-      probability: 1.0
-  otlp:
-    tracing:
-      endpoint: http://localhost:4318
   endpoint:
     health:
       group:
         readiness:
           include: "db,redis,redisStream"
-
-resilience4j:
-  ratelimiter:
-    instances:
-      geminiAudit:
-        limit-for-period: 100
-        limit-refresh-period: 1s
-        timeout-duration: 5s
-
-report:
-  rate-limit:
-    ttl: 1s
 
 room:
   qr:
@@ -99,27 +36,6 @@ otel:
 tracing:
   sampling:
     probability: 1.0
-
-websocket:
-  room-session-token:
-    secret: "test-room-session-token-secret-key-must-be-at-least-256-bits-long"
-  recovery:
-    max-length: 100
-    stream-ttl-seconds: 3600
-    dedup-ttl-seconds: 1
-
-
-admin:
-  username: admin
-  password: "1234"
-
-user:
-  jwt:
-    secret: "test-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm"
-    access-token-expiration-seconds: 1800
-    refresh-token-expiration-seconds: 1209600
-  oauth:
-    frontend-redirect-uri: "http://localhost:3000/auth/callback"
 
 block-stacking:
   timing:
@@ -191,11 +107,3 @@ zzol-bot:
         description: "아웃박스 이벤트"
         columns: [id, status, join_code, created_at]
         blocked-columns: []
-
-friend:
-  presence:
-    grace-period-seconds: 1
-web:
-  cors:
-    allowed-origins:
-      - http://localhost:3000

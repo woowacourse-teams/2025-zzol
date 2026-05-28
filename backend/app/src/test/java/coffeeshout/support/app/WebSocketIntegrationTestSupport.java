@@ -156,7 +156,7 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
                                     principalFuture.completeExceptionally(exception);
                                     return;
                                 }
-                                log.error("STOMP TRANSPORT ERROR: {}", exception.getMessage());
+                                log.error("STOMP TRANSPORT ERROR", exception);
                                 principalFuture.completeExceptionally(exception);
                                 throw new RuntimeException(exception);
                             }
@@ -169,7 +169,7 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
                                     byte[] payload,
                                     Throwable exception
                             ) {
-                                log.error("STOMP EXCEPTION: " + exception.getMessage());
+                                log.error("STOMP EXCEPTION", exception);
                                 principalFuture.completeExceptionally(exception);
                                 throw new RuntimeException(exception);
                             }

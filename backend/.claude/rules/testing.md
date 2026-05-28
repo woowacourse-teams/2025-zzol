@@ -27,5 +27,7 @@ paths:
 | 서비스 테스트 | 모듈 로컬 `{Module}ServiceTest` 상속 (`coffeeshout.support.ServiceTest` 확장) |
 | WebSocket / REST / Stream 통합 | 모듈 로컬 `{Module}IntegrationTest` 상속 (`coffeeshout.support.IntegrationTestSupport` 확장) |
 
+`{Module}IntegrationTest`의 `webEnvironment` 기본값은 **`MOCK`**이다. `WebSocket/STOMP`(`StandardWebSocketClient`), `TestRestTemplate`, `WebTestClient` 등 실제 TCP 소켓이 필요한 경우에만 `WebEnvironment.RANDOM_PORT`로 명시 오버라이드한다.
+
 두 베이스 클래스는 `src/test/java/coffeeshout/` 아래에 위치하며, Mock 빈은 `src/test/java/coffeeshout/config/ServiceTestConfig.java`에 선언한다.
 `ApplicationEventPublisher`는 `coffeeshout.support.ServiceTest`가 `@MockitoBean`으로 제공 — `ServiceTestConfig`에 재선언 금지.

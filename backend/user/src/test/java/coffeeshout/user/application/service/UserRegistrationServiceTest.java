@@ -1,8 +1,9 @@
 package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.ServiceTest;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
@@ -70,6 +71,8 @@ class UserRegistrationServiceTest extends ServiceTest {
 
         @Test
         void 비속어_닉네임이면_자동_닉네임으로_대체된다() {
+            given(profanityChecker.contains("씨발")).willReturn(true);
+
             final User user = userRegistrationService.registerOrLogin(
                     GOOGLE, PROVIDER_USER_ID, EMAIL, "씨발").user();
 

@@ -1,5 +1,6 @@
 package coffeeshout.support.test;
 
+import coffeeshout.UserModuleTestApplication;
 import coffeeshout.config.ServiceTestConfig;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = UserModuleTestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @Import({ServiceTestConfig.class})
 @Transactional

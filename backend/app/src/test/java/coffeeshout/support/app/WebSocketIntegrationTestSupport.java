@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.simp.stomp.ConnectionLostException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
@@ -150,7 +151,12 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
 
                             @Override
                             public void handleTransportError(StompSession session, Throwable exception) {
-                                log.error("STOMP TRANSPORT ERROR: " + exception.getMessage());
+                                if (exception instanceof ConnectionLostException) {
+                                    log.debug("STOMP connection closed");
+                                    principalFuture.completeExceptionally(exception);
+                                    return;
+                                }
+                                log.error("STOMP TRANSPORT ERROR: {}", exception.getMessage());
                                 principalFuture.completeExceptionally(exception);
                                 throw new RuntimeException(exception);
                             }

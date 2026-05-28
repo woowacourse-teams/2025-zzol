@@ -2,7 +2,7 @@
 
 ## 상태
 
-적용됨 (2026-05-23, 보강 2026-05-24)
+적용됨 (2026-05-23, 보강 2026-05-24, 2026-05-28)
 
 ## 컨텍스트
 
@@ -125,6 +125,34 @@ public class CommonTestSchedulerConfig {
 게임 도메인 설정을 `:app:test`의 `IntegrationTestConfig`로 이동해 `:test-support`가 도메인 무관 공통 인프라(베이스 클래스, `application-test-base.yml`)만 제공하도록 정리했다. 함께 미사용 상태였던 `MockFlowSchedulerConfig`도 삭제했다.
 
 `@IntegrationTest` 합성 어노테이션은 삭제했다. 기존에 이 어노테이션이 담당하던 `@SpringBootTest(RANDOM_PORT) + @ActiveProfiles("test")`는 `:test-support`의 `IntegrationTestSupport` 베이스 클래스가 제공하고, `@Import(IntegrationTestConfig.class)`는 `:app`의 `IntegrationTestSupport`가 직접 선언한다. 테스트 클래스는 어노테이션 합성 대신 베이스 클래스 상속으로 설정을 획득한다.
+
+### `withReuse(true)` 제거 — 병렬 빌드 격리 (2026-05-28 보강)
+
+`gradle.properties` 에 `org.gradle.parallel=true` 가 설정되어 있어 `./gradlew build` 는
+`:profanity:test`, `:room:test`, `:user:test` 등 여러 모듈 테스트 태스크를 **별도 JVM 에서 동시 실행**한다.
+
+`TestContainerSupport` 의 `withReuse(true)` 는 동일 이미지·설정을 가진 컨테이너를
+JVM 간에 공유(재사용)하게 한다. 결과적으로 세 JVM 이 **같은 MySQL 컨테이너**에 동시에 접속하고,
+각 JVM 의 Spring Context 초기화 시 `ddl-auto: create` 가 동시에 DROP → CREATE 를 실행한다.
+
+```text
+profanity JVM  ──┐
+room      JVM  ──┼── 같은 MySQL 컨테이너 공유
+user      JVM  ──┘
+      각 JVM: ddl-auto: create → DROP TABLE → CREATE TABLE
+      → 다른 JVM이 방금 만든 테이블을 DROP → SQLSyntaxErrorException
+```
+
+이 레이스 컨디션은 IDE 에서는 재현되지 않는다. IDE 가 단일 모듈 테스트를 실행할 때는
+하나의 JVM 만 컨테이너를 사용하므로 충돌이 없기 때문이다.
+
+**해결: `withReuse(true)` 를 MySQL 과 Valkey 모두에서 제거한다.**
+각 JVM 이 독립 컨테이너를 갖게 되어 `ddl-auto: create` 충돌이 사라진다.
+
+트레이드오프:
+- 재실행 시 컨테이너를 매번 새로 기동한다 (MySQL ~15초, Valkey ~2초).
+- `withReuse(true)` 의 빠른 재사용 이점이 사라진다.
+- 대신 병렬 빌드가 안정적으로 통과한다. 플레이키한 `SQLSyntaxErrorException` 이 제거된다.
 
 ### TestContainers 버전 고정
 

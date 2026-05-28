@@ -1,4 +1,5 @@
 package coffeeshout.user.auth;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -18,12 +19,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class JwtAuthenticationFilterTest {
 
     private AuthTokenService authTokenService;
-    private JwtAuthenticationFilter filter;
+    private coffeeshout.user.auth.JwtAuthenticationFilter filter;
 
     @BeforeEach
     void setUp() {
         authTokenService = mock(AuthTokenService.class);
-        filter = new JwtAuthenticationFilter(authTokenService);
+        filter = new coffeeshout.user.auth.JwtAuthenticationFilter(authTokenService);
         SecurityContextHolder.clearContext();
     }
 

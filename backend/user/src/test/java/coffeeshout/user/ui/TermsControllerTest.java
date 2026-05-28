@@ -3,7 +3,7 @@ package coffeeshout.user.ui;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.UserModuleIntegrationTest;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.TokenPair;
@@ -17,7 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureMockMvc
-class TermsControllerTest extends IntegrationTestSupport {
+class TermsControllerTest extends UserModuleIntegrationTest {
 
     @Autowired
     MockMvc mockMvc;

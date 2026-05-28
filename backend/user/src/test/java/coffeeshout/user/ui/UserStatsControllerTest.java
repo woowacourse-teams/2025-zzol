@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import coffeeshout.fixture.IntegrationTestSupport;
+import coffeeshout.UserModuleIntegrationTest;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.TokenPair;
@@ -22,7 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureMockMvc
-class UserStatsControllerTest extends IntegrationTestSupport {
+class UserStatsControllerTest extends UserModuleIntegrationTest {
 
     @Autowired
     MockMvc mockMvc;

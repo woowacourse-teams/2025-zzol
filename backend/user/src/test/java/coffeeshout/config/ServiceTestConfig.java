@@ -23,26 +23,31 @@ public class ServiceTestConfig {
     }
 
     @Bean
+    @Primary
     public ProfanityChecker mockProfanityChecker() {
         return Mockito.mock(ProfanityChecker.class);
     }
 
     @Bean("stompPrincipalInterceptor")
+    @Primary
     public ChannelInterceptor mockStompPrincipalInterceptor() {
         return Mockito.mock(ChannelInterceptor.class);
     }
 
     @Bean
+    @Primary
     public RoomInvitationValidator mockRoomInvitationValidator() {
         return Mockito.mock(RoomInvitationValidator.class);
     }
 
     @Bean
+    @Primary
     public ReportAnonymizationPort mockReportAnonymizationPort() {
         return Mockito.mock(ReportAnonymizationPort.class);
     }
 
     @Bean
+    @Primary
     public WordPicker mockWordPicker() {
         return Mockito.mock(WordPicker.class);
     }

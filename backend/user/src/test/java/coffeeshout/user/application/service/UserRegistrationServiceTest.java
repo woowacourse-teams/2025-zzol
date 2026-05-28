@@ -3,7 +3,8 @@ package coffeeshout.user.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-import coffeeshout.ServiceTest;
+import coffeeshout.UserModuleServiceTest;
+import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
@@ -13,13 +14,16 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class UserRegistrationServiceTest extends ServiceTest {
+class UserRegistrationServiceTest extends UserModuleServiceTest {
 
     @Autowired
     UserRegistrationService userRegistrationService;
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    ProfanityChecker profanityChecker;
 
     private static final OAuthProvider GOOGLE = OAuthProvider.GOOGLE;
     private static final String PROVIDER_USER_ID = "google-uid-42";

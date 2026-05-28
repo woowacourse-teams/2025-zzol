@@ -4,7 +4,7 @@ import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.ServiceTest;
+import coffeeshout.UserModuleServiceTest;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.User;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class AuthTokenServiceTest extends ServiceTest {
+class AuthTokenServiceTest extends UserModuleServiceTest {
 
     @Autowired
     AuthTokenService authTokenService;

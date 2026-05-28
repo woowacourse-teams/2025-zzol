@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.MiniGameDummy;
-import coffeeshout.gamecommon.Playable;
 import coffeeshout.fixture.RouletteFixture;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;

@@ -1,11 +1,9 @@
 package coffeeshout.room.infra.auth;
 
-import coffeeshout.room.infra.auth.RoomSessionClaim;
-import coffeeshout.room.infra.auth.RoomSessionTokenService;
-import coffeeshout.room.infra.auth.RoomSessionTokenIssuer;
-import coffeeshout.room.infra.auth.JjwtRoomSessionTokenIssuer;
-import coffeeshout.room.infra.auth.RoomSessionTokenProperties;
-import coffeeshout.room.infra.auth.RoomSessionTokenErrorCode;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.RoomSessionClaimFixture;
 import org.junit.jupiter.api.Nested;
@@ -14,11 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class RoomSessionTokenServiceTest {

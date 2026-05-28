@@ -7,10 +7,10 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
-import coffeeshout.websocket.WsRecoveryService;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.application.service.RoomCommandService;
+import coffeeshout.room.domain.JoinCode;
+import coffeeshout.websocket.WsRecoveryService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ScheduledFuture;

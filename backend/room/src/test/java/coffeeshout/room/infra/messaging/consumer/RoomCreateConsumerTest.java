@@ -3,13 +3,13 @@ package coffeeshout.room.infra.messaging.consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-import coffeeshout.support.ServiceTest;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;
+import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
-import coffeeshout.room.application.service.RoomQueryService;
+import coffeeshout.support.ServiceTest;
 import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;

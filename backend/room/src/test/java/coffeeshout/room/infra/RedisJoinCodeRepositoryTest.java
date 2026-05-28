@@ -2,9 +2,9 @@ package coffeeshout.room.infra;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.support.ServiceTest;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
+import coffeeshout.support.ServiceTest;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;

@@ -34,6 +34,8 @@ spring:
       hibernate:
         format_sql: true
         show_sql: false
+        hbm2ddl:
+          halt_on_error: false
   lifecycle:
     timeout-per-shutdown-phase: 1s
   flyway:

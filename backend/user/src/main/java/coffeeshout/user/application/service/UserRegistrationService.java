@@ -2,20 +2,19 @@ package coffeeshout.user.application.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.nickname.ProfanityChecker;
+import coffeeshout.user.application.port.UserCreationPort;
 import coffeeshout.user.config.UserCodeProperties;
 import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
+import coffeeshout.user.domain.UserErrorCode;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
-import coffeeshout.user.domain.UserErrorCode;
-import coffeeshout.user.application.port.UserCreationPort;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service

@@ -19,12 +19,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class JwtAuthenticationFilterTest {
 
     private AuthTokenService authTokenService;
-    private coffeeshout.user.auth.JwtAuthenticationFilter filter;
+    private JwtAuthenticationFilter filter;
 
     @BeforeEach
     void setUp() {
         authTokenService = mock(AuthTokenService.class);
-        filter = new coffeeshout.user.auth.JwtAuthenticationFilter(authTokenService);
+        filter = new JwtAuthenticationFilter(authTokenService);
         SecurityContextHolder.clearContext();
     }
 

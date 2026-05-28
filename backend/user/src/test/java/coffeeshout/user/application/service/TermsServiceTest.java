@@ -2,8 +2,8 @@ package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.fixture.UserFixture;
 import coffeeshout.UserModuleServiceTest;
+import coffeeshout.fixture.UserFixture;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.infra.persistence.UserEntity;

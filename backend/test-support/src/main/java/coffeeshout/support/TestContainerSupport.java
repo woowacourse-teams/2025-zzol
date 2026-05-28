@@ -26,15 +26,13 @@ public abstract class TestContainerSupport {
             .withUsername("test")
             .withPassword("test")
             .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci",
-                    "--max_connections=500")
-            .withReuse(true);
+                    "--max_connections=500");
 
     protected static final GenericContainer<?> valkey = new GenericContainer<>(
             DockerImageName.parse("valkey/valkey:alpine"))
             .withExposedPorts(VALKEY_PORT)
             .withCommand("valkey-server", "--appendonly", "yes")
             .withEnv("VALKEY_DISABLE_COMMANDS", "CONFIG,SHUTDOWN,DEBUG")
-            .withReuse(true)
             .waitingFor(Wait.forListeningPort())
             .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("VALKEY"));
 

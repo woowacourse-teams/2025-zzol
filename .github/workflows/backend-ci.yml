@@ -84,7 +84,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Tests
-        run: ./gradlew test --parallel --build-cache --no-daemon
+        run: ./gradlew test --build-cache --no-daemon
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2

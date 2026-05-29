@@ -6,7 +6,7 @@ plugins {
 group = "coffeeshout"
 version = "0.0.1-SNAPSHOT"
 
-val testcontainersVersion: String? = libs.versions.testcontainers.get()
+val testcontainersVersion: String = libs.versions.testcontainers.get()
 
 tasks.register<Exec>("pruneStaleTestContainers") {
     group = "verification"

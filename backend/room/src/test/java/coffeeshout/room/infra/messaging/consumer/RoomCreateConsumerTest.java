@@ -9,7 +9,7 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
-import coffeeshout.support.ServiceTest;
+import coffeeshout.RoomModuleServiceTest;
 import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-class RoomCreateConsumerTest extends ServiceTest {
+class RoomCreateConsumerTest extends RoomModuleServiceTest {
 
     @Autowired
     Consumer<RoomCreateEvent> roomCreateEventConsumer;

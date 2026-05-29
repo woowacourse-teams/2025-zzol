@@ -1,4 +1,4 @@
-package coffeeshout.websocket.event;
+package coffeeshout.room.infra.websocket.event;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,10 +12,10 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.application.service.RoomQueryService;
+import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
-import coffeeshout.room.infra.websocket.event.SessionConnectEventListener;
+import coffeeshout.websocket.StompSessionManager;
 import coffeeshout.websocket.metric.WebSocketMetricService;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +41,7 @@ class SessionConnectEventListenerTest {
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
     @Mock
-    private coffeeshout.websocket.StompSessionManager sessionManager;
+    private StompSessionManager sessionManager;
 
     private SessionConnectEventListener listener;
 

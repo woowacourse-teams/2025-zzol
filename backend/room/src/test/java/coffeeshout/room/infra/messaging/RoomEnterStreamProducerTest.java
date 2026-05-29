@@ -10,14 +10,14 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.repository.RoomRepository;
-import coffeeshout.support.IntegrationTestSupport;
+import coffeeshout.RoomModuleIntegrationTest;
 import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class RoomEnterStreamProducerTest extends IntegrationTestSupport {
+class RoomEnterStreamProducerTest extends RoomModuleIntegrationTest {
 
     @Autowired
     RoomRepository roomRepository;

@@ -13,7 +13,7 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.support.ServiceTest;
+import coffeeshout.RoomModuleServiceTest;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class RoomCommandServiceTest extends ServiceTest {
+class RoomCommandServiceTest extends RoomModuleServiceTest {
 
     @Autowired
     JoinCodeGenerator joinCodeGenerator;

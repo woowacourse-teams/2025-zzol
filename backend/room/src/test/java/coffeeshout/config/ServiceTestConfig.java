@@ -1,4 +1,4 @@
-package coffeeshout.room.config;
+package coffeeshout.config;
 
 import coffeeshout.gamecommon.MiniGameFactory;
 import coffeeshout.gamecommon.Playable;
@@ -7,21 +7,21 @@ import coffeeshout.user.application.port.ReportAnonymizationPort;
 import java.util.EnumMap;
 import java.util.Map;
 import org.mockito.Mockito;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 
-@Configuration
-public class RoomTestConfig {
+@TestConfiguration(proxyBeanMethods = false)
+@Profile("test")
+public class ServiceTestConfig {
 
-    // 구현체가 :admin 모듈에 있으므로 room 테스트 컨텍스트에서는 mock으로 대체한다
     @Bean
     @Primary
-    public ReportAnonymizationPort reportAnonymizationPort() {
+    public ReportAnonymizationPort mockReportAnonymizationPort() {
         return Mockito.mock(ReportAnonymizationPort.class);
     }
 
-    // MiniGameFactoryConfig은 :app 모듈에 있어 room 테스트 컨텍스트에서 로드되지 않는다
     @Bean
     @Primary
     public Map<MiniGameType, MiniGameFactory> miniGameFactoryMap() {

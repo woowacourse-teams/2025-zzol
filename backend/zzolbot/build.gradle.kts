@@ -22,4 +22,6 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
 
     testImplementation(project(":test-support"))
+    testImplementation(testFixtures(project(":room")))
+    testImplementation("org.wiremock:wiremock-standalone:3.9.2")
 }

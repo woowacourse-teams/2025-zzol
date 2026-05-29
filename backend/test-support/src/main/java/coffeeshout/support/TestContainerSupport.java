@@ -47,7 +47,7 @@ public abstract class TestContainerSupport {
         }
     }
 
-    @Autowired
+    @Autowired(required = false)
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -95,6 +95,9 @@ public abstract class TestContainerSupport {
     }
 
     protected void cleanDatabase() {
+        if (jdbcTemplate == null) {
+            return;
+        }
         try {
             jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
             List<String> tables = jdbcTemplate.queryForList("SHOW TABLES", String.class);

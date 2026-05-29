@@ -5,7 +5,6 @@ import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import coffeeshout.zzolbot.config.ZzolBotProperties.TableSchema;
 import coffeeshout.zzolbot.domain.ZzolBotErrorCode;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,6 +20,7 @@ import net.sf.jsqlparser.statement.select.AllTableColumns;
 import net.sf.jsqlparser.statement.select.Limit;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 import org.springframework.stereotype.Component;
 
@@ -70,12 +70,11 @@ public class SqlQueryValidator {
     }
 
     private void validateSingleSelect(Statements statements) {
-        final List<Statement> stmtList = statements.getStatements();
-        if (stmtList.size() != 1) {
+        if (statements.size() != 1) {
             throw new BusinessException(ZzolBotErrorCode.INVALID_SQL,
-                    "단일 SELECT 문 하나만 허용됩니다. 현재 " + stmtList.size() + "개의 구문이 감지됐습니다.");
+                    "단일 SELECT 문 하나만 허용됩니다. 현재 " + statements.size() + "개의 구문이 감지됐습니다.");
         }
-        if (!(stmtList.get(0) instanceof Select)) {
+        if (!(statements.getFirst() instanceof Select)) {
             throw new BusinessException(ZzolBotErrorCode.INVALID_SQL,
                     "SELECT 문만 허용됩니다. DDL·DML은 사용할 수 없습니다.");
         }
@@ -83,7 +82,7 @@ public class SqlQueryValidator {
 
     // JSqlParser 5.x: PlainSelect extends Select extends Statement (SELECT * FROM ... 형태)
     private PlainSelect extractPlainSelect(Statements statements) {
-        final Select select = (Select) statements.getStatements().get(0);
+        final Select select = (Select) statements.getFirst();
         if (!(select instanceof PlainSelect plainSelect)) {
             throw new BusinessException(ZzolBotErrorCode.INVALID_SQL,
                     "단순 SELECT 형태만 지원합니다. UNION·INTERSECT 등은 허용되지 않습니다.");
@@ -118,7 +117,7 @@ public class SqlQueryValidator {
                 .collect(Collectors.toSet());
 
         // PlainSelect가 Statement와 Expression 모두 구현하므로 Statement로 명시적 캐스팅
-        final List<String> referencedTables = new TablesNamesFinder().getTableList((Statement) select);
+        final Set<String> referencedTables = new TablesNamesFinder<>().getTables((Statement) select);
 
         referencedTables.stream()
                 .map(String::toLowerCase)
@@ -136,7 +135,7 @@ public class SqlQueryValidator {
             return;
         }
         select.getSelectItems().stream()
-                .map(item -> item.getExpression())
+                .map(SelectItem::getExpression)
                 .filter(expr -> expr instanceof Column)
                 .map(expr -> (Column) expr)
                 .forEach(col -> checkBlockedColumn(col, blockedByTable));

@@ -1,25 +1,12 @@
 plugins {
-    id("org.springframework.boot") version "3.5.3" apply false
-    id("io.spring.dependency-management") version "1.1.7" apply false
+    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.spring.dependency.management) apply false
 }
 
 group = "coffeeshout"
 version = "0.0.1-SNAPSHOT"
 
-// 공유 버전 변수 — 서브모듈이 rootProject.extra["key"]로 참조
-val versions = mapOf(
-    "springDoc"     to "2.8.3",
-    "ociSdk"        to "3.74.1",
-    "redisson"      to "3.27.2",
-    "zxing"         to "3.5.3",
-    "queryDsl"      to "5.0.0",
-    "googleGenAi"   to "1.55.0",
-    "testcontainers" to "2.0.5",
-    "reflections"   to "0.10.2",
-    "resilience4j"  to "2.2.0",
-    "jjwt"          to "0.12.6",
-)
-versions.forEach { (k, v) -> extra[k] = v }
+val testcontainersVersion = libs.versions.testcontainers.get()
 
 tasks.register<Exec>("pruneStaleTestContainers") {
     group = "verification"
@@ -35,7 +22,7 @@ subprojects {
     apply(plugin = "io.spring.dependency-management")
 
     // Spring Boot BOM이 testcontainers 코어를 1.x로 다운그레이드하지 못하도록 오버라이드
-    extra["testcontainers.version"] = rootProject.extra["testcontainers"] as String
+    extra["testcontainers.version"] = testcontainersVersion
 
     // Spring Boot bootJar 기본 비활성화 (라이브러리 모듈은 jar만, :app이 override)
     tasks.named("bootJar") { enabled = false }

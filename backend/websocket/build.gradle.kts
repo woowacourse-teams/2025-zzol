@@ -15,10 +15,9 @@ dependencies {
     implementation("io.micrometer:context-propagation")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
-    val jjwtVersion = rootProject.extra["jjwt"] as String
-    implementation("io.jsonwebtoken:jjwt-api:$jjwtVersion")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
 
     testImplementation(project(":test-support"))
 }

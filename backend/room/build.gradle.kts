@@ -7,11 +7,6 @@ plugins {
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
-val ociSdkVersion = rootProject.extra["ociSdk"] as String
-val zxingVersion = rootProject.extra["zxing"] as String
-val jjwtVersion = rootProject.extra["jjwt"] as String
-val queryDslVersion = rootProject.extra["queryDsl"] as String
-
 dependencies {
     implementation(project(":common"))
     implementation(project(":infra"))
@@ -20,17 +15,17 @@ dependencies {
     implementation(project(":user"))
     implementation(project(":game-api"))
 
-    implementation(platform("com.oracle.oci.sdk:oci-java-sdk-bom:$ociSdkVersion"))
+    implementation(platform(libs.oci.sdk.bom))
     implementation("com.oracle.oci.sdk:oci-java-sdk-objectstorage")
     implementation("com.oracle.oci.sdk:oci-java-sdk-common")
     implementation("com.oracle.oci.sdk:oci-java-sdk-common-httpclient-jersey3")
 
-    implementation("com.google.zxing:core:$zxingVersion")
-    implementation("com.google.zxing:javase:$zxingVersion")
+    implementation(libs.zxing.core)
+    implementation(libs.zxing.javase)
 
-    implementation("io.jsonwebtoken:jjwt-api:$jjwtVersion")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
 
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -38,9 +33,8 @@ dependencies {
     implementation("io.micrometer:micrometer-core")
     implementation("io.micrometer:context-propagation")
 
-    val resilience4jVersion = rootProject.extra["resilience4j"] as String
-    implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
-    annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
+    implementation(libs.resilience4j)
+    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jakarta") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 

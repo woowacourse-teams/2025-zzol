@@ -3,10 +3,6 @@
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
-val redissonVersion = rootProject.extra["redisson"] as String
-val queryDslVersion = rootProject.extra["queryDsl"] as String
-val reflectionsVersion = rootProject.extra["reflections"] as String
-
 dependencies {
     implementation(project(":common"))
 
@@ -17,10 +13,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
-    implementation("org.redisson:redisson-spring-boot-starter:$redissonVersion")
+    implementation(libs.redisson)
 
-    implementation("com.querydsl:querydsl-jpa:$queryDslVersion:jakarta")
-    annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
+    implementation(variantOf(libs.querydsl.jpa) { classifier("jakarta") })
+    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jakarta") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
@@ -30,10 +26,8 @@ dependencies {
     implementation("io.opentelemetry:opentelemetry-exporter-otlp")
     implementation("io.micrometer:context-propagation")
 
-    implementation("org.reflections:reflections:$reflectionsVersion")
-
-    val resilience4jVersion = rootProject.extra["resilience4j"] as String
-    implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
+    implementation(libs.reflections)
+    implementation(libs.resilience4j)
 
     testImplementation("io.micrometer:micrometer-tracing-test")
 }

@@ -23,7 +23,7 @@ dependencies {
     implementation("com.mysql:mysql-connector-j")
 
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
-    developmentOnly("me.paulschwarz:spring-dotenv:4.0.0")
+    developmentOnly(libs.spring.dotenv)
 
     testImplementation(project(":test-support"))
     testImplementation(testFixtures(project(":room")))
@@ -34,14 +34,9 @@ dependencies {
     testImplementation("io.micrometer:micrometer-tracing-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.micrometer:micrometer-core")
-    val resilience4jVersion = rootProject.extra["resilience4j"] as String
-    testImplementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
-
-    val redissonVersion = rootProject.extra["redisson"] as String
-    testImplementation("org.redisson:redisson-spring-boot-starter:$redissonVersion")
-
-    // ArchUnit — 아키텍처 규칙 테스트
-    testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
+    testImplementation(libs.resilience4j)
+    testImplementation(libs.redisson)
+    testImplementation(libs.archunit)
 }
 
 tasks.withType<Test> {

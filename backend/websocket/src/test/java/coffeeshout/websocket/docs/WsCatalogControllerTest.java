@@ -2,7 +2,7 @@ package coffeeshout.websocket.docs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.WebsocketModuleIntegrationTest;
+import coffeeshout.WebsocketModuleRandomPortTest;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 @DisplayName("WsCatalogController")
-class WsCatalogControllerTest extends WebsocketModuleIntegrationTest {
+class WsCatalogControllerTest extends WebsocketModuleRandomPortTest {
 
     @Autowired
     private TestRestTemplate restTemplate;

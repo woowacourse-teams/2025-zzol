@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.context.annotation.Import;
 
-@SpringBootTest(classes = WebsocketModuleTestApplication.class, webEnvironment = WebEnvironment.MOCK)
+@SpringBootTest(classes = WebsocketModuleTestApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(ServiceTestConfig.class)
-public abstract class WebsocketModuleIntegrationTest extends IntegrationTestSupport {
+public abstract class WebsocketModuleRandomPortTest extends IntegrationTestSupport {
 }

@@ -62,6 +62,26 @@ public abstract class {Module}IntegrationTest extends coffeeshout.support.Integr
 모듈 외부 의존(인터페이스 구현체가 없는 포트 등)은 `src/test/java/coffeeshout/config/ServiceTestConfig.java`에 `@TestConfiguration`으로 선언한다.
 `ApplicationEventPublisher` Mock은 부모(`coffeeshout.support.ServiceTest`)가 `@MockitoBean`으로 이미 제공하므로 `ServiceTestConfig`에 재선언하지 않는다.
 
+> **주의 — 테스트 클래스 내부 `@TestConfiguration`은 자동 감지되지 않는다**
+>
+> `@SpringBootTest`가 **부모 클래스**(`{Module}IntegrationTest` 등)에 선언된 경우,
+> 자식 테스트 클래스에 작성한 `static class` 형태의 내부 `@TestConfiguration`은
+> Spring Boot Test가 자동으로 로드하지 않는다.
+>
+> **해결**: 빈 정의를 독립 파일(`XxxTestConfig.java`)로 분리하고 `@Import`로 명시한다.
+>
+> ```java
+> // 잘못된 예 — 자동 감지 안 됨
+> class MyIntegrationTest extends RoomModuleIntegrationTest {
+>     @TestConfiguration
+>     static class TestConfig { /* 빈 선언 */ }
+> }
+>
+> // 올바른 예 — 독립 파일로 분리 후 Import
+> @Import(MyTestConfig.class)
+> class MyIntegrationTest extends RoomModuleIntegrationTest { }
+> ```
+
 ## 픽스처
 
 테스트 데이터를 직접 생성하지 않고 픽스처를 통해 재사용한다. 메서드명은 한글 도메인 용어를 사용한다.

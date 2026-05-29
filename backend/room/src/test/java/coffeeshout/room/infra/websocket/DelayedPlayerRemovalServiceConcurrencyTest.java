@@ -17,7 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @ExtendWith(MockitoExtension.class)
-class DelayedPlayerRemovalServiceIntegrationTest {
+class DelayedPlayerRemovalServiceConcurrencyTest {
 
     private static final Duration TEST_REMOVAL_DELAY = Duration.ofMillis(500);
 

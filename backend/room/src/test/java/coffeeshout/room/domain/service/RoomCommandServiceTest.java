@@ -4,6 +4,7 @@ import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import coffeeshout.RoomModuleServiceTest;
 import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -13,7 +14,6 @@ import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.RoomModuleServiceTest;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;

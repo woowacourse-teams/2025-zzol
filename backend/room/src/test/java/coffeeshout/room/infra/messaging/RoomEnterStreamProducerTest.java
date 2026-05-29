@@ -3,6 +3,7 @@ package coffeeshout.room.infra.messaging;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import coffeeshout.RoomModuleIntegrationTest;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.JoinCode;
@@ -10,7 +11,6 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.repository.RoomRepository;
-import coffeeshout.RoomModuleIntegrationTest;
 import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;

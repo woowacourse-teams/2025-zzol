@@ -16,12 +16,14 @@ import org.springframework.context.annotation.Profile;
 @Profile("test")
 public class ServiceTestConfig {
 
+    // :room은 :user의 ReportAnonymizationPort에 의존하지만 test 프로파일에선 실구현체가 없으므로 mock으로 대체
     @Bean
     @Primary
     public ReportAnonymizationPort mockReportAnonymizationPort() {
         return Mockito.mock(ReportAnonymizationPort.class);
     }
 
+    // :room의 RoomService가 Map<MiniGameType, MiniGameFactory>를 주입받지만 실구현체(:game)는 클래스패스 밖이므로 mock 등록
     @Bean
     @Primary
     public Map<MiniGameType, MiniGameFactory> miniGameFactoryMap() {

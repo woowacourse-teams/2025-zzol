@@ -9,8 +9,6 @@ plugins {
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
-val testcontainersVersion = rootProject.extra["testcontainers"] as String
-
 dependencies {
     // 다른 모듈의 testImplementation에서 전이적으로 사용되도록 api로 선언
     api("org.springframework.boot:spring-boot-starter-test")
@@ -19,9 +17,9 @@ dependencies {
     api("org.springframework.boot:spring-boot-starter-websocket")
     api("org.springframework.boot:spring-boot-starter-web")
 
-    api("org.testcontainers:testcontainers:$testcontainersVersion")
-    api("org.testcontainers:testcontainers-mysql:$testcontainersVersion")
-    api("org.testcontainers:testcontainers-junit-jupiter:$testcontainersVersion")
+    api(libs.testcontainers.core)
+    api(libs.testcontainers.mysql)
+    api(libs.testcontainers.junit)
 
     // ExceptionAssertions — CoffeeShoutException, ErrorCode
     api(project(":common"))

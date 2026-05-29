@@ -28,8 +28,7 @@ outbox:
 report:
   rate-limit:
     rate: 5
-    rate-interval: 1
-    rate-interval-unit: HOURS
+    rate-interval: 1h
     ttl: 1h
 
 nickname-audit:

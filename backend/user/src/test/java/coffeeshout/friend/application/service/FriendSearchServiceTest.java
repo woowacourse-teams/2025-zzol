@@ -6,7 +6,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import coffeeshout.fixture.FriendshipFixture;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.UserModuleServiceTest;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import java.util.List;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class FriendSearchServiceTest extends ServiceTest {
+class FriendSearchServiceTest extends UserModuleServiceTest {
 
     @Autowired
     private FriendSearchService friendSearchService;

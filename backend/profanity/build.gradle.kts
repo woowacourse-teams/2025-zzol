@@ -7,8 +7,6 @@ plugins {
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
-val googleGenAiVersion = rootProject.extra["googleGenAi"] as String
-
 dependencies {
     implementation(project(":common"))
     implementation(project(":infra"))
@@ -18,23 +16,19 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.ahocorasick:ahocorasick:0.6.3")
+    implementation(libs.ahocorasick)
 
     implementation("io.micrometer:micrometer-core")
-
-    val resilience4jVersion = rootProject.extra["resilience4j"] as String
-    implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
-
-    implementation("com.google.genai:google-genai:$googleGenAiVersion")
+    implementation(libs.resilience4j)
+    implementation(libs.google.genai)
 
     testFixturesImplementation(project(":common"))
     testFixturesImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-    val queryDslVersion = rootProject.extra["queryDsl"] as String
-    implementation("com.querydsl:querydsl-jpa:$queryDslVersion:jakarta")
-    annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
+    implementation(variantOf(libs.querydsl.jpa) { classifier("jakarta") })
+    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jakarta") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 }

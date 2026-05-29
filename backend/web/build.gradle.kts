@@ -3,11 +3,9 @@
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
-val springDocVersion = rootProject.extra["springDoc"] as String
-
 dependencies {
     implementation(project(":common"))
     api("org.springframework.boot:spring-boot-starter-web")
     api("org.springframework.boot:spring-boot-starter-validation")
-    api("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
+    api(libs.springdoc.openapi)
 }

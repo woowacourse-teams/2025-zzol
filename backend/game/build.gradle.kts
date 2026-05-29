@@ -7,8 +7,6 @@ plugins {
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
-val queryDslVersion = rootProject.extra["queryDsl"] as String
-
 dependencies {
     implementation(project(":common"))
     implementation(project(":infra"))
@@ -22,7 +20,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("io.micrometer:micrometer-core")
 
-    annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
+    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jakarta") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 

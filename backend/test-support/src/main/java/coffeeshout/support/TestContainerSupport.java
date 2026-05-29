@@ -23,7 +23,7 @@ public abstract class TestContainerSupport {
     private static final String MODULE_DB = System.getProperty("test.db.name", BASE_DB);
     private static final int MODULE_REDIS_DB = Integer.parseInt(System.getProperty("test.redis.db", "0"));
 
-    protected static final MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
+    protected static final MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:8.0"))
             .withDatabaseName(BASE_DB)
             .withUsername("test")
             .withPassword("test")

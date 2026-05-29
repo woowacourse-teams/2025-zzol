@@ -77,8 +77,6 @@ public abstract class TestContainerSupport {
                 throw new RuntimeException(result.getStderr());
             }
             log.info("모듈 테스트 DB 생성: {}", dbName);
-        } catch (RuntimeException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException("모듈 테스트 DB 생성 실패: " + dbName, e);
         }

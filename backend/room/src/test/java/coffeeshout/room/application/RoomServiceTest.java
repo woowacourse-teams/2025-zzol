@@ -38,6 +38,7 @@ import coffeeshout.room.infra.auth.RoomSessionTokenService;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
+import coffeeshout.support.ServiceTest;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

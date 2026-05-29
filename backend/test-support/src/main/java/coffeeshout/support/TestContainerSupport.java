@@ -28,13 +28,13 @@ public abstract class TestContainerSupport {
             .withUsername("test")
             .withPassword("test")
             .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci",
-                    "--max_connections=500")
+                    "--max_connections=500", "--innodb_flush_log_at_trx_commit=2", "--sync_binlog=0")
             .withReuse(true);
 
     protected static final GenericContainer<?> valkey = new GenericContainer<>(
             DockerImageName.parse("valkey/valkey:alpine"))
             .withExposedPorts(VALKEY_PORT)
-            .withCommand("valkey-server", "--save", "", "--appendonly", "no")
+            .withCommand("valkey-server", "--save", "", "--appendonly", "no", "--loglevel", "warning")
             .withEnv("VALKEY_DISABLE_COMMANDS", "CONFIG,SHUTDOWN,DEBUG")
             .withReuse(true)
             .waitingFor(Wait.forListeningPort())

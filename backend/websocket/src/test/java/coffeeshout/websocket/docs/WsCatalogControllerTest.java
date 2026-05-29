@@ -1,8 +1,8 @@
 package coffeeshout.websocket.docs;
 
-import coffeeshout.support.app.IntegrationTestSupport;
-import coffeeshout.websocket.docs.WsCatalog;
-import coffeeshout.websocket.docs.WsCatalogController;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import coffeeshout.WebsocketModuleRandomPortTest;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,10 +13,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @DisplayName("WsCatalogController")
-class WsCatalogControllerTest extends IntegrationTestSupport {
+class WsCatalogControllerTest extends WebsocketModuleRandomPortTest {
 
     @Autowired
     private TestRestTemplate restTemplate;

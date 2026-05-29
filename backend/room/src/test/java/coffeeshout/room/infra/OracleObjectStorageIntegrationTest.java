@@ -7,22 +7,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.global.exception.custom.InfrastructureException;
-import coffeeshout.room.config.OracleObjectStorageProperties;
-import coffeeshout.room.config.QrProperties;
-import coffeeshout.support.IntegrationTestSupport;
+import coffeeshout.RoomModuleIntegrationTest;
 import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -31,7 +26,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
  * @Retry)과 폴백(fallbackMethod) 로직이 정상적으로 작동하여 InfrastructureException을 던지는지 확인합니다.
  */
 @ActiveProfiles({"test", "circuit-breaker-test"})
-class OracleObjectStorageIntegrationTest extends IntegrationTestSupport {
+@Import(OracleObjectStorageTestConfig.class)
+class OracleObjectStorageIntegrationTest extends RoomModuleIntegrationTest {
 
     @MockitoBean
     private ObjectStorage objectStorage;
@@ -46,23 +42,6 @@ class OracleObjectStorageIntegrationTest extends IntegrationTestSupport {
     void setUp() {
         // 각 테스트 실행 전 서킷 브레이커 상태를 초기화(CLOSED)합니다.
         circuitBreakerRegistry.circuitBreaker("oracleStorage").reset();
-    }
-
-    /**
-     * OracleObjectStorageService는 !test 프로필에서만 로드되므로, 테스트용 컨텍스트에서 해당 빈을 수동으로 등록하여 AOP가 적용되도록 합니다.
-     */
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        @Primary
-        public OracleObjectStorageService oracleObjectStorageService(
-                ObjectStorage objectStorage,
-                OracleObjectStorageProperties oracleProperties,
-                QrProperties qrProperties,
-                MeterRegistry meterRegistry
-        ) {
-            return new OracleObjectStorageService(objectStorage, oracleProperties, qrProperties, meterRegistry);
-        }
     }
 
     @Test

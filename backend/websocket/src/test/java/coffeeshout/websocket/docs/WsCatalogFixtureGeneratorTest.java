@@ -2,7 +2,7 @@ package coffeeshout.websocket.docs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.support.app.IntegrationTestSupport;
+import coffeeshout.WebsocketModuleRandomPortTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.nio.file.Files;
@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 @DisplayName("WsCatalog fixture 생성")
-class WsCatalogFixtureGeneratorTest extends IntegrationTestSupport {
+class WsCatalogFixtureGeneratorTest extends WebsocketModuleRandomPortTest {
 
     private static final Path FIXTURE_PATH = Path.of(
             "src", "test", "resources", "__fixtures__", "ws-catalog.json"

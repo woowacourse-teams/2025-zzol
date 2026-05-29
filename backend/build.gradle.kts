@@ -69,16 +69,30 @@ subprojects {
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
     }
 
+    // 모듈별 Redis DB 인덱스 — 새 모듈 추가 시 여기에 등록 (0·6·7·8·... 미사용)
+    val redisDbByModule = mapOf(
+        "app"       to 0,
+        "room"      to 1,
+        "user"      to 2,
+        "websocket" to 3,
+        "game"      to 4,
+        "zzolbot"   to 5,
+    )
+
     tasks.withType<Test> {
         useJUnitPlatform()
         exclude("**/QueryPerformanceTest.class")
         systemProperty("updateFixture", System.getProperty("updateFixture", "false"))
         jvmArgs("-Xmx1g", "-XX:+HeapDumpOnOutOfMemoryError")
 
-        // 모듈별 독립 DB — 병렬 테스트 실행 시 ddl-auto:create 충돌 방지
+        // 모듈별 독립 DB/Redis — 병렬 테스트 실행 시 간섭 방지
         // :app은 전 모듈 통합 DB로 zzol_test 유지
         val dbName = if (project.name == "app") "zzol_test"
                      else "zzol_test_${project.name.replace("-", "_")}"
+        require(dbName.matches(Regex("[a-zA-Z0-9_]+"))) {
+            "Invalid test DB name '$dbName' for module '${project.name}': only alphanumeric and underscore allowed"
+        }
         systemProperty("test.db.name", dbName)
+        systemProperty("test.redis.db", redisDbByModule[project.name] ?: 0)
     }
 }

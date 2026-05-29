@@ -3,14 +3,14 @@ package coffeeshout.room.infra.messaging.consumer;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.room.infra.websocket.DelayedPlayerRemovalService;
-import coffeeshout.support.ServiceTest;
+import coffeeshout.RoomModuleServiceTest;
 import coffeeshout.websocket.event.player.PlayerReconnectedEvent;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-class PlayerReconnectedConsumerTest extends ServiceTest {
+class PlayerReconnectedConsumerTest extends RoomModuleServiceTest {
 
     @Autowired
     Consumer<PlayerReconnectedEvent> playerReconnectedEventConsumer;

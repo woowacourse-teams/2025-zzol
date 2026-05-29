@@ -1,11 +1,11 @@
-package coffeeshout.websocket;
+package coffeeshout.room.infra.websocket;
 
 import static org.mockito.BDDMockito.then;
 
+import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.application.service.RoomCommandService;
-import coffeeshout.room.infra.websocket.PlayerDisconnectionService;
+import coffeeshout.websocket.StompSessionManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,15 +30,12 @@ class PlayerDisconnectionServiceTest {
 
     @Test
     void cancelReady_isReady가_false로_변경된다() {
-        // given
         String playerKey = "ABC4:김철수";
         String joinCode = "ABC4";
         String playerName = "김철수";
 
-        // when
         playerDisconnectionService.cancelReady(playerKey);
 
-        // then
         then(roomCommandService).should().readyPlayer(new JoinCode(joinCode), new PlayerName(playerName), false);
     }
 }

@@ -3,6 +3,7 @@ package coffeeshout.room.application.service;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
+import coffeeshout.RoomModuleServiceTest;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -10,7 +11,6 @@ import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.infra.auth.RoomSessionClaim;
 import coffeeshout.room.infra.auth.RoomSessionTokenService;
 import coffeeshout.room.infra.messaging.RoomEventWaitManager;
-import coffeeshout.support.ServiceTest;
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-class RoomServiceMemberTest extends ServiceTest {
+class RoomServiceMemberTest extends RoomModuleServiceTest {
 
     @Autowired
     RoomService roomService;

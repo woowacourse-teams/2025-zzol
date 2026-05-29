@@ -25,12 +25,14 @@ allowed-tools: Read, Bash, Glob
 
 | type | 라벨 |
 |------|------|
-| feat | `✨feat`, `BE` 또는 `FE` |
-| fix | `🐞bug`, `BE` 또는 `FE` |
-| refactor | `🛠️refactor`, `BE` 또는 `FE` |
-| chore | `⚙️chore` |
-| docs | `📝docs` |
-| test | `🧪 test` |
+| feat | `✨feat`, `BE` |
+| fix | `🐞bug`, `BE` |
+| refactor | `🛠️refactor`, `BE` |
+| chore | `⚙️chore`, `BE` |
+| docs | `📝docs`, `BE` |
+| test | `🧪 test`, `BE` |
+
+`BE` 라벨은 type에 관계없이 **항상** 포함한다.
 
 우선순위 라벨(`p-*`)은 `$ARGUMENTS`에 명시된 경우에만 추가한다.
 

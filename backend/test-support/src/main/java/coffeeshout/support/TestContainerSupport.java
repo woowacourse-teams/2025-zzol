@@ -10,7 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
@@ -21,19 +21,20 @@ public abstract class TestContainerSupport {
     private static final int VALKEY_PORT = 6379;
     private static final String BASE_DB = "zzol_test";
     private static final String MODULE_DB = System.getProperty("test.db.name", BASE_DB);
+    private static final int MODULE_REDIS_DB = Integer.parseInt(System.getProperty("test.redis.db", "0"));
 
-    protected static final MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
+    protected static final MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:8.0"))
             .withDatabaseName(BASE_DB)
             .withUsername("test")
             .withPassword("test")
             .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci",
-                    "--max_connections=500")
+                    "--max_connections=500", "--innodb_flush_log_at_trx_commit=2", "--sync_binlog=0")
             .withReuse(true);
 
     protected static final GenericContainer<?> valkey = new GenericContainer<>(
             DockerImageName.parse("valkey/valkey:alpine"))
             .withExposedPorts(VALKEY_PORT)
-            .withCommand("valkey-server", "--appendonly", "yes")
+            .withCommand("valkey-server", "--save", "", "--appendonly", "no", "--loglevel", "warning")
             .withEnv("VALKEY_DISABLE_COMMANDS", "CONFIG,SHUTDOWN,DEBUG")
             .withReuse(true)
             .waitingFor(Wait.forListeningPort())
@@ -47,7 +48,7 @@ public abstract class TestContainerSupport {
         }
     }
 
-    @Autowired
+    @Autowired(required = false)
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -61,6 +62,7 @@ public abstract class TestContainerSupport {
         registry.add("spring.datasource.password", mysql::getPassword);
         registry.add("spring.data.redis.host", valkey::getHost);
         registry.add("spring.data.redis.port", () -> valkey.getMappedPort(VALKEY_PORT));
+        registry.add("spring.data.redis.database", () -> MODULE_REDIS_DB);
     }
 
     private static void createDatabaseIfAbsent(String dbName) {
@@ -77,6 +79,8 @@ public abstract class TestContainerSupport {
                 throw new RuntimeException(result.getStderr());
             }
             log.info("모듈 테스트 DB 생성: {}", dbName);
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("모듈 테스트 DB 생성 실패: " + dbName, e);
         }
@@ -85,7 +89,7 @@ public abstract class TestContainerSupport {
     @BeforeEach
     void cleanRedis() {
         try (var connection = redisConnectionFactory.getConnection()) {
-            connection.serverCommands().flushAll();
+            connection.serverCommands().flushDb();
             log.debug("Redis flushed");
         } catch (Exception e) {
             log.warn("Failed to flush Redis: {}", e.getMessage());
@@ -93,6 +97,9 @@ public abstract class TestContainerSupport {
     }
 
     protected void cleanDatabase() {
+        if (jdbcTemplate == null) {
+            return;
+        }
         try {
             jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
             List<String> tables = jdbcTemplate.queryForList("SHOW TABLES", String.class);

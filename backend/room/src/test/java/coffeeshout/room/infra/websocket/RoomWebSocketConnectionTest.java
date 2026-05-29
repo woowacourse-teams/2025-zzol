@@ -1,15 +1,15 @@
-package coffeeshout.websocket;
+package coffeeshout.room.infra.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import coffeeshout.RoomModuleWebSocketTest;
 import coffeeshout.support.TestStompSession;
-import coffeeshout.support.app.WebSocketIntegrationTestSupport;
 import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.stomp.ConnectionLostException;
 
-class WebSocketConnectionTest extends WebSocketIntegrationTestSupport {
+class RoomWebSocketConnectionTest extends RoomModuleWebSocketTest {
 
     @Test
     void 유효한_RST로_연결하면_성공한다() throws Exception {
@@ -25,16 +25,5 @@ class WebSocketConnectionTest extends WebSocketIntegrationTestSupport {
         assertThatThrownBy(() -> createSessionWithRoomToken("invalid.token.value"))
                 .isInstanceOf(ExecutionException.class)
                 .hasCauseInstanceOf(ConnectionLostException.class);
-    }
-
-    @Test
-    void 연결_후_토픽을_구독할_수_있다() throws Exception {
-        TestStompSession session = createSession();
-
-        session.subscribe("/topic/room/TEST");
-
-        assertThat(session.isConnected()).isTrue();
-
-        session.disconnect();
     }
 }

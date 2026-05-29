@@ -18,7 +18,10 @@ public class ServiceTestConfig {
     @Bean("stompPrincipalInterceptor")
     @Primary
     public ChannelInterceptor mockStompPrincipalInterceptor() {
-        return Mockito.mock(ChannelInterceptor.class);
+        ChannelInterceptor mock = Mockito.mock(ChannelInterceptor.class);
+        Mockito.when(mock.preSend(Mockito.any(), Mockito.any()))
+                .thenAnswer(inv -> inv.getArgument(0));
+        return mock;
     }
 
     @Bean

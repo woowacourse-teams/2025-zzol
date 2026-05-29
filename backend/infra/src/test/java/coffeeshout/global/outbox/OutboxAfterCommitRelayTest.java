@@ -8,8 +8,9 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,8 +46,8 @@ class OutboxAfterCommitRelayTest {
         @Test
         void Redis_발행_성공_시_markPublished를_호출한다() throws Exception {
             // given
-            BaseEvent mockEvent = new PlayerListUpdateEvent("test");
-            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"PlayerListUpdateEvent\"}");
+            BaseEvent mockEvent = new StubEvent();
+            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"StubEvent\"}");
 
             org.mockito.BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
                     .willReturn(mockEvent);
@@ -62,8 +63,8 @@ class OutboxAfterCommitRelayTest {
         @Test
         void Redis_발행_실패_시_예외를_삼키고_markPublished를_호출하지_않는다() throws Exception {
             // given
-            BaseEvent mockEvent = new PlayerListUpdateEvent("test");
-            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"PlayerListUpdateEvent\"}");
+            BaseEvent mockEvent = new StubEvent();
+            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"StubEvent\"}");
 
             org.mockito.BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
                     .willReturn(mockEvent);
@@ -76,5 +77,12 @@ class OutboxAfterCommitRelayTest {
             // then — markPublished가 호출되지 않아야 한다 (PENDING 유지)
             verify(eventProcessor, org.mockito.Mockito.never()).markPublished(any());
         }
+    }
+
+    private static final class StubEvent implements BaseEvent {
+        @Override
+        public String eventId() { return UUID.randomUUID().toString(); }
+        @Override
+        public Instant timestamp() { return Instant.EPOCH; }
     }
 }

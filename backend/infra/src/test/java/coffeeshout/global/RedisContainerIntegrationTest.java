@@ -2,7 +2,7 @@ package coffeeshout.global;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.support.app.IntegrationTestSupport;
+import coffeeshout.InfraModuleIntegrationTest;
 import java.time.Duration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,7 @@ import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 @DisplayName("RedisContainer 통합 테스트")
-class RedisContainerIntegrationTest extends IntegrationTestSupport {
+class RedisContainerIntegrationTest extends InfraModuleIntegrationTest {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;

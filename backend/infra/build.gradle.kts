@@ -30,4 +30,5 @@ dependencies {
     implementation(libs.resilience4j)
 
     testImplementation("io.micrometer:micrometer-tracing-test")
+    testImplementation(project(":test-support"))
 }

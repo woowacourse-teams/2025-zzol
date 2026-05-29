@@ -89,6 +89,9 @@ subprojects {
         // :app은 전 모듈 통합 DB로 zzol_test 유지
         val dbName = if (project.name == "app") "zzol_test"
                      else "zzol_test_${project.name.replace("-", "_")}"
+        require(dbName.matches(Regex("[a-zA-Z0-9_]+"))) {
+            "Invalid test DB name '$dbName' for module '${project.name}': only alphanumeric and underscore allowed"
+        }
         systemProperty("test.db.name", dbName)
         systemProperty("test.redis.db", redisDbByModule[project.name] ?: 0)
     }

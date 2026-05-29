@@ -51,8 +51,3 @@ dependencies {
     testImplementation(testFixtures(project(":user")))
     testImplementation(project(":profanity"))
 }
-
-tasks.test {
-    systemProperty("test.db.name", "room_test")
-    systemProperty("test.redis.db", "1")
-}

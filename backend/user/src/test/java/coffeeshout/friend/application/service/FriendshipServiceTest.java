@@ -16,7 +16,7 @@ import coffeeshout.fixture.UserFixture;
 import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.friend.domain.FriendErrorCode;
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.UserModuleServiceTest;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class FriendshipServiceTest extends ServiceTest {
+class FriendshipServiceTest extends UserModuleServiceTest {
 
     @Autowired
     private FriendshipService friendshipService;

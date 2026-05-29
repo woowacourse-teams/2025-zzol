@@ -21,6 +21,7 @@ public abstract class TestContainerSupport {
     private static final int VALKEY_PORT = 6379;
     private static final String BASE_DB = "zzol_test";
     private static final String MODULE_DB = System.getProperty("test.db.name", BASE_DB);
+    private static final int MODULE_REDIS_DB = Integer.parseInt(System.getProperty("test.redis.db", "0"));
 
     protected static final MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
             .withDatabaseName(BASE_DB)
@@ -33,7 +34,7 @@ public abstract class TestContainerSupport {
     protected static final GenericContainer<?> valkey = new GenericContainer<>(
             DockerImageName.parse("valkey/valkey:alpine"))
             .withExposedPorts(VALKEY_PORT)
-            .withCommand("valkey-server", "--appendonly", "yes")
+            .withCommand("valkey-server", "--save", "", "--appendonly", "no")
             .withEnv("VALKEY_DISABLE_COMMANDS", "CONFIG,SHUTDOWN,DEBUG")
             .withReuse(true)
             .waitingFor(Wait.forListeningPort())
@@ -61,6 +62,7 @@ public abstract class TestContainerSupport {
         registry.add("spring.datasource.password", mysql::getPassword);
         registry.add("spring.data.redis.host", valkey::getHost);
         registry.add("spring.data.redis.port", () -> valkey.getMappedPort(VALKEY_PORT));
+        registry.add("spring.data.redis.database", () -> MODULE_REDIS_DB);
     }
 
     private static void createDatabaseIfAbsent(String dbName) {
@@ -87,7 +89,7 @@ public abstract class TestContainerSupport {
     @BeforeEach
     void cleanRedis() {
         try (var connection = redisConnectionFactory.getConnection()) {
-            connection.serverCommands().flushAll();
+            connection.serverCommands().flushDb();
             log.debug("Redis flushed");
         } catch (Exception e) {
             log.warn("Failed to flush Redis: {}", e.getMessage());

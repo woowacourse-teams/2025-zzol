@@ -23,3 +23,7 @@ dependencies {
 
     testImplementation(project(":test-support"))
 }
+
+tasks.test {
+    systemProperty("test.redis.db", "5")
+}

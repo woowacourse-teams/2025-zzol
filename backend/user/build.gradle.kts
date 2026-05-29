@@ -31,3 +31,8 @@ dependencies {
     testImplementation("org.wiremock:wiremock-standalone:3.9.2")
     testImplementation(project(":test-support"))
 }
+
+tasks.test {
+    systemProperty("test.db.name", "user_test")
+    systemProperty("test.redis.db", "2")
+}

@@ -30,3 +30,8 @@ dependencies {
     testImplementation(project(":test-support"))
     testImplementation(testFixtures(project(":room")))
 }
+
+tasks.test {
+    systemProperty("test.db.name", "game_test")
+    systemProperty("test.redis.db", "4")
+}

@@ -31,6 +31,7 @@ dependencies {
     testImplementation(testFixtures(project(":game")))
     testImplementation(testFixtures(project(":admin")))
     testImplementation(testFixtures(project(":profanity")))
+    testImplementation("org.springframework.boot:spring-boot-starter-actuator")
     testImplementation("io.micrometer:micrometer-tracing-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.micrometer:micrometer-core")

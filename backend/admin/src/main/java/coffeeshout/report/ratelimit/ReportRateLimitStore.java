@@ -53,7 +53,7 @@ public class ReportRateLimitStore {
     @CircuitBreaker(name = "reportRateLimiter", fallbackMethod = "tryAcquireFallback")
     public boolean tryAcquire(String ip) {
         final RRateLimiter rateLimiter = redissonClient.getRateLimiter(KEY_PREFIX + ip);
-        boolean isNew = rateLimiter.trySetRate(RateType.OVERALL, properties.rate(), properties.rateInterval(), properties.rateIntervalUnit());
+        boolean isNew = rateLimiter.trySetRate(RateType.OVERALL, properties.rate(), properties.rateInterval());
         if (isNew) {
             rateLimiter.expire(properties.ttl());
         }

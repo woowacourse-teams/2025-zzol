@@ -3,21 +3,21 @@ package coffeeshout.user.application.service;
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.UserModuleServiceTest;
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.support.app.ServiceTest;
-import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.User;
+import coffeeshout.user.domain.UserErrorCode;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
 import coffeeshout.user.domain.repository.UserRepository;
-import coffeeshout.user.domain.UserErrorCode;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class AuthTokenServiceTest extends ServiceTest {
+class AuthTokenServiceTest extends UserModuleServiceTest {
 
     @Autowired
     AuthTokenService authTokenService;

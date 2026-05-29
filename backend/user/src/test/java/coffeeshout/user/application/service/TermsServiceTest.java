@@ -2,8 +2,8 @@ package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.UserModuleServiceTest;
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.support.app.ServiceTest;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.infra.persistence.UserEntity;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class TermsServiceTest extends ServiceTest {
+class TermsServiceTest extends UserModuleServiceTest {
 
     @Autowired
     TermsService termsService;

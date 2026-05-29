@@ -1,16 +1,16 @@
 package coffeeshout.friend.application.service;
 
+import coffeeshout.friend.domain.FriendErrorCode;
 import coffeeshout.friend.domain.Friendship;
-import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.friend.domain.event.FriendRemovedEvent;
 import coffeeshout.friend.domain.event.FriendRequestAcceptedEvent;
 import coffeeshout.friend.domain.event.FriendRequestCreatedEvent;
 import coffeeshout.friend.domain.event.FriendRequestRejectedEvent;
-import coffeeshout.friend.domain.FriendErrorCode;
+import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.domain.User;
-import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.domain.UserErrorCode;
+import coffeeshout.user.domain.repository.UserRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;

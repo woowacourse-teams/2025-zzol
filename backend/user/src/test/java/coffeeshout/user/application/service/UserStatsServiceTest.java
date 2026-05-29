@@ -2,7 +2,7 @@ package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.UserModuleServiceTest;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserStats;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class UserStatsServiceTest extends ServiceTest {
+class UserStatsServiceTest extends UserModuleServiceTest {
 
     @Autowired
     UserStatsService userStatsService;

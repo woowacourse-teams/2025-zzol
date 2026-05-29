@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisServerCommands.FlushOption;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -20,9 +19,11 @@ public abstract class TestContainerSupport {
 
     private static final Logger log = LoggerFactory.getLogger(TestContainerSupport.class);
     private static final int VALKEY_PORT = 6379;
+    private static final String BASE_DB = "zzol_test";
+    private static final String MODULE_DB = System.getProperty("test.db.name", BASE_DB);
 
     protected static final MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
-            .withDatabaseName("coffee_shout_test")
+            .withDatabaseName(BASE_DB)
             .withUsername("test")
             .withPassword("test")
             .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci",
@@ -41,6 +42,9 @@ public abstract class TestContainerSupport {
     static {
         mysql.start();
         valkey.start();
+        if (!MODULE_DB.equals(BASE_DB)) {
+            createDatabaseIfAbsent(MODULE_DB);
+        }
     }
 
     @Autowired
@@ -51,17 +55,37 @@ public abstract class TestContainerSupport {
 
     @DynamicPropertySource
     static void registerContainerProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", mysql::getJdbcUrl);
+        registry.add("spring.datasource.url",
+                () -> mysql.getJdbcUrl().replace("/" + BASE_DB, "/" + MODULE_DB));
         registry.add("spring.datasource.username", mysql::getUsername);
         registry.add("spring.datasource.password", mysql::getPassword);
         registry.add("spring.data.redis.host", valkey::getHost);
         registry.add("spring.data.redis.port", () -> valkey.getMappedPort(VALKEY_PORT));
     }
 
+    private static void createDatabaseIfAbsent(String dbName) {
+        try {
+            var result = mysql.execInContainer(
+                    "mysql",
+                    "--user=root",
+                    "--password=" + mysql.getPassword(),
+                    "--execute=CREATE DATABASE IF NOT EXISTS `" + dbName + "`"
+                            + "; GRANT ALL PRIVILEGES ON `" + dbName + "`.* TO '" + mysql.getUsername() + "'@'%'"
+                            + "; FLUSH PRIVILEGES"
+            );
+            if (result.getExitCode() != 0) {
+                throw new RuntimeException(result.getStderr());
+            }
+            log.info("모듈 테스트 DB 생성: {}", dbName);
+        } catch (Exception e) {
+            throw new RuntimeException("모듈 테스트 DB 생성 실패: " + dbName, e);
+        }
+    }
+
     @BeforeEach
     void cleanRedis() {
         try (var connection = redisConnectionFactory.getConnection()) {
-            connection.flushAll(FlushOption.SYNC);
+            connection.serverCommands().flushAll();
             log.debug("Redis flushed");
         } catch (Exception e) {
             log.warn("Failed to flush Redis: {}", e.getMessage());

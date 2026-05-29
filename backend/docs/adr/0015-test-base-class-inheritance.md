@@ -106,11 +106,12 @@ TestContainerSupport (MySQL + Redis 컨테이너 관리)
   │     └── :room, :user, ... 테스트 직접 상속  ← 게임 빈 없이 공통 인프라만
   │
   └── coffeeshout.support.IntegrationTestSupport   ← :test-support
-        @SpringBootTest(RANDOM_PORT)
+        @SpringBootTest(MOCK)              ← ADR-0017: 기본값 변경
         @Import(CommonTestSchedulerConfig)
         @BeforeEach cleanDatabase()
         │
-        └── coffeeshout.support.app.IntegrationTestSupport  ← :app (게임 빈 mock 추가)
+        └── coffeeshout.support.app.IntegrationTestSupport  ← :app (WebSocket + HTTP 테스트)
+              @SpringBootTest(RANDOM_PORT) ← 명시 오버라이드 (ADR-0017)
               @Import(IntegrationTestConfig)
 ```
 

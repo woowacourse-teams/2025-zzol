@@ -1,17 +1,16 @@
 package coffeeshout.room.application.service;
 
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
+import coffeeshout.room.application.port.PlayerEntityRepository;
+import coffeeshout.room.application.port.RoomEntityRepository;
+import coffeeshout.room.application.port.RouletteResultEntityRepository;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Winner;
-import coffeeshout.room.application.port.PlayerEntityRepository;
-import coffeeshout.room.application.port.RoomEntityRepository;
-import coffeeshout.room.application.port.RouletteResultEntityRepository;
-import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RouletteResultEntity;
-import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

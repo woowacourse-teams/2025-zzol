@@ -10,11 +10,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 
-import coffeeshout.websocket.ui.WebSocketResponse;
-import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.infra.messaging.handler.QrCodeSubscriptionHandler;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
+import coffeeshout.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.websocket.ui.WebSocketResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

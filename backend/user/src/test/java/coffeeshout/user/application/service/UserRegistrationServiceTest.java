@@ -1,8 +1,10 @@
 package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.UserModuleServiceTest;
+import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
@@ -12,13 +14,16 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class UserRegistrationServiceTest extends ServiceTest {
+class UserRegistrationServiceTest extends UserModuleServiceTest {
 
     @Autowired
     UserRegistrationService userRegistrationService;
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    ProfanityChecker profanityChecker;
 
     private static final OAuthProvider GOOGLE = OAuthProvider.GOOGLE;
     private static final String PROVIDER_USER_ID = "google-uid-42";
@@ -70,6 +75,8 @@ class UserRegistrationServiceTest extends ServiceTest {
 
         @Test
         void 비속어_닉네임이면_자동_닉네임으로_대체된다() {
+            given(profanityChecker.contains("씨발")).willReturn(true);
+
             final User user = userRegistrationService.registerOrLogin(
                     GOOGLE, PROVIDER_USER_ID, EMAIL, "씨발").user();
 

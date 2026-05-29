@@ -48,6 +48,10 @@ subprojects {
         toolchain { languageVersion = JavaLanguageVersion.of(21) }
     }
 
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("-Xlint:deprecation")
+    }
+
     repositories {
         mavenCentral()
     }
@@ -70,5 +74,11 @@ subprojects {
         exclude("**/QueryPerformanceTest.class")
         systemProperty("updateFixture", System.getProperty("updateFixture", "false"))
         jvmArgs("-Xmx1g", "-XX:+HeapDumpOnOutOfMemoryError")
+
+        // 모듈별 독립 DB — 병렬 테스트 실행 시 ddl-auto:create 충돌 방지
+        // :app은 전 모듈 통합 DB로 zzol_test 유지
+        val dbName = if (project.name == "app") "zzol_test"
+                     else "zzol_test_${project.name.replace("-", "_")}"
+        systemProperty("test.db.name", dbName)
     }
 }

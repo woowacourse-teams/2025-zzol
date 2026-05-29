@@ -28,6 +28,10 @@ disable-model-invocation: true
 
 아래 내용을 참고해 이슈 본문을 작성한다.
 
+이슈 템플릿은 **모노레포 루트**에 있다. `backend/` 하위가 아니므로 절대 경로로 Read한다.
+- `C:\java_project\2025-zzol-backend\.github\ISSUE_TEMPLATE\bug_report.md`
+- `C:\java_project\2025-zzol-backend\.github\ISSUE_TEMPLATE\feature-template.md`
+
 ### Bug 템플릿
 !`cat ../.github/ISSUE_TEMPLATE/bug_report.md`
 

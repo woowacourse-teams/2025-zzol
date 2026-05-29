@@ -1,12 +1,12 @@
 package coffeeshout.user.application.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.user.domain.User;
-import coffeeshout.user.domain.UserNickname;
-import coffeeshout.global.nickname.NicknameSubmittedEvent;
-import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.domain.UserErrorCode;
+import coffeeshout.user.domain.UserNickname;
+import coffeeshout.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;

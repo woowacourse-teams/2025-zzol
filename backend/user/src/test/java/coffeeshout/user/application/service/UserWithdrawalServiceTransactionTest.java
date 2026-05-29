@@ -2,10 +2,10 @@ package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.support.TestContainerSupport;
+import coffeeshout.config.ServiceTestConfig;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.support.CommonTestSchedulerConfig;
-import coffeeshout.support.app.config.ServiceTestConfig;
+import coffeeshout.support.TestContainerSupport;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
 import coffeeshout.user.domain.repository.UserRepository;

@@ -9,7 +9,7 @@ allowed-tools: Read, Bash, Glob
 
 ## 사전 작업
 
-1. `.github/pull_request_template.md`를 Read로 읽어 템플릿 구조를 파악한다.
+1. `.github/pull_request_template.md`는 **모노레포 루트**에 있다. `backend/` 하위가 아니므로 `REPO_ROOT="$(git rev-parse --show-toplevel)"` 로 루트를 구한 뒤 `${REPO_ROOT}/.github/pull_request_template.md` 경로로 Read한다.
 2. `git log be/dev..HEAD --oneline`으로 이번 브랜치의 커밋 목록을 확인한다.
 3. `git diff be/dev...HEAD --stat`으로 변경된 파일 목록을 확인한다.
 

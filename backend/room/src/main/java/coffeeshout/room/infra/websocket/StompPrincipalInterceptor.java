@@ -1,12 +1,12 @@
 package coffeeshout.room.infra.websocket;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.websocket.PlayerKey;
-import coffeeshout.websocket.UserPrincipal;
 import coffeeshout.room.infra.auth.RoomSessionClaim;
 import coffeeshout.room.infra.auth.RoomSessionTokenService;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.AuthenticatedUser;
+import coffeeshout.websocket.PlayerKey;
+import coffeeshout.websocket.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;

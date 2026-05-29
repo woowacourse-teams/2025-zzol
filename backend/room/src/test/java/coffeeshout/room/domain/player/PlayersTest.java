@@ -3,7 +3,6 @@ package coffeeshout.room.domain.player;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.gamecommon.Gamer;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.roulette.ProbabilityCalculator;

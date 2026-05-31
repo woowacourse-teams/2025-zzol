@@ -104,6 +104,7 @@ jobs:
 
       - name: Report Coverage
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         uses: madrapps/jacoco-report@v1.7.1
         with:
           paths: backend/*/build/reports/jacoco/test/jacocoTestReport.xml

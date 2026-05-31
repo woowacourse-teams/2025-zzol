@@ -56,7 +56,7 @@ subprojects {
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
     }
 
-    // 모듈별 Redis DB 인덱스 — 새 모듈 추가 시 여기에 등록 (0·6·7·8·... 미사용)
+    // 모듈별 Redis DB 인덱스 — 새 모듈 추가 시 여기에 등록 (0·7·8·... 미사용)
     val redisDbByModule = mapOf(
         "app"       to 0,
         "room"      to 1,
@@ -64,6 +64,7 @@ subprojects {
         "websocket" to 3,
         "game"      to 4,
         "zzolbot"   to 5,
+        "admin"     to 6,
     )
 
     tasks.withType<Test> {

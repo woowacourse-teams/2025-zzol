@@ -34,4 +34,5 @@ dependencies {
     testFixturesImplementation(project(":game-api"))
     testImplementation(project(":test-support"))
     testImplementation(testFixtures(project(":profanity")))
+    testImplementation(libs.archunit)
 }

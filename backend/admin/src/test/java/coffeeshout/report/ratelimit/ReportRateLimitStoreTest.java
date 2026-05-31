@@ -3,7 +3,7 @@ package coffeeshout.report.ratelimit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.AdminModuleServiceTest;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class ReportRateLimitStoreTest extends ServiceTest {
+class ReportRateLimitStoreTest extends AdminModuleServiceTest {
 
     @Autowired
     private ReportRateLimitStore rateLimitStore;

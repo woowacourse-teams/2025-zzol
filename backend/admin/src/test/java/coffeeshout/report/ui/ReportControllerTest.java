@@ -5,7 +5,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import coffeeshout.support.app.IntegrationTestSupport;
+import coffeeshout.AdminModuleIntegrationTest;
 import coffeeshout.report.ratelimit.ReportRateLimitStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureMockMvc
 @DisplayName("ReportController 통합 테스트")
-class ReportControllerTest extends IntegrationTestSupport {
+class ReportControllerTest extends AdminModuleIntegrationTest {
 
     @Autowired
     MockMvc mockMvc;

@@ -9,12 +9,11 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.support.StubBaseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Field;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,7 +73,7 @@ class OutboxRelayWorkerTest {
             OutboxEvent event = createMockEvent(1L, "room", "{\"@type\":\"StubEvent\"}");
             given(eventProcessor.fetchAndMarkInProgress(50)).willReturn(List.of(event));
             given(objectMapper.readValue(event.getPayload(), BaseEvent.class))
-                    .willReturn(new StubEvent());
+                    .willReturn(new StubBaseEvent());
 
             // when
             outboxRelayWorker.relay();
@@ -91,7 +90,7 @@ class OutboxRelayWorkerTest {
             OutboxEvent event = createMockEvent(1L, "room", "{\"@type\":\"StubEvent\"}");
             given(eventProcessor.fetchAndMarkInProgress(50)).willReturn(List.of(event));
             given(objectMapper.readValue(event.getPayload(), BaseEvent.class))
-                    .willReturn(new StubEvent());
+                    .willReturn(new StubBaseEvent());
             doThrow(new RuntimeException("Redis connection refused"))
                     .when(streamPublisher).publish(any(String.class), any());
 
@@ -114,7 +113,7 @@ class OutboxRelayWorkerTest {
                     .willReturn(List.of(event1, event2, event3));
 
             given(objectMapper.readValue(any(String.class), eq(BaseEvent.class)))
-                    .willReturn(new StubEvent());
+                    .willReturn(new StubBaseEvent());
 
             doThrow(new RuntimeException("timeout"))
                     .doNothing()
@@ -131,10 +130,4 @@ class OutboxRelayWorkerTest {
         }
     }
 
-    private static final class StubEvent implements BaseEvent {
-        @Override
-        public String eventId() { return UUID.randomUUID().toString(); }
-        @Override
-        public Instant timestamp() { return Instant.EPOCH; }
-    }
 }

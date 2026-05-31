@@ -1,15 +1,17 @@
 package coffeeshout.support.app;
 
-import coffeeshout.support.TestStompSession;
-import coffeeshout.room.infra.auth.RoomSessionTokenService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.infra.auth.RoomSessionTokenService;
+import coffeeshout.room.infra.websocket.StompPrincipalInterceptor;
+import coffeeshout.support.TestStompSession;
 import coffeeshout.support.app.config.IntegrationTestConfig;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.messaging.simp.stomp.StompHeaders;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(IntegrationTestConfig.class)
@@ -36,5 +38,12 @@ public abstract class WebSocketIntegrationTestSupport
             throws InterruptedException, ExecutionException, TimeoutException {
         String token = roomSessionTokenService.issue(joinCode, playerName, null);
         return createSessionWithRoomToken(token);
+    }
+
+    protected TestStompSession createSessionWithRoomToken(String roomToken)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        StompHeaders headers = new StompHeaders();
+        headers.add(StompPrincipalInterceptor.ROOM_TOKEN_HEADER, roomToken);
+        return connect(headers);
     }
 }

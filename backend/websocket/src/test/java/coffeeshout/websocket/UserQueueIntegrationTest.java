@@ -3,6 +3,7 @@ package coffeeshout.websocket;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.WebsocketModuleWebSocketIntegrationTest;
+import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.support.TestStompSession.MessageCollector;
@@ -19,7 +20,7 @@ class UserQueueIntegrationTest extends WebsocketModuleWebSocketIntegrationTest {
 
         MessageResponse response = errorCollector.get();
         assertThat(response.payload()).contains("\"success\":false");
-        assertThat(response.payload()).contains("해당 데이터가 존재하지 않습니다.");
+        assertThat(response.payload()).contains(GlobalErrorCode.NOT_EXIST.getMessage());
     }
 
     @Test

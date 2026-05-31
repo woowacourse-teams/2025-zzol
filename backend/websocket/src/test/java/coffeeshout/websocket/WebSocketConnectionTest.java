@@ -22,7 +22,7 @@ class WebSocketConnectionTest extends WebsocketModuleRandomPortTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void 연결_후_토픽을_구독할_수_있다() throws Exception {
+    void 구독_요청_후_세션이_활성_상태다() throws Exception {
         TestStompSession session = new TestStompSessionFactory(port, objectMapper).connect(new StompHeaders());
         try {
             session.subscribe("/topic/room/TEST");

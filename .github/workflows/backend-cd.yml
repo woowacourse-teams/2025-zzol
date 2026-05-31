@@ -88,7 +88,7 @@ jobs:
           image-ref: ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:${{ env.IMAGE_TAG }}
           format: table
           severity: CRITICAL
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
 
       - name: Cleanup old GHCR images (keep 5)

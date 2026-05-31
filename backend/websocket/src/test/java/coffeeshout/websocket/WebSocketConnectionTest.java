@@ -24,11 +24,11 @@ class WebSocketConnectionTest extends WebsocketModuleRandomPortTest {
     @Test
     void 연결_후_토픽을_구독할_수_있다() throws Exception {
         TestStompSession session = new TestStompSessionFactory(port, objectMapper).connect(new StompHeaders());
-
-        session.subscribe("/topic/room/TEST");
-
-        assertThat(session.isConnected()).isTrue();
-
-        session.disconnect();
+        try {
+            session.subscribe("/topic/room/TEST");
+            assertThat(session.isConnected()).isTrue();
+        } finally {
+            session.disconnect();
+        }
     }
 }

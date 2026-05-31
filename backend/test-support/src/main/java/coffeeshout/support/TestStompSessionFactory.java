@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
-import org.springframework.messaging.simp.stomp.ConnectionLostException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
@@ -55,9 +54,6 @@ public class TestStompSessionFactory {
                             @Override
                             public void handleTransportError(StompSession session, Throwable exception) {
                                 principalFuture.completeExceptionally(exception);
-                                if (!(exception instanceof ConnectionLostException)) {
-                                    throw new RuntimeException(exception);
-                                }
                             }
 
                             @Override

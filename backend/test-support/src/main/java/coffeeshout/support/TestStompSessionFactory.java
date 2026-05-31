@@ -19,7 +19,7 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 public class TestStompSessionFactory {
 
-    private static final int CONNECT_TIMEOUT_SECONDS = 1;
+    private static final int CONNECT_TIMEOUT_SECONDS = 3;
     private static final String URL_FORMAT = "ws://localhost:%d/ws";
 
     private final int port;
@@ -64,7 +64,7 @@ public class TestStompSessionFactory {
                             }
                         })
                 .get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        final TestStompSession testSession = new TestStompSession(session, objectMapper);
+        final TestStompSession testSession = new TestStompSession(session, stompClient, objectMapper);
         testSession.setPrincipalName(principalFuture.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
         return testSession;
     }

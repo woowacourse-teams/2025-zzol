@@ -50,10 +50,8 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
         return stompFactory.connect(headers);
     }
 
-    protected TestStompSession createSessionWithRoomToken(String roomToken)
+    protected TestStompSession connect(StompHeaders headers)
             throws InterruptedException, ExecutionException, TimeoutException {
-        StompHeaders headers = new StompHeaders();
-        headers.add("roomToken", roomToken);
         return stompFactory.connect(headers);
     }
 

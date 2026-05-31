@@ -110,8 +110,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "Backend Test Coverage"
           update-comment: true
-          min-coverage-overall: 0
-          min-coverage-changed-files: 0
+          min-coverage-overall: 45
+          min-coverage-changed-files: 60
 
       - name: Build JAR
         if: github.event_name != 'pull_request'

@@ -33,7 +33,7 @@ git status --short
 
 그룹화 결과를 다음 형식으로 사용자에게 제시한다:
 
-```
+```text
 [그룹 1] feat(catalog): WsCatalog 캐싱 개선
   M src/main/java/coffeeshout/websocket/catalog/WsCatalog.java
   M src/main/java/coffeeshout/websocket/catalog/WsCatalogBuilder.java

@@ -1,7 +1,8 @@
 ---
-description: docs/ 디렉토리 Markdown 파일 작성 규칙 (markdownlint MD040/MD031/MD022)                                                                                                                    
+description: docs/ 및 .claude/ 디렉토리 Markdown 파일 작성 규칙 (markdownlint MD040/MD031/MD022)                                                                                                                    
 paths:                                                                                                                                                                              
 - "docs/**/*.md"
+- ".claude/**/*.md"
 ---
 
 # 전체 컨벤션: `docs/conventions-docs.md`

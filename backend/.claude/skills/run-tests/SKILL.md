@@ -16,15 +16,17 @@ allowed-tools: Agent
 | 대상 입력                    | 실행 명령                                        |
 |--------------------------|----------------------------------------------|
 | `:module` (콜론으로 시작)      | `./gradlew :module:test`                     |
-| `package.pattern` (점 표기) | `./gradlew test --tests "package.pattern.*"` |
+| `package.pattern` (점 표기) | `./gradlew test --tests "package.pattern"`   |
 | 비어 있음                    | `./gradlew test`                             |
+
+점 표기 대상은 입력값을 `--tests` 필터로 **그대로** 전달한다(`.*`를 자동으로 덧붙이지 않는다). 호출 측이 완전한 필터를 지정한다: 패키지 전체는 `coffeeshout.foo.*`, 특정 클래스는 `coffeeshout.foo.BarTest`.
 
 ## Step 2: 에이전트 실행
 
 에이전트 프롬프트는 다음과 같다:
 
-```
-Working directory: C:\java_project\2025-zzol-backend\backend
+```text
+Working directory: 저장소 루트(backend 디렉터리)에서 실행한다
 
 다음 명령을 실행하고 결과를 분석한다:
 <Step 1 gradle 명령>
@@ -43,7 +45,8 @@ Working directory: C:\java_project\2025-zzol-backend\backend
 ```
 
 **`--sync` 없음 (기본):** `run_in_background: true`로 실행 후 즉시 출력한다:
-```
+
+```text
 🔄 테스트 실행 중... (<대상>)
 완료되면 결과가 도착합니다.
 ```

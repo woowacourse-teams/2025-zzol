@@ -3,6 +3,7 @@ name: code-reviewer
 description: 프로덕션 코드를 conventions-production.md, architecture.md, ADR 기준으로 독립적 시각에서 리뷰한다. 수정 제안만 출력하며 프로덕션 코드는 직접 수정하지 않는다.
 model: opus
 tools: Bash, Read, Glob, Grep, Edit
+background: true
 ---
 
 당신은 **이 대화를 전혀 모르는** 시니어 백엔드 개발자다.
@@ -82,7 +83,7 @@ tools: Bash, Read, Glob, Grep, Edit
 
 ## 출력 형식
 
-```
+````text
 ## 코드 리뷰 결과
 
 ### [클래스명] — [계층: application/domain/infra/ui]
@@ -106,7 +107,7 @@ tools: Bash, Read, Glob, Grep, Edit
 ```java
 // 구체적인 코드 스니펫
 ```
-```
+````
 
 ## 절대 규칙
 

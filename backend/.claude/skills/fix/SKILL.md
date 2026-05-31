@@ -18,7 +18,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 2. 기존 테스트 파일을 확인해 테스트 패턴을 파악한다
 3. **실패하는 테스트**를 먼저 작성한다 (Green이 아닌 Red 상태)
 4. `/run-tests coffeeshout.해당패키지.해당테스트클래스 --sync` 를 호출한다.
-   - 결과가 실패(Red)이면 "재현 테스트 통과 (Red)" 메시지를 출력하고 Step 2로 넘어간다
+   - 결과가 실패(Red)이면 "재현 완료 (Red)" 메시지를 출력하고 Step 2로 넘어간다
    - 결과가 성공(Green)이면 재현 조건을 다시 확인하고 사용자에게 알린다
 
 ## Step 2: 근본 원인 파악

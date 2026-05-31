@@ -33,9 +33,11 @@ disable-model-invocation: true
 - `C:\java_project\2025-zzol-backend\.github\ISSUE_TEMPLATE\feature-template.md`
 
 ### Bug 템플릿
+
 !`cat ../.github/ISSUE_TEMPLATE/bug_report.md`
 
 ### Feature 템플릿
+
 !`cat ../.github/ISSUE_TEMPLATE/feature-template.md`
 
 ## 3. 사용자 확인 (필수 — 이 단계를 건너뛰지 않는다)
@@ -98,7 +100,7 @@ git checkout -b be/{type}/{issue-number}-{slug}
 
 ## 6. 완료 출력
 
-```
+```text
 ✅ 이슈 생성: https://github.com/.../issues/{N}
 🌿 브랜치:   be/{type}/{N}-{slug}
 ```

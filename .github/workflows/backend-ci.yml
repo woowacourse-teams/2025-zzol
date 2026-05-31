@@ -29,9 +29,18 @@ on:
         description: "Docker image tag"
         value: ${{ jobs.ci-build.outputs.image_tag }}
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   ci-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # output을 상위 워크플로우로 전달
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}

@@ -37,7 +37,7 @@ jobs:
   deploy:
     needs: ci-and-build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     # 빌드 단계에서 결정된 환경 사용
     environment: ${{ needs.ci-and-build.outputs.environment }}
     permissions:

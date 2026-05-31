@@ -14,9 +14,15 @@ on:
       - 'backend/src/test/resources/__fixtures__/ws-catalog.json'
       - '.github/workflows/ws-mcp-ci.yml'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   ws-mcp:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: tools/ws-mcp
@@ -25,7 +31,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: tools/ws-mcp/package-lock.json
 

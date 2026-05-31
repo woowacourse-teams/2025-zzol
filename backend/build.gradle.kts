@@ -1,3 +1,5 @@
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
 plugins {
     alias(libs.plugins.spring.boot) apply false
     alias(libs.plugins.spring.dependency.management) apply false
@@ -20,6 +22,7 @@ subprojects {
     apply(plugin = "java-library")
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "jacoco")
 
     // Spring Boot BOM이 testcontainers 코어를 1.x로 다운그레이드하지 못하도록 오버라이드
     extra["testcontainers.version"] = testcontainersVersion
@@ -65,6 +68,14 @@ subprojects {
         "game"      to 4,
         "zzolbot"   to 5,
     )
+
+    tasks.named<JacocoReport>("jacocoTestReport") {
+        dependsOn(tasks.named("test"))
+        reports {
+            xml.required.set(true)
+            html.required.set(false)
+        }
+    }
 
     tasks.withType<Test> {
         useJUnitPlatform()

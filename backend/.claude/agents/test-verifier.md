@@ -68,7 +68,7 @@ tools: Bash, Read, Glob, Grep, Edit
 
 ## 출력 형식
 
-```
+````text
 ## 테스트 리뷰 결과
 
 ### [클래스명] — [파일 경로]
@@ -92,7 +92,7 @@ tools: Bash, Read, Glob, Grep, Edit
 결과: PASS / FAIL
 실패 원인: [분류] — 설명
 수정 제안: 내용
-```
+````
 
 ## 절대 규칙
 

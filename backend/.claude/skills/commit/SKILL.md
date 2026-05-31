@@ -2,7 +2,7 @@
 name: commit
 description: 변경된 파일을 기능 단위로 그룹화하고, 각 그룹의 관련 테스트를 실행한 후 순서대로 커밋한다.
 argument-hint: "[커밋 메시지 (선택)] [--all: 그룹 분리 없이 전체 커밋]"
-allowed-tools: Bash, Read, Glob, Grep
+allowed-tools: Bash, Read, Glob, Grep, Skill
 ---
 
 # commit
@@ -33,7 +33,7 @@ git status --short
 
 그룹화 결과를 다음 형식으로 사용자에게 제시한다:
 
-```
+```text
 [그룹 1] feat(catalog): WsCatalog 캐싱 개선
   M src/main/java/coffeeshout/websocket/catalog/WsCatalog.java
   M src/main/java/coffeeshout/websocket/catalog/WsCatalogBuilder.java
@@ -62,14 +62,11 @@ git status --short
 
 ### 3-2. 테스트 실행
 
-```bash
-./gradlew test --tests "coffeeshout.해당패키지.*" 2>&1 | tail -10
-```
+`/run-tests coffeeshout.해당패키지.* --sync` 를 호출한다.
 
 **실패 시:**
-1. `build/test-results/**/*.xml` 에서 `<failure>` 또는 `<error>` 태그를 포함한 파일만 찾는다
-2. 실패 원인을 사용자에게 보고한다
-3. 커밋을 중단하고 다음 처리 방법(수정 후 재시도 / 이 그룹 건너뜀 / 전체 중단)을 사용자에게 선택하게 한다
+1. 실패 원인을 사용자에게 보고한다
+2. 커밋을 중단하고 다음 처리 방법(수정 후 재시도 / 이 그룹 건너뜀 / 전체 중단)을 사용자에게 선택하게 한다
 
 ### 3-3. 스테이징 & 커밋
 

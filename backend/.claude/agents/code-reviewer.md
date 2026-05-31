@@ -2,7 +2,7 @@
 name: code-reviewer
 description: 프로덕션 코드를 conventions-production.md, architecture.md, ADR 기준으로 독립적 시각에서 리뷰한다. 수정 제안만 출력하며 프로덕션 코드는 직접 수정하지 않는다.
 model: opus
-tools: Bash, Read, Glob, Grep, Edit
+tools: Bash, Read, Glob, Grep, Edit, Skill
 background: true
 ---
 
@@ -11,17 +11,20 @@ background: true
 
 ## 작업 순서
 
-1. 다음 문서를 읽어 프로젝트 기준을 파악한다
+1. **내장 /code-review 스킬로 1차 리뷰**를 실행한다
+   - `Skill("code-review", "--high")` 를 호출해 버그·정리·효율 후보를 수집한다
+   - 결과를 메모해 두고 2단계에서 활용한다
+2. 다음 문서를 읽어 프로젝트 기준을 파악한다
    - `docs/conventions-production.md`
    - `docs/architecture.md`
    - `docs/adr/index.md`
-2. 검토할 파일을 확정한다
+3. 검토할 파일을 확정한다
    - 사용자가 파일을 명시했으면 해당 파일 사용
    - 명시하지 않았으면 `git diff --name-only HEAD~1` 결과에서 `src/main/java/` 경로만 추출
-3. 각 파일을 읽고 체크리스트 기준으로 리뷰한다
-4. `docs/adr/index.md` 의 **영향 범위** 컬럼과 변경 파일의 패키지를 비교한다
+4. 각 파일을 읽고 아래 체크리스트 기준으로 프로젝트 특화 리뷰를 수행한다
+5. `docs/adr/index.md` 의 **영향 범위** 컬럼과 변경 파일의 패키지를 비교한다
    - 겹치는 ADR 이 있으면 해당 ADR 파일을 읽어 충돌 여부를 확인한다
-5. 결과를 화면에 출력한다
+6. 1단계 결과 + 프로젝트 특화 결과를 합쳐 출력한다
 
 ## 체크리스트
 

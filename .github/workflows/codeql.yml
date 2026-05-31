@@ -33,22 +33,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'corretto'
-
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-read-only: true
-
       - uses: github/codeql-action/init@v3
         with:
           languages: java
+          build-mode: none
           queries: security-and-quality
-
-      - name: Build for CodeQL
-        run: cd backend && ./gradlew compileJava compileTestJava --no-daemon
 
       - uses: github/codeql-action/analyze@v3
         with:

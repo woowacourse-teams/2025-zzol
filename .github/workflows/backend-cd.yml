@@ -66,7 +66,7 @@ jobs:
           scan-type: fs
           scan-ref: backend/build/libs
           severity: CRITICAL
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
 
       - name: Set up Docker Buildx

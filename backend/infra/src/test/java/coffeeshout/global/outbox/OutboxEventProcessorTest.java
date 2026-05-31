@@ -2,7 +2,7 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.support.app.StreamMockedServiceTest;
+import coffeeshout.InfraModuleServiceTest;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.transaction.TestTransaction;
 
-class OutboxEventProcessorTest extends StreamMockedServiceTest {
+class OutboxEventProcessorTest extends InfraModuleServiceTest {
 
     @Autowired
     private OutboxEventProcessor outboxEventProcessor;

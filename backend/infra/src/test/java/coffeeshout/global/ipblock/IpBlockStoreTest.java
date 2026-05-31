@@ -2,7 +2,7 @@ package coffeeshout.global.ipblock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.support.app.IntegrationTestSupport;
+import coffeeshout.InfraModuleIntegrationTest;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 @DisplayName("IpBlockStore")
-class IpBlockStoreTest extends IntegrationTestSupport {
+class IpBlockStoreTest extends InfraModuleIntegrationTest {
 
     private static final String IP = "1.2.3.4";
     private static final String ANOTHER_IP = "5.6.7.8";

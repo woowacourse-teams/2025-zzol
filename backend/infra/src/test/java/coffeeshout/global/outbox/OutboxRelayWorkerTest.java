@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.room.domain.event.PlayerListUpdateEvent;
+import coffeeshout.support.StubBaseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -70,10 +70,10 @@ class OutboxRelayWorkerTest {
         @Test
         void 발행_성공_시_markPublished를_호출한다() throws Exception {
             // given
-            OutboxEvent event = createMockEvent(1L, "room", "{\"@type\":\"PlayerListUpdateEvent\"}");
+            OutboxEvent event = createMockEvent(1L, "room", "{\"@type\":\"StubEvent\"}");
             given(eventProcessor.fetchAndMarkInProgress(50)).willReturn(List.of(event));
             given(objectMapper.readValue(event.getPayload(), BaseEvent.class))
-                    .willReturn(new PlayerListUpdateEvent("test"));
+                    .willReturn(new StubBaseEvent());
 
             // when
             outboxRelayWorker.relay();
@@ -87,10 +87,10 @@ class OutboxRelayWorkerTest {
         @Test
         void Redis_발행_실패_시_handleFailure를_호출한다() throws Exception {
             // given
-            OutboxEvent event = createMockEvent(1L, "room", "{\"@type\":\"PlayerListUpdateEvent\"}");
+            OutboxEvent event = createMockEvent(1L, "room", "{\"@type\":\"StubEvent\"}");
             given(eventProcessor.fetchAndMarkInProgress(50)).willReturn(List.of(event));
             given(objectMapper.readValue(event.getPayload(), BaseEvent.class))
-                    .willReturn(new PlayerListUpdateEvent("test"));
+                    .willReturn(new StubBaseEvent());
             doThrow(new RuntimeException("Redis connection refused"))
                     .when(streamPublisher).publish(any(String.class), any());
 
@@ -112,9 +112,8 @@ class OutboxRelayWorkerTest {
             given(eventProcessor.fetchAndMarkInProgress(50))
                     .willReturn(List.of(event1, event2, event3));
 
-            BaseEvent mockEvent = new PlayerListUpdateEvent("test");
             given(objectMapper.readValue(any(String.class), eq(BaseEvent.class)))
-                    .willReturn(mockEvent);
+                    .willReturn(new StubBaseEvent());
 
             doThrow(new RuntimeException("timeout"))
                     .doNothing()
@@ -130,4 +129,5 @@ class OutboxRelayWorkerTest {
             verify(eventProcessor).markPublished(3L);
         }
     }
+
 }

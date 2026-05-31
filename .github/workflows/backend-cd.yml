@@ -23,6 +23,9 @@ concurrency:
   group: backend-deploy-${{ github.ref_name }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # 1. 공통 빌드/테스트 워크플로우 호출 (backend-ci.yml 재사용)
   ci-and-build:
@@ -34,6 +37,7 @@ jobs:
   deploy:
     needs: ci-and-build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # 빌드 단계에서 결정된 환경 사용
     environment: ${{ needs.ci-and-build.outputs.environment }}
     permissions:
@@ -56,11 +60,20 @@ jobs:
         with:
           name: build-artifacts
 
+      - name: Scan artifacts for vulnerabilities
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: backend/build/libs
+          severity: CRITICAL
+          exit-code: '0'
+          ignore-unfixed: true
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

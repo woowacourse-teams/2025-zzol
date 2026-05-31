@@ -19,10 +19,17 @@ concurrency:
   group: backend-deploy-${{ inputs.environment }}
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   rollback:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      deployments: write
 
     env:
       ENVIRONMENT: ${{ inputs.environment }}

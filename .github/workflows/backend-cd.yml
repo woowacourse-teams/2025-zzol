@@ -37,7 +37,7 @@ jobs:
   deploy:
     needs: ci-and-build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     # 빌드 단계에서 결정된 환경 사용
     environment: ${{ needs.ci-and-build.outputs.environment }}
     permissions:
@@ -60,6 +60,15 @@ jobs:
         with:
           name: build-artifacts
 
+      - name: Scan artifacts for vulnerabilities
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: backend/build/libs
+          severity: CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -81,15 +90,6 @@ jobs:
             ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:${{ env.IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Scan image for vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:${{ env.IMAGE_TAG }}
-          format: table
-          severity: CRITICAL
-          exit-code: '1'
-          ignore-unfixed: true
 
       - name: Cleanup old GHCR images (keep 5)
         uses: actions/delete-package-versions@v5

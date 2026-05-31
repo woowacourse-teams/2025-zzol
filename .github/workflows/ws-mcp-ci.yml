@@ -2,6 +2,7 @@ name: ws-mcp CI
 
 on:
   pull_request:
+    branches: [be/dev, be/prod]
     paths:
       - 'tools/ws-mcp/**'
       - 'backend/src/test/resources/__fixtures__/ws-catalog.json'

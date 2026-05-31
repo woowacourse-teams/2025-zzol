@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.skyscreamer.jsonassert.Customization;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.comparator.CustomComparator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
@@ -22,7 +23,7 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
     private int port;
 
     @Autowired
-    private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     @Autowired(required = false)
     private RedisMessageListenerContainer redisMessageListenerContainer;

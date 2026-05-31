@@ -13,7 +13,7 @@ import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
-public class TestStompSession {
+public class TestStompSession implements AutoCloseable {
 
     private static final int DEFAULT_RESPONSE_TIMEOUT_SECONDS = 5;
 
@@ -35,7 +35,7 @@ public class TestStompSession {
     }
 
     public void send(String sendEndpoint, Object bodyMessage) {
-        session.send(String.format(sendEndpoint), bodyMessage);
+        session.send(sendEndpoint, bodyMessage);
     }
 
     public void send(String sendEndpoint, String jsonString) {
@@ -66,6 +66,11 @@ public class TestStompSession {
     public void disconnect() {
         session.disconnect();
         stompClient.stop();
+    }
+
+    @Override
+    public void close() {
+        disconnect();
     }
 
     public static class MessageCollector {

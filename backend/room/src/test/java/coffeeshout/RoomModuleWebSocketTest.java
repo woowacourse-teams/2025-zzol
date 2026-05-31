@@ -36,7 +36,7 @@ public abstract class RoomModuleWebSocketTest extends WebSocketIntegrationTestSu
 
     protected TestStompSession createSessionWithRoomToken(String roomToken)
             throws InterruptedException, ExecutionException, TimeoutException {
-        StompHeaders headers = new StompHeaders();
+        final StompHeaders headers = new StompHeaders();
         headers.add(StompPrincipalInterceptor.ROOM_TOKEN_HEADER, roomToken);
         return connect(headers);
     }

@@ -13,11 +13,9 @@ class RoomWebSocketConnectionTest extends RoomModuleWebSocketTest {
 
     @Test
     void 유효한_RST로_연결하면_성공한다() throws Exception {
-        TestStompSession session = createSession();
-
-        assertThat(session.isConnected()).isTrue();
-
-        session.disconnect();
+        try (TestStompSession session = createSession()) {
+            assertThat(session.isConnected()).isTrue();
+        }
     }
 
     @Test

@@ -73,7 +73,7 @@ jobs:
           target: /tmp/rollback-${{ env.ENVIRONMENT }}/
 
       - name: Execute Rollback
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         env:
           ENV: ${{ env.ENVIRONMENT }}
           TARGET_TAG: ${{ inputs.image_tag }}

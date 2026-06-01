@@ -25,6 +25,7 @@ dependencies {
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
     testFixturesImplementation(project(":game-api"))
+    testFixturesImplementation(project(":test-support"))
     testImplementation(project(":test-support"))
     testImplementation(testFixtures(project(":room")))
 }

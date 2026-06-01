@@ -1,50 +1,19 @@
 package coffeeshout.support.app.config;
 
-import coffeeshout.gamecommon.flow.FlowScheduler;
-import coffeeshout.support.TestTaskScheduler;
+import coffeeshout.config.GameSchedulerTestConfig;
 import java.time.Clock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.TaskScheduler;
 
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
+@Import(GameSchedulerTestConfig.class)
 public class ServiceTestConfig {
-
-    @Bean(name = "cardGameFlowScheduler")
-    @Primary
-    public FlowScheduler mockCardGameFlowScheduler() {
-        return Mockito.mock(FlowScheduler.class);
-    }
-
-    @Bean(name = "blockStackingFlowScheduler")
-    public FlowScheduler mockBlockStackingFlowScheduler() {
-        return Mockito.mock(FlowScheduler.class);
-    }
-
-    @Bean(name = "ladderFlowScheduler")
-    public FlowScheduler mockLadderFlowScheduler() {
-        return Mockito.mock(FlowScheduler.class);
-    }
-
-    @Bean(name = "racingGameScheduler")
-    public TaskScheduler testRacingGameScheduler() {
-        return new TestTaskScheduler();
-    }
-
-    @Bean(name = "speedTouchGameScheduler")
-    public TaskScheduler testSpeedTouchGameScheduler() {
-        return new TestTaskScheduler();
-    }
-
-    @Bean(name = "blindTimerGameScheduler")
-    public TaskScheduler testBlindTimerGameScheduler() {
-        return new TestTaskScheduler();
-    }
 
     @Bean
     @Primary

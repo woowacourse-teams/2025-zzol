@@ -1,22 +1,21 @@
-package coffeeshout.support.app;
+package coffeeshout;
 
-import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.config.ServiceTestConfig;
 import coffeeshout.room.infra.auth.RoomSessionTokenService;
 import coffeeshout.room.infra.websocket.StompPrincipalInterceptor;
 import coffeeshout.support.TestStompSession;
-import coffeeshout.support.app.config.IntegrationTestConfig;
+import coffeeshout.support.WebSocketIntegrationTestSupport;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.context.annotation.Import;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(IntegrationTestConfig.class)
-public abstract class WebSocketIntegrationTestSupport
-        extends coffeeshout.support.WebSocketIntegrationTestSupport {
+@SpringBootTest(classes = RoomModuleTestApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@Import(ServiceTestConfig.class)
+public abstract class RoomModuleWebSocketTest extends WebSocketIntegrationTestSupport {
 
     private static final String SMOKE_JOIN_CODE = "SMOK";
     private static final String SMOKE_PLAYER_NAME = "smoketest";
@@ -25,24 +24,19 @@ public abstract class WebSocketIntegrationTestSupport
     private RoomSessionTokenService roomSessionTokenService;
 
     protected TestStompSession createSession() throws InterruptedException, ExecutionException, TimeoutException {
-        String token = roomSessionTokenService.issue(SMOKE_JOIN_CODE, SMOKE_PLAYER_NAME, null);
+        final String token = roomSessionTokenService.issue(SMOKE_JOIN_CODE, SMOKE_PLAYER_NAME, null);
         return createSessionWithRoomToken(token);
-    }
-
-    protected TestStompSession createSession(JoinCode joinCode, PlayerName playerName)
-            throws InterruptedException, ExecutionException, TimeoutException {
-        return createSession(joinCode.getValue(), playerName.value());
     }
 
     protected TestStompSession createSession(String joinCode, String playerName)
             throws InterruptedException, ExecutionException, TimeoutException {
-        String token = roomSessionTokenService.issue(joinCode, playerName, null);
+        final String token = roomSessionTokenService.issue(joinCode, playerName, null);
         return createSessionWithRoomToken(token);
     }
 
     protected TestStompSession createSessionWithRoomToken(String roomToken)
             throws InterruptedException, ExecutionException, TimeoutException {
-        StompHeaders headers = new StompHeaders();
+        final StompHeaders headers = new StompHeaders();
         headers.add(StompPrincipalInterceptor.ROOM_TOKEN_HEADER, roomToken);
         return connect(headers);
     }

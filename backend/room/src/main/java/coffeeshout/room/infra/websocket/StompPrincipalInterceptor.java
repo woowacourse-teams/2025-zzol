@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class StompPrincipalInterceptor implements ChannelInterceptor {
 
+    public static final String ROOM_TOKEN_HEADER = "roomToken";
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final RoomSessionTokenService roomSessionTokenService;
@@ -35,7 +36,7 @@ public class StompPrincipalInterceptor implements ChannelInterceptor {
             return message;
         }
 
-        final String roomToken = accessor.getFirstNativeHeader("roomToken");
+        final String roomToken = accessor.getFirstNativeHeader(ROOM_TOKEN_HEADER);
         if (roomToken != null) {
             final RoomSessionClaim claim = roomSessionTokenService.verify(roomToken);
             final String userName = PlayerKey.of(claim.joinCode(), claim.playerName()).toString();

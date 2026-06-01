@@ -11,17 +11,20 @@ import org.awaitility.Awaitility;
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
+import org.springframework.web.socket.messaging.WebSocketStompClient;
 
-public class TestStompSession {
+public class TestStompSession implements AutoCloseable {
 
     private static final int DEFAULT_RESPONSE_TIMEOUT_SECONDS = 5;
 
     private final StompSession session;
+    private final WebSocketStompClient stompClient;
     private final ObjectMapper objectMapper;
     private String principalName;
 
-    public TestStompSession(StompSession session, ObjectMapper objectMapper) {
+    public TestStompSession(StompSession session, WebSocketStompClient stompClient, ObjectMapper objectMapper) {
         this.session = session;
+        this.stompClient = stompClient;
         this.objectMapper = objectMapper;
     }
 
@@ -32,7 +35,7 @@ public class TestStompSession {
     }
 
     public void send(String sendEndpoint, Object bodyMessage) {
-        session.send(String.format(sendEndpoint), bodyMessage);
+        session.send(sendEndpoint, bodyMessage);
     }
 
     public void send(String sendEndpoint, String jsonString) {
@@ -62,6 +65,12 @@ public class TestStompSession {
 
     public void disconnect() {
         session.disconnect();
+        stompClient.stop();
+    }
+
+    @Override
+    public void close() {
+        disconnect();
     }
 
     public static class MessageCollector {
@@ -100,7 +109,7 @@ public class TestStompSession {
             Awaitility.await()
                 .during(timeout, unit)
                 .atMost(unit.toMillis(timeout) + 200, TimeUnit.MILLISECONDS)
-                .until(() -> queue.isEmpty());
+                .until(queue::isEmpty);
         }
     }
 

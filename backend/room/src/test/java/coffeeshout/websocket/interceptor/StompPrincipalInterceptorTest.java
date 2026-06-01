@@ -1,24 +1,23 @@
 package coffeeshout.websocket.interceptor;
 
-import coffeeshout.support.TestStompSession;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import coffeeshout.RoomModuleWebSocketTest;
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.support.app.WebSocketIntegrationTestSupport;
+import coffeeshout.support.TestStompSession;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.websocket.UserPrincipal;
+import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import java.util.concurrent.ExecutionException;
 import org.springframework.messaging.simp.stomp.ConnectionLostException;
 
-class StompPrincipalInterceptorTest extends WebSocketIntegrationTestSupport {
+class StompPrincipalInterceptorTest extends RoomModuleWebSocketTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -31,12 +30,10 @@ class StompPrincipalInterceptorTest extends WebSocketIntegrationTestSupport {
 
         @Test
         void 정상_토큰으로_연결하면_성공한다() throws Exception {
-            final TestStompSession session = createSession("ABCD", "홍길동");
-
-            assertThat(session.isConnected()).isTrue();
-            assertThat(session.getPrincipalName()).isEqualTo("ABCD:홍길동");
-
-            session.disconnect();
+            try (final TestStompSession session = createSession("ABCD", "홍길동")) {
+                assertThat(session.isConnected()).isTrue();
+                assertThat(session.getPrincipalName()).isEqualTo("ABCD:홍길동");
+            }
         }
     }
 
@@ -59,31 +56,25 @@ class StompPrincipalInterceptorTest extends WebSocketIntegrationTestSupport {
             final User user = userRepository.save(UserFixture.회원_엠제이());
             final TokenPair tokens = authTokenService.issue(user);
 
-            final TestStompSession session = createSessionWithAuthorizationToken(tokens.accessToken());
-
-            assertThat(session.isConnected()).isTrue();
-            assertThat(session.getPrincipalName()).isEqualTo(UserPrincipal.of(user.getId()));
-
-            session.disconnect();
+            try (final TestStompSession session = createSessionWithAuthorizationToken(tokens.accessToken())) {
+                assertThat(session.isConnected()).isTrue();
+                assertThat(session.getPrincipalName()).isEqualTo(UserPrincipal.of(user.getId()));
+            }
         }
 
         @Test
         void 유효하지_않은_액세스_토큰이면_sessionId로_연결된다() throws Exception {
-            final TestStompSession session = createSessionWithAuthorizationToken("invalid.token");
-
-            assertThat(session.isConnected()).isTrue();
-            assertThat(session.getPrincipalName()).isNotNull();
-
-            session.disconnect();
+            try (final TestStompSession session = createSessionWithAuthorizationToken("invalid.token")) {
+                assertThat(session.isConnected()).isTrue();
+                assertThat(session.getPrincipalName()).isNotNull();
+            }
         }
 
         @Test
         void Authorization_헤더_없으면_sessionId로_연결된다() throws Exception {
-            final TestStompSession session = createSessionWithoutRoomToken();
-
-            assertThat(session.isConnected()).isTrue();
-
-            session.disconnect();
+            try (final TestStompSession session = createSessionWithoutRoomToken()) {
+                assertThat(session.isConnected()).isTrue();
+            }
         }
     }
 }

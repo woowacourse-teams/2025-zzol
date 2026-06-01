@@ -28,9 +28,18 @@ on:
         description: "Docker image tag"
         value: ${{ jobs.ci-build.outputs.image_tag }}
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   ci-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # output을 상위 워크플로우로 전달
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}
@@ -84,7 +93,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Tests
-        run: ./gradlew test --build-cache --no-daemon
+        run: ./gradlew test jacocoTestReport --build-cache --no-daemon
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -92,6 +101,18 @@ jobs:
         with:
           files: backend/*/build/test-results/test/*.xml
           check_name: "Backend Test Results"
+
+      - name: Report Coverage
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: madrapps/jacoco-report@v1.7.1
+        with:
+          paths: backend/*/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Backend Test Coverage"
+          update-comment: true
+          min-coverage-overall: 45
+          min-coverage-changed-files: 60
 
       - name: Build JAR
         if: github.event_name != 'pull_request'

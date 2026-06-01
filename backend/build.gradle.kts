@@ -1,3 +1,5 @@
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
 plugins {
     alias(libs.plugins.spring.boot) apply false
     alias(libs.plugins.spring.dependency.management) apply false
@@ -20,6 +22,7 @@ subprojects {
     apply(plugin = "java-library")
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "jacoco")
 
     // Spring Boot BOM이 testcontainers 코어를 1.x로 다운그레이드하지 못하도록 오버라이드
     extra["testcontainers.version"] = testcontainersVersion
@@ -56,7 +59,7 @@ subprojects {
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
     }
 
-    // 모듈별 Redis DB 인덱스 — 새 모듈 추가 시 여기에 등록 (0·7·8·... 미사용)
+    // 모듈별 Redis DB 인덱스 — 새 모듈 추가 시 여기에 등록
     val redisDbByModule = mapOf(
         "app"       to 0,
         "room"      to 1,
@@ -64,8 +67,17 @@ subprojects {
         "websocket" to 3,
         "game"      to 4,
         "zzolbot"   to 5,
-        "admin"     to 6,
+        "infra"     to 6,
+        "admin"     to 7,
     )
+
+    tasks.named<JacocoReport>("jacocoTestReport") {
+        dependsOn(tasks.named("test"))
+        reports {
+            xml.required.set(true)
+            html.required.set(false)
+        }
+    }
 
     tasks.withType<Test> {
         useJUnitPlatform()

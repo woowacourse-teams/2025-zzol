@@ -3,6 +3,7 @@ package coffeeshout.global.metric;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.support.StubBaseEvent;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -84,16 +85,6 @@ class RedisStreamLatencyMetricServiceTest {
     }
 
     private BaseEvent createEvent(Instant timestamp) {
-        return new BaseEvent() {
-            @Override
-            public String eventId() {
-                return "test-event-id";
-            }
-
-            @Override
-            public Instant timestamp() {
-                return timestamp;
-            }
-        };
+        return new StubBaseEvent("test-event-id", timestamp);
     }
 }

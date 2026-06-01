@@ -1,22 +1,13 @@
 package coffeeshout.websocket;
 
-import static coffeeshout.cardgame.application.CardGameNotifier.CARD_GAME_STATE_DESTINATION_FORMAT;
-import static coffeeshout.cardgame.application.CardGameNotifier.GAME_START_DESTINATION_FORMAT;
 import static coffeeshout.websocket.WsRecoveryService.ID_MAP_KEY_FORMAT;
 import static coffeeshout.websocket.WsRecoveryService.STREAM_KEY_FORMAT;
-import static coffeeshout.racinggame.infra.messaging.RacingGameMessagePublisher.RACING_GAME_PLAYERS_POSITION_DESTINATION_FORMAT;
-import static coffeeshout.racinggame.infra.messaging.RacingGameMessagePublisher.RACING_GAME_STATE_DESTINATION_FORMAT;
-import static coffeeshout.room.ui.messaging.RoomMessagePublisher.MINI_GAME_TOPIC_FORMAT;
-import static coffeeshout.room.ui.messaging.RoomMessagePublisher.PLAYER_LIST_TOPIC_FORMAT;
-import static coffeeshout.room.ui.messaging.RoomMessagePublisher.QR_CODE_TOPIC_FORMAT;
-import static coffeeshout.room.ui.messaging.RoomMessagePublisher.ROULETTE_TOPIC_FORMAT;
-import static coffeeshout.room.ui.messaging.RoomMessagePublisher.WINNER_TOPIC_FORMAT;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
 
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.WebsocketModuleIntegrationTest;
 import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.websocket.ui.dto.RecoveryMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-class WsRecoveryServiceTest extends ServiceTest {
+class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
 
     @Autowired
     WsRecoveryService wsRecoveryService;
@@ -277,6 +267,30 @@ class WsRecoveryServiceTest extends ServiceTest {
                 assertThat(message.destination()).isEqualTo(destination);
                 assertThat(message.response().success()).isTrue();
             }
+        }
+
+        @Test
+        void 같은_방의_다양한_destination에_저장된_메시지들이_모두_복구된다() {
+            // given
+            String dest1 = "/topic/room/" + joinCode + "/players";
+            String dest2 = "/topic/room/" + joinCode + "/minigame";
+            String dest3 = "/topic/room/" + joinCode + "/roulette";
+            String dest4 = "/topic/room/" + joinCode + "/cardgame";
+            String dest5 = "/topic/room/" + joinCode + "/racinggame";
+
+            saveMessage(dest1, "data1");
+            saveMessage(dest2, "data2");
+            saveMessage(dest3, "data3");
+            saveMessage(dest4, "data4");
+            saveMessage(dest5, "data5");
+
+            // when
+            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
+
+            // then
+            assertThat(messages).hasSize(5)
+                    .extracting(RecoveryMessage::destination)
+                    .containsExactlyInAnyOrder(dest1, dest2, dest3, dest4, dest5);
         }
 
         private String saveMessage(String destination, String data) {
@@ -631,192 +645,4 @@ class WsRecoveryServiceTest extends ServiceTest {
         }
     }
 
-    @Nested
-    class 실제_MessagePublisher_destination_테스트 {
-
-        @ParameterizedTest
-        @MethodSource("coffeeshout.websocket.WsRecoveryServiceTest#allMessagePublisherDestinations")
-        void 모든_MessagePublisher_destination에서_메시지가_정상_저장된다(String destinationFormat, String testData) {
-            // given
-            String destination = String.format(destinationFormat, joinCode);
-            WebSocketResponse<String> response = WebSocketResponse.success(testData);
-
-            // when
-            String streamId = wsRecoveryService.save(joinCode, destination, response);
-
-            // then
-            assertThat(streamId).isNotBlank();
-            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
-            assertThat(messages).hasSize(1);
-            assertThat(messages.getFirst().destination()).isEqualTo(destination);
-
-            // cleanup for next test
-            cleanupRedis(joinCode);
-        }
-
-        @Test
-        void 같은_방의_다양한_destination_메시지들이_모두_복구된다() {
-            // given - 다양한 destination으로 메시지 저장
-            String playerListDest = String.format(PLAYER_LIST_TOPIC_FORMAT, joinCode);
-            String miniGameDest = String.format(MINI_GAME_TOPIC_FORMAT, joinCode);
-            String rouletteDest = String.format(ROULETTE_TOPIC_FORMAT, joinCode);
-            String cardGameDest = String.format(CARD_GAME_STATE_DESTINATION_FORMAT, joinCode);
-            String racingGameDest = String.format(RACING_GAME_PLAYERS_POSITION_DESTINATION_FORMAT, joinCode);
-
-            saveMessage(playerListDest, "player list data");
-            saveMessage(miniGameDest, "minigame data");
-            saveMessage(rouletteDest, "roulette data");
-            saveMessage(cardGameDest, "card game data");
-            saveMessage(racingGameDest, "racing game data");
-
-            // when
-            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
-
-            // then
-            assertThat(messages).hasSize(5);
-
-            // 각 destination이 올바르게 저장되었는지 확인
-            assertThat(messages).extracting(RecoveryMessage::destination)
-                    .containsExactlyInAnyOrder(
-                            playerListDest,
-                            miniGameDest,
-                            rouletteDest,
-                            cardGameDest,
-                            racingGameDest
-                    );
-        }
-
-        @Test
-        @DisplayName("destination에 포함된 joinCode와 저장된 joinCode가 일치하는 메시지만 복구된다")
-        void destination_joinCode와_저장된_joinCode가_일치하는_메시지만_복구된다() {
-            // given
-            String joinCode1 = "ABC3";
-            String joinCode2 = "ABC4";
-            cleanupRedis(joinCode1);
-            cleanupRedis(joinCode2);
-
-            // joinCode1 방에 메시지 저장
-            String dest1 = String.format(PLAYER_LIST_TOPIC_FORMAT, joinCode1);
-            saveMessageToRoom(joinCode1, dest1, "room1 player list");
-
-            // joinCode2 방에 메시지 저장
-            String dest2 = String.format(PLAYER_LIST_TOPIC_FORMAT, joinCode2);
-            saveMessageToRoom(joinCode2, dest2, "room2 player list");
-
-            // when - joinCode1으로만 복구
-            List<RecoveryMessage> room1Messages = wsRecoveryService.getMessagesSince(joinCode1, "0-0");
-            List<RecoveryMessage> room2Messages = wsRecoveryService.getMessagesSince(joinCode2, "0-0");
-
-            // then
-            assertThat(room1Messages).hasSize(1);
-            assertThat(room1Messages.getFirst().destination()).contains(joinCode1);
-
-            assertThat(room2Messages).hasSize(1);
-            assertThat(room2Messages.getFirst().destination()).contains(joinCode2);
-
-            // cleanup
-            cleanupRedis(joinCode1);
-            cleanupRedis(joinCode2);
-        }
-
-        @Test
-        void 복구된_메시지의_destination에서_joinCode를_추출할_수_있다() {
-            // given
-            String testJoinCode = "XYZ7";
-            cleanupRedis(testJoinCode);
-
-            String destination = String.format(ROULETTE_TOPIC_FORMAT, testJoinCode);
-            saveMessageToRoom(testJoinCode, destination, "roulette winner");
-
-            // when
-            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(testJoinCode, "0-0");
-
-            // then
-            assertThat(messages).hasSize(1);
-            String recoveredDestination = messages.getFirst().destination();
-
-            // destination에서 joinCode 추출 검증
-            assertThat(recoveredDestination).isEqualTo("/topic/room/" + testJoinCode + "/roulette")
-                    .contains(testJoinCode);
-
-            // 정규식으로 joinCode 추출
-            String extractedJoinCode = recoveredDestination.split("/")[3];
-            assertThat(extractedJoinCode).isEqualTo(testJoinCode);
-
-            // cleanup
-            cleanupRedis(testJoinCode);
-        }
-
-        @ParameterizedTest
-        @MethodSource("coffeeshout.websocket.WsRecoveryServiceTest#allDestinationFormats")
-        void 모든_destination_형식에서_joinCode가_올바르게_포함된다(String destinationFormat) {
-            // given
-            String testJoinCode = "T3ST";
-            cleanupRedis(testJoinCode);
-
-            String destination = String.format(destinationFormat, testJoinCode);
-            saveMessageToRoom(testJoinCode, destination, "test data");
-
-            // when
-            List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(testJoinCode, "0-0");
-
-            // then
-            assertThat(messages).hasSize(1);
-            RecoveryMessage message = messages.getFirst();
-
-            // destination 검증
-            assertThat(message.destination()).isEqualTo(destination);
-            assertThat(message.destination()).contains(testJoinCode);
-
-            // /topic/room/{joinCode} 또는 /topic/room/{joinCode}/... 형식 검증
-            assertThat(message.destination()).startsWith("/topic/room/" + testJoinCode);
-
-            // cleanup
-            cleanupRedis(testJoinCode);
-        }
-
-        private void saveMessage(String destination, String data) {
-            WebSocketResponse<String> response = WebSocketResponse.success(data);
-            wsRecoveryService.save(joinCode, destination, response);
-        }
-
-        private void saveMessageToRoom(String roomJoinCode, String destination, String data) {
-            WebSocketResponse<String> response = WebSocketResponse.success(data);
-            wsRecoveryService.save(roomJoinCode, destination, response);
-        }
-    }
-
-    static Stream<Arguments> allMessagePublisherDestinations() {
-        return Stream.of(
-                // RoomMessagePublisher
-                Arguments.of(PLAYER_LIST_TOPIC_FORMAT, "player list"),
-                Arguments.of(MINI_GAME_TOPIC_FORMAT, "minigame list"),
-                Arguments.of(ROULETTE_TOPIC_FORMAT, "roulette state"),
-                Arguments.of(WINNER_TOPIC_FORMAT, "winner info"),
-                Arguments.of(QR_CODE_TOPIC_FORMAT, "qr code status"),
-                // CardGameMessagePublisher
-                Arguments.of(CARD_GAME_STATE_DESTINATION_FORMAT, "card game state"),
-                Arguments.of(GAME_START_DESTINATION_FORMAT, "game start"),
-                // RacingGameMessagePublisher
-                Arguments.of(RACING_GAME_PLAYERS_POSITION_DESTINATION_FORMAT, "runner positions"),
-                Arguments.of(RACING_GAME_STATE_DESTINATION_FORMAT, "racing game state")
-        );
-    }
-
-    static Stream<String> allDestinationFormats() {
-        return Stream.of(
-                // RoomMessagePublisher
-                PLAYER_LIST_TOPIC_FORMAT,
-                MINI_GAME_TOPIC_FORMAT,
-                ROULETTE_TOPIC_FORMAT,
-                WINNER_TOPIC_FORMAT,
-                QR_CODE_TOPIC_FORMAT,
-                // CardGameMessagePublisher
-                CARD_GAME_STATE_DESTINATION_FORMAT,
-                GAME_START_DESTINATION_FORMAT,
-                // RacingGameMessagePublisher
-                RACING_GAME_PLAYERS_POSITION_DESTINATION_FORMAT,
-                RACING_GAME_STATE_DESTINATION_FORMAT
-        );
-    }
 }

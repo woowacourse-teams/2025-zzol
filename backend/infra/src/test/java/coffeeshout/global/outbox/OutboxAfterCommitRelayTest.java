@@ -1,18 +1,20 @@
 package coffeeshout.global.outbox;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.room.domain.event.PlayerListUpdateEvent;
+import coffeeshout.support.StubBaseEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.BDDMockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * AFTER_COMMIT 리스너의 핵심 동작을 검증한다:
  * - Redis 발행 성공 시 → markPublished() 호출
  * - Redis 발행 실패 시 → 예외를 삼키고 PENDING 상태 유지 (Worker가 재시도)
+ * - 역직렬화 실패 시 → 예외를 삼키고 PENDING 상태 유지
  */
 @ExtendWith(MockitoExtension.class)
 class OutboxAfterCommitRelayTest {
@@ -45,10 +48,10 @@ class OutboxAfterCommitRelayTest {
         @Test
         void Redis_발행_성공_시_markPublished를_호출한다() throws Exception {
             // given
-            BaseEvent mockEvent = new PlayerListUpdateEvent("test");
-            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"PlayerListUpdateEvent\"}");
+            BaseEvent mockEvent = new StubBaseEvent();
+            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"StubBaseEvent\"}");
 
-            org.mockito.BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
+            BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
                     .willReturn(mockEvent);
 
             // when
@@ -62,10 +65,10 @@ class OutboxAfterCommitRelayTest {
         @Test
         void Redis_발행_실패_시_예외를_삼키고_markPublished를_호출하지_않는다() throws Exception {
             // given
-            BaseEvent mockEvent = new PlayerListUpdateEvent("test");
-            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"PlayerListUpdateEvent\"}");
+            BaseEvent mockEvent = new StubBaseEvent();
+            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"StubBaseEvent\"}");
 
-            org.mockito.BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
+            BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
                     .willReturn(mockEvent);
             doThrow(new RuntimeException("Redis connection refused"))
                     .when(streamPublisher).publish(any(String.class), any());
@@ -74,7 +77,23 @@ class OutboxAfterCommitRelayTest {
             outboxAfterCommitRelay.onOutboxSaved(savedEvent);
 
             // then — markPublished가 호출되지 않아야 한다 (PENDING 유지)
-            verify(eventProcessor, org.mockito.Mockito.never()).markPublished(any());
+            verify(eventProcessor, never()).markPublished(any());
+        }
+
+        @Test
+        void 역직렬화_실패_시_예외를_삼키고_markPublished를_호출하지_않는다() throws Exception {
+            // given
+            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "invalid-json");
+
+            BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
+                    .willThrow(new JsonProcessingException("역직렬화 실패") {});
+
+            // when — 예외가 밖으로 나가면 안 된다
+            outboxAfterCommitRelay.onOutboxSaved(savedEvent);
+
+            // then — 역직렬화 실패 시에도 markPublished와 publish가 호출되지 않아야 한다
+            verify(eventProcessor, never()).markPublished(any());
+            verify(streamPublisher, never()).publish(any(String.class), any());
         }
     }
 }

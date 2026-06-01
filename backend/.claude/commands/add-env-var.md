@@ -8,7 +8,7 @@
 
 `x-dev-app.environment` 블록의 마지막 항목(`- OAUTH_FRONTEND_REDIRECT_URI=...`) 바로 아래에 추가:
 
-```
+```yaml
     - ROOM_SESSION_TOKEN_SECRET=${ROOM_SESSION_TOKEN_SECRET}
 ```
 
@@ -16,7 +16,7 @@
 
 `x-prod-app.environment` 블록의 마지막 항목(`- OAUTH_FRONTEND_REDIRECT_URI=...`) 바로 아래에 추가:
 
-```
+```yaml
     - ROOM_SESSION_TOKEN_SECRET=${ROOM_SESSION_TOKEN_SECRET}
 ```
 
@@ -24,7 +24,7 @@
 
 `Create .env file` 스텝의 `OAUTH_FRONTEND_REDIRECT_URI=...` 줄 바로 아래에 추가:
 
-```
+```text
           ROOM_SESSION_TOKEN_SECRET=${{ secrets.ROOM_SESSION_TOKEN_SECRET }}
 ```
 

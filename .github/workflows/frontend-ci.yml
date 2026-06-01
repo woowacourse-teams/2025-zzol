@@ -16,6 +16,9 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
 
     # frontend 폴더를 기본 작업 디렉토리로 설정
     defaults:

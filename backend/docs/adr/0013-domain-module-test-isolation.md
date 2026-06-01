@@ -235,6 +235,6 @@ api("org.testcontainers:junit-jupiter:$testcontainersVersion")
 
 ### 미적용 모듈
 
-현재 `:room` 만 이 패턴을 적용했다.
-나머지 도메인 모듈(`:user`, `:game`, `:websocket`, `:admin`, `:zzolbot`) 은 아직 `:app:test` 에 의존한다.
+현재 `:profanity`, `:room`, `:user`, `:websocket`, `:infra`, `:admin`, `:zzolbot` 이 이 패턴을 적용했다.
+나머지 도메인 모듈(`:game`) 은 아직 `:app:test` 에 의존한다.
 마이그레이션 순서는 팀 협의로 결정한다.

@@ -68,6 +68,8 @@ subprojects {
         "game"      to 4,
         "zzolbot"   to 5,
         "infra"     to 6,
+        "admin"     to 7,
+        "profanity" to 8,
     )
 
     tasks.named<JacocoReport>("jacocoTestReport") {

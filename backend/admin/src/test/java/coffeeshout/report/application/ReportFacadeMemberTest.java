@@ -2,7 +2,7 @@ package coffeeshout.report.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.AdminModuleServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.infra.persistence.Report;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class ReportFacadeMemberTest extends ServiceTest {
+class ReportFacadeMemberTest extends AdminModuleServiceTest {
 
     @Autowired
     ReportFacade reportFacade;

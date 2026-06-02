@@ -4,7 +4,7 @@ import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.AdminModuleServiceTest;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import coffeeshout.patchnote.domain.PatchNoteErrorCode;
 import coffeeshout.patchnote.infra.persistence.PatchNoteJpaRepository;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class PatchNoteAdminServiceTest extends ServiceTest {
+class PatchNoteAdminServiceTest extends AdminModuleServiceTest {
 
     @Autowired
     private PatchNoteAdminService patchNoteAdminService;

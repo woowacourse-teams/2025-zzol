@@ -4,7 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import coffeeshout.support.app.IntegrationTestSupport;
+import coffeeshout.AdminModuleIntegrationTest;
 import coffeeshout.patchnote.application.PatchNoteAdminService;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureMockMvc
 @DisplayName("PatchNoteController 통합 테스트")
-class PatchNoteControllerTest extends IntegrationTestSupport {
+class PatchNoteControllerTest extends AdminModuleIntegrationTest {
 
     @Autowired
     MockMvc mockMvc;

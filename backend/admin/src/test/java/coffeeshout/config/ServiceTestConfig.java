@@ -1,6 +1,5 @@
-package coffeeshout.support.app.config;
+package coffeeshout.config;
 
-import coffeeshout.config.GameSchedulerTestConfig;
 import java.time.Clock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;

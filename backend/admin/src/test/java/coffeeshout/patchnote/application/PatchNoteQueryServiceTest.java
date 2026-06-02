@@ -2,7 +2,7 @@ package coffeeshout.patchnote.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.AdminModuleServiceTest;
 import coffeeshout.patchnote.domain.PatchNoteCategory;
 import coffeeshout.patchnote.infra.persistence.PatchNoteEntity;
 import java.util.List;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class PatchNoteQueryServiceTest extends ServiceTest {
+class PatchNoteQueryServiceTest extends AdminModuleServiceTest {
 
     @Autowired
     private PatchNoteAdminService patchNoteAdminService;

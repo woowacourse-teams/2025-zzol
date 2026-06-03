@@ -34,9 +34,10 @@ public class ReportService {
     @Transactional
     public long submit(ReportCategory category, MiniGameType gameType, String joinCode, String content,
                        Reporter author, String ip) {
-        final Report entity = category == ReportCategory.BUG
-                ? Report.createBugReport(gameType, joinCode, content, clock, author, ip)
-                : Report.createGeneralReport(category, content, clock, author, ip);
+        final Report.ReportCreation creation = category == ReportCategory.BUG
+                ? Report.ReportCreation.bug(gameType, joinCode, content, author, ip)
+                : Report.ReportCreation.general(category, content, author, ip);
+        final Report entity = Report.create(creation, clock);
         final Report saved = reportRepository.save(entity);
         eventPublisher.publishEvent(
                 new ReportSubmittedEvent(

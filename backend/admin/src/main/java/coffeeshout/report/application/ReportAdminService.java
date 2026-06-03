@@ -1,5 +1,6 @@
 package coffeeshout.report.application;
 
+import coffeeshout.admin.ipblock.IpBlockAdminService;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -11,11 +12,13 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReportAdminService {
@@ -24,6 +27,7 @@ public class ReportAdminService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ReportRepository reportRepository;
+    private final IpBlockAdminService ipBlockAdminService;
 
     @Transactional(readOnly = true)
     public Page<ReportRow> list(ReportStatus status, ReportCategory category, MiniGameType gameType, int page) {
@@ -42,6 +46,15 @@ public class ReportAdminService {
         return reportRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "신고를 찾을 수 없습니다."))
                 .getIp();
+    }
+
+    @Transactional(readOnly = true)
+    public void unblockReporterIp(Long id) {
+        final String ip = findReporterIp(id);
+        if (ip != null) {
+            ipBlockAdminService.unblock(ip);
+            log.info("신고 #{} 신고자 IP 차단 해제: ip={}", id, ip);
+        }
     }
 
     @Transactional

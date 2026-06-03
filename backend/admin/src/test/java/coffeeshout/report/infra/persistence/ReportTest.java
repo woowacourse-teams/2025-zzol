@@ -5,6 +5,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
+import coffeeshout.report.infra.persistence.Report.ReportCreation;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -89,24 +90,28 @@ class ReportTest {
     class IpField {
 
         @Test
-        void ip를_전달하면_createBugReport에_저장된다() {
-            final Report entity = Report.createBugReport(
-                    MiniGameType.CARD_GAME, "ABC12", "내용", FIXED_CLOCK, null, "1.2.3.4");
+        void ip를_전달하면_bug_신고에_저장된다() {
+            final Report entity = Report.create(
+                    ReportCreation.bug(MiniGameType.CARD_GAME, "ABC12", "내용", null, "1.2.3.4"),
+                    FIXED_CLOCK);
 
             assertThat(entity.getIp()).isEqualTo("1.2.3.4");
         }
 
         @Test
-        void ip를_전달하면_createGeneralReport에_저장된다() {
-            final Report entity = Report.createGeneralReport(
-                    ReportCategory.SUGGESTION, "내용", FIXED_CLOCK, null, "5.6.7.8");
+        void ip를_전달하면_general_신고에_저장된다() {
+            final Report entity = Report.create(
+                    ReportCreation.general(ReportCategory.SUGGESTION, "내용", null, "5.6.7.8"),
+                    FIXED_CLOCK);
 
             assertThat(entity.getIp()).isEqualTo("5.6.7.8");
         }
 
         @Test
         void ip_없이_생성하면_null이다() {
-            final Report entity = Report.createBugReport(MiniGameType.CARD_GAME, "ABC12", "내용", FIXED_CLOCK);
+            final Report entity = Report.create(
+                    ReportCreation.bug(MiniGameType.CARD_GAME, "ABC12", "내용", null, null),
+                    FIXED_CLOCK);
 
             assertThat(entity.getIp()).isNull();
         }

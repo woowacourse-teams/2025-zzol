@@ -8,7 +8,9 @@ import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.infra.persistence.Report;
+import coffeeshout.report.infra.persistence.Report.ReportCreation;
 import coffeeshout.report.infra.persistence.ReportRepository;
+import java.time.Clock;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,8 +32,8 @@ class ReportAdminServiceTest extends AdminModuleServiceTest {
         @Test
         void ip가_저장된_신고의_ip를_반환한다() {
             final Report saved = reportRepository.save(
-                    Report.createBugReport(MiniGameType.CARD_GAME, "ABC12", "내용", java.time.Clock.systemUTC(),
-                            null, "1.2.3.4")
+                    Report.create(ReportCreation.bug(MiniGameType.CARD_GAME, "ABC12", "내용", null, "1.2.3.4"),
+                            Clock.systemUTC())
             );
 
             final String ip = reportAdminService.findReporterIp(saved.getId());
@@ -42,7 +44,8 @@ class ReportAdminServiceTest extends AdminModuleServiceTest {
         @Test
         void ip_없이_제출된_신고는_null을_반환한다() {
             final Report saved = reportRepository.save(
-                    Report.createGeneralReport(ReportCategory.SUGGESTION, "내용", java.time.Clock.systemUTC())
+                    Report.create(ReportCreation.general(ReportCategory.SUGGESTION, "내용", null, null),
+                            Clock.systemUTC())
             );
 
             final String ip = reportAdminService.findReporterIp(saved.getId());

@@ -1,6 +1,5 @@
 package coffeeshout.report.ui;
 
-import coffeeshout.global.ipblock.IpBlockStore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.application.ReportAdminService;
 import coffeeshout.report.application.ReportAdminService.ReportRow;
@@ -8,7 +7,6 @@ import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportStatus;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Slf4j
 @Controller
 @RequestMapping("/admin/reports")
 @Validated
@@ -27,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class ReportAdminController {
 
     private final ReportAdminService reportAdminService;
-    private final IpBlockStore ipBlockStore;
 
     @GetMapping
     public String dashboard(
@@ -76,11 +72,7 @@ public class ReportAdminController {
             @RequestParam(required = false) MiniGameType gameType,
             @RequestParam(defaultValue = "0") int page
     ) {
-        final String ip = reportAdminService.findReporterIp(id);
-        if (ip != null) {
-            ipBlockStore.unblock(ip);
-            log.info("신고 #{} 신고자 IP 차단 해제: ip={}", id, ip);
-        }
+        reportAdminService.unblockReporterIp(id);
         return buildRedirect(page, status, category, gameType);
     }
 

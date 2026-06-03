@@ -37,6 +37,13 @@ public class ReportAdminService {
         return reportRepository.countByStatus(ReportStatus.PENDING);
     }
 
+    @Transactional(readOnly = true)
+    public String findReporterIp(Long id) {
+        return reportRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "신고를 찾을 수 없습니다."))
+                .getIp();
+    }
+
     @Transactional
     public void resolve(Long id) {
         final Report report = reportRepository.findById(id)
@@ -57,7 +64,8 @@ public class ReportAdminService {
                 e.getContent(),
                 e.getStatus(),
                 toKst(e.getCreatedAt()),
-                e.getResolvedAt() != null ? toKst(e.getResolvedAt()) : null
+                e.getResolvedAt() != null ? toKst(e.getResolvedAt()) : null,
+                e.getIp()
         );
     }
 
@@ -73,7 +81,8 @@ public class ReportAdminService {
             String content,
             ReportStatus status,
             LocalDateTime createdAt,
-            LocalDateTime resolvedAt
+            LocalDateTime resolvedAt,
+            String ip
     ) {
     }
 }

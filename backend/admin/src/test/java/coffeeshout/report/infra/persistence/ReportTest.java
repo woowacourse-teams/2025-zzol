@@ -85,6 +85,34 @@ class ReportTest {
     }
 
     @Nested
+    @DisplayName("ip 필드")
+    class IpField {
+
+        @Test
+        void ip를_전달하면_createBugReport에_저장된다() {
+            final Report entity = Report.createBugReport(
+                    MiniGameType.CARD_GAME, "ABC12", "내용", FIXED_CLOCK, null, "1.2.3.4");
+
+            assertThat(entity.getIp()).isEqualTo("1.2.3.4");
+        }
+
+        @Test
+        void ip를_전달하면_createGeneralReport에_저장된다() {
+            final Report entity = Report.createGeneralReport(
+                    ReportCategory.SUGGESTION, "내용", FIXED_CLOCK, null, "5.6.7.8");
+
+            assertThat(entity.getIp()).isEqualTo("5.6.7.8");
+        }
+
+        @Test
+        void ip_없이_생성하면_null이다() {
+            final Report entity = Report.createBugReport(MiniGameType.CARD_GAME, "ABC12", "내용", FIXED_CLOCK);
+
+            assertThat(entity.getIp()).isNull();
+        }
+    }
+
+    @Nested
     @DisplayName("공통 필드")
     class CommonFields {
 

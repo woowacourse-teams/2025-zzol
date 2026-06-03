@@ -39,6 +39,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class IpBlockFilter extends OncePerRequestFilter {
 
+    /**
+     * IP 차단 검사를 건너뛸 경로 prefix 목록.
+     * <ul>
+     *   <li>{@code /admin} — 차단된 어드민도 관리 화면에 접근 가능해야 함 (Spring Security가 2차 인증 담당)</li>
+     *   <li>{@code /reports} — 차단된 사용자가 이의신청 신고를 제출할 수 있어야 함</li>
+     * </ul>
+     */
+    private static final String[] EXEMPT_PATH_PREFIXES = {"/admin", "/reports"};
+
     private static final Pattern IPV4_PATTERN = Pattern.compile(
             "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$"
     );
@@ -56,6 +65,13 @@ public class IpBlockFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+        final String uri = request.getRequestURI();
+
+        if (isExemptPath(uri)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         final String ip = getClientIp(request);
 
         if (!isValidIp(ip)) {
@@ -65,13 +81,13 @@ public class IpBlockFilter extends OncePerRequestFilter {
         }
 
         if (ipBlockStore.isBlocked(ip)) {
-            log.warn("차단된 IP 접근 시도: ip={} uri={}", ip, request.getRequestURI());
+            log.warn("차단된 IP 접근 시도: ip={} uri={}", ip, uri);
             writeBlockedResponse(request, response);
             return;
         }
 
-        if (maliciousPathMatcher.isMalicious(request.getRequestURI())) {
-            log.warn("악성 경로 접근 감지 → IP 즉시 차단: ip={} uri={}", ip, request.getRequestURI());
+        if (maliciousPathMatcher.isMalicious(uri)) {
+            log.warn("악성 경로 접근 감지 → IP 즉시 차단: ip={} uri={}", ip, uri);
             ipBlockStore.blockImmediately(ip);
             writeBlockedResponse(request, response);
             return;
@@ -94,12 +110,12 @@ public class IpBlockFilter extends OncePerRequestFilter {
         }
 
         final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.TOO_MANY_REQUESTS, GlobalErrorCode.IP_BLOCKED.getMessage());
+                HttpStatus.FORBIDDEN, GlobalErrorCode.IP_BLOCKED.getMessage());
         problemDetail.setProperty("errorCode", GlobalErrorCode.IP_BLOCKED.getCode());
         problemDetail.setProperty("timestamp", LocalDateTime.now());
         problemDetail.setProperty("exception", IpBlockFilter.class.getSimpleName());
 
-        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getWriter(), problemDetail);
@@ -124,6 +140,15 @@ public class IpBlockFilter extends OncePerRequestFilter {
 
     private String resolveOrDefault(String value, String fallback) {
         return value != null && !value.isBlank() ? value : fallback;
+    }
+
+    private boolean isExemptPath(String uri) {
+        for (String prefix : EXEMPT_PATH_PREFIXES) {
+            if (uri.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String getClientIp(HttpServletRequest request) {

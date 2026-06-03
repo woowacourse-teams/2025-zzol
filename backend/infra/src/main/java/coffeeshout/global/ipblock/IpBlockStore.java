@@ -5,7 +5,10 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -111,5 +114,40 @@ public class IpBlockStore {
 
     private void incrementNotFoundFallback(String ip, Throwable t) {
         log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 404 카운터를 처리할 수 없습니다. ip={} error={}", ip, t.getMessage());
+    }
+
+    @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "unblockFallback")
+    public void unblock(String ip) {
+        stringRedisTemplate.delete(BLOCKED_IP_PREFIX + ip);
+        stringRedisTemplate.delete(NOT_FOUND_COUNTER_PREFIX + ip);
+        log.info("IP 차단 해제: ip={}", ip);
+    }
+
+    private void unblockFallback(String ip, Throwable t) {
+        log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 IP 차단을 해제할 수 없습니다. ip={} error={}", ip, t.getMessage());
+    }
+
+    @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "getBlockedIpsFallback")
+    public List<BlockedIp> getBlockedIps() {
+        final Set<String> keys = stringRedisTemplate.keys(BLOCKED_IP_PREFIX + "*");
+        if (keys == null || keys.isEmpty()) {
+            return List.of();
+        }
+        return keys.stream()
+                .map(key -> {
+                    final String ip = key.substring(BLOCKED_IP_PREFIX.length());
+                    final Long ttl = stringRedisTemplate.getExpire(key, TimeUnit.SECONDS);
+                    return new BlockedIp(ip, ttl != null ? ttl : -1L);
+                })
+                .sorted(Comparator.comparing(BlockedIp::ip))
+                .toList();
+    }
+
+    private List<BlockedIp> getBlockedIpsFallback(Throwable t) {
+        log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 차단 IP 목록을 조회할 수 없습니다. error={}", t.getMessage());
+        return List.of();
+    }
+
+    public record BlockedIp(String ip, long remainingTtlSeconds) {
     }
 }

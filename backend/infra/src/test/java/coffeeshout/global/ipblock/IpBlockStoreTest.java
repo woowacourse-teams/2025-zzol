@@ -3,7 +3,9 @@ package coffeeshout.global.ipblock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.InfraModuleIntegrationTest;
+import coffeeshout.global.ipblock.IpBlockStore.BlockedIp;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -104,6 +106,102 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
             }
 
             assertThat(ipBlockStore.isBlocked(IP)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("unblock")
+    class unblock {
+
+        @Test
+        void 차단된_IP를_해제하면_isBlocked가_false를_반환한다() {
+            ipBlockStore.blockImmediately(IP);
+
+            ipBlockStore.unblock(IP);
+
+            assertThat(ipBlockStore.isBlocked(IP)).isFalse();
+        }
+
+        @Test
+        void 해제_시_404_카운터도_함께_삭제한다() {
+            for (int i = 0; i < 3; i++) {
+                ipBlockStore.incrementNotFoundAndBlockIfExceeded(IP);
+            }
+
+            ipBlockStore.unblock(IP);
+
+            assertThat(stringRedisTemplate.hasKey("block:404:" + IP)).isFalse();
+        }
+
+        @Test
+        void 차단되지_않은_IP_해제는_예외_없이_처리된다() {
+            ipBlockStore.unblock(IP);
+
+            assertThat(ipBlockStore.isBlocked(IP)).isFalse();
+        }
+
+        @Test
+        void 다른_IP의_차단에는_영향을_주지_않는다() {
+            ipBlockStore.blockImmediately(IP);
+            ipBlockStore.blockImmediately(ANOTHER_IP);
+
+            ipBlockStore.unblock(IP);
+
+            assertThat(ipBlockStore.isBlocked(ANOTHER_IP)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("getBlockedIps")
+    class getBlockedIps {
+
+        @Test
+        void 차단된_IP가_없으면_빈_목록을_반환한다() {
+            final List<BlockedIp> result = ipBlockStore.getBlockedIps();
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        void 차단된_IP가_목록에_포함된다() {
+            ipBlockStore.blockImmediately(IP);
+
+            final List<BlockedIp> result = ipBlockStore.getBlockedIps();
+
+            assertThat(result).extracting(BlockedIp::ip).contains(IP);
+        }
+
+        @Test
+        void 차단된_IP의_남은_TTL이_양수다() {
+            ipBlockStore.blockImmediately(IP);
+
+            final List<BlockedIp> result = ipBlockStore.getBlockedIps();
+
+            assertThat(result)
+                    .filteredOn(e -> e.ip().equals(IP))
+                    .first()
+                    .extracting(BlockedIp::remainingTtlSeconds)
+                    .satisfies(ttl -> assertThat((Long) ttl).isGreaterThan(0));
+        }
+
+        @Test
+        void 차단된_IP가_여러_개면_모두_포함된다() {
+            ipBlockStore.blockImmediately(IP);
+            ipBlockStore.blockImmediately(ANOTHER_IP);
+
+            final List<BlockedIp> result = ipBlockStore.getBlockedIps();
+
+            assertThat(result).extracting(BlockedIp::ip).containsExactlyInAnyOrder(IP, ANOTHER_IP);
+        }
+
+        @Test
+        void 해제된_IP는_목록에서_제거된다() {
+            ipBlockStore.blockImmediately(IP);
+            ipBlockStore.unblock(IP);
+
+            final List<BlockedIp> result = ipBlockStore.getBlockedIps();
+
+            assertThat(result).extracting(BlockedIp::ip).doesNotContain(IP);
         }
     }
 

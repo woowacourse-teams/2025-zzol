@@ -28,7 +28,7 @@ class IpBlockFilterTest {
 
     private static final String REMOTE_IP = "1.2.3.4";
     private static final String MALICIOUS_PATH = "/.env";
-    private static final String NORMAL_PATH = "/reports";
+    private static final String NORMAL_PATH = "/api/game";
 
     @Mock
     private IpBlockStore ipBlockStore;
@@ -60,7 +60,7 @@ class IpBlockFilterTest {
             filter.doFilter(request, response, filterChain);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(response.getStatus()).isEqualTo(429);
+                softly.assertThat(response.getStatus()).isEqualTo(403);
                 softly.assertThat(response.getContentType()).contains("application/json");
             });
             then(filterChain).shouldHaveNoInteractions();
@@ -78,7 +78,7 @@ class IpBlockFilterTest {
             filter.doFilter(request, response, filterChain);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(response.getStatus()).isEqualTo(429);
+                softly.assertThat(response.getStatus()).isEqualTo(403);
                 softly.assertThat(response.getHeader("Access-Control-Allow-Origin")).isEqualTo(origin);
                 softly.assertThat(response.getHeader("Access-Control-Allow-Credentials")).isEqualTo("true");
             });
@@ -119,7 +119,7 @@ class IpBlockFilterTest {
             filter.doFilter(request, response, filterChain);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(response.getStatus()).isEqualTo(429);
+                softly.assertThat(response.getStatus()).isEqualTo(403);
                 softly.assertThat(response.getContentType()).contains("application/json");
             });
             then(ipBlockStore).should().blockImmediately(REMOTE_IP);
@@ -184,6 +184,42 @@ class IpBlockFilterTest {
             filter.doFilter(요청(REMOTE_IP, NORMAL_PATH), new MockHttpServletResponse(), filterChain);
 
             then(ipBlockStore).should(never()).incrementNotFoundAndBlockIfExceeded(any());
+        }
+    }
+
+    @Nested
+    class 예외_경로 {
+
+        @Test
+        void admin_경로는_차단된_IP도_filterChain을_통과한다() throws Exception {
+            filter.doFilter(요청(REMOTE_IP, "/admin/ip-blocks"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).shouldHaveNoInteractions();
+            then(filterChain).should().doFilter(any(), any());
+        }
+
+        @Test
+        void admin_하위_경로도_filterChain을_통과한다() throws Exception {
+            filter.doFilter(요청(REMOTE_IP, "/admin/reports/1/resolve"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void reports_경로는_차단된_IP도_filterChain을_통과한다() throws Exception {
+            filter.doFilter(요청(REMOTE_IP, "/reports"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).shouldHaveNoInteractions();
+            then(filterChain).should().doFilter(any(), any());
+        }
+
+        @Test
+        void 예외_경로가_아닌_일반_경로는_차단_검사를_수행한다() throws Exception {
+            given(ipBlockStore.isBlocked(REMOTE_IP)).willReturn(true);
+
+            filter.doFilter(요청(REMOTE_IP, NORMAL_PATH), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should().isBlocked(REMOTE_IP);
         }
     }
 

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP 차단 관리 — ZZOL</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+<header>
+    <h1>IP 차단 관리</h1>
+    <form th:action="@{/admin/logout}" method="post">
+        <button type="submit" class="logout-btn">로그아웃</button>
+    </form>
+</header>
+
+<main>
+    <a th:href="@{/admin}" class="nav-back">← 대시보드로</a>
+
+    <div class="section-header">
+        <span class="section-title">차단된 IP 목록</span>
+        <span class="badge badge-pending" th:text="${blockedIps.size()}">0</span>
+        <span style="font-size:0.8rem;color:#9ca3af;">개 차단 중</span>
+    </div>
+
+    <div th:if="${blockedIps.empty}" class="empty">현재 차단된 IP가 없습니다.</div>
+
+    <div th:if="${!blockedIps.empty}" class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>IP 주소</th>
+                <th>남은 차단 시간</th>
+                <th>해제</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="entry : ${blockedIps}">
+                <td style="font-family:monospace;" th:text="${entry.ip}"></td>
+                <td class="date">
+                    <span th:if="${entry.remainingTtlSeconds >= 3600}"
+                          th:text="${#numbers.formatInteger(entry.remainingTtlSeconds / 3600, 1)} + '시간 ' + #numbers.formatInteger((entry.remainingTtlSeconds % 3600) / 60, 1) + '분'"></span>
+                    <span th:if="${entry.remainingTtlSeconds >= 60 and entry.remainingTtlSeconds < 3600}"
+                          th:text="${#numbers.formatInteger(entry.remainingTtlSeconds / 60, 1)} + '분'"></span>
+                    <span th:if="${entry.remainingTtlSeconds < 60 and entry.remainingTtlSeconds >= 0}"
+                          th:text="${entry.remainingTtlSeconds} + '초'"></span>
+                    <span th:if="${entry.remainingTtlSeconds < 0}" style="color:#9ca3af;">만료 없음</span>
+                </td>
+                <td>
+                    <form th:action="@{/admin/ip-blocks/{ip}/unblock(ip=${entry.ip})}" method="post">
+                        <button type="submit" class="btn btn-resolve">차단 해제</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

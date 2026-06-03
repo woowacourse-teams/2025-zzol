@@ -1,6 +1,5 @@
 package coffeeshout.admin.ipblock;
 
-import coffeeshout.global.ipblock.IpBlockStore;
 import coffeeshout.global.ipblock.IpBlockStore.BlockedIp;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -16,18 +15,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequiredArgsConstructor
 public class IpBlockAdminController {
 
-    private final IpBlockStore ipBlockStore;
+    private final IpBlockAdminService ipBlockAdminService;
 
     @GetMapping
     public String list(Model model) {
-        final List<BlockedIp> blockedIps = ipBlockStore.getBlockedIps();
+        final List<BlockedIp> blockedIps = ipBlockAdminService.getBlockedIps();
         model.addAttribute("blockedIps", blockedIps);
         return "admin/ip-blocks";
     }
 
     @PostMapping("/{ip}/unblock")
     public String unblock(@PathVariable String ip) {
-        ipBlockStore.unblock(ip);
+        ipBlockAdminService.unblock(ip);
         return "redirect:/admin/ip-blocks";
     }
 }

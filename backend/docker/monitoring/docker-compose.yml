@@ -96,7 +96,7 @@ services:
       - GF_AUTH_ANONYMOUS_ENABLED=false
       - GF_USERS_DEFAULT_ROLE=Viewer
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
-      - GF_SERVER_ROOT_URL=http://status.zzol.site
+      - GF_SERVER_ROOT_URL=https://status.zzol.site
       - TZ=Asia/Seoul
     # 자원 제한 (Grafana - Visualization)
     deploy:

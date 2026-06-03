@@ -4,13 +4,18 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
@@ -129,7 +134,18 @@ public class IpBlockStore {
 
     @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "getBlockedIpsFallback")
     public List<BlockedIp> getBlockedIps() {
-        final Set<String> keys = stringRedisTemplate.keys(BLOCKED_IP_PREFIX + "*");
+        final ScanOptions options = ScanOptions.scanOptions()
+                .match(BLOCKED_IP_PREFIX + "*")
+                .count(100L)
+                .build();
+        final Set<String> keys = stringRedisTemplate.execute(
+                (RedisCallback<Set<String>>) connection -> {
+                    final Set<String> result = new HashSet<>();
+                    try (var cursor = connection.keyCommands().scan(options)) {
+                        cursor.forEachRemaining(k -> result.add(new String(k, StandardCharsets.UTF_8)));
+                    }
+                    return result;
+                });
         if (keys == null || keys.isEmpty()) {
             return List.of();
         }

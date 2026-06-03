@@ -4,13 +4,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,21 +40,26 @@ class IpBlockFilterTest {
     private MaliciousPathMatcher maliciousPathMatcher;
 
     @Mock
+    private IpBlockProperties properties;
+
+    @Mock
     private FilterChain filterChain;
 
     private IpBlockFilter filter;
 
     @BeforeEach
     void setUp() {
+        // lenient: 악성 경로 테스트에서는 isMalicious 체크 직후 return되어 exemptPaths에 도달하지 않음
+        lenient().when(properties.exemptPaths()).thenReturn(List.of("/admin", "/reports"));
         final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        filter = new IpBlockFilter(ipBlockStore, maliciousPathMatcher, objectMapper);
+        filter = new IpBlockFilter(ipBlockStore, maliciousPathMatcher, properties, objectMapper);
     }
 
     @Nested
     class 차단된_IP_접근 {
 
         @Test
-        void 차단된_IP는_429를_반환하고_filterChain을_통과하지_않는다() throws Exception {
+        void 차단된_IP는_403을_반환하고_filterChain을_통과하지_않는다() throws Exception {
             given(ipBlockStore.isBlocked(REMOTE_IP)).willReturn(true);
 
             final MockHttpServletRequest request = 요청(REMOTE_IP, NORMAL_PATH);
@@ -105,14 +113,10 @@ class IpBlockFilterTest {
     @Nested
     class 악성_경로_접근 {
 
-        @BeforeEach
-        void setUp() {
-            given(ipBlockStore.isBlocked(anyString())).willReturn(false);
-            given(maliciousPathMatcher.isMalicious(MALICIOUS_PATH)).willReturn(true);
-        }
-
         @Test
-        void 악성_경로_접근_시_429를_반환하고_IP를_즉시_차단한다() throws Exception {
+        void 악성_경로_접근_시_403을_반환하고_IP를_즉시_차단한다() throws Exception {
+            given(maliciousPathMatcher.isMalicious(MALICIOUS_PATH)).willReturn(true);
+
             final MockHttpServletRequest request = 요청(REMOTE_IP, MALICIOUS_PATH);
             final MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -121,6 +125,22 @@ class IpBlockFilterTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(response.getStatus()).isEqualTo(403);
                 softly.assertThat(response.getContentType()).contains("application/json");
+            });
+            then(ipBlockStore).should().blockImmediately(REMOTE_IP);
+            then(filterChain).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 악성_경로는_예외_경로_prefix여도_즉시_차단한다() throws Exception {
+            given(maliciousPathMatcher.isMalicious("/admin.php")).willReturn(true);
+
+            final MockHttpServletRequest request = 요청(REMOTE_IP, "/admin.php");
+            final MockHttpServletResponse response = new MockHttpServletResponse();
+
+            filter.doFilter(request, response, filterChain);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getStatus()).isEqualTo(403);
             });
             then(ipBlockStore).should().blockImmediately(REMOTE_IP);
             then(filterChain).shouldHaveNoInteractions();
@@ -211,6 +231,15 @@ class IpBlockFilterTest {
 
             then(ipBlockStore).shouldHaveNoInteractions();
             then(filterChain).should().doFilter(any(), any());
+        }
+
+        @Test
+        void adminXX_같은_유사_경로는_예외_처리되지_않는다() throws Exception {
+            given(ipBlockStore.isBlocked(REMOTE_IP)).willReturn(true);
+
+            filter.doFilter(요청(REMOTE_IP, "/administrator"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should().isBlocked(REMOTE_IP);
         }
 
         @Test

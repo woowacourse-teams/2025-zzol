@@ -25,10 +25,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * <p>
  * 세 가지 차단 정책을 적용한다:
  * <ol>
- *   <li>이미 차단된 IP는 요청 초입에서 즉시 429 반환</li>
- *   <li>악성 경로(스캐너 패턴) 접근 시 해당 IP를 즉시 차단하고 429 반환</li>
+ *   <li>악성 경로(스캐너 패턴) 접근 시 해당 IP를 즉시 차단하고 403 반환 (예외 경로 포함 — 항상 적용)</li>
+ *   <li>이미 차단된 IP는 요청 초입에서 즉시 403 반환 (예외 경로는 건너뜀)</li>
  *   <li>404 응답이 누적되면 차단 (IpBlockStore 위임)</li>
  * </ol>
+ *
+ * <p>예외 경로({@code security.ip-block.exempt-paths})는 차단 여부 검사를 우회하지만,
+ * 악성 경로 패턴에 해당하면 예외 없이 즉시 차단한다.
+ * Spring Security가 해당 경로의 인증·인가를 2차로 담당한다.
  *
  * <p>{@code HIGHEST_PRECEDENCE}로 등록해 Security 필터 체인보다 먼저 실행한다.
  * 차단된 요청은 Security 처리 비용 없이 즉시 반환된다.
@@ -39,15 +43,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class IpBlockFilter extends OncePerRequestFilter {
 
-    /**
-     * IP 차단 검사를 건너뛸 경로 prefix 목록.
-     * <ul>
-     *   <li>{@code /admin} — 차단된 어드민도 관리 화면에 접근 가능해야 함 (Spring Security가 2차 인증 담당)</li>
-     *   <li>{@code /reports} — 차단된 사용자가 이의신청 신고를 제출할 수 있어야 함</li>
-     * </ul>
-     */
-    private static final String[] EXEMPT_PATH_PREFIXES = {"/admin", "/reports"};
-
     private static final Pattern IPV4_PATTERN = Pattern.compile(
             "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$"
     );
@@ -57,6 +52,7 @@ public class IpBlockFilter extends OncePerRequestFilter {
 
     private final IpBlockStore ipBlockStore;
     private final MaliciousPathMatcher maliciousPathMatcher;
+    private final IpBlockProperties properties;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -66,12 +62,6 @@ public class IpBlockFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         final String uri = request.getRequestURI();
-
-        if (isExemptPath(uri)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         final String ip = getClientIp(request);
 
         if (!isValidIp(ip)) {
@@ -80,15 +70,22 @@ public class IpBlockFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (ipBlockStore.isBlocked(ip)) {
-            log.warn("차단된 IP 접근 시도: ip={} uri={}", ip, uri);
+        // 악성 경로는 예외 경로여도 항상 차단 (/admin.php 등 스캐너 패턴)
+        if (maliciousPathMatcher.isMalicious(uri)) {
+            log.warn("악성 경로 접근 감지 → IP 즉시 차단: ip={} uri={}", ip, uri);
+            ipBlockStore.blockImmediately(ip);
             writeBlockedResponse(request, response);
             return;
         }
 
-        if (maliciousPathMatcher.isMalicious(uri)) {
-            log.warn("악성 경로 접근 감지 → IP 즉시 차단: ip={} uri={}", ip, uri);
-            ipBlockStore.blockImmediately(ip);
+        // 예외 경로는 차단 여부와 무관하게 통과 (Spring Security가 2차 인증 담당)
+        if (isExemptPath(uri)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (ipBlockStore.isBlocked(ip)) {
+            log.warn("차단된 IP 접근 시도: ip={} uri={}", ip, uri);
             writeBlockedResponse(request, response);
             return;
         }
@@ -143,8 +140,8 @@ public class IpBlockFilter extends OncePerRequestFilter {
     }
 
     private boolean isExemptPath(String uri) {
-        for (String prefix : EXEMPT_PATH_PREFIXES) {
-            if (uri.startsWith(prefix)) {
+        for (final String prefix : properties.exemptPaths()) {
+            if (uri.equals(prefix) || uri.startsWith(prefix + "/")) {
                 return true;
             }
         }

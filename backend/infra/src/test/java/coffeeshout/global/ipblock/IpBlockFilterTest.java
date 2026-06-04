@@ -308,6 +308,40 @@ class IpBlockFilterTest {
             then(ipBlockStore).should().recordInternalIpSuspicious(INTERNAL_IP, MALICIOUS_PATH);
             then(filterChain).should().doFilter(any(), any());
         }
+
+        @Test
+        void CGNAT_대역_IP도_차단하지_않고_filterChain을_통과한다() throws Exception {
+            lenient().when(maliciousPathMatcher.isMalicious(anyString())).thenReturn(false);
+            lenient().when(ipBlockStore.isBlocked("100.64.0.1")).thenReturn(true);
+
+            final MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilter(요청("100.64.0.1", NORMAL_PATH), response, filterChain);
+
+            SoftAssertions.assertSoftly(softly -> softly.assertThat(response.getStatus()).isNotEqualTo(403));
+            then(filterChain).should().doFilter(any(), any());
+        }
+
+        @Test
+        void IPv6_ULA_대역_IP도_차단하지_않고_filterChain을_통과한다() throws Exception {
+            lenient().when(maliciousPathMatcher.isMalicious(anyString())).thenReturn(false);
+            lenient().when(ipBlockStore.isBlocked("fd00::1")).thenReturn(true);
+
+            final MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilter(요청("fd00::1", NORMAL_PATH), response, filterChain);
+
+            SoftAssertions.assertSoftly(softly -> softly.assertThat(response.getStatus()).isNotEqualTo(403));
+            then(filterChain).should().doFilter(any(), any());
+        }
+
+        @Test
+        void 공인_IP는_CGNAT_경계_밖이면_정상_차단_검사를_수행한다() throws Exception {
+            lenient().when(maliciousPathMatcher.isMalicious(anyString())).thenReturn(false);
+            given(ipBlockStore.isBlocked("100.128.0.1")).willReturn(true);
+
+            filter.doFilter(요청("100.128.0.1", NORMAL_PATH), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should().isBlocked("100.128.0.1");
+        }
     }
 
     @Nested

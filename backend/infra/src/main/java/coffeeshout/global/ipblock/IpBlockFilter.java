@@ -177,18 +177,49 @@ public class IpBlockFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 사설(RFC1918)·루프백·링크로컬 IP 여부. isValidIp 통과 후 호출되므로 DNS 조회는 발생하지 않는다.
+     * 사설(RFC1918)·루프백·링크로컬·CGNAT(RFC6598)·IPv6 ULA(RFC4193) IP 여부.
+     * isValidIp 통과 후 호출되므로 DNS 조회는 발생하지 않는다.
      */
     private boolean isInternalIp(String ip) {
         try {
-            final InetAddress address = InetAddress.getByName(ip);
-            return address.isLoopbackAddress()
-                    || address.isSiteLocalAddress()
-                    || address.isLinkLocalAddress()
-                    || address.isAnyLocalAddress();
+            return isInternalAddress(InetAddress.getByName(ip));
         } catch (UnknownHostException e) {
             return false;
         }
+    }
+
+    private boolean isInternalAddress(InetAddress address) {
+        return address.isLoopbackAddress()
+                || address.isSiteLocalAddress()
+                || address.isLinkLocalAddress()
+                || address.isAnyLocalAddress()
+                || isCarrierGradeNat(address)
+                || isUniqueLocalIpv6(address);
+    }
+
+    /**
+     * 100.64.0.0/10 (RFC 6598 CGNAT). 클라우드·k8s 프록시가 사용할 수 있으나
+     * {@link InetAddress#isSiteLocalAddress()}는 포함하지 않으므로 직접 판정한다.
+     */
+    private boolean isCarrierGradeNat(InetAddress address) {
+        final byte[] bytes = address.getAddress();
+        if (bytes.length != 4) {
+            return false;
+        }
+        final int first = bytes[0] & 0xFF;
+        final int second = bytes[1] & 0xFF;
+        return first == 100 && second >= 64 && second <= 127;
+    }
+
+    /**
+     * fc00::/7 (RFC 4193 IPv6 Unique Local Address). 첫 바이트가 0xFC 또는 0xFD.
+     */
+    private boolean isUniqueLocalIpv6(InetAddress address) {
+        final byte[] bytes = address.getAddress();
+        if (bytes.length != 16) {
+            return false;
+        }
+        return (bytes[0] & 0xFE) == 0xFC;
     }
 
     private String getClientIp(HttpServletRequest request) {

@@ -1,9 +1,8 @@
 package coffeeshout.cardgame.config;
 
 import coffeeshout.game.flow.CompletableFutureFlowScheduler;
+import coffeeshout.game.scheduler.GameTaskSchedulerFactory;
 import coffeeshout.gamecommon.flow.FlowScheduler;
-import io.micrometer.context.ContextSnapshotFactory;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,23 +13,12 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @Configuration
 @EnableScheduling
 @EnableConfigurationProperties(CardGameTimingProperties.class)
-@Slf4j
 public class CardGameTaskSchedulerConfig {
 
     @Bean(name = "cardGameThreadPoolTaskScheduler")
     @Profile("!test")
-    public ThreadPoolTaskScheduler cardGameThreadPoolTaskScheduler(ContextSnapshotFactory snapshotFactory) {
-        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(3);
-        scheduler.setThreadNamePrefix("card-game-task-");
-        scheduler.setDaemon(false);
-        // 지연 실행 후 Stream 발행 시 trace가 끊기지 않도록 제출 시점 컨텍스트를 전파한다
-        scheduler.setTaskDecorator(runnable -> snapshotFactory.captureAll().wrap(runnable));
-        scheduler.setErrorHandler(t -> log.error("스케줄 실행 중 예외가 발생했습니다.", t));
-        scheduler.setWaitForTasksToCompleteOnShutdown(true);
-        scheduler.setAwaitTerminationSeconds(30);
-        scheduler.initialize();
-        return scheduler;
+    public ThreadPoolTaskScheduler cardGameThreadPoolTaskScheduler(GameTaskSchedulerFactory schedulerFactory) {
+        return schedulerFactory.create("card-game-task-", 3, "스케줄 실행 중 예외가 발생했습니다.");
     }
 
     @Bean

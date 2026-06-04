@@ -41,6 +41,8 @@ security:
     exempt-paths:
       - /admin
       - /reports
+    not-found-exempt-paths:
+      - /ws
 
 admin:
   username: ${ADMIN_USERNAME}

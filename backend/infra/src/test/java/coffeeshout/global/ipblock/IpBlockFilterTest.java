@@ -51,6 +51,7 @@ class IpBlockFilterTest {
     void setUp() {
         // lenient: 악성 경로 테스트에서는 isMalicious 체크 직후 return되어 exemptPaths에 도달하지 않음
         lenient().when(properties.exemptPaths()).thenReturn(List.of("/admin", "/reports"));
+        lenient().when(properties.notFoundExemptPaths()).thenReturn(List.of("/ws"));
         final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         filter = new IpBlockFilter(ipBlockStore, maliciousPathMatcher, properties, objectMapper);
     }
@@ -205,6 +206,18 @@ class IpBlockFilterTest {
 
             then(ipBlockStore).should(never()).incrementNotFoundAndBlockIfExceeded(any());
         }
+
+        @Test
+        void WS_엔드포인트의_404_응답은_카운터를_증가시키지_않는다() throws Exception {
+            doAnswer(invocation -> {
+                ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
+                return null;
+            }).when(filterChain).doFilter(any(), any());
+
+            filter.doFilter(요청(REMOTE_IP, "/ws/abc/123/websocket"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should(never()).incrementNotFoundAndBlockIfExceeded(any());
+        }
     }
 
     @Nested
@@ -249,6 +262,51 @@ class IpBlockFilterTest {
             filter.doFilter(요청(REMOTE_IP, NORMAL_PATH), new MockHttpServletResponse(), filterChain);
 
             then(ipBlockStore).should().isBlocked(REMOTE_IP);
+        }
+    }
+
+    @Nested
+    class 사설_내부_IP {
+
+        private static final String INTERNAL_IP = "172.20.0.5";
+
+        @Test
+        void 차단_등록된_사설_IP도_filterChain을_통과한다() throws Exception {
+            lenient().when(maliciousPathMatcher.isMalicious(anyString())).thenReturn(false);
+            lenient().when(ipBlockStore.isBlocked(INTERNAL_IP)).thenReturn(true);
+
+            final MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilter(요청(INTERNAL_IP, NORMAL_PATH), response, filterChain);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getStatus()).isNotEqualTo(403);
+            });
+            then(filterChain).should().doFilter(any(), any());
+        }
+
+        @Test
+        void 사설_IP의_404_응답은_카운터를_증가시키지_않는다() throws Exception {
+            lenient().when(maliciousPathMatcher.isMalicious(anyString())).thenReturn(false);
+            lenient().when(ipBlockStore.isBlocked(anyString())).thenReturn(false);
+            doAnswer(invocation -> {
+                ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
+                return null;
+            }).when(filterChain).doFilter(any(), any());
+
+            filter.doFilter(요청(INTERNAL_IP, "/not-found"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should(never()).incrementNotFoundAndBlockIfExceeded(any());
+        }
+
+        @Test
+        void 사설_IP가_악성_경로_접근_시_차단하지_않고_경고만_기록한다() throws Exception {
+            given(maliciousPathMatcher.isMalicious(MALICIOUS_PATH)).willReturn(true);
+
+            filter.doFilter(요청(INTERNAL_IP, MALICIOUS_PATH), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should(never()).blockImmediately(any());
+            then(ipBlockStore).should().recordInternalIpSuspicious(INTERNAL_IP, MALICIOUS_PATH);
+            then(filterChain).should().doFilter(any(), any());
         }
     }
 

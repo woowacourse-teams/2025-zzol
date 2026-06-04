@@ -61,6 +61,7 @@ public class IpBlockStore {
 
     private Counter blockedRequestCounter;
     private Counter newIpBlockCounter;
+    private Counter internalSuspiciousCounter;
 
     @PostConstruct
     private void initMetrics() {
@@ -70,6 +71,19 @@ public class IpBlockStore {
         newIpBlockCounter = Counter.builder("ip.block.new.total")
                 .description("새로 차단된 IP 수")
                 .register(meterRegistry);
+        internalSuspiciousCounter = Counter.builder("ip.block.internal.suspicious.total")
+                .description("사설/내부 IP가 차단 트리거 경로에 접근한 횟수 (XFF/프록시 설정 의심)")
+                .register(meterRegistry);
+    }
+
+    /**
+     * 사설/내부 IP가 악성 경로 등 차단 트리거 경로에 접근했을 때 호출한다.
+     * 내부 IP는 차단하지 않되, XFF/프록시 설정 이상으로 클라이언트 트래픽이 내부 IP로
+     * 보이는 상황을 조기에 감지하기 위해 경고 로그와 메트릭을 남긴다.
+     */
+    public void recordInternalIpSuspicious(String ip, String uri) {
+        internalSuspiciousCounter.increment();
+        log.warn("사설/내부 IP가 악성 경로에 접근 — XFF/프록시 설정 점검 필요: ip={} uri={}", ip, uri);
     }
 
     @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "isBlockedFallback")

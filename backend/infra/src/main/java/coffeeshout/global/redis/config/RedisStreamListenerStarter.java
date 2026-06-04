@@ -3,6 +3,8 @@ package coffeeshout.global.redis.config;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.EventDispatcher;
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
+import coffeeshout.global.redis.stream.StreamRecordFields;
+import coffeeshout.global.redis.stream.StreamTracePropagator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -17,7 +19,7 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.stream.ObjectRecord;
+import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer.StreamMessageListenerContainerOptions;
@@ -35,6 +37,7 @@ public class RedisStreamListenerStarter {
     private final RedisConnectionFactory redisConnectionFactory;
     private final ObjectMapper redisObjectMapper;
     private final EventDispatcher eventDispatcher;
+    private final StreamTracePropagator streamTracePropagator;
     private final ApplicationContext applicationContext;
     private final GenericApplicationContext genericApplicationContext;
 
@@ -43,6 +46,7 @@ public class RedisStreamListenerStarter {
             RedisConnectionFactory redisConnectionFactory,
             @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper,
             EventDispatcher eventDispatcher,
+            StreamTracePropagator streamTracePropagator,
             ApplicationContext applicationContext,
             GenericApplicationContext genericApplicationContext
     ) {
@@ -50,6 +54,7 @@ public class RedisStreamListenerStarter {
         this.redisConnectionFactory = redisConnectionFactory;
         this.redisObjectMapper = redisObjectMapper;
         this.eventDispatcher = eventDispatcher;
+        this.streamTracePropagator = streamTracePropagator;
         this.applicationContext = applicationContext;
         this.genericApplicationContext = genericApplicationContext;
     }
@@ -65,7 +70,7 @@ public class RedisStreamListenerStarter {
             final String streamKey = entry.getKey();
             final StreamConfig streamConfig = entry.getValue();
 
-            final StreamMessageListenerContainer<String, ObjectRecord<String, String>> container = createContainer(
+            final StreamMessageListenerContainer<String, MapRecord<String, String, String>> container = createContainer(
                     redisConnectionFactory,
                     findExecutor(streamKey, streamConfig),
                     streamConfig
@@ -120,19 +125,38 @@ public class RedisStreamListenerStarter {
         return false;
     }
 
-    private void onMessage(ObjectRecord<String, String> message) {
+    private void onMessage(MapRecord<String, String, String> message) {
+        final Map<String, String> fields = message.getValue();
+        final String payload = resolvePayload(fields);
+        if (payload == null) {
+            log.error("payload 필드가 없는 레코드입니다: stream={}, recordId={}", message.getStream(), message.getId());
+            return;
+        }
         try {
-            final BaseEvent event = redisObjectMapper.readValue(message.getValue(), BaseEvent.class);
-            eventDispatcher.handle(event);
+            final BaseEvent event = redisObjectMapper.readValue(payload, BaseEvent.class);
+            streamTracePropagator.runInConsumerScope(
+                    fields,
+                    event.getClass().getSimpleName(),
+                    () -> eventDispatcher.handle(event)
+            );
         } catch (JsonProcessingException e) {
-            log.error("Failed to parse event: {}", message.getValue(), e);
+            log.error("Failed to parse event: {}", payload, e);
         } catch (Exception e) {
             log.error("예외가 발생했습니다.", e);
             throw e;
         }
     }
 
-    private StreamMessageListenerContainer<String, ObjectRecord<String, String>> createContainer(
+    private String resolvePayload(Map<String, String> fields) {
+        final String payload = fields.get(StreamRecordFields.PAYLOAD);
+        if (payload != null) {
+            return payload;
+        }
+        // 구형 ObjectRecord 포맷 폴백 — 1릴리스 유지 후 제거
+        return fields.get(StreamRecordFields.LEGACY_RAW);
+    }
+
+    private StreamMessageListenerContainer<String, MapRecord<String, String, String>> createContainer(
             RedisConnectionFactory redisConnectionFactory,
             Executor executor,
             StreamConfig streamConfig
@@ -141,16 +165,15 @@ public class RedisStreamListenerStarter {
             throw new IllegalStateException("Redis Stream 공통 설정이 없습니다.");
         }
 
-        final StreamMessageListenerContainerOptions<String, ObjectRecord<String, String>> options =
+        final StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options =
                 StreamMessageListenerContainerOptions.builder()
                         .batchSize(streamConfig.getBatchSize(properties.commonSettings()))
                         .executor(executor)
                         .pollTimeout(streamConfig.getPollTimeout(properties.commonSettings()))
-                        .targetType(String.class)
                         .errorHandler(this::handleStreamError)
                         .build();
 
-        final StreamMessageListenerContainer<String, ObjectRecord<String, String>> container =
+        final StreamMessageListenerContainer<String, MapRecord<String, String, String>> container =
                 StreamMessageListenerContainer.create(redisConnectionFactory, options);
 
         container.start();

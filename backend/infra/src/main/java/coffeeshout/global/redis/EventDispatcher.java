@@ -1,8 +1,6 @@
 package coffeeshout.global.redis;
 
 import coffeeshout.global.metric.RedisStreamLatencyMetricService;
-import coffeeshout.global.trace.Traceable;
-import coffeeshout.global.trace.TracerProvider;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +14,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EventDispatcher {
 
-    private final TracerProvider tracerProvider;
     private final ApplicationContext applicationContext;
     private final RedisStreamLatencyMetricService latencyMetricService;
 
@@ -30,14 +27,7 @@ public class EventDispatcher {
                 log.warn("등록된 Consumer 없음, 이벤트를 건너뜁니다: eventType={}", event.getClass().getSimpleName());
                 return;
             }
-            final Runnable handling = () -> consumer.accept(event);
-
-            if (event instanceof Traceable traceable) {
-                tracerProvider.executeWithTraceContext(traceable.traceInfo(), handling, event);
-                return;
-            }
-            handling.run();
-
+            consumer.accept(event);
         } catch (Exception e) {
             log.error("이벤트 처리 실패: message={}", event, e);
         }

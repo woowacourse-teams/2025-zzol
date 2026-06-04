@@ -41,6 +41,8 @@ security:
     exempt-paths:
       - /admin
       - /reports
+      - /css
+      - /favicon.ico
 
 admin:
   username: ${ADMIN_USERNAME}

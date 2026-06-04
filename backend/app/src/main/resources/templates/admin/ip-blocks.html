@@ -39,7 +39,7 @@
                 <td style="font-family:monospace;" th:text="${entry.ip}"></td>
                 <td class="date">
                     <span th:if="${entry.remainingTtlSeconds >= 3600}"
-                          th:text="${#numbers.formatInteger(entry.remainingTtlSeconds / 3600, 1)} + '시간 ' + #numbers.formatInteger((entry.remainingTtlSeconds % 3600) / 60, 1) + '분'"></span>
+                          th:text="${#numbers.formatInteger(entry.remainingTtlSeconds / 3600, 1) + '시간 ' + #numbers.formatInteger((entry.remainingTtlSeconds % 3600) / 60, 1) + '분'}"></span>
                     <span th:if="${entry.remainingTtlSeconds >= 60 and entry.remainingTtlSeconds < 3600}"
                           th:text="${#numbers.formatInteger(entry.remainingTtlSeconds / 60, 1)} + '분'"></span>
                     <span th:if="${entry.remainingTtlSeconds < 60 and entry.remainingTtlSeconds >= 0}"

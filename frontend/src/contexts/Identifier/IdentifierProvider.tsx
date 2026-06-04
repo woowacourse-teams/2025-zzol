@@ -75,8 +75,12 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
 
   const clearIdentifier = useCallback(() => {
     const currentJoinCode = joinCodeRef.current;
+    const currentMyName = myNameRef.current;
     if (currentJoinCode) {
       storageManager.setItem(STORAGE_KEYS.LAST_JOIN_CODE, currentJoinCode, 'localStorage');
+      if (currentMyName) {
+        clearLastStreamId(currentJoinCode, currentMyName);
+      }
     }
     clearAllLastStreamIds();
     clearJoinCode();

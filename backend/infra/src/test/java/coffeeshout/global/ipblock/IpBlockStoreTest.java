@@ -251,5 +251,15 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
             assertThat(meterRegistry.find("ip.block.new.total").counter().count() - before)
                     .isEqualTo(1.0);
         }
+
+        @Test
+        void 사설_IP_의심_접근_기록_시_internalSuspicious_카운터가_증가한다() {
+            double before = meterRegistry.find("ip.block.internal.suspicious.total").counter().count();
+
+            ipBlockStore.recordInternalIpSuspicious("172.20.0.5", "/.env");
+
+            assertThat(meterRegistry.find("ip.block.internal.suspicious.total").counter().count() - before)
+                    .isEqualTo(1.0);
+        }
     }
 }

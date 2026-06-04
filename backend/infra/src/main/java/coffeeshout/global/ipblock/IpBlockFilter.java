@@ -7,6 +7,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +72,17 @@ public class IpBlockFilter extends OncePerRequestFilter {
             return;
         }
 
+        // 사설/내부 IP(프록시·헬스체크·내부 서비스)는 클라이언트가 아니므로 차단·카운트 대상에서 제외한다.
+        // XFF가 깨지면 모든 트래픽이 프록시 IP로 보이는데, 이를 차단하면 전체 장애로 번진다.
+        // 악성 경로 접근은 XFF 설정 이상 신호이므로 경고만 남기고 통과시킨다.
+        if (isInternalIp(ip)) {
+            if (maliciousPathMatcher.isMalicious(uri)) {
+                ipBlockStore.recordInternalIpSuspicious(ip, uri);
+            }
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // 악성 경로는 예외 경로여도 항상 차단 (/admin.php 등 스캐너 패턴)
         if (maliciousPathMatcher.isMalicious(uri)) {
             log.warn("악성 경로 접근 감지 → IP 즉시 차단: ip={} uri={}", ip, uri);
@@ -93,7 +106,8 @@ public class IpBlockFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
 
         if (response.getStatus() == HttpStatus.NOT_FOUND.value()
-                && !Boolean.TRUE.equals(request.getAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND))) {
+                && !Boolean.TRUE.equals(request.getAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND))
+                && !isNotFoundExemptPath(uri)) {
             ipBlockStore.incrementNotFoundAndBlockIfExceeded(ip);
         }
     }
@@ -146,6 +160,66 @@ public class IpBlockFilter extends OncePerRequestFilter {
             }
         }
         return false;
+    }
+
+    /**
+     * 404 누적 카운트에서 제외할 경로인지 판단한다.
+     * WebSocket(SockJS) 엔드포인트는 재연결·전송 폴백 과정에서 정상적으로 4xx를 유발하므로
+     * 차단 카운트에 반영하면 정상 사용자가 차단될 수 있다.
+     */
+    private boolean isNotFoundExemptPath(String uri) {
+        for (final String prefix : properties.notFoundExemptPaths()) {
+            if (uri.equals(prefix) || uri.startsWith(prefix + "/")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 사설(RFC1918)·루프백·링크로컬·CGNAT(RFC6598)·IPv6 ULA(RFC4193) IP 여부.
+     * isValidIp 통과 후 호출되므로 DNS 조회는 발생하지 않는다.
+     */
+    private boolean isInternalIp(String ip) {
+        try {
+            return isInternalAddress(InetAddress.getByName(ip));
+        } catch (UnknownHostException e) {
+            return false;
+        }
+    }
+
+    private boolean isInternalAddress(InetAddress address) {
+        return address.isLoopbackAddress()
+                || address.isSiteLocalAddress()
+                || address.isLinkLocalAddress()
+                || address.isAnyLocalAddress()
+                || isCarrierGradeNat(address)
+                || isUniqueLocalIpv6(address);
+    }
+
+    /**
+     * 100.64.0.0/10 (RFC 6598 CGNAT). 클라우드·k8s 프록시가 사용할 수 있으나
+     * {@link InetAddress#isSiteLocalAddress()}는 포함하지 않으므로 직접 판정한다.
+     */
+    private boolean isCarrierGradeNat(InetAddress address) {
+        final byte[] bytes = address.getAddress();
+        if (bytes.length != 4) {
+            return false;
+        }
+        final int first = bytes[0] & 0xFF;
+        final int second = bytes[1] & 0xFF;
+        return first == 100 && second >= 64 && second <= 127;
+    }
+
+    /**
+     * fc00::/7 (RFC 4193 IPv6 Unique Local Address). 첫 바이트가 0xFC 또는 0xFD.
+     */
+    private boolean isUniqueLocalIpv6(InetAddress address) {
+        final byte[] bytes = address.getAddress();
+        if (bytes.length != 16) {
+            return false;
+        }
+        return (bytes[0] & 0xFE) == 0xFC;
     }
 
     private String getClientIp(HttpServletRequest request) {

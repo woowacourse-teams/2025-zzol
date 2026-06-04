@@ -78,6 +78,12 @@ subprojects {
             xml.required.set(true)
             html.required.set(false)
         }
+        // event 패키지의 *Event record는 로직 없는 전송 DTO — 커버리지 측정 제외
+        classDirectories.setFrom(
+            classDirectories.files.map { dir ->
+                fileTree(dir) { exclude("**/event/*Event.class") }
+            }
+        )
     }
 
     tasks.withType<Test> {

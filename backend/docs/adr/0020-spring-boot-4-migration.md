@@ -49,7 +49,7 @@ Spring Boot 4.0.x로 마이그레이션하되, 리스크를 분리하기 위해 
 | HTTP Interface 클라이언트 | `@ImportHttpServices`로 선언적 HTTP 클라이언트 (서드파티 불필요)              | 외부 API 연동 보일러플레이트 제거 후보                              |
 | Spring Data AOT      | 쿼리 생성을 런타임 → 빌드 타임으로 이동                                       | 기동 시간 단축 (50~70% 보고 사례)                              |
 | 내장 resilience        | `@Retryable`, `@ConcurrencyLimit` 코어 내장                       | `@Retry` 사용처만 대체 가능 — 서킷브레이커·레이트리미터는 resilience4j 유지 |
-| OpenTelemetry 공식 통합  | 관측성 표준화                                                       | Actuator 기반 모니터링 확장 경로                               |
+| OpenTelemetry 공식 통합  | `spring-boot-starter-opentelemetry` 신설                        | `:infra`에 수동 나열된 OTel 의존성 5개를 스타터 1개로 통합 ([ADR-0021](0021-trace-propagation-traceparent.md)과 시너지) |
 | Java 25 LTS 지원       | Framework 7 기준선                                               | 현 Java 21에서 차기 LTS 전환 여지 확보                          |
 
 ## 고려한 대안

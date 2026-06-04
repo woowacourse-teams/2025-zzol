@@ -20,6 +20,6 @@ public class RacingGameSchedulerConfig {
     @Bean(name = "racingGameScheduler")
     @Profile("!test")
     public TaskScheduler racingGameScheduler(GameTaskSchedulerFactory schedulerFactory) {
-        return schedulerFactory.create("racing-game-", 3, "스케줄 실행 중 예외가 발생했습니다.");
+        return schedulerFactory.create("racing-game");
     }
 }

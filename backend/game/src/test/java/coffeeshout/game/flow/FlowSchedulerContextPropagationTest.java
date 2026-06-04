@@ -37,8 +37,8 @@ class FlowSchedulerContextPropagationTest {
                 .contextRegistry(registry)
                 .build();
 
-        schedulerFactory = new GameTaskSchedulerFactory(snapshotFactory);
-        scheduler = schedulerFactory.create("test-task-", 2, "테스트 스케줄 실행 중 예외가 발생했습니다.");
+        schedulerFactory = new GameTaskSchedulerFactory(snapshotFactory, 2);
+        scheduler = schedulerFactory.create("test");
         flowScheduler = new CompletableFutureFlowScheduler(scheduler);
     }
 
@@ -101,8 +101,12 @@ class FlowSchedulerContextPropagationTest {
 
         @Test
         void poolSize가_1_미만이면_1로_보정한다() {
+            // given
+            GameTaskSchedulerFactory zeroPoolFactory = new GameTaskSchedulerFactory(
+                    ContextSnapshotFactory.builder().build(), 0);
+
             // when
-            ThreadPoolTaskScheduler created = schedulerFactory.create("min-pool-", 0, "예외");
+            ThreadPoolTaskScheduler created = zeroPoolFactory.create("min-pool");
 
             // then — getPoolSize()는 현재 스레드 수를 반환하므로 corePoolSize로 검증한다
             assertThat(created.getScheduledThreadPoolExecutor().getCorePoolSize()).isEqualTo(1);
@@ -110,17 +114,17 @@ class FlowSchedulerContextPropagationTest {
         }
 
         @Test
-        void 스레드_이름_접두사를_적용한다() {
+        void 게임_이름에서_스레드_접두사를_파생한다() {
             // given
             AtomicReference<String> threadName = new AtomicReference<>();
-            ThreadPoolTaskScheduler created = schedulerFactory.create("prefix-test-", 1, "예외");
+            ThreadPoolTaskScheduler created = schedulerFactory.create("prefix-game");
 
             // when
             created.execute(() -> threadName.set(Thread.currentThread().getName()));
 
             // then
             await().atMost(Duration.ofSeconds(3))
-                    .untilAsserted(() -> assertThat(threadName.get()).startsWith("prefix-test-"));
+                    .untilAsserted(() -> assertThat(threadName.get()).startsWith("prefix-game-task-"));
             created.shutdown();
         }
     }

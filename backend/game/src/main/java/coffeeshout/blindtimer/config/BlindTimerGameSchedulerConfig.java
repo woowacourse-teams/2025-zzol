@@ -12,6 +12,6 @@ public class BlindTimerGameSchedulerConfig {
     @Bean(name = "blindTimerGameScheduler")
     @Profile("!test")
     public TaskScheduler blindTimerGameScheduler(GameTaskSchedulerFactory schedulerFactory) {
-        return schedulerFactory.create("blind-timer-", 2, "블라인드 타이머 스케줄 실행 중 예외가 발생했습니다.");
+        return schedulerFactory.create("blind-timer");
     }
 }

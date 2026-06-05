@@ -43,10 +43,6 @@
 - 구형 레코드 구조(`ObjectRecord` 단일 필드)를 신형 리스너가 읽는 경우: 레거시 필드(`_raw`) 폴백을 1릴리스 동안 유지한 뒤 제거한다
 - **신→구 비호환 (배포 주의)**: 구형 리스너는 신형 MapRecord를 읽지 못한다. 롤링 배포 윈도우 또는 롤백 시 신형 메시지가 스트림에 남아있는 동안 구버전 인스턴스에서 파싱 실패가 발생한다
 
-### 구현 노트 — 테스트 환경
-
-`@SpringBootTest`는 기본으로 `management.tracing.enabled=false`를 주입해(ObservabilityContextCustomizerFactory) `Propagator`가 noop이 된다 — 스팬은 생성되는데 전파만 안 되는 형태라 원인 파악이 어렵다. 전파를 검증하는 테스트에는 `@AutoConfigureObservability`가 필수다 (`RedisStreamContextPropagationTest` 참고). 로컬 프로파일(`application-local.yml`)도 `tracing.enabled: false`라 동일하게 전파가 비활성화된다.
-
 ### 2단계 (후속) — 이벤트 envelope 분리
 
 `traceparent`와 같은 성격의 전송 메타데이터가 이벤트에 더 남아 있다: `eventId`(UUID 생성), `timestamp`(`Instant.now()`), 타입 정보(`@JsonTypeInfo`). 이를 발행 경계에서 감싸는 envelope로 옮기면:
@@ -60,6 +56,12 @@
 ## Spring Boot 4와의 관계
 
 이 전환은 **Boot 3.5에서 즉시 가능**하며 [ADR-0020](0020-spring-boot-4-migration.md)과 독립이다. 다만 Boot 4의 `spring-boot-starter-opentelemetry`가 현재 `:infra`에 수동 나열된 OTel 의존성 5개를 스타터 1개로 통합하므로, Boot 4 전환 시 관측성 정리라는 시너지가 있다.
+
+## 구현 시 주의사항
+
+### 테스트 환경
+
+`@SpringBootTest`는 기본으로 `management.tracing.enabled=false`를 주입해(ObservabilityContextCustomizerFactory) `Propagator`가 noop이 된다 — 스팬은 생성되는데 전파만 안 되는 형태라 원인 파악이 어렵다. 전파를 검증하는 테스트에는 `@AutoConfigureObservability`가 필수다 (`RedisStreamContextPropagationTest` 참고). 로컬 프로파일(`application-local.yml`)도 `tracing.enabled: false`라 동일하게 전파가 비활성화된다.
 
 ## 고려한 대안
 

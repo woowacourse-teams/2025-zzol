@@ -137,7 +137,7 @@
                         <input type="hidden" name="gameType" th:value="${gameTypeFilter}">
                         <button type="submit" class="btn" style="background:#1d4ed8;color:#fff;">IP 해제</button>
                     </form>
-                    <span th:if="${r.status.name() == 'RESOLVED' and r.ip == null}" class="date"
+                    <span th:if="${r.status.name() == 'RESOLVED'}" class="date"
                           th:text="${r.resolvedAt != null ? #temporals.format(r.resolvedAt, 'MM-dd HH:mm') : ''}"></span>
                 </td>
             </tr>

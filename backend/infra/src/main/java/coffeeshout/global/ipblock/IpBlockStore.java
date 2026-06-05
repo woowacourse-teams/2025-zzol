@@ -5,8 +5,6 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +29,14 @@ import org.springframework.stereotype.Component;
  *
  * <p>모든 쓰기·조회 메서드는 검증된 {@link Ip} 값 객체만 받으므로
  * 로그·Redis 키 인젝션이 타입 수준에서 차단된다.
+ *
+ * <p>장애 처리 정책:
+ * <ul>
+ *   <li>필터 경로({@link #isBlocked}, {@link #blockImmediately}, {@link #incrementNotFoundAndBlockIfExceeded})
+ *       — fail-open: Redis 장애가 일반 사용자 트래픽을 막지 않도록 fallback으로 흡수한다</li>
+ *   <li>어드민 경로({@link #unblock}, {@link #getBlockedIps})
+ *       — fail-loud: 장애를 그대로 전파해 운영자가 빈 목록·거짓 성공을 보지 않게 한다</li>
+ * </ul>
  *
  * <p>Redis Key 설계:
  * <ul>
@@ -124,18 +130,14 @@ public class IpBlockStore {
         log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 404 카운터를 처리할 수 없습니다. ip={} error={}", ip, t.getMessage());
     }
 
-    @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "unblockFallback")
+    @CircuitBreaker(name = "redisBlockStore")
     public void unblock(Ip ip) {
         stringRedisTemplate.delete(BLOCKED_IP_PREFIX + ip.value());
         stringRedisTemplate.delete(NOT_FOUND_COUNTER_PREFIX + ip.value());
         log.info("IP 차단 해제: ip={}", ip);
     }
 
-    private void unblockFallback(Ip ip, Throwable t) {
-        log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 IP 차단을 해제할 수 없습니다. ip={} error={}", ip, t.getMessage());
-    }
-
-    @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "getBlockedIpsFallback")
+    @CircuitBreaker(name = "redisBlockStore")
     public List<BlockedIp> getBlockedIps() {
         final ScanOptions options = ScanOptions.scanOptions()
                 .match(BLOCKED_IP_PREFIX + "*")
@@ -160,11 +162,6 @@ public class IpBlockStore {
                 })
                 .sorted(Comparator.comparing(BlockedIp::ip))
                 .toList();
-    }
-
-    private List<BlockedIp> getBlockedIpsFallback(Throwable t) {
-        log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 차단 IP 목록을 조회할 수 없습니다. error={}", t.getMessage());
-        return List.of();
     }
 
     public record BlockedIp(String ip, long remainingTtlSeconds) {

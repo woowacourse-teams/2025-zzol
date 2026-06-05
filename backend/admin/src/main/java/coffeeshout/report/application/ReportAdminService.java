@@ -3,6 +3,7 @@ package coffeeshout.report.application;
 import coffeeshout.admin.ipblock.IpBlockAdminService;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.ipblock.Ip;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;
@@ -52,7 +53,7 @@ public class ReportAdminService {
     public void unblockReporterIp(Long id) {
         final String ip = findReporterIp(id);
         if (ip != null) {
-            ipBlockAdminService.unblock(ip);
+            ipBlockAdminService.unblock(new Ip(ip));
             log.info("신고 #{} 신고자 IP 차단 해제: ip={}", id, ip);
         }
     }

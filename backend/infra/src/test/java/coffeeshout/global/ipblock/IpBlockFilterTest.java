@@ -29,7 +29,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 @ExtendWith(MockitoExtension.class)
 class IpBlockFilterTest {
 
-    private static final String REMOTE_IP = "1.2.3.4";
+    private static final Ip REMOTE_IP = new Ip("1.2.3.4");
     private static final String MALICIOUS_PATH = "/.env";
     private static final String NORMAL_PATH = "/api/game";
 
@@ -152,7 +152,7 @@ class IpBlockFilterTest {
 
         @BeforeEach
         void setUp() {
-            given(ipBlockStore.isBlocked(anyString())).willReturn(false);
+            given(ipBlockStore.isBlocked(any(Ip.class))).willReturn(false);
             given(maliciousPathMatcher.isMalicious(anyString())).willReturn(false);
         }
 
@@ -263,11 +263,23 @@ class IpBlockFilterTest {
 
             then(ipBlockStore).should().isBlocked(REMOTE_IP);
         }
+
+        @Test
+        void 유효하지_않은_IP_형식이면_차단_검사_없이_filterChain을_통과한다() throws Exception {
+            final MockHttpServletRequest request = new MockHttpServletRequest();
+            request.setRemoteAddr("not-an-ip");
+            request.setRequestURI(NORMAL_PATH);
+
+            filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).shouldHaveNoInteractions();
+            then(filterChain).should().doFilter(any(), any());
+        }
     }
 
-    private MockHttpServletRequest 요청(String remoteAddr, String uri) {
+    private MockHttpServletRequest 요청(Ip remoteAddr, String uri) {
         final MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr(remoteAddr);
+        request.setRemoteAddr(remoteAddr.value());
         request.setRequestURI(uri);
         return request;
     }

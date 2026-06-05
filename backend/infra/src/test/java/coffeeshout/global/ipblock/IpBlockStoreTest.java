@@ -16,8 +16,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 @DisplayName("IpBlockStore")
 class IpBlockStoreTest extends InfraModuleIntegrationTest {
 
-    private static final String IP = "1.2.3.4";
-    private static final String ANOTHER_IP = "5.6.7.8";
+    private static final Ip IP = new Ip("1.2.3.4");
+    private static final Ip ANOTHER_IP = new Ip("5.6.7.8");
 
     @Autowired
     private IpBlockStore ipBlockStore;
@@ -168,7 +168,7 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
 
             final List<BlockedIp> result = ipBlockStore.getBlockedIps();
 
-            assertThat(result).extracting(BlockedIp::ip).contains(IP);
+            assertThat(result).extracting(BlockedIp::ip).contains(IP.value());
         }
 
         @Test
@@ -178,7 +178,7 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
             final List<BlockedIp> result = ipBlockStore.getBlockedIps();
 
             assertThat(result)
-                    .filteredOn(e -> e.ip().equals(IP))
+                    .filteredOn(e -> e.ip().equals(IP.value()))
                     .first()
                     .extracting(BlockedIp::remainingTtlSeconds)
                     .satisfies(ttl -> assertThat((Long) ttl).isGreaterThan(0));
@@ -191,7 +191,7 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
 
             final List<BlockedIp> result = ipBlockStore.getBlockedIps();
 
-            assertThat(result).extracting(BlockedIp::ip).containsExactlyInAnyOrder(IP, ANOTHER_IP);
+            assertThat(result).extracting(BlockedIp::ip).containsExactlyInAnyOrder(IP.value(), ANOTHER_IP.value());
         }
 
         @Test
@@ -201,7 +201,7 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
 
             final List<BlockedIp> result = ipBlockStore.getBlockedIps();
 
-            assertThat(result).extracting(BlockedIp::ip).doesNotContain(IP);
+            assertThat(result).extracting(BlockedIp::ip).doesNotContain(IP.value());
         }
     }
 
@@ -211,10 +211,10 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
 
         @Test
         void 차단된_IP_확인_시_blockedRequest_카운터가_증가한다() {
-            ipBlockStore.blockImmediately("9.9.9.1");
+            ipBlockStore.blockImmediately(new Ip("9.9.9.1"));
             double before = meterRegistry.find("ip.block.request.blocked.total").counter().count();
 
-            ipBlockStore.isBlocked("9.9.9.1");
+            ipBlockStore.isBlocked(new Ip("9.9.9.1"));
 
             assertThat(meterRegistry.find("ip.block.request.blocked.total").counter().count() - before)
                     .isEqualTo(1.0);
@@ -224,7 +224,7 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
         void 차단되지_않은_IP_확인_시_blockedRequest_카운터가_증가하지_않는다() {
             double before = meterRegistry.find("ip.block.request.blocked.total").counter().count();
 
-            ipBlockStore.isBlocked("9.9.9.2");
+            ipBlockStore.isBlocked(new Ip("9.9.9.2"));
 
             assertThat(meterRegistry.find("ip.block.request.blocked.total").counter().count() - before)
                     .isEqualTo(0.0);
@@ -234,7 +234,7 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
         void IP_즉시_차단_시_newIpBlock_카운터가_증가한다() {
             double before = meterRegistry.find("ip.block.new.total").counter().count();
 
-            ipBlockStore.blockImmediately("9.9.9.3");
+            ipBlockStore.blockImmediately(new Ip("9.9.9.3"));
 
             assertThat(meterRegistry.find("ip.block.new.total").counter().count() - before)
                     .isEqualTo(1.0);
@@ -245,7 +245,7 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
             double before = meterRegistry.find("ip.block.new.total").counter().count();
 
             for (int i = 0; i < 5; i++) {
-                ipBlockStore.incrementNotFoundAndBlockIfExceeded("9.9.9.4");
+                ipBlockStore.incrementNotFoundAndBlockIfExceeded(new Ip("9.9.9.4"));
             }
 
             assertThat(meterRegistry.find("ip.block.new.total").counter().count() - before)

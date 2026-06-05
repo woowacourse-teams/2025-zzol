@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.regex.Pattern;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
@@ -43,13 +43,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class IpBlockFilter extends OncePerRequestFilter {
 
-    private static final Pattern IPV4_PATTERN = Pattern.compile(
-            "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$"
-    );
-    private static final Pattern IPV6_PATTERN = Pattern.compile(
-            "^[0-9a-fA-F]{0,4}(:[0-9a-fA-F]{0,4}){2,7}$"
-    );
-
     private final IpBlockStore ipBlockStore;
     private final MaliciousPathMatcher maliciousPathMatcher;
     private final IpBlockProperties properties;
@@ -62,13 +55,15 @@ public class IpBlockFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         final String uri = request.getRequestURI();
-        final String ip = getClientIp(request);
+        final Optional<Ip> clientIp = Ip.tryFrom(getClientIp(request));
 
-        if (!isValidIp(ip)) {
-            log.debug("유효하지 않은 IP 형식, 필터 처리 건너뜀: ip={}", ip);
+        if (clientIp.isEmpty()) {
+            // 검증 전 원본 값은 로그 인젝션 가능성이 있으므로 기록하지 않는다
+            log.debug("유효하지 않은 IP 형식, 필터 처리 건너뜀: uri={}", uri);
             filterChain.doFilter(request, response);
             return;
         }
+        final Ip ip = clientIp.get();
 
         // 악성 경로는 예외 경로여도 항상 차단 (/admin.php 등 스캐너 패턴)
         if (maliciousPathMatcher.isMalicious(uri)) {
@@ -150,12 +145,5 @@ public class IpBlockFilter extends OncePerRequestFilter {
 
     private String getClientIp(HttpServletRequest request) {
         return request.getRemoteAddr();
-    }
-
-    private boolean isValidIp(String ip) {
-        if (ip == null || ip.isBlank()) {
-            return false;
-        }
-        return IPV4_PATTERN.matcher(ip).matches() || IPV6_PATTERN.matcher(ip).matches();
     }
 }

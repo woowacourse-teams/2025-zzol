@@ -1,5 +1,6 @@
 package coffeeshout.admin.ipblock;
 
+import coffeeshout.global.ipblock.Ip;
 import coffeeshout.global.ipblock.IpBlockStore;
 import coffeeshout.global.ipblock.IpBlockStore.BlockedIp;
 import java.util.List;
@@ -16,7 +17,7 @@ public class IpBlockAdminService {
         return ipBlockStore.getBlockedIps();
     }
 
-    public void unblock(String ip) {
+    public void unblock(Ip ip) {
         ipBlockStore.unblock(ip);
     }
 }

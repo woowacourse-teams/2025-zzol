@@ -1,5 +1,6 @@
 package coffeeshout.admin.ipblock;
 
+import coffeeshout.global.ipblock.Ip;
 import coffeeshout.global.ipblock.IpBlockStore.BlockedIp;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class IpBlockAdminController {
 
     @PostMapping("/{ip}/unblock")
     public String unblock(@PathVariable String ip) {
-        ipBlockAdminService.unblock(ip);
+        ipBlockAdminService.unblock(new Ip(ip));
         return "redirect:/admin/ip-blocks";
     }
 }

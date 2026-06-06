@@ -6,7 +6,6 @@ import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -98,34 +97,14 @@ public class RedisStreamListenerStarter {
         stopping.set(true);
     }
 
+    // 종료 신호의 진실 공급원은 stopping 플래그다. 종료 중 폴링 오류는 커넥션 해체 과정의
+    // 기대된 노이즈이므로 메시지 텍스트로 세분류하지 않는다 (라이브러리 버전업에 취약)
     private void handleStreamError(Throwable t) {
-        if (stopping.get() && isShutdownRelated(t)) {
-            log.debug("Redis Stream 연결이 종료됐습니다 (정상 종료)");
+        if (stopping.get()) {
+            log.debug("종료 중 Redis Stream 오류 (정상 종료 과정)", t);
             return;
         }
         log.error("Redis Stream 처리 중 오류가 발생했습니다.", t);
-    }
-
-    private static final List<String> SHUTDOWN_MESSAGE_PATTERNS = List.of(
-            "Connection closed", "is STOPPING", "has been STOPPED", "was destroyed"
-    );
-
-    private boolean isShutdownRelated(Throwable t) {
-        Throwable current = t;
-        while (current != null) {
-            if (containsShutdownPattern(current.getMessage())) {
-                return true;
-            }
-            current = current.getCause();
-        }
-        return false;
-    }
-
-    private boolean containsShutdownPattern(String message) {
-        if (message == null) {
-            return false;
-        }
-        return SHUTDOWN_MESSAGE_PATTERNS.stream().anyMatch(message::contains);
     }
 
     // receive()의 기본 cancelOnError(t -> true)는 예외 1건으로 구독을 영구 중단시키므로

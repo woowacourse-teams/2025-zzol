@@ -141,7 +141,7 @@ class RedisStreamListenerStarterTest {
         }
 
         @Test
-        void 종료_중_커넥션_팩토리_파괴_오류는_ERROR로_기록하지_않는다() {
+        void 종료_중에는_어떤_오류도_ERROR로_기록하지_않는다() {
             // given
             final ErrorHandler errorHandler = starter.buildReadRequest(STREAM_KEY).getErrorHandler();
             starter.onContextClosed(new ContextClosedEvent(genericApplicationContext));
@@ -150,6 +150,7 @@ class RedisStreamListenerStarterTest {
             errorHandler.handleError(
                     new IllegalStateException("LettuceConnectionFactory was destroyed and cannot be used anymore")
             );
+            errorHandler.handleError(new RuntimeException("종료 중 임의 오류"));
 
             // then
             assertThat(appender.list).noneMatch(event -> event.getLevel() == Level.ERROR);

@@ -24,13 +24,15 @@ class IpTest {
         }
 
         @ParameterizedTest
-        @ValueSource(strings = {"::1", "2001:db8::1", "fe80::a00:27ff:fe4e:66a1", "0:0:0:0:0:0:0:1"})
+        @ValueSource(strings = {"::1", "2001:db8::1", "fe80::a00:27ff:fe4e:66a1", "0:0:0:0:0:0:0:1",
+                "1:2:3:4:5:6:7:8", "::ffff:192.168.0.1"})
         void 유효한_IPv6로_생성할_수_있다(String value) {
             assertThat(new Ip(value).value()).isEqualTo(value);
         }
 
         @ParameterizedTest
-        @ValueSource(strings = {"256.1.1.1", "1.2.3", "1.2.3.4.5", "not-an-ip", "gggg::1", "1:2:3:4:5:6:7:8:9"})
+        @ValueSource(strings = {"256.1.1.1", "1.2.3", "1.2.3.4.5", "not-an-ip", "gggg::1", "1:2:3:4:5:6:7:8:9",
+                "1::2::3"})
         void 유효하지_않은_형식이면_예외를_던진다(String value) {
             assertCoffeeShoutException(
                     () -> new Ip(value),

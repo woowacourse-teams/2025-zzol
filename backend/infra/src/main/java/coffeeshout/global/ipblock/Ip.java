@@ -2,8 +2,8 @@ package coffeeshout.global.ipblock;
 
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
+import io.netty.util.NetUtil;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /**
  * 검증된 IP 주소 값 객체.
@@ -16,13 +16,6 @@ import java.util.regex.Pattern;
  * </ul>
  */
 public record Ip(String value) {
-
-    private static final Pattern IPV4_PATTERN = Pattern.compile(
-            "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$"
-    );
-    private static final Pattern IPV6_PATTERN = Pattern.compile(
-            "^[0-9a-fA-F]{0,4}(:[0-9a-fA-F]{0,4}){2,7}$"
-    );
 
     public Ip {
         if (!isValid(value)) {
@@ -37,11 +30,16 @@ public record Ip(String value) {
         return Optional.of(new Ip(value));
     }
 
+    /**
+     * 직접 작성한 정규식 대신 검증된 파서(Netty NetUtil)를 사용한다.
+     * 정규식 기반 IPv6 검증은 압축 표기(::) 중복·IPv4-mapped 표기 등에서 오판하기 쉽고,
+     * 필터 경로의 거짓 거부는 곧 차단 우회로 이어진다.
+     */
     private static boolean isValid(String value) {
         if (value == null || value.isBlank()) {
             return false;
         }
-        return IPV4_PATTERN.matcher(value).matches() || IPV6_PATTERN.matcher(value).matches();
+        return NetUtil.isValidIpV4Address(value) || NetUtil.isValidIpV6Address(value);
     }
 
     @Override

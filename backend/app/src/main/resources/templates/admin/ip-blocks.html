@@ -17,6 +17,10 @@
 <main>
     <a th:href="@{/admin}" class="nav-back">← 대시보드로</a>
 
+    <div th:if="${errorMessage}"
+         style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:6px;padding:0.6rem 1rem;margin-bottom:1rem;"
+         th:text="${errorMessage}"></div>
+
     <div class="section-header">
         <span class="section-title">차단된 IP 목록</span>
         <span class="badge badge-pending" th:text="${blockedIps.size()}">0</span>

@@ -7,26 +7,39 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { CatalogCache } from './catalog/cache.js';
 import { CatalogFetcher } from './catalog/fetch.js';
+import { OpenApiFetcher } from './openapi/fetch.js';
 import { wsConnectTool } from './tools/connect.js';
 import { wsDescribeTool } from './tools/describe.js';
 import { wsListTopicsTool } from './tools/list-topics.js';
 import { wsSendTool } from './tools/send.js';
 import { wsSourceTool } from './tools/source.js';
 import { wsSubscribeTool } from './tools/subscribe.js';
+import { httpRequestTool } from './tools/http-request.js';
+import { httpListEndpointsTool } from './tools/http-list-endpoints.js';
+import { httpDescribeTool } from './tools/http-describe.js';
+import { httpValidateTool } from './tools/http-validate.js';
 import { loadConfig } from './config.js';
 import type { ToolContext, ToolDefinition } from './tools/types.js';
 
 const TOOLS: ToolDefinition[] = [
+  // WebSocket / STOMP
   wsDescribeTool,
   wsListTopicsTool,
   wsSourceTool,
   wsConnectTool,
   wsSubscribeTool,
   wsSendTool,
+  // HTTP / REST
+  httpRequestTool,
+  httpListEndpointsTool,
+  httpDescribeTool,
+  httpValidateTool,
 ];
 
 async function main(): Promise<void> {
-  const { catalogUrl, brokerUrl, cachePath } = loadConfig();
+  const { catalogUrl, brokerUrl, cachePath, baseUrl } = loadConfig();
+
+  const openApiCachePath = cachePath ? cachePath.replace(/\.json$/, '-openapi.json') : undefined;
 
   const context: ToolContext = {
     catalog: new CatalogFetcher({
@@ -34,9 +47,14 @@ async function main(): Promise<void> {
       ...(cachePath ? { cache: new CatalogCache(cachePath) } : {}),
     }),
     brokerUrl,
+    openapi: new OpenApiFetcher({
+      baseUrl,
+      ...(openApiCachePath ? { cache: new CatalogCache(openApiCachePath) } : {}),
+    }),
+    baseUrl,
   };
 
-  const server = new Server({ name: 'ws-mcp', version: '0.1.0' }, { capabilities: { tools: {} } });
+  const server = new Server({ name: 'api-mcp', version: '0.1.0' }, { capabilities: { tools: {} } });
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: TOOLS.map((t) => ({
@@ -70,7 +88,7 @@ async function main(): Promise<void> {
 
 main().catch((error: unknown) => {
   process.stderr.write(
-    `ws-mcp 시작 실패: ${error instanceof Error ? error.message : String(error)}\n`
+    `api-mcp 시작 실패: ${error instanceof Error ? error.message : String(error)}\n`
   );
   process.exit(1);
 });

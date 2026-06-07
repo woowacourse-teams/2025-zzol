@@ -122,7 +122,7 @@ public class RedisStreamListenerStarter {
                 .build();
     }
 
-    private void onMessage(MapRecord<String, String, String> message) {
+    void onMessage(MapRecord<String, String, String> message) {
         final Map<String, String> fields = message.getValue();
         final String payload = resolvePayload(fields);
         if (payload == null) {

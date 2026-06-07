@@ -3,6 +3,7 @@ package coffeeshout.global.redis.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,11 +14,15 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import coffeeshout.fixture.BaseEventDummy;
 import coffeeshout.global.redis.EventDispatcher;
+import coffeeshout.global.redis.stream.StreamRecordFields;
+import coffeeshout.global.redis.stream.StreamTracePropagator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;
@@ -34,7 +39,7 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.stream.ObjectRecord;
+import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer.StreamReadRequest;
 import org.springframework.util.ErrorHandler;
@@ -52,6 +57,9 @@ class RedisStreamListenerStarterTest {
 
     @Mock
     private EventDispatcher eventDispatcher;
+
+    @Mock
+    private StreamTracePropagator streamTracePropagator;
 
     @Mock
     private ApplicationContext applicationContext;
@@ -74,6 +82,7 @@ class RedisStreamListenerStarterTest {
                 redisConnectionFactory,
                 objectMapper,
                 eventDispatcher,
+                streamTracePropagator,
                 applicationContext,
                 genericApplicationContext
         );
@@ -143,7 +152,9 @@ class RedisStreamListenerStarterTest {
         @Test
         void 종료_중에는_어떤_오류도_ERROR로_기록하지_않는다() {
             // given
-            final ErrorHandler errorHandler = starter.buildReadRequest(STREAM_KEY).getErrorHandler();
+            final ErrorHandler errorHandler = Objects.requireNonNull(
+                    starter.buildReadRequest(STREAM_KEY).getErrorHandler()
+            );
             starter.onContextClosed(new ContextClosedEvent(genericApplicationContext));
 
             // when
@@ -159,7 +170,9 @@ class RedisStreamListenerStarterTest {
         @Test
         void 평시_오류는_ERROR로_기록한다() {
             // given
-            final ErrorHandler errorHandler = starter.buildReadRequest(STREAM_KEY).getErrorHandler();
+            final ErrorHandler errorHandler = Objects.requireNonNull(
+                    starter.buildReadRequest(STREAM_KEY).getErrorHandler()
+            );
 
             // when
             errorHandler.handleError(new RuntimeException("폴링 실패"));
@@ -175,8 +188,9 @@ class RedisStreamListenerStarterTest {
         @Test
         void 정상_메시지는_EventDispatcher에_위임한다() throws JsonProcessingException {
             // given
+            stubPropagatorToRunTask();
             final BaseEventDummy event = BaseEventDummy.페이로드("정상 메시지");
-            final ObjectRecord<String, String> message = 메시지(objectMapper.writeValueAsString(event));
+            final MapRecord<String, String, String> message = 메시지(objectMapper.writeValueAsString(event));
 
             // when
             starter.onMessage(message);
@@ -188,9 +202,39 @@ class RedisStreamListenerStarterTest {
         }
 
         @Test
+        void 구형_raw_필드만_있는_레코드도_처리한다() throws JsonProcessingException {
+            // given — 전환 이전에 발행된 ObjectRecord 포맷 메시지 폴백
+            stubPropagatorToRunTask();
+            final BaseEventDummy event = BaseEventDummy.페이로드("구형 메시지");
+            final MapRecord<String, String, String> message = StreamRecords.<String, String, String>newRecord()
+                    .in(STREAM_KEY)
+                    .ofMap(Map.of(StreamRecordFields.LEGACY_RAW, objectMapper.writeValueAsString(event)));
+
+            // when
+            starter.onMessage(message);
+
+            // then
+            final ArgumentCaptor<BaseEventDummy> captor = ArgumentCaptor.forClass(BaseEventDummy.class);
+            verify(eventDispatcher).handle(captor.capture());
+            assertThat(captor.getValue().eventId()).isEqualTo(event.eventId());
+        }
+
+        @Test
+        void payload_필드가_없는_레코드는_무시한다() {
+            // given
+            final MapRecord<String, String, String> message = StreamRecords.<String, String, String>newRecord()
+                    .in(STREAM_KEY)
+                    .ofMap(Map.of("unknown", "값"));
+
+            // when & then
+            assertThatCode(() -> starter.onMessage(message)).doesNotThrowAnyException();
+            verify(eventDispatcher, never()).handle(any());
+        }
+
+        @Test
         void 역직렬화에_실패해도_예외를_전파하지_않는다() {
             // given
-            final ObjectRecord<String, String> message = 메시지("json이 아닌 값");
+            final MapRecord<String, String, String> message = 메시지("json이 아닌 값");
 
             // when & then — 예외가 전파되면 Spring Data Redis가 구독을 취소할 수 있다
             assertThatCode(() -> starter.onMessage(message)).doesNotThrowAnyException();
@@ -200,17 +244,27 @@ class RedisStreamListenerStarterTest {
         @Test
         void 이벤트_처리_중_예외가_발생해도_전파하지_않는다() throws JsonProcessingException {
             // given
+            stubPropagatorToRunTask();
             willThrow(new RuntimeException("처리 실패")).given(eventDispatcher).handle(any());
-            final ObjectRecord<String, String> message = 메시지(
+            final MapRecord<String, String, String> message = 메시지(
                     objectMapper.writeValueAsString(BaseEventDummy.페이로드("처리 실패 메시지"))
             );
 
             // when & then — 예외가 전파되면 Spring Data Redis가 구독을 취소할 수 있다
             assertThatCode(() -> starter.onMessage(message)).doesNotThrowAnyException();
         }
+
+        private void stubPropagatorToRunTask() {
+            willAnswer(invocation -> {
+                invocation.getArgument(2, Runnable.class).run();
+                return null;
+            }).given(streamTracePropagator).runInConsumerScope(any(), any(), any());
+        }
     }
 
-    private ObjectRecord<String, String> 메시지(String value) {
-        return StreamRecords.newRecord().in(STREAM_KEY).ofObject(value);
+    private MapRecord<String, String, String> 메시지(String payload) {
+        return StreamRecords.newRecord()
+                .in(STREAM_KEY)
+                .ofMap(Map.of(StreamRecordFields.PAYLOAD, payload));
     }
 }

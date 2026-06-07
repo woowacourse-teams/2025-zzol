@@ -74,10 +74,12 @@ redis:
       max-length: 100
       batch-size: 10
       poll-timeout: 2s
+    # 폴링 태스크는 스레드를 영구 점유하므로 core-size는 이 풀을 쓰는 스트림 수(7) 이상이어야 한다
+    # core/max는 운영 redis.yml(8/16)과 정렬. queue-capacity는 테스트 부하 기준 128 유지 (운영은 1024)
     thread-pools:
       concurrent:
-        core-size: 2
-        max-size: 4
+        core-size: 8
+        max-size: 16
         queue-capacity: 128
     keys:
       "[room]":

@@ -29,4 +29,6 @@ dependencies {
     testFixturesImplementation(project(":test-support"))
     testImplementation(project(":test-support"))
     testImplementation(testFixtures(project(":room")))
+    // 테스트 컨텍스트가 coffeeshout 전체를 스캔하며 :room·:user 빈이 ProfanityChecker 구현체를 요구한다
+    testImplementation(project(":profanity"))
 }

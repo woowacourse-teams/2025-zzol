@@ -1,6 +1,8 @@
 spring:
   config:
-    import: "classpath:application-test-base.yml"
+    import:
+      - "classpath:application-test-base.yml"
+      - "classpath:application-test-game.yml"
 
 nickname-audit:
   gemini-api-key: test-key
@@ -29,40 +31,3 @@ player:
 
 roulette:
   default-adjustment-weight: 0.7
-
-card-game:
-  timing:
-    first-loading: 500ms
-    loading: 500ms
-    prepare: 500ms
-    playing: 2000ms
-    score-board: 500ms
-    early-finish-delay: 500ms
-
-block-stacking:
-  timing:
-    prepare: 500ms
-    playing: 2000ms
-    all-failed-delay: 500ms
-
-ladder:
-  timing:
-    description: 500ms
-    prepare: 500ms
-    drawing: 1000ms
-    drawing-grace-period: 300ms
-    result: 500ms
-
-speed-touch:
-  timing:
-    description: 500ms
-    prepare: 500ms
-    playing: 30000ms
-
-blind-timer:
-  timing:
-    description: 500ms
-    prepare: 500ms
-    blind-delay: 500ms
-    timeout-buffer: 3000ms
-    result-delay: 500ms

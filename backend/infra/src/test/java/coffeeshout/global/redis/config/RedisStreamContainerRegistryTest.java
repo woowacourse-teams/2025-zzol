@@ -1,6 +1,8 @@
 package coffeeshout.global.redis.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +47,18 @@ class RedisStreamContainerRegistryTest {
         registry.register("minigame", anotherContainer);
 
         registry.stopAll();
+
+        verify(container).stop();
+        verify(anotherContainer).stop();
+    }
+
+    @Test
+    void 한_컨테이너의_정지_실패가_나머지_컨테이너_정지를_막지_않는다() {
+        registry.register("room", container);
+        registry.register("minigame", anotherContainer);
+        doThrow(new IllegalStateException("stop 실패")).when(container).stop();
+
+        assertThatCode(() -> registry.stopAll()).doesNotThrowAnyException();
 
         verify(container).stop();
         verify(anotherContainer).stop();

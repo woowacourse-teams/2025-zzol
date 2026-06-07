@@ -74,10 +74,11 @@ redis:
       max-length: 100
       batch-size: 10
       poll-timeout: 2s
+    # 폴링 태스크는 스레드를 영구 점유하므로 core-size는 이 풀을 쓰는 스트림 수(7) 이상이어야 한다 (ADR-0022)
     thread-pools:
       concurrent:
-        core-size: 2
-        max-size: 4
+        core-size: 8
+        max-size: 8
         queue-capacity: 128
     keys:
       "[room]":

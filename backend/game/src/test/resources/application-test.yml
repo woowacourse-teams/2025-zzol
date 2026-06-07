@@ -1,0 +1,67 @@
+spring:
+  config:
+    import: classpath:application-test-base.yml
+
+# :room 빈이 게임 모듈 테스트 컨텍스트에 포함되므로 room 도메인 설정이 필요하다
+room:
+  removalDelay: 1h
+  qr:
+    width: 150
+    height: 150
+    prefix: https://coffee-shout.com/join/
+    presignedUrl:
+      expirationHours: 1
+    storage-key-prefix: qr-code
+  event:
+    timeout: 5s
+
+player:
+  removalDelay: 15s
+
+roulette:
+  default-adjustment-weight: 0.7
+
+# :profanity 빈(ProfanityChecker 구현체)이 컨텍스트에 포함되므로 필요하다
+nickname-audit:
+  gemini-api-key: test-key
+  model: gemini-test
+  flagged-threshold: 0.85
+  batch-size: 10
+  feedback-injection-threshold: 20
+
+block-stacking:
+  timing:
+    prepare: 500ms
+    playing: 2000ms
+    all-failed-delay: 500ms
+
+ladder:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    drawing: 1000ms
+    drawing-grace-period: 300ms
+    result: 500ms
+
+card-game:
+  timing:
+    first-loading: 500ms
+    loading: 500ms
+    prepare: 500ms
+    playing: 2000ms
+    score-board: 500ms
+    early-finish-delay: 500ms
+
+speed-touch:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    playing: 30000ms
+
+blind-timer:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    blind-delay: 500ms
+    timeout-buffer: 3000ms
+    result-delay: 500ms

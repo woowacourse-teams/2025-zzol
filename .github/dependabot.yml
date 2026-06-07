@@ -1,13 +1,17 @@
 version: 2
 updates:
+  # 백엔드 코드는 be/dev가 실제 작업 브랜치 — main의 backend는 멀티모듈 전환 이전
+  # 화석이라 main 스캔은 무의미하다. be/dev의 libs.versions.toml을 스캔해 be/dev로 PR을 보낸다.
   - package-ecosystem: "gradle"
     directory: "/backend"
+    target-branch: "be/dev"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+      - "BE"
       - "backend"
 
   - package-ecosystem: "npm"
@@ -30,6 +34,7 @@ updates:
       - "dependencies"
       - "ws-mcp"
 
+  # main의 워크플로우 파일용 + 보안 업데이트(Dependabot 보안 업데이트는 default 브랜치만 타깃)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -38,4 +43,18 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+      - "github-actions"
+
+  # 실행 브랜치 be/dev의 워크플로우 버전업 — main에만 bump가 와서 be/dev가 영원히
+  # 구버전으로 남는 문제(setup-gradle v4 잔존) 방지를 위해 be/dev 타깃 블록을 별도로 둔다.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "be/dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "BE"
       - "github-actions"

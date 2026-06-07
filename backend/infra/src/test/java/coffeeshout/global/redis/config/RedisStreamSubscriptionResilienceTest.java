@@ -11,15 +11,14 @@ import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
  * 처리에 실패하는 메시지가 끼어도 Redis Stream 구독이 유지되어
  * 후속 메시지를 계속 소비하는지 검증한다.
+ * RedisStreamResilienceTestConfig는 베이스 클래스(InfraModuleIntegrationTest)가 임포트한다.
  */
-@Import(RedisStreamResilienceTestConfig.class)
 class RedisStreamSubscriptionResilienceTest extends InfraModuleIntegrationTest {
 
     private static final String STREAM_KEY = "minigame";

@@ -52,10 +52,9 @@ public class OutboxAfterCommitRelay {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onOutboxSaved(OutboxSavedEvent savedEvent) {
         try {
-            final BaseEvent baseEvent = objectMapper.readValue(
-                    savedEvent.payload(), BaseEvent.class
-            );
-            streamPublisher.publish(savedEvent.streamKey(), baseEvent);
+            // 페이로드 무결성 검증 — 파싱 불가 페이로드는 발행 전에 실패시켜 Worker 재시도 경로로 보낸다
+            objectMapper.readValue(savedEvent.payload(), BaseEvent.class);
+            streamPublisher.publish(savedEvent.streamKey(), savedEvent.payload(), savedEvent.traceparent());
 
             // 즉시 발행 성공 → PUBLISHED로 전환 (REQUIRES_NEW 트랜잭션)
             eventProcessor.markPublished(savedEvent.outboxEventId());

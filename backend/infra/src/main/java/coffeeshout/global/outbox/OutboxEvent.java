@@ -39,6 +39,15 @@ public class OutboxEvent {
     @Column(length = 4)
     private String joinCode;
 
+    /**
+     * 기록 시점에 캡처한 W3C traceparent 헤더.
+     * <p>
+     * 재시도 릴레이는 스케줄러 스레드에서 실행되어 원본 트레이스 컨텍스트가 없으므로
+     * 발행 시점 추출이 아닌 기록 시점 저장이 필요하다.
+     */
+    @Column(length = 64)
+    private String traceparent;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private OutboxStatus status;
@@ -53,14 +62,19 @@ public class OutboxEvent {
     private Instant updatedAt;
 
     public static OutboxEvent create(String streamKey, String payload) {
-        return create(streamKey, payload, null);
+        return create(streamKey, payload, null, null);
     }
 
     public static OutboxEvent create(String streamKey, String payload, String joinCode) {
+        return create(streamKey, payload, joinCode, null);
+    }
+
+    public static OutboxEvent create(String streamKey, String payload, String joinCode, String traceparent) {
         final OutboxEvent event = new OutboxEvent();
         event.streamKey = streamKey;
         event.payload = payload;
         event.joinCode = joinCode;
+        event.traceparent = traceparent;
         event.status = OutboxStatus.PENDING;
         event.retryCount = 0;
         event.createdAt = Instant.now();

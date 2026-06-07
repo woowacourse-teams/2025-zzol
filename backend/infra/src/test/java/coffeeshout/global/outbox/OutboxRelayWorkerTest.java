@@ -2,6 +2,8 @@ package coffeeshout.global.outbox;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -63,7 +65,7 @@ class OutboxRelayWorkerTest {
             outboxRelayWorker.relay();
 
             // then
-            verify(streamPublisher, never()).publish(any(String.class), any());
+            verify(streamPublisher, never()).publish(any(String.class), any(String.class), nullable(String.class));
             verify(eventProcessor, never()).markPublished(any());
         }
 
@@ -80,7 +82,7 @@ class OutboxRelayWorkerTest {
 
             // then
             verify(eventProcessor).fetchAndMarkInProgress(50);
-            verify(streamPublisher).publish(eq("room"), any());
+            verify(streamPublisher).publish(eq("room"), eq(event.getPayload()), isNull());
             verify(eventProcessor).markPublished(1L);
         }
 
@@ -92,7 +94,7 @@ class OutboxRelayWorkerTest {
             given(objectMapper.readValue(event.getPayload(), BaseEvent.class))
                     .willReturn(new StubBaseEvent());
             doThrow(new RuntimeException("Redis connection refused"))
-                    .when(streamPublisher).publish(any(String.class), any());
+                    .when(streamPublisher).publish(any(String.class), any(String.class), nullable(String.class));
 
             // when
             outboxRelayWorker.relay();
@@ -118,7 +120,7 @@ class OutboxRelayWorkerTest {
             doThrow(new RuntimeException("timeout"))
                     .doNothing()
                     .doNothing()
-                    .when(streamPublisher).publish(any(String.class), any());
+                    .when(streamPublisher).publish(any(String.class), any(String.class), nullable(String.class));
 
             // when
             outboxRelayWorker.relay();

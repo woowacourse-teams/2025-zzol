@@ -10,6 +10,7 @@ package coffeeshout.global.outbox;
 public record OutboxSavedEvent(
         Long outboxEventId,
         String streamKey,
-        String payload
+        String payload,
+        String traceparent
 ) {
 }

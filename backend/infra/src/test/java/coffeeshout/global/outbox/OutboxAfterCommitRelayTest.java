@@ -2,6 +2,7 @@ package coffeeshout.global.outbox;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -46,10 +47,11 @@ class OutboxAfterCommitRelayTest {
     class onOutboxSaved_메서드는 {
 
         @Test
-        void Redis_발행_성공_시_markPublished를_호출한다() throws Exception {
+        void Redis_발행_성공_시_저장된_traceparent와_함께_발행하고_markPublished를_호출한다() throws Exception {
             // given
             BaseEvent mockEvent = new StubBaseEvent();
-            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"StubBaseEvent\"}");
+            String traceparent = "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01";
+            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"StubBaseEvent\"}", traceparent);
 
             BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
                     .willReturn(mockEvent);
@@ -58,7 +60,7 @@ class OutboxAfterCommitRelayTest {
             outboxAfterCommitRelay.onOutboxSaved(savedEvent);
 
             // then
-            verify(streamPublisher).publish(eq("room"), any());
+            verify(streamPublisher).publish(eq("room"), eq(savedEvent.payload()), eq(traceparent));
             verify(eventProcessor).markPublished(1L);
         }
 
@@ -66,12 +68,12 @@ class OutboxAfterCommitRelayTest {
         void Redis_발행_실패_시_예외를_삼키고_markPublished를_호출하지_않는다() throws Exception {
             // given
             BaseEvent mockEvent = new StubBaseEvent();
-            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"StubBaseEvent\"}");
+            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"StubBaseEvent\"}", null);
 
             BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
                     .willReturn(mockEvent);
             doThrow(new RuntimeException("Redis connection refused"))
-                    .when(streamPublisher).publish(any(String.class), any());
+                    .when(streamPublisher).publish(any(String.class), any(String.class), nullable(String.class));
 
             // when — 예외가 밖으로 나가면 안 된다
             outboxAfterCommitRelay.onOutboxSaved(savedEvent);
@@ -83,7 +85,7 @@ class OutboxAfterCommitRelayTest {
         @Test
         void 역직렬화_실패_시_예외를_삼키고_markPublished를_호출하지_않는다() throws Exception {
             // given
-            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "invalid-json");
+            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "invalid-json", null);
 
             BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
                     .willThrow(new JsonProcessingException("역직렬화 실패") {});
@@ -93,7 +95,7 @@ class OutboxAfterCommitRelayTest {
 
             // then — 역직렬화 실패 시에도 markPublished와 publish가 호출되지 않아야 한다
             verify(eventProcessor, never()).markPublished(any());
-            verify(streamPublisher, never()).publish(any(String.class), any());
+            verify(streamPublisher, never()).publish(any(String.class), any(String.class), nullable(String.class));
         }
     }
 }

@@ -1,9 +1,6 @@
 package coffeeshout.laddergame.domain.event;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.trace.TraceInfo;
-import coffeeshout.global.trace.TraceInfoExtractor;
-import coffeeshout.global.trace.Traceable;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -12,9 +9,8 @@ public record LadderDrawCommandEvent(
         String joinCode,
         String playerName,
         int segmentIndex,
-        Instant timestamp,
-        TraceInfo traceInfo
-) implements BaseEvent, Traceable {
+        Instant timestamp
+) implements BaseEvent {
 
     public static LadderDrawCommandEvent of(String joinCode, String playerName, int segmentIndex) {
         return new LadderDrawCommandEvent(
@@ -22,8 +18,7 @@ public record LadderDrawCommandEvent(
                 joinCode,
                 playerName,
                 segmentIndex,
-                Instant.now(),
-                TraceInfoExtractor.extract()
+                Instant.now()
         );
     }
 }

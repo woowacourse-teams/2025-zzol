@@ -62,7 +62,10 @@ container options의 errorHandler를 제거한다. 진실 공급원은 `buildRea
 
 ### refresh 실패 시 고아 컨테이너
 
-`ContextClosedEvent`는 **refresh 실패 시 발행되지 않는다**. `@PostConstruct` 도중 예외가 나면 이미 start된 컨테이너가 stopping=false 상태로 남아, 파괴된 커넥션 팩토리에 무한 폴링하며 ERROR를 쏟는다. 생성한 컨테이너를 필드로 보관하고 `@PreDestroy`(정상 종료·refresh 실패 양쪽에서 호출됨)에서 stopping 설정 + 일괄 `stop()`으로 봉합한다.
+`ContextClosedEvent`는 **refresh 실패 시 발행되지 않는다**. `@PostConstruct` 도중 예외가 나면 이미 start된 컨테이너가 stopping=false 상태로 남아, 파괴된 커넥션 팩토리에 무한 폴링하며 ERROR를 쏟는다. 봉합 책임은 둘로 나뉜다:
+
+- `RedisStreamContainerRegistry`(스트림 키별 컨테이너 단일 장부)가 `@PreDestroy`(정상 종료·refresh 실패 양쪽에서 호출됨)에서 일괄 `stop()`한다. Starter는 start/await **이전**에 레지스트리에 등록하므로 기동 중단 시에도 stop 대상에 포함된다
+- Starter의 `@PreDestroy`는 stopping 플래그만 확정한다. **Starter가 레지스트리를 생성자 주입하므로 빈 파괴는 역의존 순서(Starter → Registry)** — 플래그 설정이 일괄 stop보다 항상 먼저 실행된다. 이 불변식은 생성자 주입 관계에 의존하므로, 주입 방식을 setter/lazy로 바꾸면 깨진다
 
 ## 트레이드오프
 

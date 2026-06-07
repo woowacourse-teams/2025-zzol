@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.support.app.StreamMockedServiceTest;
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.redis.stream.StreamTracePropagator;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import java.util.List;
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 /**
  * OutboxEventRecorder 단위 테스트.
@@ -21,6 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
  * ServiceTest가 @Transactional이므로 테스트 종료 시 롤백된다.
  * 따라서 @TransactionalEventListener(AFTER_COMMIT)은 실행되지 않는다.
  * AFTER_COMMIT 즉시 발행 동작은 OutboxAfterCommitRelayTest에서 별도 검증한다.
+ * streamTracePropagator spy는 베이스 클래스(StreamMockedServiceTest)가 제공한다.
  */
 class OutboxEventRecorderTest extends StreamMockedServiceTest {
 
@@ -29,9 +28,6 @@ class OutboxEventRecorderTest extends StreamMockedServiceTest {
 
     @Autowired
     private OutboxEventRepository outboxEventRepository;
-
-    @MockitoSpyBean
-    private StreamTracePropagator streamTracePropagator;
 
     @BeforeEach
     void setUp() {

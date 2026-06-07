@@ -1,18 +1,14 @@
 package coffeeshout.global.health;
 
-import static coffeeshout.global.redis.config.RedisStreamListenerStarter.STREAM_CONTAINER_BEAN_NAME_FORMAT;
-
+import coffeeshout.global.redis.config.RedisStreamContainerRegistry;
 import coffeeshout.global.redis.config.RedisStreamProperties;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.context.ApplicationContext;
-import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +28,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RedisStreamHealthIndicator implements HealthIndicator {
 
-    private final ApplicationContext applicationContext;
+    private final RedisStreamContainerRegistry containerRegistry;
     private final RedisStreamContainerRecovery containerRecovery;
     private final RedisStreamProperties redisStreamProperties;
 
@@ -42,17 +38,10 @@ public class RedisStreamHealthIndicator implements HealthIndicator {
 
         if (redisStreamProperties.keys() != null) {
             for (String streamKey : redisStreamProperties.keys().keySet()) {
-                final String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-
-                try {
-                    final StreamMessageListenerContainer<?, ?> container =
-                            applicationContext.getBean(beanName, StreamMessageListenerContainer.class);
-
-                    final boolean running = container.isRunning();
-                    details.put(streamKey, running ? "RUNNING" : "STOPPED");
-                } catch (NoSuchBeanDefinitionException e) {
-                    details.put(streamKey, "NOT_REGISTERED");
-                }
+                final String status = containerRegistry.find(streamKey)
+                        .map(container -> container.isRunning() ? "RUNNING" : "STOPPED")
+                        .orElse("NOT_REGISTERED");
+                details.put(streamKey, status);
             }
         }
 

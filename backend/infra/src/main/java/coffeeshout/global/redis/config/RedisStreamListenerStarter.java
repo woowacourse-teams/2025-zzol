@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -21,7 +20,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.domain.Range;
 import org.springframework.data.redis.connection.Limit;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -40,11 +38,7 @@ import org.springframework.stereotype.Component;
 @DependsOn("redisStreamThreadPoolConfig")
 public class RedisStreamListenerStarter {
 
-    public static final String STREAM_CONTAINER_BEAN_NAME_FORMAT = "stream-container-%s";
-
     private final AtomicBoolean stopping = new AtomicBoolean(false);
-    private final List<StreamMessageListenerContainer<String, MapRecord<String, String, String>>> containers =
-            new ArrayList<>();
     private final RedisStreamProperties properties;
     private final RedisConnectionFactory redisConnectionFactory;
     private final StringRedisTemplate stringRedisTemplate;
@@ -52,7 +46,7 @@ public class RedisStreamListenerStarter {
     private final EventDispatcher eventDispatcher;
     private final StreamTracePropagator streamTracePropagator;
     private final ApplicationContext applicationContext;
-    private final GenericApplicationContext genericApplicationContext;
+    private final RedisStreamContainerRegistry containerRegistry;
 
     public RedisStreamListenerStarter(
             RedisStreamProperties properties,
@@ -62,7 +56,7 @@ public class RedisStreamListenerStarter {
             EventDispatcher eventDispatcher,
             StreamTracePropagator streamTracePropagator,
             ApplicationContext applicationContext,
-            GenericApplicationContext genericApplicationContext
+            RedisStreamContainerRegistry containerRegistry
     ) {
         this.properties = properties;
         this.redisConnectionFactory = redisConnectionFactory;
@@ -71,7 +65,7 @@ public class RedisStreamListenerStarter {
         this.eventDispatcher = eventDispatcher;
         this.streamTracePropagator = streamTracePropagator;
         this.applicationContext = applicationContext;
-        this.genericApplicationContext = genericApplicationContext;
+        this.containerRegistry = containerRegistry;
     }
 
     @PostConstruct
@@ -91,17 +85,13 @@ public class RedisStreamListenerStarter {
                     streamConfig
             );
 
-            containers.add(container);
+            // start/await 이전에 등록한다 — await 실패로 기동이 중단돼도
+            // 이미 start된 컨테이너가 레지스트리의 @PreDestroy stop 대상에 포함된다
+            containerRegistry.register(streamKey, container);
 
             final Subscription subscription = container.register(buildReadRequest(streamKey), this::onMessage);
             container.start();
             awaitSubscriptionStart(streamKey, subscription);
-
-            genericApplicationContext.registerBean(
-                    String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey),
-                    StreamMessageListenerContainer.class,
-                    () -> container
-            );
         }
     }
 
@@ -136,13 +126,12 @@ public class RedisStreamListenerStarter {
         stopping.set(true);
     }
 
-    // refresh 실패 시에는 ContextClosedEvent가 발행되지 않아 stopping이 false로 남고,
-    // 이미 시작된 컨테이너가 파괴된 커넥션 팩토리에 무한 폴링한다. @PreDestroy는
-    // 정상 종료와 refresh 실패 양쪽에서 호출되므로 여기서 확정적으로 멈춘다 (stop()은 멱등)
+    // refresh 실패 시에는 ContextClosedEvent가 발행되지 않으므로 @PreDestroy에서 stopping을 확정한다.
+    // 컨테이너 일괄 stop은 RedisStreamContainerRegistry의 @PreDestroy 책임이며, 빈 파괴는 역의존
+    // 순서이므로 이 플래그 설정이 레지스트리 stopAll()보다 항상 먼저 실행된다 (ADR-0022)
     @PreDestroy
-    public void stopContainers() {
+    public void markStopping() {
         stopping.set(true);
-        containers.forEach(StreamMessageListenerContainer::stop);
     }
 
     // 종료 신호의 진실 공급원은 stopping 플래그다. 종료 중 폴링 오류는 커넥션 해체 과정의

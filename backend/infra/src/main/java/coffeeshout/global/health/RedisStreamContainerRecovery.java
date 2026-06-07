@@ -1,14 +1,12 @@
 package coffeeshout.global.health;
 
-import static coffeeshout.global.redis.config.RedisStreamListenerStarter.STREAM_CONTAINER_BEAN_NAME_FORMAT;
-
+import coffeeshout.global.redis.config.RedisStreamContainerRegistry;
 import coffeeshout.global.redis.config.RedisStreamProperties;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -35,7 +33,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class RedisStreamContainerRecovery {
 
-    private final ApplicationContext applicationContext;
+    private final RedisStreamContainerRegistry containerRegistry;
     private final RedisStreamProperties redisStreamProperties;
 
     /**
@@ -55,9 +53,9 @@ public class RedisStreamContainerRecovery {
 
     private static final int MAX_RECOVERY_ATTEMPTS = 2;
 
-    public RedisStreamContainerRecovery(ApplicationContext applicationContext,
+    public RedisStreamContainerRecovery(RedisStreamContainerRegistry containerRegistry,
                                         RedisStreamProperties redisStreamProperties) {
-        this.applicationContext = applicationContext;
+        this.containerRegistry = containerRegistry;
         this.redisStreamProperties = redisStreamProperties;
     }
 
@@ -79,12 +77,14 @@ public class RedisStreamContainerRecovery {
         }
 
         for (String streamKey : redisStreamProperties.keys().keySet()) {
-            final String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-
             try {
-                final StreamMessageListenerContainer<?, ?> container =
-                        applicationContext.getBean(beanName, StreamMessageListenerContainer.class);
+                final Optional<StreamMessageListenerContainer<?, ?>> found = containerRegistry.find(streamKey);
+                if (found.isEmpty()) {
+                    log.debug("Redis Stream container 미등록: stream={}", streamKey);
+                    continue;
+                }
 
+                final StreamMessageListenerContainer<?, ?> container = found.get();
                 if (container.isRunning()) {
                     recoveryFailureCounts.remove(streamKey);
                     failedRecoveryStreams.remove(streamKey);
@@ -94,8 +94,6 @@ public class RedisStreamContainerRecovery {
                 log.warn("Redis Stream container 중단 감지, 복구 시도: stream={}", streamKey);
                 attemptRecovery(streamKey, container);
 
-            } catch (NoSuchBeanDefinitionException e) {
-                log.debug("Redis Stream container 빈 없음: stream={}", streamKey);
             } catch (Exception e) {
                 log.error("Redis Stream container 상태 확인 중 예외: stream={}", streamKey, e);
             }

@@ -43,7 +43,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.stream.MapRecord;
@@ -82,10 +81,8 @@ class RedisStreamListenerStarterTest {
     @Mock
     private ApplicationContext applicationContext;
 
-    @Mock
-    private GenericApplicationContext genericApplicationContext;
-
     private ObjectMapper objectMapper;
+    private RedisStreamContainerRegistry containerRegistry;
     private RedisStreamListenerStarter starter;
 
     @BeforeEach
@@ -95,6 +92,7 @@ class RedisStreamListenerStarterTest {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.registerSubtypes(BaseEventDummy.class);
 
+        containerRegistry = new RedisStreamContainerRegistry();
         starter = new RedisStreamListenerStarter(
                 properties,
                 redisConnectionFactory,
@@ -103,7 +101,7 @@ class RedisStreamListenerStarterTest {
                 eventDispatcher,
                 streamTracePropagator,
                 applicationContext,
-                genericApplicationContext
+                containerRegistry
         );
     }
 
@@ -135,7 +133,7 @@ class RedisStreamListenerStarterTest {
         void 컨텍스트_종료_중에는_구독_취소를_허용한다() {
             // given — 종료 중 취소를 막으면 파괴된 커넥션 팩토리에 폴링을 무한 재시도한다
             final StreamReadRequest<String> request = starter.buildReadRequest(STREAM_KEY);
-            starter.onContextClosed(new ContextClosedEvent(genericApplicationContext));
+            starter.onContextClosed(new ContextClosedEvent(applicationContext));
 
             // when & then
             assertThat(request.getCancelSubscriptionOnError().test(new RuntimeException("종료 중 오류"))).isTrue();
@@ -145,7 +143,7 @@ class RedisStreamListenerStarterTest {
         void 빈_파괴_시점에도_구독_취소를_허용한다() {
             // given — refresh 실패 시에는 ContextClosedEvent 없이 @PreDestroy만 호출된다 (ADR-0022)
             final StreamReadRequest<String> request = starter.buildReadRequest(STREAM_KEY);
-            starter.stopContainers();
+            starter.markStopping();
 
             // when & then
             assertThat(request.getCancelSubscriptionOnError().test(new RuntimeException("파괴 후 폴링 오류"))).isTrue();
@@ -281,7 +279,7 @@ class RedisStreamListenerStarterTest {
             final ErrorHandler errorHandler = Objects.requireNonNull(
                     starter.buildReadRequest(STREAM_KEY).getErrorHandler()
             );
-            starter.onContextClosed(new ContextClosedEvent(genericApplicationContext));
+            starter.onContextClosed(new ContextClosedEvent(applicationContext));
 
             // when
             errorHandler.handleError(

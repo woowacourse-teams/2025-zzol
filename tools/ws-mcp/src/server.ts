@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /* eslint-disable @typescript-eslint/require-await --
- * MCP SDK 의 Server / setRequestHandler 시그니처를 직접 사용하는 thin shim.
- * McpServer 마이그레이션은 별도 후속 작업, 핸들러는 SDK 가 async 콜백을 요구한다. */
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+ * MCP SDK setRequestHandler 시그니처를 직접 사용하는 thin shim.
+ * 핸들러는 SDK 가 async 콜백을 요구한다. */
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { CatalogCache } from './catalog/cache.js';
@@ -36,7 +36,11 @@ async function main(): Promise<void> {
     brokerUrl,
   };
 
-  const server = new Server({ name: 'ws-mcp', version: '0.1.0' }, { capabilities: { tools: {} } });
+  const mcpServer = new McpServer(
+    { name: 'ws-mcp', version: '0.1.0' },
+    { capabilities: { tools: {} } }
+  );
+  const server = mcpServer.server;
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: TOOLS.map((t) => ({
@@ -65,7 +69,7 @@ async function main(): Promise<void> {
   });
 
   const transport = new StdioServerTransport();
-  await server.connect(transport);
+  await mcpServer.connect(transport);
 }
 
 main().catch((error: unknown) => {

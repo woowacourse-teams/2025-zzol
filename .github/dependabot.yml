@@ -14,24 +14,31 @@ updates:
       - "BE"
       - "backend"
 
+  # 프론트엔드 실제 작업 브랜치는 fe/dev (main 대비 수백 커밋 앞섬) — fe/dev를 스캔·타깃한다.
   - package-ecosystem: "npm"
     directory: "/frontend"
+    target-branch: "fe/dev"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+      - "FE"
       - "frontend"
 
+  # tools/ws-mcp는 main에 존재하지 않아(be/dev·fe/dev에만 있음) main 스캔은 no-op이었다.
+  # ws-mcp-ci 트리거가 be/dev·be/prod이므로 be/dev를 타깃한다.
   - package-ecosystem: "npm"
     directory: "/tools/ws-mcp"
+    target-branch: "be/dev"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
+      - "BE"
       - "ws-mcp"
 
   # main의 워크플로우 파일용 + 보안 업데이트(Dependabot 보안 업데이트는 default 브랜치만 타깃)

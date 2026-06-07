@@ -19,6 +19,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("io.micrometer:micrometer-core")
+    implementation("io.micrometer:context-propagation")
 
     annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jakarta") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")

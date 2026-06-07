@@ -70,7 +70,7 @@ CoffeeShoutException (abstract)
 
 - 이벤트는 record로 정의하고 `BaseEvent`를 구현한다
 - 컴팩트 생성자에서 `eventId`(UUID)와 `timestamp`(Instant.now())를 자동 생성한다
-- 분산 추적이 필요하면 `Traceable`도 함께 구현한다
+- 분산 추적은 인프라 경계(`StreamPublisher`/`RedisStreamListenerStarter`)가 W3C `traceparent` 캐리어로 자동 전파한다. 이벤트에 트레이싱 코드를 넣지 않는다 ([ADR-0021](adr/0021-trace-propagation-traceparent.md))
 
 > **외부 의존성 주입 원칙과의 관계**: `eventId`·`timestamp`는 "이벤트가 생성된 사실 자체"를 기록하는 메타데이터이므로, 비즈니스 로직 테스트의 격리 대상이 아니다. 이벤트 생성 시점이 테스트에 영향을 준다면 이벤트 객체 자체보다 그것을 소비하는 쪽의 설계를 먼저 검토한다.
 

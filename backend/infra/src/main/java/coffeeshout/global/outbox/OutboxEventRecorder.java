@@ -2,6 +2,7 @@ package coffeeshout.global.outbox;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamKey;
+import coffeeshout.global.redis.stream.StreamTracePropagator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -28,15 +29,18 @@ public class OutboxEventRecorder {
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final StreamTracePropagator streamTracePropagator;
 
     public OutboxEventRecorder(
             OutboxEventRepository outboxEventRepository,
             @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
-            ApplicationEventPublisher applicationEventPublisher
+            ApplicationEventPublisher applicationEventPublisher,
+            StreamTracePropagator streamTracePropagator
     ) {
         this.outboxEventRepository = outboxEventRepository;
         this.objectMapper = objectMapper;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.streamTracePropagator = streamTracePropagator;
     }
 
     /**
@@ -50,12 +54,14 @@ public class OutboxEventRecorder {
     public void record(StreamKey streamKey, BaseEvent event) {
         try {
             final String payload = objectMapper.writeValueAsString(event);
-            final OutboxEvent outboxEvent = OutboxEvent.create(streamKey.getRedisKey(), payload);
+            // 재시도 릴레이는 스케줄러 스레드라 컨텍스트가 없으므로 기록 시점에 traceparent를 캡처한다
+            final String traceparent = streamTracePropagator.currentTraceparent();
+            final OutboxEvent outboxEvent = OutboxEvent.create(streamKey.getRedisKey(), payload, null, traceparent);
             outboxEventRepository.saveAndFlush(outboxEvent);
 
             // Spring 내부 이벤트 발행 → 트랜잭션 커밋 후 OutboxAfterCommitRelay가 수신
             applicationEventPublisher.publishEvent(
-                    new OutboxSavedEvent(outboxEvent.getId(), streamKey.getRedisKey(), payload)
+                    new OutboxSavedEvent(outboxEvent.getId(), streamKey.getRedisKey(), payload, traceparent)
             );
 
             log.debug("Outbox 이벤트 저장: streamKey={}, eventId={}",

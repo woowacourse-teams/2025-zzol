@@ -41,7 +41,7 @@ class OutboxAfterCommitRelayIntegrationTest extends InfraModuleIntegrationTest {
     @Test
     void 트랜잭션_커밋_후_AFTER_COMMIT_리스너가_실행된다() {
         // given
-        OutboxSavedEvent savedEvent = new OutboxSavedEvent(42L, "test-stream", "{}");
+        OutboxSavedEvent savedEvent = new OutboxSavedEvent(42L, "test-stream", "{}", null);
         // 실제 처리 로직은 단위 테스트에서 검증하므로 여기서는 바인딩 타이밍만 확인
         doNothing().when(outboxAfterCommitRelay).onOutboxSaved(any(OutboxSavedEvent.class));
 

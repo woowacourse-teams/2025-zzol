@@ -10,7 +10,7 @@
 프로젝트는 12개 Gradle 모듈로 구성된다.
 
 ```text
-:common       — Spring 무관 순수 추상 (ErrorCode, BaseEvent, TraceInfo, VO)
+:common       — Spring 무관 순수 추상 (ErrorCode, BaseEvent, VO)
 :infra        — Spring + JPA + Redis + Outbox + Lock + IpBlock + Health + Metric
 :web          — 공유 HTTP 인프라 (RestExceptionHandler, CORS, SpringDoc)
 :websocket    — STOMP 플랫폼 (도메인 무지)
@@ -57,7 +57,6 @@
 |--------------|-----------------------------------------------------|
 | `event/`     | ProfanityWordBlockedEvent, BaseEvent                |
 | `exception/` | ErrorCode 인터페이스, BusinessException 계층               |
-| `trace/`     | TraceInfo, Traceable                                |
 | `nickname/`  | ProfanityChecker, NicknameSubmittedEvent, WordPicker 등 닉네임 유틸 |
 | `redis/`     | BaseEvent, StreamKey 인터페이스                          |
 | `log/`       | NotificationMarker                                  |

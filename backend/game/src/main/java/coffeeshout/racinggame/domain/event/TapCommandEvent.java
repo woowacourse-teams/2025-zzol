@@ -1,9 +1,6 @@
 package coffeeshout.racinggame.domain.event;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.trace.TraceInfo;
-import coffeeshout.global.trace.TraceInfoExtractor;
-import coffeeshout.global.trace.Traceable;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -12,9 +9,8 @@ public record TapCommandEvent(
         String joinCode,
         String playerName,
         int tapCount,
-        Instant timestamp,
-        TraceInfo traceInfo
-) implements BaseEvent, Traceable {
+        Instant timestamp
+) implements BaseEvent {
 
     public static TapCommandEvent create(String joinCode, String playerName, int tapCount) {
         final String eventId = UUID.randomUUID().toString();
@@ -23,8 +19,7 @@ public record TapCommandEvent(
                 joinCode,
                 playerName,
                 tapCount,
-                Instant.now(),
-                TraceInfoExtractor.extract()
+                Instant.now()
         );
     }
 }

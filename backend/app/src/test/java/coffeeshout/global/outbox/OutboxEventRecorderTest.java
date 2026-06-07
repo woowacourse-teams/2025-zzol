@@ -4,13 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.support.app.StreamMockedServiceTest;
 import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.global.redis.stream.StreamTracePropagator;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 /**
  * OutboxEventRecorder 단위 테스트.
@@ -26,6 +29,9 @@ class OutboxEventRecorderTest extends StreamMockedServiceTest {
 
     @Autowired
     private OutboxEventRepository outboxEventRepository;
+
+    @MockitoSpyBean
+    private StreamTracePropagator streamTracePropagator;
 
     @BeforeEach
     void setUp() {
@@ -49,6 +55,34 @@ class OutboxEventRecorderTest extends StreamMockedServiceTest {
         assertThat(saved.getStatus()).isEqualTo(OutboxStatus.PENDING);
         assertThat(saved.getRetryCount()).isZero();
         assertThat(saved.getPayload()).contains("test-join-code");
+    }
+
+    @Test
+    void record_호출_시_기록_시점의_traceparent가_함께_저장된다() {
+        // given — 재시도 릴레이는 스케줄러 스레드라 컨텍스트가 없으므로 기록 시점 캡처를 검증한다
+        String traceparent = "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01";
+        BDDMockito.given(streamTracePropagator.currentTraceparent()).willReturn(traceparent);
+        BaseEvent event = new PlayerListUpdateEvent("test-join-code");
+
+        // when
+        outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
+
+        // then
+        OutboxEvent saved = outboxEventRepository.findAll().getFirst();
+        assertThat(saved.getTraceparent()).isEqualTo(traceparent);
+    }
+
+    @Test
+    void 트레이스_컨텍스트가_없으면_traceparent가_null로_저장된다() {
+        // given — 테스트 스레드에는 활성 스팬이 없다
+        BaseEvent event = new PlayerListUpdateEvent("test-join-code");
+
+        // when
+        outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
+
+        // then
+        OutboxEvent saved = outboxEventRepository.findAll().getFirst();
+        assertThat(saved.getTraceparent()).isNull();
     }
 
     @Test

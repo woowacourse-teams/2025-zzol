@@ -150,6 +150,25 @@ user      JVM  ──┘
 `ddl-auto: create` 대신 Flyway 기반 테스트 마이그레이션으로 전환하면
 `withReuse` 를 유지하면서 충돌도 제거할 수 있다 — 향후 개선 과제로 남긴다.
 
+### CI에서 reuse 활성화 (2026-06-07)
+
+위 레이스 컨디션의 원인이었던 **단일 공유 DB(`zzol_test`)** 구조는 이후
+모듈별 독립 DB(`zzol_test_<module>`) + 모듈별 Redis DB 인덱스(0~8) 격리로 해소됐다
+(루트 `build.gradle.kts`의 `test.db.name` / `test.redis.db` 시스템 프로퍼티 참조).
+각 모듈 JVM의 `ddl-auto: create` 는 자기 DB만 DROP/CREATE 하므로 충돌하지 않는다.
+
+이에 따라 CI 워크플로우(`backend-ci.yml`)에서도 `~/.testcontainers.properties` 에
+`testcontainers.reuse.enable=true` 를 설정해 reuse를 활성화했다.
+
+- **이전**: `org.gradle.parallel=true` 로 모듈 test 태스크가 별도 JVM에서 병렬 실행될 때
+  JVM마다 MySQL + Valkey 컨테이너를 새로 기동 (통합 테스트 보유 모듈 수만큼 반복)
+- **이후**: 최초 JVM이 기동한 컨테이너 1세트를 이후 JVM이 재사용
+
+알려진 한계: 병렬 JVM들이 거의 동시에 최초 기동하면 reuse 해시 조회 전에
+컨테이너가 중복 생성될 수 있다. 각 JVM은 자신이 만든 컨테이너를 사용하므로
+정합성 문제는 없고, 최악의 경우가 reuse 비활성 상태와 동일하다.
+CI 러너는 잡 종료 시 폐기되므로 잔여 컨테이너 정리도 불필요하다.
+
 ### TestContainers 버전 고정
 
 Spring Boot BOM 이 트랜지티브 의존으로 `testcontainers` 를 1.x 로 다운그레이드한다.

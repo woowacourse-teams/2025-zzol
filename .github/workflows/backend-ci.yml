@@ -92,6 +92,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # 모듈별 test JVM이 같은 MySQL/Valkey 컨테이너를 재사용하도록 활성화 (ADR-0013)
+      # 모듈별 독립 DB(zzol_test_<module>)·Redis DB 인덱스 격리로 병렬 실행 시에도 안전하다
+      - name: Enable Testcontainers reuse
+        run: echo "testcontainers.reuse.enable=true" > ~/.testcontainers.properties
+
       - name: Run Tests
         run: ./gradlew test jacocoTestReport --build-cache --no-daemon
 

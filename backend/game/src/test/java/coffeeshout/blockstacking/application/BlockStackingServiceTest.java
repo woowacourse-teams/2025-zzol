@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.blockstacking.domain.BlockStackingGameErrorCode;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.GameModuleServiceTest;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-class BlockStackingServiceTest extends ServiceTest {
+class BlockStackingServiceTest extends GameModuleServiceTest {
 
     @Autowired
     private RoomRepository roomRepository;

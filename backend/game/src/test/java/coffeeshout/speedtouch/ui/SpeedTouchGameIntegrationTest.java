@@ -5,7 +5,7 @@ import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.support.TestStompSession;
-import coffeeshout.support.app.WebSocketIntegrationTestSupport;
+import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class SpeedTouchGameIntegrationTest extends WebSocketIntegrationTestSupport {
+class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
     JoinCode joinCode;
     Player host;

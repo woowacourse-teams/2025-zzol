@@ -7,7 +7,7 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
 import coffeeshout.fixture.CardGameFake;
-import coffeeshout.support.app.IntegrationTestSupport;
+import coffeeshout.GameModuleIntegrationTest;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.cardgame.infra.CardGameStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 
-class CardSelectStreamProducerTest extends IntegrationTestSupport {
+class CardSelectStreamProducerTest extends GameModuleIntegrationTest {
 
     @Autowired
     RoomRepository roomRepository;

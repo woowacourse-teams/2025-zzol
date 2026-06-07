@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.GameModuleServiceTest;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.racinggame.domain.RacingGameState;
 import coffeeshout.room.domain.Room;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class RacingGameServiceTest extends ServiceTest {
+class RacingGameServiceTest extends GameModuleServiceTest {
 
     @Autowired
     private RoomRepository roomRepository;

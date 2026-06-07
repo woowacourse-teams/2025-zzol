@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.support.TestStompSession;
-import coffeeshout.support.app.WebSocketIntegrationTestSupport;
+import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * 타이밍 설정 (application-test.yml): prepare=500ms, playing=2000ms
  */
-class BlockStackingIntegrationTest extends WebSocketIntegrationTestSupport {
+class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
 
     private static final long PREPARE_MS = 500L;
     private static final long PLAYING_MS = 2000L;

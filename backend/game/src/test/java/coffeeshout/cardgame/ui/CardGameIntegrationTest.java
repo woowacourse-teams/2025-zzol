@@ -7,7 +7,7 @@ import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.support.TestStompSession;
-import coffeeshout.support.app.WebSocketIntegrationTestSupport;
+import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * 타이밍 설정 (application-test.yml): firstLoading=500ms, prepare=500ms, playing=2000ms, scoreBoard=500ms, loading=500ms,
  * earlyFinishDelay=500ms
  */
-class CardGameIntegrationTest extends WebSocketIntegrationTestSupport {
+class CardGameIntegrationTest extends GameModuleWebSocketTest {
 
     // application-test.yml 타이밍 값과 일치해야 함
     private static final long FIRST_LOADING_MS = 500L;

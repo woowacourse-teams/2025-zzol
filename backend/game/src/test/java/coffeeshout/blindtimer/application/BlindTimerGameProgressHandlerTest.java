@@ -9,7 +9,7 @@ import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.BlindTimerGameState;
 import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.GameModuleServiceTest;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class BlindTimerGameProgressHandlerTest extends ServiceTest {
+class BlindTimerGameProgressHandlerTest extends GameModuleServiceTest {
 
     @Autowired
     private RoomRepository roomRepository;

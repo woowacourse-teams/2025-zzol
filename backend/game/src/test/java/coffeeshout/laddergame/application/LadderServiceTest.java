@@ -7,7 +7,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.app.ServiceTest;
+import coffeeshout.GameModuleServiceTest;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-class LadderServiceTest extends ServiceTest {
+class LadderServiceTest extends GameModuleServiceTest {
 
     @Autowired
     private RoomRepository roomRepository;

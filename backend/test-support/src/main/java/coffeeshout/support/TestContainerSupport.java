@@ -43,8 +43,6 @@ public abstract class TestContainerSupport {
     static {
         mysql.start();
         valkey.start();
-        log.info("Testcontainers 기동 — mysql={}, valkey={} (reuse 시 JVM 간 동일 ID)",
-                mysql.getContainerId(), valkey.getContainerId());
         if (!MODULE_DB.equals(BASE_DB)) {
             createDatabaseIfAbsent(MODULE_DB);
         }

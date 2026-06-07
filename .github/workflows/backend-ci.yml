@@ -100,11 +100,6 @@ jobs:
       - name: Run Tests
         run: ./gradlew test jacocoTestReport --build-cache --no-daemon
 
-      # reuse 동작 진단: 종료 시점에 살아있는 Testcontainers 컨테이너 목록 (reuse면 mysql/valkey 각 1개)
-      - name: Show Testcontainers usage
-        if: always()
-        run: docker ps -a --filter label=org.testcontainers=true --format '{{.ID}} {{.Image}} {{.Status}} {{.Names}}'
-
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()

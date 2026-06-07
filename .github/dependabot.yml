@@ -1,41 +1,92 @@
 version: 2
 updates:
+  # 백엔드 코드는 be/dev가 실제 작업 브랜치 — main의 backend는 멀티모듈 전환 이전
+  # 화석이라 main 스캔은 무의미하다. be/dev의 libs.versions.toml을 스캔해 be/dev로 PR을 보낸다.
   - package-ecosystem: "gradle"
     directory: "/backend"
+    target-branch: "be/dev"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    # minor·patch는 PR 1개로 묶어 알림 폭주 방지. major(예: Spring Boot 메이저)만 개별 PR.
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
+      - "BE"
       - "backend"
 
+  # 프론트엔드 실제 작업 브랜치는 fe/dev (main 대비 수백 커밋 앞섬) — fe/dev를 스캔·타깃한다.
   - package-ecosystem: "npm"
     directory: "/frontend"
+    target-branch: "fe/dev"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
+      - "FE"
       - "frontend"
 
+  # tools/ws-mcp는 main에 존재하지 않아(be/dev·fe/dev에만 있음) main 스캔은 no-op이었다.
+  # ws-mcp-ci 트리거가 be/dev·be/prod이므로 be/dev를 타깃한다.
   - package-ecosystem: "npm"
     directory: "/tools/ws-mcp"
+    target-branch: "be/dev"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 3
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
+      - "BE"
       - "ws-mcp"
 
+  # main의 워크플로우 파일용 + 보안 업데이트(Dependabot 보안 업데이트는 default 브랜치만 타깃)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    # 액션 버전업은 대부분 저위험이라 major 포함 전부 PR 1개로 묶는다.
+    groups:
+      actions:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
+      - "github-actions"
+
+  # 실행 브랜치 be/dev의 워크플로우 버전업 — main에만 bump가 와서 be/dev가 영원히
+  # 구버전으로 남는 문제(setup-gradle v4 잔존) 방지를 위해 be/dev 타깃 블록을 별도로 둔다.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "be/dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "BE"
       - "github-actions"

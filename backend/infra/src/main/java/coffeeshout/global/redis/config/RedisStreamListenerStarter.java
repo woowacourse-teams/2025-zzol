@@ -23,6 +23,7 @@ import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer.StreamMessageListenerContainerOptions;
+import org.springframework.data.redis.stream.StreamMessageListenerContainer.StreamReadRequest;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -76,7 +77,7 @@ public class RedisStreamListenerStarter {
                     streamConfig
             );
 
-            container.receive(StreamOffset.fromStart(streamKey), this::onMessage);
+            container.register(buildReadRequest(streamKey), this::onMessage);
 
             genericApplicationContext.registerBean(
                     String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey),
@@ -101,31 +102,27 @@ public class RedisStreamListenerStarter {
         stopping.set(true);
     }
 
+    // 종료 신호의 진실 공급원은 stopping 플래그다. 종료 중 폴링 오류는 커넥션 해체 과정의
+    // 기대된 노이즈이므로 메시지 텍스트로 세분류하지 않는다 (라이브러리 버전업에 취약)
     private void handleStreamError(Throwable t) {
-        if (stopping.get() && isShutdownRelated(t)) {
-            log.debug("Redis Stream 연결이 종료됐습니다 (정상 종료)");
+        if (stopping.get()) {
+            log.debug("종료 중 Redis Stream 오류 (정상 종료 과정)", t);
             return;
         }
         log.error("Redis Stream 처리 중 오류가 발생했습니다.", t);
     }
 
-    private static final String CONNECTION_CLOSED = "Connection closed";
-    private static final String FACTORY_STOPPING = "is STOPPING";
-    private static final String FACTORY_STOPPED = "has been STOPPED";
-
-    private boolean isShutdownRelated(Throwable t) {
-        Throwable current = t;
-        while (current != null) {
-            final String msg = current.getMessage();
-            if (msg != null && (msg.contains(CONNECTION_CLOSED) || msg.contains(FACTORY_STOPPING) || msg.contains(FACTORY_STOPPED))) {
-                return true;
-            }
-            current = current.getCause();
-        }
-        return false;
+    // receive()의 기본 cancelOnError(t -> true)는 예외 1건으로 구독을 영구 중단시키므로
+    // 평시에는 구독을 유지하고, 컨텍스트 종료 중에만 취소를 허용한다
+    // (종료 중 취소를 막으면 파괴된 커넥션 팩토리에 폴링을 무한 재시도한다)
+    StreamReadRequest<String> buildReadRequest(String streamKey) {
+        return StreamReadRequest.builder(StreamOffset.fromStart(streamKey))
+                .errorHandler(this::handleStreamError)
+                .cancelOnError(t -> stopping.get())
+                .build();
     }
 
-    private void onMessage(MapRecord<String, String, String> message) {
+    void onMessage(MapRecord<String, String, String> message) {
         final Map<String, String> fields = message.getValue();
         final String payload = resolvePayload(fields);
         if (payload == null) {
@@ -142,8 +139,9 @@ public class RedisStreamListenerStarter {
         } catch (JsonProcessingException e) {
             log.error("Failed to parse event: {}", payload, e);
         } catch (Exception e) {
+            // EventDispatcher가 내부에서 예외를 삼키므로 평소엔 도달하지 않는 최후 안전망.
+            // 재던지면 구독이 cancel될 수 있으므로 로깅만 한다 (컨슈머 그룹 미사용 — 재전달 이득 없음)
             log.error("예외가 발생했습니다.", e);
-            throw e;
         }
     }
 

@@ -89,7 +89,9 @@ jobs:
         with:
           # PR 런도 캐시를 저장한다 — 같은 PR에 커밋을 거듭 푸시할 때
           # 직전 푸시에서 실행한 모듈 테스트 결과(FROM-CACHE)를 재사용하기 위함.
-          # PR 브랜치 캐시는 해당 PR 스코프에만 보이므로 다른 PR을 오염시키지 않는다.
+          # 캐시는 head 브랜치 스코프에 저장되고, 다른 브랜치는 base/default 브랜치
+          # 캐시를 단방향으로 읽기만 하므로 sibling PR이나 배포 빌드(be/dev·be/prod)로
+          # 역전파되지 않는다. 10GB LRU 압박은 v6 기본 cache-cleanup(on-success)이 완화.
           cache-read-only: false
 
       - name: Grant execute permission for gradlew

@@ -38,7 +38,7 @@ class RedisStreamLagMetricServiceTest {
         given(streamOps.size("room")).willReturn(42L);
         given(streamOps.size("racinggame")).willReturn(7L);
 
-        CommonSettings commonSettings = new CommonSettings(100, 10, Duration.ofSeconds(2));
+        CommonSettings commonSettings = new CommonSettings(100, 10, Duration.ofSeconds(2), Duration.ofSeconds(5));
         StreamConfig roomConfig = new StreamConfig("concurrent", null, null, null, null);
         StreamConfig racingConfig = new StreamConfig("concurrent", null, null, null, null);
 

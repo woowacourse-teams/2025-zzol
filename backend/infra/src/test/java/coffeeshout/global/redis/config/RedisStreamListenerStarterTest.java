@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -209,6 +210,13 @@ class RedisStreamListenerStarterTest {
 
     @Nested
     class 구독_시작을_대기할_때 {
+
+        @BeforeEach
+        void stubCommonSettings() {
+            given(properties.commonSettings()).willReturn(
+                    new RedisStreamProperties.CommonSettings(
+                            100, 10, Duration.ofSeconds(2), Duration.ofSeconds(5)));
+        }
 
         @Test
         void 제한_시간_내에_시작되면_정상_반환한다() throws InterruptedException {

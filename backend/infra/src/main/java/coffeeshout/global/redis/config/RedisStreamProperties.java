@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Positive;
 import java.time.Duration;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
@@ -17,7 +18,8 @@ public record RedisStreamProperties(
     public record CommonSettings(
             @Positive int maxLength,
             @Positive int batchSize,
-            @NotNull Duration pollTimeout
+            @NotNull Duration pollTimeout,
+            @DefaultValue("5s") @NotNull Duration subscriptionStartTimeout
     ) {
     }
 

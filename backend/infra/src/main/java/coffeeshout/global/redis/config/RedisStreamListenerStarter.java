@@ -42,8 +42,6 @@ public class RedisStreamListenerStarter {
 
     public static final String STREAM_CONTAINER_BEAN_NAME_FORMAT = "stream-container-%s";
 
-    private static final Duration SUBSCRIPTION_START_TIMEOUT = Duration.ofSeconds(5);
-
     private final AtomicBoolean stopping = new AtomicBoolean(false);
     private final List<StreamMessageListenerContainer<String, MapRecord<String, String, String>>> containers =
             new ArrayList<>();
@@ -110,8 +108,9 @@ public class RedisStreamListenerStarter {
     // 폴링 태스크 시작을 보장한 뒤 기동을 완료한다. Stream은 메시지 흐름의 필수 경로이므로
     // 구독 없는 기동은 무의미하다 — 실패 시 fail-fast (ADR-0022)
     void awaitSubscriptionStart(String streamKey, Subscription subscription) {
+        final Duration timeout = properties.commonSettings().subscriptionStartTimeout();
         try {
-            if (!subscription.await(SUBSCRIPTION_START_TIMEOUT)) {
+            if (!subscription.await(timeout)) {
                 throw new IllegalStateException(
                         "Redis Stream 구독이 제한 시간 내에 시작되지 않았습니다 (공유 스레드풀 core-size가 "
                                 + "스트림 수보다 작은지 확인): " + streamKey);

@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: classpath:application-test-game.yml
   datasource:
     url: jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
     hikari:
@@ -118,42 +120,6 @@ user:
     refresh-token-expiration-seconds: 1209600
   oauth:
     frontend-redirect-uri: "http://localhost:3000/auth/callback"
-
-block-stacking:
-  timing:
-    prepare: 500ms
-    playing: 2000ms
-
-ladder:
-  timing:
-    description: 500ms
-    prepare: 500ms
-    drawing: 1000ms
-    drawing-grace-period: 300ms
-    result: 500ms
-
-card-game:
-  timing:
-    first-loading: 500ms
-    loading: 500ms
-    prepare: 500ms
-    playing: 2000ms
-    score-board: 500ms
-    early-finish-delay: 500ms
-
-speed-touch:
-  timing:
-    description: 500ms
-    prepare: 500ms
-    playing: 30000ms
-
-blind-timer:
-  timing:
-    description: 500ms
-    prepare: 500ms
-    blind-delay: 500ms
-    timeout-buffer: 3000ms
-    result-delay: 500ms
 
 zzol-bot:
   gemini-api-key: test-key

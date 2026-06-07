@@ -1,0 +1,39 @@
+# 게임 모듈 timing 테스트 공통 설정 — :game 빈을 컨텍스트에 올리는 모듈(:game, :app, :admin)이
+# spring.config.import: classpath:application-test-game.yml 로 가져다 쓴다.
+# *TimingProperties가 @NotNull 검증을 걸므로 게임 컨텍스트를 띄우는 테스트는 이 값들이 필수다.
+block-stacking:
+  timing:
+    prepare: 500ms
+    playing: 2000ms
+    all-failed-delay: 500ms
+
+ladder:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    drawing: 1000ms
+    drawing-grace-period: 300ms
+    result: 500ms
+
+card-game:
+  timing:
+    first-loading: 500ms
+    loading: 500ms
+    prepare: 500ms
+    playing: 2000ms
+    score-board: 500ms
+    early-finish-delay: 500ms
+
+speed-touch:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    playing: 30000ms
+
+blind-timer:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    blind-delay: 500ms
+    timeout-buffer: 3000ms
+    result-delay: 500ms

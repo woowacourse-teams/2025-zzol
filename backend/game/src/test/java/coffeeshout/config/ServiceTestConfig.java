@@ -1,6 +1,5 @@
 package coffeeshout.config;
 
-import coffeeshout.user.application.port.ReportAnonymizationPort;
 import java.time.Clock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -12,7 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
-@Import(GameSchedulerTestConfig.class)
+@Import({GameSchedulerTestConfig.class, ExternalPortMockConfig.class})
 public class ServiceTestConfig {
 
     @Bean
@@ -25,12 +24,5 @@ public class ServiceTestConfig {
     @Primary
     public Clock testClock() {
         return Clock.systemUTC();
-    }
-
-    // :user의 UserWithdrawalService가 ReportAnonymizationPort에 의존하지만 실구현체(:admin)는 클래스패스 밖이므로 mock 등록
-    @Bean
-    @Primary
-    public ReportAnonymizationPort mockReportAnonymizationPort() {
-        return Mockito.mock(ReportAnonymizationPort.class);
     }
 }

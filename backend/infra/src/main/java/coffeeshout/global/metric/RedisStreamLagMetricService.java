@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 /**
  * Redis Stream의 공간적 백로그(lag)를 주기적으로 수집한다.
  *
- * <p>현재 ZZOL은 Consumer Group 없이 StreamOffset.fromStart()로 소비하므로,
+ * <p>현재 ZZOL은 Consumer Group 없이 기동 시점 마지막 ID부터 소비하므로(ADR-0022),
  * XINFO GROUPS 대신 XLEN(스트림 길이)과 스레드풀 큐 깊이를 조합하여 측정한다.</p>
  *
  * <p>Redis 부하 최소화:

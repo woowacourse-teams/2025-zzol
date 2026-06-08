@@ -1,9 +1,9 @@
 package coffeeshout.global.health;
 
-import static coffeeshout.global.redis.config.RedisStreamListenerStarter.STREAM_CONTAINER_BEAN_NAME_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
+import coffeeshout.global.redis.config.RedisStreamContainerRegistry;
 import coffeeshout.global.redis.config.RedisStreamProperties;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,17 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 
 @ExtendWith(MockitoExtension.class)
 class RedisStreamHealthIndicatorTest {
-
-    @Mock
-    private ApplicationContext applicationContext;
 
     @Mock
     private RedisStreamContainerRecovery containerRecovery;
@@ -37,6 +32,7 @@ class RedisStreamHealthIndicatorTest {
     @Mock
     private StreamMessageListenerContainer<?, ?> stoppedContainer;
 
+    private RedisStreamContainerRegistry containerRegistry;
     private RedisStreamHealthIndicator indicator;
 
     private static final String[] STREAM_KEYS = {
@@ -45,7 +41,8 @@ class RedisStreamHealthIndicatorTest {
 
     @BeforeEach
     void setUp() {
-        indicator = new RedisStreamHealthIndicator(applicationContext, containerRecovery, redisStreamProperties);
+        containerRegistry = new RedisStreamContainerRegistry();
+        indicator = new RedisStreamHealthIndicator(containerRegistry, containerRecovery, redisStreamProperties);
 
         Map<String, RedisStreamProperties.StreamConfig> keys = new LinkedHashMap<>();
         for (String key : STREAM_KEYS) {
@@ -54,16 +51,17 @@ class RedisStreamHealthIndicatorTest {
         given(redisStreamProperties.keys()).willReturn(keys);
     }
 
+    private void registerAllRunning() {
+        given(runningContainer.isRunning()).willReturn(true);
+        for (String streamKey : STREAM_KEYS) {
+            containerRegistry.register(streamKey, runningContainer);
+        }
+    }
+
     @Test
     void 모든_컨테이너가_실행_중이고_복구_실패가_없으면_UP을_반환한다() {
-        given(runningContainer.isRunning()).willReturn(true);
+        registerAllRunning();
         given(containerRecovery.hasUnrecoverableStreams()).willReturn(false);
-
-        for (String streamKey : STREAM_KEYS) {
-            String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-            given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                    .willReturn(runningContainer);
-        }
 
         Health health = indicator.health();
 
@@ -78,14 +76,7 @@ class RedisStreamHealthIndicatorTest {
         given(containerRecovery.hasUnrecoverableStreams()).willReturn(false);
 
         for (String streamKey : STREAM_KEYS) {
-            String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-            if (streamKey.equals("room")) {
-                given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                        .willReturn(stoppedContainer);
-            } else {
-                given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                        .willReturn(runningContainer);
-            }
+            containerRegistry.register(streamKey, streamKey.equals("room") ? stoppedContainer : runningContainer);
         }
 
         Health health = indicator.health();
@@ -96,15 +87,9 @@ class RedisStreamHealthIndicatorTest {
 
     @Test
     void 복구_실패한_스트림이_있으면_DOWN을_반환한다() {
-        given(runningContainer.isRunning()).willReturn(true);
+        registerAllRunning();
         given(containerRecovery.hasUnrecoverableStreams()).willReturn(true);
         given(containerRecovery.getFailedRecoveryStreams()).willReturn(Set.of("room"));
-
-        for (String streamKey : STREAM_KEYS) {
-            String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-            given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                    .willReturn(runningContainer);
-        }
 
         Health health = indicator.health();
 
@@ -113,14 +98,9 @@ class RedisStreamHealthIndicatorTest {
     }
 
     @Test
-    void 컨테이너_빈이_없으면_NOT_REGISTERED로_표시하고_UP을_반환한다() {
+    void 레지스트리에_없는_컨테이너는_NOT_REGISTERED로_표시하고_UP을_반환한다() {
+        // 아무 컨테이너도 등록하지 않는다 — 기동 실패 등으로 등록 전인 상태
         given(containerRecovery.hasUnrecoverableStreams()).willReturn(false);
-
-        for (String streamKey : STREAM_KEYS) {
-            String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-            given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                    .willThrow(new NoSuchBeanDefinitionException(beanName));
-        }
 
         Health health = indicator.health();
 

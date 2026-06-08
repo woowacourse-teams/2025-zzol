@@ -21,7 +21,7 @@ dependencies {
     implementation("io.micrometer:micrometer-core")
     implementation("io.micrometer:context-propagation")
 
-    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jakarta") })
+    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jpa") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 

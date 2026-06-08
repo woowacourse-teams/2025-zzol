@@ -15,8 +15,8 @@ dependencies {
 
     implementation(libs.redisson)
 
-    implementation(variantOf(libs.querydsl.jpa) { classifier("jakarta") })
-    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jakarta") })
+    implementation(libs.querydsl.jpa)
+    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jpa") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 

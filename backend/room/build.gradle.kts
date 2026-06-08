@@ -34,7 +34,7 @@ dependencies {
     implementation("io.micrometer:context-propagation")
 
     implementation(libs.resilience4j)
-    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jakarta") })
+    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jpa") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 

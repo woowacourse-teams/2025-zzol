@@ -77,7 +77,7 @@ redis:
       # 기동 시 구독(폴링 태스크) 시작 대기 한도 — 초과 시 기동 실패 (ADR-0022)
       subscription-start-timeout: 5s
     # 폴링 태스크는 스레드를 영구 점유하므로 core-size는 이 풀을 쓰는 스트림 수(7) 이상이어야 한다 (ADR-0022)
-    # max-size는 운영 redis.yml과 동일하게 16 — 처리 스레드 헤드룸 확보 (테스트/운영 비대칭 제거)
+    # core/max는 운영 redis.yml(8/16)과 정렬. queue-capacity는 테스트 부하 기준 128 유지 (운영은 1024)
     thread-pools:
       concurrent:
         core-size: 8

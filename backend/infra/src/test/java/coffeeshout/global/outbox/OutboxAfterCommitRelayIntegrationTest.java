@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -19,11 +18,9 @@ import org.springframework.transaction.support.TransactionTemplate;
  * <p>
  * 단위 테스트로 검증 불가한 @TransactionalEventListener(phase=AFTER_COMMIT) 바인딩을 검증한다.
  * 트랜잭션이 실제로 커밋된 뒤에만 릴레이가 실행되는지 확인한다.
+ * outboxAfterCommitRelay spy는 베이스 클래스(InfraModuleIntegrationTest)가 제공한다.
  */
 class OutboxAfterCommitRelayIntegrationTest extends InfraModuleIntegrationTest {
-
-    @MockitoSpyBean
-    private OutboxAfterCommitRelay outboxAfterCommitRelay;
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;

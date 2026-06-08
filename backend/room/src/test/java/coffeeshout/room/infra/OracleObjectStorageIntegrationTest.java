@@ -24,6 +24,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 /**
  * OracleObjectStorageService의 서킷 브레이커 및 리트라이 동작을 검증하는 통합 테스트. 실제 Spring 컨텍스트에서 Resilience4j 어노테이션(@CircuitBreaker,
  * @Retry)과 폴백(fallbackMethod) 로직이 정상적으로 작동하여 InfrastructureException을 던지는지 확인합니다.
+ *
+ * <p>OracleObjectStorageService는 {@code @Profile("!local & !test")}라 공유 테스트 컨텍스트에 존재하지 않으므로,
+ * {@code @Import} + {@code @MockitoBean}으로 별도 컨텍스트를 구성한다. 공유 컨텍스트에 합치면 LocalStorageService와
+ * StorageService 빈이 경합하므로 이 컨텍스트 분리는 의도된 비용이다.
+ *
+ * <p>circuit-breaker-test 프로파일은 oracleStorage resilience4j 설정의 유일한 소스인
+ * application-circuit-breaker-test.yml을 로드한다. 이 컨텍스트는 어차피 캐시를 공유하지 못하므로
+ * 프로파일 추가로 인한 캐시 분리 비용은 없다.
  */
 @ActiveProfiles({"test", "circuit-breaker-test"})
 @Import(OracleObjectStorageTestConfig.class)

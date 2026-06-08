@@ -3,26 +3,27 @@ package coffeeshout.room.infra.messaging.consumer;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.room.infra.websocket.DelayedPlayerRemovalService;
-import coffeeshout.RoomModuleServiceTest;
 import coffeeshout.websocket.event.player.PlayerDisconnectedEvent;
-import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-class PlayerDisconnectedConsumerTest extends RoomModuleServiceTest {
+@ExtendWith(MockitoExtension.class)
+class PlayerDisconnectedConsumerTest {
 
-    @Autowired
-    Consumer<PlayerDisconnectedEvent> playerDisconnectedEventConsumer;
-
-    @MockitoBean
+    @Mock
     DelayedPlayerRemovalService delayedPlayerRemovalService;
+
+    @InjectMocks
+    PlayerDisconnectedConsumer playerDisconnectedConsumer;
 
     @Test
     void 플레이어_연결_해제_이벤트를_수신하면_지연_삭제가_스케줄링된다() {
         PlayerDisconnectedEvent event = PlayerDisconnectedEvent.create("ABCD:닉네임", "session-1", "SESSION_DISCONNECT");
 
-        playerDisconnectedEventConsumer.accept(event);
+        playerDisconnectedConsumer.accept(event);
 
         verify(delayedPlayerRemovalService).schedulePlayerRemoval("ABCD:닉네임", "session-1", "SESSION_DISCONNECT");
     }

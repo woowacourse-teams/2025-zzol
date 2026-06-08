@@ -2,10 +2,8 @@ package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.config.ServiceTestConfig;
+import coffeeshout.UserModuleIntegrationTest;
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.support.CommonTestSchedulerConfig;
-import coffeeshout.support.TestContainerSupport;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
 import coffeeshout.user.domain.repository.UserRepository;
@@ -13,14 +11,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest
-@Import({CommonTestSchedulerConfig.class, ServiceTestConfig.class})
-@ActiveProfiles("test")
-class UserWithdrawalServiceTransactionTest extends TestContainerSupport {
+/**
+ * 트랜잭션 커밋 후 동작(AFTER_COMMIT 리스너)을 검증하므로 실제 ApplicationEventPublisher가 필요하다.
+ * MockEventPublisherConfig를 임포트하는 ServiceTest 대신 통합 테스트 베이스를 사용한다.
+ */
+class UserWithdrawalServiceTransactionTest extends UserModuleIntegrationTest {
 
     @Autowired
     UserWithdrawalService userWithdrawalService;
@@ -36,7 +32,6 @@ class UserWithdrawalServiceTransactionTest extends TestContainerSupport {
 
     @BeforeEach
     void setUp() {
-        cleanDatabase();
         final User user = userRepository.save(UserFixture.회원_엠제이());
         userId = user.getId();
         userCode = user.getUserCode().value();

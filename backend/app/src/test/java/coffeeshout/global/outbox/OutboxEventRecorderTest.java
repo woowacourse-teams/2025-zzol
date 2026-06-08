@@ -93,7 +93,10 @@ class OutboxEventRecorderTest extends StreamMockedServiceTest {
         // when
         outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
 
-        // then — @Transactional 테스트이므로 커밋 안 됨 → AFTER_COMMIT 미실행 → Redis 미호출
-        Mockito.verifyNoInteractions(streamPublisher);
+        // then — @Transactional 테스트이므로 커밋 안 됨 → AFTER_COMMIT 미실행 → Outbox 릴레이의 publish 미호출
+        // verifyNoInteractions는 백그라운드 스트림 consumer(예: SessionEventConfig)가 공유 mock을 건드리면
+        // 오염되므로, 릴레이가 쓰는 publish(String, String, String) 오버로드만 검증한다
+        Mockito.verify(streamPublisher, Mockito.never())
+                .publish(Mockito.any(String.class), Mockito.any(String.class), Mockito.nullable(String.class));
     }
 }

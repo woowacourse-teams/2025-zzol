@@ -34,9 +34,11 @@ jobs:
       environment: ${{ inputs.environment }}
 
   # 2. Deploy Job
+  # ARM 네이티브 러너 사용: linux/arm64 이미지 빌드 시 QEMU 에뮬레이션 제거
+  # (Dockerfile의 RUN java -Djarmode=tools ... 가 네이티브로 실행됨)
   deploy:
     needs: ci-and-build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
     # 빌드 단계에서 결정된 환경 사용
     environment: ${{ needs.ci-and-build.outputs.environment }}

@@ -1,10 +1,10 @@
 package coffeeshout.minigame.application;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.event.MiniGameStartedEvent;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.application.service.RoomQueryService;

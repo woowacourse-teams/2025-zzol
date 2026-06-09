@@ -1,10 +1,10 @@
 package coffeeshout.zzolbot.infra.tool;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.zzolbot.domain.ZzolBotTool;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.application.service.RoomQueryService;
 import com.fasterxml.jackson.core.JsonProcessingException;

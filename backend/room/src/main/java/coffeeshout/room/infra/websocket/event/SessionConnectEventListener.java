@@ -1,10 +1,10 @@
 package coffeeshout.room.infra.websocket.event;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.RoomQueryService;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.UserPrincipal;

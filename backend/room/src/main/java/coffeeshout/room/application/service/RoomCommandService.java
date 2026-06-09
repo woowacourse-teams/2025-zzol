@@ -1,9 +1,9 @@
 package coffeeshout.room.application.service;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.gamecommon.MiniGameFactory;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
@@ -93,7 +93,7 @@ public class RoomCommandService {
 
     public void assignQrCode(JoinCode joinCode, String qrCodeUrl) {
         final Room room = roomQueryService.getByJoinCode(joinCode);
-        final QrCode currentQrCode = room.getJoinCode().getQrCode();
+        final QrCode currentQrCode = room.getQrCode();
 
         // 이미 SUCCESS 상태이고 동일한 URL이면 중복 처리 방지 (멱등성)
         if (currentQrCode.isSuccess() && qrCodeUrl.equals(currentQrCode.getUrl())) {
@@ -115,7 +115,7 @@ public class RoomCommandService {
 
     public void assignQrCodeError(JoinCode joinCode) {
         final Room room = roomQueryService.getByJoinCode(joinCode);
-        final QrCode currentQrCode = room.getJoinCode().getQrCode();
+        final QrCode currentQrCode = room.getQrCode();
 
         // 이미 SUCCESS 상태면 ERROR로 다운그레이드 방지
         if (currentQrCode.isSuccess()) {

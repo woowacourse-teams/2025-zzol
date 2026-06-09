@@ -2,8 +2,8 @@ package coffeeshout.cardgame.application.service;
 
 import coffeeshout.cardgame.application.CardGameNotifier;
 import coffeeshout.cardgame.domain.CardGame;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;

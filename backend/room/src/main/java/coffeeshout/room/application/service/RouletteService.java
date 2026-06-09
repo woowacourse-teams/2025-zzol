@@ -1,10 +1,10 @@
 package coffeeshout.room.application.service;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
 import coffeeshout.room.application.port.RouletteResultEntityRepository;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Winner;

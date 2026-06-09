@@ -3,7 +3,7 @@ package coffeeshout.room.infra;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.RoomModuleServiceTest;
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import java.util.List;
 import java.util.Set;

@@ -2,7 +2,7 @@ package coffeeshout.blindtimer.application;
 
 import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.application.service.RoomQueryService;

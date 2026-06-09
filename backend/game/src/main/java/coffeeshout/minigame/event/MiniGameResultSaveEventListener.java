@@ -1,6 +1,7 @@
 package coffeeshout.minigame.event;
 
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameResult;
@@ -11,7 +12,6 @@ import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.application.service.RoomQueryService;

@@ -4,6 +4,7 @@ import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.state;
 
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
@@ -36,6 +37,7 @@ public class Room {
     private Player host;
     private RoomState roomState;
     private double adjustmentWeight;
+    private QrCode qrCode;
 
     public Room(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
         this(joinCode, hostName, null, adjustmentWeight);
@@ -50,6 +52,7 @@ public class Room {
         this.miniGames = new LinkedList<>();
         this.finishedGames = new ArrayList<>();
         this.adjustmentWeight = adjustmentWeight;
+        this.qrCode = QrCode.pending();
 
         join(host);
     }
@@ -206,7 +209,7 @@ public class Room {
                     "QR 코드는 null일 수 없습니다.");
         }
 
-        joinCode.assignQrCode(qrCode);
+        this.qrCode = qrCode;
     }
 
     public void showRoulette() {

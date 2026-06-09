@@ -1,7 +1,7 @@
 package coffeeshout.room.ui.messaging;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.application.service.RoomQueryService;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;

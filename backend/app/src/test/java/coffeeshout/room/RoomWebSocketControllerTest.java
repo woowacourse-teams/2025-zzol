@@ -1,10 +1,10 @@
 package coffeeshout.room;
 
 import coffeeshout.fixture.RoomFixture;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.support.app.WebSocketIntegrationTestSupport;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Player;

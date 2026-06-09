@@ -1,6 +1,7 @@
 package coffeeshout.cardgame.application;
 
 import coffeeshout.cardgame.domain.CardGame;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.event.MiniGameStartedEvent;
 import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.websocket.docs.WsTopic;
@@ -8,7 +9,6 @@ import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.ui.response.MiniGameStartMessage;
 import coffeeshout.cardgame.application.response.MiniGameStateMessage;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;

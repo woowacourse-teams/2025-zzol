@@ -1,6 +1,6 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.websocket.WsRecoveryService;
 import java.time.Duration;
 import java.time.Instant;

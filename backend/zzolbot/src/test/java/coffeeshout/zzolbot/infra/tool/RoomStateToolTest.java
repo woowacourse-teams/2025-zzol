@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 
 import coffeeshout.fixture.RoomFixture;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.zzolbot.domain.AskContext;
@@ -12,7 +13,6 @@ import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.application.service.RoomQueryService;
 import com.fasterxml.jackson.databind.ObjectMapper;

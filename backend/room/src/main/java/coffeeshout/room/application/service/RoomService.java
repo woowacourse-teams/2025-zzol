@@ -1,6 +1,7 @@
 package coffeeshout.room.application.service;
 
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.global.redis.BaseEvent;
@@ -10,7 +11,6 @@ import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.port.RoomEntityRepository;
 import coffeeshout.room.config.RouletteProperties;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
@@ -216,7 +216,7 @@ public class RoomService {
 
     public QrCodeStatusResponse getQrCodeStatus(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final QrCode qrCode = room.getJoinCode().getQrCode();
+        final QrCode qrCode = room.getQrCode();
 
         final QrCodeStatusResponse response = new QrCodeStatusResponse(qrCode.getStatus(), qrCode.getUrl());
 

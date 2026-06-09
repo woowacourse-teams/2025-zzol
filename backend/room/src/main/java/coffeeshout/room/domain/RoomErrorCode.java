@@ -9,9 +9,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum RoomErrorCode implements ErrorCode {
 
-    JOIN_CODE_NULL(400, "참여 코드는 null일 수 없습니다."),
-    JOIN_CODE_ILLEGAL_LENGTH(400, "코드는 4자리여야 합니다."),
-    JOIN_CODE_ILLEGAL_CHARACTER(400, "허용되지 않는 문자가 포함되어 있습니다."),
     PLAYER_NAME_BLANK(400, "이름은 공백일 수 없습니다."),
     PLAYER_NAME_TOO_LONG(400, "이름은 10자 이하여야 합니다."),
     PLAYER_NAME_CONTAINS_PROFANITY(400, "비속어가 포함된 닉네임은 사용할 수 없습니다."),

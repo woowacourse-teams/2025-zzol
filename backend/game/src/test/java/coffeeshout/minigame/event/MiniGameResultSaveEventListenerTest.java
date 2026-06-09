@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import coffeeshout.cardgame.domain.CardGameScore;
 import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -17,7 +18,6 @@ import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.room.domain.Room;
 import coffeeshout.gamecommon.Gamer;

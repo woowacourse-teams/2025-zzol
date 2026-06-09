@@ -11,7 +11,7 @@ import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.blockstacking.domain.BlockStackingGameErrorCode;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.GameModuleServiceTest;
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;

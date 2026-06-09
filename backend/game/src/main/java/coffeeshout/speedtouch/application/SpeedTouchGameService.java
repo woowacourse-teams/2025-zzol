@@ -1,10 +1,10 @@
 package coffeeshout.speedtouch.application;
 
 import coffeeshout.game.metric.GameDurationMetricService;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.speedtouch.config.SpeedTouchGameTimingProperties;

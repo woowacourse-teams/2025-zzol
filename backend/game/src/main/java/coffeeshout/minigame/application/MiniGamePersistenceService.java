@@ -1,5 +1,6 @@
 package coffeeshout.minigame.application;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
@@ -8,7 +9,6 @@ import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
 import coffeeshout.room.application.port.RoomStatusPort;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.application.service.RoomQueryService;

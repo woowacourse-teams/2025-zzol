@@ -1,6 +1,6 @@
 package coffeeshout.room.domain.repository;
 
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.Room;
 import java.util.Optional;
 

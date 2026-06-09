@@ -12,6 +12,7 @@ import coffeeshout.RoomModuleServiceTest;
 import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
@@ -25,7 +26,6 @@ import coffeeshout.room.application.service.RoomCreateResult;
 import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.application.service.RoomService;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
@@ -355,7 +355,7 @@ class RoomServiceTest extends RoomModuleServiceTest {
                 .pollInterval(500, java.util.concurrent.TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
                     Room room = roomQueryService.getByJoinCode(joinCode);
-                    QrCodeStatus status = room.getJoinCode().getQrCode().getStatus();
+                    QrCodeStatus status = room.getQrCode().getStatus();
 
                     // SUCCESS 또는 ERROR 상태로 변경되었는지 확인
                     assertThat(status).isIn(QrCodeStatus.SUCCESS, QrCodeStatus.ERROR);

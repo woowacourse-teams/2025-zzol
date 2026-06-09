@@ -1,8 +1,8 @@
 package coffeeshout.cardgame.config;
 
 import coffeeshout.game.flow.CompletableFutureFlowScheduler;
+import coffeeshout.game.scheduler.GameTaskSchedulerFactory;
 import coffeeshout.gamecommon.flow.FlowScheduler;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,21 +13,12 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @Configuration
 @EnableScheduling
 @EnableConfigurationProperties(CardGameTimingProperties.class)
-@Slf4j
 public class CardGameTaskSchedulerConfig {
 
     @Bean(name = "cardGameThreadPoolTaskScheduler")
     @Profile("!test")
-    public ThreadPoolTaskScheduler cardGameThreadPoolTaskScheduler() {
-        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(3);
-        scheduler.setThreadNamePrefix("card-game-task-");
-        scheduler.setDaemon(false);
-        scheduler.setErrorHandler(t -> log.error("스케줄 실행 중 예외가 발생했습니다.", t));
-        scheduler.setWaitForTasksToCompleteOnShutdown(true);
-        scheduler.setAwaitTerminationSeconds(30);
-        scheduler.initialize();
-        return scheduler;
+    public ThreadPoolTaskScheduler cardGameThreadPoolTaskScheduler(GameTaskSchedulerFactory schedulerFactory) {
+        return schedulerFactory.create("card-game");
     }
 
     @Bean

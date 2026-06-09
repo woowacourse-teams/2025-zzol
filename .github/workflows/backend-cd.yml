@@ -34,9 +34,11 @@ jobs:
       environment: ${{ inputs.environment }}
 
   # 2. Deploy Job
+  # ARM 네이티브 러너 사용: linux/arm64 이미지 빌드 시 QEMU 에뮬레이션 제거
+  # (Dockerfile의 RUN java -Djarmode=tools ... 가 네이티브로 실행됨)
   deploy:
     needs: ci-and-build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
     # 빌드 단계에서 결정된 환경 사용
     environment: ${{ needs.ci-and-build.outputs.environment }}
@@ -53,10 +55,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts
 
@@ -71,7 +73,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: backend/app/build/libs
           file: backend/docker/app/Dockerfile
@@ -105,7 +107,7 @@ jobs:
 
       - name: Create GitHub Deployment
         id: create_deployment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const deployment = await github.rest.repos.createDeployment({
@@ -166,7 +168,7 @@ jobs:
           target: /tmp/deploy-${{ env.ENVIRONMENT }}/
 
       - name: Deploy with Docker Compose
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         env:
           ENV: ${{ env.ENVIRONMENT }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
@@ -224,7 +226,7 @@ jobs:
 
       - name: Create Issue on Failure
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const label = 'deployment-failure';

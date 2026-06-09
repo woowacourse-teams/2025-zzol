@@ -27,6 +27,13 @@ subprojects {
     // Spring Boot BOM이 testcontainers 코어를 1.x로 다운그레이드하지 못하도록 오버라이드
     extra["testcontainers.version"] = testcontainersVersion
 
+    // CVE-2026-41293 / CVE-2026-43512 / CVE-2026-43515
+    extra["tomcat.version"] = "10.1.55"
+    // CVE-2026-***732
+    extra["spring-security.version"] = "6.5.9"
+    // CVE-2026-40477 / CVE-2026-40478 / CVE-2026-41901
+    extra["thymeleaf.version"] = "3.1.5.RELEASE"
+
     // Spring Boot bootJar 기본 비활성화 (라이브러리 모듈은 jar만, :app이 override)
     tasks.named("bootJar") { enabled = false }
     tasks.named("jar") { enabled = true }
@@ -78,6 +85,12 @@ subprojects {
             xml.required.set(true)
             html.required.set(false)
         }
+        // event 패키지의 *Event record는 로직 없는 전송 DTO — 커버리지 측정 제외
+        classDirectories.setFrom(
+            classDirectories.files.map { dir ->
+                fileTree(dir) { exclude("**/event/*Event.class") }
+            }
+        )
     }
 
     tasks.withType<Test> {

@@ -1,10 +1,10 @@
 package coffeeshout.global.health;
 
-import static coffeeshout.global.redis.config.RedisStreamListenerStarter.STREAM_CONTAINER_BEAN_NAME_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import coffeeshout.global.redis.config.RedisStreamContainerRegistry;
 import coffeeshout.global.redis.config.RedisStreamProperties;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,15 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 
 @ExtendWith(MockitoExtension.class)
 class RedisStreamContainerRecoveryTest {
-
-    @Mock
-    private ApplicationContext applicationContext;
 
     @Mock
     private RedisStreamProperties redisStreamProperties;
@@ -32,6 +27,7 @@ class RedisStreamContainerRecoveryTest {
     @Mock
     private StreamMessageListenerContainer<?, ?> stoppedContainer;
 
+    private RedisStreamContainerRegistry containerRegistry;
     private RedisStreamContainerRecovery recovery;
 
     private static final String[] STREAM_KEYS = {
@@ -40,7 +36,8 @@ class RedisStreamContainerRecoveryTest {
 
     @BeforeEach
     void setUp() {
-        recovery = new RedisStreamContainerRecovery(applicationContext, redisStreamProperties);
+        containerRegistry = new RedisStreamContainerRegistry();
+        recovery = new RedisStreamContainerRecovery(containerRegistry, redisStreamProperties);
 
         Map<String, RedisStreamProperties.StreamConfig> keys = new LinkedHashMap<>();
         for (String key : STREAM_KEYS) {
@@ -49,18 +46,23 @@ class RedisStreamContainerRecoveryTest {
         given(redisStreamProperties.keys()).willReturn(keys);
     }
 
-    private void mockAllContainersRunning() {
+    private void registerAllRunning() {
         given(runningContainer.isRunning()).willReturn(true);
         for (String streamKey : STREAM_KEYS) {
-            String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-            given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                    .willReturn(runningContainer);
+            containerRegistry.register(streamKey, runningContainer);
+        }
+    }
+
+    private void registerWithRoomStopped() {
+        given(runningContainer.isRunning()).willReturn(true);
+        for (String streamKey : STREAM_KEYS) {
+            containerRegistry.register(streamKey, streamKey.equals("room") ? stoppedContainer : runningContainer);
         }
     }
 
     @Test
     void 모든_컨테이너가_정상이면_복구_불가_스트림이_없다() {
-        mockAllContainersRunning();
+        registerAllRunning();
 
         recovery.checkAndRecover();
 
@@ -70,18 +72,7 @@ class RedisStreamContainerRecoveryTest {
     @Test
     void 멈춘_컨테이너를_발견하면_start를_호출한다() {
         given(stoppedContainer.isRunning()).willReturn(false, true);
-        given(runningContainer.isRunning()).willReturn(true);
-
-        for (String streamKey : STREAM_KEYS) {
-            String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-            if (streamKey.equals("room")) {
-                given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                        .willReturn(stoppedContainer);
-            } else {
-                given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                        .willReturn(runningContainer);
-            }
-        }
+        registerWithRoomStopped();
 
         recovery.checkAndRecover();
 
@@ -90,20 +81,18 @@ class RedisStreamContainerRecoveryTest {
     }
 
     @Test
+    void 레지스트리에_없는_스트림은_건너뛴다() {
+        // 아무 컨테이너도 등록하지 않는다 — 기동 실패 등으로 등록 전인 상태
+
+        recovery.checkAndRecover();
+
+        assertThat(recovery.hasUnrecoverableStreams()).isFalse();
+    }
+
+    @Test
     void 복구_시도_1회_실패하면_아직_DOWN이_아니다() {
         given(stoppedContainer.isRunning()).willReturn(false);
-        given(runningContainer.isRunning()).willReturn(true);
-
-        for (String streamKey : STREAM_KEYS) {
-            String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-            if (streamKey.equals("room")) {
-                given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                        .willReturn(stoppedContainer);
-            } else {
-                given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                        .willReturn(runningContainer);
-            }
-        }
+        registerWithRoomStopped();
 
         recovery.checkAndRecover();
 
@@ -113,18 +102,7 @@ class RedisStreamContainerRecoveryTest {
     @Test
     void 복구_시도_2회_연속_실패하면_복구_불가로_판정한다() {
         given(stoppedContainer.isRunning()).willReturn(false);
-        given(runningContainer.isRunning()).willReturn(true);
-
-        for (String streamKey : STREAM_KEYS) {
-            String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-            if (streamKey.equals("room")) {
-                given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                        .willReturn(stoppedContainer);
-            } else {
-                given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                        .willReturn(runningContainer);
-            }
-        }
+        registerWithRoomStopped();
 
         recovery.checkAndRecover();
         recovery.checkAndRecover();
@@ -136,18 +114,7 @@ class RedisStreamContainerRecoveryTest {
     @Test
     void 복구_성공하면_실패_카운트가_초기화된다() {
         given(stoppedContainer.isRunning()).willReturn(false);
-        given(runningContainer.isRunning()).willReturn(true);
-
-        for (String streamKey : STREAM_KEYS) {
-            String beanName = String.format(STREAM_CONTAINER_BEAN_NAME_FORMAT, streamKey);
-            if (streamKey.equals("room")) {
-                given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                        .willReturn(stoppedContainer);
-            } else {
-                given(applicationContext.getBean(beanName, StreamMessageListenerContainer.class))
-                        .willReturn(runningContainer);
-            }
-        }
+        registerWithRoomStopped();
 
         recovery.checkAndRecover(); // 1회 실패
 

@@ -3,21 +3,19 @@ package coffeeshout.room.infra.messaging.consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-import coffeeshout.room.application.service.DelayedRoomRemovalService;
+import coffeeshout.room.StreamMockedServiceTest;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
-import coffeeshout.RoomModuleServiceTest;
 import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-class RoomCreateConsumerTest extends RoomModuleServiceTest {
+class RoomCreateConsumerTest extends StreamMockedServiceTest {
 
     @Autowired
     Consumer<RoomCreateEvent> roomCreateEventConsumer;
@@ -27,9 +25,6 @@ class RoomCreateConsumerTest extends RoomModuleServiceTest {
 
     @Autowired
     JoinCodeGenerator joinCodeGenerator;
-
-    @MockitoSpyBean
-    DelayedRoomRemovalService delayedRoomRemovalService;
 
     JoinCode joinCode;
 

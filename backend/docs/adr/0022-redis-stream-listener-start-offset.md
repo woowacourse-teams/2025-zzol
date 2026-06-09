@@ -42,14 +42,25 @@
 final var container = createContainer(...);          // start() 호출 제거
 final Subscription subscription = container.register(buildReadRequest(streamKey), this::onMessage);
 container.start();
-subscription.await(Duration.ofSeconds(5));            // 폴링 태스크 시작 보장, 실패 시 기동 실패
+// 타임아웃은 commonSettings.subscriptionStartTimeout(기본 5s)으로 설정화
+subscription.await(properties.commonSettings().subscriptionStartTimeout());
 ```
 
 `await()` 실패(타임아웃·인터럽트)는 `IllegalStateException`으로 전환해 **앱 기동을 실패시킨다**. 메시지 처리 흐름 전체가 Redis Stream을 경유하므로(CLAUDE.md 핵심 제약) 구독 없는 기동은 무의미하다 — fail-fast 후 오케스트레이터 재시작이 옳다.
 
+대기 한도는 하드코딩하지 않고 `common-settings.subscription-start-timeout`(`@DefaultValue("5s")`)으로 바인딩한다 — 환경별로 조정 가능하다.
+
 ### 3. errorHandler 단일화
 
 container options의 errorHandler를 제거한다. 진실 공급원은 `buildReadRequest()` 하나다. options 쪽을 폴백으로 남기면 "errorHandler는 있는데 `cancelOnError`는 기본값(`t -> true`)인 구독"이 조용히 생길 수 있다 — 예외 1건으로 구독이 영구 취소되는, 직전에 수정한 버그(PR #1359)의 재발 경로다. 모든 구독 등록은 `buildReadRequest()`를 경유해야 한다.
+
+### 4. 컨테이너 장부 단일화: `RedisStreamContainerRegistry`
+
+기존에는 같은 컨테이너가 두 곳에 기록됐다 — Spring 컨텍스트에 동적 빈으로(`registerBean` + `stream-container-%s` 문자열 빈 이름) 등록하고, 종료용으로 별도 List에도 담았다. 이를 스트림 키별 단일 장부(`ConcurrentHashMap`)인 `RedisStreamContainerRegistry`로 일원화한다.
+
+- 등록은 Starter가 전담한다 (`registry.register()` — start/await **이전**에 호출하므로 await 실패로 기동이 중단돼도 stop 대상에 포함된다)
+- 조회는 Recovery·HealthIndicator가 `registry.find()`(Optional)로 한다 — 기존 `applicationContext.getBean(문자열, ...)` + `NoSuchBeanDefinitionException` catch 방식을 폐기한다
+- 동적 빈 등록·문자열 빈 이름 결합(프로덕션 + 테스트)이 완전히 제거된다
 
 ## 구현 시 주의사항
 

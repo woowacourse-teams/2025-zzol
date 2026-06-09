@@ -14,7 +14,7 @@ public record MiniGameRanksMessage(List<MiniGameRankMessage> ranks) {
     ) {
 
         public static MiniGameRankMessage from(@NonNull Entry<Gamer, Integer> rankEntry) {
-            return new MiniGameRankMessage(rankEntry.getKey().name(), rankEntry.getValue());
+            return new MiniGameRankMessage(rankEntry.getKey().getName(), rankEntry.getValue());
         }
     }
 

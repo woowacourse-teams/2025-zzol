@@ -61,7 +61,7 @@ public class LadderNotifier {
                         line.playerName(),
                         line.segmentIndex(),
                         line.row(),
-                        game.getPoles().findGamer(line.playerName()).colorIndex()
+                        game.getPoles().findGamer(line.playerName()).getColorIndex()
                 ))
         );
     }

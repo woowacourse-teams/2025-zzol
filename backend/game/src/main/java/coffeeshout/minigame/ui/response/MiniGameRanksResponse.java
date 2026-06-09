@@ -14,7 +14,7 @@ public record MiniGameRanksResponse(List<MiniGameRankResponse> ranks) {
     ) {
 
         public static MiniGameRankResponse from(@NonNull Map.Entry<Gamer, Integer> rankEntry) {
-            return new MiniGameRankResponse(rankEntry.getKey().name(), rankEntry.getValue());
+            return new MiniGameRankResponse(rankEntry.getKey().getName(), rankEntry.getValue());
         }
     }
 

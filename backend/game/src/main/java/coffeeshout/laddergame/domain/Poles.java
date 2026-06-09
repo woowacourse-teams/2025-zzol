@@ -26,7 +26,7 @@ public class Poles {
 
     public int getPoleIndex(String playerName) {
         return poles.stream()
-                .filter(p -> p.gamer().name().equals(playerName))
+                .filter(p -> p.gamer().getName().equals(playerName))
                 .mapToInt(Pole::index)
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
@@ -49,7 +49,7 @@ public class Poles {
     public Gamer findGamer(String playerName) {
         return poles.stream()
                 .map(Pole::gamer)
-                .filter(gamer -> gamer.name().equals(playerName))
+                .filter(gamer -> gamer.getName().equals(playerName))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
                         LadderGameErrorCode.PLAYER_NOT_FOUND,
@@ -66,7 +66,7 @@ public class Poles {
     }
 
     public boolean contains(String playerName) {
-        return poles.stream().anyMatch(p -> p.gamer().name().equals(playerName));
+        return poles.stream().anyMatch(p -> p.gamer().getName().equals(playerName));
     }
 
     public List<Pole> getAll() {

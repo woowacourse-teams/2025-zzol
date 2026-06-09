@@ -7,12 +7,14 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.GameModuleServiceTest;
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import coffeeshout.speedtouch.domain.SpeedTouchGameState;
 import coffeeshout.speedtouch.domain.event.SpeedTouchProgressEvent;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,9 @@ class SpeedTouchGameProgressHandlerTest extends GameModuleServiceTest {
     @Autowired
     private SpeedTouchGameProgressHandler progressHandler;
 
+    @Autowired
+    private GameSessionService gameSessionService;
+
     private static final String HOST_NAME = "꾹이";
 
     private Room room;
@@ -37,13 +42,17 @@ class SpeedTouchGameProgressHandlerTest extends GameModuleServiceTest {
         room = RoomFixture.호스트_꾹이();
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         roomRepository.save(room);
-        game = new SpeedTouchGame();
-        room.addMiniGame(new PlayerName(HOST_NAME), game);
-        room.startNextGame(HOST_NAME);
         joinCode = room.getJoinCode().getValue();
 
+        // GameSession 대기열에 게임을 넣고 시작한다(startGame이 game.setUp(gamers)를 호출).
+        game = new SpeedTouchGame();
+        final Gamer host = Gamer.guest(HOST_NAME);
+        gameSessionService.deleteSession(room.getJoinCode());
+        gameSessionService.initSession(room.getJoinCode(), host);
+        gameSessionService.getSession(room.getJoinCode()).replaceGames(host, List.of(game));
+        gameSessionService.startGame(room.getJoinCode(), host, room.getGamers());
+
         // TestTaskScheduler를 우회하여 직접 PLAYING 상태로 세팅
-        game.setUp(room.getPlayers().stream().map(p -> p.toGamer()).toList());
         game.startPlaying();
     }
 

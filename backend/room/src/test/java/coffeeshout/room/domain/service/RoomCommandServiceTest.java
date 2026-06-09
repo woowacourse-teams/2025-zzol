@@ -13,8 +13,10 @@ import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
+import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
+import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -262,5 +264,31 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
         }
 
 
+    }
+
+    @Nested
+    class 게임_결과_적용 {
+
+        @Test
+        void 순위_맵과_라운드_수로_확률을_조정하고_SCORE_BOARD로_전이한다() {
+            // given
+            PlayerName hostName = new PlayerName("호스트");
+            PlayerName guestName = new PlayerName("게스트");
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
+            roomCommandService.joinGuest(joinCode, guestName);
+
+            Map<PlayerName, Integer> rankByPlayer = Map.of(hostName, 1, guestName, 2);
+
+            // when
+            roomCommandService.applyGameResult(joinCode, rankByPlayer, 5);
+
+            // then
+            Room room = roomQueryService.getByJoinCode(joinCode);
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(room.getRoomState()).isEqualTo(RoomState.SCORE_BOARD);
+                softly.assertThat(room.findPlayer(hostName).getProbability().value())
+                        .isLessThan(room.findPlayer(guestName).getProbability().value());
+            });
+        }
     }
 }

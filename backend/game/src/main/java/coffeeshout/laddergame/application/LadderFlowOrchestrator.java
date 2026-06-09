@@ -3,6 +3,7 @@ package coffeeshout.laddergame.application;
 import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.laddergame.config.LadderTimingProperties;
 import coffeeshout.laddergame.domain.LadderGame;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.room.domain.Room;
@@ -21,6 +22,7 @@ public class LadderFlowOrchestrator {
     private final FlowScheduler ladderFlowScheduler;
     private final LadderTimingProperties timing;
     private final LadderNotifier notifier;
+    private final GameSessionService gameSessionService;
     private final ApplicationEventPublisher eventPublisher;
 
     public void startFlow(LadderGame game, Room room) {
@@ -83,13 +85,15 @@ public class LadderFlowOrchestrator {
         final String joinCode = room.getJoinCode().getValue();
         return () -> {
             game.changeToDone();
-            room.applyMiniGameResult(game.getResult());
             try {
                 notifier.notifyDone(room);
             } catch (Exception e) {
                 log.warn("사다리게임 DONE 알림 실패: joinCode={}", joinCode, e);
             }
-            eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.LADDER_GAME.name()));
+            // 순서 불변식(ADR-0023 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행
+            final int roundCount = gameSessionService.finishGame(room.getJoinCode());
+            eventPublisher.publishEvent(new MiniGameFinishedEvent(
+                    joinCode, MiniGameType.LADDER_GAME.name(), game.getResult().toRankMap(), roundCount));
         };
     }
 }

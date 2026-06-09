@@ -1,6 +1,7 @@
 package coffeeshout.racinggame.application;
 
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
@@ -27,17 +28,20 @@ import org.springframework.stereotype.Service;
 public class RacingGameService implements MiniGameService {
 
     private final RoomQueryService roomQueryService;
+    private final GameSessionService gameSessionService;
     private final TaskScheduler taskScheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final SpeedCalculator speedCalculator;
 
     public RacingGameService(
             RoomQueryService roomQueryService,
+            GameSessionService gameSessionService,
             @Qualifier("racingGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
             SpeedCalculator speedCalculator
     ) {
         this.roomQueryService = roomQueryService;
+        this.gameSessionService = gameSessionService;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
         this.speedCalculator = speedCalculator;
@@ -113,12 +117,15 @@ public class RacingGameService implements MiniGameService {
 
     private void handleRaceFinished(RacingGame racingGame, String joinCode) {
         racingGame.updateState(RacingGameState.DONE);
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        room.applyMiniGameResult(racingGame.getResult());
+        // 순서 불변식(ADR-0023 결정 5): finishGame()으로 roundCount를 먼저 확정·상태 복귀시킨다.
+        final int roundCount = gameSessionService.finishGame(new JoinCode(joinCode));
         taskScheduler.schedule(() -> eventPublisher.publishEvent(RaceFinishedEvent.of(racingGame, joinCode)),
                 Instant.now().plusSeconds(2));
-        eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.RACING_GAME.name()));
         racingGame.stopAutoMove();
+        // 확률 조정·결과 저장을 유발하는 이벤트는 종료 알림·정리를 모두 끝낸 뒤 마지막에 발행한다 —
+        // 저장 리스너(@Transactional/@RedisLock) 실패가 게임 종료 알림·자동이동 정지를 막지 않도록.
+        eventPublisher.publishEvent(new MiniGameFinishedEvent(
+                joinCode, MiniGameType.RACING_GAME.name(), racingGame.getResult().toRankMap(), roundCount));
         log.info("레이싱 게임 종료: joinCode={}", joinCode);
     }
 
@@ -132,6 +139,7 @@ public class RacingGameService implements MiniGameService {
     }
 
     private RacingGame getRacingGame(Room room) {
-        return (RacingGame) room.findMiniGame(MiniGameType.RACING_GAME);
+        return (RacingGame) gameSessionService.getSession(room.getJoinCode())
+                .findCompletedGame(MiniGameType.RACING_GAME);
     }
 }

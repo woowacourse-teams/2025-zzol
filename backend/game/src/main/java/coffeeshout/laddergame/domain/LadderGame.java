@@ -10,33 +10,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.Getter;
 
 public class LadderGame implements Playable {
 
+    @Getter
     private volatile LadderGameState state;
+    @Getter
     private Poles poles;
+    @Getter
     private LadderLines lines = new LadderLines();
+    @Getter
     private BottomRanks bottomRanks;
     private Map<Gamer, Integer> finalRanks;
 
     public LadderGame() {
         this.state = LadderGameState.DESCRIPTION;
-    }
-
-    public LadderGameState getState() {
-        return state;
-    }
-
-    public Poles getPoles() {
-        return poles;
-    }
-
-    public LadderLines getLines() {
-        return lines;
-    }
-
-    public BottomRanks getBottomRanks() {
-        return bottomRanks;
     }
 
     @Override
@@ -102,7 +91,7 @@ public class LadderGame implements Playable {
         }
         return finalRanks.entrySet().stream()
                 .collect(Collectors.toMap(
-                        e -> e.getKey().name(),
+                        e -> e.getKey().getName(),
                         Map.Entry::getValue
                 ));
     }

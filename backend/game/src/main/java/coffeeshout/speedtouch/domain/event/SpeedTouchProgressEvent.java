@@ -1,7 +1,6 @@
 package coffeeshout.speedtouch.domain.event;
 
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
-import coffeeshout.speedtouch.domain.SpeedTouchPlayer;
 import java.util.List;
 
 public record SpeedTouchProgressEvent(String joinCode, List<SpeedTouchPlayerProgress> players) {
@@ -12,7 +11,7 @@ public record SpeedTouchProgressEvent(String joinCode, List<SpeedTouchPlayerProg
     public static SpeedTouchProgressEvent of(SpeedTouchGame game, String joinCode) {
         final List<SpeedTouchPlayerProgress> progresses = game.getPlayers().stream()
                 .map(p -> new SpeedTouchPlayerProgress(
-                        p.getGamer().name(),
+                        p.getGamer().getName(),
                         p.getCurrentNumber(),
                         p.isFinished()
                 ))

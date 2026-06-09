@@ -8,11 +8,13 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.GameModuleServiceTest;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.laddergame.domain.LadderGame;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,9 @@ class LadderServiceTest extends GameModuleServiceTest {
     @Autowired
     private LadderService service;
 
+    @Autowired
+    private GameSessionService gameSessionService;
+
     @MockitoSpyBean
     private LadderNotifier notifier;
 
@@ -40,15 +45,17 @@ class LadderServiceTest extends GameModuleServiceTest {
     void setUp() {
         room = RoomFixture.호스트_꾹이();
         room.getPlayers().forEach(player -> player.updateReadyState(true));
-
-        game = new LadderGame();
-        room.addMiniGame(new PlayerName(HOST_NAME), game);
-        room.startNextGame(HOST_NAME);
-        game.changeToPrepare();
-        game.changeToDrawing();
-
         roomRepository.save(room);
         joinCode = room.getJoinCode();
+
+        game = new LadderGame();
+        final Gamer host = Gamer.guest(HOST_NAME);
+        gameSessionService.deleteSession(joinCode);
+        gameSessionService.initSession(joinCode, host);
+        gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));
+        gameSessionService.startGame(joinCode, host, room.getGamers());
+        game.changeToPrepare();
+        game.changeToDrawing();
     }
 
     @Nested

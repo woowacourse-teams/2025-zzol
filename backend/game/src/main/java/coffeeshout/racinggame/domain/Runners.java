@@ -71,7 +71,7 @@ public class Runners {
 
     private Runner findRunnerByName(String playerName) {
         return runners.stream()
-                .filter(runner -> runner.getGamer().name().equals(playerName))
+                .filter(runner -> runner.getGamer().getName().equals(playerName))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("해당 플레이어의 러너를 찾을 수 없습니다."));
     }

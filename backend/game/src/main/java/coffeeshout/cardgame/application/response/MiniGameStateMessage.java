@@ -47,8 +47,8 @@ public record MiniGameStateMessage(
             return cardGame.getDeck().getCards().stream()
                     .map(card -> {
                         final Optional<Gamer> owner = cardGame.findCardOwnerInCurrentRound(card);
-                        final String name = owner.map(Gamer::name).orElse(null);
-                        final Integer colorIndex = owner.map(Gamer::colorIndex).orElse(null);
+                        final String name = owner.map(Gamer::getName).orElse(null);
+                        final Integer colorIndex = owner.map(Gamer::getColorIndex).orElse(null);
                         return CardInfoMessage.of(card, owner.isPresent(), name, colorIndex);
                     }).toList();
         }

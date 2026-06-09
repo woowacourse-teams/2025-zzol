@@ -153,7 +153,7 @@ class PlayerHandsTest {
             Gamer foundPlayer = playerHands.findByName(playerName);
 
             // then
-            assertThat(foundPlayer.name()).isEqualTo(playerName);
+            assertThat(foundPlayer.getName()).isEqualTo(playerName);
         }
 
         @Test

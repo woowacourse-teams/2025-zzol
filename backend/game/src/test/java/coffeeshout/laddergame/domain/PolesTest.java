@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.gamecommon.Gamer;
-import coffeeshout.laddergame.domain.LadderGameErrorCode;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +49,7 @@ class PolesTest {
         @Test
         void 각_기둥에_플레이어가_하나씩_배정된다() {
             final long distinctPlayers = poles.getAll().stream()
-                    .map(p -> p.gamer().name())
+                    .map(p -> p.gamer().getName())
                     .distinct()
                     .count();
 
@@ -85,7 +84,7 @@ class PolesTest {
             final int index = poles.getPoleIndex("꾹이");
             final Gamer found = poles.getGamer(index);
 
-            assertThat(found.name()).isEqualTo("꾹이");
+            assertThat(found.getName()).isEqualTo("꾹이");
         }
 
         @Test

@@ -20,7 +20,6 @@ public enum BlockStackingGameStep {
         @Override
         public void execute(BlockStackingGame game, Room room) {
             game.finish();
-            room.applyMiniGameResult(game.getResult());
         }
     },
     ;

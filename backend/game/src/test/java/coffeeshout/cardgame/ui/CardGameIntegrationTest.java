@@ -6,7 +6,9 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.RoomFixture;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.support.MessageResponse;
@@ -16,6 +18,7 @@ import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.json.JSONException;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +44,9 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
     TestStompSession session;
     CardGame cardGame;
 
+    @Autowired
+    GameSessionService gameSessionService;
+
     @BeforeEach
     void setUp(@Autowired RoomRepository roomRepository,
                @Autowired RoomJpaRepository roomJpaRepository,
@@ -51,12 +57,17 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         host = room.getHost();
         cardGame = new CardGameFake(new CardGameDeckStub());
-        room.addMiniGame(host.getName(), cardGame);
 
         roomRepository.save(room);
 
         RoomEntity roomEntity = new RoomEntity(joinCode.getValue());
         roomJpaRepository.save(roomEntity);
+
+        // CardGameFake 인스턴스를 GameSession 대기열(READY)에 넣어 WebSocket START 커맨드가 시작하도록 한다(ADR-0023 Step 4).
+        final Gamer hostGamer = Gamer.guest(host.getName().value());
+        gameSessionService.deleteSession(joinCode);
+        gameSessionService.initSession(joinCode, hostGamer);
+        gameSessionService.getSession(joinCode).replaceGames(hostGamer, List.of(cardGame));
 
         session = createSession(joinCode, host.getName());
     }

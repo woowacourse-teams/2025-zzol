@@ -96,7 +96,7 @@ public class GameSession {
     }
 
     private void validateHost(Gamer requester) {
-        if (!host.name().equals(requester.name())) {
+        if (!host.getName().equals(requester.getName())) {
             throw new BusinessException(GameSessionErrorCode.NOT_HOST, "호스트만 게임 세션을 조작할 수 있습니다.");
         }
     }

@@ -72,6 +72,28 @@ class MiniGameResultTest {
     }
 
     @Test
+    void toRankMap은_순위를_플레이어_이름_기준으로_변환한다() {
+        // given
+        MiniGameResult result = new MiniGameResult(Map.of(
+                호스트_한스.toGamer(), 1,
+                게스트_루키.toGamer(), 2,
+                게스트_꾹이.toGamer(), 3
+        ));
+
+        // when
+        Map<String, Integer> rankMap = result.toRankMap();
+
+        // then
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(rankMap).containsExactlyInAnyOrderEntriesOf(Map.of(
+                    호스트_한스.toGamer().getName(), 1,
+                    게스트_루키.toGamer().getName(), 2,
+                    게스트_꾹이.toGamer().getName(), 3
+            ));
+        });
+    }
+
+    @Test
     void 동점자가_몇_명인지_확인한다() {
         // given
         MiniGameResult result = MiniGameResult.fromDescending(Map.of(

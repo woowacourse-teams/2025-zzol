@@ -2,12 +2,16 @@ package coffeeshout.minigame.application;
 
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.MiniGameFactory;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.GameSessionRepository;
+import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +21,7 @@ import org.springframework.stereotype.Service;
 public class GameSessionService {
 
     private final GameSessionRepository gameSessionRepository;
+    private final Map<MiniGameType, MiniGameFactory> miniGameFactoryMap;
 
     /**
      * 방 생성 시 세션을 사전 초기화한다. 이미 존재하면 무시한다(멱등).
@@ -41,6 +46,25 @@ public class GameSessionService {
      */
     public Optional<GameSession> findSession(JoinCode joinCode) {
         return gameSessionRepository.findByJoinCode(joinCode);
+    }
+
+    /**
+     * 선택된 게임 목록을 통째로 교체한다. 세션이 없으면 호스트 이름으로 지연 생성한다(Step 6의
+     * {@code initSession}과 멱등). 실제 흐름에서 게임 선택({@code updateGames})은 항상
+     * 시작·조회보다 먼저 일어나므로 이 지연 생성이 Step 4 단독으로 동작하게 한다(ADR-0023).
+     */
+    public void updateGames(MiniGameSelectEvent event) {
+        final JoinCode joinCode = new JoinCode(event.joinCode());
+        final Gamer host = Gamer.guest(event.hostName());
+        final GameSession session = findSession(joinCode)
+                .orElseGet(() -> new GameSession(joinCode, host));
+
+        final List<Playable> games = event.miniGameTypes().stream()
+                .map(type -> miniGameFactoryMap.get(type).create(joinCode.getValue()))
+                .toList();
+
+        session.replaceGames(host, games);
+        gameSessionRepository.save(session);
     }
 
     /**

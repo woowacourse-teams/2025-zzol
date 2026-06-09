@@ -18,7 +18,7 @@ public class BlindTimerPlayers {
 
     public BlindTimerPlayer findByName(String name) {
         return players.stream()
-                .filter(p -> p.getGamer().name().equals(name))
+                .filter(p -> p.getGamer().getName().equals(name))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("해당 플레이어를 찾을 수 없습니다: " + name));
     }

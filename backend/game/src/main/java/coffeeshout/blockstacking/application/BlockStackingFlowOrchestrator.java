@@ -9,6 +9,7 @@ import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.blockstacking.domain.BlockStackingGameStep;
 import coffeeshout.gamecommon.flow.EarlyFinishTrigger;
 import coffeeshout.gamecommon.flow.FlowScheduler;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.room.domain.Room;
@@ -28,6 +29,7 @@ public class BlockStackingFlowOrchestrator {
     private final FlowScheduler blockStackingFlowScheduler;
     private final BlockStackingTimingProperties timing;
     private final BlockStackingNotifier notifier;
+    private final GameSessionService gameSessionService;
     private final ApplicationEventPublisher eventPublisher;
 
     private final ConcurrentHashMap<String, EarlyFinishTrigger> earlyFinishTriggers = new ConcurrentHashMap<>();
@@ -94,7 +96,10 @@ public class BlockStackingFlowOrchestrator {
             } catch (Exception e) {
                 log.warn("BlockStacking 완료 알림 실패: joinCode={}", joinCode, e);
             }
-            eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.BLOCK_STACKING.name()));
+            // 순서 불변식(ADR-0023 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행
+            final int roundCount = gameSessionService.finishGame(room.getJoinCode());
+            eventPublisher.publishEvent(new MiniGameFinishedEvent(
+                    joinCode, MiniGameType.BLOCK_STACKING.name(), game.getResult().toRankMap(), roundCount));
         };
     }
 }

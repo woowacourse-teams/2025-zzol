@@ -1,6 +1,7 @@
 package coffeeshout.gamecommon;
 
 import java.util.Objects;
+import lombok.Getter;
 
 /**
  * 모듈 경계를 넘는 게임 참가자 식별자 (ADR-0023).
@@ -9,6 +10,7 @@ import java.util.Objects;
  * 렌더링용 표시 상태이지 식별자가 아니므로 {@link #equals}/{@link #hashCode}에서 제외한다.
  * 동일 식별의 Gamer가 색상 유무와 무관하게 score 맵 키로 일관되게 매칭되도록 보장한다.
  */
+@Getter
 public final class Gamer {
 
     private final String name;
@@ -35,18 +37,6 @@ public final class Gamer {
 
     public static Gamer of(String name, Long userId, Integer colorIndex) {
         return new Gamer(name, userId, colorIndex);
-    }
-
-    public String name() {
-        return name;
-    }
-
-    public Long userId() {
-        return userId;
-    }
-
-    public Integer colorIndex() {
-        return colorIndex;
     }
 
     public boolean isLoggedIn() {

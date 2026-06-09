@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.fixture.RoomFixture;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.support.MessageResponse;
@@ -14,6 +16,7 @@ import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -32,6 +35,9 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
     Player host;
     TestStompSession session;
 
+    @Autowired
+    GameSessionService gameSessionService;
+
     @BeforeEach
     void setUp(
             @Autowired RoomRepository roomRepository,
@@ -43,10 +49,14 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         host = room.getHost();
 
-        room.addMiniGame(host.getName(), new BlockStackingGame());
-
         roomRepository.save(room);
         roomJpaRepository.save(new RoomEntity(joinCode.getValue()));
+
+        // 게임을 GameSession 대기열(READY)에 넣어 WebSocket START 커맨드가 시작하도록 한다(ADR-0023 Step 4).
+        final Gamer hostGamer = Gamer.guest(host.getName().value());
+        gameSessionService.deleteSession(joinCode);
+        gameSessionService.initSession(joinCode, hostGamer);
+        gameSessionService.getSession(joinCode).replaceGames(hostGamer, List.of(new BlockStackingGame()));
 
         session = createSession(joinCode, host.getName());
     }

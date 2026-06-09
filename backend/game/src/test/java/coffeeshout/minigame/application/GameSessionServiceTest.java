@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.fixture.StubPlayable;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.MiniGameFactory;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.minigame.domain.GameSession;
@@ -13,7 +14,9 @@ import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.GameSessionStatus;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.MemoryGameSessionRepository;
+import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import java.util.List;
+import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +35,7 @@ class GameSessionServiceTest {
     @BeforeEach
     void setUp() {
         repository = new MemoryGameSessionRepository();
-        service = new GameSessionService(repository);
+        service = new GameSessionService(repository, Map.of());
     }
 
     private Playable game(MiniGameType type) {
@@ -114,6 +117,83 @@ class GameSessionServiceTest {
                 softly.assertThat(roundCount).isEqualTo(2);
                 softly.assertThat(service.getSession(JOIN_CODE).getStatus()).isEqualTo(GameSessionStatus.READY);
             });
+        }
+    }
+
+    @Nested
+    @DisplayName("게임 선택 교체(updateGames)")
+    class UpdateGames {
+
+        private MiniGameFactory factory(MiniGameType type) {
+            return new MiniGameFactory() {
+                @Override
+                public MiniGameType type() {
+                    return type;
+                }
+
+                @Override
+                public Playable create(String joinCode) {
+                    return new StubPlayable(type);
+                }
+            };
+        }
+
+        private GameSessionService serviceWithFactories(MiniGameType... types) {
+            final Map<MiniGameType, MiniGameFactory> factoryMap = new java.util.EnumMap<>(MiniGameType.class);
+            for (MiniGameType type : types) {
+                factoryMap.put(type, factory(type));
+            }
+            return new GameSessionService(repository, factoryMap);
+        }
+
+        @Test
+        @DisplayName("세션이 없으면 호스트 이름으로 지연 생성하고 선택 게임으로 교체한다")
+        void 세션이_없으면_지연_생성하고_교체한다() {
+            final GameSessionService sut = serviceWithFactories(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME);
+            final MiniGameSelectEvent event = new MiniGameSelectEvent(
+                    JOIN_CODE.getValue(),
+                    HOST.getName(),
+                    List.of(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME));
+
+            sut.updateGames(event);
+
+            final GameSession session = sut.getSession(JOIN_CODE);
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(repository.existsByJoinCode(JOIN_CODE)).isTrue();
+                softly.assertThat(session.getHost()).isEqualTo(HOST);
+                softly.assertThat(session.getSelectedTypes())
+                        .containsExactly(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME);
+            });
+        }
+
+        @Test
+        @DisplayName("기존 세션이 있으면 선택 게임 목록을 통째로 교체한다")
+        void 기존_세션이_있으면_교체한다() {
+            final GameSessionService sut = serviceWithFactories(
+                    MiniGameType.CARD_GAME, MiniGameType.RACING_GAME, MiniGameType.LADDER_GAME);
+            sut.initSession(JOIN_CODE, HOST);
+            sut.updateGames(new MiniGameSelectEvent(
+                    JOIN_CODE.getValue(), HOST.getName(), List.of(MiniGameType.CARD_GAME)));
+
+            sut.updateGames(new MiniGameSelectEvent(
+                    JOIN_CODE.getValue(), HOST.getName(),
+                    List.of(MiniGameType.RACING_GAME, MiniGameType.LADDER_GAME)));
+
+            assertThat(sut.getSession(JOIN_CODE).getSelectedTypes())
+                    .containsExactly(MiniGameType.RACING_GAME, MiniGameType.LADDER_GAME);
+        }
+
+        @Test
+        @DisplayName("팩토리 맵으로 각 타입의 Playable을 생성한다")
+        void 팩토리_맵으로_Playable을_생성한다() {
+            final GameSessionService sut = serviceWithFactories(MiniGameType.CARD_GAME);
+            final MiniGameSelectEvent event = new MiniGameSelectEvent(
+                    JOIN_CODE.getValue(), HOST.getName(), List.of(MiniGameType.CARD_GAME));
+
+            sut.updateGames(event);
+
+            assertThat(sut.getSession(JOIN_CODE).getSelectedTypes())
+                    .containsExactly(MiniGameType.CARD_GAME);
         }
     }
 

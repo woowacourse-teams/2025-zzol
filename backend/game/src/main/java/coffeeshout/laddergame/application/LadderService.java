@@ -3,6 +3,7 @@ package coffeeshout.laddergame.application;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.application.LadderCommandService;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Room;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class LadderService implements MiniGameService {
 
     private final RoomQueryService roomQueryService;
+    private final GameSessionService gameSessionService;
     private final LadderFlowOrchestrator flowOrchestrator;
     private final LadderCommandService commandService;
     private final LadderNotifier notifier;
@@ -44,6 +46,7 @@ public class LadderService implements MiniGameService {
     }
 
     private LadderGame getGame(Room room) {
-        return (LadderGame) room.findMiniGame(MiniGameType.LADDER_GAME);
+        return (LadderGame) gameSessionService.getSession(room.getJoinCode())
+                .findCompletedGame(MiniGameType.LADDER_GAME);
     }
 }

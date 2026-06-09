@@ -4,22 +4,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.fixture.RoomFixture;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.domain.repository.RoomRepository;
+import coffeeshout.room.infra.persistence.PlayerEntity;
+import coffeeshout.room.infra.persistence.PlayerJpaRepository;
+import coffeeshout.room.infra.persistence.RoomEntity;
+import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
+
+    @Autowired
+    GameSessionService gameSessionService;
 
     JoinCode joinCode;
     Player host;
@@ -28,14 +38,30 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
     SpeedTouchGame game;
 
     @BeforeEach
-    void setUp(@Autowired RoomRepository roomRepository) throws Exception {
+    void setUp(@Autowired RoomRepository roomRepository,
+               @Autowired RoomJpaRepository roomJpaRepository,
+               @Autowired PlayerJpaRepository playerJpaRepository) throws Exception {
         joinCode = new JoinCode("A4BX");
         room = RoomFixture.호스트_꾹이();
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         host = room.getHost();
-        game = new SpeedTouchGame();
-        room.addMiniGame(new PlayerName(host.getName().value()), game);
         roomRepository.save(room);
+
+        // 게임 종료 시 결과 저장 리스너(MiniGameResultSaveEventListener)가 RoomEntity·PlayerEntity를
+        // 조회하므로, 실제 join 흐름이 영속화하는 엔티티들을 통합 테스트에서도 동일하게 적재한다.
+        final RoomEntity roomEntity = roomJpaRepository.save(new RoomEntity(joinCode.getValue()));
+        room.getPlayers().forEach(player -> playerJpaRepository.save(
+                new PlayerEntity(roomEntity, player.getName().value(),
+                        player.equals(host) ? PlayerType.HOST : PlayerType.GUEST)));
+
+        // 테스트의 game 인스턴스를 GameSession 대기열(READY)에 넣어, WebSocket START 커맨드의
+        // startGame이 동일 인스턴스를 시작하도록 한다(game.findPlayer 단언이 라이브 인스턴스를 본다).
+        game = new SpeedTouchGame();
+        final Gamer hostGamer = Gamer.guest(host.getName().value());
+        gameSessionService.deleteSession(joinCode);
+        gameSessionService.initSession(joinCode, hostGamer);
+        gameSessionService.getSession(joinCode).replaceGames(hostGamer, List.of(game));
+
         session = createSession(joinCode, host.getName());
     }
 

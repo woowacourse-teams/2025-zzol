@@ -8,6 +8,7 @@ import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
 import coffeeshout.blindtimer.domain.event.BlindTimerStateChangedEvent;
 import coffeeshout.game.metric.GameDurationMetricService;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 public class BlindTimerGameService implements MiniGameService {
 
     private final RoomQueryService roomQueryService;
+    private final GameSessionService gameSessionService;
     private final TaskScheduler taskScheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final BlindTimerGameTimingProperties timing;
@@ -34,12 +36,14 @@ public class BlindTimerGameService implements MiniGameService {
 
     public BlindTimerGameService(
             RoomQueryService roomQueryService,
+            GameSessionService gameSessionService,
             @Qualifier("blindTimerGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
             BlindTimerGameTimingProperties timing,
             GameDurationMetricService gameDurationMetricService
     ) {
         this.roomQueryService = roomQueryService;
+        this.gameSessionService = gameSessionService;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
         this.timing = timing;
@@ -68,20 +72,24 @@ public class BlindTimerGameService implements MiniGameService {
         }
         game.cancelTimeout();
 
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        room.applyMiniGameResult(game.getResult());
+        // 순서 불변식(ADR-0023 결정 5): finishGame()으로 roundCount를 먼저 확정·상태 복귀시킨다.
+        final int roundCount = gameSessionService.finishGame(new JoinCode(joinCode));
 
         eventPublisher.publishEvent(BlindTimerProgressEvent.of(game, joinCode));
         taskScheduler.schedule(
                 () -> eventPublisher.publishEvent(BlindTimerFinishedEvent.of(game, joinCode)),
                 Instant.now().plus(timing.resultDelay())
         );
-        eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.BLIND_TIMER.name()));
+        // 확률 조정·결과 저장을 유발하는 이벤트는 종료 알림을 모두 보낸 뒤 마지막에 발행한다 —
+        // 저장 리스너(@Transactional/@RedisLock) 실패가 게임 종료 알림을 막지 않도록(다른 게임과 동일 순서).
+        eventPublisher.publishEvent(new MiniGameFinishedEvent(
+                joinCode, MiniGameType.BLIND_TIMER.name(), game.getResult().toRankMap(), roundCount));
         log.info("블라인드 타이머 게임 종료: joinCode={}", joinCode);
     }
 
     public BlindTimerGame getBlindTimerGame(Room room) {
-        return (BlindTimerGame) room.findMiniGame(MiniGameType.BLIND_TIMER);
+        return (BlindTimerGame) gameSessionService.getSession(room.getJoinCode())
+                .findCompletedGame(MiniGameType.BLIND_TIMER);
     }
 
     private void scheduleDescription(BlindTimerGame game, String joinCode) {

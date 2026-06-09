@@ -63,24 +63,24 @@ public class BlockStackingGame implements Playable {
         if (progress == null) {
             log.warn("[{}] 등록되지 않은 플레이어의 진행 이벤트 수신 — 무시: player={}",
                     BlockStackingGameErrorCode.PLAYER_NOT_FOUND.getCode(),
-                    gamer.name());
+                    gamer.getName());
             throw new BusinessException(
                     BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
-                    "등록되지 않은 플레이어입니다: " + gamer.name()
+                    "등록되지 않은 플레이어입니다: " + gamer.getName()
             );
         }
 
         if (progress.failed()) {
             log.warn("[{}] 이미 실패한 플레이어의 진행 이벤트 수신 — 무시: player={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
-                    gamer.name());
+                    gamer.getName());
             return false;
         }
 
         if (!isValidFloorSequence(floor, progress.currentFloor())) {
             log.warn("[{}] 비연속적 층수 수신 — 무시: player={}, expected={}, received={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
-                    gamer.name(), progress.currentFloor() + 1, floor);
+                    gamer.getName(), progress.currentFloor() + 1, floor);
             return false;
         }
 
@@ -88,7 +88,7 @@ public class BlockStackingGame implements Playable {
         if (overlap <= 0) {
             log.warn("[{}] 유효하지 않은 overlap — 무시: player={}, floor={}, overlap={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
-                    gamer.name(), floor, overlap);
+                    gamer.getName(), floor, overlap);
             return false;
         }
 
@@ -114,7 +114,7 @@ public class BlockStackingGame implements Playable {
         if (progress == null) {
             throw new BusinessException(
                     BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
-                    "등록되지 않은 플레이어입니다: " + gamer.name()
+                    "등록되지 않은 플레이어입니다: " + gamer.getName()
             );
         }
 
@@ -122,7 +122,7 @@ public class BlockStackingGame implements Playable {
             return false;
         }
         playerProgresses.put(gamer, progress.fail());
-        log.info("플레이어 실패 기록: player={}, floor={}", gamer.name(), progress.currentFloor());
+        log.info("플레이어 실패 기록: player={}, floor={}", gamer.getName(), progress.currentFloor());
         return true;
     }
 
@@ -134,14 +134,14 @@ public class BlockStackingGame implements Playable {
     public List<BlockStackingPlayerRankInfo> getRanking() {
         return playerProgresses.values().stream()
                 .sorted(Comparator.comparingInt(BlockStackingPlayerProgress::currentFloor).reversed()
-                        .thenComparing(p -> p.gamer().name()))
-                .map(p -> new BlockStackingPlayerRankInfo(p.gamer().name(), p.currentFloor()))
+                        .thenComparing(p -> p.gamer().getName()))
+                .map(p -> new BlockStackingPlayerRankInfo(p.gamer().getName(), p.currentFloor()))
                 .toList();
     }
 
     public Gamer findByName(String name) {
         return playerProgresses.keySet().stream()
-                .filter(gamer -> gamer.name().equals(name))
+                .filter(gamer -> gamer.getName().equals(name))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
                         BlockStackingGameErrorCode.PLAYER_NOT_FOUND,

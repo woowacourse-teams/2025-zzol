@@ -14,7 +14,7 @@ public record MiniGameScoresMessage(List<MiniGameScoreMessage> scores) {
     ) {
 
         public static MiniGameScoreMessage from(@NonNull Map.Entry<Gamer, MiniGameScore> scoreEntry) {
-            return new MiniGameScoreMessage(scoreEntry.getKey().name(), scoreEntry.getValue().getValue());
+            return new MiniGameScoreMessage(scoreEntry.getKey().getName(), scoreEntry.getValue().getValue());
         }
     }
 

@@ -10,10 +10,12 @@ import coffeeshout.blindtimer.domain.BlindTimerGameState;
 import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.GameModuleServiceTest;
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
 import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,9 @@ class BlindTimerGameProgressHandlerTest extends GameModuleServiceTest {
     @Autowired
     private BlindTimerGameProgressHandler progressHandler;
 
+    @Autowired
+    private GameSessionService gameSessionService;
+
     private static final String HOST_NAME = "꾹이";
 
     private Room room;
@@ -38,12 +43,16 @@ class BlindTimerGameProgressHandlerTest extends GameModuleServiceTest {
         room = RoomFixture.호스트_꾹이();
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         roomRepository.save(room);
-        game = new BlindTimerGame(Duration.ofSeconds(10));
-        room.addMiniGame(new PlayerName(HOST_NAME), game);
-        room.startNextGame(HOST_NAME);
         joinCode = room.getJoinCode().getValue();
 
-        game.setUp(room.getPlayers().stream().map(p -> p.toGamer()).toList());
+        // GameSession 대기열에 게임을 넣고 시작한다(startGame이 game.setUp(gamers)를 호출).
+        game = new BlindTimerGame(Duration.ofSeconds(10));
+        final Gamer host = Gamer.guest(HOST_NAME);
+        gameSessionService.deleteSession(room.getJoinCode());
+        gameSessionService.initSession(room.getJoinCode(), host);
+        gameSessionService.getSession(room.getJoinCode()).replaceGames(host, List.of(game));
+        gameSessionService.startGame(room.getJoinCode(), host, room.getGamers());
+
         game.startPlaying();
     }
 

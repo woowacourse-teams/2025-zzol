@@ -4,6 +4,7 @@ import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.application.service.CardGameCommandService;
 import coffeeshout.game.metric.GameDurationMetricService;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Room;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 public class CardGameService implements MiniGameService {
 
     private final RoomQueryService roomQueryService;
+    private final GameSessionService gameSessionService;
     private final CardGameCommandService cardGameCommandService;
     private final CardGameFlowOrchestrator flowOrchestrator;
     private final GameDurationMetricService gameDurationMetricService;
@@ -44,6 +46,7 @@ public class CardGameService implements MiniGameService {
     }
 
     private CardGame getCardGame(Room room) {
-        return (CardGame) room.findMiniGame(MiniGameType.CARD_GAME);
+        return (CardGame) gameSessionService.getSession(room.getJoinCode())
+                .findCompletedGame(MiniGameType.CARD_GAME);
     }
 }

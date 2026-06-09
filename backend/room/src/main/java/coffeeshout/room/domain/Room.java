@@ -20,6 +20,7 @@ import coffeeshout.room.domain.roulette.Roulette;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import lombok.Getter;
 
@@ -94,6 +95,20 @@ public class Room {
         players.adjustProbabilities(miniGameResult, probabilityCalculator);
     }
 
+    /**
+     * 게임 결과(순위 맵)와 라운드 수로 확률을 조정한다. 게임 수 상태는 GameSession이 소유하므로
+     * {@code roundCount}는 {@code MiniGameFinishedEvent}로 전달받는다(ADR-0023 결정 3·5).
+     */
+    public void applyGameResult(Map<PlayerName, Integer> rankByPlayer, int roundCount) {
+        final ProbabilityCalculator probabilityCalculator = new ProbabilityCalculator(
+                players.getPlayerCount(),
+                roundCount,
+                adjustmentWeight
+        );
+        this.roomState = RoomState.SCORE_BOARD;
+        players.adjustProbabilities(rankByPlayer, probabilityCalculator);
+    }
+
     public void updateAdjustmentWeight(PlayerName hostName, double adjustmentWeight) {
         validateHost(hostName);
         validateRoomUpdatable();
@@ -120,6 +135,16 @@ public class Room {
 
     public List<Player> getPlayers() {
         return players.getPlayers();
+    }
+
+    /**
+     * 현재 플레이어를 {@code Gamer}(:game-api)로 변환해 반환한다. 게임 시작 흐름이 {@code Player}를
+     * import하지 않고 플레이어 식별·색상만 받도록 한다(ADR-0023 결정 4).
+     */
+    public List<Gamer> getGamers() {
+        return players.getPlayers().stream()
+                .map(Player::toGamer)
+                .toList();
     }
 
     public Player findPlayer(PlayerName playerName) {
@@ -166,6 +191,22 @@ public class Room {
         finishedGames.add(currentGame);
 
         return currentGame;
+    }
+
+    /**
+     * 게임 시작 가능 여부를 검증한다(호스트·전원 준비·인원·방 상태). 게임 대기열은 GameSession이
+     * 소유하므로 여기서 검사하지 않으며, 상태를 변경하지 않는다(ADR-0023 결정 4). 대기열 검증과
+     * {@code PLAYING} 전이는 {@code GameSessionService.startGame} → {@link #markPlaying()} 순서로 분리된다.
+     */
+    public void validateStartable(String hostName) {
+        state(host.sameName(new PlayerName(hostName)), "호스트가 게임을 시작할 수 있습니다.");
+        state(players.isAllReady(), "모든 플레이어가 준비 완료해야합니다.");
+        state(players.getPlayerCount() >= 2, "게임을 시작하려면 플레이어가 2명 이상이어야 합니다.");
+        state(isPlayableState(), "게임을 시작할 수 있는 상태가 아닙니다.");
+    }
+
+    public void markPlaying() {
+        this.roomState = RoomState.PLAYING;
     }
 
     private boolean isPlayableState() {

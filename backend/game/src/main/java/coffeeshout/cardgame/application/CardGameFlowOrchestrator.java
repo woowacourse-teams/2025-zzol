@@ -13,6 +13,7 @@ import coffeeshout.cardgame.config.CardGameTimingProperties;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.CardGameState;
 import coffeeshout.cardgame.domain.CardGameStep;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
 import coffeeshout.room.domain.Room;
@@ -31,6 +32,7 @@ public class CardGameFlowOrchestrator {
     private final FlowScheduler cardGameFlowScheduler;
     private final CardGameTimingProperties timing;
     private final CardGameNotifier notifier;
+    private final GameSessionService gameSessionService;
     private final ApplicationEventPublisher eventPublisher;
 
     private final ConcurrentHashMap<String, EarlyFinishTrigger> earlyFinishTriggers = new ConcurrentHashMap<>();
@@ -112,7 +114,10 @@ public class CardGameFlowOrchestrator {
         return () -> {
             earlyFinishTriggers.remove(joinCode);
             step(cardGame, room, FINISH_GAME).run();
-            eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.CARD_GAME.name()));
+            // 순서 불변식(ADR-0023 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행
+            final int roundCount = gameSessionService.finishGame(room.getJoinCode());
+            eventPublisher.publishEvent(new MiniGameFinishedEvent(
+                    joinCode, MiniGameType.CARD_GAME.name(), cardGame.getResult().toRankMap(), roundCount));
         };
     }
 

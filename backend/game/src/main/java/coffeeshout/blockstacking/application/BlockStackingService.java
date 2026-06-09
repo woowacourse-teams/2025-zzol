@@ -3,6 +3,7 @@ package coffeeshout.blockstacking.application;
 import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Room;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class BlockStackingService implements MiniGameService {
 
     private final RoomQueryService roomQueryService;
+    private final GameSessionService gameSessionService;
     private final BlockStackingFlowOrchestrator flowOrchestrator;
     private final BlockStackingNotifier notifier;
 
@@ -64,7 +66,8 @@ public class BlockStackingService implements MiniGameService {
     }
 
     private BlockStackingGame getGame(Room room) {
-        return (BlockStackingGame) room.findMiniGame(MiniGameType.BLOCK_STACKING);
+        return (BlockStackingGame) gameSessionService.getSession(room.getJoinCode())
+                .findCompletedGame(MiniGameType.BLOCK_STACKING);
     }
 
     private Gamer findGamer(BlockStackingGame game, String playerName) {

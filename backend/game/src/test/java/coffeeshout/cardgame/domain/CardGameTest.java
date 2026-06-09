@@ -271,7 +271,7 @@ class CardGameTest {
             Gamer foundPlayer = cardGame.findByName(playerName);
 
             // then
-            assertThat(foundPlayer.name()).isEqualTo(playerName);
+            assertThat(foundPlayer.getName()).isEqualTo(playerName);
         }
 
         @Test

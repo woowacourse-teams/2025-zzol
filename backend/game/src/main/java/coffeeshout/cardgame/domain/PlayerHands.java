@@ -44,7 +44,7 @@ public class PlayerHands {
 
     public Gamer findByName(String name) {
         return playerHands.keySet().stream()
-                .filter(gamer -> gamer.name().equals(name))
+                .filter(gamer -> gamer.getName().equals(name))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
                         RoomErrorCode.NO_EXIST_PLAYER,

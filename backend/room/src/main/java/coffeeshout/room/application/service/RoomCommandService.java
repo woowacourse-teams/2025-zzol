@@ -31,6 +31,16 @@ public class RoomCommandService {
         return roomRepository.save(room);
     }
 
+    /**
+     * 게임 종료 결과(순위 맵·라운드 수)로 확률을 조정한다. {@code :game}의
+     * {@code MiniGameFinishedEvent}를 수신한 {@code MiniGameResultRoomListener}가 호출한다(ADR-0023 결정 5).
+     */
+    public void applyGameResult(JoinCode joinCode, Map<PlayerName, Integer> rankByPlayer, int roundCount) {
+        final Room room = roomQueryService.getByJoinCode(joinCode);
+        room.applyGameResult(rankByPlayer, roundCount);
+        save(room);
+    }
+
     public void delete(@NonNull JoinCode joinCode) {
         roomRepository.deleteByJoinCode(joinCode);
     }

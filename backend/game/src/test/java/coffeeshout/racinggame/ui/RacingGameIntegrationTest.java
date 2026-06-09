@@ -1,21 +1,31 @@
 package coffeeshout.racinggame.ui;
 
 import coffeeshout.fixture.RoomFixture;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.domain.repository.RoomRepository;
+import coffeeshout.room.infra.persistence.PlayerEntity;
+import coffeeshout.room.infra.persistence.PlayerJpaRepository;
+import coffeeshout.room.infra.persistence.RoomEntity;
+import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class RacingGameIntegrationTest extends GameModuleWebSocketTest {
+
+    @Autowired
+    GameSessionService gameSessionService;
 
     JoinCode joinCode;
     Player host;
@@ -24,14 +34,29 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
     RacingGame racingGame;
 
     @BeforeEach
-    void setUp(@Autowired RoomRepository roomRepository) throws Exception {
+    void setUp(@Autowired RoomRepository roomRepository,
+               @Autowired RoomJpaRepository roomJpaRepository,
+               @Autowired PlayerJpaRepository playerJpaRepository) throws Exception {
         joinCode = new JoinCode("A4BX");
         room = RoomFixture.호스트_꾹이();
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         host = room.getHost();
-        racingGame = new RacingGame();
-        room.addMiniGame(new PlayerName(host.getName().value()), racingGame);
         roomRepository.save(room);
+
+        // 게임 종료 시 결과 저장 리스너(MiniGameResultSaveEventListener)가 RoomEntity·PlayerEntity를
+        // 조회하므로, 실제 join 흐름이 영속화하는 엔티티들을 통합 테스트에서도 동일하게 적재한다.
+        final RoomEntity roomEntity = roomJpaRepository.save(new RoomEntity(joinCode.getValue()));
+        room.getPlayers().forEach(player -> playerJpaRepository.save(
+                new PlayerEntity(roomEntity, player.getName().value(),
+                        player.equals(host) ? PlayerType.HOST : PlayerType.GUEST)));
+
+        // 테스트의 game 인스턴스를 GameSession 대기열(READY)에 넣어, WebSocket START 커맨드가 시작하도록 한다.
+        racingGame = new RacingGame();
+        final Gamer hostGamer = Gamer.guest(host.getName().value());
+        gameSessionService.deleteSession(joinCode);
+        gameSessionService.initSession(joinCode, hostGamer);
+        gameSessionService.getSession(joinCode).replaceGames(hostGamer, List.of(racingGame));
+
         session = createSession(joinCode, host.getName());
     }
 

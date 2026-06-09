@@ -1,0 +1,4 @@
+# nginx/monitoring 설정·compose 파일은 Linux 컨테이너로 배포되므로 LF로 고정한다.
+# Windows에서 편집·커밋해도 CRLF로 변환되지 않도록 강제 (nginx -t 오류 및 무의미한 diff 방지).
+backend/docker/** text eol=lf
+.github/scripts/** text eol=lf

@@ -1,12 +1,11 @@
 package coffeeshout.blockstacking.application;
 
 import coffeeshout.blockstacking.domain.BlockStackingGame;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.application.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,9 +37,9 @@ public class BlockStackingService implements MiniGameService {
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final BlockStackingGame game = getGame(room);
-        final Player player = findPlayer(game, playerName);
+        final Gamer gamer = findGamer(game, playerName);
 
-        final boolean updated = game.recordProgress(player, floor, movingBlockX, stackTopX, stackTopWidth);
+        final boolean updated = game.recordProgress(gamer, floor, movingBlockX, stackTopX, stackTopWidth);
         if (updated) {
             notifier.notifyProgressUpdated(game, room);
         }
@@ -51,9 +50,9 @@ public class BlockStackingService implements MiniGameService {
 
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final BlockStackingGame game = getGame(room);
-        final Player player = findPlayer(game, playerName);
+        final Gamer gamer = findGamer(game, playerName);
 
-        final boolean recorded = game.recordFailure(player);
+        final boolean recorded = game.recordFailure(gamer);
         if (recorded) {
             flowOrchestrator.triggerEarlyFinishIfAllFailed(joinCode, game);
         }
@@ -68,7 +67,7 @@ public class BlockStackingService implements MiniGameService {
         return (BlockStackingGame) room.findMiniGame(MiniGameType.BLOCK_STACKING);
     }
 
-    private Player findPlayer(BlockStackingGame game, String playerName) {
-        return game.findPlayerByName(new PlayerName(playerName));
+    private Gamer findGamer(BlockStackingGame game, String playerName) {
+        return game.findByName(playerName);
     }
 }

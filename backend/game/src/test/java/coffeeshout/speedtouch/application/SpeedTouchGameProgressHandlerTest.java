@@ -65,7 +65,7 @@ class SpeedTouchGameProgressHandlerTest extends GameModuleServiceTest {
             progressHandler.handleTouch(joinCode, "꾹이", 10);
 
             // then
-            final var player = game.findPlayer(new PlayerName("꾹이"));
+            final var player = game.findPlayer("꾹이");
             assertThat(player.getCurrentNumber()).isEqualTo(1);
         }
     }

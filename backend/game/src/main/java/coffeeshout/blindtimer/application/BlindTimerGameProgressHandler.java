@@ -4,7 +4,6 @@ import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.application.service.RoomQueryService;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class BlindTimerGameProgressHandler {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final BlindTimerGame game = blindTimerGameService.getBlindTimerGame(room);
 
-        final boolean accepted = game.stop(new PlayerName(playerName), Instant.now());
+        final boolean accepted = game.stop(playerName, Instant.now());
         if (!accepted) {
             log.debug("STOP 무시 (이미 멈춤): joinCode={}, player={}", joinCode, playerName);
             return;

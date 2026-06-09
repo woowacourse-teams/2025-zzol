@@ -53,15 +53,15 @@ public class LadderNotifier {
 
     @WsTopic(path = "/room/{joinCode}/ladder/line", payload = LadderLineResponse.class,
             description = "사다리 선 그리기 브로드캐스트")
-    public void notifyLineDrawn(LadderLine line, Room room) {
+    public void notifyLineDrawn(LadderGame game, LadderLine line, Room room) {
         final String joinCode = room.getJoinCode().getValue();
         messagingTemplate.convertAndSend(
                 String.format(LINE_DESTINATION_FORMAT, joinCode),
                 WebSocketResponse.success(new LadderLineResponse(
-                        line.playerName().value(),
+                        line.playerName(),
                         line.segmentIndex(),
                         line.row(),
-                        room.findPlayer(line.playerName()).getColorIndex()
+                        game.getPoles().findGamer(line.playerName()).colorIndex()
                 ))
         );
     }

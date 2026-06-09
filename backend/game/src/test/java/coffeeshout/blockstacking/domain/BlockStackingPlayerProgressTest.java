@@ -2,14 +2,14 @@ package coffeeshout.blockstacking.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.gamecommon.Gamer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class BlockStackingPlayerProgressTest {
 
-    static final PlayerName 플레이어명 = new PlayerName("꾹이");
+    static final Gamer 플레이어명 = Gamer.guest("꾹이");
 
     @Nested
     class 초기_생성_테스트 {
@@ -19,7 +19,7 @@ class BlockStackingPlayerProgressTest {
             final BlockStackingPlayerProgress progress = BlockStackingPlayerProgress.initial(플레이어명);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(progress.playerName()).isEqualTo(플레이어명);
+                softly.assertThat(progress.gamer()).isEqualTo(플레이어명);
                 softly.assertThat(progress.currentFloor()).isZero();
                 softly.assertThat(progress.failed()).isFalse();
             });
@@ -52,7 +52,7 @@ class BlockStackingPlayerProgressTest {
             final BlockStackingPlayerProgress failed = original.fail();
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(failed.playerName()).isEqualTo(플레이어명);
+                softly.assertThat(failed.gamer()).isEqualTo(플레이어명);
                 softly.assertThat(failed.currentFloor()).isEqualTo(3);
             });
         }
@@ -100,7 +100,7 @@ class BlockStackingPlayerProgressTest {
             final BlockStackingPlayerProgress progress = BlockStackingPlayerProgress.initial(플레이어명)
                     .advanceTo(7);
 
-            assertThat(progress.playerName()).isEqualTo(플레이어명);
+            assertThat(progress.gamer()).isEqualTo(플레이어명);
         }
 
         @Test

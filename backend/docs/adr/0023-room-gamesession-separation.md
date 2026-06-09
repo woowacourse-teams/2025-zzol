@@ -101,7 +101,7 @@ public enum GameSessionStatus {
 - `addGame`/`removeGame` 개별 API는 만들지 않는다. WebSocket 프로토콜(`MiniGameSelectMessage`)이 변경 시마다 현재 선택 목록 전체를 전송하므로 호출 경로가 없다. `replaceGames`가 원자적으로 전체 교체하며 중복 게임 타입 선택과 개수 상한(최대 5개, 현재 `Room.addMiniGame`의 `miniGames.size() <= 5` 제약 계승)을 함께 검증한다.
 - **상태 기반 변경 가능 검증**: 게임 중 여부를 Room 상태 조회 없이 GameSession 스스로 식별한다. `replaceGames`는 `READY`에서만 허용하고, `PLAYING` 중 호출은 `GAME_IN_PROGRESS`로 거부한다. `startNextGame`은 `READY`+대기열 존재 조건에서 `PLAYING`으로 전이하며, 게임 종료(`MiniGameFinishedEvent` 처리 시점)에 `finishCurrentGame()`으로 `READY` 또는 `DONE`으로 복귀한다. Room의 `RoomState`(방 화면 흐름: READY/PLAYING/SCORE_BOARD/ROULETTE/DONE)와 역할이 다르다 — `GameSessionStatus`는 대기열 불변식 보호 전용이다.
 - 호스트 검증은 Room이 아닌 GameSession에서 수행한다. 생성 시 `host`(`Gamer`)를 고정하고 `replaceGames`/`startNextGame` 진입점에서 `validateHost()`로 확인한다. Room 조회 없이 권한 검증이 끝난다. `:room`의 `PlayerName`이 아닌 `:game-api`의 `Gamer`를 사용해 GameSession 도메인의 `:room` 의존을 없앤다.
-- **호스트 동일성은 이름으로 검증한다.** 방은 닉네임 중복을 막으므로(`Room.validatePlayerNameNotDuplicate` → `DUPLICATE_PLAYER_NAME`, 409) 방 안에서 이름이 곧 유니크 식별자다. 기존 Room의 호스트 검증도 전부 `host.sameName(hostName)` 이름 기준이다. 따라서 `validateHost()`는 `Gamer.name()`을 비교하며 `Gamer` record 전체 동등성(`userId` 포함)에 의존하지 않는다. init host는 `userId` 없이 이름만으로 구성(`Gamer.guest(hostName)`)할 수 있어 `RoomCreateEvent` 변경이 필요 없다.
+- **호스트 동일성은 이름으로 검증한다.** 방은 닉네임 중복을 막으므로(`Room.validatePlayerNameNotDuplicate` → `DUPLICATE_PLAYER_NAME`, 409) 방 안에서 이름이 곧 유니크 식별자다. 기존 Room의 호스트 검증도 전부 `host.sameName(hostName)` 이름 기준이다. 따라서 `validateHost()`는 `Gamer.name()`을 비교하며 `Gamer` 객체 동등성에 의존하지 않는다. init host는 `userId` 없이 이름만으로 구성(`Gamer.guest(hostName)`)할 수 있어 `RoomCreateEvent` 변경이 필요 없다.
 - ⚠️ **이 이름 기반 식별은 "방 내 닉네임 유니크" 불변식에 의존한다 — 이는 영구 보장이 아니다.** 현재는 복잡도 때문에 중복 닉네임을 차단만 하고 있으나 차후 리팩터로 허용될 예정이다. 허용 시 이름은 더 이상 방-유니크 식별자가 아니므로, GameSession의 호스트/플레이어 식별을 방-유니크 키로 이관해야 한다. 회원은 `UserCode`로 가능하지만 게스트는 `UserCode`가 없으므로 `PlayerKey`(ADR-0009, 방-유니크) 같은 토큰이나 합성 식별자가 필요하다. 이 이관은 후속 고려 사항의 외부 식별 ADR과 한 묶음으로 설계한다.
 - 검증 실패는 `BusinessException` + `GameSessionErrorCode`로 처리한다.
 
@@ -177,7 +177,9 @@ Playable game = session.findCompletedGame(MiniGameType.CARD);
 
 `MiniGameSelectConsumer`(현재 `:room` `infra.messaging.consumer`)는 `:game`으로 이동해 `GameSessionService.updateGames()`를 호출한다. WebSocket 수신(`RoomWebSocketController` → Redis Stream 발행) 경로는 변경 없다.
 
-**게임 내부 값도 `Player` 대신 `Gamer`를 사용한다.** 현재 `Playable` 경계 시그니처는 `Gamer`이지만, 게임 내부 도메인 21개 파일(`BlindTimerPlayers`, `PlayerHands`, `Runners`, `Poles`, `SpeedTouchPlayer` 등)이 여전히 `room.domain.player.Player`를 직접 import한다. 게임이 필요한 것은 식별(이름·userId)뿐이고 `Player`의 확률·준비 상태는 게임이 알 필요도, 변경할 권한도 없다. 내부 컬렉션·점수 보관 키를 `Gamer`(`:game-api`)로 전면 교체해 `:game` → `:room` 직접 의존을 줄인다. `setUp(List<Gamer>)`로 받은 객체를 그대로 흘려보내면 되므로 경계 변환 비용도 사라진다.
+**게임 내부 값도 `Player` 대신 `Gamer`를 사용한다.** 현재 `Playable` 경계 시그니처는 `Gamer`이지만, 게임 내부 도메인 파일들(`BlindTimerPlayers`, `PlayerHands`, `Runners`, `Poles`, `SpeedTouchPlayer` 등)이 여전히 `room.domain.player.Player`를 직접 import한다. 게임이 필요한 것은 식별(이름·userId)뿐이고 `Player`의 확률·준비 상태는 게임이 알 필요도, 변경할 권한도 없다. 내부 컬렉션·점수 보관 키를 `Gamer`(`:game-api`)로 전면 교체해 `:game` → `:room` 직접 의존을 줄인다. `setUp(List<Gamer>)`로 받은 객체를 그대로 흘려보내면 되므로 경계 변환 비용도 사라진다.
+
+**색상(`colorIndex`)은 `Gamer`가 함께 운반한다.** 게임은 식별 외에 색상도 화면 렌더링에 쓴다(카드 소유자·사다리 막대 색). 색상은 Room이 입장 시 부여하는 표시 상태인데, 게임 내부를 `Gamer`로 바꾸면 응답 DTO가 더 이상 `Player.getColorIndex()`를 읽을 수 없다. 이를 응답 조립마다 Room에서 재조회하는 대신 `Gamer`에 `colorIndex`를 실어 게임이 이미 흘려보내는 객체로 일관되게 처리한다. 단 **식별 동등성은 `name`+`userId`만으로 정의**하고 `colorIndex`는 `equals`/`hashCode`에서 제외한다 — 색상은 표시 상태일 뿐 식별자가 아니므로, 색상 유무와 무관하게 동일 식별의 `Gamer`가 score 맵 키로 일관되게 매칭돼야 한다(색상 없는 `Gamer.guest(host)`로 조회해도 색상을 가진 키와 매칭). 이 '전체 필드 동등성'과의 불일치를 표면화하기 위해 `Gamer`는 record가 아닌 불변 class로 둔다. 색상은 `Player.toGamer()`가 채우며, 색상이 불필요한 지점(호스트 초기화 `Gamer.guest`)은 null을 허용한다.
 
 ### 5. 게임 결과 전달 — `:game-api` 이벤트 경유 (in-process 동기)
 
@@ -292,6 +294,7 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 - 게임 대기열 쓰기(`replaceGames`, `startNextGame`)는 GameSession의 호스트 검증과 상태 검증(`READY`에서만 변경 가능), 개수 상한(5개)을 모두 통과해야 한다.
 - 호스트 검증은 이름 기준(`Gamer.name()` 비교)이며 기존 `sameName`과 일치한다. ⚠️ 이 검증은 "방 내 닉네임 유니크" 불변식에 의존하고, 해당 불변식(중복 닉네임 차단)은 차후 리팩터 대상이다. 중복 허용 시 GameSession 식별을 방-유니크 키(회원 `UserCode`, 게스트 `PlayerKey`/합성 식별자)로 이관해야 한다 — 후속 고려 사항 참조.
 - `:game`의 게임 도메인은 `room.domain.player.Player`를 import하지 않는다. 식별이 필요하면 `Gamer`를 사용한다.
+- `Gamer`는 식별(`name`+`userId`)과 표시 상태(`colorIndex`)를 함께 갖는 불변 class이되, 동등성은 식별만으로 정의한다(`colorIndex`는 `equals`/`hashCode` 제외). 색상은 `Player.toGamer()`가 채우며, 게임 응답이 색상을 표시할 때 Room을 재조회하지 않고 `Gamer`에서 읽는다. ⚠️ 색상이 `Gamer` 페이로드로 흐르므로 ADR-0024의 외부 노출 점검 대상에 `colorIndex`도 포함한다.
 - 게임 수 상태는 `GameSession`이 단독 소유한다. Room은 게임 카운터를 보유하지 않으며, `ProbabilityCalculator`에 넘기는 `roundCount`(선택 게임 총수, 완료 수 아님)는 `MiniGameFinishedEvent`로 전달받는다. 게임 종료 시 `finishGame()`으로 `roundCount`를 확정한 뒤 이벤트를 발행하는 순서를 지킨다.
 
 ## 후속 고려 사항 (범위 밖)
@@ -327,8 +330,10 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 
 ### Step 3 — 게임 내부 `Player` → `Gamer` 전환
 
-- `:game` 내 `room.domain.player.Player` import 21개 파일을 `Gamer` 기반으로 교체 (`BlindTimerPlayers`, `PlayerHands`, `Runners`, `Poles`, `SpeedTouchPlayer` 등)
+- `:game` 내 `room.domain.player.Player`/`PlayerName` import 파일을 `Gamer` 기반으로 교체 (`BlindTimerPlayers`, `PlayerHands`, `Runners`, `Poles`, `SpeedTouchPlayer` 등)
 - 게임별 점수·상태 보관 키를 `Gamer`로 통일
+- `Gamer`에 `colorIndex` 추가(불변 class, 식별 동등성은 `name`+`userId`만) — 색상을 읽던 응답 DTO(`MiniGameStateMessage`, `LadderStateResponse`/`PoleInfo`)는 `Gamer.colorIndex()`에서 읽도록 변경
+- `MiniGameResultSaveEventListener`는 게임 내부가 아니라 Room의 player 목록(`room.getPlayers()`)과 `room.findMiniGame()`을 쓰므로 **Step 4로 연기**한다(`room.findMiniGame()` → GameSession 조회 전환과 함께 정리). 따라서 Step 3 종료 시점에 `:game`의 `Player` import는 이 한 파일만 남고, `grep = 0`은 Step 4 완료 시 달성한다
 
 ### Step 4 — 게임 서비스 조회 경로·결과 전달 변경
 

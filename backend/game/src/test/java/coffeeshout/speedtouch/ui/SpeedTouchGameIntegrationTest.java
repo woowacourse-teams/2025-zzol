@@ -159,7 +159,7 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
                 await().atMost(Duration.ofSeconds(5))
                         .pollInterval(Duration.ofMillis(50))
                         .untilAsserted(() ->
-                                assertThat(game.findPlayer(new PlayerName(playerName)).getCurrentNumber())
+                                assertThat(game.findPlayer(playerName).getCurrentNumber())
                                         .isGreaterThanOrEqualTo(expectedNext)
                         );
             }

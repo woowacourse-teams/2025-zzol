@@ -154,7 +154,7 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
             await().atMost(Duration.ofSeconds(5))
                     .pollInterval(Duration.ofMillis(50))
                     .untilAsserted(() ->
-                            assertThat(game.findPlayer(new PlayerName(playerName)).isStopped()).isTrue()
+                            assertThat(game.findPlayer(playerName).isStopped()).isTrue()
                     );
         }
 

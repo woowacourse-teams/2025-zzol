@@ -27,7 +27,7 @@ public record LadderStateResponse(
 
     public static LadderStateResponse ofPrepare(Poles poles, BottomRanks bottomRanks) {
         final List<PoleInfo> poleInfos = poles.getAll().stream()
-                .map(p -> new PoleInfo(p.index(), p.player().getName().value(), p.player().getColorIndex()))
+                .map(p -> new PoleInfo(p.index(), p.gamer().name(), p.gamer().colorIndex()))
                 .toList();
         return new LadderStateResponse(LadderGameState.PREPARE, poleInfos, bottomRanks.getAll(), null, null, null);
     }

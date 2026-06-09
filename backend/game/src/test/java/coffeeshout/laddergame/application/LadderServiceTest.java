@@ -58,7 +58,7 @@ class LadderServiceTest extends GameModuleServiceTest {
         void 유효한_선_긋기_요청은_notifier를_호출한다() {
             service.drawLine(joinCode.getValue(), HOST_NAME, 0);
 
-            verify(notifier, times(1)).notifyLineDrawn(any(), any());
+            verify(notifier, times(1)).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
@@ -66,7 +66,7 @@ class LadderServiceTest extends GameModuleServiceTest {
             service.drawLine(joinCode.getValue(), HOST_NAME, 0);
             service.drawLine(joinCode.getValue(), "루키", 1);
 
-            verify(notifier, times(2)).notifyLineDrawn(any(), any());
+            verify(notifier, times(2)).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
@@ -86,7 +86,7 @@ class LadderServiceTest extends GameModuleServiceTest {
 
             service.drawLine(joinCode.getValue(), HOST_NAME, 0);
 
-            verify(notifier, never()).notifyLineDrawn(any(), any());
+            verify(notifier, never()).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
@@ -95,14 +95,14 @@ class LadderServiceTest extends GameModuleServiceTest {
 
             service.drawLine(joinCode.getValue(), HOST_NAME, 1);
 
-            verify(notifier, times(1)).notifyLineDrawn(any(), any());
+            verify(notifier, times(1)).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
         void 미참여자_요청은_notifier를_호출하지_않는다() {
             service.drawLine(joinCode.getValue(), "없는플레이어", 0);
 
-            verify(notifier, never()).notifyLineDrawn(any(), any());
+            verify(notifier, never()).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
@@ -110,7 +110,7 @@ class LadderServiceTest extends GameModuleServiceTest {
             // 기둥 4개(꾹이+루키+엠제이+한스) → 유효한 구간: 0,1,2 → 3은 유효하지 않음
             service.drawLine(joinCode.getValue(), HOST_NAME, 3);
 
-            verify(notifier, never()).notifyLineDrawn(any(), any());
+            verify(notifier, never()).notifyLineDrawn(any(), any(), any());
         }
     }
 

@@ -6,8 +6,6 @@ import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -48,10 +46,7 @@ public class BlindTimerGame implements Playable {
 
     @Override
     public void setUp(List<Gamer> gamers) {
-        final List<Player> castList = gamers.stream()
-                .map(g -> Player.createGuest(new PlayerName(g.name()), g.userId()))
-                .toList();
-        this.players = new BlindTimerPlayers(castList);
+        this.players = new BlindTimerPlayers(gamers);
     }
 
     @Override
@@ -63,7 +58,7 @@ public class BlindTimerGame implements Playable {
     public Map<Gamer, MiniGameScore> getScores() {
         return players.stream()
                 .collect(Collectors.toMap(
-                        p -> p.getPlayer().toGamer(),
+                        BlindTimerPlayer::getGamer,
                         this::calculateScore
                 ));
     }
@@ -73,7 +68,7 @@ public class BlindTimerGame implements Playable {
         return MiniGameType.BLIND_TIMER;
     }
 
-    public boolean stop(PlayerName playerName, Instant now) {
+    public boolean stop(String playerName, Instant now) {
         validatePlaying();
         final BlindTimerPlayer player = players.findByName(playerName);
         final Duration elapsed = Duration.between(startTime, now);
@@ -117,7 +112,7 @@ public class BlindTimerGame implements Playable {
         }
     }
 
-    public BlindTimerPlayer findPlayer(PlayerName name) {
+    public BlindTimerPlayer findPlayer(String name) {
         return players.findByName(name);
     }
 

@@ -7,7 +7,6 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.application.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,7 @@ public class CardGameService implements MiniGameService {
 
     public void selectCard(String joinCode, String playerName, Integer cardIndex) {
         final JoinCode code = new JoinCode(joinCode);
-        final boolean roundFinished = cardGameCommandService.selectCard(code, new PlayerName(playerName), cardIndex);
+        final boolean roundFinished = cardGameCommandService.selectCard(code, playerName, cardIndex);
         if (roundFinished) {
             flowOrchestrator.triggerEarlyRoundFinish(joinCode);
         }

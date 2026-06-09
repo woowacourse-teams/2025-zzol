@@ -12,7 +12,7 @@ public record SpeedTouchProgressEvent(String joinCode, List<SpeedTouchPlayerProg
     public static SpeedTouchProgressEvent of(SpeedTouchGame game, String joinCode) {
         final List<SpeedTouchPlayerProgress> progresses = game.getPlayers().stream()
                 .map(p -> new SpeedTouchPlayerProgress(
-                        p.getPlayer().getName().value(),
+                        p.getGamer().name(),
                         p.getCurrentNumber(),
                         p.isFinished()
                 ))

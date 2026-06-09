@@ -2,7 +2,6 @@ package coffeeshout.speedtouch.application;
 
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import coffeeshout.speedtouch.domain.event.SpeedTouchProgressEvent;
@@ -25,7 +24,7 @@ public class SpeedTouchGameProgressHandler {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final SpeedTouchGame game = speedTouchGameService.getSpeedTouchGame(room);
 
-        final boolean accepted = game.touch(new PlayerName(playerName), touchedNumber, Instant.now());
+        final boolean accepted = game.touch(playerName, touchedNumber, Instant.now());
         if (!accepted) {
             log.debug("터치 무시: joinCode={}, player={}, number={}", joinCode, playerName, touchedNumber);
             return;

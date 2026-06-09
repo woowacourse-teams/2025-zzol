@@ -37,7 +37,7 @@ class PlayerHandsTest {
         players.join(PlayerFixture.호스트한스());
         players.join(PlayerFixture.호스트엠제이());
 
-        playerHands = new PlayerHands(players.getPlayers());
+        playerHands = new PlayerHands(players.getPlayers().stream().map(Player::toGamer).toList());
     }
 
     @Nested
@@ -59,7 +59,7 @@ class PlayerHandsTest {
         @Test
         void 플레이어에게_카드를_추가한다() {
             // given
-            Player player = players.getPlayer(new PlayerName("꾹이"));
+            Gamer player = players.getPlayer(new PlayerName("꾹이")).toGamer();
             Card card = AdditionCard.PLUS_40;
 
             // when
@@ -72,8 +72,8 @@ class PlayerHandsTest {
         @Test
         void 여러_플레이어에게_카드를_추가한다() {
             // given
-            Player player1 = players.getPlayer(new PlayerName("꾹이"));
-            Player player2 = players.getPlayer(new PlayerName("루키"));
+            Gamer player1 = players.getPlayer(new PlayerName("꾹이")).toGamer();
+            Gamer player2 = players.getPlayer(new PlayerName("루키")).toGamer();
 
             // when
             playerHands.put(player1, AdditionCard.PLUS_40);
@@ -86,7 +86,7 @@ class PlayerHandsTest {
         @Test
         void 한_플레이어에게_여러_카드를_추가한다() {
             // given
-            Player player = players.getPlayer(new PlayerName("꾹이"));
+            Gamer player = players.getPlayer(new PlayerName("꾹이")).toGamer();
 
             // when
             playerHands.put(player, AdditionCard.PLUS_40);
@@ -109,13 +109,13 @@ class PlayerHandsTest {
         @Test
         void 첫번째_라운드가_끝났는지_확인한다() {
             // given
-            playerHands.put(players.getPlayer(new PlayerName("꾹이")), AdditionCard.PLUS_40);
-            playerHands.put(players.getPlayer(new PlayerName("루키")), AdditionCard.PLUS_30);
-            playerHands.put(players.getPlayer(new PlayerName("한스")), AdditionCard.PLUS_20);
+            playerHands.put(players.getPlayer(new PlayerName("꾹이")).toGamer(), AdditionCard.PLUS_40);
+            playerHands.put(players.getPlayer(new PlayerName("루키")).toGamer(), AdditionCard.PLUS_30);
+            playerHands.put(players.getPlayer(new PlayerName("한스")).toGamer(), AdditionCard.PLUS_20);
             assertThat(playerHands.isRoundFinished(ROUND_FIRST)).isFalse();
 
             // when
-            playerHands.put(players.getPlayer(new PlayerName("엠제이")), AdditionCard.PLUS_10);
+            playerHands.put(players.getPlayer(new PlayerName("엠제이")).toGamer(), AdditionCard.PLUS_10);
 
             // then
             assertThat(playerHands.isRoundFinished(ROUND_FIRST)).isTrue();
@@ -124,17 +124,17 @@ class PlayerHandsTest {
         @Test
         void 두번째_라운드가_끝났는지_확인한다() {
             // given - 첫 번째 라운드
-            playerHands.put(players.getPlayer(new PlayerName("꾹이")), AdditionCard.PLUS_40);
-            playerHands.put(players.getPlayer(new PlayerName("루키")), AdditionCard.PLUS_30);
-            playerHands.put(players.getPlayer(new PlayerName("한스")), AdditionCard.PLUS_20);
-            playerHands.put(players.getPlayer(new PlayerName("엠제이")), AdditionCard.PLUS_10);
+            playerHands.put(players.getPlayer(new PlayerName("꾹이")).toGamer(), AdditionCard.PLUS_40);
+            playerHands.put(players.getPlayer(new PlayerName("루키")).toGamer(), AdditionCard.PLUS_30);
+            playerHands.put(players.getPlayer(new PlayerName("한스")).toGamer(), AdditionCard.PLUS_20);
+            playerHands.put(players.getPlayer(new PlayerName("엠제이")).toGamer(), AdditionCard.PLUS_10);
 
             // when - 두 번째 라운드
-            playerHands.put(players.getPlayer(new PlayerName("꾹이")), MultiplierCard.DOUBLE);
-            playerHands.put(players.getPlayer(new PlayerName("루키")), MultiplierCard.QUADRUPLE);
-            playerHands.put(players.getPlayer(new PlayerName("한스")), MultiplierCard.INVERT);
+            playerHands.put(players.getPlayer(new PlayerName("꾹이")).toGamer(), MultiplierCard.DOUBLE);
+            playerHands.put(players.getPlayer(new PlayerName("루키")).toGamer(), MultiplierCard.QUADRUPLE);
+            playerHands.put(players.getPlayer(new PlayerName("한스")).toGamer(), MultiplierCard.INVERT);
             assertThat(playerHands.isRoundFinished(ROUND_SECOND)).isFalse();
-            playerHands.put(players.getPlayer(new PlayerName("엠제이")), AdditionCard.ZERO);
+            playerHands.put(players.getPlayer(new PlayerName("엠제이")).toGamer(), AdditionCard.ZERO);
 
             // then
             assertThat(playerHands.isRoundFinished(ROUND_SECOND)).isTrue();
@@ -150,10 +150,10 @@ class PlayerHandsTest {
             String playerName = "꾹이";
 
             // when
-            Player foundPlayer = playerHands.findPlayerByName(new PlayerName(playerName));
+            Gamer foundPlayer = playerHands.findByName(playerName);
 
             // then
-            assertThat(foundPlayer.getName().value()).isEqualTo(playerName);
+            assertThat(foundPlayer.name()).isEqualTo(playerName);
         }
 
         @Test
@@ -161,9 +161,8 @@ class PlayerHandsTest {
             // given
             String nonExistentName = "존재하지않는플레이어";
 
-            PlayerName playerName = new PlayerName(nonExistentName);
             // when & then
-            assertThatThrownBy(() -> playerHands.findPlayerByName(playerName))
+            assertThatThrownBy(() -> playerHands.findByName(nonExistentName))
                     .isInstanceOf(BusinessException.class);
         }
     }
@@ -174,8 +173,8 @@ class PlayerHandsTest {
         @Test
         void 플레이어별_점수를_계산한다() {
             // given
-            Player player1 = players.getPlayer(new PlayerName("꾹이"));
-            Player player2 = players.getPlayer(new PlayerName("루키"));
+            Gamer player1 = players.getPlayer(new PlayerName("꾹이")).toGamer();
+            Gamer player2 = players.getPlayer(new PlayerName("루키")).toGamer();
 
             playerHands.put(player1, AdditionCard.PLUS_40);
             playerHands.put(player1, MultiplierCard.DOUBLE);
@@ -187,8 +186,8 @@ class PlayerHandsTest {
 
             // then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(scores.get(player1.toGamer()).getValue()).isEqualTo(80);
-                softly.assertThat(scores.get(player2.toGamer()).getValue()).isEqualTo(-30);
+                softly.assertThat(scores.get(player1).getValue()).isEqualTo(80);
+                softly.assertThat(scores.get(player2).getValue()).isEqualTo(-30);
                 softly.assertThat(scores).hasSize(4);
             });
         }
@@ -211,18 +210,18 @@ class PlayerHandsTest {
         @Test
         void 첫번째_라운드에서_선택하지_않은_플레이어를_조회한다() {
             // given
-            playerHands.put(players.getPlayer(new PlayerName("꾹이")), AdditionCard.PLUS_40);
-            playerHands.put(players.getPlayer(new PlayerName("루키")), AdditionCard.PLUS_30);
+            playerHands.put(players.getPlayer(new PlayerName("꾹이")).toGamer(), AdditionCard.PLUS_40);
+            playerHands.put(players.getPlayer(new PlayerName("루키")).toGamer(), AdditionCard.PLUS_30);
 
             // when
-            List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(ROUND_FIRST);
+            List<Gamer> unselectedPlayers = playerHands.getUnselectedPlayers(ROUND_FIRST);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(unselectedPlayers).hasSize(2);
                 softly.assertThat(unselectedPlayers).contains(
-                        players.getPlayer(new PlayerName("한스")),
-                        players.getPlayer(new PlayerName("엠제이"))
+                        players.getPlayer(new PlayerName("한스")).toGamer(),
+                        players.getPlayer(new PlayerName("엠제이")).toGamer()
                 );
             });
         }
@@ -230,24 +229,24 @@ class PlayerHandsTest {
         @Test
         void 두번째_라운드에서_선택하지_않은_플레이어를_조회한다() {
             // given - 첫 번째 라운드 완료
-            playerHands.put(players.getPlayer(new PlayerName("꾹이")), AdditionCard.PLUS_40);
-            playerHands.put(players.getPlayer(new PlayerName("루키")), AdditionCard.PLUS_30);
-            playerHands.put(players.getPlayer(new PlayerName("한스")), AdditionCard.PLUS_20);
-            playerHands.put(players.getPlayer(new PlayerName("엠제이")), AdditionCard.PLUS_10);
+            playerHands.put(players.getPlayer(new PlayerName("꾹이")).toGamer(), AdditionCard.PLUS_40);
+            playerHands.put(players.getPlayer(new PlayerName("루키")).toGamer(), AdditionCard.PLUS_30);
+            playerHands.put(players.getPlayer(new PlayerName("한스")).toGamer(), AdditionCard.PLUS_20);
+            playerHands.put(players.getPlayer(new PlayerName("엠제이")).toGamer(), AdditionCard.PLUS_10);
 
             // 두 번째 라운드 일부 선택
-            playerHands.put(players.getPlayer(new PlayerName("꾹이")), MultiplierCard.DOUBLE);
+            playerHands.put(players.getPlayer(new PlayerName("꾹이")).toGamer(), MultiplierCard.DOUBLE);
 
             // when
-            List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(ROUND_SECOND);
+            List<Gamer> unselectedPlayers = playerHands.getUnselectedPlayers(ROUND_SECOND);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(unselectedPlayers).hasSize(3);
                 softly.assertThat(unselectedPlayers).contains(
-                        players.getPlayer(new PlayerName("루키")),
-                        players.getPlayer(new PlayerName("한스")),
-                        players.getPlayer(new PlayerName("엠제이"))
+                        players.getPlayer(new PlayerName("루키")).toGamer(),
+                        players.getPlayer(new PlayerName("한스")).toGamer(),
+                        players.getPlayer(new PlayerName("엠제이")).toGamer()
                 );
             });
         }
@@ -255,13 +254,13 @@ class PlayerHandsTest {
         @Test
         void 모든_플레이어가_선택했으면_빈_리스트를_반환한다() {
             // given
-            playerHands.put(players.getPlayer(new PlayerName("꾹이")), AdditionCard.PLUS_40);
-            playerHands.put(players.getPlayer(new PlayerName("루키")), AdditionCard.PLUS_30);
-            playerHands.put(players.getPlayer(new PlayerName("한스")), AdditionCard.PLUS_20);
-            playerHands.put(players.getPlayer(new PlayerName("엠제이")), AdditionCard.PLUS_10);
+            playerHands.put(players.getPlayer(new PlayerName("꾹이")).toGamer(), AdditionCard.PLUS_40);
+            playerHands.put(players.getPlayer(new PlayerName("루키")).toGamer(), AdditionCard.PLUS_30);
+            playerHands.put(players.getPlayer(new PlayerName("한스")).toGamer(), AdditionCard.PLUS_20);
+            playerHands.put(players.getPlayer(new PlayerName("엠제이")).toGamer(), AdditionCard.PLUS_10);
 
             // when
-            List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(ROUND_FIRST);
+            List<Gamer> unselectedPlayers = playerHands.getUnselectedPlayers(ROUND_FIRST);
 
             // then
             assertThat(unselectedPlayers).isEmpty();
@@ -274,12 +273,12 @@ class PlayerHandsTest {
         @Test
         void 첫번째_라운드에서_카드_소유자를_찾는다() {
             // given
-            Player player = players.getPlayer(new PlayerName("꾹이"));
+            Gamer player = players.getPlayer(new PlayerName("꾹이")).toGamer();
             Card card = AdditionCard.PLUS_40;
             playerHands.put(player, card);
 
             // when
-            Optional<Player> cardOwner = playerHands.findCardOwner(card, ROUND_FIRST);
+            Optional<Gamer> cardOwner = playerHands.findCardOwner(card, ROUND_FIRST);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -291,13 +290,13 @@ class PlayerHandsTest {
         @Test
         void 두번째_라운드에서_카드_소유자를_찾는다() {
             // given
-            Player player = players.getPlayer(new PlayerName("꾹이"));
+            Gamer player = players.getPlayer(new PlayerName("꾹이")).toGamer();
             playerHands.put(player, AdditionCard.PLUS_40); // 첫 번째 라운드
             Card secondRoundCard = MultiplierCard.DOUBLE;
             playerHands.put(player, secondRoundCard); // 두 번째 라운드
 
             // when
-            Optional<Player> cardOwner = playerHands.findCardOwner(secondRoundCard, ROUND_SECOND);
+            Optional<Gamer> cardOwner = playerHands.findCardOwner(secondRoundCard, ROUND_SECOND);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -312,7 +311,7 @@ class PlayerHandsTest {
             Card nonExistentCard = AdditionCard.PLUS_40;
 
             // when
-            Optional<Player> cardOwner = playerHands.findCardOwner(nonExistentCard, ROUND_FIRST);
+            Optional<Gamer> cardOwner = playerHands.findCardOwner(nonExistentCard, ROUND_FIRST);
 
             // then
             assertThat(cardOwner).isEmpty();
@@ -321,12 +320,12 @@ class PlayerHandsTest {
         @Test
         void 잘못된_라운드로_카드_소유자를_찾으면_빈_Optional을_반환한다() {
             // given
-            Player player = players.getPlayer(new PlayerName("꾹이"));
+            Gamer player = players.getPlayer(new PlayerName("꾹이")).toGamer();
             Card card = AdditionCard.PLUS_40;
             playerHands.put(player, card); // 첫 번째 라운드
 
             // when - 두 번째 라운드에서 첫 번째 라운드 카드를 찾음
-            Optional<Player> cardOwner = playerHands.findCardOwner(card, ROUND_SECOND);
+            Optional<Gamer> cardOwner = playerHands.findCardOwner(card, ROUND_SECOND);
 
             // then
             assertThat(cardOwner).isEmpty();

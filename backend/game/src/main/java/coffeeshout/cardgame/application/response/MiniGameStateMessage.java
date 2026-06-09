@@ -2,8 +2,7 @@ package coffeeshout.cardgame.application.response;
 
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.Card;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.gamecommon.Gamer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -47,19 +46,19 @@ public record MiniGameStateMessage(
         public static List<CardInfoMessage> from(@NonNull CardGame cardGame) {
             return cardGame.getDeck().getCards().stream()
                     .map(card -> {
-                        Optional<Player> player = cardGame.findCardOwnerInCurrentRound(card);
-                        PlayerName name = player.map(Player::getName).orElse(null);
-                        Integer colorIndex = player.map(Player::getColorIndex).orElse(null);
-                        return CardInfoMessage.of(card, player.isPresent(), name, colorIndex);
+                        final Optional<Gamer> owner = cardGame.findCardOwnerInCurrentRound(card);
+                        final String name = owner.map(Gamer::name).orElse(null);
+                        final Integer colorIndex = owner.map(Gamer::colorIndex).orElse(null);
+                        return CardInfoMessage.of(card, owner.isPresent(), name, colorIndex);
                     }).toList();
         }
 
-        public static CardInfoMessage of(@NonNull Card card, boolean isSelected, PlayerName name, Integer colorIndex) {
+        public static CardInfoMessage of(@NonNull Card card, boolean isSelected, String name, Integer colorIndex) {
             return new CardInfoMessage(
                     card.getType().name(),
                     card.getValue(),
                     isSelected,
-                    name == null ? null : name.value(),
+                    name,
                     colorIndex
             );
         }

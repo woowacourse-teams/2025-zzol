@@ -8,7 +8,6 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -87,14 +86,14 @@ class BlindTimerGameTest {
             newGame.setUp(List.of(한스.toGamer()));
 
             // when & then
-            assertThatThrownBy(() -> newGame.stop(new PlayerName("한스"), Instant.now()))
+            assertThatThrownBy(() -> newGame.stop("한스", Instant.now()))
                     .isInstanceOf(BusinessException.class);
         }
 
         @Test
         void 정상적으로_STOP하면_true를_반환한다() {
             // when
-            final boolean result = game.stop(new PlayerName("한스"), Instant.now());
+            final boolean result = game.stop("한스", Instant.now());
 
             // then
             assertThat(result).isTrue();
@@ -103,10 +102,10 @@ class BlindTimerGameTest {
         @Test
         void 이미_STOP한_플레이어가_다시_STOP하면_false를_반환한다() {
             // given
-            game.stop(new PlayerName("한스"), Instant.now());
+            game.stop("한스", Instant.now());
 
             // when
-            final boolean result = game.stop(new PlayerName("한스"), Instant.now());
+            final boolean result = game.stop("한스", Instant.now());
 
             // then
             assertThat(result).isFalse();
@@ -119,8 +118,8 @@ class BlindTimerGameTest {
         @Test
         void 한명이라도_STOP하지_않으면_false이다() {
             // given
-            game.stop(new PlayerName("한스"), Instant.now());
-            game.stop(new PlayerName("꾹이"), Instant.now());
+            game.stop("한스", Instant.now());
+            game.stop("꾹이", Instant.now());
 
             // when & then
             assertThat(game.isAllStopped()).isFalse();
@@ -129,9 +128,9 @@ class BlindTimerGameTest {
         @Test
         void 전원_STOP하면_true이다() {
             // given
-            game.stop(new PlayerName("한스"), Instant.now());
-            game.stop(new PlayerName("꾹이"), Instant.now());
-            game.stop(new PlayerName("루키"), Instant.now());
+            game.stop("한스", Instant.now());
+            game.stop("꾹이", Instant.now());
+            game.stop("루키", Instant.now());
 
             // when & then
             assertThat(game.isAllStopped()).isTrue();
@@ -144,15 +143,15 @@ class BlindTimerGameTest {
         @Test
         void markAllTimedOut은_STOP하지_않은_플레이어만_타임아웃시킨다() {
             // given
-            game.stop(new PlayerName("한스"), Instant.now());
+            game.stop("한스", Instant.now());
 
             // when
             game.markAllTimedOut();
 
             // then
-            assertThat(game.findPlayer(new PlayerName("한스")).isTimedOut()).isFalse();
-            assertThat(game.findPlayer(new PlayerName("꾹이")).isTimedOut()).isTrue();
-            assertThat(game.findPlayer(new PlayerName("루키")).isTimedOut()).isTrue();
+            assertThat(game.findPlayer("한스").isTimedOut()).isFalse();
+            assertThat(game.findPlayer("꾹이").isTimedOut()).isTrue();
+            assertThat(game.findPlayer("루키").isTimedOut()).isTrue();
             assertThat(game.isAllStopped()).isTrue();
         }
     }
@@ -164,9 +163,9 @@ class BlindTimerGameTest {
         void 오차가_작은_사람이_높은_순위를_받는다() {
             // given - 목표: 10.00초
             final Instant startTime = game.getStartTime();
-            game.stop(new PlayerName("한스"), startTime.plusMillis(9800));   // 오차 200ms
-            game.stop(new PlayerName("꾹이"), startTime.plusMillis(10500)); // 오차 500ms
-            game.stop(new PlayerName("루키"), startTime.plusMillis(8000));  // 오차 2000ms
+            game.stop("한스", startTime.plusMillis(9800));   // 오차 200ms
+            game.stop("꾹이", startTime.plusMillis(10500)); // 오차 500ms
+            game.stop("루키", startTime.plusMillis(8000));  // 오차 2000ms
 
             // when
             final MiniGameResult result = game.getResult();
@@ -180,7 +179,7 @@ class BlindTimerGameTest {
         @Test
         void 정상_STOP은_항상_타임아웃보다_높은_순위를_받는다() {
             // given
-            game.stop(new PlayerName("한스"), game.getStartTime().plusMillis(5000)); // 오차 5000ms
+            game.stop("한스", game.getStartTime().plusMillis(5000)); // 오차 5000ms
             game.markAllTimedOut(); // 꾹이, 루키 타임아웃
 
             // when

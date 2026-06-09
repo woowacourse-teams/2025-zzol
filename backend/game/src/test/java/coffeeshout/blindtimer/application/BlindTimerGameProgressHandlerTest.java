@@ -68,7 +68,7 @@ class BlindTimerGameProgressHandlerTest extends GameModuleServiceTest {
             progressHandler.handleStop(joinCode, "꾹이");
 
             // then
-            assertThat(game.findPlayer(new PlayerName("꾹이")).isStopped()).isTrue();
+            assertThat(game.findPlayer("꾹이").isStopped()).isTrue();
         }
     }
 

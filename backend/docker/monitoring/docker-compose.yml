@@ -84,7 +84,6 @@ services:
       - ./data/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./data/grafana/grafana_data:/var/lib/grafana
       - ./data/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./provisioning/alerting:/etc/grafana/provisioning/alerting:ro
       - ./logs/grafana:/var/log/grafana
     networks:
       - zzol-network
@@ -126,12 +125,12 @@ services:
   loki:
     image: grafana/loki:2.9.6
     container_name: loki
-    user: "10001:10001"  # loki:loki (Loki 기본 UID)
     restart: unless-stopped
     volumes:
       - loki-data:/loki
       - loki-logs:/var/log/loki
       - ./conf/loki.yml:/etc/loki/loki.yaml:ro
+      - /usr/share/zoneinfo/Asia/Seoul:/etc/localtime:ro
     networks:
       - monitoring-network
       - dev-network

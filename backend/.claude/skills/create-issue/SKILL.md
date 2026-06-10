@@ -28,17 +28,17 @@ disable-model-invocation: true
 
 아래 내용을 참고해 이슈 본문을 작성한다.
 
-이슈 템플릿은 **모노레포 루트**에 있다. `backend/` 하위가 아니므로 절대 경로로 Read한다.
-- `C:\java_project\2025-zzol-backend\.github\ISSUE_TEMPLATE\bug_report.md`
-- `C:\java_project\2025-zzol-backend\.github\ISSUE_TEMPLATE\feature-template.md`
+이슈 템플릿은 **모노레포 루트**의 `.github/ISSUE_TEMPLATE/`에 있다. `backend/` 하위가 아니다.
+cwd가 `backend/`이든 worktree 루트이든 동작하도록 `git rev-parse --show-toplevel`로 repo 루트를 앵커한다.
+(worktree는 자체 `.github/`를 가지므로 하드코딩 절대경로·`../` 상대경로는 깨진다.)
 
 ### Bug 템플릿
 
-!`cat ../.github/ISSUE_TEMPLATE/bug_report.md`
+!`cat "$(git rev-parse --show-toplevel)/.github/ISSUE_TEMPLATE/bug_report.md"`
 
 ### Feature 템플릿
 
-!`cat ../.github/ISSUE_TEMPLATE/feature-template.md`
+!`cat "$(git rev-parse --show-toplevel)/.github/ISSUE_TEMPLATE/feature-template.md"`
 
 ## 3. 사용자 확인 (필수 — 이 단계를 건너뛰지 않는다)
 
@@ -98,7 +98,7 @@ git checkout -b be/{type}/{issue-number}-{slug}
 - `{slug}`: 이슈 제목을 소문자 + 하이픈으로 변환, 최대 40자
 - 한국어 단어는 의미를 유지하는 영문으로 변환
 
-## 6. 완료 출력
+## 7. 완료 출력
 
 ```text
 ✅ 이슈 생성: https://github.com/.../issues/{N}

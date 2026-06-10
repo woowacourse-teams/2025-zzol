@@ -7,3 +7,7 @@ ssl_prefer_server_ciphers on;
 ssl_session_cache shared:SSL:10m;
 ssl_session_timeout 10m;
 ssl_session_tickets off;
+
+# 인증서
+ssl_certificate     /etc/letsencrypt/live/zzol.site/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/zzol.site/privkey.pem;

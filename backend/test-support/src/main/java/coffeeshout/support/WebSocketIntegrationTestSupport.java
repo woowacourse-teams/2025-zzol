@@ -14,6 +14,8 @@ import org.skyscreamer.jsonassert.comparator.CustomComparator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
@@ -97,14 +99,37 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
      */
     protected <T> T payloadAs(MessageResponse response, Class<T> dataType) {
         try {
+            return objectMapper.treeToValue(dataNode(response), dataType);
+        } catch (JsonProcessingException e) {
+            throw new AssertionError(
+                    "응답 페이로드를 " + dataType.getSimpleName() + "(으)로 역직렬화할 수 없습니다: " + response.payload(), e);
+        }
+    }
+
+    /**
+     * {@link #payloadAs}의 리스트 버전. {@code data}가 JSON 배열일 때 각 원소를 {@code elementType}으로 역직렬화한다.
+     */
+    protected <T> List<T> payloadAsList(MessageResponse response, Class<T> elementType) {
+        try {
+            final CollectionType listType = objectMapper.getTypeFactory()
+                    .constructCollectionType(List.class, elementType);
+            return objectMapper.treeToValue(dataNode(response), listType);
+        } catch (JsonProcessingException e) {
+            throw new AssertionError(
+                    "응답 페이로드를 List<" + elementType.getSimpleName() + ">(으)로 역직렬화할 수 없습니다: "
+                            + response.payload(), e);
+        }
+    }
+
+    private JsonNode dataNode(MessageResponse response) {
+        try {
             final JsonNode data = objectMapper.readTree(response.payload()).get("data");
             if (data == null || data.isNull()) {
                 throw new AssertionError("응답에 data가 없습니다: " + response.payload());
             }
-            return objectMapper.treeToValue(data, dataType);
+            return data;
         } catch (JsonProcessingException e) {
-            throw new AssertionError(
-                    "응답 페이로드를 " + dataType.getSimpleName() + "(으)로 역직렬화할 수 없습니다: " + response.payload(), e);
+            throw new AssertionError("응답 페이로드를 파싱할 수 없습니다: " + response.payload(), e);
         }
     }
 

@@ -52,8 +52,8 @@
 
 3. **edge-cd의 적용 단계는 백업-원복 패턴을 따른다.** 레포가 이미 가진 `switch_nginx_upstream()`의
    규율(이전 설정 백업 → 쓰기 → `nginx -t` → 실패 시 원복+reload)을 구조 설정 동기화에도 미러링한다.
-   적용 순서는 **백업 → sync → `docker compose up -d` → `nginx -t` → reload → 실제 경로 프로브 →
-   실패 시 원복**이다. 프로브는 실제로 깨졌던 경로(`/ws/info`, `status.zzol.site`→Grafana)를 때린다.
+   적용 순서는 **백업 → sync → `nginx -t` → reload → (필요 시) `docker compose up -d` → 실제 경로 프로브 →
+   실패 시 원복**이다. `nginx -t`/reload를 compose보다 먼저 두어, 설정 오류 시 컨테이너 재생성까지 번지지 않게 한다. 프로브는 실제로 깨졌던 경로(`/ws/info`, `status.zzol.site`→Grafana)를 때린다.
    `nginx -t`는 문법만 검증하므로 "문법은 통과하지만 라우팅이 틀린" 인시던트를 막지 못한다.
 
 ## 고려한 대안

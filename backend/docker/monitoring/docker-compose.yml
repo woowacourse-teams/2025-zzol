@@ -131,7 +131,6 @@ services:
       - loki-logs:/var/log/loki
       - ./conf/loki.yml:/etc/loki/loki.yaml:ro
       - /usr/share/zoneinfo/Asia/Seoul:/etc/localtime:ro
-      - /usr/share/zoneinfo/Asia/Seoul:/etc/timezone:ro
     networks:
       - monitoring-network
       - dev-network
@@ -228,4 +227,3 @@ volumes:
     driver: local
   tempo-logs:
     driver: local
-

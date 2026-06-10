@@ -1,12 +1,12 @@
 services:
   nginx:
-    image: nginx:latest
+    image: nginx:1.30.2
     container_name: nginx
     volumes:
       - ./conf:/etc/nginx/conf.d:ro
       - ./logs:/var/log/nginx
       - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/certbot:/var/www/certbot
+      - /var/www/certbot:/var/www/certbot:ro
     ports:
       - "80:80"
       - "443:443"

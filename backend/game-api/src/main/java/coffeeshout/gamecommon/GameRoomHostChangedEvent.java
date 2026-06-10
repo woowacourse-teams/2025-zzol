@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * 방의 호스트가 승계됐음을 알리는 공유 생명주기 이벤트(ADR-0023 결정 6). 기존 호스트가 방을 떠나
+ * 방의 호스트가 승계됐음을 알리는 공유 생명주기 이벤트(ADR-0025 결정 6). 기존 호스트가 방을 떠나
  * {@code Room.promoteNewHost()}로 새 호스트가 지정되면 {@code :room}이 발행하고, {@code :game}이 소비해
  * GameSession의 호스트를 갱신한다(세션 호스트가 방 생성 시점 값에 고정돼 새 호스트의 세션 조작이 거부되던 문제 해소).
  *

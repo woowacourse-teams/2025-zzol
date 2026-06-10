@@ -12,7 +12,7 @@ import lombok.Getter;
 
 /**
  * 게임 대기열·완료 목록과 진행 상태를 소유하는 애그리거트.
- * Room과 {@link JoinCode}로 1:1 연결되며, 게임 컨테이너 책임을 Room에서 분리한다(ADR-0023).
+ * Room과 {@link JoinCode}로 1:1 연결되며, 게임 컨테이너 책임을 Room에서 분리한다(ADR-0025).
  * 내부 컬렉션은 단일 스레드(Stream Consumer) 접근을 전제로 하며, 대기열 불변식은 메서드 가드로만 변경된다.
  */
 public class GameSession {
@@ -108,7 +108,7 @@ public class GameSession {
 
     /**
      * 세션의 첫 게임이 시작된 직후인지 여부. 첫 게임 시작 시 1회성 작업(플레이어 엔티티 저장 등)의
-     * 트리거로 사용한다(기존 {@code Room.isFirstStarted()} 대체, ADR-0023 Step 5).
+     * 트리거로 사용한다(기존 {@code Room.isFirstStarted()} 대체, ADR-0025 Step 5).
      */
     public boolean isFirstGameStarted() {
         return completedGames.size() == 1;
@@ -116,7 +116,7 @@ public class GameSession {
 
     /**
      * 선택된 게임 총수(대기 + 진행 중 + 완료). 진행 중인 게임은 시작 시점에 완료 목록으로 옮겨지므로
-     * 세션 동안 변하지 않으며, 확률 조정 분모({@code roundCount})로 사용된다(ADR-0023 결정 3).
+     * 세션 동안 변하지 않으며, 확률 조정 분모({@code roundCount})로 사용된다(ADR-0025 결정 3).
      */
     public int roundCount() {
         return pendingGames.size() + completedGames.size();

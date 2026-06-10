@@ -43,7 +43,7 @@ public class MiniGameResultSaveEventListener {
     private final UserStatsService userStatsService;
 
     // 확률 조정 리스너(MiniGameResultRoomListener, @Order(1)) 이후에 실행한다 —
-    // 저장 실패(@RedisLock 경합/DB 오류)가 확률 조정·SCORE_BOARD 전이를 막지 않도록(ADR-0023 결정 5).
+    // 저장 실패(@RedisLock 경합/DB 오류)가 확률 조정·SCORE_BOARD 전이를 막지 않도록(ADR-0025 결정 5).
     @EventListener
     @Order(2)
     @Transactional

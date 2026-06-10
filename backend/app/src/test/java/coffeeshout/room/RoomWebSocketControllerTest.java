@@ -84,7 +84,7 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
             });
         });
 
-        // 게임 선택 흐름은 GameSession 사전 생성을 전제하므로(ADR-0023 결정 4), 실제 방 생성과 동일하게
+        // 게임 선택 흐름은 GameSession 사전 생성을 전제하므로(ADR-0025 결정 4), 실제 방 생성과 동일하게
         // GameRoomCreatedEvent를 스트림에 발행해 GameSessionInitConsumer가 권위 있는 호스트로 세션을 만들도록 한다.
         streamPublisher.publish(RoomStreamKey.BROADCAST,
                 new GameRoomCreatedEvent(host.getName().value(), joinCode.getValue()));

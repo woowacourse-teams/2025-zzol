@@ -43,7 +43,7 @@ public class MiniGameEventService {
     }
 
     /**
-     * 방 검증을 통과한 시작 요청을 받아 GameSession을 시작한다(ADR-0023 결정 4 — 이벤트 분리).
+     * 방 검증을 통과한 시작 요청을 받아 GameSession을 시작한다(ADR-0025 결정 4 — 이벤트 분리).
      * {@code :room}의 {@code MiniGameStartConsumer}가 in-process 동기로 발행하므로, 여기서 던지는 예외는
      * 발행 측으로 전파된다.
      *

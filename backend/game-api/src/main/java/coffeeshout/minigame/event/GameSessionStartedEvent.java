@@ -1,7 +1,7 @@
 package coffeeshout.minigame.event;
 
 /**
- * GameSession이 {@code PLAYING}으로 전이됐음을 알리는 <b>in-process 동기</b> 이벤트(ADR-0023 결정 4).
+ * GameSession이 {@code PLAYING}으로 전이됐음을 알리는 <b>in-process 동기</b> 이벤트(ADR-0025 결정 4).
  *
  * <p>게임 시작 처리({@code MiniGameEventService.onGameStartReady})에서 {@code startGame} 직후,
  * 실패 가능 I/O({@code miniGameService.start}·결과 영속)보다 <b>먼저</b> 발행한다. {@code :room}이 동기 수신해

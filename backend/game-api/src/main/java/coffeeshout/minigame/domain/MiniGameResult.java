@@ -25,7 +25,7 @@ public class MiniGameResult {
 
     /**
      * 순위 맵을 이름 기준으로 변환한다. {@code MiniGameFinishedEvent}가 원시 타입만 운반하도록
-     * 6개 게임의 중복 변환을 막는 단일 변환 지점이다(ADR-0023 결정 5).
+     * 6개 게임의 중복 변환을 막는 단일 변환 지점이다(ADR-0025 결정 5).
      */
     public Map<String, Integer> toRankMap() {
         return rank.entrySet().stream()

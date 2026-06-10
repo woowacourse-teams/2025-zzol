@@ -42,7 +42,7 @@ public class MiniGamePersistenceService {
         final MiniGameEntity miniGameEntity = new MiniGameEntity(roomEntity, miniGameType);
         miniGameEntityRepository.save(miniGameEntity);
 
-        // 첫 게임 시작 여부는 게임 수 상태를 소유한 GameSession이 판정한다(ADR-0023 Step 5).
+        // 첫 게임 시작 여부는 게임 수 상태를 소유한 GameSession이 판정한다(ADR-0025 Step 5).
         // PlayerEntity 스냅샷 생성은 PlayerType 등 Room 도메인에 접근해야 하므로 :room이 소유한다 —
         // 이벤트를 발행만 하고 PlayerSnapshotListener가 동기 수신해 저장한다(생성 책임 이관).
         if (gameSessionService.getSession(roomJoinCode).isFirstGameStarted()) {

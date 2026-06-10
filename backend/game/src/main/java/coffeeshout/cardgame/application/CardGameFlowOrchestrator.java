@@ -114,7 +114,7 @@ public class CardGameFlowOrchestrator {
         return () -> {
             earlyFinishTriggers.remove(joinCodeValue);
             step(cardGame, joinCode, FINISH_GAME).run();
-            // 순서 불변식(ADR-0023 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행
+            // 순서 불변식(ADR-0025 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행
             final int roundCount = gameSessionService.finishGame(joinCode);
             eventPublisher.publishEvent(new MiniGameFinishedEvent(
                     joinCodeValue, MiniGameType.CARD_GAME.name(), cardGame.getResult().toRankMap(), roundCount));

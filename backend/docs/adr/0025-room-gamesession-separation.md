@@ -1,7 +1,7 @@
 # 0025. Room-GameSession 분리 — 게임 대기열 소유권을 `:game`으로 이관
 
 - 날짜: 2026-06-05
-- 상태: 승인 (구현 예정)
+- 상태: 승인 (구현 완료)
 - 참조 구현: `be/refactor/game-entity-ownership` 브랜치 (`d7abc0ea`, `ddfee28b`, `53cf40cc`, `af0d1a70`) — 멀티 모듈 전환 이전 코드베이스에서 동일 설계를 구현·검증한 선행 작업
 
 ## 구현 중 개정 (2026-06-10)
@@ -261,11 +261,11 @@ URL 경로는 클라이언트 호환을 위해 유지한다.
 변경 전:  :room → :game-api (게임 타입 + 게임 인스턴스 보유)
           :game → :room     (게임 조회를 Room 경유)
 
-변경 후:  :room → :game-api (JoinCode·Gamer 식별자 + MiniGameFinishedEvent 리스너 참조)
-          :game → :room     (게임 시작 시 RoomQueryService 플레이어 조회 등 최소 참조만 잔존)
+변경 후:  :room → :game-api (JoinCode·Gamer·MiniGameResultType 값/식별자 + 게임 이벤트 in-process 리스너 3종)
+          :game → :room     (MiniGamePersistenceService의 PlayerEntity 영속 참조만 잔존 — 결정 4 개정으로 RoomQueryService 조회는 제거됨)
 ```
 
-- `:room`의 도메인 코드(`room.domain`)에서 `Playable`, `MiniGameType`, `MiniGameResult`, `MiniGameScore` import가 사라진다.
+- `:room`의 도메인 코드(`room.domain`)에서 `Playable`, `MiniGameType`, `MiniGameResult`, `MiniGameScore` import가 사라진다. 단 `room.domain.roulette`(`ProbabilityCalculator`·`Probability`)는 순위→승패 분류를 위해 `:game-api`의 값 enum `MiniGameResultType`을 참조한다 — 게임 인스턴스·타입이 아닌 결과 분류 값이므로 소유권 분리에 위배되지 않는다.
 - `GameSession` 도메인은 `JoinCode`·`Gamer`·`Playable` 모두 `:game-api` 타입만 사용하므로 `:room` 의존이 없다.
 - 게임 내부 도메인(`Runners`, `PlayerHands` 등)의 `room.domain.player.Player` import 21곳이 `Gamer`로 대체된다.
 - 게임 결과 반영 경로에서 `:game` → `RoomCommandService` 호출 결합이 제거된다.
@@ -300,7 +300,7 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 ## 핵심 제약
 
 - `GameSession`은 `JoinCode`로 Room과 1:1 연결된다. Room 삭제 시 `GameRoomRemovedEvent`(`:game-api`) → `GameSessionCleanupConsumer`(Redis Stream)로 GameSession도 반드시 정리한다. 생성·정리 모두 Stream Consumer로 통일하고 in-process 리스너를 섞지 않는다.
-- `:room` 도메인 코드는 `Playable`, `MiniGameType`, `MiniGameResult`, `MiniGameScore`를 import하지 않는다. `:game-api` 참조는 `MiniGameFinishedEvent` 리스너 한 곳만 허용한다.
+- `:room` 도메인 코드는 `Playable`, `MiniGameType`, `MiniGameResult`, `MiniGameScore`를 import하지 않는다(결과 분류 값 enum `MiniGameResultType`은 `room.domain.roulette`에서 참조 허용 — 게임 인스턴스가 아닌 값). `:room` 애플리케이션의 `:game-api` 이벤트 in-process 리스너는 3종(`MiniGameResultRoomListener` ← `MiniGameFinishedEvent`, `RoomGameStartListener` ← `GameSessionStartedEvent`, `PlayerSnapshotListener` ← `PlayerSnapshotRequiredEvent`)이며 ArchUnit이 이 목록으로 동결한다(결정 4 개정으로 `RoomGameStartListener`가, PlayerEntity 영속 분리 후속 작업으로 `PlayerSnapshotListener`가 추가됐다).
 - 게임 결과 전달은 `MiniGameFinishedEvent`(`:game-api`) in-process 동기 리스너로 처리한다. 해당 리스너에 `@Async` 적용 금지 — `publishEvent()` 반환 시점에 확률 조정 완료가 보장돼야 룰렛/스코어보드 조회 타이밍이 깨지지 않는다.
 - `:game`은 `RoomCommandService`를 직접 호출하지 않는다.
 - `JoinCode`는 `:game-api` `gamecommon` 소속 불변 순수 값 객체로 유지한다. `QrCode` 등 방 입장 관심사를 다시 들이지 않는다.

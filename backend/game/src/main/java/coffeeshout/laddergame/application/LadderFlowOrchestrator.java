@@ -88,7 +88,7 @@ public class LadderFlowOrchestrator {
             } catch (Exception e) {
                 log.warn("사다리게임 DONE 알림 실패: joinCode={}", joinCodeValue, e);
             }
-            // 순서 불변식(ADR-0023 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행
+            // 순서 불변식(ADR-0025 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행
             final int roundCount = gameSessionService.finishGame(joinCode);
             eventPublisher.publishEvent(new MiniGameFinishedEvent(
                     joinCodeValue, MiniGameType.LADDER_GAME.name(), game.getResult().toRankMap(), roundCount));

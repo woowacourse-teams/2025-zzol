@@ -49,7 +49,7 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
         host = GamerFixture.호스트_꾹이();
         gamers = GamerFixture.꾹이_루키_엠제이_한스();
 
-        // GameSession을 READY 상태로 사전 구성한다 — Room 검증·영속을 거치지 않고 :game만으로 시작한다(ADR-0023).
+        // GameSession을 READY 상태로 사전 구성한다 — Room 검증·영속을 거치지 않고 :game만으로 시작한다(ADR-0025).
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(new BlockStackingGame()));

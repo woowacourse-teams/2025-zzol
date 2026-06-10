@@ -11,7 +11,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 /**
- * 미니게임 시작 커맨드의 방 검증 단계를 담당한다(ADR-0023 결정 4 — 이벤트 분리).
+ * 미니게임 시작 커맨드의 방 검증 단계를 담당한다(ADR-0025 결정 4 — 이벤트 분리).
  *
  * <p>시작은 방 검증(호스트·전원 준비·인원·방 상태)과 GameSession 시작의 두 책임으로 나뉜다. 검증·플레이어 명단은
  * {@code :room}의 데이터이므로 여기서 처리하고, GameSession 시작은 {@code :game}이 {@link GameStartReadyEvent}를

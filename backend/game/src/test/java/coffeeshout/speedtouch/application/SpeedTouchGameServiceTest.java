@@ -66,7 +66,7 @@ class SpeedTouchGameServiceTest extends GameModuleServiceTest {
     }
 
     /**
-     * 테스트가 구성한 {@code game} 인스턴스를 GameSession 대기열에 넣고 시작시킨다(ADR-0023 Step 4).
+     * 테스트가 구성한 {@code game} 인스턴스를 GameSession 대기열에 넣고 시작시킨다(ADR-0025 Step 4).
      * {@code startNextGame}이 동일 인스턴스를 완료 목록에 저장하므로 서비스의 {@code findCompletedGame}이
      * 같은 객체를 반환하고, 세션을 PLAYING으로 전이시켜 종료 시 {@code finishGame}이 동작한다.
      */

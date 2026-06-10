@@ -82,7 +82,7 @@ public class RoomStateTool implements ZzolBotTool {
         summary.put("players", room.getPlayers().stream()
                 .map(p -> p.getName().value())
                 .toList());
-        // 게임 대기열·완료 이력은 GameSession이 소유한다(ADR-0023). 세션이 없으면(게임 선택 전) 빈 목록
+        // 게임 대기열·완료 이력은 GameSession이 소유한다(ADR-0025). 세션이 없으면(게임 선택 전) 빈 목록
         final GameSession session = gameSessionService.findSession(room.getJoinCode()).orElse(null);
         summary.put("pendingMiniGames", session == null ? List.of()
                 : session.getSelectedTypes().stream().map(Enum::name).toList());

@@ -13,7 +13,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * 게임 종료 시 {@code :game}이 발행하는 {@link MiniGameFinishedEvent}를 수신해 방의 확률을 조정한다(ADR-0023 결정 5).
+ * 게임 종료 시 {@code :game}이 발행하는 {@link MiniGameFinishedEvent}를 수신해 방의 확률을 조정한다(ADR-0025 결정 5).
  *
  * <p>in-process 동기 리스너이므로 {@code publishEvent()} 반환 시점에 확률 조정이 완료된다.
  * 발행 측이 {@code finishGame()}으로 {@code roundCount}를 먼저 확정한 뒤 발행하므로 정확한 라운드 수로 조정된다.
@@ -30,7 +30,7 @@ public class MiniGameResultRoomListener {
 
     // 같은 이벤트의 저장 리스너(MiniGameResultSaveEventListener, @Order(2))보다 먼저 실행한다 —
     // 저장 리스너가 @RedisLock(waitTime=0)/DB 오류로 예외를 던져도 확률 조정·SCORE_BOARD 전이가
-    // 보장돼야 한다(ADR-0023 결정 5: publishEvent 반환 시점 확률 조정 완료).
+    // 보장돼야 한다(ADR-0025 결정 5: publishEvent 반환 시점 확률 조정 완료).
     @EventListener
     @Order(1)
     public void handle(MiniGameFinishedEvent event) {

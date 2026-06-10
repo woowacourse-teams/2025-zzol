@@ -65,7 +65,7 @@ public class Room {
 
     /**
      * 게임 결과(순위 맵)와 라운드 수로 확률을 조정한다. 게임 수 상태는 GameSession이 소유하므로
-     * {@code roundCount}는 {@code MiniGameFinishedEvent}로 전달받는다(ADR-0023 결정 3·5).
+     * {@code roundCount}는 {@code MiniGameFinishedEvent}로 전달받는다(ADR-0025 결정 3·5).
      */
     public void applyGameResult(Map<PlayerName, Integer> rankByPlayer, int roundCount) {
         final ProbabilityCalculator probabilityCalculator = new ProbabilityCalculator(
@@ -103,7 +103,7 @@ public class Room {
 
     /**
      * 현재 플레이어를 {@code Gamer}(:game-api)로 변환해 반환한다. 게임 시작 흐름이 {@code Player}를
-     * import하지 않고 플레이어 식별·색상만 받도록 한다(ADR-0023 결정 4).
+     * import하지 않고 플레이어 식별·색상만 받도록 한다(ADR-0025 결정 4).
      */
     public List<Gamer> getGamers() {
         return players.getPlayers().stream()
@@ -121,7 +121,7 @@ public class Room {
 
     /**
      * 게임 시작 가능 여부를 검증한다(호스트·전원 준비·인원·방 상태). 게임 대기열은 GameSession이
-     * 소유하므로 여기서 검사하지 않으며, 상태를 변경하지 않는다(ADR-0023 결정 4). 대기열 검증과
+     * 소유하므로 여기서 검사하지 않으며, 상태를 변경하지 않는다(ADR-0025 결정 4). 대기열 검증과
      * {@code PLAYING} 전이는 {@code GameSessionService.startGame} → {@link #markPlaying()} 순서로 분리된다.
      */
     public void validateStartable(String hostName) {
@@ -133,7 +133,7 @@ public class Room {
 
     /**
      * 요청자가 방 호스트인지 검증한다. 게임 대기열 쓰기 경로(미니게임 선택)가 GameSession을 지연 생성하기
-     * 전에 이벤트의 호스트 이름을 보증하는 데 사용한다(ADR-0023 Step 5).
+     * 전에 이벤트의 호스트 이름을 보증하는 데 사용한다(ADR-0025 Step 5).
      */
     public void validateHost(String hostName) {
         if (!host.sameName(new PlayerName(hostName))) {

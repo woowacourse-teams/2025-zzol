@@ -59,7 +59,7 @@ public class DelayedRoomRemovalService {
             roomCommandService.delete(joinCode);
             wsRecoveryService.cleanup(joinCode.getValue());
             // 삭제 완료 후 Stream 발행 — GameSession 정리도 생성과 동일한 Stream 경로를 타야
-            // 세션을 소유한 인스턴스에 일관되게 도달한다 (ADR-0023 결정 6, in-process 리스너 금지)
+            // 세션을 소유한 인스턴스에 일관되게 도달한다 (ADR-0025 결정 6, in-process 리스너 금지)
             streamPublisher.publish(RoomStreamKey.BROADCAST, new GameRoomRemovedEvent(joinCode.getValue()));
             log.info("방 삭제 완료: joinCode={}", joinCode.getValue());
         } catch (Exception e) {

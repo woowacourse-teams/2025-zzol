@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * GameSession이 {@code PLAYING}으로 전이됐을 때({@link GameSessionStartedEvent}) 방도 {@code PLAYING}으로
- * 동기화한다(ADR-0023 결정 4).
+ * 동기화한다(ADR-0025 결정 4).
  *
  * <p>{@code :game}이 {@code startGame} 직후, 실패 가능 I/O(게임 시작·결과 영속)보다 <b>먼저</b> in-process 동기로
  * 발행하므로 이 리스너의 {@code markPlaying}이 그 I/O보다 먼저 완료된다. 따라서 이후 I/O가 실패해도 GameSession·Room이

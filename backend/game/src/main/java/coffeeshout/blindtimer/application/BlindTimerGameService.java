@@ -66,7 +66,7 @@ public class BlindTimerGameService implements MiniGameService {
         }
         game.cancelTimeout();
 
-        // 순서 불변식(ADR-0023 결정 5): finishGame()으로 roundCount를 먼저 확정·상태 복귀시킨다.
+        // 순서 불변식(ADR-0025 결정 5): finishGame()으로 roundCount를 먼저 확정·상태 복귀시킨다.
         final int roundCount = gameSessionService.finishGame(new JoinCode(joinCode));
 
         eventPublisher.publishEvent(BlindTimerProgressEvent.of(game, joinCode));

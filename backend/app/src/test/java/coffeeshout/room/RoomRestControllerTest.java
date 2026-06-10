@@ -594,7 +594,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         Room 호스트_꾹이 = RoomFixture.호스트_꾹이();
         roomRepository.save(호스트_꾹이);
 
-        // 게임 대기열은 GameSession이 소유한다(ADR-0023)
+        // 게임 대기열은 GameSession이 소유한다(ADR-0025)
         Gamer host = Gamer.guest(호스트_꾹이.getHost().getName().value());
         GameSession session = new GameSession(호스트_꾹이.getJoinCode(), host);
         session.replaceGames(host, List.of(

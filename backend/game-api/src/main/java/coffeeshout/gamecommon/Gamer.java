@@ -4,7 +4,7 @@ import java.util.Objects;
 import lombok.Getter;
 
 /**
- * 모듈 경계를 넘는 게임 참가자 식별자 (ADR-0023).
+ * 모듈 경계를 넘는 게임 참가자 식별자 (ADR-0025).
  *
  * <p>식별은 {@code name}과 {@code userId}로만 한다. {@code colorIndex}는 게임 화면
  * 렌더링용 표시 상태이지 식별자가 아니므로 {@link #equals}/{@link #hashCode}에서 제외한다.

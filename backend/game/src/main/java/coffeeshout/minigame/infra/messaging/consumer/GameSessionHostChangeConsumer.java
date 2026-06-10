@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * 호스트 승계 시 GameSession의 호스트를 갱신한다(ADR-0023 결정 6 — 생명주기 자동 관리).
+ * 호스트 승계 시 GameSession의 호스트를 갱신한다(ADR-0025 결정 6 — 생명주기 자동 관리).
  *
  * <p>호스트 검증이 이름 기준이므로 {@code newHostName}만으로 host를 구성한다({@code Gamer.guest}).
  * GameSession은 인스턴스 로컬 저장소에 있으므로 갱신도 생성·정리와 동일한 Stream 경로를 타야

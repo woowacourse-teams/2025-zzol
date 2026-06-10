@@ -58,7 +58,7 @@ class CardSelectStreamProducerTest extends GameModuleIntegrationTest {
         }
         roomRepository.save(room);
 
-        // 게임 대기열은 GameSession이 소유한다(ADR-0023) — 세션에 게임을 싣고 시작한다.
+        // 게임 대기열은 GameSession이 소유한다(ADR-0025) — 세션에 게임을 싣고 시작한다.
         final Gamer hostGamer = Gamer.guest(host.getName().value());
         final GameSession session = new GameSession(room.getJoinCode(), hostGamer);
         session.replaceGames(hostGamer, List.of(cardGame));

@@ -4,7 +4,7 @@ import coffeeshout.gamecommon.Gamer;
 import java.util.List;
 
 /**
- * 방 검증을 통과해 게임을 시작할 준비가 됐음을 알리는 <b>in-process 동기</b> 이벤트(ADR-0023 결정 4).
+ * 방 검증을 통과해 게임을 시작할 준비가 됐음을 알리는 <b>in-process 동기</b> 이벤트(ADR-0025 결정 4).
  *
  * <p>{@code :room}이 {@code StartMiniGameCommandEvent}를 검증한 뒤 발행하고, {@code :game}이 동기 수신해
  * GameSession을 시작한다. Redis Stream이 아닌 in-process로 두는 이유:

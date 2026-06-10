@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 미니게임 조회 REST 엔드포인트. {@code /rooms/...} 경로 3종은 {@code :room}의
- * {@code RoomRestController}에서 이전했다(ADR-0023 결정 7 — 클라이언트 호환을 위해 URL 유지).
+ * {@code RoomRestController}에서 이전했다(ADR-0025 결정 7 — 클라이언트 호환을 위해 URL 유지).
  */
 @RestController
 @RequiredArgsConstructor

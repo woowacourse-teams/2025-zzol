@@ -8,7 +8,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 /**
- * 미니게임 선택 변경을 GameSession에 반영한다(ADR-0023 결정 4 — Option B).
+ * 미니게임 선택 변경을 GameSession에 반영한다(ADR-0025 결정 4 — Option B).
  *
  * <p>호스트 검증은 GameSession이 단독 수행한다. 세션은 방 생성 시 {@code GameSessionInitConsumer}가
  * {@code GameRoomCreatedEvent}의 권위 있는 hostName으로 사전 생성하므로, {@code updateGames} 내부의

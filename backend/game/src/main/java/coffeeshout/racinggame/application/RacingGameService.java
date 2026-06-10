@@ -113,7 +113,7 @@ public class RacingGameService implements MiniGameService {
 
     private void handleRaceFinished(RacingGame racingGame, String joinCode) {
         racingGame.updateState(RacingGameState.DONE);
-        // 순서 불변식(ADR-0023 결정 5): finishGame()으로 roundCount를 먼저 확정·상태 복귀시킨다.
+        // 순서 불변식(ADR-0025 결정 5): finishGame()으로 roundCount를 먼저 확정·상태 복귀시킨다.
         final int roundCount = gameSessionService.finishGame(new JoinCode(joinCode));
         taskScheduler.schedule(() -> eventPublisher.publishEvent(RaceFinishedEvent.of(racingGame, joinCode)),
                 Instant.now().plus(timing.raceFinishedDelay()));

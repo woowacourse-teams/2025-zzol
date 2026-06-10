@@ -32,7 +32,7 @@ public class RoomCommandService {
 
     /**
      * 게임 종료 결과(순위 맵·라운드 수)로 확률을 조정한다. {@code :game}의
-     * {@code MiniGameFinishedEvent}를 수신한 {@code MiniGameResultRoomListener}가 호출한다(ADR-0023 결정 5).
+     * {@code MiniGameFinishedEvent}를 수신한 {@code MiniGameResultRoomListener}가 호출한다(ADR-0025 결정 5).
      */
     public void applyGameResult(JoinCode joinCode, Map<PlayerName, Integer> rankByPlayer, int roundCount) {
         final Room room = roomQueryService.getByJoinCode(joinCode);
@@ -67,7 +67,7 @@ public class RoomCommandService {
     /**
      * 호스트가 떠나 새 호스트가 승계됐으면({@code promoteNewHost}) GameSession이 새 호스트로 갱신되도록
      * 생명주기 이벤트를 발행한다. 세션은 인스턴스 로컬이라 in-process가 아닌 Stream으로 발행해야
-     * 세션을 소유한 모든 인스턴스에 도달한다(ADR-0023 결정 6, {@code GameRoomRemovedEvent}와 동일 경로).
+     * 세션을 소유한 모든 인스턴스에 도달한다(ADR-0025 결정 6, {@code GameRoomRemovedEvent}와 동일 경로).
      */
     private void publishHostChangeIfPromoted(JoinCode joinCode, PlayerName previousHost, Room room) {
         final PlayerName currentHost = room.getHost().getName();

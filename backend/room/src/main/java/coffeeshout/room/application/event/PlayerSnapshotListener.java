@@ -14,7 +14,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
- * 첫 게임 시작 시 방 플레이어 스냅샷({@code PlayerEntity})을 영속화한다(ADR-0023 — PlayerEntity 영속 책임 분리).
+ * 첫 게임 시작 시 방 플레이어 스냅샷({@code PlayerEntity})을 영속화한다(ADR-0025 — PlayerEntity 영속 책임 분리).
  *
  * <p>{@code PlayerEntity} 생성은 {@code Player} 도메인의 {@code PlayerType}·{@code userId}에 접근해야 하므로
  * {@code :game}이 아닌 {@code :room}이 소유한다. {@code :game}의 {@code MiniGamePersistenceService}가 발행하는

@@ -15,7 +15,19 @@
 3. **결정 6 — 생명주기 이벤트를 `:game-api`로 이전하고 중립 네이밍한다.** `RoomCreateEvent`/`RoomRemovedEvent`(`:room.domain.event`)를 **`GameRoomCreatedEvent`/`GameRoomRemovedEvent`(`:game-api` `gamecommon`)** 로 이전한다. `BaseEvent`가 `:common`에 있어 의존 위반이 없고, `:game`이 `:room` 이벤트를 import하던 참조 2건이 사라진다(`:game → :game-api`만 남음). `:room`은 생산자로서, `:game`은 소비자로서 모두 `:game-api`만 본다.
 4. **부수 — `PlayerHands`의 `room.domain.RoomErrorCode`를 공용 `GameErrorCode`(`:game-api` `gamecommon`)로 교체**한다. 게임 전반의 횡단 개념(플레이어 식별 실패 등)을 담는 공용 에러 코드를 신설한다.
 
-> `MiniGamePersistenceService`의 `Room`/`RoomState`/`PlayerEntity` 의존(JPA FK 계열)은 본 개정 범위 밖이며, `MiniGameEntity`의 `RoomEntity` FK·`PlayerEntity` 영속 책임 분리는 별도 후속 작업으로 미룬다.
+> `MiniGamePersistenceService`의 `Room`/`RoomState`/`PlayerEntity` 의존(JPA FK 계열)은 본 개정 범위 밖이며, `MiniGameEntity`의 `RoomEntity` FK·`PlayerEntity` 영속 책임 분리는 별도 후속 작업으로 미룬다. **→ 이 후속 작업은 완료됐다(아래 「구현 완료 후속」 절).**
+
+## 구현 완료 후속 — `:game → :room` FK 영속 분리 (2026-06-11)
+
+위 「구현 중 개정」 블록쿼트가 미뤘던 FK 영속 책임 분리를 완료했다. **아래가 본문 결정 5·「최종 의존 구조」·「핵심 제약」의 잔존 `:game → :room` 서술보다 우선한다.**
+
+1. **엔티티 FK를 ID 참조로 분리.** `MiniGameEntity.roomSession`(`@ManyToOne RoomEntity`) → `roomSessionId`(`Long`), `MiniGameResultEntity.player`(`@ManyToOne PlayerEntity`) → `playerId`(`Long`). DB FK 컬럼·스키마는 그대로 두고 객체 연관만 끊는다(다른 애그리거트는 객체가 아니라 ID로 참조 — DDD). `MiniGameResultEntity.miniGamePlay`(`@ManyToOne MiniGameEntity`)는 `:game` 내부라 유지한다. **port로는 `@ManyToOne`을 감출 수 없으므로(JPA가 매핑 지점에 구체 엔티티 타입을 요구) 이 ID 환원이 분리의 본체다.**
+2. **`RoomReferencePort`/`PlayerRef` 신설(`:game-api` `gamecommon`).** `:room`이 구현(`RoomReferenceAdapter`, `room.infra.persistence`)하고 `:game`이 소비한다 — room → game-api 의존만으로 성립하며 `GameRoomCreatedEvent`(room 생산·game 소비) 계열과 대칭이다. 메서드 3종: `findCurrentRoomSessionId(joinCode)`("어느 세션이 현재인가" 판정을 `:room`에 가둔 채 현재 세션 ID 반환 — joinCode 하나에 세션이 시간순 여러 개 존재 가능), `markRoomPlaying(joinCode)`(`RoomState`를 `:room`에 가둔 채 PLAYING 전이), `findPlayerRefs(roomSessionId, names)`(`PlayerRef(id, name, userId)` DTO 반환). `PlayerEntity` 참조가 사라져 `MiniGameResultSaveEventListener`는 결과 조립 시점에 `PlayerRef.userId`를 캡처해 UserStats 갱신 목록을 함께 만든다(저장 후 엔티티에서 재조회 불가).
+3. **`MiniGameRestController`의 `RoomQueryService` 제거.** `validateRoomExists`가 `gameSessionService.findSession`으로 방 존재(=세션 존재, 결정 6의 1:1 생명주기)를 판정한다. 동일 `GlobalErrorCode.NOT_EXIST`(404)·메시지를 유지한다.
+4. **`:game` 프로덕션의 `:room` 의존 0건.** `:game` `build.gradle.kts`에서 `implementation(project(":room"))`을 제거(테스트는 `testImplementation`으로 유지)한다. ArchUnit `game은_room을_직접_참조할_수_없다`를 `coffeeshout.room.domain..` → `coffeeshout.room..`(전체)로 격상하고, `GameArchitectureTest`의 room.infra 예외 규칙은 상위 규칙에 포섭되므로 제거한다.
+5. **`:admin` 연쇄(불가피).** `QueryDslDashboardStatisticsRepository`가 `MINI_GAME.roomSession`·`MINI_GAME_RESULT.player` 연관 조인을 쓰던 것을 id 기반 `.on()` 조인(`ROOM.id.eq(MINI_GAME.roomSessionId)`, `PLAYER.id.eq(MINI_GAME_RESULT.playerId)`)으로 전환한다 — 동 파일의 `USER.id.eq(PLAYER.userId)` 선례와 동일 패턴이다. 엔티티 연관 제거가 admin QueryDSL 조인을 깨므로 함께 전환한다.
+
+> `RoomStatusPort`/`RoomEntityRepository`의 일부 메서드는 이 변경으로 `:game` 소비가 사라졌으나 `:room` 내부 사용 가능성이 있어 제거하지 않는다(범위 밖). 두 PLAYING 전이의 원자성(개정 1)은 그대로다 — `RoomGameStartListener`가 도메인 Room을, `markRoomPlaying`이 DB `RoomEntity`를 각각 전이하며 둘은 다른 저장소다(중복 아님).
 
 ## 컨텍스트
 
@@ -261,8 +273,9 @@ URL 경로는 클라이언트 호환을 위해 유지한다.
 변경 전:  :room → :game-api (게임 타입 + 게임 인스턴스 보유)
           :game → :room     (게임 조회를 Room 경유)
 
-변경 후:  :room → :game-api (JoinCode·Gamer·MiniGameResultType 값/식별자 + 게임 이벤트 in-process 리스너 3종)
-          :game → :room     (MiniGamePersistenceService의 PlayerEntity 영속 참조만 잔존 — 결정 4 개정으로 RoomQueryService 조회는 제거됨)
+변경 후:  :room → :game-api (JoinCode·Gamer·MiniGameResultType 값/식별자 + 게임 이벤트 in-process 리스너 3종 + RoomReferencePort 구현)
+          :game ↛ :room     (FK 영속 분리 완료 — 2026-06-11. RoomEntity/PlayerEntity FK를 ID 참조로 끊고,
+                            :room의 식별·상태·플레이어 참조는 RoomReferencePort(:game-api) 경유. :game 프로덕션의 :room 의존 0건)
 ```
 
 - `:room`의 도메인 코드(`room.domain`)에서 `Playable`, `MiniGameType`, `MiniGameResult`, `MiniGameScore` import가 사라진다. 단 `room.domain.roulette`(`ProbabilityCalculator`·`Probability`)는 순위→승패 분류를 위해 `:game-api`의 값 enum `MiniGameResultType`을 참조한다 — 게임 인스턴스·타입이 아닌 결과 분류 값이므로 소유권 분리에 위배되지 않는다.
@@ -307,6 +320,7 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 - 게임 대기열 쓰기(`replaceGames`, `startNextGame`)는 GameSession의 호스트 검증과 상태 검증(`READY`에서만 변경 가능), 개수 상한(5개)을 모두 통과해야 한다.
 - 호스트 검증은 이름 기준(`Gamer.name()` 비교)이며 기존 `sameName`과 일치한다. ⚠️ 이 검증은 "방 내 닉네임 유니크" 불변식에 의존하고, 해당 불변식(중복 닉네임 차단)은 차후 리팩터 대상이다. 중복 허용 시 GameSession 식별을 방-유니크 키(회원 `UserCode`, 게스트 `PlayerKey`/합성 식별자)로 이관해야 한다 — 후속 고려 사항 참조.
 - `:game`의 게임 도메인은 `room.domain.player.Player`를 import하지 않는다. 식별이 필요하면 `Gamer`를 사용한다.
+- **`:game` 프로덕션은 `:room`(`coffeeshout.room..`) 전체를 직접 import하지 않는다(2026-06-11 FK 영속 분리 완료).** `:room`의 식별·상태·플레이어 참조가 필요하면 `RoomReferencePort`(`:game-api`)를 경유하고, `MiniGameEntity`/`MiniGameResultEntity`는 `RoomEntity`/`PlayerEntity`를 `Long` ID로 참조한다. ArchUnit `game은_room을_직접_참조할_수_없다`가 `coffeeshout.room..` 전체로 동결한다.
 - `Gamer`는 식별(`name`+`userId`)과 표시 상태(`colorIndex`)를 함께 갖는 불변 class이되, 동등성은 식별만으로 정의한다(`colorIndex`는 `equals`/`hashCode` 제외). 색상은 `Player.toGamer()`가 채우며, 게임 응답이 색상을 표시할 때 Room을 재조회하지 않고 `Gamer`에서 읽는다. ⚠️ 색상이 `Gamer` 페이로드로 흐르므로 ADR-0024의 외부 노출 점검 대상에 `colorIndex`도 포함한다.
 - 게임 수 상태는 `GameSession`이 단독 소유한다. Room은 게임 카운터를 보유하지 않으며, `ProbabilityCalculator`에 넘기는 `roundCount`(선택 게임 총수, 완료 수 아님)는 `MiniGameFinishedEvent`로 전달받는다. 게임 종료 시 `finishGame()`으로 `roundCount`를 확정한 뒤 이벤트를 발행하는 순서를 지킨다.
 

@@ -2,20 +2,21 @@ package coffeeshout.blockstacking.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.GameModuleWebSocketTest;
+import coffeeshout.blockstacking.application.BlockStackingService;
+import coffeeshout.blockstacking.application.response.BlockStackingProgressResponse;
+import coffeeshout.blockstacking.application.response.BlockStackingStateResponse;
 import coffeeshout.blockstacking.domain.BlockStackingGame;
-import coffeeshout.fixture.RoomFixture;
+import coffeeshout.blockstacking.domain.BlockStackingGameState;
+import coffeeshout.blockstacking.domain.BlockStackingPlayerRankInfo;
+import coffeeshout.blockstacking.ui.request.BlockStackingProgressRequest;
+import coffeeshout.fixture.GamerFixture;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.support.TestStompSession;
-import coffeeshout.GameModuleWebSocketTest;
-import coffeeshout.support.MessageResponse;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
-import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import coffeeshout.support.MessageResponse;
+import coffeeshout.support.TestStompSession;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,33 +33,28 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
     private static final long PLAYING_MS = 2000L;
 
     JoinCode joinCode;
-    Player host;
+    Gamer host;
+    List<Gamer> gamers;
     TestStompSession session;
 
     @Autowired
     GameSessionService gameSessionService;
 
+    @Autowired
+    BlockStackingService blockStackingService;
+
     @BeforeEach
-    void setUp(
-            @Autowired RoomRepository roomRepository,
-            @Autowired RoomJpaRepository roomJpaRepository,
-            @Autowired JoinCodeGenerator joinCodeGenerator
-    ) throws Exception {
+    void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
         joinCode = joinCodeGenerator.generate();
-        Room room = RoomFixture.호스트_꾹이(joinCode);
-        room.getPlayers().forEach(player -> player.updateReadyState(true));
-        host = room.getHost();
+        host = GamerFixture.호스트_꾹이();
+        gamers = GamerFixture.꾹이_루키_엠제이_한스();
 
-        roomRepository.save(room);
-        roomJpaRepository.save(new RoomEntity(joinCode.getValue()));
-
-        // 게임을 GameSession 대기열(READY)에 넣어 WebSocket START 커맨드가 시작하도록 한다(ADR-0023 Step 4).
-        final Gamer hostGamer = Gamer.guest(host.getName().value());
+        // GameSession을 READY 상태로 사전 구성한다 — Room 검증·영속을 거치지 않고 :game만으로 시작한다(ADR-0023).
         gameSessionService.deleteSession(joinCode);
-        gameSessionService.initSession(joinCode, hostGamer);
-        gameSessionService.getSession(joinCode).replaceGames(hostGamer, List.of(new BlockStackingGame()));
+        gameSessionService.initSession(joinCode, host);
+        gameSessionService.getSession(joinCode).replaceGames(host, List.of(new BlockStackingGame()));
 
-        session = createSession(joinCode, host.getName());
+        session = createSession(joinCode.getValue(), host.getName());
     }
 
     @Nested
@@ -68,47 +64,51 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
         void 게임_페이즈가_PREPARE_PLAYING_DONE_순서로_전환된다() {
             final var stateResponses = session.subscribe(stateUrl());
 
-            session.send(startCommandUrl(), hostStartCommand());
+            startBlockStackingGame();
 
-            final MessageResponse prepare = stateResponses.get();
-            final MessageResponse playing = stateResponses.get();
-            final MessageResponse done = stateResponses.get(4, TimeUnit.SECONDS);
+            final BlockStackingStateResponse prepare = payloadAs(stateResponses.get(), BlockStackingStateResponse.class);
+            final MessageResponse playingMessage = stateResponses.get();
+            final MessageResponse doneMessage = stateResponses.get(4, TimeUnit.SECONDS);
+            final BlockStackingStateResponse playing = payloadAs(playingMessage, BlockStackingStateResponse.class);
+            final BlockStackingStateResponse done = payloadAs(doneMessage, BlockStackingStateResponse.class);
 
-            assertMessageContains(prepare, "\"state\":\"PREPARE\"");
-            assertMessageContains(playing, PREPARE_MS, "\"state\":\"PLAYING\"");
-            assertThat(playing.payload()).contains("\"endTimeEpochMs\":");
-            assertMessageContains(done, PLAYING_MS, "\"state\":\"DONE\"");
-            assertThat(done.payload()).doesNotContain("\"endTimeEpochMs\":");
+            assertThat(prepare.state()).isEqualTo(BlockStackingGameState.PREPARE);
+            assertThat(playing.state()).isEqualTo(BlockStackingGameState.PLAYING);
+            assertThat(playingMessage.duration()).isGreaterThanOrEqualTo(PREPARE_MS - 100);
+            assertThat(playing.endTimeEpochMs()).isNotNull();
+            assertThat(done.state()).isEqualTo(BlockStackingGameState.DONE);
+            assertThat(doneMessage.duration()).isGreaterThanOrEqualTo(PLAYING_MS - 100);
+            assertThat(done.endTimeEpochMs()).isNull();
         }
 
         @Test
         void PREPARE_단계에서_state_필드가_포함된_응답을_받는다() {
             final var stateResponses = session.subscribe(stateUrl());
 
-            session.send(startCommandUrl(), hostStartCommand());
+            startBlockStackingGame();
 
-            final MessageResponse prepare = stateResponses.get();
+            final BlockStackingStateResponse prepare = payloadAs(stateResponses.get(), BlockStackingStateResponse.class);
 
-            assertMessageContains(prepare, "\"state\":\"PREPARE\"");
-            assertThat(prepare.payload()).contains("\"success\":true");
+            assertThat(prepare.state()).isEqualTo(BlockStackingGameState.PREPARE);
         }
 
         @Test
         void 타이머_만료_후_게임이_완료된다() {
             final var stateResponses = session.subscribe(stateUrl());
 
-            session.send(startCommandUrl(), hostStartCommand());
+            startBlockStackingGame();
 
             stateResponses.get(); // PREPARE
             stateResponses.get(); // PLAYING
 
             // playing(2000ms) 후 DONE 전환
-            final MessageResponse done = stateResponses.get(4, TimeUnit.SECONDS);
+            final MessageResponse doneMessage = stateResponses.get(4, TimeUnit.SECONDS);
+            final BlockStackingStateResponse done = payloadAs(doneMessage, BlockStackingStateResponse.class);
 
-            assertMessageContains(done, "\"state\":\"DONE\"");
+            assertThat(done.state()).isEqualTo(BlockStackingGameState.DONE);
 
             // 핵심 검증: playing 제한 시간(2000ms) 이내에 done으로 전환되지 않음
-            assertThat(done.duration())
+            assertThat(doneMessage.duration())
                     .as("DONE 전환은 playing 제한 시간(%dms) 이후여야 합니다", PLAYING_MS)
                     .isGreaterThanOrEqualTo(PLAYING_MS - 100);
         }
@@ -122,18 +122,18 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
             final var stateResponses = session.subscribe(stateUrl());
             final var progressResponses = session.subscribe(progressUrl());
 
-            session.send(startCommandUrl(), hostStartCommand());
+            startBlockStackingGame();
 
             stateResponses.get(); // PREPARE
             stateResponses.get(); // PLAYING
 
             session.send(progressCommandUrl(), progressCommand(1, 100.0, 85.0, 150.0));
 
-            final MessageResponse progressResponse = progressResponses.get();
+            final BlockStackingProgressResponse progress =
+                    payloadAs(progressResponses.get(), BlockStackingProgressResponse.class);
 
-            assertMessageContains(progressResponse, "\"name\":\"꾹이\"");
-            assertMessageContains(progressResponse, "\"floor\":1");
-            assertThat(progressResponse.payload()).contains("\"success\":true");
+            final BlockStackingPlayerRankInfo 꾹이 = findByName(progress, "꾹이");
+            assertThat(꾹이.floor()).isEqualTo(1);
         }
 
         @Test
@@ -143,7 +143,7 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
             final var stateResponses = session.subscribe(stateUrl());
             final var progressResponses = session.subscribe(progressUrl());
 
-            session.send(startCommandUrl(), hostStartCommand());
+            startBlockStackingGame();
 
             stateResponses.get(); // PREPARE
             stateResponses.get(); // PLAYING
@@ -156,11 +156,12 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
             progressResponses.get(); // 꾹이 2층 브로드캐스트
 
             루키세션.send(progressCommandUrl(), progressCommand(1, 100.0, 85.0, 135.0));
-            final MessageResponse rankingResponse = progressResponses.get();
+            final BlockStackingProgressResponse ranking =
+                    payloadAs(progressResponses.get(), BlockStackingProgressResponse.class);
 
             // 꾹이(2층)가 루키(1층)보다 앞에 위치
-            final int 꾹이위치 = rankingResponse.payload().indexOf("\"name\":\"꾹이\"");
-            final int 루키위치 = rankingResponse.payload().indexOf("\"name\":\"루키\"");
+            final int 꾹이위치 = indexOfName(ranking, "꾹이");
+            final int 루키위치 = indexOfName(ranking, "루키");
             assertThat(꾹이위치).isLessThan(루키위치);
         }
 
@@ -169,7 +170,7 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
             final var stateResponses = session.subscribe(stateUrl());
             final var progressResponses = session.subscribe(progressUrl());
 
-            session.send(startCommandUrl(), hostStartCommand());
+            startBlockStackingGame();
 
             stateResponses.get(); // PREPARE
             stateResponses.get(); // PLAYING
@@ -185,7 +186,7 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
             final var stateResponses = session.subscribe(stateUrl());
             final var progressResponses = session.subscribe(progressUrl());
 
-            session.send(startCommandUrl(), hostStartCommand());
+            startBlockStackingGame();
 
             stateResponses.get(); // PREPARE
             stateResponses.get(); // PLAYING
@@ -207,34 +208,40 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
         return String.format("/topic/room/%s/block-stacking/progress", joinCode.getValue());
     }
 
-    private String startCommandUrl() {
-        return String.format("/app/room/%s/minigame/command", joinCode.getValue());
-    }
-
     private String progressCommandUrl() {
         return String.format("/app/room/%s/block-stacking/progress", joinCode.getValue());
     }
 
-    private String hostStartCommand() {
-        return String.format("""
-                {
-                  "commandType": "START_MINI_GAME",
-                  "commandRequest": { "hostName": "%s" }
-                }
-                """, host.getName().value());
+    /**
+     * WS START 커맨드(Room 검증·영속 경유) 대신 :game 서비스를 직접 호출해 게임을 시작한다.
+     * {@code startGame}으로 READY→PLAYING 전이 후 {@code start}로 플로우를 스케줄한다(프로덕션 onGameStartReady와 동일 순서).
+     */
+    private void startBlockStackingGame() {
+        gameSessionService.startGame(joinCode, host, gamers);
+        blockStackingService.start(joinCode.getValue(), host.getName());
     }
 
-    private String progressCommand(
+    private BlockStackingProgressRequest progressCommand(
             int floor,
             double movingBlockX, double stackTopX, double stackTopWidth
     ) {
-        return String.format("""
-                {
-                  "floor": %d,
-                  "movingBlockX": %f,
-                  "stackTopX": %f,
-                  "stackTopWidth": %f
-                }
-                """, floor, movingBlockX, stackTopX, stackTopWidth);
+        return new BlockStackingProgressRequest(floor, movingBlockX, stackTopX, stackTopWidth);
+    }
+
+    private BlockStackingPlayerRankInfo findByName(BlockStackingProgressResponse response, String name) {
+        return response.players().stream()
+                .filter(player -> player.name().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("플레이어를 찾을 수 없습니다: " + name));
+    }
+
+    private int indexOfName(BlockStackingProgressResponse response, String name) {
+        final List<BlockStackingPlayerRankInfo> players = response.players();
+        for (int i = 0; i < players.size(); i++) {
+            if (players.get(i).name().equals(name)) {
+                return i;
+            }
+        }
+        throw new AssertionError("플레이어를 찾을 수 없습니다: " + name);
     }
 }

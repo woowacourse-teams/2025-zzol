@@ -3,22 +3,18 @@ package coffeeshout.blindtimer.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import coffeeshout.GameModuleWebSocketTest;
+import coffeeshout.blindtimer.application.BlindTimerGameService;
 import coffeeshout.blindtimer.domain.BlindTimerGame;
-import coffeeshout.fixture.RoomFixture;
+import coffeeshout.blindtimer.ui.request.StopCommand;
+import coffeeshout.blindtimer.ui.response.BlindTimerProgressResponse;
+import coffeeshout.blindtimer.ui.response.BlindTimerStateResponse;
+import coffeeshout.fixture.GamerFixture;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.support.TestStompSession;
-import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.support.MessageResponse;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerType;
-import coffeeshout.room.domain.repository.RoomRepository;
-import coffeeshout.room.infra.persistence.PlayerEntity;
-import coffeeshout.room.infra.persistence.PlayerJpaRepository;
-import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import coffeeshout.support.TestStompSession;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -31,38 +27,25 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
     @Autowired
     GameSessionService gameSessionService;
 
+    @Autowired
+    BlindTimerGameService blindTimerGameService;
+
     JoinCode joinCode;
-    Player host;
+    Gamer host;
+    List<Gamer> gamers;
     TestStompSession session;
-    Room room;
     BlindTimerGame game;
 
     @BeforeEach
-    void setUp(@Autowired RoomRepository roomRepository,
-               @Autowired RoomJpaRepository roomJpaRepository,
-               @Autowired PlayerJpaRepository playerJpaRepository) throws Exception {
+    void setUp() throws Exception {
         joinCode = new JoinCode("A4BX");
-        room = RoomFixture.호스트_꾹이();
-        room.getPlayers().forEach(player -> player.updateReadyState(true));
-        host = room.getHost();
-        roomRepository.save(room);
-
-        // 게임 종료 시 결과 저장 리스너(MiniGameResultSaveEventListener)가 RoomEntity·PlayerEntity를
-        // 조회하므로, 실제 join 흐름이 영속화하는 엔티티들을 통합 테스트에서도 동일하게 적재한다.
-        final RoomEntity roomEntity = roomJpaRepository.save(new RoomEntity(joinCode.getValue()));
-        room.getPlayers().forEach(player -> playerJpaRepository.save(
-                new PlayerEntity(roomEntity, player.getName().value(),
-                        player.equals(host) ? PlayerType.HOST : PlayerType.GUEST)));
-
-        // 테스트의 game 인스턴스를 GameSession 대기열(READY)에 넣어, WebSocket START 커맨드의
-        // startGame이 동일 인스턴스를 시작하도록 한다(game.findPlayer 단언이 라이브 인스턴스를 본다).
+        host = GamerFixture.호스트_꾹이();
+        gamers = GamerFixture.꾹이_루키_엠제이_한스();
         game = new BlindTimerGame(Duration.ofSeconds(10));
-        final Gamer hostGamer = Gamer.guest(host.getName().value());
         gameSessionService.deleteSession(joinCode);
-        gameSessionService.initSession(joinCode, hostGamer);
-        gameSessionService.getSession(joinCode).replaceGames(hostGamer, List.of(game));
-
-        session = createSession(joinCode, host.getName());
+        gameSessionService.initSession(joinCode, host);
+        gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));
+        session = createSession(joinCode.getValue(), host.getName());
     }
 
     @Test
@@ -71,34 +54,25 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/blind-timer/state", joinCodeValue);
         final String subscribeProgressUrl = String.format("/topic/room/%s/blind-timer/progress", joinCodeValue);
-        final String requestUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);
 
         var stateResponses = session.subscribe(subscribeStateUrl);
         var progressResponses = session.subscribe(subscribeProgressUrl);
 
         // when
-        session.send(requestUrl, String.format("""
-                {
-                  "commandRequest": {
-                    "hostName": "%s"
-                  },
-                  "commandType": "START_MINI_GAME"
-                }
-                """, host.getName().value()));
+        startBlindTimerGame();
 
         // then - DESCRIPTION 상태 (targetTimeMillis 포함)
-        MessageResponse descriptionState = stateResponses.get(2, TimeUnit.SECONDS);
-        assertMessageContains(descriptionState, "\"state\":\"DESCRIPTION\"");
-        assertMessageContains(descriptionState, "\"success\":true");
-        assertMessageContains(descriptionState, "\"targetTimeMillis\":10000");
+        BlindTimerStateResponse descriptionState = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        assertThat(descriptionState.state()).isEqualTo("DESCRIPTION");
+        assertThat(descriptionState.targetTimeMillis()).isEqualTo(10000);
 
         // PREPARE 상태
-        MessageResponse prepareState = stateResponses.get(6, TimeUnit.SECONDS);
-        assertMessageContains(prepareState, "\"state\":\"PREPARE\"");
+        BlindTimerStateResponse prepareState = payloadAs(stateResponses.get(6, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        assertThat(prepareState.state()).isEqualTo("PREPARE");
 
         // PLAYING 상태
-        MessageResponse playingState = stateResponses.get(4, TimeUnit.SECONDS);
-        assertMessageContains(playingState, "\"state\":\"PLAYING\"");
+        BlindTimerStateResponse playingState = payloadAs(stateResponses.get(4, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        assertThat(playingState.state()).isEqualTo("PLAYING");
     }
 
     @Test
@@ -107,21 +81,13 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/blind-timer/state", joinCodeValue);
         final String subscribeProgressUrl = String.format("/topic/room/%s/blind-timer/progress", joinCodeValue);
-        final String startUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);
         final String stopUrl = String.format("/app/room/%s/blind-timer/stop", joinCodeValue);
 
         var stateResponses = session.subscribe(subscribeStateUrl);
         var progressResponses = session.subscribe(subscribeProgressUrl);
 
         // 게임 시작
-        session.send(startUrl, String.format("""
-                {
-                  "commandRequest": {
-                    "hostName": "%s"
-                  },
-                  "commandType": "START_MINI_GAME"
-                }
-                """, host.getName().value()));
+        startBlindTimerGame();
 
         stateResponses.get(2, TimeUnit.SECONDS); // DESCRIPTION
         stateResponses.get(6, TimeUnit.SECONDS); // PREPARE
@@ -129,16 +95,11 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         stateResponses.get(4, TimeUnit.SECONDS); // PLAYING
 
         // when - STOP
-        session.send(stopUrl, String.format("""
-                {
-                  "playerName": "%s"
-                }
-                """, host.getName().value()));
+        session.send(stopUrl, new StopCommand(host.getName()));
 
         // then - 진행도 응답
-        MessageResponse progressUpdate = progressResponses.get(3, TimeUnit.SECONDS);
-        assertMessageContains(progressUpdate, "\"success\":true");
-        assertMessageContains(progressUpdate, "\"players\"");
+        BlindTimerProgressResponse progressUpdate = payloadAs(progressResponses.get(3, TimeUnit.SECONDS), BlindTimerProgressResponse.class);
+        assertThat(progressUpdate.players()).isNotEmpty();
     }
 
     @Test
@@ -147,21 +108,13 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/blind-timer/state", joinCodeValue);
         final String subscribeProgressUrl = String.format("/topic/room/%s/blind-timer/progress", joinCodeValue);
-        final String startUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);
         final String stopUrl = String.format("/app/room/%s/blind-timer/stop", joinCodeValue);
 
         var stateResponses = session.subscribe(subscribeStateUrl);
         var progressResponses = session.subscribe(subscribeProgressUrl);
 
         // 게임 시작 후 PLAYING 까지 대기
-        session.send(startUrl, String.format("""
-                {
-                  "commandRequest": {
-                    "hostName": "%s"
-                  },
-                  "commandType": "START_MINI_GAME"
-                }
-                """, host.getName().value()));
+        startBlindTimerGame();
 
         stateResponses.get(2, TimeUnit.SECONDS); // DESCRIPTION
         stateResponses.get(6, TimeUnit.SECONDS); // PREPARE
@@ -169,13 +122,9 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         stateResponses.get(4, TimeUnit.SECONDS); // PLAYING
 
         // when - 모든 플레이어 STOP
-        for (Player player : room.getPlayers()) {
-            final String playerName = player.getName().value();
-            session.send(stopUrl, String.format("""
-                    {
-                      "playerName": "%s"
-                    }
-                    """, playerName));
+        for (Gamer gamer : gamers) {
+            final String playerName = gamer.getName();
+            session.send(stopUrl, new StopCommand(playerName));
 
             await().atMost(Duration.ofSeconds(5))
                     .pollInterval(Duration.ofMillis(50))
@@ -185,8 +134,16 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         }
 
         // then - DONE 상태 확인
-        MessageResponse doneState = stateResponses.get(10, TimeUnit.SECONDS);
-        assertMessageContains(doneState, "\"state\":\"DONE\"");
-        assertMessageContains(doneState, "\"success\":true");
+        BlindTimerStateResponse doneState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        assertThat(doneState.state()).isEqualTo("DONE");
+    }
+
+    /**
+     * WS START 커맨드(Room 검증·영속 경유) 대신 :game 서비스를 직접 호출해 게임을 시작한다.
+     * {@code startGame}으로 READY→PLAYING 전이 후 {@code start}로 플로우를 스케줄한다(프로덕션 onGameStartReady와 동일 순서).
+     */
+    private void startBlindTimerGame() {
+        gameSessionService.startGame(joinCode, host, gamers);
+        blindTimerGameService.start(joinCode.getValue(), host.getName());
     }
 }

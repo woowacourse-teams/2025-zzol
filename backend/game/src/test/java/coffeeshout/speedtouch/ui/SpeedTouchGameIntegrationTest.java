@@ -3,22 +3,18 @@ package coffeeshout.speedtouch.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import coffeeshout.fixture.RoomFixture;
+import coffeeshout.GameModuleWebSocketTest;
+import coffeeshout.fixture.GamerFixture;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.support.TestStompSession;
-import coffeeshout.GameModuleWebSocketTest;
-import coffeeshout.support.MessageResponse;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerType;
-import coffeeshout.room.domain.repository.RoomRepository;
-import coffeeshout.room.infra.persistence.PlayerEntity;
-import coffeeshout.room.infra.persistence.PlayerJpaRepository;
-import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import coffeeshout.speedtouch.application.SpeedTouchGameService;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
+import coffeeshout.speedtouch.ui.request.TouchCommand;
+import coffeeshout.speedtouch.ui.response.SpeedTouchProgressResponse;
+import coffeeshout.speedtouch.ui.response.SpeedTouchStateResponse;
+import coffeeshout.support.MessageResponse;
+import coffeeshout.support.TestStompSession;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -31,38 +27,25 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
     @Autowired
     GameSessionService gameSessionService;
 
+    @Autowired
+    SpeedTouchGameService speedTouchGameService;
+
     JoinCode joinCode;
-    Player host;
+    Gamer host;
+    List<Gamer> gamers;
     TestStompSession session;
-    Room room;
     SpeedTouchGame game;
 
     @BeforeEach
-    void setUp(@Autowired RoomRepository roomRepository,
-               @Autowired RoomJpaRepository roomJpaRepository,
-               @Autowired PlayerJpaRepository playerJpaRepository) throws Exception {
+    void setUp() throws Exception {
         joinCode = new JoinCode("A4BX");
-        room = RoomFixture.호스트_꾹이();
-        room.getPlayers().forEach(player -> player.updateReadyState(true));
-        host = room.getHost();
-        roomRepository.save(room);
-
-        // 게임 종료 시 결과 저장 리스너(MiniGameResultSaveEventListener)가 RoomEntity·PlayerEntity를
-        // 조회하므로, 실제 join 흐름이 영속화하는 엔티티들을 통합 테스트에서도 동일하게 적재한다.
-        final RoomEntity roomEntity = roomJpaRepository.save(new RoomEntity(joinCode.getValue()));
-        room.getPlayers().forEach(player -> playerJpaRepository.save(
-                new PlayerEntity(roomEntity, player.getName().value(),
-                        player.equals(host) ? PlayerType.HOST : PlayerType.GUEST)));
-
-        // 테스트의 game 인스턴스를 GameSession 대기열(READY)에 넣어, WebSocket START 커맨드의
-        // startGame이 동일 인스턴스를 시작하도록 한다(game.findPlayer 단언이 라이브 인스턴스를 본다).
+        host = GamerFixture.호스트_꾹이();
+        gamers = GamerFixture.꾹이_루키_엠제이_한스();
         game = new SpeedTouchGame();
-        final Gamer hostGamer = Gamer.guest(host.getName().value());
         gameSessionService.deleteSession(joinCode);
-        gameSessionService.initSession(joinCode, hostGamer);
-        gameSessionService.getSession(joinCode).replaceGames(hostGamer, List.of(game));
-
-        session = createSession(joinCode, host.getName());
+        gameSessionService.initSession(joinCode, host);
+        gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));
+        session = createSession(joinCode.getValue(), host.getName());
     }
 
     @Test
@@ -71,33 +54,24 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/speed-touch/state", joinCodeValue);
         final String subscribeProgressUrl = String.format("/topic/room/%s/speed-touch/progress", joinCodeValue);
-        final String requestUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);
 
         var stateResponses = session.subscribe(subscribeStateUrl);
         var progressResponses = session.subscribe(subscribeProgressUrl);
 
         // when
-        session.send(requestUrl, String.format("""
-                {
-                  "commandRequest": {
-                    "hostName": "%s"
-                  },
-                  "commandType": "START_MINI_GAME"
-                }
-                """, host.getName().value()));
+        startSpeedTouchGame();
 
         // then - DESCRIPTION 상태
         MessageResponse descriptionState = stateResponses.get(2, TimeUnit.SECONDS);
-        assertMessageContains(descriptionState, "\"state\":\"DESCRIPTION\"");
-        assertMessageContains(descriptionState, "\"success\":true");
+        assertThat(payloadAs(descriptionState, SpeedTouchStateResponse.class).state()).isEqualTo("DESCRIPTION");
 
         // PREPARE 상태
         MessageResponse prepareState = stateResponses.get(6, TimeUnit.SECONDS);
-        assertMessageContains(prepareState, "\"state\":\"PREPARE\"");
+        assertThat(payloadAs(prepareState, SpeedTouchStateResponse.class).state()).isEqualTo("PREPARE");
 
         // PLAYING 상태
         MessageResponse playingState = stateResponses.get(4, TimeUnit.SECONDS);
-        assertMessageContains(playingState, "\"state\":\"PLAYING\"");
+        assertThat(payloadAs(playingState, SpeedTouchStateResponse.class).state()).isEqualTo("PLAYING");
     }
 
     @Test
@@ -106,21 +80,13 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/speed-touch/state", joinCodeValue);
         final String subscribeProgressUrl = String.format("/topic/room/%s/speed-touch/progress", joinCodeValue);
-        final String startUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);
         final String touchUrl = String.format("/app/room/%s/speed-touch/touch", joinCodeValue);
 
         var stateResponses = session.subscribe(subscribeStateUrl);
         var progressResponses = session.subscribe(subscribeProgressUrl);
 
         // 게임 시작
-        session.send(startUrl, String.format("""
-                {
-                  "commandRequest": {
-                    "hostName": "%s"
-                  },
-                  "commandType": "START_MINI_GAME"
-                }
-                """, host.getName().value()));
+        startSpeedTouchGame();
 
         stateResponses.get(2, TimeUnit.SECONDS); // DESCRIPTION
         stateResponses.get(6, TimeUnit.SECONDS); // PREPARE
@@ -128,17 +94,11 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         stateResponses.get(4, TimeUnit.SECONDS); // PLAYING
 
         // when - 터치
-        session.send(touchUrl, String.format("""
-                {
-                  "playerName": "%s",
-                  "touchedNumber": 1
-                }
-                """, host.getName().value()));
+        session.send(touchUrl, new TouchCommand(host.getName(), 1));
 
         // then - 진행도 응답 (blocking get으로 메시지 도착까지 대기)
         MessageResponse progressUpdate = progressResponses.get(3, TimeUnit.SECONDS);
-        assertMessageContains(progressUpdate, "\"success\":true");
-        assertMessageContains(progressUpdate, "\"players\"");
+        assertThat(payloadAs(progressUpdate, SpeedTouchProgressResponse.class).players()).isNotEmpty();
     }
 
     @Test
@@ -147,21 +107,13 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/speed-touch/state", joinCodeValue);
         final String subscribeProgressUrl = String.format("/topic/room/%s/speed-touch/progress", joinCodeValue);
-        final String startUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);
         final String touchUrl = String.format("/app/room/%s/speed-touch/touch", joinCodeValue);
 
         var stateResponses = session.subscribe(subscribeStateUrl);
         var progressResponses = session.subscribe(subscribeProgressUrl);
 
         // 게임 시작 후 PLAYING 까지 대기
-        session.send(startUrl, String.format("""
-                {
-                  "commandRequest": {
-                    "hostName": "%s"
-                  },
-                  "commandType": "START_MINI_GAME"
-                }
-                """, host.getName().value()));
+        startSpeedTouchGame();
 
         stateResponses.get(2, TimeUnit.SECONDS); // DESCRIPTION
         stateResponses.get(6, TimeUnit.SECONDS); // PREPARE
@@ -170,16 +122,11 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
         // when - 모든 플레이어 1~25 터치
         // 각 플레이어별로 1~25를 순차 전송하되, 이전 터치 처리 완료를 Awaitility로 확인
-        for (Player player : room.getPlayers()) {
-            final String playerName = player.getName().value();
+        for (Gamer gamer : gamers) {
+            final String playerName = gamer.getName();
             for (int i = 1; i <= 25; i++) {
                 final int expectedNext = i + 1;
-                session.send(touchUrl, String.format("""
-                        {
-                          "playerName": "%s",
-                          "touchedNumber": %d
-                        }
-                        """, playerName, i));
+                session.send(touchUrl, new TouchCommand(playerName, i));
 
                 // 게임 도메인 객체의 currentNumber가 갱신될 때까지 대기
                 await().atMost(Duration.ofSeconds(5))
@@ -193,7 +140,11 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
         // then - DONE 상태 확인
         MessageResponse doneState = stateResponses.get(10, TimeUnit.SECONDS);
-        assertMessageContains(doneState, "\"state\":\"DONE\"");
-        assertMessageContains(doneState, "\"success\":true");
+        assertThat(payloadAs(doneState, SpeedTouchStateResponse.class).state()).isEqualTo("DONE");
+    }
+
+    private void startSpeedTouchGame() {
+        gameSessionService.startGame(joinCode, host, gamers);
+        speedTouchGameService.start(joinCode.getValue(), host.getName());
     }
 }

@@ -1,21 +1,19 @@
 package coffeeshout.racinggame.ui;
 
-import coffeeshout.fixture.RoomFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import coffeeshout.GameModuleWebSocketTest;
+import coffeeshout.fixture.GamerFixture;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.support.TestStompSession;
-import coffeeshout.GameModuleWebSocketTest;
-import coffeeshout.support.MessageResponse;
+import coffeeshout.racinggame.application.RacingGameService;
 import coffeeshout.racinggame.domain.RacingGame;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerType;
-import coffeeshout.room.domain.repository.RoomRepository;
-import coffeeshout.room.infra.persistence.PlayerEntity;
-import coffeeshout.room.infra.persistence.PlayerJpaRepository;
-import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import coffeeshout.racinggame.domain.RacingGameState;
+import coffeeshout.racinggame.ui.request.TapCommand;
+import coffeeshout.racinggame.ui.response.RacingGameRunnersStateResponse;
+import coffeeshout.racinggame.ui.response.RacingGameStateResponse;
+import coffeeshout.support.TestStompSession;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,37 +25,26 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
     @Autowired
     GameSessionService gameSessionService;
 
+    @Autowired
+    RacingGameService racingGameService;
+
     JoinCode joinCode;
-    Player host;
+    Gamer host;
+    List<Gamer> gamers;
     TestStompSession session;
-    Room room;
     RacingGame racingGame;
 
     @BeforeEach
-    void setUp(@Autowired RoomRepository roomRepository,
-               @Autowired RoomJpaRepository roomJpaRepository,
-               @Autowired PlayerJpaRepository playerJpaRepository) throws Exception {
+    void setUp() throws Exception {
         joinCode = new JoinCode("A4BX");
-        room = RoomFixture.호스트_꾹이();
-        room.getPlayers().forEach(player -> player.updateReadyState(true));
-        host = room.getHost();
-        roomRepository.save(room);
-
-        // 게임 종료 시 결과 저장 리스너(MiniGameResultSaveEventListener)가 RoomEntity·PlayerEntity를
-        // 조회하므로, 실제 join 흐름이 영속화하는 엔티티들을 통합 테스트에서도 동일하게 적재한다.
-        final RoomEntity roomEntity = roomJpaRepository.save(new RoomEntity(joinCode.getValue()));
-        room.getPlayers().forEach(player -> playerJpaRepository.save(
-                new PlayerEntity(roomEntity, player.getName().value(),
-                        player.equals(host) ? PlayerType.HOST : PlayerType.GUEST)));
-
-        // 테스트의 game 인스턴스를 GameSession 대기열(READY)에 넣어, WebSocket START 커맨드가 시작하도록 한다.
+        host = GamerFixture.호스트_꾹이();
+        gamers = GamerFixture.꾹이_루키_엠제이_한스();
         racingGame = new RacingGame();
-        final Gamer hostGamer = Gamer.guest(host.getName().value());
         gameSessionService.deleteSession(joinCode);
-        gameSessionService.initSession(joinCode, hostGamer);
-        gameSessionService.getSession(joinCode).replaceGames(hostGamer, List.of(racingGame));
+        gameSessionService.initSession(joinCode, host);
+        gameSessionService.getSession(joinCode).replaceGames(host, List.of(racingGame));
 
-        session = createSession(joinCode, host.getName());
+        session = createSession(joinCode.getValue(), host.getName());
     }
 
     @Test
@@ -66,61 +53,46 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
         String joinCodeValue = joinCode.getValue();
         String subscribeStateUrl = String.format("/topic/room/%s/racing-game/state", joinCodeValue);
         String subscribePositionUrl = String.format("/topic/room/%s/racing-game", joinCodeValue);
-        String requestUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);
 
         var stateResponses = session.subscribe(subscribeStateUrl);
         var positionResponses = session.subscribe(subscribePositionUrl);
 
-        // when - command 전송
-        session.send(requestUrl, String.format("""
-                {
-                  "commandRequest": {
-                    "hostName": "%s"
-                  },
-                  "commandType": "START_MINI_GAME"
-                }
-                """, host.getName().value()));
+        // when - 게임 시작
+        startRacingGame();
 
         // then - 첫 번째 응답: DESCRIPTION 상태 (4초 후)
-        MessageResponse descriptionState = stateResponses.get(1, TimeUnit.SECONDS);
-        assertMessageContains(descriptionState, "\"state\":\"DESCRIPTION\"");
-        assertMessageContains(descriptionState, "\"success\":true");
+        RacingGameStateResponse descriptionState =
+                payloadAs(stateResponses.get(1, TimeUnit.SECONDS), RacingGameStateResponse.class);
+        assertThat(descriptionState.state()).isEqualTo(RacingGameState.DESCRIPTION);
 
         // 두 번째 응답: PREPARE 상태 (추가 2초 후)
-        MessageResponse prepareState = stateResponses.get(5, TimeUnit.SECONDS);
-        assertMessageContains(prepareState, "\"state\":\"PREPARE\"");
-        assertMessageContains(prepareState, "\"success\":true");
+        RacingGameStateResponse prepareState =
+                payloadAs(stateResponses.get(5, TimeUnit.SECONDS), RacingGameStateResponse.class);
+        assertThat(prepareState.state()).isEqualTo(RacingGameState.PREPARE);
 
         // 세 번째 응답: PLAYING 상태 (바로 이어서)
-        MessageResponse playingState = stateResponses.get(3, TimeUnit.SECONDS);
-        assertMessageContains(playingState, "\"state\":\"PLAYING\"");
-        assertMessageContains(playingState, "\"success\":true");
+        RacingGameStateResponse playingState =
+                payloadAs(stateResponses.get(3, TimeUnit.SECONDS), RacingGameStateResponse.class);
+        assertThat(playingState.state()).isEqualTo(RacingGameState.PLAYING);
 
         // 자동 이동으로 위치 업데이트 메시지가 계속 발행됨
-        MessageResponse positionUpdate1 = positionResponses.get(1, TimeUnit.SECONDS);
-        assertMessageContains(positionUpdate1, "\"position\"");
-        assertMessageContains(positionUpdate1, "\"distance\"");
+        RacingGameRunnersStateResponse positionUpdate1 =
+                payloadAs(positionResponses.get(1, TimeUnit.SECONDS), RacingGameRunnersStateResponse.class);
+        assertThat(positionUpdate1.distance()).isNotNull();
+        assertThat(positionUpdate1.players()).isNotEmpty();
     }
 
     @Test
     void 게임이_완주되면_FINISHED_상태가_전송된다() throws Exception {
-        TestStompSession singleSession = createSession(joinCode, host.getName());
+        TestStompSession singleSession = createSession(joinCode.getValue(), host.getName());
         String joinCodeValue = joinCode.getValue();
         String subscribeStateUrl = String.format("/topic/room/%s/racing-game/state", joinCodeValue);
-        String startRequestUrl = String.format("/app/room/%s/minigame/command", joinCodeValue);
         String tapRequestUrl = String.format("/app/room/%s/racing-game/tap", joinCodeValue);
 
         var stateResponses = singleSession.subscribe(subscribeStateUrl);
 
         // 게임 시작
-        singleSession.send(startRequestUrl, String.format("""
-                {
-                  "commandRequest": {
-                    "hostName": "%s"
-                  },
-                  "commandType": "START_MINI_GAME"
-                }
-                """, host.getName().value()));
+        startRacingGame();
 
         stateResponses.get(1, TimeUnit.SECONDS); // DESCRIPTION
         stateResponses.get(5, TimeUnit.SECONDS); // PREPARE (4초 후)
@@ -130,20 +102,20 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
          100ms마다 moveAll → 최고속도(30)로 달린다고 가정하면 결승점(3000)까지 10000ms걸림
         */
         for (int i = 0; i < 100; i++) {
-            for (Player player : room.getPlayers()) {
-                singleSession.send(tapRequestUrl, String.format("""
-                        {
-                          "playerName": "%s",
-                          "tapCount": 10
-                        }
-                        """, player.getName().value()));
+            for (Gamer gamer : gamers) {
+                singleSession.send(tapRequestUrl, new TapCommand(gamer.getName(), 10));
             }
             Thread.sleep(100);
         }
 
-        // then - DONE 상태 확인 (최대 15초 대기)
-        MessageResponse finishedState = stateResponses.get(30, TimeUnit.SECONDS);
-        assertMessageContains(finishedState, "\"state\":\"DONE\"");
-        assertMessageContains(finishedState, "\"success\":true");
+        // then - DONE 상태 확인 (최대 30초 대기)
+        RacingGameStateResponse finishedState =
+                payloadAs(stateResponses.get(30, TimeUnit.SECONDS), RacingGameStateResponse.class);
+        assertThat(finishedState.state()).isEqualTo(RacingGameState.DONE);
+    }
+
+    private void startRacingGame() {
+        gameSessionService.startGame(joinCode, host, gamers);
+        racingGameService.start(joinCode.getValue(), host.getName());
     }
 }

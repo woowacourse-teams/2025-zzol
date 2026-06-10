@@ -1,10 +1,10 @@
 package coffeeshout.cardgame.domain;
 
 import coffeeshout.cardgame.domain.card.Card;
+import coffeeshout.gamecommon.GameErrorCode;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameScore;
-import coffeeshout.room.domain.RoomErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +47,7 @@ public class PlayerHands {
                 .filter(gamer -> gamer.getName().equals(name))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
-                        RoomErrorCode.NO_EXIST_PLAYER,
+                        GameErrorCode.PLAYER_NOT_FOUND,
                         "해당 플레이어를 찾을 수 없습니다. name: " + name)
                 );
     }

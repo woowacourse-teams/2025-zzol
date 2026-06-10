@@ -9,7 +9,7 @@ import coffeeshout.cardgame.domain.card.CardGameDeckGenerator;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.PlayersFixture;
-import coffeeshout.room.domain.RoomErrorCode;
+import coffeeshout.gamecommon.GameErrorCode;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.room.domain.player.PlayerName;
@@ -282,7 +282,7 @@ class CardGameTest {
             // when & then
             assertCoffeeShoutException(
                     () -> cardGame.findByName(nonExistentName),
-                    RoomErrorCode.NO_EXIST_PLAYER
+                    GameErrorCode.PLAYER_NOT_FOUND
             );
         }
     }

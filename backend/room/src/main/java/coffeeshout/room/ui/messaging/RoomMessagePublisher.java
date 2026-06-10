@@ -3,6 +3,7 @@ package coffeeshout.room.ui.messaging;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectFailedEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.event.RouletteShownEvent;
@@ -71,6 +72,17 @@ public class RoomMessagePublisher {
         messagingTemplate.convertAndSend(destination, WebSocketResponse.success(event.miniGameTypes()));
 
         log.debug("미니게임 목록 브로드캐스트 완료: joinCode={}", event.joinCode());
+    }
+
+    @EventListener
+    public void onMiniGameSelectFailed(MiniGameSelectFailedEvent event) {
+        if (event.principalName() == null) {
+            log.warn("미니게임 선택 실패 알림 대상 미상(principal=null): joinCode={}", event.joinCode());
+            return;
+        }
+
+        log.debug("미니게임 선택 실패 알림: joinCode={}, principal={}", event.joinCode(), event.principalName());
+        messagingTemplate.convertAndSendError(event.principalName(), event.errorMessage());
     }
 
     @EventListener

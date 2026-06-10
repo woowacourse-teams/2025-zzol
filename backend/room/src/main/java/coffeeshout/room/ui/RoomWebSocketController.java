@@ -14,6 +14,7 @@ import coffeeshout.room.ui.request.MiniGameSelectMessage;
 import coffeeshout.room.ui.request.ReadyChangeMessage;
 import coffeeshout.room.ui.request.RouletteSpinMessage;
 import coffeeshout.websocket.docs.WsReceive;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -52,9 +53,14 @@ public class RoomWebSocketController {
             respondsOnTopics = {"/room/{joinCode}/minigame"},
             description = "미니게임 목록 업데이트 및 브로드캐스트"
     )
-    public void broadcastMiniGames(@DestinationVariable String joinCode, @Payload MiniGameSelectMessage message) {
+    public void broadcastMiniGames(
+            @DestinationVariable String joinCode,
+            @Payload MiniGameSelectMessage message,
+            Principal user
+    ) {
+        // user.getName()(WebSocket Principal)을 이벤트에 실어, 비동기 반영이 실패하면 이 클라이언트에게만 에러를 되돌린다
         final BaseEvent event = new MiniGameSelectEvent(joinCode, message.hostName(),
-                message.miniGameTypes());
+                message.miniGameTypes(), user.getName());
         streamPublisher.publish(RoomStreamKey.BROADCAST, event);
     }
 

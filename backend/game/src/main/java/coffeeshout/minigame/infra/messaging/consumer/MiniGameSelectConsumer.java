@@ -1,9 +1,12 @@
 package coffeeshout.minigame.infra.messaging.consumer;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectFailedEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Component;
  * 반영 성공 후 in-process 이벤트를 재발행해 선택 목록 브로드캐스트({@code RoomMessagePublisher.onMiniGameListChanged})를
  * 트리거한다.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MiniGameSelectConsumer implements Consumer<MiniGameSelectEvent> {
@@ -26,7 +30,17 @@ public class MiniGameSelectConsumer implements Consumer<MiniGameSelectEvent> {
 
     @Override
     public void accept(MiniGameSelectEvent event) {
-        gameSessionService.updateGames(event);
+        try {
+            gameSessionService.updateGames(event);
+        } catch (BusinessException e) {
+            // 비동기 경로라 EventDispatcher가 예외를 삼켜 클라이언트가 거부 사실을 알 수 없으므로,
+            // 실패 이벤트를 발행해 :room 리스너가 요청 클라이언트에게만 에러를 되돌리게 한다(ADR-0025).
+            log.warn("미니게임 선택 반영 실패: joinCode={}, principal={}, errorCode={}, message={}",
+                    event.joinCode(), event.principalName(), e.getErrorCode().getCode(), e.getMessage());
+            eventPublisher.publishEvent(new MiniGameSelectFailedEvent(
+                    event.joinCode(), event.principalName(), e.getErrorCode().getMessage()));
+            return;
+        }
         eventPublisher.publishEvent(event);
     }
 }

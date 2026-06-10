@@ -1,6 +1,6 @@
 package coffeeshout.minigame.infra.messaging.consumer;
 
-import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -11,11 +11,13 @@ import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.GameSessionErrorCode;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectFailedEvent;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -58,23 +60,29 @@ class MiniGameSelectConsumerTest {
         }
 
         @Test
-        @DisplayName("세션 갱신이 실패하면(비호스트 등) 이벤트가 재발행되지 않는다")
-        void 세션_갱신이_실패하면_이벤트가_재발행되지_않는다() {
+        @DisplayName("세션 갱신이 실패하면(비호스트 등) 성공 이벤트 대신 실패 이벤트를 발행한다")
+        void 세션_갱신이_실패하면_실패_이벤트를_발행한다() {
             // given — 호스트 검증은 GameSession(updateGames 내부)이 수행하므로 실패를 위임 모킹으로 재현한다
             final MiniGameSelectEvent event = new MiniGameSelectEvent(
                     "ABCD",
                     "비호스트",
-                    List.of(MiniGameType.CARD_GAME)
+                    List.of(MiniGameType.CARD_GAME),
+                    "ABCD:비호스트"
             );
             willThrow(new BusinessException(GameSessionErrorCode.NOT_HOST, "호스트만 수행할 수 있는 작업입니다."))
                     .given(gameSessionService).updateGames(event);
 
-            // when & then
-            assertCoffeeShoutException(
-                    () -> consumer.accept(event),
-                    GameSessionErrorCode.NOT_HOST
-            );
+            // when — 비동기 경로라 예외를 전파하지 않고 클라이언트 통지용 실패 이벤트로 전환한다
+            consumer.accept(event);
+
+            // then — 성공(브로드캐스트) 이벤트는 발행되지 않고, 요청 클라이언트에게 되돌릴 실패 이벤트가 발행된다
             verify(eventPublisher, never()).publishEvent(event);
+            final ArgumentCaptor<MiniGameSelectFailedEvent> captor =
+                    ArgumentCaptor.forClass(MiniGameSelectFailedEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            final MiniGameSelectFailedEvent failed = captor.getValue();
+            assertThat(failed.principalName()).isEqualTo("ABCD:비호스트");
+            assertThat(failed.errorMessage()).isEqualTo(GameSessionErrorCode.NOT_HOST.getMessage());
         }
     }
 }

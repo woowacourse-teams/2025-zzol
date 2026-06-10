@@ -18,11 +18,15 @@ import coffeeshout.support.TestStompSession;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
+
+    private static final String JOIN_CODE_CHARSET = "ABCDFGHJKLMNPQRSTUVWXYZ346789";
+    private static final AtomicInteger JOIN_CODE_SEQUENCE = new AtomicInteger();
 
     @Autowired
     GameSessionService gameSessionService;
@@ -38,7 +42,7 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        joinCode = new JoinCode("A4BX");
+        joinCode = uniqueJoinCode();
         host = GamerFixture.호스트_꾹이();
         gamers = GamerFixture.꾹이_루키_엠제이_한스();
         game = new BlindTimerGame(Duration.ofSeconds(10));
@@ -71,7 +75,7 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         assertThat(prepareState.state()).isEqualTo("PREPARE");
 
         // PLAYING 상태
-        BlindTimerStateResponse playingState = payloadAs(stateResponses.get(4, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        BlindTimerStateResponse playingState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
         assertThat(playingState.state()).isEqualTo("PLAYING");
     }
 
@@ -92,7 +96,7 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         stateResponses.get(2, TimeUnit.SECONDS); // DESCRIPTION
         stateResponses.get(6, TimeUnit.SECONDS); // PREPARE
         progressResponses.get(6, TimeUnit.SECONDS); // PREPARE 시 초기 progress
-        stateResponses.get(4, TimeUnit.SECONDS); // PLAYING
+        stateResponses.get(10, TimeUnit.SECONDS); // PLAYING
 
         // when - STOP
         session.send(stopUrl, new StopCommand(host.getName()));
@@ -119,7 +123,7 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         stateResponses.get(2, TimeUnit.SECONDS); // DESCRIPTION
         stateResponses.get(6, TimeUnit.SECONDS); // PREPARE
         progressResponses.get(6, TimeUnit.SECONDS); // initial progress
-        stateResponses.get(4, TimeUnit.SECONDS); // PLAYING
+        stateResponses.get(10, TimeUnit.SECONDS); // PLAYING
 
         // when - 모든 플레이어 STOP
         for (Gamer gamer : gamers) {
@@ -145,5 +149,22 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
     private void startBlindTimerGame() {
         gameSessionService.startGame(joinCode, host, gamers);
         blindTimerGameService.start(joinCode.getValue(), host.getName());
+    }
+
+    /**
+     * 테스트마다 고유한 joinCode를 발급한다.
+     *
+     * <p>여러 테스트가 같은 joinCode를 쓰면 동일한 {@code /topic/room/{code}/blind-timer/state} 토픽을 공유한다.
+     * 한 테스트가 시작한 게임의 스케줄된 트레일링 브로드캐스트(타임아웃→DONE 등)는 {@code deleteSession}이
+     * 스케줄러를 정리하지 않으므로 다음 테스트의 같은 토픽으로 새어들어, "첫 state 메시지가 DESCRIPTION이 아님"
+     * 같은 부하 의존 flaky 실패를 만든다. 테스트별 고유 코드로 토픽을 분리해 누수를 차단한다.</p>
+     */
+    private static JoinCode uniqueJoinCode() {
+        final int sequence = JOIN_CODE_SEQUENCE.getAndIncrement();
+        final int radix = JOIN_CODE_CHARSET.length();
+        final char first = JOIN_CODE_CHARSET.charAt((sequence / (radix * radix)) % radix);
+        final char second = JOIN_CODE_CHARSET.charAt((sequence / radix) % radix);
+        final char third = JOIN_CODE_CHARSET.charAt(sequence % radix);
+        return new JoinCode("" + first + second + third + 'B');
     }
 }

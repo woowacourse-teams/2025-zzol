@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.skyscreamer.jsonassert.Customization;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.comparator.CustomComparator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -86,6 +88,24 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
 
     protected void assertMessageContains(MessageResponse response, String expected) {
         SoftAssertions.assertSoftly(softly -> softly.assertThat(response.payload()).contains(expected));
+    }
+
+    /**
+     * WebSocket 브로드캐스트 페이로드({@code WebSocketResponse} 래퍼)의 {@code data}를 지정 타입으로 역직렬화한다.
+     * 문자열 substring 단언 대신 타입 안전한 검증을 위해 쓴다. {@code data}가 없거나 해당 타입으로
+     * 역직렬화할 수 없으면 {@link AssertionError}를 던진다.
+     */
+    protected <T> T payloadAs(MessageResponse response, Class<T> dataType) {
+        try {
+            final JsonNode data = objectMapper.readTree(response.payload()).get("data");
+            if (data == null || data.isNull()) {
+                throw new AssertionError("응답에 data가 없습니다: " + response.payload());
+            }
+            return objectMapper.treeToValue(data, dataType);
+        } catch (JsonProcessingException e) {
+            throw new AssertionError(
+                    "응답 페이로드를 " + dataType.getSimpleName() + "(으)로 역직렬화할 수 없습니다: " + response.payload(), e);
+        }
     }
 
     protected void assertMessage(MessageResponse response, long duration, String payload) throws JSONException {

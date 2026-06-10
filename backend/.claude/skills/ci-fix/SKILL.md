@@ -45,7 +45,7 @@ bash .claude/skills/ci-fix/fetch-failures.sh <PR번호>
 
 ## Step 5: 전체 회귀 확인
 
-모든 수정 완료 후 `./gradlew test` 로 영향 받은 모듈 전체를 확인한다. 실패 시 Step 4와 동일하게 XML을 분석한다.
+모든 수정 완료 후 `/run-tests`로 영향 받은 모듈 전체를 확인한다(전체 회귀는 `./gradlew test` 직접 실행 대신 위임 — CLAUDE.md 테스트 실행 규칙). 실패 시 Step 4와 동일하게 XML을 분석한다.
 
 ## Step 6: 커밋
 

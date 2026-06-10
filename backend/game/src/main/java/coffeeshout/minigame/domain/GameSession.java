@@ -22,7 +22,7 @@ public class GameSession {
     @Getter
     private final JoinCode joinCode;
     @Getter
-    private final Gamer host;
+    private Gamer host;
     private final Queue<Playable> pendingGames;
     private final List<Playable> completedGames;
     @Getter
@@ -34,6 +34,15 @@ public class GameSession {
         this.pendingGames = new LinkedList<>();
         this.completedGames = new ArrayList<>();
         this.status = GameSessionStatus.READY;
+    }
+
+    /**
+     * 호스트를 승계된 새 호스트로 갱신한다. Room의 호스트 승계({@code promoteNewHost})를 세션에 반영해
+     * 새 호스트가 게임 세션을 조작할 수 있게 한다. 호스트 승계는 진행 상태와 무관하게 일어날 수 있으므로
+     * (게임 중 호스트 연결 해제 등) 상태 가드를 두지 않는다.
+     */
+    public void updateHost(Gamer newHost) {
+        this.host = newHost;
     }
 
     /**

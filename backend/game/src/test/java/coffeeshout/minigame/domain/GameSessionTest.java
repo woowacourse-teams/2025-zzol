@@ -327,4 +327,50 @@ class GameSessionTest {
             softly.assertAll();
         }
     }
+
+    @Nested
+    @DisplayName("호스트 승계(updateHost)")
+    class UpdateHost {
+
+        @Test
+        @DisplayName("host가 새 Gamer로 교체된다")
+        void host가_새_Gamer로_교체된다() {
+            final Gamer newHost = Gamer.guest("새호스트");
+
+            session.updateHost(newHost);
+
+            assertThat(session.getHost()).isEqualTo(newHost);
+        }
+
+        @Test
+        @DisplayName("갱신 후 새 호스트는 호스트 검증을 통과하고 기존 호스트는 NOT_HOST로 거부된다")
+        void 갱신_후_새_호스트가_검증을_통과하고_기존_호스트는_거부된다() {
+            final Gamer newHost = Gamer.guest("새호스트");
+
+            session.updateHost(newHost);
+
+            // 새 호스트는 통과
+            session.replaceGames(newHost, List.of(game(MiniGameType.CARD_GAME)));
+            assertThat(session.getSelectedTypes()).containsExactly(MiniGameType.CARD_GAME);
+            // 기존 호스트는 거부
+            assertCoffeeShoutException(
+                    () -> session.replaceGames(HOST, List.of(game(MiniGameType.RACING_GAME))),
+                    GameSessionErrorCode.NOT_HOST);
+        }
+
+        @Test
+        @DisplayName("게임 진행 중(PLAYING)에도 호스트를 교체할 수 있다")
+        void 게임_진행_중에도_호스트를_교체할_수_있다() {
+            session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME)));
+            session.startNextGame(HOST, List.of(HOST, GUEST));
+            final Gamer newHost = Gamer.guest("새호스트");
+
+            session.updateHost(newHost);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(session.getStatus()).isEqualTo(GameSessionStatus.PLAYING);
+                softly.assertThat(session.getHost()).isEqualTo(newHost);
+            });
+        }
+    }
 }

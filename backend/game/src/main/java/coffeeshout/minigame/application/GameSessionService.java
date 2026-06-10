@@ -100,6 +100,18 @@ public class GameSessionService {
     }
 
     /**
+     * 호스트 승계 시 세션의 호스트를 갱신한다. 생성·정리와 같은 생명주기 이벤트이므로 세션이 없으면
+     * 조용히 건너뛴다(인스턴스 재시작으로 인메모리 세션이 소실된 경우 등 — {@code initSession}/
+     * {@code deleteSession}과 동일한 멱등·비throw 정책).
+     */
+    public void updateHost(JoinCode joinCode, Gamer newHost) {
+        findSession(joinCode).ifPresent(session -> {
+            session.updateHost(newHost);
+            gameSessionRepository.save(session);
+        });
+    }
+
+    /**
      * 방 삭제 시 세션을 정리한다.
      */
     public void deleteSession(JoinCode joinCode) {

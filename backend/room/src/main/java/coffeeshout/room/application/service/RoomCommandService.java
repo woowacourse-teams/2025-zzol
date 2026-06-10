@@ -1,12 +1,15 @@
 package coffeeshout.room.application.service;
 
+import coffeeshout.gamecommon.GameRoomHostChangedEvent;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.domain.repository.RoomRepository;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import java.util.Map;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,7 @@ public class RoomCommandService {
 
     private final RoomRepository roomRepository;
     private final RoomQueryService roomQueryService;
+    private final StreamPublisher streamPublisher;
 
     public Room save(Room room) {
         return roomRepository.save(room);
@@ -43,6 +47,7 @@ public class RoomCommandService {
     public boolean removePlayer(JoinCode joinCode, PlayerName playerName) {
         log.info("JoinCode[{}] 플레이어 퇴장 - 플레이어 이름: {} ", joinCode, playerName);
         final Room room = roomQueryService.getByJoinCode(joinCode);
+        final PlayerName previousHost = room.getHost().getName();
 
         boolean removed = room.removePlayer(playerName);
 
@@ -53,9 +58,24 @@ public class RoomCommandService {
 
         if (removed) {
             save(room);
+            publishHostChangeIfPromoted(joinCode, previousHost, room);
         }
 
         return removed;
+    }
+
+    /**
+     * 호스트가 떠나 새 호스트가 승계됐으면({@code promoteNewHost}) GameSession이 새 호스트로 갱신되도록
+     * 생명주기 이벤트를 발행한다. 세션은 인스턴스 로컬이라 in-process가 아닌 Stream으로 발행해야
+     * 세션을 소유한 모든 인스턴스에 도달한다(ADR-0023 결정 6, {@code GameRoomRemovedEvent}와 동일 경로).
+     */
+    private void publishHostChangeIfPromoted(JoinCode joinCode, PlayerName previousHost, Room room) {
+        final PlayerName currentHost = room.getHost().getName();
+        if (!currentHost.equals(previousHost)) {
+            streamPublisher.publish(
+                    RoomStreamKey.BROADCAST,
+                    new GameRoomHostChangedEvent(joinCode.getValue(), currentHost.value()));
+        }
     }
 
     public Room joinGuest(JoinCode joinCode, PlayerName playerName) {

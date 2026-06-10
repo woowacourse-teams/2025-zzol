@@ -2,6 +2,7 @@ package coffeeshout.minigame.application;
 
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import coffeeshout.fixture.StubPlayable;
 import coffeeshout.gamecommon.Gamer;
@@ -250,6 +251,31 @@ class GameSessionServiceTest {
             initSessionWithStartedGame();
 
             assertThat(service.getRanks(JOIN_CODE, MiniGameType.CARD_GAME)).isNotNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("호스트 갱신(updateHost)")
+    class UpdateHost {
+
+        @Test
+        @DisplayName("세션이 있으면 host를 갱신해 저장한다")
+        void 세션이_있으면_host를_갱신한다() {
+            service.initSession(JOIN_CODE, HOST);
+            final Gamer newHost = Gamer.guest("새호스트");
+
+            service.updateHost(JOIN_CODE, newHost);
+
+            assertThat(service.getSession(JOIN_CODE).getHost()).isEqualTo(newHost);
+        }
+
+        @Test
+        @DisplayName("세션이 없으면 예외 없이 조용히 건너뛴다(생명주기 멱등)")
+        void 세션이_없으면_조용히_건너뛴다() {
+            // 세션을 생성하지 않은 상태 — init/cleanup과 동일한 비throw 정책
+            assertThatCode(() -> service.updateHost(JOIN_CODE, Gamer.guest("새호스트")))
+                    .doesNotThrowAnyException();
+            assertThat(repository.existsByJoinCode(JOIN_CODE)).isFalse();
         }
     }
 

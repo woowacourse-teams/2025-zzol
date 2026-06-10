@@ -6,8 +6,6 @@ import coffeeshout.laddergame.application.LadderCommandService;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.application.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class LadderService implements MiniGameService {
 
-    private final RoomQueryService roomQueryService;
     private final GameSessionService gameSessionService;
     private final LadderFlowOrchestrator flowOrchestrator;
     private final LadderCommandService commandService;
@@ -25,19 +22,19 @@ public class LadderService implements MiniGameService {
 
     @Override
     public void start(String joinCode, String hostName) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final LadderGame game = getGame(room);
-        flowOrchestrator.startFlow(game, room);
+        final JoinCode code = new JoinCode(joinCode);
+        final LadderGame game = getGame(code);
+        flowOrchestrator.startFlow(game, code);
     }
 
     public void drawLine(String joinCode, String playerName, int segmentIndex) {
         log.debug("사다리게임 선 그리기 처리 시작: joinCode={}, playerName={}, segmentIndex={}",
                 joinCode, playerName, segmentIndex);
 
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final LadderGame game = getGame(room);
+        final JoinCode code = new JoinCode(joinCode);
+        final LadderGame game = getGame(code);
         commandService.drawLine(game, playerName, segmentIndex)
-                .ifPresent(line -> notifier.notifyLineDrawn(game, line, room));
+                .ifPresent(line -> notifier.notifyLineDrawn(game, line, code));
     }
 
     @Override
@@ -45,8 +42,8 @@ public class LadderService implements MiniGameService {
         return MiniGameType.LADDER_GAME;
     }
 
-    private LadderGame getGame(Room room) {
-        return (LadderGame) gameSessionService.getSession(room.getJoinCode())
+    private LadderGame getGame(JoinCode joinCode) {
+        return (LadderGame) gameSessionService.getSession(joinCode)
                 .findCompletedGame(MiniGameType.LADDER_GAME);
     }
 }

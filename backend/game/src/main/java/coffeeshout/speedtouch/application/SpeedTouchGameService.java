@@ -6,8 +6,6 @@ import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.speedtouch.config.SpeedTouchGameTimingProperties;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import coffeeshout.speedtouch.domain.SpeedTouchGameState;
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class SpeedTouchGameService implements MiniGameService {
 
-    private final RoomQueryService roomQueryService;
     private final GameSessionService gameSessionService;
     private final TaskScheduler taskScheduler;
     private final ApplicationEventPublisher eventPublisher;
@@ -35,14 +32,12 @@ public class SpeedTouchGameService implements MiniGameService {
     private final GameDurationMetricService gameDurationMetricService;
 
     public SpeedTouchGameService(
-            RoomQueryService roomQueryService,
             GameSessionService gameSessionService,
             @Qualifier("speedTouchGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
             SpeedTouchGameTimingProperties timing,
             GameDurationMetricService gameDurationMetricService
     ) {
-        this.roomQueryService = roomQueryService;
         this.gameSessionService = gameSessionService;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
@@ -52,8 +47,7 @@ public class SpeedTouchGameService implements MiniGameService {
 
     @Override
     public void start(String joinCode, String hostName) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final SpeedTouchGame game = getSpeedTouchGame(room);
+        final SpeedTouchGame game = getSpeedTouchGame(new JoinCode(joinCode));
 
         scheduleDescription(game, joinCode);
 
@@ -123,8 +117,8 @@ public class SpeedTouchGameService implements MiniGameService {
         log.info("스피드 터치 게임 종료: joinCode={}", joinCode);
     }
 
-    public SpeedTouchGame getSpeedTouchGame(Room room) {
-        return (SpeedTouchGame) gameSessionService.getSession(room.getJoinCode())
+    public SpeedTouchGame getSpeedTouchGame(JoinCode joinCode) {
+        return (SpeedTouchGame) gameSessionService.getSession(joinCode)
                 .findCompletedGame(MiniGameType.SPEED_TOUCH);
     }
 }

@@ -6,8 +6,6 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.application.service.RoomQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class BlockStackingService implements MiniGameService {
 
-    private final RoomQueryService roomQueryService;
     private final GameSessionService gameSessionService;
     private final BlockStackingFlowOrchestrator flowOrchestrator;
     private final BlockStackingNotifier notifier;
@@ -25,9 +22,9 @@ public class BlockStackingService implements MiniGameService {
 
     @Override
     public void start(String joinCode, String hostName) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final BlockStackingGame game = getGame(room);
-        flowOrchestrator.startFlow(game, room);
+        final JoinCode code = new JoinCode(joinCode);
+        final BlockStackingGame game = getGame(code);
+        flowOrchestrator.startFlow(game, code);
     }
 
     public void recordProgress(
@@ -37,21 +34,21 @@ public class BlockStackingService implements MiniGameService {
         log.debug("블록 쌓기 진행 처리 시작: joinCode={}, playerName={}, floor={}",
                 joinCode, playerName, floor);
 
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final BlockStackingGame game = getGame(room);
+        final JoinCode code = new JoinCode(joinCode);
+        final BlockStackingGame game = getGame(code);
         final Gamer gamer = findGamer(game, playerName);
 
         final boolean updated = game.recordProgress(gamer, floor, movingBlockX, stackTopX, stackTopWidth);
         if (updated) {
-            notifier.notifyProgressUpdated(game, room);
+            notifier.notifyProgressUpdated(game, code);
         }
     }
 
     public void recordFailure(String joinCode, String playerName) {
         log.debug("블록 쌓기 실패 처리 시작: joinCode={}, playerName={}", joinCode, playerName);
 
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final BlockStackingGame game = getGame(room);
+        final JoinCode code = new JoinCode(joinCode);
+        final BlockStackingGame game = getGame(code);
         final Gamer gamer = findGamer(game, playerName);
 
         final boolean recorded = game.recordFailure(gamer);
@@ -65,8 +62,8 @@ public class BlockStackingService implements MiniGameService {
         return MiniGameType.BLOCK_STACKING;
     }
 
-    private BlockStackingGame getGame(Room room) {
-        return (BlockStackingGame) gameSessionService.getSession(room.getJoinCode())
+    private BlockStackingGame getGame(JoinCode joinCode) {
+        return (BlockStackingGame) gameSessionService.getSession(joinCode)
                 .findCompletedGame(MiniGameType.BLOCK_STACKING);
     }
 

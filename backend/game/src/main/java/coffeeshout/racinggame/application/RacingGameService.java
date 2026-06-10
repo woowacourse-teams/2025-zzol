@@ -11,8 +11,6 @@ import coffeeshout.racinggame.domain.SpeedCalculator;
 import coffeeshout.racinggame.domain.event.RaceFinishedEvent;
 import coffeeshout.racinggame.domain.event.RaceStateChangedEvent;
 import coffeeshout.racinggame.domain.event.RunnersMovedEvent;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.application.service.RoomQueryService;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -27,20 +25,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class RacingGameService implements MiniGameService {
 
-    private final RoomQueryService roomQueryService;
     private final GameSessionService gameSessionService;
     private final TaskScheduler taskScheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final SpeedCalculator speedCalculator;
 
     public RacingGameService(
-            RoomQueryService roomQueryService,
             GameSessionService gameSessionService,
             @Qualifier("racingGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
             SpeedCalculator speedCalculator
     ) {
-        this.roomQueryService = roomQueryService;
         this.gameSessionService = gameSessionService;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
@@ -49,8 +44,7 @@ public class RacingGameService implements MiniGameService {
 
     @Override
     public void start(String joinCode, String hostName) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final RacingGame racingGame = getRacingGame(room);
+        final RacingGame racingGame = getRacingGame(new JoinCode(joinCode));
 
         processDescription(joinCode, racingGame);
 
@@ -64,8 +58,7 @@ public class RacingGameService implements MiniGameService {
     }
 
     public void tap(String joinCode, String playerName, int tapCount) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final RacingGame racingGame = getRacingGame(room);
+        final RacingGame racingGame = getRacingGame(new JoinCode(joinCode));
         racingGame.updateSpeed(playerName, tapCount, speedCalculator, Instant.now());
 
         log.debug("탭 처리 완료: joinCode={}, playerName={}, tapCount={}", joinCode, playerName, tapCount);
@@ -138,8 +131,8 @@ public class RacingGameService implements MiniGameService {
         racingGame.stopAutoMove();
     }
 
-    private RacingGame getRacingGame(Room room) {
-        return (RacingGame) gameSessionService.getSession(room.getJoinCode())
+    private RacingGame getRacingGame(JoinCode joinCode) {
+        return (RacingGame) gameSessionService.getSession(joinCode)
                 .findCompletedGame(MiniGameType.RACING_GAME);
     }
 }

@@ -1,8 +1,6 @@
 package coffeeshout.speedtouch.application;
 
 import coffeeshout.gamecommon.JoinCode;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import coffeeshout.speedtouch.domain.event.SpeedTouchProgressEvent;
 import java.time.Instant;
@@ -16,13 +14,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SpeedTouchGameProgressHandler {
 
-    private final RoomQueryService roomQueryService;
     private final SpeedTouchGameService speedTouchGameService;
     private final ApplicationEventPublisher eventPublisher;
 
     public void handleTouch(String joinCode, String playerName, int touchedNumber) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final SpeedTouchGame game = speedTouchGameService.getSpeedTouchGame(room);
+        final SpeedTouchGame game = speedTouchGameService.getSpeedTouchGame(new JoinCode(joinCode));
 
         final boolean accepted = game.touch(playerName, touchedNumber, Instant.now());
         if (!accepted) {

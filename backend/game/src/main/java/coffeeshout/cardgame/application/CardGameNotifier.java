@@ -9,7 +9,6 @@ import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.ui.response.MiniGameStartMessage;
 import coffeeshout.cardgame.application.response.MiniGameStateMessage;
-import coffeeshout.room.domain.Room;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -25,8 +24,8 @@ public class CardGameNotifier {
 
     @WsTopic(path = "/room/{joinCode}/gameState", payload = MiniGameStateMessage.class,
             description = "카드게임 단계 완료 시 게임 상태 브로드캐스트")
-    public void notifyStepCompleted(CardGame cardGame, Room room) {
-        sendGameState(cardGame, room.getJoinCode());
+    public void notifyStepCompleted(CardGame cardGame, JoinCode joinCode) {
+        sendGameState(cardGame, joinCode);
     }
 
     @WsTopic(path = "/room/{joinCode}/gameState", payload = MiniGameStateMessage.class,

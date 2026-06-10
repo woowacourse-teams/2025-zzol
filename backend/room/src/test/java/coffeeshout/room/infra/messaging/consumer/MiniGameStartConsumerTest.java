@@ -45,9 +45,9 @@ class MiniGameStartConsumerTest {
     class Accept {
 
         @Test
-        @DisplayName("검증 → GameStartReadyEvent 발행 → markPlaying 순서로 처리한다")
-        void 검증_후_이벤트를_발행하고_markPlaying한다() {
-            // given
+        @DisplayName("방을 검증한 뒤 GameStartReadyEvent를 발행한다")
+        void 검증_후_GameStartReadyEvent를_발행한다() {
+            // given — markPlaying은 여기서 하지 않는다(GameSession 시작 직후 RoomGameStartListener가 수행)
             final StartMiniGameCommandEvent event = new StartMiniGameCommandEvent("ABCD", "꾹이");
             given(roomQueryService.getByJoinCode(new JoinCode("ABCD"))).willReturn(room);
             given(room.getGamers()).willReturn(List.of(Gamer.guest("꾹이"), Gamer.guest("초롱")));
@@ -55,27 +55,25 @@ class MiniGameStartConsumerTest {
             // when
             consumer.accept(event);
 
-            // then — 검증(읽기) → 시작 위임(동기 발행) → PLAYING 전이 순서가 불변식
+            // then — 검증(읽기) 후 시작 위임(이벤트 발행)
             final InOrder inOrder = inOrder(room, eventPublisher);
             inOrder.verify(room).validateStartable("꾹이");
             inOrder.verify(eventPublisher).publishEvent(any(GameStartReadyEvent.class));
-            inOrder.verify(room).markPlaying();
         }
 
         @Test
-        @DisplayName("게임 시작 위임이 예외로 실패하면 markPlaying을 호출하지 않는다")
-        void 게임_시작_실패_시_markPlaying하지_않는다() {
-            // given — 동기 리스너(:game startGame)의 실패를 발행 예외로 재현한다(예: 빈 대기열)
-            final StartMiniGameCommandEvent event = new StartMiniGameCommandEvent("ABCD", "꾹이");
+        @DisplayName("방 검증에 실패하면 시작 이벤트를 발행하지 않는다")
+        void 검증_실패시_이벤트를_발행하지_않는다() {
+            // given
+            final StartMiniGameCommandEvent event = new StartMiniGameCommandEvent("ABCD", "비호스트");
             given(roomQueryService.getByJoinCode(new JoinCode("ABCD"))).willReturn(room);
-            given(room.getGamers()).willReturn(List.of(Gamer.guest("꾹이"), Gamer.guest("초롱")));
-            willThrow(new IllegalStateException("시작할 수 있는 대기 게임이 없습니다."))
-                    .given(eventPublisher).publishEvent(any(GameStartReadyEvent.class));
+            willThrow(new IllegalStateException("게임을 시작할 수 있는 상태가 아닙니다."))
+                    .given(room).validateStartable("비호스트");
 
             // when & then
             assertThatThrownBy(() -> consumer.accept(event))
                     .isInstanceOf(IllegalStateException.class);
-            verify(room, never()).markPlaying();
+            verify(eventPublisher, never()).publishEvent(any());
         }
     }
 }

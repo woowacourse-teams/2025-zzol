@@ -37,13 +37,19 @@ public class RoomGameSeparationArchitectureTest {
             .haveNameMatching("coffeeshout\\.gamecommon\\.(Playable|MiniGameFactory)")
             .as("room.domain은 게임 SPI(Playable, MiniGameFactory)를 참조할 수 없다 (ADR-0023)");
 
+    /**
+     * room.application의 게임 패키지 참조는 game-api 이벤트를 수신하는 in-process 리스너(room.application.event)에만
+     * 허용한다 — {@code MiniGameResultRoomListener}(결정 5, 게임 종료→확률 조정),
+     * {@code RoomGameStartListener}(결정 4, GameSession 시작→방 PLAYING 전이).
+     */
     @ArchTest
-    static final ArchRule room_application은_결과_리스너_외에_minigame을_참조할_수_없다 = noClasses()
+    static final ArchRule room_application은_게임_이벤트_리스너_외에_minigame을_참조할_수_없다 = noClasses()
             .that().resideInAPackage("coffeeshout.room.application..")
             .and().haveSimpleNameNotContaining("MiniGameResultRoomListener")
+            .and().haveSimpleNameNotContaining("RoomGameStartListener")
             .should().dependOnClassesThat()
             .resideInAPackage("coffeeshout.minigame..")
-            .as("room.application의 게임 패키지 참조는 MiniGameResultRoomListener 한 곳만 허용한다 (ADR-0023)");
+            .as("room.application의 게임 패키지 참조는 game-api 이벤트 in-process 리스너 2곳만 허용한다 (ADR-0023)");
 
     /**
      * [의도된 예외] MiniGamePersistenceService는 PlayerEntity 영속 필드(name, playerType, userId)를

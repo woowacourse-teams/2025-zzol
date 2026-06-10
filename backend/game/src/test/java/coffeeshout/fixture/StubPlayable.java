@@ -15,11 +15,17 @@ import java.util.Map;
 public class StubPlayable implements Playable {
 
     private final MiniGameType miniGameType;
+    private final Map<Gamer, MiniGameScore> scores;
     private boolean setUpCalled = false;
     private List<Gamer> setUpGamers = null;
 
     public StubPlayable(MiniGameType miniGameType) {
+        this(miniGameType, Map.of());
+    }
+
+    public StubPlayable(MiniGameType miniGameType, Map<Gamer, MiniGameScore> scores) {
         this.miniGameType = miniGameType;
+        this.scores = scores;
     }
 
     @Override
@@ -29,7 +35,7 @@ public class StubPlayable implements Playable {
 
     @Override
     public Map<Gamer, MiniGameScore> getScores() {
-        return Map.of();
+        return scores;
     }
 
     @Override

@@ -4,6 +4,7 @@ import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+import coffeeshout.cardgame.domain.CardGameScore;
 import coffeeshout.fixture.StubPlayable;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
@@ -14,10 +15,13 @@ import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.GameSessionErrorCode;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.GameSessionStatus;
+import coffeeshout.minigame.domain.MiniGameResult;
+import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.MemoryGameSessionRepository;
 import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import java.util.List;
+import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -205,6 +209,13 @@ class GameSessionServiceTest {
             service.startGame(JOIN_CODE, HOST, List.of(HOST, GUEST));
         }
 
+        private void initSessionWithScoredGame(Map<Gamer, MiniGameScore> scores) {
+            service.initSession(JOIN_CODE, HOST);
+            service.getSession(JOIN_CODE)
+                    .replaceGames(HOST, List.of(new StubPlayable(MiniGameType.CARD_GAME, scores)));
+            service.startGame(JOIN_CODE, HOST, List.of(HOST, GUEST));
+        }
+
         @Test
         @DisplayName("getSelectedTypes는 세션이 없으면 빈 목록을 반환한다")
         void getSelectedTypes는_세션이_없으면_빈_목록을_반환한다() {
@@ -246,11 +257,41 @@ class GameSessionServiceTest {
         }
 
         @Test
+        @DisplayName("getScores는 게임이 계산한 점수 맵을 그대로 반환한다")
+        void getScores는_게임의_점수_맵을_그대로_반환한다() {
+            initSessionWithScoredGame(Map.of(
+                    HOST, new CardGameScore(20),
+                    GUEST, new CardGameScore(-10)));
+
+            final Map<Gamer, MiniGameScore> result = service.getScores(JOIN_CODE, MiniGameType.CARD_GAME);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.get(HOST).getValue()).isEqualTo(20);
+                softly.assertThat(result.get(GUEST).getValue()).isEqualTo(-10);
+            });
+        }
+
+        @Test
         @DisplayName("getRanks는 시작된 게임의 결과를 반환한다")
         void getRanks는_시작된_게임의_결과를_반환한다() {
             initSessionWithStartedGame();
 
             assertThat(service.getRanks(JOIN_CODE, MiniGameType.CARD_GAME)).isNotNull();
+        }
+
+        @Test
+        @DisplayName("getRanks는 점수 내림차순으로 순위를 매겨 반환한다")
+        void getRanks는_점수_내림차순으로_순위를_반환한다() {
+            initSessionWithScoredGame(Map.of(
+                    HOST, new CardGameScore(20),
+                    GUEST, new CardGameScore(-10)));
+
+            final MiniGameResult result = service.getRanks(JOIN_CODE, MiniGameType.CARD_GAME);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.getPlayerRank(HOST)).isEqualTo(1);
+                softly.assertThat(result.getPlayerRank(GUEST)).isEqualTo(2);
+            });
         }
     }
 

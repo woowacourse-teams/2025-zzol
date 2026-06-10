@@ -1,8 +1,8 @@
 package coffeeshout.minigame.infra.messaging.consumer;
 
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.GameRoomRemovedEvent;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.room.domain.event.RoomRemovedEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,12 +15,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class GameSessionCleanupConsumer implements Consumer<RoomRemovedEvent> {
+public class GameSessionCleanupConsumer implements Consumer<GameRoomRemovedEvent> {
 
     private final GameSessionService gameSessionService;
 
     @Override
-    public void accept(RoomRemovedEvent event) {
+    public void accept(GameRoomRemovedEvent event) {
         gameSessionService.deleteSession(new JoinCode(event.joinCode()));
     }
 }

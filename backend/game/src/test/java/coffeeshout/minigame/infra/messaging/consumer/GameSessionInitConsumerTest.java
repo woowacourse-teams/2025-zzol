@@ -2,10 +2,10 @@ package coffeeshout.minigame.infra.messaging.consumer;
 
 import static org.mockito.BDDMockito.then;
 
+import coffeeshout.gamecommon.GameRoomCreatedEvent;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.room.domain.event.RoomCreateEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class GameSessionInitConsumerTest {
         @DisplayName("이벤트의 hostName으로 게스트 Gamer를 구성해 세션을 초기화한다")
         void 이벤트의_hostName으로_게스트_Gamer를_구성해_세션을_초기화한다() {
             // given
-            final RoomCreateEvent event = new RoomCreateEvent("꾹이", "ABCD");
+            final GameRoomCreatedEvent event = new GameRoomCreatedEvent("꾹이", "ABCD");
 
             // when
             consumer.accept(event);

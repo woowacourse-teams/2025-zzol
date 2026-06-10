@@ -18,7 +18,7 @@ public class EventDispatcher {
     private final ApplicationContext applicationContext;
     private final RedisStreamLatencyMetricService latencyMetricService;
 
-    // 동일 이벤트 타입의 Consumer 전체에 팬아웃한다 (ADR-0023 결정 6 — 예: RoomCreateEvent를
+    // 동일 이벤트 타입의 Consumer 전체에 팬아웃한다 (ADR-0023 결정 6 — 예: GameRoomCreatedEvent를
     // RoomCreateConsumer와 GameSessionInitConsumer가 함께 처리). 한 Consumer의 실패가
     // 나머지 Consumer의 이벤트 수신을 막지 않도록 개별 격리한다
     public void handle(BaseEvent event) {

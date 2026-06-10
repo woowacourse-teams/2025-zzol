@@ -3,11 +3,11 @@ package coffeeshout.room.infra.messaging.consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
+import coffeeshout.gamecommon.GameRoomCreatedEvent;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.StreamMockedServiceTest;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.event.RoomCreateEvent;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 class RoomCreateConsumerTest extends StreamMockedServiceTest {
 
     @Autowired
-    Consumer<RoomCreateEvent> roomCreateEventConsumer;
+    Consumer<GameRoomCreatedEvent> roomCreateEventConsumer;
 
     @Autowired
     RoomQueryService roomQueryService;
@@ -38,7 +38,7 @@ class RoomCreateConsumerTest extends StreamMockedServiceTest {
         // given
         String hostName = "호스트";
 
-        RoomCreateEvent event = new RoomCreateEvent(
+        GameRoomCreatedEvent event = new GameRoomCreatedEvent(
                 hostName,
                 joinCode.getValue()
         );
@@ -60,7 +60,7 @@ class RoomCreateConsumerTest extends StreamMockedServiceTest {
         // given
         String hostName = "호스트";
 
-        RoomCreateEvent event = new RoomCreateEvent(
+        GameRoomCreatedEvent event = new GameRoomCreatedEvent(
                 hostName,
                 joinCode.getValue()
         );
@@ -77,7 +77,7 @@ class RoomCreateConsumerTest extends StreamMockedServiceTest {
         // given
         String hostName = "호스트";
 
-        RoomCreateEvent event = new RoomCreateEvent(
+        GameRoomCreatedEvent event = new GameRoomCreatedEvent(
                 hostName,
                 joinCode.getValue()
         );

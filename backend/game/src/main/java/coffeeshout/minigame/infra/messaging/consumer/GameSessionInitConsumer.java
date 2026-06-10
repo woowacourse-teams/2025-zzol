@@ -2,8 +2,8 @@ package coffeeshout.minigame.infra.messaging.consumer;
 
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.GameRoomCreatedEvent;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.room.domain.event.RoomCreateEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,12 +16,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class GameSessionInitConsumer implements Consumer<RoomCreateEvent> {
+public class GameSessionInitConsumer implements Consumer<GameRoomCreatedEvent> {
 
     private final GameSessionService gameSessionService;
 
     @Override
-    public void accept(RoomCreateEvent event) {
+    public void accept(GameRoomCreatedEvent event) {
         gameSessionService.initSession(new JoinCode(event.joinCode()), Gamer.guest(event.hostName()));
     }
 }

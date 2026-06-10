@@ -2,20 +2,17 @@ package coffeeshout.room.domain.service;
 
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.RoomModuleServiceTest;
 import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.PlayerName;
-import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -207,62 +204,6 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
                     RoomErrorCode.DUPLICATE_PLAYER_NAME
             );
         }
-
-    }
-
-    @Nested
-    class 미니게임_선택 {
-        @Test
-        void 미니게임을_선택한다() {
-            // given
-            PlayerName hostName = new PlayerName("호스트");
-            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
-
-            // when
-            List<MiniGameType> selectedMiniGames = roomCommandService.updateMiniGames(room.getJoinCode(),
-                    hostName,
-                    List.of(MiniGameType.CARD_GAME));
-
-            // then
-            assertThat(selectedMiniGames).hasSize(1);
-            assertThat(selectedMiniGames.getFirst()).isEqualTo(MiniGameType.CARD_GAME);
-        }
-
-        @Test
-        void 호스트가_아닌_플레이어가_미니게임을_선택하면_예외가_발생한다() {
-            // given
-            PlayerName hostName = new PlayerName("호스트");
-            PlayerName guest1 = new PlayerName("게스트1");
-
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
-            roomCommandService.joinGuest(joinCode, guest1);
-
-            List<MiniGameType> miniGameTypes = List.of(MiniGameType.CARD_GAME);
-            // when & then
-            assertThatThrownBy(
-                    () -> roomCommandService.updateMiniGames(joinCode,
-                            guest1,
-                            miniGameTypes))
-                    .isInstanceOf(IllegalArgumentException.class);
-        }
-
-        @Test
-        void 호스트가_아닌_플레이어가_미니게임을_선택_취소하면_예외가_발생한다() {
-            // given
-            PlayerName hostName = new PlayerName("호스트");
-            PlayerName guest1 = new PlayerName("게스트1");
-
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
-            roomCommandService.joinGuest(joinCode, guest1);
-
-            roomCommandService.updateMiniGames(joinCode, hostName, List.of(MiniGameType.CARD_GAME));
-
-            // when & then
-            assertThatThrownBy(() -> roomCommandService.updateMiniGames(joinCode, guest1,
-                    List.of(MiniGameType.CARD_GAME)))
-                    .isInstanceOf(IllegalArgumentException.class);
-        }
-
 
     }
 

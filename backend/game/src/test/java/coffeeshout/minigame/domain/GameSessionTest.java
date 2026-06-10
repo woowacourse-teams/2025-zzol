@@ -219,6 +219,76 @@ class GameSessionTest {
     }
 
     @Nested
+    @DisplayName("시작된 게임 타입 목록(getCompletedTypes)")
+    class GetCompletedTypes {
+
+        @Test
+        @DisplayName("아무 게임도 시작하지 않으면 빈 목록을 반환한다")
+        void 아무_게임도_시작하지_않으면_빈_목록을_반환한다() {
+            session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME)));
+
+            assertThat(session.getCompletedTypes()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("진행 중인 게임도 시작된 목록에 포함된다")
+        void 진행_중인_게임도_포함된다() {
+            session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME), game(MiniGameType.RACING_GAME)));
+            session.startNextGame(HOST, List.of(HOST, GUEST));
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(session.getStatus()).isEqualTo(GameSessionStatus.PLAYING);
+                softly.assertThat(session.getCompletedTypes()).containsExactly(MiniGameType.CARD_GAME);
+            });
+        }
+
+        @Test
+        @DisplayName("게임을 시작할 때마다 시작 순서대로 누적된다")
+        void 시작_순서대로_누적된다() {
+            session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME), game(MiniGameType.RACING_GAME)));
+            session.startNextGame(HOST, List.of(HOST, GUEST));
+            session.finishCurrentGame();
+            session.startNextGame(HOST, List.of(HOST, GUEST));
+
+            assertThat(session.getCompletedTypes())
+                    .containsExactly(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME);
+        }
+    }
+
+    @Nested
+    @DisplayName("첫 게임 시작 여부(isFirstGameStarted)")
+    class IsFirstGameStarted {
+
+        @Test
+        @DisplayName("게임 시작 전에는 false를 반환한다")
+        void 게임_시작_전에는_false를_반환한다() {
+            session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME)));
+
+            assertThat(session.isFirstGameStarted()).isFalse();
+        }
+
+        @Test
+        @DisplayName("첫 게임을 시작한 직후에는 true를 반환한다")
+        void 첫_게임_시작_직후에는_true를_반환한다() {
+            session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME), game(MiniGameType.RACING_GAME)));
+            session.startNextGame(HOST, List.of(HOST, GUEST));
+
+            assertThat(session.isFirstGameStarted()).isTrue();
+        }
+
+        @Test
+        @DisplayName("두 번째 게임을 시작하면 false를 반환한다")
+        void 두_번째_게임을_시작하면_false를_반환한다() {
+            session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME), game(MiniGameType.RACING_GAME)));
+            session.startNextGame(HOST, List.of(HOST, GUEST));
+            session.finishCurrentGame();
+            session.startNextGame(HOST, List.of(HOST, GUEST));
+
+            assertThat(session.isFirstGameStarted()).isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("라운드 수 불변식(roundCount)")
     class RoundCount {
 

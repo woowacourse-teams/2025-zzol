@@ -88,6 +88,24 @@ public class GameSession {
     }
 
     /**
+     * 시작된 게임(진행 중 포함)의 타입 목록. 진행 중인 게임은 시작 시점에 완료 목록으로 옮겨지므로
+     * {@code status == PLAYING}이면 마지막 항목이 현재 진행 중인 게임이다.
+     */
+    public List<MiniGameType> getCompletedTypes() {
+        return completedGames.stream()
+                .map(Playable::getMiniGameType)
+                .toList();
+    }
+
+    /**
+     * 세션의 첫 게임이 시작된 직후인지 여부. 첫 게임 시작 시 1회성 작업(플레이어 엔티티 저장 등)의
+     * 트리거로 사용한다(기존 {@code Room.isFirstStarted()} 대체, ADR-0023 Step 5).
+     */
+    public boolean isFirstGameStarted() {
+        return completedGames.size() == 1;
+    }
+
+    /**
      * 선택된 게임 총수(대기 + 진행 중 + 완료). 진행 중인 게임은 시작 시점에 완료 목록으로 옮겨지므로
      * 세션 동안 변하지 않으며, 확률 조정 분모({@code roundCount})로 사용된다(ADR-0023 결정 3).
      */

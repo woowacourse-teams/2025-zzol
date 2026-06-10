@@ -5,23 +5,17 @@ import static org.springframework.util.Assert.state;
 
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
-import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.custom.SystemException;
-import coffeeshout.minigame.domain.MiniGameResult;
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Players;
 import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.roulette.ProbabilityCalculator;
 import coffeeshout.room.domain.roulette.Roulette;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import lombok.Getter;
 
 @Getter
@@ -32,8 +26,6 @@ public class Room {
 
     private final JoinCode joinCode;
     private final Players players;
-    private final Queue<Playable> miniGames;
-    private final List<Playable> finishedGames;
 
     private Player host;
     private RoomState roomState;
@@ -50,8 +42,6 @@ public class Room {
         this.host = Player.createHost(hostName, userId);
         this.players = new Players(joinCode.getValue());
         this.roomState = RoomState.READY;
-        this.miniGames = new LinkedList<>();
-        this.finishedGames = new ArrayList<>();
         this.adjustmentWeight = adjustmentWeight;
         this.qrCode = QrCode.pending();
 
@@ -73,28 +63,6 @@ public class Room {
         join(Player.createGuest(guestName, userId));
     }
 
-    public void addMiniGame(PlayerName hostName, Playable miniGame) {
-        isTrue(host.sameName(hostName), "호스트가 아닙니다.");
-        state(miniGames.size() <= 5, "미니게임은 5개 이하여야 합니다.");
-        miniGames.add(miniGame);
-    }
-
-    public void removeMiniGame(PlayerName hostName, Playable miniGame) {
-        isTrue(host.sameName(hostName), "호스트가 아닙니다.");
-        isTrue(miniGames.stream().anyMatch(m -> m.getMiniGameType() == miniGame.getMiniGameType()), "미니게임이 존재하지 않습니다.");
-        miniGames.removeIf(m -> m.getMiniGameType() == miniGame.getMiniGameType());
-    }
-
-    public void applyMiniGameResult(MiniGameResult miniGameResult) {
-        final ProbabilityCalculator probabilityCalculator = new ProbabilityCalculator(
-                players.getPlayerCount(),
-                calculateMiniGameCount(),
-                adjustmentWeight
-        );
-        this.roomState = RoomState.SCORE_BOARD;
-        players.adjustProbabilities(miniGameResult, probabilityCalculator);
-    }
-
     /**
      * 게임 결과(순위 맵)와 라운드 수로 확률을 조정한다. 게임 수 상태는 GameSession이 소유하므로
      * {@code roundCount}는 {@code MiniGameFinishedEvent}로 전달받는다(ADR-0023 결정 3·5).
@@ -114,10 +82,6 @@ public class Room {
         validateRoomUpdatable();
         validateAdjustmentWeight(adjustmentWeight);
         this.adjustmentWeight = adjustmentWeight;
-    }
-
-    private int calculateMiniGameCount() {
-        return miniGames.size() + finishedGames.size();
     }
 
     public Winner spinRoulette(Player host, Roulette roulette) {
@@ -155,44 +119,6 @@ public class Room {
         players.join(player);
     }
 
-    public List<Playable> getAllMiniGame() {
-        return List.copyOf(miniGames);
-    }
-
-    public List<MiniGameType> getSelectedMiniGameTypes() {
-        return getAllMiniGame().stream()
-                .map(Playable::getMiniGameType)
-                .toList();
-    }
-
-    public Playable findMiniGame(MiniGameType miniGameType) {
-        return finishedGames.stream()
-                .filter(minigame -> minigame.getMiniGameType() == miniGameType)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("해당하는 미니게임이 존재하지 않습니다."));
-    }
-
-    public Playable startNextGame(String hostName) {
-        state(host.sameName(new PlayerName(hostName)), "호스트가 게임을 시작할 수 있습니다.");
-        state(players.isAllReady(), "모든 플레이어가 준비 완료해야합니다.");
-        state(players.getPlayerCount() >= 2, "게임을 시작하려면 플레이어가 2명 이상이어야 합니다.");
-        state(!miniGames.isEmpty(), "시작할 게임이 없습니다.");
-        state(isPlayableState(), "게임을 시작할 수 있는 상태가 아닙니다.");
-
-        final Playable currentGame = miniGames.poll();
-
-        final java.util.List<Gamer> gamers = players.getPlayers().stream()
-                .map(coffeeshout.room.domain.player.Player::toGamer)
-                .toList();
-        currentGame.setUp(gamers);
-
-        roomState = RoomState.PLAYING;
-
-        finishedGames.add(currentGame);
-
-        return currentGame;
-    }
-
     /**
      * 게임 시작 가능 여부를 검증한다(호스트·전원 준비·인원·방 상태). 게임 대기열은 GameSession이
      * 소유하므로 여기서 검사하지 않으며, 상태를 변경하지 않는다(ADR-0023 결정 4). 대기열 검증과
@@ -205,16 +131,22 @@ public class Room {
         state(isPlayableState(), "게임을 시작할 수 있는 상태가 아닙니다.");
     }
 
+    /**
+     * 요청자가 방 호스트인지 검증한다. 게임 대기열 쓰기 경로(미니게임 선택)가 GameSession을 지연 생성하기
+     * 전에 이벤트의 호스트 이름을 보증하는 데 사용한다(ADR-0023 Step 5).
+     */
+    public void validateHost(String hostName) {
+        if (!host.sameName(new PlayerName(hostName))) {
+            throw new BusinessException(RoomErrorCode.NOT_HOST, "호스트만 수행할 수 있는 작업입니다.");
+        }
+    }
+
     public void markPlaying() {
         this.roomState = RoomState.PLAYING;
     }
 
     private boolean isPlayableState() {
         return roomState == RoomState.READY || roomState == RoomState.ROULETTE;
-    }
-
-    public void clearMiniGames() {
-        this.miniGames.clear();
     }
 
     public boolean hasDuplicatePlayerName(PlayerName guestName) {
@@ -255,10 +187,6 @@ public class Room {
 
     public void showRoulette() {
         this.roomState = RoomState.ROULETTE;
-    }
-
-    public boolean isFirstStarted() {
-        return finishedGames.size() == 1;
     }
 
     private boolean hasEnoughPlayers() {

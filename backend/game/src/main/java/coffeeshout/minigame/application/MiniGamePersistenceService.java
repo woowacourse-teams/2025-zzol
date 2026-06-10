@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MiniGamePersistenceService {
 
     private final RoomQueryService roomQueryService;
+    private final GameSessionService gameSessionService;
     private final RoomEntityRepository roomEntityRepository;
     private final PlayerEntityRepository playerEntityRepository;
     private final MiniGameEntityRepository miniGameEntityRepository;
@@ -46,7 +47,8 @@ public class MiniGamePersistenceService {
         final MiniGameEntity miniGameEntity = new MiniGameEntity(roomEntity, miniGameType);
         miniGameEntityRepository.save(miniGameEntity);
 
-        if (room.isFirstStarted()) {
+        // 첫 게임 시작 여부는 게임 수 상태를 소유한 GameSession이 판정한다(ADR-0023 Step 5)
+        if (gameSessionService.getSession(roomJoinCode).isFirstGameStarted()) {
             room.getPlayers().forEach(player -> {
                 final PlayerEntity playerEntity = new PlayerEntity(
                         roomEntity,

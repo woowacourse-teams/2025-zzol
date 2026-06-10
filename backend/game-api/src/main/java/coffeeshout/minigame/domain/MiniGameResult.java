@@ -61,7 +61,7 @@ public class MiniGameResult {
         MiniGameScore prevScore = null;
         for (MiniGameScore score : sortedScores) {
             count++;
-            if (prevScore == null || !score.equals(prevScore)) {
+            if (!score.equals(prevScore)) {
                 rank = count;
                 prevScore = score;
             }

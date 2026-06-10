@@ -6,8 +6,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.RoomModuleIntegrationTest;
+import coffeeshout.global.exception.custom.InfrastructureException;
 import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.requests.PutObjectRequest;

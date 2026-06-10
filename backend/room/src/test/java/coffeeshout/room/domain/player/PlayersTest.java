@@ -3,7 +3,6 @@ package coffeeshout.room.domain.player;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.roulette.ProbabilityCalculator;
 import java.util.Map;
@@ -27,10 +26,10 @@ class PlayersTest {
         players.join(꾹이);
         players.join(엠제이);
 
-        MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.toGamer(), 1, 루키.toGamer(), 2, 꾹이.toGamer(), 3, 엠제이.toGamer(), 4));
+        Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 4);
 
         // when
-        players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 5, 0.7));
+        players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(4, 5, 0.7));
 
         // then
         assertThat(players.getPlayer(PlayerFixture.호스트한스().getName()).getProbability())
@@ -41,80 +40,6 @@ class PlayersTest {
                 .isEqualTo(new Probability((int) (2500 + 250 * 0.7)));
         assertThat(players.getPlayer(PlayerFixture.게스트엠제이().getName()).getProbability())
                 .isEqualTo(new Probability((int) (2500 + 500 * 0.7)));
-    }
-
-    @Nested
-    class 순위_맵_오버로드 {
-
-        @Test
-        void 순위_맵으로_확률을_조정하면_MiniGameResult_오버로드와_동일한_결과를_낸다() {
-            // given
-            final Players byMap = new Players("ABC23");
-            final Players byResult = new Players("ABC23");
-            for (Players players : java.util.List.of(byMap, byResult)) {
-                players.join(PlayerFixture.호스트한스());
-                players.join(PlayerFixture.게스트루키());
-                players.join(PlayerFixture.게스트꾹이());
-                players.join(PlayerFixture.게스트엠제이());
-            }
-
-            final Map<PlayerName, Integer> rankByPlayer = Map.of(
-                    new PlayerName("한스"), 1,
-                    new PlayerName("루키"), 2,
-                    new PlayerName("꾹이"), 3,
-                    new PlayerName("엠제이"), 4
-            );
-            final MiniGameResult miniGameResult = new MiniGameResult(Map.of(
-                    PlayerFixture.호스트한스().toGamer(), 1,
-                    PlayerFixture.게스트루키().toGamer(), 2,
-                    PlayerFixture.게스트꾹이().toGamer(), 3,
-                    PlayerFixture.게스트엠제이().toGamer(), 4
-            ));
-
-            // when
-            byMap.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(4, 5, 0.7));
-            byResult.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 5, 0.7));
-
-            // then
-            SoftAssertions.assertSoftly(softly -> {
-                for (String name : java.util.List.of("한스", "루키", "꾹이", "엠제이")) {
-                    softly.assertThat(byMap.getPlayer(new PlayerName(name)).getProbability())
-                            .isEqualTo(byResult.getPlayer(new PlayerName(name)).getProbability());
-                }
-            });
-        }
-
-        @Test
-        void 순위_맵_오버로드도_동점자를_같은_순위로_나눠_조정한다() {
-            // given
-            final Players players = new Players("ABC23");
-            players.join(PlayerFixture.호스트한스());
-            players.join(PlayerFixture.게스트루키());
-            players.join(PlayerFixture.게스트꾹이());
-            players.join(PlayerFixture.게스트엠제이());
-
-            final Map<PlayerName, Integer> rankByPlayer = Map.of(
-                    new PlayerName("한스"), 1,
-                    new PlayerName("루키"), 2,
-                    new PlayerName("꾹이"), 2,
-                    new PlayerName("엠제이"), 4
-            );
-
-            // when
-            players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(4, 1, 0.7));
-
-            // then
-            SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(players.getPlayer(new PlayerName("한스")).getProbability())
-                        .isEqualTo(new Probability((2500 - (int) (2500 * 0.7))));
-                softly.assertThat(players.getPlayer(new PlayerName("루키")).getProbability())
-                        .isEqualTo(new Probability(2500));
-                softly.assertThat(players.getPlayer(new PlayerName("꾹이")).getProbability())
-                        .isEqualTo(new Probability(2500));
-                softly.assertThat(players.getPlayer(new PlayerName("엠제이")).getProbability())
-                        .isEqualTo(new Probability((2500 + (int) (2500 * 0.7))));
-            });
-        }
     }
 
     @Nested
@@ -132,10 +57,10 @@ class PlayersTest {
             players.join(루키);
             players.join(꾹이);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.toGamer(), 1, 루키.toGamer(), 2, 꾹이.toGamer(), 2));
+            Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2);
 
             // when
-            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(3, 1, 0.7));
+            players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(3, 1, 0.7));
 
             // then
             // 한스 1등, 루키/꾹이 2등 동점 (2명이므로 확률 조정량을 2로 나눔)
@@ -165,10 +90,10 @@ class PlayersTest {
             players.join(꾹이);
             players.join(엠제이);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.toGamer(), 1, 루키.toGamer(), 2, 꾹이.toGamer(), 2, 엠제이.toGamer(), 4));
+            Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 4);
 
             // when
-            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 1, 0.7));
+            players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(4, 1, 0.7));
 
             // then
             // 한스 1등, 루키/꾹이 2등 동점 (2명이므로 확률 조정량을 2로 나눔)
@@ -205,10 +130,10 @@ class PlayersTest {
             players.join(엠제이);
             players.join(루키);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.toGamer(), 1, 루키.toGamer(), 2, 꾹이.toGamer(), 3, 엠제이.toGamer(), 3));
+            Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 3);
 
             // when
-            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 1, 0.7));
+            players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(4, 1, 0.7));
 
             SoftAssertions.assertSoftly(
                     softly -> {
@@ -238,10 +163,10 @@ class PlayersTest {
             players.join(꾹이);
             players.join(엠제이);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.toGamer(), 1, 루키.toGamer(), 2, 꾹이.toGamer(), 2, 엠제이.toGamer(), 2));
+            Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 2);
 
             // when
-            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(4, 1, 0.7));
+            players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(4, 1, 0.7));
 
             // then
             SoftAssertions.assertSoftly(
@@ -275,9 +200,9 @@ class PlayersTest {
             players.join(엠제이);
             players.join(호스트유령);
 
-            MiniGameResult miniGameResult = new MiniGameResult(Map.of(한스.toGamer(), 1, 루키.toGamer(), 1, 꾹이.toGamer(), 3, 엠제이.toGamer(), 3, 호스트유령.toGamer(), 5));
+            Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 1, 꾹이.getName(), 3, 엠제이.getName(), 3, 호스트유령.getName(), 5);
 
-            players.adjustProbabilities(miniGameResult, new ProbabilityCalculator(5, 1, 0.7));
+            players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(5, 1, 0.7));
 
             // then
             SoftAssertions.assertSoftly(

@@ -2,6 +2,8 @@ package coffeeshout.zzolbot.infra.tool;
 
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.zzolbot.domain.ZzolBotTool;
@@ -25,6 +27,7 @@ public class RoomStateTool implements ZzolBotTool {
     static final String TOOL_NAME = "room_state";
 
     private final RoomQueryService roomQueryService;
+    private final GameSessionService gameSessionService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -79,12 +82,12 @@ public class RoomStateTool implements ZzolBotTool {
         summary.put("players", room.getPlayers().stream()
                 .map(p -> p.getName().value())
                 .toList());
-        summary.put("pendingMiniGames", room.getMiniGames().stream()
-                .map(g -> g.getMiniGameType().name())
-                .toList());
-        summary.put("finishedMiniGames", room.getFinishedGames().stream()
-                .map(g -> g.getMiniGameType().name())
-                .toList());
+        // 게임 대기열·완료 이력은 GameSession이 소유한다(ADR-0023). 세션이 없으면(게임 선택 전) 빈 목록
+        final GameSession session = gameSessionService.findSession(room.getJoinCode()).orElse(null);
+        summary.put("pendingMiniGames", session == null ? List.of()
+                : session.getSelectedTypes().stream().map(Enum::name).toList());
+        summary.put("finishedMiniGames", session == null ? List.of()
+                : session.getCompletedTypes().stream().map(Enum::name).toList());
         return summary;
     }
 }

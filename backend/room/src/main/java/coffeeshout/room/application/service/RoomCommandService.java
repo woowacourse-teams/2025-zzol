@@ -1,16 +1,12 @@
 package coffeeshout.room.application.service;
 
 import coffeeshout.gamecommon.JoinCode;
-import coffeeshout.gamecommon.MiniGameFactory;
-import coffeeshout.gamecommon.Playable;
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.domain.repository.RoomRepository;
-import java.util.List;
 import java.util.Map;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +21,6 @@ public class RoomCommandService {
 
     private final RoomRepository roomRepository;
     private final RoomQueryService roomQueryService;
-    private final Map<MiniGameType, MiniGameFactory> miniGameFactoryMap;
 
     public Room save(Room room) {
         return roomRepository.save(room);
@@ -142,24 +137,6 @@ public class RoomCommandService {
         room.assignQrCode(QrCode.error());
         save(room);
         log.info("QR 코드 ERROR 상태로 변경: joinCode={}", joinCode);
-    }
-
-    public List<MiniGameType> updateMiniGames(JoinCode joinCode, PlayerName hostName,
-                                              List<MiniGameType> miniGameTypes) {
-        log.info("JoinCode[{}] 미니게임 설정 변경 - 호스트 이름: {}, 미니게임 목록: {}", joinCode, hostName, miniGameTypes);
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        room.clearMiniGames();
-
-        miniGameTypes.forEach(miniGameType -> {
-            final Playable miniGame = miniGameFactoryMap.get(miniGameType).create(joinCode.getValue());
-            room.addMiniGame(hostName, miniGame);
-        });
-
-        save(room);
-
-        return room.getAllMiniGame().stream()
-                .map(Playable::getMiniGameType)
-                .toList();
     }
 
     public Room readyPlayer(JoinCode joinCode, PlayerName playerName, Boolean isReady) {

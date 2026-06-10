@@ -8,6 +8,7 @@ import coffeeshout.fixture.RoomFixture;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import java.time.Clock;
@@ -35,11 +36,14 @@ class RoomStateToolTest {
     @Mock
     private RoomQueryService roomQueryService;
 
+    @Mock
+    private GameSessionService gameSessionService;
+
     private RoomStateTool roomStateTool;
 
     @BeforeEach
     void setUp() {
-        roomStateTool = new RoomStateTool(roomQueryService, new ObjectMapper());
+        roomStateTool = new RoomStateTool(roomQueryService, gameSessionService, new ObjectMapper());
     }
 
     @Nested

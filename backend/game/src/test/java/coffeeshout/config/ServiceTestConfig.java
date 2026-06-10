@@ -11,7 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
-@Import({GameSchedulerTestConfig.class, ExternalPortMockConfig.class, MiniGameFactoryTestConfig.class})
+@Import({GameSchedulerTestConfig.class, ExternalPortMockConfig.class})
 public class ServiceTestConfig {
 
     @Bean

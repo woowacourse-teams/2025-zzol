@@ -1,20 +1,14 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
-import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.minigame.domain.MiniGameResult;
-import coffeeshout.minigame.domain.MiniGameScore;
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.port.RoomEntityRepository;
 import coffeeshout.room.config.RouletteProperties;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
-import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.PlayerReadyEvent;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
@@ -41,9 +35,7 @@ import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import coffeeshout.user.application.service.UserProfileService;
 import coffeeshout.user.domain.AuthenticatedUser;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -148,11 +140,6 @@ public class RoomService {
         return room.spinRoulette(host, new Roulette(new RoulettePicker()));
     }
 
-    public List<MiniGameType> getAllMiniGames() {
-        return Arrays.stream(MiniGameType.values())
-                .toList();
-    }
-
     public String generateRandomNicknameForGuest(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         final Set<String> existingNames = room.getPlayers().stream()
@@ -182,25 +169,6 @@ public class RoomService {
                 .toList();
     }
 
-    public Map<Gamer, MiniGameScore> getMiniGameScores(String joinCode, MiniGameType miniGameType) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final Playable miniGame = room.findMiniGame(miniGameType);
-
-        return miniGame.getScores();
-    }
-
-    public MiniGameResult getMiniGameRanks(String joinCode, MiniGameType miniGameType) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final Playable miniGame = room.findMiniGame(miniGameType);
-
-        return miniGame.getResult();
-    }
-
-    public List<MiniGameType> getSelectedMiniGames(String joinCode) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        return room.getSelectedMiniGameTypes();
-    }
-
     public void updateAdjustmentWeight(String joinCode, String hostName, double adjustmentWeight) {
         roomCommandService.updateAdjustmentWeight(
                 new JoinCode(joinCode),
@@ -222,27 +190,6 @@ public class RoomService {
 
         log.debug("QR 코드 상태 반환: joinCode={}, status={}", joinCode, qrCode.getStatus());
         return response;
-    }
-
-    public List<Playable> getRemainingMiniGames(String joinCode) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        return room.getMiniGames().stream().toList();
-    }
-
-    public void updateMiniGames(MiniGameSelectEvent event) {
-        log.info("JoinCode[{}] 미니게임 목록 업데이트 이벤트 처리 - 호스트: {}, 미니게임 종류: {}",
-                event.joinCode(),
-                event.hostName(),
-                event.miniGameTypes()
-        );
-
-        roomCommandService.updateMiniGames(
-                new JoinCode(event.joinCode()),
-                new PlayerName(event.hostName()),
-                event.miniGameTypes()
-        );
-
-        eventPublisher.publishEvent(event);
     }
 
     public void readyPlayer(PlayerReadyEvent event) {

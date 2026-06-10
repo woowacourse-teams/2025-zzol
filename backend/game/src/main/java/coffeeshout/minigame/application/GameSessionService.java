@@ -8,20 +8,31 @@ import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.GameSessionRepository;
+import coffeeshout.minigame.domain.MiniGameResult;
+import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class GameSessionService {
 
     private final GameSessionRepository gameSessionRepository;
     private final Map<MiniGameType, MiniGameFactory> miniGameFactoryMap;
+
+    /**
+     * 팩토리 맵은 {@code :game}이 자기 팩토리 빈 전부를 보므로 composition root 없이 여기서 조립한다
+     * (ADR-0023 Step 5 — 기존 {@code :app}의 {@code MiniGameFactoryConfig} 대체).
+     */
+    public GameSessionService(GameSessionRepository gameSessionRepository, List<MiniGameFactory> miniGameFactories) {
+        this.gameSessionRepository = gameSessionRepository;
+        this.miniGameFactoryMap = new EnumMap<>(MiniGameType.class);
+        miniGameFactories.forEach(factory -> miniGameFactoryMap.put(factory.type(), factory));
+    }
 
     /**
      * 방 생성 시 세션을 사전 초기화한다. 이미 존재하면 무시한다(멱등).
@@ -92,5 +103,29 @@ public class GameSessionService {
      */
     public void deleteSession(JoinCode joinCode) {
         gameSessionRepository.deleteByJoinCode(joinCode);
+    }
+
+    /**
+     * 시작된 게임(진행 중 포함)의 점수를 조회한다.
+     */
+    public Map<Gamer, MiniGameScore> getScores(JoinCode joinCode, MiniGameType miniGameType) {
+        return getSession(joinCode).findCompletedGame(miniGameType).getScores();
+    }
+
+    /**
+     * 시작된 게임(진행 중 포함)의 순위를 조회한다.
+     */
+    public MiniGameResult getRanks(JoinCode joinCode, MiniGameType miniGameType) {
+        return getSession(joinCode).findCompletedGame(miniGameType).getResult();
+    }
+
+    /**
+     * 선택된(대기 중인) 게임 타입 목록을 조회한다. 세션이 아직 없으면 빈 목록을 반환한다
+     * (게임 선택 전의 방 — 기존 Room 대기열 조회와 동일한 의미).
+     */
+    public List<MiniGameType> getSelectedTypes(JoinCode joinCode) {
+        return findSession(joinCode)
+                .map(GameSession::getSelectedTypes)
+                .orElseGet(List::of);
     }
 }

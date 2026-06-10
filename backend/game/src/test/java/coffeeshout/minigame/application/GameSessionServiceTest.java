@@ -10,13 +10,13 @@ import coffeeshout.gamecommon.MiniGameFactory;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.minigame.domain.GameSession;
+import coffeeshout.minigame.domain.GameSessionErrorCode;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.GameSessionStatus;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.MemoryGameSessionRepository;
 import coffeeshout.room.domain.event.MiniGameSelectEvent;
 import java.util.List;
-import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +35,7 @@ class GameSessionServiceTest {
     @BeforeEach
     void setUp() {
         repository = new MemoryGameSessionRepository();
-        service = new GameSessionService(repository, Map.of());
+        service = new GameSessionService(repository, List.of());
     }
 
     private Playable game(MiniGameType type) {
@@ -139,11 +139,11 @@ class GameSessionServiceTest {
         }
 
         private GameSessionService serviceWithFactories(MiniGameType... types) {
-            final Map<MiniGameType, MiniGameFactory> factoryMap = new java.util.EnumMap<>(MiniGameType.class);
+            final List<MiniGameFactory> factories = new java.util.ArrayList<>();
             for (MiniGameType type : types) {
-                factoryMap.put(type, factory(type));
+                factories.add(factory(type));
             }
-            return new GameSessionService(repository, factoryMap);
+            return new GameSessionService(repository, factories);
         }
 
         @Test
@@ -194,6 +194,66 @@ class GameSessionServiceTest {
 
             assertThat(sut.getSession(JOIN_CODE).getSelectedTypes())
                     .containsExactly(MiniGameType.CARD_GAME);
+        }
+    }
+
+    @Nested
+    @DisplayName("게임 조회(getScores / getRanks / getSelectedTypes)")
+    class Queries {
+
+        private void initSessionWithStartedGame() {
+            service.initSession(JOIN_CODE, HOST);
+            final GameSession session = service.getSession(JOIN_CODE);
+            session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME), game(MiniGameType.RACING_GAME)));
+            service.startGame(JOIN_CODE, HOST, List.of(HOST, GUEST));
+        }
+
+        @Test
+        @DisplayName("getSelectedTypes는 세션이 없으면 빈 목록을 반환한다")
+        void getSelectedTypes는_세션이_없으면_빈_목록을_반환한다() {
+            assertThat(service.getSelectedTypes(JOIN_CODE)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getSelectedTypes는 대기 중인 게임 타입 목록을 반환한다")
+        void getSelectedTypes는_대기_게임_타입을_반환한다() {
+            initSessionWithStartedGame();
+
+            assertThat(service.getSelectedTypes(JOIN_CODE)).containsExactly(MiniGameType.RACING_GAME);
+        }
+
+        @Test
+        @DisplayName("getScores는 시작된 게임의 점수를 반환한다")
+        void getScores는_시작된_게임의_점수를_반환한다() {
+            initSessionWithStartedGame();
+
+            assertThat(service.getScores(JOIN_CODE, MiniGameType.CARD_GAME)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getScores는 세션이 없으면 NOT_EXIST 예외가 발생한다")
+        void getScores는_세션이_없으면_NOT_EXIST_예외가_발생한다() {
+            assertCoffeeShoutException(
+                    () -> service.getScores(JOIN_CODE, MiniGameType.CARD_GAME),
+                    GlobalErrorCode.NOT_EXIST);
+        }
+
+        @Test
+        @DisplayName("getScores는 시작되지 않은 타입이면 GAME_NOT_FOUND 예외가 발생한다")
+        void getScores는_시작되지_않은_타입이면_GAME_NOT_FOUND_예외가_발생한다() {
+            initSessionWithStartedGame();
+
+            assertCoffeeShoutException(
+                    () -> service.getScores(JOIN_CODE, MiniGameType.LADDER_GAME),
+                    GameSessionErrorCode.GAME_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("getRanks는 시작된 게임의 결과를 반환한다")
+        void getRanks는_시작된_게임의_결과를_반환한다() {
+            initSessionWithStartedGame();
+
+            assertThat(service.getRanks(JOIN_CODE, MiniGameType.CARD_GAME)).isNotNull();
         }
     }
 

@@ -7,7 +7,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
-import coffeeshout.room.infra.websocket.event.SessionDisconnectEventListener;
 import coffeeshout.websocket.StompSessionManager;
 import coffeeshout.websocket.SubscriptionInfoService;
 import coffeeshout.websocket.metric.WebSocketMetricService;

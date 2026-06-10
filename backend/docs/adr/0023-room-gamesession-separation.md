@@ -349,6 +349,8 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 - `miniGames`/`finishedGames` 필드 및 게임 관련 메서드 제거(`calculateMiniGameCount()` 포함)
 - `applyMiniGameResult(MiniGameResult)` → `applyGameResult(Map<PlayerName, Integer>, int roundCount)` — Room은 게임 카운터를 보유하지 않음
 - `RoomService`/`RoomCommandService`에서 게임 관련 책임 제거
+- **전환기 이중 쓰기 해제** — `MiniGameSelectConsumer`(`:game`)의 `roomService.updateMiniGames(event)` 호출 제거, `gameSessionService.updateGames(event)` 단일 경로만 남긴다. 이에 따라 `RoomService.updateMiniGames(MiniGameSelectEvent)`·`RoomCommandService.updateMiniGames(...)`를 제거한다(이 둘이 `:room`의 마지막 `miniGameFactoryMap` 소비처)
+- **`MiniGameFactoryConfig`를 `:app` → `:game`으로 이관** — 위 소비처 제거로 `:room`이 더는 `miniGameFactoryMap`을 주입받지 않으면, 맵 소비처는 `:game`의 `GameSessionService` 단 하나가 된다. `:game`은 자기 팩토리 빈을 전부 보므로 조립을 composition root에 둘 이유가 사라진다. 별도 `@Bean`/`@Configuration` 없이 `GameSessionService`가 생성자에서 `List<MiniGameFactory>`를 주입받아 `EnumMap<MiniGameType, MiniGameFactory>`로 조립하고(B안), `:app`의 `MiniGameFactoryConfig`는 삭제한다. `:app`이 `coffeeshout.minigame.domain.MiniGameType`을 import하던 게임 도메인 설정 누수가 해소된다(ADR-0014에서 `:app`에 두기로 한 사유 — `:room` 소비처 — 가 사라지므로 위치 변경 타당)
 
 ### Step 6 — 생명주기 이벤트 연결
 
@@ -372,3 +374,17 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 
 - `:game`에서 `room.domain.player.Player` import 0건 확인
 - ArchUnit으로 `:room` → 게임 타입 import 금지, `:game` → `Player` import 금지 규칙 추가 검토
+
+## 구현 중 발견한 모델 정리 후보 (범위 밖)
+
+ADR-0023 구현 중 `GameSession` 내부에서 관찰된 모델링 흠이다. 본 ADR의 결정(소유권 이관)과 무관하며 본 작업에서는 손대지 않는다. 별도 리팩터로 다루기 위해 기록만 남긴다.
+
+`Playable`을 별도 Repository로 분리하지 않고 `GameSession` 애그리거트 안에 두는 현행 구조는 유효하다(생명주기·일관성 경계를 세션과 완전히 공유). 분리는 오케스트레이션 상태(`Queue` + `status` + `roundCount`)에 durable/분산 저장이 필요하고 라이브 게임 상태는 휘발성으로 둬도 되는 시점에 재검토한다.
+
+### 1. `completedGames`가 진행 중 게임을 담는다
+
+`GameSession.startNextGame()`이 폴링한 게임을 곧바로 `completedGames`에 넣으므로, `status == PLAYING`인 동안 현재 플레이 중인 게임이 "완료" 목록에 존재한다. 그 결과 `findCompletedGame(type)`이 진행 중 게임을 반환하며, 컬렉션 이름이 모델을 속인다. 라이브 인스턴스 보관 슬롯과 완료 이력을 한 컬렉션에 합친 흔적이다. 라이브 슬롯 분리 또는 명명 정리(예: `currentGame` 슬롯 도입)로 다룰 수 있다.
+
+### 2. 선택 시점 eager 인스턴스 생성
+
+`GameSessionService.updateGames()`가 선택된 모든 타입의 `Playable`을 선택 시점에 즉시 생성하고, 일부 게임은 생성자에서 초기 상태까지 만든다(예: `CardGame` 생성자가 덱 생성). 한 번에 하나만 플레이하지만 선택된 게임 전부를 미리 만든다. 인메모리·단일 소비자라 실질 영향은 작으나, 모델상 대기열이 "계획(타입)"이 아니라 "완성된 인스턴스"를 들고 있다. 대기열을 `Queue<MiniGameType>`으로 두고 `startNextGame` 시점에 팩토리로 생성하는 방식이 대안이다.

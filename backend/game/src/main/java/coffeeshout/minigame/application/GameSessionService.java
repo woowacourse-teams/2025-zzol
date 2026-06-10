@@ -60,21 +60,22 @@ public class GameSessionService {
     }
 
     /**
-     * 선택된 게임 목록을 통째로 교체한다. 세션이 없으면 호스트 이름으로 지연 생성한다(Step 6의
-     * {@code initSession}과 멱등). 실제 흐름에서 게임 선택({@code updateGames})은 항상
-     * 시작·조회보다 먼저 일어나므로 이 지연 생성이 Step 4 단독으로 동작하게 한다(ADR-0023).
+     * 선택된 게임 목록을 통째로 교체한다. 세션은 방 생성 시 {@code GameSessionInitConsumer}가
+     * 권위 있는 호스트({@code GameRoomCreatedEvent}의 hostName)로 사전 생성하므로 여기서는 반드시 존재한다고
+     * 가정한다(지연 생성 폴백 없음 — ADR-0023 결정 4/Option B). 호스트 검증을 GameSession이 단독 수행하려면
+     * 세션 host가 select 이벤트의 주장값이 아니라 방 생성 시점의 권위값이어야 하기 때문이다. init보다 select가
+     * 먼저 도달하는 극히 짧은 창에서는 {@code getSession}이 예외를 던져 {@code EventDispatcher}가 격리·스킵하고,
+     * 클라이언트의 재전송으로 복구된다(거짓 호스트를 신뢰하는 대신 일시 거부).
      */
     public void updateGames(MiniGameSelectEvent event) {
         final JoinCode joinCode = new JoinCode(event.joinCode());
-        final Gamer host = Gamer.guest(event.hostName());
-        final GameSession session = findSession(joinCode)
-                .orElseGet(() -> new GameSession(joinCode, host));
+        final GameSession session = getSession(joinCode);
 
         final List<Playable> games = event.miniGameTypes().stream()
                 .map(type -> miniGameFactoryMap.get(type).create(joinCode.getValue()))
                 .toList();
 
-        session.replaceGames(host, games);
+        session.replaceGames(Gamer.guest(event.hostName()), games);
         gameSessionRepository.save(session);
     }
 

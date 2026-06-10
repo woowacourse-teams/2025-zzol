@@ -147,23 +147,18 @@ class GameSessionServiceTest {
         }
 
         @Test
-        @DisplayName("세션이 없으면 호스트 이름으로 지연 생성하고 선택 게임으로 교체한다")
-        void 세션이_없으면_지연_생성하고_교체한다() {
+        @DisplayName("세션이 없으면 NOT_EXIST 예외가 발생한다(지연 생성 없음 — Option B)")
+        void 세션이_없으면_예외가_발생한다() {
+            // 세션은 방 생성 시 GameSessionInitConsumer가 권위 있는 호스트로 사전 생성한다.
+            // 지연 생성을 제거했으므로 select가 init보다 먼저 도달하면 거짓 호스트를 신뢰하지 않고 거부한다.
             final GameSessionService sut = serviceWithFactories(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME);
             final MiniGameSelectEvent event = new MiniGameSelectEvent(
                     JOIN_CODE.getValue(),
                     HOST.getName(),
                     List.of(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME));
 
-            sut.updateGames(event);
-
-            final GameSession session = sut.getSession(JOIN_CODE);
-            SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(repository.existsByJoinCode(JOIN_CODE)).isTrue();
-                softly.assertThat(session.getHost()).isEqualTo(HOST);
-                softly.assertThat(session.getSelectedTypes())
-                        .containsExactly(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME);
-            });
+            assertCoffeeShoutException(() -> sut.updateGames(event), GlobalErrorCode.NOT_EXIST);
+            assertThat(repository.existsByJoinCode(JOIN_CODE)).isFalse();
         }
 
         @Test
@@ -187,6 +182,7 @@ class GameSessionServiceTest {
         @DisplayName("팩토리 맵으로 각 타입의 Playable을 생성한다")
         void 팩토리_맵으로_Playable을_생성한다() {
             final GameSessionService sut = serviceWithFactories(MiniGameType.CARD_GAME);
+            sut.initSession(JOIN_CODE, HOST);
             final MiniGameSelectEvent event = new MiniGameSelectEvent(
                     JOIN_CODE.getValue(), HOST.getName(), List.of(MiniGameType.CARD_GAME));
 

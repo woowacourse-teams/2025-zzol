@@ -1,9 +1,6 @@
 package coffeeshout.minigame.infra.messaging.consumer;
 
-import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.room.application.service.RoomQueryService;
-import coffeeshout.room.domain.Room;
 import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -11,26 +8,24 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 /**
- * 미니게임 선택 변경을 GameSession에 반영한다(ADR-0023 결정 4).
+ * 미니게임 선택 변경을 GameSession에 반영한다(ADR-0023 결정 4 — Option B).
  *
- * <p>호스트 검증은 Room에 위임한다 — GameSession 지연 생성 시 이벤트의 {@code hostName}이 세션 호스트로
- * 고정되므로, 실제 방 호스트인지 먼저 보증해야 한다({@code GameSessionInitConsumer}가 세션을 사전 생성하지만
- * {@code updateGames}의 지연 생성 폴백이 남아 있어 여전히 필요). 반영 성공 후 in-process 이벤트를 재발행해 선택 목록 브로드캐스트
- * ({@code RoomMessagePublisher.onMiniGameListChanged})를 트리거한다.
+ * <p>호스트 검증은 GameSession이 단독 수행한다. 세션은 방 생성 시 {@code GameSessionInitConsumer}가
+ * {@code GameRoomCreatedEvent}의 권위 있는 hostName으로 사전 생성하므로, {@code updateGames} 내부의
+ * {@code replaceGames} 호스트 검증이 "select가 주장한 hostName == 권위 있는 호스트 이름"을 보증한다.
+ * 따라서 더 이상 {@code RoomQueryService}로 방을 조회해 검증하지 않는다(:game → :room 의존 제거).
+ * 반영 성공 후 in-process 이벤트를 재발행해 선택 목록 브로드캐스트({@code RoomMessagePublisher.onMiniGameListChanged})를
+ * 트리거한다.
  */
 @Component
 @RequiredArgsConstructor
 public class MiniGameSelectConsumer implements Consumer<MiniGameSelectEvent> {
 
-    private final RoomQueryService roomQueryService;
     private final GameSessionService gameSessionService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void accept(MiniGameSelectEvent event) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(event.joinCode()));
-        room.validateHost(event.hostName());
-
         gameSessionService.updateGames(event);
         eventPublisher.publishEvent(event);
     }

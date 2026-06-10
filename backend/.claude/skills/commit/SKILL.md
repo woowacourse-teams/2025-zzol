@@ -93,7 +93,7 @@ git add <그룹 내 파일 목록>
 git commit -m "$(cat <<'EOF'
 <커밋 메시지>
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+<하네스가 지정한 Co-Authored-By 트레일러를 그대로 붙인다 — 모델명 하드코딩 금지>
 EOF
 )"
 ```

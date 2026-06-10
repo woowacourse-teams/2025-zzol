@@ -19,26 +19,18 @@
 - 모호한 목표는 구현 전에 검증 가능한 성공 기준으로 바꾼다 (예: "버그 수정" → "버그 재현 테스트 작성 후 통과")
 - 프로덕션 코드(`src/main/java/`) 작성 또는 수정 완료 시 `/write-tests`를 실행한다
 - 테스트 실행은 단일 클래스 빠른 확인을 제외하고 `/run-tests`를 사용한다
-- 이미 읽은 파일은 다시 읽지 않는다 diff를 통해 변경된 줄만 확인한다.
 - 20줄 이상의 대량 출력이 예상되는 탐색·분석 작업은 서브에이전트에 위임한다
-- **사용자가 이미 설명한 내용은 다시 반복하지 않는다**
 - 코드 작성 전 `docs/adr/index.md`의 **영향 범위** 컬럼을 작업 중인 패키지/주제와 비교한다. 겹치는 ADR이 있으면 해당 파일을 읽어 **핵심 제약**과 충돌 여부를 확인하고, 충돌 시 작업 전에 사용자에게 경고한다
 
 ## 코드 탐색
 
-파일을 Read하기 전에 **반드시 먼저 Grep으로 파일 경로와 줄 번호를 확인**한 뒤, `offset`과 `limit`을 지정해 필요한 범위만 읽는다.
+파일을 Read하기 전에 **먼저 Grep 툴로 파일 경로와 줄 번호를 확인**한 뒤, `offset`과 `limit`을 지정해 필요한 범위만 읽는다.
 
-```bash
-# 1단계: 파일 경로 + 줄 번호 획득 (내용은 읽지 않음)
-grep -rn "class CardGameFlowOrchestrator" src/
-grep -rn "void startRound" src/
+1. Grep 툴로 심볼 위치를 찾는다 (예: 패턴 `class CardGameFlowOrchestrator`, `void startRound`) — 내용은 읽지 않고 경로·줄 번호만 얻는다
+2. 얻은 줄 번호로 `Read(file, offset=N, limit=40)` — 전체 파일 Read는 피한다
 
-# 2단계: 해당 범위만 읽기 — 전체 파일 Read 금지
-Read(file, offset=N, limit=40)
-```
-
-- 구조 파악이 목적이면 `grep -n "public\|private\|class\|interface" 파일` 로 메서드 목록만 먼저 확인한다
-- Java는 파일명 = 클래스명 규칙이 강제되므로 클래스명을 알면 경로를 예측해 Grep 없이 바로 Read할 수 있다
+- 구조 파악이 목적이면 Grep 툴로 `public|private|class|interface` 패턴을 잡아 메서드 목록만 먼저 확인한다
+- Java는 파일명 = 클래스명 규칙이 강제되므로 클래스명을 알면 경로를 예측해 바로 Read할 수 있다 (이 경우 Grep 생략 가능)
 
 ## 아키텍처 핵심 제약
 

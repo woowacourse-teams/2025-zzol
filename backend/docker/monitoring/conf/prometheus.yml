@@ -5,33 +5,51 @@ global:
 scrape_configs:
   - job_name: 'dev-app'
     static_configs:
-      - targets: [ 'dev-app-blue:8080', 'dev-app-green:8080' ]
+      - targets: ['dev-app-blue:8080', 'dev-app-green:8080']
     metrics_path: '/actuator/prometheus'
     scrape_interval: 10s
     scrape_timeout: 5s
 
   - job_name: 'prod-app'
     static_configs:
-      - targets: [ 'prod-app-blue:8080', 'prod-app-green:8080' ]
+      - targets: ['prod-app-blue:8080', 'prod-app-green:8080']
     metrics_path: '/actuator/prometheus'
     scrape_interval: 10s
     scrape_timeout: 5s
 
   - job_name: 'cadvisor'
     static_configs:
-      - targets: [ 'cadvisor:8080' ]
+      - targets: ['cadvisor:8080']
     metrics_path: '/metrics'
     scrape_interval: 10s
     scrape_timeout: 5s
 
-  - job_name: 'dev-redis'
+  - job_name: 'mysql-exporter'
+    scrape_interval: 10s
     static_configs:
-      - targets: [ 'dev-redis-exporter:9121' ]
+      - targets: ['dev-mysql-exporter:9104']
+        labels:
+          env: 'dev'      
+          instance: 'dev-mysql' 
 
-  - job_name: 'dev-mysql'
+      - targets: ['prod-mysql-exporter:9104'] # Docker 내부 통신이라면 9104 확인!
+        labels:
+          env: 'prod'     
+          instance: 'prod-mysql'
+          
+  - job_name: 'redis-exporter' # Job 이름 통일
+    scrape_interval: 10s
     static_configs:
-      - targets: [ 'dev-mysql-exporter:9104' ]
+      - targets: ['dev-redis-exporter:9121']
+        labels:
+          env: 'dev'
+          instance: 'dev-redis'
+
+      - targets: ['prod-redis-exporter:9121'] 
+        labels:
+          env: 'prod'
+          instance: 'prod-redis'
 
   - job_name: 'node'
     static_configs:
-      - targets: [ 'node-exporter:9100' ]
+      - targets: ['node-exporter:9100']

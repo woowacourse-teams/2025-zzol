@@ -4,17 +4,15 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.GameStartReadyEvent;
+import coffeeshout.minigame.event.PlayerSnapshotRequiredEvent;
 import coffeeshout.minigame.application.port.MiniGameEntityRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
-import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
 import coffeeshout.room.application.port.RoomStatusPort;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
-import coffeeshout.room.application.service.RoomQueryService;
-import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,12 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MiniGamePersistenceService {
 
-    private final RoomQueryService roomQueryService;
     private final GameSessionService gameSessionService;
     private final RoomEntityRepository roomEntityRepository;
-    private final PlayerEntityRepository playerEntityRepository;
     private final MiniGameEntityRepository miniGameEntityRepository;
     private final RoomStatusPort roomStatusPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     @RedisLock(
             key = "#event.eventId()",
@@ -39,25 +36,17 @@ public class MiniGamePersistenceService {
     @Transactional
     public void saveGameEntities(GameStartReadyEvent event, MiniGameType miniGameType) {
         final JoinCode roomJoinCode = new JoinCode(event.joinCode());
-        final Room room = roomQueryService.getByJoinCode(roomJoinCode);
 
-        // getRoomEntity()로 먼저 엔티티를 가져와 오버로드에 넘김 — 조회 1회로 통합
         final RoomEntity roomEntity = getRoomEntity(event.joinCode());
         roomStatusPort.updateStatus(roomEntity, RoomState.PLAYING);
         final MiniGameEntity miniGameEntity = new MiniGameEntity(roomEntity, miniGameType);
         miniGameEntityRepository.save(miniGameEntity);
 
-        // 첫 게임 시작 여부는 게임 수 상태를 소유한 GameSession이 판정한다(ADR-0023 Step 5)
+        // 첫 게임 시작 여부는 게임 수 상태를 소유한 GameSession이 판정한다(ADR-0023 Step 5).
+        // PlayerEntity 스냅샷 생성은 PlayerType 등 Room 도메인에 접근해야 하므로 :room이 소유한다 —
+        // 이벤트를 발행만 하고 PlayerSnapshotListener가 동기 수신해 저장한다(생성 책임 이관).
         if (gameSessionService.getSession(roomJoinCode).isFirstGameStarted()) {
-            room.getPlayers().forEach(player -> {
-                final PlayerEntity playerEntity = new PlayerEntity(
-                        roomEntity,
-                        player.getName().value(),
-                        player.getPlayerType(),
-                        player.getUserId()
-                );
-                playerEntityRepository.save(playerEntity);
-            });
+            eventPublisher.publishEvent(new PlayerSnapshotRequiredEvent(event.joinCode()));
         }
     }
 

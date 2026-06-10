@@ -4,6 +4,18 @@
 - 상태: 승인 (구현 예정)
 - 참조 구현: `be/refactor/game-entity-ownership` 브랜치 (`d7abc0ea`, `ddfee28b`, `53cf40cc`, `af0d1a70`) — 멀티 모듈 전환 이전 코드베이스에서 동일 설계를 구현·검증한 선행 작업
 
+## 구현 중 개정 (2026-06-10)
+
+구현 단계에서 잔여 `:game → :room` 의존을 더 제거하면서 결정 2·4·6이 다음과 같이 바뀌었다. 아래 개정이 본문 해당 결정의 세부 서술보다 우선한다.
+
+1. **결정 4 — 게임 시작 흐름을 이벤트로 분리한다.** 원안은 `:game` 컨슈머가 `RoomQueryService.getByJoinCode`로 플레이어 명단을 조회하는 "최소 잔존 참조"를 유지했다. 개정안은 시작 커맨드(`StartMiniGameCommandEvent`, `:game-api`로 이전)를 **`:room`의 `MiniGameStartConsumer`가 먼저 소비**해 `validateStartable`·플레이어 명단 수집·`markPlaying`을 수행하고, **in-process 동기 이벤트 `GameStartReadyEvent`(`:game-api`)** 로 `:game`(`MiniGameEventService.onGameStartReady`)에 시작을 위임한다. 이로써 `MiniGameEventService`의 `Room`/`RoomQueryService` 의존이 사라진다.
+   - **Redis Stream이 아니라 in-process 동기 이벤트를 쓰는 이유**: 스트림 리스너가 컨슈머 그룹을 쓰지 않아(각 인스턴스가 모든 메시지를 독립 소비) 중간 단계를 스트림으로 쪼개면 인스턴스 수만큼 중복 발행돼 대기열이 깨진다. in-process는 발행 인스턴스에서 한 번만 동기 실행되고, `startGame` 실패가 발행 측으로 전파돼 `markPlaying`을 건너뛸 수 있어(검증 → 시작 → PLAYING 전이의 순서·원자성 보존) 결정 5의 `MiniGameFinishedEvent` 패턴과 대칭이다.
+2. **결정 2 / Step 4 — `updateGames` 지연 생성 폴백을 제거한다(Option B).** 미니게임 선택 호스트 검증을 `MiniGameSelectConsumer`가 `RoomQueryService`로 하던 것을 제거하고 **GameSession이 단독 수행**한다. 세션은 방 생성 시 `GameSessionInitConsumer`가 권위 있는 호스트로 사전 생성하므로(지연 생성 없음), `replaceGames`의 호스트 검증이 "select가 주장한 hostName == 권위 호스트 이름"을 보증한다(기존 Room 검증과 보안 등가). init보다 select가 먼저 도달하는 극히 짧은 창에서는 `getSession`이 예외를 던져 `EventDispatcher`가 격리·스킵하고 클라이언트 재전송으로 복구된다.
+3. **결정 6 — 생명주기 이벤트를 `:game-api`로 이전하고 중립 네이밍한다.** `RoomCreateEvent`/`RoomRemovedEvent`(`:room.domain.event`)를 **`GameRoomCreatedEvent`/`GameRoomRemovedEvent`(`:game-api` `gamecommon`)** 로 이전한다. `BaseEvent`가 `:common`에 있어 의존 위반이 없고, `:game`이 `:room` 이벤트를 import하던 참조 2건이 사라진다(`:game → :game-api`만 남음). `:room`은 생산자로서, `:game`은 소비자로서 모두 `:game-api`만 본다.
+4. **부수 — `PlayerHands`의 `room.domain.RoomErrorCode`를 공용 `GameErrorCode`(`:game-api` `gamecommon`)로 교체**한다. 게임 전반의 횡단 개념(플레이어 식별 실패 등)을 담는 공용 에러 코드를 신설한다.
+
+> `MiniGamePersistenceService`의 `Room`/`RoomState`/`PlayerEntity` 의존(JPA FK 계열)은 본 개정 범위 밖이며, `MiniGameEntity`의 `RoomEntity` FK·`PlayerEntity` 영속 책임 분리는 별도 후속 작업으로 미룬다.
+
 ## 컨텍스트
 
 ADR-0011 멀티 모듈 전환으로 게임 타입(`Playable`, `Gamer`, `MiniGameType`, `MiniGameResult`, `MiniGameScore`)은 `:game-api`로 이전됐다. 그러나 **게임 인스턴스의 소유권은 여전히 `Room`에 있다.**
@@ -105,28 +117,28 @@ public enum GameSessionStatus {
 - ⚠️ **이 이름 기반 식별은 "방 내 닉네임 유니크" 불변식에 의존한다 — 이는 영구 보장이 아니다.** 현재는 복잡도 때문에 중복 닉네임을 차단만 하고 있으나 차후 리팩터로 허용될 예정이다. 허용 시 이름은 더 이상 방-유니크 식별자가 아니므로, GameSession의 호스트/플레이어 식별을 방-유니크 키로 이관해야 한다. 회원은 `UserCode`로 가능하지만 게스트는 `UserCode`가 없으므로 `PlayerKey`(ADR-0009, 방-유니크) 같은 토큰이나 합성 식별자가 필요하다. 이 이관은 후속 고려 사항의 외부 식별 ADR과 한 묶음으로 설계한다.
 - 검증 실패는 `BusinessException` + `GameSessionErrorCode`로 처리한다.
 
-| 코드 | HTTP | 설명 |
-|------|------|------|
-| `NOT_HOST` | 403 | 호스트 외 게임 세션 조작 시도 |
-| `DUPLICATE_GAME` | 400 | 동일 게임 타입 중복 선택 |
-| `TOO_MANY_GAMES` | 400 | 선택 게임 수가 상한(5개) 초과 |
-| `GAME_IN_PROGRESS` | 409 | 게임 진행 중 대기열 변경 시도 |
-| `NO_PENDING_GAMES` | 409 | 대기 게임 없는 상태에서 시작 요청 |
-| `GAME_NOT_FOUND` | 404 | 완료된 게임 조회 실패 |
+| 코드                 | HTTP | 설명                  |
+|--------------------|------|---------------------|
+| `NOT_HOST`         | 403  | 호스트 외 게임 세션 조작 시도   |
+| `DUPLICATE_GAME`   | 400  | 동일 게임 타입 중복 선택      |
+| `TOO_MANY_GAMES`   | 400  | 선택 게임 수가 상한(5개) 초과  |
+| `GAME_IN_PROGRESS` | 409  | 게임 진행 중 대기열 변경 시도   |
+| `NO_PENDING_GAMES` | 409  | 대기 게임 없는 상태에서 시작 요청 |
+| `GAME_NOT_FOUND`   | 404  | 완료된 게임 조회 실패        |
 
 `GameSessionRepository` 인터페이스를 `minigame.domain`에 두고, `MemoryGameSessionRepository`(`ConcurrentHashMap` 기반)를 `minigame.infra`에 구현한다.
 
 `GameSessionService`(application)는 다음 메서드로 구성한다.
 
-| 메서드 | 용도 |
-|--------|------|
-| `initSession(JoinCode, Gamer)` | 방 생성 시 세션 사전 초기화 (이미 존재하면 무시) |
-| `getSession(JoinCode)` | 읽기 전용 조회 (세션 반드시 존재) |
-| `findSession(JoinCode)` | 세션 유무 불확실할 때 `Optional` 반환 |
-| `updateGames(MiniGameSelectEvent)` | `replaceGames` 위임 |
-| `startGame(JoinCode, Gamer requester, List<Gamer> gamers)` | `startNextGame` 위임 — `READY`+대기열 조건에서 `PLAYING` 전이, 시작 `Playable` 반환 |
-| `finishGame(JoinCode)` | `finishCurrentGame` 위임 — `PLAYING` → `READY`/`DONE`, 갱신된 라운드 수(`roundCount`) 반환 |
-| `deleteSession(JoinCode)` | 방 삭제 시 세션 정리 |
+| 메서드                                                        | 용도                                                                              |
+|------------------------------------------------------------|---------------------------------------------------------------------------------|
+| `initSession(JoinCode, Gamer)`                             | 방 생성 시 세션 사전 초기화 (이미 존재하면 무시)                                                   |
+| `getSession(JoinCode)`                                     | 읽기 전용 조회 (세션 반드시 존재)                                                            |
+| `findSession(JoinCode)`                                    | 세션 유무 불확실할 때 `Optional` 반환                                                      |
+| `updateGames(MiniGameSelectEvent)`                         | `replaceGames` 위임                                                               |
+| `startGame(JoinCode, Gamer requester, List<Gamer> gamers)` | `startNextGame` 위임 — `READY`+대기열 조건에서 `PLAYING` 전이, 시작 `Playable` 반환            |
+| `finishGame(JoinCode)`                                     | `finishCurrentGame` 위임 — `PLAYING` → `READY`/`DONE`, 갱신된 라운드 수(`roundCount`) 반환 |
+| `deleteSession(JoinCode)`                                  | 방 삭제 시 세션 정리                                                                    |
 
 `startGame`의 `List<Gamer>`는 호출부(게임 시작 흐름의 `:game` 컨슈머)가 `RoomQueryService`에서 현재 플레이어를 조회해 전달한다 — 결정 4가 명시한 `:game` → `:room` 최소 잔존 참조다. `finishGame`이 반환하는 `roundCount`(= 대기 + 진행 중 + 완료 = 세션 선택 게임 총수)는 결정 5에서 `MiniGameFinishedEvent`에 실려 `:room`의 확률 조정에 사용된다.
 
@@ -223,21 +235,21 @@ public record MiniGameFinishedEvent(
 GameSession 생성·정리를 서비스 호출 누락에 의존하지 않도록 Room 생명주기 이벤트에 연결한다.
 
 ```text
-RoomCreateEvent  (기존)  → GameSessionInitConsumer    (:game) → initSession()
-RoomRemovedEvent (신설)  → GameSessionCleanupConsumer (:game) → deleteSession()
+GameRoomCreatedEvent (:game-api)  → GameSessionInitConsumer    (:game) → initSession()
+GameRoomRemovedEvent (:game-api)  → GameSessionCleanupConsumer (:game) → deleteSession()
 ```
 
 - **생성·정리 모두 Redis Stream Consumer로 통일한다.** 두 생명주기 이벤트 모두 `EventDispatcher`를 경유하는 `Consumer`로 처리하며, in-process 리스너를 섞지 않는다. `GameSession`은 `MemoryGameSessionRepository`(인스턴스 로컬 `ConcurrentHashMap`)에 저장되므로, 정리 이벤트도 생성과 동일한 Stream 경로를 타야 세션을 소유한 인스턴스에 일관되게 도달한다(in-process 이벤트는 발행 인스턴스에만 전달되어 불일치 위험).
-- `RoomRemovedEvent`를 `room.domain.event`에 신설하고, `DelayedRoomRemovalService`가 방 삭제 완료 후 Redis Stream으로 발행한다(`StreamPublisher` 경유, 기존 이벤트와 동일).
-- `GameSessionInitConsumer`는 `RoomCreateEvent`의 `hostName`만으로 host를 구성한다(`initSession(joinCode, Gamer.guest(hostName))`). 호스트 검증이 이름 기준이므로(결정 2) `userId`는 불필요해 `RoomCreateEvent` 변경이 없다.
+- `GameRoomRemovedEvent`를 `:game-api` `gamecommon`에 신설하고, `DelayedRoomRemovalService`가 방 삭제 완료 후 Redis Stream으로 발행한다(`StreamPublisher` 경유, 기존 이벤트와 동일). (개정: 원안은 `room.domain.event.RoomRemovedEvent`였다 — 상단 「구현 중 개정」 참조.)
+- `GameSessionInitConsumer`는 `GameRoomCreatedEvent`의 `hostName`만으로 host를 구성한다(`initSession(joinCode, Gamer.guest(hostName))`). 호스트 검증이 이름 기준이므로(결정 2) `userId`는 불필요해 이벤트에 `userId` 필드가 없다.
 - 현재 `EventDispatcher`(`:infra`)는 이벤트 타입당 Consumer 1개만 지원한다(미등록 시 warn 후 스킵). `RoomCreateEvent`를 기존 `RoomCreateConsumer`와 신규 `GameSessionInitConsumer`가 함께 처리해야 하므로, `ObjectProvider.stream()`으로 동일 타입 Consumer 전체를 수집해 순차 실행하는 **팬아웃 방식으로 변경**한다. `RoomRemovedEvent`는 현재 Consumer가 1개(`GameSessionCleanupConsumer`)뿐이지만 동일 팬아웃 경로를 그대로 사용한다.
 
 ### 7. 미니게임 REST 엔드포인트 `:game` 이전
 
-| 엔드포인트 | 현재 위치 | 이전 위치 | 변경 사항 |
-|---|---|---|---|
-| `GET /rooms/minigames` | `:room` `RoomRestController` | `:game` `MiniGameRestController` | 없음 |
-| `GET /rooms/minigames/selected` | `:room` `RoomRestController` | `:game` `MiniGameRestController` | `Room` → `GameSession.getSelectedTypes()` |
+| 엔드포인트                                       | 현재 위치                        | 이전 위치                            | 변경 사항                                                       |
+|---------------------------------------------|------------------------------|----------------------------------|-------------------------------------------------------------|
+| `GET /rooms/minigames`                      | `:room` `RoomRestController` | `:game` `MiniGameRestController` | 없음                                                          |
+| `GET /rooms/minigames/selected`             | `:room` `RoomRestController` | `:game` `MiniGameRestController` | `Room` → `GameSession.getSelectedTypes()`                   |
 | `GET /rooms/{joinCode}/miniGames/remaining` | `:room` `RoomRestController` | `:game` `MiniGameRestController` | `RemainingMiniGameResponse`도 `:game`으로 이전, `Playable` 의존 제거 |
 
 URL 경로는 클라이언트 호환을 위해 유지한다.
@@ -286,7 +298,7 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 
 ## 핵심 제약
 
-- `GameSession`은 `JoinCode`로 Room과 1:1 연결된다. Room 삭제 시 `RoomRemovedEvent` → `GameSessionCleanupConsumer`(Redis Stream)로 GameSession도 반드시 정리한다. 생성·정리 모두 Stream Consumer로 통일하고 in-process 리스너를 섞지 않는다.
+- `GameSession`은 `JoinCode`로 Room과 1:1 연결된다. Room 삭제 시 `GameRoomRemovedEvent`(`:game-api`) → `GameSessionCleanupConsumer`(Redis Stream)로 GameSession도 반드시 정리한다. 생성·정리 모두 Stream Consumer로 통일하고 in-process 리스너를 섞지 않는다.
 - `:room` 도메인 코드는 `Playable`, `MiniGameType`, `MiniGameResult`, `MiniGameScore`를 import하지 않는다. `:game-api` 참조는 `MiniGameFinishedEvent` 리스너 한 곳만 허용한다.
 - 게임 결과 전달은 `MiniGameFinishedEvent`(`:game-api`) in-process 동기 리스너로 처리한다. 해당 리스너에 `@Async` 적용 금지 — `publishEvent()` 반환 시점에 확률 조정 완료가 보장돼야 룰렛/스코어보드 조회 타이밍이 깨지지 않는다.
 - `:game`은 `RoomCommandService`를 직접 호출하지 않는다.

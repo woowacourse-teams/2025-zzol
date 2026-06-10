@@ -1,4 +1,4 @@
-# 미니게임 타이밍 및 스케줄러 설정 (card-game, block-stacking, ladder, speed-touch, blind-timer, roulette)
+# 미니게임 타이밍 및 스케줄러 설정 (card-game, block-stacking, ladder, racing-game, speed-touch, blind-timer, roulette)
 game:
   scheduler:
     pool-size: 2   # 전 게임 공통 (GameTaskSchedulerFactory)
@@ -25,6 +25,12 @@ ladder:
     drawing: 8000ms
     drawing-grace-period: 300ms
     result: 5000ms
+
+racing-game:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    race-finished-delay: 2000ms
 
 speed-touch:
   timing:

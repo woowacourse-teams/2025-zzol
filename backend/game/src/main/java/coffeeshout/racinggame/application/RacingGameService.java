@@ -2,6 +2,7 @@ package coffeeshout.racinggame.application;
 
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.racinggame.config.RacingGameTimingProperties;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
@@ -13,7 +14,6 @@ import coffeeshout.racinggame.domain.event.RaceStateChangedEvent;
 import coffeeshout.racinggame.domain.event.RunnersMovedEvent;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ScheduledFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,17 +29,20 @@ public class RacingGameService implements MiniGameService {
     private final TaskScheduler taskScheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final SpeedCalculator speedCalculator;
+    private final RacingGameTimingProperties timing;
 
     public RacingGameService(
             GameSessionService gameSessionService,
             @Qualifier("racingGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
-            SpeedCalculator speedCalculator
+            SpeedCalculator speedCalculator,
+            RacingGameTimingProperties timing
     ) {
         this.gameSessionService = gameSessionService;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
         this.speedCalculator = speedCalculator;
+        this.timing = timing;
     }
 
     @Override
@@ -77,14 +80,14 @@ public class RacingGameService implements MiniGameService {
         taskScheduler.schedule(() -> {
             processPrepare(racingGame, joinCode);
             eventPublisher.publishEvent(RaceStateChangedEvent.of(racingGame, joinCode));
-        }, Instant.now().plus(racingGame.getState().getDuration(), ChronoUnit.MILLIS));
+        }, Instant.now().plus(timing.description()));
     }
 
     private void processPrepare(RacingGame racingGame, String joinCode) {
         racingGame.updateState(RacingGameState.PREPARE);
         eventPublisher.publishEvent(RunnersMovedEvent.of(racingGame, joinCode));
         taskScheduler.schedule(() -> startAutoMove(racingGame, joinCode),
-                Instant.now().plus(racingGame.getState().getDuration(), ChronoUnit.MILLIS));
+                Instant.now().plus(timing.prepare()));
     }
 
     private ScheduledFuture<?> scheduleAutoMoveTask(RacingGame racingGame, String joinCode) {
@@ -113,7 +116,7 @@ public class RacingGameService implements MiniGameService {
         // 순서 불변식(ADR-0023 결정 5): finishGame()으로 roundCount를 먼저 확정·상태 복귀시킨다.
         final int roundCount = gameSessionService.finishGame(new JoinCode(joinCode));
         taskScheduler.schedule(() -> eventPublisher.publishEvent(RaceFinishedEvent.of(racingGame, joinCode)),
-                Instant.now().plusSeconds(2));
+                Instant.now().plus(timing.raceFinishedDelay()));
         racingGame.stopAutoMove();
         // 확률 조정·결과 저장을 유발하는 이벤트는 종료 알림·정리를 모두 끝낸 뒤 마지막에 발행한다 —
         // 저장 리스너(@Transactional/@RedisLock) 실패가 게임 종료 알림·자동이동 정지를 막지 않도록.

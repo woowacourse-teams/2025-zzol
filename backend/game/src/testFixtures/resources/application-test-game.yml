@@ -24,6 +24,12 @@ card-game:
     score-board: 500ms
     early-finish-delay: 500ms
 
+racing-game:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    race-finished-delay: 500ms
+
 speed-touch:
   timing:
     description: 500ms

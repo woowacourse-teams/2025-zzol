@@ -1,7 +1,6 @@
 package coffeeshout.minigame.infra.persistence;
 
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.infra.persistence.PlayerEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -32,9 +31,9 @@ public class MiniGameResultEntity {
     @JoinColumn(name = "mini_game_play_id", nullable = false)
     private MiniGameEntity miniGamePlay;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "player_id", nullable = false)
-    private PlayerEntity player;
+    // PlayerEntity FK를 ID 참조로 분리한다(ADR-0025 FK 영속 책임 분리) — :game이 :room.infra를 모르게 한다.
+    @Column(name = "player_id", nullable = false)
+    private Long playerId;
 
     @Column(name = "player_rank", nullable = false)
     private Integer rank;
@@ -49,9 +48,9 @@ public class MiniGameResultEntity {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public MiniGameResultEntity(MiniGameEntity miniGamePlay, PlayerEntity player, Integer rank, Long score) {
+    public MiniGameResultEntity(MiniGameEntity miniGamePlay, Long playerId, Integer rank, Long score) {
         this.miniGamePlay = miniGamePlay;
-        this.player = player;
+        this.playerId = playerId;
         this.rank = rank;
         this.score = score;
         this.miniGameType = miniGamePlay.getMiniGameType();

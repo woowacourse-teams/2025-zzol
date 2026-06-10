@@ -98,7 +98,7 @@ git checkout -b be/{type}/{issue-number}-{slug}
 - `{slug}`: 이슈 제목을 소문자 + 하이픈으로 변환, 최대 40자
 - 한국어 단어는 의미를 유지하는 영문으로 변환
 
-## 6. 완료 출력
+## 7. 완료 출력
 
 ```text
 ✅ 이슈 생성: https://github.com/.../issues/{N}

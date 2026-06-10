@@ -12,7 +12,7 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
-import coffeeshout.room.domain.event.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

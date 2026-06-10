@@ -11,7 +11,7 @@ import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.domain.event.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;

@@ -4,7 +4,7 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.event.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;

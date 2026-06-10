@@ -15,7 +15,7 @@ import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.GameSessionStatus;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.MemoryGameSessionRepository;
-import coffeeshout.room.domain.event.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;

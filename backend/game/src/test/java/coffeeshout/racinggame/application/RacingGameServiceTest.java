@@ -11,7 +11,7 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.racinggame.domain.RacingGameState;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.event.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import coffeeshout.room.domain.repository.RoomRepository;
 import java.time.Duration;
 import java.util.List;

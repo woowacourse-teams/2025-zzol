@@ -3,7 +3,7 @@ package coffeeshout.room.ui;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.RoomService;
-import coffeeshout.room.domain.event.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.PlayerReadyEvent;
 import coffeeshout.room.domain.event.RouletteShowEvent;

@@ -1,4 +1,4 @@
-package coffeeshout.room.domain.event;
+package coffeeshout.minigame.event.dto;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.minigame.domain.MiniGameType;

@@ -29,7 +29,7 @@ public class MiniGameResultBulkRepositoryImpl implements MiniGameResultBulkRepos
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 final MiniGameResultEntity entity = resultEntities.get(i);
                 ps.setLong(1, entity.getMiniGamePlay().getId());
-                ps.setLong(2, entity.getPlayer().getId());
+                ps.setLong(2, entity.getPlayerId());
                 ps.setInt(3, entity.getRank());
                 ps.setLong(4, entity.getScore());
                 ps.setString(5, entity.getMiniGameType().name());

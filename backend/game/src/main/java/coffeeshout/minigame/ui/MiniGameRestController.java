@@ -2,6 +2,8 @@ package coffeeshout.minigame.ui;
 
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
@@ -9,7 +11,6 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.ui.response.MiniGameRanksResponse;
 import coffeeshout.minigame.ui.response.MiniGameScoresResponse;
 import coffeeshout.minigame.ui.response.RemainingMiniGameResponse;
-import coffeeshout.room.application.service.RoomQueryService;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class MiniGameRestController implements MiniGameApi {
 
     private final GameSessionService gameSessionService;
-    private final RoomQueryService roomQueryService;
 
     @GetMapping("/minigames/scores")
     public ResponseEntity<MiniGameScoresResponse> getScores(
@@ -76,12 +76,16 @@ public class MiniGameRestController implements MiniGameApi {
     }
 
     /**
-     * 존재하지 않는 방은 404로 거부한다(이전 {@code :room} 엔드포인트의 응답 계약 유지). 세션은 게임 선택
-     * 시점에 지연 생성되므로(Step 6의 {@code initSession} 도입 전) 세션 부재만으로는 방 부재를 판별할 수 없다.
+     * 존재하지 않는 방은 404로 거부한다(이전 {@code :room} 엔드포인트의 응답 계약 유지). GameSession은 방 생성
+     * 시점에 {@code GameSessionInitConsumer}가 사전 생성하고 방 삭제 시 정리하므로 방과 1:1 대응한다
+     * (ADR-0025 결정 6 — 지연 생성 폐지). 따라서 세션 부재를 방 부재로 판정할 수 있어 {@code :room} 조회 없이
+     * 동일한 404 계약을 유지한다.
      */
     private JoinCode validateRoomExists(String joinCode) {
         final JoinCode code = new JoinCode(joinCode);
-        roomQueryService.getByJoinCode(code);
+        if (gameSessionService.findSession(code).isEmpty()) {
+            throw new BusinessException(GlobalErrorCode.NOT_EXIST, "방이 존재하지 않습니다.");
+        }
         return code;
     }
 }

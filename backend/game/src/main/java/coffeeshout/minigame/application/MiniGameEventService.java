@@ -2,39 +2,35 @@ package coffeeshout.minigame.application;
 
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
-import coffeeshout.minigame.event.MiniGameStartedEvent;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.event.StartMiniGameCommandEvent;
-import coffeeshout.gamecommon.Playable;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.application.service.RoomQueryService;
+import coffeeshout.minigame.event.GameStartReadyEvent;
+import coffeeshout.minigame.event.MiniGameStartedEvent;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class MiniGameEventService {
 
-    private final Map<MiniGameType, coffeeshout.minigame.domain.MiniGameService> miniGameServiceMap;
-    private final RoomQueryService roomQueryService;
+    private final Map<MiniGameType, MiniGameService> miniGameServiceMap;
     private final GameSessionService gameSessionService;
     private final ApplicationEventPublisher eventPublisher;
     private final MiniGamePersistenceService miniGamePersistenceService;
 
     public MiniGameEventService(
-            RoomQueryService roomQueryService,
             GameSessionService gameSessionService,
-            List<coffeeshout.minigame.domain.MiniGameService> miniGameServices,
+            List<MiniGameService> miniGameServices,
             ApplicationEventPublisher eventPublisher,
             MiniGamePersistenceService miniGamePersistenceService
     ) {
-        this.roomQueryService = roomQueryService;
         this.gameSessionService = gameSessionService;
         this.eventPublisher = eventPublisher;
         this.miniGamePersistenceService = miniGamePersistenceService;
@@ -45,18 +41,20 @@ public class MiniGameEventService {
         ));
     }
 
-    public void startMiniGame(StartMiniGameCommandEvent event) {
-        log.info("미니게임 시작 이벤트 수신: eventId={}, joinCode={}, hostName={}",
+    /**
+     * 방 검증을 통과한 시작 요청을 받아 GameSession을 시작한다(ADR-0023 결정 4 — 이벤트 분리).
+     * {@code :room}의 {@code MiniGameStartConsumer}가 in-process 동기로 발행하므로, 여기서 던지는 예외는
+     * 발행 측으로 전파돼 방 {@code markPlaying} 전이를 건너뛰게 한다(검증 → 시작 → PLAYING 전이의 순서 보존).
+     * 플레이어 명단은 방이 조회해 이벤트에 실어 주므로 더 이상 {@code RoomQueryService}를 호출하지 않는다.
+     */
+    @EventListener
+    public void onGameStartReady(GameStartReadyEvent event) {
+        log.info("게임 시작 준비 이벤트 수신: eventId={}, joinCode={}, hostName={}",
                 event.eventId(), event.joinCode(), event.hostName());
 
         final JoinCode joinCode = new JoinCode(event.joinCode());
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-
-        // 검증(읽기 전용) → 대기열 전이(GameSession) → PLAYING 전이(Room) 순서로 분리 (ADR-0023 결정 4)
-        room.validateStartable(event.hostName());
         final Playable playable = gameSessionService.startGame(
-                joinCode, Gamer.guest(event.hostName()), room.getGamers());
-        room.markPlaying();
+                joinCode, Gamer.guest(event.hostName()), event.gamers());
 
         final MiniGameType miniGameType = playable.getMiniGameType();
 

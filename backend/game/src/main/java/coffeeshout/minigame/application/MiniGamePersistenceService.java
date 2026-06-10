@@ -3,7 +3,7 @@ package coffeeshout.minigame.application;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.lock.RedisLock;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.event.StartMiniGameCommandEvent;
+import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.minigame.application.port.MiniGameEntityRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.room.application.port.PlayerEntityRepository;
@@ -37,7 +37,7 @@ public class MiniGamePersistenceService {
             leaseTime = 5000
     )
     @Transactional
-    public void saveGameEntities(StartMiniGameCommandEvent event, MiniGameType miniGameType) {
+    public void saveGameEntities(GameStartReadyEvent event, MiniGameType miniGameType) {
         final JoinCode roomJoinCode = new JoinCode(event.joinCode());
         final Room room = roomQueryService.getByJoinCode(roomJoinCode);
 

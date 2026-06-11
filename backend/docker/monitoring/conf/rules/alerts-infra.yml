@@ -10,17 +10,19 @@
 groups:
   - name: infra-availability
     rules:
-      # 앱 인스턴스 down — blue/green 둘 중 하나라도 scrape 실패가 2분 지속.
-      # critical 근거: 인스턴스 소실은 재시작/배포 사고의 1차 신호다.
-      # `by (instance)`로 평가해 blue/green 합산에 묻히지 않게 한다(ADR-0026 트레이드오프).
+      # 앱 서비스 down — 해당 job의 인스턴스가 하나도 안 떠 있는 상태가 2분 지속.
+      # 블루-그린(평소 한 색만 활성): 유휴 색 타깃은 항상 up=0이 정상이므로 인스턴스별로 보면
+      # 영구 오탐이 난다. job 합산(sum==0)으로 봐서 "활성 색까지 소실 = 진짜 서비스 중단"만 잡는다.
+      # 활성 색이 1대뿐이라 인스턴스 소실 == 서비스 소실이고, 배포 컷오버 순간의 짧은 공백은 for:2m이 거른다.
+      # (ADR-0026 재결정: 기존 by-instance → job 합산. 블루-그린 토폴로지 확정에 따른 정정.)
       - alert: AppInstanceDown
-        expr: up{job=~"dev-app|prod-app"} == 0
+        expr: sum by (job) (up{job=~"dev-app|prod-app"}) == 0
         for: 2m
         labels:
           severity: critical
         annotations:
-          summary: "앱 인스턴스 scrape 실패 ({{ $labels.job }} / {{ $labels.instance }})"
-          description: "{{ $labels.instance }}가 2분 이상 메트릭을 내지 않습니다. 컨테이너 다운 또는 네트워크 단절 가능성."
+          summary: "앱 인스턴스 전부 down ({{ $labels.job }})"
+          description: "{{ $labels.job }}의 활성 인스턴스가 2분 이상 메트릭을 내지 않습니다. 서비스 중단 가능성(컨테이너 다운 또는 네트워크 단절)."
 
       # 익스포터/보조 타깃 down — 모니터링 자체의 사각지대를 만든다.
       # 앱이 아니므로 warning. node가 죽으면 호스트 리소스 룰(디스크/CPU)이 조용히 멈춘다.

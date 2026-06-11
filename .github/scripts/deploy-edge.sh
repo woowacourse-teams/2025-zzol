@@ -167,7 +167,11 @@ apply_nginx() {
         restore_nginx_files
         return 1
     fi
-    cp -a "${NGINX_SRC}/docker-compose.yml" "${NGINX_DIR}/docker-compose.yml"
+    if ! cp -a "${NGINX_SRC}/docker-compose.yml" "${NGINX_DIR}/docker-compose.yml"; then
+        log_error "docker-compose 복사 실패 — 원복"
+        restore_nginx_files
+        return 1
+    fi
 
     # 2. 문법 게이트 — 재생성(up -d) 전에 옛 워커로 새 conf 검증
     if ! docker exec "${NGINX_CONTAINER}" nginx -t 2>&1; then

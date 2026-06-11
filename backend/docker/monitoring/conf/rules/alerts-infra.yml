@@ -1,0 +1,34 @@
+# Prometheus 알림 룰 — 인프라/타깃 가용성 (ADR-0026 Phase A)
+#
+# 두 엔진 어디에도 없던 "타깃 자체가 죽음" 계열. 기존 Grafana Alerting 8룰은
+# 앱이 떠 있다는 전제 위에서 리소스를 본다 — 인스턴스가 통째로 사라지는 경우는
+# Prometheus `up`으로만 잡힌다.
+#
+# 메트릭 출처: Prometheus가 매 scrape마다 자동 생성하는 `up` (ADR-0026 컨텍스트).
+# job 라벨 값은 conf/prometheus.yml의 scrape_configs 기준:
+#   dev-app, prod-app, cadvisor, mysql-exporter, redis-exporter, node
+groups:
+  - name: infra-availability
+    rules:
+      # 앱 인스턴스 down — blue/green 둘 중 하나라도 scrape 실패가 2분 지속.
+      # critical 근거: 인스턴스 소실은 재시작/배포 사고의 1차 신호다.
+      # `by (instance)`로 평가해 blue/green 합산에 묻히지 않게 한다(ADR-0026 트레이드오프).
+      - alert: AppInstanceDown
+        expr: up{job=~"dev-app|prod-app"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "앱 인스턴스 scrape 실패 ({{ $labels.job }} / {{ $labels.instance }})"
+          description: "{{ $labels.instance }}가 2분 이상 메트릭을 내지 않습니다. 컨테이너 다운 또는 네트워크 단절 가능성."
+
+      # 익스포터/보조 타깃 down — 모니터링 자체의 사각지대를 만든다.
+      # 앱이 아니므로 warning. node가 죽으면 호스트 리소스 룰(디스크/CPU)이 조용히 멈춘다.
+      - alert: MonitoringTargetDown
+        expr: up{job=~"cadvisor|mysql-exporter|redis-exporter|node"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "모니터링 타깃 down ({{ $labels.job }} / {{ $labels.instance }})"
+          description: "{{ $labels.job }} 익스포터가 5분 이상 응답하지 않습니다. 이 타깃에 의존하는 알림이 평가 불능 상태일 수 있습니다."

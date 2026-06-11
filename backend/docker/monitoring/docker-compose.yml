@@ -43,6 +43,7 @@ services:
       - prometheus-data:/prometheus
       - prometheus-logs:/var/log/prometheus
       - ./conf/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./conf/rules:/etc/prometheus/rules:ro   # ADR-0026: 알림 룰 파일
     networks:
       - monitoring-network
       - dev-network
@@ -68,6 +69,41 @@ services:
           memory: 1G         # 최소 1GB
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:9090/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # Alertmanager - Alert Routing & Delivery (ADR-0026)
+  # ============================================
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./conf/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./secrets:/etc/alertmanager/secrets:ro   # slack_api_url (서버에서 생성, 미커밋)
+      - alertmanager-data:/alertmanager
+    networks:
+      - monitoring-network   # prometheus가 alertmanager:9093 으로 접근
+    expose:
+      - "9093"               # 호스트 미노출 — 검증은 docker exec / 내부 네트워크
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    environment:
+      - TZ=Asia/Seoul
+    # 자원 제한 (Alertmanager - 경량)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.15'       # 최대 0.15 vCPU
+          memory: 192M       # 최대 192MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 64M        # 최소 64MB
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:9093/-/healthy || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -226,4 +262,6 @@ volumes:
   tempo-data:
     driver: local
   tempo-logs:
+    driver: local
+  alertmanager-data:
     driver: local

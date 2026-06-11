@@ -29,8 +29,10 @@
 1. **알림 엔진을 Alertmanager + Prometheus 룰 파일로 일원화한다.** Grafana Alerting을 남긴 채 Alertmanager를 얹으면 **같은 datasource를 읽는 두 엔진**이 되어 룰셋·알림 설정이 이중화된다(초기 검토안의 약점). 대신 Grafana는 시각화 본업으로 환원하고, 알림 룰은 모두 `conf/rules/*.yml`에 PromQL 텍스트로 둔다. 근거: PromQL `expr`는 Grafana 룰 모델(룰당 refId A/B/C 약 40줄)보다 간결하고, `promtool check rules`/`amtool check-config`로 CI·로컬 사전 검증이 가능하며, SLO 레코딩 룰과 multi-window burn-rate가 네이티브이고, Alertmanager의 그룹화·억제(inhibition)·silence가 인시던트 대응에서 더 강하다. 기존 8룰의 임계값(부하 테스트 실측)은 버리지 않고 PromQL로 이식한다.
 
 2. **2단계 롤아웃으로 어느 시점에도 알림 커버리지 공백을 만들지 않는다.**
-   - **Phase A (이슈 #1399):** Alertmanager 기동 + Slack 연동 + **두 엔진 어디에도 없던 신규 인시던트 룰·SLO**(대량 IP 차단, WS 핸드셰이크 실패, 에러버짓 burn-rate)를 Prometheus 룰로 작성한다. 동시에 **기존 Grafana Alerting에 Slack contact point를 추가**해, 이미 있는 8룰이 *즉시* 전달되게 한다. 이 구간은 일시적으로 엔진이 둘이지만 **둘 다 전달은 되므로** 인시던트 루프가 곧바로 닫힌다.
+   - **Phase A (이슈 #1399):** Alertmanager 기동 + Slack 연동 + **두 엔진 어디에도 없던 신규 인시던트 룰·SLO**(대량 IP 차단, WS 핸드셰이크 실패, 에러버짓 burn-rate)를 Prometheus 룰로 작성한다.
    - **Phase B (별도 이슈):** 8룰을 Prometheus 룰로 이관하고, 룰별 발화 동치를 검증한 뒤 Grafana Alerting provisioning을 제거한다. 신중한 검증을 동반한 통합 단계다.
+
+   > **실측에 의한 Phase A 범위 수정(2026-06-11):** 당초 Phase A는 "기존 Grafana Alerting에 Slack contact point를 추가해 8룰을 *즉시* 전달"하려 했고, 이 구간은 엔진이 둘이어도 둘 다 전달되므로 인시던트 루프가 곧 닫힌다고 봤다. 그러나 구현 중 서버를 실측하자 두 가지가 드러났다. ① Grafana provisioning의 `alerting/`이 `alerting_bak`으로 rename돼 **코드 관리가 끊긴 상태**다(8룰은 Grafana DB에 남아 평가·UI 표시는 되나 전달 채널이 비어 아무 데도 안 감). ② 레포의 `provisioning/alerting/`은 컨테이너 마운트 소스(`data/grafana/provisioning`, gitignore)와 edge-cd 동기화(`conf/`만) **어디에도 닿지 않는 orphan**이다. 8룰은 Phase B에서 Prometheus로 이관·삭제될 예정이므로 **곧 지울 Grafana provisioning 배관을 Phase A에서 복구하지 않기로 한다.** Phase A는 Alertmanager 신규 룰만 활성화하고, 8룰 커버리지 복원은 Phase B의 Prometheus 이관으로 일원화한다. (8룰을 당장 전달해야 하면 Grafana UI에서 contact point를 수동 추가하는 운영 조치로 대응하고 코드는 건드리지 않는다.)
 
 3. **이관의 핵심 제약: `noDataState: Alerting`은 Prometheus에 등가물이 없다.** 기존 룰 중 JVM 힙·WS 지연·서킷브레이커·CPU는 `noDataState: Alerting`(데이터가 없으면 발화) 의미를 가진다. Prometheus는 시계열이 사라지면 룰을 **그냥 발화하지 않는다.** 그대로 이관하면 이 4개가 **조용히 알림을 멈춘다** — 본 프로젝트가 반응하는 바로 그 silent failure다. 따라서 Phase B에서 이들은 반드시 `absent()` 동반 룰을 명시적으로 추가해야 동치가 된다. `noDataState: OK`(WS 실패·DB 풀·Redis 지연·디스크)는 단순 이식이다.
 
@@ -62,8 +64,64 @@
 
 ## 결과
 
-- 파일 변경 정본은 `backend/docker/monitoring/`: `conf/prometheus.yml`(`alerting`+`rule_files` 추가), `conf/alertmanager.yml`(신규), `conf/rules/*.yml`(신규), `docker-compose.yml`(alertmanager 서비스 + rules 마운트 + `alertmanager-data` 볼륨), `secrets/.gitignore`(신규). Phase A에서 기존 `provisioning/alerting/contact-points.yml`에 Slack contact point 추가, Phase B에서 `provisioning/alerting/` 정리.
+- 파일 변경 정본은 `backend/docker/monitoring/`: `conf/prometheus.yml`(`alerting`+`rule_files` 추가), `conf/alertmanager.yml`(신규), `conf/rules/*.yml`(신규), `docker-compose.yml`(alertmanager 서비스 + rules 마운트 + `alertmanager-data` 볼륨), `secrets/.gitignore`(신규). **Phase A는 Grafana provisioning을 건드리지 않는다**(위 범위 수정 참조). Phase B에서 8룰을 Prometheus로 이관하며 `provisioning/alerting/`(현재 서버에서 `alerting_bak`으로 비활성, 레포 정본은 마운트·CD 어디에도 닿지 않는 orphan)을 정리한다.
 - **Phase A = 이슈 #1399**, **Phase B(8룰 이관·Grafana Alerting 제거) = 이슈 #1400**으로 분리한다.
 - 호스트에서 9090/9093은 미노출(`expose`만)이므로 검증·운영 접근은 `docker exec` 또는 monitoring-network 내부에서만 한다.
 - 롤백은 앱·트래픽 영향이 없다: `docker compose stop alertmanager` + `prometheus.yml`의 `alerting`/`rule_files` 주석 처리 후 `/-/reload`로 즉시 원복된다.
 - 브랜치는 `be/chore/1399-add-alertmanager`다.
+
+## 배포 시 수동 적용 (Phase A 운영 체크리스트)
+
+Git 정본(`backend/docker/monitoring/`)은 edge-cd 워크플로우가 서버 `~/monitor/`로 동기화하지만, **시크릿과 실측 검증은 코드로 자동화되지 않는다.** 아래는 사람이 서버에서 직접 해야 하는 작업이다. 순서를 지킨다 — 시크릿이 없으면 alertmanager 컨테이너가 기동에 실패한다.
+
+### 1. 배포 전 — 시크릿·환경변수 준비 (필수)
+
+Phase A는 **Alertmanager만** Slack에 연동한다(기존 Grafana 8룰 전달은 Phase B로 미룬다 — 위 "실측에 의한 Phase A 범위 수정" 참조).
+
+- **Slack webhook 발급**: Incoming Webhook을 **`#problem` 채널**로 발급한다. `alertmanager.yml`이 receiver에서 채널을 명시하지만, webhook 자체도 같은 채널로 발급해 두면 일관된다.
+- **Alertmanager용 — 파일 마운트**: 서버에서 webhook URL을 파일로 만든다. `secrets/` 디렉터리는 Git에 `.gitignore`만 올라가므로 rsync로 동기화되지 않는다. 직접 생성한다.
+
+```bash
+mkdir -p ~/monitor/secrets
+printf '%s' 'https://hooks.slack.com/services/XXX/YYY/ZZZ' > ~/monitor/secrets/slack_api_url
+chmod 600 ~/monitor/secrets/slack_api_url
+```
+
+### 2. 배포 — 적용
+
+- `backend/docker/monitoring/**` 변경이 `be/dev`에 머지되면 edge-cd가 `~/monitor/`로 동기화 → `docker compose up -d`(alertmanager 신규 기동, prometheus 재생성) → `docker kill -s HUP prometheus`(룰 리로드)를 수행한다.
+- monitoring은 edge-cd에서 **best-effort**라 실패해도 워크플로우는 성공으로 뜬다. 아래 검증으로 실제 적용 여부를 직접 확인한다.
+
+### 3. 배포 후 — 검증 (성공 기준)
+
+호스트에서 9090/9093은 미노출이므로 `docker exec`로 접근한다.
+
+- **alertmanager healthy + prometheus 연결**:
+
+```bash
+docker exec prometheus wget -qO- http://alertmanager:9093/-/healthy
+docker exec prometheus wget -qO- http://localhost:9090/api/v1/alertmanagers
+```
+
+- **룰 로드 확인**: `docker exec prometheus wget -qO- http://localhost:9090/api/v1/rules` 로 14개 룰이 보이는지 확인.
+- **테스트 알림 → `#problem` 도착**:
+
+```bash
+docker exec alertmanager amtool alert add test severity=critical \
+  --alertmanager.url=http://localhost:9093 \
+  -a summary="배포 검증 테스트"
+```
+
+- **critical 룰 실평가**: dev 앱 컨테이너 하나를 중지해 `AppInstanceDown`이 발화 → 재기동 시 해제 알림까지 양쪽 도착하는지 확인.
+
+### 4. 배포 후 — 임계값 보정 (모든 신규 임계는 추정치)
+
+배포 직후 Prometheus API로 정상 베이스라인을 측정해 `conf/rules/*.yml`의 임계를 조정한다. 특히:
+
+- **WS `uri` 라벨 실측**: `http_server_requests_seconds_count`의 `uri` 라벨이 `/ws/info`인지 `/ws/**`인지 확인. `WsHandshakeFailure`의 `uri=~"/ws.*"`가 실제 라벨과 안 맞으면 룰이 발화하지 않는다.
+- **`ip_block_*` 베이스라인**: 정상 차단량을 재고 `MassIpBlockingSpike`(5 req/s)·`IpBanRateSpike`(1/s) 임계를 보정. 초기엔 오탐을 줄이는 방향(높게)으로 둔다.
+- **Redis Stream**: `redis_stream_e2e_latency`·`redis_stream_length`의 정상 분위수/길이 확인 후 0.5s·1000 임계 조정.
+
+### 5. 롤백
+
+앱·트래픽 영향 없음. `docker compose stop alertmanager` 후 `prometheus.yml`의 `alerting`/`rule_files`를 주석 처리하고 `docker kill -s HUP prometheus`(또는 `/-/reload`)로 즉시 원복한다.

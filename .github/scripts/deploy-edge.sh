@@ -50,6 +50,15 @@ SERVICE_INC_EXCLUDE=(--exclude='*-service.inc')
 
 BACKUP_DIR=""
 
+# 종료 사유(성공/실패/중단)와 무관하게 백업 임시 디렉터리를 회수한다.
+# BACKUP_DIR은 STAGING 밖(mktemp -d → /tmp/tmp.XXXX)이라 워크플로우의
+# staging trap으로는 정리되지 않으므로 스크립트 자체에서 건다.
+cleanup() {
+    [[ -n "${BACKUP_DIR}" && -d "${BACKUP_DIR}" ]] && rm -rf "${BACKUP_DIR}"
+    return 0
+}
+trap cleanup EXIT
+
 # ============================================
 # 백업 / 원복
 # ============================================
@@ -81,6 +90,8 @@ restore_nginx_files() {
         rsync -a --delete "${SERVICE_INC_EXCLUDE[@]}" "${BACKUP_DIR}/nginx-conf/" "${NGINX_DIR}/conf/"
     [[ -f "${BACKUP_DIR}/nginx-compose.yml" ]] && \
         cp -a "${BACKUP_DIR}/nginx-compose.yml" "${NGINX_DIR}/docker-compose.yml"
+    # 백업본 부재 시 마지막 [[ ]]가 비0을 반환하므로 명시적으로 0을 돌려준다.
+    return 0
 }
 
 # nginx 원복 + reload + 재프로브 (reload 후 프로브 실패용 — 깨진 설정이 라이브이므로 reload 필수)
@@ -112,8 +123,12 @@ _probe() {
     local code attempt
     for attempt in 1 2; do
         code=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 5 \
-            --resolve "${host}:443:127.0.0.1" "https://${host}${path}" 2>/dev/null || echo "000")
-        if [[ "$code" != "000" && "$code" -lt 500 ]]; then
+            --resolve "${host}:443:127.0.0.1" "https://${host}${path}" 2>/dev/null)
+        # 연결 실패 시 curl은 '000'을 출력하며 exit≠0. `|| echo`로 덧붙이면
+        # '000000'이 되어 거짓 통과하므로, 빈 값일 때만 명시 할당한다.
+        [[ -z "$code" ]] && code="000"
+        # 10# 강제로 leading-zero의 8진수 오해석을 막는다.
+        if [[ "$code" != "000" ]] && (( 10#$code < 500 )); then
             log_success "프로브 OK: ${host}${path} → ${code}"
             return 0
         fi
@@ -193,10 +208,14 @@ apply_nginx() {
 apply_monitoring() {
     log_step "📊 monitoring 설정 적용"
 
-    rsync -a --delete "${MONITOR_SRC}/conf/" "${MONITOR_DIR}/conf/"
-    cp -a "${MONITOR_SRC}/docker-compose.yml" "${MONITOR_DIR}/docker-compose.yml"
-
-    ( cd "${MONITOR_DIR}" && docker compose up -d )
+    # best-effort지만 각 단계 실패를 집계해 호출부(main)가 경고를 띄울 수 있도록 비0 전파.
+    local rc=0
+    rsync -a --delete "${MONITOR_SRC}/conf/" "${MONITOR_DIR}/conf/" \
+        || { log_warning "monitor conf sync 실패"; rc=1; }
+    cp -a "${MONITOR_SRC}/docker-compose.yml" "${MONITOR_DIR}/docker-compose.yml" \
+        || { log_warning "monitor compose 복사 실패"; rc=1; }
+    ( cd "${MONITOR_DIR}" && docker compose up -d ) \
+        || { log_warning "monitor compose up -d 실패"; rc=1; }
 
     # Prometheus는 SIGHUP으로 conf 핫리로드 (--web.enable-lifecycle 불필요)
     if check_container_running "${PROMETHEUS_CONTAINER}"; then
@@ -204,13 +223,16 @@ apply_monitoring() {
             log_success "Prometheus 설정 reload (SIGHUP)"
         else
             log_warning "Prometheus reload 실패 — 수동 점검"
+            rc=1
         fi
     fi
 
     # Loki/Tempo/Grafana conf는 핫리로드 미지원 → compose 변경 시에만 up -d로 재생성됨.
     # conf-only 변경은 후속 PR에서 선택적 restart로 처리(v1 범위 외).
-    log_success "monitoring 설정 동기화 완료"
-    return 0
+    if [[ "$rc" -eq 0 ]]; then
+        log_success "monitoring 설정 동기화 완료"
+    fi
+    return "$rc"
 }
 
 # ============================================
@@ -223,6 +245,11 @@ main() {
     require_file "${NGINX_SRC}/docker-compose.yml" || exit 1
     require_file "${MONITOR_SRC}/docker-compose.yml" || exit 1
 
+    # 소스 conf가 비었거나 누락된 채 rsync --delete가 돌면 라이브 conf를 비운다.
+    # nginx -t 게이트·원복으로 회복은 되지만, 원복까지 가지 않고 조기 차단한다.
+    [[ -d "${NGINX_SRC}/conf" && -n "$(ls -A "${NGINX_SRC}/conf" 2>/dev/null)" ]] \
+        || { log_error "nginx 소스 conf 누락/비어있음 — 중단"; exit 1; }
+
     backup_edge
 
     if ! apply_nginx; then
@@ -234,7 +261,7 @@ main() {
     apply_monitoring || log_warning "monitoring 적용 일부 실패 — 로그 확인"
 
     log_step "✅ Edge 배포 완료"
-    rm -rf "${BACKUP_DIR}"
+    # BACKUP_DIR 정리는 EXIT trap(cleanup)에 위임한다.
     exit 0
 }
 

@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,80 +53,36 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         session = createSession(joinCode.getValue(), host.getName());
     }
 
+    /**
+     * 시작→상태 전환→STOP 진행도→전원 STOP DONE은 모두 하나의 게임 플로우 위에서 순서대로 일어난다.
+     * 페이즈마다 게임을 재시작하면 description/prepare/playing 대기가 중복되므로,
+     * 단일 플로우에서 상태 전환·진행도 브로드캐스트·DONE 전환을 함께 검증한다.
+     */
     @Test
-    void 블라인드타이머_게임을_시작하면_상태_변경_메시지가_전송된다() {
+    void 게임_시작부터_전원_STOP까지_상태와_진행도가_순서대로_브로드캐스트된다() {
         // given
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/blind-timer/state", joinCodeValue);
         final String subscribeProgressUrl = String.format("/topic/room/%s/blind-timer/progress", joinCodeValue);
+        final String stopUrl = String.format("/app/room/%s/blind-timer/stop", joinCodeValue);
 
         var stateResponses = session.subscribe(subscribeStateUrl);
         var progressResponses = session.subscribe(subscribeProgressUrl);
 
-        // when
+        // when - 게임 시작
         startBlindTimerGame();
 
-        // then - DESCRIPTION 상태 (targetTimeMillis 포함)
+        // 상태 전환: DESCRIPTION(targetTimeMillis) → PREPARE → PLAYING
         BlindTimerStateResponse descriptionState = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), BlindTimerStateResponse.class);
-        assertThat(descriptionState.state()).isEqualTo("DESCRIPTION");
-        assertThat(descriptionState.targetTimeMillis()).isEqualTo(10000);
-
-        // PREPARE 상태
         BlindTimerStateResponse prepareState = payloadAs(stateResponses.get(6, TimeUnit.SECONDS), BlindTimerStateResponse.class);
-        assertThat(prepareState.state()).isEqualTo("PREPARE");
-
-        // PLAYING 상태
-        BlindTimerStateResponse playingState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
-        assertThat(playingState.state()).isEqualTo("PLAYING");
-    }
-
-    @Test
-    void STOP하면_진행도_브로드캐스트_메시지가_전송된다() {
-        // given
-        final String joinCodeValue = joinCode.getValue();
-        final String subscribeStateUrl = String.format("/topic/room/%s/blind-timer/state", joinCodeValue);
-        final String subscribeProgressUrl = String.format("/topic/room/%s/blind-timer/progress", joinCodeValue);
-        final String stopUrl = String.format("/app/room/%s/blind-timer/stop", joinCodeValue);
-
-        var stateResponses = session.subscribe(subscribeStateUrl);
-        var progressResponses = session.subscribe(subscribeProgressUrl);
-
-        // 게임 시작
-        startBlindTimerGame();
-
-        stateResponses.get(2, TimeUnit.SECONDS); // DESCRIPTION
-        stateResponses.get(6, TimeUnit.SECONDS); // PREPARE
         progressResponses.get(6, TimeUnit.SECONDS); // PREPARE 시 초기 progress
-        stateResponses.get(10, TimeUnit.SECONDS); // PLAYING
+        BlindTimerStateResponse playingState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
 
-        // when - STOP
+        // host STOP → 진행도 브로드캐스트
         session.send(stopUrl, new StopCommand(host.getName()));
-
-        // then - 진행도 응답
         BlindTimerProgressResponse progressUpdate = payloadAs(progressResponses.get(3, TimeUnit.SECONDS), BlindTimerProgressResponse.class);
-        assertThat(progressUpdate.players()).isNotEmpty();
-    }
 
-    @Test
-    void 전원_STOP하면_DONE_상태가_전송된다() {
-        // given
-        final String joinCodeValue = joinCode.getValue();
-        final String subscribeStateUrl = String.format("/topic/room/%s/blind-timer/state", joinCodeValue);
-        final String subscribeProgressUrl = String.format("/topic/room/%s/blind-timer/progress", joinCodeValue);
-        final String stopUrl = String.format("/app/room/%s/blind-timer/stop", joinCodeValue);
-
-        var stateResponses = session.subscribe(subscribeStateUrl);
-        var progressResponses = session.subscribe(subscribeProgressUrl);
-
-        // 게임 시작 후 PLAYING 까지 대기
-        startBlindTimerGame();
-
-        stateResponses.get(2, TimeUnit.SECONDS); // DESCRIPTION
-        stateResponses.get(6, TimeUnit.SECONDS); // PREPARE
-        progressResponses.get(6, TimeUnit.SECONDS); // initial progress
-        stateResponses.get(10, TimeUnit.SECONDS); // PLAYING
-
-        // when - 모든 플레이어 STOP
+        // 전원 STOP (host 포함, 재STOP은 멱등) → DONE
         for (Gamer gamer : gamers) {
             final String playerName = gamer.getName();
             session.send(stopUrl, new StopCommand(playerName));
@@ -136,10 +93,17 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
                             assertThat(game.findPlayer(playerName).isStopped()).isTrue()
                     );
         }
-
-        // then - DONE 상태 확인
         BlindTimerStateResponse doneState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
-        assertThat(doneState.state()).isEqualTo("DONE");
+
+        // then
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(descriptionState.state()).isEqualTo("DESCRIPTION");
+            softly.assertThat(descriptionState.targetTimeMillis()).isEqualTo(10000);
+            softly.assertThat(prepareState.state()).isEqualTo("PREPARE");
+            softly.assertThat(playingState.state()).isEqualTo("PLAYING");
+            softly.assertThat(progressUpdate.players()).isNotEmpty();
+            softly.assertThat(doneState.state()).isEqualTo("DONE");
+        });
     }
 
     /**

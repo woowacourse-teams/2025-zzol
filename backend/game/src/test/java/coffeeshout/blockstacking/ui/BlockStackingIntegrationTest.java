@@ -19,6 +19,7 @@ import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -77,67 +78,21 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
             assertThat(playingMessage.duration()).isGreaterThanOrEqualTo(PREPARE_MS - 100);
             assertThat(playing.endTimeEpochMs()).isNotNull();
             assertThat(done.state()).isEqualTo(BlockStackingGameState.DONE);
+            // DONE 전환은 playing 제한 시간(2000ms) 이후여야 한다
             assertThat(doneMessage.duration()).isGreaterThanOrEqualTo(PLAYING_MS - 100);
             assertThat(done.endTimeEpochMs()).isNull();
-        }
-
-        @Test
-        void PREPARE_단계에서_state_필드가_포함된_응답을_받는다() {
-            final var stateResponses = session.subscribe(stateUrl());
-
-            startBlockStackingGame();
-
-            final BlockStackingStateResponse prepare = payloadAs(stateResponses.get(), BlockStackingStateResponse.class);
-
-            assertThat(prepare.state()).isEqualTo(BlockStackingGameState.PREPARE);
-        }
-
-        @Test
-        void 타이머_만료_후_게임이_완료된다() {
-            final var stateResponses = session.subscribe(stateUrl());
-
-            startBlockStackingGame();
-
-            stateResponses.get(); // PREPARE
-            stateResponses.get(); // PLAYING
-
-            // playing(2000ms) 후 DONE 전환
-            final MessageResponse doneMessage = stateResponses.get(4, TimeUnit.SECONDS);
-            final BlockStackingStateResponse done = payloadAs(doneMessage, BlockStackingStateResponse.class);
-
-            assertThat(done.state()).isEqualTo(BlockStackingGameState.DONE);
-
-            // 핵심 검증: playing 제한 시간(2000ms) 이내에 done으로 전환되지 않음
-            assertThat(doneMessage.duration())
-                    .as("DONE 전환은 playing 제한 시간(%dms) 이후여야 합니다", PLAYING_MS)
-                    .isGreaterThanOrEqualTo(PLAYING_MS - 100);
         }
     }
 
     @Nested
     class 진행_이벤트_테스트 {
 
+        /**
+         * 유효한 안착이 층수를 갱신하고, 여러 플레이어의 진행이 랭킹 내림차순으로 정렬되는지를
+         * 한 번의 PLAYING 플로우에서 함께 검증한다. (개별 안착 검증과 랭킹 검증이 같은 진행 시퀀스를 공유)
+         */
         @Test
-        void 유효한_블록_안착_이벤트가_랭킹을_업데이트한다() {
-            final var stateResponses = session.subscribe(stateUrl());
-            final var progressResponses = session.subscribe(progressUrl());
-
-            startBlockStackingGame();
-
-            stateResponses.get(); // PREPARE
-            stateResponses.get(); // PLAYING
-
-            session.send(progressCommandUrl(), progressCommand(1, 100.0, 85.0, 150.0));
-
-            final BlockStackingProgressResponse progress =
-                    payloadAs(progressResponses.get(), BlockStackingProgressResponse.class);
-
-            final BlockStackingPlayerRankInfo 꾹이 = findByName(progress, "꾹이");
-            assertThat(꾹이.floor()).isEqualTo(1);
-        }
-
-        @Test
-        void 여러_플레이어의_진행을_랭킹_내림차순으로_브로드캐스트한다() throws Exception {
+        void 유효한_안착이_층수를_갱신하고_여러_플레이어가_랭킹_내림차순으로_브로드캐스트된다() throws Exception {
             final TestStompSession 루키세션 = createSession(joinCode.getValue(), "루키");
 
             final var stateResponses = session.subscribe(stateUrl());
@@ -148,25 +103,30 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
             stateResponses.get(); // PREPARE
             stateResponses.get(); // PLAYING
 
-            // 꾹이: 2층, 루키: 1층
+            // 꾹이 1층
             session.send(progressCommandUrl(), progressCommand(1, 100.0, 85.0, 150.0));
-            progressResponses.get(); // 꾹이 1층 브로드캐스트
+            final BlockStackingProgressResponse 꾹이1층 =
+                    payloadAs(progressResponses.get(), BlockStackingProgressResponse.class);
 
+            // 꾹이 2층
             session.send(progressCommandUrl(), progressCommand(2, 100.0, 85.0, 135.0));
             progressResponses.get(); // 꾹이 2층 브로드캐스트
 
+            // 루키 1층
             루키세션.send(progressCommandUrl(), progressCommand(1, 100.0, 85.0, 135.0));
             final BlockStackingProgressResponse ranking =
                     payloadAs(progressResponses.get(), BlockStackingProgressResponse.class);
 
-            // 꾹이(2층)가 루키(1층)보다 앞에 위치
-            final int 꾹이위치 = indexOfName(ranking, "꾹이");
-            final int 루키위치 = indexOfName(ranking, "루키");
-            assertThat(꾹이위치).isLessThan(루키위치);
+            SoftAssertions.assertSoftly(softly -> {
+                // 유효한 안착이 층수를 1로 갱신
+                softly.assertThat(findByName(꾹이1층, "꾹이").floor()).isEqualTo(1);
+                // 꾹이(2층)가 루키(1층)보다 앞에 위치
+                softly.assertThat(indexOfName(ranking, "꾹이")).isLessThan(indexOfName(ranking, "루키"));
+            });
         }
 
         @Test
-        void 유효하지_않은_overlap_이벤트는_브로드캐스트되지_않는다() {
+        void 유효하지_않은_진행_이벤트는_브로드캐스트되지_않는다() {
             final var stateResponses = session.subscribe(stateUrl());
             final var progressResponses = session.subscribe(progressUrl());
 
@@ -175,25 +135,12 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
             stateResponses.get(); // PREPARE
             stateResponses.get(); // PLAYING
 
-            // overlap <= 0: movingBlockX=300으로 stackTop 범위(85~235) 완전 이탈
+            // (1) overlap <= 0: movingBlockX=300으로 stackTop 범위(85~235) 완전 이탈
             session.send(progressCommandUrl(), progressCommand(1, 300.0, 85.0, 150.0));
-
-            progressResponses.assertNoMessage();
-        }
-
-        @Test
-        void 비연속적_floor_이벤트는_브로드캐스트되지_않는다() {
-            final var stateResponses = session.subscribe(stateUrl());
-            final var progressResponses = session.subscribe(progressUrl());
-
-            startBlockStackingGame();
-
-            stateResponses.get(); // PREPARE
-            stateResponses.get(); // PLAYING
-
-            // floor=1을 건너뛰고 floor=2 전송 → 무시됨
+            // (2) 비연속 floor: floor=1을 건너뛰고 floor=2 전송 (앞의 이벤트가 무시되어 currentFloor=0 유지)
             session.send(progressCommandUrl(), progressCommand(2, 100.0, 85.0, 150.0));
 
+            // 둘 다 무시되어 progress 토픽으로 어떤 브로드캐스트도 발행되지 않는다
             progressResponses.assertNoMessage();
         }
     }

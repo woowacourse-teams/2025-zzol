@@ -12,7 +12,6 @@ import coffeeshout.racinggame.domain.SpeedCalculator;
 import coffeeshout.racinggame.domain.event.RaceFinishedEvent;
 import coffeeshout.racinggame.domain.event.RaceStateChangedEvent;
 import coffeeshout.racinggame.domain.event.RunnersMovedEvent;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ScheduledFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -92,7 +91,7 @@ public class RacingGameService implements MiniGameService {
 
     private ScheduledFuture<?> scheduleAutoMoveTask(RacingGame racingGame, String joinCode) {
         return taskScheduler.scheduleAtFixedRate(() -> executeAutoMove(racingGame, joinCode),
-                Duration.ofMillis(RacingGame.MOVE_INTERVAL_MILLIS));
+                timing.moveInterval());
     }
 
     private void executeAutoMove(RacingGame racingGame, String joinCode) {

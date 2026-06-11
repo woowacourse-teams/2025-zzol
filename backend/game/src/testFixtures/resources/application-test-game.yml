@@ -1,17 +1,6 @@
 # 게임 모듈 timing 테스트 공통 설정 — :game 빈을 컨텍스트에 올리는 모듈(:game, :app, :admin)이
 # spring.config.import: classpath:application-test-game.yml 로 가져다 쓴다.
 # *TimingProperties가 @NotNull 검증을 걸므로 게임 컨텍스트를 띄우는 테스트는 이 값들이 필수다.
-
-# 게임별 페이즈 전이 스케줄러 풀(GameTaskSchedulerFactory). 운영 game.yml은 2.
-# 전이 태스크는 publishEvent()로 Stream을 동기 발행하므로 발행 동안 스레드를 점유한다.
-# CI는 testcontainers.reuse로 전 모듈 test JVM이 단일 Valkey를 공유(ADR-0013)해 발행 지연이
-# 커지고, 끝난 테스트의 트레일링 태스크(FlowHandle에 cancel 수단 없음)가 풀(2)을 함께 점유하면
-# 현재 테스트의 다음 전이가 실행조차 못 해 페이즈 도착 단언이 타임아웃한다. 처리 헤드룸을 위해
-# 테스트에서만 상향한다(운영 부하와 무관). 이는 Redis 폴링용 redis.concurrent 풀과 별개다.
-game:
-  scheduler:
-    pool-size: 8
-
 block-stacking:
   timing:
     prepare: 500ms

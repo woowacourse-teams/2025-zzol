@@ -10,6 +10,7 @@ on:
       - 'backend/docker/nginx/**'
       - 'backend/docker/monitoring/**'
       - '.github/scripts/deploy-edge.sh'
+      - '.github/scripts/deploy-utils.sh'
       # NOTE: edge-cd.yml 자기 경로는 의도적으로 제외한다.
       #       워크플로우 추가/수정 머지가 곧바로 엣지에 배포되는 것을 막고,
       #       최초/검증 배포는 workflow_dispatch 수동 실행으로 통제한다.
@@ -35,7 +36,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Transfer config & scripts via SCP
-        uses: appleboy/scp-action@v1
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}

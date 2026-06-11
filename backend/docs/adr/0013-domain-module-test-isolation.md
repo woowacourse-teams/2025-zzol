@@ -169,6 +169,23 @@ user      JVM  ──┘
 정합성 문제는 없고, 최악의 경우가 reuse 비활성 상태와 동일하다.
 CI 러너는 잡 종료 시 폐기되므로 잔여 컨테이너 정리도 불필요하다.
 
+### reuse 영구 비활성화 — 모듈별 격리 제거 (2026-06-11)
+
+위 reuse 활성화는 철회한다. 모듈별 DB·Redis 인덱스 격리는 **데이터 충돌**만 막을 뿐,
+병렬 모듈 테스트가 단일 공유 컨테이너(한 MySQL·Valkey 프로세스)를 동시에 두드릴 때 생기는
+**자원 경합**(처리량 한계·지연 변동)은 막지 못한다. 타이밍 민감한 게임 통합테스트가 이
+경합으로 간헐 awaitility 타임아웃했고, 스트림/컨텍스트 개선(#1361/#1369)이 머지된 뒤에도
+reuse-on은 플레이키로 재현됐다(로컬 `./gradlew test --rerun-tasks`).
+
+따라서 `withReuse(true)` 를 제거(JVM별 독립 컨테이너 = 물리적 자원 격리)하고, 그에 따라
+무효가 된 모듈별 DB(`zzol_test_<module>`)·Redis 인덱스(0~8) 격리와 `test.db.name` /
+`test.redis.db` 시스템 프로퍼티를 함께 제거했다. 각 모듈 JVM은 자기 컨테이너의 `zzol_test` 와
+redis db 0 을 단독 사용한다. 기동 시간 증가는 #1369(컨텍스트 기동 횟수↓)·#1401(게임 IT 시간↓)로
+상쇄됐다.
+
+- 이슈: #1402
+- CI `backend-ci.yml` 의 "Enable Testcontainers reuse" 스텝은 no-op이 된다 — 워크플로 정리는 별도(main 전용)
+
 ### TestContainers 버전 고정
 
 Spring Boot BOM 이 트랜지티브 의존으로 `testcontainers` 를 1.x 로 다운그레이드한다.

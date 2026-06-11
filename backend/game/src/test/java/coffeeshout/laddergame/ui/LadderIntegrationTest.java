@@ -1,7 +1,5 @@
 package coffeeshout.laddergame.ui;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.fixture.GamerFixture;
 import coffeeshout.gamecommon.Gamer;
@@ -24,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * 타이밍 설정 (application-test.yml): description=500ms, prepare=500ms, drawing=1000ms, result=500ms
+ * 타이밍 설정 (application-test-game.yml): description=500ms, prepare=500ms, drawing=500ms(+grace 300ms), result=500ms
  */
 class LadderIntegrationTest extends GameModuleWebSocketTest {
 
@@ -56,8 +54,13 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
     @Nested
     class 상태_전환_테스트 {
 
+        /**
+         * 페이즈 전환은 한 번의 게임 플로우로 모든 상태 브로드캐스트가 순서대로 도착하므로,
+         * 페이즈별 페이로드 검증을 단일 플로우에서 SoftAssertions로 한꺼번에 확인한다.
+         * (페이즈마다 게임을 재시작하면 phase 대기가 중복되어 IT 시간이 불필요하게 늘어난다.)
+         */
         @Test
-        void 게임_페이즈가_DESCRIPTION_PREPARE_DRAWING_RESULT_DONE_순서로_전환된다() {
+        void 페이즈가_순서대로_전환되며_각_상태가_올바른_페이로드를_브로드캐스트한다() {
             final var stateResponses = session.subscribe(stateUrl());
 
             startLadderGame();
@@ -70,76 +73,18 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(description.state()).isEqualTo(LadderGameState.DESCRIPTION);
-                softly.assertThat(prepare.state()).isEqualTo(LadderGameState.PREPARE);
-                softly.assertThat(drawing.state()).isEqualTo(LadderGameState.DRAWING);
-                softly.assertThat(result.state()).isEqualTo(LadderGameState.RESULT);
-                softly.assertThat(done.state()).isEqualTo(LadderGameState.DONE);
-            });
-        }
 
-        @Test
-        void PREPARE_응답에_poles와_bottomRanks가_포함된다() {
-            final var stateResponses = session.subscribe(stateUrl());
-
-            startLadderGame();
-
-            stateResponses.get(); // DESCRIPTION
-            final LadderStateResponse prepare = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
-
-            SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(prepare.state()).isEqualTo(LadderGameState.PREPARE);
                 softly.assertThat(prepare.poles()).isNotEmpty();
                 softly.assertThat(prepare.bottomRanks()).isNotEmpty();
-            });
-        }
 
-        @Test
-        void DRAWING_응답에_endTimeEpochMs가_포함된다() {
-            final var stateResponses = session.subscribe(stateUrl());
-
-            startLadderGame();
-
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            final LadderStateResponse drawing = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
-
-            SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(drawing.state()).isEqualTo(LadderGameState.DRAWING);
                 softly.assertThat(drawing.endTimeEpochMs()).isNotNull();
-            });
-        }
 
-        @Test
-        void RESULT_응답에_rankings와_animationDurationMs가_포함된다() {
-            final var stateResponses = session.subscribe(stateUrl());
-
-            startLadderGame();
-
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
-            final LadderStateResponse result = payloadAs(stateResponses.get(3, TimeUnit.SECONDS), LadderStateResponse.class);
-
-            SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.state()).isEqualTo(LadderGameState.RESULT);
                 softly.assertThat(result.rankings()).isNotEmpty();
                 softly.assertThat(result.animationDurationMs()).isEqualTo(500);
-            });
-        }
 
-        @Test
-        void DONE_응답에는_state_필드만_포함된다() {
-            final var stateResponses = session.subscribe(stateUrl());
-
-            startLadderGame();
-
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
-            stateResponses.get(3, TimeUnit.SECONDS); // RESULT
-            final LadderStateResponse done = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
-
-            SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(done.state()).isEqualTo(LadderGameState.DONE);
                 softly.assertThat(done.poles()).isNull();
                 softly.assertThat(done.rankings()).isNull();
@@ -149,46 +94,6 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
 
     @Nested
     class 선_긋기_테스트 {
-
-        @Test
-        void DRAWING_중_선_긋기_요청이_line_토픽으로_브로드캐스트된다() throws Exception {
-            final var stateResponses = session.subscribe(stateUrl());
-            final var lineResponses = session.subscribe(lineUrl());
-
-            startLadderGame();
-
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
-
-            session.send(drawCommandUrl(), drawRequest(0));
-
-            final LadderLineResponse line = payloadAs(lineResponses.get(), LadderLineResponse.class);
-
-            SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(line.playerName()).isEqualTo("꾹이");
-                softly.assertThat(line.segmentIndex()).isEqualTo(0);
-                softly.assertThat(line.row()).isPositive();
-            });
-        }
-
-        @Test
-        void 브로드캐스트된_선의_row는_양수다() throws Exception {
-            final var stateResponses = session.subscribe(stateUrl());
-            final var lineResponses = session.subscribe(lineUrl());
-
-            startLadderGame();
-
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
-
-            session.send(drawCommandUrl(), drawRequest(0));
-
-            final LadderLineResponse line = payloadAs(lineResponses.get(), LadderLineResponse.class);
-
-            assertThat(line.row()).isPositive();
-        }
 
         @Test
         void 이미_선을_그은_플레이어의_재요청은_브로드캐스트되지_않는다() {
@@ -227,7 +132,7 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
         }
 
         @Test
-        void 여러_플레이어가_각자_선을_그을_수_있다() throws Exception {
+        void 여러_플레이어가_각자_선을_그으면_각_선이_line_토픽으로_브로드캐스트된다() throws Exception {
             try (final TestStompSession 루키세션 = createSession(joinCode.getValue(), "루키")) {
                 final var stateResponses = session.subscribe(stateUrl());
                 final var lineResponses = session.subscribe(lineUrl());
@@ -239,14 +144,18 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
                 stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
 
                 session.send(drawCommandUrl(), drawRequest(0));
-                lineResponses.get(); // 꾹이 선 브로드캐스트
+                final LadderLineResponse 꾹이라인 = payloadAs(lineResponses.get(), LadderLineResponse.class);
 
                 루키세션.send(drawCommandUrl(), drawRequest(2));
                 final LadderLineResponse 루키라인 = payloadAs(lineResponses.get(), LadderLineResponse.class);
 
                 SoftAssertions.assertSoftly(softly -> {
+                    softly.assertThat(꾹이라인.playerName()).isEqualTo("꾹이");
+                    softly.assertThat(꾹이라인.segmentIndex()).isEqualTo(0);
+                    softly.assertThat(꾹이라인.row()).isPositive();
                     softly.assertThat(루키라인.playerName()).isEqualTo("루키");
                     softly.assertThat(루키라인.segmentIndex()).isEqualTo(2);
+                    softly.assertThat(루키라인.row()).isPositive();
                 });
             }
         }

@@ -112,6 +112,11 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         var stateResponses = session.subscribe(subscribeStateUrl);
         var progressResponses = session.subscribe(subscribeProgressUrl);
 
+        // IT 가속: 터치는 strict sequential(number != currentNumber면 거부)이라 터치마다 직렬 await가 필수다.
+        // 라운드트립 횟수가 곧 실행시간이므로, 전원 완주→DONE 검증(다중 플레이어 allMatch)은 유지하되
+        // 플레이어를 2명으로 줄여 100회(4명×25)였던 직렬 라운드트립을 50회로 절반화한다.
+        gamers = gamers.subList(0, 2);
+
         // 게임 시작 후 PLAYING 까지 대기
         startSpeedTouchGame();
 

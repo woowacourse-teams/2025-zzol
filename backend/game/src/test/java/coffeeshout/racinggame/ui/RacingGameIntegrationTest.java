@@ -1,6 +1,7 @@
 package coffeeshout.racinggame.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.fixture.GamerFixture;
@@ -14,8 +15,10 @@ import coffeeshout.racinggame.ui.request.TapCommand;
 import coffeeshout.racinggame.ui.response.RacingGameRunnersStateResponse;
 import coffeeshout.racinggame.ui.response.RacingGameStateResponse;
 import coffeeshout.support.TestStompSession;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,18 +102,25 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
         stateResponses.get(3, TimeUnit.SECONDS); // PLAYING (2초 후)
 
         /*
-         100ms마다 moveAll → 최고속도(30)로 달린다고 가정하면 결승점(3000)까지 10000ms걸림
+         IT 가속: move-interval=50ms(application-test-game.yml)로 자동이동이 돌고, 속도는 rate 기반이라
+         최고속도 유지를 위해 ~50ms마다 탭한다. 결승(3000) 도달·감속·정지하면 DONE.
+         고정 대기(Thread.sleep)는 컨벤션상 금지이므로 Awaitility 폴링으로 탭을 송신하고,
+         충분한 탭 라운드(120회 ≈ 6s) 후 종료한다. (racingGame.state는 비휘발성이라 폴링 조건으로 쓰지 않고,
+         종료 판정은 아래의 신뢰 가능한 DONE 브로드캐스트로 한다.) 프로덕션 100ms 기준 ~10s 구간이 ~6s로 단축된다.
         */
-        for (int i = 0; i < 100; i++) {
-            for (Gamer gamer : gamers) {
-                singleSession.send(tapRequestUrl, new TapCommand(gamer.getName(), 10));
-            }
-            Thread.sleep(100);
-        }
+        final AtomicInteger tapRounds = new AtomicInteger();
+        await().atMost(Duration.ofSeconds(8))
+                .pollInterval(Duration.ofMillis(50))
+                .until(() -> {
+                    for (Gamer gamer : gamers) {
+                        singleSession.send(tapRequestUrl, new TapCommand(gamer.getName(), 10));
+                    }
+                    return tapRounds.incrementAndGet() >= 120;
+                });
 
-        // then - DONE 상태 확인 (최대 30초 대기)
+        // then - DONE 상태 확인
         RacingGameStateResponse finishedState =
-                payloadAs(stateResponses.get(30, TimeUnit.SECONDS), RacingGameStateResponse.class);
+                payloadAs(stateResponses.get(5, TimeUnit.SECONDS), RacingGameStateResponse.class);
         assertThat(finishedState.state()).isEqualTo(RacingGameState.DONE);
     }
 

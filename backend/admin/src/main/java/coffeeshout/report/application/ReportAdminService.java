@@ -1,7 +1,9 @@
 package coffeeshout.report.application;
 
+import coffeeshout.admin.ipblock.IpBlockAdminService;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.ipblock.Ip;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;
@@ -11,11 +13,13 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReportAdminService {
@@ -24,6 +28,7 @@ public class ReportAdminService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ReportRepository reportRepository;
+    private final IpBlockAdminService ipBlockAdminService;
 
     @Transactional(readOnly = true)
     public Page<ReportRow> list(ReportStatus status, ReportCategory category, MiniGameType gameType, int page) {
@@ -35,6 +40,22 @@ public class ReportAdminService {
     @Transactional(readOnly = true)
     public long countPending() {
         return reportRepository.countByStatus(ReportStatus.PENDING);
+    }
+
+    @Transactional(readOnly = true)
+    public String findReporterIp(Long id) {
+        return reportRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "신고를 찾을 수 없습니다."))
+                .getIp();
+    }
+
+    @Transactional(readOnly = true)
+    public void unblockReporterIp(Long id) {
+        final String ip = findReporterIp(id);
+        if (ip != null) {
+            ipBlockAdminService.unblock(new Ip(ip));
+            log.info("신고 #{} 신고자 IP 차단 해제: ip={}", id, ip);
+        }
     }
 
     @Transactional
@@ -57,7 +78,8 @@ public class ReportAdminService {
                 e.getContent(),
                 e.getStatus(),
                 toKst(e.getCreatedAt()),
-                e.getResolvedAt() != null ? toKst(e.getResolvedAt()) : null
+                e.getResolvedAt() != null ? toKst(e.getResolvedAt()) : null,
+                e.getIp()
         );
     }
 
@@ -73,7 +95,8 @@ public class ReportAdminService {
             String content,
             ReportStatus status,
             LocalDateTime createdAt,
-            LocalDateTime resolvedAt
+            LocalDateTime resolvedAt,
+            String ip
     ) {
     }
 }

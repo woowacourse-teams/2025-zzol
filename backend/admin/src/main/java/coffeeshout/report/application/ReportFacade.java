@@ -38,6 +38,6 @@ public class ReportFacade {
         final Reporter author = authUser
                 .map(u -> new Reporter(u.userId(), u.userCode()))
                 .orElse(null);
-        return reportService.submit(category, gameType, joinCode, content, author);
+        return reportService.submit(category, gameType, joinCode, content, author, ip);
     }
 }

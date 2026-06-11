@@ -5,12 +5,14 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,9 +28,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 @ExtendWith(MockitoExtension.class)
 class IpBlockFilterTest {
 
-    private static final String REMOTE_IP = "1.2.3.4";
+    private static final Ip REMOTE_IP = new Ip("1.2.3.4");
     private static final String MALICIOUS_PATH = "/.env";
-    private static final String NORMAL_PATH = "/reports";
+    private static final String NORMAL_PATH = "/api/game";
 
     @Mock
     private IpBlockStore ipBlockStore;
@@ -37,21 +39,26 @@ class IpBlockFilterTest {
     private MaliciousPathMatcher maliciousPathMatcher;
 
     @Mock
+    private IpBlockProperties properties;
+
+    @Mock
     private FilterChain filterChain;
 
     private IpBlockFilter filter;
 
     @BeforeEach
     void setUp() {
+        // lenient: 악성 경로 테스트에서는 isMalicious 체크 직후 return되어 exemptPaths에 도달하지 않음
+        lenient().when(properties.exemptPaths()).thenReturn(List.of("/admin", "/reports"));
         final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        filter = new IpBlockFilter(ipBlockStore, maliciousPathMatcher, objectMapper);
+        filter = new IpBlockFilter(ipBlockStore, maliciousPathMatcher, properties, objectMapper);
     }
 
     @Nested
     class 차단된_IP_접근 {
 
         @Test
-        void 차단된_IP는_429를_반환하고_filterChain을_통과하지_않는다() throws Exception {
+        void 차단된_IP는_403을_반환하고_filterChain을_통과하지_않는다() throws Exception {
             given(ipBlockStore.isBlocked(REMOTE_IP)).willReturn(true);
 
             final MockHttpServletRequest request = 요청(REMOTE_IP, NORMAL_PATH);
@@ -60,7 +67,7 @@ class IpBlockFilterTest {
             filter.doFilter(request, response, filterChain);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(response.getStatus()).isEqualTo(429);
+                softly.assertThat(response.getStatus()).isEqualTo(403);
                 softly.assertThat(response.getContentType()).contains("application/json");
             });
             then(filterChain).shouldHaveNoInteractions();
@@ -78,7 +85,7 @@ class IpBlockFilterTest {
             filter.doFilter(request, response, filterChain);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(response.getStatus()).isEqualTo(429);
+                softly.assertThat(response.getStatus()).isEqualTo(403);
                 softly.assertThat(response.getHeader("Access-Control-Allow-Origin")).isEqualTo(origin);
                 softly.assertThat(response.getHeader("Access-Control-Allow-Credentials")).isEqualTo("true");
             });
@@ -105,22 +112,34 @@ class IpBlockFilterTest {
     @Nested
     class 악성_경로_접근 {
 
-        @BeforeEach
-        void setUp() {
-            given(ipBlockStore.isBlocked(anyString())).willReturn(false);
-            given(maliciousPathMatcher.isMalicious(MALICIOUS_PATH)).willReturn(true);
-        }
-
         @Test
-        void 악성_경로_접근_시_429를_반환하고_IP를_즉시_차단한다() throws Exception {
+        void 악성_경로_접근_시_403을_반환하고_IP를_즉시_차단한다() throws Exception {
+            given(maliciousPathMatcher.isMalicious(MALICIOUS_PATH)).willReturn(true);
+
             final MockHttpServletRequest request = 요청(REMOTE_IP, MALICIOUS_PATH);
             final MockHttpServletResponse response = new MockHttpServletResponse();
 
             filter.doFilter(request, response, filterChain);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(response.getStatus()).isEqualTo(429);
+                softly.assertThat(response.getStatus()).isEqualTo(403);
                 softly.assertThat(response.getContentType()).contains("application/json");
+            });
+            then(ipBlockStore).should().blockImmediately(REMOTE_IP);
+            then(filterChain).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 악성_경로는_예외_경로_prefix여도_즉시_차단한다() throws Exception {
+            given(maliciousPathMatcher.isMalicious("/admin.php")).willReturn(true);
+
+            final MockHttpServletRequest request = 요청(REMOTE_IP, "/admin.php");
+            final MockHttpServletResponse response = new MockHttpServletResponse();
+
+            filter.doFilter(request, response, filterChain);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getStatus()).isEqualTo(403);
             });
             then(ipBlockStore).should().blockImmediately(REMOTE_IP);
             then(filterChain).shouldHaveNoInteractions();
@@ -132,7 +151,7 @@ class IpBlockFilterTest {
 
         @BeforeEach
         void setUp() {
-            given(ipBlockStore.isBlocked(anyString())).willReturn(false);
+            given(ipBlockStore.isBlocked(any(Ip.class))).willReturn(false);
             given(maliciousPathMatcher.isMalicious(anyString())).willReturn(false);
         }
 
@@ -188,6 +207,51 @@ class IpBlockFilterTest {
     }
 
     @Nested
+    class 예외_경로 {
+
+        @Test
+        void admin_경로는_차단된_IP도_filterChain을_통과한다() throws Exception {
+            filter.doFilter(요청(REMOTE_IP, "/admin/ip-blocks"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).shouldHaveNoInteractions();
+            then(filterChain).should().doFilter(any(), any());
+        }
+
+        @Test
+        void admin_하위_경로도_filterChain을_통과한다() throws Exception {
+            filter.doFilter(요청(REMOTE_IP, "/admin/reports/1/resolve"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void reports_경로는_차단된_IP도_filterChain을_통과한다() throws Exception {
+            filter.doFilter(요청(REMOTE_IP, "/reports"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).shouldHaveNoInteractions();
+            then(filterChain).should().doFilter(any(), any());
+        }
+
+        @Test
+        void adminXX_같은_유사_경로는_예외_처리되지_않는다() throws Exception {
+            given(ipBlockStore.isBlocked(REMOTE_IP)).willReturn(true);
+
+            filter.doFilter(요청(REMOTE_IP, "/administrator"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should().isBlocked(REMOTE_IP);
+        }
+
+        @Test
+        void 예외_경로가_아닌_일반_경로는_차단_검사를_수행한다() throws Exception {
+            given(ipBlockStore.isBlocked(REMOTE_IP)).willReturn(true);
+
+            filter.doFilter(요청(REMOTE_IP, NORMAL_PATH), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should().isBlocked(REMOTE_IP);
+        }
+    }
+
+    @Nested
     class IP_추출 {
 
         @Test
@@ -198,11 +262,23 @@ class IpBlockFilterTest {
 
             then(ipBlockStore).should().isBlocked(REMOTE_IP);
         }
+
+        @Test
+        void 유효하지_않은_IP_형식이면_차단_검사_없이_filterChain을_통과한다() throws Exception {
+            final MockHttpServletRequest request = new MockHttpServletRequest();
+            request.setRemoteAddr("not-an-ip");
+            request.setRequestURI(NORMAL_PATH);
+
+            filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).shouldHaveNoInteractions();
+            then(filterChain).should().doFilter(any(), any());
+        }
     }
 
-    private MockHttpServletRequest 요청(String remoteAddr, String uri) {
+    private MockHttpServletRequest 요청(Ip remoteAddr, String uri) {
         final MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr(remoteAddr);
+        request.setRemoteAddr(remoteAddr.value());
         request.setRequestURI(uri);
         return request;
     }

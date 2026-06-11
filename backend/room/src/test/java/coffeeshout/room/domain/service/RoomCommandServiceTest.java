@@ -2,6 +2,7 @@ package coffeeshout.room.domain.service;
 
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import coffeeshout.RoomModuleServiceTest;
 import coffeeshout.fixture.TestDataHelper;
@@ -76,6 +77,43 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
                 softly.assertThat(room.getPlayers()).hasSize(1);
                 softly.assertThat(room.getPlayers().getFirst().getName()).isEqualTo(hostName1);
             });
+        }
+    }
+
+    @Nested
+    class QR_코드_할당 {
+
+        @Test
+        void 존재하는_방에_QR_코드를_할당한다() {
+            // given
+            roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName("호스트"), 0.7);
+
+            // when
+            roomCommandService.assignQrCode(joinCode, "data:image/png;base64,QR");
+
+            // then
+            Room room = roomQueryService.getByJoinCode(joinCode);
+            assertThat(room.getQrCode().isSuccess()).isTrue();
+        }
+
+        @Test
+        void 존재하지_않는_방의_QR_SUCCESS_이벤트는_예외없이_무시한다() {
+            // given - 비동기 QR 생성 완료 전에 방이 제거된 경우(늦게 도착한 이벤트)
+            JoinCode unknownCode = joinCodeGenerator.generate();
+
+            // when & then - 멱등하게 무시한다(예외를 던져 스트림 컨슈머를 잠식하지 않는다)
+            assertThatNoException().isThrownBy(() ->
+                    roomCommandService.assignQrCode(unknownCode, "data:image/png;base64,QR"));
+        }
+
+        @Test
+        void 존재하지_않는_방의_QR_ERROR_이벤트는_예외없이_무시한다() {
+            // given
+            JoinCode unknownCode = joinCodeGenerator.generate();
+
+            // when & then
+            assertThatNoException().isThrownBy(() ->
+                    roomCommandService.assignQrCodeError(unknownCode));
         }
     }
 

@@ -117,6 +117,13 @@ public class RoomCommandService {
     }
 
     public void assignQrCode(JoinCode joinCode, String qrCodeUrl) {
+        // 비동기 QR 생성(@Async)이 끝나기 전에 방이 제거되면(사용자 이탈·TTL, 테스트 격리 정리 등) QR을 붙일 대상이 없다.
+        // 예외를 던지면 스트림 컨슈머가 거대한 data-URL 페이로드와 스택을 반복 로깅해 처리량을 잠식하므로,
+        // 사라진 방의 QR 이벤트는 멱등하게 무시한다(늦게 도착한 이벤트에 대한 정상적인 처리).
+        if (!roomRepository.existsByJoinCode(joinCode)) {
+            log.debug("이미 제거된 방의 QR SUCCESS 이벤트 무시: joinCode={}", joinCode);
+            return;
+        }
         final Room room = roomQueryService.getByJoinCode(joinCode);
         final QrCode currentQrCode = room.getQrCode();
 
@@ -139,6 +146,10 @@ public class RoomCommandService {
     }
 
     public void assignQrCodeError(JoinCode joinCode) {
+        if (!roomRepository.existsByJoinCode(joinCode)) {
+            log.debug("이미 제거된 방의 QR ERROR 이벤트 무시: joinCode={}", joinCode);
+            return;
+        }
         final Room room = roomQueryService.getByJoinCode(joinCode);
         final QrCode currentQrCode = room.getQrCode();
 

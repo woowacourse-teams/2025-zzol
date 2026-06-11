@@ -216,8 +216,9 @@ public class RoomService {
         switch (event.status()) {
             case SUCCESS -> {
                 log.info(
-                        "QR 코드 완료 이벤트 처리 완료 (SUCCESS): eventId={}, joinCode={}, url={}",
-                        event.eventId(), event.joinCode(), event.qrCodeUrl()
+                        "QR 코드 완료 이벤트 처리 완료 (SUCCESS): eventId={}, joinCode={}, urlLength={}",
+                        event.eventId(), event.joinCode(),
+                        event.qrCodeUrl() == null ? 0 : event.qrCodeUrl().length()
                 );
                 roomCommandService.assignQrCode(new JoinCode(event.joinCode()), event.qrCodeUrl());
                 eventPublisher.publishEvent(event);

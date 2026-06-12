@@ -34,3 +34,26 @@ groups:
         annotations:
           summary: "모니터링 타깃 down ({{ $labels.job }} / {{ $labels.instance }})"
           description: "{{ $labels.job }} 익스포터가 5분 이상 응답하지 않습니다. 이 타깃에 의존하는 알림이 평가 불능 상태일 수 있습니다."
+
+      # Alloy 로그 수집기 down — scrape 실패가 5분 지속. 로그가 Loki로 인입되지 않는다.
+      # warning 근거: 앱 트래픽엔 영향 없으나 장애 분석용 로그가 끊겨 사후 추적이 막힌다.
+      - alert: AlloyDown
+        expr: up{job="alloy"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alloy 로그 수집기 down ({{ $labels.env }})"
+          description: "{{ $labels.env }} Alloy가 5분 이상 메트릭을 내지 않습니다. 컨테이너 다운 또는 로그가 Loki로 인입되지 않는 상태일 수 있습니다."
+
+      # Alloy 컴포넌트 unhealthy — Git pull한 config가 깨졌을 때의 '조용한 정체'를 잡는다.
+      # Alloy는 잘못된 config를 pull해도 죽지 않고 last-good config를 유지한 채 컴포넌트만
+      # unhealthy로 빠지므로(ADR-0028), pull 기반의 검증 게이트 부재를 이 룰이 보완한다.
+      - alert: AlloyComponentUnhealthy
+        expr: alloy_component_controller_running_components{health_type="unhealthy"} > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alloy 컴포넌트 unhealthy ({{ $labels.env }})"
+          description: "{{ $labels.env }} Alloy에 unhealthy 컴포넌트가 10분 이상 존재합니다. be/prod(prod) 또는 be/dev(dev)에서 잘못된 모듈을 pull했을 가능성 — last-good config로 동작 중일 수 있습니다."

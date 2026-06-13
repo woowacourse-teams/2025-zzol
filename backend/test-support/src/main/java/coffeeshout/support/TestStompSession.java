@@ -8,8 +8,10 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +25,7 @@ import org.springframework.web.socket.messaging.WebSocketStompClient;
 public class TestStompSession implements AutoCloseable {
 
     private static final int DEFAULT_RESPONSE_TIMEOUT_SECONDS = 5;
-    private static final Map<String, String> SUBSCRIBE_BARRIER_PING = Map.of("ping", "1");
+    private static final String SUBSCRIBE_BARRIER_KEY = "__subscribeBarrier__";
 
     private final StompSession session;
     private final WebSocketStompClient stompClient;
@@ -42,41 +44,37 @@ public class TestStompSession implements AutoCloseable {
      * <p>STOMP SUBSCRIBE는 비동기라 {@code session.subscribe()}는 등록 완료를 기다리지 않고 즉시 반환한다.
      * 구독 직후 동기적으로 브로드캐스트를 트리거하면(예: 게임 시작), 등록 전에 발행된 가장 이른
      * 브로드캐스트가 구독자 0명에게 전달되어 유실되고 이후 메시지가 한 칸씩 밀린다(subscribe→publish
-     * 레이스, #1410). 이를 막기 위해 반환 전 {@link #awaitRegistered()}로 등록 완료를 보장한다.
+     * 레이스, #1410). 이를 막기 위해 반환 전 {@link #awaitRegistered}로 등록 완료를 보장한다.
      */
     public MessageCollector subscribe(String subscribeEndPoint) {
-        MessageCollector messageCollector = rawSubscribe(subscribeEndPoint);
-        awaitRegistered();
-        return messageCollector;
-    }
-
-    private MessageCollector rawSubscribe(String subscribeEndPoint) {
         MessageCollector messageCollector = new MessageCollector();
         session.subscribe(subscribeEndPoint, new MessageCollectorStompFrameHandler(messageCollector));
+        awaitRegistered(subscribeEndPoint, messageCollector);
         return messageCollector;
     }
 
     /**
-     * 이 세션이 직전까지 보낸 모든 SUBSCRIBE의 브로커 등록 완료를 결정론적으로 보장한다.
+     * 방금 구독한 {@code topic}의 브로커 등록 완료까지 블록한다.
      *
      * <p>인메모리 SimpleBroker는 SUBSCRIBE에 RECEIPT를 보내지 않으므로(#1410 실측) 구독 ACK로 확인할 수
-     * 없다. 대신 센티넬 토픽을 구독한 뒤 그 토픽으로 ping을 round-trip될 때까지 재전송한다. ping이
-     * 돌아오면 센티넬 SUBSCRIBE가 등록된 것이고, 한 세션의 inbound 채널은 프레임을 순서대로 처리하므로
-     * 그 이전에 보낸 SUBSCRIBE들도 모두 등록 완료다. 고정 sleep과 달리 등록 완료를 실제로 증명하므로
-     * 부하와 무관하게 결정론적이다.
+     * 없다. 대신 <b>그 토픽 자체로</b> 고유 토큰을 담은 barrier ping을 컬렉터에 도착할 때까지 재전송한다.
+     * SimpleBroker는 등록된 구독자에게만 전달하므로, ping이 이 컬렉터에 도착했다는 사실 자체가 해당 구독이
+     * 등록됐다는 증거다(전달 ⟹ 등록). 이 논거는 프레임 처리 순서에 의존하지 않으므로, inbound 채널이
+     * 멀티스레드(WebSocketMessageBrokerConfig: 32 threads)라 SUBSCRIBE·SEND 순서가 보장되지 않아도
+     * 성립한다 — 고정 sleep과 달리 부하와 무관하게 결정론적이다.
      *
-     * <p>센티넬 구독은 {@link #rawSubscribe}로 등록해 {@link #subscribe} → {@code awaitRegistered} 재귀를 끊는다.
+     * <p>barrier ping은 {@link MessageCollector}가 일반 메시지 큐에서 걸러내므로 테스트 단언을 오염시키지 않는다.
      */
-    private void awaitRegistered() {
-        String sentinelTopic = "/topic/__subscribe-barrier__/" + UUID.randomUUID();
-        MessageCollector sentinel = rawSubscribe(sentinelTopic);
+    private void awaitRegistered(String topic, MessageCollector collector) {
+        String token = UUID.randomUUID().toString();
+        Map<String, String> ping = Map.of(SUBSCRIBE_BARRIER_KEY, token);
         Awaitility.await()
             .atMost(DEFAULT_RESPONSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .pollDelay(Duration.ZERO)
             .pollInterval(Duration.ofMillis(50))
             .until(() -> {
-                session.send(sentinelTopic, SUBSCRIBE_BARRIER_PING);
-                return !sentinel.isEmpty();
+                session.send(topic, ping);
+                return collector.receivedBarrierPing(token);
             });
     }
 
@@ -132,13 +130,24 @@ public class TestStompSession implements AutoCloseable {
         private final List<String> receivedHistory = new CopyOnWriteArrayList<>();
         private volatile long firstAddAt = -1L;
 
+        /** subscribe() 등록 확인용 barrier ping. 일반 큐에서 걸러내 단언을 오염시키지 않고 등록 확인에만 쓴다(#1410). */
+        private final Set<String> barrierPings = ConcurrentHashMap.newKeySet();
+
         private void add(String message) {
+            if (message.contains(SUBSCRIBE_BARRIER_KEY)) {
+                barrierPings.add(message);
+                return;
+            }
             long now = System.currentTimeMillis();
             if (firstAddAt < 0L) {
                 firstAddAt = now;
             }
             receivedHistory.add("+" + (now - firstAddAt) + "ms " + message);
             queue.add(message);
+        }
+
+        private boolean receivedBarrierPing(String token) {
+            return barrierPings.stream().anyMatch(ping -> ping.contains(token));
         }
 
         public MessageResponse get() {

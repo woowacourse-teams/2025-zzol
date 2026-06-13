@@ -123,7 +123,7 @@ collector.assertNoMessage();                         // 메시지 없음 검증 
 
 STOMP SUBSCRIBE는 비동기라 `session.subscribe()`(Spring)는 등록 완료를 기다리지 않고 즉시 반환한다. 구독 직후 동기적으로 브로드캐스트를 트리거하면(예: 게임 시작), 등록 전에 발행된 가장 이른 브로드캐스트가 구독자 0명에게 전달되어 유실되고, 이후 메시지가 한 칸씩 밀려 `get()`이 타임아웃한다. 부하가 큰 CI에서만 간헐 재현되는 flaky의 원인이었다(#1410).
 
-`TestStompSession.subscribe()`는 이를 막기 위해 **반환 전 브로커 등록 완료까지 블록한다** — 별도의 대기 호출이 필요 없다. (인메모리 SimpleBroker는 SUBSCRIBE에 RECEIPT를 보내지 않으므로, 센티넬 토픽으로 ping을 round-trip시켜 등록을 결정론적으로 증명한다. 고정 대기가 아니다.)
+`TestStompSession.subscribe()`는 이를 막기 위해 **반환 전 브로커 등록 완료까지 블록한다** — 별도의 대기 호출이 필요 없다. (인메모리 SimpleBroker는 SUBSCRIBE에 RECEIPT를 보내지 않으므로, 방금 구독한 그 토픽으로 고유 토큰 ping을 도착할 때까지 재전송한다. 브로커는 등록된 구독자에게만 전달하므로 ping 도착이 곧 등록 증거다. inbound 채널이 멀티스레드라 프레임 순서가 보장되지 않아도 성립하는 결정론적 방식이다. 단, subscribe()는 등록 확인용 SEND를 추가로 발생시키므로 인바운드 메트릭 카운트·세션 rate-limit 예산에 잡힌다. ping은 일반 메시지 큐에서 걸러져 단언을 오염시키지 않는다.)
 
 ```java
 MessageCollector stateResponses = session.subscribe("/topic/room/{joinCode}/.../state"); // 등록 완료 후 반환

@@ -1,0 +1,59 @@
+# Alertmanager 설정 — ZZOL 단일 알림 엔진 (ADR-0026 Phase A)
+#
+# 시크릿 주입: global.slack_api_url_file 로 webhook URL을 "파일"에서 읽는다.
+#   Alertmanager는 config에서 ${ENV} 확장을 하지 않으므로(-config.expand-env는 Loki/Tempo 전용)
+#   compose env·${SLACK_URL} 치환은 동작하지 않는다(ADR-0026 §4, 결정 4).
+#   서버에서 ~/monitor/secrets/slack_api_url 를 생성(chmod 600)해야 컨테이너가 뜬다.
+#   이 파일은 secrets 디렉터리 마운트(./secrets:/etc/alertmanager/secrets:ro)로 주입된다.
+#
+# 전달 채널: Slack #problem (인시던트 채널). webhook이 이 채널을 향하도록 발급돼야 한다.
+global:
+  resolve_timeout: 5m
+  slack_api_url_file: /etc/alertmanager/secrets/slack_api_url
+
+# 알림 그룹화·라우팅. critical은 더 빠르게/자주 알린다.
+route:
+  receiver: slack-default
+  group_by: ['alertname', 'job']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity = "critical"
+      receiver: slack-critical
+      group_wait: 10s
+      repeat_interval: 1h
+
+# SLO burn-rate: fast(critical)가 켜지면 같은 job의 slow(warning)는 중복이므로 억제.
+# (severity만으로 묶으면 14룰의 alertname이 전부 단일 severity라 매칭되지 않는 죽은 설정이 된다 —
+#  실제로 동시 발화하는 쌍은 이 fast/slow 하나뿐이라 alertname으로 직접 지정한다.)
+inhibit_rules:
+  - source_matchers:
+      - alertname = "ErrorBudgetBurnFast"
+    target_matchers:
+      - alertname = "ErrorBudgetBurnSlow"
+    equal: ['job']
+
+receivers:
+  - name: slack-default
+    slack_configs:
+      - channel: '#problem'
+        send_resolved: true
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+        text: >-
+          {{ range .Alerts }}*{{ .Labels.severity | toUpper }}* · {{ .Labels.job }}{{ if .Labels.instance }} ({{ .Labels.instance }}){{ end }}
+          {{ .Annotations.summary }}
+          {{ .Annotations.description }}
+          {{ end }}
+
+  - name: slack-critical
+    slack_configs:
+      - channel: '#problem'
+        send_resolved: true
+        title: '{{ if eq .Status "firing" }}🚨{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+        text: >-
+          {{ range .Alerts }}*{{ .Labels.severity | toUpper }}* · {{ .Labels.job }}{{ if .Labels.instance }} ({{ .Labels.instance }}){{ end }}
+          {{ .Annotations.summary }}
+          {{ .Annotations.description }}
+          {{ end }}

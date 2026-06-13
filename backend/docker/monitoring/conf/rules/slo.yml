@@ -1,0 +1,64 @@
+# Prometheus 레코딩 + 알림 룰 — 가용성 SLO 99.5% (ADR-0026 Phase A)
+#
+# 두 엔진 어디에도 없던 "에러버짓 burn-rate". 단발 5xx 스파이크가 아니라
+# "에러버짓을 얼마나 빠르게 태우는가"로 본다 → multi-window multi-burn-rate(Google SRE).
+#
+# SLI: HTTP 성공률 = 1 - (5xx / 전체).  SLO 목표: 99.5% → 에러버짓 0.5%(=0.005).
+# 대상: job="prod-app" (blue/green 두 인스턴스 합산. 인스턴스별 이상은 AppInstanceDown이 별도로 잡음).
+#
+# 사용 메트릭: http_server_requests_seconds_count{status, job} (ADR-0026 확인 목록).
+# ※ latency-SLO(http ..._bucket)는 버킷 수집이 미확인이라 의도적으로 제외했다(ADR-0026).
+groups:
+  # ── 레코딩 룰: 여러 윈도우의 에러 비율을 미리 계산 ──────────────────
+  - name: slo-recording
+    rules:
+      - record: job:slo_http_error:ratio_rate5m
+        expr: |
+          sum by (job) (rate(http_server_requests_seconds_count{status=~"5..",job="prod-app"}[5m]))
+          /
+          sum by (job) (rate(http_server_requests_seconds_count{job="prod-app"}[5m]))
+      - record: job:slo_http_error:ratio_rate30m
+        expr: |
+          sum by (job) (rate(http_server_requests_seconds_count{status=~"5..",job="prod-app"}[30m]))
+          /
+          sum by (job) (rate(http_server_requests_seconds_count{job="prod-app"}[30m]))
+      - record: job:slo_http_error:ratio_rate1h
+        expr: |
+          sum by (job) (rate(http_server_requests_seconds_count{status=~"5..",job="prod-app"}[1h]))
+          /
+          sum by (job) (rate(http_server_requests_seconds_count{job="prod-app"}[1h]))
+      - record: job:slo_http_error:ratio_rate6h
+        expr: |
+          sum by (job) (rate(http_server_requests_seconds_count{status=~"5..",job="prod-app"}[6h]))
+          /
+          sum by (job) (rate(http_server_requests_seconds_count{job="prod-app"}[6h]))
+
+  # ── 알림 룰: 빠른/느린 두 창이 동시에 임계를 넘을 때만 발화(오탐 억제) ──
+  - name: slo-burn-rate
+    rules:
+      # Fast burn: 1시간 에러버짓을 ~2일 만에 소진하는 속도(14.4×). 즉시 대응.
+      # 5m·1h 두 창 동시 충족 조건이 짧은 스파이크의 오탐을 거른다.
+      - alert: ErrorBudgetBurnFast
+        expr: |
+          job:slo_http_error:ratio_rate1h{job="prod-app"} > (14.4 * 0.005)
+          and
+          job:slo_http_error:ratio_rate5m{job="prod-app"} > (14.4 * 0.005)
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "에러버짓 빠른 소진 (SLO 99.5%, burn-rate 14.4×)"
+          description: "prod-app 5xx 비율이 1h·5m 양 창에서 7.2%를 초과. 약 2일이면 월간 에러버짓 전부 소진."
+
+      # Slow burn: 6시간 에러버짓을 ~5일에 소진하는 속도(6×). 경고 수준.
+      - alert: ErrorBudgetBurnSlow
+        expr: |
+          job:slo_http_error:ratio_rate6h{job="prod-app"} > (6 * 0.005)
+          and
+          job:slo_http_error:ratio_rate30m{job="prod-app"} > (6 * 0.005)
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "에러버짓 느린 소진 (SLO 99.5%, burn-rate 6×)"
+          description: "prod-app 5xx 비율이 6h·30m 양 창에서 3%를 초과. 누적 시 에러버짓 위협."

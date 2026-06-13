@@ -1,0 +1,76 @@
+name: Edge & Monitoring Deploy (CD)
+
+# 공유 호스트(zzol-vnic)의 nginx(엣지)·monitoring 설정을 Git 기준으로 동기화한다.
+# 애플리케이션 배포(backend-cd.yml)와 분리: 변경 케이던스·blast radius가 다르다.
+on:
+  push:
+    branches:
+      - be/dev
+    paths:
+      - 'backend/docker/nginx/**'
+      - 'backend/docker/monitoring/**'
+      - '.github/scripts/deploy-edge.sh'
+      - '.github/scripts/deploy-utils.sh'
+      # NOTE: edge-cd.yml 자기 경로는 의도적으로 제외한다.
+      #       워크플로우 추가/수정 머지가 곧바로 엣지에 배포되는 것을 막고,
+      #       최초/검증 배포는 workflow_dispatch 수동 실행으로 통제한다.
+  workflow_dispatch:
+
+# 단일 공유 호스트 — 동시 실행 직렬화. reload 중 취소는 반쯤 적용된 상태를 남기므로 금지.
+concurrency:
+  group: edge-deploy
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy-edge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # 수동(workflow_dispatch) 실행이 다른 브랜치의 설정을 공유 호스트에 배포하는 것을 막는다.
+    # push 트리거는 이미 be/dev로 제한되어 있어 영향 없음(중복 가드).
+    if: github.ref == 'refs/heads/be/dev'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Transfer config & scripts via SCP
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "backend/docker/nginx,backend/docker/monitoring,.github/scripts/deploy-edge.sh,.github/scripts/deploy-utils.sh"
+          target: /tmp/edge-deploy/
+
+      - name: Apply on server (sync → nginx -t → reload → probe → restore on failure)
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            STAGING=/tmp/edge-deploy
+            trap "rm -rf '${STAGING}'" EXIT
+
+            chmod +x "${STAGING}"/.github/scripts/deploy-*.sh
+            "${STAGING}/.github/scripts/deploy-edge.sh" "${STAGING}"
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          {
+            echo "### Edge Deploy Summary :globe_with_meridians:"
+            echo ""
+            echo "- **Host:** shared (zzol-vnic)"
+            echo "- **Branch:** ${{ github.ref_name }}"
+            echo "- **Commit:** ${{ github.sha }}"
+            echo "- **Status:** ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -111,7 +111,8 @@ public class GameArchitectureTest {
      */
     /**
      * minigame.application의 room.infra 의존 중 JPA FK 구조상 허용된 클래스 목록:
-     * - MiniGamePersistenceService: RoomEntity/PlayerEntity 직접 생성
+     * - MiniGamePersistenceService: MiniGameEntity의 RoomEntity FK 생성 (PlayerEntity 생성 책임은
+     *   PlayerSnapshotRequiredEvent로 :room에 이관됨 — ADR-0025 PlayerEntity 영속 책임 분리)
      * - MiniGameEntityRepository: RoomEntity FK 파라미터
      *
      * 나머지 application 클래스는 room.infra를 참조해서는 안 된다.

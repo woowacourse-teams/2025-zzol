@@ -1,6 +1,6 @@
 package coffeeshout.support.app;
 
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.infra.auth.RoomSessionTokenService;
 import coffeeshout.room.infra.websocket.StompPrincipalInterceptor;

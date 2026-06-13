@@ -15,7 +15,7 @@ class BlindTimerPlayerTest {
         @Test
         void STOP하면_경과시간이_기록된다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스());
+            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스().toGamer());
 
             // when
             final boolean result = player.stop(Duration.ofMillis(7500));
@@ -29,7 +29,7 @@ class BlindTimerPlayerTest {
         @Test
         void 이미_STOP한_플레이어는_다시_STOP할_수_없다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스());
+            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스().toGamer());
             player.stop(Duration.ofMillis(7500));
 
             // when
@@ -43,7 +43,7 @@ class BlindTimerPlayerTest {
         @Test
         void 타임아웃된_플레이어는_STOP할_수_없다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스());
+            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스().toGamer());
             player.markTimedOut();
 
             // when
@@ -61,7 +61,7 @@ class BlindTimerPlayerTest {
         @Test
         void 타임아웃_처리되면_timedOut이_true이다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스());
+            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스().toGamer());
 
             // when
             player.markTimedOut();
@@ -75,7 +75,7 @@ class BlindTimerPlayerTest {
         @Test
         void 이미_STOP한_플레이어는_타임아웃되지_않는다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스());
+            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스().toGamer());
             player.stop(Duration.ofMillis(7500));
 
             // when
@@ -93,7 +93,7 @@ class BlindTimerPlayerTest {
         @Test
         void 생성_직후에는_멈추지_않은_상태이다() {
             // given
-            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스());
+            final BlindTimerPlayer player = new BlindTimerPlayer(PlayerFixture.게스트한스().toGamer());
 
             // when & then
             assertThat(player.isStopped()).isFalse();

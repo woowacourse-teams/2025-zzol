@@ -9,8 +9,6 @@ import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,10 +49,7 @@ public class CardGame implements Playable {
 
     @Override
     public void setUp(List<Gamer> gamers) {
-        final List<Player> playerList = gamers.stream()
-                .map(g -> Player.createGuest(new PlayerName(g.name()), g.userId()))
-                .toList();
-        playerHands = new PlayerHands(playerList);
+        playerHands = new PlayerHands(gamers);
     }
 
     @Override
@@ -78,7 +73,7 @@ public class CardGame implements Playable {
         this.state = CardGameState.PLAYING;
     }
 
-    public boolean selectCard(Player player, Integer cardIndex) {
+    public boolean selectCard(Gamer gamer, Integer cardIndex) {
         if (state != CardGameState.PLAYING) {
             throw new BusinessException(
                     CardGameErrorCode.NOT_PLAYING_STATE,
@@ -86,7 +81,7 @@ public class CardGame implements Playable {
             );
         }
 
-        playerHands.put(player, deck.pick(cardIndex));
+        playerHands.put(gamer, deck.pick(cardIndex));
         return playerHands.isRoundFinished(this.round);
     }
 
@@ -106,22 +101,22 @@ public class CardGame implements Playable {
         return round.getTotalRounds();
     }
 
-    public Player findPlayerByName(PlayerName name) {
-        return playerHands.findPlayerByName(name);
+    public Gamer findByName(String name) {
+        return playerHands.findByName(name);
     }
 
     public void assignRandomCardsToUnselectedPlayers() {
-        final List<Player> unselectedPlayers = playerHands.getUnselectedPlayers(round);
+        final List<Gamer> unselectedPlayers = playerHands.getUnselectedPlayers(round);
         // 라운드 정보를 포함한 시드로 일관된 랜덤 생성
         final Random random = new Random(seed + round.toIndex());
 
-        for (Player player : unselectedPlayers) {
+        for (Gamer gamer : unselectedPlayers) {
             final Card card = deck.pickRandom(random);
-            playerHands.put(player, card);
+            playerHands.put(gamer, card);
         }
     }
 
-    public Optional<Player> findCardOwnerInCurrentRound(Card card) {
+    public Optional<Gamer> findCardOwnerInCurrentRound(Card card) {
         return playerHands.findCardOwner(card, round);
     }
 

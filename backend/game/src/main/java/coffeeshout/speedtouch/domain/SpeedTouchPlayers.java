@@ -1,8 +1,6 @@
 package coffeeshout.speedtouch.domain;
 
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
-import java.util.Collections;
+import coffeeshout.gamecommon.Gamer;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -12,28 +10,28 @@ public class SpeedTouchPlayers {
 
     private final List<SpeedTouchPlayer> players;
 
-    public SpeedTouchPlayers(List<Player> roomPlayers) {
+    public SpeedTouchPlayers(List<Gamer> gamers) {
         this.players = List.copyOf(
-                roomPlayers.stream()
+                gamers.stream()
                         .map(SpeedTouchPlayer::new)
                         .toList()
         );
     }
 
-    public SpeedTouchPlayer findByName(PlayerName name) {
+    public SpeedTouchPlayer findByName(String name) {
         return players.stream()
-                .filter(p -> p.getPlayer().sameName(name))
+                .filter(p -> p.getGamer().getName().equals(name))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("해당 플레이어를 찾을 수 없습니다: " + name.value()));
+                .orElseThrow(() -> new IllegalArgumentException("해당 플레이어를 찾을 수 없습니다: " + name));
     }
 
     public synchronized boolean isAllFinished() {
         return players.stream().allMatch(SpeedTouchPlayer::isFinished);
     }
 
-    public Map<Player, SpeedTouchPlayer> toPlayerMap() {
+    public Map<Gamer, SpeedTouchPlayer> toGamerMap() {
         return players.stream()
-                .collect(Collectors.toMap(SpeedTouchPlayer::getPlayer, p -> p));
+                .collect(Collectors.toMap(SpeedTouchPlayer::getGamer, p -> p));
     }
 
     public Stream<SpeedTouchPlayer> stream() {

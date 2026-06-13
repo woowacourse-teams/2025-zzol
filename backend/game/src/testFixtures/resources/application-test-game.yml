@@ -11,7 +11,7 @@ ladder:
   timing:
     description: 500ms
     prepare: 500ms
-    drawing: 1000ms
+    drawing: 500ms
     drawing-grace-period: 300ms
     result: 500ms
 
@@ -23,6 +23,16 @@ card-game:
     playing: 2000ms
     score-board: 500ms
     early-finish-delay: 500ms
+
+racing-game:
+  timing:
+    description: 500ms
+    prepare: 500ms
+    race-finished-delay: 500ms
+    # IT 가속: 프로덕션 100ms 대비 자동이동 주기를 절반으로 줄여 완주(거리 3000) 도달을 ~2.5s로 단축.
+    # 도메인 Runner.finishTime 정밀도는 static MOVE_INTERVAL_MILLIS(100ms)를 그대로 쓰지만,
+    # 완주 IT는 DONE 상태만 검증하고 순위/완주시간은 검증하지 않으므로 영향 없음.
+    move-interval: 50ms
 
 speed-touch:
   timing:

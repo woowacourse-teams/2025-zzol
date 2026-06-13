@@ -10,12 +10,16 @@ import coffeeshout.fixture.CardGameFake;
 import coffeeshout.GameModuleIntegrationTest;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.cardgame.infra.CardGameStreamKey;
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.minigame.domain.GameSession;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.repository.RoomRepository;
 import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,6 +30,9 @@ class CardSelectStreamProducerTest extends GameModuleIntegrationTest {
 
     @Autowired
     RoomRepository roomRepository;
+
+    @Autowired
+    GameSessionRepository gameSessionRepository;
 
     @Autowired
     StreamPublisher streamPublisher;
@@ -45,15 +52,19 @@ class CardSelectStreamProducerTest extends GameModuleIntegrationTest {
         CardGame cardGame = new CardGameFake(new CardGameRandomDeckGenerator());
         cardGame.startPlay();
 
-        room.addMiniGame(host.getName(), cardGame);
-
-                // 모든 플레이어를 Ready 상태로 전환 후 시작한다.
+        // 모든 플레이어를 Ready 상태로 전환한다.
         for (final Player player : room.getPlayers()) {
             player.updateReadyState(true);
         }
-        room.startNextGame(host.getName().value());
-
         roomRepository.save(room);
+
+        // 게임 대기열은 GameSession이 소유한다(ADR-0025) — 세션에 게임을 싣고 시작한다.
+        final Gamer hostGamer = Gamer.guest(host.getName().value());
+        final GameSession session = new GameSession(room.getJoinCode(), hostGamer);
+        session.replaceGames(hostGamer, List.of(cardGame));
+        session.startNextGame(hostGamer, room.getGamers());
+        gameSessionRepository.save(session);
+
         joinCode = room.getJoinCode();
 
         cardGameStreamKey = CardGameStreamKey.SELECT_BROADCAST.getRedisKey();

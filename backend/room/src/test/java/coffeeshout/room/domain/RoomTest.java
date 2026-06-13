@@ -2,19 +2,20 @@ package coffeeshout.room.domain;
 
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import coffeeshout.fixture.MiniGameDummy;
 import coffeeshout.fixture.RouletteFixture;
-import coffeeshout.gamecommon.Playable;
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
+import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.roulette.Roulette;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -93,68 +94,6 @@ class RoomTest {
     }
 
     @Test
-    void 미니게임은_5개_이하여야_한다() {
-        // given
-        List<Playable> miniGames = new LinkedList<>(List.of(
-                new MiniGameDummy(),
-                new MiniGameDummy(),
-                new MiniGameDummy(),
-                new MiniGameDummy()
-        ));
-        ReflectionTestUtils.setField(room, "miniGames", miniGames);
-
-        // when
-        room.addMiniGame(호스트_한스, new MiniGameDummy());
-
-        // then
-        assertThat(room.getMiniGames()).hasSize(5);
-    }
-
-    @Test
-    void 미니게임이_6개_이상이면_예외가_발생한다() {
-        // given
-        List<Playable> miniGames = new LinkedList<>(List.of(
-                new MiniGameDummy(),
-                new MiniGameDummy(),
-                new MiniGameDummy(),
-                new MiniGameDummy(),
-                new MiniGameDummy(),
-                new MiniGameDummy()
-        ));
-
-        ReflectionTestUtils.setField(room, "miniGames", miniGames);
-
-        MiniGameDummy miniGameDummy = new MiniGameDummy();
-        // when & then
-        assertThatThrownBy(() -> room.addMiniGame(호스트_한스, miniGameDummy))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    void 미니게임을_제거한다() {
-        // given
-        Playable cardGame = new MiniGameDummy();
-        room.addMiniGame(호스트_한스, cardGame);
-
-        // when
-        room.removeMiniGame(호스트_한스, cardGame);
-
-        // then
-        assertThat(room.getMiniGames()).isEmpty();
-    }
-
-    @Test
-    void 해당_미니게임이_없을_때_제거하면_예외를_발생한다() {
-        // given
-        MiniGameDummy miniGameDummy = new MiniGameDummy();
-
-        // when & then
-        assertThatThrownBy(() -> {
-            room.removeMiniGame(호스트_한스, miniGameDummy);
-        }).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
     void 룰렛을_시작하면_상태가_DONE으로_변하고_한_명은_선택된다() {
         // given
         room.joinGuest(게스트_꾹이);
@@ -212,60 +151,6 @@ class RoomTest {
         // when & then
         assertThat(room.isHost(Player.createHost(호스트_한스))).isTrue();
         assertThat(room.isHost(Player.createGuest(게스트_꾹이))).isFalse();
-    }
-
-    @Test
-    void 호스트가_아니면_미니게임을_추가할_수_없다() {
-        // given
-        room.joinGuest(게스트_꾹이);
-        MiniGameDummy miniGameDummy = new MiniGameDummy();
-
-        // when & then
-        assertThatThrownBy(() -> room.addMiniGame(게스트_꾹이, miniGameDummy))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void 호스트가_아니면_미니게임을_제거할_수_없다() {
-        // given
-        Playable cardGame = new MiniGameDummy();
-        room.addMiniGame(호스트_한스, cardGame);
-        room.joinGuest(게스트_꾹이);
-
-        // when & then
-        assertThatThrownBy(() -> room.removeMiniGame(게스트_꾹이, cardGame))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void 미니게임을_시작한다() {
-        // given
-        Playable cardGame = new MiniGameDummy();
-        room.addMiniGame(호스트_한스, cardGame);
-        room.joinGuest(게스트_꾹이);
-        Player host = room.getHost();
-        Player guest = room.findPlayer(게스트_꾹이);
-
-        // when
-        guest.updateReadyState(true);
-        Playable playable = room.startNextGame(host.getName().value());
-
-        // then
-        assertThat(playable.getMiniGameType()).isEqualTo(MiniGameType.CARD_GAME);
-    }
-
-    @Test
-    void 게임_시작_시_모든_플레이어가_레디_상태가_아니면_예외가_발생한다() {
-        // given
-        Playable cardGame = new MiniGameDummy();
-        room.addMiniGame(호스트_한스, cardGame);
-        room.joinGuest(게스트_꾹이);
-        Player host = room.getHost();
-
-        // when & then
-        assertThatThrownBy(() -> room.startNextGame(host.getName().value()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("모든 플레이어가 준비 완료해야합니다.");
     }
 
     @Test
@@ -427,6 +312,140 @@ class RoomTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThatCode(() -> new Room(joinCode, 호스트_한스, 0.1)).doesNotThrowAnyException();
                 softly.assertThatCode(() -> new Room(joinCode, 호스트_한스, 0.9)).doesNotThrowAnyException();
+            });
+        }
+    }
+
+    @Nested
+    class 호스트_검증_validateHost {
+
+        @Test
+        void 호스트면_예외가_발생하지_않는다() {
+            assertThatCode(() -> room.validateHost(호스트_한스.value()))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        void 호스트가_아니면_NOT_HOST_예외가_발생한다() {
+            // given
+            room.joinGuest(게스트_꾹이);
+
+            // when & then
+            assertCoffeeShoutException(
+                    () -> room.validateHost(게스트_꾹이.value()),
+                    RoomErrorCode.NOT_HOST
+            );
+        }
+    }
+
+    @Nested
+    class 게임_시작_검증_validateStartable {
+
+        @Test
+        void 호스트_전원준비_2명이상_READY면_통과하고_상태를_바꾸지_않는다() {
+            // given
+            room.joinGuest(게스트_꾹이);
+            room.findPlayer(게스트_꾹이).updateReadyState(true);
+
+            // when & then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThatCode(() -> room.validateStartable(호스트_한스.value()))
+                        .doesNotThrowAnyException();
+                softly.assertThat(room.getRoomState()).isEqualTo(RoomState.READY);
+            });
+        }
+
+        @Test
+        void 호스트가_아니면_예외가_발생한다() {
+            // given
+            room.joinGuest(게스트_꾹이);
+            room.findPlayer(게스트_꾹이).updateReadyState(true);
+
+            // when & then
+            assertThatThrownBy(() -> room.validateStartable(게스트_꾹이.value()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("호스트가 게임을 시작할 수 있습니다.");
+        }
+
+        @Test
+        void 전원이_준비되지_않으면_예외가_발생한다() {
+            // given
+            room.joinGuest(게스트_꾹이);
+
+            // when & then
+            assertThatThrownBy(() -> room.validateStartable(호스트_한스.value()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("모든 플레이어가 준비 완료해야합니다.");
+        }
+
+        @Test
+        void 플레이어가_2명_미만이면_예외가_발생한다() {
+            // when & then (호스트 혼자)
+            assertThatThrownBy(() -> room.validateStartable(호스트_한스.value()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("게임을 시작하려면 플레이어가 2명 이상이어야 합니다.");
+        }
+    }
+
+    @Nested
+    class 상태_전이_markPlaying {
+
+        @Test
+        void markPlaying은_방_상태를_PLAYING으로_바꾼다() {
+            // when
+            room.markPlaying();
+
+            // then
+            assertThat(room.getRoomState()).isEqualTo(RoomState.PLAYING);
+        }
+    }
+
+    @Nested
+    class 게이머_변환_getGamers {
+
+        @Test
+        void getGamers는_플레이어를_Gamer로_변환해_반환한다() {
+            // given
+            room.joinGuest(게스트_꾹이);
+
+            // when
+            List<Gamer> gamers = room.getGamers();
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(gamers).hasSize(2);
+                softly.assertThat(gamers).extracting(Gamer::getName)
+                        .containsExactlyInAnyOrder(호스트_한스.value(), 게스트_꾹이.value());
+            });
+        }
+    }
+
+    @Nested
+    class 게임_결과_적용_applyGameResult {
+
+        @Test
+        void 순위_맵으로_확률을_조정하고_SCORE_BOARD로_전이한다() {
+            // given
+            room.joinGuest(게스트_루키);
+            room.joinGuest(게스트_꾹이);
+            room.joinGuest(게스트_엠제이);
+            Map<PlayerName, Integer> rankByPlayer = Map.of(
+                    호스트_한스, 1,
+                    게스트_루키, 2,
+                    게스트_꾹이, 3,
+                    게스트_엠제이, 4
+            );
+
+            // when
+            room.applyGameResult(rankByPlayer, 5);
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(room.getRoomState()).isEqualTo(RoomState.SCORE_BOARD);
+                softly.assertThat(room.findPlayer(호스트_한스).getProbability())
+                        .isEqualTo(new Probability((int) (2500 - 500 * 0.7)));
+                softly.assertThat(room.findPlayer(게스트_엠제이).getProbability())
+                        .isEqualTo(new Probability((int) (2500 + 500 * 0.7)));
             });
         }
     }

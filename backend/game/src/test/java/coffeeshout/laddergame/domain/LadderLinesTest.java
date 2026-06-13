@@ -2,7 +2,6 @@ package coffeeshout.laddergame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.room.domain.player.PlayerName;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -10,9 +9,9 @@ import org.junit.jupiter.api.Test;
 
 class LadderLinesTest {
 
-    static final PlayerName 꾹이 = new PlayerName("꾹이");
-    static final PlayerName 철수 = new PlayerName("철수");
-    static final PlayerName 영희 = new PlayerName("영희");
+    static final String 꾹이 = "꾹이";
+    static final String 철수 = "철수";
+    static final String 영희 = "영희";
 
     LadderLines lines;
 

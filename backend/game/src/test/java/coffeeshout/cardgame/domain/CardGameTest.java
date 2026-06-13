@@ -9,10 +9,9 @@ import coffeeshout.cardgame.domain.card.CardGameDeckGenerator;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.PlayersFixture;
-import coffeeshout.room.domain.RoomErrorCode;
+import coffeeshout.gamecommon.GameErrorCode;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.gamecommon.Gamer;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Players;
 import java.util.Map;
@@ -84,7 +83,7 @@ class CardGameTest {
         @Test
         void 플레이어가_카드를_선택한다() {
             // given
-            Player player = players.getPlayer(new PlayerName("꾹이"));
+            Gamer player = players.getPlayer(new PlayerName("꾹이")).toGamer();
 
             // when
             cardGame.startPlay();
@@ -98,7 +97,7 @@ class CardGameTest {
         void 게임이_진행중이_아닐때_카드_선택시_예외_발생() {
             // given
             cardGame.changeScoreBoardState(); // PLAYING이 아닌 상태로 변경
-            Player player = players.getPlayer(new PlayerName("꾹이"));
+            Gamer player = players.getPlayer(new PlayerName("꾹이")).toGamer();
 
             // when & then
             assertCoffeeShoutException(
@@ -111,9 +110,9 @@ class CardGameTest {
         void 여러_플레이어가_카드를_선택한다() {
             // when
             cardGame.startPlay();
-            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0);
-            cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1);
-            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
+            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")).toGamer(), 0);
+            cardGame.selectCard(players.getPlayer(new PlayerName("루키")).toGamer(), 1);
+            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2);
 
             // then
             assertThat(cardGame.getPlayerHands().totalHandSize()).isEqualTo(3);
@@ -123,8 +122,8 @@ class CardGameTest {
         void 플레이어들이_같은_카드를_선택하면_예외를_반환한다() {
             // given
             cardGame.startPlay();
-            Player player1 = players.getPlayer(new PlayerName("꾹이"));
-            Player player2 = players.getPlayer(new PlayerName("루키"));
+            Gamer player1 = players.getPlayer(new PlayerName("꾹이")).toGamer();
+            Gamer player2 = players.getPlayer(new PlayerName("루키")).toGamer();
 
             // when
             cardGame.selectCard(player1, 0);
@@ -146,10 +145,10 @@ class CardGameTest {
         @Test
         void 플레이어들의_점수를_계산한다() {
             // given
-            Player player1 = players.getPlayer(new PlayerName("꾹이"));
-            Player player2 = players.getPlayer(new PlayerName("루키"));
-            Player player3 = players.getPlayer(new PlayerName("엠제이"));
-            Player player4 = players.getPlayer(new PlayerName("한스"));
+            Gamer player1 = players.getPlayer(new PlayerName("꾹이")).toGamer();
+            Gamer player2 = players.getPlayer(new PlayerName("루키")).toGamer();
+            Gamer player3 = players.getPlayer(new PlayerName("엠제이")).toGamer();
+            Gamer player4 = players.getPlayer(new PlayerName("한스")).toGamer();
 
             cardGame.startPlay();
             cardGame.selectCard(player1, 0);
@@ -163,20 +162,20 @@ class CardGameTest {
             // then - 점수가 계산되는지 확인 (shuffle에 의해 실제 값은 변할 수 있음)
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(scores).hasSize(4);
-                softly.assertThat(scores.get(player1.toGamer())).isNotNull();
-                softly.assertThat(scores.get(player2.toGamer())).isNotNull();
-                softly.assertThat(scores.get(player3.toGamer())).isNotNull();
-                softly.assertThat(scores.get(player4.toGamer())).isNotNull();
+                softly.assertThat(scores.get(player1)).isNotNull();
+                softly.assertThat(scores.get(player2)).isNotNull();
+                softly.assertThat(scores.get(player3)).isNotNull();
+                softly.assertThat(scores.get(player4)).isNotNull();
             });
         }
 
         @Test
         void 두_라운드를_진행할_수_있다() {
             // given
-            Player player1 = players.getPlayer(new PlayerName("꾹이"));
-            Player player2 = players.getPlayer(new PlayerName("루키"));
-            Player player3 = players.getPlayer(new PlayerName("엠제이"));
-            Player player4 = players.getPlayer(new PlayerName("한스"));
+            Gamer player1 = players.getPlayer(new PlayerName("꾹이")).toGamer();
+            Gamer player2 = players.getPlayer(new PlayerName("루키")).toGamer();
+            Gamer player3 = players.getPlayer(new PlayerName("엠제이")).toGamer();
+            Gamer player4 = players.getPlayer(new PlayerName("한스")).toGamer();
 
             // 첫 번째 라운드 완료
             cardGame.startPlay();
@@ -206,9 +205,9 @@ class CardGameTest {
         void 첫번째_라운드가_완료되지_않음() {
             // given
             cardGame.startPlay();
-            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0);
-            cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1);
-            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
+            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")).toGamer(), 0);
+            cardGame.selectCard(players.getPlayer(new PlayerName("루키")).toGamer(), 1);
+            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2);
 
             // when & then
             assertThat(cardGame.isFinishedThisRound()).isFalse();
@@ -218,10 +217,10 @@ class CardGameTest {
         void 첫번째_라운드가_완료됨() {
             // given
             cardGame.startPlay();
-            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0);
-            cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1);
-            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
-            cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3);
+            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")).toGamer(), 0);
+            cardGame.selectCard(players.getPlayer(new PlayerName("루키")).toGamer(), 1);
+            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2);
+            cardGame.selectCard(players.getPlayer(new PlayerName("한스")).toGamer(), 3);
 
             // when & then
             assertThat(cardGame.isFinishedThisRound()).isTrue();
@@ -231,13 +230,13 @@ class CardGameTest {
         void 현재_라운드_완료_확인() {
             // given
             cardGame.startPlay();
-            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0);
-            cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1);
-            boolean notYetFinished = cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
+            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")).toGamer(), 0);
+            cardGame.selectCard(players.getPlayer(new PlayerName("루키")).toGamer(), 1);
+            boolean notYetFinished = cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2);
             assertThat(notYetFinished).isFalse();
 
             // when
-            boolean roundFinished = cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3);
+            boolean roundFinished = cardGame.selectCard(players.getPlayer(new PlayerName("한스")).toGamer(), 3);
 
             // then
             assertThat(roundFinished).isTrue();
@@ -247,13 +246,13 @@ class CardGameTest {
         void 라운드_진행_상태를_확인한다() {
             // given - 첫 번째 라운드 진행 중
             cardGame.startPlay();
-            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0);
-            cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1);
-            boolean notYetFinished = cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
+            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")).toGamer(), 0);
+            cardGame.selectCard(players.getPlayer(new PlayerName("루키")).toGamer(), 1);
+            boolean notYetFinished = cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2);
             assertThat(notYetFinished).isFalse();
 
             // when - 마지막 플레이어가 선택
-            boolean roundFinished = cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3);
+            boolean roundFinished = cardGame.selectCard(players.getPlayer(new PlayerName("한스")).toGamer(), 3);
 
             // then
             assertThat(roundFinished).isTrue();
@@ -269,10 +268,10 @@ class CardGameTest {
             String playerName = "꾹이";
 
             // when
-            Player foundPlayer = cardGame.findPlayerByName(new PlayerName(playerName));
+            Gamer foundPlayer = cardGame.findByName(playerName);
 
             // then
-            assertThat(foundPlayer.getName().value()).isEqualTo(playerName);
+            assertThat(foundPlayer.getName()).isEqualTo(playerName);
         }
 
         @Test
@@ -280,11 +279,10 @@ class CardGameTest {
             // given
             String nonExistentName = "존재하지않는플레이어";
 
-            PlayerName playerName = new PlayerName(nonExistentName);
             // when & then
             assertCoffeeShoutException(
-                    () -> cardGame.findPlayerByName(playerName),
-                    RoomErrorCode.NO_EXIST_PLAYER
+                    () -> cardGame.findByName(nonExistentName),
+                    GameErrorCode.PLAYER_NOT_FOUND
             );
         }
     }
@@ -324,8 +322,8 @@ class CardGameTest {
         void 선택하지_않은_플레이어에게_랜덤_카드_할당() {
             // given
             cardGame.startPlay();
-            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0);
-            cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1);
+            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")).toGamer(), 0);
+            cardGame.selectCard(players.getPlayer(new PlayerName("루키")).toGamer(), 1);
             // players.getPlayer(new PlayerName("엠제이")), players.getPlayer(new PlayerName("한스"))은 선택하지 않음
 
             // when
@@ -339,10 +337,10 @@ class CardGameTest {
         void 모든_플레이어가_선택한_경우_변화_없음() {
             // given
             cardGame.startPlay();
-            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0);
-            cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1);
-            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2);
-            cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3);
+            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")).toGamer(), 0);
+            cardGame.selectCard(players.getPlayer(new PlayerName("루키")).toGamer(), 1);
+            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2);
+            cardGame.selectCard(players.getPlayer(new PlayerName("한스")).toGamer(), 3);
             int sizeBefore = cardGame.getPlayerHands().totalHandSize();
 
             // when
@@ -365,12 +363,12 @@ class CardGameTest {
         void 현재_라운드의_카드_소유자를_찾는다() {
             // given
             cardGame.startPlay();
-            Player player = players.getPlayer(new PlayerName("꾹이"));
+            Gamer player = players.getPlayer(new PlayerName("꾹이")).toGamer();
             cardGame.selectCard(player, 0);
             Card selectedCard = cardGame.getDeck().getCards().getFirst();
 
             // when
-            Optional<Player> cardOwner = cardGame.findCardOwnerInCurrentRound(selectedCard);
+            Optional<Gamer> cardOwner = cardGame.findCardOwnerInCurrentRound(selectedCard);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -385,7 +383,7 @@ class CardGameTest {
             Card unselectedCard = cardGame.getDeck().getCards().get(5);
 
             // when
-            Optional<Player> cardOwner = cardGame.findCardOwnerInCurrentRound(unselectedCard);
+            Optional<Gamer> cardOwner = cardGame.findCardOwnerInCurrentRound(unselectedCard);
 
             // then
             assertThat(cardOwner).isEmpty();
@@ -426,10 +424,10 @@ class CardGameTest {
         void 게임_결과를_반환한다() {
             // given
             cardGame.startPlay();
-            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")), 0); // 40
-            cardGame.selectCard(players.getPlayer(new PlayerName("루키")), 1); // 30
-            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")), 2); // 20
-            cardGame.selectCard(players.getPlayer(new PlayerName("한스")), 3); // 10
+            cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")).toGamer(), 0); // 40
+            cardGame.selectCard(players.getPlayer(new PlayerName("루키")).toGamer(), 1); // 30
+            cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2); // 20
+            cardGame.selectCard(players.getPlayer(new PlayerName("한스")).toGamer(), 3); // 10
 
             // when
             var result = cardGame.getResult();

@@ -2,7 +2,7 @@ package coffeeshout.racinggame.domain;
 
 import static org.springframework.util.Assert.isTrue;
 
-import coffeeshout.room.domain.player.Player;
+import coffeeshout.gamecommon.Gamer;
 import java.time.Instant;
 import lombok.Getter;
 
@@ -10,15 +10,15 @@ import lombok.Getter;
 public class Runner {
 
     public static final int SLOW_DOWN_STEP = 3;
-    private final Player player;
+    private final Gamer gamer;
 
     private int position = 0;
     private int speed = RacingGame.INITIAL_SPEED;
     private Instant lastSpeedUpdateTime;
     private Instant finishTime;
 
-    public Runner(Player player) {
-        this.player = player;
+    public Runner(Gamer gamer) {
+        this.gamer = gamer;
         this.lastSpeedUpdateTime = Instant.now();
     }
 

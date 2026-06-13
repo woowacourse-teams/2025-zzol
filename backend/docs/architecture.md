@@ -135,7 +135,7 @@
 :game-api
   Playable        — 게임이 구현해야 하는 인터페이스
   MiniGameFactory — 게임 생성 SPI (각 게임이 Spring 빈으로 등록)
-  Gamer           — 게임 참여자 (String name, Long userId)
+  Gamer           — 게임 참여자 (String name, Long userId, Integer colorIndex; 불변 class)
 
 :game
   CardGameFactory implements MiniGameFactory  — 빈 등록만 하면 자동 디스패치
@@ -144,7 +144,7 @@
 
 `MiniGameEventService`는 `List<MiniGameFactory>`를 주입받아 `EnumMap<MiniGameType, MiniGameFactory>`로 관리한다. 새 게임 추가 = `MiniGameType` enum 1줄 + `{NewGame}Factory` 빈 등록.
 
-`Gamer` record는 `room.Player` 대신 게임이 사용하는 플레이어 표현으로, game 모듈이 room 타입 없이 플레이어 정보를 다룰 수 있게 한다.
+`Gamer`는 `room.Player` 대신 게임이 사용하는 플레이어 표현으로, game 모듈이 room 타입 없이 플레이어 정보를 다룰 수 있게 한다. 식별(`name`+`userId`)과 표시 상태(`colorIndex`)를 함께 갖는 불변 class이며, 동등성은 식별만으로 정의한다(`colorIndex`는 `equals`/`hashCode` 제외). 색상은 `Player.toGamer()`가 채우고, 게임 응답 DTO가 Room 재조회 없이 `Gamer.colorIndex()`에서 읽는다 (ADR-0025 Step 3).
 
 ---
 

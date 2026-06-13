@@ -9,6 +9,7 @@ dependencies {
     implementation(project(":web"))
     implementation(project(":game-api"))
     implementation(project(":room"))
+    implementation(project(":game"))
 
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-security")

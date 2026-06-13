@@ -3,9 +3,10 @@ package coffeeshout.room.application.service;
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.JoinCodeErrorCode;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.room.StreamMockedServiceTest;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.event.PlayerKickEvent;
@@ -132,7 +133,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             // when & then
             assertCoffeeShoutException(
                     () -> playerService.checkAndKickPlayer(null, "플레이어"),
-                    RoomErrorCode.JOIN_CODE_NULL
+                    JoinCodeErrorCode.JOIN_CODE_NULL
             );
         }
     }
@@ -189,7 +190,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             // when & then
             assertCoffeeShoutException(
                     () -> playerService.getPlayers(null),
-                    RoomErrorCode.JOIN_CODE_NULL
+                    JoinCodeErrorCode.JOIN_CODE_NULL
             );
         }
     }

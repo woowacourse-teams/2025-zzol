@@ -1,8 +1,8 @@
 package coffeeshout.room.application.service;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.repository.RoomRepository;

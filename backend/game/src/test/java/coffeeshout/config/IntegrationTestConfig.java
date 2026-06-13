@@ -11,7 +11,7 @@ import org.springframework.scheduling.TaskScheduler;
 
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
-@Import(ExternalPortMockConfig.class)
+@Import({ExternalPortMockConfig.class})
 public class IntegrationTestConfig {
 
     @Bean(name = "cardGameExecutorScheduler")

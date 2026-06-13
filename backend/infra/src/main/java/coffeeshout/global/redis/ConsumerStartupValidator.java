@@ -35,7 +35,10 @@ public class ConsumerStartupValidator implements SmartInitializingSingleton {
                 continue;
             }
             final ResolvableType type = ResolvableType.forClassWithGenerics(Consumer.class, eventType);
-            if (applicationContext.getBeanProvider(type).getIfAvailable() == null) {
+            // 한 이벤트 타입에 Consumer가 여럿일 수 있다(EventDispatcher 팬아웃 — 예: RoomLifecycleEvent.Created를
+            // RoomCreateConsumer + GameSessionInitConsumer가 함께 처리). getIfAvailable()은 다중 후보에서
+            // NoUniqueBeanDefinitionException을 던지므로, 존재 여부만 stream()으로 확인한다 (ADR-0025 결정 6)
+            if (applicationContext.getBeanProvider(type).stream().findAny().isEmpty()) {
                 missing.add(eventType.getName());
             }
         }

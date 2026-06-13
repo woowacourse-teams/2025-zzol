@@ -8,11 +8,13 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.GameModuleServiceTest;
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.laddergame.domain.LadderGame;
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.repository.RoomRepository;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,9 @@ class LadderServiceTest extends GameModuleServiceTest {
     @Autowired
     private LadderService service;
 
+    @Autowired
+    private GameSessionService gameSessionService;
+
     @MockitoSpyBean
     private LadderNotifier notifier;
 
@@ -40,15 +45,17 @@ class LadderServiceTest extends GameModuleServiceTest {
     void setUp() {
         room = RoomFixture.호스트_꾹이();
         room.getPlayers().forEach(player -> player.updateReadyState(true));
-
-        game = new LadderGame();
-        room.addMiniGame(new PlayerName(HOST_NAME), game);
-        room.startNextGame(HOST_NAME);
-        game.changeToPrepare();
-        game.changeToDrawing();
-
         roomRepository.save(room);
         joinCode = room.getJoinCode();
+
+        game = new LadderGame();
+        final Gamer host = Gamer.guest(HOST_NAME);
+        gameSessionService.deleteSession(joinCode);
+        gameSessionService.initSession(joinCode, host);
+        gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));
+        gameSessionService.startGame(joinCode, host, room.getGamers());
+        game.changeToPrepare();
+        game.changeToDrawing();
     }
 
     @Nested
@@ -58,7 +65,7 @@ class LadderServiceTest extends GameModuleServiceTest {
         void 유효한_선_긋기_요청은_notifier를_호출한다() {
             service.drawLine(joinCode.getValue(), HOST_NAME, 0);
 
-            verify(notifier, times(1)).notifyLineDrawn(any(), any());
+            verify(notifier, times(1)).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
@@ -66,7 +73,7 @@ class LadderServiceTest extends GameModuleServiceTest {
             service.drawLine(joinCode.getValue(), HOST_NAME, 0);
             service.drawLine(joinCode.getValue(), "루키", 1);
 
-            verify(notifier, times(2)).notifyLineDrawn(any(), any());
+            verify(notifier, times(2)).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
@@ -86,7 +93,7 @@ class LadderServiceTest extends GameModuleServiceTest {
 
             service.drawLine(joinCode.getValue(), HOST_NAME, 0);
 
-            verify(notifier, never()).notifyLineDrawn(any(), any());
+            verify(notifier, never()).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
@@ -95,14 +102,14 @@ class LadderServiceTest extends GameModuleServiceTest {
 
             service.drawLine(joinCode.getValue(), HOST_NAME, 1);
 
-            verify(notifier, times(1)).notifyLineDrawn(any(), any());
+            verify(notifier, times(1)).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
         void 미참여자_요청은_notifier를_호출하지_않는다() {
             service.drawLine(joinCode.getValue(), "없는플레이어", 0);
 
-            verify(notifier, never()).notifyLineDrawn(any(), any());
+            verify(notifier, never()).notifyLineDrawn(any(), any(), any());
         }
 
         @Test
@@ -110,7 +117,7 @@ class LadderServiceTest extends GameModuleServiceTest {
             // 기둥 4개(꾹이+루키+엠제이+한스) → 유효한 구간: 0,1,2 → 3은 유효하지 않음
             service.drawLine(joinCode.getValue(), HOST_NAME, 3);
 
-            verify(notifier, never()).notifyLineDrawn(any(), any());
+            verify(notifier, never()).notifyLineDrawn(any(), any(), any());
         }
     }
 

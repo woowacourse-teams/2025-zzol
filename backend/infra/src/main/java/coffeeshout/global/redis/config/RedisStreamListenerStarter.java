@@ -2,6 +2,7 @@ package coffeeshout.global.redis.config;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.EventDispatcher;
+import coffeeshout.global.redis.EventTypeName;
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import coffeeshout.global.redis.stream.StreamRecordFields;
 import coffeeshout.global.redis.stream.StreamTracePropagator;
@@ -179,7 +180,7 @@ public class RedisStreamListenerStarter {
             final BaseEvent event = redisObjectMapper.readValue(payload, BaseEvent.class);
             streamTracePropagator.runInConsumerScope(
                     fields,
-                    event.getClass().getSimpleName(),
+                    EventTypeName.of(event),
                     () -> eventDispatcher.handle(event)
             );
         } catch (JsonProcessingException e) {

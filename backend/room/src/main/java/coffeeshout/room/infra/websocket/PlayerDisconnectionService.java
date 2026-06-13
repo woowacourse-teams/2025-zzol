@@ -1,7 +1,7 @@
 package coffeeshout.room.infra.websocket;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.application.service.RoomCommandService;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.infra.websocket.event.RoomStateUpdateEvent;
 import coffeeshout.websocket.PlayerKey;

@@ -2,19 +2,19 @@ package coffeeshout.room.domain.service;
 
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import coffeeshout.RoomModuleServiceTest;
 import coffeeshout.fixture.TestDataHelper;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.application.service.RoomQueryService;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
+import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.PlayerName;
-import java.util.List;
+import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -77,6 +77,43 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
                 softly.assertThat(room.getPlayers()).hasSize(1);
                 softly.assertThat(room.getPlayers().getFirst().getName()).isEqualTo(hostName1);
             });
+        }
+    }
+
+    @Nested
+    class QR_코드_할당 {
+
+        @Test
+        void 존재하는_방에_QR_코드를_할당한다() {
+            // given
+            roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName("호스트"), 0.7);
+
+            // when
+            roomCommandService.assignQrCode(joinCode, "data:image/png;base64,QR");
+
+            // then
+            Room room = roomQueryService.getByJoinCode(joinCode);
+            assertThat(room.getQrCode().isSuccess()).isTrue();
+        }
+
+        @Test
+        void 존재하지_않는_방의_QR_SUCCESS_이벤트는_예외없이_무시한다() {
+            // given - 비동기 QR 생성 완료 전에 방이 제거된 경우(늦게 도착한 이벤트)
+            JoinCode unknownCode = joinCodeGenerator.generate();
+
+            // when & then - 멱등하게 무시한다(예외를 던져 스트림 컨슈머를 잠식하지 않는다)
+            assertThatNoException().isThrownBy(() ->
+                    roomCommandService.assignQrCode(unknownCode, "data:image/png;base64,QR"));
+        }
+
+        @Test
+        void 존재하지_않는_방의_QR_ERROR_이벤트는_예외없이_무시한다() {
+            // given
+            JoinCode unknownCode = joinCodeGenerator.generate();
+
+            // when & then
+            assertThatNoException().isThrownBy(() ->
+                    roomCommandService.assignQrCodeError(unknownCode));
         }
     }
 
@@ -209,58 +246,28 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
     }
 
     @Nested
-    class 미니게임_선택 {
+    class 게임_결과_적용 {
+
         @Test
-        void 미니게임을_선택한다() {
+        void 순위_맵과_라운드_수로_확률을_조정하고_SCORE_BOARD로_전이한다() {
             // given
             PlayerName hostName = new PlayerName("호스트");
-            Room room = roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
+            PlayerName guestName = new PlayerName("게스트");
+            roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
+            roomCommandService.joinGuest(joinCode, guestName);
+
+            Map<PlayerName, Integer> rankByPlayer = Map.of(hostName, 1, guestName, 2);
 
             // when
-            List<MiniGameType> selectedMiniGames = roomCommandService.updateMiniGames(room.getJoinCode(),
-                    hostName,
-                    List.of(MiniGameType.CARD_GAME));
+            roomCommandService.applyGameResult(joinCode, rankByPlayer, 5);
 
             // then
-            assertThat(selectedMiniGames).hasSize(1);
-            assertThat(selectedMiniGames.getFirst()).isEqualTo(MiniGameType.CARD_GAME);
+            Room room = roomQueryService.getByJoinCode(joinCode);
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(room.getRoomState()).isEqualTo(RoomState.SCORE_BOARD);
+                softly.assertThat(room.findPlayer(hostName).getProbability().value())
+                        .isLessThan(room.findPlayer(guestName).getProbability().value());
+            });
         }
-
-        @Test
-        void 호스트가_아닌_플레이어가_미니게임을_선택하면_예외가_발생한다() {
-            // given
-            PlayerName hostName = new PlayerName("호스트");
-            PlayerName guest1 = new PlayerName("게스트1");
-
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
-            roomCommandService.joinGuest(joinCode, guest1);
-
-            List<MiniGameType> miniGameTypes = List.of(MiniGameType.CARD_GAME);
-            // when & then
-            assertThatThrownBy(
-                    () -> roomCommandService.updateMiniGames(joinCode,
-                            guest1,
-                            miniGameTypes))
-                    .isInstanceOf(IllegalArgumentException.class);
-        }
-
-        @Test
-        void 호스트가_아닌_플레이어가_미니게임을_선택_취소하면_예외가_발생한다() {
-            // given
-            PlayerName hostName = new PlayerName("호스트");
-            PlayerName guest1 = new PlayerName("게스트1");
-
-            roomCommandService.saveIfAbsentRoom(joinCode, hostName, 0.7);
-            roomCommandService.joinGuest(joinCode, guest1);
-
-            roomCommandService.updateMiniGames(joinCode, hostName, List.of(MiniGameType.CARD_GAME));
-
-            // when & then
-            assertThatThrownBy(() -> roomCommandService.updateMiniGames(joinCode, guest1,
-                    List.of(MiniGameType.CARD_GAME)))
-                    .isInstanceOf(IllegalArgumentException.class);
-        }
-
-
     }
 }

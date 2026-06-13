@@ -2,7 +2,7 @@ package coffeeshout.room.domain.repository;
 
 import static org.springframework.util.Assert.notNull;
 
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import java.util.Map;

@@ -1,6 +1,9 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.WsRecoveryService;
 import java.time.Duration;
 import java.time.Instant;
@@ -18,17 +21,20 @@ public class DelayedRoomRemovalService {
     private final Duration removeDuration;
     private final RoomCommandService roomCommandService;
     private final WsRecoveryService wsRecoveryService;
+    private final StreamPublisher streamPublisher;
 
     public DelayedRoomRemovalService(
             @Qualifier("delayRemovalScheduler") TaskScheduler taskScheduler,
             @Value("${room.removalDelay}") Duration removalDelay,
             RoomCommandService roomCommandService,
-            WsRecoveryService wsRecoveryService) {
+            WsRecoveryService wsRecoveryService,
+            StreamPublisher streamPublisher) {
         validateRemovalDuration(removalDelay);
         this.taskScheduler = taskScheduler;
         this.removeDuration = removalDelay;
         this.roomCommandService = roomCommandService;
         this.wsRecoveryService = wsRecoveryService;
+        this.streamPublisher = streamPublisher;
     }
 
     private void validateRemovalDuration(Duration removalDelay) {
@@ -52,6 +58,9 @@ public class DelayedRoomRemovalService {
         try {
             roomCommandService.delete(joinCode);
             wsRecoveryService.cleanup(joinCode.getValue());
+            // 삭제 완료 후 Stream 발행 — GameSession 정리도 생성과 동일한 Stream 경로를 타야
+            // 세션을 소유한 인스턴스에 일관되게 도달한다 (ADR-0025 결정 6, in-process 리스너 금지)
+            streamPublisher.publish(RoomStreamKey.BROADCAST, new RoomLifecycleEvent.Removed(joinCode.getValue()));
             log.info("방 삭제 완료: joinCode={}", joinCode.getValue());
         } catch (Exception e) {
             log.warn("방 삭제 중 오류 발생: joinCode={}", joinCode.getValue(), e);

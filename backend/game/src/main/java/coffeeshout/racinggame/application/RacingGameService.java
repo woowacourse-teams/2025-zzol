@@ -1,5 +1,8 @@
 package coffeeshout.racinggame.application;
 
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.racinggame.config.RacingGameTimingProperties;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
@@ -9,14 +12,7 @@ import coffeeshout.racinggame.domain.SpeedCalculator;
 import coffeeshout.racinggame.domain.event.RaceFinishedEvent;
 import coffeeshout.racinggame.domain.event.RaceStateChangedEvent;
 import coffeeshout.racinggame.domain.event.RunnersMovedEvent;
-import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.application.service.RoomQueryService;
-import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ScheduledFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,27 +24,29 @@ import org.springframework.stereotype.Service;
 @Service
 public class RacingGameService implements MiniGameService {
 
-    private final RoomQueryService roomQueryService;
+    private final GameSessionService gameSessionService;
     private final TaskScheduler taskScheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final SpeedCalculator speedCalculator;
+    private final RacingGameTimingProperties timing;
 
     public RacingGameService(
-            RoomQueryService roomQueryService,
+            GameSessionService gameSessionService,
             @Qualifier("racingGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
-            SpeedCalculator speedCalculator
+            SpeedCalculator speedCalculator,
+            RacingGameTimingProperties timing
     ) {
-        this.roomQueryService = roomQueryService;
+        this.gameSessionService = gameSessionService;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
         this.speedCalculator = speedCalculator;
+        this.timing = timing;
     }
 
     @Override
     public void start(String joinCode, String hostName) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final RacingGame racingGame = getRacingGame(room);
+        final RacingGame racingGame = getRacingGame(new JoinCode(joinCode));
 
         processDescription(joinCode, racingGame);
 
@@ -62,10 +60,8 @@ public class RacingGameService implements MiniGameService {
     }
 
     public void tap(String joinCode, String playerName, int tapCount) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final RacingGame racingGame = getRacingGame(room);
-        final Player player = room.findPlayer(new PlayerName(playerName));
-        racingGame.updateSpeed(player, tapCount, speedCalculator, Instant.now());
+        final RacingGame racingGame = getRacingGame(new JoinCode(joinCode));
+        racingGame.updateSpeed(playerName, tapCount, speedCalculator, Instant.now());
 
         log.debug("탭 처리 완료: joinCode={}, playerName={}, tapCount={}", joinCode, playerName, tapCount);
     }
@@ -83,19 +79,19 @@ public class RacingGameService implements MiniGameService {
         taskScheduler.schedule(() -> {
             processPrepare(racingGame, joinCode);
             eventPublisher.publishEvent(RaceStateChangedEvent.of(racingGame, joinCode));
-        }, Instant.now().plus(racingGame.getState().getDuration(), ChronoUnit.MILLIS));
+        }, Instant.now().plus(timing.description()));
     }
 
     private void processPrepare(RacingGame racingGame, String joinCode) {
         racingGame.updateState(RacingGameState.PREPARE);
         eventPublisher.publishEvent(RunnersMovedEvent.of(racingGame, joinCode));
         taskScheduler.schedule(() -> startAutoMove(racingGame, joinCode),
-                Instant.now().plus(racingGame.getState().getDuration(), ChronoUnit.MILLIS));
+                Instant.now().plus(timing.prepare()));
     }
 
     private ScheduledFuture<?> scheduleAutoMoveTask(RacingGame racingGame, String joinCode) {
         return taskScheduler.scheduleAtFixedRate(() -> executeAutoMove(racingGame, joinCode),
-                Duration.ofMillis(RacingGame.MOVE_INTERVAL_MILLIS));
+                timing.moveInterval());
     }
 
     private void executeAutoMove(RacingGame racingGame, String joinCode) {
@@ -116,12 +112,15 @@ public class RacingGameService implements MiniGameService {
 
     private void handleRaceFinished(RacingGame racingGame, String joinCode) {
         racingGame.updateState(RacingGameState.DONE);
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        room.applyMiniGameResult(racingGame.getResult());
+        // 순서 불변식(ADR-0025 결정 5): finishGame()으로 roundCount를 먼저 확정·상태 복귀시킨다.
+        final int roundCount = gameSessionService.finishGame(new JoinCode(joinCode));
         taskScheduler.schedule(() -> eventPublisher.publishEvent(RaceFinishedEvent.of(racingGame, joinCode)),
-                Instant.now().plusSeconds(2));
-        eventPublisher.publishEvent(new MiniGameFinishedEvent(joinCode, MiniGameType.RACING_GAME.name()));
+                Instant.now().plus(timing.raceFinishedDelay()));
         racingGame.stopAutoMove();
+        // 확률 조정·결과 저장을 유발하는 이벤트는 종료 알림·정리를 모두 끝낸 뒤 마지막에 발행한다 —
+        // 저장 리스너(@Transactional/@RedisLock) 실패가 게임 종료 알림·자동이동 정지를 막지 않도록.
+        eventPublisher.publishEvent(new MiniGameFinishedEvent(
+                joinCode, MiniGameType.RACING_GAME.name(), racingGame.getResult().toRankMap(), roundCount));
         log.info("레이싱 게임 종료: joinCode={}", joinCode);
     }
 
@@ -134,7 +133,8 @@ public class RacingGameService implements MiniGameService {
         racingGame.stopAutoMove();
     }
 
-    private RacingGame getRacingGame(Room room) {
-        return (RacingGame) room.findMiniGame(MiniGameType.RACING_GAME);
+    private RacingGame getRacingGame(JoinCode joinCode) {
+        return (RacingGame) gameSessionService.getSession(joinCode)
+                .findCompletedGame(MiniGameType.RACING_GAME);
     }
 }

@@ -2,8 +2,8 @@ package coffeeshout.room.infra.websocket;
 
 import static org.mockito.BDDMockito.then;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.application.service.RoomCommandService;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.websocket.StompSessionManager;
 import org.junit.jupiter.api.Test;

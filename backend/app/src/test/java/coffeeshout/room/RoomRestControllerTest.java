@@ -11,11 +11,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.support.app.IntegrationTestSupport;
 import coffeeshout.fixture.RoomFixture;
+import coffeeshout.minigame.domain.GameSession;
+import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.ui.response.RemainingMiniGameResponse;
 import coffeeshout.racinggame.domain.RacingGame;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.repository.RoomRepository;
@@ -23,7 +27,6 @@ import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
-import coffeeshout.room.ui.response.RemainingMiniGameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,6 +57,9 @@ class RoomRestControllerTest extends IntegrationTestSupport {
 
     @Autowired
     RoomRepository roomRepository;
+
+    @Autowired
+    GameSessionRepository gameSessionRepository;
 
     @Nested
     @DisplayName("방 생성 테스트")
@@ -587,8 +593,15 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         // given
         Room 호스트_꾹이 = RoomFixture.호스트_꾹이();
         roomRepository.save(호스트_꾹이);
-        호스트_꾹이.addMiniGame(호스트_꾹이.getHost().getName(), new CardGame(new CardGameRandomDeckGenerator(), 0));
-        호스트_꾹이.addMiniGame(호스트_꾹이.getHost().getName(), new RacingGame());
+
+        // 게임 대기열은 GameSession이 소유한다(ADR-0025)
+        Gamer host = Gamer.guest(호스트_꾹이.getHost().getName().value());
+        GameSession session = new GameSession(호스트_꾹이.getJoinCode(), host);
+        session.replaceGames(host, List.of(
+                new CardGame(new CardGameRandomDeckGenerator(), 0),
+                new RacingGame()
+        ));
+        gameSessionRepository.save(session);
 
         // when
         var remainingMiniGamesResponse = objectMapper.readValue(mockMvc.perform(

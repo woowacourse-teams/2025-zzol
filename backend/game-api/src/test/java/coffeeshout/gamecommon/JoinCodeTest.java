@@ -1,4 +1,4 @@
-package coffeeshout.room.domain;
+package coffeeshout.gamecommon;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

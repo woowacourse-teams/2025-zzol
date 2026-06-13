@@ -11,13 +11,26 @@ import org.junit.jupiter.api.BeforeEach;
 import org.skyscreamer.jsonassert.Customization;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.comparator.CustomComparator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 
 public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSupport {
+
+    /**
+     * 페이즈 전이 메시지의 도착 시간을 검증할 때 쓰는 하한 허용오차(ms).
+     *
+     * <p>도착 시간 검증은 "타이머가 실제 경과한 뒤 전이됐는가(조기 전이가 아닌가)"만 본다(하한). 상한은 두지 않는다 —
+     * {@code MessageCollector.get()}이 Awaitility 폴링(최대 100ms)으로 대기하고 전체 스위트 부하로 도착이 늦어질 수
+     * 있어, 상한 검증은 의미 신호 없이 flaky하기만 하다. 과도하게 늦는 경우는 {@code get(timeout)}의 대기 한도가 이미 거른다.
+     */
+    private static final long TIMING_LOWER_TOLERANCE_MS = 100;
 
     @LocalServerPort
     private int port;
@@ -71,7 +84,7 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
     protected void assertMessageContains(MessageResponse response, long duration, String expected) {
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(response.payload()).contains(expected);
-            softly.assertThat(response.duration()).isBetween(duration - 100, duration + 100);
+            softly.assertThat(response.duration()).isGreaterThanOrEqualTo(duration - TIMING_LOWER_TOLERANCE_MS);
         });
     }
 
@@ -79,8 +92,49 @@ public abstract class WebSocketIntegrationTestSupport extends IntegrationTestSup
         SoftAssertions.assertSoftly(softly -> softly.assertThat(response.payload()).contains(expected));
     }
 
+    /**
+     * WebSocket 브로드캐스트 페이로드({@code WebSocketResponse} 래퍼)의 {@code data}를 지정 타입으로 역직렬화한다.
+     * 문자열 substring 단언 대신 타입 안전한 검증을 위해 쓴다. {@code data}가 없거나 해당 타입으로
+     * 역직렬화할 수 없으면 {@link AssertionError}를 던진다.
+     */
+    protected <T> T payloadAs(MessageResponse response, Class<T> dataType) {
+        try {
+            return objectMapper.treeToValue(dataNode(response), dataType);
+        } catch (JsonProcessingException e) {
+            throw new AssertionError(
+                    "응답 페이로드를 " + dataType.getSimpleName() + "(으)로 역직렬화할 수 없습니다: " + response.payload(), e);
+        }
+    }
+
+    /**
+     * {@link #payloadAs}의 리스트 버전. {@code data}가 JSON 배열일 때 각 원소를 {@code elementType}으로 역직렬화한다.
+     */
+    protected <T> List<T> payloadAsList(MessageResponse response, Class<T> elementType) {
+        try {
+            final CollectionType listType = objectMapper.getTypeFactory()
+                    .constructCollectionType(List.class, elementType);
+            return objectMapper.treeToValue(dataNode(response), listType);
+        } catch (JsonProcessingException e) {
+            throw new AssertionError(
+                    "응답 페이로드를 List<" + elementType.getSimpleName() + ">(으)로 역직렬화할 수 없습니다: "
+                            + response.payload(), e);
+        }
+    }
+
+    private JsonNode dataNode(MessageResponse response) {
+        try {
+            final JsonNode data = objectMapper.readTree(response.payload()).get("data");
+            if (data == null || data.isNull()) {
+                throw new AssertionError("응답에 data가 없습니다: " + response.payload());
+            }
+            return data;
+        } catch (JsonProcessingException e) {
+            throw new AssertionError("응답 페이로드를 파싱할 수 없습니다: " + response.payload(), e);
+        }
+    }
+
     protected void assertMessage(MessageResponse response, long duration, String payload) throws JSONException {
         JSONAssert.assertEquals(payload, response.payload(), false);
-        Assertions.assertThat(response.duration()).isBetween(duration - 100, duration + 100);
+        Assertions.assertThat(response.duration()).isGreaterThanOrEqualTo(duration - TIMING_LOWER_TOLERANCE_MS);
     }
 }

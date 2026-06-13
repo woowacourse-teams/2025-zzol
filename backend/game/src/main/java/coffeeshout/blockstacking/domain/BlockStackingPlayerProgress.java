@@ -1,8 +1,8 @@
 package coffeeshout.blockstacking.domain;
 
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.gamecommon.Gamer;
 
-public record BlockStackingPlayerProgress(PlayerName playerName, int currentFloor, boolean failed) {
+public record BlockStackingPlayerProgress(Gamer gamer, int currentFloor, boolean failed) {
 
     public BlockStackingPlayerProgress {
         if (currentFloor < 0) {
@@ -10,8 +10,8 @@ public record BlockStackingPlayerProgress(PlayerName playerName, int currentFloo
         }
     }
 
-    public static BlockStackingPlayerProgress initial(PlayerName playerName) {
-        return new BlockStackingPlayerProgress(playerName, 0, false);
+    public static BlockStackingPlayerProgress initial(Gamer gamer) {
+        return new BlockStackingPlayerProgress(gamer, 0, false);
     }
 
     public BlockStackingPlayerProgress advanceTo(int floor) {
@@ -19,10 +19,10 @@ public record BlockStackingPlayerProgress(PlayerName playerName, int currentFloo
             throw new IllegalArgumentException(
                     "floor는 currentFloor(" + currentFloor + ") 이상이어야 합니다: " + floor);
         }
-        return new BlockStackingPlayerProgress(playerName, floor, this.failed);
+        return new BlockStackingPlayerProgress(gamer, floor, this.failed);
     }
 
     public BlockStackingPlayerProgress fail() {
-        return new BlockStackingPlayerProgress(playerName, currentFloor, true);
+        return new BlockStackingPlayerProgress(gamer, currentFloor, true);
     }
 }

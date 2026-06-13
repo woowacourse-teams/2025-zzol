@@ -1,23 +1,37 @@
 package coffeeshout.room;
 
-import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.app.WebSocketIntegrationTestSupport;
-import coffeeshout.support.MessageResponse;
-import coffeeshout.support.TestStompSession;
-import coffeeshout.room.domain.JoinCode;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.awaitility.Awaitility.await;
+
+import coffeeshout.gamecommon.RoomLifecycleEvent;
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.minigame.domain.GameSessionRepository;
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Player;
+import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
-import org.json.JSONException;
+import coffeeshout.room.ui.request.MiniGameSelectMessage;
+import coffeeshout.room.ui.request.ReadyChangeMessage;
+import coffeeshout.room.ui.request.RouletteSpinMessage;
+import coffeeshout.room.ui.response.PlayerResponse;
+import coffeeshout.room.ui.response.WinnerResponse;
+import coffeeshout.fixture.RoomFixture;
+import coffeeshout.support.TestStompSession;
+import coffeeshout.support.app.WebSocketIntegrationTestSupport;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.skyscreamer.jsonassert.Customization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -39,7 +53,9 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
                @Autowired RoomJpaRepository roomJpaRepository,
                @Autowired PlayerJpaRepository playerJpaRepository,
                @Autowired PlatformTransactionManager transactionManager,
-               @Autowired JoinCodeGenerator joinCodeGenerator
+               @Autowired JoinCodeGenerator joinCodeGenerator,
+               @Autowired StreamPublisher streamPublisher,
+               @Autowired GameSessionRepository gameSessionRepository
     ) throws Exception {
         joinCode = joinCodeGenerator.generate();
         testRoom = RoomFixture.호스트_꾹이(joinCode);
@@ -68,167 +84,89 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
             });
         });
 
+        // 게임 선택 흐름은 GameSession 사전 생성을 전제하므로(ADR-0025 결정 4), 실제 방 생성과 동일하게
+        // RoomLifecycleEvent.Created를 스트림에 발행해 GameSessionInitConsumer가 권위 있는 호스트로 세션을 만들도록 한다.
+        streamPublisher.publish(RoomStreamKey.BROADCAST,
+                new RoomLifecycleEvent.Created(host.getName().value(), joinCode.getValue()));
+
+        // 비동기 컨슈머의 세션 생성 완료를 보장한 뒤 진행한다.
+        await().atMost(5, TimeUnit.SECONDS)
+                .until(() -> gameSessionRepository.existsByJoinCode(joinCode));
+
         session = createSession(joinCode, host.getName());
     }
 
     @Test
-    void 플레이어_목록을_조회한다() throws JSONException {
-        // given
-        String joinCodeValue = joinCode.getValue();
-        String subscribeUrlFormat = String.format("/topic/room/%s", joinCodeValue);
-        String requestUrlFormat = String.format("/app/room/%s/update-players", joinCodeValue);
+    void 플레이어_목록을_조회한다() {
+        String subscribeUrl = String.format("/topic/room/%s", joinCode.getValue());
+        String requestUrl = String.format("/app/room/%s/update-players", joinCode.getValue());
 
-        var responses = session.subscribe(subscribeUrlFormat);
+        var responses = session.subscribe(subscribeUrl);
 
-        // when
-        session.send(requestUrlFormat);
+        session.send(requestUrl);
 
-        // then
-        MessageResponse playersResponse = responses.get();
-        assertMessage(playersResponse, """
-                {
-                   "success":true,
-                   "data":[
-                      {
-                         "playerName":"꾹이",
-                         "playerType":"HOST",
-                         "isReady":true,
-                         "probability": 25.0
-                      },
-                      {
-                         "playerName":"루키",
-                         "playerType":"GUEST",
-                         "isReady":false,
-                         "probability": 25.0
-                      },
-                      {
-                         "playerName":"엠제이",
-                         "playerType":"GUEST",
-                         "isReady":false,
-                         "probability": 25.0
-                      },
-                      {
-                         "playerName":"한스",
-                         "playerType":"GUEST",
-                         "isReady":false,
-                         "probability": 25.0
-                      }
-                   ]
-                }
-                """);
+        List<PlayerResponse> players = payloadAsList(responses.get(), PlayerResponse.class);
+
+        assertThat(players)
+                .extracting(PlayerResponse::playerName, PlayerResponse::playerType,
+                        PlayerResponse::isReady, PlayerResponse::probability)
+                .containsExactly(
+                        tuple("꾹이", PlayerType.HOST, true, 25.0),
+                        tuple("루키", PlayerType.GUEST, false, 25.0),
+                        tuple("엠제이", PlayerType.GUEST, false, 25.0),
+                        tuple("한스", PlayerType.GUEST, false, 25.0)
+                );
     }
 
     @Test
-    void 준비_상태를_변경한다() throws JSONException {
-        // given
-        String subscribeUrlFormat = String.format("/topic/room/%s", joinCode.getValue());
-        String requestUrlFormat = String.format("/app/room/%s/update-ready", joinCode.getValue());
+    void 준비_상태를_변경한다() {
+        String subscribeUrl = String.format("/topic/room/%s", joinCode.getValue());
+        String requestUrl = String.format("/app/room/%s/update-ready", joinCode.getValue());
 
-        var responses = session.subscribe(subscribeUrlFormat);
+        var responses = session.subscribe(subscribeUrl);
 
-        // when
-        session.send(requestUrlFormat, String.format("""
-                {
-                  "joinCode": "%s",
-                  "playerName": "루키",
-                  "isReady": false
-                }
-                """, joinCode.getValue()));
+        session.send(requestUrl, new ReadyChangeMessage(joinCode.getValue(), "루키", false));
 
-        // then
-        MessageResponse readyResponse = responses.get();
+        List<PlayerResponse> players = payloadAsList(responses.get(), PlayerResponse.class);
 
-        assertMessage(readyResponse, """
-                {
-                   "success":true,
-                   "data":[
-                      {
-                         "playerName":"꾹이",
-                         "playerType":"HOST",
-                         "isReady":true,
-                         "probability": 25.0
-                      },
-                      {
-                         "playerName":"루키",
-                         "playerType":"GUEST",
-                         "isReady":false,
-                         "probability": 25.0
-                      },
-                      {
-                         "playerName":"엠제이",
-                         "playerType":"GUEST",
-                         "isReady":false,
-                         "probability": 25.0
-                      },
-                      {
-                         "playerName":"한스",
-                         "playerType":"GUEST",
-                         "isReady":false,
-                         "probability": 25.0
-                      }
-                   ]
-                }
-                """);
+        assertThat(players)
+                .extracting(PlayerResponse::playerName, PlayerResponse::playerType,
+                        PlayerResponse::isReady, PlayerResponse::probability)
+                .containsExactly(
+                        tuple("꾹이", PlayerType.HOST, true, 25.0),
+                        tuple("루키", PlayerType.GUEST, false, 25.0),
+                        tuple("엠제이", PlayerType.GUEST, false, 25.0),
+                        tuple("한스", PlayerType.GUEST, false, 25.0)
+                );
     }
 
     @Test
-    void 미니게임을_선택한다() throws JSONException {
-        // given
-        String subscribeUrlFormat = String.format("/topic/room/%s/minigame", joinCode.getValue());
-        String requestUrlFormat = String.format("/app/room/%s/update-minigames", joinCode.getValue());
+    void 미니게임을_선택한다() {
+        String subscribeUrl = String.format("/topic/room/%s/minigame", joinCode.getValue());
+        String requestUrl = String.format("/app/room/%s/update-minigames", joinCode.getValue());
 
-        var responses = session.subscribe(subscribeUrlFormat);
+        var responses = session.subscribe(subscribeUrl);
 
-        // when
-        session.send(requestUrlFormat, String.format("""
-                {
-                  "hostName": "%s",
-                  "miniGameTypes": ["CARD_GAME"]
-                }
-                """, host.getName().value()));
+        session.send(requestUrl, new MiniGameSelectMessage(host.getName().value(), List.of(MiniGameType.CARD_GAME)));
 
-        // then
-        MessageResponse miniGameResponse = responses.get();
+        List<MiniGameType> miniGameTypes = payloadAsList(responses.get(), MiniGameType.class);
 
-        assertMessage(miniGameResponse, """
-                {
-                   "success":true,
-                   "data":["CARD_GAME"]
-                }
-                """);
+        assertThat(miniGameTypes).containsExactly(MiniGameType.CARD_GAME);
     }
 
     @Test
     void 룰렛을_돌려서_당첨자를_선택한다() {
-        // given
         ReflectionTestUtils.setField(testRoom, "roomState", RoomState.ROULETTE);
 
-        String subscribeUrlFormat = String.format("/topic/room/%s/winner", joinCode.getValue());
-        String requestUrlFormat = String.format("/app/room/%s/spin-roulette", joinCode.getValue());
+        String subscribeUrl = String.format("/topic/room/%s/winner", joinCode.getValue());
+        String requestUrl = String.format("/app/room/%s/spin-roulette", joinCode.getValue());
 
-        var responses = session.subscribe(subscribeUrlFormat);
+        var responses = session.subscribe(subscribeUrl);
 
-        // when
-        session.send(requestUrlFormat, String.format("""
-                {
-                  "hostName": "%s"
-                }
-                """, host.getName().value()));
+        session.send(requestUrl, new RouletteSpinMessage(host.getName().value()));
 
-        // then
-        MessageResponse winnerResponse = responses.get();
-
-        // 룰렛 결과는 랜덤이므로 assertMessageContains 사용
-        assertMessageContains(winnerResponse, "\"success\":true");
-        assertMessageContains(winnerResponse, "\"playerName\":");
-    }
-
-    private static Customization getColorIndexCustomization(String path) {
-        return new Customization(path, (actual, expect) -> {
-            if (expect instanceof Integer value) {
-                return value >= 0 && value <= 9;
-            }
-            return true;
-        });
+        // 룰렛 결과는 랜덤이므로 당첨자가 방의 플레이어 중 하나인지만 검증한다
+        WinnerResponse winner = payloadAs(responses.get(), WinnerResponse.class);
+        assertThat(winner.playerName()).isIn("꾹이", "루키", "엠제이", "한스");
     }
 }

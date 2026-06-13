@@ -1,6 +1,6 @@
 package coffeeshout.fixture;
 
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.PlayerName;

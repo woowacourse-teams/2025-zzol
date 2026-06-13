@@ -1,15 +1,21 @@
 package coffeeshout.room.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verifyNoInteractions;
 
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;
 import coffeeshout.room.application.service.RoomCommandService;
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.WsRecoveryService;
 import java.time.Duration;
 import java.time.Instant;
@@ -18,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.TaskScheduler;
@@ -34,6 +41,9 @@ class DelayedRoomRemovalServiceTest {
     @Mock
     WsRecoveryService wsRecoveryService;
 
+    @Mock
+    StreamPublisher streamPublisher;
+
     @SuppressWarnings({"rawtypes"})
     ScheduledFuture scheduledFuture = mock(ScheduledFuture.class);
 
@@ -49,7 +59,8 @@ class DelayedRoomRemovalServiceTest {
                 taskScheduler,
                 removalDelay,
                 roomCommandService,
-                wsRecoveryService
+                wsRecoveryService,
+                streamPublisher
         );
 
         joinCode = new JoinCode("ABCD");
@@ -119,6 +130,46 @@ class DelayedRoomRemovalServiceTest {
             delayedRoomRemovalService.scheduleRemoveRoom(joinCode);
 
             then(roomCommandService).should().delete(joinCode);
+        }
+    }
+
+    @Nested
+    class 방_삭제_이벤트_발행 {
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void 삭제_완료_후_RoomLifecycleEvent_Removed를_발행한다() {
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willAnswer(invocation -> {
+                        Runnable task = invocation.getArgument(0);
+                        task.run();
+                        return scheduledFuture;
+                    });
+
+            delayedRoomRemovalService.scheduleRemoveRoom(joinCode);
+
+            final ArgumentCaptor<RoomLifecycleEvent.Removed> eventCaptor = ArgumentCaptor.forClass(RoomLifecycleEvent.Removed.class);
+            then(streamPublisher).should().publish(eq(RoomStreamKey.BROADCAST), eventCaptor.capture());
+            assertThat(eventCaptor.getValue().joinCode()).isEqualTo(joinCode.getValue());
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void 삭제_실패_시_이벤트를_발행하지_않는다() {
+            willThrow(new RuntimeException("방 삭제 실패"))
+                    .given(roomCommandService)
+                    .delete(any(JoinCode.class));
+
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willAnswer(invocation -> {
+                        Runnable task = invocation.getArgument(0);
+                        task.run();
+                        return scheduledFuture;
+                    });
+
+            delayedRoomRemovalService.scheduleRemoveRoom(joinCode);
+
+            verifyNoInteractions(streamPublisher);
         }
     }
 }

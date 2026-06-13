@@ -2,12 +2,10 @@ package coffeeshout.cardgame.application.service;
 
 import coffeeshout.cardgame.application.CardGameNotifier;
 import coffeeshout.cardgame.domain.CardGame;
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
-import coffeeshout.room.application.service.RoomQueryService;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,17 +19,17 @@ import org.springframework.stereotype.Service;
 
 public class CardGameCommandService {
 
-    private final RoomQueryService roomQueryService;
+    private final GameSessionService gameSessionService;
     private final CardGameNotifier notifier;
 
-    public boolean selectCard(JoinCode joinCode, PlayerName playerName, int cardIndex) {
+    public boolean selectCard(JoinCode joinCode, String playerName, int cardIndex) {
         log.info("카드 선택 처리 시작: joinCode={}, playerName={}, cardIndex={}",
                 joinCode, playerName, cardIndex);
 
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        final CardGame cardGame = (CardGame) room.findMiniGame(MiniGameType.CARD_GAME);
-        final Player player = cardGame.findPlayerByName(playerName);
-        final boolean roundFinished = cardGame.selectCard(player, cardIndex);
+        final CardGame cardGame = (CardGame) gameSessionService.getSession(joinCode)
+                .findCompletedGame(MiniGameType.CARD_GAME);
+        final Gamer gamer = cardGame.findByName(playerName);
+        final boolean roundFinished = cardGame.selectCard(gamer, cardIndex);
 
         notifier.notifyCardSelected(joinCode, cardGame);
         return roundFinished;

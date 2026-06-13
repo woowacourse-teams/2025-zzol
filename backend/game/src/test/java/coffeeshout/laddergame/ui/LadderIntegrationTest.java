@@ -1,19 +1,19 @@
 package coffeeshout.laddergame.ui;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import coffeeshout.fixture.RoomFixture;
-import coffeeshout.support.TestStompSession;
 import coffeeshout.GameModuleWebSocketTest;
-import coffeeshout.support.MessageResponse;
+import coffeeshout.fixture.GamerFixture;
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.laddergame.application.LadderService;
+import coffeeshout.laddergame.application.response.LadderLineResponse;
+import coffeeshout.laddergame.application.response.LadderStateResponse;
 import coffeeshout.laddergame.domain.LadderGame;
-import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.repository.RoomRepository;
+import coffeeshout.laddergame.domain.LadderGameState;
+import coffeeshout.laddergame.ui.request.LadderDrawRequest;
+import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
-import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoomJpaRepository;
+import coffeeshout.support.TestStompSession;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,119 +22,73 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * 타이밍 설정 (application-test.yml): description=500ms, prepare=500ms, drawing=1000ms, result=500ms
+ * 타이밍 설정 (application-test-game.yml): description=500ms, prepare=500ms, drawing=500ms(+grace 300ms), result=500ms
  */
 class LadderIntegrationTest extends GameModuleWebSocketTest {
 
     JoinCode joinCode;
-    Player host;
+    Gamer host;
+    List<Gamer> gamers;
     TestStompSession session;
 
+    @Autowired
+    GameSessionService gameSessionService;
+
+    @Autowired
+    LadderService ladderService;
+
     @BeforeEach
-    void setUp(
-            @Autowired RoomRepository roomRepository,
-            @Autowired RoomJpaRepository roomJpaRepository,
-            @Autowired JoinCodeGenerator joinCodeGenerator
-    ) throws Exception {
+    void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
         joinCode = joinCodeGenerator.generate();
-        Room room = RoomFixture.호스트_꾹이(joinCode);
-        room.getPlayers().forEach(player -> player.updateReadyState(true));
-        host = room.getHost();
+        host = GamerFixture.호스트_꾹이();
+        gamers = GamerFixture.꾹이_루키_엠제이_한스();
 
-        room.addMiniGame(host.getName(), new LadderGame());
+        // GameSession을 READY 상태로 사전 구성한다 — Room 검증·영속을 거치지 않고 :game만으로 시작한다(ADR-0025).
+        gameSessionService.deleteSession(joinCode);
+        gameSessionService.initSession(joinCode, host);
+        gameSessionService.getSession(joinCode).replaceGames(host, List.of(new LadderGame()));
 
-        roomRepository.save(room);
-        roomJpaRepository.save(new RoomEntity(joinCode.getValue()));
-
-        session = createSession(joinCode, host.getName());
+        session = createSession(joinCode.getValue(), host.getName());
     }
 
     @Nested
     class 상태_전환_테스트 {
 
+        /**
+         * 페이즈 전환은 한 번의 게임 플로우로 모든 상태 브로드캐스트가 순서대로 도착하므로,
+         * 페이즈별 페이로드 검증을 단일 플로우에서 SoftAssertions로 한꺼번에 확인한다.
+         * (페이즈마다 게임을 재시작하면 phase 대기가 중복되어 IT 시간이 불필요하게 늘어난다.)
+         */
         @Test
-        void 게임_페이즈가_DESCRIPTION_PREPARE_DRAWING_RESULT_DONE_순서로_전환된다() throws Exception {
+        void 페이즈가_순서대로_전환되며_각_상태가_올바른_페이로드를_브로드캐스트한다() {
             final var stateResponses = session.subscribe(stateUrl());
 
-            session.send(startCommandUrl(), hostStartCommand());
+            startLadderGame();
 
-            final MessageResponse description = stateResponses.get();
-            final MessageResponse prepare = stateResponses.get(2, TimeUnit.SECONDS);
-            final MessageResponse drawing = stateResponses.get(2, TimeUnit.SECONDS);
-            final MessageResponse result = stateResponses.get(3, TimeUnit.SECONDS);
-            final MessageResponse done = stateResponses.get(2, TimeUnit.SECONDS);
+            final LadderStateResponse description = payloadAs(stateResponses.get(), LadderStateResponse.class);
+            final LadderStateResponse prepare = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse drawing = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse result = payloadAs(stateResponses.get(3, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse done = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(description.payload()).contains("\"state\":\"DESCRIPTION\"");
-                softly.assertThat(prepare.payload()).contains("\"state\":\"PREPARE\"");
-                softly.assertThat(drawing.payload()).contains("\"state\":\"DRAWING\"");
-                softly.assertThat(result.payload()).contains("\"state\":\"RESULT\"");
-                softly.assertThat(done.payload()).contains("\"state\":\"DONE\"");
+                softly.assertThat(description.state()).isEqualTo(LadderGameState.DESCRIPTION);
+
+                softly.assertThat(prepare.state()).isEqualTo(LadderGameState.PREPARE);
+                softly.assertThat(prepare.poles()).isNotEmpty();
+                softly.assertThat(prepare.bottomRanks()).isNotEmpty();
+
+                softly.assertThat(drawing.state()).isEqualTo(LadderGameState.DRAWING);
+                softly.assertThat(drawing.endTimeEpochMs()).isNotNull();
+
+                softly.assertThat(result.state()).isEqualTo(LadderGameState.RESULT);
+                softly.assertThat(result.rankings()).isNotEmpty();
+                softly.assertThat(result.animationDurationMs()).isEqualTo(500);
+
+                softly.assertThat(done.state()).isEqualTo(LadderGameState.DONE);
+                softly.assertThat(done.poles()).isNull();
+                softly.assertThat(done.rankings()).isNull();
             });
-        }
-
-        @Test
-        void PREPARE_응답에_poles와_bottomRanks가_포함된다() throws Exception {
-            final var stateResponses = session.subscribe(stateUrl());
-
-            session.send(startCommandUrl(), hostStartCommand());
-
-            stateResponses.get(); // DESCRIPTION
-            final MessageResponse prepare = stateResponses.get(2, TimeUnit.SECONDS);
-
-            assertMessageContains(prepare, "\"state\":\"PREPARE\"");
-            assertThat(prepare.payload())
-                    .contains("\"poles\":")
-                    .contains("\"bottomRanks\":");
-        }
-
-        @Test
-        void DRAWING_응답에_endTimeEpochMs가_포함된다() throws Exception {
-            final var stateResponses = session.subscribe(stateUrl());
-
-            session.send(startCommandUrl(), hostStartCommand());
-
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            final MessageResponse drawing = stateResponses.get(2, TimeUnit.SECONDS);
-
-            assertMessageContains(drawing, "\"state\":\"DRAWING\"");
-            assertThat(drawing.payload()).contains("\"endTimeEpochMs\":");
-        }
-
-        @Test
-        void RESULT_응답에_rankings와_animationDurationMs가_포함된다() throws Exception {
-            final var stateResponses = session.subscribe(stateUrl());
-
-            session.send(startCommandUrl(), hostStartCommand());
-
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
-            final MessageResponse result = stateResponses.get(3, TimeUnit.SECONDS);
-
-            assertMessageContains(result, "\"state\":\"RESULT\"");
-            assertThat(result.payload())
-                    .contains("\"rankings\":")
-                    .contains("\"animationDurationMs\":500");
-        }
-
-        @Test
-        void DONE_응답에는_state_필드만_포함된다() throws Exception {
-            final var stateResponses = session.subscribe(stateUrl());
-
-            session.send(startCommandUrl(), hostStartCommand());
-
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
-            stateResponses.get(3, TimeUnit.SECONDS); // RESULT
-            final MessageResponse done = stateResponses.get(2, TimeUnit.SECONDS);
-
-            assertMessageContains(done, "\"state\":\"DONE\"");
-            assertThat(done.payload())
-                    .doesNotContain("\"poles\":")
-                    .doesNotContain("\"rankings\":");
         }
     }
 
@@ -142,50 +96,11 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
     class 선_긋기_테스트 {
 
         @Test
-        void DRAWING_중_선_긋기_요청이_line_토픽으로_브로드캐스트된다() throws Exception {
+        void 이미_선을_그은_플레이어의_재요청은_브로드캐스트되지_않는다() {
             final var stateResponses = session.subscribe(stateUrl());
             final var lineResponses = session.subscribe(lineUrl());
 
-            session.send(startCommandUrl(), hostStartCommand());
-
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
-
-            session.send(drawCommandUrl(), drawRequest(0));
-
-            final MessageResponse lineResponse = lineResponses.get();
-
-            assertMessageContains(lineResponse, "\"playerName\":\"꾹이\"");
-            assertMessageContains(lineResponse, "\"segmentIndex\":0");
-            assertThat(lineResponse.payload()).contains("\"row\":");
-        }
-
-        @Test
-        void 브로드캐스트된_선의_row는_양수다() throws Exception {
-            final var stateResponses = session.subscribe(stateUrl());
-            final var lineResponses = session.subscribe(lineUrl());
-
-            session.send(startCommandUrl(), hostStartCommand());
-
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
-
-            session.send(drawCommandUrl(), drawRequest(0));
-
-            final MessageResponse lineResponse = lineResponses.get();
-
-            // "row": 뒤에 1 이상의 숫자가 오는지 검증
-            assertThat(lineResponse.payload()).containsPattern("\"row\":\\s*[1-9]\\d*");
-        }
-
-        @Test
-        void 이미_선을_그은_플레이어의_재요청은_브로드캐스트되지_않는다() throws Exception {
-            final var stateResponses = session.subscribe(stateUrl());
-            final var lineResponses = session.subscribe(lineUrl());
-
-            session.send(startCommandUrl(), hostStartCommand());
+            startLadderGame();
 
             stateResponses.get(); // DESCRIPTION
             stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
@@ -200,11 +115,11 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
         }
 
         @Test
-        void 유효하지_않은_segmentIndex_요청은_브로드캐스트되지_않는다() throws Exception {
+        void 유효하지_않은_segmentIndex_요청은_브로드캐스트되지_않는다() {
             final var stateResponses = session.subscribe(stateUrl());
             final var lineResponses = session.subscribe(lineUrl());
 
-            session.send(startCommandUrl(), hostStartCommand());
+            startLadderGame();
 
             stateResponses.get(); // DESCRIPTION
             stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
@@ -217,26 +132,32 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
         }
 
         @Test
-        void 여러_플레이어가_각자_선을_그을_수_있다() throws Exception {
-            final TestStompSession 루키세션 = createSession(joinCode.getValue(), "루키");
+        void 여러_플레이어가_각자_선을_그으면_각_선이_line_토픽으로_브로드캐스트된다() throws Exception {
+            try (final TestStompSession 루키세션 = createSession(joinCode.getValue(), "루키")) {
+                final var stateResponses = session.subscribe(stateUrl());
+                final var lineResponses = session.subscribe(lineUrl());
 
-            final var stateResponses = session.subscribe(stateUrl());
-            final var lineResponses = session.subscribe(lineUrl());
+                startLadderGame();
 
-            session.send(startCommandUrl(), hostStartCommand());
+                stateResponses.get(); // DESCRIPTION
+                stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
+                stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
 
-            stateResponses.get(); // DESCRIPTION
-            stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
-            stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
+                session.send(drawCommandUrl(), drawRequest(0));
+                final LadderLineResponse 꾹이라인 = payloadAs(lineResponses.get(), LadderLineResponse.class);
 
-            session.send(drawCommandUrl(), drawRequest(0));
-            lineResponses.get(); // 꾹이 선 브로드캐스트
+                루키세션.send(drawCommandUrl(), drawRequest(2));
+                final LadderLineResponse 루키라인 = payloadAs(lineResponses.get(), LadderLineResponse.class);
 
-            루키세션.send(drawCommandUrl(), drawRequest(2));
-            final MessageResponse 루키라인 = lineResponses.get();
-
-            assertMessageContains(루키라인, "\"playerName\":\"루키\"");
-            assertMessageContains(루키라인, "\"segmentIndex\":2");
+                SoftAssertions.assertSoftly(softly -> {
+                    softly.assertThat(꾹이라인.playerName()).isEqualTo("꾹이");
+                    softly.assertThat(꾹이라인.segmentIndex()).isEqualTo(0);
+                    softly.assertThat(꾹이라인.row()).isPositive();
+                    softly.assertThat(루키라인.playerName()).isEqualTo("루키");
+                    softly.assertThat(루키라인.segmentIndex()).isEqualTo(2);
+                    softly.assertThat(루키라인.row()).isPositive();
+                });
+            }
         }
     }
 
@@ -250,28 +171,20 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
         return String.format("/topic/room/%s/ladder/line", joinCode.getValue());
     }
 
-    private String startCommandUrl() {
-        return String.format("/app/room/%s/minigame/command", joinCode.getValue());
-    }
-
     private String drawCommandUrl() {
         return String.format("/app/room/%s/ladder/draw", joinCode.getValue());
     }
 
-    private String hostStartCommand() {
-        return String.format("""
-                {
-                  "commandType": "START_MINI_GAME",
-                  "commandRequest": { "hostName": "%s" }
-                }
-                """, host.getName().value());
+    /**
+     * WS START 커맨드(Room 검증·영속 경유) 대신 :game 서비스를 직접 호출해 게임을 시작한다.
+     * {@code startGame}으로 READY→PLAYING 전이 후 {@code start}로 플로우를 스케줄한다(프로덕션 onGameStartReady와 동일 순서).
+     */
+    private void startLadderGame() {
+        gameSessionService.startGame(joinCode, host, gamers);
+        ladderService.start(joinCode.getValue(), host.getName());
     }
 
-    private String drawRequest(int segmentIndex) {
-        return String.format("""
-                {
-                  "segmentIndex": %d
-                }
-                """, segmentIndex);
+    private LadderDrawRequest drawRequest(int segmentIndex) {
+        return new LadderDrawRequest(segmentIndex);
     }
 }

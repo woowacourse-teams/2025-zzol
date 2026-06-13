@@ -1,6 +1,5 @@
 package coffeeshout.laddergame.domain;
 
-import coffeeshout.room.domain.player.PlayerName;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -9,13 +8,13 @@ public class LadderLines {
 
     private final List<LadderLine> lines = new ArrayList<>();
 
-    public synchronized LadderLine add(PlayerName playerName, int segmentIndex) {
+    public synchronized LadderLine add(String playerName, int segmentIndex) {
         final LadderLine line = new LadderLine(playerName, segmentIndex, lines.size() + 1);
         lines.add(line);
         return line;
     }
 
-    public synchronized boolean hasDrawn(PlayerName playerName) {
+    public synchronized boolean hasDrawn(String playerName) {
         return lines.stream().anyMatch(l -> l.playerName().equals(playerName));
     }
 

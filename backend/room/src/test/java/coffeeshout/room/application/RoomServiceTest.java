@@ -9,13 +9,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 import coffeeshout.RoomModuleServiceTest;
-import coffeeshout.fixture.MiniGameDummy;
-import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.minigame.domain.MiniGameResult;
-import coffeeshout.minigame.domain.MiniGameScore;
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.profanity.application.ProfanityFilterService;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.fixture.ProfanityTestDataSeeder;
@@ -25,7 +20,6 @@ import coffeeshout.room.application.service.RoomCreateResult;
 import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.application.service.RoomService;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.QrCodeStatus;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
@@ -39,7 +33,6 @@ import coffeeshout.room.infra.messaging.RoomEventWaitManager;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -219,15 +212,6 @@ class RoomServiceTest extends RoomModuleServiceTest {
     }
 
     @Test
-    void 모든_미니게임_목록을_조회한다() {
-        // when
-        List<MiniGameType> miniGames = roomService.getAllMiniGames();
-
-        // then
-        assertThat(miniGames).containsExactlyInAnyOrder(MiniGameType.values());
-    }
-
-    @Test
     void 방이_존재하는지_확인한다() {
         // given
         String hostName = "호스트";
@@ -272,74 +256,6 @@ class RoomServiceTest extends RoomModuleServiceTest {
     }
 
     @Test
-    void 미니게임의_점수를_반환한다() {
-        // given
-        String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName).room();
-        JoinCode joinCode = createdRoom.getJoinCode();
-        joinGuest(joinCode, "게스트1");
-        joinGuest(joinCode, "게스트2");
-
-        List<MiniGameDummy> miniGames = List.of(new MiniGameDummy());
-        ReflectionTestUtils.setField(createdRoom, "finishedGames", miniGames);
-
-        // when
-        Map<Gamer, MiniGameScore> miniGameScores = roomService.getMiniGameScores(
-                joinCode.getValue(),
-                MiniGameType.CARD_GAME
-        );
-
-        // then
-        SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(miniGameScores.get(PlayerFixture.호스트꾹이().toGamer()).getValue()).isEqualTo(20);
-            softly.assertThat(miniGameScores.get(PlayerFixture.게스트루키().toGamer()).getValue()).isEqualTo(-10);
-        });
-    }
-
-    @Test
-    void 미니게임의_순위를_반환한다() {
-        // given
-        String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName).room();
-        JoinCode joinCode = createdRoom.getJoinCode();
-        joinGuest(joinCode, "게스트1");
-        joinGuest(joinCode, "게스트2");
-
-        List<MiniGameDummy> miniGames = List.of(new MiniGameDummy());
-        ReflectionTestUtils.setField(createdRoom, "finishedGames", miniGames);
-
-        // when
-        MiniGameResult miniGameRanks = roomService.getMiniGameRanks(joinCode.getValue(), MiniGameType.CARD_GAME);
-
-        // then
-        SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(miniGameRanks.getPlayerRank(PlayerFixture.호스트꾹이().toGamer())).isEqualTo(1);
-            softly.assertThat(miniGameRanks.getPlayerRank(PlayerFixture.게스트루키().toGamer())).isEqualTo(2);
-        });
-    }
-
-    @Test
-    void 선택된_미니게임의_목록을_반환한다() {
-        // given
-        String hostName = "호스트";
-        Room createdRoom = roomService.createRoom(hostName).room();
-        JoinCode joinCode = createdRoom.getJoinCode();
-        joinGuest(joinCode, "게스트1");
-        joinGuest(joinCode, "게스트2");
-        roomCommandService.updateMiniGames(createdRoom.getJoinCode(), new PlayerName(hostName),
-                List.of(MiniGameType.CARD_GAME));
-
-        // when
-        List<MiniGameType> selectedMiniGames = roomService.getSelectedMiniGames(joinCode.getValue());
-
-        // then
-        SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(selectedMiniGames).hasSize(1);
-            softly.assertThat(selectedMiniGames).containsExactly(MiniGameType.CARD_GAME);
-        });
-    }
-
-    @Test
     void 방_생성_시_QR_코드가_비동기로_생성된다() {
         // given
         String hostName = "호스트";
@@ -355,7 +271,7 @@ class RoomServiceTest extends RoomModuleServiceTest {
                 .pollInterval(500, java.util.concurrent.TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
                     Room room = roomQueryService.getByJoinCode(joinCode);
-                    QrCodeStatus status = room.getJoinCode().getQrCode().getStatus();
+                    QrCodeStatus status = room.getQrCode().getStatus();
 
                     // SUCCESS 또는 ERROR 상태로 변경되었는지 확인
                     assertThat(status).isIn(QrCodeStatus.SUCCESS, QrCodeStatus.ERROR);

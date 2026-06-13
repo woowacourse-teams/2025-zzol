@@ -1,6 +1,6 @@
 package coffeeshout.room.ui.response;
 
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.RoomState;
 
 public record RoomStatusResponse(

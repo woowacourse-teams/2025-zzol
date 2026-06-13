@@ -1,16 +1,15 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.gamecommon.MiniGameFactory;
-import coffeeshout.gamecommon.Playable;
-import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.domain.repository.RoomRepository;
-import java.util.List;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import java.util.Map;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +24,20 @@ public class RoomCommandService {
 
     private final RoomRepository roomRepository;
     private final RoomQueryService roomQueryService;
-    private final Map<MiniGameType, MiniGameFactory> miniGameFactoryMap;
+    private final StreamPublisher streamPublisher;
 
     public Room save(Room room) {
         return roomRepository.save(room);
+    }
+
+    /**
+     * 게임 종료 결과(순위 맵·라운드 수)로 확률을 조정한다. {@code :game}의
+     * {@code MiniGameFinishedEvent}를 수신한 {@code MiniGameResultRoomListener}가 호출한다(ADR-0025 결정 5).
+     */
+    public void applyGameResult(JoinCode joinCode, Map<PlayerName, Integer> rankByPlayer, int roundCount) {
+        final Room room = roomQueryService.getByJoinCode(joinCode);
+        room.applyGameResult(rankByPlayer, roundCount);
+        save(room);
     }
 
     public void delete(@NonNull JoinCode joinCode) {
@@ -38,6 +47,7 @@ public class RoomCommandService {
     public boolean removePlayer(JoinCode joinCode, PlayerName playerName) {
         log.info("JoinCode[{}] 플레이어 퇴장 - 플레이어 이름: {} ", joinCode, playerName);
         final Room room = roomQueryService.getByJoinCode(joinCode);
+        final PlayerName previousHost = room.getHost().getName();
 
         boolean removed = room.removePlayer(playerName);
 
@@ -48,9 +58,24 @@ public class RoomCommandService {
 
         if (removed) {
             save(room);
+            publishHostChangeIfPromoted(joinCode, previousHost, room);
         }
 
         return removed;
+    }
+
+    /**
+     * 호스트가 떠나 새 호스트가 승계됐으면({@code promoteNewHost}) GameSession이 새 호스트로 갱신되도록
+     * 생명주기 이벤트를 발행한다. 세션은 인스턴스 로컬이라 in-process가 아닌 Stream으로 발행해야
+     * 세션을 소유한 모든 인스턴스에 도달한다(ADR-0025 결정 6, {@code RoomLifecycleEvent.Removed}와 동일 경로).
+     */
+    private void publishHostChangeIfPromoted(JoinCode joinCode, PlayerName previousHost, Room room) {
+        final PlayerName currentHost = room.getHost().getName();
+        if (!currentHost.equals(previousHost)) {
+            streamPublisher.publish(
+                    RoomStreamKey.BROADCAST,
+                    new RoomLifecycleEvent.HostChanged(joinCode.getValue(), currentHost.value()));
+        }
     }
 
     public Room joinGuest(JoinCode joinCode, PlayerName playerName) {
@@ -92,8 +117,15 @@ public class RoomCommandService {
     }
 
     public void assignQrCode(JoinCode joinCode, String qrCodeUrl) {
+        // 비동기 QR 생성(@Async)이 끝나기 전에 방이 제거되면(사용자 이탈·TTL, 테스트 격리 정리 등) QR을 붙일 대상이 없다.
+        // 예외를 던지면 스트림 컨슈머가 거대한 data-URL 페이로드와 스택을 반복 로깅해 처리량을 잠식하므로,
+        // 사라진 방의 QR 이벤트는 멱등하게 무시한다(늦게 도착한 이벤트에 대한 정상적인 처리).
+        if (!roomRepository.existsByJoinCode(joinCode)) {
+            log.debug("이미 제거된 방의 QR SUCCESS 이벤트 무시: joinCode={}", joinCode);
+            return;
+        }
         final Room room = roomQueryService.getByJoinCode(joinCode);
-        final QrCode currentQrCode = room.getJoinCode().getQrCode();
+        final QrCode currentQrCode = room.getQrCode();
 
         // 이미 SUCCESS 상태이고 동일한 URL이면 중복 처리 방지 (멱등성)
         if (currentQrCode.isSuccess() && qrCodeUrl.equals(currentQrCode.getUrl())) {
@@ -114,8 +146,12 @@ public class RoomCommandService {
     }
 
     public void assignQrCodeError(JoinCode joinCode) {
+        if (!roomRepository.existsByJoinCode(joinCode)) {
+            log.debug("이미 제거된 방의 QR ERROR 이벤트 무시: joinCode={}", joinCode);
+            return;
+        }
         final Room room = roomQueryService.getByJoinCode(joinCode);
-        final QrCode currentQrCode = room.getJoinCode().getQrCode();
+        final QrCode currentQrCode = room.getQrCode();
 
         // 이미 SUCCESS 상태면 ERROR로 다운그레이드 방지
         if (currentQrCode.isSuccess()) {
@@ -132,24 +168,6 @@ public class RoomCommandService {
         room.assignQrCode(QrCode.error());
         save(room);
         log.info("QR 코드 ERROR 상태로 변경: joinCode={}", joinCode);
-    }
-
-    public List<MiniGameType> updateMiniGames(JoinCode joinCode, PlayerName hostName,
-                                              List<MiniGameType> miniGameTypes) {
-        log.info("JoinCode[{}] 미니게임 설정 변경 - 호스트 이름: {}, 미니게임 목록: {}", joinCode, hostName, miniGameTypes);
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        room.clearMiniGames();
-
-        miniGameTypes.forEach(miniGameType -> {
-            final Playable miniGame = miniGameFactoryMap.get(miniGameType).create(joinCode.getValue());
-            room.addMiniGame(hostName, miniGame);
-        });
-
-        save(room);
-
-        return room.getAllMiniGame().stream()
-                .map(Playable::getMiniGameType)
-                .toList();
     }
 
     public Room readyPlayer(JoinCode joinCode, PlayerName playerName, Boolean isReady) {

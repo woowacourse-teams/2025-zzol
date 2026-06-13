@@ -8,10 +8,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.RoomFixture;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.redis.stream.StreamRecordFields;
 import coffeeshout.global.redis.stream.StreamTracePropagator;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.event.RoomJoinEvent;
 import coffeeshout.room.domain.repository.RoomRepository;

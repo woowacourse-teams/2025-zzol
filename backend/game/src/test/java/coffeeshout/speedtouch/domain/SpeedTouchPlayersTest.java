@@ -4,8 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.gamecommon.Gamer;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,14 +13,14 @@ import org.junit.jupiter.api.Test;
 
 class SpeedTouchPlayersTest {
 
-    private Player 한스;
-    private Player 꾹이;
+    private Gamer 한스;
+    private Gamer 꾹이;
     private SpeedTouchPlayers players;
 
     @BeforeEach
     void setUp() {
-        한스 = PlayerFixture.게스트한스();
-        꾹이 = PlayerFixture.게스트꾹이();
+        한스 = PlayerFixture.게스트한스().toGamer();
+        꾹이 = PlayerFixture.게스트꾹이().toGamer();
         players = new SpeedTouchPlayers(List.of(한스, 꾹이));
     }
 
@@ -31,16 +30,16 @@ class SpeedTouchPlayersTest {
         @Test
         void 이름으로_플레이어를_찾을_수_있다() {
             // when
-            final SpeedTouchPlayer found = players.findByName(new PlayerName("한스"));
+            final SpeedTouchPlayer found = players.findByName("한스");
 
             // then
-            assertThat(found.getPlayer()).isEqualTo(한스);
+            assertThat(found.getGamer()).isEqualTo(한스);
         }
 
         @Test
         void 존재하지_않는_이름으로_조회하면_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> players.findByName(new PlayerName("없는사람")))
+            assertThatThrownBy(() -> players.findByName("없는사람"))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
@@ -57,7 +56,7 @@ class SpeedTouchPlayersTest {
         @Test
         void 일부만_완주하면_false를_반환한다() {
             // given
-            final SpeedTouchPlayer 한스플레이어 = players.findByName(new PlayerName("한스"));
+            final SpeedTouchPlayer 한스플레이어 = players.findByName("한스");
             final Instant now = Instant.now();
             for (int i = SpeedTouchPlayer.FIRST_NUMBER; i <= SpeedTouchPlayer.LAST_NUMBER; i++) {
                 한스플레이어.touch(i, now);
@@ -97,7 +96,7 @@ class SpeedTouchPlayersTest {
         @Test
         void toPlayerMap으로_Player_키_맵을_생성할_수_있다() {
             // when
-            final var map = players.toPlayerMap();
+            final var map = players.toGamerMap();
 
             // then
             assertThat(map).hasSize(2);

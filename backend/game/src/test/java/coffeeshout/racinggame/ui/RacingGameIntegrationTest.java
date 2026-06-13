@@ -60,6 +60,8 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
         var stateResponses = session.subscribe(subscribeStateUrl);
         var positionResponses = session.subscribe(subscribePositionUrl);
 
+        // 구독 등록 완료 보장 후 시작 — 등록 전 첫 브로드캐스트 유실(subscribe→publish 레이스) 방지 (#1410)
+        session.awaitSubscribed();
         // when - 게임 시작
         startRacingGame();
 
@@ -94,6 +96,8 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
 
         var stateResponses = singleSession.subscribe(subscribeStateUrl);
 
+        // 구독 등록 완료 보장 후 시작 — 등록 전 첫 브로드캐스트 유실(subscribe→publish 레이스) 방지 (#1410)
+        singleSession.awaitSubscribed();
         // 게임 시작
         startRacingGame();
 

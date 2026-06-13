@@ -4,8 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -20,6 +23,7 @@ import org.springframework.web.socket.messaging.WebSocketStompClient;
 public class TestStompSession implements AutoCloseable {
 
     private static final int DEFAULT_RESPONSE_TIMEOUT_SECONDS = 5;
+    private static final Map<String, String> SUBSCRIBE_BARRIER_PING = Map.of("ping", "1");
 
     private final StompSession session;
     private final WebSocketStompClient stompClient;
@@ -36,6 +40,35 @@ public class TestStompSession implements AutoCloseable {
         MessageCollector messageCollector = new MessageCollector();
         session.subscribe(subscribeEndPoint, new MessageCollectorStompFrameHandler(messageCollector));
         return messageCollector;
+    }
+
+    /**
+     * 이 세션이 직전까지 보낸 모든 SUBSCRIBE의 브로커 등록 완료를 결정론적으로 보장한다.
+     *
+     * <p>인메모리 SimpleBroker는 SUBSCRIBE에 RECEIPT를 보내지 않으므로(#1410 실측) 구독 ACK로 확인할 수
+     * 없다. 대신 센티넬 토픽을 구독한 뒤 그 토픽으로 ping을 round-trip될 때까지 재전송한다. ping이
+     * 돌아오면 센티넬 SUBSCRIBE가 등록된 것이고, 한 세션의 inbound 채널은 프레임을 순서대로 처리하므로
+     * 그 이전에 보낸 SUBSCRIBE들도 모두 등록 완료다.
+     *
+     * <p>테스트는 게임 시작(첫 브로드캐스트 발행) 직전에 호출해, 구독 등록 전 발행된 가장 이른
+     * 브로드캐스트가 유실되는 subscribe→publish 레이스를 제거한다. 고정 sleep과 달리 등록 완료를
+     * 실제로 증명하므로 부하와 무관하게 결정론적이다.
+     */
+    public void awaitSubscribed() {
+        awaitSubscribed(DEFAULT_RESPONSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    }
+
+    public void awaitSubscribed(long timeout, TimeUnit unit) {
+        String sentinelTopic = "/topic/__subscribe-barrier__/" + UUID.randomUUID();
+        MessageCollector sentinel = subscribe(sentinelTopic);
+        Awaitility.await()
+            .atMost(timeout, unit)
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(50))
+            .until(() -> {
+                session.send(sentinelTopic, SUBSCRIBE_BARRIER_PING);
+                return !sentinel.isEmpty();
+            });
     }
 
     public void send(String sendEndpoint, Object bodyMessage) {

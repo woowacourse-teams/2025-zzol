@@ -46,6 +46,7 @@ BE 의 `GET /dev/ws-catalog` 에 모든 토픽/큐/send destination 의 path·pa
 | 파일 | 범위 | 내용 |
 | --- | --- | --- |
 | `principles.md` | 전역 | 역할, 코딩 원칙, 외과적 변경, 작업 원칙 |
+| `git-push-safety.md` | 전역 | 보호 브랜치(fe/dev·fe/prod·main 등) 직접 push 금지, upstream·refspec 검증 절차 |
 | `style.md` | 전역 | 색상·타이포그래피·z-index 토큰, Emotion 패턴 금지 항목 |
 | `qmd.md` | 전역 | 코드베이스 시맨틱 검색 사용법 |
 | `websocket.md` | `src/apis/websocket/**`, `src/contexts/**` | WebSocket 구독·발행 패턴, destination 형식 |

@@ -26,6 +26,10 @@ public class TestStompSession implements AutoCloseable {
 
     private static final int DEFAULT_RESPONSE_TIMEOUT_SECONDS = 5;
     private static final String SUBSCRIBE_BARRIER_KEY = "__subscribeBarrier__";
+    // echo round-trip 기반 등록 확인은 클라이언트 SEND를 같은 목적지 구독자에게 브로드캐스트하는
+    // SimpleBroker 목적지(/topic/*)에서만 성립한다. /user/*는 UserDestinationMessageHandler가
+    // 세션별로 변환·라우팅해 echo되지 않으므로 배리어 비대상(이들 구독은 레이스 대상도 아니다).
+    private static final String BROKER_BROADCAST_PREFIX = "/topic/";
 
     private final StompSession session;
     private final WebSocketStompClient stompClient;
@@ -44,12 +48,16 @@ public class TestStompSession implements AutoCloseable {
      * <p>STOMP SUBSCRIBE는 비동기라 {@code session.subscribe()}는 등록 완료를 기다리지 않고 즉시 반환한다.
      * 구독 직후 동기적으로 브로드캐스트를 트리거하면(예: 게임 시작), 등록 전에 발행된 가장 이른
      * 브로드캐스트가 구독자 0명에게 전달되어 유실되고 이후 메시지가 한 칸씩 밀린다(subscribe→publish
-     * 레이스, #1410). 이를 막기 위해 반환 전 {@link #awaitRegistered}로 등록 완료를 보장한다.
+     * 레이스, #1410). 이를 막기 위해 {@code /topic/*} 구독은 반환 전 {@link #awaitRegistered}로 등록
+     * 완료를 보장한다. echo가 성립하지 않는 {@code /user/*}·{@code /queue/*} 등은 즉시 반환한다 — 이들은
+     * 게임 시작 같은 동기 발행 레이스 대상이 아니다.
      */
     public MessageCollector subscribe(String subscribeEndPoint) {
         MessageCollector messageCollector = new MessageCollector();
         session.subscribe(subscribeEndPoint, new MessageCollectorStompFrameHandler(messageCollector));
-        awaitRegistered(subscribeEndPoint, messageCollector);
+        if (subscribeEndPoint.startsWith(BROKER_BROADCAST_PREFIX)) {
+            awaitRegistered(subscribeEndPoint, messageCollector);
+        }
         return messageCollector;
     }
 

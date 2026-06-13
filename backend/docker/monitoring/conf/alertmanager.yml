@@ -35,6 +35,27 @@ inhibit_rules:
       - alertname = "ErrorBudgetBurnSlow"
     equal: ['job']
 
+  # 단일 근본원인(app-down)이 critical을 증폭하지 않게 억제(ADR-0026 Phase B).
+  # 앱이 통째로 죽으면 AppInstanceDown(sum by(job)(up)==0)과 함께, 메트릭 소실로 absent
+  # 동반룰(JVM 힙·서킷·WS 지연)이 동시에 발화한다 — 같은 사건의 파생이므로 AppInstanceDown이
+  # 같은 job의 absent 룰을 억제한다. equal: ['job']로 dev↔prod 교차 억제를 막는다.
+  # (AppInstanceDown은 up이 사라지는 게 아니라 up==0이라 source가 살아 있어 inhibition 성립.)
+  - source_matchers:
+      - alertname = "AppInstanceDown"
+    target_matchers:
+      - alertname =~ "JvmHeapMetricAbsent|CircuitBreakerMetricAbsent|WsInboundLatencyMetricAbsent"
+    equal: ['job']
+
+  # node-exporter 소실: MonitoringTargetDown(job="node")이 NodeCpuMetricAbsent를 억제.
+  # equal: ['job']이라 node의 MonitoringTargetDown에만 매칭된다.
+  # (MonitoringTargetDown for:5m > NodeCpuMetricAbsent for:2m라 초기 ~3분은 absent가 단독
+  #  발화 후 억제된다 — 지속 중복 페이지는 막되 첫 알림은 빠른 쪽이 먼저 도착.)
+  - source_matchers:
+      - alertname = "MonitoringTargetDown"
+    target_matchers:
+      - alertname = "NodeCpuMetricAbsent"
+    equal: ['job']
+
 receivers:
   - name: slack-default
     slack_configs:

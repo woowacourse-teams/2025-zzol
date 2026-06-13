@@ -21,6 +21,8 @@
 #   1) redis_commands_duration_seconds_total / _processed_total 메트릭·라벨(cmd) 실재 확인.
 #   2) websocket_message_inbound_time_seconds{quantile}·_count의 idle 거동 확인.
 #      저트래픽 dev에서 _count absent 오탐이 나면 `and on() up{...}==1` 게이팅 검토.
+#      ※ Micrometer percentile 발행이 꺼져 {quantile} 시리즈가 아예 없으면 WsInboundLatencyHigh가
+#        조용히 영영 안 터지고, _count 기반 absent도 이를 못 잡는다 → percentile 발행 활성 여부 확인.
 #   3) jvm_memory_max_bytes{area="heap"}에 id별 -1(미정의 max) 존재 시 `> 0` 필터 추가.
 #   4) 모든 임계값은 베이스라인 미측정 추정치(부하 테스트 실측 기반 원본 보존) — dev에서 정상 범위 측정 후 보정.
 

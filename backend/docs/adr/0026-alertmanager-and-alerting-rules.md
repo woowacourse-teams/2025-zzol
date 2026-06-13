@@ -169,7 +169,7 @@ Phase B(이슈 #1400, PR #1412)는 기존 Grafana Alerting 8룰을 `conf/rules/a
 
 ### 5. 소음 후속 — absent 동반룰 중첩
 
-`JvmHeapMetricAbsent`·`CircuitBreakerMetricAbsent`는 Phase A `AppInstanceDown`(`up == 0`)과, `NodeCpuMetricAbsent`는 `MonitoringTargetDown{job="node"}`과 조건이 겹친다(메트릭 소스가 죽으면 양쪽 발화). §3이 absent 동반룰을 명시 요구하므로 제거하지 않되, 한 사건에 복수 critical이 떠 소음이 되면 Alertmanager `inhibit_rules`로 `AppInstanceDown`이 같은 job의 absent 룰을 억제하도록 후속 보강한다.
+`JvmHeapMetricAbsent`·`CircuitBreakerMetricAbsent`는 Phase A `AppInstanceDown`(`up == 0`)과, `NodeCpuMetricAbsent`는 `MonitoringTargetDown{job="node"}`과 조건이 겹친다(메트릭 소스가 죽으면 양쪽 발화). §3이 absent 동반룰을 명시 요구하므로 제거하지 않고, 대신 한 사건이 critical을 증폭하지 않게 **`alertmanager.yml`에 `inhibit_rules`를 함께 추가했다** — `AppInstanceDown`이 같은 `job`의 absent 동반룰 3개를, `MonitoringTargetDown`(node)이 `NodeCpuMetricAbsent`를 억제한다(`equal: ['job']`로 dev↔prod 교차 억제 방지). 배포 후 실제 소음 패턴을 보고 매처를 조정한다.
 
 ### 6. 롤백
 

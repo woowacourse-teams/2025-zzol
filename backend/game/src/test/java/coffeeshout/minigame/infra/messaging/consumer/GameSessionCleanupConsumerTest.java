@@ -2,8 +2,8 @@ package coffeeshout.minigame.infra.messaging.consumer;
 
 import static org.mockito.BDDMockito.then;
 
-import coffeeshout.gamecommon.GameRoomRemovedEvent;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.minigame.application.GameSessionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,7 +30,7 @@ class GameSessionCleanupConsumerTest {
         @DisplayName("이벤트의 joinCode로 세션을 정리한다")
         void 이벤트의_joinCode로_세션을_정리한다() {
             // given
-            final GameRoomRemovedEvent event = new GameRoomRemovedEvent("ABCD");
+            final RoomLifecycleEvent.Removed event = new RoomLifecycleEvent.Removed("ABCD");
 
             // when
             consumer.accept(event);

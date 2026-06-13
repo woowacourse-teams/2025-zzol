@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
-import coffeeshout.gamecommon.GameRoomCreatedEvent;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.domain.GameSessionRepository;
@@ -85,9 +85,9 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
         });
 
         // 게임 선택 흐름은 GameSession 사전 생성을 전제하므로(ADR-0025 결정 4), 실제 방 생성과 동일하게
-        // GameRoomCreatedEvent를 스트림에 발행해 GameSessionInitConsumer가 권위 있는 호스트로 세션을 만들도록 한다.
+        // RoomLifecycleEvent.Created를 스트림에 발행해 GameSessionInitConsumer가 권위 있는 호스트로 세션을 만들도록 한다.
         streamPublisher.publish(RoomStreamKey.BROADCAST,
-                new GameRoomCreatedEvent(host.getName().value(), joinCode.getValue()));
+                new RoomLifecycleEvent.Created(host.getName().value(), joinCode.getValue()));
 
         // 비동기 컨슈머의 세션 생성 완료를 보장한 뒤 진행한다.
         await().atMost(5, TimeUnit.SECONDS)

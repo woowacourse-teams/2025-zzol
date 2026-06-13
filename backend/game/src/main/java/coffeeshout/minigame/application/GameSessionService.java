@@ -61,7 +61,7 @@ public class GameSessionService {
 
     /**
      * 선택된 게임 목록을 통째로 교체한다. 세션은 방 생성 시 {@code GameSessionInitConsumer}가
-     * 권위 있는 호스트({@code GameRoomCreatedEvent}의 hostName)로 사전 생성하므로 여기서는 반드시 존재한다고
+     * 권위 있는 호스트({@code RoomLifecycleEvent.Created}의 hostName)로 사전 생성하므로 여기서는 반드시 존재한다고
      * 가정한다(지연 생성 폴백 없음 — ADR-0025 결정 4/Option B). 호스트 검증을 GameSession이 단독 수행하려면
      * 세션 host가 select 이벤트의 주장값이 아니라 방 생성 시점의 권위값이어야 하기 때문이다. init보다 select가
      * 먼저 도달하는 극히 짧은 창에서는 {@code getSession}이 예외를 던져 {@code EventDispatcher}가 격리·스킵하고,

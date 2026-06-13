@@ -236,14 +236,14 @@ public record MiniGameFinishedEvent(
 GameSession 생성·정리를 서비스 호출 누락에 의존하지 않도록 Room 생명주기 이벤트에 연결한다.
 
 ```text
-GameRoomCreatedEvent (:game-api)  → GameSessionInitConsumer    (:game) → initSession()
-GameRoomRemovedEvent (:game-api)  → GameSessionCleanupConsumer (:game) → deleteSession()
+RoomLifecycleEvent.Created (:game-api) → GameSessionInitConsumer    (:game) → initSession()
+RoomLifecycleEvent.Removed (:game-api) → GameSessionCleanupConsumer (:game) → deleteSession()
 ```
 
 - **생성·정리 모두 Redis Stream Consumer로 통일한다.** 두 생명주기 이벤트 모두 `EventDispatcher`를 경유하는 `Consumer`로 처리하며, in-process 리스너를 섞지 않는다. `GameSession`은 `MemoryGameSessionRepository`(인스턴스 로컬 `ConcurrentHashMap`)에 저장되므로, 정리 이벤트도 생성과 동일한 Stream 경로를 타야 세션을 소유한 인스턴스에 일관되게 도달한다(in-process 이벤트는 발행 인스턴스에만 전달되어 불일치 위험).
-- `GameRoomRemovedEvent`를 `:game-api` `gamecommon`에 신설하고, `DelayedRoomRemovalService`가 방 삭제 완료 후 Redis Stream으로 발행한다(`StreamPublisher` 경유, 기존 이벤트와 동일). (개정: 원안은 `room.domain.event.RoomRemovedEvent`였다 — 상단 「구현 중 개정」 참조.)
-- `GameSessionInitConsumer`는 `GameRoomCreatedEvent`의 `hostName`만으로 host를 구성한다(`initSession(joinCode, Gamer.guest(hostName))`). 호스트 검증이 이름 기준이므로(결정 2) `userId`는 불필요해 이벤트에 `userId` 필드가 없다.
-- 현재 `EventDispatcher`(`:infra`)는 이벤트 타입당 Consumer 1개만 지원한다(미등록 시 warn 후 스킵). `RoomCreateEvent`를 기존 `RoomCreateConsumer`와 신규 `GameSessionInitConsumer`가 함께 처리해야 하므로, `ObjectProvider.stream()`으로 동일 타입 Consumer 전체를 수집해 순차 실행하는 **팬아웃 방식으로 변경**한다. `RoomRemovedEvent`는 현재 Consumer가 1개(`GameSessionCleanupConsumer`)뿐이지만 동일 팬아웃 경로를 그대로 사용한다.
+- `RoomLifecycleEvent.Removed`를 `:game-api` `gamecommon`에 신설하고, `DelayedRoomRemovalService`가 방 삭제 완료 후 Redis Stream으로 발행한다(`StreamPublisher` 경유, 기존 이벤트와 동일). (개정: 원안은 `room.domain.event.RoomRemovedEvent`였고, 이후 `GameRoomRemovedEvent` 단독 클래스였다 — 현재는 `RoomLifecycleEvent` sealed 패밀리의 중첩 record. 상단 「구현 중 개정」 참조.)
+- `GameSessionInitConsumer`는 `RoomLifecycleEvent.Created`의 `hostName`만으로 host를 구성한다(`initSession(joinCode, Gamer.guest(hostName))`). 호스트 검증이 이름 기준이므로(결정 2) `userId`는 불필요해 이벤트에 `userId` 필드가 없다.
+- 현재 `EventDispatcher`(`:infra`)는 이벤트 타입당 Consumer 1개만 지원한다(미등록 시 warn 후 스킵). `RoomLifecycleEvent.Created`를 기존 `RoomCreateConsumer`와 신규 `GameSessionInitConsumer`가 함께 처리해야 하므로, `ObjectProvider.stream()`으로 동일 타입 Consumer 전체를 수집해 순차 실행하는 **팬아웃 방식으로 변경**한다. `RoomLifecycleEvent.Removed`는 현재 Consumer가 1개(`GameSessionCleanupConsumer`)뿐이지만 동일 팬아웃 경로를 그대로 사용한다.
 
 ### 7. 미니게임 REST 엔드포인트 `:game` 이전
 

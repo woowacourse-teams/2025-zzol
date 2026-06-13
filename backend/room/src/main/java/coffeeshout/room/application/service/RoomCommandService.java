@@ -1,6 +1,6 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.gamecommon.GameRoomHostChangedEvent;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.QrCode;
@@ -67,14 +67,14 @@ public class RoomCommandService {
     /**
      * 호스트가 떠나 새 호스트가 승계됐으면({@code promoteNewHost}) GameSession이 새 호스트로 갱신되도록
      * 생명주기 이벤트를 발행한다. 세션은 인스턴스 로컬이라 in-process가 아닌 Stream으로 발행해야
-     * 세션을 소유한 모든 인스턴스에 도달한다(ADR-0025 결정 6, {@code GameRoomRemovedEvent}와 동일 경로).
+     * 세션을 소유한 모든 인스턴스에 도달한다(ADR-0025 결정 6, {@code RoomLifecycleEvent.Removed}와 동일 경로).
      */
     private void publishHostChangeIfPromoted(JoinCode joinCode, PlayerName previousHost, Room room) {
         final PlayerName currentHost = room.getHost().getName();
         if (!currentHost.equals(previousHost)) {
             streamPublisher.publish(
                     RoomStreamKey.BROADCAST,
-                    new GameRoomHostChangedEvent(joinCode.getValue(), currentHost.value()));
+                    new RoomLifecycleEvent.HostChanged(joinCode.getValue(), currentHost.value()));
         }
     }
 

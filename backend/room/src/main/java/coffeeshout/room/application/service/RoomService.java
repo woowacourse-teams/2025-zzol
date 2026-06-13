@@ -1,6 +1,6 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.gamecommon.GameRoomCreatedEvent;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.global.redis.BaseEvent;
@@ -93,7 +93,7 @@ public class RoomService {
     private Room doCreateRoom(String resolvedName, Long userId) {
         final JoinCode joinCode = joinCodeGenerator.generate();
         final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(resolvedName), userId, rouletteProperties.defaultAdjustmentWeight());
-        final BaseEvent event = new GameRoomCreatedEvent(resolvedName, joinCode.getValue());
+        final BaseEvent event = new RoomLifecycleEvent.Created(resolvedName, joinCode.getValue());
 
         outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
         qrCodeService.generateQrCodeAsync(joinCode.getValue());
@@ -238,7 +238,7 @@ public class RoomService {
         }
     }
 
-    public void createRoom(GameRoomCreatedEvent event) {
+    public void createRoom(RoomLifecycleEvent.Created event) {
         log.info("JoinCode[{}] 방 생성 이벤트 처리 - 호스트 이름: {}",
                 event.joinCode(),
                 event.hostName()

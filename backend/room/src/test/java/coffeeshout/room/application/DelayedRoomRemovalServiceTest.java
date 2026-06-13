@@ -14,7 +14,7 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;
 import coffeeshout.room.application.service.RoomCommandService;
-import coffeeshout.gamecommon.GameRoomRemovedEvent;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.WsRecoveryService;
 import java.time.Duration;
@@ -138,7 +138,7 @@ class DelayedRoomRemovalServiceTest {
 
         @Test
         @SuppressWarnings("unchecked")
-        void 삭제_완료_후_GameRoomRemovedEvent를_발행한다() {
+        void 삭제_완료_후_RoomLifecycleEvent_Removed를_발행한다() {
             given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
                     .willAnswer(invocation -> {
                         Runnable task = invocation.getArgument(0);
@@ -148,7 +148,7 @@ class DelayedRoomRemovalServiceTest {
 
             delayedRoomRemovalService.scheduleRemoveRoom(joinCode);
 
-            final ArgumentCaptor<GameRoomRemovedEvent> eventCaptor = ArgumentCaptor.forClass(GameRoomRemovedEvent.class);
+            final ArgumentCaptor<RoomLifecycleEvent.Removed> eventCaptor = ArgumentCaptor.forClass(RoomLifecycleEvent.Removed.class);
             then(streamPublisher).should().publish(eq(RoomStreamKey.BROADCAST), eventCaptor.capture());
             assertThat(eventCaptor.getValue().joinCode()).isEqualTo(joinCode.getValue());
         }

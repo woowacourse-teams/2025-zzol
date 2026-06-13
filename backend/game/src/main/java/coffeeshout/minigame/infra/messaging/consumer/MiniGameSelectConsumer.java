@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * 미니게임 선택 변경을 GameSession에 반영한다(ADR-0025 결정 4 — Option B).
  *
  * <p>호스트 검증은 GameSession이 단독 수행한다. 세션은 방 생성 시 {@code GameSessionInitConsumer}가
- * {@code GameRoomCreatedEvent}의 권위 있는 hostName으로 사전 생성하므로, {@code updateGames} 내부의
+ * {@code RoomLifecycleEvent.Created}의 권위 있는 hostName으로 사전 생성하므로, {@code updateGames} 내부의
  * {@code replaceGames} 호스트 검증이 "select가 주장한 hostName == 권위 있는 호스트 이름"을 보증한다.
  * 따라서 더 이상 {@code RoomQueryService}로 방을 조회해 검증하지 않는다(:game → :room 의존 제거).
  * 반영 성공 후 in-process 이벤트를 재발행해 선택 목록 브로드캐스트({@code RoomMessagePublisher.onMiniGameListChanged})를

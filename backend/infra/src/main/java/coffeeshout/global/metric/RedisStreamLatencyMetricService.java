@@ -1,6 +1,7 @@
 package coffeeshout.global.metric;
 
 import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.global.redis.EventTypeName;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
@@ -64,7 +65,7 @@ public class RedisStreamLatencyMetricService {
 
         if (latency.toMillis() > 50) {
             log.warn("Redis Stream 지연 50ms 초과: eventId={}, latency={}ms, eventType={}",
-                    event.eventId(), latency.toMillis(), event.getClass().getSimpleName());
+                    event.eventId(), latency.toMillis(), EventTypeName.of(event));
         }
     }
 }

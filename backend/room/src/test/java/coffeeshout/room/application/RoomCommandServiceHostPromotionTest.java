@@ -6,7 +6,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-import coffeeshout.gamecommon.GameRoomHostChangedEvent;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.RoomCommandService;
@@ -62,7 +62,7 @@ class RoomCommandServiceHostPromotionTest {
     class PublishHostChange {
 
         @Test
-        @DisplayName("호스트가 떠나면 승계된 새 호스트 이름으로 GameRoomHostChangedEvent를 발행한다")
+        @DisplayName("호스트가 떠나면 승계된 새 호스트 이름으로 RoomLifecycleEvent.HostChanged를 발행한다")
         void 호스트가_떠나면_승계된_새_호스트_이름으로_이벤트를_발행한다() {
             // given
             given(roomQueryService.getByJoinCode(JOIN_CODE)).willReturn(threePlayerRoom());
@@ -72,8 +72,8 @@ class RoomCommandServiceHostPromotionTest {
 
             // then
             assertThat(removed).isTrue();
-            final ArgumentCaptor<GameRoomHostChangedEvent> captor =
-                    ArgumentCaptor.forClass(GameRoomHostChangedEvent.class);
+            final ArgumentCaptor<RoomLifecycleEvent.HostChanged> captor =
+                    ArgumentCaptor.forClass(RoomLifecycleEvent.HostChanged.class);
             then(streamPublisher).should().publish(eq(RoomStreamKey.BROADCAST), captor.capture());
             assertThat(captor.getValue().joinCode()).isEqualTo(JOIN_CODE.getValue());
             assertThat(captor.getValue().newHostName()).isEqualTo(GUEST_1.value());

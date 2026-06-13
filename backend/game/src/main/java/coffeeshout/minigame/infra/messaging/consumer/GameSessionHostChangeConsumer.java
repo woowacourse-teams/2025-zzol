@@ -1,8 +1,8 @@
 package coffeeshout.minigame.infra.messaging.consumer;
 
-import coffeeshout.gamecommon.GameRoomHostChangedEvent;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.minigame.application.GameSessionService;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +17,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class GameSessionHostChangeConsumer implements Consumer<GameRoomHostChangedEvent> {
+public class GameSessionHostChangeConsumer implements Consumer<RoomLifecycleEvent.HostChanged> {
 
     private final GameSessionService gameSessionService;
 
     @Override
-    public void accept(GameRoomHostChangedEvent event) {
+    public void accept(RoomLifecycleEvent.HostChanged event) {
         gameSessionService.updateHost(new JoinCode(event.joinCode()), Gamer.guest(event.newHostName()));
     }
 }

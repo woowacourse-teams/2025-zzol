@@ -110,8 +110,6 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
      * {@code startGame}으로 READY→PLAYING 전이 후 {@code start}로 플로우를 스케줄한다(프로덕션 onGameStartReady와 동일 순서).
      */
     private void startBlindTimerGame() {
-        // 구독 등록 완료 보장 후 시작 — 등록 전 첫 브로드캐스트 유실(subscribe→publish 레이스) 방지 (#1410)
-        session.awaitSubscribed();
         gameSessionService.startGame(joinCode, host, gamers);
         blindTimerGameService.start(joinCode.getValue(), host.getName());
     }

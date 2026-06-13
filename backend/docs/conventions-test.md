@@ -119,16 +119,15 @@ MessageResponse response = collector.get(3, TimeUnit.SECONDS);
 collector.assertNoMessage();                         // 메시지 없음 검증 (기본 1초)
 ```
 
-### 구독 등록 완료 대기 (subscribe→publish 레이스 방지)
+### subscribe()는 등록 완료까지 블록한다 (subscribe→publish 레이스 방지)
 
-구독 직후 **동기적으로** 브로드캐스트를 트리거하는 경우(예: 게임 시작), 트리거 직전에 `awaitSubscribed()`를 호출해 구독 등록 완료를 보장한다.
+STOMP SUBSCRIBE는 비동기라 `session.subscribe()`(Spring)는 등록 완료를 기다리지 않고 즉시 반환한다. 구독 직후 동기적으로 브로드캐스트를 트리거하면(예: 게임 시작), 등록 전에 발행된 가장 이른 브로드캐스트가 구독자 0명에게 전달되어 유실되고, 이후 메시지가 한 칸씩 밀려 `get()`이 타임아웃한다. 부하가 큰 CI에서만 간헐 재현되는 flaky의 원인이었다(#1410).
 
-`subscribe()`는 SUBSCRIBE 프레임의 브로커 등록 완료를 기다리지 않고 즉시 반환한다. 등록 전에 발행된 가장 이른 브로드캐스트는 구독자 0명에게 전달되어 유실되고, 이후 메시지가 한 칸씩 밀려 마지막 `get()`이 타임아웃한다. 부하가 큰 CI에서만 간헐 재현되는 flaky의 원인이다(#1410). 인메모리 SimpleBroker는 SUBSCRIBE에 RECEIPT를 보내지 않아 구독 ACK로 확인할 수 없으므로, `awaitSubscribed()`는 센티넬 토픽으로 ping을 round-trip시켜 등록 완료를 결정론적으로 증명한다(고정 대기가 아니다).
+`TestStompSession.subscribe()`는 이를 막기 위해 **반환 전 브로커 등록 완료까지 블록한다** — 별도의 대기 호출이 필요 없다. (인메모리 SimpleBroker는 SUBSCRIBE에 RECEIPT를 보내지 않으므로, 센티넬 토픽으로 ping을 round-trip시켜 등록을 결정론적으로 증명한다. 고정 대기가 아니다.)
 
 ```java
-MessageCollector stateResponses = session.subscribe("/topic/room/{joinCode}/.../state");
-session.awaitSubscribed();   // 구독 등록 완료 보장 — 브로드캐스트 트리거 직전 호출
-startGame();                 // 동기 호출로 즉시 첫 브로드캐스트 발행
+MessageCollector stateResponses = session.subscribe("/topic/room/{joinCode}/.../state"); // 등록 완료 후 반환
+startGame();                                                                              // 즉시 첫 브로드캐스트를 발행해도 안전
 ```
 
 ## 비동기·시간 의존 검증

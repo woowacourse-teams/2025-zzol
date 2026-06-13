@@ -36,7 +36,21 @@ public class TestStompSession implements AutoCloseable {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * 구독하고, 브로커 등록 완료까지 블록한 뒤 {@link MessageCollector}를 반환한다.
+     *
+     * <p>STOMP SUBSCRIBE는 비동기라 {@code session.subscribe()}는 등록 완료를 기다리지 않고 즉시 반환한다.
+     * 구독 직후 동기적으로 브로드캐스트를 트리거하면(예: 게임 시작), 등록 전에 발행된 가장 이른
+     * 브로드캐스트가 구독자 0명에게 전달되어 유실되고 이후 메시지가 한 칸씩 밀린다(subscribe→publish
+     * 레이스, #1410). 이를 막기 위해 반환 전 {@link #awaitRegistered()}로 등록 완료를 보장한다.
+     */
     public MessageCollector subscribe(String subscribeEndPoint) {
+        MessageCollector messageCollector = rawSubscribe(subscribeEndPoint);
+        awaitRegistered();
+        return messageCollector;
+    }
+
+    private MessageCollector rawSubscribe(String subscribeEndPoint) {
         MessageCollector messageCollector = new MessageCollector();
         session.subscribe(subscribeEndPoint, new MessageCollectorStompFrameHandler(messageCollector));
         return messageCollector;
@@ -48,21 +62,16 @@ public class TestStompSession implements AutoCloseable {
      * <p>인메모리 SimpleBroker는 SUBSCRIBE에 RECEIPT를 보내지 않으므로(#1410 실측) 구독 ACK로 확인할 수
      * 없다. 대신 센티넬 토픽을 구독한 뒤 그 토픽으로 ping을 round-trip될 때까지 재전송한다. ping이
      * 돌아오면 센티넬 SUBSCRIBE가 등록된 것이고, 한 세션의 inbound 채널은 프레임을 순서대로 처리하므로
-     * 그 이전에 보낸 SUBSCRIBE들도 모두 등록 완료다.
+     * 그 이전에 보낸 SUBSCRIBE들도 모두 등록 완료다. 고정 sleep과 달리 등록 완료를 실제로 증명하므로
+     * 부하와 무관하게 결정론적이다.
      *
-     * <p>테스트는 게임 시작(첫 브로드캐스트 발행) 직전에 호출해, 구독 등록 전 발행된 가장 이른
-     * 브로드캐스트가 유실되는 subscribe→publish 레이스를 제거한다. 고정 sleep과 달리 등록 완료를
-     * 실제로 증명하므로 부하와 무관하게 결정론적이다.
+     * <p>센티넬 구독은 {@link #rawSubscribe}로 등록해 {@link #subscribe} → {@code awaitRegistered} 재귀를 끊는다.
      */
-    public void awaitSubscribed() {
-        awaitSubscribed(DEFAULT_RESPONSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    }
-
-    public void awaitSubscribed(long timeout, TimeUnit unit) {
+    private void awaitRegistered() {
         String sentinelTopic = "/topic/__subscribe-barrier__/" + UUID.randomUUID();
-        MessageCollector sentinel = subscribe(sentinelTopic);
+        MessageCollector sentinel = rawSubscribe(sentinelTopic);
         Awaitility.await()
-            .atMost(timeout, unit)
+            .atMost(DEFAULT_RESPONSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .pollDelay(Duration.ZERO)
             .pollInterval(Duration.ofMillis(50))
             .until(() -> {

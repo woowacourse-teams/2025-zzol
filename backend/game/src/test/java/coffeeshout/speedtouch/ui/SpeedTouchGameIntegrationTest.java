@@ -147,8 +147,6 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
     }
 
     private void startSpeedTouchGame() {
-        // 구독 등록 완료 보장 후 시작 — 등록 전 첫 브로드캐스트 유실(subscribe→publish 레이스) 방지 (#1410)
-        session.awaitSubscribed();
         gameSessionService.startGame(joinCode, host, gamers);
         speedTouchGameService.start(joinCode.getValue(), host.getName());
     }

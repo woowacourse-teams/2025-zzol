@@ -144,10 +144,13 @@ public class TestStompSession implements AutoCloseable {
                     .until(() -> !queue.isEmpty());
             } catch (ConditionTimeoutException e) {
                 // [진단 계측 — #1410] 예외 타입은 유지하고 메시지만 보강한다.
-                throw new ConditionTimeoutException(String.format(
+                // ConditionTimeoutException은 (String) 생성자만 제공하므로 initCause로 원본을 cause에 보존한다.
+                ConditionTimeoutException enriched = new ConditionTimeoutException(String.format(
                     "메시지 미수신 (timeout=%d %s). 미폴링 큐 크기=%d, 누적 수신 이력(%d건)=%s",
                     timeout, unit.name(), queue.size(), receivedHistory.size(),
                     Collections.unmodifiableList(receivedHistory)));
+                enriched.initCause(e);
+                throw enriched;
             }
             long end = System.currentTimeMillis();
             return new MessageResponse(end - start, queue.poll());

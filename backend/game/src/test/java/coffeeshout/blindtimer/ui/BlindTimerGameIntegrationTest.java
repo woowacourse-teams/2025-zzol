@@ -13,7 +13,6 @@ import coffeeshout.fixture.GamerFixture;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
 import java.time.Duration;
 import java.util.List;

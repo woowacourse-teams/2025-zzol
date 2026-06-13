@@ -53,10 +53,8 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         // given
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/speed-touch/state", joinCodeValue);
-        final String subscribeProgressUrl = String.format("/topic/room/%s/speed-touch/progress", joinCodeValue);
 
         var stateResponses = session.subscribe(subscribeStateUrl);
-        var progressResponses = session.subscribe(subscribeProgressUrl);
 
         // when
         startSpeedTouchGame();

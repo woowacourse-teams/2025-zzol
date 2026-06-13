@@ -49,8 +49,10 @@ export const useBlockStackingSounds = (): BlockStackingSounds => {
   const ensureAudioContext = useCallback(() => {
     if (mutedRef.current) return;
     if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      audioCtxRef.current = new (
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      )();
     }
     if (audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();

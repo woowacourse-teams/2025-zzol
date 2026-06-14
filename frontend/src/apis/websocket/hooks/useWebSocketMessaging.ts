@@ -1,6 +1,6 @@
 import { Client } from '@stomp/stompjs';
 import { useCallback } from 'react';
-import { WEBSOCKET_CONFIG, WebSocketMessage } from '../constants/constants';
+import { isBrokerDestination, WEBSOCKET_CONFIG, WebSocketMessage } from '../constants/constants';
 import { saveLastStreamId } from '@/apis/rest/recovery';
 import WebSocketErrorHandler from '../utils/WebSocketErrorHandler';
 
@@ -25,8 +25,8 @@ export const useWebSocketMessaging = ({ client, isConnected, playerName, joinCod
         return null;
       }
 
-      // 개인 큐(/user/queue/...)는 prefix 를 그대로 두고, 그 외 토픽만 /topic 을 붙인다
-      const requestUrl = url.startsWith('/user/') ? url : WEBSOCKET_CONFIG.TOPIC_PREFIX + url;
+      // broker destination(/user/, /queue/)은 prefix 를 그대로 두고, 그 외 토픽만 /topic 을 붙인다
+      const requestUrl = isBrokerDestination(url) ? url : WEBSOCKET_CONFIG.TOPIC_PREFIX + url;
 
       return client.subscribe(requestUrl, (message) => {
         try {

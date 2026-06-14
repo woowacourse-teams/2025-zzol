@@ -1,8 +1,8 @@
 import { reportWebSocketError } from '@/apis/utils/reportSentryError';
 import { Client, IFrame, StompSocketState } from '@stomp/stompjs';
-import { WebSocketErrorOptions } from '../constants/constants';
+import { SubscriptionErrorExtra, WebSocketErrorOptions } from '../constants/constants';
 
-class WebSocketError extends Error {
+export class WebSocketError extends Error {
   constructor(
     public message: string,
     public type: string,
@@ -98,11 +98,13 @@ class WebSocketErrorHandler {
   }: SubscriptionErrorParams): WebSocketError {
     const fullMessage = `구독 메시지 오류 (${url}): ${errorMessage}`;
 
+    const extra: SubscriptionErrorExtra = { url, messageBody, errorMessage };
+
     return this.handleError(
       fullMessage,
       {
         type: 'subscription',
-        extra: { url, messageBody, errorMessage },
+        extra,
       },
       onError
     );

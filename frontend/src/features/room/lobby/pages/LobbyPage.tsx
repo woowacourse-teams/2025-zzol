@@ -1,7 +1,9 @@
 import useFetch from '@/apis/rest/useFetch';
 import useMutation from '@/apis/rest/useMutation';
+import { SubscriptionErrorExtra } from '@/apis/websocket/constants/constants';
 import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import { useWebSocketSubscription } from '@/apis/websocket/hooks/useWebSocketSubscription';
+import { WebSocketError } from '@/apis/websocket/utils/WebSocketErrorHandler';
 import ShareIcon from '@/assets/share-icon.svg';
 import BackButton from '@/components/@common/BackButton/BackButton';
 import Button from '@/components/@common/Button/Button';
@@ -145,7 +147,10 @@ const LobbyPage = () => {
 
   const handleQueueError = useCallback(
     (error: Error) => {
-      const errorMessage = (error as { extra?: { errorMessage?: string } }).extra?.errorMessage;
+      const errorMessage =
+        error instanceof WebSocketError
+          ? (error.extra as SubscriptionErrorExtra | undefined)?.errorMessage
+          : undefined;
       showToast({
         type: 'error',
         message: errorMessage?.trim() || '요청 처리에 실패했습니다. 다시 시도해주세요.',

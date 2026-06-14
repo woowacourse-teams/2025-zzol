@@ -25,7 +25,8 @@ export const useWebSocketMessaging = ({ client, isConnected, playerName, joinCod
         return null;
       }
 
-      const requestUrl = WEBSOCKET_CONFIG.TOPIC_PREFIX + url;
+      // 개인 큐(/user/queue/...)는 prefix 를 그대로 두고, 그 외 토픽만 /topic 을 붙인다
+      const requestUrl = url.startsWith('/user/') ? url : WEBSOCKET_CONFIG.TOPIC_PREFIX + url;
 
       return client.subscribe(requestUrl, (message) => {
         try {

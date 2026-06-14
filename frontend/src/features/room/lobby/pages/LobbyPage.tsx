@@ -41,6 +41,9 @@ import * as S from './LobbyPage.styled';
 type SectionType = '참가자' | '룰렛' | '미니게임';
 type SectionComponents = Record<SectionType, ReactElement>;
 
+// 개인 에러 큐(/user/queue/errors)는 항상 에러 envelope 라 onData 가 호출되지 않는다
+const noop = () => {};
+
 const LobbyPage = () => {
   const navigate = useReplaceNavigate();
   const { send, isConnected } = useWebSocket();
@@ -139,6 +142,17 @@ const LobbyPage = () => {
     [setQrCodeUrl, showToast]
   );
 
+  const handleQueueError = useCallback(
+    (error: Error) => {
+      const { errorMessage } = (error as { extra?: { errorMessage?: string } }).extra ?? {};
+      showToast({
+        type: 'error',
+        message: errorMessage ?? '요청 처리에 실패했습니다. 다시 시도해주세요.',
+      });
+    },
+    [showToast]
+  );
+
   const { isSubscribed: isParticipantsSubscribed } = useWebSocketSubscription<Player[]>(
     `/room/${joinCode}`,
     handleParticipant
@@ -155,6 +169,8 @@ const LobbyPage = () => {
     undefined,
     qrCodeStatus !== 'SUCCESS'
   );
+  // 미니게임 선택 등 비동기 처리 실패 시 BE 가 요청 클라이언트에게만 되돌리는 개인 에러 큐
+  useWebSocketSubscription('/user/queue/errors', noop, handleQueueError);
 
   useEffect(() => {
     if (joinCode && isConnected && isParticipantsSubscribed) {

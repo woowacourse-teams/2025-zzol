@@ -102,7 +102,7 @@ class WebSocketErrorHandler {
       fullMessage,
       {
         type: 'subscription',
-        extra: { url, messageBody },
+        extra: { url, messageBody, errorMessage },
       },
       onError
     );

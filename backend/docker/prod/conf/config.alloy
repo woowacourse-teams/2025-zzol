@@ -18,3 +18,10 @@ shipping.app_logs_log_time "prod" {
 	environment = "prod"
 	job         = "prod-app"
 }
+
+// 라이브 디버깅 UI(:12345 /debug) — 컴포넌트 간 흐르는 실제 데이터를 실시간 관찰한다
+// (ADR-0030). UI 접근은 compose가 호스트 loopback(127.0.0.1)에만 publish한 포트 +
+// SSH 터널로 한정되며 공개 노출은 없다. 활성 스트리밍 시에만 오버헤드가 발생한다.
+livedebugging {
+	enabled = true
+}

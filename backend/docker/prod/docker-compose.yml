@@ -222,6 +222,11 @@ services:
     image: grafana/alloy:v1.16.3
     container_name: prod-alloy
     restart: unless-stopped
+    # 라이브 디버깅 UI/메트릭(:12345)을 호스트 loopback에만 publish (ADR-0030).
+    # 공개 노출 없음 — SSH 터널(ssh -L 12346:localhost:12346 ...)로만 접근.
+    # 호스트 포트는 dev(12345)와 충돌 회피 위해 12346 사용(동일 호스트 공존 가정).
+    ports:
+      - "127.0.0.1:12346:12345"
     volumes:
       - prod-app-logs:/app/logs:ro
       - ./conf/config.alloy:/etc/alloy/config.alloy:ro

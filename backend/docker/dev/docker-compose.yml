@@ -209,6 +209,10 @@ services:
     image: grafana/alloy:v1.16.3
     container_name: dev-alloy
     restart: unless-stopped
+    # 라이브 디버깅 UI/메트릭(:12345)을 호스트 loopback에만 publish (ADR-0030).
+    # 공개 노출 없음 — SSH 터널(ssh -L 12345:localhost:12345 ...)로만 접근.
+    ports:
+      - "127.0.0.1:12345:12345"
     volumes:
       - dev-app-logs:/app/logs:ro
       - ./conf/config.alloy:/etc/alloy/config.alloy:ro

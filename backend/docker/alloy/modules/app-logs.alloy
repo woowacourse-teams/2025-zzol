@@ -19,8 +19,21 @@ declare "app_logs_ingest_time" {
 	loki.process "process" {
 		forward_to = [loki.write.default.receiver]
 
+		// 멀티라인: 타임스탬프 브래킷으로 시작하지 않는 줄(Java 스택트레이스의
+		// continuation 줄·"Caused by:"·"    at ...")을 직전 엔트리에 합쳐 1건으로 만든다.
+		// max_lines 기본 128(초과분은 다음 엔트리로 분할 — 유실 아님).
+		stage.multiline {
+			firstline     = "^\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\]"
+			max_wait_time = "3s"
+		}
+
+		// (?s): .이 개행을 포함 → 병합된 멀티라인 엔트리 전체를 매치(없으면 스택트레이스
+		// 엔트리에서 매치 실패 → level/timestamp 미추출). (?:\[trace\] )?: ADR-0021로
+		// 추가된 [traceId,spanId] 구간을 옵션 처리(트레이스 없는 startup 로그·구포맷도 매치).
+		// 이 구간 누락으로 매치가 깨져 있던 잠재 버그를 함께 수정한다(ADR-0030).
+		// traceId는 고카디널리티라 추출만 하고 라벨로 쓰지 않는다.
 		stage.regex {
-			expression = "^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] --- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
+			expression = "(?s)^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] (?:\\[(?P<trace>[^\\]]*)\\] )?--- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
 		}
 
 		stage.labels {
@@ -61,8 +74,21 @@ declare "app_logs_log_time" {
 	loki.process "process" {
 		forward_to = [loki.write.default.receiver]
 
+		// 멀티라인: 타임스탬프 브래킷으로 시작하지 않는 줄(Java 스택트레이스의
+		// continuation 줄·"Caused by:"·"    at ...")을 직전 엔트리에 합쳐 1건으로 만든다.
+		// max_lines 기본 128(초과분은 다음 엔트리로 분할 — 유실 아님).
+		stage.multiline {
+			firstline     = "^\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\]"
+			max_wait_time = "3s"
+		}
+
+		// (?s): .이 개행을 포함 → 병합된 멀티라인 엔트리 전체를 매치(없으면 스택트레이스
+		// 엔트리에서 매치 실패 → level/timestamp 미추출). (?:\[trace\] )?: ADR-0021로
+		// 추가된 [traceId,spanId] 구간을 옵션 처리(트레이스 없는 startup 로그·구포맷도 매치).
+		// 이 구간 누락으로 매치가 깨져 있던 잠재 버그를 함께 수정한다(ADR-0030).
+		// traceId는 고카디널리티라 추출만 하고 라벨로 쓰지 않는다.
 		stage.regex {
-			expression = "^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] --- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
+			expression = "(?s)^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] (?:\\[(?P<trace>[^\\]]*)\\] )?--- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
 		}
 
 		stage.labels {

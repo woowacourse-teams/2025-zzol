@@ -22,9 +22,9 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "~1.0.4",
+    "@modelcontextprotocol/sdk": "~1.29.0",
     "@stomp/stompjs": "^7.0.0",
-    "ws": "^8.18.0",
+    "ws": "^8.21.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -36,7 +36,7 @@
     "msw": "^2.4.9",
     "prettier": "^3.3.3",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.11.0",
+    "typescript-eslint": "^8.60.1",
     "vitest": "^2.0.5"
   }
 }

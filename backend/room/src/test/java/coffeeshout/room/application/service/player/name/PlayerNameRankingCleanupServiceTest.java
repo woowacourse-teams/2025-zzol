@@ -1,0 +1,112 @@
+package coffeeshout.room.application.service.player.name;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+
+import coffeeshout.global.nickname.NicknamesCollectedEvent;
+import coffeeshout.global.nickname.ProfanityChecker;
+import coffeeshout.room.application.port.PlayerEntityRepository;
+import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.room.domain.service.PlayerNameGenerator;
+import coffeeshout.room.infra.persistence.PlayerEntity;
+import coffeeshout.room.infra.persistence.RoomEntity;
+import java.util.List;
+import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class PlayerNameRankingCleanupServiceTest {
+
+    @Mock ProfanityChecker profanityChecker;
+    @Mock PlayerEntityRepository playerRepository;
+    @Mock PlayerNameGenerator playerNameGenerator;
+
+    PlayerNameRankingCleanupService cleanupService;
+
+    @BeforeEach
+    void setUp() {
+        cleanupService = new PlayerNameRankingCleanupService(
+                profanityChecker, playerRepository, playerNameGenerator
+        );
+    }
+
+    @Nested
+    class 랭킹_닉네임이_비속어_목록에_없는_경우 {
+
+        @Test
+        void 교체_없이_종료한다() {
+            cleanupService.onNicknamesCollected(
+                    new NicknamesCollectedEvent(Set.of("용감한호랑이")));
+
+            then(playerRepository).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void playerRepository_findAllByPlayerName을_호출하지_않는다() {
+            cleanupService.onNicknamesCollected(
+                    new NicknamesCollectedEvent(Set.of("용감한호랑이")));
+
+            then(playerRepository).should(never()).findAllByPlayerName(anyString());
+        }
+    }
+
+    @Nested
+    class 비속어가_랭킹에_있는_경우 {
+
+        @Test
+        void 룰렛_랭킹의_비속어_닉네임을_교체한다() {
+            RoomEntity room = mock(RoomEntity.class);
+            PlayerEntity player = mock(PlayerEntity.class);
+            PlayerEntity roommate = mock(PlayerEntity.class);
+
+            given(profanityChecker.contains("씨발")).willReturn(true);
+            given(playerRepository.findAllByPlayerName("씨발")).willReturn(List.of(player));
+            given(player.getRoomSession()).willReturn(room);
+            given(roommate.getRoomSession()).willReturn(room);
+            given(playerRepository.findAllByRoomSessionIn(anyList())).willReturn(List.of(player, roommate));
+            given(player.getPlayerName()).willReturn("씨발");
+            given(roommate.getPlayerName()).willReturn("용감한호랑이");
+            given(playerNameGenerator.generate(Set.of("씨발", "용감한호랑이"))).willReturn(new PlayerName("빠른여우"));
+
+            cleanupService.onNicknamesCollected(
+                    new NicknamesCollectedEvent(Set.of("씨발")));
+
+            then(player).should().updatePlayerName(new PlayerName("빠른여우"));
+            then(roommate).should(never()).updatePlayerName(any(PlayerName.class));
+        }
+
+        @Test
+        void 동일_비속어_닉네임을_가진_여러_플레이어를_모두_교체한다() {
+            RoomEntity room1 = mock(RoomEntity.class);
+            RoomEntity room2 = mock(RoomEntity.class);
+            PlayerEntity player1 = mock(PlayerEntity.class);
+            PlayerEntity player2 = mock(PlayerEntity.class);
+
+            given(profanityChecker.contains("씨발")).willReturn(true);
+            given(playerRepository.findAllByPlayerName("씨발")).willReturn(List.of(player1, player2));
+            given(player1.getRoomSession()).willReturn(room1);
+            given(player2.getRoomSession()).willReturn(room2);
+            given(playerRepository.findAllByRoomSessionIn(anyList())).willReturn(List.of(player1, player2));
+            given(player1.getPlayerName()).willReturn("씨발");
+            given(player2.getPlayerName()).willReturn("씨발");
+            given(playerNameGenerator.generate(eq(Set.of("씨발")))).willReturn(new PlayerName("빠른여우"), new PlayerName("용감한호랑이"));
+
+            cleanupService.onNicknamesCollected(
+                    new NicknamesCollectedEvent(Set.of("씨발")));
+
+            then(player1).should().updatePlayerName(new PlayerName("빠른여우"));
+            then(player2).should().updatePlayerName(new PlayerName("용감한호랑이"));
+        }
+    }
+}

@@ -18,7 +18,22 @@
 | ErrorCode           | `{Domain}ErrorCode`                      | `CardGameErrorCode`              |
 | 요청 객체               | `{Action}Request` / `{Action}Message`    | `RoomEnterRequest`               |
 
+### WebSocket 컨트랙트 어노테이션
+
+WebSocket 메시지를 발행하는 메서드에는 반드시 아래 어노테이션을 붙여야 한다.
+어노테이션이 누락되면 `/dev/ws-catalog` 카탈로그에서 해당 컨트랙트가 노출되지 않는다.
+
+| 어노테이션        | 사용 위치                                                  | 설명                             |
+|--------------|--------------------------------------------------------|--------------------------------|
+| `@WsTopic`   | `convertAndSend` 로 토픽을 브로드캐스트하는 메서드                    | 응답 토픽 경로와 페이로드 타입 선언           |
+| `@WsQueue`   | `convertAndSendToUser` 로 개인 큐에 전송하는 메서드                | 큐 경로(`/queue/...`)와 페이로드 타입 선언 |
+| `@WsReceive` | `@MessageMapping` 핸들러 중 Redis Stream 으로 비동기 응답이 나가는 경우 | send→topic 인과 관계 선언            |
+
+`@WsTopic.path` 는 `/topic/` prefix 를 제외한 상대 경로를 적는다 (예: `/room/{joinCode}`).
+`@WsQueue.path` 는 `/queue/` 를 포함한 경로를 적는다 (예: `/queue/friends/requests`).
+
 ### 값 객체(Value Object)
+
 도메인의 식별자와 핵심 개념은 record로 정의한다. 원시 타입(`String`, `int`)을 도메인 메서드 시그니처에 그대로 노출하지 않는다.
 
 ---
@@ -55,7 +70,7 @@ CoffeeShoutException (abstract)
 
 - 이벤트는 record로 정의하고 `BaseEvent`를 구현한다
 - 컴팩트 생성자에서 `eventId`(UUID)와 `timestamp`(Instant.now())를 자동 생성한다
-- 분산 추적이 필요하면 `Traceable`도 함께 구현한다
+- 분산 추적은 인프라 경계(`StreamPublisher`/`RedisStreamListenerStarter`)가 W3C `traceparent` 캐리어로 자동 전파한다. 이벤트에 트레이싱 코드를 넣지 않는다 ([ADR-0021](adr/0021-trace-propagation-traceparent.md))
 
 > **외부 의존성 주입 원칙과의 관계**: `eventId`·`timestamp`는 "이벤트가 생성된 사실 자체"를 기록하는 메타데이터이므로, 비즈니스 로직 테스트의 격리 대상이 아니다. 이벤트 생성 시점이 테스트에 영향을 준다면 이벤트 객체 자체보다 그것을 소비하는 쪽의 설계를 먼저 검토한다.
 

@@ -28,9 +28,18 @@ on:
         description: "Docker image tag"
         value: ${{ jobs.ci-build.outputs.image_tag }}
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   ci-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # output을 상위 워크플로우로 전달
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}
@@ -42,7 +51,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set deployment environment
         id: set-env
@@ -70,28 +79,50 @@ jobs:
           echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
       - name: Setup JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'corretto'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/be/dev' && github.ref != 'refs/heads/be/prod' }}
+          # PR 런도 캐시를 저장한다 — 같은 PR에 커밋을 거듭 푸시할 때
+          # 직전 푸시에서 실행한 모듈 테스트 결과(FROM-CACHE)를 재사용하기 위함.
+          # 캐시는 head 브랜치 스코프에 저장되고, 다른 브랜치는 base/default 브랜치
+          # 캐시를 단방향으로 읽기만 하므로 sibling PR이나 배포 빌드(be/dev·be/prod)로
+          # 역전파되지 않는다. 10GB LRU 압박은 v6 기본 cache-cleanup(on-success)이 완화.
+          cache-read-only: false
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # 모듈별 test JVM이 같은 MySQL/Valkey 컨테이너를 재사용하도록 활성화 (ADR-0013)
+      # 모듈별 독립 DB(zzol_test_<module>)·Redis DB 인덱스 격리로 병렬 실행 시에도 안전하다
+      - name: Enable Testcontainers reuse
+        run: echo "testcontainers.reuse.enable=true" > ~/.testcontainers.properties
+
       - name: Run Tests
-        run: ./gradlew test --build-cache --no-daemon
+        run: ./gradlew test jacocoTestReport --build-cache --no-daemon
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
-          files: backend/build/test-results/test/*.xml
+          files: backend/*/build/test-results/test/*.xml
           check_name: "Backend Test Results"
+
+      - name: Report Coverage
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: madrapps/jacoco-report@v1.8.0
+        with:
+          paths: backend/*/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Backend Test Coverage"
+          update-comment: true
+          min-coverage-overall: 45
+          min-coverage-changed-files: 60
 
       - name: Build JAR
         if: github.event_name != 'pull_request'
@@ -99,10 +130,10 @@ jobs:
 
       - name: Upload Build Artifacts
         if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-artifacts
           path: |
-            backend/build/libs
+            backend/app/build/libs
             backend/docker
             .github/scripts

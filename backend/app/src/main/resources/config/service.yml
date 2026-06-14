@@ -1,0 +1,39 @@
+# 서비스 도메인 설정 (user, room, player, friend, outbox, report, nickname-audit)
+user:
+  code:
+    max-retry: 100
+
+room:
+  removalDelay: 1h
+  qr:
+    width: 150
+    height: 150
+    presignedUrl:
+      expirationHours: 1
+    storage-key-prefix: qr-code
+  event:
+    timeout: 5s
+
+player:
+  removalDelay: 15s
+
+friend:
+  presence:
+    grace-period-seconds: 10
+
+outbox:
+  relay:
+    delay: 500  # ms, 로컬에서는 application-local.yml로 오버라이드
+
+report:
+  rate-limit:
+    rate: 5
+    rate-interval: 1h
+    ttl: 1h
+
+nickname-audit:
+  gemini-api-key: ${GEMINI_API_KEY}   # local/test 프로파일에서는 NoOpNicknameAuditor가 대신 동작
+  model: gemini-3.5-flash
+  flagged-threshold: 0.85
+  batch-size: 100                      # API 호출 1회당 처리량 (RPM 5 기준 100개씩 5회 = 500개/min)
+  feedback-injection-threshold: 20

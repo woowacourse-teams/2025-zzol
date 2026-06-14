@@ -1,7 +1,7 @@
 # 0009. WebSocket 인증 — Room Session Token 도입
 
 - 날짜: 2026-05-08
-- 상태: 승인
+- 상태: 승인 (2026-05-15 부분 개정 — 인증 분기 정책 확장)
 
 ## 컨텍스트
 
@@ -34,15 +34,35 @@ RST는 HS256 서명 JWT이며, 클레임은 다음과 같다.
 
 STOMP CONNECT 헤더 변경은 다음과 같다.
 
-| 변경 전                                       | 변경 후                    |
-|--------------------------------------------|-------------------------|
-| `joinCode: ABCD`                           | 제거                      |
-| `playerName: 홍길동`                          | 제거                      |
-| `Authorization: Bearer {accessToken}` (선택) | 서버에서 무시 (검증 제외)         |
-| —                                          | `roomToken: {RST}` (필수) |
+| 변경 전                                       | 변경 후                                    |
+|--------------------------------------------|------------------------------------------|
+| `joinCode: ABCD`                           | 제거                                      |
+| `playerName: 홍길동`                          | 제거                                      |
+| `Authorization: Bearer {accessToken}` (선택) | `roomToken` 부재 시 User Principal 인증에 사용  |
+| —                                          | `roomToken: {RST}` (방 연결 시 필수)          |
 
-`StompPrincipalInterceptor`는 CONNECT 수신 시 RST를 검증하고, 클레임에서 `joinCode:playerName` Principal을 설정한다.
-`Authorization` 헤더는 별도로 검증하지 않는다. RST 서명이 단일 인증 수단이며, `Authorization` 헤더와 RST의 `userId` 교차 검증은 우회 가능성(헤더 생략)이 있어 보안 효과가 미미하다고 판단해 제외했다.
+`StompPrincipalInterceptor`는 CONNECT 수신 시 아래 순서로 인증을 처리한다.
+
+```text
+1. roomToken 헤더 존재
+   → RST 검증 → PlayerKey("joinCode:playerName") Principal 설정
+
+2. roomToken 헤더 없음 + Authorization: Bearer 헤더 존재
+   → Access Token 검증 → UserPrincipal("user:{userId}") Principal 설정
+
+3. 두 헤더 모두 없음 또는 토큰 검증 실패
+   → sessionId를 Principal로 설정 (익명 연결)
+```
+
+**연결 타입 구분**
+
+| 연결 타입      | 사용 헤더              | Principal 형식          | 예시 사용처           |
+|------------|--------------------|-----------------------|------------------|
+| 방 연결       | `roomToken` (필수)   | `joinCode:playerName` | 게임 진행, 룸 이벤트     |
+| 사용자 연결     | `Authorization`    | `user:{userId}`       | 친구 알림, 사용자 이벤트   |
+| 익명 연결      | 없음                 | `{sessionId}`         | 미인증 클라이언트        |
+
+> **주의**: `roomToken`과 `Authorization`을 교차 검증하지 않는다. `roomToken`이 있으면 RST 클레임의 `userId`와 Access Token의 `userId` 일치 여부를 확인하지 않는다. RST 단독으로 방 연결을 승인하고, 사용자 연결은 Access Token 단독으로 승인한다.
 
 ## 고려한 대안
 
@@ -89,7 +109,7 @@ STOMP CONNECT 헤더 변경은 다음과 같다.
 
 - `POST /api/rooms` (방 생성) 및 `POST /api/rooms/{joinCode}` (방 입장) 응답에 `roomSessionToken` 필드 추가. HOST는 방 생성 시 자동 입장하므로 생성 응답에도 RST가 포함된다.
 - `RoomSessionTokenService`: RST 발급(`issue`) 및 검증(`verify`) 담당.
-- `StompPrincipalInterceptor`: `joinCode`/`playerName` 헤더 파싱 제거 → `roomToken` 헤더 검증으로 교체. 검증 실패 시 연결 거부.
+- `StompPrincipalInterceptor`: `joinCode`/`playerName` 헤더 파싱 제거 → `roomToken` → `Authorization` 순으로 인증 분기. 방 연결은 RST 필수, 사용자 연결은 Access Token, 이외에는 sessionId로 폴백.
 - `SessionConnectEventListener`: `joinCode`/`playerName` 헤더 직접 읽기 제거 → Principal에서 추출.
 - `application.yml`에 `websocket.room-session-token.secret` 추가. TTL은 기존 `room.removalDelay`를 주입받아 사용.
 
@@ -132,3 +152,25 @@ STOMP CONNECT 헤더 변경은 다음과 같다.
 
 백엔드 배포 후 즉시 기존 `joinCode`, `playerName` 헤더는 서버에서 무시된다.
 배포 전 프론트엔드와 동시 릴리즈 또는 임시 하위 호환 기간을 조율해야 한다.
+
+---
+
+## 개정 이력
+
+### 2026-05-15 — 인증 분기 정책 확장
+
+**배경**: 친구 관리 기능 도입(`#1234`)으로 방 컨텍스트(`joinCode`)가 없는 사용자 연결이 필요해졌다.
+친구 알림 등 사용자 수준 WebSocket 이벤트는 RST를 발급받을 방이 없으므로 기존 정책(RST 단일 인증)으로는 연결 불가.
+
+**변경 내용**
+
+- 초기 결정: `roomToken` 없으면 연결 거부, `Authorization` 헤더 무시
+- 개정 후: `roomToken` 없으면 `Authorization` 헤더로 폴백, 둘 다 없거나 검증 실패 시 `sessionId`로 익명 연결
+
+**보안 분석**
+
+- 방 연결(RST 경로)의 보안 모델은 변경 없다. RST 검증은 그대로 단일 수단이며 `Authorization`과 교차 검증하지 않는다.
+- 사용자 연결(Access Token 경로)은 기존 REST API와 동일한 JWT 검증을 재사용한다.
+- sessionId 폴백은 방 수준 권한이 없는 연결에만 적용되므로 방 이벤트 수신은 불가하다.
+
+**영향 범위**: `StompPrincipalInterceptor`, 친구 알림 구독 경로

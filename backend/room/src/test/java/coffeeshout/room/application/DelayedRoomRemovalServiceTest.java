@@ -1,0 +1,175 @@
+package coffeeshout.room.application;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verifyNoInteractions;
+
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.room.application.service.DelayedRoomRemovalService;
+import coffeeshout.room.application.service.RoomCommandService;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
+import coffeeshout.websocket.WsRecoveryService;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.ScheduledFuture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.TaskScheduler;
+
+@ExtendWith(MockitoExtension.class)
+class DelayedRoomRemovalServiceTest {
+
+    @Mock
+    RoomCommandService roomCommandService;
+
+    @Mock
+    TaskScheduler taskScheduler;
+
+    @Mock
+    WsRecoveryService wsRecoveryService;
+
+    @Mock
+    StreamPublisher streamPublisher;
+
+    @SuppressWarnings({"rawtypes"})
+    ScheduledFuture scheduledFuture = mock(ScheduledFuture.class);
+
+    DelayedRoomRemovalService delayedRoomRemovalService;
+
+    JoinCode joinCode;
+
+    @BeforeEach
+    void setUp() {
+        Duration removalDelay = Duration.ofMillis(100);
+
+        delayedRoomRemovalService = new DelayedRoomRemovalService(
+                taskScheduler,
+                removalDelay,
+                roomCommandService,
+                wsRecoveryService,
+                streamPublisher
+        );
+
+        joinCode = new JoinCode("ABCD");
+    }
+
+    @Nested
+    class 방_지연_삭제_스케줄링 {
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void 정상적으로_지연_삭제를_스케줄링한다() {
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willReturn(scheduledFuture);
+
+            delayedRoomRemovalService.scheduleRemoveRoom(joinCode);
+
+            then(taskScheduler).should().schedule(any(Runnable.class), any(Instant.class));
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void 서로_다른_방은_독립적으로_스케줄링된다() {
+            JoinCode joinCode1 = new JoinCode("ABCD");
+            JoinCode joinCode2 = new JoinCode("FGHK");
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willReturn(scheduledFuture);
+
+            delayedRoomRemovalService.scheduleRemoveRoom(joinCode1);
+            delayedRoomRemovalService.scheduleRemoveRoom(joinCode2);
+
+            then(taskScheduler).should(times(2)).schedule(any(Runnable.class), any(Instant.class));
+        }
+    }
+
+    @Nested
+    class 실제_삭제_실행_시뮬레이션 {
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void RoomCommandService가_정상_호출된다() {
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willAnswer(invocation -> {
+                        Runnable task = invocation.getArgument(0);
+                        task.run();
+                        return scheduledFuture;
+                    });
+
+            delayedRoomRemovalService.scheduleRemoveRoom(joinCode);
+
+            then(roomCommandService).should().delete(joinCode);
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void RoomCommandService에서_예외_발생해도_안전하게_처리한다() {
+            willThrow(new RuntimeException("방 삭제 실패"))
+                    .given(roomCommandService)
+                    .delete(any(JoinCode.class));
+
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willAnswer(invocation -> {
+                        Runnable task = invocation.getArgument(0);
+                        task.run();
+                        return scheduledFuture;
+                    });
+
+            delayedRoomRemovalService.scheduleRemoveRoom(joinCode);
+
+            then(roomCommandService).should().delete(joinCode);
+        }
+    }
+
+    @Nested
+    class 방_삭제_이벤트_발행 {
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void 삭제_완료_후_RoomLifecycleEvent_Removed를_발행한다() {
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willAnswer(invocation -> {
+                        Runnable task = invocation.getArgument(0);
+                        task.run();
+                        return scheduledFuture;
+                    });
+
+            delayedRoomRemovalService.scheduleRemoveRoom(joinCode);
+
+            final ArgumentCaptor<RoomLifecycleEvent.Removed> eventCaptor = ArgumentCaptor.forClass(RoomLifecycleEvent.Removed.class);
+            then(streamPublisher).should().publish(eq(RoomStreamKey.BROADCAST), eventCaptor.capture());
+            assertThat(eventCaptor.getValue().joinCode()).isEqualTo(joinCode.getValue());
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void 삭제_실패_시_이벤트를_발행하지_않는다() {
+            willThrow(new RuntimeException("방 삭제 실패"))
+                    .given(roomCommandService)
+                    .delete(any(JoinCode.class));
+
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willAnswer(invocation -> {
+                        Runnable task = invocation.getArgument(0);
+                        task.run();
+                        return scheduledFuture;
+                    });
+
+            delayedRoomRemovalService.scheduleRemoveRoom(joinCode);
+
+            verifyNoInteractions(streamPublisher);
+        }
+    }
+}

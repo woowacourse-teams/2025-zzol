@@ -1,0 +1,35 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+web:
+  cors:
+    allowed-origins:
+      - https://dev.zzol.site
+
+room:
+  qr:
+    prefix: "https://dev.zzol.site/join/"
+
+websocket:
+  docs:
+    server-url: "https://api.dev.zzol.site/ws"
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+server:
+  tomcat:
+    remoteip:
+      # Docker 기본 브릿지 네트워크 대역 (172.17.0.0/16 등) 포함
+      internal-proxies: "127\\.0\\.0\\.1|10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|172\\.(1[6-9]|2[0-9]|3[0-1])\\.\\d{1,3}\\.\\d{1,3}|192\\.168\\.\\d{1,3}\\.\\d{1,3}"

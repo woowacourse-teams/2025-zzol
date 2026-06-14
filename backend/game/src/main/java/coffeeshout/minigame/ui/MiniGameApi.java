@@ -1,0 +1,40 @@
+package coffeeshout.minigame.ui;
+
+import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.ui.response.MiniGameRanksResponse;
+import coffeeshout.minigame.ui.response.MiniGameScoresResponse;
+import coffeeshout.minigame.ui.response.RemainingMiniGameResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import org.springframework.http.ResponseEntity;
+
+@Tag(name = "MiniGame", description = "미니게임 관련 API")
+public interface MiniGameApi {
+
+    @Operation(summary = "미니게임 점수 조회", description = "특정 방의 미니게임 점수를 조회합니다.")
+    ResponseEntity<MiniGameScoresResponse> getScores(
+            @Parameter(description = "방 입장 코드", required = true) String joinCode,
+            @Parameter(description = "미니게임 타입", required = true) MiniGameType miniGameType
+    );
+
+    @Operation(summary = "미니게임 순위 조회", description = "특정 방의 미니게임 순위를 조회합니다.")
+    ResponseEntity<MiniGameRanksResponse> getRanks(
+            @Parameter(description = "방 입장 코드", required = true) String joinCode,
+            @Parameter(description = "미니게임 타입", required = true) MiniGameType miniGameType
+    );
+
+    @Operation(summary = "미니게임 전체 목록 조회", description = "사용 가능한 모든 미니게임 목록을 조회합니다.")
+    ResponseEntity<List<MiniGameType>> getMiniGames();
+
+    @Operation(summary = "선택된 미니게임 조회", description = "특정 방에서 선택된 미니게임 목록을 조회합니다.")
+    ResponseEntity<List<MiniGameType>> getSelectedMiniGames(
+            @Parameter(description = "방 입장 코드", required = true) String joinCode
+    );
+
+    @Operation(summary = "남은 미니게임 조회", description = "특정 방에서 아직 플레이하지 않은 미니게임 목록을 조회합니다.")
+    ResponseEntity<RemainingMiniGameResponse> getRemainingMiniGames(
+            @Parameter(description = "방 입장 코드", required = true) String joinCode
+    );
+}

@@ -1,7 +1,7 @@
 ---
 name: test-verifier
 description: 테스트 코드를 docs/conventions-test.md 기준으로 독립적 시각에서 리뷰하고 관련 테스트를 실행·분석한다. 수정 제안만 출력하며 프로덕션/테스트 코드는 직접 수정하지 않는다.
-model: claude-haiku-4-5-20251001
+model: haiku
 tools: Bash, Read, Glob, Grep, Edit
 ---
 
@@ -68,7 +68,7 @@ tools: Bash, Read, Glob, Grep, Edit
 
 ## 출력 형식
 
-```
+````text
 ## 테스트 리뷰 결과
 
 ### [클래스명] — [파일 경로]
@@ -92,7 +92,7 @@ tools: Bash, Read, Glob, Grep, Edit
 결과: PASS / FAIL
 실패 원인: [분류] — 설명
 수정 제안: 내용
-```
+````
 
 ## 절대 규칙
 

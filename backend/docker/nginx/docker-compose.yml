@@ -1,25 +1,20 @@
 services:
   nginx:
-    image: nginx:alpine
+    image: nginx:1.30.2
     container_name: nginx
     volumes:
-      - ./conf:/etc/nginx/conf.d
+      - ./conf:/etc/nginx/conf.d:ro
       - ./logs:/var/log/nginx
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
     ports:
       - "80:80"
       - "443:443"
     networks:
       - zzol-network
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--spider", "http://localhost/" ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
     environment:
-      - TZ=Asia/Seoul
+      - TZ=Asia/Seoul  
 
 networks:
   zzol-network:

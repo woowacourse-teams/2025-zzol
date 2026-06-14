@@ -41,3 +41,4 @@ limits_config:
   ingestion_rate_mb: 16
   ingestion_burst_size_mb: 32
   max_query_length: 12000h
+  creation_grace_period: 10h

@@ -1,0 +1,40 @@
+# Prometheus 알림 룰 — Redis Stream 메시지 파이프라인 (ADR-0026 Phase A)
+#
+# 메시지 처리 흐름(Handler → Stream 발행 → Consumer → App Service → Notifier)의
+# 지연·적체를 본다. 이 경로가 막히면 게임 액션이 클라이언트에 늦게/안 전달된다.
+#
+# 사용 메트릭 (ADR-0026 컨텍스트에서 수집 확인됨):
+#   redis_stream_e2e_latency_seconds_bucket   히스토그램 버킷 → 분위수 계산 가능
+#   redis_stream_length                       스트림 적체 길이
+#   redis_stream_threadpool_*                  컨슈머 스레드풀 지표
+#
+# ⚠️ 임계값은 베이스라인 미측정 추정치. 배포 전 정상 분위수/길이를 재고 조정한다.
+groups:
+  - name: redis-stream
+    rules:
+      # E2E 처리 지연 p95 — 발행부터 처리 완료까지.
+      # 버킷이 있으므로 histogram_quantile로 분위수를 직접 계산한다(ADR-0026 line 22).
+      # ⚠️ 임계 0.5s 추정. 레이싱 등 실시간 게임에서 0.5초 지연은 "렉"으로 체감.
+      - alert: RedisStreamE2eLatencyHigh
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(redis_stream_e2e_latency_seconds_bucket[5m]))
+          ) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis Stream E2E 지연 p95 > 500ms"
+          description: "스트림 처리 p95 지연이 {{ $value | printf \"%.3f\" }}s. 컨슈머 처리 적체 또는 다운스트림(App Service) 지연 가능성."
+
+      # 스트림 적체 — 컨슈머가 발행 속도를 못 따라가면 length가 쌓인다.
+      # ⚠️ 임계 1000 추정. 정상 운영 시 length는 0 근처여야 한다.
+      - alert: RedisStreamBacklogHigh
+        expr: max(redis_stream_length) > 1000
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis Stream 적체 (length > 1000)"
+          description: "스트림 길이가 {{ $value }}. 컨슈머 처리 속도가 발행을 못 따라가고 있습니다."

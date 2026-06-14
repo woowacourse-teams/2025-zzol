@@ -14,6 +14,7 @@ import { PlayerTypeProvider } from './contexts/PlayerType/PlayerTypeProvider';
 import ProbabilityHistoryProvider from './contexts/ProbabilityHistory/ProbabilityHistoryProvider';
 import { theme } from './styles/theme';
 import UpdateBanner from './components/@common/UpdateBanner/UpdateBanner';
+import InstallPromptProvider from './contexts/InstallPrompt/InstallPromptProvider';
 import { DevToolsWrapper } from './devtools/common/components/DevToolsWrapper/DevToolsWrapper';
 
 const App = () => {
@@ -23,34 +24,36 @@ const App = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      {process.env.ENABLE_DEVTOOLS && <DevToolsWrapper />}
-      <UpdateBanner />
+      <InstallPromptProvider>
+        {process.env.ENABLE_DEVTOOLS && <DevToolsWrapper />}
+        <UpdateBanner />
 
-      <AuthProvider>
-        <UserSocketProvider>
-          <IdentifierProvider>
-            <ParticipantsProvider>
-              <WebSocketProvider>
-                <PlayerTypeProvider>
-                  <ProbabilityHistoryProvider>
-                    <GlobalErrorBoundary>
-                      <ToastProvider>
-                        <ModalProvider>
-                          <FriendsProvider>
-                            <Suspense fallback={<div>Loading...</div>}>
-                              <Outlet />
-                            </Suspense>
-                          </FriendsProvider>
-                        </ModalProvider>
-                      </ToastProvider>
-                    </GlobalErrorBoundary>
-                  </ProbabilityHistoryProvider>
-                </PlayerTypeProvider>
-              </WebSocketProvider>
-            </ParticipantsProvider>
-          </IdentifierProvider>
-        </UserSocketProvider>
-      </AuthProvider>
+        <AuthProvider>
+          <UserSocketProvider>
+            <IdentifierProvider>
+              <ParticipantsProvider>
+                <WebSocketProvider>
+                  <PlayerTypeProvider>
+                    <ProbabilityHistoryProvider>
+                      <GlobalErrorBoundary>
+                        <ToastProvider>
+                          <ModalProvider>
+                            <FriendsProvider>
+                              <Suspense fallback={<div>Loading...</div>}>
+                                <Outlet />
+                              </Suspense>
+                            </FriendsProvider>
+                          </ModalProvider>
+                        </ToastProvider>
+                      </GlobalErrorBoundary>
+                    </ProbabilityHistoryProvider>
+                  </PlayerTypeProvider>
+                </WebSocketProvider>
+              </ParticipantsProvider>
+            </IdentifierProvider>
+          </UserSocketProvider>
+        </AuthProvider>
+      </InstallPromptProvider>
     </ThemeProvider>
   );
 };

@@ -27,28 +27,26 @@ export const HeroIconWrap = styled.div`
   width: 60px;
   height: 60px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.2);
+  background: ${({ theme }) => theme.color.white}33;
   display: flex;
   align-items: center;
   justify-content: center;
 `;
 
 export const HeroTitle = styled.span`
-  font-size: 18px;
-  font-weight: 800;
+  ${({ theme }) => theme.typography.h3}
   color: ${({ theme }) => theme.color.white};
   letter-spacing: -0.02em;
 `;
 
 export const HeroSub = styled.span`
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.72);
+  ${({ theme }) => theme.typography.small}
+  color: ${({ theme }) => theme.color.white}B8;
   text-align: center;
 `;
 
 export const SectionLabel = styled.span`
-  font-size: 11px;
-  font-weight: 700;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[400]};
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -78,7 +76,7 @@ export const BenefitRow = styled.div`
 `;
 
 export const BenefitEmoji = styled.span`
-  font-size: 22px;
+  font-size: ${({ theme }) => theme.typography.h2.fontSize};
   width: 36px;
   height: 36px;
   display: flex;
@@ -96,14 +94,13 @@ export const BenefitInfo = styled.div`
 `;
 
 export const BenefitTitle = styled.span`
-  font-size: 14px;
-  font-weight: 700;
+  ${({ theme }) => theme.typography.h4}
   color: ${({ theme }) => theme.color.gray[800]};
   letter-spacing: -0.01em;
 `;
 
 export const BenefitDesc = styled.span`
-  font-size: 12px;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[400]};
 `;
 
@@ -115,8 +112,7 @@ export const InstallButton = styled.button`
   border-radius: 14px;
   background: ${({ theme }) => theme.color.point[500]};
   color: ${({ theme }) => theme.color.white};
-  font-size: 15px;
-  font-weight: 700;
+  ${({ theme }) => theme.typography.h4}
   letter-spacing: -0.01em;
   cursor: pointer;
   transition:
@@ -141,15 +137,13 @@ export const StatusBanner = styled.div<{ $type: 'installed' }>`
 `;
 
 export const StatusEmoji = styled.span`
-  font-size: 16px;
-  font-weight: 700;
+  ${({ theme }) => theme.typography.h4}
   color: ${({ theme }) => theme.color.point[500]};
   flex-shrink: 0;
 `;
 
 export const StatusText = styled.span`
-  font-size: 14px;
-  font-weight: 600;
+  ${({ theme }) => theme.typography.h4}
   color: ${({ theme }) => theme.color.point[500]};
 `;
 
@@ -165,8 +159,7 @@ export const GuideRow = styled.div`
 `;
 
 export const GuideBadge = styled.span`
-  font-size: 11px;
-  font-weight: 700;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.point[500]};
   background: ${({ theme }) => theme.color.point[50]};
   border: 1px solid ${({ theme }) => theme.color.point[100]};
@@ -178,6 +171,6 @@ export const GuideBadge = styled.span`
 `;
 
 export const GuideDesc = styled.span`
-  font-size: 13px;
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.gray[600]};
 `;

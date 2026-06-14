@@ -5,6 +5,7 @@ import { useFriends } from '@/features/friends/hooks/useFriends';
 import useToast from '@/components/@common/Toast/useToast';
 import { useFriendSearch } from '@/features/home/hooks/useFriendSearch';
 import { theme } from '@/styles/theme';
+import CopyIcon from '@/components/icons/CopyIcon';
 import FriendsList from './FriendsList';
 import LoginRequiredView from './LoginRequiredView';
 import ReceivedRequestsList from './ReceivedRequestsList';
@@ -54,14 +55,17 @@ const FriendsTab = () => {
       </S.Header>
 
       {user && (
-        <S.MyCodeCard>
-          <S.MyCodeLabel>내 친구 코드</S.MyCodeLabel>
-          <S.MyCodeRow>
-            <S.MyCode># {user.userCode}</S.MyCode>
-            <S.MyCodeCopy type="button" onClick={handleCopyCode}>
-              복사
-            </S.MyCodeCopy>
-          </S.MyCodeRow>
+        <S.MyCodeCard type="button" onClick={handleCopyCode} aria-label="친구 코드 복사">
+          <S.MyCodeHeader>
+            <S.MyCodeLabel>내 친구 코드</S.MyCodeLabel>
+            <S.MyCodeCopyIcon>
+              <CopyIcon size={14} />
+            </S.MyCodeCopyIcon>
+          </S.MyCodeHeader>
+          <S.MyCodeBody>
+            <S.MyNickname>{user.nickname}</S.MyNickname>
+            <S.MyCode>#{user.userCode}</S.MyCode>
+          </S.MyCodeBody>
         </S.MyCodeCard>
       )}
 
@@ -130,51 +134,66 @@ const S = {
     letter-spacing: -0.02em;
   `,
 
-  MyCodeCard: styled.div`
+  MyCodeCard: styled.button`
     margin: 0 16px 4px;
-    padding: 14px 16px;
+    width: calc(100% - 32px);
+    padding: 16px 18px;
     background: ${theme.color.point[50]};
-    border: 1px solid ${theme.color.point[100]};
-    border-radius: 14px;
+    border: 1.5px solid ${theme.color.point[100]};
+    border-radius: 18px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+
+    &:active {
+      background: ${theme.color.point[100]};
+    }
   `,
 
-  MyCodeLabel: styled.span`
-    font-size: 11px;
-    font-weight: 600;
-    color: ${theme.color.point[400]};
-    letter-spacing: 0.02em;
-  `,
-
-  MyCodeRow: styled.div`
+  MyCodeHeader: styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
   `,
 
-  MyCode: styled.span`
-    font-size: 18px;
-    font-weight: 800;
-    color: ${theme.color.gray[900]};
-    letter-spacing: 0.06em;
+  MyCodeLabel: styled.span`
+    font-size: ${theme.typography.caption.fontSize};
+    font-weight: ${theme.typography.h4.fontWeight};
+    color: ${theme.color.point[300]};
+    letter-spacing: 0.02em;
   `,
 
-  MyCodeCopy: styled.button`
-    padding: 4px 12px;
-    border: 1.5px solid ${theme.color.point[300]};
-    border-radius: 8px;
-    background: ${theme.color.white};
-    color: ${theme.color.point[500]};
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.12s;
+  MyCodeCopyIcon: styled.span`
+    display: flex;
+    align-items: center;
+    color: ${theme.color.point[300]};
 
-    &:active {
-      background: ${theme.color.point[50]};
+    svg rect:last-of-type {
+      fill: ${theme.color.point[50]};
     }
+  `,
+
+  MyCodeBody: styled.div`
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  `,
+
+  MyNickname: styled.span`
+    font-size: ${theme.typography.h2.fontSize};
+    font-weight: ${theme.typography.h2.fontWeight};
+    color: ${theme.color.gray[900]};
+  `,
+
+  MyCode: styled.span`
+    font-size: ${theme.typography.paragraph.fontSize};
+    font-weight: ${theme.typography.h4.fontWeight};
+    color: ${theme.color.gray[500]};
+    letter-spacing: 0.08em;
   `,
 
   SearchArea: styled.div`

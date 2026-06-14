@@ -28,16 +28,14 @@ export const ProfileInfo = styled.div`
 `;
 
 export const WelcomeMessage = styled.span`
-  font-size: 17px;
-  font-weight: 700;
+  ${({ theme }) => theme.typography.h3}
   color: ${({ theme }) => theme.color.white};
   letter-spacing: -0.02em;
 `;
 
 export const UserStatus = styled.span`
-  font-size: 12px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.72);
+  ${({ theme }) => theme.typography.caption}
+  color: ${({ theme }) => theme.color.white}B8;
 `;
 
 export const StatGrid = styled.div`
@@ -58,8 +56,7 @@ export const StatCard = styled.div`
 `;
 
 export const StatLabel = styled.span`
-  font-size: 12px;
-  font-weight: 500;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[400]};
   letter-spacing: -0.01em;
 `;
@@ -71,16 +68,14 @@ export const StatValueRow = styled.div`
 `;
 
 export const StatNumber = styled.span`
-  font-size: 30px;
-  font-weight: 800;
+  ${({ theme }) => theme.typography.h1}
   color: ${({ theme }) => theme.color.gray[900]};
   letter-spacing: -0.04em;
   line-height: 1;
 `;
 
 export const StatUnit = styled.span`
-  font-size: 14px;
-  font-weight: 600;
+  ${({ theme }) => theme.typography.h4}
   color: ${({ theme }) => theme.color.gray[500]};
   letter-spacing: -0.02em;
 `;
@@ -93,8 +88,7 @@ export const InfoSection = styled.div`
 `;
 
 export const SectionTitle = styled.h4`
-  font-size: 11px;
-  font-weight: 600;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[400]};
   padding-left: 4px;
   letter-spacing: 0.06em;
@@ -110,7 +104,7 @@ export const TooltipCard = styled.div`
 `;
 
 export const TooltipList = styled.ul`
-  font-size: 12px;
+  ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[500]};
   line-height: 1.7;
   list-style: none;
@@ -150,13 +144,11 @@ export const DangerRow = styled.button`
 `;
 
 export const DangerLabel = styled.span`
-  font-size: 13px;
-  font-weight: 600;
+  ${({ theme }) => theme.typography.small}
   color: ${({ theme }) => theme.color.point[500]};
 `;
 
 export const DangerIcon = styled.span`
-  font-size: 16px;
-  font-weight: 300;
+  ${({ theme }) => theme.typography.paragraph}
   color: ${({ theme }) => theme.color.point[200]};
 `;

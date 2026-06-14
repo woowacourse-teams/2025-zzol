@@ -1,6 +1,6 @@
 import { Client } from '@stomp/stompjs';
 import { useCallback } from 'react';
-import { WEBSOCKET_CONFIG, WebSocketMessage } from '../constants/constants';
+import { isBrokerDestination, WEBSOCKET_CONFIG, WebSocketMessage } from '../constants/constants';
 import { saveLastStreamId } from '@/apis/rest/recovery';
 import WebSocketErrorHandler from '../utils/WebSocketErrorHandler';
 
@@ -8,14 +8,10 @@ type Props = {
   client: Client | null;
   isConnected: boolean;
   playerName: string | null;
+  joinCode: string;
 };
 
-const extractJoinCodeFromDestination = (destination: string): string | null => {
-  const match = destination.match(/\/room\/([^/]+)/);
-  return match ? match[1] : null;
-};
-
-export const useWebSocketMessaging = ({ client, isConnected, playerName }: Props) => {
+export const useWebSocketMessaging = ({ client, isConnected, playerName, joinCode }: Props) => {
   const subscribe = useCallback(
     <T>(url: string, onData: (data: T) => void, onError?: (error: Error) => void) => {
       if (!client || !isConnected) {
@@ -29,7 +25,8 @@ export const useWebSocketMessaging = ({ client, isConnected, playerName }: Props
         return null;
       }
 
-      const requestUrl = WEBSOCKET_CONFIG.TOPIC_PREFIX + url;
+      // broker destination(/user/, /queue/)은 prefix 를 그대로 두고, 그 외 토픽만 /topic 을 붙인다
+      const requestUrl = isBrokerDestination(url) ? url : WEBSOCKET_CONFIG.TOPIC_PREFIX + url;
 
       return client.subscribe(requestUrl, (message) => {
         try {
@@ -45,11 +42,8 @@ export const useWebSocketMessaging = ({ client, isConnected, playerName }: Props
             return;
           }
 
-          if (parsedMessage.id && playerName) {
-            const joinCode = extractJoinCodeFromDestination(url);
-            if (joinCode) {
-              saveLastStreamId(joinCode, playerName, parsedMessage.id);
-            }
+          if (parsedMessage.id && joinCode && playerName) {
+            saveLastStreamId(joinCode, playerName, parsedMessage.id);
           }
 
           onData(parsedMessage.data);
@@ -63,7 +57,7 @@ export const useWebSocketMessaging = ({ client, isConnected, playerName }: Props
         }
       });
     },
-    [client, isConnected, playerName]
+    [client, isConnected, playerName, joinCode]
   );
 
   const send = useCallback(

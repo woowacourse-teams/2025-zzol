@@ -1,7 +1,7 @@
 import useModal from '@/components/@common/Modal/useModal';
 import { useAuth } from '../../contexts/AuthContext';
 import LoginSheet from '../LoginSheet/LoginSheet';
-import LogoutSheet from '../LogoutSheet/LogoutSheet';
+import ProfileSheet from '../ProfileSheet/ProfileSheet';
 import * as S from './ProfileChip.styled';
 
 const ProfileChip = () => {
@@ -10,7 +10,7 @@ const ProfileChip = () => {
 
   const handleClick = () => {
     if (isAuthenticated) {
-      openModal(<LogoutSheet />, { showCloseButton: false, closeOnBackdropClick: true });
+      openModal(<ProfileSheet />, { showCloseButton: true, closeOnBackdropClick: true });
     } else {
       openModal(<LoginSheet />, { showCloseButton: false, closeOnBackdropClick: true });
     }
@@ -26,7 +26,14 @@ const ProfileChip = () => {
         <S.Avatar>{user.nickname.slice(0, 1)}</S.Avatar>
       ) : (
         <>
-          <S.PersonIcon viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <S.PersonIcon
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+            focusable="false"
+          >
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
           </S.PersonIcon>

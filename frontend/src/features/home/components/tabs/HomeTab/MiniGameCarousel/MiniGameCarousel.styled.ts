@@ -1,4 +1,16 @@
 import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
+
+const fadeSlideUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 export const Grid = styled.div`
   display: grid;
@@ -6,7 +18,10 @@ export const Grid = styled.div`
   gap: 10px;
 `;
 
-export const GameCard = styled.button`
+export const GameCard = styled.button<{ $index: number }>`
+  animation: ${fadeSlideUp} 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: ${({ $index }) => `${Math.min($index, 7) * 0.07}s`};
+
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -51,18 +66,15 @@ export const GameMeta = styled.div`
 `;
 
 export const GameName = styled.span`
-  font-size: 13px;
+  ${({ theme }) => theme.typography.small};
   font-weight: 700;
   color: ${({ theme }) => theme.color.gray[900]};
-  line-height: 1.3;
   letter-spacing: -0.01em;
 `;
 
 export const GameDesc = styled.span`
-  font-size: 11px;
-  font-weight: 400;
+  ${({ theme }) => theme.typography.caption};
   color: ${({ theme }) => theme.color.gray[400]};
-  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

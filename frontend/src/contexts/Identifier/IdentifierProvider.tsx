@@ -1,4 +1,5 @@
 import { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
+import { clearAllLastStreamIds } from '@/apis/rest/recovery';
 import { storageManager, STORAGE_KEYS } from '@/utils/StorageManager';
 import { IdentifierContext } from './IdentifierContext';
 
@@ -17,14 +18,12 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
   });
 
   const joinCodeRef = useRef(joinCode);
-  const myNameRef = useRef(myName);
   const qrCodeUrlRef = useRef(qrCodeUrl);
 
   useEffect(() => {
     joinCodeRef.current = joinCode;
-    myNameRef.current = myName;
     qrCodeUrlRef.current = qrCodeUrl;
-  }, [joinCode, myName, qrCodeUrl]);
+  }, [joinCode, qrCodeUrl]);
 
   useEffect(() => {
     if (joinCode) {
@@ -79,6 +78,7 @@ export const IdentifierProvider = ({ children }: PropsWithChildren) => {
     if (currentJoinCode) {
       storageManager.setItem(STORAGE_KEYS.LAST_JOIN_CODE, currentJoinCode, 'localStorage');
     }
+    clearAllLastStreamIds();
     clearJoinCode();
     clearMyName();
     clearQrCodeUrl();

@@ -233,7 +233,7 @@ services:
   # node-exporter - Host Metrics (CPU/Memory/Disk)
   # ============================================
   # 호스트(OS) 단위 메트릭. cAdvisor가 컨테이너를, 이것이 호스트 자체를 본다.
-  # 디스크/CPU 룰(provisioning/alerting, Phase B에서 Prometheus로 이관)이 이 메트릭에 의존한다.
+  # 디스크/CPU 룰(conf/rules/alerts-migrated.yml, Phase B에서 Prometheus 이관 완료)이 이 메트릭에 의존한다.
   # 컨테이너명은 prometheus.yml의 'node' job 타깃(node-exporter:9100)과 일치해야 한다.
   node-exporter:
     image: prom/node-exporter:v1.8.2

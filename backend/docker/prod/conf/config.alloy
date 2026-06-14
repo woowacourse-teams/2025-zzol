@@ -1,41 +1,20 @@
-loki.process "prod_app_logs" {
-	forward_to = [loki.write.default.receiver]
+// ============================================
+// Alloy bootstrap (prod) — 실제 로그 파이프라인은 Git에서 pull (ADR-0028)
+// ============================================
+// 로그 파이프라인 로직은 backend/docker/alloy/modules/app-logs.alloy 에 있다.
+// prod는 기존 prod 브랜치 be/prod만 추종한다 — be/dev의 매 커밋이 prod로 게이트
+// 없이 자동 배포되는 것을 막기 위함(blast radius 통제, ADR-0028). 새 버전 승격은
+// be/prod로 PR 머지로만 이뤄진다(앱 prod 배포와 동일한 관문). 저장소가 public이라
+// 인증 블록은 불필요하다.
 
-	stage.regex {
-		expression = "^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] --- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
-	}
-
-	stage.labels {
-		values = {
-			level = "",
-		}
-	}
-
-	stage.timestamp {
-		source   = "timestamp"
-		format   = "2006-01-02 15:04:05.000"
-		location = "Asia/Seoul"
-	}
+import.git "shipping" {
+	repository     = "https://github.com/woowacourse-teams/2025-zzol.git"
+	revision       = "be/prod"
+	path           = "backend/docker/alloy/modules/app-logs.alloy"
+	pull_frequency = "60s"
 }
 
-loki.source.file "prod_app_logs" {
-	targets = [{
-		__address__ = "localhost",
-		__path__    = "/app/logs/application*.log",
-		environment = "prod",
-		job         = "prod-app",
-	}]
-	forward_to = [loki.process.prod_app_logs.receiver]
-
-	file_match {
-		enabled = true
-	}
-	legacy_positions_file = "/tmp/positions.yaml"
-}
-
-loki.write "default" {
-	endpoint {
-		url = "http://loki:3100/loki/api/v1/push"
-	}
-	external_labels = {}
+shipping.app_logs_log_time "prod" {
+	environment = "prod"
+	job         = "prod-app"
 }

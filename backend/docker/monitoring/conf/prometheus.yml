@@ -64,3 +64,15 @@ scrape_configs:
   - job_name: 'node'
     static_configs:
       - targets: ['node-exporter:9100']
+
+  # Alloy 로그 수집기 self-metrics (ADR-0028: pull 기반 config 도입 + health 알림)
+  # Alloy는 :12345/metrics 로 컴포넌트 컨트롤러 메트릭을 노출한다.
+  - job_name: 'alloy'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['dev-alloy:12345']
+        labels:
+          env: 'dev'
+      - targets: ['prod-alloy:12345']
+        labels:
+          env: 'prod'

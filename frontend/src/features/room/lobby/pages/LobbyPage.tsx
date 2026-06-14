@@ -41,7 +41,8 @@ import * as S from './LobbyPage.styled';
 type SectionType = '참가자' | '룰렛' | '미니게임';
 type SectionComponents = Record<SectionType, ReactElement>;
 
-// 개인 에러 큐(/user/queue/errors)는 항상 에러 envelope 라 onData 가 호출되지 않는다
+// 개인 에러 큐(/user/queue/errors)는 항상 에러 envelope(success:false) 라 onData 가 호출되지 않는다.
+// recovery 재시도 경로도 WebSocketProvider 에서 success/data 가드로 막혀 있어 noop 은 dead path.
 const noop = () => {};
 
 const LobbyPage = () => {
@@ -144,10 +145,10 @@ const LobbyPage = () => {
 
   const handleQueueError = useCallback(
     (error: Error) => {
-      const { errorMessage } = (error as { extra?: { errorMessage?: string } }).extra ?? {};
+      const errorMessage = (error as { extra?: { errorMessage?: string } }).extra?.errorMessage;
       showToast({
         type: 'error',
-        message: errorMessage ?? '요청 처리에 실패했습니다. 다시 시도해주세요.',
+        message: errorMessage?.trim() || '요청 처리에 실패했습니다. 다시 시도해주세요.',
       });
     },
     [showToast]

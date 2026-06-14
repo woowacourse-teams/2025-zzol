@@ -20,8 +20,30 @@ public abstract class TestContainerSupport {
     private static final Logger log = LoggerFactory.getLogger(TestContainerSupport.class);
     private static final int VALKEY_PORT = 6379;
     private static final String BASE_DB = "zzol_test";
-    private static final String MODULE_DB = System.getProperty("test.db.name", BASE_DB);
-    private static final int MODULE_REDIS_DB = Integer.parseInt(System.getProperty("test.redis.db", "0"));
+    private static final String MODULE_DB = validateDbName(System.getProperty("test.db.name", BASE_DB));
+    private static final int MODULE_REDIS_DB = resolveRedisDbIndex();
+
+    // build.gradle.kts 의 require(...)와 동일한 계약. IDE 실행이나 -Dtest.db.name 직접 주입처럼
+    // gradle 검증을 우회하는 경로에서도 SQL 식별자 인젝션을 막는다(MODULE_DB는 CREATE DATABASE·
+    // JDBC URL 에 문자열로 합쳐지므로 단일 출처에서 한 번만 검증한다).
+    private static String validateDbName(String dbName) {
+        if (!dbName.matches("[a-zA-Z0-9_]+")) {
+            throw new IllegalArgumentException(
+                    "Invalid 'test.db.name' value '" + dbName + "': only alphanumeric and underscore allowed");
+        }
+        return dbName;
+    }
+
+    private static int resolveRedisDbIndex() {
+        String redisDbProperty = System.getProperty("test.redis.db", "0");
+        try {
+            return Integer.parseInt(redisDbProperty);
+        } catch (NumberFormatException e) {
+            log.warn("Invalid 'test.redis.db' value '{}'. Falling back to default Redis DB index 0.",
+                    redisDbProperty, e);
+            return 0;
+        }
+    }
 
     // 컨테이너 reuse를 켜고(JVM 간 단일 공유 MySQL·Valkey), 모듈별 DB·Redis 인덱스 격리(ADR-0013)로
     // 병렬 모듈 테스트(parallel=true·workers=4)의 데이터 충돌을 막는다. reuse-off(이슈 #1402)는 게임

@@ -13,6 +13,8 @@ import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.gamecommon.Playable;
+import coffeeshout.gamecommon.PlayerRef;
+import coffeeshout.gamecommon.RoomReferencePort;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.MiniGameResult;
@@ -23,10 +25,6 @@ import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.infra.persistence.PlayerEntity;
-import coffeeshout.room.infra.persistence.PlayerJpaRepository;
-import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.user.application.service.UserStatsService;
 import java.util.List;
 import java.util.Map;
@@ -41,13 +39,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MiniGameResultSaveEventListenerTest {
 
+    private static final String JOIN_CODE = "AB3C";
+    private static final Long ROOM_SESSION_ID = 1L;
+
     @InjectMocks
     MiniGameResultSaveEventListener listener;
 
     @Mock
-    RoomJpaRepository roomJpaRepository;
-    @Mock
-    PlayerJpaRepository playerJpaRepository;
+    RoomReferencePort roomReferencePort;
     @Mock
     MiniGameJpaRepository miniGameJpaRepository;
     @Mock
@@ -56,8 +55,6 @@ class MiniGameResultSaveEventListenerTest {
     GameSessionService gameSessionService;
     @Mock
     UserStatsService userStatsService;
-
-    private static final String JOIN_CODE = "AB3C";
 
     @Nested
     class 게임_종료_시_UserStats_자동_업데이트 {
@@ -73,14 +70,14 @@ class MiniGameResultSaveEventListenerTest {
                     루키.toGamer(), new CardGameScore(80)
             );
 
-            RoomEntity roomEntity = 룸엔티티_설정();
-            미니게임엔티티_설정(roomEntity);
+            룸세션_설정();
+            미니게임엔티티_설정();
             게임세션_설정(result, scores);
 
-            PlayerEntity 한스Entity = 플레이어엔티티("한스", 1L);
-            PlayerEntity 루키Entity = 플레이어엔티티("루키", 2L);
-            when(playerJpaRepository.findByRoomSessionAndPlayerNameIn(eq(roomEntity), any()))
-                    .thenReturn(List.of(한스Entity, 루키Entity));
+            플레이어참조_설정(
+                    new PlayerRef(10L, 한스.toGamer().getName(), 1L),
+                    new PlayerRef(20L, 루키.toGamer().getName(), 2L)
+            );
 
             listener.handle(미니게임종료이벤트(result));
 
@@ -99,14 +96,14 @@ class MiniGameResultSaveEventListenerTest {
                     루키.toGamer(), new CardGameScore(80)
             );
 
-            RoomEntity roomEntity = 룸엔티티_설정();
-            미니게임엔티티_설정(roomEntity);
+            룸세션_설정();
+            미니게임엔티티_설정();
             게임세션_설정(result, scores);
 
-            PlayerEntity 한스Entity = 플레이어엔티티("한스", 1L);   // 회원
-            PlayerEntity 루키Entity = 플레이어엔티티("루키", null);  // 게스트
-            when(playerJpaRepository.findByRoomSessionAndPlayerNameIn(eq(roomEntity), any()))
-                    .thenReturn(List.of(한스Entity, 루키Entity));
+            플레이어참조_설정(
+                    new PlayerRef(10L, 한스.toGamer().getName(), 1L),    // 회원
+                    new PlayerRef(20L, 루키.toGamer().getName(), null)   // 게스트
+            );
 
             listener.handle(미니게임종료이벤트(result));
 
@@ -125,14 +122,14 @@ class MiniGameResultSaveEventListenerTest {
                     루키.toGamer(), new CardGameScore(80)
             );
 
-            RoomEntity roomEntity = 룸엔티티_설정();
-            미니게임엔티티_설정(roomEntity);
+            룸세션_설정();
+            미니게임엔티티_설정();
             게임세션_설정(result, scores);
 
-            PlayerEntity 한스Entity = 플레이어엔티티("한스", null);
-            PlayerEntity 루키Entity = 플레이어엔티티("루키", null);
-            when(playerJpaRepository.findByRoomSessionAndPlayerNameIn(eq(roomEntity), any()))
-                    .thenReturn(List.of(한스Entity, 루키Entity));
+            플레이어참조_설정(
+                    new PlayerRef(10L, 한스.toGamer().getName(), null),
+                    new PlayerRef(20L, 루키.toGamer().getName(), null)
+            );
 
             listener.handle(미니게임종료이벤트(result));
 
@@ -144,16 +141,14 @@ class MiniGameResultSaveEventListenerTest {
         return new MiniGameFinishedEvent(JOIN_CODE, MiniGameType.CARD_GAME.name(), result.toRankMap(), 1);
     }
 
-    private RoomEntity 룸엔티티_설정() {
-        RoomEntity roomEntity = mock(RoomEntity.class);
-        when(roomJpaRepository.findFirstByJoinCodeOrderByCreatedAtDesc(JOIN_CODE))
-                .thenReturn(Optional.of(roomEntity));
-        return roomEntity;
+    private void 룸세션_설정() {
+        when(roomReferencePort.findCurrentRoomSessionId(JOIN_CODE))
+                .thenReturn(Optional.of(ROOM_SESSION_ID));
     }
 
-    private void 미니게임엔티티_설정(RoomEntity roomEntity) {
+    private void 미니게임엔티티_설정() {
         MiniGameEntity miniGameEntity = mock(MiniGameEntity.class);
-        when(miniGameJpaRepository.findByRoomSessionAndMiniGameType(roomEntity, MiniGameType.CARD_GAME))
+        when(miniGameJpaRepository.findByRoomSessionIdAndMiniGameType(ROOM_SESSION_ID, MiniGameType.CARD_GAME))
                 .thenReturn(Optional.of(miniGameEntity));
     }
 
@@ -167,10 +162,8 @@ class MiniGameResultSaveEventListenerTest {
         when(gameSessionService.getSession(new JoinCode(JOIN_CODE))).thenReturn(session);
     }
 
-    private PlayerEntity 플레이어엔티티(String name, Long userId) {
-        PlayerEntity entity = mock(PlayerEntity.class);
-        when(entity.getPlayerName()).thenReturn(name);
-        when(entity.getUserId()).thenReturn(userId);
-        return entity;
+    private void 플레이어참조_설정(PlayerRef... refs) {
+        when(roomReferencePort.findPlayerRefs(eq(ROOM_SESSION_ID), any()))
+                .thenReturn(List.of(refs));
     }
 }

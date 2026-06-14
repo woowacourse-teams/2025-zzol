@@ -114,7 +114,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         MINI_GAME.count()
                 ))
                 .from(MINI_GAME)
-                .join(MINI_GAME.roomSession, ROOM)
+                .join(ROOM).on(ROOM.id.eq(MINI_GAME.roomSessionId))
                 .where(ROOM.createdAt.between(startDate, endDate))
                 .groupBy(MINI_GAME.miniGameType)
                 .orderBy(MINI_GAME.count().desc())
@@ -130,7 +130,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
         // 1단계: player_id로 GROUP BY하여 집계 (JOIN 없이)
         final List<Tuple> aggregations = queryFactory
                 .select(
-                        MINI_GAME_RESULT.player.id,
+                        MINI_GAME_RESULT.playerId,
                         MINI_GAME_RESULT.score.min()
                 )
                 .from(MINI_GAME_RESULT)
@@ -138,8 +138,8 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         MINI_GAME_RESULT.miniGameType.eq(MiniGameType.RACING_GAME),
                         MINI_GAME_RESULT.createdAt.between(startDate, endDate)
                 )
-                .groupBy(MINI_GAME_RESULT.player.id)
-                .orderBy(MINI_GAME_RESULT.score.min().asc(), MINI_GAME_RESULT.player.id.asc())
+                .groupBy(MINI_GAME_RESULT.playerId)
+                .orderBy(MINI_GAME_RESULT.score.min().asc(), MINI_GAME_RESULT.playerId.asc())
                 .limit(limit)
                 .fetch();
 
@@ -149,7 +149,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
 
         // 2단계: player_id 목록으로 player_name 조회
         final List<Long> playerIds = aggregations.stream()
-                .map(tuple -> tuple.get(MINI_GAME_RESULT.player.id))
+                .map(tuple -> tuple.get(MINI_GAME_RESULT.playerId))
                 .toList();
 
         final Map<Long, String> playerNameMap = queryFactory
@@ -166,7 +166,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
         // 3단계: 집계 결과와 player_name 매핑
         return aggregations.stream()
                 .map(tuple -> new RacingGameTopPlayerResponse(
-                        playerNameMap.get(tuple.get(MINI_GAME_RESULT.player.id)),
+                        playerNameMap.get(tuple.get(MINI_GAME_RESULT.playerId)),
                         tuple.get(MINI_GAME_RESULT.score.min())
                 ))
                 .toList();
@@ -185,7 +185,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         MINI_GAME_RESULT.score.max()
                 ))
                 .from(MINI_GAME_RESULT)
-                .join(MINI_GAME_RESULT.player, PLAYER)
+                .join(PLAYER).on(PLAYER.id.eq(MINI_GAME_RESULT.playerId))
                 .where(
                         MINI_GAME_RESULT.miniGameType.eq(MiniGameType.BLOCK_STACKING),
                         MINI_GAME_RESULT.createdAt.between(startDate, endDate)

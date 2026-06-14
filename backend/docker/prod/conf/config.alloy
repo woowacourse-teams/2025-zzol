@@ -1,0 +1,41 @@
+loki.process "prod_app_logs" {
+	forward_to = [loki.write.default.receiver]
+
+	stage.regex {
+		expression = "^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] --- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
+	}
+
+	stage.labels {
+		values = {
+			level = "",
+		}
+	}
+
+	stage.timestamp {
+		source   = "timestamp"
+		format   = "2006-01-02 15:04:05.000"
+		location = "Asia/Seoul"
+	}
+}
+
+loki.source.file "prod_app_logs" {
+	targets = [{
+		__address__ = "localhost",
+		__path__    = "/app/logs/application*.log",
+		environment = "prod",
+		job         = "prod-app",
+	}]
+	forward_to = [loki.process.prod_app_logs.receiver]
+
+	file_match {
+		enabled = true
+	}
+	legacy_positions_file = "/tmp/positions.yaml"
+}
+
+loki.write "default" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+	external_labels = {}
+}

@@ -216,17 +216,24 @@ services:
           memory: 64M        # 최소 64MB
 
   # ============================================
-  # Prod Promtail - Log Shipper
+  # Prod Alloy - Log Shipper (Promtail 후속, OTel Collector 기반)
   # ============================================
-  prod-promtail:
-    image: grafana/promtail:latest
-    container_name: prod-promtail
+  prod-alloy:
+    image: grafana/alloy:v1.16.3
+    container_name: prod-alloy
     restart: unless-stopped
     volumes:
       - prod-app-logs:/app/logs:ro
-      - ./conf/promtail.yml:/etc/promtail/promtail.yml:ro
+      - ./conf/config.alloy:/etc/alloy/config.alloy:ro
       - /etc/localtime:/etc/localtime:ro
-    command: -config.file=/etc/promtail/promtail.yml
+    # 기본 CMD(run /etc/alloy/config.alloy --storage.path=...)를 덮어쓰므로
+    # --storage.path(WAL/state)를 반드시 유지한다. listen-addr은 네트워크 내
+    # /-/ready·메트릭 노출을 위해 0.0.0.0:12345로 연다(기본은 loopback).
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
     networks:
       - prod-network
       - zzol-network

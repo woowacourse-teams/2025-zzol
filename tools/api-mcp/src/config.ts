@@ -6,12 +6,12 @@ export interface ServerConfig {
 }
 
 export function loadConfig(): ServerConfig {
-  const catalogUrl = process.env.WS_MCP_CATALOG_URL ?? 'http://localhost:8080/dev/ws-catalog';
-  const baseUrl = process.env.HTTP_MCP_BASE_URL ?? deriveBaseUrl(catalogUrl);
+  const catalogUrl = process.env.API_MCP_CATALOG_URL ?? 'http://localhost:8080/dev/ws-catalog';
+  const baseUrl = process.env.API_MCP_BASE_URL ?? deriveBaseUrl(catalogUrl);
   return {
     catalogUrl,
-    brokerUrl: process.env.WS_MCP_BROKER_URL ?? deriveBrokerUrl(catalogUrl),
-    cachePath: process.env.WS_MCP_CACHE_PATH,
+    brokerUrl: process.env.API_MCP_BROKER_URL ?? deriveBrokerUrl(catalogUrl),
+    cachePath: process.env.API_MCP_CACHE_PATH,
     baseUrl,
   };
 }

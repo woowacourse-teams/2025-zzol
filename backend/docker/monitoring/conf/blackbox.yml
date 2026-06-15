@@ -1,37 +1,17 @@
-# blackbox_exporter 프로브 모듈 — ADR-0026 Phase C (합성 WebSocket 핸드셰이크 프로브)
-#
-# 목적: 엣지(nginx)를 통과하는 실제 WebSocket 업그레이드를 검증해 Upgrade/Connection 헤더
-#       소실류 회귀를 배포 후 결정론적으로 감지한다. 앱 발행 메트릭(http_server_requests,
-#       websocket_*)은 모두 nginx '뒤'에서 집계되어 엣지 silent failure에 구조적으로 무력하다
-#       (요청이 백엔드에 도달조차 안 함). 이 프로브가 비어 있던 "동작 검증" 계층을 채운다.
-#
-# 검증 깊이 = WS 101 핸드셰이크만(전체 STOMP CONNECT 아님). 헤더 없는 STOMP CONNECT는
-#   StompPrincipalInterceptor가 매번 WARN 로그(Loki 폭주) + 활성세션 게이지·churn을 오염시키므로
-#   보류한다. 101만으로 이번 사고 클래스(Upgrade strip → 101 미발생)를 완전히 커버하면서 부작용 0.
-#
-# ★ prober=tcp인 이유(http가 아님): http prober로 라이브 검증하니 101은 정상 수신하나, 101 직후
-#   업그레이드된 연결을 '본문'으로 읽으려 매달려(서버 heartbeat로 EOF 없음) probe가 ~900s 행에 걸렸다
-#   (timeout이 안 먹음). 30s 스크랩에선 매번 scrape_timeout + 연결 누수 → 운영 불가. tcp prober는
-#   raw 바이트로 핸드셰이크 요청을 보내고 응답에서 '101'만 정규식 매칭한 뒤 즉시 닫으므로 행이 없다.
-#   부수 효과: tcp+tls는 ALPN에서 h2를 협상하지 않아(평문 HTTP/1.1 바이트 전송) h2 함정도 원천 회피된다.
-#
-# ⚠️ /ws/info(SockJS info)는 업그레이드 실패와 무관하게 200을 반환하므로 프로브 대상이 아니다
-#    (ADR-0026 §트레이드오프의 /ws/info 스케치를 이 점 때문에 개선). 네이티브 WS 전송
-#    엔드포인트 /ws/websocket에 실제 업그레이드 요청을 보내 101 Switching Protocols를 확인한다.
+# blackbox_exporter 프로브 모듈 — ADR-0026 Phase C
+# 엣지(nginx)를 통과하는 실제 WS 업그레이드를 검증해 Upgrade/Connection 헤더 소실 회귀를 감지한다.
+# tcp prober 채택 이유, /ws/websocket 선택 등 설계 배경은 ADR-0026 Phase C 참조.
 modules:
   ws_handshake:
+    # http가 아닌 tcp prober: 101 확인 후 즉시 연결을 닫아 hang을 피하고, ALPN h2 미협상으로 h2 함정도 회피.
     prober: tcp
     timeout: 5s
     tcp:
       tls: true
       tls_config:
-        # 컨테이너명(nginx)으로 접속하므로 SNI·인증서 검증 호스트를 실제 vhost로 명시한다.
-        # 인증서가 api.zzol.site용이라 이게 없으면 TLS 검증이 실패한다.
-        server_name: api.zzol.site
+        server_name: api.zzol.site  # 컨테이너명 접속 시 SNI·인증서 검증 호스트
       query_response:
-        # raw HTTP/1.1 업그레이드 요청. YAML 더블쿼트가 \r\n을 실제 CRLF 바이트로 전개한다.
-        # Host로 nginx vhost(api.zzol.site) 라우팅. Sec-WebSocket-Key는 RFC 6455 예시 nonce.
+        # raw HTTP/1.1 업그레이드 요청(더블쿼트가 \r\n을 CRLF로 전개). 업그레이드와 무관하게
+        # 200을 주는 /ws/info(SockJS) 대신 네이티브 WS 엔드포인트로 보낸다.
         - send: "GET /ws/websocket HTTP/1.1\r\nHost: api.zzol.site\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nOrigin: https://api.zzol.site\r\n\r\n"
-        # 101 Switching Protocols면 업그레이드 성공. 헤더 소실 시 200/4xx 상태줄이 와 매칭 실패
-        # → probe_failed_due_to_regex=1, probe_success=0.
-        - expect: "^HTTP/1.1 101"
+        - expect: "^HTTP/1.1 101"  # 101이면 성공, 헤더 소실 시 200/4xx → probe_failed_due_to_regex=1

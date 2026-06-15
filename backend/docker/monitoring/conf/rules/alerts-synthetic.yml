@@ -1,21 +1,10 @@
 # Prometheus 알림 룰 — 합성 프로브 (ADR-0026 Phase C)
-#
-# 엣지(nginx)를 통과하는 blackbox 합성 WS 핸드셰이크 프로브 기반. 앱 발행 메트릭이
-# 구조적으로 못 잡는 엣지 silent failure(Upgrade 헤더 소실 → 101 미발생)를 직접 잡는다.
-# "구문(nginx -t) → HTTP(200) → 동작(실제 핸드셰이크)" 3계층 중 '동작 검증' 계층.
-#
-# 사용 메트릭 (blackbox-exporter 'tcp' prober, job=blackbox-ws):
-#   probe_success              1=성공(응답에 101 매칭) / 0=실패
-#   probe_failed_due_to_regex  1=TCP/TLS는 됐으나 '^HTTP/1.1 101' 미매칭(=헤더 소실로 200 등 반환)
-#   probe_ssl_earliest_cert_expiry  인증서 만료 임박 부수 감지(별도 룰은 범위 밖)
-#
-# (tcp prober라 probe_http_status_code는 없다. http prober는 101 직후 업그레이드된 연결을
-#  본문으로 읽으려 ~900s 행에 걸려 운영 불가였다 — ADR-0026 Phase C 참조.)
+# 엣지 silent failure(Upgrade 헤더 소실 → 101 미발생)를 blackbox WS 프로브로 직접 잡는다.
+# probe_success: 1=성공 / 0=실패, probe_failed_due_to_regex: 1=TCP/TLS는 OK지만 101 미매칭.
 groups:
   - name: synthetic-probes
     rules:
-      # WS 핸드셰이크 합성 프로브 실패 — 이번 인시던트(Upgrade strip)를 직접 잡는 룰.
-      # 엣지에서 101이 안 나오면 실유저의 WS가 전부 끊긴 상태. for:2m로 일시적 스크랩 blip은 거른다.
+      # 엣지에서 101이 안 나오면 실유저 WS가 전부 끊긴 상태. for:2m로 일시적 스크랩 blip은 거른다.
       - alert: WsHandshakeProbeFailed
         expr: probe_success{job="blackbox-ws"} == 0
         for: 2m
@@ -25,9 +14,7 @@ groups:
           summary: "WS 핸드셰이크 합성 프로브 실패 (edge={{ $labels.edge }})"
           description: "엣지({{ $labels.instance }})에서 WS 업그레이드(101)가 실패. nginx Upgrade/Connection 헤더 소실 의심. probe_failed_due_to_regex=1이면 TCP/TLS는 됐으나 101 미수신(=헤더 소실로 200 등 반환), 0이면 TCP/TLS 단계 실패(nginx 다운·인증서)."
 
-      # 프로브 메트릭 소실 — ADR-0026 §3 absent 동반룰. 프로브 자체가 죽으면(blackbox 다운·
-      # 스크랩 실패) probe_success 시계열이 사라져 위 룰이 조용히 평가 불능이 된다(silent).
-      # 이 동반룰이 없으면 "프로브가 죽은 것"과 "정상"을 구분 못 한다 — 본 프로젝트가 싸우는 그 함정.
+      # absent 동반룰(ADR-0026 §3): 프로브 자체가 죽으면 probe_success 시계열이 사라져 위 룰이 silent로 평가 불능이 된다.
       - alert: WsHandshakeProbeAbsent
         expr: absent(probe_success{job="blackbox-ws"})
         for: 5m

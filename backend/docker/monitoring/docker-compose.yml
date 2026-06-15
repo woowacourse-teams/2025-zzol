@@ -273,10 +273,8 @@ services:
   # ============================================
   # blackbox-exporter - Synthetic Probes (ADR-0026 Phase C)
   # ============================================
-  # 엣지(nginx)를 통과하는 합성 WS 핸드셰이크 프로브. 앱 메트릭이 구조적으로 못 잡는
-  # nginx Upgrade 헤더 소실류 회귀를 101 검증으로 결정론적으로 감지한다(conf/blackbox.yml).
-  # - monitoring-network: prometheus가 blackbox-exporter:9115를 스크랩
-  # - zzol-network: blackbox가 컨테이너명 nginx로 직접 프로브(hairpin NAT 회피)
+  # 엣지(nginx)를 통과하는 합성 WS 핸드셰이크 프로브(conf/blackbox.yml).
+  # monitoring-network: prometheus가 스크랩 / zzol-network: 컨테이너명 nginx 직접 프로브(hairpin 회피).
   blackbox-exporter:
     image: prom/blackbox-exporter:v0.25.0
     container_name: blackbox-exporter

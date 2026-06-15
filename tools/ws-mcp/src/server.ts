@@ -36,6 +36,7 @@ async function main(): Promise<void> {
     brokerUrl,
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-deprecated -- 위 thin shim 주석 참조. McpServer 마이그레이션 전까지 저수준 Server 사용 유지.
   const server = new Server({ name: 'ws-mcp', version: '0.1.0' }, { capabilities: { tools: {} } });
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({

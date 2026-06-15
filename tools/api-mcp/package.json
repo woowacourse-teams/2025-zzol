@@ -1,7 +1,7 @@
 {
-  "name": "@zzol/ws-mcp",
+  "name": "@zzol/api-mcp",
   "version": "0.1.0",
-  "description": "MCP server for the zzol WebSocket catalog (/dev/ws-catalog) + STOMP connection helpers",
+  "description": "MCP server for the zzol HTTP (OpenAPI) + WebSocket (STOMP) API tools",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,7 +9,7 @@
   },
   "main": "dist/server.js",
   "bin": {
-    "ws-mcp": "dist/server.js"
+    "api-mcp": "dist/server.js"
   },
   "scripts": {
     "prepare": "npm run build",

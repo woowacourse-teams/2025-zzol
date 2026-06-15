@@ -1,0 +1,203 @@
+# Prometheus 알림 룰 — 기존 Grafana Alerting 8룰 이관 (ADR-0026 Phase B, 이슈 #1400)
+#
+# 이 8룰은 Grafana provisioning(provisioning/alerting/)이 서버에서 alerting_bak으로 비활성이고
+# 레포 정본은 compose 마운트·edge-cd 어디에도 닿지 않는 orphan이라 "외부로 전달된 적이 없다".
+# 따라서 발화 동치 이관이 아니라 전달된 적 없는 8룰의 Alertmanager 단일 경로 신규 편입이다.
+# 기존 alert-rules.yml(Grafana refId A/B/C 모델)은 PromQL 변환 출발점·임계값 출처로만 참고했고,
+# 검증 기준은 "동치"가 아니라 정의 충실성이다.
+#
+# ── noDataState 처리 (ADR-0026 §3) ──────────────────────────────────────
+# Grafana 룰의 noDataState: Alerting("데이터 없으면 발화")은 Prometheus에 등가물이 없다.
+# Prometheus는 시계열이 사라지면 룰을 그냥 발화하지 않으므로, 그대로 옮기면 해당 룰이
+# 조용히 알림을 멈춘다(silent failure). 따라서 noDataState: Alerting이던 4룰
+# (WS 지연·JVM 힙·서킷브레이커·CPU)에 absent() 동반룰을 명시적으로 추가해 등가를 만든다.
+# noDataState: OK였던 4룰(WS 실패·DB 풀·Redis 지연·디스크)은 단순 이식.
+#
+# ── 라벨/메트릭 교정 (현 conf/prometheus.yml scrape_configs 기준) ───────────
+#   app: job=~"dev-app|prod-app"  | node-exporter: job="node"
+#   redis: job="redis-exporter", instance=dev-redis|prod-redis  (소스의 job="dev-redis"는 현재 없음)
+#
+# ── ⚠️ deploy-time 검증 (9090 호스트 미노출 → 로컬 확인 불가, 서버에서 실측) ──
+#   1) redis_commands_duration_seconds_total / _processed_total 메트릭·라벨(cmd) 실재 확인.
+#   2) websocket_message_inbound_time_seconds{quantile}·_count의 idle 거동 확인.
+#      저트래픽 dev에서 _count absent 오탐이 나면 `and on() up{...}==1` 게이팅 검토.
+#      ※ Micrometer percentile 발행이 꺼져 {quantile} 시리즈가 아예 없으면 WsInboundLatencyHigh가
+#        조용히 영영 안 터지고, _count 기반 absent도 이를 못 잡는다 → percentile 발행 활성 여부 확인.
+#   3) jvm_memory_max_bytes{area="heap"}에 id별 -1(미정의 max) 존재 시 `> 0` 필터 추가.
+#   4) 모든 임계값은 베이스라인 미측정 추정치(부하 테스트 실측 기반 원본 보존) — dev에서 정상 범위 측정 후 보정.
+
+groups:
+  # ============================================
+  # WebSocket — 앱 메트릭 계층
+  # (Phase A WsHandshakeFailure는 http_server_requests 핸드셰이크 계층이라 중복 아님)
+  # ============================================
+  - name: migrated-websocket
+    rules:
+      # WS 연결 실패율 증가 — 5분간 실패 10건 이상. (원본 noDataState: OK → 단순 이식)
+      - alert: WsConnectionFailuresHigh
+        expr: increase(websocket_connections_failed_total{job=~"dev-app|prod-app"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WebSocket 연결 실패 급증 ({{ $labels.job }})"
+          description: "최근 5분 WS 연결 실패가 {{ $value | printf \"%.0f\" }}건 (임계 10). STOMP 연결 단계 실패 누적."
+
+      # WS inbound 메시지 처리 지연 — p99 > 500ms. 레이싱 게임에서 0.5초는 "렉"으로 체감.
+      # (원본 noDataState: Alerting → 아래 absent 동반룰로 등가 보강)
+      - alert: WsInboundLatencyHigh
+        expr: websocket_message_inbound_time_seconds{quantile="0.99", job=~"dev-app|prod-app"} > 0.5
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "WebSocket 메시지 처리 p99 > 500ms ({{ $labels.job }})"
+          description: "WS inbound p99 처리 시간이 {{ $value | printf \"%.3f\" }}s. 서비스 품질 저하 체감 수준."
+
+      # noDataState: Alerting 등가 — 앱이 WS 타이머 메트릭을 아예 안 내면 위 지연 룰이 silent.
+      # quantile 시리즈는 idle 거동이 불확실하므로 한 번 등록되면 persist하는 _count를 absent 대상으로 쓴다.
+      # dev/prod job별 분리: 집계 selector는 한쪽만 살아도 빈 결과라 한 환경 소실을 놓침.
+      - alert: WsInboundLatencyMetricAbsent
+        expr: |
+          absent(websocket_message_inbound_time_seconds_count{job="dev-app"})
+          or absent(websocket_message_inbound_time_seconds_count{job="prod-app"})
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "WS 처리시간 메트릭 소실 ({{ $labels.job }})"
+          description: "WsInboundLatencyHigh(noDataState:Alerting 등가)가 평가 불능. 앱이 WS 타이머를 내지 않습니다."
+
+  # ============================================
+  # JVM / DB / 서킷브레이커 — 앱 리소스
+  # ============================================
+  - name: migrated-app-resources
+    rules:
+      # JVM 힙 사용률 > 85%. Prod -Xmx4200m 기준 85% = 3,570MB. GC 오버헤드 급증 구간.
+      # 원본은 used/max를 per-pool(id 라벨 매칭)로 나눴으나, 스테이트된 의도("힙 사용률")는 전체 힙이므로
+      # sum by(job)로 교정한다. (원본 noDataState: Alerting → absent 동반룰 보강)
+      # 분모에 `> 0` 필터 필수: G1GC는 Eden/Survivor 풀의 max를 -1(미정의)로 노출하는 경우가 흔하다.
+      # -1이 섞인 채 합산하면 분모가 왜곡돼 비율이 음수/엉뚱한 값이 되고 `> 85`가 영구 거짓 →
+      # critical 룰이 조용히 안 터진다(이 ADR이 싸우는 바로 그 silent failure). 게다가 메트릭은
+      # present(값 -1)라 absent 동반룰도 못 잡는다. `> 0`로 정의된 max만 합산하면 분모가 실제 힙
+      # 상한(-Xmx, G1 Old Gen이 보고)이 된다.
+      # ⚠️ deploy-time P0: dev에서 jvm_memory_max_bytes{area="heap"} 시리즈별 값을 확인해
+      #    정의된 max가 최소 1개 존재하는지(전 풀 -1이면 분모 공집합 → 무발화) 검증한다.
+      - alert: JvmHeapUsageHigh
+        expr: |
+          sum by (job) (jvm_memory_used_bytes{area="heap", job=~"dev-app|prod-app"})
+          / sum by (job) (jvm_memory_max_bytes{area="heap", job=~"dev-app|prod-app"} > 0)
+          * 100 > 85
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "JVM 힙 사용률 > 85% ({{ $labels.job }})"
+          description: "힙 사용률이 {{ $value | printf \"%.1f\" }}%. GC 오버헤드 증가 및 OOM 위험."
+
+      - alert: JvmHeapMetricAbsent
+        expr: |
+          absent(jvm_memory_used_bytes{area="heap", job="dev-app"})
+          or absent(jvm_memory_used_bytes{area="heap", job="prod-app"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "JVM 힙 메트릭 소실 ({{ $labels.job }})"
+          description: "JvmHeapUsageHigh(noDataState:Alerting 등가)가 평가 불능. 앱이 JVM 메트릭을 내지 않습니다."
+
+      # DB 커넥션 풀 사용률 — HikariCP active > 8 (최대 10의 80%). 여유분 2개는 헬스체크/스케줄러용.
+      # (원본 noDataState: OK → 단순 이식)
+      - alert: DbConnectionPoolHigh
+        expr: hikaricp_connections_active{job=~"dev-app|prod-app"} > 8
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DB 커넥션 풀 활성 > 8 ({{ $labels.job }})"
+          description: "활성 연결 {{ $value }}개 (최대 10). 슬로우 쿼리 또는 커넥션 누수 확인 필요."
+
+      # 서킷브레이커 OPEN — OracleObjectStorage 서킷이 열리면 QR 코드 생성 불가. state: 1=OPEN.
+      # 원본 for: 0s 보존(즉발). (원본 noDataState: Alerting → absent 동반룰 보강)
+      - alert: CircuitBreakerOpen
+        expr: resilience4j_circuitbreaker_state{state="open", job=~"dev-app|prod-app"} > 0
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: "서킷브레이커 OPEN ({{ $labels.name }} / {{ $labels.job }})"
+          description: "서킷브레이커가 OPEN 상태입니다. 외부 서비스(OracleObjectStorage) 장애 확인 필요."
+
+      - alert: CircuitBreakerMetricAbsent
+        expr: |
+          absent(resilience4j_circuitbreaker_state{state="open", job="dev-app"})
+          or absent(resilience4j_circuitbreaker_state{state="open", job="prod-app"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "서킷브레이커 메트릭 소실 ({{ $labels.job }})"
+          description: "CircuitBreakerOpen(noDataState:Alerting 등가)이 평가 불능. 앱이 resilience4j 메트릭을 내지 않습니다."
+
+  # ============================================
+  # Redis — 명령 응답 시간
+  # ============================================
+  - name: migrated-redis
+    rules:
+      # Redis 평균 응답 시간 > 50ms. 게임 액션마다 Redis 호출 → 50ms면 체감 지연 시작.
+      # 수정: 소스 job="dev-redis"는 현 prometheus.yml에 없음 → job="redis-exporter"(dev+prod).
+      # redis_commands_duration_seconds_total은 cmd 라벨이 붙은 per-command 카운터라
+      # processed_total(글로벌)과 직접 나누면 매치 실패 → sum by(instance)로 집계해 dev/prod 분리 유지.
+      # (원본 noDataState: OK → 단순 이식). ⚠️ 메트릭·cmd 라벨 실재는 deploy-time 검증.
+      - alert: RedisCommandLatencyHigh
+        expr: |
+          sum by (instance) (rate(redis_commands_duration_seconds_total{job="redis-exporter"}[5m]))
+          / sum by (instance) (rate(redis_commands_processed_total{job="redis-exporter"}[5m]))
+          > 0.05
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis 평균 응답 시간 > 50ms ({{ $labels.instance }})"
+          description: "Redis 평균 명령 응답 시간이 {{ $value | printf \"%.4f\" }}s."
+
+  # ============================================
+  # 호스트 리소스 — node-exporter (job="node", #1406로 데이터 소스 확보)
+  # node-exporter는 --path.rootfs=/rootfs + /:/rootfs 마운트로 mountpoint="/"가 호스트 루트를 가리킴.
+  # ============================================
+  - name: migrated-host
+    rules:
+      # 디스크 사용률 > 85%. 로그·Redis AOF·MySQL binlog가 점유. 90%면 쓰기 실패 가능.
+      # (원본 noDataState: OK → 단순 이식)
+      - alert: DiskUsageHigh
+        expr: |
+          100 - (node_filesystem_avail_bytes{mountpoint="/", job="node"}
+          / node_filesystem_size_bytes{mountpoint="/", job="node"} * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "디스크 사용률 > 85%"
+          description: "디스크 사용률이 {{ $value | printf \"%.1f\" }}%. 로그 정리 또는 디스크 확장 필요."
+
+      # CPU 사용률 > 90% (5분 지속). t4g.small vCPU 2개.
+      # (원본 noDataState: Alerting → absent 동반룰 보강)
+      - alert: CpuUsageHigh
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle", job="node"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CPU 사용률 > 90% (5분 지속)"
+          description: "CPU 사용률이 {{ $value | printf \"%.1f\" }}%."
+
+      # noDataState: Alerting 등가 — node-exporter가 죽으면 위 CPU 룰이 silent.
+      # node는 단일 job이므로 단순 absent.
+      - alert: NodeCpuMetricAbsent
+        expr: absent(node_cpu_seconds_total{mode="idle", job="node"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "node-exporter CPU 메트릭 소실"
+          description: "CpuUsageHigh(noDataState:Alerting 등가)가 평가 불능. node-exporter가 메트릭을 내지 않습니다."

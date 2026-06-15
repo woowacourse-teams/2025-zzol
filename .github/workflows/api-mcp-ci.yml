@@ -1,26 +1,26 @@
-name: ws-mcp CI
+name: api-mcp CI
 
 on:
   pull_request:
     branches: [be/dev, be/prod]
     paths:
       - 'tools/api-mcp/**'
-      - 'backend/src/test/resources/__fixtures__/ws-catalog.json'
-      - '.github/workflows/ws-mcp-ci.yml'
+      - 'backend/app/src/test/resources/__fixtures__/ws-catalog.json'
+      - '.github/workflows/api-mcp-ci.yml'
   push:
     branches:
       - be/dev
     paths:
       - 'tools/api-mcp/**'
-      - 'backend/src/test/resources/__fixtures__/ws-catalog.json'
-      - '.github/workflows/ws-mcp-ci.yml'
+      - 'backend/app/src/test/resources/__fixtures__/ws-catalog.json'
+      - '.github/workflows/api-mcp-ci.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  ws-mcp:
+  api-mcp:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

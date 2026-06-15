@@ -1,12 +1,11 @@
 package coffeeshout.room.infra.auth;
 
-import coffeeshout.room.infra.auth.RoomSessionClaim;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RoomSessionClaimTest {
 

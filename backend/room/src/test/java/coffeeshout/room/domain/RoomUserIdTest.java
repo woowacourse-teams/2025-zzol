@@ -2,6 +2,7 @@ package coffeeshout.room.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import org.junit.jupiter.api.Nested;

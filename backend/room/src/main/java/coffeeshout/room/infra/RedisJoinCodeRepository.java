@@ -1,6 +1,6 @@
 package coffeeshout.room.infra;
 
-import coffeeshout.room.domain.JoinCode;
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.repository.JoinCodeRepository;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;

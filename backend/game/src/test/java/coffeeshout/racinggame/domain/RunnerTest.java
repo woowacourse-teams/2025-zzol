@@ -4,9 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.racinggame.domain.RacingGame;
-import coffeeshout.racinggame.domain.Runner;
-import coffeeshout.racinggame.domain.SpeedCalculator;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,7 +15,7 @@ class RunnerTest {
     @Test
     void 러너의_초기_속도는_0이다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
 
         // when && then
         assertThat(runner.getSpeed()).isEqualTo(RacingGame.INITIAL_SPEED);
@@ -27,7 +24,7 @@ class RunnerTest {
     @Test
     void 속도를_업데이트할_수_있다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> 15;
         final Instant now = Instant.now();
 
@@ -41,7 +38,7 @@ class RunnerTest {
     @Test
     void 속도가_최소값보다_작으면_예외가_발생한다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> 2;
         final Instant now = Instant.now();
 
@@ -54,7 +51,7 @@ class RunnerTest {
     @Test
     void 속도가_최대값보다_크면_예외가_발생한다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> 61;
         final Instant now = Instant.now();
 
@@ -67,7 +64,7 @@ class RunnerTest {
     @Test
     void 최소_속도로_업데이트할_수_있다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> RacingGame.MIN_SPEED;
         final Instant now = Instant.now();
 
@@ -81,7 +78,7 @@ class RunnerTest {
     @Test
     void 최대_속도로_업데이트할_수_있다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> RacingGame.MAX_SPEED;
         final Instant now = Instant.now();
 
@@ -95,7 +92,7 @@ class RunnerTest {
     @Test
     void 러너의_초기_위치는_0이다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
 
         // when && then
         assertThat(runner.getPosition()).isEqualTo(RacingGame.START_LINE);
@@ -104,7 +101,7 @@ class RunnerTest {
     @Test
     void 러너는_현재_속도만큼_이동할_수_있다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> 15;
         final Instant now = Instant.now();
         runner.updateSpeed(10, speedCalculator, now);
@@ -119,7 +116,7 @@ class RunnerTest {
     @Test
     void 러너는_여러_번_이동할_수_있다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> 10;
         final Instant now = Instant.now();
         runner.updateSpeed(10, speedCalculator, now);
@@ -136,7 +133,7 @@ class RunnerTest {
     @Test
     void 속도가_0이면_이동하지_않는다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
 
         // when
         runner.move(Instant.now());
@@ -148,7 +145,7 @@ class RunnerTest {
     @Test
     void 러너가_완주_라인을_넘으면_속도가_0이_된다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> RacingGame.MAX_SPEED;
         final Instant now = Instant.now();
         runner.updateSpeed(10, speedCalculator, now);
@@ -165,7 +162,7 @@ class RunnerTest {
     @Test
     void 러너가_완주하면_더이상_움직이지_않는다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> RacingGame.MAX_SPEED;
         final Instant now = Instant.now();
         runner.updateSpeed(10, speedCalculator, now);
@@ -185,7 +182,7 @@ class RunnerTest {
     @Test
     void 러너가_완주했는지_확인할_수_있다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> RacingGame.MAX_SPEED;
         final Instant now = Instant.now();
         runner.updateSpeed(10, speedCalculator, now);
@@ -202,7 +199,7 @@ class RunnerTest {
     @Test
     void 러너가_완주하지_않았는지_확인할_수_있다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
 
         // when && then
         assertThat(runner.isFinished()).isFalse();
@@ -211,7 +208,7 @@ class RunnerTest {
     @Test
     void 러너가_완주하면_완주_시간이_기록된다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> RacingGame.MAX_SPEED;
         final Instant now = Instant.now();
         runner.updateSpeed(10, speedCalculator, now);
@@ -230,7 +227,7 @@ class RunnerTest {
     @Test
     void 첫_이동_속도는_최소_속도가_된다() {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
 
         // when
         runner.initializeSpeed();
@@ -254,7 +251,7 @@ class RunnerTest {
             int expectedTicksToFinish
     ) {
         // given
-        final Runner runner = new Runner(PlayerFixture.게스트한스());
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> speed;
         final Instant tickStartTime = Instant.parse("2025-01-01T00:00:00Z");
 

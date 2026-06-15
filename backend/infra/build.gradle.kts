@@ -3,10 +3,6 @@
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
-val redissonVersion = rootProject.extra["redisson"] as String
-val queryDslVersion = rootProject.extra["queryDsl"] as String
-val reflectionsVersion = rootProject.extra["reflections"] as String
-
 dependencies {
     implementation(project(":common"))
 
@@ -14,13 +10,15 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    // Ip 값 객체의 IPv4/IPv6 검증용 — Lettuce가 이미 runtime에 포함하므로 새 jar 추가 없음
+    implementation("io.netty:netty-common")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
-    implementation("org.redisson:redisson-spring-boot-starter:$redissonVersion")
+    implementation(libs.redisson)
 
-    implementation("com.querydsl:querydsl-jpa:$queryDslVersion:jakarta")
-    annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
+    implementation(libs.querydsl.jpa)
+    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jpa") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
@@ -30,13 +28,9 @@ dependencies {
     implementation("io.opentelemetry:opentelemetry-exporter-otlp")
     implementation("io.micrometer:context-propagation")
 
-    val springDocVersion = rootProject.extra["springDoc"] as String
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
-
-    implementation("org.reflections:reflections:$reflectionsVersion")
-
-    val resilience4jVersion = rootProject.extra["resilience4j"] as String
-    implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
+    implementation(libs.reflections)
+    implementation(libs.resilience4j)
 
     testImplementation("io.micrometer:micrometer-tracing-test")
+    testImplementation(project(":test-support"))
 }

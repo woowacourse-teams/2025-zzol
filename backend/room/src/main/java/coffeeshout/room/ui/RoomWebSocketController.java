@@ -1,23 +1,24 @@
 package coffeeshout.room.ui;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.websocket.docs.WsReceive;
 import coffeeshout.room.application.service.RoomService;
-import coffeeshout.room.domain.event.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.PlayerReadyEvent;
 import coffeeshout.room.domain.event.RouletteShowEvent;
 import coffeeshout.room.domain.event.RouletteSpinEvent;
 import coffeeshout.room.domain.player.Winner;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.ui.request.MiniGameSelectMessage;
 import coffeeshout.room.ui.request.ReadyChangeMessage;
 import coffeeshout.room.ui.request.RouletteSpinMessage;
-import org.springframework.messaging.handler.annotation.Payload;
+import coffeeshout.websocket.docs.WsReceive;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -52,9 +53,14 @@ public class RoomWebSocketController {
             respondsOnTopics = {"/room/{joinCode}/minigame"},
             description = "미니게임 목록 업데이트 및 브로드캐스트"
     )
-    public void broadcastMiniGames(@DestinationVariable String joinCode, @Payload MiniGameSelectMessage message) {
+    public void broadcastMiniGames(
+            @DestinationVariable String joinCode,
+            @Payload MiniGameSelectMessage message,
+            Principal user
+    ) {
+        // user.getName()(WebSocket Principal)을 이벤트에 실어, 비동기 반영이 실패하면 이 클라이언트에게만 에러를 되돌린다
         final BaseEvent event = new MiniGameSelectEvent(joinCode, message.hostName(),
-                message.miniGameTypes());
+                message.miniGameTypes(), user.getName());
         streamPublisher.publish(RoomStreamKey.BROADCAST, event);
     }
 

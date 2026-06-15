@@ -1,18 +1,18 @@
 package coffeeshout.blindtimer.domain;
 
-import coffeeshout.room.domain.player.Player;
+import coffeeshout.gamecommon.Gamer;
 import java.time.Duration;
 import lombok.Getter;
 
 @Getter
 public class BlindTimerPlayer {
 
-    private final Player player;
+    private final Gamer gamer;
     private Duration stoppedElapsed;
     private boolean timedOut;
 
-    public BlindTimerPlayer(Player player) {
-        this.player = player;
+    public BlindTimerPlayer(Gamer gamer) {
+        this.gamer = gamer;
     }
 
     public synchronized boolean stop(Duration elapsed) {

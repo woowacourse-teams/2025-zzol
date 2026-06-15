@@ -32,8 +32,8 @@ class RacingGameTest {
         racingGame.setUp(players.stream().map(p -> p.toGamer()).toList());
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
-        racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(players.getFirst().getName().value(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(players.get(1).getName().value(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
 
         // when
         racingGame.moveAll();
@@ -49,8 +49,8 @@ class RacingGameTest {
         racingGame.setUp(players.stream().map(p -> p.toGamer()).toList());
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
-        racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
+        racingGame.updateSpeed(players.getFirst().getName().value(), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
+        racingGame.updateSpeed(players.get(1).getName().value(), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
 
         // when
         for (int i = 0; i < 101; ++i) {
@@ -67,8 +67,8 @@ class RacingGameTest {
         racingGame.setUp(players.stream().map(p -> p.toGamer()).toList());
         racingGame.updateState(RacingGameState.PLAYING);
 
-        racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
-        racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(players.getFirst().getName().value(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+        racingGame.updateSpeed(players.get(1).getName().value(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
 
         // then
         assertThat(racingGame.getRunners().getSpeeds().values()).allMatch(value -> value == 10);
@@ -81,7 +81,7 @@ class RacingGameTest {
         racingGame.setUp(players.stream().map(p -> p.toGamer()).toList());
 
         // when && then
-        assertThatThrownBy(() -> racingGame.updateSpeed(players.getFirst(), 10, speedCalculator, Instant.now()))
+        assertThatThrownBy(() -> racingGame.updateSpeed(players.getFirst().getName().value(), 10, speedCalculator, Instant.now()))
                 .isInstanceOf(BusinessException.class);
     }
 
@@ -94,15 +94,15 @@ class RacingGameTest {
         racingGame.setAutoMoveFuture(null);
 
         for (int i = 0; i < 100; i++) {
-            racingGame.updateSpeed(players.get(1), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
-            racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+            racingGame.updateSpeed(players.get(1).getName().value(), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
+            racingGame.updateSpeed(players.getFirst().getName().value(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
             racingGame.moveAll();
         }
 
         Thread.sleep(2);
 
         for (int i = 0; i < 200; i++) {
-            racingGame.updateSpeed(players.getFirst(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
+            racingGame.updateSpeed(players.getFirst().getName().value(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
             racingGame.moveAll();
         }
 

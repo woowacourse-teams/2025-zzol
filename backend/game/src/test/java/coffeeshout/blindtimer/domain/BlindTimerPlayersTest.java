@@ -4,8 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.gamecommon.Gamer;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,13 +14,13 @@ import org.junit.jupiter.api.Test;
 class BlindTimerPlayersTest {
 
     private BlindTimerPlayers players;
-    private Player 한스;
-    private Player 꾹이;
+    private Gamer 한스;
+    private Gamer 꾹이;
 
     @BeforeEach
     void setUp() {
-        한스 = PlayerFixture.게스트한스();
-        꾹이 = PlayerFixture.게스트꾹이();
+        한스 = PlayerFixture.게스트한스().toGamer();
+        꾹이 = PlayerFixture.게스트꾹이().toGamer();
         players = new BlindTimerPlayers(List.of(한스, 꾹이));
     }
 
@@ -31,16 +30,16 @@ class BlindTimerPlayersTest {
         @Test
         void 이름으로_플레이어를_찾을_수_있다() {
             // when
-            final BlindTimerPlayer found = players.findByName(new PlayerName("한스"));
+            final BlindTimerPlayer found = players.findByName("한스");
 
             // then
-            assertThat(found.getPlayer()).isEqualTo(한스);
+            assertThat(found.getGamer()).isEqualTo(한스);
         }
 
         @Test
         void 존재하지_않는_플레이어를_찾으면_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> players.findByName(new PlayerName("없는사람")))
+            assertThatThrownBy(() -> players.findByName("없는사람"))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
@@ -57,7 +56,7 @@ class BlindTimerPlayersTest {
         @Test
         void 한명만_STOP하면_false이다() {
             // given
-            players.findByName(new PlayerName("한스")).stop(Duration.ofSeconds(7));
+            players.findByName("한스").stop(Duration.ofSeconds(7));
 
             // when & then
             assertThat(players.isAllStopped()).isFalse();
@@ -66,8 +65,8 @@ class BlindTimerPlayersTest {
         @Test
         void 전원_STOP하면_true이다() {
             // given
-            players.findByName(new PlayerName("한스")).stop(Duration.ofSeconds(7));
-            players.findByName(new PlayerName("꾹이")).stop(Duration.ofSeconds(8));
+            players.findByName("한스").stop(Duration.ofSeconds(7));
+            players.findByName("꾹이").stop(Duration.ofSeconds(8));
 
             // when & then
             assertThat(players.isAllStopped()).isTrue();
@@ -76,8 +75,8 @@ class BlindTimerPlayersTest {
         @Test
         void 타임아웃도_STOP으로_간주한다() {
             // given
-            players.findByName(new PlayerName("한스")).stop(Duration.ofSeconds(7));
-            players.findByName(new PlayerName("꾹이")).markTimedOut();
+            players.findByName("한스").stop(Duration.ofSeconds(7));
+            players.findByName("꾹이").markTimedOut();
 
             // when & then
             assertThat(players.isAllStopped()).isTrue();

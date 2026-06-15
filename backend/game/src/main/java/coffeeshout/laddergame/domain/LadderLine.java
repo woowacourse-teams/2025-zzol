@@ -1,9 +1,8 @@
 package coffeeshout.laddergame.domain;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.room.domain.player.PlayerName;
 
-public record LadderLine(PlayerName playerName, int segmentIndex, int row) {
+public record LadderLine(String playerName, int segmentIndex, int row) {
 
     public LadderLine {
         if (playerName == null) {

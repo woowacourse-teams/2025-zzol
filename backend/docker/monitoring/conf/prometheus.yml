@@ -2,36 +2,65 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+# ADR-0026: Alertmanager 단일 알림 엔진 연동.
+# alertmanager는 monitoring-network 내부에서 9093으로 접근(호스트 미노출).
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+# 룰 파일은 conf/rules/ → 컨테이너 /etc/prometheus/rules/ 로 마운트(docker-compose.yml).
+rule_files:
+  - '/etc/prometheus/rules/*.yml'
+
 scrape_configs:
   - job_name: 'dev-app'
     static_configs:
-      - targets: [ 'dev-app-blue:8080', 'dev-app-green:8080' ]
+      - targets: ['dev-app-blue:8080', 'dev-app-green:8080']
     metrics_path: '/actuator/prometheus'
     scrape_interval: 10s
     scrape_timeout: 5s
 
   - job_name: 'prod-app'
     static_configs:
-      - targets: [ 'prod-app-blue:8080', 'prod-app-green:8080' ]
+      - targets: ['prod-app-blue:8080', 'prod-app-green:8080']
     metrics_path: '/actuator/prometheus'
     scrape_interval: 10s
     scrape_timeout: 5s
 
   - job_name: 'cadvisor'
     static_configs:
-      - targets: [ 'cadvisor:8080' ]
+      - targets: ['cadvisor:8080']
     metrics_path: '/metrics'
     scrape_interval: 10s
     scrape_timeout: 5s
 
-  - job_name: 'dev-redis'
+  - job_name: 'mysql-exporter'
+    scrape_interval: 10s
     static_configs:
-      - targets: [ 'dev-redis-exporter:9121' ]
+      - targets: ['dev-mysql-exporter:9104']
+        labels:
+          env: 'dev'      
+          instance: 'dev-mysql' 
 
-  - job_name: 'dev-mysql'
+      - targets: ['prod-mysql-exporter:9104'] # Docker 내부 통신이라면 9104 확인!
+        labels:
+          env: 'prod'     
+          instance: 'prod-mysql'
+          
+  - job_name: 'redis-exporter' # Job 이름 통일
+    scrape_interval: 10s
     static_configs:
-      - targets: [ 'dev-mysql-exporter:9104' ]
+      - targets: ['dev-redis-exporter:9121']
+        labels:
+          env: 'dev'
+          instance: 'dev-redis'
+
+      - targets: ['prod-redis-exporter:9121'] 
+        labels:
+          env: 'prod'
+          instance: 'prod-redis'
 
   - job_name: 'node'
     static_configs:
-      - targets: [ 'node-exporter:9100' ]
+      - targets: ['node-exporter:9100']

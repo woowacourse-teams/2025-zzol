@@ -1,0 +1,71 @@
+# Prometheus 알림 룰 — 애플리케이션 증상 기반 (ADR-0026 Phase A)
+#
+# "두 엔진 어디에도 없던 신규 인시던트 룰" 본체. 앱 코드 변경 없이 기존 메트릭만으로
+# 증상을 잡는다(ADR-0026 §5). 라벨 기반 정밀화(PrivateIpBanned 등)는 후속 PR.
+#
+# 사용 메트릭 (ADR-0026 컨텍스트에서 수집 확인됨):
+#   http_server_requests_seconds_count  라벨: uri, status, method, job
+#   ip_block_new_total                  신규 BAN 카운터
+#   ip_block_request_blocked_total      차단된 요청 카운터
+#
+# ⚠️ 임계값은 전부 베이스라인 미측정 상태의 보수적 추정치다(ADR-0026 트레이드오프).
+#    배포 전 Prometheus API로 정상 범위를 재고, 초기엔 오탐을 줄이는 방향(높게)으로 둔다.
+groups:
+  - name: app-symptoms
+    rules:
+      # HTTP 5xx 비율 급증 — 서버 측 광범위 실패.
+      # 비율(=5xx/전체)로 보아 트래픽 규모와 무관하게 동작하게 한다.
+      # 분모가 0이면(요청 없음) 식 자체가 결과를 내지 않아 발화하지 않는다(정상).
+      - alert: Http5xxRatioHigh
+        expr: |
+          sum by (job) (rate(http_server_requests_seconds_count{status=~"5..",job=~"dev-app|prod-app"}[5m]))
+          /
+          sum by (job) (rate(http_server_requests_seconds_count{job=~"dev-app|prod-app"}[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx 비율 5% 초과 ({{ $labels.job }})"
+          description: "최근 5분 5xx 비율이 {{ $value | humanizePercentage }}. 서버 측 광범위 실패 가능성."
+
+      # 대량 IP 차단 급증 — 본 프로젝트가 반응한 그 인시던트의 증상.
+      # X-Forwarded-For 소실 → 전 트래픽이 단일 내부 IP로 인식 → IpBlockFilter가 BAN →
+      # 차단 요청 수가 평소 베이스라인을 크게 벗어나 치솟는다(ADR-0026 §5).
+      # ⚠️ 임계 5 req/s는 순수 추정. 정상 차단(악성 트래픽)과 구분하려면 베이스라인 필수.
+      #    라벨 기반 정밀화(ip_type=private 즉발)는 후속 PR에서 오탐을 줄인다.
+      - alert: MassIpBlockingSpike
+        expr: sum(rate(ip_block_request_blocked_total[5m])) > 5
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "IP 차단 요청 급증 (전 트래픽 차단 인시던트 의심)"
+          description: "차단 요청이 {{ $value | printf \"%.2f\" }} req/s. X-Forwarded-For 소실로 내부 IP가 BAN되는 패턴인지 즉시 확인."
+
+      # 신규 BAN 급증 — 위 증상의 선행 신호(차단보다 BAN 등록이 먼저 튄다).
+      # ⚠️ 임계 추정. 짧은 창에 신규 BAN이 몰리면 비정상.
+      - alert: IpBanRateSpike
+        expr: sum(rate(ip_block_new_total[5m])) > 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "신규 IP BAN 급증"
+          description: "신규 BAN이 {{ $value | printf \"%.2f\" }} /s. 정상 베이스라인 대비 비정상이면 차단 정책/프록시 헤더를 점검."
+
+      # WebSocket 핸드셰이크 실패 — /ws 엔드포인트의 HTTP 에러 응답 급증.
+      # 기존 Grafana 룰(websocket_connections_failed_total, STOMP 연결 단계)과 중복을 피하려
+      # 의도적으로 HTTP 핸드셰이크 계층(http_server_requests)에서 본다(ADR-0026 §5).
+      # ⚠️ uri 라벨 값(/ws/info, /ws/** 등 SockJS 매핑 패턴)은 서버에서 실측 확인 필요.
+      #    실제 라벨이 다르면 이 룰은 조용히 발화하지 않으므로 배포 시 1순위로 검증한다.
+      - alert: WsHandshakeFailure
+        expr: |
+          sum (rate(http_server_requests_seconds_count{uri=~"/ws.*",status=~"4..|5..",job=~"dev-app|prod-app"}[5m]))
+          > 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WebSocket 핸드셰이크 실패 급증 (/ws*)"
+          description: "/ws* 4xx/5xx 응답이 {{ $value | printf \"%.2f\" }} /s. nginx Upgrade/Connection 헤더 소실 또는 인증 실패 가능성."

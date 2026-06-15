@@ -1,0 +1,98 @@
+package coffeeshout.blindtimer.application;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
+
+import coffeeshout.blindtimer.domain.BlindTimerGame;
+import coffeeshout.blindtimer.domain.BlindTimerGameState;
+import coffeeshout.blindtimer.domain.event.BlindTimerProgressEvent;
+import coffeeshout.fixture.RoomFixture;
+import coffeeshout.GameModuleServiceTest;
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.repository.RoomRepository;
+import java.time.Duration;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+class BlindTimerGameProgressHandlerTest extends GameModuleServiceTest {
+
+    @Autowired
+    private RoomRepository roomRepository;
+
+    @Autowired
+    private BlindTimerGameProgressHandler progressHandler;
+
+    @Autowired
+    private GameSessionService gameSessionService;
+
+    private static final String HOST_NAME = "꾹이";
+
+    private Room room;
+    private BlindTimerGame game;
+    private String joinCode;
+
+    @BeforeEach
+    void setUp() {
+        room = RoomFixture.호스트_꾹이();
+        room.getPlayers().forEach(player -> player.updateReadyState(true));
+        roomRepository.save(room);
+        joinCode = room.getJoinCode().getValue();
+
+        // GameSession 대기열에 게임을 넣고 시작한다(startGame이 game.setUp(gamers)를 호출).
+        game = new BlindTimerGame(Duration.ofSeconds(10));
+        final Gamer host = Gamer.guest(HOST_NAME);
+        gameSessionService.deleteSession(room.getJoinCode());
+        gameSessionService.initSession(room.getJoinCode(), host);
+        gameSessionService.getSession(room.getJoinCode()).replaceGames(host, List.of(game));
+        gameSessionService.startGame(room.getJoinCode(), host, room.getGamers());
+
+        game.startPlaying();
+    }
+
+    @Nested
+    class STOP_처리 {
+
+        @Test
+        void STOP하면_진행도_이벤트가_발행된다() {
+            // when
+            progressHandler.handleStop(joinCode, "꾹이");
+
+            // then
+            verify(eventPublisher, atLeastOnce()).publishEvent(any(BlindTimerProgressEvent.class));
+        }
+
+        @Test
+        void 이미_STOP한_플레이어가_다시_STOP하면_무시된다() {
+            // given
+            progressHandler.handleStop(joinCode, "꾹이");
+
+            // when
+            progressHandler.handleStop(joinCode, "꾹이");
+
+            // then
+            assertThat(game.findPlayer("꾹이").isStopped()).isTrue();
+        }
+    }
+
+    @Nested
+    class 전원_STOP_시_게임_종료 {
+
+        @Test
+        void 모든_플레이어가_STOP하면_게임이_종료된다() {
+            // given
+            for (var player : room.getPlayers()) {
+                progressHandler.handleStop(joinCode, player.getName().value());
+            }
+
+            // then
+            assertThat(game.getState()).isEqualTo(BlindTimerGameState.DONE);
+        }
+    }
+}

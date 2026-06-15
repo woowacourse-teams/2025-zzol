@@ -1,13 +1,12 @@
 package coffeeshout.laddergame.domain;
 
-import static coffeeshout.fixture.ExceptionAssertions.assertCoffeeShoutException;
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -59,9 +58,9 @@ class LadderGameTest {
         @Test
         void setUp_후_기둥에_모든_플레이어가_배정된다() {
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(game.getPoles().contains(꾹이.getName())).isTrue();
-                softly.assertThat(game.getPoles().contains(철수.getName())).isTrue();
-                softly.assertThat(game.getPoles().contains(영희.getName())).isTrue();
+                softly.assertThat(game.getPoles().contains(꾹이.getName().value())).isTrue();
+                softly.assertThat(game.getPoles().contains(철수.getName().value())).isTrue();
+                softly.assertThat(game.getPoles().contains(영희.getName().value())).isTrue();
             });
         }
     }
@@ -127,7 +126,7 @@ class LadderGameTest {
         void drawLine_호출_시_LadderLine을_반환한다() {
             final int validSegment = 0;
 
-            final LadderLine line = game.drawLine(꾹이.getName(), validSegment);
+            final LadderLine line = game.drawLine(꾹이.getName().value(), validSegment);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(line).isNotNull();
@@ -139,17 +138,17 @@ class LadderGameTest {
         @Test
         void 미등록_플레이어_선_긋기_시_예외를_던진다() {
             assertCoffeeShoutException(
-                    () -> game.drawLine(new PlayerName("미등록"), 0),
+                    () -> game.drawLine("미등록", 0),
                     LadderGameErrorCode.PLAYER_NOT_FOUND
             );
         }
 
         @Test
         void 이미_선을_그은_플레이어가_다시_그으면_예외를_던진다() {
-            game.drawLine(꾹이.getName(), 0);
+            game.drawLine(꾹이.getName().value(), 0);
 
             assertCoffeeShoutException(
-                    () -> game.drawLine(꾹이.getName(), 0),
+                    () -> game.drawLine(꾹이.getName().value(), 0),
                     LadderGameErrorCode.ALREADY_DREW
             );
         }
@@ -166,14 +165,14 @@ class LadderGameTest {
 
         @Test
         void 선을_그지_않은_플레이어는_false를_반환한다() {
-            assertThat(game.isAlreadyDrew(꾹이.getName())).isFalse();
+            assertThat(game.isAlreadyDrew(꾹이.getName().value())).isFalse();
         }
 
         @Test
         void 선을_그은_플레이어는_true를_반환한다() {
-            game.drawLine(꾹이.getName(), 0);
+            game.drawLine(꾹이.getName().value(), 0);
 
-            assertThat(game.isAlreadyDrew(꾹이.getName())).isTrue();
+            assertThat(game.isAlreadyDrew(꾹이.getName().value())).isTrue();
         }
     }
 

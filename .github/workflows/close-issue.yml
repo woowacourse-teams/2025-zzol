@@ -3,13 +3,18 @@ on:
   pull_request:
     types: [closed] # PR이 닫힐 때
     branches: [fe/dev, fe/prod, be/dev, be/prod]
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   close_linked_issues:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
     steps:
       - name: Close linked issues in PR body
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const prBody = context.payload.pull_request.body;

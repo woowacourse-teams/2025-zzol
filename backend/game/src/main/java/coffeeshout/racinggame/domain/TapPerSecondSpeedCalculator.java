@@ -2,7 +2,6 @@ package coffeeshout.racinggame.domain;
 
 import java.time.Duration;
 import java.time.Instant;
-import org.springframework.stereotype.Component;
 
 
 public class TapPerSecondSpeedCalculator implements SpeedCalculator {

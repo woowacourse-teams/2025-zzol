@@ -1,30 +1,30 @@
 // :user — User + Auth + Friend (OAuth2, JWT, Security)
 
+plugins {
+    `java-test-fixtures`
+}
+
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
-
-val jjwtVersion = rootProject.extra["jjwt"] as String
 
 dependencies {
     implementation(project(":common"))
     implementation(project(":infra"))
+    implementation(project(":web"))
     implementation(project(":websocket"))
-
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    implementation("io.jsonwebtoken:jjwt-api:$jjwtVersion")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
 
-    val queryDslVersion = rootProject.extra["queryDsl"] as String
-    annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
+    annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jpa") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
     testImplementation("org.springframework.security:spring-security-test")
-    testImplementation("org.wiremock:wiremock-standalone:3.9.2")
+    testImplementation(libs.wiremock)
+    testImplementation(project(":test-support"))
 }

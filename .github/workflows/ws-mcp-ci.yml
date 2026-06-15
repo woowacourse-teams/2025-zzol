@@ -2,6 +2,7 @@ name: ws-mcp CI
 
 on:
   pull_request:
+    branches: [be/dev, be/prod]
     paths:
       - 'tools/ws-mcp/**'
       - 'backend/src/test/resources/__fixtures__/ws-catalog.json'
@@ -14,18 +15,27 @@ on:
       - 'backend/src/test/resources/__fixtures__/ws-catalog.json'
       - '.github/workflows/ws-mcp-ci.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ws-mcp:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: tools/ws-mcp
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
         with:
-          node-version: '20'
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: tools/ws-mcp/package-lock.json
 

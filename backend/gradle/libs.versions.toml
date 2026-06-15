@@ -1,0 +1,53 @@
+[versions]
+spring-boot                  = "3.5.3"
+spring-dependency-management = "1.1.7"
+spring-doc                   = "2.8.17"
+oci-sdk                      = "3.89.1"
+redisson                     = "4.5.0"
+zxing                        = "3.5.4"
+querydsl                     = "7.3.0"
+google-genai                 = "1.58.0"
+testcontainers               = "2.0.5"
+reflections                  = "0.10.2"
+resilience4j                 = "2.4.0"
+jjwt                         = "0.13.0"
+wiremock                     = "3.13.2"
+ahocorasick                  = "0.6.3"
+jsqlparser                   = "5.3"
+spring-dotenv                = "5.1.0"
+archunit                     = "1.4.2"
+
+[libraries]
+springdoc-openapi            = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui",       version.ref = "spring-doc" }
+
+redisson                     = { module = "org.redisson:redisson-spring-boot-starter",               version.ref = "redisson" }
+
+querydsl-jpa                 = { module = "io.github.openfeign.querydsl:querydsl-jpa",             version.ref = "querydsl" }
+querydsl-apt                 = { module = "io.github.openfeign.querydsl:querydsl-apt",             version.ref = "querydsl" }
+
+oci-sdk-bom                  = { module = "com.oracle.oci.sdk:oci-java-sdk-bom",                    version.ref = "oci-sdk" }
+
+zxing-core                   = { module = "com.google.zxing:core",                                  version.ref = "zxing" }
+zxing-javase                 = { module = "com.google.zxing:javase",                                version.ref = "zxing" }
+
+jjwt-api                     = { module = "io.jsonwebtoken:jjwt-api",                               version.ref = "jjwt" }
+jjwt-impl                    = { module = "io.jsonwebtoken:jjwt-impl",                              version.ref = "jjwt" }
+jjwt-jackson                 = { module = "io.jsonwebtoken:jjwt-jackson",                           version.ref = "jjwt" }
+
+reflections                  = { module = "org.reflections:reflections",                            version.ref = "reflections" }
+resilience4j                 = { module = "io.github.resilience4j:resilience4j-spring-boot3",       version.ref = "resilience4j" }
+google-genai                 = { module = "com.google.genai:google-genai",                          version.ref = "google-genai" }
+
+testcontainers-core          = { module = "org.testcontainers:testcontainers",                      version.ref = "testcontainers" }
+testcontainers-mysql         = { module = "org.testcontainers:testcontainers-mysql",                version.ref = "testcontainers" }
+testcontainers-junit         = { module = "org.testcontainers:testcontainers-junit-jupiter",        version.ref = "testcontainers" }
+
+wiremock                     = { module = "org.wiremock:wiremock-standalone",                       version.ref = "wiremock" }
+ahocorasick                  = { module = "org.ahocorasick:ahocorasick",                            version.ref = "ahocorasick" }
+jsqlparser                   = { module = "com.github.jsqlparser:jsqlparser",                       version.ref = "jsqlparser" }
+spring-dotenv                = { module = "me.paulschwarz:spring-dotenv",                           version.ref = "spring-dotenv" }
+archunit                     = { module = "com.tngtech.archunit:archunit-junit5",                   version.ref = "archunit" }
+
+[plugins]
+spring-boot                  = { id = "org.springframework.boot",           version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management",    version.ref = "spring-dependency-management" }

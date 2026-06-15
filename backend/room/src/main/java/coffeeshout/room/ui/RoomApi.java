@@ -1,6 +1,5 @@
 package coffeeshout.room.ui;
 
-import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
@@ -49,14 +48,6 @@ public interface RoomApi {
 
     @Operation(summary = "확률 조회", description = "방의 모든 플레이어 당첨 확률을 조회합니다.")
     ResponseEntity<List<ProbabilityResponse>> getProbabilities(
-            @Parameter(description = "방 입장 코드", required = true) String joinCode
-    );
-
-    @Operation(summary = "미니게임 전체 목록 조회", description = "사용 가능한 모든 미니게임 목록을 조회합니다.")
-    ResponseEntity<List<MiniGameType>> getMiniGames();
-
-    @Operation(summary = "선택된 미니게임 조회", description = "특정 방에서 선택된 미니게임 목록을 조회합니다.")
-    ResponseEntity<List<MiniGameType>> getSelectedMiniGames(
             @Parameter(description = "방 입장 코드", required = true) String joinCode
     );
 

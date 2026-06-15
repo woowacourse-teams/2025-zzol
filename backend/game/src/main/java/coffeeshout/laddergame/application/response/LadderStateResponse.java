@@ -1,10 +1,7 @@
 package coffeeshout.laddergame.application.response;
 
-import coffeeshout.laddergame.application.response.PoleInfo;
 import coffeeshout.laddergame.domain.BottomRanks;
-import coffeeshout.laddergame.application.response.PoleInfo;
 import coffeeshout.laddergame.domain.LadderGameState;
-import coffeeshout.laddergame.application.response.PoleInfo;
 import coffeeshout.laddergame.domain.Poles;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,7 +24,7 @@ public record LadderStateResponse(
 
     public static LadderStateResponse ofPrepare(Poles poles, BottomRanks bottomRanks) {
         final List<PoleInfo> poleInfos = poles.getAll().stream()
-                .map(p -> new PoleInfo(p.index(), p.player().getName().value(), p.player().getColorIndex()))
+                .map(p -> new PoleInfo(p.index(), p.gamer().getName(), p.gamer().getColorIndex()))
                 .toList();
         return new LadderStateResponse(LadderGameState.PREPARE, poleInfos, bottomRanks.getAll(), null, null, null);
     }

@@ -2,26 +2,15 @@ package coffeeshout.global.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.gamecommon.flow.FlowScheduler;
-import coffeeshout.fixture.TestContainerSupport;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
+import coffeeshout.support.app.IntegrationTestSupport;
 import java.util.List;
 import java.util.stream.IntStream;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.Answers;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Outbox 패턴 E2E 테스트 (2단 콤보 Outbox).
@@ -32,65 +21,11 @@ import org.springframework.test.context.ActiveProfiles;
  * Worker가 500ms 후 재시도 (Fallback)
  * <p>
  * H2 대신 MySQL을 쓰는 이유: FOR UPDATE SKIP LOCKED가 H2에서 지원되지 않는다.
+ * <p>
+ * 백그라운드 @Scheduled(relay/recoverStaleEvents/cleanup)와 수동 호출의 경합 방지는
+ * 베이스의 CommonTestSchedulerConfig(no-op taskScheduler)가, 게임 스케줄러 대체는 IntegrationTestConfig가 담당한다.
  */
-
-@SpringBootTest
-@ActiveProfiles("test")
-@Import(OutboxE2ETest.OutboxE2ETestConfig.class)
-class OutboxE2ETest extends TestContainerSupport {
-
-    @TestConfiguration
-    static class OutboxE2ETestConfig {
-
-        @Bean(name = "cardGameFlowScheduler")
-        @Primary
-        public FlowScheduler mockCardGameFlowScheduler() {
-            return Mockito.mock(FlowScheduler.class);
-        }
-
-        @Bean(name = "blockStackingFlowScheduler")
-        public FlowScheduler mockBlockStackingFlowScheduler() {
-            return Mockito.mock(FlowScheduler.class);
-        }
-
-        @Bean(name = "cardGameTaskScheduler")
-        public TaskScheduler cardGameTaskScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
-        }
-
-        @Bean(name = "delayRemovalScheduler")
-        public TaskScheduler delayRemovalScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
-        }
-
-        @Bean(name = "racingGameScheduler")
-        public TaskScheduler racingGameScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
-        }
-
-        @Bean(name = "speedTouchGameScheduler")
-        public TaskScheduler speedTouchGameScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
-        }
-
-        @Bean(name = "blindTimerGameScheduler")
-        public TaskScheduler blindTimerGameScheduler() {
-            return new coffeeshout.global.config.ShutDownTestScheduler();
-        }
-
-        /**
-         * 기본 taskScheduler를 no-op으로 덮어써서 @Scheduled 메서드 실행을 막는다.
-         * OutboxRelayWorker의 relay(), recoverStaleEvents(), cleanup()이
-         * 테스트 중에 백그라운드로 돌면서 수동 호출과 경합하는 걸 방지한다.
-         * ShutDownTestScheduler는 ThreadPoolTaskScheduler 상속이라 실제로 태스크를 실행하므로
-         * Mockito mock을 사용해 진짜 no-op으로 만든다.
-         */
-        @Bean(name = "taskScheduler")
-        @Primary
-        public TaskScheduler noOpTaskScheduler() {
-            return Mockito.mock(TaskScheduler.class, Answers.RETURNS_MOCKS);
-        }
-    }
+class OutboxE2ETest extends IntegrationTestSupport {
 
     @Autowired
     private OutboxEventRecorder outboxEventRecorder;
@@ -103,11 +38,6 @@ class OutboxE2ETest extends TestContainerSupport {
 
     @Autowired
     private OutboxEventRepository outboxEventRepository;
-
-    @BeforeEach
-    void setUp() {
-        cleanDatabase();
-    }
 
     @Nested
     class AFTER_COMMIT_즉시_발행_Happy_Path는 {

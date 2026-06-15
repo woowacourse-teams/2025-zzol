@@ -6,8 +6,6 @@ import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +28,7 @@ public class SpeedTouchGame implements Playable {
 
     @Override
     public void setUp(List<Gamer> gamers) {
-        final List<Player> castList = gamers.stream()
-                .map(g -> Player.createGuest(new PlayerName(g.name()), g.userId()))
-                .toList();
-        this.players = new SpeedTouchPlayers(castList);
+        this.players = new SpeedTouchPlayers(gamers);
     }
 
     @Override
@@ -45,7 +40,7 @@ public class SpeedTouchGame implements Playable {
     public Map<Gamer, MiniGameScore> getScores() {
         return players.stream()
                 .collect(Collectors.toMap(
-                        p -> p.getPlayer().toGamer(),
+                        SpeedTouchPlayer::getGamer,
                         this::calculateScore
                 ));
     }
@@ -55,7 +50,7 @@ public class SpeedTouchGame implements Playable {
         return MiniGameType.SPEED_TOUCH;
     }
 
-    public boolean touch(PlayerName playerName, int number, Instant now) {
+    public boolean touch(String playerName, int number, Instant now) {
         validatePlaying();
         final SpeedTouchPlayer player = players.findByName(playerName);
         return player.touch(number, now);
@@ -96,7 +91,7 @@ public class SpeedTouchGame implements Playable {
         }
     }
 
-    public SpeedTouchPlayer findPlayer(PlayerName name) {
+    public SpeedTouchPlayer findPlayer(String name) {
         return players.findByName(name);
     }
 

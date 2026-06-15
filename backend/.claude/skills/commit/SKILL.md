@@ -2,7 +2,7 @@
 name: commit
 description: 변경된 파일을 기능 단위로 그룹화하고, 각 그룹의 관련 테스트를 실행한 후 순서대로 커밋한다.
 argument-hint: "[커밋 메시지 (선택)] [--all: 그룹 분리 없이 전체 커밋]"
-allowed-tools: Bash, Read, Glob, Grep
+allowed-tools: Bash, Read, Glob, Grep, Skill
 ---
 
 # commit
@@ -33,7 +33,7 @@ git status --short
 
 그룹화 결과를 다음 형식으로 사용자에게 제시한다:
 
-```
+```text
 [그룹 1] feat(catalog): WsCatalog 캐싱 개선
   M src/main/java/coffeeshout/websocket/catalog/WsCatalog.java
   M src/main/java/coffeeshout/websocket/catalog/WsCatalogBuilder.java
@@ -47,31 +47,35 @@ git status --short
 
 사용자 확인 후 Step 3으로 넘어간다.
 
-## Step 3: 각 그룹 처리
+## Step 3: 관련 테스트 병렬 실행
 
-그룹 순서대로 반복한다.
+커밋은 그룹 순서대로 하지만, **테스트는 커밋 전에 모든 그룹을 한 번에 병렬로 돌린다.** 그룹마다 하나씩 순차로 기다리지 않는다.
 
 ### 3-1. 관련 테스트 식별
 
 그룹에 **프로덕션 파일**이 포함된 경우에만 테스트를 실행한다.
+
 - 파일 경로에서 공통 패키지를 추출한다
   - `src/main/java/coffeeshout/websocket/catalog/WsCatalog.java` → `coffeeshout.websocket.catalog`
 - 같은 패키지 하위를 모두 테스트한다: `coffeeshout.websocket.catalog.*`
+- 한 그룹이 여러 패키지/모듈에 걸치면 해당 테스트 클래스를 모두 대상에 포함한다
 
-테스트 파일만 변경된 그룹은 테스트 실행을 건너뛴다.
+테스트 파일만 변경된 그룹은 테스트 실행 대상에서 제외한다.
 
-### 3-2. 테스트 실행
+### 3-2. 병렬 실행
 
-```bash
-./gradlew test --tests "coffeeshout.해당패키지.*" 2>&1 | tail -10
-```
+프로덕션 파일이 포함된 모든 그룹의 테스트를 **한 메시지에서 동시에** 띄운다. `/run-tests ... --sync`는 내부적으로 Agent 1회 호출이므로, 그룹 수만큼의 Agent를 같은 응답에서 병렬로 발행해 한꺼번에 결과를 받는다. 그룹 하나씩 순차로 기다리지 않는다.
 
-**실패 시:**
-1. `build/test-results/**/*.xml` 에서 `<failure>` 또는 `<error>` 태그를 포함한 파일만 찾는다
-2. 실패 원인을 사용자에게 보고한다
-3. 커밋을 중단하고 다음 처리 방법(수정 후 재시도 / 이 그룹 건너뜀 / 전체 중단)을 사용자에게 선택하게 한다
+결과 처리:
 
-### 3-3. 스테이징 & 커밋
+- **전부 통과** → Step 4(순차 커밋)로 넘어간다
+- **일부 실패** → 실패한 그룹과 실패 원인을 사용자에게 보고하고 처리 방법(수정 후 재시도 / 이 그룹 건너뜀 / 전체 중단)을 선택하게 한다
+  - **수정 후 재시도**: 수정한 코드는 뒤 순서 그룹에도 영향을 줄 수 있으므로, **수정한 그룹과 그 이후 순서의 모든 그룹 테스트를 다시 병렬로 실행**한다. 이미 통과했고 수정에 영향받지 않는 앞 순서 그룹은 재실행하지 않는다
+  - **건너뜀**: 해당 그룹을 커밋 대상에서 제외하고 나머지 통과 그룹만 진행한다
+
+## Step 4: 순차 커밋
+
+모든 관련 테스트가 통과한 뒤, 그룹 순서대로 스테이징·커밋한다.
 
 ```bash
 git add <그룹 내 파일 목록>
@@ -89,14 +93,14 @@ git add <그룹 내 파일 목록>
 git commit -m "$(cat <<'EOF'
 <커밋 메시지>
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+<하네스가 지정한 Co-Authored-By 트레일러를 그대로 붙인다 — 모델명 하드코딩 금지>
 EOF
 )"
 ```
 
 커밋 후 다음 그룹으로 넘어간다.
 
-## Step 4: 완료 보고
+## Step 5: 완료 보고
 
 모든 그룹 커밋 후 생성된 커밋을 보여준다:
 

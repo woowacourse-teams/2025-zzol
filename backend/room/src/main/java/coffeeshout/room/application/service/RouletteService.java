@@ -1,17 +1,16 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.domain.RoomState;
-import coffeeshout.room.domain.player.Winner;
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
 import coffeeshout.room.application.port.RouletteResultEntityRepository;
-import coffeeshout.room.application.service.RoomQueryService;
+import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.RoomState;
+import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RouletteResultEntity;
-import coffeeshout.room.infra.event.PlayerNameAuditRequestedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -63,7 +62,7 @@ public class RouletteService {
                 winner.probability()
         );
         rouletteResultEntityRepository.save(rouletteResult);
-        eventPublisher.publishEvent(new PlayerNameAuditRequestedEvent(winner.name().value()));
+        eventPublisher.publishEvent(new NicknameSubmittedEvent(winner.name().value()));
 
         log.info("RouletteResultEntity 저장 완료: joinCode={}, winner={}, probability={}",
                 joinCode, winner.name().value(), winner.probability());

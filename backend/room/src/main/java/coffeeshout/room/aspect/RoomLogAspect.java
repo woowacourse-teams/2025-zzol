@@ -1,7 +1,7 @@
 package coffeeshout.room.aspect;
 
+import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.log.NotificationMarker;
-import coffeeshout.room.domain.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Winner;
 import java.time.Clock;

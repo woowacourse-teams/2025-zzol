@@ -6,8 +6,6 @@ import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -38,10 +36,7 @@ public class RacingGame implements Playable {
 
     @Override
     public void setUp(List<Gamer> gamers) {
-        final List<Player> playerList = gamers.stream()
-                .map(g -> Player.createGuest(new PlayerName(g.name()), g.userId()))
-                .toList();
-        this.runners = new Runners(playerList);
+        this.runners = new Runners(gamers);
         this.state = RacingGameState.DESCRIPTION;
     }
 
@@ -65,9 +60,9 @@ public class RacingGame implements Playable {
         }
     }
 
-    public void updateSpeed(Player player, int tapCount, SpeedCalculator speedCalculator, Instant now) {
+    public void updateSpeed(String playerName, int tapCount, SpeedCalculator speedCalculator, Instant now) {
         validatePlaying();
-        runners.updateSpeed(player, tapCount, speedCalculator, now);
+        runners.updateSpeed(playerName, tapCount, speedCalculator, now);
     }
 
     private void validatePlaying() {
@@ -86,7 +81,7 @@ public class RacingGame implements Playable {
 
     @Override
     public Map<Gamer, MiniGameScore> getScores() {
-        return runners.stream().collect(Collectors.toMap(r -> r.getPlayer().toGamer(), this::convertScore));
+        return runners.stream().collect(Collectors.toMap(Runner::getGamer, this::convertScore));
     }
 
     @Override

@@ -68,10 +68,9 @@ public class OutboxRelayWorker {
         for (final OutboxEvent event : events) {
             try {
                 // 2단계: 트랜잭션 밖에서 Redis I/O
-                final BaseEvent baseEvent = objectMapper.readValue(
-                        event.getPayload(), BaseEvent.class
-                );
-                streamPublisher.publish(event.getStreamKey(), baseEvent);
+                // 페이로드 무결성 검증 — 파싱 불가 페이로드는 발행하지 않고 실패 처리한다
+                objectMapper.readValue(event.getPayload(), BaseEvent.class);
+                streamPublisher.publish(event.getStreamKey(), event.getPayload(), event.getTraceparent());
 
                 // 3단계: 단건 DB 트랜잭션 — PUBLISHED 전환
                 eventProcessor.markPublished(event.getId());

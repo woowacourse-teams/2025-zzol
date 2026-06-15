@@ -23,6 +23,9 @@ concurrency:
   group: backend-deploy-${{ github.ref_name }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # 1. 공통 빌드/테스트 워크플로우 호출 (backend-ci.yml 재사용)
   ci-and-build:
@@ -31,9 +34,12 @@ jobs:
       environment: ${{ inputs.environment }}
 
   # 2. Deploy Job
+  # ARM 네이티브 러너 사용: linux/arm64 이미지 빌드 시 QEMU 에뮬레이션 제거
+  # (Dockerfile의 RUN java -Djarmode=tools ... 가 네이티브로 실행됨)
   deploy:
     needs: ci-and-build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
     # 빌드 단계에서 결정된 환경 사용
     environment: ${{ needs.ci-and-build.outputs.environment }}
     permissions:
@@ -49,25 +55,25 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: backend/app/build/libs
           file: backend/docker/app/Dockerfile
@@ -77,6 +83,17 @@ jobs:
             ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:${{ env.IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        env:
+          TRIVY_PLATFORM: linux/arm64
+        with:
+          image-ref: ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:${{ env.IMAGE_TAG }}
+          format: table
+          severity: CRITICAL
+          exit-code: '0'
+          ignore-unfixed: true
 
       - name: Cleanup old GHCR images (keep 5)
         uses: actions/delete-package-versions@v5
@@ -90,7 +107,7 @@ jobs:
 
       - name: Create GitHub Deployment
         id: create_deployment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const deployment = await github.rest.repos.createDeployment({
@@ -151,7 +168,7 @@ jobs:
           target: /tmp/deploy-${{ env.ENVIRONMENT }}/
 
       - name: Deploy with Docker Compose
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         env:
           ENV: ${{ env.ENVIRONMENT }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
@@ -209,7 +226,7 @@ jobs:
 
       - name: Create Issue on Failure
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const label = 'deployment-failure';

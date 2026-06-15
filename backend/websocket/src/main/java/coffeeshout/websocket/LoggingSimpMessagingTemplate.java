@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class LoggingSimpMessagingTemplate {
 
     private final SimpMessagingTemplate messagingTemplate;
-    private final GameRecoveryService gameRecoveryService;
+    private final WsRecoveryService wsRecoveryService;
 
     // destination 패턴: /topic/room/{joinCode} 또는 /topic/room/{joinCode}/...
     private static final Pattern ROOM_DESTINATION_PATTERN = Pattern.compile("/topic/room/([^/]+)(?:/.*)?");
@@ -27,7 +27,7 @@ public class LoggingSimpMessagingTemplate {
             String joinCode = extractJoinCode(destination);
 
             if (joinCode != null) {
-                final String streamId = gameRecoveryService.save(joinCode, destination, response);
+                final String streamId = wsRecoveryService.save(joinCode, destination, response);
                 if (streamId == null) {
                     log.warn("복구 메시지 저장 실패: joinCode={}, destination={}", joinCode, destination);
                     messagingTemplate.convertAndSend(destination, response);

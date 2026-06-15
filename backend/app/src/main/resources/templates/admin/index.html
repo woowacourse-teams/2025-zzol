@@ -95,10 +95,10 @@
 </header>
 <main>
     <div class="cards">
-        <a th:href="@{/admin/playername-audit}" class="card">
-            <div class="card-icon">🔍</div>
-            <div class="card-title">닉네임 검열</div>
-            <div class="card-desc">AI 검열 결과 확인 및 운영자 판단 처리</div>
+        <a th:href="@{/admin/profanity}" class="card">
+            <div class="card-icon">🛡️</div>
+            <div class="card-title">비속어 관리</div>
+            <div class="card-desc">AI 검열 케이스 처리 · 비속어 단어 사전 편집</div>
         </a>
         <a th:href="@{/admin/reports}" class="card">
             <div class="card-icon">📋</div>
@@ -114,6 +114,11 @@
             <div class="card-icon">🤖</div>
             <div class="card-title">ZzolBot</div>
             <div class="card-desc">joinCode 기반 방 상태 진단 · 운영 어시스턴트</div>
+        </a>
+        <a th:href="@{/admin/ip-blocks}" class="card">
+            <div class="card-icon">🚫</div>
+            <div class="card-title">IP 차단 관리</div>
+            <div class="card-desc">차단된 IP 목록 조회 · 수동 차단 해제</div>
         </a>
     </div>
 </main>

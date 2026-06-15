@@ -28,7 +28,8 @@
       │
       ▼
 [StreamPublisher.publish(StreamKey, BaseEvent)]
-  JSON 직렬화 후 Redis Stream에 XADD
+  JSON 직렬화 + 현재 트레이스 컨텍스트를 traceparent 필드로 주입 후 XADD
+  레코드 구조: MapRecord {payload: <이벤트 JSON>, traceparent: <W3C 헤더>}
       │
       ▼
 [Redis Stream (Valkey)]
@@ -37,12 +38,12 @@
       ▼
 [RedisStreamListenerStarter]
   StreamKey별 StreamMessageListenerContainer + 전용 ThreadPool로 폴링
+  traceparent 필드에서 컨텍스트 복원 → consumer span 스코프 안에서 디스패치
       │
       ▼
 [EventDispatcher.handle(BaseEvent)]
   1. JSON 역직렬화 → @JsonTypeInfo로 구체 타입 복원
-  2. ResolvableType으로 Consumer<이벤트타입> 빈 동적 조회
-  3. Traceable이면 트레이스 컨텍스트 주입 후 실행
+  2. ResolvableType으로 Consumer<이벤트타입> 빈 동적 조회 후 실행
       │
       ▼
 [Consumer<T> 구현체 (infra/messaging/consumer/)]

@@ -1,42 +1,39 @@
 package coffeeshout.cardgame.domain;
 
-import coffeeshout.room.domain.Room;
-
 public enum CardGameStep {
 
     START_ROUND {
         @Override
-        public void execute(CardGame cardGame, Room room) {
+        public void execute(CardGame cardGame) {
             cardGame.startRound();
         }
     },
     PREPARE {
         @Override
-        public void execute(CardGame cardGame, Room room) {
+        public void execute(CardGame cardGame) {
             cardGame.updateDescription();
         }
     },
     START_PLAY {
         @Override
-        public void execute(CardGame cardGame, Room room) {
+        public void execute(CardGame cardGame) {
             cardGame.startPlay();
         }
     },
     FINISH_ROUND {
         @Override
-        public void execute(CardGame cardGame, Room room) {
+        public void execute(CardGame cardGame) {
             cardGame.assignRandomCardsToUnselectedPlayers();
             cardGame.changeScoreBoardState();
         }
     },
     FINISH_GAME {
         @Override
-        public void execute(CardGame cardGame, Room room) {
+        public void execute(CardGame cardGame) {
             cardGame.changeDoneState();
-            room.applyMiniGameResult(cardGame.getResult());
         }
     },
     ;
 
-    public abstract void execute(CardGame cardGame, Room room);
+    public abstract void execute(CardGame cardGame);
 }

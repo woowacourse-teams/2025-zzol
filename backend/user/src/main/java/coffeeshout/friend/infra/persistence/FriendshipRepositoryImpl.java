@@ -1,9 +1,9 @@
 package coffeeshout.friend.infra.persistence;
 
+import coffeeshout.friend.domain.FriendErrorCode;
 import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.FriendshipStatus;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
-import coffeeshout.friend.domain.FriendErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import java.util.List;
 import java.util.Optional;

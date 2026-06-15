@@ -1,10 +1,12 @@
 package coffeeshout.user.application.service;
 
-import static coffeeshout.fixture.ExceptionAssertions.assertCoffeeShoutException;
+// TODO(phase2): UserWithdrawalService가 :admin 모듈에, Report/Reporter가 :app에 존재하여
+//  :user 단독 모듈로 이동 불가. :admin 모듈 테스트로 이동 예정.
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.global.ServiceTest;
+import coffeeshout.support.app.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.infra.persistence.ReportRepository;

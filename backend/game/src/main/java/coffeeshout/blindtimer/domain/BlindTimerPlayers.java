@@ -1,7 +1,6 @@
 package coffeeshout.blindtimer.domain;
 
-import coffeeshout.room.domain.player.Player;
-import coffeeshout.room.domain.player.PlayerName;
+import coffeeshout.gamecommon.Gamer;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -9,19 +8,19 @@ public class BlindTimerPlayers {
 
     private final List<BlindTimerPlayer> players;
 
-    public BlindTimerPlayers(List<Player> roomPlayers) {
+    public BlindTimerPlayers(List<Gamer> gamers) {
         this.players = List.copyOf(
-                roomPlayers.stream()
+                gamers.stream()
                         .map(BlindTimerPlayer::new)
                         .toList()
         );
     }
 
-    public BlindTimerPlayer findByName(PlayerName name) {
+    public BlindTimerPlayer findByName(String name) {
         return players.stream()
-                .filter(p -> p.getPlayer().sameName(name))
+                .filter(p -> p.getGamer().getName().equals(name))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("해당 플레이어를 찾을 수 없습니다: " + name.value()));
+                .orElseThrow(() -> new IllegalArgumentException("해당 플레이어를 찾을 수 없습니다: " + name));
     }
 
     public synchronized boolean isAllStopped() {

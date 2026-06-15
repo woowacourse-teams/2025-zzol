@@ -1,19 +1,16 @@
 package coffeeshout.room.domain.player;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.roulette.ProbabilityCalculator;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 import lombok.Getter;
 
 @Getter
 public class Players {
-
-    private static final Random RANDOM = new Random();
 
     private final List<Player> players;
     private final ColorUsage colorUsage;
@@ -31,13 +28,19 @@ public class Players {
         return getPlayer(player.getName());
     }
 
-    public void adjustProbabilities(MiniGameResult miniGameResult, ProbabilityCalculator probabilityCalculator) {
+    /**
+     * 순위 맵(이름 기준)으로 확률을 조정한다. 게임 결과가 {@code MiniGameFinishedEvent}로 전달되는
+     * 경로(ADR-0025 결정 5)에서 사용한다. 동점 수는 {@code MiniGameResult.getTieCountByRank}와 동일하게
+     * "같은 순위를 가진 플레이어 수"로 계산한다.
+     */
+    public void adjustProbabilities(Map<PlayerName, Integer> rankByPlayer,
+                                    ProbabilityCalculator probabilityCalculator) {
         for (Player player : players) {
-            final int rank = miniGameResult.getPlayerRank(player.toGamer());
-            final int probabilityChange = probabilityCalculator.calculateProbabilityChange(
-                    rank,
-                    miniGameResult.getTieCountByRank(rank)
-            );
+            final int rank = rankByPlayer.get(player.getName());
+            final int tieCount = (int) rankByPlayer.values().stream()
+                    .filter(value -> value == rank)
+                    .count();
+            final int probabilityChange = probabilityCalculator.calculateProbabilityChange(rank, tieCount);
             final Probability adjustedProbability = player.getProbability().plus(probabilityChange);
             player.updateProbability(adjustedProbability);
         }

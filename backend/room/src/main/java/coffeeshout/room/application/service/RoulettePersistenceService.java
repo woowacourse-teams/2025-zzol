@@ -1,7 +1,6 @@
 package coffeeshout.room.application.service;
 
 import coffeeshout.global.lock.RedisLock;
-import coffeeshout.room.application.service.RouletteService;
 import coffeeshout.room.domain.event.RouletteShowEvent;
 import coffeeshout.room.domain.event.RouletteSpinEvent;
 import lombok.RequiredArgsConstructor;

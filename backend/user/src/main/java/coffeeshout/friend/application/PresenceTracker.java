@@ -4,14 +4,14 @@ import coffeeshout.friend.config.FriendPresenceProperties;
 import coffeeshout.friend.domain.event.PresenceChangedEvent;
 import coffeeshout.websocket.event.user.UserSessionConnectedEvent;
 import coffeeshout.websocket.event.user.UserSessionDisconnectedEvent;
-import jakarta.annotation.PreDestroy;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -22,20 +22,18 @@ public class PresenceTracker {
 
     private final Map<Long, AtomicInteger> sessionCounts = new ConcurrentHashMap<>();
     private final Map<Long, ScheduledFuture<?>> pendingOffline = new ConcurrentHashMap<>();
-    private final ScheduledThreadPoolExecutor scheduler;
+    private final ScheduledExecutorService scheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final long gracePeriodSeconds;
 
-    public PresenceTracker(ApplicationEventPublisher eventPublisher, FriendPresenceProperties properties) {
+    public PresenceTracker(
+            @Qualifier("presenceScheduler") ScheduledExecutorService scheduler,
+            ApplicationEventPublisher eventPublisher,
+            FriendPresenceProperties properties
+    ) {
+        this.scheduler = scheduler;
         this.eventPublisher = eventPublisher;
         this.gracePeriodSeconds = properties.gracePeriodSeconds();
-        this.scheduler = new ScheduledThreadPoolExecutor(1);
-        this.scheduler.setRemoveOnCancelPolicy(true);
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        scheduler.shutdown();
     }
 
     @EventListener

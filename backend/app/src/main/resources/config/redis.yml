@@ -6,6 +6,8 @@ spring:
       ssl:
         enabled: false
       host: localhost
+      lettuce:
+        shutdown-timeout: 300ms
 
 redis:
   stream:
@@ -14,6 +16,8 @@ redis:
       max-length: 100
       batch-size: 10
       poll-timeout: 2s
+      # 기동 시 구독(폴링 태스크) 시작 대기 한도 — 초과 시 기동 실패 (ADR-0022)
+      subscription-start-timeout: 5s
     # 공유 스레드풀
     thread-pools:
       concurrent:

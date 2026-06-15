@@ -60,7 +60,7 @@ public class Player {
     }
 
     public Gamer toGamer() {
-        return Gamer.of(name.value(), userId);
+        return Gamer.of(name.value(), userId, colorIndex);
     }
 
     @Override

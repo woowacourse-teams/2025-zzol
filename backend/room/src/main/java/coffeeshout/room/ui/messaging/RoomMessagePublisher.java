@@ -1,19 +1,20 @@
 package coffeeshout.room.ui.messaging;
 
-import coffeeshout.websocket.LoggingSimpMessagingTemplate;
-import coffeeshout.websocket.docs.WsTopic;
-import coffeeshout.websocket.ui.WebSocketResponse;
-import coffeeshout.room.domain.JoinCode;
-import coffeeshout.room.domain.event.MiniGameSelectEvent;
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.room.application.service.RoomQueryService;
+import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
+import coffeeshout.minigame.event.dto.MiniGameSelectFailedEvent;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.event.RouletteShownEvent;
 import coffeeshout.room.domain.event.RouletteWinnerEvent;
-import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.ui.response.PlayerResponse;
 import coffeeshout.room.ui.response.QrCodeStatusResponse;
 import coffeeshout.room.ui.response.RoomStatusResponse;
 import coffeeshout.room.ui.response.WinnerResponse;
+import coffeeshout.websocket.LoggingSimpMessagingTemplate;
+import coffeeshout.websocket.docs.WsTopic;
+import coffeeshout.websocket.ui.WebSocketResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +72,17 @@ public class RoomMessagePublisher {
         messagingTemplate.convertAndSend(destination, WebSocketResponse.success(event.miniGameTypes()));
 
         log.debug("미니게임 목록 브로드캐스트 완료: joinCode={}", event.joinCode());
+    }
+
+    @EventListener
+    public void onMiniGameSelectFailed(MiniGameSelectFailedEvent event) {
+        if (event.principalName() == null) {
+            log.warn("미니게임 선택 실패 알림 대상 미상(principal=null): joinCode={}", event.joinCode());
+            return;
+        }
+
+        log.debug("미니게임 선택 실패 알림: joinCode={}, principal={}", event.joinCode(), event.principalName());
+        messagingTemplate.convertAndSendError(event.principalName(), event.errorMessage());
     }
 
     @EventListener

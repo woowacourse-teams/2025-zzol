@@ -1,7 +1,7 @@
 package coffeeshout.user.application.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.global.event.ProfanityWordBlockedEvent;
+import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;

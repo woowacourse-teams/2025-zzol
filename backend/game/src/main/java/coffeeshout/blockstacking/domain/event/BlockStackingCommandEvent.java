@@ -2,9 +2,6 @@ package coffeeshout.blockstacking.domain.event;
 
 import coffeeshout.blockstacking.ui.request.BlockStackingProgressRequest;
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.global.trace.TraceInfo;
-import coffeeshout.global.trace.TraceInfoExtractor;
-import coffeeshout.global.trace.Traceable;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -16,9 +13,8 @@ public record BlockStackingCommandEvent(
         double movingBlockX,
         double stackTopX,
         double stackTopWidth,
-        Instant timestamp,
-        TraceInfo traceInfo
-) implements BaseEvent, Traceable {
+        Instant timestamp
+) implements BaseEvent {
 
     public static BlockStackingCommandEvent of(
             String joinCode, String authenticatedPlayerName, BlockStackingProgressRequest request
@@ -31,8 +27,7 @@ public record BlockStackingCommandEvent(
                 request.movingBlockX(),
                 request.stackTopX(),
                 request.stackTopWidth(),
-                Instant.now(),
-                TraceInfoExtractor.extract()
+                Instant.now()
         );
     }
 }

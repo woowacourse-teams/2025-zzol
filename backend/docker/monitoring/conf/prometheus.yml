@@ -75,10 +75,11 @@ scrape_configs:
     scrape_interval: 30s
     scrape_timeout: 10s
     static_configs:
-      # prod 엣지. Host: api.zzol.site는 모듈(conf/blackbox.yml)에서 지정한다.
-      # dev 엣지 추가 시: Host=dev.api.zzol.site 모듈을 분리하고 여기 별도 job으로 둔다.
+      # prod 엣지. tcp prober라 타깃은 host:port. 경로(/ws/websocket)·Host 헤더는 모듈
+      # (conf/blackbox.yml)의 send 문자열에 있다. dev 엣지 추가 시 Host=dev.api.zzol.site
+      # send를 가진 모듈을 분리하고 여기 별도 job으로 둔다.
       - targets:
-          - https://nginx/ws/websocket
+          - nginx:443
         labels:
           edge: prod
     relabel_configs:

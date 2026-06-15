@@ -185,9 +185,9 @@ Phase C(이슈 #1440)는 `blackbox-exporter` 합성 WS 핸드셰이크 프로브
 - `backend/docker/monitoring/**` 변경이 `be/dev`에 머지되면 edge-cd가 `~/monitor/`로 동기화 → `docker compose up -d`(blackbox-exporter 신규 기동) → `docker kill -s HUP prometheus`(룰·job 리로드). `alertmanager.yml` 변경 없음 → 시크릿 작업 불필요.
 - blackbox-exporter는 `monitoring-network`(prometheus 스크랩) + `zzol-network`(nginx 도달) 양쪽에 조인해야 한다. monitoring은 edge-cd best-effort라 실패해도 워크플로우는 성공으로 뜨므로 아래 검증을 직접 한다.
 
-### 2. 배포 후 — 검증 (성공 기준, 추측 금지·서버 실측 필수)
+### 2. 배포 후 — 검증 (성공 기준)
 
-로컬에서 `promtool check`(룰·config)와 `blackbox --config.check`(모듈)는 통과했으나, **"프로브가 실제 101을 성공으로 집계하는가"는 서버에서만 확인된다.**
+> **머지 전 라이브 검증 완료(2026-06-15).** prod 엣지(`api.zzol.site:443`)에 모듈을 직접 실행해 `probe_success=1`·`probe_failed_due_to_regex=0`·`probe_duration_seconds≈0.12s`를 확인했다. 즉 101 도달성·헤더·TLS·정규식 매칭은 검증됐다. 배포 후 남는 확인은 **(a) 모니터링 스택→nginx 컨테이너명 도달**과 **(b) 알림 발화**뿐이다.
 
 - **프로브 성공 확인** — 정상 상태에서 1이어야 한다:
 
@@ -195,15 +195,15 @@ Phase C(이슈 #1440)는 `blackbox-exporter` 합성 WS 핸드셰이크 프로브
 docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=probe_success{job="blackbox-ws"}'
 ```
 
-- **0이면 원인 분류** — `probe_http_status_code`를 본다. **200이면** nginx가 Upgrade 헤더를 떨궈 일반 GET으로 처리(=잡으려던 사고, 또는 라우팅 오류), **4xx/5xx면** 핸드셰이크 거부:
+- **0이면 원인 분류** — `probe_failed_due_to_regex`를 본다. **1이면** TCP/TLS는 성공했으나 `^HTTP/1.1 101` 미매칭(=nginx가 Upgrade 헤더를 떨궈 200 등 반환 = 잡으려던 사고). **0이면** TCP/TLS 단계 실패(nginx 다운·컨테이너명 미도달·인증서):
 
 ```bash
-docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=probe_http_status_code{job="blackbox-ws"}'
+docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=probe_failed_due_to_regex{job="blackbox-ws"}'
 ```
 
-> **⚠️ 1순위 함정 — h2 협상.** nginx는 `http2 on`이라 ALPN에서 h2를 제시한다. h2로 협상되면 `Connection`/`Upgrade`(연결 헤더)가 금지되어 떨궈지고 101이 안 난다 → 프로브 상시 실패. `conf/blackbox.yml`에서 `enable_http2: false`로 막았으나, 배포 후 `probe_success`가 0이고 `probe_http_status_code`가 200/426이면 이 경로를 먼저 의심한다.
+> **모듈 타입 주의 — 왜 `tcp` prober인가(`http` 아님).** 머지 전 `http` prober로 검증하니 101은 정상 수신하나 **직후 업그레이드된 연결을 본문으로 읽으려 ~900s 행에 걸렸다**(서버 heartbeat로 EOF 없음, timeout 무력). 30s 스크랩에선 매번 scrape_timeout + 연결 누수로 운영 불가였다. `tcp` prober는 raw 바이트로 핸드셰이크를 보내고 `101`만 정규식 매칭 후 즉시 닫아 행이 없고(0.12s), tcp+tls는 ALPN h2를 협상하지 않아 nginx `http2 on`발 h2 함정(Upgrade 헤더 금지)도 원천 회피한다.
 
-- **Host 라우팅 확인**: 컨테이너명 `nginx`로 접속하되 모듈의 `Host: api.zzol.site`로 prod 블록에 라우팅된다. 실패 시 `docker exec blackbox-exporter wget -qO- 'http://localhost:9115/probe?module=ws_handshake&target=https://nginx/ws/websocket&debug=true'`의 debug 출력으로 핸드셰이크 단계를 추적한다.
+- **Host 라우팅 확인**: tcp 타깃은 `nginx:443`, 경로·`Host: api.zzol.site`는 모듈 send에 있어 prod 블록으로 라우팅된다. 실패 시 모듈 컨테이너에서 직접: `docker exec blackbox-exporter wget -qO- 'http://localhost:9115/probe?module=ws_handshake&target=nginx:443'`로 `probe_success`를 확인한다.
 - **알림 동작**: nginx의 `proxy-ws.inc`에서 `Upgrade` 헤더를 임시로 주석 처리하고 reload → `WsHandshakeProbeFailed`가 2분 내 발화 → `#problem` 도착 → 원복 시 해제까지 확인(스테이징/저트래픽 시간대 권장).
 
 ### 3. 롤백

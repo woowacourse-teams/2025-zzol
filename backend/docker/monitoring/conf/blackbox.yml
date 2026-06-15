@@ -1,0 +1,44 @@
+# blackbox_exporter 프로브 모듈 — ADR-0026 Phase C (합성 WebSocket 핸드셰이크 프로브)
+#
+# 목적: 엣지(nginx)를 통과하는 실제 WebSocket 업그레이드를 검증해 Upgrade/Connection 헤더
+#       소실류 회귀를 배포 후 결정론적으로 감지한다. 앱 발행 메트릭(http_server_requests,
+#       websocket_*)은 모두 nginx '뒤'에서 집계되어 엣지 silent failure에 구조적으로 무력하다
+#       (요청이 백엔드에 도달조차 안 함). 이 프로브가 비어 있던 "동작 검증" 계층을 채운다.
+#
+# 검증 깊이 = WS 101 핸드셰이크만(전체 STOMP CONNECT 아님). 헤더 없는 STOMP CONNECT는
+#   StompPrincipalInterceptor가 매번 WARN 로그(Loki 폭주) + 활성세션 게이지·churn을 오염시키므로
+#   보류한다. 101만으로 이번 사고 클래스(Upgrade strip → 101 미발생)를 완전히 커버하면서 부작용 0.
+#
+# ⚠️ /ws/info(SockJS info)는 업그레이드 실패와 무관하게 200을 반환하므로 프로브 대상이 아니다
+#    (ADR-0026 §트레이드오프의 /ws/info 스케치를 이 점 때문에 개선). 네이티브 WS 전송
+#    엔드포인트 /ws/websocket에 실제 업그레이드 헤더를 보내 101 Switching Protocols를 확인한다.
+modules:
+  ws_handshake:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      # 101 Switching Protocols = 업그레이드 성공. 200(헤더 소실로 일반 GET 처리)·4xx·5xx = 실패.
+      valid_status_codes: [101]
+      valid_http_versions: ["HTTP/1.1"]
+      fail_if_not_ssl: true
+      follow_redirects: false
+      # WS 업그레이드는 HTTP/1.1 전용이다. nginx는 http2 on이라 ALPN에서 h2를 제시하는데,
+      # h2로 협상되면 Connection/Upgrade 헤더가 금지(연결 헤더)되어 떨궈지고 101이 발생하지 않는다.
+      # → HTTP/2를 끄고 HTTP/1.1로 고정한다(이게 없으면 프로브가 상시 실패한다).
+      enable_http2: false
+      headers:
+        # 컨테이너명 nginx로 접속하되 Host 헤더로 vhost를 지정한다(blackbox는 http 모듈의
+        # Host 헤더를 request.Host로 승격). → server_name api.zzol.site 블록으로 라우팅,
+        # 외부 DNS·hairpin NAT 불필요(nginx·monitoring 모두 zzol-network).
+        Host: api.zzol.site
+        Connection: Upgrade
+        Upgrade: websocket
+        Sec-WebSocket-Version: "13"
+        # RFC 6455 예시 nonce(16바이트 base64). 서버 응답의 Accept 값은 검증하지 않는다(101이면 충분).
+        Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+      tls_config:
+        # 컨테이너명으로 접속하므로 SNI·인증서 검증 호스트를 실제 vhost로 명시한다.
+        # 인증서가 api.zzol.site용이라 이게 없으면 검증 실패한다.
+        server_name: api.zzol.site
+      preferred_ip_protocol: ip4

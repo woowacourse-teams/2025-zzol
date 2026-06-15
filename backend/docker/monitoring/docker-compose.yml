@@ -270,6 +270,43 @@ services:
       timeout: 10s
       retries: 3
 
+  # ============================================
+  # blackbox-exporter - Synthetic Probes (ADR-0026 Phase C)
+  # ============================================
+  # 엣지(nginx)를 통과하는 합성 WS 핸드셰이크 프로브. 앱 메트릭이 구조적으로 못 잡는
+  # nginx Upgrade 헤더 소실류 회귀를 101 검증으로 결정론적으로 감지한다(conf/blackbox.yml).
+  # - monitoring-network: prometheus가 blackbox-exporter:9115를 스크랩
+  # - zzol-network: blackbox가 컨테이너명 nginx로 직접 프로브(hairpin NAT 회피)
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    volumes:
+      - ./conf/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    networks:
+      - monitoring-network
+      - zzol-network
+    expose:
+      - "9115"
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+    environment:
+      - TZ=Asia/Seoul
+    # 자원 제한 (blackbox - 경량)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'        # 최대 0.1 vCPU
+          memory: 96M        # 최대 96MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 32M        # 최소 32MB
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:9115/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 # ============================================
 # Networks
 # ============================================

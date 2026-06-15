@@ -31,6 +31,7 @@
 2. **2단계 롤아웃으로 어느 시점에도 알림 커버리지 공백을 만들지 않는다.**
    - **Phase A (이슈 #1399):** Alertmanager 기동 + Slack 연동 + **두 엔진 어디에도 없던 신규 인시던트 룰·SLO**(대량 IP 차단, WS 핸드셰이크 실패, 에러버짓 burn-rate)를 Prometheus 룰로 작성한다.
    - **Phase B (별도 이슈):** 8룰을 Prometheus 룰로 이관하고, 룰별 발화 동치를 검증한 뒤 Grafana Alerting provisioning을 제거한다. 신중한 검증을 동반한 통합 단계다.
+   - **Phase C (이슈 #1440):** 증상 기반 룰의 사각(엣지 silent failure)을 합성 프로브로 보완한다. `blackbox-exporter`가 엣지(nginx)를 통과하는 실제 WS 업그레이드를 보내 101을 검증(`probe_success`)하고, `absent()` 동반룰로 프로브 자체의 죽음도 잡는다. 앱 발행 메트릭(Phase A/B)은 모두 nginx 뒤에서 집계되어 엣지 헤더 소실에 구조적으로 무력하므로, 이 "동작 검증" 계층이 본 인시던트(Upgrade strip)를 직접 잡는 유일한 신호다.
 
    > **실측에 의한 Phase A 범위 수정(2026-06-11):** 당초 Phase A는 "기존 Grafana Alerting에 Slack contact point를 추가해 8룰을 *즉시* 전달"하려 했고, 이 구간은 엔진이 둘이어도 둘 다 전달되므로 인시던트 루프가 곧 닫힌다고 봤다. 그러나 구현 중 서버를 실측하자 두 가지가 드러났다. ① Grafana provisioning의 `alerting/`이 `alerting_bak`으로 rename돼 **코드 관리가 끊긴 상태**다(8룰은 Grafana DB에 남아 평가·UI 표시는 되나 전달 채널이 비어 아무 데도 안 감). ② 레포의 `provisioning/alerting/`은 컨테이너 마운트 소스(`data/grafana/provisioning`, gitignore)와 edge-cd 동기화(`conf/`만) **어디에도 닿지 않는 orphan**이다. 8룰은 Phase B에서 Prometheus로 이관·삭제될 예정이므로 **곧 지울 Grafana provisioning 배관을 Phase A에서 복구하지 않기로 한다.** Phase A는 Alertmanager 신규 룰만 활성화하고, 8룰 커버리지 복원은 Phase B의 Prometheus 이관으로 일원화한다. (8룰을 당장 전달해야 하면 Grafana UI에서 contact point를 수동 추가하는 운영 조치로 대응하고 코드는 건드리지 않는다.)
 
@@ -59,7 +60,7 @@
 - **이관 검증은 룰별로 비싸다.** "이관이 동작을 보존했는가"는 각 룰을 실제로 발화시켜 확인해야 하고, `noDataState: Alerting` 4개는 `absent()` 동반 룰까지 짜야 한다. Phase B의 수용 기준이 그만큼 높다.
 - **모든 신규 임계값은 추정치다.** 대량 BAN·WS 실패·burn-rate 임계는 베이스라인 미확인 상태의 보수적 추정이다. 배포 전 Prometheus API로 정상 범위를 측정해 조정하고, 초기엔 오탐을 줄이는 방향(임계 높게)으로 잡은 뒤 좁힌다.
 - **`job="prod-app"`는 blue/green 합산 기준이며, 블루-그린은 평소 한 색만 활성이다.** SLO·`AppInstanceDown` 모두 job 합산으로 평가한다. (정정: 초기엔 `AppInstanceDown`을 `by (instance)`로 짜 인스턴스별 이상을 잡으려 했으나, 유휴 색 타깃의 `up=0`이 영구 오탐을 냈다. 활성 색이 1대라 인스턴스 소실 == 서비스 소실이므로 `sum by (job)(up) == 0`으로 변경했고, 합산이 마스킹하는 이상은 없다. → `alerts-infra.yml`)
-- **silent failure는 알림만으로 완전히 막지 못한다.** 본 작업의 룰도 "메트릭에 드러난 증상"을 잡을 뿐이다. 구성과 동작의 검증을 분리하려면 합성 프로브(blackbox-exporter로 `/ws/info` 외부 프로브 → `probe_success == 0`)가 필요하며 별도 exporter 추가라 후순위로 둔다.
+- **silent failure는 알림만으로 완전히 막지 못한다.** 본 작업의 룰도 "메트릭에 드러난 증상"을 잡을 뿐이다. 구성과 동작의 검증을 분리하려면 합성 프로브(blackbox-exporter로 외부 프로브 → `probe_success == 0`)가 필요하며 별도 exporter 추가라 후순위로 둔다. → **Phase C(아래)로 구현.** 단 당초 스케치한 `/ws/info` 프로브는 폐기했다: `/ws/info`(SockJS info)는 업그레이드 실패와 무관하게 200을 반환하므로(앱 HTTP 계층과 같은 한계) 엣지 헤더 소실을 못 잡는다. 대신 네이티브 WS 전송 엔드포인트(`/ws/websocket`)에 실제 업그레이드 헤더를 보내 **101 Switching Protocols**를 검증한다.
 - **prod-promtail이 unhealthy 상태다(발견 당시).** 로그 기반 대응 경로가 불안정하므로 메트릭 알림이 더 중요해지는 동시에 promtail 점검이 별도로 필요하다.
 
 ## 결과
@@ -174,3 +175,37 @@ Phase B(이슈 #1400, PR #1412)는 기존 Grafana Alerting 8룰을 `conf/rules/a
 ### 6. 롤백
 
 `conf/rules/alerts-migrated.yml`만 제거(또는 `prometheus.yml` rule_files에서 제외) 후 `docker kill -s HUP prometheus`로 즉시 원복. 앱·트래픽 영향 없음. orphan provisioning 삭제는 런타임에 닿지 않았으므로 롤백 불필요.
+
+## 배포 시 수동 적용 (Phase C 운영 체크리스트)
+
+Phase C(이슈 #1440)는 `blackbox-exporter` 합성 WS 핸드셰이크 프로브를 추가한다. 변경 정본: `conf/blackbox.yml`(신규), `docker-compose.yml`(blackbox-exporter 서비스), `conf/prometheus.yml`(`blackbox-ws` job), `conf/rules/alerts-synthetic.yml`(신규 2룰). 9090은 호스트 미노출이라 검증은 `docker exec`로 한다.
+
+### 1. 배포 — 적용
+
+- `backend/docker/monitoring/**` 변경이 `be/dev`에 머지되면 edge-cd가 `~/monitor/`로 동기화 → `docker compose up -d`(blackbox-exporter 신규 기동) → `docker kill -s HUP prometheus`(룰·job 리로드). `alertmanager.yml` 변경 없음 → 시크릿 작업 불필요.
+- blackbox-exporter는 `monitoring-network`(prometheus 스크랩) + `zzol-network`(nginx 도달) 양쪽에 조인해야 한다. monitoring은 edge-cd best-effort라 실패해도 워크플로우는 성공으로 뜨므로 아래 검증을 직접 한다.
+
+### 2. 배포 후 — 검증 (성공 기준, 추측 금지·서버 실측 필수)
+
+로컬에서 `promtool check`(룰·config)와 `blackbox --config.check`(모듈)는 통과했으나, **"프로브가 실제 101을 성공으로 집계하는가"는 서버에서만 확인된다.**
+
+- **프로브 성공 확인** — 정상 상태에서 1이어야 한다:
+
+```bash
+docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=probe_success{job="blackbox-ws"}'
+```
+
+- **0이면 원인 분류** — `probe_http_status_code`를 본다. **200이면** nginx가 Upgrade 헤더를 떨궈 일반 GET으로 처리(=잡으려던 사고, 또는 라우팅 오류), **4xx/5xx면** 핸드셰이크 거부:
+
+```bash
+docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=probe_http_status_code{job="blackbox-ws"}'
+```
+
+> **⚠️ 1순위 함정 — h2 협상.** nginx는 `http2 on`이라 ALPN에서 h2를 제시한다. h2로 협상되면 `Connection`/`Upgrade`(연결 헤더)가 금지되어 떨궈지고 101이 안 난다 → 프로브 상시 실패. `conf/blackbox.yml`에서 `enable_http2: false`로 막았으나, 배포 후 `probe_success`가 0이고 `probe_http_status_code`가 200/426이면 이 경로를 먼저 의심한다.
+
+- **Host 라우팅 확인**: 컨테이너명 `nginx`로 접속하되 모듈의 `Host: api.zzol.site`로 prod 블록에 라우팅된다. 실패 시 `docker exec blackbox-exporter wget -qO- 'http://localhost:9115/probe?module=ws_handshake&target=https://nginx/ws/websocket&debug=true'`의 debug 출력으로 핸드셰이크 단계를 추적한다.
+- **알림 동작**: nginx의 `proxy-ws.inc`에서 `Upgrade` 헤더를 임시로 주석 처리하고 reload → `WsHandshakeProbeFailed`가 2분 내 발화 → `#problem` 도착 → 원복 시 해제까지 확인(스테이징/저트래픽 시간대 권장).
+
+### 3. 롤백
+
+`docker compose stop blackbox-exporter` + `prometheus.yml`의 `blackbox-ws` job·`alerts-synthetic.yml`을 제거(rule_files glob에서 빠지게)하고 `docker kill -s HUP prometheus`. 앱·트래픽 영향 없음.

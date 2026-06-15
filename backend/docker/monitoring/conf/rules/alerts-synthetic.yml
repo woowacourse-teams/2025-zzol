@@ -1,0 +1,38 @@
+# Prometheus 알림 룰 — 합성 프로브 (ADR-0026 Phase C)
+#
+# 엣지(nginx)를 통과하는 blackbox 합성 WS 핸드셰이크 프로브 기반. 앱 발행 메트릭이
+# 구조적으로 못 잡는 엣지 silent failure(Upgrade 헤더 소실 → 101 미발생)를 직접 잡는다.
+# "구문(nginx -t) → HTTP(200) → 동작(실제 핸드셰이크)" 3계층 중 '동작 검증' 계층.
+#
+# 사용 메트릭 (blackbox-exporter, job=blackbox-ws):
+#   probe_success            1=성공(101 수신) / 0=실패
+#   probe_http_status_code   실제 응답 코드(실패 원인 분류용: 200=헤더 소실, 4xx/5xx=핸드셰이크 거부)
+#
+# ⚠️ 배포 시 1순위 검증: blackbox가 실제로 101을 성공으로 집계하는지
+#    (docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=probe_success{job="blackbox-ws"}').
+#    h2 협상·Host 라우팅 문제로 상시 실패하면 probe_http_status_code로 원인을 가른다.
+groups:
+  - name: synthetic-probes
+    rules:
+      # WS 핸드셰이크 합성 프로브 실패 — 이번 인시던트(Upgrade strip)를 직접 잡는 룰.
+      # 엣지에서 101이 안 나오면 실유저의 WS가 전부 끊긴 상태. for:2m로 일시적 스크랩 blip은 거른다.
+      - alert: WsHandshakeProbeFailed
+        expr: probe_success{job="blackbox-ws"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "WS 핸드셰이크 합성 프로브 실패 (edge={{ $labels.edge }})"
+          description: "엣지({{ $labels.instance }})에서 WS 업그레이드(101)가 실패. nginx Upgrade/Connection 헤더 소실 의심. 원인 분류: probe_http_status_code 확인(200=헤더 소실로 일반 GET 처리, 4xx/5xx=핸드셰이크 거부)."
+
+      # 프로브 메트릭 소실 — ADR-0026 §3 absent 동반룰. 프로브 자체가 죽으면(blackbox 다운·
+      # 스크랩 실패) probe_success 시계열이 사라져 위 룰이 조용히 평가 불능이 된다(silent).
+      # 이 동반룰이 없으면 "프로브가 죽은 것"과 "정상"을 구분 못 한다 — 본 프로젝트가 싸우는 그 함정.
+      - alert: WsHandshakeProbeAbsent
+        expr: absent(probe_success{job="blackbox-ws"})
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WS 합성 프로브 메트릭 소실 (blackbox-ws)"
+          description: "blackbox-ws 타깃이 스크랩되지 않음 — blackbox-exporter 다운 또는 스크랩 설정 문제. WsHandshakeProbeFailed가 평가 불능 상태."

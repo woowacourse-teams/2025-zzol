@@ -64,3 +64,27 @@ scrape_configs:
   - job_name: 'node'
     static_configs:
       - targets: ['node-exporter:9100']
+
+  # 합성 WS 핸드셰이크 프로브 (ADR-0026 Phase C). blackbox-exporter가 엣지(nginx)로
+  # 실제 WS 업그레이드를 보내 101을 검증한다. probe_success==0 이면 Upgrade 헤더 소실류 회귀.
+  # 타깃 URL은 blackbox로 넘기고 실제 스크랩 주소는 blackbox-exporter로 relabel하는 표준 패턴.
+  - job_name: 'blackbox-ws'
+    metrics_path: /probe
+    params:
+      module: [ws_handshake]
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    static_configs:
+      # prod 엣지. Host: api.zzol.site는 모듈(conf/blackbox.yml)에서 지정한다.
+      # dev 엣지 추가 시: Host=dev.api.zzol.site 모듈을 분리하고 여기 별도 job으로 둔다.
+      - targets:
+          - https://nginx/ws/websocket
+        labels:
+          edge: prod
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

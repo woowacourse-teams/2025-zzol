@@ -9,15 +9,17 @@ allowed-tools: Read, Bash, Glob
 
 ## 사전 작업
 
-1. `.github/pull_request_template.md`는 **모노레포 루트**에 있다. `backend/` 하위가 아니므로 `REPO_ROOT="$(git rev-parse --show-toplevel)"` 로 루트를 구한 뒤 `${REPO_ROOT}/.github/pull_request_template.md` 경로로 Read한다.
-2. `git log be/dev..HEAD --oneline`으로 이번 브랜치의 커밋 목록을 확인한다.
-3. `git diff be/dev...HEAD --stat`으로 변경된 파일 목록을 확인한다.
+1. base 브랜치를 정한다. `$ARGUMENTS`에 `--base=<브랜치>`가 있으면 그 값을, 없으면 `be/dev`를 쓴다. 이후 단계는 이 값(`$BASE`)을 기준으로 한다.
+2. `.github/pull_request_template.md`는 **모노레포 루트**에 있다. `backend/` 하위가 아니므로 `REPO_ROOT="$(git rev-parse --show-toplevel)"` 로 루트를 구한 뒤 `${REPO_ROOT}/.github/pull_request_template.md` 경로로 Read한다.
+3. `git log "$BASE"..HEAD --oneline`으로 이번 브랜치의 커밋 목록을 확인한다.
+4. `git diff "$BASE"...HEAD --stat`으로 변경된 파일 목록을 확인한다.
 
 ## PR 제목 규칙
 
-- 형식: `[type] 한국어 설명`
+- 형식: `[type] 한국어 설명` (예: `[fix] 카드 점수 집계 누락 수정`)
 - type 종류: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 - `$ARGUMENTS`에 제목이 주어지면 그대로 사용, 없으면 커밋 내용을 분석해 자동 생성
+- type별 제목·본문 작성 예시는 [examples.md](examples.md)를 참조한다
 
 ## 라벨 & Assignee
 
@@ -52,18 +54,21 @@ allowed-tools: Read, Bash, Glob
 ## 실행
 
 ```bash
+# base 브랜치 (사전 작업 1에서 정한 값, 기본 be/dev)
+BASE="be/dev"
+
 # assignee 조회
 gh api user --jq '.login'
 
+# 본문은 --body-file - 로 stdin에서 읽는다 (heredoc)
 gh pr create \
-  --title "[type] 제목" \
-  --base be/dev \
-  --label "라벨1,라벨2" \
+  --title "[fix] 카드 점수 집계 누락 수정" \
+  --base "$BASE" \
+  --label "🐞bug,BE" \
   --assignee "$(gh api user --jq '.login')" \
-  --body "$(cat <<'EOF'
+  --body-file - <<'EOF'
 <템플릿 채운 내용>
 EOF
-)"
 ```
 
-완료 후 PR URL을 사용자에게 출력한다.
+완료 후 생성된 PR의 본문이 의도대로 반영됐는지 확인하고, PR URL을 사용자에게 출력한다.

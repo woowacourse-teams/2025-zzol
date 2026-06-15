@@ -21,14 +21,14 @@ updates:
       - "frontend"
 
   - package-ecosystem: "npm"
-    directory: "/tools/ws-mcp"
+    directory: "/tools/api-mcp"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
-      - "ws-mcp"
+      - "api-mcp"
 
   - package-ecosystem: "github-actions"
     directory: "/"

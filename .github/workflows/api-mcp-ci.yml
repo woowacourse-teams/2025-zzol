@@ -1,33 +1,33 @@
-name: ws-mcp CI
+name: api-mcp CI
 
 on:
   pull_request:
     branches: [be/dev, be/prod]
     paths:
-      - 'tools/ws-mcp/**'
-      - 'backend/src/test/resources/__fixtures__/ws-catalog.json'
-      - '.github/workflows/ws-mcp-ci.yml'
+      - 'tools/api-mcp/**'
+      - 'backend/app/src/test/resources/__fixtures__/ws-catalog.json'
+      - '.github/workflows/api-mcp-ci.yml'
   push:
     branches:
       - be/dev
     paths:
-      - 'tools/ws-mcp/**'
-      - 'backend/src/test/resources/__fixtures__/ws-catalog.json'
-      - '.github/workflows/ws-mcp-ci.yml'
+      - 'tools/api-mcp/**'
+      - 'backend/app/src/test/resources/__fixtures__/ws-catalog.json'
+      - '.github/workflows/api-mcp-ci.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  ws-mcp:
+  api-mcp:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
     defaults:
       run:
-        working-directory: tools/ws-mcp
+        working-directory: tools/api-mcp
     steps:
       - uses: actions/checkout@v6
         with:
@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: tools/ws-mcp/package-lock.json
+          cache-dependency-path: tools/api-mcp/package-lock.json
 
       - name: Install
         run: npm ci

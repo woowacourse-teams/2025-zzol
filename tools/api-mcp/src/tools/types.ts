@@ -1,8 +1,11 @@
 import type { CatalogFetcher } from '../catalog/fetch.js';
+import type { OpenApiFetcher } from '../openapi/fetch.js';
 
 export interface ToolContext {
   catalog: CatalogFetcher;
   brokerUrl: string;
+  openapi: OpenApiFetcher;
+  baseUrl: string;
 }
 
 export interface ToolDefinition {

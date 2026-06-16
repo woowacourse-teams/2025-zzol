@@ -75,7 +75,9 @@ run_tests() {
     # 임시 작업공간
     local tmp_dir
     tmp_dir="$(mktemp -d)"
-    trap 'rm -rf "$tmp_dir"' EXIT
+    # 더블쿼트로 등록 시점에 tmp_dir를 확장한다. 단일쿼트면 EXIT 트랩이
+    # run_tests 반환 후(= local tmp_dir 스코프 소멸 후) 실행돼 빈 값으로 평가된다.
+    trap "rm -rf -- '$tmp_dir'" EXIT
 
     # 픽스처 준비
     local file_path="${tmp_dir}/config.alloy.file"

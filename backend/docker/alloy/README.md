@@ -58,10 +58,18 @@ docker compose --env-file .env up -d dev-alloy
 
 ### 로그가 Loki에 안 들어옴 / 모듈 pull 실패
 
-- `docker logs dev-alloy` 에서 `import.git` 오류·github egress 오류 확인.
-- Prometheus `up{job="alloy"}` 가 0이면 `AlloyDown`,
-  컴포넌트 unhealthy면 `AlloyComponentUnhealthy` 알림이 ADR-0026 Alertmanager로 전달된다.
-- 모듈 자체는 GitHub의 해당 브랜치(`be/dev`/`be/prod`)에 존재해야 한다.
+`docker logs dev-alloy` 에서 pull 오류를 찾는다(정확한 문구는 Alloy 버전에 따라 다를 수 있어 키워드로 grep — 아래는 예시):
+
+- `import.git` / `unhealthy` — 모듈 pull·평가 실패
+- `dial tcp github.com:443` / `connection refused` / `i/o timeout` — github egress 차단(방화벽·NAT). 예: `dial tcp github.com:443: connect: connection refused`
+- `404`(경로·브랜치 오타) / `403`(rate limit·접근) — import.git `path`/`revision` 점검
+
+알림(ADR-0026 Alertmanager 전달):
+
+- **`AlloyDown`** — `up{job="alloy"} == 0` 이 **5분** 지속(컨테이너 다운 또는 스크레이프 단절).
+- **`AlloyComponentUnhealthy`** — unhealthy 컴포넌트가 **10분** 지속(깨진 모듈 pull 등). Alloy는 last-good config로 계속 동작 — 다운이 아닌 '정체'다.
+
+모듈 자체는 GitHub의 해당 브랜치(`be/dev`/`be/prod`)에 존재해야 한다.
 
 ## 관련 문서
 

@@ -140,3 +140,37 @@ docker exec alertmanager amtool alert add alertname=test severity=critical \
 ### 5. 롤백
 
 앱·트래픽 영향 없음. `docker compose stop alertmanager` 후 `prometheus.yml`의 `alerting`/`rule_files`를 주석 처리하고 `docker kill -s HUP prometheus`(또는 `/-/reload`)로 즉시 원복한다.
+
+## 배포 시 수동 적용 (Phase B 운영 체크리스트)
+
+Phase B(이슈 #1400, PR #1412)는 기존 Grafana Alerting 8룰을 `conf/rules/alerts-migrated.yml`로 신규 편입하고 orphan `provisioning/alerting/`을 제거한다. 이 8룰은 전달된 적이 없으므로(orphan/비활성) 검증 기준은 발화 "동치"가 아니라 **정의 충실성 + 발화 가능성**이다. 9090/9093은 호스트 미노출이라 아래는 `docker exec`로 서버에서 직접 해야 한다.
+
+### 1. 배포 — 적용
+
+- `backend/docker/monitoring/conf/rules/**` 변경이 `be/dev`에 머지되면 edge-cd가 `~/monitor/`로 동기화 → `docker kill -s HUP prometheus`(룰 리로드). `alertmanager.yml`은 변경 없으므로 시크릿 추가 작업은 불필요(Phase A에서 완료).
+- monitoring은 edge-cd에서 best-effort라 실패해도 워크플로우는 성공으로 뜬다. 아래 검증으로 실제 적용을 직접 확인한다.
+
+### 2. 배포 후 — 룰 로드·발화/해제 검증
+
+- **룰 로드 확인**: `docker exec prometheus wget -qO- http://localhost:9090/api/v1/rules` 로 본 Phase B 12룰(8 + absent 4)이 추가돼 **총 26룰**(Phase A 14 + Phase B 12)이 보이는지 확인.
+- **발화/해제 실측**: dev 환경에서 룰 1건을 의도적으로 발화시켜(예: 앱 컨테이너 중지 → `CircuitBreaker`/`Jvm` 계열 또는 부하로 `WsInboundLatency`) `#problem` 도착 → 해제까지 양쪽 확인.
+
+### 3. 배포 후 — 정의 충실성·발화 가능성 검증 (추측 금지, 서버 실측 필수)
+
+로컬 `promtool check rules`는 문법·PromQL 파싱만 검증한다. "룰이 실제로 발화 가능한가"는 메트릭 실재에 달려 있어 서버에서만 확인된다.
+
+- **P0 — JVM 힙 발화 가능성**: `docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=jvm_memory_max_bytes{area="heap"}'` 로 시리즈별 값 확인. **G1GC는 Eden/Survivor의 max를 `-1`(미정의)로 노출**하는 경우가 흔하다. 이 경우 합산 분모가 오염돼 `JvmHeapUsageHigh`(critical)가 **조용히 안 터지고**(absent 동반룰도 메트릭이 present라 못 잡음) — 이 ADR이 싸우는 바로 그 silent failure다. 룰은 분모에 `> 0` 필터로 정의된 max만 합산하게 방어했으나, **전 풀이 -1이면 분모가 공집합 → 무발화**이므로 정의된 max가 최소 1개(보통 G1 Old Gen) 존재하는지 반드시 확인한다.
+- **redis 메트릭 실재**: `redis_commands_duration_seconds_total`·`redis_commands_processed_total`이 redis_exporter에서 실제 노출되는지, `cmd` 라벨 유무 확인. 없으면 `RedisCommandLatencyHigh`가 발화하지 않는다.
+- **WS 메트릭 idle 거동**: `websocket_message_inbound_time_seconds{quantile}`·`_count`가 저트래픽 dev에서 사라지는지 확인. `WsInboundLatencyMetricAbsent`가 idle에 오탐하면 `and on() up{job=~"dev-app|prod-app"} == 1` 게이팅을 추가한다.
+
+### 4. 배포 후 — 임계값 보정 (모든 임계는 추정치)
+
+8룰의 임계는 원본 부하 테스트 실측값을 보존했으나 베이스라인 재측정 없이 옮겼다. 배포 직후 Prometheus API로 정상 범위를 재고 `alerts-migrated.yml`의 임계(힙 85%·WS p99 0.5s·DB 8·Redis 50ms·디스크 85%·CPU 90%)를 조정한다. 초기엔 오탐을 줄이는 방향(높게)으로 둔다.
+
+### 5. 소음 후속 — absent 동반룰 중첩
+
+`JvmHeapMetricAbsent`·`CircuitBreakerMetricAbsent`는 Phase A `AppInstanceDown`(`up == 0`)과, `NodeCpuMetricAbsent`는 `MonitoringTargetDown{job="node"}`과 조건이 겹친다(메트릭 소스가 죽으면 양쪽 발화). §3이 absent 동반룰을 명시 요구하므로 제거하지 않고, 대신 한 사건이 critical을 증폭하지 않게 **`alertmanager.yml`에 `inhibit_rules`를 함께 추가했다** — `AppInstanceDown`이 같은 `job`의 absent 동반룰 3개를, `MonitoringTargetDown`(node)이 `NodeCpuMetricAbsent`를 억제한다(`equal: ['job']`로 dev↔prod 교차 억제 방지). 배포 후 실제 소음 패턴을 보고 매처를 조정한다.
+
+### 6. 롤백
+
+`conf/rules/alerts-migrated.yml`만 제거(또는 `prometheus.yml` rule_files에서 제외) 후 `docker kill -s HUP prometheus`로 즉시 원복. 앱·트래픽 영향 없음. orphan provisioning 삭제는 런타임에 닿지 않았으므로 롤백 불필요.

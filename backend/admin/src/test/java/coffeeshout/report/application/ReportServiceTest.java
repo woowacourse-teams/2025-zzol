@@ -47,5 +47,25 @@ class ReportServiceTest extends AdminModuleServiceTest {
             assertThat(saved.getGameType()).isNull();
             assertThat(saved.getJoinCode()).isNull();
         }
+
+        @Test
+        void ip를_전달하면_신고에_저장된다() {
+            final long reportId = reportService.submit(
+                    ReportCategory.BUG, MiniGameType.CARD_GAME, "ABC12", "내용", null, "1.2.3.4"
+            );
+
+            final Report saved = reportRepository.findById(reportId).orElseThrow();
+            assertThat(saved.getIp()).isEqualTo("1.2.3.4");
+        }
+
+        @Test
+        void ip_없이_제출하면_null로_저장된다() {
+            final long reportId = reportService.submit(
+                    ReportCategory.SUGGESTION, null, null, "내용"
+            );
+
+            final Report saved = reportRepository.findById(reportId).orElseThrow();
+            assertThat(saved.getIp()).isNull();
+        }
     }
 }

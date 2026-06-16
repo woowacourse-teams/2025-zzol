@@ -213,6 +213,7 @@ services:
       - dev-app-logs:/app/logs:ro
       - ./conf/config.alloy:/etc/alloy/config.alloy:ro
       - /etc/localtime:/etc/localtime:ro
+      - dev-alloy-data:/var/lib/alloy/data   # positions·WAL 영속화 (재생성 시 중복 적재 방지)
     # 기본 CMD(run /etc/alloy/config.alloy --storage.path=...)를 덮어쓰므로
     # --storage.path(WAL/state)를 반드시 유지한다. listen-addr은 네트워크 내
     # /-/ready·메트릭 노출을 위해 0.0.0.0:12345로 연다(기본은 loopback).
@@ -252,6 +253,8 @@ networks:
 # ============================================
 volumes:
   dev-app-logs:
+    driver: local
+  dev-alloy-data:
     driver: local
   dev-mysql-data:
     driver: local

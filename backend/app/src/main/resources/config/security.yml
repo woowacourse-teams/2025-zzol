@@ -38,6 +38,11 @@ security:
     not-found-threshold: 5
     not-found-window: 1h
     block-ttl: 24h
+    exempt-paths:
+      - /admin
+      - /reports
+      - /css
+      - /favicon.ico
 
 admin:
   username: ${ADMIN_USERNAME}

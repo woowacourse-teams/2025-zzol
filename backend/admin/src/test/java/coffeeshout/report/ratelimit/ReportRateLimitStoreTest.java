@@ -36,14 +36,14 @@ class ReportRateLimitStoreTest extends AdminModuleServiceTest {
 
         @Test
         void 임계값_이내_요청은_토큰을_획득한다() {
-            for (int i = 0; i < rateLimitProperties.rate(); i++) {
+            for (long i = 0; i < rateLimitProperties.rate(); i++) {
                 assertThat(rateLimitStore.tryAcquire(TEST_IP)).isTrue();
             }
         }
 
         @Test
         void 임계값_초과_요청은_토큰_획득에_실패한다() {
-            for (int i = 0; i < rateLimitProperties.rate(); i++) {
+            for (long i = 0; i < rateLimitProperties.rate(); i++) {
                 rateLimitStore.tryAcquire(TEST_IP);
             }
 
@@ -52,7 +52,7 @@ class ReportRateLimitStoreTest extends AdminModuleServiceTest {
 
         @Test
         void 다른_IP는_카운트가_별도로_관리된다() {
-            for (int i = 0; i < rateLimitProperties.rate(); i++) {
+            for (long i = 0; i < rateLimitProperties.rate(); i++) {
                 rateLimitStore.tryAcquire(TEST_IP);
             }
 
@@ -67,7 +67,7 @@ class ReportRateLimitStoreTest extends AdminModuleServiceTest {
         @Test
         void Rate_Limit_초과_시_dropped_카운터가_증가한다() {
             String ip = "10.0.0.1";
-            for (int i = 0; i < rateLimitProperties.rate(); i++) {
+            for (long i = 0; i < rateLimitProperties.rate(); i++) {
                 rateLimitStore.tryAcquire(ip);
             }
             double before = meterRegistry.find("report.ratelimit.dropped.total").counter().count();
@@ -106,7 +106,7 @@ class ReportRateLimitStoreTest extends AdminModuleServiceTest {
         @Test
         void TTL_만료_후_Rate_Limit이_초기화된다() {
             String ip = "172.16.0.2";
-            for (int i = 0; i < rateLimitProperties.rate(); i++) {
+            for (long i = 0; i < rateLimitProperties.rate(); i++) {
                 rateLimitStore.tryAcquire(ip);
             }
             assertThat(rateLimitStore.tryAcquire(ip)).isFalse();

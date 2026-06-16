@@ -194,6 +194,28 @@ require_file() {
     return 0
 }
 
+# Alloy bootstrap(config.alloy) 상태를 판정한다 (docker 호출 없음 → 단위 테스트 가능).
+# ADR-0028: bootstrap은 호스트에 1회 수동 배치되고 bind-mount된다.
+# 디렉터리 검사를 파일 검사보다 먼저 한다 — Docker는 마운트 소스가 없으면
+# 그 경로를 빈 디렉터리로 자동 생성하는데, 그 경우 `! -f`도 참이라
+# 순서가 바뀌면 "누락"으로 오판해 잘못된 복구 안내를 내보낸다.
+#
+# 반환 코드:
+#   0 - 정상(일반 파일 존재) → alloy 기동 가능
+#   2 - 디렉터리(오염: Docker auto-create 추정) → 정리 후 배치 필요
+#   3 - 누락 → 최초 1회 배치 필요
+classify_alloy_bootstrap() {
+    local path="$1"
+
+    if [[ -d "$path" ]]; then
+        return 2
+    elif [[ ! -f "$path" ]]; then
+        return 3
+    fi
+
+    return 0
+}
+
 # ============================================
 # Readiness probe (actuator/health/readiness)
 # ============================================

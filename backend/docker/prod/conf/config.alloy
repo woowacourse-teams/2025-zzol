@@ -1,0 +1,20 @@
+// ============================================
+// Alloy bootstrap (prod) — 실제 로그 파이프라인은 Git에서 pull (ADR-0028)
+// ============================================
+// 로그 파이프라인 로직은 backend/docker/alloy/modules/app-logs.alloy 에 있다.
+// prod는 기존 prod 브랜치 be/prod만 추종한다 — be/dev의 매 커밋이 prod로 게이트
+// 없이 자동 배포되는 것을 막기 위함(blast radius 통제, ADR-0028). 새 버전 승격은
+// be/prod로 PR 머지로만 이뤄진다(앱 prod 배포와 동일한 관문). 저장소가 public이라
+// 인증 블록은 불필요하다.
+
+import.git "shipping" {
+	repository     = "https://github.com/woowacourse-teams/2025-zzol.git"
+	revision       = "be/prod"
+	path           = "backend/docker/alloy/modules/app-logs.alloy"
+	pull_frequency = "60s"
+}
+
+shipping.app_logs_log_time "prod" {
+	environment = "prod"
+	job         = "prod-app"
+}

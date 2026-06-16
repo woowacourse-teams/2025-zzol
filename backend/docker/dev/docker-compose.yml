@@ -203,17 +203,25 @@ services:
           memory: 64M        # 최소 64MB
 
   # ============================================
-  # Dev Promtail - Log Shipper
+  # Dev Alloy - Log Shipper (Promtail 후속, OTel Collector 기반)
   # ============================================
-  dev-promtail:
-    image: grafana/promtail:2.9.6
-    container_name: dev-promtail
+  dev-alloy:
+    image: grafana/alloy:v1.16.3
+    container_name: dev-alloy
     restart: unless-stopped
     volumes:
       - dev-app-logs:/app/logs:ro
-      - ./conf/promtail.yml:/etc/promtail/promtail.yml:ro
+      - ./conf/config.alloy:/etc/alloy/config.alloy:ro
       - /etc/localtime:/etc/localtime:ro
-    command: -config.file=/etc/promtail/promtail.yml
+      - dev-alloy-data:/var/lib/alloy/data   # positions·WAL 영속화 (재생성 시 중복 적재 방지)
+    # 기본 CMD(run /etc/alloy/config.alloy --storage.path=...)를 덮어쓰므로
+    # --storage.path(WAL/state)를 반드시 유지한다. listen-addr은 네트워크 내
+    # /-/ready·메트릭 노출을 위해 0.0.0.0:12345로 연다(기본은 loopback).
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
     networks:
       - dev-network
       - zzol-network
@@ -245,6 +253,8 @@ networks:
 # ============================================
 volumes:
   dev-app-logs:
+    driver: local
+  dev-alloy-data:
     driver: local
   dev-mysql-data:
     driver: local

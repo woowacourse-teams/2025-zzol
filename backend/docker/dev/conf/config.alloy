@@ -1,0 +1,22 @@
+// ============================================
+// Alloy bootstrap (dev) — 실제 로그 파이프라인은 Git에서 pull (ADR-0028)
+// ============================================
+// 거의 바뀌지 않는 진입점이다. 로그 파이프라인 로직은
+// backend/docker/alloy/modules/app-logs.alloy 에 있고, Alloy가 아래 import.git으로
+// pull_frequency(60s)마다 polling해 핫리로드한다.
+//
+// dev는 be/dev HEAD를 직접 추종한다 — 모듈 변경 시 즉시 반영(검증용).
+// prod는 기존 prod 브랜치 be/prod만 추종한다(prod/config.alloy 참조).
+// 저장소가 public이라 인증 블록은 불필요하다.
+
+import.git "shipping" {
+	repository     = "https://github.com/woowacourse-teams/2025-zzol.git"
+	revision       = "be/dev"
+	path           = "backend/docker/alloy/modules/app-logs.alloy"
+	pull_frequency = "60s"
+}
+
+shipping.app_logs_ingest_time "dev" {
+	environment = "dev"
+	job         = "dev-app"
+}

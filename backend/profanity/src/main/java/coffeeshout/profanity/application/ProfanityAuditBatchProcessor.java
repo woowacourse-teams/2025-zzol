@@ -3,6 +3,7 @@ package coffeeshout.profanity.application;
 import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.domain.Language;
+import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
@@ -11,6 +12,7 @@ import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -32,6 +34,9 @@ public class ProfanityAuditBatchProcessor {
     private final ApplicationEventPublisher eventPublisher;
     private final MeterRegistry meterRegistry;
     private final TransactionTemplate transactionTemplate;
+    private final TextNormalizer textNormalizer;
+
+    private static final int MIN_TERM_LENGTH = 2;
 
     private Counter batchSkippedCounter;
 
@@ -72,14 +77,42 @@ public class ProfanityAuditBatchProcessor {
         entity.complete(result.status(), result.confidence(), result.reason());
         meterRegistry.counter("nickname.audit.result", "status", result.status().name()).increment();
         if (result.status() == NicknameAuditStatus.FLAGGED) {
-            autoBlock(entity.getNickname());
+            autoBlock(entity.getNickname(), result.profanityTerms());
         }
     }
 
-    private void autoBlock(String nickname) {
-        if (profanityWordManagementService.add(nickname, Language.detect(nickname), WordSource.AI_FLAGGED)) {
-            eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
-            log.info("FLAGGED 자동 차단: {}", nickname);
+    private void autoBlock(String nickname, List<String> profanityTerms) {
+        resolveBlockWords(nickname, profanityTerms).forEach(word -> {
+            if (profanityWordManagementService.add(word, Language.detect(word), WordSource.AI_FLAGGED)) {
+                eventPublisher.publishEvent(new ProfanityWordBlockedEvent(word));
+                log.info("FLAGGED 자동 차단: nickname={}, word={}", nickname, word);
+            }
+        });
+    }
+
+    /**
+     * AI가 추출한 비속어 조각 중 원본 닉네임의 (정규화 기준) 부분 문자열인 것만 차단 대상으로 채택한다.
+     * 정규화 후 길이가 너무 짧은 조각은 Trie 부분일치 특성상 과차단을 유발하므로 제외하고,
+     * 정규화 결과가 같은 중복 조각은 한 번만 등록한다.
+     * 유효한 조각이 하나도 없으면 닉네임 전체를 차단 대상으로 폴백한다.
+     */
+    private List<String> resolveBlockWords(String nickname, List<String> profanityTerms) {
+        final String normalizedNickname = textNormalizer.normalize(nickname);
+        final Map<String, String> validByNormalized = new LinkedHashMap<>();
+        for (String term : profanityTerms) {
+            if (term == null || term.isBlank()) {
+                continue;
+            }
+            final String normalizedTerm = textNormalizer.normalize(term);
+            if (normalizedTerm.length() < MIN_TERM_LENGTH || !normalizedNickname.contains(normalizedTerm)) {
+                continue;
+            }
+            validByNormalized.putIfAbsent(normalizedTerm, term);
         }
+        if (validByNormalized.isEmpty()) {
+            log.info("유효한 비속어 조각 없음 — 닉네임 전체 차단 폴백: nickname={}, terms={}", nickname, profanityTerms);
+            return List.of(nickname);
+        }
+        return List.copyOf(validByNormalized.values());
     }
 }

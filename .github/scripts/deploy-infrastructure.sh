@@ -2,10 +2,13 @@
 set -e
 
 # ============================================
-# Deploy Infrastructure (MySQL, Redis)
+# Deploy Infrastructure (MySQL, Redis, Alloy)
 # ============================================
-# DB와 Redis 컨테이너를 관리합니다.
+# DB·Redis·Alloy(로그 수집기) 컨테이너를 관리합니다.
 # 최초 배포 시 생성하고, 이미 존재하면 유지합니다.
+#
+# Alloy는 로그 수집기라 앱 가용성과 무관하므로, bootstrap(config.alloy)이
+# 호스트에 배치되지 않았으면 alloy만 skip하고 배포를 계속합니다(ADR-0028).
 #
 # Usage:
 #   ./deploy-infrastructure.sh <environment> <deploy_dir>
@@ -136,6 +139,51 @@ deploy_redis() {
     return 0
 }
 
+deploy_alloy() {
+    local service_name="${ENVIRONMENT}-alloy"
+    local bootstrap="${DEPLOY_DIR}/conf/config.alloy"
+
+    log_step "📦 Alloy 로그 수집기 배포"
+
+    # bootstrap config.alloy는 호스트에 1회 수동 배치된다(ADR-0028, 운영 절차 참조).
+    # backend-cd는 conf/를 서버로 전송하지 않으므로, 없으면 alloy만 skip하고
+    # 인프라·앱 배포는 계속한다. 로그 수집 부재는 Prometheus AlloyDown 알림이 사후 감지한다.
+    # set -e 하에서 bare 호출은 2/3 반환 시 스크립트를 abort시킨다.
+    # 판정 결과를 status로 받아 errexit 의존 없이 자체적으로 분기한다.
+    local status=0
+    classify_alloy_bootstrap "$bootstrap" || status=$?
+    case $status in
+        2)
+            log_warning "config.alloy 가 파일이 아닌 디렉터리임 → alloy 기동 skip: $bootstrap"
+            log_warning "Docker가 마운트 소스 부재 시 빈 디렉터리를 자동 생성한 흔적일 수 있음."
+            log_warning "복구: rm -rf '$bootstrap' 후 실제 파일 배치 (절차: backend/docs/adr/0028-alloy-pull-based-config-via-git.md)"
+            return 0
+            ;;
+        3)
+            log_warning "Alloy bootstrap 누락 → alloy 기동 skip: $bootstrap"
+            log_warning "최초 1회 호스트 배치 필요:"
+            log_warning "  mkdir -p '${DEPLOY_DIR}/conf'"
+            log_warning "  # 레포 backend/docker/${ENVIRONMENT}/conf/config.alloy 를 위 경로로 복사"
+            log_warning "절차: backend/docs/adr/0028-alloy-pull-based-config-via-git.md (운영 절차)"
+            return 0
+            ;;
+    esac
+
+    log_info "Starting Alloy: $service_name"
+    if ! docker compose --env-file .env up -d "$service_name"; then
+        log_warning "Alloy 기동 실패 — 앱 배포는 계속 진행(로그 수집만 영향, AlloyDown으로 감지)"
+        return 0
+    fi
+
+    if check_container_running "$service_name"; then
+        log_success "Alloy 기동 완료: $service_name (health: Prometheus AlloyDown 알림으로 사후 감시)"
+    else
+        log_warning "Alloy 기동 직후 미실행 — 'docker logs $service_name' 확인 권장"
+    fi
+
+    return 0
+}
+
 ensure_monitoring_network() {
     log_info "Ensuring monitoring-network exists..."
     docker network create monitoring-network 2>/dev/null || true
@@ -169,13 +217,16 @@ main() {
         exit 1
     fi
 
+    # Alloy는 로그 수집기 — bootstrap 미배치/기동 실패해도 앱 배포를 막지 않는다(skip+warning).
+    deploy_alloy || log_warning "Alloy 단계 예기치 못한 오류 — 무시하고 계속"
+
     log_step "✅ Infrastructure Deployment Completed"
     log_success "MySQL: ${ENVIRONMENT}-mysql (healthy)"
     log_success "Redis: ${ENVIRONMENT}-redis (healthy)"
 
     echo ""
     log_info "Current infrastructure status:"
-    docker compose --env-file .env ps "${ENVIRONMENT}-mysql" "${ENVIRONMENT}-redis" || log_warning "Status check incomplete"
+    docker compose --env-file .env ps "${ENVIRONMENT}-mysql" "${ENVIRONMENT}-redis" "${ENVIRONMENT}-alloy" || log_warning "Status check incomplete"
     exit 0
 }
 

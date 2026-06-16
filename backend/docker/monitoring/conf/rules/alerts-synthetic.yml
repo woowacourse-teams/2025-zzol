@@ -1,0 +1,25 @@
+# Prometheus 알림 룰 — 합성 프로브 (ADR-0026 Phase C)
+# 엣지 silent failure(Upgrade 헤더 소실 → 101 미발생)를 blackbox WS 프로브로 직접 잡는다.
+# probe_success: 1=성공 / 0=실패, probe_failed_due_to_regex: 1=TCP/TLS는 OK지만 101 미매칭.
+groups:
+  - name: synthetic-probes
+    rules:
+      # 엣지에서 101이 안 나오면 실유저 WS가 전부 끊긴 상태. for:2m로 일시적 스크랩 blip은 거른다.
+      - alert: WsHandshakeProbeFailed
+        expr: probe_success{job="blackbox-ws"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "WS 핸드셰이크 합성 프로브 실패 (edge={{ $labels.edge }})"
+          description: "엣지({{ $labels.instance }})에서 WS 업그레이드(101)가 실패. nginx Upgrade/Connection 헤더 소실 의심. probe_failed_due_to_regex=1이면 TCP/TLS는 됐으나 101 미수신(=헤더 소실로 200 등 반환), 0이면 TCP/TLS 단계 실패(nginx 다운·인증서)."
+
+      # absent 동반룰(ADR-0026 §3): 프로브 자체가 죽으면 probe_success 시계열이 사라져 위 룰이 silent로 평가 불능이 된다.
+      - alert: WsHandshakeProbeAbsent
+        expr: absent(probe_success{job="blackbox-ws"})
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WS 합성 프로브 메트릭 소실 (blackbox-ws)"
+          description: "blackbox-ws 타깃이 스크랩되지 않음 — blackbox-exporter 다운 또는 스크랩 설정 문제. WsHandshakeProbeFailed가 평가 불능 상태."

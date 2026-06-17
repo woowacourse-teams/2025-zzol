@@ -64,3 +64,38 @@ scrape_configs:
   - job_name: 'node'
     static_configs:
       - targets: ['node-exporter:9100']
+
+  # Alloy 로그 수집기 self-metrics (ADR-0028: pull 기반 config 도입 + health 알림)
+  # Alloy는 :12345/metrics 로 컴포넌트 컨트롤러 메트릭을 노출한다.
+  - job_name: 'alloy'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['dev-alloy:12345']
+        labels:
+          env: 'dev'
+      - targets: ['prod-alloy:12345']
+        labels:
+          env: 'prod'
+
+  # 합성 WS 핸드셰이크 프로브 (ADR-0026 Phase C). blackbox가 엣지(nginx)로 실제 업그레이드를
+  # 보내 101을 검증한다. probe_success==0 이면 Upgrade 헤더 소실 회귀.
+  - job_name: 'blackbox-ws'
+    metrics_path: /probe
+    params:
+      module: [ws_handshake]
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    static_configs:
+      # tcp prober라 타깃은 host:port. 경로(/ws/websocket)·Host 헤더는 모듈(conf/blackbox.yml) send에 있다.
+      - targets:
+          - nginx:443
+        labels:
+          edge: prod
+    # 타깃을 blackbox 파라미터로 넘기고, 실제 스크랩 주소는 blackbox-exporter로 치환(표준 패턴).
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

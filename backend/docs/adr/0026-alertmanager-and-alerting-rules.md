@@ -31,6 +31,7 @@
 2. **2단계 롤아웃으로 어느 시점에도 알림 커버리지 공백을 만들지 않는다.**
    - **Phase A (이슈 #1399):** Alertmanager 기동 + Slack 연동 + **두 엔진 어디에도 없던 신규 인시던트 룰·SLO**(대량 IP 차단, WS 핸드셰이크 실패, 에러버짓 burn-rate)를 Prometheus 룰로 작성한다.
    - **Phase B (별도 이슈):** 8룰을 Prometheus 룰로 이관하고, 룰별 발화 동치를 검증한 뒤 Grafana Alerting provisioning을 제거한다. 신중한 검증을 동반한 통합 단계다.
+   - **Phase C (이슈 #1440):** 증상 기반 룰의 사각(엣지 silent failure)을 합성 프로브로 보완한다. `blackbox-exporter`가 엣지(nginx)를 통과하는 실제 WS 업그레이드를 보내 101을 검증(`probe_success`)하고, `absent()` 동반룰로 프로브 자체의 죽음도 잡는다. 앱 발행 메트릭(Phase A/B)은 모두 nginx 뒤에서 집계되어 엣지 헤더 소실에 구조적으로 무력하므로, 이 "동작 검증" 계층이 본 인시던트(Upgrade strip)를 직접 잡는 유일한 신호다.
 
    > **실측에 의한 Phase A 범위 수정(2026-06-11):** 당초 Phase A는 "기존 Grafana Alerting에 Slack contact point를 추가해 8룰을 *즉시* 전달"하려 했고, 이 구간은 엔진이 둘이어도 둘 다 전달되므로 인시던트 루프가 곧 닫힌다고 봤다. 그러나 구현 중 서버를 실측하자 두 가지가 드러났다. ① Grafana provisioning의 `alerting/`이 `alerting_bak`으로 rename돼 **코드 관리가 끊긴 상태**다(8룰은 Grafana DB에 남아 평가·UI 표시는 되나 전달 채널이 비어 아무 데도 안 감). ② 레포의 `provisioning/alerting/`은 컨테이너 마운트 소스(`data/grafana/provisioning`, gitignore)와 edge-cd 동기화(`conf/`만) **어디에도 닿지 않는 orphan**이다. 8룰은 Phase B에서 Prometheus로 이관·삭제될 예정이므로 **곧 지울 Grafana provisioning 배관을 Phase A에서 복구하지 않기로 한다.** Phase A는 Alertmanager 신규 룰만 활성화하고, 8룰 커버리지 복원은 Phase B의 Prometheus 이관으로 일원화한다. (8룰을 당장 전달해야 하면 Grafana UI에서 contact point를 수동 추가하는 운영 조치로 대응하고 코드는 건드리지 않는다.)
 
@@ -59,7 +60,7 @@
 - **이관 검증은 룰별로 비싸다.** "이관이 동작을 보존했는가"는 각 룰을 실제로 발화시켜 확인해야 하고, `noDataState: Alerting` 4개는 `absent()` 동반 룰까지 짜야 한다. Phase B의 수용 기준이 그만큼 높다.
 - **모든 신규 임계값은 추정치다.** 대량 BAN·WS 실패·burn-rate 임계는 베이스라인 미확인 상태의 보수적 추정이다. 배포 전 Prometheus API로 정상 범위를 측정해 조정하고, 초기엔 오탐을 줄이는 방향(임계 높게)으로 잡은 뒤 좁힌다.
 - **`job="prod-app"`는 blue/green 합산 기준이며, 블루-그린은 평소 한 색만 활성이다.** SLO·`AppInstanceDown` 모두 job 합산으로 평가한다. (정정: 초기엔 `AppInstanceDown`을 `by (instance)`로 짜 인스턴스별 이상을 잡으려 했으나, 유휴 색 타깃의 `up=0`이 영구 오탐을 냈다. 활성 색이 1대라 인스턴스 소실 == 서비스 소실이므로 `sum by (job)(up) == 0`으로 변경했고, 합산이 마스킹하는 이상은 없다. → `alerts-infra.yml`)
-- **silent failure는 알림만으로 완전히 막지 못한다.** 본 작업의 룰도 "메트릭에 드러난 증상"을 잡을 뿐이다. 구성과 동작의 검증을 분리하려면 합성 프로브(blackbox-exporter로 `/ws/info` 외부 프로브 → `probe_success == 0`)가 필요하며 별도 exporter 추가라 후순위로 둔다.
+- **silent failure는 알림만으로 완전히 막지 못한다.** 본 작업의 룰도 "메트릭에 드러난 증상"을 잡을 뿐이다. 구성과 동작의 검증을 분리하려면 합성 프로브(blackbox-exporter로 외부 프로브 → `probe_success == 0`)가 필요하며 별도 exporter 추가라 후순위로 둔다. → **Phase C(아래)로 구현.** 단 당초 스케치한 `/ws/info` 프로브는 폐기했다: `/ws/info`(SockJS info)는 업그레이드 실패와 무관하게 200을 반환하므로(앱 HTTP 계층과 같은 한계) 엣지 헤더 소실을 못 잡는다. 대신 네이티브 WS 전송 엔드포인트(`/ws/websocket`)에 실제 업그레이드 헤더를 보내 **101 Switching Protocols**를 검증한다.
 - **prod-promtail이 unhealthy 상태다(발견 당시).** 로그 기반 대응 경로가 불안정하므로 메트릭 알림이 더 중요해지는 동시에 promtail 점검이 별도로 필요하다.
 
 ## 결과
@@ -140,3 +141,71 @@ docker exec alertmanager amtool alert add alertname=test severity=critical \
 ### 5. 롤백
 
 앱·트래픽 영향 없음. `docker compose stop alertmanager` 후 `prometheus.yml`의 `alerting`/`rule_files`를 주석 처리하고 `docker kill -s HUP prometheus`(또는 `/-/reload`)로 즉시 원복한다.
+
+## 배포 시 수동 적용 (Phase B 운영 체크리스트)
+
+Phase B(이슈 #1400, PR #1412)는 기존 Grafana Alerting 8룰을 `conf/rules/alerts-migrated.yml`로 신규 편입하고 orphan `provisioning/alerting/`을 제거한다. 이 8룰은 전달된 적이 없으므로(orphan/비활성) 검증 기준은 발화 "동치"가 아니라 **정의 충실성 + 발화 가능성**이다. 9090/9093은 호스트 미노출이라 아래는 `docker exec`로 서버에서 직접 해야 한다.
+
+### 1. 배포 — 적용
+
+- `backend/docker/monitoring/conf/rules/**` 변경이 `be/dev`에 머지되면 edge-cd가 `~/monitor/`로 동기화 → `docker kill -s HUP prometheus`(룰 리로드). `alertmanager.yml`은 변경 없으므로 시크릿 추가 작업은 불필요(Phase A에서 완료).
+- monitoring은 edge-cd에서 best-effort라 실패해도 워크플로우는 성공으로 뜬다. 아래 검증으로 실제 적용을 직접 확인한다.
+
+### 2. 배포 후 — 룰 로드·발화/해제 검증
+
+- **룰 로드 확인**: `docker exec prometheus wget -qO- http://localhost:9090/api/v1/rules` 로 본 Phase B 12룰(8 + absent 4)이 추가돼 **총 26룰**(Phase A 14 + Phase B 12)이 보이는지 확인.
+- **발화/해제 실측**: dev 환경에서 룰 1건을 의도적으로 발화시켜(예: 앱 컨테이너 중지 → `CircuitBreaker`/`Jvm` 계열 또는 부하로 `WsInboundLatency`) `#problem` 도착 → 해제까지 양쪽 확인.
+
+### 3. 배포 후 — 정의 충실성·발화 가능성 검증 (추측 금지, 서버 실측 필수)
+
+로컬 `promtool check rules`는 문법·PromQL 파싱만 검증한다. "룰이 실제로 발화 가능한가"는 메트릭 실재에 달려 있어 서버에서만 확인된다.
+
+- **P0 — JVM 힙 발화 가능성**: `docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=jvm_memory_max_bytes{area="heap"}'` 로 시리즈별 값 확인. **G1GC는 Eden/Survivor의 max를 `-1`(미정의)로 노출**하는 경우가 흔하다. 이 경우 합산 분모가 오염돼 `JvmHeapUsageHigh`(critical)가 **조용히 안 터지고**(absent 동반룰도 메트릭이 present라 못 잡음) — 이 ADR이 싸우는 바로 그 silent failure다. 룰은 분모에 `> 0` 필터로 정의된 max만 합산하게 방어했으나, **전 풀이 -1이면 분모가 공집합 → 무발화**이므로 정의된 max가 최소 1개(보통 G1 Old Gen) 존재하는지 반드시 확인한다.
+- **redis 메트릭 실재**: `redis_commands_duration_seconds_total`·`redis_commands_processed_total`이 redis_exporter에서 실제 노출되는지, `cmd` 라벨 유무 확인. 없으면 `RedisCommandLatencyHigh`가 발화하지 않는다.
+- **WS 메트릭 idle 거동**: `websocket_message_inbound_time_seconds{quantile}`·`_count`가 저트래픽 dev에서 사라지는지 확인. `WsInboundLatencyMetricAbsent`가 idle에 오탐하면 `and on() up{job=~"dev-app|prod-app"} == 1` 게이팅을 추가한다.
+
+### 4. 배포 후 — 임계값 보정 (모든 임계는 추정치)
+
+8룰의 임계는 원본 부하 테스트 실측값을 보존했으나 베이스라인 재측정 없이 옮겼다. 배포 직후 Prometheus API로 정상 범위를 재고 `alerts-migrated.yml`의 임계(힙 85%·WS p99 0.5s·DB 8·Redis 50ms·디스크 85%·CPU 90%)를 조정한다. 초기엔 오탐을 줄이는 방향(높게)으로 둔다.
+
+### 5. 소음 후속 — absent 동반룰 중첩
+
+`JvmHeapMetricAbsent`·`CircuitBreakerMetricAbsent`는 Phase A `AppInstanceDown`(`up == 0`)과, `NodeCpuMetricAbsent`는 `MonitoringTargetDown{job="node"}`과 조건이 겹친다(메트릭 소스가 죽으면 양쪽 발화). §3이 absent 동반룰을 명시 요구하므로 제거하지 않고, 대신 한 사건이 critical을 증폭하지 않게 **`alertmanager.yml`에 `inhibit_rules`를 함께 추가했다** — `AppInstanceDown`이 같은 `job`의 absent 동반룰 3개를, `MonitoringTargetDown`(node)이 `NodeCpuMetricAbsent`를 억제한다(`equal: ['job']`로 dev↔prod 교차 억제 방지). 배포 후 실제 소음 패턴을 보고 매처를 조정한다.
+
+### 6. 롤백
+
+`conf/rules/alerts-migrated.yml`만 제거(또는 `prometheus.yml` rule_files에서 제외) 후 `docker kill -s HUP prometheus`로 즉시 원복. 앱·트래픽 영향 없음. orphan provisioning 삭제는 런타임에 닿지 않았으므로 롤백 불필요.
+
+## 배포 시 수동 적용 (Phase C 운영 체크리스트)
+
+Phase C(이슈 #1440)는 `blackbox-exporter` 합성 WS 핸드셰이크 프로브를 추가한다. 변경 정본: `conf/blackbox.yml`(신규), `docker-compose.yml`(blackbox-exporter 서비스), `conf/prometheus.yml`(`blackbox-ws` job), `conf/rules/alerts-synthetic.yml`(신규 2룰). 9090은 호스트 미노출이라 검증은 `docker exec`로 한다.
+
+### 1. 배포 — 적용
+
+- `backend/docker/monitoring/**` 변경이 `be/dev`에 머지되면 edge-cd가 `~/monitor/`로 동기화 → `docker compose up -d`(blackbox-exporter 신규 기동) → `docker kill -s HUP prometheus`(룰·job 리로드). `alertmanager.yml` 변경 없음 → 시크릿 작업 불필요.
+- blackbox-exporter는 `monitoring-network`(prometheus 스크랩) + `zzol-network`(nginx 도달) 양쪽에 조인해야 한다. monitoring은 edge-cd best-effort라 실패해도 워크플로우는 성공으로 뜨므로 아래 검증을 직접 한다.
+
+### 2. 배포 후 — 검증 (성공 기준)
+
+> **머지 전 라이브 검증 완료(2026-06-15).** prod 엣지(`api.zzol.site:443`)에 모듈을 직접 실행해 `probe_success=1`·`probe_failed_due_to_regex=0`·`probe_duration_seconds≈0.12s`를 확인했다. 즉 101 도달성·헤더·TLS·정규식 매칭은 검증됐다. 배포 후 남는 확인은 **(a) 모니터링 스택→nginx 컨테이너명 도달**과 **(b) 알림 발화**뿐이다.
+
+- **프로브 성공 확인** — 정상 상태에서 1이어야 한다:
+
+```bash
+docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=probe_success{job="blackbox-ws"}'
+```
+
+- **0이면 원인 분류** — `probe_failed_due_to_regex`를 본다. **1이면** TCP/TLS는 성공했으나 `^HTTP/1.1 101` 미매칭(=nginx가 Upgrade 헤더를 떨궈 200 등 반환 = 잡으려던 사고). **0이면** TCP/TLS 단계 실패(nginx 다운·컨테이너명 미도달·인증서):
+
+```bash
+docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=probe_failed_due_to_regex{job="blackbox-ws"}'
+```
+
+> **모듈 타입 주의 — 왜 `tcp` prober인가(`http` 아님).** 머지 전 `http` prober로 검증하니 101은 정상 수신하나 **직후 업그레이드된 연결을 본문으로 읽으려 ~900s 행에 걸렸다**(서버 heartbeat로 EOF 없음, timeout 무력). 30s 스크랩에선 매번 scrape_timeout + 연결 누수로 운영 불가였다. `tcp` prober는 raw 바이트로 핸드셰이크를 보내고 `101`만 정규식 매칭 후 즉시 닫아 행이 없고(0.12s), tcp+tls는 ALPN h2를 협상하지 않아 nginx `http2 on`발 h2 함정(Upgrade 헤더 금지)도 원천 회피한다.
+
+- **Host 라우팅 확인**: tcp 타깃은 `nginx:443`, 경로·`Host: api.zzol.site`는 모듈 send에 있어 prod 블록으로 라우팅된다. 실패 시 모듈 컨테이너에서 직접: `docker exec blackbox-exporter wget -qO- 'http://localhost:9115/probe?module=ws_handshake&target=nginx:443'`로 `probe_success`를 확인한다.
+- **알림 동작**: nginx의 `proxy-ws.inc`에서 `Upgrade` 헤더를 임시로 주석 처리하고 reload → `WsHandshakeProbeFailed`가 2분 내 발화 → `#problem` 도착 → 원복 시 해제까지 확인(스테이징/저트래픽 시간대 권장).
+
+### 3. 롤백
+
+`docker compose stop blackbox-exporter` + `prometheus.yml`의 `blackbox-ws` job·`alerts-synthetic.yml`을 제거(rule_files glob에서 빠지게)하고 `docker kill -s HUP prometheus`. 앱·트래픽 영향 없음.

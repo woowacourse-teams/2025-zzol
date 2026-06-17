@@ -1,0 +1,102 @@
+// ============================================
+// app-logs 모듈 — 앱 로그 → Loki 파이프라인 (Git pull / import.git, ADR-0028)
+// ============================================
+// dev/prod bootstrap(config.alloy)이 import.git으로 이 파일을 가져와 커스텀
+// 컴포넌트를 인스턴스화한다. 이 파일을 수정하면 Alloy가 pull_frequency 주기로
+// 감지해 핫리로드한다 — 컨테이너 재시작·재배포 불필요(pull 기반 자동 reload).
+//
+// dev/prod 타임스탬프 처리가 다르므로(ADR-0027 보존 제약: dev=Loki 인입 시각,
+// prod=로그의 KST 시각) declare 2개로 분리한다. River에서 stage.timestamp 같은
+// 처리 단계는 argument로 켜고 끌 수 없어, 단계 구성이 다른 두 컴포넌트로 나눈다.
+//   - app_logs_ingest_time : 타임스탬프 미파싱(Loki 인입 시각)  — dev
+//   - app_logs_log_time    : 로그의 KST 타임스탬프 파싱           — prod
+
+declare "app_logs_ingest_time" {
+	argument "environment" { }
+
+	argument "job" { }
+
+	loki.process "process" {
+		forward_to = [loki.write.default.receiver]
+
+		stage.regex {
+			expression = "^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] --- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
+		}
+
+		stage.labels {
+			values = {
+				level = "",
+			}
+		}
+	}
+
+	loki.source.file "source" {
+		targets = [{
+			__address__ = "localhost",
+			__path__    = "/app/logs/application*.log",
+			environment = argument.environment.value,
+			job         = argument.job.value,
+		}]
+		forward_to = [loki.process.process.receiver]
+
+		file_match {
+			enabled = true
+		}
+		legacy_positions_file = "/tmp/positions.yaml"
+	}
+
+	loki.write "default" {
+		endpoint {
+			url = "http://loki:3100/loki/api/v1/push"
+		}
+		external_labels = {}
+	}
+}
+
+declare "app_logs_log_time" {
+	argument "environment" { }
+
+	argument "job" { }
+
+	loki.process "process" {
+		forward_to = [loki.write.default.receiver]
+
+		stage.regex {
+			expression = "^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] --- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
+		}
+
+		stage.labels {
+			values = {
+				level = "",
+			}
+		}
+
+		stage.timestamp {
+			source   = "timestamp"
+			format   = "2006-01-02 15:04:05.000"
+			location = "Asia/Seoul"
+		}
+	}
+
+	loki.source.file "source" {
+		targets = [{
+			__address__ = "localhost",
+			__path__    = "/app/logs/application*.log",
+			environment = argument.environment.value,
+			job         = argument.job.value,
+		}]
+		forward_to = [loki.process.process.receiver]
+
+		file_match {
+			enabled = true
+		}
+		legacy_positions_file = "/tmp/positions.yaml"
+	}
+
+	loki.write "default" {
+		endpoint {
+			url = "http://loki:3100/loki/api/v1/push"
+		}
+		external_labels = {}
+	}
+}

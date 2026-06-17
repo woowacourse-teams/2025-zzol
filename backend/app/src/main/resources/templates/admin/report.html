@@ -17,6 +17,10 @@
 <main>
     <a th:href="@{/admin}" class="nav-back">← 대시보드로</a>
 
+    <div th:if="${errorMessage}"
+         style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:6px;padding:0.6rem 1rem;margin-bottom:1rem;"
+         th:text="${errorMessage}"></div>
+
     <div class="section-header">
         <span class="section-title">신고 목록</span>
         <span class="badge badge-pending" th:text="${pendingCount}">0</span>
@@ -93,6 +97,7 @@
                 <th>방코드</th>
                 <th>내용</th>
                 <th>접수일시</th>
+                <th>IP</th>
                 <th>상태</th>
                 <th>처리</th>
             </tr>
@@ -112,10 +117,14 @@
                 <td class="content-cell" th:text="${r.content}"></td>
                 <td class="date" th:text="${#temporals.format(r.createdAt, 'MM-dd HH:mm')}"></td>
                 <td>
+                    <span th:if="${r.ip != null}" style="font-family:monospace;font-size:0.8rem;" th:text="${r.ip}"></span>
+                    <span th:if="${r.ip == null}" style="color:#d1d5db;">—</span>
+                </td>
+                <td>
                     <span th:if="${r.status.name() == 'PENDING'}" class="badge badge-pending-status">미처리</span>
                     <span th:if="${r.status.name() == 'RESOLVED'}" class="badge badge-resolved">처리 완료</span>
                 </td>
-                <td>
+                <td style="display:flex;gap:0.4rem;flex-wrap:wrap;">
                     <form th:if="${r.status.name() == 'PENDING'}"
                           th:action="@{/admin/reports/{id}/resolve(id=${r.id})}" method="post">
                         <input type="hidden" name="page" th:value="${currentPage}">
@@ -123,6 +132,14 @@
                         <input type="hidden" name="category" th:value="${categoryFilter}">
                         <input type="hidden" name="gameType" th:value="${gameTypeFilter}">
                         <button type="submit" class="btn btn-resolve">처리 완료</button>
+                    </form>
+                    <form th:if="${r.ip != null}"
+                          th:action="@{/admin/reports/{id}/unblock-reporter-ip(id=${r.id})}" method="post">
+                        <input type="hidden" name="page" th:value="${currentPage}">
+                        <input type="hidden" name="status" th:value="${statusFilter}">
+                        <input type="hidden" name="category" th:value="${categoryFilter}">
+                        <input type="hidden" name="gameType" th:value="${gameTypeFilter}">
+                        <button type="submit" class="btn" style="background:#1d4ed8;color:#fff;">IP 해제</button>
                     </form>
                     <span th:if="${r.status.name() == 'RESOLVED'}" class="date"
                           th:text="${r.resolvedAt != null ? #temporals.format(r.resolvedAt, 'MM-dd HH:mm') : ''}"></span>

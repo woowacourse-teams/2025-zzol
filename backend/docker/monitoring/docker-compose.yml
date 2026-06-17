@@ -233,7 +233,7 @@ services:
   # node-exporter - Host Metrics (CPU/Memory/Disk)
   # ============================================
   # 호스트(OS) 단위 메트릭. cAdvisor가 컨테이너를, 이것이 호스트 자체를 본다.
-  # 디스크/CPU 룰(provisioning/alerting, Phase B에서 Prometheus로 이관)이 이 메트릭에 의존한다.
+  # 디스크/CPU 룰(conf/rules/alerts-migrated.yml, Phase B에서 Prometheus 이관 완료)이 이 메트릭에 의존한다.
   # 컨테이너명은 prometheus.yml의 'node' job 타깃(node-exporter:9100)과 일치해야 한다.
   node-exporter:
     image: prom/node-exporter:v1.8.2
@@ -266,6 +266,41 @@ services:
           memory: 32M        # 최소 32MB
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:9100/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # blackbox-exporter - Synthetic Probes (ADR-0026 Phase C)
+  # ============================================
+  # 엣지(nginx)를 통과하는 합성 WS 핸드셰이크 프로브(conf/blackbox.yml).
+  # monitoring-network: prometheus가 스크랩 / zzol-network: 컨테이너명 nginx 직접 프로브(hairpin 회피).
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    volumes:
+      - ./conf/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    networks:
+      - monitoring-network
+      - zzol-network
+    expose:
+      - "9115"
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+    environment:
+      - TZ=Asia/Seoul
+    # 자원 제한 (blackbox - 경량)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'        # 최대 0.1 vCPU
+          memory: 96M        # 최대 96MB
+        reservations:
+          cpus: '0.05'       # 최소 0.05 vCPU
+          memory: 32M        # 최소 32MB
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:9115/-/healthy || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

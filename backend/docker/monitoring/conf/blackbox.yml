@@ -1,0 +1,17 @@
+# blackbox_exporter 프로브 모듈 — ADR-0026 Phase C
+# 엣지(nginx)를 통과하는 실제 WS 업그레이드를 검증해 Upgrade/Connection 헤더 소실 회귀를 감지한다.
+# tcp prober 채택 이유, /ws/websocket 선택 등 설계 배경은 ADR-0026 Phase C 참조.
+modules:
+  ws_handshake:
+    # http가 아닌 tcp prober: 101 확인 후 즉시 연결을 닫아 hang을 피하고, ALPN h2 미협상으로 h2 함정도 회피.
+    prober: tcp
+    timeout: 5s
+    tcp:
+      tls: true
+      tls_config:
+        server_name: api.zzol.site  # 컨테이너명 접속 시 SNI·인증서 검증 호스트
+      query_response:
+        # raw HTTP/1.1 업그레이드 요청(더블쿼트가 \r\n을 CRLF로 전개). 업그레이드와 무관하게
+        # 200을 주는 /ws/info(SockJS) 대신 네이티브 WS 엔드포인트로 보낸다.
+        - send: "GET /ws/websocket HTTP/1.1\r\nHost: api.zzol.site\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nOrigin: https://api.zzol.site\r\n\r\n"
+        - expect: "^HTTP/1.1 101"  # 101이면 성공, 헤더 소실 시 200/4xx → probe_failed_due_to_regex=1

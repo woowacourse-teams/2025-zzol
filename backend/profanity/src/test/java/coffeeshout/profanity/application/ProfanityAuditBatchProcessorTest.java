@@ -11,6 +11,7 @@ import static org.mockito.Mockito.never;
 
 import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
+import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.Language;
 
 import coffeeshout.profanity.domain.TextNormalizer;
@@ -53,9 +54,12 @@ class ProfanityAuditBatchProcessorTest {
             @Override protected void doRollback(DefaultTransactionStatus status) {}
         });
 
+        final NicknameAuditProperties properties = new NicknameAuditProperties(
+                "test-key", "gemini-test", 0.85, 10, 20, 2
+        );
         processor = new ProfanityAuditBatchProcessor(
                 auditRepository, nicknameAuditor, profanityWordManagementService,
-                eventPublisher, new SimpleMeterRegistry(), transactionTemplate, new TextNormalizer()
+                eventPublisher, new SimpleMeterRegistry(), transactionTemplate, new TextNormalizer(), properties
         );
         processor.initMetrics();
     }

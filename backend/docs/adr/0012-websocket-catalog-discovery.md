@@ -133,9 +133,9 @@ public @interface WsQueue {
 
 - `coffeeshout.websocket.docs` 패키지에 11개 신규 클래스 추가 (`@WsTopic`, `@WsTopics`, `@WsReceive`, `@WsQueue`, `@WsQueues`, `WsCatalogBuilder`, `WsCatalogController`, `WsCatalogProperties`, `WsCatalog`).
 - 어노테이션 부착 컴포넌트 (총 15개):
-    - `@WsTopic`: `RoomWebSocketController`, `RoomMessagePublisher`, `CardGameNotifier`, `RacingGameWebSocketController`, `RacingGameMessagePublisher`, `LadderWebSocketController`, `LadderNotifier`, `BlindTimerGameMessagePublisher`, `BlockStackingNotifier`, `SpeedTouchGameMessagePublisher`
-    - `@WsReceive`: `BlindTimerGameWebSocketController`, `BlockStackingWebSocketController`, `SpeedTouchGameWebSocketController`, `MiniGameWebSocketController`
-    - `@WsQueue`: `FriendNotifier`, `PresenceNotifier`
+  - `@WsTopic`: `RoomWebSocketController`, `RoomMessagePublisher`, `CardGameNotifier`, `RacingGameWebSocketController`, `RacingGameMessagePublisher`, `LadderWebSocketController`, `LadderNotifier`, `BlindTimerGameMessagePublisher`, `BlockStackingNotifier`, `SpeedTouchGameMessagePublisher`
+  - `@WsReceive`: `BlindTimerGameWebSocketController`, `BlockStackingWebSocketController`, `SpeedTouchGameWebSocketController`, `MiniGameWebSocketController`
+  - `@WsQueue`: `FriendNotifier`, `PresenceNotifier`
 - `build.gradle.kts` 에서 legacy 의존성 라인 1개 제거.
 - `application.yml` 의 `websocket.docs.*` 키를 재구성한다. `app-path`, `topic-path`, `queue-path`, `user-destination-prefix`, `stomp-endpoint`, `error-topic`, `envelope-class`, `allowed-ips` 를 사용하며 `enabled` / `base-package` / `server-url` / `info` 키는 제거한다 (`@Profile("!prod")` 가 dev 가드 단일 책임을 지므로 별도 `info` 메타가 필요 없다).
 - 멀티 모듈 분리(`@WsTopic`/`@WsQueue` 등 어노테이션의 별도 모듈 추출)는 본 ADR 범위 밖으로, 멀티 모듈 마이그레이션이 실제로 시작되는 시점에 별도 ADR 로 다룬다.

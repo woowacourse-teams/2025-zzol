@@ -19,7 +19,7 @@
 
 ## Redis Stream 처리 흐름
 
-```
+```text
 [클라이언트 WebSocket]
       │ 메시지 전송 (/app/...)
       ▼
@@ -67,7 +67,7 @@
 
 JPA Entity와 도메인 객체를 분리하여 영속성 관심사가 도메인을 오염시키지 않도록 한다.
 
-```
+```text
 [Application Service]
       │ 값객체(JoinCode 등)로 조회 요청
       ▼

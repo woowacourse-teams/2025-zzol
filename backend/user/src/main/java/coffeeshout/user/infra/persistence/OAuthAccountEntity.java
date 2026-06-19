@@ -47,6 +47,10 @@ public class OAuthAccountEntity {
     private Instant linkedAt;
 
     public OAuthAccountEntity(UserEntity user, String provider, String providerUserId, String email, String emailHash) {
+        // email과 emailHash는 항상 함께 존재하거나 함께 없어야 한다(블라인드 인덱스 조회 계약).
+        if ((email == null) != (emailHash == null)) {
+            throw new IllegalArgumentException("email과 emailHash는 둘 다 존재하거나 둘 다 null이어야 합니다.");
+        }
         this.user = user;
         this.provider = provider;
         this.providerUserId = providerUserId;

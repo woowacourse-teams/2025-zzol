@@ -12,15 +12,15 @@ import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 
 /**
- * V32에서 추가된 암호화 컬럼 정책에 맞춰, 기존 평문 이메일을 일괄 암호화 + 해시로 전환한다.
+ * V33에서 추가된 암호화 컬럼 정책에 맞춰, 기존 평문 이메일을 일괄 암호화 + 해시로 전환한다.
  *
- * <p>V32로 컨버터가 적용되면 기존 평문 행을 JPA로 읽을 때 GCM 복호화가 평문에 대해 실패한다.
+ * <p>V33으로 컨버터가 적용되면 기존 평문 행을 JPA로 읽을 때 GCM 복호화가 평문에 대해 실패한다.
  * Flyway는 앱 기동 전에 실행되므로, 이 마이그레이션으로 평문 행을 모두 전환해 "복호화 실패" 구간을 없앤다.
  *
  * <p>SQL로는 AES/HMAC 연산이 불가능하므로 Java 마이그레이션으로 작성한다. 키는 앱과 동일한 환경변수에서
  * 읽는다. {@code email_hash IS NULL AND email IS NOT NULL} 대상만 처리하므로 재실행해도 안전(멱등)하다.
  */
-public class V33__backfill_oauth_email extends BaseJavaMigration {
+public class V34__backfill_oauth_email extends BaseJavaMigration {
 
     private static final String SELECT_PLAINTEXT =
             "SELECT id, email FROM oauth_account WHERE email_hash IS NULL AND email IS NOT NULL";

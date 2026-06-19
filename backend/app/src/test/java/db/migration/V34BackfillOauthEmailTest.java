@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-class V33BackfillOauthEmailTest {
+class V34BackfillOauthEmailTest {
 
     private static final String ENCRYPTION_KEY = "test-email-encryption-key-at-least-32-chars";
     private static final String HMAC_KEY = "test-email-hmac-key-at-least-32-characters";
@@ -22,7 +22,7 @@ class V33BackfillOauthEmailTest {
     private Connection connection;
     private EmailEncryptor encryptor;
     private EmailBlindIndexHasher hasher;
-    private V33__backfill_oauth_email migration;
+    private V34__backfill_oauth_email migration;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -39,7 +39,7 @@ class V33BackfillOauthEmailTest {
         final EmailCryptoProperties properties = new EmailCryptoProperties(ENCRYPTION_KEY, HMAC_KEY);
         encryptor = new EmailEncryptor(properties);
         hasher = new EmailBlindIndexHasher(properties);
-        migration = new V33__backfill_oauth_email();
+        migration = new V34__backfill_oauth_email();
     }
 
     @AfterEach

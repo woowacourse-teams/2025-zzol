@@ -26,6 +26,7 @@ public class V33__backfill_oauth_email extends BaseJavaMigration {
             "SELECT id, email FROM oauth_account WHERE email_hash IS NULL AND email IS NOT NULL";
     private static final String UPDATE_ENCRYPTED =
             "UPDATE oauth_account SET email = ?, email_hash = ? WHERE id = ?";
+    private static final int MIN_KEY_LENGTH = 32;
 
     @Override
     public void migrate(Context context) throws Exception {
@@ -64,12 +65,18 @@ public class V33__backfill_oauth_email extends BaseJavaMigration {
     }
 
     private EmailCryptoProperties loadProperties() {
-        final String encryptionKey = System.getenv("USER_EMAIL_ENCRYPTION_KEY");
-        final String hmacKey = System.getenv("USER_EMAIL_HMAC_KEY");
-        if (encryptionKey == null || hmacKey == null) {
-            throw new IllegalStateException(
-                    "평문 이메일 백필을 위해 USER_EMAIL_ENCRYPTION_KEY, USER_EMAIL_HMAC_KEY 환경변수가 필요합니다.");
-        }
+        // EmailCryptoProperties의 @Size 검증은 Spring 바인딩 시에만 동작하고, 여기서는 직접 생성하므로 우회된다.
+        // 약한 키로 백필되는 것을 막기 위해 최소 길이를 직접 검증한다.
+        final String encryptionKey = requireKey("USER_EMAIL_ENCRYPTION_KEY", System.getenv("USER_EMAIL_ENCRYPTION_KEY"));
+        final String hmacKey = requireKey("USER_EMAIL_HMAC_KEY", System.getenv("USER_EMAIL_HMAC_KEY"));
         return new EmailCryptoProperties(encryptionKey, hmacKey);
+    }
+
+    private String requireKey(String name, String value) {
+        if (value == null || value.length() < MIN_KEY_LENGTH) {
+            throw new IllegalStateException(
+                    "평문 이메일 백필을 위해 %s 환경변수가 %d자 이상으로 설정되어야 합니다.".formatted(name, MIN_KEY_LENGTH));
+        }
+        return value;
     }
 }

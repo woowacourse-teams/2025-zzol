@@ -40,6 +40,7 @@ out/
 
 ### Claude Code ###
 .claude/settings.local.json
+.claude/worktrees/
 
 ### Docker ###
 # Environment files

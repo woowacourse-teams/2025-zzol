@@ -16,8 +16,8 @@ Markdown 파일 작성 시 지켜야 할 규칙과 그 배경을 설명한다.
 로컬에서 검사하려면 저장소 루트에서 다음을 실행한다.
 
 ```bash
-npx markdownlint-cli2          # 검사
-npx markdownlint-cli2 --fix    # 자동 수정 가능한 위반(MD031/MD022/MD047/MD012/MD007) 정리
+npx markdownlint-cli2@0.22.1          # 검사 (CI와 동일 버전)
+npx markdownlint-cli2@0.22.1 --fix    # 자동 수정 가능한 위반(MD031/MD022/MD047/MD012/MD007) 정리
 ```
 
 ## MD040 — 코드 블록에 언어 지정 필수

@@ -55,3 +55,6 @@ user:
     refresh-token-expiration-seconds: 1209600   # 14일
   oauth:
     frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI}
+  email-crypto:
+    encryption-key: ${USER_EMAIL_ENCRYPTION_KEY}
+    hmac-key: ${USER_EMAIL_HMAC_KEY}

@@ -153,6 +153,8 @@ jobs:
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           OAUTH_FRONTEND_REDIRECT_URI=${{ secrets.OAUTH_FRONTEND_REDIRECT_URI }}
           ROOM_SESSION_TOKEN_SECRET=${{ secrets.ROOM_SESSION_TOKEN_SECRET }}
+          USER_EMAIL_ENCRYPTION_KEY=${{ secrets.USER_EMAIL_ENCRYPTION_KEY }}
+          USER_EMAIL_HMAC_KEY=${{ secrets.USER_EMAIL_HMAC_KEY }}
           EOF
           # IMAGE_TAG는 deploy-application.sh 인자로 전달 (Blue/Green 색상별 관리)
           # ORACLE_REGION은 ap-chuncheon-1 기본값 사용 (변경 필요 시 시크릿으로 추가)

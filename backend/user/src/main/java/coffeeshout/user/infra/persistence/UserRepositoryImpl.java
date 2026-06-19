@@ -7,6 +7,7 @@ import coffeeshout.user.domain.UserCode;
 import coffeeshout.user.domain.UserErrorCode;
 import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
+import coffeeshout.user.infra.crypto.EmailBlindIndexHasher;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,6 +22,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     private final UserJpaRepository userJpaRepository;
     private final OAuthAccountJpaRepository oAuthAccountJpaRepository;
+    private final EmailBlindIndexHasher emailBlindIndexHasher;
 
     @Override
     public User save(User user) {
@@ -42,7 +44,8 @@ public class UserRepositoryImpl implements UserRepository {
                 savedUser,
                 oAuthAccount.provider().getRegistrationId(),
                 oAuthAccount.providerUserId(),
-                oAuthAccount.email()
+                oAuthAccount.email(),
+                emailBlindIndexHasher.hash(oAuthAccount.email())
         );
         final OAuthAccountEntity savedOAuth = oAuthAccountJpaRepository.save(oAuthAccountEntity);
 
@@ -71,6 +74,19 @@ public class UserRepositoryImpl implements UserRepository {
     public Optional<User> findByProviderAndProviderUserId(String provider, String providerUserId) {
         return oAuthAccountJpaRepository
                 .findByProviderAndProviderUserIdWithUser(provider, providerUserId)
+                .map(oAuth -> oAuth.getUser().toDomain(oAuth));
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        if (email == null) {
+            return Optional.empty();
+        }
+        // email_hash는 non-unique(이메일은 provider 간 중복 가능)이므로 다건이 반환될 수 있다. 첫 건을 사용한다.
+        return oAuthAccountJpaRepository
+                .findByEmailHashWithUser(emailBlindIndexHasher.hash(email))
+                .stream()
+                .findFirst()
                 .map(oAuth -> oAuth.getUser().toDomain(oAuth));
     }
 

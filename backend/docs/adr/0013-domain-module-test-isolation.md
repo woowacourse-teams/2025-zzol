@@ -203,6 +203,13 @@ api("org.testcontainers:junit-jupiter:$testcontainersVersion")
 
 도메인 모듈은 별도 선언 없이 `testImplementation(project(":test-support"))` 전이 의존으로 testcontainers 를 획득한다.
 
+## 관련 포스트모템
+
+reuse 정책 변경(활성화 → 비활성)을 둘러싼 인시던트·의사결정 회고:
+
+- [포스트모템 0001 — 게임 통합테스트 플레이키](../postmortem/0001-game-integration-test-flaky.md)
+- [포스트모템 0002 — Testcontainers reuse 의사결정 2회 번복](../postmortem/0002-testcontainers-reuse-decision-reversal.md)
+
 `resolutionStrategy.force` 는 `io.spring.dependency-management` 플러그인에 의해 무시되므로 사용하지 않는다.
 
 ## 고려한 대안

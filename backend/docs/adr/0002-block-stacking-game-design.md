@@ -62,7 +62,7 @@ class BlockStackingPlayerProgress {
 
 progress 이벤트를 공유 `CommandType` 라우터(`/app/room/{joinCode}/minigame/command`)를 거치지 않고 전용 엔드포인트로 직접 수신한다.
 
-```
+```text
 STOMP SEND /app/room/{joinCode}/block-stacking/progress
 {
   "playerName": "꾹이",
@@ -77,7 +77,7 @@ STOMP SEND /app/room/{joinCode}/block-stacking/progress
 
 `BlockStackingWebSocketController`는 수신한 요청을 `BlockStackingCommandEvent`로 변환해 `StreamKey.BLOCK_STACKING_EVENTS` Redis Stream에 발행한다. `BlockStackingCommandEventConsumer`가 이를 소비해 `BlockStackingService.recordProgress()`를 호출한다.
 
-```
+```text
 WebSocketController
   → StreamPublisher.publish(BLOCK_STACKING_EVENTS, event)
   → BlockStackingCommandEventConsumer.accept(event)

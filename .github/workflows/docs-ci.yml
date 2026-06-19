@@ -1,0 +1,41 @@
+name: Docs CI
+
+on:
+  # PR이 열릴 때, 업데이트될 때, 다시 열릴 때
+  pull_request:
+    branches: [be/dev]
+    paths:
+      - "**/*.md"
+      - ".markdownlint.jsonc"
+      - ".markdownlint-cli2.jsonc"
+      - ".github/workflows/docs-ci.yml"
+
+  # 커밋이 푸시될 때
+  push:
+    branches: [be/dev]
+    paths:
+      - "**/*.md"
+      - ".markdownlint.jsonc"
+      - ".markdownlint-cli2.jsonc"
+      - ".github/workflows/docs-ci.yml"
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      # 규칙 SSOT: .markdownlint.jsonc / 대상 범위: .markdownlint-cli2.jsonc
+      # 버전을 고정해 "코드 변경 없이 린트 룰만 바뀌어 깨지는" 회귀를 차단한다.
+      - name: Run markdownlint
+        run: npx --yes markdownlint-cli2@0.22.1

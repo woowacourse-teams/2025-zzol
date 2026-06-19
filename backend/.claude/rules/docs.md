@@ -1,22 +1,16 @@
 ---
-description: docs/ 및 .claude/ 디렉토리 Markdown 파일 작성 규칙 (markdownlint MD040/MD031/MD022)                                                                                                                    
-paths:                                                                                                                                                                              
+description: docs/ 및 .claude/ 디렉토리 Markdown 파일 작성 규칙 (markdownlint)
+paths:
 - "docs/**/*.md"
 - ".claude/**/*.md"
 ---
 
-# 전체 컨벤션: `docs/conventions-docs.md`
+# Markdown 작성 규칙
 
-## MD040 — 코드 블록에 언어 지정 필수
+규칙의 단일 진실 원천(SSOT)은 저장소 루트의 `.markdownlint.jsonc`이며, `Docs CI`가 이를 강제한다.
+설정에 명시되지 않은 규칙은 이 프로젝트의 규칙이 아니다.
 
-모든 펜스 코드 블록(` ``` `)에 언어를 명시한다. 언어를 특정할 수 없으면 `text`를 사용한다.
+현재 채택 규칙: `MD040`(코드 블록 언어 지정), `MD031`(코드 블록 앞뒤 빈 줄), `MD022`(헤딩 앞뒤 빈 줄).
+각 규칙의 "왜"와 적용 예시는 `docs/conventions-docs.md`를 참조한다.
 
-자주 쓰는 식별자: `java`, `sql`, `yaml`, `bash`, `json`, `text`
-
-## MD031 — 코드 블록 앞뒤에 빈 줄 필수
-
-펜스 코드 블록 바로 앞과 바로 뒤에 빈 줄이 있어야 한다.
-
-## MD022 — 헤딩 앞뒤에 빈 줄 필수
-
-`#`, `##`, `###` 헤딩 바로 앞과 바로 뒤에 빈 줄을 넣는다. 문서 첫 줄 헤딩의 앞 빈 줄은 생략 가능하다.
+커밋 전 `npx markdownlint-cli2`(또는 `--fix`)로 로컬에서 검사한다.

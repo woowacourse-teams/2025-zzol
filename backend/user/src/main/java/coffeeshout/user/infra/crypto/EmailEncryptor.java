@@ -58,7 +58,7 @@ public class EmailEncryptor {
                     .array();
             return Base64.getEncoder().encodeToString(combined);
         } catch (GeneralSecurityException e) {
-            throw new BusinessException(UserErrorCode.EMAIL_CRYPTO_FAILED, "이메일 암호화에 실패했습니다.");
+            throw new BusinessException(UserErrorCode.EMAIL_CRYPTO_FAILED, "이메일 암호화에 실패했습니다.", e);
         }
     }
 
@@ -75,7 +75,7 @@ public class EmailEncryptor {
             cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
             return new String(cipher.doFinal(cipherText), StandardCharsets.UTF_8);
         } catch (GeneralSecurityException | IllegalArgumentException e) {
-            throw new BusinessException(UserErrorCode.EMAIL_CRYPTO_FAILED, "이메일 복호화에 실패했습니다.");
+            throw new BusinessException(UserErrorCode.EMAIL_CRYPTO_FAILED, "이메일 복호화에 실패했습니다.", e);
         }
     }
 
@@ -85,7 +85,7 @@ public class EmailEncryptor {
                     .digest(rawKey.getBytes(StandardCharsets.UTF_8));
             return new SecretKeySpec(keyBytes, KEY_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
-            throw new BusinessException(UserErrorCode.EMAIL_CRYPTO_FAILED, "암호화 키 초기화에 실패했습니다.");
+            throw new BusinessException(UserErrorCode.EMAIL_CRYPTO_FAILED, "암호화 키 초기화에 실패했습니다.", e);
         }
     }
 }

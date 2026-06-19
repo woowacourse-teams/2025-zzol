@@ -40,7 +40,7 @@ public class EmailBlindIndexHasher {
             final byte[] digest = mac.doFinal(normalized.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
         } catch (GeneralSecurityException e) {
-            throw new BusinessException(UserErrorCode.EMAIL_CRYPTO_FAILED, "이메일 해시 생성에 실패했습니다.");
+            throw new BusinessException(UserErrorCode.EMAIL_CRYPTO_FAILED, "이메일 해시 생성에 실패했습니다.", e);
         }
     }
 }

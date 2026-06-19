@@ -1,6 +1,8 @@
 package coffeeshout.user.infra.persistence;
 
+import coffeeshout.user.infra.crypto.EmailEncryptConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -34,17 +36,22 @@ public class OAuthAccountEntity {
     @Column(nullable = false, length = 255)
     private String providerUserId;
 
-    @Column(length = 255)
+    @Convert(converter = EmailEncryptConverter.class)
+    @Column(length = 512)
     private String email;
+
+    @Column(name = "email_hash", length = 64)
+    private String emailHash;
 
     @Column(nullable = false)
     private Instant linkedAt;
 
-    public OAuthAccountEntity(UserEntity user, String provider, String providerUserId, String email) {
+    public OAuthAccountEntity(UserEntity user, String provider, String providerUserId, String email, String emailHash) {
         this.user = user;
         this.provider = provider;
         this.providerUserId = providerUserId;
         this.email = email;
+        this.emailHash = emailHash;
         this.linkedAt = Instant.now();
     }
 }

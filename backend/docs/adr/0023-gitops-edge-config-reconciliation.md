@@ -1,7 +1,7 @@
 # 0023. GitOps 엣지 설정 동기화 — nginx/monitoring reconciliation과 edge-cd 분리
 
 - 날짜: 2026-06-09
-- 상태: 제안
+- 상태: 적용됨 (#1393·#1394 머지)
 
 ## 컨텍스트
 

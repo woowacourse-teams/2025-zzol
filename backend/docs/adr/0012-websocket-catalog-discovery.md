@@ -1,7 +1,7 @@
-# 0011. WebSocket 컨트랙트 디스커버리 — `@WsTopic`/`@WsQueue`/`@WsReceive` + `/dev/ws-catalog`
+# 0012. WebSocket 컨트랙트 디스커버리 — `@WsTopic`/`@WsQueue`/`@WsReceive` + `/dev/ws-catalog`
 
 - 날짜: 2026-05-14
-- 상태: 보류 (2026-05-16 개정 — `@WsQueue`/`@WsReceive` 추가, 다중 발행자 표시 방식 정리, `envelope-class` 도입 및 `info` 섹션 제거; 2026-05-17 개정 — `WsCatalogSecurityConfig` IP 허용 목록 가드 추가, `generic=Object.class` 거부 보완, fixture 스냅샷 검증 테스트 제거)
+- 상태: 적용됨 (WsCatalog 구현 반영; 2026-05-16 개정 — `@WsQueue`/`@WsReceive` 추가, 다중 발행자 표시 방식 정리, `envelope-class` 도입 및 `info` 섹션 제거; 2026-05-17 개정 — `WsCatalogSecurityConfig` IP 허용 목록 가드 추가, `generic=Object.class` 거부 보완, fixture 스냅샷 검증 테스트 제거)
 
 ## 컨텍스트
 

@@ -16,7 +16,7 @@ public interface OAuthAccountJpaRepository extends JpaRepository<OAuthAccountEnt
     );
 
     @Query("SELECT o FROM OAuthAccountEntity o JOIN FETCH o.user WHERE o.emailHash = :emailHash")
-    Optional<OAuthAccountEntity> findByEmailHashWithUser(@Param("emailHash") String emailHash);
+    List<OAuthAccountEntity> findByEmailHashWithUser(@Param("emailHash") String emailHash);
 
     Optional<OAuthAccountEntity> findByUser_Id(Long userId);
 

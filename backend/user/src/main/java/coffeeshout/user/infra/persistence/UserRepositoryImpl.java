@@ -82,8 +82,11 @@ public class UserRepositoryImpl implements UserRepository {
         if (email == null) {
             return Optional.empty();
         }
+        // email_hash는 non-unique(이메일은 provider 간 중복 가능)이므로 다건이 반환될 수 있다. 첫 건을 사용한다.
         return oAuthAccountJpaRepository
                 .findByEmailHashWithUser(emailBlindIndexHasher.hash(email))
+                .stream()
+                .findFirst()
                 .map(oAuth -> oAuth.getUser().toDomain(oAuth));
     }
 

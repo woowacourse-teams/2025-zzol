@@ -4,7 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.UserModuleIntegrationTest;
 import coffeeshout.fixture.UserFixture;
+import coffeeshout.user.domain.OAuthAccount;
+import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
+import coffeeshout.user.domain.UserCode;
+import coffeeshout.user.domain.UserNickname;
 import coffeeshout.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -72,6 +76,19 @@ class OAuthAccountEmailEncryptionTest extends UserModuleIntegrationTest {
             userRepository.save(UserFixture.회원_엠제이());
 
             assertThat(userRepository.findByEmail("unknown@example.com")).isEmpty();
+        }
+
+        @Test
+        void 같은_이메일이_여러_provider에_존재해도_예외_없이_조회된다() {
+            userRepository.save(UserFixture.회원_엠제이());
+            userRepository.save(new User(
+                    null,
+                    new UserCode("ZZ9ZZ"),
+                    new UserNickname("카카오엠제이"),
+                    new OAuthAccount(OAuthProvider.KAKAO, "kakao-uid-mj", PLAIN_EMAIL)
+            ));
+
+            assertThat(userRepository.findByEmail(PLAIN_EMAIL)).isPresent();
         }
     }
 }

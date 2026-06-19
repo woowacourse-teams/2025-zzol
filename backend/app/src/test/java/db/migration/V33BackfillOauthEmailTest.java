@@ -64,7 +64,7 @@ class V33BackfillOauthEmailTest {
         try (Statement statement = connection.createStatement();
                 ResultSet rs = statement.executeQuery(
                         "SELECT %s FROM oauth_account WHERE id = %d".formatted(name, id))) {
-            rs.next();
+            assertThat(rs.next()).as("id=%d 행이 존재해야 한다", id).isTrue();
             return rs.getString(name);
         }
     }

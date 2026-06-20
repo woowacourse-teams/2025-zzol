@@ -92,9 +92,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 - [ ] WebSocket 경로는 Application Service 직접 호출 없이 Stream 발행을 경유
 
 완료 후:
-1. `/write-tests`를 호출해 통합 테스트를 작성한다
-   - REST: 모듈 로컬 `{Module}IntegrationTest` 상속(`coffeeshout.support.IntegrationTestSupport` 확장, 기본 `MOCK`). `@WebMvcTest` 금지. `@IntegrationTest` 애노테이션은 없다 — 베이스 클래스 상속이다
-   - WebSocket: `WebSocketIntegrationTestSupport` 상속(`RANDOM_PORT`)
+1. `/write-tests`를 호출해 통합 테스트를 작성한다 — 베이스 상속·`@WebMvcTest` 금지·REST(`MOCK`)/WebSocket(`WebSocketIntegrationTestSupport`·`RANDOM_PORT`) 구분 등 컨벤션은 `/write-tests`가 SSOT다
 2. `/run-tests 해당패키지.* --sync` 를 호출해 모든 테스트가 통과하는지 확인한다.
 3. `test-verifier` agent를 `run_in_background: true`로 실행한다
 4. 컨트롤러 계층 코드와 테스트를 커밋한다 (`feat: [기능명] 컨트롤러 계층 구현`)

@@ -14,7 +14,8 @@ allowed-tools: Read, Glob, Grep, Write, Edit
 
 ## 반드시 지킬 규칙
 
-- **모듈 로컬 베이스를 상속한다** — 서비스 테스트는 `{Module}ServiceTest`, 통합 테스트는 `{Module}IntegrationTest`(각각 `coffeeshout.support.ServiceTest` / `IntegrationTestSupport` 확장). 이 상속이 TestContainers(MySQL·Valkey)와 `test` 프로파일을 자동 구동한다. 빠뜨리면 컨테이너가 안 떠 테스트가 깨진다 (ADR-0015)
+- **모듈 로컬 베이스를 상속한다** — 서비스 테스트는 `{Module}ServiceTest`, 통합 테스트는 `{Module}IntegrationTest`(각각 `coffeeshout.support.ServiceTest` / `IntegrationTestSupport` 확장). 이 상속이 TestContainers(MySQL·Valkey)와 `test` 프로파일을 자동 구동한다 — 빠뜨리면 컨테이너가 안 떠 테스트가 깨진다 (ADR-0015). `@IntegrationTest` 같은 애노테이션은 없다(베이스 상속이다)
+- **통합 테스트 종류별** — REST는 기본 `MOCK`(`@WebMvcTest` 금지), WebSocket은 `WebSocketIntegrationTestSupport` 상속 + `RANDOM_PORT` (ADR-0017)
 - Fixture를 활용한다(없으면 생성). 모듈 간 **공유**는 `src/testFixtures/java/coffeeshout/fixture/`, 모듈 **내부 전용**은 `src/test/java/coffeeshout/fixture/`. 유형 구분: `*Fixture`(팩토리)·`*Fake`·`*Dummy`·`Stub*`·`TestDataHelper`(@Component DB헬퍼) (ADR-0016)
 - `@Nested`로 시나리오를 그룹화한다
 - 테스트 메서드명은 한글로 작성한다

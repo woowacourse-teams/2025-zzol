@@ -12,7 +12,7 @@ allowed-tools: Read, Bash, Glob
 1. base 브랜치를 정한다. `$ARGUMENTS`에 `--base=<브랜치>`가 있으면 그 값, 없으면 `be/dev`. 이후 이 값을 `$BASE`로 쓴다.
 2. PR 템플릿은 모노레포 루트에 있다. `REPO_ROOT="$(git rev-parse --show-toplevel)"` 로 루트를 구해 `${REPO_ROOT}/.github/pull_request_template.md`를 Read한다.
 3. `git log "origin/$BASE"..HEAD --oneline` 와 `git diff "origin/$BASE"...HEAD --stat` 으로 이번 브랜치의 커밋·변경 파일을 확인한다 (로컬 `$BASE`는 stale일 수 있으니 `origin/` 기준).
-4. **브랜치를 원격에 올린다 (`gh pr create`의 전제).** 현재 브랜치명을 확인한다. 보호 브랜치(`be/dev`·`be/prod`·`fe/dev`·`fe/prod`·`main`·`master`)면 중단하고 사용자에게 보고한다(git-push-safety). 아니면 **자기 이름 명시 refspec**으로 push한다 — `git push -u origin HEAD:<현재브랜치>` (bare `git push` 금지). 이미 올라가 있으면 생략한다.
+4. **브랜치를 원격에 올린다 (`gh pr create`의 전제).** 먼저 `bash .claude/skills/commit/preflight.sh`로 보호 브랜치·detached HEAD를 차단한다(`ABORT` 출력 시 중단·보고 — 보호 브랜치 목록 SSOT, 변경 인벤토리 출력은 무시). 통과하면 현재 브랜치를 **자기 이름 명시 refspec**으로 push한다 — `git push -u origin HEAD:<현재브랜치>` (bare `git push` 금지). 이미 올라가 있으면 생략한다.
 
 ## PR 제목
 

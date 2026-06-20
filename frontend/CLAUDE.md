@@ -75,7 +75,18 @@ BE 의 `GET /dev/ws-catalog` 에 모든 토픽/큐/send destination 의 path·pa
 
 | 에이전트 | 설명 |
 | --- | --- |
-| `fe-code-reviewer` | 컴포넌트 계층·스타일링·훅 설계·접근성 기준 독립 코드 리뷰. 항상 `run_in_background: true`로 실행 |
+| `fe-code-reviewer` | zzol FE 고유 규칙(컴포넌트 계층·스타일 토큰·API 훅·WebSocket 컨트랙트·a11y·Storybook·ADR) 감수. 범용 버그·중복·효율은 다루지 않음. 항상 `run_in_background: true`로 실행 |
+
+#### 코드 리뷰 = 두 도구 병행
+
+"코드 리뷰해줘" 같은 요청은 **두 도구를 함께** 돌린다. 역할이 다르므로 한쪽만으로는 부족하다.
+
+| 도구 | 담당 | 호출 |
+| --- | --- | --- |
+| `/code-review` (내장 스킬) | 범용 버그(정확성)·중복·단순화·효율, 일반 React/TS 정확성. effort·`ultra`(클라우드)·`--comment`·`--fix` 지원 | Skill 툴 |
+| `fe-code-reviewer` (에이전트) | zzol FE 고유 규칙·ADR 준수 (`/code-review`가 모르는 영역) | Agent 툴, `run_in_background: true` |
+
+실행 패턴: `fe-code-reviewer`를 백그라운드로 먼저 띄우고 `/code-review`를 돌린 뒤, 두 결과를 합쳐 보고한다. (자세한 분업은 `.claude/agents/fe-code-reviewer.md` "검토 범위" 참조)
 
 ## 커맨드
 

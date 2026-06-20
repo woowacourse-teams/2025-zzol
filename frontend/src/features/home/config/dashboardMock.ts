@@ -4,6 +4,8 @@ import type {
   GamePlayCount,
   BlockStackingTopPlayer,
   RacingGameTopPlayer,
+  BlindTimerTopPlayer,
+  SpeedTouchTopPlayer,
 } from '@/types/dashBoard';
 
 export const MOCK_TOP_WINNERS: TopWinner[] = [
@@ -42,4 +44,20 @@ export const MOCK_RACING_GAME_TOP_PLAYERS: RacingGameTopPlayer[] = [
   { playerName: '광속', bestTime: 381 },
   { playerName: '빠름주의', bestTime: 412 },
   { playerName: '달려라', bestTime: 443 },
+];
+
+export const MOCK_BLIND_TIMER_TOP_PLAYERS: BlindTimerTopPlayer[] = [
+  { playerName: '체감시계', bestErrorMillis: 80 },
+  { playerName: '뇌피셜장인', bestErrorMillis: 150 },
+  { playerName: '느낌적인느낌', bestErrorMillis: 230 },
+  { playerName: '시간감각', bestErrorMillis: 360 },
+  { playerName: '대충맞춤', bestErrorMillis: 470 },
+];
+
+export const MOCK_SPEED_TOUCH_TOP_PLAYERS: SpeedTouchTopPlayer[] = [
+  { playerName: '터치왕', bestTime: 18230 },
+  { playerName: '손가락폭풍', bestTime: 19840 },
+  { playerName: '0.1초컷', bestTime: 21470 },
+  { playerName: '눈보다손', bestTime: 23910 },
+  { playerName: '연타고수', bestTime: 26350 },
 ];

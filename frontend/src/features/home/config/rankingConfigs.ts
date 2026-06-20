@@ -1,7 +1,22 @@
 import type { ComponentType } from 'react';
-import type { BlockStackingTopPlayer, RacingGameTopPlayer } from '@/types/dashBoard';
-import { BlocksIcon, RacingCarIcon } from '../components/RankingTab/rankingIcons';
-import { MOCK_BLOCK_STACKING_TOP_PLAYERS, MOCK_RACING_GAME_TOP_PLAYERS } from './dashboardMock';
+import type {
+  BlockStackingTopPlayer,
+  RacingGameTopPlayer,
+  BlindTimerTopPlayer,
+  SpeedTouchTopPlayer,
+} from '@/types/dashBoard';
+import {
+  BlocksIcon,
+  RacingCarIcon,
+  StopwatchIcon,
+  TouchIcon,
+} from '../components/RankingTab/rankingIcons';
+import {
+  MOCK_BLOCK_STACKING_TOP_PLAYERS,
+  MOCK_RACING_GAME_TOP_PLAYERS,
+  MOCK_BLIND_TIMER_TOP_PLAYERS,
+  MOCK_SPEED_TOUCH_TOP_PLAYERS,
+} from './dashboardMock';
 
 export type RankingItem = {
   rank: number;
@@ -18,6 +33,9 @@ export type RankingCategory = {
   transformData: (raw: unknown) => RankingItem[];
   mockRaw?: unknown;
 };
+
+/** 밀리초를 소수점 2자리 초로 변환한다 (예: 18230 → 18.23). */
+const millisToSeconds = (millis: number) => Math.round(millis / 10) / 100;
 
 export const RANKING_CATEGORIES: RankingCategory[] = [
   {
@@ -44,7 +62,35 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
       (raw as RacingGameTopPlayer[]).map((p, i) => ({
         rank: i + 1,
         name: p.playerName,
-        count: Math.round(p.bestTime / 10) / 100,
+        count: millisToSeconds(p.bestTime),
+        unit: '초',
+      })),
+  },
+  {
+    key: 'blind-timer-top-players',
+    label: '뇌피셜 초시계 최소 오차',
+    icon: StopwatchIcon,
+    endpoint: '/dashboard/blind-timer-top-players',
+    mockRaw: MOCK_BLIND_TIMER_TOP_PLAYERS,
+    transformData: (raw) =>
+      (raw as BlindTimerTopPlayer[]).map((p, i) => ({
+        rank: i + 1,
+        name: p.playerName,
+        count: millisToSeconds(p.bestErrorMillis),
+        unit: '초',
+      })),
+  },
+  {
+    key: 'speed-touch-top-players',
+    label: '스피드터치 최단 기록',
+    icon: TouchIcon,
+    endpoint: '/dashboard/speed-touch-top-players',
+    mockRaw: MOCK_SPEED_TOUCH_TOP_PLAYERS,
+    transformData: (raw) =>
+      (raw as SpeedTouchTopPlayer[]).map((p, i) => ({
+        rank: i + 1,
+        name: p.playerName,
+        count: millisToSeconds(p.bestTime),
         unit: '초',
       })),
   },

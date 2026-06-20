@@ -106,6 +106,40 @@ class ProfanityWordTest {
                 );
             }
         }
+
+        @Nested
+        class ASCII_최소_길이_미만 {
+
+            @Test
+            void 두_글자_ASCII_단어면_예외가_발생한다() {
+                assertCoffeeShoutException(
+                        () -> ProfanityWord.of("aa", Language.ENGLISH, WordSource.VANE),
+                        ProfanityErrorCode.WORD_TOO_SHORT
+                );
+            }
+
+            @Test
+            void 한_글자_ASCII_단어면_예외가_발생한다() {
+                assertCoffeeShoutException(
+                        () -> ProfanityWord.of("a", Language.ENGLISH, WordSource.VANE),
+                        ProfanityErrorCode.WORD_TOO_SHORT
+                );
+            }
+
+            @Test
+            void 세_글자_ASCII_단어는_정상_생성된다() {
+                final ProfanityWord word = ProfanityWord.of("sex", Language.ENGLISH, WordSource.VANE);
+
+                assertThat(word.word()).isEqualTo("sex");
+            }
+
+            @Test
+            void 두_글자_한글_단어는_ASCII가_아니므로_정상_생성된다() {
+                final ProfanityWord word = ProfanityWord.of("씨발", Language.KOREAN, WordSource.VANE);
+
+                assertThat(word.word()).isEqualTo("씨발");
+            }
+        }
     }
 
     @Nested

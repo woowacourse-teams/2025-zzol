@@ -81,4 +81,7 @@ user:
     refresh-token-expiration-seconds: 1209600
   oauth:
     frontend-redirect-uri: "http://localhost:3000/auth/callback"
+  email-crypto:
+    encryption-key: "local-dev-email-encryption-key-must-be-at-least-32-chars"
+    hmac-key: "local-dev-email-hmac-key-must-be-at-least-32-chars"
 

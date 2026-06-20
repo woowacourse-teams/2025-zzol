@@ -42,7 +42,7 @@ class ProfanityAuditServiceTest {
 
         @Test
         void 새로운_닉네임은_UNAUDITED_상태로_저장된다() {
-            given(auditRepository.existsByNicknameAndStatus("새닉네임", NicknameAuditStatus.UNAUDITED))
+            given(auditRepository.existsByNickname("새닉네임"))
                     .willReturn(false);
 
             service.register("새닉네임");
@@ -51,19 +51,20 @@ class ProfanityAuditServiceTest {
         }
 
         @Test
-        void 이미_UNAUDITED_상태인_닉네임은_중복_저장되지_않는다() {
-            given(auditRepository.existsByNicknameAndStatus("이미등록된닉네임", NicknameAuditStatus.UNAUDITED))
+        void 이미_등록된_닉네임은_재등록해도_중복_저장되지_않는다() {
+            // issue #1467 재현: 이미 검열된(CLEAN 등) 닉네임이 재등장하면, 상태 무관 검사가 없으면
+            // 새 UNAUDITED 중복이 생기고 다음 검열 시 (player_name, status) 유니크 충돌이 발생한다.
+            // 상태와 무관하게 이미 존재하면 저장하지 않아야 한다.
+            given(auditRepository.existsByNickname("이미검열된닉네임"))
                     .willReturn(true);
 
-            service.register("이미등록된닉네임");
+            service.register("이미검열된닉네임");
 
             then(auditRepository).should(never()).save(any());
         }
 
         @Test
         void 운영자_허용_닉네임은_검열_등록이_생략된다() {
-            given(auditRepository.existsByNicknameAndStatus("허용닉네임", NicknameAuditStatus.UNAUDITED))
-                    .willReturn(false);
             given(profanityWordManagementService.isOperatorAllowed("허용닉네임"))
                     .willReturn(true);
 

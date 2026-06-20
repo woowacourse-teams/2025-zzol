@@ -5,6 +5,7 @@ import coffeeshout.user.domain.OAuthAccount;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserCode;
 import coffeeshout.user.domain.UserNickname;
+import coffeeshout.user.infra.crypto.EmailBlindIndexHasher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ public class UserCreateAttemptHelper implements UserCreationPort {
 
     private final UserJpaRepository userJpaRepository;
     private final OAuthAccountJpaRepository oAuthAccountJpaRepository;
+    private final EmailBlindIndexHasher emailBlindIndexHasher;
 
     @Transactional
     public User attempt(UserNickname nickname, OAuthAccount oAuthAccount) {
@@ -26,7 +28,8 @@ public class UserCreateAttemptHelper implements UserCreationPort {
                 savedUser,
                 oAuthAccount.provider().getRegistrationId(),
                 oAuthAccount.providerUserId(),
-                oAuthAccount.email()
+                oAuthAccount.email(),
+                emailBlindIndexHasher.hash(oAuthAccount.email())
         );
         final OAuthAccountEntity savedOAuth = oAuthAccountJpaRepository.save(oAuthAccountEntity);
 

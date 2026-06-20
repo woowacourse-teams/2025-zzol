@@ -131,7 +131,6 @@ PlayerNameAuditService.auditPending()
 **FLAGGED는 즉시 차단, PENDING은 운영자 검토를 거친다.**
 FLAGGED 차단 후 운영자가 오판으로 판단하면 ALLOWED 처리로 필터에서 제거한다.
 
-
 ### 신뢰도 임계값
 
 | 상태        | 조건                                   | 자동 처리                                         | 운영자 액션              |

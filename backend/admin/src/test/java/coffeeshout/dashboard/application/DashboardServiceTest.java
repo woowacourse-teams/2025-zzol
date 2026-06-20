@@ -3,9 +3,12 @@ package coffeeshout.dashboard.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.blindtimer.domain.BlindTimerScore;
+import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
+import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.AdminModuleServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -20,6 +23,7 @@ import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.room.infra.persistence.RouletteResultEntity;
 import coffeeshout.room.infra.persistence.RouletteResultJpaRepository;
+import coffeeshout.speedtouch.domain.SpeedTouchScore;
 import coffeeshout.user.infra.persistence.UserEntity;
 import coffeeshout.user.infra.persistence.UserJpaRepository;
 import java.util.List;
@@ -517,6 +521,213 @@ class DashboardServiceTest extends AdminModuleServiceTest {
                 softly.assertThat(result).hasSize(1);
                 softly.assertThat(result.getFirst().playerName()).isEqualTo("철수");
             });
+        }
+    }
+
+    @Nested
+    @DisplayName("getSpeedTouchTopPlayers 테스트")
+    class GetSpeedTouchTopPlayersTest {
+
+        @Test
+        void 이번달_스피드터치_최단_완주시간_기준_오름차순으로_조회한다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("STAA"));
+            final MiniGameEntity miniGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.SPEED_TOUCH)
+            );
+
+            final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
+            final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
+            final PlayerEntity 민수 = playerJpaRepository.save(new PlayerEntity(room, "민수", PlayerType.GUEST));
+
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수, 1, 1000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 영희, 2, 2000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 민수, 3, 3000L));
+
+            // when
+            final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).hasSize(3);
+                softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(0).bestTime()).isEqualTo(1000L);
+                softly.assertThat(result.get(2).playerName()).isEqualTo("민수");
+            });
+        }
+
+        @Test
+        void 미완주_DNF_기록은_집계에서_제외된다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("STBB"));
+            final MiniGameEntity miniGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.SPEED_TOUCH)
+            );
+            final PlayerEntity 완주자 = playerJpaRepository.save(new PlayerEntity(room, "완주자", PlayerType.HOST));
+            final PlayerEntity 미완주자 = playerJpaRepository.save(new PlayerEntity(room, "미완주자", PlayerType.GUEST));
+
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 완주자, 1, 4000L));
+            // DNF 점수는 도메인 정의(SpeedTouchScore.ofDnf)에서 생성해 경계값이 실제 정의와 회귀로 묶이게 한다
+            miniGameResultJpaRepository.save(
+                    new MiniGameResultEntity(miniGame, 미완주자, 2, SpeedTouchScore.ofDnf(2).getValue()));
+
+            // when
+            final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).hasSize(1);
+                softly.assertThat(result.getFirst().playerName()).isEqualTo("완주자");
+                softly.assertThat(result.getFirst().bestTime()).isEqualTo(4000L);
+            });
+        }
+
+        @Test
+        void 같은_플레이어의_여러_기록은_최단_시간으로_집계된다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("STCC"));
+            final MiniGameEntity miniGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.SPEED_TOUCH)
+            );
+            final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
+
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수, 1, 5000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수, 1, 2000L));
+
+            // when
+            final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).hasSize(1);
+                softly.assertThat(result.getFirst().bestTime()).isEqualTo(2000L);
+            });
+        }
+
+        @Test
+        void 다섯명_초과이면_상위_5명만_반환한다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("STDD"));
+            final MiniGameEntity miniGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.SPEED_TOUCH)
+            );
+
+            for (int i = 1; i <= 7; i++) {
+                final PlayerEntity player = playerJpaRepository.save(
+                        new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST)
+                );
+                miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, player, i, (long) i * 1000));
+            }
+
+            // when
+            final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).hasSize(5);
+                softly.assertThat(result.getFirst().bestTime()).isEqualTo(1000L);
+            });
+        }
+
+        @Test
+        void 다른_게임_타입의_결과는_포함하지_않는다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("STEE"));
+            final MiniGameEntity speedTouch = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.SPEED_TOUCH)
+            );
+            final MiniGameEntity racing = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.RACING_GAME)
+            );
+
+            final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
+            final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
+
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(speedTouch, 철수, 1, 1500L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(racing, 영희, 1, 500L));
+
+            // when
+            final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).hasSize(1);
+                softly.assertThat(result.getFirst().playerName()).isEqualTo("철수");
+            });
+        }
+
+        @Test
+        void 이번달_스피드터치_기록이_없으면_빈_리스트를_반환한다() {
+            // when
+            final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
+
+            // then
+            assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("getBlindTimerTopPlayers 테스트")
+    class GetBlindTimerTopPlayersTest {
+
+        @Test
+        void 이번달_목표시간과의_오차가_작은_순으로_오름차순_조회한다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("BTAA"));
+            final MiniGameEntity miniGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.BLIND_TIMER)
+            );
+            final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
+            final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
+
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수, 1, 120L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 영희, 2, 800L));
+
+            // when
+            final List<BlindTimerTopPlayerResponse> result = dashboardService.getBlindTimerTopPlayers();
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).hasSize(2);
+                softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(0).bestErrorMillis()).isEqualTo(120L);
+                softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
+            });
+        }
+
+        @Test
+        void 타임아웃_기록은_집계에서_제외된다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("BTBB"));
+            final MiniGameEntity miniGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room, MiniGameType.BLIND_TIMER)
+            );
+            final PlayerEntity 정상 = playerJpaRepository.save(new PlayerEntity(room, "정상", PlayerType.HOST));
+            final PlayerEntity 타임아웃 = playerJpaRepository.save(new PlayerEntity(room, "타임아웃", PlayerType.GUEST));
+
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 정상, 1, 3000L));
+            // 타임아웃 점수는 도메인 정의(BlindTimerScore.ofTimeout)에서 생성해 경계값이 실제 정의와 회귀로 묶이게 한다
+            miniGameResultJpaRepository.save(
+                    new MiniGameResultEntity(miniGame, 타임아웃, 2, BlindTimerScore.ofTimeout().getValue()));
+
+            // when
+            final List<BlindTimerTopPlayerResponse> result = dashboardService.getBlindTimerTopPlayers();
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).hasSize(1);
+                softly.assertThat(result.getFirst().playerName()).isEqualTo("정상");
+                softly.assertThat(result.getFirst().bestErrorMillis()).isEqualTo(3000L);
+            });
+        }
+
+        @Test
+        void 이번달_블라인드타이머_기록이_없으면_빈_리스트를_반환한다() {
+            // when
+            final List<BlindTimerTopPlayerResponse> result = dashboardService.getBlindTimerTopPlayers();
+
+            // then
+            assertThat(result).isEmpty();
         }
     }
 }

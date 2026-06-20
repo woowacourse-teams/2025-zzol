@@ -1,7 +1,7 @@
 # 0026. Alertmanager 단일 알림 엔진 채택 — Grafana Alerting 통합과 2단계 롤아웃
 
 - 날짜: 2026-06-11
-- 상태: 제안
+- 상태: 적용됨 (Phase A #1399·Phase B #1412 머지)
 
 ## 컨텍스트
 

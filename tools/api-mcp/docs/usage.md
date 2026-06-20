@@ -32,10 +32,13 @@ REST API 를 OpenAPI spec 기반으로 탐색·호출·검증한다. spec 은 `$
 1. **엔드포인트 찾기** — `http_list_endpoints` (`method`/`tag`/`q` 로 필터). 예: `tag:"room"`, `method:"POST"`, `q:"join"`.
 2. **스키마 상세** — `http_describe method:"POST" path:"/api/rooms"`. 요청/응답 스키마를 자세히 본다.
 3. **실제 호출** (BE 필요) — `http_request`:
+
    ```text
    http_request path:"/api/rooms" method:"POST" body:{ "hostName": "..." }
    ```
+
    `{ request, response }` 형태로 반환한다. GET/HEAD/DELETE 등에 `body` 를 실으면 거부된다.
+
 4. **바디 검증** — `http_validate method:"POST" path:"/api/rooms" requestBody:{...}`. 누락 필드·타입 불일치를 OpenAPI 스키마와 대조해 리포트한다. 응답 검증은 `responseBody`/`responseStatus` 를 함께 넘긴다.
 
 ## 자주 겪는 문제

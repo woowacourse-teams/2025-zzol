@@ -1,9 +1,11 @@
 package coffeeshout.dashboard.ui;
 
+import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
+import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,4 +29,10 @@ public interface DashboardApi {
 
     @Operation(summary = "블록 쌓기 TOP 플레이어 조회", description = "이번 달 블록 쌓기 게임 최고 층수 기준 상위 5명을 조회합니다.")
     ResponseEntity<List<BlockStackingTopPlayerResponse>> getBlockStackingTopPlayers();
+
+    @Operation(summary = "스피드터치 TOP 플레이어 조회", description = "이번 달 스피드터치(1to25) 최단 완주 시간 기준 상위 5명을 조회합니다.")
+    ResponseEntity<List<SpeedTouchTopPlayerResponse>> getSpeedTouchTopPlayers();
+
+    @Operation(summary = "뇌피셜 초시계 TOP 플레이어 조회", description = "이번 달 블라인드타이머 목표 시간과의 오차가 가장 작은 상위 5명을 조회합니다.")
+    ResponseEntity<List<BlindTimerTopPlayerResponse>> getBlindTimerTopPlayers();
 }

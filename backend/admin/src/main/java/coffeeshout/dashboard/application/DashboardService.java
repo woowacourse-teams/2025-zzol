@@ -1,9 +1,11 @@
 package coffeeshout.dashboard.application;
 
+import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
+import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import java.time.Clock;
@@ -58,6 +60,20 @@ public class DashboardService {
         final LocalDateTime endOfMonth = getEndOfMonth();
 
         return dashboardStatisticsRepository.findBlockStackingTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT);
+    }
+
+    public List<SpeedTouchTopPlayerResponse> getSpeedTouchTopPlayers() {
+        final LocalDateTime startOfMonth = getStartOfMonth();
+        final LocalDateTime endOfMonth = getEndOfMonth();
+
+        return dashboardStatisticsRepository.findSpeedTouchTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT);
+    }
+
+    public List<BlindTimerTopPlayerResponse> getBlindTimerTopPlayers() {
+        final LocalDateTime startOfMonth = getStartOfMonth();
+        final LocalDateTime endOfMonth = getEndOfMonth();
+
+        return dashboardStatisticsRepository.findBlindTimerTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT);
     }
 
     private LocalDateTime getStartOfMonth() {

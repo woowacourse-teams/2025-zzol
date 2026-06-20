@@ -1,10 +1,12 @@
 package coffeeshout.dashboard.ui;
 
 import coffeeshout.dashboard.application.DashboardService;
+import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
+import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -43,5 +45,15 @@ public class DashboardController implements DashboardApi {
     @GetMapping("/block-stacking-top-players")
     public ResponseEntity<List<BlockStackingTopPlayerResponse>> getBlockStackingTopPlayers() {
         return ResponseEntity.ok(dashboardService.getBlockStackingTopPlayers());
+    }
+
+    @GetMapping("/speed-touch-top-players")
+    public ResponseEntity<List<SpeedTouchTopPlayerResponse>> getSpeedTouchTopPlayers() {
+        return ResponseEntity.ok(dashboardService.getSpeedTouchTopPlayers());
+    }
+
+    @GetMapping("/blind-timer-top-players")
+    public ResponseEntity<List<BlindTimerTopPlayerResponse>> getBlindTimerTopPlayers() {
+        return ResponseEntity.ok(dashboardService.getBlindTimerTopPlayers());
     }
 }

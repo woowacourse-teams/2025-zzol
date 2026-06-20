@@ -89,18 +89,21 @@
 ## 계층별 역할 구분
 
 ### Application Layer
+
 - 유스케이스 단위로 클래스를 나눈다
 - 도메인 서비스들을 조합하고 외부 의존성(스케줄러, 알림 등)을 주입받는다
 - `{Domain}FlowOrchestrator`: 복잡한 게임 흐름(타이밍, 페이즈 전환)을 관리
 - `{Domain}Notifier`: 도메인 이벤트를 WebSocket 메시지로 변환하여 발행
 
 ### Domain Layer
+
 - 순수 비즈니스 로직만 포함한다. 스프링 의존성을 최소화한다
 - `{Domain}CommandService`: 단일 커맨드 처리 (select, touch 등)
 - 포트(interface)를 도메인에 정의하고, 구현체는 `infra/`에 위치
 - 도메인 이벤트는 record로 정의한다
 
 ### Infrastructure Layer
+
 - 포트 구현체, JPA 엔티티, Redis Stream Consumer
 - JPA 엔티티는 `{Domain}Entity`로 도메인 객체와 분리
 
@@ -108,7 +111,7 @@
 
 ## 메시지 처리 흐름
 
-```
+```text
 클라이언트 WebSocket 메시지
   → ui/ Handler (커맨드 수신)
   → 도메인 이벤트 생성 (record)
@@ -131,7 +134,7 @@
 
 새 게임을 추가할 때 기존 코드를 수정하지 않아도 된다 (OCP).
 
-```
+```text
 :game-api
   Playable        — 게임이 구현해야 하는 인터페이스
   MiniGameFactory — 게임 생성 SPI (각 게임이 Spring 빈으로 등록)
@@ -152,7 +155,7 @@
 
 게임 페이즈 전환(로딩 → 플레이 → 스코어보드)은 `CompletableFuture` 체인으로 구현된다.
 
-```
+```text
 FlowOrchestrator
   → FlowScheduler (port, :game-api)
     → CompletableFutureFlowScheduler (infra 구현체, :game)

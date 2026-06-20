@@ -1,0 +1,12 @@
+{
+  // markdownlint-cli2 실행 설정 (대상 파일 범위 전용).
+  // 린트 "규칙"의 SSOT는 .markdownlint.jsonc 이며, 여기에는 rules(config) 키를 두지 않는다.
+  // 인자 없이 `npx markdownlint-cli2` 실행 시 아래 globs/ignores 가 적용된다.
+  "globs": ["**/*.md"],
+  "ignores": [
+    "**/node_modules/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/.gradle/**"
+  ]
+}

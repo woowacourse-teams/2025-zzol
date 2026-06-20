@@ -1,9 +1,11 @@
 package coffeeshout.dashboard.domain.repository;
 
+import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
+import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +34,18 @@ public interface DashboardStatisticsRepository {
     );
 
     List<BlockStackingTopPlayerResponse> findBlockStackingTopPlayers(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int limit
+    );
+
+    List<SpeedTouchTopPlayerResponse> findSpeedTouchTopPlayers(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int limit
+    );
+
+    List<BlindTimerTopPlayerResponse> findBlindTimerTopPlayers(
             LocalDateTime startDate,
             LocalDateTime endDate,
             int limit

@@ -20,6 +20,12 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 
 ---
 
+## 커밋 규칙 (모든 Phase 공통)
+
+각 Phase의 "커밋한다" 단계 직전에 `bash .claude/skills/commit/preflight.sh`를 실행해 보호 브랜치·detached HEAD를 차단한다(`ABORT` 출력 시 즉시 중단·보고). 통과하면 해당 계층 파일만 `git add` 후 `feat: ...`로 커밋한다. Phase 테스트는 이미 검증했으므로 `/commit`의 재검증은 생략한다.
+
+---
+
 ## Phase 1: 도메인 계층 (`--from=domain`)
 
 **목표**: 비즈니스 규칙을 순수 Java로 표현한다. Spring·JPA 등 외부 의존성 없이 작성한다.
@@ -77,16 +83,18 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 구현 대상:
 - REST Controller
 - Request/Response DTO
+- WebSocket Handler (해당 시): 커맨드 수신 후 **Redis Stream에 발행**한다. Application Service를 직접 호출하지 않는다 — CLAUDE.md 핵심 제약(Handler → Stream 발행 → Consumer → Service → Notifier). Stream을 건너뛰면 비동기 처리 보장이 깨진다. (REST Controller는 Service 직접 위임 OK)
 
 완료 기준:
 - [ ] Controller는 요청 파싱·응답 직렬화·서비스 위임만 담당
 - [ ] 비즈니스 로직이 Controller에 없음
 - [ ] API 응답 형식이 기존 컨벤션과 일치
+- [ ] WebSocket 경로는 Application Service 직접 호출 없이 Stream 발행을 경유
 
 완료 후:
 1. `/write-tests`를 호출해 통합 테스트를 작성한다
-   - REST: `@IntegrationTest` 사용 (`@WebMvcTest` 사용 금지)
-   - WebSocket: `WebSocketIntegrationTestSupport` 상속
+   - REST: 모듈 로컬 `{Module}IntegrationTest` 상속(`coffeeshout.support.IntegrationTestSupport` 확장, 기본 `MOCK`). `@WebMvcTest` 금지. `@IntegrationTest` 애노테이션은 없다 — 베이스 클래스 상속이다
+   - WebSocket: `WebSocketIntegrationTestSupport` 상속(`RANDOM_PORT`)
 2. `/run-tests 해당패키지.* --sync` 를 호출해 모든 테스트가 통과하는지 확인한다.
 3. `test-verifier` agent를 `run_in_background: true`로 실행한다
 4. 컨트롤러 계층 코드와 테스트를 커밋한다 (`feat: [기능명] 컨트롤러 계층 구현`)

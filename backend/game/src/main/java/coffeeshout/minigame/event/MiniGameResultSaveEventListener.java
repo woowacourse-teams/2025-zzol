@@ -3,6 +3,8 @@ package coffeeshout.minigame.event;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.gamecommon.Playable;
+import coffeeshout.gamecommon.PlayerRef;
+import coffeeshout.gamecommon.RoomReferencePort;
 import coffeeshout.global.lock.RedisLock;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameResult;
@@ -13,10 +15,6 @@ import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
-import coffeeshout.room.infra.persistence.PlayerEntity;
-import coffeeshout.room.infra.persistence.PlayerJpaRepository;
-import coffeeshout.room.infra.persistence.RoomEntity;
-import coffeeshout.room.infra.persistence.RoomJpaRepository;
 import coffeeshout.user.application.service.UserStatsService;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
@@ -35,8 +33,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MiniGameResultSaveEventListener {
 
-    private final RoomJpaRepository roomJpaRepository;
-    private final PlayerJpaRepository playerJpaRepository;
+    private final RoomReferencePort roomReferencePort;
     private final MiniGameJpaRepository miniGameJpaRepository;
     private final MiniGameResultJpaRepository miniGameResultJpaRepository;
     private final GameSessionService gameSessionService;
@@ -55,12 +52,12 @@ public class MiniGameResultSaveEventListener {
             leaseTime = 5000
     )
     public void handle(MiniGameFinishedEvent event) {
-        final RoomEntity roomEntity = roomJpaRepository.findFirstByJoinCodeOrderByCreatedAtDesc(event.joinCode())
+        final Long roomSessionId = roomReferencePort.findCurrentRoomSessionId(event.joinCode())
                 .orElseThrow(() -> new IllegalArgumentException("방이 존재하지 않습니다: " + event.joinCode()));
         final MiniGameType miniGameType = MiniGameType.valueOf(event.miniGameType());
 
         final MiniGameEntity miniGameEntity = miniGameJpaRepository
-                .findByRoomSessionAndMiniGameType(roomEntity, miniGameType)
+                .findByRoomSessionIdAndMiniGameType(roomSessionId, miniGameType)
                 .orElseThrow(() -> new IllegalArgumentException("미니게임 엔티티가 존재하지 않습니다: " + event.joinCode()));
 
         final Playable miniGame = gameSessionService.getSession(new JoinCode(event.joinCode()))
@@ -73,44 +70,43 @@ public class MiniGameResultSaveEventListener {
                 .map(Gamer::getName)
                 .toList();
 
-        final Map<String, PlayerEntity> playerEntityMap = playerJpaRepository
-                .findByRoomSessionAndPlayerNameIn(roomEntity, playerNames)
+        final Map<String, PlayerRef> playerRefMap = roomReferencePort
+                .findPlayerRefs(roomSessionId, playerNames)
                 .stream()
                 .collect(Collectors.toMap(
-                        PlayerEntity::getPlayerName,
+                        PlayerRef::name,
                         Function.identity(),
                         (existing, replacement) -> existing
                 ));
 
         final List<MiniGameResultEntity> resultEntities = new ArrayList<>();
+        // PlayerEntity 참조가 사라져 저장 후 엔티티에서 userId를 다시 읽을 수 없으므로,
+        // 결과 조립 시점에 PlayerRef.userId를 캡처해 stats 갱신 목록을 함께 만든다.
+        final List<StatUpdate> statUpdates = new ArrayList<>();
 
         for (Map.Entry<Gamer, MiniGameScore> entry : scores.entrySet()) {
             final Gamer gamer = entry.getKey();
-            final PlayerEntity playerEntity = playerEntityMap.get(gamer.getName());
-            if (playerEntity == null) {
+            final PlayerRef playerRef = playerRefMap.get(gamer.getName());
+            if (playerRef == null) {
                 throw new IllegalArgumentException("플레이어가 존재하지 않습니다: " + gamer.getName());
             }
 
             final Integer rank = result.getPlayerRank(gamer);
             final Long score = entry.getValue().getValue();
 
-            resultEntities.add(new MiniGameResultEntity(
-                    miniGameEntity,
-                    playerEntity,
-                    rank,
-                    score
-            ));
+            resultEntities.add(new MiniGameResultEntity(miniGameEntity, playerRef.id(), rank, score));
+            if (playerRef.userId() != null) {
+                statUpdates.add(new StatUpdate(playerRef.userId(), rank == 1));
+            }
         }
 
         miniGameResultJpaRepository.bulkInsert(resultEntities);
 
-        resultEntities.stream()
-                .filter(entity -> entity.getPlayer().getUserId() != null)
-                .forEach(entity -> userStatsService.updateStats(
-                        entity.getPlayer().getUserId(),
-                        entity.getRank() == 1
-                ));
+        statUpdates.forEach(statUpdate -> userStatsService.updateStats(statUpdate.userId(), statUpdate.winner()));
 
         log.info("미니게임 결과 벌크 저장 완료: joinCode={}, playerCount={}", event.joinCode(), resultEntities.size());
+    }
+
+    private record StatUpdate(Long userId, boolean winner) {
     }
 }

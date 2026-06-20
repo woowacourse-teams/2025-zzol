@@ -54,10 +54,9 @@ public class RoomGameSeparationArchitectureTest {
             .as("room.application의 게임 패키지 참조는 game-api 이벤트 in-process 리스너 3곳만 허용한다 (ADR-0025)");
 
     /**
-     * [의도된 예외] MiniGamePersistenceService는 PlayerEntity 영속 필드(name, playerType, userId)를
-     * 채우기 위해 room.getPlayers()의 Player에 접근한다. Gamer는 playerType을 갖지 않아 대체 불가.
-     * GameArchitectureTest의 room.infra JPA FK 예외와 같은 계열이며, 해소 방향도 동일하다
-     * (FK를 ID 참조로 변경 시 함께 제거 가능).
+     * :game은 room.domain.player를 참조할 수 없다 — 플레이어 식별은 Gamer(:game-api)를 사용한다.
+     * (ADR-0025 FK 영속 책임 분리 완료로, PlayerEntity 영속을 위해 Player에 접근하던
+     * MiniGamePersistenceService 예외가 제거됐다 — 이제 RoomReferencePort.findPlayerRefs로 ID·userId만 받는다.)
      */
     @ArchTest
     static final ArchRule game은_room_domain_player를_참조할_수_없다 = noClasses()
@@ -70,33 +69,22 @@ public class RoomGameSeparationArchitectureTest {
                     "coffeeshout.speedtouch..",
                     "coffeeshout.blindtimer.."
             )
-            .and().haveSimpleNameNotContaining("PersistenceService")
             .should().dependOnClassesThat()
             .resideInAPackage("coffeeshout.room.domain.player..")
             .as("게임 모듈은 room.domain.player를 참조할 수 없다 — 플레이어 식별은 Gamer(:game-api)를 사용한다 (ADR-0025)");
 
     /**
-     * [ADR-0025 재유입 방지] :game 게임 서비스·도메인·플로우 계층은 Room 애그리거트
-     * (coffeeshout.room.domain..)를 직접 참조할 수 없다. 게임 식별은 JoinCode, 플레이어 식별은 Gamer를
-     * 사용하며, 게임 인스턴스 조회는 GameSession을 경유한다. "joinCode를 얻으려 Room을 왕복 조회"하던
-     * 패턴(RoomQueryService.getByJoinCode → room.getJoinCode())의 재도입을 차단한다.
+     * [ADR-0025 재유입 방지] :game(게임 서비스·도메인·플로우·영속·UI)은 :room(coffeeshout.room..) 전체를
+     * 직접 참조할 수 없다. 게임 식별은 JoinCode, 플레이어 식별은 Gamer를 쓰고, 게임 인스턴스 조회는
+     * GameSession을 경유하며, :room의 식별·상태·영속이 필요하면 RoomReferencePort(:game-api)를 통한다.
+     * "joinCode를 얻으려 Room을 왕복 조회"하던 패턴(RoomQueryService.getByJoinCode)의 재도입도 차단한다.
      *
-     * <p>현 상태를 동결(freeze)해 신규 위반을 막는다. 아래는 현재 정당한 :game → room.domain 참조다.
-     * <ul>
-     *   <li>MiniGamePersistenceService : 결과 영속 시 Room/RoomState/Player 접근 (JPA FK 예외 계열 —
-     *       ADR-0025 후속 작업에서 MiniGameEntity의 RoomEntity FK·PlayerEntity 영속 책임 분리 예정)</li>
-     * </ul>
-     *
-     * <p>이전에 정당 참조였던 다음 클래스는 ADR-0025 결정 4·6 개정으로 :room 의존이 제거됐다.
-     * <ul>
-     *   <li>MiniGameEventService       : 게임 시작을 {@code GameStartReadyEvent}(in-process 동기)로 분리 — 명단은 :room이 실어 전달</li>
-     *   <li>MiniGameSelectConsumer     : 호스트 검증을 GameSession으로 이관(권위 세션 사전 생성, Option B)</li>
-     *   <li>GameSessionInit/CleanupConsumer : 생명주기 이벤트를 :game-api(GameRoomCreated/RemovedEvent)로 이전</li>
-     *   <li>PlayerHands                : 공용 {@code GameErrorCode}(:game-api)로 교체</li>
-     * </ul>
+     * <p>FK 영속 책임 분리 완료로, 이전의 정당 참조(MiniGamePersistenceService·MiniGameResultSaveEventListener의
+     * RoomEntity/PlayerEntity/RoomState/RoomQueryService 직접 참조)가 모두 제거돼 더 이상 예외 클래스가 없다.
+     * room.domain뿐 아니라 room.application·room.infra까지 포함한 :room 전체로 금지 범위를 격상한다.
      */
     @ArchTest
-    static final ArchRule game은_room_domain을_직접_참조할_수_없다 = noClasses()
+    static final ArchRule game은_room을_직접_참조할_수_없다 = noClasses()
             .that().resideInAnyPackage(
                     "coffeeshout.minigame..",
                     "coffeeshout.cardgame..",
@@ -106,9 +94,8 @@ public class RoomGameSeparationArchitectureTest {
                     "coffeeshout.speedtouch..",
                     "coffeeshout.blindtimer.."
             )
-            .and().haveSimpleNameNotContaining("MiniGamePersistenceService")
             .should().dependOnClassesThat()
-            .resideInAPackage("coffeeshout.room.domain..")
-            .as("게임 모듈은 Room 애그리거트(coffeeshout.room.domain..)를 직접 참조할 수 없다 "
-                    + "— 식별은 JoinCode/Gamer, 게임 조회는 GameSession 경유 (ADR-0025)");
+            .resideInAPackage("coffeeshout.room..")
+            .as("게임 모듈은 :room(coffeeshout.room..)을 직접 참조할 수 없다 "
+                    + "— 식별은 JoinCode/Gamer, 게임 조회는 GameSession, room 참조는 RoomReferencePort(:game-api) 경유 (ADR-0025)");
 }

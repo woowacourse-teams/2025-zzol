@@ -9,13 +9,14 @@ allowed-tools: Read, Glob, Grep, Write, Edit
 ## 순서
 
 1. 대상 클래스의 public 메서드와 책임을 파악한다
-2. `src/test/java/` 하위 동일 패키지에 테스트 파일을 생성한다
+2. 해당 **모듈의** `src/test/java/` 하위 동일 패키지에 테스트 파일을 생성한다 (멀티모듈 — 경로는 `<module>/src/test/java/coffeeshout/...`)
 3. `docs/conventions-test.md`의 컨벤션을 따른다
 
 ## 반드시 지킬 규칙
 
+- **모듈 로컬 베이스를 상속한다** — 서비스 테스트는 `{Module}ServiceTest`, 통합 테스트는 `{Module}IntegrationTest`(각각 `coffeeshout.support.ServiceTest` / `IntegrationTestSupport` 확장). 이 상속이 TestContainers(MySQL·Valkey)와 `test` 프로파일을 자동 구동한다. 빠뜨리면 컨테이너가 안 떠 테스트가 깨진다 (ADR-0015)
+- Fixture를 활용한다(없으면 생성). 모듈 간 **공유**는 `src/testFixtures/java/coffeeshout/fixture/`, 모듈 **내부 전용**은 `src/test/java/coffeeshout/fixture/`. 유형 구분: `*Fixture`(팩토리)·`*Fake`·`*Dummy`·`Stub*`·`TestDataHelper`(@Component DB헬퍼) (ADR-0016)
 - `@Nested`로 시나리오를 그룹화한다
-- `src/test/java/coffeeshout/fixture/`의 Fixture를 활용한다 (없으면 생성)
 - 테스트 메서드명은 한글로 작성한다
 - 복수 검증은 `SoftAssertions`를 사용한다
 

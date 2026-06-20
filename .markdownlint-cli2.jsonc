@@ -7,6 +7,8 @@
     "**/node_modules/**",
     "**/build/**",
     "**/dist/**",
-    "**/.gradle/**"
+    "**/.gradle/**",
+    // git-ignored 임시 워크트리 — CI 체크아웃엔 없으므로 로컬 린트에서도 제외한다
+    "**/.claude/worktrees/**"
   ]
 }

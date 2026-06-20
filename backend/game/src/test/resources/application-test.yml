@@ -26,7 +26,8 @@ roulette:
 # :profanity 빈(ProfanityChecker 구현체)이 컨텍스트에 포함되므로 필요하다
 nickname-audit:
   gemini-api-key: test-key
-  model: gemini-test
+  models:
+    - gemini-test
   flagged-threshold: 0.85
   batch-size: 10
   feedback-injection-threshold: 20

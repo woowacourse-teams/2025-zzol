@@ -33,7 +33,10 @@ report:
 
 nickname-audit:
   gemini-api-key: ${GEMINI_API_KEY}   # local/test 프로파일에서는 NoOpNicknameAuditor가 대신 동작
-  model: gemini-3.5-flash
+  models:                              # 우선순위 순 폴백: 한 모델이 429(요청 한도)면 다음 모델로 전환
+    - gemini-3-flash                   # 1순위
+    - gemini-3.5-flash                 # 2순위
+    - gemini-2.5-flash                 # 최후 폴백
   flagged-threshold: 0.85
   batch-size: 100                      # API 호출 1회당 처리량 (RPM 5 기준 100개씩 5회 = 500개/min)
   feedback-injection-threshold: 20

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
+import com.google.genai.errors.ApiException;
 import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
@@ -94,28 +95,76 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
     @RateLimiter(name = "geminiAudit")
     public List<NicknameAuditResult> audit(List<String> nicknames) {
         final String userMessage = buildUserMessage(nicknames);
-
-        final GenerateContentResponse response;
-        try {
-            response = apiCallTimer.recordCallable(() ->
-                    geminiClient.models.generateContent(
-                            properties.model(),
-                            userMessage,
-                            GenerateContentConfig.builder()
-                                    .systemInstruction(SYSTEM_INSTRUCTION)
-                                    .responseMimeType("application/json")
-                                    .responseSchema(RESPONSE_SCHEMA)
-                                    .build()
-                    ));
-        } catch (Exception e) {
-            throw new InfrastructureException(NicknameAuditErrorCode.AI_CALL_FAILED, "닉네임 검열 AI 호출 실패", e);
-        }
+        final GenerateContentResponse response = callWithModelFallback(userMessage);
 
         if (response == null || response.text() == null) {
             throw new InfrastructureException(NicknameAuditErrorCode.AI_EMPTY_RESPONSE, "닉네임 검열 AI가 빈 응답을 반환했습니다.");
         }
 
         return parseResults(response.text(), nicknames);
+    }
+
+    /**
+     * 모델 목록을 우선순위 순으로 호출한다. 요청 한도(429)에 걸린 모델은 건너뛰고 다음 모델로 폴백한다.
+     * 무료 등급의 RPM/RPD 한도는 프로젝트·모델 단위로 부과되므로, 모델을 바꾸면 별도 한도 버킷을 사용한다.
+     * 한도 외의 오류(400 등 결정론적 실패)는 모델을 바꿔도 동일하게 실패하므로 즉시 중단한다.
+     */
+    private GenerateContentResponse callWithModelFallback(String userMessage) {
+        final List<String> models = properties.models();
+        for (int i = 0; i < models.size(); i++) {
+            final String model = models.get(i);
+            try {
+                return apiCallTimer.recordCallable(() ->
+                        geminiClient.models.generateContent(
+                                model,
+                                userMessage,
+                                GenerateContentConfig.builder()
+                                        .systemInstruction(SYSTEM_INSTRUCTION)
+                                        .responseMimeType("application/json")
+                                        .responseSchema(RESPONSE_SCHEMA)
+                                        .build()
+                        ));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new InfrastructureException(NicknameAuditErrorCode.AI_CALL_FAILED, "닉네임 검열 AI 호출 중 인터럽트", e);
+            } catch (Exception e) {
+                if (!shouldFallback(e)) {
+                    throw new InfrastructureException(NicknameAuditErrorCode.AI_CALL_FAILED, "닉네임 검열 AI 호출 실패", e);
+                }
+                if (i == models.size() - 1) {
+                    throw new InfrastructureException(NicknameAuditErrorCode.AI_RATE_LIMIT_EXHAUSTED, "모든 Gemini 모델 호출 실패(요청 한도 또는 모델 없음)", e);
+                }
+                log.warn("[NicknameAudit] 모델 {} 호출 불가(429/404), 폴백 → {}", model, models.get(i + 1));
+            }
+        }
+        throw new InfrastructureException(NicknameAuditErrorCode.AI_RATE_LIMIT_EXHAUSTED, "모든 Gemini 모델 호출 실패(요청 한도 또는 모델 없음)");
+    }
+
+    /**
+     * 다음 모델로 폴백해야 하는 오류인지 판별한다.
+     * <ul>
+     *   <li>429(RESOURCE_EXHAUSTED): 요청 한도 초과 — 다른 모델은 별도 한도 버킷을 가진다</li>
+     *   <li>404(NOT_FOUND): 모델이 없거나 미제공 — 모델 단위 문제이므로 다음 모델을 시도한다</li>
+     * </ul>
+     * 그 외(400 등 전역·결정론적 오류, 5xx)는 모델을 바꿔도 동일하게 실패하므로 폴백하지 않는다.
+     * 우선 SDK의 {@link ApiException#code()}로 식별하고, 래핑 등으로 타입을 잃은 경우 메시지로 보조 판별한다.
+     */
+    boolean shouldFallback(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof ApiException apiException && (apiException.code() == 429 || apiException.code() == 404)) {
+                return true;
+            }
+            final String message = t.getMessage();
+            if (message != null && (
+                    message.contains("RESOURCE_EXHAUSTED")
+                            || message.contains("Too Many Requests")
+                            || message.contains("rateLimitExceeded")
+                            || message.contains("Quota exceeded")
+                            || message.contains("NOT_FOUND"))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String buildUserMessage(List<String> nicknames) {

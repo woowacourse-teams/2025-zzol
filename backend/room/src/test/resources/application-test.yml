@@ -22,7 +22,8 @@ roulette:
 
 nickname-audit:
   gemini-api-key: test-key
-  model: gemini-test
+  models:
+    - gemini-test
   flagged-threshold: 0.85
   batch-size: 10
   feedback-injection-threshold: 20

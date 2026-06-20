@@ -27,10 +27,11 @@
 <img width="4604" height="2544" alt="image" src="https://github.com/user-attachments/assets/6c91653d-dfa0-4473-a1d9-b2ea100cae87" />
 
 ### 🍃 BackEnd
-<img width="1000" height="500" alt="image" src="https://github.com/user-attachments/assets/bb20bf91-5ddb-408d-a4e3-a0367c76132c" />
+<img width="4604" height="1872" alt="backend" src="https://github.com/user-attachments/assets/45763566-7311-47e1-8aa0-13d4b2b230aa" />
 
 ### ⚙️ Infra
-<img width="1000" height="500" alt="image" src="https://github.com/user-attachments/assets/48910643-33ba-409d-b98b-5d274e93e40d" />
+<img width="4604" height="2544" alt="infra" src="https://github.com/user-attachments/assets/57877c54-8297-4580-8630-9bbdd884a9fd" />
+
 
 ## 📌 Infra Design 
 

@@ -30,7 +30,7 @@ allowed-tools: Read, Bash, Glob
 `.github/pull_request_template.md` 섹션을 유지하고 채운다.
 
 - ✅ 체크리스트: `--base` 확인 후 `[x]`
-- 🔥 연관 이슈: 이슈 번호가 있으면 `close #N`, 없으면 `없음`
+- 🔥 연관 이슈: 현재 브랜치명 `be/<type>/<N>-<slug>`(create-issue가 만든 형식)에서 이슈 번호 `N`을 추출해 `close #N`. 브랜치명에 번호가 없으면 `없음`
 - 🚀 작업 내용: 변경 파일·커밋을 번호 목록으로
 - 💬 리뷰 중점사항: 설계 결정·트레이드오프·주의 사항
 

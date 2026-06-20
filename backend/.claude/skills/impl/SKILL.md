@@ -18,11 +18,25 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
    - 찾은 문서를 읽어 구현 전에 요구사항과 제약을 파악한다
 4. 관련 도메인의 기존 코드를 Grep으로 탐색해 네이밍·구조 컨벤션을 파악한다
 
----
+## 요구사항·예외 케이스 합의 (구현 전 필수)
 
-## 커밋 규칙 (모든 Phase 공통)
+사전 작업으로 파악한 내용을 바탕으로, **Phase 1 코드를 작성하기 전에** 사용자와 범위·예외를 합의한다. 추측으로 구현하지 않는다(CLAUDE.md).
 
-각 Phase의 "커밋한다" 단계 직전에 `bash .claude/skills/commit/preflight.sh`를 실행해 보호 브랜치·detached HEAD를 차단한다(`ABORT` 출력 시 즉시 중단·보고). 통과하면 해당 계층 파일만 `git add` 후 `feat: ...`로 커밋한다. Phase 테스트는 이미 검증했으므로 `/commit`의 재검증은 생략한다.
+1. **무엇을 만들지 한 문단으로 요약**해 제시한다 — 대상 계층/클래스, 핵심 동작, 건드릴 모듈.
+2. **열린 질문으로 예외·경계 케이스를 함께 짚는다.** 고정 체크리스트가 아니라, 사전 작업에서 파악한 도메인 맥락에서 실제로 동작이 갈릴 지점을 질문한다 — 빈 입력·경계값, 동시성·순서, 실패·롤백, 잘못된 상태 전이, 권한·인증, 중복 요청 등. "이 경우엔 어떻게 동작해야 하나요?" 식으로 사용자가 결정하게 한다.
+3. 모호한 목표는 **검증 가능한 성공 기준**으로 바꿔 합의한다. 이슈에서 시작했다면 이슈의 `✅ 성공 기준`·`🔧 TODO`를 먼저 읽어 채운다.
+4. 합의된 범위·예외·성공 기준을 확인받은 뒤에만 Phase 1로 넘어간다. 합의 내용이 ADR 핵심 제약과 충돌하면 멈추고 보고한다.
+
+## Phase 완료 루틴 (모든 Phase 공통)
+
+각 Phase의 구현이 끝나면 순서대로 수행한다.
+
+1. **즉시 멈춘다 — 다음 Phase 코드를 미리 작성하지 않는다.** (마지막 Phase면 생략)
+2. `/write-tests`로 해당 계층 테스트를 작성한다 (베이스 상속·픽스처 등 컨벤션은 `/write-tests`가 SSOT).
+3. `/run-tests <해당패키지>.* --sync`로 모든 테스트 통과를 확인한다.
+4. `test-verifier` agent를 `run_in_background: true`로 실행한다.
+5. **커밋** — `bash .claude/skills/commit/preflight.sh`로 보호 브랜치·detached HEAD를 차단(`ABORT` 출력 시 중단·보고)한 뒤, 해당 계층 파일만 `git add` 후 `feat: [기능명] <계층> 구현`으로 커밋한다. Phase 테스트는 이미 검증했으므로 `/commit` 재검증은 생략한다.
+6. 사용자에게 Phase 완료를 알리고 다음 Phase 진행 여부를 확인한다. (마지막 Phase면 생략)
 
 ---
 
@@ -42,13 +56,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 - [ ] 외부 의존성(Spring, JPA 애노테이션 등) 없음
 - [ ] public 메서드 네이밍에 의도가 드러남
 
-완료 후:
-1. **이 시점에서 즉시 멈춘다. Phase 2 코드를 미리 작성하지 않는다.**
-2. `/write-tests`를 호출해 도메인 단위 테스트를 작성한다
-3. `/run-tests 해당패키지.* --sync` 를 호출해 모든 테스트가 통과하는지 확인한다.
-4. `test-verifier` agent를 `run_in_background: true`로 실행한다
-5. 도메인 계층 코드와 테스트를 커밋한다 (`feat: [기능명] 도메인 계층 구현`)
-6. 사용자에게 Phase 1 완료를 알리고 Phase 2 진행 여부를 확인한다
+→ **완료 후: [Phase 완료 루틴]** (커밋 메시지 `feat: [기능명] 도메인 계층 구현`)
 
 ---
 
@@ -66,13 +74,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 - [ ] 트랜잭션 경계가 명확함 (`@Transactional` 위치)
 - [ ] 도메인 이벤트 발행 위치가 서비스 계층 이하
 
-완료 후:
-1. **이 시점에서 즉시 멈춘다. Phase 3 코드를 미리 작성하지 않는다.**
-2. `/write-tests`를 호출해 서비스 단위 테스트를 작성한다
-3. `/run-tests 해당패키지.* --sync` 를 호출해 모든 테스트가 통과하는지 확인한다.
-4. `test-verifier` agent를 `run_in_background: true`로 실행한다
-5. 서비스/Orchestrator 계층 코드와 테스트를 커밋한다 (`feat: [기능명] 서비스 계층 구현`)
-6. 사용자에게 Phase 2 완료를 알리고 Phase 3 진행 여부를 확인한다
+→ **완료 후: [Phase 완료 루틴]** (커밋 메시지 `feat: [기능명] 서비스 계층 구현`)
 
 ---
 
@@ -91,11 +93,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 - [ ] API 응답 형식이 기존 컨벤션과 일치
 - [ ] WebSocket 경로는 Application Service 직접 호출 없이 Stream 발행을 경유
 
-완료 후:
-1. `/write-tests`를 호출해 통합 테스트를 작성한다 — 베이스 상속·`@WebMvcTest` 금지·REST(`MOCK`)/WebSocket(`WebSocketIntegrationTestSupport`·`RANDOM_PORT`) 구분 등 컨벤션은 `/write-tests`가 SSOT다
-2. `/run-tests 해당패키지.* --sync` 를 호출해 모든 테스트가 통과하는지 확인한다.
-3. `test-verifier` agent를 `run_in_background: true`로 실행한다
-4. 컨트롤러 계층 코드와 테스트를 커밋한다 (`feat: [기능명] 컨트롤러 계층 구현`)
+→ **완료 후: [Phase 완료 루틴]** (커밋 메시지 `feat: [기능명] 컨트롤러 계층 구현`). 통합 테스트 컨벤션(베이스 상속·`@WebMvcTest` 금지·REST `MOCK`/WebSocket `RANDOM_PORT`)은 `/write-tests`가 SSOT다.
 
 ---
 
@@ -107,4 +105,4 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 2. 사용자에게 다음을 요약한다:
    - 구현된 클래스 목록 (패키지 경로 포함)
    - 작성된 테스트 파일 목록
-   - 백그라운드 실행 중인 agent 목록 (`test-verifier` × 3, `code-reviewer` × 1)
+   - 백그라운드 실행 중인 agent 목록 (`test-verifier` × Phase 수, `code-reviewer` × 1)

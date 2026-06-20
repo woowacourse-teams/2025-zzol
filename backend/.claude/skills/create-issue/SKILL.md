@@ -89,10 +89,12 @@ EOF
 
 ## 6. 브랜치 생성 및 체크아웃
 
+be/dev를 **체크아웃하지 않고** `origin/be/dev`에서 직접 분기한다. be/dev 위에서 `git checkout -b`하면 autoSetupMerge가 새 브랜치 upstream을 be/dev로 잡아 이후 push·IDE Sync가 be/dev로 직행한다(#1404 사고 원인) — 금지.
+
 ```bash
-git checkout be/dev
-git pull origin be/dev
-git checkout -b be/{type}/{issue-number}-{slug}
+git fetch origin be/dev
+git switch -c be/{type}/{issue-number}-{slug} origin/be/dev
+git branch --unset-upstream   # ★ autoSetupMerge가 잡은 be/dev upstream 제거 (git-push-safety)
 ```
 
 - `{slug}`: 이슈 제목을 소문자 + 하이픈으로 변환, 최대 40자

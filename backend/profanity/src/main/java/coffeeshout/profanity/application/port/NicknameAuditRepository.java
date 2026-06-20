@@ -26,5 +26,7 @@ public interface NicknameAuditRepository {
 
     Set<String> findNicknamesByStatus(NicknameAuditStatus status);
 
+    boolean existsByNickname(String nickname);
+
     boolean existsByNicknameAndStatus(String nickname, NicknameAuditStatus status);
 }

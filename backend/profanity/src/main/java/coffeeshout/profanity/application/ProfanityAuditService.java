@@ -58,8 +58,11 @@ public class ProfanityAuditService {
             log.debug("운영자 허용 닉네임 — 검열 등록 생략: {}", nickname);
             return;
         }
-        if (auditRepository.existsByNicknameAndStatus(nickname, NicknameAuditStatus.UNAUDITED)) {
-            log.debug("이미 UNAUDITED 상태로 등록된 닉네임: {}", nickname);
+        if (auditRepository.existsByNickname(nickname)) {
+            // 상태 무관으로 검사한다. 유니크 제약이 (player_name, status)라 이미 검열된(CLEAN 등)
+            // 닉네임에 대해 UNAUDITED만 검사하면 새 UNAUDITED 중복이 생기고, 다음 검열 시
+            // 기존 상태로 승격되며 유니크 충돌이 발생한다 (issue #1467).
+            log.debug("이미 등록된 닉네임 — 검열 등록 생략: {}", nickname);
             return;
         }
         auditRepository.save(new NicknameAudit(nickname));

@@ -19,6 +19,10 @@ zzol-bot:
     dead-letter-threshold: 10                    # outbox DEAD_LETTER 누적 임계
     stream-backlog-threshold: 10000              # Redis Stream 최대 XLEN 임계
     cooldown-minutes: 30                         # 동일 이상 재알림 억제 시간
+  slack:
+    webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성
+  llm-budget:
+    daily-max: ${ZZOL_BOT_LLM_DAILY_MAX:50}      # 스케줄 작업 일일 LLM 호출 상한
   sql:
     max-rows: 1000
     query-timeout-seconds: 5

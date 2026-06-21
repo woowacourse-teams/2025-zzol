@@ -356,7 +356,7 @@
                 <h2>🔔 모니터링 알림</h2>
                 <button class="btn-action" id="runMonitorBtn" onclick="runMonitor()">지금 점검</button>
             </div>
-            <p class="muted">4시간마다 자동 점검합니다. 임계값 초과(이상)일 때만 LLM 분석·Slack 알림이 동작하며, 동일 이상은 쿨다운으로 억제됩니다.</p>
+            <p class="muted">4시간마다 자동 점검합니다. 임계값 초과(이상)일 때만 LLM 분석·Slack 알림이 동작하며, 동일 이상은 쿨다운으로 억제됩니다. 행을 클릭하면 신호별 값·분석·제안 조치가 펼쳐집니다.</p>
             <table class="data" style="margin-top:1rem">
                 <thead>
                 <tr><th>시각</th><th>이상</th><th>심각도</th><th>지문</th><th>요약</th><th>알림</th></tr>
@@ -785,15 +785,55 @@
             body.innerHTML = '';
             list.forEach(a => {
                 const tr = document.createElement('tr');
+                tr.className = 'row-click';
                 tr.innerHTML = `<td>${esc(a.createdAt)}</td><td>${a.anomalous ? '⚠️' : '✅'}</td>`
                     + `<td class="sev-${esc(a.severity)}">${esc(a.severity)}</td>`
                     + `<td>${esc(a.fingerprint || '-')}</td><td>${esc(a.analysisSummary || '-')}</td>`
                     + `<td>${a.notified ? '📨' : '-'}</td>`;
+
+                const detailTr = document.createElement('tr');
+                detailTr.style.display = 'none';
+                detailTr.innerHTML = `<td colspan="6">${buildMonitorDetail(a)}</td>`;
+
+                tr.onclick = () => {
+                    detailTr.style.display = detailTr.style.display === 'none' ? '' : 'none';
+                };
                 body.appendChild(tr);
+                body.appendChild(detailTr);
             });
         } catch (e) {
             body.innerHTML = `<tr><td colspan="6" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
         }
+    }
+
+    function buildMonitorDetail(a) {
+        let signalsHtml;
+        try {
+            const signals = JSON.parse(a.signalsJson || '[]');
+            signalsHtml = '<table class="data" style="margin-top:0.3rem"><thead>'
+                + '<tr><th>신호</th><th>값</th><th>임계</th><th>초과</th></tr></thead><tbody>'
+                + signals.map(s => `<tr><td>${esc(s.name)}</td><td>${s.value}</td>`
+                    + `<td>${s.threshold}</td><td>${s.breached ? '⚠️' : '-'}</td></tr>`).join('')
+                + '</tbody></table>';
+        } catch (e) {
+            signalsHtml = '<div class="muted">신호 파싱 실패</div>';
+        }
+
+        let actionsHtml = '';
+        try {
+            const actions = JSON.parse(a.suggestedActionsJson || '[]');
+            if (actions.length) {
+                actionsHtml = `<span class="label">🔧 제안 조치</span><ul class="muted">`
+                    + actions.map(x => `<li>${esc(x)}</li>`).join('') + '</ul>';
+            }
+        } catch (e) { /* 제안 없음 */ }
+
+        return `<div class="result-detail">`
+            + `<span class="label">📊 신호</span>${signalsHtml}`
+            + `<span class="label">🧠 분석 요약</span>`
+            + `<div class="muted">${esc(a.analysisSummary || '분석 없음 (정상이거나 예산 소진)')}</div>`
+            + actionsHtml
+            + `</div>`;
     }
 
     loadHistory();

@@ -3,6 +3,7 @@ package coffeeshout.zzolbot.monitor.infra;
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -26,11 +27,13 @@ public class LokiLogClient {
     private static final String LEVEL_WARN = "WARN";
 
     private final RestClient restClient;
+    private final String lokiBaseUrl;
     private final String environment;
     private final ObjectMapper objectMapper;
 
     public LokiLogClient(ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
-        this.restClient = restClientBuilder.baseUrl(properties.monitoring().lokiUrl()).build();
+        this.lokiBaseUrl = properties.monitoring().lokiUrl();
+        this.restClient = restClientBuilder.baseUrl(lokiBaseUrl).build();
         this.environment = properties.monitoring().environment();
         this.objectMapper = objectMapper;
     }
@@ -53,8 +56,8 @@ public class LokiLogClient {
         final String logql = String.format(
                 "sum(count_over_time({environment=\"%s\"} |~ \"%s\" [%dm]))",
                 environment, level, Math.max(1, window.toMinutes()));
-        final String uri = "/loki/api/v1/query?query=" + encode(logql)
-                + "&time=" + (end.toEpochMilli() * 1_000_000L);
+        final URI uri = URI.create(lokiBaseUrl + "/loki/api/v1/query?query=" + encode(logql)
+                + "&time=" + (end.toEpochMilli() * 1_000_000L));
         try {
             final String body = restClient.get().uri(uri).retrieve().body(String.class);
             return parseScalar(body);
@@ -71,9 +74,9 @@ public class LokiLogClient {
         final String logql = String.format("{environment=\"%s\"} |~ \"%s\"", environment, LEVEL_ERROR);
         final long startNano = end.minus(window).toEpochMilli() * 1_000_000L;
         final long endNano = end.toEpochMilli() * 1_000_000L;
-        final String uri = String.format(
+        final URI uri = URI.create(lokiBaseUrl + String.format(
                 "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d&direction=backward",
-                encode(logql), startNano, endNano, limit);
+                encode(logql), startNano, endNano, limit));
         try {
             final String body = restClient.get().uri(uri).retrieve().body(String.class);
             return parseMessages(body, limit);
@@ -125,6 +128,8 @@ public class LokiLogClient {
     }
 
     private String encode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+        // URLEncoder는 공백을 '+'로 만든다. 인코딩 결과를 URI로 직접 넘기므로(RestClient 재인코딩 방지),
+        // 공백은 어디서나 일관되게 해석되는 %20으로 통일한다.
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 }

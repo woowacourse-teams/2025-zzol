@@ -1,11 +1,15 @@
 package coffeeshout.zzolbot.infra.tool;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.findAll;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import coffeeshout.zzolbot.domain.AskContext;
@@ -127,6 +131,24 @@ class LokiQueryToolTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.success()).isTrue();
                 softly.assertThat(result.toolName()).isEqualTo(LokiQueryTool.TOOL_NAME);
+            });
+        }
+
+        @Test
+        void LogQL_쿼리는_이중_인코딩되지_않은_URI로_요청한다(WireMockRuntimeInfo wmInfo) {
+            // 회귀 방지: 과거 URLEncoder 결과를 RestClient.uri(String)에 넘겨 '%'가 '%25'로 재인코딩되면서
+            // Loki가 400 "parse error ... unexpected %!(NOVERB)"로 거부했다(loki_logs 100% 실패).
+            stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
+                    .willReturn(ok().withBody("{\"status\":\"success\",\"data\":{}}")));
+
+            createTool(wmInfo).execute(Map.of(), CTX); // joinCode 없음 → {environment="local"} |~ "ERROR|WARN"
+
+            final List<LoggedRequest> requests = findAll(getRequestedFor(urlPathEqualTo("/loki/api/v1/query_range")));
+            assertThat(requests).hasSize(1);
+            final String rawUrl = requests.get(0).getUrl();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(rawUrl).as("LogQL '{'는 한 번만 인코딩(%%7B)").contains("%7B");
+                softly.assertThat(rawUrl).as("이중 인코딩(%%257B) 금지").doesNotContain("%257B");
             });
         }
 

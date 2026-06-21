@@ -145,6 +145,7 @@ public class ZzolBotEvalController {
                 scenario.getId(),
                 scenario.getName(),
                 scenario.getQuestion(),
+                scenario.getRubric(),
                 scenario.getSourceType().name(),
                 formatNullable(scenario.getCreatedAt()));
     }
@@ -174,5 +175,5 @@ public class ZzolBotEvalController {
 
     record RunDetailResponse(RunResponse run, List<ResultResponse> results) {}
 
-    record ScenarioResponse(Long id, String name, String question, String sourceType, String createdAt) {}
+    record ScenarioResponse(Long id, String name, String question, String rubric, String sourceType, String createdAt) {}
 }

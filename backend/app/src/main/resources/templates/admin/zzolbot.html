@@ -326,10 +326,10 @@
             <div class="panel-head"><h2>시나리오</h2></div>
             <table class="data">
                 <thead>
-                <tr><th>이름</th><th>질문</th><th>출처</th><th>생성</th><th></th></tr>
+                <tr><th>이름</th><th>질문</th><th>채점 기준</th><th>출처</th><th>생성</th><th></th></tr>
                 </thead>
                 <tbody id="evalScenariosBody">
-                <tr><td colspan="5" class="muted">불러오는 중...</td></tr>
+                <tr><td colspan="6" class="muted">불러오는 중...</td></tr>
                 </tbody>
             </table>
             <div class="form-grid">
@@ -691,19 +691,20 @@
         try {
             const list = await api('GET', '/admin/zzolbot/eval/scenarios');
             if (!list.length) {
-                body.innerHTML = '<tr><td colspan="5" class="muted">시나리오가 없습니다</td></tr>';
+                body.innerHTML = '<tr><td colspan="6" class="muted">시나리오가 없습니다</td></tr>';
                 return;
             }
             body.innerHTML = '';
             list.forEach(s => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td>${esc(s.name)}</td><td>${esc(s.question)}</td>`
+                    + `<td class="muted">${esc(s.rubric)}</td>`
                     + `<td>${esc(s.sourceType)}</td><td>${esc(s.createdAt)}</td>`
                     + `<td><button class="btn-del" title="삭제" onclick="deleteScenario(${s.id}, '${esc(s.name)}')">✕</button></td>`;
                 body.appendChild(tr);
             });
         } catch (e) {
-            body.innerHTML = `<tr><td colspan="5" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
+            body.innerHTML = `<tr><td colspan="6" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
         }
     }
 

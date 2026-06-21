@@ -26,6 +26,10 @@ import LadderGameDescription1 from '@/assets/ladder_game_desc1.svg';
 import LadderGameDescription2 from '@/assets/ladder_game_desc2.svg';
 import LadderGameReadyPage from '../ladderGame/pages/LadderGameReadyPage';
 import LadderGamePlayPage from '../ladderGame/pages/LadderGamePlayPage';
+import NunchiGameProvider from '@/contexts/NunchiGame/NunchiGameProvider';
+import NunchiGameReadyPage from '../nunchiGame/pages/NunchiGameReadyPage';
+import NunchiGamePlayPage from '../nunchiGame/pages/NunchiGamePlayPage';
+import NunchiGameResultContent from '../nunchiGame/pages/NunchiGameResultPage';
 
 export type SlideConfig = {
   textLines: string[];
@@ -38,6 +42,13 @@ export type GameConfig = {
   ReadyPage: ComponentType;
   slides: SlideConfig[];
   PlayPage: ComponentType;
+  /**
+   * 결과 화면의 **본문(Layout.Content) 슬롯만** 교체하는 게임 전용 결과 컴포넌트(선택).
+   * 미지정 시 공유 ScoreBoardResultList(rank+score 나열)가 렌더된다.
+   * 배너·룰렛 진행 버튼·룰렛 구독은 공유 MiniGameResultPage 가 유지하므로
+   * 게임 전용 결과 뷰가 룰렛 흐름을 깨지 않는다(nunchi 3계층 결과 — ADR-0031 N7).
+   */
+  ResultContent?: ComponentType;
 };
 
 export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
@@ -138,5 +149,21 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
       },
     ],
     PlayPage: LadderGamePlayPage,
+  },
+  NUNCHI_GAME: {
+    Provider: NunchiGameProvider,
+    ReadyPage: NunchiGameReadyPage,
+    slides: [
+      {
+        textLines: ['공유 카운터가 1, 2, 3…', '한 명씩 눈치껏 누르세요'],
+        className: 'slide-first',
+      },
+      {
+        textLines: ['같은 숫자를 동시에 누르면', '충돌! 먼저 누른 순으로 등수가 결정됩니다'],
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: NunchiGamePlayPage,
+    ResultContent: NunchiGameResultContent,
   },
 };

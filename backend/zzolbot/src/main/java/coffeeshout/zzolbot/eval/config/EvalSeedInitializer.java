@@ -9,6 +9,7 @@ import coffeeshout.zzolbot.eval.infra.ToolSnapshotCodec;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +73,7 @@ public class EvalSeedInitializer implements ApplicationRunner {
             return ScenarioSource.MANUAL;
         }
         try {
-            return ScenarioSource.valueOf(source.trim().toUpperCase());
+            return ScenarioSource.valueOf(source.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             log.warn("[ZzolBot] 알 수 없는 시드 source='{}' — MANUAL로 분류", source);
             return ScenarioSource.MANUAL;

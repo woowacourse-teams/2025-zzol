@@ -647,8 +647,8 @@
         btn.disabled = true;
         try {
             await api('POST', '/admin/zzolbot/eval/runs', { label });
-            // 백그라운드 실행 — 끝날 때까지 자동 폴링(최대 ~60초). 새로고침 불필요.
-            setTimeout(() => refreshEvalRunsUntilDone(24), 800);
+            // 백그라운드 실행 — RUNNING인 동안 목록·상세를 자동 폴링(채팅처럼 실시간). 새로고침 불필요.
+            ensureEvalPolling();
         } catch (e) {
             alert('실행 시작 실패: ' + e.message);
         } finally {
@@ -658,7 +658,9 @@
 
     async function loadEvalRuns() {
         try {
-            renderEvalRuns(await api('GET', '/admin/zzolbot/eval/runs'));
+            const runs = await api('GET', '/admin/zzolbot/eval/runs');
+            renderEvalRuns(runs);
+            if (runs.some(r => r.status === 'RUNNING')) ensureEvalPolling();
         } catch (e) {
             document.getElementById('evalRunsBody').innerHTML =
                 `<tr><td colspan="5" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
@@ -683,23 +685,46 @@
         });
     }
 
-    // 가장 최근 실행이 COMPLETED/FAILED가 될 때까지 2.5초 간격으로 폴링.
-    async function refreshEvalRunsUntilDone(remaining) {
+    // RUNNING인 실행이 하나라도 있는 동안 2.5초 간격으로 목록과 열린 상세를 자동 갱신한다(채팅처럼 실시간).
+    let evalPolling = false;
+    let openDetailRunId = null;
+
+    function ensureEvalPolling() {
+        if (evalPolling) return;       // 이미 폴링 중이면 중복 시작 방지
+        evalPolling = true;
+        setTimeout(pollEvalOnce, 800);
+    }
+
+    async function pollEvalOnce() {
         let runs = [];
         try {
             runs = await api('GET', '/admin/zzolbot/eval/runs');
-        } catch (e) { /* 일시 실패는 다음 시도에서 회복 */ }
+        } catch (e) { /* 일시 실패는 다음 폴에서 회복 */ }
         renderEvalRuns(runs);
-        const top = runs[0];
-        const done = top && (top.status === 'COMPLETED' || top.status === 'FAILED');
-        if (!done && remaining > 0) {
-            setTimeout(() => refreshEvalRunsUntilDone(remaining - 1), 2500);
+        if (openDetailRunId != null) {  // 열려있는 상세 카드도 같이 갱신
+            try {
+                renderEvalRunDetail(await api('GET', '/admin/zzolbot/eval/runs/' + openDetailRunId));
+            } catch (e) { /* 상세 일시 실패 무시 */ }
+        }
+        if (runs.some(r => r.status === 'RUNNING')) {
+            setTimeout(pollEvalOnce, 2500);
+        } else {
+            evalPolling = false;        // RUNNING 없음 → 폴링 종료(다음 실행 때 재시작)
         }
     }
 
     async function loadEvalRunDetail(id) {
+        openDetailRunId = id;  // 폴링이 이 상세를 자동 갱신하도록 기억
         try {
             const detail = await api('GET', '/admin/zzolbot/eval/runs/' + id);
+            renderEvalRunDetail(detail);
+            document.getElementById('evalRunDetailCard').scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            alert('상세 로드 실패: ' + e.message);
+        }
+    }
+
+    function renderEvalRunDetail(detail) {
             const card = document.getElementById('evalRunDetailCard');
             const body = document.getElementById('evalResultsBody');
             body.innerHTML = '';
@@ -729,10 +754,6 @@
                 body.appendChild(detailTr);
             });
             card.hidden = false;
-            card.scrollIntoView({ behavior: 'smooth' });
-        } catch (e) {
-            alert('상세 로드 실패: ' + e.message);
-        }
     }
 
     async function loadScenarios() {

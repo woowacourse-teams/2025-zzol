@@ -58,7 +58,8 @@ public class EvalRunner {
                         passCount++;
                     }
                 } catch (Exception e) {
-                    log.warn("[ZzolBot] 시나리오 평가 실패. scenario={}", scenario.getName(), e);
+                    log.warn("[ZzolBot] 시나리오 평가 실패 — FAIL 결과로 기록. scenario={}", scenario.getName(), e);
+                    saveFailureResult(run.getId(), scenario, e);
                 }
             }
             run.complete(passCount);
@@ -84,5 +85,15 @@ public class EvalRunner {
                 runId, scenario.getId(), result.answer(), score, latencyMs, source.missingCount()));
 
         return score.verdict() == EvalVerdict.PASS;
+    }
+
+    /**
+     * 시나리오 평가가 예외로 끝났을 때도 FAIL 결과를 남겨 "시나리오당 결과 1건" 불변식을 유지한다.
+     * (그래야 합격/전체 카운트와 실제 저장 건수가 어긋나지 않는다.)
+     */
+    private void saveFailureResult(Long runId, EvalScenarioEntity scenario, Exception e) {
+        final JudgeScore failed = new JudgeScore(0, 0, false, EvalVerdict.FAIL, "평가 중 예외: " + e.getMessage());
+        resultRepository.save(EvalResultEntity.create(
+                runId, scenario.getId(), "평가 실패", failed, 0L, 0));
     }
 }

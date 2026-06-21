@@ -34,6 +34,7 @@ public class EvalScenarioService {
     }
 
     public EvalScenarioEntity registerManual(String name, String question, String snapshotJson, String rubric) {
+        codec.fromJson(snapshotJson); // 잘못된 스냅샷 JSON을 저장 전에 빠르게 검증(실패 시 예외) — 이후 실행 깨짐 방지
         return scenarioRepository.save(
                 EvalScenarioEntity.create(name, question, snapshotJson, rubric, ScenarioSource.MANUAL));
     }

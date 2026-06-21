@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * 평가 하네스 어드민 API. 평가 실행은 시나리오 수만큼 LLM을 호출해 오래 걸리므로
@@ -82,7 +84,7 @@ public class ZzolBotEvalController {
     @GetMapping("/runs/{id}")
     public RunDetailResponse run(@PathVariable Long id) {
         final EvalRunEntity run = runRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 평가 실행: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 평가 실행: " + id));
         final List<ResultResponse> results = resultRepository.findByRunIdOrderByIdAsc(id).stream()
                 .map(this::toResultResponse)
                 .toList();

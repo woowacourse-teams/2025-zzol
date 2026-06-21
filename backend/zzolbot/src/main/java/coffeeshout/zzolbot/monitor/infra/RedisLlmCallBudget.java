@@ -16,6 +16,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 public class RedisLlmCallBudget implements LlmCallBudget {
 
     private static final String KEY_PREFIX = "zzolbot:llm-budget:";
+    private static final long NO_EXPIRY = -1L;
+    private static final Duration TTL = Duration.ofHours(26);
 
     private final StringRedisTemplate redisTemplate;
     private final LlmBudgetProperties properties;
@@ -25,10 +27,12 @@ public class RedisLlmCallBudget implements LlmCallBudget {
     public boolean tryAcquire() {
         final String key = todayKey();
         final Long current = redisTemplate.opsForValue().increment(key);
-        if (current != null && current == 1L) {
-            redisTemplate.expire(key, Duration.ofHours(26));
+        if (current == null) {
+            // Redis 비정상 — 예산으로 가용성을 막지 않는다(쿨다운·게이팅이 1차 방어).
+            return true;
         }
-        return current == null || current <= properties.dailyMax();
+        ensureExpiry(key);
+        return current <= properties.dailyMax();
     }
 
     @Override
@@ -36,6 +40,17 @@ public class RedisLlmCallBudget implements LlmCallBudget {
         final String value = redisTemplate.opsForValue().get(todayKey());
         final long used = value == null ? 0 : Long.parseLong(value);
         return Math.max(0, properties.dailyMax() - used);
+    }
+
+    /**
+     * INCR과 EXPIRE는 원자가 아니라 EXPIRE 단독 실패 시 키에 TTL이 영영 없을 수 있다.
+     * 매 호출 TTL을 확인해 누락이면 다시 건다(키가 영구 잠금되는 것을 방지).
+     */
+    private void ensureExpiry(String key) {
+        final Long ttl = redisTemplate.getExpire(key);
+        if (ttl != null && ttl == NO_EXPIRY) {
+            redisTemplate.expire(key, TTL);
+        }
     }
 
     private String todayKey() {

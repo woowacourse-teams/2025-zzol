@@ -12,6 +12,7 @@ import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
+import io.github.resilience4j.retry.annotation.Retry;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,7 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
     private final ZzolBotProperties properties;
     private final ObjectMapper objectMapper;
 
+    @Retry(name = "zzolBotGemini")
     @Override
     public MonitorAnalysis analyze(MonitorSnapshot snapshot, AnomalyVerdict verdict) {
         final GenerateContentConfig config = GenerateContentConfig.builder()
@@ -52,13 +54,16 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
                 .responseMimeType("application/json")
                 .build();
         final String prompt = buildPrompt(snapshot, verdict);
+        final GenerateContentResponse response = callApi(prompt, config);
+        return parse(response.text());
+    }
+
+    protected GenerateContentResponse callApi(String prompt, GenerateContentConfig config) {
         try {
-            final GenerateContentResponse response = zzolBotClient.models.generateContent(
+            return zzolBotClient.models.generateContent(
                     properties.model(), List.of(Content.fromParts(Part.fromText(prompt))), config);
-            return parse(response.text());
         } catch (Exception e) {
-            log.warn("[ZzolBot] 이상 분석 LLM 호출 실패", e);
-            return MonitorAnalysis.failed();
+            throw new RuntimeException("이상 분석 Gemini API 호출 실패: " + e.getMessage(), e);
         }
     }
 

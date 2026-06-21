@@ -99,6 +99,19 @@ class MonitorServiceTest {
     }
 
     @Test
+    void 이상이고_예산이_있지만_분석이_실패하면_결정적_신호만_알린다() {
+        given(gate.evaluate(any())).willReturn(anomalous());
+        given(llmCallBudget.tryAcquire()).willReturn(true);
+        given(analyzer.analyze(any(), any())).willThrow(new RuntimeException("Gemini 5xx"));
+
+        service.runOnce();
+
+        final ArgumentCaptor<MonitorAnalysis> captor = ArgumentCaptor.forClass(MonitorAnalysis.class);
+        verify(notifier).notifyAnomaly(any(), any(), captor.capture());
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().summary()).contains("실패");
+    }
+
+    @Test
     void 쿨다운_중인_동일_이상은_분석과_알림을_건너뛴다() {
         given(gate.evaluate(any())).willReturn(anomalous());
         final MonitorRunEntity lastNotified = MonitorRunEntity.of(Instant.now(), anomalous(), "[]");

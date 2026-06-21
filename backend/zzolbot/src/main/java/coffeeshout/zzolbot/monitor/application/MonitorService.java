@@ -59,13 +59,22 @@ public class MonitorService {
     private void analyzeAndNotify(MonitorSnapshot snapshot, AnomalyVerdict verdict, MonitorRunEntity run) {
         final MonitorAnalysis analysis;
         if (llmCallBudget.tryAcquire()) {
-            analysis = analyzer.analyze(snapshot, verdict);
+            analysis = safeAnalyze(snapshot, verdict);
         } else {
             log.warn("[ZzolBot] 일일 LLM 예산 소진 — 이상 분석 생략. fingerprint={}", verdict.fingerprint());
             analysis = MonitorAnalysis.budgetExhausted();
         }
         run.attachAnalysis(analysis.summary(), toJson(analysis.suggestedActions()));
         notifier.notifyAnomaly(snapshot, verdict, analysis);
+    }
+
+    private MonitorAnalysis safeAnalyze(MonitorSnapshot snapshot, AnomalyVerdict verdict) {
+        try {
+            return analyzer.analyze(snapshot, verdict);
+        } catch (Exception e) {
+            log.warn("[ZzolBot] 이상 분석 실패 — 결정적 신호만 알림. fingerprint={}", verdict.fingerprint(), e);
+            return MonitorAnalysis.failed();
+        }
     }
 
     private boolean inCooldown(AnomalyVerdict verdict) {

@@ -50,19 +50,24 @@ public class EvalRunner {
         final EvalRunEntity run = runRepository.save(
                 EvalRunEntity.start(label, properties.model(), null, scenarios.size()));
 
-        int passCount = 0;
-        for (EvalScenarioEntity scenario : scenarios) {
-            try {
-                if (evaluateOne(run.getId(), scenario)) {
-                    passCount++;
+        try {
+            int passCount = 0;
+            for (EvalScenarioEntity scenario : scenarios) {
+                try {
+                    if (evaluateOne(run.getId(), scenario)) {
+                        passCount++;
+                    }
+                } catch (Exception e) {
+                    log.warn("[ZzolBot] 시나리오 평가 실패. scenario={}", scenario.getName(), e);
                 }
-            } catch (Exception e) {
-                log.warn("[ZzolBot] 시나리오 평가 실패. scenario={}", scenario.getName(), e);
             }
+            run.complete(passCount);
+            return runRepository.save(run);
+        } catch (Exception e) {
+            log.error("[ZzolBot] 평가 실행 실패 — run을 FAILED로 마킹. runId={}", run.getId(), e);
+            run.fail();
+            return runRepository.save(run);
         }
-
-        run.complete(passCount);
-        return runRepository.save(run);
     }
 
     private boolean evaluateOne(Long runId, EvalScenarioEntity scenario) {

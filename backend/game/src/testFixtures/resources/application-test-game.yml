@@ -47,3 +47,12 @@ blind-timer:
     blind-delay: 500ms
     timeout-buffer: 3000ms
     result-delay: 500ms
+
+nunchi:
+  timing:
+    number-window: 300ms        # 동시 판정 윈도우는 프로덕션과 동일(충돌 판정 규칙이라 단축 시 의미 변질)
+    collision-cooldown: 500ms   # IT 가속
+    idle-timeout: 2000ms        # IT 가속
+    hard-cap: 5000ms            # IT 가속
+    prepare: 500ms
+    early-finish-delay: 500ms

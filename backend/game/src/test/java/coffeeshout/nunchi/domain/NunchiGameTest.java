@@ -1,8 +1,10 @@
 package coffeeshout.nunchi.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import java.time.Instant;
 import java.util.List;
@@ -43,6 +45,25 @@ class NunchiGameTest {
                 softly.assertThat(game.getCurrentNumber()).isEqualTo(1);
                 softly.assertThat(game.isFinished()).isFalse();
             });
+        }
+    }
+
+    @Nested
+    class findByName_테스트 {
+
+        @Test
+        void 닉네임으로_setUp에_주입된_원본_Gamer_인스턴스를_돌려준다() {
+            // when
+            final Gamer found = game.findByName("일");
+
+            // then — 새 인스턴스가 아니라 주입된 원본이어야 점수맵 키와 매칭된다
+            assertThat(found).isSameAs(일);
+        }
+
+        @Test
+        void 없는_닉네임이면_예외를_던진다() {
+            assertThat(catchThrowable(() -> game.findByName("없는사람")))
+                    .isInstanceOf(BusinessException.class);
         }
     }
 

@@ -53,6 +53,14 @@ class AnomalyGateTest {
     }
 
     @Test
+    void 정확히_임계값의_2배여도_CRITICAL_경계를_포함한다() {
+        final MonitorSnapshot snapshot = new MonitorSnapshot(
+                List.of(MonitorSignal.of("redis_stream_backlog", 20000, 10000)), Instant.EPOCH);
+
+        assertThat(gate.evaluate(snapshot).severity()).isEqualTo(Severity.CRITICAL);
+    }
+
+    @Test
     void 여러_신호가_초과하면_지문을_정렬해_결합한다() {
         final MonitorSnapshot snapshot = new MonitorSnapshot(List.of(
                 MonitorSignal.of("redis_stream_backlog", 20000, 10000),

@@ -40,6 +40,9 @@ class EvalRunEntityTest {
 
         run.fail();
 
-        assertThat(run.getStatus()).isEqualTo(EvalRunStatus.FAILED);
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(run.getStatus()).isEqualTo(EvalRunStatus.FAILED);
+            softly.assertThat(run.getFinishedAt()).isNotNull();
+        });
     }
 }

@@ -56,6 +56,16 @@ resilience4j:
           - java.lang.RuntimeException
         ignore-exceptions:
           - io.github.resilience4j.ratelimiter.RequestNotPermitted
+      zzolBotJudge:                             # 평가 채점용 (진단 봇과 분리해 경합 회피)
+        max-attempts: 3
+        wait-duration: 2s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        exponential-max-wait-duration: 16s
+        retry-exceptions:
+          - java.lang.RuntimeException
+        ignore-exceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
   ratelimiter:
     instances:
       geminiAudit:
@@ -66,3 +76,7 @@ resilience4j:
         limit-for-period: 10                    # 분당 10회 (운영자 대화 기준)
         limit-refresh-period: 60s
         timeout-duration: 30s
+      zzolBotJudge:
+        limit-for-period: 10                    # 분당 10회 (평가 일괄 실행 시 버스트 평탄화)
+        limit-refresh-period: 60s
+        timeout-duration: 60s                   # 일괄 채점이므로 대기 넉넉히

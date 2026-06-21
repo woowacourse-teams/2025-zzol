@@ -1,0 +1,12 @@
+{
+  "name": "seed-redis-stream-backlog",
+  "question": "요즘 전체적으로 응답이 느리다는 제보가 많아요. 시스템 상태 점검해줘.",
+  "rubric": "Redis Stream(game-stream)의 적체로 컨슈머가 처리를 따라가지 못하고 있음을 짚어야 한다. 스트림 backlog(XLEN 급증) 또는 컨슈머 지연을 근본 원인으로 언급하면 정답. 단순히 정상이라 답하면 오답.",
+  "snapshot": [
+    {
+      "toolName": "redis_stream_status",
+      "args": {},
+      "content": "{\"game-stream\":48213,\"room-stream\":120}"
+    }
+  ]
+}

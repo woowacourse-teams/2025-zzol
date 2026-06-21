@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@EnableConfigurationProperties(ZzolBotProperties.class)
+@EnableConfigurationProperties({ZzolBotProperties.class, coffeeshout.zzolbot.monitor.config.MonitorProperties.class})
 public class ZzolBotConfig {
 
     @Bean

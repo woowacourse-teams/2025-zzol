@@ -13,6 +13,12 @@ zzol-bot:
   determinism:
     temperature: 0.1
     top-p: 0.1
+  monitor:
+    enabled: ${ZZOL_BOT_MONITOR_ENABLED:true}
+    cron: "0 0 */4 * * *"                       # 4시간마다 능동 점검
+    dead-letter-threshold: 10                    # outbox DEAD_LETTER 누적 임계
+    stream-backlog-threshold: 10000              # Redis Stream 최대 XLEN 임계
+    cooldown-minutes: 30                         # 동일 이상 재알림 억제 시간
   sql:
     max-rows: 1000
     query-timeout-seconds: 5

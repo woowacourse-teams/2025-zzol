@@ -1,0 +1,94 @@
+package coffeeshout.zzolbot.monitor.application;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+
+import coffeeshout.global.redis.config.RedisStreamProperties;
+import coffeeshout.zzolbot.infra.ZzolBotOutboxRepository;
+import coffeeshout.zzolbot.monitor.config.MonitorProperties;
+import coffeeshout.zzolbot.monitor.domain.MonitorSignal;
+import coffeeshout.zzolbot.monitor.domain.MonitorSnapshot;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StreamOperations;
+
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class MonitorCollectorTest {
+
+    private static final MonitorProperties PROPERTIES =
+            new MonitorProperties(true, "0 0 */4 * * *", 10, 10000, 30);
+
+    @Mock
+    private ZzolBotOutboxRepository outboxRepository;
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+    @Mock
+    @SuppressWarnings("rawtypes")
+    private StreamOperations streamOperations;
+    @Mock
+    private RedisStreamProperties redisStreamProperties;
+
+    private MonitorCollector collector;
+
+    @BeforeEach
+    @SuppressWarnings("unchecked")
+    void setUp() {
+        collector = new MonitorCollector(outboxRepository, redisTemplate, redisStreamProperties, PROPERTIES,
+                Clock.fixed(Instant.parse("2026-06-21T00:00:00Z"), ZoneOffset.UTC));
+
+        final Map<String, RedisStreamProperties.StreamConfig> keys = new LinkedHashMap<>();
+        keys.put("game-stream", null);
+        given(redisStreamProperties.keys()).willReturn(keys);
+        given(redisTemplate.opsForStream()).willReturn(streamOperations);
+    }
+
+    @Test
+    void outbox_DEAD_LETTER가_임계를_넘으면_초과로_수집한다() {
+        given(outboxRepository.countByStatusIn(anyList())).willReturn(15L);
+        given(streamOperations.size(anyString())).willReturn(120L);
+
+        final MonitorSnapshot snapshot = collector.collect();
+
+        final MonitorSignal deadLetter = signal(snapshot, "outbox_dead_letter");
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(deadLetter.value()).isEqualTo(15);
+            softly.assertThat(deadLetter.breached()).isTrue();
+        });
+    }
+
+    @Test
+    void redis_stream_최대_적재량을_수집한다() {
+        given(outboxRepository.countByStatusIn(anyList())).willReturn(0L);
+        given(streamOperations.size(anyString())).willReturn(48213L);
+
+        final MonitorSnapshot snapshot = collector.collect();
+
+        final MonitorSignal backlog = signal(snapshot, "redis_stream_backlog");
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(backlog.value()).isEqualTo(48213);
+            softly.assertThat(backlog.breached()).isTrue();
+        });
+    }
+
+    private MonitorSignal signal(MonitorSnapshot snapshot, String name) {
+        return snapshot.signals().stream()
+                .filter(s -> s.name().equals(name))
+                .findFirst()
+                .orElseThrow();
+    }
+}

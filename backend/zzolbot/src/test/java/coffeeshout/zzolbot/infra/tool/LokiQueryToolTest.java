@@ -33,12 +33,16 @@ class LokiQueryToolTest {
     private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     private LokiQueryTool createTool(WireMockRuntimeInfo wmInfo) {
+        return createTool(wmInfo.getHttpBaseUrl());
+    }
+
+    private LokiQueryTool createTool(String lokiUrl) {
         final ZzolBotProperties props = new ZzolBotProperties(
                 "",
                 "gemini-2.0-flash",
                 8,
                 new ZzolBotProperties.MonitoringProperties(
-                        wmInfo.getHttpBaseUrl(),
+                        lokiUrl,
                         "http://tempo",
                         "http://prometheus",
                         "local"
@@ -150,6 +154,21 @@ class LokiQueryToolTest {
                 softly.assertThat(rawUrl).as("LogQL '{'는 한 번만 인코딩(%%7B)").contains("%7B");
                 softly.assertThat(rawUrl).as("이중 인코딩(%%257B) 금지").doesNotContain("%257B");
             });
+        }
+
+        @Test
+        void lokiUrl_끝에_슬래시가_있어도_이중_슬래시_없이_요청한다(WireMockRuntimeInfo wmInfo) {
+            // 회귀 방지: base + path 문자열 결합 시 "http://loki:3100/" + "/loki/..." → "//loki/..." 가 되면
+            // 프록시/Loki 라우팅이 깨질 수 있다. URI.resolve로 경로 결합을 고정한다.
+            stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
+                    .willReturn(ok().withBody("{\"status\":\"success\",\"data\":{}}")));
+
+            final ToolExecutionResult result = createTool(wmInfo.getHttpBaseUrl() + "/").execute(Map.of(), CTX);
+
+            assertThat(result.success()).isTrue(); // '//loki' 가 되면 path 불일치로 stub 미적중 → 실패했을 것
+            final String rawUrl = findAll(getRequestedFor(urlPathEqualTo("/loki/api/v1/query_range")))
+                    .get(0).getUrl();
+            assertThat(rawUrl).doesNotContain("//loki");
         }
 
         @Test

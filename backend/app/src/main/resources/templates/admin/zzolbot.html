@@ -200,6 +200,46 @@
             color: var(--text-secondary);
             font-size: 0.82rem;
         }
+
+        /* 탭 */
+        .tab-bar { display: flex; gap: 0.5rem; margin: 0 0 1.25rem; border-bottom: 1px solid var(--border); }
+        .tab-btn {
+            padding: 0.6rem 1.1rem; background: none; border: none; cursor: pointer;
+            font-size: 0.9rem; color: var(--text-secondary); border-bottom: 2px solid transparent;
+        }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+        .panel-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.25rem;
+        }
+        .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .panel-head h2 { font-size: 1rem; margin: 0; }
+        .btn-action {
+            padding: 0.5rem 1rem; background: var(--accent); color: #fff; border: none;
+            border-radius: var(--radius); font-size: 0.85rem; font-weight: 600; cursor: pointer;
+        }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        table.data { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        table.data th, table.data td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); text-align: left; }
+        table.data th { color: var(--text-secondary); font-weight: 600; }
+        .row-click { cursor: pointer; }
+        .row-click:hover { background: var(--surface-hover, #f4f4f5); }
+
+        .tag-pass { color: #16a34a; font-weight: 600; }
+        .tag-fail { color: #dc2626; font-weight: 600; }
+        .sev-CRITICAL { color: #dc2626; font-weight: 600; }
+        .sev-WARNING { color: #ea8800; font-weight: 600; }
+        .sev-NORMAL { color: var(--text-secondary); }
+
+        .form-grid { display: grid; gap: 0.5rem; margin-top: 1rem; }
+        .form-grid input, .form-grid textarea {
+            padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 0.85rem; background: var(--surface); color: var(--text); width: 100%;
+            box-sizing: border-box; font-family: inherit;
+        }
+        .muted { color: var(--text-secondary); font-size: 0.82rem; }
     </style>
 </head>
 <body>
@@ -212,6 +252,13 @@
 <main>
     <a th:href="@{/admin}" class="nav-back">← 대시보드로</a>
 
+    <div class="tab-bar">
+        <button class="tab-btn active" data-tab="diagnose" onclick="switchTab('diagnose')">🔍 진단</button>
+        <button class="tab-btn" data-tab="eval" onclick="switchTab('eval')">📊 평가</button>
+        <button class="tab-btn" data-tab="monitor" onclick="switchTab('monitor')">🔔 모니터링</button>
+    </div>
+
+    <div id="tab-diagnose" class="tab-panel">
     <div class="zzolbot-layout">
         <!-- 챗 영역 -->
         <div>
@@ -238,6 +285,72 @@
             <div class="history-list" id="historyList">
                 <div class="history-empty">이력 불러오는 중...</div>
             </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="tab-eval" class="tab-panel" hidden>
+        <div class="panel-card">
+            <div class="panel-head">
+                <h2>📊 평가 실행</h2>
+                <button class="btn-action" id="runEvalBtn" onclick="runEval()">전체 실행</button>
+            </div>
+            <p class="muted">골든 시나리오 전체를 박제 스냅샷으로 replay해 채점합니다. 실행은 백그라운드로 진행되며 잠시 후 목록이 갱신됩니다.</p>
+            <table class="data" style="margin-top:1rem">
+                <thead>
+                <tr><th>라벨</th><th>모델</th><th>상태</th><th>합격/전체</th><th>시작</th></tr>
+                </thead>
+                <tbody id="evalRunsBody">
+                <tr><td colspan="5" class="muted">불러오는 중...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel-card" id="evalRunDetailCard" hidden>
+            <div class="panel-head"><h2>실행 상세</h2></div>
+            <table class="data">
+                <thead>
+                <tr><th>시나리오</th><th>정확성</th><th>근거</th><th>환각</th><th>판정</th><th>지연(ms)</th><th>미존재 호출</th></tr>
+                </thead>
+                <tbody id="evalResultsBody"></tbody>
+            </table>
+        </div>
+
+        <div class="panel-card">
+            <div class="panel-head"><h2>시나리오</h2></div>
+            <table class="data">
+                <thead>
+                <tr><th>이름</th><th>질문</th><th>출처</th><th>생성</th></tr>
+                </thead>
+                <tbody id="evalScenariosBody">
+                <tr><td colspan="4" class="muted">불러오는 중...</td></tr>
+                </tbody>
+            </table>
+            <div class="form-grid">
+                <strong style="font-size:0.85rem">진단 녹화 박제 (질문을 라이브 1회 실행해 도구 결과를 고정)</strong>
+                <input id="recName" placeholder="시나리오 이름 (고유)"/>
+                <input id="recQuestion" placeholder="질문 (예: A4BX 방 상태 점검)"/>
+                <textarea id="recRubric" rows="2" placeholder="채점 기준 — 정답에 반드시 포함돼야 할 핵심"></textarea>
+                <button class="btn-action" onclick="recordScenario()">녹화 박제</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-monitor" class="tab-panel" hidden>
+        <div class="panel-card">
+            <div class="panel-head">
+                <h2>🔔 모니터링 알림</h2>
+                <button class="btn-action" id="runMonitorBtn" onclick="runMonitor()">지금 점검</button>
+            </div>
+            <p class="muted">4시간마다 자동 점검합니다. 임계값 초과(이상)일 때만 LLM 분석·Slack 알림이 동작하며, 동일 이상은 쿨다운으로 억제됩니다.</p>
+            <table class="data" style="margin-top:1rem">
+                <thead>
+                <tr><th>시각</th><th>이상</th><th>심각도</th><th>지문</th><th>요약</th><th>알림</th></tr>
+                </thead>
+                <tbody id="monitorAlertsBody">
+                <tr><td colspan="6" class="muted">불러오는 중...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </main>
@@ -478,6 +591,169 @@
 
     function escapeHtml(str) {
         return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    /* ===== 탭 ===== */
+    function esc(s) {
+        return (s ?? '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        document.getElementById('tab-' + tab).hidden = false;
+        if (tab === 'eval') { loadEvalRuns(); loadScenarios(); }
+        if (tab === 'monitor') loadAlerts();
+    }
+
+    async function api(method, url, body) {
+        const opt = { method, headers: { [csrfHeader]: csrfToken } };
+        if (body !== undefined) {
+            opt.headers['Content-Type'] = 'application/json';
+            opt.body = JSON.stringify(body);
+        }
+        const res = await fetch(url, opt);
+        if (!res.ok) throw new Error(res.status);
+        const txt = await res.text();
+        return txt ? JSON.parse(txt) : null;
+    }
+
+    /* ===== 평가 ===== */
+    async function runEval() {
+        const label = prompt('실행 라벨 (예: baseline, prompt-v2):', 'baseline');
+        if (!label) return;
+        const btn = document.getElementById('runEvalBtn');
+        btn.disabled = true;
+        try {
+            await api('POST', '/admin/zzolbot/eval/runs', { label });
+            alert('평가 실행을 시작했습니다. 잠시 후 목록이 갱신됩니다.');
+            setTimeout(loadEvalRuns, 1500);
+        } catch (e) {
+            alert('실행 시작 실패: ' + e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function loadEvalRuns() {
+        const body = document.getElementById('evalRunsBody');
+        try {
+            const runs = await api('GET', '/admin/zzolbot/eval/runs');
+            if (!runs.length) {
+                body.innerHTML = '<tr><td colspan="5" class="muted">실행 이력이 없습니다</td></tr>';
+                return;
+            }
+            body.innerHTML = '';
+            runs.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = 'row-click';
+                tr.innerHTML = `<td>${esc(r.label)}</td><td>${esc(r.model)}</td><td>${esc(r.status)}</td>`
+                    + `<td>${r.passCount}/${r.scenarioCount}</td><td>${esc(r.startedAt)}</td>`;
+                tr.onclick = () => loadEvalRunDetail(r.id);
+                body.appendChild(tr);
+            });
+        } catch (e) {
+            body.innerHTML = `<tr><td colspan="5" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
+        }
+    }
+
+    async function loadEvalRunDetail(id) {
+        try {
+            const detail = await api('GET', '/admin/zzolbot/eval/runs/' + id);
+            const card = document.getElementById('evalRunDetailCard');
+            const body = document.getElementById('evalResultsBody');
+            body.innerHTML = '';
+            detail.results.forEach(r => {
+                const verdict = r.verdict === 'PASS'
+                    ? '<span class="tag-pass">PASS</span>'
+                    : '<span class="tag-fail">FAIL</span>';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>#${r.scenarioId}</td><td>${r.accuracy}</td><td>${r.groundedness}</td>`
+                    + `<td>${r.hallucination ? '⚠️' : '-'}</td><td>${verdict}</td>`
+                    + `<td>${r.latencyMs}</td><td>${r.missingToolCalls}</td>`;
+                body.appendChild(tr);
+            });
+            card.hidden = false;
+            card.scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            alert('상세 로드 실패: ' + e.message);
+        }
+    }
+
+    async function loadScenarios() {
+        const body = document.getElementById('evalScenariosBody');
+        try {
+            const list = await api('GET', '/admin/zzolbot/eval/scenarios');
+            if (!list.length) {
+                body.innerHTML = '<tr><td colspan="4" class="muted">시나리오가 없습니다</td></tr>';
+                return;
+            }
+            body.innerHTML = '';
+            list.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${esc(s.name)}</td><td>${esc(s.question)}</td>`
+                    + `<td>${esc(s.sourceType)}</td><td>${esc(s.createdAt)}</td>`;
+                body.appendChild(tr);
+            });
+        } catch (e) {
+            body.innerHTML = `<tr><td colspan="4" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
+        }
+    }
+
+    async function recordScenario() {
+        const name = document.getElementById('recName').value.trim();
+        const question = document.getElementById('recQuestion').value.trim();
+        const rubric = document.getElementById('recRubric').value.trim();
+        if (!name || !question || !rubric) {
+            alert('이름·질문·채점기준을 모두 입력하세요.');
+            return;
+        }
+        try {
+            await api('POST', '/admin/zzolbot/eval/scenarios/record', { name, question, rubric });
+            alert('녹화 박제 완료');
+            document.getElementById('recName').value = '';
+            document.getElementById('recQuestion').value = '';
+            document.getElementById('recRubric').value = '';
+            loadScenarios();
+        } catch (e) {
+            alert('박제 실패: ' + e.message);
+        }
+    }
+
+    /* ===== 모니터링 ===== */
+    async function runMonitor() {
+        const btn = document.getElementById('runMonitorBtn');
+        btn.disabled = true;
+        try {
+            await api('POST', '/admin/zzolbot/monitor/run');
+            loadAlerts();
+        } catch (e) {
+            alert('점검 실패: ' + e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function loadAlerts() {
+        const body = document.getElementById('monitorAlertsBody');
+        try {
+            const list = await api('GET', '/admin/zzolbot/monitor/alerts');
+            if (!list.length) {
+                body.innerHTML = '<tr><td colspan="6" class="muted">점검 이력이 없습니다</td></tr>';
+                return;
+            }
+            body.innerHTML = '';
+            list.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${esc(a.createdAt)}</td><td>${a.anomalous ? '⚠️' : '✅'}</td>`
+                    + `<td class="sev-${esc(a.severity)}">${esc(a.severity)}</td>`
+                    + `<td>${esc(a.fingerprint || '-')}</td><td>${esc(a.analysisSummary || '-')}</td>`
+                    + `<td>${a.notified ? '📨' : '-'}</td>`;
+                body.appendChild(tr);
+            });
+        } catch (e) {
+            body.innerHTML = `<tr><td colspan="6" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
+        }
     }
 
     loadHistory();

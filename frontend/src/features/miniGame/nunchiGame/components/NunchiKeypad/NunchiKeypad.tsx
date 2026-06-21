@@ -34,8 +34,9 @@ const NunchiKeypad = () => {
         disabled={!canPress}
         $state={myInputState}
         $connected={isConnected}
-        aria-label="눈치게임 누르기"
       >
+        {/* 버튼 텍스트(getLabel)가 접근성 이름이 되도록 정적 aria-label 을 두지 않는다.
+            정적 라벨을 두면 스크린리더가 상태("일어섰다!"/"충돌 — 탈락"/"연결 끊김")를 못 읽는다. */}
         {getLabel()}
       </S.PressButton>
     </S.Keypad>

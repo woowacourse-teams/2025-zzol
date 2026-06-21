@@ -69,8 +69,17 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
           });
         } else if (msg.state === 'COLLISION_COOLDOWN') {
           setServerOffsetMs(msg.serverNowEpochMs - Date.now());
-          setCollided(msg.collided); // 필드명 number 주의(currentNumber 아님)
-          setCurrentNumber(msg.number);
+          // BE 의 collided 는 "이번 충돌 그룹"만(누적 아님 — NunchiFlowOrchestrator#119).
+          // 한 라운드에 충돌이 2번 이상이면 이전 그룹을 덮어쓰면 안 된다(영구 OUT — 요구사항 H).
+          // 닉네임 기준 union 으로 누적한다(방내 닉네임 유니크 — ADR N6).
+          setCollided((prev) => {
+            const merged = [...prev];
+            msg.collided.forEach((name) => {
+              if (!merged.includes(name)) merged.push(name);
+            });
+            return merged;
+          });
+          setCurrentNumber(msg.number); // 필드명 number 주의(currentNumber 아님)
           setResumeAtEpochMs(msg.resumeAtEpochMs);
           setIdleDeadlineEpochMs(null); // 쿨다운 동안 idle 일시정지(데드라인 무의미)
           // 충돌 애니메이션 트리거(이벤트 신호 — 요구사항 7). 배열 diff 아님.

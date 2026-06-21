@@ -640,8 +640,8 @@
         btn.disabled = true;
         try {
             await api('POST', '/admin/zzolbot/eval/runs', { label });
-            alert('평가 실행을 시작했습니다. 잠시 후 목록이 갱신됩니다.');
-            setTimeout(loadEvalRuns, 1500);
+            // 백그라운드 실행 — 끝날 때까지 자동 폴링(최대 ~60초). 새로고침 불필요.
+            setTimeout(() => refreshEvalRunsUntilDone(24), 800);
         } catch (e) {
             alert('실행 시작 실패: ' + e.message);
         } finally {
@@ -650,24 +650,43 @@
     }
 
     async function loadEvalRuns() {
-        const body = document.getElementById('evalRunsBody');
         try {
-            const runs = await api('GET', '/admin/zzolbot/eval/runs');
-            if (!runs.length) {
-                body.innerHTML = '<tr><td colspan="5" class="muted">실행 이력이 없습니다</td></tr>';
-                return;
-            }
-            body.innerHTML = '';
-            runs.forEach(r => {
-                const tr = document.createElement('tr');
-                tr.className = 'row-click';
-                tr.innerHTML = `<td>${esc(r.label)}</td><td>${esc(r.model)}</td><td>${esc(r.status)}</td>`
-                    + `<td>${r.passCount}/${r.scenarioCount}</td><td>${esc(r.startedAt)}</td>`;
-                tr.onclick = () => loadEvalRunDetail(r.id);
-                body.appendChild(tr);
-            });
+            renderEvalRuns(await api('GET', '/admin/zzolbot/eval/runs'));
         } catch (e) {
-            body.innerHTML = `<tr><td colspan="5" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
+            document.getElementById('evalRunsBody').innerHTML =
+                `<tr><td colspan="5" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
+        }
+    }
+
+    function renderEvalRuns(runs) {
+        const body = document.getElementById('evalRunsBody');
+        if (!runs.length) {
+            body.innerHTML = '<tr><td colspan="5" class="muted">실행 이력이 없습니다</td></tr>';
+            return;
+        }
+        body.innerHTML = '';
+        runs.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.className = 'row-click';
+            const status = r.status === 'RUNNING' ? '⏳ RUNNING' : esc(r.status);
+            tr.innerHTML = `<td>${esc(r.label)}</td><td>${esc(r.model)}</td><td>${status}</td>`
+                + `<td>${r.passCount}/${r.scenarioCount}</td><td>${esc(r.startedAt)}</td>`;
+            tr.onclick = () => loadEvalRunDetail(r.id);
+            body.appendChild(tr);
+        });
+    }
+
+    // 가장 최근 실행이 COMPLETED/FAILED가 될 때까지 2.5초 간격으로 폴링.
+    async function refreshEvalRunsUntilDone(remaining) {
+        let runs = [];
+        try {
+            runs = await api('GET', '/admin/zzolbot/eval/runs');
+        } catch (e) { /* 일시 실패는 다음 시도에서 회복 */ }
+        renderEvalRuns(runs);
+        const top = runs[0];
+        const done = top && (top.status === 'COMPLETED' || top.status === 'FAILED');
+        if (!done && remaining > 0) {
+            setTimeout(() => refreshEvalRunsUntilDone(remaining - 1), 2500);
         }
     }
 

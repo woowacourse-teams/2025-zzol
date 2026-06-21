@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class ToolExecutor {
+public class ToolExecutor implements ToolResultSource {
 
     private final Map<String, ZzolBotTool> toolsByName;
     private final ExecutorService virtualExecutor;
@@ -35,6 +35,7 @@ public class ToolExecutor {
         return List.copyOf(toolsByName.values());
     }
 
+    @Override
     public List<ToolExecutionResult> executeAll(List<ToolCallItem> calls, AskContext ctx) {
         final List<CompletableFuture<ToolExecutionResult>> futures = calls.stream()
                 .map(call -> CompletableFuture

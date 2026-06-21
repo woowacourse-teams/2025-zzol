@@ -1,0 +1,23 @@
+{
+  "name": "seed-payment-error-spike",
+  "source": "MANUAL",
+  "question": "오후부터 에러 알림이 갑자기 쏟아져요. 무슨 일인지 점검해줘.",
+  "rubric": "결제 콜백(PaymentCallbackHandler)에서 NullPointerException(orderId가 null)이 대량 발생한 것을 근본원인으로 짚으면 정답. Redis 스트림은 정상이므로 스트림/방 문제로 오진하면 오답.",
+  "snapshot": [
+    {
+      "toolName": "loki_logs",
+      "args": {},
+      "content": "{\"logCount\":312,\"logs\":[{\"message\":\"ERROR PaymentCallbackHandler - java.lang.NullPointerException: orderId is null\"},{\"message\":\"ERROR PaymentCallbackHandler - java.lang.NullPointerException: orderId is null\"},{\"message\":\"ERROR PaymentCallbackHandler - failed to settle payment, orderId is null\"}]}"
+    },
+    {
+      "toolName": "loki_logs",
+      "args": { "since": "1h" },
+      "content": "{\"logCount\":312,\"logs\":[{\"message\":\"ERROR PaymentCallbackHandler - java.lang.NullPointerException: orderId is null\"},{\"message\":\"ERROR PaymentCallbackHandler - failed to settle payment, orderId is null\"}]}"
+    },
+    {
+      "toolName": "redis_stream_status",
+      "args": {},
+      "content": "{\"game-stream\":95,\"room-stream\":40}"
+    }
+  ]
+}

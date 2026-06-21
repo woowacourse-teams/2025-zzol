@@ -1,0 +1,23 @@
+{
+  "name": "seed-db-pool-exhaustion",
+  "source": "MANUAL",
+  "question": "전반적으로 응답이 느리고 가끔 에러가 난다는 제보가 있어요. 점검해줘.",
+  "rubric": "HikariCP DB 커넥션 풀 고갈(Connection is not available, request timed out)을 근본원인으로 짚으면 정답. Redis 스트림은 정상이므로 스트림 적체로 오진하면 오답. '느림 + 간헐적 에러'를 풀 고갈로 연결하면 가점.",
+  "snapshot": [
+    {
+      "toolName": "loki_logs",
+      "args": {},
+      "content": "{\"logCount\":88,\"logs\":[{\"message\":\"ERROR HikariPool-1 - Connection is not available, request timed out after 30000ms\"},{\"message\":\"ERROR HikariPool-1 - Connection is not available, request timed out after 30000ms\"},{\"message\":\"WARN  HikariPool-1 - Thread starvation or clock leap detected\"}]}"
+    },
+    {
+      "toolName": "loki_logs",
+      "args": { "since": "1h" },
+      "content": "{\"logCount\":88,\"logs\":[{\"message\":\"ERROR HikariPool-1 - Connection is not available, request timed out after 30000ms\"},{\"message\":\"WARN  HikariPool-1 - Thread starvation or clock leap detected\"}]}"
+    },
+    {
+      "toolName": "redis_stream_status",
+      "args": {},
+      "content": "{\"game-stream\":120,\"room-stream\":60}"
+    }
+  ]
+}

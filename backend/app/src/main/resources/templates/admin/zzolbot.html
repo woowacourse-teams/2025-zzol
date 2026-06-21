@@ -246,6 +246,13 @@
             color: #dc2626; cursor: pointer; font-size: 0.8rem; padding: 0.1rem 0.45rem;
         }
         .btn-del:hover { background: #fee2e2; border-color: #f87171; }
+
+        .result-detail { padding: 0.5rem 0.25rem; font-size: 0.85rem; }
+        .result-detail .label { font-weight: 600; display: block; margin: 0.4rem 0 0.25rem; }
+        .answer-box {
+            background: var(--surface-hover, #f4f4f5); border: 1px solid var(--border);
+            border-radius: 8px; padding: 0.6rem 0.8rem; line-height: 1.6; word-break: break-word;
+        }
     </style>
 </head>
 <body>
@@ -314,6 +321,7 @@
 
         <div class="panel-card" id="evalRunDetailCard" hidden>
             <div class="panel-head"><h2>실행 상세</h2></div>
+            <p class="muted">행을 클릭하면 zzolbot 답변과 judge 판정 근거가 펼쳐집니다.</p>
             <table class="data">
                 <thead>
                 <tr><th>시나리오</th><th>정확성</th><th>근거</th><th>환각</th><th>판정</th><th>지연(ms)</th><th>미존재 호출</th></tr>
@@ -674,10 +682,24 @@
                     ? '<span class="tag-pass">PASS</span>'
                     : '<span class="tag-fail">FAIL</span>';
                 const tr = document.createElement('tr');
+                tr.className = 'row-click';
                 tr.innerHTML = `<td>#${r.scenarioId}</td><td>${r.accuracy}</td><td>${r.groundedness}</td>`
                     + `<td>${r.hallucination ? '⚠️' : '-'}</td><td>${verdict}</td>`
                     + `<td>${r.latencyMs}</td><td>${r.missingToolCalls}</td>`;
+
+                const detailTr = document.createElement('tr');
+                detailTr.style.display = 'none';
+                const answerHtml = (typeof marked !== 'undefined') ? marked.parse(r.answer ?? '') : esc(r.answer);
+                detailTr.innerHTML = `<td colspan="7"><div class="result-detail">`
+                    + `<span class="label">🤖 zzolbot 답변</span><div class="answer-box">${answerHtml}</div>`
+                    + `<span class="label">⚖️ judge 판정 근거</span><div class="muted">${esc(r.rationale)}</div>`
+                    + `</div></td>`;
+
+                tr.onclick = () => {
+                    detailTr.style.display = detailTr.style.display === 'none' ? '' : 'none';
+                };
                 body.appendChild(tr);
+                body.appendChild(detailTr);
             });
             card.hidden = false;
             card.scrollIntoView({ behavior: 'smooth' });

@@ -60,7 +60,8 @@ class MonitorServiceTest {
                 llmCallBudget, PROPERTIES, new ObjectMapper(), Clock.systemUTC());
         given(collector.collect()).willReturn(snapshot());
         given(monitorRunRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
-        given(monitorRunRepository.findFirstByNotifiedTrueOrderByCreatedAtDesc()).willReturn(Optional.empty());
+        given(monitorRunRepository.findFirstByFingerprintAndNotifiedTrueOrderByCreatedAtDesc(any()))
+                .willReturn(Optional.empty());
         given(lokiLogClient.tailErrors(any(), any(), org.mockito.ArgumentMatchers.anyInt())).willReturn(java.util.List.of());
     }
 
@@ -120,7 +121,7 @@ class MonitorServiceTest {
         given(gate.evaluate(any())).willReturn(anomalous());
         final MonitorRunEntity lastNotified = MonitorRunEntity.of(Instant.now(), anomalous(), "[]");
         lastNotified.markNotified();
-        given(monitorRunRepository.findFirstByNotifiedTrueOrderByCreatedAtDesc())
+        given(monitorRunRepository.findFirstByFingerprintAndNotifiedTrueOrderByCreatedAtDesc("outbox_dead_letter"))
                 .willReturn(Optional.of(lastNotified));
 
         service.runOnce();

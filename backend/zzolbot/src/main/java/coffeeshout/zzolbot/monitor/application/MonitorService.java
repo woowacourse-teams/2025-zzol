@@ -84,9 +84,9 @@ public class MonitorService {
     }
 
     private boolean inCooldown(AnomalyVerdict verdict) {
-        return monitorRunRepository.findFirstByNotifiedTrueOrderByCreatedAtDesc()
-                .filter(last -> last.getFingerprint() != null
-                        && last.getFingerprint().equals(verdict.fingerprint()))
+        // 같은 fingerprint의 직전 알림만 조회해야, 그 사이 다른 이상이 끼어도 동일 이상이 쿨다운으로 정확히 억제된다.
+        return monitorRunRepository
+                .findFirstByFingerprintAndNotifiedTrueOrderByCreatedAtDesc(verdict.fingerprint())
                 .filter(last -> last.getCreatedAt()
                         .isAfter(clock.instant().minus(Duration.ofMinutes(properties.cooldownMinutes()))))
                 .isPresent();

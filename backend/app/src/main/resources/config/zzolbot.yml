@@ -22,7 +22,7 @@ zzol-bot:
     warn-log-threshold: 300                       # 윈도우 내 WARN 로그 건수 임계(보통 ERROR보다 잦음)
     error-log-window-minutes: 240                # 로그·5xx 집계 윈도우(기본 4시간)
     http5xx-threshold: 50                         # 윈도우 내 HTTP 5xx 응답 수 임계
-    cooldown-minutes: 30                         # 동일 이상 재알림 억제 시간
+    cooldown-minutes: 240                        # 동일 이상 재알림 억제 시간(점검 주기 이상이라야 매 주기 중복 알림을 막음)
   slack:
     webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성
   llm-budget:

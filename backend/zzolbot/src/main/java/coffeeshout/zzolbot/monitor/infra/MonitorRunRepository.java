@@ -8,5 +8,5 @@ public interface MonitorRunRepository extends JpaRepository<MonitorRunEntity, Lo
 
     List<MonitorRunEntity> findTop50ByOrderByCreatedAtDesc();
 
-    Optional<MonitorRunEntity> findFirstByNotifiedTrueOrderByCreatedAtDesc();
+    Optional<MonitorRunEntity> findFirstByFingerprintAndNotifiedTrueOrderByCreatedAtDesc(String fingerprint);
 }

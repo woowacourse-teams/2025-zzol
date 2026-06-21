@@ -174,6 +174,13 @@ FE가 카운트다운을 정확히 그릴 수 있도록 모든 시간 정보를 
 { "state": "DONE" }
 ```
 
+```json
+// /topic/room/{joinCode}/nunchi/stand — 한 명이 번호를 차지(첫 press 즉시·낙관적, N2)
+// number는 카운터 값이지 등수가 아니다(stand는 rank 미포함). 충돌은 stand가 아니라
+// COLLISION_COOLDOWN state로 통보된다.
+{ "name": "민수", "number": 1, "serverNowEpochMs": 1712140000000, "idleDeadlineEpochMs": 1712140010000 }
+```
+
 - **타임아웃 통보**: `idleDeadlineEpochMs`(무입력 자동 종료 예정 시각)는 유효 입력마다 갱신되며,
   갱신값을 `stand` 브로드캐스트에 함께 실어 FE가 카운트다운을 리셋한다. `hardCapEpochMs`는
   고정 상한이다.
@@ -325,6 +332,24 @@ RTT가 윈도우를 넘겨 늦게 도착한 입력은 **도착 시점의 현재 
 이는 **결정 3 위반이 아니다** — 결정 3이 금지한 건 *도메인* `MiniGameResult`를 대체하는 새 결과
 타입이지, *UI 응답 DTO*는 게임마다 다르다(`MiniGameScoresResponse` 등 선례). 3계층 결과 화면은
 기존 `MiniGameResultPage`(단순 rank 나열)를 재사용할 수 없는 신규 전용 뷰다.
+
+**전송 방식(확정)**: 공유 `MiniGameRanksResponse`/`MiniGameScoresResponse`(6게임 공용, `tier`
+없음)를 건드리지 않고 **nunchi 전용 REST 엔드포인트**를 둔다. 기존 결과 조회가 REST
+(`/minigames/ranks`·`/minigames/scores`)인 선례를 따른다.
+
+```json
+// GET /minigames/nunchi/result?joinCode={joinCode}
+// 필드명은 기존 결과 DTO와 동일하게 playerName 사용(name 아님). rank는 MiniGameResult
+// standard-competition(1,2,2,4,6), tier는 NunchiScore 밴드에서 도출.
+{
+  "results": [
+    { "playerName": "민수", "rank": 1, "tier": "SOLO" },
+    { "playerName": "철수", "rank": 2, "tier": "COLLISION" },
+    { "playerName": "영희", "rank": 2, "tier": "COLLISION" },
+    { "playerName": "지훈", "rank": 4, "tier": "MISS" }
+  ]
+}
+```
 
 ## 고려한 대안
 

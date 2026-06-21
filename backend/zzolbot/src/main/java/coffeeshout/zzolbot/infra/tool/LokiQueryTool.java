@@ -95,7 +95,7 @@ public class LokiQueryTool implements ZzolBotTool {
         // 쿼리를 직접 인코딩한 뒤 String이 아닌 URI로 넘긴다.
         // RestClient.uri(String)은 인자를 URI 템플릿으로 보고 한 번 더 인코딩해(% → %25),
         // Loki가 400 "parse error ... unexpected %!(NOVERB)"로 거부했다. URI 객체는 재인코딩되지 않는다.
-        final URI uri = URI.create(lokiBaseUrl + String.format(
+        final URI uri = URI.create(lokiBaseUrl).resolve(String.format(
                 "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d",
                 encodeQueryValue(lokiQuery), startNano, endNano, LOG_LIMIT
         ));

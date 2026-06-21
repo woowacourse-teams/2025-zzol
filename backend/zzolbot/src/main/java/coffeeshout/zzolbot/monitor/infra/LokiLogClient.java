@@ -56,7 +56,7 @@ public class LokiLogClient {
         final String logql = String.format(
                 "sum(count_over_time({environment=\"%s\"} |~ \"%s\" [%dm]))",
                 environment, level, Math.max(1, window.toMinutes()));
-        final URI uri = URI.create(lokiBaseUrl + "/loki/api/v1/query?query=" + encode(logql)
+        final URI uri = URI.create(lokiBaseUrl).resolve("/loki/api/v1/query?query=" + encode(logql)
                 + "&time=" + (end.toEpochMilli() * 1_000_000L));
         try {
             final String body = restClient.get().uri(uri).retrieve().body(String.class);
@@ -74,7 +74,7 @@ public class LokiLogClient {
         final String logql = String.format("{environment=\"%s\"} |~ \"%s\"", environment, LEVEL_ERROR);
         final long startNano = end.minus(window).toEpochMilli() * 1_000_000L;
         final long endNano = end.toEpochMilli() * 1_000_000L;
-        final URI uri = URI.create(lokiBaseUrl + String.format(
+        final URI uri = URI.create(lokiBaseUrl).resolve(String.format(
                 "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d&direction=backward",
                 encode(logql), startNano, endNano, limit));
         try {

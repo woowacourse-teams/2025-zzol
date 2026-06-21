@@ -24,21 +24,15 @@ disable-model-invocation: true
 | docs | feature-template | `📝docs` |
 | test | feature-template | `🧪 test` |
 
-## 2. 현재 이슈 템플릿
+## 2. 이슈 템플릿 읽기
 
-아래 내용을 참고해 이슈 본문을 작성한다.
+type에 맞는 템플릿 **하나만** 읽어 본문 골격으로 삼는다 — `fix`는 `bug_report.md`, 그 외는 `feature-template.md` (두 템플릿은 제목 줄만 다르고 섹션 구조는 동일하다).
 
-이슈 템플릿은 **모노레포 루트**의 `.github/ISSUE_TEMPLATE/`에 있다. `backend/` 하위가 아니다.
-cwd가 `backend/`이든 worktree 루트이든 동작하도록 `git rev-parse --show-toplevel`로 repo 루트를 앵커한다.
-(worktree는 자체 `.github/`를 가지므로 하드코딩 절대경로·`../` 상대경로는 깨진다.)
+템플릿은 **모노레포 루트** `.github/ISSUE_TEMPLATE/`에 있다(`backend/` 하위 아님). worktree는 자체 `.github/`를 가지므로 `git rev-parse --show-toplevel`로 루트를 앵커한다(하드코딩·`../` 금지):
 
-### Bug 템플릿
-
-!`cat "$(git rev-parse --show-toplevel)/.github/ISSUE_TEMPLATE/bug_report.md"`
-
-### Feature 템플릿
-
-!`cat "$(git rev-parse --show-toplevel)/.github/ISSUE_TEMPLATE/feature-template.md"`
+```bash
+cat "$(git rev-parse --show-toplevel)/.github/ISSUE_TEMPLATE/<bug_report|feature-template>.md"
+```
 
 ## 3. 사용자 확인 (필수 — 이 단계를 건너뛰지 않는다)
 
@@ -89,10 +83,12 @@ EOF
 
 ## 6. 브랜치 생성 및 체크아웃
 
+be/dev를 **체크아웃하지 않고** `origin/be/dev`에서 직접 분기한다. be/dev 위에서 `git checkout -b`하면 autoSetupMerge가 새 브랜치 upstream을 be/dev로 잡아 이후 push·IDE Sync가 be/dev로 직행한다(#1404 사고 원인) — 금지.
+
 ```bash
-git checkout be/dev
-git pull origin be/dev
-git checkout -b be/{type}/{issue-number}-{slug}
+git fetch origin be/dev
+git switch -c be/{type}/{issue-number}-{slug} origin/be/dev
+git branch --unset-upstream   # ★ autoSetupMerge가 잡은 be/dev upstream 제거 (git-push-safety)
 ```
 
 - `{slug}`: 이슈 제목을 소문자 + 하이픈으로 변환, 최대 40자

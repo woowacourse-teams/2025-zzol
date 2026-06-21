@@ -36,7 +36,7 @@ CREATE TABLE zzolbot_eval_result (
     answer             TEXT        NOT NULL,
     accuracy           INT         NOT NULL,
     groundedness       INT         NOT NULL,
-    hallucination      TINYINT(1)  NOT NULL,
+    hallucination      BOOLEAN     NOT NULL,
     verdict            VARCHAR(10) NOT NULL,
     rationale          TEXT        NOT NULL,
     latency_ms         BIGINT      NOT NULL,

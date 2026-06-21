@@ -383,14 +383,21 @@
 
     function setLoading(v) { input.disabled = v; sendBtn.disabled = v; }
 
+    // 마크다운을 렌더링하되 반드시 sanitize한다. 안전하게 렌더할 수 없으면 null을 반환해 호출부가 textContent로 폴백한다.
+    function renderMarkdown(text) {
+        if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') return null;
+        return DOMPurify.sanitize(marked.parse((text ?? '').toString()));
+    }
+
     function appendMessage(role, text) {
         document.getElementById('emptyHint')?.remove();
         const msg = document.createElement('div');
         msg.className = `message ${role}`;
         const bubble = document.createElement('div');
         bubble.className = 'bubble';
-        if (role === 'bot' && typeof marked !== 'undefined') {
-            bubble.innerHTML = marked.parse(text);
+        const html = role === 'bot' ? renderMarkdown(text) : null;
+        if (html !== null) {
+            bubble.innerHTML = html;
         } else {
             bubble.textContent = text;
         }
@@ -708,7 +715,8 @@
 
                 const detailTr = document.createElement('tr');
                 detailTr.style.display = 'none';
-                const answerHtml = (typeof marked !== 'undefined') ? marked.parse(r.answer ?? '') : esc(r.answer);
+                const md = renderMarkdown(r.answer);
+                const answerHtml = (md !== null) ? md : esc(r.answer);
                 detailTr.innerHTML = `<td colspan="7"><div class="result-detail">`
                     + `<span class="label">🤖 zzolbot 답변</span><div class="answer-box">${answerHtml}</div>`
                     + `<span class="label">⚖️ judge 판정 근거</span><div class="muted">${esc(r.rationale)}</div>`
@@ -741,7 +749,14 @@
                 tr.innerHTML = `<td>${esc(s.name)}</td><td>${esc(s.question)}</td>`
                     + `<td class="muted">${esc(s.rubric)}</td>`
                     + `<td>${esc(s.sourceType)}</td><td>${esc(s.createdAt)}</td>`
-                    + `<td><button class="btn-del" title="삭제" onclick="deleteScenario(${s.id}, '${esc(s.name)}')">✕</button></td>`;
+                    + `<td></td>`;
+                const btn = document.createElement('button');
+                btn.className = 'btn-del';
+                btn.title = '삭제';
+                btn.textContent = '✕';
+                // 인라인 onclick 문자열 결합은 이름에 따옴표가 있으면 깨지고 주입 위험이 있어 핸들러로 분리한다.
+                btn.addEventListener('click', () => deleteScenario(s.id, s.name));
+                tr.lastElementChild.appendChild(btn);
                 body.appendChild(tr);
             });
         } catch (e) {
@@ -858,5 +873,6 @@
     loadHistory();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 </body>
 </html>

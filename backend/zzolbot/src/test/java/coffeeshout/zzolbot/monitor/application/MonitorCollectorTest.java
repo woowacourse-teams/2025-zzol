@@ -13,6 +13,7 @@ import coffeeshout.zzolbot.monitor.config.MonitorProperties;
 import coffeeshout.zzolbot.monitor.domain.MonitorSignal;
 import coffeeshout.zzolbot.monitor.domain.MonitorSnapshot;
 import coffeeshout.zzolbot.monitor.infra.LokiLogClient;
+import coffeeshout.zzolbot.monitor.infra.PrometheusMetricClient;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -34,7 +35,7 @@ import org.springframework.data.redis.core.StreamOperations;
 class MonitorCollectorTest {
 
     private static final MonitorProperties PROPERTIES =
-            new MonitorProperties(true, "0 0 */4 * * *", 10, 10000, 100, 240, 30);
+            new MonitorProperties(true, "0 0 */4 * * *", 10, 10000, 100, 240, 50, 30);
 
     @Mock
     private ZzolBotOutboxRepository outboxRepository;
@@ -47,6 +48,8 @@ class MonitorCollectorTest {
     private RedisStreamProperties redisStreamProperties;
     @Mock
     private LokiLogClient lokiLogClient;
+    @Mock
+    private PrometheusMetricClient prometheusMetricClient;
 
     private MonitorCollector collector;
 
@@ -54,13 +57,14 @@ class MonitorCollectorTest {
     @SuppressWarnings("unchecked")
     void setUp() {
         collector = new MonitorCollector(outboxRepository, redisTemplate, redisStreamProperties, lokiLogClient,
-                PROPERTIES, Clock.fixed(Instant.parse("2026-06-21T00:00:00Z"), ZoneOffset.UTC));
+                prometheusMetricClient, PROPERTIES, Clock.fixed(Instant.parse("2026-06-21T00:00:00Z"), ZoneOffset.UTC));
 
         final Map<String, RedisStreamProperties.StreamConfig> keys = new LinkedHashMap<>();
         keys.put("game-stream", null);
         given(redisStreamProperties.keys()).willReturn(keys);
         given(redisTemplate.opsForStream()).willReturn(streamOperations);
         given(lokiLogClient.countErrors(any(), any())).willReturn(0L);
+        given(prometheusMetricClient.count5xx(any(), any())).willReturn(0L);
     }
 
     @Test
@@ -103,6 +107,21 @@ class MonitorCollectorTest {
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(logs.value()).isEqualTo(250);
             softly.assertThat(logs.breached()).isTrue();
+        });
+    }
+
+    @Test
+    void HTTP_5xx_응답_수가_임계를_넘으면_초과로_수집한다() {
+        given(outboxRepository.countByStatusIn(anyList())).willReturn(0L);
+        given(streamOperations.size(anyString())).willReturn(120L);
+        given(prometheusMetricClient.count5xx(any(), any())).willReturn(80L);
+
+        final MonitorSnapshot snapshot = collector.collect();
+
+        final MonitorSignal http5xx = signal(snapshot, "http_5xx");
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(http5xx.value()).isEqualTo(80);
+            softly.assertThat(http5xx.breached()).isTrue();
         });
     }
 

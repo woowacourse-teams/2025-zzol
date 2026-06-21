@@ -17,10 +17,14 @@ public record MonitorProperties(
         @Positive long streamBacklogThreshold,
         @Positive long errorLogThreshold,
         @Positive int errorLogWindowMinutes,
+        @Positive long http5xxThreshold,
         @Positive int cooldownMinutes
 ) {
 
-    public java.time.Duration errorLogWindow() {
+    /**
+     * 로그·5xx 집계가 공유하는 조회 윈도우.
+     */
+    public java.time.Duration window() {
         return java.time.Duration.ofMinutes(errorLogWindowMinutes);
     }
 }

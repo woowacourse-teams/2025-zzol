@@ -64,7 +64,7 @@ public class MonitorService {
         final MonitorAnalysis analysis;
         if (llmCallBudget.tryAcquire()) {
             final List<String> logSamples = lokiLogClient.tailErrors(
-                    snapshot.collectedAt(), properties.errorLogWindow(), LOG_SAMPLE_LIMIT);
+                    snapshot.collectedAt(), properties.window(), LOG_SAMPLE_LIMIT);
             analysis = safeAnalyze(snapshot, verdict, logSamples);
         } else {
             log.warn("[ZzolBot] 일일 LLM 예산 소진 — 이상 분석 생략. fingerprint={}", verdict.fingerprint());

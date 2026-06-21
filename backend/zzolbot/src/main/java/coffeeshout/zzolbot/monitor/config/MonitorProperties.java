@@ -15,6 +15,12 @@ public record MonitorProperties(
         @NotBlank String cron,
         @Positive long deadLetterThreshold,
         @Positive long streamBacklogThreshold,
+        @Positive long errorLogThreshold,
+        @Positive int errorLogWindowMinutes,
         @Positive int cooldownMinutes
 ) {
+
+    public java.time.Duration errorLogWindow() {
+        return java.time.Duration.ofMinutes(errorLogWindowMinutes);
+    }
 }

@@ -18,6 +18,8 @@ zzol-bot:
     cron: "0 0 */4 * * *"                       # 4시간마다 능동 점검
     dead-letter-threshold: 10                    # outbox DEAD_LETTER 누적 임계
     stream-backlog-threshold: 10000              # Redis Stream 최대 XLEN 임계
+    error-log-threshold: 100                     # 윈도우 내 ERROR/WARN 로그 건수 임계
+    error-log-window-minutes: 240                # 로그 집계 윈도우(기본 4시간)
     cooldown-minutes: 30                         # 동일 이상 재알림 억제 시간
   slack:
     webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성

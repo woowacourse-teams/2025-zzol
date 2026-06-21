@@ -5,6 +5,7 @@ import coffeeshout.zzolbot.monitor.domain.AnomalyVerdict;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
 import coffeeshout.zzolbot.monitor.domain.MonitorSnapshot;
 import coffeeshout.zzolbot.monitor.infra.AnomalyAnalyzer;
+import coffeeshout.zzolbot.monitor.infra.LokiLogClient;
 import coffeeshout.zzolbot.monitor.infra.MonitorRunEntity;
 import coffeeshout.zzolbot.monitor.infra.MonitorRunRepository;
 import coffeeshout.zzolbot.monitor.infra.ZzolBotSlackNotifier;
@@ -26,9 +27,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MonitorService {
 
+    private static final int LOG_SAMPLE_LIMIT = 20;
+
     private final MonitorCollector collector;
     private final AnomalyGate gate;
     private final AnomalyAnalyzer analyzer;
+    private final LokiLogClient lokiLogClient;
     private final ZzolBotSlackNotifier notifier;
     private final MonitorRunRepository monitorRunRepository;
     private final LlmCallBudget llmCallBudget;
@@ -59,7 +63,9 @@ public class MonitorService {
     private void analyzeAndNotify(MonitorSnapshot snapshot, AnomalyVerdict verdict, MonitorRunEntity run) {
         final MonitorAnalysis analysis;
         if (llmCallBudget.tryAcquire()) {
-            analysis = safeAnalyze(snapshot, verdict);
+            final List<String> logSamples = lokiLogClient.tailErrors(
+                    snapshot.collectedAt(), properties.errorLogWindow(), LOG_SAMPLE_LIMIT);
+            analysis = safeAnalyze(snapshot, verdict, logSamples);
         } else {
             log.warn("[ZzolBot] 일일 LLM 예산 소진 — 이상 분석 생략. fingerprint={}", verdict.fingerprint());
             analysis = MonitorAnalysis.budgetExhausted();
@@ -68,9 +74,9 @@ public class MonitorService {
         notifier.notifyAnomaly(snapshot, verdict, analysis);
     }
 
-    private MonitorAnalysis safeAnalyze(MonitorSnapshot snapshot, AnomalyVerdict verdict) {
+    private MonitorAnalysis safeAnalyze(MonitorSnapshot snapshot, AnomalyVerdict verdict, List<String> logSamples) {
         try {
-            return analyzer.analyze(snapshot, verdict);
+            return analyzer.analyze(snapshot, verdict, logSamples);
         } catch (Exception e) {
             log.warn("[ZzolBot] 이상 분석 실패 — 결정적 신호만 알림. fingerprint={}", verdict.fingerprint(), e);
             return MonitorAnalysis.failed();

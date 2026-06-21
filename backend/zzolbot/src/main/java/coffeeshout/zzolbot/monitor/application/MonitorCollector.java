@@ -6,6 +6,7 @@ import coffeeshout.zzolbot.infra.ZzolBotOutboxRepository;
 import coffeeshout.zzolbot.monitor.config.MonitorProperties;
 import coffeeshout.zzolbot.monitor.domain.MonitorSignal;
 import coffeeshout.zzolbot.monitor.domain.MonitorSnapshot;
+import coffeeshout.zzolbot.monitor.infra.LokiLogClient;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +17,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * 결정적(LLM 무관) 운영 신호를 수집한다. 평상시 매 주기 호출되므로 비용이 0이어야 한다.
- * 현재 신호: outbox DEAD_LETTER 누적 수, Redis Stream 최대 적재량(XLEN).
- * (Loki ERROR/WARN·Prometheus 등 HTTP 기반 신호는 후속 확장 여지로 남김.)
+ * 현재 신호: outbox DEAD_LETTER 누적 수, Redis Stream 최대 적재량(XLEN),
+ * Alloy가 Loki에 적재한 ERROR/WARN 로그 건수(윈도우 집계).
  */
 @Slf4j
 @Component
@@ -26,10 +27,12 @@ public class MonitorCollector {
 
     static final String SIGNAL_DEAD_LETTER = "outbox_dead_letter";
     static final String SIGNAL_STREAM_BACKLOG = "redis_stream_backlog";
+    static final String SIGNAL_ERROR_LOGS = "loki_error_logs";
 
     private final ZzolBotOutboxRepository outboxRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedisStreamProperties redisStreamProperties;
+    private final LokiLogClient lokiLogClient;
     private final MonitorProperties properties;
     private final Clock clock;
 
@@ -37,7 +40,13 @@ public class MonitorCollector {
         final List<MonitorSignal> signals = new ArrayList<>();
         signals.add(collectDeadLetter());
         signals.add(collectStreamBacklog());
+        signals.add(collectErrorLogs());
         return new MonitorSnapshot(signals, clock.instant());
+    }
+
+    private MonitorSignal collectErrorLogs() {
+        final long count = lokiLogClient.countErrors(clock.instant(), properties.errorLogWindow());
+        return MonitorSignal.of(SIGNAL_ERROR_LOGS, count, properties.errorLogThreshold());
     }
 
     private MonitorSignal collectDeadLetter() {

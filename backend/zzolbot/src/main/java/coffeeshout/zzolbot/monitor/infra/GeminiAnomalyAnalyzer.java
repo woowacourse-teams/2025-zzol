@@ -46,14 +46,14 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
 
     @Retry(name = "zzolBotGemini")
     @Override
-    public MonitorAnalysis analyze(MonitorSnapshot snapshot, AnomalyVerdict verdict) {
+    public MonitorAnalysis analyze(MonitorSnapshot snapshot, AnomalyVerdict verdict, List<String> logSamples) {
         final GenerateContentConfig config = GenerateContentConfig.builder()
                 .systemInstruction(Content.fromParts(Part.fromText(SYSTEM_INSTRUCTION)))
                 .temperature(0f)
                 .topP(0f)
                 .responseMimeType("application/json")
                 .build();
-        final String prompt = buildPrompt(snapshot, verdict);
+        final String prompt = buildPrompt(snapshot, verdict, logSamples);
         final GenerateContentResponse response = callApi(prompt, config);
         return parse(response.text());
     }
@@ -67,7 +67,7 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
         }
     }
 
-    private String buildPrompt(MonitorSnapshot snapshot, AnomalyVerdict verdict) {
+    private String buildPrompt(MonitorSnapshot snapshot, AnomalyVerdict verdict, List<String> logSamples) {
         final StringBuilder sb = new StringBuilder();
         sb.append("심각도: ").append(verdict.severity()).append('\n');
         sb.append("초과 지문: ").append(verdict.fingerprint()).append('\n');
@@ -78,6 +78,12 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
                     .append(", threshold=").append(signal.threshold())
                     .append(", breached=").append(signal.breached())
                     .append('\n');
+        }
+        if (logSamples != null && !logSamples.isEmpty()) {
+            sb.append("\n최근 ERROR/WARN 로그 샘플:\n");
+            for (String line : logSamples) {
+                sb.append("- ").append(line).append('\n');
+            }
         }
         return sb.toString();
     }

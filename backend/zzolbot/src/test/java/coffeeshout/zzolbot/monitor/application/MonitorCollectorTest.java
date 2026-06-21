@@ -5,11 +5,14 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
+import static org.mockito.ArgumentMatchers.any;
+
 import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.zzolbot.infra.ZzolBotOutboxRepository;
 import coffeeshout.zzolbot.monitor.config.MonitorProperties;
 import coffeeshout.zzolbot.monitor.domain.MonitorSignal;
 import coffeeshout.zzolbot.monitor.domain.MonitorSnapshot;
+import coffeeshout.zzolbot.monitor.infra.LokiLogClient;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -31,7 +34,7 @@ import org.springframework.data.redis.core.StreamOperations;
 class MonitorCollectorTest {
 
     private static final MonitorProperties PROPERTIES =
-            new MonitorProperties(true, "0 0 */4 * * *", 10, 10000, 30);
+            new MonitorProperties(true, "0 0 */4 * * *", 10, 10000, 100, 240, 30);
 
     @Mock
     private ZzolBotOutboxRepository outboxRepository;
@@ -42,19 +45,22 @@ class MonitorCollectorTest {
     private StreamOperations streamOperations;
     @Mock
     private RedisStreamProperties redisStreamProperties;
+    @Mock
+    private LokiLogClient lokiLogClient;
 
     private MonitorCollector collector;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() {
-        collector = new MonitorCollector(outboxRepository, redisTemplate, redisStreamProperties, PROPERTIES,
-                Clock.fixed(Instant.parse("2026-06-21T00:00:00Z"), ZoneOffset.UTC));
+        collector = new MonitorCollector(outboxRepository, redisTemplate, redisStreamProperties, lokiLogClient,
+                PROPERTIES, Clock.fixed(Instant.parse("2026-06-21T00:00:00Z"), ZoneOffset.UTC));
 
         final Map<String, RedisStreamProperties.StreamConfig> keys = new LinkedHashMap<>();
         keys.put("game-stream", null);
         given(redisStreamProperties.keys()).willReturn(keys);
         given(redisTemplate.opsForStream()).willReturn(streamOperations);
+        given(lokiLogClient.countErrors(any(), any())).willReturn(0L);
     }
 
     @Test
@@ -82,6 +88,21 @@ class MonitorCollectorTest {
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(backlog.value()).isEqualTo(48213);
             softly.assertThat(backlog.breached()).isTrue();
+        });
+    }
+
+    @Test
+    void Loki_ERROR_로그_건수가_임계를_넘으면_초과로_수집한다() {
+        given(outboxRepository.countByStatusIn(anyList())).willReturn(0L);
+        given(streamOperations.size(anyString())).willReturn(120L);
+        given(lokiLogClient.countErrors(any(), any())).willReturn(250L);
+
+        final MonitorSnapshot snapshot = collector.collect();
+
+        final MonitorSignal logs = signal(snapshot, "loki_error_logs");
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(logs.value()).isEqualTo(250);
+            softly.assertThat(logs.breached()).isTrue();
         });
     }
 

@@ -16,7 +16,6 @@ public record NunchiTimingProperties(
         @NotNull @DurationMin(nanos = 1) Duration numberWindow,
         @NotNull @DurationMin(nanos = 1) Duration collisionCooldown,
         @NotNull @DurationMin(nanos = 1) Duration idleTimeout,
-        @NotNull @DurationMin(nanos = 1) Duration hardCap,
-        @NotNull @DurationMin(nanos = 1) Duration earlyFinishDelay
+        @NotNull @DurationMin(nanos = 1) Duration hardCap
 ) {
 }

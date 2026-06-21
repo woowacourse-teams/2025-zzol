@@ -66,8 +66,7 @@ class NunchiFlowOrchestratorTest {
                 Duration.ofMillis(300),   // numberWindow
                 Duration.ofMillis(2000),  // collisionCooldown
                 Duration.ofMillis(10000), // idleTimeout
-                Duration.ofMillis(30000), // hardCap
-                Duration.ofMillis(2000)   // earlyFinishDelay
+                Duration.ofMillis(30000)  // hardCap
         );
         orchestrator = new NunchiFlowOrchestrator(
                 scheduler, timing, notifier, gameSessionService, eventPublisher);
@@ -156,11 +155,9 @@ class NunchiFlowOrchestratorTest {
             orchestrator.handlePress(game, JOIN_CODE, 삼, T0.plusMillis(5000)); // solo → 전원 입력
 
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
-            assertThat(game.isFinished()).isTrue();
-
-            // MiniGameFinishedEvent는 earlyFinishDelay만큼 지연 발행된다 — 캡처된 마지막 task를 발화해 확인
-            scheduler.lastTask().run();
+            // MiniGameFinishedEvent는 동기 발행(ADR-0025 순서 불변식 — 결과 저장·라운드 전진)
             verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
+            assertThat(game.isFinished()).isTrue();
         }
 
         @DisplayName("종료 후 늦게 발화한 idle/하드캡 콜백은 다시 종료하지 않는다(멱등)")
@@ -181,8 +178,9 @@ class NunchiFlowOrchestratorTest {
             // 종료 후 startFlow의 idle/hardCap 콜백(stale)을 강제로 발화해도 추가 종료 없음
             startupTimers.forEach(Runnable::run);
 
-            // notifyDone은 여전히 1회 — stale 타이머가 멱등 가드(finished)에 막힌다
+            // notifyDone·MiniGameFinishedEvent 모두 여전히 1회 — stale 타이머가 멱등 가드(finished)에 막힌다
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
+            verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
         }
 
         @Test

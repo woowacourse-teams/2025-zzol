@@ -217,13 +217,11 @@ public class NunchiFlowOrchestrator {
         notifier.notifyDone(code);
 
         // 순서 불변식(ADR-0025 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행.
-        // 결과 저장·확률 조정을 유발하는 MiniGameFinishedEvent는 결과 화면 전환 여유를 위해 지연 발행한다
-        // (SpeedTouch/BlindTimer 선례). 저장 리스너 실패가 종료 알림을 막지 않도록 알림 뒤에 둔다.
+        // MiniGameFinishedEvent는 결과 저장·라운드 전진·확률 조정을 유발하므로 동기로, 종료 알림(notifyDone)
+        // 뒤에 마지막으로 발행한다(저장 리스너 실패가 알림을 막지 않도록 — BlockStacking/SpeedTouch 동일).
         final int roundCount = gameSessionService.finishGame(new JoinCode(code));
-        taskScheduler.schedule(
-                () -> eventPublisher.publishEvent(new MiniGameFinishedEvent(
-                        code, MiniGameType.NUNCHI_GAME.name(), game.getResult().toRankMap(), roundCount)),
-                Instant.now().plus(timing.earlyFinishDelay()));
+        eventPublisher.publishEvent(new MiniGameFinishedEvent(
+                code, MiniGameType.NUNCHI_GAME.name(), game.getResult().toRankMap(), roundCount));
 
         sessions.remove(code);
     }

@@ -2,6 +2,8 @@ package coffeeshout.nunchi.domain;
 
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.Playable;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -145,6 +147,20 @@ public class NunchiGame implements Playable {
 
     public boolean isFinished() {
         return state == NunchiState.DONE;
+    }
+
+    /**
+     * 닉네임으로 참가자를 찾는다(방내 닉네임 유니크 불변식 전제 — ADR-0031 N6). 컨슈머가 받은
+     * 닉네임 문자열을 {@code press}에 넘길 {@link Gamer}로 해석하기 위함이다. {@code Gamer} 동일성은
+     * {@code (name, userId)}이므로 닉네임만으로 새 {@code Gamer}를 만들면 점수 맵 키와 어긋나, 반드시
+     * {@code setUp}으로 주입된 원본 인스턴스를 돌려준다.
+     */
+    public Gamer findByName(String name) {
+        return gamers.stream()
+                .filter(gamer -> gamer.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(
+                        GlobalErrorCode.NOT_EXIST, "플레이어를 찾을 수 없습니다: " + name));
     }
 
     public NunchiState getState() {

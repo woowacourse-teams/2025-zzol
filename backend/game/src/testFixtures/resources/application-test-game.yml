@@ -54,5 +54,4 @@ nunchi:
     collision-cooldown: 500ms   # IT 가속
     idle-timeout: 2000ms        # IT 가속
     hard-cap: 5000ms            # IT 가속
-    prepare: 500ms
-    early-finish-delay: 500ms
+    early-finish-delay: 500ms   # IT 가속

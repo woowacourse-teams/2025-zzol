@@ -2,9 +2,12 @@ package coffeeshout.nunchi.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
 
 /**
@@ -63,7 +67,6 @@ class NunchiFlowOrchestratorTest {
                 Duration.ofMillis(2000),  // collisionCooldown
                 Duration.ofMillis(10000), // idleTimeout
                 Duration.ofMillis(30000), // hardCap
-                Duration.ofMillis(2000),  // prepare
                 Duration.ofMillis(2000)   // earlyFinishDelay
         );
         orchestrator = new NunchiFlowOrchestrator(
@@ -153,8 +156,11 @@ class NunchiFlowOrchestratorTest {
             orchestrator.handlePress(game, JOIN_CODE, 삼, T0.plusMillis(5000)); // solo → 전원 입력
 
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
-            verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
             assertThat(game.isFinished()).isTrue();
+
+            // MiniGameFinishedEvent는 earlyFinishDelay만큼 지연 발행된다 — 캡처된 마지막 task를 발화해 확인
+            scheduler.lastTask().run();
+            verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
         }
 
         @DisplayName("종료 후 늦게 발화한 idle/하드캡 콜백은 다시 종료하지 않는다(멱등)")
@@ -172,23 +178,64 @@ class NunchiFlowOrchestratorTest {
 
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
 
-            // 종료 후 startFlow의 idle/hardCap 콜백을 강제로 발화해도 추가 종료 없음
+            // 종료 후 startFlow의 idle/hardCap 콜백(stale)을 강제로 발화해도 추가 종료 없음
             startupTimers.forEach(Runnable::run);
 
+            // notifyDone은 여전히 1회 — stale 타이머가 멱등 가드(finished)에 막힌다
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
-            verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
         }
 
         @Test
         void idle_타임아웃이_먼저_발화하면_미입력자를_MISS로_종료한다() {
             orchestrator.startFlow(game, JOIN_CODE);
-            orchestrator.handlePress(game, JOIN_CODE, 일, T0); // 일만 입력
 
-            // idle 타이머(startFlow의 두 번째 예약 — 인덱스 0=idle, 1=hardCap)를 강제 발화
+            // idle 타이머(startFlow의 첫 예약 — 인덱스 0=idle, 1=hardCap)를 강제 발화
             scheduler.taskAt(0).run();
 
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
             assertThat(game.isFinished()).isTrue();
+        }
+
+        @DisplayName("press로 idle을 리셋한 뒤 발화한 stale idle 타이머는 게임을 종료하지 않는다(★ 동시성)")
+        @Test
+        void 대체된_stale_idle_타이머는_종료를_트리거하지_않는다() {
+            orchestrator.startFlow(game, JOIN_CODE);
+            final Runnable staleIdle = scheduler.taskAt(0); // startFlow가 건 idle
+
+            // 유효 press가 idle을 리셋(scheduleIdle이 새 idle을 걸고 generation을 올림)
+            orchestrator.handlePress(game, JOIN_CODE, 일, T0);
+
+            // cancel(false)는 이미 발화해 락 대기 중인 옛 콜백을 못 막는다 — 강제 발화해 stale 가드를 검증
+            staleIdle.run();
+
+            // generation 불일치로 무시 — 종료되지 않아야 한다
+            verify(notifier, never()).notifyDone(anyString());
+            assertThat(game.isFinished()).isFalse();
+        }
+    }
+
+    @Nested
+    class 고정_데드라인 {
+
+        @DisplayName("hardCapEpochMs는 시작 시 고정되어 이후 PLAYING 브로드캐스트에서 변하지 않는다(결정 8)")
+        @Test
+        void 하드캡은_재개_브로드캐스트에서도_고정값이다() {
+            orchestrator.startFlow(game, JOIN_CODE);
+            final ArgumentCaptor<Long> hardCapCaptor = ArgumentCaptor.forClass(Long.class);
+            verify(notifier).notifyPlaying(eq(JOIN_CODE.getValue()), anyInt(), any(),
+                    anyLong(), anyLong(), hardCapCaptor.capture());
+            final long startHardCap = hardCapCaptor.getValue();
+
+            // 충돌 → 쿨다운 종료(재개)에서 PLAYING이 다시 브로드캐스트된다
+            orchestrator.handlePress(game, JOIN_CODE, 일, T0);
+            orchestrator.handlePress(game, JOIN_CODE, 이, T0.plusMillis(100)); // 충돌
+            fireCooldown(); // onCooldownEnd → broadcastPlaying
+
+            final ArgumentCaptor<Long> resumeHardCap = ArgumentCaptor.forClass(Long.class);
+            verify(notifier, times(2)).notifyPlaying(eq(JOIN_CODE.getValue()), anyInt(), any(),
+                    anyLong(), anyLong(), resumeHardCap.capture());
+            // 마지막(재개) 브로드캐스트의 hardCap이 시작값과 동일해야 한다 — 드리프트 금지
+            assertThat(resumeHardCap.getValue()).isEqualTo(startHardCap);
         }
     }
 

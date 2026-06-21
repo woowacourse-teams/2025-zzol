@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NunchiInputConsumer implements Consumer<NunchiCommandEvent> {
+public class NunchiCommandEventConsumer implements Consumer<NunchiCommandEvent> {
 
     private final NunchiService nunchiService;
 

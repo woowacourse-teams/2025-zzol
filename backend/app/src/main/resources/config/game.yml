@@ -53,8 +53,7 @@ nunchi:
     collision-cooldown: 2000ms  # 충돌 후 재개 대기(결정 6)
     idle-timeout: 10000ms       # 무입력 자동 종료(결정 5 — 유효 입력마다 리셋, 쿨다운 중 일시정지)
     hard-cap: 30000ms           # 라운드 전체 강제 종료 안전망(결정 5)
-    prepare: 2000ms             # 시작 전 준비(다른 게임 일관)
-    early-finish-delay: 2000ms  # 전원 입력/종료 후 결과 발행 지연
+    early-finish-delay: 2000ms  # 종료 후 결과(MiniGameFinishedEvent) 발행 지연(SpeedTouch 선례)
 
 roulette:
   default-adjustment-weight: 0.7

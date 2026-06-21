@@ -35,7 +35,7 @@ import org.mockito.quality.Strictness;
 class MonitorServiceTest {
 
     private static final MonitorProperties PROPERTIES =
-            new MonitorProperties(true, "0 0 */4 * * *", 10, 10000, 100, 240, 50, 30);
+            new MonitorProperties(true, "0 0 */4 * * *", 10, 10000, 100, 300, 240, 50, 30);
 
     @Mock
     private MonitorCollector collector;

@@ -16,6 +16,7 @@ public record MonitorProperties(
         @Positive long deadLetterThreshold,
         @Positive long streamBacklogThreshold,
         @Positive long errorLogThreshold,
+        @Positive long warnLogThreshold,
         @Positive int errorLogWindowMinutes,
         @Positive long http5xxThreshold,
         @Positive int cooldownMinutes

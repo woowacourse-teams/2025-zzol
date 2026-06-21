@@ -35,7 +35,7 @@ import org.springframework.data.redis.core.StreamOperations;
 class MonitorCollectorTest {
 
     private static final MonitorProperties PROPERTIES =
-            new MonitorProperties(true, "0 0 */4 * * *", 10, 10000, 100, 240, 50, 30);
+            new MonitorProperties(true, "0 0 */4 * * *", 10, 10000, 100, 300, 240, 50, 30);
 
     @Mock
     private ZzolBotOutboxRepository outboxRepository;
@@ -64,6 +64,7 @@ class MonitorCollectorTest {
         given(redisStreamProperties.keys()).willReturn(keys);
         given(redisTemplate.opsForStream()).willReturn(streamOperations);
         given(lokiLogClient.countErrors(any(), any())).willReturn(0L);
+        given(lokiLogClient.countWarns(any(), any())).willReturn(0L);
         given(prometheusMetricClient.count5xx(any(), any())).willReturn(0L);
     }
 
@@ -107,6 +108,22 @@ class MonitorCollectorTest {
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(logs.value()).isEqualTo(250);
             softly.assertThat(logs.breached()).isTrue();
+        });
+    }
+
+    @Test
+    void WARN_로그는_ERROR와_별도_신호로_수집된다() {
+        given(outboxRepository.countByStatusIn(anyList())).willReturn(0L);
+        given(streamOperations.size(anyString())).willReturn(120L);
+        given(lokiLogClient.countErrors(any(), any())).willReturn(5L);
+        given(lokiLogClient.countWarns(any(), any())).willReturn(400L);
+
+        final MonitorSnapshot snapshot = collector.collect();
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(signal(snapshot, "loki_error_logs").breached()).isFalse();   // 5 < 100
+            softly.assertThat(signal(snapshot, "loki_warn_logs").value()).isEqualTo(400);
+            softly.assertThat(signal(snapshot, "loki_warn_logs").breached()).isTrue();     // 400 > 300
         });
     }
 

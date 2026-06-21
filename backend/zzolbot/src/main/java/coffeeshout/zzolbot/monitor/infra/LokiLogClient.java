@@ -15,14 +15,15 @@ import org.springframework.web.client.RestClient;
 
 /**
  * 능동 모니터링용 Loki 로그 클라이언트.
- * Alloy가 수집해 Loki에 적재한 ERROR/WARN 로그를 (1) 윈도우 단위로 집계하고 (2) 이상 시 샘플을 뽑는다.
+ * Alloy가 수집해 Loki에 적재한 로그를 레벨별(ERROR/WARN)로 집계하고, 이상 시 ERROR 샘플을 뽑는다.
  * Loki가 없거나(로컬) 조회 실패 시 0건/빈 목록으로 안전하게 떨어진다.
  */
 @Slf4j
 @Component
 public class LokiLogClient {
 
-    private static final String LEVEL_FILTER = "|~ \"ERROR|WARN\"";
+    private static final String LEVEL_ERROR = "ERROR";
+    private static final String LEVEL_WARN = "WARN";
 
     private final RestClient restClient;
     private final String environment;
@@ -35,28 +36,39 @@ public class LokiLogClient {
     }
 
     /**
-     * 윈도우 구간의 ERROR/WARN 로그 총 건수. count_over_time 메트릭 쿼리로 정확한 합계를 얻는다.
+     * 윈도우 구간의 ERROR 로그 건수. count_over_time 메트릭 쿼리로 정확한 합계를 얻는다.
      */
     public long countErrors(Instant end, Duration window) {
+        return countByLevel(end, window, LEVEL_ERROR);
+    }
+
+    /**
+     * 윈도우 구간의 WARN 로그 건수.
+     */
+    public long countWarns(Instant end, Duration window) {
+        return countByLevel(end, window, LEVEL_WARN);
+    }
+
+    private long countByLevel(Instant end, Duration window, String level) {
         final String logql = String.format(
-                "sum(count_over_time({environment=\"%s\"} %s [%dm]))",
-                environment, LEVEL_FILTER, Math.max(1, window.toMinutes()));
+                "sum(count_over_time({environment=\"%s\"} |~ \"%s\" [%dm]))",
+                environment, level, Math.max(1, window.toMinutes()));
         final String uri = "/loki/api/v1/query?query=" + encode(logql)
                 + "&time=" + (end.toEpochMilli() * 1_000_000L);
         try {
             final String body = restClient.get().uri(uri).retrieve().body(String.class);
             return parseScalar(body);
         } catch (Exception e) {
-            log.warn("[ZzolBot] Loki ERROR 로그 집계 실패 — 0건으로 처리", e);
+            log.warn("[ZzolBot] Loki {} 로그 집계 실패 — 0건으로 처리", level, e);
             return 0L;
         }
     }
 
     /**
-     * 윈도우 구간의 최근 ERROR/WARN 로그 메시지를 최대 {@code limit}건 반환(LLM 분석 근거).
+     * 윈도우 구간의 최근 ERROR 로그 메시지를 최대 {@code limit}건 반환(LLM 분석 근거).
      */
     public List<String> tailErrors(Instant end, Duration window, int limit) {
-        final String logql = String.format("{environment=\"%s\"} %s", environment, LEVEL_FILTER);
+        final String logql = String.format("{environment=\"%s\"} |~ \"%s\"", environment, LEVEL_ERROR);
         final long startNano = end.minus(window).toEpochMilli() * 1_000_000L;
         final long endNano = end.toEpochMilli() * 1_000_000L;
         final String uri = String.format(

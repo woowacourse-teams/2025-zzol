@@ -37,4 +37,9 @@ public class EvalScenarioService {
         return scenarioRepository.save(
                 EvalScenarioEntity.create(name, question, snapshotJson, rubric, ScenarioSource.MANUAL));
     }
+
+    @Transactional
+    public void delete(Long id) {
+        scenarioRepository.deleteById(id);
+    }
 }

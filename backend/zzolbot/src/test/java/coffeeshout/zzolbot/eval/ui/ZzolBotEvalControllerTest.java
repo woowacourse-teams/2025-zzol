@@ -85,6 +85,14 @@ class ZzolBotEvalControllerTest {
     }
 
     @Test
+    void deleteScenario_는_시나리오를_삭제하고_204를_반환한다() {
+        final var response = controller.deleteScenario(5L);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(204);
+        verify(scenarioService).delete(5L);
+    }
+
+    @Test
     void run_상세는_실행과_결과를_함께_반환한다() {
         final EvalRunEntity run = EvalRunEntity.start("baseline", "gemini-2.5-flash", null, 1);
         run.complete(1);

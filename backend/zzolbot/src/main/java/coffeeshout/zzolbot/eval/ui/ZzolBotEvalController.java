@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -106,6 +107,12 @@ public class ZzolBotEvalController {
         final String adminUsername = principal != null ? principal.getName() : "unknown";
         return toScenarioResponse(scenarioService.registerRecorded(
                 request.name(), request.question(), request.rubric(), adminUsername));
+    }
+
+    @DeleteMapping("/scenarios/{id}")
+    public ResponseEntity<Void> deleteScenario(@PathVariable Long id) {
+        scenarioService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     private RunResponse toRunResponse(EvalRunEntity run) {

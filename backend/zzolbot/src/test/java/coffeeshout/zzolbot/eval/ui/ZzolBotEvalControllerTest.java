@@ -14,6 +14,9 @@ import coffeeshout.zzolbot.eval.infra.EvalResultEntity;
 import coffeeshout.zzolbot.eval.infra.EvalResultRepository;
 import coffeeshout.zzolbot.eval.infra.EvalRunEntity;
 import coffeeshout.zzolbot.eval.infra.EvalRunRepository;
+import coffeeshout.zzolbot.eval.ui.request.RunRequest;
+import coffeeshout.zzolbot.eval.ui.response.RunDetailResponse;
+import coffeeshout.zzolbot.eval.ui.response.RunResponse;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
@@ -61,7 +64,7 @@ class ZzolBotEvalControllerTest {
 
     @Test
     void startRun_은_202를_반환하고_평가를_비동기로_실행한다() {
-        final var response = controller.startRun(new ZzolBotEvalController.RunRequest("baseline", null));
+        final var response = controller.startRun(new RunRequest("baseline", null));
 
         assertThat(response.getStatusCode().value()).isEqualTo(202);
         await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> verify(evalRunner).run("baseline", 1));
@@ -74,7 +77,7 @@ class ZzolBotEvalControllerTest {
         ReflectionTestUtils.setField(run, "id", 7L);
         given(runRepository.findTop20ByOrderByStartedAtDesc()).willReturn(List.of(run));
 
-        final List<ZzolBotEvalController.RunResponse> result = controller.runs();
+        final List<RunResponse> result = controller.runs();
 
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(result).hasSize(1);
@@ -103,7 +106,7 @@ class ZzolBotEvalControllerTest {
         given(runRepository.findById(7L)).willReturn(Optional.of(run));
         given(resultRepository.findByRunIdOrderByIdAsc(7L)).willReturn(List.of(entity));
 
-        final ZzolBotEvalController.RunDetailResponse detail = controller.run(7L);
+        final RunDetailResponse detail = controller.run(7L);
 
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(detail.run().id()).isEqualTo(7L);

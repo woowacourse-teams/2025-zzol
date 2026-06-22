@@ -7,8 +7,14 @@ import coffeeshout.zzolbot.eval.infra.EvalResultRepository;
 import coffeeshout.zzolbot.eval.infra.EvalRunEntity;
 import coffeeshout.zzolbot.eval.infra.EvalRunRepository;
 import coffeeshout.zzolbot.eval.infra.EvalScenarioEntity;
+import coffeeshout.zzolbot.eval.ui.request.ManualScenarioRequest;
+import coffeeshout.zzolbot.eval.ui.request.RecordScenarioRequest;
+import coffeeshout.zzolbot.eval.ui.request.RunRequest;
+import coffeeshout.zzolbot.eval.ui.response.ResultResponse;
+import coffeeshout.zzolbot.eval.ui.response.RunDetailResponse;
+import coffeeshout.zzolbot.eval.ui.response.RunResponse;
+import coffeeshout.zzolbot.eval.ui.response.ScenarioResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import java.security.Principal;
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -164,27 +170,4 @@ public class ZzolBotEvalController {
     private String formatNullable(Instant instant) {
         return instant != null ? formatter.format(instant) : null;
     }
-
-    record RunRequest(@NotBlank String label, Integer repeats) {}
-
-    record ManualScenarioRequest(
-            @NotBlank String name,
-            @NotBlank String question,
-            @NotBlank String snapshotJson,
-            @NotBlank String rubric) {}
-
-    record RecordScenarioRequest(
-            @NotBlank String name,
-            @NotBlank String question,
-            @NotBlank String rubric) {}
-
-    record RunResponse(Long id, String label, String model, String status,
-                       int scenarioCount, int passCount, String startedAt, String finishedAt) {}
-
-    record ResultResponse(Long scenarioId, int accuracy, int groundedness, boolean hallucination,
-                          String verdict, long latencyMs, int missingToolCalls, String rationale, String answer) {}
-
-    record RunDetailResponse(RunResponse run, List<ResultResponse> results) {}
-
-    record ScenarioResponse(Long id, String name, String question, String rubric, String sourceType, String createdAt) {}
 }

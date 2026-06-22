@@ -25,6 +25,14 @@ allowed-tools: Read, Bash, Glob
 - 라벨: 항상 `BE` + type별 1개 — feat `✨feat` / fix `🐞bug` / refactor `🛠️refactor` / chore `⚙️chore` / docs `📝docs` / test `🧪 test`. 우선순위(`p-*`)는 `$ARGUMENTS`에 있을 때만 추가
 - Assignee: `gh api user --jq '.login'` 결과로 자동 지정
 
+## 작성 원칙 (본문 공통)
+
+리뷰어가 빠르게 이해하는 것을 최우선으로, 쉬운 용어와 간결한 문장으로 작성한다.
+
+- **쉬운 용어**: 전문 용어·영어 약어(point of use, redundant, hermetic, drift 등)를 피하고 풀어서 쓴다. 꼭 필요한 기술 용어는 한 줄 풀이를 붙인다.
+- **간결함**: 한 항목은 1~2문장. "무엇을 왜 바꿨는지"를 먼저 적는다.
+- **결정·트레이드오프는 이유와 함께**: 리뷰어가 되묻지 않아도 알 수 있게 적는다.
+
 ## 템플릿 작성
 
 `.github/pull_request_template.md` 섹션을 유지하고 채운다.

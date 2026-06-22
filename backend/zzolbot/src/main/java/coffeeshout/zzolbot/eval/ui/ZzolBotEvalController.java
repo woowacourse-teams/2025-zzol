@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -45,6 +46,8 @@ public class ZzolBotEvalController {
     private final EvalResultRepository resultRepository;
     private final ExecutorService virtualThreadExecutor;
     private final DateTimeFormatter formatter;
+    // 평가는 비동기라 POST는 즉시 반환한다. 중복 실행(더블클릭·다중 탭)으로 LLM 호출이 배가되지 않도록 한 번에 하나만 허용한다.
+    private final AtomicBoolean evalRunning = new AtomicBoolean(false);
 
     public ZzolBotEvalController(
             EvalRunner evalRunner,
@@ -65,11 +68,16 @@ public class ZzolBotEvalController {
     @PostMapping("/runs")
     public ResponseEntity<Void> startRun(@RequestBody @Valid RunRequest request) {
         final int repeats = request.repeats() == null ? 1 : request.repeats();
+        if (!evalRunning.compareAndSet(false, true)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 이미 실행 중 — 중복 실행 차단
+        }
         virtualThreadExecutor.execute(() -> {
             try {
                 evalRunner.run(request.label(), repeats);
             } catch (Exception e) {
                 log.warn("[ZzolBot] 평가 실행 실패. label={}", request.label(), e);
+            } finally {
+                evalRunning.set(false);
             }
         });
         return ResponseEntity.accepted().build();

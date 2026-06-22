@@ -7,14 +7,21 @@ import coffeeshout.zzolbot.eval.infra.EvalResultRepository;
 import coffeeshout.zzolbot.eval.infra.EvalRunEntity;
 import coffeeshout.zzolbot.eval.infra.EvalRunRepository;
 import coffeeshout.zzolbot.eval.infra.EvalScenarioEntity;
+import coffeeshout.zzolbot.eval.ui.request.ManualScenarioRequest;
+import coffeeshout.zzolbot.eval.ui.request.RecordScenarioRequest;
+import coffeeshout.zzolbot.eval.ui.request.RunRequest;
+import coffeeshout.zzolbot.eval.ui.response.ResultResponse;
+import coffeeshout.zzolbot.eval.ui.response.RunDetailResponse;
+import coffeeshout.zzolbot.eval.ui.response.RunResponse;
+import coffeeshout.zzolbot.eval.ui.response.ScenarioResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import java.security.Principal;
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -45,6 +52,8 @@ public class ZzolBotEvalController {
     private final EvalResultRepository resultRepository;
     private final ExecutorService virtualThreadExecutor;
     private final DateTimeFormatter formatter;
+    // 평가는 비동기라 POST는 즉시 반환한다. 중복 실행(더블클릭·다중 탭)으로 LLM 호출이 배가되지 않도록 한 번에 하나만 허용한다.
+    private final AtomicBoolean evalRunning = new AtomicBoolean(false);
 
     public ZzolBotEvalController(
             EvalRunner evalRunner,
@@ -64,11 +73,17 @@ public class ZzolBotEvalController {
 
     @PostMapping("/runs")
     public ResponseEntity<Void> startRun(@RequestBody @Valid RunRequest request) {
+        final int repeats = request.repeats() == null ? 1 : request.repeats();
+        if (!evalRunning.compareAndSet(false, true)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 이미 실행 중 — 중복 실행 차단
+        }
         virtualThreadExecutor.execute(() -> {
             try {
-                evalRunner.run(request.label());
+                evalRunner.run(request.label(), repeats);
             } catch (Exception e) {
                 log.warn("[ZzolBot] 평가 실행 실패. label={}", request.label(), e);
+            } finally {
+                evalRunning.set(false);
             }
         });
         return ResponseEntity.accepted().build();
@@ -155,27 +170,4 @@ public class ZzolBotEvalController {
     private String formatNullable(Instant instant) {
         return instant != null ? formatter.format(instant) : null;
     }
-
-    record RunRequest(@NotBlank String label) {}
-
-    record ManualScenarioRequest(
-            @NotBlank String name,
-            @NotBlank String question,
-            @NotBlank String snapshotJson,
-            @NotBlank String rubric) {}
-
-    record RecordScenarioRequest(
-            @NotBlank String name,
-            @NotBlank String question,
-            @NotBlank String rubric) {}
-
-    record RunResponse(Long id, String label, String model, String status,
-                       int scenarioCount, int passCount, String startedAt, String finishedAt) {}
-
-    record ResultResponse(Long scenarioId, int accuracy, int groundedness, boolean hallucination,
-                          String verdict, long latencyMs, int missingToolCalls, String rationale, String answer) {}
-
-    record RunDetailResponse(RunResponse run, List<ResultResponse> results) {}
-
-    record ScenarioResponse(Long id, String name, String question, String rubric, String sourceType, String createdAt) {}
 }

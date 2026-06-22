@@ -642,16 +642,19 @@
     async function runEval() {
         const label = prompt('실행 라벨 (예: baseline, prompt-v2):', 'baseline');
         if (!label) return;
+        // 최대 시도 횟수. PASS가 한 번 뜨면 멈추고, 전부 실패할 때만 재시도(최대 3). 기본 1이면 토큰 소모 종전과 동일.
+        const repeats = Math.max(1, Math.min(3, parseInt(prompt('최대 시도 횟수 (PASS 뜨면 멈춤, 전부 실패 시 재시도. 기본 1, 최대 3):', '1'), 10) || 1));
         const btn = document.getElementById('runEvalBtn');
-        btn.disabled = true;
+        btn.disabled = true; // 중복 클릭 방지 — RUNNING 동안은 renderEvalRuns가 계속 비활성으로 유지
         try {
-            await api('POST', '/admin/zzolbot/eval/runs', { label });
+            await api('POST', '/admin/zzolbot/eval/runs', { label, repeats });
             // 백그라운드 실행 — RUNNING인 동안 목록·상세를 자동 폴링(채팅처럼 실시간). 새로고침 불필요.
             ensureEvalPolling();
         } catch (e) {
-            alert('실행 시작 실패: ' + e.message);
-        } finally {
-            btn.disabled = false;
+            btn.disabled = false; // 시작 실패 시 다시 활성
+            alert(String(e.message) === '409'
+                ? '이미 평가가 실행 중입니다. 끝난 뒤 다시 시도하세요.'
+                : '실행 시작 실패: ' + e.message);
         }
     }
 
@@ -667,6 +670,8 @@
     }
 
     function renderEvalRuns(runs) {
+        // RUNNING이 하나라도 있으면 "전체 실행" 버튼 비활성(서버 409 가드와 짝). 끝나면 자동 활성.
+        document.getElementById('runEvalBtn').disabled = runs.some(r => r.status === 'RUNNING');
         const body = document.getElementById('evalRunsBody');
         if (!runs.length) {
             body.innerHTML = '<tr><td colspan="5" class="muted">실행 이력이 없습니다</td></tr>';

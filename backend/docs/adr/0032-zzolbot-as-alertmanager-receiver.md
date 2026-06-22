@@ -38,7 +38,13 @@ Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
 
 세부 결정:
 
-1. **탐지를 단일 엔진으로 되돌린다.** 5xx 급증은 이미 있는 Prometheus 룰로 충분하고, 로그 ERROR/WARN 카운트 신호는 **Loki ruler 룰**(`count_over_time(... |= "ERROR" [w]) > N`)로 이관해 Alertmanager로 발화시킨다. Alertmanager가 평가 커버리지·그룹화·silence·inhibition의 단일 주체로 남는다.
+1. **탐지를 단일 엔진으로 되돌린다 — 옛 self-poll 5개 신호를 빠짐없이 이관한다.** 자체 폴링이 보던 신호와 단일 엔진 대응은 다음과 같다(누락 방지):
+   - **HTTP 5xx**(`http5xx-threshold`) → 기존 Prometheus 룰 `Http5xxRatioHigh`(alerts-app.yml). 이미 커버.
+   - **Stream backlog**(`stream-backlog-threshold`) → 기존 Prometheus 룰 `RedisStreamBacklogHigh`(`max(redis_stream_length) > 1000`). 이미 커버 — self-poll은 이걸 중복으로 본 것이라 제거가 정확.
+   - **ERROR/WARN 로그**(`error-log-threshold`/`warn-log-threshold`) → 신규 **Loki ruler 룰**(`count_over_time(... |= "ERROR" [w]) > N`). 율 신호.
+   - **DLQ 적체**(`dead-letter-threshold`) → 동등 메트릭·룰이 **없어 누락 위험이 있었다(코드 리뷰에서 발견).** 깊이 신호라 로그 율 룰로는 느린 누적을 못 잡으므로, `outbox_dead_letter_count` Micrometer 게이지(`OutboxDeadLetterMetricService`, `redis_stream_length` 패턴 미러)를 신설하고 Prometheus 룰 `OutboxDeadLetterHigh`(`> 10`, 옛 임계 보존)로 복구했다.
+
+   Alertmanager가 평가 커버리지·그룹화·silence·inhibition의 단일 주체로 남는다.
 
 2. **zzol-bot은 웹훅 수신기로만 동작한다.** `POST /internal/zzolbot/alerts/webhook` 하나를 노출하고, Alertmanager의 `webhook_config` receiver가 firing 알림을 여기로 보낸다. zzol-bot은 `status=firing` 알림만 보강해 Slack에 enriched 메시지로 게시한다. `AnomalyGate`·`MonitorCollector`의 자체 수집·게이팅은 단계적으로 제거한다.
 
@@ -74,8 +80,10 @@ Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
   - 신규: `monitor/ui/AlertmanagerWebhookController`·`AlertmanagerWebhookRequest`(DTO), `monitor/application/FiringAlertEnricher`(포트)·`AlertEnrichmentService`(구현), `monitor/domain/FiringAlert`.
   - 리팩터: `AnomalyAnalyzer`/`GeminiAnomalyAnalyzer`/`ZzolBotSlackNotifier`/`MonitorRunEntity.of`를 `MonitorSnapshot` 대신 **알림 컨텍스트** 입력으로, `MonitorService`는 조회 전용으로 슬림화, `ZzolBotMonitorController`에서 수동 트리거(`POST /run`) 제거, `LokiLogClient`는 `tailErrors`만 유지, `MonitorProperties` 축소(`enabled`·`errorLogWindowMinutes`), `zzolbot.html` 대시보드 읽기 전용.
   - 삭제: `MonitorCollector`·`MonitorScheduler`·`AnomalyGate`·`PrometheusMetricClient`·`MonitorSnapshot`/`MonitorSignal`/`AnomalyVerdict`·`LoggingFiringAlertEnricher`(+관련 테스트).
+  - **DLQ 신호 복구**: `:infra` `OutboxDeadLetterMetricService`(신규, `outbox_dead_letter_count` 게이지) + `OutboxEventRepository.countByStatus`. self-poll 제거로 빠진 DLQ "적체 깊이" 신호를 단일 엔진 메트릭으로 되살린다(코드 리뷰 발견).
 - **이 PR의 변경 지점 — 인프라(배포 시점 검증):**
   - `docker/monitoring/conf/alertmanager.yml`: `zzolbot-enrich` receiver를 `http://nginx:8889/internal/...` + 베어러 인증(`credentials_file`)으로 지정, firing 미러링 route.
+  - `docker/monitoring/conf/rules/alerts-redis-stream.yml`: `OutboxDeadLetterHigh` 룰(`max(outbox_dead_letter_count) > 10`) 신규. `promtool check rules` 통과.
   - `docker/nginx/conf/internal.conf`(신규): 8889 내부 전용 리스너가 `$upstream`(prod-service.inc=활성 색)으로 프록시. `dev.conf`·`prod.conf` 공개 블록은 `/internal/` 404로 차단.
   - `docker/nginx/docker-compose.yml`: nginx를 `monitoring-network`에 조인 + 8889 `expose`(호스트 미노출).
   - `docker/monitoring/conf/loki.yml`: ruler 블록(미배선이던 `ruler:` 활성화).

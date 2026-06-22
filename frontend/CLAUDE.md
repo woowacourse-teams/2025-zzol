@@ -35,7 +35,9 @@ BE 컨트랙트(WebSocket + HTTP)를 직접 `curl` 로 받아도 되지만, 본 
 
 **등록**: `frontend/.mcp.json` 에 이미 정의되어 있다(서버 키 `api`). `cd frontend && claude` 로 띄우면 자동 인식.
 
-**MCP 빌드**: 별도 빌드 불필요. `frontend/.mcp.json` 이 self-healing 런처(`../tools/api-mcp/scripts/launch.mjs`)를 가리키므로 실행 시점에 의존성 설치·빌드를 자동 보장한다. BE 시그니처가 변경되면 BE 측에서 `WsCatalogFixtureExportTest` 가 fixture 를 갱신하고 MCP CI 가 zod 스키마 일치를 자동 검증한다.
+**MCP 빌드**: 별도 빌드 불필요. `frontend/.mcp.json` 이 self-healing 런처(`../tools/api-mcp/scripts/launch.mjs`)를 가리키므로 실행 시점에 의존성 설치·빌드를 자동 보장한다.
+
+**컨트랙트 검증 위치**: api-mcp 의 zod 스키마와 BE 카탈로그의 일치(contract drift) 검증은 **be/dev 가 단독으로 소유**한다 — fixture 생성기(`WsCatalogFixtureGeneratorTest`, `-DupdateFixture=true`)·커밋된 fixture·BE 소스가 모두 be/dev 에 있기 때문이다. `tools/api-mcp` 는 be/dev 미러이므로 fe/dev CI 는 컨트랙트 검증을 수행하지 않고 빌드·린트·단위 테스트만 돌린다.
 
 **prefix 주의사항**: MCP 카탈로그의 path 는 prefix 를 포함(`/topic/room/...`, `/user/queue/...`, `/app/...`)하지만, FE 의 `useWebSocketSubscription`/`send` 는 wrapper 가 prefix 를 자동 추가하므로 path 에서 `/topic`·`/app` 부분을 제거해 전달한다 (자세한 규칙은 `.claude/rules/websocket.md`).
 

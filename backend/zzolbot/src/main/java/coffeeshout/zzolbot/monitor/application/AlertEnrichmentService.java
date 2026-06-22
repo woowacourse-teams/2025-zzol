@@ -11,6 +11,7 @@ import coffeeshout.zzolbot.monitor.infra.MonitorRunRepository;
 import coffeeshout.zzolbot.monitor.infra.ZzolBotSlackNotifier;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,6 +48,11 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
             return;
         }
         final Instant now = clock.instant();
+        if (recentlyNotified(alert.fingerprint(), now)) {
+            log.info("[ZzolBot] 중복 firing 억제 — 윈도우 내 동일 fingerprint 보강 이력 존재. fingerprint={}",
+                    alert.fingerprint());
+            return;
+        }
         final Severity severity = toSeverity(alert.severity());
         final MonitorRunEntity run = monitorRunRepository.save(
                 MonitorRunEntity.of(now, severity, alert.fingerprint(), toJson(alertContext(alert))));
@@ -63,6 +69,20 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
         run.markNotified();
         notifier.notifyAnomaly(alert, analysis);
         monitorRunRepository.save(run);
+    }
+
+    /**
+     * 같은 fingerprint의 firing 재배달(웹훅 재시도·Alertmanager 재시작)을 멱등 처리한다. 윈도우가 0이거나
+     * fingerprint가 비어 식별 불가하면 가드하지 않는다. Alertmanager {@code repeat_interval}보다 짧은
+     * 윈도우라 의도된 주기적 재알림은 통과한다(ADR-0032 결정 #4 — dedup은 Alertmanager 소유 보완).
+     */
+    private boolean recentlyNotified(String fingerprint, Instant now) {
+        final Duration window = properties.duplicateSuppressionWindow();
+        if (window.isZero() || fingerprint == null || fingerprint.isBlank()) {
+            return false;
+        }
+        return monitorRunRepository.existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(
+                fingerprint, now.minus(window));
     }
 
     private MonitorAnalysis safeAnalyze(FiringAlert alert, List<String> logSamples) {

@@ -16,6 +16,7 @@ zzol-bot:
   monitor:
     enabled: ${ZZOL_BOT_MONITOR_ENABLED:true}    # Alertmanager firing 알림 보강 활성 여부
     error-log-window-minutes: 240                # ERROR 로그 샘플 조회 윈도우(기본 4시간)
+    duplicate-suppression-seconds: 300           # firing 재배달 멱등 윈도우(기본 5분, repeat_interval 1h보다 짧게). 0이면 비활성
   slack:
     webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성
   llm-budget:

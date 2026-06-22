@@ -34,7 +34,7 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class AlertEnrichmentServiceTest {
 
-    private static final MonitorProperties PROPERTIES = new MonitorProperties(true, 240);
+    private static final MonitorProperties PROPERTIES = new MonitorProperties(true, 240, 300);
 
     @Mock
     private LlmCallBudget llmCallBudget;
@@ -92,9 +92,36 @@ class AlertEnrichmentServiceTest {
     }
 
     @Test
+    void 중복_억제_윈도우_내_동일_fingerprint_재배달은_보강을_생략한다() {
+        given(monitorRunRepository.existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(any(), any()))
+                .willReturn(true);
+
+        service.enrich(warningAlert());
+
+        verify(monitorRunRepository, never()).save(any());
+        verify(llmCallBudget, never()).tryAcquire();
+        verify(notifier, never()).notifyAnomaly(any(), any());
+    }
+
+    @Test
+    void 중복_억제_윈도우가_0이면_가드를_건너뛰고_보강한다() {
+        final AlertEnrichmentService noDedup = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer,
+                notifier, monitorRunRepository, new MonitorProperties(true, 240, 0), new ObjectMapper(),
+                Clock.systemUTC());
+        given(llmCallBudget.tryAcquire()).willReturn(true);
+        given(analyzer.analyze(any(), any())).willReturn(new MonitorAnalysis("요약", "", List.of()));
+
+        noDedup.enrich(warningAlert());
+
+        verify(monitorRunRepository, never())
+                .existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(any(), any());
+        verify(notifier).notifyAnomaly(any(), any());
+    }
+
+    @Test
     void 모니터링이_비활성이면_아무것도_하지_않는다() {
         final AlertEnrichmentService disabled = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer,
-                notifier, monitorRunRepository, new MonitorProperties(false, 240), new ObjectMapper(),
+                notifier, monitorRunRepository, new MonitorProperties(false, 240, 300), new ObjectMapper(),
                 Clock.systemUTC());
 
         disabled.enrich(warningAlert());

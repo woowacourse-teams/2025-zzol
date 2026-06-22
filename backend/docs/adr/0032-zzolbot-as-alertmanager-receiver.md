@@ -5,31 +5,31 @@
 
 ## 컨텍스트
 
-`be/feat/1474-zzolbot-upgrade` 브랜치의 코드 리뷰에서, zzol-bot 능동 모니터링이 이상 발생 시 `ZzolBotSlackNotifier`로 **Slack에 직접 알림을 전송**한다는 점이 [ADR-0026](0026-alertmanager-and-alerting-rules.md)과의 잠재 충돌로 지적됐다. ADR-0026은 "Alertmanager를 단일 알림 엔진으로 채택"하고 "같은 datasource를 읽는 두 엔진이 되어 알림 설정이 이중화"되는 것을 명시적 약점으로 경계한다.
+`be/feat/1474-zzolbot-upgrade` 코드 리뷰에서, zzol-bot이 이상 발생 시 `ZzolBotSlackNotifier`로 **Slack에 직접 알림을 보낸다**는 점이 [ADR-0026](0026-alertmanager-and-alerting-rules.md)과 충돌로 지적됐다. ADR-0026은 Alertmanager를 **단일 알림 엔진**으로 두기로 했는데, zzol-bot이 두 번째 알림 경로가 되기 때문이다.
 
-표면적으로는 "Slack에 보내는 경로가 둘"로 보이지만, 코드를 보면 충돌의 본질은 더 깊다 — **탐지(detection)가 중복**이다.
+겉으로는 "Slack 경로가 둘"로 보이지만, 진짜 문제는 **탐지가 겹치는 것**이다.
 
-- `coffeeshout.zzolbot.monitor.application.AnomalyGate`는 Loki ERROR/WARN 카운트·Prometheus 5xx에 대한 **순수 임계값 게이팅**이다. 이는 Prometheus alert rule이나 Loki ruler rule이 하는 일과 정확히 같다. 즉 zzol-bot의 결정적 탐지 레이어는 단일 룰셋과 **진짜로 중복**이며, 이것이 ADR-0026 충돌의 실체다.
-- 반면 `MonitorAnalysis`(LLM이 로그 샘플을 읽어 생성하는 근본원인 가설 + 제안 조치)는 Alertmanager·PromQL이 **표현할 수 없는 유일한 비중복 가치**다.
+- `AnomalyGate`는 Loki ERROR/WARN 수·Prometheus 5xx를 **임계값으로 판정**한다. Prometheus·Loki 룰이 하는 일과 똑같아 룰과 진짜로 중복이다.
+- 반면 `MonitorAnalysis`(LLM이 로그를 읽어 만든 원인 가설 + 조치 제안)는 Alertmanager·PromQL로는 못 만드는 **여기서만 나오는 가치**다.
 
-정리하면 zzol-bot 모니터에서 ADR-0026과 부딪히는 것은 "탐지 레이어"이고, 살릴 가치가 있는 것은 "LLM 보강 레이어"다. 이 구분이 결정 범위를 좁힌다.
+즉 ADR-0026과 부딪히는 건 "탐지"이고, 살릴 건 "LLM 보강"이다.
 
 ### 현재 구조
 
 ```text
 @Scheduled(공유 풀) → MonitorScheduler → MonitorCollector
-    → Loki/Prometheus 직접 폴링(수집) → AnomalyGate(임계 게이팅)
+    → Loki/Prometheus 직접 폴링 → AnomalyGate(임계 판정)
     → (이상·비쿨다운·예산) AnomalyAnalyzer(LLM) → ZzolBotSlackNotifier → Slack
 ```
 
-이 구조는 두 가지 부수 문제를 동반한다.
+문제 둘:
 
-1. **탐지가 Alertmanager 룰셋과 중복**(ADR-0026 약점 재현).
-2. `MonitorCollector`가 공유 `@Scheduled` 스레드(pool size 1)에서 Loki/Prometheus를 **타임아웃 없이 동기 폴링**한다. 외부 응답이 지연되면 아웃박스 릴레이·Redis 스트림 복구 등 다른 스케줄 작업까지 굶는다(같은 리뷰의 BLOCKER 지적).
+1. **탐지가 Alertmanager 룰과 중복**(ADR-0026 약점 재현).
+2. `MonitorCollector`가 공유 `@Scheduled` 스레드(pool size 1)에서 Loki/Prometheus를 **타임아웃 없이 폴링**한다. 외부 응답이 느리면 아웃박스 릴레이·Redis 스트림 복구 등 다른 스케줄 작업까지 멈춘다(리뷰의 BLOCKER).
 
 ## 결정
 
-**zzol-bot을 "병렬 알림기"에서 "Alertmanager 웹훅 수신기"로 재배치한다.** 결정적 탐지는 단일 엔진(Prometheus 룰 + 신규 Loki ruler)으로 일원화하고, zzol-bot은 Alertmanager가 발화시킨 알림을 받아 **LLM으로 보강**(근본원인 가설 + 제안 조치 + Loki 로그 샘플)한 뒤 Slack에 게시한다.
+**zzol-bot을 "별도 알림기"에서 "Alertmanager 웹훅 수신기"로 바꾼다.** 탐지는 단일 엔진(Prometheus 룰 + 새 Loki ruler)으로 모으고, zzol-bot은 Alertmanager가 보낸 알림을 받아 **LLM으로 보강**(원인 가설 + 조치 제안 + Loki 로그 샘플)한 뒤 Slack에 올린다.
 
 ```text
 Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
@@ -38,78 +38,79 @@ Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
 
 세부 결정:
 
-1. **탐지를 단일 엔진으로 되돌린다 — 옛 self-poll 5개 신호를 빠짐없이 이관한다.** 자체 폴링이 보던 신호와 단일 엔진 대응은 다음과 같다(누락 방지):
-   - **HTTP 5xx**(`http5xx-threshold`) → 기존 Prometheus 룰 `Http5xxRatioHigh`(alerts-app.yml). 이미 커버.
-   - **Stream backlog**(`stream-backlog-threshold`) → 기존 Prometheus 룰 `RedisStreamBacklogHigh`(`max(redis_stream_length) > 1000`). 이미 커버 — self-poll은 이걸 중복으로 본 것이라 제거가 정확.
-   - **ERROR/WARN 로그**(`error-log-threshold`/`warn-log-threshold`) → 신규 **Loki ruler 룰**(`count_over_time(... |= "ERROR" [w]) > N`). 율 신호.
-   - **DLQ 적체**(`dead-letter-threshold`) → 동등 메트릭·룰이 **없어 누락 위험이 있었다(코드 리뷰에서 발견).** 깊이 신호라 로그 율 룰로는 느린 누적을 못 잡으므로, `outbox_dead_letter_count` Micrometer 게이지(`OutboxDeadLetterMetricService`, `redis_stream_length` 패턴 미러)를 신설하고 Prometheus 룰 `OutboxDeadLetterHigh`(`> 10`, 옛 임계 보존)로 복구했다.
+1. **탐지를 단일 엔진으로 되돌리되, 옛 폴링이 보던 신호 5개를 빠짐없이 옮긴다.**
+   - **HTTP 5xx** → 기존 Prometheus 룰 `Http5xxRatioHigh`. 이미 커버.
+   - **Stream backlog** → 기존 룰 `RedisStreamBacklogHigh`(`max(redis_stream_length) > 1000`). 이미 커버 — 폴링이 이걸 중복으로 보던 것이라 제거가 맞다.
+   - **ERROR/WARN 로그** → 새 **Loki ruler 룰**(`count_over_time(... |= "ERROR" [w]) > N`).
+   - **DLQ 적체** → 대응 메트릭·룰이 **없어 누락 위험**이었다(리뷰 발견). 로그 율 룰로는 느린 누적을 못 잡으므로 `outbox_dead_letter_count` 게이지(`OutboxDeadLetterMetricService`)를 새로 만들고 룰 `OutboxDeadLetterHigh`(`> 10`, 옛 임계 유지)로 복구했다.
 
-   Alertmanager가 평가 커버리지·그룹화·silence·inhibition의 단일 주체로 남는다.
+   이제 Alertmanager가 탐지·그룹화·silence·억제를 모두 맡는다.
 
-2. **zzol-bot은 웹훅 수신기로만 동작한다.** `POST /internal/zzolbot/alerts/webhook` 하나를 노출하고, Alertmanager의 `webhook_config` receiver가 firing 알림을 여기로 보낸다. zzol-bot은 `status=firing` 알림만 보강해 Slack에 enriched 메시지로 게시한다. `AnomalyGate`·`MonitorCollector`의 자체 수집·게이팅은 단계적으로 제거한다.
+2. **zzol-bot은 웹훅 수신기로만 동작한다.** `POST /internal/zzolbot/alerts/webhook` 하나만 열고, Alertmanager가 firing 알림을 여기로 보낸다. `status=firing`만 보강해 Slack에 올린다. `AnomalyGate`·`MonitorCollector`는 제거한다.
 
-3. **부수 효과로 폴링 기아(starvation) 위험이 해소된다.** zzol-bot이 더 이상 공유 `@Scheduled` 스레드에서 Loki/Prometheus를 폴링하지 않으므로, 타임아웃 부재로 스케줄러 풀이 굶는 경로 자체가 사라진다. 이 ADR을 채택하면 코드 리뷰의 BLOCKER가 별도 핫픽스 없이 구조적으로 닫힌다.
+3. **덤으로 폴링 굶음(starvation) 위험이 사라진다.** zzol-bot이 공유 `@Scheduled` 스레드에서 더는 폴링하지 않으므로, 스케줄러 풀이 굶는 경로 자체가 없어진다. 리뷰의 BLOCKER가 핫픽스 없이 닫힌다.
 
-4. **앱측 쿨다운(`MonitorService.inCooldown`)은 제거한다.** 재알림 억제는 이제 Alertmanager가 `group_interval`/`repeat_interval`(현재 4h ≈ 기존 cooldown 240m)로 소유한다. 앱측 쿨다운을 남기면 이중 억제이므로 떼어내고, 비용 백스톱은 `LlmCallBudget`(일일 호출 상한)이 담당한다. 단순화이지 기능 손실이 아니다.
+4. **앱측 쿨다운(`MonitorService.inCooldown`)은 제거한다.** 재알림 억제는 이제 Alertmanager의 `repeat_interval`(zzolbot-enrich = 1h)이 맡는다(옛 앱 cooldown 240m을 대체). 앱에도 쿨다운을 두면 이중이라 떼고, 비용 안전장치는 `LlmCallBudget`(일일 호출 상한)이 맡는다. 기능 손실이 아니라 단순화다.
 
-5. **본 PR이 전체 구현을 담는다(골격 → 전체).** 팀 합의로 ADR을 `승인` 전환하고, 결정 기록과 함께 ① Java 보강 경로(`AlertEnrichmentService`가 `AnomalyAnalyzer`·`ZzolBotSlackNotifier`·`LokiLogClient.tailErrors`·`LlmCallBudget` 재사용, 자체 폴링 `MonitorCollector`/`Scheduler`/`AnomalyGate` 제거), ② 인프라(`alertmanager.yml` nginx-경유 receiver + 베어러 인증, nginx 내부 리스너·공개 차단, `docker-compose` 네트워크 조인, `loki.yml` ruler), ③ Spring Security `/internal/**` 베어러 토큰을 함께 반영한다. 인프라는 로컬 검증 불가라 배포 시점 검증 대상이다(아래 결과).
+5. **이 PR이 구현 전체를 담는다.** ADR을 `승인`으로 올리고 ① Java 보강 경로, ② 인프라(`alertmanager.yml` nginx 경유 receiver + 베어러 인증, nginx 내부 리스너·공개 차단, `docker-compose` 네트워크 조인, `loki.yml` ruler), ③ Spring Security `/internal/**` 베어러 토큰을 함께 반영한다. 인프라는 로컬 검증이 안 돼 배포 시점에 확인한다(아래 결과).
 
 ## 고려한 대안
 
 | 대안 | 장점 | 단점 |
 |------|------|------|
-| 현행 유지(`ZzolBotSlackNotifier` 직접 Slack) | 추가 작업 없음 | 탐지가 Alertmanager 룰셋과 중복(ADR-0026 약점), 폴링 기아 위험 잔존, silence/inhibition 미적용 |
-| **A. 웹훅 수신기(채택)** | 단일 엔진 유지, LLM 가치 보존, 폴링 기아 해소, silence/그룹화/억제가 enriched 알림에도 적용 | Alertmanager 룰 커버리지에 의존(자체 탐지 상실), 네트워크 도달성·내부 노출 차단 등 배선 필요 |
-| B. zzol-bot 자체 탐지 유지 + `/api/v2/alerts` push | 전달만 일원화하면서 자체 탐지 유지 | 중복 탐지 레이어를 그대로 남김(ADR-0026 약점 미해결) — 현 게이트가 단순 임계값이라 **현 시점엔 순수 중복**. LLM 기반 *탐지*(PromQL로 표현 못 하는 의미론적 패턴) 로드맵이 생길 때만 정당화됨 |
+| 현행 유지(직접 Slack) | 추가 작업 없음 | 탐지가 룰과 중복(ADR-0026 약점), 폴링 굶음 잔존, silence/억제 미적용 |
+| **A. 웹훅 수신기(채택)** | 단일 엔진 유지, LLM 가치 보존, 폴링 굶음 해소, silence·그룹화·억제가 보강 알림에도 적용 | Alertmanager 룰 커버리지에 의존(자체 탐지 없음), 네트워크·노출 차단 배선 필요 |
+| B. 자체 탐지 유지 + `/api/v2/alerts` push | 전달만 일원화하며 자체 탐지 유지 | 중복 탐지를 그대로 둠(약점 미해결) — 지금 게이트는 단순 임계값이라 순수 중복. LLM *탐지*(PromQL로 못 푸는 패턴)가 생길 때만 정당 |
 
-> 대안 B는 "보강이 아니라 탐지"로 진화할 때를 위한 장래 선택지로 남긴다. 현재 `AnomalyGate`는 임계값이라 B는 중복을 제거하지 못한다.
+> 대안 B는 "보강이 아니라 탐지"로 발전할 때를 위한 장래 선택지다.
 
 ## 트레이드오프
 
-- **Alloy는 알림 엔진이 아니다.** "Alloy로 푼다"의 정확한 메커니즘은 **Loki ruler**다. `loki.yml`의 `common.storage.rules_directory: /loki/rules`는 있으나 `ruler:` 블록(`alertmanager_url`)이 미배선이라, ruler를 켜는 것이 곧 로그 탐지를 단일 엔진에 합류시키는 작업이다. Alloy의 역할은 그 스택에 로그를 먹이는 파이프라인이라는 점뿐이며([ADR-0027](0027-promtail-to-alloy-migration.md)·[ADR-0028](0028-alloy-pull-based-config-via-git.md)), [ADR-0030](0030-alloy-trace-metric-collection-integration.md)이 검토하는 수집 일원화와도 결이 같다.
-- **웹훅 타깃은 raw 색 컨테이너가 아니라 nginx 경유다(블루-그린 + 네트워크 + 내부 차단 일괄 해결).** 앱은 `dev-app-blue`/`dev-app-green` 두 컨테이너로 뜨고 **활성 색을 가리키는 정적 별칭은 없다.** 활성 색의 단일 진실 원천은 nginx의 `docker/nginx/conf/*-service.inc`(`set $upstream http://dev-app-blue:8080;`)이며, 블루-그린 전환 시 이 `.inc`만 재작성된다(ADR-0023에서 edge-cd 동기화 제외 대상인 라이브 B/G 파일). 따라서 Alertmanager 웹훅을 `dev-app-blue`로 못박으면 green 활성 시 죽은 색으로 가 **보강이 조용히 실패한다.** 해법은 웹훅을 **nginx로 보내고 nginx가 `$upstream`(활성 색)으로 프록시**하게 두는 것이다. 이 한 수가 세 문제를 동시에 푼다 — ① 블루-그린 활성 색 자동 추종(`$upstream` 재사용, 별도 추적 로직 불필요), ② Alertmanager(`monitoring-network`)↔앱(`dev/prod-network`) 네트워크 도달, ③ 내부 노출 차단.
-- **내부 노출 차단 필수.** 웹훅 엔드포인트(`/internal/zzolbot/alerts/webhook`)는 공개로 노출하면 임의 Slack 알림 주입이 가능하다. 따라서 nginx에는 **내부 전용 location**(공개 server 블록과 분리, 모니터링 네트워크에서만 도달)으로 추가하고 Spring Security로 `/internal/**`를 추가 제한한다. 공개 `proxy_pass $upstream` 경로와 같은 `$upstream` 변수를 재사용해 블루-그린 추종을 공유한다.
-- **웹훅 페이로드 형태.** 수신기는 firing과 resolved를 모두 받고, 각 페이로드는 (상류에서 그룹화된) `alerts[]` 배열을 싣는다. LLM 보강은 firing에만 의미가 있으므로 배열을 순회하며 `status` 필터링한다.
-- **Slack 포맷팅 소유권 이동.** enriched 알림은 zzol-bot Java가 포맷해 Alertmanager의 Slack receiver를 우회한다. 어느 알림을 어느 경로로 보낼지(Alertmanager 직접 Slack vs zzol-bot enriched)를 라우팅(`continue`)으로 명시 설계해야 중복·누락이 없다.
-- **자체 탐지 상실.** zzol-bot은 Alertmanager 룰이 발화한 것만 본다. PromQL/LogQL로 표현 못 하는 이상은 (대안 B의 장래 선택지 전까지) 탐지 범위 밖이다.
+- **Alloy는 알림 엔진이 아니다.** 로그 탐지를 단일 엔진에 합치는 실제 장치는 **Loki ruler**다. `loki.yml`에 `rules_directory`는 있으나 `ruler:` 블록이 비어 있어, 이걸 켜는 게 곧 합치는 작업이다. Alloy는 로그를 그 스택에 넣는 파이프라인일 뿐이다([ADR-0027](0027-promtail-to-alloy-migration.md)·[ADR-0028](0028-alloy-pull-based-config-via-git.md)·[ADR-0030](0030-alloy-trace-metric-collection-integration.md)).
+- **웹훅은 앱 컨테이너가 아니라 nginx로 보낸다(블루-그린·네트워크·노출차단 한 번에 해결).** 앱은 `blue`/`green` 두 컨테이너로 뜨고 활성 색을 가리키는 고정 별칭이 없다. 활성 색의 유일한 기준은 nginx의 `*-service.inc`(`set $upstream http://dev-app-blue:8080;`)이고 전환 때 이 파일만 바뀐다(ADR-0023에서 edge-cd 동기화 제외인 라이브 파일). 웹훅을 `blue`로 못박으면 green이 활성일 때 죽은 색으로 가 **조용히 실패**한다. 웹훅을 nginx로 보내 nginx가 `$upstream`(활성 색)으로 넘기면 ① 활성 색 자동 추종 ② Alertmanager(`monitoring-network`)↔앱(`dev/prod-network`) 네트워크 도달 ③ 노출 차단이 한 번에 풀린다.
+- **내부 노출은 막아야 한다.** `/internal/zzolbot/alerts/webhook`이 공개되면 가짜 Slack 알림을 주입할 수 있다. nginx에 **내부 전용 location**(공개 블록과 분리, 모니터링 네트워크에서만 도달)으로 넣고 Spring Security로 `/internal/**`를 한 번 더 막는다. 공개 경로와 같은 `$upstream`을 재사용해 블루-그린 추종을 공유한다.
+- **페이로드 형태.** 수신기는 firing·resolved를 모두 받고 각 페이로드에 (상류에서 그룹화된) `alerts[]` 배열이 들어온다. 보강은 firing만 의미 있어 `status`로 거른다.
+- **웹훅은 한 번만 오지 않는다 — 수신기는 멱등이어야 한다(결정 #4 부작용).** Alertmanager는 타임아웃·5xx, `repeat_interval`(1h) 주기, 재시작 때 같은 firing을 다시 보낸다. 보강이 동기(Gemini 수 초)라 막는 장치가 없으면 Slack 중복·예산 중복 소진·중복 행이 생긴다. **완화:** `AlertEnrichmentService`가 시작 지점에서 `duplicate-suppression-seconds`(기본 300s, `repeat_interval`보다 짧게) 안에 같은 fingerprint 알림 이력이 있으면 건너뛴다. 쿨다운 부활이 아니라 *중복 배달 차단*이다(쿨다운=재알림 억제, 이 가드=재시도 중복 흡수). 조회-후-저장이라 동시 배달은 미세하게 샐 수 있어, 완전 차단이 필요하면 `(fingerprint, 시간버킷)` unique 제약을 후속 도입한다.
+- **Slack 포맷은 zzol-bot이 맡는다.** 보강 알림은 zzol-bot Java가 포맷해 Alertmanager의 Slack receiver를 거치지 않는다. 어느 알림을 어느 경로로 보낼지(Alertmanager 직접 vs zzol-bot 보강)를 라우팅(`continue`)으로 정해야 중복·누락이 없다.
+- **자체 탐지는 포기한다.** zzol-bot은 Alertmanager 룰이 켜진 것만 본다. PromQL/LogQL로 못 쓰는 이상은 (대안 B 전까지) 탐지 밖이다.
 
 ## 결과
 
-- **상태는 `승인`이다.** ADR-0026(단일 알림 엔진)·ADR-0030(수집 일원화)을 건드리는 팀 레벨 결정으로 합의됐고, 구현을 본 PR에 포함한다.
-- **이 PR의 변경 지점 — Java(로컬 검증됨):**
+- **상태는 `승인`이다.** ADR-0026(단일 알림 엔진)·ADR-0030(수집 일원화)을 건드리는 팀 레벨 결정으로 합의했고, 구현을 본 PR에 포함한다.
+- **Java 변경(로컬 검증됨):**
   - 신규: `monitor/ui/AlertmanagerWebhookController`·`AlertmanagerWebhookRequest`(DTO), `monitor/application/FiringAlertEnricher`(포트)·`AlertEnrichmentService`(구현), `monitor/domain/FiringAlert`.
-  - 리팩터: `AnomalyAnalyzer`/`GeminiAnomalyAnalyzer`/`ZzolBotSlackNotifier`/`MonitorRunEntity.of`를 `MonitorSnapshot` 대신 **알림 컨텍스트** 입력으로, `MonitorService`는 조회 전용으로 슬림화, `ZzolBotMonitorController`에서 수동 트리거(`POST /run`) 제거, `LokiLogClient`는 `tailErrors`만 유지, `MonitorProperties` 축소(`enabled`·`errorLogWindowMinutes`), `zzolbot.html` 대시보드 읽기 전용.
-  - 삭제: `MonitorCollector`·`MonitorScheduler`·`AnomalyGate`·`PrometheusMetricClient`·`MonitorSnapshot`/`MonitorSignal`/`AnomalyVerdict`·`LoggingFiringAlertEnricher`(+관련 테스트).
-  - **DLQ 신호 복구**: `:infra` `OutboxDeadLetterMetricService`(신규, `outbox_dead_letter_count` 게이지) + `OutboxEventRepository.countByStatus`. self-poll 제거로 빠진 DLQ "적체 깊이" 신호를 단일 엔진 메트릭으로 되살린다(코드 리뷰 발견).
-- **이 PR의 변경 지점 — 인프라(배포 시점 검증):**
+  - 리팩터: `AnomalyAnalyzer`/`GeminiAnomalyAnalyzer`/`ZzolBotSlackNotifier`/`MonitorRunEntity.of`를 `MonitorSnapshot` 대신 **알림 컨텍스트** 입력으로, `MonitorService`는 조회 전용으로, `ZzolBotMonitorController`에서 수동 트리거(`POST /run`) 제거, `LokiLogClient`는 `tailErrors`만 유지, `MonitorProperties`는 `enabled`·`errorLogWindowMinutes`·`duplicateSuppressionSeconds`로 정리, `zzolbot.html` 대시보드 읽기 전용.
+  - 삭제: `MonitorCollector`·`MonitorScheduler`·`AnomalyGate`·`PrometheusMetricClient`·`MonitorSnapshot`/`MonitorSignal`/`AnomalyVerdict`·`LoggingFiringAlertEnricher`(+테스트).
+  - **DLQ 신호 복구**: `:infra` `OutboxDeadLetterMetricService`(신규, `outbox_dead_letter_count` 게이지) + `OutboxEventRepository.countByStatus`. 폴링 제거로 빠진 DLQ "적체 깊이" 신호를 단일 엔진 메트릭으로 되살린다(리뷰 발견).
+- **인프라 변경(배포 시점 검증):**
   - `docker/monitoring/conf/alertmanager.yml`: `zzolbot-enrich` receiver를 `http://nginx:8889/internal/...` + 베어러 인증(`credentials_file`)으로 지정, firing 미러링 route.
   - `docker/monitoring/conf/rules/alerts-redis-stream.yml`: `OutboxDeadLetterHigh` 룰(`max(outbox_dead_letter_count) > 10`) 신규. `promtool check rules` 통과.
-  - `docker/nginx/conf/internal.conf`(신규): 8889 내부 전용 리스너가 `$upstream`(prod-service.inc=활성 색)으로 프록시. `dev.conf`·`prod.conf` 공개 블록은 `/internal/` 404로 차단.
+  - `docker/nginx/conf/internal.conf`(신규): 8889 내부 전용 리스너가 `$upstream`(prod-service.inc=활성 색)으로 프록시. `dev.conf`·`prod.conf` 공개 블록은 `/internal/`을 404로 막는다.
   - `docker/nginx/docker-compose.yml`: nginx를 `monitoring-network`에 조인 + 8889 `expose`(호스트 미노출).
-  - `docker/monitoring/conf/loki.yml`: ruler 블록(미배선이던 `ruler:` 활성화).
-  - Spring Security: `/internal/**` 전용 체인(Order 0)이 베어러 토큰 검증.
-- **배포 시점 검증/결정(로컬 불가):**
-  - **시크릿**: 서버에서 `~/monitor/secrets/zzolbot_webhook_token` 생성(`slack_api_url`과 동일: `chown 65534:65534`·`chmod 600`)하고, 앱 env `ZZOL_BOT_ALERT_WEBHOOK_TOKEN`에 동일 값 주입.
-  - **도달성**: alertmanager → `nginx:8889` 도달(`monitoring-network` 조인)과 nginx → 활성 색 프록시를 `docker exec`로 확인.
-  - **환경 라우팅 가정**: 내부 리스너는 현재 **prod 활성 색**(`prod-service.inc`)으로 보낸다(zzol-bot 모니터는 prod 인시던트 중심). dev 보강이 필요하면 `dev-service.inc`를 include한 8890 리스너를 동일 패턴으로 추가하고, `alertmanager.yml`에서 `job` 라벨로 분기한다.
-  - **Loki ruler 룰 마운트**: `docker-compose`에 `./conf/loki-rules:/etc/loki/rules:ro` 마운트 + 테넌트 `fake/` 하위 배치(본 PR 포함). Loki는 ruler 블록을 기동 시 읽으므로 **컨테이너 재시작** 필요.
-  - 배포는 edge-cd(ADR-0023) 위에서 진행하며 서버 직접 수정 금지(ADR-0026 계승). `*-service.inc`는 edge-cd 동기화 제외(라이브 B/G) 대상임에 유의.
-- **롤백.** 인프라는 alertmanager `zzolbot-enrich` route/receiver 제거 + nginx `internal.conf` 제거 + 리로드로 원복(앱·트래픽 영향 없음). Java는 자체 폴링 제거를 포함하므로, 되돌리려면 본 커밋 revert.
-- 브랜치는 `be/chore/zzolbot-alertmanager-receiver-adr`이며 PR 타깃은 `be/feat/1474-zzolbot-upgrade`(#1492)다.
+  - `docker/monitoring/conf/loki.yml`: ruler 블록(비어 있던 `ruler:` 활성화).
+  - Spring Security: `/internal/**` 전용 체인(Order 0)이 베어러 토큰을 검증한다.
+- **배포 시점에 확인할 것(로컬 불가):**
+  - **시크릿**: 서버에서 `~/monitor/secrets/zzolbot_webhook_token` 생성(`slack_api_url`과 동일: `chown 65534:65534`·`chmod 600`)하고 앱 env `ZZOL_BOT_ALERT_WEBHOOK_TOKEN`에 같은 값 주입.
+  - **도달성**: alertmanager → `nginx:8889`(`monitoring-network` 조인)와 nginx → 활성 색 프록시를 `docker exec`로 확인.
+  - **환경 라우팅**: 내부 리스너는 현재 **prod 활성 색**(`prod-service.inc`)으로 보낸다(zzol-bot 모니터는 prod 인시던트 중심). dev 보강이 필요하면 `dev-service.inc`를 include한 8890 리스너를 같은 패턴으로 추가하고 `alertmanager.yml`에서 `job` 라벨로 분기한다.
+  - **Loki ruler 룰 마운트**: `docker-compose`에 `./conf/loki-rules:/etc/loki/rules:ro` 마운트 + 테넌트 `fake/` 하위 배치(본 PR 포함). Loki는 ruler를 기동 시 읽으므로 **컨테이너 재시작** 필요.
+  - 배포는 edge-cd(ADR-0023) 위에서 하며 서버 직접 수정 금지(ADR-0026 계승). `*-service.inc`는 edge-cd 동기화 제외(라이브 B/G) 대상임에 유의.
+- **롤백.** 인프라는 alertmanager `zzolbot-enrich` route/receiver 제거 + nginx `internal.conf` 제거 + 리로드로 원복(앱·트래픽 영향 없음). Java는 폴링 제거를 포함하므로 되돌리려면 본 커밋 revert.
+- 브랜치는 `be/chore/zzolbot-alertmanager-receiver-adr`, PR 타깃은 `be/feat/1474-zzolbot-upgrade`(#1492)다.
 
 ## 배포 시 운영 체크리스트
 
-Git 정본(`backend/docker/**`)은 edge-cd(ADR-0023)가 서버로 동기화하지만, **시크릿·env·컨테이너 재생성·실측 검증은 코드로 자동화되지 않는다.** 아래는 사람이 서버에서 직접 하는 작업이다. 순서를 지킨다 — 시크릿이 없으면 인증이 막히고, 네트워크 조인이 없으면 alertmanager가 nginx에 도달하지 못한다.
+Git 정본(`backend/docker/**`)은 edge-cd(ADR-0023)가 서버로 동기화하지만, **시크릿·env·컨테이너 재생성·실측 검증은 자동화되지 않는다.** 아래는 사람이 서버에서 직접 한다. 순서를 지킨다 — 시크릿이 없으면 인증이 막히고, 네트워크 조인이 없으면 alertmanager가 nginx에 못 닿는다.
 
 ### 1. 배포 전 — 시크릿·환경변수 준비 (필수)
 
-- **베어러 토큰 생성**: JWT가 아니라 단순 공유 시크릿(랜덤 문자열)이다. 앱은 상수시간 문자열 비교만 하므로, **한 번 생성해 같은 값을 양쪽(파일·env)에** 넣는 게 핵심이다. 앱 env에 개행이 섞이면 401 미스매치가 나므로 파일은 `printf`(개행 없음)로 쓴다.
+- **베어러 토큰 생성**: JWT가 아니라 단순 공유 시크릿(랜덤 문자열)이다. 앱은 상수시간 비교만 하므로 **한 번 만들어 같은 값을 양쪽(파일·env)에** 넣는 게 핵심이다. 앱 env에 개행이 섞이면 401이 나므로 파일은 `printf`(개행 없음)로 쓴다.
 
 ```bash
-# 한 번 생성해 변수에 담는다 — 256-bit, 헤더에 안전한 hex(특수문자 없음)
+# 한 번 만들어 변수에 담는다 — 256-bit, 헤더에 안전한 hex(특수문자 없음)
 TOKEN=$(openssl rand -hex 32)
 
-# (a) Alertmanager용 파일 — 개행 없이 기록, 컨테이너 uid(65534) 소유(slack_api_url과 동일 패턴)
+# (a) Alertmanager용 파일 — 개행 없이 기록, 컨테이너 uid(65534) 소유(slack_api_url과 동일)
 printf '%s' "$TOKEN" | sudo tee ~/monitor/secrets/zzolbot_webhook_token >/dev/null
 sudo chown 65534:65534 ~/monitor/secrets/zzolbot_webhook_token
 sudo chmod 600 ~/monitor/secrets/zzolbot_webhook_token
@@ -118,28 +119,28 @@ sudo chmod 600 ~/monitor/secrets/zzolbot_webhook_token
 echo "$TOKEN"
 ```
 
-- **앱 env 선언**: `ZZOL_BOT_ALERT_WEBHOOK_TOKEN`을 dev/prod 앱 컨테이너 env에 주입한다(`docker/{dev,prod}/docker-compose.yml`의 app env 또는 서버 `.env`). 미설정이면 `InternalWebhookTokenFilter`가 모든 `/internal` 요청을 401로 거부한다(secure-by-default). **값은 커밋하지 않는다.**
-- 시크릿 파일은 발송마다 새로 읽히므로 alertmanager 재시작은 불필요하나, **앱 env 주입은 앱 컨테이너 재배포(backend-cd)로 반영**된다.
+- **앱 env 선언**: `ZZOL_BOT_ALERT_WEBHOOK_TOKEN`을 dev/prod 앱 컨테이너 env에 주입한다(`docker/{dev,prod}/docker-compose.yml`의 app env 또는 서버 `.env`). 미설정이면 `InternalWebhookTokenFilter`가 모든 `/internal` 요청을 401로 막는다(기본 차단). **값은 커밋하지 않는다.**
+- 시크릿 파일은 발송마다 새로 읽히므로 alertmanager 재시작은 불필요하지만, **앱 env 주입은 앱 컨테이너 재배포(backend-cd)로 반영**된다.
 
-### 2. 배포 — 컨테이너 재생성/재시작 (어디가 reload로 안 되는지 주의)
+### 2. 배포 — 컨테이너 재생성/재시작 (reload로 안 되는 곳 주의)
 
 | 대상 | 변경 | reload로 충분? | 필요 조치 |
 |------|------|----------------|-----------|
-| **nginx** | monitoring-network 조인 + 8889 expose | ❌ (네트워크·expose는 컨테이너 속성) | **`docker compose up -d nginx` 재생성** — 공개 nginx 순단 발생. 저트래픽 시간대 권장. (무중단 스톱갭: `docker network connect monitoring-network nginx` 후 conf만 reload, 다음 계획 재생성 때 일치) |
-| nginx conf (internal.conf·/internal 404) | conf만 | ✅ | 재생성에 포함됨. 단독 변경이면 `nginx -s reload` |
-| **loki** | `ruler:` 블록 + 룰 마운트 | ❌ (ruler는 기동 시 시작) | **loki 컨테이너 재시작**(`docker compose up -d loki`) |
+| **nginx** | monitoring-network 조인 + 8889 expose | ❌ (네트워크·expose는 컨테이너 속성) | **`docker compose up -d nginx` 재생성** — 공개 nginx 순단 발생, 저트래픽 시간대 권장. (무중단 임시방편: `docker network connect monitoring-network nginx` 후 conf만 reload, 다음 재생성 때 일치) |
+| nginx conf (internal.conf·/internal 404) | conf만 | ✅ | 재생성에 포함. 단독 변경이면 `nginx -s reload` |
+| **loki** | `ruler:` 블록 + 룰 마운트 | ❌ (ruler는 기동 시 시작) | **loki 재시작**(`docker compose up -d loki`) |
 | **alertmanager** | `zzolbot-enrich` receiver/route | ✅ | `docker kill -s HUP alertmanager`(또는 `/-/reload`) |
 | **prometheus** | `OutboxDeadLetterHigh` 룰 | ✅ | `docker kill -s HUP prometheus` |
 | **app** | webhook 수신기·enricher·DLQ 게이지·env | — | backend-cd 재배포 |
 
-### 3. 배포 후 — 검증 (성공 기준, 9090/9093/3100 호스트 미노출 → `docker exec`)
+### 3. 배포 후 — 검증 (9090/9093/3100 호스트 미노출 → `docker exec`)
 
-- **설정 문법**(로컬에서 이미 통과, 서버 재확인): `docker exec nginx nginx -t`, `docker exec prometheus promtool check rules /etc/prometheus/rules/alerts-redis-stream.yml`.
-- **DLQ 메트릭 노출**: `docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=outbox_dead_letter_count'` 로 시리즈가 보이는지(앱 actuator 스크레이프됨).
-- **룰 로드**: `.../api/v1/rules` 에 `OutboxDeadLetterHigh`와 Loki ruler 발화분이 보이는지.
-- **도달성**: `docker exec alertmanager wget -qO- http://nginx:8889/internal/zzolbot/alerts/webhook` → 토큰 없이는 **401**(차단 동작 확인). Alertmanager가 실제 보낼 때만 200.
-- **엔드투엔드**: dev에서 임계 초과를 유발(또는 `amtool`로 테스트 알림)해 Alertmanager firing → zzol-bot 보강 → Slack enriched 메시지 도착까지 확인.
+- **설정 문법**: `docker exec nginx nginx -t`, `docker exec prometheus promtool check rules /etc/prometheus/rules/alerts-redis-stream.yml`.
+- **DLQ 메트릭 노출**: `docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=outbox_dead_letter_count'`로 시리즈가 보이는지.
+- **룰 로드**: `.../api/v1/rules`에 `OutboxDeadLetterHigh`와 Loki ruler 발화분이 보이는지.
+- **도달성**: `docker exec alertmanager wget -qO- http://nginx:8889/internal/zzolbot/alerts/webhook` → 토큰 없이는 **401**(차단 확인). Alertmanager가 실제 보낼 때만 200.
+- **엔드투엔드**: dev에서 임계 초과를 유발(또는 `amtool` 테스트 알림)해 firing → zzol-bot 보강 → Slack 메시지 도착까지 확인.
 
 ### 4. 롤백
 
-앱·트래픽 영향 최소: alertmanager `zzolbot-enrich` 제거 + `docker kill -s HUP alertmanager`, nginx `internal.conf` 제거 + 재생성(또는 `network disconnect`), loki ruler 블록 주석 + 재시작. Java(자체 폴링 제거 포함)는 커밋 revert.
+앱·트래픽 영향 최소: alertmanager `zzolbot-enrich` 제거 + `docker kill -s HUP alertmanager`, nginx `internal.conf` 제거 + 재생성(또는 `network disconnect`), loki ruler 블록 주석 + 재시작. Java(폴링 제거 포함)는 커밋 revert.

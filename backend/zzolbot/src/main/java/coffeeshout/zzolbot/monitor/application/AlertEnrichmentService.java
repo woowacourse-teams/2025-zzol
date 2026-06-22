@@ -21,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * 능동 폴링 대신 Alertmanager가 발화한 firing 알림을 받아 LLM으로 보강한다(ADR-0032).
- * 탐지는 Alertmanager가 소유하고, 앱은 지문별 재보강 쿨다운으로 같은 장애의 LLM 재호출만 비용 관점에서 묶는다.
+ * 능동 폴링 대신 Alertmanager가 발화한 firing 알림을 받아 LLM으로 분석한다(ADR-0032).
+ * 탐지는 Alertmanager가 소유하고, 앱은 지문별 재분석 간격으로 같은 장애의 LLM 재호출만 비용 관점에서 묶는다.
  * firing 알림을 영속하고, 예산이 있으면 ERROR 로그 샘플로 LLM 분석한 뒤 Slack에 게시한다.
  */
 @Slf4j
@@ -44,12 +44,12 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
     @Override
     public void enrich(FiringAlert alert) {
         if (!properties.enabled()) {
-            log.debug("[ZzolBot] 모니터링 비활성 — 알림 보강 생략. fingerprint={}", alert.fingerprint());
+            log.debug("[ZzolBot] 모니터링 비활성 — 알림 분석 생략. fingerprint={}", alert.fingerprint());
             return;
         }
         final Instant now = clock.instant();
         if (recentlyEnriched(alert.fingerprint(), now)) {
-            log.info("[ZzolBot] 재보강 쿨다운 — 쿨다운 내 동일 fingerprint 보강 이력 존재. fingerprint={}",
+            log.info("[ZzolBot] 중복 분석 방지 — 일정 시간 내 동일 fingerprint 분석 이력 존재. fingerprint={}",
                     alert.fingerprint());
             return;
         }
@@ -57,25 +57,27 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
         final MonitorRunEntity run = monitorRunRepository.save(
                 MonitorRunEntity.of(now, severity, alert.fingerprint(), toJson(alertContext(alert))));
 
-        final MonitorAnalysis analysis;
-        if (llmCallBudget.tryAcquire()) {
-            final List<String> logs = lokiLogClient.tailErrors(now, properties.window(), LOG_SAMPLE_LIMIT);
-            analysis = safeAnalyze(alert, logs);
-        } else {
-            log.warn("[ZzolBot] 일일 LLM 예산 소진 — 이상 분석 생략. fingerprint={}", alert.fingerprint());
-            analysis = MonitorAnalysis.budgetExhausted();
-        }
+        final MonitorAnalysis analysis = analyze(alert, now);
         run.attachAnalysis(analysis.summary(), toJson(analysis.suggestedActions()));
         run.markNotified();
         notifier.notifyAnomaly(alert, analysis);
         monitorRunRepository.save(run);
     }
 
+    private MonitorAnalysis analyze(FiringAlert alert, Instant now) {
+        if (!llmCallBudget.tryAcquire()) {
+            log.warn("[ZzolBot] 일일 LLM 예산 소진 — 이상 분석 생략. fingerprint={}", alert.fingerprint());
+            return MonitorAnalysis.budgetExhausted();
+        }
+        final List<String> logs = lokiLogClient.tailErrors(now, properties.window(), LOG_SAMPLE_LIMIT);
+        return safeAnalyze(alert, logs);
+    }
+
     /**
-     * 같은 fingerprint를 쿨다운 안에는 재보강하지 않는다(지문별 해설 쿨다운). 웹훅 재시도·flapping을 흡수하고,
-     * 지속되는 장애를 매 재통보마다 다시 LLM에 태우지 않아 비용을 묶는다. 쿨다운이 0이거나 fingerprint가
-     * 비어 식별 불가하면 가드하지 않는다. Alertmanager {@code repeat_interval}(4h) 위의 앱측 방어선으로,
-     * 재보강을 fingerprint당 ~쿨다운 1회로 제한한다.
+     * 같은 fingerprint를 일정 시간 안에는 다시 분석하지 않는다(지문별 중복 분석 방지). 웹훅 재시도·flapping을
+     * 흡수하고, 지속되는 장애를 매 재통보마다 다시 LLM에 태우지 않아 비용을 묶는다. 간격이 0이거나
+     * fingerprint가 비어 식별 불가하면 가드하지 않는다. Alertmanager {@code repeat_interval}(4h) 위의
+     * 앱측 방어선으로, 재분석을 fingerprint당 일정 시간에 한 번으로 제한한다.
      */
     private boolean recentlyEnriched(String fingerprint, Instant now) {
         final Duration cooldown = properties.enrichCooldown();

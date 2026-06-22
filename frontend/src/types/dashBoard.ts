@@ -23,3 +23,13 @@ export type RacingGameTopPlayer = {
   playerName: string;
   bestTime: number;
 };
+
+export type BlindTimerTopPlayer = {
+  playerName: string;
+  bestErrorMillis: number;
+};
+
+export type SpeedTouchTopPlayer = {
+  playerName: string;
+  bestTime: number;
+};

@@ -1,18 +1,18 @@
 ---
-description: WebSocket 구독·발행 코드 작성 또는 수정 시 ws-mcp 카탈로그로 BE 컨트랙트를 먼저 확인한다. destination prefix·payload·publisher 위치를 코드 작성 전에 검증해 prefix 중복·오타·존재하지 않는 토픽 구독을 사전 차단한다.
+description: WebSocket 구독·발행 코드 작성 또는 수정 시 api-mcp 카탈로그로 BE 컨트랙트를 먼저 확인한다. destination prefix·payload·publisher 위치를 코드 작성 전에 검증해 prefix 중복·오타·존재하지 않는 토픽 구독을 사전 차단한다.
 paths:
-  - 'src/apis/websocket/**'
-  - 'src/contexts/**'
-  - 'src/features/**/hooks/use*WebSocket*.ts'
-  - 'src/features/**/hooks/use*Subscription*.ts'
-allowed-tools: Read, mcp__ws__ws_list_topics, mcp__ws__ws_describe, mcp__ws__ws_source
+  - "src/apis/websocket/**"
+  - "src/contexts/**"
+  - "src/features/**/hooks/use*WebSocket*.ts"
+  - "src/features/**/hooks/use*Subscription*.ts"
+allowed-tools: Read, mcp__api__ws_list_topics, mcp__api__ws_describe, mcp__api__ws_source
 ---
 
 # WebSocket 컨트랙트 조회 워크플로우
 
 ## 사전 검색 — 새 구독/발행 작성 전 필수
 
-`useWebSocketSubscription` / `send` 호출을 새로 추가하거나 destination 을 수정할 때는 **반드시 ws-mcp 도구로 BE 카탈로그를 먼저 확인**한다. 존재하지 않는 토픽 구독, prefix 중복, payload 타입 오해를 사전에 차단한다.
+`useWebSocketSubscription` / `send` 호출을 새로 추가하거나 destination 을 수정할 때는 **반드시 api-mcp 의 `ws_*` 도구로 BE 카탈로그를 먼저 확인**한다. 존재하지 않는 토픽 구독, prefix 중복, payload 타입 오해를 사전에 차단한다.
 
 ```text
 1. ws_list_topics q="<도메인 키워드>"   # 후보 토픽/큐 좁히기
@@ -20,11 +20,11 @@ allowed-tools: Read, mcp__ws__ws_list_topics, mcp__ws__ws_describe, mcp__ws__ws_
 3. ws_source path=<...>                # 필요시 발행 메서드 위치 확인
 ```
 
-`mcp__ws__ws_*` 도구는 `frontend/.mcp.json` 으로 자동 등록된다. BE 가 안 떠 있어도 `~/.zzol-mcp/catalog.json` 캐시로 동작한다.
+`mcp__api__ws_*` 도구는 `frontend/.mcp.json` 으로 자동 등록된다. BE 가 안 떠 있어도 `~/.zzol-mcp/catalog.json` 캐시로 동작한다.
 
 ## destination 형식 — prefix 변환 규칙
 
-ws-mcp 카탈로그의 path 는 prefix 를 포함하지만, FE wrapper(`useWebSocketSubscription` / `send`)는 prefix 를 자동 추가한다. **path 에서 prefix 를 제거해 전달**한다.
+api-mcp 카탈로그의 path 는 prefix 를 포함하지만, FE wrapper(`useWebSocketSubscription` / `send`)는 prefix 를 자동 추가한다. **path 에서 prefix 를 제거해 전달**한다.
 
 | 카탈로그 path (MCP 응답)                               | FE 호출 시 path                                        |
 | ------------------------------------------------------ | ------------------------------------------------------ |

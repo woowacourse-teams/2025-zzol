@@ -1,0 +1,55 @@
+name: api-mcp CI
+
+on:
+  pull_request:
+    paths:
+      - 'tools/api-mcp/**'
+      - '.github/workflows/api-mcp-ci.yml'
+  push:
+    branches:
+      - fe/dev
+    paths:
+      - 'tools/api-mcp/**'
+      - '.github/workflows/api-mcp-ci.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-mcp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: tools/api-mcp
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: tools/api-mcp/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Format check (Prettier)
+        run: npm run format:check
+
+      - name: Lint (ESLint + typescript-eslint)
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test (L1 단위)
+        run: npm test
+
+      - name: Build
+        run: npm run build

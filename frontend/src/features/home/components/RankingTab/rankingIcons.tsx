@@ -58,6 +58,33 @@ export const GamepadIcon = () => (
   </svg>
 );
 
+export const StopwatchIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* 상단 버튼 */}
+    <rect x="8.5" y="1.5" width="3" height="2" rx="0.5" fill="#10B981" />
+    <rect x="9" y="3" width="2" height="1.5" fill="#10B981" />
+    {/* 본체 */}
+    <circle cx="10" cy="12" r="6.5" fill="#34D399" />
+    <circle cx="10" cy="12" r="4.8" fill="#ECFDF5" />
+    {/* 시침 */}
+    <path d="M10 12V8.6" stroke="#065F46" strokeWidth="1.3" strokeLinecap="round" />
+    <path d="M10 12l2.4 1.4" stroke="#065F46" strokeWidth="1.3" strokeLinecap="round" />
+    <circle cx="10" cy="12" r="0.9" fill="#065F46" />
+  </svg>
+);
+
+export const TouchIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* 터치 물결 */}
+    <path d="M4 5a5 5 0 0 1 8 0" stroke="#60A5FA" strokeWidth="1.3" strokeLinecap="round" />
+    {/* 손가락 */}
+    <path
+      d="M8 7.5a1.2 1.2 0 0 1 2.4 0v3.5l1.2.3a2 2 0 0 1 1.5 1.6l.4 2.3a2 2 0 0 1-2 2.4H10a3 3 0 0 1-2.5-1.3L5.2 13a1.3 1.3 0 0 1 1.8-1.8l1 .8V7.5z"
+      fill="#3B82F6"
+    />
+  </svg>
+);
+
 export const RacingCarIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
     {/* 차체 */}

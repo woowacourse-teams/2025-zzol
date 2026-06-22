@@ -18,9 +18,9 @@
 | `docs/seo-optimization.md`    | SEO 최적화 작업 기록                                                                     |
 | `docs/api-design-menu-tab.md` | 메뉴 탭 API 설계 — 백엔드 협의용 (POST /reports, GET /patch-notes Request/Response 스펙) |
 
-## WebSocket 컨트랙트 조회 (MCP)
+## API 컨트랙트 조회 (MCP)
 
-BE 의 `GET /dev/ws-catalog` 에 모든 토픽/큐/send destination 의 path·payloadType·publisher 위치가 노출되어 있다. 직접 `curl` 로 받아도 되지만, 본 레포는 `tools/ws-mcp/` MCP 서버를 통해 Claude Code 에서 바로 조회한다.
+BE 컨트랙트(WebSocket + HTTP)를 직접 `curl` 로 받아도 되지만, 본 레포는 `tools/api-mcp/` MCP 서버를 통해 Claude Code 에서 바로 조회한다. WebSocket 은 `GET /dev/ws-catalog`, HTTP 는 springdoc OpenAPI(`GET /v3/api-docs`)를 소비한다. (구 `ws-mcp` 에서 HTTP/OpenAPI 도구가 추가되며 `api-mcp` 로 통합됨)
 
 | 도구                                      | 용도                                                                          |
 | ----------------------------------------- | ----------------------------------------------------------------------------- |
@@ -28,14 +28,20 @@ BE 의 `GET /dev/ws-catalog` 에 모든 토픽/큐/send destination 의 path·pa
 | `ws_describe`                             | 특정 path 의 풀 컨트랙트 (payloadType + publishers + 참조 schema)             |
 | `ws_source`                               | 특정 path 의 발행 메서드 위치 (className#methodName)                          |
 | `ws_connect` / `ws_subscribe` / `ws_send` | STOMP 세션을 짧게 띄워 연결/구독/송신 검증 (`roomToken` 필요 — ADR-0009 참조) |
+| `http_list_endpoints` | OpenAPI 엔드포인트 요약 목록 (method/path/summary) |
+| `http_describe` | 특정 엔드포인트의 요청/응답 스키마 상세 |
+| `http_request` | 실제 백엔드로 REST 요청 후 `{ request, response }` 반환 |
+| `http_validate` | 바디를 OpenAPI 스키마와 대조한 누락/타입 불일치 리포트 |
 
-**등록**: `frontend/.mcp.json` 에 이미 정의되어 있다. `cd frontend && claude` 로 띄우면 자동 인식.
+**등록**: `frontend/.mcp.json` 에 이미 정의되어 있다(서버 키 `api`). `cd frontend && claude` 로 띄우면 자동 인식.
 
-**MCP 빌드**: 최초 1회 `cd ../tools/ws-mcp && npm install && npm run build` 가 필요하다. 이후 BE 시그니처가 변경되면 BE 측에서 `WsCatalogFixtureExportTest` 가 fixture 를 갱신하고 MCP CI 가 zod 스키마 일치를 자동 검증한다.
+**MCP 빌드**: 별도 빌드 불필요. `frontend/.mcp.json` 이 self-healing 런처(`../tools/api-mcp/scripts/launch.mjs`)를 가리키므로 실행 시점에 의존성 설치·빌드를 자동 보장한다.
+
+**컨트랙트 검증 위치**: api-mcp 의 zod 스키마와 BE 카탈로그의 일치(contract drift) 검증은 **be/dev 가 단독으로 소유**한다 — fixture 생성기(`WsCatalogFixtureGeneratorTest`, `-DupdateFixture=true`)·커밋된 fixture·BE 소스가 모두 be/dev 에 있기 때문이다. `tools/api-mcp` 는 be/dev 미러이므로 fe/dev CI 는 컨트랙트 검증을 수행하지 않고 빌드·린트·단위 테스트만 돌린다.
 
 **prefix 주의사항**: MCP 카탈로그의 path 는 prefix 를 포함(`/topic/room/...`, `/user/queue/...`, `/app/...`)하지만, FE 의 `useWebSocketSubscription`/`send` 는 wrapper 가 prefix 를 자동 추가하므로 path 에서 `/topic`·`/app` 부분을 제거해 전달한다 (자세한 규칙은 `.claude/rules/websocket.md`).
 
-상세 도구 명세·환경 변수·동작 검증(MCP Inspector) 은 `../tools/ws-mcp/README.md` 참조.
+상세 도구 명세·환경 변수·동작 검증(MCP Inspector) 은 `../tools/api-mcp/README.md` 참조.
 
 ## .claude 리소스
 
@@ -73,9 +79,20 @@ BE 의 `GET /dev/ws-catalog` 에 모든 토픽/큐/send destination 의 path·pa
 
 ### Agents
 
-| 에이전트           | 설명                                                                                             |
-| ------------------ | ------------------------------------------------------------------------------------------------ |
-| `fe-code-reviewer` | 컴포넌트 계층·스타일링·훅 설계·접근성 기준 독립 코드 리뷰. 항상 `run_in_background: true`로 실행 |
+| 에이전트 | 설명 |
+| --- | --- |
+| `fe-code-reviewer` | zzol FE 고유 규칙(컴포넌트 계층·스타일 토큰·API 훅·WebSocket 컨트랙트·a11y·Storybook·ADR) 감수. 범용 버그·중복·효율은 다루지 않음. 항상 `run_in_background: true`로 실행 |
+
+#### 코드 리뷰 = 두 도구 병행
+
+"코드 리뷰해줘" 같은 요청은 **두 도구를 함께** 돌린다. 역할이 다르므로 한쪽만으로는 부족하다.
+
+| 도구 | 담당 | 호출 |
+| --- | --- | --- |
+| `/code-review` (내장 스킬) | 범용 버그(정확성)·중복·단순화·효율, 일반 React/TS 정확성. effort·`ultra`(클라우드)·`--comment`·`--fix` 지원 | Skill 툴 |
+| `fe-code-reviewer` (에이전트) | zzol FE 고유 규칙·ADR 준수 (`/code-review`가 모르는 영역) | Agent 툴, `run_in_background: true` |
+
+실행 패턴: `fe-code-reviewer`를 백그라운드로 먼저 띄우고 `/code-review`를 돌린 뒤, 두 결과를 합쳐 보고한다. (자세한 분업은 `.claude/agents/fe-code-reviewer.md` "검토 범위" 참조)
 
 ## 커맨드
 

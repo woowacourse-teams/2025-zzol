@@ -61,4 +61,9 @@ public class IntegrationTestConfig {
     public TaskScheduler testIntegrationBlindTimerGameScheduler() {
         return new ShutDownTestScheduler();
     }
+
+    @Bean(name = "nunchiGameScheduler")
+    public TaskScheduler testIntegrationNunchiGameScheduler() {
+        return new ShutDownTestScheduler();
+    }
 }

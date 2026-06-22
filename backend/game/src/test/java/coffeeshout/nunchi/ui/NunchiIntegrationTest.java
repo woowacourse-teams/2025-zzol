@@ -16,6 +16,8 @@ import coffeeshout.nunchi.domain.NunchiState;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
+import coffeeshout.websocket.WsRecoveryService;
+import coffeeshout.websocket.ui.dto.RecoveryMessage;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +48,9 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
 
     @Autowired
     NunchiTimingProperties timing;
+
+    @Autowired
+    WsRecoveryService wsRecoveryService;
 
     @BeforeEach
     void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
@@ -119,6 +124,36 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
             assertThat(cooldown.state()).isEqualTo(NunchiState.COLLISION_COOLDOWN);
             assertThat(cooldown.collided()).contains(host.getName(), "루키");
             assertThat(cooldown.resumeAtEpochMs()).isNotNull();
+        }
+    }
+
+    @Nested
+    class 재접속_복구_테스트 {
+
+        /**
+         * 재접속 스냅샷(ADR-0031 결정 8)은 별도 push 인프라 없이 기존 WS 복구({@link WsRecoveryService})에
+         * 얹힌다 — {@code NunchiNotifier}가 {@code LoggingSimpMessagingTemplate}로 보내므로 stand/state가
+         * 자동으로 복구 스트림에 저장된다. 재연결한 클라이언트는 {@code /api/rooms/{joinCode}/recovery}로
+         * 이 메시지들을 재생해 PLAYING 스냅샷(currentNumber·stood)부터 상태를 복원한다.
+         */
+        @Test
+        void 복구_스트림에서_PLAYING과_stand를_재생할_수_있다() {
+            final var standResponses = session.subscribe(standUrl());
+            final var stateResponses = session.subscribe(stateUrl());
+
+            startNunchiGame();
+            stateResponses.get(); // PLAYING
+
+            session.send(pressCommandUrl());
+            standResponses.get(); // stand 수신 = 복구 저장 완료(save가 broadcast 직전 실행)
+
+            // lastId="0-0"(스트림 시작)부터 재생 — 시드 PLAYING과 이후 stand가 모두 복구 대상에 들어있다
+            final List<String> destinations =
+                    wsRecoveryService.getMessagesSince(joinCode.getValue(), "0-0").stream()
+                            .map(RecoveryMessage::destination)
+                            .toList();
+
+            assertThat(destinations).contains(stateUrl(), standUrl());
         }
     }
 

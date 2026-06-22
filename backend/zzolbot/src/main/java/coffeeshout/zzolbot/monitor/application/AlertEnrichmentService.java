@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * 능동 폴링 대신 Alertmanager가 발화한 firing 알림을 받아 LLM으로 보강한다(ADR-0032).
- * Alertmanager가 탐지·dedup을 소유하므로 자체 임계값 게이팅·쿨다운은 두지 않는다.
+ * 탐지는 Alertmanager가 소유하고, 앱은 지문별 재보강 쿨다운으로 같은 장애의 LLM 재호출만 비용 관점에서 묶는다.
  * firing 알림을 영속하고, 예산이 있으면 ERROR 로그 샘플로 LLM 분석한 뒤 Slack에 게시한다.
  */
 @Slf4j
@@ -48,8 +48,8 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
             return;
         }
         final Instant now = clock.instant();
-        if (recentlyNotified(alert.fingerprint(), now)) {
-            log.info("[ZzolBot] 중복 firing 억제 — 윈도우 내 동일 fingerprint 보강 이력 존재. fingerprint={}",
+        if (recentlyEnriched(alert.fingerprint(), now)) {
+            log.info("[ZzolBot] 재보강 쿨다운 — 쿨다운 내 동일 fingerprint 보강 이력 존재. fingerprint={}",
                     alert.fingerprint());
             return;
         }
@@ -72,17 +72,18 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
     }
 
     /**
-     * 같은 fingerprint의 firing 재배달(웹훅 재시도·Alertmanager 재시작)을 멱등 처리한다. 윈도우가 0이거나
-     * fingerprint가 비어 식별 불가하면 가드하지 않는다. Alertmanager {@code repeat_interval}보다 짧은
-     * 윈도우라 의도된 주기적 재알림은 통과한다(ADR-0032 결정 #4 — dedup은 Alertmanager 소유 보완).
+     * 같은 fingerprint를 쿨다운 안에는 재보강하지 않는다(지문별 해설 쿨다운). 웹훅 재시도·flapping을 흡수하고,
+     * 지속되는 장애를 매 재통보마다 다시 LLM에 태우지 않아 비용을 묶는다. 쿨다운이 0이거나 fingerprint가
+     * 비어 식별 불가하면 가드하지 않는다. Alertmanager {@code repeat_interval}(4h) 위의 앱측 방어선으로,
+     * 재보강을 fingerprint당 ~쿨다운 1회로 제한한다.
      */
-    private boolean recentlyNotified(String fingerprint, Instant now) {
-        final Duration window = properties.duplicateSuppressionWindow();
-        if (window.isZero() || fingerprint == null || fingerprint.isBlank()) {
+    private boolean recentlyEnriched(String fingerprint, Instant now) {
+        final Duration cooldown = properties.enrichCooldown();
+        if (cooldown.isZero() || fingerprint == null || fingerprint.isBlank()) {
             return false;
         }
         return monitorRunRepository.existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(
-                fingerprint, now.minus(window));
+                fingerprint, now.minus(cooldown));
     }
 
     private MonitorAnalysis safeAnalyze(FiringAlert alert, List<String> logSamples) {

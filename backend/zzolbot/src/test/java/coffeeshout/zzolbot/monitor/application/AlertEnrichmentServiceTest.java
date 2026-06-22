@@ -34,7 +34,7 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class AlertEnrichmentServiceTest {
 
-    private static final MonitorProperties PROPERTIES = new MonitorProperties(true, 240, 300);
+    private static final MonitorProperties PROPERTIES = new MonitorProperties(true, 240, 240);
 
     @Mock
     private LlmCallBudget llmCallBudget;
@@ -92,7 +92,7 @@ class AlertEnrichmentServiceTest {
     }
 
     @Test
-    void 중복_억제_윈도우_내_동일_fingerprint_재배달은_보강을_생략한다() {
+    void 쿨다운_내_동일_fingerprint_재배달은_보강을_생략한다() {
         given(monitorRunRepository.existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(any(), any()))
                 .willReturn(true);
 
@@ -104,7 +104,7 @@ class AlertEnrichmentServiceTest {
     }
 
     @Test
-    void 중복_억제_윈도우가_0이면_가드를_건너뛰고_보강한다() {
+    void 쿨다운이_0이면_가드를_건너뛰고_보강한다() {
         final AlertEnrichmentService noDedup = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer,
                 notifier, monitorRunRepository, new MonitorProperties(true, 240, 0), new ObjectMapper(),
                 Clock.systemUTC());
@@ -121,7 +121,7 @@ class AlertEnrichmentServiceTest {
     @Test
     void 모니터링이_비활성이면_아무것도_하지_않는다() {
         final AlertEnrichmentService disabled = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer,
-                notifier, monitorRunRepository, new MonitorProperties(false, 240, 300), new ObjectMapper(),
+                notifier, monitorRunRepository, new MonitorProperties(false, 240, 240), new ObjectMapper(),
                 Clock.systemUTC());
 
         disabled.enrich(warningAlert());

@@ -7,14 +7,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 /**
- * 모니터링 설정. 보강 활성 여부, ERROR 로그 조회 윈도우, 중복 억제 윈도우를 외부화한다.
+ * 모니터링 설정. 보강 활성 여부, ERROR 로그 조회 윈도우, 재보강 쿨다운을 외부화한다.
  */
 @Validated
 @ConfigurationProperties(prefix = "zzol-bot.monitor")
 public record MonitorProperties(
         boolean enabled,
         @Positive int errorLogWindowMinutes,
-        @PositiveOrZero int duplicateSuppressionSeconds
+        @PositiveOrZero int enrichCooldownMinutes
 ) {
 
     /**
@@ -25,10 +25,10 @@ public record MonitorProperties(
     }
 
     /**
-     * 같은 fingerprint의 firing 재배달(웹훅 재시도·재시작)을 멱등 처리하기 위한 중복 억제 윈도우.
-     * Alertmanager {@code repeat_interval}보다 짧게 둬야 의도된 주기적 재알림은 통과한다. 0이면 가드 비활성.
+     * 같은 fingerprint를 이 시간 안에는 재보강하지 않는다(지문별 해설 쿨다운). 웹훅 재시도·flapping을
+     * 흡수하고, 지속되는 장애의 LLM 재호출을 fingerprint당 ~쿨다운 1회로 묶어 비용을 통제한다. 0이면 비활성.
      */
-    public Duration duplicateSuppressionWindow() {
-        return Duration.ofSeconds(duplicateSuppressionSeconds);
+    public Duration enrichCooldown() {
+        return Duration.ofMinutes(enrichCooldownMinutes);
     }
 }

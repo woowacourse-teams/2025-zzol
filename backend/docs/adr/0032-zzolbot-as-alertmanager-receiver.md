@@ -59,8 +59,8 @@ Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
 ## 트레이드오프
 
 - **Alloy는 알림 엔진이 아니다.** "Alloy로 푼다"의 정확한 메커니즘은 **Loki ruler**다. `loki.yml`의 `common.storage.rules_directory: /loki/rules`는 있으나 `ruler:` 블록(`alertmanager_url`)이 미배선이라, ruler를 켜는 것이 곧 로그 탐지를 단일 엔진에 합류시키는 작업이다. Alloy의 역할은 그 스택에 로그를 먹이는 파이프라인이라는 점뿐이며([ADR-0027](0027-promtail-to-alloy-migration.md)·[ADR-0028](0028-alloy-pull-based-config-via-git.md)), [ADR-0030](0030-alloy-trace-metric-collection-integration.md)이 검토하는 수집 일원화와도 결이 같다.
-- **네트워크 도달성.** Alertmanager는 `monitoring-network`에만 있고 앱은 `dev/prod-network`에 있다. Alertmanager → zzol-bot 웹훅이 도달하려면 Grafana처럼 양쪽 네트워크 조인(또는 역방향 라우팅)이 필요하다. 후속 PR의 `docker-compose` 변경 지점.
-- **내부 노출 차단 필수.** 웹훅 엔드포인트는 nginx로 외부 노출하면 안 된다(`/internal/**` 차단 + Spring Security 제한). 외부에서 호출되면 임의 Slack 알림 주입이 가능하다.
+- **웹훅 타깃은 raw 색 컨테이너가 아니라 nginx 경유다(블루-그린 + 네트워크 + 내부 차단 일괄 해결).** 앱은 `dev-app-blue`/`dev-app-green` 두 컨테이너로 뜨고 **활성 색을 가리키는 정적 별칭은 없다.** 활성 색의 단일 진실 원천은 nginx의 `docker/nginx/conf/*-service.inc`(`set $upstream http://dev-app-blue:8080;`)이며, 블루-그린 전환 시 이 `.inc`만 재작성된다(ADR-0023에서 edge-cd 동기화 제외 대상인 라이브 B/G 파일). 따라서 Alertmanager 웹훅을 `dev-app-blue`로 못박으면 green 활성 시 죽은 색으로 가 **보강이 조용히 실패한다.** 해법은 웹훅을 **nginx로 보내고 nginx가 `$upstream`(활성 색)으로 프록시**하게 두는 것이다. 이 한 수가 세 문제를 동시에 푼다 — ① 블루-그린 활성 색 자동 추종(`$upstream` 재사용, 별도 추적 로직 불필요), ② Alertmanager(`monitoring-network`)↔앱(`dev/prod-network`) 네트워크 도달, ③ 내부 노출 차단.
+- **내부 노출 차단 필수.** 웹훅 엔드포인트(`/internal/zzolbot/alerts/webhook`)는 공개로 노출하면 임의 Slack 알림 주입이 가능하다. 따라서 nginx에는 **내부 전용 location**(공개 server 블록과 분리, 모니터링 네트워크에서만 도달)으로 추가하고 Spring Security로 `/internal/**`를 추가 제한한다. 공개 `proxy_pass $upstream` 경로와 같은 `$upstream` 변수를 재사용해 블루-그린 추종을 공유한다.
 - **웹훅 페이로드 형태.** 수신기는 firing과 resolved를 모두 받고, 각 페이로드는 (상류에서 그룹화된) `alerts[]` 배열을 싣는다. LLM 보강은 firing에만 의미가 있으므로 배열을 순회하며 `status` 필터링한다.
 - **Slack 포맷팅 소유권 이동.** enriched 알림은 zzol-bot Java가 포맷해 Alertmanager의 Slack receiver를 우회한다. 어느 알림을 어느 경로로 보낼지(Alertmanager 직접 Slack vs zzol-bot enriched)를 라우팅(`continue`)으로 명시 설계해야 중복·누락이 없다.
 - **자체 탐지 상실.** zzol-bot은 Alertmanager 룰이 발화한 것만 본다. PromQL/LogQL로 표현 못 하는 이상은 (대안 B의 장래 선택지 전까지) 탐지 범위 밖이다.
@@ -73,8 +73,9 @@ Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
   - 인프라: `docker/monitoring/conf/alertmanager.yml`(webhook receiver + route), `conf/loki.yml`(ruler 블록), `conf/loki-rules/zzolbot-log-signals.yml`(신규 LogQL 룰).
 - **후속 구현 PR의 변경 지점:**
   - `LoggingFiringAlertEnricher`를 실제 LLM 보강으로 교체(기존 `AnomalyAnalyzer`·`ZzolBotSlackNotifier` 재사용), `MonitorCollector`·`MonitorScheduler`·`AnomalyGate` 자체 폴링 제거.
-  - `docker-compose.yml`: Loki ruler 룰 마운트, alertmanager ↔ 앱 네트워크 도달 배선.
-  - Spring Security·nginx에서 `/internal/**` 외부 차단.
+  - **nginx 내부 전용 location 추가**: `/internal/zzolbot/alerts/webhook`를 `$upstream`(활성 색)으로 프록시하되 공개 server와 분리해 모니터링 네트워크에서만 도달하게 한다. `alertmanager.yml`의 webhook url을 이 nginx 내부 엔드포인트로 지정(raw 색 컨테이너 직격 금지). 블루-그린 라이브 파일(`*-service.inc`) 수정이라 edge-cd 동기화 제외 대상임에 유의(ADR-0023).
+  - `docker-compose.yml`: Loki ruler 룰 마운트, alertmanager가 nginx 내부 리스너에 도달하도록 네트워크 조인.
+  - Spring Security에서 `/internal/**` 추가 제한(다층 방어).
   - 배포는 edge-cd(ADR-0023) 위에서 진행하며 서버 직접 수정 금지(ADR-0026 계승).
 - **롤백.** 골격은 자체 폴링·직접 Slack 경로를 제거하지 않으므로 기존 동작과 공존한다. 후속 PR에서 자체 폴링을 제거하기 전까지 두 경로가 잠시 병존할 수 있다(전환기 중복 알림 가능 — Phase 전환으로 해소).
 - 브랜치는 `be/chore/zzolbot-alertmanager-receiver-adr`이며 PR 타깃은 `be/feat/1474-zzolbot-upgrade`다.

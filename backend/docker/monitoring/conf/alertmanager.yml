@@ -74,11 +74,14 @@ receivers:
           {{ end }}
 
   # ADR-0032 골격: zzol-bot LLM 보강 수신기. firing만 보낸다(보강은 firing에만 의미).
-  # TODO(후속 PR): url 타깃 안정화 + 네트워크 도달성. Alertmanager는 monitoring-network,
-  #   앱은 dev/prod-network라 Grafana처럼 네트워크 조인이 필요하다(docker-compose 변경 지점).
-  #   blue/green 주소(dev-app-blue/green) 중 활성 색 지정도 후속에서 해소한다.
+  # 아래 url은 placeholder다 — raw 색 컨테이너(dev-app-blue) 직격은 금지.
+  # TODO(후속 PR): nginx 내부 전용 location 경유로 교체한다. 활성 색 SoT는 nginx의
+  #   *-service.inc($upstream)라, nginx로 보내면 블루-그린 활성 색 추종 + 네트워크 도달 +
+  #   내부 노출 차단이 한 번에 해결된다(ADR-0032 트레이드오프). Alertmanager(monitoring-network)가
+  #   nginx 내부 리스너에 도달하도록 docker-compose 네트워크 조인도 함께.
   - name: zzolbot-enrich
     webhook_configs:
+      # placeholder — 후속 PR에서 nginx 내부 엔드포인트로 교체(raw 색 직격 금지)
       - url: http://dev-app-blue:8080/internal/zzolbot/alerts/webhook
         send_resolved: false
 

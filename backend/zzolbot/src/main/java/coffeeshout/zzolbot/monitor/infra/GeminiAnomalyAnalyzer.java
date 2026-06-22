@@ -1,10 +1,8 @@
 package coffeeshout.zzolbot.monitor.infra;
 
 import coffeeshout.zzolbot.config.ZzolBotProperties;
-import coffeeshout.zzolbot.monitor.domain.AnomalyVerdict;
+import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
-import coffeeshout.zzolbot.monitor.domain.MonitorSignal;
-import coffeeshout.zzolbot.monitor.domain.MonitorSnapshot;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
@@ -15,6 +13,7 @@ import com.google.genai.types.Part;
 import io.github.resilience4j.retry.annotation.Retry;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,7 +21,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Gemini로 이상 신호를 요약·근본원인 분석한다. 이상+예산 보유 시에만 호출되므로 호출 빈도가 낮다.
+ * Gemini로 firing 알림을 요약·근본원인 분석한다. 예산 보유 시에만 호출되므로 호출 빈도가 낮다.
  * 조치는 제안만 생성하며 자동 실행하지 않는다.
  */
 @Slf4j
@@ -32,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
 
     private static final String SYSTEM_INSTRUCTION = """
-            너는 운영 모니터링 분석가다. 임계값을 초과한 신호 목록을 보고 아래 JSON으로만 응답하라.
+            너는 운영 모니터링 분석가다. 발화한 알림과 로그 샘플을 보고 아래 JSON으로만 응답하라.
             {
               "summary": "현재 상황 한국어 1~2문장 요약",
               "rootCauseHypothesis": "가장 가능성 높은 근본 원인 가설",
@@ -46,14 +45,14 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
 
     @Retry(name = "zzolBotGemini")
     @Override
-    public MonitorAnalysis analyze(MonitorSnapshot snapshot, AnomalyVerdict verdict, List<String> logSamples) {
+    public MonitorAnalysis analyze(FiringAlert alert, List<String> logSamples) {
         final GenerateContentConfig config = GenerateContentConfig.builder()
                 .systemInstruction(Content.fromParts(Part.fromText(SYSTEM_INSTRUCTION)))
                 .temperature(0f)
                 .topP(0f)
                 .responseMimeType("application/json")
                 .build();
-        final String prompt = buildPrompt(snapshot, verdict, logSamples);
+        final String prompt = buildPrompt(alert, logSamples);
         final GenerateContentResponse response = callApi(prompt, config);
         return parse(response.text());
     }
@@ -67,20 +66,19 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
         }
     }
 
-    private String buildPrompt(MonitorSnapshot snapshot, AnomalyVerdict verdict, List<String> logSamples) {
+    private String buildPrompt(FiringAlert alert, List<String> logSamples) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("심각도: ").append(verdict.severity()).append('\n');
-        sb.append("초과 지문: ").append(verdict.fingerprint()).append('\n');
-        sb.append("신호:\n");
-        for (MonitorSignal signal : snapshot.signals()) {
-            sb.append("- ").append(signal.name())
-                    .append(": value=").append(signal.value())
-                    .append(", threshold=").append(signal.threshold())
-                    .append(", breached=").append(signal.breached())
-                    .append('\n');
+        sb.append("심각도: ").append(alert.severity()).append('\n');
+        sb.append("지문: ").append(alert.fingerprint()).append('\n');
+        sb.append("알림명: ").append(alert.alertname()).append('\n');
+        sb.append("요약: ").append(alert.summary()).append('\n');
+        sb.append("설명: ").append(alert.description()).append('\n');
+        sb.append("라벨:\n");
+        for (Map.Entry<String, String> label : alert.labels().entrySet()) {
+            sb.append("- ").append(label.getKey()).append('=').append(label.getValue()).append('\n');
         }
         if (logSamples != null && !logSamples.isEmpty()) {
-            sb.append("\n최근 ERROR/WARN 로그 샘플:\n");
+            sb.append("\n최근 ERROR 로그 샘플:\n");
             for (String line : logSamples) {
                 sb.append("- ").append(line).append('\n');
             }

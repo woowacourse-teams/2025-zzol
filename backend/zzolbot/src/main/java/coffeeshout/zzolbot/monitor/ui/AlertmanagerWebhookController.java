@@ -1,7 +1,7 @@
 package coffeeshout.zzolbot.monitor.ui;
 
-import coffeeshout.zzolbot.monitor.application.FiringAlert;
 import coffeeshout.zzolbot.monitor.application.FiringAlertEnricher;
+import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import coffeeshout.zzolbot.monitor.ui.AlertmanagerWebhookRequest.Alert;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -354,9 +354,8 @@
         <div class="panel-card">
             <div class="panel-head">
                 <h2>🔔 모니터링 알림</h2>
-                <button class="btn-action" id="runMonitorBtn" onclick="runMonitor()">지금 점검</button>
             </div>
-            <p class="muted">4시간마다 자동 점검합니다. 임계값 초과(이상)일 때만 LLM 분석·Slack 알림이 동작하며, 동일 이상은 쿨다운으로 억제됩니다. 행을 클릭하면 신호별 값·분석·제안 조치가 펼쳐집니다.</p>
+            <p class="muted">Alertmanager가 발화한 이상을 LLM이 분석해 Slack으로 알립니다. 행을 클릭하면 분석·제안 조치가 펼쳐집니다.</p>
             <table class="data" style="margin-top:1rem">
                 <thead>
                 <tr><th>시각</th><th>이상</th><th>심각도</th><th>지문</th><th>요약</th><th>알림</th></tr>
@@ -816,19 +815,6 @@
     }
 
     /* ===== 모니터링 ===== */
-    async function runMonitor() {
-        const btn = document.getElementById('runMonitorBtn');
-        btn.disabled = true;
-        try {
-            await api('POST', '/admin/zzolbot/monitor/run');
-            loadAlerts();
-        } catch (e) {
-            alert('점검 실패: ' + e.message);
-        } finally {
-            btn.disabled = false;
-        }
-    }
-
     async function loadAlerts() {
         const body = document.getElementById('monitorAlertsBody');
         try {

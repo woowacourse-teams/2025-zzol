@@ -15,16 +15,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 /**
- * 능동 모니터링용 Loki 로그 클라이언트.
- * Alloy가 수집해 Loki에 적재한 로그를 레벨별(ERROR/WARN)로 집계하고, 이상 시 ERROR 샘플을 뽑는다.
- * Loki가 없거나(로컬) 조회 실패 시 0건/빈 목록으로 안전하게 떨어진다.
+ * Alertmanager 보강용 Loki 로그 클라이언트.
+ * Alloy가 수집해 Loki에 적재한 로그에서 알림 시점의 ERROR 샘플을 뽑아 LLM 분석 근거로 제공한다.
+ * Loki가 없거나(로컬) 조회 실패 시 빈 목록으로 안전하게 떨어진다.
  */
 @Slf4j
 @Component
 public class LokiLogClient {
 
     private static final String LEVEL_ERROR = "ERROR";
-    private static final String LEVEL_WARN = "WARN";
 
     private final RestClient restClient;
     private final String lokiBaseUrl;
@@ -36,35 +35,6 @@ public class LokiLogClient {
         this.restClient = restClientBuilder.baseUrl(lokiBaseUrl).build();
         this.environment = properties.monitoring().environment();
         this.objectMapper = objectMapper;
-    }
-
-    /**
-     * 윈도우 구간의 ERROR 로그 건수. count_over_time 메트릭 쿼리로 정확한 합계를 얻는다.
-     */
-    public long countErrors(Instant end, Duration window) {
-        return countByLevel(end, window, LEVEL_ERROR);
-    }
-
-    /**
-     * 윈도우 구간의 WARN 로그 건수.
-     */
-    public long countWarns(Instant end, Duration window) {
-        return countByLevel(end, window, LEVEL_WARN);
-    }
-
-    private long countByLevel(Instant end, Duration window, String level) {
-        final String logql = String.format(
-                "sum(count_over_time({environment=\"%s\"} |~ \"%s\" [%dm]))",
-                environment, level, Math.max(1, window.toMinutes()));
-        final URI uri = URI.create(lokiBaseUrl).resolve("/loki/api/v1/query?query=" + encode(logql)
-                + "&time=" + (end.toEpochMilli() * 1_000_000L));
-        try {
-            final String body = restClient.get().uri(uri).retrieve().body(String.class);
-            return parseScalar(body);
-        } catch (Exception e) {
-            log.warn("[ZzolBot] Loki {} 로그 집계 실패 — 0건으로 처리", level, e);
-            return 0L;
-        }
     }
 
     /**
@@ -83,25 +53,6 @@ public class LokiLogClient {
         } catch (Exception e) {
             log.warn("[ZzolBot] Loki ERROR 로그 샘플 조회 실패 — 빈 목록", e);
             return List.of();
-        }
-    }
-
-    private long parseScalar(String raw) {
-        if (raw == null) {
-            return 0L;
-        }
-        try {
-            final JsonNode result = objectMapper.readTree(raw).path("data").path("result");
-            if (result.isArray() && !result.isEmpty()) {
-                final JsonNode value = result.get(0).path("value");
-                if (value.isArray() && value.size() >= 2) {
-                    return (long) Double.parseDouble(value.get(1).asText("0"));
-                }
-            }
-            return 0L;
-        } catch (Exception e) {
-            log.warn("[ZzolBot] Loki 집계 응답 파싱 실패 — 0건", e);
-            return 0L;
         }
     }
 

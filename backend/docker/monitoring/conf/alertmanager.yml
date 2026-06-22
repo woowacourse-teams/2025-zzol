@@ -73,17 +73,21 @@ receivers:
           {{ .Annotations.description }}
           {{ end }}
 
-  # ADR-0032 골격: zzol-bot LLM 보강 수신기. firing만 보낸다(보강은 firing에만 의미).
-  # 아래 url은 placeholder다 — raw 색 컨테이너(dev-app-blue) 직격은 금지.
-  # TODO(후속 PR): nginx 내부 전용 location 경유로 교체한다. 활성 색 SoT는 nginx의
-  #   *-service.inc($upstream)라, nginx로 보내면 블루-그린 활성 색 추종 + 네트워크 도달 +
-  #   내부 노출 차단이 한 번에 해결된다(ADR-0032 트레이드오프). Alertmanager(monitoring-network)가
-  #   nginx 내부 리스너에 도달하도록 docker-compose 네트워크 조인도 함께.
+  # ADR-0032: zzol-bot LLM 보강 수신기. firing만 보낸다(보강은 firing에만 의미).
+  # nginx 내부 전용 리스너(nginx:8889) 경유 — nginx가 $upstream(prod 활성 색)으로 프록시해
+  # 블루-그린 활성 색을 자동 추종한다(raw 색 컨테이너 직격 금지). nginx가 monitoring-network에
+  # 조인돼야 alertmanager가 도달한다(nginx/docker-compose.yml).
+  # 인증: 베어러 토큰(credentials_file)을 앱 Spring Security가 /internal/** 에서 검증한다.
+  #   deploy-time: 서버에서 ~/monitor/secrets/zzolbot_webhook_token 생성(slack_api_url과 동일 패턴,
+  #   chown 65534:65534·chmod 600), 앱 env ZZOL_BOT_ALERT_WEBHOOK_TOKEN에 동일 값 주입.
   - name: zzolbot-enrich
     webhook_configs:
-      # placeholder — 후속 PR에서 nginx 내부 엔드포인트로 교체(raw 색 직격 금지)
-      - url: http://dev-app-blue:8080/internal/zzolbot/alerts/webhook
+      - url: http://nginx:8889/internal/zzolbot/alerts/webhook
         send_resolved: false
+        http_config:
+          authorization:
+            type: Bearer
+            credentials_file: /etc/alertmanager/secrets/zzolbot_webhook_token
 
   - name: slack-critical
     slack_configs:

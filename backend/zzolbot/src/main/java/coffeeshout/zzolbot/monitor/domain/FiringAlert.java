@@ -1,4 +1,4 @@
-package coffeeshout.zzolbot.monitor.application;
+package coffeeshout.zzolbot.monitor.domain;
 
 import java.util.Map;
 

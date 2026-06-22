@@ -1,7 +1,7 @@
 # 0032. zzol-bot을 Alertmanager 웹훅 수신기로 재배치 — 탐지 일원화 + LLM 보강 분리
 
 - 날짜: 2026-06-22
-- 상태: 제안 (초안 — 결정 보류, 팀 합의 필요)
+- 상태: 승인 (팀 합의 — 구현을 본 PR에 포함)
 
 ## 컨텍스트
 
@@ -44,7 +44,9 @@ Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
 
 3. **부수 효과로 폴링 기아(starvation) 위험이 해소된다.** zzol-bot이 더 이상 공유 `@Scheduled` 스레드에서 Loki/Prometheus를 폴링하지 않으므로, 타임아웃 부재로 스케줄러 풀이 굶는 경로 자체가 사라진다. 이 ADR을 채택하면 코드 리뷰의 BLOCKER가 별도 핫픽스 없이 구조적으로 닫힌다.
 
-4. **이 PR은 결정 골격까지만 담는다.** 본 ADR(결정 기록)과 함께, 웹훅 수신 컨트롤러 스텁·payload DTO·보강 포트(`FiringAlertEnricher`)와 인프라 설정 골격(`alertmanager.yml` 웹훅 receiver·`loki.yml` ruler 블록·Loki ruler 룰 파일)을 동봉한다. 실제 LLM 보강 배선(기존 `AnomalyAnalyzer`·`ZzolBotSlackNotifier` 재사용)과 자체 폴링 제거는 결정 승인 후 후속 PR로 진행한다.
+4. **앱측 쿨다운(`MonitorService.inCooldown`)은 제거한다.** 재알림 억제는 이제 Alertmanager가 `group_interval`/`repeat_interval`(현재 4h ≈ 기존 cooldown 240m)로 소유한다. 앱측 쿨다운을 남기면 이중 억제이므로 떼어내고, 비용 백스톱은 `LlmCallBudget`(일일 호출 상한)이 담당한다. 단순화이지 기능 손실이 아니다.
+
+5. **본 PR이 전체 구현을 담는다(골격 → 전체).** 팀 합의로 ADR을 `승인` 전환하고, 결정 기록과 함께 ① Java 보강 경로(`AlertEnrichmentService`가 `AnomalyAnalyzer`·`ZzolBotSlackNotifier`·`LokiLogClient.tailErrors`·`LlmCallBudget` 재사용, 자체 폴링 `MonitorCollector`/`Scheduler`/`AnomalyGate` 제거), ② 인프라(`alertmanager.yml` nginx-경유 receiver + 베어러 인증, nginx 내부 리스너·공개 차단, `docker-compose` 네트워크 조인, `loki.yml` ruler), ③ Spring Security `/internal/**` 베어러 토큰을 함께 반영한다. 인프라는 로컬 검증 불가라 배포 시점 검증 대상이다(아래 결과).
 
 ## 고려한 대안
 
@@ -67,15 +69,22 @@ Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
 
 ## 결과
 
-- **결정 상태는 `제안`이다.** ADR-0026(단일 알림 엔진)과 ADR-0030(수집 일원화)을 건드리는 팀 레벨 결정이므로, 승인 후 본 ADR을 `승인`으로 갱신하고 후속 구현 PR을 연다.
-- **이 PR의 변경 지점(골격):**
-  - 코드: `zzolbot/.../monitor/ui/AlertmanagerWebhookController.java`(스텁), `.../monitor/ui/AlertmanagerWebhookRequest.java`(payload DTO), `.../monitor/application/FiringAlertEnricher.java`(포트), `.../monitor/infra/LoggingFiringAlertEnricher.java`(스텁 구현).
-  - 인프라: `docker/monitoring/conf/alertmanager.yml`(webhook receiver + route), `conf/loki.yml`(ruler 블록), `conf/loki-rules/zzolbot-log-signals.yml`(신규 LogQL 룰).
-- **후속 구현 PR의 변경 지점:**
-  - `LoggingFiringAlertEnricher`를 실제 LLM 보강으로 교체(기존 `AnomalyAnalyzer`·`ZzolBotSlackNotifier` 재사용), `MonitorCollector`·`MonitorScheduler`·`AnomalyGate` 자체 폴링 제거.
-  - **nginx 내부 전용 location 추가**: `/internal/zzolbot/alerts/webhook`를 `$upstream`(활성 색)으로 프록시하되 공개 server와 분리해 모니터링 네트워크에서만 도달하게 한다. `alertmanager.yml`의 webhook url을 이 nginx 내부 엔드포인트로 지정(raw 색 컨테이너 직격 금지). 블루-그린 라이브 파일(`*-service.inc`) 수정이라 edge-cd 동기화 제외 대상임에 유의(ADR-0023).
-  - `docker-compose.yml`: Loki ruler 룰 마운트, alertmanager가 nginx 내부 리스너에 도달하도록 네트워크 조인.
-  - Spring Security에서 `/internal/**` 추가 제한(다층 방어).
-  - 배포는 edge-cd(ADR-0023) 위에서 진행하며 서버 직접 수정 금지(ADR-0026 계승).
-- **롤백.** 골격은 자체 폴링·직접 Slack 경로를 제거하지 않으므로 기존 동작과 공존한다. 후속 PR에서 자체 폴링을 제거하기 전까지 두 경로가 잠시 병존할 수 있다(전환기 중복 알림 가능 — Phase 전환으로 해소).
-- 브랜치는 `be/chore/zzolbot-alertmanager-receiver-adr`이며 PR 타깃은 `be/feat/1474-zzolbot-upgrade`다.
+- **상태는 `승인`이다.** ADR-0026(단일 알림 엔진)·ADR-0030(수집 일원화)을 건드리는 팀 레벨 결정으로 합의됐고, 구현을 본 PR에 포함한다.
+- **이 PR의 변경 지점 — Java(로컬 검증됨):**
+  - 신규: `monitor/ui/AlertmanagerWebhookController`·`AlertmanagerWebhookRequest`(DTO), `monitor/application/FiringAlertEnricher`(포트)·`AlertEnrichmentService`(구현), `monitor/domain/FiringAlert`.
+  - 리팩터: `AnomalyAnalyzer`/`GeminiAnomalyAnalyzer`/`ZzolBotSlackNotifier`/`MonitorRunEntity.of`를 `MonitorSnapshot` 대신 **알림 컨텍스트** 입력으로, `MonitorService`는 조회 전용으로 슬림화, `ZzolBotMonitorController`에서 수동 트리거(`POST /run`) 제거, `LokiLogClient`는 `tailErrors`만 유지, `MonitorProperties` 축소(`enabled`·`errorLogWindowMinutes`), `zzolbot.html` 대시보드 읽기 전용.
+  - 삭제: `MonitorCollector`·`MonitorScheduler`·`AnomalyGate`·`PrometheusMetricClient`·`MonitorSnapshot`/`MonitorSignal`/`AnomalyVerdict`·`LoggingFiringAlertEnricher`(+관련 테스트).
+- **이 PR의 변경 지점 — 인프라(배포 시점 검증):**
+  - `docker/monitoring/conf/alertmanager.yml`: `zzolbot-enrich` receiver를 `http://nginx:8889/internal/...` + 베어러 인증(`credentials_file`)으로 지정, firing 미러링 route.
+  - `docker/nginx/conf/internal.conf`(신규): 8889 내부 전용 리스너가 `$upstream`(prod-service.inc=활성 색)으로 프록시. `dev.conf`·`prod.conf` 공개 블록은 `/internal/` 404로 차단.
+  - `docker/nginx/docker-compose.yml`: nginx를 `monitoring-network`에 조인 + 8889 `expose`(호스트 미노출).
+  - `docker/monitoring/conf/loki.yml`: ruler 블록(미배선이던 `ruler:` 활성화).
+  - Spring Security: `/internal/**` 전용 체인(Order 0)이 베어러 토큰 검증.
+- **배포 시점 검증/결정(로컬 불가):**
+  - **시크릿**: 서버에서 `~/monitor/secrets/zzolbot_webhook_token` 생성(`slack_api_url`과 동일: `chown 65534:65534`·`chmod 600`)하고, 앱 env `ZZOL_BOT_ALERT_WEBHOOK_TOKEN`에 동일 값 주입.
+  - **도달성**: alertmanager → `nginx:8889` 도달(`monitoring-network` 조인)과 nginx → 활성 색 프록시를 `docker exec`로 확인.
+  - **환경 라우팅 가정**: 내부 리스너는 현재 **prod 활성 색**(`prod-service.inc`)으로 보낸다(zzol-bot 모니터는 prod 인시던트 중심). dev 보강이 필요하면 `dev-service.inc`를 include한 8890 리스너를 동일 패턴으로 추가하고, `alertmanager.yml`에서 `job` 라벨로 분기한다.
+  - **Loki ruler 룰 마운트**: `docker-compose`에 `./conf/loki-rules:/etc/loki/rules:ro` 마운트와 테넌트 `fake/` 하위 배치가 필요(별도 후속 — 본 PR은 ruler 설정·룰 파일까지).
+  - 배포는 edge-cd(ADR-0023) 위에서 진행하며 서버 직접 수정 금지(ADR-0026 계승). `*-service.inc`는 edge-cd 동기화 제외(라이브 B/G) 대상임에 유의.
+- **롤백.** 인프라는 alertmanager `zzolbot-enrich` route/receiver 제거 + nginx `internal.conf` 제거 + 리로드로 원복(앱·트래픽 영향 없음). Java는 자체 폴링 제거를 포함하므로, 되돌리려면 본 커밋 revert.
+- 브랜치는 `be/chore/zzolbot-alertmanager-receiver-adr`이며 PR 타깃은 `be/feat/1474-zzolbot-upgrade`(#1492)다.

@@ -14,15 +14,8 @@ zzol-bot:
     temperature: 0.1
     top-p: 0.1
   monitor:
-    enabled: ${ZZOL_BOT_MONITOR_ENABLED:true}
-    cron: "0 0 */4 * * *"                       # 4시간마다 능동 점검
-    dead-letter-threshold: 10                    # outbox DEAD_LETTER 누적 임계
-    stream-backlog-threshold: 10000              # Redis Stream 최대 XLEN 임계
-    error-log-threshold: 100                     # 윈도우 내 ERROR 로그 건수 임계
-    warn-log-threshold: 300                       # 윈도우 내 WARN 로그 건수 임계(보통 ERROR보다 잦음)
-    error-log-window-minutes: 240                # 로그·5xx 집계 윈도우(기본 4시간)
-    http5xx-threshold: 50                         # 윈도우 내 HTTP 5xx 응답 수 임계
-    cooldown-minutes: 240                        # 동일 이상 재알림 억제 시간(점검 주기 이상이라야 매 주기 중복 알림을 막음)
+    enabled: ${ZZOL_BOT_MONITOR_ENABLED:true}    # Alertmanager firing 알림 보강 활성 여부
+    error-log-window-minutes: 240                # ERROR 로그 샘플 조회 윈도우(기본 4시간)
   slack:
     webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성
   llm-budget:

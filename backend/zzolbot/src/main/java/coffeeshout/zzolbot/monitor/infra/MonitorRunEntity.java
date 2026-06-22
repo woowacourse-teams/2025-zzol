@@ -1,6 +1,5 @@
 package coffeeshout.zzolbot.monitor.infra;
 
-import coffeeshout.zzolbot.monitor.domain.AnomalyVerdict;
 import coffeeshout.zzolbot.monitor.domain.Severity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -64,12 +63,12 @@ public class MonitorRunEntity {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    public static MonitorRunEntity of(Instant collectedAt, AnomalyVerdict verdict, String signalsJson) {
+    public static MonitorRunEntity of(Instant now, Severity severity, String fingerprint, String signalsJson) {
         final MonitorRunEntity entity = new MonitorRunEntity();
-        entity.collectedAt = collectedAt;
-        entity.anomalous = verdict.anomalous();
-        entity.severity = verdict.severity();
-        entity.fingerprint = verdict.fingerprint();
+        entity.collectedAt = now;
+        entity.anomalous = true;
+        entity.severity = severity;
+        entity.fingerprint = fingerprint;
         entity.signalsJson = signalsJson;
         entity.notified = false;
         entity.createdAt = Instant.now();

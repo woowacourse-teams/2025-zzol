@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-import coffeeshout.zzolbot.monitor.application.FiringAlert;
 import coffeeshout.zzolbot.monitor.application.FiringAlertEnricher;
+import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import coffeeshout.zzolbot.monitor.ui.AlertmanagerWebhookRequest.Alert;
 import java.util.List;
 import java.util.Map;

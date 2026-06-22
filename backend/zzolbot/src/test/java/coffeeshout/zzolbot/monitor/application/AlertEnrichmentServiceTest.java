@@ -92,7 +92,7 @@ class AlertEnrichmentServiceTest {
     }
 
     @Test
-    void 쿨다운_내_동일_fingerprint_재배달은_보강을_생략한다() {
+    void 간격_내_동일_fingerprint_재배달은_분석을_생략한다() {
         given(monitorRunRepository.existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(any(), any()))
                 .willReturn(true);
 
@@ -104,7 +104,7 @@ class AlertEnrichmentServiceTest {
     }
 
     @Test
-    void 쿨다운이_0이면_가드를_건너뛰고_보강한다() {
+    void 간격이_0이면_가드를_건너뛰고_분석한다() {
         final AlertEnrichmentService noDedup = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer,
                 notifier, monitorRunRepository, new MonitorProperties(true, 240, 0), new ObjectMapper(),
                 Clock.systemUTC());

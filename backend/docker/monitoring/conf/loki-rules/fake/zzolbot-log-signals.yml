@@ -2,7 +2,7 @@
 #
 # zzol-bot이 자체 폴링하던 로그 ERROR/WARN 카운트 탐지를 Loki ruler로 이관한다.
 # ruler가 이 LogQL을 평가해 Alertmanager로 발화하고, Alertmanager가 zzol-bot 웹훅 수신기로
-# 미러링하면 zzol-bot이 LLM으로 보강한다(ADR-0032 결정 1~2).
+# 미러링하면 zzol-bot이 LLM으로 분석한다(ADR-0032 결정 1~2).
 #
 # 'fake' = auth_enabled:false 일 때 Loki의 기본 테넌트. 룰 파일은 이 하위에 둬야 인식된다.
 #

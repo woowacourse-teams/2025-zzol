@@ -28,7 +28,7 @@ public class RedisLlmCallBudget implements LlmCallBudget {
         final String key = todayKey();
         final Long current = redisTemplate.opsForValue().increment(key);
         if (current == null) {
-            // Redis 비정상 — 예산으로 가용성을 막지 않는다(쿨다운·게이팅이 1차 방어).
+            // Redis 비정상 — 예산으로 가용성을 막지 않는다(재분석 간격·게이팅이 1차 방어).
             return true;
         }
         ensureExpiry(key);

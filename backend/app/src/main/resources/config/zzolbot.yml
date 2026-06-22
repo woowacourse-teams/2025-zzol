@@ -14,13 +14,13 @@ zzol-bot:
     temperature: 0.1
     top-p: 0.1
   monitor:
-    enabled: ${ZZOL_BOT_MONITOR_ENABLED:true}    # Alertmanager firing 알림 보강 활성 여부
+    enabled: ${ZZOL_BOT_MONITOR_ENABLED:true}    # Alertmanager firing 알림 분석 활성 여부
     error-log-window-minutes: 240                # ERROR 로그 샘플 조회 윈도우(기본 4시간)
-    enrich-cooldown-minutes: 240                 # 같은 fingerprint 재보강 쿨다운(기본 4시간). 재시도·flapping 흡수 + 지속 장애 LLM 재호출 비용 절감. 0이면 비활성
+    enrich-cooldown-minutes: 240                 # 같은 fingerprint 재분석 최소 간격(기본 4시간). 중복 분석 방지 — 재시도·flapping 흡수 + 지속 장애 LLM 재호출 비용 절감. 0이면 비활성
   slack:
     webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성
   llm-budget:
-    daily-max: ${ZZOL_BOT_LLM_DAILY_MAX:10}      # 보강 작업 일일 LLM 호출 하드 캡(비용 상한). env로 조절
+    daily-max: ${ZZOL_BOT_LLM_DAILY_MAX:10}      # 분석 작업 일일 LLM 호출 하드 캡(비용 상한). env로 조절
   sql:
     max-rows: 1000
     query-timeout-seconds: 5

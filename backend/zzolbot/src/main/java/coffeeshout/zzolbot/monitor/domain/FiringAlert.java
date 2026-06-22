@@ -3,8 +3,8 @@ package coffeeshout.zzolbot.monitor.domain;
 import java.util.Map;
 
 /**
- * Alertmanager가 발화한 단일 firing 알림의 도메인 뷰. 웹훅 DTO를 보강 포트로 넘기기 위한 경계 객체로,
- * 보강기가 web 계층 DTO에 의존하지 않게 한다(ADR-0032).
+ * Alertmanager가 발화한 단일 firing 알림의 도메인 뷰. 웹훅 DTO를 분석 포트로 넘기기 위한 경계 객체로,
+ * 분석기가 web 계층 DTO에 의존하지 않게 한다(ADR-0032).
  */
 public record FiringAlert(
         String alertname,

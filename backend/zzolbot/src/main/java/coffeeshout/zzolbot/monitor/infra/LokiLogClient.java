@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 /**
- * Alertmanager 보강용 Loki 로그 클라이언트.
+ * Alertmanager 분석용 Loki 로그 클라이언트.
  * Alloy가 수집해 Loki에 적재한 로그에서 알림 시점의 ERROR 샘플을 뽑아 LLM 분석 근거로 제공한다.
  * Loki가 없거나(로컬) 조회 실패 시 빈 목록으로 안전하게 떨어진다.
  */

@@ -48,7 +48,7 @@ class AlertmanagerWebhookControllerTest {
     }
 
     @Test
-    void firing_알림은_라벨_어노테이션을_매핑해_보강기로_넘긴다() {
+    void firing_알림은_라벨_어노테이션을_매핑해_분석기로_넘긴다() {
         final Alert firing = new Alert(
                 "firing",
                 Map.of("alertname", "AppErrorLogSpike", "severity", "warning"),
@@ -70,7 +70,7 @@ class AlertmanagerWebhookControllerTest {
     }
 
     @Test
-    void resolved_알림은_보강하지_않는다() {
+    void resolved_알림은_분석하지_않는다() {
         final Alert resolved = new Alert(
                 "resolved", Map.of("alertname", "AppErrorLogSpike"), Map.of(), "2026-06-22T00:00:00Z", "fp-2");
 

@@ -1,0 +1,25 @@
+# ADR-0032 골격 — Loki ruler 알림 룰.
+#
+# zzol-bot이 자체 폴링하던 로그 ERROR/WARN 카운트 탐지를 Loki ruler로 이관한다.
+# ruler가 이 LogQL을 평가해 Alertmanager로 발화하고, Alertmanager가 zzol-bot 웹훅 수신기로
+# 미러링하면 zzol-bot이 LLM으로 보강한다(ADR-0032 결정 1~2).
+#
+# 'fake' = auth_enabled:false 일 때 Loki의 기본 테넌트. 룰 파일은 이 하위에 둬야 인식된다.
+#
+# TODO(후속 PR):
+#   - 라벨 셀렉터를 실제 Alloy 로그 파이프라인(app-logs.alloy) 라벨에 맞춘다(아래는 placeholder).
+#   - 임계값은 추정치다(ADR-0026 계승). 배포 후 베이스라인 측정으로 보정한다.
+#   - zzol-bot 자체 폴링(MonitorCollector/Scheduler/AnomalyGate) 제거와 같은 PR에서 활성화한다.
+groups:
+  - name: zzolbot-log-signals
+    rules:
+      - alert: AppErrorLogSpike
+        # TODO: {service_name="..."} 셀렉터를 실제 라벨로 교체.
+        expr: |
+          sum(count_over_time({job=~"dev-app|prod-app"} |= "ERROR" [5m])) > 20
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ERROR 로그 급증(최근 5분)"
+          description: "ERROR 로그 카운트가 임계(20/5m)를 초과했습니다. zzol-bot이 근본원인을 분석합니다."

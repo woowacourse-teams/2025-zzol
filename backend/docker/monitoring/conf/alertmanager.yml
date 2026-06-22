@@ -19,6 +19,11 @@ route:
   group_interval: 5m
   repeat_interval: 4h
   routes:
+    # ADR-0032 골격: firing 알림을 zzol-bot LLM 보강 수신기로 미러링한다.
+    # continue: true 로 기존 Slack 라우팅(아래)을 그대로 유지한다(전환기 병존).
+    # 후속 PR에서 enriched 경로로 일원화하며 중복 알림을 정리한다.
+    - receiver: zzolbot-enrich
+      continue: true
     - matchers:
         - severity = "critical"
       receiver: slack-critical
@@ -67,6 +72,15 @@ receivers:
           {{ .Annotations.summary }}
           {{ .Annotations.description }}
           {{ end }}
+
+  # ADR-0032 골격: zzol-bot LLM 보강 수신기. firing만 보낸다(보강은 firing에만 의미).
+  # TODO(후속 PR): url 타깃 안정화 + 네트워크 도달성. Alertmanager는 monitoring-network,
+  #   앱은 dev/prod-network라 Grafana처럼 네트워크 조인이 필요하다(docker-compose 변경 지점).
+  #   blue/green 주소(dev-app-blue/green) 중 활성 색 지정도 후속에서 해소한다.
+  - name: zzolbot-enrich
+    webhook_configs:
+      - url: http://dev-app-blue:8080/internal/zzolbot/alerts/webhook
+        send_resolved: false
 
   - name: slack-critical
     slack_configs:

@@ -24,15 +24,15 @@ public class ZzolBotPromptTemplate {
             - 방 상태(RoomState): READY → PLAYING → SCORE_BOARD → ROULETTE → DONE
             - Outbox: Redis Stream 발행이 실패했을 때 재시도를 위해 DB에 저장하는 이벤트
             - DEAD_LETTER: 재시도를 모두 소진하고 최종 실패한 Outbox 이벤트
-            - Redis Stream lag: 이벤트가 쌓였으나 아직 소비되지 않은 상태
+            - Redis Stream lag: 이벤트가 아직 소비되지 못해 컨슈머 처리가 밀린 상태 (XLEN이 아니라 컨슈머 스레드풀 큐 깊이로 드러남)
 
             ## 사용 가능한 도구와 언제 써야 하는지
             - room_state: 방 상태와 플레이어 목록 확인 (joinCode 필수)
             - outbox_events: 이벤트 유실/재시도 실패 여부 확인 (joinCode 필수)
-            - redis_stream_status: 스트림 전반의 처리 지연 확인 (joinCode 무관)
+            - redis_stream_status: 스트림 길이(XLEN) 확인 — 트리밍으로 항상 일정해 처리 지연 지표는 아님 (joinCode 무관)
             - loki_logs: 에러 로그 확인, joinCode 없으면 전체 환경 조회 (joinCode 선택)
             - tempo_traces: 요청 흐름과 소요 시간 분석, joinCode 없으면 전체 트레이스 조회 (joinCode 선택)
-            - prometheus_query: 메트릭 수치 조회 (joinCode 무관)
+            - prometheus_query: 메트릭 수치 조회 — 처리 지연·backpressure는 컨슈머 스레드풀 큐 깊이/lag 메트릭으로 여기서 확인 (joinCode 무관)
             - sql_query: 회원·방·미니게임 등 운영 통계를 SQL로 직접 조회 (joinCode 없는 통계 질문에 사용)
 
             ## 도구 결과 충돌 우선순위 (방 진단 모드)

@@ -92,7 +92,49 @@ Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
   - **시크릿**: 서버에서 `~/monitor/secrets/zzolbot_webhook_token` 생성(`slack_api_url`과 동일: `chown 65534:65534`·`chmod 600`)하고, 앱 env `ZZOL_BOT_ALERT_WEBHOOK_TOKEN`에 동일 값 주입.
   - **도달성**: alertmanager → `nginx:8889` 도달(`monitoring-network` 조인)과 nginx → 활성 색 프록시를 `docker exec`로 확인.
   - **환경 라우팅 가정**: 내부 리스너는 현재 **prod 활성 색**(`prod-service.inc`)으로 보낸다(zzol-bot 모니터는 prod 인시던트 중심). dev 보강이 필요하면 `dev-service.inc`를 include한 8890 리스너를 동일 패턴으로 추가하고, `alertmanager.yml`에서 `job` 라벨로 분기한다.
-  - **Loki ruler 룰 마운트**: `docker-compose`에 `./conf/loki-rules:/etc/loki/rules:ro` 마운트와 테넌트 `fake/` 하위 배치가 필요(별도 후속 — 본 PR은 ruler 설정·룰 파일까지).
+  - **Loki ruler 룰 마운트**: `docker-compose`에 `./conf/loki-rules:/etc/loki/rules:ro` 마운트 + 테넌트 `fake/` 하위 배치(본 PR 포함). Loki는 ruler 블록을 기동 시 읽으므로 **컨테이너 재시작** 필요.
   - 배포는 edge-cd(ADR-0023) 위에서 진행하며 서버 직접 수정 금지(ADR-0026 계승). `*-service.inc`는 edge-cd 동기화 제외(라이브 B/G) 대상임에 유의.
 - **롤백.** 인프라는 alertmanager `zzolbot-enrich` route/receiver 제거 + nginx `internal.conf` 제거 + 리로드로 원복(앱·트래픽 영향 없음). Java는 자체 폴링 제거를 포함하므로, 되돌리려면 본 커밋 revert.
 - 브랜치는 `be/chore/zzolbot-alertmanager-receiver-adr`이며 PR 타깃은 `be/feat/1474-zzolbot-upgrade`(#1492)다.
+
+## 배포 시 운영 체크리스트
+
+Git 정본(`backend/docker/**`)은 edge-cd(ADR-0023)가 서버로 동기화하지만, **시크릿·env·컨테이너 재생성·실측 검증은 코드로 자동화되지 않는다.** 아래는 사람이 서버에서 직접 하는 작업이다. 순서를 지킨다 — 시크릿이 없으면 인증이 막히고, 네트워크 조인이 없으면 alertmanager가 nginx에 도달하지 못한다.
+
+### 1. 배포 전 — 시크릿·환경변수 준비 (필수)
+
+- **베어러 토큰 생성**: 서버에서 공유 토큰을 만든다.
+
+```bash
+openssl rand -hex 32 > /tmp/zzolbot_webhook_token   # 예시 — 임의의 강한 토큰
+# (a) Alertmanager용 파일(slack_api_url과 동일 패턴, 컨테이너 uid 65534 소유)
+sudo install -m 600 -o 65534 -g 65534 /tmp/zzolbot_webhook_token ~/monitor/secrets/zzolbot_webhook_token
+# (b) 앱용 — 같은 값을 앱 env로 주입
+TOKEN=$(cat /tmp/zzolbot_webhook_token)
+```
+
+- **앱 env 선언**: `ZZOL_BOT_ALERT_WEBHOOK_TOKEN`을 dev/prod 앱 컨테이너 env에 주입한다(`docker/{dev,prod}/docker-compose.yml`의 app env 또는 서버 `.env`). 미설정이면 `InternalWebhookTokenFilter`가 모든 `/internal` 요청을 401로 거부한다(secure-by-default). **값은 커밋하지 않는다.**
+- 시크릿 파일은 발송마다 새로 읽히므로 alertmanager 재시작은 불필요하나, **앱 env 주입은 앱 컨테이너 재배포(backend-cd)로 반영**된다.
+
+### 2. 배포 — 컨테이너 재생성/재시작 (어디가 reload로 안 되는지 주의)
+
+| 대상 | 변경 | reload로 충분? | 필요 조치 |
+|------|------|----------------|-----------|
+| **nginx** | monitoring-network 조인 + 8889 expose | ❌ (네트워크·expose는 컨테이너 속성) | **`docker compose up -d nginx` 재생성** — 공개 nginx 순단 발생. 저트래픽 시간대 권장. (무중단 스톱갭: `docker network connect monitoring-network nginx` 후 conf만 reload, 다음 계획 재생성 때 일치) |
+| nginx conf (internal.conf·/internal 404) | conf만 | ✅ | 재생성에 포함됨. 단독 변경이면 `nginx -s reload` |
+| **loki** | `ruler:` 블록 + 룰 마운트 | ❌ (ruler는 기동 시 시작) | **loki 컨테이너 재시작**(`docker compose up -d loki`) |
+| **alertmanager** | `zzolbot-enrich` receiver/route | ✅ | `docker kill -s HUP alertmanager`(또는 `/-/reload`) |
+| **prometheus** | `OutboxDeadLetterHigh` 룰 | ✅ | `docker kill -s HUP prometheus` |
+| **app** | webhook 수신기·enricher·DLQ 게이지·env | — | backend-cd 재배포 |
+
+### 3. 배포 후 — 검증 (성공 기준, 9090/9093/3100 호스트 미노출 → `docker exec`)
+
+- **설정 문법**(로컬에서 이미 통과, 서버 재확인): `docker exec nginx nginx -t`, `docker exec prometheus promtool check rules /etc/prometheus/rules/alerts-redis-stream.yml`.
+- **DLQ 메트릭 노출**: `docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=outbox_dead_letter_count'` 로 시리즈가 보이는지(앱 actuator 스크레이프됨).
+- **룰 로드**: `.../api/v1/rules` 에 `OutboxDeadLetterHigh`와 Loki ruler 발화분이 보이는지.
+- **도달성**: `docker exec alertmanager wget -qO- http://nginx:8889/internal/zzolbot/alerts/webhook` → 토큰 없이는 **401**(차단 동작 확인). Alertmanager가 실제 보낼 때만 200.
+- **엔드투엔드**: dev에서 임계 초과를 유발(또는 `amtool`로 테스트 알림)해 Alertmanager firing → zzol-bot 보강 → Slack enriched 메시지 도착까지 확인.
+
+### 4. 롤백
+
+앱·트래픽 영향 최소: alertmanager `zzolbot-enrich` 제거 + `docker kill -s HUP alertmanager`, nginx `internal.conf` 제거 + 재생성(또는 `network disconnect`), loki ruler 블록 주석 + 재시작. Java(자체 폴링 제거 포함)는 커밋 revert.

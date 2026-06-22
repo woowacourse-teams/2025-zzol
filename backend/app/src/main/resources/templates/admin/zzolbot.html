@@ -855,14 +855,23 @@
     function buildMonitorDetail(a) {
         let signalsHtml;
         try {
-            const signals = JSON.parse(a.signalsJson || '[]');
-            signalsHtml = '<table class="data" style="margin-top:0.3rem"><thead>'
-                + '<tr><th>신호</th><th>값</th><th>임계</th><th>초과</th></tr></thead><tbody>'
-                + signals.map(s => `<tr><td>${esc(s.name)}</td><td>${s.value}</td>`
-                    + `<td>${s.threshold}</td><td>${s.breached ? '⚠️' : '-'}</td></tr>`).join('')
-                + '</tbody></table>';
+            // Alertmanager 발화 알림 컨텍스트(FiringAlert): alertname·severity·요약·설명 + 라벨
+            const ctx = JSON.parse(a.signalsJson || '{}');
+            const rows = [];
+            if (ctx.alertname) rows.push(['알림', ctx.alertname]);
+            if (ctx.severity) rows.push(['심각도', ctx.severity]);
+            if (ctx.summary) rows.push(['요약', ctx.summary]);
+            if (ctx.description) rows.push(['설명', ctx.description]);
+            Object.entries(ctx.labels || {}).forEach(([k, v]) => {
+                if (k !== 'alertname' && k !== 'severity') rows.push([k, v]);
+            });
+            signalsHtml = rows.length
+                ? '<table class="data" style="margin-top:0.3rem"><tbody>'
+                    + rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(String(v))}</td></tr>`).join('')
+                    + '</tbody></table>'
+                : '<div class="muted">발화 정보 없음</div>';
         } catch (e) {
-            signalsHtml = '<div class="muted">신호 파싱 실패</div>';
+            signalsHtml = '<div class="muted">발화 정보 파싱 실패</div>';
         }
 
         let actionsHtml = '';
@@ -875,7 +884,7 @@
         } catch (e) { /* 제안 없음 */ }
 
         return `<div class="result-detail">`
-            + `<span class="label">📊 신호</span>${signalsHtml}`
+            + `<span class="label">📡 발화 알림</span>${signalsHtml}`
             + `<span class="label">🧠 분석 요약</span>`
             + `<div class="muted">${esc(a.analysisSummary || '분석 없음 (정상이거나 예산 소진)')}</div>`
             + actionsHtml

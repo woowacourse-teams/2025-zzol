@@ -25,7 +25,9 @@ import lombok.NoArgsConstructor;
         name = "zzolbot_monitor_run",
         indexes = {
                 @Index(name = "idx_zzolbot_monitor_run_created_at", columnList = "created_at DESC"),
-                @Index(name = "idx_zzolbot_monitor_run_fingerprint", columnList = "fingerprint")
+                // 쿨다운 조회(fingerprint=? AND notified=true ORDER BY created_at DESC)용 복합 인덱스.
+                // 단일 fingerprint 인덱스는 이 인덱스의 prefix라 중복이므로 두지 않는다.
+                @Index(name = "idx_zzolbot_monitor_run_cooldown", columnList = "fingerprint, notified, created_at DESC")
         }
 )
 @Getter

@@ -1,7 +1,7 @@
 ---
 globs:
-  - "src/apis/websocket/**"
-  - "src/contexts/**"
+  - 'src/apis/websocket/**'
+  - 'src/contexts/**'
 ---
 
 ## WebSocket 컨벤션
@@ -54,7 +54,7 @@ const FooProvider = ({ children }: PropsWithChildren) => {
 const { send } = useWebSocket();
 
 send(`/room/${joinCode}/action`, { type: 'SELECT', value: id });
-send(`/room/${joinCode}/ready`);   // body 없는 경우
+send(`/room/${joinCode}/ready`); // body 없는 경우
 ```
 
 ### onData 안정화

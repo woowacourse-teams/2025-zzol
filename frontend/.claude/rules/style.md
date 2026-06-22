@@ -2,14 +2,14 @@
 
 ### 금지 항목 요약
 
-| 금지 | 대체 |
-|---|---|
-| hex 리터럴 (`'#888'`, `'#fff'`) | `theme.color.*` |
-| `color: 'white'`, `background: 'black'` | `theme.color.white`, `theme.color.black` |
-| `font-size: 15px` | `theme.typography.*` |
-| `z-index: 999` | `Z_INDEX.*` |
-| `style={{ color: '#333' }}` JSX 인라인 스타일 | `.styled.ts` + `theme.color.*` |
-| `width: 54px` (반응형 UI 요소) | `DESIGN_TOKENS.*` |
+| 금지                                          | 대체                                     |
+| --------------------------------------------- | ---------------------------------------- |
+| hex 리터럴 (`'#888'`, `'#fff'`)               | `theme.color.*`                          |
+| `color: 'white'`, `background: 'black'`       | `theme.color.white`, `theme.color.black` |
+| `font-size: 15px`                             | `theme.typography.*`                     |
+| `z-index: 999`                                | `Z_INDEX.*`                              |
+| `style={{ color: '#333' }}` JSX 인라인 스타일 | `.styled.ts` + `theme.color.*`           |
+| `width: 54px` (반응형 UI 요소)                | `DESIGN_TOKENS.*`                        |
 
 ---
 
@@ -20,9 +20,9 @@
 ```ts
 // styled 파일 임포트 순서
 import styled from '@emotion/styled';
-import { css, keyframes } from '@emotion/react';       // 필요할 때만
-import { Z_INDEX } from '@/constants/zIndex';          // z-index 사용 시
-import { DESIGN_TOKENS } from '@/constants/design';    // 반응형 카드/원 크기 사용 시
+import { css, keyframes } from '@emotion/react'; // 필요할 때만
+import { Z_INDEX } from '@/constants/zIndex'; // z-index 사용 시
+import { DESIGN_TOKENS } from '@/constants/design'; // 반응형 카드/원 크기 사용 시
 ```
 
 컴포넌트에서 네임스페이스 임포트:
@@ -38,13 +38,13 @@ import * as S from './ComponentName.styled';
 
 hex 리터럴(`'#888'`, `'#fff'`)은 **위치 무관하게 금지**. JSX prop(`fill`, `stroke`, `color`, `backgroundColor`)도 포함.
 
-| 그룹 | 키 | 용도 |
-|---|---|---|
-| `theme.color.point.{50~500}` | 브랜드 컬러 (레드 계열) | 주요 CTA, 강조 |
-| `theme.color.gray.{50~950}` | 그레이 스케일 | 배경, 텍스트, 구분선 |
-| `theme.color.white` / `theme.color.black` | 단색 | |
-| `theme.color.yellow` | 옐로우 | |
-| `theme.color.oauth.{google,kakao,naver}` | OAuth 버튼 전용 | 로그인 버튼만 사용 |
+| 그룹                                      | 키                      | 용도                 |
+| ----------------------------------------- | ----------------------- | -------------------- |
+| `theme.color.point.{50~500}`              | 브랜드 컬러 (레드 계열) | 주요 CTA, 강조       |
+| `theme.color.gray.{50~950}`               | 그레이 스케일           | 배경, 텍스트, 구분선 |
+| `theme.color.white` / `theme.color.black` | 단색                    |                      |
+| `theme.color.yellow`                      | 옐로우                  |                      |
+| `theme.color.oauth.{google,kakao,naver}`  | OAuth 버튼 전용         | 로그인 버튼만 사용   |
 
 ```ts
 // ✅
@@ -75,15 +75,15 @@ box-shadow: 0 4px 20px rgba(245, 62, 65, 0.35);
 `font-size`, `font-weight`, `line-height`를 개별로 하드코딩하지 않는다.
 `theme.typography.*`를 스프레드하거나 각 속성을 토큰으로 참조한다.
 
-| 토큰 | `fontSize` | `fontWeight` | 용도 |
-|---|---|---|---|
-| `h1` | clamp(24→30px) | 700 | 메인 타이틀 |
-| `h2` | clamp(20→24px) | 600 | 섹션 제목 |
-| `h3` | clamp(18→20px) | 600 | 서브 제목 |
-| `h4` | clamp(14→16px) | 600 | 소제목, 버튼 텍스트 |
-| `paragraph` | clamp(14→16px) | 500 | 본문 |
-| `small` | clamp(12→14px) | 400 | 보조 텍스트 |
-| `caption` | clamp(11→12px) | 400 | 캡션 |
+| 토큰        | `fontSize`     | `fontWeight` | 용도                |
+| ----------- | -------------- | ------------ | ------------------- |
+| `h1`        | clamp(24→30px) | 700          | 메인 타이틀         |
+| `h2`        | clamp(20→24px) | 600          | 섹션 제목           |
+| `h3`        | clamp(18→20px) | 600          | 서브 제목           |
+| `h4`        | clamp(14→16px) | 600          | 소제목, 버튼 텍스트 |
+| `paragraph` | clamp(14→16px) | 500          | 본문                |
+| `small`     | clamp(12→14px) | 400          | 보조 텍스트         |
+| `caption`   | clamp(11→12px) | 400          | 캡션                |
 
 ```ts
 // ✅ — 스타일 블록 전체 스프레드 (권장)
@@ -117,14 +117,14 @@ z-index: 999;
 z-index: 1000;
 ```
 
-| 상수 | 값 | 용도 |
-|---|---|---|
-| `TOGGLE_BUTTON_THUMB` | 0 | 토글 썸 |
-| `TOGGLE_BUTTON_OPTION` | 1 | 토글 옵션 |
-| `ROULETTE_PIN` | 10 | 룰렛 핀 |
-| `BACKDROP` | 990 | 백드롭 |
-| `MODAL` | 999 | 모달 |
-| `TOAST` | 1000 | 토스트/배너 |
+| 상수                   | 값   | 용도        |
+| ---------------------- | ---- | ----------- |
+| `TOGGLE_BUTTON_THUMB`  | 0    | 토글 썸     |
+| `TOGGLE_BUTTON_OPTION` | 1    | 토글 옵션   |
+| `ROULETTE_PIN`         | 10   | 룰렛 핀     |
+| `BACKDROP`             | 990  | 백드롭      |
+| `MODAL`                | 999  | 모달        |
+| `TOAST`                | 1000 | 토스트/배너 |
 
 ---
 
@@ -237,4 +237,3 @@ z-index: ${Z_INDEX.TOAST};
 max-width: 430px;
 margin: 0 auto;
 ```
-

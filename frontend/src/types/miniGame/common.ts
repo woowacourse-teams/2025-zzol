@@ -4,8 +4,7 @@ import SpeedTouchIcon from '@/assets/speed-touch-icon.svg';
 import BlindTimerIcon from '@/assets/blind-timer-icon.svg';
 import BlockStackingIcon from '@/assets/block-stacking-icon.svg';
 import LadderGameIcon from '@/assets/ladder-game-icon.svg';
-// TODO(에셋): 눈치게임 전용 아이콘 미준비 — other-icon 으로 임시 대체. 디자인 확정 후 교체.
-import NunchiGameIcon from '@/assets/other-icon.svg';
+import NunchiGameIcon from '@/assets/nunchi-game-icon.svg';
 
 /**
  * 전체 미니 게임 공통 타입

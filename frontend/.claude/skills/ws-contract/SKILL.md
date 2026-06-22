@@ -1,10 +1,10 @@
 ---
 description: WebSocket 구독·발행 코드 작성 또는 수정 시 ws-mcp 카탈로그로 BE 컨트랙트를 먼저 확인한다. destination prefix·payload·publisher 위치를 코드 작성 전에 검증해 prefix 중복·오타·존재하지 않는 토픽 구독을 사전 차단한다.
 paths:
-  - "src/apis/websocket/**"
-  - "src/contexts/**"
-  - "src/features/**/hooks/use*WebSocket*.ts"
-  - "src/features/**/hooks/use*Subscription*.ts"
+  - 'src/apis/websocket/**'
+  - 'src/contexts/**'
+  - 'src/features/**/hooks/use*WebSocket*.ts'
+  - 'src/features/**/hooks/use*Subscription*.ts'
 allowed-tools: Read, mcp__ws__ws_list_topics, mcp__ws__ws_describe, mcp__ws__ws_source
 ---
 
@@ -26,12 +26,12 @@ allowed-tools: Read, mcp__ws__ws_list_topics, mcp__ws__ws_describe, mcp__ws__ws_
 
 ws-mcp 카탈로그의 path 는 prefix 를 포함하지만, FE wrapper(`useWebSocketSubscription` / `send`)는 prefix 를 자동 추가한다. **path 에서 prefix 를 제거해 전달**한다.
 
-| 카탈로그 path (MCP 응답) | FE 호출 시 path |
-|---|---|
-| `/topic/room/{joinCode}/winner` | `/room/{joinCode}/winner` |
-| `/topic/room/{joinCode}/ladder/state` | `/room/{joinCode}/ladder/state` |
-| `/app/room/{joinCode}/update-ready` (send destination) | `/room/{joinCode}/update-ready` |
-| `/user/queue/friends/requests` (개인 큐) | `/queue/friends/requests` (`/user` 는 wrapper 가 자동) |
+| 카탈로그 path (MCP 응답)                               | FE 호출 시 path                                        |
+| ------------------------------------------------------ | ------------------------------------------------------ |
+| `/topic/room/{joinCode}/winner`                        | `/room/{joinCode}/winner`                              |
+| `/topic/room/{joinCode}/ladder/state`                  | `/room/{joinCode}/ladder/state`                        |
+| `/app/room/{joinCode}/update-ready` (send destination) | `/room/{joinCode}/update-ready`                        |
+| `/user/queue/friends/requests` (개인 큐)               | `/queue/friends/requests` (`/user` 는 wrapper 가 자동) |
 
 상세 룰은 `.claude/rules/websocket.md` 참조.
 

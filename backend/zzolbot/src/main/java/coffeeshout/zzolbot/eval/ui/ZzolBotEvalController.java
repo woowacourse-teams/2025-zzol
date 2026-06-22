@@ -64,9 +64,10 @@ public class ZzolBotEvalController {
 
     @PostMapping("/runs")
     public ResponseEntity<Void> startRun(@RequestBody @Valid RunRequest request) {
+        final int repeats = request.repeats() == null ? 1 : request.repeats();
         virtualThreadExecutor.execute(() -> {
             try {
-                evalRunner.run(request.label());
+                evalRunner.run(request.label(), repeats);
             } catch (Exception e) {
                 log.warn("[ZzolBot] 평가 실행 실패. label={}", request.label(), e);
             }
@@ -156,7 +157,7 @@ public class ZzolBotEvalController {
         return instant != null ? formatter.format(instant) : null;
     }
 
-    record RunRequest(@NotBlank String label) {}
+    record RunRequest(@NotBlank String label, Integer repeats) {}
 
     record ManualScenarioRequest(
             @NotBlank String name,

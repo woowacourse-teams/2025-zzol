@@ -45,7 +45,19 @@ public class EvalRunner {
     private final ToolSnapshotCodec codec;
     private final ZzolBotProperties properties;
 
+    private static final int MAX_REPEATS = 3;
+
     public EvalRunEntity run(String label) {
+        return run(label, 1);
+    }
+
+    /**
+     * 각 시나리오를 최대 {@code repeats}회까지 평가한다. PASS가 한 번 나오면 거기서 멈추고,
+     * 모든 시도가 FAIL일 때만 FAIL로 본다 — LLM 변동으로 가끔 빗나가는 걸 재시도로 완화한다.
+     * repeats는 1~{@value #MAX_REPEATS}로 클램프한다(기본 1이면 비용·동작 모두 종전과 동일).
+     */
+    public EvalRunEntity run(String label, int repeats) {
+        final int attempts = Math.max(1, Math.min(MAX_REPEATS, repeats));
         final List<EvalScenarioEntity> scenarios = scenarioRepository.findAllByOrderByCreatedAtDesc();
         final EvalRunEntity run = runRepository.save(
                 EvalRunEntity.start(label, properties.model(), null, scenarios.size()));
@@ -53,13 +65,8 @@ public class EvalRunner {
         try {
             int passCount = 0;
             for (EvalScenarioEntity scenario : scenarios) {
-                try {
-                    if (evaluateOne(run.getId(), scenario)) {
-                        passCount++;
-                    }
-                } catch (Exception e) {
-                    log.warn("[ZzolBot] 시나리오 평가 실패 — FAIL 결과로 기록. scenario={}", scenario.getName(), e);
-                    saveFailureResult(run.getId(), scenario, e);
+                if (passesWithinRetries(run.getId(), scenario, attempts)) {
+                    passCount++;
                 }
             }
             run.complete(passCount);
@@ -69,6 +76,26 @@ public class EvalRunner {
             run.fail();
             return runRepository.save(run);
         }
+    }
+
+    /**
+     * 한 시나리오를 최대 attempts회까지 평가한다(각 시도는 결과 1행으로 저장).
+     * PASS가 한 번 나오면 즉시 멈추고(토큰 절약), 모든 시도가 FAIL일 때만 FAIL로 본다 —
+     * LLM 변동으로 가끔 빗나가는 걸 재시도로 흡수한다.
+     */
+    private boolean passesWithinRetries(Long runId, EvalScenarioEntity scenario, int attempts) {
+        for (int i = 0; i < attempts; i++) {
+            try {
+                if (evaluateOne(runId, scenario)) {
+                    return true; // 통과하면 즉시 멈춤
+                }
+            } catch (Exception e) {
+                log.warn("[ZzolBot] 시나리오 평가 실패 — FAIL 결과로 기록. scenario={}, attempt={}",
+                        scenario.getName(), i + 1, e);
+                saveFailureResult(runId, scenario, e);
+            }
+        }
+        return false; // 모든 시도 FAIL
     }
 
     private boolean evaluateOne(Long runId, EvalScenarioEntity scenario) {
@@ -88,8 +115,8 @@ public class EvalRunner {
     }
 
     /**
-     * 시나리오 평가가 예외로 끝났을 때도 FAIL 결과를 남겨 "시나리오당 결과 1건" 불변식을 유지한다.
-     * (그래야 합격/전체 카운트와 실제 저장 건수가 어긋나지 않는다.)
+     * 시나리오 평가가 예외로 끝났을 때도 FAIL 결과를 남겨 "시도당 결과 1건" 불변식을 유지한다.
+     * (그래야 실행 상세에 빠진 시도 없이 모든 시도가 한 행씩 남는다.)
      */
     private void saveFailureResult(Long runId, EvalScenarioEntity scenario, Exception e) {
         final JudgeScore failed = new JudgeScore(0, 0, false, EvalVerdict.FAIL, "평가 중 예외: " + e.getMessage());

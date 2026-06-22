@@ -61,10 +61,10 @@ class ZzolBotEvalControllerTest {
 
     @Test
     void startRun_은_202를_반환하고_평가를_비동기로_실행한다() {
-        final var response = controller.startRun(new ZzolBotEvalController.RunRequest("baseline"));
+        final var response = controller.startRun(new ZzolBotEvalController.RunRequest("baseline", null));
 
         assertThat(response.getStatusCode().value()).isEqualTo(202);
-        await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> verify(evalRunner).run(eq("baseline")));
+        await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> verify(evalRunner).run("baseline", 1));
     }
 
     @Test

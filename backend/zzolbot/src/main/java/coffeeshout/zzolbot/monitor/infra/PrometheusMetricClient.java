@@ -1,5 +1,6 @@
 package coffeeshout.zzolbot.monitor.infra;
 
+import coffeeshout.zzolbot.config.ZzolBotHttpTimeouts;
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +29,9 @@ public class PrometheusMetricClient {
     public PrometheusMetricClient(
             ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
         this.prometheusBaseUrl = properties.monitoring().prometheusUrl();
-        this.restClient = restClientBuilder.baseUrl(prometheusBaseUrl).build();
+        this.restClient = restClientBuilder.baseUrl(prometheusBaseUrl)
+                .requestFactory(ZzolBotHttpTimeouts.requestFactory())
+                .build();
         this.objectMapper = objectMapper;
     }
 

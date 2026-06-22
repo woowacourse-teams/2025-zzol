@@ -149,6 +149,17 @@
 
 `Gamer`는 `room.Player` 대신 게임이 사용하는 플레이어 표현으로, game 모듈이 room 타입 없이 플레이어 정보를 다룰 수 있게 한다. 식별(`name`+`userId`)과 표시 상태(`colorIndex`)를 함께 갖는 불변 class이며, 동등성은 식별만으로 정의한다(`colorIndex`는 `equals`/`hashCode` 제외). 색상은 `Player.toGamer()`가 채우고, 게임 응답 DTO가 Room 재조회 없이 `Gamer.colorIndex()`에서 읽는다 (ADR-0025 Step 3).
 
+### 전용 스케줄러·스트림을 쓰는 게임 — 테스트 미러링 (자주 누락)
+
+동적 타이머가 필요한 게임(SpeedTouch·BlindTimer·Nunchi)은 OCP 한 줄 등록(`MiniGameType` + Factory) 외에 **전용 빈/스트림**을 추가한다. 이때 프로덕션에만 등록하고 테스트측 미러를 빠뜨리면, 도메인·서비스 단위 테스트는 통과하지만 **통합테스트가 컨텍스트 로딩 실패 또는 "메시지 미수신"으로 깨진다**. ADR-0031(Nunchi) 작업에서 아래 둘 다 누락된 선례가 있다.
+
+| 프로덕션 등록 | 같은 커밋에서 반드시 추가할 테스트 미러 | 누락 시 증상 |
+|---|---|---|
+| `@Bean("xGameScheduler") @Profile("!test")` (전용 `TaskScheduler`) | `game/.../config/IntegrationTestConfig`에 **같은 이름** 빈 → `new ShutDownTestScheduler()` | 컨텍스트 로딩 실패 — `NoSuchBeanDefinitionException: TaskScheduler` |
+| `config/redis.yml`의 `redis.stream.keys["[x]"]` (전용 입력 스트림) | `test-support/.../application-test-base.yml`의 `redis.stream.keys`에 **같은 키** | 컨슈머 미기동 → 스트림 경로 IT가 타임아웃("메시지 미수신") |
+
+체크: 새 게임 PR에 `@Profile("!test")` 빈 또는 새 `redis.stream.keys` 항목이 있으면, 대응하는 테스트 설정이 같은 diff에 있는지 확인한다. 두 설정은 모두 **공유 테스트 자원**이라 누락 시 그 게임만이 아니라 해당 stream/scheduler를 쓰는 통합테스트 전체가 영향받을 수 있다.
+
 ---
 
 ## 게임 플로우 스케줄링

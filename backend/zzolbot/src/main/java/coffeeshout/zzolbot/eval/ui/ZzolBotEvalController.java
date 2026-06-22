@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -77,15 +78,22 @@ public class ZzolBotEvalController {
         if (!evalRunning.compareAndSet(false, true)) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 이미 실행 중 — 중복 실행 차단
         }
-        virtualThreadExecutor.execute(() -> {
-            try {
-                evalRunner.run(request.label(), repeats);
-            } catch (Exception e) {
-                log.warn("[ZzolBot] 평가 실행 실패. label={}", request.label(), e);
-            } finally {
-                evalRunning.set(false);
-            }
-        });
+        try {
+            virtualThreadExecutor.execute(() -> {
+                try {
+                    evalRunner.run(request.label(), repeats);
+                } catch (Exception e) {
+                    log.warn("[ZzolBot] 평가 실행 실패. label={}", request.label(), e);
+                } finally {
+                    evalRunning.set(false);
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            // 제출 실패 시 finally(워커 람다 안)에 도달하지 못하므로 여기서 가드를 풀어준다.
+            evalRunning.set(false);
+            log.warn("[ZzolBot] 평가 실행 제출 거부. label={}", request.label(), e);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
         return ResponseEntity.accepted().build();
     }
 

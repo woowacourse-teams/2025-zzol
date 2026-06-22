@@ -32,4 +32,10 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     @Modifying
     @Query("DELETE FROM OutboxEvent o WHERE o.status = 'PUBLISHED' AND o.createdAt < :threshold")
     int deletePublishedEventsBefore(@Param("threshold") Instant threshold);
+
+    /**
+     * 상태별 누적 건수. DEAD_LETTER 적체 깊이를 Prometheus 게이지로 노출하는 데 쓴다(ADR-0032).
+     * {@code idx_outbox_status_id(status, id)} 인덱스를 타므로 스크레이프 시점 COUNT가 가볍다.
+     */
+    long countByStatus(OutboxStatus status);
 }

@@ -2,10 +2,8 @@ package coffeeshout.zzolbot.monitor.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 
 import coffeeshout.zzolbot.monitor.application.MonitorService;
-import coffeeshout.zzolbot.monitor.domain.AnomalyVerdict;
 import coffeeshout.zzolbot.monitor.domain.Severity;
 import coffeeshout.zzolbot.monitor.infra.MonitorRunEntity;
 import java.time.Clock;
@@ -37,26 +35,16 @@ class ZzolBotMonitorControllerTest {
     }
 
     @Test
-    void run_은_수동_점검을_실행하고_결과를_반환한다() {
-        given(monitorService.runOnce()).willReturn(run(true, Severity.WARNING));
-
-        final ZzolBotMonitorController.AlertResponse response = controller.run();
-
-        SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(response.anomalous()).isTrue();
-            softly.assertThat(response.severity()).isEqualTo("WARNING");
-        });
-        verify(monitorService).runOnce();
-    }
-
-    @Test
     void alerts_는_최근_실행을_AlertResponse로_변환한다() {
-        given(monitorService.recentRuns()).willReturn(List.of(run(false, Severity.NORMAL)));
+        given(monitorService.recentRuns()).willReturn(List.of(run(Severity.WARNING)));
 
         final List<ZzolBotMonitorController.AlertResponse> result = controller.alerts();
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).anomalous()).isFalse();
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(result).hasSize(1);
+            softly.assertThat(result.get(0).anomalous()).isTrue();
+            softly.assertThat(result.get(0).severity()).isEqualTo("WARNING");
+        });
     }
 
     @Test
@@ -66,9 +54,8 @@ class ZzolBotMonitorControllerTest {
         assertThat(controller.alert(999L).getStatusCode().value()).isEqualTo(404);
     }
 
-    private MonitorRunEntity run(boolean anomalous, Severity severity) {
-        final MonitorRunEntity entity = MonitorRunEntity.of(
-                Instant.now(), new AnomalyVerdict(anomalous, severity, "fp"), "[]");
+    private MonitorRunEntity run(Severity severity) {
+        final MonitorRunEntity entity = MonitorRunEntity.of(Instant.now(), severity, "fp", "{}");
         ReflectionTestUtils.setField(entity, "id", 1L);
         return entity;
     }

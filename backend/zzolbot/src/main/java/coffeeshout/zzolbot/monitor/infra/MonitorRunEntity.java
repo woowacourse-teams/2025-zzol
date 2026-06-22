@@ -1,6 +1,5 @@
 package coffeeshout.zzolbot.monitor.infra;
 
-import coffeeshout.zzolbot.monitor.domain.AnomalyVerdict;
 import coffeeshout.zzolbot.monitor.domain.Severity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +24,7 @@ import lombok.NoArgsConstructor;
         name = "zzolbot_monitor_run",
         indexes = {
                 @Index(name = "idx_zzolbot_monitor_run_created_at", columnList = "created_at DESC"),
-                // 쿨다운 조회(fingerprint=? AND notified=true ORDER BY created_at DESC)용 복합 인덱스.
+                // firing 재배달 멱등 가드(fingerprint=? AND notified=true AND created_at>?)용 복합 인덱스.
                 // 단일 fingerprint 인덱스는 이 인덱스의 prefix라 중복이므로 두지 않는다.
                 @Index(name = "idx_zzolbot_monitor_run_cooldown", columnList = "fingerprint, notified, created_at DESC")
         }
@@ -66,12 +65,12 @@ public class MonitorRunEntity {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    public static MonitorRunEntity of(Instant collectedAt, AnomalyVerdict verdict, String signalsJson) {
+    public static MonitorRunEntity of(Instant now, Severity severity, String fingerprint, String signalsJson) {
         final MonitorRunEntity entity = new MonitorRunEntity();
-        entity.collectedAt = collectedAt;
-        entity.anomalous = verdict.anomalous();
-        entity.severity = verdict.severity();
-        entity.fingerprint = verdict.fingerprint();
+        entity.collectedAt = now;
+        entity.anomalous = true;
+        entity.severity = severity;
+        entity.fingerprint = fingerprint;
         entity.signalsJson = signalsJson;
         entity.notified = false;
         entity.createdAt = Instant.now();

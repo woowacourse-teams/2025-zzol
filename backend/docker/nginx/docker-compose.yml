@@ -10,12 +10,18 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    # ADR-0032: 8889는 호스트 미노출(expose만) — monitoring-network 내부에서만 도달(alertmanager → nginx:8889).
+    expose:
+      - "8889"
     networks:
       - zzol-network
+      - monitoring-network   # ADR-0032: alertmanager(monitoring-network) → nginx 내부 리스너 도달용
     restart: unless-stopped
     environment:
-      - TZ=Asia/Seoul  
+      - TZ=Asia/Seoul
 
 networks:
   zzol-network:
     external: true
+  monitoring-network:
+    external: true   # monitoring 스택이 생성(name: monitoring-network)

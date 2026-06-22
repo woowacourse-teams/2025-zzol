@@ -1,8 +1,7 @@
 package coffeeshout.zzolbot.monitor.infra;
 
-import coffeeshout.zzolbot.monitor.domain.AnomalyVerdict;
+import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
-import coffeeshout.zzolbot.monitor.domain.MonitorSnapshot;
 import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class NoOpAnomalyAnalyzer implements AnomalyAnalyzer {
 
     @Override
-    public MonitorAnalysis analyze(MonitorSnapshot snapshot, AnomalyVerdict verdict, List<String> logSamples) {
+    public MonitorAnalysis analyze(FiringAlert alert, List<String> logSamples) {
         return new MonitorAnalysis("NoOp 분석", "", List.of());
     }
 }

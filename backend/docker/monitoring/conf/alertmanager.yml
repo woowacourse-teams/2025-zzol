@@ -19,6 +19,11 @@ route:
   group_interval: 5m
   repeat_interval: 4h
   routes:
+    # ADR-0032 골격: firing 알림을 zzol-bot LLM 보강 수신기로 미러링한다.
+    # continue: true 로 기존 Slack 라우팅(아래)을 그대로 유지한다(전환기 병존).
+    # 후속 PR에서 enriched 경로로 일원화하며 중복 알림을 정리한다.
+    - receiver: zzolbot-enrich
+      continue: true
     - matchers:
         - severity = "critical"
       receiver: slack-critical
@@ -67,6 +72,22 @@ receivers:
           {{ .Annotations.summary }}
           {{ .Annotations.description }}
           {{ end }}
+
+  # ADR-0032: zzol-bot LLM 보강 수신기. firing만 보낸다(보강은 firing에만 의미).
+  # nginx 내부 전용 리스너(nginx:8889) 경유 — nginx가 $upstream(prod 활성 색)으로 프록시해
+  # 블루-그린 활성 색을 자동 추종한다(raw 색 컨테이너 직격 금지). nginx가 monitoring-network에
+  # 조인돼야 alertmanager가 도달한다(nginx/docker-compose.yml).
+  # 인증: 베어러 토큰(credentials_file)을 앱 Spring Security가 /internal/** 에서 검증한다.
+  #   deploy-time: 서버에서 ~/monitor/secrets/zzolbot_webhook_token 생성(slack_api_url과 동일 패턴,
+  #   chown 65534:65534·chmod 600), 앱 env ZZOL_BOT_ALERT_WEBHOOK_TOKEN에 동일 값 주입.
+  - name: zzolbot-enrich
+    webhook_configs:
+      - url: http://nginx:8889/internal/zzolbot/alerts/webhook
+        send_resolved: false
+        http_config:
+          authorization:
+            type: Bearer
+            credentials_file: /etc/alertmanager/secrets/zzolbot_webhook_token
 
   - name: slack-critical
     slack_configs:

@@ -38,3 +38,17 @@ groups:
         annotations:
           summary: "Redis Stream 적체 (length > 1000)"
           description: "스트림 길이가 {{ $value }}. 컨슈머 처리 속도가 발행을 못 따라가고 있습니다."
+
+      # Outbox DEAD_LETTER 적체 — 재시도 초과로 죽은 이벤트가 쌓이면 메시지 유실.
+      # 과거 zzol-bot 자체 폴링(DB count ≥ 10)을 Prometheus로 이관(ADR-0032). "적체 깊이" 신호라
+      # 로그 율 기반 룰(Loki ERROR 카운트)로는 못 잡는 느린 누적을 잡는다.
+      # blue/green 두 인스턴스가 같은 DB를 보므로 값이 동일 → max()로 중복 제거.
+      # ⚠️ 임계 10은 옛 self-poll 임계 보존(추정치). 배포 후 정상 범위로 보정.
+      - alert: OutboxDeadLetterHigh
+        expr: max(outbox_dead_letter_count) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outbox DEAD_LETTER 적체 (> 10)"
+          description: "재시도 초과로 DEAD_LETTER 전환된 outbox 이벤트가 {{ $value }}건. 다운스트림 발행 경로 점검 필요."

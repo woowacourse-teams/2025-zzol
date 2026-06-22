@@ -142,6 +142,7 @@ jobs:
           GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
           GEMINI_ZZOL_BOT_API_KEY=${{ secrets.GEMINI_ZZOL_BOT_API_KEY }}
           SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}
+          ZZOL_BOT_SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}
           TEMPO_URL=${{ secrets.TEMPO_URL }}
           TRACE_SAMPLING_PROBABILITY=${{ secrets.TRACE_SAMPLING_PROBABILITY }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
@@ -155,6 +156,7 @@ jobs:
           ROOM_SESSION_TOKEN_SECRET=${{ secrets.ROOM_SESSION_TOKEN_SECRET }}
           USER_EMAIL_ENCRYPTION_KEY=${{ secrets.USER_EMAIL_ENCRYPTION_KEY }}
           USER_EMAIL_HMAC_KEY=${{ secrets.USER_EMAIL_HMAC_KEY }}
+          ZZOL_BOT_ALERT_WEBHOOK_TOKEN=${{ secrets.ZZOL_BOT_ALERT_WEBHOOK_TOKEN }}
           EOF
           # IMAGE_TAG는 deploy-application.sh 인자로 전달 (Blue/Green 색상별 관리)
           # ORACLE_REGION은 ap-chuncheon-1 기본값 사용 (변경 필요 시 시크릿으로 추가)

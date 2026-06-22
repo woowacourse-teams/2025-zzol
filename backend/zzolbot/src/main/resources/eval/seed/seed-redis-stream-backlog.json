@@ -1,0 +1,12 @@
+{
+  "name": "seed-redis-stream-backlog",
+  "question": "요즘 전체적으로 응답이 느리다는 제보가 많아요. 시스템 상태 점검해줘.",
+  "rubric": "redis_stream_status의 XLEN(game-stream)이 정상 범위(MAXLEN 트리밍으로 항상 100 안팎)임을 인지하고, XLEN만으로는 처리 지연을 판단할 수 없다고 짚으면 정답. 진짜 backpressure는 컨슈머 스레드풀 큐 깊이/lag 메트릭에서 봐야 한다고 언급하면 가점. XLEN이 정상이라는 이유로 '문제없음'이라 단정하거나, XLEN 적체를 원인으로 지목하면 오답.",
+  "snapshot": [
+    {
+      "toolName": "redis_stream_status",
+      "args": {},
+      "content": "{\"game-stream\":100,\"room-stream\":98}"
+    }
+  ]
+}

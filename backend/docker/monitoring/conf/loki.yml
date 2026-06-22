@@ -42,3 +42,19 @@ limits_config:
   ingestion_burst_size_mb: 32
   max_query_length: 12000h
   creation_grace_period: 10h
+
+# ADR-0032 골격: 로그 기반 탐지를 zzol-bot 자체 폴링에서 Loki ruler로 이관해 단일 알림
+# 엔진(Alertmanager)에 합류시킨다. ruler가 LogQL 알림 룰을 평가해 Alertmanager로 발화한다.
+# TODO(후속 PR): docker-compose에 룰 디렉터리 마운트(./conf/loki-rules:/etc/loki/rules:ro).
+#   auth_enabled=false이므로 룰 파일은 테넌트 'fake' 하위(/etc/loki/rules/fake/*.yml)에 둔다.
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /etc/loki/rules
+  rule_path: /loki/rules-temp
+  alertmanager_url: http://alertmanager:9093
+  enable_alertmanager_v2: true
+  ring:
+    kvstore:
+      store: inmemory

@@ -166,6 +166,7 @@ services:
       - loki-data:/loki
       - loki-logs:/var/log/loki
       - ./conf/loki.yml:/etc/loki/loki.yaml:ro
+      - ./conf/loki-rules:/etc/loki/rules:ro   # ADR-0032: ruler 룰(테넌트 fake/ 하위). loki.yml ruler.storage.local.directory와 일치
       - /usr/share/zoneinfo/Asia/Seoul:/etc/localtime:ro
     networks:
       - monitoring-network

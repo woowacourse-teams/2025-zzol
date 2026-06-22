@@ -622,8 +622,9 @@
         document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
         document.getElementById('tab-' + tab).hidden = false;
+        stopMonitorPolling();   // 탭 전환 시 모니터 폴링 정리
         if (tab === 'eval') { loadEvalRuns(); loadScenarios(); }
-        if (tab === 'monitor') loadAlerts();
+        if (tab === 'monitor') { loadAlerts(); startMonitorPolling(); }
     }
 
     async function api(method, url, body) {
@@ -820,36 +821,65 @@
     }
 
     /* ===== 모니터링 ===== */
+    // 탭이 열려있는 동안 새 발화 알림을 자동 반영(폴링). 탭을 떠나면 멈춘다.
+    let monitorPollTimer = null;
+    let lastAlertKey = null;   // 최신 알림 식별 — 변화 없으면 다시 안 그려 펼친 상세를 유지
+
+    function startMonitorPolling() {
+        stopMonitorPolling();
+        monitorPollTimer = setInterval(pollAlertsOnce, 10000);   // 10초 간격
+    }
+
+    function stopMonitorPolling() {
+        if (monitorPollTimer) { clearInterval(monitorPollTimer); monitorPollTimer = null; }
+    }
+
+    function alertKey(list) {
+        return list.length ? `${list[0].createdAt}|${list[0].fingerprint}|${list.length}` : 'empty';
+    }
+
+    async function pollAlertsOnce() {
+        let list;
+        try { list = await api('GET', '/admin/zzolbot/monitor/alerts'); }
+        catch (e) { return; }   // 일시 실패는 다음 폴에서 회복
+        if (alertKey(list) !== lastAlertKey) renderAlerts(list);   // 새 알림이 있을 때만 다시 그림
+    }
+
     async function loadAlerts() {
-        const body = document.getElementById('monitorAlertsBody');
         try {
-            const list = await api('GET', '/admin/zzolbot/monitor/alerts');
-            if (!list.length) {
-                body.innerHTML = '<tr><td colspan="6" class="muted">점검 이력이 없습니다</td></tr>';
-                return;
-            }
-            body.innerHTML = '';
-            list.forEach(a => {
-                const tr = document.createElement('tr');
-                tr.className = 'row-click';
-                tr.innerHTML = `<td>${esc(a.createdAt)}</td><td>${a.anomalous ? '⚠️' : '✅'}</td>`
-                    + `<td class="sev-${esc(a.severity)}">${esc(a.severity)}</td>`
-                    + `<td>${esc(a.fingerprint || '-')}</td><td>${esc(a.analysisSummary || '-')}</td>`
-                    + `<td>${a.notified ? '📨' : '-'}</td>`;
-
-                const detailTr = document.createElement('tr');
-                detailTr.style.display = 'none';
-                detailTr.innerHTML = `<td colspan="6">${buildMonitorDetail(a)}</td>`;
-
-                tr.onclick = () => {
-                    detailTr.style.display = detailTr.style.display === 'none' ? '' : 'none';
-                };
-                body.appendChild(tr);
-                body.appendChild(detailTr);
-            });
+            renderAlerts(await api('GET', '/admin/zzolbot/monitor/alerts'));
         } catch (e) {
-            body.innerHTML = `<tr><td colspan="6" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
+            document.getElementById('monitorAlertsBody').innerHTML =
+                `<tr><td colspan="6" class="muted">로드 실패: ${esc(e.message)}</td></tr>`;
         }
+    }
+
+    function renderAlerts(list) {
+        const body = document.getElementById('monitorAlertsBody');
+        lastAlertKey = alertKey(list);
+        if (!list.length) {
+            body.innerHTML = '<tr><td colspan="6" class="muted">점검 이력이 없습니다</td></tr>';
+            return;
+        }
+        body.innerHTML = '';
+        list.forEach(a => {
+            const tr = document.createElement('tr');
+            tr.className = 'row-click';
+            tr.innerHTML = `<td>${esc(a.createdAt)}</td><td>${a.anomalous ? '⚠️' : '✅'}</td>`
+                + `<td class="sev-${esc(a.severity)}">${esc(a.severity)}</td>`
+                + `<td>${esc(a.fingerprint || '-')}</td><td>${esc(a.analysisSummary || '-')}</td>`
+                + `<td>${a.notified ? '📨' : '-'}</td>`;
+
+            const detailTr = document.createElement('tr');
+            detailTr.style.display = 'none';
+            detailTr.innerHTML = `<td colspan="6">${buildMonitorDetail(a)}</td>`;
+
+            tr.onclick = () => {
+                detailTr.style.display = detailTr.style.display === 'none' ? '' : 'none';
+            };
+            body.appendChild(tr);
+            body.appendChild(detailTr);
+        });
     }
 
     function buildMonitorDetail(a) {

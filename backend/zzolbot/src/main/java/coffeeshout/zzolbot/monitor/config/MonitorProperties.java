@@ -14,7 +14,7 @@ public record MonitorProperties(
         boolean enabled,
         @NotBlank String cron,
         @Positive long deadLetterThreshold,
-        @Positive long streamBacklogThreshold,
+        @Positive long consumerQueueThreshold,
         @Positive long errorLogThreshold,
         @Positive long warnLogThreshold,
         @Positive int errorLogWindowMinutes,

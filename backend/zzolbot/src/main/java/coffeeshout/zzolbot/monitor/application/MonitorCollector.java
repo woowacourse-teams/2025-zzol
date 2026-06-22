@@ -1,7 +1,6 @@
 package coffeeshout.zzolbot.monitor.application;
 
 import coffeeshout.global.outbox.OutboxStatus;
-import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.zzolbot.infra.ZzolBotOutboxRepository;
 import coffeeshout.zzolbot.monitor.config.MonitorProperties;
 import coffeeshout.zzolbot.monitor.domain.MonitorSignal;
@@ -13,13 +12,15 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 /**
  * 결정적(LLM 무관) 운영 신호를 수집한다. 평상시 매 주기 호출되므로 비용이 0이어야 한다.
- * 현재 신호: outbox DEAD_LETTER 누적 수, Redis Stream 최대 적재량(XLEN),
+ * 현재 신호: outbox DEAD_LETTER 누적 수, Redis Stream 컨슈머 스레드풀 큐 깊이,
  * Loki ERROR 로그 건수, Loki WARN 로그 건수, HTTP 5xx 응답 수(Prometheus).
+ *
+ * <p>스트림 처리가 밀리는지는 XLEN이 아니라 컨슈머 스레드풀 큐 깊이로 본다. ZZOL은 Consumer Group 없이
+ * {@code XADD MAXLEN}으로 trimming하므로 XLEN은 컨슈머가 죽어도 일정하게 유지돼 lag 지표가 못 된다.
  * 로그(ERROR/WARN)와 5xx는 측정 축이 달라 — 로그는 모든 계층의 에러 이벤트, 5xx는 유저 영향 응답.
  * 겹치더라도 게이트가 OR라 알림은 1회이며, 서로의 사각지대를 메운다.
  */
@@ -29,14 +30,12 @@ import org.springframework.stereotype.Component;
 public class MonitorCollector {
 
     static final String SIGNAL_DEAD_LETTER = "outbox_dead_letter";
-    static final String SIGNAL_STREAM_BACKLOG = "redis_stream_backlog";
+    static final String SIGNAL_CONSUMER_QUEUE = "redis_stream_consumer_queue";
     static final String SIGNAL_ERROR_LOGS = "loki_error_logs";
     static final String SIGNAL_WARN_LOGS = "loki_warn_logs";
     static final String SIGNAL_HTTP_5XX = "http_5xx";
 
     private final ZzolBotOutboxRepository outboxRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
-    private final RedisStreamProperties redisStreamProperties;
     private final LokiLogClient lokiLogClient;
     private final PrometheusMetricClient prometheusMetricClient;
     private final MonitorProperties properties;
@@ -45,11 +44,16 @@ public class MonitorCollector {
     public MonitorSnapshot collect() {
         final List<MonitorSignal> signals = new ArrayList<>();
         signals.add(collectDeadLetter());
-        signals.add(collectStreamBacklog());
+        signals.add(collectConsumerQueue());
         signals.add(collectErrorLogs());
         signals.add(collectWarnLogs());
         signals.add(collectHttp5xx());
         return new MonitorSnapshot(signals, clock.instant());
+    }
+
+    private MonitorSignal collectConsumerQueue() {
+        final long depth = prometheusMetricClient.maxConsumerQueueSize(clock.instant());
+        return MonitorSignal.of(SIGNAL_CONSUMER_QUEUE, depth, properties.consumerQueueThreshold());
     }
 
     private MonitorSignal collectErrorLogs() {
@@ -70,16 +74,5 @@ public class MonitorCollector {
     private MonitorSignal collectDeadLetter() {
         final long count = outboxRepository.countByStatusIn(List.of(OutboxStatus.DEAD_LETTER));
         return MonitorSignal.of(SIGNAL_DEAD_LETTER, count, properties.deadLetterThreshold());
-    }
-
-    private MonitorSignal collectStreamBacklog() {
-        long maxBacklog = 0;
-        for (String streamKey : redisStreamProperties.keys().keySet()) {
-            final Long size = redisTemplate.opsForStream().size(streamKey);
-            if (size != null) {
-                maxBacklog = Math.max(maxBacklog, size);
-            }
-        }
-        return MonitorSignal.of(SIGNAL_STREAM_BACKLOG, maxBacklog, properties.streamBacklogThreshold());
     }
 }

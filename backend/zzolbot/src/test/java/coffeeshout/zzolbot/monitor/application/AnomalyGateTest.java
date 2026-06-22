@@ -45,7 +45,7 @@ class AnomalyGateTest {
     @Test
     void 임계값의_2배_이상이면_CRITICAL로_판정한다() {
         final MonitorSnapshot snapshot = new MonitorSnapshot(
-                List.of(MonitorSignal.of("redis_stream_backlog", 25000, 10000)), Instant.EPOCH);
+                List.of(MonitorSignal.of("redis_stream_consumer_queue", 25000, 10000)), Instant.EPOCH);
 
         final AnomalyVerdict verdict = gate.evaluate(snapshot);
 
@@ -55,7 +55,7 @@ class AnomalyGateTest {
     @Test
     void 정확히_임계값의_2배여도_CRITICAL_경계를_포함한다() {
         final MonitorSnapshot snapshot = new MonitorSnapshot(
-                List.of(MonitorSignal.of("redis_stream_backlog", 20000, 10000)), Instant.EPOCH);
+                List.of(MonitorSignal.of("redis_stream_consumer_queue", 20000, 10000)), Instant.EPOCH);
 
         assertThat(gate.evaluate(snapshot).severity()).isEqualTo(Severity.CRITICAL);
     }
@@ -63,11 +63,11 @@ class AnomalyGateTest {
     @Test
     void 여러_신호가_초과하면_지문을_정렬해_결합한다() {
         final MonitorSnapshot snapshot = new MonitorSnapshot(List.of(
-                MonitorSignal.of("redis_stream_backlog", 20000, 10000),
+                MonitorSignal.of("redis_stream_consumer_queue", 20000, 10000),
                 MonitorSignal.of("outbox_dead_letter", 15, 10)), Instant.EPOCH);
 
         final AnomalyVerdict verdict = gate.evaluate(snapshot);
 
-        assertThat(verdict.fingerprint()).isEqualTo("outbox_dead_letter,redis_stream_backlog");
+        assertThat(verdict.fingerprint()).isEqualTo("outbox_dead_letter,redis_stream_consumer_queue");
     }
 }

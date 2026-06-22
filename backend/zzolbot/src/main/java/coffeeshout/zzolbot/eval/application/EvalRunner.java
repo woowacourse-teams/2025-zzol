@@ -109,7 +109,7 @@ public class EvalRunner {
 
         final JudgeScore score = judgeClient.evaluate(scenario.getQuestion(), scenario.getRubric(), result.answer());
         resultRepository.save(EvalResultEntity.create(
-                runId, scenario.getId(), result.answer(), score, latencyMs, source.missingCount()));
+                runId, scenario.getId(), result.answer(), score, latencyMs, source.getMissingCount()));
 
         return score.verdict() == EvalVerdict.PASS;
     }

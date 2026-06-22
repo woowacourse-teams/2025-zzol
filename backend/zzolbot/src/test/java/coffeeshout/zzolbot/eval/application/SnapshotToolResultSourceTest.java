@@ -26,7 +26,7 @@ class SnapshotToolResultSourceTest {
             softly.assertThat(results).hasSize(1);
             softly.assertThat(results.get(0).success()).isTrue();
             softly.assertThat(results.get(0).content()).isEqualTo("{\"state\":\"PLAYING\"}");
-            softly.assertThat(source.missingCount()).isZero();
+            softly.assertThat(source.getMissingCount()).isZero();
         });
     }
 
@@ -43,7 +43,7 @@ class SnapshotToolResultSourceTest {
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(results.get(0).success()).isTrue();
             softly.assertThat(results.get(0).content()).isEqualTo("{\"logCount\":312}");
-            softly.assertThat(source.missingCount()).isZero();
+            softly.assertThat(source.getMissingCount()).isZero();
         });
     }
 
@@ -58,7 +58,7 @@ class SnapshotToolResultSourceTest {
 
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(results.get(0).success()).isFalse();   // 다른 방 → 매칭 안 됨
-            softly.assertThat(source.missingCount()).isEqualTo(1);
+            softly.assertThat(source.getMissingCount()).isEqualTo(1);
         });
     }
 
@@ -73,7 +73,7 @@ class SnapshotToolResultSourceTest {
 
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(results.get(0).success()).isFalse();
-            softly.assertThat(source.missingCount()).isEqualTo(1);
+            softly.assertThat(source.getMissingCount()).isEqualTo(1);
         });
     }
 }

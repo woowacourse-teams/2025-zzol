@@ -13,6 +13,7 @@ web:
   cors:
     allowed-origins:
       - https://dev.zzol.site
+      - https://dev.api.zzol.site   # 어드민 페이지(/admin/**)가 dev.api.zzol.site에서 서빙 — 어드민 호출 CORS 허용
 
 room:
   qr:

@@ -13,4 +13,6 @@ public interface ZzolBotOutboxRepository extends JpaRepository<OutboxEvent, Long
             List<OutboxStatus> statuses,
             Pageable pageable
     );
+
+    long countByStatusIn(List<OutboxStatus> statuses);
 }

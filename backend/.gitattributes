@@ -1,3 +1,8 @@
 /gradlew text eol=lf
 *.bat text eol=crlf
 *.jar binary
+
+# ADR·포스트모템 인덱스는 여러 브랜치가 각자 행을 추가해 매번 충돌난다.
+# union 병합으로 양쪽 추가분을 모두 보존해 충돌을 없앤다 (드문 번호 race는 리뷰에서 처리).
+docs/adr/index.md merge=union
+docs/postmortem/index.md merge=union

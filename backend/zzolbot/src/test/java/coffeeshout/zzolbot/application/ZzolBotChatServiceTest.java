@@ -207,6 +207,50 @@ class ZzolBotChatServiceTest {
     }
 
     @Nested
+    class ask_평가용_오버로드 {
+
+        @Test
+        void 주입된_ToolResultSource로_도구를_실행하고_ToolExecutor는_사용하지_않는다() {
+            final List<List<?>> sourceCalls = new ArrayList<>();
+            final ToolResultSource source = (calls, ctx) -> {
+                sourceCalls.add(calls);
+                return List.of(ToolExecutionResult.ok("room_state", "{\"roomState\":\"PLAYING\"}"));
+            };
+            given(llmClient.generate(anyList(), anyList(), anyString(), any(AskContext.class)))
+                    .willReturn(new ZzolBotLlmResponse.ToolCallsResponse(List.of(
+                            new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem("room_state", Map.of("joinCode", "A4BX")))))
+                    .willReturn(new ZzolBotLlmResponse.TextResponse("완료"));
+
+            chatService.ask("A4BX 방 상태", "eval", progressCallback,
+                    source, (q, a, admin, ctx) -> new ZzolBotChatResult(null, a));
+
+            assertThat(sourceCalls).hasSize(1);
+            org.mockito.Mockito.verify(toolExecutor, org.mockito.Mockito.never())
+                    .executeAll(anyList(), any(AskContext.class));
+        }
+
+        @Test
+        void 주입된_SessionSink로_저장을_위임하고_DB에_저장하지_않는다() {
+            given(llmClient.generate(anyList(), anyList(), anyString(), any(AskContext.class)))
+                    .willReturn(new ZzolBotLlmResponse.TextResponse("PLAYING 상태입니다."));
+            final List<String> capturedAnswers = new ArrayList<>();
+            final SessionSink nonPersisting = (q, a, admin, ctx) -> {
+                capturedAnswers.add(a);
+                return new ZzolBotChatResult(null, a);
+            };
+
+            final ZzolBotChatResult result =
+                    chatService.ask("A4BX 방 상태", "eval", progressCallback, toolExecutor, nonPersisting);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.sessionId()).isNull();
+                softly.assertThat(capturedAnswers).containsExactly("PLAYING 상태입니다.");
+            });
+            org.mockito.Mockito.verify(sessionRepository, org.mockito.Mockito.never()).save(any());
+        }
+    }
+
+    @Nested
     class applyFeedback_메서드 {
 
         @Test

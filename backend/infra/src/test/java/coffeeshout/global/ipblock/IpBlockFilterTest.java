@@ -19,6 +19,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -273,6 +275,65 @@ class IpBlockFilterTest {
 
             then(ipBlockStore).shouldHaveNoInteractions();
             then(filterChain).should().doFilter(any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("내부 IP 화이트리스트")
+    class 내부_IP_화이트리스트 {
+
+        @ParameterizedTest
+        @ValueSource(strings = {
+                "127.0.0.1",    // 루프백
+                "10.0.0.1",     // RFC1918 (10/8)
+                "172.21.0.5",   // RFC1918 (172.16/12) — postmortem 0003 사고 IP
+                "192.168.0.1",  // RFC1918 (192.168/16)
+                "169.254.0.1",  // 링크로컬
+                "100.64.0.1",   // CGNAT (RFC6598) 시작 경계
+                "100.127.255.255", // CGNAT (RFC6598) 끝 경계
+                "fd00::1",      // IPv6 ULA (RFC4193)
+                "::1",          // IPv6 루프백
+        })
+        void 내부_IP는_차단_검사와_카운트_없이_통과한다(String internalIp) throws Exception {
+            filter.doFilter(요청(new Ip(internalIp), NORMAL_PATH), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).shouldHaveNoInteractions();
+            then(filterChain).should().doFilter(any(), any());
+        }
+
+        @Test
+        void 내부_IP는_404_응답에도_누적_카운트하지_않는다() throws Exception {
+            doAnswer(invocation -> {
+                ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
+                return null;
+            }).when(filterChain).doFilter(any(), any());
+
+            filter.doFilter(요청(new Ip("172.21.0.5"), "/not-found"), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should(never()).incrementNotFoundAndBlockIfExceeded(any());
+        }
+
+        @Test
+        void 내부_IP의_악성_경로_접근은_차단하지_않고_통과한다() throws Exception {
+            given(maliciousPathMatcher.isMalicious(MALICIOUS_PATH)).willReturn(true);
+
+            filter.doFilter(요청(new Ip("172.21.0.5"), MALICIOUS_PATH), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should(never()).blockImmediately(any());
+            then(filterChain).should().doFilter(any(), any());
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {
+                "100.63.255.255",  // CGNAT(100.64/10) 직전 — 공인 IP
+                "100.128.0.1",     // CGNAT(100.64/10) 직후 — 공인 IP
+        })
+        void CGNAT_경계_밖_공인_IP는_내부로_취급하지_않고_차단_검사를_수행한다(String externalIp) throws Exception {
+            final Ip ip = new Ip(externalIp);
+
+            filter.doFilter(요청(ip, NORMAL_PATH), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should().isBlocked(ip);
         }
     }
 

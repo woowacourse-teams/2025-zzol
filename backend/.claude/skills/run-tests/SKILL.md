@@ -33,7 +33,7 @@ allowed-tools: Agent
 에이전트 프롬프트는 다음과 같다:
 
 ```text
-Working directory: 저장소 루트(backend 디렉터리)에서 실행한다
+Working directory: backend 디렉터리(gradlew·settings.gradle.kts 위치)에서 실행한다 — git 루트는 그 상위이므로 동일하지 않다
 
 다음 명령을 실행하고 결과를 분석한다:
 <Step 1 gradle 명령>
@@ -42,13 +42,19 @@ Working directory: 저장소 루트(backend 디렉터리)에서 실행한다
 ✅ 모든 테스트 통과 (<대상>)
 
 [실패]
-1. build/test-results/**/*.xml 에서 <failure> 또는 <error> 태그를 포함한 파일만 찾는다
+1. **/build/test-results/**/*.xml 에서 <failure> 또는 <error> 태그를 포함한 파일만 찾는다
+   - 결과는 모듈별 <module>/build/test-results/ 에 있다. 1차 신호는 gradle 출력의 실패 요약으로 삼고
+     XML은 상세 확인용으로 쓴다
+   - 루트 backend/build/test-results/ 는 멀티모듈 전환 전 잔재일 수 있다(루트엔 test 소스가 없다). 신뢰하지 않는다
 2. 다음 형식으로 보고한다:
 
 ❌ <N>개 테스트 실패 (<대상>)
 
 - ClassName#methodName
   <오류 메시지 첫 줄>
+
+3. XML이 하나도 없으면 컴파일·인프라 단계에서 깨진 것이다. gradle 출력 끝부분을 보고하고,
+   Testcontainers/Docker 연결 오류면 "통합 테스트는 Docker 실행이 필요하다"를 함께 안내한다
 ```
 
 **`--sync` 없음 (기본):** `run_in_background: true`로 실행 후 즉시 출력한다:

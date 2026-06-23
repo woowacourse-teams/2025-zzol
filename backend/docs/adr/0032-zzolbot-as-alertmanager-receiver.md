@@ -92,7 +92,7 @@ Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
 - **배포 시점에 확인할 것(로컬 불가):**
   - **시크릿**: 서버에서 `~/monitor/secrets/zzolbot_webhook_token` 생성(`slack_api_url`과 동일: `chown 65534:65534`·`chmod 600`)하고 앱 env `ZZOL_BOT_ALERT_WEBHOOK_TOKEN`에 같은 값 주입.
   - **도달성**: alertmanager → `nginx:8889`(`monitoring-network` 조인)와 nginx → 활성 색 프록시를 `docker exec`로 확인.
-  - **환경 라우팅**: 내부 리스너는 현재 **prod 활성 색**(`prod-service.inc`)으로 보낸다(zzol-bot 모니터는 prod 인시던트 중심). dev 보강이 필요하면 `dev-service.inc`를 include한 8890 리스너를 같은 패턴으로 추가하고 `alertmanager.yml`에서 `job` 라벨로 분기한다.
+  - **환경 라우팅**: 8889 내부 리스너는 **prod 활성 색**(`prod-service.inc`)으로 보낸다(zzol-bot 모니터는 prod 인시던트 중심). **dev 웹훅 검증은 별도 8890 리스너**(`dev-service.inc` → dev 활성 색)로 한다 — PR #1494에서 추가했다. 8889(prod)로 dev 테스트를 보내면 prod-app 404 누적으로 nginx 내부 IP가 차단되는 사고가 났다([postmortem 0003](../postmortem/0003-internal-ip-block-dev-webhook.md)). 한편 **실제 dev firing 알림을 dev-app으로 보강**하려면(수동 테스트가 아니라 Alertmanager 경유) `alertmanager.yml`에서 `job` 라벨로 분기해 8890 receiver를 추가해야 하며, 이는 아직 도입 전이다.
   - **Loki ruler 룰 마운트**: `docker-compose`에 `./conf/loki-rules:/etc/loki/rules:ro` 마운트 + 테넌트 `fake/` 하위 배치(본 PR 포함). Loki는 ruler를 기동 시 읽으므로 **컨테이너 재시작** 필요.
   - 배포는 edge-cd(ADR-0023) 위에서 하며 서버 직접 수정 금지(ADR-0026 계승). `*-service.inc`는 edge-cd 동기화 제외(라이브 B/G) 대상임에 유의.
 - **롤백.** 인프라는 alertmanager `zzolbot-enrich` route/receiver 제거 + nginx `internal.conf` 제거 + 리로드로 원복(앱·트래픽 영향 없음). Java는 폴링 제거를 포함하므로 되돌리려면 본 커밋 revert.
@@ -139,7 +139,7 @@ echo "$TOKEN"
 - **DLQ 메트릭 노출**: `docker exec prometheus wget -qO- 'http://localhost:9090/api/v1/query?query=outbox_dead_letter_count'`로 시리즈가 보이는지.
 - **룰 로드**: `.../api/v1/rules`에 `OutboxDeadLetterHigh`와 Loki ruler 발화분이 보이는지.
 - **도달성**: `docker exec alertmanager wget -qO- http://nginx:8889/internal/zzolbot/alerts/webhook` → 토큰 없이는 **401**(차단 확인). Alertmanager가 실제 보낼 때만 200.
-- **엔드투엔드**: dev에서 임계 초과를 유발(또는 `amtool` 테스트 알림)해 firing → zzol-bot 보강 → Slack 메시지 도착까지 확인.
+- **엔드투엔드**: dev 웹훅 검증은 **nginx:8890**(`dev-service.inc` → dev 활성 색)으로 보낸다 — `docker exec`로 8890에 테스트 페이로드를 쏴 dev-app 보강 → Slack 도착을 확인한다. **8889(prod)로 dev 테스트를 보내지 않는다**(dev 테스트가 prod-app 404를 누적시켜 내부 IP를 차단한 사고: [postmortem 0003](../postmortem/0003-internal-ip-block-dev-webhook.md)). 실제 Alertmanager firing e2e는 prod 경로(8889)로 확인한다.
 
 ### 4. 롤백
 

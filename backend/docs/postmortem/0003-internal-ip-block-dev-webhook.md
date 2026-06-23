@@ -39,7 +39,7 @@ dev 환경의 zzol-bot 웹훅 수신기를 수동 테스트하려 했으나, ngi
 
 - 탐지: dev 웹훅 수동 테스트 중 내부 트래픽 403 발생으로 인지.
 - 완화: `prod-redis`에서 `block:ip:*`·`block:404:*` 키(`block:*`)를 SCAN 기반으로 삭제. 어드민 해제 API도 시도했으나 호출 출처(`api.zzol.site`)가 CORS 허용 목록에 없어 거절됨.
-- 근본 수정: 미진행 — 아래 재발 방지 액션으로 단일 PR에서 처리 예정.
+- 근본 수정: 이슈 #1493 / PR #1494로 처리(nginx 8890 dev 리스너 분리 + 내부 IP 화이트리스트 복구 + 어드민 CORS). dev 웹훅 경로는 8890 e2e로 검증 완료 — 절차·함정은 [ADR-0032](../adr/0032-zzolbot-as-alertmanager-receiver.md)의 "배포 후 검증 › dev 수동 e2e 검증 절차" 참조.
 
 ## 재발 방지 액션
 

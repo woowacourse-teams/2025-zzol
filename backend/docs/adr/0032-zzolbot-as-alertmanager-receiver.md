@@ -141,6 +141,25 @@ echo "$TOKEN"
 - **도달성**: `docker exec alertmanager wget -qO- http://nginx:8889/internal/zzolbot/alerts/webhook` → 토큰 없이는 **401**(차단 확인). Alertmanager가 실제 보낼 때만 200.
 - **엔드투엔드**: dev 웹훅 검증은 **nginx:8890**(`dev-service.inc` → dev 활성 색)으로 보낸다 — `docker exec`로 8890에 테스트 페이로드를 쏴 dev-app 보강 → Slack 도착을 확인한다. **8889(prod)로 dev 테스트를 보내지 않는다**(dev 테스트가 prod-app 404를 누적시켜 내부 IP를 차단한 사고: [postmortem 0003](../postmortem/0003-internal-ip-block-dev-webhook.md)). 실제 Alertmanager firing e2e는 prod 경로(8889)로 확인한다.
 
+#### dev 수동 e2e 검증 절차
+
+dev-app 컨테이너 안에서 nginx:8890으로 POST한다. 인증·라우팅이 통과하면 컨트롤러가 즉시 `200`(빈 본문)으로 ack하고, `alerts[]`가 비어 있지 않으면 가상 스레드로 보강(LLM·Loki·Slack)이 돈다.
+
+```bash
+docker exec dev-app-blue sh -c 'wget -S -qO- \
+  --header="Authorization: Bearer $ZZOL_BOT_ALERT_WEBHOOK_TOKEN" \
+  --header="Content-Type: application/json" \
+  --post-data="{\"status\":\"firing\",\"alerts\":[{\"status\":\"firing\",\"fingerprint\":\"test-001\",\"labels\":{\"alertname\":\"WebhookSmokeTest\",\"severity\":\"warning\"},\"annotations\":{\"summary\":\"manual-e2e-test\"}}]}" \
+  http://nginx:8890/internal/zzolbot/alerts/webhook 2>&1 | grep "HTTP/"'
+```
+
+성공이면 `HTTP/1.1 200`. 이어서 `docker logs --tail 80 dev-app-blue | grep -iE "zzolbot|enrich"`로 보강 처리를 확인한다(dev `ZZOL_BOT_SLACK_WEBHOOK_URL`이 설정돼 있으면 공통 Slack 채널로 발화).
+
+흔한 함정 둘(실제 검증 중 겪음):
+
+- **토큰은 컨테이너 내부 env로 확장한다.** `sh -c '... Bearer $ZZOL_BOT_ALERT_WEBHOOK_TOKEN ...'`처럼 **작은따옴표**로 감싸 dev-app 안에서 풀리게 한다. 호스트 셸의 `$TOKEN`을 쓰면(대개 미설정) 빈 토큰이 들어가 **401**. 인증 토큰은 dev-app env `ZZOL_BOT_ALERT_WEBHOOK_TOKEN`만 관여하며, alertmanager의 `secrets/zzolbot_webhook_token` 파일은 이 수동 테스트와 무관하다(alertmanager가 직접 보낼 때만 사용).
+- **`--post-data` JSON은 한 줄로.** 문자열 값 안에 줄바꿈이 끼면(터미널 줄바꿈 포함) Jackson이 raw 제어문자를 거부해 **400**. 한 줄로 붙여넣고 한글 등으로 줄이 접히지 않게 한다.
+
 ### 4. 롤백
 
 앱·트래픽 영향 최소: alertmanager `zzolbot-enrich` 제거 + `docker kill -s HUP alertmanager`, nginx `internal.conf` 제거 + 재생성(또는 `network disconnect`), loki ruler 블록 주석 + 재시작. Java(폴링 제거 포함)는 커밋 revert.

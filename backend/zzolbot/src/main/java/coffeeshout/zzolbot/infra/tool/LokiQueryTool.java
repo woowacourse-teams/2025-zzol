@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -31,11 +32,13 @@ public class LokiQueryTool implements ZzolBotTool {
     private static final int LOG_LIMIT = 50;
 
     private final RestClient restClient;
+    private final String lokiBaseUrl;
     private final String environment;
     private final ObjectMapper objectMapper;
 
     public LokiQueryTool(ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
-        this.restClient = restClientBuilder.baseUrl(properties.monitoring().lokiUrl()).build();
+        this.lokiBaseUrl = properties.monitoring().lokiUrl();
+        this.restClient = restClientBuilder.baseUrl(lokiBaseUrl).build();
         this.environment = properties.monitoring().environment();
         this.objectMapper = objectMapper;
     }
@@ -89,15 +92,17 @@ public class LokiQueryTool implements ZzolBotTool {
                 : String.format("{environment=\"%s\"} %s", environment, GLOBAL_LOG_FILTER);
         final long startNano = start.toEpochMilli() * 1_000_000L;
         final long endNano = end.toEpochMilli() * 1_000_000L;
-        final String encodedUri = String.format(
+        // 쿼리를 직접 인코딩한 뒤 String이 아닌 URI로 넘긴다.
+        // RestClient.uri(String)은 인자를 URI 템플릿으로 보고 한 번 더 인코딩해(% → %25),
+        // Loki가 400 "parse error ... unexpected %!(NOVERB)"로 거부했다. URI 객체는 재인코딩되지 않는다.
+        final URI uri = URI.create(lokiBaseUrl).resolve(String.format(
                 "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d",
-                URLEncoder.encode(lokiQuery, StandardCharsets.UTF_8),
-                startNano, endNano, LOG_LIMIT
-        );
+                encodeQueryValue(lokiQuery), startNano, endNano, LOG_LIMIT
+        ));
 
         try {
             final String response = restClient.get()
-                    .uri(encodedUri)
+                    .uri(uri)
                     .retrieve()
                     .body(String.class);
             return ToolExecutionResult.ok(TOOL_NAME, parseLokiResponse(response));
@@ -142,6 +147,11 @@ public class LokiQueryTool implements ZzolBotTool {
             log.warn("[ZzolBot] Loki 응답 파싱 실패, raw 응답 반환");
             return raw;
         }
+    }
+
+    private static String encodeQueryValue(String value) {
+        // URLEncoder는 공백을 '+'로 만든다. URI로 직접 넘기므로 어디서나 일관되게 해석되는 %20으로 통일한다.
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     private boolean isValidJoinCode(String joinCode) {

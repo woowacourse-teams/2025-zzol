@@ -1,0 +1,18 @@
+{
+  "name": "seed-oauth-login-failure",
+  "source": "MANUAL",
+  "question": "로그인이 안 된다는 문의가 계속 들어와요. 원인 찾아줘.",
+  "rubric": "구글 OAuth 토큰 교환이 401 Unauthorized로 실패해 로그인이 막힌 것을 근본원인으로 짚으면 정답. 외부 인증(OAuth provider) 연동 문제임을 언급하면 가점. 내부 DB/스트림 문제로 오진하면 오답.",
+  "snapshot": [
+    {
+      "toolName": "loki_logs",
+      "args": {},
+      "content": "{\"logCount\":145,\"logs\":[{\"message\":\"ERROR OAuthClient - token exchange failed: 401 Unauthorized (provider=google)\"},{\"message\":\"ERROR OAuthClient - token exchange failed: 401 Unauthorized (provider=google)\"},{\"message\":\"WARN  LoginController - authentication aborted: oauth token exchange failed\"}]}"
+    },
+    {
+      "toolName": "loki_logs",
+      "args": { "since": "1h" },
+      "content": "{\"logCount\":145,\"logs\":[{\"message\":\"ERROR OAuthClient - token exchange failed: 401 Unauthorized (provider=google)\"},{\"message\":\"WARN  LoginController - authentication aborted: oauth token exchange failed\"}]}"
+    }
+  ]
+}

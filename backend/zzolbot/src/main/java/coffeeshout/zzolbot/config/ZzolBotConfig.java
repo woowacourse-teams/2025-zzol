@@ -1,15 +1,15 @@
 package coffeeshout.zzolbot.config;
 
 import coffeeshout.zzolbot.domain.PiiMasker;
+import coffeeshout.zzolbot.monitor.config.MonitorProperties;
 import com.google.genai.Client;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@EnableConfigurationProperties(ZzolBotProperties.class)
+@EnableConfigurationProperties({ZzolBotProperties.class, MonitorProperties.class})
 public class ZzolBotConfig {
 
     @Bean

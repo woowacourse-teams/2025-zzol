@@ -1,0 +1,17 @@
+{
+  "name": "seed-outbox-deadletter-A4BX",
+  "question": "A4BX 방에서 게임 결과가 반영이 안 된다는 신고가 들어왔어요. 뭐가 문제예요?",
+  "rubric": "outbox에 DEAD_LETTER 상태 이벤트가 쌓여 Redis Stream 발행이 실패했음을 짚어야 한다. 근본 원인으로 MiniGameResult outbox 이벤트의 재발행 실패/적체를 언급하면 정답. room_state만 보고 정상이라 답하면 오답.",
+  "snapshot": [
+    {
+      "toolName": "room_state",
+      "args": { "joinCode": "A4BX" },
+      "content": "{\"state\":\"PLAYING\",\"players\":3,\"miniGameQueue\":[\"CARD_GAME\"]}"
+    },
+    {
+      "toolName": "outbox_events",
+      "args": { "joinCode": "A4BX" },
+      "content": "[{\"id\":1011,\"status\":\"DEAD_LETTER\",\"type\":\"MiniGameResult\",\"retryCount\":5},{\"id\":1012,\"status\":\"DEAD_LETTER\",\"type\":\"MiniGameResult\",\"retryCount\":5}]"
+    }
+  ]
+}

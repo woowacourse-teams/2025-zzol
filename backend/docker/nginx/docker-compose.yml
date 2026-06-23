@@ -10,12 +10,20 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    # ADR-0032: 내부 리스너는 호스트 미노출(expose만) — 도커 네트워크 내부에서만 도달.
+    #   8889: prod(alertmanager → nginx:8889), 8890: dev 웹훅 수동 테스트(postmortem 0003).
+    expose:
+      - "8889"
+      - "8890"
     networks:
       - zzol-network
+      - monitoring-network   # ADR-0032: alertmanager(monitoring-network) → nginx 내부 리스너 도달용
     restart: unless-stopped
     environment:
-      - TZ=Asia/Seoul  
+      - TZ=Asia/Seoul
 
 networks:
   zzol-network:
     external: true
+  monitoring-network:
+    external: true   # monitoring 스택이 생성(name: monitoring-network)

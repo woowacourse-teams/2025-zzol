@@ -31,8 +31,9 @@ public class RedisStreamTool implements ZzolBotTool {
 
     @Override
     public String description() {
-        return "모든 Redis Stream 키별 현재 메시지 적재량(XLEN)을 조회한다. " +
-                "특정 방 처리 당시 스트림이 밀려 있었는지 진단할 때 사용한다.";
+        return "모든 Redis Stream 키별 현재 길이(XLEN)를 조회한다. " +
+                "XLEN은 XADD MAXLEN 트리밍으로 항상 일정 수준을 유지하므로 처리 지연(lag) 지표가 아니다. " +
+                "처리 지연·backpressure는 prometheus_query의 컨슈머 스레드풀 큐 깊이/lag 메트릭으로 확인한다.";
     }
 
     @Override

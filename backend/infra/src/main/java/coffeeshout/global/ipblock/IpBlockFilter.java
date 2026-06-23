@@ -7,6 +7,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +66,18 @@ public class IpBlockFilter extends OncePerRequestFilter {
             return;
         }
         final Ip ip = clientIp.get();
+
+        // 사설/내부 IP(프록시·헬스체크·내부 서비스)는 클라이언트가 아니므로 차단·카운트 대상에서 제외한다.
+        // 프록시 뒤에서 getRemoteAddr()는 항상 내부 IP이며, 이를 차단하면 nginx 경유 트래픽 전체가 막혀
+        // 장애로 번진다(postmortem 0003). 내부 IP의 악성 경로 접근은 프록시/XFF 설정 이상 신호이므로
+        // 차단 없이 경고만 남기고 통과시킨다.
+        if (isInternalIp(ip.value())) {
+            if (maliciousPathMatcher.isMalicious(uri)) {
+                log.warn("내부 IP에서 악성 경로 접근 — 차단하지 않고 통과(프록시/XFF 설정 점검 필요): ip={} uri={}", ip, uri);
+            }
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // 악성 경로는 예외 경로여도 항상 차단 (/admin.php 등 스캐너 패턴)
         if (maliciousPathMatcher.isMalicious(uri)) {
@@ -145,5 +159,51 @@ public class IpBlockFilter extends OncePerRequestFilter {
 
     private String getClientIp(HttpServletRequest request) {
         return request.getRemoteAddr();
+    }
+
+    /**
+     * 사설(RFC1918)·루프백·링크로컬·CGNAT(RFC6598)·IPv6 ULA(RFC4193) IP 여부.
+     * {@link Ip} 검증을 통과한 IP 리터럴만 전달되므로 {@link InetAddress#getByName}은 DNS 조회를 하지 않는다.
+     */
+    private boolean isInternalIp(String ip) {
+        try {
+            return isInternalAddress(InetAddress.getByName(ip));
+        } catch (UnknownHostException e) {
+            return false;
+        }
+    }
+
+    private boolean isInternalAddress(InetAddress address) {
+        return address.isLoopbackAddress()
+                || address.isSiteLocalAddress()
+                || address.isLinkLocalAddress()
+                || address.isAnyLocalAddress()
+                || isCarrierGradeNat(address)
+                || isUniqueLocalIpv6(address);
+    }
+
+    /**
+     * 100.64.0.0/10 (RFC 6598 CGNAT). 클라우드·k8s 프록시가 사용할 수 있으나
+     * {@link InetAddress#isSiteLocalAddress()}는 포함하지 않으므로 직접 판정한다.
+     */
+    private boolean isCarrierGradeNat(InetAddress address) {
+        final byte[] bytes = address.getAddress();
+        if (bytes.length != 4) {
+            return false;
+        }
+        final int first = bytes[0] & 0xFF;
+        final int second = bytes[1] & 0xFF;
+        return first == 100 && second >= 64 && second <= 127;
+    }
+
+    /**
+     * fc00::/7 (RFC 4193 IPv6 Unique Local Address). 첫 바이트가 0xFC 또는 0xFD.
+     */
+    private boolean isUniqueLocalIpv6(InetAddress address) {
+        final byte[] bytes = address.getAddress();
+        if (bytes.length != 16) {
+            return false;
+        }
+        return (bytes[0] & 0xFE) == 0xFC;
     }
 }

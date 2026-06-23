@@ -289,8 +289,10 @@ class IpBlockFilterTest {
                 "172.21.0.5",   // RFC1918 (172.16/12) — postmortem 0003 사고 IP
                 "192.168.0.1",  // RFC1918 (192.168/16)
                 "169.254.0.1",  // 링크로컬
-                "100.64.0.1",   // CGNAT (RFC6598)
+                "100.64.0.1",   // CGNAT (RFC6598) 시작 경계
+                "100.127.255.255", // CGNAT (RFC6598) 끝 경계
                 "fd00::1",      // IPv6 ULA (RFC4193)
+                "::1",          // IPv6 루프백
         })
         void 내부_IP는_차단_검사와_카운트_없이_통과한다(String internalIp) throws Exception {
             filter.doFilter(요청(new Ip(internalIp), NORMAL_PATH), new MockHttpServletResponse(), filterChain);
@@ -319,6 +321,19 @@ class IpBlockFilterTest {
 
             then(ipBlockStore).should(never()).blockImmediately(any());
             then(filterChain).should().doFilter(any(), any());
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {
+                "100.63.255.255",  // CGNAT(100.64/10) 직전 — 공인 IP
+                "100.128.0.1",     // CGNAT(100.64/10) 직후 — 공인 IP
+        })
+        void CGNAT_경계_밖_공인_IP는_내부로_취급하지_않고_차단_검사를_수행한다(String externalIp) throws Exception {
+            final Ip ip = new Ip(externalIp);
+
+            filter.doFilter(요청(ip, NORMAL_PATH), new MockHttpServletResponse(), filterChain);
+
+            then(ipBlockStore).should().isBlocked(ip);
         }
     }
 

@@ -19,13 +19,13 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
 
-@Disabled("gemini-3.5-flash 모델 연결 확인용 수동 테스트 — 확인 후 삭제")
+@Disabled("폴백 모델 목록(gemini-3-flash, gemini-3.5-flash, gemini-2.5-flash) 연결·200 응답 확인용 수동 테스트 — 실제 GEMINI_API_KEY 필요")
 class GeminiNicknameAuditorConnectivityTest {
 
     private static final String API_KEY = System.getenv("GEMINI_API_KEY");
     private static final NicknameAuditProperties PROPERTIES = new NicknameAuditProperties(
             API_KEY,
-            "gemini-3.5-flash",
+            List.of("gemini-3-flash", "gemini-3.5-flash", "gemini-2.5-flash"),
             0.85,
             100,
             20

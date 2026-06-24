@@ -4,7 +4,9 @@
 
 ### 보호 브랜치 (직접 push·commit 금지)
 
-`be/dev`, `be/prod`, `fe/dev`, `fe/prod`, `main`, `master`
+`dev`, `be/dev`, `be/prod`, `fe/dev`, `fe/prod`, `main`, `master`
+
+> `dev`는 2026-06-25 신설된 BE+FE 통합 브랜치다(be/dev backend + fe/dev frontend). 이제 풀스택 작업은 `dev`에서 분기해 `dev`로 PR한다.
 
 이 브랜치들의 변경은 **PR로만** 반영한다. Claude는 어떤 경우에도 이 브랜치로 직접 push하거나, 이 브랜치를 체크아웃해 직접 커밋하지 않는다.
 

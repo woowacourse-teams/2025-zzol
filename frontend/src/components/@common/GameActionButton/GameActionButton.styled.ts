@@ -76,7 +76,7 @@ export const NumberBadge = styled.div`
   box-shadow: 1px 1px 4px ${({ theme }) => theme.color.point[500]};
 `;
 
-export const InfoButton = styled.button<Pick<Props, '$isSelected'>>`
+export const InfoButton = styled.span<Pick<Props, '$isSelected'>>`
   position: absolute;
   top: 6px;
   right: 6px;
@@ -103,7 +103,7 @@ export const InfoButton = styled.button<Pick<Props, '$isSelected'>>`
   }
 `;
 
-export const SettingsButton = styled.button<Pick<Props, '$isSelected'>>`
+export const SettingsButton = styled.span<Pick<Props, '$isSelected'>>`
   position: absolute;
   bottom: 6px;
   right: 6px;

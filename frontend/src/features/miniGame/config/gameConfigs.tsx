@@ -4,6 +4,8 @@ import RacingGameDescription1 from '@/assets/racing_game_desc1.svg';
 import RacingGameDescription2 from '@/assets/racing_game_desc2.svg';
 import BlockStackingDescription1 from '@/assets/block_stacking_desc1.svg';
 import BlockStackingDescription2 from '@/assets/block_stacking_desc2.svg';
+import NunchiGameDescription1 from '@/assets/nunchi_game_desc1.svg';
+import NunchiGameDescription2 from '@/assets/nunchi-game-icon.svg';
 import CardGameProvider from '@/contexts/CardGame/CardGameProvider';
 import RacingGameProvider from '@/contexts/RacingGame/RacingGameProvider';
 import SpeedTouchGameProvider from '@/contexts/SpeedTouchGame/SpeedTouchGameProvider';
@@ -26,6 +28,10 @@ import LadderGameDescription1 from '@/assets/ladder_game_desc1.svg';
 import LadderGameDescription2 from '@/assets/ladder_game_desc2.svg';
 import LadderGameReadyPage from '../ladderGame/pages/LadderGameReadyPage';
 import LadderGamePlayPage from '../ladderGame/pages/LadderGamePlayPage';
+import NunchiGameProvider from '@/contexts/NunchiGame/NunchiGameProvider';
+import NunchiGameReadyPage from '../nunchiGame/pages/NunchiGameReadyPage';
+import NunchiGamePlayPage from '../nunchiGame/pages/NunchiGamePlayPage';
+import NunchiGameResultContent from '../nunchiGame/pages/NunchiGameResultPage';
 
 export type SlideConfig = {
   textLines: string[];
@@ -38,6 +44,13 @@ export type GameConfig = {
   ReadyPage: ComponentType;
   slides: SlideConfig[];
   PlayPage: ComponentType;
+  /**
+   * 결과 화면의 **본문(Layout.Content) 슬롯만** 교체하는 게임 전용 결과 컴포넌트(선택).
+   * 미지정 시 공유 ScoreBoardResultList(rank+score 나열)가 렌더된다.
+   * 배너·룰렛 진행 버튼·룰렛 구독은 공유 MiniGameResultPage 가 유지하므로
+   * 게임 전용 결과 뷰가 룰렛 흐름을 깨지 않는다(nunchi 3계층 결과 — ADR-0031 N7).
+   */
+  ResultContent?: ComponentType;
 };
 
 export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
@@ -138,5 +151,23 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
       },
     ],
     PlayPage: LadderGamePlayPage,
+  },
+  NUNCHI_GAME: {
+    Provider: NunchiGameProvider,
+    ReadyPage: NunchiGameReadyPage,
+    slides: [
+      {
+        textLines: ['눈치껏 한 명씩 누르면', '누른 숫자가 그대로 내 순위!'],
+        imageSrc: NunchiGameDescription1,
+        className: 'slide-first',
+      },
+      {
+        textLines: ['여럿이 동시에 누르면', '꼴찌 순위로 밀려요'],
+        imageSrc: NunchiGameDescription2,
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: NunchiGamePlayPage,
+    ResultContent: NunchiGameResultContent,
   },
 };

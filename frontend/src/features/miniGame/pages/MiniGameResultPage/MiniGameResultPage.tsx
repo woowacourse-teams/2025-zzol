@@ -19,6 +19,7 @@ import * as S from './MiniGameResultPage.styled';
 import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
 import { useWebSocketSubscription } from '@/apis/websocket/hooks/useWebSocketSubscription';
 import LocalErrorBoundary from '@/components/@common/ErrorBoundary/LocalErrorBoundary';
+import { GAME_CONFIGS } from '../../config/gameConfigs';
 
 type PlayerRank = {
   playerName: string;
@@ -68,6 +69,10 @@ const MiniGameResultPage = () => {
 
   if (!miniGameType) return <div>잘못된 미니게임 타입입니다.</div>;
 
+  // 게임 전용 결과 본문이 있으면 그것을, 없으면 공유 스코어보드를 Content 슬롯에 렌더한다.
+  // 배너·룰렛 진행 버튼·룰렛 구독은 모든 게임 공통이므로 여기서 유지한다(룰렛 흐름 보존).
+  const ResultContent = GAME_CONFIGS[miniGameType]?.ResultContent;
+
   return (
     <Layout>
       <Layout.Banner height="30%">
@@ -81,7 +86,11 @@ const MiniGameResultPage = () => {
       </Layout.Banner>
       <Layout.Content>
         <LocalErrorBoundary>
-          <ScoreBoardResultList joinCode={joinCode} miniGameType={miniGameType} />
+          {ResultContent ? (
+            <ResultContent />
+          ) : (
+            <ScoreBoardResultList joinCode={joinCode} miniGameType={miniGameType} />
+          )}
         </LocalErrorBoundary>
       </Layout.Content>
       <Layout.ButtonBar>

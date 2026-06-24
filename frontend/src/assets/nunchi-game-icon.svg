@@ -1,0 +1,69 @@
+<svg width="166" height="120" viewBox="0 0 166 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Character clip path template (local coordinate space of character: 0 to 200) -->
+    <clipPath id="bodyClip">
+      <path d="M20 100 A80 81 0 0 1 180 100 L156 220 L44 220 Z"/>
+    </clipPath>
+
+    <!-- Clip path for the single rounded rectangular background box -->
+    <clipPath id="boxClip">
+      <rect x="10" y="15" width="146" height="90" rx="20"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background rounded rectangular box -->
+  <rect x="10" y="15" width="146" height="90" rx="20" fill="#FD6C6E"/>
+
+  <!-- Left Character (inside the Background Box - shifted left to hide outer 30%) -->
+  <g clip-path="url(#boxClip)">
+    <g transform="translate(-14, 16) scale(0.40) rotate(12, 100, 110)">
+      <!-- White body + ears -->
+      <path d="M20 100a80 81 0 0 1 160 0l-24 120H44Z" fill="#FFFFFF"/>
+      <circle cx="22" cy="100" r="12" fill="#FFFFFF"/>
+      <circle cx="178" cy="100" r="12" fill="#FFFFFF"/>
+      
+      <!-- Cup sleeve (dark brown) -->
+      <g clip-path="url(#bodyClip)">
+        <path d="M0 135 Q100 70 200 135 L170 210 L30 210 Z" fill="#4A0F0B" stroke="#4A0F0B" stroke-width="0.5" stroke-linejoin="round" paint-order="stroke fill"/>
+      </g>
+      
+      <!-- Eyes looking to the RIGHT (glancing sideways) -->
+      <ellipse cx="88" cy="68" rx="4.5" ry="8.5" fill="#000000"/>
+      <ellipse cx="138" cy="68" rx="4.5" ry="8.5" fill="#000000"/>
+      
+      <!-- Straw -->
+      <rect x="95" y="-1" width="10" height="25" fill="#FFFFFF" rx="3" transform="rotate(30 100 19)"/>
+      
+      <!-- Sweat drop on the outer LEFT temple -->
+      <path d="M64 55c0-4.4 3-8 3-8s3 3.6 3 8a3 3 0 1 1-6 0z" fill="#48DBFB"/>
+    </g>
+  </g>
+
+  <!-- Right Character (inside the Background Box - shifted right to hide outer 30%) -->
+  <g clip-path="url(#boxClip)">
+    <g transform="translate(100, 16) scale(0.40) rotate(-12, 100, 110)">
+      <!-- White body + ears -->
+      <path d="M20 100a80 81 0 0 1 160 0l-24 120H44Z" fill="#FFFFFF"/>
+      <circle cx="22" cy="100" r="12" fill="#FFFFFF"/>
+      <circle cx="178" cy="100" r="12" fill="#FFFFFF"/>
+      
+      <!-- Cup sleeve (dark brown) -->
+      <g clip-path="url(#bodyClip)">
+        <path d="M0 135 Q100 70 200 135 L170 210 L30 210 Z" fill="#4A0F0B" stroke="#4A0F0B" stroke-width="0.5" stroke-linejoin="round" paint-order="stroke fill"/>
+      </g>
+      
+      <!-- Eyes looking to the LEFT (glancing sideways) -->
+      <ellipse cx="62" cy="68" rx="4.5" ry="8.5" fill="#000000"/>
+      <ellipse cx="112" cy="68" rx="4.5" ry="8.5" fill="#000000"/>
+      
+      <!-- Straw -->
+      <rect x="95" y="-1" width="10" height="25" fill="#FFFFFF" rx="3" transform="rotate(30 100 19)"/>
+      
+      <!-- Sweat drop on the outer RIGHT temple -->
+      <path d="M136 55c0-4.4 3-8 3-8s3 3.6 3 8a3 3 0 1 1-6 0z" fill="#48DBFB"/>
+    </g>
+  </g>
+
+  <!-- Single sharp clash spark in the center (clean and simple, not flowery) -->
+  <path d="M 83,38 L 86.5,46.5 L 95,50 L 86.5,53.5 L 83,62 L 79.5,53.5 L 71,50 L 79.5,46.5 Z" fill="#FEF9C2"/>
+</svg>

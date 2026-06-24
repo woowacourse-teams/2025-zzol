@@ -1,8 +1,8 @@
 ---
 description: 미니게임 신규 추가 또는 수정 시 디렉터리 구조, Context 위치, GAME_CONFIGS 등록, MiniGameType 추가 절차를 자동 안내한다.
 paths:
-  - "src/features/miniGame/**"
-  - "src/contexts/*Game*/**"
+  - 'src/features/miniGame/**'
+  - 'src/contexts/*Game*/**'
 allowed-tools: Read, Bash
 ---
 
@@ -126,11 +126,11 @@ Context 위치 패턴: `src/contexts/<PascalCase>Game/<PascalCase>GameProvider.t
 
 ## 네이밍 컨벤션
 
-| 항목 | 형식 | 예 |
-|---|---|---|
-| 디렉터리 | camelCase | `cardGame`, `racingGame` |
-| Context 파일 | PascalCase | `CardGameContext.ts` |
-| Provider 파일 | PascalCase | `CardGameProvider.tsx` |
-| 훅 파일 | `use` + PascalCase | `useCardGameActions.ts` |
-| 페이지 파일 | PascalCase + `Page` | `CardGameReadyPage.tsx` |
-| MiniGameType 키 | UPPER_SNAKE_CASE | `CARD_GAME` |
+| 항목            | 형식                | 예                       |
+| --------------- | ------------------- | ------------------------ |
+| 디렉터리        | camelCase           | `cardGame`, `racingGame` |
+| Context 파일    | PascalCase          | `CardGameContext.ts`     |
+| Provider 파일   | PascalCase          | `CardGameProvider.tsx`   |
+| 훅 파일         | `use` + PascalCase  | `useCardGameActions.ts`  |
+| 페이지 파일     | PascalCase + `Page` | `CardGameReadyPage.tsx`  |
+| MiniGameType 키 | UPPER_SNAKE_CASE    | `CARD_GAME`              |

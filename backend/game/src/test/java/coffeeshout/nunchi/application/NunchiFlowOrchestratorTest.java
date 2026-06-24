@@ -68,7 +68,8 @@ class NunchiFlowOrchestratorTest {
                 Duration.ofMillis(2000),  // collisionCooldown
                 Duration.ofMillis(10000), // idleTimeout
                 Duration.ofMillis(30000), // hardCap
-                Duration.ofMillis(1000)   // resultDelay
+                Duration.ofMillis(1000),  // resultDelay
+                Duration.ofMillis(10)     // allPressedDelay (캡처 스케줄러라 값 무의미, 최소로)
         );
         orchestrator = new NunchiFlowOrchestrator(
                 scheduler, timing, notifier, gameSessionService, eventPublisher);
@@ -166,8 +167,9 @@ class NunchiFlowOrchestratorTest {
     @Nested
     class 종료_멱등성 {
 
+        @DisplayName("전원 입력: 곧장 DONE이 아니라 allPressedDelay 후 DONE, 다시 resultDelay 후 이벤트(결정 5·9)")
         @Test
-        void 전원_입력_완료시_DONE은_즉시_이벤트는_resultDelay_후_한_번만_발행한다() {
+        void 전원_입력_완료시_allPressedDelay_후_DONE_다시_resultDelay_후_이벤트가_한_번씩_발행된다() {
             startAndEnterPlaying();
 
             // 일·이 충돌(2명 OUT) 후 삼 solo → 전원 입력 완료
@@ -176,7 +178,12 @@ class NunchiFlowOrchestratorTest {
             fireCooldown();
             orchestrator.handlePress(game, JOIN_CODE, 삼, T0.plusMillis(5000)); // solo → 전원 입력
 
-            // DONE은 즉시 알리되, 다음 단계 전이(MiniGameFinishedEvent)는 resultDelay까지 미뤄진다(결정 9)
+            // 마지막 입력 직후엔 곧장 DONE이 아니라 allPressedDelay 종료 타이머만 예약된다(결정 5)
+            verify(notifier, never()).notifyDone(anyString());
+            assertThat(game.isFinished()).isFalse();
+
+            // allPressedDelay 타이머 발화 → 이제 DONE 1회, 다음 단계 전이(이벤트)는 아직 resultDelay 대기(결정 9)
+            fireFinish();
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
             verify(eventPublisher, never()).publishEvent(any(MiniGameFinishedEvent.class));
             assertThat(game.isFinished()).isTrue();
@@ -193,12 +200,13 @@ class NunchiFlowOrchestratorTest {
             // 진입 시 걸린 description(이미 발화)·idle·hardCap 콜백 핸들을 캡처 — 종료 후엔 세션 제거·finished 가드로 모두 무시된다
             final List<Runnable> startupTimers = scheduler.allTasksSnapshot();
 
-            // 전원 충돌로 즉시 종료
+            // 전원 입력으로 종료
             orchestrator.handlePress(game, JOIN_CODE, 일, T0);
             orchestrator.handlePress(game, JOIN_CODE, 이, T0.plusMillis(100));
             fireCooldown();
             orchestrator.handlePress(game, JOIN_CODE, 삼, T0.plusMillis(5000));
 
+            fireFinish(); // allPressedDelay 타이머 → DONE + resultDelay 타이머 예약
             fireResult(); // resultDelay 타이머 → finalize(이벤트 발행 + 세션 제거)
 
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
@@ -268,6 +276,11 @@ class NunchiFlowOrchestratorTest {
 
     /** COLLISION_COOLDOWN 직후 예약된 쿨다운 콜백을 찾아 발화한다(마지막으로 예약된 task가 쿨다운). */
     private void fireCooldown() {
+        scheduler.lastTask().run();
+    }
+
+    /** 전원 입력 직후 예약된 allPressedDelay 종료 콜백을 발화한다(마지막으로 예약된 task가 finish). */
+    private void fireFinish() {
         scheduler.lastTask().run();
     }
 

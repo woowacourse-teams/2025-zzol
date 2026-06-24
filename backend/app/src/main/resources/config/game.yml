@@ -54,6 +54,7 @@ nunchi:
     collision-cooldown: 2000ms  # 충돌 후 재개 대기(결정 6)
     idle-timeout: 10000ms       # 무입력 자동 종료(결정 5 — 유효 입력마다 리셋, 쿨다운 중 일시정지)
     hard-cap: 30000ms           # 라운드 전체 강제 종료 안전망(결정 5)
+    all-pressed-delay: 1000ms   # 전원 입력 조기 종료 시 마지막 입력을 잠깐 보여주고 DONE으로 전이(결정 5)
     result-delay: 1000ms        # 종료(DONE) 후 결과를 잠깐 보여주고 다음 단계(SCORE_BOARD)로 전이(결정 9)
 
 roulette:

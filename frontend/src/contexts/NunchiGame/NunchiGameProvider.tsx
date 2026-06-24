@@ -59,6 +59,7 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
 
         if (msg.state === 'PLAYING') {
           setServerOffsetMs(msg.serverNowEpochMs - Date.now());
+          setPlayStartEpochMs(null); // DESCRIPTION 종료 → 계약("DESCRIPTION 동안만 non-null") 복원.
           // 재접속 스냅샷 포함: currentNumber + stood 를 그대로 반영(애니메이션 없이 상태만 — 요구사항 7).
           setCurrentNumber(msg.currentNumber);
           setStood(msg.stood);

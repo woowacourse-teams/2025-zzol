@@ -50,10 +50,10 @@ blind-timer:
 
 nunchi:
   timing:
-    description: 500ms          # IT 가속(구독 등록 후 +description 시점의 PLAYING 자동 재발행을 받기에 넉넉한 여유)
+    description: 500ms          # IT 가속(구독 등록 후 +description 시점의 READY 자동 재발행을 받기에 넉넉한 여유)
+    ready: 500ms               # IT 가속(곧 시작 카운트다운 — +ready 시점에 PLAYING 자동 재발행)
     number-window: 300ms        # 동시 판정 윈도우는 프로덕션과 동일(충돌 판정 규칙이라 단축 시 의미 변질)
     collision-cooldown: 500ms   # IT 가속
     idle-timeout: 500ms         # IT 가속
     hard-cap: 3000ms            # IT 가속(idle/cooldown 합보다 넉넉한 상한이면 충분)
     all-pressed-delay: 10ms     # IT 가속(전원 입력 후 DONE 전이 대기 — 값 자체는 무의미, 최소로)
-    result-delay: 200ms         # IT 가속(DONE 후 다음 단계 전이 대기)

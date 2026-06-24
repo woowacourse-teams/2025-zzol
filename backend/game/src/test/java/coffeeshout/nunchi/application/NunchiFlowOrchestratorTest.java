@@ -64,11 +64,11 @@ class NunchiFlowOrchestratorTest {
 
         final NunchiTimingProperties timing = new NunchiTimingProperties(
                 Duration.ofMillis(2000),  // description
+                Duration.ofMillis(2000),  // ready
                 Duration.ofMillis(300),   // numberWindow
                 Duration.ofMillis(2000),  // collisionCooldown
                 Duration.ofMillis(10000), // idleTimeout
                 Duration.ofMillis(30000), // hardCap
-                Duration.ofMillis(1000),  // resultDelay
                 Duration.ofMillis(10)     // allPressedDelay (캡처 스케줄러라 값 무의미, 최소로)
         );
         orchestrator = new NunchiFlowOrchestrator(
@@ -79,12 +79,13 @@ class NunchiFlowOrchestratorTest {
     }
 
     /**
-     * startFlow 후 description 타이머(인덱스 0)를 발화해 PLAYING으로 진입시킨다. 이 시점에 idle(인덱스 1)·
-     * hardCap(인덱스 2) 타이머가 예약되고 press를 받을 수 있다 — 입력 분기 테스트의 공통 전제.
+     * startFlow 후 description 타이머(인덱스 0)·ready 타이머(인덱스 1)를 차례로 발화해 PLAYING으로 진입시킨다.
+     * 이 시점에 idle(인덱스 2)·hardCap(인덱스 3) 타이머가 예약되고 press를 받을 수 있다 — 입력 분기 테스트의 공통 전제.
      */
     private void startAndEnterPlaying() {
         orchestrator.startFlow(game, JOIN_CODE);
-        scheduler.taskAt(0).run(); // onDescriptionEnd → PLAYING + idle + hardCap
+        scheduler.taskAt(0).run(); // onDescriptionEnd → READY + ready 타이머
+        scheduler.taskAt(1).run(); // onReadyEnd → PLAYING + idle + hardCap
     }
 
     @Nested
@@ -94,21 +95,35 @@ class NunchiFlowOrchestratorTest {
         void startFlow는_DESCRIPTION을_브로드캐스트하고_description_타이머만_건다() {
             orchestrator.startFlow(game, JOIN_CODE);
 
-            verify(notifier).notifyDescription(eq(JOIN_CODE.getValue()), anyLong(), anyLong());
-            // 설명 단계에선 PLAYING·idle·hardCap을 아직 걸지 않는다 — description 타이머 하나뿐
+            verify(notifier).notifyDescription(eq(JOIN_CODE.getValue()), anyLong());
+            // 설명 단계에선 READY·PLAYING·idle·hardCap을 아직 걸지 않는다 — description 타이머 하나뿐
+            verify(notifier, never()).notifyReady(anyString(), anyLong(), anyLong());
             verify(notifier, never()).notifyPlaying(anyString(), anyInt(), any(),
                     anyLong(), anyLong(), anyLong());
             assertThat(scheduler.scheduledCount()).isEqualTo(1);
         }
 
         @Test
-        void description_종료시_PLAYING을_브로드캐스트하고_idle과_하드캡_타이머를_건다() {
+        void description_종료시_READY를_브로드캐스트하고_ready_타이머만_건다() {
+            orchestrator.startFlow(game, JOIN_CODE);
+            scheduler.taskAt(0).run(); // onDescriptionEnd → READY
+
+            // READY는 playStartEpochMs(PLAYING 시작 절대 시각)를 싣는다(결정 9)
+            verify(notifier).notifyReady(eq(JOIN_CODE.getValue()), anyLong(), anyLong());
+            // 카운트다운 단계에선 PLAYING·idle·hardCap을 아직 걸지 않는다 — description(0) + ready(1)
+            verify(notifier, never()).notifyPlaying(anyString(), anyInt(), any(),
+                    anyLong(), anyLong(), anyLong());
+            assertThat(scheduler.scheduledCount()).isEqualTo(2);
+        }
+
+        @Test
+        void ready_종료시_PLAYING을_브로드캐스트하고_idle과_하드캡_타이머를_건다() {
             startAndEnterPlaying();
 
             verify(notifier).notifyPlaying(eq(JOIN_CODE.getValue()), eq(1), any(),
                     anyLong(), anyLong(), anyLong());
-            // description(0) + idle(1) + hardCap(2)
-            assertThat(scheduler.scheduledCount()).isEqualTo(3);
+            // description(0) + ready(1) + idle(2) + hardCap(3)
+            assertThat(scheduler.scheduledCount()).isEqualTo(4);
         }
     }
 
@@ -167,9 +182,9 @@ class NunchiFlowOrchestratorTest {
     @Nested
     class 종료_멱등성 {
 
-        @DisplayName("전원 입력: 곧장 DONE이 아니라 allPressedDelay 후 DONE, 다시 resultDelay 후 이벤트(결정 5·9)")
+        @DisplayName("전원 입력: 곧장 DONE이 아니라 allPressedDelay 후 DONE + 이벤트 한 번씩(결정 5)")
         @Test
-        void 전원_입력_완료시_allPressedDelay_후_DONE_다시_resultDelay_후_이벤트가_한_번씩_발행된다() {
+        void 전원_입력_완료시_allPressedDelay_후_DONE과_이벤트가_한_번씩_발행된다() {
             startAndEnterPlaying();
 
             // 일·이 충돌(2명 OUT) 후 삼 solo → 전원 입력 완료
@@ -182,15 +197,11 @@ class NunchiFlowOrchestratorTest {
             verify(notifier, never()).notifyDone(anyString());
             assertThat(game.isFinished()).isFalse();
 
-            // allPressedDelay 타이머 발화 → 이제 DONE 1회, 다음 단계 전이(이벤트)는 아직 resultDelay 대기(결정 9)
+            // allPressedDelay 타이머 발화 → DONE 1회 + 곧바로 finalize(roundCount 확정 + 이벤트 1회 발행, ADR-0025 순서 불변식)
             fireFinish();
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
-            verify(eventPublisher, never()).publishEvent(any(MiniGameFinishedEvent.class));
-            assertThat(game.isFinished()).isTrue();
-
-            // resultDelay 타이머 발화 → roundCount 확정 + MiniGameFinishedEvent 1회 발행(ADR-0025 순서 불변식)
-            fireResult();
             verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
+            assertThat(game.isFinished()).isTrue();
         }
 
         @DisplayName("종료 후 늦게 발화한 idle/하드캡 콜백은 다시 종료하지 않는다(멱등)")
@@ -206,8 +217,7 @@ class NunchiFlowOrchestratorTest {
             fireCooldown();
             orchestrator.handlePress(game, JOIN_CODE, 삼, T0.plusMillis(5000));
 
-            fireFinish(); // allPressedDelay 타이머 → DONE + resultDelay 타이머 예약
-            fireResult(); // resultDelay 타이머 → finalize(이벤트 발행 + 세션 제거)
+            fireFinish(); // allPressedDelay 타이머 → DONE + finalize(이벤트 발행 + 세션 제거)
 
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
             verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
@@ -224,8 +234,8 @@ class NunchiFlowOrchestratorTest {
         void idle_타임아웃이_먼저_발화하면_미입력자를_MISS로_종료한다() {
             startAndEnterPlaying();
 
-            // PLAYING 진입 후 예약 순서는 description(0)=idle(1)=hardCap(2) — idle(인덱스 1)을 강제 발화
-            scheduler.taskAt(1).run();
+            // PLAYING 진입 후 예약 순서는 description(0)·ready(1)·idle(2)·hardCap(3) — idle(인덱스 2)을 강제 발화
+            scheduler.taskAt(2).run();
 
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
             assertThat(game.isFinished()).isTrue();
@@ -235,7 +245,7 @@ class NunchiFlowOrchestratorTest {
         @Test
         void 대체된_stale_idle_타이머는_종료를_트리거하지_않는다() {
             startAndEnterPlaying();
-            final Runnable staleIdle = scheduler.taskAt(1); // PLAYING 진입 시 건 idle(인덱스 1)
+            final Runnable staleIdle = scheduler.taskAt(2); // PLAYING 진입 시 건 idle(인덱스 2)
 
             // 유효 press가 idle을 리셋(scheduleIdle이 새 idle을 걸고 generation을 올림)
             orchestrator.handlePress(game, JOIN_CODE, 일, T0);
@@ -281,11 +291,6 @@ class NunchiFlowOrchestratorTest {
 
     /** 전원 입력 직후 예약된 allPressedDelay 종료 콜백을 발화한다(마지막으로 예약된 task가 finish). */
     private void fireFinish() {
-        scheduler.lastTask().run();
-    }
-
-    /** 종료 시 마지막으로 예약된 resultDelay 타이머를 발화한다(finalize — roundCount 확정 + 이벤트 발행). */
-    private void fireResult() {
         scheduler.lastTask().run();
     }
 

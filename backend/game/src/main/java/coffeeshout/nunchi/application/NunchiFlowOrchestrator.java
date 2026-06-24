@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 /**
  * 눈치게임 Flow(ADR-0031 — 난이도 최상). 현 {@code FlowScheduler} SPI는 단발·취소불가라 윈도우(300ms)·
  * 쿨다운·idle·하드캡을 동적으로 cancel·reschedule할 수 없다(N2). 따라서 raw {@link TaskScheduler}를
- * 직접 주입하고 joinCode별 {@link NunchiSession}에 5개 타이머 future(설명·윈도우·idle·쿨다운·하드캡)를
+ * 직접 주입하고 joinCode별 {@link NunchiSession}에 6개 타이머 future(설명·ready·윈도우·idle·쿨다운·하드캡)를
  * 들어 미세 제어한다. 세션은 자기 {@link NunchiGame}·{@link JoinCode}도 함께 들어, private 흐름 메서드는
  * {@code session} 하나만 받는다(게임·코드를 매 호출 줄줄이 넘기지 않는다).
  *
@@ -80,21 +80,35 @@ public class NunchiFlowOrchestrator {
 
         synchronized (session.lock) {
             // 규칙 설명 단계(다른 미니게임과 동일). 이 구간엔 idle·하드캡·윈도우 타이머를 걸지 않고
-            // press도 도메인이 거부한다. description이 끝나면 onDescriptionEnd가 PLAYING으로 전이한다.
+            // press도 도메인이 거부한다. description이 끝나면 onDescriptionEnd가 READY로 전이한다.
             final long now = System.currentTimeMillis();
-            final long playStartEpochMs = now + timing.description().toMillis();
             // 알림은 격리한다 — 던지면 아래 description 타이머가 안 걸려 종료 경로 없는 DESCRIPTION에 영구 고착된다.
-            notifyQuietly(() -> notifier.notifyDescription(code, now, playStartEpochMs));
+            notifyQuietly(() -> notifier.notifyDescription(code, now));
             session.description = schedule(() -> onDescriptionEnd(code), timing.description());
         }
     }
 
-    /** 규칙 설명 종료 — PLAYING으로 전이하고 idle·하드캡 타이머를 건다(시작 시 한 번, 재예약 없음). */
+    /**
+     * 규칙 설명 종료 — READY(곧 시작 카운트다운)로 전이한다. playStartEpochMs(= PLAYING 시작 절대 시각)를
+     * 실어 보내, 전 클라이언트가 같은 시각에 동시 진입하도록 한다. ready 타이머가 끝나면 onReadyEnd가 PLAYING으로
+     * 전이한다. 이 구간도 입력을 받지 않으므로(도메인 거부) idle·하드캡·윈도우 타이머는 걸지 않는다.
+     */
     private void onDescriptionEnd(String code) {
+        withLiveSession(code, session -> {
+            session.game.startReady();
+            final long now = System.currentTimeMillis();
+            final long playStartEpochMs = now + timing.ready().toMillis();
+            notifyQuietly(() -> notifier.notifyReady(code, now, playStartEpochMs));
+            session.ready = schedule(() -> onReadyEnd(code), timing.ready());
+        });
+    }
+
+    /** 곧 시작 카운트다운 종료 — PLAYING으로 전이하고 idle·하드캡 타이머를 건다(시작 시 한 번, 재예약 없음). */
+    private void onReadyEnd(String code) {
         withLiveSession(code, session -> {
             final NunchiGame game = session.game;
             game.startPlaying();
-            // 하드캡은 PLAYING 시작 시점부터 잰다(설명 시간은 라운드 상한에 포함하지 않음 — 결정 8 고정 상한).
+            // 하드캡은 PLAYING 시작 시점부터 잰다(설명·카운트다운 시간은 라운드 상한에 포함하지 않음 — 결정 8 고정 상한).
             final long now = System.currentTimeMillis();
             session.hardCapEpochMs = now + timing.hardCap().toMillis();
             scheduleIdle(session); // idleDeadlineEpochMs 저장 포함 — notify 전에 걸어 종료 경로 보장
@@ -230,9 +244,7 @@ public class NunchiFlowOrchestrator {
     }
 
     /**
-     * 멱등 종료. 호출자는 락을 보유한 상태여야 한다. DONE은 즉시 알리되, 다음 단계(SCORE_BOARD 전이)는
-     * 결과를 잠깐 보여준 뒤 {@code resultDelay} 후에 넘어간다(결정 9 — Ladder의 RESULT 지연·BlindTimer
-     * result-delay와 동일한 "결과 보여주고 전이" 패턴).
+     * 멱등 종료. 호출자는 락을 보유한 상태여야 한다. DONE을 알린 뒤 곧바로 라운드를 확정하고 다음 단계로 넘긴다.
      */
     private void finish(NunchiSession session) {
         if (session.finished) {
@@ -244,29 +256,21 @@ public class NunchiFlowOrchestrator {
         session.game.finishByTimeout(); // pending solo 확정 + 미입력자 MISS + DONE
         notifyQuietly(() -> notifier.notifyDone(session.code));
 
-        // DONE 브로드캐스트는 즉시 나가고, 다음 단계로의 전이(roundCount 확정 + MiniGameFinishedEvent 발행)는
-        // resultDelay 만큼 미룬다. 종료는 단발(finished 가드)이라 이 타이머는 정확히 한 번 예약된다.
-        session.result = schedule(() -> finalizeGame(session.code), timing.resultDelay());
+        finalizeGame(session);
     }
 
     /**
-     * 결과 대기({@code resultDelay}) 후 라운드를 확정하고 다음 단계로 넘긴다.
+     * 라운드를 확정하고 다음 단계(SCORE_BOARD 전이)로 넘긴다. 호출자({@link #finish})는 락을 보유한 상태여야 한다.
      *
      * <p>순서 불변식(ADR-0025 결정 5): {@code finishGame()}으로 roundCount 확정·상태 복귀 후
      * {@link MiniGameFinishedEvent}를 발행한다(결과 저장·라운드 전진·확률 조정·SCORE_BOARD 전이 유발). 발행은
      * 동기로, 저장 리스너 실패가 흐름을 막지 않도록 한다 — BlockStacking/SpeedTouch 동일.
      */
-    private void finalizeGame(String code) {
-        final NunchiSession session = sessions.get(code);
-        if (session == null) {
-            return; // 이미 정리됨
-        }
-        synchronized (session.lock) {
-            final int roundCount = gameSessionService.finishGame(session.joinCode);
-            eventPublisher.publishEvent(new MiniGameFinishedEvent(
-                    code, MiniGameType.NUNCHI_GAME.name(), session.game.getResult().toRankMap(), roundCount));
-            sessions.remove(code);
-        }
+    private void finalizeGame(NunchiSession session) {
+        final int roundCount = gameSessionService.finishGame(session.joinCode);
+        eventPublisher.publishEvent(new MiniGameFinishedEvent(
+                session.code, MiniGameType.NUNCHI_GAME.name(), session.game.getResult().toRankMap(), roundCount));
+        sessions.remove(session.code);
     }
 
     private void broadcastPlaying(NunchiSession session) {
@@ -340,6 +344,7 @@ public class NunchiFlowOrchestrator {
         cancelWindow(session);
         cancelIdle(session);
         session.description = cancel(session.description);
+        session.ready = cancel(session.ready);
         session.cooldown = cancel(session.cooldown);
         session.hardCap = cancel(session.hardCap);
         session.finish = cancel(session.finish);
@@ -363,13 +368,13 @@ public class NunchiFlowOrchestrator {
         private final JoinCode joinCode;   // finalize 시 finishGame에 그대로 전달
         private final String code;         // joinCode.getValue() 캐시 — 맵 키·알림 인자로 빈번히 쓰임
         private final List<String> stood = new ArrayList<>();
-        private ScheduledFuture<?> description; // 규칙 설명 → PLAYING 전이 타이머(시작 시 한 번)
+        private ScheduledFuture<?> description; // 규칙 설명 → READY 전이 타이머(시작 시 한 번)
+        private ScheduledFuture<?> ready;       // 곧 시작 카운트다운 → PLAYING 전이 타이머(시작 시 한 번)
         private ScheduledFuture<?> window;
         private ScheduledFuture<?> idle;
         private ScheduledFuture<?> cooldown;
         private ScheduledFuture<?> hardCap;
         private ScheduledFuture<?> finish;  // 전원 입력 → allPressedDelay 후 DONE 전이 타이머(결정 5, 단발 예약)
-        private ScheduledFuture<?> result; // 종료 후 결과 대기 → 다음 단계 전이 타이머(결정 9, cancelAll 이후 단발 예약)
         private long windowGen;          // 윈도우 타이머 세대 — stale 발화 가드
         private long idleGen;            // idle 타이머 세대 — stale 발화 가드
         private long idleDeadlineEpochMs; // 실제 예약된 idle 발화 절대 시각(브로드캐스트와 일치)

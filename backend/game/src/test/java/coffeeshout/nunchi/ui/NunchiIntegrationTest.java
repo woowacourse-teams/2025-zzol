@@ -31,10 +31,10 @@ import org.springframework.beans.factory.annotation.Autowired;
  * 입력 경로 Handler→Redis Stream→Consumer→Service→Notifier가 실제로 동작하는지(아키텍처 불변 규칙)와
  * stand/state 브로드캐스트 컨트랙트(결정 8)를 검증한다.
  *
- * <p>타이밍(application-test-game.yml): description=500ms, number-window=300ms,
- * collision-cooldown=500ms, idle-timeout=500ms, hard-cap=3000ms. 시작 시 DESCRIPTION이 먼저 나가고
- * description(500ms) 뒤 PLAYING으로 전이하므로, PLAYING 이후를 보는 테스트는 {@link #awaitState}로
- * 앞선 DESCRIPTION을 흘려보낸 뒤 단언한다.
+ * <p>타이밍(application-test-game.yml): description=500ms, ready=500ms, number-window=300ms,
+ * collision-cooldown=500ms, idle-timeout=500ms, hard-cap=3000ms. 시작 시 DESCRIPTION → READY가
+ * 먼저 나가고 description+ready(1000ms) 뒤 PLAYING으로 전이하므로, PLAYING 이후를 보는 테스트는
+ * {@link #awaitState}로 앞선 DESCRIPTION·READY를 흘려보낸 뒤 단언한다.
  */
 class NunchiIntegrationTest extends GameModuleWebSocketTest {
 
@@ -74,19 +74,24 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
     class 상태_브로드캐스트_테스트 {
 
         @Test
-        void 시작하면_DESCRIPTION_먼저_그다음_PLAYING_상태를_브로드캐스트한다() {
+        void 시작하면_DESCRIPTION_READY_PLAYING_순으로_상태를_브로드캐스트한다() {
             final MessageCollector stateResponses = session.subscribe(stateUrl());
 
             startNunchiGame();
 
-            // 첫 메시지는 규칙 설명(DESCRIPTION) — playStartEpochMs로 PLAYING 시작 시각을 싣는다(결정 8)
+            // 첫 메시지는 규칙 설명(DESCRIPTION) — serverNowEpochMs만 싣는다(결정 9)
             final NunchiStateResponse description =
                     payloadAs(stateResponses.get(), NunchiStateResponse.class);
             assertThat(description.state()).isEqualTo(NunchiState.DESCRIPTION);
             assertThat(description.serverNowEpochMs()).isNotNull();
-            assertThat(description.playStartEpochMs()).isNotNull();
+            assertThat(description.playStartEpochMs()).isNull();
 
-            // description(500ms) 뒤 PLAYING으로 전이(중복 DESCRIPTION 스냅샷이 끼면 흘려보낸다)
+            // description(500ms) 뒤 READY — playStartEpochMs로 PLAYING 시작 시각을 싣는다(결정 8·9)
+            final NunchiStateResponse ready = awaitState(stateResponses, NunchiState.READY);
+            assertThat(ready.serverNowEpochMs()).isNotNull();
+            assertThat(ready.playStartEpochMs()).isNotNull();
+
+            // ready(500ms) 뒤 PLAYING으로 전이(중복 스냅샷이 끼면 흘려보낸다)
             final NunchiStateResponse playing = awaitState(stateResponses, NunchiState.PLAYING);
             assertThat(playing.currentNumber()).isEqualTo(1);
             assertThat(playing.serverNowEpochMs()).isNotNull();
@@ -100,8 +105,9 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
          * <p>프로덕션 로그(joinCode=HJ6G)에서 확인됐던 start 레이스: {@code /nunchi/state} 구독이
          * {@code 미니게임 시작됨}보다 늦게 등록돼 시작 broadcast를 구독자 0명에게 보내 유실하고, 이후 재발행이
          * 없어 FE가 멈췄다. 과거엔 구독 스냅샷 핸들러로 막았으나, DESCRIPTION 단계 도입으로 더 단순한 구조가
-         * 됐다 — 시작 broadcast(DESCRIPTION)를 놓쳐도 {@code onDescriptionEnd}가 입력과 무관하게 description
-         * 종료 시점(여기선 500ms)에 PLAYING을 <b>자동 재발행</b>하므로, 그 전에 구독만 하면 PLAYING을 받는다.
+         * 됐다 — 시작 broadcast(DESCRIPTION)를 놓쳐도 {@code onDescriptionEnd}(→ READY)·{@code onReadyEnd}
+         * (→ PLAYING)가 입력과 무관하게 각 단계 종료 시점(여기선 500ms·1000ms)에 다음 상태를 <b>자동 재발행</b>하므로,
+         * 그 전에 구독만 하면 PLAYING을 받는다.
          *
          * <p>즉 이 자동 재발행이 별도 스냅샷 인프라 없이 start 레이스를 흡수한다(게임 중 새로고침 재접속은
          * {@link WsRecoveryService}가 따로 커버 — 아래 재접속 복구 테스트).
@@ -112,7 +118,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
 
             final MessageCollector stateResponses = session.subscribe(stateUrl());
 
-            // description(500ms) 종료 시 onDescriptionEnd가 자동 재발행한 PLAYING을 받는다
+            // description→ready 종료(1000ms) 시 onReadyEnd가 자동 재발행한 PLAYING을 받는다
             final NunchiStateResponse playing = awaitState(stateResponses, NunchiState.PLAYING);
             assertThat(playing.currentNumber()).isEqualTo(1);
             assertThat(playing.idleDeadlineEpochMs()).isNotNull();
@@ -129,7 +135,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
             final MessageCollector stateResponses = session.subscribe(stateUrl());
 
             startNunchiGame();
-            awaitState(stateResponses, NunchiState.PLAYING); // DESCRIPTION→PLAYING 후에야 입력 수락
+            awaitState(stateResponses, NunchiState.PLAYING); // DESCRIPTION→READY→PLAYING 후에야 입력 수락
 
             session.send(pressCommandUrl()); // 호스트(꾹이) 단독 press
 
@@ -146,7 +152,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
             final MessageCollector stateResponses = session.subscribe(stateUrl());
 
             startNunchiGame();
-            awaitState(stateResponses, NunchiState.PLAYING); // DESCRIPTION→PLAYING 후에야 입력 수락
+            awaitState(stateResponses, NunchiState.PLAYING); // DESCRIPTION→READY→PLAYING 후에야 입력 수락
 
             // 윈도우(300ms) 안에 두 명이 누르면 충돌
             session.send(pressCommandUrl());
@@ -176,7 +182,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
             final MessageCollector stateResponses = session.subscribe(stateUrl());
 
             startNunchiGame();
-            awaitState(stateResponses, NunchiState.PLAYING); // DESCRIPTION→PLAYING 후에야 입력 수락
+            awaitState(stateResponses, NunchiState.PLAYING); // DESCRIPTION→READY→PLAYING 후에야 입력 수락
 
             session.send(pressCommandUrl());
             standResponses.get(); // stand 수신 = 복구 저장 완료(save가 broadcast 직전 실행)
@@ -196,7 +202,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
 
         /**
          * 가장 결정적인 종료 경로 — 아무도 누르지 않으면 idle 타임아웃(500ms)만으로 끝난다.
-         * 상태 토픽은 DESCRIPTION → PLAYING(1) → DONE 순으로 받는다(PLAYING 이후 중간 전이 없음).
+         * 상태 토픽은 DESCRIPTION → READY → PLAYING(1) → DONE 순으로 받는다(PLAYING 이후 중간 전이 없음).
          */
         @Test
         void 아무도_누르지_않으면_idle_타임아웃으로_DONE이_된다() {
@@ -251,7 +257,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
             final MessageCollector stateResponses = session.subscribe(stateUrl());
 
             startNunchiGame();
-            awaitState(stateResponses, NunchiState.PLAYING); // DESCRIPTION→PLAYING 후에야 입력 수락
+            awaitState(stateResponses, NunchiState.PLAYING); // DESCRIPTION→READY→PLAYING 후에야 입력 수락
 
             session.send(pressCommandUrl()); // 호스트 첫 press
             final NunchiStandResponse first =

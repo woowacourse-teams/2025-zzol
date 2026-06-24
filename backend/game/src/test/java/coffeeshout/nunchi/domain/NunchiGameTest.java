@@ -29,7 +29,8 @@ class NunchiGameTest {
     void setUp() {
         game = new NunchiGame(WINDOW_MILLIS);
         game.setUp(List.of(일, 이, 삼, 사));
-        game.startPlaying(); // DESCRIPTION → PLAYING: 이하 입력 테스트는 입력 수락 상태를 전제로 한다
+        game.startReady();   // DESCRIPTION → READY
+        game.startPlaying(); // READY → PLAYING: 이하 입력 테스트는 입력 수락 상태를 전제로 한다
     }
 
     private NunchiTier tierOf(Gamer gamer) {
@@ -68,11 +69,27 @@ class NunchiGameTest {
         }
 
         @Test
+        void startReady하면_READY로_전이하고_여전히_입력을_받지_않는다() {
+            final NunchiGame fresh = new NunchiGame(WINDOW_MILLIS);
+            fresh.setUp(List.of(일, 이, 삼, 사));
+
+            fresh.startReady();
+
+            // 곧 시작 카운트다운 중에도 아직 입력을 받지 않는다 — IGNORED로 흡수(결정 1·9)
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(fresh.getState()).isEqualTo(NunchiState.READY);
+                softly.assertThat(fresh.press(일, T0).outcome()).isEqualTo(PressOutcome.IGNORED);
+                softly.assertThat(fresh.getScores()).doesNotContainKey(일);
+            });
+        }
+
+        @Test
         void startPlaying하면_PLAYING으로_전이해_입력을_받는다() {
             final NunchiGame fresh = new NunchiGame(WINDOW_MILLIS);
             fresh.setUp(List.of(일, 이, 삼, 사));
 
-            fresh.startPlaying();
+            fresh.startReady();   // DESCRIPTION → READY
+            fresh.startPlaying(); // READY → PLAYING
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(fresh.getState()).isEqualTo(NunchiState.PLAYING);

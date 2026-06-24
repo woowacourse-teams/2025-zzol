@@ -7,12 +7,13 @@ import java.util.List;
 
 /**
  * 눈치게임 상태 브로드캐스트(ADR-0031 결정 8). 상태 머신
- * {@code DESCRIPTION → PLAYING ↔ COLLISION_COOLDOWN → DONE}을 한 DTO로 표현하고,
+ * {@code DESCRIPTION → READY → PLAYING ↔ COLLISION_COOLDOWN → DONE}을 한 DTO로 표현하고,
  * {@code @JsonInclude(NON_NULL)}로 상태별 무관 필드를 JSON에서 제외해 컨트랙트에 정확히 맞춘다.
  * 모든 타이밍은 서버 epoch ms이며 모든 메시지에 {@code serverNowEpochMs}(스큐 보정)를 싣는다.
  *
  * <ul>
- *   <li>DESCRIPTION: {@code serverNowEpochMs, playStartEpochMs}</li>
+ *   <li>DESCRIPTION: {@code serverNowEpochMs}</li>
+ *   <li>READY: {@code serverNowEpochMs, playStartEpochMs}</li>
  *   <li>PLAYING: {@code currentNumber, stood, serverNowEpochMs, idleDeadlineEpochMs, hardCapEpochMs}</li>
  *   <li>COLLISION_COOLDOWN: {@code number, collided, serverNowEpochMs, resumeAtEpochMs}</li>
  *   <li>DONE: {@code state}만</li>
@@ -32,9 +33,16 @@ public record NunchiStateResponse(
         Long playStartEpochMs
 ) {
 
-    public static NunchiStateResponse description(long serverNowEpochMs, long playStartEpochMs) {
+    public static NunchiStateResponse description(long serverNowEpochMs) {
         return new NunchiStateResponse(
                 NunchiState.DESCRIPTION, null, null,
+                null, null,
+                serverNowEpochMs, null, null, null, null);
+    }
+
+    public static NunchiStateResponse ready(long serverNowEpochMs, long playStartEpochMs) {
+        return new NunchiStateResponse(
+                NunchiState.READY, null, null,
                 null, null,
                 serverNowEpochMs, null, null, null, playStartEpochMs);
     }

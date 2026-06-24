@@ -22,13 +22,13 @@ export const useNunchiCountdown = (
   serverOffsetMs: number,
   enabled: boolean
 ): number => {
-  const [remainingMs, setRemainingMs] = useState(0);
+  // rAF 틱마다 리렌더만 트리거하고, 남은 시간은 렌더 시점에 직접 계산한다(아래 return).
+  // useState 에 값을 담아두면 deadline/enabled 변경 직후 첫 커밋이 이전 값(또는 0)으로 그려져
+  // 게이지가 한 프레임 비거나(scaleX 0·빨강) "0.0초" 만료로 깜빡인다 — 렌더 시 계산으로 그 틈을 없앤다.
+  const [, tickRerender] = useState(0);
 
   useEffect(() => {
-    if (!enabled || deadlineEpochMs == null) {
-      setRemainingMs(0);
-      return;
-    }
+    if (!enabled || deadlineEpochMs == null) return;
 
     let rafId = 0;
 
@@ -36,10 +36,9 @@ export const useNunchiCountdown = (
     // BlockStacking 의 "deadline 루프"(delta 누적이 아님)와 같은 방식이라
     // 탭 복귀 시에도 자동 보정된다 — prevTime/document.hidden 처리가 필요 없다.
     const tick = () => {
-      const remaining = Math.max(0, deadlineEpochMs - (Date.now() + serverOffsetMs));
-      setRemainingMs(remaining);
+      tickRerender((n) => n + 1);
       // 0 도달 시 루프를 멈춘다. 실제 상태 전환(종료/재개)은 서버 state 가 권위다.
-      if (remaining <= 0) return;
+      if (deadlineEpochMs - (Date.now() + serverOffsetMs) <= 0) return;
       rafId = requestAnimationFrame(tick);
     };
 
@@ -47,5 +46,6 @@ export const useNunchiCountdown = (
     return () => cancelAnimationFrame(rafId);
   }, [deadlineEpochMs, serverOffsetMs, enabled]);
 
-  return remainingMs;
+  if (!enabled || deadlineEpochMs == null) return 0;
+  return Math.max(0, deadlineEpochMs - (Date.now() + serverOffsetMs));
 };

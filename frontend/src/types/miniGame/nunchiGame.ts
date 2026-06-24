@@ -10,27 +10,43 @@
  */
 
 /**
- * 서버 state 토픽이 보내는 상태(컨트랙트): DESCRIPTION → PLAYING ↔ COLLISION_COOLDOWN → DONE (ADR 결정 8).
- * 와이어 메시지 타입(NunchiStateMessage)은 이 4개만 쓴다 — 임의 확장 금지.
+ * 서버 state 토픽이 보내는 상태(컨트랙트): DESCRIPTION → READY → PLAYING ↔ COLLISION_COOLDOWN → DONE
+ * (ADR-0031 결정 9, 2026-06-24 개정 — DESCRIPTION 과 PLAYING 사이 READY 단계 추가).
+ * 와이어 메시지 타입(NunchiStateMessage)은 이 5개만 쓴다 — 임의 확장 금지.
  */
-export type NunchiServerState = 'DESCRIPTION' | 'PLAYING' | 'COLLISION_COOLDOWN' | 'DONE';
+export type NunchiServerState = 'DESCRIPTION' | 'READY' | 'PLAYING' | 'COLLISION_COOLDOWN' | 'DONE';
 
 /**
- * Provider 의 라우팅 상태 = 서버 상태 머신과 동일(4-state). 초기값 'DESCRIPTION' 으로 첫 메시지 전까지
- * 인트로(ReadyPage)를 보여준다. 서버가 DESCRIPTION 을 playStartEpochMs(PLAYING 시작 시각)와 함께
- * 보내므로, ReadyPage 는 그 시각까지 인트로 후 play 로 전환한다(PLAYING 메시지 도착 또는 타임아웃 폴백).
+ * Provider 의 라우팅 상태 = 서버 상태 머신과 동일. 초기값 'DESCRIPTION' 으로 첫 메시지 전까지
+ * 인트로(ReadyPage)를 보여준다. 서버는 DESCRIPTION(규칙 설명) → READY(곧 시작 카운트다운,
+ * playStartEpochMs 포함) → PLAYING 순으로 보낸다. ReadyPage 는 READY 의 playStartEpochMs 까지
+ * READY→START! 카운트다운을 띄우고 그 시각에 play 로 전환한다(PLAYING 도착 또는 타임아웃 폴백).
  */
 export type NunchiGameState = NunchiServerState;
 
 /**
- * DESCRIPTION 메시지 — 게임 진입(규칙 설명 단계) / 설명 구간 재접속 스냅샷.
- * playStartEpochMs 로 PLAYING 시작 시각을 알린다. FE 는 이 시각까지 인트로를 보여주고 play 로 전환한다.
+ * DESCRIPTION 메시지 — 게임 진입(규칙 설명 단계). serverNowEpochMs 만 싣는다
+ * (playStartEpochMs 는 2026-06-24 개정으로 READY 로 이동 — 결정 9).
+ * description(예 4초) 경과 시 서버가 READY 를 자동 재발행한다.
  *
- * 예: { state:'DESCRIPTION', serverNowEpochMs:..., playStartEpochMs:... }
+ * 예: { state:'DESCRIPTION', serverNowEpochMs:... }
  */
 export type NunchiDescriptionMessage = {
   state: 'DESCRIPTION';
   /** 서버 현재 시각(시계 스큐 보정 기준). 모든 메시지에 포함. */
+  serverNowEpochMs: number;
+};
+
+/**
+ * READY 메시지 — 곧 시작 카운트다운 단계(ADR-0031 결정 9). playStartEpochMs 로 PLAYING 시작 절대
+ * 시각을 실어 FE 가 정확한 "READY → START!" 카운트다운을 그린다. ready(예 3초) 경과 시 서버가
+ * PLAYING 을 자동 재발행한다(FE 는 그 도착 또는 playStartEpochMs 타임아웃으로 play 전환).
+ *
+ * 예: { state:'READY', serverNowEpochMs:..., playStartEpochMs:... }
+ */
+export type NunchiReadyMessage = {
+  state: 'READY';
+  /** 서버 현재 시각(시계 스큐 보정 기준). */
   serverNowEpochMs: number;
   /** PLAYING 이 시작될 서버 시각(epoch ms). ReadyPage 가 이 시각에 play 로 전환한다. */
   playStartEpochMs: number;
@@ -82,6 +98,7 @@ export type NunchiDoneMessage = {
 /** `/topic/room/{joinCode}/nunchi/state` 메시지(state 필드 기준 discriminated union). */
 export type NunchiStateMessage =
   | NunchiDescriptionMessage
+  | NunchiReadyMessage
   | NunchiPlayingMessage
   | NunchiCollisionCooldownMessage
   | NunchiDoneMessage;

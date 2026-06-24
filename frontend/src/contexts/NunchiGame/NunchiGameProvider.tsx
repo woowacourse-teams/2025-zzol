@@ -30,10 +30,17 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
   const [gameState, setGameState] = useState<NunchiGameState>('DESCRIPTION');
   const [currentNumber, setCurrentNumber] = useState(1);
   const [stood, setStood] = useState<string[]>([]);
+  // 닉네임 → 누른 숫자(무대 번호 뱃지용). stand 이벤트로만 채워지며 리셋하지 않는다
+  // (쿨다운 후 재개 PLAYING 에서 기존 수집값을 잃지 않도록 — 재접속 시엔 비어 시작).
+  const [standNumbers, setStandNumbers] = useState<Record<string, number>>({});
   const [collided, setCollided] = useState<string[]>([]);
+  // 이번 충돌 그룹(가장 최근 COLLISION_COOLDOWN 메시지의 collided). 쿨다운 무대 "충돌!" 표시용 —
+  // 누적 union(collided)이 아니라 "방금 충돌한 사람"만 보여줘야 한다.
+  const [lastCollided, setLastCollided] = useState<string[]>([]);
   const [serverOffsetMs, setServerOffsetMs] = useState(0);
   const [playStartEpochMs, setPlayStartEpochMs] = useState<number | null>(null);
   const [idleDeadlineEpochMs, setIdleDeadlineEpochMs] = useState<number | null>(null);
+  const [idleWindowMs, setIdleWindowMs] = useState<number | null>(null);
   const [hardCapEpochMs, setHardCapEpochMs] = useState<number | null>(null);
   const [resumeAtEpochMs, setResumeAtEpochMs] = useState<number | null>(null);
   const [myInputState, setMyInputState] = useState<NunchiLocalInputState>('IDLE');
@@ -51,7 +58,14 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
         setGameState(msg.state);
 
         if (msg.state === 'DESCRIPTION') {
-          // 규칙 설명 단계. playStartEpochMs(=PLAYING 시작 시각)를 보관 → ReadyPage 가 그 시각에 play 로 전환.
+          // 규칙 설명 단계. serverNowEpochMs 만 온다(playStartEpochMs 는 READY 로 이동 — 결정 9).
+          setServerOffsetMs(msg.serverNowEpochMs - Date.now());
+          return;
+        }
+
+        if (msg.state === 'READY') {
+          // 곧 시작 카운트다운 단계. playStartEpochMs(=PLAYING 시작 시각)를 보관 →
+          // ReadyPage 가 READY→START! 를 띄우고 그 시각에 play 로 전환한다(결정 9).
           setServerOffsetMs(msg.serverNowEpochMs - Date.now());
           setPlayStartEpochMs(msg.playStartEpochMs);
           return;
@@ -59,12 +73,14 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
 
         if (msg.state === 'PLAYING') {
           setServerOffsetMs(msg.serverNowEpochMs - Date.now());
-          setPlayStartEpochMs(null); // DESCRIPTION 종료 → 계약("DESCRIPTION 동안만 non-null") 복원.
+          setPlayStartEpochMs(null); // READY 종료 → 계약("READY 동안만 non-null") 복원.
           // 재접속 스냅샷 포함: currentNumber + stood 를 그대로 반영(애니메이션 없이 상태만 — 요구사항 7).
           setCurrentNumber(msg.currentNumber);
           setStood(msg.stood);
           // deadline 단일 소스(F): state·stand 가 같은 필드에 write.
           setIdleDeadlineEpochMs(msg.idleDeadlineEpochMs);
+          // 게이지 전체 길이(메시지 시점 기준). 게이지가 가득→0 으로 비례해 줄도록.
+          setIdleWindowMs(msg.idleDeadlineEpochMs - msg.serverNowEpochMs);
           setHardCapEpochMs(msg.hardCapEpochMs);
           setResumeAtEpochMs(null);
           // 쿨다운→PLAYING 재개. collided 는 결과 전까지 유지(요구사항 H)하되,
@@ -88,9 +104,12 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
             });
             return merged;
           });
+          // 무대 "충돌!" 표시는 이번 그룹만(누적 union 아님 — 이전 라운드 탈락자가 섞이면 안 됨).
+          setLastCollided(msg.collided);
           setCurrentNumber(msg.number); // 필드명 number 주의(currentNumber 아님)
           setResumeAtEpochMs(msg.resumeAtEpochMs);
           setIdleDeadlineEpochMs(null); // 쿨다운 동안 idle 일시정지(데드라인 무의미)
+          setIdleWindowMs(null);
           // 충돌 애니메이션 트리거(이벤트 신호 — 요구사항 7). 배열 diff 아님.
           setCollisionSeq((seq) => seq + 1);
           if (msg.collided.includes(myName)) {
@@ -110,11 +129,17 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
       (msg: NunchiStandMessage) => {
         setServerOffsetMs(msg.serverNowEpochMs - Date.now()); // 스큐 보정(D)
         setIdleDeadlineEpochMs(msg.idleDeadlineEpochMs); // 단일 소스(F) — state 와 같은 필드
+        setIdleWindowMs(msg.idleDeadlineEpochMs - msg.serverNowEpochMs); // 게이지 전체 길이 갱신
+        // press 가 들어와 데드라인이 리셋됐으므로 게이지도 가득 찬 상태에서 다시 줄기 시작한다.
         // 카운터 전진: 서버는 클린 solo press 마다 PLAYING 을 보내지 않으므로(시작·재개·스냅샷만),
         // stand 의 number(=currentNumber 와 동일 의미)로 무대 숫자를 갱신해야 1→2→3 이 보인다.
         setCurrentNumber(msg.number);
         // 라이브 일어섬(H): "일어섰다"는 사실만(등수 미포함). number 는 카운터 값(등수 아님).
         setStood((prev) => (prev.includes(msg.name) ? prev : [...prev, msg.name]));
+        // 무대 번호 뱃지용 매핑(라이브 수집). 첫 stand 만 기록(중복 press 무시).
+        setStandNumbers((prev) =>
+          prev[msg.name] != null ? prev : { ...prev, [msg.name]: msg.number }
+        );
         // 일어서기 애니메이션 트리거(이벤트 신호 — 요구사항 7). 매 stand 마다 seq 증가.
         setLastStand((prev) => ({ name: msg.name, seq: (prev?.seq ?? 0) + 1 }));
         if (msg.name === myName) {
@@ -147,12 +172,15 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
       gameState,
       currentNumber,
       stood,
+      standNumbers,
       collided,
+      lastCollided,
       lastStand,
       collisionSeq,
       serverOffsetMs,
       playStartEpochMs,
       idleDeadlineEpochMs,
+      idleWindowMs,
       hardCapEpochMs,
       resumeAtEpochMs,
       myInputState,
@@ -164,12 +192,15 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
       gameState,
       currentNumber,
       stood,
+      standNumbers,
       collided,
+      lastCollided,
       lastStand,
       collisionSeq,
       serverOffsetMs,
       playStartEpochMs,
       idleDeadlineEpochMs,
+      idleWindowMs,
       hardCapEpochMs,
       resumeAtEpochMs,
       myInputState,

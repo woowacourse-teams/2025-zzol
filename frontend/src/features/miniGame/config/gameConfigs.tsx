@@ -4,6 +4,8 @@ import RacingGameDescription1 from '@/assets/racing_game_desc1.svg';
 import RacingGameDescription2 from '@/assets/racing_game_desc2.svg';
 import BlockStackingDescription1 from '@/assets/block_stacking_desc1.svg';
 import BlockStackingDescription2 from '@/assets/block_stacking_desc2.svg';
+import NunchiGameDescription1 from '@/assets/nunchi_game_desc1.svg';
+import NunchiGameDescription2 from '@/assets/nunchi-game-icon.svg';
 import CardGameProvider from '@/contexts/CardGame/CardGameProvider';
 import RacingGameProvider from '@/contexts/RacingGame/RacingGameProvider';
 import SpeedTouchGameProvider from '@/contexts/SpeedTouchGame/SpeedTouchGameProvider';
@@ -155,11 +157,13 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
     ReadyPage: NunchiGameReadyPage,
     slides: [
       {
-        textLines: ['공유 카운터가 1, 2, 3…', '한 명씩 눈치껏 누르세요'],
+        textLines: ['눈치껏 한 명씩 누르면', '누른 숫자가 그대로 내 순위!'],
+        imageSrc: NunchiGameDescription1,
         className: 'slide-first',
       },
       {
-        textLines: ['같은 숫자를 동시에 누르면', '충돌! 먼저 누른 순으로 등수가 결정됩니다'],
+        textLines: ['여럿이 동시에 누르면', '꼴찌 순위로 밀려요'],
+        imageSrc: NunchiGameDescription2,
         className: 'slide-second',
       },
     ],

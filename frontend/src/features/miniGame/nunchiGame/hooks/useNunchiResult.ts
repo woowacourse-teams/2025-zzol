@@ -21,6 +21,9 @@ export const useNunchiResult = (joinCode: string) => {
   });
 
   const results: NunchiResultEntry[] = data?.results ?? [];
+  // 첫 응답 도착 여부. useFetch 는 loading 을 post-paint effect 에서야 true 로 올리므로,
+  // 첫 커밋은 loading=false·data=undefined 다. fetched 로 "아직 안 옴"과 "빈 결과"를 구분한다.
+  const fetched = data !== undefined;
 
-  return { results, loading };
+  return { results, loading, fetched };
 };

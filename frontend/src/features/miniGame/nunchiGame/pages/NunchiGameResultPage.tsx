@@ -25,7 +25,7 @@ const TIER_ORDER: Record<NunchiResultTier, number> = {
 
 const NunchiGameResultPage = () => {
   const { joinCode, myName } = useIdentifier();
-  const { results, loading } = useNunchiResult(joinCode);
+  const { results, loading, fetched } = useNunchiResult(joinCode);
 
   // rank 오름차순(좋음 먼저), 동일 rank 는 tier 우선순위 → 이름으로 안정 정렬.
   const sortedResults = useMemo(
@@ -39,7 +39,8 @@ const NunchiGameResultPage = () => {
     [results]
   );
 
-  if (loading) {
+  // 첫 응답 전(loading 이 아직 false 인 첫 커밋 포함)에는 스켈레톤. 빈 배열을 실패로 오인하지 않도록.
+  if (loading || !fetched) {
     return <MiniGameResultSkeleton />;
   }
 

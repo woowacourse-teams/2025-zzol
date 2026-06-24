@@ -9,14 +9,6 @@
     <clipPath id="boxClip">
       <rect x="10" y="15" width="146" height="90" rx="20"/>
     </clipPath>
-
-    <!-- Linear gradient for the bottom grounding line (styled like racing-icon.svg) -->
-    <linearGradient id="nunchi_line_grad" x1="30" y1="109" x2="136" y2="109" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FEF9C2" stop-opacity="0.2"/>
-      <stop offset="0.175481" stop-color="#FEEDC4" stop-opacity="0.8"/>
-      <stop offset="0.350962" stop-color="#FFE1C6"/>
-      <stop offset="0.850962" stop-color="#470809"/>
-    </linearGradient>
   </defs>
 
   <!-- Background rounded rectangular box -->
@@ -74,7 +66,4 @@
 
   <!-- Single sharp clash spark in the center (clean and simple, not flowery) -->
   <path d="M 83,38 L 86.5,46.5 L 95,50 L 86.5,53.5 L 83,62 L 79.5,53.5 L 71,50 L 79.5,46.5 Z" fill="#FEF9C2"/>
-
-  <!-- Bottom grounding line -->
-  <rect x="30" y="109" width="106" height="3" rx="1.5" fill="url(#nunchi_line_grad)"/>
 </svg>

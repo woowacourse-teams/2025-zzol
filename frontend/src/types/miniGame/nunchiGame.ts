@@ -10,18 +10,31 @@
  */
 
 /**
- * 서버 state 토픽이 보내는 상태(컨트랙트): PLAYING ↔ COLLISION_COOLDOWN → DONE (ADR 결정 8).
- * 와이어 메시지 타입(NunchiStateMessage)은 이 3개만 쓴다 — 임의 확장 금지.
+ * 서버 state 토픽이 보내는 상태(컨트랙트): DESCRIPTION → PLAYING ↔ COLLISION_COOLDOWN → DONE (ADR 결정 8).
+ * 와이어 메시지 타입(NunchiStateMessage)은 이 4개만 쓴다 — 임의 확장 금지.
  */
-export type NunchiServerState = 'PLAYING' | 'COLLISION_COOLDOWN' | 'DONE';
+export type NunchiServerState = 'DESCRIPTION' | 'PLAYING' | 'COLLISION_COOLDOWN' | 'DONE';
 
 /**
- * Provider 의 로컬 라우팅 상태. 서버 3-state 에 더해 **play 이전 인트로 단계 'DESCRIPTION'** 을 갖는다.
- * (다른 게임의 DESCRIPTION/PREPARE 와 동일 역할 — ReadyPage 가 슬라이드를 유지하다가 PLAYING 도착 시 이동.)
- * nunchi 는 서버에 PREPARE 단계가 없어 시작부터 PLAYING 이지만, FE 는 첫 PLAYING 메시지 전까지
- * DESCRIPTION 으로 머물러야 인트로가 보인다(초기값을 PLAYING 으로 두면 ReadyPage 가 즉시 이동해버림).
+ * Provider 의 라우팅 상태 = 서버 상태 머신과 동일(4-state). 초기값 'DESCRIPTION' 으로 첫 메시지 전까지
+ * 인트로(ReadyPage)를 보여준다. 서버가 DESCRIPTION 을 playStartEpochMs(PLAYING 시작 시각)와 함께
+ * 보내므로, ReadyPage 는 그 시각까지 인트로 후 play 로 전환한다(PLAYING 메시지 도착 또는 타임아웃 폴백).
  */
-export type NunchiGameState = 'DESCRIPTION' | NunchiServerState;
+export type NunchiGameState = NunchiServerState;
+
+/**
+ * DESCRIPTION 메시지 — 게임 진입(규칙 설명 단계) / 설명 구간 재접속 스냅샷.
+ * playStartEpochMs 로 PLAYING 시작 시각을 알린다. FE 는 이 시각까지 인트로를 보여주고 play 로 전환한다.
+ *
+ * 예: { state:'DESCRIPTION', serverNowEpochMs:..., playStartEpochMs:... }
+ */
+export type NunchiDescriptionMessage = {
+  state: 'DESCRIPTION';
+  /** 서버 현재 시각(시계 스큐 보정 기준). 모든 메시지에 포함. */
+  serverNowEpochMs: number;
+  /** PLAYING 이 시작될 서버 시각(epoch ms). ReadyPage 가 이 시각에 play 로 전환한다. */
+  playStartEpochMs: number;
+};
 
 /**
  * PLAYING 메시지 — 게임 시작 / 충돌 후 재개 / 재접속 스냅샷에 공통으로 쓰인다.
@@ -68,6 +81,7 @@ export type NunchiDoneMessage = {
 
 /** `/topic/room/{joinCode}/nunchi/state` 메시지(state 필드 기준 discriminated union). */
 export type NunchiStateMessage =
+  | NunchiDescriptionMessage
   | NunchiPlayingMessage
   | NunchiCollisionCooldownMessage
   | NunchiDoneMessage;

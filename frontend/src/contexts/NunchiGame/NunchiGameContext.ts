@@ -39,6 +39,9 @@ type NunchiGameContextType = {
   /** 시계 스큐 보정 오프셋. = serverNowEpochMs - Date.now(), 매 메시지 갱신(요구사항 D). */
   serverOffsetMs: number;
 
+  /** PLAYING 이 시작될 서버 시각(epoch ms). DESCRIPTION 동안만 non-null — ReadyPage 전환 타이머용. */
+  playStartEpochMs: number | null;
+
   /** 무입력 자동 종료 데드라인(단일 소스 — 요구사항 F). state·stand 둘 다 여기로 write. */
   idleDeadlineEpochMs: number | null;
 

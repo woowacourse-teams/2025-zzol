@@ -32,6 +32,7 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
   const [stood, setStood] = useState<string[]>([]);
   const [collided, setCollided] = useState<string[]>([]);
   const [serverOffsetMs, setServerOffsetMs] = useState(0);
+  const [playStartEpochMs, setPlayStartEpochMs] = useState<number | null>(null);
   const [idleDeadlineEpochMs, setIdleDeadlineEpochMs] = useState<number | null>(null);
   const [hardCapEpochMs, setHardCapEpochMs] = useState<number | null>(null);
   const [resumeAtEpochMs, setResumeAtEpochMs] = useState<number | null>(null);
@@ -48,6 +49,13 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
       (msg: NunchiStateMessage) => {
         // 1. 스큐 보정(D) — 모든 분기 공통. DONE 은 serverNowEpochMs 가 없으므로 분기 안에서 처리.
         setGameState(msg.state);
+
+        if (msg.state === 'DESCRIPTION') {
+          // 규칙 설명 단계. playStartEpochMs(=PLAYING 시작 시각)를 보관 → ReadyPage 가 그 시각에 play 로 전환.
+          setServerOffsetMs(msg.serverNowEpochMs - Date.now());
+          setPlayStartEpochMs(msg.playStartEpochMs);
+          return;
+        }
 
         if (msg.state === 'PLAYING') {
           setServerOffsetMs(msg.serverNowEpochMs - Date.now());
@@ -142,6 +150,7 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
       lastStand,
       collisionSeq,
       serverOffsetMs,
+      playStartEpochMs,
       idleDeadlineEpochMs,
       hardCapEpochMs,
       resumeAtEpochMs,
@@ -158,6 +167,7 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
       lastStand,
       collisionSeq,
       serverOffsetMs,
+      playStartEpochMs,
       idleDeadlineEpochMs,
       hardCapEpochMs,
       resumeAtEpochMs,

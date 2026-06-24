@@ -42,7 +42,7 @@
       <!-- Straw -->
       <rect x="95" y="-1" width="10" height="25" fill="#FFFFFF" rx="3" transform="rotate(30 100 19)"/>
       
-      <!-- Sweat drop on the outer LEFT temple (clean, near outer edge of face) -->
+      <!-- Sweat drop on the outer LEFT temple -->
       <path d="M64 55c0-4.4 3-8 3-8s3 3.6 3 8a3 3 0 1 1-6 0z" fill="#48DBFB"/>
     </g>
   </g>
@@ -67,20 +67,13 @@
       <!-- Straw -->
       <rect x="95" y="-1" width="10" height="25" fill="#FFFFFF" rx="3" transform="rotate(30 100 19)"/>
       
-      <!-- Sweat drop on the outer RIGHT temple (clean, near outer edge of face) -->
+      <!-- Sweat drop on the outer RIGHT temple -->
       <path d="M136 55c0-4.4 3-8 3-8s3 3.6 3 8a3 3 0 1 1-6 0z" fill="#48DBFB"/>
     </g>
   </g>
 
-  <!-- Premium multi-layered clash sparkles in the center -->
-  <!-- Outer glowing main star -->
-  <path d="M 83,40 Q 83,50 93,50 Q 83,50 83,60 Q 83,50 73,50 Q 83,50 83,40 Z" fill="#FEF9C2"/>
-  <!-- Inner bright star -->
-  <path d="M 83,44 Q 83,50 89,50 Q 83,50 83,56 Q 83,50 77,50 Q 83,50 83,44 Z" fill="#FFFFFF"/>
-  <!-- Secondary small sparkle (top-left) -->
-  <path d="M 73,38 Q 73,41 76,41 Q 73,41 73,44 Q 73,41 70,41 Q 73,41 73,38 Z" fill="#FEF9C2"/>
-  <!-- Secondary small sparkle (bottom-right) -->
-  <path d="M 93,56 Q 93,59 96,59 Q 93,59 93,62 Q 93,59 90,59 Q 93,59 93,56 Z" fill="#FEF9C2"/>
+  <!-- Single sharp clash spark in the center (clean and simple, not flowery) -->
+  <path d="M 83,38 L 86.5,46.5 L 95,50 L 86.5,53.5 L 83,62 L 79.5,53.5 L 71,50 L 79.5,46.5 Z" fill="#FEF9C2"/>
 
   <!-- Bottom grounding line -->
   <rect x="30" y="109" width="106" height="3" rx="1.5" fill="url(#nunchi_line_grad)"/>

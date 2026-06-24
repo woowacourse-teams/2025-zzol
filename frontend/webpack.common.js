@@ -107,6 +107,11 @@ export default (_, argv) => {
             to: 'manifest.json',
           },
           {
+            // SEO 랜딩 페이지 (React 앱과 분리된 정적 HTML)
+            from: 'public/bet-games.html',
+            to: 'bet-games.html',
+          },
+          {
             from: 'public/icons',
             to: 'icons',
           },

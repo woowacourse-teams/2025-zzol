@@ -1,7 +1,7 @@
 # 0031. 눈치게임(Nunchi) 서버 설계 — 순차 카운팅·동시 입력 순위 판정과 FE/BE 조율
 
 - 날짜: 2026-06-21
-- 상태: 승인 (FE/BE 조율 완료 — 구 미결 질문 Q1~Q7 모두 확정; 2026-06-21 구현 메커니즘 확정 — 「구현 노트」 절 참조; 2026-06-24 개정 — 시작 `DESCRIPTION` 단계 추가, 결정 8 구독 스냅샷을 description 종료 자동 재발행으로 대체. 「결정 9」 절 참조)
+- 상태: 승인 (FE/BE 조율 완료 — 구 미결 질문 Q1~Q7 모두 확정; 2026-06-21 구현 메커니즘 확정 — 「구현 노트」 절 참조; 2026-06-24 개정 — 시작 `DESCRIPTION` 단계 추가, 결정 8 구독 스냅샷을 description 종료 자동 재발행으로 대체. 「결정 9」 절 참조; 2026-06-24 개정 — `DESCRIPTION`과 `PLAYING` 사이 `READY`(곧 시작 카운트다운) 단계 추가, `playStartEpochMs`를 DESCRIPTION → READY로 이동. 「결정 9」 절 참조)
 
 ## 컨텍스트
 
@@ -165,10 +165,13 @@ ADR-0002 §6의 `endTimeEpochMs` 패턴을 그대로 재사용한다. `resumeAtE
 
 FE가 카운트다운을 정확히 그릴 수 있도록 모든 시간 정보를 **서버 기준 epoch ms**로 `state`
 토픽에 실어 보낸다. FE는 `Date.now()` 차이로 남은 시간을 계산하므로 네트워크 지연이 자동
-보정된다(ADR-0002 §6 패턴). 상태 머신은 `DESCRIPTION → PLAYING ↔ COLLISION_COOLDOWN → DONE`이다
-(`DESCRIPTION`은 2026-06-24 개정 — 결정 9).
+보정된다(ADR-0002 §6 패턴). 상태 머신은 `DESCRIPTION → READY → PLAYING ↔ COLLISION_COOLDOWN → DONE`이다
+(`DESCRIPTION`·`READY`는 2026-06-24 개정 — 결정 9).
 
 ```json
+// READY (곧 시작 카운트다운) — playStartEpochMs에 PLAYING 시작 절대 시각
+{ "state": "READY", "serverNowEpochMs": 1712140004000, "playStartEpochMs": 1712140007000 }
+
 // PLAYING (시작·충돌 후 재개·재접속 스냅샷) — 현재 숫자 + 일어선 사람 + 종료 데드라인
 { "state": "PLAYING", "currentNumber": 1, "stood": ["민수"], "serverNowEpochMs": 1712140000000, "idleDeadlineEpochMs": 1712140010000, "hardCapEpochMs": 1712140030000 }
 
@@ -203,40 +206,45 @@ FE가 카운트다운을 정확히 그릴 수 있도록 모든 시간 정보를 
   단계에서만 확정 노출한다.
 - **재접속 스냅샷** (원안 → **2026-06-24 개정으로 철회**, 결정 9 참조): 원안은 구독 직후 BE가 현재
   `state`를 1회 푸시(`NunchiStateSubscriptionHandler`)해 start 레이스(시작 broadcast 유실)를 막는
-  것이었다. 그러나 결정 9의 DESCRIPTION 단계 도입으로 `onDescriptionEnd`가 입력과 무관하게
-  description 종료 시 PLAYING을 **자동 재발행**하므로, 시작 broadcast를 놓쳐도 그 전에 구독만 하면
-  복구된다. 이로써 구독 스냅샷 핸들러는 제거됐다. PLAYING 페이로드의 `currentNumber`·`stood`는 그대로
+  것이었다. 그러나 결정 9의 DESCRIPTION·READY 단계 도입으로 `onDescriptionEnd`(→ READY)·
+  `onReadyEnd`(→ PLAYING)가 입력과 무관하게 단계 종료 시 다음 상태를 **자동 재발행**하므로, 시작
+  broadcast를 놓쳐도 그 전에 구독만 하면 복구된다. 이로써 구독 스냅샷 핸들러는 제거됐다. PLAYING 페이로드의 `currentNumber`·`stood`는 그대로
   유지되며, 게임 중 새로고침 재접속은 `WsRecoveryService`가 커버한다. 데드라인은 절대 epoch ms라 늦게
   받아도 정확하다.
 
 토픽·커맨드는 ADR-0012의 `@WsTopic`/`@WsReceive`로 등록해 `/dev/ws-catalog` 디스커버리에
 노출한다.
 
-### 9. 시작 규칙 설명(DESCRIPTION) 단계 + 종료 후 결과 대기 — 2026-06-24 개정
+### 9. 시작 규칙 설명(DESCRIPTION) + 곧 시작 카운트다운(READY) 단계 + 종료 후 결과 대기 — 2026-06-24 개정
 
 다른 미니게임(Ladder/Racing/SpeedTouch/BlindTimer의 `DESCRIPTION`, BlockStacking/CardGame의
-`READY`)과 동일하게 **시작 직후 짧은 규칙 설명 시간**을 둔다. 상태 머신은
-`DESCRIPTION → PLAYING ↔ COLLISION_COOLDOWN → DONE`이 된다.
+`READY`)과 동일하게 **시작 직후 짧은 규칙 설명 시간**을 두고, 그 뒤에 **곧 시작 카운트다운(READY)**
+단계를 둔다. 규칙 설명과 "곧 시작 카운트다운"을 분리해, 전 클라이언트가 같은 `playStartEpochMs`에 동시
+진입하도록 한다. 상태 머신은 `DESCRIPTION → READY → PLAYING ↔ COLLISION_COOLDOWN → DONE`이 된다.
 
-- `setUp` 직후 상태는 `DESCRIPTION`이며 이 구간엔 idle·하드캡·윈도우 타이머를 걸지 않는다.
-  DESCRIPTION 중 들어온 `press`는 도메인이 `IGNORED`로 흡수한다(결정 1 일관 — warn 로그만, 에러
-  응답 없음).
-- `description`(`nunchi.timing.description`, 예 4초) 경과 시 `onDescriptionEnd`가 `PLAYING`으로
-  전이하며 그때 idle·하드캡 타이머를 시작한다. **하드캡은 PLAYING 시작 시점부터** 잰다(설명 시간은
+- `setUp` 직후 상태는 `DESCRIPTION`이며, 이 구간과 이어지는 `READY` 구간 모두 idle·하드캡·윈도우
+  타이머를 걸지 않는다. DESCRIPTION·READY 중 들어온 `press`는 도메인이 `IGNORED`로 흡수한다(결정 1
+  일관 — warn 로그만, 에러 응답 없음).
+- `description`(`nunchi.timing.description`, 예 4초) 경과 시 `onDescriptionEnd`가 `READY`로
+  전이하고, `ready`(`nunchi.timing.ready`, 예 3초) 경과 시 `onReadyEnd`가 `PLAYING`으로 전이하며
+  그때 idle·하드캡 타이머를 시작한다. **하드캡은 PLAYING 시작 시점부터** 잰다(설명·카운트다운 시간은
   라운드 상한에 포함하지 않음 — 결정 8 고정 상한과 일관).
-- DESCRIPTION 메시지도 epoch 컨트랙트(결정 8)를 따른다: `playStartEpochMs`로 PLAYING 시작 절대
-  시각을 실어 FE가 정확한 카운트다운을 그린다.
+- DESCRIPTION은 `serverNowEpochMs`만, READY 메시지가 epoch 컨트랙트(결정 8)를 따라
+  `playStartEpochMs`로 PLAYING 시작 절대 시각을 실어 FE가 정확한 카운트다운을 그린다.
 
 ```json
 // /topic/room/{joinCode}/nunchi/state — 시작 규칙 설명
-{ "state": "DESCRIPTION", "serverNowEpochMs": 1712140000000, "playStartEpochMs": 1712140004000 }
+{ "state": "DESCRIPTION", "serverNowEpochMs": 1712140000000 }
+
+// /topic/room/{joinCode}/nunchi/state — 곧 시작 카운트다운
+{ "state": "READY", "serverNowEpochMs": 1712140004000, "playStartEpochMs": 1712140007000 }
 ```
 
-**부수 효과 — 결정 8 구독 스냅샷 철회**: `onDescriptionEnd`의 자동 PLAYING 재발행이 입력과 무관하게
-description 종료 시점에 일어나므로, 시작 broadcast(DESCRIPTION) 유실(start 레이스)을 그 자체로
-흡수한다. 따라서 원안의 구독 스냅샷 핸들러(`NunchiStateSubscriptionHandler`)는 불필요해져 제거했다.
-잔여 빈틈은 시작 +`description` **이후**에야 구독하는 극단 케이스뿐이며(초기 로딩 4초는 넉넉),
-게임 중 새로고침 재접속은 `WsRecoveryService`가 커버한다.
+**부수 효과 — 결정 8 구독 스냅샷 철회**: `onDescriptionEnd`(→ READY)·`onReadyEnd`(→ PLAYING)의 자동
+재발행이 입력과 무관하게 각 단계 종료 시점에 일어나므로, 시작 broadcast(DESCRIPTION) 유실(start
+레이스)을 그 자체로 흡수한다. 따라서 원안의 구독 스냅샷 핸들러(`NunchiStateSubscriptionHandler`)는
+불필요해져 제거했다. 잔여 빈틈은 시작 +`description`+`ready` **이후**에야 구독하는 극단 케이스뿐이며
+(초기 로딩 수 초는 넉넉), 게임 중 새로고침 재접속은 `WsRecoveryService`가 커버한다.
 
 **종료 후 결과 대기(`result-delay`)**: 게임이 끝나면 `DONE`은 즉시 브로드캐스트하되, 다음 단계로의
 전이(`MiniGameFinishedEvent` 발행 → 확률 조정·SCORE_BOARD 전이)는 곧바로 가지 않고

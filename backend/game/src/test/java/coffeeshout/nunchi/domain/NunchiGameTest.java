@@ -29,6 +29,7 @@ class NunchiGameTest {
     void setUp() {
         game = new NunchiGame(WINDOW_MILLIS);
         game.setUp(List.of(일, 이, 삼, 사));
+        game.startPlaying(); // DESCRIPTION → PLAYING: 이하 입력 테스트는 입력 수락 상태를 전제로 한다
     }
 
     private NunchiTier tierOf(Gamer gamer) {
@@ -39,11 +40,43 @@ class NunchiGameTest {
     class 초기화_테스트 {
 
         @Test
-        void 셋업하면_PLAYING_1번으로_시작한다() {
+        void 셋업하면_DESCRIPTION_1번으로_시작한다() {
+            // 공유 setUp의 startPlaying을 거치지 않은 갓 셋업한 게임의 초기 상태를 본다
+            final NunchiGame fresh = new NunchiGame(WINDOW_MILLIS);
+            fresh.setUp(List.of(일, 이, 삼, 사));
+
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(game.getState()).isEqualTo(NunchiState.PLAYING);
-                softly.assertThat(game.getCurrentNumber()).isEqualTo(1);
-                softly.assertThat(game.isFinished()).isFalse();
+                softly.assertThat(fresh.getState()).isEqualTo(NunchiState.DESCRIPTION);
+                softly.assertThat(fresh.getCurrentNumber()).isEqualTo(1);
+                softly.assertThat(fresh.isFinished()).isFalse();
+            });
+        }
+
+        @Test
+        void DESCRIPTION_중_press는_IGNORED다() {
+            final NunchiGame fresh = new NunchiGame(WINDOW_MILLIS);
+            fresh.setUp(List.of(일, 이, 삼, 사));
+
+            // 규칙 설명 중에는 아직 입력을 받지 않는다 — 예외가 아니라 IGNORED로 흡수(결정 1)
+            final PressResult result = fresh.press(일, T0);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.outcome()).isEqualTo(PressOutcome.IGNORED);
+                softly.assertThat(fresh.getScores()).doesNotContainKey(일);
+                softly.assertThat(fresh.getCurrentNumber()).isEqualTo(1);
+            });
+        }
+
+        @Test
+        void startPlaying하면_PLAYING으로_전이해_입력을_받는다() {
+            final NunchiGame fresh = new NunchiGame(WINDOW_MILLIS);
+            fresh.setUp(List.of(일, 이, 삼, 사));
+
+            fresh.startPlaying();
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(fresh.getState()).isEqualTo(NunchiState.PLAYING);
+                softly.assertThat(fresh.press(일, T0).outcome()).isEqualTo(PressOutcome.STOOD);
             });
         }
     }

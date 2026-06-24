@@ -1,13 +1,16 @@
 package coffeeshout.nunchi.application;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -61,6 +64,15 @@ class NunchiServiceTest {
 
         // 새 Gamer가 아니라 setUp으로 주입된 원본 인스턴스를 넘겨야 점수맵 키와 매칭된다
         verify(flowOrchestrator).handlePress(eq(game), any(JoinCode.class), eq(일), eq(T0));
+    }
+
+    @Test
+    void handlePress는_방내_없는_플레이어면_BusinessException을_전파하고_Flow에_위임하지_않는다() {
+        // findByName이 도메인에서 예외를 던지므로 오케스트레이터까지 가지 않는다(컨슈머가 warn으로 흡수)
+        assertThatThrownBy(() -> service.handlePress(JOIN_CODE.getValue(), "없는사람", T0))
+                .isInstanceOf(BusinessException.class);
+
+        verify(flowOrchestrator, never()).handlePress(any(), any(), any(), any());
     }
 
     @Test

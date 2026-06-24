@@ -63,10 +63,12 @@ class NunchiFlowOrchestratorTest {
         when(gameSessionService.finishGame(any())).thenReturn(1);
 
         final NunchiTimingProperties timing = new NunchiTimingProperties(
+                Duration.ofMillis(2000),  // description
                 Duration.ofMillis(300),   // numberWindow
                 Duration.ofMillis(2000),  // collisionCooldown
                 Duration.ofMillis(10000), // idleTimeout
-                Duration.ofMillis(30000)  // hardCap
+                Duration.ofMillis(30000), // hardCap
+                Duration.ofMillis(1000)   // resultDelay
         );
         orchestrator = new NunchiFlowOrchestrator(
                 scheduler, timing, notifier, gameSessionService, eventPublisher);
@@ -75,17 +77,37 @@ class NunchiFlowOrchestratorTest {
         game.setUp(List.of(일, 이, 삼));
     }
 
+    /**
+     * startFlow 후 description 타이머(인덱스 0)를 발화해 PLAYING으로 진입시킨다. 이 시점에 idle(인덱스 1)·
+     * hardCap(인덱스 2) 타이머가 예약되고 press를 받을 수 있다 — 입력 분기 테스트의 공통 전제.
+     */
+    private void startAndEnterPlaying() {
+        orchestrator.startFlow(game, JOIN_CODE);
+        scheduler.taskAt(0).run(); // onDescriptionEnd → PLAYING + idle + hardCap
+    }
+
     @Nested
     class 시작 {
 
         @Test
-        void startFlow는_PLAYING을_브로드캐스트하고_idle과_하드캡_타이머를_건다() {
+        void startFlow는_DESCRIPTION을_브로드캐스트하고_description_타이머만_건다() {
             orchestrator.startFlow(game, JOIN_CODE);
+
+            verify(notifier).notifyDescription(eq(JOIN_CODE.getValue()), anyLong(), anyLong());
+            // 설명 단계에선 PLAYING·idle·hardCap을 아직 걸지 않는다 — description 타이머 하나뿐
+            verify(notifier, never()).notifyPlaying(anyString(), anyInt(), any(),
+                    anyLong(), anyLong(), anyLong());
+            assertThat(scheduler.scheduledCount()).isEqualTo(1);
+        }
+
+        @Test
+        void description_종료시_PLAYING을_브로드캐스트하고_idle과_하드캡_타이머를_건다() {
+            startAndEnterPlaying();
 
             verify(notifier).notifyPlaying(eq(JOIN_CODE.getValue()), eq(1), any(),
                     anyLong(), anyLong(), anyLong());
-            // idle + hardCap 두 타이머가 예약된다
-            assertThat(scheduler.scheduledCount()).isEqualTo(2);
+            // description(0) + idle(1) + hardCap(2)
+            assertThat(scheduler.scheduledCount()).isEqualTo(3);
         }
     }
 
@@ -94,7 +116,7 @@ class NunchiFlowOrchestratorTest {
 
         @Test
         void STOOD이면_stand를_브로드캐스트하고_윈도우_타이머를_새로_건다() {
-            orchestrator.startFlow(game, JOIN_CODE);
+            startAndEnterPlaying();
             final int before = scheduler.scheduledCount();
 
             orchestrator.handlePress(game, JOIN_CODE, 일, T0);
@@ -107,7 +129,7 @@ class NunchiFlowOrchestratorTest {
         @DisplayName("STOOD→STOOD(윈도우 경과): 이전 윈도우 future가 cancel되고 새 윈도우가 잡힌다")
         @Test
         void 연속_STOOD는_윈도우를_cancel하고_reschedule한다() {
-            orchestrator.startFlow(game, JOIN_CODE);
+            startAndEnterPlaying();
 
             orchestrator.handlePress(game, JOIN_CODE, 일, T0);
             final ScheduledFuture<?> firstWindow = scheduler.lastFuture();
@@ -127,7 +149,7 @@ class NunchiFlowOrchestratorTest {
         @DisplayName("STOOD→COLLIDED(윈도우 내): 윈도우 cancel + COLLISION_COOLDOWN 브로드캐스트 + 쿨다운 예약")
         @Test
         void 윈도우_내_동시_press는_충돌로_처리된다() {
-            orchestrator.startFlow(game, JOIN_CODE);
+            startAndEnterPlaying();
 
             orchestrator.handlePress(game, JOIN_CODE, 일, T0);
             final ScheduledFuture<?> windowFuture = scheduler.lastFuture();
@@ -145,8 +167,8 @@ class NunchiFlowOrchestratorTest {
     class 종료_멱등성 {
 
         @Test
-        void 전원_입력_완료시_즉시_DONE을_한_번만_발행한다() {
-            orchestrator.startFlow(game, JOIN_CODE);
+        void 전원_입력_완료시_DONE은_즉시_이벤트는_resultDelay_후_한_번만_발행한다() {
+            startAndEnterPlaying();
 
             // 일·이 충돌(2명 OUT) 후 삼 solo → 전원 입력 완료
             orchestrator.handlePress(game, JOIN_CODE, 일, T0);
@@ -154,17 +176,21 @@ class NunchiFlowOrchestratorTest {
             fireCooldown();
             orchestrator.handlePress(game, JOIN_CODE, 삼, T0.plusMillis(5000)); // solo → 전원 입력
 
+            // DONE은 즉시 알리되, 다음 단계 전이(MiniGameFinishedEvent)는 resultDelay까지 미뤄진다(결정 9)
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
-            // MiniGameFinishedEvent는 동기 발행(ADR-0025 순서 불변식 — 결과 저장·라운드 전진)
-            verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
+            verify(eventPublisher, never()).publishEvent(any(MiniGameFinishedEvent.class));
             assertThat(game.isFinished()).isTrue();
+
+            // resultDelay 타이머 발화 → roundCount 확정 + MiniGameFinishedEvent 1회 발행(ADR-0025 순서 불변식)
+            fireResult();
+            verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
         }
 
         @DisplayName("종료 후 늦게 발화한 idle/하드캡 콜백은 다시 종료하지 않는다(멱등)")
         @Test
         void 종료_후_타이머_콜백은_무시된다() {
-            orchestrator.startFlow(game, JOIN_CODE);
-            // startFlow가 건 idle·hardCap 콜백 핸들을 캡처
+            startAndEnterPlaying();
+            // 진입 시 걸린 description(이미 발화)·idle·hardCap 콜백 핸들을 캡처 — 종료 후엔 세션 제거·finished 가드로 모두 무시된다
             final List<Runnable> startupTimers = scheduler.allTasksSnapshot();
 
             // 전원 충돌로 즉시 종료
@@ -173,22 +199,25 @@ class NunchiFlowOrchestratorTest {
             fireCooldown();
             orchestrator.handlePress(game, JOIN_CODE, 삼, T0.plusMillis(5000));
 
-            verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
+            fireResult(); // resultDelay 타이머 → finalize(이벤트 발행 + 세션 제거)
 
-            // 종료 후 startFlow의 idle/hardCap 콜백(stale)을 강제로 발화해도 추가 종료 없음
+            verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
+            verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
+
+            // 종료·정리 후 startFlow의 idle/hardCap 콜백(stale)을 강제로 발화해도 추가 종료·발행 없음
             startupTimers.forEach(Runnable::run);
 
-            // notifyDone·MiniGameFinishedEvent 모두 여전히 1회 — stale 타이머가 멱등 가드(finished)에 막힌다
+            // notifyDone·MiniGameFinishedEvent 모두 여전히 1회 — 세션 제거·finished 가드가 stale 타이머를 막는다
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
             verify(eventPublisher, times(1)).publishEvent(any(MiniGameFinishedEvent.class));
         }
 
         @Test
         void idle_타임아웃이_먼저_발화하면_미입력자를_MISS로_종료한다() {
-            orchestrator.startFlow(game, JOIN_CODE);
+            startAndEnterPlaying();
 
-            // idle 타이머(startFlow의 첫 예약 — 인덱스 0=idle, 1=hardCap)를 강제 발화
-            scheduler.taskAt(0).run();
+            // PLAYING 진입 후 예약 순서는 description(0)=idle(1)=hardCap(2) — idle(인덱스 1)을 강제 발화
+            scheduler.taskAt(1).run();
 
             verify(notifier, times(1)).notifyDone(JOIN_CODE.getValue());
             assertThat(game.isFinished()).isTrue();
@@ -197,8 +226,8 @@ class NunchiFlowOrchestratorTest {
         @DisplayName("press로 idle을 리셋한 뒤 발화한 stale idle 타이머는 게임을 종료하지 않는다(★ 동시성)")
         @Test
         void 대체된_stale_idle_타이머는_종료를_트리거하지_않는다() {
-            orchestrator.startFlow(game, JOIN_CODE);
-            final Runnable staleIdle = scheduler.taskAt(0); // startFlow가 건 idle
+            startAndEnterPlaying();
+            final Runnable staleIdle = scheduler.taskAt(1); // PLAYING 진입 시 건 idle(인덱스 1)
 
             // 유효 press가 idle을 리셋(scheduleIdle이 새 idle을 걸고 generation을 올림)
             orchestrator.handlePress(game, JOIN_CODE, 일, T0);
@@ -218,7 +247,7 @@ class NunchiFlowOrchestratorTest {
         @DisplayName("hardCapEpochMs는 시작 시 고정되어 이후 PLAYING 브로드캐스트에서 변하지 않는다(결정 8)")
         @Test
         void 하드캡은_재개_브로드캐스트에서도_고정값이다() {
-            orchestrator.startFlow(game, JOIN_CODE);
+            startAndEnterPlaying();
             final ArgumentCaptor<Long> hardCapCaptor = ArgumentCaptor.forClass(Long.class);
             verify(notifier).notifyPlaying(eq(JOIN_CODE.getValue()), anyInt(), any(),
                     anyLong(), anyLong(), hardCapCaptor.capture());
@@ -239,6 +268,11 @@ class NunchiFlowOrchestratorTest {
 
     /** COLLISION_COOLDOWN 직후 예약된 쿨다운 콜백을 찾아 발화한다(마지막으로 예약된 task가 쿨다운). */
     private void fireCooldown() {
+        scheduler.lastTask().run();
+    }
+
+    /** 종료 시 마지막으로 예약된 resultDelay 타이머를 발화한다(finalize — roundCount 확정 + 이벤트 발행). */
+    private void fireResult() {
         scheduler.lastTask().run();
     }
 

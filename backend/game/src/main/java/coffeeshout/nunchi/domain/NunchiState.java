@@ -1,9 +1,12 @@
 package coffeeshout.nunchi.domain;
 
 /**
- * 눈치게임 상태기계(ADR-0031 결정 8). {@code PLAYING ↔ COLLISION_COOLDOWN → DONE}.
+ * 눈치게임 상태기계(ADR-0031 결정 8). {@code DESCRIPTION → PLAYING ↔ COLLISION_COOLDOWN → DONE}.
  */
 public enum NunchiState {
+
+    /** 규칙 설명 — 시작 직후 짧게 대기하며 입력을 받지 않는다(다른 미니게임과 동일). */
+    DESCRIPTION,
 
     /** 카운터 활성 — 입력을 수락한다. */
     PLAYING,

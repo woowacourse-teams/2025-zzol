@@ -51,8 +51,15 @@ public class NunchiGame implements Playable {
         this.results.clear();
         this.pending = null;
         this.openCollision = null;
-        this.state = NunchiState.PLAYING;
+        this.state = NunchiState.DESCRIPTION;
         this.currentNumber = 1;
+    }
+
+    /** 규칙 설명이 끝났을 때 Flow가 호출한다. {@code DESCRIPTION → PLAYING}으로 전이해 입력을 받기 시작한다. */
+    public void startPlaying() {
+        if (state == NunchiState.DESCRIPTION) {
+            state = NunchiState.PLAYING;
+        }
     }
 
     /**
@@ -62,6 +69,9 @@ public class NunchiGame implements Playable {
     public PressResult press(Gamer gamer, Instant at) {
         if (state == NunchiState.DONE || results.containsKey(gamer)) {
             return PressResult.ignored(); // 종료됐거나 이미 일어섬/충돌해 OUT
+        }
+        if (state == NunchiState.DESCRIPTION) {
+            return PressResult.ignored(); // 규칙 설명 중 — 아직 입력을 받지 않음
         }
         if (state == NunchiState.COLLISION_COOLDOWN) {
             return pressDuringCooldown(gamer, at);

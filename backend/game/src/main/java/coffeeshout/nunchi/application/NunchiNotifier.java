@@ -33,6 +33,14 @@ public class NunchiNotifier {
     }
 
     @WsTopic(path = "/room/{joinCode}/nunchi/state", payload = NunchiStateResponse.class,
+            description = "눈치게임 DESCRIPTION 상태(시작 규칙 설명·재접속 스냅샷) 브로드캐스트 — "
+                    + "playStartEpochMs에 PLAYING 시작 시각(서버 epoch ms)")
+    public void notifyDescription(String joinCode, long serverNowEpochMs, long playStartEpochMs) {
+        send(STATE_DESTINATION_FORMAT, joinCode, WebSocketResponse.success(
+                NunchiStateResponse.description(serverNowEpochMs, playStartEpochMs)));
+    }
+
+    @WsTopic(path = "/room/{joinCode}/nunchi/state", payload = NunchiStateResponse.class,
             description = "눈치게임 PLAYING 상태(시작·충돌 후 재개·재접속 스냅샷) 브로드캐스트")
     public void notifyPlaying(
             String joinCode, int currentNumber, List<String> stood,

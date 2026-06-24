@@ -1,17 +1,222 @@
 <!doctype html>
 <html lang="ko">
   <head>
+    <!-- Google Tag Manager -->
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != 'dataLayer' ? '&l=' + l : '';
+        j.async = true;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, 'script', 'dataLayer', 'GTM-PPFVK27G');
+    </script>
+    <!-- End Google Tag Manager -->
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>커피빵 ☕️</title>
-    <link
-      rel="stylesheet"
-      as="style"
-      crossorigin
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
+    <title>쫄 - 똥손도 즐기는 미니게임 내기 서비스</title>
+    <meta
+      name="description"
+      content="커피 내기, 점심 내기, 당번 정하기를 미니게임으로! 내기 게임과 룰렛으로 긴장감 있게 결정하세요. 가위바위보는 그만, 쫄(ZZOL)에서 똥손 탈출에 도전해보세요!"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.zzol.site/" />
+    <meta property="og:title" content="쫄 - 똥손도 즐기는 미니게임 내기 서비스" />
+    <meta
+      property="og:description"
+      content="커피 내기, 점심 내기, 당번 정하기를 미니게임으로! 내기 게임과 룰렛으로 긴장감 있게 결정하세요. 가위바위보는 그만, 쫄(ZZOL)에서 똥손 탈출에 도전해보세요!"
+    />
+    <meta property="og:image" content="https://www.zzol.site/logo/og_image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="쫄 (ZZOL)" />
+    <meta property="og:locale" content="ko_KR" />
+
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#F53E41" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="쫄 - 똥손도 즐기는 미니게임 내기 서비스" />
+    <meta
+      name="twitter:description"
+      content="커피 내기, 점심 내기, 당번 정하기를 미니게임으로! 내기 게임과 룰렛으로 긴장감 있게 결정하세요. 가위바위보는 그만, 쫄(ZZOL)에서 똥손 탈출에 도전해보세요!"
+    />
+    <meta name="twitter:image" content="https://www.zzol.site/logo/og_image.png" />
+
+    <link rel="canonical" href="https://www.zzol.site/" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="쫄" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+    <link
+      rel="preload"
+      href="/fonts/PretendardVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/PartialSansKR-Regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="./logo/logo-main.png"
+      as="image"
+      type="image/png"
+      fetchpriority="high"
+    />
+    <base href="/" />
+    <style>
+      @font-face {
+        font-family: 'Pretendard Variable';
+        src: url('/fonts/PretendardVariable.woff2') format('woff2-variations');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'PartialSansKR-Regular';
+        src: url('/fonts/PartialSansKR-Regular.woff2') format('woff2');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+      @keyframes zzol-pulse {
+        0%, 100% { opacity: 0.2; transform: scale(0.75); }
+        50%       { opacity: 1;   transform: scale(1); }
+      }
+      #zzol-splash {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        min-height: 100vh;
+        min-height: 100dvh;
+        background: #ffffff;
+        text-align: center;
+      }
+      #zzol-splash svg {
+        color: #FD6C6E;
+      }
+      #zzol-splash h1 {
+        font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+                     system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: #444;
+        margin: 0;
+        line-height: 1.5;
+      }
+      #zzol-splash p {
+        font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+                     system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        color: #666;
+        line-height: 1.75;
+        max-width: 260px;
+        margin: 0;
+      }
+      #zzol-dots {
+        display: flex;
+        gap: 0.375rem;
+        align-items: center;
+        margin-top: 0.5rem;
+      }
+      #zzol-dots span {
+        display: block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #F53E41;
+        animation: zzol-pulse 1.2s ease-in-out infinite;
+      }
+      #zzol-dots span:nth-of-type(2) { animation-delay: 0.4s; }
+      #zzol-dots span:nth-of-type(3) { animation-delay: 0.8s; }
+      @media (prefers-reduced-motion: reduce) {
+        #zzol-dots span { animation: none; opacity: 0.6; }
+      }
+    </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "쫄 (ZZOL)",
+        "url": "https://www.zzol.site/",
+        "description": "커피 내기, 점심 내기, 당번 정하기를 미니게임으로 결정하는 내기 게임 서비스. QR코드로 방에 입장하고 미니게임 결과로 룰렛 당첨 확률을 정합니다.",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "ko",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "KRW"
+        },
+        "featureList": [
+          "QR코드로 방 입장 후 즉시 내기 시작",
+          "미니게임 결과로 룰렛 당첨 확률 결정",
+          "커피·점심·당번 등 내기 결과 실시간 추첨",
+          "실시간 멀티플레이어 미니게임 진행",
+          "복불복 룰렛으로 긴장감 있는 당첨자 발표"
+        ],
+        "author": {
+          "@type": "Organization",
+          "name": "쫄 (ZZOL)",
+          "url": "https://www.zzol.site/"
+        }
+      }
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2150P8R4FF"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-2150P8R4FF');
+    </script>
+    <%= DEV_SNIPPET %>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript>
+      <iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-PPFVK27G"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe>
+    </noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div id="root">
+      <main id="zzol-splash">
+        <svg width="120" height="31" viewBox="0 0 206 53" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <path d="M49.2 51.6H-1.95601e-06L19.08 18H0.899998V1.2H49.8L30.72 34.8H49.2V51.6ZM99.0047 51.6H49.8047L68.8847 18H50.7047V1.2L99.6047 1.2L80.5247 34.8H99.0047V51.6ZM130.209 52.8C112.389 52.8 100.809 42.78 100.209 27.54H121.269C121.689 31.44 124.869 34.8 130.209 34.8C135.909 34.8 139.209 30.84 139.209 26.34C139.209 21.84 135.969 18 130.209 18C124.809 18 121.329 21.42 121.269 26.94L100.209 25.14C100.869 9.96 112.449 2.38419e-08 130.209 2.38419e-08C148.449 2.38419e-08 160.209 10.5 160.209 26.4C160.209 42.3 148.449 52.8 130.209 52.8ZM205.181 34.2V51.6H161.981V1.2H182.381V34.2H205.181Z" fill="currentColor"/>
+        </svg>
+        <h1>커피 내기 · 점심 내기를 미니게임으로</h1>
+        <p>내기 게임·복불복을 미니게임으로!<br/>커피 내기, 술 내기, 점심 메뉴, 당번 뽑기까지<br/>가위바위보 대신 쫄(ZZOL)로.</p>
+        <div id="zzol-dots" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </main>
+    </div>
+    <div id="modal-root"></div>
+    <div id="toast-root"></div>
   </body>
 </html>

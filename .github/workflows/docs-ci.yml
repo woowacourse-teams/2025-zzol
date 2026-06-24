@@ -3,7 +3,7 @@ name: Docs CI
 on:
   # PR이 열릴 때, 업데이트될 때, 다시 열릴 때
   pull_request:
-    branches: [be/dev]
+    branches: [be/dev, dev]
     paths:
       - "**/*.md"
       - ".markdownlint.jsonc"
@@ -12,7 +12,7 @@ on:
 
   # 커밋이 푸시될 때
   push:
-    branches: [be/dev]
+    branches: [be/dev, dev]
     paths:
       - "**/*.md"
       - ".markdownlint.jsonc"

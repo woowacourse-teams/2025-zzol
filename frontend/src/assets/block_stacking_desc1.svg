@@ -1,0 +1,40 @@
+<svg width="299" height="453" viewBox="0 0 299 453" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 -->
+  <rect width="299" height="453" rx="20" fill="#E8F4FD"/>
+
+  <!-- 하늘 그라디언트 배경 -->
+  <rect x="20" y="30" width="259" height="393" rx="14" fill="#87CEEB" fill-opacity="0.35"/>
+
+  <!-- 바닥 블록 (고정) -->
+  <rect x="55" y="350" width="190" height="32" rx="6" fill="#FF6B6B"/>
+  <rect x="55" y="350" width="190" height="5" rx="3" fill="rgba(255,255,255,0.35)"/>
+
+  <!-- 이동하는 블록 (현재 위치 — 중앙 약간 오른쪽) -->
+  <rect x="80" y="270" width="140" height="32" rx="6" fill="#FF9F43"/>
+  <rect x="80" y="270" width="140" height="5" rx="3" fill="rgba(255,255,255,0.35)"/>
+  <!-- 블록 그림자 -->
+  <rect x="80" y="296" width="140" height="6" rx="3" fill="rgba(0,0,0,0.12)"/>
+
+  <!-- 이동 궤적 점선 -->
+  <line x1="44" y1="286" x2="256" y2="286" stroke="#4A90D9" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round"/>
+
+  <!-- 왼쪽 화살표 -->
+  <path d="M52 280 L36 286 L52 292" fill="none" stroke="#4A90D9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- 오른쪽 화살표 -->
+  <path d="M247 280 L263 286 L247 292" fill="none" stroke="#4A90D9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- 손가락 탭 아이콘 -->
+  <g transform="translate(134, 170)">
+    <!-- 손가락 모양 -->
+    <ellipse cx="16" cy="38" rx="12" ry="7" fill="rgba(0,0,0,0.08)"/>
+    <rect x="9" y="8" width="13" height="26" rx="6.5" fill="#FDDBB4"/>
+    <rect x="9" y="8" width="13" height="14" rx="6.5" fill="#F5C090"/>
+    <!-- 탭 파동 -->
+    <circle cx="15" cy="10" r="18" stroke="#4A90D9" stroke-width="2" stroke-opacity="0.4" fill="none"/>
+    <circle cx="15" cy="10" r="24" stroke="#4A90D9" stroke-width="1.5" stroke-opacity="0.2" fill="none"/>
+  </g>
+
+  <!-- TAP 텍스트 -->
+  <text x="149" y="145" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="18" font-weight="700" fill="#4A90D9" fill-opacity="0.85">TAP!</text>
+</svg>

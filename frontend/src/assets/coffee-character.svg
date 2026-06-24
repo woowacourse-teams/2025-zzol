@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="100" height="115"
+     viewBox="0 -10 200 230"
+     preserveAspectRatio="xMidYMid meet"
+     shape-rendering="geometricPrecision">
+
+  <defs>
+    <clipPath id="bodyClip">
+      <path d="M20 100 A80 81 0 0 1 180 100 L156 220 L44 220 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- 흰색 몸통 + 귀 -->
+  <path d="M20 100a80 81 0 0 1 160 0l-24 120H44Z" fill="#fff"/>
+  <circle cx="22" cy="100" r="12" fill="#fff"/>
+  <circle cx="178" cy="100" r="12" fill="#fff"/>
+
+  <!-- 컵 (fill + stroke 함께 클립) -->
+  <g clip-path="url(#bodyClip)">
+    <path
+      d="M0 135 Q100 70 200 135 L170 210 L30 210 Z"
+      fill="#4a0f0b"
+      stroke="#4a0f0b"
+      stroke-width="0.5"
+      stroke-linejoin="round"
+      paint-order="stroke fill"
+    />
+  </g>
+
+  <!-- 눈 (원래 세로 타원 크기) -->
+  <ellipse cx="75" cy="68" rx="4" ry="8" fill="black"/>
+  <ellipse cx="125" cy="68" rx="4" ry="8" fill="black"/>
+
+  <!-- 빨대 -->
+  <rect x="95" y="-1" width="10" height="25"
+        fill="#fff" rx="3"
+        transform="rotate(30 100 19)"/>
+</svg>

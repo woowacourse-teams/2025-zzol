@@ -1,0 +1,9 @@
+export const Z_INDEX = {
+  TOGGLE_BUTTON_THUMB: 0,
+  TOGGLE_BUTTON_OPTION: 1,
+  ROULETTE_PIN: 10,
+  BACKDROP: 990,
+  MODAL: 999,
+  TOAST: 1000,
+  RIPPLE_Effect: -1,
+} as const;

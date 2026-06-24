@@ -23,7 +23,13 @@ dist-ssr
 *.sln
 *.sw?
 
-*.env
+*.env.*
 .eslintcache
 *storybook.log
 storybook-static
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

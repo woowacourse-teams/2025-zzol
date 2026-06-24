@@ -1,3 +1,23 @@
+/* 전체 페이지 확대/축소 완전 차단 */
+html,
+body {
+  overflow-x: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+
+  /* 전체 페이지 확대/축소 차단 */
+  -webkit-user-scalable: no;
+  -moz-user-scalable: no;
+  -ms-user-scalable: no;
+
+  /* 모바일 더블탭 확대 차단 */
+  touch-action: manipulation;
+
+  /*당겨서 새로고침 막기*/
+  overscroll-behavior: none;
+}
+
 body {
   font-family:
     'Pretendard Variable',
@@ -6,4 +26,52 @@ body {
     BlinkMacSystemFont,
     system-ui,
     sans-serif;
+  color: #364153;
+}
+
+#root {
+  min-width: 320px;
+  max-width: 430px;
+  width: 100%;
+  height: 100dvh;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* 모든 요소에 확대/터치/선택/효과 제거 */
+* {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* 요소 드래그 제거 */
+input,
+textarea,
+select,
+img,
+p,
+span,
+div,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  -webkit-user-drag: none;
+}
+
+/* 스크롤바 제거 */
+::-webkit-scrollbar {
+  display: none;
 }

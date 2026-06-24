@@ -2,10 +2,10 @@ name: CodeQL Security Analysis
 
 on:
   push:
-    branches: [be/dev, be/prod]
+    branches: [be/dev, be/prod, dev]
     paths: ['backend/**']
   pull_request:
-    branches: [be/dev, be/prod]
+    branches: [be/dev, be/prod, dev]
     paths: ['backend/**']
   schedule:
     - cron: '0 2 * * 1'

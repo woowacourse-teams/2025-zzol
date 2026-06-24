@@ -14,6 +14,7 @@ module.exports = {
 
   // 모듈 이름 매핑 (TypeScript path alias 지원)
   moduleNameMapper: {
+    '^.+\\.svg$': '<rootDir>/__mocks__/svgMock.cjs',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
 

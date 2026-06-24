@@ -1,0 +1,50 @@
+<svg width="299" height="453" viewBox="0 0 299 453" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 -->
+  <rect width="299" height="453" rx="20" fill="#EDF4FF"/>
+  <rect x="20" y="30" width="259" height="393" rx="14" fill="#C8DEFF" fill-opacity="0.4"/>
+
+  <!-- 세로 기둥 3개 -->
+  <line x1="74" y1="115" x2="74" y2="345" stroke="#5a88c8" stroke-width="7" stroke-linecap="round"/>
+  <line x1="149" y1="115" x2="149" y2="345" stroke="#5a88c8" stroke-width="7" stroke-linecap="round"/>
+  <line x1="224" y1="115" x2="224" y2="345" stroke="#5a88c8" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- 가로 선 (seg0-1, y=168) -->
+  <line x1="74" y1="168" x2="149" y2="168" stroke="#FF6B6B" stroke-width="6" stroke-linecap="round"/>
+  <!-- 가로 선 (seg1-2, y=228) -->
+  <line x1="149" y1="228" x2="224" y2="228" stroke="#85b62e" stroke-width="6" stroke-linecap="round"/>
+  <!-- 가로 선 (seg0-1, y=288) -->
+  <line x1="74" y1="288" x2="149" y2="288" stroke="#4cafa9" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- 경로 점선 -->
+  <!-- A (빨강): 기둥0 → seg0-1(168) → 기둥1 → seg1-2(228) → 기둥2 → 기둥2 바닥 -->
+  <polyline points="74,115 74,168 149,168 149,228 224,228 224,345" stroke="#FF6B6B" stroke-width="3" stroke-dasharray="7 5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
+  <!-- B (청록): 기둥1 → seg0-1(168) → 기둥0 → seg0-1(288) → 기둥1 → 기둥1 바닥 -->
+  <polyline points="149,115 149,168 74,168 74,288 149,288 149,345" stroke="#4cafa9" stroke-width="3" stroke-dasharray="7 5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
+  <!-- C (초록): 기둥2 → seg1-2(228) → 기둥1 → seg0-1(288) → 기둥0 → 기둥0 바닥 -->
+  <polyline points="224,115 224,228 149,228 149,288 74,288 74,345" stroke="#85b62e" stroke-width="3" stroke-dasharray="7 5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
+
+  <!-- 플레이어 원 (기둥 상단) -->
+  <circle cx="74" cy="93" r="22" fill="#FF6B6B"/>
+  <text x="74" y="99" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="15" font-weight="700" fill="white">나</text>
+
+  <circle cx="149" cy="93" r="22" fill="#4cafa9"/>
+  <text x="149" y="99" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="16" font-weight="700" fill="white">B</text>
+
+  <circle cx="224" cy="93" r="22" fill="#85b62e"/>
+  <text x="224" y="99" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="16" font-weight="700" fill="white">C</text>
+
+  <!-- 바닥 순위 (기둥0=3위, 기둥1=1위, 기둥2=2위) -->
+  <circle cx="74" cy="378" r="21" fill="#FFC8A4"/>
+  <text x="74" y="383" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="13" font-weight="700" fill="white">3위</text>
+
+  <circle cx="149" cy="378" r="21" fill="#FFDE65"/>
+  <text x="149" y="383" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="13" font-weight="700" fill="#888">1위</text>
+
+  <circle cx="224" cy="378" r="21" fill="#E5E7EB"/>
+  <text x="224" y="383" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="13" font-weight="700" fill="#999">2위</text>
+
+  <!-- 최종 도착 화살표 -->
+  <circle cx="224" cy="345" r="8" fill="#FF6B6B" opacity="0.85"/>
+  <circle cx="149" cy="345" r="8" fill="#4cafa9" opacity="0.85"/>
+  <circle cx="74" cy="345" r="8" fill="#85b62e" opacity="0.85"/>
+</svg>

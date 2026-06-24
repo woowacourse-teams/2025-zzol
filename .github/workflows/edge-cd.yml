@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - be/dev
+      - dev
     paths:
       - 'backend/docker/nginx/**'
       - 'backend/docker/monitoring/**'

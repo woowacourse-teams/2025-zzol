@@ -1,3 +1,5 @@
+import { DESIGN_TOKENS } from '@/constants/design';
+
 const color = {
   point: {
     50: '#FEF2F2',
@@ -22,48 +24,87 @@ const color = {
     950: '#030712',
   },
 
+  red: '#FF0000',
+  blue: '#0066FF',
   white: '#FFFFFF',
   black: '#000000',
+  yellow: '#FFDF20',
+
+  status: {
+    online: '#1FCD7E',
+    offline: '#D1D5DC',
+  },
+
+  oauth: {
+    google: {
+      bg: '#FFFFFF',
+      text: '#1F1F1F',
+      border: '#747775',
+    },
+    kakao: {
+      bg: '#FEE500',
+      text: '#191919',
+    },
+    naver: {
+      bg: '#03A94D',
+      text: '#FFFFFF',
+    },
+  },
 } as const;
 
 const typography = {
   h1: {
-    fontSize: '30px',
+    fontSize: DESIGN_TOKENS.typography.h1,
     fontWeight: 700,
     fontFamily:
       "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    lineHeight: 1.4,
   },
   h2: {
-    fontSize: '24px',
+    fontSize: DESIGN_TOKENS.typography.h2,
     fontWeight: 600,
     fontFamily:
       "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    lineHeight: 1.5,
   },
   h3: {
-    fontSize: '20px',
+    fontSize: DESIGN_TOKENS.typography.h3,
     fontWeight: 600,
     fontFamily:
       "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    lineHeight: 1.6,
   },
   h4: {
-    fontSize: '16px',
+    fontSize: DESIGN_TOKENS.typography.h4,
     fontWeight: 600,
     fontFamily:
       "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+
+    lineHeight: 1.6,
   },
 
   paragraph: {
-    fontSize: '16px',
+    fontSize: DESIGN_TOKENS.typography.paragraph,
     fontWeight: 500,
     fontFamily:
       "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+
+    lineHeight: 1.6,
   },
 
   small: {
-    fontSize: '14px',
+    fontSize: DESIGN_TOKENS.typography.small,
     fontWeight: 400,
     fontFamily:
       "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    lineHeight: 1.6,
+  },
+  caption: {
+    fontSize: DESIGN_TOKENS.typography.caption,
+    fontWeight: 400,
+    fontFamily:
+      "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    lineHeight: 1.6,
   },
 } as const;
 

@@ -124,3 +124,22 @@ table {
   border-collapse: collapse;
   border-spacing: 0;
 }
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  touch-action: pan-x pan-y;
+}
+
+/* Button reset */
+button {
+  padding: 0;
+  margin: 0;
+  background: none;
+  cursor: pointer;
+  border: none;
+}

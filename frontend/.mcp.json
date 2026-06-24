@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "ws": {
+      "command": "node",
+      "args": ["../tools/ws-mcp/dist/server.js"],
+      "env": {
+        "WS_MCP_CATALOG_URL": "http://localhost:8080/dev/ws-catalog"
+      }
+    },
+    "api": {
+      "command": "node",
+      "args": ["../tools/api-mcp/scripts/launch.mjs"],
+      "env": {
+        "API_MCP_CATALOG_URL": "http://localhost:8080/dev/ws-catalog"
+      }
+    }
+  }
+}

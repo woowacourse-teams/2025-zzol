@@ -1,0 +1,44 @@
+<svg width="299" height="453" viewBox="0 0 299 453" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 -->
+  <rect width="299" height="453" rx="20" fill="#EDF4FF"/>
+  <rect x="20" y="30" width="259" height="393" rx="14" fill="#C8DEFF" fill-opacity="0.4"/>
+
+  <!-- 세로 기둥 2개 (크게) -->
+  <line x1="82" y1="87" x2="82" y2="388" stroke="#5a88c8" stroke-width="8" stroke-linecap="round"/>
+  <line x1="218" y1="87" x2="218" y2="388" stroke="#5a88c8" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- 플레이어 원 -->
+  <circle cx="82" cy="62" r="24" fill="#FF6B6B"/>
+  <text x="82" y="69" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="16" font-weight="700" fill="white">나</text>
+
+  <circle cx="218" cy="62" r="24" fill="#4cafa9"/>
+  <text x="218" y="69" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="17" font-weight="700" fill="white">B</text>
+
+  <!-- 이미 그어진 확정 선 (상단) -->
+  <line x1="82" y1="162" x2="218" y2="162" stroke="#4cafa9" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- ghost 선 (반투명 점선) -->
+  <line x1="82" y1="265" x2="218" y2="265" stroke="#FF6B6B" stroke-width="7" stroke-linecap="round" stroke-dasharray="14 9" opacity="0.38"/>
+
+  <!-- 터치 파동 -->
+  <circle cx="150" cy="265" r="44" stroke="#FF6B6B" stroke-width="2" stroke-opacity="0.18" fill="none"/>
+  <circle cx="150" cy="265" r="31" stroke="#FF6B6B" stroke-width="2" stroke-opacity="0.25" fill="none"/>
+  <circle cx="150" cy="265" r="18" fill="#FF6B6B" fill-opacity="0.12"/>
+
+  <!-- 손가락 아이콘 -->
+  <g transform="translate(134, 238)">
+    <ellipse cx="16" cy="40" rx="13" ry="7" fill="rgba(0,0,0,0.07)"/>
+    <rect x="9" y="7" width="14" height="28" rx="7" fill="#FDDBB4"/>
+    <rect x="9" y="7" width="14" height="15" rx="7" fill="#F5C090"/>
+  </g>
+
+  <!-- TAP! 텍스트 -->
+  <text x="150" y="348" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="22" font-weight="700" fill="#FF6B6B" fill-opacity="0.85">TAP!</text>
+
+  <!-- 바닥 순위 (미확인 상태) -->
+  <circle cx="82" cy="414" r="20" fill="#C8DEFF"/>
+  <text x="82" y="420" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="14" font-weight="600" fill="#5a88c8">?위</text>
+
+  <circle cx="218" cy="414" r="20" fill="#C8DEFF"/>
+  <text x="218" y="420" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="14" font-weight="600" fill="#5a88c8">?위</text>
+</svg>

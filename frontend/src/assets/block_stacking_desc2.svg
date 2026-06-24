@@ -1,0 +1,48 @@
+<svg width="299" height="453" viewBox="0 0 299 453" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 -->
+  <rect width="299" height="453" rx="20" fill="#EAF6F0"/>
+
+  <!-- 배경 패널 -->
+  <rect x="20" y="30" width="259" height="393" rx="14" fill="#1DD1A1" fill-opacity="0.12"/>
+
+  <!-- 쌓인 블록 타워 (아래에서 위로) -->
+  <!-- 1층 -->
+  <rect x="50" y="370" width="200" height="28" rx="5" fill="#FF6B6B"/>
+  <rect x="50" y="370" width="200" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
+
+  <!-- 2층 -->
+  <rect x="62" y="340" width="176" height="28" rx="5" fill="#FF9F43"/>
+  <rect x="62" y="340" width="176" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
+
+  <!-- 3층 -->
+  <rect x="74" y="310" width="152" height="28" rx="5" fill="#FECA57"/>
+  <rect x="74" y="310" width="152" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
+
+  <!-- 4층 -->
+  <rect x="88" y="280" width="124" height="28" rx="5" fill="#48DBFB"/>
+  <rect x="88" y="280" width="124" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
+
+  <!-- 5층 -->
+  <rect x="100" y="250" width="100" height="28" rx="5" fill="#1DD1A1"/>
+  <rect x="100" y="250" width="100" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
+
+  <!-- 6층 -->
+  <rect x="112" y="220" width="76" height="28" rx="5" fill="#54A0FF"/>
+  <rect x="112" y="220" width="76" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
+
+  <!-- 7층 -->
+  <rect x="122" y="190" width="56" height="28" rx="5" fill="#A29BFE"/>
+  <rect x="122" y="190" width="56" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
+
+  <!-- 층수 배지 -->
+  <circle cx="230" cy="200" r="28" fill="#F53E41"/>
+  <text x="230" y="196" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="13" font-weight="700" fill="white">7층</text>
+  <text x="230" y="213" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="10" font-weight="500" fill="rgba(255,255,255,0.85)">달성!</text>
+
+  <!-- 위쪽 화살표 (높이 강조) -->
+  <path d="M149 155 L149 80" stroke="#1DD1A1" stroke-width="3" stroke-linecap="round"/>
+  <path d="M137 92 L149 76 L161 92" fill="none" stroke="#1DD1A1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- 설명 텍스트 -->
+  <text x="149" y="62" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="14" font-weight="700" fill="#1DD1A1">높이 쌓을수록 유리!</text>
+</svg>

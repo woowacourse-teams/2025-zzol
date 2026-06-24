@@ -1,0 +1,31 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - cd frontend
+      - npm ci
+
+  pre_build:
+    commands:
+      - npm run lint
+      - npm run test:jest
+
+  build:
+    commands:
+      - npm run build
+
+  post_build:
+    commands:
+      - ls -al dist
+
+artifacts:
+  base-directory: frontend/dist
+  files:
+    - '**/*'
+
+cache:
+  paths:
+    - 'node_modules/**/*'

@@ -6,6 +6,7 @@ on:
     branches:
       - be/dev
       - be/prod
+      - dev
     paths:
       - "backend/**"
       - ".github/workflows/backend-ci.yml"

@@ -3,22 +3,25 @@ name: Frontend CI
 on:
   # PR이 열릴 때, 업데이트될 때, 다시 열릴 때
   pull_request:
-    branches: [fe/dev, fe/prod]
+    branches: [fe/dev, fe/prod, dev]
     paths:
       - "frontend/**"
 
-  # 커밋이 푸시될 때
-  push:
-    branches: [fe/dev, fe/prod]
-    paths:
-      - "frontend/**"
+  # 다른 워크플로우에서 호출할 수 있도록 설정
+  workflow_call:
+    outputs:
+      # 빌드 결과를 다른 워크플로우에서 사용할 수 있도록 출력
+      build-success:
+        description: "Build completion status"
+        value: ${{ jobs.ci.outputs.build-success }}
 
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
+
+    # 출력 설정
+    outputs:
+      build-success: ${{ steps.build.outputs.success }}
 
     # frontend 폴더를 기본 작업 디렉토리로 설정
     defaults:
@@ -27,10 +30,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
@@ -38,6 +41,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Create .env file
+        run: |
+          echo "API_URL=${{ secrets.API_URL }}" >> .env
 
       - name: Run ESLint
         run: npm run lint
@@ -49,4 +56,7 @@ jobs:
           CI: true
 
       - name: Run Build
-        run: npm run build
+        id: build
+        run: |
+          npm run build
+          echo "success=true" >> $GITHUB_OUTPUT

@@ -46,9 +46,9 @@ jobs:
       GH_PAT: ${{ secrets.ZZOL_BOT_GH_DISPATCH_TOKEN }}
       GEMINI_ZZOL_BOT_API_KEY: ${{ secrets.GEMINI_ZZOL_BOT_API_KEY }}
       SLACK_WEBHOOK_URL: ${{ secrets.ZZOL_BOT_SLACK_WEBHOOK_URL }}
-      # 앱 콜백(선택). 내부 리스너라 GitHub 호스티드 러너에선 보통 비어 있고, in-network 셀프호스티드에서만 도달.
+      # 앱 공개 콜백(토큰 가드). 워커가 PR_OPENED/NO_FIX/FAILED를 앱에 보고해 어드민에 실시간 반영한다.
       APP_CALLBACK_URL: ${{ secrets.ZZOL_BOT_APP_CALLBACK_URL }}
-      APP_CALLBACK_TOKEN: ${{ secrets.ZZOL_BOT_ALERT_WEBHOOK_TOKEN }}
+      APP_CALLBACK_TOKEN: ${{ secrets.ZZOL_BOT_REMEDIATION_CALLBACK_TOKEN }}
     steps:
       - name: Checkout be/dev
         uses: actions/checkout@v7
@@ -149,8 +149,9 @@ jobs:
           fi
           echo "재현 테스트 GREEN + 모듈 테스트 통과."
 
-          # 3) be/zzolbot/auto-fix-* 브랜치로 커밋·push (명시 refspec, 보호 브랜치로 push 금지)
-          SUFFIX="${{ steps.payload.outputs.fingerprint }}"
+          # 3) be/zzolbot/auto-fix-<attemptId> 브랜치로 커밋·push (명시 refspec, 보호 브랜치로 push 금지)
+          # attemptId를 인코딩해 콜백·추적이 시도 1건과 1:1로 매칭되게 한다(수동 dispatch는 run_id 폴백).
+          SUFFIX="${{ steps.payload.outputs.attemptId }}"
           [ -z "$SUFFIX" ] && SUFFIX="${{ github.run_id }}"
           BRANCH="be/zzolbot/auto-fix-${SUFFIX}"
           git config user.name "zzolbot"
@@ -193,12 +194,12 @@ jobs:
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "PR 발행: $PR_URL"
 
-      - name: Callback to app (optional)
+      - name: Callback to app
         if: always() && env.APP_CALLBACK_URL != '' && steps.payload.outputs.attemptId != ''
         run: |
           set -euo pipefail
           RESULT="${{ steps.verify.outputs.result || 'FAILED' }}"
-          curl -fsS -X POST "${APP_CALLBACK_URL}/internal/zzolbot/remediation/attempts/${{ steps.payload.outputs.attemptId }}" \
+          curl -fsS -X POST "${APP_CALLBACK_URL}/webhook/zzolbot/remediation/attempts/${{ steps.payload.outputs.attemptId }}" \
             -H "Authorization: Bearer ${APP_CALLBACK_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "$(jq -n \
@@ -208,7 +209,7 @@ jobs:
               --arg detail "${{ steps.verify.outputs.detail }}" \
               --argjson prNumber "${{ steps.verify.outputs.prNumber || 'null' }}" \
               '{status:$status, prUrl:($prUrl|select(.!="")), prNumber:$prNumber, branchName:($branchName|select(.!="")), detail:($detail|select(.!=""))}')" \
-          || echo "콜백 실패(앱 내부 엔드포인트 미도달 가능) — 무시"
+          || echo "콜백 실패 — Slack 통지로 대체"
 
       - name: Notify Slack
         if: always() && env.SLACK_WEBHOOK_URL != ''

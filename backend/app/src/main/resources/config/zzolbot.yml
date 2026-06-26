@@ -21,6 +21,14 @@ zzol-bot:
     webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성
   llm-budget:
     daily-max: ${ZZOL_BOT_LLM_DAILY_MAX:10}      # 분석 작업 일일 LLM 호출 하드 캡(비용 상한). env로 조절
+  remediation:
+    enabled: ${ZZOL_BOT_REMEDIATION_ENABLED:false}   # 자동 수정 PR 디스패치 활성 여부(기본 비활성 — PAT·워크플로우 배포 후 켠다)
+    github-token: ${ZZOL_BOT_GH_DISPATCH_TOKEN:}     # repository_dispatch용 fine-grained PAT. GITHUB_TOKEN으론 dispatch 불가·CI 미트리거. 미설정 시 디스패치 실패
+    repo-owner: ${ZZOL_BOT_REPO_OWNER:woowacourse-teams}
+    repo-name: ${ZZOL_BOT_REPO_NAME:2025-coffee-shout}
+    daily-max: ${ZZOL_BOT_REMEDIATION_DAILY_MAX:5}   # 일일 수정 디스패치 하드캡(오클릭·폭주 방지)
+    cooldown-minutes: 240                            # 같은 fingerprint 재수정 최소 간격(기본 4시간). 0이면 비활성
+    defect-whitelist: [NULL_POINTER]                 # 자동 수정 대상 결함 유형. 화이트리스트 밖은 디스패치 안 하고 제안만
   sql:
     max-rows: 1000
     query-timeout-seconds: 5

@@ -33,7 +33,8 @@ allowed-tools: Read, Write, Bash, Glob, Grep
 - **기각된 대안 재채택**: 기존 ADR에서 명시적으로 기각한 접근법을 현재 결정이 다시 선택하는가?
 
 충돌이 발견되면 구현으로 넘어가기 전에 사용자에게 명시한다:
-```
+
+```text
 ⚠️ 기존 ADR과 충돌
 파일: docs/adr/{파일명}
 충돌 내용: {기존 결정 요약}
@@ -42,11 +43,13 @@ allowed-tools: Read, Write, Bash, Glob, Grep
 ```
 
 기존 ADR을 supersede하기로 결정한 경우 새 ADR에 다음을 추가한다:
+
 ```md
 ## 대체하는 ADR
 [{기존 ADR 제목}](../adr/{파일명}) 을 대체한다.
 대체 이유: {왜 이전 결정을 바꾸는가}
 ```
+
 그리고 기존 ADR의 frontmatter `status`를 `superseded`로 업데이트한다.
 
 관련 ADR이 없거나 충돌이 없으면 다음 단계로 바로 진행한다.

@@ -9,7 +9,7 @@ globs:
 
 ### 디렉터리 배치
 
-```
+```text
 src/features/<featureName>/
 ├── components/   feature 전용 UI — api 직접 호출 금지
 ├── hooks/        서버 상태·로직 — useFetch/useMutation 사용 (api-conventions 참조)

@@ -237,4 +237,3 @@ z-index: ${Z_INDEX.TOAST};
 max-width: 430px;
 margin: 0 auto;
 ```
-

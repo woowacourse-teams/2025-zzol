@@ -31,7 +31,7 @@ staged 변경만 확인하려면 `git diff --cached --name-only`를 사용한다
 
 다음 패턴을 Grep으로 탐지한다:
 
-```
+```text
 # hex 리터럴
 '#[0-9a-fA-F]{3,8}'
 
@@ -46,7 +46,7 @@ rgba\([1-9]|rgb\(
 
 ### 3-2. 타이포그래피 하드코딩
 
-```
+```text
 font-size: \d+(px|rem|em)
 font-weight: \d{3}
 line-height: \d+\.?\d*[^;]    # theme 토큰 외부
@@ -56,7 +56,7 @@ line-height: \d+\.?\d*[^;]    # theme 토큰 외부
 
 ### 3-3. z-index 하드코딩
 
-```
+```text
 z-index: \d+
 ```
 
@@ -81,7 +81,7 @@ style=\{\{
 
 ## 4. 출력 형식
 
-```
+```text
 ## 스타일 검사 결과
 
 ### 요약

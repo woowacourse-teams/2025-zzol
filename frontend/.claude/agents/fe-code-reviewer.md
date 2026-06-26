@@ -132,7 +132,7 @@ WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할
 
 ## 출력 형식
 
-````
+````text
 ## 코드 리뷰 결과
 
 ### [파일명] — [계층: @common / @composition / feature / page / hook / util]
@@ -173,8 +173,6 @@ WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할
 // 구체적인 코드 스니펫
 ````
 
-```
-
 체크리스트 항목이 해당 파일에 적용되지 않으면 그 섹션은 출력에서 생략한다.
 문제가 없는 파일은 `### [파일명] — 이슈 없음` 한 줄로 처리한다.
 
@@ -182,4 +180,3 @@ WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할
 
 `src/` 하위 파일은 **절대 수정하지 않는다**.
 수정 제안은 출력으로만 전달한다.
-```

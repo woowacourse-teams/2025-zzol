@@ -29,9 +29,11 @@ disable-model-invocation: true
 아래 내용을 참고해 이슈 본문을 작성한다.
 
 ### Bug 템플릿
+
 !`cat ../.github/ISSUE_TEMPLATE/bug_report.md`
 
 ### Feature 템플릿
+
 !`cat ../.github/ISSUE_TEMPLATE/feature-template.md`
 
 ## 3. 사용자 확인 (필수 — 이 단계를 건너뛰지 않는다)
@@ -94,7 +96,7 @@ git checkout -b fe/{type}/{issue-number}-{slug}
 
 ## 6. 완료 출력
 
-```
+```text
 ✅ 이슈 생성: https://github.com/.../issues/{N}
 🌿 브랜치:   fe/{type}/{N}-{slug}
 ```

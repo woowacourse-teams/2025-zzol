@@ -92,7 +92,7 @@ tools: Bash, Read, Glob, Grep
 
 ### WebSocket 컨트랙트
 
-WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할 때는 `ws-mcp` 도구로 BE 카탈로그와 일치 여부를 확인한다. 도구는 `frontend/.mcp.json` 으로 자동 등록되어 있다.
+WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할 때는 `api-mcp` 의 `ws_*` 도구로 BE 카탈로그와 일치 여부를 확인한다. 도구는 `frontend/.mcp.json` 으로 자동 등록되어 있다.
 
 - [ ] destination 에 prefix(`/topic`, `/app`, `/user`)가 중복으로 들어가 있지 않은가 — FE wrapper 가 자동 추가하므로 path 에서 제거해야 한다 (`.claude/rules/websocket.md` 참조)
 - [ ] 사용한 destination 이 `ws_list_topics` 또는 `ws_describe` 카탈로그에 존재하는가 — 존재하지 않으면 BE 측 `@WsTopic` 추가 필요. 임의 신설 금지

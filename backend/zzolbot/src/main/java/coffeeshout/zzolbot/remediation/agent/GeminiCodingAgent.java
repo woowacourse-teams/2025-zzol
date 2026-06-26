@@ -79,6 +79,11 @@ public class GeminiCodingAgent implements CodingAgent {
     }
 
     PatchProposal parse(DefectContext context, String json) {
+        if (json == null || json.isBlank()) {
+            // 콘텐츠 차단·빈 응답 시 SDK가 null을 줄 수 있다. 빈 제안 → 호출측 NO_FIX.
+            log.warn("[ZzolBot] 수정 제안 응답이 비어 있음 — NO_FIX 처리.");
+            return new PatchProposal(context.location().filePath(), "", "", "", "");
+        }
         try {
             final JsonNode node = objectMapper.readTree(json);
             return new PatchProposal(

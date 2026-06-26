@@ -15,6 +15,7 @@ import coffeeshout.zzolbot.monitor.infra.LokiLogClient;
 import coffeeshout.zzolbot.monitor.infra.MonitorRunEntity;
 import coffeeshout.zzolbot.remediation.application.RemediationDecision.Outcome;
 import coffeeshout.zzolbot.remediation.config.RemediationProperties;
+import coffeeshout.zzolbot.remediation.domain.DefectType;
 import coffeeshout.zzolbot.remediation.domain.RemediationRequest;
 import coffeeshout.zzolbot.remediation.infra.GitHubDispatchClient;
 import coffeeshout.zzolbot.remediation.infra.RemediationAttemptEntity;
@@ -38,7 +39,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 class RemediationTriggerServiceTest {
 
     private static final RemediationProperties ENABLED = new RemediationProperties(
-            true, "token", "owner", "repo", 5, 240, List.of("NULL_POINTER"));
+            true, "token", "owner", "repo", 5, 240, List.of(DefectType.NULL_POINTER));
     private static final MonitorProperties MONITOR = new MonitorProperties(true, 240, 240);
     private static final String NPE_SIGNALS = "{\"summary\":\"NullPointerException on orderId\"}";
 
@@ -95,7 +96,7 @@ class RemediationTriggerServiceTest {
     @Test
     void 비활성이면_디스패치하지_않는다() {
         final RemediationDecision decision = newService(new RemediationProperties(
-                false, "token", "owner", "repo", 5, 240, List.of("NULL_POINTER"))).requestFix(1L);
+                false, "token", "owner", "repo", 5, 240, List.of(DefectType.NULL_POINTER))).requestFix(1L);
 
         assertThat(decision.outcome()).isEqualTo(Outcome.DISABLED);
         verify(monitorService, never()).findRun(any());

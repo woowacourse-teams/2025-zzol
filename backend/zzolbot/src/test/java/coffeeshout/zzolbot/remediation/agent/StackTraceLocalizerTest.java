@@ -86,5 +86,17 @@ class StackTraceLocalizerTest {
             assertThat(localizer.localize(null, repoRoot)).isEmpty();
             assertThat(localizer.localize("  ", repoRoot)).isEmpty();
         }
+
+        @Test
+        void 첫_coffeeshout_프레임_소스가_없으면_뒤_프레임으로_폴백하지_않는다(@TempDir Path repoRoot) throws IOException {
+            // 첫 프레임(Missing) 소스는 repo에 없고, 두 번째 프레임(RoomService) 소스만 존재한다.
+            createSource(repoRoot, "room", "coffeeshout/room/application", "RoomService.java");
+            final String stackTrace = "java.lang.NullPointerException\n"
+                    + "\tat coffeeshout.room.application.Missing.run(Missing.java:5)\n"
+                    + "\tat coffeeshout.room.application.RoomService.find(RoomService.java:42)";
+
+            // 계약: 첫 coffeeshout 프레임만 신뢰한다 — 그 소스가 없으면 빈값(두 번째로 넘어가지 않음).
+            assertThat(localizer.localize(stackTrace, repoRoot)).isEmpty();
+        }
     }
 }

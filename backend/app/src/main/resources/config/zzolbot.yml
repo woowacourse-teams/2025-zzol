@@ -27,7 +27,7 @@ zzol-bot:
     repo-owner: ${ZZOL_BOT_REPO_OWNER:woowacourse-teams}
     repo-name: ${ZZOL_BOT_REPO_NAME:2025-coffee-shout}
     daily-max: ${ZZOL_BOT_REMEDIATION_DAILY_MAX:5}   # 일일 수정 디스패치 하드캡(오클릭·폭주 방지)
-    cooldown-minutes: 240                            # 같은 fingerprint 재수정 최소 간격(기본 4시간). 0이면 비활성
+    cooldown-minutes: ${ZZOL_BOT_REMEDIATION_COOLDOWN_MINUTES:240}   # 같은 fingerprint 재수정 최소 간격(기본 4시간). 0이면 비활성. 인시던트 시 env로 즉시 조절
     defect-whitelist: [NULL_POINTER]                 # 자동 수정 대상 결함 유형. 화이트리스트 밖은 디스패치 안 하고 제안만
   sql:
     max-rows: 1000

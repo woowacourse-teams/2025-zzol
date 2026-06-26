@@ -43,7 +43,7 @@ class RemediationCallbackServiceTest {
     }
 
     @Test
-    void NO_FIX_콜백은_사유를_기록한다() {
+    void NO_FIX_콜백은_사유를_기록하고_저장한다() {
         final RemediationAttemptEntity attempt = dispatchedAttempt();
         given(attemptRepository.findById(7L)).willReturn(Optional.of(attempt));
 
@@ -51,6 +51,30 @@ class RemediationCallbackServiceTest {
 
         assertThat(attempt.getStatus()).isEqualTo(RemediationStatus.NO_FIX);
         assertThat(attempt.getDetail()).isEqualTo("재현 실패");
+        verify(attemptRepository).save(attempt);
+    }
+
+    @Test
+    void FAILED_콜백은_FAILED로_기록한다() {
+        final RemediationAttemptEntity attempt = dispatchedAttempt();
+        given(attemptRepository.findById(7L)).willReturn(Optional.of(attempt));
+
+        service.apply(7L, RemediationStatus.FAILED, null, null, null, "워커 오류");
+
+        assertThat(attempt.getStatus()).isEqualTo(RemediationStatus.FAILED);
+        assertThat(attempt.getDetail()).isEqualTo("워커 오류");
+        verify(attemptRepository).save(attempt);
+    }
+
+    @Test
+    void 허용되지_않는_상태_콜백은_저장하지_않는다() {
+        final RemediationAttemptEntity attempt = dispatchedAttempt();
+        given(attemptRepository.findById(7L)).willReturn(Optional.of(attempt));
+
+        service.apply(7L, RemediationStatus.DISPATCHED, null, null, null, null);
+
+        assertThat(attempt.getStatus()).isEqualTo(RemediationStatus.DISPATCHED);
+        verify(attemptRepository, never()).save(any());
     }
 
     @Test

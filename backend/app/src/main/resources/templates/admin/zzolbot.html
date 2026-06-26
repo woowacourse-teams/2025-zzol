@@ -932,7 +932,8 @@
     function buildRemediationHtml(a) {
         const label = `<span class="label">🔧 자동 수정</span>`;
         const button = `<div><button type="button" class="btn-action" onclick="remediate(${a.id})">수정 시도</button></div>`;
-        if (a.remediationPrUrl) {
+        // PR URL은 토큰 가드 콜백으로 채워지므로 스킴을 검증한다(javascript: 등 저장형 XSS 차단).
+        if (a.remediationPrUrl && /^https?:\/\//i.test(a.remediationPrUrl)) {
             return label
                 + `<div><a href="${esc(a.remediationPrUrl)}" target="_blank" rel="noopener">수정 PR 보기 ↗</a></div>`;
         }

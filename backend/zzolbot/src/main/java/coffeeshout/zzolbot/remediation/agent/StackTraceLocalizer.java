@@ -84,8 +84,13 @@ public class StackTraceLocalizer {
         try (Stream<Path> paths = Files.walk(repoRoot, MAX_WALK_DEPTH)) {
             return paths
                     .filter(Files::isRegularFile)
-                    .filter(p -> p.toString().replace('\\', '/').endsWith(suffix))
-                    .findFirst();
+                    .map(p -> p.toString().replace('\\', '/'))
+                    // 빌드 산출물·VCS 디렉터리는 소스가 아니므로 제외(CI I/O 절감, build/ 내 복사본 오탐 방지).
+                    .filter(path -> !path.contains("/.git/") && !path.contains("/build/")
+                            && !path.contains("/.gradle/"))
+                    .filter(path -> path.endsWith(suffix))
+                    .findFirst()
+                    .map(repoRoot.getFileSystem()::getPath);
         } catch (IOException e) {
             throw new UncheckedIOException("소스 파일 탐색 실패: " + suffix, e);
         }

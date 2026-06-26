@@ -80,19 +80,26 @@ jobs:
 
       - name: Build payload
         id: payload
+        # 모든 입력을 env로 받아 셸에서 데이터($VAR)로만 평가한다 — ${{ }} 직접 전개로 인한 셸/명령 주입 차단.
         env:
+          EVENT_NAME: ${{ github.event_name }}
           DISPATCH_PAYLOAD: ${{ toJSON(github.event.client_payload) }}
+          IN_ATTEMPT_ID: ${{ github.event.inputs.attemptId }}
+          IN_DEFECT_TYPE: ${{ github.event.inputs.defectType }}
+          IN_FINGERPRINT: ${{ github.event.inputs.fingerprint }}
+          IN_ROOT_CAUSE: ${{ github.event.inputs.rootCauseHypothesis }}
+          IN_STACKTRACE: ${{ github.event.inputs.stackTrace }}
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+          if [ "$EVENT_NAME" = "repository_dispatch" ]; then
             echo "$DISPATCH_PAYLOAD" > payload.json
           else
             jq -n \
-              --arg attemptId "${{ github.event.inputs.attemptId }}" \
-              --arg defectType "${{ github.event.inputs.defectType }}" \
-              --arg fingerprint "${{ github.event.inputs.fingerprint }}" \
-              --arg rootCauseHypothesis "${{ github.event.inputs.rootCauseHypothesis }}" \
-              --arg stackTrace "${{ github.event.inputs.stackTrace }}" \
+              --arg attemptId "${IN_ATTEMPT_ID:-}" \
+              --arg defectType "${IN_DEFECT_TYPE:-}" \
+              --arg fingerprint "${IN_FINGERPRINT:-}" \
+              --arg rootCauseHypothesis "${IN_ROOT_CAUSE:-}" \
+              --arg stackTrace "${IN_STACKTRACE:-}" \
               '{attemptId:$attemptId, defectType:$defectType, fingerprint:$fingerprint, rootCauseHypothesis:$rootCauseHypothesis, stackTrace:$stackTrace}' \
               > payload.json
           fi
@@ -165,6 +172,10 @@ jobs:
         if: steps.verify.outputs.ready == 'true'
         env:
           GH_PAT: ${{ secrets.ZZOL_BOT_GH_DISPATCH_TOKEN }}
+          ATTEMPT_ID: ${{ steps.payload.outputs.attemptId }}
+          RUN_ID: ${{ github.run_id }}
+          BASE_REF_INPUT: ${{ github.event.inputs.ref }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           TARGET=$(jq -r '.targetPath' proposal.json)
@@ -177,8 +188,8 @@ jobs:
           DEFECT=$(jq -r '.defectType // "NULL_POINTER"' payload.json)
 
           # be/zzolbot/auto-fix-<attemptId> 브랜치 (명시 refspec, 보호 브랜치로 push 금지).
-          SUFFIX="${{ steps.payload.outputs.attemptId }}"
-          [ -z "$SUFFIX" ] && SUFFIX="${{ github.run_id }}"
+          SUFFIX="${ATTEMPT_ID:-}"
+          [ -z "$SUFFIX" ] && SUFFIX="$RUN_ID"
           BRANCH="be/zzolbot/auto-fix-${SUFFIX}"
           git config user.name "zzolbot"
           git config user.email "zzolbot@users.noreply.github.com"
@@ -186,7 +197,7 @@ jobs:
           git add "$TARGET" "$TEST_PATH"
           git commit -q -m "fix: zzol-bot 자동 수정 — ${RATIONALE}"
           # 자격증명 미영속이므로 토큰을 URL에 명시해 일회성 push.
-          git push "https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git" "HEAD:${BRANCH}"
+          git push "https://x-access-token:${GH_PAT}@github.com/${REPO}.git" "HEAD:${BRANCH}"
 
           {
             echo "# 🤖 zzol-bot 자동 수정 (사람 리뷰 필요)"
@@ -210,7 +221,7 @@ jobs:
             echo "- 최소 변경 여부·동작 보존·재현 테스트 타당성을 확인하세요."
           } > pr_body.md
 
-          BASE_REF="${{ github.event.inputs.ref }}"
+          BASE_REF="${BASE_REF_INPUT:-}"
           [ -z "$BASE_REF" ] && BASE_REF="be/dev"
           PR_URL=$(GH_TOKEN="$GH_PAT" gh pr create --base "$BASE_REF" --head "$BRANCH" \
             --title "fix: zzol-bot 자동 수정 — ${RATIONALE}" \
@@ -224,38 +235,44 @@ jobs:
 
       - name: Callback to app
         if: always() && steps.payload.outputs.attemptId != ''
+        # 신뢰 불가 값(detail=LLM 텍스트, prUrl 등)을 모두 env로 받아 $VAR(데이터)로만 평가한다 — 셸 주입 차단.
         env:
           APP_CALLBACK_URL: ${{ secrets.ZZOL_BOT_APP_CALLBACK_URL }}
           APP_CALLBACK_TOKEN: ${{ secrets.ZZOL_BOT_REMEDIATION_CALLBACK_TOKEN }}
+          ATTEMPT_ID: ${{ steps.payload.outputs.attemptId }}
+          RESULT: ${{ steps.openpr.outputs.result || steps.verify.outputs.result || 'FAILED' }}
+          PR_URL: ${{ steps.openpr.outputs.prUrl }}
+          PR_NUMBER: ${{ steps.openpr.outputs.prNumber }}
+          BRANCH_NAME: ${{ steps.openpr.outputs.branch }}
+          DETAIL: ${{ steps.verify.outputs.detail }}
         run: |
           set -euo pipefail
           if [ -z "${APP_CALLBACK_URL:-}" ]; then echo "콜백 URL 미설정 — 생략"; exit 0; fi
-          RESULT="${{ steps.openpr.outputs.result || steps.verify.outputs.result || 'FAILED' }}"
-          curl -fsS -X POST "${APP_CALLBACK_URL}/webhook/zzolbot/remediation/attempts/${{ steps.payload.outputs.attemptId }}" \
+          curl -fsS -X POST "${APP_CALLBACK_URL}/webhook/zzolbot/remediation/attempts/${ATTEMPT_ID}" \
             -H "Authorization: Bearer ${APP_CALLBACK_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "$(jq -n \
-              --arg status "$RESULT" \
-              --arg prUrl "${{ steps.openpr.outputs.prUrl }}" \
-              --arg branchName "${{ steps.openpr.outputs.branch }}" \
-              --arg detail "${{ steps.verify.outputs.detail }}" \
-              --argjson prNumber "${{ steps.openpr.outputs.prNumber || 'null' }}" \
-              '{status:$status, prUrl:($prUrl|select(.!="")), prNumber:$prNumber, branchName:($branchName|select(.!="")), detail:($detail|select(.!=""))}')" \
+              --arg status "${RESULT:-FAILED}" \
+              --arg prUrl "${PR_URL:-}" \
+              --arg branchName "${BRANCH_NAME:-}" \
+              --arg detail "${DETAIL:-}" \
+              --arg prNumber "${PR_NUMBER:-}" \
+              '{status:$status, prUrl:($prUrl|select(.!="")), prNumber:(($prNumber|select(.!=""))|tonumber? // null), branchName:($branchName|select(.!="")), detail:($detail|select(.!=""))}')" \
           || echo "콜백 실패 — Slack 통지로 대체"
 
       - name: Notify Slack
         if: always()
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ZZOL_BOT_SLACK_WEBHOOK_URL }}
+          RESULT: ${{ steps.openpr.outputs.result || steps.verify.outputs.result || 'FAILED' }}
+          PR_URL: ${{ steps.openpr.outputs.prUrl }}
+          DETAIL: ${{ steps.verify.outputs.detail }}
         run: |
           set -euo pipefail
           if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then echo "Slack 웹훅 미설정 — 생략"; exit 0; fi
-          RESULT="${{ steps.openpr.outputs.result || steps.verify.outputs.result || 'FAILED' }}"
-          PR_URL="${{ steps.openpr.outputs.prUrl }}"
-          DETAIL="${{ steps.verify.outputs.detail }}"
-          TEXT="🤖 zzol-bot 자동 수정: ${RESULT}"
-          [ -n "$PR_URL" ] && TEXT="${TEXT}\n${PR_URL}"
-          [ -n "$DETAIL" ] && TEXT="${TEXT}\n${DETAIL}"
+          TEXT="🤖 zzol-bot 자동 수정: ${RESULT:-FAILED}"
+          [ -n "${PR_URL:-}" ] && TEXT="${TEXT}\n${PR_URL}"
+          [ -n "${DETAIL:-}" ] && TEXT="${TEXT}\n${DETAIL}"
           curl -fsS -X POST "$SLACK_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg t "$TEXT" '{text:$t}')" || true

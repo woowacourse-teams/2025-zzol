@@ -13,7 +13,8 @@ public interface RemediationAttemptRepository extends JpaRepository<RemediationA
     Optional<RemediationAttemptEntity> findTopByMonitorRunIdOrderByCreatedAtDesc(Long monitorRunId);
 
     /**
-     * 여러 실행의 최신 시도를 한 번에 조회(목록 화면 N+1 방지)할 때 쓴다.
+     * 주어진 실행들의 수정 시도 <b>전체</b>를 created_at DESC로 한 번에 조회한다(목록 화면 N+1 방지).
+     * 실행별 최신 1건은 호출측이 DESC 순서에서 실행별 첫 항목으로 선택한다(이력 전체를 내려준다는 점에 유의).
      */
     List<RemediationAttemptEntity> findByMonitorRunIdInOrderByCreatedAtDesc(List<Long> monitorRunIds);
 

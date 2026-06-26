@@ -22,10 +22,11 @@ public record RemediationProperties(
         String repoName,
         @Positive long dailyMax,
         @PositiveOrZero int cooldownMinutes,
-        @NotNull List<String> defectWhitelist
+        @NotNull List<DefectType> defectWhitelist
 ) {
 
     public RemediationProperties {
+        // DefectType으로 바인딩해 오타(예: NUL_POINTER)는 시작 시 변환 실패로 드러난다(silent-off 방지).
         defectWhitelist = defectWhitelist != null ? List.copyOf(defectWhitelist) : List.of();
     }
 
@@ -40,6 +41,6 @@ public record RemediationProperties(
      * 결함 유형이 자동 수정 대상(화이트리스트)인지. 화이트리스트 밖이면 디스패치하지 않고 제안에 머문다.
      */
     public boolean isWhitelisted(DefectType type) {
-        return type != null && defectWhitelist.contains(type.name());
+        return type != null && defectWhitelist.contains(type);
     }
 }

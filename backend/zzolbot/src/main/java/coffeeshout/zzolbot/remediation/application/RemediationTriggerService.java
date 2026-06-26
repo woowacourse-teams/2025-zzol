@@ -35,6 +35,8 @@ public class RemediationTriggerService {
 
     private static final int STACKTRACE_SAMPLE_LIMIT = 20;
     private static final String APP_FRAME_MARKER = "coffeeshout";
+    // repository_dispatch client_payload 전체 크기 제한(약 10KB, 초과 시 422)을 넘지 않도록 스택트레이스를 상한한다.
+    private static final int MAX_STACKTRACE_CHARS = 6000;
 
     private final RemediationProperties properties;
     private final MonitorProperties monitorProperties;
@@ -104,7 +106,15 @@ public class RemediationTriggerService {
         return errors.stream()
                 .filter(line -> line != null && line.contains(APP_FRAME_MARKER))
                 .findFirst()
+                .map(this::truncate)
                 .orElse("");
+    }
+
+    private String truncate(String stackTrace) {
+        if (stackTrace.length() <= MAX_STACKTRACE_CHARS) {
+            return stackTrace;
+        }
+        return stackTrace.substring(0, MAX_STACKTRACE_CHARS) + "\n... (truncated)";
     }
 
     private RemediationRequest toRequest(Long attemptId, MonitorRunEntity run, DefectType defectType, String stackTrace) {

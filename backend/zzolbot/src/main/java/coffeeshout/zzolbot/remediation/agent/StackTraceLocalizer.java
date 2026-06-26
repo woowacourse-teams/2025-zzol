@@ -35,7 +35,13 @@ public class StackTraceLocalizer {
         }
         final String fqnWithMethod = matcher.group(1);
         final String fileBase = matcher.group(2);
-        final int line = Integer.parseInt(matcher.group(3));
+        final int line;
+        try {
+            // 정규식이 숫자임은 보장하나, 비정상적으로 긴 값은 int 범위를 넘겨 던질 수 있다.
+            line = Integer.parseInt(matcher.group(3));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
 
         final int lastDot = fqnWithMethod.lastIndexOf('.');
         if (lastDot < 0) {

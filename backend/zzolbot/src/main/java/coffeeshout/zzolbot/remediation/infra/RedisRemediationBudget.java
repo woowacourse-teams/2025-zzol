@@ -38,8 +38,22 @@ public class RedisRemediationBudget implements RemediationBudget {
     @Override
     public long remaining() {
         final String value = redisTemplate.opsForValue().get(todayKey());
-        final long used = value == null ? 0 : Long.parseLong(value);
-        return Math.max(0, properties.dailyMax() - used);
+        return Math.max(0, properties.dailyMax() - parseUsed(value));
+    }
+
+    /**
+     * INCR이 만든 값은 정상이면 숫자지만, 키가 손상·수동변경됐을 수 있어 방어적으로 파싱한다.
+     * 파싱 실패 시 0으로 보아 가용성을 막지 않는다(예산은 INCR(tryAcquire)에서 1차로 강제된다).
+     */
+    private long parseUsed(String value) {
+        if (value == null) {
+            return 0;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     /**

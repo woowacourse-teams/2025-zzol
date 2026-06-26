@@ -32,7 +32,9 @@ public class RemediationCallbackSecurityConfig {
         http
                 .securityMatcher("/webhook/zzolbot/remediation/**")
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                .csrf(csrf -> csrf.disable())
+                // 머신 콜백(stateless + Bearer 헤더 인증, 쿠키 없음)이라 CSRF가 성립하지 않는다.
+                // 전역 disable 대신 이 경로만 명시적으로 제외해 의도를 분명히 한다(CodeQL).
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/webhook/zzolbot/remediation/**"))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(

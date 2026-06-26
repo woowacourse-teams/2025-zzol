@@ -1,0 +1,225 @@
+name: ZzolBot Auto-Fix Remediation
+
+# zzol-bot 자동 수정 봇 워커(zzolbot 4편). 앱이 모니터링 알림을 코드 결함으로 분류하면
+# repository_dispatch(event_type=zzolbot-remediation)로 이 워크플로우를 트리거한다.
+# 워커는 결함 위치를 특정→Gemini로 수정·재현 테스트 제안→재현 테스트 RED→GREEN + 모듈 테스트 통과 시에만
+# be/zzolbot/auto-fix-* 브랜치로 PR을 연다. 봇은 PR 발행까지만 — 머지 게이트는 사람 리뷰 + CI다.
+on:
+  repository_dispatch:
+    types: [zzolbot-remediation]
+  # 안전한 수동 e2e용. 통제 주입 결함 시나리오로 직접 트리거한다.
+  workflow_dispatch:
+    inputs:
+      attemptId:
+        description: "수정 시도 ID(앱 콜백용, 없으면 생략)"
+        required: false
+      defectType:
+        description: "결함 유형"
+        required: false
+        default: "NULL_POINTER"
+      fingerprint:
+        description: "알림 지문(브랜치명 suffix)"
+        required: false
+      rootCauseHypothesis:
+        description: "근본원인 가설"
+        required: false
+      stackTrace:
+        description: "스택트레이스(coffeeshout 프레임 포함)"
+        required: false
+
+# 같은 지문은 동시에 한 번만 — 중복 PR을 막는다.
+concurrency:
+  group: zzolbot-remediation-${{ github.event.client_payload.fingerprint || github.event.inputs.fingerprint || github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # PAT으로 체크아웃·push·PR 생성을 한다. GITHUB_TOKEN으로 연 PR은 다른 워크플로우(CI/CodeQL)를
+      # 트리거하지 못하므로, CI 게이트를 받으려면 반드시 PAT이어야 한다.
+      GH_PAT: ${{ secrets.ZZOL_BOT_GH_DISPATCH_TOKEN }}
+      GEMINI_ZZOL_BOT_API_KEY: ${{ secrets.GEMINI_ZZOL_BOT_API_KEY }}
+      SLACK_WEBHOOK_URL: ${{ secrets.ZZOL_BOT_SLACK_WEBHOOK_URL }}
+      # 앱 콜백(선택). 내부 리스너라 GitHub 호스티드 러너에선 보통 비어 있고, in-network 셀프호스티드에서만 도달.
+      APP_CALLBACK_URL: ${{ secrets.ZZOL_BOT_APP_CALLBACK_URL }}
+      APP_CALLBACK_TOKEN: ${{ secrets.ZZOL_BOT_ALERT_WEBHOOK_TOKEN }}
+    steps:
+      - name: Checkout be/dev
+        uses: actions/checkout@v7
+        with:
+          ref: be/dev
+          fetch-depth: 0
+          token: ${{ secrets.ZZOL_BOT_GH_DISPATCH_TOKEN }}
+
+      - name: Unset upstream (push-safety)
+        # 작업 브랜치 upstream이 보호 브랜치가 되지 않도록 떼어낸다(.claude/rules/git-push-safety.md).
+        run: git branch --unset-upstream || true
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Enable Testcontainers reuse
+        run: echo "testcontainers.reuse.enable=true" > ~/.testcontainers.properties
+
+      - name: Build payload
+        id: payload
+        env:
+          DISPATCH_PAYLOAD: ${{ toJSON(github.event.client_payload) }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "$DISPATCH_PAYLOAD" > payload.json
+          else
+            jq -n \
+              --arg attemptId "${{ github.event.inputs.attemptId }}" \
+              --arg defectType "${{ github.event.inputs.defectType }}" \
+              --arg fingerprint "${{ github.event.inputs.fingerprint }}" \
+              --arg rootCauseHypothesis "${{ github.event.inputs.rootCauseHypothesis }}" \
+              --arg stackTrace "${{ github.event.inputs.stackTrace }}" \
+              '{attemptId:$attemptId, defectType:$defectType, fingerprint:$fingerprint, rootCauseHypothesis:$rootCauseHypothesis, stackTrace:$stackTrace}' \
+              > payload.json
+          fi
+          echo "attemptId=$(jq -r '.attemptId // ""' payload.json)" >> "$GITHUB_OUTPUT"
+          echo "fingerprint=$(jq -r '.fingerprint // ""' payload.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Propose patch (localize + Gemini)
+        run: |
+          set -euo pipefail
+          backend/gradlew -p backend :zzolbot:proposePatch --quiet \
+            --args="$PWD/payload.json $PWD $PWD/proposal.json"
+          echo "----- proposal status -----"
+          jq -r '.status' proposal.json
+
+      - name: Verify and open PR
+        id: verify
+        run: |
+          set -euo pipefail
+          STATUS=$(jq -r '.status' proposal.json)
+          if [ "$STATUS" != "PROPOSED" ]; then
+            echo "result=NO_FIX" >> "$GITHUB_OUTPUT"
+            echo "detail=$(jq -r '.reason // "수정 제안 없음"' proposal.json)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          TARGET=$(jq -r '.targetPath' proposal.json)
+          TEST_PATH=$(jq -r '.reproTestPath' proposal.json)
+          TEST_CLASS=$(jq -r '.reproTestClass' proposal.json)
+          MODULE=$(jq -r '.gradleModule' proposal.json)
+          if [ -z "$TEST_CLASS" ] || [ -z "$MODULE" ]; then
+            echo "result=NO_FIX" >> "$GITHUB_OUTPUT"
+            echo "detail=재현 테스트 클래스/모듈을 도출하지 못했습니다." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # 1) 재현 테스트만 적용해 수정 전 RED 확인 (재현되지 않으면 NO_FIX — 게이트가 환각을 거른다)
+          mkdir -p "$(dirname "$TEST_PATH")"
+          jq -r '.reproTestSource' proposal.json > "$TEST_PATH"
+          if backend/gradlew -p backend "${MODULE}:test" --tests "$TEST_CLASS" --quiet; then
+            echo "result=NO_FIX" >> "$GITHUB_OUTPUT"
+            echo "detail=재현 테스트가 수정 전에도 통과 — 결함을 재현하지 못했습니다(RED 실패)." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "재현 테스트 RED 확인됨."
+
+          # 2) 수정 적용 후 GREEN + 모듈 전체 테스트 통과 확인
+          jq -r '.modifiedSource' proposal.json > "$TARGET"
+          if ! backend/gradlew -p backend "${MODULE}:test" --tests "$TEST_CLASS" --quiet; then
+            echo "result=NO_FIX" >> "$GITHUB_OUTPUT"
+            echo "detail=수정 후에도 재현 테스트가 실패 — 수정이 결함을 해결하지 못했습니다(GREEN 실패)." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! backend/gradlew -p backend "${MODULE}:test" --quiet; then
+            echo "result=NO_FIX" >> "$GITHUB_OUTPUT"
+            echo "detail=모듈 테스트 회귀 — 다른 테스트를 깨뜨려 PR을 열지 않습니다." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "재현 테스트 GREEN + 모듈 테스트 통과."
+
+          # 3) be/zzolbot/auto-fix-* 브랜치로 커밋·push (명시 refspec, 보호 브랜치로 push 금지)
+          SUFFIX="${{ steps.payload.outputs.fingerprint }}"
+          [ -z "$SUFFIX" ] && SUFFIX="${{ github.run_id }}"
+          BRANCH="be/zzolbot/auto-fix-${SUFFIX}"
+          git config user.name "zzolbot"
+          git config user.email "zzolbot@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add "$TARGET" "$TEST_PATH"
+          RATIONALE=$(jq -r '.rationale' proposal.json)
+          git commit -q -m "fix: zzol-bot 자동 수정 — ${RATIONALE}"
+          git push -u origin "HEAD:${BRANCH}"
+
+          # 4) PR 발행 — 본문은 감사 로그(결함·근본원인·검증 증거·🤖 사람 리뷰 필요)
+          {
+            echo "# 🤖 zzol-bot 자동 수정 (사람 리뷰 필요)"
+            echo ""
+            echo "이 PR은 zzol-bot이 모니터링 알림을 코드 결함으로 분류해 자동 생성했습니다. **머지 전 반드시 사람이 검토**하세요."
+            echo ""
+            echo "## 🔧 작업 내용"
+            echo "- 대상: \`${TARGET}\`"
+            echo "- 모듈: \`${MODULE}\`"
+            echo "- 재현 테스트: \`${TEST_CLASS}\`"
+            echo "- 근거: ${RATIONALE}"
+            echo ""
+            echo "## ✅ 검증"
+            echo "- 재현 테스트 수정 전 RED → 수정 후 GREEN 확인"
+            echo "- \`${MODULE}:test\` 전체 통과(회귀 없음)"
+            echo ""
+            echo "## 💬 리뷰 중점사항"
+            echo "- 근본원인 가설: ${{ steps.payload.outputs.fingerprint }}"
+            echo "- 결함 유형: $(jq -r '.defectType // "NULL_POINTER"' payload.json)"
+            echo "- 최소 변경 여부·동작 보존·재현 테스트 타당성을 확인하세요."
+          } > pr_body.md
+
+          PR_URL=$(GH_TOKEN="$GH_PAT" gh pr create --base be/dev --head "$BRANCH" \
+            --title "fix: zzol-bot 자동 수정 — ${RATIONALE}" \
+            --label "🐞bug,BE" --body-file pr_body.md)
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$' || true)
+          echo "result=PR_OPENED" >> "$GITHUB_OUTPUT"
+          echo "prUrl=$PR_URL" >> "$GITHUB_OUTPUT"
+          echo "prNumber=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "PR 발행: $PR_URL"
+
+      - name: Callback to app (optional)
+        if: always() && env.APP_CALLBACK_URL != '' && steps.payload.outputs.attemptId != ''
+        run: |
+          set -euo pipefail
+          RESULT="${{ steps.verify.outputs.result || 'FAILED' }}"
+          curl -fsS -X POST "${APP_CALLBACK_URL}/internal/zzolbot/remediation/attempts/${{ steps.payload.outputs.attemptId }}" \
+            -H "Authorization: Bearer ${APP_CALLBACK_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg status "$RESULT" \
+              --arg prUrl "${{ steps.verify.outputs.prUrl }}" \
+              --arg branchName "${{ steps.verify.outputs.branch }}" \
+              --arg detail "${{ steps.verify.outputs.detail }}" \
+              --argjson prNumber "${{ steps.verify.outputs.prNumber || 'null' }}" \
+              '{status:$status, prUrl:($prUrl|select(.!="")), prNumber:$prNumber, branchName:($branchName|select(.!="")), detail:($detail|select(.!=""))}')" \
+          || echo "콜백 실패(앱 내부 엔드포인트 미도달 가능) — 무시"
+
+      - name: Notify Slack
+        if: always() && env.SLACK_WEBHOOK_URL != ''
+        run: |
+          set -euo pipefail
+          RESULT="${{ steps.verify.outputs.result || 'FAILED' }}"
+          PR_URL="${{ steps.verify.outputs.prUrl }}"
+          DETAIL="${{ steps.verify.outputs.detail }}"
+          TEXT="🤖 zzol-bot 자동 수정: ${RESULT}"
+          [ -n "$PR_URL" ] && TEXT="${TEXT}\n${PR_URL}"
+          [ -n "$DETAIL" ] && TEXT="${TEXT}\n${DETAIL}"
+          curl -fsS -X POST "$SLACK_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg t "$TEXT" '{text:$t}')" || true

@@ -159,6 +159,9 @@ jobs:
           git checkout -b "$BRANCH"
           git add "$TARGET" "$TEST_PATH"
           RATIONALE=$(jq -r '.rationale' proposal.json)
+          ROOT_CAUSE=$(jq -r '.rootCauseHypothesis // "-"' payload.json)
+          FINGERPRINT=$(jq -r '.fingerprint // "-"' payload.json)
+          DEFECT=$(jq -r '.defectType // "NULL_POINTER"' payload.json)
           git commit -q -m "fix: zzol-bot 자동 수정 — ${RATIONALE}"
           git push -u origin "HEAD:${BRANCH}"
 
@@ -179,8 +182,9 @@ jobs:
             echo "- \`${MODULE}:test\` 전체 통과(회귀 없음)"
             echo ""
             echo "## 💬 리뷰 중점사항"
-            echo "- 근본원인 가설: ${{ steps.payload.outputs.fingerprint }}"
-            echo "- 결함 유형: $(jq -r '.defectType // "NULL_POINTER"' payload.json)"
+            echo "- 근본원인 가설: ${ROOT_CAUSE}"
+            echo "- 지문(fingerprint): ${FINGERPRINT}"
+            echo "- 결함 유형: ${DEFECT}"
             echo "- 최소 변경 여부·동작 보존·재현 테스트 타당성을 확인하세요."
           } > pr_body.md
 

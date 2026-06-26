@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * GitHub Actions 워커에서 실행되는 코딩 에이전트 CLI(Gradle JavaExec {@code :zzolbot:proposePatch}).
@@ -28,6 +30,9 @@ public final class RemediationAgentMain {
     private static final String DEFAULT_MODEL = "gemini-2.5-flash";
     private static final String MODEL_ENV = "ZZOL_BOT_MODEL";
     private static final String API_KEY_ENV = "GEMINI_ZZOL_BOT_API_KEY";
+    private static final Pattern PACKAGE_PATTERN = Pattern.compile("(?m)^\\s*package\\s+([\\w.]+)\\s*;");
+    private static final Pattern CLASS_PATTERN =
+            Pattern.compile("(?m)^\\s*(?:public\\s+)?(?:final\\s+)?class\\s+(\\w+)");
 
     private RemediationAgentMain() {
     }
@@ -68,8 +73,35 @@ public final class RemediationAgentMain {
             writeNoFix(objectMapper, outputPath, "에이전트가 적용 가능한 수정·재현 테스트를 만들지 못했습니다.");
             return;
         }
-        writeProposed(objectMapper, outputPath, loc, proposal);
-        System.out.printf("[ZzolBot] 수정 제안 생성: %s (module=%s)%n", loc.filePath(), loc.gradleModule());
+        final String[] normalizedTest = normalizeTestLocation(loc, proposal);
+        writeProposed(objectMapper, outputPath, loc, proposal, normalizedTest[0], normalizedTest[1]);
+        System.out.printf("[ZzolBot] 수정 제안 생성: %s (module=%s, test=%s)%n",
+                loc.filePath(), loc.gradleModule(), normalizedTest[1]);
+    }
+
+    /**
+     * LLM이 준 테스트 경로를 그대로 믿지 않고, 테스트 소스의 {@code package}/{@code class} 선언으로 경로·FQN을
+     * 대상 모듈 기준으로 재구성한다. LLM이 {@code backend/} 접두를 빼거나 package와 경로가 어긋나도 테스트가
+     * 올바른 위치에 놓이게 해, 정상 수정이 위치 불일치만으로 NO_FIX가 되는 것을 막는다. 파싱 실패 시 LLM 값으로 폴백.
+     *
+     * @return [reproTestPath, reproTestClass]
+     */
+    static String[] normalizeTestLocation(DefectLocation loc, PatchProposal proposal) {
+        final String module = loc.gradleModule().replaceFirst("^:", "");
+        final String packageName = match(PACKAGE_PATTERN, proposal.reproTestSource());
+        final String className = match(CLASS_PATTERN, proposal.reproTestSource());
+        if (module.isEmpty() || className.isEmpty()) {
+            return new String[]{proposal.reproTestPath(), reproTestClass(proposal.reproTestPath())};
+        }
+        final String packageDir = packageName.isEmpty() ? "" : packageName.replace('.', '/') + "/";
+        final String path = "backend/" + module + "/src/test/java/" + packageDir + className + ".java";
+        final String fqn = packageName.isEmpty() ? className : packageName + "." + className;
+        return new String[]{path, fqn};
+    }
+
+    private static String match(Pattern pattern, String source) {
+        final Matcher matcher = pattern.matcher(source);
+        return matcher.find() ? matcher.group(1) : "";
     }
 
     private static Client buildClient() {
@@ -101,15 +133,16 @@ public final class RemediationAgentMain {
         System.out.println("[ZzolBot] NO_FIX: " + reason);
     }
 
-    private static void writeProposed(ObjectMapper objectMapper, Path outputPath,
-                                      DefectLocation loc, PatchProposal proposal) throws Exception {
+    private static void writeProposed(ObjectMapper objectMapper, Path outputPath, DefectLocation loc,
+                                      PatchProposal proposal, String reproTestPath, String reproTestClass)
+            throws Exception {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("status", "PROPOSED");
         out.put("targetPath", proposal.targetPath());
         out.put("modifiedSource", proposal.modifiedSource());
-        out.put("reproTestPath", proposal.reproTestPath());
+        out.put("reproTestPath", reproTestPath);
         out.put("reproTestSource", proposal.reproTestSource());
-        out.put("reproTestClass", reproTestClass(proposal.reproTestPath()));
+        out.put("reproTestClass", reproTestClass);
         out.put("rationale", proposal.rationale());
         out.put("gradleModule", loc.gradleModule());
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputPath.toFile(), out);

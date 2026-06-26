@@ -31,4 +31,15 @@ class DefectClassifierTest {
     void null_입력은_UNKNOWN으로_분류한다() {
         assertThat(classifier.classify(null, null)).isEqualTo(DefectType.UNKNOWN);
     }
+
+    @Test
+    void 단어경계_npe는_NULL_POINTER로_분류한다() {
+        assertThat(classifier.classify("로그인 중 NPE 발생", "{}")).isEqualTo(DefectType.NULL_POINTER);
+    }
+
+    @Test
+    void npe가_다른_단어_내부면_오탐하지_않는다() {
+        // "unpegged"는 'npe'를 부분문자열로 포함하지만 단어 경계가 아니므로 UNKNOWN이어야 한다.
+        assertThat(classifier.classify("rate unpegged from baseline", "{}")).isEqualTo(DefectType.UNKNOWN);
+    }
 }

@@ -3,6 +3,7 @@ package coffeeshout.zzolbot.remediation.application;
 import coffeeshout.zzolbot.remediation.domain.DefectType;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,14 +22,16 @@ public class DefectClassifier {
             "nosuchelementexception",
             "orelsethrow",
             "optional.get",
-            "npe",
             "널 포인터",
             "null 역참조",
             "널 역참조");
 
+    // 짧은 약어 "npe"는 다른 단어 내부 우연 포함을 피해 단어 경계로만 매칭한다(오탐 방지).
+    private static final Pattern NPE_ABBREVIATION = Pattern.compile("\\bnpe\\b");
+
     public DefectType classify(String rootCauseHypothesis, String signalsJson) {
         final String haystack = (safe(rootCauseHypothesis) + " " + safe(signalsJson)).toLowerCase(Locale.ROOT);
-        if (NULL_POINTER_KEYWORDS.stream().anyMatch(haystack::contains)) {
+        if (NULL_POINTER_KEYWORDS.stream().anyMatch(haystack::contains) || NPE_ABBREVIATION.matcher(haystack).find()) {
             return DefectType.NULL_POINTER;
         }
         return DefectType.UNKNOWN;

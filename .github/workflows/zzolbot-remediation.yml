@@ -4,6 +4,11 @@ name: ZzolBot Auto-Fix Remediation
 # repository_dispatch(event_type=zzolbot-remediation)로 이 워크플로우를 트리거한다.
 # 워커는 결함 위치를 특정→Gemini로 수정·재현 테스트 제안→재현 테스트 RED→GREEN + 모듈 테스트 통과 시에만
 # be/zzolbot/auto-fix-* 브랜치로 PR을 연다. 봇은 PR 발행까지만 — 머지 게이트는 사람 리뷰 + CI다.
+#
+# 보안(시크릿 격리): LLM이 생성한 코드를 gradle test로 실행하는 단계(Verify)는 시크릿을 일절 받지 않고,
+# checkout도 자격증명을 .git에 남기지 않는다(persist-credentials: false). 프롬프트 인젝션으로 생성 코드가
+# 토큰을 탈취하는 표면을 제거한다. 시크릿은 그 코드를 실행하지 않는 단계(Propose=Gemini, Open PR=PAT,
+# Callback=콜백토큰, Slack=웹훅)에만 스텝 스코프로 주입한다.
 on:
   repository_dispatch:
     types: [zzolbot-remediation]
@@ -36,23 +41,15 @@ concurrency:
   group: zzolbot-remediation-${{ github.event.client_payload.fingerprint || github.event.inputs.fingerprint || github.run_id }}
   cancel-in-progress: false
 
+# 최소 권한. PR push·생성은 워크플로우 GITHUB_TOKEN이 아니라 별도 PAT으로 하므로,
+# 기본 토큰은 읽기 전용으로 두어 신뢰 불가 코드 실행 구간의 토큰 가치를 낮춘다.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   remediate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      # PAT으로 체크아웃·push·PR 생성을 한다. GITHUB_TOKEN으로 연 PR은 다른 워크플로우(CI/CodeQL)를
-      # 트리거하지 못하므로, CI 게이트를 받으려면 반드시 PAT이어야 한다.
-      GH_PAT: ${{ secrets.ZZOL_BOT_GH_DISPATCH_TOKEN }}
-      GEMINI_ZZOL_BOT_API_KEY: ${{ secrets.GEMINI_ZZOL_BOT_API_KEY }}
-      SLACK_WEBHOOK_URL: ${{ secrets.ZZOL_BOT_SLACK_WEBHOOK_URL }}
-      # 앱 공개 콜백(토큰 가드). 워커가 PR_OPENED/NO_FIX/FAILED를 앱에 보고해 어드민에 실시간 반영한다.
-      APP_CALLBACK_URL: ${{ secrets.ZZOL_BOT_APP_CALLBACK_URL }}
-      APP_CALLBACK_TOKEN: ${{ secrets.ZZOL_BOT_REMEDIATION_CALLBACK_TOKEN }}
     steps:
       - name: Checkout target ref
         uses: actions/checkout@v7
@@ -60,6 +57,8 @@ jobs:
           ref: ${{ github.event.inputs.ref || 'be/dev' }}
           fetch-depth: 0
           token: ${{ secrets.ZZOL_BOT_GH_DISPATCH_TOKEN }}
+          # 자격증명을 .git에 남기지 않는다 — 이후 신뢰 불가 코드(gradle test)가 토큰에 접근 못 하게.
+          persist-credentials: false
 
       - name: Unset upstream (push-safety)
         # 작업 브랜치 upstream이 보호 브랜치가 되지 않도록 떼어낸다(.claude/rules/git-push-safety.md).
@@ -100,7 +99,10 @@ jobs:
           echo "attemptId=$(jq -r '.attemptId // ""' payload.json)" >> "$GITHUB_OUTPUT"
           echo "fingerprint=$(jq -r '.fingerprint // ""' payload.json)" >> "$GITHUB_OUTPUT"
 
+      # Gemini 키만 받는다. 아직 신뢰 불가 코드를 실행하지 않는 단계(제안 JSON 생성만).
       - name: Propose patch (localize + Gemini)
+        env:
+          GEMINI_ZZOL_BOT_API_KEY: ${{ secrets.GEMINI_ZZOL_BOT_API_KEY }}
         run: |
           set -euo pipefail
           backend/gradlew -p backend :zzolbot:proposePatch --quiet \
@@ -108,7 +110,9 @@ jobs:
           echo "----- proposal status -----"
           jq -r '.status' proposal.json
 
-      - name: Verify and open PR
+      # ⚠️ 신뢰 불가 코드 실행 구간 — 시크릿 일절 없음. LLM 생성 테스트/수정을 적용해 RED→GREEN을 검증만 한다.
+      # 게이트를 통과하면 ready=true를 내보내고, 수정·테스트 파일은 작업 트리에 남겨 다음(Open PR) 단계가 커밋한다.
+      - name: Verify RED to GREEN (no secrets)
         id: verify
         run: |
           set -euo pipefail
@@ -119,9 +123,9 @@ jobs:
             exit 0
           fi
 
-          TARGET=$(jq -r '.targetPath' proposal.json)
           TEST_PATH=$(jq -r '.reproTestPath' proposal.json)
           TEST_CLASS=$(jq -r '.reproTestClass' proposal.json)
+          TARGET=$(jq -r '.targetPath' proposal.json)
           MODULE=$(jq -r '.gradleModule' proposal.json)
           if [ -z "$TEST_CLASS" ] || [ -z "$MODULE" ]; then
             echo "result=NO_FIX" >> "$GITHUB_OUTPUT"
@@ -152,9 +156,27 @@ jobs:
             exit 0
           fi
           echo "재현 테스트 GREEN + 모듈 테스트 통과."
+          echo "ready=true" >> "$GITHUB_OUTPUT"
 
-          # 3) be/zzolbot/auto-fix-<attemptId> 브랜치로 커밋·push (명시 refspec, 보호 브랜치로 push 금지)
-          # attemptId를 인코딩해 콜백·추적이 시도 1건과 1:1로 매칭되게 한다(수동 dispatch는 run_id 폴백).
+      # PR 발행만 PAT을 받는다. 이 단계는 신뢰 불가 코드를 실행하지 않고 git push·gh만 한다.
+      # checkout이 자격증명을 남기지 않으므로 push는 토큰을 URL에 명시해 일회성으로 인증한다.
+      - name: Open PR (PAT only)
+        id: openpr
+        if: steps.verify.outputs.ready == 'true'
+        env:
+          GH_PAT: ${{ secrets.ZZOL_BOT_GH_DISPATCH_TOKEN }}
+        run: |
+          set -euo pipefail
+          TARGET=$(jq -r '.targetPath' proposal.json)
+          TEST_PATH=$(jq -r '.reproTestPath' proposal.json)
+          TEST_CLASS=$(jq -r '.reproTestClass' proposal.json)
+          MODULE=$(jq -r '.gradleModule' proposal.json)
+          RATIONALE=$(jq -r '.rationale' proposal.json)
+          ROOT_CAUSE=$(jq -r '.rootCauseHypothesis // "-"' payload.json)
+          FINGERPRINT=$(jq -r '.fingerprint // "-"' payload.json)
+          DEFECT=$(jq -r '.defectType // "NULL_POINTER"' payload.json)
+
+          # be/zzolbot/auto-fix-<attemptId> 브랜치 (명시 refspec, 보호 브랜치로 push 금지).
           SUFFIX="${{ steps.payload.outputs.attemptId }}"
           [ -z "$SUFFIX" ] && SUFFIX="${{ github.run_id }}"
           BRANCH="be/zzolbot/auto-fix-${SUFFIX}"
@@ -162,14 +184,10 @@ jobs:
           git config user.email "zzolbot@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add "$TARGET" "$TEST_PATH"
-          RATIONALE=$(jq -r '.rationale' proposal.json)
-          ROOT_CAUSE=$(jq -r '.rootCauseHypothesis // "-"' payload.json)
-          FINGERPRINT=$(jq -r '.fingerprint // "-"' payload.json)
-          DEFECT=$(jq -r '.defectType // "NULL_POINTER"' payload.json)
           git commit -q -m "fix: zzol-bot 자동 수정 — ${RATIONALE}"
-          git push -u origin "HEAD:${BRANCH}"
+          # 자격증명 미영속이므로 토큰을 URL에 명시해 일회성 push.
+          git push "https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git" "HEAD:${BRANCH}"
 
-          # 4) PR 발행 — 본문은 감사 로그(결함·근본원인·검증 증거·🤖 사람 리뷰 필요)
           {
             echo "# 🤖 zzol-bot 자동 수정 (사람 리뷰 필요)"
             echo ""
@@ -205,28 +223,35 @@ jobs:
           echo "PR 발행: $PR_URL"
 
       - name: Callback to app
-        if: always() && env.APP_CALLBACK_URL != '' && steps.payload.outputs.attemptId != ''
+        if: always() && steps.payload.outputs.attemptId != ''
+        env:
+          APP_CALLBACK_URL: ${{ secrets.ZZOL_BOT_APP_CALLBACK_URL }}
+          APP_CALLBACK_TOKEN: ${{ secrets.ZZOL_BOT_REMEDIATION_CALLBACK_TOKEN }}
         run: |
           set -euo pipefail
-          RESULT="${{ steps.verify.outputs.result || 'FAILED' }}"
+          if [ -z "${APP_CALLBACK_URL:-}" ]; then echo "콜백 URL 미설정 — 생략"; exit 0; fi
+          RESULT="${{ steps.openpr.outputs.result || steps.verify.outputs.result || 'FAILED' }}"
           curl -fsS -X POST "${APP_CALLBACK_URL}/webhook/zzolbot/remediation/attempts/${{ steps.payload.outputs.attemptId }}" \
             -H "Authorization: Bearer ${APP_CALLBACK_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "$(jq -n \
               --arg status "$RESULT" \
-              --arg prUrl "${{ steps.verify.outputs.prUrl }}" \
-              --arg branchName "${{ steps.verify.outputs.branch }}" \
+              --arg prUrl "${{ steps.openpr.outputs.prUrl }}" \
+              --arg branchName "${{ steps.openpr.outputs.branch }}" \
               --arg detail "${{ steps.verify.outputs.detail }}" \
-              --argjson prNumber "${{ steps.verify.outputs.prNumber || 'null' }}" \
+              --argjson prNumber "${{ steps.openpr.outputs.prNumber || 'null' }}" \
               '{status:$status, prUrl:($prUrl|select(.!="")), prNumber:$prNumber, branchName:($branchName|select(.!="")), detail:($detail|select(.!=""))}')" \
           || echo "콜백 실패 — Slack 통지로 대체"
 
       - name: Notify Slack
-        if: always() && env.SLACK_WEBHOOK_URL != ''
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ZZOL_BOT_SLACK_WEBHOOK_URL }}
         run: |
           set -euo pipefail
-          RESULT="${{ steps.verify.outputs.result || 'FAILED' }}"
-          PR_URL="${{ steps.verify.outputs.prUrl }}"
+          if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then echo "Slack 웹훅 미설정 — 생략"; exit 0; fi
+          RESULT="${{ steps.openpr.outputs.result || steps.verify.outputs.result || 'FAILED' }}"
+          PR_URL="${{ steps.openpr.outputs.prUrl }}"
           DETAIL="${{ steps.verify.outputs.detail }}"
           TEXT="🤖 zzol-bot 자동 수정: ${RESULT}"
           [ -n "$PR_URL" ] && TEXT="${TEXT}\n${PR_URL}"

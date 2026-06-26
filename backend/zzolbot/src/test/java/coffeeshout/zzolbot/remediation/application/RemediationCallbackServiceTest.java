@@ -61,4 +61,12 @@ class RemediationCallbackServiceTest {
 
         verify(attemptRepository, never()).save(any());
     }
+
+    @Test
+    void status가_null이면_NPE없이_무시한다() {
+        service.apply(7L, null, null, null, null, null);
+
+        verify(attemptRepository, never()).findById(any());
+        verify(attemptRepository, never()).save(any());
+    }
 }

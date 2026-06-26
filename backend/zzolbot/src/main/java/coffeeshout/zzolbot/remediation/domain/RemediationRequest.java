@@ -10,7 +10,6 @@ public record RemediationRequest(
         Long attemptId,
         Long monitorRunId,
         String fingerprint,
-        String alertname,
         String severity,
         DefectType defectType,
         String rootCauseHypothesis,

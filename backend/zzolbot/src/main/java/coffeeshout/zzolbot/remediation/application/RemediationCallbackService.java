@@ -23,6 +23,11 @@ public class RemediationCallbackService {
     @Transactional
     public void apply(Long attemptId, RemediationStatus status, String prUrl, Integer prNumber,
                       String branchName, String detail) {
+        if (status == null) {
+            // 공개+토큰 경로라 토큰을 가진 잘못된 호출이 status 없이 올 수 있다. NPE→500 대신 무시한다.
+            log.warn("[ZzolBot] 콜백 status 누락 — 무시. attemptId={}", attemptId);
+            return;
+        }
         final RemediationAttemptEntity attempt = attemptRepository.findById(attemptId).orElse(null);
         if (attempt == null) {
             log.warn("[ZzolBot] 콜백 대상 수정 시도 없음. attemptId={}", attemptId);

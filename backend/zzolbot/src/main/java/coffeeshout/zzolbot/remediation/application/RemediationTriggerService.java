@@ -112,7 +112,6 @@ public class RemediationTriggerService {
                 attemptId,
                 run.getId(),
                 run.getFingerprint(),
-                null,
                 run.getSeverity().name(),
                 defectType,
                 run.getRootCauseHypothesis(),

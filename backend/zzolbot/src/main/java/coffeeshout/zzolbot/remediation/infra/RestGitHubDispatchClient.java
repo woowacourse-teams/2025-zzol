@@ -1,7 +1,9 @@
 package coffeeshout.zzolbot.remediation.infra;
 
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.zzolbot.config.ZzolBotHttpTimeouts;
 import coffeeshout.zzolbot.remediation.config.RemediationProperties;
+import coffeeshout.zzolbot.remediation.domain.RemediationErrorCode;
 import coffeeshout.zzolbot.remediation.domain.RemediationRequest;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -39,7 +41,8 @@ public class RestGitHubDispatchClient implements GitHubDispatchClient {
     @Override
     public void dispatch(RemediationRequest request) {
         if (properties.githubToken() == null || properties.githubToken().isBlank()) {
-            throw new IllegalStateException("ZZOL_BOT_GH_DISPATCH_TOKEN이 설정되지 않아 자동 수정을 디스패치할 수 없습니다.");
+            throw new InfrastructureException(RemediationErrorCode.GITHUB_TOKEN_MISSING,
+                    "ZZOL_BOT_GH_DISPATCH_TOKEN이 설정되지 않아 자동 수정을 디스패치할 수 없습니다.");
         }
         try {
             restClient.post()
@@ -52,7 +55,8 @@ public class RestGitHubDispatchClient implements GitHubDispatchClient {
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
-            throw new RuntimeException("GitHub repository_dispatch 호출 실패: " + e.getMessage(), e);
+            throw new InfrastructureException(RemediationErrorCode.GITHUB_DISPATCH_FAILED,
+                    "GitHub repository_dispatch 호출 실패: " + e.getMessage(), e);
         }
     }
 
@@ -61,7 +65,6 @@ public class RestGitHubDispatchClient implements GitHubDispatchClient {
         payload.put("attemptId", request.attemptId());
         payload.put("monitorRunId", request.monitorRunId());
         payload.put("fingerprint", request.fingerprint());
-        payload.put("alertname", request.alertname());
         payload.put("severity", request.severity());
         payload.put("defectType", request.defectType().name());
         payload.put("rootCauseHypothesis", request.rootCauseHypothesis());

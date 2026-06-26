@@ -10,6 +10,10 @@ on:
   # 안전한 수동 e2e용. 통제 주입 결함 시나리오로 직접 트리거한다.
   workflow_dispatch:
     inputs:
+      ref:
+        description: "체크아웃·PR base 브랜치(e2e는 결함 주입한 throwaway 브랜치, 기본 be/dev)"
+        required: false
+        default: "be/dev"
       attemptId:
         description: "수정 시도 ID(앱 콜백용, 없으면 생략)"
         required: false
@@ -50,10 +54,10 @@ jobs:
       APP_CALLBACK_URL: ${{ secrets.ZZOL_BOT_APP_CALLBACK_URL }}
       APP_CALLBACK_TOKEN: ${{ secrets.ZZOL_BOT_REMEDIATION_CALLBACK_TOKEN }}
     steps:
-      - name: Checkout be/dev
+      - name: Checkout target ref
         uses: actions/checkout@v7
         with:
-          ref: be/dev
+          ref: ${{ github.event.inputs.ref || 'be/dev' }}
           fetch-depth: 0
           token: ${{ secrets.ZZOL_BOT_GH_DISPATCH_TOKEN }}
 
@@ -188,7 +192,9 @@ jobs:
             echo "- 최소 변경 여부·동작 보존·재현 테스트 타당성을 확인하세요."
           } > pr_body.md
 
-          PR_URL=$(GH_TOKEN="$GH_PAT" gh pr create --base be/dev --head "$BRANCH" \
+          BASE_REF="${{ github.event.inputs.ref }}"
+          [ -z "$BASE_REF" ] && BASE_REF="be/dev"
+          PR_URL=$(GH_TOKEN="$GH_PAT" gh pr create --base "$BASE_REF" --head "$BRANCH" \
             --title "fix: zzol-bot 자동 수정 — ${RATIONALE}" \
             --label "🐞bug,BE" --body-file pr_body.md)
           PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$' || true)

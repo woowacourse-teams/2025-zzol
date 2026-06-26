@@ -19,8 +19,22 @@ declare "app_logs_ingest_time" {
 	loki.process "process" {
 		forward_to = [loki.write.default.receiver]
 
+		// 스택트레이스 등 멀티라인 로그를 하나의 엔트리로 병합한다.
+		// 로그 라인은 "[yyyy-MM-dd HH:mm:ss.SSS]"로 시작하므로, 그 패턴으로
+		// 시작하지 않는 후속 라인(예: "\tat coffeeshout...")을 직전 엔트리에 이어붙인다.
+		// 병합이 없으면 Loki에 스택트레이스가 라인 단위로 조각나 file:line 프레임을
+		// 온전히 질의할 수 없다(zzol-bot 진단·자동 수정 봇이 결함 위치 특정에 의존).
+		stage.multiline {
+			firstline     = "^\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\]"
+			max_wait_time = "3s"
+			max_lines     = 256
+		}
+
+		// (?s): 병합된 멀티라인에서도 (?P<message>.*)가 줄바꿈을 가로질러 매칭되도록
+		// 한다. 이 플래그가 없으면 스택트레이스 엔트리가 정규식 매칭에 실패해 level
+		// 라벨·timestamp 추출이 누락된다(하필 ERROR 로그에서).
 		stage.regex {
-			expression = "^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] --- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
+			expression = "(?s)^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] --- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
 		}
 
 		stage.labels {
@@ -61,8 +75,22 @@ declare "app_logs_log_time" {
 	loki.process "process" {
 		forward_to = [loki.write.default.receiver]
 
+		// 스택트레이스 등 멀티라인 로그를 하나의 엔트리로 병합한다.
+		// 로그 라인은 "[yyyy-MM-dd HH:mm:ss.SSS]"로 시작하므로, 그 패턴으로
+		// 시작하지 않는 후속 라인(예: "\tat coffeeshout...")을 직전 엔트리에 이어붙인다.
+		// 병합이 없으면 Loki에 스택트레이스가 라인 단위로 조각나 file:line 프레임을
+		// 온전히 질의할 수 없다(zzol-bot 진단·자동 수정 봇이 결함 위치 특정에 의존).
+		stage.multiline {
+			firstline     = "^\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\]"
+			max_wait_time = "3s"
+			max_lines     = 256
+		}
+
+		// (?s): 병합된 멀티라인에서도 (?P<message>.*)가 줄바꿈을 가로질러 매칭되도록
+		// 한다. 이 플래그가 없으면 스택트레이스 엔트리가 정규식 매칭에 실패해 level
+		// 라벨·timestamp 추출이 누락된다(하필 ERROR 로그에서).
 		stage.regex {
-			expression = "^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] --- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
+			expression = "(?s)^\\[(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\] \\[(?P<level>\\w+)\\] --- \\[(?P<thread>[^\\]]+)\\] (?P<logger>[^\\s]+) : (?P<message>.*)$"
 		}
 
 		stage.labels {

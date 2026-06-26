@@ -40,4 +40,15 @@ class GeminiCodingAgentTest {
             softly.assertThat(proposal.rationale()).isEqualTo("널 가드 추가");
         });
     }
+
+    @Test
+    void 깨진_JSON은_크래시하지_않고_빈_제안으로_떨군다() {
+        final PatchProposal proposal = agent.parse(context(), "{\"modifiedSource\": \"x\" 깨진 응답");
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(proposal.modifiedSource()).isEmpty();
+            softly.assertThat(proposal.reproTestSource()).isEmpty();
+            softly.assertThat(proposal.reproTestPath()).isEmpty();
+        });
+    }
 }

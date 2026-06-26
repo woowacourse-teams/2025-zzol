@@ -8,6 +8,7 @@ import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Gemini로 결함 수정을 제안한다. {@code GeminiAnomalyAnalyzer}와 같은 결정적 구조 출력 패턴(temperature 0,
@@ -17,6 +18,7 @@ import java.util.List;
  * <p>토큰 최소화: 전체 repo가 아니라 특정된 대상 파일 한 개만 프롬프트에 넣는다. 모델 선택이 아니라 컨텍스트
  * 스코핑이 비용을 가른다.
  */
+@Slf4j
 public class GeminiCodingAgent implements CodingAgent {
 
     private static final String SYSTEM_INSTRUCTION = """
@@ -86,7 +88,10 @@ public class GeminiCodingAgent implements CodingAgent {
                     node.path("reproTestSource").asText(""),
                     node.path("rationale").asText(""));
         } catch (Exception e) {
-            throw new RuntimeException("수정 제안 응답 파싱 실패: " + e.getMessage(), e);
+            // 모델이 깨진 JSON을 반환할 수 있다(특히 큰 파일). 크래시 대신 빈 제안을 돌려
+            // 호출측이 NO_FIX로 깔끔히 떨구게 한다 — 봇은 틀렸을 때 멈춰야지 터지면 안 된다.
+            log.warn("[ZzolBot] 수정 제안 응답 파싱 실패 — NO_FIX 처리. {}", e.getMessage());
+            return new PatchProposal(context.location().filePath(), "", "", "", "");
         }
     }
 

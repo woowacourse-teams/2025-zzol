@@ -58,7 +58,7 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
                 MonitorRunEntity.of(now, severity, alert.fingerprint(), toJson(alertContext(alert))));
 
         final MonitorAnalysis analysis = analyze(alert, now);
-        run.attachAnalysis(analysis.summary(), toJson(analysis.suggestedActions()));
+        run.attachAnalysis(analysis.summary(), analysis.rootCauseHypothesis(), toJson(analysis.suggestedActions()));
         run.markNotified();
         notifier.notifyAnomaly(alert, analysis);
         monitorRunRepository.save(run);

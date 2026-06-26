@@ -56,6 +56,10 @@ public class MonitorRunEntity {
     @Column(name = "analysis_summary", columnDefinition = "TEXT")
     private String analysisSummary;
 
+    // LLM이 추정한 근본원인 가설. 자동 수정 봇의 결함 분류·결함 위치 특정 입력으로 쓰인다(zzolbot remediation).
+    @Column(name = "root_cause_hypothesis", columnDefinition = "TEXT")
+    private String rootCauseHypothesis;
+
     @Column(name = "suggested_actions_json", columnDefinition = "TEXT")
     private String suggestedActionsJson;
 
@@ -77,8 +81,9 @@ public class MonitorRunEntity {
         return entity;
     }
 
-    public void attachAnalysis(String analysisSummary, String suggestedActionsJson) {
+    public void attachAnalysis(String analysisSummary, String rootCauseHypothesis, String suggestedActionsJson) {
         this.analysisSummary = analysisSummary;
+        this.rootCauseHypothesis = rootCauseHypothesis;
         this.suggestedActionsJson = suggestedActionsJson;
     }
 

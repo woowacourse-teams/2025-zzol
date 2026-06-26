@@ -18,7 +18,7 @@
 
 ## 게임 상태 머신
 
-```
+```text
 DESCRIPTION → PREPARE → PLAYING → DONE
 ```
 
@@ -47,7 +47,7 @@ DESCRIPTION → PREPARE → PLAYING → DONE
 
 ## 파일 구조
 
-```
+```text
 src/
 ├── features/miniGame/blockStackingGame/
 │   ├── components/
@@ -126,7 +126,7 @@ type BlockStackingGameContextValue = {
 
 canvas ref와 게임 상태를 받아 `requestAnimationFrame` 루프를 관리.
 
-```
+```text
 useBlockStackingGame(canvasRef, { phase, stack, currentBlock, fallingPieces, onTap, onGameOver })
   └── useEffect → rAF 루프 시작
         ├── 현재 블록 x 업데이트 (좌우 반전 처리)
@@ -161,8 +161,6 @@ export const getBlockSpeed = (floor: number): number => {
 
 > **백엔드 연동 시 설계**: 속도 계산 로직을 서버와 동기화하거나, 서버에서 직접 속도 값을 내려주어 모든 플레이어가 동일한 난이도를 경험하도록 설계 권장.
 
-```
-
 ---
 
 ## 동적 시점 (Dynamic View)
@@ -170,6 +168,7 @@ export const getBlockSpeed = (floor: number): number => {
 초기에는 블록을 하단에서 쌓기 시작하고, 층수가 높아짐에 따라 시점이 위로 이동하여 블록이 화면 중앙에 머물도록 한다.
 
 ### 계산 방식
+
 - `movingBlockY`: 현재 움직이는 블록의 Y 좌표
 - `targetY = H / 2` (화면 중앙)
 - `initialY = H - 2 * BLOCK_HEIGHT` (화면 하단)
@@ -196,14 +195,12 @@ export const getBlockSpeed = (floor: number): number => {
 
 Canvas Context의 `save()` / `translate()` / `restore()`로 처리. CSS `transform`이 아닌 canvas 내부 변환을 사용해 게임 렌더링과 분리.
 
-```
-
+```text
 useScreenShake(intensity, duration)
 └── shakeOffset: { x, y } 반환
 └── rAF 루프에서 ctx.translate(shakeOffset.x, shakeOffset.y) 적용
 └── 매 프레임 랜덤 offset, duration 경과 후 0으로 수렴
-
-````
+```
 
 ```typescript
 type ShakeConfig = {
@@ -216,7 +213,7 @@ ctx.save();
 ctx.translate(shakeX, shakeY); // shakeX = (Math.random() * 2 - 1) * intensity * progress
 // ... 전체 드로우
 ctx.restore();
-````
+```
 
 ---
 
@@ -235,7 +232,7 @@ ctx.restore();
 
 ### 구조
 
-```
+```text
 useBlockStackingSounds()
   ├── audioCtx: AudioContext (첫 탭 시 생성 — 브라우저 자동재생 정책 대응)
   ├── playLand()       — 안착
@@ -291,7 +288,7 @@ BLOCK_STACKING: {
 
 ### UI 구조
 
-```
+```text
 ┌──────────────────────────┐
 │      Canvas (게임)       │
 │  ┌────────────────────┐  │
@@ -312,7 +309,7 @@ BLOCK_STACKING: {
 
 ### 전체 통신 흐름
 
-```
+```text
 [호스트] 게임 시작 요청 (REST)
     ↓
 [서버] 모든 클라이언트에 게임 시작 브로드캐스트 (WebSocket)

@@ -10,7 +10,7 @@ allowed-tools: Read, Bash
 
 ## 디렉터리 구조
 
-```
+```text
 src/features/miniGame/<gameName>/
 ├── components/          # 게임 전용 UI 컴포넌트
 │   └── <ComponentName>/
@@ -28,7 +28,7 @@ src/features/miniGame/<gameName>/
 
 Context는 게임 디렉터리 **외부**에 위치한다:
 
-```
+```text
 src/contexts/<GameName>/
 ├── <GameName>Context.ts       # createContext + 타입
 └── <GameName>Provider.tsx     # Provider 컴포넌트

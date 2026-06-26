@@ -930,18 +930,22 @@
     // 자동 수정: PR이 열렸으면 링크, 진행 중이면 상태, 아니면 "수정 시도" 버튼을 보여준다.
     // 봇은 PR 발행까지만 — 머지 게이트는 사람 리뷰 + CI다.
     function buildRemediationHtml(a) {
+        const label = `<span class="label">🔧 자동 수정</span>`;
+        const button = `<div><button type="button" class="btn-action" onclick="remediate(${a.id})">수정 시도</button></div>`;
         if (a.remediationPrUrl) {
-            return `<span class="label">🔧 자동 수정</span>`
+            return label
                 + `<div><a href="${esc(a.remediationPrUrl)}" target="_blank" rel="noopener">수정 PR 보기 ↗</a></div>`;
         }
         if (a.remediationStatus === 'DISPATCHED') {
-            return `<span class="label">🔧 자동 수정</span><div class="muted">수정 시도 중… (워커 처리 대기)</div>`;
+            return label + '<div class="muted">수정 시도 중… (워커 처리 대기)</div>';
         }
-        let note = '';
-        if (a.remediationStatus === 'NO_FIX') note = '<div class="muted">이전 시도: 검증 통과 수정 없음</div>';
-        else if (a.remediationStatus === 'FAILED') note = '<div class="muted">이전 시도: 실패</div>';
-        return `<span class="label">🔧 자동 수정</span>${note}`
-            + `<div><button type="button" class="btn-action" onclick="remediate(${a.id})">수정 시도</button></div>`;
+        if (a.remediationStatus === 'NO_FIX') {
+            return label + '<div class="muted">이전 시도: 검증 통과 수정 없음</div>' + button;
+        }
+        if (a.remediationStatus === 'FAILED') {
+            return label + '<div class="muted">이전 시도: 실패</div>' + button;
+        }
+        return label + button;
     }
 
     async function remediate(id) {

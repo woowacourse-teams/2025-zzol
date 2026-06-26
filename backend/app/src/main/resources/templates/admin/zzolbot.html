@@ -913,12 +913,46 @@
             }
         } catch (e) { /* 제안 없음 */ }
 
+        const rootCauseHtml = a.rootCauseHypothesis
+            ? `<span class="label">🔬 근본원인 가설</span><div class="muted">${esc(a.rootCauseHypothesis)}</div>`
+            : '';
+
         return `<div class="result-detail">`
             + `<span class="label">📡 발화 알림</span>${signalsHtml}`
             + `<span class="label">🧠 분석 요약</span>`
             + `<div class="muted">${esc(a.analysisSummary || '분석 없음 (정상이거나 예산 소진)')}</div>`
+            + rootCauseHtml
             + actionsHtml
+            + buildRemediationHtml(a)
             + `</div>`;
+    }
+
+    // 자동 수정: PR이 열렸으면 링크, 진행 중이면 상태, 아니면 "수정 시도" 버튼을 보여준다.
+    // 봇은 PR 발행까지만 — 머지 게이트는 사람 리뷰 + CI다.
+    function buildRemediationHtml(a) {
+        if (a.remediationPrUrl) {
+            return `<span class="label">🔧 자동 수정</span>`
+                + `<div><a href="${esc(a.remediationPrUrl)}" target="_blank" rel="noopener">수정 PR 보기 ↗</a></div>`;
+        }
+        if (a.remediationStatus === 'DISPATCHED') {
+            return `<span class="label">🔧 자동 수정</span><div class="muted">수정 시도 중… (워커 처리 대기)</div>`;
+        }
+        let note = '';
+        if (a.remediationStatus === 'NO_FIX') note = '<div class="muted">이전 시도: 검증 통과 수정 없음</div>';
+        else if (a.remediationStatus === 'FAILED') note = '<div class="muted">이전 시도: 실패</div>';
+        return `<span class="label">🔧 자동 수정</span>${note}`
+            + `<div><button type="button" class="btn-action" onclick="remediate(${a.id})">수정 시도</button></div>`;
+    }
+
+    async function remediate(id) {
+        if (!confirm('이 알림을 코드 결함으로 보고 자동 수정 PR 발행을 시도합니다.\n봇은 PR 발행까지만 하며 머지는 사람 리뷰가 결정합니다. 진행할까요?')) return;
+        try {
+            const res = await api('POST', `/admin/zzolbot/monitor/alerts/${id}/remediate`);
+            alert(res && res.message ? res.message : '요청을 보냈습니다.');
+        } catch (e) {
+            alert('수정 시도 실패: ' + e.message);
+        }
+        loadAlerts();
     }
 
     loadHistory();

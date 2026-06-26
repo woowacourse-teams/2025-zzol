@@ -1,11 +1,13 @@
 package coffeeshout.zzolbot.monitor.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 import coffeeshout.zzolbot.monitor.application.MonitorService;
 import coffeeshout.zzolbot.monitor.domain.Severity;
 import coffeeshout.zzolbot.monitor.infra.MonitorRunEntity;
+import coffeeshout.zzolbot.remediation.infra.RemediationAttemptRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -27,16 +29,20 @@ class ZzolBotMonitorControllerTest {
     @Mock
     private MonitorService monitorService;
 
+    @Mock
+    private RemediationAttemptRepository attemptRepository;
+
     private ZzolBotMonitorController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new ZzolBotMonitorController(monitorService, Clock.systemDefaultZone());
+        controller = new ZzolBotMonitorController(monitorService, attemptRepository, Clock.systemDefaultZone());
     }
 
     @Test
     void alerts_는_최근_실행을_AlertResponse로_변환한다() {
         given(monitorService.recentRuns()).willReturn(List.of(run(Severity.WARNING)));
+        given(attemptRepository.findByMonitorRunIdInOrderByCreatedAtDesc(any())).willReturn(List.of());
 
         final List<ZzolBotMonitorController.AlertResponse> result = controller.alerts();
 

@@ -9,7 +9,7 @@
 # 테스트용: PREFLIGHT_BRANCH 를 set 하면(빈 값 포함) 브랜치 감지를 오버라이드한다.
 set -u
 
-PROTECTED="be/dev be/prod fe/dev fe/prod main master"
+PROTECTED="dev be/dev be/prod fe/dev fe/prod main master"
 
 # 현재 브랜치 (detached 면 빈 문자열). PREFLIGHT_BRANCH 가 set 돼 있으면 그 값을 쓴다.
 if [ -n "${PREFLIGHT_BRANCH+set}" ]; then

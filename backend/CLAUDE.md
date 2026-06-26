@@ -6,10 +6,12 @@
 
 ## 브랜치 전략
 
-- 작업 브랜치는 **`be/dev`에서 체크아웃**한다
-- PR 타깃은 `be/dev`이다
-- `main`은 GitHub Actions 워크플로우·CodeRabbit 설정 등 GitHub 관련 파일 전용이다. 백엔드 코드 작업에 사용하지 않는다
-- 브랜치 네이밍: `be/feat/...`, `be/fix/...`, `be/chore/...`, `be/refactor/...`
+브랜치 전략은 모노레포 공통이다 — 루트 [CLAUDE.md](../CLAUDE.md)·[git-push-safety](../.claude/rules/git-push-safety.md)를 따른다. 요약:
+
+- 작업 브랜치는 통합 브랜치 **`dev`에서 분기**하고 PR 타깃도 `dev`다 (백엔드도 `be/dev`가 아니라 `dev`). 분기 시 `git switch -c {type}/{N}-{slug} origin/dev` 후 `git branch --unset-upstream`.
+- 브랜치 네이밍은 prefix 없이 `{type}/{N}-{slug}`. 영역(BE)은 `create-issue`/`create-pr`가 라벨로 붙인다.
+- `main`은 GitHub Actions 워크플로우·CodeRabbit 설정 등 GitHub 관련 파일 전용이다. 백엔드 코드 작업에 사용하지 않는다.
+- 이슈·PR 생성은 루트 공통 스킬 `create-issue`·`create-pr`를 쓴다.
 
 ## 작업 규칙
 

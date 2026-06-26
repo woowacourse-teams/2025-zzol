@@ -7,7 +7,9 @@ public class RemediationE2eSandbox {
 
     public int lengthOf(String value) {
         // 의도된 결함: null 입력에 대한 가드 없이 역참조한다.
-        final Optional<String> resolved = Optional.ofNullable(value);
-        return resolved.get().length();
+        // 수정: Optional.map과 orElse를 사용하여 NullPointerException을 방지하고, null 입력 시 0을 반환한다.
+        return Optional.ofNullable(value)
+                       .map(String::length)
+                       .orElse(0);
     }
 }

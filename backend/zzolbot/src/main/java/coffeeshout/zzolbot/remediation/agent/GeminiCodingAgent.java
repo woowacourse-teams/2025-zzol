@@ -76,7 +76,7 @@ public class GeminiCodingAgent implements CodingAgent {
                 .toString();
     }
 
-    private PatchProposal parse(DefectContext context, String json) {
+    PatchProposal parse(DefectContext context, String json) {
         try {
             final JsonNode node = objectMapper.readTree(json);
             return new PatchProposal(

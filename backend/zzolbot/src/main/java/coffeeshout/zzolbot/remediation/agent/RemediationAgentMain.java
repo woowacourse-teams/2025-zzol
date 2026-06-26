@@ -85,7 +85,7 @@ public final class RemediationAgentMain {
         return model == null || model.isBlank() ? DEFAULT_MODEL : model;
     }
 
-    private static DefectType parseDefectType(String raw) {
+    static DefectType parseDefectType(String raw) {
         try {
             return DefectType.valueOf(raw);
         } catch (IllegalArgumentException e) {
@@ -119,7 +119,7 @@ public final class RemediationAgentMain {
      * 테스트 파일 경로에서 클래스 FQN을 결정적으로 도출한다(워커가 {@code --tests <FQN>}로 RED→GREEN을 검증).
      * 예: {@code .../src/test/java/coffeeshout/game/FooTest.java} → {@code coffeeshout.game.FooTest}.
      */
-    private static String reproTestClass(String reproTestPath) {
+    static String reproTestClass(String reproTestPath) {
         final String normalized = reproTestPath.replace('\\', '/');
         final String marker = "src/test/java/";
         final int idx = normalized.indexOf(marker);

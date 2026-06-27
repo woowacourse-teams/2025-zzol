@@ -119,7 +119,7 @@ jobs:
       # 실패 스택트레이스 인라인). 표기 시간은 JUnit XML 합계라 wall-clock이 아니다 —
       # 실제 경과는 Build Scan 참조.
       - name: Publish Test Results
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         if: always()
         with:
           name: Backend Test Results

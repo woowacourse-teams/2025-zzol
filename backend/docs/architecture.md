@@ -149,6 +149,21 @@
 
 `Gamer`는 `room.Player` 대신 게임이 사용하는 플레이어 표현으로, game 모듈이 room 타입 없이 플레이어 정보를 다룰 수 있게 한다. 식별(`name`+`userId`)과 표시 상태(`colorIndex`)를 함께 갖는 불변 class이며, 동등성은 식별만으로 정의한다(`colorIndex`는 `equals`/`hashCode` 제외). 색상은 `Player.toGamer()`가 채우고, 게임 응답 DTO가 Room 재조회 없이 `Gamer.colorIndex()`에서 읽는다 (ADR-0025 Step 3).
 
+### 전용 스케줄러·스트림을 쓰는 게임 — 테스트 미러링 (자주 누락)
+
+동적 타이머가 필요한 게임(SpeedTouch·BlindTimer·Nunchi)은 OCP 한 줄 등록(`MiniGameType` + Factory) 외에 **전용 빈/스트림**을 추가한다. 이때 프로덕션에만 등록하고 테스트측 미러를 빠뜨리면, 도메인·서비스 단위 테스트는 통과하지만 **통합테스트가 컨텍스트 로딩 실패 또는 "메시지 미수신"으로 깨진다**.
+
+★ **전용 스케줄러 빈 미러는 모듈마다 따로 존재하는 3곳을 전부 추가해야 한다.** 이 셋은 서로 다른 테스트 컨텍스트가 import하므로, 한 곳만 고치면 그 곳을 안 쓰는 모듈의 IT가 깨진다(아래 표 1행).
+
+| 프로덕션 등록 | 같은 커밋에서 반드시 추가할 테스트 미러 | 누락 시 증상 |
+|---|---|---|
+| `@Bean("xGameScheduler") @Profile("!test")` (전용 `TaskScheduler`) | **같은 이름** 빈을 다음 3곳에 모두 추가:<br>① `game/src/testFixtures/.../config/GameSchedulerTestConfig` → `new TestTaskScheduler()` (game·service 테스트가 import)<br>② `game/src/test/.../config/IntegrationTestConfig` → `new ShutDownTestScheduler()`<br>③ `app/src/test/.../support/app/config/IntegrationTestConfig` → `new ShutDownTestScheduler()` (전체 컨텍스트 로드 IT가 쓰는 곳) | 컨텍스트 로딩 실패 — `NoSuchBeanDefinitionException: TaskScheduler` (해당 미러가 빠진 모듈의 IT 전체가 무더기 실패) |
+| `config/redis.yml`의 `redis.stream.keys["[x]"]` (전용 입력 스트림) | `test-support/.../application-test-base.yml`의 `redis.stream.keys`에 **같은 키** | 컨슈머 미기동 → 스트림 경로 IT가 타임아웃("메시지 미수신") |
+
+체크: 새 게임 PR에 `@Profile("!test")` 빈 또는 새 `redis.stream.keys` 항목이 있으면, 대응하는 테스트 설정이 같은 diff에 있는지 확인한다. 모두 **공유 테스트 자원**이라 누락 시 그 게임만이 아니라 해당 stream/scheduler를 쓰는 통합테스트 전체가 영향받는다.
+
+ADR-0031(Nunchi) 선례: 1차에서 ①②(game쪽)는 추가했으나 ③(app쪽 `IntegrationTestConfig`)을 빠뜨려, PR #1484 CI에서 전체 컨텍스트 로드 IT 약 55건이 `nunchiGameScheduler` `NoSuchBeanDefinitionException`으로 무더기 실패했다(상세: [postmortem 0003](postmortem/0003-test-mirror-checklist-incomplete-recurrence.md)).
+
 ---
 
 ## 게임 플로우 스케줄링

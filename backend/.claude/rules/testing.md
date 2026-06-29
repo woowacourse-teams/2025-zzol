@@ -13,6 +13,7 @@ paths:
 - `Thread.sleep` 금지 → Awaitility
 - 테스트 데이터 직접 생성 금지 → 픽스처 사용. 클래스명은 반드시 5가지 패턴 중 하나: `*Fixture` / `TestDataHelper` / `*Fake` / `*Dummy` / `Stub*`
 - `CoffeeShoutException` 계열은 `assertCoffeeShoutException` 사용. `assertThatThrownBy` 체인 직접 작성 금지
+- **새 게임이 전용 스케줄러(`@Profile("!test")` 빈)·전용 Redis Stream 키를 쓰면** 테스트 미러를 같은 커밋에 추가: `IntegrationTestConfig`에 동일 이름 `ShutDownTestScheduler` 빈, `application-test-base.yml`의 `redis.stream.keys`에 동일 키. 누락 시 IT가 `NoSuchBeanDefinitionException`(스케줄러) 또는 "메시지 미수신" 타임아웃(스트림). 상세 표: `docs/architecture.md` → 게임 SPI 패턴 → 전용 스케줄러·스트림 테스트 미러링
 
 ## :test-support 모듈
 

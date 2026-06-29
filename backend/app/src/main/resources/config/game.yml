@@ -47,5 +47,15 @@ blind-timer:
     timeout-buffer: 3000ms
     result-delay: 2000ms
 
+nunchi:
+  timing:
+    description: 4000ms         # 시작 규칙 설명(다른 미니게임과 동일하게 READY 진입 전 짧게 대기)
+    ready: 3000ms              # 곧 시작 카운트다운(playStartEpochMs까지 대기, 전원 동시 PLAYING 진입)
+    number-window: 300ms        # 동시 판정 윈도우(ADR-0031 Q2 — 첫 press anchor + 300ms)
+    collision-cooldown: 2000ms  # 충돌 후 재개 대기(결정 6)
+    idle-timeout: 10000ms       # 무입력 자동 종료(결정 5 — 유효 입력마다 리셋, 쿨다운 중 일시정지)
+    hard-cap: 30000ms           # 라운드 전체 강제 종료 안전망(결정 5)
+    all-pressed-delay: 2000ms   # 전원 입력 조기 종료 시 마지막 입력을 잠깐 보여주고 DONE으로 전이(결정 5)
+
 roulette:
   default-adjustment-weight: 0.7

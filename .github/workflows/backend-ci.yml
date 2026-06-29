@@ -40,7 +40,8 @@ permissions:
 jobs:
   ci-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 실측 wall-clock ~8분(4-vCPU 러너에서 모듈 병렬). 여유로 15분.
+    timeout-minutes: 15
     # output을 상위 워크플로우로 전달
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}
@@ -94,6 +95,13 @@ jobs:
           # 캐시를 단방향으로 읽기만 하므로 sibling PR이나 배포 빌드(be/dev·be/prod)로
           # 역전파되지 않는다. 10GB LRU 압박은 v6 기본 cache-cleanup(on-success)이 완화.
           cache-read-only: false
+          # Build Scan 발행 — 실제 wall-clock·병렬 타임라인·모듈/테스트별 시간을
+          # scans.gradle.com 리치 리포트로(빌드 로그·job summary에 링크). 프로젝트에
+          # Develocity 플러그인이 없어도 액션이 주입하며 ToS를 자동 동의한다.
+          # 합계(테스트 리포트)로는 안 보이던 "8분이 어디서 났나"를 여기서 본다.
+          build-scan-publish: true
+          build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
+          build-scan-terms-of-use-agree: "yes"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -103,15 +111,20 @@ jobs:
       - name: Enable Testcontainers reuse
         run: echo "testcontainers.reuse.enable=true" > ~/.testcontainers.properties
 
+      # 시간 분석(wall-clock·병렬 타임라인·모듈별)은 Setup Gradle의 Build Scan으로 본다.
       - name: Run Tests
         run: ./gradlew test jacocoTestReport --build-cache --no-daemon
 
+      # 테스트 결과는 dorny/test-reporter로 Checks 탭에 표시(스위트/테스트 드릴다운,
+      # 실패 스택트레이스 인라인). 표기 시간은 JUnit XML 합계라 wall-clock이 아니다 —
+      # 실제 경과는 Build Scan 참조.
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: dorny/test-reporter@v3
         if: always()
         with:
-          files: backend/*/build/test-results/test/*.xml
-          check_name: "Backend Test Results"
+          name: Backend Test Results
+          path: backend/*/build/test-results/test/*.xml
+          reporter: java-junit
 
       - name: Report Coverage
         if: github.event_name == 'pull_request'

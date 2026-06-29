@@ -39,14 +39,15 @@ BE 의 `GET /dev/ws-catalog` 에 모든 토픽/큐/send destination 의 path·pa
 
 ## .claude 리소스
 
+> 브랜치 전략·git push 안전·공통 스킬(`create-issue`·`create-pr`·`adr`)은 **모노레포 루트**로 통합됐다 — 루트 [CLAUDE.md](../CLAUDE.md)·[.claude/rules/git-push-safety.md](../.claude/rules/git-push-safety.md)·[.claude/skills/](../.claude/skills/) 참조. 아래는 프론트 전용 리소스만 정리한다.
+
 ### Rules
 
-자동 로드된다. 경로 범위가 있는 파일은 해당 경로 작업 시에만 활성화된다.
+자동 로드된다. 경로 범위가 있는 파일은 해당 경로 작업 시에만 활성화된다. (`git-push-safety`는 루트 SSOT.)
 
 | 파일 | 범위 | 내용 |
 | --- | --- | --- |
 | `principles.md` | 전역 | 역할, 코딩 원칙, 외과적 변경, 작업 원칙 |
-| `git-push-safety.md` | 전역 | 보호 브랜치(fe/dev·fe/prod·main 등) 직접 push 금지, upstream·refspec 검증 절차 |
 | `style.md` | 전역 | 색상·타이포그래피·z-index 토큰, Emotion 패턴 금지 항목 |
 | `qmd.md` | 전역 | 코드베이스 시맨틱 검색 사용법 |
 | `websocket.md` | `src/apis/websocket/**`, `src/contexts/**` | WebSocket 구독·발행 패턴, destination 형식 |
@@ -67,9 +68,9 @@ BE 의 `GET /dev/ws-catalog` 에 모든 토픽/큐/send destination 의 path·pa
 
 | 커맨드 | 설명 |
 | --- | --- |
-| `/adr` | 코드 작업 전 설계 결정 논의 및 ADR 문서 저장 |
-| `/create-pr` | PR 템플릿 기반 GitHub Pull Request 생성 |
 | `/style-audit` | 변경 파일 전체 스타일 규칙 일괄 감사 |
+
+> `/adr`·`/create-pr`·`/create-issue`는 루트 공통 스킬로 이동했다(전역 사용 가능).
 
 ### Agents
 

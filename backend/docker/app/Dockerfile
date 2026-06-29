@@ -39,8 +39,13 @@ EXPOSE 8080
 
 # Health check 설정
 # DOWN만 unhealthy로 판정. OUT_OF_SERVICE(Graceful Shutdown)는 healthy로 통과시킴.
-# 1) wget 실패(앱 죽음, 타임아웃) → 즉시 unhealthy
-# 2) wget 성공 → 응답 본문에 "DOWN"이 있으면 unhealthy, 없으면(UP/OUT_OF_SERVICE) healthy
+# 1) wget 실패 → 즉시 unhealthy
+#    - 앱 죽음, 타임아웃
+#    - HTTP 503: busybox wget은 비2xx에서 본문 없이 exit 1. DOWN은 503이므로 여기서 걸러진다.
+#      OUT_OF_SERVICE는 config/monitoring.yml의 http-mapping(out-of-service: 200)으로 통과한다.
+# 2) wget 성공(2xx) → 본문에 "DOWN"이 있으면 unhealthy (http-mapping 변경에 대비한 이중 방어)
+# 주의: docker-compose(dev/prod)의 healthcheck가 이 설정을 덮어쓴다 (--spider, 상태 코드만 판정).
+#       해당 healthcheck도 위 http-mapping 덕분에 동일한 3분류 의미를 갖는다.
 HEALTHCHECK --interval=30s \
     --timeout=3s \
     --start-period=40s \

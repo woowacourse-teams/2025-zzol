@@ -2,7 +2,6 @@
 # Source: https://github.com/Tanat05/korean-profanity-resources
 # 이 파일은 DB에 시드 데이터로 1회 적재된다. 이후 변경은 관리 API를 통해 처리한다.
 # 형식: 줄당 1단어, # 시작 줄은 주석
-@!@
 ^^l발
 ^^ㅣ발
 108새끼

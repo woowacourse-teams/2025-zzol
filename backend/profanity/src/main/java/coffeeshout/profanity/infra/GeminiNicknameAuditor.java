@@ -50,9 +50,13 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
                             "nickname", Schema.builder().type("STRING").build(),
                             "flagged", Schema.builder().type("BOOLEAN").build(),
                             "confidence", Schema.builder().type("NUMBER").build(),
-                            "reason", Schema.builder().type("STRING").build()
+                            "reason", Schema.builder().type("STRING").build(),
+                            "terms", Schema.builder()
+                                    .type("ARRAY")
+                                    .items(Schema.builder().type("STRING").build())
+                                    .build()
                     ))
-                    .required(List.of("nickname", "flagged", "confidence", "reason"))
+                    .required(List.of("nickname", "flagged", "confidence", "reason", "terms"))
                     .build())
             .build();
 
@@ -158,6 +162,7 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
                 final GeminiAuditItem item = objectMapper.treeToValue(node, GeminiAuditItem.class);
                 results.add(NicknameAuditResult.of(
                         item.nickname(), item.flagged(), item.confidence(), item.reason(),
+                        item.terms() == null ? List.of() : item.terms(),
                         properties.flaggedThreshold()
                 ));
             } catch (Exception e) {
@@ -179,5 +184,5 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
         return results;
     }
 
-    private record GeminiAuditItem(String nickname, boolean flagged, double confidence, String reason) {}
+    private record GeminiAuditItem(String nickname, boolean flagged, double confidence, String reason, List<String> terms) {}
 }

@@ -11,8 +11,18 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 class ProfanityWordRepositoryImplTest extends ServiceTest {
+
+    // 운영 데이터소스(config/database.yml)는 rewriteBatchedStatements=true다. 이 플래그가 켜지면 MySQL
+    // 드라이버가 배치를 multi-row INSERT로 재작성하고 executeBatch가 실제 행수 대신 SUCCESS_NO_INFO(-2)를
+    // 반환한다. 테스트도 동일 조건으로 맞춰야 bulkInsertIgnore 반환값 버그(#1500)를 재현·회귀 방지할 수 있다.
+    @DynamicPropertySource
+    static void enableRewriteBatchedStatements(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.hikari.data-source-properties.rewriteBatchedStatements", () -> true);
+    }
 
     @Autowired
     private ProfanityWordRepositoryImpl repository;

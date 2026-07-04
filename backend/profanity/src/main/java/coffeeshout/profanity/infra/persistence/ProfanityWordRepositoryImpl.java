@@ -6,7 +6,6 @@ import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.WordSource;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -57,21 +56,31 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
         return true;
     }
 
+    /**
+     * INSERT IGNORE로 단어를 일괄 삽입하고 실제 신규 삽입 건수를 반환한다.
+     *
+     * <p>삽입 전후 테이블 카운트 델타로 건수를 계산한다. 동일 트랜잭션에 다른 writer가 끼면 델타가
+     * 오염될 수 있으나, 호출부(시드)는 단일 트랜잭션·단일 스레드라 안전하다.
+     */
     @Override
     public int bulkInsertIgnore(List<ProfanityWord> words) {
         if (words.isEmpty()) {
             return 0;
         }
+        // rewriteBatchedStatements=true(운영 설정)면 드라이버가 배치를 multi-row INSERT로 재작성하고
+        // executeBatch가 실제 행수 대신 SUCCESS_NO_INFO(-2)를 반환한다. batchUpdate 반환값으로는 신규
+        // 등록 건수를 셀 수 없으므로, INSERT IGNORE 전후 행 수 차이로 실제 삽입 건수를 계산한다(#1500).
+        final long before = jpaRepository.count();
         final Instant now = Instant.now();
         final String sql = "INSERT IGNORE INTO profanity_word (word, language, source, is_active, created_at, updated_at) VALUES (?, ?, ?, true, ?, ?)";
-        final int[][] counts = jdbcTemplate.batchUpdate(sql, words, 500, (ps, word) -> {
+        jdbcTemplate.batchUpdate(sql, words, 500, (ps, word) -> {
             ps.setString(1, word.word());
             ps.setString(2, word.language().name());
             ps.setString(3, word.source().name());
             ps.setTimestamp(4, Timestamp.from(now));
             ps.setTimestamp(5, Timestamp.from(now));
         });
-        return Arrays.stream(counts).mapToInt(batch -> Arrays.stream(batch).sum()).sum();
+        return (int) (jpaRepository.count() - before);
     }
 
     @Override

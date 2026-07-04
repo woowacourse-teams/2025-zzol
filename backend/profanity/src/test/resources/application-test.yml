@@ -8,3 +8,4 @@ nickname-audit:
   flagged-threshold: 0.85
   batch-size: 10
   feedback-injection-threshold: 20
+  min-term-length: 2

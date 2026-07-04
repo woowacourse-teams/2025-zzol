@@ -430,8 +430,9 @@ RTT가 윈도우를 넘겨 늦게 도착한 입력은 **도착 시점의 현재 
 조율이 완료되어 아래 항목으로 구현한다.
 
 - `MiniGameType`에 `NUNCHI_GAME` 추가
-- `nunchi/` 패키지 신설: `NunchiGame`(`Playable`), `NunchiScore` + 전용 `Comparator`,
-  `NunchiFlowOrchestrator`, `NunchiNotifier`, `NunchiCommandService`,
+- `nunchi/` 패키지 신설: `NunchiGame`(`Playable`), `NunchiScore`(단일 `long` 밴드 인코딩 —
+  전용 `Comparator` 없이 값 하나로 정렬·동점 결정, 구현 노트 N4),
+  `NunchiFlowOrchestrator`, `NunchiNotifier`, `NunchiService`,
   `NunchiGameFactory`(`MiniGameFactory`)
 - 입력 엔드포인트: `/app/room/{joinCode}/nunchi/press` (전용, `CommandType` 미사용)
 - 일어서기 브로드캐스트 토픽: `/topic/room/{joinCode}/nunchi/stand`

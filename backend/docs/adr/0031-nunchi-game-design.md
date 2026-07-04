@@ -436,8 +436,10 @@ RTT가 윈도우를 넘겨 늦게 도착한 입력은 **도착 시점의 현재 
   `NunchiGameFactory`(`MiniGameFactory`)
 - 입력 엔드포인트: `/app/room/{joinCode}/nunchi/press` (전용, `CommandType` 미사용)
 - 일어서기 브로드캐스트 토픽: `/topic/room/{joinCode}/nunchi/stand`
-- 상태 브로드캐스트 토픽: `/topic/room/{joinCode}/nunchi/state` (PLAYING/COLLISION_COOLDOWN/DONE;
-  `idleDeadlineEpochMs`·`hardCapEpochMs`·`resumeAtEpochMs` 등 모든 타이밍을 epoch ms로 — 결정 8).
+- 상태 브로드캐스트 토픽: `/topic/room/{joinCode}/nunchi/state`
+  (DESCRIPTION/READY/PLAYING/COLLISION_COOLDOWN/DONE;
+  `playStartEpochMs`·`idleDeadlineEpochMs`·`hardCapEpochMs`·`resumeAtEpochMs` 등 모든 타이밍을
+  epoch ms로 — 결정 8).
   모든 state/stand에 `serverNowEpochMs`(시계 스큐 보정), PLAYING에 `stood`+`currentNumber`(재접속
   스냅샷), stand에는 rank 미포함 — 구현 노트 참조
 - 순위 표현: `MiniGameResult` 재사용(새 도메인 타입 없음) — 정상 단독(누른 순) > 충돌(그룹별 스택) >

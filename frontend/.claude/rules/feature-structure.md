@@ -1,6 +1,6 @@
 ---
 globs:
-  - "src/features/**"
+  - 'src/features/**'
 ---
 
 ## Feature 슬라이스 구조
@@ -20,11 +20,11 @@ src/features/<featureName>/
 
 ### 네이밍
 
-| 항목 | 형식 | 예 |
-|---|---|---|
-| 디렉터리 | camelCase | `auth`, `entry`, `home` |
-| 페이지 | PascalCase + `Page` | `EntryNamePage.tsx` |
-| 훅 | `use` + PascalCase | `useMyStats.ts` |
+| 항목     | 형식                | 예                      |
+| -------- | ------------------- | ----------------------- |
+| 디렉터리 | camelCase           | `auth`, `entry`, `home` |
+| 페이지   | PascalCase + `Page` | `EntryNamePage.tsx`     |
+| 훅       | `use` + PascalCase  | `useMyStats.ts`         |
 
 ### Service 패턴 (필요 시)
 

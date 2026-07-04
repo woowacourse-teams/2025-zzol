@@ -26,12 +26,12 @@ allowed-tools: Read, mcp__api__ws_list_topics, mcp__api__ws_describe, mcp__api__
 
 api-mcp 카탈로그의 path 는 prefix 를 포함하지만, FE wrapper(`useWebSocketSubscription` / `send`)는 prefix 를 자동 추가한다. **path 에서 prefix 를 제거해 전달**한다.
 
-| 카탈로그 path (MCP 응답) | FE 호출 시 path |
-|---|---|
-| `/topic/room/{joinCode}/winner` | `/room/{joinCode}/winner` |
-| `/topic/room/{joinCode}/ladder/state` | `/room/{joinCode}/ladder/state` |
-| `/app/room/{joinCode}/update-ready` (send destination) | `/room/{joinCode}/update-ready` |
-| `/user/queue/friends/requests` (개인 큐) | `/queue/friends/requests` (`/user` 는 wrapper 가 자동) |
+| 카탈로그 path (MCP 응답)                               | FE 호출 시 path                                        |
+| ------------------------------------------------------ | ------------------------------------------------------ |
+| `/topic/room/{joinCode}/winner`                        | `/room/{joinCode}/winner`                              |
+| `/topic/room/{joinCode}/ladder/state`                  | `/room/{joinCode}/ladder/state`                        |
+| `/app/room/{joinCode}/update-ready` (send destination) | `/room/{joinCode}/update-ready`                        |
+| `/user/queue/friends/requests` (개인 큐)               | `/queue/friends/requests` (`/user` 는 wrapper 가 자동) |
 
 상세 룰은 `.claude/rules/websocket.md` 참조.
 

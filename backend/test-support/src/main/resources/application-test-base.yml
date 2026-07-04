@@ -108,6 +108,12 @@ redis:
         thread-pool-name: concurrent
       "[laddergame]":
         thread-pool-name: concurrent
+      # 눈치게임 입력은 순서 보존이 핵심(ADR-0031 N1)이라 전용 단일스레드 풀로 직렬 처리한다([cardgame:select] 선례)
+      "[nunchi]":
+        thread-pool:
+          core-size: 1
+          max-size: 1
+          queue-capacity: 128
 
 management:
   tracing:

@@ -16,7 +16,7 @@ import org.springframework.validation.annotation.Validated;
 public record NunchiTimingProperties(
         @NotNull @DurationMin(nanos = 1) Duration description,
         @NotNull @DurationMin(nanos = 1) Duration ready,
-        @NotNull @DurationMin(nanos = 1) Duration numberWindow,
+        @NotNull @DurationMin(millis = 1) Duration numberWindow,
         @NotNull @DurationMin(nanos = 1) Duration collisionCooldown,
         @NotNull @DurationMin(nanos = 1) Duration idleTimeout,
         @NotNull @DurationMin(nanos = 1) Duration hardCap,

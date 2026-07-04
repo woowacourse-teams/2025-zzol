@@ -132,6 +132,16 @@ MessageCollector stateResponses = session.subscribe("/topic/room/{joinCode}/.../
 startGame();                                                                              // 즉시 첫 브로드캐스트를 발행해도 안전
 ```
 
+### 특정 상태를 기다릴 땐 위치 기반 get() 대신 상태를 폴링한다
+
+여러 상태가 순차 브로드캐스트되는 토픽(예: 눈치게임 `state` — `DESCRIPTION→READY→PLAYING↔COLLISION_COOLDOWN→DONE`)에서 특정 상태를 검증할 때, `collector.get()`으로 "다음 큐 메시지가 곧 목표 상태"라고 가정하지 않는다. 중복 스냅샷(재접속 자동 재발행 등)이 끼거나 메시지가 한 칸 밀리면 위치 기반 읽기는 flaky해진다. **목표 상태가 나올 때까지 메시지를 훑어 매칭되는 스냅샷을 반환하는 헬퍼**로 읽고, 필드 단언은 그 반환값에만 적용한다(`NunchiIntegrationTest.awaitState`가 참조 구현).
+
+```java
+// 목표 상태가 도착할 때까지 앞선 상태·중복 스냅샷을 흘려보내며 찾는다
+NunchiStateResponse cooldown = awaitState(stateResponses, NunchiState.COLLISION_COOLDOWN);
+assertThat(cooldown.collided()).contains(host.getName(), "루키"); // 매칭된 스냅샷에만 필드 단언
+```
+
 ## 비동기·시간 의존 검증
 
 `Thread.sleep`은 사용하지 않는다. 고정 대기는 실행 환경에 따라 테스트가 flaky해지는 원인이 된다.

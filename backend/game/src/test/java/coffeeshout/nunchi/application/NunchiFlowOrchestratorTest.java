@@ -135,7 +135,7 @@ class NunchiFlowOrchestratorTest {
             startAndEnterPlaying();
             final int before = scheduler.scheduledCount();
 
-            orchestrator.handlePress(game, JOIN_CODE, 일, T0);
+            orchestrator.handlePress(JOIN_CODE, 일, T0);
 
             verify(notifier).notifyStood(eq(JOIN_CODE.getValue()), eq("일"), eq(1), anyLong(), anyLong());
             // 윈도우 + idle 리셋 = 최소 2개 추가 예약
@@ -147,11 +147,11 @@ class NunchiFlowOrchestratorTest {
         void 연속_STOOD는_윈도우를_cancel하고_reschedule한다() {
             startAndEnterPlaying();
 
-            orchestrator.handlePress(game, JOIN_CODE, 일, T0);
+            orchestrator.handlePress(JOIN_CODE, 일, T0);
             final ScheduledFuture<?> firstWindow = scheduler.lastFuture();
 
             // 윈도우(300ms) 밖의 두 번째 press → 직전 pending solo 확정 + 새 STOOD
-            orchestrator.handlePress(game, JOIN_CODE, 이, T0.plusMillis(1000));
+            orchestrator.handlePress(JOIN_CODE, 이, T0.plusMillis(1000));
 
             // 첫 윈도우 future는 reschedule되며 cancel돼야 한다
             verify(firstWindow).cancel(false);
@@ -167,10 +167,10 @@ class NunchiFlowOrchestratorTest {
         void 윈도우_내_동시_press는_충돌로_처리된다() {
             startAndEnterPlaying();
 
-            orchestrator.handlePress(game, JOIN_CODE, 일, T0);
+            orchestrator.handlePress(JOIN_CODE, 일, T0);
             final ScheduledFuture<?> windowFuture = scheduler.lastFuture();
 
-            orchestrator.handlePress(game, JOIN_CODE, 이, T0.plusMillis(100)); // 윈도우 내 → 충돌
+            orchestrator.handlePress(JOIN_CODE, 이, T0.plusMillis(100)); // 윈도우 내 → 충돌
 
             verify(windowFuture).cancel(false); // 충돌로 윈도우 종료
             verify(notifier).notifyCollisionCooldown(eq(JOIN_CODE.getValue()), eq(1),
@@ -188,10 +188,10 @@ class NunchiFlowOrchestratorTest {
             startAndEnterPlaying();
 
             // 일·이 충돌(2명 OUT) 후 삼 solo → 전원 입력 완료
-            orchestrator.handlePress(game, JOIN_CODE, 일, T0);
-            orchestrator.handlePress(game, JOIN_CODE, 이, T0.plusMillis(100)); // 충돌
+            orchestrator.handlePress(JOIN_CODE, 일, T0);
+            orchestrator.handlePress(JOIN_CODE, 이, T0.plusMillis(100)); // 충돌
             fireCooldown();
-            orchestrator.handlePress(game, JOIN_CODE, 삼, T0.plusMillis(5000)); // solo → 전원 입력
+            orchestrator.handlePress(JOIN_CODE, 삼, T0.plusMillis(5000)); // solo → 전원 입력
 
             // 마지막 입력 직후엔 곧장 DONE이 아니라 allPressedDelay 종료 타이머만 예약된다(결정 5)
             verify(notifier, never()).notifyDone(anyString());
@@ -212,10 +212,10 @@ class NunchiFlowOrchestratorTest {
             final List<Runnable> startupTimers = scheduler.allTasksSnapshot();
 
             // 전원 입력으로 종료
-            orchestrator.handlePress(game, JOIN_CODE, 일, T0);
-            orchestrator.handlePress(game, JOIN_CODE, 이, T0.plusMillis(100));
+            orchestrator.handlePress(JOIN_CODE, 일, T0);
+            orchestrator.handlePress(JOIN_CODE, 이, T0.plusMillis(100));
             fireCooldown();
-            orchestrator.handlePress(game, JOIN_CODE, 삼, T0.plusMillis(5000));
+            orchestrator.handlePress(JOIN_CODE, 삼, T0.plusMillis(5000));
 
             fireFinish(); // allPressedDelay 타이머 → DONE + finalize(이벤트 발행 + 세션 제거)
 
@@ -248,7 +248,7 @@ class NunchiFlowOrchestratorTest {
             final Runnable staleIdle = scheduler.taskAt(2); // PLAYING 진입 시 건 idle(인덱스 2)
 
             // 유효 press가 idle을 리셋(scheduleIdle이 새 idle을 걸고 generation을 올림)
-            orchestrator.handlePress(game, JOIN_CODE, 일, T0);
+            orchestrator.handlePress(JOIN_CODE, 일, T0);
 
             // cancel(false)는 이미 발화해 락 대기 중인 옛 콜백을 못 막는다 — 강제 발화해 stale 가드를 검증
             staleIdle.run();
@@ -272,8 +272,8 @@ class NunchiFlowOrchestratorTest {
             final long startHardCap = hardCapCaptor.getValue();
 
             // 충돌 → 쿨다운 종료(재개)에서 PLAYING이 다시 브로드캐스트된다
-            orchestrator.handlePress(game, JOIN_CODE, 일, T0);
-            orchestrator.handlePress(game, JOIN_CODE, 이, T0.plusMillis(100)); // 충돌
+            orchestrator.handlePress(JOIN_CODE, 일, T0);
+            orchestrator.handlePress(JOIN_CODE, 이, T0.plusMillis(100)); // 충돌
             fireCooldown(); // onCooldownEnd → broadcastPlaying
 
             final ArgumentCaptor<Long> resumeHardCap = ArgumentCaptor.forClass(Long.class);

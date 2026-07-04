@@ -38,9 +38,8 @@ public class NunchiService implements MiniGameService {
      */
     public void handlePress(String joinCode, String playerName, Instant at) {
         final JoinCode code = new JoinCode(joinCode);
-        final NunchiGame game = getGame(code);
-        final Gamer gamer = game.findByName(playerName);
-        flowOrchestrator.handlePress(game, code, gamer, at);
+        final Gamer gamer = getGame(code).findByName(playerName);
+        flowOrchestrator.handlePress(code, gamer, at);
     }
 
     @Override

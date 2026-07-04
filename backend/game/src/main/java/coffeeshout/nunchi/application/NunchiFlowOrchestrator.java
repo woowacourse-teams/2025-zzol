@@ -120,8 +120,9 @@ public class NunchiFlowOrchestrator {
         });
     }
 
-    /** press 입력 — 도메인 판정 후 결과에 따라 타이머·브로드캐스트를 joinCode 락 아래에서 처리한다. */
-    public void handlePress(NunchiGame game, JoinCode joinCode, Gamer gamer, Instant at) {
+    /** press 입력 — 도메인 판정 후 결과에 따라 타이머·브로드캐스트를 joinCode 락 아래에서 처리한다.
+     * 게임 상태는 세션 소유 {@code session.game}만을 진실의 원천으로 쓴다(밖에서 게임을 주입받지 않는다). */
+    public void handlePress(JoinCode joinCode, Gamer gamer, Instant at) {
         final String code = joinCode.getValue();
         final NunchiSession session = sessions.get(code);
         if (session == null) {
@@ -132,7 +133,7 @@ public class NunchiFlowOrchestrator {
             if (session.finished || session.finishing) {
                 return; // 종료됐거나 전원 입력으로 종료 대기 중 — 더 받을 입력이 없다
             }
-            final PressResult result = game.press(gamer, at);
+            final PressResult result = session.game.press(gamer, at);
             switch (result.outcome()) {
                 case STOOD -> onStood(session, gamer);
                 case COLLIDED -> onCollided(session, result);

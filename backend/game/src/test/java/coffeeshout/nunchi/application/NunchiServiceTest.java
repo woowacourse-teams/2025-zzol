@@ -63,7 +63,7 @@ class NunchiServiceTest {
         service.handlePress(JOIN_CODE.getValue(), "일", T0);
 
         // 새 Gamer가 아니라 setUp으로 주입된 원본 인스턴스를 넘겨야 점수맵 키와 매칭된다
-        verify(flowOrchestrator).handlePress(eq(game), any(JoinCode.class), eq(일), eq(T0));
+        verify(flowOrchestrator).handlePress(any(JoinCode.class), eq(일), eq(T0));
     }
 
     @Test
@@ -72,7 +72,7 @@ class NunchiServiceTest {
         assertThatThrownBy(() -> service.handlePress(JOIN_CODE.getValue(), "없는사람", T0))
                 .isInstanceOf(BusinessException.class);
 
-        verify(flowOrchestrator, never()).handlePress(any(), any(), any(), any());
+        verify(flowOrchestrator, never()).handlePress(any(), any(), any());
     }
 
     @Test

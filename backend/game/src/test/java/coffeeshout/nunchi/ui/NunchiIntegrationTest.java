@@ -14,7 +14,6 @@ import coffeeshout.nunchi.config.NunchiTimingProperties;
 import coffeeshout.nunchi.domain.NunchiGame;
 import coffeeshout.nunchi.domain.NunchiState;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
-import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.support.TestStompSession.MessageCollector;
 import coffeeshout.websocket.WsRecoveryService;
@@ -158,10 +157,8 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
             session.send(pressCommandUrl());
             루키세션.send(pressCommandUrl());
 
-            // PLAYING 다음의 상태 변경에서 COLLISION_COOLDOWN을 찾는다(stand는 별도 토픽)
-            final MessageResponse next = stateResponses.get(2, TimeUnit.SECONDS);
-            final NunchiStateResponse cooldown = payloadAs(next, NunchiStateResponse.class);
-            assertThat(cooldown.state()).isEqualTo(NunchiState.COLLISION_COOLDOWN);
+            // PLAYING 이후 도착하는 상태들 중 COLLISION_COOLDOWN을 찾는다(중복 PLAYING 스냅샷·stand는 흘려보냄)
+            final NunchiStateResponse cooldown = awaitState(stateResponses, NunchiState.COLLISION_COOLDOWN);
             assertThat(cooldown.collided()).contains(host.getName(), "루키");
             assertThat(cooldown.resumeAtEpochMs()).isNotNull();
         }

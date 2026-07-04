@@ -162,7 +162,7 @@
 
 체크: 새 게임 PR에 `@Profile("!test")` 빈 또는 새 `redis.stream.keys` 항목이 있으면, 대응하는 테스트 설정이 같은 diff에 있는지 확인한다. 모두 **공유 테스트 자원**이라 누락 시 그 게임만이 아니라 해당 stream/scheduler를 쓰는 통합테스트 전체가 영향받는다.
 
-ADR-0031(Nunchi) 선례: 1차에서 ①②(game쪽)는 추가했으나 ③(app쪽 `IntegrationTestConfig`)을 빠뜨려, PR #1484 CI에서 전체 컨텍스트 로드 IT 약 55건이 `nunchiGameScheduler` `NoSuchBeanDefinitionException`으로 무더기 실패했다(상세: [postmortem 0003](postmortem/0003-test-mirror-checklist-incomplete-recurrence.md)).
+ADR-0031(Nunchi) 선례: 1차에서 ①②(game쪽)는 추가했으나 ③(app쪽 `IntegrationTestConfig`)을 빠뜨려, PR #1484 CI에서 전체 컨텍스트 로드 IT 약 55건이 `nunchiGameScheduler` `NoSuchBeanDefinitionException`으로 무더기 실패했다(상세: [postmortem 0004](postmortem/0004-test-mirror-checklist-incomplete-recurrence.md)).
 
 ---
 

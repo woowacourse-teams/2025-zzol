@@ -82,6 +82,22 @@ public abstract class {Module}IntegrationTest extends coffeeshout.support.Integr
 > class MyIntegrationTest extends RoomModuleIntegrationTest { }
 > ```
 
+## 테스트 계층 전략
+
+어느 계층에서 무엇을 테스트할지의 결정과 근거는 [ADR-0033](adr/0033-test-layer-strategy.md)을 따른다. 요약: 케이스는 가능한 낮은 계층에서 소진하고("더 적은 컨텍스트로 같은 이유로 실패시킬 수 있나?" → 예면 내린다), 통합 테스트는 플로우당 현실적 해피패스 시나리오 1개 + 임계 와이어링 + 그 플로우에서 자연스럽게 생길 수 있는 예외 처리로 얇게 유지한다. 계층별 "테스트할 것/자제할 것"은 `.claude/rules/testing-{integration,service,domain}.md`에 있다.
+
+### 페이즈·타이밍은 가짜 스케줄러로 검증한다
+
+페이즈 전이(예: `DESCRIPTION→READY→PLAYING→DONE`)와 종료 타이머는 실시간 `sleep`을 도는 통합 테스트가 아니라, 예약된 태스크를 즉시 실행하는 스케줄러로 오케스트레이터 계층에서 검증한다. `NunchiFlowOrchestratorTest`의 `CapturingScheduler`가 참조 구현이다.
+
+```java
+// 예약을 붙잡아 두고 테스트가 원하는 시점에 즉시 실행 → 실시간 대기 0
+CapturingScheduler scheduler = new CapturingScheduler();
+orchestrator.startFlow(game, JOIN_CODE);
+scheduler.taskAt(0).run(); // onDescriptionEnd → READY
+scheduler.taskAt(1).run(); // onReadyEnd → PLAYING
+```
+
 ## 픽스처
 
 테스트 데이터를 직접 생성하지 않고 픽스처를 통해 재사용한다. 메서드명은 한글 도메인 용어를 사용한다.

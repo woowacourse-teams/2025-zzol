@@ -6,6 +6,21 @@ paths:
 
 전체 컨벤션: `docs/conventions-test.md` → 통합 테스트 (WebSocket). 공통 체크: `testing.md`
 
+## 이 계층에서 무엇을 (ADR-0033)
+
+**테스트할 것**
+
+- 플로우당 **현실적 해피패스 시나리오 1개** — 상태 전이(예: `DESCRIPTION→READY→PLAYING→DONE`) 관통 + WS 브로드캐스트
+- **임계 와이어링**: 비동기 경로(Handler→Redis Stream→Consumer→Service→Notifier→broadcast)·실제 MySQL 거동
+- **그 플로우를 진행하다 자연스럽게 생길 수 있는 예외의 처리** — 예: 블록쌓기에서 규칙대로 못 쌓는 입력이 들어와도 브로드캐스트되지 않고 게임이 계속 진행되는지. 별도 예외 매트릭스를 만드는 게 아니라, 한 플로우에서 실제 일어날 수 있는 예외 정도만 확인
+
+**자제할 것 (하위로 내림)**
+
+- 도메인 분기 매트릭스 열거 → domain/service (통합엔 대표 1개만)
+- 같은 종료를 보려 수십 번 왕복 반복 → 게임을 테스트용으로 짧게 구성하거나 도메인 테스트로
+- 페이즈/타이밍을 실시간 `sleep`으로 검증 → `CapturingScheduler`로 오케스트레이터 계층에서(`NunchiFlowOrchestratorTest` 참조)
+- Redis/JPA 등 라이브러리·프레임워크 동작 자체 검증
+
 ## 통합 테스트 체크
 
 - 베이스: 모듈 로컬 `{Module}IntegrationTest`(`coffeeshout.support.IntegrationTestSupport` 확장). `webEnvironment` 기본값은 **`MOCK`** — WebSocket/STOMP(`StandardWebSocketClient`)·`TestRestTemplate`·`WebTestClient`처럼 실제 TCP 소켓이 필요할 때만 `WebEnvironment.RANDOM_PORT`로 명시 오버라이드

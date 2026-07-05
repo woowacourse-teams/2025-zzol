@@ -8,7 +8,7 @@
 
 - 작업 브랜치는 **`be/dev`에서 체크아웃**한다
 - PR 타깃은 `be/dev`이다
-- `main`은 GitHub Actions 워크플로우·CodeRabbit 설정 등 GitHub 관련 파일 전용이다. 백엔드 코드 작업에 사용하지 않는다
+- `.github/` 워크플로우(`backend-ci.yml`·`docs-ci.yml` 등)·CodeRabbit 설정 등 GitHub 관련 파일도 `be/dev` PR에서 트리거·검증된다. 따라서 이 파일 변경도 다른 작업과 동일하게 **`be/dev`를 타깃으로** 작업한다(`main` 직접 push·커밋은 git-push-safety 규칙대로 금지)
 - 브랜치 네이밍: `be/<타입>/<이슈번호>-<설명>` 형식을 따른다. 타입은 `feat`, `fix`, `chore`, `refactor`. 연관 이슈가 있으면 **이슈번호를 반드시 포함**한다 (예: `be/fix/1500-profanity-seed-count`). 이슈번호 뒤 설명은 kebab-case 영문
 
 ## 작업 규칙

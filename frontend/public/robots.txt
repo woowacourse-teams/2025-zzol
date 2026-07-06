@@ -3,8 +3,9 @@
 
 User-agent: *
 
-# 허용: 홈페이지
+# 허용: 홈페이지 + SEO 랜딩
 Allow: /$
+Allow: /bet-games.html
 
 # 차단
 # 게임 룸은 일회성 세션이므로 크롤링 불필요

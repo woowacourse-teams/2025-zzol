@@ -12,6 +12,14 @@
     <priority>1.0</priority>
   </url>
 
+  <!-- 내기 게임 랜딩 (SEO) -->
+  <url>
+    <loc>https://www.zzol.site/bet-games.html</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
   <!-- 개인정보 처리방침 -->
   <url>
     <loc>https://www.zzol.site/privacy</loc>

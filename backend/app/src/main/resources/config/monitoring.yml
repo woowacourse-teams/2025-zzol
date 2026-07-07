@@ -3,6 +3,14 @@ management:
   endpoint:
     health:
       show-details: always
+      # OUT_OF_SERVICE(Graceful Shutdown 중)를 200으로 매핑한다.
+      # 기본값(503)이면 busybox wget이 본문 없이 exit 1 → Docker HEALTHCHECK가
+      # 종료 중인 컨테이너를 unhealthy로 오판한다. DOWN은 기본값(503)을 유지해
+      # 진짜 장애만 unhealthy로 판정한다. (LB가 이 엔드포인트를 액티브 헬스체크에
+      # 쓰게 된다면 이 매핑은 재검토 필요 — 503은 "트래픽 차단" 신호이기도 하다)
+      status:
+        http-mapping:
+          out-of-service: 200
       group:
         liveness:
           include: "ping"

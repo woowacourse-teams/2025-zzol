@@ -21,6 +21,7 @@ import coffeeshout.profanity.domain.audit.NicknameAuditor;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -195,7 +196,7 @@ class ProfanityAuditBatchProcessorTest {
             given(nicknameAuditor.audit(anyList())).willReturn(List.of(
                     new NicknameAuditResult("host", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
             ));
-            given(auditRepository.existsByNicknameAndStatusNot("host", NicknameAuditStatus.UNAUDITED)).willReturn(true);
+            given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of("host"));
 
             processor.process(List.of(residual));
 
@@ -212,7 +213,7 @@ class ProfanityAuditBatchProcessorTest {
             given(nicknameAuditor.audit(anyList())).willReturn(List.of(
                     new NicknameAuditResult("host", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "재판정")
             ));
-            given(auditRepository.existsByNicknameAndStatusNot("host", NicknameAuditStatus.UNAUDITED)).willReturn(true);
+            given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of("host"));
 
             processor.process(List.of(residual));
 
@@ -228,7 +229,7 @@ class ProfanityAuditBatchProcessorTest {
             given(nicknameAuditor.audit(anyList())).willReturn(List.of(
                     new NicknameAuditResult("용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
             ));
-            given(auditRepository.existsByNicknameAndStatusNot("용감한호랑이", NicknameAuditStatus.UNAUDITED)).willReturn(false);
+            given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of());
 
             processor.process(List.of(fresh));
 

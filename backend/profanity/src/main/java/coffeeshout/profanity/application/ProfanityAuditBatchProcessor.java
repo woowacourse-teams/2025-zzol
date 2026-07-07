@@ -14,6 +14,7 @@ import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -61,6 +62,9 @@ public class ProfanityAuditBatchProcessor {
                 .collect(Collectors.toMap(NicknameAuditResult::nickname, Function.identity(), (a, b) -> a));
 
         transactionTemplate.executeWithoutResult(status -> {
+            // 배치 닉네임 중 이미 검열 완료(terminal) 행을 가진 것들을 한 번에 조회한다 (건별 조회 N+1 회피).
+            final Set<String> nicknamesWithTerminal = auditRepository.findNicknamesWithTerminalStatus(nicknames);
+
             final List<NicknameAudit> toPromote = new ArrayList<>();
             final List<NicknameAudit> redundant = new ArrayList<>();
             for (final NicknameAudit entity : batch) {
@@ -70,8 +74,7 @@ public class ProfanityAuditBatchProcessor {
                 // uq_player_name_audit_name_status에 충돌해 배치 전체가 롤백되고 매 tick 재크래시하며,
                 // 다를 때는 (예: 기존 CLEAN + 신규 FLAGGED) 모순된 감사 이력과 autoBlock 오발동을 남긴다.
                 // 어느 쪽이든 승격 대신 제거한다 — 기존 terminal 행이 권위 있는 판정을 이미 보유한다.
-                if (result != null
-                        && auditRepository.existsByNicknameAndStatusNot(entity.getNickname(), NicknameAuditStatus.UNAUDITED)) {
+                if (result != null && nicknamesWithTerminal.contains(entity.getNickname())) {
                     redundant.add(entity);
                     continue;
                 }

@@ -20,7 +20,9 @@ allowed-tools: Read, Bash
 import { fn } from '@storybook/test';
 
 // ✅ 클릭 핸들러는 빈 함수
-args: { onClick: () => {} }
+args: {
+  onClick: () => {};
+}
 ```
 
 ---
@@ -83,9 +85,7 @@ export const Success: Story = {
   render: () => {
     const { showToast } = useToast();
     return (
-      <button onClick={() => showToast({ type: 'success', message: '성공' })}>
-        토스트 표시
-      </button>
+      <button onClick={() => showToast({ type: 'success', message: '성공' })}>토스트 표시</button>
     );
   },
 };

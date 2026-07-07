@@ -161,6 +161,8 @@ export const getBlockSpeed = (floor: number): number => {
 
 > **백엔드 연동 시 설계**: 속도 계산 로직을 서버와 동기화하거나, 서버에서 직접 속도 값을 내려주어 모든 플레이어가 동일한 난이도를 경험하도록 설계 권장.
 
+```text
+
 ---
 
 ## 동적 시점 (Dynamic View)
@@ -168,7 +170,6 @@ export const getBlockSpeed = (floor: number): number => {
 초기에는 블록을 하단에서 쌓기 시작하고, 층수가 높아짐에 따라 시점이 위로 이동하여 블록이 화면 중앙에 머물도록 한다.
 
 ### 계산 방식
-
 - `movingBlockY`: 현재 움직이는 블록의 Y 좌표
 - `targetY = H / 2` (화면 중앙)
 - `initialY = H - 2 * BLOCK_HEIGHT` (화면 하단)
@@ -195,12 +196,14 @@ export const getBlockSpeed = (floor: number): number => {
 
 Canvas Context의 `save()` / `translate()` / `restore()`로 처리. CSS `transform`이 아닌 canvas 내부 변환을 사용해 게임 렌더링과 분리.
 
-```text
+```
+
 useScreenShake(intensity, duration)
 └── shakeOffset: { x, y } 반환
 └── rAF 루프에서 ctx.translate(shakeOffset.x, shakeOffset.y) 적용
 └── 매 프레임 랜덤 offset, duration 경과 후 0으로 수렴
-```
+
+````text
 
 ```typescript
 type ShakeConfig = {
@@ -213,7 +216,7 @@ ctx.save();
 ctx.translate(shakeX, shakeY); // shakeX = (Math.random() * 2 - 1) * intensity * progress
 // ... 전체 드로우
 ctx.restore();
-```
+````
 
 ---
 

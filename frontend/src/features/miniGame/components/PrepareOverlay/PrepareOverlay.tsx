@@ -9,16 +9,29 @@ const PREPARE_TEXT = {
   START: 'START!',
 };
 
-const PrepareOverlay = () => {
-  const [displayText, setDisplayText] = useState<string>(PREPARE_TEXT.READY);
+export type PreparePhase = keyof typeof PREPARE_TEXT;
+
+type Props = {
+  /**
+   * 외부에서 phase 를 제어할 때 전달한다(예: 눈치게임이 서버 playStartEpochMs 기준으로 READY→START 전환).
+   * 생략하면 기존 동작대로 1초 후 자체 타이머로 START 로 넘어간다(카드게임).
+   */
+  phase?: PreparePhase;
+};
+
+const PrepareOverlay = ({ phase }: Props) => {
+  const [autoPhase, setAutoPhase] = useState<PreparePhase>('READY');
 
   useEffect(() => {
+    if (phase) return; // controlled — 자체 타이머 불필요.
     const timer = setTimeout(() => {
-      setDisplayText(PREPARE_TEXT.START);
+      setAutoPhase('START');
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [phase]);
+
+  const displayText = PREPARE_TEXT[phase ?? autoPhase];
 
   return (
     <S.Backdrop>

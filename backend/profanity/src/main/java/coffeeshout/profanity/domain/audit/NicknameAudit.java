@@ -8,13 +8,20 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "player_name_audit") // :room에서 이전 시 기존 테이블 유지 — 스키마 마이그레이션 없이 호환
+@Table(
+        name = "player_name_audit", // :room에서 이전 시 기존 테이블 유지 — 스키마 마이그레이션 없이 호환
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_player_name_audit_name_status",
+                columnNames = {"player_name", "status"}
+        )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class NicknameAudit {

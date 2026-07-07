@@ -11,6 +11,7 @@ import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -60,8 +61,26 @@ public class ProfanityAuditBatchProcessor {
                 .collect(Collectors.toMap(NicknameAuditResult::nickname, Function.identity(), (a, b) -> a));
 
         transactionTemplate.executeWithoutResult(status -> {
-            batch.forEach(entity -> applyResult(entity, resultMap.get(entity.getNickname())));
-            auditRepository.saveAll(batch);
+            final List<NicknameAudit> toPromote = new ArrayList<>();
+            final List<NicknameAudit> redundant = new ArrayList<>();
+            for (NicknameAudit entity : batch) {
+                final NicknameAuditResult result = resultMap.get(entity.getNickname());
+                // 이미 같은 (닉네임, 승격 대상 상태) 행이 있으면 이 UNAUDITED는 #1467 fix 이전에 생긴
+                // 잔존 중복 재등록이다. 그대로 승격하면 uq_player_name_audit_name_status에 충돌해
+                // 배치 전체가 롤백되고, 문제 행이 UNAUDITED로 남아 매 스케줄 tick마다 재크래시한다.
+                // 승격 대신 제거해 큐를 비운다 — 기존 terminal 행이 권위 있는 판정을 이미 보유하므로 손실이 없다.
+                if (result != null && auditRepository.existsByNicknameAndStatus(entity.getNickname(), result.status())) {
+                    redundant.add(entity);
+                    continue;
+                }
+                applyResult(entity, result);
+                toPromote.add(entity);
+            }
+            auditRepository.saveAll(toPromote);
+            if (!redundant.isEmpty()) {
+                auditRepository.deleteAll(redundant);
+                log.warn("이미 검열된 닉네임의 잔존 UNAUDITED {}건 제거 (중복 재등록)", redundant.size());
+            }
         });
 
         return batch.size();

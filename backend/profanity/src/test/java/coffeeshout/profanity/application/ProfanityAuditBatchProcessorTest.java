@@ -184,4 +184,39 @@ class ProfanityAuditBatchProcessorTest {
             assertThat(processed).isEqualTo(2);
         }
     }
+
+    @Nested
+    class 잔존_UNAUDITED_중복_제거 {
+
+        @Test
+        void 이미_terminal_행이_있는_닉네임의_UNAUDITED는_승격_대신_제거된다() {
+            // #1467 fix 이전 잔존 데이터: (host, CLEAN)이 이미 존재하는 상태에서 (host, UNAUDITED) 승격 시도.
+            final NicknameAudit residual = new NicknameAudit("host");
+            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
+                    new NicknameAuditResult("host", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
+            ));
+            given(auditRepository.existsByNicknameAndStatus("host", NicknameAuditStatus.CLEAN)).willReturn(true);
+
+            processor.process(List.of(residual));
+
+            then(auditRepository).should().deleteAll(List.of(residual));
+            then(auditRepository).should().saveAll(List.of());
+            assertThat(residual.getStatus()).isEqualTo(NicknameAuditStatus.UNAUDITED);
+        }
+
+        @Test
+        void terminal_충돌이_없는_닉네임은_정상_승격된다() {
+            final NicknameAudit fresh = new NicknameAudit("용감한호랑이");
+            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
+                    new NicknameAuditResult("용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
+            ));
+            given(auditRepository.existsByNicknameAndStatus("용감한호랑이", NicknameAuditStatus.CLEAN)).willReturn(false);
+
+            processor.process(List.of(fresh));
+
+            then(auditRepository).should().saveAll(List.of(fresh));
+            then(auditRepository).should(never()).deleteAll(any());
+            assertThat(fresh.getStatus()).isEqualTo(NicknameAuditStatus.CLEAN);
+        }
+    }
 }

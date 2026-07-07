@@ -14,6 +14,8 @@ public interface NicknameAuditRepository {
 
     List<NicknameAudit> saveAll(Iterable<NicknameAudit> entities);
 
+    void deleteAll(Iterable<NicknameAudit> entities);
+
     Optional<NicknameAudit> findById(Long id);
 
     long countByStatusAndAuditedAtIsNull(NicknameAuditStatus status);

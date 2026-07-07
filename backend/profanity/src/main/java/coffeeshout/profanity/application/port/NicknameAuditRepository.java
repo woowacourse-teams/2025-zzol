@@ -31,4 +31,6 @@ public interface NicknameAuditRepository {
     boolean existsByNickname(String nickname);
 
     boolean existsByNicknameAndStatus(String nickname, NicknameAuditStatus status);
+
+    boolean existsByNicknameAndStatusNot(String nickname, NicknameAuditStatus status);
 }

@@ -195,7 +195,7 @@ class ProfanityAuditBatchProcessorTest {
             given(nicknameAuditor.audit(anyList())).willReturn(List.of(
                     new NicknameAuditResult("host", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
             ));
-            given(auditRepository.existsByNicknameAndStatus("host", NicknameAuditStatus.CLEAN)).willReturn(true);
+            given(auditRepository.existsByNicknameAndStatusNot("host", NicknameAuditStatus.UNAUDITED)).willReturn(true);
 
             processor.process(List.of(residual));
 
@@ -205,12 +205,30 @@ class ProfanityAuditBatchProcessorTest {
         }
 
         @Test
-        void terminal_충돌이_없는_닉네임은_정상_승격된다() {
+        void 기존_terminal과_다른_상태로_재판정돼도_모순_행_없이_제거되고_autoBlock도_발동하지_않는다() {
+            // 기존 (host, CLEAN)이 있는데 이번 AI 결과가 FLAGGED인 경우. 상태가 달라 유니크 충돌은 없지만,
+            // 승격하면 (host, CLEAN)+(host, FLAGGED) 모순 공존 + autoBlock 오발동이 생긴다. 제거가 정답이다.
+            final NicknameAudit residual = new NicknameAudit("host");
+            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
+                    new NicknameAuditResult("host", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "재판정")
+            ));
+            given(auditRepository.existsByNicknameAndStatusNot("host", NicknameAuditStatus.UNAUDITED)).willReturn(true);
+
+            processor.process(List.of(residual));
+
+            then(auditRepository).should().deleteAll(List.of(residual));
+            then(profanityWordManagementService).should(never()).add(any(), any(), any());
+            then(eventPublisher).should(never()).publishEvent(any());
+            assertThat(residual.getStatus()).isEqualTo(NicknameAuditStatus.UNAUDITED);
+        }
+
+        @Test
+        void terminal_트윈이_없는_닉네임은_정상_승격된다() {
             final NicknameAudit fresh = new NicknameAudit("용감한호랑이");
             given(nicknameAuditor.audit(anyList())).willReturn(List.of(
                     new NicknameAuditResult("용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
             ));
-            given(auditRepository.existsByNicknameAndStatus("용감한호랑이", NicknameAuditStatus.CLEAN)).willReturn(false);
+            given(auditRepository.existsByNicknameAndStatusNot("용감한호랑이", NicknameAuditStatus.UNAUDITED)).willReturn(false);
 
             processor.process(List.of(fresh));
 

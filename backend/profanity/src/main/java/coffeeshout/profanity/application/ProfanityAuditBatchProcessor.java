@@ -63,13 +63,15 @@ public class ProfanityAuditBatchProcessor {
         transactionTemplate.executeWithoutResult(status -> {
             final List<NicknameAudit> toPromote = new ArrayList<>();
             final List<NicknameAudit> redundant = new ArrayList<>();
-            for (NicknameAudit entity : batch) {
+            for (final NicknameAudit entity : batch) {
                 final NicknameAuditResult result = resultMap.get(entity.getNickname());
-                // 이미 같은 (닉네임, 승격 대상 상태) 행이 있으면 이 UNAUDITED는 #1467 fix 이전에 생긴
-                // 잔존 중복 재등록이다. 그대로 승격하면 uq_player_name_audit_name_status에 충돌해
-                // 배치 전체가 롤백되고, 문제 행이 UNAUDITED로 남아 매 스케줄 tick마다 재크래시한다.
-                // 승격 대신 제거해 큐를 비운다 — 기존 terminal 행이 권위 있는 판정을 이미 보유하므로 손실이 없다.
-                if (result != null && auditRepository.existsByNicknameAndStatus(entity.getNickname(), result.status())) {
+                // 같은 닉네임의 검열 완료(terminal) 행이 이미 있으면 이 UNAUDITED는 #1467 fix 이전에 생긴
+                // 잔존 중복 재등록이다(register의 "이름당 1행" 불변식 위반). 승격하면 대상 상태가 같을 때
+                // uq_player_name_audit_name_status에 충돌해 배치 전체가 롤백되고 매 tick 재크래시하며,
+                // 다를 때는 (예: 기존 CLEAN + 신규 FLAGGED) 모순된 감사 이력과 autoBlock 오발동을 남긴다.
+                // 어느 쪽이든 승격 대신 제거한다 — 기존 terminal 행이 권위 있는 판정을 이미 보유한다.
+                if (result != null
+                        && auditRepository.existsByNicknameAndStatusNot(entity.getNickname(), NicknameAuditStatus.UNAUDITED)) {
                     redundant.add(entity);
                     continue;
                 }

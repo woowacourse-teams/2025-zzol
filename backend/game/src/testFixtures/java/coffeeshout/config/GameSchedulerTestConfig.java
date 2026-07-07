@@ -41,4 +41,9 @@ public class GameSchedulerTestConfig {
     public TaskScheduler testBlindTimerGameScheduler() {
         return new TestTaskScheduler();
     }
+
+    @Bean(name = "nunchiGameScheduler")
+    public TaskScheduler testNunchiGameScheduler() {
+        return new TestTaskScheduler();
+    }
 }

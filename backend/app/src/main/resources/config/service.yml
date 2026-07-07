@@ -37,3 +37,4 @@ nickname-audit:
   flagged-threshold: 0.85
   batch-size: 100                      # API 호출 1회당 처리량 (RPM 5 기준 100개씩 5회 = 500개/min)
   feedback-injection-threshold: 20
+  min-term-length: 2                   # 자동 차단할 비속어 조각의 정규화 후 최소 길이 (짧을수록 Trie 부분일치 과차단 위험 ↑)

@@ -11,7 +11,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -30,7 +30,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE) // 트랜잭션보다 먼저 실행
 @RequiredArgsConstructor
-@ConditionalOnBean(RedissonClient.class)
+// RedissonClient 빈 생성 조건(RedissonConfig)과 동일한 프로퍼티로 게이팅한다.
+// @ConditionalOnBean은 @Bean 등록보다 먼저 평가돼 애스펙트가 조용히 빠지는 함정이 있다(LlmBudgetConfig 주석 참조)
+@ConditionalOnProperty(name = "redisson.enabled", havingValue = "true", matchIfMissing = true)
 public class RedisLockAspect {
 
     private final RedissonClient redissonClient;

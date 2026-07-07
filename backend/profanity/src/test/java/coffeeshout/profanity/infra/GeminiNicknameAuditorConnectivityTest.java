@@ -28,7 +28,8 @@ class GeminiNicknameAuditorConnectivityTest {
             "gemini-3.5-flash",
             0.85,
             100,
-            20
+            20,
+            2
     );
 
     private GeminiNicknameAuditor auditor;

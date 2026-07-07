@@ -17,7 +17,7 @@ ADR과 포스트모템은 장르가 다르다. **ADR은 "앞으로 무엇을 할
 3. 사실관계는 메모리·추측이 아니라 git 로그·PR·실제 코드로 검증한 뒤 서술한다. 확인 못 한 부분은 "미해결/미확인"으로 명시한다.
 4. 회고에서 결정이 도출됐으면 `/adr`로 ADR을 작성하고, 포스트모템 상단 메타의 `관련 ADR`에 링크한다.
 5. `index.md` 테이블 맨 끝에 한 줄을 추가한다 ([format.md](format.md)의 행 형식, 번호 오름차순 유지).
-6. **markdownlint 검증** — 저장소 루트에서 `npx markdownlint-cli2@0.22.1`을 실행해 통과시킨다 (Docs CI가 be/dev PR에서 강제). 규칙·예시는 `docs/conventions-docs.md`.
+6. **markdownlint 검증** — 저장소 루트에서 `npx markdownlint-cli2`을 실행해 통과시킨다 (Docs CI가 be/dev PR에서 강제). 규칙·예시는 `docs/conventions-docs.md`.
 
 ## 작성 원칙
 

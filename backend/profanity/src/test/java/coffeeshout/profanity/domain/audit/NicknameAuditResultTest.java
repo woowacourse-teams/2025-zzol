@@ -2,6 +2,8 @@ package coffeeshout.profanity.domain.audit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.profanity.domain.TextNormalizer;
+import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -9,6 +11,13 @@ import org.junit.jupiter.api.Test;
 class NicknameAuditResultTest {
 
     private static final double THRESHOLD = 0.8;
+    private static final int MIN_TERM_LENGTH = 2;
+
+    private final TextNormalizer textNormalizer = new TextNormalizer();
+
+    private NicknameAuditResult flaggedWithTerms(String nickname, List<String> terms) {
+        return new NicknameAuditResult(nickname, NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "비속어 포함", terms);
+    }
 
     @Nested
     class of_팩토리_메서드 {
@@ -57,6 +66,64 @@ class NicknameAuditResultTest {
             final NicknameAuditResult result = NicknameAuditResult.of("닉네임", false, 0.92, "이유", THRESHOLD);
 
             assertThat(result.confidence()).isEqualTo(AiConfidence.of(0.92));
+        }
+    }
+
+    @Nested
+    class extractProfanityFragments {
+
+        @Test
+        void 닉네임의_부분문자열인_조각만_채택한다() {
+            final NicknameAuditResult result = flaggedWithTerms("경찬이병신", List.of("병신", "핵상욕설"));
+
+            final List<String> fragments = result.extractProfanityFragments(textNormalizer, MIN_TERM_LENGTH);
+
+            assertThat(fragments).containsExactly("병신");
+        }
+
+        @Test
+        void 여러_유효_조각을_모두_채택한다() {
+            final NicknameAuditResult result = flaggedWithTerms("시발경찬이병신", List.of("시발", "병신"));
+
+            final List<String> fragments = result.extractProfanityFragments(textNormalizer, MIN_TERM_LENGTH);
+
+            assertThat(fragments).containsExactly("시발", "병신");
+        }
+
+        @Test
+        void 정규화_후_최소_길이_미만_조각은_제외한다() {
+            final NicknameAuditResult result = flaggedWithTerms("경찬이병신", List.of("병신", "이"));
+
+            final List<String> fragments = result.extractProfanityFragments(textNormalizer, MIN_TERM_LENGTH);
+
+            assertThat(fragments).containsExactly("병신");
+        }
+
+        @Test
+        void 정규화_결과가_같은_조각은_첫_raw_형태로_한_번만_채택한다() {
+            final NicknameAuditResult result = flaggedWithTerms("시1발놈", List.of("시1발", "시i발"));
+
+            final List<String> fragments = result.extractProfanityFragments(textNormalizer, MIN_TERM_LENGTH);
+
+            assertThat(fragments).containsExactly("시1발");
+        }
+
+        @Test
+        void null이나_빈_조각은_무시한다() {
+            final NicknameAuditResult result = flaggedWithTerms("경찬이병신", java.util.Arrays.asList("병신", null, "   "));
+
+            final List<String> fragments = result.extractProfanityFragments(textNormalizer, MIN_TERM_LENGTH);
+
+            assertThat(fragments).containsExactly("병신");
+        }
+
+        @Test
+        void 유효한_조각이_없으면_빈_리스트를_반환한다() {
+            final NicknameAuditResult result = flaggedWithTerms("씨발놈", List.of("닉네임에없는말"));
+
+            final List<String> fragments = result.extractProfanityFragments(textNormalizer, MIN_TERM_LENGTH);
+
+            assertThat(fragments).isEmpty();
         }
     }
 }

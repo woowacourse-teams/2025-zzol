@@ -11,8 +11,10 @@ import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -60,8 +62,30 @@ public class ProfanityAuditBatchProcessor {
                 .collect(Collectors.toMap(NicknameAuditResult::nickname, Function.identity(), (a, b) -> a));
 
         transactionTemplate.executeWithoutResult(status -> {
-            batch.forEach(entity -> applyResult(entity, resultMap.get(entity.getNickname())));
-            auditRepository.saveAll(batch);
+            // 배치 닉네임 중 이미 검열 완료(terminal) 행을 가진 것들을 한 번에 조회한다 (건별 조회 N+1 회피).
+            final Set<String> nicknamesWithTerminal = auditRepository.findNicknamesWithTerminalStatus(nicknames);
+
+            final List<NicknameAudit> toPromote = new ArrayList<>();
+            final List<NicknameAudit> redundant = new ArrayList<>();
+            for (final NicknameAudit entity : batch) {
+                final NicknameAuditResult result = resultMap.get(entity.getNickname());
+                // 같은 닉네임의 검열 완료(terminal) 행이 이미 있으면 이 UNAUDITED는 #1467 fix 이전에 생긴
+                // 잔존 중복 재등록이다(register의 "이름당 1행" 불변식 위반). 승격하면 대상 상태가 같을 때
+                // uq_player_name_audit_name_status에 충돌해 배치 전체가 롤백되고 매 tick 재크래시하며,
+                // 다를 때는 (예: 기존 CLEAN + 신규 FLAGGED) 모순된 감사 이력과 autoBlock 오발동을 남긴다.
+                // 어느 쪽이든 승격 대신 제거한다 — 기존 terminal 행이 권위 있는 판정을 이미 보유한다.
+                if (result != null && nicknamesWithTerminal.contains(entity.getNickname())) {
+                    redundant.add(entity);
+                    continue;
+                }
+                applyResult(entity, result);
+                toPromote.add(entity);
+            }
+            auditRepository.saveAll(toPromote);
+            if (!redundant.isEmpty()) {
+                auditRepository.deleteAll(redundant);
+                log.warn("이미 검열된 닉네임의 잔존 UNAUDITED {}건 제거 (중복 재등록)", redundant.size());
+            }
         });
 
         return batch.size();

@@ -21,6 +21,7 @@ import coffeeshout.profanity.domain.audit.NicknameAuditor;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -182,6 +183,59 @@ class ProfanityAuditBatchProcessorTest {
             final int processed = processor.process(batch);
 
             assertThat(processed).isEqualTo(2);
+        }
+    }
+
+    @Nested
+    class 잔존_UNAUDITED_중복_제거 {
+
+        @Test
+        void 이미_terminal_행이_있는_닉네임의_UNAUDITED는_승격_대신_제거된다() {
+            // #1467 fix 이전 잔존 데이터: (host, CLEAN)이 이미 존재하는 상태에서 (host, UNAUDITED) 승격 시도.
+            final NicknameAudit residual = new NicknameAudit("host");
+            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
+                    new NicknameAuditResult("host", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
+            ));
+            given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of("host"));
+
+            processor.process(List.of(residual));
+
+            then(auditRepository).should().deleteAll(List.of(residual));
+            then(auditRepository).should().saveAll(List.of());
+            assertThat(residual.getStatus()).isEqualTo(NicknameAuditStatus.UNAUDITED);
+        }
+
+        @Test
+        void 기존_terminal과_다른_상태로_재판정돼도_모순_행_없이_제거되고_autoBlock도_발동하지_않는다() {
+            // 기존 (host, CLEAN)이 있는데 이번 AI 결과가 FLAGGED인 경우. 상태가 달라 유니크 충돌은 없지만,
+            // 승격하면 (host, CLEAN)+(host, FLAGGED) 모순 공존 + autoBlock 오발동이 생긴다. 제거가 정답이다.
+            final NicknameAudit residual = new NicknameAudit("host");
+            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
+                    new NicknameAuditResult("host", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "재판정")
+            ));
+            given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of("host"));
+
+            processor.process(List.of(residual));
+
+            then(auditRepository).should().deleteAll(List.of(residual));
+            then(profanityWordManagementService).should(never()).add(any(), any(), any());
+            then(eventPublisher).should(never()).publishEvent(any());
+            assertThat(residual.getStatus()).isEqualTo(NicknameAuditStatus.UNAUDITED);
+        }
+
+        @Test
+        void terminal_트윈이_없는_닉네임은_정상_승격된다() {
+            final NicknameAudit fresh = new NicknameAudit("용감한호랑이");
+            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
+                    new NicknameAuditResult("용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
+            ));
+            given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of());
+
+            processor.process(List.of(fresh));
+
+            then(auditRepository).should().saveAll(List.of(fresh));
+            then(auditRepository).should(never()).deleteAll(any());
+            assertThat(fresh.getStatus()).isEqualTo(NicknameAuditStatus.CLEAN);
         }
     }
 }

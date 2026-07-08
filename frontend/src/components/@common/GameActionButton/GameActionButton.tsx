@@ -34,21 +34,14 @@ const GameActionButton = ({
     onInfoClick?.();
   };
 
-  const handleInfoKeyDown = (e: KeyboardEvent) => {
+  const handleActionKeyDown = (action?: () => void) => (e: KeyboardEvent) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
     e.stopPropagation();
-    onInfoClick?.();
+    action?.();
   };
 
   const handleSettingClick = (e: MouseEvent) => {
-    e.stopPropagation();
-    onSettingClick?.();
-  };
-
-  const handleSettingKeyDown = (e: KeyboardEvent) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
     e.stopPropagation();
     onSettingClick?.();
   };
@@ -61,7 +54,7 @@ const GameActionButton = ({
         role="button"
         tabIndex={0}
         onClick={handleInfoClick}
-        onKeyDown={handleInfoKeyDown}
+        onKeyDown={handleActionKeyDown(onInfoClick)}
         aria-label={`${gameName} 정보`}
       >
         i
@@ -73,7 +66,7 @@ const GameActionButton = ({
         role="button"
         tabIndex={0}
         onClick={handleSettingClick}
-        onKeyDown={handleSettingKeyDown}
+        onKeyDown={handleActionKeyDown(onSettingClick)}
         aria-label={`${gameName} 설정`}
       >
         ⚙

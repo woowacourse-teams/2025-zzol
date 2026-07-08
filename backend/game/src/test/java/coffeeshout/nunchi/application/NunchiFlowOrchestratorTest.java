@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -76,6 +77,11 @@ class NunchiFlowOrchestratorTest {
 
         game = new NunchiGame(300L);
         game.setUp(List.of(일, 이, 삼));
+    }
+
+    @AfterEach
+    void tearDown() {
+        scheduler.shutdown();
     }
 
     /**

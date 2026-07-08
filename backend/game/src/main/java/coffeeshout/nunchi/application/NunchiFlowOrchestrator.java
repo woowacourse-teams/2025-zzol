@@ -268,10 +268,13 @@ public class NunchiFlowOrchestrator {
      * 동기로, 저장 리스너 실패가 흐름을 막지 않도록 한다 — BlockStacking/SpeedTouch 동일.
      */
     private void finalizeGame(NunchiSession session) {
-        final int roundCount = gameSessionService.finishGame(session.joinCode);
-        eventPublisher.publishEvent(new MiniGameFinishedEvent(
-                session.code, MiniGameType.NUNCHI_GAME.name(), session.game.getResult().toRankMap(), roundCount));
-        sessions.remove(session.code);
+        try {
+            final int roundCount = gameSessionService.finishGame(session.joinCode);
+            eventPublisher.publishEvent(new MiniGameFinishedEvent(
+                    session.code, MiniGameType.NUNCHI_GAME.name(), session.game.getResult().toRankMap(), roundCount));
+        } finally {
+            sessions.remove(session.code);
+        }
     }
 
     private void broadcastPlaying(NunchiSession session) {

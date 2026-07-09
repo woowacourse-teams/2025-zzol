@@ -1,7 +1,7 @@
 ---
 description: .styled.ts 파일을 작성하거나 수정한 직후 zzol 스타일 규칙 위반 여부를 자동 검증하고 수정한다. hex 리터럴, z-index 숫자, 타이포그래피 하드코딩, 인라인 스타일 감지.
 paths:
-  - "**/*.styled.ts"
+  - '**/*.styled.ts'
 allowed-tools: Read, Edit
 ---
 

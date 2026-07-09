@@ -1,4 +1,4 @@
-import { ComponentProps, MouseEvent, ReactElement } from 'react';
+import { ComponentProps, KeyboardEvent, MouseEvent, ReactElement } from 'react';
 import * as S from './GameActionButton.styled';
 
 type Props = {
@@ -34,6 +34,13 @@ const GameActionButton = ({
     onInfoClick?.();
   };
 
+  const handleActionKeyDown = (action?: () => void) => (e: KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    e.stopPropagation();
+    action?.();
+  };
+
   const handleSettingClick = (e: MouseEvent) => {
     e.stopPropagation();
     onSettingClick?.();
@@ -44,7 +51,10 @@ const GameActionButton = ({
       {isSelected && orderNumber && <S.NumberBadge>{orderNumber}</S.NumberBadge>}
       <S.InfoButton
         $isSelected={isSelected}
+        role="button"
+        tabIndex={0}
         onClick={handleInfoClick}
+        onKeyDown={handleActionKeyDown(onInfoClick)}
         aria-label={`${gameName} 정보`}
       >
         i
@@ -53,7 +63,10 @@ const GameActionButton = ({
       <S.GameName $isSelected={isSelected}>{gameName}</S.GameName>
       <S.SettingsButton
         $isSelected={isSelected}
+        role="button"
+        tabIndex={0}
         onClick={handleSettingClick}
+        onKeyDown={handleActionKeyDown(onSettingClick)}
         aria-label={`${gameName} 설정`}
       >
         ⚙

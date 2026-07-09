@@ -10,7 +10,7 @@
 
 - 작업 브랜치는 통합 브랜치 **`dev`에서 분기**하고 PR 타깃도 `dev`다 (백엔드도 `be/dev`가 아니라 `dev`). 분기 시 `git switch -c {type}/{N}-{slug} origin/dev` 후 `git branch --unset-upstream`.
 - 브랜치 네이밍은 prefix 없이 `{type}/{N}-{slug}`. 영역(BE)은 `create-issue`/`create-pr`가 라벨로 붙인다.
-- `main`은 GitHub Actions 워크플로우·CodeRabbit 설정 등 GitHub 관련 파일 전용이다. 백엔드 코드 작업에 사용하지 않는다.
+- `dev`가 저장소 **기본 브랜치**다. README·dependabot·CodeRabbit·워크플로우 등 GitHub 관련 파일도 `dev`에서 관리한다(dependabot·보안 스캔·스케줄은 기본 브랜치 기준으로 동작). `main`은 배포 브랜치가 아니며(배포는 `be/dev`·`be/prod` push 트리거) 전환기 잔재로만 남아 있다 — 신규 작업에 사용하지 않는다.
 - 이슈·PR 생성은 루트 공통 스킬 `create-issue`·`create-pr`를 쓴다.
 
 ## 작업 규칙

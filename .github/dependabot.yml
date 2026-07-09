@@ -6,6 +6,12 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    # minor·patch는 PR 1개로 묶어 알림 폭주 방지. major(예: Spring Boot 메이저)만 개별 PR.
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
       - "backend"
@@ -16,6 +22,11 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
       - "frontend"
@@ -26,6 +37,11 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 3
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
       - "api-mcp"
@@ -36,6 +52,11 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    # 액션 버전업은 대부분 저위험이라 major 포함 전부 PR 1개로 묶는다.
+    groups:
+      actions:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "github-actions"

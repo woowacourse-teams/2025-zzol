@@ -9,6 +9,7 @@ amended: 2026-05-23
 ## 맥락
 
 홈 화면 랭킹 탭은 세 개의 엔드포인트를 각각 호출한다:
+
 - `GET /dashboard/top-winners`
 - `GET /dashboard/lowest-probability-winner`
 - `GET /dashboard/game-play-counts`
@@ -34,10 +35,12 @@ amended: 2026-05-23
 랭킹 탭에서 `top-winners`, `lowest-probability-winner`, `game-play-counts` 세 카테고리를 제거했다. 다른 대시보드 슬라이드(`TopWinnersSlide`, `LowestProbabilitySlide`)와 내용이 중복되어 UX 관점에서 불필요하다고 판단했기 때문이다.
 
 **현재 `rankingConfigs.ts`에 남은 카테고리:**
+
 - `blockstacking-top-players` — `GET /dashboard/block-stacking-top-players`
 - `racing-game-top-players` — `GET /dashboard/racing-game-top-players`
 
 **제거된 세 엔드포인트의 현재 소비처:**
+
 - `top-winners`, `lowest-probability-winner` → `src/features/home/hooks/useDashboardData.ts` (DashBoard 슬라이드)
 - `game-play-counts` → 현재 미사용. 백엔드 엔드포인트는 유지 중.
 

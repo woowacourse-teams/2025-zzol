@@ -1,0 +1,34 @@
+<svg width="300" height="460" viewBox="0 0 300 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="nunchiBtn" cx="50%" cy="34%" r="70%">
+      <stop offset="0%" stop-color="#FF8789"/>
+      <stop offset="55%" stop-color="#FD6C6E"/>
+      <stop offset="100%" stop-color="#F53E41"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 배경 -->
+  <rect width="300" height="460" rx="22" fill="#FFF1F1"/>
+
+  <!-- 탭 파동 -->
+  <circle cx="150" cy="170" r="74" fill="none" stroke="#FFC8C9" stroke-width="3" opacity="0.7"/>
+  <circle cx="150" cy="170" r="90" fill="none" stroke="#FFC8C9" stroke-width="2" opacity="0.4"/>
+
+  <!-- 둥근 버튼 -->
+  <circle cx="150" cy="170" r="60" fill="url(#nunchiBtn)"/>
+  <ellipse cx="150" cy="146" rx="32" ry="18" fill="#FFFFFF" opacity="0.3"/>
+  <!-- 가운데 동심원 타겟 디테일 -->
+  <circle cx="150" cy="170" r="34" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.45"/>
+  <circle cx="150" cy="170" r="14" fill="#FFFFFF" opacity="0.55"/>
+
+  <!-- 누르는 손가락 -->
+  <g transform="translate(134 220)">
+    <ellipse cx="10" cy="58" rx="13" ry="6" fill="#000000" opacity="0.08"/>
+    <rect x="0" y="0" width="20" height="54" rx="10" fill="#FDDBB4"/>
+    <rect x="0" y="0" width="20" height="18" rx="9" fill="#F5C090"/>
+  </g>
+
+  <!-- 결과 순위 태그 -->
+  <rect x="84" y="322" width="132" height="50" rx="16" fill="#FFFFFF" stroke="#FD6C6E" stroke-width="3"/>
+  <text x="150" y="354" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="20" font-weight="700" fill="#364153">내 순위 3등</text>
+</svg>

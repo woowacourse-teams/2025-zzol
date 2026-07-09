@@ -60,4 +60,9 @@ public class IntegrationTestConfig {
         return new ShutDownTestScheduler();
     }
 
+    @Bean(name = "nunchiGameScheduler")
+    public TaskScheduler testIntegrationNunchiGameScheduler() {
+        return new ShutDownTestScheduler();
+    }
+
 }

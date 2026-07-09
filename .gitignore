@@ -2,4 +2,9 @@
 .DS_Store
 /dist/
 
-*.env
+.env
+*.env.*
+
+.cursor/
+frontend/.claude/settings.local.json
+frontend/CLAUDE.local.md

@@ -11,6 +11,7 @@ public enum MiniGameType {
     BLIND_TIMER("블라인드타이머"),
     BLOCK_STACKING("블록쌓기"),
     LADDER_GAME("사다리타기"),
+    NUNCHI_GAME("눈치게임"),
     ;
 
     public final String label;

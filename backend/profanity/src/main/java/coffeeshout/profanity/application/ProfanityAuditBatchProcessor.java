@@ -2,7 +2,9 @@ package coffeeshout.profanity.application;
 
 import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
+import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.Language;
+import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
@@ -34,6 +36,8 @@ public class ProfanityAuditBatchProcessor {
     private final ApplicationEventPublisher eventPublisher;
     private final MeterRegistry meterRegistry;
     private final TransactionTemplate transactionTemplate;
+    private final TextNormalizer textNormalizer;
+    private final NicknameAuditProperties nicknameAuditProperties;
 
     private Counter batchSkippedCounter;
 
@@ -96,14 +100,32 @@ public class ProfanityAuditBatchProcessor {
         entity.complete(result.status(), result.confidence(), result.reason());
         meterRegistry.counter("nickname.audit.result", "status", result.status().name()).increment();
         if (result.status() == NicknameAuditStatus.FLAGGED) {
-            autoBlock(entity.getNickname());
+            autoBlock(result);
         }
     }
 
-    private void autoBlock(String nickname) {
-        if (profanityWordManagementService.add(nickname, Language.detect(nickname), WordSource.AI_FLAGGED)) {
-            eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
-            log.info("FLAGGED 자동 차단: {}", nickname);
+    private void autoBlock(NicknameAuditResult result) {
+        resolveBlockWords(result).forEach(word -> {
+            final Language language = Language.detect(textNormalizer.normalize(word));
+            if (profanityWordManagementService.add(word, language, WordSource.AI_FLAGGED)) {
+                eventPublisher.publishEvent(new ProfanityWordBlockedEvent(word));
+                log.info("FLAGGED 자동 차단: nickname={}, word={}", result.nickname(), word);
+            }
+        });
+    }
+
+    /**
+     * 도메인이 골라낸 유효 비속어 조각을 차단 대상으로 채택한다.
+     * 유효한 조각이 하나도 없으면 닉네임 전체를 차단 대상으로 폴백한다(폴백 정책은 application의 책임).
+     */
+    private List<String> resolveBlockWords(NicknameAuditResult result) {
+        final List<String> fragments =
+                result.extractProfanityFragments(textNormalizer, nicknameAuditProperties.minTermLength());
+        if (fragments.isEmpty()) {
+            log.info("유효한 비속어 조각 없음 — 닉네임 전체 차단 폴백: nickname={}, terms={}",
+                    result.nickname(), result.profanityTerms());
+            return List.of(result.nickname());
         }
+        return fragments;
     }
 }

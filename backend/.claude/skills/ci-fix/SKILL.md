@@ -7,18 +7,19 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent
 
 # ci-fix
 
-PR 번호를 받아 GitHub CI "Backend Test Results" 체크의 실패 테스트를 자동으로 감지하고 수정한다.
+PR 번호를 받아 GitHub Actions `backend-ci.yml` 런 로그에서 실패한 테스트를 자동으로 감지하고 수정한다.
 
 ## Step 1–2: 실패 테스트 추출
 
-`fetch-failures.sh`로 PR 상태 확인 및 실패 목록을 가져온다:
+`fetch-failures.sh`로 PR 상태 확인 및 실패 목록을 가져온다. 이 스크립트는 PR head 브랜치의 최근 `backend-ci.yml` 런 로그(gradle JUnit 출력)를 직접 파싱한다 — dorny "Backend Test Results" 체크런은 생성되지 않으므로 의존하지 않는다(#1521):
 
 ```bash
 bash .claude/skills/ci-fix/fetch-failures.sh <PR번호>
 ```
 
 - "CI가 통과 상태입니다" 출력 시 종료한다
-- 출력이 비어 있으면 "Annotations에서 실패 정보를 가져올 수 없습니다. 로그를 직접 확인해주세요."를 출력하고 종료한다
+- "CI가 아직 실행 중입니다" 출력 시 완료를 기다렸다가 재시도한다
+- "테스트 실패 라인을 찾지 못했습니다" 출력 시(컴파일·인프라 등 테스트 외 실패) 함께 출력된 로그 마지막 부분으로 원인을 판단한다
 
 ## Step 3: 실패 목록 정리
 

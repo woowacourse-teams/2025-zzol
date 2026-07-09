@@ -37,7 +37,7 @@ public class LoginStartMetricFilter extends OncePerRequestFilter {
             // enum의 정규화된 값(소문자)으로만 센다 — 성공 카운트 태그와도 값집합이 일치한다.
             final String segment = uri.substring(PREFIX.length());
             OAuthProvider.fromRegistrationId(segment)
-                    .ifPresent(provider -> loginMetricService.countStart(provider.getRegistrationId()));
+                    .ifPresent(loginMetricService::countStart);
         }
         filterChain.doFilter(request, response);
     }

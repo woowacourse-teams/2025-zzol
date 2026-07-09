@@ -1,5 +1,6 @@
 package coffeeshout.user.infra.metric;
 
+import coffeeshout.user.domain.OAuthProvider;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
@@ -21,19 +22,19 @@ public class LoginMetricService {
     private final MeterRegistry meterRegistry;
 
     /** OAuth 인가 시작(/oauth2/authorization/{provider}) 카운트 — 알람의 분모(시도). */
-    public void countStart(String provider) {
+    public void countStart(OAuthProvider provider) {
         counter("login.start", "OAuth 인가 시작 요청 수", provider).increment();
     }
 
     /** 로그인 성공(토큰 발급 직전) 카운트 — 알람의 분자(성공). */
-    public void countSuccess(String provider) {
+    public void countSuccess(OAuthProvider provider) {
         counter("login.success", "OAuth 로그인 성공 수", provider).increment();
     }
 
-    private Counter counter(String name, String description, String provider) {
+    private Counter counter(String name, String description, OAuthProvider provider) {
         return Counter.builder(name)
                 .description(description)
-                .tag("provider", provider)
+                .tag("provider", provider.getRegistrationId())
                 .register(meterRegistry);
     }
 }

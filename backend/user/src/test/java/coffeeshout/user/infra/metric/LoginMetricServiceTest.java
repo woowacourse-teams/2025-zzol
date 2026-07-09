@@ -2,6 +2,7 @@ package coffeeshout.user.infra.metric;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.user.domain.OAuthProvider;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -21,9 +22,9 @@ class LoginMetricServiceTest {
 
     @Test
     void 시작_카운트는_provider별로_누적된다() {
-        loginMetricService.countStart("kakao");
-        loginMetricService.countStart("kakao");
-        loginMetricService.countStart("google");
+        loginMetricService.countStart(OAuthProvider.KAKAO);
+        loginMetricService.countStart(OAuthProvider.KAKAO);
+        loginMetricService.countStart(OAuthProvider.GOOGLE);
 
         assertThat(count("login.start", "kakao")).isEqualTo(2.0);
         assertThat(count("login.start", "google")).isEqualTo(1.0);
@@ -31,14 +32,14 @@ class LoginMetricServiceTest {
 
     @Test
     void 성공_카운트는_provider별로_누적된다() {
-        loginMetricService.countSuccess("kakao");
+        loginMetricService.countSuccess(OAuthProvider.KAKAO);
 
         assertThat(count("login.success", "kakao")).isEqualTo(1.0);
     }
 
     @Test
     void 시작과_성공은_별개의_메트릭이다() {
-        loginMetricService.countStart("kakao");
+        loginMetricService.countStart(OAuthProvider.KAKAO);
 
         assertThat(count("login.start", "kakao")).isEqualTo(1.0);
         assertThat(meterRegistry.find("login.success").tag("provider", "kakao").counter()).isNull();

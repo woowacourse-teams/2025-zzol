@@ -43,7 +43,7 @@ public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
         );
 
         final String code = authTokenService.issueCode(loginResult);
-        loginMetricService.countSuccess(provider.getRegistrationId());
+        loginMetricService.countSuccess(provider);
         response.sendRedirect(frontendRedirectUri + "?code=" + code);
     }
 }

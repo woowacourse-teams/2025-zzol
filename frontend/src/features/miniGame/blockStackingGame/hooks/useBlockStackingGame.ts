@@ -4,7 +4,7 @@ import {
   FallingPiece,
   StackedBlock,
 } from '@/types/miniGame/blockStackingGame';
-import { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { MutableRefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   BLOCK_COLORS,
   BLOCK_GAP,
@@ -196,7 +196,8 @@ export const useBlockStackingGame = (
   const onBlockPlacedRef = useRef(onBlockPlaced);
   const onFailRef = useRef(onFail);
   const isLocalGameOverRef = useRef(isLocalGameOver);
-  useEffect(() => {
+  // rAF 그리기 루프가 페인트 전에 최신값을 읽어야 하므로(원래 렌더 중 동기 갱신) useLayoutEffect 로 커밋 시 동기 반영한다.
+  useLayoutEffect(() => {
     gameStateRef.current = gameState;
     soundsRef.current = sounds;
     setLocalGameOverRef.current = setLocalGameOver;

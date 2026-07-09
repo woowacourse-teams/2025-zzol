@@ -2,6 +2,7 @@ package coffeeshout.user.metric;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,13 +15,10 @@ import org.springframework.stereotype.Component;
  * 알람은 이 둘의 비교로 발화한다(rules/alerts-app.yml).
  */
 @Component
+@RequiredArgsConstructor
 public class LoginMetrics {
 
     private final MeterRegistry meterRegistry;
-
-    public LoginMetrics(MeterRegistry meterRegistry) {
-        this.meterRegistry = meterRegistry;
-    }
 
     /** OAuth 인가 시작(/oauth2/authorization/{provider}) 카운트 — 알람의 분모(시도). */
     public void countStart(String provider) {

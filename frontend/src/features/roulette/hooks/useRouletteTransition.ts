@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { RouletteSector, PlayerProbability } from '@/types/roulette';
 import { convertProbabilitiesToAngles, interpolateAngles } from '../utils';
 
@@ -19,8 +19,10 @@ export const useRouletteTransition = (
 
   const prevRef = useRef<PlayerProbability[]>([]);
   const currentRef = useRef<PlayerProbability[]>([]);
-  prevRef.current = prev || [];
-  currentRef.current = current || [];
+  useEffect(() => {
+    prevRef.current = prev || [];
+    currentRef.current = current || [];
+  });
 
   const startAnimationTransition = useCallback(() => {
     if (!prev || !current || prev.length === 0 || current.length === 0) {

@@ -18,21 +18,19 @@ export const useCardGameTimer = () => {
     return () => clearTimeout(timer);
   }, [currentTime, isTimerActive]);
 
-  useEffect(() => {
-    const isPrepareState = currentCardGameState === 'PREPARE';
-    const isPlayingState = currentCardGameState === 'PLAYING';
-
-    if (isPrepareState) {
+  // 게임 상태·라운드 전환 시 타이머를 리셋한다(렌더 중 state 조정 — 가드로 전환 시 1회만).
+  const stateKey = `${currentCardGameState}:${currentRound}`;
+  const [prevStateKey, setPrevStateKey] = useState(stateKey);
+  if (stateKey !== prevStateKey) {
+    setPrevStateKey(stateKey);
+    if (currentCardGameState === 'PREPARE') {
       setCurrentTime(ROUND_TOTAL_TIME);
       setIsTimerActive(false);
-      return;
-    }
-
-    if (isPlayingState) {
+    } else if (currentCardGameState === 'PLAYING') {
       setCurrentTime(ROUND_TOTAL_TIME);
       setIsTimerActive(true);
     }
-  }, [currentCardGameState, currentRound]);
+  }
 
   return {
     currentTime,

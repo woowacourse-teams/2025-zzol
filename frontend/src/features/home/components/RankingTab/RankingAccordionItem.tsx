@@ -1,7 +1,7 @@
 import useLazyFetch from '@/apis/rest/useLazyFetch';
 import RankingItem from '@/components/@common/RankingItem/RankingItem';
 import { useMockMode } from '@/hooks/useMockMode';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { RankingCategory } from '../../config/rankingConfigs';
 import * as S from './RankingTab.styled';
 
@@ -16,10 +16,13 @@ const RankingAccordionItem = ({ category }: Props) => {
   const [items, setItems] = useState<ReturnType<RankingCategory['transformData']>>([]);
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // mock 모드 전환 시 로드된 항목·열림 상태를 리셋한다(렌더 중 state 조정).
+  const [prevMockEnabled, setPrevMockEnabled] = useState(mockEnabled);
+  if (mockEnabled !== prevMockEnabled) {
+    setPrevMockEnabled(mockEnabled);
     setItems([]);
     setIsOpen(false);
-  }, [mockEnabled]);
+  }
 
   const handleTransitionEnd = () => {
     if (!isOpen || !bodyRef.current) return;

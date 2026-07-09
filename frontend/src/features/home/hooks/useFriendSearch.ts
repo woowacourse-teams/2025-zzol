@@ -39,7 +39,6 @@ export const useFriendSearch = () => {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!searchQuery.trim()) {
-      setSearchResults([]);
       return () => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
       };
@@ -56,6 +55,8 @@ export const useFriendSearch = () => {
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = searchMode === '유저코드' ? e.target.value.toUpperCase() : e.target.value;
     setSearchQuery(value);
+    // 입력이 비워지면 이전 검색 결과를 즉시 지운다(재입력 시 잔상 방지).
+    if (!value.trim()) setSearchResults([]);
   };
 
   const handleModeChange = (mode: SearchMode) => {

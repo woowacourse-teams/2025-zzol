@@ -191,17 +191,19 @@ export const useBlockStackingGame = (
   // --- 2. Closure Avoidance (클로저 문제 해결) ---
   // 아래 Ref들은 handleTap이나 루프 내부에서 최신 Props/Callbacks에 접근할 수 있게 합니다.
   const gameStateRef = useRef(gameState);
-  gameStateRef.current = gameState;
   const soundsRef = useRef(sounds);
-  soundsRef.current = sounds;
   const setLocalGameOverRef = useRef(setLocalGameOver);
-  setLocalGameOverRef.current = setLocalGameOver;
   const onBlockPlacedRef = useRef(onBlockPlaced);
-  onBlockPlacedRef.current = onBlockPlaced;
   const onFailRef = useRef(onFail);
-  onFailRef.current = onFail;
   const isLocalGameOverRef = useRef(isLocalGameOver);
-  isLocalGameOverRef.current = isLocalGameOver;
+  useEffect(() => {
+    gameStateRef.current = gameState;
+    soundsRef.current = sounds;
+    setLocalGameOverRef.current = setLocalGameOver;
+    onBlockPlacedRef.current = onBlockPlaced;
+    onFailRef.current = onFail;
+    isLocalGameOverRef.current = isLocalGameOver;
+  });
 
   // --- 3. Game Actions (주요 액션 함수) ---
 

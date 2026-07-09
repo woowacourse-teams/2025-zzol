@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ApiError } from '@/apis/rest/error';
 import useToast from '@/components/@common/Toast/useToast';
 import { friendsApi } from '@/features/friends/api/friendsApi';
@@ -29,9 +29,12 @@ const ActionButton = ({ user, onRelationChange }: ActionProps) => {
   const [localStatus, setLocalStatus] = useState<RelationStatus>(user.relationStatus);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  // prop 변경 시 로컬 상태를 재동기화한다(렌더 중 state 조정 — 가드로 1회만).
+  const [prevRelationStatus, setPrevRelationStatus] = useState(user.relationStatus);
+  if (user.relationStatus !== prevRelationStatus) {
+    setPrevRelationStatus(user.relationStatus);
     setLocalStatus(user.relationStatus);
-  }, [user.relationStatus]);
+  }
 
   const incomingRequest = receivedRequests.find((r) => r.userId === user.userId);
 
@@ -171,9 +174,12 @@ type Props = {
 const SearchPanel = ({ results, loading }: Props) => {
   const [localResults, setLocalResults] = useState(results);
 
-  useEffect(() => {
+  // 검색 결과 prop 변경 시 로컬 상태를 재동기화한다(렌더 중 state 조정).
+  const [prevResults, setPrevResults] = useState(results);
+  if (results !== prevResults) {
+    setPrevResults(results);
     setLocalResults(results);
-  }, [results]);
+  }
 
   const handleRelationChange = useCallback((userId: number, status: RelationStatus) => {
     setLocalResults((prev) =>

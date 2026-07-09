@@ -59,6 +59,8 @@ const useFetch = <T>(options: UseFetchOptions<T>): UseFetchReturn<T> => {
 
   useEffect(() => {
     if (enabled) {
+      // 데이터 페칭은 정당한 effect 부수효과 — 시작 시 loading/error 상태 반영이 동반된다.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchData();
     }
   }, [enabled, fetchData]);

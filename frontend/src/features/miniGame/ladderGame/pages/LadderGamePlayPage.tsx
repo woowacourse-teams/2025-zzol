@@ -13,22 +13,23 @@ type TimerBarProps = { endTimeEpochMs: number | null };
 
 const TimerBar = ({ endTimeEpochMs }: TimerBarProps) => {
   const [timeLeft, setTimeLeft] = useState(0);
-  const totalMsRef = useRef<number>(1);
+  const [totalTimeSec, setTotalTimeSec] = useState(0.001);
   const endTimeRef = useRef<number | null>(endTimeEpochMs);
 
   useEffect(() => {
     endTimeRef.current = endTimeEpochMs;
-    if (endTimeEpochMs) {
-      totalMsRef.current = Math.max(1, endTimeEpochMs - Date.now());
-    } else {
-      setTimeLeft(0);
-    }
   }, [endTimeEpochMs]);
 
   useEffect(() => {
     let rafId: number;
+    let totalSec = 0;
     const tick = () => {
-      if (endTimeRef.current !== null && totalMsRef.current > 0) {
+      if (endTimeRef.current !== null) {
+        // 총 길이(분모)는 첫 유효 프레임에 한 번만 확정한다 — rAF 콜백이므로 렌더 순수성에 영향 없음.
+        if (totalSec === 0) {
+          totalSec = Math.max(1, endTimeRef.current - Date.now()) / 1000;
+          setTotalTimeSec(totalSec);
+        }
         const remaining = Math.max(0, (endTimeRef.current - Date.now()) / 1000);
         setTimeLeft(remaining);
         if (remaining > 0) {
@@ -45,7 +46,7 @@ const TimerBar = ({ endTimeEpochMs }: TimerBarProps) => {
 
   return (
     <S.TimerBarWrapper>
-      <S.TimerBarFill $timeLeft={timeLeft} $totalTime={totalMsRef.current / 1000} />
+      <S.TimerBarFill $timeLeft={timeLeft} $totalTime={totalTimeSec} />
     </S.TimerBarWrapper>
   );
 };

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './api';
 import { ErrorDisplayMode } from './error';
 import { Method } from './apiRequest';
@@ -33,8 +33,10 @@ const useMutation = <TData = unknown, TVariables = void>(
   const onSuccessRef = useRef(onSuccess);
   const onErrorRef = useRef(onError);
 
-  onSuccessRef.current = onSuccess;
-  onErrorRef.current = onError;
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onErrorRef.current = onError;
+  });
 
   const mutate = useCallback(
     async (variables: TVariables): Promise<TData | undefined> => {

@@ -1,5 +1,5 @@
 import Modal from '@/components/@common/Modal/Modal';
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 import useUpdateAdjustmentWeight from '../../hooks/useUpdateAdjustmentWeight';
 import * as S from './RouletteSettingsModal.styled';
 
@@ -23,11 +23,12 @@ const RouletteSettingsModal = ({
 }: Props) => {
   const [weight, setWeight] = useState(currentWeight);
 
-  useEffect(() => {
-    if (isOpen) {
-      setWeight(currentWeight);
-    }
-  }, [isOpen, currentWeight]);
+  // 모달이 열려 있는 동안 isOpen/currentWeight 변화 시 weight 를 재설정한다(렌더 중 state 조정).
+  const [syncKey, setSyncKey] = useState({ isOpen, currentWeight });
+  if (isOpen !== syncKey.isOpen || currentWeight !== syncKey.currentWeight) {
+    setSyncKey({ isOpen, currentWeight });
+    if (isOpen) setWeight(currentWeight);
+  }
 
   const handleSuccess = useCallback(() => {
     onSave?.(weight);

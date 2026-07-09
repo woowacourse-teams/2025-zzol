@@ -2,7 +2,7 @@
 spring-boot                  = "3.5.3"
 spring-dependency-management = "1.1.7"
 spring-doc                   = "2.8.17"
-oci-sdk                      = "3.90.1"
+oci-sdk                      = "3.91.1"
 redisson                     = "4.6.1"
 zxing                        = "3.5.4"
 querydsl                     = "7.4.0"

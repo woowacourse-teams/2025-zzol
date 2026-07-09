@@ -33,4 +33,8 @@ springdoc:
 server:
   tomcat:
     remoteip:
-      internal-proxies: "172\\.20\\.0\\.\\d{1,3}"
+      # zzol-network 는 172.20.0.0/16 이라 nginx IP 가 172.20.0.x 밖으로 재할당될 수 있다.
+      # 좁은 /24 로 잡으면 X-Forwarded-Proto 가 무시돼 {baseUrl} 이 http 로 떨어지고
+      # OAuth redirect_uri(https) 불일치로 카카오 KOE006·구글 로그인이 실패한다(#1537).
+      # dev 와 동일하게 사설 대역(RFC1918) 전체를 신뢰한다.
+      internal-proxies: "127\\.0\\.0\\.1|10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|172\\.(1[6-9]|2[0-9]|3[0-1])\\.\\d{1,3}\\.\\d{1,3}|192\\.168\\.\\d{1,3}\\.\\d{1,3}"

@@ -7,6 +7,8 @@
 #   http_server_requests_seconds_count  라벨: uri, status, method, job
 #   ip_block_new_total                  신규 BAN 카운터
 #   ip_block_request_blocked_total      차단된 요청 카운터
+#   login_start_total / login_success_total  라벨: provider, job — LoginMetrics(앱 코드) 신설
+#     (예외: LoginSuccessDroppedToZero는 기존 메트릭으로 잡히지 않아 전용 카운터를 도입했다)
 #
 # ⚠️ 임계값은 전부 베이스라인 미측정 상태의 보수적 추정치다(ADR-0026 트레이드오프).
 #    배포 전 Prometheus API로 정상 범위를 재고, 초기엔 오탐을 줄이는 방향(높게)으로 둔다.
@@ -69,3 +71,22 @@ groups:
         annotations:
           summary: "WebSocket 핸드셰이크 실패 급증 (/ws*)"
           description: "/ws* 4xx/5xx 응답이 {{ $value | printf \"%.2f\" }} /s. nginx Upgrade/Connection 헤더 소실 또는 인증 실패 가능성."
+
+      # OAuth 로그인 성공 소멸 — 시도는 계속되는데 성공이 없다.
+      # redirect_uri 불일치(카카오 KOE006 등)는 5xx 없이 사용자가 provider 페이지에서
+      # 튕겨 돌아오지 않아 에러율로는 안 잡힌다. 시작(login_start)은 늘고 성공(login_success)이
+      # 사라지는 것으로만 드러나므로 그 비교로 발화한다. (메트릭: LoginMetrics, 이 PR에서 신설)
+      # unless 사용: 성공 rate가 0이거나 시리즈가 아예 없을 때(배포 직후 한 번도 성공 못 한
+      #   경우 포함) 모두 발화한다. == 0 만으로는 "시리즈 부재"를 놓친다.
+      # provider 라벨이 동시에 여럿 뜨면 인프라(baseUrl/프록시), 하나만 뜨면 그 provider 콘솔/시크릿.
+      - alert: LoginSuccessDroppedToZero
+        expr: |
+          sum by (job, provider) (rate(login_start_total{job=~"dev-app|prod-app"}[5m])) > 0
+          unless
+          sum by (job, provider) (rate(login_success_total{job=~"dev-app|prod-app"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.provider }} 로그인 성공 0 ({{ $labels.job }}) — 시도는 계속됨"
+          description: "최근 로그인 시도는 있으나 성공이 없다. redirect_uri(스킴/호스트)·provider 콘솔 등록·시크릿을 점검. 여러 provider 동시 발생 시 프록시/baseUrl 의심."

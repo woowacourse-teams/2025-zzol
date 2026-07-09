@@ -5,6 +5,7 @@ import coffeeshout.user.application.service.LoginResult;
 import coffeeshout.user.application.service.UserRegistrationService;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.infra.oauth.CustomOAuth2UserService.CustomOAuth2User;
+import coffeeshout.user.metric.LoginMetrics;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -20,6 +21,7 @@ public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRegistrationService userRegistrationService;
     private final AuthTokenService authTokenService;
+    private final LoginMetrics loginMetrics;
 
     @Value("${user.oauth.frontend-redirect-uri}")
     private String frontendRedirectUri;
@@ -41,6 +43,7 @@ public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
         );
 
         final String code = authTokenService.issueCode(loginResult);
+        loginMetrics.countSuccess(provider.getRegistrationId());
         response.sendRedirect(frontendRedirectUri + "?code=" + code);
     }
 }

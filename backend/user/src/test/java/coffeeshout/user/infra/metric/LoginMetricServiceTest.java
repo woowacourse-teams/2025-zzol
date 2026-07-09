@@ -1,4 +1,4 @@
-package coffeeshout.user.metric;
+package coffeeshout.user.infra.metric;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,22 +8,22 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class LoginMetricsTest {
+class LoginMetricServiceTest {
 
     private MeterRegistry meterRegistry;
-    private LoginMetrics loginMetrics;
+    private LoginMetricService loginMetricService;
 
     @BeforeEach
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
-        loginMetrics = new LoginMetrics(meterRegistry);
+        loginMetricService = new LoginMetricService(meterRegistry);
     }
 
     @Test
     void 시작_카운트는_provider별로_누적된다() {
-        loginMetrics.countStart("kakao");
-        loginMetrics.countStart("kakao");
-        loginMetrics.countStart("google");
+        loginMetricService.countStart("kakao");
+        loginMetricService.countStart("kakao");
+        loginMetricService.countStart("google");
 
         assertThat(count("login.start", "kakao")).isEqualTo(2.0);
         assertThat(count("login.start", "google")).isEqualTo(1.0);
@@ -31,14 +31,14 @@ class LoginMetricsTest {
 
     @Test
     void 성공_카운트는_provider별로_누적된다() {
-        loginMetrics.countSuccess("kakao");
+        loginMetricService.countSuccess("kakao");
 
         assertThat(count("login.success", "kakao")).isEqualTo(1.0);
     }
 
     @Test
     void 시작과_성공은_별개의_메트릭이다() {
-        loginMetrics.countStart("kakao");
+        loginMetricService.countStart("kakao");
 
         assertThat(count("login.start", "kakao")).isEqualTo(1.0);
         assertThat(meterRegistry.find("login.success").tag("provider", "kakao").counter()).isNull();

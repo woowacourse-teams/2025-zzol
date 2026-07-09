@@ -1,4 +1,4 @@
-package coffeeshout.user.metric;
+package coffeeshout.user.infra.metric;
 
 import coffeeshout.user.domain.OAuthProvider;
 import jakarta.servlet.FilterChain;
@@ -18,10 +18,10 @@ public class LoginStartMetricFilter extends OncePerRequestFilter {
 
     private static final String PREFIX = "/oauth2/authorization/";
 
-    private final LoginMetrics loginMetrics;
+    private final LoginMetricService loginMetricService;
 
-    public LoginStartMetricFilter(LoginMetrics loginMetrics) {
-        this.loginMetrics = loginMetrics;
+    public LoginStartMetricFilter(LoginMetricService loginMetricService) {
+        this.loginMetricService = loginMetricService;
     }
 
     @Override
@@ -37,7 +37,7 @@ public class LoginStartMetricFilter extends OncePerRequestFilter {
             // enum의 정규화된 값(소문자)으로만 센다 — 성공 카운트 태그와도 값집합이 일치한다.
             final String segment = uri.substring(PREFIX.length());
             OAuthProvider.fromRegistrationId(segment)
-                    .ifPresent(provider -> loginMetrics.countStart(provider.getRegistrationId()));
+                    .ifPresent(provider -> loginMetricService.countStart(provider.getRegistrationId()));
         }
         filterChain.doFilter(request, response);
     }

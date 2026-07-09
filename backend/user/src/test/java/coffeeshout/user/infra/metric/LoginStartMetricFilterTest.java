@@ -1,4 +1,4 @@
-package coffeeshout.user.metric;
+package coffeeshout.user.infra.metric;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,7 +18,7 @@ class LoginStartMetricFilterTest {
     @BeforeEach
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
-        filter = new LoginStartMetricFilter(new LoginMetrics(meterRegistry));
+        filter = new LoginStartMetricFilter(new LoginMetricService(meterRegistry));
     }
 
     @Test

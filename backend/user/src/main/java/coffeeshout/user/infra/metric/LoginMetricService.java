@@ -1,4 +1,4 @@
-package coffeeshout.user.metric;
+package coffeeshout.user.infra.metric;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class LoginMetrics {
+public class LoginMetricService {
 
     private final MeterRegistry meterRegistry;
 

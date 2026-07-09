@@ -1,9 +1,9 @@
 package coffeeshout.user.auth;
 
 import coffeeshout.user.application.service.AuthTokenService;
+import coffeeshout.user.infra.metric.LoginMetricService;
+import coffeeshout.user.infra.metric.LoginStartMetricFilter;
 import coffeeshout.user.infra.oauth.CustomOAuth2UserService;
-import coffeeshout.user.metric.LoginMetrics;
-import coffeeshout.user.metric.LoginStartMetricFilter;
 import coffeeshout.user.ui.OAuthSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +22,7 @@ public class UserSecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuthSuccessHandler oAuthSuccessHandler;
     private final AuthTokenService authTokenService;
-    private final LoginMetrics loginMetrics;
+    private final LoginMetricService loginMetricService;
 
     @Bean
     @Order(2)
@@ -46,7 +46,7 @@ public class UserSecurityConfig {
                 )
                 // 로그인 "시도" 카운트 — 인가 리다이렉트가 응답을 끝내기 전에 세야 한다
                 .addFilterBefore(
-                        new LoginStartMetricFilter(loginMetrics),
+                        new LoginStartMetricFilter(loginMetricService),
                         OAuth2AuthorizationRequestRedirectFilter.class
                 );
         return http.build();

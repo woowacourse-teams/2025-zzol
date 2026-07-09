@@ -18,18 +18,17 @@ const TimerBar = ({ endTimeEpochMs }: TimerBarProps) => {
 
   useEffect(() => {
     endTimeRef.current = endTimeEpochMs;
+    // 총 길이(분모)는 서버가 정하는 종료 시각이 바뀔 때마다 재계산해야 한다 — 렌더 순수성을 위해 effect 에서 파생.
+    if (endTimeEpochMs) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTotalTimeSec(Math.max(1, endTimeEpochMs - Date.now()) / 1000);
+    }
   }, [endTimeEpochMs]);
 
   useEffect(() => {
     let rafId: number;
-    let totalSec = 0;
     const tick = () => {
       if (endTimeRef.current !== null) {
-        // 총 길이(분모)는 첫 유효 프레임에 한 번만 확정한다 — rAF 콜백이므로 렌더 순수성에 영향 없음.
-        if (totalSec === 0) {
-          totalSec = Math.max(1, endTimeRef.current - Date.now()) / 1000;
-          setTotalTimeSec(totalSec);
-        }
         const remaining = Math.max(0, (endTimeRef.current - Date.now()) / 1000);
         setTimeLeft(remaining);
         if (remaining > 0) {

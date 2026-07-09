@@ -19,8 +19,9 @@ export const useCardGameTimer = () => {
   }, [currentTime, isTimerActive]);
 
   // 게임 상태·라운드 전환 시 타이머를 리셋한다(렌더 중 state 조정 — 가드로 전환 시 1회만).
+  // sentinel('')로 초기화해 마운트 시(예: PLAYING 상태로 재진입)에도 1회 실행되도록 한다.
   const stateKey = `${currentCardGameState}:${currentRound}`;
-  const [prevStateKey, setPrevStateKey] = useState(stateKey);
+  const [prevStateKey, setPrevStateKey] = useState('');
   if (stateKey !== prevStateKey) {
     setPrevStateKey(stateKey);
     if (currentCardGameState === 'PREPARE') {

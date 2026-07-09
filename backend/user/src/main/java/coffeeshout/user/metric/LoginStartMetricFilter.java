@@ -1,5 +1,6 @@
 package coffeeshout.user.metric;
 
+import coffeeshout.user.domain.OAuthProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,11 +32,12 @@ public class LoginStartMetricFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         final String uri = request.getRequestURI();
         if (uri != null && uri.startsWith(PREFIX)) {
-            final String provider = uri.substring(PREFIX.length());
-            // 하위 경로 없이 provider 세그먼트 하나일 때만 센다 (예: /oauth2/authorization/kakao)
-            if (!provider.isEmpty() && provider.indexOf('/') < 0) {
-                loginMetrics.countStart(provider);
-            }
+            // URL 세그먼트를 그대로 태그로 쓰면 임의 provider(예: /oauth2/authorization/<랜덤>)로
+            // 메트릭 시리즈가 무한 생성돼 카디널리티가 폭발한다. 지원 provider일 때만, 그리고
+            // enum의 정규화된 값(소문자)으로만 센다 — 성공 카운트 태그와도 값집합이 일치한다.
+            final String segment = uri.substring(PREFIX.length());
+            OAuthProvider.fromRegistrationId(segment)
+                    .ifPresent(provider -> loginMetrics.countStart(provider.getRegistrationId()));
         }
         filterChain.doFilter(request, response);
     }

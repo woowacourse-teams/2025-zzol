@@ -47,6 +47,24 @@ class LoginStartMetricFilterTest {
     }
 
     @Test
+    void 지원하지_않는_provider는_세지_않는다() throws Exception {
+        // 무검증 태그로 인한 카디널리티 폭발 방지
+        doFilter("/oauth2/authorization/evil-random-value");
+
+        assertThat(meterRegistry.find("login.start").counter()).isNull();
+    }
+
+    @Test
+    void provider_대소문자는_정규화되어_집계된다() throws Exception {
+        doFilter("/oauth2/authorization/KAKAO");
+        doFilter("/oauth2/authorization/kakao");
+
+        // 성공 카운트 태그(소문자 enum 값)와 동일한 값집합으로 정규화된다
+        assertThat(count("kakao")).isEqualTo(2.0);
+        assertThat(meterRegistry.find("login.start").tag("provider", "KAKAO").counter()).isNull();
+    }
+
+    @Test
     void 경로와_무관하게_다음_필터로_체인을_이어간다() throws Exception {
         MockFilterChain chain = new MockFilterChain();
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth2/authorization/kakao");

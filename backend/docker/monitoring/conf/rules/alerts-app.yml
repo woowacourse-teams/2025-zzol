@@ -80,10 +80,12 @@ groups:
       #   경우 포함) 모두 발화한다. == 0 만으로는 "시리즈 부재"를 놓친다.
       # provider 라벨이 동시에 여럿 뜨면 인프라(baseUrl/프록시), 하나만 뜨면 그 provider 콘솔/시크릿.
       - alert: LoginSuccessDroppedToZero
+        # provider 매처는 방어적 이중 안전망 — 앱(LoginStartMetricFilter)이 이미 지원 provider만
+        # 집계하지만, 혹시 모를 유입으로 알림이 오발화하지 않도록 여기서도 화이트리스트로 좁힌다.
         expr: |
-          sum by (job, provider) (rate(login_start_total{job=~"dev-app|prod-app"}[5m])) > 0
+          sum by (job, provider) (rate(login_start_total{job=~"dev-app|prod-app",provider=~"google|kakao|naver"}[5m])) > 0
           unless
-          sum by (job, provider) (rate(login_success_total{job=~"dev-app|prod-app"}[5m])) > 0
+          sum by (job, provider) (rate(login_success_total{job=~"dev-app|prod-app",provider=~"google|kakao|naver"}[5m])) > 0
         for: 5m
         labels:
           severity: critical

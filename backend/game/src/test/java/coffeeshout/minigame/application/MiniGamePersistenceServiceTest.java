@@ -7,16 +7,13 @@ import static org.mockito.Mockito.verify;
 
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.RoomSnapshotQuery;
 import coffeeshout.minigame.application.port.MiniGameEntityRepository;
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.minigame.event.PlayerSnapshotRequiredEvent;
-import coffeeshout.room.application.port.RoomEntityRepository;
-import coffeeshout.room.application.port.RoomStatusPort;
-import coffeeshout.room.infra.persistence.RoomEntity;
 import java.util.List;
-import java.util.Optional;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,24 +29,19 @@ import org.springframework.context.ApplicationEventPublisher;
 class MiniGamePersistenceServiceTest {
 
     private static final String JOIN_CODE = "ABCD";
+    private static final long ROOM_SESSION_ID = 42L;
 
     @Mock
     private GameSessionService gameSessionService;
 
     @Mock
-    private RoomEntityRepository roomEntityRepository;
+    private RoomSnapshotQuery roomSnapshotQuery;
 
     @Mock
     private MiniGameEntityRepository miniGameEntityRepository;
 
     @Mock
-    private RoomStatusPort roomStatusPort;
-
-    @Mock
     private ApplicationEventPublisher eventPublisher;
-
-    @Mock
-    private RoomEntity roomEntity;
 
     @Mock
     private GameSession gameSession;
@@ -60,9 +52,8 @@ class MiniGamePersistenceServiceTest {
     void setUp() {
         service = new MiniGamePersistenceService(
                 gameSessionService,
-                roomEntityRepository,
+                roomSnapshotQuery,
                 miniGameEntityRepository,
-                roomStatusPort,
                 eventPublisher
         );
     }
@@ -77,8 +68,7 @@ class MiniGamePersistenceServiceTest {
 
         @BeforeEach
         void 방과_세션을_스텁한다() {
-            given(roomEntityRepository.findFirstByJoinCodeOrderByCreatedAtDesc(JOIN_CODE))
-                    .willReturn(Optional.of(roomEntity));
+            given(roomSnapshotQuery.resolveRoomSessionId(JOIN_CODE)).willReturn(ROOM_SESSION_ID);
             given(gameSessionService.getSession(new JoinCode(JOIN_CODE))).willReturn(gameSession);
         }
 

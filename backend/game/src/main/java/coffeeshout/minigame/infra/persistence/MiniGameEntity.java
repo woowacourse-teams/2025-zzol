@@ -1,17 +1,13 @@
 package coffeeshout.minigame.infra.persistence;
 
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.room.infra.persistence.RoomEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -27,16 +23,16 @@ public class MiniGameEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_session_id", nullable = false)
-    private RoomEntity roomSession;
+    // room_session(:room)을 JPA 연관이 아니라 Long FK 컬럼으로 참조한다(ADR-0034) — DB FK 제약은 유지.
+    @Column(name = "room_session_id", nullable = false)
+    private Long roomSessionId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MiniGameType miniGameType;
 
-    public MiniGameEntity(RoomEntity roomSession, MiniGameType miniGameType) {
-        this.roomSession = roomSession;
+    public MiniGameEntity(Long roomSessionId, MiniGameType miniGameType) {
+        this.roomSessionId = roomSessionId;
         this.miniGameType = miniGameType;
     }
 }

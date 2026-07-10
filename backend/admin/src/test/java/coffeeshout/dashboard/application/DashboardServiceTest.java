@@ -368,9 +368,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("IIII"));
 
-            miniGameJpaRepository.save(new MiniGameEntity(room, MiniGameType.CARD_GAME));
-            miniGameJpaRepository.save(new MiniGameEntity(room, MiniGameType.CARD_GAME));
-            miniGameJpaRepository.save(new MiniGameEntity(room, MiniGameType.CARD_GAME));
+            miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.CARD_GAME));
+            miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.CARD_GAME));
+            miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.CARD_GAME));
 
             // when
             final List<GamePlayCountResponse> result = dashboardService.getGamePlayCounts();
@@ -388,7 +388,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // CARD_GAME 5회
             for (int i = 0; i < 5; i++) {
-                miniGameJpaRepository.save(new MiniGameEntity(room, MiniGameType.CARD_GAME));
+                miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.CARD_GAME));
             }
 
             // when
@@ -406,9 +406,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             final RoomEntity room1 = roomJpaRepository.save(new RoomEntity("KKKK"));
             final RoomEntity room2 = roomJpaRepository.save(new RoomEntity("LLLL"));
 
-            miniGameJpaRepository.save(new MiniGameEntity(room1, MiniGameType.CARD_GAME));
-            miniGameJpaRepository.save(new MiniGameEntity(room1, MiniGameType.CARD_GAME));
-            miniGameJpaRepository.save(new MiniGameEntity(room2, MiniGameType.CARD_GAME));
+            miniGameJpaRepository.save(new MiniGameEntity(room1.getId(), MiniGameType.CARD_GAME));
+            miniGameJpaRepository.save(new MiniGameEntity(room1.getId(), MiniGameType.CARD_GAME));
+            miniGameJpaRepository.save(new MiniGameEntity(room2.getId(), MiniGameType.CARD_GAME));
 
             // when
             final List<GamePlayCountResponse> result = dashboardService.getGamePlayCounts();
@@ -438,16 +438,16 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("MMNN"));
             final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.BLOCK_STACKING)
+                    new MiniGameEntity(room.getId(), MiniGameType.BLOCK_STACKING)
             );
 
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
             final PlayerEntity 민수 = playerJpaRepository.save(new PlayerEntity(room, "민수", PlayerType.GUEST));
 
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수, 1, 30L));
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 영희, 2, 20L));
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 민수, 3, 10L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수.getId(), 1, 30L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 영희.getId(), 2, 20L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 민수.getId(), 3, 10L));
 
             // when
             final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
@@ -476,14 +476,14 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("TTUV"));
             final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.BLOCK_STACKING)
+                    new MiniGameEntity(room.getId(), MiniGameType.BLOCK_STACKING)
             );
 
             for (int i = 1; i <= 10; i++) {
                 final PlayerEntity player = playerJpaRepository.save(
                         new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST)
                 );
-                miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, player, i, (long) i * 10));
+                miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, player.getId(), i, (long) i * 10));
             }
 
             // when
@@ -501,17 +501,17 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("WWXX"));
             final MiniGameEntity blockStackingGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.BLOCK_STACKING)
+                    new MiniGameEntity(room.getId(), MiniGameType.BLOCK_STACKING)
             );
             final MiniGameEntity racingGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.RACING_GAME)
+                    new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME)
             );
 
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
 
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(blockStackingGame, 철수, 1, 20L));
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(racingGame, 영희, 1, 5000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(blockStackingGame, 철수.getId(), 1, 20L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(racingGame, 영희.getId(), 1, 5000L));
 
             // when
             final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
@@ -533,16 +533,16 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("STAA"));
             final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.SPEED_TOUCH)
+                    new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH)
             );
 
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
             final PlayerEntity 민수 = playerJpaRepository.save(new PlayerEntity(room, "민수", PlayerType.GUEST));
 
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수, 1, 1000L));
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 영희, 2, 2000L));
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 민수, 3, 3000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수.getId(), 1, 1000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 영희.getId(), 2, 2000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 민수.getId(), 3, 3000L));
 
             // when
             final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
@@ -561,15 +561,15 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("STBB"));
             final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.SPEED_TOUCH)
+                    new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH)
             );
             final PlayerEntity 완주자 = playerJpaRepository.save(new PlayerEntity(room, "완주자", PlayerType.HOST));
             final PlayerEntity 미완주자 = playerJpaRepository.save(new PlayerEntity(room, "미완주자", PlayerType.GUEST));
 
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 완주자, 1, 4000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 완주자.getId(), 1, 4000L));
             // DNF 점수는 도메인 정의(SpeedTouchScore.ofDnf)에서 생성해 경계값이 실제 정의와 회귀로 묶이게 한다
             miniGameResultJpaRepository.save(
-                    new MiniGameResultEntity(miniGame, 미완주자, 2, SpeedTouchScore.ofDnf(2).getValue()));
+                    new MiniGameResultEntity(miniGame, 미완주자.getId(), 2, SpeedTouchScore.ofDnf(2).getValue()));
 
             // when
             final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
@@ -587,12 +587,12 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("STCC"));
             final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.SPEED_TOUCH)
+                    new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH)
             );
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
 
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수, 1, 5000L));
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수, 1, 2000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수.getId(), 1, 5000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수.getId(), 1, 2000L));
 
             // when
             final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
@@ -609,14 +609,14 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("STDD"));
             final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.SPEED_TOUCH)
+                    new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH)
             );
 
             for (int i = 1; i <= 7; i++) {
                 final PlayerEntity player = playerJpaRepository.save(
                         new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST)
                 );
-                miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, player, i, (long) i * 1000));
+                miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, player.getId(), i, (long) i * 1000));
             }
 
             // when
@@ -634,17 +634,17 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("STEE"));
             final MiniGameEntity speedTouch = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.SPEED_TOUCH)
+                    new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH)
             );
             final MiniGameEntity racing = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.RACING_GAME)
+                    new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME)
             );
 
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
 
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(speedTouch, 철수, 1, 1500L));
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(racing, 영희, 1, 500L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(speedTouch, 철수.getId(), 1, 1500L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(racing, 영희.getId(), 1, 500L));
 
             // when
             final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
@@ -675,13 +675,13 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("BTAA"));
             final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.BLIND_TIMER)
+                    new MiniGameEntity(room.getId(), MiniGameType.BLIND_TIMER)
             );
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
 
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수, 1, 120L));
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 영희, 2, 800L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수.getId(), 1, 120L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 영희.getId(), 2, 800L));
 
             // when
             final List<BlindTimerTopPlayerResponse> result = dashboardService.getBlindTimerTopPlayers();
@@ -700,15 +700,15 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("BTBB"));
             final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room, MiniGameType.BLIND_TIMER)
+                    new MiniGameEntity(room.getId(), MiniGameType.BLIND_TIMER)
             );
             final PlayerEntity 정상 = playerJpaRepository.save(new PlayerEntity(room, "정상", PlayerType.HOST));
             final PlayerEntity 타임아웃 = playerJpaRepository.save(new PlayerEntity(room, "타임아웃", PlayerType.GUEST));
 
-            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 정상, 1, 3000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 정상.getId(), 1, 3000L));
             // 타임아웃 점수는 도메인 정의(BlindTimerScore.ofTimeout)에서 생성해 경계값이 실제 정의와 회귀로 묶이게 한다
             miniGameResultJpaRepository.save(
-                    new MiniGameResultEntity(miniGame, 타임아웃, 2, BlindTimerScore.ofTimeout().getValue()));
+                    new MiniGameResultEntity(miniGame, 타임아웃.getId(), 2, BlindTimerScore.ofTimeout().getValue()));
 
             // when
             final List<BlindTimerTopPlayerResponse> result = dashboardService.getBlindTimerTopPlayers();

@@ -1,7 +1,7 @@
 # 0034. `:game → :room` 잔여 의존 제거 — 존재검증·상태전이·JPA FK 분리
 
 - 날짜: 2026-07-10
-- 상태: 승인 (미구현 — 구현 전 설계 기록)
+- 상태: 승인 (구현 완료 — #1548, 머지 대기)
 - 참조: ADR-0025(방-게임 분리, 본 결정이 유예한 JPA FK 계열을 이어받음), 이슈 #1547(`:game → :user` 이벤트 역전 — 자매 작업), 이슈 #1548(본 작업)
 
 ## 컨텍스트
@@ -37,12 +37,21 @@ ADR-0025는 방과 게임 세션의 소유권을 분리하며 `:game → :room` 
 
 `MiniGameEntity.roomSession(@ManyToOne RoomEntity)` → `Long roomSessionId`, `MiniGameResultEntity.player(@ManyToOne PlayerEntity)` → `Long playerId`로 바꾼다. **DB 외래키 컬럼·제약은 그대로 유지**하고 JPA 연관 탐색만 끊는다. 리포지토리 시그니처의 `RoomEntity`/`PlayerEntity` 파라미터는 `Long`으로 바꾼다(`findByRoomSessionIdAndMiniGameType(Long, …)`).
 
-**ID 공급(핵심 설계점).** `:game`이 `:room` 리포지토리를 직접 조회하지 않고 id를 얻는 방법:
+**ID 공급(핵심 설계점).** `:game`이 `:room` 리포지토리를 직접 조회하지 않고 id를 얻는 방법 —
+`roomSessionId`·`playerId` **둘 다 `:game-api`의 단일 조회 포트 `RoomSnapshotQuery`로 통일**하고 `:room`이 구현한다(이벤트 페이로드 확장은 불필요).
 
-- `roomSessionId`는 `:room`이 생성하는 게임 시작 이벤트(결정 2) 페이로드에 실어 전달한다. `:game`은 이 id로 `MiniGameEntity`를 저장한다.
-- 결과 저장 시 필요한 `playerId`(이름→id)는 `:game-api`에 조회 포트를 정의하고 `:room`이 구현해 공급한다(예: `PlayerIdQuery { Map<String,Long> playerIds(String joinCode, Collection<String> names) }`). 대안으로 결과 트리거 이벤트에 이름→id 맵을 실어 보낼 수 있으나, 결과 저장 시점이 시작과 떨어져 있어 조회 포트가 더 명확하다.
+```java
+// :game-api
+interface RoomSnapshotQuery {
+    long resolveRoomSessionId(String joinCode);
+    List<PlayerSnapshot> resolvePlayers(long roomSessionId, List<String> playerNames);
+    record PlayerSnapshot(String playerName, long playerId, Long userId) {} // 게스트는 userId=null
+}
+```
 
-`MiniGameResultSaveEventListener`는 이 포트로 id를 받아 `RoomJpaRepository`·`PlayerJpaRepository` 직접 조회를 제거한다.
+- `MiniGamePersistenceService`(게임 시작 저장)는 `resolveRoomSessionId`로 `MiniGameEntity`의 `roomSessionId`를 얻는다.
+- `MiniGameResultSaveEventListener`(결과 저장)는 `resolveRoomSessionId`+`resolvePlayers`로 `MiniGameResultEntity`의 `playerId`와 통계 이벤트용 `userId`를 얻어 `RoomJpaRepository`·`PlayerJpaRepository` 직접 조회를 제거한다.
+- 구현체 `RoomSnapshotQueryAdapter`(`:room`)는 `RoomEntityRepository`와 신규 파생 쿼리 `findByRoomSession_IdAndPlayerNameIn`로 id를 조회한다.
 
 ## 고려한 대안
 
@@ -57,12 +66,13 @@ ADR-0025는 방과 게임 세션의 소유권을 분리하며 `:game → :room` 
 
 - **JPA 연관 탐색 상실**: `miniGameEntity.getRoomSession()` 같은 네비게이션이 불가해지고, 필요 시 명시적 조회로 대체한다. 대신 경계가 명확해지고 LAZY 로딩·N+1 리스크가 준다.
 - **참조 무결성 위치 이동**: 애플리케이션 레벨 연관이 사라지고 DB FK 제약만 남는다. 잘못된 id 저장은 컴파일이 아닌 런타임 제약 위반으로 드러난다.
-- **id 공급 복잡도 증가**: 이벤트 페이로드·조회 포트가 늘어난다. 다만 이는 ADR-0025가 이미 채택한 이벤트·포트 역전 패턴의 연장이며 새로운 개념이 아니다.
+- **id 공급 복잡도 증가**: 조회 포트(`RoomSnapshotQuery`)가 늘어난다. 다만 이는 ADR-0025가 이미 채택한 포트 역전 패턴의 연장이며 새로운 개념이 아니다.
+- **분석 쿼리 파급**: `:admin` 대시보드 통계(QueryDSL)가 `MINI_GAME.roomSession`·`MINI_GAME_RESULT.player` 연관 탐색으로 조인하던 것을 `Long` id 명시 조인(`.on(ROOM.id.eq(MINI_GAME.roomSessionId))` 등)으로 바꿔야 한다 — JPA 탐색 상실의 대표적 파급점.
 - **마이그레이션 리스크**: 스키마 컬럼은 불변이라 데이터 영향은 없으나, 매핑·쿼리 변경으로 회귀 위험이 있어 결과 저장·조회 경로 통합 테스트가 필수다.
 
 ## 결과
 
 - `:game` 프로덕션의 `:room` 참조 6파일이 모두 제거되어 `game/build.gradle.kts`의 `implementation(project(":room"))`를 제거할 수 있다. `:game`은 도메인 모듈 의존이 0이 된다.
-- **ArchUnit 규칙 강화**: `GameArchitectureTest`의 `minigame.application` `PersistenceService`/`EntityRepository` **FK 예외 허용을 제거**하고, `RoomGameSeparationArchitectureTest`의 `PersistenceService` 예외도 좁힌다. `game_프로덕션은_user를_직접_참조할_수_없다`(#1547)와 짝으로 `game_프로덕션은_room을_직접_참조할_수_없다`를 추가해 재유입을 차단한다.
+- **ArchUnit 규칙 강화**: `GameArchitectureTest`의 `minigame.application`용 **`room.infra` FK 예외 규칙을 제거**하고, 예외 없는 브로드 규칙 `game_프로덕션은_room을_직접_참조할_수_없다`(game 패키지 전체 → `coffeeshout.room..` 금지)로 대체했다. `game_프로덕션은_user를_직접_참조할_수_없다`(#1547)와 짝을 이뤄 재유입을 차단한다.
 - **프로덕션 재테스트 결합 완화**: `:room` 변경 시 `:game:test`가 무효화되던 결합(#1547 논의)이 프로덕션 경로에서는 사라진다. 단, `@SpringBootTest` 전체 스캔 컨텍스트가 여전히 전이 `:room` 빈을 로드하면 `testImplementation(project(":room"))`는 테스트 스코프로 남을 수 있다(프로덕션 방향과 무관, #1547의 `:user`와 동일한 성격).
 - `:room → :user` 정리와 독립적으로 진행 가능하다.

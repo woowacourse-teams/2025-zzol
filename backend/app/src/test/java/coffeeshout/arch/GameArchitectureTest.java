@@ -101,30 +101,29 @@ public class GameArchitectureTest {
             ).as("minigame orchestration은 개별 게임 패키지를 직접 참조할 수 없다 — MiniGameFactory SPI를 통해 디스패치해야 한다");
 
     /**
-     * [의도된 예외] MiniGamePersistenceService(game 모듈)가 room.infra.persistence 타입을 직접 사용.
+     * :game 프로덕션 코드는 :room을 직접 참조할 수 없다. ADR-0025가 유예했던 JPA FK 계열 예외를 ADR-0034가
+     * 제거했다 — 미니게임 영속 엔티티는 room_session/player를 {@code Long} FK 컬럼으로 참조하고, 그 id·상태전이는
+     * {@code :game-api}의 {@code RoomSnapshotQuery} 포트·이벤트로 {@code :room}이 공급/수행한다.
      *
-     * MiniGameEntity/MiniGameResultEntity의 JPA @ManyToOne이 RoomEntity/PlayerEntity를 참조하므로
-     * game → room.infra 의존은 JPA FK 구조상 단기 해소가 어렵다.
-     * 이 의존이 규칙 위반처럼 보일 수 있으나 설계상 허용된 예외다.
-     *
-     * 해소 방향: MiniGameEntity의 FK를 ID 참조(@Column)로 변경하면 room.infra 의존을 제거할 수 있음.
-     */
-    /**
-     * minigame.application의 room.infra 의존 중 JPA FK 구조상 허용된 클래스 목록:
-     * - MiniGamePersistenceService: MiniGameEntity의 RoomEntity FK 생성 (PlayerEntity 생성 책임은
-     *   PlayerSnapshotRequiredEvent로 :room에 이관됨 — ADR-0025 PlayerEntity 영속 책임 분리)
-     * - MiniGameEntityRepository: RoomEntity FK 파라미터
-     *
-     * 나머지 application 클래스는 room.infra를 참조해서는 안 된다.
+     * <p>(@AnalyzeClasses가 테스트를 제외하므로 main 소스만 검사한다 — 통합 테스트 컨텍스트가 전이 :room 빈을
+     * 로드하는 것은 무관하다.) 재유입 시 이 규칙이 실패한다.
      */
     @ArchTest
-    static final ArchRule minigame_persistence_외에는_room_infra를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.minigame.application..")
-            .and().haveSimpleNameNotContaining("PersistenceService")
-            .and().haveSimpleNameNotContaining("EntityRepository")
+    static final ArchRule game_프로덕션은_room을_직접_참조할_수_없다 = noClasses()
+            .that().resideInAnyPackage(
+                    "coffeeshout.minigame..",
+                    "coffeeshout.cardgame..",
+                    "coffeeshout.blockstacking..",
+                    "coffeeshout.laddergame..",
+                    "coffeeshout.racinggame..",
+                    "coffeeshout.speedtouch..",
+                    "coffeeshout.blindtimer..",
+                    "coffeeshout.nunchi..",
+                    "coffeeshout.game.."
+            )
             .should().dependOnClassesThat()
-            .resideInAPackage("coffeeshout.room.infra..")
-            .as("minigame.application 중 JPA 영속성 관련 클래스를 제외하고는 room.infra를 참조할 수 없다");
+            .resideInAPackage("coffeeshout.room..")
+            .as("game 프로덕션 코드는 room을 직접 참조할 수 없다 — 방·플레이어 id·상태전이는 RoomSnapshotQuery 포트·이벤트로 처리한다 (ADR-0034)");
 
     /**
      * :game 프로덕션 코드는 :user를 직접 참조할 수 없다. (@AnalyzeClasses가 테스트를 제외하므로

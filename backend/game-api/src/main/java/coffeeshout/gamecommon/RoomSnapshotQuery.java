@@ -21,9 +21,6 @@ public interface RoomSnapshotQuery {
      */
     List<PlayerSnapshot> resolvePlayers(long roomSessionId, List<String> playerNames);
 
-    /**
-     * 결과 영속에 필요한 플레이어 식별 정보. {@code userId}는 게스트면 {@code null}이다.
-     */
-    record PlayerSnapshot(String playerName, long playerId, Long userId) {
+    record PlayerSnapshot(String playerName, long playerId) {
     }
 }

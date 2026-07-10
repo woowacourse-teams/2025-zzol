@@ -45,12 +45,12 @@ ADR-0025는 방과 게임 세션의 소유권을 분리하며 `:game → :room` 
 interface RoomSnapshotQuery {
     long resolveRoomSessionId(String joinCode);
     List<PlayerSnapshot> resolvePlayers(long roomSessionId, List<String> playerNames);
-    record PlayerSnapshot(String playerName, long playerId, Long userId) {} // 게스트는 userId=null
+    record PlayerSnapshot(String playerName, long playerId) {}
 }
 ```
 
 - `MiniGamePersistenceService`(게임 시작 저장)는 `resolveRoomSessionId`로 `MiniGameEntity`의 `roomSessionId`를 얻는다.
-- `MiniGameResultSaveEventListener`(결과 저장)는 `resolveRoomSessionId`+`resolvePlayers`로 `MiniGameResultEntity`의 `playerId`와 통계 이벤트용 `userId`를 얻어 `RoomJpaRepository`·`PlayerJpaRepository` 직접 조회를 제거한다.
+- `MiniGameResultSaveEventListener`(결과 저장)는 `resolveRoomSessionId`+`resolvePlayers`로 `MiniGameResultEntity`의 `playerId`를 얻어 `RoomJpaRepository`·`PlayerJpaRepository` 직접 조회를 제거한다. 통계 이벤트용 `userId`는 `:room`이 아니라 `Gamer`(game-api)가 이미 들고 있으므로 `Gamer.getUserId()`에서 얻는다 — 포트는 영속 식별자(roomSessionId·playerId)만 공급한다.
 - 구현체 `RoomSnapshotQueryAdapter`(`:room`)는 `RoomEntityRepository`와 신규 파생 쿼리 `findByRoomSession_IdAndPlayerNameIn`로 id를 조회한다.
 
 ## 고려한 대안

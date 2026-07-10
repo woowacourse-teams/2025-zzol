@@ -82,7 +82,7 @@ public class MiniGameResultSaveEventListener {
                 ));
 
         final List<MiniGameResultEntity> resultEntities = new ArrayList<>();
-        // 회원 플레이어의 승패는 이벤트로 발행 → :user가 구독해 통계 갱신(#1547). 게스트(userId null)는 제외.
+        // 회원 승패는 직접 호출이 아니라 이벤트로 :user에 전달해 통계 갱신한다(#1547).
         final List<PlayerStat> playerStats = new ArrayList<>();
 
         for (Map.Entry<Gamer, MiniGameScore> entry : scores.entrySet()) {
@@ -97,8 +97,8 @@ public class MiniGameResultSaveEventListener {
 
             resultEntities.add(new MiniGameResultEntity(miniGameEntity, snapshot.playerId(), rank, score));
 
-            if (snapshot.userId() != null) {
-                playerStats.add(new PlayerStat(snapshot.userId(), rank == 1));
+            if (gamer.getUserId() != null) {
+                playerStats.add(new PlayerStat(gamer.getUserId(), rank == 1));
             }
         }
 

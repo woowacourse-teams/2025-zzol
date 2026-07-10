@@ -30,7 +30,7 @@ public class RoomSnapshotQueryAdapter implements RoomSnapshotQuery {
     @Override
     public List<PlayerSnapshot> resolvePlayers(long roomSessionId, List<String> playerNames) {
         return playerEntityRepository.findByRoomSession_IdAndPlayerNameIn(roomSessionId, playerNames).stream()
-                .map(player -> new PlayerSnapshot(player.getPlayerName(), player.getId(), player.getUserId()))
+                .map(player -> new PlayerSnapshot(player.getPlayerName(), player.getId()))
                 .toList();
     }
 }

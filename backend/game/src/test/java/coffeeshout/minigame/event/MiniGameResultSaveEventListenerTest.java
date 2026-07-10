@@ -29,6 +29,7 @@ import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
 import coffeeshout.room.domain.player.Player;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -147,7 +148,7 @@ class MiniGameResultSaveEventListenerTest {
         when(roomSnapshotQuery.resolveRoomSessionId(JOIN_CODE)).thenReturn(ROOM_SESSION_ID);
         MiniGameEntity miniGameEntity = mock(MiniGameEntity.class);
         when(miniGameJpaRepository.findByRoomSessionIdAndMiniGameType(ROOM_SESSION_ID, MiniGameType.CARD_GAME))
-                .thenReturn(java.util.Optional.of(miniGameEntity));
+                .thenReturn(Optional.of(miniGameEntity));
     }
 
     private void 게임세션_설정(MiniGameResult result, Map<Gamer, MiniGameScore> scores) {

@@ -15,6 +15,19 @@ import com.tngtech.archunit.lang.ArchRule;
 @AnalyzeClasses(packages = "coffeeshout", importOptions = ImportOption.DoNotIncludeTests.class)
 public class GameArchitectureTest {
 
+    // :game 모듈의 프로덕션 패키지 루트 — 도메인 모듈(room/user) 참조 금지 규칙이 공유한다.
+    private static final String[] GAME_PACKAGES = {
+            "coffeeshout.minigame..",
+            "coffeeshout.cardgame..",
+            "coffeeshout.blockstacking..",
+            "coffeeshout.laddergame..",
+            "coffeeshout.racinggame..",
+            "coffeeshout.speedtouch..",
+            "coffeeshout.blindtimer..",
+            "coffeeshout.nunchi..",
+            "coffeeshout.game.."
+    };
+
     @ArchTest
     static final ArchRule cardgame은_다른_게임을_참조할_수_없다 = noClasses()
             .that().resideInAPackage("coffeeshout.cardgame..")
@@ -110,17 +123,7 @@ public class GameArchitectureTest {
      */
     @ArchTest
     static final ArchRule game_프로덕션은_room을_직접_참조할_수_없다 = noClasses()
-            .that().resideInAnyPackage(
-                    "coffeeshout.minigame..",
-                    "coffeeshout.cardgame..",
-                    "coffeeshout.blockstacking..",
-                    "coffeeshout.laddergame..",
-                    "coffeeshout.racinggame..",
-                    "coffeeshout.speedtouch..",
-                    "coffeeshout.blindtimer..",
-                    "coffeeshout.nunchi..",
-                    "coffeeshout.game.."
-            )
+            .that().resideInAnyPackage(GAME_PACKAGES)
             .should().dependOnClassesThat()
             .resideInAPackage("coffeeshout.room..")
             .as("game 프로덕션 코드는 room을 직접 참조할 수 없다 — 방·플레이어 id·상태전이는 RoomSnapshotQuery 포트·이벤트로 처리한다 (ADR-0034)");
@@ -135,17 +138,7 @@ public class GameArchitectureTest {
      */
     @ArchTest
     static final ArchRule game_프로덕션은_user를_직접_참조할_수_없다 = noClasses()
-            .that().resideInAnyPackage(
-                    "coffeeshout.minigame..",
-                    "coffeeshout.cardgame..",
-                    "coffeeshout.blockstacking..",
-                    "coffeeshout.laddergame..",
-                    "coffeeshout.racinggame..",
-                    "coffeeshout.speedtouch..",
-                    "coffeeshout.blindtimer..",
-                    "coffeeshout.nunchi..",
-                    "coffeeshout.game.."
-            )
+            .that().resideInAnyPackage(GAME_PACKAGES)
             .should().dependOnClassesThat()
             .resideInAPackage("coffeeshout.user..")
             .as("game 프로덕션 코드는 user를 직접 참조할 수 없다 — 유저 통계는 MiniGameStatsRecordedEvent 구독으로 처리한다 (이슈 #1547)");

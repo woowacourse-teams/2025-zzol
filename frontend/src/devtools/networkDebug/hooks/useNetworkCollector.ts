@@ -68,6 +68,7 @@ const getAllCollectors = (): NetworkCollector[] => {
 
 export const useNetworkCollector = () => {
   const [requests, setRequests] = useState<NetworkRequest[]>([]);
+  const [collectors, setCollectors] = useState<NetworkCollector[]>([]);
   const collectorsRef = useRef<NetworkCollector[]>([]);
   const unsubscribeFunctionsRef = useRef<(() => void)[]>([]);
   const initialRequestIdsRef = useRef<Set<string>>(new Set());
@@ -131,6 +132,7 @@ export const useNetworkCollector = () => {
     });
 
     collectorsRef.current = collectors;
+    setCollectors(collectors);
   }, []);
 
   useEffect(() => {
@@ -138,6 +140,8 @@ export const useNetworkCollector = () => {
 
     // 초기 collector 수집 및 구독
     const initialCollectors = getAllCollectors();
+    // 외부 시스템(collector) 구독 설정 부수효과 — 초기 요청 목록 반영이 동반된다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setupCollectors(initialCollectors);
 
     // 주기적으로 iframe 확인 (동적으로 추가되는 iframe 대응)
@@ -214,6 +218,6 @@ export const useNetworkCollector = () => {
     requests,
     clearRequests,
     refreshRequests,
-    collectors: collectorsRef.current,
+    collectors,
   };
 };

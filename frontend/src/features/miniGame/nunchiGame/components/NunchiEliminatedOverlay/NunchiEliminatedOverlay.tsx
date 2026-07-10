@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useState } from 'react';
 import { useNunchiGameContext } from '@/contexts/NunchiGame/NunchiGameContext';
 import * as S from './NunchiEliminatedOverlay.styled';
 
@@ -13,20 +13,21 @@ const NunchiEliminatedOverlay = () => {
   const { myInputState, currentNumber } = useNunchiGameContext();
 
   // 충돌 시점의 숫자를 고정한다 — 생존자가 이어가면 currentNumber 가 뒤에서 바뀌므로.
-  const collisionNumberRef = useRef<number | null>(null);
-  if (myInputState === 'COLLIDED' && collisionNumberRef.current === null) {
-    collisionNumberRef.current = currentNumber;
+  // 렌더 중 state 조정(React 공식 패턴): 가드로 첫 충돌 시 1회만 캡처한다.
+  const [collisionNumber, setCollisionNumber] = useState<number | null>(null);
+  if (myInputState === 'COLLIDED' && collisionNumber === null) {
+    setCollisionNumber(currentNumber);
   }
 
   if (myInputState !== 'COLLIDED') return null;
 
-  const collisionNumber = collisionNumberRef.current ?? currentNumber;
+  const displayNumber = collisionNumber ?? currentNumber;
 
   return (
     <S.Backdrop role="alert">
       <S.Stamp>탈락</S.Stamp>
       <S.Message>
-        <S.Headline>{collisionNumber}에서 같이 일어섰어요</S.Headline>
+        <S.Headline>{displayNumber}에서 같이 일어섰어요</S.Headline>
         <S.Sub>결과 화면에서 다시 만나요</S.Sub>
       </S.Message>
     </S.Backdrop>

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type BlockStackingSounds = {
   ensureAudioContext: () => void;
@@ -44,7 +44,9 @@ export const useBlockStackingSounds = (): BlockStackingSounds => {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const mutedRef = useRef(muted);
-  mutedRef.current = muted;
+  useEffect(() => {
+    mutedRef.current = muted;
+  });
 
   const ensureAudioContext = useCallback(() => {
     if (mutedRef.current) return;

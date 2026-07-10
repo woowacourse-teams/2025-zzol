@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import * as S from './CircularProgress.styled';
 
 type Props = {
@@ -12,23 +11,12 @@ const RADIUS = 45;
 const circumference = 2 * Math.PI * RADIUS;
 
 const CircularProgress = ({ current, total, size = '2rem', isActive = true }: Props) => {
-  const [strokeDashoffset, setStrokeDashoffset] = useState(0);
-
-  useEffect(() => {
-    if (!isActive) {
-      setStrokeDashoffset(0);
-      return;
-    }
-
-    if (total <= 0) {
-      setStrokeDashoffset(circumference);
-      return;
-    }
-
-    const progress = Math.min(1, (total - current + 1) / total);
-    const newStrokeDashoffset = circumference * progress;
-    setStrokeDashoffset(newStrokeDashoffset);
-  }, [current, total, isActive]);
+  // props에서 직접 파생한다(값 변경 시 CSS transition 으로 애니메이션됨).
+  const strokeDashoffset = !isActive
+    ? 0
+    : total <= 0
+      ? circumference
+      : circumference * Math.min(1, (total - current + 1) / total);
 
   return (
     <S.Container $size={size}>

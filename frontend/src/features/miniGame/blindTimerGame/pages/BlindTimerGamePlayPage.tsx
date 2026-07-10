@@ -3,7 +3,7 @@ import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useBlindTimerGame } from '@/contexts/BlindTimerGame/BlindTimerGameContext';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import Layout from '@/layouts/Layout';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import PrepareOverlay from '../../components/PrepareOverlay/PrepareOverlay';
 import TargetTime from '../components/TargetTime/TargetTime';
@@ -21,7 +21,7 @@ const BlindTimerGamePlayPage = () => {
   const { miniGameType } = useParams();
 
   const [isStopped, setIsStopped] = useState(false);
-  const stoppedTimeRef = useRef<number | null>(null);
+  const [stoppedTime, setStoppedTime] = useState<number | null>(null);
 
   const isPlaying = gameState === 'PLAYING';
   const { elapsedMs, isBlind, displayTime, formatTime } = useBlindTimer(
@@ -31,7 +31,7 @@ const BlindTimerGamePlayPage = () => {
 
   const handleStop = useCallback(() => {
     if (isStopped || !isPlaying) return;
-    stoppedTimeRef.current = elapsedMs;
+    setStoppedTime(elapsedMs);
     setIsStopped(true);
     sendStop();
   }, [isStopped, isPlaying, elapsedMs, sendStop]);
@@ -42,8 +42,7 @@ const BlindTimerGamePlayPage = () => {
     }
   }, [gameState, joinCode, navigate, miniGameType]);
 
-  const stoppedTimeDisplay =
-    stoppedTimeRef.current !== null ? formatTime(stoppedTimeRef.current) : null;
+  const stoppedTimeDisplay = stoppedTime !== null ? formatTime(stoppedTime) : null;
 
   return (
     <Layout>

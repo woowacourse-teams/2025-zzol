@@ -44,6 +44,8 @@ export const UserSocketProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     if (isAuthenticated) {
+      // STOMP 연결은 정당한 effect 부수효과(client/연결 상태 setState 동반).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       connect();
     } else {
       void disconnect();

@@ -14,7 +14,9 @@ import Splash from '../components/Splash/Splash';
 import * as S from './HomePage.styled';
 
 const HomePage = () => {
-  const [showSplash, setShowSplash] = useState(false);
+  const [showSplash, setShowSplash] = useState(
+    () => !storageManager.getItem(STORAGE_KEYS.VISITED, 'sessionStorage')
+  );
   const [activeTab, setActiveTab] = useState<HomeTabType>('home');
   const [menuInitialView, setMenuInitialView] = useState<MenuView | null>(null);
   const { clearIdentifier } = useIdentifier();
@@ -27,18 +29,16 @@ const HomePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 메뉴 탭을 벗어나면 initialView 초기화 (다음 번 직접 진입 시 루트 메뉴로 복귀)
+  // 첫 방문 판별(위 lazy 초기화) 후 방문 기록을 남긴다 — setState 없는 순수 부수효과.
   useEffect(() => {
-    if (activeTab !== 'menu') setMenuInitialView(null);
-  }, [activeTab]);
-
-  useEffect(() => {
-    const hasVisited = storageManager.getItem(STORAGE_KEYS.VISITED, 'sessionStorage');
-    if (!hasVisited) {
-      setShowSplash(true);
-      storageManager.setItem(STORAGE_KEYS.VISITED, 'true', 'sessionStorage');
-    }
+    storageManager.setItem(STORAGE_KEYS.VISITED, 'true', 'sessionStorage');
   }, []);
+
+  // 메뉴 탭을 벗어나면 initialView 초기화 (다음 번 직접 진입 시 루트 메뉴로 복귀)
+  const handleTabChange = (tab: HomeTabType) => {
+    if (tab !== 'menu') setMenuInitialView(null);
+    setActiveTab(tab);
+  };
 
   if (showSplash) {
     return <Splash onComplete={() => setShowSplash(false)} />;
@@ -70,7 +70,7 @@ const HomePage = () => {
       </S.ScrollArea>
       <HomeBottomTab
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         friendsBadgeCount={pendingReceivedCount}
       />
     </S.PageContainer>

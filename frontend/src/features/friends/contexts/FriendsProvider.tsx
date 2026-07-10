@@ -35,10 +35,13 @@ export const FriendsProvider = ({ children }: PropsWithChildren) => {
   // 로그인 해제 시 상태 초기화
   useEffect(() => {
     if (!isAuthenticated) {
+      // 로그아웃 시 상태·ref 초기화 — ref 리셋이 포함되어 렌더 단계로 옮길 수 없다.
+      /* eslint-disable react-hooks/set-state-in-effect */
       setFriends([]);
       setReceivedRequests([]);
       setSentRequests([]);
       setIsFriendsLoaded(false);
+      /* eslint-enable react-hooks/set-state-in-effect */
       initialLoadDoneRef.current = false;
     }
   }, [isAuthenticated]);

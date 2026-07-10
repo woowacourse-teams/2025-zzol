@@ -16,6 +16,8 @@ const LowestProbabilitySlide = ({ players, probability }: Props) => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
 
     if (probability === 0) {
+      // 확률 0: 이 effect 는 rAF 게이지 애니메이션 담당 — 애니메이션 없이 100%로 리셋.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayPct(100.0);
       return;
     }

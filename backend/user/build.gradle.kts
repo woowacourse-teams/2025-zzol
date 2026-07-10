@@ -12,6 +12,8 @@ dependencies {
     implementation(project(":infra"))
     implementation(project(":web"))
     implementation(project(":websocket"))
+    // 미니게임 결과 이벤트(MiniGameStatsRecordedEvent) 구독 — :game→:user 의존 역전
+    implementation(project(":game-api"))
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("io.micrometer:micrometer-core")

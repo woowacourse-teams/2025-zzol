@@ -125,4 +125,29 @@ public class GameArchitectureTest {
             .should().dependOnClassesThat()
             .resideInAPackage("coffeeshout.room.infra..")
             .as("minigame.application 중 JPA 영속성 관련 클래스를 제외하고는 room.infra를 참조할 수 없다");
+
+    /**
+     * :game 프로덕션 코드는 :user를 직접 참조할 수 없다. (@AnalyzeClasses가 테스트를 제외하므로
+     * main 소스만 검사한다 — 통합 테스트 컨텍스트가 전이 :user 빈을 mock 등록하는 것은 무관하다.)
+     *
+     * 유저 통계 갱신은 :game이 결과 저장 후 발행하는 MiniGameStatsRecordedEvent(:game-api)를
+     * :user가 구독해 처리한다 — {@code game → user} 프로덕션 의존을 이벤트로 역전했다(이슈 #1547).
+     * 재유입 시 이 규칙이 실패한다.
+     */
+    @ArchTest
+    static final ArchRule game_프로덕션은_user를_직접_참조할_수_없다 = noClasses()
+            .that().resideInAnyPackage(
+                    "coffeeshout.minigame..",
+                    "coffeeshout.cardgame..",
+                    "coffeeshout.blockstacking..",
+                    "coffeeshout.laddergame..",
+                    "coffeeshout.racinggame..",
+                    "coffeeshout.speedtouch..",
+                    "coffeeshout.blindtimer..",
+                    "coffeeshout.nunchi..",
+                    "coffeeshout.game.."
+            )
+            .should().dependOnClassesThat()
+            .resideInAPackage("coffeeshout.user..")
+            .as("game 프로덕션 코드는 user를 직접 참조할 수 없다 — 유저 통계는 MiniGameStatsRecordedEvent 구독으로 처리한다 (이슈 #1547)");
 }

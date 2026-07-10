@@ -1,7 +1,7 @@
 package coffeeshout.minigame.event;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -19,6 +19,8 @@ import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
+import coffeeshout.minigame.event.dto.MiniGameStatsRecordedEvent;
+import coffeeshout.minigame.event.dto.MiniGameStatsRecordedEvent.PlayerStat;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
@@ -27,16 +29,17 @@ import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.room.infra.persistence.RoomJpaRepository;
-import coffeeshout.user.application.service.UserStatsService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class MiniGameResultSaveEventListenerTest {
@@ -55,15 +58,15 @@ class MiniGameResultSaveEventListenerTest {
     @Mock
     GameSessionService gameSessionService;
     @Mock
-    UserStatsService userStatsService;
+    ApplicationEventPublisher eventPublisher;
 
     private static final String JOIN_CODE = "AB3C";
 
     @Nested
-    class 게임_종료_시_UserStats_자동_업데이트 {
+    class 게임_종료_시_통계_이벤트가_발행된다 {
 
         @Test
-        void 회원_플레이어는_1위면_isWinner_true로_UserStats가_업데이트된다() {
+        void 회원_플레이어는_1위면_isWinner_true로_이벤트에_담긴다() {
             Player 한스 = PlayerFixture.호스트한스();
             Player 루키 = PlayerFixture.게스트루키();
 
@@ -84,12 +87,12 @@ class MiniGameResultSaveEventListenerTest {
 
             listener.handle(미니게임종료이벤트(result));
 
-            verify(userStatsService).updateStats(1L, true);
-            verify(userStatsService).updateStats(2L, false);
+            assertThat(발행된_통계().playerStats())
+                    .containsExactlyInAnyOrder(new PlayerStat(1L, true), new PlayerStat(2L, false));
         }
 
         @Test
-        void 게스트_플레이어는_userId가_null이므로_UserStats_업데이트에서_제외된다() {
+        void 게스트_플레이어는_userId가_null이므로_이벤트에서_제외된다() {
             Player 한스 = PlayerFixture.호스트한스();
             Player 루키 = PlayerFixture.게스트루키();
 
@@ -110,12 +113,12 @@ class MiniGameResultSaveEventListenerTest {
 
             listener.handle(미니게임종료이벤트(result));
 
-            verify(userStatsService).updateStats(1L, true);
-            verify(userStatsService, never()).updateStats(eq(null), anyBoolean());
+            assertThat(발행된_통계().playerStats())
+                    .containsExactly(new PlayerStat(1L, true));
         }
 
         @Test
-        void 전원_게스트인_방은_UserStats_업데이트가_발생하지_않는다() {
+        void 전원_게스트인_방은_통계_이벤트가_발행되지_않는다() {
             Player 한스 = PlayerFixture.호스트한스();
             Player 루키 = PlayerFixture.게스트루키();
 
@@ -136,8 +139,14 @@ class MiniGameResultSaveEventListenerTest {
 
             listener.handle(미니게임종료이벤트(result));
 
-            verify(userStatsService, never()).updateStats(any(), anyBoolean());
+            verify(eventPublisher, never()).publishEvent(any());
         }
+    }
+
+    private MiniGameStatsRecordedEvent 발행된_통계() {
+        ArgumentCaptor<MiniGameStatsRecordedEvent> captor = ArgumentCaptor.forClass(MiniGameStatsRecordedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        return captor.getValue();
     }
 
     private MiniGameFinishedEvent 미니게임종료이벤트(MiniGameResult result) {

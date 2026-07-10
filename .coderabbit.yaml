@@ -12,7 +12,7 @@ reviews:
   auto_review:
     enabled: true               # PR 자동 리뷰 활성화
     auto_incremental_review: true
-    base_branches: ["be/dev", "fe/dev"]
+    base_branches: ["dev", "be/dev", "fe/dev"]
 
 chat:
   auto_reply: true              # PR 코멘트에 자동 답변

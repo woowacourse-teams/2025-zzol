@@ -9,6 +9,9 @@ group = "coffeeshout"
 version = "0.0.1-SNAPSHOT"
 
 val testcontainersVersion: String = libs.versions.testcontainers.get()
+val tomcatVersion: String = libs.versions.tomcat.get()
+val springSecurityVersion: String = libs.versions.spring.security.get()
+val thymeleafVersion: String = libs.versions.thymeleaf.get()
 
 tasks.register<Exec>("pruneStaleTestContainers") {
     group = "verification"
@@ -28,11 +31,11 @@ subprojects {
     extra["testcontainers.version"] = testcontainersVersion
 
     // CVE-2026-41293 / CVE-2026-43512 / CVE-2026-43515
-    extra["tomcat.version"] = "10.1.55"
+    extra["tomcat.version"] = tomcatVersion
     // CVE-2026-***732
-    extra["spring-security.version"] = "6.5.9"
+    extra["spring-security.version"] = springSecurityVersion
     // CVE-2026-40477 / CVE-2026-40478 / CVE-2026-41901
-    extra["thymeleaf.version"] = "3.1.5.RELEASE"
+    extra["thymeleaf.version"] = thymeleafVersion
 
     // Spring Boot bootJar 기본 비활성화 (라이브러리 모듈은 jar만, :app이 override)
     tasks.named("bootJar") { enabled = false }

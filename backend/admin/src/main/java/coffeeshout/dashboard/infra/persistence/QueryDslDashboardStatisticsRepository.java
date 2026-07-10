@@ -119,7 +119,6 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         MINI_GAME.count()
                 ))
                 .from(MINI_GAME)
-                // mini_game_play.room_session_id는 JPA 연관이 아닌 Long FK다(ADR-0034) — id로 명시 조인한다.
                 .join(ROOM).on(ROOM.id.eq(MINI_GAME.roomSessionId))
                 .where(ROOM.createdAt.between(startDate, endDate))
                 .groupBy(MINI_GAME.miniGameType)
@@ -196,7 +195,6 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         MINI_GAME_RESULT.score.max()
                 ))
                 .from(MINI_GAME_RESULT)
-                // mini_game_result.player_id는 JPA 연관이 아닌 Long FK다(ADR-0034) — id로 명시 조인한다.
                 .join(PLAYER).on(PLAYER.id.eq(MINI_GAME_RESULT.playerId))
                 .where(
                         MINI_GAME_RESULT.miniGameType.eq(MiniGameType.BLOCK_STACKING),

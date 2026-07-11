@@ -20,12 +20,7 @@ import {
 } from './menuIcons';
 
 export type MenuView =
-  | 'my-info'
-  | 'game-manual'
-  | 'report'
-  | 'patch-notes'
-  | 'service-info'
-  | 'app-install';
+  'my-info' | 'game-manual' | 'report' | 'patch-notes' | 'service-info' | 'app-install';
 
 const VIEW_TITLE: Record<MenuView, string> = {
   'my-info': '내 정보',

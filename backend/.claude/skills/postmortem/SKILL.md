@@ -2,7 +2,6 @@
 name: postmortem
 description: 장애·인시던트·반복된 오진의 사후 회고(Postmortem)를 작성한다. 프로덕션 장애, CI 플레이키, 배포 사고, 진단이 여러 번 빗나간 사건 등 "무엇이 어떻게 터졌고 왜 그렇게 진단했는가"를 복기할 때 사용한다.
 argument-hint: "[사건 주제] (예: 게임 통합테스트 플레이키, Redis 구독 영구 중단)"
-disable-model-invocation: true
 allowed-tools: Read, Glob, Write, Bash
 ---
 

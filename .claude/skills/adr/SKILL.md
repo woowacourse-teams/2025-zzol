@@ -2,7 +2,6 @@
 name: adr
 description: Architecture Decision Record를 작성한다. 기술 선택, 설계 결정, 패턴 도입 등 팀이 내린 중요한 기술적 의사결정을 기록할 때 사용한다.
 argument-hint: "[결정 주제] (예: Redis Stream 도입, Notifier 패턴 적용)"
-disable-model-invocation: true
 allowed-tools: Read, Glob, Write, Bash
 ---
 

@@ -3,7 +3,6 @@ name: create-issue
 description: GitHub 이슈를 템플릿 기반으로 생성하고, 이슈 번호로 dev에서 작업 브랜치를 체크아웃한다. 백엔드·프론트엔드 공통.
 argument-hint: "[type] 이슈 제목 — type: feat | fix | refactor | chore | docs | test"
 allowed-tools: Bash
-disable-model-invocation: true
 ---
 
 # create-issue

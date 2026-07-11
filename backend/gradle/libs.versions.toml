@@ -2,7 +2,7 @@
 spring-boot                  = "3.5.3"
 spring-dependency-management = "1.1.7"
 spring-doc                   = "2.8.17"
-oci-sdk                      = "3.90.1"
+oci-sdk                      = "3.91.1"
 redisson                     = "4.6.1"
 zxing                        = "3.5.4"
 querydsl                     = "7.4.0"
@@ -16,6 +16,12 @@ ahocorasick                  = "0.6.3"
 jsqlparser                   = "5.3"
 spring-dotenv                = "5.1.0"
 archunit                     = "1.4.2"
+
+# BOM 관리 전이 의존성의 CVE 패치 오버라이드 — 라이브러리 선언 없이 루트
+# build.gradle.kts subprojects{}의 extra["*.version"]에서 버전만 참조한다.
+tomcat                       = "10.1.55"
+spring-security              = "6.5.9"
+thymeleaf                    = "3.1.5.RELEASE"
 
 [libraries]
 springdoc-openapi            = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui",       version.ref = "spring-doc" }

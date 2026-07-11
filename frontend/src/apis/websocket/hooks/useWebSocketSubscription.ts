@@ -19,6 +19,7 @@ export const useWebSocketSubscription = <T>(
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onDataRef = useRef(onData);
+  const trySubscribeRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     onDataRef.current = onData;
@@ -82,13 +83,17 @@ export const useWebSocketSubscription = <T>(
         retryCountRef.current += 1;
         retryTimerRef.current = setTimeout(() => {
           console.log(`⏳ ${destination} 재시도 (${retryCountRef.current}회차)...`);
-          trySubscribe();
+          trySubscribeRef.current();
         }, delay);
       } else {
         console.error(`🚫 ${destination} 구독 재시도 횟수 초과 (${MAX_RETRY_COUNT}회)`);
       }
     }
   }, [enabled, isVisible, isConnected, destination, onData, onError, sessionId, subscribe]);
+
+  useEffect(() => {
+    trySubscribeRef.current = trySubscribe;
+  }, [trySubscribe]);
 
   const doSubscribe = useCallback(() => {
     if (!sessionId) return;

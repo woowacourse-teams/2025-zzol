@@ -39,6 +39,8 @@ export const useGameAnnouncement = ({
       return;
     }
 
+    // aria-live 영역 낭독: 준비 상태 전환에 반응하는 a11y 안내(디바운스 타이머 포함)라 effect 에서 호출한다.
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (!previousReadyStateRef.current && isAllReady) {
       if (playerType === 'HOST') {
         announce('모든 참가자가 준비되었습니다. 게임 시작 버튼을 눌러주세요.');
@@ -48,6 +50,7 @@ export const useGameAnnouncement = ({
     } else if (previousReadyStateRef.current && !isAllReady) {
       announce('참가자 중 누군가 준비를 취소했습니다.');
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     previousReadyStateRef.current = isAllReady;
   }, [isAllReady, playerType, announce]);

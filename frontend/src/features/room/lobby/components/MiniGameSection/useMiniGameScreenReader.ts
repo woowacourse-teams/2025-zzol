@@ -6,6 +6,8 @@ export const useMiniGameScreenReader = (loading: boolean, hasMiniGames: boolean)
 
   useEffect(() => {
     if (!loading && hasMiniGames) {
+      // aria-live 영역 낭독 트리거를 위해 effect 에서 안내문을 설정한다.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMessage('미니게임 선택 영역입니다. 원하는 미니게임을 여러 개 선택할 수 있습니다.');
     }
   }, [loading, hasMiniGames]);

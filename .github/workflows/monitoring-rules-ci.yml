@@ -1,0 +1,46 @@
+name: Monitoring Rules CI
+
+# Prometheus 알림/기록 룰(backend/docker/monitoring/conf/rules/*.yml)을 promtool로 검증한다.
+# 룰은 배포 시 Prometheus 로드로만 검증돼 왔어서, 문법·PromQL 오류가 배포까지 새어나갈 수
+# 있었다. dev PR 단계에서 미리 잡는다. (Loki 룰은 형식이 달라 대상이 아니다 — conf/loki-rules/ 제외)
+
+on:
+  pull_request:
+    branches: [be/dev, dev]
+    paths:
+      - "backend/docker/monitoring/conf/rules/**"
+      - ".github/workflows/monitoring-rules-ci.yml"
+  push:
+    branches: [be/dev, dev]
+    paths:
+      - "backend/docker/monitoring/conf/rules/**"
+      - ".github/workflows/monitoring-rules-ci.yml"
+
+# 같은 ref의 이전 실행은 취소해 중복 CI 낭비를 줄인다
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  promtool:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # 배포본과 동일 버전으로 검증한다 (monitoring/docker-compose.yml: prom/prometheus:v2.49.1).
+      # 버전 bump 시 이 값도 함께 올린다.
+      - name: Install promtool
+        run: |
+          VERSION=2.49.1
+          curl -sSL "https://github.com/prometheus/prometheus/releases/download/v${VERSION}/prometheus-${VERSION}.linux-amd64.tar.gz" | tar -xz
+          echo "${PWD}/prometheus-${VERSION}.linux-amd64" >> "${GITHUB_PATH}"
+
+      - name: Check Prometheus rules
+        run: promtool check rules backend/docker/monitoring/conf/rules/*.yml

@@ -40,7 +40,7 @@ api-mcp 카탈로그의 path 는 prefix 를 포함하지만, FE wrapper(`useWebS
 BE 측에 해당 토픽/큐가 아직 존재하지 않는다는 신호다. 임의로 새 destination 을 만들지 않는다. 두 선택지:
 
 1. **기존 토픽 재사용**: `ws_list_topics q="..."` 로 유사 토픽 검색. 의미가 맞으면 그것을 쓴다.
-2. **BE 측에 어노테이션 추가 요청**: 해당 컨트롤러/Publisher 에 `@WsTopic(path = "...", payload = <Type>.class)` 추가가 필요하다. PR 본문에 "BE: 토픽 신설 필요 (`/room/{joinCode}/...`, payload `XxxResponse`)" 명시하고 BE 측 PR 선행 후 fe/dev sync 후 진행한다.
+2. **BE 측에 어노테이션 추가 요청**: 해당 컨트롤러/Publisher 에 `@WsTopic(path = "...", payload = <Type>.class)` 추가가 필요하다. PR 본문에 "BE: 토픽 신설 필요 (`/room/{joinCode}/...`, payload `XxxResponse`)" 명시하고 BE 측 PR 선행 후 dev sync 후 진행한다.
 
 ## payload 타입 안전성
 

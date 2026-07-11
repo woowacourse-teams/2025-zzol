@@ -47,5 +47,7 @@ export const useNunchiCountdown = (
   }, [deadlineEpochMs, serverOffsetMs, enabled]);
 
   if (!enabled || deadlineEpochMs == null) return 0;
+  // 렌더 시점 Date.now() 계산은 상단 주석대로 게이지 깜빡임을 없애기 위한 의도된 설계다.
+  // eslint-disable-next-line react-hooks/purity
   return Math.max(0, deadlineEpochMs - (Date.now() + serverOffsetMs));
 };

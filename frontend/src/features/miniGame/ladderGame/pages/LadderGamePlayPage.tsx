@@ -13,22 +13,22 @@ type TimerBarProps = { endTimeEpochMs: number | null };
 
 const TimerBar = ({ endTimeEpochMs }: TimerBarProps) => {
   const [timeLeft, setTimeLeft] = useState(0);
-  const totalMsRef = useRef<number>(1);
+  const [totalTimeSec, setTotalTimeSec] = useState(0.001);
   const endTimeRef = useRef<number | null>(endTimeEpochMs);
 
   useEffect(() => {
     endTimeRef.current = endTimeEpochMs;
+    // 총 길이(분모)는 서버가 정하는 종료 시각이 바뀔 때마다 재계산해야 한다 — 렌더 순수성을 위해 effect 에서 파생.
     if (endTimeEpochMs) {
-      totalMsRef.current = Math.max(1, endTimeEpochMs - Date.now());
-    } else {
-      setTimeLeft(0);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTotalTimeSec(Math.max(1, endTimeEpochMs - Date.now()) / 1000);
     }
   }, [endTimeEpochMs]);
 
   useEffect(() => {
     let rafId: number;
     const tick = () => {
-      if (endTimeRef.current !== null && totalMsRef.current > 0) {
+      if (endTimeRef.current !== null) {
         const remaining = Math.max(0, (endTimeRef.current - Date.now()) / 1000);
         setTimeLeft(remaining);
         if (remaining > 0) {
@@ -45,7 +45,7 @@ const TimerBar = ({ endTimeEpochMs }: TimerBarProps) => {
 
   return (
     <S.TimerBarWrapper>
-      <S.TimerBarFill $timeLeft={timeLeft} $totalTime={totalMsRef.current / 1000} />
+      <S.TimerBarFill $timeLeft={timeLeft} $totalTime={totalTimeSec} />
     </S.TimerBarWrapper>
   );
 };

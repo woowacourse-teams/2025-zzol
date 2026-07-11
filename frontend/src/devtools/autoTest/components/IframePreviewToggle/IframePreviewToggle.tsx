@@ -65,11 +65,13 @@ const IframePreviewToggle = () => {
     resume: handleResumeTest,
   } = autoTestControls;
 
-  useEffect(() => {
-    // 경로가 바뀌면 닫아준다 (예상치 못한 잔상 방지)
+  // 경로가 바뀌면 닫아준다 (예상치 못한 잔상 방지) — 렌더 중 state 조정.
+  const [prevPathname, setPrevPathname] = useState(location.pathname);
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname);
     setOpen(false);
     setExpanded(false);
-  }, [location.pathname, setExpanded]);
+  }
 
   if (!topWindow || !isRootPath || isTouchDevice) return null;
 

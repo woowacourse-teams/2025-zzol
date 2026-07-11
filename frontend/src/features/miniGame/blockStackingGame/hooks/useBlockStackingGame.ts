@@ -4,7 +4,7 @@ import {
   FallingPiece,
   StackedBlock,
 } from '@/types/miniGame/blockStackingGame';
-import { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { MutableRefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   BLOCK_COLORS,
   BLOCK_GAP,
@@ -191,17 +191,20 @@ export const useBlockStackingGame = (
   // --- 2. Closure Avoidance (클로저 문제 해결) ---
   // 아래 Ref들은 handleTap이나 루프 내부에서 최신 Props/Callbacks에 접근할 수 있게 합니다.
   const gameStateRef = useRef(gameState);
-  gameStateRef.current = gameState;
   const soundsRef = useRef(sounds);
-  soundsRef.current = sounds;
   const setLocalGameOverRef = useRef(setLocalGameOver);
-  setLocalGameOverRef.current = setLocalGameOver;
   const onBlockPlacedRef = useRef(onBlockPlaced);
-  onBlockPlacedRef.current = onBlockPlaced;
   const onFailRef = useRef(onFail);
-  onFailRef.current = onFail;
   const isLocalGameOverRef = useRef(isLocalGameOver);
-  isLocalGameOverRef.current = isLocalGameOver;
+  // rAF 그리기 루프가 페인트 전에 최신값을 읽어야 하므로(원래 렌더 중 동기 갱신) useLayoutEffect 로 커밋 시 동기 반영한다.
+  useLayoutEffect(() => {
+    gameStateRef.current = gameState;
+    soundsRef.current = sounds;
+    setLocalGameOverRef.current = setLocalGameOver;
+    onBlockPlacedRef.current = onBlockPlaced;
+    onFailRef.current = onFail;
+    isLocalGameOverRef.current = isLocalGameOver;
+  });
 
   // --- 3. Game Actions (주요 액션 함수) ---
 

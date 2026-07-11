@@ -119,7 +119,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         MINI_GAME.count()
                 ))
                 .from(MINI_GAME)
-                .join(MINI_GAME.roomSession, ROOM)
+                .join(ROOM).on(ROOM.id.eq(MINI_GAME.roomSessionId))
                 .where(ROOM.createdAt.between(startDate, endDate))
                 .groupBy(MINI_GAME.miniGameType)
                 .orderBy(MINI_GAME.count().desc())
@@ -195,7 +195,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         MINI_GAME_RESULT.score.max()
                 ))
                 .from(MINI_GAME_RESULT)
-                .join(MINI_GAME_RESULT.player, PLAYER)
+                .join(PLAYER).on(PLAYER.id.eq(MINI_GAME_RESULT.playerId))
                 .where(
                         MINI_GAME_RESULT.miniGameType.eq(MiniGameType.BLOCK_STACKING),
                         MINI_GAME_RESULT.createdAt.between(startDate, endDate)
@@ -223,7 +223,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
     ) {
         final List<Tuple> aggregations = queryFactory
                 .select(
-                        MINI_GAME_RESULT.player.id,
+                        MINI_GAME_RESULT.playerId,
                         MINI_GAME_RESULT.score.min()
                 )
                 .from(MINI_GAME_RESULT)
@@ -232,8 +232,8 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                         MINI_GAME_RESULT.createdAt.between(startDate, endDate),
                         scoreFilter
                 )
-                .groupBy(MINI_GAME_RESULT.player.id)
-                .orderBy(MINI_GAME_RESULT.score.min().asc(), MINI_GAME_RESULT.player.id.asc())
+                .groupBy(MINI_GAME_RESULT.playerId)
+                .orderBy(MINI_GAME_RESULT.score.min().asc(), MINI_GAME_RESULT.playerId.asc())
                 .limit(limit)
                 .fetch();
 
@@ -242,14 +242,14 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
         }
 
         final List<Long> playerIds = aggregations.stream()
-                .map(tuple -> tuple.get(MINI_GAME_RESULT.player.id))
+                .map(tuple -> tuple.get(MINI_GAME_RESULT.playerId))
                 .toList();
 
         final Map<Long, String> playerNameMap = findPlayerNames(playerIds);
 
         return aggregations.stream()
                 .map(tuple -> mapper.apply(
-                        playerNameMap.get(tuple.get(MINI_GAME_RESULT.player.id)),
+                        playerNameMap.get(tuple.get(MINI_GAME_RESULT.playerId)),
                         tuple.get(MINI_GAME_RESULT.score.min())
                 ))
                 .toList();

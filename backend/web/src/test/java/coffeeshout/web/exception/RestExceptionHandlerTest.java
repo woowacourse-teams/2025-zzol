@@ -72,7 +72,7 @@ class RestExceptionHandlerTest {
         @Test
         void 미등록_경로_접근_시_IP_차단_스킵_속성을_설정하지_않는다() {
             final NoResourceFoundException exception =
-                    new NoResourceFoundException(HttpMethod.GET, "/random-probe");
+                    new NoResourceFoundException(HttpMethod.GET, "/random-probe", "/random-probe");
             final MockHttpServletRequest request = new MockHttpServletRequest();
 
             handler.handleNoResourceFoundException(exception, request);

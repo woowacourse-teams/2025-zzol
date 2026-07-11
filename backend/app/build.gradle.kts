@@ -22,6 +22,9 @@ dependencies {
     implementation("org.flywaydb:flyway-mysql")
     implementation("com.mysql:mysql-connector-j")
 
+    // Jackson 2 호환 모드 — jjwt-jackson 등 Jackson 2 직접 의존 서드파티용 (ADR-0020 Phase 2, deprecated stop-gap)
+    implementation(libs.spring.boot.jackson2)
+
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     developmentOnly(libs.spring.dotenv)
 
@@ -33,6 +36,9 @@ dependencies {
     testImplementation(testFixtures(project(":profanity")))
     testImplementation("org.springframework.boot:spring-boot-starter-actuator")
     testImplementation("io.micrometer:micrometer-tracing-test")
+    // Boot 4 모듈러 테스트 스타터 — @AutoConfigureMockMvc/@AutoConfigureTracing이 각각 별도 모듈로 분리됨
+    testImplementation("org.springframework.boot:spring-boot-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-micrometer-tracing-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.micrometer:micrometer-core")
     testImplementation(libs.resilience4j)

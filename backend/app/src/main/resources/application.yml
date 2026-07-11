@@ -1,6 +1,8 @@
 spring:
   application:
     name: zzol
+  jackson:
+    use-jackson2-defaults: true
   config:
     import:
       - "classpath:config/database.yml"

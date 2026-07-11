@@ -21,6 +21,7 @@ dependencies {
     implementation("io.micrometer:micrometer-core")
     implementation(libs.resilience4j)
     implementation(libs.google.genai)
+    implementation(libs.spring.boot.jackson2)
 
     testFixturesImplementation(project(":common"))
     testFixturesImplementation("org.springframework.boot:spring-boot-starter-data-jpa")

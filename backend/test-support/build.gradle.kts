@@ -26,4 +26,5 @@ dependencies {
 
     api("com.mysql:mysql-connector-j")
     api("com.h2database:h2")
+    api(libs.spring.boot.jackson2)
 }

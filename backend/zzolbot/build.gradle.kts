@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.google.genai)
     implementation(libs.jsqlparser)
     implementation(libs.resilience4j)
+    implementation(libs.spring.boot.jackson2)
 
     testImplementation(project(":test-support"))
     testImplementation(testFixtures(project(":room")))

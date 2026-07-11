@@ -1,7 +1,6 @@
 [versions]
-spring-boot                  = "3.5.3"
-spring-dependency-management = "1.1.7"
-spring-doc                   = "2.8.17"
+spring-boot                  = "4.0.7"
+spring-doc                   = "3.0.3"
 oci-sdk                      = "3.91.1"
 redisson                     = "4.6.1"
 zxing                        = "3.5.4"
@@ -16,12 +15,7 @@ ahocorasick                  = "0.6.3"
 jsqlparser                   = "5.3"
 spring-dotenv                = "5.1.0"
 archunit                     = "1.4.2"
-
-# BOM 관리 전이 의존성의 CVE 패치 오버라이드 — 라이브러리 선언 없이 루트
-# build.gradle.kts subprojects{}의 extra["*.version"]에서 버전만 참조한다.
-tomcat                       = "10.1.55"
-spring-security              = "6.5.9"
-thymeleaf                    = "3.1.5.RELEASE"
+jackson                      = "2.21"
 
 [libraries]
 springdoc-openapi            = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui",       version.ref = "spring-doc" }
@@ -41,7 +35,7 @@ jjwt-impl                    = { module = "io.jsonwebtoken:jjwt-impl",          
 jjwt-jackson                 = { module = "io.jsonwebtoken:jjwt-jackson",                           version.ref = "jjwt" }
 
 reflections                  = { module = "org.reflections:reflections",                            version.ref = "reflections" }
-resilience4j                 = { module = "io.github.resilience4j:resilience4j-spring-boot3",       version.ref = "resilience4j" }
+resilience4j                 = { module = "io.github.resilience4j:resilience4j-spring-boot4",       version.ref = "resilience4j" }
 google-genai                 = { module = "com.google.genai:google-genai",                          version.ref = "google-genai" }
 
 testcontainers-core          = { module = "org.testcontainers:testcontainers",                      version.ref = "testcontainers" }
@@ -51,9 +45,11 @@ testcontainers-junit         = { module = "org.testcontainers:testcontainers-jun
 wiremock                     = { module = "org.wiremock:wiremock-standalone",                       version.ref = "wiremock" }
 ahocorasick                  = { module = "org.ahocorasick:ahocorasick",                            version.ref = "ahocorasick" }
 jsqlparser                   = { module = "com.github.jsqlparser:jsqlparser",                       version.ref = "jsqlparser" }
-spring-dotenv                = { module = "me.paulschwarz:spring-dotenv",                           version.ref = "spring-dotenv" }
+spring-dotenv                = { module = "me.paulschwarz:springboot4-dotenv",                      version.ref = "spring-dotenv" }
 archunit                     = { module = "com.tngtech.archunit:archunit-junit5",                   version.ref = "archunit" }
+spring-boot-jackson2         = { module = "org.springframework.boot:spring-boot-jackson2" }
+spring-boot-opentelemetry    = { module = "org.springframework.boot:spring-boot-starter-opentelemetry" }
+jackson-annotations          = { module = "com.fasterxml.jackson.core:jackson-annotations",         version.ref = "jackson" }
 
 [plugins]
 spring-boot                  = { id = "org.springframework.boot",           version.ref = "spring-boot" }
-spring-dependency-management = { id = "io.spring.dependency-management",    version.ref = "spring-dependency-management" }

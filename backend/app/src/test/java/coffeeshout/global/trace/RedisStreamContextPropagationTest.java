@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
+import org.springframework.boot.micrometer.tracing.test.autoconfigure.AutoConfigureTracing;
 import org.springframework.data.domain.Range;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.StreamRecords;
@@ -50,10 +50,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
  * consumer span 스코프 안에서 처리하는지 검증한다.</p>
  *
  * <p>{@code @SpringBootTest}는 기본으로 {@code management.tracing.enabled=false}를 주입해
- * Propagator가 noop이 되므로, {@code @AutoConfigureObservability}로 실제 W3C 전파를 활성화한다.
+ * Propagator가 noop이 되므로, {@code @AutoConfigureTracing}로 실제 W3C 전파를 활성화한다.
  * OTLP 익스포터의 로컬 전송 시도는 무해하다 (export 실패는 경고 로그만 남긴다).</p>
  */
-@AutoConfigureObservability
+@AutoConfigureTracing
 class RedisStreamContextPropagationTest extends IntegrationTestSupport {
 
     @Autowired

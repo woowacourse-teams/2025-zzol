@@ -60,6 +60,14 @@ public class GameSessionService {
     }
 
     /**
+     * 방 존재 여부를 세션 존재로 판별한다. 방 생성 시 {@code GameSessionInitConsumer}가 세션을
+     * 사전 생성하므로(ADR-0025 결정 6) 세션 존재 = 방 존재이며, {@code :room} 조회 없이 판별할 수 있다.
+     */
+    public boolean existsByJoinCode(JoinCode joinCode) {
+        return gameSessionRepository.existsByJoinCode(joinCode);
+    }
+
+    /**
      * 선택된 게임 목록을 통째로 교체한다. 세션은 방 생성 시 {@code GameSessionInitConsumer}가
      * 권위 있는 호스트({@code RoomLifecycleEvent.Created}의 hostName)로 사전 생성하므로 여기서는 반드시 존재한다고
      * 가정한다(지연 생성 폴백 없음 — ADR-0025 결정 4/Option B). 호스트 검증을 GameSession이 단독 수행하려면

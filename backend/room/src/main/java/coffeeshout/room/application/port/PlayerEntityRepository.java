@@ -11,7 +11,7 @@ public interface PlayerEntityRepository {
 
     Optional<PlayerEntity> findByRoomSessionAndPlayerName(RoomEntity roomSession, String playerName);
 
-    List<PlayerEntity> findByRoomSessionAndPlayerNameIn(RoomEntity roomSession, List<String> playerNames);
+    List<PlayerEntity> findByRoomSession_IdAndPlayerNameIn(Long roomSessionId, List<String> playerNames);
 
     List<PlayerEntity> findAllByPlayerName(String playerName);
 

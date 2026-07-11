@@ -1,16 +1,13 @@
 package coffeeshout.minigame.application;
 
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.RoomSnapshotQuery;
 import coffeeshout.global.lock.RedisLock;
+import coffeeshout.minigame.application.port.MiniGameEntityRepository;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.minigame.event.PlayerSnapshotRequiredEvent;
-import coffeeshout.minigame.application.port.MiniGameEntityRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
-import coffeeshout.room.application.port.RoomEntityRepository;
-import coffeeshout.room.application.port.RoomStatusPort;
-import coffeeshout.room.domain.RoomState;
-import coffeeshout.room.infra.persistence.RoomEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -21,9 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class MiniGamePersistenceService {
 
     private final GameSessionService gameSessionService;
-    private final RoomEntityRepository roomEntityRepository;
+    private final RoomSnapshotQuery roomSnapshotQuery;
     private final MiniGameEntityRepository miniGameEntityRepository;
-    private final RoomStatusPort roomStatusPort;
     private final ApplicationEventPublisher eventPublisher;
 
     @RedisLock(
@@ -37,9 +33,10 @@ public class MiniGamePersistenceService {
     public void saveGameEntities(GameStartReadyEvent event, MiniGameType miniGameType) {
         final JoinCode roomJoinCode = new JoinCode(event.joinCode());
 
-        final RoomEntity roomEntity = getRoomEntity(event.joinCode());
-        roomStatusPort.updateStatus(roomEntity, RoomState.PLAYING);
-        final MiniGameEntity miniGameEntity = new MiniGameEntity(roomEntity, miniGameType);
+        // 방 PLAYING 전이는 :room이 GameSessionStartedEvent 수신 시 수행한다(ADR-0034 — 상태전이 이관).
+        // :game은 자기 미니게임 엔티티만 저장하며, room_session id는 :room이 구현한 포트로 얻는다.
+        final Long roomSessionId = roomSnapshotQuery.resolveRoomSessionId(event.joinCode());
+        final MiniGameEntity miniGameEntity = new MiniGameEntity(roomSessionId, miniGameType);
         miniGameEntityRepository.save(miniGameEntity);
 
         // 첫 게임 시작 여부는 게임 수 상태를 소유한 GameSession이 판정한다(ADR-0025 Step 5).
@@ -48,10 +45,5 @@ public class MiniGamePersistenceService {
         if (gameSessionService.getSession(roomJoinCode).isFirstGameStarted()) {
             eventPublisher.publishEvent(new PlayerSnapshotRequiredEvent(event.joinCode()));
         }
-    }
-
-    private RoomEntity getRoomEntity(String joinCode) {
-        return roomEntityRepository.findFirstByJoinCodeOrderByCreatedAtDesc(joinCode)
-                .orElseThrow(() -> new IllegalArgumentException("방이 존재하지 않습니다: " + joinCode));
     }
 }

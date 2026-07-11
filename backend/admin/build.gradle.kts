@@ -28,7 +28,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
     implementation(libs.resilience4j)
-    implementation(libs.spring.boot.jackson2)
 
     annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jpa") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")

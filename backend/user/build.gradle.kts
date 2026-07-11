@@ -24,7 +24,6 @@ dependencies {
     implementation(libs.jjwt.api)
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
-    implementation(libs.spring.boot.jackson2)
 
     annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jpa") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")

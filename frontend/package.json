@@ -72,7 +72,7 @@
     "jest-environment-jsdom": "^30.4.1",
     "prettier": "^3.9.4",
     "sharp": "^0.35.3",
-    "storybook": "^9.1.20",
+    "storybook": "^10.5.0",
     "style-loader": "^4.0.0",
     "ts-jest": "^29.4.11",
     "ts-loader": "^9.6.2",

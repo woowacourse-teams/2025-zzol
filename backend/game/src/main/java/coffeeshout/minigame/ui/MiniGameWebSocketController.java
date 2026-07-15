@@ -4,12 +4,12 @@ import coffeeshout.websocket.docs.WsReceive;
 import coffeeshout.minigame.ui.command.MiniGameCommand;
 import coffeeshout.minigame.ui.command.MiniGameCommandDispatcher;
 import coffeeshout.minigame.ui.request.MiniGameMessage;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
+import tools.jackson.databind.ObjectMapper;
 
 @Controller
 @RequiredArgsConstructor

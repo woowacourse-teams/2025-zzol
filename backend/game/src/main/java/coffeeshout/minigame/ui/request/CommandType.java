@@ -3,8 +3,8 @@ package coffeeshout.minigame.ui.request;
 import coffeeshout.minigame.ui.command.MiniGameCommand;
 import coffeeshout.minigame.ui.request.command.SelectCardCommand;
 import coffeeshout.minigame.ui.request.command.StartMiniGameCommand;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 public enum CommandType {
 

@@ -34,6 +34,7 @@ Spring Boot 4.0.x로 마이그레이션하되, 리스크를 분리하기 위해 
   - 검증: 대표 STOMP 페이로드와 REST 응답의 직렬화 round-trip 결과를 Boot 3.5 기준 JSON과 비교하는 통합 테스트로 동일성을 확인한다
 - springdoc 2.8 → 3.0.x, resilience4j `spring-boot3` → `spring-boot4` 모듈 교체(2.4.0+ — Boot 3용 자동 구성은 Boot 4에서 동작하지 않아 전용 스타터 필요. 어노테이션·설정 키는 동일), Redisson·spring-dotenv 호환 버전 확인
 - `io.spring.dependency-management` 플러그인 → Gradle 네이티브 `platform()` BOM 전환
+- **(계획 대비 조정)** WS 커맨드 봉투(`MiniGameMessage.commandRequest`)는 Jackson 3 네이티브 타입(`tools.jackson.databind.JsonNode`)으로 Phase 2에서 앞당겨 전환한다. Boot 4의 STOMP 인바운드 컨버터는 커스텀 컨버터를 등록하지 않으면 기본으로 Jackson 3을 사용해, `use-jackson2-defaults=true`만으로는 WS 페이로드까지 Jackson 2 호환을 유지할 수 없다(자동 구성 `JsonMapper`의 기본값만 정렬할 뿐 컨버터 선택엔 영향 없음). REST 응답 DTO는 이 예외 없이 Jackson 2 호환(`spring-boot-jackson2`)을 그대로 유지한다. 와이어 포맷(JSON 구조)은 Boot 3.5와 동일하며, 변경은 서버 내부 타입 선택에 한정된다
 
 ### Phase 3 — Jackson 3 네이티브 + 내장 resilience 부분 채택
 
@@ -73,5 +74,5 @@ Spring Boot 4.0.x로 마이그레이션하되, 리스크를 분리하기 위해 
 
 - Phase별 독립 PR로 진행하며, 각 Phase는 전체 통합 테스트(TestContainers) + ArchUnit 통과를 완료 조건으로 한다
 - Phase 2 완료 시점부터 보안 패치 공백이 해소된다
-- Jackson 3 네이티브 전환(Phase 3) 전까지 WebSocket 컨트랙트의 JSON 직렬화는 기존과 동일하게 유지된다
+- REST 응답의 JSON 직렬화는 Jackson 3 네이티브 전환(Phase 3) 전까지 기존과 동일하게 유지된다. WS 커맨드 봉투(`MiniGameMessage`)는 Boot 4 STOMP 기본 동작 제약으로 Phase 2에서 Jackson 3 네이티브로 앞당겨 전환됐다 — 와이어 포맷은 Boot 3.5와 동일하게 유지된다
 - 빌드 스크립트 변경 시 [ADR-0011](0011-multi-module-migration.md)의 모듈 의존 방향 제약을 그대로 따른다

@@ -51,7 +51,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
  *
  * <p>{@code @SpringBootTest}는 기본으로 {@code management.tracing.enabled=false}를 주입해
  * Propagator가 noop이 되므로, {@code @AutoConfigureTracing}로 실제 W3C 전파를 활성화한다.
- * OTLP 익스포터의 로컬 전송 시도는 무해하다 (export 실패는 경고 로그만 남긴다).</p>
+ * OTLP 익스포터의 로컬 전송 시도는 무해하다 (export 실패는 경고 로그만 남긴다).
+ * {@code export=false}는 사용하지 않는다 — Boot 4의 {@code @ConditionalOnEnabledTracingExport}가
+ * 실제 {@code TextMapPropagator} 빈 생성 자체를 이 플래그로 게이팅해, export를 끄면 전파 기능도
+ * noop이 되어버려 이 테스트가 검증하려는 대상이 사라진다.</p>
  */
 @AutoConfigureTracing
 class RedisStreamContextPropagationTest extends IntegrationTestSupport {

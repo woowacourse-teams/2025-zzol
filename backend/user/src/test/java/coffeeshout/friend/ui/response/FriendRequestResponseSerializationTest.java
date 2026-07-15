@@ -31,8 +31,8 @@ class FriendRequestResponseSerializationTest extends UserModuleIntegrationTest {
         final String json = objectMapper.writeValueAsString(response);
 
         assertThat(json).isEqualTo(
-                "{\"requestId\":1,\"userId\":2,\"userCode\":\"USER1234\",\"nickname\":\"닉네임\","
-                        + "\"createdAt\":1767225600.000000000}"
+                """
+                {"requestId":1,"userId":2,"userCode":"USER1234","nickname":"닉네임","createdAt":1767225600.000000000}"""
         );
     }
 }

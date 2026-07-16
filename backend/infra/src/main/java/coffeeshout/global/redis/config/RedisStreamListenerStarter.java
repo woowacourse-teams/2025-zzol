@@ -139,7 +139,7 @@ public class RedisStreamListenerStarter {
     // 기대된 노이즈이므로 메시지 텍스트로 세분류하지 않는다 (라이브러리 버전업에 취약)
     private void handleStreamError(Throwable t) {
         if (stopping.get()) {
-            log.debug("종료 중 Redis Stream 오류 (정상 종료 과정)", t);
+            log.debug("종료 중 Redis Stream 오류 (정상 종료 과정): {}", t.getMessage());
             return;
         }
         log.error("Redis Stream 처리 중 오류가 발생했습니다.", t);

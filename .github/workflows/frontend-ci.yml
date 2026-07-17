@@ -48,6 +48,7 @@ jobs:
         # 파일명을 .env로 쓰면 API_URL이 번들에 들어가지 않는다(undefined로 구워짐).
         run: |
           echo "API_URL=${{ github.ref_name == 'prod' && secrets.API_URL_PROD || secrets.API_URL }}" >> .env.production
+          echo "DSN_KEY=${{ secrets.DSN_KEY }}" >> .env.production
 
       - name: Run ESLint
         run: npm run lint

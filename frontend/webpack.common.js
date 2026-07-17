@@ -24,10 +24,10 @@ export default (_, argv) => {
     'process.env.VERSION': JSON.stringify(appVersion),
     'process.env.API_URL': JSON.stringify(process.env.API_URL),
     'process.env.ENABLE_DEVTOOLS': JSON.stringify(process.env.ENABLE_DEVTOOLS === 'true'),
+    // 값이 없어도 반드시 치환한다 — 조건부로 두면 번들에 process.env.DSN_KEY가
+    // 리터럴로 남아 브라우저에서 ReferenceError(process is not defined)로 앱이 죽는다.
+    'process.env.DSN_KEY': JSON.stringify(process.env.DSN_KEY || ''),
   };
-  if (process.env.DSN_KEY) {
-    envKeys['process.env.DSN_KEY'] = JSON.stringify(process.env.DSN_KEY);
-  }
   if (process.env.SENTRY_AUTH_TOKEN) {
     envKeys['process.env.SENTRY_AUTH_TOKEN'] = JSON.stringify(process.env.SENTRY_AUTH_TOKEN);
   }

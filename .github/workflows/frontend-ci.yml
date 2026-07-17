@@ -49,6 +49,7 @@ jobs:
         run: |
           echo "API_URL=${{ github.ref_name == 'prod' && secrets.API_URL_PROD || secrets.API_URL }}" >> .env.production
           echo "DSN_KEY=${{ secrets.DSN_KEY }}" >> .env.production
+          echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.production
 
       - name: Run ESLint
         run: npm run lint

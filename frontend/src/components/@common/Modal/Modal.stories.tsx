@@ -1,8 +1,7 @@
 import Headline3 from '@/components/@common/Headline3/Headline3';
 import styled from '@emotion/styled';
-import { expect } from '@storybook/jest';
 import type { Meta, StoryContext, StoryObj } from '@storybook/react-webpack5';
-import { userEvent, waitFor, within } from '@storybook/testing-library';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useState } from 'react';
 import Modal from './Modal';
 import useModal from './useModal';

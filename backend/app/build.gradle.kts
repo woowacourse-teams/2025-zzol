@@ -33,6 +33,9 @@ dependencies {
     testImplementation(testFixtures(project(":profanity")))
     testImplementation("org.springframework.boot:spring-boot-starter-actuator")
     testImplementation("io.micrometer:micrometer-tracing-test")
+    // Boot 4 모듈러 테스트 스타터 — @AutoConfigureMockMvc/@AutoConfigureTracing이 각각 별도 모듈로 분리됨
+    testImplementation("org.springframework.boot:spring-boot-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-micrometer-tracing-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.micrometer:micrometer-core")
     testImplementation(libs.resilience4j)

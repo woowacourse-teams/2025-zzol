@@ -287,8 +287,9 @@ class RedisStreamListenerStarterTest {
             );
             errorHandler.handleError(new RuntimeException("종료 중 임의 오류"));
 
-            // then
-            assertThat(appender.list).noneMatch(event -> event.getLevel() == Level.ERROR);
+            // then — appender.list는 같은 클래스 Logger를 쓰는 다른 테스트의 잔여 백그라운드
+            // 스레드가 동시에 append할 수 있어 순회 전 스냅샷으로 뜬다 (ConcurrentModificationException 방지)
+            assertThat(List.copyOf(appender.list)).noneMatch(event -> event.getLevel() == Level.ERROR);
         }
 
         @Test
@@ -302,7 +303,7 @@ class RedisStreamListenerStarterTest {
             errorHandler.handleError(new RuntimeException("폴링 실패"));
 
             // then
-            assertThat(appender.list).anyMatch(event -> event.getLevel() == Level.ERROR);
+            assertThat(List.copyOf(appender.list)).anyMatch(event -> event.getLevel() == Level.ERROR);
         }
     }
 

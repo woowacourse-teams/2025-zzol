@@ -116,16 +116,16 @@ jobs:
       - name: Run Tests
         run: ./gradlew test jacocoTestReport --build-cache --no-daemon
 
-      # 테스트 결과는 dorny/test-reporter로 Checks 탭에 표시(스위트/테스트 드릴다운,
-      # 실패 스택트레이스 인라인). 표기 시간은 JUnit XML 합계라 wall-clock이 아니다 —
+      # 테스트 결과는 EnricoMi로 Checks 탭에 표시. dorny/test-reporter(내장 Node)는
+      # 멀티모듈 XML 전체 + git 추적 파일 2121개를 한 번에 메모리 적재하다 V8 힙
+      # OOM으로 죽어(#1564) 롤백. 표기 시간은 JUnit XML 합계라 wall-clock이 아니다 —
       # 실제 경과는 Build Scan 참조.
       - name: Publish Test Results
-        uses: dorny/test-reporter@v3
+        uses: EnricoMi/publish-unit-test-result-action@v2.24.0
         if: always()
         with:
-          name: Backend Test Results
-          path: backend/*/build/test-results/test/*.xml
-          reporter: java-junit
+          files: backend/*/build/test-results/test/*.xml
+          check_name: "Backend Test Results"
 
       - name: Report Coverage
         if: github.event_name == 'pull_request'

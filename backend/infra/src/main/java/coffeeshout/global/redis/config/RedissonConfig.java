@@ -7,7 +7,7 @@ import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.redisson.config.ConstantDelay;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +21,7 @@ public class RedissonConfig {
 
     @Bean
     @ConditionalOnProperty(name = "redisson.enabled", havingValue = "true", matchIfMissing = true)
-    public RedissonClient redissonClient(RedisProperties redisProperties) {
+    public RedissonClient redissonClient(DataRedisProperties redisProperties) {
         final Config config = new Config();
 
         final String host = redisProperties.getHost();

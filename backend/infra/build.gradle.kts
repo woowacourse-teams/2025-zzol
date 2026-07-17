@@ -7,7 +7,7 @@ dependencies {
     implementation(project(":common"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("org.springframework.boot:spring-boot-starter-aspectj")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     // Ip 값 객체의 IPv4/IPv6 검증용 — Lettuce가 이미 runtime에 포함하므로 새 jar 추가 없음
@@ -24,12 +24,12 @@ dependencies {
 
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("io.micrometer:micrometer-observation")
-    implementation("io.micrometer:micrometer-tracing-bridge-otel")
-    implementation("io.opentelemetry:opentelemetry-exporter-otlp")
+    implementation(libs.spring.boot.opentelemetry)
     implementation("io.micrometer:context-propagation")
 
     implementation(libs.reflections)
     implementation(libs.resilience4j)
+    implementation(libs.spring.boot.jackson2)
 
     testImplementation("io.micrometer:micrometer-tracing-test")
     testImplementation(project(":test-support"))

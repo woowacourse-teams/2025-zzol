@@ -61,7 +61,7 @@
 
 ### 테스트 환경
 
-`@SpringBootTest`는 기본으로 `management.tracing.enabled=false`를 주입해(ObservabilityContextCustomizerFactory) `Propagator`가 noop이 된다 — 스팬은 생성되는데 전파만 안 되는 형태라 원인 파악이 어렵다. 전파를 검증하는 테스트에는 `@AutoConfigureObservability`가 필수다 (`RedisStreamContextPropagationTest` 참고). 로컬 프로파일(`application-local.yml`)도 `tracing.enabled: false`라 동일하게 전파가 비활성화된다.
+`@SpringBootTest`는 기본으로 `management.tracing.enabled=false`를 주입해(ObservabilityContextCustomizerFactory) `Propagator`가 noop이 된다 — 스팬은 생성되는데 전파만 안 되는 형태라 원인 파악이 어렵다. 전파를 검증하는 테스트에는 `@AutoConfigureTracing`이 필수다 (Spring Boot 4에서 `@AutoConfigureObservability`가 제거되고 `@AutoConfigureMetrics`·`@AutoConfigureTracing`으로 분리됨, `RedisStreamContextPropagationTest` 참고). 로컬 프로파일(`application-local.yml`)도 `tracing.enabled: false`라 동일하게 전파가 비활성화된다.
 
 ## 고려한 대안
 

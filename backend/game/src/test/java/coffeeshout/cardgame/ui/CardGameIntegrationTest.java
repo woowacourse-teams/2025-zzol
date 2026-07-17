@@ -18,13 +18,13 @@ import coffeeshout.minigame.ui.request.command.SelectCardCommand;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.Customization;
 import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 타이밍 설정 (application-test.yml): firstLoading=500ms, prepare=500ms, playing=2000ms, scoreBoard=500ms, loading=500ms,
@@ -244,11 +244,16 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
     /**
      * SELECT_CARD는 방 검증과 무관한 :game 커맨드이므로 실제 WebSocket 전송 경로(dispatch→Stream→Consumer→service→broadcast)를
      * 그대로 검증한다. 커맨드 봉투는 {@code MiniGameMessage}, 본문은 실제 {@code SelectCardCommand} 레코드를 타입으로 직렬화한다.
+     * <p>
+     * {@code TestStompSession}의 클라이언트측 STOMP 컨버터는 Jackson 2 기반이라, {@code MiniGameMessage}를
+     * 자바 객체로 바로 보내면 Jackson 3 {@code JsonNode}(commandRequest)를 못 읽는다. JSON 문자열로 직렬화해
+     * 문자열 전송 경로({@code send(url, String)})로 보내 이 불일치를 피한다.
      */
     private void selectCard(String playerName, int cardIndex) {
-        session.send(commandUrl(), new MiniGameMessage(
+        String json = objectMapper.writeValueAsString(new MiniGameMessage(
                 CommandType.SELECT_CARD,
                 objectMapper.valueToTree(new SelectCardCommand(playerName, cardIndex))));
+        session.send(commandUrl(), json);
     }
 
     private String commandUrl() {

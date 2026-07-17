@@ -38,7 +38,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -395,19 +395,13 @@ class RoomRestControllerTest extends IntegrationTestSupport {
 
         @Test
         void 특정_방의_선택된_미니게임_목록을_조회할_수_있다() throws Exception {
-            // given - 방 생성
-            RoomEnterRequest request = new RoomEnterRequest("호스트");
-
-            String createResponse = mockMvc.perform(post("/rooms")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andReturn()
-                    .getResponse()
-                    .getContentAsString();
-
-            RoomCreateResponse roomCreateResponse = objectMapper.readValue(createResponse, RoomCreateResponse.class);
-            String joinCode = roomCreateResponse.joinCode();
+            // given - POST /rooms 후 세션 생성은 GameSessionInitConsumer가 비동기로 수행하므로(ADR-0025)
+            // 레이스를 피하기 위해 방·세션을 리포지토리에 직접 저장한다
+            Room 호스트_꾹이 = RoomFixture.호스트_꾹이();
+            roomRepository.save(호스트_꾹이);
+            Gamer host = Gamer.guest(호스트_꾹이.getHost().getName().value());
+            gameSessionRepository.save(new GameSession(호스트_꾹이.getJoinCode(), host));
+            String joinCode = 호스트_꾹이.getJoinCode().toString();
 
             // when & then
             String response = mockMvc.perform(get("/rooms/minigames/selected")

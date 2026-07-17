@@ -2,16 +2,12 @@ import org.gradle.testing.jacoco.tasks.JacocoReport
 
 plugins {
     alias(libs.plugins.spring.boot) apply false
-    alias(libs.plugins.spring.dependency.management) apply false
 }
 
 group = "coffeeshout"
 version = "0.0.1-SNAPSHOT"
 
-val testcontainersVersion: String = libs.versions.testcontainers.get()
-val tomcatVersion: String = libs.versions.tomcat.get()
-val springSecurityVersion: String = libs.versions.spring.security.get()
-val thymeleafVersion: String = libs.versions.thymeleaf.get()
+val springBootVersion: String = libs.versions.spring.boot.get()
 
 tasks.register<Exec>("pruneStaleTestContainers") {
     group = "verification"
@@ -24,18 +20,7 @@ tasks.register<Exec>("pruneStaleTestContainers") {
 subprojects {
     apply(plugin = "java-library")
     apply(plugin = "org.springframework.boot")
-    apply(plugin = "io.spring.dependency-management")
     apply(plugin = "jacoco")
-
-    // Spring Boot BOM이 testcontainers 코어를 1.x로 다운그레이드하지 못하도록 오버라이드
-    extra["testcontainers.version"] = testcontainersVersion
-
-    // CVE-2026-41293 / CVE-2026-43512 / CVE-2026-43515
-    extra["tomcat.version"] = tomcatVersion
-    // CVE-2026-***732
-    extra["spring-security.version"] = springSecurityVersion
-    // CVE-2026-40477 / CVE-2026-40478 / CVE-2026-41901
-    extra["thymeleaf.version"] = thymeleafVersion
 
     // Spring Boot bootJar 기본 비활성화 (라이브러리 모듈은 jar만, :app이 override)
     tasks.named("bootJar") { enabled = false }
@@ -61,12 +46,21 @@ subprojects {
     }
 
     dependencies {
+        for (configurationName in listOf("implementation", "compileOnly", "annotationProcessor", "testCompileOnly", "testAnnotationProcessor", "developmentOnly")) {
+            add(configurationName, platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+        }
         "compileOnly"("org.projectlombok:lombok")
         "annotationProcessor"("org.projectlombok:lombok")
         "testCompileOnly"("org.projectlombok:lombok")
         "testAnnotationProcessor"("org.projectlombok:lombok")
         "testImplementation"("org.springframework.boot:spring-boot-starter-test")
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
+    }
+
+    pluginManager.withPlugin("java-test-fixtures") {
+        dependencies {
+            "testFixturesImplementation"(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+        }
     }
 
     tasks.named<JacocoReport>("jacocoTestReport") {

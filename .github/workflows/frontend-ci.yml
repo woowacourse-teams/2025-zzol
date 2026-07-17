@@ -60,3 +60,9 @@ jobs:
         run: |
           npm run build
           echo "success=true" >> $GITHUB_OUTPUT
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/dist

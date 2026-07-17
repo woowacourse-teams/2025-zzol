@@ -3,8 +3,8 @@ import { StompSession } from '../stomp/client.js';
 import { fail, ok, tryParseJson, type ToolDefinition } from './types.js';
 
 const SubscribeArgsSchema = z.object({
-  topic: z.string({ required_error: 'topic 은 필수입니다' }),
-  roomToken: z.string({ required_error: 'roomToken 은 필수입니다' }),
+  topic: z.string({ error: 'topic 은 필수입니다' }),
+  roomToken: z.string({ error: 'roomToken 은 필수입니다' }),
   joinCode: z.string().optional(),
   playerName: z.string().optional(),
   durationMs: z.number().min(100).max(60_000).optional(),

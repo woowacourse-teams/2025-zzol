@@ -25,7 +25,7 @@ export class CatalogCache {
   async read(): Promise<CachedCatalog | null> {
     try {
       const raw = await readFile(this.path, 'utf-8');
-      return CachedCatalogSchema.parse(JSON.parse(raw)) as CachedCatalog;
+      return CachedCatalogSchema.parse(JSON.parse(raw));
     } catch (error) {
       if (isNotFound(error)) {
         return null;

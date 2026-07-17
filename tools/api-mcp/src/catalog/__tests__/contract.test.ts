@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { WsCatalogSchema } from '../types.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -24,7 +25,7 @@ describe('contract drift', () => {
     const json = JSON.parse(raw);
     const parsed = WsCatalogSchema.safeParse(json);
     if (!parsed.success) {
-      const formatted = JSON.stringify(parsed.error.format(), null, 2);
+      const formatted = JSON.stringify(z.treeifyError(parsed.error), null, 2);
       throw new Error(`fixture 가 WsCatalog zod 스키마와 다릅니다:\n${formatted}`);
     }
     expect(parsed.data.envelope.type).toMatch(/^WebSocketResponse</);

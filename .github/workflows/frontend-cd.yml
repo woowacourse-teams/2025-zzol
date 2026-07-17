@@ -1,0 +1,66 @@
+name: Frontend Deploy (CD)
+
+# AWS CodePipeline의 GitHub 소스 연결(AWS Connector for GitHub App)을 조직 정책상
+# 더 이상 사용할 수 없어(#1568) GitHub Actions가 직접 빌드·배포한다.
+# OIDC로 AWS Role을 assume하므로 장기 access key를 쓰지 않는다.
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+      - '.github/workflows/frontend-cd.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-deploy
+  cancel-in-progress: true
+
+jobs:
+  # 1. 공통 빌드/테스트 워크플로우 호출 (frontend-ci.yml 재사용)
+  ci-and-build:
+    uses: ./.github/workflows/frontend-ci.yml
+    secrets: inherit
+
+  # 2. Deploy Job — S3 sync + CloudFront invalidation
+  deploy:
+    needs: ci-and-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-dist
+          path: dist
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.FRONTEND_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
+
+      - name: Sync to S3
+        run: aws s3 sync dist "s3://${{ vars.FRONTEND_S3_BUCKET }}" --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --paths "/*"
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          {
+            echo "### Frontend Deploy Summary :rocket:"
+            echo ""
+            echo "- **Branch:** ${{ github.ref_name }}"
+            echo "- **Commit:** ${{ github.sha }}"
+            echo "- **Status:** ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"

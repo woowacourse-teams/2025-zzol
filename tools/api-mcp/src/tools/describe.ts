@@ -9,7 +9,7 @@ import type {
 import { fail, ok, type ToolDefinition } from './types.js';
 
 const DescribeArgsSchema = z.object({
-  path: z.string({ required_error: 'path 는 필수입니다' }),
+  path: z.string({ error: 'path 는 필수입니다' }),
 });
 
 export const wsDescribeTool: ToolDefinition = {

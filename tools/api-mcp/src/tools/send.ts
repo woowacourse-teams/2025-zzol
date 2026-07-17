@@ -3,8 +3,8 @@ import { StompSession } from '../stomp/client.js';
 import { fail, ok, tryParseJson, type ToolDefinition } from './types.js';
 
 const SendArgsSchema = z.object({
-  destination: z.string({ required_error: 'destination 은 필수입니다' }),
-  roomToken: z.string({ required_error: 'roomToken 은 필수입니다' }),
+  destination: z.string({ error: 'destination 은 필수입니다' }),
+  roomToken: z.string({ error: 'roomToken 은 필수입니다' }),
   payload: z.unknown().optional(),
   joinCode: z.string().optional(),
   playerName: z.string().optional(),

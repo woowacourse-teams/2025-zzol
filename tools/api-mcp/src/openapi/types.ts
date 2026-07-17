@@ -7,10 +7,10 @@ export const OpenApiSpecSchema = z.object({
     version: z.string(),
     description: z.string().optional(),
   }),
-  paths: z.record(z.record(z.unknown())).default({}),
+  paths: z.record(z.string(), z.record(z.string(), z.unknown())).default({}),
   components: z
     .object({
-      schemas: z.record(z.unknown()).optional(),
+      schemas: z.record(z.string(), z.unknown()).optional(),
     })
     .optional(),
 });

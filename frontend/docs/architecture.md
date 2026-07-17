@@ -91,6 +91,8 @@ Sentry는 `src/main.tsx`에서 프로덕션 전용으로 초기화되며, `@sent
 
 ## 배포 인프라
 
-**AWS CodePipeline → S3 Deploy** 구조. `buildspec.yml`이 CodeBuild에서 실행되며 `frontend/dist`를 아티팩트로 넘기면 CodePipeline이 S3에 배포한다. CloudFront가 S3 앞단에 위치한다.
+**GitHub Actions → S3 Deploy** 구조 (`.github/workflows/frontend-cd.yml`). `dev`에 `frontend/**` 변경이 push되면 `frontend-ci.yml`(lint·test·build)을 재사용해 `frontend/dist`를 아티팩트로 만들고, OIDC로 AWS Role을 assume해 S3에 동기화한 뒤 CloudFront 캐시를 무효화한다. 장기 AWS access key는 사용하지 않는다.
+
+기존에는 AWS CodePipeline(GitHub App 소스)이 이 역할을 했으나, 조직 이관 후 GitHub App 설치 권한이 없어져 GitHub Actions 직접 배포로 전환했다(#1568).
 
 - 정적 파일(`sitemap.xml`, `robots.txt`, `manifest.json` 등)은 `webpack.common.js`의 CopyWebpackPlugin으로 `dist/`에 복사되어 아티팩트에 포함된다.

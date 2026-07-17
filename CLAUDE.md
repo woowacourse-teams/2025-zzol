@@ -13,7 +13,8 @@
 - 브랜치명은 prefix 없이 `{type}/{N}-{slug}` (예: `feat/1502-nunchi-game`). type: `feat`·`fix`·`refactor`·`chore`·`docs`·`test`.
 - 영역(BE/FE)은 브랜치가 아니라 **라벨**로 구분한다 — `create-issue`/`create-pr`가 변경 영역을 판별해 `BE`/`FE`(풀스택이면 둘 다) 라벨을 단다.
 - 프로덕션 승격은 통합 `prod` 브랜치로의 `dev`→`prod` PR로만 한다. `prod` push가 곧 운영 배포다.
-- `be/dev`·`fe/dev`·`be/prod`·`fe/prod`는 전환기 호환으로만 남아 있다. 신규 분기·PR 대상이 아니다. 상세는 [git-push-safety](.claude/rules/git-push-safety.md).
+- `be/dev`·`fe/dev`·`be/prod`·`fe/prod` 같은 영역 prefix 브랜치 체계는 **폐기됐다**. 모든 커밋은 `dev` 기준 작업 브랜치에서 하며, 어떤 작업도 이 브랜치들을 대상으로 하지 않는다. 상세는 [git-push-safety](.claude/rules/git-push-safety.md).
+- **AI(Claude)는 체크아웃된 브랜치에서 바로 작업하지 않는다** — 코드 수정 시 `dev` 기준 별도 git worktree를 만들어 그 안에서 작업하고, 작업 브랜치를 push해 PR한다.
 
 ## 공통 스킬 (전역)
 

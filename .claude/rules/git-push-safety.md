@@ -10,7 +10,7 @@
 >
 > `prod`는 BE+FE 통합 **프로덕션** 브랜치다(#1574). 승격은 `dev`→`prod` PR로만 하며, `prod` push가 곧 운영 배포 트리거다(backend-cd·frontend-cd).
 >
-> `be/dev`·`fe/dev`·`be/prod`·`fe/prod`는 전환기 호환으로 보호 목록에 남기지만 **신규 분기·PR 대상이 아니다**. 원격에서 이 브랜치들을 삭제하면 이 목록과 `backend/.claude/skills/commit/preflight.sh`의 `PROTECTED`에서도 제거한다(TODO).
+> `be/dev`·`fe/dev`·`be/prod`·`fe/prod` 체계는 **폐기됐다** — 작업·PR·배포 트리거가 모두 `dev`·`prod`로 이관됐다. 원격에 브랜치가 남아 있는 동안만 보호 목록에 유지하며, 원격에서 삭제하면 이 목록과 `backend/.claude/skills/commit/preflight.sh`의 `PROTECTED`에서도 제거한다(TODO).
 
 이 브랜치들의 변경은 **PR로만** 반영한다. Claude는 어떤 경우에도 이 브랜치로 직접 push하거나, 이 브랜치를 체크아웃해 직접 커밋하지 않는다.
 
@@ -30,6 +30,13 @@ git push -u origin feat/x:dev
 ```bash
 git push -u origin HEAD:{type}/{N}-{slug}
 ```
+
+### AI는 별도 워크트리에서 작업한다
+
+Claude가 코드를 수정할 때는 사용자가 체크아웃한 브랜치(워킹 카피)에서 직접 작업하지 않는다. `dev` 기준 별도 git worktree를 만들어 그 안에서 작업한다.
+
+- 사용자의 워킹 카피·IDE 상태와 격리되고, 보호 브랜치를 체크아웃한 채 커밋할 소지가 원천 차단된다.
+- 워크트리의 작업 브랜치에도 위 규칙이 동일하게 적용된다: `{type}/{N}-{slug}` 네이밍, upstream 미설정(`git branch --unset-upstream`), 명시 refspec push.
 
 ### push 전 검증 절차
 

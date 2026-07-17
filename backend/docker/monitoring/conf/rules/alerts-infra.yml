@@ -56,4 +56,4 @@ groups:
           severity: warning
         annotations:
           summary: "Alloy 컴포넌트 unhealthy ({{ $labels.env }})"
-          description: "{{ $labels.env }} Alloy에 unhealthy 컴포넌트가 10분 이상 존재합니다. be/prod(prod) 또는 be/dev(dev)에서 잘못된 모듈을 pull했을 가능성 — last-good config로 동작 중일 수 있습니다."
+          description: "{{ $labels.env }} Alloy에 unhealthy 컴포넌트가 10분 이상 존재합니다. prod(prod) 또는 be/dev(dev)에서 잘못된 모듈을 pull했을 가능성 — last-good config로 동작 중일 수 있습니다."

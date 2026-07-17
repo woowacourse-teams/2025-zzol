@@ -3,7 +3,7 @@ name: Frontend CI
 on:
   # PR이 열릴 때, 업데이트될 때, 다시 열릴 때
   pull_request:
-    branches: [fe/dev, fe/prod, dev]
+    branches: [fe/dev, fe/prod, dev, prod]
     paths:
       - "frontend/**"
 
@@ -43,8 +43,9 @@ jobs:
         run: npm ci
 
       - name: Create .env file
+        # prod 브랜치 빌드는 prod 백엔드 주소를 굽는다 (PR·dev는 API_URL)
         run: |
-          echo "API_URL=${{ secrets.API_URL }}" >> .env
+          echo "API_URL=${{ github.ref_name == 'prod' && secrets.API_URL_PROD || secrets.API_URL }}" >> .env
 
       - name: Run ESLint
         run: npm run lint

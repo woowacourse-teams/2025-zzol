@@ -21,14 +21,14 @@ set -e
 #
 # Examples:
 #   ./validate-deployment.sh push refs/heads/be/dev
-#   ./validate-deployment.sh workflow_dispatch refs/heads/be/prod prod
+#   ./validate-deployment.sh workflow_dispatch refs/heads/prod prod
 # ============================================
 
 # 브랜치-환경 매핑 (중앙 집중식 관리)
 # 새로운 환경 추가 시 여기에만 추가하면 됩니다
 declare -A BRANCH_ENV_MAP=(
     ["refs/heads/be/dev"]="dev"
-    ["refs/heads/be/prod"]="prod"
+    ["refs/heads/prod"]="prod"
 )
 
 # 입력 파라미터
@@ -68,7 +68,7 @@ validate_arguments() {
         echo "" >&2
         echo "Arguments:" >&2
         echo "  event_name    - push, workflow_dispatch" >&2
-        echo "  branch_ref    - refs/heads/be/dev, refs/heads/be/prod" >&2
+        echo "  branch_ref    - refs/heads/be/dev, refs/heads/prod" >&2
         echo "  selected_env  - dev, prod (required for workflow_dispatch)" >&2
         return 1
     fi
@@ -107,7 +107,7 @@ validate_branch_env_match() {
 get_env_from_branch() {
     local branch="$1"
 
-    # 1. 명시적 매핑 확인 (be/dev, be/prod)
+    # 1. 명시적 매핑 확인 (be/dev, prod)
     if [[ -v BRANCH_ENV_MAP[$branch] ]]; then
         echo "${BRANCH_ENV_MAP[$branch]}"
         return 0

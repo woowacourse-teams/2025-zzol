@@ -5,6 +5,7 @@ on:
     branches:
       - be/dev
       - dev
+      - prod
     types:
       - closed
 
@@ -39,7 +40,7 @@ jobs:
         run: |
           BRANCH_NAME="${{ steps.branch-name.outputs.branch }}"
 
-          PROTECTED_BRANCHES=("main" "fe/dev" "fe/prod" "be/dev" "be/prod")
+          PROTECTED_BRANCHES=("main" "dev" "prod" "fe/dev" "fe/prod" "be/dev" "be/prod")
 
           for protected in "${PROTECTED_BRANCHES[@]}"; do
             if [[ "$BRANCH_NAME" == "$protected" ]]; then
@@ -68,7 +69,7 @@ jobs:
         with:
           script: |
             const branchName = '${{ steps.branch-name.outputs.branch }}';
-            const protectedBranches = ['main', 'fe/dev', 'fe/prod', 'be/dev', 'be/prod'];
+            const protectedBranches = ['main', 'dev', 'prod', 'fe/dev', 'fe/prod', 'be/dev', 'be/prod'];
 
             if (protectedBranches.includes(branchName)) {
               await github.rest.issues.createComment({

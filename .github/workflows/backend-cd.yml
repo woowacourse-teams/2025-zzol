@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - be/dev
-      - be/prod
+      - prod
     paths:
       - 'backend/**'
       - '.github/scripts/deploy-*.sh'

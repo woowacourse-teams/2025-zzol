@@ -149,11 +149,11 @@ run_tests() {
     assert_output_contains "push event with be/dev outputs 'dev'" "dev" \
         "$VALIDATOR_SCRIPT" push refs/heads/be/dev
 
-    assert_success "push event with be/prod branch" \
-        "$VALIDATOR_SCRIPT" push refs/heads/be/prod
+    assert_success "push event with prod branch" \
+        "$VALIDATOR_SCRIPT" push refs/heads/prod
 
-    assert_output_contains "push event with be/prod outputs 'prod'" "prod" \
-        "$VALIDATOR_SCRIPT" push refs/heads/be/prod
+    assert_output_contains "push event with prod outputs 'prod'" "prod" \
+        "$VALIDATOR_SCRIPT" push refs/heads/prod
 
     # ============================================
     # 2. 정상 케이스 - Workflow Dispatch
@@ -163,8 +163,8 @@ run_tests() {
     assert_success "workflow_dispatch with be/dev + dev env" \
         "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/dev dev
 
-    assert_success "workflow_dispatch with be/prod + prod env" \
-        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/prod prod
+    assert_success "workflow_dispatch with prod + prod env" \
+        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/prod prod
 
     # ============================================
     # 3. 에러 케이스 - Push Event
@@ -180,6 +180,9 @@ run_tests() {
     assert_failure "push event with invalid branch format" 1 \
         "$VALIDATOR_SCRIPT" push invalid-ref
 
+    assert_failure "push event with legacy be/prod branch" 1 \
+        "$VALIDATOR_SCRIPT" push refs/heads/be/prod
+
     # ============================================
     # 4. 에러 케이스 - Workflow Dispatch
     # ============================================
@@ -189,7 +192,7 @@ run_tests() {
         "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/dev prod
 
     assert_failure "workflow_dispatch with mismatched branch-env (prod branch + dev env)" 1 \
-        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/prod dev
+        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/prod dev
 
     assert_failure "workflow_dispatch without selected_env" 2 \
         "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/dev

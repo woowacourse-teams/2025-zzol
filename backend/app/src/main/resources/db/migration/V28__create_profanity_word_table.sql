@@ -13,16 +13,16 @@ CREATE TABLE profanity_word (
 -- custom_profanity → profanity_word 데이터 이관
 INSERT INTO profanity_word (word, language, source, is_active, match_count, created_at, updated_at)
 SELECT
-    word,
+    cp.word,
     'KOREAN',
-    CASE source
-        WHEN 'AI_AUDIT'       THEN 'AI_FLAGGED'
+    CASE cp.source
+        WHEN 'AI_AUDIT'        THEN 'AI_FLAGGED'
         WHEN 'OPERATOR_MANUAL' THEN 'MANUAL'
         ELSE 'MANUAL'
     END,
     TRUE,
     0,
-    created_at,
-    created_at
-FROM custom_profanity
-ON DUPLICATE KEY UPDATE word = word;
+    cp.created_at,
+    cp.created_at
+FROM custom_profanity cp
+ON DUPLICATE KEY UPDATE word = profanity_word.word;

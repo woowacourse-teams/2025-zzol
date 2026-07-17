@@ -143,28 +143,28 @@ run_tests() {
     # ============================================
     print_header "Test Suite 1: Push Event (정상 케이스)"
 
-    assert_success "push event with be/dev branch" \
-        "$VALIDATOR_SCRIPT" push refs/heads/be/dev
+    assert_success "push event with dev branch" \
+        "$VALIDATOR_SCRIPT" push refs/heads/dev
 
-    assert_output_contains "push event with be/dev outputs 'dev'" "dev" \
-        "$VALIDATOR_SCRIPT" push refs/heads/be/dev
+    assert_output_contains "push event with dev outputs 'dev'" "dev" \
+        "$VALIDATOR_SCRIPT" push refs/heads/dev
 
-    assert_success "push event with be/prod branch" \
-        "$VALIDATOR_SCRIPT" push refs/heads/be/prod
+    assert_success "push event with prod branch" \
+        "$VALIDATOR_SCRIPT" push refs/heads/prod
 
-    assert_output_contains "push event with be/prod outputs 'prod'" "prod" \
-        "$VALIDATOR_SCRIPT" push refs/heads/be/prod
+    assert_output_contains "push event with prod outputs 'prod'" "prod" \
+        "$VALIDATOR_SCRIPT" push refs/heads/prod
 
     # ============================================
     # 2. 정상 케이스 - Workflow Dispatch
     # ============================================
     print_header "Test Suite 2: Workflow Dispatch (정상 케이스)"
 
-    assert_success "workflow_dispatch with be/dev + dev env" \
-        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/dev dev
+    assert_success "workflow_dispatch with dev + dev env" \
+        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/dev dev
 
-    assert_success "workflow_dispatch with be/prod + prod env" \
-        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/prod prod
+    assert_success "workflow_dispatch with prod + prod env" \
+        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/prod prod
 
     # ============================================
     # 3. 에러 케이스 - Push Event
@@ -180,22 +180,28 @@ run_tests() {
     assert_failure "push event with invalid branch format" 1 \
         "$VALIDATOR_SCRIPT" push invalid-ref
 
+    assert_failure "push event with legacy be/prod branch" 1 \
+        "$VALIDATOR_SCRIPT" push refs/heads/be/prod
+
+    assert_failure "push event with legacy be/dev branch" 1 \
+        "$VALIDATOR_SCRIPT" push refs/heads/be/dev
+
     # ============================================
     # 4. 에러 케이스 - Workflow Dispatch
     # ============================================
     print_header "Test Suite 4: Workflow Dispatch (에러 케이스)"
 
     assert_failure "workflow_dispatch with mismatched branch-env (dev branch + prod env)" 1 \
-        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/dev prod
+        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/dev prod
 
     assert_failure "workflow_dispatch with mismatched branch-env (prod branch + dev env)" 1 \
-        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/prod dev
+        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/prod dev
 
     assert_failure "workflow_dispatch without selected_env" 2 \
-        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/dev
+        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/dev
 
     assert_failure "workflow_dispatch with invalid env" 1 \
-        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/dev staging
+        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/dev staging
 
     # ============================================
     # 5. 에러 케이스 - Invalid Arguments
@@ -209,7 +215,7 @@ run_tests() {
         "$VALIDATOR_SCRIPT" push
 
     assert_failure "unsupported event type" 2 \
-        "$VALIDATOR_SCRIPT" pull_request refs/heads/be/dev
+        "$VALIDATOR_SCRIPT" pull_request refs/heads/dev
 
     # ============================================
     # 6. Edge Cases
@@ -217,13 +223,13 @@ run_tests() {
     print_header "Test Suite 6: Edge Cases"
 
     assert_failure "empty event_name" 2 \
-        "$VALIDATOR_SCRIPT" "" refs/heads/be/dev
+        "$VALIDATOR_SCRIPT" "" refs/heads/dev
 
     assert_failure "empty branch_ref" 2 \
         "$VALIDATOR_SCRIPT" push ""
 
     assert_success "extra arguments are ignored" \
-        "$VALIDATOR_SCRIPT" push refs/heads/be/dev extra args here
+        "$VALIDATOR_SCRIPT" push refs/heads/dev extra args here
 
     # ============================================
     # 7. Output Validation
@@ -231,13 +237,13 @@ run_tests() {
     print_header "Test Suite 7: Output Validation"
 
     assert_output_contains "success message includes environment" "dev 환경 배포" \
-        "$VALIDATOR_SCRIPT" push refs/heads/be/dev
+        "$VALIDATOR_SCRIPT" push refs/heads/dev
 
     assert_output_contains "error message for unsupported branch" "지원하지 않는 브랜치" \
         "$VALIDATOR_SCRIPT" push refs/heads/main
 
     assert_output_contains "error message for branch-env mismatch" "브랜치에서만 배포 가능" \
-        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/be/dev prod
+        "$VALIDATOR_SCRIPT" workflow_dispatch refs/heads/dev prod
 }
 
 # ============================================

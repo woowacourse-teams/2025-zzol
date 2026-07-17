@@ -3,8 +3,8 @@ name: Backend Deploy (CD)
 on:
   push:
     branches:
-      - be/dev
-      - be/prod
+      - dev
+      - prod
     paths:
       - 'backend/**'
       - '.github/scripts/deploy-*.sh'

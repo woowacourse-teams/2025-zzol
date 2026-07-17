@@ -127,4 +127,12 @@ class RedisStreamContainerRegistryTest {
 
         assertThat(registry.getPhase()).isGreaterThan(factory.getPhase());
     }
+
+    @Test
+    void 웹_트래픽_드레인보다_늦게_정지하도록_phase가_드레인_단계들보다_낮다() {
+        // 드레인 중 수신된 커맨드의 소비·브로드캐스트를 유지한다. 상수는 package-private이라 값으로 고정:
+        // WebSocketGracefulShutdownHandler(MAX-1) > WebServerGracefulShutdownLifecycle(MAX-1024)
+        // > WebServerStartStopLifecycle(MAX-2048) > 레지스트리
+        assertThat(registry.getPhase()).isLessThan(Integer.MAX_VALUE - 2048);
+    }
 }

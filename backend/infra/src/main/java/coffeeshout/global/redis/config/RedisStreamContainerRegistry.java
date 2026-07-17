@@ -18,8 +18,7 @@ import org.springframework.stereotype.Component;
  * 컨테이너는 Starter가 수동 생성한 비(非)빈이라 Spring 라이프사이클(컨텍스트 close의 lifecycle
  * stop, Spring Framework 7 테스트 컨텍스트 pause)이 인지하지 못한다 — 커넥션 팩토리만 정지되고
  * 폴러는 살아남아 정지된 팩토리에 무한 재시도한다. 레지스트리가 {@link SmartLifecycle}로 stop/start를
- * 대신 위임받아 컨테이너를 라이프사이클에 편입시킨다. phase는 기본값(Integer.MAX_VALUE)을 그대로 써서
- * {@code LettuceConnectionFactory}(phase 0)보다 먼저 멈추고 늦게 시작된다.
+ * 대신 위임받아 컨테이너를 라이프사이클에 편입시킨다.
  */
 @Slf4j
 @Component
@@ -53,6 +52,15 @@ public class RedisStreamContainerRegistry implements SmartLifecycle {
     @Override
     public boolean isRunning() {
         return containers.values().stream().anyMatch(StreamMessageListenerContainer::isRunning);
+    }
+
+    // 종료(stop)는 phase 내림차순이다. 폴러는 웹 트래픽 드레인이 모두 끝난 뒤 멈춰야
+    // 드레인 중 수신된 커맨드의 소비·브로드캐스트가 유지되고(WS 세션 드레인 MAX-1,
+    // Tomcat 드레인 MAX-1024, 웹서버 stop MAX-2048), LettuceConnectionFactory(phase 0)보다는
+    // 먼저 멈춰야 정지된 팩토리에 폴링하지 않는다. 그 사이 값이면 되고, 1024는 그 표식이다
+    @Override
+    public int getPhase() {
+        return 1024;
     }
 
     // refresh 실패 시에는 ContextClosedEvent도 lifecycle stop도 없이 빈 파괴만 진행되어 이미

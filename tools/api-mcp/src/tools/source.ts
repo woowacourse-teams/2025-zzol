@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { fail, ok, type ToolDefinition } from './types.js';
 
 const SourceArgsSchema = z.object({
-  path: z.string({ required_error: 'path 는 필수입니다' }),
+  path: z.string({ error: 'path 는 필수입니다' }),
 });
 
 export const wsSourceTool: ToolDefinition = {

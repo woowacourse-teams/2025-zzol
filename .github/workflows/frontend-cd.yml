@@ -39,6 +39,16 @@ jobs:
       CLOUDFRONT_DISTRIBUTION_ID: ${{ github.ref_name == 'prod' && vars.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID_PROD || vars.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID }}
 
     steps:
+      # 버킷을 dev/prod가 프리픽스(zzol/fe-dev, zzol/fe-prod)로 공유하므로,
+      # 프리픽스 없는 값이 들어오면 루트 sync --delete가 양쪽 환경을 전부 지운다
+      # (2026-07-17 실제 발생). 값에 '/'가 없으면 배포를 중단한다.
+      - name: Guard — S3 경로에 환경 프리픽스 필수
+        run: |
+          case "${S3_BUCKET}" in
+            */*) echo "S3 target OK: s3://${S3_BUCKET}" ;;
+            *) echo "::error::S3 버킷 변수('${S3_BUCKET}')에 환경 프리픽스가 없습니다 — 루트 sync --delete는 버킷 전체를 삭제합니다"; exit 1 ;;
+          esac
+
       - name: Download build artifact
         uses: actions/download-artifact@v8
         with:

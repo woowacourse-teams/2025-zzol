@@ -6,12 +6,12 @@ name: Monitoring Rules CI
 
 on:
   pull_request:
-    branches: [be/dev, dev]
+    branches: [dev]
     paths:
       - "backend/docker/monitoring/conf/rules/**"
       - ".github/workflows/monitoring-rules-ci.yml"
   push:
-    branches: [be/dev, dev]
+    branches: [dev]
     paths:
       - "backend/docker/monitoring/conf/rules/**"
       - ".github/workflows/monitoring-rules-ci.yml"

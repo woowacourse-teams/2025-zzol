@@ -10,8 +10,9 @@ config.alloy (호스트 1회 배치, ~15줄 진입점)
        └─ loki.process → loki.write → Loki
 ```
 
-- dev bootstrap: `be/dev` 추종(모듈 변경 즉시 반영)
-- prod bootstrap: `prod` 추종(PR 게이트로 blast radius 통제, #1574에서 `be/prod`→`prod` 이관)
+- dev bootstrap: `dev` 추종(모듈 변경 즉시 반영)
+- prod bootstrap: `prod` 추종(PR 게이트로 blast radius 통제)
+- #1574에서 추종 브랜치를 `be/dev`→`dev`, `be/prod`→`prod`로 이관
 
 ## bootstrap 호스트 1회 배치 (★ 필수)
 
@@ -69,7 +70,7 @@ docker compose --env-file .env up -d dev-alloy
 - **`AlloyDown`** — `up{job="alloy"} == 0` 이 **5분** 지속(컨테이너 다운 또는 스크레이프 단절).
 - **`AlloyComponentUnhealthy`** — unhealthy 컴포넌트가 **10분** 지속(깨진 모듈 pull 등). Alloy는 last-good config로 계속 동작 — 다운이 아닌 '정체'다.
 
-모듈 자체는 GitHub의 해당 브랜치(`be/dev`/`prod`)에 존재해야 한다.
+모듈 자체는 GitHub의 해당 브랜치(`dev`/`prod`)에 존재해야 한다.
 
 ## 관련 문서
 

@@ -11,7 +11,7 @@ PR 번호를 받아 GitHub Actions `backend-ci.yml` 런 로그에서 실패한 �
 
 ## Step 1–2: 실패 테스트 추출
 
-`fetch-failures.sh`로 PR 상태 확인 및 실패 목록을 가져온다. 이 스크립트는 PR head 브랜치의 최근 `backend-ci.yml` 런 로그(gradle JUnit 출력)를 직접 파싱한다 — dorny "Backend Test Results" 체크런은 생성되지 않으므로 의존하지 않는다(#1521):
+`fetch-failures.sh`로 PR 상태 확인 및 실패 목록을 가져온다. 이 스크립트는 "Backend Test Results" 체크런의 실패 annotation을 먼저 시도하고, 체크런이 없거나 annotation이 비어 있으면 PR head 브랜치의 최근 `backend-ci.yml` 런 로그(gradle JUnit 출력)를 직접 파싱하는 것으로 폴백한다(#1521, #1564):
 
 ```bash
 bash .claude/skills/ci-fix/fetch-failures.sh <PR번호>

@@ -24,7 +24,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "~1.29.0",
     "@stomp/stompjs": "^7.0.0",
-    "ws": "^8.21.0",
+    "ws": "^8.21.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -36,7 +36,7 @@
     "msw": "^2.15.0",
     "prettier": "^3.9.5",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.63.0",
+    "typescript-eslint": "^8.64.0",
     "vitest": "^4.1.10"
   }
 }

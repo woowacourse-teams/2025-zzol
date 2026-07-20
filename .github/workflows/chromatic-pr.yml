@@ -3,7 +3,6 @@ name: Deploy PR Storybook Preview
 on:
   pull_request:
     branches:
-      - fe/dev
       - dev
     types: [opened, synchronize]
     paths:

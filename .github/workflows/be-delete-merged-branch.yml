@@ -3,7 +3,6 @@ name: be-delete-merged-branch.yml
 on:
   pull_request:
     branches:
-      - be/dev
       - dev
       - prod
     types:
@@ -40,7 +39,7 @@ jobs:
         run: |
           BRANCH_NAME="${{ steps.branch-name.outputs.branch }}"
 
-          PROTECTED_BRANCHES=("main" "dev" "prod" "fe/dev" "fe/prod" "be/dev" "be/prod")
+          PROTECTED_BRANCHES=("main" "dev" "prod")
 
           for protected in "${PROTECTED_BRANCHES[@]}"; do
             if [[ "$BRANCH_NAME" == "$protected" ]]; then
@@ -69,7 +68,7 @@ jobs:
         with:
           script: |
             const branchName = '${{ steps.branch-name.outputs.branch }}';
-            const protectedBranches = ['main', 'dev', 'prod', 'fe/dev', 'fe/prod', 'be/dev', 'be/prod'];
+            const protectedBranches = ['main', 'dev', 'prod'];
 
             if (protectedBranches.includes(branchName)) {
               await github.rest.issues.createComment({

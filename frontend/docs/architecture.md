@@ -79,7 +79,7 @@ fetch를 래핑한 커스텀 훅:
 
 ## DevTools (`src/devtools/`, `ENABLE_DEVTOOLS`)
 
-`process.env.ENABLE_DEVTOOLS`가 truthy일 때만 `DevToolsWrapper`(iframe 자동 테스트 패널, 네트워크 디버거)가 렌더링된다. `.env.development`에 `ENABLE_DEVTOOLS=true`가 설정되어 있어 로컬 dev 서버와 `build:dev`(be/dev 환경) 양쪽에서 활성화된다.
+`process.env.ENABLE_DEVTOOLS`가 truthy일 때만 `DevToolsWrapper`(iframe 자동 테스트 패널, 네트워크 디버거)가 렌더링된다. `.env.development`에 `ENABLE_DEVTOOLS=true`가 설정되어 있어 로컬 dev 서버와 `build:dev`(dev 환경) 양쪽에서 활성화된다.
 
 **기능별 가드도 `ENABLE_DEVTOOLS` 기준을 따른다.** `useMockMode`와 `useServiceWorkerUpdate`의 기능 활성화 조건은 `NODE_ENV === 'development'`가 아니라 `Boolean(process.env.ENABLE_DEVTOOLS)`로 통일되어 있다. `NODE_ENV`를 사용하면 `build:dev`처럼 `NODE_ENV=development`이지만 별도 배포 환경인 경우에도 동작하지만, `ENABLE_DEVTOOLS` 없이 `NODE_ENV=production` 빌드에 devtools를 붙이는 경우엔 기능이 비활성화된다. 두 조건을 일치시킴으로써 패널 노출 여부와 기능 동작 여부가 항상 같은 변수로 제어된다.
 

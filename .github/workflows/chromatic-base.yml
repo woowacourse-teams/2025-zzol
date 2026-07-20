@@ -1,9 +1,8 @@
-name: Deploy Base Storybook (fe/dev)
+name: Deploy Base Storybook (dev)
 
 on:
   push:
     branches:
-      - fe/dev
       - dev
 
 jobs:

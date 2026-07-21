@@ -149,6 +149,7 @@ groups:
       # redis_commands_duration_seconds_total은 cmd 라벨이 붙은 per-command 카운터라
       # processed_total(글로벌)과 직접 나누면 매치 실패 → sum by(instance)로 집계해 dev/prod 분리 유지.
       # (원본 noDataState: OK → 단순 이식). ⚠️ 메트릭·cmd 라벨 실재는 deploy-time 검증.
+      # job-scope-exempt: job='redis-exporter' 하나에 dev·prod가 함께 들어오고 instance 라벨로 구분된다. 환경 구분자는 job이 아니라 instance라 by (instance)가 옳다.
       - alert: RedisCommandLatencyHigh
         expr: |
           sum by (instance) (rate(redis_commands_duration_seconds_total{job="redis-exporter"}[5m]))
@@ -182,6 +183,7 @@ groups:
 
       # CPU 사용률 > 90% (5분 지속). t4g.small vCPU 2개.
       # (원본 noDataState: Alerting → absent 동반룰 보강)
+      # job-scope-exempt: job='node' 타깃이 node-exporter:9100 하나뿐이다. 단일 호스트의 코어 평균이라 환경 뭉갬이 없다.
       - alert: CpuUsageHigh
         expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle", job="node"}[5m])) * 100) > 90
         for: 5m

@@ -44,3 +44,11 @@ jobs:
 
       - name: Check Prometheus rules
         run: promtool check rules backend/docker/monitoring/conf/rules/*.yml
+
+      # promtool은 문법만 본다. 집계가 job 라벨을 지우는 결함(#1592·#1596·#1598)은 잡지 못해
+      # 같은 실수가 여러 룰에서 반복됐다. Loki ruler 룰은 promtool 대상이 아니므로 함께 검사한다.
+      - name: Check alert job scope
+        run: |
+          python3 .github/scripts/check-alert-job-scope.py \
+            backend/docker/monitoring/conf/rules \
+            backend/docker/monitoring/conf/loki-rules

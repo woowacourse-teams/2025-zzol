@@ -61,9 +61,12 @@ groups:
       # 의도적으로 HTTP 핸드셰이크 계층(http_server_requests)에서 본다(ADR-0026 §5).
       # ⚠️ uri 라벨 값(/ws/info, /ws/** 등 SockJS 매핑 패턴)은 서버에서 실측 확인 필요.
       #    실제 라벨이 다르면 이 룰은 조용히 발화하지 않으므로 배포 시 1순위로 검증한다.
+      # prod로 한정하고 job 라벨을 보존한다(#1598). 셀렉터에 job이 있어도 bare sum()이
+      # 라벨을 지워, 발화한 알림에 환경 정보가 남지 않았다.
+      # 임계 1/s 유지 — prod 실측 7일 최대 0건(uri 라벨은 `/ws/**`로 셀렉터와 매칭 확인).
       - alert: WsHandshakeFailure
         expr: |
-          sum (rate(http_server_requests_seconds_count{uri=~"/ws.*",status=~"4..|5..",job=~"dev-app|prod-app"}[5m]))
+          sum by (job) (rate(http_server_requests_seconds_count{uri=~"/ws.*",status=~"4..|5..",job="prod-app"}[5m]))
           > 1
         for: 3m
         labels:

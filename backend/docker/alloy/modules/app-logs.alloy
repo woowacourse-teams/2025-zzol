@@ -33,7 +33,11 @@ declare "app_logs_ingest_time" {
 	loki.source.file "source" {
 		targets = [{
 			__address__ = "localhost",
-			__path__    = "/app/logs/application*.log",
+			// 활성 로그 파일만 따라간다. 이전 글롭(application*.log)은 회전 파일
+			// (application-YYYY-MM-DD.log)까지 매칭해, 자정 로테이션 때 새 타깃으로 인식된
+			// 회전 파일을 처음부터 다시 읽었다. 그 결과 하루치 로그가 중복 적재되고
+			// 재수집분이 자정 한 지점에 몰려 ERROR 급증 알림이 오발화했다(#1596).
+			__path__    = "/app/logs/application.log",
 			environment = argument.environment.value,
 			job         = argument.job.value,
 		}]
@@ -81,7 +85,11 @@ declare "app_logs_log_time" {
 	loki.source.file "source" {
 		targets = [{
 			__address__ = "localhost",
-			__path__    = "/app/logs/application*.log",
+			// 활성 로그 파일만 따라간다. 이전 글롭(application*.log)은 회전 파일
+			// (application-YYYY-MM-DD.log)까지 매칭해, 자정 로테이션 때 새 타깃으로 인식된
+			// 회전 파일을 처음부터 다시 읽었다. 그 결과 하루치 로그가 중복 적재되고
+			// 재수집분이 자정 한 지점에 몰려 ERROR 급증 알림이 오발화했다(#1596).
+			__path__    = "/app/logs/application.log",
 			environment = argument.environment.value,
 			job         = argument.job.value,
 		}]

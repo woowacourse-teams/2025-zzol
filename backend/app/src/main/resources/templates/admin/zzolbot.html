@@ -884,6 +884,7 @@
 
     function buildMonitorDetail(a) {
         let signalsHtml;
+        let evidenceHtml = '';
         try {
             // Alertmanager 발화 알림 컨텍스트(FiringAlert): alertname·severity·요약·설명 + 라벨
             const ctx = JSON.parse(a.signalsJson || '{}');
@@ -900,6 +901,7 @@
                     + rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(String(v))}</td></tr>`).join('')
                     + '</tbody></table>'
                 : '<div class="muted">발화 정보 없음</div>';
+            evidenceHtml = buildEvidenceBlock(ctx.analysisContext);
         } catch (e) {
             signalsHtml = '<div class="muted">발화 정보 파싱 실패</div>';
         }
@@ -918,7 +920,24 @@
             + `<span class="label">🧠 분석 요약</span>`
             + `<div class="muted">${esc(a.analysisSummary || '분석 없음 (정상이거나 예산 소진)')}</div>`
             + actionsHtml
+            + evidenceHtml
             + `</div>`;
+    }
+
+    // 분석이 무엇을 근거로 삼았는지. 이게 없으면 분석이 틀렸을 때 화면만으로 검증할 수 없다.
+    function buildEvidenceBlock(ac) {
+        if (!ac) return '';
+        const rows = [
+            ['조회 환경', ac.logEnvironment],
+            ['조회 창', ac.windowMinutes != null ? `최근 ${ac.windowMinutes}분` : null],
+            ['로그 샘플', ac.logSampleCount != null ? `${ac.logSampleCount}건` : null],
+            ['근거 확인', ac.evidenceFound ? '✅ 로그가 알림을 뒷받침함' : '⚠️ 뒷받침하는 근거 없음'],
+        ].filter(([, v]) => v != null && v !== '');
+        if (ac.rootCauseHypothesis) rows.push(['근본원인 가설', ac.rootCauseHypothesis]);
+        return `<span class="label">🔍 조회 근거</span>`
+            + '<table class="data" style="margin-top:0.3rem"><tbody>'
+            + rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(String(v))}</td></tr>`).join('')
+            + '</tbody></table>';
     }
 
     loadHistory();

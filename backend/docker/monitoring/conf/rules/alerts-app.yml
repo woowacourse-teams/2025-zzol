@@ -36,22 +36,28 @@ groups:
       # 차단 요청 수가 평소 베이스라인을 크게 벗어나 치솟는다(ADR-0026 §5).
       # ⚠️ 임계 5 req/s는 순수 추정. 정상 차단(악성 트래픽)과 구분하려면 베이스라인 필수.
       #    라벨 기반 정밀화(ip_type=private 즉발)는 후속 PR에서 오탐을 줄인다.
+      # incident_group — 아래 IpBanRateSpike와 같은 인시던트를 다른 각도에서 잡는다.
+      # zzol-bot이 이 라벨로 중복 분석을 막아, 한 인시던트에 LLM을 한 번만 쓴다(#1598).
       - alert: MassIpBlockingSpike
         expr: sum(rate(ip_block_request_blocked_total[5m])) > 5
         for: 3m
         labels:
           severity: critical
+          incident_group: ip-blocking
         annotations:
           summary: "IP 차단 요청 급증 (전 트래픽 차단 인시던트 의심)"
           description: "차단 요청이 {{ $value | printf \"%.2f\" }} req/s. X-Forwarded-For 소실로 내부 IP가 BAN되는 패턴인지 즉시 확인."
 
       # 신규 BAN 급증 — 위 증상의 선행 신호(차단보다 BAN 등록이 먼저 튄다).
       # ⚠️ 임계 추정. 짧은 창에 신규 BAN이 몰리면 비정상.
+      # 위 MassIpBlockingSpike와 같은 incident_group — 선행 신호라 억제(inhibit)로 죽이지
+      # 않는다. warning만 뜨고 critical로 번지지 않은 사례(2026-07-13)가 실제로 있다.
       - alert: IpBanRateSpike
         expr: sum(rate(ip_block_new_total[5m])) > 1
         for: 3m
         labels:
           severity: warning
+          incident_group: ip-blocking
         annotations:
           summary: "신규 IP BAN 급증"
           description: "신규 BAN이 {{ $value | printf \"%.2f\" }} /s. 정상 베이스라인 대비 비정상이면 차단 정책/프록시 헤더를 점검."

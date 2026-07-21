@@ -2,6 +2,7 @@ package coffeeshout.zzolbot.monitor.application;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -92,15 +95,21 @@ class AlertEnrichmentServiceTest {
     }
 
     @Test
-    void 간격_내_동일_fingerprint_재배달은_분석을_생략한다() {
-        given(monitorRunRepository.existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(any(), any()))
+    void 간격_내_재배달은_LLM_분석을_생략하되_이력은_남긴다() {
+        given(monitorRunRepository.existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(any(), any()))
                 .willReturn(true);
 
         service.enrich(warningAlert());
 
-        verify(monitorRunRepository, never()).save(any());
         verify(llmCallBudget, never()).tryAcquire();
         verify(notifier, never()).notifyAnomaly(any(), any());
+        final ArgumentCaptor<MonitorRunEntity> captor = ArgumentCaptor.forClass(MonitorRunEntity.class);
+        verify(monitorRunRepository).save(captor.capture());
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(captor.getValue().getAnalysisSummary()).contains("이미 분석됨");
+            // notified=false여야 이 중복 기록이 다시 쿨다운 기준점이 되어 창을 연장하지 않는다.
+            softly.assertThat(captor.getValue().isNotified()).isFalse();
+        });
     }
 
     @Test
@@ -114,7 +123,7 @@ class AlertEnrichmentServiceTest {
         noDedup.enrich(warningAlert());
 
         verify(monitorRunRepository, never())
-                .existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(any(), any());
+                .existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(any(), any());
         verify(notifier).notifyAnomaly(any(), any());
     }
 
@@ -159,8 +168,73 @@ class AlertEnrichmentServiceTest {
         });
     }
 
+    @Nested
+    @DisplayName("인시던트 단위 중복 판정")
+    class IncidentDedup {
+
+        @Test
+        void 같은_incident_group_알림_쌍은_LLM을_한_번만_호출한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any())).willReturn(new MonitorAnalysis("요약", "", List.of()));
+            // 첫 알림(warning)이 분석된 뒤, 같은 인시던트의 critical이 뒤따르는 상황
+            given(monitorRunRepository.existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(eq("ip-blocking"), any()))
+                    .willReturn(false, true);
+
+            service.enrich(groupedAlert("warning"));
+            service.enrich(groupedAlert("critical"));
+
+            verify(analyzer, times(1)).analyze(any(), any());
+            verify(llmCallBudget, times(1)).tryAcquire();
+        }
+
+        @Test
+        void incident_group이_있으면_그것을_중복_판정_키로_저장한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any())).willReturn(new MonitorAnalysis("요약", "", List.of()));
+
+            service.enrich(groupedAlert("critical"));
+
+            final ArgumentCaptor<MonitorRunEntity> captor = ArgumentCaptor.forClass(MonitorRunEntity.class);
+            verify(monitorRunRepository, times(2)).save(captor.capture());
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(captor.getValue().getDedupKey()).isEqualTo("ip-blocking");
+                // fingerprint는 개별 알림 식별자로 그대로 남는다.
+                softly.assertThat(captor.getValue().getFingerprint()).isEqualTo("fp-1");
+            });
+        }
+
+        @Test
+        void incident_group이_없으면_fingerprint로_판정한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any())).willReturn(new MonitorAnalysis("요약", "", List.of()));
+
+            service.enrich(warningAlert());
+
+            verify(monitorRunRepository).existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(eq("fp-1"), any());
+        }
+
+        @Test
+        void 같은_그룹이라도_쿨다운이_지났으면_다시_분석한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any())).willReturn(new MonitorAnalysis("요약", "", List.of()));
+            given(monitorRunRepository.existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(any(), any()))
+                    .willReturn(false);
+
+            service.enrich(groupedAlert("warning"));
+            service.enrich(groupedAlert("critical"));
+
+            verify(analyzer, times(2)).analyze(any(), any());
+        }
+    }
+
     private FiringAlert warningAlert() {
         return alert("warning");
+    }
+
+    private FiringAlert groupedAlert(String severity) {
+        return new FiringAlert("MassIpBlockingSpike", severity, "fp-1", "IP 차단 급증", "임계 초과",
+                Map.of("alertname", "MassIpBlockingSpike", "severity", severity,
+                        "incident_group", "ip-blocking"));
     }
 
     private FiringAlert alert(String severity) {

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class NoOpAnomalyAnalyzer implements AnomalyAnalyzer {
 
     @Override
-    public MonitorAnalysis analyze(FiringAlert alert, List<String> logSamples) {
-        return new MonitorAnalysis("NoOp 분석", "", List.of());
+    public MonitorAnalysis analyze(FiringAlert alert, List<String> logSamples, String logEnvironment) {
+        return new MonitorAnalysis("NoOp 분석", "", List.of(), true);
     }
 }

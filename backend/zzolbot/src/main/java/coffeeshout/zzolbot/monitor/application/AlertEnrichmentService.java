@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 public class AlertEnrichmentService implements FiringAlertEnricher {
 
     private static final int LOG_SAMPLE_LIMIT = 20;
+    private static final String INCIDENT_GROUP_LABEL = "incident_group";
     private static final String JOB_LABEL = "job";
     private static final String JOB_SUFFIX = "-app";
     // 유도한 환경명이 LogQL 셀렉터에 삽입되므로 허용 문자를 제한한다 — 인젝션 방지 + 빈 문자열 차단.
@@ -53,14 +54,18 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
             return;
         }
         final Instant now = clock.instant();
-        if (recentlyEnriched(alert.fingerprint(), now)) {
-            log.info("[ZzolBot] 중복 분석 방지 — 일정 시간 내 동일 fingerprint 분석 이력 존재. fingerprint={}",
-                    alert.fingerprint());
+        final Severity severity = toSeverity(alert.severity());
+        final String dedupKey = resolveDedupKey(alert);
+        if (recentlyEnriched(dedupKey, now)) {
+            log.info("[ZzolBot] 중복 분석 방지 — 일정 시간 내 같은 인시던트 분석 이력 존재. dedupKey={} fingerprint={}",
+                    dedupKey, alert.fingerprint());
+            monitorRunRepository.save(MonitorRunEntity.duplicate(
+                    now, severity, alert.fingerprint(), dedupKey, toJson(alertContext(alert)),
+                    "LLM 분석 생략 — 같은 인시던트(%s)가 이미 분석됨".formatted(dedupKey)));
             return;
         }
-        final Severity severity = toSeverity(alert.severity());
         final MonitorRunEntity run = monitorRunRepository.save(
-                MonitorRunEntity.of(now, severity, alert.fingerprint(), toJson(alertContext(alert))));
+                MonitorRunEntity.of(now, severity, alert.fingerprint(), dedupKey, toJson(alertContext(alert))));
 
         final String environment = resolveEnvironment(alert);
         final List<String> logs = lokiLogClient.tailErrors(now, properties.window(), LOG_SAMPLE_LIMIT, environment);
@@ -126,18 +131,37 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
     }
 
     /**
-     * 같은 fingerprint를 일정 시간 안에는 다시 분석하지 않는다(지문별 중복 분석 방지). 웹훅 재시도·flapping을
-     * 흡수하고, 지속되는 장애를 매 재통보마다 다시 LLM에 태우지 않아 비용을 묶는다. 간격이 0이거나
-     * fingerprint가 비어 식별 불가하면 가드하지 않는다. Alertmanager {@code repeat_interval}(4h) 위의
-     * 앱측 방어선으로, 재분석을 fingerprint당 일정 시간에 한 번으로 제한한다.
+     * 중복 분석 판정 키를 정한다. 알림에 {@code incident_group} 라벨이 있으면 그것을, 없으면
+     * fingerprint를 쓴다.
+     * <p>
+     * 하나의 인시던트가 알림 2건으로 발화하는 경우가 있다 — IP 차단 급증은 신규 BAN(warning)과
+     * 차단 요청(critical) 두 룰이 같은 현상을 다른 각도에서 잡는다. fingerprint는 알림마다 다르므로
+     * 그것으로 가드하면 같은 장애에 LLM을 두 번 태운다. 관련 룰에 공통 라벨을 달아 한 번으로 묶는다.
+     * <p>
+     * 억제(inhibit)로 warning을 죽이지 않는 이유는 그것이 선행 신호이기 때문이다. warning만 뜨고
+     * critical로 번지지 않은 사례가 실제로 있어(2026-07-13), 죽이면 조기 경보를 잃는다.
      */
-    private boolean recentlyEnriched(String fingerprint, Instant now) {
+    private String resolveDedupKey(FiringAlert alert) {
+        final String incidentGroup = alert.labels().get(INCIDENT_GROUP_LABEL);
+        if (incidentGroup == null || incidentGroup.isBlank()) {
+            return alert.fingerprint();
+        }
+        return incidentGroup.trim();
+    }
+
+    /**
+     * 같은 인시던트를 일정 시간 안에는 다시 분석하지 않는다. 웹훅 재시도·flapping을 흡수하고,
+     * 지속되는 장애를 매 재통보마다 다시 LLM에 태우지 않아 비용을 묶는다. 간격이 0이거나
+     * 키가 비어 식별 불가하면 가드하지 않는다. Alertmanager {@code repeat_interval}(4h) 위의
+     * 앱측 방어선이다.
+     */
+    private boolean recentlyEnriched(String dedupKey, Instant now) {
         final Duration cooldown = properties.enrichCooldown();
-        if (cooldown.isZero() || fingerprint == null || fingerprint.isBlank()) {
+        if (cooldown.isZero() || dedupKey == null || dedupKey.isBlank()) {
             return false;
         }
-        return monitorRunRepository.existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(
-                fingerprint, now.minus(cooldown));
+        return monitorRunRepository.existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(
+                dedupKey, now.minus(cooldown));
     }
 
     private MonitorAnalysis safeAnalyze(FiringAlert alert, List<String> logSamples, String environment) {

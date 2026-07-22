@@ -40,11 +40,14 @@ groups:
       # ⚠️ 30일 베이스라인 확보 후 재조정 필요.
       # description에 원인 가설을 적지 않는다 — 웹훅 payload로 zzol-bot 프롬프트에
       # 들어가 LLM이 그 가설을 결론으로 되돌려준다(#1592).
+      # incident_group — 아래 IpBanRateSpike와 같은 인시던트를 다른 각도에서 잡는다.
+      # zzol-bot이 이 라벨로 중복 분석을 막아, 한 인시던트에 LLM을 한 번만 쓴다(#1598).
       - alert: MassIpBlockingSpike
         expr: sum by (job) (rate(ip_block_request_blocked_total{job="prod-app"}[5m])) > 2
         for: 3m
         labels:
           severity: critical
+          incident_group: ip-blocking
         annotations:
           summary: "IP 차단 요청 급증 ({{ $labels.job }})"
           description: "차단 요청이 {{ $value | printf \"%.2f\" }} req/s. 베이스라인(약 0.5 req/s) 대비 급증. 차단된 IP와 요청 경로를 확인."
@@ -53,11 +56,14 @@ groups:
       # MassIpBlockingSpike와 동일하게 prod 한정 + job 라벨 보존(#1592).
       # 임계 0.5/s — prod 관측 최대 0.055/s 대비 약 9배 여유(2026-07 실측).
       # ⚠️ 30일 베이스라인 확보 후 재조정 필요.
+      # 위 MassIpBlockingSpike와 같은 incident_group — 선행 신호라 억제(inhibit)로 죽이지
+      # 않는다. warning만 뜨고 critical로 번지지 않은 사례(2026-07-13)가 실제로 있다(#1598).
       - alert: IpBanRateSpike
         expr: sum by (job) (rate(ip_block_new_total{job="prod-app"}[5m])) > 0.5
         for: 3m
         labels:
           severity: warning
+          incident_group: ip-blocking
         annotations:
           summary: "신규 IP BAN 급증 ({{ $labels.job }})"
           description: "신규 BAN이 {{ $value | printf \"%.2f\" }} /s. 차단된 IP 대역과 접근 경로를 확인."
@@ -67,9 +73,12 @@ groups:
       # 의도적으로 HTTP 핸드셰이크 계층(http_server_requests)에서 본다(ADR-0026 §5).
       # ⚠️ uri 라벨 값(/ws/info, /ws/** 등 SockJS 매핑 패턴)은 서버에서 실측 확인 필요.
       #    실제 라벨이 다르면 이 룰은 조용히 발화하지 않으므로 배포 시 1순위로 검증한다.
+      # prod로 한정하고 job 라벨을 보존한다(#1598). 셀렉터에 job이 있어도 bare sum()이
+      # 라벨을 지워, 발화한 알림에 환경 정보가 남지 않았다.
+      # 임계 1/s 유지 — prod 실측 7일 최대 0건(uri 라벨은 `/ws/**`로 셀렉터와 매칭 확인).
       - alert: WsHandshakeFailure
         expr: |
-          sum (rate(http_server_requests_seconds_count{uri=~"/ws.*",status=~"4..|5..",job=~"dev-app|prod-app"}[5m]))
+          sum by (job) (rate(http_server_requests_seconds_count{uri=~"/ws.*",status=~"4..|5..",job="prod-app"}[5m]))
           > 1
         for: 3m
         labels:

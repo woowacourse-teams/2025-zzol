@@ -55,7 +55,7 @@ class ZzolBotMonitorControllerTest {
     }
 
     private MonitorRunEntity run(Severity severity) {
-        final MonitorRunEntity entity = MonitorRunEntity.of(Instant.now(), severity, "fp", "{}");
+        final MonitorRunEntity entity = MonitorRunEntity.of(Instant.now(), severity, "fp", "fp", "{}");
         ReflectionTestUtils.setField(entity, "id", 1L);
         return entity;
     }

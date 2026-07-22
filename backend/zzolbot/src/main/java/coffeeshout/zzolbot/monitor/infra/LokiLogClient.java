@@ -28,7 +28,7 @@ public class LokiLogClient {
 
     private final RestClient restClient;
     private final String lokiBaseUrl;
-    private final String environment;
+    private final String defaultEnvironment;
     private final ObjectMapper objectMapper;
 
     public LokiLogClient(ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
@@ -36,14 +36,24 @@ public class LokiLogClient {
         this.restClient = restClientBuilder.baseUrl(lokiBaseUrl)
                 .requestFactory(ZzolBotHttpTimeouts.requestFactory())
                 .build();
-        this.environment = properties.monitoring().environment();
+        this.defaultEnvironment = properties.monitoring().environment();
         this.objectMapper = objectMapper;
     }
 
     /**
-     * 윈도우 구간의 최근 ERROR 로그 메시지를 최대 {@code limit}건 반환(LLM 분석 근거).
+     * 알림에서 환경을 판별하지 못했을 때 쓸 폴백 환경(이 인스턴스가 실행 중인 환경).
      */
-    public List<String> tailErrors(Instant end, Duration window, int limit) {
+    public String defaultEnvironment() {
+        return defaultEnvironment;
+    }
+
+    /**
+     * {@code environment} 환경의 윈도우 구간 최근 ERROR 로그를 최대 {@code limit}건 반환(LLM 분석 근거).
+     * <p>
+     * 환경을 인자로 받는다. 이전에는 이 인스턴스의 설정값으로 고정해, dev에서 발화한 알림을 prod
+     * 인스턴스가 받으면 prod 로그를 근거로 분석하는 불일치가 있었다(#1594).
+     */
+    public List<String> tailErrors(Instant end, Duration window, int limit, String environment) {
         final String logql = String.format("{environment=\"%s\"} |~ \"%s\"", environment, LEVEL_ERROR);
         final long startNano = end.minus(window).toEpochMilli() * 1_000_000L;
         final long endNano = end.toEpochMilli() * 1_000_000L;

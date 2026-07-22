@@ -101,9 +101,14 @@ public class MonitorRunEntity {
         return entity;
     }
 
-    public void attachAnalysis(String analysisSummary, String suggestedActionsJson) {
+    /**
+     * 분석 결과와, 그 분석이 무엇을 근거로 삼았는지({@code signalsJson}의 {@code analysisContext})를 함께 기록한다.
+     * 근거를 남기지 않으면 분석이 틀렸을 때 화면만으로 검증할 수 없다(#1594).
+     */
+    public void attachAnalysis(String analysisSummary, String suggestedActionsJson, String signalsJson) {
         this.analysisSummary = analysisSummary;
         this.suggestedActionsJson = suggestedActionsJson;
+        this.signalsJson = signalsJson;
     }
 
     public void markNotified() {

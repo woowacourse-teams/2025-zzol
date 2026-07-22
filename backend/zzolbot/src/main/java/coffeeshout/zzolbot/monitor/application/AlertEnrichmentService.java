@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,10 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
 
     private static final int LOG_SAMPLE_LIMIT = 20;
     private static final String INCIDENT_GROUP_LABEL = "incident_group";
+    private static final String JOB_LABEL = "job";
+    private static final String JOB_SUFFIX = "-app";
+    // 유도한 환경명이 LogQL 셀렉터에 삽입되므로 허용 문자를 제한한다 — 인젝션 방지 + 빈 문자열 차단.
+    private static final Pattern SAFE_ENVIRONMENT = Pattern.compile("^[a-zA-Z0-9_-]+$");
 
     private final LlmCallBudget llmCallBudget;
     private final LokiLogClient lokiLogClient;
@@ -62,20 +67,67 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
         final MonitorRunEntity run = monitorRunRepository.save(
                 MonitorRunEntity.of(now, severity, alert.fingerprint(), dedupKey, toJson(alertContext(alert))));
 
-        final MonitorAnalysis analysis = analyze(alert, now);
-        run.attachAnalysis(analysis.summary(), toJson(analysis.suggestedActions()));
+        final String environment = resolveEnvironment(alert);
+        final List<String> logs = lokiLogClient.tailErrors(now, properties.window(), LOG_SAMPLE_LIMIT, environment);
+        final MonitorAnalysis analysis = analyze(alert, logs, environment);
+
+        run.attachAnalysis(
+                analysis.summary(),
+                toJson(analysis.suggestedActions()),
+                toJson(alertContext(alert, environment, logs.size(), analysis)));
         run.markNotified();
         notifier.notifyAnomaly(alert, analysis);
         monitorRunRepository.save(run);
     }
 
-    private MonitorAnalysis analyze(FiringAlert alert, Instant now) {
+    /**
+     * 알림의 {@code job} 라벨에서 조회할 환경을 유도한다({@code prod-app} → {@code prod}).
+     * 라벨이 없거나 유도 결과가 환경명 형식에 맞지 않으면 이 인스턴스의 환경으로 폴백한다.
+     * <p>
+     * 폴백이 필요한 이유가 둘이다. (1) 룰이 {@code sum()}으로 라벨을 지우면 알림에 환경 정보가
+     * 남지 않는다(#1592에서 실제로 발생). (2) 유도한 값은 하류 {@link LokiLogClient#tailErrors}의
+     * LogQL 셀렉터에 그대로 삽입되므로, 형식을 검증하지 않으면 셀렉터 인젝션 위험이 있고
+     * {@code job}이 정확히 {@code "-app"}일 때 빈 문자열이 되어 환경 필터가 무력화된다(#1595 리뷰).
+     */
+    private String resolveEnvironment(FiringAlert alert) {
+        final String job = alert.labels().get(JOB_LABEL);
+        if (job == null || job.isBlank()) {
+            return fallbackEnvironment(alert, "job 라벨 없음");
+        }
+        final String trimmed = job.trim();
+        final String derived = trimmed.endsWith(JOB_SUFFIX)
+                ? trimmed.substring(0, trimmed.length() - JOB_SUFFIX.length())
+                : trimmed;
+        if (!SAFE_ENVIRONMENT.matcher(derived).matches()) {
+            return fallbackEnvironment(alert, "환경명 형식 위반(job=%s)".formatted(job));
+        }
+        return derived;
+    }
+
+    private String fallbackEnvironment(FiringAlert alert, String reason) {
+        final String fallback = lokiLogClient.defaultEnvironment();
+        log.info("[ZzolBot] {} — 실행 환경({})으로 폴백. fingerprint={}",
+                reason, fallback, alert.fingerprint());
+        return fallback;
+    }
+
+    /**
+     * 로그 근거를 먼저 확보하고, 근거가 있을 때만 예산을 소모해 LLM을 호출한다.
+     * <p>
+     * 근거 없이 LLM을 부르면 알림 메타데이터만으로 그럴듯한 인과를 지어낸다(#1594). 예산 확인을
+     * 로그 조회 뒤로 옮긴 이유이기도 하다 — 어차피 분석하지 않을 건에 예산 슬롯을 태우지 않는다.
+     */
+    private MonitorAnalysis analyze(FiringAlert alert, List<String> logs, String environment) {
+        if (logs.isEmpty()) {
+            log.info("[ZzolBot] 조회 구간에 ERROR 로그 없음 — LLM 분석 생략. environment={} fingerprint={}",
+                    environment, alert.fingerprint());
+            return MonitorAnalysis.noEvidence(environment, (int) properties.window().toMinutes());
+        }
         if (!llmCallBudget.tryAcquire()) {
             log.warn("[ZzolBot] 일일 LLM 예산 소진 — 이상 분석 생략. fingerprint={}", alert.fingerprint());
             return MonitorAnalysis.budgetExhausted();
         }
-        final List<String> logs = lokiLogClient.tailErrors(now, properties.window(), LOG_SAMPLE_LIMIT);
-        return safeAnalyze(alert, logs);
+        return safeAnalyze(alert, logs, environment);
     }
 
     /**
@@ -112,9 +164,9 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
                 dedupKey, now.minus(cooldown));
     }
 
-    private MonitorAnalysis safeAnalyze(FiringAlert alert, List<String> logSamples) {
+    private MonitorAnalysis safeAnalyze(FiringAlert alert, List<String> logSamples, String environment) {
         try {
-            return analyzer.analyze(alert, logSamples);
+            return analyzer.analyze(alert, logSamples, environment);
         } catch (Exception e) {
             log.warn("[ZzolBot] 이상 분석 실패 — 결정적 알림만 전송. fingerprint={}", alert.fingerprint(), e);
             return MonitorAnalysis.failed();
@@ -135,6 +187,26 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
         context.put("summary", nullToEmpty(alert.summary()));
         context.put("description", nullToEmpty(alert.description()));
         context.put("labels", alert.labels());
+        return context;
+    }
+
+    /**
+     * 알림 컨텍스트에 "무엇을 근거로 분석했는가"를 덧붙인다. 분석이 틀렸을 때 어드민 화면만 보고
+     * 검증할 수 있게 하려는 것으로, 진단 챗 경로가 답변에 조회 기준을 남기는 것과 같은 취지다(#1594).
+     * <p>
+     * 전용 컬럼 대신 기존 {@code signals_json}에 병합해 마이그레이션 없이 처리한다. 입력(알림)과
+     * 분석 메타데이터가 한 컬럼에 섞이는 절충이며, 별도 키로 분리해 구분한다.
+     */
+    private Map<String, Object> alertContext(
+            FiringAlert alert, String environment, int logSampleCount, MonitorAnalysis analysis) {
+        final Map<String, Object> context = alertContext(alert);
+        final Map<String, Object> analysisContext = new LinkedHashMap<>();
+        analysisContext.put("logEnvironment", environment);
+        analysisContext.put("windowMinutes", properties.window().toMinutes());
+        analysisContext.put("logSampleCount", logSampleCount);
+        analysisContext.put("evidenceFound", analysis.evidenceFound());
+        analysisContext.put("rootCauseHypothesis", nullToEmpty(analysis.rootCauseHypothesis()));
+        context.put("analysisContext", analysisContext);
         return context;
     }
 

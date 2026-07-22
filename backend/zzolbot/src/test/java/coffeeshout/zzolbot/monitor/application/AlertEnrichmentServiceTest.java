@@ -192,6 +192,26 @@ class AlertEnrichmentServiceTest {
 
             verify(lokiLogClient).tailErrors(any(), any(), anyInt(), eq("staging"));
         }
+
+        @Test
+        void job이_정확히_접미사뿐이면_빈_환경_대신_실행_환경으로_폴백한다() {
+            given(lokiLogClient.defaultEnvironment()).willReturn("prod");
+
+            // "-app" → 접미사 제거 시 빈 문자열. 그대로 쓰면 {environment=""}로 필터가 무력화된다.
+            service.enrich(alertWithJob("-app"));
+
+            verify(lokiLogClient).tailErrors(any(), any(), anyInt(), eq("prod"));
+        }
+
+        @Test
+        void 환경명_형식에_맞지_않는_job은_실행_환경으로_폴백한다() {
+            given(lokiLogClient.defaultEnvironment()).willReturn("prod");
+
+            // LogQL 셀렉터를 조기 종료시킬 수 있는 값 — 유도 결과가 허용 문자 밖이면 폴백해야 한다.
+            service.enrich(alertWithJob("prod\"} |~ \".*"));
+
+            verify(lokiLogClient).tailErrors(any(), any(), anyInt(), eq("prod"));
+        }
     }
 
     @Nested

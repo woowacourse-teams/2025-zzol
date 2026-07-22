@@ -55,6 +55,9 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
             없는 수치·테이블·이벤트명을 지어내지 마라. 확인된 것과 추측을 섞지 마라.
             조치는 제안일 뿐 자동 실행되지 않는다. 설명 텍스트 없이 JSON 객체 하나만 출력하라.""";
 
+    // 근거가 확인되지 않은 분석의 요약을 대체하는 문구. 모델의 단정적 요약이 그대로 남지 않게 한다.
+    private static final String NO_EVIDENCE_SUMMARY = "제공된 로그에서 이 알림을 뒷받침할 근거를 찾지 못했습니다.";
+
     private final @Qualifier("zzolBotClient") Client zzolBotClient;
     private final ZzolBotProperties properties;
     private final ObjectMapper objectMapper;
@@ -111,13 +114,11 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
             // 보수적으로 false로 본다 — 근거 있다고 잘못 표시하는 쪽이 더 위험하다.
             final boolean claimed = node.path("evidenceFound").asBoolean(false);
             final boolean grounded = claimed && citedInLogs(node.path("evidenceLine").asText(""), logSamples);
-            // 규칙 #3을 코드로 강제한다 — 근거가 없으면 모델이 무엇을 보냈든 원인 가설은 공백이다.
+            // 근거가 없으면 모델이 무엇을 보냈든 원인 가설뿐 아니라 요약까지 안전한 문구로 강제한다.
+            // 화면엔 "근거 없음"인데 요약은 "DB에 심각한 문제" 같은 단정으로 남는 구멍을 막는다(#1595 리뷰).
+            final String summary = grounded ? node.path("summary").asText("") : NO_EVIDENCE_SUMMARY;
             final String hypothesis = grounded ? node.path("rootCauseHypothesis").asText("") : "";
-            return new MonitorAnalysis(
-                    node.path("summary").asText(""),
-                    hypothesis,
-                    actions,
-                    grounded);
+            return new MonitorAnalysis(summary, hypothesis, actions, grounded);
         } catch (Exception e) {
             log.warn("[ZzolBot] 이상 분석 응답 파싱 실패. raw={}", json, e);
             return MonitorAnalysis.failed();

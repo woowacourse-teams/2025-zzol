@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,8 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
     private static final int LOG_SAMPLE_LIMIT = 20;
     private static final String JOB_LABEL = "job";
     private static final String JOB_SUFFIX = "-app";
+    // 유도한 환경명이 LogQL 셀렉터에 삽입되므로 허용 문자를 제한한다 — 인젝션 방지 + 빈 문자열 차단.
+    private static final Pattern SAFE_ENVIRONMENT = Pattern.compile("^[a-zA-Z0-9_-]+$");
 
     private final LlmCallBudget llmCallBudget;
     private final LokiLogClient lokiLogClient;
@@ -74,21 +77,33 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
 
     /**
      * 알림의 {@code job} 라벨에서 조회할 환경을 유도한다({@code prod-app} → {@code prod}).
-     * 라벨이 없으면 이 인스턴스의 환경으로 폴백한다 — 룰이 {@code sum()}으로 라벨을 지우면
-     * 알림에 환경 정보가 남지 않기 때문이다(#1592에서 실제로 발생).
+     * 라벨이 없거나 유도 결과가 환경명 형식에 맞지 않으면 이 인스턴스의 환경으로 폴백한다.
+     * <p>
+     * 폴백이 필요한 이유가 둘이다. (1) 룰이 {@code sum()}으로 라벨을 지우면 알림에 환경 정보가
+     * 남지 않는다(#1592에서 실제로 발생). (2) 유도한 값은 하류 {@link LokiLogClient#tailErrors}의
+     * LogQL 셀렉터에 그대로 삽입되므로, 형식을 검증하지 않으면 셀렉터 인젝션 위험이 있고
+     * {@code job}이 정확히 {@code "-app"}일 때 빈 문자열이 되어 환경 필터가 무력화된다(#1595 리뷰).
      */
     private String resolveEnvironment(FiringAlert alert) {
         final String job = alert.labels().get(JOB_LABEL);
         if (job == null || job.isBlank()) {
-            final String fallback = lokiLogClient.defaultEnvironment();
-            log.info("[ZzolBot] 알림에 job 라벨 없음 — 실행 환경({})으로 폴백. fingerprint={}",
-                    fallback, alert.fingerprint());
-            return fallback;
+            return fallbackEnvironment(alert, "job 라벨 없음");
         }
         final String trimmed = job.trim();
-        return trimmed.endsWith(JOB_SUFFIX)
+        final String derived = trimmed.endsWith(JOB_SUFFIX)
                 ? trimmed.substring(0, trimmed.length() - JOB_SUFFIX.length())
                 : trimmed;
+        if (!SAFE_ENVIRONMENT.matcher(derived).matches()) {
+            return fallbackEnvironment(alert, "환경명 형식 위반(job=%s)".formatted(job));
+        }
+        return derived;
+    }
+
+    private String fallbackEnvironment(FiringAlert alert, String reason) {
+        final String fallback = lokiLogClient.defaultEnvironment();
+        log.info("[ZzolBot] {} — 실행 환경({})으로 폴백. fingerprint={}",
+                reason, fallback, alert.fingerprint());
+        return fallback;
     }
 
     /**

@@ -27,6 +27,8 @@ class GeminiAnomalyAnalyzerTest {
     private static final FiringAlert ALERT = new FiringAlert(
             "AppErrorLogSpike", "warning", "fp-1", "ERROR 급증", "임계 초과",
             Map.of("alertname", "AppErrorLogSpike"));
+    // 프로덕션 상수(GeminiAnomalyAnalyzer.NO_EVIDENCE_SUMMARY)와 동일해야 한다. private이라 값으로 고정한다.
+    private static final String NO_EVIDENCE_SUMMARY = "제공된 로그에서 이 알림을 뒷받침할 근거를 찾지 못했습니다.";
 
     // client·properties는 callApi 안에서만 쓰이고 그 메서드를 스텁하므로 null로 둔다.
     @Spy
@@ -70,6 +72,26 @@ class GeminiAnomalyAnalyzerTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.evidenceFound()).isFalse();
                 softly.assertThat(result.rootCauseHypothesis()).isEmpty();
+                // 근거 없음이면 모델의 단정적 요약("DB 문제로 보임")이 아니라 표준 문구로 대체된다.
+                softly.assertThat(result.summary()).isEqualTo(NO_EVIDENCE_SUMMARY);
+            });
+        }
+
+        @Test
+        void 근거없음으로_강등되면_요약도_표준_문구로_대체한다() {
+            // 모델이 근거 있다며 단정적 요약을 냈지만 인용은 실재하지 않는다.
+            final String json = """
+                    {"summary":"서비스에 심각한 장애 발생","rootCauseHypothesis":"커넥션 풀 고갈",
+                     "suggestedActions":["재시작"],"evidenceFound":true,
+                     "evidenceLine":"ERROR pool exhausted"}""";
+
+            final MonitorAnalysis result = analyzeWith(json, List.of("2026-07-22 ERROR consumer lag 12000"));
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.evidenceFound()).isFalse();
+                softly.assertThat(result.summary())
+                        .isEqualTo(NO_EVIDENCE_SUMMARY)
+                        .doesNotContain("심각한 장애");
             });
         }
 

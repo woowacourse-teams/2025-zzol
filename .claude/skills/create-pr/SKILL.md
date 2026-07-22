@@ -54,9 +54,11 @@ allowed-tools: Read, Bash, Glob, Agent
 
 ## 실행
 
+`gh pr create`는 생성된 PR URL을 stdout으로 출력하므로 그대로 캡처한다.
+
 ```bash
 BASE="dev"   # 사전 작업 1의 값 (--base 로 오버라이드 가능)
-gh pr create \
+PR_URL="$(gh pr create \
   --title "[fix] 카드 점수 집계 누락 수정" \
   --base "$BASE" \
   --label "🐞bug,BE" \
@@ -64,9 +66,12 @@ gh pr create \
   --body-file - <<'EOF'
 <템플릿 채운 내용>
 EOF
+)"
+[ -z "$PR_URL" ] && { echo "ABORT: PR 생성/URL 조회 실패"; exit 1; }
+echo "$PR_URL"
 ```
 
-완료 후 PR 본문이 반영됐는지 확인하고 URL을 `$PR_URL`로 둔다.
+Bash 툴은 호출마다 새 셸이라 `$PR_URL`은 블록 간 유지되지 않는다. 아래 코드 리뷰 단계의 코멘트 블록은 URL을 **다시 조회**한다.
 
 ## 코드 리뷰 (PR 생성 후, 필수)
 
@@ -97,7 +102,11 @@ CodeRabbit 자동 리뷰를 대체하는 단계다(#1600). PR이 이미 존재�
 
 3. **코멘트 정돈·게시**: 에이전트 리포트를 스캔 가능한 코멘트 하나로 정돈한다 — 상단에 심각도별 요약, 그 아래 파일별 발견사항, 긴 개선 제안은 `<details>`로 접는다. **두 리뷰어를 돌린 경우(풀스택) `### 백엔드`·`### 프론트엔드` 섹션으로 나눠 한 코멘트에 합친다**(코멘트 난립 방지). 발견사항이 없으면 "리뷰 통과 — 지적사항 없음"으로 적는다. 리뷰어는 제안만 하고 코드는 수정하지 않으므로 코드 변경은 없다. 정돈한 내용을 PR에 코멘트 1개로 올린다.
 
+   URL 조회와 게시를 **한 셸 블록**에서 처리한다 — `gh pr view`가 현재 브랜치의 PR URL을 잡고, 빈 값이면 중단한다(빈 URL로 코멘트가 엉뚱한 곳에 달리는 것 방지).
+
    ```bash
+   PR_URL="$(gh pr view --json url -q .url)"   # 현재 브랜치의 PR
+   [ -z "$PR_URL" ] && { echo "ABORT: PR URL 조회 실패 — PR이 생성됐는지 확인하세요."; exit 1; }
    gh pr comment "$PR_URL" --body-file - <<'EOF'
    ## 🤖 클로드 코드 리뷰
    <정돈한 발견사항>

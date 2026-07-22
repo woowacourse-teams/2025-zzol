@@ -14,41 +14,46 @@ groups:
     rules:
       # E2E 처리 지연 p95 — 발행부터 처리 완료까지.
       # 버킷이 있으므로 histogram_quantile로 분위수를 직접 계산한다(ADR-0026 line 22).
-      # ⚠️ 임계 0.5s 추정. 레이싱 등 실시간 게임에서 0.5초 지연은 "렉"으로 체감.
+      # prod로 한정하고 job 라벨을 보존한다(#1596) — 이전에는 sum by (le)가 dev·prod 히스토그램을
+      # 합쳐, 07/17 21:05 알림은 dev 2.201s에서 나왔고 prod는 표본조차 없었다.
+      # 임계 0.5s 유지 — prod 관측 최대 p95가 65ms라 여유가 충분하다(2026-07 실측).
       - alert: RedisStreamE2eLatencyHigh
         expr: |
           histogram_quantile(
             0.95,
-            sum by (le) (rate(redis_stream_e2e_latency_seconds_bucket[5m]))
+            sum by (le, job) (rate(redis_stream_e2e_latency_seconds_bucket{job="prod-app"}[5m]))
           ) > 0.5
         for: 3m
         labels:
           severity: warning
         annotations:
-          summary: "Redis Stream E2E 지연 p95 > 500ms"
+          summary: "Redis Stream E2E 지연 p95 > 500ms ({{ $labels.job }})"
           description: "스트림 처리 p95 지연이 {{ $value | printf \"%.3f\" }}s. 컨슈머 처리 적체 또는 다운스트림(App Service) 지연 가능성."
 
       # 스트림 적체 — 컨슈머가 발행 속도를 못 따라가면 length가 쌓인다.
-      # ⚠️ 임계 1000 추정. 정상 운영 시 length는 0 근처여야 한다.
+      # max()는 blue/green 두 인스턴스가 같은 값을 보고하는 중복을 제거하려는 것이지만, job 필터가
+      # 없으면 dev·prod까지 뭉갠다. prod로 한정하고 job별로 집계해 두 의도를 모두 지킨다(#1596).
+      # 임계 1000 유지 — prod 관측 최대가 117이라 여유가 충분하다(2026-07 실측).
       - alert: RedisStreamBacklogHigh
-        expr: max(redis_stream_length) > 1000
+        expr: max by (job) (redis_stream_length{job="prod-app"}) > 1000
         for: 3m
         labels:
           severity: warning
         annotations:
-          summary: "Redis Stream 적체 (length > 1000)"
+          summary: "Redis Stream 적체 (length > 1000, {{ $labels.job }})"
           description: "스트림 길이가 {{ $value }}. 컨슈머 처리 속도가 발행을 못 따라가고 있습니다."
 
       # Outbox DEAD_LETTER 적체 — 재시도 초과로 죽은 이벤트가 쌓이면 메시지 유실.
       # 과거 zzol-bot 자체 폴링(DB count ≥ 10)을 Prometheus로 이관(ADR-0032). "적체 깊이" 신호라
       # 로그 율 기반 룰(Loki ERROR 카운트)로는 못 잡는 느린 누적을 잡는다.
       # blue/green 두 인스턴스가 같은 DB를 보므로 값이 동일 → max()로 중복 제거.
+      # 다만 dev·prod는 DB가 다르므로 job으로 한정하지 않으면 두 환경까지 뭉갠다(#1596).
       # ⚠️ 임계 10은 옛 self-poll 임계 보존(추정치). 배포 후 정상 범위로 보정.
       - alert: OutboxDeadLetterHigh
-        expr: max(outbox_dead_letter_count) > 10
+        expr: max by (job) (outbox_dead_letter_count{job="prod-app"}) > 10
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "Outbox DEAD_LETTER 적체 (> 10)"
+          summary: "Outbox DEAD_LETTER 적체 (> 10, {{ $labels.job }})"
           description: "재시도 초과로 DEAD_LETTER 전환된 outbox 이벤트가 {{ $value }}건. 다운스트림 발행 경로 점검 필요."

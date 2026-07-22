@@ -6,20 +6,23 @@
 #
 # 'fake' = auth_enabled:false 일 때 Loki의 기본 테넌트. 룰 파일은 이 하위에 둬야 인식된다.
 #
-# TODO(후속 PR):
-#   - 라벨 셀렉터를 실제 Alloy 로그 파이프라인(app-logs.alloy) 라벨에 맞춘다(아래는 placeholder).
-#   - 임계값은 추정치다(ADR-0026 계승). 배포 후 베이스라인 측정으로 보정한다.
-#   - zzol-bot 자체 폴링(MonitorCollector/Scheduler/AnomalyGate) 제거와 같은 PR에서 활성화한다.
 groups:
   - name: zzolbot-log-signals
     rules:
+      # ERROR 로그 급증 — prod로 한정하고 job 라벨을 보존한다(#1596).
+      # 이전에는 job 필터 없는 sum()이라 dev·prod를 합산했고, 07/18에는 dev 22건 / prod 2건으로
+      # dev가 단독으로 임계를 넘겨 오발화했다. sum()이 라벨까지 지워 발화한 알림에 환경 정보가
+      # 남지 않았고, Alertmanager 라우팅과 zzol-bot의 환경 식별도 불가능했다.
+      #
+      # 임계 30 — prod 관측 최대 16건/5분 대비 약 2배 여유(2026-07 실측).
+      # ⚠️ 이 실측치는 로그 재수집 아티팩트가 섞인 값이다. #1596의 __path__ 수정이 배포되어
+      #    자정 중복 적재가 사라진 뒤 재측정해 보정한다.
       - alert: AppErrorLogSpike
-        # TODO: {service_name="..."} 셀렉터를 실제 라벨로 교체.
         expr: |
-          sum(count_over_time({job=~"dev-app|prod-app"} |= "ERROR" [5m])) > 20
+          sum by (job) (count_over_time({job="prod-app"} |= "ERROR" [5m])) > 30
         for: 2m
         labels:
           severity: warning
         annotations:
-          summary: "ERROR 로그 급증(최근 5분)"
-          description: "ERROR 로그 카운트가 임계(20/5m)를 초과했습니다. zzol-bot이 근본원인을 분석합니다."
+          summary: "ERROR 로그 급증(최근 5분, {{ $labels.job }})"
+          description: "ERROR 로그가 {{ $value }}건(임계 30/5m)입니다. zzol-bot이 근본원인을 분석합니다."

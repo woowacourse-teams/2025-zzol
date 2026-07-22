@@ -72,15 +72,28 @@ EOF
 
 CodeRabbit 자동 리뷰를 대체하는 단계다(#1600). PR이 이미 존재하므로 여기서 리뷰를 돌려 발견사항을 PR 코멘트로 게시한다.
 
-1. **리뷰어 선택**: 영역 라벨과 동일한 판별(`git diff --name-only "origin/$BASE"...HEAD`)로 고른다. `backend/` 변경이 있으면 `code-reviewer`, `frontend/` 변경이 있으면 `fe-code-reviewer`, 양쪽이면 둘 다 호출한다. 루트 설정 등 소스 변경이 없으면 이 단계를 건너뛴다.
-2. **동기 실행**: 결과 텍스트를 받아 코멘트로 올려야 하므로 `run_in_background: false`로 호출한다. 프롬프트에 **리뷰 대상 diff 범위를 `origin/$BASE...HEAD`로 명시**한다 — 리뷰어 에이전트 기본값이 마지막 커밋(`git diff HEAD~1`)이라 PR 전체 범위와 어긋나므로 반드시 범위를 넘긴다.
+1. **리뷰어 선택 (영역 → 에이전트 매핑)**: 영역 라벨과 동일한 판별(`git diff --name-only "origin/$BASE"...HEAD`)로 고른다. **에이전트는 스택 전용이다** — 백엔드는 `code-reviewer`, 프론트엔드는 `fe-code-reviewer`로 반드시 구분해 호출한다.
+
+   | 변경 경로 | 리뷰어 에이전트 (`subagent_type`) | 리뷰 대상 경로 |
+   | --- | --- | --- |
+   | `backend/` 포함 | **`code-reviewer`** (백엔드) | `backend/**/src/main/java` |
+   | `frontend/` 포함 | **`fe-code-reviewer`** (프론트엔드) | `frontend/src` |
+   | 양쪽(풀스택) | **둘 다** 각각 호출 | 각 스택 경로 |
+   | 루트 설정 등 소스 변경 없음 | 건너뜀 | — |
+
+2. **동기 실행**: 결과 텍스트를 받아 코멘트로 올려야 하므로 `run_in_background: false`로 호출한다. 프롬프트에 **리뷰 대상 diff 범위를 `origin/$BASE...HEAD`로 명시**한다 — 리뷰어 에이전트 기본값이 마지막 커밋(`git diff HEAD~1`)이라 PR 전체 범위와 어긋나므로 반드시 범위를 넘긴다. 스택별로 `subagent_type`과 대상 경로가 다르다.
 
    ```text
+   # 백엔드 변경
    Agent(subagent_type: "code-reviewer", run_in_background: false,
-         prompt: "이 PR(브랜치 origin/$BASE...HEAD 전체 diff)의 src/main/java 변경을 리뷰하라. 대상 파일은 `git diff --name-only origin/$BASE...HEAD`로 확정하라. 발견사항만 텍스트로 반환한다.")
+         prompt: "이 PR(브랜치 origin/$BASE...HEAD 전체 diff)의 backend src/main/java 변경을 리뷰하라. 대상 파일은 `git diff --name-only origin/$BASE...HEAD`로 확정하라. 발견사항만 텍스트로 반환한다.")
+
+   # 프론트엔드 변경
+   Agent(subagent_type: "fe-code-reviewer", run_in_background: false,
+         prompt: "이 PR(브랜치 origin/$BASE...HEAD 전체 diff)의 frontend/src 변경을 리뷰하라. 대상 파일은 `git diff --name-only origin/$BASE...HEAD`로 확정하라. 발견사항만 텍스트로 반환한다.")
    ```
 
-3. **코멘트 정돈·게시**: 에이전트 리포트를 스캔 가능한 코멘트 하나로 정돈한다 — 상단에 심각도별 요약, 그 아래 파일별 발견사항, 긴 개선 제안은 `<details>`로 접는다. 발견사항이 없으면 "리뷰 통과 — 지적사항 없음"으로 적는다. 리뷰어는 제안만 하고 코드는 수정하지 않으므로 코드 변경은 없다. 정돈한 내용을 PR에 코멘트 1개로 올린다.
+3. **코멘트 정돈·게시**: 에이전트 리포트를 스캔 가능한 코멘트 하나로 정돈한다 — 상단에 심각도별 요약, 그 아래 파일별 발견사항, 긴 개선 제안은 `<details>`로 접는다. **두 리뷰어를 돌린 경우(풀스택) `### 백엔드`·`### 프론트엔드` 섹션으로 나눠 한 코멘트에 합친다**(코멘트 난립 방지). 발견사항이 없으면 "리뷰 통과 — 지적사항 없음"으로 적는다. 리뷰어는 제안만 하고 코드는 수정하지 않으므로 코드 변경은 없다. 정돈한 내용을 PR에 코멘트 1개로 올린다.
 
    ```bash
    gh pr comment "$PR_URL" --body-file - <<'EOF'

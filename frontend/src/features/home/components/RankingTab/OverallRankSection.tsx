@@ -18,7 +18,9 @@ const OverallRankSection = () => {
     <T.RankingSection>
       <T.StatsSectionTitle>게임 종합 랭크</T.StatsSectionTitle>
       <S.Caption>
-        게임에서 얻은 등수대로 포인트가 쌓이는 종합 랭킹이에요. 지금은 블라인드 타이머만 집계돼요.
+        게임에서 얻은 등수대로 포인트가 쌓이는 종합 랭킹이에요.
+        <br />
+        지금은 블라인드 타이머만 집계돼요.
       </S.Caption>
       <S.Card>
         {!myRankLoading && myRank && (

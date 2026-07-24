@@ -46,3 +46,13 @@ export const rankColorMap: Record<number, string> = {
 };
 
 export type RankColorKey = keyof typeof rankColorMap;
+
+/** 시즌 티어 뱃지 색 — 서버 SeasonTier(BRONZE~DIAMOND)와 1:1 */
+export const tierColorMap = {
+  BRONZE: { bg: '#F7E8D8', text: '#A05A1C' },
+  SILVER: { bg: '#EEF1F5', text: '#5B6472' },
+  GOLD: { bg: '#FFF3C4', text: '#9A6B00' },
+  DIAMOND: { bg: '#E0F4FF', text: '#0B6E99' },
+} as const;
+
+export type TierColorKey = keyof typeof tierColorMap;

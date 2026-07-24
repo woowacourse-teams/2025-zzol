@@ -1,17 +1,27 @@
-import RankingItem from '@/components/@common/RankingItem/RankingItem';
+import { useAuth } from '@/features/auth/contexts/AuthContext';
 import { useMySeasonRank, useSeasonLeaderboard } from '@/features/home/hooks/useSeasonRanking';
+import type { SeasonTier } from '@/types/season';
 import * as S from './RankTab.styled';
+
+const TIER_LABEL: Record<SeasonTier, string> = {
+  BRONZE: '브론즈',
+  SILVER: '실버',
+  GOLD: '골드',
+  DIAMOND: '다이아',
+};
 
 /**
  * 게임 종합 랭크 탭 — 미니게임 등수대로 획득한 포인트를 월간 누적하는 종합 랭킹.
- * 종목별 최고 기록(랭킹 탭)과 성격이 달라 별도 탭으로 분리했다.
+ * 내 순위 히어로 카드(포인트 레드) + 티어 뱃지 + 메달 리더보드 + 포인트 규칙 안내.
  * 회원(로그인) 결과만 집계된다.
  */
 const RankTab = () => {
+  const { user } = useAuth();
   const { data: leaderboard, loading } = useSeasonLeaderboard();
   const { data: myRank, loading: myRankLoading } = useMySeasonRank();
 
   const rows = leaderboard?.rows ?? [];
+  const myUserCode = user?.userCode;
 
   return (
     <S.Container>
@@ -21,33 +31,66 @@ const RankTab = () => {
         <br />
         지금은 블라인드 타이머만 집계돼요.
       </S.Caption>
-      <S.CardWrapper>
-        <S.Card>
-          {!myRankLoading && myRank && (
-            <S.MyRankRow>
-              <S.MyRankLabel>내 순위</S.MyRankLabel>
-              <S.MyRankValue>
-                {myRank.rank}위 · {myRank.totalPoints}P {myRank.tier}
-              </S.MyRankValue>
-            </S.MyRankRow>
+
+      {!myRankLoading && myRank && (
+        <S.HeroCard>
+          <S.HeroTopRow>
+            <S.HeroLabel>내 순위</S.HeroLabel>
+            <S.TierBadge $tier={myRank.tier}>{TIER_LABEL[myRank.tier]}</S.TierBadge>
+          </S.HeroTopRow>
+          <S.HeroRankRow>
+            <S.HeroRank>{myRank.rank}</S.HeroRank>
+            <S.HeroRankUnit>위</S.HeroRankUnit>
+            <S.HeroPoints>{myRank.totalPoints}P</S.HeroPoints>
+          </S.HeroRankRow>
+          <S.HeroFooter>
+            {leaderboard ? `${leaderboard.seasonKey} 시즌 · ` : ''}전체 {myRank.totalMembers}명 중
+          </S.HeroFooter>
+        </S.HeroCard>
+      )}
+
+      <S.BoardCard>
+        <S.BoardHeader>
+          <S.BoardTitle>리더보드</S.BoardTitle>
+          {leaderboard && leaderboard.totalMembers > 0 && (
+            <S.BoardCount>{leaderboard.totalMembers}명 참여 중</S.BoardCount>
           )}
-          {loading && <S.Spinner />}
-          {!loading && rows.length === 0 && (
-            <S.Empty>아직 이번 달 기록이 없어요. 블라인드 타이머를 플레이해보세요!</S.Empty>
-          )}
-          {!loading &&
-            rows.map((row, index) => (
-              <S.AnimatedItem key={row.userCode} $index={index}>
-                <RankingItem
-                  rank={row.rank}
-                  name={`${row.nickname}#${row.userCode}`}
-                  count={row.totalPoints}
-                  unit="P"
-                />
-              </S.AnimatedItem>
-            ))}
-        </S.Card>
-      </S.CardWrapper>
+        </S.BoardHeader>
+        {loading && <S.Spinner />}
+        {!loading && rows.length === 0 && (
+          <S.Empty>
+            <S.EmptyEmoji>🏆</S.EmptyEmoji>
+            <S.EmptyText>
+              아직 이번 달 기록이 없어요.
+              <br />
+              블라인드 타이머를 플레이하고 첫 1위를 차지해보세요!
+            </S.EmptyText>
+          </S.Empty>
+        )}
+        {!loading &&
+          rows.map((row, index) => (
+            <S.AnimatedItem key={row.userCode} $index={index}>
+              <S.Row $isMe={row.userCode === myUserCode}>
+                <S.Medal $rank={row.rank}>{row.rank}</S.Medal>
+                <S.RowName>
+                  <S.Nickname>{row.nickname}</S.Nickname>
+                  <S.UserCode>#{row.userCode}</S.UserCode>
+                </S.RowName>
+                <S.TierBadge $tier={row.tier}>{TIER_LABEL[row.tier]}</S.TierBadge>
+                <S.RowPoints>{row.totalPoints}P</S.RowPoints>
+              </S.Row>
+            </S.AnimatedItem>
+          ))}
+      </S.BoardCard>
+
+      <S.GuideCard>
+        <S.GuideTitle>포인트 안내</S.GuideTitle>
+        <S.GuideList>
+          <li>• 게임 1등 100P · 2등 70P · 3등 50P · 그 외 30P를 얻어요.</li>
+          <li>• 300P 실버 · 1,000P 골드 · 3,000P 다이아 티어로 올라가요.</li>
+          <li>• 랭크는 매달 1일에 초기화돼요. 로그인한 플레이만 집계돼요.</li>
+        </S.GuideList>
+      </S.GuideCard>
     </S.Container>
   );
 };

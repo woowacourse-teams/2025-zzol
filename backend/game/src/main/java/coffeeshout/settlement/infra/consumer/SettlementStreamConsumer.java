@@ -164,19 +164,33 @@ public class SettlementStreamConsumer {
         }
     }
 
-    private void handleStreamError(Throwable t) {
+    void handleStreamError(Throwable t) {
         if (stopping.get()) {
             log.debug("종료 중 정산 스트림 오류 (정상 종료 과정): {}", t.getMessage());
             return;
         }
         // 그룹이 사라진 경우(AOF 없는 Redis 재시작·flush 등) 자가 복구한다. 그룹은 0-0부터
         // 재생성되므로 스트림에 남아 있는 메시지는 다시 소비된다 — 멱등성은 정산 원장이 보장한다.
-        if (String.valueOf(t.getMessage()).contains("NOGROUP")) {
+        if (isNoGroupError(t)) {
             log.warn("정산 컨슈머 그룹이 존재하지 않아 재생성합니다: {}", GROUP);
             ensureGroup();
             return;
         }
         log.error("정산 스트림 처리 중 오류가 발생했습니다.", t);
+    }
+
+    /**
+     * NOGROUP은 래핑 계층에 따라 위치가 다르다 — Lettuce 예외가 그대로 오기도 하고, Spring이
+     * {@code RedisSystemException("Error in execution")}으로 감싸 원문이 cause로 밀려나기도
+     * 한다. 최상위 메시지만 보면 후자를 놓쳐 자가 복구 대신 에러 로그 폴링 루프에 빠진다.
+     */
+    private boolean isNoGroupError(Throwable t) {
+        for (Throwable current = t; current != null; current = current.getCause()) {
+            if (String.valueOf(current.getMessage()).contains("NOGROUP")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @EventListener

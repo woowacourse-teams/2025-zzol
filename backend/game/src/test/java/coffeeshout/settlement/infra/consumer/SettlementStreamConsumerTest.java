@@ -20,7 +20,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
@@ -64,6 +66,32 @@ class SettlementStreamConsumerTest {
                 executor,
                 "test-consumer"
         );
+    }
+
+    @Nested
+    class 스트림_오류를_처리할_때 {
+
+        @Test
+        void NOGROUP이_cause에_감싸여_와도_그룹을_재생성한다() {
+            // Spring이 Lettuce 예외를 RedisSystemException("Error in execution")으로 감싸면
+            // 최상위 메시지에 NOGROUP이 없다 — cause 체인을 못 보면 자가 복구가 죽고
+            // 폴링 루프가 에러 스택 로그를 무한 반복한다(테스트 결과 XML 177MB 사고)
+            RedisSystemException wrapped = new RedisSystemException(
+                    "Error in execution",
+                    new RuntimeException("NOGROUP No such key 'settlement:result' or consumer group 'settlement'")
+            );
+
+            consumer.handleStreamError(wrapped);
+
+            verify(stringRedisTemplate).execute(any(RedisCallback.class), eq(true));
+        }
+
+        @Test
+        void NOGROUP이_아닌_오류는_그룹을_재생성하지_않는다() {
+            consumer.handleStreamError(new RuntimeException("connection reset"));
+
+            verify(stringRedisTemplate, never()).execute(any(RedisCallback.class), eq(true));
+        }
     }
 
     @Nested

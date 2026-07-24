@@ -12,6 +12,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -103,6 +104,26 @@ class RedisStreamListenerStarterTest {
                 applicationContext,
                 containerRegistry
         );
+    }
+
+    @Nested
+    class 리스너_생성을_결정할_때 {
+
+        @Test
+        void listener_enabled가_false인_스트림은_브로드캐스트_컨테이너를_만들지_않는다() {
+            // given: 컨슈머 그룹 전용 작업 큐 스트림(#1610)
+            given(properties.keys()).willReturn(Map.of(
+                    "settlement:result",
+                    new RedisStreamProperties.StreamConfig(null, null, 10000, null, null, false)
+            ));
+
+            // when
+            starter.streamContainers();
+
+            // then: 컨테이너 생성 경로(스레드풀 조회·시작 오프셋 해석)에 진입하지 않는다
+            verifyNoInteractions(applicationContext);
+            verifyNoInteractions(stringRedisTemplate);
+        }
     }
 
     @Nested

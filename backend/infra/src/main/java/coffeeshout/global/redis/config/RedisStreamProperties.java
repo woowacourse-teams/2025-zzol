@@ -28,19 +28,39 @@ public record RedisStreamProperties(
             ThreadPoolConfig threadPool,
             Integer maxLength,
             Integer batchSize,
-            Duration pollTimeout
+            Duration pollTimeout,
+            Boolean listenerEnabled
     ) {
         public StreamConfig {
-            if (threadPoolName == null && threadPool == null) {
+            final boolean enabled = listenerEnabled == null || listenerEnabled;
+            if (enabled) {
+                if (threadPoolName == null && threadPool == null) {
+                    throw new IllegalArgumentException(
+                            "threadPoolName 또는 threadPool 중 하나는 반드시 지정해야 합니다."
+                    );
+                }
+                if (threadPoolName != null && threadPool != null) {
+                    throw new IllegalArgumentException(
+                            "threadPoolName과 threadPool을 동시에 지정할 수 없습니다."
+                    );
+                }
+            } else if (threadPoolName != null || threadPool != null) {
+                // 리스너를 만들지 않는 스트림은 소비 스레드가 없다 — 풀 지정은 설정 오해의 신호다.
                 throw new IllegalArgumentException(
-                        "threadPoolName 또는 threadPool 중 하나는 반드시 지정해야 합니다."
+                        "listener-enabled: false인 스트림은 스레드풀을 지정할 수 없습니다."
                 );
             }
-            if (threadPoolName != null && threadPool != null) {
-                throw new IllegalArgumentException(
-                        "threadPoolName과 threadPool을 동시에 지정할 수 없습니다."
-                );
-            }
+        }
+
+        /**
+         * 브로드캐스트 리스너({@code RedisStreamListenerStarter})를 생성할지 여부. 기본 true.
+         * <p>
+         * false인 스트림은 발행({@code StreamPublisher})만 이 설정을 통해 허용되고, 소비는 별도
+         * 컨슈머 그룹 소유 컴포넌트가 담당한다. 전 인스턴스 브로드캐스트가 아니라 "정확히 한 번
+         * 처리"가 필요한 작업 큐 스트림(예: 시즌 정산)이 여기에 해당한다(#1610).
+         */
+        public boolean isListenerEnabled() {
+            return listenerEnabled == null || listenerEnabled;
         }
 
         public boolean isUseSharedThreadPool() {

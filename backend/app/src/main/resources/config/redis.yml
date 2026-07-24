@@ -57,6 +57,13 @@ redis:
           core-size: 1
           max-size: 1
           queue-capacity: 1024
+      # 시즌 정산 작업 큐 — 브로드캐스트가 아니라 컨슈머 그룹이 "정확히 한 번" 소비한다(#1610).
+      # listener-enabled: false로 브로드캐스트 리스너를 만들지 않고, 발행 경로(StreamPublisher)만 연다.
+      # max-length가 짧으면 소비가 밀릴 때 미처리 메시지가 트리밍되어 PEL 회수(XCLAIM)가 빈 껍데기가
+      # 되므로, 처리 보장이 목적인 이 스트림은 브로드캐스트 스트림(100)과 달리 길게 잡는다.
+      "[settlement:result]":
+        listener-enabled: false
+        max-length: 10000
 
 redisson:
   enabled: true

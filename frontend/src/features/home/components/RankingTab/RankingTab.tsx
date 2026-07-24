@@ -10,11 +10,8 @@ const RankingTab = () => {
       <S.StatsSection>
         <S.StatsSectionTitle>이달의 통계</S.StatsSectionTitle>
         <DashBoard />
+        <SeasonRankingSection />
       </S.StatsSection>
-
-      <S.Divider />
-
-      <SeasonRankingSection />
 
       <S.Divider />
 

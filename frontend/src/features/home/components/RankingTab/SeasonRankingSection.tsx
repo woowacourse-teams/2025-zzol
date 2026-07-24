@@ -4,7 +4,8 @@ import * as T from './RankingTab.styled';
 import * as S from './SeasonRankingSection.styled';
 
 /**
- * 시즌 랭킹 섹션 — 미니게임 결과가 시즌 포인트로 정산된 전역 리더보드.
+ * 시즌 랭킹 카드 — 미니게임 결과가 시즌 포인트로 정산된 전역 리더보드.
+ * 이달의 통계 섹션의 카드들 아래에 같은 카드 스타일로 놓인다.
  * 월 단위 시즌이라 매월 초기화되고, 회원(로그인) 결과만 집계된다.
  */
 const SeasonRankingSection = () => {
@@ -14,12 +15,12 @@ const SeasonRankingSection = () => {
   const rows = leaderboard?.rows ?? [];
 
   return (
-    <T.RankingSection>
-      <S.TitleRow>
-        <T.StatsSectionTitle>시즌 랭킹</T.StatsSectionTitle>
-        {leaderboard && <S.SeasonLabel>{leaderboard.seasonKey} 시즌</S.SeasonLabel>}
-      </S.TitleRow>
+    <S.CardWrapper>
       <S.Card>
+        <S.TitleRow>
+          <S.CardTitle>시즌 랭킹</S.CardTitle>
+          {leaderboard && <S.SeasonLabel>{leaderboard.seasonKey} 시즌</S.SeasonLabel>}
+        </S.TitleRow>
         {!myRankLoading && myRank && (
           <S.MyRankRow>
             <S.MyRankLabel>내 순위</S.MyRankLabel>
@@ -30,7 +31,7 @@ const SeasonRankingSection = () => {
         )}
         {loading && <T.Spinner />}
         {!loading && rows.length === 0 && (
-          <T.EmptyText>아직 이번 시즌 기록이 없어요. 블라인드 타이머를 플레이해보세요!</T.EmptyText>
+          <S.Empty>아직 이번 시즌 기록이 없어요. 블라인드 타이머를 플레이해보세요!</S.Empty>
         )}
         {!loading &&
           rows.map((row, index) => (
@@ -44,7 +45,7 @@ const SeasonRankingSection = () => {
             </T.AnimatedItem>
           ))}
       </S.Card>
-    </T.RankingSection>
+    </S.CardWrapper>
   );
 };
 

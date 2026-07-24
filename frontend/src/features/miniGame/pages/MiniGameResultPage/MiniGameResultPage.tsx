@@ -9,6 +9,8 @@ import PlayerCard from '@/components/@composition/PlayerCard/PlayerCard';
 import MiniGameResultSkeleton from '@/components/@composition/MiniGameResultSkeleton/MiniGameResultSkeleton';
 import { colorList } from '@/constants/color';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
+import useToast from '@/components/@common/Toast/useToast';
+import type { SeasonRankMessage } from '@/types/season';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import Layout from '@/layouts/Layout';
 import { MiniGameType } from '@/types/miniGame/common';
@@ -51,8 +53,23 @@ const MiniGameResultPage = () => {
   const navigate = useReplaceNavigate();
   const miniGameType = useParams<{ miniGameType: MiniGameType }>().miniGameType;
   const { send } = useWebSocket();
-  const { joinCode } = useIdentifier();
+  const { joinCode, myName } = useIdentifier();
   const { playerType } = usePlayerType();
+  const { showToast } = useToast();
+
+  // 시즌 정산은 게임 종료 직후 서버가 비동기로 완료하고 방 토픽으로 알린다.
+  // 내 결과가 포함된 경우에만 개인화된 토스트를 띄운다(게스트는 정산 대상이 아니다).
+  const handleSeasonRankUpdated = useCallback(
+    (message: SeasonRankMessage) => {
+      const myEntry = message.entries.find((entry) => entry.playerName === myName);
+      if (!myEntry) return;
+      showToast({
+        type: 'success',
+        message: `시즌 랭킹 ${myEntry.seasonRank}위! (${myEntry.totalPoints}P ${myEntry.tier})`,
+      });
+    },
+    [myName, showToast]
+  );
 
   const handleNavigateToRoulettePlayPage = useCallback(() => {
     navigate(`/room/${joinCode}/roulette/play`);
@@ -61,6 +78,10 @@ const MiniGameResultPage = () => {
   useWebSocketSubscription<ShowRouletteResponse>(
     `/room/${joinCode}/roulette`,
     handleNavigateToRoulettePlayPage
+  );
+  useWebSocketSubscription<SeasonRankMessage>(
+    `/room/${joinCode}/settlement`,
+    handleSeasonRankUpdated
   );
 
   const handleClickRouletteResultButton = () => {

@@ -32,7 +32,7 @@ ZZOL의 모든 Redis Stream 소비는 standalone XREAD 브로드캐스트다. We
 
 ### 3. 발행 — 결과 저장 트랜잭션 안에서 Outbox 경유
 
-발행 훅은 `MiniGameResultSaveEventListener`(ADR-0025) 안이다. 게임별 종료 지점은 전부 스케줄러 스레드(트랜잭션 밖)라 Outbox를 끼울 수 없고, 결과 저장 트랜잭션을 가진 이 리스너가 유일한 훅 위치다. 게임 코드는 수정하지 않으며 대상 게임은 게이트(`SETTLEMENT_TARGET_GAMES`)로 제한한다 — 첫 대상은 점수가 방 간 절대 비교 가능한 BLIND_TIMER(목표 시간과의 오차 ms)다.
+발행 훅은 `MiniGameResultSaveEventListener`(ADR-0025) 안이다. 게임별 종료 지점은 전부 스케줄러 스레드(트랜잭션 밖)라 Outbox를 끼울 수 없고, 결과 저장 트랜잭션을 가진 이 리스너가 유일한 훅 위치다. 게임 코드는 수정하지 않으며 대상 게임은 게이트(`SETTLEMENT_TARGET_GAMES`)로 제어한다 — BLIND_TIMER로 선행 검증한 뒤 같은 PR에서 전 게임으로 확장했다. 포인트가 방 안 등수 기반이라 게임 간 점수 단위가 달라도 성립하고, 등수 계산(`MiniGameResult.calculateRank`)은 전 게임 공통이며 동점은 같은 등수를 공유한다(1,1,3). 전원 동점(전원 실패 포함) 판은 등수 결과를 그대로 신뢰해 전원 1등으로 정산한다 — 드문 케이스에 정산 계층이 게임별 실패 판정 지식을 갖는 비용이 더 크다고 판단했다.
 
 정산 이벤트의 eventId는 랜덤 UUID가 아니라 `roomSessionId + miniGameType`에서 안정 파생한다. `MiniGameFinishedEvent.eventId()`는 인스턴스별 랜덤이라, blue/green 양쪽 발행·Outbox 재발행에서 같은 사건이 다른 ID를 갖게 되어 멱등 기준으로 쓸 수 없다.
 

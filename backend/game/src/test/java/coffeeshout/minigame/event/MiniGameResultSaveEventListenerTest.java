@@ -128,7 +128,8 @@ class MiniGameResultSaveEventListenerTest {
         }
 
         @Test
-        void 정산_대상이_아닌_게임은_기록하지_않는다() {
+        void 모든_게임_타입이_정산_대상이다() {
+            // 전 게임 확장(#1610) — BLIND_TIMER 외 게임도 정산 이벤트를 발행한다
             Gamer 한스 = Gamer.loggedIn("한스", 1L);
             Gamer 루키 = Gamer.loggedIn("루키", 2L);
 
@@ -137,7 +138,9 @@ class MiniGameResultSaveEventListenerTest {
 
             listener.handle(미니게임종료이벤트(한스, 루키));
 
-            verify(outboxEventRecorder, never()).record(any(), any());
+            SettlementResultEvent 발행된_정산 = 발행된_정산_이벤트();
+            assertThat(발행된_정산.eventId()).isEqualTo("settlement:7:CARD_GAME");
+            assertThat(발행된_정산.results()).hasSize(2);
         }
 
         @Test

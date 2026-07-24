@@ -23,6 +23,8 @@ import coffeeshout.settlement.event.SettlementResultEvent.PlayerResult;
 import coffeeshout.settlement.infra.SettlementStreamKey;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,9 +42,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MiniGameResultSaveEventListener {
 
-    // 시즌 정산 대상 게임. 점수가 방 간 절대 비교 가능한 게임만 넣는다 — BLIND_TIMER는 목표
-    // 시간과의 오차(ms)라 전역 랭킹이 성립한다. 파이프라인 검증 후 확장한다(#1610).
-    private static final Set<MiniGameType> SETTLEMENT_TARGET_GAMES = Set.of(MiniGameType.BLIND_TIMER);
+    // 시즌 정산 대상 게임 — 전 게임 적용(BLIND_TIMER 선행 검증 후 확장, #1610). 포인트는 방 안
+    // 등수 기반(SeasonPointPolicy)이라 게임 간 점수 단위가 달라도 성립한다. 전원 동점(전원 실패
+    // 포함) 판은 등수 계산 결과를 그대로 신뢰해 전원 1등으로 정산한다. 새 게임 타입은 자동
+    // 포함되며, 제외할 게임이 생기면 여기서 뺀다.
+    private static final Set<MiniGameType> SETTLEMENT_TARGET_GAMES =
+            Collections.unmodifiableSet(EnumSet.allOf(MiniGameType.class));
 
     private final RoomSnapshotQuery roomSnapshotQuery;
     private final MiniGameJpaRepository miniGameJpaRepository;

@@ -29,7 +29,7 @@ const RankTab = () => {
       <S.Caption>
         게임에서 얻은 등수대로 포인트가 쌓이는 종합 랭킹이에요.
         <br />
-        지금은 블라인드 타이머만 집계돼요.
+        모든 미니게임의 결과가 집계돼요.
       </S.Caption>
 
       {!myRankLoading && myRank && (
@@ -63,7 +63,7 @@ const RankTab = () => {
             <S.EmptyText>
               아직 이번 달 기록이 없어요.
               <br />
-              블라인드 타이머를 플레이하고 첫 1위를 차지해보세요!
+              미니게임을 플레이하고 첫 1위를 차지해보세요!
             </S.EmptyText>
           </S.Empty>
         )}

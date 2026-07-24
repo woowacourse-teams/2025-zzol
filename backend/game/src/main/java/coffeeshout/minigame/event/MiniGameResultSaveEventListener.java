@@ -110,7 +110,7 @@ public class MiniGameResultSaveEventListener {
 
             if (gamer.getUserId() != null) {
                 playerStats.add(new PlayerStat(gamer.getUserId(), rank == 1));
-                settlementResults.add(new PlayerResult(gamer.getUserId(), rank, score));
+                settlementResults.add(new PlayerResult(gamer.getUserId(), gamer.getName(), rank, score));
             }
         }
 

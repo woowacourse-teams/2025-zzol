@@ -46,6 +46,6 @@ public record SettlementResultEvent(
         return "settlement:" + roomSessionId + ":" + miniGameType;
     }
 
-    public record PlayerResult(long userId, int rank, long score) {
+    public record PlayerResult(long userId, String playerName, int rank, long score) {
     }
 }

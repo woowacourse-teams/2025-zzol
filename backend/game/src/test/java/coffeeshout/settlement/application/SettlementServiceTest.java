@@ -56,7 +56,7 @@ class SettlementServiceTest {
             given(scoreRepository.addPoints(SEASON, 1L, 100)).willReturn(0);
             시즌_성적_조회_설정(1L, 100, SeasonTier.BRONZE);
 
-            List<SettledScore> settled = settlementService.settle(정산_이벤트(new PlayerResult(1L, 1, 12L)));
+            List<SettledScore> settled = settlementService.settle(정산_이벤트(new PlayerResult(1L, "한스", 1, 12L)));
 
             ArgumentCaptor<SeasonSettlementEntity> ledger = ArgumentCaptor.forClass(SeasonSettlementEntity.class);
             verify(settlementRepository).save(ledger.capture());
@@ -73,7 +73,7 @@ class SettlementServiceTest {
             given(scoreRepository.addPoints(SEASON, 1L, 70)).willReturn(1);
             시즌_성적_조회_설정(1L, 170, SeasonTier.BRONZE);
 
-            settlementService.settle(정산_이벤트(new PlayerResult(1L, 2, 40L)));
+            settlementService.settle(정산_이벤트(new PlayerResult(1L, "한스", 2, 40L)));
 
             verify(scoreRepository, never()).save(any(SeasonScoreEntity.class));
         }
@@ -85,7 +85,7 @@ class SettlementServiceTest {
             given(scoreRepository.addPoints(SEASON, 1L, 100)).willReturn(1);
             SeasonScoreEntity score = 시즌_성적_조회_설정(1L, 320, SeasonTier.BRONZE);
 
-            List<SettledScore> settled = settlementService.settle(정산_이벤트(new PlayerResult(1L, 1, 12L)));
+            List<SettledScore> settled = settlementService.settle(정산_이벤트(new PlayerResult(1L, "한스", 1, 12L)));
 
             verify(score).updateTier(SeasonTier.SILVER);
             assertThat(settled.getFirst().tier()).isEqualTo(SeasonTier.SILVER);
@@ -99,7 +99,7 @@ class SettlementServiceTest {
             given(scoreRepository.addPoints(anyString(), anyLong(), anyInt())).willReturn(1);
             시즌_성적_조회_설정(1L, 100, SeasonTier.BRONZE);
 
-            settlementService.settle(정산_이벤트(new PlayerResult(1L, 1, 12L)));
+            settlementService.settle(정산_이벤트(new PlayerResult(1L, "한스", 1, 12L)));
 
             verify(scoreRepository).addPoints(eq(SEASON), eq(1L), anyInt());
         }
@@ -113,7 +113,7 @@ class SettlementServiceTest {
             given(settlementRepository.existsByRoomSessionIdAndMiniGameTypeAndUserId(ROOM_SESSION_ID, GAME_TYPE, 1L))
                     .willReturn(true);
 
-            List<SettledScore> settled = settlementService.settle(정산_이벤트(new PlayerResult(1L, 1, 12L)));
+            List<SettledScore> settled = settlementService.settle(정산_이벤트(new PlayerResult(1L, "한스", 1, 12L)));
 
             verify(settlementRepository, never()).save(any());
             verify(scoreRepository, never()).addPoints(anyString(), anyLong(), anyInt());
@@ -131,7 +131,7 @@ class SettlementServiceTest {
             시즌_성적_조회_설정(2L, 70, SeasonTier.BRONZE);
 
             List<SettledScore> settled = settlementService.settle(
-                    정산_이벤트(new PlayerResult(1L, 1, 12L), new PlayerResult(2L, 2, 40L)));
+                    정산_이벤트(new PlayerResult(1L, "한스", 1, 12L), new PlayerResult(2L, "루키", 2, 40L)));
 
             assertThat(settled).containsExactly(new SettledScore(2L, SEASON, 70, SeasonTier.BRONZE));
         }

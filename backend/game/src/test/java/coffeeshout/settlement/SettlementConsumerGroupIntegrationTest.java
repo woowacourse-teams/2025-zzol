@@ -62,7 +62,7 @@ class SettlementConsumerGroupIntegrationTest extends GameModuleIntegrationTest {
                 "ZZ9X",
                 ROOM_SESSION_ID,
                 "BLIND_TIMER",
-                List.of(new PlayerResult(1L, 1, 12L), new PlayerResult(2L, 2, 40L))
+                List.of(new PlayerResult(1L, "한스", 1, 12L), new PlayerResult(2L, "루키", 2, 40L))
         );
         final String seasonKey = SeasonKey.from(event.timestamp()).value();
 

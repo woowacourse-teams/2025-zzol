@@ -9,11 +9,15 @@ import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.redis.stream.StreamTracePropagator;
+import coffeeshout.minigame.infra.MinigameStreamKey;
 import coffeeshout.settlement.application.SeasonLeaderboardService;
 import coffeeshout.settlement.application.SettlementService;
 import coffeeshout.settlement.application.SettlementService.SettledScore;
 import coffeeshout.settlement.domain.SeasonTier;
+import coffeeshout.settlement.application.SeasonLeaderboardService.LeaderboardEntry;
+import coffeeshout.settlement.event.SeasonRankUpdatedEvent;
 import coffeeshout.settlement.event.SettlementResultEvent;
 import coffeeshout.settlement.event.SettlementResultEvent.PlayerResult;
 import coffeeshout.settlement.infra.consumer.SettlementMessageProcessor.PoisonMessageException;
@@ -43,6 +47,8 @@ class SettlementMessageProcessorTest {
     SettlementService settlementService;
     @Mock
     SeasonLeaderboardService leaderboardService;
+    @Mock
+    StreamPublisher streamPublisher;
 
     private ObjectMapper objectMapper;
     private SettlementMessageProcessor processor;
@@ -58,7 +64,7 @@ class SettlementMessageProcessorTest {
         objectMapper.registerSubtypes(SettlementResultEvent.class, OtherEventDummy.class);
 
         processor = new SettlementMessageProcessor(
-                objectMapper, streamTracePropagator, settlementService, leaderboardService);
+                objectMapper, streamTracePropagator, settlementService, leaderboardService, streamPublisher);
 
         // 트레이스 스코프는 본문 실행만 위임한다
         willAnswer(invocation -> {
@@ -70,7 +76,7 @@ class SettlementMessageProcessorTest {
     @Test
     void 정산_이벤트를_파싱해_정산하고_리더보드를_갱신한다() throws Exception {
         SettlementResultEvent event = SettlementResultEvent.of(
-                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, 1, 12L)));
+                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)));
         SettledScore settled = new SettledScore(1L, "2026-07", 100, SeasonTier.BRONZE);
         given(settlementService.settle(any())).willReturn(List.of(settled));
 
@@ -78,6 +84,37 @@ class SettlementMessageProcessorTest {
 
         verify(settlementService).settle(any(SettlementResultEvent.class));
         verify(leaderboardService).updateScore(settled);
+    }
+
+    @Test
+    void 정산_후_순위_변동을_브로드캐스트_스트림으로_발행한다() throws Exception {
+        SettlementResultEvent event = SettlementResultEvent.of(
+                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)));
+        SettledScore settled = new SettledScore(1L, "2026-07", 100, SeasonTier.BRONZE);
+        given(settlementService.settle(any())).willReturn(List.of(settled));
+        given(leaderboardService.rankOf("2026-07", 1L))
+                .willReturn(java.util.Optional.of(new LeaderboardEntry(1L, 3, 100)));
+
+        processor.process(레코드(objectMapper.writeValueAsString(event)));
+
+        org.mockito.ArgumentCaptor<SeasonRankUpdatedEvent> captor =
+                org.mockito.ArgumentCaptor.forClass(SeasonRankUpdatedEvent.class);
+        verify(streamPublisher).publish(org.mockito.ArgumentMatchers.eq(MinigameStreamKey.EVENTS), captor.capture());
+        SeasonRankUpdatedEvent published = captor.getValue();
+        org.assertj.core.api.Assertions.assertThat(published.joinCode()).isEqualTo("AB3C");
+        org.assertj.core.api.Assertions.assertThat(published.entries())
+                .containsExactly(new SeasonRankUpdatedEvent.RankEntry("한스", 100, "BRONZE", 3));
+    }
+
+    @Test
+    void 재전달로_정산이_전부_스킵되면_순위_알림도_발행하지_않는다() throws Exception {
+        SettlementResultEvent event = SettlementResultEvent.of(
+                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)));
+        given(settlementService.settle(any())).willReturn(List.of());
+
+        processor.process(레코드(objectMapper.writeValueAsString(event)));
+
+        org.mockito.Mockito.verifyNoInteractions(streamPublisher);
     }
 
     @Test
@@ -109,7 +146,7 @@ class SettlementMessageProcessorTest {
     void 정산_실패는_포이즌이_아니라_그대로_전파된다() throws Exception {
         // 일시 실패는 ACK 보류 → 재전달로 수렴해야 하므로 포이즌으로 오분류하면 안 된다
         SettlementResultEvent event = SettlementResultEvent.of(
-                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, 1, 12L)));
+                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)));
         given(settlementService.settle(any())).willThrow(new RuntimeException("DB 일시 실패"));
         String payload = objectMapper.writeValueAsString(event);
 

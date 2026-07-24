@@ -124,7 +124,7 @@ class MiniGameResultSaveEventListenerTest {
             SettlementResultEvent 발행된_정산 = 발행된_정산_이벤트();
             assertThat(발행된_정산.eventId()).isEqualTo("settlement:7:BLIND_TIMER");
             assertThat(발행된_정산.roomSessionId()).isEqualTo(ROOM_SESSION_ID);
-            assertThat(발행된_정산.results()).containsExactly(new PlayerResult(1L, 1, 100L));
+            assertThat(발행된_정산.results()).containsExactly(new PlayerResult(1L, "한스", 1, 100L));
         }
 
         @Test

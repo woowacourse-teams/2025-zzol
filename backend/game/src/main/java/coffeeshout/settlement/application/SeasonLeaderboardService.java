@@ -2,8 +2,13 @@ package coffeeshout.settlement.application;
 
 import coffeeshout.settlement.application.SettlementService.SettledScore;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.stereotype.Service;
 
 /**
@@ -29,7 +34,46 @@ public class SeasonLeaderboardService {
         stringRedisTemplate.expire(key, RETENTION);
     }
 
+    /** 시즌 상위 {@code limit}명 (포인트 내림차순). */
+    public List<LeaderboardEntry> top(String seasonKey, int limit) {
+        final Set<TypedTuple<String>> tuples = stringRedisTemplate.opsForZSet()
+                .reverseRangeWithScores(leaderboardKey(seasonKey), 0, limit - 1L);
+        if (tuples == null) {
+            return List.of();
+        }
+        final List<LeaderboardEntry> entries = new ArrayList<>();
+        int rank = 1;
+        for (TypedTuple<String> tuple : tuples) {
+            if (tuple.getValue() == null || tuple.getScore() == null) {
+                continue;
+            }
+            entries.add(new LeaderboardEntry(Long.parseLong(tuple.getValue()), rank++, tuple.getScore().longValue()));
+        }
+        return entries;
+    }
+
+    /** 특정 회원의 시즌 순위. 이번 시즌 정산 이력이 없으면 빈 값. */
+    public Optional<LeaderboardEntry> rankOf(String seasonKey, long userId) {
+        final String key = leaderboardKey(seasonKey);
+        final String member = String.valueOf(userId);
+        final Long rank = stringRedisTemplate.opsForZSet().reverseRank(key, member);
+        final Double score = stringRedisTemplate.opsForZSet().score(key, member);
+        if (rank == null || score == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new LeaderboardEntry(userId, (int) (rank + 1), score.longValue()));
+    }
+
+    /** 시즌에 정산 이력이 있는 회원 수. */
+    public long memberCount(String seasonKey) {
+        final Long size = stringRedisTemplate.opsForZSet().zCard(leaderboardKey(seasonKey));
+        return size == null ? 0 : size;
+    }
+
     public static String leaderboardKey(String seasonKey) {
         return KEY_PREFIX + seasonKey;
+    }
+
+    public record LeaderboardEntry(long userId, int rank, long totalPoints) {
     }
 }

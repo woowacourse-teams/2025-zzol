@@ -3,15 +3,23 @@ package coffeeshout.settlement.infra.consumer;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.EventTypeName;
 import coffeeshout.global.redis.stream.StreamRecordFields;
+import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.redis.stream.StreamTracePropagator;
+import coffeeshout.minigame.infra.MinigameStreamKey;
 import coffeeshout.settlement.application.SeasonLeaderboardService;
+import coffeeshout.settlement.application.SeasonLeaderboardService.LeaderboardEntry;
 import coffeeshout.settlement.application.SettlementService;
 import coffeeshout.settlement.application.SettlementService.SettledScore;
+import coffeeshout.settlement.event.SeasonRankUpdatedEvent;
+import coffeeshout.settlement.event.SeasonRankUpdatedEvent.RankEntry;
 import coffeeshout.settlement.event.SettlementResultEvent;
+import coffeeshout.settlement.event.SettlementResultEvent.PlayerResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.connection.stream.MapRecord;
@@ -29,17 +37,20 @@ public class SettlementMessageProcessor {
     private final StreamTracePropagator streamTracePropagator;
     private final SettlementService settlementService;
     private final SeasonLeaderboardService leaderboardService;
+    private final StreamPublisher streamPublisher;
 
     public SettlementMessageProcessor(
             @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper,
             StreamTracePropagator streamTracePropagator,
             SettlementService settlementService,
-            SeasonLeaderboardService leaderboardService
+            SeasonLeaderboardService leaderboardService,
+            StreamPublisher streamPublisher
     ) {
         this.redisObjectMapper = redisObjectMapper;
         this.streamTracePropagator = streamTracePropagator;
         this.settlementService = settlementService;
         this.leaderboardService = leaderboardService;
+        this.streamPublisher = streamPublisher;
     }
 
     /**
@@ -60,8 +71,37 @@ public class SettlementMessageProcessor {
         streamTracePropagator.runInConsumerScope(fields, EventTypeName.of(event), () -> {
             final List<SettledScore> settled = settlementService.settle(event);
             settled.forEach(leaderboardService::updateScore);
+            notifyRankUpdated(event, settled);
             log.info("시즌 정산 완료: eventId={}, settledCount={}", event.eventId(), settled.size());
         });
+    }
+
+    /**
+     * 순위 변동을 방으로 되돌려 보낸다 — 작업 큐(정산)에서 브로드캐스트(알림)로의 복귀 지점.
+     * 재전달로 정산이 스킵되면(settled 비어 있음) 알림도 내보내지 않아 중복 알림이 없다.
+     */
+    private void notifyRankUpdated(SettlementResultEvent event, List<SettledScore> settled) {
+        if (settled.isEmpty()) {
+            return;
+        }
+        final Map<Long, String> namesByUserId = event.results().stream()
+                .collect(Collectors.toMap(PlayerResult::userId, PlayerResult::playerName, (a, b) -> a));
+
+        final String seasonKey = settled.getFirst().seasonKey();
+        final List<RankEntry> entries = new ArrayList<>();
+        for (SettledScore score : settled) {
+            final int seasonRank = leaderboardService.rankOf(seasonKey, score.userId())
+                    .map(LeaderboardEntry::rank)
+                    .orElse(0);
+            entries.add(new RankEntry(
+                    namesByUserId.getOrDefault(score.userId(), "unknown"),
+                    score.totalPoints(),
+                    score.tier().name(),
+                    seasonRank
+            ));
+        }
+        streamPublisher.publish(MinigameStreamKey.EVENTS,
+                SeasonRankUpdatedEvent.of(event.joinCode(), seasonKey, entries));
     }
 
     private SettlementResultEvent parse(String payload) {

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
  * 갱신은 증분(ZINCRBY)이 아니라 <b>절대값(ZADD)</b>이다. 컨슈머 재전달로 같은 정산 결과가
  * 두 번 반영되어도 누적 절대값을 다시 쓰는 것이라 점수가 부풀지 않는다(#1610).
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SeasonLeaderboardService {
@@ -47,7 +49,14 @@ public class SeasonLeaderboardService {
             if (tuple.getValue() == null || tuple.getScore() == null) {
                 continue;
             }
-            entries.add(new LeaderboardEntry(Long.parseLong(tuple.getValue()), rank++, tuple.getScore().longValue()));
+            try {
+                entries.add(new LeaderboardEntry(
+                        Long.parseLong(tuple.getValue()), rank++, tuple.getScore().longValue()));
+            } catch (NumberFormatException e) {
+                // 정상 경로에선 멤버가 항상 userId 문자열이다. 오염된 멤버 하나가 조회 전체를
+                // 실패시키지 않도록 해당 행만 건너뛴다
+                log.warn("리더보드 멤버가 userId 형식이 아님: seasonKey={}, member={}", seasonKey, tuple.getValue());
+            }
         }
         return entries;
     }

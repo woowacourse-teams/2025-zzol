@@ -70,21 +70,22 @@ class SettlementConsumerGroupIntegrationTest extends GameModuleIntegrationTest {
         streamPublisher.publish(SettlementStreamKey.RESULT, event);
 
         // then: 원장·누적 성적·리더보드가 반영된다
+        // 원장 커밋과 ZSET 갱신 사이에 창이 있으므로, 셋 다 같은 대기 블록에서 검증해야 flaky하지 않다
+        final String leaderboardKey = SeasonLeaderboardService.leaderboardKey(seasonKey);
         await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
             assertThat(settlementRepository
                     .existsByRoomSessionIdAndMiniGameTypeAndUserId(ROOM_SESSION_ID, "BLIND_TIMER", 1L)).isTrue();
             assertThat(settlementRepository
                     .existsByRoomSessionIdAndMiniGameTypeAndUserId(ROOM_SESSION_ID, "BLIND_TIMER", 2L)).isTrue();
+
+            final SeasonScoreEntity first = scoreRepository.findBySeasonKeyAndUserId(seasonKey, 1L).orElseThrow();
+            final SeasonScoreEntity second = scoreRepository.findBySeasonKeyAndUserId(seasonKey, 2L).orElseThrow();
+            assertThat(first.getTotalPoints()).isEqualTo(100L);
+            assertThat(second.getTotalPoints()).isEqualTo(70L);
+
+            assertThat(stringRedisTemplate.opsForZSet().score(leaderboardKey, "1")).isEqualTo(100.0);
+            assertThat(stringRedisTemplate.opsForZSet().score(leaderboardKey, "2")).isEqualTo(70.0);
         });
-
-        final SeasonScoreEntity first = scoreRepository.findBySeasonKeyAndUserId(seasonKey, 1L).orElseThrow();
-        final SeasonScoreEntity second = scoreRepository.findBySeasonKeyAndUserId(seasonKey, 2L).orElseThrow();
-        assertThat(first.getTotalPoints()).isEqualTo(100L);
-        assertThat(second.getTotalPoints()).isEqualTo(70L);
-
-        final String leaderboardKey = SeasonLeaderboardService.leaderboardKey(seasonKey);
-        assertThat(stringRedisTemplate.opsForZSet().score(leaderboardKey, "1")).isEqualTo(100.0);
-        assertThat(stringRedisTemplate.opsForZSet().score(leaderboardKey, "2")).isEqualTo(70.0);
 
         // then: 처리 완료가 ACK로 확정된다 — PEL이 비어야 회수 대상이 남지 않은 것이다
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {

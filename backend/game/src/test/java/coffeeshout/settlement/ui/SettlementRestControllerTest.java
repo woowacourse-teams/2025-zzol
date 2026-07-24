@@ -3,6 +3,8 @@ package coffeeshout.settlement.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import coffeeshout.gamecommon.SeasonUserProfileQuery;
 import coffeeshout.gamecommon.SeasonUserProfileQuery.SeasonUserProfile;
@@ -68,6 +70,30 @@ class SettlementRestControllerTest {
                     new SeasonLeaderboardResponse.Row(1, "한스", "AB123", 320, "SILVER"),
                     new SeasonLeaderboardResponse.Row(2, "루키", "CD456", 100, "BRONZE")
             );
+        }
+
+        @Test
+        void limit이_0_이하면_1로_보정한다() {
+            // 하한 없이 0이 ZSET 범위(0, -1)로 흘러가면 Redis 규칙상 전체 조회가 된다
+            given(leaderboardService.top(SEASON, 1)).willReturn(List.of());
+            given(leaderboardService.memberCount(SEASON)).willReturn(0L);
+            given(userProfileQuery.resolveProfiles(anyList())).willReturn(List.of());
+
+            controller.getLeaderboard(SEASON, 0);
+            controller.getLeaderboard(SEASON, -5);
+
+            verify(leaderboardService, times(2)).top(SEASON, 1);
+        }
+
+        @Test
+        void limit이_상한을_넘으면_100으로_보정한다() {
+            given(leaderboardService.top(SEASON, 100)).willReturn(List.of());
+            given(leaderboardService.memberCount(SEASON)).willReturn(0L);
+            given(userProfileQuery.resolveProfiles(anyList())).willReturn(List.of());
+
+            controller.getLeaderboard(SEASON, 500);
+
+            verify(leaderboardService).top(SEASON, 100);
         }
 
         @Test

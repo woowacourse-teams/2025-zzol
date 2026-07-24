@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
  * <ul>
  *   <li>redis.stream.group.pending — 전달됐지만 ACK되지 않은 메시지 수. 0이 정상이고,
  *       지속 증가는 컨슈머 사망 또는 반복 실패의 신호다.</li>
+ *   <li>redis.stream.group.lag — 스트림에 쌓였지만 아직 그룹에 전달되지 않은 메시지 수.
+ *       컨슈머가 전혀 읽지 못하는 상황은 pending이 아니라 lag에 나타난다.</li>
  *   <li>redis.stream.group.consumers — 그룹에 등록된 컨슈머 수. blue/green 상태에 따라 1~2.</li>
  *   <li>redis.stream.length(dlq) — 격리된 메시지 수. 0이 아니면 사람이 봐야 한다.</li>
  * </ul>
@@ -33,6 +35,12 @@ public class SettlementConsumerMetrics {
     public void initializeMetrics() {
         Gauge.builder("redis.stream.group.pending", () -> readGroupInfo(GroupField.PENDING))
                 .description("정산 컨슈머 그룹의 미ACK(pending) 메시지 수")
+                .tag("stream", SettlementStreamConsumer.STREAM_KEY)
+                .tag("group", SettlementStreamConsumer.GROUP)
+                .register(meterRegistry);
+
+        Gauge.builder("redis.stream.group.lag", () -> readGroupInfo(GroupField.LAG))
+                .description("정산 컨슈머 그룹에 아직 전달되지 않은 메시지 수")
                 .tag("stream", SettlementStreamConsumer.STREAM_KEY)
                 .tag("group", SettlementStreamConsumer.GROUP)
                 .register(meterRegistry);
@@ -56,15 +64,29 @@ public class SettlementConsumerMetrics {
             return groups.stream()
                     .filter(group -> SettlementStreamConsumer.GROUP.equals(group.groupName()))
                     .findFirst()
-                    .map(group -> field == GroupField.PENDING
-                            ? (double) group.pendingCount()
-                            : (double) group.consumerCount())
+                    .map(group -> switch (field) {
+                        case PENDING -> (double) group.pendingCount();
+                        case CONSUMERS -> (double) group.consumerCount();
+                        case LAG -> readLag(group);
+                    })
                     .orElse(Double.NaN);
         } catch (Exception e) {
             // 스트림·그룹 미생성(기동 직후) 또는 Redis 장애 — 게이지는 NaN으로 표시한다
             log.debug("정산 컨슈머 그룹 정보 조회 실패: {}", e.getMessage());
             return Double.NaN;
         }
+    }
+
+    /**
+     * Spring Data Redis의 {@code XInfoGroup}은 lag accessor를 제공하지 않아 raw 응답에서 읽는다.
+     * lag은 Redis 7+ 응답 필드이고, XSETID 등으로 산정 불가해지면 서버가 null을 반환한다 — 둘 다 NaN.
+     */
+    private double readLag(XInfoGroup group) {
+        final Object lag = group.getRaw().get("lag");
+        if (lag instanceof Number number) {
+            return number.doubleValue();
+        }
+        return Double.NaN;
     }
 
     private double readDlqLength() {
@@ -78,6 +100,6 @@ public class SettlementConsumerMetrics {
     }
 
     private enum GroupField {
-        PENDING, CONSUMERS
+        PENDING, LAG, CONSUMERS
     }
 }

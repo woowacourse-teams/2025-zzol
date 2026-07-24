@@ -122,7 +122,8 @@ public class MiniGameResultSaveEventListener {
         }
 
         // 시즌 정산은 Outbox를 경유해 정산 작업 큐 스트림으로 나간다 — 결과 저장과 같은
-        // 트랜잭션이라 원자적이고, 소비는 컨슈머 그룹이 "정확히 한 번" 처리한다(#1610).
+        // 트랜잭션이라 원자적이고, 소비는 컨슈머 그룹의 단일 처리 경로로 이뤄진다(#1610).
+        // 전달은 at-least-once이며 중복 반영은 정산 원장의 멱등 처리가 막는다.
         // 게임 종료 지점들은 스케줄러 스레드(트랜잭션 밖)라 이 리스너가 유일한 훅 위치다.
         if (SETTLEMENT_TARGET_GAMES.contains(miniGameType) && !settlementResults.isEmpty()) {
             outboxEventRecorder.record(

@@ -42,7 +42,9 @@ public class SettlementRestController {
             @RequestParam(defaultValue = "10") int limit
     ) {
         final String seasonKey = resolveSeason(season);
-        final List<LeaderboardEntry> entries = leaderboardService.top(seasonKey, Math.min(limit, MAX_LIMIT));
+        // 하한 보정 필수 — limit<=0이 ZSET 범위(0, limit-1)로 흘러가면 Redis 음수 인덱스 규칙상 전체 조회가 된다
+        final int boundedLimit = Math.clamp(limit, 1, MAX_LIMIT);
+        final List<LeaderboardEntry> entries = leaderboardService.top(seasonKey, boundedLimit);
 
         final Map<Long, SeasonUserProfile> profiles = userProfileQuery
                 .resolveProfiles(entries.stream().map(LeaderboardEntry::userId).toList())

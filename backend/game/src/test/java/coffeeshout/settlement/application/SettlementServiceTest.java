@@ -1,6 +1,7 @@
 package coffeeshout.settlement.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -29,6 +30,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @ExtendWith(MockitoExtension.class)
 class SettlementServiceTest {
@@ -118,6 +120,19 @@ class SettlementServiceTest {
             verify(settlementRepository, never()).save(any());
             verify(scoreRepository, never()).addPoints(anyString(), anyLong(), anyInt());
             assertThat(settled).isEmpty();
+        }
+
+        @Test
+        void 동시_경합의_제약_위반은_삼키지_않고_전파한다() {
+            // 문서화된 계약: 예외를 여기서 잡으면 재전달 수렴이 끊겨 이중 지급 방어가 무력화된다
+            given(settlementRepository.existsByRoomSessionIdAndMiniGameTypeAndUserId(ROOM_SESSION_ID, GAME_TYPE, 1L))
+                    .willReturn(false);
+            given(settlementRepository.save(any(SeasonSettlementEntity.class)))
+                    .willThrow(new DataIntegrityViolationException("uk_season_settlement_result"));
+
+            assertThatThrownBy(() -> settlementService.settle(정산_이벤트(new PlayerResult(1L, "한스", 1, 12L))))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+            verify(scoreRepository, never()).addPoints(anyString(), anyLong(), anyInt());
         }
 
         @Test

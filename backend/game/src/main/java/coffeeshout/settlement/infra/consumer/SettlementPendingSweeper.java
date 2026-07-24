@@ -78,9 +78,12 @@ public class SettlementPendingSweeper {
         }
 
         for (MapRecord<String, String, String> record : claimed) {
+            // totalDeliveryCount는 XCLAIM 이전까지의 전달 횟수다. idle 60초를 넘겨 pending에
+            // 남았다는 것 자체가 직전 전달의 처리 실패를 뜻하므로, N이면 이미 N회 시도가
+            // 소진된 상태다 — MAX_DELIVERIES회 시도 후 격리라는 계약에 >=가 부합한다.
             if (message.getTotalDeliveryCount() >= MAX_DELIVERIES) {
                 deadLetterPublisher.publish(record,
-                        "최대 재전달 횟수 초과: deliveries=" + message.getTotalDeliveryCount());
+                        "최대 재전달 횟수 소진: deliveries=" + message.getTotalDeliveryCount());
                 acknowledge(record.getId());
                 continue;
             }

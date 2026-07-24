@@ -79,6 +79,10 @@ public class SettlementMessageProcessor {
     /**
      * 순위 변동을 방으로 되돌려 보낸다 — 작업 큐(정산)에서 브로드캐스트(알림)로의 복귀 지점.
      * 재전달로 정산이 스킵되면(settled 비어 있음) 알림도 내보내지 않아 중복 알림이 없다.
+     * <p>
+     * 알림은 <b>유실 허용</b>이다(ADR-0035): 정산 커밋 후 이 발행이 실패하면 재전달 시
+     * settled가 비어 알림 없이 ACK로 끝난다. 정산(돈)과 달리 알림(토스트)은 홈 화면
+     * 시즌 랭킹에서 언제든 다시 확인할 수 있어, 발행 상태 영속화 같은 재시도 장치를 더하지 않는다.
      */
     private void notifyRankUpdated(SettlementResultEvent event, List<SettledScore> settled) {
         if (settled.isEmpty()) {

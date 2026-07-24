@@ -56,8 +56,8 @@ public record RedisStreamProperties(
          * 브로드캐스트 리스너({@code RedisStreamListenerStarter})를 생성할지 여부. 기본 true.
          * <p>
          * false인 스트림은 발행({@code StreamPublisher})만 이 설정을 통해 허용되고, 소비는 별도
-         * 컨슈머 그룹 소유 컴포넌트가 담당한다. 전 인스턴스 브로드캐스트가 아니라 "정확히 한 번
-         * 처리"가 필요한 작업 큐 스트림(예: 시즌 정산)이 여기에 해당한다(#1610).
+         * 컨슈머 그룹 소유 컴포넌트가 담당한다. 전 인스턴스 브로드캐스트가 아니라 단일 처리
+         * 경로가 필요한 작업 큐 스트림(예: 시즌 정산)이 여기에 해당한다(#1610).
          */
         public boolean isListenerEnabled() {
             return listenerEnabled == null || listenerEnabled;

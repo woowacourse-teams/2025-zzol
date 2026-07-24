@@ -33,7 +33,8 @@ import org.springframework.stereotype.Component;
  * 브로드캐스트 리스너({@code RedisStreamListenerStarter})와의 차이:
  * <ul>
  *   <li>그룹 내 한 컨슈머만 메시지를 받는다 — blue/green 두 인스턴스가 떠 있어도
- *       정산은 정확히 한 번 일어난다.</li>
+ *       한 메시지의 처리 경로는 하나다. 단 전달 보장은 at-least-once다(ACK 전에 죽으면
+ *       재전달). 중복 반영 방지는 정산 원장의 멱등 처리가 담당한다({@code SettlementService}).</li>
  *   <li>처리 성공 시에만 XACK한다. ACK 전에 죽으면 메시지가 PEL에 남고,
  *       {@code SettlementPendingSweeper}가 회수해 다른 인스턴스에서 재처리한다.</li>
  *   <li>시작 오프셋은 XREVRANGE 해석이 아니라 그룹의 last-delivered-id다

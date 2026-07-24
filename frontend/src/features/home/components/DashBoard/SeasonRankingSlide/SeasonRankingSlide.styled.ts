@@ -1,8 +1,9 @@
 import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
+import { scoreboardReveal } from '@/styles/animations/scoreboardReveal';
 
-/** 이달의 통계 카드들(DashBoard.Container: padding 0 16px)과 좌우 정렬을 맞춘다 */
-export const CardWrapper = styled.div`
-  padding: 0 16px;
+const spin = keyframes`
+  to { transform: rotate(360deg); }
 `;
 
 export const Card = styled.div`
@@ -16,22 +17,11 @@ export const Card = styled.div`
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 `;
 
-export const TitleRow = styled.div`
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-`;
-
 export const CardTitle = styled.h3`
   ${({ theme }) => theme.typography.paragraph}
   font-weight: 700;
   color: ${({ theme }) => theme.color.gray[800]};
   letter-spacing: -0.01em;
-`;
-
-export const SeasonLabel = styled.span`
-  ${({ theme }) => theme.typography.caption}
-  color: ${({ theme }) => theme.color.gray[400]};
 `;
 
 export const Empty = styled.p`
@@ -60,4 +50,19 @@ export const MyRankLabel = styled.span`
 export const MyRankValue = styled.span`
   ${({ theme }) => theme.typography.h4}
   color: ${({ theme }) => theme.color.gray[900]};
+`;
+
+export const AnimatedItem = styled.div<{ $index: number }>`
+  animation: ${scoreboardReveal} 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: ${({ $index }) => `${$index * 0.07}s`};
+`;
+
+export const Spinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid ${({ theme }) => theme.color.gray[200]};
+  border-top-color: ${({ theme }) => theme.color.point[400]};
+  border-radius: 50%;
+  animation: ${spin} 0.7s linear infinite;
+  margin: 12px auto;
 `;

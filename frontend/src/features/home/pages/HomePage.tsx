@@ -8,6 +8,7 @@ import HomeBottomTab, { type HomeTabType } from '../components/HomeBottomTab/Hom
 import { type MenuView } from '../components/MenuTab/MenuTab';
 import HomeTab from '../components/tabs/HomeTab/HomeTab';
 import RankingTab from '../components/RankingTab/RankingTab';
+import RankTab from '../components/RankTab/RankTab';
 import MenuTab from '../components/MenuTab/MenuTab';
 import FriendsTab from '../components/FriendsTab/FriendsTab';
 import Splash from '../components/Splash/Splash';
@@ -65,6 +66,7 @@ const HomePage = () => {
           />
         )}
         {activeTab === 'ranking' && <RankingTab />}
+        {activeTab === 'rank' && <RankTab />}
         {activeTab === 'friends' && <FriendsTab />}
         {activeTab === 'menu' && <MenuTab initialView={menuInitialView} />}
       </S.ScrollArea>

@@ -1,7 +1,6 @@
 import DashBoard from '../DashBoard/DashBoard';
 import { RANKING_CATEGORIES } from '../../config/rankingConfigs';
 import RankingAccordionItem from './RankingAccordionItem';
-import OverallRankSection from './OverallRankSection';
 import * as S from './RankingTab.styled';
 
 const RankingTab = () => {
@@ -11,10 +10,6 @@ const RankingTab = () => {
         <S.StatsSectionTitle>이달의 통계</S.StatsSectionTitle>
         <DashBoard />
       </S.StatsSection>
-
-      <S.Divider />
-
-      <OverallRankSection />
 
       <S.Divider />
 

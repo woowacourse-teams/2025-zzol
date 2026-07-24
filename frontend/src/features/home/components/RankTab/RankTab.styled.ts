@@ -6,6 +6,37 @@ const spin = keyframes`
   to { transform: rotate(360deg); }
 `;
 
+const fadeSlideUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+export const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 0 16px;
+  animation: ${fadeSlideUp} 0.35s ease both;
+`;
+
+export const Title = styled.h2`
+  ${({ theme }) => theme.typography.h4}
+  font-weight: 800;
+  color: ${({ theme }) => theme.color.gray[900]};
+  letter-spacing: -0.02em;
+  padding: 0 16px;
+`;
+
+export const CardWrapper = styled.div`
+  padding: 0 16px;
+`;
+
 export const Card = styled.div`
   display: flex;
   flex-direction: column;

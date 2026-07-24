@@ -2,7 +2,6 @@ import { useDashboardData } from '../../hooks/useDashboardData';
 import TopWinnersSlide from './TopWinnersSlide/TopWinnersSlide';
 import LowestProbabilitySlide from './LowestProbabilitySlide/LowestProbabilitySlide';
 import GamePlayCountSlide from './GamePlayCountSlide/GamePlayCountSlide';
-import SeasonRankingSlide from './SeasonRankingSlide/SeasonRankingSlide';
 import * as S from './DashBoard.styled';
 
 const DashBoard = () => {
@@ -16,7 +15,6 @@ const DashBoard = () => {
         probability={lowestProbabilityWinner?.probability ?? 0}
       />
       <GamePlayCountSlide games={gamePlayCounts} />
-      <SeasonRankingSlide />
     </S.Container>
   );
 };

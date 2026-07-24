@@ -17,11 +17,10 @@ export const Card = styled.div`
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 `;
 
-export const CardTitle = styled.h3`
-  ${({ theme }) => theme.typography.paragraph}
-  font-weight: 700;
-  color: ${({ theme }) => theme.color.gray[800]};
-  letter-spacing: -0.01em;
+export const Caption = styled.p`
+  ${({ theme }) => theme.typography.caption}
+  color: ${({ theme }) => theme.color.gray[400]};
+  padding: 0 16px;
 `;
 
 export const Empty = styled.p`

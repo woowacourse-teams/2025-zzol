@@ -1,6 +1,6 @@
 package coffeeshout.settlement.event;
 
-import coffeeshout.global.redis.BaseEvent;
+import coffeeshout.global.redis.WorkQueueEvent;
 import java.time.Instant;
 import java.util.List;
 
@@ -20,7 +20,7 @@ public record SettlementResultEvent(
         long roomSessionId,
         String miniGameType,
         List<PlayerResult> results
-) implements BaseEvent {
+) implements WorkQueueEvent {
 
     public SettlementResultEvent {
         results = List.copyOf(results);

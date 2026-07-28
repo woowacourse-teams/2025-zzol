@@ -8,6 +8,11 @@ import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.infra.persistence.audit.NicknameAuditJpaRepository;
 import coffeeshout.support.IntegrationTestSupport;
 import java.time.Instant;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -58,14 +63,42 @@ class ProfanityAuditRegistrationIntegrationTest extends IntegrationTestSupport {
 
     @Test
     void 같은_닉네임이_동시에_등록돼도_유니크_충돌이_호출자_트랜잭션을_깨뜨리지_않는다() {
-        // 조회 가드(existsByNickname)를 둘 다 통과한 동시 등록 상황. 예전 save()였다면 두 번째
-        // INSERT가 uq_player_name_audit_name_status에 걸려, 이제 같은 트랜잭션을 쓰는 호출자
-        // (닉네임 변경·룰렛 결과 저장)까지 함께 롤백됐다.
-        assertThatCode(() -> transactionTemplate.executeWithoutResult(status -> {
-            auditRepository.insertUnaudited("동시닉네임", Instant.now());
-            auditRepository.insertUnaudited("동시닉네임", Instant.now());
-        })).doesNotThrowAnyException();
+        // 서로 다른 트랜잭션 둘이 조회 가드(existsByNickname)를 모두 통과한 뒤 같은 행을 INSERT하는
+        // 상황이다 — 방 참가 닉네임은 전역 유니크가 아니라 서로 다른 방에서 같은 이름이 동시에
+        // 당첨될 수 있다. 예전 save()였다면 늦게 커밋하는 쪽이 uq_player_name_audit_name_status에
+        // 걸려, 이제 같은 트랜잭션을 쓰는 호출자(룰렛 결과 저장)까지 함께 롤백됐다.
+        //
+        // 가드 통과를 래치로 맞춰야 의미가 있다. 한쪽이 먼저 커밋해버리면 다른 쪽 가드가 그 행을
+        // 보고 INSERT를 건너뛰어 충돌 자체가 일어나지 않는다.
+        final CountDownLatch guardPassed = new CountDownLatch(2);
+        final ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            final Runnable register = () -> transactionTemplate.executeWithoutResult(status -> {
+                assertThat(auditRepository.existsByNickname("동시닉네임")).isFalse();
+                awaitBothGuardsPassed(guardPassed);
+                auditRepository.insertUnaudited("동시닉네임", Instant.now());
+            });
+            final Future<?> first = executor.submit(register);
+            final Future<?> second = executor.submit(register);
+
+            assertThatCode(() -> first.get(10, TimeUnit.SECONDS)).doesNotThrowAnyException();
+            assertThatCode(() -> second.get(10, TimeUnit.SECONDS)).doesNotThrowAnyException();
+        } finally {
+            executor.shutdownNow();
+        }
 
         assertThat(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED)).isEqualTo(1);
+    }
+
+    private void awaitBothGuardsPassed(CountDownLatch guardPassed) {
+        try {
+            guardPassed.countDown();
+            if (!guardPassed.await(10, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("두 트랜잭션이 모두 조회 가드를 통과하지 못했습니다");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
     }
 }

@@ -33,15 +33,20 @@ class ProfanityAuditRegistrationIntegrationTest extends IntegrationTestSupport {
     private NicknameAuditJpaRepository auditRepository;
 
     @Autowired
+    private ProfanityAuditService service;
+
+    @Autowired
     private TransactionTemplate transactionTemplate;
 
     @Test
-    void 닉네임_저장_트랜잭션이_커밋되면_검열_대기_행도_함께_커밋된다() {
-        transactionTemplate.executeWithoutResult(status ->
-                eventPublisher.publishEvent(new NicknameSubmittedEvent("커밋닉네임")));
+    void 트랜잭션_없는_호출자도_검열_등록에_성공한다() {
+        // insertUnaudited는 @Modifying 네이티브 쿼리라 주변 트랜잭션이 없으면 TransactionRequiredException이다.
+        // save()는 리포지토리 자체 트랜잭션으로 동작했으므로, register()가 스스로 트랜잭션을 열지 않으면
+        // 어드민·초기화 코드처럼 트랜잭션 밖에서 부르는 호출자가 조용히 깨진다.
+        assertThatCode(() -> service.register("비트랜잭션")).doesNotThrowAnyException();
 
         assertThat(auditRepository.findNicknamesByStatus(NicknameAuditStatus.UNAUDITED))
-                .containsOnly("커밋닉네임");
+                .containsOnly("비트랜잭션");
     }
 
     @Test
@@ -62,11 +67,12 @@ class ProfanityAuditRegistrationIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 같은_닉네임이_동시에_등록돼도_유니크_충돌이_호출자_트랜잭션을_깨뜨리지_않는다() {
-        // 서로 다른 트랜잭션 둘이 조회 가드(existsByNickname)를 모두 통과한 뒤 같은 행을 INSERT하는
+    void 서로_다른_트랜잭션이_같은_닉네임을_동시에_등록해도_INSERT가_예외를_던지지_않는다() {
+        // 조회 가드(existsByNickname)를 둘 다 통과한 뒤 서로 다른 트랜잭션이 같은 행을 INSERT하는
         // 상황이다 — 방 참가 닉네임은 전역 유니크가 아니라 서로 다른 방에서 같은 이름이 동시에
         // 당첨될 수 있다. 예전 save()였다면 늦게 커밋하는 쪽이 uq_player_name_audit_name_status에
-        // 걸려, 이제 같은 트랜잭션을 쓰는 호출자(룰렛 결과 저장)까지 함께 롤백됐다.
+        // 걸리고, 이제 검열 등록이 호출자 트랜잭션 안이라 룰렛 결과 저장까지 함께 롤백됐다.
+        // 여기서 검증하는 건 그 예외가 애초에 발생하지 않는다는 것이다.
         //
         // 가드 통과를 래치로 맞춰야 의미가 있다. 한쪽이 먼저 커밋해버리면 다른 쪽 가드가 그 행을
         // 보고 INSERT를 건너뛰어 충돌 자체가 일어나지 않는다.
@@ -74,7 +80,12 @@ class ProfanityAuditRegistrationIntegrationTest extends IntegrationTestSupport {
         final ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
             final Runnable register = () -> transactionTemplate.executeWithoutResult(status -> {
-                assertThat(auditRepository.existsByNickname("동시닉네임")).isFalse();
+                try {
+                    assertThat(auditRepository.existsByNickname("동시닉네임")).isFalse();
+                } finally {
+                    // 단언이 실패해도 반대 스레드를 래치에서 굶기지 않는다.
+                    guardPassed.countDown();
+                }
                 awaitBothGuardsPassed(guardPassed);
                 auditRepository.insertUnaudited("동시닉네임", Instant.now());
             });
@@ -92,7 +103,6 @@ class ProfanityAuditRegistrationIntegrationTest extends IntegrationTestSupport {
 
     private void awaitBothGuardsPassed(CountDownLatch guardPassed) {
         try {
-            guardPassed.countDown();
             if (!guardPassed.await(10, TimeUnit.SECONDS)) {
                 throw new IllegalStateException("두 트랜잭션이 모두 조회 가드를 통과하지 못했습니다");
             }

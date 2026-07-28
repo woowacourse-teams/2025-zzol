@@ -2,6 +2,7 @@ package coffeeshout.profanity.application.port;
 
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 public interface NicknameAuditRepository {
 
     NicknameAudit save(NicknameAudit entity);
+
+    void insertUnaudited(String nickname, Instant createdAt);
 
     List<NicknameAudit> saveAll(Iterable<NicknameAudit> entities);
 

@@ -3,13 +3,22 @@ package coffeeshout.profanity.infra.persistence.audit;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Set;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 public interface NicknameAuditJpaRepository extends Repository<NicknameAudit, Long>, NicknameAuditRepository {
+
+    @Override
+    @Modifying
+    @Query(value = "INSERT INTO player_name_audit (player_name, status, created_at) "
+            + "VALUES (:nickname, 'UNAUDITED', :createdAt) "
+            + "ON DUPLICATE KEY UPDATE id = id", nativeQuery = true)
+    void insertUnaudited(@Param("nickname") String nickname, @Param("createdAt") Instant createdAt);
 
     @Override
     @Query("SELECT DISTINCT n.nickname FROM NicknameAudit n WHERE n.status = :status")

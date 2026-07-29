@@ -68,9 +68,10 @@ public class IpBlockFilter extends OncePerRequestFilter {
         final Ip ip = clientIp.get();
 
         // 사설/내부 IP(프록시·헬스체크·내부 서비스)는 클라이언트가 아니므로 차단·카운트 대상에서 제외한다.
-        // 프록시 뒤에서 getRemoteAddr()는 항상 내부 IP이며, 이를 차단하면 nginx 경유 트래픽 전체가 막혀
-        // 장애로 번진다(postmortem 0003). 내부 IP의 악성 경로 접근은 프록시/XFF 설정 이상 신호이므로
-        // 차단 없이 경고만 남기고 통과시킨다.
+        // XFF 신뢰 체인이 정상이면 여기 오는 값은 실제 클라이언트 IP이므로 내부 IP는 거의 나오지 않는다.
+        // 체인이 끊기면(프록시가 XFF를 세팅하지 않으면) nginx의 도커 IP가 그대로 잡히고, 이를 차단하면
+        // nginx 경유 트래픽 전체가 막혀 장애로 번진다(postmortem 0003). 내부 IP의 악성 경로 접근은
+        // 프록시/XFF 설정 이상 신호이므로 차단 없이 경고만 남기고 통과시킨다.
         if (isInternalIp(ip.value())) {
             if (maliciousPathMatcher.isMalicious(uri)) {
                 log.warn("내부 IP에서 악성 경로 접근 — 차단하지 않고 통과(프록시/XFF 설정 점검 필요): ip={} uri={}", ip, uri);
@@ -157,6 +158,18 @@ public class IpBlockFilter extends OncePerRequestFilter {
         return false;
     }
 
+    /**
+     * 클라이언트 IP. Tomcat {@code RemoteIpValve}({@code server.forward-headers-strategy: native})가
+     * 이미 X-Forwarded-For를 해석해 넣어둔 값이므로 여기서 헤더를 직접 읽지 않는다.
+     *
+     * <p>Valve는 XFF를 <b>오른쪽부터</b> 훑으며 {@code internal-proxies}(RFC1918·루프백)에 해당하는
+     * 항목만 벗겨내고 첫 비내부 IP에서 멈춘다. nginx가 {@code $proxy_add_x_forwarded_for}로 실제
+     * TCP peer를 XFF 맨 뒤에 덧붙이므로(proxy-http.inc·proxy-ws.inc), 클라이언트가 헤더 왼쪽에
+     * 주입한 사설 IP는 이 값이 될 수 없다 — 즉 XFF 스푸핑으로 아래 내부 IP 화이트리스트를 통과할 수 없다.
+     *
+     * <p>이 보장은 "모든 {@code proxy_pass}가 프록시 헤더 include를 동반한다"에 의존한다.
+     * {@code .github/scripts/check-nginx-proxy-headers.py}가 CI에서 이를 강제한다(#1620).
+     */
     private String getClientIp(HttpServletRequest request) {
         return request.getRemoteAddr();
     }

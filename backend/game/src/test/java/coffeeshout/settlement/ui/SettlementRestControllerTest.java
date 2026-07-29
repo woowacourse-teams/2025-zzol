@@ -74,7 +74,7 @@ class SettlementRestControllerTest {
 
         @Test
         void limit이_0_이하면_1로_보정한다() {
-            // 하한 없이 0이 ZSET 범위(0, -1)로 흘러가면 Redis 규칙상 전체 조회가 된다
+            // 하한 없이 0이 넘어가면 PageRequest.of가 예외를 던진다 — 1로 보정되어야 한다
             given(leaderboardService.top(SEASON, 1)).willReturn(List.of());
             given(leaderboardService.memberCount(SEASON)).willReturn(0L);
             given(userProfileQuery.resolveProfiles(anyList())).willReturn(List.of());

@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 시즌 리더보드 조회 REST 엔드포인트. 순위·점수는 리더보드 ZSET에서, 표시 이름은
+ * 시즌 리더보드 조회 REST 엔드포인트. 순위·점수는 season_score 테이블에서, 표시 이름은
  * {@code :user}가 구현한 포트에서 읽는다. userId는 노출하지 않는다(ADR-0024).
  */
 @RestController
@@ -42,7 +42,7 @@ public class SettlementRestController {
             @RequestParam(defaultValue = "10") int limit
     ) {
         final String seasonKey = resolveSeason(season);
-        // 하한 보정 필수 — limit<=0이 ZSET 범위(0, limit-1)로 흘러가면 Redis 음수 인덱스 규칙상 전체 조회가 된다
+        // 하한 보정 필수 — PageRequest.of가 양수 page size를 요구한다. 상한은 과도한 조회를 막는다
         final int boundedLimit = Math.clamp(limit, 1, MAX_LIMIT);
         final List<LeaderboardEntry> entries = leaderboardService.top(seasonKey, boundedLimit);
 

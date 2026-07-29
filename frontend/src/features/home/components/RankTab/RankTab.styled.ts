@@ -149,10 +149,6 @@ export const Row = styled.div<{ $isMe: boolean }>`
   border-radius: 10px;
   background: ${({ $isMe, theme }) => ($isMe ? theme.color.point[50] : 'transparent')};
   border-bottom: 1px solid ${({ theme }) => theme.color.gray[50]};
-
-  &:last-of-type {
-    border-bottom: none;
-  }
 `;
 
 export const Medal = styled.div<{ $rank: number }>`
@@ -202,6 +198,12 @@ export const RowPoints = styled.span`
 export const AnimatedItem = styled.div<{ $index: number }>`
   animation: ${scoreboardReveal} 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: ${({ $index }) => `${$index * 0.07}s`};
+
+  /* Row는 각 AnimatedItem의 유일한 자식이라 Row 쪽 last-of-type은 모든 행에 매치된다.
+     마지막 행 판단은 형제 관계가 있는 이 래퍼에서 해야 한다 */
+  &:last-of-type ${Row} {
+    border-bottom: none;
+  }
 `;
 
 /* ─── 빈 상태 · 로딩 ─── */

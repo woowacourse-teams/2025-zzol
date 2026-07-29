@@ -17,7 +17,7 @@ const TIER_LABEL: Record<SeasonTier, string> = {
  */
 const RankTab = () => {
   const { user } = useAuth();
-  const { data: leaderboard, loading } = useSeasonLeaderboard();
+  const { data: leaderboard, loading, error } = useSeasonLeaderboard();
   const { data: myRank, loading: myRankLoading } = useMySeasonRank();
 
   const rows = leaderboard?.rows ?? [];
@@ -57,7 +57,12 @@ const RankTab = () => {
           )}
         </S.BoardHeader>
         {loading && <S.Spinner />}
-        {!loading && rows.length === 0 && (
+        {!loading && error && (
+          <S.Empty>
+            <S.EmptyText>랭킹을 불러오지 못했어요. 잠시 후 다시 시도해주세요.</S.EmptyText>
+          </S.Empty>
+        )}
+        {!loading && !error && rows.length === 0 && (
           <S.Empty>
             <S.EmptyEmoji>🏆</S.EmptyEmoji>
             <S.EmptyText>

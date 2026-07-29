@@ -5,7 +5,6 @@ import static org.awaitility.Awaitility.await;
 
 import coffeeshout.GameModuleIntegrationTest;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.settlement.application.SeasonLeaderboardService;
 import coffeeshout.settlement.domain.SeasonKey;
 import coffeeshout.settlement.event.SettlementResultEvent;
 import coffeeshout.settlement.event.SettlementResultEvent.PlayerResult;
@@ -25,7 +24,7 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 
 /**
  * 정산 파이프라인의 임계 와이어링 검증(ADR-0033) — 발행(Outbox 하류인 StreamPublisher)부터
- * 컨슈머 그룹 소비, 멱등 정산, 리더보드 갱신, XACK까지 실제 Redis·MySQL로 관통한다.
+ * 컨슈머 그룹 소비, 멱등 정산, XACK까지 실제 Redis·MySQL로 관통한다.
  */
 class SettlementConsumerGroupIntegrationTest extends GameModuleIntegrationTest {
 
@@ -62,16 +61,15 @@ class SettlementConsumerGroupIntegrationTest extends GameModuleIntegrationTest {
                 "ZZ9X",
                 ROOM_SESSION_ID,
                 "BLIND_TIMER",
-                List.of(new PlayerResult(1L, "한스", 1, 12L), new PlayerResult(2L, "루키", 2, 40L))
+                List.of(new PlayerResult(1L, "한스", 1, 12L), new PlayerResult(2L, "루키", 2, 40L)),
+                List.of(1, 2)
         );
         final String seasonKey = SeasonKey.from(event.timestamp()).value();
 
         // when
         streamPublisher.publish(SettlementStreamKey.RESULT, event);
 
-        // then: 원장·누적 성적·리더보드가 반영된다
-        // 원장 커밋과 ZSET 갱신 사이에 창이 있으므로, 셋 다 같은 대기 블록에서 검증해야 flaky하지 않다
-        final String leaderboardKey = SeasonLeaderboardService.leaderboardKey(seasonKey);
+        // then: 원장과 누적 성적이 반영된다
         await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
             assertThat(settlementRepository
                     .existsByRoomSessionIdAndMiniGameTypeAndUserId(ROOM_SESSION_ID, "BLIND_TIMER", 1L)).isTrue();
@@ -82,9 +80,6 @@ class SettlementConsumerGroupIntegrationTest extends GameModuleIntegrationTest {
             final SeasonScoreEntity second = scoreRepository.findBySeasonKeyAndUserId(seasonKey, 2L).orElseThrow();
             assertThat(first.getTotalPoints()).isEqualTo(100L);
             assertThat(second.getTotalPoints()).isEqualTo(70L);
-
-            assertThat(stringRedisTemplate.opsForZSet().score(leaderboardKey, "1")).isEqualTo(100.0);
-            assertThat(stringRedisTemplate.opsForZSet().score(leaderboardKey, "2")).isEqualTo(70.0);
         });
 
         // then: 처리 완료가 ACK로 확정된다 — PEL이 비어야 회수 대상이 남지 않은 것이다

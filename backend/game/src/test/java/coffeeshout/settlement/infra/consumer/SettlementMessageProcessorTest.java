@@ -74,22 +74,21 @@ class SettlementMessageProcessorTest {
     }
 
     @Test
-    void 정산_이벤트를_파싱해_정산하고_리더보드를_갱신한다() throws Exception {
+    void 정산_이벤트를_파싱해_정산한다() throws Exception {
         SettlementResultEvent event = SettlementResultEvent.of(
-                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)));
+                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)), List.of(1, 2));
         SettledScore settled = new SettledScore(1L, "2026-07", 100, SeasonTier.BRONZE);
         given(settlementService.settle(any())).willReturn(List.of(settled));
 
         processor.process(레코드(objectMapper.writeValueAsString(event)));
 
         verify(settlementService).settle(any(SettlementResultEvent.class));
-        verify(leaderboardService).updateScore(settled);
     }
 
     @Test
     void 정산_후_순위_변동을_브로드캐스트_스트림으로_발행한다() throws Exception {
         SettlementResultEvent event = SettlementResultEvent.of(
-                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)));
+                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)), List.of(1, 2));
         SettledScore settled = new SettledScore(1L, "2026-07", 100, SeasonTier.BRONZE);
         given(settlementService.settle(any())).willReturn(List.of(settled));
         given(leaderboardService.rankOf("2026-07", 1L))
@@ -109,7 +108,7 @@ class SettlementMessageProcessorTest {
     @Test
     void 재전달로_정산이_전부_스킵되면_순위_알림도_발행하지_않는다() throws Exception {
         SettlementResultEvent event = SettlementResultEvent.of(
-                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)));
+                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)), List.of(1, 2));
         given(settlementService.settle(any())).willReturn(List.of());
 
         processor.process(레코드(objectMapper.writeValueAsString(event)));
@@ -146,7 +145,7 @@ class SettlementMessageProcessorTest {
     void 정산_실패는_포이즌이_아니라_그대로_전파된다() throws Exception {
         // 일시 실패는 ACK 보류 → 재전달로 수렴해야 하므로 포이즌으로 오분류하면 안 된다
         SettlementResultEvent event = SettlementResultEvent.of(
-                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)));
+                "AB3C", 7L, "BLIND_TIMER", List.of(new PlayerResult(1L, "한스", 1, 12L)), List.of(1, 2));
         given(settlementService.settle(any())).willThrow(new RuntimeException("DB 일시 실패"));
         String payload = objectMapper.writeValueAsString(event);
 

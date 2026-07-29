@@ -43,9 +43,8 @@ import org.springframework.stereotype.Component;
 public class MiniGameResultSaveEventListener {
 
     // 시즌 정산 대상 게임 — 전 게임 적용(BLIND_TIMER 선행 검증 후 확장, #1610). 포인트는 방 안
-    // 등수 기반(SeasonPointPolicy)이라 게임 간 점수 단위가 달라도 성립한다. 전원 동점(전원 실패
-    // 포함) 판은 등수 계산 결과를 그대로 신뢰해 전원 1등으로 정산한다. 새 게임 타입은 자동
-    // 포함되며, 제외할 게임이 생기면 여기서 뺀다.
+    // 등수 기반(SeasonPointPolicy)이라 게임 간 점수 단위가 달라도 성립하고, 동점은 해당 순위
+    // 구간의 포인트를 균등 분배한다. 새 게임 타입은 자동 포함되며, 제외할 게임이 생기면 여기서 뺀다.
     private static final Set<MiniGameType> SETTLEMENT_TARGET_GAMES =
             Collections.unmodifiableSet(EnumSet.allOf(MiniGameType.class));
 
@@ -100,6 +99,8 @@ public class MiniGameResultSaveEventListener {
         // 회원 승패는 직접 호출이 아니라 이벤트로 :user에 전달해 통계 갱신한다(#1547).
         final List<PlayerStat> playerStats = new ArrayList<>();
         final List<PlayerResult> settlementResults = new ArrayList<>();
+        // 동점 구간 균등 분배에 필요한 전체(게스트 포함) 순위 분포 — 게스트도 순위 한 자리를 차지한다
+        final List<Integer> allRanks = new ArrayList<>();
 
         for (Map.Entry<Gamer, MiniGameScore> entry : scores.entrySet()) {
             final Gamer gamer = entry.getKey();
@@ -112,6 +113,9 @@ public class MiniGameResultSaveEventListener {
             final Long score = entry.getValue().getValue();
 
             resultEntities.add(new MiniGameResultEntity(miniGameEntity, snapshot.playerId(), rank, score));
+            if (rank != null) {
+                allRanks.add(rank);
+            }
 
             if (gamer.getUserId() != null) {
                 playerStats.add(new PlayerStat(gamer.getUserId(), rank == 1));
@@ -133,7 +137,8 @@ public class MiniGameResultSaveEventListener {
         if (SETTLEMENT_TARGET_GAMES.contains(miniGameType) && !settlementResults.isEmpty()) {
             outboxEventRecorder.record(
                     SettlementStreamKey.RESULT,
-                    SettlementResultEvent.of(event.joinCode(), roomSessionId, miniGameType.name(), settlementResults)
+                    SettlementResultEvent.of(
+                            event.joinCode(), roomSessionId, miniGameType.name(), settlementResults, allRanks)
             );
         }
 

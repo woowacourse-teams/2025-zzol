@@ -87,6 +87,7 @@ const RankTab = () => {
         <S.GuideTitle>포인트 안내</S.GuideTitle>
         <S.GuideList>
           <li>• 게임 1등 100P · 2등 70P · 3등 50P · 그 외 30P를 얻어요.</li>
+          <li>• 동점이면 해당 순위들의 포인트를 합쳐 똑같이 나눠 가져요.</li>
           <li>• 300P 실버 · 1,000P 골드 · 3,000P 다이아 티어로 올라가요.</li>
           <li>• 랭크는 매달 1일에 초기화돼요. 로그인한 플레이만 집계돼요.</li>
         </S.GuideList>

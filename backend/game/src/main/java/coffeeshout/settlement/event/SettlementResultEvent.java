@@ -19,18 +19,23 @@ public record SettlementResultEvent(
         String joinCode,
         long roomSessionId,
         String miniGameType,
-        List<PlayerResult> results
+        List<PlayerResult> results,
+        // 그 판 전체 플레이어(게스트 포함)의 순위 목록. 동점 구간 균등 분배(SeasonPointPolicy)의
+        // 동점자 수 산정에 쓰인다 — 게스트도 순위 한 자리를 차지하므로 회원 결과만으로는 부족하다.
+        List<Integer> allRanks
 ) implements WorkQueueEvent {
 
     public SettlementResultEvent {
         results = List.copyOf(results);
+        allRanks = allRanks == null ? List.of() : List.copyOf(allRanks);
     }
 
     public static SettlementResultEvent of(
             String joinCode,
             long roomSessionId,
             String miniGameType,
-            List<PlayerResult> results
+            List<PlayerResult> results,
+            List<Integer> allRanks
     ) {
         return new SettlementResultEvent(
                 deriveEventId(roomSessionId, miniGameType),
@@ -38,7 +43,8 @@ public record SettlementResultEvent(
                 joinCode,
                 roomSessionId,
                 miniGameType,
-                results
+                results,
+                allRanks
         );
     }
 

@@ -21,6 +21,7 @@ import coffeeshout.settlement.infra.persistence.SeasonScoreJpaRepository;
 import coffeeshout.settlement.infra.persistence.SeasonSettlementEntity;
 import coffeeshout.settlement.infra.persistence.SeasonSettlementJpaRepository;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Nested;
@@ -167,7 +168,8 @@ class SettlementServiceTest {
                 "AB3C",
                 ROOM_SESSION_ID,
                 GAME_TYPE,
-                List.of(results)
+                List.of(results),
+                Arrays.stream(results).map(PlayerResult::rank).toList()
         );
     }
 }

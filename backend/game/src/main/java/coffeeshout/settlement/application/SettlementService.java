@@ -59,7 +59,7 @@ public class SettlementService {
     }
 
     private SettledScore settleOne(SettlementResultEvent event, PlayerResult result, SeasonKey seasonKey) {
-        final int points = SeasonPointPolicy.pointsFor(result.rank());
+        final int points = SeasonPointPolicy.pointsFor(result.rank(), event.allRanks());
 
         settlementRepository.save(new SeasonSettlementEntity(
                 event.roomSessionId(),
@@ -91,10 +91,7 @@ public class SettlementService {
         return new SettledScore(result.userId(), seasonKey.value(), score.getTotalPoints(), tier);
     }
 
-    /**
-     * 정산이 실제로 반영된 회원의 최신 누적 성적. 리더보드(ZSET) 갱신·알림의 입력이 된다 —
-     * 절대값(totalPoints)을 넘겨 ZSET 갱신이 재실행에도 안전(멱등)하도록 한다.
-     */
+    /** 정산이 실제로 반영된 회원의 최신 누적 성적. 순위 변동 알림의 입력이 된다. */
     public record SettledScore(long userId, String seasonKey, long totalPoints, SeasonTier tier) {
     }
 }

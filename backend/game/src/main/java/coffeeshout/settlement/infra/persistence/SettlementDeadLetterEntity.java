@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -20,7 +21,10 @@ import lombok.NoArgsConstructor;
  * 유실될 수 있다. Outbox의 DEAD_LETTER가 RDBMS에 있는 것과 같은 철학이다.
  */
 @Entity
-@Table(name = "settlement_dead_letter")
+@Table(
+        name = "settlement_dead_letter",
+        uniqueConstraints = @UniqueConstraint(name = "uk_settlement_dead_letter_record", columnNames = "record_id")
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SettlementDeadLetterEntity {

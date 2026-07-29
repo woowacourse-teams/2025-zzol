@@ -9,5 +9,7 @@ CREATE TABLE settlement_dead_letter (
     record_id  VARCHAR(64)  NOT NULL,
     reason     VARCHAR(500) NOT NULL,
     payload    TEXT,
-    created_at TIMESTAMP(6) NOT NULL
+    created_at TIMESTAMP(6) NOT NULL,
+    -- DLQ 기록 후 ACK 실패로 같은 메시지가 재전달되어도 격리 행은 하나만 남는다(멱등)
+    UNIQUE KEY uk_settlement_dead_letter_record (record_id)
 );

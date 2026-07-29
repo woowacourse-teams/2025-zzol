@@ -33,7 +33,7 @@ public final class SeasonPointPolicy {
         if (rank < 1) {
             throw new IllegalArgumentException("순위는 1 이상이어야 합니다: " + rank);
         }
-        final long tieCount = countTies(rank, allRanks);
+        final int tieCount = countTies(rank, allRanks);
         if (tieCount <= 1) {
             return basePointsFor(rank);
         }
@@ -44,14 +44,14 @@ public final class SeasonPointPolicy {
         return Math.toIntExact(Math.round((double) sum / tieCount));
     }
 
-    private static long countTies(int rank, List<Integer> allRanks) {
+    private static int countTies(int rank, List<Integer> allRanks) {
         // 구버전 이벤트(allRanks 없음)가 재전달되면 동점 정보 없이 기본표로 처리한다
         if (allRanks == null || allRanks.isEmpty()) {
             return 1;
         }
-        return allRanks.stream()
+        return Math.toIntExact(allRanks.stream()
                 .filter(r -> r != null && r == rank)
-                .count();
+                .count());
     }
 
     private static int basePointsFor(int rank) {

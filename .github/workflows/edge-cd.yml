@@ -38,6 +38,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      # 서버의 nginx -t는 문법만 본다(ADR-0023 §3). XFF 사슬이 끊긴 설정은 문법상 정상이라
+      # 통과하므로 전송 전에 여기서 막는다. edge-config-ci는 PR 단계 피드백용이고, push 시에는
+      # 이 워크플로와 병렬로 떠서 배포를 게이트하지 못한다(#1620).
+      - name: Check proxy header chain
+        run: python3 .github/scripts/check-nginx-proxy-headers.py backend/docker/nginx/conf
+
       - name: Transfer config & scripts via SCP
         uses: appleboy/scp-action@v1.0.0
         with:

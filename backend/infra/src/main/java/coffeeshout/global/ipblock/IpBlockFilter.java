@@ -162,13 +162,21 @@ public class IpBlockFilter extends OncePerRequestFilter {
      * 클라이언트 IP. Tomcat {@code RemoteIpValve}({@code server.forward-headers-strategy: native})가
      * 이미 X-Forwarded-For를 해석해 넣어둔 값이므로 여기서 헤더를 직접 읽지 않는다.
      *
-     * <p>Valve는 XFF를 <b>오른쪽부터</b> 훑으며 {@code internal-proxies}(RFC1918·루프백)에 해당하는
-     * 항목만 벗겨내고 첫 비내부 IP에서 멈춘다. nginx가 {@code $proxy_add_x_forwarded_for}로 실제
-     * TCP peer를 XFF 맨 뒤에 덧붙이므로(proxy-http.inc·proxy-ws.inc), 클라이언트가 헤더 왼쪽에
-     * 주입한 사설 IP는 이 값이 될 수 없다 — 즉 XFF 스푸핑으로 아래 내부 IP 화이트리스트를 통과할 수 없다.
+     * <p>Valve는 XFF를 <b>오른쪽부터</b> 훑으며 {@code internal-proxies}에 매칭되는 항목만 벗겨내고
+     * 첫 비매칭 IP에서 멈춘다. dev·prod는 Tomcat 기본값을 덮어써 {@code 127.0.0.1}과 RFC1918
+     * 세 대역만 신뢰한다(application-{dev,prod}.yml). nginx가 {@code $proxy_add_x_forwarded_for}로
+     * 실제 TCP peer를 XFF 맨 뒤에 덧붙이므로(proxy-http.inc·proxy-ws.inc), <b>공인 IP에서 온 요청이라면</b>
+     * 클라이언트가 헤더 왼쪽에 주입한 사설 IP는 이 값이 될 수 없다 — XFF 스푸핑으로 아래 내부 IP
+     * 화이트리스트를 통과할 수 없다. TCP peer 자체가 사설 IP인 요청은 주입값이 남을 수 있으나,
+     * 그런 출발지는 스푸핑 없이도 이미 화이트리스트 대상이다.
      *
-     * <p>이 보장은 "모든 {@code proxy_pass}가 프록시 헤더 include를 동반한다"에 의존한다.
-     * {@code .github/scripts/check-nginx-proxy-headers.py}가 CI에서 이를 강제한다(#1620).
+     * <p>이 보장은 두 전제에 의존한다.
+     * <ol>
+     *   <li>모든 {@code proxy_pass}가 XFF 체인을 누적한다 —
+     *       {@code .github/scripts/check-nginx-proxy-headers.py}가 CI에서 강제한다(#1620).</li>
+     *   <li>앱 포트가 nginx를 통해서만 도달 가능하다 — 앱 컨테이너는 host 포트를 열지 않고
+     *       nginx만 80·443을 연다(docker/{dev,prod}/docker-compose.yml). 강제 장치는 없다.</li>
+     * </ol>
      */
     private String getClientIp(HttpServletRequest request) {
         return request.getRemoteAddr();

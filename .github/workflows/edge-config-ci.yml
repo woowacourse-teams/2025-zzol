@@ -7,16 +7,16 @@ name: Edge Config CI
 
 on:
   pull_request:
-    branches: [dev]
+    branches: [dev, prod]
     paths:
-      - "backend/docker/nginx/conf/**"
+      - "backend/docker/nginx/**"
       - ".github/scripts/check-nginx-proxy-headers.py"
       - ".github/scripts/test/test-check-nginx-proxy-headers.sh"
       - ".github/workflows/edge-config-ci.yml"
   push:
-    branches: [dev]
+    branches: [dev, prod]
     paths:
-      - "backend/docker/nginx/conf/**"
+      - "backend/docker/nginx/**"
       - ".github/scripts/check-nginx-proxy-headers.py"
       - ".github/scripts/test/test-check-nginx-proxy-headers.sh"
       - ".github/workflows/edge-config-ci.yml"

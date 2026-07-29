@@ -1,86 +1,69 @@
 package coffeeshout.settlement.application;
 
-import coffeeshout.settlement.application.SettlementService.SettledScore;
-import java.time.Duration;
+import coffeeshout.settlement.infra.persistence.SeasonScoreEntity;
+import coffeeshout.settlement.infra.persistence.SeasonScoreJpaRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 시즌 리더보드(Redis ZSET). 진실 공급원은 season_score 테이블이고, ZSET은 순위 조회를
- * O(logN)으로 만드는 파생 뷰다.
+ * 시즌 리더보드 조회. 순위·포인트를 진실 공급원인 season_score 테이블에서 직접 읽는다.
  * <p>
- * 갱신은 증분(ZINCRBY)이 아니라 <b>절대값(ZADD)</b>이다. 컨슈머 재전달로 같은 정산 결과가
- * 두 번 반영되어도 누적 절대값을 다시 쓰는 것이라 점수가 부풀지 않는다(#1610).
+ * 처음에는 Redis ZSET 파생 뷰로 만들었다가 코드 리뷰(#1612)에서 걷어냈다. 회원당 시즌에
+ * 1행이고 조회 빈도도 낮아 SQL 정렬로 충분한 규모인데, 파생 뷰를 두면 DB와 어긋나는 창과
+ * 조회 왕복이 비용으로 남기 때문이다. 순위 조회가 병목이 되는 규모(수만 회원·고빈도 조회)가
+ * 되면 그때 ZSET 파생 뷰를 다시 검토한다.
+ * <p>
+ * 동점자는 같은 순위를 공유한다(경쟁 순위). 표시 순서는 포인트 내림차순, 같으면 먼저
+ * 정산을 시작한 회원(id 오름차순)이 앞에 온다 — 갱신 타이밍에 따라 순서가 흔들리지 않게
+ * 하기 위한 결정적 규칙이다.
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SeasonLeaderboardService {
 
-    private static final String KEY_PREFIX = "settlement:leaderboard:";
-    // 월 시즌 종료 후에도 잠시 조회할 수 있게 여유를 두고, 옛 시즌 ZSET은 자동 소멸시킨다
-    private static final Duration RETENTION = Duration.ofDays(40);
-
-    private final StringRedisTemplate stringRedisTemplate;
-
-    public void updateScore(SettledScore settled) {
-        final String key = leaderboardKey(settled.seasonKey());
-        stringRedisTemplate.opsForZSet().add(key, String.valueOf(settled.userId()), settled.totalPoints());
-        stringRedisTemplate.expire(key, RETENTION);
-    }
+    private final SeasonScoreJpaRepository scoreRepository;
 
     /** 시즌 상위 {@code limit}명 (포인트 내림차순). */
+    @Transactional(readOnly = true)
     public List<LeaderboardEntry> top(String seasonKey, int limit) {
-        final Set<TypedTuple<String>> tuples = stringRedisTemplate.opsForZSet()
-                .reverseRangeWithScores(leaderboardKey(seasonKey), 0, limit - 1L);
-        if (tuples == null) {
-            return List.of();
-        }
+        final List<SeasonScoreEntity> scores = scoreRepository
+                .findBySeasonKeyOrderByTotalPointsDescIdAsc(seasonKey, PageRequest.of(0, limit));
+
         final List<LeaderboardEntry> entries = new ArrayList<>();
-        int rank = 1;
-        for (TypedTuple<String> tuple : tuples) {
-            if (tuple.getValue() == null || tuple.getScore() == null) {
-                continue;
+        int rank = 0;
+        long previousPoints = Long.MIN_VALUE;
+        for (int i = 0; i < scores.size(); i++) {
+            final SeasonScoreEntity score = scores.get(i);
+            if (score.getTotalPoints() != previousPoints) {
+                rank = i + 1;
+                previousPoints = score.getTotalPoints();
             }
-            try {
-                entries.add(new LeaderboardEntry(
-                        Long.parseLong(tuple.getValue()), rank++, tuple.getScore().longValue()));
-            } catch (NumberFormatException e) {
-                // 정상 경로에선 멤버가 항상 userId 문자열이다. 오염된 멤버 하나가 조회 전체를
-                // 실패시키지 않도록 해당 행만 건너뛴다
-                log.warn("리더보드 멤버가 userId 형식이 아님: seasonKey={}, member={}", seasonKey, tuple.getValue());
-            }
+            entries.add(new LeaderboardEntry(score.getUserId(), rank, score.getTotalPoints()));
         }
         return entries;
     }
 
     /** 특정 회원의 시즌 순위. 이번 시즌 정산 이력이 없으면 빈 값. */
+    @Transactional(readOnly = true)
     public Optional<LeaderboardEntry> rankOf(String seasonKey, long userId) {
-        final String key = leaderboardKey(seasonKey);
-        final String member = String.valueOf(userId);
-        final Long rank = stringRedisTemplate.opsForZSet().reverseRank(key, member);
-        final Double score = stringRedisTemplate.opsForZSet().score(key, member);
-        if (rank == null || score == null) {
-            return Optional.empty();
-        }
-        return Optional.of(new LeaderboardEntry(userId, (int) (rank + 1), score.longValue()));
+        return scoreRepository.findBySeasonKeyAndUserId(seasonKey, userId)
+                .map(score -> new LeaderboardEntry(
+                        userId,
+                        Math.toIntExact(scoreRepository
+                                .countBySeasonKeyAndTotalPointsGreaterThan(seasonKey, score.getTotalPoints()) + 1),
+                        score.getTotalPoints()
+                ));
     }
 
     /** 시즌에 정산 이력이 있는 회원 수. */
+    @Transactional(readOnly = true)
     public long memberCount(String seasonKey) {
-        final Long size = stringRedisTemplate.opsForZSet().zCard(leaderboardKey(seasonKey));
-        return size == null ? 0 : size;
-    }
-
-    public static String leaderboardKey(String seasonKey) {
-        return KEY_PREFIX + seasonKey;
+        return scoreRepository.countBySeasonKey(seasonKey);
     }
 
     public record LeaderboardEntry(long userId, int rank, long totalPoints) {

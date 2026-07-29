@@ -54,7 +54,7 @@ public class SettlementMessageProcessor {
     }
 
     /**
-     * 정산을 수행한다. DB 정산(트랜잭션)이 커밋된 뒤 리더보드를 절대값으로 갱신하므로,
+     * 정산을 수행한다. 원장·누적 성적·리더보드가 모두 season_score 기준(단일 DB 트랜잭션)이라
      * 이 메서드가 어느 지점에서 중단되고 재실행되어도 결과가 부풀지 않는다.
      *
      * @throws PoisonMessageException 파싱 불가·타입 불일치 — 재시도해도 영원히 실패하는 메시지
@@ -70,7 +70,6 @@ public class SettlementMessageProcessor {
         final SettlementResultEvent event = parse(payload);
         streamTracePropagator.runInConsumerScope(fields, EventTypeName.of(event), () -> {
             final List<SettledScore> settled = settlementService.settle(event);
-            settled.forEach(leaderboardService::updateScore);
             notifyRankUpdated(event, settled);
             log.info("시즌 정산 완료: eventId={}, settledCount={}", event.eventId(), settled.size());
         });

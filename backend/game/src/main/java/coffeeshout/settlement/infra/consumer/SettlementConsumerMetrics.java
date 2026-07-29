@@ -1,5 +1,6 @@
 package coffeeshout.settlement.infra.consumer;
 
+import coffeeshout.settlement.infra.persistence.SettlementDeadLetterJpaRepository;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -20,7 +21,7 @@ import org.springframework.stereotype.Component;
  *   <li>redis.stream.group.lag — 스트림에 쌓였지만 아직 그룹에 전달되지 않은 메시지 수.
  *       컨슈머가 전혀 읽지 못하는 상황은 pending이 아니라 lag에 나타난다.</li>
  *   <li>redis.stream.group.consumers — 그룹에 등록된 컨슈머 수. blue/green 상태에 따라 1~2.</li>
- *   <li>redis.stream.length(dlq) — 격리된 메시지 수. 0이 아니면 사람이 봐야 한다.</li>
+ *   <li>settlement.deadletter.count — 격리된 메시지 수(RDBMS). 0이 아니면 사람이 봐야 한다.</li>
  * </ul>
  */
 @Slf4j
@@ -30,6 +31,7 @@ public class SettlementConsumerMetrics {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final MeterRegistry meterRegistry;
+    private final SettlementDeadLetterJpaRepository deadLetterRepository;
 
     @PostConstruct
     public void initializeMetrics() {
@@ -51,9 +53,8 @@ public class SettlementConsumerMetrics {
                 .tag("group", SettlementStreamConsumer.GROUP)
                 .register(meterRegistry);
 
-        Gauge.builder("redis.stream.length", this::readDlqLength)
-                .description("Redis Stream의 현재 메시지 수 (XLEN)")
-                .tag("stream", SettlementDeadLetterPublisher.DLQ_KEY)
+        Gauge.builder("settlement.deadletter.count", this::readDeadLetterCount)
+                .description("격리된 정산 메시지 수 (settlement_dead_letter)")
                 .register(meterRegistry);
     }
 
@@ -89,12 +90,11 @@ public class SettlementConsumerMetrics {
         return Double.NaN;
     }
 
-    private double readDlqLength() {
+    private double readDeadLetterCount() {
         try {
-            final Long length = stringRedisTemplate.opsForStream().size(SettlementDeadLetterPublisher.DLQ_KEY);
-            return length != null ? length.doubleValue() : 0.0;
+            return deadLetterRepository.count();
         } catch (Exception e) {
-            log.debug("정산 DLQ 길이 조회 실패: {}", e.getMessage());
+            log.debug("정산 DLQ 건수 조회 실패: {}", e.getMessage());
             return Double.NaN;
         }
     }

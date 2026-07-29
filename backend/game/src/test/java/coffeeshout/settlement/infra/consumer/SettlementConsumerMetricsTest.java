@@ -11,6 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.connection.stream.StreamInfo.XInfoGroups;
+import coffeeshout.settlement.infra.persistence.SettlementDeadLetterJpaRepository;
 import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
@@ -19,6 +20,7 @@ class SettlementConsumerMetricsTest {
     private MeterRegistry meterRegistry;
     private StringRedisTemplate stringRedisTemplate;
     private StreamOperations<String, Object, Object> streamOperations;
+    private SettlementDeadLetterJpaRepository deadLetterRepository;
     private SettlementConsumerMetrics metrics;
 
     @SuppressWarnings("unchecked")
@@ -28,7 +30,8 @@ class SettlementConsumerMetricsTest {
         stringRedisTemplate = mock(StringRedisTemplate.class);
         streamOperations = mock(StreamOperations.class);
         given(stringRedisTemplate.opsForStream()).willReturn(streamOperations);
-        metrics = new SettlementConsumerMetrics(stringRedisTemplate, meterRegistry);
+        deadLetterRepository = mock(SettlementDeadLetterJpaRepository.class);
+        metrics = new SettlementConsumerMetrics(stringRedisTemplate, meterRegistry, deadLetterRepository);
     }
 
     @Test
@@ -41,8 +44,7 @@ class SettlementConsumerMetricsTest {
                 .tag("group", SettlementStreamConsumer.GROUP).gauge()).isNotNull();
         assertThat(meterRegistry.find("redis.stream.group.consumers")
                 .tag("group", SettlementStreamConsumer.GROUP).gauge()).isNotNull();
-        assertThat(meterRegistry.find("redis.stream.length")
-                .tag("stream", SettlementDeadLetterPublisher.DLQ_KEY).gauge()).isNotNull();
+        assertThat(meterRegistry.find("settlement.deadletter.count").gauge()).isNotNull();
     }
 
     @Test
@@ -104,13 +106,12 @@ class SettlementConsumerMetricsTest {
     }
 
     @Test
-    void DLQ_길이를_XLEN으로_읽는다() {
-        given(streamOperations.size(SettlementDeadLetterPublisher.DLQ_KEY)).willReturn(3L);
+    void DLQ_건수를_DB에서_읽는다() {
+        given(deadLetterRepository.count()).willReturn(3L);
 
         metrics.initializeMetrics();
 
-        Gauge dlq = meterRegistry.find("redis.stream.length")
-                .tag("stream", SettlementDeadLetterPublisher.DLQ_KEY).gauge();
+        Gauge dlq = meterRegistry.find("settlement.deadletter.count").gauge();
         assertThat(dlq.value()).isEqualTo(3.0);
     }
 }

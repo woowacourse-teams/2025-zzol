@@ -95,6 +95,25 @@ class SettlementServiceTest {
         }
 
         @Test
+        void 동점_구간_포인트를_균등_분배해_저장한다() {
+            // 2인 동점 1등 → (100+70)/2 = 85. 정책이 아니라 저장 경로가 allRanks를 넘기는지 고정한다
+            given(settlementRepository.existsByRoomSessionIdAndMiniGameTypeAndUserId(ROOM_SESSION_ID, GAME_TYPE, 1L))
+                    .willReturn(false);
+            given(settlementRepository.existsByRoomSessionIdAndMiniGameTypeAndUserId(ROOM_SESSION_ID, GAME_TYPE, 2L))
+                    .willReturn(false);
+            given(scoreRepository.addPoints(SEASON, 1L, 85)).willReturn(1);
+            given(scoreRepository.addPoints(SEASON, 2L, 85)).willReturn(1);
+            시즌_성적_조회_설정(1L, 85, SeasonTier.BRONZE);
+            시즌_성적_조회_설정(2L, 85, SeasonTier.BRONZE);
+
+            settlementService.settle(
+                    정산_이벤트(new PlayerResult(1L, "한스", 1, 12L), new PlayerResult(2L, "루키", 1, 12L)));
+
+            verify(scoreRepository).addPoints(SEASON, 1L, 85);
+            verify(scoreRepository).addPoints(SEASON, 2L, 85);
+        }
+
+        @Test
         void 시즌_키는_처리_시각이_아니라_이벤트_시각에서_파생한다() {
             // 재전달된 메시지를 시즌 경계 이후에 재처리해도 같은 시즌으로 정산되어야 멱등이 성립한다
             given(settlementRepository.existsByRoomSessionIdAndMiniGameTypeAndUserId(anyLong(), anyString(), anyLong()))

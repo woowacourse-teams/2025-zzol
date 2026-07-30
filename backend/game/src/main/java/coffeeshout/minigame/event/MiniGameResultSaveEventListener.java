@@ -6,6 +6,7 @@ import coffeeshout.gamecommon.Playable;
 import coffeeshout.gamecommon.RoomSnapshotQuery;
 import coffeeshout.gamecommon.RoomSnapshotQuery.PlayerSnapshot;
 import coffeeshout.global.lock.RedisLock;
+import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
@@ -17,10 +18,16 @@ import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
+import coffeeshout.settlement.event.SettlementResultEvent;
+import coffeeshout.settlement.event.SettlementResultEvent.PlayerResult;
+import coffeeshout.settlement.infra.SettlementStreamKey;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -35,11 +42,18 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MiniGameResultSaveEventListener {
 
+    // 시즌 정산 대상 게임 — 전 게임 적용(BLIND_TIMER 선행 검증 후 확장, #1610). 포인트는 방 안
+    // 등수 기반(SeasonPointPolicy)이라 게임 간 점수 단위가 달라도 성립하고, 동점은 해당 순위
+    // 구간의 포인트를 균등 분배한다. 새 게임 타입은 자동 포함되며, 제외할 게임이 생기면 여기서 뺀다.
+    private static final Set<MiniGameType> SETTLEMENT_TARGET_GAMES =
+            Collections.unmodifiableSet(EnumSet.allOf(MiniGameType.class));
+
     private final RoomSnapshotQuery roomSnapshotQuery;
     private final MiniGameJpaRepository miniGameJpaRepository;
     private final MiniGameResultJpaRepository miniGameResultJpaRepository;
     private final GameSessionService gameSessionService;
     private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventRecorder outboxEventRecorder;
 
     // 확률 조정 리스너(MiniGameResultRoomListener, @Order(1)) 이후에 실행한다 —
     // 저장 실패(@RedisLock 경합/DB 오류)가 확률 조정·SCORE_BOARD 전이를 막지 않도록(ADR-0025 결정 5).
@@ -84,6 +98,9 @@ public class MiniGameResultSaveEventListener {
         final List<MiniGameResultEntity> resultEntities = new ArrayList<>();
         // 회원 승패는 직접 호출이 아니라 이벤트로 :user에 전달해 통계 갱신한다(#1547).
         final List<PlayerStat> playerStats = new ArrayList<>();
+        final List<PlayerResult> settlementResults = new ArrayList<>();
+        // 동점 구간 균등 분배에 필요한 전체(게스트 포함) 순위 분포 — 게스트도 순위 한 자리를 차지한다
+        final List<Integer> allRanks = new ArrayList<>();
 
         for (Map.Entry<Gamer, MiniGameScore> entry : scores.entrySet()) {
             final Gamer gamer = entry.getKey();
@@ -96,9 +113,13 @@ public class MiniGameResultSaveEventListener {
             final Long score = entry.getValue().getValue();
 
             resultEntities.add(new MiniGameResultEntity(miniGameEntity, snapshot.playerId(), rank, score));
+            if (rank != null) {
+                allRanks.add(rank);
+            }
 
             if (gamer.getUserId() != null) {
                 playerStats.add(new PlayerStat(gamer.getUserId(), rank == 1));
+                settlementResults.add(new PlayerResult(gamer.getUserId(), gamer.getName(), rank, score));
             }
         }
 
@@ -107,6 +128,18 @@ public class MiniGameResultSaveEventListener {
         // 동기 발행이므로 현 트랜잭션 안에서 실행되어 기존 롤백 의미를 보존한다.
         if (!playerStats.isEmpty()) {
             eventPublisher.publishEvent(new MiniGameStatsRecordedEvent(playerStats));
+        }
+
+        // 시즌 정산은 Outbox를 경유해 정산 작업 큐 스트림으로 나간다 — 결과 저장과 같은
+        // 트랜잭션이라 원자적이고, 소비는 컨슈머 그룹의 단일 처리 경로로 이뤄진다(#1610).
+        // 전달은 at-least-once이며 중복 반영은 정산 원장의 멱등 처리가 막는다.
+        // 게임 종료 지점들은 스케줄러 스레드(트랜잭션 밖)라 이 리스너가 유일한 훅 위치다.
+        if (SETTLEMENT_TARGET_GAMES.contains(miniGameType) && !settlementResults.isEmpty()) {
+            outboxEventRecorder.record(
+                    SettlementStreamKey.RESULT,
+                    SettlementResultEvent.of(
+                            event.joinCode(), roomSessionId, miniGameType.name(), settlementResults, allRanks)
+            );
         }
 
         log.info("미니게임 결과 벌크 저장 완료: joinCode={}, playerCount={}", event.joinCode(), resultEntities.size());

@@ -80,6 +80,13 @@ public class RedisStreamListenerStarter {
             final String streamKey = entry.getKey();
             final StreamConfig streamConfig = entry.getValue();
 
+            // 작업 큐 스트림(컨슈머 그룹 전용)은 브로드캐스트 리스너를 만들지 않는다.
+            // 여기에 리스너를 만들면 전 인스턴스가 소비해 단일 처리 경로가 깨진다(#1610).
+            if (!streamConfig.isListenerEnabled()) {
+                log.info("브로드캐스트 리스너를 생성하지 않습니다 (컨슈머 그룹 전용 스트림): {}", streamKey);
+                continue;
+            }
+
             final StreamMessageListenerContainer<String, MapRecord<String, String, String>> container = createContainer(
                     redisConnectionFactory,
                     findExecutor(streamKey, streamConfig),

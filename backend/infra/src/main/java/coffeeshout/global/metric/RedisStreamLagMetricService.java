@@ -74,6 +74,12 @@ public class RedisStreamLagMetricService {
                     .tag("stream", streamKey)
                     .register(meterRegistry);
 
+            // 리스너 미생성 스트림(컨슈머 그룹 전용)은 소비 스레드풀이 없다 — 길이 게이지만 등록한다.
+            // 그룹 lag·pending은 XINFO GROUPS 기반 전용 메트릭이 담당한다(#1610).
+            if (!streamConfig.isListenerEnabled()) {
+                continue;
+            }
+
             // 2) 스레드풀 큐 깊이 Gauge
             Gauge.builder("redis.stream.threadpool.queue.size",
                             () -> getThreadPoolQueueSize(streamKey, streamConfig))

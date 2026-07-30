@@ -34,6 +34,12 @@ public class ConsumerStartupValidator implements SmartInitializingSingleton {
             if (isAbstractOrInterface(eventType)) {
                 continue;
             }
+            // 작업 큐 이벤트는 브로드캐스트 파이프라인을 타지 않는다 — 소비 책임이 Consumer<T> 빈이
+            // 아니라 컨슈머 그룹 소유 컴포넌트에 있으므로 이 검증 대상이 아니다(#1610)
+            if (WorkQueueEvent.class.isAssignableFrom(eventType)) {
+                log.info("컨슈머 그룹 소비 이벤트 — 브로드캐스트 Consumer 검증 제외: {}", eventType.getSimpleName());
+                continue;
+            }
             final ResolvableType type = ResolvableType.forClassWithGenerics(Consumer.class, eventType);
             // 한 이벤트 타입에 Consumer가 여럿일 수 있다(EventDispatcher 팬아웃 — 예: RoomLifecycleEvent.Created를
             // RoomCreateConsumer + GameSessionInitConsumer가 함께 처리). getIfAvailable()은 다중 후보에서

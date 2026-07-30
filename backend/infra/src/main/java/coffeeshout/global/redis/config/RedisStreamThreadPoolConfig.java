@@ -28,6 +28,8 @@ public class RedisStreamThreadPoolConfig {
                 () -> createThreadPoolExecutor(poolConfig, String.format(BEAN_NAME, poolName))
         ));
         properties.keys().entrySet().stream()
+                // 리스너를 만들지 않는 스트림(컨슈머 그룹 전용)은 소비 스레드풀이 필요 없다
+                .filter(entry -> entry.getValue().isListenerEnabled())
                 .filter(entry -> !entry.getValue().isUseSharedThreadPool())
                 .forEach(entry -> {
                     final String keyName = entry.getKey();

@@ -2,7 +2,7 @@
 name: create-pr
 description: PR 템플릿을 읽어 GitHub Pull Request를 생성한다. 백엔드·프론트엔드 공통.
 argument-hint: "[PR 제목 (선택)] [--base=브랜치명 (기본: dev)]"
-allowed-tools: Read, Bash, Glob
+allowed-tools: Read, Bash, Glob, Agent, Skill
 ---
 
 # create-pr
@@ -54,9 +54,11 @@ allowed-tools: Read, Bash, Glob
 
 ## 실행
 
+`gh pr create`는 생성된 PR URL을 stdout으로 출력하므로 그대로 캡처한다.
+
 ```bash
 BASE="dev"   # 사전 작업 1의 값 (--base 로 오버라이드 가능)
-gh pr create \
+PR_URL="$(gh pr create \
   --title "[fix] 카드 점수 집계 누락 수정" \
   --base "$BASE" \
   --label "🐞bug,BE" \
@@ -64,6 +66,21 @@ gh pr create \
   --body-file - <<'EOF'
 <템플릿 채운 내용>
 EOF
+)"
+[ -z "$PR_URL" ] && { echo "ABORT: PR 생성/URL 조회 실패"; exit 1; }
+echo "$PR_URL"
 ```
 
-완료 후 PR 본문이 반영됐는지 확인하고 URL을 출력한다.
+Bash 툴은 호출마다 새 셸이라 `$PR_URL`은 블록 간 유지되지 않는다. 아래 코드 리뷰 단계의 코멘트 블록은 URL을 **다시 조회**한다.
+
+## 코드 리뷰 (PR 생성 후, 필수)
+
+CodeRabbit 자동 리뷰를 대체하는 단계다(#1600). PR이 이미 존재하므로 여기서 리뷰를 돌려 발견사항을 PR 코멘트로 게시한다.
+
+리뷰 로직은 `deep-review` 스킬에 있다. 그대로 호출한다 — 렌즈 선택·병렬 실행·채점·코멘트 게시를 스킬이 처리한다.
+
+```text
+Skill("deep-review", "--base=$BASE --comment")
+```
+
+완료 후 PR URL과 리뷰 코멘트 게시 여부를 출력한다.

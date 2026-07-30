@@ -22,9 +22,12 @@
 | --- | --- |
 | `create-issue` | 이슈 템플릿 기반 생성 + `dev`에서 작업 브랜치 분기 (영역 라벨 확인) |
 | `create-pr` | PR 템플릿 기반 생성 (base `dev`, 변경 경로로 영역 라벨 판별) |
+| `deep-review` | 리뷰 렌즈 5~6개 병렬 실행 → 신뢰도 채점(80점 컷) → 리포트 1개로 병합. CodeRabbit 대체(#1600), `create-pr`이 자동 호출 |
 | `adr` | Architecture Decision Record 작성 (`NNNN`+index, 영역별 `docs/adr/`) |
 
 도메인 전용 스킬·에이전트·규칙은 각 폴더 `.claude/`에 있으며 그 폴더 작업 시 자동 로드된다(백엔드 `impl`·`write-tests`·`commit`·`code-reviewer` 등, 프론트 `frontend-design`·`ws-contract`·`fe-code-reviewer` 등).
+
+`deep-review`의 과설계 렌즈가 쓰는 **ponytail 플러그인은 `.claude/settings.json`에서 프로젝트 전역으로 활성**이다(팀 합의). 첫 세션에 설치·신뢰 프롬프트가 뜬다.
 
 ## 보편 작업 원칙
 

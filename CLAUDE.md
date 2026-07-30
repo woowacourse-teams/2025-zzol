@@ -1,11 +1,6 @@
 # CLAUDE.md
 
-**쫄(ZZOL)** — 미니게임 기반 당첨자 추첨 서비스(<https://zzol.site>)의 모노레포다.
-
-| 폴더 | 스택 | 가이드 |
-| --- | --- | --- |
-| `backend/` | Spring, Gradle 멀티모듈 | 백엔드 작업 시 `backend/CLAUDE.md` 자동 로드 |
-| `frontend/` | React, Webpack | 프론트 작업 시 `frontend/CLAUDE.md` 자동 로드 |
+**쫄(ZZOL)** — 미니게임 기반 당첨자 추첨 서비스(<https://zzol.site>)의 모노레포다. `backend/`·`frontend/` 2개 영역.
 
 ## 브랜치 전략 (단일 `dev`)
 
@@ -14,17 +9,9 @@
 - 영역(BE/FE)은 브랜치가 아니라 **라벨**로 구분한다 — `create-issue`/`create-pr`가 변경 영역을 판별해 `BE`/`FE`(풀스택이면 둘 다) 라벨을 단다.
 - 프로덕션 승격은 통합 `prod` 브랜치로의 `dev`→`prod` PR로만 한다. `prod` push가 곧 운영 배포다. 상세는 [git-push-safety](.claude/rules/git-push-safety.md).
 
-## 공통 스킬 (전역)
+## 스킬·에이전트·규칙
 
-루트 `.claude/skills/`에 있어 어느 폴더에서 작업하든 사용 가능하다.
-
-| 스킬 | 용도 |
-| --- | --- |
-| `create-issue` | 이슈 템플릿 기반 생성 + `dev`에서 작업 브랜치 분기 (영역 라벨 확인) |
-| `create-pr` | PR 템플릿 기반 생성 (base `dev`, 변경 경로로 영역 라벨 판별) |
-| `adr` | Architecture Decision Record 작성 (`NNNN`+index, 영역별 `docs/adr/`) |
-
-도메인 전용 스킬·에이전트·규칙은 각 폴더 `.claude/`에 있으며 그 폴더 작업 시 자동 로드된다(백엔드 `impl`·`write-tests`·`commit`·`code-reviewer` 등, 프론트 `frontend-design`·`ws-contract`·`fe-code-reviewer` 등).
+루트 `.claude/skills/`의 공통 스킬은 어느 폴더에서 작업하든 사용 가능하다. 도메인 전용 스킬·에이전트·규칙은 각 폴더 `.claude/`에 있으며 그 폴더 작업 시 자동 로드된다.
 
 ## 보편 작업 원칙
 

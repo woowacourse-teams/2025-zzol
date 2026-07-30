@@ -2,7 +2,7 @@
 name: create-pr
 description: PR 템플릿을 읽어 GitHub Pull Request를 생성한다. 백엔드·프론트엔드 공통.
 argument-hint: "[PR 제목 (선택)] [--base=브랜치명 (기본: dev)]"
-allowed-tools: Read, Bash, Glob, Agent
+allowed-tools: Read, Bash, Glob, Agent, Skill
 ---
 
 # create-pr
@@ -77,41 +77,10 @@ Bash 툴은 호출마다 새 셸이라 `$PR_URL`은 블록 간 유지되지 않�
 
 CodeRabbit 자동 리뷰를 대체하는 단계다(#1600). PR이 이미 존재하므로 여기서 리뷰를 돌려 발견사항을 PR 코멘트로 게시한다.
 
-1. **리뷰어 선택 (영역 → 에이전트 매핑)**: 영역 라벨과 동일한 판별(`git diff --name-only "origin/$BASE"...HEAD`)로 고른다. **에이전트는 스택 전용이다** — 백엔드는 `code-reviewer`, 프론트엔드는 `fe-code-reviewer`로 반드시 구분해 호출한다.
+리뷰 로직은 `deep-review` 스킬에 있다. 그대로 호출한다 — 렌즈 선택·병렬 실행·채점·코멘트 게시를 스킬이 처리한다.
 
-   | 변경 경로 | 리뷰어 에이전트 (`subagent_type`) | 리뷰 대상 파일 |
-   | --- | --- | --- |
-   | `backend/` 포함 | **`code-reviewer`** (백엔드) | `git diff --name-only origin/$BASE...HEAD -- backend/` 전체 |
-   | `frontend/` 포함 | **`fe-code-reviewer`** (프론트엔드) | `git diff --name-only origin/$BASE...HEAD -- frontend/` 전체 |
-   | 양쪽(풀스택) | **둘 다** 각각 호출 | 각 스택 경로로 스코프한 파일 목록 |
-   | 루트 설정 등 소스 변경 없음 | 건너뜀 | — |
-
-   대상 파일을 `src/main/java`·`frontend/src`로 **하드코딩하지 않는다** — 백엔드 변경은 `build.gradle`·설정·리소스 등 다른 경로에도 있을 수 있어 누락된다. 반드시 스택 경로(`-- backend/`·`-- frontend/`)로 스코프한 실제 diff 파일 목록을 전달한다.
-
-2. **실행 (풀스택은 병렬)**: 결과 텍스트를 받아 코멘트로 올려야 하므로 `run_in_background: false`(foreground)로 호출한다. **풀스택이면 두 Agent 호출을 한 응답에 함께 넣어 병렬 실행한다 — 순차로 하지 않는다.** 둘 다 foreground라 결과가 함께 돌아오고, 3단계에서 메인 루프가 직접 병합한다(별도 오케스트레이터 에이전트를 두지 않는다 — 팬아웃·병합은 메인 루프가 한다). 프롬프트에 **리뷰 범위를 `origin/$BASE...HEAD`(PR 전체)로 명시**한다 — 리뷰어 에이전트 기본값이 마지막 커밋(`git diff HEAD~1`)이라 PR 전체 범위와 어긋나므로 반드시 범위를 넘긴다. 대상 파일은 스택 경로로 스코프한 diff 파일 목록을 그대로 전달한다(경로 하드코딩 금지).
-
-   ```text
-   # 풀스택이면 아래 두 호출을 한 응답에 함께 넣어 병렬 실행한다.
-   # 백엔드 변경 — 대상 = `git diff --name-only origin/$BASE...HEAD -- backend/` 전체
-   Agent(subagent_type: "code-reviewer", run_in_background: false,
-         prompt: "이 PR(브랜치 origin/$BASE...HEAD)의 백엔드 변경을 리뷰하라. 대상 파일은 `git diff --name-only origin/$BASE...HEAD -- backend/` 결과 전체다(경로를 src/main/java 등으로 좁히지 말 것). 발견사항만 텍스트로 반환한다.")
-
-   # 프론트엔드 변경 — 대상 = `git diff --name-only origin/$BASE...HEAD -- frontend/` 전체
-   Agent(subagent_type: "fe-code-reviewer", run_in_background: false,
-         prompt: "이 PR(브랜치 origin/$BASE...HEAD)의 프론트엔드 변경을 리뷰하라. 대상 파일은 `git diff --name-only origin/$BASE...HEAD -- frontend/` 결과 전체다(경로를 frontend/src 등으로 좁히지 말 것). 발견사항만 텍스트로 반환한다.")
-   ```
-
-3. **코멘트 정돈·게시**: 에이전트 리포트를 스캔 가능한 코멘트 하나로 정돈한다 — 상단에 심각도별 요약, 그 아래 파일별 발견사항, 긴 개선 제안은 `<details>`로 접는다. **두 리뷰어를 돌린 경우(풀스택) `### 백엔드`·`### 프론트엔드` 섹션으로 나눠 한 코멘트에 합친다**(코멘트 난립 방지). 발견사항이 없으면 "리뷰 통과 — 지적사항 없음"으로 적는다. 리뷰어는 제안만 하고 코드는 수정하지 않으므로 코드 변경은 없다. 정돈한 내용을 PR에 코멘트 1개로 올린다.
-
-   URL 조회와 게시를 **한 셸 블록**에서 처리한다 — `gh pr view`가 현재 브랜치의 PR URL을 잡고, 빈 값이면 중단한다(빈 URL로 코멘트가 엉뚱한 곳에 달리는 것 방지).
-
-   ```bash
-   PR_URL="$(gh pr view --json url -q .url)"   # 현재 브랜치의 PR
-   [ -z "$PR_URL" ] && { echo "ABORT: PR URL 조회 실패 — PR이 생성됐는지 확인하세요."; exit 1; }
-   gh pr comment "$PR_URL" --body-file - <<'EOF'
-   ## 🤖 클로드 코드 리뷰
-   <정돈한 발견사항>
-   EOF
-   ```
+```text
+Skill("deep-review", "--base=$BASE --comment")
+```
 
 완료 후 PR URL과 리뷰 코멘트 게시 여부를 출력한다.

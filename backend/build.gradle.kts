@@ -1,7 +1,9 @@
+import com.diffplug.gradle.spotless.SpotlessExtension
 import org.gradle.testing.jacoco.tasks.JacocoReport
 
 plugins {
     alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.spotless) apply false
 }
 
 group = "coffeeshout"
@@ -21,6 +23,20 @@ subprojects {
     apply(plugin = "java-library")
     apply(plugin = "org.springframework.boot")
     apply(plugin = "jacoco")
+    apply(plugin = "com.diffplug.spotless")
+
+    // 포맷은 Spotless가 자동 수정한다 (ADR-0036). ./gradlew spotlessApply
+    extensions.configure<SpotlessExtension> {
+        // 전체 재포맷 대신 origin/dev 이후 변경된 파일만 검사한다.
+        // 기존 파일을 건드리지 않아 git blame·리뷰 diff가 오염되지 않는다.
+        ratchetFrom("origin/dev")
+        java {
+            removeUnusedImports()
+            palantirJavaFormat()
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
+    }
 
     // Spring Boot bootJar 기본 비활성화 (라이브러리 모듈은 jar만, :app이 override)
     tasks.named("bootJar") { enabled = false }

@@ -1,0 +1,46 @@
+name: Edge Config CI
+
+# nginx 설정(backend/docker/nginx/conf/**)을 PR 단계에서 검증한다.
+# 앱의 내부 IP 화이트리스트가 XFF 스푸핑에 뚫리지 않는 근거는 nginx가 실제 TCP peer를
+# X-Forwarded-For 맨 뒤에 덧붙이는 것(proxy-http.inc·proxy-ws.inc)이다. include 없는
+# proxy_pass가 하나라도 생기면 그 사슬이 끊긴다(#1620). 사람 리뷰에 맡기지 않고 CI로 고정한다.
+
+on:
+  pull_request:
+    branches: [dev, prod]
+    paths:
+      - "backend/docker/nginx/**"
+      - ".github/scripts/check-nginx-proxy-headers.py"
+      - ".github/scripts/test/test-check-nginx-proxy-headers.sh"
+      - ".github/workflows/edge-config-ci.yml"
+  push:
+    branches: [dev, prod]
+    paths:
+      - "backend/docker/nginx/**"
+      - ".github/scripts/check-nginx-proxy-headers.py"
+      - ".github/scripts/test/test-check-nginx-proxy-headers.sh"
+      - ".github/workflows/edge-config-ci.yml"
+
+# 같은 ref의 이전 실행은 취소해 중복 CI 낭비를 줄인다
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proxy-headers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check proxy header includes
+        run: python3 .github/scripts/check-nginx-proxy-headers.py backend/docker/nginx/conf
+
+      - name: Test the checker itself
+        run: bash .github/scripts/test/test-check-nginx-proxy-headers.sh

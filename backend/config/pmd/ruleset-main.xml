@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<ruleset name="zzol-main"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        zzol 백엔드 프로덕션 소스(src/main/java) 규칙 (ADR-0036).
+        PMD 기본 룰셋은 쓰지 않는다 — 여기 명시한 규칙만 강제한다.
+        규칙 텍스트의 SSOT는 docs/conventions-*.md, 판정의 SSOT는 이 파일이다.
+        테스트 소스는 ruleset-test.xml이 담당한다(:test-support의 main 포함 — 테스트 인프라이므로).
+    </description>
+
+    <!-- ===== 묶음 A — 위반 0곳, 즉시 실패 ===== -->
+
+    <!-- 생성자 주입을 강제한다. 필드 주입은 불변성을 깨고 테스트에서 교체가 어렵다.
+         테스트 소스의 @Autowired 필드 주입(213곳)은 JUnit+Spring 관용이라 대상이 아니다. -->
+    <rule name="NoFieldInjection"
+          language="java"
+          message="@Autowired 필드 주입 대신 생성자 주입을 쓴다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//FieldDeclaration[ModifierList/Annotation[@SimpleName = 'Autowired']]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- 고정 대기는 실행 환경에 따라 동작이 갈린다. 지연은 TaskScheduler에 위임한다. -->
+    <rule name="NoThreadSleep"
+          language="java"
+          message="Thread.sleep 대신 스케줄러에 위임한다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//MethodCall[@MethodName = 'sleep'][TypeExpression/ClassType[@SimpleName = 'Thread']]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- 표준 출력은 로그 수집(Alloy→Loki) 경로를 타지 않아 운영에서 유실된다. -->
+    <rule ref="category/java/bestpractices.xml/SystemPrintln">
+        <priority>1</priority>
+    </rule>
+    <rule ref="category/java/bestpractices.xml/AvoidPrintStackTrace">
+        <priority>1</priority>
+    </rule>
+
+    <!--
+        의도적으로 켜지 않은 규칙 — 근거를 남긴다.
+
+        LocalVariableCouldBeFinal (지역 변수 final, conventions-production.md)
+          위반 1,346곳. final 선언 901곳 대비 준수율 40%로 컨벤션이 사실상 안 지켜지고 있다.
+          기계적 수정이지만 1,346곳을 이 PR에 넣으면 규칙 도입 diff가 묻힌다 — 별도 이슈로 분리.
+
+        MethodArgumentCouldBeFinal
+          컨벤션이 "매개변수에는 붙이지 않는다"로 명시 — 규칙 자체가 컨벤션과 반대다.
+
+        필드 final (커스텀 XPath 후보)
+          non-final 인스턴스 필드 286곳 중 130곳이 JPA 엔티티다. JPA는 프록시·리플렉션 때문에
+          non-final 필드를 요구하므로 전역 규칙으로 만들 수 없고, 컨벤션도 "가능한 한 final"로
+          조건부다. 판정이 문맥에 달린 규칙은 리뷰가 맡는다.
+    -->
+
+</ruleset>

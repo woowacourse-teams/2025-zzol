@@ -17,6 +17,7 @@ spring-dotenv                = "5.1.0"
 archunit                     = "1.4.2"
 jackson                      = "2.22"
 spotless                     = "8.9.0"
+pmd                          = "7.26.0"
 
 [libraries]
 springdoc-openapi            = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui",       version.ref = "spring-doc" }

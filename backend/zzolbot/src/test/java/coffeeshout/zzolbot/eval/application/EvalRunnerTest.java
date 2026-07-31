@@ -103,6 +103,22 @@ class EvalRunnerTest {
     }
 
     @Test
+    void kind를_지정하면_해당_kind_시나리오만_실행한다() {
+        given(scenarioRepository.findAllByKindOrderByCreatedAtDesc(ScenarioKind.CHAT))
+                .willReturn(List.of(scenario(1L)));
+        given(judgeClient.evaluate(anyString(), anyString(), anyString()))
+                .willReturn(new JudgeScore(5, 5, false, EvalVerdict.PASS, "정답"));
+
+        final EvalRunEntity run = runner.run("chat-only", 1, ScenarioKind.CHAT);
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(run.getScenarioCount()).isEqualTo(1);
+            softly.assertThat(run.getPassCount()).isEqualTo(1);
+        });
+        verify(scenarioRepository, times(0)).findAllByOrderByCreatedAtDesc();
+    }
+
+    @Test
     void 평가기가_없는_kind의_시나리오는_FAIL_결과로_기록된다() {
         final EvalScenarioEntity monitorScenario = EvalScenarioEntity.create(
                 "monitor-1", ScenarioKind.MONITOR, "알림", "{}", "rubric", ScenarioSource.RECORDED);

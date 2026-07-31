@@ -37,17 +37,25 @@ public class EvalRunner {
     private static final int MAX_REPEATS = 3;
 
     public EvalRunEntity run(String label) {
-        return run(label, 1);
+        return run(label, 1, null);
+    }
+
+    public EvalRunEntity run(String label, int repeats) {
+        return run(label, repeats, null);
     }
 
     /**
      * 각 시나리오를 최대 {@code repeats}회까지 평가한다. PASS가 한 번 나오면 거기서 멈추고,
      * 모든 시도가 FAIL일 때만 FAIL로 본다 — LLM 변동으로 가끔 빗나가는 걸 재시도로 완화한다.
      * repeats는 1~{@value #MAX_REPEATS}로 클램프한다(기본 1이면 비용·동작 모두 종전과 동일).
+     * kind가 null이면 전체 시나리오를, 지정하면 해당 kind만 실행한다 — 경로 하나만 바꿨을 때
+     * 다른 경로 시나리오까지 LLM을 태우지 않기 위한 필터다.
      */
-    public EvalRunEntity run(String label, int repeats) {
+    public EvalRunEntity run(String label, int repeats, ScenarioKind kind) {
         final int attempts = Math.max(1, Math.min(MAX_REPEATS, repeats));
-        final List<EvalScenarioEntity> scenarios = scenarioRepository.findAllByOrderByCreatedAtDesc();
+        final List<EvalScenarioEntity> scenarios = kind == null
+                ? scenarioRepository.findAllByOrderByCreatedAtDesc()
+                : scenarioRepository.findAllByKindOrderByCreatedAtDesc(kind);
         final EvalRunEntity run = runRepository.save(
                 EvalRunEntity.start(label, properties.model(), null, scenarios.size()));
 

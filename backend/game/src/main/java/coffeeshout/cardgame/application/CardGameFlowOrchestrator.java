@@ -6,14 +6,16 @@ import static coffeeshout.cardgame.domain.CardGameStep.PREPARE;
 import static coffeeshout.cardgame.domain.CardGameStep.START_PLAY;
 import static coffeeshout.cardgame.domain.CardGameStep.START_ROUND;
 
-import coffeeshout.gamecommon.JoinCode;
-import coffeeshout.gamecommon.flow.EarlyFinishTrigger;
-import coffeeshout.gamecommon.flow.FlowHandle;
-import coffeeshout.gamecommon.flow.FlowScheduler;
 import coffeeshout.cardgame.config.CardGameTimingProperties;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.CardGameState;
 import coffeeshout.cardgame.domain.CardGameStep;
+import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.flow.EarlyFinishTrigger;
+import coffeeshout.gamecommon.flow.FlowHandle;
+import coffeeshout.gamecommon.flow.FlowScheduler;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
@@ -67,18 +69,16 @@ public class CardGameFlowOrchestrator {
         trigger.complete();
     }
 
-    private FlowHandle chainFirstRound(FlowHandle flow, CardGame cardGame, JoinCode joinCode,
-                                       EarlyFinishTrigger trigger) {
-        return flow
-                .andThen(step(cardGame, joinCode, PREPARE), durationOf(CardGameState.FIRST_LOADING))
+    private FlowHandle chainFirstRound(
+            FlowHandle flow, CardGame cardGame, JoinCode joinCode, EarlyFinishTrigger trigger) {
+        return flow.andThen(step(cardGame, joinCode, PREPARE), durationOf(CardGameState.FIRST_LOADING))
                 .andThen(startPlay(cardGame, joinCode, trigger), durationOf(CardGameState.PREPARE))
                 .raceTimeout(durationOf(CardGameState.PLAYING), trigger, timing.earlyFinishDelay());
     }
 
-    private FlowHandle chainSubsequentRound(FlowHandle flow, CardGame cardGame, JoinCode joinCode,
-                                            EarlyFinishTrigger trigger) {
-        return flow
-                .andThen(startPlay(cardGame, joinCode, trigger), durationOf(CardGameState.LOADING))
+    private FlowHandle chainSubsequentRound(
+            FlowHandle flow, CardGame cardGame, JoinCode joinCode, EarlyFinishTrigger trigger) {
+        return flow.andThen(startPlay(cardGame, joinCode, trigger), durationOf(CardGameState.LOADING))
                 .raceTimeout(durationOf(CardGameState.PLAYING), trigger, timing.earlyFinishDelay());
     }
 
@@ -97,8 +97,8 @@ public class CardGameFlowOrchestrator {
             case PREPARE -> timing.prepare();
             case PLAYING -> timing.playing();
             case SCORE_BOARD -> timing.scoreBoard();
-            case READY, DONE -> throw new IllegalArgumentException(
-                    "타이밍이 정의되지 않은 상태입니다: " + state);
+            case READY, DONE ->
+                throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "타이밍이 정의되지 않은 상태입니다: " + state);
         };
     }
 
@@ -117,7 +117,10 @@ public class CardGameFlowOrchestrator {
             // 순서 불변식(ADR-0025 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행
             final int roundCount = gameSessionService.finishGame(joinCode);
             eventPublisher.publishEvent(new MiniGameFinishedEvent(
-                    joinCodeValue, MiniGameType.CARD_GAME.name(), cardGame.getResult().toRankMap(), roundCount));
+                    joinCodeValue,
+                    MiniGameType.CARD_GAME.name(),
+                    cardGame.getResult().toRankMap(),
+                    roundCount));
         };
     }
 

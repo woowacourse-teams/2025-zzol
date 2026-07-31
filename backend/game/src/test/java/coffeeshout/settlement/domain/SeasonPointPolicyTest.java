@@ -1,8 +1,9 @@
 package coffeeshout.settlement.domain;
 
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import coffeeshout.global.exception.GlobalErrorCode;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,8 +27,8 @@ class SeasonPointPolicyTest {
         @ParameterizedTest
         @ValueSource(ints = {0, -1})
         void 순위가_1_미만이면_예외가_발생한다(int rank) {
-            assertThatThrownBy(() -> SeasonPointPolicy.pointsFor(rank, List.of(1, 2)))
-                    .isInstanceOf(IllegalArgumentException.class);
+            assertCoffeeShoutException(
+                    () -> SeasonPointPolicy.pointsFor(rank, List.of(1, 2)), GlobalErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 

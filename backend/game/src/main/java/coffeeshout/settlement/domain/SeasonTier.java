@@ -1,5 +1,7 @@
 package coffeeshout.settlement.domain;
 
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -26,7 +28,7 @@ public enum SeasonTier {
 
     public static SeasonTier fromPoints(long totalPoints) {
         if (totalPoints < 0) {
-            throw new IllegalArgumentException("포인트는 0 이상이어야 합니다: " + totalPoints);
+            throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "포인트는 0 이상이어야 합니다: " + totalPoints);
         }
         return DESCENDING.stream()
                 .filter(tier -> totalPoints >= tier.threshold)

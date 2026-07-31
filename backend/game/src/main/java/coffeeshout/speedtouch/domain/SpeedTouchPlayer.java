@@ -1,6 +1,8 @@
 package coffeeshout.speedtouch.domain;
 
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.Getter;
@@ -12,6 +14,7 @@ public class SpeedTouchPlayer {
 
     @Getter
     private final Gamer gamer;
+
     private int currentNumber;
     private Instant finishTime;
 
@@ -52,7 +55,7 @@ public class SpeedTouchPlayer {
 
     public synchronized long calculateFinishMillis(Instant startTime) {
         if (!isFinished()) {
-            throw new IllegalStateException("완주하지 않은 플레이어의 완주 시간을 계산할 수 없습니다.");
+            throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "완주하지 않은 플레이어의 완주 시간을 계산할 수 없습니다.");
         }
         return Duration.between(startTime, finishTime).toMillis();
     }

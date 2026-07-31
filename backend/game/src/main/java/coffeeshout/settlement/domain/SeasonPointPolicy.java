@@ -1,5 +1,7 @@
 package coffeeshout.settlement.domain;
 
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import java.util.List;
 
 /**
@@ -21,8 +23,7 @@ public final class SeasonPointPolicy {
     private static final int THIRD_PLACE = 50;
     private static final int PARTICIPATION = 30;
 
-    private SeasonPointPolicy() {
-    }
+    private SeasonPointPolicy() {}
 
     /**
      * @param rank     포인트를 계산할 회원의 순위
@@ -31,7 +32,7 @@ public final class SeasonPointPolicy {
      */
     public static int pointsFor(int rank, List<Integer> allRanks) {
         if (rank < 1) {
-            throw new IllegalArgumentException("순위는 1 이상이어야 합니다: " + rank);
+            throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "순위는 1 이상이어야 합니다: " + rank);
         }
         final int tieCount = countTies(rank, allRanks);
         if (tieCount <= 1) {
@@ -49,9 +50,8 @@ public final class SeasonPointPolicy {
         if (allRanks == null || allRanks.isEmpty()) {
             return 1;
         }
-        return Math.toIntExact(allRanks.stream()
-                .filter(r -> r != null && r == rank)
-                .count());
+        return Math.toIntExact(
+                allRanks.stream().filter(r -> r != null && r == rank).count());
     }
 
     private static int basePointsFor(int rank) {

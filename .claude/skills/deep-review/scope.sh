@@ -21,7 +21,14 @@ if [ -z "$CHANGED" ]; then
 fi
 
 # 문서·에이전트 정의·워크플로우만 바뀐 경우를 걸러낸다 (소스 렌즈를 헛돌리지 않기 위해)
-SRC="$(printf '%s\n' "$CHANGED" | grep -Ev '(^|/)\.claude/|(^|/)docs/|\.md$|(^|/)\.github/' || true)"
+DOC_RE='(^|/)\.claude/|(^|/)docs/|\.md$|(^|/)\.github/'
+SRC="$(printf '%s\n' "$CHANGED" | grep -Ev "$DOC_RE" || true)"
+
+# 문서를 뺀 변경 줄 수 — issue-workflow 의 경량 경로 판정이 쓴다(문서 길이에 휘둘리지 않게).
+SRC_LINES=0
+[ -n "$SRC" ] && SRC_LINES="$(git diff --numstat "origin/$BASE"...HEAD \
+  | grep -Ev "$DOC_RE" | awk '{s+=$1+$2} END{print s+0}')"
+echo "SRC_LINES=$SRC_LINES"
 
 [ -z "$SRC" ] && echo "SRC_EMPTY=1"
 printf '%s\n' "$SRC" | grep -q '^backend/'  && echo "HAS_BE=1"

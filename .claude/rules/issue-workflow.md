@@ -16,20 +16,19 @@ push·merge 안전은 [git-push-safety](git-push-safety.md)가 SSOT다.
 
 모든 변경이 전체 흐름을 탈 필요는 없다.
 
+판별은 `deep-review`의 [`scope.sh`](../skills/deep-review/scope.sh)가 이미 한다. **여기서 따로 세지 않는다** — 판별을 두 벌 두면 정규식이 갈라져 같은 변경을 다르게 분류하게 된다.
+
 ```bash
-git fetch origin dev
-DOCS='(\.md$|^\.github/|^\.claude/)'
-git diff --name-only origin/dev...HEAD | grep -vE "$DOCS"                    # 문서가 아닌 파일
-git diff --numstat origin/dev...HEAD | grep -vE "$DOCS" | awk '{s+=$1+$2} END{print s+0}'  # 그 파일들의 변경 줄 수
+bash "$(git rev-parse --show-toplevel)/.claude/skills/deep-review/scope.sh" dev
 ```
 
-| 조건 | 경로 |
+| 출력 | 경로 |
 | --- | --- |
-| 문서가 아닌 파일이 **하나도 없음** (`*.md`·`.github/`·`.claude/` 전용) | **경량** — 이슈·설계 생략. 브랜치 → PR만 |
-| 문서가 아닌 파일의 변경이 **20줄 미만**이고 동작이 안 바뀜(오타·주석·포맷·설정 한 줄) | **경량** |
+| `SRC_EMPTY=1` (문서·`.claude/`·`.github/`·`docs/` 전용) | **경량** — 이슈·설계 생략. 브랜치 → PR만 |
+| `SRC_LINES` < 20 이고 동작이 안 바뀜(오타·주석·포맷·설정 한 줄) | **경량** |
 | 그 외 | **전체** — 아래 0~6단계 |
 
-**20줄은 문서를 뺀 줄 수다.** 규칙·문서를 길게 쓰면서 코드는 한 줄만 건드린 변경은 경량이다 — 전체 diff 줄 수로 세면 문서가 길다는 이유로 이슈를 강제하게 된다.
+`SRC_LINES`는 **문서를 뺀 변경 줄 수**다. 전체 diff로 세면 규칙·문서를 길게 쓰면서 코드는 한 줄만 건드린 변경까지 이슈를 강제하게 된다.
 
 경량 경로는 이슈를 만들지 않으므로 PR 템플릿의 `🔥 연관 이슈`에 `없음 (경량 경로)`라고 적는다. 브랜치명은 `{type}/no-issue-{slug}`. 라벨은 그대로 단다.
 

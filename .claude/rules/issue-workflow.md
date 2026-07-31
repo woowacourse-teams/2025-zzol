@@ -12,27 +12,45 @@
 
 push·merge 안전은 [git-push-safety](git-push-safety.md)가 SSOT다.
 
-### 경로 선택 — 시작 전에 정한다
+### 경로 선택 — 잠정으로 시작하고 커밋 후 확정한다
 
-모든 변경이 전체 흐름을 탈 필요는 없다.
+모든 변경이 전체 흐름을 탈 필요는 없다. 다만 **시작 시점에는 기계로 판별할 수 없다** — 아직 고친 게 없어 diff가 비어 있고, `scope.sh`는 변경이 없으면 `NO_CHANGE=1`만 내고 끝난다. 그래서 두 번에 나눠 정한다.
 
-판별은 `deep-review`의 [`scope.sh`](../skills/deep-review/scope.sh)가 이미 한다. **여기서 따로 세지 않는다** — 판별을 두 벌 두면 정규식이 갈라져 같은 변경을 다르게 분류하게 된다.
+#### 시작할 때 — 지시 내용으로 잠정 판정
+
+| 지시 내용 | 잠정 |
+| --- | --- |
+| 오타·주석·포맷·문서 수정, 설정 한 줄 같은 **동작이 안 바뀌는 작업** | **경량(잠정)** — 이슈 없이 바로 워크트리·브랜치로 간다 |
+| 그 외 | **전체** — 1단계부터 이슈를 만든다 |
+
+애매하면 전체로 잠정한다. 판단이 갈리는 변경은 대개 전체가 필요한 변경이다.
+
+#### 커밋한 뒤 — `scope.sh`로 확정
+
+PR을 열기 직전에 확정한다(`/create-pr`이 확인한다). 판별은 `deep-review`의 [`scope.sh`](../skills/deep-review/scope.sh)가 한다. **여기서 따로 세지 않는다** — 판별을 두 벌 두면 정규식이 갈라져 같은 변경을 다르게 분류하게 된다.
 
 ```bash
 bash "$(git rev-parse --show-toplevel)/.claude/skills/deep-review/scope.sh" dev
 ```
 
-| 출력 | 경로 |
+| 출력 | 확정 |
 | --- | --- |
-| `SRC_EMPTY=1` (문서·`.claude/`·`.github/`·`docs/` 전용) | **경량** — 이슈·설계 생략. 브랜치 → PR만 |
-| `SRC_LINES` < 20 이고 동작이 안 바뀜(오타·주석·포맷·설정 한 줄) | **경량** |
-| 그 외 | **전체** — 아래 0~6단계 |
+| `SRC_EMPTY=1` (문서·`.github/`·`docs/` 전용) | **경량** |
+| `SRC_LINES` < 20 이고 `SRC_BINARY`가 없고 동작이 안 바뀜 | **경량** |
+| 그 외 (`SRC_BINARY=1` 포함) | **전체** |
 
-`SRC_LINES`는 **문서를 뺀 변경 줄 수**다. 전체 diff로 세면 규칙·문서를 길게 쓰면서 코드는 한 줄만 건드린 변경까지 이슈를 강제하게 된다.
+`SRC_LINES`는 **문서를 뺀 변경 줄 수**다. 전체 diff로 세면 규칙·문서를 길게 쓰면서 코드는 한 줄만 건드린 변경까지 이슈를 강제하게 된다. `SRC_BINARY=1`은 줄 수로 잴 수 없는 변경(이미지·폰트 등)이 섞였다는 뜻이라 크기를 알 수 없으므로 전체로 본다.
 
-경량 경로는 이슈를 만들지 않으므로 PR 템플릿의 `🔥 연관 이슈`에 `없음 (경량 경로)`라고 적는다. 브랜치명은 `{type}/no-issue-{slug}`. 라벨은 그대로 단다.
+#### 잠정과 확정이 어긋나면
 
-애매하면 전체 경로를 탄다. 판단이 갈리는 변경은 대개 전체 경로가 필요한 변경이다.
+- **잠정 경량 → 확정 전체**: 그 시점에 이슈를 만든다. 워크트리·브랜치는 이미 있으므로 `/create-issue`를 이슈 생성까지만 쓰고, 브랜치명은 그대로 둔 채 PR 본문 `🔥 연관 이슈`에 `close #N`을 **직접 적는다**(브랜치명에 번호가 없어 자동 추출이 안 된다).
+- **잠정 전체 → 확정 경량**: 그대로 둔다. 이미 만든 이슈는 지우지 않는다.
+
+#### 경량 경로의 브랜치명·이슈 표기
+
+브랜치명은 `{type}/no-issue-{slug}`. `{type}/` 바로 뒤가 숫자가 아니어야 `/create-pr`의 이슈 번호 추출이 이 브랜치를 건너뛴다 — `no-issue-`로 시작하므로 slug에 숫자가 들어가도 안전하다(추출 규칙은 [create-pr](../skills/create-pr/SKILL.md)).
+
+PR 템플릿의 `🔥 연관 이슈`에는 `없음`이라 적고 사유를 괄호로 덧붙인다(예: `없음 (경량 경로)`). 라벨은 그대로 단다.
 
 ### 0. 정찰 — `origin/dev` 기준으로 읽는다
 
@@ -71,7 +89,14 @@ git -C "$MAIN/.claude/worktrees/{type}-{N}" branch --unset-upstream 2>/dev/null 
 - **디렉터리명(`{type}-{N}`)과 브랜치명(`{type}/{N}-{slug}`)은 다르다.** 디렉터리에는 `/`를 쓸 수 없고, 브랜치명은 `create-pr`이 `{N}`을 뽑아 `close #N`을 채우는 근거라 규약을 지켜야 한다.
 - **`EnterWorktree`를 `name`으로 부르지 않는다.** 그러면 브랜치명이 `worktree-<name>`이 되어 규약을 깨고 이슈 번호 추출이 실패한다. 브랜치는 위처럼 `git worktree add -b`로 만들고, `EnterWorktree`는 `path`로 들어가기만 한다.
 - `.claude/worktrees/`는 `.gitignore` 대상이다 — 워크트리가 저장소를 더럽히지 않는다.
-- 워크트리는 작업이 끝나도 자동으로 지우지 않는다. PR이 merge된 뒤 정리한다: `git worktree remove <경로> && git branch -d {type}/{N}-{slug}`.
+- 워크트리는 작업이 끝나도 자동으로 지우지 않는다. PR이 merge된 뒤 정리한다.
+
+  ```bash
+  git worktree remove "$MAIN/.claude/worktrees/{type}-{N}"
+  git branch -D "{type}/{N}-{slug}"    # -d 가 아니라 -D
+  ```
+
+  **`-d`는 항상 거부된다.** PR을 squash로 합치므로(git-push-safety) 작업 브랜치 커밋은 `dev`에서 reachable하지 않고, git은 "머지 안 된 브랜치"로 본다. `-d`를 쓰면 워크트리만 지워지고 브랜치가 남아, 같은 이슈로 다시 작업할 때 브랜치명 충돌로 워크트리 생성이 실패한다. **PR이 merge된 것을 확인한 뒤에만** `-D`를 쓴다.
 
 ### 3. 설계 — 브랜치 파일을 직접 보고 이슈에 채운다
 
@@ -112,11 +137,25 @@ PR을 만들기 전에 **연결된 이슈를 다시 읽어 성공 기준이 충�
 
 ```bash
 PR=1234
-# 미해결 스레드의 코멘트 id 목록
-gh api "repos/{owner}/{repo}/pulls/$PR/comments" --jq '.[] | "\(.id)\t\(.path):\(.line)\t\(.user.login)"'
-# 해당 스레드에 답글
-gh api "repos/{owner}/{repo}/pulls/$PR/comments/$COMMENT_ID/replies" -f body='✅ 반영 — …'
+REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
+
+# 아직 답하지 않은 스레드의 최상위 코멘트 id 목록.
+#  --paginate: 없으면 30개까지만 와서 그 뒤 지적이 통째로 안 보인다(답을 다 했다고 착각하게 된다).
+#  isResolved 는 REST 에 없다 — GraphQL reviewThreads 로만 알 수 있다.
+gh api graphql --paginate -F pr="$PR" -F owner="${REPO%/*}" -F name="${REPO#*/}" -f query='
+query($owner:String!,$name:String!,$pr:Int!,$endCursor:String){
+  repository(owner:$owner,name:$name){ pullRequest(number:$pr){
+    reviewThreads(first:100,after:$endCursor){
+      pageInfo{ hasNextPage endCursor }
+      nodes{ isResolved comments(first:1){ nodes{ databaseId path line body } } } } } } }' \
+  --jq '.data.repository.pullRequest.reviewThreads.nodes[]
+        | select(.isResolved | not) | .comments.nodes[0] | "\(.databaseId)\t\(.path):\(.line)"'
+
+# 해당 스레드에 답글 (databaseId 를 그대로 쓴다)
+gh api "repos/$REPO/pulls/$PR/comments/$COMMENT_ID/replies" -f body='✅ 반영 — …'
 ```
+
+`pulls/$PR/comments`를 그냥 부르면 **이미 해결된 스레드와 과거 답글까지 섞여** 나온다. 그대로 답글을 달면 끝난 대화에 중복 답글이 붙어 알림만 시끄러워진다. 위 GraphQL은 미해결 스레드의 **첫 코멘트만** 뽑는다.
 
 여러 지적을 관통하는 설명이 필요할 때만 `gh pr comment $PR`로 전체 코멘트를 **덧붙인다**(답글을 대신하지 않는다).
 

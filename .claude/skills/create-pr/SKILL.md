@@ -12,6 +12,13 @@ allowed-tools: Read, Bash, Glob, Agent, Skill
 1. base 브랜치를 정한다. `$ARGUMENTS`에 `--base=<브랜치>`가 있으면 그 값, 없으면 통합 브랜치 `dev`. 이후 이 값을 `$BASE`로 쓴다.
 2. PR 템플릿은 모노레포 루트에 있다. `REPO_ROOT="$(git rev-parse --show-toplevel)"` 로 루트를 구해 `${REPO_ROOT}/.github/pull_request_template.md`를 Read한다.
 3. `git log "origin/$BASE"..HEAD --oneline` 와 `git diff "origin/$BASE"...HEAD --stat` 으로 이번 브랜치의 커밋·변경 파일을 확인한다 (로컬 `$BASE`는 stale일 수 있으니 `origin/` 기준).
+3-1. **경로 확정** — 커밋이 다 올라온 지금이 [issue-workflow](../../rules/issue-workflow.md)의 경로를 확정할 시점이다. `scope.sh` 출력으로 판정한다.
+
+   ```bash
+   bash "$(git rev-parse --show-toplevel)/.claude/skills/deep-review/scope.sh" "$BASE"
+   ```
+
+   `SRC_EMPTY=1`이거나 (`SRC_LINES` < 20 이고 `SRC_BINARY`가 없고 동작이 안 바뀜)이면 경량, 아니면 전체다. **이슈 없이 시작했는데 전체로 확정되면 지금 이슈를 만들고** `close #N`을 본문에 직접 적는다. 이미 이슈가 있으면 그대로 진행한다.
 4. **브랜치를 원격에 올린다 (`gh pr create`의 전제).** 먼저 아래 보호 브랜치·detached HEAD 가드를 실행한다(`ABORT` 출력 시 중단·보고). 보호 목록 SSOT는 `.claude/rules/git-push-safety.md`. 통과하면 **자기 이름 명시 refspec**으로 push한다 (bare `git push` 금지). 이미 올라가 있으면 push는 생략한다.
 
    ```bash
@@ -48,7 +55,16 @@ allowed-tools: Read, Bash, Glob, Agent, Skill
 `.github/pull_request_template.md` 섹션을 유지하고 채운다.
 
 - ✅ 체크리스트: `--base` 확인 후 `[x]`
-- 🔥 연관 이슈: 현재 브랜치명 `<type>/<N>-<slug>`(create-issue가 만든 형식)에서 이슈 번호 `N`을 추출해 `close #N`. 브랜치명에 번호가 없으면 `없음`
+- 🔥 연관 이슈: 현재 브랜치명 `<type>/<N>-<slug>`(create-issue가 만든 형식)에서 이슈 번호 `N`을 추출해 `close #N`.
+
+  **추출은 반드시 브랜치명 맨 앞에 앵커한다.** 아무 숫자나 주우면 `chore/no-issue-1587-dependabot-...` 같은 경량 경로 브랜치에서 `1587`을 뽑아 **무관한 이슈를 자동으로 닫는다**.
+
+  ```bash
+  N="$(git branch --show-current | sed -n 's|^[a-z][a-z]*/\([0-9][0-9]*\)-.*|\1|p')"
+  [ -n "$N" ] && echo "close #$N" || echo "없음"
+  ```
+
+  번호가 없으면 `없음`이라 적고 사유를 괄호로 덧붙인다(예: `없음 (경량 경로)`). 작업 도중 경량에서 전체로 바뀌어 이슈를 뒤늦게 만든 경우([issue-workflow](../../rules/issue-workflow.md)의 경로 선택)는 브랜치명에 번호가 없으므로 `close #N`을 **직접 적는다**.
 - 🚀 작업 내용: 변경 파일·커밋을 번호 목록으로
 - 💬 리뷰 중점사항: 설계 결정·트레이드오프·주의 사항
 

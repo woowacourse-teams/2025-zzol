@@ -94,12 +94,24 @@ EOF
 
 통합 브랜치 `dev`를 **체크아웃하지 않고** `origin/dev`에서 직접 분기한다. `dev` 위에서 분기하면 autoSetupMerge가 새 브랜치 upstream을 `dev`로 잡아 이후 push·IDE Sync가 `dev`로 직행한다(#1404 사고 원인) — 금지. 영역(BE/FE)과 무관하게 브랜치 prefix는 붙이지 않는다.
 
+**실패를 삼키지 않는다.** 아래 가드는 하나라도 어긋나면 `ABORT`로 멈춘다 — 특히 upstream 제거는 #1404 재발방지의 핵심이라, 조용히 실패하면 이후 push 한 번으로 작업 커밋이 `dev`에 직행한다.
+
 ```bash
 MAIN="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"   # 주 저장소 경로 (워크트리 안에서 실행해도 안전)
+[ -n "$MAIN" ] || { echo "ABORT: 주 저장소 경로를 찾지 못했다"; exit 1; }
 WT="$MAIN/.claude/worktrees/{type}-{issue-number}"
-git fetch origin dev
-git worktree add -b "{type}/{issue-number}-{slug}" "$WT" origin/dev
-git -C "$WT" branch --unset-upstream 2>/dev/null || true   # ★ autoSetupMerge가 잡은 dev upstream 제거 (git-push-safety)
+
+git fetch origin dev || { echo "ABORT: origin/dev fetch 실패"; exit 1; }
+git worktree add -b "{type}/{issue-number}-{slug}" "$WT" origin/dev || {
+  echo "ABORT: 워크트리 생성 실패 — 경로 또는 브랜치명이 이미 있는지 확인한다(아래 참고)"; exit 1; }
+
+# ★ autoSetupMerge 가 잡은 dev upstream 제거 (git-push-safety). 있을 때만 떼고, 뗐는지 반드시 확인한다.
+if git -C "$WT" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then
+  git -C "$WT" branch --unset-upstream || { echo "ABORT: upstream 제거 실패"; exit 1; }
+fi
+git -C "$WT" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1 && {
+  echo "ABORT: upstream 이 남아있다 — 이 상태로 두면 push 가 dev 로 직행한다(#1404)"; exit 1; }
+
 echo "$WT"
 ```
 
@@ -113,7 +125,9 @@ EnterWorktree(path: "<WT 경로>")
 - 디렉터리명은 `{type}-{issue-number}`(`/` 불가), 브랜치명은 `{type}/{issue-number}-{slug}`로 서로 다르다.
 - `{slug}`: 이슈 제목을 소문자 + 하이픈으로 변환, 최대 40자
 - 한국어 단어는 의미를 유지하는 영문으로 변환
-- 이미 같은 경로의 워크트리가 있으면 `git worktree add`가 실패한다. 그때는 새로 만들지 말고 `EnterWorktree(path:)`로 기존 것에 들어간다.
+- **`git worktree add`가 실패하는 두 경우를 구분한다.** 메시지를 보고 갈라진다.
+  - `already exists` (경로 선점) → 새로 만들지 말고 `EnterWorktree(path:)`로 기존 워크트리에 들어간다.
+  - `a branch named '...' already exists` (브랜치 선점 — 지난 작업의 브랜치가 남아 있다) → 워크트리만 새로 붙인다: `git worktree add "$WT" "{type}/{issue-number}-{slug}"` (`-b` 없이). 그래도 안 되면 사용자에게 보고한다. **`git switch`로 되돌아가지 않는다.**
 
 ## 7. 완료 출력
 

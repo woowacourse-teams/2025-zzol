@@ -66,10 +66,18 @@ gh pr merge <번호> --squash --subject "[fix] 카드 점수 집계 누락 수�
 git ls-remote --exit-code --heads origin "$(git branch --show-current)" >/dev/null
 ```
 
-- **있으면(push 이력 O)** → `git pull --no-rebase`. `dev` 동기화도 `git merge origin/dev`.
-- **없으면(push 이력 X)** → `git pull --rebase` 사용 가능.
+- **있으면(push 이력 O)** → `git pull --no-rebase`.
+- **없으면(push 이력 X)** → `git pull` 자체가 안 된다. 아래를 쓴다.
 
-판별이 번거로우면 그냥 `--no-rebase`를 쓴다. squash가 히스토리를 정리하므로 잃는 게 없다.
+**첫 push 전에는 `git pull`을 쓰지 않는다.** 작업 브랜치는 만들자마자 upstream을 떼어내므로(위 절), `git pull`은 `--rebase`든 `--no-rebase`든 `fatal: There is no tracking information for the current branch.`로 죽는다. upstream을 다시 붙이는 것으로 해결하지 않는다 — 그게 이 문서가 막으려는 상태다.
+
+`dev` 동기화는 브랜치 상태와 무관하게 **항상 이것으로 한다**:
+
+```bash
+git fetch origin dev && git merge origin/dev
+```
+
+판별이 번거로우면 push 이력이 있어도 그냥 위 두 줄을 쓴다. squash가 히스토리를 정리하므로 rebase로 얻을 게 없다.
 
 ### 이 규칙의 한계 (사용자 인지 필요)
 

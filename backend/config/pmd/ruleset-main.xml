@@ -52,9 +52,30 @@
         <priority>1</priority>
     </rule>
 
-    <!-- ===== 묶음 B — domain 계층 한정 =====
-         계층 판정은 별도 Gradle 태스크 없이 CompilationUnit의 @PackageName으로 한다.
-         application까지 넓히지 않는 이유는 아래 각 규칙에 적었다. -->
+    <!-- ===== 묶음 B — 계층 한정 =====
+         계층 판정은 별도 Gradle 태스크 없이 CompilationUnit의 @PackageName으로 한다. -->
+
+    <!-- 도메인·애플리케이션 계층의 예외는 전부 ErrorCode를 갖는다(conventions-production.md).
+         raw IllegalArgumentException/IllegalStateException은 RestExceptionHandler:27의
+         Exception 핸들러로 떨어져 응답·로그 어디에도 식별 코드가 남지 않는다.
+
+         상태 코드를 낮추라는 규칙이 아니다 — 내부 불변식 위반은 실제로 서버 버그이므로 500이 옳고,
+         SystemException은 toStatus(ErrorCode)로 상태를 정하므로 500짜리 ErrorCode를 쓰면 그대로 500이다.
+         바뀌는 것은 "코드가 붙는다"는 것뿐이다(Room:181·QrCode:24·PlayerNameGenerator:35가 기존 선례). -->
+    <rule name="NoRawExceptionInDomain"
+          language="java"
+          message="ErrorCode를 가진 CoffeeShoutException 계열을 던진다 (내부 불변식이면 SystemException + 500 ErrorCode)"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//ThrowStatement[ConstructorCall/ClassType[@SimpleName = ('IllegalArgumentException', 'IllegalStateException')]]
+    [ancestor::CompilationUnit[matches(@PackageName, '\.(domain|application)(\.|$)')]]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
 
     <!-- 순수 도메인 로직에서 포괄 catch는 삼킬 예외와 삼키면 안 될 예외를 구분하지 못한다.
 
@@ -137,13 +158,10 @@
     <!--
         의도적으로 켜지 않은 규칙 — 근거를 남긴다.
 
-        도메인의 IllegalArgumentException/IllegalStateException 금지 (묶음 B 후보였다가 철회)
-          RestExceptionHandler:27이 이들을 500으로 매핑하므로 "ErrorCode 매핑 우회 = 버그"라고 보고
-          규칙을 만들었으나, 실측 11곳을 전수 추적한 결과 사용자 입력이 닿는 경로가 하나도 없었다.
-          전부 내부 불변식(RacingRange는 상수로만 생성, BlockStackingPlayerProgress.advanceTo는
-          BlockStackingGame:80이 클라이언트 입력을 먼저 걸러냄 — ADR-0002) 또는 설정·DB 값 검증이다.
-          이들은 발생하면 실제로 서버 버그이므로 500이 옳다. 규칙을 강행하면 버그를 4xx로 위장하게 된다.
-          진짜 규칙은 "사용자 입력 검증에는 ErrorCode를 쓴다"인데 기계는 입력의 출처를 모른다 — 리뷰가 맡는다.
+        (참고) NoRawExceptionInDomain은 한 번 철회했다가 되살렸다.
+          철회 사유는 "11곳 전부 내부 불변식이라 500이 옳은데 BusinessException으로 바꾸면 버그를 4xx로 위장한다"였다.
+          전제가 틀렸다 — SystemException을 쓰면 상태는 500 그대로 두고 ErrorCode만 붙는다.
+          "예외에 코드를 붙이는 것"과 "상태 코드를 낮추는 것"은 별개다.
 
         LocalVariableCouldBeFinal (지역 변수 final, conventions-production.md)
           위반 1,346곳. final 선언 901곳 대비 준수율 40%로 컨벤션이 사실상 안 지켜지고 있다.

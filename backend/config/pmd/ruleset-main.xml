@@ -52,8 +52,41 @@
         <priority>1</priority>
     </rule>
 
+    <!-- ===== 묶음 B — domain 계층 한정 =====
+         계층 판정은 별도 Gradle 태스크 없이 CompilationUnit의 @PackageName으로 한다.
+         application까지 넓히지 않는 이유는 아래 각 규칙에 적었다. -->
+
+    <!-- 순수 도메인 로직에서 포괄 catch는 삼킬 예외와 삼키면 안 될 예외를 구분하지 못한다.
+
+         application까지 넓히지 않는다: 실측 결과 포괄 catch 29곳이 전부 application이고 domain은 0곳인데,
+         그 29곳은 모두 "브로드캐스트·스케줄러 콜백 실패를 삼키고 흐름은 잇는" 의도된 경계다
+         (NunchiFlowOrchestrator.notifyQuietly가 그 패턴을 이름으로 명시한다).
+         넓히면 억제 주석 29개가 붙고, 그건 규칙이 현실과 안 맞는다는 신호다. -->
+    <rule name="NoGenericCatchInDomain"
+          language="java"
+          message="도메인 계층에서는 구체 예외를 잡는다. 포괄 catch가 필요하면 경계 계층(application)으로 옮긴다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//CatchParameter[ClassType[@SimpleName = ('Exception', 'Throwable')]]
+    [ancestor::CompilationUnit[matches(@PackageName, '\.domain(\.|$)')]]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
     <!--
         의도적으로 켜지 않은 규칙 — 근거를 남긴다.
+
+        도메인의 IllegalArgumentException/IllegalStateException 금지 (묶음 B 후보였다가 철회)
+          RestExceptionHandler:27이 이들을 500으로 매핑하므로 "ErrorCode 매핑 우회 = 버그"라고 보고
+          규칙을 만들었으나, 실측 11곳을 전수 추적한 결과 사용자 입력이 닿는 경로가 하나도 없었다.
+          전부 내부 불변식(RacingRange는 상수로만 생성, BlockStackingPlayerProgress.advanceTo는
+          BlockStackingGame:80이 클라이언트 입력을 먼저 걸러냄 — ADR-0002) 또는 설정·DB 값 검증이다.
+          이들은 발생하면 실제로 서버 버그이므로 500이 옳다. 규칙을 강행하면 버그를 4xx로 위장하게 된다.
+          진짜 규칙은 "사용자 입력 검증에는 ErrorCode를 쓴다"인데 기계는 입력의 출처를 모른다 — 리뷰가 맡는다.
 
         LocalVariableCouldBeFinal (지역 변수 final, conventions-production.md)
           위반 1,346곳. final 선언 901곳 대비 준수율 40%로 컨벤션이 사실상 안 지켜지고 있다.

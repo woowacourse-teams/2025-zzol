@@ -163,6 +163,10 @@ assertThat(cooldown.collided()).contains(host.getName(), "루키"); // 매칭된
 `Thread.sleep`은 사용하지 않는다. 고정 대기는 실행 환경에 따라 테스트가 flaky해지는 원인이 된다.
 시간이 지난 뒤 상태 변화를 검증해야 할 때는 Awaitility를 사용한다.
 
+> **PMD가 CI에서 강제한다** — `NoThreadSleep`(`config/pmd/ruleset-test.xml`, [ADR-0036](adr/0036-static-analysis-lint-stack.md)).
+> 단언도 AssertJ로 통일하며 정적 임포트한 JUnit 단언(`assertTrue`·`assertEquals` 등)은 `NoJUnitAssertions`가 막는다.
+> 억제가 불가피하면 `@SuppressWarnings("PMD.<규칙명>")`에 **사유 주석을 함께** 남긴다.
+
 ```java
 await().atMost(Duration.ofSeconds(3))
         .until(() -> store.tryAcquire(ip));

@@ -1,7 +1,7 @@
 # 0036. 정적 분석 스택 도입 — Spotless(포맷) + PMD(구조 규칙)
 
 - 날짜: 2026-07-31
-- 상태: 승인 (구현 진행)
+- 상태: 적용됨 (#1628 — 실측으로 규칙 구성이 바뀌었다. 「구현 결과」 참조)
 
 ## 컨텍스트
 
@@ -172,6 +172,33 @@ Spotless는 `ratchetFrom("origin/dev")`로 **변경된 파일만** 검사해 bas
 
 리뷰가 계속 맡는 영역도 명시한다 — 트랜잭션 스크립트 지양, 계산/사이드이펙트 분리, 도메인 로직 위치, 그리고 위에서 제외한 시간 API 주입 여부. **린트 도입의 목적은 리뷰를 줄이는 게 아니라 리뷰를 이쪽으로 몰아주는 것이다.**
 
+## 구현 결과 (#1628)
+
+**추정으로 세운 규칙 구성이 실측에서 여러 군데 뒤집혔다.** 아래는 결정과 달라진 것과 그 근거다.
+
+| 초안 | 실제 | 이유 |
+| --- | --- | --- |
+| 묶음 A에 지역 변수 `final` 포함(위반 ≈0 추정) | **제외** | 실제 위반 **1,346곳**. `final` 901곳은 이미 붙은 것을 센 것이었다(준수율 40%). 별도 이슈로 분리 |
+| 묶음 A에 필드 `final` 포함 | **제외** | non-final 필드 286곳 중 **130곳이 JPA 엔티티**. JPA가 non-final을 요구하므로 규칙화 불가 |
+| `@Autowired` 필드 주입 금지(위반 0) | **프로덕션만** | 217곳 중 213곳이 테스트. 테스트의 필드 주입은 JUnit+Spring 관용이라 대상이 아니다 |
+| 룰셋 1개 | **소스셋별 2개** | 위 항목의 귀결. `ruleset-main.xml` / `ruleset-test.xml`, `:test-support`의 main은 테스트 인프라라 테스트 룰셋을 적용 |
+| `System.out` 금지(위반 0) | **위반 48곳 → exclude** | 전부 `QueryPerformanceTest`(test 태스크에서도 제외된 수동 벤치마크). stdout 리포트가 목적이라 파일째 제외 |
+| 묶음 B에 도메인 raw 예외 금지 | **철회** | 11곳을 전수 추적한 결과 사용자 입력이 닿는 경로가 0곳. 전부 500이 옳은 내부 불변식이라, 규칙을 강행하면 서버 버그를 4xx로 위장하게 된다 |
+| 묶음 B 포괄 catch = domain+application | **domain만** | 29곳이 전부 application이고 domain은 0곳. 그 29곳은 브로드캐스트·스케줄러 콜백 실패를 삼키고 흐름을 잇는 의도된 경계다(`NunchiFlowOrchestrator.notifyQuietly`) |
+| 묶음 C 위반 26곳 예상 | **13곳** | 중첩 6 + 길이 7 + `else` **0**. grep으로 세던 `else` 10곳은 then이 `return`으로 끝나지 않아 규칙 대상이 아니었다 |
+
+**XPath는 전부 프로브로 검증했다.** 초안에 적었던 AST 형태가 PMD 7과 달랐다 — 한정자는 `ClassType`이 아니라
+`TypeExpression/ClassType`, 어노테이션은 `FieldDeclaration/Annotation`이 아니라 `ModifierList/Annotation` 아래에 있다.
+초안 그대로 넣었다면 **규칙이 아무것도 잡지 못한 채 통과했을 것이다.** 새 XPath 규칙은 반드시
+"걸려야 할 코드"와 "걸리면 안 되는 코드"를 함께 넣은 프로브로 확인한 뒤 커밋한다.
+
+**억제는 3곳이고 전부 사유 주석을 달았다** — `IpBlockFilter.doFilterInternal`(가드 순서가 보안 의미, 포스트모템 0003),
+`ReportMockDataInitializer.buildMockData`(로직이 아니라 mock 데이터 표), `RacingGameTest`의 `Thread.sleep`
+(`RacingGame.moveAll()`이 내부에서 `Instant.now()`를 읽는 프로덕션 제약 — 근본 해결은 별도 이슈).
+
+**CI에는 `fetch-depth: 0`이 필요하다.** `actions/checkout` 기본값(depth 1)이면 `origin/dev` ref가 없어
+`ratchetFrom`이 실패한다.
+
 ## 고려한 대안
 
 | 대안 | 장점 | 단점 |
@@ -200,5 +227,7 @@ Spotless는 `ratchetFrom("origin/dev")`로 **변경된 파일만** 검사해 bas
 - 묶음 B 정리로 **도메인 예외 11곳이 `CoffeeShoutException` 계열로 교체**되어 에러 응답의 `ErrorCode` 일관성이 올라간다. 포괄 catch 29곳은 구체 예외로 좁히거나 경계 계층으로 옮긴다.
 - 프론트엔드는 이 ADR의 범위 밖이다(별도 ESLint 스택 보유).
 - **후속 이슈(별도)** — 클래스명·패키지·의존이 판정 기준인 규칙은 PMD가 아니라 **ArchUnit**의 몫이라 이 작업에 넣지 않는다. 대상: 테스트 지원 클래스 5패턴(`*Fixture`·`TestDataHelper`·`*Fake`·`*Dummy`·`Stub*`, `conventions-test.md:120`), Handler의 Application Service 직접 호출 금지(Stream 경유), `convertAndSend` 메서드의 `@WsTopic`/`@WsQueue` 필수, 게임별 테스트 미러 빈 존재 검증. 마지막 항목은 **포스트모템 0004에서 체크리스트 문서로 두 번 실패한 규칙**이라 우선순위가 높다.
-- **후속 이슈(임계값 조임)** — 중첩 깊이 3→2(남는 위반 35개), `NcssCount` 25→20(남는 위반 13개). 규칙이 이미 CI에 있는 상태에서 리팩터링만 하므로 순수 코드 작업이 된다.
+- **후속 이슈(임계값 조임)** — 중첩 깊이 3→2, `NcssCount` 25→20. 규칙이 이미 CI에 있는 상태에서 리팩터링만 하므로 순수 코드 작업이 된다.
+- **후속 이슈(지역 변수 `final`)** — 위반 1,346곳. IDE 일괄 적용이 가능한 기계적 작업이라 전용 PR로 분리한다. 이 작업을 안 할 것이라면 컨벤션에서 항목을 빼는 게 낫다 — 준수율 40%로 방치된 규칙은 리뷰에서 자의적으로 적용된다.
+- **후속 이슈(`RacingGame.moveAll()` 시간 주입)** — 프로덕션이 내부에서 `Instant.now()`를 읽어 테스트가 `Thread.sleep`으로 완주 시각을 벌려야 한다. `moveAll(Instant)`로 바꾸면 억제도 사라진다.
 - 후속 검토 대상: 문서 린트(`markdownlint-cli2`)를 Spotless로 흡수할지, ErrorProne을 버그 패턴 축으로 별도 도입할지.

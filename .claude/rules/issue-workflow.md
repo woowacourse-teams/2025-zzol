@@ -1,6 +1,12 @@
 ## 이슈 기반 작업 흐름
 
-작업은 **정찰 → 이슈 → 브랜치 → 설계 → PR → 리뷰 반영 → merge** 순으로 진행한다.
+작업은 **정찰 → 이슈 → 워크트리·브랜치 → 설계 → PR → 리뷰 반영 → merge** 순으로 진행한다.
+
+### 왜 이 규칙을 두는가
+
+**1. git 작업을 순서대로 위임하기 위해.** 지금까지는 이슈를 만들고, 브랜치를 파고, PR을 열고, 리뷰를 반영하는 각 단계를 사람이 매번 따로 지시해야 했다. 어디까지 진행됐는지도 사람이 기억해야 했다. 순서와 판단 기준을 규칙으로 고정하면 "이 작업 해줘" 한 번으로 흐름 전체를 맡길 수 있다 — 사람은 확인 지점에서만 개입한다.
+
+**2. 작업을 동시에 여러 개 돌리기 위해.** 로컬 브랜치 하나를 체크아웃해 쓰면 한 번에 한 작업만 가능하다. 다른 작업을 시작하려면 지금 것을 커밋하거나 치워야 하고, 세션이 둘이면 서로의 체크아웃을 갈아엎는다. **작업마다 워크트리를 분리하면 독립된 디렉터리에서 동시에 진행할 수 있다** — 이게 2단계에서 워크트리를 필수로 두는 이유다.
 
 실행 절차는 스킬에 있다 — 이슈·브랜치는 [`/create-issue`](../skills/create-issue/SKILL.md), PR·리뷰 실행은 [`/create-pr`](../skills/create-pr/SKILL.md), 리뷰 로직은 [`deep-review`](../skills/deep-review/SKILL.md). 이 문서는 스킬이 다루지 않는 **판단 기준**만 정한다. 절차를 여기 옮겨 적지 않는다.
 
@@ -46,9 +52,23 @@ git show origin/dev:frontend/src/apis/rest/api.ts
 
 **설계 방향은 이 단계에서 쓰지 않는다.** 코드를 제대로 보기 전에 확정한 설계는 어차피 다시 쓴다. 이슈에는 "무엇이 되면 끝인가"(성공 기준)만 남기고, "어떻게 할 것인가"는 3단계에서 채운다.
 
-### 2. 브랜치
+### 2. 워크트리·브랜치 — 현재 디렉터리에서 브랜치를 갈아타지 않는다
 
-`/create-issue` 6단계가 `origin/dev`에서 분기하고 upstream을 떼어낸다. 브랜치명은 `{type}/{N}-{slug}`.
+**작업마다 워크트리를 새로 만들고 그 안에서 브랜치를 판다.** 현재 디렉터리에서 `git switch`로 갈아타면 같은 저장소를 보는 다른 세션의 작업을 덮어쓴다. `/create-issue` 6단계가 처리한다.
+
+```bash
+MAIN="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"   # 주 저장소 경로
+git fetch origin dev
+git worktree add -b "{type}/{N}-{slug}" "$MAIN/.claude/worktrees/{type}-{N}" origin/dev
+git -C "$MAIN/.claude/worktrees/{type}-{N}" branch --unset-upstream 2>/dev/null || true
+```
+
+그 뒤 `EnterWorktree`에 `path`로 그 경로를 넘겨 세션을 옮긴다.
+
+- **디렉터리명(`{type}-{N}`)과 브랜치명(`{type}/{N}-{slug}`)은 다르다.** 디렉터리에는 `/`를 쓸 수 없고, 브랜치명은 `create-pr`이 `{N}`을 뽑아 `close #N`을 채우는 근거라 규약을 지켜야 한다.
+- **`EnterWorktree`를 `name`으로 부르지 않는다.** 그러면 브랜치명이 `worktree-<name>`이 되어 규약을 깨고 이슈 번호 추출이 실패한다. 브랜치는 위처럼 `git worktree add -b`로 만들고, `EnterWorktree`는 `path`로 들어가기만 한다.
+- `.claude/worktrees/`는 `.gitignore` 대상이다 — 워크트리가 저장소를 더럽히지 않는다.
+- 워크트리는 작업이 끝나도 자동으로 지우지 않는다. PR이 merge된 뒤 정리한다: `git worktree remove <경로> && git branch -d {type}/{N}-{slug}`.
 
 ### 3. 설계 — 브랜치 파일을 직접 보고 이슈에 채운다
 

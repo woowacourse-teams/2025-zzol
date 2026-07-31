@@ -1,5 +1,6 @@
 package coffeeshout.zzolbot.eval.application;
 
+import coffeeshout.zzolbot.eval.domain.ScenarioKind;
 import coffeeshout.zzolbot.eval.domain.ScenarioSource;
 import coffeeshout.zzolbot.eval.infra.EvalScenarioEntity;
 import coffeeshout.zzolbot.eval.infra.EvalScenarioRepository;
@@ -30,13 +31,15 @@ public class EvalScenarioService {
         final ScenarioRecorder.Recorded recorded = recorder.record(question, adminUsername);
         final String snapshotJson = codec.toJson(recorded.snapshot());
         return scenarioRepository.save(
-                EvalScenarioEntity.create(name, question, snapshotJson, rubric, ScenarioSource.RECORDED));
+                EvalScenarioEntity.create(name, ScenarioKind.CHAT, question, snapshotJson, rubric,
+                        ScenarioSource.RECORDED));
     }
 
     public EvalScenarioEntity registerManual(String name, String question, String snapshotJson, String rubric) {
         codec.fromJson(snapshotJson); // 잘못된 스냅샷 JSON을 저장 전에 빠르게 검증(실패 시 예외) — 이후 실행 깨짐 방지
         return scenarioRepository.save(
-                EvalScenarioEntity.create(name, question, snapshotJson, rubric, ScenarioSource.MANUAL));
+                EvalScenarioEntity.create(name, ScenarioKind.CHAT, question, snapshotJson, rubric,
+                        ScenarioSource.MANUAL));
     }
 
     @Transactional

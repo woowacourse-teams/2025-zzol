@@ -21,6 +21,7 @@ import coffeeshout.zzolbot.eval.infra.EvalScenarioRepository;
 import coffeeshout.zzolbot.eval.infra.JudgeClient;
 import coffeeshout.zzolbot.eval.infra.ToolSnapshotCodec;
 import coffeeshout.zzolbot.application.ZzolBotChatService;
+import coffeeshout.zzolbot.eval.domain.ScenarioKind;
 import coffeeshout.zzolbot.eval.domain.ScenarioSource;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +112,7 @@ class EvalRunnerTest {
 
     private EvalScenarioEntity scenario(Long id) {
         final EvalScenarioEntity entity = EvalScenarioEntity.create(
-                "scenario-" + id, "질문 " + id, "[]", "rubric", ScenarioSource.MANUAL);
+                "scenario-" + id, ScenarioKind.CHAT, "질문 " + id, "[]", "rubric", ScenarioSource.MANUAL);
         ReflectionTestUtils.setField(entity, "id", id);
         return entity;
     }

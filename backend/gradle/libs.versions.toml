@@ -1,11 +1,11 @@
 [versions]
-spring-boot                  = "4.0.7"
+spring-boot                  = "4.1.0"
 spring-doc                   = "3.0.3"
-oci-sdk                      = "3.92.0"
+oci-sdk                      = "3.92.1"
 redisson                     = "4.6.1"
 zxing                        = "3.5.4"
-querydsl                     = "7.4.0"
-google-genai                 = "1.62.0"
+querydsl                     = "7.5"
+google-genai                 = "1.63.0"
 testcontainers               = "2.0.5"
 reflections                  = "0.10.2"
 resilience4j                 = "2.4.0"
@@ -15,7 +15,7 @@ ahocorasick                  = "0.6.3"
 jsqlparser                   = "5.3"
 spring-dotenv                = "5.1.0"
 archunit                     = "1.4.2"
-jackson                      = "2.21"
+jackson                      = "2.22"
 
 [libraries]
 springdoc-openapi            = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui",       version.ref = "spring-doc" }

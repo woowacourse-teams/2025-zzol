@@ -1,11 +1,12 @@
-import { FriendsIcon, HomeIcon, MenuIcon, RankingIcon } from './tabIcons';
+import { FriendsIcon, HomeIcon, MenuIcon, RankingIcon, TrophyIcon } from './tabIcons';
 import * as S from './HomeBottomTab.styled';
 
-export type HomeTabType = 'home' | 'ranking' | 'friends' | 'menu';
+export type HomeTabType = 'home' | 'ranking' | 'rank' | 'friends' | 'menu';
 
 const TABS: { key: HomeTabType; label: string; Icon: typeof HomeIcon }[] = [
   { key: 'home', label: '홈', Icon: HomeIcon },
   { key: 'ranking', label: '랭킹', Icon: RankingIcon },
+  { key: 'rank', label: '랭크', Icon: TrophyIcon },
   { key: 'friends', label: '친구', Icon: FriendsIcon },
   { key: 'menu', label: '더보기', Icon: MenuIcon },
 ];

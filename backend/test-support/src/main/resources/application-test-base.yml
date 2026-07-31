@@ -114,6 +114,10 @@ redis:
           core-size: 1
           max-size: 1
           queue-capacity: 128
+      # 시즌 정산 작업 큐 — 컨슈머 그룹 전용, 브로드캐스트 리스너 미생성(#1610). 운영 redis.yml과 정렬
+      "[settlement:result]":
+        listener-enabled: false
+        max-length: 10000
 
 management:
   tracing:

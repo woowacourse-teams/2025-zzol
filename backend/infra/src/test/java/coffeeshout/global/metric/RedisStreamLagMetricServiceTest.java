@@ -39,8 +39,8 @@ class RedisStreamLagMetricServiceTest {
         given(streamOps.size("racinggame")).willReturn(7L);
 
         CommonSettings commonSettings = new CommonSettings(100, 10, Duration.ofSeconds(2), Duration.ofSeconds(5));
-        StreamConfig roomConfig = new StreamConfig("concurrent", null, null, null, null);
-        StreamConfig racingConfig = new StreamConfig("concurrent", null, null, null, null);
+        StreamConfig roomConfig = new StreamConfig("concurrent", null, null, null, null, null);
+        StreamConfig racingConfig = new StreamConfig("concurrent", null, null, null, null, null);
 
         redisStreamProperties = new RedisStreamProperties(
                 commonSettings,
@@ -96,6 +96,39 @@ class RedisStreamLagMetricServiceTest {
                 .gauge();
         assertThat(queueGauge).isNotNull();
         assertThat(queueGauge.value()).isNaN();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void 리스너_미생성_스트림은_길이_게이지만_등록하고_스레드풀_게이지는_등록하지_않는다() {
+        // given: 컨슈머 그룹 전용 스트림 — 소비 스레드풀이 없다(#1610)
+        StreamOperations<String, Object, Object> streamOps = mock(StreamOperations.class);
+        given(stringRedisTemplate.opsForStream()).willReturn(streamOps);
+        given(streamOps.size("settlement:result")).willReturn(3L);
+
+        StreamConfig workQueueConfig = new StreamConfig(null, null, 10000, null, null, false);
+        RedisStreamProperties workQueueProperties = new RedisStreamProperties(
+                new CommonSettings(100, 10, Duration.ofSeconds(2), Duration.ofSeconds(5)),
+                null,
+                Map.of("settlement:result", workQueueConfig)
+        );
+        RedisStreamLagMetricService service = new RedisStreamLagMetricService(
+                stringRedisTemplate, workQueueProperties, meterRegistry, applicationContext
+        );
+
+        // when
+        service.initializeMetrics();
+
+        // then
+        Gauge lengthGauge = meterRegistry.find("redis.stream.length")
+                .tag("stream", "settlement:result")
+                .gauge();
+        Gauge queueGauge = meterRegistry.find("redis.stream.threadpool.queue.size")
+                .tag("stream", "settlement:result")
+                .gauge();
+        assertThat(lengthGauge).isNotNull();
+        assertThat(lengthGauge.value()).isEqualTo(3.0);
+        assertThat(queueGauge).isNull();
     }
 
     @Test

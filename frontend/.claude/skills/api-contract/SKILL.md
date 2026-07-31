@@ -24,6 +24,6 @@ BE 컨트랙트(WebSocket + HTTP)를 직접 `curl` 로 받아도 되지만, 본 
 
 **컨트랙트 검증 위치**: api-mcp 의 zod 스키마와 BE 카탈로그의 일치(contract drift) 검증은 **BE CI(api-mcp CI)가 단독으로 소유**한다 — fixture 생성기(`WsCatalogFixtureGeneratorTest`, `-DupdateFixture=true`)·커밋된 fixture·BE 소스가 모두 `backend/` 에 있기 때문이다. `tools/api-mcp` 는 BE 소스의 미러이므로 FE CI 는 컨트랙트 검증을 수행하지 않고 빌드·린트·단위 테스트만 돌린다.
 
-**prefix 주의사항**: MCP 카탈로그의 path 는 prefix 를 포함(`/topic/room/...`, `/user/queue/...`, `/app/...`)하지만, FE 의 `useWebSocketSubscription`/`send` 는 wrapper 가 prefix 를 자동 추가하므로 path 에서 `/topic`·`/app` 부분을 제거해 전달한다 (자세한 규칙은 `.claude/rules/websocket.md`).
+**prefix 주의사항**: MCP 카탈로그의 path 는 prefix 를 포함(`/topic/room/...`, `/user/queue/...`, `/app/...`)하지만, FE 의 `useWebSocketSubscription`/`send` 는 wrapper 가 prefix 를 자동 추가하므로 path 에서 `/topic`·`/app` 부분을 제거해 전달한다 (자세한 규칙은 `frontend/.claude/rules/websocket.md`).
 
-상세 도구 명세·환경 변수·동작 검증(MCP Inspector) 은 `../tools/api-mcp/README.md` 참조.
+상세 도구 명세·환경 변수·동작 검증(MCP Inspector) 은 저장소 루트의 `tools/api-mcp/README.md` 참조.

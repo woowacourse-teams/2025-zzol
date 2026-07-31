@@ -13,6 +13,8 @@
 
 루트 `.claude/skills/`의 공통 스킬은 어느 폴더에서 작업하든 사용 가능하다. 도메인 전용 스킬·에이전트·규칙은 각 폴더 `.claude/`에 있으며 그 폴더 작업 시 자동 로드된다.
 
+`deep-review`의 과설계 렌즈가 쓰는 **ponytail 플러그인은 `.claude/settings.json`에서 프로젝트 전역으로 활성**이다(팀 합의). 첫 세션에 설치·신뢰 프롬프트가 뜬다.
+
 ## 보편 작업 원칙
 
 - 요구사항이 모호하거나 해석이 여럿이면 **구현 전에 질문**한다. 추측으로 진행하지 않는다.
@@ -21,4 +23,4 @@
 
 ## git push 안전
 
-보호 브랜치(`dev`·`main` 등)에는 **직접 push·commit하지 않는다.** 작업 브랜치 upstream을 보호 브랜치로 두지 않고(`git branch --unset-upstream`), push는 명시 refspec(`git push -u origin HEAD:{type}/{N}-{slug}`)으로 한다. 전문은 [.claude/rules/git-push-safety.md](.claude/rules/git-push-safety.md).
+보호 브랜치(`dev`·`prod`·`main`·`master`)에는 **직접 push·commit하지 않는다.** 작업 브랜치 upstream을 보호 브랜치로 두지 않고(`git branch --unset-upstream`), push는 명시 refspec(`git push -u origin HEAD:{type}/{N}-{slug}`)으로 한다. 전문은 [.claude/rules/git-push-safety.md](.claude/rules/git-push-safety.md).

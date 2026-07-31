@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "coffeeshout.room",
         "coffeeshout.profanity",
         "coffeeshout.minigame",
+        "coffeeshout.settlement",
         "coffeeshout.global"
 })
 @EnableJpaRepositories(basePackages = {
@@ -20,6 +21,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "coffeeshout.room",
         "coffeeshout.profanity",
         "coffeeshout.minigame",
+        "coffeeshout.settlement",
         "coffeeshout.global"
 })
 @ConfigurationPropertiesScan(basePackages = "coffeeshout")

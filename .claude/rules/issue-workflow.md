@@ -18,14 +18,18 @@ push·merge 안전은 [git-push-safety](git-push-safety.md)가 SSOT다.
 
 ```bash
 git fetch origin dev
-git diff --name-status origin/dev...HEAD
+DOCS='(\.md$|^\.github/|^\.claude/)'
+git diff --name-only origin/dev...HEAD | grep -vE "$DOCS"                    # 문서가 아닌 파일
+git diff --numstat origin/dev...HEAD | grep -vE "$DOCS" | awk '{s+=$1+$2} END{print s+0}'  # 그 파일들의 변경 줄 수
 ```
 
 | 조건 | 경로 |
 | --- | --- |
-| 변경이 `*.md`·`.github/`·`.claude/` 전용 | **경량** — 이슈·설계 생략. 브랜치 → PR만 |
-| 코드 변경 20줄 미만이고 동작이 안 바뀜(오타·주석·포맷) | **경량** |
+| 문서가 아닌 파일이 **하나도 없음** (`*.md`·`.github/`·`.claude/` 전용) | **경량** — 이슈·설계 생략. 브랜치 → PR만 |
+| 문서가 아닌 파일의 변경이 **20줄 미만**이고 동작이 안 바뀜(오타·주석·포맷·설정 한 줄) | **경량** |
 | 그 외 | **전체** — 아래 0~6단계 |
+
+**20줄은 문서를 뺀 줄 수다.** 규칙·문서를 길게 쓰면서 코드는 한 줄만 건드린 변경은 경량이다 — 전체 diff 줄 수로 세면 문서가 길다는 이유로 이슈를 강제하게 된다.
 
 경량 경로는 이슈를 만들지 않으므로 PR 템플릿의 `🔥 연관 이슈`에 `없음 (경량 경로)`라고 적는다. 브랜치명은 `{type}/no-issue-{slug}`. 라벨은 그대로 단다.
 

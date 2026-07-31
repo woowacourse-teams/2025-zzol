@@ -25,6 +25,8 @@ bash "$(git rev-parse --show-toplevel)/.claude/skills/deep-review/scope.sh" dev 
 | --- | --- |
 | `NO_CHANGE=1` | 리뷰 대상 없음 — 즉시 종료 |
 | `SRC_EMPTY=1` | 문서·설정 변경만 — **모든 렌즈 건너뛰고** 그 사실을 보고 |
+| `SRC_LINES=N` | 문서를 뺀 변경 줄 수. 렌즈 선택에는 안 쓰고, [issue-workflow](../../rules/issue-workflow.md)의 경량 경로 판정이 쓴다 |
+| `SRC_BINARY=1` | 줄 수로 잴 수 없는 소스 변경(이미지·폰트 등)이 섞였다. 경량 경로 판정에서 전체로 본다 |
 | `HAS_BE=1` / `HAS_FE=1` | 해당 스택 컨벤션 렌즈 실행 |
 | `NEEDS_SECURITY=1` | 보안 렌즈 실행 |
 | `DIRTY=1` | 커밋 안 된 변경은 범위 밖 — 사용자에게 알린다 |

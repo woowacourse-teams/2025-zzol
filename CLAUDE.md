@@ -8,6 +8,7 @@
 - 브랜치명은 prefix 없이 `{type}/{N}-{slug}` (예: `feat/1502-nunchi-game`). type: `feat`·`fix`·`refactor`·`chore`·`docs`·`test`.
 - 영역(BE/FE)은 브랜치가 아니라 **라벨**로 구분한다 — `create-issue`/`create-pr`가 변경 영역을 판별해 `BE`/`FE`(풀스택이면 둘 다) 라벨을 단다.
 - 프로덕션 승격은 통합 `prod` 브랜치로의 `dev`→`prod` PR로만 한다. `prod` push가 곧 운영 배포다. 상세는 [git-push-safety](.claude/rules/git-push-safety.md).
+- **작업마다 워크트리를 분리한다** — 현재 디렉터리에서 브랜치를 갈아타지 않아야 여러 작업을 동시에 돌릴 수 있다. 작업 순서(이슈→워크트리→설계→PR→리뷰 반영→merge)와 판단 기준은 [issue-workflow](.claude/rules/issue-workflow.md).
 
 ## 스킬·에이전트·규칙
 

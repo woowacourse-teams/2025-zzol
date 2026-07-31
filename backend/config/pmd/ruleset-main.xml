@@ -77,6 +77,63 @@
         </properties>
     </rule>
 
+    <!-- ===== 묶음 C — 구조 규칙 =====
+         목표값(깊이 2 / 문장 20)이 아니라 한 칸 느슨한 값으로 시작한다.
+         목표값으로 바로 걸면 리팩터링이 규칙 도입 diff를 압도한다(ADR-0036 결정 5).
+         조이는 것은 후속 이슈. -->
+
+    <!-- conventions-production.md: "들여쓰기 깊이가 깊어지면 메서드로 분리한다.
+         한 메서드는 한 가지 추상화 수준의 일만 한다"
+         Checkstyle의 NestedIfDepth류와 달리 if·for·while·switch·try를 함께 세므로
+         for { if { if } } 같은 혼합 중첩도 잡는다.
+         시작 임계값 3 = 조상 제어문 3개 이상(= 깊이 4)부터 위반. 목표는 2. -->
+    <rule name="MaxNestingDepth"
+          language="java"
+          message="제어문 중첩이 너무 깊다. 메서드로 분리한다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//*[local-name() = ('IfStatement', 'ForStatement', 'ForeachStatement', 'WhileStatement',
+                   'DoStatement', 'SwitchStatement', 'TryStatement')]
+  [count(ancestor::*[local-name() = ('IfStatement', 'ForStatement', 'ForeachStatement',
+                                     'WhileStatement', 'DoStatement', 'SwitchStatement',
+                                     'TryStatement')]) >= 3]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- conventions-production.md: "if-else 사용을 지양하고 early return으로 중첩을 줄인다"
+         then 절이 return/throw로 끝나는 경우만 잡는다 — else를 지워도 의미가 바뀌지 않는 형태다.
+         값을 대입하는 if-else(양쪽이 다 필요한 경우)는 대상이 아니다. -->
+    <rule name="NoElseAfterReturn"
+          language="java"
+          message="then 절이 return/throw로 끝나면 else를 없애고 early return한다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//IfStatement[@Else = true()]
+  [*[2][self::ReturnStatement or self::ThrowStatement
+        or self::Block[*[last()][self::ReturnStatement or self::ThrowStatement]]]]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- 메서드 길이는 물리 줄 수가 아니라 문장 수(NCSS)로 잰다 — 어노테이션·빈 줄·포맷에 흔들리지 않는다.
+         시작 25(≈40줄), 목표 20(≈30줄). 클래스 임계값은 쓰지 않는다(분리 기준이 길이가 아니라 책임이다). -->
+    <rule ref="category/java/design.xml/NcssCount">
+        <priority>1</priority>
+        <properties>
+            <property name="methodReportLevel" value="25"/>
+            <property name="classReportLevel" value="99999"/>
+        </properties>
+    </rule>
+
     <!--
         의도적으로 켜지 않은 규칙 — 근거를 남긴다.
 

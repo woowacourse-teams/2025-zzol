@@ -183,9 +183,21 @@ Spotless는 `ratchetFrom("origin/dev")`로 **변경된 파일만** 검사해 bas
 | `@Autowired` 필드 주입 금지(위반 0) | **프로덕션만** | 217곳 중 213곳이 테스트. 테스트의 필드 주입은 JUnit+Spring 관용이라 대상이 아니다 |
 | 룰셋 1개 | **소스셋별 2개** | 위 항목의 귀결. `ruleset-main.xml` / `ruleset-test.xml`, `:test-support`의 main은 테스트 인프라라 테스트 룰셋을 적용 |
 | `System.out` 금지(위반 0) | **위반 48곳 → exclude** | 전부 `QueryPerformanceTest`(test 태스크에서도 제외된 수동 벤치마크). stdout 리포트가 목적이라 파일째 제외 |
-| 묶음 B에 도메인 raw 예외 금지 | **철회** | 11곳을 전수 추적한 결과 사용자 입력이 닿는 경로가 0곳. 전부 500이 옳은 내부 불변식이라, 규칙을 강행하면 서버 버그를 4xx로 위장하게 된다 |
+| 묶음 B에 도메인 raw 예외 금지 | **유지 (한 번 철회했다 복원)** | 아래 「예외 규칙을 두 번 뒤집은 과정」 참조 |
 | 묶음 B 포괄 catch = domain+application | **domain만** | 29곳이 전부 application이고 domain은 0곳. 그 29곳은 브로드캐스트·스케줄러 콜백 실패를 삼키고 흐름을 잇는 의도된 경계다(`NunchiFlowOrchestrator.notifyQuietly`) |
 | 묶음 C 위반 26곳 예상 | **13곳** | 중첩 6 + 길이 7 + `else` **0**. grep으로 세던 `else` 10곳은 then이 `return`으로 끝나지 않아 규칙 대상이 아니었다 |
+
+### 예외 규칙을 두 번 뒤집은 과정
+
+기록해 둘 값어치가 있는 오판이다.
+
+1. **처음**: "도메인의 `IllegalArgumentException`은 `RestExceptionHandler:27`을 타 500이 되고 `ErrorCode` 매핑을 우회하니 버그다" → 규칙 추가.
+2. **철회**: 11곳을 전수 추적하니 **사용자 입력이 닿는 경로가 0곳**이었다. 전부 내부 불변식(`RacingRange`는 상수로만 생성, `BlockStackingPlayerProgress.advanceTo`는 `BlockStackingGame:80`이 클라이언트 입력을 먼저 걸러냄 — ADR-0002)이라 500이 옳고, `BusinessException`으로 바꾸면 서버 버그가 4xx로 위장된다고 보고 규칙을 뺐다.
+3. **복원**: 2번은 **`BusinessException`만 선택지로 놓은 판단**이었다. `SystemException`은 `toStatus(ErrorCode)`로 상태를 정하므로 **500짜리 `ErrorCode`를 쓰면 상태는 그대로 500**이고, 바뀌는 것은 응답·로그에 식별 코드가 붙는다는 것뿐이다. `Room:181`·`QrCode:24`·`PlayerNameGenerator:35`가 이미 그 패턴을 쓰고 있었다 — 11곳이 오히려 예외였다.
+
+교훈: **"예외에 코드를 붙이는 것"과 "상태 코드를 낮추는 것"은 별개 축이다.** 둘을 묶어 생각하면
+"코드를 붙이면 버그가 숨는다"는 잘못된 배타 선택이 만들어진다. 예외 계층이 세 갈래
+(`BusinessException`·`InfrastructureException`·`SystemException`)인 이유가 이것이다.
 
 **XPath는 전부 프로브로 검증했다.** 초안에 적었던 AST 형태가 PMD 7과 달랐다 — 한정자는 `ClassType`이 아니라
 `TypeExpression/ClassType`, 어노테이션은 `FieldDeclaration/Annotation`이 아니라 `ModifierList/Annotation` 아래에 있다.

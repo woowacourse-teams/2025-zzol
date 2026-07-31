@@ -31,9 +31,11 @@ public class LokiLogClient {
     private final String defaultEnvironment;
     private final ObjectMapper objectMapper;
 
-    public LokiLogClient(ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
+    public LokiLogClient(
+            ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
         this.lokiBaseUrl = properties.monitoring().lokiUrl();
-        this.restClient = restClientBuilder.baseUrl(lokiBaseUrl)
+        this.restClient = restClientBuilder
+                .baseUrl(lokiBaseUrl)
                 .requestFactory(ZzolBotHttpTimeouts.requestFactory())
                 .build();
         this.defaultEnvironment = properties.monitoring().environment();
@@ -57,9 +59,10 @@ public class LokiLogClient {
         final String logql = String.format("{environment=\"%s\"} |~ \"%s\"", environment, LEVEL_ERROR);
         final long startNano = end.minus(window).toEpochMilli() * 1_000_000L;
         final long endNano = end.toEpochMilli() * 1_000_000L;
-        final URI uri = URI.create(lokiBaseUrl).resolve(String.format(
-                "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d&direction=backward",
-                encode(logql), startNano, endNano, limit));
+        final URI uri = URI.create(lokiBaseUrl)
+                .resolve(String.format(
+                        "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d&direction=backward",
+                        encode(logql), startNano, endNano, limit));
         try {
             final String body = restClient.get().uri(uri).retrieve().body(String.class);
             return parseMessages(body, limit);
@@ -75,20 +78,22 @@ public class LokiLogClient {
             return messages;
         }
         try {
-            final JsonNode results = objectMapper.readTree(raw).path("data").path("result");
-            if (results.isArray()) {
-                for (final JsonNode stream : results) {
-                    for (final JsonNode entry : stream.path("values")) {
-                        if (entry.isArray() && entry.size() >= 2 && messages.size() < limit) {
-                            messages.add(entry.get(1).asText());
-                        }
-                    }
-                }
+            // JsonNode는 배열이 아니면 순회 시 원소가 없으므로 isArray() 검사 없이 그대로 돌린다.
+            for (final JsonNode stream : objectMapper.readTree(raw).path("data").path("result")) {
+                collectMessages(stream.path("values"), limit, messages);
             }
         } catch (Exception e) {
             log.warn("[ZzolBot] Loki 로그 응답 파싱 실패 — 빈 목록", e);
         }
         return messages;
+    }
+
+    private void collectMessages(JsonNode values, int limit, List<String> messages) {
+        for (final JsonNode entry : values) {
+            if (entry.isArray() && entry.size() >= 2 && messages.size() < limit) {
+                messages.add(entry.get(1).asText());
+            }
+        }
     }
 
     private String encode(String value) {

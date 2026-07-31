@@ -65,8 +65,7 @@ public class MiniGameResultSaveEventListener {
             lockPrefix = "minigame:result:lock:",
             donePrefix = "minigame:result:done:",
             waitTime = 0,
-            leaseTime = 5000
-    )
+            leaseTime = 5000)
     public void handle(MiniGameFinishedEvent event) {
         // 방·플레이어 id는 :room이 구현한 포트로 얻는다(ADR-0034 — :game→:room 의존 제거).
         final long roomSessionId = roomSnapshotQuery.resolveRoomSessionId(event.joinCode());
@@ -76,30 +75,68 @@ public class MiniGameResultSaveEventListener {
                 .findByRoomSessionIdAndMiniGameType(roomSessionId, miniGameType)
                 .orElseThrow(() -> new IllegalArgumentException("미니게임 엔티티가 존재하지 않습니다: " + event.joinCode()));
 
-        final Playable miniGame = gameSessionService.getSession(new JoinCode(event.joinCode()))
-                .findCompletedGame(miniGameType);
+        final Playable miniGame =
+                gameSessionService.getSession(new JoinCode(event.joinCode())).findCompletedGame(miniGameType);
 
         final MiniGameResult result = miniGame.getResult();
         final Map<Gamer, MiniGameScore> scores = miniGame.getScores();
 
-        final List<String> playerNames = scores.keySet().stream()
-                .map(Gamer::getName)
-                .toList();
+        final List<String> playerNames =
+                scores.keySet().stream().map(Gamer::getName).toList();
 
-        final Map<String, PlayerSnapshot> snapshotMap = roomSnapshotQuery
-                .resolvePlayers(roomSessionId, playerNames)
-                .stream()
-                .collect(Collectors.toMap(
-                        PlayerSnapshot::playerName,
-                        Function.identity(),
-                        (existing, replacement) -> existing
-                ));
+        final Map<String, PlayerSnapshot> snapshotMap =
+                roomSnapshotQuery.resolvePlayers(roomSessionId, playerNames).stream()
+                        .collect(Collectors.toMap(
+                                PlayerSnapshot::playerName, Function.identity(), (existing, replacement) -> existing));
 
+        final Aggregated aggregated = aggregate(scores, result, miniGameEntity, snapshotMap);
+        final List<MiniGameResultEntity> resultEntities = aggregated.resultEntities();
+        final List<PlayerStat> playerStats = aggregated.playerStats();
+        final List<PlayerResult> settlementResults = aggregated.settlementResults();
+        final List<Integer> allRanks = aggregated.allRanks();
+
+        miniGameResultJpaRepository.bulkInsert(resultEntities);
+
+        // 동기 발행이므로 현 트랜잭션 안에서 실행되어 기존 롤백 의미를 보존한다.
+        if (!playerStats.isEmpty()) {
+            eventPublisher.publishEvent(new MiniGameStatsRecordedEvent(playerStats));
+        }
+
+        // 시즌 정산은 Outbox를 경유해 정산 작업 큐 스트림으로 나간다 — 결과 저장과 같은
+        // 트랜잭션이라 원자적이고, 소비는 컨슈머 그룹의 단일 처리 경로로 이뤄진다(#1610).
+        // 전달은 at-least-once이며 중복 반영은 정산 원장의 멱등 처리가 막는다.
+        // 게임 종료 지점들은 스케줄러 스레드(트랜잭션 밖)라 이 리스너가 유일한 훅 위치다.
+        if (SETTLEMENT_TARGET_GAMES.contains(miniGameType) && !settlementResults.isEmpty()) {
+            outboxEventRecorder.record(
+                    SettlementStreamKey.RESULT,
+                    SettlementResultEvent.of(
+                            event.joinCode(), roomSessionId, miniGameType.name(), settlementResults, allRanks));
+        }
+
+        log.info("미니게임 결과 벌크 저장 완료: joinCode={}, playerCount={}", event.joinCode(), resultEntities.size());
+    }
+
+    /**
+     * 한 번의 순회로 만들어지는 네 갈래 결과.
+     *
+     * <p>{@code playerStats}는 회원 승패(직접 호출이 아니라 이벤트로 :user에 전달, #1547),
+     * {@code allRanks}는 동점 구간 균등 분배에 필요한 전체(게스트 포함) 순위 분포다 —
+     * 게스트도 순위 한 자리를 차지한다.</p>
+     */
+    private record Aggregated(
+            List<MiniGameResultEntity> resultEntities,
+            List<PlayerStat> playerStats,
+            List<PlayerResult> settlementResults,
+            List<Integer> allRanks) {}
+
+    private Aggregated aggregate(
+            Map<Gamer, MiniGameScore> scores,
+            MiniGameResult result,
+            MiniGameEntity miniGameEntity,
+            Map<String, PlayerSnapshot> snapshotMap) {
         final List<MiniGameResultEntity> resultEntities = new ArrayList<>();
-        // 회원 승패는 직접 호출이 아니라 이벤트로 :user에 전달해 통계 갱신한다(#1547).
         final List<PlayerStat> playerStats = new ArrayList<>();
         final List<PlayerResult> settlementResults = new ArrayList<>();
-        // 동점 구간 균등 분배에 필요한 전체(게스트 포함) 순위 분포 — 게스트도 순위 한 자리를 차지한다
         final List<Integer> allRanks = new ArrayList<>();
 
         for (Map.Entry<Gamer, MiniGameScore> entry : scores.entrySet()) {
@@ -123,25 +160,6 @@ public class MiniGameResultSaveEventListener {
             }
         }
 
-        miniGameResultJpaRepository.bulkInsert(resultEntities);
-
-        // 동기 발행이므로 현 트랜잭션 안에서 실행되어 기존 롤백 의미를 보존한다.
-        if (!playerStats.isEmpty()) {
-            eventPublisher.publishEvent(new MiniGameStatsRecordedEvent(playerStats));
-        }
-
-        // 시즌 정산은 Outbox를 경유해 정산 작업 큐 스트림으로 나간다 — 결과 저장과 같은
-        // 트랜잭션이라 원자적이고, 소비는 컨슈머 그룹의 단일 처리 경로로 이뤄진다(#1610).
-        // 전달은 at-least-once이며 중복 반영은 정산 원장의 멱등 처리가 막는다.
-        // 게임 종료 지점들은 스케줄러 스레드(트랜잭션 밖)라 이 리스너가 유일한 훅 위치다.
-        if (SETTLEMENT_TARGET_GAMES.contains(miniGameType) && !settlementResults.isEmpty()) {
-            outboxEventRecorder.record(
-                    SettlementStreamKey.RESULT,
-                    SettlementResultEvent.of(
-                            event.joinCode(), roomSessionId, miniGameType.name(), settlementResults, allRanks)
-            );
-        }
-
-        log.info("미니게임 결과 벌크 저장 완료: joinCode={}, playerCount={}", event.joinCode(), resultEntities.size());
+        return new Aggregated(resultEntities, playerStats, settlementResults, allRanks);
     }
 }

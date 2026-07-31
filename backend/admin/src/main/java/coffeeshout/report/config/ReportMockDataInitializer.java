@@ -42,6 +42,9 @@ public class ReportMockDataInitializer implements ApplicationRunner {
         log.info("[ReportMockDataInitializer] mock 신고 데이터 {}건 삽입 완료", entities.size());
     }
 
+    // PMD.NcssCount 억제 — 이 메서드는 로직이 아니라 mock 데이터 표다(list.add 나열).
+    // 카테고리별로 쪼개도 표가 여러 조각이 될 뿐 추상화 수준이 나뉘지 않는다.
+    @SuppressWarnings("PMD.NcssCount")
     private List<Report> buildMockData() {
         final List<Report> list = new ArrayList<>();
         final Instant base = Instant.now(clock);
@@ -117,13 +120,13 @@ public class ReportMockDataInitializer implements ApplicationRunner {
     }
 
     private Report suggestion(String content, Instant base, int offsetHours) {
-        return Report.createGeneralReport(ReportCategory.SUGGESTION, content,
-                base.minus(offsetHours, ChronoUnit.HOURS));
+        return Report.createGeneralReport(
+                ReportCategory.SUGGESTION, content, base.minus(offsetHours, ChronoUnit.HOURS));
     }
 
     private Report gameRequest(String content, Instant base, int offsetHours) {
-        return Report.createGeneralReport(ReportCategory.GAME_REQUEST, content,
-                base.minus(offsetHours, ChronoUnit.HOURS));
+        return Report.createGeneralReport(
+                ReportCategory.GAME_REQUEST, content, base.minus(offsetHours, ChronoUnit.HOURS));
     }
 
     private Report other(String content, Instant base, int offsetHours) {

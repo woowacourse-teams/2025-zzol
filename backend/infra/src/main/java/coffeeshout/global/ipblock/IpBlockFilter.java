@@ -51,11 +51,15 @@ public class IpBlockFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper;
 
     @Override
+    // PMD.NcssCount 억제 — 이 메서드는 조기 반환 가드가 순서대로 늘어선 형태이고,
+    // 그 순서 자체가 보안 의미다(내부 IP → 악성 경로 → 예외 경로 → 차단 여부, postmortem 0003).
+    // 절반을 헬퍼로 옮기면 순서가 한눈에 안 보여 오히려 위험해진다.
+    @SuppressWarnings("PMD.NcssCount")
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
+            @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
         final String uri = request.getRequestURI();
         final Optional<Ip> clientIp = Ip.tryFrom(getClientIp(request));
 
@@ -116,8 +120,8 @@ public class IpBlockFilter extends OncePerRequestFilter {
             return;
         }
 
-        final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.FORBIDDEN, GlobalErrorCode.IP_BLOCKED.getMessage());
+        final ProblemDetail problemDetail =
+                ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, GlobalErrorCode.IP_BLOCKED.getMessage());
         problemDetail.setProperty("errorCode", GlobalErrorCode.IP_BLOCKED.getCode());
         problemDetail.setProperty("timestamp", LocalDateTime.now());
         problemDetail.setProperty("exception", IpBlockFilter.class.getSimpleName());
@@ -132,11 +136,15 @@ public class IpBlockFilter extends OncePerRequestFilter {
         final String origin = request.getHeader("Origin");
         if (origin != null) {
             response.setHeader("Access-Control-Allow-Origin", origin);
-            response.setHeader("Access-Control-Allow-Methods",
-                    resolveOrDefault(request.getHeader("Access-Control-Request-Method"),
+            response.setHeader(
+                    "Access-Control-Allow-Methods",
+                    resolveOrDefault(
+                            request.getHeader("Access-Control-Request-Method"),
                             "GET, POST, PUT, PATCH, DELETE, OPTIONS"));
-            response.setHeader("Access-Control-Allow-Headers",
-                    resolveOrDefault(request.getHeader("Access-Control-Request-Headers"),
+            response.setHeader(
+                    "Access-Control-Allow-Headers",
+                    resolveOrDefault(
+                            request.getHeader("Access-Control-Request-Headers"),
                             "Authorization, Content-Type, Accept, Origin, X-Requested-With"));
             response.setHeader("Access-Control-Allow-Credentials", "true");
             response.addHeader("Vary", "Origin");

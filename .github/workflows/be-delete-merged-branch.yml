@@ -15,6 +15,7 @@ jobs:
   delete-branch:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write
       pull-requests: write
@@ -90,6 +91,7 @@ jobs:
     if: github.event.pull_request.merged == true
     needs: delete-branch
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - name: Log deletion

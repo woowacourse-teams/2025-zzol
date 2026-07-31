@@ -25,9 +25,11 @@ DOC_RE='(^|/)\.claude/|(^|/)docs/|\.md$|(^|/)\.github/'
 SRC="$(printf '%s\n' "$CHANGED" | grep -Ev "$DOC_RE" || true)"
 
 # 문서를 뺀 변경 줄 수 — issue-workflow 의 경량 경로 판정이 쓴다(문서 길이에 휘둘리지 않게).
+# numstat 은 "추가<TAB>삭제<TAB>경로" 라 경로가 줄 시작이 아니다.
+# grep 으로 줄 전체를 걸러내면 DOC_RE 의 ^ 앵커가 빗나가 문서 변경까지 세어진다 — 경로 필드($3)로만 판정한다.
 SRC_LINES=0
 [ -n "$SRC" ] && SRC_LINES="$(git diff --numstat "origin/$BASE"...HEAD \
-  | grep -Ev "$DOC_RE" | awk '{s+=$1+$2} END{print s+0}')"
+  | DOC_RE="$DOC_RE" awk -F'\t' '$3 !~ ENVIRON["DOC_RE"] {s+=$1+$2} END{print s+0}')"
 echo "SRC_LINES=$SRC_LINES"
 
 [ -z "$SRC" ] && echo "SRC_EMPTY=1"

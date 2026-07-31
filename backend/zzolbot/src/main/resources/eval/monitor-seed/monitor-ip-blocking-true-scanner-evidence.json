@@ -1,0 +1,42 @@
+{
+  "name": "monitor-ip-blocking-true-scanner-evidence",
+  "question": "알림 MassIpBlockingSpike(critical)가 prod에서 발화했다 — IP 차단 요청 급증. 봇에는 같은 시각의 IP 차단 관련 WARN 로그 20줄이 주어졌다(로그 필터 개선 후 도달할 입력의 선행 검증).",
+  "rubric": "로그의 악성 경로 접근(/.git/config, /.env 등 스캐너 패턴 경로)과 IP 차단 등록 급증이 알림을 직접 뒷받침한다. '근거 발견: 예'로 판정하고 스캐너/봇 스윕에 의한 차단 급증으로 진단하면 정답. 근거 없음으로 처리하거나 무관한 원인(애플리케이션 장애 등)을 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "MassIpBlockingSpike",
+    "severity": "critical",
+    "fingerprint": "golden-run16",
+    "summary": "IP 차단 요청 급증 (prod-app)",
+    "description": "차단 요청이 10.54 req/s. 베이스라인(약 0.5 req/s) 대비 급증. 차단된 IP와 요청 경로를 확인.",
+    "labels": {
+      "alertname": "MassIpBlockingSpike",
+      "severity": "critical",
+      "job": "prod-app",
+      "incident_group": "ip-blocking"
+    }
+  },
+  "logSamples": [
+    "[2026-07-15 10:57:26.184] [WARN] [,] --- [http-nio-8080-exec-8] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/bthil.php",
+    "[2026-07-15 10:57:26.600] [WARN] [,] --- [http-nio-8080-exec-16] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/class-t.api.php",
+    "[2026-07-15 10:57:27.008] [WARN] [,] --- [http-nio-8080-exec-7] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/yas.php",
+    "[2026-07-15 10:57:27.416] [WARN] [,] --- [http-nio-8080-exec-4] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=//test.php",
+    "[2026-07-15 10:57:27.834] [WARN] [,] --- [http-nio-8080-exec-30] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/test.php",
+    "[2026-07-15 10:57:28.243] [WARN] [,] --- [http-nio-8080-exec-19] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/amax.php",
+    "[2026-07-15 10:57:28.652] [WARN] [,] --- [http-nio-8080-exec-14] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/wp5.php",
+    "[2026-07-15 10:57:29.062] [WARN] [,] --- [http-nio-8080-exec-29] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/wp-slss.php",
+    "[2026-07-15 10:57:29.470] [WARN] [,] --- [http-nio-8080-exec-18] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/v2.php",
+    "[2026-07-15 10:57:29.906] [WARN] [,] --- [http-nio-8080-exec-24] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=//min.php",
+    "[2026-07-15 10:57:30.314] [WARN] [,] --- [http-nio-8080-exec-9] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/error.php",
+    "[2026-07-15 10:57:30.721] [WARN] [,] --- [http-nio-8080-exec-25] c.global.ipblock.IpBlockFilter : 악성 경로 접근 감지 → IP 즉시 차단: ip=203.0.113.1 uri=/wp-admin/css/colors/blue/file.php",
+    "[2026-07-15 10:57:30.722] [WARN] [,] --- [http-nio-8080-exec-25] c.global.ipblock.IpBlockStore : IP 차단 등록: ip=203.0.113.1 ttl=24h",
+    "[2026-07-15 10:57:31.132] [WARN] [,] --- [http-nio-8080-exec-12] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/wmore1.php",
+    "[2026-07-15 10:57:31.540] [WARN] [,] --- [http-nio-8080-exec-6] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/bless24.php",
+    "[2026-07-15 10:57:31.948] [WARN] [,] --- [http-nio-8080-exec-3] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/wp-wz.php",
+    "[2026-07-15 10:57:32.366] [WARN] [,] --- [http-nio-8080-exec-5] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/pouhg.php",
+    "[2026-07-15 10:57:32.775] [WARN] [,] --- [http-nio-8080-exec-27] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/wp-su.php",
+    "[2026-07-15 10:57:33.186] [WARN] [,] --- [http-nio-8080-exec-21] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/b.php",
+    "[2026-07-15 10:57:33.594] [WARN] [,] --- [http-nio-8080-exec-2] c.global.ipblock.IpBlockFilter : 차단된 IP 접근 시도: ip=203.0.113.1 uri=/1index.php"
+  ],
+  "logEnvironment": "prod"
+}

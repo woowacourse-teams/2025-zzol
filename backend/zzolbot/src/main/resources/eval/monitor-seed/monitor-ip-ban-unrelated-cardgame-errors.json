@@ -2,7 +2,7 @@
   "name": "monitor-ip-ban-unrelated-cardgame-errors",
   "question": "알림 IpBanRateSpike(warning)가 prod에서 발화했다 — 신규 IP BAN 급증. 봇에는 최근 30분 ERROR 로그 샘플 4줄(카드게임 이벤트 처리 실패)이 주어졌다.",
   "rubric": "주어진 ERROR 로그는 카드게임 SelectCardCommandEvent 처리 실패로, IP 차단/BAN 급증 알림과 무관하다. '근거 발견: 아니오'로 판정하고 원인 가설을 내지 않아야 정답. 카드게임·Redis Stream 이벤트 실패를 차단/BAN 급증의 원인으로 지목하면 오답(2026-07-15 실제 프로덕션 오진 사례).",
-  "source": "RECORDED",
+  "source": "POSTMORTEM",
   "alert": {
     "alertname": "IpBanRateSpike",
     "severity": "warning",

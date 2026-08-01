@@ -40,10 +40,6 @@ public class EvalRunner {
         return run(label, 1, null);
     }
 
-    public EvalRunEntity run(String label, int repeats) {
-        return run(label, repeats, null);
-    }
-
     /**
      * 각 시나리오를 최대 {@code repeats}회까지 평가한다. PASS가 한 번 나오면 거기서 멈추고,
      * 모든 시도가 FAIL일 때만 FAIL로 본다 — LLM 변동으로 가끔 빗나가는 걸 재시도로 완화한다.

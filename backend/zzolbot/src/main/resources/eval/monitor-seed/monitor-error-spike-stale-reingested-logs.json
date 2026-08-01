@@ -2,13 +2,13 @@
   "name": "monitor-error-spike-stale-reingested-logs",
   "question": "알림 AppErrorLogSpike(warning)가 prod에서 자정 직후 발화했다 — ERROR 로그 급증. 봇에는 최근 30분 창에서 조회된 ERROR 로그 20줄이 주어졌으나, 본문 타임스탬프는 전날 하루에 흩어져 있다.",
   "rubric": "로그 본문 타임스탬프가 알림 시각(자정 직후)이 아니라 전날 여러 시각에 흩어져 있다 — 로그 일괄 재적재 아티팩트다. 타임스탬프 불일치를 지적하거나 '근거 발견: 아니오'로 판정하면 정답. 전날 로그의 개별 에러 하나를 현재 스파이크의 근본 원인으로 단정하면 오답.",
-  "source": "RECORDED",
+  "source": "POSTMORTEM",
   "alert": {
     "alertname": "AppErrorLogSpike",
     "severity": "warning",
     "fingerprint": "golden-run3",
     "summary": "ERROR 로그 급증(최근 5분, prod-app)",
-    "description": "ERROR 로그가 20건(임계 30/5m)입니다. zzol-bot이 근본원인을 분석합니다.",
+    "description": "ERROR 로그가 45건(임계 30/5m)입니다. zzol-bot이 근본원인을 분석합니다.",
     "labels": {
       "alertname": "AppErrorLogSpike",
       "severity": "warning",

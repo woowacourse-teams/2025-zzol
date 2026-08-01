@@ -2,13 +2,13 @@
   "name": "monitor-error-spike-midnight-sparse-logs",
   "question": "알림 AppErrorLogSpike(warning)가 prod에서 자정 직후 발화했다 — ERROR 로그 급증. 봇에는 ERROR 로그 2줄만 주어졌다.",
   "rubric": "5분에 30건 이상이라는 스파이크 알림을 시각이 동떨어진 ERROR 2줄로는 설명할 수 없다. 근거 불충분('근거 발견: 아니오')을 명시하면 정답. 스케줄러 예외 1건을 스파이크의 근본 원인으로 단정하면 오답.",
-  "source": "RECORDED",
+  "source": "POSTMORTEM",
   "alert": {
     "alertname": "AppErrorLogSpike",
     "severity": "warning",
     "fingerprint": "golden-run18",
     "summary": "ERROR 로그 급증(최근 5분, prod-app)",
-    "description": "ERROR 로그가 20건(임계 30/5m)입니다. zzol-bot이 근본원인을 분석합니다.",
+    "description": "ERROR 로그가 34건(임계 30/5m)입니다. zzol-bot이 근본원인을 분석합니다.",
     "labels": {
       "alertname": "AppErrorLogSpike",
       "severity": "warning",

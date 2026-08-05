@@ -18,6 +18,7 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     # 출력 설정
     outputs:

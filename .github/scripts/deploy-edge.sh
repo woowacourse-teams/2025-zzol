@@ -146,6 +146,12 @@ probe_nginx() {
     _probe "api.zzol.site" "/ws/info" || failed=1
     _probe "dev.api.zzol.site" "/ws/info" || failed=1
     _probe "status.zzol.site" "/" || failed=1
+    # scanner-block.inc가 정상 경로를 잡아먹지 않는지 확인한다. 444는 연결 종료(=000)라
+    # _probe가 실패로 보고 자동 원복된다. nginx -t로는 못 잡는 라우팅 회귀다.
+    #   - IPv4 경로 파라미터: 차단 해제 수단(postmortem 0003). GET이라 405가 오지만 <500이라 통과.
+    #   - 관리자 CSS: 확장자를 쓰는 정상 경로가 ^~ 예외로 살아있는지.
+    _probe "api.zzol.site" "/admin/ip-blocks/1.2.3.4/unblock" || failed=1
+    _probe "api.zzol.site" "/css/admin.css" || failed=1
     return "$failed"
 }
 

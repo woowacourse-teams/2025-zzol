@@ -2,7 +2,10 @@ package coffeeshout.global.metric;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 
 import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.global.redis.config.RedisStreamProperties.CommonSettings;
@@ -145,6 +148,26 @@ class RedisStreamLagMetricServiceTest {
         // then
         Gauge gauge = meterRegistry.find("redis.stream.length").gauge();
         assertThat(gauge).isNull();
+    }
+
+    @Test
+    void 종료_신호를_받으면_게이지가_Redis를_조회하지_않고_Nan를_반환한다() {
+        // given: 종료 전에는 정상 조회된다
+        lagMetricService.initializeMetrics();
+        Gauge gauge = meterRegistry.find("redis.stream.length")
+                .tag("stream", "room")
+                .gauge();
+        assertThat(gauge).isNotNull();
+        assertThat(gauge.value()).isEqualTo(42.0);
+
+        // when: 컨텍스트 종료 — Lifecycle stop 은 커넥션 팩토리(phase 0)보다 먼저 온다
+        clearInvocations(stringRedisTemplate);
+        lagMetricService.stop();
+
+        // then: 마지막 publish 가 게이지를 평가해도 이미 닫힌 커넥션을 건드리지 않는다 (#1642)
+        assertThat(gauge.value()).isNaN();
+        assertThat(lagMetricService.isRunning()).isFalse();
+        then(stringRedisTemplate).should(never()).opsForStream();
     }
 
     @SuppressWarnings("unchecked")

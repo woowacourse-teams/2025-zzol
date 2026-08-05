@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -35,15 +36,25 @@ import org.springframework.stereotype.Component;
  *   <li>redis_stream_threadpool_active_count (tag: stream)</li>
  * </ul>
  * </p>
+ *
+ * <p>종료 시 Redis를 조회하지 않는다({@link SmartLifecycle}). 컨텍스트 종료는
+ * ① Lifecycle 빈 stop → ② {@code ContextClosedEvent} → ③ {@code MeterRegistryCloser}가
+ * 마지막 publish를 수행하며 <b>모든 Gauge를 평가</b> 순서로 진행된다. ①에서 이미 멈춘
+ * {@code LettuceConnectionFactory}(phase 0)를 ③의 게이지가 호출하면
+ * {@code IllegalStateException: ... has been STOPPED}가 스트림 수만큼 터진다(#1642).
+ * 기본 phase({@link SmartLifecycle#DEFAULT_PHASE})는 0보다 크므로 이 빈은 커넥션 팩토리보다
+ * 먼저 stop 신호를 받고, 그 뒤 게이지는 Redis를 건드리지 않고 NaN을 낸다.</p>
  */
 @Slf4j
 @Component
-public class RedisStreamLagMetricService {
+public class RedisStreamLagMetricService implements SmartLifecycle {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedisStreamProperties redisStreamProperties;
     private final MeterRegistry meterRegistry;
     private final ApplicationContext applicationContext;
+
+    private volatile boolean running = true;
 
     public RedisStreamLagMetricService(
             StringRedisTemplate stringRedisTemplate,
@@ -99,7 +110,28 @@ public class RedisStreamLagMetricService {
                 redisStreamProperties.keys().keySet());
     }
 
+    @Override
+    public void start() {
+        running = true;
+    }
+
+    /**
+     * 컨텍스트 종료 시작 신호. 이후 Redis 조회 게이지는 호출 자체를 건너뛴다.
+     */
+    @Override
+    public void stop() {
+        running = false;
+    }
+
+    @Override
+    public boolean isRunning() {
+        return running;
+    }
+
     private double getStreamLength(String streamKey) {
+        if (!running) {
+            return Double.NaN;
+        }
         try {
             Long length = stringRedisTemplate.opsForStream().size(streamKey);
             return length != null ? length.doubleValue() : 0.0;

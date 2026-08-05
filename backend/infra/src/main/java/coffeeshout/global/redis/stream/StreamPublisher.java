@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.connection.RedisStreamCommands.TrimOptions;
 import org.springframework.data.redis.connection.RedisStreamCommands.XAddOptions;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -89,7 +90,7 @@ public class StreamPublisher {
 
         stringRedisTemplate.opsForStream().add(
                 StreamRecords.newRecord().in(redisKey).ofMap(fields),
-                XAddOptions.maxlen(maxLength).approximateTrimming(true)
+                XAddOptions.trim(TrimOptions.maxLen(maxLength).approximate())
         );
     }
 }

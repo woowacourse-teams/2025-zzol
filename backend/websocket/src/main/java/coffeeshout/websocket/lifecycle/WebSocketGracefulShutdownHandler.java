@@ -173,8 +173,9 @@ public class WebSocketGracefulShutdownHandler implements SmartLifecycle {
 
     @Override
     public int getPhase() {
-        // WebServerGracefulShutdownLifecycle(MAX_VALUE)이 먼저 Tomcat을 닫은 뒤
-        // 이 핸들러가 남은 WS 세션을 드레인한다
+        // 가장 먼저 멈춘다 — HTTP 요청 드레인(WebServerGracefulShutdownLifecycle, MAX-1024)이
+        // 시작되기 전에 WS 세션을 정리해야 한다.
+        // 전체 순서표는 docs/architecture.md "종료 순서 (lifecycle phase)"
         return Integer.MAX_VALUE - 1;
     }
 

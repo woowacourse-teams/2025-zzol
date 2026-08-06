@@ -54,10 +54,9 @@ public class RedisStreamContainerRegistry implements SmartLifecycle {
         return containers.values().stream().anyMatch(StreamMessageListenerContainer::isRunning);
     }
 
-    // 종료(stop)는 phase 내림차순이다. 폴러는 웹 트래픽 드레인이 모두 끝난 뒤 멈춰야
-    // 드레인 중 수신된 커맨드의 소비·브로드캐스트가 유지되고(WS 세션 드레인 MAX-1,
-    // Tomcat 드레인 MAX-1024, 웹서버 stop MAX-2048), LettuceConnectionFactory(phase 0)보다는
-    // 먼저 멈춰야 정지된 팩토리에 폴링하지 않는다. 그 사이 값이면 되고, 1024는 그 표식이다
+    // 폴러는 웹 트래픽 드레인이 모두 끝난 뒤 멈춰야 드레인 중 수신된 커맨드의 소비·브로드캐스트가
+    // 유지되고, 커넥션 팩토리 정지보다는 먼저 멈춰야 정지된 팩토리에 폴링하지 않는다 (ADR-0022).
+    // 전체 순서표는 docs/architecture.md "종료 순서 (lifecycle phase)"
     @Override
     public int getPhase() {
         return 1024;

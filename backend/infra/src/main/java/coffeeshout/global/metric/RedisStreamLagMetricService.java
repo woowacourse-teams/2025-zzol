@@ -131,11 +131,8 @@ public class RedisStreamLagMetricService implements SmartLifecycle {
         return running;
     }
 
-    // 종료(stop)는 phase 내림차순이다. 기본값(SmartLifecycle.DEFAULT_PHASE)이면 모든 lifecycle
-    // 빈보다 먼저 멈춰, graceful shutdown 드레인(spring.lifecycle.timeout-per-shutdown-phase=5m) 내내
-    // 액추에이터는 살아 스크레이핑되는데 XLEN 게이지만 NaN이 된다 — 백로그가 빠지는 걸 봐야 할 창이다.
-    // 폴러 정지(RedisStreamContainerRegistry, 1024)보다 뒤, LettuceConnectionFactory(0)보다는 앞이면
-    // 되고, 512는 그 표식이다
+    // 폴러가 멈춘 뒤에도 백로그는 관측 대상이므로 폴러 정지보다 뒤, 조회가 불가능해지는
+    // 커넥션 팩토리 정지보다는 앞에 선다. 전체 순서표는 docs/architecture.md "종료 순서 (lifecycle phase)"
     @Override
     public int getPhase() {
         return 512;

@@ -36,6 +36,10 @@ management:
   otlp:
     tracing:
       endpoint: http://localhost:4318
+    # 트레이싱과 마찬가지로 메트릭 push 도 끈다 — 수집기가 없어 매 step 실패한다
+    metrics:
+      export:
+        enabled: false
 
 logging:
   level:

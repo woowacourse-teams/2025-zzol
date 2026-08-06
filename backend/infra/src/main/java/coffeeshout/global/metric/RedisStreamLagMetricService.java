@@ -37,13 +37,16 @@ import org.springframework.stereotype.Component;
  * </ul>
  * </p>
  *
- * <p>종료 시 Redis를 조회하지 않는다({@link SmartLifecycle}). 컨텍스트 종료는
- * ① Lifecycle 빈 stop → ② {@code ContextClosedEvent} → ③ {@code MeterRegistryCloser}가
- * 마지막 publish를 수행하며 <b>모든 Gauge를 평가</b> 순서로 진행된다. ①에서 이미 멈춘
- * {@code LettuceConnectionFactory}(phase 0)를 ③의 게이지가 호출하면
+ * <p>종료 시 Redis를 조회하지 않는다({@link SmartLifecycle}). {@code AbstractApplicationContext.doClose()}는
+ * ① {@code ContextClosedEvent} 발행 → ② Lifecycle 빈 stop → ③ 빈 파괴 순으로 진행하고,
+ * ①의 이벤트를 받은 {@code MeterRegistryCloser}가 마지막 publish를 수행하며 <b>모든 Gauge를 평가</b>한다.
+ * 이벤트가 stop보다 <b>먼저</b>이므로, 평범한 close에서는 게이지 평가 시점에 커넥션 팩토리가 아직 살아 있다.</p>
+ *
+ * <p>문제가 되는 건 <b>close 이전에 이미 lifecycle이 멈춘 컨텍스트</b>다 — Spring Framework 7의 테스트
+ * 컨텍스트 pause가 그렇다. pause가 lifecycle을 통째로 멈춘 뒤 JVM 종료 시점에 close가 오면, ①의 게이지
+ * 평가가 이미 STOPPED인 {@code LettuceConnectionFactory}를 호출해
  * {@code IllegalStateException: ... has been STOPPED}가 스트림 수만큼 터진다(#1642).
- * 기본 phase({@link SmartLifecycle#DEFAULT_PHASE})는 0보다 크므로 이 빈은 커넥션 팩토리보다
- * 먼저 stop 신호를 받고, 그 뒤 게이지는 Redis를 건드리지 않고 NaN을 낸다.</p>
+ * {@code stop()}에서 내린 플래그가 그 호출 자체를 막아 NaN을 낸다.</p>
  */
 @Slf4j
 @Component
@@ -126,6 +129,16 @@ public class RedisStreamLagMetricService implements SmartLifecycle {
     @Override
     public boolean isRunning() {
         return running;
+    }
+
+    // 종료(stop)는 phase 내림차순이다. 기본값(SmartLifecycle.DEFAULT_PHASE)이면 모든 lifecycle
+    // 빈보다 먼저 멈춰, graceful shutdown 드레인(spring.lifecycle.timeout-per-shutdown-phase=5m) 내내
+    // 액추에이터는 살아 스크레이핑되는데 XLEN 게이지만 NaN이 된다 — 백로그가 빠지는 걸 봐야 할 창이다.
+    // 폴러 정지(RedisStreamContainerRegistry, 1024)보다 뒤, LettuceConnectionFactory(0)보다는 앞이면
+    // 되고, 512는 그 표식이다
+    @Override
+    public int getPhase() {
+        return 512;
     }
 
     private double getStreamLength(String streamKey) {

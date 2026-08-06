@@ -1,7 +1,7 @@
 ---
 description: 프로덕션 코드 작성 시 핵심 체크 항목. 전체 컨벤션은 docs/conventions-production.md 참고.
 paths:
-  - "src/main/java/**/*.java"
+  - "**/src/main/java/**/*.java"
 ---
 
 전체 컨벤션: `docs/conventions-production.md`

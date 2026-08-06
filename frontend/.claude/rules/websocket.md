@@ -1,7 +1,7 @@
 ---
-globs:
-  - 'src/apis/websocket/**'
-  - 'src/contexts/**'
+paths:
+  - '**/src/apis/websocket/**'
+  - '**/src/contexts/**'
 ---
 
 ## WebSocket 컨벤션

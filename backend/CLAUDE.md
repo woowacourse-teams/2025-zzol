@@ -31,6 +31,32 @@
 - 구조 파악이 목적이면 Grep 툴로 `public|private|class|interface` 패턴을 잡아 메서드 목록만 먼저 확인한다
 - Java는 파일명 = 클래스명 규칙이 강제되므로 클래스명을 알면 경로를 예측해 바로 Read할 수 있다 (이 경우 Grep 생략 가능)
 
+## 모듈
+
+Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는다** — `backend/src/`는 없고 `backend/game/src/main/java/…` 형태다.
+
+| 모듈 | 역할 |
+| --- | --- |
+| `common` | 순수 Java 공용 타입·유틸. **Spring 의존 없음** |
+| `infra` | Redis·MySQL 등 외부 인프라 어댑터 |
+| `web` | HTTP 공통(예외 핸들러·응답 규격) |
+| `websocket` | STOMP 설정·공통 WebSocket 인프라 |
+| `game-api` | 게임 SPI — `room`이 게임을 알기 위한 유일한 통로 |
+| `game` | 미니게임 구현체 (룰렛·사다리·카드·눈치…) |
+| `room` | 방 생성·입장·참가자. `game` 구체 클래스를 몰라야 한다 |
+| `user` | 사용자·인증 |
+| `profanity` | 비속어 필터 |
+| `admin` | 어드민 API |
+| `zzolbot` | 봇 참가자 |
+| `app` | Spring Boot 진입점 — 전 모듈 조립 |
+| `test-support` | 테스트 전용 공통(TestContainers 등). 프로덕션에서 참조 금지 |
+
+단일 클래스 빠른 확인은 모듈을 지정해 돌린다(그 외에는 `/run-tests`):
+
+```bash
+./gradlew :game:test --tests '*CardGameTest'
+```
+
 ## 아키텍처 핵심 제약
 
 위반하면 구조 파괴 또는 런타임 버그로 직결되는 불변 규칙이다.

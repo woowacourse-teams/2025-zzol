@@ -66,6 +66,11 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
                 .setTaskScheduler(heartbeatScheduler);
 
         config.setApplicationDestinationPrefixes("/app");
+
+        // clientOutboundChannel이 16스레드 풀이라(configureClientOutboundChannel) 같은 세션으로 가는
+        // 브로드캐스트가 발행 순서와 다르게 도착할 수 있다. 게임 상태 전환(DESCRIPTION→PREPARE→PLAYING)은
+        // 순서가 뒤집히면 클라이언트 화면이 되돌아가므로 세션별 순서를 보존한다.
+        config.setPreservePublishOrder(true);
     }
 
     @Override

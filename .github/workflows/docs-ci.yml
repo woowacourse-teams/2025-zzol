@@ -46,6 +46,6 @@ jobs:
       # globs는 CLI 인자가 config의 globs 를 덮으므로 여기서 명시한다.
       # 버전 bump 은 Dependabot(github-actions) 이 관리한다.
       - name: Run markdownlint
-        uses: DavidAnson/markdownlint-cli2-action@6bf21b07787794f89a243495939cd651942aeabe # v24
+        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24
         with:
           globs: "**/*.md"

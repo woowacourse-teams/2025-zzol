@@ -68,7 +68,7 @@
          없어 전부 빠져나갔다(#1629 리뷰). 생성만 하고 던지지 않는 코드는 이 저장소에 없다.
 
          event 계층을 포함한다: 이벤트 리스너는 도메인 흐름의 연장이고(MiniGameResultSaveEventListener),
-         범위를 넓혀도 새로 걸리는 위반이 없다. ui·infra·config는 성격이 섞여 있어 별도 이슈로 미룬다. -->
+         범위를 넓혀도 새로 걸리는 위반이 없다. ui·infra·config는 성격이 섞여 있어 #1654로 미룬다. -->
     <rule name="NoRawExceptionInDomain"
           language="java"
           message="ErrorCode를 가진 CoffeeShoutException 계열을 던진다 (내부 불변식이면 SystemException + 500 ErrorCode)"

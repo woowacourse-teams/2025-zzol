@@ -1,5 +1,7 @@
 package coffeeshout.room.domain.roulette;
 
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.Players;
 import java.util.ArrayList;
@@ -12,18 +14,16 @@ public class RouletteRanges {
     public RouletteRanges(Players players) {
         this.ranges = new ArrayList<>();
 
-        players.getPlayers().forEach(player -> ranges.add(generateRange(
-                endValue() + 1,
-                player.getProbability().value(),
-                player
-        )));
+        players.getPlayers()
+                .forEach(player -> ranges.add(
+                        generateRange(endValue() + 1, player.getProbability().value(), player)));
     }
 
     public Player pickPlayer(int number) {
         return ranges.stream()
                 .filter(rouletteRange -> rouletteRange.isBetween(number))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("범위에 해당하지 않는 숫자입니다."))
+                .orElseThrow(() -> new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "범위에 해당하지 않는 숫자입니다."))
                 .player();
     }
 

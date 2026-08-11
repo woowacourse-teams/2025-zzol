@@ -1,12 +1,13 @@
 package coffeeshout.room.application.event;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.minigame.event.PlayerSnapshotRequiredEvent;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
@@ -92,8 +93,9 @@ class PlayerSnapshotListenerTest {
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> listener.handle(new PlayerSnapshotRequiredEvent(JOIN_CODE)))
-                    .isInstanceOf(IllegalArgumentException.class);
+            assertCoffeeShoutException(
+                    () -> listener.handle(new PlayerSnapshotRequiredEvent(JOIN_CODE)),
+                    GlobalErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 }

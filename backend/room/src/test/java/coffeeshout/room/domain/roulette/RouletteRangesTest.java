@@ -1,9 +1,10 @@
 package coffeeshout.room.domain.roulette;
 
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.Players;
 import org.junit.jupiter.api.Test;
@@ -16,10 +17,12 @@ class RouletteRangesTest {
         Player player1 = PlayerFixture.호스트한스();
         Player player2 = PlayerFixture.호스트꾹이();
 
-        Players players = new Players("ABC23") {{
-            join(player1);
-            join(player2);
-        }};
+        Players players = new Players("ABC23") {
+            {
+                join(player1);
+                join(player2);
+            }
+        };
 
         player1.updateProbability(new Probability(1500));
         player2.updateProbability(new Probability(8500));
@@ -40,15 +43,16 @@ class RouletteRangesTest {
         // given
         Player player1 = PlayerFixture.호스트엠제이();
 
-        Players players = new Players("ABC23") {{
-            join(player1);
-        }};
+        Players players = new Players("ABC23") {
+            {
+                join(player1);
+            }
+        };
 
         RouletteRanges rouletteRanges = new RouletteRanges(players);
 
         // when & then
-        assertThatThrownBy(() -> rouletteRanges.pickPlayer(10002))
-                .isInstanceOf(IllegalStateException.class);
+        assertCoffeeShoutException(() -> rouletteRanges.pickPlayer(10002), GlobalErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -70,10 +74,12 @@ class RouletteRangesTest {
         Player player1 = PlayerFixture.호스트한스();
         Player player2 = PlayerFixture.호스트꾹이();
 
-        Players players = new Players("ABC23") {{
-            join(player1);
-            join(player2);
-        }};
+        Players players = new Players("ABC23") {
+            {
+                join(player1);
+                join(player2);
+            }
+        };
 
         player1.updateProbability(new Probability(5000));
         player2.updateProbability(new Probability(5000));

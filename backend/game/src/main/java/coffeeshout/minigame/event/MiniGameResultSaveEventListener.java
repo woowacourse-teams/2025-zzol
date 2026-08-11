@@ -5,6 +5,8 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.gamecommon.RoomSnapshotQuery;
 import coffeeshout.gamecommon.RoomSnapshotQuery.PlayerSnapshot;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.global.lock.RedisLock;
 import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.minigame.application.GameSessionService;
@@ -73,7 +75,8 @@ public class MiniGameResultSaveEventListener {
 
         final MiniGameEntity miniGameEntity = miniGameJpaRepository
                 .findByRoomSessionIdAndMiniGameType(roomSessionId, miniGameType)
-                .orElseThrow(() -> new IllegalArgumentException("미니게임 엔티티가 존재하지 않습니다: " + event.joinCode()));
+                .orElseThrow(() -> new SystemException(
+                        GlobalErrorCode.INTERNAL_SERVER_ERROR, "미니게임 엔티티가 존재하지 않습니다: " + event.joinCode()));
 
         final Playable miniGame =
                 gameSessionService.getSession(new JoinCode(event.joinCode())).findCompletedGame(miniGameType);
@@ -143,7 +146,7 @@ public class MiniGameResultSaveEventListener {
             final Gamer gamer = entry.getKey();
             final PlayerSnapshot snapshot = snapshotMap.get(gamer.getName());
             if (snapshot == null) {
-                throw new IllegalArgumentException("플레이어가 존재하지 않습니다: " + gamer.getName());
+                throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "플레이어가 존재하지 않습니다: " + gamer.getName());
             }
 
             final Integer rank = result.getPlayerRank(gamer);

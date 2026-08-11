@@ -1,6 +1,8 @@
 package coffeeshout.room.application.service;
 
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
@@ -54,27 +56,32 @@ public class RouletteService {
         roomEntity.finish();
         roomEntityRepository.saveAndFlush(roomEntity);
 
-        final PlayerEntity playerEntity = getPlayerEntity(roomEntity, winner.name().value());
+        final PlayerEntity playerEntity =
+                getPlayerEntity(roomEntity, winner.name().value());
 
-        final RouletteResultEntity rouletteResult = new RouletteResultEntity(
-                roomEntity,
-                playerEntity,
-                winner.probability()
-        );
+        final RouletteResultEntity rouletteResult =
+                new RouletteResultEntity(roomEntity, playerEntity, winner.probability());
         rouletteResultEntityRepository.save(rouletteResult);
         eventPublisher.publishEvent(new NicknameSubmittedEvent(winner.name().value()));
 
-        log.info("RouletteResultEntity 저장 완료: joinCode={}, winner={}, probability={}",
-                joinCode, winner.name().value(), winner.probability());
+        log.info(
+                "RouletteResultEntity 저장 완료: joinCode={}, winner={}, probability={}",
+                joinCode,
+                winner.name().value(),
+                winner.probability());
     }
 
     private RoomEntity getRoomEntity(String joinCode) {
-        return roomEntityRepository.findFirstByJoinCodeOrderByCreatedAtDesc(joinCode)
-                .orElseThrow(() -> new IllegalArgumentException("RoomEntity를 찾을 수 없습니다: " + joinCode));
+        return roomEntityRepository
+                .findFirstByJoinCodeOrderByCreatedAtDesc(joinCode)
+                .orElseThrow(() -> new SystemException(
+                        GlobalErrorCode.INTERNAL_SERVER_ERROR, "RoomEntity를 찾을 수 없습니다: " + joinCode));
     }
 
     private PlayerEntity getPlayerEntity(RoomEntity roomEntity, String playerName) {
-        return playerEntityRepository.findByRoomSessionAndPlayerName(roomEntity, playerName)
-                .orElseThrow(() -> new IllegalArgumentException("PlayerEntity를 찾을 수 없습니다: " + playerName));
+        return playerEntityRepository
+                .findByRoomSessionAndPlayerName(roomEntity, playerName)
+                .orElseThrow(() -> new SystemException(
+                        GlobalErrorCode.INTERNAL_SERVER_ERROR, "PlayerEntity를 찾을 수 없습니다: " + playerName));
     }
 }

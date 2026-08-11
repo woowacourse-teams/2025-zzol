@@ -61,7 +61,14 @@
 
          상태 코드를 낮추라는 규칙이 아니다 — 내부 불변식 위반은 실제로 서버 버그이므로 500이 옳고,
          SystemException은 toStatus(ErrorCode)로 상태를 정하므로 500짜리 ErrorCode를 쓰면 그대로 500이다.
-         바뀌는 것은 "코드가 붙는다"는 것뿐이다(Room:181·QrCode:24·PlayerNameGenerator:35가 기존 선례). -->
+         바뀌는 것은 "코드가 붙는다"는 것뿐이다(Room:181·QrCode:24·PlayerNameGenerator:35가 기존 선례).
+
+         ThrowStatement가 아니라 ConstructorCall을 잡는다 — 실제 위반의 대부분이
+         orElseThrow(() -> new IllegalArgumentException(...)) 형태인데, 람다 본문에는 ThrowStatement 노드가
+         없어 전부 빠져나갔다(#1629 리뷰). 생성만 하고 던지지 않는 코드는 이 저장소에 없다.
+
+         event 계층을 포함한다: 이벤트 리스너는 도메인 흐름의 연장이고(MiniGameResultSaveEventListener),
+         범위를 넓혀도 새로 걸리는 위반이 없다. ui·infra·config는 성격이 섞여 있어 별도 이슈로 미룬다. -->
     <rule name="NoRawExceptionInDomain"
           language="java"
           message="ErrorCode를 가진 CoffeeShoutException 계열을 던진다 (내부 불변식이면 SystemException + 500 ErrorCode)"
@@ -70,8 +77,8 @@
         <properties>
             <property name="xpath">
                 <value><![CDATA[
-//ThrowStatement[ConstructorCall/ClassType[@SimpleName = ('IllegalArgumentException', 'IllegalStateException')]]
-    [ancestor::CompilationUnit[matches(@PackageName, '\.(domain|application)(\.|$)')]]
+//ConstructorCall[ClassType[@SimpleName = ('IllegalArgumentException', 'IllegalStateException')]]
+    [ancestor::CompilationUnit[matches(@PackageName, '\.(domain|application|event)(\.|$)')]]
                 ]]></value>
             </property>
         </properties>

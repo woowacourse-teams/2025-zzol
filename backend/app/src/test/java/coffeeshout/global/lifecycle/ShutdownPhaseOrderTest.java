@@ -11,7 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.server.context.WebServerGracefulShutdownLifecycle;
+import org.springframework.boot.web.server.context.WebServerApplicationContext;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.scheduling.TaskScheduler;
@@ -60,7 +60,7 @@ class ShutdownPhaseOrderTest extends IntegrationTestSupport {
 
         // then: 높은 phase 가 먼저 멈춘다. HTTP 요청 드레인이 시작되기 전에 WS 세션을 정리해야 한다
         assertThat(webSocketDrain)
-                .isGreaterThan(WebServerGracefulShutdownLifecycle.SMART_LIFECYCLE_PHASE);
+                .isGreaterThan(WebServerApplicationContext.GRACEFUL_SHUTDOWN_PHASE);
     }
 
     private WebSocketGracefulShutdownHandler webSocketShutdownHandler() {

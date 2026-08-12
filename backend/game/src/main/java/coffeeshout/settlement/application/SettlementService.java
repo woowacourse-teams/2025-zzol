@@ -1,5 +1,7 @@
 package coffeeshout.settlement.application;
 
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.settlement.domain.SeasonKey;
 import coffeeshout.settlement.domain.SeasonPointPolicy;
 import coffeeshout.settlement.domain.SeasonTier;
@@ -68,8 +70,7 @@ public class SettlementService {
                 result.rank(),
                 result.score(),
                 points,
-                seasonKey.value()
-        ));
+                seasonKey.value()));
 
         // 가산은 DB 원자 UPDATE — 같은 회원의 다른 게임 결과가 동시에 정산되어도 유실이 없다.
         // 0행이면 이 시즌 첫 정산이라 새 행을 만든다(동시 INSERT 경합은 유니크 제약 → 재전달로 수렴).
@@ -78,9 +79,10 @@ public class SettlementService {
             scoreRepository.save(new SeasonScoreEntity(seasonKey.value(), result.userId(), points));
         }
 
-        final SeasonScoreEntity score = scoreRepository.findBySeasonKeyAndUserId(seasonKey.value(), result.userId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "정산 직후 시즌 성적이 존재해야 합니다: userId=" + result.userId()));
+        final SeasonScoreEntity score = scoreRepository
+                .findBySeasonKeyAndUserId(seasonKey.value(), result.userId())
+                .orElseThrow(() -> new SystemException(
+                        GlobalErrorCode.INTERNAL_SERVER_ERROR, "정산 직후 시즌 성적이 존재해야 합니다: userId=" + result.userId()));
 
         // 티어는 가산 결과의 파생값이라 가산 후 재판정한다.
         final SeasonTier tier = SeasonTier.fromPoints(score.getTotalPoints());
@@ -92,6 +94,5 @@ public class SettlementService {
     }
 
     /** 정산이 실제로 반영된 회원의 최신 누적 성적. 순위 변동 알림의 입력이 된다. */
-    public record SettledScore(long userId, String seasonKey, long totalPoints, SeasonTier tier) {
-    }
+    public record SettledScore(long userId, String seasonKey, long totalPoints, SeasonTier tier) {}
 }

@@ -1,7 +1,9 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.WsRecoveryService;
@@ -39,16 +41,16 @@ public class DelayedRoomRemovalService {
 
     private void validateRemovalDuration(Duration removalDelay) {
         if (removalDelay == null || removalDelay.isNegative() || removalDelay.isZero()) {
-            throw new IllegalArgumentException("지연 삭제 시간은 양수여야 합니다.");
+            throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "지연 삭제 시간은 양수여야 합니다.");
         }
     }
 
     public void scheduleRemoveRoom(JoinCode joinCode) {
         try {
-            log.info("방 지연 삭제 스케줄링: joinCode={}, delay={}초",
-                    joinCode.getValue(), removeDuration.getSeconds());
+            log.info("방 지연 삭제 스케줄링: joinCode={}, delay={}초", joinCode.getValue(), removeDuration.getSeconds());
 
-            taskScheduler.schedule(() -> executeRoomRemoval(joinCode), Instant.now().plus(removeDuration));
+            taskScheduler.schedule(
+                    () -> executeRoomRemoval(joinCode), Instant.now().plus(removeDuration));
         } catch (Exception e) {
             log.error("방 제거 스케줄링 실패: joinCode={}", joinCode.getValue(), e);
         }

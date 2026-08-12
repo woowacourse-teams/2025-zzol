@@ -3,6 +3,8 @@ package coffeeshout.minigame.application;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.gamecommon.Playable;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.GameSessionStartedEvent;
@@ -30,16 +32,13 @@ public class MiniGameEventService {
             GameSessionService gameSessionService,
             List<MiniGameService> miniGameServices,
             ApplicationEventPublisher eventPublisher,
-            MiniGamePersistenceService miniGamePersistenceService
-    ) {
+            MiniGamePersistenceService miniGamePersistenceService) {
         this.gameSessionService = gameSessionService;
         this.eventPublisher = eventPublisher;
         this.miniGamePersistenceService = miniGamePersistenceService;
         this.miniGameServiceMap = new EnumMap<>(MiniGameType.class);
-        miniGameServices.forEach(miniGameService -> miniGameServiceMap.put(
-                miniGameService.getMiniGameType(),
-                miniGameService
-        ));
+        miniGameServices.forEach(
+                miniGameService -> miniGameServiceMap.put(miniGameService.getMiniGameType(), miniGameService));
     }
 
     /**
@@ -56,12 +55,14 @@ public class MiniGameEventService {
      */
     @EventListener
     public void onGameStartReady(GameStartReadyEvent event) {
-        log.info("게임 시작 준비 이벤트 수신: eventId={}, joinCode={}, hostName={}",
-                event.eventId(), event.joinCode(), event.hostName());
+        log.info(
+                "게임 시작 준비 이벤트 수신: eventId={}, joinCode={}, hostName={}",
+                event.eventId(),
+                event.joinCode(),
+                event.hostName());
 
         final JoinCode joinCode = new JoinCode(event.joinCode());
-        final Playable playable = gameSessionService.startGame(
-                joinCode, Gamer.guest(event.hostName()), event.gamers());
+        final Playable playable = gameSessionService.startGame(joinCode, Gamer.guest(event.hostName()), event.gamers());
 
         // GameSession PLAYING 전이 직후, 실패 가능 I/O보다 먼저 Room도 PLAYING으로 동기화한다(:room 리스너)
         eventPublisher.publishEvent(new GameSessionStartedEvent(event.joinCode()));
@@ -69,7 +70,8 @@ public class MiniGameEventService {
         final MiniGameType miniGameType = playable.getMiniGameType();
 
         final MiniGameService miniGameService = Optional.ofNullable(miniGameServiceMap.get(miniGameType))
-                .orElseThrow(() -> new IllegalStateException("미니게임 서비스가 등록되지 않았습니다: " + miniGameType));
+                .orElseThrow(() -> new SystemException(
+                        GlobalErrorCode.INTERNAL_SERVER_ERROR, "미니게임 서비스가 등록되지 않았습니다: " + miniGameType));
         miniGameService.start(event.joinCode(), event.hostName());
 
         miniGamePersistenceService.saveGameEntities(event, miniGameType);

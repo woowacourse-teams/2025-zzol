@@ -5,6 +5,8 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.gamecommon.Playable;
 import coffeeshout.gamecommon.RoomSnapshotQuery;
 import coffeeshout.gamecommon.RoomSnapshotQuery.PlayerSnapshot;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.global.lock.RedisLock;
 import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.minigame.application.GameSessionService;
@@ -65,8 +67,7 @@ public class MiniGameResultSaveEventListener {
             lockPrefix = "minigame:result:lock:",
             donePrefix = "minigame:result:done:",
             waitTime = 0,
-            leaseTime = 5000
-    )
+            leaseTime = 5000)
     public void handle(MiniGameFinishedEvent event) {
         // 방·플레이어 id는 :room이 구현한 포트로 얻는다(ADR-0034 — :game→:room 의존 제거).
         final long roomSessionId = roomSnapshotQuery.resolveRoomSessionId(event.joinCode());
@@ -74,54 +75,28 @@ public class MiniGameResultSaveEventListener {
 
         final MiniGameEntity miniGameEntity = miniGameJpaRepository
                 .findByRoomSessionIdAndMiniGameType(roomSessionId, miniGameType)
-                .orElseThrow(() -> new IllegalArgumentException("미니게임 엔티티가 존재하지 않습니다: " + event.joinCode()));
+                .orElseThrow(() -> new SystemException(
+                        GlobalErrorCode.INTERNAL_SERVER_ERROR, "미니게임 엔티티가 존재하지 않습니다: " + event.joinCode()));
 
-        final Playable miniGame = gameSessionService.getSession(new JoinCode(event.joinCode()))
-                .findCompletedGame(miniGameType);
+        final Playable miniGame =
+                gameSessionService.getSession(new JoinCode(event.joinCode())).findCompletedGame(miniGameType);
 
         final MiniGameResult result = miniGame.getResult();
         final Map<Gamer, MiniGameScore> scores = miniGame.getScores();
 
-        final List<String> playerNames = scores.keySet().stream()
-                .map(Gamer::getName)
-                .toList();
+        final List<String> playerNames =
+                scores.keySet().stream().map(Gamer::getName).toList();
 
-        final Map<String, PlayerSnapshot> snapshotMap = roomSnapshotQuery
-                .resolvePlayers(roomSessionId, playerNames)
-                .stream()
-                .collect(Collectors.toMap(
-                        PlayerSnapshot::playerName,
-                        Function.identity(),
-                        (existing, replacement) -> existing
-                ));
+        final Map<String, PlayerSnapshot> snapshotMap =
+                roomSnapshotQuery.resolvePlayers(roomSessionId, playerNames).stream()
+                        .collect(Collectors.toMap(
+                                PlayerSnapshot::playerName, Function.identity(), (existing, replacement) -> existing));
 
-        final List<MiniGameResultEntity> resultEntities = new ArrayList<>();
-        // 회원 승패는 직접 호출이 아니라 이벤트로 :user에 전달해 통계 갱신한다(#1547).
-        final List<PlayerStat> playerStats = new ArrayList<>();
-        final List<PlayerResult> settlementResults = new ArrayList<>();
-        // 동점 구간 균등 분배에 필요한 전체(게스트 포함) 순위 분포 — 게스트도 순위 한 자리를 차지한다
-        final List<Integer> allRanks = new ArrayList<>();
-
-        for (Map.Entry<Gamer, MiniGameScore> entry : scores.entrySet()) {
-            final Gamer gamer = entry.getKey();
-            final PlayerSnapshot snapshot = snapshotMap.get(gamer.getName());
-            if (snapshot == null) {
-                throw new IllegalArgumentException("플레이어가 존재하지 않습니다: " + gamer.getName());
-            }
-
-            final Integer rank = result.getPlayerRank(gamer);
-            final Long score = entry.getValue().getValue();
-
-            resultEntities.add(new MiniGameResultEntity(miniGameEntity, snapshot.playerId(), rank, score));
-            if (rank != null) {
-                allRanks.add(rank);
-            }
-
-            if (gamer.getUserId() != null) {
-                playerStats.add(new PlayerStat(gamer.getUserId(), rank == 1));
-                settlementResults.add(new PlayerResult(gamer.getUserId(), gamer.getName(), rank, score));
-            }
-        }
+        final Aggregated aggregated = aggregate(scores, result, miniGameEntity, snapshotMap);
+        final List<MiniGameResultEntity> resultEntities = aggregated.resultEntities();
+        final List<PlayerStat> playerStats = aggregated.playerStats();
+        final List<PlayerResult> settlementResults = aggregated.settlementResults();
+        final List<Integer> allRanks = aggregated.allRanks();
 
         miniGameResultJpaRepository.bulkInsert(resultEntities);
 
@@ -138,10 +113,56 @@ public class MiniGameResultSaveEventListener {
             outboxEventRecorder.record(
                     SettlementStreamKey.RESULT,
                     SettlementResultEvent.of(
-                            event.joinCode(), roomSessionId, miniGameType.name(), settlementResults, allRanks)
-            );
+                            event.joinCode(), roomSessionId, miniGameType.name(), settlementResults, allRanks));
         }
 
         log.info("미니게임 결과 벌크 저장 완료: joinCode={}, playerCount={}", event.joinCode(), resultEntities.size());
+    }
+
+    /**
+     * 한 번의 순회로 만들어지는 네 갈래 결과.
+     *
+     * <p>{@code playerStats}는 회원 승패(직접 호출이 아니라 이벤트로 :user에 전달, #1547),
+     * {@code allRanks}는 동점 구간 균등 분배에 필요한 전체(게스트 포함) 순위 분포다 —
+     * 게스트도 순위 한 자리를 차지한다.</p>
+     */
+    private record Aggregated(
+            List<MiniGameResultEntity> resultEntities,
+            List<PlayerStat> playerStats,
+            List<PlayerResult> settlementResults,
+            List<Integer> allRanks) {}
+
+    private Aggregated aggregate(
+            Map<Gamer, MiniGameScore> scores,
+            MiniGameResult result,
+            MiniGameEntity miniGameEntity,
+            Map<String, PlayerSnapshot> snapshotMap) {
+        final List<MiniGameResultEntity> resultEntities = new ArrayList<>();
+        final List<PlayerStat> playerStats = new ArrayList<>();
+        final List<PlayerResult> settlementResults = new ArrayList<>();
+        final List<Integer> allRanks = new ArrayList<>();
+
+        for (Map.Entry<Gamer, MiniGameScore> entry : scores.entrySet()) {
+            final Gamer gamer = entry.getKey();
+            final PlayerSnapshot snapshot = snapshotMap.get(gamer.getName());
+            if (snapshot == null) {
+                throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "플레이어가 존재하지 않습니다: " + gamer.getName());
+            }
+
+            final Integer rank = result.getPlayerRank(gamer);
+            final Long score = entry.getValue().getValue();
+
+            resultEntities.add(new MiniGameResultEntity(miniGameEntity, snapshot.playerId(), rank, score));
+            if (rank != null) {
+                allRanks.add(rank);
+            }
+
+            if (gamer.getUserId() != null) {
+                playerStats.add(new PlayerStat(gamer.getUserId(), rank == 1));
+                settlementResults.add(new PlayerResult(gamer.getUserId(), gamer.getName(), rank, score));
+            }
+        }
+
+        return new Aggregated(resultEntities, playerStats, settlementResults, allRanks);
     }
 }

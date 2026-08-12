@@ -44,7 +44,7 @@ public class RedisLockAspect {
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         final Method method = signature.getMethod();
         final RedisLock redisLock = method.getAnnotation(RedisLock.class);
-        
+
         final String lockKey = getLockKey(joinPoint, redisLock);
         final String doneKey = getDoneKey(joinPoint, redisLock);
 
@@ -58,34 +58,7 @@ public class RedisLockAspect {
         final RLock lock = redissonClient.getLock(lockKey);
 
         try {
-            // 락 획득 시도
-            final boolean acquired = lock.tryLock(
-                    redisLock.waitTime(), 
-                    redisLock.leaseTime(), 
-                    TimeUnit.MILLISECONDS
-            );
-
-            if (!acquired) {
-                log.warn("락 획득 실패 (스킵): lockKey={}", lockKey);
-                return null;
-            }
-
-            // 2단계: 락 획득 후 이중 체크 (Race Condition 방지)
-            if (isAlreadyProcessed(doneKey)) {
-                log.debug("락 획득 후 이중 체크 - 이미 처리됨 (스킵): doneKey={}", doneKey);
-                return null;
-            }
-
-            // 메서드 실행
-            log.debug("락 획득 성공, 메서드 실행: lockKey={}", lockKey);
-            final Object result = joinPoint.proceed();
-
-            // 처리 완료 마킹
-            markAsDone(doneKey, redisLock.doneTtl());
-            log.debug("처리 완료 마킹: doneKey={}", doneKey);
-
-            return result;
-
+            return acquireAndProceed(joinPoint, redisLock, lock, lockKey, doneKey);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("락 획득 중 인터럽트 발생: lockKey={}", lockKey, e);
@@ -97,6 +70,30 @@ public class RedisLockAspect {
                 log.debug("락 해제: lockKey={}", lockKey);
             }
         }
+    }
+
+    // 락 해제는 호출자의 finally가 책임진다 — 이 메서드는 획득·중복체크·실행만 한다.
+    private Object acquireAndProceed(
+            ProceedingJoinPoint joinPoint, RedisLock redisLock, RLock lock, String lockKey, String doneKey)
+            throws Throwable {
+        final boolean acquired = lock.tryLock(redisLock.waitTime(), redisLock.leaseTime(), TimeUnit.MILLISECONDS);
+        if (!acquired) {
+            log.warn("락 획득 실패 (스킵): lockKey={}", lockKey);
+            return null;
+        }
+
+        // 2단계: 락 획득 후 이중 체크 (Race Condition 방지)
+        if (isAlreadyProcessed(doneKey)) {
+            log.debug("락 획득 후 이중 체크 - 이미 처리됨 (스킵): doneKey={}", doneKey);
+            return null;
+        }
+
+        log.debug("락 획득 성공, 메서드 실행: lockKey={}", lockKey);
+        final Object result = joinPoint.proceed();
+
+        markAsDone(doneKey, redisLock.doneTtl());
+        log.debug("처리 완료 마킹: doneKey={}", doneKey);
+        return result;
     }
 
     private String getLockKey(ProceedingJoinPoint joinPoint, RedisLock redisLock) {
@@ -128,7 +125,6 @@ public class RedisLockAspect {
     }
 
     private void markAsDone(String doneKey, long doneTtl) {
-        redisTemplate.opsForValue()
-                .set(doneKey, "done", Duration.ofMillis(doneTtl));
+        redisTemplate.opsForValue().set(doneKey, "done", Duration.ofMillis(doneTtl));
     }
 }

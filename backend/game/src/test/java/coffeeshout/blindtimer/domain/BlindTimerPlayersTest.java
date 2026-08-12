@@ -1,10 +1,11 @@
 package coffeeshout.blindtimer.domain;
 
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.global.exception.GlobalErrorCode;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,8 +40,7 @@ class BlindTimerPlayersTest {
         @Test
         void 존재하지_않는_플레이어를_찾으면_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> players.findByName("없는사람"))
-                    .isInstanceOf(IllegalArgumentException.class);
+            assertCoffeeShoutException(() -> players.findByName("없는사람"), GlobalErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 

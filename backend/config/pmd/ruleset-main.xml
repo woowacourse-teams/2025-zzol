@@ -1,0 +1,186 @@
+<?xml version="1.0"?>
+<ruleset name="zzol-main"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        zzol 백엔드 프로덕션 소스(src/main/java) 규칙 (ADR-0036).
+        PMD 기본 룰셋은 쓰지 않는다 — 여기 명시한 규칙만 강제한다.
+        규칙 텍스트의 SSOT는 docs/conventions-*.md, 판정의 SSOT는 이 파일이다.
+        테스트 소스는 ruleset-test.xml이 담당한다(:test-support의 main 포함 — 테스트 인프라이므로).
+    </description>
+
+    <!-- ===== 묶음 A — 위반 0곳, 즉시 실패 ===== -->
+
+    <!-- 생성자 주입을 강제한다. 필드 주입은 불변성을 깨고 테스트에서 교체가 어렵다.
+         테스트 소스의 @Autowired 필드 주입(213곳)은 JUnit+Spring 관용이라 대상이 아니다. -->
+    <rule name="NoFieldInjection"
+          language="java"
+          message="@Autowired 필드 주입 대신 생성자 주입을 쓴다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//FieldDeclaration[ModifierList/Annotation[@SimpleName = 'Autowired']]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- 고정 대기는 실행 환경에 따라 동작이 갈린다. 지연은 TaskScheduler에 위임한다. -->
+    <rule name="NoThreadSleep"
+          language="java"
+          message="Thread.sleep 대신 스케줄러에 위임한다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//MethodCall[@MethodName = 'sleep'][TypeExpression/ClassType[@SimpleName = 'Thread']]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- 표준 출력은 로그 수집(Alloy→Loki) 경로를 타지 않아 운영에서 유실된다. -->
+    <rule ref="category/java/bestpractices.xml/SystemPrintln">
+        <priority>1</priority>
+    </rule>
+    <rule ref="category/java/bestpractices.xml/AvoidPrintStackTrace">
+        <priority>1</priority>
+    </rule>
+
+    <!-- ===== 묶음 B — 계층 한정 =====
+         계층 판정은 별도 Gradle 태스크 없이 CompilationUnit의 @PackageName으로 한다. -->
+
+    <!-- 도메인·애플리케이션 계층의 예외는 전부 ErrorCode를 갖는다(conventions-production.md).
+         raw IllegalArgumentException/IllegalStateException은 RestExceptionHandler:27의
+         Exception 핸들러로 떨어져 응답·로그 어디에도 식별 코드가 남지 않는다.
+
+         상태 코드를 낮추라는 규칙이 아니다 — 내부 불변식 위반은 실제로 서버 버그이므로 500이 옳고,
+         SystemException은 toStatus(ErrorCode)로 상태를 정하므로 500짜리 ErrorCode를 쓰면 그대로 500이다.
+         바뀌는 것은 "코드가 붙는다"는 것뿐이다(Room:181·QrCode:24·PlayerNameGenerator:35가 기존 선례).
+
+         ThrowStatement가 아니라 ConstructorCall을 잡는다 — 실제 위반의 대부분이
+         orElseThrow(() -> new IllegalArgumentException(...)) 형태인데, 람다 본문에는 ThrowStatement 노드가
+         없어 전부 빠져나갔다(#1629 리뷰). 생성만 하고 던지지 않는 코드는 이 저장소에 없다.
+
+         event 계층을 포함한다: 이벤트 리스너는 도메인 흐름의 연장이고(MiniGameResultSaveEventListener),
+         범위를 넓혀도 새로 걸리는 위반이 없다. ui·infra·config는 성격이 섞여 있어 #1654로 미룬다. -->
+    <rule name="NoRawExceptionInDomain"
+          language="java"
+          message="ErrorCode를 가진 CoffeeShoutException 계열을 던진다 (내부 불변식이면 SystemException + 500 ErrorCode)"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//ConstructorCall[ClassType[@SimpleName = ('IllegalArgumentException', 'IllegalStateException')]]
+    [ancestor::CompilationUnit[matches(@PackageName, '\.(domain|application|event)(\.|$)')]]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- 순수 도메인 로직에서 포괄 catch는 삼킬 예외와 삼키면 안 될 예외를 구분하지 못한다.
+
+         application까지 넓히지 않는다: 실측 결과 포괄 catch 29곳이 전부 application이고 domain은 0곳인데,
+         그 29곳은 모두 "브로드캐스트·스케줄러 콜백 실패를 삼키고 흐름은 잇는" 의도된 경계다
+         (NunchiFlowOrchestrator.notifyQuietly가 그 패턴을 이름으로 명시한다).
+         넓히면 억제 주석 29개가 붙고, 그건 규칙이 현실과 안 맞는다는 신호다. -->
+    <rule name="NoGenericCatchInDomain"
+          language="java"
+          message="도메인 계층에서는 구체 예외를 잡는다. 포괄 catch가 필요하면 경계 계층(application)으로 옮긴다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//CatchParameter[ClassType[@SimpleName = ('Exception', 'Throwable')]]
+    [ancestor::CompilationUnit[matches(@PackageName, '\.domain(\.|$)')]]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- ===== 묶음 C — 구조 규칙 =====
+         목표값(깊이 2 / 문장 20)이 아니라 한 칸 느슨한 값으로 시작한다.
+         목표값으로 바로 걸면 리팩터링이 규칙 도입 diff를 압도한다(ADR-0036 결정 5).
+         조이는 것은 후속 이슈. -->
+
+    <!-- conventions-production.md: "들여쓰기 깊이가 깊어지면 메서드로 분리한다.
+         한 메서드는 한 가지 추상화 수준의 일만 한다"
+         Checkstyle의 NestedIfDepth류와 달리 if·for·while·switch·try를 함께 세므로
+         for { if { if } } 같은 혼합 중첩도 잡는다.
+         시작 임계값 3 = 조상 제어문 3개 이상(= 깊이 4)부터 위반. 목표는 2. -->
+    <rule name="MaxNestingDepth"
+          language="java"
+          message="제어문 중첩이 너무 깊다. 메서드로 분리한다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//*[local-name() = ('IfStatement', 'ForStatement', 'ForeachStatement', 'WhileStatement',
+                   'DoStatement', 'SwitchStatement', 'TryStatement')]
+  [count(ancestor::*[local-name() = ('IfStatement', 'ForStatement', 'ForeachStatement',
+                                     'WhileStatement', 'DoStatement', 'SwitchStatement',
+                                     'TryStatement')]) >= 3]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- conventions-production.md: "if-else 사용을 지양하고 early return으로 중첩을 줄인다"
+         then 절이 return/throw로 끝나는 경우만 잡는다 — else를 지워도 의미가 바뀌지 않는 형태다.
+         값을 대입하는 if-else(양쪽이 다 필요한 경우)는 대상이 아니다. -->
+    <rule name="NoElseAfterReturn"
+          language="java"
+          message="then 절이 return/throw로 끝나면 else를 없애고 early return한다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//IfStatement[@Else = true()]
+  [*[2][self::ReturnStatement or self::ThrowStatement
+        or self::Block[*[last()][self::ReturnStatement or self::ThrowStatement]]]]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- 메서드 길이는 물리 줄 수가 아니라 문장 수(NCSS)로 잰다 — 어노테이션·빈 줄·포맷에 흔들리지 않는다.
+         시작 25(≈40줄), 목표 20(≈30줄). 클래스 임계값은 쓰지 않는다(분리 기준이 길이가 아니라 책임이다). -->
+    <rule ref="category/java/design.xml/NcssCount">
+        <priority>1</priority>
+        <properties>
+            <property name="methodReportLevel" value="25"/>
+            <property name="classReportLevel" value="99999"/>
+        </properties>
+    </rule>
+
+    <!--
+        의도적으로 켜지 않은 규칙 — 근거를 남긴다.
+
+        (참고) NoRawExceptionInDomain은 한 번 철회했다가 되살렸다.
+          철회 사유는 "11곳 전부 내부 불변식이라 500이 옳은데 BusinessException으로 바꾸면 버그를 4xx로 위장한다"였다.
+          전제가 틀렸다 — SystemException을 쓰면 상태는 500 그대로 두고 ErrorCode만 붙는다.
+          "예외에 코드를 붙이는 것"과 "상태 코드를 낮추는 것"은 별개다.
+
+        LocalVariableCouldBeFinal (지역 변수 final, conventions-production.md)
+          위반 1,346곳. final 선언 901곳 대비 준수율 40%로 컨벤션이 사실상 안 지켜지고 있다.
+          기계적 수정이지만 1,346곳을 이 PR에 넣으면 규칙 도입 diff가 묻힌다 — 별도 이슈로 분리.
+
+        MethodArgumentCouldBeFinal
+          컨벤션이 "매개변수에는 붙이지 않는다"로 명시 — 규칙 자체가 컨벤션과 반대다.
+
+        필드 final (커스텀 XPath 후보)
+          non-final 인스턴스 필드 286곳 중 130곳이 JPA 엔티티다. JPA는 프록시·리플렉션 때문에
+          non-final 필드를 요구하므로 전역 규칙으로 만들 수 없고, 컨벤션도 "가능한 한 final"로
+          조건부다. 판정이 문맥에 달린 규칙은 리뷰가 맡는다.
+    -->
+
+</ruleset>

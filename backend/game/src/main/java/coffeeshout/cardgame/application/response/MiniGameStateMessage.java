@@ -3,17 +3,15 @@ package coffeeshout.cardgame.application.response;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.NonNull;
 
 public record MiniGameStateMessage(
-        String cardGameState,
-        String currentRound,
-        List<CardInfoMessage> cardInfoMessages,
-        Boolean allSelected
-) {
+        String cardGameState, String currentRound, List<CardInfoMessage> cardInfoMessages, Boolean allSelected) {
 
     private enum RoundLabel {
         READY(0),
@@ -31,36 +29,27 @@ public record MiniGameStateMessage(
             return Arrays.stream(values())
                     .filter(label -> label.index == roundIndex)
                     .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 라운드 인덱스: " + roundIndex));
+                    .orElseThrow(() -> new SystemException(
+                            GlobalErrorCode.INTERNAL_SERVER_ERROR, "지원하지 않는 라운드 인덱스: " + roundIndex));
         }
     }
 
-    public record CardInfoMessage(
-            String cardType,
-            int value,
-            boolean selected,
-            String playerName,
-            Integer colorIndex
-    ) {
+    public record CardInfoMessage(String cardType, int value, boolean selected, String playerName, Integer colorIndex) {
 
         public static List<CardInfoMessage> from(@NonNull CardGame cardGame) {
             return cardGame.getDeck().getCards().stream()
                     .map(card -> {
                         final Optional<Gamer> owner = cardGame.findCardOwnerInCurrentRound(card);
                         final String name = owner.map(Gamer::getName).orElse(null);
-                        final Integer colorIndex = owner.map(Gamer::getColorIndex).orElse(null);
+                        final Integer colorIndex =
+                                owner.map(Gamer::getColorIndex).orElse(null);
                         return CardInfoMessage.of(card, owner.isPresent(), name, colorIndex);
-                    }).toList();
+                    })
+                    .toList();
         }
 
         public static CardInfoMessage of(@NonNull Card card, boolean isSelected, String name, Integer colorIndex) {
-            return new CardInfoMessage(
-                    card.getType().name(),
-                    card.getValue(),
-                    isSelected,
-                    name,
-                    colorIndex
-            );
+            return new CardInfoMessage(card.getType().name(), card.getValue(), isSelected, name, colorIndex);
         }
     }
 
@@ -69,7 +58,6 @@ public record MiniGameStateMessage(
                 cardGame.getState().name(),
                 RoundLabel.from(cardGame.getRound().toIndex()).name(),
                 CardInfoMessage.from(cardGame),
-                cardGame.isFinishedThisRound()
-        );
+                cardGame.isFinishedThisRound());
     }
 }

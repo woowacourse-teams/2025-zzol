@@ -126,6 +126,11 @@ management:
   otlp:
     tracing:
       endpoint: http://localhost:4318
+    # 테스트 컨텍스트도 OtlpMeterRegistry 를 만들어 종료마다 localhost:4318 로 푸시를 시도한다.
+    # 이 파일은 config/monitoring.yml 을 import 하지 않으므로 여기에도 따로 끈다
+    metrics:
+      export:
+        enabled: false
 
 resilience4j:
   ratelimiter:

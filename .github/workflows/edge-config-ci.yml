@@ -44,3 +44,33 @@ jobs:
 
       - name: Test the checker itself
         run: bash .github/scripts/test/test-check-nginx-proxy-headers.sh
+
+  # 문법 검증. 배포 시점에 처음 터지면 엣지가 통째로 내려가므로 PR에서 잡는다.
+  # 인증서는 실물이 없으므로 자체서명으로 대체한다(경로만 맞으면 nginx -t 는 통과).
+  syntax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Generate self-signed cert
+        run: |
+          mkdir -p certs
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+            -keyout certs/privkey.pem -out certs/fullchain.pem -subj "/CN=zzol.site"
+
+      - name: nginx -t
+        run: |
+          # 이미지 태그는 compose에서 읽는다 — 버전을 두 곳에 적으면 갈라진다.
+          IMAGE=$(grep -oP '^\s*image:\s*\Knginx:\S+' backend/docker/nginx/docker-compose.yml)
+          echo "image: $IMAGE"
+          docker run --rm \
+            -v "$PWD/backend/docker/nginx/conf:/etc/nginx/conf.d:ro" \
+            -v "$PWD/certs:/etc/letsencrypt/live/zzol.site:ro" \
+            "$IMAGE" nginx -t

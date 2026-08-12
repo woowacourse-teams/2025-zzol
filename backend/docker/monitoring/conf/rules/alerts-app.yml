@@ -31,39 +31,54 @@ groups:
           summary: "HTTP 5xx 비율 5% 초과 ({{ $labels.job }})"
           description: "최근 5분 5xx 비율이 {{ $value | humanizePercentage }}. 서버 측 광범위 실패 가능성."
 
-      # 대량 IP 차단 급증 — 본 프로젝트가 반응한 그 인시던트의 증상.
-      # X-Forwarded-For 소실 → 전 트래픽이 단일 내부 IP로 인식 → IpBlockFilter가 BAN →
-      # 차단 요청 수가 평소 베이스라인을 크게 벗어나 치솟는다(ADR-0026 §5).
-      # ⚠️ 임계 5 req/s는 순수 추정. 정상 차단(악성 트래픽)과 구분하려면 베이스라인 필수.
-      #    라벨 기반 정밀화(ip_type=private 즉발)는 후속 PR에서 오탐을 줄인다.
+      # 대량 IP 차단 급증 — 이미 차단된 IP의 요청이 거절되는 비율(ADR-0026 §5).
+      # prod로 한정하고 job 라벨을 보존한다(#1592). 이전에는 job 필터 없는 sum()이라
+      # dev·prod를 합산했고, dev가 스캐너 스윕을 받는 동안 그 수치가 전체 합계가 되어
+      # prod 무이상 상태에서 CRITICAL 13건이 오발화했다. 또한 sum()이 라벨을 제거해
+      # Alertmanager 라우팅과 zzol-bot의 환경 식별이 불가능했다(ADR-0032).
+      # 임계 2 req/s — prod 관측 최대 0.528 req/s 대비 약 4배 여유(2026-07 실측).
+      # ⚠️ 30일 베이스라인 확보 후 재조정 필요.
+      # description에 원인 가설을 적지 않는다 — 웹훅 payload로 zzol-bot 프롬프트에
+      # 들어가 LLM이 그 가설을 결론으로 되돌려준다(#1592).
+      # incident_group — 아래 IpBanRateSpike와 같은 인시던트를 다른 각도에서 잡는다.
+      # zzol-bot이 이 라벨로 중복 분석을 막아, 한 인시던트에 LLM을 한 번만 쓴다(#1598).
       - alert: MassIpBlockingSpike
-        expr: sum(rate(ip_block_request_blocked_total[5m])) > 5
+        expr: sum by (job) (rate(ip_block_request_blocked_total{job="prod-app"}[5m])) > 2
         for: 3m
         labels:
           severity: critical
+          incident_group: ip-blocking
         annotations:
-          summary: "IP 차단 요청 급증 (전 트래픽 차단 인시던트 의심)"
-          description: "차단 요청이 {{ $value | printf \"%.2f\" }} req/s. X-Forwarded-For 소실로 내부 IP가 BAN되는 패턴인지 즉시 확인."
+          summary: "IP 차단 요청 급증 ({{ $labels.job }})"
+          description: "차단 요청이 {{ $value | printf \"%.2f\" }} req/s. 베이스라인(약 0.5 req/s) 대비 급증. 차단된 IP와 요청 경로를 확인."
 
-      # 신규 BAN 급증 — 위 증상의 선행 신호(차단보다 BAN 등록이 먼저 튄다).
-      # ⚠️ 임계 추정. 짧은 창에 신규 BAN이 몰리면 비정상.
+      # 신규 BAN 급증 — 위 증상의 선행 신호(차단 요청보다 BAN 등록이 먼저 튄다).
+      # MassIpBlockingSpike와 동일하게 prod 한정 + job 라벨 보존(#1592).
+      # 임계 0.5/s — prod 관측 최대 0.055/s 대비 약 9배 여유(2026-07 실측).
+      # ⚠️ 30일 베이스라인 확보 후 재조정 필요.
+      # 위 MassIpBlockingSpike와 같은 incident_group — 선행 신호라 억제(inhibit)로 죽이지
+      # 않는다. warning만 뜨고 critical로 번지지 않은 사례(2026-07-13)가 실제로 있다(#1598).
       - alert: IpBanRateSpike
-        expr: sum(rate(ip_block_new_total[5m])) > 1
+        expr: sum by (job) (rate(ip_block_new_total{job="prod-app"}[5m])) > 0.5
         for: 3m
         labels:
           severity: warning
+          incident_group: ip-blocking
         annotations:
-          summary: "신규 IP BAN 급증"
-          description: "신규 BAN이 {{ $value | printf \"%.2f\" }} /s. 정상 베이스라인 대비 비정상이면 차단 정책/프록시 헤더를 점검."
+          summary: "신규 IP BAN 급증 ({{ $labels.job }})"
+          description: "신규 BAN이 {{ $value | printf \"%.2f\" }} /s. 차단된 IP 대역과 접근 경로를 확인."
 
       # WebSocket 핸드셰이크 실패 — /ws 엔드포인트의 HTTP 에러 응답 급증.
       # 기존 Grafana 룰(websocket_connections_failed_total, STOMP 연결 단계)과 중복을 피하려
       # 의도적으로 HTTP 핸드셰이크 계층(http_server_requests)에서 본다(ADR-0026 §5).
       # ⚠️ uri 라벨 값(/ws/info, /ws/** 등 SockJS 매핑 패턴)은 서버에서 실측 확인 필요.
       #    실제 라벨이 다르면 이 룰은 조용히 발화하지 않으므로 배포 시 1순위로 검증한다.
+      # prod로 한정하고 job 라벨을 보존한다(#1598). 셀렉터에 job이 있어도 bare sum()이
+      # 라벨을 지워, 발화한 알림에 환경 정보가 남지 않았다.
+      # 임계 1/s 유지 — prod 실측 7일 최대 0건(uri 라벨은 `/ws/**`로 셀렉터와 매칭 확인).
       - alert: WsHandshakeFailure
         expr: |
-          sum (rate(http_server_requests_seconds_count{uri=~"/ws.*",status=~"4..|5..",job=~"dev-app|prod-app"}[5m]))
+          sum by (job) (rate(http_server_requests_seconds_count{uri=~"/ws.*",status=~"4..|5..",job="prod-app"}[5m]))
           > 1
         for: 3m
         labels:

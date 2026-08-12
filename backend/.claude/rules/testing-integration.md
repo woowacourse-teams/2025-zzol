@@ -1,7 +1,7 @@
 ---
 description: 통합 테스트(IntegrationTest) 전용 규칙 — Docker·컨테이너·WebSocket·스트림. 공통은 testing.md.
 paths:
-  - "src/test/java/**/*IntegrationTest.java"
+  - "**/src/test/java/**/*IntegrationTest.java"
 ---
 
 전체 컨벤션: `docs/conventions-test.md` → 통합 테스트 (WebSocket). 공통 체크: `testing.md`

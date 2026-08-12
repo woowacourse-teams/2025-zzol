@@ -1,7 +1,7 @@
 ---
 description: 프로덕션·테스트 코드 공통 Java 규칙
 paths:
-  - "src/**/*.java"
+  - "**/src/**/*.java"
 ---
 
 # 공통 Java 코드 규칙

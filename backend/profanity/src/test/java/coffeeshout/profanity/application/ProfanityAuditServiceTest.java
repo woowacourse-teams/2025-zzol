@@ -1,6 +1,7 @@
 package coffeeshout.profanity.application;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -11,6 +12,8 @@ import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -33,7 +36,8 @@ class ProfanityAuditServiceTest {
         final NicknameAuditProperties properties = new NicknameAuditProperties(
                 "api-key", "gemini-2.0-flash", 0.8, 10, 5, 2
         );
-        service = new ProfanityAuditService(auditRepository, batchProcessor, profanityWordManagementService, properties, new SimpleMeterRegistry());
+        service = new ProfanityAuditService(auditRepository, batchProcessor, profanityWordManagementService, properties,
+                new SimpleMeterRegistry(), Clock.systemDefaultZone());
         service.initMetrics();
     }
 
@@ -47,7 +51,7 @@ class ProfanityAuditServiceTest {
 
             service.register("새닉네임");
 
-            then(auditRepository).should().save(any(NicknameAudit.class));
+            then(auditRepository).should().insertUnaudited(eq("새닉네임"), any(Instant.class));
         }
 
         @Test
@@ -60,7 +64,7 @@ class ProfanityAuditServiceTest {
 
             service.register("이미검열된닉네임");
 
-            then(auditRepository).should(never()).save(any());
+            then(auditRepository).should(never()).insertUnaudited(any(), any());
         }
 
         @Test
@@ -70,7 +74,7 @@ class ProfanityAuditServiceTest {
 
             service.register("허용닉네임");
 
-            then(auditRepository).should(never()).save(any());
+            then(auditRepository).should(never()).insertUnaudited(any(), any());
         }
     }
 

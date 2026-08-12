@@ -1,8 +1,8 @@
 ---
 description: docs/ 및 .claude/ 디렉토리 Markdown 파일 작성 규칙 (markdownlint)
 paths:
-- "docs/**/*.md"
-- ".claude/**/*.md"
+- "**/docs/**/*.md"
+- "**/.claude/**/*.md"
 ---
 
 # Markdown 작성 규칙

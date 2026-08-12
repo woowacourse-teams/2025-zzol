@@ -1,8 +1,9 @@
 package coffeeshout.profanity.domain.audit;
 
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import coffeeshout.global.exception.GlobalErrorCode;
 import java.math.BigDecimal;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
@@ -20,21 +21,21 @@ class AiConfidenceTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThatCode(() -> new AiConfidence(BigDecimal.ZERO)).doesNotThrowAnyException();
                 softly.assertThatCode(() -> new AiConfidence(BigDecimal.ONE)).doesNotThrowAnyException();
-                softly.assertThatCode(() -> new AiConfidence(new BigDecimal("0.5"))).doesNotThrowAnyException();
+                softly.assertThatCode(() -> new AiConfidence(new BigDecimal("0.5")))
+                        .doesNotThrowAnyException();
             });
         }
 
         @ParameterizedTest
         @ValueSource(strings = {"-0.01", "1.01", "1.5", "-1.0"})
         void 범위를_벗어난_값은_예외가_발생한다(String value) {
-            assertThatThrownBy(() -> new AiConfidence(new BigDecimal(value)))
-                    .isInstanceOf(IllegalArgumentException.class);
+            assertCoffeeShoutException(
+                    () -> new AiConfidence(new BigDecimal(value)), GlobalErrorCode.INTERNAL_SERVER_ERROR);
         }
 
         @Test
         void null_값은_예외가_발생한다() {
-            assertThatThrownBy(() -> new AiConfidence(null))
-                    .isInstanceOf(IllegalArgumentException.class);
+            assertCoffeeShoutException(() -> new AiConfidence(null), GlobalErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 

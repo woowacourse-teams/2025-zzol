@@ -1,9 +1,7 @@
 package coffeeshout.global.redis.config;
 
 import coffeeshout.global.redis.config.RedisProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -12,7 +10,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceClientConfigurat
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -37,20 +35,16 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(
-            RedisConnectionFactory redisConnectionFactory,
-            @Qualifier("redisObjectMapper") ObjectMapper objectMapper
-    ) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         final RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
 
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
 
-        final GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer = new GenericJackson2JsonRedisSerializer(
-                objectMapper);
-        redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);
-        redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);
+        final RedisSerializer<Object> jsonRedisSerializer = RedisSerializer.json();
+        redisTemplate.setValueSerializer(jsonRedisSerializer);
+        redisTemplate.setHashValueSerializer(jsonRedisSerializer);
 
         redisTemplate.afterPropertiesSet();
         return redisTemplate;

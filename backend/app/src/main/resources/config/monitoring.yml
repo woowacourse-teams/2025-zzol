@@ -21,6 +21,13 @@ management:
   otlp:
     tracing:
       endpoint: ${TEMPO_URL}
+    # 메트릭은 아래 prometheus scrape 로 걷는다. OTLP 메트릭 push 는 트레이싱용
+    # spring-boot-starter-opentelemetry 가 micrometer-registry-otlp 를 딸려오면서 기본값 true 로
+    # 켜진 것뿐이라, 아무도 설정하지 않은 URL(micrometer 기본값 localhost:4318/v1/metrics)로 매 step
+    # 푸시하다 실패한다. 위 tracing 과는 별개 오토컨피그(OtlpMetricsExportAutoConfiguration)라 영향 없다
+    metrics:
+      export:
+        enabled: false
   metrics:
     enable:
       tomcat: true

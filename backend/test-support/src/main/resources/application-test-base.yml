@@ -114,6 +114,10 @@ redis:
           core-size: 1
           max-size: 1
           queue-capacity: 128
+      # 시즌 정산 작업 큐 — 컨슈머 그룹 전용, 브로드캐스트 리스너 미생성(#1610). 운영 redis.yml과 정렬
+      "[settlement:result]":
+        listener-enabled: false
+        max-length: 10000
 
 management:
   tracing:
@@ -122,6 +126,11 @@ management:
   otlp:
     tracing:
       endpoint: http://localhost:4318
+    # 테스트 컨텍스트도 OtlpMeterRegistry 를 만들어 종료마다 localhost:4318 로 푸시를 시도한다.
+    # 이 파일은 config/monitoring.yml 을 import 하지 않으므로 여기에도 따로 끈다
+    metrics:
+      export:
+        enabled: false
 
 resilience4j:
   ratelimiter:

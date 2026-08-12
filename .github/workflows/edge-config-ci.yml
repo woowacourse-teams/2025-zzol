@@ -1,0 +1,76 @@
+name: Edge Config CI
+
+# nginx 설정(backend/docker/nginx/conf/**)을 PR 단계에서 검증한다.
+# 앱의 내부 IP 화이트리스트가 XFF 스푸핑에 뚫리지 않는 근거는 nginx가 실제 TCP peer를
+# X-Forwarded-For 맨 뒤에 덧붙이는 것(proxy-http.inc·proxy-ws.inc)이다. include 없는
+# proxy_pass가 하나라도 생기면 그 사슬이 끊긴다(#1620). 사람 리뷰에 맡기지 않고 CI로 고정한다.
+
+on:
+  pull_request:
+    branches: [dev, prod]
+    paths:
+      - "backend/docker/nginx/**"
+      - ".github/scripts/check-nginx-proxy-headers.py"
+      - ".github/scripts/test/test-check-nginx-proxy-headers.sh"
+      - ".github/workflows/edge-config-ci.yml"
+  push:
+    branches: [dev, prod]
+    paths:
+      - "backend/docker/nginx/**"
+      - ".github/scripts/check-nginx-proxy-headers.py"
+      - ".github/scripts/test/test-check-nginx-proxy-headers.sh"
+      - ".github/workflows/edge-config-ci.yml"
+
+# 같은 ref의 이전 실행은 취소해 중복 CI 낭비를 줄인다
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proxy-headers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check proxy header includes
+        run: python3 .github/scripts/check-nginx-proxy-headers.py backend/docker/nginx/conf
+
+      - name: Test the checker itself
+        run: bash .github/scripts/test/test-check-nginx-proxy-headers.sh
+
+  # 문법 검증. 배포 시점에 처음 터지면 엣지가 통째로 내려가므로 PR에서 잡는다.
+  # 인증서는 실물이 없으므로 자체서명으로 대체한다(경로만 맞으면 nginx -t 는 통과).
+  syntax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Generate self-signed cert
+        run: |
+          mkdir -p certs
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+            -keyout certs/privkey.pem -out certs/fullchain.pem -subj "/CN=zzol.site"
+
+      - name: nginx -t
+        run: |
+          # 이미지 태그는 compose에서 읽는다 — 버전을 두 곳에 적으면 갈라진다.
+          IMAGE=$(grep -oP '^\s*image:\s*\Knginx:\S+' backend/docker/nginx/docker-compose.yml)
+          echo "image: $IMAGE"
+          docker run --rm \
+            -v "$PWD/backend/docker/nginx/conf:/etc/nginx/conf.d:ro" \
+            -v "$PWD/certs:/etc/letsencrypt/live/zzol.site:ro" \
+            "$IMAGE" nginx -t

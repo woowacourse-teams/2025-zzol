@@ -22,21 +22,21 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "~1.29.0",
+    "@modelcontextprotocol/sdk": "~1.30.0",
     "@stomp/stompjs": "^7.0.0",
-    "ws": "^8.21.0",
+    "ws": "^8.21.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^20.12.7",
+    "@types/node": "^26.1.2",
     "@types/ws": "^8.5.12",
-    "eslint": "^10.7.0",
+    "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "msw": "^2.15.0",
-    "prettier": "^3.9.5",
+    "prettier": "^3.9.6",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.63.0",
+    "typescript-eslint": "^8.66.0",
     "vitest": "^4.1.10"
   }
 }

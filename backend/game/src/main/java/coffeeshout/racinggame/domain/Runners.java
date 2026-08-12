@@ -1,6 +1,8 @@
 package coffeeshout.racinggame.domain;
 
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,9 +34,7 @@ public class Runners {
     }
 
     public Optional<Runner> findWinner() {
-        return runners.stream()
-                .filter(Runner::isFinished)
-                .min(Comparator.comparing(Runner::getFinishTime));
+        return runners.stream().filter(Runner::isFinished).min(Comparator.comparing(Runner::getFinishTime));
     }
 
     public boolean hasWinner() {
@@ -73,6 +73,7 @@ public class Runners {
         return runners.stream()
                 .filter(runner -> runner.getGamer().getName().equals(playerName))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("해당 플레이어의 러너를 찾을 수 없습니다."));
+                .orElseThrow(
+                        () -> new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "해당 플레이어의 러너를 찾을 수 없습니다."));
     }
 }

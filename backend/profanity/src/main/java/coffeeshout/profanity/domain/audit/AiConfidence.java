@@ -1,5 +1,7 @@
 package coffeeshout.profanity.domain.audit;
 
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -9,7 +11,8 @@ public record AiConfidence(BigDecimal value) {
 
     public AiConfidence {
         if (value == null || value.compareTo(BigDecimal.ZERO) < 0 || value.compareTo(BigDecimal.ONE) > 0) {
-            throw new IllegalArgumentException("confidence는 0.0~1.0 사이여야 합니다. 입력값: " + value);
+            throw new SystemException(
+                    GlobalErrorCode.INTERNAL_SERVER_ERROR, "confidence는 0.0~1.0 사이여야 합니다. 입력값: " + value);
         }
         value = value.setScale(2, RoundingMode.HALF_UP);
     }

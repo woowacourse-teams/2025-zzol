@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<ruleset name="zzol-test"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        zzol 백엔드 테스트 소스 규칙 (ADR-0036).
+        `src/test/java` 전체와 :test-support의 `src/main/java`(테스트 인프라)에 적용된다.
+        프로덕션 전용 규칙(생성자 주입 강제 등)은 ruleset-main.xml에 있다.
+    </description>
+
+    <!-- QueryPerformanceTest는 test 태스크에서도 제외된(build.gradle.kts) 수동 벤치마크 하네스다.
+         stdout 리포트 출력이 이 클래스의 목적이므로 System.out이 정상 사용이다. -->
+    <exclude-pattern>.*/QueryPerformanceTest\.java</exclude-pattern>
+
+    <!-- ===== 묶음 A — 위반 4곳, 즉시 실패 ===== -->
+
+    <!-- conventions-test.md: "Thread.sleep은 사용하지 않는다. 고정 대기는 실행 환경에 따라
+         테스트가 flaky해지는 원인이 된다." 대기는 Awaitility(통합) 또는
+         CapturingScheduler(오케스트레이터, ADR-0033)로 한다.
+         포스트모템 0001·0002가 모두 플레이키 사건이다. -->
+    <rule name="NoThreadSleep"
+          language="java"
+          message="Thread.sleep 대신 Awaitility(통합) 또는 CapturingScheduler(오케스트레이터)를 쓴다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//MethodCall[@MethodName = 'sleep'][TypeExpression/ClassType[@SimpleName = 'Thread']]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- 단언은 AssertJ로 통일한다. 현재 assertThat 2,145곳 대 JUnit 단언 0곳 —
+         이미 일관된 상태를 잠그는 규칙이다.
+         도메인 예외 검증은 ExceptionAssertions.assertCoffeeShoutException을 쓴다(conventions-test.md).
+         `[*[1][self::ArgumentList]]`는 "한정자 없는 호출"(= 정적 임포트한 JUnit 단언)만 잡는다.
+         JSONAssert.assertEquals 같은 한정 호출은 첫 자식이 TypeExpression이라 걸리지 않는다. -->
+    <rule name="NoJUnitAssertions"
+          language="java"
+          message="JUnit 단언 대신 AssertJ assertThat(...)을 쓴다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//MethodCall[@MethodName = ('assertTrue', 'assertFalse', 'assertEquals', 'assertNotEquals',
+                           'assertNull', 'assertNotNull', 'assertSame', 'assertNotSame',
+                           'assertArrayEquals', 'assertThrows', 'assertDoesNotThrow')]
+           [*[1][self::ArgumentList]]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- 테스트에서도 표준 출력 대신 단언으로 검증한다. 통과한 테스트의 출력은 아무도 안 읽는다. -->
+    <rule ref="category/java/bestpractices.xml/SystemPrintln">
+        <priority>1</priority>
+    </rule>
+    <rule ref="category/java/bestpractices.xml/AvoidPrintStackTrace">
+        <priority>1</priority>
+    </rule>
+
+</ruleset>

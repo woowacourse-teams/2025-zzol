@@ -15,7 +15,7 @@ zzol-bot:
     top-p: 0.1
   monitor:
     enabled: ${ZZOL_BOT_MONITOR_ENABLED:true}    # Alertmanager firing 알림 분석 활성 여부
-    error-log-window-minutes: 240                # ERROR 로그 샘플 조회 윈도우(기본 4시간)
+    error-log-window-minutes: 30                 # ERROR 로그 샘플 조회 윈도우. 넓으면 알림과 무관한 상시 에러가 딸려 들어와 분석이 엉뚱한 근거 위에 선다(#1594). 알림 시점 전후를 좁게 본다
     enrich-cooldown-minutes: 240                 # 같은 fingerprint 재분석 최소 간격(기본 4시간). 중복 분석 방지 — 재시도·flapping 흡수 + 지속 장애 LLM 재호출 비용 절감. 0이면 비활성
   slack:
     webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성

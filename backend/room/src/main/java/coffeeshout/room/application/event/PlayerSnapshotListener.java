@@ -1,6 +1,8 @@
 package coffeeshout.room.application.event;
 
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.minigame.event.PlayerSnapshotRequiredEvent;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
@@ -34,18 +36,19 @@ public class PlayerSnapshotListener {
 
     @EventListener
     public void handle(PlayerSnapshotRequiredEvent event) {
-        final RoomEntity roomEntity = roomEntityRepository.findFirstByJoinCodeOrderByCreatedAtDesc(event.joinCode())
-                .orElseThrow(() -> new IllegalArgumentException("방이 존재하지 않습니다: " + event.joinCode()));
+        final RoomEntity roomEntity = roomEntityRepository
+                .findFirstByJoinCodeOrderByCreatedAtDesc(event.joinCode())
+                .orElseThrow(() -> new SystemException(
+                        GlobalErrorCode.INTERNAL_SERVER_ERROR, "방이 존재하지 않습니다: " + event.joinCode()));
         final Room room = roomQueryService.getByJoinCode(new JoinCode(event.joinCode()));
 
-        room.getPlayers().forEach(player -> playerEntityRepository.save(new PlayerEntity(
-                roomEntity,
-                player.getName().value(),
-                player.getPlayerType(),
-                player.getUserId()
-        )));
+        room.getPlayers()
+                .forEach(player -> playerEntityRepository.save(new PlayerEntity(
+                        roomEntity, player.getName().value(), player.getPlayerType(), player.getUserId())));
 
-        log.debug("플레이어 스냅샷 저장 완료: joinCode={}, playerCount={}",
-                event.joinCode(), room.getPlayers().size());
+        log.debug(
+                "플레이어 스냅샷 저장 완료: joinCode={}, playerCount={}",
+                event.joinCode(),
+                room.getPlayers().size());
     }
 }

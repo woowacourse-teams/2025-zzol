@@ -37,8 +37,10 @@ public class WebSocketGracefulShutdownHandler implements SmartLifecycle {
     private final Duration shutdownWaitDuration;
 
     private volatile boolean isRunning = false;
+
     @Getter
     private volatile boolean isShuttingDown = false;
+
     private final AtomicReference<CompletableFuture<Void>> shutdownFuture = new AtomicReference<>();
     private final AtomicReference<ScheduledFuture<?>> statusCheckTask = new AtomicReference<>();
 
@@ -94,7 +96,11 @@ public class WebSocketGracefulShutdownHandler implements SmartLifecycle {
         // 주기적인 상태 로깅 스케줄링
         scheduleStatusLogging();
 
-        // 타임아웃과 함께 대기 (이벤트 기반 - CompletableFuture 사용)
+        awaitConnectionsClosed(callback, displayMinutes, displaySeconds);
+    }
+
+    // 타임아웃과 함께 대기 (이벤트 기반 - CompletableFuture 사용). 어떤 경로로 끝나든 cleanup·callback은 보장한다.
+    private void awaitConnectionsClosed(Runnable callback, long displayMinutes, long displaySeconds) {
         try {
             final CompletableFuture<Void> future = shutdownFuture.get();
             if (future != null) {
@@ -103,8 +109,11 @@ public class WebSocketGracefulShutdownHandler implements SmartLifecycle {
             log.info("✅ 모든 WebSocket 연결 정상 종료 완료");
         } catch (TimeoutException e) {
             final int remaining = getWebSocketSessionCount();
-            log.warn("⚠️ Graceful Shutdown 타임아웃 ({}분 {}초): 활성 연결 {} 개가 남아있습니다. 강제 종료합니다.",
-                    displayMinutes, displaySeconds, remaining);
+            log.warn(
+                    "⚠️ Graceful Shutdown 타임아웃 ({}분 {}초): 활성 연결 {} 개가 남아있습니다. 강제 종료합니다.",
+                    displayMinutes,
+                    displaySeconds,
+                    remaining);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("❌ Graceful Shutdown 중단됨", e);
@@ -124,25 +133,27 @@ public class WebSocketGracefulShutdownHandler implements SmartLifecycle {
      * </p>
      */
     private void scheduleStatusLogging() {
-        statusCheckTask.set(taskScheduler.scheduleAtFixedRate(() -> {
-            try {
-                final CompletableFuture<Void> future = shutdownFuture.get();
-                if (future == null || future.isDone()) {
-                    return;
-                }
+        statusCheckTask.set(taskScheduler.scheduleAtFixedRate(
+                () -> {
+                    try {
+                        final CompletableFuture<Void> future = shutdownFuture.get();
+                        if (future == null || future.isDone()) {
+                            return;
+                        }
 
-                final int remaining = getWebSocketSessionCount();
-                log.info("📊 Graceful Shutdown 진행 중: 남은 연결 {} 개", remaining);
+                        final int remaining = getWebSocketSessionCount();
+                        log.info("📊 Graceful Shutdown 진행 중: 남은 연결 {} 개", remaining);
 
-                // 모든 세션이 종료되면 Shutdown 완료
-                if (remaining == 0) {
-                    log.info("✅ 모든 WebSocket 세션 종료됨. Graceful Shutdown 완료");
-                    future.complete(null);
-                }
-            } catch (Exception e) {
-                log.error("❌ Graceful Shutdown 상태 체크 중 오류", e);
-            }
-        }, STATUS_CHECK_INTERVAL));
+                        // 모든 세션이 종료되면 Shutdown 완료
+                        if (remaining == 0) {
+                            log.info("✅ 모든 WebSocket 세션 종료됨. Graceful Shutdown 완료");
+                            future.complete(null);
+                        }
+                    } catch (Exception e) {
+                        log.error("❌ Graceful Shutdown 상태 체크 중 오류", e);
+                    }
+                },
+                STATUS_CHECK_INTERVAL));
     }
 
     /**
@@ -173,13 +184,15 @@ public class WebSocketGracefulShutdownHandler implements SmartLifecycle {
 
     @Override
     public int getPhase() {
-        // WebServerGracefulShutdownLifecycle(MAX_VALUE)이 먼저 Tomcat을 닫은 뒤
-        // 이 핸들러가 남은 WS 세션을 드레인한다
+        // 가장 먼저 멈춘다 — HTTP 요청 드레인(WebServerGracefulShutdownLifecycle, MAX-1024)이
+        // 시작되기 전에 WS 세션을 정리해야 한다.
+        // 전체 순서표는 docs/architecture.md "종료 순서 (lifecycle phase)"
         return Integer.MAX_VALUE - 1;
     }
 
     private int getWebSocketSessionCount() {
-        return Objects.requireNonNull(webSocketMessageBrokerStats.getWebSocketSessionStats(),
-                "WebSocketSessionStats를 가져올 수 없습니다.").getWebSocketSessions();
+        return Objects.requireNonNull(
+                        webSocketMessageBrokerStats.getWebSocketSessionStats(), "WebSocketSessionStats를 가져올 수 없습니다.")
+                .getWebSocketSessions();
     }
 }

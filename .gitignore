@@ -6,5 +6,6 @@
 *.env.*
 
 .cursor/
+.claude/worktrees/
 frontend/.claude/settings.local.json
 frontend/CLAUDE.local.md

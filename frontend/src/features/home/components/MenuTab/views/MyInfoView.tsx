@@ -4,12 +4,14 @@ import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useAuth } from '@/features/auth/contexts/AuthContext';
 import DeleteAccountSheet from '@/features/auth/components/DeleteAccountSheet/DeleteAccountSheet';
 import { useMyStats } from '@/features/home/hooks/useMyStats';
+import { useMySeasonRank } from '@/features/home/hooks/useSeasonRanking';
 import * as S from './MyInfoView.styled';
 
 const MyInfoView = () => {
   const { myName } = useIdentifier();
   const { winCount, streak } = useMyStats();
   const { isAuthenticated, user } = useAuth();
+  const { data: myRank } = useMySeasonRank();
 
   const displayName = user?.nickname?.trim() || myName || '익명의 사용자';
   const { openModal } = useModal();
@@ -47,6 +49,15 @@ const MyInfoView = () => {
             <S.StatUnit>회</S.StatUnit>
           </S.StatValueRow>
         </S.StatCard>
+        {isAuthenticated && (
+          <S.StatCard>
+            <S.StatLabel>이번 시즌 순위{myRank ? ` · ${myRank.tier}` : ''}</S.StatLabel>
+            <S.StatValueRow>
+              <S.StatNumber>{myRank ? myRank.rank : '-'}</S.StatNumber>
+              {myRank && <S.StatUnit>위</S.StatUnit>}
+            </S.StatValueRow>
+          </S.StatCard>
+        )}
       </S.StatGrid>
 
       <S.InfoSection>
@@ -56,6 +67,9 @@ const MyInfoView = () => {
             <li>• 당첨 횟수는 룰렛에서 최종적으로 선택된 횟수입니다.</li>
             <li>• 연속 안걸린 횟수는 마지막 당첨 이후 성공적으로 대기를 피한 횟수입니다.</li>
             <li>• 통계 데이터는 현재 브라우저의 로컬 스토리지에 저장됩니다.</li>
+            <li>
+              • 시즌 순위는 매월 초기화되며, 로그인 상태로 플레이한 미니게임 결과만 집계됩니다.
+            </li>
           </S.TooltipList>
         </S.TooltipCard>
       </S.InfoSection>

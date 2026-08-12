@@ -1,7 +1,7 @@
 ---
 description: 서비스 테스트(ServiceTest) 전용 규칙 — Mock 빈·이벤트 퍼블리셔. 공통은 testing.md.
 paths:
-  - "src/test/java/**/*ServiceTest.java"
+  - "**/src/test/java/**/*ServiceTest.java"
 ---
 
 전체 컨벤션: `docs/conventions-test.md`. 공통 체크: `testing.md`

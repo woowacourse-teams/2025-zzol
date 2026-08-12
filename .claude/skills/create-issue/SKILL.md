@@ -1,8 +1,8 @@
 ---
 name: create-issue
-description: GitHub 이슈를 템플릿 기반으로 생성하고, 이슈 번호로 dev에서 작업 브랜치를 체크아웃한다. 백엔드·프론트엔드 공통.
+description: GitHub 이슈를 템플릿 기반으로 생성하고, 이슈 번호로 dev에서 작업 워크트리·브랜치를 만들어 진입한다. 백엔드·프론트엔드 공통.
 argument-hint: "[type] 이슈 제목 — type: feat | fix | refactor | chore | docs | test"
-allowed-tools: Bash
+allowed-tools: Bash, EnterWorktree
 ---
 
 # create-issue
@@ -88,22 +88,51 @@ EOF
 
 생성 후 출력된 URL에서 이슈 번호를 추출한다.
 
-## 6. 브랜치 생성 및 체크아웃
+## 6. 워크트리 생성 및 진입
 
-통합 브랜치 `dev`를 **체크아웃하지 않고** `origin/dev`에서 직접 분기한다. `dev` 위에서 `git checkout -b`하면 autoSetupMerge가 새 브랜치 upstream을 `dev`로 잡아 이후 push·IDE Sync가 `dev`로 직행한다(#1404 사고 원인) — 금지. 영역(BE/FE)과 무관하게 브랜치 prefix는 붙이지 않는다.
+**현재 디렉터리에서 `git switch`로 브랜치를 갈아타지 않는다.** 같은 저장소를 보는 다른 세션의 작업을 덮어쓴다. 작업마다 워크트리를 새로 만들어 동시에 진행할 수 있게 한다([issue-workflow](../../rules/issue-workflow.md)).
+
+통합 브랜치 `dev`를 **체크아웃하지 않고** `origin/dev`에서 직접 분기한다. `dev` 위에서 분기하면 autoSetupMerge가 새 브랜치 upstream을 `dev`로 잡아 이후 push·IDE Sync가 `dev`로 직행한다(#1404 사고 원인) — 금지. 영역(BE/FE)과 무관하게 브랜치 prefix는 붙이지 않는다.
+
+**실패를 삼키지 않는다.** 아래 가드는 하나라도 어긋나면 `ABORT`로 멈춘다 — 특히 upstream 제거는 #1404 재발방지의 핵심이라, 조용히 실패하면 이후 push 한 번으로 작업 커밋이 `dev`에 직행한다.
 
 ```bash
-git fetch origin dev
-git switch -c {type}/{issue-number}-{slug} origin/dev
-git branch --unset-upstream   # ★ autoSetupMerge가 잡은 dev upstream 제거 (git-push-safety)
+MAIN="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"   # 주 저장소 경로 (워크트리 안에서 실행해도 안전)
+[ -n "$MAIN" ] || { echo "ABORT: 주 저장소 경로를 찾지 못했다"; exit 1; }
+WT="$MAIN/.claude/worktrees/{type}-{issue-number}"
+
+git fetch origin dev || { echo "ABORT: origin/dev fetch 실패"; exit 1; }
+git worktree add -b "{type}/{issue-number}-{slug}" "$WT" origin/dev || {
+  echo "ABORT: 워크트리 생성 실패 — 경로 또는 브랜치명이 이미 있는지 확인한다(아래 참고)"; exit 1; }
+
+# ★ autoSetupMerge 가 잡은 dev upstream 제거 (git-push-safety). 있을 때만 떼고, 뗐는지 반드시 확인한다.
+if git -C "$WT" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then
+  git -C "$WT" branch --unset-upstream || { echo "ABORT: upstream 제거 실패"; exit 1; }
+fi
+git -C "$WT" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1 && {
+  echo "ABORT: upstream 이 남아있다 — 이 상태로 두면 push 가 dev 로 직행한다(#1404)"; exit 1; }
+
+echo "$WT"
 ```
 
+그 뒤 `EnterWorktree`에 **`path`로 위 경로를 넘겨** 세션을 옮긴다.
+
+```text
+EnterWorktree(path: "<WT 경로>")
+```
+
+- **`EnterWorktree`를 `name`으로 부르지 않는다.** 브랜치명이 `worktree-<name>`이 되어 `{type}/{N}-{slug}` 규약을 깨고, `create-pr`의 이슈 번호 추출(`close #N`)이 실패한다. 브랜치는 위 `git worktree add -b`로 만들고 `EnterWorktree`는 진입에만 쓴다.
+- 디렉터리명은 `{type}-{issue-number}`(`/` 불가), 브랜치명은 `{type}/{issue-number}-{slug}`로 서로 다르다.
 - `{slug}`: 이슈 제목을 소문자 + 하이픈으로 변환, 최대 40자
 - 한국어 단어는 의미를 유지하는 영문으로 변환
+- **`git worktree add`가 실패하는 두 경우를 구분한다.** 메시지를 보고 갈라진다.
+  - `already exists` (경로 선점) → 새로 만들지 말고 `EnterWorktree(path:)`로 기존 워크트리에 들어간다.
+  - `a branch named '...' already exists` (브랜치 선점 — 지난 작업의 브랜치가 남아 있다) → 워크트리만 새로 붙인다: `git worktree add "$WT" "{type}/{issue-number}-{slug}"` (`-b` 없이). 그래도 안 되면 사용자에게 보고한다. **`git switch`로 되돌아가지 않는다.**
 
 ## 7. 완료 출력
 
 ```text
 ✅ 이슈 생성: https://github.com/.../issues/{N}
 🌿 브랜치:   {type}/{N}-{slug}
+📁 워크트리: .claude/worktrees/{type}-{N}
 ```

@@ -69,6 +69,11 @@ management:
   otlp:
     tracing:
       endpoint: http://localhost:4318
+    # 이 파일은 application-test-base.yml 을 import 하지 않으므로 여기에도 따로 끈다 —
+    # 켜두면 컨텍스트 종료마다 localhost:4318 로 메트릭 푸시를 시도해 실패 스택트레이스가 찍힌다
+    metrics:
+      export:
+        enabled: false
   endpoint:
     health:
       group:

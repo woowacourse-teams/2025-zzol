@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -35,15 +36,28 @@ import org.springframework.stereotype.Component;
  *   <li>redis_stream_threadpool_active_count (tag: stream)</li>
  * </ul>
  * </p>
+ *
+ * <p>종료 시 Redis를 조회하지 않는다({@link SmartLifecycle}). {@code AbstractApplicationContext.doClose()}는
+ * ① {@code ContextClosedEvent} 발행 → ② Lifecycle 빈 stop → ③ 빈 파괴 순으로 진행하고,
+ * ①의 이벤트를 받은 {@code MeterRegistryCloser}가 마지막 publish를 수행하며 <b>모든 Gauge를 평가</b>한다.
+ * 이벤트가 stop보다 <b>먼저</b>이므로, 평범한 close에서는 게이지 평가 시점에 커넥션 팩토리가 아직 살아 있다.</p>
+ *
+ * <p>문제가 되는 건 <b>close 이전에 이미 lifecycle이 멈춘 컨텍스트</b>다 — Spring Framework 7의 테스트
+ * 컨텍스트 pause가 그렇다. pause가 lifecycle을 통째로 멈춘 뒤 JVM 종료 시점에 close가 오면, ①의 게이지
+ * 평가가 이미 STOPPED인 {@code LettuceConnectionFactory}를 호출해
+ * {@code IllegalStateException: ... has been STOPPED}가 스트림 수만큼 터진다(#1642).
+ * {@code stop()}에서 내린 플래그가 그 호출 자체를 막아 NaN을 낸다.</p>
  */
 @Slf4j
 @Component
-public class RedisStreamLagMetricService {
+public class RedisStreamLagMetricService implements SmartLifecycle {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedisStreamProperties redisStreamProperties;
     private final MeterRegistry meterRegistry;
     private final ApplicationContext applicationContext;
+
+    private volatile boolean running = true;
 
     public RedisStreamLagMetricService(
             StringRedisTemplate stringRedisTemplate,
@@ -74,6 +88,12 @@ public class RedisStreamLagMetricService {
                     .tag("stream", streamKey)
                     .register(meterRegistry);
 
+            // 리스너 미생성 스트림(컨슈머 그룹 전용)은 소비 스레드풀이 없다 — 길이 게이지만 등록한다.
+            // 그룹 lag·pending은 XINFO GROUPS 기반 전용 메트릭이 담당한다(#1610).
+            if (!streamConfig.isListenerEnabled()) {
+                continue;
+            }
+
             // 2) 스레드풀 큐 깊이 Gauge
             Gauge.builder("redis.stream.threadpool.queue.size",
                             () -> getThreadPoolQueueSize(streamKey, streamConfig))
@@ -93,7 +113,35 @@ public class RedisStreamLagMetricService {
                 redisStreamProperties.keys().keySet());
     }
 
+    @Override
+    public void start() {
+        running = true;
+    }
+
+    /**
+     * 컨텍스트 종료 시작 신호. 이후 Redis 조회 게이지는 호출 자체를 건너뛴다.
+     */
+    @Override
+    public void stop() {
+        running = false;
+    }
+
+    @Override
+    public boolean isRunning() {
+        return running;
+    }
+
+    // 폴러가 멈춘 뒤에도 백로그는 관측 대상이므로 폴러 정지보다 뒤, 조회가 불가능해지는
+    // 커넥션 팩토리 정지보다는 앞에 선다. 전체 순서표는 docs/architecture.md "종료 순서 (lifecycle phase)"
+    @Override
+    public int getPhase() {
+        return 512;
+    }
+
     private double getStreamLength(String streamKey) {
+        if (!running) {
+            return Double.NaN;
+        }
         try {
             Long length = stringRedisTemplate.opsForStream().size(streamKey);
             return length != null ? length.doubleValue() : 0.0;

@@ -1,14 +1,14 @@
-name: Deploy Base Storybook (fe/dev)
+name: Deploy Base Storybook (dev)
 
 on:
   push:
     branches:
-      - fe/dev
       - dev
 
 jobs:
   chromatic-base:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: ./frontend
@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: npm

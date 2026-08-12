@@ -6,7 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.JacksonJsonMessageConverter;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
@@ -35,7 +35,7 @@ public class TestStompSessionFactory {
         final SockJsClient sockJsClient = new SockJsClient(
                 List.of(new WebSocketTransport(new StandardWebSocketClient())));
         final WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
-        final MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter(objectMapper);
+        final JacksonJsonMessageConverter converter = new JacksonJsonMessageConverter();
         converter.setStrictContentTypeMatch(false);
         stompClient.setMessageConverter(converter);
 

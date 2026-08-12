@@ -6,12 +6,9 @@
 
 ## 브랜치 전략
 
-브랜치 전략은 모노레포 공통이다 — 루트 [CLAUDE.md](../CLAUDE.md)·[git-push-safety](../.claude/rules/git-push-safety.md)를 따른다. 요약:
+브랜치 전략은 모노레포 공통이다 — 루트 [CLAUDE.md](../CLAUDE.md)·[git-push-safety](../.claude/rules/git-push-safety.md)를 따른다. 백엔드에서 추가로 알아야 할 것:
 
-- 작업 브랜치는 통합 브랜치 **`dev`에서 분기**하고 PR 타깃도 `dev`다 (백엔드도 `be/dev`가 아니라 `dev`). 분기 시 `git switch -c {type}/{N}-{slug} origin/dev` 후 `git branch --unset-upstream`.
-- 브랜치 네이밍은 prefix 없이 `{type}/{N}-{slug}`. 영역(BE)은 `create-issue`/`create-pr`가 라벨로 붙인다.
 - `dev`가 저장소 **기본 브랜치**다. README·dependabot·CodeRabbit·워크플로우 등 GitHub 관련 파일도 `dev`에서 관리한다(dependabot·보안 스캔·스케줄은 기본 브랜치 기준으로 동작). `main`은 배포 브랜치가 아니며(배포는 `dev`·`prod` push 트리거) 전환기 잔재로만 남아 있다 — 신규 작업에 사용하지 않는다.
-- 이슈·PR 생성은 루트 공통 스킬 `create-issue`·`create-pr`를 쓴다.
 
 ## 작업 규칙
 
@@ -33,6 +30,18 @@
 
 - 구조 파악이 목적이면 Grep 툴로 `public|private|class|interface` 패턴을 잡아 메서드 목록만 먼저 확인한다
 - Java는 파일명 = 클래스명 규칙이 강제되므로 클래스명을 알면 경로를 예측해 바로 Read할 수 있다 (이 경우 Grep 생략 가능)
+
+## 모듈 경로
+
+Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는다** — `backend/src/`는 존재하지 않고 `backend/game/src/main/java/…` 형태다. 경로를 예측해 Read하거나 글롭을 쓸 때 이걸 놓치면 조용히 빗나간다(`.claude/rules/`의 `paths`가 이 이유로 매칭에 실패한 적이 있다).
+
+모듈 목록·역할·의존 방향은 [아키텍처 레퍼런스](docs/architecture.md)가 유일한 출처다. 여기에 옮겨 적지 않는다.
+
+단일 클래스 빠른 확인은 모듈을 지정해 돌린다(그 외에는 `/run-tests`):
+
+```bash
+./gradlew :game:test --tests '*CardGameTest'
+```
 
 ## 아키텍처 핵심 제약
 

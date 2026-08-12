@@ -36,7 +36,8 @@ public class LokiQueryTool implements ZzolBotTool {
     private final String environment;
     private final ObjectMapper objectMapper;
 
-    public LokiQueryTool(ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
+    public LokiQueryTool(
+            ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
         this.lokiBaseUrl = properties.monitoring().lokiUrl();
         this.restClient = restClientBuilder.baseUrl(lokiBaseUrl).build();
         this.environment = properties.monitoring().environment();
@@ -52,27 +53,25 @@ public class LokiQueryTool implements ZzolBotTool {
 
     @Override
     public String description() {
-        return "Loki에서 로그를 조회한다. " +
-                "joinCode가 있으면 해당 방으로 필터링하고, 없으면 전체 환경에서 ERROR/WARN 레벨을 조회한다. " +
-                "since 파라미터로 조회 기간을 지정한다 (예: 30m, 1h, 2h). 기본값은 1h.";
+        return "Loki에서 로그를 조회한다. " + "joinCode가 있으면 해당 방으로 필터링하고, 없으면 전체 환경에서 ERROR/WARN 레벨을 조회한다. "
+                + "since 파라미터로 조회 기간을 지정한다 (예: 30m, 1h, 2h). 기본값은 1h.";
     }
 
     @Override
     public Map<String, Object> parameterSchema() {
         return Map.of(
                 "type", "object",
-                "properties", Map.of(
-                        "joinCode", Map.of(
-                                "type", "string",
-                                "description", "4자리 방 입장 코드. 생략하면 전체 환경 조회"
-                        ),
-                        "since", Map.of(
-                                "type", "string",
-                                "description", "조회 기간 (예: 30m, 1h, 2h). 기본값 1h"
-                        )
-                ),
-                "required", List.of()
-        );
+                "properties",
+                        Map.of(
+                                "joinCode",
+                                        Map.of(
+                                                "type", "string",
+                                                "description", "4자리 방 입장 코드. 생략하면 전체 환경 조회"),
+                                "since",
+                                        Map.of(
+                                                "type", "string",
+                                                "description", "조회 기간 (예: 30m, 1h, 2h). 기본값 1h")),
+                "required", List.of());
     }
 
     @Override
@@ -95,16 +94,13 @@ public class LokiQueryTool implements ZzolBotTool {
         // 쿼리를 직접 인코딩한 뒤 String이 아닌 URI로 넘긴다.
         // RestClient.uri(String)은 인자를 URI 템플릿으로 보고 한 번 더 인코딩해(% → %25),
         // Loki가 400 "parse error ... unexpected %!(NOVERB)"로 거부했다. URI 객체는 재인코딩되지 않는다.
-        final URI uri = URI.create(lokiBaseUrl).resolve(String.format(
-                "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d",
-                encodeQueryValue(lokiQuery), startNano, endNano, LOG_LIMIT
-        ));
+        final URI uri = URI.create(lokiBaseUrl)
+                .resolve(String.format(
+                        "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d",
+                        encodeQueryValue(lokiQuery), startNano, endNano, LOG_LIMIT));
 
         try {
-            final String response = restClient.get()
-                    .uri(uri)
-                    .retrieve()
-                    .body(String.class);
+            final String response = restClient.get().uri(uri).retrieve().body(String.class);
             return ToolExecutionResult.ok(TOOL_NAME, parseLokiResponse(response));
         } catch (RestClientException e) {
             log.warn("[ZzolBot] Loki 조회 실패. joinCode={}", joinCode, e);
@@ -119,24 +115,7 @@ public class LokiQueryTool implements ZzolBotTool {
         try {
             final JsonNode root = objectMapper.readTree(raw);
             final String status = root.path("status").asText("unknown");
-            final ArrayNode logs = objectMapper.createArrayNode();
-
-            final JsonNode results = root.path("data").path("result");
-            if (results.isArray()) {
-                for (final JsonNode stream : results) {
-                    final JsonNode values = stream.path("values");
-                    if (values.isArray()) {
-                        for (final JsonNode entry : values) {
-                            if (entry.isArray() && entry.size() >= 2) {
-                                final ObjectNode log = objectMapper.createObjectNode();
-                                log.put("time", Instant.ofEpochMilli(entry.get(0).asLong() / 1_000_000).toString());
-                                log.put("message", entry.get(1).asText());
-                                logs.add(log);
-                            }
-                        }
-                    }
-                }
-            }
+            final ArrayNode logs = collectLogEntries(root.path("data").path("result"));
 
             final ObjectNode summary = objectMapper.createObjectNode();
             summary.put("status", status);
@@ -147,6 +126,27 @@ public class LokiQueryTool implements ZzolBotTool {
             log.warn("[ZzolBot] Loki 응답 파싱 실패, raw 응답 반환");
             return raw;
         }
+    }
+
+    // JsonNode는 배열이 아니면 순회 시 원소가 없으므로 isArray() 검사 없이 그대로 돌린다.
+    private ArrayNode collectLogEntries(JsonNode results) {
+        final ArrayNode logs = objectMapper.createArrayNode();
+        for (final JsonNode stream : results) {
+            for (final JsonNode entry : stream.path("values")) {
+                addLogEntry(logs, entry);
+            }
+        }
+        return logs;
+    }
+
+    private void addLogEntry(ArrayNode logs, JsonNode entry) {
+        if (!entry.isArray() || entry.size() < 2) {
+            return;
+        }
+        final ObjectNode log = objectMapper.createObjectNode();
+        log.put("time", Instant.ofEpochMilli(entry.get(0).asLong() / 1_000_000).toString());
+        log.put("message", entry.get(1).asText());
+        logs.add(log);
     }
 
     private static String encodeQueryValue(String value) {

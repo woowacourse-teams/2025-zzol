@@ -2,7 +2,7 @@ name: Close issues when PR is merged
 on:
   pull_request:
     types: [closed] # PR이 닫힐 때
-    branches: [dev, prod, fe/dev, fe/prod, be/dev, be/prod]
+    branches: [dev, prod]
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:

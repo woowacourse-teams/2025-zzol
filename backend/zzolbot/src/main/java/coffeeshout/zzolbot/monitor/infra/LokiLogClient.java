@@ -28,28 +28,41 @@ public class LokiLogClient {
 
     private final RestClient restClient;
     private final String lokiBaseUrl;
-    private final String environment;
+    private final String defaultEnvironment;
     private final ObjectMapper objectMapper;
 
-    public LokiLogClient(ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
+    public LokiLogClient(
+            ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
         this.lokiBaseUrl = properties.monitoring().lokiUrl();
-        this.restClient = restClientBuilder.baseUrl(lokiBaseUrl)
+        this.restClient = restClientBuilder
+                .baseUrl(lokiBaseUrl)
                 .requestFactory(ZzolBotHttpTimeouts.requestFactory())
                 .build();
-        this.environment = properties.monitoring().environment();
+        this.defaultEnvironment = properties.monitoring().environment();
         this.objectMapper = objectMapper;
     }
 
     /**
-     * 윈도우 구간의 최근 ERROR 로그 메시지를 최대 {@code limit}건 반환(LLM 분석 근거).
+     * 알림에서 환경을 판별하지 못했을 때 쓸 폴백 환경(이 인스턴스가 실행 중인 환경).
      */
-    public List<String> tailErrors(Instant end, Duration window, int limit) {
+    public String defaultEnvironment() {
+        return defaultEnvironment;
+    }
+
+    /**
+     * {@code environment} 환경의 윈도우 구간 최근 ERROR 로그를 최대 {@code limit}건 반환(LLM 분석 근거).
+     * <p>
+     * 환경을 인자로 받는다. 이전에는 이 인스턴스의 설정값으로 고정해, dev에서 발화한 알림을 prod
+     * 인스턴스가 받으면 prod 로그를 근거로 분석하는 불일치가 있었다(#1594).
+     */
+    public List<String> tailErrors(Instant end, Duration window, int limit, String environment) {
         final String logql = String.format("{environment=\"%s\"} |~ \"%s\"", environment, LEVEL_ERROR);
         final long startNano = end.minus(window).toEpochMilli() * 1_000_000L;
         final long endNano = end.toEpochMilli() * 1_000_000L;
-        final URI uri = URI.create(lokiBaseUrl).resolve(String.format(
-                "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d&direction=backward",
-                encode(logql), startNano, endNano, limit));
+        final URI uri = URI.create(lokiBaseUrl)
+                .resolve(String.format(
+                        "/loki/api/v1/query_range?query=%s&start=%d&end=%d&limit=%d&direction=backward",
+                        encode(logql), startNano, endNano, limit));
         try {
             final String body = restClient.get().uri(uri).retrieve().body(String.class);
             return parseMessages(body, limit);
@@ -65,20 +78,22 @@ public class LokiLogClient {
             return messages;
         }
         try {
-            final JsonNode results = objectMapper.readTree(raw).path("data").path("result");
-            if (results.isArray()) {
-                for (final JsonNode stream : results) {
-                    for (final JsonNode entry : stream.path("values")) {
-                        if (entry.isArray() && entry.size() >= 2 && messages.size() < limit) {
-                            messages.add(entry.get(1).asText());
-                        }
-                    }
-                }
+            // JsonNode는 배열이 아니면 순회 시 원소가 없으므로 isArray() 검사 없이 그대로 돌린다.
+            for (final JsonNode stream : objectMapper.readTree(raw).path("data").path("result")) {
+                collectMessages(stream.path("values"), limit, messages);
             }
         } catch (Exception e) {
             log.warn("[ZzolBot] Loki 로그 응답 파싱 실패 — 빈 목록", e);
         }
         return messages;
+    }
+
+    private void collectMessages(JsonNode values, int limit, List<String> messages) {
+        for (final JsonNode entry : values) {
+            if (entry.isArray() && entry.size() >= 2 && messages.size() < limit) {
+                messages.add(entry.get(1).asText());
+            }
+        }
     }
 
     private String encode(String value) {

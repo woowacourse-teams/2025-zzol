@@ -6,8 +6,8 @@ import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@EntityScan(basePackages = {"coffeeshout.minigame", "coffeeshout.room", "coffeeshout.user", "coffeeshout.friend", "coffeeshout.profanity", "coffeeshout.global"})
-@EnableJpaRepositories(basePackages = {"coffeeshout.minigame", "coffeeshout.room", "coffeeshout.user", "coffeeshout.friend", "coffeeshout.profanity", "coffeeshout.global"})
+@EntityScan(basePackages = {"coffeeshout.minigame", "coffeeshout.settlement", "coffeeshout.room", "coffeeshout.user", "coffeeshout.friend", "coffeeshout.profanity", "coffeeshout.global"})
+@EnableJpaRepositories(basePackages = {"coffeeshout.minigame", "coffeeshout.settlement", "coffeeshout.room", "coffeeshout.user", "coffeeshout.friend", "coffeeshout.profanity", "coffeeshout.global"})
 @ConfigurationPropertiesScan(basePackages = "coffeeshout")
 @SpringBootApplication(scanBasePackages = "coffeeshout")
 public class GameModuleTestApplication {

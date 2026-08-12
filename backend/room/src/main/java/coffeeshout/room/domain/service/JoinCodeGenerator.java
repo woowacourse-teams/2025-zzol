@@ -1,6 +1,8 @@
 package coffeeshout.room.domain.service;
 
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.room.domain.repository.JoinCodeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,6 @@ public class JoinCodeGenerator {
             log.debug("JoinCode 중복 발생: {} (재시도 중... {}/{})", joinCode.getValue(), attempt + 1, MAX_RETRY_COUNT);
         }
 
-        throw new IllegalStateException("입장 코드 생성이 실패했습니다. 최대 시도 횟수를 초과했습니다.");
+        throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "입장 코드 생성이 실패했습니다. 최대 시도 횟수를 초과했습니다.");
     }
 }

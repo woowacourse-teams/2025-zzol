@@ -7,7 +7,7 @@
 
 ## 모듈 구성
 
-프로젝트는 12개 Gradle 모듈로 구성된다.
+프로젝트는 13개 Gradle 모듈로 구성된다.
 
 ```text
 :common       — Spring 무관 순수 추상 (ErrorCode, BaseEvent, VO)
@@ -18,6 +18,7 @@
 :user         — User + Auth + Friend
 :room         — Room aggregate + Player + Roulette + RoomSessionToken
 :game         — 6게임 구현체 + minigame orchestration
+:profanity    — 비속어 필터 (:admin·:app 이 사용, :room·:game 은 테스트에서만)
 :admin        — dashboard + patchnote + report
 :zzolbot      — AI 운영자 어시스턴트
 :app          — Spring Boot 진입점, 모든 모듈 조합
@@ -32,6 +33,7 @@
         → :game-api → :room → :game → :admin
                                     → :zzolbot
         :infra + :web → :websocket → :user
+        :common + :infra → :profanity → :admin
         (모두) → :app
 :test-support — testImplementation 전용
 ```
@@ -127,6 +129,36 @@
 2. `SelectCardCommandHandler`가 수신 → `SelectCardCommandEvent` 생성 → Redis Stream 발행
 3. `SelectCardCommandEventConsumer`가 소비 → `CardGameService.selectCard()` 호출
 4. `CardGameCommandService`가 도메인 처리 → `CardGameNotifier`가 결과 브로드캐스트
+
+---
+
+## 종료 순서 (lifecycle phase)
+
+`SmartLifecycle` 빈의 `stop()`은 **phase 내림차순**으로 호출된다. 값 자체보다 **상대 순서**가 계약이며,
+표의 절반은 우리가 소유하지 않은 값이다 — 라이브러리가 바꾸면 우리 주석은 조용히 거짓말한다.
+그래서 순서는 `ShutdownPhaseOrderTest`가 실제 컨텍스트에서 검증한다. **이 표를 고치면 그 테스트도 같이 고친다.**
+
+| phase | 빈 | 하는 일 | 소유 |
+| --- | --- | --- | --- |
+| `MAX-1` | `WebSocketGracefulShutdownHandler` | WS 세션 드레인 | **우리** (`:websocket`) |
+| `MAX-1024` | `WebServerGracefulShutdownLifecycle` | HTTP 요청 드레인 | Spring Boot |
+| `MAX-2048` | `WebServerStartStopLifecycle` | 웹서버 stop | Spring Boot |
+| `1024` | `RedisStreamContainerRegistry` | Stream 폴러 정지 | **우리** (`:infra`) |
+| `512` | `RedisStreamLagMetricService` | XLEN 게이지 소등 | **우리** (`:infra`) |
+| `0` | `LettuceConnectionFactory` | Redis 커넥션 정지 | spring-data-redis |
+
+각 자리의 근거:
+
+- **WS 세션 드레인이 가장 먼저** — HTTP 요청 드레인이 시작되기 전에 클라이언트를 정리해야 세션이 끊기지 않는다.
+- **폴러 정지(1024)가 커넥션 팩토리(0)보다 먼저** — 순서가 뒤집히면 폴러가 정지된 팩토리에 무한 재시도한다 (ADR-0022).
+- **게이지 소등(512)이 폴러 정지 뒤, 커넥션 팩토리 앞** — 폴러가 멈춘 뒤에도 백로그는 관측 대상이다.
+  기본값(`Integer.MAX_VALUE`)으로 두면 드레인(`spring.lifecycle.timeout-per-shutdown-phase: 5m`) 내내
+  액추에이터는 살아 스크레이핑되는데 게이지만 NaN이 된다 (#1642).
+
+컨텍스트 종료 전체 순서는 `AbstractApplicationContext.doClose()`가 정한다 —
+① `ContextClosedEvent` 발행 → ② 위 표의 lifecycle stop → ③ 빈 파괴. **이벤트가 stop보다 먼저**이므로,
+`ContextClosedEvent` 리스너(예: 마지막 metric publish를 수행하는 `MeterRegistryCloser`)와
+lifecycle stop 사이의 순서는 phase로 조정할 수 없다.
 
 ---
 

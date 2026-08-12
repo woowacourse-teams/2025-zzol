@@ -2,6 +2,8 @@ package coffeeshout.zzolbot.monitor.application;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -20,8 +22,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Clock;
 import java.util.List;
 import java.util.Map;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -34,7 +39,8 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class AlertEnrichmentServiceTest {
 
-    private static final MonitorProperties PROPERTIES = new MonitorProperties(true, 240, 240);
+    private static final MonitorProperties PROPERTIES = new MonitorProperties(true, 30, 240);
+    private static final List<String> LOG_SAMPLES = List.of("[ERROR] 컨슈머 처리 실패");
 
     @Mock
     private LlmCallBudget llmCallBudget;
@@ -54,19 +60,20 @@ class AlertEnrichmentServiceTest {
         service = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer, notifier,
                 monitorRunRepository, PROPERTIES, new ObjectMapper(), Clock.systemUTC());
         given(monitorRunRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
-        given(lokiLogClient.tailErrors(any(), any(), anyInt())).willReturn(List.of());
+        given(lokiLogClient.tailErrors(any(), any(), anyInt(), anyString())).willReturn(LOG_SAMPLES);
+        given(lokiLogClient.defaultEnvironment()).willReturn("prod");
     }
 
     @Test
     void 예산이_있으면_로그_샘플로_분석하고_알림_후_2회_저장한다() {
         given(llmCallBudget.tryAcquire()).willReturn(true);
-        given(analyzer.analyze(any(), any()))
-                .willReturn(new MonitorAnalysis("적체 발생", "컨슈머 지연", List.of("스케일 아웃")));
+        given(analyzer.analyze(any(), any(), anyString()))
+                .willReturn(new MonitorAnalysis("적체 발생", "컨슈머 지연", List.of("스케일 아웃"), true));
 
         service.enrich(warningAlert());
 
-        verify(lokiLogClient).tailErrors(any(), any(), anyInt());
-        verify(analyzer).analyze(any(), any());
+        verify(lokiLogClient).tailErrors(any(), any(), anyInt(), anyString());
+        verify(analyzer).analyze(any(), any(), anyString());
         verify(notifier).notifyAnomaly(any(), any());
         final ArgumentCaptor<MonitorRunEntity> captor = ArgumentCaptor.forClass(MonitorRunEntity.class);
         verify(monitorRunRepository, times(2)).save(captor.capture());
@@ -79,49 +86,43 @@ class AlertEnrichmentServiceTest {
     }
 
     @Test
-    void 예산이_소진되면_로그_분석을_건너뛰고_예산소진_분석으로_알림한다() {
-        given(llmCallBudget.tryAcquire()).willReturn(false);
-
-        service.enrich(warningAlert());
-
-        verify(lokiLogClient, never()).tailErrors(any(), any(), anyInt());
-        verify(analyzer, never()).analyze(any(), any());
-        final ArgumentCaptor<MonitorAnalysis> captor = ArgumentCaptor.forClass(MonitorAnalysis.class);
-        verify(notifier).notifyAnomaly(any(), captor.capture());
-        org.assertj.core.api.Assertions.assertThat(captor.getValue().summary()).contains("예산 소진");
-    }
-
-    @Test
-    void 간격_내_동일_fingerprint_재배달은_분석을_생략한다() {
-        given(monitorRunRepository.existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(any(), any()))
+    void 간격_내_재배달은_LLM_분석을_생략하되_이력은_남긴다() {
+        given(monitorRunRepository.existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(any(), any()))
                 .willReturn(true);
 
         service.enrich(warningAlert());
 
-        verify(monitorRunRepository, never()).save(any());
         verify(llmCallBudget, never()).tryAcquire();
         verify(notifier, never()).notifyAnomaly(any(), any());
+        final ArgumentCaptor<MonitorRunEntity> captor = ArgumentCaptor.forClass(MonitorRunEntity.class);
+        verify(monitorRunRepository).save(captor.capture());
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(captor.getValue().getAnalysisSummary()).contains("이미 분석됨");
+            // notified=false여야 이 중복 기록이 다시 쿨다운 기준점이 되어 창을 연장하지 않는다.
+            softly.assertThat(captor.getValue().isNotified()).isFalse();
+        });
     }
 
     @Test
     void 간격이_0이면_가드를_건너뛰고_분석한다() {
         final AlertEnrichmentService noDedup = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer,
-                notifier, monitorRunRepository, new MonitorProperties(true, 240, 0), new ObjectMapper(),
+                notifier, monitorRunRepository, new MonitorProperties(true, 30, 0), new ObjectMapper(),
                 Clock.systemUTC());
         given(llmCallBudget.tryAcquire()).willReturn(true);
-        given(analyzer.analyze(any(), any())).willReturn(new MonitorAnalysis("요약", "", List.of()));
+        given(analyzer.analyze(any(), any(), anyString()))
+                .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
 
         noDedup.enrich(warningAlert());
 
         verify(monitorRunRepository, never())
-                .existsByFingerprintAndNotifiedTrueAndCreatedAtAfter(any(), any());
+                .existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(any(), any());
         verify(notifier).notifyAnomaly(any(), any());
     }
 
     @Test
     void 모니터링이_비활성이면_아무것도_하지_않는다() {
         final AlertEnrichmentService disabled = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer,
-                notifier, monitorRunRepository, new MonitorProperties(false, 240, 240), new ObjectMapper(),
+                notifier, monitorRunRepository, new MonitorProperties(false, 30, 240), new ObjectMapper(),
                 Clock.systemUTC());
 
         disabled.enrich(warningAlert());
@@ -133,19 +134,20 @@ class AlertEnrichmentServiceTest {
     @Test
     void 분석이_실패해도_실패_분석으로_결정적_알림을_보낸다() {
         given(llmCallBudget.tryAcquire()).willReturn(true);
-        given(analyzer.analyze(any(), any())).willThrow(new RuntimeException("Gemini 5xx"));
+        given(analyzer.analyze(any(), any(), anyString())).willThrow(new RuntimeException("Gemini 5xx"));
 
         service.enrich(warningAlert());
 
         final ArgumentCaptor<MonitorAnalysis> captor = ArgumentCaptor.forClass(MonitorAnalysis.class);
         verify(notifier).notifyAnomaly(any(), captor.capture());
-        org.assertj.core.api.Assertions.assertThat(captor.getValue().summary()).contains("실패");
+        Assertions.assertThat(captor.getValue().summary()).contains("실패");
     }
 
     @Test
     void severity_문자열을_심각도로_매핑한다() {
         given(llmCallBudget.tryAcquire()).willReturn(true);
-        given(analyzer.analyze(any(), any())).willReturn(new MonitorAnalysis("요약", "", List.of()));
+        given(analyzer.analyze(any(), any(), anyString()))
+                .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
 
         service.enrich(alert("critical"));
         service.enrich(alert("warning"));
@@ -159,12 +161,224 @@ class AlertEnrichmentServiceTest {
         });
     }
 
+    @Nested
+    @DisplayName("조회 환경 판별")
+    class ResolveEnvironment {
+
+        @Test
+        void job_라벨에서_환경을_유도해_해당_환경_로그를_조회한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any(), anyString()))
+                    .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
+
+            service.enrich(alertWithJob("dev-app"));
+
+            verify(lokiLogClient).tailErrors(any(), any(), anyInt(), eq("dev"));
+            verify(analyzer).analyze(any(), any(), eq("dev"));
+        }
+
+        @Test
+        void job_라벨이_없으면_실행_환경으로_폴백한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any(), anyString()))
+                    .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
+
+            service.enrich(warningAlert());
+
+            verify(lokiLogClient).tailErrors(any(), any(), anyInt(), eq("prod"));
+        }
+
+        @Test
+        void 접미사가_없는_job_라벨은_그대로_환경으로_쓴다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any(), anyString()))
+                    .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
+
+            service.enrich(alertWithJob("staging"));
+
+            verify(lokiLogClient).tailErrors(any(), any(), anyInt(), eq("staging"));
+        }
+
+        @Test
+        void job이_정확히_접미사뿐이면_빈_환경_대신_실행_환경으로_폴백한다() {
+            given(lokiLogClient.defaultEnvironment()).willReturn("prod");
+
+            // "-app" → 접미사 제거 시 빈 문자열. 그대로 쓰면 {environment=""}로 필터가 무력화된다.
+            service.enrich(alertWithJob("-app"));
+
+            verify(lokiLogClient).tailErrors(any(), any(), anyInt(), eq("prod"));
+        }
+
+        @Test
+        void 환경명_형식에_맞지_않는_job은_실행_환경으로_폴백한다() {
+            given(lokiLogClient.defaultEnvironment()).willReturn("prod");
+
+            // LogQL 셀렉터를 조기 종료시킬 수 있는 값 — 유도 결과가 허용 문자 밖이면 폴백해야 한다.
+            service.enrich(alertWithJob("prod\"} |~ \".*"));
+
+            verify(lokiLogClient).tailErrors(any(), any(), anyInt(), eq("prod"));
+        }
+    }
+
+    @Nested
+    @DisplayName("근거 없는 분석 방지")
+    class NoEvidenceGuard {
+
+        @Test
+        void 로그가_없으면_LLM을_호출하지_않고_예산도_소모하지_않는다() {
+            given(lokiLogClient.tailErrors(any(), any(), anyInt(), anyString())).willReturn(List.of());
+
+            service.enrich(warningAlert());
+
+            verify(analyzer, never()).analyze(any(), any(), anyString());
+            verify(llmCallBudget, never()).tryAcquire();
+        }
+
+        @Test
+        void 로그가_없으면_근거_없음을_명시해_알린다() {
+            given(lokiLogClient.tailErrors(any(), any(), anyInt(), anyString())).willReturn(List.of());
+
+            service.enrich(warningAlert());
+
+            final ArgumentCaptor<MonitorAnalysis> captor = ArgumentCaptor.forClass(MonitorAnalysis.class);
+            verify(notifier).notifyAnomaly(any(), captor.capture());
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(captor.getValue().summary()).contains("근거가 없다");
+                softly.assertThat(captor.getValue().evidenceFound()).isFalse();
+            });
+        }
+
+        @Test
+        void 예산이_소진되면_LLM_분석을_건너뛰고_예산소진_분석으로_알린다() {
+            given(llmCallBudget.tryAcquire()).willReturn(false);
+
+            service.enrich(warningAlert());
+
+            verify(analyzer, never()).analyze(any(), any(), anyString());
+            final ArgumentCaptor<MonitorAnalysis> captor = ArgumentCaptor.forClass(MonitorAnalysis.class);
+            verify(notifier).notifyAnomaly(any(), captor.capture());
+            Assertions.assertThat(captor.getValue().summary()).contains("예산 소진");
+        }
+    }
+
+    @Nested
+    @DisplayName("조회 근거 기록")
+    class AnalysisContextRecording {
+
+        @Test
+        void 무엇을_근거로_분석했는지_저장한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any(), anyString()))
+                    .willReturn(new MonitorAnalysis("적체 발생", "컨슈머 지연", List.of(), true));
+
+            service.enrich(alertWithJob("prod-app"));
+
+            final ArgumentCaptor<MonitorRunEntity> captor = ArgumentCaptor.forClass(MonitorRunEntity.class);
+            verify(monitorRunRepository, times(2)).save(captor.capture());
+            final String signals = captor.getValue().getSignalsJson();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(signals).contains("\"logEnvironment\":\"prod\"");
+                softly.assertThat(signals).contains("\"windowMinutes\":30");
+                softly.assertThat(signals).contains("\"logSampleCount\":1");
+                softly.assertThat(signals).contains("\"evidenceFound\":true");
+                softly.assertThat(signals).contains("컨슈머 지연");
+            });
+        }
+
+        @Test
+        void 근거가_없다는_판정도_그대로_기록한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any(), anyString()))
+                    .willReturn(new MonitorAnalysis("무관한 로그뿐", "", List.of(), false));
+
+            service.enrich(warningAlert());
+
+            final ArgumentCaptor<MonitorRunEntity> captor = ArgumentCaptor.forClass(MonitorRunEntity.class);
+            verify(monitorRunRepository, times(2)).save(captor.capture());
+            Assertions.assertThat(captor.getValue().getSignalsJson()).contains("\"evidenceFound\":false");
+        }
+    }
+
+    @Nested
+    @DisplayName("인시던트 단위 중복 판정")
+    class IncidentDedup {
+
+        @Test
+        void 같은_incident_group_알림_쌍은_LLM을_한_번만_호출한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any(), anyString()))
+                    .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
+            // 첫 알림(warning)이 분석된 뒤, 같은 인시던트의 critical이 뒤따르는 상황
+            given(monitorRunRepository.existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(eq("ip-blocking"), any()))
+                    .willReturn(false, true);
+
+            service.enrich(groupedAlert("warning"));
+            service.enrich(groupedAlert("critical"));
+
+            verify(analyzer, times(1)).analyze(any(), any(), anyString());
+            verify(llmCallBudget, times(1)).tryAcquire();
+        }
+
+        @Test
+        void incident_group이_있으면_그것을_중복_판정_키로_저장한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any(), anyString()))
+                    .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
+
+            service.enrich(groupedAlert("critical"));
+
+            final ArgumentCaptor<MonitorRunEntity> captor = ArgumentCaptor.forClass(MonitorRunEntity.class);
+            verify(monitorRunRepository, times(2)).save(captor.capture());
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(captor.getValue().getDedupKey()).isEqualTo("ip-blocking");
+                // fingerprint는 개별 알림 식별자로 그대로 남는다.
+                softly.assertThat(captor.getValue().getFingerprint()).isEqualTo("fp-1");
+            });
+        }
+
+        @Test
+        void incident_group이_없으면_fingerprint로_판정한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any(), anyString()))
+                    .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
+
+            service.enrich(warningAlert());
+
+            verify(monitorRunRepository).existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(eq("fp-1"), any());
+        }
+
+        @Test
+        void 같은_그룹이라도_쿨다운이_지났으면_다시_분석한다() {
+            given(llmCallBudget.tryAcquire()).willReturn(true);
+            given(analyzer.analyze(any(), any(), anyString()))
+                    .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
+            given(monitorRunRepository.existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(any(), any()))
+                    .willReturn(false);
+
+            service.enrich(groupedAlert("warning"));
+            service.enrich(groupedAlert("critical"));
+
+            verify(analyzer, times(2)).analyze(any(), any(), anyString());
+        }
+    }
+
     private FiringAlert warningAlert() {
         return alert("warning");
+    }
+
+    private FiringAlert groupedAlert(String severity) {
+        return new FiringAlert("MassIpBlockingSpike", severity, "fp-1", "IP 차단 급증", "임계 초과",
+                Map.of("alertname", "MassIpBlockingSpike", "severity", severity,
+                        "incident_group", "ip-blocking"));
     }
 
     private FiringAlert alert(String severity) {
         return new FiringAlert("AppErrorLogSpike", severity, "fp-1", "ERROR 급증", "임계 초과",
                 Map.of("alertname", "AppErrorLogSpike", "severity", severity));
+    }
+
+    private FiringAlert alertWithJob(String job) {
+        return new FiringAlert("AppErrorLogSpike", "warning", "fp-1", "ERROR 급증", "임계 초과",
+                Map.of("alertname", "AppErrorLogSpike", "severity", "warning", "job", job));
     }
 }

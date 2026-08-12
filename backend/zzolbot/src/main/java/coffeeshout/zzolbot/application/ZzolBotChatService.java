@@ -47,10 +47,14 @@ public class ZzolBotChatService {
      * 주입받아 운영(라이브+영속)과 평가(스냅샷 replay+비영속)가 같은 추론 경로를 공유한다.
      * 도구 정의(스키마)는 항상 {@link ToolExecutor#tools()}에서 가져오고, 실행만 source로 위임한다.
      */
-    public ZzolBotChatResult ask(String question, String adminUsername, Consumer<String> progressCallback,
-                                 ToolResultSource toolResultSource, SessionSink sessionSink) {
-        final List<FewShotExample> pool = sessionRepository.findByFeedbackOrderByCreatedAtDesc(
-                        ZzolBotFeedback.GOOD, PageRequest.of(0, FEEDBACK_POOL_SIZE))
+    public ZzolBotChatResult ask(
+            String question,
+            String adminUsername,
+            Consumer<String> progressCallback,
+            ToolResultSource toolResultSource,
+            SessionSink sessionSink) {
+        final List<FewShotExample> pool = sessionRepository
+                .findByFeedbackOrderByCreatedAtDesc(ZzolBotFeedback.GOOD, PageRequest.of(0, FEEDBACK_POOL_SIZE))
                 .stream()
                 .map(e -> new FewShotExample(e.getId(), e.getQuestion(), e.getAnswer()))
                 .toList();
@@ -61,8 +65,8 @@ public class ZzolBotChatService {
         final String systemInstruction = promptTemplate.build(ctx, selection.examples());
 
         for (int i = 0; i < properties.maxLoopIterations(); i++) {
-            final ZzolBotLlmResponse response = llmClient.generate(
-                    conversation, toolExecutor.tools(), systemInstruction, ctx);
+            final ZzolBotLlmResponse response =
+                    llmClient.generate(conversation, toolExecutor.tools(), systemInstruction, ctx);
 
             if (response instanceof ZzolBotLlmResponse.TextResponse text) {
                 log.debug("[ZzolBot] 최종 응답 완료. iterations={}", i + 1);
@@ -70,19 +74,7 @@ public class ZzolBotChatService {
             }
 
             if (response instanceof ZzolBotLlmResponse.ToolCallsResponse toolCalls) {
-                final List<ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem> calls = toolCalls.calls();
-                calls.forEach(call -> progressCallback.accept(call.toolName()));
-                log.debug("[ZzolBot] tool 병렬 실행. count={}, iteration={}", calls.size(), i + 1);
-
-                final List<ToolExecutionResult> results = toolResultSource.executeAll(calls, ctx);
-
-                for (int j = 0; j < calls.size(); j++) {
-                    final ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem call = calls.get(j);
-                    final ToolExecutionResult result = results.get(j);
-                    conversation.add(new ZzolBotMessage.ToolCallMessage(call.toolName(), call.args()));
-                    final String maskedContent = piiMasker.mask(result.content(), ctx.piiSession());
-                    conversation.add(new ZzolBotMessage.ToolResultMessage(call.toolName(), maskedContent));
-                }
+                runToolsInto(conversation, toolCalls, ctx, toolResultSource, progressCallback, i + 1);
             }
         }
 
@@ -101,18 +93,40 @@ public class ZzolBotChatService {
         return sessionRepository.findTop20ByOrderByCreatedAtDesc();
     }
 
-    private ZzolBotChatResult finalizeResult(String question, String answer, String adminUsername,
-                                             AskContext ctx, SessionSink sessionSink) {
+    // tool 호출·결과를 대화에 이어 붙인다. 결과 내용은 대화에 남기기 전에 PII를 마스킹한다.
+    private void runToolsInto(
+            List<ZzolBotMessage> conversation,
+            ZzolBotLlmResponse.ToolCallsResponse toolCalls,
+            AskContext ctx,
+            ToolResultSource toolResultSource,
+            Consumer<String> progressCallback,
+            int iteration) {
+        final List<ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem> calls = toolCalls.calls();
+        calls.forEach(call -> progressCallback.accept(call.toolName()));
+        log.debug("[ZzolBot] tool 병렬 실행. count={}, iteration={}", calls.size(), iteration);
+
+        final List<ToolExecutionResult> results = toolResultSource.executeAll(calls, ctx);
+
+        for (int j = 0; j < calls.size(); j++) {
+            final ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem call = calls.get(j);
+            final ToolExecutionResult result = results.get(j);
+            conversation.add(new ZzolBotMessage.ToolCallMessage(call.toolName(), call.args()));
+            final String maskedContent = piiMasker.mask(result.content(), ctx.piiSession());
+            conversation.add(new ZzolBotMessage.ToolResultMessage(call.toolName(), maskedContent));
+        }
+    }
+
+    private ZzolBotChatResult finalizeResult(
+            String question, String answer, String adminUsername, AskContext ctx, SessionSink sessionSink) {
         final String maskedQuestion = piiMasker.mask(question, ctx.piiSession());
         final String maskedAnswer = piiMasker.mask(answer, ctx.piiSession());
         return sessionSink.save(maskedQuestion, maskedAnswer, adminUsername, ctx);
     }
 
-    private ZzolBotChatResult persistSession(String maskedQuestion, String maskedAnswer,
-                                             String adminUsername, AskContext ctx) {
-        final ZzolBotSessionEntity session = sessionRepository.save(
-                ZzolBotSessionEntity.create(maskedQuestion, maskedAnswer, adminUsername)
-        );
+    private ZzolBotChatResult persistSession(
+            String maskedQuestion, String maskedAnswer, String adminUsername, AskContext ctx) {
+        final ZzolBotSessionEntity session =
+                sessionRepository.save(ZzolBotSessionEntity.create(maskedQuestion, maskedAnswer, adminUsername));
         return new ZzolBotChatResult(session.getId(), maskedAnswer);
     }
 

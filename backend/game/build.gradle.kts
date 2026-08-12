@@ -15,6 +15,8 @@ dependencies {
     implementation(project(":game-api"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    // 정산 컨슈머 그룹(XREADGROUP/XACK/XCLAIM)이 Redis Stream API를 직접 사용한다(#1610)
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("io.micrometer:micrometer-core")
     implementation("io.micrometer:context-propagation")

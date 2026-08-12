@@ -7,7 +7,7 @@
 
 ## 모듈 구성
 
-프로젝트는 12개 Gradle 모듈로 구성된다.
+프로젝트는 13개 Gradle 모듈로 구성된다.
 
 ```text
 :common       — Spring 무관 순수 추상 (ErrorCode, BaseEvent, VO)
@@ -18,6 +18,7 @@
 :user         — User + Auth + Friend
 :room         — Room aggregate + Player + Roulette + RoomSessionToken
 :game         — 6게임 구현체 + minigame orchestration
+:profanity    — 비속어 필터 (:admin·:app 이 사용, :room·:game 은 테스트에서만)
 :admin        — dashboard + patchnote + report
 :zzolbot      — AI 운영자 어시스턴트
 :app          — Spring Boot 진입점, 모든 모듈 조합
@@ -32,6 +33,7 @@
         → :game-api → :room → :game → :admin
                                     → :zzolbot
         :infra + :web → :websocket → :user
+        :common + :infra → :profanity → :admin
         (모두) → :app
 :test-support — testImplementation 전용
 ```

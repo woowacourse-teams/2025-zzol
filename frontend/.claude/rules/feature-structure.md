@@ -1,6 +1,6 @@
 ---
-globs:
-  - 'src/features/**'
+paths:
+  - '**/src/features/**'
 ---
 
 ## Feature 슬라이스 구조

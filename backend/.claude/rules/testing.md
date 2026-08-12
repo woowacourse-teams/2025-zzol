@@ -1,7 +1,7 @@
 ---
 description: 모든 테스트 공통 핵심 체크. 경계별 상세는 testing-integration/service/domain.md, 전체는 docs/conventions-test.md.
 paths:
-  - "src/test/java/**/*.java"
+  - "**/src/test/java/**/*.java"
 ---
 
 전체 컨벤션: `docs/conventions-test.md`

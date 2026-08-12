@@ -1,7 +1,7 @@
 ---
 description: 도메인 단위 테스트 전용 규칙 — 순수 Java, 컨텍스트 없음. 공통은 testing.md.
 paths:
-  - "src/test/java/**/domain/**/*Test.java"
+  - "**/src/test/java/**/domain/**/*Test.java"
 ---
 
 전체 컨벤션: `docs/conventions-test.md`. 공통 체크: `testing.md`

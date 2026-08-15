@@ -15,8 +15,13 @@ description: 현재 워크트리에서 백엔드·프론트엔드를 로컬로 �
 
 `.env`가 없거나 `.ports`가 없으면 먼저 돌린다. `create-issue`가 워크트리를 만들 때 이미 돌렸다면 건너뛴다.
 
+**워크트리 안에서만 돌린다.** 주 저장소를 대상으로 주면 스크립트가 `ABORT`로 막는다 — 자기 자신을 가리키는 링크가 되어 원본 `.env`가 파괴되기 때문이다.
+
 ```bash
-bash "$(git rev-parse --show-toplevel)/.claude/skills/create-issue/worktree-setup.sh" "$(git rev-parse --show-toplevel)"
+# 워크트리 루트에서
+WT="$(git rev-parse --show-toplevel)"
+MAIN="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"
+bash "$MAIN/.claude/skills/create-issue/worktree-setup.sh" "$WT"
 ```
 
 `.env` 계열을 주 저장소에서 심볼릭 링크하고, 이 워크트리 전용 포트 쌍을 `.ports`에 잡는다.

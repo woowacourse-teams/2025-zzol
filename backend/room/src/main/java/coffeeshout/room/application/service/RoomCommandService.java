@@ -25,9 +25,12 @@ public class RoomCommandService {
     private final RoomRepository roomRepository;
     private final RoomQueryService roomQueryService;
     private final StreamPublisher streamPublisher;
+    private final RoomPresencePublisher roomPresencePublisher;
 
     public Room save(Room room) {
-        return roomRepository.save(room);
+        final Room saved = roomRepository.save(room);
+        roomPresencePublisher.onRoomSaved(saved);
+        return saved;
     }
 
     /**
@@ -42,6 +45,7 @@ public class RoomCommandService {
 
     public void delete(@NonNull JoinCode joinCode) {
         roomRepository.deleteByJoinCode(joinCode);
+        roomPresencePublisher.onRoomDeleted(joinCode.getValue());
     }
 
     public boolean removePlayer(JoinCode joinCode, PlayerName playerName) {

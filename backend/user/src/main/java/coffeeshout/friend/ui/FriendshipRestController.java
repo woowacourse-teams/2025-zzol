@@ -1,7 +1,10 @@
 package coffeeshout.friend.ui;
 
 import coffeeshout.friend.application.PresenceTracker;
+import coffeeshout.friend.application.port.RoomMembership;
+import coffeeshout.friend.application.port.RoomMembershipQuery;
 import coffeeshout.friend.application.service.FriendSearchService;
+import coffeeshout.friend.application.service.FriendWithUser;
 import coffeeshout.friend.application.service.FriendshipService;
 import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.ui.request.SendFriendRequestRequest;
@@ -16,6 +19,7 @@ import coffeeshout.user.domain.User;
 import coffeeshout.user.ui.resolver.AuthUser;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,6 +40,7 @@ public class FriendshipRestController {
     private final FriendSearchService friendSearchService;
     private final UserProfileService userProfileService;
     private final PresenceTracker presenceTracker;
+    private final RoomMembershipQuery roomMembershipQuery;
 
     @GetMapping("/search")
     public ResponseEntity<List<UserSearchResponse>> search(
@@ -100,8 +105,15 @@ public class FriendshipRestController {
 
     @GetMapping("/me/friends")
     public ResponseEntity<List<FriendResponse>> getFriends(@AuthUser AuthenticatedUser me) {
-        final List<FriendResponse> responses = friendshipService.findFriends(me.userId()).stream()
-                .map(f -> FriendResponse.from(f, presenceTracker))
+        final List<FriendWithUser> friends = friendshipService.findFriends(me.userId());
+        final Map<Long, RoomMembership> membershipByUserId = roomMembershipQuery.findByUserIds(
+                friends.stream().map(f -> f.friendUser().getId()).toList());
+
+        final List<FriendResponse> responses = friends.stream()
+                .map(f -> FriendResponse.from(
+                        f,
+                        presenceTracker,
+                        membershipByUserId.getOrDefault(f.friendUser().getId(), RoomMembership.NONE)))
                 .toList();
         return ResponseEntity.ok(responses);
     }

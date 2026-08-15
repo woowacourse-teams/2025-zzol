@@ -176,6 +176,14 @@ public class Room {
         return roomState == RoomState.READY;
     }
 
+    /**
+     * 다른 사람이 지금 이 방에 입장할 수 있는지 판단한다. {@code joinGuest}의 사전 조건
+     * ({@code validateRoomReady} + {@code validateCanJoin})과 같은 기준이라, 둘 중 하나가 바뀌면 여기도 함께 바뀐다.
+     */
+    public boolean isJoinable() {
+        return isReadyState() && canJoin();
+    }
+
     public void assignQrCode(QrCode qrCode) {
         if (qrCode == null) {
             throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR,

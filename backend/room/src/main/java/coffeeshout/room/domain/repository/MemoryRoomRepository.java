@@ -5,8 +5,12 @@ import static org.springframework.util.Assert.notNull;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
+import coffeeshout.room.domain.player.Player;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +27,25 @@ public class MemoryRoomRepository implements RoomRepository {
     @Override
     public Optional<Room> findByJoinCode(JoinCode joinCode) {
         return Optional.ofNullable(rooms.get(joinCode));
+    }
+
+    @Override
+    public Map<Long, Room> findAllByUserIds(Collection<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        final Set<Long> targets = Set.copyOf(userIds);
+        final Map<Long, Room> roomByUserId = new HashMap<>();
+        for (Room room : rooms.values()) {
+            for (Player player : room.getPlayers()) {
+                final Long userId = player.getUserId();
+                if (userId != null && targets.contains(userId)) {
+                    roomByUserId.put(userId, room);
+                }
+            }
+        }
+        return roomByUserId;
     }
 
     @Override

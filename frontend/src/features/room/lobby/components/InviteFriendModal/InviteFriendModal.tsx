@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { ApiError } from '@/apis/rest/error';
 import Button from '@/components/@common/Button/Button';
 import useToast from '@/components/@common/Toast/useToast';
-import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
 import { friendsApi } from '@/features/friends/api/friendsApi';
 import { Friend } from '@/features/friends/types';
 import { theme } from '@/styles/theme';
@@ -17,15 +16,15 @@ type Props = {
   onClose: () => void;
 };
 
-const FriendInviteRow = ({
-  friend,
-  joinCode,
-  isParticipant,
-}: {
-  friend: Friend;
-  joinCode: string;
-  isParticipant: boolean;
-}) => {
+/** 초대장은 저장되지 않고 개인 큐로만 전달되므로, 받을 수 없는 상태면 보내지 않는다(서버도 같은 조건으로 거절한다). */
+const inviteBlockReason = (friend: Friend, joinCode: string): string | null => {
+  if (friend.joinCode === joinCode) return '참가 중';
+  if (friend.joinCode) return '다른 방 참가 중';
+  if (!friend.online) return '오프라인';
+  return null;
+};
+
+const FriendInviteRow = ({ friend, joinCode }: { friend: Friend; joinCode: string }) => {
   const { showToast } = useToast();
   const [invited, setInvited] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,6 +46,10 @@ const FriendInviteRow = ({
         showToast({ message: '친구 관계가 아닙니다', type: 'error' });
       } else if (code === 'ROOM_NOT_FOUND') {
         showToast({ message: '존재하지 않는 방입니다', type: 'error' });
+      } else if (code === 'FRIEND_OFFLINE') {
+        showToast({ message: '접속 중이 아닌 친구는 초대할 수 없습니다', type: 'error' });
+      } else if (code === 'FRIEND_ALREADY_IN_ROOM') {
+        showToast({ message: '이미 다른 방에 참여 중인 친구입니다', type: 'error' });
       } else {
         showToast({ message: '초대에 실패했습니다', type: 'error' });
       }
@@ -54,6 +57,8 @@ const FriendInviteRow = ({
       setLoading(false);
     }
   };
+
+  const blockReason = inviteBlockReason(friend, joinCode);
 
   return (
     <S.Row>
@@ -65,9 +70,9 @@ const FriendInviteRow = ({
         <S.Nickname>{friend.nickname}</S.Nickname>
         <S.Code># {friend.userCode}</S.Code>
       </S.Info>
-      {isParticipant ? (
-        <Button variant="disabled" width="72px" height="small">
-          참가 중
+      {blockReason ? (
+        <Button variant="disabled" width="88px" height="small">
+          {blockReason}
         </Button>
       ) : invited ? (
         <Button variant="disabled" width="72px" height="small">
@@ -89,9 +94,12 @@ const FriendInviteRow = ({
 };
 
 const InviteFriendModal = ({ joinCode, friends, onClose }: Props) => {
-  const { participants } = useParticipants();
-  const participantUserIds = new Set(participants.map((p) => p.userId));
-  const sorted = [...friends].sort((a, b) => Number(b.online) - Number(a.online));
+  // 초대 가능한 친구를 맨 위로
+  const sorted = [...friends].sort(
+    (a, b) =>
+      Number(inviteBlockReason(a, joinCode) !== null) -
+        Number(inviteBlockReason(b, joinCode) !== null) || Number(b.online) - Number(a.online)
+  );
 
   if (sorted.length === 0) {
     return (
@@ -110,11 +118,7 @@ const InviteFriendModal = ({ joinCode, friends, onClose }: Props) => {
       <S.List>
         {sorted.map((friend) => (
           <S.Item key={friend.userId}>
-            <FriendInviteRow
-              friend={friend}
-              joinCode={joinCode}
-              isParticipant={participantUserIds.has(friend.userId)}
-            />
+            <FriendInviteRow friend={friend} joinCode={joinCode} />
           </S.Item>
         ))}
       </S.List>

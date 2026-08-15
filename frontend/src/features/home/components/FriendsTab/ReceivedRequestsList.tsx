@@ -27,6 +27,8 @@ const RequestItem = ({ request }: { request: ReceivedRequest }) => {
         nickname: result.friendNickname,
         since: new Date().toISOString(),
         online: false,
+        joinCode: null,
+        joinable: false,
       });
       removeReceivedRequest(request.requestId);
       showToast({ message: `${result.friendNickname} 님과 친구가 되었습니다`, type: 'success' });

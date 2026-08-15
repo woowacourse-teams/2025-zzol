@@ -7,6 +7,7 @@ import useToast from '@/components/@common/Toast/useToast';
 import { friendsApi } from '@/features/friends/api/friendsApi';
 import { useFriends } from '@/features/friends/hooks/useFriends';
 import { Friend } from '@/features/friends/types';
+import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import { theme } from '@/styles/theme';
 import FriendRow from './FriendRow';
 
@@ -41,7 +42,11 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
   const { showToast } = useToast();
   const { openModal, closeModal } = useModal();
   const { removeFriendFromStore } = useFriends();
+  const navigate = useReplaceNavigate();
   const [loading, setLoading] = useState(false);
+
+  // 기존 방 입장 흐름(닉네임 확인 → POST /rooms/{joinCode})을 그대로 탄다
+  const handleJoin = () => navigate(`/join/${friend.joinCode}`);
 
   const handleRemove = () => {
     openModal(
@@ -77,24 +82,30 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
       online={friend.online}
       showOnlineDot
       right={
-        <S.DeleteButton onClick={handleRemove} disabled={loading} aria-label="친구 삭제">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-            <path d="M10 11v6M14 11v6" />
-            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-          </svg>
-        </S.DeleteButton>
+        <>
+          {friend.joinCode && friend.joinable && (
+            <S.JoinButton onClick={handleJoin}>참여하기</S.JoinButton>
+          )}
+          {friend.joinCode && !friend.joinable && <S.StatusText>게임 중</S.StatusText>}
+          <S.DeleteButton onClick={handleRemove} disabled={loading} aria-label="친구 삭제">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6M14 11v6" />
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+          </S.DeleteButton>
+        </>
       }
     />
   );
@@ -103,7 +114,12 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
 const FriendsList = () => {
   const { friends } = useFriends();
 
-  const sorted = [...friends].sort((a, b) => Number(b.online) - Number(a.online));
+  // 바로 참여할 수 있는 친구를 맨 위로, 그다음 온라인
+  const sorted = [...friends].sort(
+    (a, b) =>
+      Number(Boolean(b.joinCode) && b.joinable) - Number(Boolean(a.joinCode) && a.joinable) ||
+      Number(b.online) - Number(a.online)
+  );
 
   if (sorted.length === 0) {
     return (
@@ -171,6 +187,28 @@ const S = {
   EmptyDesc: styled.p`
     ${theme.typography.small}
     color: ${theme.color.gray[400]};
+  `,
+
+  JoinButton: styled.button`
+    ${theme.typography.caption}
+    padding: 6px 10px;
+    border: none;
+    border-radius: 8px;
+    background: ${theme.color.point[400]};
+    color: ${theme.color.white};
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s;
+    &:hover {
+      background: ${theme.color.point[500]};
+    }
+  `,
+
+  StatusText: styled.span`
+    ${theme.typography.caption}
+    color: ${theme.color.gray[400]};
+    white-space: nowrap;
   `,
 
   DeleteButton: styled.button`

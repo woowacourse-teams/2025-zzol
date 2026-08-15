@@ -72,6 +72,8 @@ export const useFriendSocketEvents = ({
             nickname: data.counterpartNickname,
             since: new Date().toISOString(),
             online: false,
+            joinCode: null,
+            joinable: false,
           };
           setFriends((prev) =>
             prev.some((f) => f.userId === newFriend.userId) ? prev : [...prev, newFriend]
@@ -122,7 +124,7 @@ export const useFriendSocketEvents = ({
     isAuthenticated
   );
 
-  // 친구 온라인/오프라인 전이
+  // 친구 접속·방 참여 상태 전이 (서버가 항상 전체 스냅샷을 보낸다)
   // REST 완료(isFriendsLoaded) 후 구독 — 서버 일괄 푸시가 friends 배열에 정상 반영되도록 순서 보장
   useUserSocketSubscription<FriendPresenceEvent>(
     '/user/queue/friends/presence',
@@ -130,7 +132,11 @@ export const useFriendSocketEvents = ({
       (event) => {
         const { data } = event;
         setFriends((prev) =>
-          prev.map((f) => (f.userId === data.userId ? { ...f, online: data.online } : f))
+          prev.map((f) =>
+            f.userId === data.userId
+              ? { ...f, online: data.online, joinCode: data.joinCode, joinable: data.joinable }
+              : f
+          )
         );
       },
       [setFriends]

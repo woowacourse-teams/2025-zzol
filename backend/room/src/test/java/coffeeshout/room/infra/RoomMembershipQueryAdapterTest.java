@@ -60,10 +60,10 @@ class RoomMembershipQueryAdapterTest {
 
             final Map<Long, RoomMembership> result = adapter.findByUserIds(List.of(호스트_ID, 방에_없는_유저_ID));
 
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(result).containsKey(호스트_ID);
-            softly.assertThat(result).doesNotContainKey(방에_없는_유저_ID);
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).containsKey(호스트_ID);
+                softly.assertThat(result).doesNotContainKey(방에_없는_유저_ID);
+            });
         }
 
         @Test
@@ -74,10 +74,10 @@ class RoomMembershipQueryAdapterTest {
 
             final Map<Long, RoomMembership> result = adapter.findByUserIds(List.of(호스트_ID, 게스트_ID));
 
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(result.get(호스트_ID).joinCode()).isEqualTo("ABCD");
-            softly.assertThat(result.get(게스트_ID).joinCode()).isEqualTo("BCDF");
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.get(호스트_ID).joinCode()).isEqualTo("ABCD");
+                softly.assertThat(result.get(게스트_ID).joinCode()).isEqualTo("BCDF");
+            });
         }
 
         @Test
@@ -124,10 +124,10 @@ class RoomMembershipQueryAdapterTest {
 
             final Map<Long, RoomMembership> result = adapter.findByUserIds(List.of(호스트_ID));
 
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(result.get(호스트_ID).joinCode()).isEqualTo("ABCD");
-            softly.assertThat(result.get(호스트_ID).joinable()).isFalse();
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.get(호스트_ID).joinCode()).isEqualTo("ABCD");
+                softly.assertThat(result.get(호스트_ID).joinable()).isFalse();
+            });
         }
 
         @Test
@@ -141,10 +141,10 @@ class RoomMembershipQueryAdapterTest {
 
             final Map<Long, RoomMembership> result = adapter.findByUserIds(List.of(호스트_ID));
 
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(result.get(호스트_ID).joinCode()).isEqualTo("ABCD");
-            softly.assertThat(result.get(호스트_ID).joinable()).isFalse();
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.get(호스트_ID).joinCode()).isEqualTo("ABCD");
+                softly.assertThat(result.get(호스트_ID).joinable()).isFalse();
+            });
         }
     }
 }

@@ -77,11 +77,11 @@ class RoomPresencePublisherTest {
             roomPresencePublisher.onRoomSaved(room);
 
             final List<RoomPresenceChangedEvent> events = 발행된_이벤트();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(events).hasSize(1);
-            softly.assertThat(events.getFirst().userId()).isEqualTo(호스트_ID);
-            softly.assertThat(events.getFirst().membership()).isEqualTo(new RoomMembership(JOIN_CODE, true));
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(events).hasSize(1);
+                softly.assertThat(events.getFirst().userId()).isEqualTo(호스트_ID);
+                softly.assertThat(events.getFirst().membership()).isEqualTo(new RoomMembership(JOIN_CODE, true));
+            });
         }
 
         @Test
@@ -93,11 +93,11 @@ class RoomPresencePublisherTest {
             roomPresencePublisher.onRoomSaved(room);
 
             final List<RoomPresenceChangedEvent> events = 발행된_이벤트();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(events).hasSize(2);
-            softly.assertThat(events.getLast().userId()).isEqualTo(게스트_ID);
-            softly.assertThat(events.getLast().membership()).isEqualTo(new RoomMembership(JOIN_CODE, true));
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(events).hasSize(2);
+                softly.assertThat(events.getLast().userId()).isEqualTo(게스트_ID);
+                softly.assertThat(events.getLast().membership()).isEqualTo(new RoomMembership(JOIN_CODE, true));
+            });
         }
 
         @Test
@@ -126,10 +126,10 @@ class RoomPresencePublisherTest {
             roomPresencePublisher.onRoomSaved(room);
 
             final List<RoomPresenceChangedEvent> events = 발행된_이벤트();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(events.getLast().userId()).isEqualTo(게스트_ID);
-            softly.assertThat(events.getLast().membership()).isEqualTo(RoomMembership.NONE);
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(events.getLast().userId()).isEqualTo(게스트_ID);
+                softly.assertThat(events.getLast().membership()).isEqualTo(RoomMembership.NONE);
+            });
         }
 
         @Test
@@ -141,14 +141,14 @@ class RoomPresencePublisherTest {
             roomPresencePublisher.onRoomDeleted(JOIN_CODE);
 
             final List<RoomPresenceChangedEvent> events = 발행된_이벤트();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(events).hasSize(4);
-            softly.assertThat(events.subList(2, 4))
-                    .allSatisfy(event -> assertThat(event.membership()).isEqualTo(RoomMembership.NONE));
-            softly.assertThat(events.subList(2, 4))
-                    .extracting(RoomPresenceChangedEvent::userId)
-                    .containsExactlyInAnyOrder(호스트_ID, 게스트_ID);
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(events).hasSize(4);
+                softly.assertThat(events.subList(2, 4))
+                        .allSatisfy(event -> assertThat(event.membership()).isEqualTo(RoomMembership.NONE));
+                softly.assertThat(events.subList(2, 4))
+                        .extracting(RoomPresenceChangedEvent::userId)
+                        .containsExactlyInAnyOrder(호스트_ID, 게스트_ID);
+            });
         }
 
         @Test
@@ -164,10 +164,10 @@ class RoomPresencePublisherTest {
             roomPresencePublisher.onRoomSaved(room);
 
             final List<RoomPresenceChangedEvent> events = 발행된_이벤트();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(events.getLast().userId()).isEqualTo(게스트_ID);
-            softly.assertThat(events.getLast().membership()).isEqualTo(new RoomMembership("BCDF", true));
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(events.getLast().userId()).isEqualTo(게스트_ID);
+                softly.assertThat(events.getLast().membership()).isEqualTo(new RoomMembership("BCDF", true));
+            });
         }
 
         @Test
@@ -193,14 +193,14 @@ class RoomPresencePublisherTest {
             roomPresencePublisher.onRoomSaved(room);
 
             final List<RoomPresenceChangedEvent> events = 발행된_이벤트();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(events).hasSize(4);
-            softly.assertThat(events.subList(2, 4)).allSatisfy(event -> assertThat(event.membership())
-                    .isEqualTo(new RoomMembership(JOIN_CODE, false)));
-            softly.assertThat(events.subList(2, 4))
-                    .extracting(RoomPresenceChangedEvent::userId)
-                    .containsExactlyInAnyOrder(호스트_ID, 게스트_ID);
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(events).hasSize(4);
+                softly.assertThat(events.subList(2, 4)).allSatisfy(event -> assertThat(event.membership())
+                        .isEqualTo(new RoomMembership(JOIN_CODE, false)));
+                softly.assertThat(events.subList(2, 4))
+                        .extracting(RoomPresenceChangedEvent::userId)
+                        .containsExactlyInAnyOrder(호스트_ID, 게스트_ID);
+            });
         }
 
         @Test
@@ -216,13 +216,13 @@ class RoomPresencePublisherTest {
             roomPresencePublisher.onRoomSaved(room);
 
             final List<RoomPresenceChangedEvent> events = 발행된_이벤트();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(events.subList(2, events.size())).allSatisfy(event -> assertThat(event.membership())
-                    .isEqualTo(new RoomMembership(JOIN_CODE, false)));
-            softly.assertThat(events.subList(2, events.size()))
-                    .extracting(RoomPresenceChangedEvent::userId)
-                    .containsExactlyInAnyOrder(호스트_ID, 게스트_ID);
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(events.subList(2, events.size())).allSatisfy(event -> assertThat(event.membership())
+                        .isEqualTo(new RoomMembership(JOIN_CODE, false)));
+                softly.assertThat(events.subList(2, events.size()))
+                        .extracting(RoomPresenceChangedEvent::userId)
+                        .containsExactlyInAnyOrder(호스트_ID, 게스트_ID);
+            });
         }
 
         @Test

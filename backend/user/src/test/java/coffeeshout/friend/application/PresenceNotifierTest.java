@@ -83,12 +83,12 @@ class PresenceNotifierTest {
             presenceNotifier.onPresenceChanged(new PresenceChangedEvent(나, true));
 
             final PresencePayload payload = 전송된_페이로드().getFirst();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(payload.userId()).isEqualTo(나);
-            softly.assertThat(payload.online()).isTrue();
-            softly.assertThat(payload.joinCode()).isEqualTo("ABCD");
-            softly.assertThat(payload.joinable()).isTrue();
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(payload.userId()).isEqualTo(나);
+                softly.assertThat(payload.online()).isTrue();
+                softly.assertThat(payload.joinCode()).isEqualTo("ABCD");
+                softly.assertThat(payload.joinable()).isTrue();
+            });
         }
 
         @Test
@@ -100,10 +100,10 @@ class PresenceNotifierTest {
             presenceNotifier.onPresenceChanged(new PresenceChangedEvent(나, false));
 
             final PresencePayload payload = 전송된_페이로드().getFirst();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(payload.joinCode()).isNull();
-            softly.assertThat(payload.joinable()).isFalse();
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(payload.joinCode()).isNull();
+                softly.assertThat(payload.joinable()).isFalse();
+            });
         }
 
         @Test
@@ -136,11 +136,11 @@ class PresenceNotifierTest {
             presenceNotifier.onRoomPresenceChanged(new RoomPresenceChangedEvent(나, new RoomMembership("ABCD", false)));
 
             final PresencePayload payload = 전송된_페이로드().getFirst();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(payload.online()).isTrue();
-            softly.assertThat(payload.joinCode()).isEqualTo("ABCD");
-            softly.assertThat(payload.joinable()).isFalse();
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(payload.online()).isTrue();
+                softly.assertThat(payload.joinCode()).isEqualTo("ABCD");
+                softly.assertThat(payload.joinable()).isFalse();
+            });
         }
 
         @Test
@@ -171,11 +171,11 @@ class PresenceNotifierTest {
             presenceNotifier.onPresenceQueueSubscribe(new UserQueueSubscribedEvent(나, "/user/queue/friends/presence"));
 
             final List<PresencePayload> payloads = 전송된_페이로드();
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(payloads).hasSize(1);
-            softly.assertThat(payloads.getFirst().userId()).isEqualTo(친구_A);
-            softly.assertThat(payloads.getFirst().joinCode()).isEqualTo("ABCD");
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(payloads).hasSize(1);
+                softly.assertThat(payloads.getFirst().userId()).isEqualTo(친구_A);
+                softly.assertThat(payloads.getFirst().joinCode()).isEqualTo("ABCD");
+            });
         }
 
         @Test

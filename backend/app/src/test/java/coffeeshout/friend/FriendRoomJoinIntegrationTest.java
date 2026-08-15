@@ -78,10 +78,10 @@ class FriendRoomJoinIntegrationTest extends WebSocketIntegrationTestSupport {
             final String joinCode = 방을_만든다(친구의_토큰);
 
             final PresencePayload 푸시 = 수신함_에서_방_알림을_기다린다(수신함);
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(푸시.joinCode()).isEqualTo(joinCode);
-            softly.assertThat(푸시.joinable()).isTrue();
-            softly.assertAll();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(푸시.joinCode()).isEqualTo(joinCode);
+                softly.assertThat(푸시.joinable()).isTrue();
+            });
 
             방에_입장한다(나의_토큰, 푸시.joinCode());
         }

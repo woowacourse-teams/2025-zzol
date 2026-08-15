@@ -5,10 +5,13 @@ import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.PlayerType;
+import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.repository.RoomRepository;
+import coffeeshout.room.domain.roulette.Roulette;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import java.util.Map;
 import lombok.NonNull;
@@ -26,10 +29,33 @@ public class RoomCommandService {
     private final StreamPublisher streamPublisher;
     private final RoomPresencePublisher roomPresencePublisher;
 
-    public Room save(Room room) {
-        final Room saved = roomRepository.save(room);
-        roomPresencePublisher.onRoomSaved(saved);
-        return saved;
+    /**
+     * 게임 시작에 따른 {@code PLAYING} 전이.
+     */
+    public void markPlaying(JoinCode joinCode) {
+        final Room room = roomQueryService.getByJoinCode(joinCode);
+        room.markPlaying();
+        save(room);
+    }
+
+    /**
+     * 룰렛 화면 전이. 전이 후 상태를 돌려준다.
+     */
+    public RoomState showRoulette(JoinCode joinCode) {
+        final Room room = roomQueryService.getByJoinCode(joinCode);
+        room.showRoulette();
+        save(room);
+        return room.getRoomState();
+    }
+
+    /**
+     * 룰렛 실행 — 당첨자를 뽑고 {@code DONE}으로 전이한다.
+     */
+    public Winner spinRoulette(JoinCode joinCode, PlayerName hostName, Roulette roulette) {
+        final Room room = roomQueryService.getByJoinCode(joinCode);
+        final Winner winner = room.spinRoulette(room.findPlayer(hostName), roulette);
+        save(room);
+        return winner;
     }
 
     /**
@@ -65,20 +91,6 @@ public class RoomCommandService {
         }
 
         return removed;
-    }
-
-    /**
-     * 호스트가 떠나 새 호스트가 승계됐으면({@code promoteNewHost}) GameSession이 새 호스트로 갱신되도록
-     * 생명주기 이벤트를 발행한다. 세션은 인스턴스 로컬이라 in-process가 아닌 Stream으로 발행해야
-     * 세션을 소유한 모든 인스턴스에 도달한다(ADR-0025 결정 6, {@code RoomLifecycleEvent.Removed}와 동일 경로).
-     */
-    private void publishHostChangeIfPromoted(JoinCode joinCode, PlayerName previousHost, Room room) {
-        final PlayerName currentHost = room.getHost().getName();
-        if (!currentHost.equals(previousHost)) {
-            streamPublisher.publish(
-                    RoomStreamKey.BROADCAST,
-                    new RoomLifecycleEvent.HostChanged(joinCode.getValue(), currentHost.value()));
-        }
     }
 
     public Room joinGuest(JoinCode joinCode, PlayerName playerName) {
@@ -188,5 +200,31 @@ public class RoomCommandService {
         player.updateReadyState(isReady);
 
         return save(room);
+    }
+
+    /**
+     * 저장은 방 참여 상태 변경을 감지하는 유일한 지점이다({@link RoomPresencePublisher}). 인메모리 저장소는
+     * 같은 객체 참조를 들고 있어 저장 없이도 변이가 반영되므로, 외부에서 {@code Room}을 직접 바꾸고 저장을
+     * 빠뜨리면 알림만 조용히 누락된다. 그래서 저장을 밖으로 열지 않고 <b>변이 메서드를 이 클래스가 소유한다</b> —
+     * 상태를 바꾸려면 아래 커맨드 메서드를 거칠 수밖에 없고, 저장을 기억할 필요가 없어진다.
+     */
+    private Room save(Room room) {
+        final Room saved = roomRepository.save(room);
+        roomPresencePublisher.onRoomSaved(saved);
+        return saved;
+    }
+
+    /**
+     * 호스트가 떠나 새 호스트가 승계됐으면({@code promoteNewHost}) GameSession이 새 호스트로 갱신되도록
+     * 생명주기 이벤트를 발행한다. 세션은 인스턴스 로컬이라 in-process가 아닌 Stream으로 발행해야
+     * 세션을 소유한 모든 인스턴스에 도달한다(ADR-0025 결정 6, {@code RoomLifecycleEvent.Removed}와 동일 경로).
+     */
+    private void publishHostChangeIfPromoted(JoinCode joinCode, PlayerName previousHost, Room room) {
+        final PlayerName currentHost = room.getHost().getName();
+        if (!currentHost.equals(previousHost)) {
+            streamPublisher.publish(
+                    RoomStreamKey.BROADCAST,
+                    new RoomLifecycleEvent.HostChanged(joinCode.getValue(), currentHost.value()));
+        }
     }
 }

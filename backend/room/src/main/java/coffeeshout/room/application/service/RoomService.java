@@ -18,7 +18,6 @@ import coffeeshout.room.domain.event.RouletteShowEvent;
 import coffeeshout.room.domain.event.RouletteShownEvent;
 import coffeeshout.room.domain.event.RouletteSpinEvent;
 import coffeeshout.room.domain.event.RouletteWinnerEvent;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.roulette.Roulette;
@@ -137,13 +136,8 @@ public class RoomService {
     }
 
     public Winner spinRoulette(String joinCode, String hostName) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final Player host = room.findPlayer(new PlayerName(hostName));
-
-        final Winner winner = room.spinRoulette(host, new Roulette(new RoulettePicker()));
-        // 저장 지점을 거쳐야 방 참여 상태 변경이 친구들에게 발행된다(RoomPresencePublisher).
-        roomCommandService.save(room);
-        return winner;
+        return roomCommandService.spinRoulette(
+                new JoinCode(joinCode), new PlayerName(hostName), new Roulette(new RoulettePicker()));
     }
 
     public String generateRandomNicknameForGuest(String joinCode) {

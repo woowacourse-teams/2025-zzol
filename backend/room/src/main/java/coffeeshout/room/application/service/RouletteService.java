@@ -7,7 +7,6 @@ import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
 import coffeeshout.room.application.port.RouletteResultEntityRepository;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.infra.persistence.PlayerEntity;
@@ -32,11 +31,7 @@ public class RouletteService {
     private final ApplicationEventPublisher eventPublisher;
 
     public RoomState showRoulette(String joinCode) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        room.showRoulette();
-        // 저장 지점을 거쳐야 방 참여 상태 변경이 친구들에게 발행된다(RoomPresencePublisher).
-        roomCommandService.save(room);
-        return room.getRoomState();
+        return roomCommandService.showRoulette(new JoinCode(joinCode));
     }
 
     @Transactional

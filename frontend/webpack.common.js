@@ -145,9 +145,7 @@ export default (_, argv) => {
         directory: path.resolve(__dirname, 'dist'),
       },
       compress: true,
-      // 워크트리마다 다른 포트를 써야 여러 작업을 동시에 띄울 수 있다(#1660).
-      // 고정이면 두 번째 워크트리가 EADDRINUSE 로 죽는다.
-      port: Number(process.env.PORT) || 3000,
+      port: 3000,
       hot: true,
       open: true,
       historyApiFallback: true,

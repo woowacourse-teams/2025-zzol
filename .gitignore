@@ -5,6 +5,9 @@
 .env
 *.env.*
 
+# 워크트리 전용 포트 (#1660) — worktree-setup.sh 가 생성한다
+.ports
+
 .cursor/
 .claude/worktrees/
 frontend/.claude/settings.local.json

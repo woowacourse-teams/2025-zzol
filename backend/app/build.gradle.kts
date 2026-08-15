@@ -1,3 +1,5 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 // :app — Spring Boot 진입점, application.yml, Flyway 마이그레이션
 
 // 루트의 subprojects{}가 bootJar=false로 설정했으므로 :app만 다시 활성화
@@ -45,6 +47,15 @@ dependencies {
     testImplementation(libs.resilience4j)
     testImplementation(libs.redisson)
     testImplementation(libs.archunit)
+}
+
+tasks.named<BootRun>("bootRun") {
+    // bootRun의 기본 작업 디렉터리는 :app이라 backend/ 기준 파일을 둘 다 놓친다.
+    //  - springboot4-dotenv 가 읽을 backend/.env
+    //  - application-local.yml 의 spring.docker.compose.file: docker-compose.yml
+    // 후자는 못 찾으면 기동 자체가 실패한다("'files' content [docker-compose.yml] must exist").
+    // local 프로파일 로깅은 콘솔 전용이고 LOG_PATH도 절대경로라 이 변경이 로그 경로에 영향을 주지 않는다.
+    workingDir = rootProject.projectDir
 }
 
 tasks.withType<Test> {

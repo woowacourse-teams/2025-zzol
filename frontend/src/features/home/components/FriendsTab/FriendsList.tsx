@@ -83,6 +83,11 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
       showOnlineDot
       right={
         <>
+          {friend.joinCode && (
+            <S.JoinCode aria-label={`참여 중인 방 ${friend.joinCode}`}>
+              {friend.joinCode}
+            </S.JoinCode>
+          )}
           {friend.joinCode && friend.joinable && (
             <S.JoinButton onClick={handleJoin}>참여하기</S.JoinButton>
           )}
@@ -187,6 +192,17 @@ const S = {
   EmptyDesc: styled.p`
     ${theme.typography.small}
     color: ${theme.color.gray[400]};
+  `,
+
+  JoinCode: styled.span`
+    ${theme.typography.caption}
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: ${theme.color.gray[100]};
+    color: ${theme.color.gray[700]};
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
   `,
 
   JoinButton: styled.button`

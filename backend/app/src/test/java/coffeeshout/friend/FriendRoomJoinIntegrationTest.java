@@ -6,10 +6,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import coffeeshout.friend.application.dto.PresencePayload;
-import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.fixture.FriendshipFixture;
 import coffeeshout.fixture.UserFixture;
+import coffeeshout.friend.application.dto.PresencePayload;
+import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.support.app.WebSocketIntegrationTestSupport;
@@ -88,16 +88,18 @@ class FriendRoomJoinIntegrationTest extends WebSocketIntegrationTestSupport {
     }
 
     private String 방을_만든다(String accessToken) throws Exception {
-        final MvcResult 시작 = mockMvc.perform(post("/rooms")
-                        .header("Authorization", "Bearer " + accessToken))
+        final MvcResult 시작 = mockMvc.perform(post("/rooms").header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andReturn();
-        return objectMapper.readTree(시작.getResponse().getContentAsString()).get("joinCode").asText();
+        return objectMapper
+                .readTree(시작.getResponse().getContentAsString())
+                .get("joinCode")
+                .asText();
     }
 
     private void 방에_입장한다(String accessToken, String joinCode) throws Exception {
-        final MvcResult 시작 = mockMvc.perform(post("/rooms/{joinCode}", joinCode)
-                        .header("Authorization", "Bearer " + accessToken))
+        final MvcResult 시작 = mockMvc.perform(
+                        post("/rooms/{joinCode}", joinCode).header("Authorization", "Bearer " + accessToken))
                 .andExpect(request().asyncStarted())
                 .andReturn();
 

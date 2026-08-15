@@ -1,6 +1,5 @@
 package coffeeshout.friend.domain;
 
-import coffeeshout.friend.application.service.RelationStatus;
 import coffeeshout.global.exception.custom.BusinessException;
 import java.time.Instant;
 
@@ -13,8 +12,13 @@ public class Friendship {
     private final Instant createdAt;
     private Instant updatedAt;
 
-    public Friendship(Long id, Long requesterId, Long addresseeId, FriendshipStatus status,
-                      Instant createdAt, Instant updatedAt) {
+    public Friendship(
+            Long id,
+            Long requesterId,
+            Long addresseeId,
+            FriendshipStatus status,
+            Instant createdAt,
+            Instant updatedAt) {
         this.id = id;
         this.requesterId = requesterId;
         this.addresseeId = addresseeId;

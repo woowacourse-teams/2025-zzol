@@ -19,7 +19,6 @@ import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import { useProbabilityHistory } from '@/contexts/ProbabilityHistory/ProbabilityHistoryContext';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useFriends } from '@/features/friends/hooks/useFriends';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import Layout from '@/layouts/Layout';
 import { MiniGameType } from '@/types/miniGame/common';
@@ -54,7 +53,6 @@ const LobbyPage = () => {
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
   const { isAuthenticated } = useAuth();
-  const { friends } = useFriends();
   const { playerType, setPlayerType } = usePlayerType();
   const { probabilityHistory, updateCurrentProbabilities } = useProbabilityHistory();
   const { participants, setParticipants, isAllReady, checkPlayerReady } = useParticipants();
@@ -243,7 +241,7 @@ const LobbyPage = () => {
       showToast({ message: '로그인 후 이용 가능합니다', type: 'info' });
       return;
     }
-    openModal(<InviteFriendModal joinCode={joinCode} friends={friends} onClose={closeModal} />, {
+    openModal(<InviteFriendModal joinCode={joinCode} onClose={closeModal} />, {
       title: '온라인 친구 초대',
       showCloseButton: true,
     });

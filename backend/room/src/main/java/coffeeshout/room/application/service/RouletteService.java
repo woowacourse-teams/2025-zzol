@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RouletteService {
 
     private final RoomQueryService roomQueryService;
+    private final RoomCommandService roomCommandService;
     private final RoomEntityRepository roomEntityRepository;
     private final PlayerEntityRepository playerEntityRepository;
     private final RouletteResultEntityRepository rouletteResultEntityRepository;
@@ -33,6 +34,8 @@ public class RouletteService {
     public RoomState showRoulette(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
         room.showRoulette();
+        // 저장 지점을 거쳐야 방 참여 상태 변경이 친구들에게 발행된다(RoomPresencePublisher).
+        roomCommandService.save(room);
         return room.getRoomState();
     }
 

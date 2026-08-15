@@ -1,4 +1,4 @@
-package coffeeshout.friend.application.port;
+package coffeeshout.friend.domain;
 
 /**
  * 사용자가 현재 참여 중인 방과, 그 방에 다른 사람이 입장할 수 있는지를 담는다.

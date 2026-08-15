@@ -30,9 +30,11 @@ public class RoomInvitationService {
 
     @Transactional(readOnly = true)
     public void invite(Long inviterUserId, Long targetUserId, String rawJoinCode) {
-        final User inviter = userRepository.findById(inviterUserId)
+        final User inviter = userRepository
+                .findById(inviterUserId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
-        userRepository.findById(targetUserId)
+        userRepository
+                .findById(targetUserId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
 
         roomInvitationValidator.validateRoomIsLobby(rawJoinCode);
@@ -40,9 +42,8 @@ public class RoomInvitationService {
         validateFriendship(inviterUserId, targetUserId);
         validateTargetCanBeInvited(targetUserId);
 
-        eventPublisher.publishEvent(new RoomInvitationSentEvent(
-                inviterUserId, inviter.getNickname().value(), targetUserId, rawJoinCode
-        ));
+        eventPublisher.publishEvent(
+                new RoomInvitationSentEvent(inviterUserId, inviter.getNickname().value(), targetUserId, rawJoinCode));
     }
 
     /**
@@ -55,13 +56,13 @@ public class RoomInvitationService {
             throw new BusinessException(FriendErrorCode.FRIEND_OFFLINE, "접속 중이 아닌 친구는 초대할 수 없습니다.");
         }
         if (roomMembershipQuery.findByUserIds(List.of(targetUserId)).containsKey(targetUserId)) {
-            throw new BusinessException(
-                    FriendErrorCode.FRIEND_ALREADY_IN_ROOM, "이미 다른 방에 참여 중인 친구는 초대할 수 없습니다.");
+            throw new BusinessException(FriendErrorCode.FRIEND_ALREADY_IN_ROOM, "이미 다른 방에 참여 중인 친구는 초대할 수 없습니다.");
         }
     }
 
     private void validateFriendship(Long inviterUserId, Long targetUserId) {
-        friendshipRepository.findBetween(inviterUserId, targetUserId)
+        friendshipRepository
+                .findBetween(inviterUserId, targetUserId)
                 .filter(Friendship::isAccepted)
                 .orElseThrow(() -> new BusinessException(FriendErrorCode.NOT_FRIEND, "친구 관계가 아닌 사용자입니다."));
     }

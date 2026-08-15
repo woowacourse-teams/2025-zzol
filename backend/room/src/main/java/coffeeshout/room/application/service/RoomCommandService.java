@@ -1,7 +1,7 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.domain.QrCode;
 import coffeeshout.room.domain.Room;
@@ -15,7 +15,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 
 @Service
 @RequiredArgsConstructor
@@ -139,8 +138,11 @@ public class RoomCommandService {
 
         // 이미 SUCCESS 상태지만 다른 URL이면 경고 로그 (일반적으로 발생하지 않아야 함)
         if (currentQrCode.isSuccess()) {
-            log.warn("이미 SUCCESS 상태인데 다른 URL로 변경 시도. 무시: joinCode={}, currentUrl={}, newUrl={}",
-                    joinCode, currentQrCode.getUrl(), qrCodeUrl);
+            log.warn(
+                    "이미 SUCCESS 상태인데 다른 URL로 변경 시도. 무시: joinCode={}, currentUrl={}, newUrl={}",
+                    joinCode,
+                    currentQrCode.getUrl(),
+                    qrCodeUrl);
             return;
         }
 

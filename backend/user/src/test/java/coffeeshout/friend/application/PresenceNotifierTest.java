@@ -10,9 +10,9 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 
 import coffeeshout.friend.application.dto.PresencePayload;
-import coffeeshout.friend.application.port.RoomMembership;
 import coffeeshout.friend.application.port.RoomMembershipQuery;
 import coffeeshout.friend.application.service.FriendshipService;
+import coffeeshout.friend.domain.RoomMembership;
 import coffeeshout.friend.domain.event.PresenceChangedEvent;
 import coffeeshout.friend.domain.event.RoomPresenceChangedEvent;
 import coffeeshout.websocket.LoggingSimpMessagingTemplate;
@@ -60,9 +60,9 @@ class PresenceNotifierTest {
 
     private List<PresencePayload> 전송된_페이로드() {
         final ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
-        then(messagingTemplate).should(atLeastOnce())
-                .convertAndSendToUser(anyString(),
-                        eq(PRESENCE_QUEUE), captor.capture());
+        then(messagingTemplate)
+                .should(atLeastOnce())
+                .convertAndSendToUser(anyString(), eq(PRESENCE_QUEUE), captor.capture());
         return captor.getAllValues().stream()
                 .map(WebSocketResponse.class::cast)
                 .map(response -> (PresencePayload) response.data())
@@ -115,10 +115,9 @@ class PresenceNotifierTest {
             presenceNotifier.onPresenceChanged(new PresenceChangedEvent(나, true));
 
             final ArgumentCaptor<String> principals = ArgumentCaptor.forClass(String.class);
-            then(messagingTemplate).should(atLeastOnce())
-                    .convertAndSendToUser(principals.capture(),
-                            eq(PRESENCE_QUEUE),
-                            any());
+            then(messagingTemplate)
+                    .should(atLeastOnce())
+                    .convertAndSendToUser(principals.capture(), eq(PRESENCE_QUEUE), any());
             assertThat(principals.getAllValues())
                     .containsExactlyInAnyOrder(UserPrincipal.of(친구_A), UserPrincipal.of(친구_B));
         }
@@ -134,8 +133,7 @@ class PresenceNotifierTest {
             given(presenceTracker.isOnline(나)).willReturn(true);
             given(friendshipService.findAcceptedFriendIds(나)).willReturn(List.of(친구_A));
 
-            presenceNotifier.onRoomPresenceChanged(
-                    new RoomPresenceChangedEvent(나, new RoomMembership("ABCD", false)));
+            presenceNotifier.onRoomPresenceChanged(new RoomPresenceChangedEvent(나, new RoomMembership("ABCD", false)));
 
             final PresencePayload payload = 전송된_페이로드().getFirst();
             final SoftAssertions softly = new SoftAssertions();
@@ -170,8 +168,7 @@ class PresenceNotifierTest {
             given(roomMembershipQuery.findByUserIds(List.of(친구_A)))
                     .willReturn(Map.of(친구_A, new RoomMembership("ABCD", true)));
 
-            presenceNotifier.onPresenceQueueSubscribe(
-                    new UserQueueSubscribedEvent(나, "/user/queue/friends/presence"));
+            presenceNotifier.onPresenceQueueSubscribe(new UserQueueSubscribedEvent(나, "/user/queue/friends/presence"));
 
             final List<PresencePayload> payloads = 전송된_페이로드();
             final SoftAssertions softly = new SoftAssertions();
@@ -184,13 +181,9 @@ class PresenceNotifierTest {
         @Test
         @DisplayName("다른 목적지 구독은 무시한다")
         void 다른_목적지_구독은_무시한다() {
-            presenceNotifier.onPresenceQueueSubscribe(
-                    new UserQueueSubscribedEvent(나, "/user/queue/friends/requests"));
+            presenceNotifier.onPresenceQueueSubscribe(new UserQueueSubscribedEvent(나, "/user/queue/friends/requests"));
 
-            then(messagingTemplate).should(never())
-                    .convertAndSendToUser(anyString(),
-                            anyString(),
-                            any());
+            then(messagingTemplate).should(never()).convertAndSendToUser(anyString(), anyString(), any());
         }
     }
 }

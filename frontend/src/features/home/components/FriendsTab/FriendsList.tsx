@@ -196,23 +196,23 @@ const S = {
 
   JoinCode: styled.span`
     ${theme.typography.caption}
+    font-weight: ${theme.typography.h4.fontWeight};
     padding: 3px 7px;
     border-radius: 6px;
     background: ${theme.color.gray[100]};
     color: ${theme.color.gray[700]};
-    font-weight: 700;
     letter-spacing: 0.06em;
     white-space: nowrap;
   `,
 
   JoinButton: styled.button`
     ${theme.typography.caption}
+    font-weight: ${theme.typography.h4.fontWeight};
     padding: 6px 10px;
     border: none;
     border-radius: 8px;
     background: ${theme.color.point[400]};
     color: ${theme.color.white};
-    font-weight: 700;
     cursor: pointer;
     white-space: nowrap;
     transition: background 0.12s;

@@ -1,6 +1,6 @@
 package coffeeshout.friend.application.dto;
 
-import coffeeshout.friend.application.port.RoomMembership;
+import coffeeshout.friend.domain.RoomMembership;
 
 /**
  * 친구 한 명의 현재 상태 전체 스냅샷. 접속 상태와 방 참여 상태는 서로 다른 시점에 바뀌지만,

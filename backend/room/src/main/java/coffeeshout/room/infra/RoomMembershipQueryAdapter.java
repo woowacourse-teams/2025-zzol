@@ -1,7 +1,7 @@
 package coffeeshout.room.infra;
 
-import coffeeshout.friend.application.port.RoomMembership;
 import coffeeshout.friend.application.port.RoomMembershipQuery;
+import coffeeshout.friend.domain.RoomMembership;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.repository.RoomRepository;
 import java.util.Collection;

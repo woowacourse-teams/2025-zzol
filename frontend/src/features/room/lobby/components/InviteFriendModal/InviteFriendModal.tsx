@@ -4,6 +4,7 @@ import { ApiError } from '@/apis/rest/error';
 import Button from '@/components/@common/Button/Button';
 import useToast from '@/components/@common/Toast/useToast';
 import { friendsApi } from '@/features/friends/api/friendsApi';
+import { useFriends } from '@/features/friends/hooks/useFriends';
 import { Friend } from '@/features/friends/types';
 import { theme } from '@/styles/theme';
 
@@ -12,7 +13,6 @@ const getErrorCode = (err: unknown): string | undefined =>
 
 type Props = {
   joinCode: string;
-  friends: Friend[];
   onClose: () => void;
 };
 
@@ -93,7 +93,11 @@ const FriendInviteRow = ({ friend, joinCode }: { friend: Friend; joinCode: strin
   );
 };
 
-const InviteFriendModal = ({ joinCode, friends, onClose }: Props) => {
+const InviteFriendModal = ({ joinCode, onClose }: Props) => {
+  // 컨텍스트에서 직접 읽는다 — openModal이 엘리먼트를 보관하므로 prop으로 받으면 연 시점 값이 클로저에
+  // 고정돼, 모달이 열려 있는 동안 친구가 방에 들어오거나 나가도 버튼 상태가 갱신되지 않는다.
+  const { friends } = useFriends();
+
   // 초대 가능한 친구를 맨 위로
   const sorted = [...friends].sort(
     (a, b) =>

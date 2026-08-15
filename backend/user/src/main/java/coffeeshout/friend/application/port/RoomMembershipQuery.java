@@ -1,5 +1,6 @@
 package coffeeshout.friend.application.port;
 
+import coffeeshout.friend.domain.RoomMembership;
 import java.util.Collection;
 import java.util.Map;
 

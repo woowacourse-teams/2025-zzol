@@ -1,12 +1,12 @@
 package coffeeshout.friend.ui;
 
 import coffeeshout.friend.application.PresenceTracker;
-import coffeeshout.friend.application.port.RoomMembership;
 import coffeeshout.friend.application.port.RoomMembershipQuery;
 import coffeeshout.friend.application.service.FriendSearchService;
 import coffeeshout.friend.application.service.FriendWithUser;
 import coffeeshout.friend.application.service.FriendshipService;
 import coffeeshout.friend.domain.Friendship;
+import coffeeshout.friend.domain.RoomMembership;
 import coffeeshout.friend.ui.request.SendFriendRequestRequest;
 import coffeeshout.friend.ui.response.AcceptFriendResponse;
 import coffeeshout.friend.ui.response.FriendRequestResponse;
@@ -48,15 +48,17 @@ public class FriendshipRestController {
             @RequestParam(required = false) String userCode,
             @RequestParam(required = false) String nickname) {
         if (userCode != null) {
-            final List<UserSearchResponse> results = friendSearchService.searchByUserCode(me.userId(), userCode).stream()
-                    .map(r -> UserSearchResponse.from(r, presenceTracker))
-                    .toList();
+            final List<UserSearchResponse> results =
+                    friendSearchService.searchByUserCode(me.userId(), userCode).stream()
+                            .map(r -> UserSearchResponse.from(r, presenceTracker))
+                            .toList();
             return ResponseEntity.ok(results);
         }
         if (nickname != null) {
-            final List<UserSearchResponse> results = friendSearchService.searchByNickname(me.userId(), nickname).stream()
-                    .map(r -> UserSearchResponse.from(r, presenceTracker))
-                    .toList();
+            final List<UserSearchResponse> results =
+                    friendSearchService.searchByNickname(me.userId(), nickname).stream()
+                            .map(r -> UserSearchResponse.from(r, presenceTracker))
+                            .toList();
             return ResponseEntity.ok(results);
         }
         return ResponseEntity.ok(List.of());
@@ -64,8 +66,7 @@ public class FriendshipRestController {
 
     @PostMapping("/me/friends/requests")
     public ResponseEntity<SendFriendRequestResponse> sendRequest(
-            @AuthUser AuthenticatedUser me,
-            @Valid @RequestBody SendFriendRequestRequest request) {
+            @AuthUser AuthenticatedUser me, @Valid @RequestBody SendFriendRequestRequest request) {
         final Friendship friendship = friendshipService.sendRequest(me.userId(), request.targetUserId());
         return ResponseEntity.ok(SendFriendRequestResponse.from(friendship));
     }
@@ -87,18 +88,14 @@ public class FriendshipRestController {
     }
 
     @PostMapping("/me/friends/requests/{requestId}/accept")
-    public ResponseEntity<AcceptFriendResponse> accept(
-            @AuthUser AuthenticatedUser me,
-            @PathVariable Long requestId) {
+    public ResponseEntity<AcceptFriendResponse> accept(@AuthUser AuthenticatedUser me, @PathVariable Long requestId) {
         final Friendship accepted = friendshipService.accept(me.userId(), requestId);
         final User counterpart = userProfileService.findById(accepted.counterpartOf(me.userId()));
         return ResponseEntity.ok(AcceptFriendResponse.from(counterpart));
     }
 
     @PostMapping("/me/friends/requests/{requestId}/reject")
-    public ResponseEntity<Void> reject(
-            @AuthUser AuthenticatedUser me,
-            @PathVariable Long requestId) {
+    public ResponseEntity<Void> reject(@AuthUser AuthenticatedUser me, @PathVariable Long requestId) {
         friendshipService.reject(me.userId(), requestId);
         return ResponseEntity.noContent().build();
     }
@@ -119,9 +116,7 @@ public class FriendshipRestController {
     }
 
     @DeleteMapping("/me/friends/{friendUserId}")
-    public ResponseEntity<Void> unfriend(
-            @AuthUser AuthenticatedUser me,
-            @PathVariable Long friendUserId) {
+    public ResponseEntity<Void> unfriend(@AuthUser AuthenticatedUser me, @PathVariable Long friendUserId) {
         friendshipService.unfriend(me.userId(), friendUserId);
         return ResponseEntity.noContent().build();
     }

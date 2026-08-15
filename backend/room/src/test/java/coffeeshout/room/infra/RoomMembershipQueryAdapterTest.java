@@ -2,7 +2,7 @@ package coffeeshout.room.infra;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.friend.application.port.RoomMembership;
+import coffeeshout.friend.domain.RoomMembership;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.PlayerName;

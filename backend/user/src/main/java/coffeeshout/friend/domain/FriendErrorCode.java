@@ -4,11 +4,9 @@ import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-
 @RequiredArgsConstructor
 @Getter
 public enum FriendErrorCode implements ErrorCode {
-
     CANNOT_FRIEND_SELF(400, "자기 자신에게 친구 요청을 보낼 수 없습니다."),
     FRIEND_ALREADY_EXISTS(409, "이미 친구인 사용자입니다."),
     FRIEND_REQUEST_ALREADY_SENT(409, "이미 친구 요청을 보냈거나 받은 상태입니다."),

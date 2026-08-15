@@ -7,16 +7,16 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import coffeeshout.fixture.FriendshipFixture;
+import coffeeshout.fixture.UserFixture;
 import coffeeshout.friend.application.PresenceTracker;
 import coffeeshout.friend.application.port.RoomInvitationValidator;
-import coffeeshout.friend.application.port.RoomMembership;
 import coffeeshout.friend.application.port.RoomMembershipQuery;
 import coffeeshout.friend.domain.FriendErrorCode;
 import coffeeshout.friend.domain.Friendship;
+import coffeeshout.friend.domain.RoomMembership;
 import coffeeshout.friend.domain.event.RoomInvitationSentEvent;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
-import coffeeshout.fixture.FriendshipFixture;
-import coffeeshout.fixture.UserFixture;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import java.util.Map;
@@ -95,8 +95,7 @@ class RoomInvitationServiceTest {
             given(presenceTracker.isOnline(대상_ID)).willReturn(false);
 
             assertCoffeeShoutException(
-                    () -> roomInvitationService.invite(초대자_ID, 대상_ID, JOIN_CODE),
-                    FriendErrorCode.FRIEND_OFFLINE);
+                    () -> roomInvitationService.invite(초대자_ID, 대상_ID, JOIN_CODE), FriendErrorCode.FRIEND_OFFLINE);
         }
 
         @Test
@@ -117,8 +116,7 @@ class RoomInvitationServiceTest {
             given(presenceTracker.isOnline(대상_ID)).willReturn(false);
 
             assertCoffeeShoutException(
-                    () -> roomInvitationService.invite(초대자_ID, 대상_ID, JOIN_CODE),
-                    FriendErrorCode.FRIEND_OFFLINE);
+                    () -> roomInvitationService.invite(초대자_ID, 대상_ID, JOIN_CODE), FriendErrorCode.FRIEND_OFFLINE);
 
             then(eventPublisher).should(never()).publishEvent(any(Object.class));
         }

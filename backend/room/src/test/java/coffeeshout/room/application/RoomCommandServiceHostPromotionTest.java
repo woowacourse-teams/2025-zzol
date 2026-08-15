@@ -6,8 +6,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.application.service.RoomPresencePublisher;

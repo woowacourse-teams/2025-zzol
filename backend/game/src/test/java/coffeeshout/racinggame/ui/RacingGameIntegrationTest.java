@@ -5,15 +5,21 @@ import static org.awaitility.Awaitility.await;
 
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.fixture.GamerFixture;
+import coffeeshout.fixture.RoomFixture;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.racinggame.application.RacingGameService;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.racinggame.domain.RacingGameState;
 import coffeeshout.racinggame.ui.request.TapCommand;
 import coffeeshout.racinggame.ui.response.RacingGameRunnersStateResponse;
 import coffeeshout.racinggame.ui.response.RacingGameStateResponse;
+import coffeeshout.room.application.port.RoomEntityRepository;
+import coffeeshout.room.domain.Room;
+import coffeeshout.room.domain.repository.RoomRepository;
+import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.support.TestStompSession;
 import java.time.Duration;
 import java.util.List;
@@ -22,6 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 class RacingGameIntegrationTest extends GameModuleWebSocketTest {
 
@@ -30,6 +38,18 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
 
     @Autowired
     RacingGameService racingGameService;
+
+    @Autowired
+    RoomRepository roomRepository;
+
+    @Autowired
+    RoomEntityRepository roomEntityRepository;
+
+    @Autowired
+    ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    JdbcTemplate jdbcTemplate;
 
     JoinCode joinCode;
     Gamer host;
@@ -86,7 +106,14 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
     }
 
     @Test
-    void 게임이_완주되면_FINISHED_상태가_전송된다() throws Exception {
+    void 게임이_완주되면_DONE_상태가_전송되고_결과가_저장된다() throws Exception {
+        // given - 결과 저장 리스너가 요구하는 방·플레이어 기반. 도메인 Room은 인메모리, RoomEntity는 DB라 둘 다 채워야
+        // room_session·player id가 해석된다(RoomSnapshotQueryAdapter).
+        final Room room = RoomFixture.호스트_꾹이(joinCode);
+        room.getPlayers().forEach(player -> player.updateReadyState(true));
+        roomRepository.save(room);
+        roomEntityRepository.save(new RoomEntity(joinCode.getValue()));
+
         TestStompSession singleSession = createSession(joinCode.getValue(), host.getName());
         String joinCodeValue = joinCode.getValue();
         String subscribeStateUrl = String.format("/topic/room/%s/racing-game/state", joinCodeValue);
@@ -94,8 +121,10 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
 
         var stateResponses = singleSession.subscribe(subscribeStateUrl);
 
-        // 게임 시작
-        startRacingGame();
+        // 게임 시작 - 프로덕션과 같은 진입점(GameStartReadyEvent)으로 시작해야 MiniGameEntity·플레이어 스냅샷까지
+        // 만들어져 종료 시 결과가 저장될 수 있다. startRacingGame()은 그 앞단을 건너뛴다.
+        eventPublisher.publishEvent(
+                new GameStartReadyEvent("evt-" + joinCodeValue, joinCodeValue, host.getName(), gamers));
 
         stateResponses.get(1, TimeUnit.SECONDS); // DESCRIPTION
         stateResponses.get(5, TimeUnit.SECONDS); // PREPARE (4초 후)
@@ -122,6 +151,16 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
         RacingGameStateResponse finishedState =
                 payloadAs(stateResponses.get(5, TimeUnit.SECONDS), RacingGameStateResponse.class);
         assertThat(finishedState.state()).isEqualTo(RacingGameState.DONE);
+
+        // then - 종료 결과가 실제로 저장된다. DONE 브로드캐스트는 결과 저장보다 앞서 예약되므로(#1662)
+        // 종료 신호만 검증하면 저장이 통째로 실패해도 이 테스트는 초록으로 남는다.
+        await().atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(저장된_레이싱_결과_수()).isEqualTo(gamers.size()));
+    }
+
+    private Integer 저장된_레이싱_결과_수() {
+        return jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM mini_game_result WHERE mini_game_type = 'RACING_GAME'", Integer.class);
     }
 
     private void startRacingGame() {

@@ -9,6 +9,12 @@ import coffeeshout.room.domain.player.Player;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 class RacingGameTest {
@@ -129,5 +135,49 @@ class RacingGameTest {
         assertThat(result).isNotNull();
         assertThat(result.getRank().get(players.getFirst().toGamer())).isEqualTo(2);
         assertThat(result.getRank().get(players.get(1).toGamer())).isEqualTo(1);
+    }
+
+    /**
+     * 회귀 가드: {@code stopAutoMove()}는 자동 이동 태스크 자신의 스레드에서 호출된다
+     * (RacingGameService.handleRaceFinished ← executeAutoMove). {@code cancel(true)}로 취소하면
+     * 실행 중인 그 스레드가 스스로를 인터럽트하고, 곧이어 같은 스레드에서 발행되는
+     * MiniGameFinishedEvent의 결과 저장 리스너가 @RedisLock의 tryLock에서
+     * InterruptedException으로 실패한다 — 레이싱 기록이 한 건도 저장되지 않는다.
+     */
+    @Test
+    void 자동_이동_태스크_안에서_정지시켜도_실행_스레드가_인터럽트되지_않는다() throws InterruptedException {
+        // given
+        racingGame.setUp(players.stream().map(p -> p.toGamer()).toList());
+        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        final CountDownLatch futureAssigned = new CountDownLatch(1);
+        final CountDownLatch stopped = new CountDownLatch(1);
+        final AtomicBoolean interrupted = new AtomicBoolean();
+
+        // when — 태스크가 자기 자신을 취소한 뒤 같은 스레드에서 이어지는 구간을 재현한다
+        final ScheduledFuture<?> autoMoveFuture = scheduler.scheduleAtFixedRate(
+                () -> {
+                    try {
+                        futureAssigned.await();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                    racingGame.stopAutoMove();
+                    interrupted.set(Thread.currentThread().isInterrupted());
+                    stopped.countDown();
+                },
+                0,
+                100,
+                TimeUnit.MILLISECONDS);
+        racingGame.setAutoMoveFuture(autoMoveFuture);
+        futureAssigned.countDown();
+
+        // then
+        try {
+            assertThat(stopped.await(3, TimeUnit.SECONDS)).as("자동 이동 태스크 실행 완료").isTrue();
+            assertThat(interrupted).isFalse();
+        } finally {
+            scheduler.shutdownNow();
+        }
     }
 }

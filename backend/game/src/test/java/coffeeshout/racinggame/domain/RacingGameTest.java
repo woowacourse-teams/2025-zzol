@@ -2,6 +2,7 @@ package coffeeshout.racinggame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.global.exception.custom.BusinessException;
@@ -172,10 +173,16 @@ class RacingGameTest {
         racingGame.setAutoMoveFuture(autoMoveFuture);
         futureAssigned.countDown();
 
-        // then
+        // then — 취소는 하되 인터럽트는 하지 않는다. 인터럽트만 검증하면 stopAutoMove()가
+        // 통째로 no-op이 돼도(자동 이동이 영원히 도는 더 큰 회귀) 통과한다.
         try {
             assertThat(stopped.await(3, TimeUnit.SECONDS)).as("자동 이동 태스크 실행 완료").isTrue();
-            assertThat(interrupted).isFalse();
+            assertSoftly(softly -> {
+                softly.assertThat(interrupted).as("실행 스레드 인터럽트 여부").isFalse();
+                softly.assertThat(autoMoveFuture.isCancelled())
+                        .as("자동 이동 취소 여부")
+                        .isTrue();
+            });
         } finally {
             scheduler.shutdownNow();
         }

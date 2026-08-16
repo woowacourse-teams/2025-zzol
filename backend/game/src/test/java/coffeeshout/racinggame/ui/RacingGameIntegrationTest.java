@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +69,17 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(racingGame));
 
         session = createSession(joinCode.getValue(), host.getName());
+    }
+
+    /**
+     * 자동 이동은 컨텍스트 수명의 스케줄러 빈에 걸리므로 테스트 메서드가 끝나도 계속 돈다. 완주까지 가지 않는
+     * 테스트가 남긴 레이스는 무탭 최소 속도(3)로 약 50초 뒤 혼자 완주해, 그때 진행 중인 다른 테스트의 방·
+     * 미니게임 엔티티에 결과를 덧쓴다(joinCode·플레이어 픽스처가 같고 eventId는 매번 UUID라 @RedisLock
+     * 중복 마커도 막지 못한다). 저장 건수를 세는 검증이 그 유령 완주에 오염되지 않도록 여기서 세워둔다.
+     */
+    @AfterEach
+    void 자동이동_정리() {
+        racingGame.stopAutoMove();
     }
 
     @Test
@@ -121,8 +133,9 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
 
         var stateResponses = singleSession.subscribe(subscribeStateUrl);
 
-        // 게임 시작 - 프로덕션과 같은 진입점(GameStartReadyEvent)으로 시작해야 MiniGameEntity·플레이어 스냅샷까지
-        // 만들어져 종료 시 결과가 저장될 수 있다. startRacingGame()은 그 앞단을 건너뛴다.
+        // 게임 시작 - :game 모듈 경계(:room의 MiniGameStartConsumer가 발행하는 GameStartReadyEvent)부터 태운다.
+        // 그래야 MiniGameEntity·플레이어 스냅샷이 만들어져 종료 시 결과가 저장될 수 있다. startRacingGame()은
+        // 서비스를 직접 불러 이 앞단을 건너뛴다. 그 앞의 STOMP→Redis Stream 구간은 이 테스트 범위 밖이다.
         eventPublisher.publishEvent(
                 new GameStartReadyEvent("evt-" + joinCodeValue, joinCodeValue, host.getName(), gamers));
 

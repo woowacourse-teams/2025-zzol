@@ -19,10 +19,16 @@ export default (_, argv) => {
 
   dotenv.config({ path: path.resolve(process.cwd(), `.env.${mode}`) }).parsed || {};
 
+  // .env.development 는 gitignore 대상이라 워크트리에는 없을 수 있다(#1660).
+  // 기본값이 없으면 번들에 undefined 가 박혀 REST 요청이 `undefined/...` 로 나가고,
+  // 실패가 요청 시점까지 미뤄져 원인이 드러나지 않는다. webpack.dev.js 가 devServer
+  // 프록시에 쓰는 기본값과 같은 값으로 맞춰 두 설정의 비대칭을 없앤다.
+  const devApiUrl = mode === 'development' ? 'http://localhost:8080' : undefined;
+
   const envKeys = {
     'process.env.NODE_ENV': JSON.stringify(mode),
     'process.env.VERSION': JSON.stringify(appVersion),
-    'process.env.API_URL': JSON.stringify(process.env.API_URL),
+    'process.env.API_URL': JSON.stringify(process.env.API_URL || devApiUrl),
     'process.env.ENABLE_DEVTOOLS': JSON.stringify(process.env.ENABLE_DEVTOOLS === 'true'),
     // 값이 없어도 반드시 치환한다 — 조건부로 두면 번들에 process.env.DSN_KEY가
     // 리터럴로 남아 브라우저에서 ReferenceError(process is not defined)로 앱이 죽는다.

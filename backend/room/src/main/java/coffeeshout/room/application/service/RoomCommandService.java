@@ -14,6 +14,8 @@ import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.domain.roulette.Roulette;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,29 +35,24 @@ public class RoomCommandService {
      * 게임 시작에 따른 {@code PLAYING} 전이.
      */
     public void markPlaying(JoinCode joinCode) {
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        room.markPlaying();
-        save(room);
+        mutate(joinCode, Room::markPlaying);
     }
 
     /**
      * 룰렛 화면 전이. 전이 후 상태를 돌려준다.
      */
     public RoomState showRoulette(JoinCode joinCode) {
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        room.showRoulette();
-        save(room);
-        return room.getRoomState();
+        return mutateAndGet(joinCode, room -> {
+            room.showRoulette();
+            return room.getRoomState();
+        });
     }
 
     /**
      * 룰렛 실행 — 당첨자를 뽑고 {@code DONE}으로 전이한다.
      */
     public Winner spinRoulette(JoinCode joinCode, PlayerName hostName, Roulette roulette) {
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        final Winner winner = room.spinRoulette(room.findPlayer(hostName), roulette);
-        save(room);
-        return winner;
+        return mutateAndGet(joinCode, room -> room.spinRoulette(room.findPlayer(hostName), roulette));
     }
 
     /**
@@ -63,14 +60,19 @@ public class RoomCommandService {
      * {@code MiniGameFinishedEvent}를 수신한 {@code MiniGameResultRoomListener}가 호출한다(ADR-0025 결정 5).
      */
     public void applyGameResult(JoinCode joinCode, Map<PlayerName, Integer> rankByPlayer, int roundCount) {
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        room.applyGameResult(rankByPlayer, roundCount);
-        save(room);
+        mutate(joinCode, room -> room.applyGameResult(rankByPlayer, roundCount));
     }
 
     public void delete(@NonNull JoinCode joinCode) {
+        // 삭제하면 누가 있었는지 알 수 없으므로 지우기 전에 떠 둔다. 이미 없는 방이면 비교 대상이 양쪽 다 비어
+        // 아무것도 발행되지 않는다.
+        final RoomPresence before = roomRepository
+                .findByJoinCode(joinCode)
+                .map(RoomPresence::of)
+                .orElseGet(() -> RoomPresence.empty(joinCode));
+
         roomRepository.deleteByJoinCode(joinCode);
-        roomPresencePublisher.onRoomDeleted(joinCode.getValue());
+        roomPresencePublisher.publish(before, RoomPresence.empty(joinCode));
     }
 
     public boolean removePlayer(JoinCode joinCode, PlayerName playerName) {
@@ -78,19 +80,19 @@ public class RoomCommandService {
         final Room room = roomQueryService.getByJoinCode(joinCode);
         final PlayerName previousHost = room.getHost().getName();
 
-        boolean removed = room.removePlayer(playerName);
+        final boolean removed = mutateAndGet(joinCode, target -> target.removePlayer(playerName));
 
-        if (removed && room.isEmpty()) {
+        if (!removed) {
+            return false;
+        }
+
+        if (room.isEmpty()) {
             delete(joinCode);
             return true;
         }
 
-        if (removed) {
-            save(room);
-            publishHostChangeIfPromoted(joinCode, previousHost, room);
-        }
-
-        return removed;
+        publishHostChangeIfPromoted(joinCode, previousHost, room);
+        return true;
     }
 
     public Room joinGuest(JoinCode joinCode, PlayerName playerName) {
@@ -99,11 +101,7 @@ public class RoomCommandService {
 
     public Room joinGuest(JoinCode joinCode, PlayerName playerName, Long userId) {
         log.info("JoinCode[{}] 게스트 입장 - 게스트 이름: {} ", joinCode, playerName);
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-
-        room.joinGuest(playerName, userId);
-
-        return save(room);
+        return mutate(joinCode, room -> room.joinGuest(playerName, userId));
     }
 
     public Room saveIfAbsentRoom(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
@@ -120,15 +118,12 @@ public class RoomCommandService {
 
         final Room room = Room.createNewRoom(joinCode, hostName, userId, adjustmentWeight);
 
-        return save(room);
+        return save(RoomPresence.empty(joinCode), room);
     }
 
     public void updateAdjustmentWeight(JoinCode joinCode, PlayerName hostName, double adjustmentWeight) {
         log.info("JoinCode[{}] 조정 가중치 변경 - 호스트: {}, 가중치: {}", joinCode, hostName, adjustmentWeight);
-
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        room.updateAdjustmentWeight(hostName, adjustmentWeight);
-        save(room);
+        mutate(joinCode, room -> room.updateAdjustmentWeight(hostName, adjustmentWeight));
     }
 
     public void assignQrCode(JoinCode joinCode, String qrCodeUrl) {
@@ -139,28 +134,28 @@ public class RoomCommandService {
             log.debug("이미 제거된 방의 QR SUCCESS 이벤트 무시: joinCode={}", joinCode);
             return;
         }
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        final QrCode currentQrCode = room.getQrCode();
+        mutate(joinCode, room -> {
+            final QrCode currentQrCode = room.getQrCode();
 
-        // 이미 SUCCESS 상태이고 동일한 URL이면 중복 처리 방지 (멱등성)
-        if (currentQrCode.isSuccess() && qrCodeUrl.equals(currentQrCode.getUrl())) {
-            log.info("이미 동일한 QR 코드가 SUCCESS 상태입니다. 무시: joinCode={}, url={}", joinCode, qrCodeUrl);
-            return;
-        }
+            // 이미 SUCCESS 상태이고 동일한 URL이면 중복 처리 방지 (멱등성)
+            if (currentQrCode.isSuccess() && qrCodeUrl.equals(currentQrCode.getUrl())) {
+                log.info("이미 동일한 QR 코드가 SUCCESS 상태입니다. 무시: joinCode={}, url={}", joinCode, qrCodeUrl);
+                return;
+            }
 
-        // 이미 SUCCESS 상태지만 다른 URL이면 경고 로그 (일반적으로 발생하지 않아야 함)
-        if (currentQrCode.isSuccess()) {
-            log.warn(
-                    "이미 SUCCESS 상태인데 다른 URL로 변경 시도. 무시: joinCode={}, currentUrl={}, newUrl={}",
-                    joinCode,
-                    currentQrCode.getUrl(),
-                    qrCodeUrl);
-            return;
-        }
+            // 이미 SUCCESS 상태지만 다른 URL이면 경고 로그 (일반적으로 발생하지 않아야 함)
+            if (currentQrCode.isSuccess()) {
+                log.warn(
+                        "이미 SUCCESS 상태인데 다른 URL로 변경 시도. 무시: joinCode={}, currentUrl={}, newUrl={}",
+                        joinCode,
+                        currentQrCode.getUrl(),
+                        qrCodeUrl);
+                return;
+            }
 
-        room.assignQrCode(QrCode.success(qrCodeUrl));
-        save(room);
-        log.info("QR 코드 SUCCESS 상태로 변경: joinCode={}, url={}", joinCode, qrCodeUrl);
+            room.assignQrCode(QrCode.success(qrCodeUrl));
+            log.info("QR 코드 SUCCESS 상태로 변경: joinCode={}, url={}", joinCode, qrCodeUrl);
+        });
     }
 
     public void assignQrCodeError(JoinCode joinCode) {
@@ -168,49 +163,68 @@ public class RoomCommandService {
             log.debug("이미 제거된 방의 QR ERROR 이벤트 무시: joinCode={}", joinCode);
             return;
         }
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        final QrCode currentQrCode = room.getQrCode();
+        mutate(joinCode, room -> {
+            final QrCode currentQrCode = room.getQrCode();
 
-        // 이미 SUCCESS 상태면 ERROR로 다운그레이드 방지
-        if (currentQrCode.isSuccess()) {
-            log.warn("이미 SUCCESS 상태이므로 ERROR 무시: joinCode={}, successUrl={}", joinCode, currentQrCode.getUrl());
-            return;
-        }
+            // 이미 SUCCESS 상태면 ERROR로 다운그레이드 방지
+            if (currentQrCode.isSuccess()) {
+                log.warn("이미 SUCCESS 상태이므로 ERROR 무시: joinCode={}, successUrl={}", joinCode, currentQrCode.getUrl());
+                return;
+            }
 
-        // 이미 ERROR 상태면 중복 처리 방지 (멱등성)
-        if (currentQrCode.isError()) {
-            log.info("이미 ERROR 상태입니다. 무시: joinCode={}", joinCode);
-            return;
-        }
+            // 이미 ERROR 상태면 중복 처리 방지 (멱등성)
+            if (currentQrCode.isError()) {
+                log.info("이미 ERROR 상태입니다. 무시: joinCode={}", joinCode);
+                return;
+            }
 
-        room.assignQrCode(QrCode.error());
-        save(room);
-        log.info("QR 코드 ERROR 상태로 변경: joinCode={}", joinCode);
+            room.assignQrCode(QrCode.error());
+            log.info("QR 코드 ERROR 상태로 변경: joinCode={}", joinCode);
+        });
     }
 
     public Room readyPlayer(JoinCode joinCode, PlayerName playerName, Boolean isReady) {
         log.info("JoinCode[{}] 플레이어 준비 상태 변경 - 플레이어 이름: {}, 준비 상태: {}", joinCode, playerName, isReady);
-        final Room room = roomQueryService.getByJoinCode(joinCode);
-        final Player player = room.findPlayer(playerName);
-
-        if (player.getPlayerType() == PlayerType.HOST) {
-            return room;
-        }
-
-        player.updateReadyState(isReady);
-
-        return save(room);
+        return mutate(joinCode, room -> {
+            final Player player = room.findPlayer(playerName);
+            if (player.getPlayerType() == PlayerType.HOST) {
+                return;
+            }
+            player.updateReadyState(isReady);
+        });
     }
 
     /**
-     * 저장은 방 참여 상태 변경을 감지하는 유일한 지점이다({@link RoomPresencePublisher}). 인메모리 저장소는
-     * 같은 객체 참조를 들고 있어 저장 없이도 변이가 반영되므로, 외부에서 {@code Room}을 직접 바꾸고 저장을
-     * 빠뜨리면 알림만 조용히 누락된다. 그래서 저장을 밖으로 열지 않고 <b>변이 메서드를 이 클래스가 소유한다</b> —
-     * 상태를 바꾸려면 아래 커맨드 메서드를 거칠 수밖에 없고, 저장을 기억할 필요가 없어진다.
+     * 방을 바꾸는 유일한 통로다. 인메모리 저장소는 같은 객체 참조를 들고 있어 저장 없이도 변이가 반영되므로,
+     * 외부에서 {@code Room}을 직접 바꾸면 알림({@link RoomPresencePublisher})만 조용히 누락된다. 그래서
+     * <b>변이 메서드를 이 클래스가 소유한다</b> — 상태를 바꾸려면 위 커맨드 메서드를 거칠 수밖에 없다.
+     *
+     * <p>비교 대상인 직전 상태를 <b>여기서 뜬다</b>. 변이 지점과 같은 자리에 있어야 새 커맨드를 추가할 때
+     * "직전 상태 뜨기"와 "저장하기"를 따로 기억하지 않는다. 방 밖에 사본을 오래 두지 않으므로 정리도 필요 없다.
      */
-    private Room save(Room room) {
+    private Room mutate(JoinCode joinCode, Consumer<Room> mutation) {
+        return mutateAndGet(joinCode, room -> {
+            mutation.accept(room);
+            return room;
+        });
+    }
+
+    /**
+     * 변이 결과값(당첨자·전이된 상태 등)이 필요한 커맨드용 {@link #mutate}.
+     */
+    private <T> T mutateAndGet(JoinCode joinCode, Function<Room, T> mutation) {
+        final Room room = roomQueryService.getByJoinCode(joinCode);
+        final RoomPresence before = RoomPresence.of(room);
+
+        final T result = mutation.apply(room);
+
+        save(before, room);
+        return result;
+    }
+
+    private Room save(RoomPresence before, Room room) {
         final Room saved = roomRepository.save(room);
-        roomPresencePublisher.onRoomSaved(saved);
+        roomPresencePublisher.publish(before, RoomPresence.of(room));
         return saved;
     }
 

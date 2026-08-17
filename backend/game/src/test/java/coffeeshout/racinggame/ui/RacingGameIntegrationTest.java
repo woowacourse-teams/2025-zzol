@@ -29,8 +29,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 class RacingGameIntegrationTest extends GameModuleWebSocketTest {
 
@@ -51,6 +54,10 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
 
     @Autowired
     JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    @Qualifier("racingGameScheduler")
+    TaskScheduler racingGameScheduler;
 
     JoinCode joinCode;
     Gamer host;
@@ -76,10 +83,19 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
      * 테스트가 남긴 레이스는 무탭 최소 속도(3)로 약 50초 뒤 혼자 완주해, 그때 진행 중인 다른 테스트의 방·
      * 미니게임 엔티티에 결과를 덧쓴다(joinCode·플레이어 픽스처가 같고 eventId는 매번 UUID라 @RedisLock
      * 중복 마커도 막지 못한다). 저장 건수를 세는 검증이 그 유령 완주에 오염되지 않도록 여기서 세워둔다.
+     * <p>
+     * stopAutoMove()만으로는 부족하다 — autoMoveFuture는 시작 +1s(description 500ms + prepare 500ms)에
+     * startAutoMove에서야 대입되고, 그 전에 테스트가 실패하면 null이라 즉시 리턴한다. 그 앞의
+     * description·prepare 예약 태스크는 어디에도 보관되지 않아 취소할 대상 자체가 없고, teardown 뒤에
+     * 레이스를 새로 시작한다. 그래서 취소(재예약 차단) 후 스케줄러 예약 큐를 비운다.
      */
     @AfterEach
     void 자동이동_정리() {
         racingGame.stopAutoMove();
+        ((ThreadPoolTaskScheduler) racingGameScheduler)
+                .getScheduledThreadPoolExecutor()
+                .getQueue()
+                .clear();
     }
 
     @Test

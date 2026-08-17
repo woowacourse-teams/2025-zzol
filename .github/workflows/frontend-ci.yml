@@ -15,6 +15,13 @@ on:
         description: "Build completion status"
         value: ${{ jobs.ci.outputs.build-success }}
 
+# 같은 PR에 새 커밋을 push하면 직전 실행을 취소한다.
+# CD가 workflow_call로 부른 실행은 그룹이 호출자 이름으로 잡혀
+# (frontend-deploy-dev와 다르다) 배포를 끊지 않는다 — backend-ci.yml 주석 참고.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
     runs-on: ubuntu-latest

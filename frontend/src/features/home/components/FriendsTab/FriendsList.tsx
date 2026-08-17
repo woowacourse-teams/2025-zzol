@@ -48,6 +48,10 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
   // 기존 방 입장 흐름(닉네임 확인 → POST /rooms/{joinCode})을 그대로 탄다
   const handleJoin = () => navigate(`/join/${friend.joinCode}`);
 
+  // 연결이 끊겨도 15초 유예 동안은 방에 남아 있어 joinCode가 그대로 온다.
+  // 이미 나간 친구의 방을 권하지 않도록 접속 중일 때만 방을 보여준다.
+  const inRoom = friend.online && Boolean(friend.joinCode);
+
   const handleRemove = () => {
     openModal(
       <RemoveConfirm
@@ -83,15 +87,14 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
       showOnlineDot
       right={
         <>
-          {friend.joinCode && (
+          {inRoom && (
             <S.JoinCode aria-label={`참여 중인 방 ${friend.joinCode}`}>
               {friend.joinCode}
             </S.JoinCode>
           )}
-          {friend.joinCode && friend.joinable && (
-            <S.JoinButton onClick={handleJoin}>참여하기</S.JoinButton>
-          )}
-          {friend.joinCode && !friend.joinable && <S.StatusText>게임 중</S.StatusText>}
+          {inRoom && friend.joinable && <S.JoinButton onClick={handleJoin}>참여하기</S.JoinButton>}
+          {/* 게임 중 · 정원참 · 종료된 방을 구분할 정보가 없다(joinable 하나만 온다) */}
+          {inRoom && !friend.joinable && <S.StatusText>입장 불가</S.StatusText>}
           <S.DeleteButton onClick={handleRemove} disabled={loading} aria-label="친구 삭제">
             <svg
               width="18"
@@ -119,11 +122,11 @@ const FriendItem = ({ friend }: { friend: Friend }) => {
 const FriendsList = () => {
   const { friends } = useFriends();
 
-  // 바로 참여할 수 있는 친구를 맨 위로, 그다음 온라인
+  // 바로 참여할 수 있는 친구를 맨 위로, 그다음 온라인 (참여 버튼 노출 조건과 같은 기준)
   const sorted = [...friends].sort(
     (a, b) =>
-      Number(Boolean(b.joinCode) && b.joinable) - Number(Boolean(a.joinCode) && a.joinable) ||
-      Number(b.online) - Number(a.online)
+      Number(b.online && Boolean(b.joinCode) && b.joinable) -
+        Number(a.online && Boolean(a.joinCode) && a.joinable) || Number(b.online) - Number(a.online)
   );
 
   if (sorted.length === 0) {

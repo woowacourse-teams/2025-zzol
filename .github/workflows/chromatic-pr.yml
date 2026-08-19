@@ -9,6 +9,13 @@ on:
       - 'frontend/**/*.stories.*'
       - 'frontend/.storybook/**'
 
+# 스냅샷 단위 과금이라 중복 실행이 그대로 요금이다.
+# 기준선을 굽는 chromatic-base(dev push)는 일부러 제외했다 — 취소되면
+# 그 커밋의 기준선 빌드가 남지 않는다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   chromatic-pr:
     runs-on: ubuntu-latest

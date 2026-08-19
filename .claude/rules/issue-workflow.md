@@ -82,6 +82,9 @@ MAIN="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"   # 주 저�
 git fetch origin dev
 git worktree add -b "{type}/{N}-{slug}" "$MAIN/.claude/worktrees/{type}-{N}" origin/dev
 git -C "$MAIN/.claude/worktrees/{type}-{N}" branch --unset-upstream 2>/dev/null || true
+
+# env 심볼릭 링크 + 워크트리 전용 포트 (#1660)
+bash "$MAIN/.claude/skills/create-issue/worktree-setup.sh" "$MAIN/.claude/worktrees/{type}-{N}"
 ```
 
 그 뒤 `EnterWorktree`에 `path`로 그 경로를 넘겨 세션을 옮긴다.
@@ -89,6 +92,7 @@ git -C "$MAIN/.claude/worktrees/{type}-{N}" branch --unset-upstream 2>/dev/null 
 - **디렉터리명(`{type}-{N}`)과 브랜치명(`{type}/{N}-{slug}`)은 다르다.** 디렉터리에는 `/`를 쓸 수 없고, 브랜치명은 `create-pr`이 `{N}`을 뽑아 `close #N`을 채우는 근거라 규약을 지켜야 한다.
 - **`EnterWorktree`를 `name`으로 부르지 않는다.** 그러면 브랜치명이 `worktree-<name>`이 되어 규약을 깨고 이슈 번호 추출이 실패한다. 브랜치는 위처럼 `git worktree add -b`로 만들고, `EnterWorktree`는 `path`로 들어가기만 한다.
 - `.claude/worktrees/`는 `.gitignore` 대상이다 — 워크트리가 저장소를 더럽히지 않는다.
+- **`.env` 계열은 `.gitignore` 대상이라 `git worktree add`가 가져오지 않는다.** 위 `worktree-setup.sh`가 주 저장소에서 심볼릭 링크하고, 워크트리 전용 포트를 `.ports`에 잡는다. 이걸 건너뛰면 백엔드는 OAuth 없이 뜨고 프론트는 `API_URL`이 `undefined`인 채로 조용히 백엔드에 못 붙는다(#1660). 실행은 [`run-local`](../skills/run-local/SKILL.md).
 - 워크트리는 작업이 끝나도 자동으로 지우지 않는다. PR이 merge된 뒤 정리한다.
 
   ```bash

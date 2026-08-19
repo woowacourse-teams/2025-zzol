@@ -1,11 +1,11 @@
 package coffeeshout.racinggame.domain;
 
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.gamecommon.Gamer;
-import coffeeshout.gamecommon.Playable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -56,7 +56,7 @@ public class RacingGame implements Playable {
 
     public void stopAutoMove() {
         if (autoMoveFuture != null && !autoMoveFuture.isDone()) {
-            autoMoveFuture.cancel(true);
+            autoMoveFuture.cancel(false);
         }
     }
 
@@ -67,10 +67,7 @@ public class RacingGame implements Playable {
 
     private void validatePlaying() {
         if (state != RacingGameState.PLAYING) {
-            throw new BusinessException(
-                    RacingGameErrorCode.NOT_PLAYING_STATE,
-                    "현재 게임 상태가 플레이 중이 아닙니다: " + state
-            );
+            throw new BusinessException(RacingGameErrorCode.NOT_PLAYING_STATE, "현재 게임 상태가 플레이 중이 아닙니다: " + state);
         }
     }
 

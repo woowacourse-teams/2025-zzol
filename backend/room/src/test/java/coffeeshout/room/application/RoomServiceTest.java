@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.doReturn;
 
 import coffeeshout.RoomModuleServiceTest;
@@ -19,8 +20,10 @@ import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.application.service.RoomCreateResult;
 import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomQueryService;
+import coffeeshout.room.application.service.RoulettePersistenceService;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.QrCodeStatus;
+import coffeeshout.room.domain.event.RouletteSpinEvent;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.RoomState;
@@ -39,6 +42,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -49,6 +53,10 @@ class RoomServiceTest extends RoomModuleServiceTest {
 
     @MockitoSpyBean
     DelayedRoomRemovalService delayedRoomRemovalService;
+
+    // 룰렛 결과 DB 저장은 이 테스트의 관심사가 아니고, PlayerEntity 영속을 요구해 픽스처만 무거워진다.
+    @MockitoBean
+    RoulettePersistenceService roulettePersistenceService;
 
     @MockitoSpyBean
     RoomEventWaitManager roomEventWaitManager;
@@ -253,6 +261,23 @@ class RoomServiceTest extends RoomModuleServiceTest {
         // then
         assertThat(winner).isNotNull();
         assertThat(createdRoom.getPlayers().stream().map(Player::getName)).contains(winner.name());
+    }
+
+    @Test
+    void 룰렛_결과_처리_후_끝난_방_정리를_예약한다() {
+        // given
+        String hostName = "호스트";
+        Room createdRoom = roomService.createRoom(hostName).room();
+        JoinCode joinCode = createdRoom.getJoinCode();
+        joinGuest(joinCode, "게스트1");
+        ReflectionTestUtils.setField(createdRoom, "roomState", RoomState.ROULETTE);
+        Winner winner = roomService.spinRoulette(joinCode.getValue(), hostName);
+
+        // when
+        roomService.spinRoulette(new RouletteSpinEvent(joinCode.getValue(), hostName, winner));
+
+        // then — 생성 시 걸어 둔 최대 수명이 아니라 끝난 방 전용 지연으로 예약돼야 한다
+        then(delayedRoomRemovalService).should().scheduleRemoveFinishedRoom(joinCode);
     }
 
     @Test

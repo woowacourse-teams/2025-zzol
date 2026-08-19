@@ -32,6 +32,8 @@ import org.springframework.scheduling.TaskScheduler;
 @ExtendWith(MockitoExtension.class)
 class DelayedRoomRemovalServiceTest {
 
+    private static final Duration FINISHED_REMOVAL_DELAY = Duration.ofSeconds(30);
+
     @Mock
     RoomCommandService roomCommandService;
 
@@ -53,11 +55,12 @@ class DelayedRoomRemovalServiceTest {
 
     @BeforeEach
     void setUp() {
-        Duration removalDelay = Duration.ofMillis(100);
+        Duration removalDelay = Duration.ofHours(1);
 
         delayedRoomRemovalService = new DelayedRoomRemovalService(
                 taskScheduler,
                 removalDelay,
+                FINISHED_REMOVAL_DELAY,
                 roomCommandService,
                 wsRecoveryService,
                 streamPublisher
@@ -92,6 +95,21 @@ class DelayedRoomRemovalServiceTest {
             delayedRoomRemovalService.scheduleRemoveRoom(joinCode2);
 
             then(taskScheduler).should(times(2)).schedule(any(Runnable.class), any(Instant.class));
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void 게임이_끝난_방은_최대_수명이_아니라_짧은_지연으로_예약한다() {
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willReturn(scheduledFuture);
+            final Instant before = Instant.now();
+
+            delayedRoomRemovalService.scheduleRemoveFinishedRoom(joinCode);
+
+            final ArgumentCaptor<Instant> startCaptor = ArgumentCaptor.forClass(Instant.class);
+            then(taskScheduler).should().schedule(any(Runnable.class), startCaptor.capture());
+            assertThat(startCaptor.getValue())
+                    .isBetween(before.plus(FINISHED_REMOVAL_DELAY), Instant.now().plus(FINISHED_REMOVAL_DELAY));
         }
     }
 

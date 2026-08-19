@@ -275,6 +275,10 @@ public class RoomService {
         roulettePersistenceService.saveRouletteResult(event);
 
         eventPublisher.publishEvent(new RouletteWinnerEvent(event.joinCode(), winner));
+
+        // 룰렛이 끝나면 방은 DONE이라 더 쓸 일이 없다. 생성 시 걸어 둔 최대 수명(scheduleRemoveRoom)까지
+        // 기다리면 참가자가 그동안 방에 갇힌 것으로 판정된다 — scheduleRemoveFinishedRoom 주석 참고.
+        delayedRoomRemovalService.scheduleRemoveFinishedRoom(new JoinCode(event.joinCode()));
     }
 
     private <T> CompletableFuture<T> processEventAsync(

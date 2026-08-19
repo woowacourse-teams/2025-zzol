@@ -2,7 +2,6 @@ package coffeeshout.friend.application.service;
 
 import coffeeshout.friend.application.PresenceTracker;
 import coffeeshout.friend.application.port.RoomInvitationValidator;
-import coffeeshout.friend.application.port.RoomMembershipQuery;
 import coffeeshout.friend.domain.FriendErrorCode;
 import coffeeshout.friend.domain.Friendship;
 import coffeeshout.friend.domain.event.RoomInvitationSentEvent;
@@ -11,7 +10,6 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserErrorCode;
 import coffeeshout.user.domain.repository.UserRepository;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -23,7 +21,6 @@ public class RoomInvitationService {
 
     private final UserRepository userRepository;
     private final RoomInvitationValidator roomInvitationValidator;
-    private final RoomMembershipQuery roomMembershipQuery;
     private final PresenceTracker presenceTracker;
     private final FriendshipRepository friendshipRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -54,9 +51,6 @@ public class RoomInvitationService {
     private void validateTargetCanBeInvited(Long targetUserId) {
         if (!presenceTracker.isOnline(targetUserId)) {
             throw new BusinessException(FriendErrorCode.FRIEND_OFFLINE, "접속 중이 아닌 친구는 초대할 수 없습니다.");
-        }
-        if (roomMembershipQuery.findByUserIds(List.of(targetUserId)).containsKey(targetUserId)) {
-            throw new BusinessException(FriendErrorCode.FRIEND_ALREADY_IN_ROOM, "이미 다른 방에 참여 중인 친구는 초대할 수 없습니다.");
         }
     }
 

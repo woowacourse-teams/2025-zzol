@@ -2,7 +2,6 @@ package coffeeshout.friend.application.service;
 
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -11,15 +10,12 @@ import coffeeshout.fixture.FriendshipFixture;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.friend.application.PresenceTracker;
 import coffeeshout.friend.application.port.RoomInvitationValidator;
-import coffeeshout.friend.application.port.RoomMembershipQuery;
 import coffeeshout.friend.domain.FriendErrorCode;
 import coffeeshout.friend.domain.Friendship;
-import coffeeshout.friend.domain.RoomMembership;
 import coffeeshout.friend.domain.event.RoomInvitationSentEvent;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
-import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,9 +43,6 @@ class RoomInvitationServiceTest {
 
     @Mock
     private RoomInvitationValidator roomInvitationValidator;
-
-    @Mock
-    private RoomMembershipQuery roomMembershipQuery;
 
     @Mock
     private PresenceTracker presenceTracker;
@@ -82,8 +75,7 @@ class RoomInvitationServiceTest {
         @DisplayName("접속 중이고 어느 방에도 없으면 초대장을 발행한다")
         void 접속_중이고_어느_방에도_없으면_초대장을_발행한다() {
             given(presenceTracker.isOnline(대상_ID)).willReturn(true);
-            given(roomMembershipQuery.findByUserIds(anyCollection())).willReturn(Map.of());
-
+    
             roomInvitationService.invite(초대자_ID, 대상_ID, JOIN_CODE);
 
             then(eventPublisher).should().publishEvent(any(RoomInvitationSentEvent.class));
@@ -96,18 +88,6 @@ class RoomInvitationServiceTest {
 
             assertCoffeeShoutException(
                     () -> roomInvitationService.invite(초대자_ID, 대상_ID, JOIN_CODE), FriendErrorCode.FRIEND_OFFLINE);
-        }
-
-        @Test
-        @DisplayName("이미 다른 방에 있는 친구는 초대할 수 없다")
-        void 이미_다른_방에_있는_친구는_초대할_수_없다() {
-            given(presenceTracker.isOnline(대상_ID)).willReturn(true);
-            given(roomMembershipQuery.findByUserIds(anyCollection()))
-                    .willReturn(Map.of(대상_ID, new RoomMembership("BCDF", true)));
-
-            assertCoffeeShoutException(
-                    () -> roomInvitationService.invite(초대자_ID, 대상_ID, JOIN_CODE),
-                    FriendErrorCode.FRIEND_ALREADY_IN_ROOM);
         }
 
         @Test

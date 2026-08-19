@@ -4,9 +4,9 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.roulette.ProbabilityCalculator;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.Getter;
 
 @Getter
@@ -16,7 +16,9 @@ public class Players {
     private final ColorUsage colorUsage;
 
     public Players(String joinCode) {
-        this.players = new ArrayList<>();
+        // 방을 소유하지 않은 스레드(친구 알림·조회)가 동시에 훑는다. 순회 중 add/remove가 겹쳐도 깨지지 않도록
+        // 스냅샷 순회 리스트를 쓴다. 방 인원은 한 자릿수라 쓰기 시 복사 비용은 무시할 수 있다.
+        this.players = new CopyOnWriteArrayList<>();
         this.colorUsage = new ColorUsage(joinCode);
     }
 

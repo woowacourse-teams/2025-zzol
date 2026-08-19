@@ -3,7 +3,6 @@ package coffeeshout.room.application.service;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.player.Player;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -17,9 +16,8 @@ import java.util.stream.Collectors;
 public record RoomPresence(String joinCode, Set<Long> userIds, boolean joinable) {
 
     public static RoomPresence of(Room room) {
-        // 방을 소유하지 않은 스레드의 입퇴장과 겹치면 Players의 내부 리스트 순회가 깨진다.
-        // MemoryRoomRepository.findAllByUserIds와 같은 이유로 먼저 복사해 훑는다.
-        final Set<Long> userIds = List.copyOf(room.getPlayers()).stream()
+        // 방을 소유하지 않은 스레드에서 훑는다 — 순회 중 입퇴장이 겹쳐도 안전한 이유는 Players 생성자에 있다.
+        final Set<Long> userIds = room.getPlayers().stream()
                 .map(Player::getUserId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableSet());

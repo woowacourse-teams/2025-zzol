@@ -1,16 +1,47 @@
 package coffeeshout.room.domain.player;
 
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.roulette.ProbabilityCalculator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class PlayersTest {
+
+    @Test
+    void 다른_스레드가_입퇴장하는_동안_순회해도_깨지지_않는다() {
+        // given - 방 밖 스레드(친구 알림·조회)가 훑는 사이 방 소유 스레드가 입퇴장시키는 상황
+        final Players players = new Players("ABC23");
+        players.join(PlayerFixture.호스트한스());
+        final PlayerName 루키 = PlayerFixture.게스트루키().getName();
+        final AtomicBoolean 순회중 = new AtomicBoolean(true);
+
+        // when
+        final CompletableFuture<Void> 입퇴장 = CompletableFuture.runAsync(() -> {
+            while (순회중.get()) {
+                players.join(PlayerFixture.게스트루키());
+                players.removePlayer(루키);
+            }
+        });
+        final Throwable 순회예외 = catchThrowable(() -> {
+            for (int i = 0; i < 10_000; i++) {
+                List.copyOf(players.getPlayers()).forEach(Player::getName);
+            }
+        });
+        순회중.set(false);
+        입퇴장.join();
+
+        // then
+        assertThat(순회예외).isNull();
+    }
 
     @Test
     void 순위를_기반으로_확률을_조정한다() {

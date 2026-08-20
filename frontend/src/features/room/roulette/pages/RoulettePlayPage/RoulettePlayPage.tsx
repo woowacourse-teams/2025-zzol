@@ -101,11 +101,16 @@ const RoulettePlayPage = () => {
       <Layout.TopBar />
       <Layout.Content>
         <S.Container>
-          <SectionTitle title="룰렛 현황" description="미니게임 결과에 따라 확률이 조정됩니다" />
+          <SectionTitle
+            title="룰렛 현황"
+            description="미니게임 결과에 따라 확률이 조정됩니다"
+            suffix={
+              <S.ToggleWrapper>
+                <RouletteViewToggle currentView={currentView} onViewChange={handleViewChange} />
+              </S.ToggleWrapper>
+            }
+          />
           <LocalErrorBoundary>{VIEW_COMPONENTS[currentView]}</LocalErrorBoundary>
-          <S.IconButtonWrapper>
-            <RouletteViewToggle currentView={currentView} onViewChange={handleViewChange} />
-          </S.IconButtonWrapper>
         </S.Container>
       </Layout.Content>
       <Layout.ButtonBar>

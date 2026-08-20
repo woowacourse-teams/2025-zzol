@@ -1,5 +1,5 @@
 export { interpolateAngles } from './interpolateAngles';
-export { getTextPosition } from './getTextPosition';
+export { getSliceLabel } from './getSliceLabel';
 export { getCenterAngle } from './getCenterAngle';
 export { convertProbabilitiesToAngles } from './convertProbabilitiesToAngles';
 export { getPlayersWithAngles } from './getPlayerWithAngles.ts';

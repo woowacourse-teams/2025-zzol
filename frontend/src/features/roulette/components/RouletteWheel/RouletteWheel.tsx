@@ -1,4 +1,5 @@
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
+import { theme } from '@/styles/theme';
 import { PlayerProbability, RouletteSector } from '@/types/roulette';
 import { memo } from 'react';
 import { WHEEL_CONFIG } from '../../constants/config';
@@ -19,6 +20,8 @@ type Props =
       isSpinStarted?: boolean;
       finalRotation?: number;
     };
+
+const DIVIDER_WIDTH = 2;
 
 const RouletteWheel = ({
   sectors,
@@ -41,19 +44,23 @@ const RouletteWheel = ({
       <Pin />
       <S.Wrapper $isSpinStarted={isSpinStarted} $finalRotation={finalRotation}>
         <svg
-          width={WHEEL_CONFIG.SIZE}
-          height={WHEEL_CONFIG.SIZE}
           viewBox={`0 0 ${WHEEL_CONFIG.SIZE} ${WHEEL_CONFIG.SIZE}`}
+          role="img"
+          aria-label="참가자별 당첨 확률 룰렛"
         >
-          <GlowFilter />
-          {sortedPlayers.map((player) => (
-            <RouletteSlice
-              key={player.playerName}
-              player={player}
-              strokeColor={player.playerName === myName ? '#FFFF8F' : 'transparent'}
-              isGlowing={player.playerName === myName}
-            />
-          ))}
+          {sortedPlayers.map((player) => {
+            const isMine = player.playerName === myName;
+
+            return (
+              <RouletteSlice
+                key={player.playerName}
+                player={player}
+                // 조각마다 흰 구분선을 둔다. 없으면 비슷한 색이 이웃할 때 경계가 사라진다.
+                strokeColor={isMine ? theme.color.yellow : theme.color.white}
+                strokeWidth={isMine ? WHEEL_CONFIG.STROKE_WIDTH : DIVIDER_WIDTH}
+              />
+            );
+          })}
         </svg>
       </S.Wrapper>
     </S.Container>
@@ -64,16 +71,3 @@ export default RouletteWheel;
 
 const Pin = memo(() => <S.Pin />);
 Pin.displayName = 'Pin';
-
-const GlowFilter = memo(({ id = 'glow' }: { id?: string }) => (
-  <defs>
-    <filter id={id} x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="5" result="coloredBlur" />
-      <feMerge>
-        <feMergeNode in="coloredBlur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
-  </defs>
-));
-GlowFilter.displayName = 'GlowFilter';

@@ -34,11 +34,13 @@ export const Interactive: StoryObj<typeof RouletteWheel> = {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
-        <RouletteWheel
-          playerProbabilities={mockPlayerProbabilities}
-          isSpinStarted={isSpinStarted}
-          finalRotation={finalRotation}
-        />
+        <div style={{ width: 300, height: 300 }}>
+          <RouletteWheel
+            playerProbabilities={mockPlayerProbabilities}
+            isSpinStarted={isSpinStarted}
+            finalRotation={finalRotation}
+          />
+        </div>
         <div style={{ display: 'flex', gap: 16 }}>
           <button onClick={handleSpin} disabled={isSpinStarted}>
             {isSpinStarted ? '돌아가는 중...' : '돌리기'}
@@ -73,11 +75,13 @@ export const WithFixedRotation: StoryObj<typeof RouletteWheel> = {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
-        <RouletteWheel
-          playerProbabilities={mockPlayerProbabilities}
-          isSpinStarted={isSpinStarted}
-          finalRotation={finalRotation}
-        />
+        <div style={{ width: 300, height: 300 }}>
+          <RouletteWheel
+            playerProbabilities={mockPlayerProbabilities}
+            isSpinStarted={isSpinStarted}
+            finalRotation={finalRotation}
+          />
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
           <button onClick={handleSpin} disabled={isSpinStarted}>
             {isSpinStarted ? '돌아가는 중...' : '돌리기'}
@@ -101,49 +105,50 @@ export const WithFixedRotation: StoryObj<typeof RouletteWheel> = {
 };
 
 const mockPlayerProbabilities = [
+  // 최대 길이(10자) 닉네임과 이름을 그리지 않는 얇은 조각(2%)을 함께 둔다
   {
-    playerName: '홍길동',
-    probability: 15.0,
+    playerName: '제발당첨되게해주세요',
+    probability: 18.0,
     playerColor: colorList[0],
   },
   {
-    playerName: '김철수',
-    probability: 12.0,
+    playerName: '커피사주세요',
+    probability: 15.0,
     playerColor: colorList[1],
   },
   {
-    playerName: '이순신',
-    probability: 18.0,
+    playerName: '룰렛장인',
+    probability: 14.0,
     playerColor: colorList[2],
   },
   {
-    playerName: '박영희',
-    probability: 10.0,
+    playerName: '오늘은내가쏜다',
+    probability: 12.0,
     playerColor: colorList[3],
   },
   {
-    playerName: '정민수',
-    probability: 14.0,
+    playerName: '김철수',
+    probability: 11.0,
     playerColor: colorList[4],
   },
   {
-    playerName: '최지영',
+    playerName: '이순신',
     probability: 11.0,
     playerColor: colorList[5],
   },
   {
-    playerName: '강동원',
-    probability: 8.0,
+    playerName: '행운의여신',
+    probability: 10.0,
     playerColor: colorList[6],
   },
   {
-    playerName: '윤서연',
+    playerName: '박영희',
     probability: 7.0,
     playerColor: colorList[7],
   },
   {
-    playerName: '임태현',
-    probability: 5.0,
+    playerName: '막차탄사람',
+    probability: 2.0,
     playerColor: colorList[8],
   },
 ];

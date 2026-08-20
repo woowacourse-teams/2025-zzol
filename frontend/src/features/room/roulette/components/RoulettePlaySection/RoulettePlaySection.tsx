@@ -3,7 +3,7 @@ import { useProbabilityHistory } from '@/contexts/ProbabilityHistory/Probability
 import { convertProbabilitiesToAngles } from '@/features/roulette/utils/convertProbabilitiesToAngles';
 import { calculateFinalRotation } from '../../utils/calculateFinalRotation';
 import AnimatedRouletteWheel from '../AnimatedRouletteWheel/AnimatedRouletteWheel';
-import ProbabilitiesText from '../ProbabilitiesText/ProbabilitiesText';
+import NearbyProbabilityList from '../NearbyProbabilityList/NearbyProbabilityList';
 import RouletteWheelBack from '@/features/roulette/components/RouletteWheelBack/RouletteWheelBack';
 import Flip from '@/components/@common/Flip/Flip';
 import { RefObject, useEffect, useState } from 'react';
@@ -40,20 +40,22 @@ const RoulettePlaySection = ({ isSpinStarted, winner, randomAngle, isFirstLoadRe
 
   return (
     <S.Container>
-      <S.RouletteWheelWrapper>
-        <Flip
-          flipped={isFlipped}
-          initialView={<RouletteWheelBack />}
-          flippedView={
-            <AnimatedRouletteWheel
-              finalRotation={finalRotation}
-              isSpinStarted={isSpinStarted}
-              startAnimation={isFlipped}
-            />
-          }
-        />
-      </S.RouletteWheelWrapper>
-      <ProbabilitiesText isProbabilitiesLoading={isLoading} />
+      <S.RouletteWheelArea>
+        <S.RouletteWheelWrapper>
+          <Flip
+            flipped={isFlipped}
+            initialView={<RouletteWheelBack />}
+            flippedView={
+              <AnimatedRouletteWheel
+                finalRotation={finalRotation}
+                isSpinStarted={isSpinStarted}
+                startAnimation={isFlipped}
+              />
+            }
+          />
+        </S.RouletteWheelWrapper>
+      </S.RouletteWheelArea>
+      <NearbyProbabilityList isProbabilitiesLoading={isLoading} />
     </S.Container>
   );
 };

@@ -1,17 +1,20 @@
 import { RouletteSector } from '@/types/roulette';
 import * as S from './RouletteSlice.styled';
 import { WHEEL_CONFIG } from '../../constants/config';
-import { getCenterAngle, getTextPosition, describeArc } from '../../utils';
+import { getSliceLabel, describeArc } from '../../utils';
 
 type Props = {
   player: RouletteSector;
   strokeColor: string;
-  isGlowing?: boolean;
+  strokeWidth: number;
 };
 
-const RouletteSlice = ({ player, strokeColor, isGlowing = false }: Props) => {
-  const centerAngle = getCenterAngle(player.startAngle, player.endAngle);
-  const textPosition = getTextPosition(centerAngle);
+const RouletteSlice = ({ player, strokeColor, strokeWidth }: Props) => {
+  const label = getSliceLabel({
+    startAngle: player.startAngle,
+    endAngle: player.endAngle,
+    nameLength: player.playerName.length,
+  });
 
   const isFullCircle = player.startAngle === 0 && player.endAngle === 360;
 
@@ -24,8 +27,7 @@ const RouletteSlice = ({ player, strokeColor, isGlowing = false }: Props) => {
           r={WHEEL_CONFIG.RADIUS}
           fill={player.playerColor}
           stroke={strokeColor}
-          strokeWidth={WHEEL_CONFIG.STROKE_WIDTH}
-          filter={isGlowing ? 'url(#glow)' : undefined}
+          strokeWidth={strokeWidth}
         />
       ) : (
         <path
@@ -38,18 +40,23 @@ const RouletteSlice = ({ player, strokeColor, isGlowing = false }: Props) => {
           })}
           fill={player.playerColor}
           stroke={strokeColor}
-          strokeWidth={WHEEL_CONFIG.STROKE_WIDTH}
-          filter={isGlowing ? 'url(#glow)' : undefined}
+          strokeWidth={strokeWidth}
+          strokeLinejoin="round"
         />
       )}
-      <S.PlayerNameText
-        x={textPosition.x}
-        y={textPosition.y}
-        textAnchor="middle"
-        dominantBaseline="middle"
-      >
-        {player.playerName}
-      </S.PlayerNameText>
+      {/* 조각이 너무 얇으면 label 이 null 이다 — 이름은 아래 확률 리스트가 읽어준다 */}
+      {label && (
+        <S.PlayerNameText
+          x={label.x}
+          y={label.y}
+          fontSize={label.fontSize}
+          transform={`rotate(${label.rotate} ${WHEEL_CONFIG.CENTER} ${WHEEL_CONFIG.CENTER})`}
+          textAnchor="middle"
+          dominantBaseline="middle"
+        >
+          {player.playerName}
+        </S.PlayerNameText>
+      )}
     </g>
   );
 };

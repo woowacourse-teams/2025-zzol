@@ -7,20 +7,25 @@ type WrapperProps = {
 };
 
 export const Container = styled.div`
-  width: 300px;
-  height: 300px;
+  width: 100%;
+  height: 100%;
   position: relative;
 `;
 
 export const Wrapper = styled.div<WrapperProps>`
-  width: 300px;
-  height: 300px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.color.point[100]};
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
 
   --final-rotation: ${({ $finalRotation }) => $finalRotation ?? 0}deg;
 
@@ -41,15 +46,16 @@ export const Wrapper = styled.div<WrapperProps>`
   }
 `;
 
+// 휠 위로 뺀다. 안으로 파고들면 반경 방향으로 누운 12시 조각의 이름을 가린다.
 export const Pin = styled.div`
   width: 0;
   height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-top: 30px solid ${({ theme }) => theme.color.gray[500]};
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-top: 26px solid ${({ theme }) => theme.color.gray[500]};
   border-radius: 4px;
   position: absolute;
-  top: -5px;
+  top: -24px;
   left: 50%;
   transform: translateX(-50%);
   z-index: ${Z_INDEX.ROULETTE_PIN};

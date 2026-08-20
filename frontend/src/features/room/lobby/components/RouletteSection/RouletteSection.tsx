@@ -24,10 +24,15 @@ export const RouletteSection = ({ playerProbabilities }: Props) => {
   return (
     <>
       {message && <ScreenReaderOnly>{message}</ScreenReaderOnly>}
-      <SectionTitle title="룰렛" description="미니게임을 통해 당첨 확률이 조정됩니다" />
-      <S.IconButtonWrapper>
-        <RouletteViewToggle currentView={currentView} onViewChange={handleViewChange} />
-      </S.IconButtonWrapper>
+      <SectionTitle
+        title="룰렛"
+        description="미니게임을 통해 당첨 확률이 조정됩니다"
+        suffix={
+          <S.ToggleWrapper>
+            <RouletteViewToggle currentView={currentView} onViewChange={handleViewChange} />
+          </S.ToggleWrapper>
+        }
+      />
       {renderContent(currentView, playerProbabilities)}
     </>
   );
@@ -40,9 +45,11 @@ const renderContent = (currentView: RouletteView, playerProbabilities: PlayerPro
     case 'roulette':
     default:
       return (
-        <S.RouletteWheelWrapper>
-          <RouletteWheel playerProbabilities={playerProbabilities} />
-        </S.RouletteWheelWrapper>
+        <S.RouletteWheelArea>
+          <S.RouletteWheelWrapper>
+            <RouletteWheel playerProbabilities={playerProbabilities} />
+          </S.RouletteWheelWrapper>
+        </S.RouletteWheelArea>
       );
   }
 };

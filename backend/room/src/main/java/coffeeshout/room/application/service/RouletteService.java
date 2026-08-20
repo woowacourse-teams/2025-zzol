@@ -7,7 +7,6 @@ import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
 import coffeeshout.room.application.port.RouletteResultEntityRepository;
-import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.infra.persistence.PlayerEntity;
@@ -25,15 +24,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class RouletteService {
 
     private final RoomQueryService roomQueryService;
+    private final RoomCommandService roomCommandService;
     private final RoomEntityRepository roomEntityRepository;
     private final PlayerEntityRepository playerEntityRepository;
     private final RouletteResultEntityRepository rouletteResultEntityRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public RoomState showRoulette(String joinCode) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        room.showRoulette();
-        return room.getRoomState();
+        return roomCommandService.showRoulette(new JoinCode(joinCode));
     }
 
     @Transactional

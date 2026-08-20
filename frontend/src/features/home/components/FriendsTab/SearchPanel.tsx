@@ -67,6 +67,8 @@ const ActionButton = ({ user, onRelationChange }: ActionProps) => {
         nickname: result.friendNickname,
         since: new Date().toISOString(),
         online: false,
+        joinCode: null,
+        joinable: false,
       });
       removeReceivedRequest(incomingRequest.requestId);
       setLocalStatus('FRIEND');

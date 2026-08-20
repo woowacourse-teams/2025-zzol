@@ -1,4 +1,4 @@
-package coffeeshout.friend.application.service;
+package coffeeshout.friend.domain;
 
 public enum RelationStatus {
     NONE,

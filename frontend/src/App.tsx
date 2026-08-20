@@ -4,7 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { WebSocketProvider } from './apis/websocket/contexts/WebSocketProvider';
 import { UserSocketProvider } from './apis/websocket/contexts/UserSocketProvider';
 import GlobalErrorBoundary from './components/@common/ErrorBoundary/GlobalErrorBoundary';
-import { ModalProvider } from './components/@common/Modal/ModalContext';
+import { ModalOutlet, ModalProvider } from './components/@common/Modal/ModalContext';
 import { ToastProvider } from './components/@common/Toast/ToastContext';
 import { AuthProvider } from './features/auth/contexts/AuthProvider';
 import { FriendsProvider } from './features/friends/contexts/FriendsProvider';
@@ -42,6 +42,8 @@ const App = () => {
                               <Suspense fallback={<div>Loading...</div>}>
                                 <Outlet />
                               </Suspense>
+                              {/* 모달 내용이 FriendsProvider 안에서 렌더되도록 여기 둔다 — ModalContext 주석 참고 */}
+                              <ModalOutlet />
                             </FriendsProvider>
                           </ModalProvider>
                         </ToastProvider>

@@ -1,7 +1,7 @@
 import BackButton from '@/components/@common/BackButton/BackButton';
 import Button from '@/components/@common/Button/Button';
 import CloseIcon from '@/components/@common/CloseIcon/CloseIcon';
-import { ModalProvider } from '@/components/@common/Modal/ModalContext';
+import { ModalOutlet, ModalProvider } from '@/components/@common/Modal/ModalContext';
 import useModal from '@/components/@common/Modal/useModal';
 import { ColorKey } from '@/constants/color';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
@@ -229,6 +229,7 @@ export const ModalWithLayout: Story = {
   render: () => (
     <ModalProvider>
       <ModalWithLayoutComponent />
+      <ModalOutlet />
     </ModalProvider>
   ),
   parameters: {

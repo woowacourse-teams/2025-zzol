@@ -25,6 +25,12 @@ export const RouletteWheelArea = styled.div`
 
 /** 남은 공간에 들어가는 가장 큰 정사각형 */
 export const RouletteWheelWrapper = styled.div`
+  /*
+   * 컨테이너 쿼리 단위를 모르는 브라우저는 아래 줄을 통째로 버린다. 폭 선언이 하나도 없으면
+   * 자식이 전부 absolute 라 내용 폭이 0 이 되고, aspect-ratio 가 높이까지 0 으로 만들어
+   * 휠이 사라진다. 폴백을 먼저 둬서 그 경우 대기방과 같은 폭 기준으로 떨어지게 한다.
+   */
+  width: 100%;
   width: min(100cqw, 100cqh);
   aspect-ratio: 1;
 `;

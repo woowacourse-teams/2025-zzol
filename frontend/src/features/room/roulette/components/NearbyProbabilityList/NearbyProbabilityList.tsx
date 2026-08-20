@@ -21,7 +21,10 @@ const NearbyProbabilityList = ({ isProbabilitiesLoading }: Props) => {
   const nearbyPlayers = pickNearbyPlayers(probabilityHistory.current, myName);
   const myProbabilityChange = getMyProbabilityChange(probabilityHistory, myName);
 
-  if (nearbyPlayers.length === 0) return null;
+  // 확률이 오기 전에는 비어 있어도 자리를 잡아 둔다. 여기서 null 을 돌려주면 데이터가 도착하는
+  // 순간 리스트 높이만큼 휠이 갑자기 줄어든다 (휠이 남는 높이를 전부 쓰기 때문).
+  // 다 받았는데도 비어 있다면(내가 목록에 없는 경우) 그릴 것이 없으므로 아무것도 내지 않는다.
+  if (nearbyPlayers.length === 0 && !isProbabilitiesLoading) return null;
 
   return (
     <S.Container $isLoading={isProbabilitiesLoading}>

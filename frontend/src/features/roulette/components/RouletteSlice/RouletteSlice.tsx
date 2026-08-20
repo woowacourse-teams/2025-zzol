@@ -44,7 +44,11 @@ const RouletteSlice = ({ player, strokeColor, strokeWidth }: Props) => {
           strokeLinejoin="round"
         />
       )}
-      {/* 조각이 너무 얇으면 label 이 null 이다 — 이름은 아래 확률 리스트가 읽어준다 */}
+      {/*
+        글자가 읽을 수 없을 만큼 작아지면 label 이 null 이다. 그 조각은 색 띠로만 남는다.
+        화면에서 이름을 확인하려면 확률 목록 토글을 써야 하고, 낭독은 화면에 함께 놓인
+        ScreenReaderOnly 요약이 전원을 읽어준다.
+      */}
       {label && (
         <S.PlayerNameText
           x={label.x}

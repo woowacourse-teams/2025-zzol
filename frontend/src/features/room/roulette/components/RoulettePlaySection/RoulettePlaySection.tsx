@@ -6,6 +6,8 @@ import AnimatedRouletteWheel from '../AnimatedRouletteWheel/AnimatedRouletteWhee
 import NearbyProbabilityList from '../NearbyProbabilityList/NearbyProbabilityList';
 import RouletteWheelBack from '@/features/roulette/components/RouletteWheelBack/RouletteWheelBack';
 import Flip from '@/components/@common/Flip/Flip';
+import ScreenReaderOnly from '@/components/@common/ScreenReaderOnly/ScreenReaderOnly';
+import { PlayerProbability } from '@/types/roulette';
 import { RefObject, useEffect, useState } from 'react';
 import useRouletteProbabilities from '../../pages/RoulettePlayPage/hooks/useRouletteProbabilities';
 
@@ -55,9 +57,23 @@ const RoulettePlaySection = ({ isSpinStarted, winner, randomAngle, isFirstLoadRe
           />
         </S.RouletteWheelWrapper>
       </S.RouletteWheelArea>
+      {/*
+        휠은 aria-hidden 이고 아래 리스트는 나와 가까운 사람만 보여준다.
+        얇은 조각이라 이름이 그려지지 않은 참가자까지 낭독되도록 전원을 여기서 읽어준다.
+      */}
+      {!isLoading && (
+        <ScreenReaderOnly>{describeProbabilities(probabilityHistory.current)}</ScreenReaderOnly>
+      )}
       <NearbyProbabilityList isProbabilitiesLoading={isLoading} />
     </S.Container>
   );
 };
+
+const describeProbabilities = (players: PlayerProbability[]) =>
+  players.length === 0
+    ? '현재 참여한 인원이 없습니다.'
+    : players
+        .map(({ playerName, probability }) => `${playerName}님의 확률 ${probability}%`)
+        .join(', ');
 
 export default RoulettePlaySection;

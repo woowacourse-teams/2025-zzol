@@ -43,11 +43,12 @@ const RouletteWheel = ({
     <S.Container>
       <Pin />
       <S.Wrapper $isSpinStarted={isSpinStarted} $finalRotation={finalRotation}>
-        <svg
-          viewBox={`0 0 ${WHEEL_CONFIG.SIZE} ${WHEEL_CONFIG.SIZE}`}
-          role="img"
-          aria-label="참가자별 당첨 확률 룰렛"
-        >
+        {/*
+          role="img" 를 주면 SVG 전체가 이미지 하나로 접히면서 조각 이름이 접근성 트리에서
+          사라진다. 얇은 조각은 이름을 아예 그리지 않으므로, 낭독은 SVG 가 아니라 화면에 함께
+          놓인 확률 목록이 맡는다 (대기방은 useRouletteScreenReader, 플레이 화면은 근접 확률 리스트).
+        */}
+        <svg viewBox={`0 0 ${WHEEL_CONFIG.SIZE} ${WHEEL_CONFIG.SIZE}`} aria-hidden="true">
           {sortedPlayers.map((player) => {
             const isMine = player.playerName === myName;
 

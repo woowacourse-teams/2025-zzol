@@ -7,7 +7,7 @@ import NearbyProbabilityList from '../NearbyProbabilityList/NearbyProbabilityLis
 import RouletteWheelBack from '@/features/roulette/components/RouletteWheelBack/RouletteWheelBack';
 import Flip from '@/components/@common/Flip/Flip';
 import ScreenReaderOnly from '@/components/@common/ScreenReaderOnly/ScreenReaderOnly';
-import { PlayerProbability } from '@/types/roulette';
+import { describeProbabilities } from '@/features/roulette/utils/describeProbabilities';
 import { RefObject, useEffect, useState } from 'react';
 import useRouletteProbabilities from '../../pages/RoulettePlayPage/hooks/useRouletteProbabilities';
 
@@ -68,12 +68,5 @@ const RoulettePlaySection = ({ isSpinStarted, winner, randomAngle, isFirstLoadRe
     </S.Container>
   );
 };
-
-const describeProbabilities = (players: PlayerProbability[]) =>
-  players.length === 0
-    ? '현재 참여한 인원이 없습니다.'
-    : players
-        .map(({ playerName, probability }) => `${playerName}님의 확률 ${probability}%`)
-        .join(', ');
 
 export default RoulettePlaySection;

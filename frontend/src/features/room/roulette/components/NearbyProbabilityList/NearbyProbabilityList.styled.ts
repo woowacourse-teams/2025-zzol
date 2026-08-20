@@ -74,9 +74,9 @@ export const Dot = styled.span<DotProps>`
   background-color: ${({ $color }) => $color};
 `;
 
+// h4 와 paragraph 는 글자 크기가 같고 굵기만 다르다(600 / 500). 내 행만 h4 로 바꿔 강조한다.
 export const Name = styled.span<{ $isMine: boolean }>`
-  ${({ theme }) => theme.typography.paragraph};
-  font-weight: ${({ $isMine }) => ($isMine ? 700 : 500)};
+  ${({ theme, $isMine }) => ($isMine ? theme.typography.h4 : theme.typography.paragraph)};
   color: ${({ theme }) => theme.color.gray[700]};
   flex: 1;
   min-width: 0;
@@ -86,15 +86,15 @@ export const Name = styled.span<{ $isMine: boolean }>`
 `;
 
 export const Probability = styled.span`
-  ${({ theme }) => theme.typography.paragraph};
-  font-weight: 700;
+  ${({ theme }) => theme.typography.h4};
   color: ${({ theme }) => theme.color.gray[700]};
   font-variant-numeric: tabular-nums;
 `;
 
 export const Change = styled.span<ChangeProps>`
-  ${({ theme }) => theme.typography.caption};
-  font-weight: 700;
+  font-size: ${({ theme }) => theme.typography.caption.fontSize};
+  line-height: ${({ theme }) => theme.typography.caption.lineHeight};
+  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
   color: ${({ $isPositive, theme }) => ($isPositive ? theme.color.red : theme.color.blue)};
   background-color: ${({ theme }) => theme.color.white};
   border-radius: 999px;

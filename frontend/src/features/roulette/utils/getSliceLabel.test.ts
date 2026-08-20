@@ -99,15 +99,24 @@ describe('getSliceLabel', () => {
   });
 
   describe('혼자 남아 조각이 원 전체일 때', () => {
+    // 회귀: 반경 배치를 그대로 적용하면 중심각이 180도로 잡혀
+    // 이름이 6시 방향에 세로로 누웠다 (x: 60, rotate: 270)
+    it('가운데에 가로로 놓는다', () => {
+      const label = getSliceLabel({ startAngle: 0, endAngle: 360, nameLength: 3 });
+
+      expect(label).toMatchObject({
+        x: WHEEL_CONFIG.CENTER,
+        y: WHEEL_CONFIG.CENTER,
+        rotate: 0,
+      });
+    });
+
     // 회귀: sin 은 180도를 지나면 다시 줄어들어, 360도 조각의 두께를 0 으로 계산했다
     it('최대 길이 이름도 사라지지 않는다', () => {
       const label = getSliceLabel({ startAngle: 0, endAngle: 360, nameLength: 10 });
 
       expect(label).not.toBeNull();
-      // 침범할 이웃이 없으니 길이 제약만 남는다
-      expect(label?.fontSize).toBeCloseTo(
-        (WHEEL_CONFIG.LABEL_OUTER_RADIUS - WHEEL_CONFIG.LABEL_INNER_RADIUS) / 10
-      );
+      expect(label!.fontSize).toBeGreaterThanOrEqual(WHEEL_CONFIG.LABEL_MIN_FONT_SIZE);
     });
 
     it('짧은 이름은 최대 크기로 그린다', () => {

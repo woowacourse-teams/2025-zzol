@@ -1,7 +1,6 @@
-import ScreenReaderOnly from '@/components/@common/ScreenReaderOnly/ScreenReaderOnly';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useProbabilityHistory } from '@/contexts/ProbabilityHistory/ProbabilityHistoryContext';
-import { pickNearbyPlayers } from '@/features/roulette/utils/pickNearbyPlayers';
+import { pickNearbyPlayers } from '../../utils/pickNearbyPlayers';
 import { ProbabilityHistory } from '@/types/roulette';
 import * as S from './NearbyProbabilityList.styled';
 
@@ -38,8 +37,10 @@ const NearbyProbabilityList = ({ isProbabilitiesLoading }: Props) => {
               <S.Dot $color={playerColor} />
               <S.Name $isMine={isMine}>{playerName}</S.Name>
               {isMine && (
+                // 부호가 증감을 그대로 전달하므로 따로 낭독용 텍스트를 두지 않는다.
+                // ScreenReaderOnly 는 div + aria-live 라 span 안에 넣으면 무효 마크업이고,
+                // 확률이 갱신될 때마다 "증가"만 문맥 없이 읽힌다.
                 <S.Change $isPositive={myProbabilityChange >= 0}>
-                  <ScreenReaderOnly>{myProbabilityChange >= 0 ? '증가' : '감소'}</ScreenReaderOnly>
                   {formatChange(myProbabilityChange)}
                 </S.Change>
               )}

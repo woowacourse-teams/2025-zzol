@@ -1,5 +1,6 @@
 import { Z_INDEX } from '@/constants/zIndex';
 import styled from '@emotion/styled';
+import { WHEEL_CONFIG } from '../../constants/config';
 
 type WrapperProps = {
   $isSpinStarted?: boolean;
@@ -55,7 +56,7 @@ export const Pin = styled.div`
   border-top: 26px solid ${({ theme }) => theme.color.gray[500]};
   border-radius: 4px;
   position: absolute;
-  top: -24px;
+  top: -${WHEEL_CONFIG.PIN_OVERHANG}px;
   left: 50%;
   transform: translateX(-50%);
   z-index: ${Z_INDEX.ROULETTE_PIN};

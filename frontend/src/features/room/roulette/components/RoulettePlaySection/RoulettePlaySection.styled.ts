@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { WHEEL_CONFIG } from '@/features/roulette/constants/config';
 
 export const Container = styled.section`
   display: flex;
@@ -18,8 +19,8 @@ export const RouletteWheelArea = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  /* 핀이 휠 위로 24px 튀어나온다 — 그만큼 비워야 제목과 겹치지 않는다 */
-  padding-top: 24px;
+  /* 핀이 휠 위로 튀어나오는 만큼 비운다 — 안 비우면 제목과 겹친다 */
+  padding-top: ${WHEEL_CONFIG.PIN_OVERHANG}px;
   container-type: size;
 `;
 

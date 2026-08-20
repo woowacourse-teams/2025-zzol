@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { WHEEL_CONFIG } from '../../constants/config';
 
 export const Container = styled.div`
   position: relative;
@@ -31,7 +32,7 @@ export const Pin = styled.div`
   border-top: 26px solid ${({ theme }) => theme.color.gray[500]};
   border-radius: 4px;
   position: absolute;
-  top: -24px;
+  top: -${WHEEL_CONFIG.PIN_OVERHANG}px;
   left: 50%;
   transform: translateX(-50%);
   z-index: -1;

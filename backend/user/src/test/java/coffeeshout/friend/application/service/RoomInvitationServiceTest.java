@@ -75,7 +75,7 @@ class RoomInvitationServiceTest {
         @DisplayName("접속 중이고 어느 방에도 없으면 초대장을 발행한다")
         void 접속_중이고_어느_방에도_없으면_초대장을_발행한다() {
             given(presenceTracker.isOnline(대상_ID)).willReturn(true);
-    
+
             roomInvitationService.invite(초대자_ID, 대상_ID, JOIN_CODE);
 
             then(eventPublisher).should().publishEvent(any(RoomInvitationSentEvent.class));

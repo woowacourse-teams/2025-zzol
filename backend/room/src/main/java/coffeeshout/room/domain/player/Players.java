@@ -35,8 +35,8 @@ public class Players {
      * 경로(ADR-0025 결정 5)에서 사용한다. 동점 수는 {@code MiniGameResult.getTieCountByRank}와 동일하게
      * "같은 순위를 가진 플레이어 수"로 계산한다.
      */
-    public void adjustProbabilities(Map<PlayerName, Integer> rankByPlayer,
-                                    ProbabilityCalculator probabilityCalculator) {
+    public void adjustProbabilities(
+            Map<PlayerName, Integer> rankByPlayer, ProbabilityCalculator probabilityCalculator) {
         for (Player player : players) {
             final int rank = rankByPlayer.get(player.getName());
             final int tieCount = (int) rankByPlayer.values().stream()
@@ -57,9 +57,7 @@ public class Players {
                 .filter(p -> p.sameName(playerName))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
-                        RoomErrorCode.NO_EXIST_PLAYER,
-                        "사용자가 존재하지 않습니다. name = " + playerName.value()
-                ));
+                        RoomErrorCode.NO_EXIST_PLAYER, "사용자가 존재하지 않습니다. name = " + playerName.value()));
     }
 
     public int getPlayerCount() {
@@ -71,8 +69,7 @@ public class Players {
     }
 
     public boolean isAllReady() {
-        return players.stream()
-                .allMatch(Player::getIsReady);
+        return players.stream().allMatch(Player::getIsReady);
     }
 
     public boolean removePlayer(PlayerName playerName) {
@@ -87,16 +84,12 @@ public class Players {
     }
 
     public boolean existsByName(PlayerName playerName) {
-        return players.stream()
-                .anyMatch(player -> player.sameName(playerName));
+        return players.stream().anyMatch(player -> player.sameName(playerName));
     }
 
     public Player getFirstPlayer() {
         if (players.isEmpty()) {
-            throw new BusinessException(
-                    RoomErrorCode.NO_EXIST_PLAYER,
-                    "플레이어가 존재하지 않습니다."
-            );
+            throw new BusinessException(RoomErrorCode.NO_EXIST_PLAYER, "플레이어가 존재하지 않습니다.");
         }
         return players.getFirst();
     }

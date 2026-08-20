@@ -74,7 +74,8 @@ public class DelayedRoomRemovalService {
         try {
             log.info("방 지연 삭제 스케줄링: joinCode={}, delay={}초", joinCode.getValue(), delay.getSeconds());
 
-            taskScheduler.schedule(() -> executeRoomRemoval(joinCode), Instant.now().plus(delay));
+            taskScheduler.schedule(
+                    () -> executeRoomRemoval(joinCode), Instant.now().plus(delay));
         } catch (Exception e) {
             log.error("방 제거 스케줄링 실패: joinCode={}", joinCode.getValue(), e);
         }

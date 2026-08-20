@@ -20,13 +20,13 @@ import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.application.service.RoomCreateResult;
 import coffeeshout.room.application.service.RoomEnterResult;
 import coffeeshout.room.application.service.RoomQueryService;
-import coffeeshout.room.application.service.RoulettePersistenceService;
 import coffeeshout.room.application.service.RoomService;
+import coffeeshout.room.application.service.RoulettePersistenceService;
 import coffeeshout.room.domain.QrCodeStatus;
-import coffeeshout.room.domain.event.RouletteSpinEvent;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.domain.RoomState;
+import coffeeshout.room.domain.event.RouletteSpinEvent;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
@@ -90,7 +90,8 @@ class RoomServiceTest extends RoomModuleServiceTest {
             final RoomSessionClaim claim = roomSessionTokenService.verify(result.roomSessionToken());
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(claim.joinCode()).isEqualTo(result.room().getJoinCode().getValue());
+                softly.assertThat(claim.joinCode())
+                        .isEqualTo(result.room().getJoinCode().getValue());
                 softly.assertThat(claim.playerName()).isEqualTo("호스트");
                 softly.assertThat(claim.userId()).isNull();
             });
@@ -104,9 +105,12 @@ class RoomServiceTest extends RoomModuleServiceTest {
         void 게스트_방_입장_RST에는_올바른_클레임이_담겨있다() throws Exception {
             final Room room = roomService.createRoom("호스트").room();
             final String joinCode = room.getJoinCode().getValue();
-            doReturn(CompletableFuture.completedFuture(room)).when(roomEventWaitManager).registerWait(anyString());
+            doReturn(CompletableFuture.completedFuture(room))
+                    .when(roomEventWaitManager)
+                    .registerWait(anyString());
 
-            final RoomEnterResult result = roomService.enterRoomAsync(joinCode, "게스트").get();
+            final RoomEnterResult result =
+                    roomService.enterRoomAsync(joinCode, "게스트").get();
             final RoomSessionClaim claim = roomSessionTokenService.verify(result.roomSessionToken());
 
             SoftAssertions.assertSoftly(softly -> {
@@ -134,7 +138,8 @@ class RoomServiceTest extends RoomModuleServiceTest {
             joinGuest(createdRoom.getJoinCode(), "게스트1");
             joinGuest(createdRoom.getJoinCode(), "게스트2");
 
-            final String nickname = roomService.generateRandomNicknameForGuest(createdRoom.getJoinCode().getValue());
+            final String nickname = roomService.generateRandomNicknameForGuest(
+                    createdRoom.getJoinCode().getValue());
 
             assertThat(nickname).isNotIn("호스트", "게스트1", "게스트2");
         }
@@ -150,24 +155,19 @@ class RoomServiceTest extends RoomModuleServiceTest {
 
         @Test
         void 정상_닉네임으로_방을_생성한다() {
-            assertThatCode(() -> roomService.createRoom("용감한호랑이"))
-                    .doesNotThrowAnyException();
+            assertThatCode(() -> roomService.createRoom("용감한호랑이")).doesNotThrowAnyException();
         }
 
         @Test
         void 비속어_호스트_닉네임으로_방_생성이_실패한다() {
             assertCoffeeShoutException(
-                    () -> roomService.createRoom("씨발"),
-                    RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY
-            );
+                    () -> roomService.createRoom("씨발"), RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
         }
 
         @Test
         void 공백_우회_비속어_호스트_닉네임으로_방_생성이_실패한다() {
             assertCoffeeShoutException(
-                    () -> roomService.createRoom("씨 발"),
-                    RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY
-            );
+                    () -> roomService.createRoom("씨 발"), RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
         }
 
         @Test
@@ -176,9 +176,7 @@ class RoomServiceTest extends RoomModuleServiceTest {
 
             String joinCode = createdRoom.getJoinCode().getValue();
             assertCoffeeShoutException(
-                    () -> roomService.enterRoomAsync(joinCode, "씨발"),
-                    RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY
-            );
+                    () -> roomService.enterRoomAsync(joinCode, "씨발"), RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY);
         }
     }
 
@@ -209,7 +207,8 @@ class RoomServiceTest extends RoomModuleServiceTest {
         joinGuest(createdRoom.getJoinCode(), guestName);
 
         // when
-        List<ProbabilityResponse> probabilities = roomService.getProbabilities(createdRoom.getJoinCode().getValue());
+        List<ProbabilityResponse> probabilities =
+                roomService.getProbabilities(createdRoom.getJoinCode().getValue());
 
         // then
         assertThat(probabilities).hasSize(2);
@@ -242,8 +241,10 @@ class RoomServiceTest extends RoomModuleServiceTest {
         createdRoom.joinGuest(guestName);
 
         // when & then
-        assertThat(roomService.isGuestNameDuplicated(joinCode.getValue(), guestName.value())).isTrue();
-        assertThat(roomService.isGuestNameDuplicated(joinCode.getValue(), "uniqueName")).isFalse();
+        assertThat(roomService.isGuestNameDuplicated(joinCode.getValue(), guestName.value()))
+                .isTrue();
+        assertThat(roomService.isGuestNameDuplicated(joinCode.getValue(), "uniqueName"))
+                .isFalse();
     }
 
     @Test
@@ -323,9 +324,6 @@ class RoomServiceTest extends RoomModuleServiceTest {
         String nonExistentJoinCode = "NXNX";
 
         // when & then
-        assertCoffeeShoutException(
-                () -> roomService.getQrCodeStatus(nonExistentJoinCode),
-                GlobalErrorCode.NOT_EXIST
-        );
+        assertCoffeeShoutException(() -> roomService.getQrCodeStatus(nonExistentJoinCode), GlobalErrorCode.NOT_EXIST);
     }
 }

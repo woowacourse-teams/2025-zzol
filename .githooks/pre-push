@@ -1,0 +1,12 @@
+#!/bin/sh
+# push 전 backend Spotless 포맷 검사 — CI의 :spotlessJavaCheck가 깨지기 전에 로컬에서 잡는다.
+# 켜기: git config core.hooksPath .githooks   /   한 번 건너뛰기: git push --no-verify
+
+git fetch -q origin dev 2>/dev/null
+git diff --name-only origin/dev...HEAD | grep -q '^backend/.*\.java$' || exit 0
+
+echo "[pre-push] spotlessCheck…"
+backend/gradlew -p backend spotlessCheck -q && exit 0
+
+echo "[pre-push] 포맷 위반 — 'backend/gradlew -p backend spotlessApply' 후 다시 커밋하세요."
+exit 1

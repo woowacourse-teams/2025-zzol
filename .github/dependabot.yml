@@ -37,6 +37,11 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 3
+    ignore:
+      # typescript-eslint가 TS 7을 런타임에서 막는다("does not support TS 7.0", typescript-eslint#10940).
+      # 지원 릴리스가 나오면 이 항목을 지운다.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types:

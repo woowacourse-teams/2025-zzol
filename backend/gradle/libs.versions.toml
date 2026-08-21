@@ -16,7 +16,7 @@ jsqlparser                   = "5.3"
 spring-dotenv                = "5.1.0"
 archunit                     = "1.5.0"
 jackson                      = "2.22"
-spotless                     = "8.9.0"
+spotless                     = "8.10.0"
 pmd                          = "7.26.0"
 
 [libraries]

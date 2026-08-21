@@ -15,6 +15,11 @@ export const Empty = styled.div`
   justify-content: center;
   align-items: center;
   height: 100%;
-  font-size: 1rem;
-  color: #888;
+  ${({ theme }) => theme.typography.paragraph};
+  color: ${({ theme }) => theme.color.gray[400]};
+`;
+
+/** 확률은 세로로 쌓이므로 자릿수 폭을 고정해 소수점을 맞춘다 */
+export const Percent = styled.span`
+  font-variant-numeric: tabular-nums;
 `;

@@ -2,12 +2,8 @@ import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useProbabilityHistory } from '@/contexts/ProbabilityHistory/ProbabilityHistoryContext';
 import { pickNearbyPlayers } from '../../utils/pickNearbyPlayers';
 import { ProbabilityHistory } from '@/types/roulette';
+import { formatProbability, formatProbabilityChange } from '@/utils/formatProbability';
 import * as S from './NearbyProbabilityList.styled';
-
-const percentFormat = new Intl.NumberFormat('ko-KR', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 type Props = {
   isProbabilitiesLoading: boolean;
@@ -41,10 +37,10 @@ const NearbyProbabilityList = ({ isProbabilitiesLoading }: Props) => {
                 // ScreenReaderOnly 는 div + aria-live 라 span 안에 넣으면 무효 마크업이고,
                 // 확률이 갱신될 때마다 "증가"만 문맥 없이 읽힌다.
                 <S.Change $isPositive={myProbabilityChange >= 0}>
-                  {formatChange(myProbabilityChange)}
+                  {formatProbabilityChange(myProbabilityChange)}
                 </S.Change>
               )}
-              <S.Probability>{percentFormat.format(probability)}%</S.Probability>
+              <S.Probability>{formatProbability(probability)}</S.Probability>
             </S.Row>
           );
         })}
@@ -54,9 +50,6 @@ const NearbyProbabilityList = ({ isProbabilitiesLoading }: Props) => {
 };
 
 export default NearbyProbabilityList;
-
-const formatChange = (change: number) =>
-  `${change >= 0 ? '+' : ''}${percentFormat.format(change)}%`;
 
 const getMyProbability = (players: ProbabilityHistory['current'], myName: string) =>
   players.find((player) => player.playerName === myName)?.probability ?? 0;

@@ -1,8 +1,10 @@
 import Divider from '@/components/@common/Divider/Divider';
+import { colorList } from '@/constants/color';
 import Headline4 from '@/components/@common/Headline4/Headline4';
 import PlayerCard from '@/components/@composition/PlayerCard/PlayerCard';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { PlayerProbability } from '@/types/roulette';
+import { formatProbability } from '@/utils/formatProbability';
 import * as S from './ProbabilityList.styled';
 
 type Props = {
@@ -12,7 +14,8 @@ type Props = {
 const ProbabilityList = ({ playerProbabilities }: Props) => {
   const { myName } = useIdentifier();
   const myProbability = playerProbabilities.find(({ playerName }) => playerName === myName);
-  const myColor = myProbability ? myProbability.playerColor : '#FF6B6B';
+  // 확률 정보가 아직 없을 때의 기본 색 — 참가자 색 팔레트의 첫 번째
+  const myColor = myProbability ? myProbability.playerColor : colorList[0];
 
   const filteredParticipants = playerProbabilities.filter(
     ({ playerName }) => playerName !== myName
@@ -21,7 +24,11 @@ const ProbabilityList = ({ playerProbabilities }: Props) => {
   return (
     <>
       <PlayerCard name={myProbability ? myProbability.playerName : myName} playerColor={myColor}>
-        <Headline4>{myProbability ? `${myProbability.probability}` : '100'}%</Headline4>
+        <Headline4>
+          <S.Percent>
+            {formatProbability(myProbability ? myProbability.probability : 100)}
+          </S.Percent>
+        </Headline4>
       </PlayerCard>
       <Divider />
       <S.ScrollableWrapper>
@@ -30,7 +37,9 @@ const ProbabilityList = ({ playerProbabilities }: Props) => {
         ) : (
           filteredParticipants.map(({ playerName, probability, playerColor }) => (
             <PlayerCard key={playerName} name={playerName} playerColor={playerColor}>
-              <Headline4>{probability}%</Headline4>
+              <Headline4>
+                <S.Percent>{formatProbability(probability)}</S.Percent>
+              </Headline4>
             </PlayerCard>
           ))
         )}

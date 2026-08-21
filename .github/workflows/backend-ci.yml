@@ -28,6 +28,14 @@ on:
         description: "Docker image tag"
         value: ${{ jobs.ci-build.outputs.image_tag }}
 
+# 같은 PR에 새 커밋을 push하면 직전 실행을 취소한다 (회당 4~8분).
+# CD가 workflow_call로 부른 실행에서 github 컨텍스트는 호출자(CD) 값이라
+# 그룹이 "Backend Deploy (CD)-refs/heads/dev"가 된다 — CD 자신의 그룹
+# (backend-deploy-dev)과 겹치지 않으므로 배포를 끊지 않는다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 

@@ -1,6 +1,7 @@
 package coffeeshout.config;
 
 import coffeeshout.friend.application.port.RoomInvitationValidator;
+import coffeeshout.friend.application.port.RoomMembershipQuery;
 import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.global.nickname.WordPicker;
 import coffeeshout.user.application.port.ReportAnonymizationPort;
@@ -38,6 +39,12 @@ public class ServiceTestConfig {
     @Primary
     public RoomInvitationValidator mockRoomInvitationValidator() {
         return Mockito.mock(RoomInvitationValidator.class);
+    }
+
+    @Bean
+    @Primary
+    public RoomMembershipQuery mockRoomMembershipQuery() {
+        return Mockito.mock(RoomMembershipQuery.class);
     }
 
     @Bean

@@ -3,7 +3,7 @@ package coffeeshout.room.application.event;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.event.GameSessionStartedEvent;
 import coffeeshout.room.application.port.RoomStatusPort;
-import coffeeshout.room.application.service.RoomQueryService;
+import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.domain.RoomState;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,13 +24,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RoomGameStartListener {
 
-    private final RoomQueryService roomQueryService;
+    private final RoomCommandService roomCommandService;
     private final RoomStatusPort roomStatusPort;
 
     @EventListener
     public void handle(GameSessionStartedEvent event) {
-        // 인메모리 도메인 Room 전이.
-        roomQueryService.getByJoinCode(new JoinCode(event.joinCode())).markPlaying();
+        // 인메모리 도메인 Room 전이. 전이·저장·친구 알림이 커맨드 서비스 안에서 함께 끝난다.
+        roomCommandService.markPlaying(new JoinCode(event.joinCode()));
         // 영속 RoomEntity 전이 — 기존 :game의 MiniGamePersistenceService에서 이관(ADR-0034).
         // GameSessionStartedEvent가 :game의 실패 가능 I/O보다 먼저 발행되므로 두 전이 모두 I/O 앞에서 끝난다.
         roomStatusPort.updateStatus(event.joinCode(), RoomState.PLAYING);

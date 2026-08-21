@@ -1,16 +1,47 @@
 package coffeeshout.room.domain.player;
 
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.room.domain.roulette.Probability;
 import coffeeshout.room.domain.roulette.ProbabilityCalculator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class PlayersTest {
+
+    @Test
+    void 다른_스레드가_입퇴장하는_동안_순회해도_깨지지_않는다() {
+        // given - 방 밖 스레드(친구 알림·조회)가 훑는 사이 방 소유 스레드가 입퇴장시키는 상황
+        final Players players = new Players("ABC23");
+        players.join(PlayerFixture.호스트한스());
+        final PlayerName 루키 = PlayerFixture.게스트루키().getName();
+        final AtomicBoolean 순회중 = new AtomicBoolean(true);
+
+        // when
+        final CompletableFuture<Void> 입퇴장 = CompletableFuture.runAsync(() -> {
+            while (순회중.get()) {
+                players.join(PlayerFixture.게스트루키());
+                players.removePlayer(루키);
+            }
+        });
+        final Throwable 순회예외 = catchThrowable(() -> {
+            for (int i = 0; i < 10_000; i++) {
+                List.copyOf(players.getPlayers()).forEach(Player::getName);
+            }
+        });
+        순회중.set(false);
+        입퇴장.join();
+
+        // then
+        assertThat(순회예외).isNull();
+    }
 
     @Test
     void 순위를_기반으로_확률을_조정한다() {
@@ -26,7 +57,8 @@ class PlayersTest {
         players.join(꾹이);
         players.join(엠제이);
 
-        Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 4);
+        Map<PlayerName, Integer> rankByPlayer =
+                Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 4);
 
         // when
         players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(4, 5, 0.7));
@@ -90,7 +122,8 @@ class PlayersTest {
             players.join(꾹이);
             players.join(엠제이);
 
-            Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 4);
+            Map<PlayerName, Integer> rankByPlayer =
+                    Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 4);
 
             // when
             players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(4, 1, 0.7));
@@ -102,18 +135,20 @@ class PlayersTest {
             // 2등 조정: 조정 x
             // 4등 조정 +2500 * 0.7 / 2 = +1750 (동점자 2명이므로 나눔)
 
-            SoftAssertions.assertSoftly(
-                    softly -> {
-                        softly.assertThat(players.getPlayer(PlayerFixture.호스트한스().getName()).getProbability())
-                                .isEqualTo(new Probability((2500 - (int) (2500 * 0.7))));
-                        softly.assertThat(players.getPlayer(PlayerFixture.게스트루키().getName()).getProbability())
-                                .isEqualTo(new Probability(2500));
-                        softly.assertThat(players.getPlayer(PlayerFixture.게스트꾹이().getName()).getProbability())
-                                .isEqualTo(new Probability(2500));
-                        softly.assertThat(players.getPlayer(PlayerFixture.게스트엠제이().getName()).getProbability())
-                                .isEqualTo(new Probability((2500 + (int) (2500 * 0.7))));
-                    }
-            );
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(players.getPlayer(PlayerFixture.호스트한스().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability((2500 - (int) (2500 * 0.7))));
+                softly.assertThat(players.getPlayer(PlayerFixture.게스트루키().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability(2500));
+                softly.assertThat(players.getPlayer(PlayerFixture.게스트꾹이().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability(2500));
+                softly.assertThat(players.getPlayer(PlayerFixture.게스트엠제이().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability((2500 + (int) (2500 * 0.7))));
+            });
         }
 
         @Test
@@ -130,23 +165,26 @@ class PlayersTest {
             players.join(엠제이);
             players.join(루키);
 
-            Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 3);
+            Map<PlayerName, Integer> rankByPlayer =
+                    Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 3, 엠제이.getName(), 3);
 
             // when
             players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(4, 1, 0.7));
 
-            SoftAssertions.assertSoftly(
-                    softly -> {
-                        softly.assertThat(players.getPlayer(PlayerFixture.호스트한스().getName()).getProbability())
-                                .isEqualTo(new Probability((2500 - (int) (2500 * 0.7))));
-                        softly.assertThat(players.getPlayer(PlayerFixture.게스트루키().getName()).getProbability())
-                                .isEqualTo(new Probability(2500 - (int) (1250 * 0.7)));
-                        softly.assertThat(players.getPlayer(PlayerFixture.게스트꾹이().getName()).getProbability())
-                                .isEqualTo(new Probability(2500 + (int) (3750 * 0.7) / 2));
-                        softly.assertThat(players.getPlayer(PlayerFixture.게스트엠제이().getName()).getProbability())
-                                .isEqualTo(new Probability(2500 + (int) (3750 * 0.7) / 2));
-                    }
-            );
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(players.getPlayer(PlayerFixture.호스트한스().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability((2500 - (int) (2500 * 0.7))));
+                softly.assertThat(players.getPlayer(PlayerFixture.게스트루키().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability(2500 - (int) (1250 * 0.7)));
+                softly.assertThat(players.getPlayer(PlayerFixture.게스트꾹이().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability(2500 + (int) (3750 * 0.7) / 2));
+                softly.assertThat(players.getPlayer(PlayerFixture.게스트엠제이().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability(2500 + (int) (3750 * 0.7) / 2));
+            });
         }
 
         @Test
@@ -163,24 +201,27 @@ class PlayersTest {
             players.join(꾹이);
             players.join(엠제이);
 
-            Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 2);
+            Map<PlayerName, Integer> rankByPlayer =
+                    Map.of(한스.getName(), 1, 루키.getName(), 2, 꾹이.getName(), 2, 엠제이.getName(), 2);
 
             // when
             players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(4, 1, 0.7));
 
             // then
-            SoftAssertions.assertSoftly(
-                    softly -> {
-                        softly.assertThat(players.getPlayer(PlayerFixture.호스트한스().getName()).getProbability())
-                                .isEqualTo(new Probability((2500 - (int) (2500 * 0.7))));
-                        softly.assertThat(players.getPlayer(PlayerFixture.게스트루키().getName()).getProbability())
-                                .isEqualTo(new Probability(2500 + (int) (2500 * 0.7) / 3));
-                        softly.assertThat(players.getPlayer(PlayerFixture.게스트꾹이().getName()).getProbability())
-                                .isEqualTo(new Probability(2500 + (int) (2500 * 0.7) / 3));
-                        softly.assertThat(players.getPlayer(PlayerFixture.게스트엠제이().getName()).getProbability())
-                                .isEqualTo(new Probability(2500 + (int) (2500 * 0.7) / 3));
-                    }
-            );
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(players.getPlayer(PlayerFixture.호스트한스().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability((2500 - (int) (2500 * 0.7))));
+                softly.assertThat(players.getPlayer(PlayerFixture.게스트루키().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability(2500 + (int) (2500 * 0.7) / 3));
+                softly.assertThat(players.getPlayer(PlayerFixture.게스트꾹이().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability(2500 + (int) (2500 * 0.7) / 3));
+                softly.assertThat(players.getPlayer(PlayerFixture.게스트엠제이().getName())
+                                .getProbability())
+                        .isEqualTo(new Probability(2500 + (int) (2500 * 0.7) / 3));
+            });
         }
 
         @Test
@@ -200,25 +241,24 @@ class PlayersTest {
             players.join(엠제이);
             players.join(호스트유령);
 
-            Map<PlayerName, Integer> rankByPlayer = Map.of(한스.getName(), 1, 루키.getName(), 1, 꾹이.getName(), 3, 엠제이.getName(), 3, 호스트유령.getName(), 5);
+            Map<PlayerName, Integer> rankByPlayer =
+                    Map.of(한스.getName(), 1, 루키.getName(), 1, 꾹이.getName(), 3, 엠제이.getName(), 3, 호스트유령.getName(), 5);
 
             players.adjustProbabilities(rankByPlayer, new ProbabilityCalculator(5, 1, 0.7));
 
             // then
-            SoftAssertions.assertSoftly(
-                    softly -> {
-                        softly.assertThat(players.getPlayer(new PlayerName("한스")).getProbability())
-                                .isEqualTo(new Probability((2000 - (2100 / 2))));
-                        softly.assertThat(players.getPlayer(new PlayerName("루키")).getProbability())
-                                .isEqualTo(new Probability(2000 - (2100 / 2)));
-                        softly.assertThat(players.getPlayer(new PlayerName("꾹이")).getProbability())
-                                .isEqualTo(new Probability(2000 + 700 / 2));
-                        softly.assertThat(players.getPlayer(new PlayerName("엠제이")).getProbability())
-                                .isEqualTo(new Probability(2000 + 700 / 2));
-                        softly.assertThat(players.getPlayer(new PlayerName("유령")).getProbability())
-                                .isEqualTo(new Probability(2000 + 1400));
-                    }
-            );
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(players.getPlayer(new PlayerName("한스")).getProbability())
+                        .isEqualTo(new Probability((2000 - (2100 / 2))));
+                softly.assertThat(players.getPlayer(new PlayerName("루키")).getProbability())
+                        .isEqualTo(new Probability(2000 - (2100 / 2)));
+                softly.assertThat(players.getPlayer(new PlayerName("꾹이")).getProbability())
+                        .isEqualTo(new Probability(2000 + 700 / 2));
+                softly.assertThat(players.getPlayer(new PlayerName("엠제이")).getProbability())
+                        .isEqualTo(new Probability(2000 + 700 / 2));
+                softly.assertThat(players.getPlayer(new PlayerName("유령")).getProbability())
+                        .isEqualTo(new Probability(2000 + 1400));
+            });
         }
     }
 }

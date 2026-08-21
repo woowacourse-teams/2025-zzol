@@ -68,11 +68,8 @@ public class Room {
      * {@code roundCount}는 {@code MiniGameFinishedEvent}로 전달받는다(ADR-0025 결정 3·5).
      */
     public void applyGameResult(Map<PlayerName, Integer> rankByPlayer, int roundCount) {
-        final ProbabilityCalculator probabilityCalculator = new ProbabilityCalculator(
-                players.getPlayerCount(),
-                roundCount,
-                adjustmentWeight
-        );
+        final ProbabilityCalculator probabilityCalculator =
+                new ProbabilityCalculator(players.getPlayerCount(), roundCount, adjustmentWeight);
         this.roomState = RoomState.SCORE_BOARD;
         players.adjustProbabilities(rankByPlayer, probabilityCalculator);
     }
@@ -106,9 +103,7 @@ public class Room {
      * import하지 않고 플레이어 식별·색상만 받도록 한다(ADR-0025 결정 4).
      */
     public List<Gamer> getGamers() {
-        return players.getPlayers().stream()
-                .map(Player::toGamer)
-                .toList();
+        return players.getPlayers().stream().map(Player::toGamer).toList();
     }
 
     public Player findPlayer(PlayerName playerName) {
@@ -176,10 +171,17 @@ public class Room {
         return roomState == RoomState.READY;
     }
 
+    /**
+     * 다른 사람이 지금 이 방에 입장할 수 있는지 판단한다. {@code joinGuest}의 사전 조건
+     * ({@code validateRoomReady} + {@code validateCanJoin})과 같은 기준이라, 둘 중 하나가 바뀌면 여기도 함께 바뀐다.
+     */
+    public boolean isJoinable() {
+        return isReadyState() && canJoin();
+    }
+
     public void assignQrCode(QrCode qrCode) {
         if (qrCode == null) {
-            throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR,
-                    "QR 코드는 null일 수 없습니다.");
+            throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "QR 코드는 null일 수 없습니다.");
         }
 
         this.qrCode = qrCode;
@@ -200,36 +202,28 @@ public class Room {
     private void validateRoomReady() {
         if (roomState != RoomState.READY) {
             throw new BusinessException(
-                    RoomErrorCode.ROOM_NOT_READY_TO_JOIN,
-                    "READY 상태에서만 참여 가능합니다. 현재 상태: " + roomState
-            );
+                    RoomErrorCode.ROOM_NOT_READY_TO_JOIN, "READY 상태에서만 참여 가능합니다. 현재 상태: " + roomState);
         }
     }
 
     private void validateRoomUpdatable() {
         if (roomState != RoomState.READY) {
             throw new BusinessException(
-                    RoomErrorCode.ROOM_NOT_READY_TO_UPDATE,
-                    "READY 상태에서만 설정을 변경할 수 있습니다. 현재 상태: " + roomState
-            );
+                    RoomErrorCode.ROOM_NOT_READY_TO_UPDATE, "READY 상태에서만 설정을 변경할 수 있습니다. 현재 상태: " + roomState);
         }
     }
 
     private void validateCanJoin() {
         if (!canJoin()) {
             throw new BusinessException(
-                    RoomErrorCode.ROOM_FULL,
-                    "방에는 최대 9명만 입장 가능합니다. 현재 인원: " + players.getPlayerCount()
-            );
+                    RoomErrorCode.ROOM_FULL, "방에는 최대 9명만 입장 가능합니다. 현재 인원: " + players.getPlayerCount());
         }
     }
 
     private void validatePlayerNameNotDuplicate(PlayerName guestName) {
         if (hasDuplicatePlayerName(guestName)) {
             throw new BusinessException(
-                    RoomErrorCode.DUPLICATE_PLAYER_NAME,
-                    "중복된 닉네임은 들어올 수 없습니다. 닉네임: " + guestName.value()
-            );
+                    RoomErrorCode.DUPLICATE_PLAYER_NAME, "중복된 닉네임은 들어올 수 없습니다. 닉네임: " + guestName.value());
         }
     }
 
@@ -242,9 +236,7 @@ public class Room {
     private void validateAdjustmentWeight(double adjustmentWeight) {
         if (adjustmentWeight < 0.1 || adjustmentWeight > 0.9) {
             throw new BusinessException(
-                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT,
-                    "가중치는 0.1 이상 0.9 이하여야 합니다. 입력값: " + adjustmentWeight
-            );
+                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT, "가중치는 0.1 이상 0.9 이하여야 합니다. 입력값: " + adjustmentWeight);
         }
     }
 

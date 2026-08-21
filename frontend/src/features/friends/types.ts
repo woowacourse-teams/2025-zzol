@@ -14,6 +14,10 @@ export type Friend = {
   nickname: string;
   since: string;
   online: boolean;
+  /** 참여 중인 방의 참여 코드. 어느 방에도 없으면 null */
+  joinCode: string | null;
+  /** 그 방에 지금 입장할 수 있는지 (로비 상태 + 정원 여유) */
+  joinable: boolean;
 };
 
 export type ReceivedRequest = {
@@ -75,5 +79,7 @@ export type FriendPresenceEvent = {
   data: {
     userId: number;
     online: boolean;
+    joinCode: string | null;
+    joinable: boolean;
   };
 };

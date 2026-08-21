@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ParticipantsProvider } from '@/contexts/Participants/ParticipantsProvider';
 import { IdentifierProvider } from '../src/contexts/Identifier/IdentifierProvider';
 import { WebSocketProvider } from '../src/apis/websocket/contexts/WebSocketProvider';
-import { ModalProvider } from '../src/components/@common/Modal/ModalContext';
+import { ModalOutlet, ModalProvider } from '../src/components/@common/Modal/ModalContext';
 import CardGameProvider from '../src/contexts/CardGame/CardGameProvider';
 import '../src/styles/global.css';
 import '../src/styles/reset.css';
@@ -23,6 +23,7 @@ const preview: Preview = {
                   <ToastProvider>
                     <ModalProvider>
                       <Story />
+                      <ModalOutlet />
                     </ModalProvider>
                   </ToastProvider>
                 </CardGameProvider>

@@ -21,22 +21,28 @@ public class LayerArchitectureTest {
 
     @ArchTest
     static final ArchRule room_domain은_infra를_직접_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.room.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.room.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.room.infra..")
             .as("room.domain은 room.infra를 직접 참조할 수 없다");
 
     @ArchTest
     static final ArchRule room_domain은_application을_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.room.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.room.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.room.application..")
             .as("room.domain은 room.application을 참조할 수 없다");
 
     @ArchTest
     static final ArchRule room_domain은_ui를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.room.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.room.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.room.ui..")
             .as("room.domain은 room.ui를 참조할 수 없다");
 
@@ -46,22 +52,28 @@ public class LayerArchitectureTest {
 
     @ArchTest
     static final ArchRule user_domain은_infra를_직접_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.user.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.user.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.user.infra..")
             .as("user.domain은 user.infra를 직접 참조할 수 없다");
 
     @ArchTest
     static final ArchRule user_domain은_application을_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.user.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.user.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.user.application..")
             .as("user.domain은 user.application을 참조할 수 없다");
 
     @ArchTest
     static final ArchRule user_domain은_ui를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.user.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.user.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.user.ui..")
             .as("user.domain은 user.ui를 참조할 수 없다");
 
@@ -81,15 +93,24 @@ public class LayerArchitectureTest {
      */
     @ArchTest
     static final ArchRule room_service는_infra_persistence를_직접_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.room.application.service..")
-            .and().haveSimpleNameNotContaining("RoulettePersistenceService")
-            .and().haveSimpleNameNotContaining("RouletteService")
-            .and().haveSimpleNameNotContaining("RoomService")
-            .and().haveSimpleNameNotContaining("PlayerNameAuditService")
-            .and().haveSimpleNameNotContaining("PlayerNameFeedbackService")
-            .and().haveSimpleNameNotContaining("PlayerNameAuditBatchProcessor")
-            .and().haveSimpleNameNotContaining("PlayerNameRankingCleanupService")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.room.application.service..")
+            .and()
+            .haveSimpleNameNotContaining("RoulettePersistenceService")
+            .and()
+            .haveSimpleNameNotContaining("RouletteService")
+            .and()
+            .haveSimpleNameNotContaining("RoomService")
+            .and()
+            .haveSimpleNameNotContaining("PlayerNameAuditService")
+            .and()
+            .haveSimpleNameNotContaining("PlayerNameFeedbackService")
+            .and()
+            .haveSimpleNameNotContaining("PlayerNameAuditBatchProcessor")
+            .and()
+            .haveSimpleNameNotContaining("PlayerNameRankingCleanupService")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.room.infra.persistence..")
             .as("room.application.service(기술부채 목록 제외)는 room.infra.persistence를 직접 참조할 수 없다");
 
@@ -99,11 +120,13 @@ public class LayerArchitectureTest {
 
     @ArchTest
     static final ArchRule user_application은_infra_persistence를_직접_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.user.application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.user.application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.user.infra.persistence..")
-            .as("user.application은 user.infra.persistence를 직접 참조할 수 없다 — " +
-                    "UserCreationPort 등 port 인터페이스를 통해 접근해야 한다");
+            .as("user.application은 user.infra.persistence를 직접 참조할 수 없다 — "
+                    + "UserCreationPort 등 port 인터페이스를 통해 접근해야 한다");
 
     // ─────────────────────────────────────────
     // friend 도메인 (user 모듈 내)
@@ -111,15 +134,30 @@ public class LayerArchitectureTest {
 
     @ArchTest
     static final ArchRule friend_domain은_infra를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.friend.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.friend.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.friend.infra..")
             .as("friend.domain은 friend.infra를 참조할 수 없다");
 
+    // room·user·profanity에는 있었으나 friend에만 빠져 있던 룰이다. 그 공백으로 domain 이벤트가
+    // application.port의 값 객체를 참조하는 위반이 CI를 통과했다(#1266 리뷰).
+    @ArchTest
+    static final ArchRule friend_domain은_application을_참조할_수_없다 = noClasses()
+            .that()
+            .resideInAPackage("coffeeshout.friend.domain..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("coffeeshout.friend.application..")
+            .as("friend.domain은 friend.application을 참조할 수 없다");
+
     @ArchTest
     static final ArchRule friend_application은_infra를_직접_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.friend.application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.friend.application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.friend.infra..")
             .as("friend.application은 friend.infra를 직접 참조할 수 없다");
 
@@ -129,22 +167,28 @@ public class LayerArchitectureTest {
 
     @ArchTest
     static final ArchRule profanity_domain은_infra를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.profanity.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.profanity.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.profanity.infra..")
             .as("profanity.domain은 profanity.infra를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule profanity_domain은_application을_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.profanity.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.profanity.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.profanity.application..")
             .as("profanity.domain은 profanity.application을 참조할 수 없다");
 
     @ArchTest
     static final ArchRule profanity_application은_infra를_직접_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.profanity.application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.profanity.application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.profanity.infra..")
             .as("profanity.application은 profanity.infra를 직접 참조할 수 없다");
 }

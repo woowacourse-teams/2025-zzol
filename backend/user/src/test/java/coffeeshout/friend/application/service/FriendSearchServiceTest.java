@@ -3,10 +3,11 @@ package coffeeshout.friend.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
+import coffeeshout.UserModuleServiceTest;
 import coffeeshout.fixture.FriendshipFixture;
 import coffeeshout.fixture.UserFixture;
+import coffeeshout.friend.domain.RelationStatus;
 import coffeeshout.friend.domain.repository.FriendshipRepository;
-import coffeeshout.UserModuleServiceTest;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.repository.UserRepository;
 import java.util.List;
@@ -41,8 +42,7 @@ class FriendSearchServiceTest extends UserModuleServiceTest {
         @Test
         void 존재하는_유저코드로_검색하면_결과를_반환한다() {
             final List<UserSearchResult> results = friendSearchService.searchByUserCode(
-                    me.getId(), other.getUserCode().value()
-            );
+                    me.getId(), other.getUserCode().value());
 
             assertSoftly(softly -> {
                 softly.assertThat(results).hasSize(1);
@@ -54,17 +54,14 @@ class FriendSearchServiceTest extends UserModuleServiceTest {
         @Test
         void 자기_자신의_유저코드로_검색하면_빈_결과를_반환한다() {
             final List<UserSearchResult> results = friendSearchService.searchByUserCode(
-                    me.getId(), me.getUserCode().value()
-            );
+                    me.getId(), me.getUserCode().value());
 
             assertThat(results).isEmpty();
         }
 
         @Test
         void 존재하지_않는_유저코드로_검색하면_빈_결과를_반환한다() {
-            final List<UserSearchResult> results = friendSearchService.searchByUserCode(
-                    me.getId(), "ZZZZZ"
-            );
+            final List<UserSearchResult> results = friendSearchService.searchByUserCode(me.getId(), "ZZZZZ");
 
             assertThat(results).isEmpty();
         }
@@ -74,8 +71,7 @@ class FriendSearchServiceTest extends UserModuleServiceTest {
             friendshipRepository.save(FriendshipFixture.accepted(me.getId(), other.getId()));
 
             final List<UserSearchResult> results = friendSearchService.searchByUserCode(
-                    me.getId(), other.getUserCode().value()
-            );
+                    me.getId(), other.getUserCode().value());
 
             assertThat(results.get(0).relationStatus()).isEqualTo(RelationStatus.FRIEND);
         }
@@ -85,8 +81,7 @@ class FriendSearchServiceTest extends UserModuleServiceTest {
             friendshipRepository.save(FriendshipFixture.pending(me.getId(), other.getId()));
 
             final List<UserSearchResult> results = friendSearchService.searchByUserCode(
-                    me.getId(), other.getUserCode().value()
-            );
+                    me.getId(), other.getUserCode().value());
 
             assertThat(results.get(0).relationStatus()).isEqualTo(RelationStatus.PENDING_OUTGOING);
         }
@@ -96,8 +91,7 @@ class FriendSearchServiceTest extends UserModuleServiceTest {
             friendshipRepository.save(FriendshipFixture.pending(other.getId(), me.getId()));
 
             final List<UserSearchResult> results = friendSearchService.searchByUserCode(
-                    me.getId(), other.getUserCode().value()
-            );
+                    me.getId(), other.getUserCode().value());
 
             assertThat(results.get(0).relationStatus()).isEqualTo(RelationStatus.PENDING_INCOMING);
         }
@@ -111,8 +105,7 @@ class FriendSearchServiceTest extends UserModuleServiceTest {
             friendshipRepository.save(FriendshipFixture.accepted(me.getId(), other.getId()));
 
             final List<UserSearchResult> results = friendSearchService.searchByNickname(
-                    me.getId(), other.getNickname().value()
-            );
+                    me.getId(), other.getNickname().value());
 
             assertThat(results.get(0).relationStatus()).isEqualTo(RelationStatus.FRIEND);
         }
@@ -122,8 +115,7 @@ class FriendSearchServiceTest extends UserModuleServiceTest {
             friendshipRepository.save(FriendshipFixture.pending(me.getId(), other.getId()));
 
             final List<UserSearchResult> results = friendSearchService.searchByNickname(
-                    me.getId(), other.getNickname().value()
-            );
+                    me.getId(), other.getNickname().value());
 
             assertThat(results.get(0).relationStatus()).isEqualTo(RelationStatus.PENDING_OUTGOING);
         }
@@ -133,8 +125,7 @@ class FriendSearchServiceTest extends UserModuleServiceTest {
             friendshipRepository.save(FriendshipFixture.pending(other.getId(), me.getId()));
 
             final List<UserSearchResult> results = friendSearchService.searchByNickname(
-                    me.getId(), other.getNickname().value()
-            );
+                    me.getId(), other.getNickname().value());
 
             assertThat(results.get(0).relationStatus()).isEqualTo(RelationStatus.PENDING_INCOMING);
         }
@@ -142,8 +133,7 @@ class FriendSearchServiceTest extends UserModuleServiceTest {
         @Test
         void 존재하는_닉네임으로_검색하면_결과를_반환한다() {
             final List<UserSearchResult> results = friendSearchService.searchByNickname(
-                    me.getId(), other.getNickname().value()
-            );
+                    me.getId(), other.getNickname().value());
 
             assertSoftly(softly -> {
                 softly.assertThat(results).hasSize(1);
@@ -154,17 +144,14 @@ class FriendSearchServiceTest extends UserModuleServiceTest {
         @Test
         void 자기_자신의_닉네임으로_검색하면_본인은_제외된다() {
             final List<UserSearchResult> results = friendSearchService.searchByNickname(
-                    me.getId(), me.getNickname().value()
-            );
+                    me.getId(), me.getNickname().value());
 
             assertThat(results).isEmpty();
         }
 
         @Test
         void 존재하지_않는_닉네임으로_검색하면_빈_결과를_반환한다() {
-            final List<UserSearchResult> results = friendSearchService.searchByNickname(
-                    me.getId(), "없는닉네임"
-            );
+            final List<UserSearchResult> results = friendSearchService.searchByNickname(me.getId(), "없는닉네임");
 
             assertThat(results).isEmpty();
         }

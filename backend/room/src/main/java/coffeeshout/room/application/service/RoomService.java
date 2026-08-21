@@ -1,7 +1,7 @@
 package coffeeshout.room.application.service;
 
-import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.global.outbox.OutboxEventRecorder;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
@@ -18,7 +18,6 @@ import coffeeshout.room.domain.event.RouletteShowEvent;
 import coffeeshout.room.domain.event.RouletteShownEvent;
 import coffeeshout.room.domain.event.RouletteSpinEvent;
 import coffeeshout.room.domain.event.RouletteWinnerEvent;
-import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Winner;
 import coffeeshout.room.domain.roulette.Roulette;
@@ -84,7 +83,8 @@ public class RoomService {
 
     @Transactional
     public RoomCreateResult createRoom(AuthenticatedUser authUser) {
-        final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
+        final String nickname =
+                userProfileService.findById(authUser.userId()).getNickname().value();
         final Room room = doCreateRoom(nickname, authUser.userId());
         final String token = roomSessionTokenService.issue(room.getJoinCode().getValue(), nickname, authUser.userId());
         return new RoomCreateResult(room, token);
@@ -92,34 +92,37 @@ public class RoomService {
 
     private Room doCreateRoom(String resolvedName, Long userId) {
         final JoinCode joinCode = joinCodeGenerator.generate();
-        final Room room = roomCommandService.saveIfAbsentRoom(joinCode, new PlayerName(resolvedName), userId, rouletteProperties.defaultAdjustmentWeight());
+        final Room room = roomCommandService.saveIfAbsentRoom(
+                joinCode, new PlayerName(resolvedName), userId, rouletteProperties.defaultAdjustmentWeight());
         final BaseEvent event = new RoomLifecycleEvent.Created(resolvedName, joinCode.getValue());
 
         outboxEventRecorder.record(RoomStreamKey.BROADCAST, event);
         qrCodeService.generateQrCodeAsync(joinCode.getValue());
         saveRoomEntity(joinCode.getValue());
 
-        log.info("방 생성 이벤트 처리 완료 (DB 저장): eventId={}, joinCode={}, hostName={}",
-                event.eventId(), joinCode.getValue(), resolvedName);
+        log.info(
+                "방 생성 이벤트 처리 완료 (DB 저장): eventId={}, joinCode={}, hostName={}",
+                event.eventId(),
+                joinCode.getValue(),
+                resolvedName);
         return room;
     }
 
     public CompletableFuture<RoomEnterResult> enterRoomAsync(String joinCode, String guestName) {
         playerNameValidator.validate(new PlayerName(guestName));
-        return doEnterRoomAsync(joinCode, guestName, null)
-                .thenApply(room -> {
-                    final String token = roomSessionTokenService.issue(joinCode, guestName, null);
-                    return new RoomEnterResult(room, guestName, token);
-                });
+        return doEnterRoomAsync(joinCode, guestName, null).thenApply(room -> {
+            final String token = roomSessionTokenService.issue(joinCode, guestName, null);
+            return new RoomEnterResult(room, guestName, token);
+        });
     }
 
     public CompletableFuture<RoomEnterResult> enterRoomAsync(String joinCode, AuthenticatedUser authUser) {
-        final String nickname = userProfileService.findById(authUser.userId()).getNickname().value();
-        return doEnterRoomAsync(joinCode, nickname, authUser.userId())
-                .thenApply(room -> {
-                    final String token = roomSessionTokenService.issue(joinCode, nickname, authUser.userId());
-                    return new RoomEnterResult(room, nickname, token);
-                });
+        final String nickname =
+                userProfileService.findById(authUser.userId()).getNickname().value();
+        return doEnterRoomAsync(joinCode, nickname, authUser.userId()).thenApply(room -> {
+            final String token = roomSessionTokenService.issue(joinCode, nickname, authUser.userId());
+            return new RoomEnterResult(room, nickname, token);
+        });
     }
 
     private CompletableFuture<Room> doEnterRoomAsync(String joinCode, String resolvedName, Long userId) {
@@ -129,15 +132,12 @@ public class RoomService {
                 () -> streamPublisher.publish(RoomStreamKey.JOIN, event),
                 "방 참가",
                 String.format("joinCode=%s, playerName=%s", joinCode, resolvedName),
-                room -> String.format("joinCode=%s, playerName=%s", joinCode, resolvedName)
-        );
+                room -> String.format("joinCode=%s, playerName=%s", joinCode, resolvedName));
     }
 
     public Winner spinRoulette(String joinCode, String hostName) {
-        final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        final Player host = room.findPlayer(new PlayerName(hostName));
-
-        return room.spinRoulette(host, new Roulette(new RoulettePicker()));
+        return roomCommandService.spinRoulette(
+                new JoinCode(joinCode), new PlayerName(hostName), new Roulette(new RoulettePicker()));
     }
 
     public String generateRandomNicknameForGuest(String joinCode) {
@@ -164,17 +164,11 @@ public class RoomService {
 
     public List<ProbabilityResponse> getProbabilities(String joinCode) {
         final Room room = roomQueryService.getByJoinCode(new JoinCode(joinCode));
-        return room.getPlayers().stream()
-                .map(ProbabilityResponse::from)
-                .toList();
+        return room.getPlayers().stream().map(ProbabilityResponse::from).toList();
     }
 
     public void updateAdjustmentWeight(String joinCode, String hostName, double adjustmentWeight) {
-        roomCommandService.updateAdjustmentWeight(
-                new JoinCode(joinCode),
-                new PlayerName(hostName),
-                adjustmentWeight
-        );
+        roomCommandService.updateAdjustmentWeight(new JoinCode(joinCode), new PlayerName(hostName), adjustmentWeight);
     }
 
     public boolean isReadyState(String joinCode) {
@@ -193,16 +187,14 @@ public class RoomService {
     }
 
     public void readyPlayer(PlayerReadyEvent event) {
-        log.info("JoinCode[{}] 플레이어 준비 상태 변경 이벤트 처리 - 플레이어: {}, 준비 상태: {}",
+        log.info(
+                "JoinCode[{}] 플레이어 준비 상태 변경 이벤트 처리 - 플레이어: {}, 준비 상태: {}",
                 event.joinCode(),
                 event.playerName(),
-                event.isReady()
-        );
+                event.isReady());
 
-        roomCommandService.readyPlayer(new JoinCode(event.joinCode()),
-                new PlayerName(event.playerName()),
-                event.isReady()
-        );
+        roomCommandService.readyPlayer(
+                new JoinCode(event.joinCode()), new PlayerName(event.playerName()), event.isReady());
 
         eventPublisher.publishEvent(new PlayerListUpdateEvent(event.joinCode()));
     }
@@ -210,61 +202,51 @@ public class RoomService {
     public void handleQrCodeStatus(QrCodeStatusEvent event) {
         log.info(
                 "QR 코드 완료 이벤트 수신: eventId={}, joinCode={}, status={}",
-                event.eventId(), event.joinCode(), event.status()
-        );
+                event.eventId(),
+                event.joinCode(),
+                event.status());
 
         switch (event.status()) {
             case SUCCESS -> {
                 log.info(
                         "QR 코드 완료 이벤트 처리 완료 (SUCCESS): eventId={}, joinCode={}, urlLength={}",
-                        event.eventId(), event.joinCode(),
-                        event.qrCodeUrl() == null ? 0 : event.qrCodeUrl().length()
-                );
+                        event.eventId(),
+                        event.joinCode(),
+                        event.qrCodeUrl() == null ? 0 : event.qrCodeUrl().length());
                 roomCommandService.assignQrCode(new JoinCode(event.joinCode()), event.qrCodeUrl());
                 eventPublisher.publishEvent(event);
             }
             case ERROR -> {
-                log.info(
-                        "QR 코드 완료 이벤트 처리 완료 (ERROR): eventId={}, joinCode={}",
-                        event.eventId(), event.joinCode()
-                );
+                log.info("QR 코드 완료 이벤트 처리 완료 (ERROR): eventId={}, joinCode={}", event.eventId(), event.joinCode());
                 roomCommandService.assignQrCodeError(new JoinCode(event.joinCode()));
                 eventPublisher.publishEvent(event);
             }
-            default -> log.error(
-                    "처리할 수 없는 QR 코드 상태: eventId={}, joinCode={}, status={}",
-                    event.eventId(), event.joinCode(), event.status()
-            );
+            default ->
+                log.error(
+                        "처리할 수 없는 QR 코드 상태: eventId={}, joinCode={}, status={}",
+                        event.eventId(),
+                        event.joinCode(),
+                        event.status());
         }
     }
 
     public void createRoom(RoomLifecycleEvent.Created event) {
-        log.info("JoinCode[{}] 방 생성 이벤트 처리 - 호스트 이름: {}",
-                event.joinCode(),
-                event.hostName()
-        );
+        log.info("JoinCode[{}] 방 생성 이벤트 처리 - 호스트 이름: {}", event.joinCode(), event.hostName());
 
         roomCommandService.saveIfAbsentRoom(
                 new JoinCode(event.joinCode()),
                 new PlayerName(event.hostName()),
-                rouletteProperties.defaultAdjustmentWeight()
-        );
+                rouletteProperties.defaultAdjustmentWeight());
 
         delayedRoomRemovalService.scheduleRemoveRoom(new JoinCode(event.joinCode()));
     }
 
     public void joinRoom(RoomJoinEvent event) {
-        log.info("JoinCode[{}] 게스트 방 입장 이벤트 처리 - 게스트 이름: {}",
-                event.joinCode(),
-                event.guestName()
-        );
+        log.info("JoinCode[{}] 게스트 방 입장 이벤트 처리 - 게스트 이름: {}", event.joinCode(), event.guestName());
 
         try {
             final Room room = roomCommandService.joinGuest(
-                    new JoinCode(event.joinCode()),
-                    new PlayerName(event.guestName()),
-                    event.userId()
-            );
+                    new JoinCode(event.joinCode()), new PlayerName(event.guestName()), event.userId());
 
             roomEventWaitManager.notifySuccess(event.eventId(), room);
         } catch (Exception e) {
@@ -284,12 +266,19 @@ public class RoomService {
     }
 
     public void spinRoulette(RouletteSpinEvent event) {
-        log.info("JoinCode[{}] 룰렛 스핀 이벤트 처리 - 당첨자: {}", event.joinCode(), event.winner().name().value());
+        log.info(
+                "JoinCode[{}] 룰렛 스핀 이벤트 처리 - 당첨자: {}",
+                event.joinCode(),
+                event.winner().name().value());
 
         final Winner winner = event.winner();
         roulettePersistenceService.saveRouletteResult(event);
 
         eventPublisher.publishEvent(new RouletteWinnerEvent(event.joinCode(), winner));
+
+        // 룰렛이 끝나면 방은 DONE이라 더 쓸 일이 없다. 생성 시 걸어 둔 최대 수명(scheduleRemoveRoom)까지
+        // 기다리면 참가자가 그동안 방에 갇힌 것으로 판정된다 — scheduleRemoveFinishedRoom 주석 참고.
+        delayedRoomRemovalService.scheduleRemoveFinishedRoom(new JoinCode(event.joinCode()));
     }
 
     private <T> CompletableFuture<T> processEventAsync(
@@ -297,8 +286,7 @@ public class RoomService {
             Runnable eventPublisher,
             String operationName,
             String logParams,
-            Function<T, String> successLogParams
-    ) {
+            Function<T, String> successLogParams) {
         final CompletableFuture<T> future = roomEventWaitManager.registerWait(eventId);
 
         try {
@@ -309,16 +297,13 @@ public class RoomService {
             return future;
         }
 
-        return future.orTimeout(eventTimeout.toMillis(), TimeUnit.MILLISECONDS)
-                .whenComplete((result, throwable) -> {
-                    if (throwable != null) {
-                        log.error("{} 비동기 처리 실패: eventId={}, {}",
-                                operationName, eventId, logParams, throwable);
-                        return;
-                    }
-                    log.info("{} 비동기 처리 완료: {}, eventId={}",
-                            operationName, successLogParams.apply(result), eventId);
-                });
+        return future.orTimeout(eventTimeout.toMillis(), TimeUnit.MILLISECONDS).whenComplete((result, throwable) -> {
+            if (throwable != null) {
+                log.error("{} 비동기 처리 실패: eventId={}, {}", operationName, eventId, logParams, throwable);
+                return;
+            }
+            log.info("{} 비동기 처리 완료: {}, eventId={}", operationName, successLogParams.apply(result), eventId);
+        });
     }
 
     private void saveRoomEntity(String joinCodeValue) {

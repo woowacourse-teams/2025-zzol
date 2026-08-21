@@ -3,9 +3,11 @@ import { useProbabilityHistory } from '@/contexts/ProbabilityHistory/Probability
 import { convertProbabilitiesToAngles } from '@/features/roulette/utils/convertProbabilitiesToAngles';
 import { calculateFinalRotation } from '../../utils/calculateFinalRotation';
 import AnimatedRouletteWheel from '../AnimatedRouletteWheel/AnimatedRouletteWheel';
-import ProbabilitiesText from '../ProbabilitiesText/ProbabilitiesText';
+import NearbyProbabilityList from '../NearbyProbabilityList/NearbyProbabilityList';
 import RouletteWheelBack from '@/features/roulette/components/RouletteWheelBack/RouletteWheelBack';
 import Flip from '@/components/@common/Flip/Flip';
+import ScreenReaderOnly from '@/components/@common/ScreenReaderOnly/ScreenReaderOnly';
+import { describeProbabilities } from '@/features/roulette/utils/describeProbabilities';
 import { RefObject, useEffect, useState } from 'react';
 import useRouletteProbabilities from '../../pages/RoulettePlayPage/hooks/useRouletteProbabilities';
 
@@ -40,20 +42,29 @@ const RoulettePlaySection = ({ isSpinStarted, winner, randomAngle, isFirstLoadRe
 
   return (
     <S.Container>
-      <S.RouletteWheelWrapper>
-        <Flip
-          flipped={isFlipped}
-          initialView={<RouletteWheelBack />}
-          flippedView={
-            <AnimatedRouletteWheel
-              finalRotation={finalRotation}
-              isSpinStarted={isSpinStarted}
-              startAnimation={isFlipped}
-            />
-          }
-        />
-      </S.RouletteWheelWrapper>
-      <ProbabilitiesText isProbabilitiesLoading={isLoading} />
+      <S.RouletteWheelArea>
+        <S.RouletteWheelWrapper>
+          <Flip
+            flipped={isFlipped}
+            initialView={<RouletteWheelBack />}
+            flippedView={
+              <AnimatedRouletteWheel
+                finalRotation={finalRotation}
+                isSpinStarted={isSpinStarted}
+                startAnimation={isFlipped}
+              />
+            }
+          />
+        </S.RouletteWheelWrapper>
+      </S.RouletteWheelArea>
+      {/*
+        휠은 aria-hidden 이고 아래 리스트는 나와 가까운 사람만 보여준다.
+        얇은 조각이라 이름이 그려지지 않은 참가자까지 낭독되도록 전원을 여기서 읽어준다.
+      */}
+      {!isLoading && (
+        <ScreenReaderOnly>{describeProbabilities(probabilityHistory.current)}</ScreenReaderOnly>
+      )}
+      <NearbyProbabilityList isProbabilitiesLoading={isLoading} />
     </S.Container>
   );
 };

@@ -5,6 +5,7 @@ user:
 
 room:
   removalDelay: 1h
+  finishedRemovalDelay: 30s   # 룰렛까지 끝난 방을 정리하기까지의 지연
   qr:
     width: 150
     height: 150

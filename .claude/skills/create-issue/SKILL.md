@@ -112,6 +112,11 @@ fi
 git -C "$WT" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1 && {
   echo "ABORT: upstream 이 남아있다 — 이 상태로 두면 push 가 dev 로 직행한다(#1404)"; exit 1; }
 
+# env 심볼릭 링크 + 워크트리 전용 포트 (#1660). 이게 없으면 워크트리에서 앱을 띄울 수 없고,
+# 프론트는 API_URL 이 undefined 인 채로 조용히 백엔드에 못 붙는다.
+bash "$MAIN/.claude/skills/create-issue/worktree-setup.sh" "$WT" || {
+  echo "경고: 워크트리 준비 실패 — 로컬 실행 시 run-local 스킬의 1단계를 수동으로 돌린다"; }
+
 echo "$WT"
 ```
 

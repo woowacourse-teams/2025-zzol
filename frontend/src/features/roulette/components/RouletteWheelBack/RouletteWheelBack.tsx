@@ -10,8 +10,6 @@ const RouletteWheelBack = () => {
       <Pin />
       <S.Wrapper>
         <svg
-          width={WHEEL_CONFIG.SIZE}
-          height={WHEEL_CONFIG.SIZE}
           viewBox={`0 0 ${WHEEL_CONFIG.SIZE} ${WHEEL_CONFIG.SIZE}`}
           stroke={theme.color.point[400]}
           strokeWidth="8"

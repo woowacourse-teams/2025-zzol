@@ -1,20 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { ChangeEvent, PropsWithChildren, useEffect, useState } from 'react';
+import { ChangeEvent, PropsWithChildren, useState } from 'react';
 import RouletteWheel from './RouletteWheel';
 import { colorList } from '@/constants/color';
-import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
+import { IdentifierContext, useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 
 /** 내 조각 표시(위치 마커·테두리)를 보려면 내 이름이 참가자 중 하나여야 한다 */
 const MY_NAME = '김철수';
 
+/**
+ * setMyName 을 부르지 않는다 — 그 값은 sessionStorage 에 남아 같은 탭의 다른 스토리까지
+ * 이 이름을 물려받고, 새로고침해도 지워지지 않는다. 이 스토리 안에서만 덮어쓴다.
+ */
 const AsMe = ({ children }: PropsWithChildren) => {
-  const { setMyName } = useIdentifier();
+  const identifier = useIdentifier();
 
-  useEffect(() => {
-    setMyName(MY_NAME);
-  }, [setMyName]);
-
-  return <>{children}</>;
+  return (
+    <IdentifierContext.Provider value={{ ...identifier, myName: MY_NAME }}>
+      {children}
+    </IdentifierContext.Provider>
+  );
 };
 
 const meta: Meta<typeof RouletteWheel> = {

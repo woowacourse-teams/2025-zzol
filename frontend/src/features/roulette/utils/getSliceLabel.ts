@@ -44,12 +44,10 @@ export const getSliceLabel = ({ startAngle, endAngle, nameLength }: Props): Slic
   // 혼자 남아 조각이 원 전체면 방향이라는 것이 없다. 반경 배치를 그대로 적용하면
   // 중심각이 180도로 잡혀 이름이 6시 방향에 세로로 눕는다. 가운데 가로로 놓는다.
   if (sweep >= 360) {
-    return {
-      x: WHEEL_CONFIG.CENTER,
-      y: WHEEL_CONFIG.CENTER,
-      rotate: 0,
-      fontSize: Math.min(WHEEL_CONFIG.LABEL_MAX_FONT_SIZE, (LABEL_RADIUS * 2) / nameLength),
-    };
+    const fontSize = Math.min(WHEEL_CONFIG.LABEL_MAX_FONT_SIZE, (LABEL_RADIUS * 2) / nameLength);
+    if (fontSize < WHEEL_CONFIG.LABEL_MIN_FONT_SIZE) return null;
+
+    return { x: WHEEL_CONFIG.CENTER, y: WHEEL_CONFIG.CENTER, rotate: 0, fontSize };
   }
 
   // 180도를 넘으면 조각이 원의 절반 이상이라 침범할 이웃이 없다. 그 지점에서 두께 제약을 멈춘다

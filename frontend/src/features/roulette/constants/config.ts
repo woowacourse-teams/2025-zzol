@@ -13,11 +13,16 @@ export const WHEEL_CONFIG = {
    *
    * 최대 반경은 149.5 로 viewBox 안에서 끝나므로 원판 크기에 영향이 없다.
    */
-  MY_MARKER_LINE_INNER: 133,
-  MY_MARKER_LINE_OUTER: 138,
-  MY_MARKER_DOT_CENTER: 143.6,
-  MY_MARKER_DOT_RADIUS: 5.5,
-  MY_MARKER_LINE_WIDTH: 3.2,
+  MY_MARKER_LINE_INNER: 132,
+  MY_MARKER_LINE_OUTER: 137,
+  MY_MARKER_DOT_CENTER: 143.2,
+  MY_MARKER_DOT_RADIUS: 5.6,
+  MY_MARKER_LINE_WIDTH: 3,
+  /**
+   * 흰 테두리 두께(한쪽). 점 지름의 20% 정도라야 조각 색 위에서도 형태가 또렷하다.
+   * 점의 바깥 끝(143.2 + 5.6 + 1.1 = 149.9)이 viewBox 안에서 끝나도록 잡혀 있다.
+   */
+  MY_MARKER_OUTLINE: 1.1,
 
   /** 라벨이 시작하는 반지름 — 중심부는 조각이 뾰족해 글자를 담지 못한다 */
   LABEL_INNER_RADIUS: 45,

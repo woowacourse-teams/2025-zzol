@@ -26,6 +26,8 @@ export const Wrapper = styled.div<WrapperProps>`
   svg {
     width: 100%;
     height: 100%;
+    /* 내 위치 마커의 그림자가 viewBox 밖으로 조금 번진다. 기본값이면 그쪽만 잘려 비대칭이 된다 */
+    overflow: visible;
   }
 
   --final-rotation: ${({ $finalRotation }) => $finalRotation ?? 0}deg;

@@ -36,7 +36,7 @@ const MyPositionMarker = ({ sector, isHidden }: Props) => {
         x2={lineEnd.x}
         y2={lineEnd.y}
         stroke={theme.color.white}
-        strokeWidth={WHEEL_CONFIG.MY_MARKER_LINE_WIDTH + 2.4}
+        strokeWidth={WHEEL_CONFIG.MY_MARKER_LINE_WIDTH + WHEEL_CONFIG.MY_MARKER_OUTLINE * 2}
         strokeLinecap="round"
       />
       <line
@@ -54,7 +54,7 @@ const MyPositionMarker = ({ sector, isHidden }: Props) => {
         r={WHEEL_CONFIG.MY_MARKER_DOT_RADIUS}
         fill={theme.color.point[500]}
         stroke={theme.color.white}
-        strokeWidth={1.6}
+        strokeWidth={WHEEL_CONFIG.MY_MARKER_OUTLINE * 2}
       />
     </S.Marker>
   );

@@ -23,13 +23,15 @@ const ProbabilityList = ({ playerProbabilities }: Props) => {
 
   return (
     <>
-      <PlayerCard name={myProbability ? myProbability.playerName : myName} playerColor={myColor}>
-        <Headline4>
-          <S.Percent>
-            {formatProbability(myProbability ? myProbability.probability : 100)}
-          </S.Percent>
-        </Headline4>
-      </PlayerCard>
+      <S.MyRow>
+        <PlayerCard name={myProbability ? myProbability.playerName : myName} playerColor={myColor}>
+          <Headline4>
+            <S.Percent>
+              {formatProbability(myProbability ? myProbability.probability : 100)}
+            </S.Percent>
+          </Headline4>
+        </PlayerCard>
+      </S.MyRow>
       <Divider />
       <S.ScrollableWrapper>
         {filteredParticipants.length === 0 ? (

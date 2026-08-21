@@ -1,11 +1,32 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, PropsWithChildren, useEffect, useState } from 'react';
 import RouletteWheel from './RouletteWheel';
 import { colorList } from '@/constants/color';
+import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
+
+/** 내 조각 표시(위치 마커·테두리)를 보려면 내 이름이 참가자 중 하나여야 한다 */
+const MY_NAME = '김철수';
+
+const AsMe = ({ children }: PropsWithChildren) => {
+  const { setMyName } = useIdentifier();
+
+  useEffect(() => {
+    setMyName(MY_NAME);
+  }, [setMyName]);
+
+  return <>{children}</>;
+};
 
 const meta: Meta<typeof RouletteWheel> = {
   title: 'Composition/RouletteWheel',
   component: RouletteWheel,
+  decorators: [
+    (Story) => (
+      <AsMe>
+        <Story />
+      </AsMe>
+    ),
+  ],
 };
 
 export default meta;

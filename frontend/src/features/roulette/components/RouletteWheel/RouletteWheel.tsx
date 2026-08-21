@@ -4,6 +4,7 @@ import { PlayerProbability, RouletteSector } from '@/types/roulette';
 import { memo } from 'react';
 import { WHEEL_CONFIG } from '../../constants/config';
 import { convertProbabilitiesToAngles } from '../../utils';
+import MyPositionMarker from '../MyPositionMarker/MyPositionMarker';
 import RouletteSlice from '../RouletteSlice/RouletteSlice';
 import * as S from './RouletteWheel.styled';
 
@@ -32,6 +33,8 @@ const RouletteWheel = ({
   const { myName } = useIdentifier();
 
   const playersWithAngles = sectors || convertProbabilitiesToAngles(playerProbabilities);
+
+  const mySector = playersWithAngles.find((player) => player.playerName === myName);
 
   const sortedPlayers = [...playersWithAngles].sort((a, b) => {
     if (a.playerName === myName) return 1;
@@ -62,6 +65,7 @@ const RouletteWheel = ({
               />
             );
           })}
+          {mySector && <MyPositionMarker sector={mySector} isHidden={isSpinStarted} />}
         </svg>
       </S.Wrapper>
     </S.Container>

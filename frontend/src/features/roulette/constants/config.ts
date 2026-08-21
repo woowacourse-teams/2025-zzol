@@ -4,6 +4,21 @@ export const WHEEL_CONFIG = {
   RADIUS: 140,
   STROKE_WIDTH: 4,
 
+  /**
+   * 내 위치 마커 — 원판 바깥 여백(반지름 140~150)에 떠 있는 점과 짧은 선.
+   *
+   * 조각 자체는 키우지 않는다. 조각 넓이는 반지름의 제곱에 비례해서,
+   * 내 조각만 크게 그리면 확률이 실제보다 커 보인다(140→145 면 7.3% 증가).
+   * 확률을 보여주는 화면이므로 그 왜곡을 만들지 않는다.
+   *
+   * 최대 반경은 149.5 로 viewBox 안에서 끝나므로 원판 크기에 영향이 없다.
+   */
+  MY_MARKER_LINE_INNER: 133,
+  MY_MARKER_LINE_OUTER: 138,
+  MY_MARKER_DOT_CENTER: 143.6,
+  MY_MARKER_DOT_RADIUS: 5.5,
+  MY_MARKER_LINE_WIDTH: 3.2,
+
   /** 라벨이 시작하는 반지름 — 중심부는 조각이 뾰족해 글자를 담지 못한다 */
   LABEL_INNER_RADIUS: 45,
   /** 라벨이 끝나는 반지름 — 테두리와 겹치지 않게 가장자리에서 5px 띄운다 */

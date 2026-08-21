@@ -1,5 +1,13 @@
 import styled from '@emotion/styled';
 
+/** 내 줄임을 알리는 틴트. 목록을 훑을 때 덩어리로 잡힌다 */
+export const MyRow = styled.div`
+  background-color: ${({ theme }) => theme.color.point[50]};
+  border-radius: 12px;
+  padding: 0 12px;
+  margin: 0 -12px;
+`;
+
 export const ScrollableWrapper = styled.div`
   overflow-y: auto;
   margin-bottom: 1.6rem;

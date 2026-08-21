@@ -15,6 +15,14 @@ const meta: Meta<typeof RouletteWheelBack> = {
   },
   tags: ['autodocs'],
   argTypes: {},
+  // 휠은 부모 크기를 채우므로 스토리에서 크기를 준다
+  decorators: [
+    (Story) => (
+      <div style={{ width: 300, height: 300 }}>
+        <Story />
+      </div>
+    ),
+  ],
 };
 
 export default meta;

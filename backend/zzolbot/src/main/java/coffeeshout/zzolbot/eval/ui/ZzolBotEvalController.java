@@ -2,6 +2,7 @@ package coffeeshout.zzolbot.eval.ui;
 
 import coffeeshout.zzolbot.eval.application.EvalRunner;
 import coffeeshout.zzolbot.eval.application.EvalScenarioService;
+import coffeeshout.zzolbot.eval.domain.ScenarioKind;
 import coffeeshout.zzolbot.eval.infra.EvalResultEntity;
 import coffeeshout.zzolbot.eval.infra.EvalResultRepository;
 import coffeeshout.zzolbot.eval.infra.EvalRunEntity;
@@ -20,6 +21,7 @@ import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,13 +77,14 @@ public class ZzolBotEvalController {
     @PostMapping("/runs")
     public ResponseEntity<Void> startRun(@RequestBody @Valid RunRequest request) {
         final int repeats = request.repeats() == null ? 1 : request.repeats();
+        final ScenarioKind kind = parseKind(request.kind()); // 실행 가드를 잡기 전에 검증 — 잘못된 요청이 가드를 물고 죽지 않게
         if (!evalRunning.compareAndSet(false, true)) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 이미 실행 중 — 중복 실행 차단
         }
         try {
             virtualThreadExecutor.execute(() -> {
                 try {
-                    evalRunner.run(request.label(), repeats);
+                    evalRunner.run(request.label(), repeats, kind);
                 } catch (Exception e) {
                     log.warn("[ZzolBot] 평가 실행 실패. label={}", request.label(), e);
                 } finally {
@@ -165,10 +168,22 @@ public class ZzolBotEvalController {
                 result.getAnswer());
     }
 
+    private ScenarioKind parseKind(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return ScenarioKind.valueOf(raw.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "알 수 없는 시나리오 kind: " + raw);
+        }
+    }
+
     private ScenarioResponse toScenarioResponse(EvalScenarioEntity scenario) {
         return new ScenarioResponse(
                 scenario.getId(),
                 scenario.getName(),
+                scenario.getKind().name(),
                 scenario.getQuestion(),
                 scenario.getRubric(),
                 scenario.getSourceType().name(),

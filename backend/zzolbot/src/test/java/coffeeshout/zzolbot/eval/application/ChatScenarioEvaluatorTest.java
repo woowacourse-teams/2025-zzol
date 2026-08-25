@@ -25,6 +25,7 @@ class ChatScenarioEvaluatorTest {
 
     @Mock
     private ZzolBotChatService chatService;
+
     @Mock
     private ToolSnapshotCodec codec;
 
@@ -45,8 +46,8 @@ class ChatScenarioEvaluatorTest {
         given(codec.fromJson("[]")).willReturn(new ToolSnapshot(Map.of()));
         given(chatService.ask(eq("질문"), eq("eval"), any(), any(SnapshotToolResultSource.class), any()))
                 .willReturn(new ZzolBotChatResult(null, "진단 답변"));
-        final EvalScenarioEntity scenario = EvalScenarioEntity.create(
-                "chat-1", ScenarioKind.CHAT, "질문", "[]", "rubric", ScenarioSource.MANUAL);
+        final EvalScenarioEntity scenario =
+                EvalScenarioEntity.create("chat-1", ScenarioKind.CHAT, "질문", "[]", "rubric", ScenarioSource.MANUAL);
 
         final EvalAnswer answer = evaluator.evaluate(scenario);
 

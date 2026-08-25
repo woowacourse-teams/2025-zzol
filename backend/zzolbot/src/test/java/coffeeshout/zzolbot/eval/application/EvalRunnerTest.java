@@ -3,13 +3,15 @@ package coffeeshout.zzolbot.eval.application;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import coffeeshout.zzolbot.eval.domain.EvalRunStatus;
 import coffeeshout.zzolbot.eval.domain.EvalVerdict;
 import coffeeshout.zzolbot.eval.domain.JudgeScore;
+import coffeeshout.zzolbot.eval.domain.ScenarioKind;
+import coffeeshout.zzolbot.eval.domain.ScenarioSource;
 import coffeeshout.zzolbot.eval.infra.EvalResultEntity;
 import coffeeshout.zzolbot.eval.infra.EvalResultRepository;
 import coffeeshout.zzolbot.eval.infra.EvalRunEntity;
@@ -17,8 +19,6 @@ import coffeeshout.zzolbot.eval.infra.EvalRunRepository;
 import coffeeshout.zzolbot.eval.infra.EvalScenarioEntity;
 import coffeeshout.zzolbot.eval.infra.EvalScenarioRepository;
 import coffeeshout.zzolbot.eval.infra.JudgeClient;
-import coffeeshout.zzolbot.eval.domain.ScenarioKind;
-import coffeeshout.zzolbot.eval.domain.ScenarioSource;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,20 +36,27 @@ import org.springframework.test.util.ReflectionTestUtils;
 class EvalRunnerTest {
 
     private static final ZzolBotProperties PROPERTIES = new ZzolBotProperties(
-            "test-key", "gemini-2.5-flash", 5,
+            "test-key",
+            "gemini-2.5-flash",
+            5,
             new ZzolBotProperties.MonitoringProperties("http://loki", "http://tempo", "http://prom", "local"),
             new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
-            60, 10000L,
+            60,
+            10000L,
             new ZzolBotProperties.SqlProperties(List.of(), 100, 3));
 
     @Mock
     private EvalScenarioRepository scenarioRepository;
+
     @Mock
     private EvalRunRepository runRepository;
+
     @Mock
     private EvalResultRepository resultRepository;
+
     @Mock
     private JudgeClient judgeClient;
+
     @Mock
     private ScenarioEvaluator chatEvaluator;
 
@@ -57,8 +64,8 @@ class EvalRunnerTest {
 
     @BeforeEach
     void setUp() {
-        runner = new EvalRunner(scenarioRepository, runRepository, resultRepository,
-                judgeClient, PROPERTIES, List.of(chatEvaluator));
+        runner = new EvalRunner(
+                scenarioRepository, runRepository, resultRepository, judgeClient, PROPERTIES, List.of(chatEvaluator));
 
         given(runRepository.save(any())).willAnswer(invocation -> {
             final EvalRunEntity run = invocation.getArgument(0);

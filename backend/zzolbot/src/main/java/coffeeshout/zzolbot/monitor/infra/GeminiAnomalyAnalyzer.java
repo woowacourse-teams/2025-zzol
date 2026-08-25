@@ -102,7 +102,11 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
         sb.append("설명(사람이 적어둔 추측 — 확인된 사실 아님): ").append(alert.description()).append('\n');
         sb.append("라벨:\n");
         for (Map.Entry<String, String> label : alert.labels().entrySet()) {
-            sb.append("- ").append(label.getKey()).append('=').append(label.getValue()).append('\n');
+            sb.append("- ")
+                    .append(label.getKey())
+                    .append('=')
+                    .append(label.getValue())
+                    .append('\n');
         }
         if (logSamples != null && !logSamples.isEmpty()) {
             sb.append("\n최근 ERROR 로그 샘플 (출처 환경: ").append(logEnvironment).append("):\n");
@@ -121,11 +125,13 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
             // 근거 판정은 모델 자체 판정(evidenceFound)에 인용 검증을 코드로 덧씌운다. 판정이 누락되면
             // 보수적으로 false로 본다 — 근거 있다고 잘못 표시하는 쪽이 더 위험하다.
             final boolean claimed = node.path("evidenceFound").asBoolean(false);
-            final boolean grounded = claimed && citedInLogs(node.path("evidenceLine").asText(""), logSamples);
+            final boolean grounded =
+                    claimed && citedInLogs(node.path("evidenceLine").asText(""), logSamples);
             // 근거가 없으면 모델이 무엇을 보냈든 원인 가설뿐 아니라 요약까지 안전한 문구로 강제한다.
             // 화면엔 "근거 없음"인데 요약은 "DB에 심각한 문제" 같은 단정으로 남는 구멍을 막는다(#1595 리뷰).
             final String summary = grounded ? node.path("summary").asText("") : NO_EVIDENCE_SUMMARY;
-            final String hypothesis = grounded ? node.path("rootCauseHypothesis").asText("") : "";
+            final String hypothesis =
+                    grounded ? node.path("rootCauseHypothesis").asText("") : "";
             return new MonitorAnalysis(summary, hypothesis, actions, grounded);
         } catch (Exception e) {
             log.warn("[ZzolBot] 이상 분석 응답 파싱 실패. raw={}", json, e);
@@ -144,9 +150,8 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
             return false;
         }
         final String needle = normalizeWhitespace(evidenceLine);
-        return logSamples.stream()
-                .filter(line -> line != null)
-                .anyMatch(line -> normalizeWhitespace(line).contains(needle));
+        return logSamples.stream().filter(line -> line != null).anyMatch(line -> normalizeWhitespace(line)
+                .contains(needle));
     }
 
     private static String normalizeWhitespace(String text) {

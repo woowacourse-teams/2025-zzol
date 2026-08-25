@@ -62,7 +62,11 @@ public class EvalSeedInitializer implements ApplicationRunner {
             }
             final String snapshotJson = codec.toJson(new ToolSnapshot(results));
             scenarioRepository.save(EvalScenarioEntity.create(
-                    seed.name(), ScenarioKind.CHAT, seed.question(), snapshotJson, seed.rubric(),
+                    seed.name(),
+                    ScenarioKind.CHAT,
+                    seed.question(),
+                    snapshotJson,
+                    seed.rubric(),
                     resolveSource(seed.source())));
             log.info("[ZzolBot] 평가 시드 적재: {}", seed.name());
         } catch (Exception e) {
@@ -82,9 +86,7 @@ public class EvalSeedInitializer implements ApplicationRunner {
         }
     }
 
-    private record SeedFile(String name, String question, String rubric, String source, List<SeedEntry> snapshot) {
-    }
+    private record SeedFile(String name, String question, String rubric, String source, List<SeedEntry> snapshot) {}
 
-    private record SeedEntry(String toolName, Map<String, Object> args, String content) {
-    }
+    private record SeedEntry(String toolName, Map<String, Object> args, String content) {}
 }

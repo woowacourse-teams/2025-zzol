@@ -26,8 +26,7 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "zzolbot_eval_scenario",
         uniqueConstraints = @UniqueConstraint(name = "uk_zzolbot_eval_scenario_name", columnNames = "name"),
-        indexes = @Index(name = "idx_zzolbot_eval_scenario_created_at", columnList = "created_at DESC")
-)
+        indexes = @Index(name = "idx_zzolbot_eval_scenario_created_at", columnList = "created_at DESC"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EvalScenarioEntity {
@@ -60,7 +59,11 @@ public class EvalScenarioEntity {
     private Instant createdAt;
 
     public static EvalScenarioEntity create(
-            String name, ScenarioKind kind, String question, String snapshotJson, String rubric,
+            String name,
+            ScenarioKind kind,
+            String question,
+            String snapshotJson,
+            String rubric,
             ScenarioSource sourceType) {
         final EvalScenarioEntity entity = new EvalScenarioEntity();
         entity.name = name;

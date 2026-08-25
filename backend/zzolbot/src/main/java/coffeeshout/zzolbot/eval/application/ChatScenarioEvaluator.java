@@ -19,8 +19,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ChatScenarioEvaluator implements ScenarioEvaluator {
 
-    private static final Consumer<String> NO_PROGRESS = toolName -> {
-    };
+    private static final Consumer<String> NO_PROGRESS = toolName -> {};
     private static final SessionSink NON_PERSIST =
             (maskedQuestion, maskedAnswer, adminUsername, ctx) -> new ZzolBotChatResult(null, maskedAnswer);
 
@@ -36,8 +35,8 @@ public class ChatScenarioEvaluator implements ScenarioEvaluator {
     public EvalAnswer evaluate(EvalScenarioEntity scenario) {
         final ToolSnapshot snapshot = codec.fromJson(scenario.getSnapshotJson());
         final SnapshotToolResultSource source = new SnapshotToolResultSource(snapshot);
-        final ZzolBotChatResult result = chatService.ask(
-                scenario.getQuestion(), "eval", NO_PROGRESS, source, NON_PERSIST);
+        final ZzolBotChatResult result =
+                chatService.ask(scenario.getQuestion(), "eval", NO_PROGRESS, source, NON_PERSIST);
         return new EvalAnswer(result.answer(), source.getMissingCount());
     }
 }

@@ -18,8 +18,8 @@ import coffeeshout.zzolbot.eval.ui.response.ScenarioResponse;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.time.Clock;
-import java.time.format.DateTimeFormatter;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -64,8 +64,7 @@ public class ZzolBotEvalController {
             EvalRunRepository runRepository,
             EvalResultRepository resultRepository,
             @Qualifier("virtualThreadExecutor") ExecutorService virtualThreadExecutor,
-            Clock clock
-    ) {
+            Clock clock) {
         this.evalRunner = evalRunner;
         this.scenarioService = scenarioService;
         this.runRepository = runRepository;
@@ -109,7 +108,8 @@ public class ZzolBotEvalController {
 
     @GetMapping("/runs/{id}")
     public RunDetailResponse run(@PathVariable Long id) {
-        final EvalRunEntity run = runRepository.findById(id)
+        final EvalRunEntity run = runRepository
+                .findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 평가 실행: " + id));
         final List<ResultResponse> results = resultRepository.findByRunIdOrderByIdAsc(id).stream()
                 .map(this::toResultResponse)
@@ -119,9 +119,7 @@ public class ZzolBotEvalController {
 
     @GetMapping("/scenarios")
     public List<ScenarioResponse> scenarios() {
-        return scenarioService.list().stream()
-                .map(this::toScenarioResponse)
-                .toList();
+        return scenarioService.list().stream().map(this::toScenarioResponse).toList();
     }
 
     @PostMapping("/scenarios")
@@ -133,8 +131,8 @@ public class ZzolBotEvalController {
     @PostMapping("/scenarios/record")
     public ScenarioResponse registerRecorded(@RequestBody @Valid RecordScenarioRequest request, Principal principal) {
         final String adminUsername = principal != null ? principal.getName() : "unknown";
-        return toScenarioResponse(scenarioService.registerRecorded(
-                request.name(), request.question(), request.rubric(), adminUsername));
+        return toScenarioResponse(
+                scenarioService.registerRecorded(request.name(), request.question(), request.rubric(), adminUsername));
     }
 
     @DeleteMapping("/scenarios/{id}")

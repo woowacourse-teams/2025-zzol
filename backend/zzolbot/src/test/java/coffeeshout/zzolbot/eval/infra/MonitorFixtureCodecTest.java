@@ -17,8 +17,8 @@ class MonitorFixtureCodecTest {
     @Test
     void 직렬화_역직렬화_왕복이_원본을_보존한다() {
         final MonitorScenarioFixture fixture = new MonitorScenarioFixture(
-                new FiringAlert("IpBanRateSpike", "warning", "fp-1", "요약", "설명",
-                        Map.of("incident_group", "ip-blocking")),
+                new FiringAlert(
+                        "IpBanRateSpike", "warning", "fp-1", "요약", "설명", Map.of("incident_group", "ip-blocking")),
                 List.of("로그 A", "로그 B"),
                 "prod");
 
@@ -29,7 +29,6 @@ class MonitorFixtureCodecTest {
 
     @Test
     void 잘못된_JSON이면_예외를_던진다() {
-        assertThatThrownBy(() -> codec.fromJson("not-json"))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> codec.fromJson("not-json")).isInstanceOf(IllegalStateException.class);
     }
 }

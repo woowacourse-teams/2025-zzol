@@ -58,7 +58,11 @@ public class MonitorEvalSeedInitializer implements ApplicationRunner {
             final MonitorScenarioFixture fixture =
                     new MonitorScenarioFixture(seed.alert(), seed.logSamples(), seed.logEnvironment());
             scenarioRepository.save(EvalScenarioEntity.create(
-                    seed.name(), ScenarioKind.MONITOR, seed.question(), codec.toJson(fixture), seed.rubric(),
+                    seed.name(),
+                    ScenarioKind.MONITOR,
+                    seed.question(),
+                    codec.toJson(fixture),
+                    seed.rubric(),
                     resolveSource(seed.source())));
             log.info("[ZzolBot] 모니터 평가 시드 적재: {}", seed.name());
         } catch (Exception e) {
@@ -84,6 +88,5 @@ public class MonitorEvalSeedInitializer implements ApplicationRunner {
             String source,
             FiringAlert alert,
             List<String> logSamples,
-            String logEnvironment) {
-    }
+            String logEnvironment) {}
 }

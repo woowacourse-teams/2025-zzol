@@ -28,6 +28,7 @@ class MonitorScenarioEvaluatorTest {
 
     @Mock
     private AnomalyAnalyzer analyzer;
+
     @Mock
     private MonitorFixtureCodec codec;
 

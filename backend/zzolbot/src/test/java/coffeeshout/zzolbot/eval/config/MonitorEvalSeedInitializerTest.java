@@ -61,10 +61,13 @@ class MonitorEvalSeedInitializerTest {
                 softly.assertThat(fixture.logSamples()).isNotEmpty();
                 softly.assertThat(fixture.logEnvironment()).isEqualTo("prod");
             }
-            final List<String> names = captor.getAllValues().stream().map(EvalScenarioEntity::getName).toList();
-            softly.assertThat(names).contains(
-                    "monitor-mass-ip-blocking-description-echo-trap",
-                    "monitor-error-spike-stale-reingested-v2");
+            final List<String> names = captor.getAllValues().stream()
+                    .map(EvalScenarioEntity::getName)
+                    .toList();
+            softly.assertThat(names)
+                    .contains(
+                            "monitor-mass-ip-blocking-description-echo-trap",
+                            "monitor-error-spike-stale-reingested-v2");
         });
     }
 

@@ -30,8 +30,8 @@ public class MonitorScenarioEvaluator implements ScenarioEvaluator {
     @Override
     public EvalAnswer evaluate(EvalScenarioEntity scenario) {
         final MonitorScenarioFixture fixture = codec.fromJson(scenario.getSnapshotJson());
-        final MonitorAnalysis analysis = analyzer.analyze(
-                fixture.alert(), fixture.logSamples(), fixture.logEnvironment());
+        final MonitorAnalysis analysis =
+                analyzer.analyze(fixture.alert(), fixture.logSamples(), fixture.logEnvironment());
         return new EvalAnswer(flatten(analysis), 0);
     }
 

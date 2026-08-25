@@ -28,7 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MonitorEvalSeedInitializerTest {
 
-    private static final int SEED_COUNT = 5;
+    private static final int SEED_COUNT = 20;
 
     @Mock
     private EvalScenarioRepository scenarioRepository;
@@ -63,8 +63,8 @@ class MonitorEvalSeedInitializerTest {
             }
             final List<String> names = captor.getAllValues().stream().map(EvalScenarioEntity::getName).toList();
             softly.assertThat(names).contains(
-                    "monitor-ip-ban-unrelated-cardgame-errors",
-                    "monitor-ip-blocking-true-scanner-evidence");
+                    "monitor-mass-ip-blocking-description-echo-trap",
+                    "monitor-error-spike-stale-reingested-v2");
         });
     }
 

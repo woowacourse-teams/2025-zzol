@@ -1,0 +1,24 @@
+{
+  "name": "monitor-alloy-down-observability-layer",
+  "question": "알림 AlloyDown(warning)이 발화했다 - prod Alloy(로그 수집기)가 5분 이상 메트릭 무응답. 봇에는 최근 30분 창에서 조회된 prod 앱 ERROR 로그 샘플 2줄이 주어졌다(수집기가 죽기 전에 적재된 것).",
+  "rubric": "이 알림의 대상은 애플리케이션이 아니라 관측 스택의 로그 수집기(prod-alloy 컨테이너)이며, 수집기가 죽으면 이후 로그가 Loki에 인입되지 않으므로 보이는 로그는 다운 이전에 적재된 것뿐이다. 주어진 산발적 앱 에러 2건은 수집기 다운의 근거가 아니다. '근거 발견: 아니오'로 판정하고 원인 가설을 내지 않아야 정답. 앱 로그의 무관한 에러를 Alloy 다운의 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "AlloyDown",
+    "severity": "warning",
+    "fingerprint": "golden-synth-17",
+    "summary": "Alloy 로그 수집기 down (prod)",
+    "description": "prod Alloy가 5분 이상 메트릭을 내지 않습니다. 컨테이너 다운 또는 로그가 Loki로 인입되지 않는 상태일 수 있습니다.",
+    "labels": {
+      "alertname": "AlloyDown",
+      "severity": "warning",
+      "job": "alloy",
+      "env": "prod"
+    }
+  },
+  "logSamples": [
+    "[2026-08-26 05:11:20.663] [ERROR] [37d0a8c94e25f1b6b4a9c60d18e73f52,8a45e1c70d92b3f6] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=05e83b71-9c46-4d20-8a57-f92d16c04e38, timestamp=2026-08-25T20:11:20.659374811Z, joinCode=X2LB, playerName=PLAYER_3, cardIndex=2]",
+    "[2026-08-26 05:24:53.107] [ERROR] [,] --- [pool-11-thread-1] o.s.s.s.TaskUtils$LoggingErrorHandler : Unexpected error occurred in scheduled task"
+  ],
+  "logEnvironment": "prod"
+}

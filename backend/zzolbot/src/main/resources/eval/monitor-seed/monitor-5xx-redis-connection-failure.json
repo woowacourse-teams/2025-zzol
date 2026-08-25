@@ -1,0 +1,26 @@
+{
+  "name": "monitor-5xx-redis-connection-failure",
+  "question": "알림 Http5xxRatioHigh(critical)가 prod에서 발화했다 - 최근 5분 5xx 비율 5% 초과. 봇에는 최근 30분 ERROR 로그 샘플 5줄(Redis 연결 실패와 스트림 처리 오류)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 여러 HTTP 요청이 RedisConnectionFailureException(Unable to connect to Redis)으로 실패하고 Redis Stream 컨테이너 복구까지 포기한 내용으로, 방 상태와 세션을 Redis에 두는 이 시스템에서 광범위한 5xx의 직접 근거다. '근거 발견: 예'로 판정하고 Redis(valkey) 연결 장애를 근본 원인 가설로 제시하면 정답. '근거 발견: 아니오'로 판정하거나 DB 커넥션 풀, 애플리케이션 코드 버그를 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "Http5xxRatioHigh",
+    "severity": "critical",
+    "fingerprint": "golden-synth-06",
+    "summary": "HTTP 5xx 비율 5% 초과 (prod-app)",
+    "description": "최근 5분 5xx 비율이 12.4%. 서버 측 광범위 실패 가능성.",
+    "labels": {
+      "alertname": "Http5xxRatioHigh",
+      "severity": "critical",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-24 09:12:03.441] [ERROR] [f30c81d5a9e24b67b2d4c90a17e85f23,6d29a4c80e51b7f3] --- [http-nio-8080-exec-11] c.web.exception.RestExceptionHandler : method=POST uri=/rooms exception=RedisConnectionFailureException message=Unable to connect to Redis",
+    "[2026-08-24 09:12:29.870] [ERROR] [82a4d6f01c9e47b5a3e8b12d90c74f56,1f74c8a3d92e60b5] --- [http-nio-8080-exec-29] c.web.exception.RestExceptionHandler : method=GET uri=/rooms/check-joinCode exception=RedisConnectionFailureException message=Unable to connect to Redis",
+    "[2026-08-24 09:13:14.502] [ERROR] [4e91c3a7d80f42b6b5d0a29c81e67f34,9a06e2d75c18b4f7] ---[http-nio-8080-exec-05] c.web.exception.RestExceptionHandler : method=GET uri=/rooms/nickname/random exception=RedisConnectionFailureException message=Unable to connect to Redis",
+    "[2026-08-24 09:13:48.667] [ERROR] [b57e20d94a1c48f3a8c6d01e72b94f85,3c81f6a40d97e2b5] --- [redis-stream-thread-pool-concurrent1] c.g.r.c.RedisStreamListenerStarter : Redis Stream 처리 중 오류가 발생했습니다.",
+    "[2026-08-24 09:14:32.109] [ERROR] [,] --- [pool-11-thread-1] c.g.h.RedisStreamContainerRecovery : Redis Stream container 복구 포기: stream=room. HealthIndicator에 DOWN 보고"
+  ],
+  "logEnvironment": "prod"
+}

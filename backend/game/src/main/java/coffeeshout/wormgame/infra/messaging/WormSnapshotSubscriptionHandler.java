@@ -51,18 +51,29 @@ public class WormSnapshotSubscriptionHandler {
             log.debug("principal 없는 구독 — 스냅샷을 보낼 수 없다: destination={}", destination);
             return;
         }
-        final String joinCode = pathMatcher
-                .extractUriTemplateVariables(DELTA_TOPIC_PATTERN, destination)
-                .get("joinCode");
-        if (gameSessionService.findSession(new JoinCode(joinCode)).isEmpty()) {
-            return; // 게임을 쥔 인스턴스가 아니다 — 배포 창 재접속은 종료 후 복귀로 수용(설계 문서 v0.3)
+        final JoinCode joinCode = parseJoinCode(destination);
+        if (joinCode == null || gameSessionService.findSession(joinCode).isEmpty()) {
+            return; // 형식이 안 맞거나 게임을 쥔 인스턴스가 아니다(배포 창 재접속은 종료 후 복귀로 수용)
         }
         try {
-            final WormSnapshotResponse snapshot = WormSnapshotResponse.from(wormGameService.snapshot(joinCode));
+            final WormSnapshotResponse snapshot =
+                    WormSnapshotResponse.from(wormGameService.snapshot(joinCode.getValue()));
             messagingTemplate.convertAndSendToUser(
                     principal.getName(), SNAPSHOT_QUEUE, WebSocketResponse.success(snapshot));
         } catch (BusinessException e) {
             log.debug("아직 지렁이 게임이 없어 스냅샷을 건너뜀: joinCode={}", joinCode);
+        }
+    }
+
+    /** destination은 클라이언트 제어값 — 패턴은 임의 4문자를 통과시키므로 형식 검증 실패는 조용히 무시한다. */
+    private JoinCode parseJoinCode(String destination) {
+        final String raw = pathMatcher
+                .extractUriTemplateVariables(DELTA_TOPIC_PATTERN, destination)
+                .get("joinCode");
+        try {
+            return new JoinCode(raw);
+        } catch (BusinessException e) {
+            return null;
         }
     }
 }

@@ -1,4 +1,4 @@
-package coffeeshout.wormgame.infra.messaging;
+package coffeeshout.wormgame.application;
 
 import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.websocket.docs.WsTopic;

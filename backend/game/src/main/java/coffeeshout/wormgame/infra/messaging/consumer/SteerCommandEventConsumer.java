@@ -4,6 +4,7 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.wormgame.application.WormGameService;
+import coffeeshout.wormgame.domain.WormGameErrorCode;
 import coffeeshout.wormgame.domain.event.SteerCommandEvent;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,11 @@ public class SteerCommandEventConsumer implements Consumer<SteerCommandEvent> {
         try {
             wormGameService.steer(event.joinCode(), event.playerName(), event.angle(), event.seq());
         } catch (BusinessException e) {
+            if (e.getErrorCode() == WormGameErrorCode.NOT_PLAYING_STATE) {
+                // DESCRIPTION·PREPARE 6초 동안의 조준 드래그는 정상 입력이다 — 같은 스팸 이유로 debug
+                log.debug("PLAYING 아님 — 조향 무시: joinCode={}", event.joinCode());
+                return;
+            }
             log.warn("조향 처리 중 상태 오류: eventId={}, joinCode={}", event.eventId(), event.joinCode(), e);
         } catch (Exception e) {
             log.error("조향 처리 실패: eventId={}, joinCode={}", event.eventId(), event.joinCode(), e);

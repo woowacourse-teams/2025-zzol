@@ -115,6 +115,18 @@ public class WormGame implements Playable {
         return MiniGameType.WORM_GAME;
     }
 
+    /** 틱 델타용 — 전원의 머리 상태(사망자 포함, 클라가 alive로 판별). */
+    public List<WormPosition> positions() {
+        return worms.all().stream().map(WormPosition::of).toList();
+    }
+
+    /** 스냅샷용 — 전원의 샘플링된 궤적. */
+    public List<WormTrailSnapshot> trailSnapshots(int stride) {
+        return worms.all().stream()
+                .map(worm -> WormTrailSnapshot.of(worm, stride))
+                .toList();
+    }
+
     private MiniGameScore convertScore(Worm worm) {
         // 생존자는 마지막 사망자보다 한 틱 더 산 것으로 계산해 반드시 위 순위가 된다.
         final long survivalTicks = worm.isAlive() ? tickCount + 1 : worm.getDeathTick();
@@ -128,15 +140,17 @@ public class WormGame implements Playable {
             final Trail trail = owner.getTrail();
             final int checkable = trail.segmentCount() - skipTail;
             for (int i = 0; i < checkable; i++) {
+                final Point start = trail.start(i);
+                final Point end = trail.end(i);
                 final double distance = SegmentGeometry.distance(
                         mover.getPreviousX(),
                         mover.getPreviousY(),
                         mover.getX(),
                         mover.getY(),
-                        trail.startX(i),
-                        trail.startY(i),
-                        trail.endX(i),
-                        trail.endY(i));
+                        start.x(),
+                        start.y(),
+                        end.x(),
+                        end.y());
                 if (distance < rules.trailRadius()) {
                     return true;
                 }

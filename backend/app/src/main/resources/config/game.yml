@@ -57,5 +57,15 @@ nunchi:
     hard-cap: 30000ms           # 라운드 전체 강제 종료 안전망(결정 5)
     all-pressed-delay: 2000ms   # 전원 입력 조기 종료 시 마지막 입력을 잠깐 보여주고 DONE으로 전이(결정 5)
 
+worm-game:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    tick: 50ms                   # 20Hz — rules.tick-millis(기본 50)와 같아야 점수(생존 ms)가 실시간과 일치
+    finish: 4000ms               # 종료 연출(줌아웃 + 순위 스태거) — 서버 주도
+    snapshot-interval: 10000ms   # 주기 스냅샷은 정합 검증 보조. 재접속 복구는 구독 시점 유니캐스트가 맡는다
+  # rules(물리·판정 16개 노브)는 WormGameRulesProperties의 @DefaultValue가 설계 문서 v0.3 값이다.
+  # 튜닝할 때만 worm-game.rules.* 로 덮어쓴다.
+
 roulette:
   default-adjustment-weight: 0.7

@@ -42,6 +42,11 @@ redis:
         thread-pool-name: concurrent
       "[racinggame]":
         thread-pool-name: concurrent
+      # 지렁이 게임 조향 — 8인×10Hz=80msg/s. 공통 max-length 100이면 1.25초분이라 소비가 밀리면
+      # 조향이 조용히 트리밍되므로 길게 잡는다(#1681).
+      "[wormgame]":
+        thread-pool-name: concurrent
+        max-length: 1000
       "[speedtouch]":
         thread-pool-name: concurrent
       "[blindtimer]":

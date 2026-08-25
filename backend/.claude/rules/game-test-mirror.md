@@ -7,6 +7,13 @@ paths:
   - "**/src/main/java/**/*StreamKey.java"
   - "**/src/main/resources/config/redis.yml"
   - "**/src/main/resources/config/game.yml"
+  # 검증 지점 — 게임 IT를 만들 때 미러가 갖춰졌는지 확인한다
+  - "**/src/test/java/**/*IntegrationTest.java"
+  # 미러 파일 자체 — 한 곳을 고치면 나머지 두 곳도 같이 고쳐야 한다
+  - "**/src/testFixtures/java/**/config/GameSchedulerTestConfig.java"
+  - "**/src/test/java/**/config/IntegrationTestConfig.java"
+  - "**/src/testFixtures/resources/application-test-game.yml"
+  - "**/src/main/resources/application-test-base.yml"
 ---
 
 ## 전용 빈·스트림을 추가하면 테스트 미러를 같은 커밋에 넣는다

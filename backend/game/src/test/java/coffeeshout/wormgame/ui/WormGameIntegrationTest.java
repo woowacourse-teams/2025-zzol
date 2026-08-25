@@ -10,6 +10,7 @@ import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.support.TestStompSession;
+import coffeeshout.support.TestStompSession.MessageCollector;
 import coffeeshout.wormgame.application.WormGameService;
 import coffeeshout.wormgame.domain.WormGame;
 import coffeeshout.wormgame.domain.WormGameState;
@@ -82,16 +83,10 @@ class WormGameIntegrationTest extends GameModuleWebSocketTest {
         gameSessionService.startGame(joinCode, host, gamers);
         wormGameService.start(code, host.getName());
 
-        // then — DESCRIPTION → PREPARE → PLAYING
-        assertThat(payloadAs(stateResponses.get(1, TimeUnit.SECONDS), WormGameStateResponse.class)
-                        .state())
-                .isEqualTo(WormGameState.DESCRIPTION);
-        assertThat(payloadAs(stateResponses.get(3, TimeUnit.SECONDS), WormGameStateResponse.class)
-                        .state())
-                .isEqualTo(WormGameState.PREPARE);
-        assertThat(payloadAs(stateResponses.get(3, TimeUnit.SECONDS), WormGameStateResponse.class)
-                        .state())
-                .isEqualTo(WormGameState.PLAYING);
+        // then — DESCRIPTION → PREPARE → PLAYING (순차 상태 토픽은 위치 기반 get 대신 목표 상태까지 훑는다)
+        awaitState(stateResponses, WormGameState.DESCRIPTION);
+        awaitState(stateResponses, WormGameState.PREPARE);
+        awaitState(stateResponses, WormGameState.PLAYING);
 
         // then — 20Hz 틱 델타가 전원 머리 상태를 싣고 흐른다
         final WormsStateResponse delta = payloadAs(deltaResponses.get(2, TimeUnit.SECONDS), WormsStateResponse.class);
@@ -104,6 +99,17 @@ class WormGameIntegrationTest extends GameModuleWebSocketTest {
         // then
         await().atMost(Duration.ofSeconds(3))
                 .untilAsserted(() -> assertThat(hostTargetAngle()).isCloseTo(1.0, within(1e-9)));
+    }
+
+    private WormGameStateResponse awaitState(MessageCollector stateResponses, WormGameState target) {
+        for (int i = 0; i < 8; i++) {
+            final WormGameStateResponse response =
+                    payloadAs(stateResponses.get(3, TimeUnit.SECONDS), WormGameStateResponse.class);
+            if (response.state() == target) {
+                return response;
+            }
+        }
+        throw new AssertionError(target + " 상태를 받지 못했습니다");
     }
 
     private double hostTargetAngle() {

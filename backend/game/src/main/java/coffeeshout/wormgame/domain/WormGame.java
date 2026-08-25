@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 
 /**
- * 빛꼬리 — Tron식 궤적 서바이벌. 좌표계 중심은 (0,0)이고 모든 판정·시간은 틱에서 유도된다.
+ * 지렁이 게임 — Tron식 궤적 서바이벌. 좌표계 중심은 (0,0)이고 모든 판정·시간은 틱에서 유도된다.
  * 규칙·수치의 SSOT는 설계 문서 v0.3(이슈 #1681).
  */
 @Getter

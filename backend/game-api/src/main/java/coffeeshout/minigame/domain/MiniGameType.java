@@ -11,7 +11,7 @@ public enum MiniGameType {
     BLOCK_STACKING("블록쌓기"),
     LADDER_GAME("사다리타기"),
     NUNCHI_GAME("눈치게임"),
-    WORM_GAME("빛꼬리"),
+    WORM_GAME("지렁이 게임"),
     ;
 
     public final String label;

@@ -102,7 +102,7 @@ redis:
         thread-pool-name: concurrent
       "[wormgame]":
         thread-pool-name: concurrent
-        max-length: 1000
+        max-length: 3000
       "[speedtouch]":
         thread-pool-name: concurrent
       "[blindtimer]":

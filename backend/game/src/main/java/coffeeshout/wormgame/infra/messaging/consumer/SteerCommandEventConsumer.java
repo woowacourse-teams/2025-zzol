@@ -22,7 +22,7 @@ public class SteerCommandEventConsumer implements Consumer<SteerCommandEvent> {
     @Override
     public void accept(SteerCommandEvent event) {
         // 브로드캐스트 스트림이라 모든 인스턴스가 받는다. 세션이 없는(비소유) 인스턴스는 조용히 건너뛴다 —
-        // 8인×10Hz 조향을 예외·로그로 처리하면 초당 80건 스팸이 된다.
+        // 9인×10Hz 조향을 예외·로그로 처리하면 초당 90건 스팸이 된다.
         if (gameSessionService.findSession(new JoinCode(event.joinCode())).isEmpty()) {
             return;
         }

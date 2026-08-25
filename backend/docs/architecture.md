@@ -17,7 +17,7 @@
 :game-api     — 게임 SPI (Playable, MiniGameFactory, FlowScheduler, Gamer)
 :user         — User + Auth + Friend
 :room         — Room aggregate + Player + Roulette + RoomSessionToken
-:game         — 6게임 구현체 + minigame orchestration
+:game         — 8게임 구현체 + minigame orchestration
 :profanity    — 비속어 필터 (:admin·:app 이 사용, :room·:game 은 테스트에서만)
 :admin        — dashboard + patchnote + report
 :zzolbot      — AI 운영자 어시스턴트

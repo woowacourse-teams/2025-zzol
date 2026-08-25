@@ -1,5 +1,7 @@
 package coffeeshout.zzolbot.eval.application;
 
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.SystemException;
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import coffeeshout.zzolbot.eval.domain.EvalVerdict;
 import coffeeshout.zzolbot.eval.domain.JudgeScore;
@@ -52,8 +54,8 @@ public class EvalRunner {
         final List<EvalScenarioEntity> scenarios = kind == null
                 ? scenarioRepository.findAllByOrderByCreatedAtDesc()
                 : scenarioRepository.findAllByKindOrderByCreatedAtDesc(kind);
-        final EvalRunEntity run = runRepository.save(
-                EvalRunEntity.start(label, properties.model(), null, scenarios.size()));
+        final EvalRunEntity run =
+                runRepository.save(EvalRunEntity.start(label, properties.model(), null, scenarios.size()));
 
         try {
             int passCount = 0;
@@ -83,8 +85,7 @@ public class EvalRunner {
                     return true; // 통과하면 즉시 멈춤
                 }
             } catch (Exception e) {
-                log.warn("[ZzolBot] 시나리오 평가 실패 — FAIL 결과로 기록. scenario={}, attempt={}",
-                        scenario.getName(), i + 1, e);
+                log.warn("[ZzolBot] 시나리오 평가 실패 — FAIL 결과로 기록. scenario={}, attempt={}", scenario.getName(), i + 1, e);
                 saveFailureResult(runId, scenario, e);
             }
         }
@@ -109,7 +110,8 @@ public class EvalRunner {
         return evaluators.stream()
                 .filter(evaluator -> evaluator.kind() == kind)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("등록된 평가기가 없는 시나리오 kind: " + kind));
+                .orElseThrow(() ->
+                        new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "등록된 평가기가 없는 시나리오 kind: " + kind));
     }
 
     /**
@@ -118,7 +120,6 @@ public class EvalRunner {
      */
     private void saveFailureResult(Long runId, EvalScenarioEntity scenario, Exception e) {
         final JudgeScore failed = new JudgeScore(0, 0, false, EvalVerdict.FAIL, "평가 중 예외: " + e.getMessage());
-        resultRepository.save(EvalResultEntity.create(
-                runId, scenario.getId(), "평가 실패", failed, 0L, 0));
+        resultRepository.save(EvalResultEntity.create(runId, scenario.getId(), "평가 실패", failed, 0L, 0));
     }
 }

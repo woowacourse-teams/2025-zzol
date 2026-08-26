@@ -36,10 +36,16 @@ subprojects {
 
     // 룰셋은 소스셋별로 다르다 — 테스트의 @Autowired 필드 주입은 JUnit+Spring 관용이라 금지 대상이 아니고,
     // Thread.sleep·JUnit 단언 금지는 반대로 테스트에만 의미가 있다.
-    // :test-support의 main은 프로덕션이 아니라 테스트 인프라이므로 테스트 룰셋을 적용한다.
+    // :test-support의 main과 testFixtures는 프로덕션이 아니라 테스트 인프라이므로 테스트 룰셋을 적용한다.
+    //
+    // 태스크를 이름으로 하나씩 집지 않고 withType으로 거는 이유 — PMD 플러그인은 소스셋마다 태스크를
+    // 자동 생성한다(java-test-fixtures를 쓰는 모듈은 pmdTestFixtures가 생긴다). 위에서 기본 룰셋을 껐으므로
+    // 지정에서 빠진 태스크는 룰셋이 0개가 되고, PMD는 그 상태로 "No rulesets specified"를 내며 죽는다.
     val mainRuleSet = if (name == "test-support") "ruleset-test.xml" else "ruleset-main.xml"
-    tasks.named<Pmd>("pmdMain") { ruleSetFiles = files(rootProject.file("config/pmd/$mainRuleSet")) }
-    tasks.named<Pmd>("pmdTest") { ruleSetFiles = files(rootProject.file("config/pmd/ruleset-test.xml")) }
+    tasks.withType<Pmd>().configureEach {
+        val ruleSet = if (name == "pmdMain") mainRuleSet else "ruleset-test.xml"
+        ruleSetFiles = files(rootProject.file("config/pmd/$ruleSet"))
+    }
 
     // 포맷은 Spotless가 자동 수정한다 (ADR-0036). ./gradlew spotlessApply
     extensions.configure<SpotlessExtension> {

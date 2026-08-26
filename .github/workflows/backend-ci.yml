@@ -120,7 +120,7 @@ jobs:
       # 린트는 컨테이너를 띄우지 않아 테스트보다 훨씬 빠르다 — 앞에 두어 fail-fast 시킨다 (ADR-0036).
       # 로컬에서는 ./gradlew spotlessApply 로 포맷을 먼저 고친다.
       - name: Run Lint (Spotless + PMD)
-        run: ./gradlew spotlessCheck pmdMain pmdTest --build-cache --no-daemon
+        run: ./gradlew spotlessCheck pmdMain pmdTest pmdTestFixtures --build-cache --no-daemon
 
       # 모듈별 test JVM이 같은 MySQL/Valkey 컨테이너를 재사용하도록 활성화 (ADR-0013)
       # 모듈별 독립 DB(zzol_test_<module>)·Redis DB 인덱스 격리로 병렬 실행 시에도 안전하다

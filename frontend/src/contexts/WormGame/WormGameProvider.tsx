@@ -1,4 +1,10 @@
-import { PropsWithChildren, useCallback, useMemo, useState } from 'react';
+import { PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react';
+
+declare global {
+  interface Window {
+    __ZZOL_WORM_STORE__?: WormStore;
+  }
+}
 import { WormGameContext } from './WormGameContext';
 import { useWebSocketSubscription } from '@/apis/websocket/hooks/useWebSocketSubscription';
 import { WormStore } from '@/features/miniGame/wormGame/core/wormStore';
@@ -15,6 +21,15 @@ const WormGameProvider = ({ children }: PropsWithChildren) => {
   const [wormGameState, setWormGameState] = useState<WormGameState>('DESCRIPTION');
   // 인스턴스 1개를 마운트 동안 유지 — setState 없이 lazy init 만 쓴다
   const [store] = useState(() => new WormStore(myName));
+
+  // dev autoTest 봇이 iframe 안에서 스토어를 읽어 조향한다(devtools/wormBot). 프로덕션 번들엔 없음
+  useEffect(() => {
+    if (!process.env.ENABLE_DEVTOOLS) return;
+    window.__ZZOL_WORM_STORE__ = store;
+    return () => {
+      delete window.__ZZOL_WORM_STORE__;
+    };
+  }, [store]);
 
   const handleState = useCallback(
     (data: WormGameStateMessage) => {

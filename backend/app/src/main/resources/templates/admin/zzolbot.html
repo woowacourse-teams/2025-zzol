@@ -647,8 +647,11 @@
         const repeats = Math.max(1, Math.min(3, parseInt(prompt('최대 시도 횟수 (PASS 뜨면 멈춤, 전부 실패 시 재시도. 기본 1, 최대 3):', '1'), 10) || 1));
         const kindRaw = prompt('실행 대상 (all=전체, chat=챗봇, monitor=알림 분석):', 'all');
         if (kindRaw === null) return; // 취소는 실행 중단 — 전체 실행(가장 비싼 선택지)으로 폴백하지 않는다
-        // all 또는 인식 불가 입력은 전체 실행(kind=null). 서버는 CHAT/MONITOR 외 값을 400으로 거절한다.
-        const kind = /^(chat|monitor)$/i.test(kindRaw.trim()) ? kindRaw.trim().toUpperCase() : null;
+        // all만 전체 실행(kind=null)이고 나머지는 그대로 서버로 보낸다. 화면에서 정규식으로 거르면
+        // monit'e'r 같은 오타가 인식 불가로 떨어져 가장 비싼 전체 실행이 되어버린다.
+        // 서버 parseKind가 CHAT/MONITOR 외 값을 400으로 거절하므로 검증은 그쪽에 맡긴다.
+        const kindInput = kindRaw.trim();
+        const kind = kindInput.toLowerCase() === 'all' ? null : kindInput;
         const btn = document.getElementById('runEvalBtn');
         btn.disabled = true; // 중복 클릭 방지 — RUNNING 동안은 renderEvalRuns가 계속 비활성으로 유지
         try {

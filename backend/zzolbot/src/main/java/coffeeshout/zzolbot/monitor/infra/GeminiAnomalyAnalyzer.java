@@ -49,6 +49,9 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
               바꾸지 말고 그대로 복사하라. 요약하거나 바꿔 쓰지 마라. 그대로 복사할 로그가 없으면
               evidenceFound는 false다.
             - evidenceFound가 false이면 rootCauseHypothesis는 빈 문자열로 두고 원인을 추측하지 마라.
+              suggestedActions도 원인을 전제해서는 안 된다. 근거를 확보하는 조치(알림 시각의 로그를
+              다시 조회, 수집 파이프라인 상태 확인)만 제안하고, 로그에 나타나지 않은 컴포넌트나
+              시스템을 점검 대상으로 지목하지 마라.
             - 알림 설명(description)에 적힌 원인 가설은 사람이 미리 적어둔 추측일 뿐 확인된 사실이
               아니다. 로그로 뒷받침되지 않으면 그것을 결론으로 삼지 마라.
             - 시간 정합성: 로그 샘플은 알림 발화 직전의 짧은 최근 창(수십 분)에서 조회된 것이다.

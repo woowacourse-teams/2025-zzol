@@ -1,6 +1,7 @@
 package coffeeshout.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -27,6 +28,7 @@ import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
+import coffeeshout.room.ui.response.PlayerResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -579,6 +581,44 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isConflict());
+        }
+    }
+
+    @Nested
+    @DisplayName("플레이어 목록 조회 테스트")
+    class GetPlayersTest {
+
+        @Test
+        void 방의_플레이어_목록을_colorIndex와_함께_조회한다() throws Exception {
+            // given
+            Room 호스트_꾹이 = RoomFixture.호스트_꾹이();
+            roomRepository.save(호스트_꾹이);
+            String joinCode = 호스트_꾹이.getJoinCode().toString();
+
+            // when
+            String response = mockMvc.perform(get("/rooms/{joinCode}/players", joinCode))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            List<PlayerResponse> players = objectMapper.readValue(response,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, PlayerResponse.class));
+
+            // then - 로비와 같은 명단·색(colorIndex)이 그대로 내려온다
+            assertThat(players)
+                    .extracting(PlayerResponse::playerName, PlayerResponse::colorIndex)
+                    .containsExactlyElementsOf(호스트_꾹이.getPlayers().stream()
+                            .map(player -> tuple(player.getName().value(), player.getColorIndex()))
+                            .toList());
+        }
+
+        @Test
+        void 존재하지_않는_방의_플레이어_목록_조회_시_404_에러를_반환한다() throws Exception {
+            // when & then
+            mockMvc.perform(get("/rooms/{joinCode}/players", INVALID_JOIN_CODE))
+                    .andExpect(status().isNotFound());
         }
     }
 

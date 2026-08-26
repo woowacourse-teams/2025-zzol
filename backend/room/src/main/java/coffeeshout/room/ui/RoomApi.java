@@ -4,6 +4,7 @@ import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
+import coffeeshout.room.ui.response.PlayerResponse;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.RandomNicknameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
@@ -55,6 +56,11 @@ public interface RoomApi {
     ResponseEntity<Void> updateRoomSettings(
             @Parameter(description = "방 입장 코드", required = true) String joinCode,
             UpdateRoomSettingsRequest request
+    );
+
+    @Operation(summary = "플레이어 목록 조회", description = "방의 현재 플레이어 목록(colorIndex 포함)을 조회합니다. 게임 페이지 리프레시 시 명단 복구용.")
+    ResponseEntity<List<PlayerResponse>> getPlayers(
+            @Parameter(description = "방 입장 코드", required = true) String joinCode
     );
 
     @Operation(summary = "플레이어 강퇴", description = "방에서 특정 플레이어를 강퇴합니다.")

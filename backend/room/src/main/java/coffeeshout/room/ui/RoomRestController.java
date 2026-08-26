@@ -10,6 +10,7 @@ import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
+import coffeeshout.room.ui.response.PlayerResponse;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.RandomNicknameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
@@ -124,6 +125,15 @@ public class RoomRestController implements RoomApi {
     ) {
         roomService.updateAdjustmentWeight(joinCode, request.hostName(), request.adjustmentWeight());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{joinCode}/players")
+    public ResponseEntity<List<PlayerResponse>> getPlayers(@PathVariable String joinCode) {
+        final List<PlayerResponse> responses = playerService.getPlayers(joinCode).stream()
+                .map(PlayerResponse::from)
+                .toList();
+
+        return ResponseEntity.ok(responses);
     }
 
     @DeleteMapping("/{joinCode}/players/{playerName}")

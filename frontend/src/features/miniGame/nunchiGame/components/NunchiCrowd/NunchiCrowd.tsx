@@ -27,15 +27,19 @@ const nameColor = (state: NunchiPersonState, isMe: boolean): ColorKey => {
  * 번호는 stand 이벤트로 라이브 수집한 standNumbers 에서 읽는다. 재접속 전에 일어선 사람은 번호를
  * 모를 수 있으므로(스냅샷 stood 는 이름만) 그 경우만 숫자 대신 중립 표시('•')로 폴백한다.
  *
- * 명단(participants)은 로비에서 채워지고, 하드 리프레시·직접 진입 시엔 MiniGameProviders 가
- * HTTP 로 복구한다(#1688). 색은 명단의 colorIndex(서버 원천)만 쓴다.
+ * 명단(participants)은 로비에서 채워지고, 하드 리프레시·직접 진입 시엔 RoomLayout 의
+ * useRestoreParticipants 가 HTTP 로 복구한다(#1688). 색은 명단의 colorIndex(서버 원천)만 쓴다.
+ * 복구 응답 전·실패 시엔 게임 메시지로 드러난 사람(일어선·탈락)만이라도 그리고, 남은 인원은 알 수 없으니 숨긴다.
  */
 const NunchiCrowd = () => {
   const { myName } = useIdentifier();
   const { participants, getParticipantColorIndex } = useParticipants();
   const { stood, standNumbers, collided, lastStand } = useNunchiGameContext();
 
-  const roster = participants.map((participant) => participant.playerName);
+  const hasRoster = participants.length > 0;
+  const roster = hasRoster
+    ? participants.map((participant) => participant.playerName)
+    : Array.from(new Set([...stood, ...collided]));
 
   const getState = (name: string): NunchiPersonState => {
     if (collided.includes(name)) return 'out';
@@ -70,9 +74,11 @@ const NunchiCrowd = () => {
           );
         })}
       </S.Row>
-      <S.Remaining>
-        남은 사람 <S.RemainingCount>{seatedCount}</S.RemainingCount>명
-      </S.Remaining>
+      {hasRoster && (
+        <S.Remaining>
+          남은 사람 <S.RemainingCount>{seatedCount}</S.RemainingCount>명
+        </S.Remaining>
+      )}
     </S.Crowd>
   );
 };

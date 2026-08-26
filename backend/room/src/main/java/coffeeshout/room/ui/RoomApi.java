@@ -51,7 +51,7 @@ public interface RoomApi {
     ResponseEntity<Void> updateRoomSettings(
             @Parameter(description = "방 입장 코드", required = true) String joinCode, UpdateRoomSettingsRequest request);
 
-    @Operation(summary = "플레이어 목록 조회", description = "방의 현재 플레이어 목록(colorIndex 포함)을 조회합니다. 게임 페이지 리프레시 시 명단 복구용.")
+    @Operation(summary = "플레이어 목록 조회", description = "방의 현재 플레이어 목록(colorIndex 포함)을 조회합니다.")
     ResponseEntity<List<PlayerResponse>> getPlayers(
             @Parameter(description = "방 입장 코드", required = true) String joinCode);
 

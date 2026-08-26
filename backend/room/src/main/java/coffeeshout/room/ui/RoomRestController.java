@@ -123,11 +123,9 @@ public class RoomRestController implements RoomApi {
 
     @GetMapping("/{joinCode}/players")
     public ResponseEntity<List<PlayerResponse>> getPlayers(@PathVariable String joinCode) {
-        final List<PlayerResponse> responses = playerService.getPlayers(joinCode).stream()
+        return ResponseEntity.ok(playerService.getPlayers(joinCode).stream()
                 .map(PlayerResponse::from)
-                .toList();
-
-        return ResponseEntity.ok(responses);
+                .toList());
     }
 
     @DeleteMapping("/{joinCode}/players/{playerName}")

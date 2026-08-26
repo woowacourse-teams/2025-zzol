@@ -11,6 +11,8 @@ import { advance, lerpAngle, Pose, speedPerTick, WORM_RULES } from './wormRules'
  */
 export const INTERP_DELAY_TICKS = 2; // 100ms
 const EXTRAPOLATE_MAX_TICKS = 3;
+/** 자기 예측 상한(300ms). 넘으면 서버 틱이 멈춘 것(PREPARE·FINISH·끊김) — 더 밀지 않는다 */
+export const PREDICT_MAX_TICKS = 6;
 const SAMPLE_KEEP = 8;
 
 type Sample = Pose & { tick: number };
@@ -42,7 +44,7 @@ export class WormStore {
   /** 로컬 조향 목표각(예측 입력). 조작 계층이 갱신 */
   targetAngle: number | null = null;
 
-  private anchorTick = 0;
+  /** tick 이 마지막으로 갱신된 로컬 시각 */
   private anchorAt = 0;
 
   constructor(myName: string) {
@@ -54,13 +56,12 @@ export class WormStore {
   // ponytail: 앵커=최신 델타 도착 시각(지터 ±20ms). 튀면 max-기반 평활로 교체
   serverTickAt(now: number): number {
     if (this.tick < 0) return 0;
-    return this.anchorTick + (now - this.anchorAt) / this.tickMillis;
+    return this.tick + (now - this.anchorAt) / this.tickMillis;
   }
 
   applyDelta(delta: WormDeltaMessage, now: number): boolean {
     if (delta.tick <= this.tick) return false;
     this.tick = delta.tick;
-    this.anchorTick = delta.tick;
     this.anchorAt = now;
     this.setRadius(delta.radius);
 
@@ -80,7 +81,6 @@ export class WormStore {
   applySnapshot(snapshot: WormSnapshotMessage, now: number): void {
     this.tick = snapshot.tick;
     this.tickMillis = snapshot.tickMillis;
-    this.anchorTick = snapshot.tick;
     this.anchorAt = now;
     this.setRadius(snapshot.radius);
 
@@ -92,10 +92,17 @@ export class WormStore {
       w.trail = s.trail.slice();
       w.pending = [];
       w.layerDirty = true;
+      // 축소 뒤 재접속하면 스냅샷 radius 가 이미 줄어 있다 — 궤적 범위까지 넓혀 초반 궤적이 잘리지 않게
+      for (const p of s.trail) {
+        this.initialRadius = Math.max(this.initialRadius, Math.abs(p.x), Math.abs(p.y));
+      }
       const head = s.trail[s.trail.length - 1];
-      const prev = s.trail[s.trail.length - 2] ?? head;
+      const prev = s.trail[s.trail.length - 2];
       if (head) {
-        const angle = prev === head ? 0 : Math.atan2(head.y - prev.y, head.x - prev.x);
+        // 스냅샷에는 각도가 없다. 1점(PREPARE 스폰)이면 0 으로 확정하지 않고 기존 샘플 각도를 유지
+        const angle = prev
+          ? Math.atan2(head.y - prev.y, head.x - prev.x)
+          : (w.samples[w.samples.length - 1]?.angle ?? 0);
         w.samples = [{ tick: snapshot.tick, x: head.x, y: head.y, angle }];
       }
     }
@@ -128,11 +135,12 @@ export class WormStore {
   // ponytail: 입력 큐 리플레이 대신 "마지막 목표각"만 적용 — 조향은 last-wins 라 lag 창 내 변경만 오차
   private predict(latest: Sample, serverTick: number): Pose {
     const target = this.targetAngle ?? latest.angle;
+    const capped = Math.min(serverTick, latest.tick + PREDICT_MAX_TICKS);
     let pose: Pose = latest;
     let t = latest.tick;
-    const end = Math.floor(serverTick);
+    const end = Math.floor(capped);
     for (; t < end; t++) pose = advance(pose, target, t);
-    const frac = serverTick - Math.max(end, latest.tick);
+    const frac = capped - Math.max(end, latest.tick);
     if (frac > 0) {
       const d = speedPerTick(t) * frac;
       pose = {

@@ -1,6 +1,6 @@
 import { WormDeltaMessage, WormSnapshotMessage } from '@/types/miniGame/wormGame';
 import { advance, speedPerTick } from './wormRules';
-import { INTERP_DELAY_TICKS, WormStore } from './wormStore';
+import { INTERP_DELAY_TICKS, PREDICT_MAX_TICKS, WormStore } from './wormStore';
 
 const delta = (
   tick: number,
@@ -90,9 +90,50 @@ describe('WormStore — 자기 예측·타인 보간', () => {
     s.applyDelta(delta(10, [{ playerName: 'o', x: 0 }]), 0);
     s.applyDelta(delta(12, [{ playerName: 'o', x: 20 }]), 100);
     // 최신 델타 도착 직후 + 1틱 → 렌더 tick = 13 - 2 = 11 → x = 10
-    const pose = s.displayPose(s.worms.get('o')!, 100 + 50)!;
-    expect(INTERP_DELAY_TICKS).toBe(2);
+    const pose = s.displayPose(s.worms.get('o')!, 100 + (INTERP_DELAY_TICKS - 1) * 50)!;
     expect(pose.x).toBeCloseTo(10);
+  });
+
+  it('자기 예측은 PREDICT_MAX_TICKS 를 넘지 않는다 — 서버 틱이 멈추면 같이 멈춘다', () => {
+    const s = new WormStore('me');
+    s.applyDelta(delta(10, [{ x: 0, y: 0, angle: 0 }]), 0);
+    const w = s.worms.get('me')!;
+    const atCap = s.displayPose(w, PREDICT_MAX_TICKS * 50)!;
+    const farBeyond = s.displayPose(w, 60_000)!;
+    expect(farBeyond.x).toBeCloseTo(atCap.x);
+    expect(atCap.x).toBeGreaterThan(0);
+  });
+
+  it('1점 스냅샷(PREPARE 스폰)은 헤딩을 0 으로 확정하지 않고 기존 각도를 유지한다', () => {
+    const s = new WormStore('me');
+    s.applyDelta(delta(0, [{ x: 100, y: 0, angle: Math.PI }]), 0);
+    s.applySnapshot(
+      { ...snapshot(0), worms: [{ playerName: 'me', alive: true, trail: [{ x: 100, y: 0 }] }] },
+      10
+    );
+    expect(s.worms.get('me')!.samples[0].angle).toBeCloseTo(Math.PI);
+  });
+
+  it('스냅샷 궤적이 현재 radius 밖에 있으면 initialRadius 를 그 범위까지 넓힌다', () => {
+    const s = new WormStore('me');
+    s.applySnapshot(
+      {
+        ...snapshot(500),
+        radius: 100,
+        worms: [
+          {
+            playerName: 'me',
+            alive: true,
+            trail: [
+              { x: -250, y: 3 },
+              { x: 0, y: 0 },
+            ],
+          },
+        ],
+      },
+      0
+    );
+    expect(s.initialRadius).toBe(250);
   });
 
   it('버퍼가 비면 현재 각도로 외삽하되 3틱을 넘지 않는다', () => {

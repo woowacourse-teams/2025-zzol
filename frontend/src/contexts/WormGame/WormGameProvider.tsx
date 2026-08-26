@@ -1,4 +1,4 @@
-import { PropsWithChildren, useCallback, useState } from 'react';
+import { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 import { WormGameContext } from './WormGameContext';
 import { useWebSocketSubscription } from '@/apis/websocket/hooks/useWebSocketSubscription';
 import { WormStore } from '@/features/miniGame/wormGame/core/wormStore';
@@ -35,9 +35,9 @@ const WormGameProvider = ({ children }: PropsWithChildren) => {
   useWebSocketSubscription(`/room/${joinCode}/worm`, handleDelta);
   useWebSocketSubscription(`/room/${joinCode}/worm/snapshot`, handleSnapshot);
 
-  return (
-    <WormGameContext.Provider value={{ wormGameState, store }}>{children}</WormGameContext.Provider>
-  );
+  const value = useMemo(() => ({ wormGameState, store }), [wormGameState, store]);
+
+  return <WormGameContext.Provider value={value}>{children}</WormGameContext.Provider>;
 };
 
 export default WormGameProvider;

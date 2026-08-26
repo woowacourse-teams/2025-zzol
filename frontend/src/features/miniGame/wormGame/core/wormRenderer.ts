@@ -3,7 +3,7 @@ import { WORM_RULES } from './wormRules';
 import { INTERP_DELAY_TICKS, WormStore, WormView } from './wormStore';
 
 /** 메인 뷰 시야 반지름(u). 회전 반경 34~55u 대비 회피 판단에 충분(설계 SSOT) */
-export const VIEW_RADIUS = 130;
+const VIEW_RADIUS = 130;
 /** 궤적 레이어 해상도(px/u). 430px 폰에서 메인 뷰가 ≈1.65px/u 라 2 면 흐려지지 않는다 */
 const LAYER_PX_PER_UNIT = 2;
 const DEAD_FADE_MS = 1500;
@@ -24,7 +24,6 @@ export type WormPalette = {
 type Layer = {
   canvas: HTMLCanvasElement;
   drawn: number;
-  grayed: boolean;
   deadAt: number | null;
 };
 
@@ -39,9 +38,14 @@ export class WormRenderer {
 
   constructor(
     private readonly store: WormStore,
-    private readonly colorOf: (playerName: string) => string,
+    private colorOf: (playerName: string) => string,
     private readonly palette: WormPalette
   ) {}
+
+  /** roster 갱신 시 색 조회만 교체 — 렌더러 인스턴스(레이어·카메라·페이드)는 유지 */
+  setColorOf(colorOf: (playerName: string) => string): void {
+    this.colorOf = colorOf;
+  }
 
   render(ctx: CanvasRenderingContext2D, width: number, height: number, now: number): void {
     const { store } = this;
@@ -95,10 +99,9 @@ export class WormRenderer {
       const pose = poses.get(w.playerName);
       const tail = w.trail[w.trail.length - 1];
       if (pose && tail) {
-        // 확정 궤적 끝 → 보류 점들 → 머리: 레이어에 없는 최신 구간을 매 프레임 폴리라인으로 잇는다
+        // 확정 궤적 끝 → 머리 한 구간. 남은 pending 은 렌더 시점보다 미래 점이라 그리지 않는다
         ctx.beginPath();
         ctx.moveTo(tail.x, tail.y);
-        for (const p of w.pending) ctx.lineTo(p.x, p.y);
         ctx.lineTo(pose.x, pose.y);
         this.strokeTrail(ctx, color);
       }
@@ -112,20 +115,19 @@ export class WormRenderer {
     }
     ctx.restore();
 
-    this.drawMinimap(ctx, width, poses, scale, width, height);
+    this.drawMinimap(ctx, poses, scale, width, height);
   }
 
   private drawMinimap(
     ctx: CanvasRenderingContext2D,
-    canvasWidth: number,
-    poses: Map<string, { x: number; y: number }>,
+    poses: Map<string, WormPoint>,
     mainScale: number,
     viewW: number,
     viewH: number
   ) {
     const { store } = this;
     const size = MINIMAP_SIZE;
-    const ox = canvasWidth - size - MINIMAP_MARGIN;
+    const ox = viewW - size - MINIMAP_MARGIN;
     const oy = MINIMAP_MARGIN;
     const s = size / (2 * store.initialRadius);
     const cx = ox + size / 2;
@@ -169,13 +171,19 @@ export class WormRenderer {
   }
 
   private layerFor(w: WormView): Layer {
+    const px = Math.ceil(2 * this.store.initialRadius * LAYER_PX_PER_UNIT);
     let layer = this.layers.get(w.playerName);
+    // 스냅샷으로 initialRadius 가 넓어졌으면 레이어를 새로 잡고 전체 재작성
+    if (layer && layer.canvas.width !== px) {
+      layer.canvas.width = px;
+      layer.canvas.height = px;
+      w.layerDirty = true;
+    }
     if (!layer) {
       const canvas = document.createElement('canvas');
-      const px = Math.ceil(2 * this.store.initialRadius * LAYER_PX_PER_UNIT);
       canvas.width = px;
       canvas.height = px;
-      layer = { canvas, drawn: 0, grayed: false, deadAt: null };
+      layer = { canvas, drawn: 0, deadAt: null };
       this.layers.set(w.playerName, layer);
     }
     return layer;
@@ -183,17 +191,15 @@ export class WormRenderer {
 
   /** 레이어에 새로 확정된 궤적 구간을 추가. 사망·스냅샷 교체 시 전체 재작성 */
   private syncLayer(layer: Layer, w: WormView, now: number) {
-    if (!w.alive && layer.deadAt === null) layer.deadAt = now;
-    const needsGray = !w.alive && !layer.grayed;
-    if (w.layerDirty || needsGray) {
-      const g = layer.canvas.getContext('2d')!;
+    const g = layer.canvas.getContext('2d')!;
+    const justDied = !w.alive && layer.deadAt === null;
+    if (justDied) layer.deadAt = now;
+    if (w.layerDirty || justDied) {
       g.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
       layer.drawn = 0;
-      layer.grayed = !w.alive;
       w.layerDirty = false;
     }
     if (w.trail.length === 0 || w.trail.length <= layer.drawn) return;
-    const g = layer.canvas.getContext('2d')!;
     const R0 = this.store.initialRadius;
     g.save();
     g.scale(LAYER_PX_PER_UNIT, LAYER_PX_PER_UNIT);

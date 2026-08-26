@@ -1,17 +1,16 @@
 package coffeeshout.dashboard.application;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.AdminModuleServiceTest;
 import coffeeshout.blindtimer.domain.BlindTimerScore;
 import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
-import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
-import coffeeshout.AdminModuleServiceTest;
+import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
@@ -70,15 +69,12 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             final UserEntity user2 = userJpaRepository.save(new UserEntity("XY4ZQ", "영희"));
             final UserEntity user3 = userJpaRepository.save(new UserEntity("GH7KL", "민수"));
 
-            final PlayerEntity player1 = playerJpaRepository.save(
-                    new PlayerEntity(room, "철수", PlayerType.HOST, user1.getId())
-            );
-            final PlayerEntity player2 = playerJpaRepository.save(
-                    new PlayerEntity(room, "영희", PlayerType.GUEST, user2.getId())
-            );
-            final PlayerEntity player3 = playerJpaRepository.save(
-                    new PlayerEntity(room, "민수", PlayerType.GUEST, user3.getId())
-            );
+            final PlayerEntity player1 =
+                    playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST, user1.getId()));
+            final PlayerEntity player2 =
+                    playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST, user2.getId()));
+            final PlayerEntity player3 =
+                    playerJpaRepository.save(new PlayerEntity(room, "민수", PlayerType.GUEST, user3.getId()));
 
             for (int i = 0; i < 5; i++) {
                 rouletteResultJpaRepository.save(new RouletteResultEntity(room, player1, 50));
@@ -118,12 +114,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("AAAA"));
 
             final UserEntity user = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
-            final PlayerEntity loginPlayer = playerJpaRepository.save(
-                    new PlayerEntity(room, "철수", PlayerType.HOST, user.getId())
-            );
-            final PlayerEntity guestPlayer = playerJpaRepository.save(
-                    new PlayerEntity(room, "게스트", PlayerType.GUEST)
-            );
+            final PlayerEntity loginPlayer =
+                    playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST, user.getId()));
+            final PlayerEntity guestPlayer = playerJpaRepository.save(new PlayerEntity(room, "게스트", PlayerType.GUEST));
 
             rouletteResultJpaRepository.save(new RouletteResultEntity(room, loginPlayer, 50));
             rouletteResultJpaRepository.save(new RouletteResultEntity(room, guestPlayer, 30));
@@ -143,12 +136,10 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             final RoomEntity room2 = roomJpaRepository.save(new RoomEntity("CCCC"));
 
             final UserEntity user = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
-            final PlayerEntity player1 = playerJpaRepository.save(
-                    new PlayerEntity(room1, "철수", PlayerType.HOST, user.getId())
-            );
-            final PlayerEntity player2 = playerJpaRepository.save(
-                    new PlayerEntity(room2, "철수", PlayerType.HOST, user.getId())
-            );
+            final PlayerEntity player1 =
+                    playerJpaRepository.save(new PlayerEntity(room1, "철수", PlayerType.HOST, user.getId()));
+            final PlayerEntity player2 =
+                    playerJpaRepository.save(new PlayerEntity(room2, "철수", PlayerType.HOST, user.getId()));
 
             rouletteResultJpaRepository.save(new RouletteResultEntity(room1, player1, 50));
             rouletteResultJpaRepository.save(new RouletteResultEntity(room2, player2, 30));
@@ -167,12 +158,10 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("DDDD"));
 
             for (int i = 1; i <= 10; i++) {
-                final UserEntity user = userJpaRepository.save(
-                        new UserEntity("AB" + "CDFGHJKLMN".charAt(i - 1) + "3D", "플레이어" + i)
-                );
-                final PlayerEntity player = playerJpaRepository.save(
-                        new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST, user.getId())
-                );
+                final UserEntity user =
+                        userJpaRepository.save(new UserEntity("AB" + "CDFGHJKLMN".charAt(i - 1) + "3D", "플레이어" + i));
+                final PlayerEntity player =
+                        playerJpaRepository.save(new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST, user.getId()));
                 for (int j = 0; j < i; j++) {
                     rouletteResultJpaRepository.save(new RouletteResultEntity(room, player, 10));
                 }
@@ -203,15 +192,12 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             final UserEntity user2 = userJpaRepository.save(new UserEntity("XY4ZQ", "영희"));
             final UserEntity user3 = userJpaRepository.save(new UserEntity("GH7KL", "민수"));
 
-            final PlayerEntity player1 = playerJpaRepository.save(
-                    new PlayerEntity(room, "철수", PlayerType.HOST, user1.getId())
-            );
-            final PlayerEntity player2 = playerJpaRepository.save(
-                    new PlayerEntity(room, "영희", PlayerType.GUEST, user2.getId())
-            );
-            final PlayerEntity player3 = playerJpaRepository.save(
-                    new PlayerEntity(room, "민수", PlayerType.GUEST, user3.getId())
-            );
+            final PlayerEntity player1 =
+                    playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST, user1.getId()));
+            final PlayerEntity player2 =
+                    playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST, user2.getId()));
+            final PlayerEntity player3 =
+                    playerJpaRepository.save(new PlayerEntity(room, "민수", PlayerType.GUEST, user3.getId()));
 
             rouletteResultJpaRepository.save(new RouletteResultEntity(room, player1, 50));
             rouletteResultJpaRepository.save(new RouletteResultEntity(room, player2, 30));
@@ -238,15 +224,12 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             final UserEntity user2 = userJpaRepository.save(new UserEntity("XY4ZQ", "영희"));
             final UserEntity user3 = userJpaRepository.save(new UserEntity("GH7KL", "민수"));
 
-            final PlayerEntity player1 = playerJpaRepository.save(
-                    new PlayerEntity(room, "철수", PlayerType.HOST, user1.getId())
-            );
-            final PlayerEntity player2 = playerJpaRepository.save(
-                    new PlayerEntity(room, "영희", PlayerType.GUEST, user2.getId())
-            );
-            final PlayerEntity player3 = playerJpaRepository.save(
-                    new PlayerEntity(room, "민수", PlayerType.GUEST, user3.getId())
-            );
+            final PlayerEntity player1 =
+                    playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST, user1.getId()));
+            final PlayerEntity player2 =
+                    playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST, user2.getId()));
+            final PlayerEntity player3 =
+                    playerJpaRepository.save(new PlayerEntity(room, "민수", PlayerType.GUEST, user3.getId()));
 
             rouletteResultJpaRepository.save(new RouletteResultEntity(room, player1, 50));
             rouletteResultJpaRepository.save(new RouletteResultEntity(room, player2, 3));
@@ -271,8 +254,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             for (int i = 0; i < 10; i++) {
                 final UserEntity user = userJpaRepository.save(new UserEntity(codes[i], "플레이어" + (i + 1)));
                 final PlayerEntity player = playerJpaRepository.save(
-                        new PlayerEntity(room, "플레이어" + (i + 1), PlayerType.GUEST, user.getId())
-                );
+                        new PlayerEntity(room, "플레이어" + (i + 1), PlayerType.GUEST, user.getId()));
                 rouletteResultJpaRepository.save(new RouletteResultEntity(room, player, 1));
             }
 
@@ -294,15 +276,12 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             final UserEntity user2 = userJpaRepository.save(new UserEntity("XY4ZQ", "영희"));
             final UserEntity user3 = userJpaRepository.save(new UserEntity("GH7KL", "민수"));
 
-            final PlayerEntity player1 = playerJpaRepository.save(
-                    new PlayerEntity(room1, "철수", PlayerType.HOST, user1.getId())
-            );
-            final PlayerEntity player2 = playerJpaRepository.save(
-                    new PlayerEntity(room2, "영희", PlayerType.HOST, user2.getId())
-            );
-            final PlayerEntity player3 = playerJpaRepository.save(
-                    new PlayerEntity(room2, "민수", PlayerType.GUEST, user3.getId())
-            );
+            final PlayerEntity player1 =
+                    playerJpaRepository.save(new PlayerEntity(room1, "철수", PlayerType.HOST, user1.getId()));
+            final PlayerEntity player2 =
+                    playerJpaRepository.save(new PlayerEntity(room2, "영희", PlayerType.HOST, user2.getId()));
+            final PlayerEntity player3 =
+                    playerJpaRepository.save(new PlayerEntity(room2, "민수", PlayerType.GUEST, user3.getId()));
 
             rouletteResultJpaRepository.save(new RouletteResultEntity(room1, player1, 20));
             rouletteResultJpaRepository.save(new RouletteResultEntity(room2, player2, 10));
@@ -324,12 +303,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("PPQQ"));
 
             final UserEntity user = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
-            final PlayerEntity loginPlayer = playerJpaRepository.save(
-                    new PlayerEntity(room, "철수", PlayerType.HOST, user.getId())
-            );
-            final PlayerEntity guestPlayer = playerJpaRepository.save(
-                    new PlayerEntity(room, "게스트", PlayerType.GUEST)
-            );
+            final PlayerEntity loginPlayer =
+                    playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST, user.getId()));
+            final PlayerEntity guestPlayer = playerJpaRepository.save(new PlayerEntity(room, "게스트", PlayerType.GUEST));
 
             rouletteResultJpaRepository.save(new RouletteResultEntity(room, loginPlayer, 30));
             rouletteResultJpaRepository.save(new RouletteResultEntity(room, guestPlayer, 1));
@@ -361,7 +337,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
     @Nested
     @DisplayName("getGamePlayCounts 테스트")
-            // TODO MiniGameType 추가되면 테스트들에도 추가해야함
+    // TODO MiniGameType 추가되면 테스트들에도 추가해야함
     class GetGamePlayCountsTest {
 
         @Test
@@ -438,9 +414,8 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 이번달_지렁이_게임_최장_생존_시간_기준_상위_5명을_내림차순으로_조회한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("WWRM"));
-            final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.WORM_GAME)
-            );
+            final MiniGameEntity miniGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.WORM_GAME));
 
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
@@ -483,9 +458,8 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 이번달_블록쌓기_최고_층수_기준_상위_5명을_내림차순으로_조회한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("MMNN"));
-            final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.BLOCK_STACKING)
-            );
+            final MiniGameEntity miniGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.BLOCK_STACKING));
 
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
@@ -521,14 +495,12 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 다섯명_초과이면_상위_5명만_반환한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("TTUV"));
-            final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.BLOCK_STACKING)
-            );
+            final MiniGameEntity miniGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.BLOCK_STACKING));
 
             for (int i = 1; i <= 10; i++) {
-                final PlayerEntity player = playerJpaRepository.save(
-                        new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST)
-                );
+                final PlayerEntity player =
+                        playerJpaRepository.save(new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST));
                 miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, player.getId(), i, (long) i * 10));
             }
 
@@ -546,12 +518,10 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 다른_게임_타입의_결과는_포함하지_않는다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("WWXX"));
-            final MiniGameEntity blockStackingGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.BLOCK_STACKING)
-            );
-            final MiniGameEntity racingGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME)
-            );
+            final MiniGameEntity blockStackingGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.BLOCK_STACKING));
+            final MiniGameEntity racingGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME));
 
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
@@ -578,9 +548,8 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 이번달_스피드터치_최단_완주시간_기준_오름차순으로_조회한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("STAA"));
-            final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH)
-            );
+            final MiniGameEntity miniGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH));
 
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
@@ -606,16 +575,15 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 미완주_DNF_기록은_집계에서_제외된다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("STBB"));
-            final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH)
-            );
+            final MiniGameEntity miniGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH));
             final PlayerEntity 완주자 = playerJpaRepository.save(new PlayerEntity(room, "완주자", PlayerType.HOST));
             final PlayerEntity 미완주자 = playerJpaRepository.save(new PlayerEntity(room, "미완주자", PlayerType.GUEST));
 
             miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 완주자.getId(), 1, 4000L));
             // DNF 점수는 도메인 정의(SpeedTouchScore.ofDnf)에서 생성해 경계값이 실제 정의와 회귀로 묶이게 한다
-            miniGameResultJpaRepository.save(
-                    new MiniGameResultEntity(miniGame, 미완주자.getId(), 2, SpeedTouchScore.ofDnf(2).getValue()));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(
+                    miniGame, 미완주자.getId(), 2, SpeedTouchScore.ofDnf(2).getValue()));
 
             // when
             final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
@@ -632,9 +600,8 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 같은_플레이어의_여러_기록은_최단_시간으로_집계된다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("STCC"));
-            final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH)
-            );
+            final MiniGameEntity miniGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH));
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
 
             miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수.getId(), 1, 5000L));
@@ -654,15 +621,14 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 다섯명_초과이면_상위_5명만_반환한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("STDD"));
-            final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH)
-            );
+            final MiniGameEntity miniGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH));
 
             for (int i = 1; i <= 7; i++) {
-                final PlayerEntity player = playerJpaRepository.save(
-                        new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST)
-                );
-                miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, player.getId(), i, (long) i * 1000));
+                final PlayerEntity player =
+                        playerJpaRepository.save(new PlayerEntity(room, "플레이어" + i, PlayerType.GUEST));
+                miniGameResultJpaRepository.save(
+                        new MiniGameResultEntity(miniGame, player.getId(), i, (long) i * 1000));
             }
 
             // when
@@ -679,12 +645,10 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 다른_게임_타입의_결과는_포함하지_않는다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("STEE"));
-            final MiniGameEntity speedTouch = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH)
-            );
-            final MiniGameEntity racing = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME)
-            );
+            final MiniGameEntity speedTouch =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.SPEED_TOUCH));
+            final MiniGameEntity racing =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME));
 
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
@@ -720,9 +684,8 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 이번달_목표시간과의_오차가_작은_순으로_오름차순_조회한다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("BTAA"));
-            final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.BLIND_TIMER)
-            );
+            final MiniGameEntity miniGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.BLIND_TIMER));
             final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
             final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
 
@@ -745,16 +708,15 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 타임아웃_기록은_집계에서_제외된다() {
             // given
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("BTBB"));
-            final MiniGameEntity miniGame = miniGameJpaRepository.save(
-                    new MiniGameEntity(room.getId(), MiniGameType.BLIND_TIMER)
-            );
+            final MiniGameEntity miniGame =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.BLIND_TIMER));
             final PlayerEntity 정상 = playerJpaRepository.save(new PlayerEntity(room, "정상", PlayerType.HOST));
             final PlayerEntity 타임아웃 = playerJpaRepository.save(new PlayerEntity(room, "타임아웃", PlayerType.GUEST));
 
             miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 정상.getId(), 1, 3000L));
             // 타임아웃 점수는 도메인 정의(BlindTimerScore.ofTimeout)에서 생성해 경계값이 실제 정의와 회귀로 묶이게 한다
-            miniGameResultJpaRepository.save(
-                    new MiniGameResultEntity(miniGame, 타임아웃.getId(), 2, BlindTimerScore.ofTimeout().getValue()));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(
+                    miniGame, 타임아웃.getId(), 2, BlindTimerScore.ofTimeout().getValue()));
 
             // when
             final List<BlindTimerTopPlayerResponse> result = dashboardService.getBlindTimerTopPlayers();

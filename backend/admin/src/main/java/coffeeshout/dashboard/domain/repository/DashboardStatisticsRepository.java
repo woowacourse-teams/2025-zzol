@@ -2,59 +2,36 @@ package coffeeshout.dashboard.domain.repository;
 
 import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
-import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
+import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface DashboardStatisticsRepository {
 
-    List<TopWinnerResponse> findTopWinnersBetween(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    );
+    List<TopWinnerResponse> findTopWinnersBetween(LocalDateTime startDate, LocalDateTime endDate, int limit);
 
     Optional<LowestProbabilityWinnerResponse> findLowestProbabilityWinner(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    );
+            LocalDateTime startDate, LocalDateTime endDate, int limit);
 
     List<GamePlayCountResponse> findGamePlayCountByMonth(LocalDateTime startDate, LocalDateTime endDate);
 
     List<RacingGameTopPlayerResponse> findRacingGameTopPlayers(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    );
+            LocalDateTime startDate, LocalDateTime endDate, int limit);
 
     List<BlockStackingTopPlayerResponse> findBlockStackingTopPlayers(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    );
+            LocalDateTime startDate, LocalDateTime endDate, int limit);
 
-    List<WormGameTopPlayerResponse> findWormGameTopPlayers(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    );
+    List<WormGameTopPlayerResponse> findWormGameTopPlayers(LocalDateTime startDate, LocalDateTime endDate, int limit);
 
     List<SpeedTouchTopPlayerResponse> findSpeedTouchTopPlayers(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    );
+            LocalDateTime startDate, LocalDateTime endDate, int limit);
 
     List<BlindTimerTopPlayerResponse> findBlindTimerTopPlayers(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    );
+            LocalDateTime startDate, LocalDateTime endDate, int limit);
 }

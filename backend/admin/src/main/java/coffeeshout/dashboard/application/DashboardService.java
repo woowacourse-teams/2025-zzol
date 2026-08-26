@@ -2,12 +2,12 @@ package coffeeshout.dashboard.application;
 
 import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
-import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
+import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -38,7 +38,8 @@ public class DashboardService {
         final LocalDateTime startOfMonth = getStartOfMonth();
         final LocalDateTime endOfMonth = getEndOfMonth();
 
-        return dashboardStatisticsRepository.findLowestProbabilityWinner(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT)
+        return dashboardStatisticsRepository
+                .findLowestProbabilityWinner(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT)
                 .orElse(LowestProbabilityWinnerResponse.empty());
     }
 

@@ -43,6 +43,7 @@ public class RoomRestController implements RoomApi {
     private final RoomService roomService;
     private final PlayerService playerService;
 
+    @Override
     @PostMapping
     public ResponseEntity<RoomCreateResponse> createRoom(
             @AuthUser Optional<AuthenticatedUser> authUser,
@@ -54,6 +55,7 @@ public class RoomRestController implements RoomApi {
         return ResponseEntity.ok(RoomCreateResponse.of(result));
     }
 
+    @Override
     @PostMapping("/{joinCode}")
     public CompletableFuture<ResponseEntity<RoomEnterResponse>> enterRoom(
             @PathVariable String joinCode,
@@ -82,6 +84,7 @@ public class RoomRestController implements RoomApi {
         return request.playerName();
     }
 
+    @Override
     @GetMapping("/nickname/random")
     public ResponseEntity<RandomNicknameResponse> generateRandomNickname(
             @RequestParam(required = false) String joinCode) {
@@ -92,6 +95,7 @@ public class RoomRestController implements RoomApi {
         return ResponseEntity.ok(RandomNicknameResponse.from(nickname));
     }
 
+    @Override
     @GetMapping("/check-joinCode")
     public ResponseEntity<JoinCodeExistResponse> checkJoinCode(@RequestParam String joinCode) {
         final boolean exists = roomService.roomExists(joinCode);
@@ -99,6 +103,7 @@ public class RoomRestController implements RoomApi {
         return ResponseEntity.ok(JoinCodeExistResponse.from(exists));
     }
 
+    @Override
     @GetMapping("/check-guestName")
     public ResponseEntity<GuestNameExistResponse> checkGuestName(
             @RequestParam String joinCode, @RequestParam String guestName) {
@@ -107,6 +112,7 @@ public class RoomRestController implements RoomApi {
         return ResponseEntity.ok(GuestNameExistResponse.from(isDuplicated));
     }
 
+    @Override
     @GetMapping("/{joinCode}/probabilities")
     public ResponseEntity<List<ProbabilityResponse>> getProbabilities(@PathVariable String joinCode) {
         final List<ProbabilityResponse> responses = roomService.getProbabilities(joinCode);
@@ -114,6 +120,7 @@ public class RoomRestController implements RoomApi {
         return ResponseEntity.ok(responses);
     }
 
+    @Override
     @PatchMapping("/{joinCode}/settings")
     public ResponseEntity<Void> updateRoomSettings(
             @PathVariable String joinCode, @Valid @RequestBody UpdateRoomSettingsRequest request) {
@@ -121,6 +128,7 @@ public class RoomRestController implements RoomApi {
         return ResponseEntity.noContent().build();
     }
 
+    @Override
     @GetMapping("/{joinCode}/players")
     public ResponseEntity<List<PlayerResponse>> getPlayers(@PathVariable String joinCode) {
         return ResponseEntity.ok(playerService.getPlayers(joinCode).stream()
@@ -128,6 +136,7 @@ public class RoomRestController implements RoomApi {
                 .toList());
     }
 
+    @Override
     @DeleteMapping("/{joinCode}/players/{playerName}")
     public ResponseEntity<Void> kickPlayer(@PathVariable String joinCode, @PathVariable String playerName) {
         final boolean exists = playerService.checkAndKickPlayer(joinCode, playerName);

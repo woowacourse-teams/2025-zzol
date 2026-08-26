@@ -1,0 +1,31 @@
+{
+  "name": "monitor-error-spike-nunchi-consumer",
+  "question": "알림 AppErrorLogSpike(warning)가 prod에서 발화했다 - 최근 5분 ERROR 로그 30건 초과. 봇에는 최근 30분 ERROR 로그 샘플 10줄(같은 방의 눈치게임 press 처리 실패 집중)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 동일한 방(joinCode=V2QM)의 눈치게임 press 이벤트 처리 실패가 좁은 시간창에 반복된 것으로, ERROR 급증 알림의 직접 근거다. '근거 발견: 예'로 판정하고 특정 방의 눈치게임 press 이벤트 처리 실패 반복을 원인 가설로 제시하면 정답. '근거 발견: 아니오'로 판정하거나, 로그 재적재 아티팩트로 치부하거나(타임스탬프가 알림 시각과 정합함), 무관한 원인을 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "AppErrorLogSpike",
+    "severity": "warning",
+    "fingerprint": "golden-synth-09",
+    "summary": "ERROR 로그 급증(최근 5분, prod-app)",
+    "description": "ERROR 로그가 41건(임계 30/5m)입니다. zzol-bot이 근본원인을 분석합니다.",
+    "labels": {
+      "alertname": "AppErrorLogSpike",
+      "severity": "warning",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-25 21:40:11.208] [ERROR] [0a84c7d13e9f42b6a5d2c80e17b94f63,8b30e6a25d17c9f4] --- [redis-stream-thread-pool-nunchi1] c.n.i.m.c.NunchiCommandEventConsumer : 눈치게임 press 처리 중 오류: joinCode=V2QM, playerName=PLAYER_1, eventId=3f81b7d0-2c94-4e56-a8d1-07c5e29b6f43",
+    "[2026-08-25 21:40:13.554] [ERROR] [c92e05a7d41b48f3b0e6a83d29c17f55,4d07b2e81a95c6f3] --- [redis-stream-thread-pool-nunchi1] c.n.i.m.c.NunchiCommandEventConsumer : 눈치게임 press 처리 중 오류: joinCode=V2QM, playerName=PLAYER_3, eventId=b04e82c7-5d13-4a9f-b628-1e97d40c53a8",
+    "[2026-08-25 21:40:15.871] [ERROR] [5b17d0e94c8a42f6a2c9e05d81b73f24,9e42a7c05d81b6f3] --- [redis-stream-thread-pool-nunchi1] c.n.i.m.c.NunchiCommandEventConsumer : 눈치게임 press 처리 중 오류: joinCode=V2QM, playerName=PLAYER_2, eventId=7a95c3e1-8d40-4b26-9f57-c08d21e46b93",
+    "[2026-08-25 21:40:18.109] [ERROR] [e70a29c4d15b48f8b3d6a01c97e82f46,1c58d3a92e07b4f6] --- [redis-stream-thread-pool-nunchi1] c.n.i.m.c.NunchiCommandEventConsumer : 눈치게임 press 처리 중 오류: joinCode=V2QM, playerName=PLAYER_4, eventId=d21f60b8-3a97-4c45-8e02-5b94d7c13a86",
+    "[2026-08-25 21:40:21.443] [ERROR] [38c1e7a05d94b2f6a8e0c42d17b95f38,6a94e2c70d58b1f3] --- [redis-stream-thread-pool-nunchi1] c.n.i.m.c.NunchiCommandEventConsumer : 눈치게임 press 처리 중 오류: joinCode=V2QM, playerName=PLAYER_1, eventId=90e57a24-6c81-4d3f-a1b9-38f04c62d5e7",
+    "[2026-08-25 21:40:59.720] [ERROR] [d40b83e29c17f4a5b6e1a02d95c78f34,2f81c6a49d05e7b3] --- [redis-stream-thread-pool-nunchi1] c.n.i.m.c.NunchiCommandEventConsumer : 눈치게임 press 처리 중 오류: joinCode=V2QM, playerName=PLAYER_2, eventId=45c98d16-0b72-4e83-9a54-e7d20f81c369",
+    "[2026-08-25 21:41:32.055] [ERROR] [91f5a3c80d26e4b7a4c8e17d02b96f52,7d30a8e15c94b2f6] --- [redis-stream-thread-pool-nunchi1] c.n.i.m.c.NunchiCommandEventConsumer : 눈치게임 press 처리 중 오류: joinCode=V2QM, playerName=PLAYER_3, eventId=6b28e94d-7f05-4a13-b8c6-d41a90e57f22",
+    "[2026-08-25 21:42:07.388] [ERROR] [2c68d1a97e05f4b3b9e4a20c85d17f69,0e57b3a81d42c9f6] --- [redis-stream-thread-pool-nunchi1] c.n.i.m.c.NunchiCommandEventConsumer : 눈치게임 press 처리 중 오류: joinCode=V2QM, playerName=PLAYER_1, eventId=f83a05c2-1e96-4d78-a4b0-27c58d91e6f4",
+    "[2026-08-25 21:42:44.612] [ERROR] [76e0b4d28a91c5f3a3d7e81c40b25f97,3a92c6e07d15b8f4] --- [redis-stream-thread-pool-nunchi1] c.n.i.m.c.NunchiCommandEventConsumer : 눈치게임 press 처리 중 오류: joinCode=V2QM, playerName=PLAYER_4, eventId=1d64f92a-8b30-4c57-9e18-a05c73d82b46",
+    "[2026-08-25 21:43:19.847] [ERROR] [b3f92e60c47a18d5a0c5d94e28b71f83,5c04d8a37e91b2f6] --- [redis-stream-thread-pool-nunchi1] c.n.i.m.c.NunchiCommandEventConsumer : 눈치게임 press 처리 중 오류: joinCode=V2QM, playerName=PLAYER_2, eventId=82d47c05-9e61-4f38-b2a9-c16e50d94a73"
+  ],
+  "logEnvironment": "prod"
+}

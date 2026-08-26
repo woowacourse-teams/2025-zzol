@@ -1,0 +1,24 @@
+{
+  "name": "monitor-ws-probe-failed-edge-layer",
+  "question": "알림 WsHandshakeProbeFailed(critical)가 발화했다 - 엣지(prod)에서 WS 업그레이드(101) 합성 프로브 실패. 봇에는 최근 30분 prod 앱 ERROR 로그 샘플 2줄(방 이벤트 정리 실패, 스케줄 작업 실패)이 주어졌다.",
+  "rubric": "이 알림은 blackbox-exporter가 nginx(엣지)에 보낸 WS 업그레이드 프로브의 실패로, 원인 레이어는 nginx 설정(Upgrade/Connection 헤더)이나 TLS이며 앱 ERROR 로그에는 근거가 나타나지 않는다(nginx 로그는 Loki에 적재되지 않는다). 주어진 방 이벤트 정리 실패, 스케줄 작업 실패 로그는 이 알림과 무관하다. '근거 발견: 아니오'로 판정하고 원인 가설을 내지 않아야 정답. 앱 로그의 무관한 에러를 프로브 실패의 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "WsHandshakeProbeFailed",
+    "severity": "critical",
+    "fingerprint": "golden-synth-08",
+    "summary": "WS 핸드셰이크 합성 프로브 실패 (edge=prod)",
+    "description": "엣지(nginx:443)에서 WS 업그레이드(101)가 실패. nginx Upgrade/Connection 헤더 소실 의심. probe_failed_due_to_regex=1이면 TCP/TLS는 됐으나 101 미수신(=헤더 소실로 200 등 반환), 0이면 TCP/TLS 단계 실패(nginx 다운·인증서).",
+    "labels": {
+      "alertname": "WsHandshakeProbeFailed",
+      "severity": "critical",
+      "job": "blackbox-ws",
+      "edge": "prod"
+    }
+  },
+  "logSamples": [
+    "[2026-08-25 13:05:44.276] [ERROR] [7b04d9c2e8a14f53a1c7e60d92b48f37,5e21c7a84d09f6b3] --- [pool-12-thread-1] c.r.i.messaging.RoomEventWaitManager : 방 이벤트 자동 정리 (실패): eventId=c2e84a17-9d05-4b6f-8a31-e74d20c95f68",
+    "[2026-08-25 13:19:08.933] [ERROR] [,] --- [pool-11-thread-1] o.s.s.s.TaskUtils$LoggingErrorHandler : Unexpected error occurred in scheduled task"
+  ],
+  "logEnvironment": "prod"
+}

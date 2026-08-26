@@ -1,0 +1,25 @@
+{
+  "name": "monitor-stream-latency-container-recovery",
+  "question": "알림 RedisStreamE2eLatencyHigh(warning)가 prod에서 발화했다 - 스트림 처리 p95 지연이 500ms 초과. 봇에는 최근 30분 ERROR 로그 샘플 4줄(스트림 컨테이너 복구 실패)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 minigame 스트림의 리스너 컨테이너가 죽어 상태 확인과 복구가 반복 실패하고 결국 복구를 포기(HealthIndicator DOWN)하는 내용으로, 스트림 소비가 정체되어 E2E 지연이 커진 상황과 직접 관련된다. '근거 발견: 예'로 판정하고 스트림 리스너 컨테이너 다운으로 인한 소비 정지와 적체를 원인 가설로 제시하면 정답. '근거 발견: 아니오'로 판정하거나 다운스트림 애플리케이션 로직 지연만을 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "RedisStreamE2eLatencyHigh",
+    "severity": "warning",
+    "fingerprint": "golden-synth-04",
+    "summary": "Redis Stream E2E 지연 p95 > 500ms (prod-app)",
+    "description": "스트림 처리 p95 지연이 1.842s. 컨슈머 처리 적체 또는 다운스트림(App Service) 지연 가능성.",
+    "labels": {
+      "alertname": "RedisStreamE2eLatencyHigh",
+      "severity": "warning",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-22 11:31:04.882] [ERROR] [,] --- [pool-11-thread-1] c.g.h.RedisStreamContainerRecovery : Redis Stream container 상태 확인 중 예외: stream=minigame",
+    "[2026-08-22 11:32:04.907] [ERROR] [,] --- [pool-11-thread-1] c.g.h.RedisStreamContainerRecovery : Redis Stream container 복구 중 예외 발생: stream=minigame",
+    "[2026-08-22 11:33:29.163] [ERROR] [a6d02f84c1e94b37b0c8d5a71e39f246,4b8a1d63e07f92c5] --- [redis-stream-thread-pool-concurrent3] c.g.r.c.RedisStreamListenerStarter : Redis Stream 처리 중 오류가 발생했습니다.",
+    "[2026-08-22 11:34:05.021] [ERROR] [,] --- [pool-11-thread-1] c.g.h.RedisStreamContainerRecovery : Redis Stream container 복구 포기: stream=minigame. HealthIndicator에 DOWN 보고"
+  ],
+  "logEnvironment": "prod"
+}

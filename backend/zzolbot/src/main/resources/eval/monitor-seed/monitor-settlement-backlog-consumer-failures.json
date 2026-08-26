@@ -1,0 +1,26 @@
+{
+  "name": "monitor-settlement-backlog-consumer-failures",
+  "question": "알림 RedisStreamBacklogHigh(warning)가 prod에서 발화했다 - 스트림 길이가 1000을 초과. 봇에는 최근 30분 ERROR 로그 샘플 5줄(정산 스트림 처리 실패 반복)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 정산 컨슈머(SettlementStreamConsumer)가 같은 메시지 처리에 반복 실패해 ACK를 보류하고, pending 재처리(SettlementPendingSweeper)까지 실패하는 내용으로, 스트림 적체 알림과 직접 관련된다(정산 스트림은 max-length 10000으로 일반 스트림(100 트리밍)과 달리 1000을 넘을 수 있는 유일한 스트림이다). '근거 발견: 예'로 판정하고 정산 컨슈머의 반복 처리 실패로 인한 소비 정체를 원인 가설로 제시하면 정답. '근거 발견: 아니오'로 판정하거나 발행 측 급증만을 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "RedisStreamBacklogHigh",
+    "severity": "warning",
+    "fingerprint": "golden-synth-03",
+    "summary": "Redis Stream 적체 (length > 1000, prod-app)",
+    "description": "스트림 길이가 4382. 컨슈머 처리 속도가 발행을 못 따라가고 있습니다.",
+    "labels": {
+      "alertname": "RedisStreamBacklogHigh",
+      "severity": "warning",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-21 20:03:11.207] [ERROR] [7d20c4e8a1f94b56b8e3d0a9c2571f44,3f9b62d18a05c7e4] --- [redis-stream-thread-pool-settlement:result1] c.s.i.c.SettlementStreamConsumer : 정산 처리 실패 — ACK 보류, 재전달 대기: recordId=1755773841002-0",
+    "[2026-08-21 20:05:42.518] [ERROR] [e52a90c7d3b14f88a1c6e47b09d2f836,8c14e7a92d60b3f5] --- [redis-stream-thread-pool-settlement:result1] c.s.i.c.SettlementStreamConsumer : 정산 처리 실패 — ACK 보류, 재전달 대기: recordId=1755773841002-0",
+    "[2026-08-21 20:08:19.834] [ERROR] [1c83f6d40e9a47b2b7d2a85c93e01f67,5a07d3c81f42e9b6] --- [redis-stream-thread-pool-settlement:result1] c.s.i.c.SettlementStreamConsumer : 정산 처리 실패 — ACK 보류, 재전달 대기: recordId=1755774095221-0",
+    "[2026-08-21 20:09:03.112] [ERROR] [,] --- [pool-11-thread-1] c.s.i.c.SettlementPendingSweeper : pending 정산 메시지 재처리 실패: recordId=1755773841002-0",
+    "[2026-08-21 20:12:56.440] [ERROR] [09fd47a3c8e14b90a4b7c62e18d53a72,2e85b04f7a91c6d3] --- [redis-stream-thread-pool-settlement:result1] c.s.i.c.SettlementStreamConsumer : 정산 스트림 처리 중 오류가 발생했습니다."
+  ],
+  "logEnvironment": "prod"
+}

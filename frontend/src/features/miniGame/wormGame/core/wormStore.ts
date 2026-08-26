@@ -51,6 +51,12 @@ export class WormStore {
   zoomOut = false;
   /** 서버 틱이 도는 중(PLAYING)에만 예측·보간·외삽한다. PREPARE·FINISH 에선 서버 포즈에 고정 */
   playing = false;
+  /**
+   * 서버가 마지막으로 수락한 내 조향 seq. 서버 Worm 은 `seq <= lastSeq` 를 버리는데
+   * 조향 훅의 seq 는 컴포넌트 로컬이라 새로고침하면 0 부터 다시 시작한다 — 그대로 두면
+   * 서버가 따라잡을 때까지 조향이 전부 무시된다. 델타가 실어주는 값으로 이어붙인다.
+   */
+  myLastSeq = -1;
 
   /** tick 이 마지막으로 갱신된 로컬 시각 */
   private anchorAt = 0;
@@ -99,6 +105,7 @@ export class WormStore {
     this.setRadius(delta.radius);
 
     for (const p of delta.worms) {
+      if (p.playerName === this.myName && p.lastSeq > this.myLastSeq) this.myLastSeq = p.lastSeq;
       const w = this.getOrCreate(p.playerName);
       const wasAlive = w.alive;
       w.alive = p.alive;

@@ -8,6 +8,13 @@ const VIEW_RADIUS = 130;
 const ZOOM_OUT_MARGIN = 1.12;
 /** 궤적 레이어 해상도(px/u). 430px 폰에서 메인 뷰가 ≈1.65px/u 라 2 면 흐려지지 않는다 */
 const LAYER_PX_PER_UNIT = 2;
+/**
+ * 레이어 한 변 상한(px). 레이어는 지렁이당 하나라 메모리가 인원수만큼 곱해진다 —
+ * 9인 아레나(R₀≈495u)에서 상한이 없으면 1980²×4B ≈ 15.7MB/지렁이 ≈ 141MB 로 iOS 캔버스 예산을 넘겨
+ * 캔버스가 조용히 빈 화면이 된다. 1400 이면 ≈7.8MB/지렁이 ≈ 70MB, 해상도는 ≈1.41px/u.
+ * ponytail: 인원 많을 때 해상도를 깎는 단순 상한. 확대 시 흐리면 뷰포트 타일링으로 올린다
+ */
+const LAYER_MAX_PX = 1400;
 /** 사망 궤적은 벽이 아니므로 완전히 사라진다(데모 1.4s) */
 const DEAD_FADE_MS = 1400;
 const MINIMAP_SIZE = 96;
@@ -55,6 +62,15 @@ export class WormRenderer {
   /** roster 갱신 시 색 조회만 교체 — 렌더러 인스턴스(레이어·카메라·페이드)는 유지 */
   setColorOf(colorOf: (playerName: string) => string): void {
     this.colorOf = colorOf;
+    // 이미 래스터화된 궤적은 옛 색으로 남아 두 가지 색 궤적이 된다 — 다음 프레임에 새 색으로 다시 그린다
+    for (const w of this.store.worms.values()) w.layerDirty = true;
+  }
+
+  /** 레이어 해상도(px/u). 인원이 많아 R₀ 가 크면 LAYER_MAX_PX 에 맞춰 낮춘다 */
+  private layerPxPerUnit(): number {
+    const diameter = 2 * this.store.initialRadius;
+    if (diameter === 0) return LAYER_PX_PER_UNIT;
+    return Math.min(LAYER_PX_PER_UNIT, LAYER_MAX_PX / diameter);
   }
 
   render(ctx: CanvasRenderingContext2D, width: number, height: number, now: number): void {
@@ -79,12 +95,20 @@ export class WormRenderer {
       this.syncLayer(layer, w, now);
     }
 
+    // 스냅샷에서 빠진 지렁이의 레이어를 버린다(하나가 수 MB). 살아있는 동안엔 유지 —
+    // 페이드가 끝났다고 지우면 layerFor 가 빈 레이어를 다시 만들어 죽은 궤적이 되살아난다
+    for (const name of this.layers.keys()) {
+      if (!store.worms.has(name)) this.layers.delete(name);
+    }
+
     // 카메라·시야: 관전 대상 추적, FINISH 면 전체 맵으로 줌아웃
     const follow = store.zoomOut
       ? undefined
       : (poses.get(store.followName) ?? poses.get(store.myName));
     const target = follow ?? { x: 0, y: 0 };
-    const targetView = follow ? VIEW_RADIUS : store.initialRadius * ZOOM_OUT_MARGIN;
+    // 줌아웃 목표는 initialRadius 가 아니라 현재 radius 다 — 아레나가 줄어들면 그보다 바깥은
+    // 어차피 아래 clip 에 잘려서, R₀ 로 맞추면 종료 화면이 텅 빈 배경에 뜬 작은 원이 된다
+    const targetView = follow ? VIEW_RADIUS : store.radius * ZOOM_OUT_MARGIN;
     if (!this.camera) this.camera = { x: target.x, y: target.y };
     const kCam = 1 - Math.exp(-dt / CAMERA_SMOOTH_MS);
     const kView = 1 - Math.exp(-dt / VIEW_SMOOTH_MS);
@@ -222,7 +246,7 @@ export class WormRenderer {
   }
 
   private layerFor(w: WormView): Layer {
-    const px = Math.ceil(2 * this.store.initialRadius * LAYER_PX_PER_UNIT);
+    const px = Math.ceil(2 * this.store.initialRadius * this.layerPxPerUnit());
     let layer = this.layers.get(w.playerName);
     // 스냅샷으로 initialRadius 가 넓어졌으면 레이어를 새로 잡고 전체 재작성
     if (layer && layer.canvas.width !== px) {
@@ -252,7 +276,8 @@ export class WormRenderer {
     if (w.trail.length === 0 || w.trail.length <= layer.drawn) return;
     const R0 = this.store.initialRadius;
     g.save();
-    g.scale(LAYER_PX_PER_UNIT, LAYER_PX_PER_UNIT);
+    const k = this.layerPxPerUnit();
+    g.scale(k, k);
     g.translate(R0, R0);
     g.beginPath();
     const from = Math.max(0, layer.drawn - 1);

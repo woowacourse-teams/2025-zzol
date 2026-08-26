@@ -51,10 +51,26 @@ export const useWormSteering = ({
 
   const onPointerDown = useCallback(
     (e: PointerEvent<HTMLElement>) => {
+      // 관전 전환 버튼 위에서는 캡처하지 않는다 — 포인터 캡처 중에는 호환 마우스 이벤트가
+      // 캡처 요소로 재타깃돼 click 이 컨테이너에서 발생하고 버튼 onClick 이 영영 안 불린다
+      if ((e.target as HTMLElement).closest('button')) return;
       e.currentTarget.setPointerCapture(e.pointerId);
       track(e);
     },
     [track]
+  );
+
+  const onPointerUp = useCallback(
+    (e: PointerEvent<HTMLElement>) => {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+      // 터치·펜은 손을 떼면 조준을 멈춘다. 떼도 pointer 가 남으면 카메라가 머리를 따라가는 탓에
+      // 마지막 터치 지점이 화면 고정 오프셋으로 남아 그 방향으로 계속 조향된다.
+      // 마우스는 클릭 없이 hover 로 조준하는 설계라 그대로 둔다.
+      if (e.pointerType !== 'mouse') store.setPointer(null);
+    },
+    [store]
   );
 
   useEffect(() => {
@@ -65,12 +81,13 @@ export const useWormSteering = ({
       const angle = store.targetAngle;
       if (angle === null || angle === lastSentRef.current) return;
       lastSentRef.current = angle;
-      seqRef.current += 1;
+      // 새로고침으로 훅이 리마운트되면 seqRef 는 0 부터다 — 서버가 수락한 마지막 seq 를 넘겨서 이어붙인다
+      seqRef.current = Math.max(seqRef.current, store.myLastSeq) + 1;
       const command: SteerCommand = { playerName, angle, seq: seqRef.current };
       send(`/room/${joinCode}/worm/steer`, command);
     }, SEND_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [sendEnabled, isConnected, joinCode, playerName, send, store]);
 
-  return { onPointerDown, onPointerMove: track };
+  return { onPointerDown, onPointerMove: track, onPointerUp };
 };

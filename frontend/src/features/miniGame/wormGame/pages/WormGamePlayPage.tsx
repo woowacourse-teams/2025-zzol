@@ -30,7 +30,7 @@ const WormGamePlayPage = () => {
   const isPlaying = wormGameState === 'PLAYING';
   const isFinished = wormGameState === 'FINISH';
   const { isDead, followName, cycleFollow } = useWormSpectate(store, isPlaying);
-  const { onPointerDown, onPointerMove } = useWormSteering({
+  const { onPointerDown, onPointerMove, onPointerUp } = useWormSteering({
     store,
     joinCode,
     playerName: myName,
@@ -58,6 +58,8 @@ const WormGamePlayPage = () => {
       aria-label="지렁이 게임 — 화면을 터치한 방향으로 조향합니다 (키보드 조작 미지원)"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
     >
       <WormCanvas />
       {/* 상시 마운트 live region — 사망·종료를 스크린 리더에 전달 */}

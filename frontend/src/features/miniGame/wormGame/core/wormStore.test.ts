@@ -77,6 +77,16 @@ describe('WormStore — 델타·스냅샷 규칙', () => {
     expect(s.worms.get('me')!.trail).toHaveLength(2);
   });
 
+  it('내 델타의 lastSeq 를 이어받는다 — 새로고침 후 조향 seq 를 이어붙이는 근거', () => {
+    const s = new WormStore('me');
+    expect(s.myLastSeq).toBe(-1);
+    s.applyDelta(delta(10, [{ lastSeq: 300 }, { playerName: 'o', lastSeq: 999 }]), 0);
+    expect(s.myLastSeq).toBe(300);
+    // 남의 lastSeq 나 뒤처진 값에는 끌려가지 않는다
+    s.applyDelta(delta(11, [{ lastSeq: 12 }]), 50);
+    expect(s.myLastSeq).toBe(300);
+  });
+
   it('commitUpTo 는 렌더 tick 이 지난 점만 trail 로 옮긴다', () => {
     const s = new WormStore('me');
     s.applyDelta(delta(1, [{ playerName: 'o', x: 1 }]), 0);

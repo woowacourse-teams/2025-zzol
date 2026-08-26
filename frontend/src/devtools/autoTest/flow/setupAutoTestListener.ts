@@ -63,7 +63,9 @@ const runFlow = async (role: 'host' | 'guest', context: PageActionContext) => {
 
       const newPath = window.location.pathname;
 
-      if (currentPath.match(/^\/room\/[^/]+\/RACING_GAME\/play$/)) {
+      // 미니게임 play 를 벗어나면 봇 인터벌을 끊는다 — RACING_GAME 만 보면 WORM_GAME 의
+      // 조향 인터벌이 살아남아 이후 단계 내내 document.body 에 합성 pointermove 를 뿌린다
+      if (currentPath.match(/^\/room\/[^/]+\/[^/]+\/play$/)) {
         clearRacingGameClickInterval();
         clearWormGameSteerInterval();
       }

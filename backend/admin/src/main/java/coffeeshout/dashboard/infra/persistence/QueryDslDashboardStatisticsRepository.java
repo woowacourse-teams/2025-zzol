@@ -151,38 +151,41 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
     @Override
     public List<BlockStackingTopPlayerResponse> findBlockStackingTopPlayers(
             LocalDateTime startDate, LocalDateTime endDate, int limit) {
-        return queryFactory
-                .select(Projections.constructor(
-                        BlockStackingTopPlayerResponse.class, PLAYER.playerName, MINI_GAME_RESULT.score.max()))
-                .from(MINI_GAME_RESULT)
-                .join(PLAYER)
-                .on(PLAYER.id.eq(MINI_GAME_RESULT.playerId))
-                .where(
-                        MINI_GAME_RESULT.miniGameType.eq(MiniGameType.BLOCK_STACKING),
-                        MINI_GAME_RESULT.createdAt.between(startDate, endDate))
-                .groupBy(PLAYER.playerName)
-                .orderBy(MINI_GAME_RESULT.score.max().desc())
-                .limit(limit)
-                .fetch();
+        return findTopPlayersByMaxScore(
+                MiniGameType.BLOCK_STACKING, startDate, endDate, limit, BlockStackingTopPlayerResponse::new);
     }
 
     /** 지렁이 게임 — 점수 = 생존 시간(ms)이므로 블록쌓기와 같은 최대값 기준. */
     @Override
     public List<WormGameTopPlayerResponse> findWormGameTopPlayers(
             LocalDateTime startDate, LocalDateTime endDate, int limit) {
+        return findTopPlayersByMaxScore(
+                MiniGameType.WORM_GAME, startDate, endDate, limit, WormGameTopPlayerResponse::new);
+    }
+
+    /**
+     * 최대 점수가 우수한 미니게임의 TOP 플레이어를 조회한다(BlockStacking·WormGame 공통).
+     * 동점은 playerName 오름차순으로 순서를 고정한다(그룹 키라 2차 정렬에 쓸 수 있는 유일한 컬럼).
+     */
+    private <T> List<T> findTopPlayersByMaxScore(
+            MiniGameType type,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int limit,
+            BiFunction<String, Long, T> mapper) {
         return queryFactory
-                .select(Projections.constructor(
-                        WormGameTopPlayerResponse.class, PLAYER.playerName, MINI_GAME_RESULT.score.max()))
+                .select(PLAYER.playerName, MINI_GAME_RESULT.score.max())
                 .from(MINI_GAME_RESULT)
                 .join(PLAYER)
                 .on(PLAYER.id.eq(MINI_GAME_RESULT.playerId))
-                .where(
-                        MINI_GAME_RESULT.miniGameType.eq(MiniGameType.WORM_GAME),
-                        MINI_GAME_RESULT.createdAt.between(startDate, endDate))
+                .where(MINI_GAME_RESULT.miniGameType.eq(type), MINI_GAME_RESULT.createdAt.between(startDate, endDate))
                 .groupBy(PLAYER.playerName)
-                .orderBy(MINI_GAME_RESULT.score.max().desc())
+                .orderBy(MINI_GAME_RESULT.score.max().desc(), PLAYER.playerName.asc())
                 .limit(limit)
-                .fetch();
+                .fetch()
+                .stream()
+                .map(tuple -> mapper.apply(tuple.get(PLAYER.playerName), tuple.get(MINI_GAME_RESULT.score.max())))
+                .toList();
     }
 
     /**

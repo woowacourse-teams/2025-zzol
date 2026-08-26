@@ -13,34 +13,44 @@ type Params = {
   joinCode: string;
   playerName: string;
   containerRef: RefObject<HTMLElement | null>;
-  enabled: boolean;
+  /** 조준 입력 허용(PREPARE 중에도 미리 방향을 잡을 수 있게 전송과 분리) */
+  inputEnabled: boolean;
+  /** 서버 전송 허용(PLAYING·생존 중) */
+  sendEnabled: boolean;
 };
 
 /**
  * 포인터 방향 조향(PC·모바일 단일 경로). 추적 카메라 덕에 머리는 항상 컨테이너 중앙이므로
  * "중앙 → 포인터" 각도가 곧 목표각이다. 로컬 예측용으로 store 에 즉시 쓰고, 서버에는 10Hz·변화 시만 보낸다.
  */
-export const useWormSteering = ({ store, joinCode, playerName, containerRef, enabled }: Params) => {
-  const { send } = useWebSocket();
+export const useWormSteering = ({
+  store,
+  joinCode,
+  playerName,
+  containerRef,
+  inputEnabled,
+  sendEnabled,
+}: Params) => {
+  const { send, isConnected } = useWebSocket();
   const seqRef = useRef(0);
   const lastSentRef = useRef<number | null>(null);
 
   const steerTo = useCallback(
     (e: PointerEvent<HTMLElement>) => {
       const el = containerRef.current;
-      if (!el || !enabled) return;
+      if (!el || !inputEnabled) return;
       const rect = el.getBoundingClientRect();
       const dx = e.clientX - (rect.left + rect.width / 2);
       const dy = e.clientY - (rect.top + rect.height / 2);
       if (Math.hypot(dx, dy) < DEAD_ZONE_PX) return;
       store.steer(Math.atan2(dy, dx));
     },
-    [containerRef, enabled, store]
+    [containerRef, inputEnabled, store]
   );
 
   const onPointerDown = useCallback(
     (e: PointerEvent<HTMLElement>) => {
-      e.currentTarget.setPointerCapture?.(e.pointerId);
+      e.currentTarget.setPointerCapture(e.pointerId);
       steerTo(e);
     },
     [steerTo]
@@ -55,7 +65,9 @@ export const useWormSteering = ({ store, joinCode, playerName, containerRef, ena
   );
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!sendEnabled || !isConnected) return;
+    // (재)연결 직후엔 현재 목표각을 한 번 다시 보낸다 — 끊김 중 send 는 조용히 실패하므로
+    lastSentRef.current = null;
     const timer = setInterval(() => {
       const angle = store.targetAngle;
       if (angle === null || angle === lastSentRef.current) return;
@@ -65,7 +77,7 @@ export const useWormSteering = ({ store, joinCode, playerName, containerRef, ena
       send(`/room/${joinCode}/worm/steer`, command);
     }, SEND_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [enabled, joinCode, playerName, send, store]);
+  }, [sendEnabled, isConnected, joinCode, playerName, send, store]);
 
   return { onPointerDown, onPointerMove };
 };

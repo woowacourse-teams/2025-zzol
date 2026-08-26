@@ -165,7 +165,8 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
 
     /**
      * 최대 점수가 우수한 미니게임의 TOP 플레이어를 조회한다(BlockStacking·WormGame 공통).
-     * 동점은 playerName 오름차순으로 순서를 고정한다(그룹 키라 2차 정렬에 쓸 수 있는 유일한 컬럼).
+     * findTopPlayersByMinScore 와 같은 2-스텝 방식이다 — player_id 로 집계해야 다른 방의 동명이인이 한 행으로 합쳐지지 않는다.
+     * 동점은 playerId 오름차순으로 순서를 고정한다.
      */
     private <T> List<T> findTopPlayersByMaxScore(
             MiniGameType type,
@@ -173,18 +174,27 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
             LocalDateTime endDate,
             int limit,
             BiFunction<String, Long, T> mapper) {
-        return queryFactory
-                .select(PLAYER.playerName, MINI_GAME_RESULT.score.max())
+        final List<Tuple> aggregations = queryFactory
+                .select(MINI_GAME_RESULT.playerId, MINI_GAME_RESULT.score.max())
                 .from(MINI_GAME_RESULT)
-                .join(PLAYER)
-                .on(PLAYER.id.eq(MINI_GAME_RESULT.playerId))
                 .where(MINI_GAME_RESULT.miniGameType.eq(type), MINI_GAME_RESULT.createdAt.between(startDate, endDate))
-                .groupBy(PLAYER.playerName)
-                .orderBy(MINI_GAME_RESULT.score.max().desc(), PLAYER.playerName.asc())
+                .groupBy(MINI_GAME_RESULT.playerId)
+                .orderBy(MINI_GAME_RESULT.score.max().desc(), MINI_GAME_RESULT.playerId.asc())
                 .limit(limit)
-                .fetch()
-                .stream()
-                .map(tuple -> mapper.apply(tuple.get(PLAYER.playerName), tuple.get(MINI_GAME_RESULT.score.max())))
+                .fetch();
+
+        if (aggregations.isEmpty()) {
+            return List.of();
+        }
+
+        final Map<Long, String> playerNameMap = findPlayerNames(aggregations.stream()
+                .map(tuple -> tuple.get(MINI_GAME_RESULT.playerId))
+                .toList());
+
+        return aggregations.stream()
+                .map(tuple -> mapper.apply(
+                        playerNameMap.get(tuple.get(MINI_GAME_RESULT.playerId)),
+                        tuple.get(MINI_GAME_RESULT.score.max())))
                 .toList();
     }
 

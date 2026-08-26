@@ -112,6 +112,10 @@ export class WormStore {
   }
 
   applySnapshot(snapshot: WormSnapshotMessage, now: number): void {
+    // 스냅샷은 인바운드 스레드, 델타는 스케줄러 스레드라 순서가 뒤집힐 수 있다.
+    // 뒤처진 스냅샷을 반영하면 tick 이 되감기고 그 사이 델타 궤적이 영구 유실된다(델타는 재전송이 없다).
+    // 같은 tick 은 통과시킨다 — 델타에 없는 전체 궤적을 담고 있어 반영할 값어치가 있다.
+    if (snapshot.tick < this.tick) return;
     this.tick = snapshot.tick;
     this.tickMillis = snapshot.tickMillis;
     this.anchorAt = now;

@@ -58,6 +58,25 @@ describe('WormStore — 델타·스냅샷 규칙', () => {
     expect(s.applyDelta(delta(101, [{}]), 10)).toBe(true);
   });
 
+  it('뒤처진 스냅샷은 폐기한다 — 이미 반영한 델타보다 오래되면 되감지 않는다', () => {
+    const s = new WormStore('me');
+    s.applyDelta(delta(10, [{ x: 1 }]), 0);
+    s.applyDelta(delta(11, [{ x: 2 }]), 50);
+    s.applySnapshot(snapshot(9), 100);
+    // tick 이 9 로 되감기지 않아 이미 지난 델타는 여전히 폐기된다
+    expect(s.applyDelta(delta(11, [{ x: 99 }]), 100)).toBe(false);
+    // 확정 대기 중이던 델타 궤적이 오래된 스냅샷 궤적으로 교체되지 않는다
+    expect(s.worms.get('me')!.pending.map((p) => p.x)).toEqual([1, 2]);
+    expect(s.worms.has('other')).toBe(false);
+  });
+
+  it('같은 tick 스냅샷은 반영한다 — 델타에 없는 전체 궤적을 담고 있다', () => {
+    const s = new WormStore('me');
+    s.applyDelta(delta(100, [{ x: 1 }]), 0);
+    s.applySnapshot(snapshot(100), 50);
+    expect(s.worms.get('me')!.trail).toHaveLength(2);
+  });
+
   it('commitUpTo 는 렌더 tick 이 지난 점만 trail 로 옮긴다', () => {
     const s = new WormStore('me');
     s.applyDelta(delta(1, [{ playerName: 'o', x: 1 }]), 0);

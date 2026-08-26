@@ -159,6 +159,9 @@ const getScoreTextByGameType = ({
     case 'LADDER_GAME': {
       return scoreValue + '위';
     }
+    case 'WORM_GAME': {
+      return SECONDS_FORMATTER.format(scoreValue / 1000) + '초 생존';
+    }
     default:
       return null;
   }

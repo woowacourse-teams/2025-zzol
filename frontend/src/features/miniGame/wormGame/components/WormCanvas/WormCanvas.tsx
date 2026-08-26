@@ -1,7 +1,7 @@
 import { useTheme } from '@emotion/react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import * as S from './WormCanvas.styled';
-import { colorList, fallbackColorIndex } from '@/constants/color';
+import { colorList } from '@/constants/color';
 import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
 import { useWormGame } from '@/contexts/WormGame/WormGameContext';
 import { WormRenderer } from '../../core/wormRenderer';
@@ -15,12 +15,12 @@ const WormCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const theme = useTheme();
   const { store } = useWormGame();
-  const { participants, getParticipantColorIndex } = useParticipants();
+  const { getParticipantColorIndex } = useParticipants();
 
+  // 색의 원천은 서버 Player.colorIndex. 리프레시 시 명단 복구는 #1688(공통)이 담당한다
   const colorOf = useCallback(
-    (name: string) =>
-      colorList[participants.length ? getParticipantColorIndex(name) : fallbackColorIndex(name)],
-    [participants.length, getParticipantColorIndex]
+    (name: string) => colorList[getParticipantColorIndex(name)],
+    [getParticipantColorIndex]
   );
 
   // roster 갱신마다 renderer 를 재생성하면 레이어·카메라·페이드가 리셋된다 — 인스턴스는 유지하고 색 조회만 교체

@@ -52,6 +52,15 @@ export class WormStore {
     this.followName = myName;
   }
 
+  /** 조작 계층이 목표각을 쓴다(React 컴파일러 린트가 훅 인자 속성 대입을 막아 메서드로) */
+  steer(angle: number): void {
+    this.targetAngle = angle;
+  }
+
+  follow(playerName: string): void {
+    this.followName = playerName;
+  }
+
   /** tick↔로컬 시계 매핑. 최신 델타 도착 시각을 앵커로 쓴다 */
   // ponytail: 앵커=최신 델타 도착 시각(지터 ±20ms). 튀면 max-기반 평활로 교체
   serverTickAt(now: number): number {

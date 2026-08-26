@@ -2,6 +2,7 @@ package coffeeshout.dashboard.infra.persistence;
 
 import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
+import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
@@ -198,6 +199,31 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 .join(PLAYER).on(PLAYER.id.eq(MINI_GAME_RESULT.playerId))
                 .where(
                         MINI_GAME_RESULT.miniGameType.eq(MiniGameType.BLOCK_STACKING),
+                        MINI_GAME_RESULT.createdAt.between(startDate, endDate)
+                )
+                .groupBy(PLAYER.playerName)
+                .orderBy(MINI_GAME_RESULT.score.max().desc())
+                .limit(limit)
+                .fetch();
+    }
+
+    /** 지렁이 게임 — 점수 = 생존 시간(ms)이므로 블록쌓기와 같은 최대값 기준. */
+    @Override
+    public List<WormGameTopPlayerResponse> findWormGameTopPlayers(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int limit
+    ) {
+        return queryFactory
+                .select(Projections.constructor(
+                        WormGameTopPlayerResponse.class,
+                        PLAYER.playerName,
+                        MINI_GAME_RESULT.score.max()
+                ))
+                .from(MINI_GAME_RESULT)
+                .join(PLAYER).on(PLAYER.id.eq(MINI_GAME_RESULT.playerId))
+                .where(
+                        MINI_GAME_RESULT.miniGameType.eq(MiniGameType.WORM_GAME),
                         MINI_GAME_RESULT.createdAt.between(startDate, endDate)
                 )
                 .groupBy(PLAYER.playerName)

@@ -2,6 +2,7 @@ package coffeeshout.dashboard.application;
 
 import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
+import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
@@ -60,6 +61,13 @@ public class DashboardService {
         final LocalDateTime endOfMonth = getEndOfMonth();
 
         return dashboardStatisticsRepository.findBlockStackingTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT);
+    }
+
+    public List<WormGameTopPlayerResponse> getWormGameTopPlayers() {
+        final LocalDateTime startOfMonth = getStartOfMonth();
+        final LocalDateTime endOfMonth = getEndOfMonth();
+
+        return dashboardStatisticsRepository.findWormGameTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT);
     }
 
     public List<SpeedTouchTopPlayerResponse> getSpeedTouchTopPlayers() {

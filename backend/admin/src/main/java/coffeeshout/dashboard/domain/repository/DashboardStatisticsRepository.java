@@ -2,6 +2,7 @@ package coffeeshout.dashboard.domain.repository;
 
 import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
+import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
@@ -34,6 +35,12 @@ public interface DashboardStatisticsRepository {
     );
 
     List<BlockStackingTopPlayerResponse> findBlockStackingTopPlayers(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int limit
+    );
+
+    List<WormGameTopPlayerResponse> findWormGameTopPlayers(
             LocalDateTime startDate,
             LocalDateTime endDate,
             int limit

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.blindtimer.domain.BlindTimerScore;
 import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
+import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
@@ -423,6 +424,51 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         void 이번달_게임_실행_기록이_없으면_빈_리스트를_반환한다() {
             // when
             final List<GamePlayCountResponse> result = dashboardService.getGamePlayCounts();
+
+            // then
+            assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("getWormGameTopPlayers 테스트")
+    class GetWormGameTopPlayersTest {
+
+        @Test
+        void 이번달_지렁이_게임_최장_생존_시간_기준_상위_5명을_내림차순으로_조회한다() {
+            // given
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("WWRM"));
+            final MiniGameEntity miniGame = miniGameJpaRepository.save(
+                    new MiniGameEntity(room.getId(), MiniGameType.WORM_GAME)
+            );
+
+            final PlayerEntity 철수 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
+            final PlayerEntity 영희 = playerJpaRepository.save(new PlayerEntity(room, "영희", PlayerType.GUEST));
+            final PlayerEntity 민수 = playerJpaRepository.save(new PlayerEntity(room, "민수", PlayerType.GUEST));
+
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 철수.getId(), 2, 45_000L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 영희.getId(), 1, 62_500L));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 민수.getId(), 3, 12_000L));
+            // 같은 플레이어의 여러 판 중 최장 생존만 집계된다
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 민수.getId(), 1, 70_000L));
+
+            // when
+            final List<WormGameTopPlayerResponse> result = dashboardService.getWormGameTopPlayers();
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).hasSize(3);
+                softly.assertThat(result.get(0).playerName()).isEqualTo("민수");
+                softly.assertThat(result.get(0).bestSurvivalMillis()).isEqualTo(70_000L);
+                softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
+                softly.assertThat(result.get(2).playerName()).isEqualTo("철수");
+            });
+        }
+
+        @Test
+        void 이번달_지렁이_게임_기록이_없으면_빈_리스트를_반환한다() {
+            // when
+            final List<WormGameTopPlayerResponse> result = dashboardService.getWormGameTopPlayers();
 
             // then
             assertThat(result).isEmpty();

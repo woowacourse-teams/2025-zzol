@@ -282,6 +282,40 @@ const racingGamePlayPageAction = async () => {
   }, CLICK_INTERVAL_MS);
 };
 
+let wormGameSteerIntervalId: number | null = null;
+
+export const clearWormGameSteerInterval = () => {
+  if (wormGameSteerIntervalId !== null) {
+    clearInterval(wormGameSteerIntervalId);
+    wormGameSteerIntervalId = null;
+  }
+};
+
+// 지렁이 게임: 화면 중앙(머리) 기준으로 목표 방향을 조금씩 흔들며 pointermove 를 흘린다.
+// 조향은 렌더러가 포인터 위치로 매 프레임 계산하므로 이벤트만 주면 된다(봇 지능 없음 — 곧 죽어도 흐름 검증엔 충분).
+const wormGamePlayPageAction = async () => {
+  clearWormGameSteerInterval();
+  await wait(DELAY_BETWEEN_ACTIONS);
+
+  const STEER_INTERVAL_MS = 300;
+  const POINTER_DISTANCE_PX = 120;
+  let angle = Math.random() * Math.PI * 2;
+
+  wormGameSteerIntervalId = window.setInterval(() => {
+    const targetElement = findElement('worm-game-container') || document.body;
+    angle += (Math.random() - 0.5) * 1.2;
+    const event = new PointerEvent('pointermove', {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+      clientX: window.innerWidth / 2 + Math.cos(angle) * POINTER_DISTANCE_PX,
+      clientY: window.innerHeight / 2 + Math.sin(angle) * POINTER_DISTANCE_PX,
+    });
+    targetElement.dispatchEvent(event);
+  }, STEER_INTERVAL_MS);
+};
+
 // 페이지 액션 목록
 export const pageActions: PageAction[] = [
   {
@@ -321,6 +355,10 @@ export const pageActions: PageAction[] = [
   {
     pathPattern: /^\/room\/[^/]+\/RACING_GAME\/play$/,
     execute: racingGamePlayPageAction,
+  },
+  {
+    pathPattern: /^\/room\/[^/]+\/WORM_GAME\/play$/,
+    execute: wormGamePlayPageAction,
   },
 ];
 

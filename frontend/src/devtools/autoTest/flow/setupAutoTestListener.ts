@@ -3,6 +3,7 @@ import {
   findPageAction,
   handleHostGameStart,
   clearRacingGameClickInterval,
+  clearWormGameSteerInterval,
   type PageActionContext,
 } from './pageActions';
 import { MiniGameType } from '@/types/miniGame/common';
@@ -64,6 +65,7 @@ const runFlow = async (role: 'host' | 'guest', context: PageActionContext) => {
 
       if (currentPath.match(/^\/room\/[^/]+\/RACING_GAME\/play$/)) {
         clearRacingGameClickInterval();
+        clearWormGameSteerInterval();
       }
 
       if (/^\/room\/[^/]+\/order$/.test(newPath)) {
@@ -73,6 +75,7 @@ const runFlow = async (role: 'host' | 'guest', context: PageActionContext) => {
 
       if (newPath === '/') {
         clearRacingGameClickInterval();
+        clearWormGameSteerInterval();
         setFlowState(role, 'idle');
         break;
       }
@@ -167,11 +170,13 @@ const createMessageHandlers = ({
   },
   TEST_COMPLETED: () => {
     clearRacingGameClickInterval();
+    clearWormGameSteerInterval();
     setFlowState('host', 'idle');
     setFlowState('guest', 'idle');
   },
   STOP_TEST: () => {
     clearRacingGameClickInterval();
+    clearWormGameSteerInterval();
     setFlowState('host', 'idle');
     setFlowState('guest', 'idle');
   },

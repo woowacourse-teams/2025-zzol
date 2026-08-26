@@ -53,6 +53,7 @@ const WormGamePlayPage = () => {
   return (
     <S.Container
       ref={containerRef}
+      data-testid="worm-game-container"
       role="application"
       aria-label="지렁이 게임 — 화면을 터치한 방향으로 조향합니다 (키보드 조작 미지원)"
       onPointerDown={onPointerDown}

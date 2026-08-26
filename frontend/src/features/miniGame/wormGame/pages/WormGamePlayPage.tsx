@@ -41,6 +41,10 @@ const WormGamePlayPage = () => {
   });
 
   useEffect(() => {
+    store.setZoomOut(isFinished);
+  }, [store, isFinished]);
+
+  useEffect(() => {
     if (wormGameState === 'DONE') {
       navigate(`/room/${joinCode}/${miniGameType}/result`);
     }

@@ -41,8 +41,14 @@ export class WormStore {
   myName: string;
   /** 관전 대상. 기본은 자신 */
   followName: string;
-  /** 로컬 조향 목표각(예측 입력). 조작 계층이 갱신 */
+  /** 로컬 조향 목표각(예측 입력). 렌더러가 매 프레임 pointer 로부터 갱신 */
   targetAngle: number | null = null;
+  /** 마지막 포인터 위치(컨테이너 px). 데모처럼 클릭 없이 hover·누르고 있는 위치를 계속 따라간다 */
+  pointer: WormPoint | null = null;
+  /** 조준 입력 허용 여부(PREPARE·PLAYING 생존 중) */
+  inputEnabled = false;
+  /** FINISH 등 전체 맵 줌아웃 */
+  zoomOut = false;
 
   /** tick 이 마지막으로 갱신된 로컬 시각 */
   private anchorAt = 0;
@@ -59,6 +65,18 @@ export class WormStore {
 
   follow(playerName: string): void {
     this.followName = playerName;
+  }
+
+  setPointer(pointer: WormPoint | null): void {
+    this.pointer = pointer;
+  }
+
+  setInputEnabled(enabled: boolean): void {
+    this.inputEnabled = enabled;
+  }
+
+  setZoomOut(zoomOut: boolean): void {
+    this.zoomOut = zoomOut;
   }
 
   /** tick↔로컬 시계 매핑. 최신 델타 도착 시각을 앵커로 쓴다 */

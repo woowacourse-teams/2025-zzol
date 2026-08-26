@@ -3,8 +3,6 @@ import { PointerEvent, RefObject, useCallback, useEffect, useRef } from 'react';
 import { SteerCommand } from '@/types/miniGame/wormGame';
 import { WormStore } from '../core/wormStore';
 
-/** 머리(화면 중앙) 주변 데드존 — 손떨림으로 각도가 튀는 것을 막는다 */
-const DEAD_ZONE_PX = 20;
 /** 조향 전송 주기(10Hz). 마지막 값만 유효하므로 변화 시에만 보낸다 */
 const SEND_INTERVAL_MS = 100;
 
@@ -20,8 +18,10 @@ type Params = {
 };
 
 /**
- * 포인터 방향 조향(PC·모바일 단일 경로). 추적 카메라 덕에 머리는 항상 컨테이너 중앙이므로
- * "중앙 → 포인터" 각도가 곧 목표각이다. 로컬 예측용으로 store 에 즉시 쓰고, 서버에는 10Hz·변화 시만 보낸다.
+ * 포인터 방향 조향(PC·모바일 단일 경로). 여기서는 포인터 위치(px)만 스토어에 기록하고,
+ * 목표각은 렌더러가 매 프레임 "포인터 → 월드 → 머리 기준"으로 계산한다 — 마우스는 클릭 없이 hover 를,
+ * 터치는 누르고 있는 위치를 카메라가 움직여도 계속 따라간다(설계 데모와 동일).
+ * 서버에는 10Hz·변화 시만 보낸다.
  */
 export const useWormSteering = ({
   store,
@@ -35,33 +35,26 @@ export const useWormSteering = ({
   const seqRef = useRef(0);
   const lastSentRef = useRef<number | null>(null);
 
-  const steerTo = useCallback(
+  useEffect(() => {
+    store.setInputEnabled(inputEnabled);
+  }, [store, inputEnabled]);
+
+  const track = useCallback(
     (e: PointerEvent<HTMLElement>) => {
       const el = containerRef.current;
-      if (!el || !inputEnabled) return;
+      if (!el) return;
       const rect = el.getBoundingClientRect();
-      const dx = e.clientX - (rect.left + rect.width / 2);
-      const dy = e.clientY - (rect.top + rect.height / 2);
-      if (Math.hypot(dx, dy) < DEAD_ZONE_PX) return;
-      store.steer(Math.atan2(dy, dx));
+      store.setPointer({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     },
-    [containerRef, inputEnabled, store]
+    [containerRef, store]
   );
 
   const onPointerDown = useCallback(
     (e: PointerEvent<HTMLElement>) => {
       e.currentTarget.setPointerCapture(e.pointerId);
-      steerTo(e);
+      track(e);
     },
-    [steerTo]
-  );
-  const onPointerMove = useCallback(
-    (e: PointerEvent<HTMLElement>) => {
-      // 마우스는 누른 채 드래그할 때만, 터치·펜은 항상(터치는 접촉 중에만 move 가 온다)
-      if (e.pointerType === 'mouse' && e.buttons === 0) return;
-      steerTo(e);
-    },
-    [steerTo]
+    [track]
   );
 
   useEffect(() => {
@@ -79,5 +72,5 @@ export const useWormSteering = ({
     return () => clearInterval(timer);
   }, [sendEnabled, isConnected, joinCode, playerName, send, store]);
 
-  return { onPointerDown, onPointerMove };
+  return { onPointerDown, onPointerMove: track };
 };

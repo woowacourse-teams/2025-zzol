@@ -30,7 +30,7 @@ const WormCanvas = () => {
         background: theme.color.gray[900],
         arena: theme.color.gray[800],
         ring: theme.color.gray[500],
-        dead: theme.color.gray[400],
+        head: theme.color.white,
         minimapBg: `${theme.color.gray[950]}B3`,
         viewport: `${theme.color.white}80`,
       }),

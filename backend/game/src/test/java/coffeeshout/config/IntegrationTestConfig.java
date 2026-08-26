@@ -20,8 +20,7 @@ public class IntegrationTestConfig {
     }
 
     @Bean(name = "cardGameFlowScheduler")
-    public FlowScheduler cardGameFlowScheduler(
-            ShutDownTestScheduler cardGameExecutorScheduler) {
+    public FlowScheduler cardGameFlowScheduler(ShutDownTestScheduler cardGameExecutorScheduler) {
         return new CompletableFutureFlowScheduler(cardGameExecutorScheduler);
     }
 
@@ -31,8 +30,7 @@ public class IntegrationTestConfig {
     }
 
     @Bean(name = "blockStackingFlowScheduler")
-    public FlowScheduler blockStackingFlowScheduler(
-            ShutDownTestScheduler blockStackingExecutorScheduler) {
+    public FlowScheduler blockStackingFlowScheduler(ShutDownTestScheduler blockStackingExecutorScheduler) {
         return new CompletableFutureFlowScheduler(blockStackingExecutorScheduler);
     }
 
@@ -42,13 +40,17 @@ public class IntegrationTestConfig {
     }
 
     @Bean(name = "ladderFlowScheduler")
-    public FlowScheduler ladderFlowScheduler(
-            ShutDownTestScheduler ladderExecutorScheduler) {
+    public FlowScheduler ladderFlowScheduler(ShutDownTestScheduler ladderExecutorScheduler) {
         return new CompletableFutureFlowScheduler(ladderExecutorScheduler);
     }
 
     @Bean(name = "racingGameScheduler")
     public TaskScheduler testIntegrationRacingGameScheduler() {
+        return new ShutDownTestScheduler();
+    }
+
+    @Bean(name = "wormGameScheduler")
+    public TaskScheduler testIntegrationWormGameScheduler() {
         return new ShutDownTestScheduler();
     }
 

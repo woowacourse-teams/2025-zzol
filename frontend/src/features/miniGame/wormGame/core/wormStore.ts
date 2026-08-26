@@ -49,6 +49,8 @@ export class WormStore {
   inputEnabled = false;
   /** FINISH 등 전체 맵 줌아웃 */
   zoomOut = false;
+  /** 서버 틱이 도는 중(PLAYING)에만 예측·보간·외삽한다. PREPARE·FINISH 에선 서버 포즈에 고정 */
+  playing = false;
 
   /** tick 이 마지막으로 갱신된 로컬 시각 */
   private anchorAt = 0;
@@ -77,6 +79,10 @@ export class WormStore {
 
   setZoomOut(zoomOut: boolean): void {
     this.zoomOut = zoomOut;
+  }
+
+  setPlaying(playing: boolean): void {
+    this.playing = playing;
   }
 
   /** tick↔로컬 시계 매핑. 최신 델타 도착 시각을 앵커로 쓴다 */
@@ -151,7 +157,8 @@ export class WormStore {
   displayPose(w: WormView, now: number): Pose | null {
     const latest = w.samples[w.samples.length - 1];
     if (!latest) return null;
-    if (!w.alive) return latest;
+    // 사망자·틱 정지 구간(PREPARE 스폰 대기, FINISH 정지 화면)은 서버 포즈 그대로 — 미끄러지지 않는다
+    if (!w.alive || !this.playing) return latest;
     const serverTick = this.serverTickAt(now);
     return w.playerName === this.myName
       ? this.predict(latest, serverTick)

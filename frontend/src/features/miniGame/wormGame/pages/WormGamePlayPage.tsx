@@ -71,7 +71,7 @@ const WormGamePlayPage = () => {
           {followName} 관전 중 · 탭해서 전환
         </S.SpectateBar>
       )}
-      {isFinished && <S.FinishBadge role="status">게임 종료!</S.FinishBadge>}
+      {isFinished && <S.FinishOverlay role="status">게임 종료!</S.FinishOverlay>}
     </S.Container>
   );
 };

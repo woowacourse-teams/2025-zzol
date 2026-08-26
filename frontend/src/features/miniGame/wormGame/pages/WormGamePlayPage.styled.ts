@@ -39,11 +39,17 @@ export const SpectateBar = styled.button`
   }
 `;
 
-export const FinishBadge = styled.div`
-  ${pill}
-  top: calc(${EDGE_GAP_PX}px + env(safe-area-inset-top));
-  padding: 8px 16px;
-  background: ${({ theme }) => theme.color.point[400]};
+/** 전원 사망 뒤 정지 화면 가운데 — 결과 페이지로 넘어갈 때까지의 "게임 종료" 표기 */
+export const FinishOverlay = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px 40px;
+  border-radius: 24px;
+  background: ${({ theme }) => theme.color.gray[950]}CC;
   color: ${({ theme }) => theme.color.white};
-  ${({ theme }) => theme.typography.h4}
+  ${({ theme }) => theme.typography.h1}
+  white-space: nowrap;
+  pointer-events: none;
 `;

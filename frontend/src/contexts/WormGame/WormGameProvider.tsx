@@ -16,9 +16,13 @@ const WormGameProvider = ({ children }: PropsWithChildren) => {
   // 인스턴스 1개를 마운트 동안 유지 — setState 없이 lazy init 만 쓴다
   const [store] = useState(() => new WormStore(myName));
 
-  const handleState = useCallback((data: WormGameStateMessage) => {
-    setWormGameState(data.state);
-  }, []);
+  const handleState = useCallback(
+    (data: WormGameStateMessage) => {
+      setWormGameState(data.state);
+      store.setPlaying(data.state === 'PLAYING');
+    },
+    [store]
+  );
   const handleSnapshot = useCallback(
     (data: WormSnapshotMessage) => store.applySnapshot(data, performance.now()),
     [store]

@@ -46,8 +46,7 @@ public class RoomRestController implements RoomApi {
     @PostMapping
     public ResponseEntity<RoomCreateResponse> createRoom(
             @AuthUser Optional<AuthenticatedUser> authUser,
-            @RequestBody(required = false) @Valid RoomEnterRequest request
-    ) {
+            @RequestBody(required = false) @Valid RoomEnterRequest request) {
         final RoomCreateResult result = authUser.isPresent()
                 ? roomService.createRoom(authUser.get())
                 : roomService.createRoom(requirePlayerName(request));
@@ -59,14 +58,12 @@ public class RoomRestController implements RoomApi {
     public CompletableFuture<ResponseEntity<RoomEnterResponse>> enterRoom(
             @PathVariable String joinCode,
             @AuthUser Optional<AuthenticatedUser> authUser,
-            @RequestBody(required = false) @Valid RoomEnterRequest request
-    ) {
+            @RequestBody(required = false) @Valid RoomEnterRequest request) {
         final CompletableFuture<RoomEnterResult> future = authUser.isPresent()
                 ? roomService.enterRoomAsync(joinCode, authUser.get())
                 : roomService.enterRoomAsync(joinCode, requirePlayerName(request));
 
-        return future
-                .thenApply(result -> ResponseEntity.ok(RoomEnterResponse.of(result)))
+        return future.thenApply(result -> ResponseEntity.ok(RoomEnterResponse.of(result)))
                 .exceptionally(throwable -> {
                     final Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
                     if (cause instanceof RuntimeException runtimeException) {
@@ -77,7 +74,9 @@ public class RoomRestController implements RoomApi {
     }
 
     private String requirePlayerName(RoomEnterRequest request) {
-        if (request == null || request.playerName() == null || request.playerName().isBlank()) {
+        if (request == null
+                || request.playerName() == null
+                || request.playerName().isBlank()) {
             throw new BusinessException(RoomErrorCode.PLAYER_NAME_BLANK, "플레이어 이름이 없습니다.");
         }
         return request.playerName();
@@ -85,8 +84,7 @@ public class RoomRestController implements RoomApi {
 
     @GetMapping("/nickname/random")
     public ResponseEntity<RandomNicknameResponse> generateRandomNickname(
-            @RequestParam(required = false) String joinCode
-    ) {
+            @RequestParam(required = false) String joinCode) {
         final String nickname = (joinCode != null && !joinCode.isBlank())
                 ? roomService.generateRandomNicknameForGuest(joinCode)
                 : roomService.generateRandomNicknameForHost();
@@ -103,9 +101,7 @@ public class RoomRestController implements RoomApi {
 
     @GetMapping("/check-guestName")
     public ResponseEntity<GuestNameExistResponse> checkGuestName(
-            @RequestParam String joinCode,
-            @RequestParam String guestName
-    ) {
+            @RequestParam String joinCode, @RequestParam String guestName) {
         final boolean isDuplicated = roomService.isGuestNameDuplicated(joinCode, guestName);
 
         return ResponseEntity.ok(GuestNameExistResponse.from(isDuplicated));
@@ -120,9 +116,7 @@ public class RoomRestController implements RoomApi {
 
     @PatchMapping("/{joinCode}/settings")
     public ResponseEntity<Void> updateRoomSettings(
-            @PathVariable String joinCode,
-            @Valid @RequestBody UpdateRoomSettingsRequest request
-    ) {
+            @PathVariable String joinCode, @Valid @RequestBody UpdateRoomSettingsRequest request) {
         roomService.updateAdjustmentWeight(joinCode, request.hostName(), request.adjustmentWeight());
         return ResponseEntity.noContent().build();
     }
@@ -137,10 +131,7 @@ public class RoomRestController implements RoomApi {
     }
 
     @DeleteMapping("/{joinCode}/players/{playerName}")
-    public ResponseEntity<Void> kickPlayer(
-            @PathVariable String joinCode,
-            @PathVariable String playerName
-    ) {
+    public ResponseEntity<Void> kickPlayer(@PathVariable String joinCode, @PathVariable String playerName) {
         final boolean exists = playerService.checkAndKickPlayer(joinCode, playerName);
 
         if (exists) {

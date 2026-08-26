@@ -12,10 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
+import coffeeshout.fixture.RoomFixture;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
-import coffeeshout.support.app.IntegrationTestSupport;
-import coffeeshout.fixture.RoomFixture;
 import coffeeshout.minigame.domain.GameSession;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -31,6 +30,7 @@ import coffeeshout.room.ui.response.JoinCodeExistResponse;
 import coffeeshout.room.ui.response.PlayerResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
 import coffeeshout.room.ui.response.RoomEnterResponse;
+import coffeeshout.support.app.IntegrationTestSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -83,7 +83,8 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                     .getContentAsString();
 
             RoomCreateResponse roomCreateResponse = objectMapper.readValue(response, RoomCreateResponse.class);
-            assertThat(roomRepository.existsByJoinCode(new JoinCode(roomCreateResponse.joinCode()))).isTrue();
+            assertThat(roomRepository.existsByJoinCode(new JoinCode(roomCreateResponse.joinCode())))
+                    .isTrue();
             assertThat(roomCreateResponse.roomSessionToken()).isNotBlank();
         }
 
@@ -178,8 +179,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                     .andExpect(request().asyncStarted())
                     .andReturn();
 
-            mockMvc.perform(asyncDispatch(result))
-                    .andExpect(status().isNotFound());
+            mockMvc.perform(asyncDispatch(result)).andExpect(status().isNotFound());
         }
 
         @Test
@@ -208,10 +208,8 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                     .andExpect(request().asyncStarted())
                     .andReturn();
 
-            mockMvc.perform(asyncDispatch(result))
-                    .andExpect(status().isConflict());
+            mockMvc.perform(asyncDispatch(result)).andExpect(status().isConflict());
         }
-
 
         @Test
         void 방이_가득_찬_경우_입장_시도_시_409_에러를_반환한다() throws Exception {
@@ -239,8 +237,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                         .andExpect(request().asyncStarted())
                         .andReturn();
 
-                mockMvc.perform(asyncDispatch(result))
-                        .andExpect(status().isOk());
+                mockMvc.perform(asyncDispatch(result)).andExpect(status().isOk());
             }
 
             // given - 9번째 게스트 입장 시도 (정원 초과: 호스트 1명 + 게스트 9명 = 총 10명)
@@ -253,8 +250,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                     .andExpect(request().asyncStarted())
                     .andReturn();
 
-            mockMvc.perform(asyncDispatch(result))
-                    .andExpect(status().isConflict());
+            mockMvc.perform(asyncDispatch(result)).andExpect(status().isConflict());
         }
     }
 
@@ -279,8 +275,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
             String joinCode = roomCreateResponse.joinCode();
 
             // when & then
-            String response = mockMvc.perform(get("/rooms/check-joinCode")
-                            .param("joinCode", joinCode))
+            String response = mockMvc.perform(get("/rooms/check-joinCode").param("joinCode", joinCode))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.exist").value(true))
                     .andReturn()
@@ -294,8 +289,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         @Test
         void 존재하지_않는_방_코드_확인_시_false를_반환한다() throws Exception {
             // when & then
-            String response = mockMvc.perform(get("/rooms/check-joinCode")
-                            .param("joinCode", INVALID_JOIN_CODE))
+            String response = mockMvc.perform(get("/rooms/check-joinCode").param("joinCode", INVALID_JOIN_CODE))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.exist").value(false))
                     .andReturn()
@@ -337,8 +331,8 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                     .getResponse()
                     .getContentAsString();
 
-            GuestNameExistResponse guestNameExistResponse = objectMapper.readValue(response,
-                    GuestNameExistResponse.class);
+            GuestNameExistResponse guestNameExistResponse =
+                    objectMapper.readValue(response, GuestNameExistResponse.class);
             assertThat(guestNameExistResponse.exist()).isFalse();
         }
 
@@ -368,8 +362,8 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                     .getResponse()
                     .getContentAsString();
 
-            GuestNameExistResponse guestNameExistResponse = objectMapper.readValue(response,
-                    GuestNameExistResponse.class);
+            GuestNameExistResponse guestNameExistResponse =
+                    objectMapper.readValue(response, GuestNameExistResponse.class);
             assertThat(guestNameExistResponse.exist()).isTrue();
         }
     }
@@ -388,11 +382,10 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                     .getResponse()
                     .getContentAsString();
 
-            List<MiniGameType> miniGameTypes = objectMapper.readValue(response,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, MiniGameType.class));
+            List<MiniGameType> miniGameTypes = objectMapper.readValue(
+                    response, objectMapper.getTypeFactory().constructCollectionType(List.class, MiniGameType.class));
 
-            assertThat(miniGameTypes).isNotEmpty()
-                    .contains(MiniGameType.CARD_GAME);
+            assertThat(miniGameTypes).isNotEmpty().contains(MiniGameType.CARD_GAME);
         }
 
         @Test
@@ -406,16 +399,15 @@ class RoomRestControllerTest extends IntegrationTestSupport {
             String joinCode = 호스트_꾹이.getJoinCode().toString();
 
             // when & then
-            String response = mockMvc.perform(get("/rooms/minigames/selected")
-                            .param("joinCode", joinCode))
+            String response = mockMvc.perform(get("/rooms/minigames/selected").param("joinCode", joinCode))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").isArray())
                     .andReturn()
                     .getResponse()
                     .getContentAsString();
 
-            List<MiniGameType> selectedGames = objectMapper.readValue(response,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, MiniGameType.class));
+            List<MiniGameType> selectedGames = objectMapper.readValue(
+                    response, objectMapper.getTypeFactory().constructCollectionType(List.class, MiniGameType.class));
 
             assertThat(selectedGames).isNotNull();
         }
@@ -423,8 +415,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         @Test
         void 존재하지_않는_방의_선택된_미니게임_조회_시_404_에러를_반환한다() throws Exception {
             // when & then
-            mockMvc.perform(get("/rooms/minigames/selected")
-                            .param("joinCode", INVALID_JOIN_CODE))
+            mockMvc.perform(get("/rooms/minigames/selected").param("joinCode", INVALID_JOIN_CODE))
                     .andExpect(status().isNotFound());
         }
     }
@@ -443,8 +434,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         @ParameterizedTest
         @ValueSource(strings = {"", "   "})
         void joinCode가_빈값이거나_공백이면_호스트용_닉네임을_반환한다(String blankJoinCode) throws Exception {
-            mockMvc.perform(get("/rooms/nickname/random")
-                            .param("joinCode", blankJoinCode))
+            mockMvc.perform(get("/rooms/nickname/random").param("joinCode", blankJoinCode))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.nickname").exists());
         }
@@ -461,11 +451,12 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                     .getResponse()
                     .getContentAsString();
 
-            String joinCode = objectMapper.readValue(createResponse, RoomCreateResponse.class).joinCode();
+            String joinCode = objectMapper
+                    .readValue(createResponse, RoomCreateResponse.class)
+                    .joinCode();
 
             // when & then
-            mockMvc.perform(get("/rooms/nickname/random")
-                            .param("joinCode", joinCode))
+            mockMvc.perform(get("/rooms/nickname/random").param("joinCode", joinCode))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.nickname").exists());
         }
@@ -603,8 +594,8 @@ class RoomRestControllerTest extends IntegrationTestSupport {
                     .getResponse()
                     .getContentAsString();
 
-            List<PlayerResponse> players = objectMapper.readValue(response,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, PlayerResponse.class));
+            List<PlayerResponse> players = objectMapper.readValue(
+                    response, objectMapper.getTypeFactory().constructCollectionType(List.class, PlayerResponse.class));
 
             // then - 로비와 같은 명단·색(colorIndex)이 그대로 내려온다
             assertThat(players)
@@ -617,8 +608,7 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         @Test
         void 존재하지_않는_방의_플레이어_목록_조회_시_404_에러를_반환한다() throws Exception {
             // when & then
-            mockMvc.perform(get("/rooms/{joinCode}/players", INVALID_JOIN_CODE))
-                    .andExpect(status().isNotFound());
+            mockMvc.perform(get("/rooms/{joinCode}/players", INVALID_JOIN_CODE)).andExpect(status().isNotFound());
         }
     }
 
@@ -631,20 +621,18 @@ class RoomRestControllerTest extends IntegrationTestSupport {
         // 게임 대기열은 GameSession이 소유한다(ADR-0025)
         Gamer host = Gamer.guest(호스트_꾹이.getHost().getName().value());
         GameSession session = new GameSession(호스트_꾹이.getJoinCode(), host);
-        session.replaceGames(host, List.of(
-                new CardGame(new CardGameRandomDeckGenerator(), 0),
-                new RacingGame()
-        ));
+        session.replaceGames(host, List.of(new CardGame(new CardGameRandomDeckGenerator(), 0), new RacingGame()));
         gameSessionRepository.save(session);
 
         // when
-        var remainingMiniGamesResponse = objectMapper.readValue(mockMvc.perform(
-                        (get("/rooms/{joinCode}/miniGames/remaining", 호스트_꾹이.getJoinCode())
+        var remainingMiniGamesResponse = objectMapper.readValue(
+                mockMvc.perform((get("/rooms/{joinCode}/miniGames/remaining", 호스트_꾹이.getJoinCode())
                                 .contentType(MediaType.APPLICATION_JSON)))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString(), RemainingMiniGameResponse.class);
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString(),
+                RemainingMiniGameResponse.class);
 
         // then
         assertThat(remainingMiniGamesResponse.remaining()).containsExactly("CARD_GAME", "RACING_GAME");

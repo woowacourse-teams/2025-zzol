@@ -28,44 +28,35 @@ public interface RoomApi {
     CompletableFuture<ResponseEntity<RoomEnterResponse>> enterRoom(
             @Parameter(description = "방 입장 코드", required = true) String joinCode,
             Optional<AuthenticatedUser> authUser,
-            RoomEnterRequest request
-    );
+            RoomEnterRequest request);
 
     @Operation(summary = "랜덤 닉네임 생성", description = "랜덤 닉네임을 생성합니다. joinCode를 전달하면 방 내 중복을 제외합니다.")
     ResponseEntity<RandomNicknameResponse> generateRandomNickname(
-            @Parameter(description = "방 입장 코드 (선택)") String joinCode
-    );
+            @Parameter(description = "방 입장 코드 (선택)") String joinCode);
 
     @Operation(summary = "방 코드 존재 확인", description = "joinCode가 유효한지 확인합니다.")
     ResponseEntity<JoinCodeExistResponse> checkJoinCode(
-            @Parameter(description = "방 입장 코드", required = true) String joinCode
-    );
+            @Parameter(description = "방 입장 코드", required = true) String joinCode);
 
     @Operation(summary = "게스트 이름 중복 확인", description = "방 내에서 게스트 이름이 중복되는지 확인합니다.")
     ResponseEntity<GuestNameExistResponse> checkGuestName(
             @Parameter(description = "방 입장 코드", required = true) String joinCode,
-            @Parameter(description = "게스트 이름", required = true) String guestName
-    );
+            @Parameter(description = "게스트 이름", required = true) String guestName);
 
     @Operation(summary = "확률 조회", description = "방의 모든 플레이어 당첨 확률을 조회합니다.")
     ResponseEntity<List<ProbabilityResponse>> getProbabilities(
-            @Parameter(description = "방 입장 코드", required = true) String joinCode
-    );
+            @Parameter(description = "방 입장 코드", required = true) String joinCode);
 
     @Operation(summary = "방 설정 변경", description = "호스트가 룰렛 가중치 등 방 설정을 변경합니다.")
     ResponseEntity<Void> updateRoomSettings(
-            @Parameter(description = "방 입장 코드", required = true) String joinCode,
-            UpdateRoomSettingsRequest request
-    );
+            @Parameter(description = "방 입장 코드", required = true) String joinCode, UpdateRoomSettingsRequest request);
 
     @Operation(summary = "플레이어 목록 조회", description = "방의 현재 플레이어 목록(colorIndex 포함)을 조회합니다. 게임 페이지 리프레시 시 명단 복구용.")
     ResponseEntity<List<PlayerResponse>> getPlayers(
-            @Parameter(description = "방 입장 코드", required = true) String joinCode
-    );
+            @Parameter(description = "방 입장 코드", required = true) String joinCode);
 
     @Operation(summary = "플레이어 강퇴", description = "방에서 특정 플레이어를 강퇴합니다.")
     ResponseEntity<Void> kickPlayer(
             @Parameter(description = "방 입장 코드", required = true) String joinCode,
-            @Parameter(description = "플레이어 이름", required = true) String playerName
-    );
+            @Parameter(description = "플레이어 이름", required = true) String playerName);
 }

@@ -1,6 +1,8 @@
 package coffeeshout.user.infra.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.UserModuleServiceTest;
 import coffeeshout.user.domain.AuthenticatedUser;
@@ -34,6 +36,16 @@ class RedisRefreshTokenRepositoryTest extends UserModuleServiceTest {
             softly.assertThat(토큰_TTL).isNotNull().isPositive().isLessThanOrEqualTo(EXPIRATION_SECONDS);
             softly.assertThat(목록_TTL).isNotNull().isPositive().isLessThanOrEqualTo(EXPIRATION_SECONDS);
         });
+    }
+
+    @Test
+    void 만료시간이_0이면_저장하지_않고_예외를_던진다() {
+        // @Repository 예외 변환이 IllegalArgumentException을 DataAccessException으로 감싼다.
+        assertThatThrownBy(() -> redisRefreshTokenRepository.save(사용자_아이디, 사용자_코드, "token-zero-ttl", 0L))
+                .hasRootCauseInstanceOf(IllegalArgumentException.class);
+
+        assertThat(stringRedisTemplate.hasKey(TOKEN_KEY_PREFIX + "token-zero-ttl"))
+                .isFalse();
     }
 
     @Test
@@ -78,5 +90,11 @@ class RedisRefreshTokenRepositoryTest extends UserModuleServiceTest {
             softly.assertThat(stringRedisTemplate.hasKey(USER_TOKENS_KEY_PREFIX + 사용자_아이디))
                     .isFalse();
         });
+    }
+
+    @Test
+    void 저장된_토큰이_없는_사용자를_전체_삭제해도_예외가_나지_않는다() {
+        assertThatCode(() -> redisRefreshTokenRepository.deleteAllByUserId(사용자_아이디))
+                .doesNotThrowAnyException();
     }
 }

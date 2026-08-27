@@ -1,6 +1,7 @@
 package coffeeshout.user.infra.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.UserModuleServiceTest;
 import coffeeshout.user.domain.OAuthCodeEntry;
@@ -43,6 +44,25 @@ class RedisOAuthCodeRepositoryTest extends UserModuleServiceTest {
             softly.assertThat(entry.tokenPair()).isEqualTo(토큰_쌍);
             softly.assertThat(entry.isNewUser()).isTrue();
         });
+    }
+
+    @Test
+    void TTL이_0이면_저장하지_않고_예외를_던진다() {
+        // @Repository 예외 변환이 IllegalArgumentException을 DataAccessException으로 감싼다.
+        assertThatThrownBy(() -> redisOAuthCodeRepository.save("code-zero-ttl", 토큰_쌍, true, 0L))
+                .hasRootCauseInstanceOf(IllegalArgumentException.class);
+
+        assertThat(stringRedisTemplate.hasKey(KEY_PREFIX + "code-zero-ttl")).isFalse();
+    }
+
+    @Test
+    void 기존_회원으로_저장한_인가코드는_신규가입_여부가_false로_돌아온다() {
+        redisOAuthCodeRepository.save("code-existing", 토큰_쌍, false, TTL_SECONDS);
+
+        final OAuthCodeEntry entry =
+                redisOAuthCodeRepository.findAndDelete("code-existing").orElseThrow();
+
+        assertThat(entry.isNewUser()).isFalse();
     }
 
     @Test

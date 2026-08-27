@@ -20,6 +20,11 @@ public class RedisOAuthCodeRepository implements OAuthCodeRepository {
 
     @Override
     public void save(String code, TokenPair tokens, boolean isNewUser, long ttlSeconds) {
+        // Duration.ZERO는 Spring Data Redis가 Expiration.persistent()로 바꿔 만료 없이 저장한다.
+        // 인가 코드가 조용히 영구 존속하는 것보다 여기서 터지는 편이 낫다.
+        if (ttlSeconds <= 0) {
+            throw new IllegalArgumentException("ttlSeconds는 양수여야 합니다: " + ttlSeconds);
+        }
         final String value = tokens.accessToken() + DELIMITER + tokens.refreshToken() + DELIMITER + isNewUser;
         stringRedisTemplate.opsForValue().set(KEY_PREFIX + code, value, Duration.ofSeconds(ttlSeconds));
     }

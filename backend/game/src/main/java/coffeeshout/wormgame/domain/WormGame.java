@@ -6,9 +6,10 @@ import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 
@@ -69,7 +70,7 @@ public class WormGame implements Playable {
             worm.advance(rules.speedPerTick(tickCount), rules.omegaPerTick(tickCount));
         }
 
-        final List<Worm> deaths = new ArrayList<>();
+        final Set<Worm> deaths = new LinkedHashSet<>();
         final boolean invincible = tickCount <= rules.invincibleTicks();
         for (final Worm worm : aliveAtTickStart) {
             if (worm.distanceFromCenter() > radius) {
@@ -159,7 +160,7 @@ public class WormGame implements Playable {
         return false;
     }
 
-    private void collectHeadOnDeaths(List<Worm> aliveAtTickStart, List<Worm> deaths) {
+    private void collectHeadOnDeaths(List<Worm> aliveAtTickStart, Set<Worm> deaths) {
         for (int i = 0; i < aliveAtTickStart.size(); i++) {
             for (int j = i + 1; j < aliveAtTickStart.size(); j++) {
                 final Worm first = aliveAtTickStart.get(i);
@@ -175,12 +176,8 @@ public class WormGame implements Playable {
                         second.getY());
                 if (distance < rules.trailRadius()) {
                     // 머리끼리 정면충돌은 둘 다 사망(동점) — 한쪽만 살리면 판정 순서 논란이 된다.
-                    if (!deaths.contains(first)) {
-                        deaths.add(first);
-                    }
-                    if (!deaths.contains(second)) {
-                        deaths.add(second);
-                    }
+                    deaths.add(first);
+                    deaths.add(second);
                 }
             }
         }

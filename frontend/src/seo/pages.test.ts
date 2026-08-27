@@ -15,15 +15,21 @@ describe('SEO 페이지 메타', () => {
     expect(tooLong).toEqual([]);
   });
 
-  it('description 은 50자 이상이다', () => {
+  it('description 은 50자 이상 160자 이하다 — 구글 스니펫이 160자 부근에서 잘린다', () => {
     SEO_PAGES.forEach((page) => {
       expect(page.description.length).toBeGreaterThanOrEqual(50);
     });
+
+    const tooLong = SEO_PAGES.filter((page) => page.description.length > 160).map(
+      (page) => page.path
+    );
+
+    expect(tooLong).toEqual([]);
   });
 
-  it('게임 페이지 description 은 "내용 없는 페이지"로 색인 제외되지 않도록 200자 이상이다', () => {
+  it('게임 페이지 body 는 "내용 없는 페이지"로 색인 제외되지 않도록 200자 이상이다', () => {
     GAME_PAGES.forEach((page) => {
-      expect(page.description.length).toBeGreaterThanOrEqual(200);
+      expect(page.body.length).toBeGreaterThanOrEqual(200);
     });
   });
 

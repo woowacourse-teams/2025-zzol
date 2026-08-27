@@ -5,10 +5,11 @@ import static org.awaitility.Awaitility.await;
 
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.fixture.GamerFixture;
+import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.speedtouch.application.SpeedTouchGameService;
+import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import coffeeshout.speedtouch.ui.request.TouchCommand;
 import coffeeshout.speedtouch.ui.response.SpeedTouchProgressResponse;
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 
 class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
@@ -28,7 +30,11 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
     GameSessionService gameSessionService;
 
     @Autowired
-    SpeedTouchGameService speedTouchGameService;
+    ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    TestDataHelper testDataHelper;
+
 
     JoinCode joinCode;
     Gamer host;
@@ -42,6 +48,7 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         host = GamerFixture.호스트_꾹이();
         gamers = GamerFixture.꾹이_루키_엠제이_한스();
         game = new SpeedTouchGame();
+        testDataHelper.게임_시작_준비된_방_생성(joinCode);
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));
@@ -146,8 +153,13 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         assertThat(payloadAs(doneState, SpeedTouchStateResponse.class).state()).isEqualTo("DONE");
     }
 
+    /**
+     * 프로덕션 시작 경로를 그대로 탄다 — {@code :room}의 {@code MiniGameStartConsumer}가 발행하는
+     * {@code GameStartReadyEvent}부터다. 서비스의 {@code start()}를 직접 부르면 미니게임 엔티티·플레이어
+     * 스냅샷을 만드는 단계가 통째로 건너뛰어져, 종료 시 결과 저장 경로가 돌 수 없다(#1663).
+     */
     private void startSpeedTouchGame() {
-        gameSessionService.startGame(joinCode, host, gamers);
-        speedTouchGameService.start(joinCode.getValue(), host.getName());
+        eventPublisher.publishEvent(
+                new GameStartReadyEvent("evt-" + joinCode.getValue(), joinCode.getValue(), host.getName(), gamers));
     }
 }

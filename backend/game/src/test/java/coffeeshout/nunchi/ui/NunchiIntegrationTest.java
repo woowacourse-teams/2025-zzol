@@ -4,10 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.fixture.GamerFixture;
+import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.nunchi.application.NunchiService;
+import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.nunchi.application.response.NunchiStandResponse;
 import coffeeshout.nunchi.application.response.NunchiStateResponse;
 import coffeeshout.nunchi.config.NunchiTimingProperties;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 
 /**
  * 눈치게임 WebSocket 통합 테스트(ADR-0031). TestContainers(Redis) 기반이라 Docker가 필요하다 —
@@ -46,7 +48,11 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
     GameSessionService gameSessionService;
 
     @Autowired
-    NunchiService nunchiService;
+    ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    TestDataHelper testDataHelper;
+
 
     @Autowired
     NunchiTimingProperties timing;
@@ -61,6 +67,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
         gamers = GamerFixture.꾹이_루키_엠제이_한스();
 
         // GameSession을 READY로 사전 구성한다 — Room 검증·영속을 거치지 않고 :game만으로 시작(ADR-0025, BlockStacking IT와 동일).
+        testDataHelper.게임_시작_준비된_방_생성(joinCode);
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode)
@@ -298,11 +305,12 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
     }
 
     /**
-     * WS START 커맨드(Room 경유) 대신 :game 서비스를 직접 호출해 시작한다(BlockStacking IT와 동일 순서 —
-     * startGame으로 READY→PLAYING 전이 후 start로 플로우 시작).
+     * 프로덕션 시작 경로를 그대로 탄다 — {@code :room}의 {@code MiniGameStartConsumer}가 발행하는
+     * {@code GameStartReadyEvent}부터다. 서비스의 {@code start()}를 직접 부르면 미니게임 엔티티·플레이어
+     * 스냅샷을 만드는 단계가 통째로 건너뛰어져, 종료 시 결과 저장 경로가 돌 수 없다(#1663).
      */
     private void startNunchiGame() {
-        gameSessionService.startGame(joinCode, host, gamers);
-        nunchiService.start(joinCode.getValue(), host.getName());
+        eventPublisher.publishEvent(
+                new GameStartReadyEvent("evt-" + joinCode.getValue(), joinCode.getValue(), host.getName(), gamers));
     }
 }

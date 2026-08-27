@@ -3,6 +3,7 @@ package coffeeshout.minigame.event;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.GameModuleIntegrationTest;
+import coffeeshout.blindtimer.application.BlindTimerGameProgressHandler;
 import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blockstacking.domain.BlockStackingGame;
 import coffeeshout.fixture.CardGameDeckStub;
@@ -83,6 +84,9 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
     @Autowired
     UserJpaRepository userJpaRepository;
 
+    @Autowired
+    BlindTimerGameProgressHandler blindTimerProgressHandler;
+
     JoinCode joinCode;
     Gamer host;
     List<Gamer> gamers;
@@ -127,17 +131,16 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
 
     @Test
     void 블라인드타이머_종료시_결과와_정산_이벤트가_저장된다() {
-        // 종료는 targetTime + timeoutBuffer(3s)에 예약된다. 목표 시간을 줄여 입력 없이 타임아웃으로 끝낸다
-        // (미입력 플레이어는 BlindTimerScore.ofTimeout으로 채점되므로 결과는 그대로 만들어진다).
-        게임을_시작한다(new BlindTimerGame(Duration.ofMillis(500)));
+        final BlindTimerGame game = 게임을_시작한다(new BlindTimerGame(Duration.ofSeconds(10)));
+
+        전원_STOP시킨다(game);
 
         결과_저장과_정산_아웃박스를_확인한다(MiniGameType.BLIND_TIMER);
     }
 
     @Test
     void 스피드터치_종료시_결과와_정산_이벤트가_저장된다() {
-        final SpeedTouchGame game = new SpeedTouchGame();
-        게임을_시작한다(game);
+        final SpeedTouchGame game = 게임을_시작한다(new SpeedTouchGame());
 
         전원_완주시킨다(game);
 
@@ -145,7 +148,20 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
     }
 
     /**
-     * 스피드터치만 종료에 입력이 필요하다 — playing 타임아웃이 30초라 기다릴 수 없다.
+     * 타임아웃(목표시간 + 버퍼 3초)을 기다리지 않고 전원 STOP으로 끝낸다. 기다리는 쪽이 코드는 짧지만 3.5초를
+     * 순수 대기로 쓰고, 프로덕션에서 훨씬 흔한 경로는 전원이 멈춰 끝나는 쪽이다. 스피드터치와 같은 이유로 WS가
+     * 아니라 컨슈머가 호출하는 진입점을 직접 부른다.
+     */
+    private void 전원_STOP시킨다(BlindTimerGame game) {
+        await().atMost(Duration.ofSeconds(5)).until(game::isPlaying);
+
+        for (Gamer gamer : gamers) {
+            blindTimerProgressHandler.handleStop(joinCode.getValue(), gamer.getName());
+        }
+    }
+
+    /**
+     * 스피드터치는 종료에 입력이 필요하다 — playing 타임아웃이 30초라 기다릴 수 없다.
      *
      * <p>터치를 WS로 보내지 않고 컨슈머가 호출하는 애플리케이션 진입점을 직접 부른다. 전원 25회 = 100번의 WS
      * 왕복은 느린 데다, Rate Limiter가 세션당 초당 20건 초과분을 조용히 드롭해 완주가 부하에 따라 갈린다(#1664).
@@ -169,17 +185,21 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
      * <p>방은 도메인 {@code Room}(인메모리)과 {@code RoomEntity}(DB)를 둘 다 채워야 한다 — 저장 리스너가
      * {@code RoomSnapshotQuery}로 room_session id와 player id를 해석하기 때문이다.
      */
-    private void 게임을_시작한다(Playable game) {
+    private <T extends Playable> T 게임을_시작한다(T game) {
         final Room room = RoomFixture.호스트_꾹이(joinCode);
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         roomRepository.save(room);
         roomEntityRepository.save(new RoomEntity(joinCode.getValue()));
 
+        // 세션 맵은 컨텍스트 수명인데 joinCode 유일성을 보장하는 Redis 레지스트리는 매 테스트 flush된다.
+        // 두 수명이 어긋나 같은 코드가 재발급되면 initSession이 조용히 no-op이 되어 직전 세션을 물려받는다.
+        gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));
 
         eventPublisher.publishEvent(
                 new GameStartReadyEvent("evt-" + joinCode.getValue(), joinCode.getValue(), host.getName(), gamers));
+        return game;
     }
 
     /**
@@ -208,14 +228,18 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
      */
     private Integer 정산_아웃박스_수(MiniGameType miniGameType) {
         return jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM outbox_event WHERE stream_key = ? AND payload LIKE ?",
+                "SELECT COUNT(*) FROM outbox_event WHERE stream_key = ? AND payload LIKE ? ESCAPE '!'",
                 Integer.class,
                 SettlementStreamKey.RESULT.getRedisKey(),
-                "%" + miniGameType.name() + "%");
+                "%" + miniGameType.name().replace("_", "!_") + "%");
     }
 
     private Long 회원_한_명을_만든다() {
-        return userJpaRepository.save(new UserEntity("T1663", "루키")).getId();
+        // user_code는 UNIQUE고 DB 정리 실패는 로그만 남기고 삼켜진다(TestContainerSupport). 테스트마다 다른
+        // 코드를 써서 정리 성공 여부에 기대지 않는다. joinCode가 4자라 접두어 T를 붙이면 정확히 5자다.
+        return userJpaRepository
+                .save(new UserEntity("T" + joinCode.getValue(), "루키"))
+                .getId();
     }
 
     private List<Gamer> 루키를_회원으로_바꾼_명단(Long userId) {

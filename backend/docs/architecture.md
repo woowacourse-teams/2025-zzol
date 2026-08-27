@@ -15,9 +15,11 @@
 :web          — 공유 HTTP 인프라 (RestExceptionHandler, CORS, SpringDoc)
 :websocket    — STOMP 플랫폼 (도메인 무지)
 :game-api     — 게임 SPI (Playable, MiniGameFactory, FlowScheduler, Gamer)
+                + 도메인 간 계약 (이벤트, RoomSnapshotQuery·SeasonUserProfileQuery 포트)
 :user         — User + Auth + Friend
 :room         — Room aggregate + Player + Roulette + RoomSessionToken
-:game         — 6게임 구현체 + minigame orchestration
+:game         — 미니게임 구현체(cardgame·laddergame·racinggame·blockstacking·speedtouch·blindtimer·nunchi)
+                + minigame orchestration + settlement(시즌 정산·종합 랭크)
 :profanity    — 비속어 필터 (:admin·:app 이 사용, :room·:game 은 테스트에서만)
 :admin        — dashboard + patchnote + report
 :zzolbot      — AI 운영자 어시스턴트
@@ -25,17 +27,48 @@
 :test-support — 통합/서비스 테스트 공통 인프라 (testImplementation 전용)
 ```
 
-의존 방향 (단방향, 순환 없음):
+### 의존 방향 (단방향, 순환 없음)
+
+계층은 아래에서 위로만 의존한다. 같은 계층끼리의 의존은 `:room → :user` 하나뿐이다.
 
 ```text
-:common → :infra
-        → :web       (:game-api 제외 전 도메인 모듈 공통 기반)
-        → :game-api → :room → :game → :admin
-                                    → :zzolbot
-        :infra + :web → :websocket → :user
-        :common + :infra → :profanity → :admin
-        (모두) → :app
-:test-support — testImplementation 전용
+L4  조립      :app                                        ← 모든 모듈 조합
+L3  소비자    :admin      :zzolbot
+L2  도메인    :room ──→ :user      :game      :profanity
+L1  플랫폼    :websocket  :web  :infra  :game-api  :test-support
+L0  순수      :common                                     ← Spring 무관
+```
+
+모듈별 프로덕션 의존(`implementation`/`api`)은 다음과 같다. 표의 `→`는 **"왼쪽이 오른쪽에 의존한다"**를 뜻한다.
+
+| 모듈 | 프로덕션 의존 |
+| --- | --- |
+| `:common` | 없음 |
+| `:web` | `:common` |
+| `:infra` | `:common` |
+| `:game-api` | `:common` |
+| `:test-support` | `:common` |
+| `:websocket` | `:common` `:web` |
+| `:profanity` | `:common` `:infra` |
+| `:game` | `:common` `:game-api` `:infra` `:web` `:websocket` |
+| `:user` | `:common` `:game-api` `:infra` `:web` `:websocket` |
+| `:room` | `:common` `:game-api` `:infra` `:web` `:websocket` **`:user`** |
+| `:zzolbot` | `:common` `:game-api` `:infra` `:web` + `:game` `:room` |
+| `:admin` | `:common` `:game-api` `:infra` `:web` + `:game` `:room` `:user` `:profanity` |
+| `:app` | 전 모듈 (`:test-support` 제외 — 테스트 전용) |
+
+**L2 도메인 4개 중 `:game`·`:user`·`:profanity`는 다른 도메인 모듈을 컴파일 시점에 모른다.** `:game`이 방·유저와 주고받는 것은 전부 `:game-api`의 이벤트·조회 포트를 거친다(ADR-0025, ADR-0034). ArchUnit `game_프로덕션은_room을_직접_참조할_수_없다`·`game_프로덕션은_user를_직접_참조할_수_없다`가 재유입을 CI에서 차단한다.
+
+`:room → :user`는 남아 있는 유일한 도메인 간 의존이다(인증 타입 + 닉네임 조회).
+
+#### 테스트 스코프는 위 그림과 다르다
+
+`testImplementation`/`testFixtures`로만 걸린 의존은 프로덕션 의존이 아니다. `@SpringBootTest` 컨텍스트가 전이 빈을 로드해 생긴 것으로, 위 계층 판단의 근거로 쓰지 않는다.
+
+```text
+:game → :room  :user  :profanity     (테스트 전용 — 프로덕션 의존 아님)
+:room → :profanity                   (테스트 전용)
+전 모듈 → :test-support               (테스트 전용)
 ```
 
 ---

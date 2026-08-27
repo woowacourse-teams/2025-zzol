@@ -49,8 +49,19 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
               바꾸지 말고 그대로 복사하라. 요약하거나 바꿔 쓰지 마라. 그대로 복사할 로그가 없으면
               evidenceFound는 false다.
             - evidenceFound가 false이면 rootCauseHypothesis는 빈 문자열로 두고 원인을 추측하지 마라.
+              suggestedActions도 원인을 전제해서는 안 된다. 근거를 확보하는 조치(알림 시각의 로그를
+              다시 조회, 수집 파이프라인 상태 확인)만 제안하고, 로그에 나타나지 않은 컴포넌트나
+              시스템을 점검 대상으로 지목하지 마라.
             - 알림 설명(description)에 적힌 원인 가설은 사람이 미리 적어둔 추측일 뿐 확인된 사실이
               아니다. 로그로 뒷받침되지 않으면 그것을 결론으로 삼지 마라.
+            - 시간 정합성: 로그 샘플은 알림 발화 직전의 짧은 최근 창(수십 분)에서 조회된 것이다.
+              본문 타임스탬프가 그 창에 담길 수 없을 만큼 수 시간에 걸쳐 흩어져 있거나 이전 날짜라면,
+              오래된 로그가 일괄 재적재된 아티팩트다. 그런 로그는 근거로 삼지 말고 evidenceFound를
+              false로 두고 summary에 타임스탬프 불일치 사실을 명시하라.
+            - 양적 정합성: 알림이 말하는 규모(예: 5분에 수십 건)를 로그 샘플이 설명할 수 있는지
+              확인하라. 표본이 한두 줄뿐이고 서로 시간이 동떨어진 산발적 에러라면 급증의 근거가
+              되지 못한다. evidenceFound를 false로 두라. 단, 샘플이 알림 시각과 정합하는 좁은
+              시간대에 몰려 반복된다면 표본 수가 알림 건수보다 적어도 정상적인 근거다.
 
             없는 수치·테이블·이벤트명을 지어내지 마라. 확인된 것과 추측을 섞지 마라.
             조치는 제안일 뿐 자동 실행되지 않는다. 설명 텍스트 없이 JSON 객체 하나만 출력하라.""";
@@ -94,7 +105,11 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
         sb.append("설명(사람이 적어둔 추측 — 확인된 사실 아님): ").append(alert.description()).append('\n');
         sb.append("라벨:\n");
         for (Map.Entry<String, String> label : alert.labels().entrySet()) {
-            sb.append("- ").append(label.getKey()).append('=').append(label.getValue()).append('\n');
+            sb.append("- ")
+                    .append(label.getKey())
+                    .append('=')
+                    .append(label.getValue())
+                    .append('\n');
         }
         if (logSamples != null && !logSamples.isEmpty()) {
             sb.append("\n최근 ERROR 로그 샘플 (출처 환경: ").append(logEnvironment).append("):\n");
@@ -113,11 +128,13 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
             // 근거 판정은 모델 자체 판정(evidenceFound)에 인용 검증을 코드로 덧씌운다. 판정이 누락되면
             // 보수적으로 false로 본다 — 근거 있다고 잘못 표시하는 쪽이 더 위험하다.
             final boolean claimed = node.path("evidenceFound").asBoolean(false);
-            final boolean grounded = claimed && citedInLogs(node.path("evidenceLine").asText(""), logSamples);
+            final boolean grounded =
+                    claimed && citedInLogs(node.path("evidenceLine").asText(""), logSamples);
             // 근거가 없으면 모델이 무엇을 보냈든 원인 가설뿐 아니라 요약까지 안전한 문구로 강제한다.
             // 화면엔 "근거 없음"인데 요약은 "DB에 심각한 문제" 같은 단정으로 남는 구멍을 막는다(#1595 리뷰).
             final String summary = grounded ? node.path("summary").asText("") : NO_EVIDENCE_SUMMARY;
-            final String hypothesis = grounded ? node.path("rootCauseHypothesis").asText("") : "";
+            final String hypothesis =
+                    grounded ? node.path("rootCauseHypothesis").asText("") : "";
             return new MonitorAnalysis(summary, hypothesis, actions, grounded);
         } catch (Exception e) {
             log.warn("[ZzolBot] 이상 분석 응답 파싱 실패. raw={}", json, e);
@@ -136,9 +153,8 @@ public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
             return false;
         }
         final String needle = normalizeWhitespace(evidenceLine);
-        return logSamples.stream()
-                .filter(line -> line != null)
-                .anyMatch(line -> normalizeWhitespace(line).contains(needle));
+        return logSamples.stream().filter(line -> line != null).anyMatch(line -> normalizeWhitespace(line)
+                .contains(needle));
     }
 
     private static String normalizeWhitespace(String text) {

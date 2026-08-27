@@ -27,9 +27,9 @@ const nameColor = (state: NunchiPersonState, isMe: boolean): ColorKey => {
  * 번호는 stand 이벤트로 라이브 수집한 standNumbers 에서 읽는다. 재접속 전에 일어선 사람은 번호를
  * 모를 수 있으므로(스냅샷 stood 는 이름만) 그 경우만 숫자 대신 중립 표시('•')로 폴백한다.
  *
- * 명단(participants)은 로비에서 채워져 게임까지 유지된다. 하드 리프레시·플레이 직접 진입 시엔
- * 비어 있을 수 있으므로 graceful degradation: 명단이 없으면 일어선/탈락한 사람만 그리고
- * "남은 N명" 은 숨긴다(앉은 군중을 알 수 없으므로).
+ * 명단(participants)은 로비에서 채워지고, 하드 리프레시·직접 진입 시엔 RoomLayout 의
+ * useRestoreParticipants 가 HTTP 로 복구한다(#1688). 색은 명단의 colorIndex(서버 원천)만 쓴다.
+ * 복구 응답 전·실패 시엔 게임 메시지로 드러난 사람(일어선·탈락)만이라도 그리고, 남은 인원은 알 수 없으니 숨긴다.
  */
 const NunchiCrowd = () => {
   const { myName } = useIdentifier();
@@ -54,8 +54,7 @@ const NunchiCrowd = () => {
       <S.Row>
         {roster.map((name) => {
           const state = getState(name);
-          const colorIndex = hasRoster ? getParticipantColorIndex(name) : fallbackColorIndex(name);
-          const color = colorList[colorIndex] ?? colorList[0];
+          const color = colorList[getParticipantColorIndex(name)] ?? colorList[0];
           const isMe = name === myName;
           const pressedNumber = standNumbers[name];
           return (

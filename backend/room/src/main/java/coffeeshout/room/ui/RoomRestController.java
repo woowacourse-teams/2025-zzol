@@ -10,6 +10,7 @@ import coffeeshout.room.ui.request.RoomEnterRequest;
 import coffeeshout.room.ui.request.UpdateRoomSettingsRequest;
 import coffeeshout.room.ui.response.GuestNameExistResponse;
 import coffeeshout.room.ui.response.JoinCodeExistResponse;
+import coffeeshout.room.ui.response.PlayerResponse;
 import coffeeshout.room.ui.response.ProbabilityResponse;
 import coffeeshout.room.ui.response.RandomNicknameResponse;
 import coffeeshout.room.ui.response.RoomCreateResponse;
@@ -42,11 +43,11 @@ public class RoomRestController implements RoomApi {
     private final RoomService roomService;
     private final PlayerService playerService;
 
+    @Override
     @PostMapping
     public ResponseEntity<RoomCreateResponse> createRoom(
             @AuthUser Optional<AuthenticatedUser> authUser,
-            @RequestBody(required = false) @Valid RoomEnterRequest request
-    ) {
+            @RequestBody(required = false) @Valid RoomEnterRequest request) {
         final RoomCreateResult result = authUser.isPresent()
                 ? roomService.createRoom(authUser.get())
                 : roomService.createRoom(requirePlayerName(request));
@@ -54,18 +55,17 @@ public class RoomRestController implements RoomApi {
         return ResponseEntity.ok(RoomCreateResponse.of(result));
     }
 
+    @Override
     @PostMapping("/{joinCode}")
     public CompletableFuture<ResponseEntity<RoomEnterResponse>> enterRoom(
             @PathVariable String joinCode,
             @AuthUser Optional<AuthenticatedUser> authUser,
-            @RequestBody(required = false) @Valid RoomEnterRequest request
-    ) {
+            @RequestBody(required = false) @Valid RoomEnterRequest request) {
         final CompletableFuture<RoomEnterResult> future = authUser.isPresent()
                 ? roomService.enterRoomAsync(joinCode, authUser.get())
                 : roomService.enterRoomAsync(joinCode, requirePlayerName(request));
 
-        return future
-                .thenApply(result -> ResponseEntity.ok(RoomEnterResponse.of(result)))
+        return future.thenApply(result -> ResponseEntity.ok(RoomEnterResponse.of(result)))
                 .exceptionally(throwable -> {
                     final Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
                     if (cause instanceof RuntimeException runtimeException) {
@@ -76,16 +76,18 @@ public class RoomRestController implements RoomApi {
     }
 
     private String requirePlayerName(RoomEnterRequest request) {
-        if (request == null || request.playerName() == null || request.playerName().isBlank()) {
+        if (request == null
+                || request.playerName() == null
+                || request.playerName().isBlank()) {
             throw new BusinessException(RoomErrorCode.PLAYER_NAME_BLANK, "플레이어 이름이 없습니다.");
         }
         return request.playerName();
     }
 
+    @Override
     @GetMapping("/nickname/random")
     public ResponseEntity<RandomNicknameResponse> generateRandomNickname(
-            @RequestParam(required = false) String joinCode
-    ) {
+            @RequestParam(required = false) String joinCode) {
         final String nickname = (joinCode != null && !joinCode.isBlank())
                 ? roomService.generateRandomNicknameForGuest(joinCode)
                 : roomService.generateRandomNicknameForHost();
@@ -93,6 +95,7 @@ public class RoomRestController implements RoomApi {
         return ResponseEntity.ok(RandomNicknameResponse.from(nickname));
     }
 
+    @Override
     @GetMapping("/check-joinCode")
     public ResponseEntity<JoinCodeExistResponse> checkJoinCode(@RequestParam String joinCode) {
         final boolean exists = roomService.roomExists(joinCode);
@@ -100,16 +103,16 @@ public class RoomRestController implements RoomApi {
         return ResponseEntity.ok(JoinCodeExistResponse.from(exists));
     }
 
+    @Override
     @GetMapping("/check-guestName")
     public ResponseEntity<GuestNameExistResponse> checkGuestName(
-            @RequestParam String joinCode,
-            @RequestParam String guestName
-    ) {
+            @RequestParam String joinCode, @RequestParam String guestName) {
         final boolean isDuplicated = roomService.isGuestNameDuplicated(joinCode, guestName);
 
         return ResponseEntity.ok(GuestNameExistResponse.from(isDuplicated));
     }
 
+    @Override
     @GetMapping("/{joinCode}/probabilities")
     public ResponseEntity<List<ProbabilityResponse>> getProbabilities(@PathVariable String joinCode) {
         final List<ProbabilityResponse> responses = roomService.getProbabilities(joinCode);
@@ -117,20 +120,25 @@ public class RoomRestController implements RoomApi {
         return ResponseEntity.ok(responses);
     }
 
+    @Override
     @PatchMapping("/{joinCode}/settings")
     public ResponseEntity<Void> updateRoomSettings(
-            @PathVariable String joinCode,
-            @Valid @RequestBody UpdateRoomSettingsRequest request
-    ) {
+            @PathVariable String joinCode, @Valid @RequestBody UpdateRoomSettingsRequest request) {
         roomService.updateAdjustmentWeight(joinCode, request.hostName(), request.adjustmentWeight());
         return ResponseEntity.noContent().build();
     }
 
+    @Override
+    @GetMapping("/{joinCode}/players")
+    public ResponseEntity<List<PlayerResponse>> getPlayers(@PathVariable String joinCode) {
+        return ResponseEntity.ok(playerService.getPlayers(joinCode).stream()
+                .map(PlayerResponse::from)
+                .toList());
+    }
+
+    @Override
     @DeleteMapping("/{joinCode}/players/{playerName}")
-    public ResponseEntity<Void> kickPlayer(
-            @PathVariable String joinCode,
-            @PathVariable String playerName
-    ) {
+    public ResponseEntity<Void> kickPlayer(@PathVariable String joinCode, @PathVariable String playerName) {
         final boolean exists = playerService.checkAndKickPlayer(joinCode, playerName);
 
         if (exists) {

@@ -21,6 +21,7 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.support.TestStompSession;
+import coffeeshout.support.TestStompSession.MessageCollector;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -156,9 +157,7 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
         eventPublisher.publishEvent(
                 new GameStartReadyEvent("evt-" + joinCodeValue, joinCodeValue, host.getName(), gamers));
 
-        stateResponses.get(1, TimeUnit.SECONDS); // DESCRIPTION
-        stateResponses.get(5, TimeUnit.SECONDS); // PREPARE (4초 후)
-        stateResponses.get(3, TimeUnit.SECONDS); // PLAYING (2초 후)
+        awaitState(stateResponses, RacingGameState.PLAYING, 5);
 
         /*
          탭은 주기적으로 보내야 한다. 주행 중에는 매 틱 속도가 감쇠하므로(RacingGame.SPEED_DECAY_RATE)
@@ -181,19 +180,35 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
                 TimeUnit.MILLISECONDS);
 
         // then - DONE 상태 확인. 주행 약 9주기(3.6초) + 완주 후 감속 + race-finished-delay 만큼 걸린다.
-        final RacingGameStateResponse finishedState;
         try {
-            finishedState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), RacingGameStateResponse.class);
+            awaitState(stateResponses, RacingGameState.DONE, 10);
         } finally {
-            // DONE 이후의 탭은 PLAYING이 아니라 BusinessException이 된다 — 받자마자 멈춘다.
+            // DONE 이후의 탭은 컨슈머 스레드에서 BusinessException이 되어 WARN 로그만 남긴다.
+            // 태퍼가 스스로 멈추지는 않으므로 여기서 끈다.
             tapper.shutdownNow();
         }
-        assertThat(finishedState.state()).isEqualTo(RacingGameState.DONE);
 
         // then - 종료 결과가 실제로 저장된다. DONE 브로드캐스트는 결과 저장보다 앞서 예약되므로(#1662)
         // 종료 신호만 검증하면 저장이 통째로 실패해도 이 테스트는 초록으로 남는다.
         await().atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> assertThat(저장된_레이싱_결과_수()).isEqualTo(gamers.size()));
+    }
+
+    /**
+     * 목표 상태가 나올 때까지 훑는다. 상태 토픽은 DESCRIPTION→PREPARE→PLAYING→DONE 순으로
+     * 브로드캐스트되므로 위치 기반 get()으로 읽으면 프레임이 하나만 끼어도 엉뚱한 것을 단언한다
+     * (testing-integration.md). 참조 구현은 NunchiIntegrationTest#awaitState.
+     */
+    private RacingGameStateResponse awaitState(
+            MessageCollector stateResponses, RacingGameState target, int timeoutSeconds) {
+        for (int i = 0; i < 8; i++) {
+            final RacingGameStateResponse response =
+                    payloadAs(stateResponses.get(timeoutSeconds, TimeUnit.SECONDS), RacingGameStateResponse.class);
+            if (response.state() == target) {
+                return response;
+            }
+        }
+        throw new AssertionError(target + " 상태를 받지 못했습니다");
     }
 
     private Integer 저장된_레이싱_결과_수() {

@@ -33,7 +33,7 @@ class RunnersTest {
 
         // then
         final Map<Runner, Integer> positions = runners.getPositions();
-        assertThat(positions.values()).allMatch(position -> position == RacingGame.INITIAL_SPEED);
+        assertThat(positions.values()).allMatch(position -> position == RacingGame.START_LINE);
     }
 
     @Test
@@ -75,7 +75,7 @@ class RunnersTest {
 
         // then
         assertThat(positions).hasSize(2);
-        assertThat(positions.values()).allMatch(position -> position == RacingGame.INITIAL_SPEED);
+        assertThat(positions.values()).allMatch(position -> position == RacingGame.START_LINE);
     }
 
     @Test

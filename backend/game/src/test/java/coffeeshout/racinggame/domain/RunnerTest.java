@@ -2,6 +2,7 @@ package coffeeshout.racinggame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import coffeeshout.fixture.PlayerFixture;
 import java.time.Instant;
@@ -209,8 +210,88 @@ class RunnerTest {
         달린다(runner, speedCalculator, now, 1);
 
         // then
-        assertThat(runner.getFinishTime()).isNotNull();
-        assertThat(runner.isFinished()).isTrue();
+        assertSoftly(softly -> {
+            softly.assertThat(runner.getFinishTime()).isNotNull();
+            softly.assertThat(runner.isFinished()).isTrue();
+        });
+    }
+
+    @Test
+    void 탭이_없으면_이동할_때마다_속도가_줄어든다() {
+        // given
+        final Runner runner = 최고_속도로_달리는_러너();
+
+        // when — 탭 없이 이동만 한다
+        runner.move(Instant.now());
+
+        // then
+        assertThat(runner.getSpeed()).isEqualTo((int) (RacingGame.MAX_SPEED * RacingGame.SPEED_DECAY_RATE));
+    }
+
+    @Test
+    void 탭이_없어도_속도는_최저_속도_아래로_떨어지지_않는다() {
+        // given — 0이 되면 isStopped()로 영영 못 움직여 완주하지 못한 채 경주가 끝난다
+        final Runner runner = 최고_속도로_달리는_러너();
+        final Instant now = Instant.now();
+
+        // when
+        for (int i = 0; i < 200; i++) {
+            runner.move(now);
+        }
+
+        // then
+        assertSoftly(softly -> {
+            softly.assertThat(runner.getSpeed()).isEqualTo(RacingGame.MIN_SPEED);
+            softly.assertThat(runner.isStopped()).isFalse();
+        });
+    }
+
+    @Test
+    void 감속된_뒤_다시_탭하면_속도가_회복된다() {
+        // given
+        final Runner runner = 최고_속도로_달리는_러너();
+        final Instant now = Instant.now();
+        for (int i = 0; i < 5; i++) {
+            runner.move(now);
+        }
+
+        // when
+        runner.updateSpeed(10, (lastTapedTime, at, tapCount) -> RacingGame.MAX_SPEED, now);
+
+        // then
+        assertThat(runner.getSpeed()).isEqualTo(RacingGame.MAX_SPEED);
+    }
+
+    @Test
+    void 결승선을_넘는_틱에는_아직_주행_중_감속이_적용된다() {
+        // given — isSlowingDown()은 position 대입 전에 평가되므로 그 틱은 아직 완주로 보이지 않는다
+        final Runner runner = 최고_속도로_달리는_러너();
+        ReflectionTestUtils.setField(runner, "position", RacingGame.FINISH_LINE - RacingGame.MAX_SPEED);
+
+        // when
+        runner.move(Instant.now());
+
+        // then — SLOW_DOWN_STEP(57)이 아니라 비율 감속(54)이다
+        assertSoftly(softly -> {
+            softly.assertThat(runner.isFinished()).isTrue();
+            softly.assertThat(runner.getSpeed()).isEqualTo((int) (RacingGame.MAX_SPEED * RacingGame.SPEED_DECAY_RATE));
+        });
+    }
+
+    @Test
+    void 완주한_뒤에는_주행_중_감속이_아니라_완주_후_감속이_적용된다() {
+        // given — 완주 틱까지 진행시킨다
+        final Runner runner = 최고_속도로_달리는_러너();
+        final Instant now = Instant.now();
+        ReflectionTestUtils.setField(runner, "position", RacingGame.FINISH_LINE - RacingGame.MAX_SPEED);
+        runner.move(now);
+        final int 완주_틱_속도 = runner.getSpeed();
+
+        // when
+        runner.move(now);
+
+        // then — 비율 감속이면 48, 완주 후 감속이면 51이다
+        assertThat(runner.getSpeed()).isEqualTo(완주_틱_속도 - Runner.SLOW_DOWN_STEP);
     }
 
     @Test
@@ -252,6 +333,12 @@ class RunnerTest {
         // then
         assertThat(runner.isFinished()).isTrue();
         assertThat(runner.getFinishTime()).isEqualTo(expectFinishTime);
+    }
+
+    private Runner 최고_속도로_달리는_러너() {
+        final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
+        runner.updateSpeed(10, (lastTapedTime, at, tapCount) -> RacingGame.MAX_SPEED, Instant.now());
+        return runner;
     }
 
     /**

@@ -65,7 +65,7 @@ class RacingGameTest {
             // given
             경주를_시작한다();
 
-            // when — 결승선 3000 을 속도 30 으로 넘기려면 100 틱이 필요하다
+            // when — 결승선 3000 을 속도 30 으로 넘기려면 100 틱이다. 1 틱은 완주 후에도 멈추지 않는지 보는 여유분
             달린다(1, 101, Map.of(한스, 30, 꾹이, 30));
 
             // then
@@ -122,7 +122,10 @@ class RacingGameTest {
     }
 
     @Nested
-    class 주행_중_감속 {
+    class 탭이_끊긴_러너 {
+
+        // 감속 자체의 경계·불변식은 RunnerTest 담당(ADR-0033 결정 6 — 더 적은 컨텍스트로 내린다).
+        // 여기서는 러너 둘이 얽히는 결과만 본다.
 
         @Test
         void 탭_메시지가_끊겨도_결승선까지_자동_주행하지_않는다() {
@@ -131,39 +134,10 @@ class RacingGameTest {
             달린다(1, 1, Map.of(한스, RacingGame.MAX_SPEED));
 
             // when — 탭이 한 건도 도착하지 않는다. 속도가 굳어 있다면 3000 / 60 = 50 틱이면 완주한다
-            달린다(2, 50, Map.of());
+            달린다(2, 50, 탭이_끊긴다);
 
             // then
             assertThat(러너(한스).getPosition()).isLessThan(RacingGame.FINISH_LINE);
-        }
-
-        @Test
-        void 탭_메시지가_끊기면_속도가_줄어든다() {
-            // given
-            경주를_시작한다();
-            달린다(1, 1, Map.of(한스, RacingGame.MAX_SPEED));
-
-            // when
-            달린다(2, 6, Map.of());
-
-            // then
-            assertThat(러너(한스).getSpeed()).isLessThan(RacingGame.MAX_SPEED);
-        }
-
-        @Test
-        void 속도는_최저_속도_아래로는_떨어지지_않는다() {
-            // given — 최저 속도 아래로 떨어지면 isStopped()가 되어 완주하지 못한 채 경주가 끝난다
-            경주를_시작한다();
-            달린다(1, 1, Map.of(한스, RacingGame.MAX_SPEED));
-
-            // when
-            달린다(2, 200, Map.of());
-
-            // then
-            assertSoftly(softly -> {
-                softly.assertThat(러너(한스).getSpeed()).isEqualTo(RacingGame.MIN_SPEED);
-                softly.assertThat(러너(한스).isStopped()).isFalse();
-            });
         }
 
         @Test
@@ -177,23 +151,6 @@ class RacingGameTest {
 
             // then
             assertThat(러너(한스).getPosition()).isGreaterThan(러너(꾹이).getPosition());
-        }
-
-        @Test
-        void 완주한_러너는_주행_중_감속이_아니라_완주_후_감속으로_멈춘다() {
-            // given — 완주 직후의 속도를 확인한다
-            경주를_시작한다();
-            달린다(1, 50, Map.of(한스, RacingGame.MAX_SPEED));
-            final int 완주_직후_속도 = 러너(한스).getSpeed();
-
-            // when — 완주 후에는 탭이 무시되므로 한 틱만 더 돌린다
-            달린다(51, 51, Map.of(한스, RacingGame.MAX_SPEED));
-
-            // then — 완주 후 감속은 비율이 아니라 SLOW_DOWN_STEP 만큼 줄어든다
-            assertSoftly(softly -> {
-                softly.assertThat(러너(한스).isFinished()).isTrue();
-                softly.assertThat(러너(한스).getSpeed()).isEqualTo(완주_직후_속도 - Runner.SLOW_DOWN_STEP);
-            });
         }
     }
 
@@ -251,6 +208,9 @@ class RacingGameTest {
             }
         }
     }
+
+    /** 탭 메시지가 한 건도 도착하지 않는 상태. */
+    private static final Map<Player, Integer> 탭이_끊긴다 = Map.of();
 
     private Runner 러너(Player player) {
         return racingGame.getRunners().stream()

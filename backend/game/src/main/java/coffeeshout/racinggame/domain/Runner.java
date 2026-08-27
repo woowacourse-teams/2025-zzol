@@ -63,6 +63,10 @@ public class Runner {
     /**
      * 주행 중 감속. 무엇을 막는 값인지는 {@link RacingGame#SPEED_DECAY_RATE} 주석 참고.
      *
+     * <p>결승선을 넘는 그 틱에도 한 번 걸린다 — {@code isSlowingDown()}이 position 대입 전에
+     * 평가되므로 아직 완주로 보이지 않는다. finishTime은 그 전에 확정되므로 순위·기록에는
+     * 영향이 없고, 완주 후 관성이 한 틱 짧아질 뿐이다.
+     *
      * <p>MIN_SPEED가 하한인 이유는 속도가 0이 되면 {@code isStopped()}로 영영 못 움직여
      * 완주하지 못한 채 경주가 끝나기 때문이다. 그러면 finishTime이 null로 남아
      * {@code RacingGame#convertScore}의 {@code Duration.between(startTime, null)}이 터진다.

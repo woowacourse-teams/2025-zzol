@@ -2,15 +2,17 @@ package coffeeshout.laddergame.ui;
 
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.fixture.GamerFixture;
+import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
-import coffeeshout.laddergame.application.LadderService;
 import coffeeshout.laddergame.application.response.LadderLineResponse;
 import coffeeshout.laddergame.application.response.LadderStateResponse;
 import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.LadderGameState;
 import coffeeshout.laddergame.ui.request.LadderDrawRequest;
 import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.support.TestStompSession;
 import java.util.List;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 
 /**
  * 타이밍 설정 (application-test-game.yml): description=500ms, prepare=500ms, drawing=500ms(+grace 300ms), result=500ms
@@ -35,15 +38,18 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
     GameSessionService gameSessionService;
 
     @Autowired
-    LadderService ladderService;
+    ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    TestDataHelper testDataHelper;
 
     @BeforeEach
     void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
         joinCode = joinCodeGenerator.generate();
         host = GamerFixture.호스트_꾹이();
-        gamers = GamerFixture.꾹이_루키_엠제이_한스();
+        gamers = 루키가_회원인_명단(joinCode);
 
-        // GameSession을 READY 상태로 사전 구성한다 — Room 검증·영속을 거치지 않고 :game만으로 시작한다(ADR-0025).
+        testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(new LadderGame()));
@@ -66,10 +72,14 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
             startLadderGame();
 
             final LadderStateResponse description = payloadAs(stateResponses.get(), LadderStateResponse.class);
-            final LadderStateResponse prepare = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
-            final LadderStateResponse drawing = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
-            final LadderStateResponse result = payloadAs(stateResponses.get(3, TimeUnit.SECONDS), LadderStateResponse.class);
-            final LadderStateResponse done = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse prepare =
+                    payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse drawing =
+                    payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse result =
+                    payloadAs(stateResponses.get(3, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse done =
+                    payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(description.state()).isEqualTo(LadderGameState.DESCRIPTION);
@@ -89,6 +99,7 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
                 softly.assertThat(done.poles()).isNull();
                 softly.assertThat(done.rankings()).isNull();
             });
+            결과_저장과_정산_아웃박스를_확인한다(MiniGameType.LADDER_GAME, gamers.size());
         }
     }
 
@@ -176,12 +187,13 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
     }
 
     /**
-     * WS START 커맨드(Room 검증·영속 경유) 대신 :game 서비스를 직접 호출해 게임을 시작한다.
-     * {@code startGame}으로 READY→PLAYING 전이 후 {@code start}로 플로우를 스케줄한다(프로덕션 onGameStartReady와 동일 순서).
+     * 프로덕션 시작 경로를 그대로 탄다 — {@code :room}의 {@code MiniGameStartConsumer}가 발행하는
+     * {@code GameStartReadyEvent}부터다. 서비스의 {@code start()}를 직접 부르면 미니게임 엔티티·플레이어
+     * 스냅샷을 만드는 단계가 통째로 건너뛰어져, 종료 시 결과 저장 경로가 돌 수 없다(#1663).
      */
     private void startLadderGame() {
-        gameSessionService.startGame(joinCode, host, gamers);
-        ladderService.start(joinCode.getValue(), host.getName());
+        eventPublisher.publishEvent(
+                new GameStartReadyEvent("evt-" + joinCode.getValue(), joinCode.getValue(), host.getName(), gamers));
     }
 
     private LadderDrawRequest drawRequest(int segmentIndex) {

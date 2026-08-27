@@ -3,7 +3,6 @@ package coffeeshout.blockstacking.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.GameModuleWebSocketTest;
-import coffeeshout.blockstacking.application.BlockStackingService;
 import coffeeshout.blockstacking.application.response.BlockStackingProgressResponse;
 import coffeeshout.blockstacking.application.response.BlockStackingStateResponse;
 import coffeeshout.blockstacking.domain.BlockStackingGame;
@@ -11,9 +10,12 @@ import coffeeshout.blockstacking.domain.BlockStackingGameState;
 import coffeeshout.blockstacking.domain.BlockStackingPlayerRankInfo;
 import coffeeshout.blockstacking.ui.request.BlockStackingProgressRequest;
 import coffeeshout.fixture.GamerFixture;
+import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 
 /**
  * 타이밍 설정 (application-test.yml): prepare=500ms, playing=2000ms
@@ -42,15 +45,18 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
     GameSessionService gameSessionService;
 
     @Autowired
-    BlockStackingService blockStackingService;
+    ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    TestDataHelper testDataHelper;
 
     @BeforeEach
     void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
         joinCode = joinCodeGenerator.generate();
         host = GamerFixture.호스트_꾹이();
-        gamers = GamerFixture.꾹이_루키_엠제이_한스();
+        gamers = 루키가_회원인_명단(joinCode);
 
-        // GameSession을 READY 상태로 사전 구성한다 — Room 검증·영속을 거치지 않고 :game만으로 시작한다(ADR-0025).
+        testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(new BlockStackingGame()));
@@ -67,7 +73,8 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
 
             startBlockStackingGame();
 
-            final BlockStackingStateResponse prepare = payloadAs(stateResponses.get(), BlockStackingStateResponse.class);
+            final BlockStackingStateResponse prepare =
+                    payloadAs(stateResponses.get(), BlockStackingStateResponse.class);
             final MessageResponse playingMessage = stateResponses.get();
             final MessageResponse doneMessage = stateResponses.get(4, TimeUnit.SECONDS);
             final BlockStackingStateResponse playing = payloadAs(playingMessage, BlockStackingStateResponse.class);
@@ -81,6 +88,7 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
             // DONE 전환은 playing 제한 시간(2000ms) 이후여야 한다
             assertThat(doneMessage.duration()).isGreaterThanOrEqualTo(PLAYING_MS - 100);
             assertThat(done.endTimeEpochMs()).isNull();
+            결과_저장과_정산_아웃박스를_확인한다(MiniGameType.BLOCK_STACKING, gamers.size());
         }
     }
 
@@ -160,18 +168,17 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
     }
 
     /**
-     * WS START 커맨드(Room 검증·영속 경유) 대신 :game 서비스를 직접 호출해 게임을 시작한다.
-     * {@code startGame}으로 READY→PLAYING 전이 후 {@code start}로 플로우를 스케줄한다(프로덕션 onGameStartReady와 동일 순서).
+     * 프로덕션 시작 경로를 그대로 탄다 — {@code :room}의 {@code MiniGameStartConsumer}가 발행하는
+     * {@code GameStartReadyEvent}부터다. 서비스의 {@code start()}를 직접 부르면 미니게임 엔티티·플레이어
+     * 스냅샷을 만드는 단계가 통째로 건너뛰어져, 종료 시 결과 저장 경로가 돌 수 없다(#1663).
      */
     private void startBlockStackingGame() {
-        gameSessionService.startGame(joinCode, host, gamers);
-        blockStackingService.start(joinCode.getValue(), host.getName());
+        eventPublisher.publishEvent(
+                new GameStartReadyEvent("evt-" + joinCode.getValue(), joinCode.getValue(), host.getName(), gamers));
     }
 
     private BlockStackingProgressRequest progressCommand(
-            int floor,
-            double movingBlockX, double stackTopX, double stackTopWidth
-    ) {
+            int floor, double movingBlockX, double stackTopX, double stackTopWidth) {
         return new BlockStackingProgressRequest(floor, movingBlockX, stackTopX, stackTopWidth);
     }
 

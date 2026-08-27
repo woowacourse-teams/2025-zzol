@@ -5,10 +5,13 @@ import static org.awaitility.Awaitility.await;
 
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.fixture.GamerFixture;
+import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.speedtouch.application.SpeedTouchGameService;
+import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.event.GameStartReadyEvent;
+import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import coffeeshout.speedtouch.ui.request.TouchCommand;
 import coffeeshout.speedtouch.ui.response.SpeedTouchProgressResponse;
@@ -21,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 
 class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
@@ -28,7 +32,10 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
     GameSessionService gameSessionService;
 
     @Autowired
-    SpeedTouchGameService speedTouchGameService;
+    ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    TestDataHelper testDataHelper;
 
     JoinCode joinCode;
     Gamer host;
@@ -37,11 +44,16 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
     SpeedTouchGame game;
 
     @BeforeEach
-    void setUp() throws Exception {
-        joinCode = new JoinCode("A4BX");
+    void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
+        joinCode = joinCodeGenerator.generate();
         host = GamerFixture.호스트_꾹이();
-        gamers = GamerFixture.꾹이_루키_엠제이_한스();
+        // IT 가속: 터치는 strict sequential(number != currentNumber면 거부)이라 터치마다 직렬 await가 필수다.
+        // 라운드트립 횟수가 곧 실행시간이므로 플레이어를 2명(꾹이·루키)으로 줄여 100회(4명×25)를 50회로 절반화한다.
+        // 방 명단과 게임 명단은 같아야 한다 — 어긋나면 종료 시 확률 조정 리스너가 순위 없는 플레이어에서 죽고,
+        // 같은 이벤트의 뒤 순서인 결과 저장 리스너까지 돌지 않는다.
+        gamers = 루키가_회원인_명단(joinCode).subList(0, 2);
         game = new SpeedTouchGame();
+        testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));
@@ -61,15 +73,18 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
         // then - DESCRIPTION 상태
         MessageResponse descriptionState = stateResponses.get(2, TimeUnit.SECONDS);
-        assertThat(payloadAs(descriptionState, SpeedTouchStateResponse.class).state()).isEqualTo("DESCRIPTION");
+        assertThat(payloadAs(descriptionState, SpeedTouchStateResponse.class).state())
+                .isEqualTo("DESCRIPTION");
 
         // PREPARE 상태
         MessageResponse prepareState = stateResponses.get(6, TimeUnit.SECONDS);
-        assertThat(payloadAs(prepareState, SpeedTouchStateResponse.class).state()).isEqualTo("PREPARE");
+        assertThat(payloadAs(prepareState, SpeedTouchStateResponse.class).state())
+                .isEqualTo("PREPARE");
 
         // PLAYING 상태
         MessageResponse playingState = stateResponses.get(4, TimeUnit.SECONDS);
-        assertThat(payloadAs(playingState, SpeedTouchStateResponse.class).state()).isEqualTo("PLAYING");
+        assertThat(payloadAs(playingState, SpeedTouchStateResponse.class).state())
+                .isEqualTo("PLAYING");
     }
 
     @Test
@@ -96,7 +111,8 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
         // then - 진행도 응답 (blocking get으로 메시지 도착까지 대기)
         MessageResponse progressUpdate = progressResponses.get(3, TimeUnit.SECONDS);
-        assertThat(payloadAs(progressUpdate, SpeedTouchProgressResponse.class).players()).isNotEmpty();
+        assertThat(payloadAs(progressUpdate, SpeedTouchProgressResponse.class).players())
+                .isNotEmpty();
     }
 
     @Test
@@ -109,11 +125,6 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
         var stateResponses = session.subscribe(subscribeStateUrl);
         var progressResponses = session.subscribe(subscribeProgressUrl);
-
-        // IT 가속: 터치는 strict sequential(number != currentNumber면 거부)이라 터치마다 직렬 await가 필수다.
-        // 라운드트립 횟수가 곧 실행시간이므로, 전원 완주→DONE 검증(다중 플레이어 allMatch)은 유지하되
-        // 플레이어를 2명으로 줄여 100회(4명×25)였던 직렬 라운드트립을 50회로 절반화한다.
-        gamers = gamers.subList(0, 2);
 
         // 게임 시작 후 PLAYING 까지 대기
         startSpeedTouchGame();
@@ -134,20 +145,25 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
                 // 게임 도메인 객체의 currentNumber가 갱신될 때까지 대기
                 await().atMost(Duration.ofSeconds(5))
                         .pollInterval(Duration.ofMillis(50))
-                        .untilAsserted(() ->
-                                assertThat(game.findPlayer(playerName).getCurrentNumber())
-                                        .isGreaterThanOrEqualTo(expectedNext)
-                        );
+                        .untilAsserted(
+                                () -> assertThat(game.findPlayer(playerName).getCurrentNumber())
+                                        .isGreaterThanOrEqualTo(expectedNext));
             }
         }
 
         // then - DONE 상태 확인
         MessageResponse doneState = stateResponses.get(10, TimeUnit.SECONDS);
         assertThat(payloadAs(doneState, SpeedTouchStateResponse.class).state()).isEqualTo("DONE");
+        결과_저장과_정산_아웃박스를_확인한다(MiniGameType.SPEED_TOUCH, gamers.size());
     }
 
+    /**
+     * 프로덕션 시작 경로를 그대로 탄다 — {@code :room}의 {@code MiniGameStartConsumer}가 발행하는
+     * {@code GameStartReadyEvent}부터다. 서비스의 {@code start()}를 직접 부르면 미니게임 엔티티·플레이어
+     * 스냅샷을 만드는 단계가 통째로 건너뛰어져, 종료 시 결과 저장 경로가 돌 수 없다(#1663).
+     */
     private void startSpeedTouchGame() {
-        gameSessionService.startGame(joinCode, host, gamers);
-        speedTouchGameService.start(joinCode.getValue(), host.getName());
+        eventPublisher.publishEvent(
+                new GameStartReadyEvent("evt-" + joinCode.getValue(), joinCode.getValue(), host.getName(), gamers));
     }
 }

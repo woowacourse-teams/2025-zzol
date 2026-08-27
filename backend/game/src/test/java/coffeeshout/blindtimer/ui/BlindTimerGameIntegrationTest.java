@@ -4,15 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.GameModuleWebSocketTest;
-import coffeeshout.blindtimer.application.BlindTimerGameService;
 import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.ui.request.StopCommand;
 import coffeeshout.blindtimer.ui.response.BlindTimerProgressResponse;
 import coffeeshout.blindtimer.ui.response.BlindTimerStateResponse;
 import coffeeshout.fixture.GamerFixture;
+import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.support.TestStompSession;
 import java.time.Duration;
 import java.util.List;
@@ -22,6 +24,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 
 class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
 
@@ -32,7 +35,10 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
     GameSessionService gameSessionService;
 
     @Autowired
-    BlindTimerGameService blindTimerGameService;
+    ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    TestDataHelper testDataHelper;
 
     JoinCode joinCode;
     Gamer host;
@@ -44,8 +50,9 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
     void setUp() throws Exception {
         joinCode = uniqueJoinCode();
         host = GamerFixture.호스트_꾹이();
-        gamers = GamerFixture.꾹이_루키_엠제이_한스();
+        gamers = 루키가_회원인_명단(joinCode);
         game = new BlindTimerGame(Duration.ofSeconds(10));
+        testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));
@@ -72,14 +79,18 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         startBlindTimerGame();
 
         // 상태 전환: DESCRIPTION(targetTimeMillis) → PREPARE → PLAYING
-        BlindTimerStateResponse descriptionState = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), BlindTimerStateResponse.class);
-        BlindTimerStateResponse prepareState = payloadAs(stateResponses.get(6, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        BlindTimerStateResponse descriptionState =
+                payloadAs(stateResponses.get(2, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        BlindTimerStateResponse prepareState =
+                payloadAs(stateResponses.get(6, TimeUnit.SECONDS), BlindTimerStateResponse.class);
         progressResponses.get(6, TimeUnit.SECONDS); // PREPARE 시 초기 progress
-        BlindTimerStateResponse playingState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        BlindTimerStateResponse playingState =
+                payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
 
         // host STOP → 진행도 브로드캐스트
         session.send(stopUrl, new StopCommand(host.getName()));
-        BlindTimerProgressResponse progressUpdate = payloadAs(progressResponses.get(3, TimeUnit.SECONDS), BlindTimerProgressResponse.class);
+        BlindTimerProgressResponse progressUpdate =
+                payloadAs(progressResponses.get(3, TimeUnit.SECONDS), BlindTimerProgressResponse.class);
 
         // 전원 STOP (host 포함, 재STOP은 멱등) → DONE
         for (Gamer gamer : gamers) {
@@ -89,10 +100,10 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
             await().atMost(Duration.ofSeconds(5))
                     .pollInterval(Duration.ofMillis(50))
                     .untilAsserted(() ->
-                            assertThat(game.findPlayer(playerName).isStopped()).isTrue()
-                    );
+                            assertThat(game.findPlayer(playerName).isStopped()).isTrue());
         }
-        BlindTimerStateResponse doneState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        BlindTimerStateResponse doneState =
+                payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
 
         // then
         SoftAssertions.assertSoftly(softly -> {
@@ -103,15 +114,17 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
             softly.assertThat(progressUpdate.players()).isNotEmpty();
             softly.assertThat(doneState.state()).isEqualTo("DONE");
         });
+        결과_저장과_정산_아웃박스를_확인한다(MiniGameType.BLIND_TIMER, gamers.size());
     }
 
     /**
-     * WS START 커맨드(Room 검증·영속 경유) 대신 :game 서비스를 직접 호출해 게임을 시작한다.
-     * {@code startGame}으로 READY→PLAYING 전이 후 {@code start}로 플로우를 스케줄한다(프로덕션 onGameStartReady와 동일 순서).
+     * 프로덕션 시작 경로를 그대로 탄다 — {@code :room}의 {@code MiniGameStartConsumer}가 발행하는
+     * {@code GameStartReadyEvent}부터다. 서비스의 {@code start()}를 직접 부르면 미니게임 엔티티·플레이어
+     * 스냅샷을 만드는 단계가 통째로 건너뛰어져, 종료 시 결과 저장 경로가 돌 수 없다(#1663).
      */
     private void startBlindTimerGame() {
-        gameSessionService.startGame(joinCode, host, gamers);
-        blindTimerGameService.start(joinCode.getValue(), host.getName());
+        eventPublisher.publishEvent(
+                new GameStartReadyEvent("evt-" + joinCode.getValue(), joinCode.getValue(), host.getName(), gamers));
     }
 
     /**

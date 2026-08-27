@@ -3,8 +3,8 @@ package coffeeshout.user.infra.redis;
 import coffeeshout.user.domain.OAuthCodeEntry;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.repository.OAuthCodeRepository;
+import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -21,7 +21,7 @@ public class RedisOAuthCodeRepository implements OAuthCodeRepository {
     @Override
     public void save(String code, TokenPair tokens, boolean isNewUser, long ttlSeconds) {
         final String value = tokens.accessToken() + DELIMITER + tokens.refreshToken() + DELIMITER + isNewUser;
-        stringRedisTemplate.opsForValue().set(KEY_PREFIX + code, value, ttlSeconds, TimeUnit.SECONDS);
+        stringRedisTemplate.opsForValue().set(KEY_PREFIX + code, value, Duration.ofSeconds(ttlSeconds));
     }
 
     @Override

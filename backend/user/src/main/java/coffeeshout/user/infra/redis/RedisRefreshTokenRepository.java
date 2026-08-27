@@ -2,9 +2,9 @@ package coffeeshout.user.infra.redis;
 
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -24,9 +24,11 @@ public class RedisRefreshTokenRepository implements RefreshTokenRepository {
         final String userTokensKey = userTokensKey(userId);
         final String storedValue = userId + ":" + userCode;
 
-        stringRedisTemplate.opsForValue().set(tokenKey, storedValue, expirationSeconds, TimeUnit.SECONDS);
+        final Duration expiration = Duration.ofSeconds(expirationSeconds);
+
+        stringRedisTemplate.opsForValue().set(tokenKey, storedValue, expiration);
         stringRedisTemplate.opsForSet().add(userTokensKey, tokenId);
-        stringRedisTemplate.expire(userTokensKey, expirationSeconds, TimeUnit.SECONDS);
+        stringRedisTemplate.expire(userTokensKey, expiration);
     }
 
     @Override

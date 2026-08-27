@@ -1,6 +1,6 @@
 import PlayerIcon from '@/components/@composition/PlayerIcon/PlayerIcon';
 import Description from '@/components/@common/Description/Description';
-import { colorList, ColorKey } from '@/constants/color';
+import { colorList, ColorKey, fallbackColorIndex } from '@/constants/color';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useNunchiGameContext } from '@/contexts/NunchiGame/NunchiGameContext';
 import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
@@ -14,16 +14,6 @@ const nameColor = (state: NunchiPersonState, isMe: boolean): ColorKey => {
   if (isMe) return 'point-500';
   if (state === 'out') return 'gray-400';
   return 'gray-700';
-};
-
-// 명단이 없을 때(하드 리프레시·직접 진입)는 getParticipantColorIndex 가 모두 0 을 반환해 전원이
-// 같은 색이 된다. 이름 해시로 안정적인 색 인덱스를 만들어 사람마다 구분되게 폴백한다.
-const fallbackColorIndex = (name: string): number => {
-  let hash = 0;
-  for (let i = 0; i < name.length; i += 1) {
-    hash = (hash * 31 + name.charCodeAt(i)) % colorList.length;
-  }
-  return hash;
 };
 
 /**

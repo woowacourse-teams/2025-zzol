@@ -10,6 +10,7 @@ import {
   DELAY_AFTER_API,
 } from './domUtils';
 import { MiniGameType } from '@/types/miniGame/common';
+import { chooseHeading } from '@/features/miniGame/wormGame/devtools/wormBot';
 
 // 기본 게임 순서 상수
 export const DEFAULT_SINGLE_GAME: readonly MiniGameType[] = ['CARD_GAME'] as const;
@@ -282,6 +283,47 @@ const racingGamePlayPageAction = async () => {
   }, CLICK_INTERVAL_MS);
 };
 
+let wormGameSteerIntervalId: number | null = null;
+
+export const clearWormGameSteerInterval = () => {
+  if (wormGameSteerIntervalId !== null) {
+    clearInterval(wormGameSteerIntervalId);
+    wormGameSteerIntervalId = null;
+  }
+};
+
+// 지렁이 게임 봇: WormGameProvider 가 dev 에서 노출한 스토어(window.__ZZOL_WORM_STORE__)를 읽어
+// 궤적·경계를 피하는 방향(devtools/wormBot.chooseHeading)으로 조향한다. 스토어가 없으면 포인터를 흔드는 폴백.
+const wormGamePlayPageAction = async () => {
+  clearWormGameSteerInterval();
+  await wait(DELAY_BETWEEN_ACTIONS);
+
+  const STEER_INTERVAL_MS = 150;
+  const POINTER_DISTANCE_PX = 120;
+  let fallbackAngle = Math.random() * Math.PI * 2;
+
+  wormGameSteerIntervalId = window.setInterval(() => {
+    const store = window.__ZZOL_WORM_STORE__;
+    if (store) {
+      const heading = chooseHeading(store);
+      if (heading !== null) store.steer(heading);
+      return;
+    }
+    const targetElement = findElement('worm-game-container') || document.body;
+    fallbackAngle += (Math.random() - 0.5) * 1.2;
+    targetElement.dispatchEvent(
+      new PointerEvent('pointermove', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 1,
+        pointerType: 'mouse',
+        clientX: window.innerWidth / 2 + Math.cos(fallbackAngle) * POINTER_DISTANCE_PX,
+        clientY: window.innerHeight / 2 + Math.sin(fallbackAngle) * POINTER_DISTANCE_PX,
+      })
+    );
+  }, STEER_INTERVAL_MS);
+};
+
 // 페이지 액션 목록
 export const pageActions: PageAction[] = [
   {
@@ -321,6 +363,10 @@ export const pageActions: PageAction[] = [
   {
     pathPattern: /^\/room\/[^/]+\/RACING_GAME\/play$/,
     execute: racingGamePlayPageAction,
+  },
+  {
+    pathPattern: /^\/room\/[^/]+\/WORM_GAME\/play$/,
+    execute: wormGamePlayPageAction,
   },
 ];
 

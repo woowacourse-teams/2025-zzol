@@ -8,6 +8,7 @@ import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
+import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +46,11 @@ public class DashboardController implements DashboardApi {
     @GetMapping("/block-stacking-top-players")
     public ResponseEntity<List<BlockStackingTopPlayerResponse>> getBlockStackingTopPlayers() {
         return ResponseEntity.ok(dashboardService.getBlockStackingTopPlayers());
+    }
+
+    @GetMapping("/worm-game-top-players")
+    public ResponseEntity<List<WormGameTopPlayerResponse>> getWormGameTopPlayers() {
+        return ResponseEntity.ok(dashboardService.getWormGameTopPlayers());
     }
 
     @GetMapping("/speed-touch-top-players")

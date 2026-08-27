@@ -122,9 +122,7 @@ class RunnerTest {
         runner.updateSpeed(10, speedCalculator, now);
 
         // when
-        runner.move(now);
-        runner.move(now);
-        runner.move(now);
+        달린다(runner, speedCalculator, now, 3);
 
         // then
         assertThat(runner.getPosition()).isEqualTo(30);
@@ -150,10 +148,8 @@ class RunnerTest {
         final Instant now = Instant.now();
         runner.updateSpeed(10, speedCalculator, now);
 
-        // when
-        for (int i = 0; i < 100; i++) {
-            runner.move(now);
-        }
+        // when — 완주(50틱) 후에도 계속 돌려 완주 후 감속이 0까지 떨어지는지 본다
+        달린다(runner, speedCalculator, now, 100);
 
         // then
         assertThat(runner.getSpeed()).isEqualTo(RacingGame.INITIAL_SPEED);
@@ -166,9 +162,7 @@ class RunnerTest {
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> RacingGame.MAX_SPEED;
         final Instant now = Instant.now();
         runner.updateSpeed(10, speedCalculator, now);
-        for (int i = 0; i < 100; i++) {
-            runner.move(now);
-        }
+        달린다(runner, speedCalculator, now, 100);
         final int finishPosition = runner.getPosition();
 
         // when
@@ -188,9 +182,7 @@ class RunnerTest {
         runner.updateSpeed(10, speedCalculator, now);
 
         // when
-        for (int i = 0; i < 100; i++) {
-            runner.move(now);
-        }
+        달린다(runner, speedCalculator, now, 100);
 
         // then
         assertThat(runner.isFinished()).isTrue();
@@ -211,13 +203,10 @@ class RunnerTest {
         final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> RacingGame.MAX_SPEED;
         final Instant now = Instant.now();
-        runner.updateSpeed(10, speedCalculator, now);
-        for (int i = 0; i < 99; i++) {
-            runner.move(now);
-        }
+        달린다(runner, speedCalculator, now, 49); // 최고 속도 60 × 49틱 = 2940, 아직 결승선 앞이다
 
         // when
-        runner.move(now);
+        달린다(runner, speedCalculator, now, 1);
 
         // then
         assertThat(runner.getFinishTime()).isNotNull();
@@ -238,18 +227,14 @@ class RunnerTest {
 
     @ParameterizedTest
     @CsvSource({
-            "2950, 60, 83",     // 2950 + 60 = 3010, 10 초과
-            "2980, 30, 66",     // 2980 + 30 = 3010, 10 초과
-            "2990, 20, 50",     // 2990 + 20 = 3010, 10 초과
-            "2995, 10, 50",      // 2995 + 10 = 3005, 5 초과
-            "2997, 5, 60",       // 2997 + 5 = 3002, 2 초과
-            "2999, 3, 33",      // 2999 + 3 = 3002, 2 초과
+        "2950, 60, 83", // 2950 + 60 = 3010, 10 초과
+        "2980, 30, 66", // 2980 + 30 = 3010, 10 초과
+        "2990, 20, 50", // 2990 + 20 = 3010, 10 초과
+        "2995, 10, 50", // 2995 + 10 = 3005, 5 초과
+        "2997, 5, 60", // 2997 + 5 = 3002, 2 초과
+        "2999, 3, 33", // 2999 + 3 = 3002, 2 초과
     })
-    void 결승선을_초과하여_도착하면_남은_거리_비율만큼_시간이_보정된다(
-            int startPosition,
-            int speed,
-            int expectedTicksToFinish
-    ) {
+    void 결승선을_초과하여_도착하면_남은_거리_비율만큼_시간이_보정된다(int startPosition, int speed, int expectedTicksToFinish) {
         // given
         final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> speed;
@@ -261,11 +246,22 @@ class RunnerTest {
 
         // when
         runner.move(tickStartTime);
-        final Instant expectFinishTime = tickStartTime.minusMillis(RacingGame.MOVE_INTERVAL_MILLIS)
-                .plusMillis(expectedTicksToFinish);
+        final Instant expectFinishTime =
+                tickStartTime.minusMillis(RacingGame.MOVE_INTERVAL_MILLIS).plusMillis(expectedTicksToFinish);
 
         // then
         assertThat(runner.isFinished()).isTrue();
         assertThat(runner.getFinishTime()).isEqualTo(expectFinishTime);
+    }
+
+    /**
+     * 매 틱 탭하며 달린다. 주행 중 감속이 있으므로 속도를 한 번만 주고 반복 이동하면
+     * 속도가 계속 줄어 완주하지 못한다 — 실제 플레이(계속 누르기)와 같은 조건을 만든다.
+     */
+    private void 달린다(Runner runner, SpeedCalculator speedCalculator, Instant now, int ticks) {
+        for (int i = 0; i < ticks; i++) {
+            runner.updateSpeed(10, speedCalculator, now);
+            runner.move(now);
+        }
     }
 }

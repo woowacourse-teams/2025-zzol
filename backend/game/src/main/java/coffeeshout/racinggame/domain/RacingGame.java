@@ -22,6 +22,9 @@ public class RacingGame implements Playable {
     public static final int MIN_SPEED = 3;
     public static final int MAX_SPEED = 60;
     public static final int CLICK_PER_SPEED_SCALE = 1;
+    // 주행 중 감속률 — 탭이 없으면 매 틱 이 비율로 줄어든다. 고속일수록 크게 깎여
+    // '몰아치고 손 떼기'를 초반에 강하게 응징한다. MIN_SPEED가 하한이라 완전히 멈추지는 않는다.
+    public static final double SPEED_DECAY_RATE = 0.9;
     public static final int FINISH_LINE = 3000;
     public static final int START_LINE = 0;
 

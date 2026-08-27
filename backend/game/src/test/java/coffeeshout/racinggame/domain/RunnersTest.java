@@ -13,7 +13,8 @@ class RunnersTest {
 
     private final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> 30;
 
-    final List<Gamer> players = List.of(PlayerFixture.호스트한스().toGamer(), PlayerFixture.게스트꾹이().toGamer());
+    final List<Gamer> players =
+            List.of(PlayerFixture.호스트한스().toGamer(), PlayerFixture.게스트꾹이().toGamer());
     final Runners runners = new Runners(players);
 
     @Test
@@ -39,10 +40,7 @@ class RunnersTest {
     void 우승자를_찾을_수_있다() {
         // given
         final Instant now = Instant.now();
-        runners.updateSpeed(players.getFirst().getName(), 10, speedCalculator, now);
-        for (int i = 0; i < 100; i++) {
-            runners.moveAll(now);
-        }
+        달린다(100, now, players.getFirst().getName());
 
         // when
         final Runner winner = runners.findWinner().get();
@@ -61,10 +59,7 @@ class RunnersTest {
     void 우승자가_있는지_확인할_수_있다() {
         // given
         final Instant now = Instant.now();
-        runners.updateSpeed(players.getFirst().getName(), 10, speedCalculator, now);
-        for (int i = 0; i < 100; i++) {
-            runners.moveAll(now);
-        }
+        달린다(100, now, players.getFirst().getName());
 
         // when && then
         assertThat(runners.hasWinner()).isTrue();
@@ -97,11 +92,7 @@ class RunnersTest {
     void 모든_러너가_완주했는지_확인할_수_있다() {
         // given
         final Instant now = Instant.now();
-        runners.updateSpeed(players.getFirst().getName(), 10, speedCalculator, now);
-        runners.updateSpeed(players.get(1).getName(), 10, speedCalculator, now);
-        for (int i = 0; i < 100; i++) {
-            runners.moveAll(now);
-        }
+        달린다(100, now, players.getFirst().getName(), players.get(1).getName());
 
         // when && then
         assertThat(runners.isAllFinished()).isTrue();
@@ -132,5 +123,18 @@ class RunnersTest {
 
         // then
         assertThat(runners.getRunners().getFirst().getLastSpeedUpdateTime()).isEqualTo(time);
+    }
+
+    /**
+     * 지정한 러너들이 매 틱 탭하며 달린다. 주행 중 감속이 있으므로 속도를 한 번만 주고
+     * 반복 이동하면 속도가 계속 줄어 완주하지 못한다.
+     */
+    private void 달린다(int ticks, Instant now, String... tappingNames) {
+        for (int i = 0; i < ticks; i++) {
+            for (final String name : tappingNames) {
+                runners.updateSpeed(name, 10, speedCalculator, now);
+            }
+            runners.moveAll(now);
+        }
     }
 }

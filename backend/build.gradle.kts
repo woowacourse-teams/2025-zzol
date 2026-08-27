@@ -12,6 +12,15 @@ version = "0.0.1-SNAPSHOT"
 val springBootVersion: String = libs.versions.spring.boot.get()
 val pmdVersion: String = libs.versions.pmd.get()
 
+// pre-push 훅 자동 활성화 — 클론 후 별도 지식 없이 켜지게 한다 (#1659).
+// 프론트만 만지는 사람은 frontend/package.json 의 prepare 스크립트가 같은 일을 한다.
+tasks.register<Exec>("installGitHooks") {
+    group = "build setup"
+    description = "core.hooksPath 를 .githooks 로 설정해 pre-push 훅을 켠다."
+    commandLine("git", "config", "core.hooksPath", ".githooks")
+    isIgnoreExitValue = true // git 이 없거나 저장소가 아니어도 빌드를 막지 않는다
+}
+
 tasks.register<Exec>("pruneStaleTestContainers") {
     group = "verification"
     description = "종료된 Testcontainers 컨테이너를 제거한다. reuse 캐시 초기화 시 사용."
@@ -113,6 +122,10 @@ subprojects {
                 fileTree(dir) { exclude("**/event/*Event.class") }
             }
         )
+    }
+
+    tasks.named("build") {
+        dependsOn(rootProject.tasks.named("installGitHooks"))
     }
 
     tasks.withType<Test> {

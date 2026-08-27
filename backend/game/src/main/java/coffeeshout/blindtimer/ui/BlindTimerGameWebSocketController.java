@@ -25,15 +25,13 @@ public class BlindTimerGameWebSocketController {
      * 대신 멈출 수 있다. playerName 을 빼고 나면 본문에 남는 게 없어 request DTO 자체를 두지 않는다.
      */
     @MessageMapping("/room/{joinCode}/blind-timer/stop")
-    @WsReceive(
-            respondsOnTopics = "/room/{joinCode}/blind-timer/progress",
-            description = "블라인드 타이머 게임 STOP 버튼"
-    )
+    @WsReceive(respondsOnTopics = "/room/{joinCode}/blind-timer/progress", description = "블라인드 타이머 게임 STOP 버튼")
     public void stop(@DestinationVariable String joinCode, Principal principal) {
-        final String authenticatedPlayerName = PlayerKey.parse(principal.getName()).playerName();
+        final String authenticatedPlayerName =
+                PlayerKey.parse(principal.getName()).playerName();
         final BaseEvent event = StopCommandEvent.create(joinCode, authenticatedPlayerName);
         streamPublisher.publish(BlindTimerStreamKey.EVENTS, event);
-        log.debug("STOP 이벤트 발행: joinCode={}, player={}, eventId={}",
-                joinCode, authenticatedPlayerName, event.eventId());
+        log.debug(
+                "STOP 이벤트 발행: joinCode={}, player={}, eventId={}", joinCode, authenticatedPlayerName, event.eventId());
     }
 }

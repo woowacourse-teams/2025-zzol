@@ -27,14 +27,10 @@ public class RacingGameWebSocketController {
     @MessageMapping("/room/{joinCode}/racing-game/tap")
     @WsReceive(
             respondsOnTopics = {"/room/{joinCode}/racing-game/state"},
-            description = "레이싱 게임 탭"
-    )
-    public void tap(
-            @DestinationVariable String joinCode,
-            @Payload @Valid TapCommand command,
-            Principal principal
-    ) {
-        final String authenticatedPlayerName = PlayerKey.parse(principal.getName()).playerName();
+            description = "레이싱 게임 탭")
+    public void tap(@DestinationVariable String joinCode, @Payload @Valid TapCommand command, Principal principal) {
+        final String authenticatedPlayerName =
+                PlayerKey.parse(principal.getName()).playerName();
         racingGameCommandPublisher.tap(joinCode, authenticatedPlayerName, command.tapCount());
     }
 }

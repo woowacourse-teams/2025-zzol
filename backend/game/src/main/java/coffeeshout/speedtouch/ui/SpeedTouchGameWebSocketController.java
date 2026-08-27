@@ -30,19 +30,18 @@ public class SpeedTouchGameWebSocketController {
     @MessageMapping("/room/{joinCode}/speed-touch/touch")
     @WsReceive(
             respondsOnTopics = "/room/{joinCode}/speed-touch/progress",
-            description = "스피드 터치 게임 터치 — 1 to 25 스피드 터치에서 숫자를 터치하는 웹소켓 요청"
-    )
-    public void touch(
-            @DestinationVariable String joinCode,
-            @Payload @Valid TouchCommand command,
-            Principal principal
-    ) {
-        final String authenticatedPlayerName = PlayerKey.parse(principal.getName()).playerName();
-        final BaseEvent event = TouchProgressCommandEvent.create(
-                joinCode, authenticatedPlayerName, command.touchedNumber()
-        );
+            description = "스피드 터치 게임 터치 — 1 to 25 스피드 터치에서 숫자를 터치하는 웹소켓 요청")
+    public void touch(@DestinationVariable String joinCode, @Payload @Valid TouchCommand command, Principal principal) {
+        final String authenticatedPlayerName =
+                PlayerKey.parse(principal.getName()).playerName();
+        final BaseEvent event =
+                TouchProgressCommandEvent.create(joinCode, authenticatedPlayerName, command.touchedNumber());
         streamPublisher.publish(SpeedTouchStreamKey.EVENTS, event);
-        log.debug("터치 이벤트 발행: joinCode={}, player={}, number={}, eventId={}",
-                joinCode, authenticatedPlayerName, command.touchedNumber(), event.eventId());
+        log.debug(
+                "터치 이벤트 발행: joinCode={}, player={}, number={}, eventId={}",
+                joinCode,
+                authenticatedPlayerName,
+                command.touchedNumber(),
+                event.eventId());
     }
 }

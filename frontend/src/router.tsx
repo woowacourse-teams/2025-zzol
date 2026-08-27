@@ -54,6 +54,9 @@ const TermsAgreementPage = lazy(
 const PrivacyPage = lazy(
   () => import(/*webpackChunkName: "privacyPage"*/ './features/privacy/pages/PrivacyPage')
 );
+const SeoContentPage = lazy(
+  () => import(/*webpackChunkName: "seoContentPage"*/ './features/seo/pages/SeoContentPage')
+);
 
 const router = createBrowserRouter([
   {
@@ -105,6 +108,17 @@ const router = createBrowserRouter([
       {
         path: 'privacy',
         element: <PrivacyPage />,
+      },
+      {
+        path: 'guide',
+        element: <SeoContentPage />,
+      },
+      {
+        path: 'games',
+        children: [
+          { index: true, element: <SeoContentPage /> },
+          { path: ':slug', element: <SeoContentPage /> },
+        ],
       },
       {
         path: '*',

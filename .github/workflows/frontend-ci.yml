@@ -73,6 +73,11 @@ jobs:
         id: build
         run: |
           npm run build
+          # 라우트별 정적 HTML·sitemap 이 실제로 생성됐는지 확인한다 (#1710).
+          # 빠지면 CloudFront 가 SPA fallback 으로 홈 HTML 을 주고 색인이 다시 홈으로 합쳐진다.
+          grep -q 'canonical" href="https://www.zzol.site/games/card-game"' dist/games/card-game/index.html
+          grep -q 'name="robots" content="noindex' dist/404/index.html
+          test "$(grep -c '<loc>' dist/sitemap.xml)" -eq 11
           echo "success=true" >> $GITHUB_OUTPUT
 
       - name: Upload build artifact

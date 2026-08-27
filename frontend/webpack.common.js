@@ -14,6 +14,75 @@ const __dirname = dirname(__filename);
 const packageJson = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
 const appVersion = packageJson.version;
 
+const SITE_URL = 'https://www.zzol.site';
+
+// 라우트별 메타의 단일 소스. SPA 콘텐츠 페이지(src/seo/pages.ts)와 같은 파일을 읽는다.
+const seoPages = JSON.parse(readFileSync(path.resolve(__dirname, 'src/seo/pages.json'), 'utf8'));
+
+// CloudFront Function 이 확장자 없는 URI 를 `.../index.html` 로 재작성하므로,
+// 라우트마다 실제 파일을 만들어 두면 SPA fallback 대신 이 파일이 서빙된다.
+const htmlPlugins = (devSnippet) =>
+  seoPages.map(
+    (page) =>
+      new HtmlWebpackPlugin({
+        template: './public/index.html',
+        filename: page.path === '/' ? 'index.html' : `${page.path.slice(1)}/index.html`,
+        templateParameters: {
+          DEV_SNIPPET: devSnippet,
+          TITLE: page.title,
+          DESCRIPTION: page.description,
+          CANONICAL: `${SITE_URL}${page.path}`,
+          H1: page.h1,
+          BODY: page.body,
+          ROBOTS: page.noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large',
+          JSON_LD: JSON.stringify(
+            page.jsonLd ?? {
+              '@context': 'https://schema.org',
+              '@type': 'WebPage',
+              name: page.title,
+              description: page.description,
+              url: `${SITE_URL}${page.path}`,
+              inLanguage: 'ko',
+              isPartOf: { '@type': 'WebSite', name: '쫄 (ZZOL)', url: `${SITE_URL}/` },
+            }
+          ),
+        },
+      })
+  );
+
+// sitemap 도 같은 소스에서 만든다 — public/sitemap.xml 수기 관리를 없애고 lastmod 를 빌드일로 갱신한다.
+const sitemapPlugin = {
+  apply(compiler) {
+    compiler.hooks.thisCompilation.tap('SitemapPlugin', (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'SitemapPlugin',
+          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+        },
+        () => {
+          const lastmod = new Date().toISOString().split('T')[0];
+          const urls = seoPages
+            .filter((page) => !page.noindex)
+            .map(
+              (page) =>
+                `  <url>\n    <loc>${SITE_URL}${page.path}</loc>\n    <lastmod>${lastmod}</lastmod>\n` +
+                `    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>`
+            )
+            .join('\n');
+
+          compilation.emitAsset(
+            'sitemap.xml',
+            new compiler.webpack.sources.RawSource(
+              `<?xml version="1.0" encoding="UTF-8"?>\n` +
+                `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`
+            )
+          );
+        }
+      );
+    });
+  },
+};
+
 export default (_, argv) => {
   const mode = argv.mode || 'development';
 
@@ -74,16 +143,12 @@ export default (_, argv) => {
       conditionNames: ['import', 'module', 'browser', 'default'],
     },
     plugins: [
-      new HtmlWebpackPlugin({
-        template: './public/index.html',
-        favicon: './public/favicon.ico',
-        templateParameters: {
-          DEV_SNIPPET:
-            process.env.ENABLE_DEVTOOLS === 'true'
-              ? `<script type="module" src="/devtools/devSnippet.js"></script>`
-              : '',
-        },
-      }),
+      ...htmlPlugins(
+        process.env.ENABLE_DEVTOOLS === 'true'
+          ? `<script type="module" src="/devtools/devSnippet.js"></script>`
+          : ''
+      ),
+      sitemapPlugin,
       new CopyWebpackPlugin({
         patterns: [
           {
@@ -99,14 +164,10 @@ export default (_, argv) => {
             to: 'robots.txt',
           },
           {
-            from: 'public/sitemap.xml',
-            to: 'sitemap.xml',
-            transform(content) {
-              const today = new Date().toISOString().split('T')[0];
-              return content
-                .toString()
-                .replace(/<lastmod>[^<]*<\/lastmod>/g, `<lastmod>${today}</lastmod>`);
-            },
+            // HtmlWebpackPlugin 의 favicon 옵션 대신 여기서 복사한다 —
+            // 페이지 수만큼 인스턴스가 생기면 같은 파일을 여러 번 emit 하게 된다.
+            from: 'public/favicon.ico',
+            to: 'favicon.ico',
           },
           {
             from: 'public/manifest.json',

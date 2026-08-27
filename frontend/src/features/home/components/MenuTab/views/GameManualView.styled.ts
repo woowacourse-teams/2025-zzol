@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { Link } from 'react-router-dom';
 
 export const Container = styled.div`
   display: flex;
@@ -22,4 +23,11 @@ export const Subtitle = styled.p`
   color: ${({ theme }) => theme.color.point[500]};
   margin: 0;
   line-height: 1.5;
+`;
+
+export const MoreLink = styled(Link)`
+  ${({ theme }) => theme.typography.small}
+  align-self: flex-start;
+  color: ${({ theme }) => theme.color.point[500]};
+  text-decoration: underline;
 `;

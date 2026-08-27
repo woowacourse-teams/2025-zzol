@@ -38,6 +38,14 @@ const ServiceInfoView = () => {
           <S.LinkLabel>GitHub 보기</S.LinkLabel>
           <S.LinkIcon>↗</S.LinkIcon>
         </S.LinkRow>
+        <S.InternalLinkRow onClick={() => navigate('/guide')}>
+          <S.LinkLabel>이용 가이드</S.LinkLabel>
+          <S.LinkIcon>›</S.LinkIcon>
+        </S.InternalLinkRow>
+        <S.InternalLinkRow onClick={() => navigate('/games')}>
+          <S.LinkLabel>미니게임 설명</S.LinkLabel>
+          <S.LinkIcon>›</S.LinkIcon>
+        </S.InternalLinkRow>
         <S.InternalLinkRow onClick={() => navigate('/privacy')}>
           <S.LinkLabel>개인정보 처리방침</S.LinkLabel>
           <S.LinkIcon>›</S.LinkIcon>

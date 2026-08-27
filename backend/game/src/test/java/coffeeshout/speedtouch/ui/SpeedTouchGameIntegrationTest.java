@@ -35,7 +35,6 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
     @Autowired
     TestDataHelper testDataHelper;
 
-
     JoinCode joinCode;
     Gamer host;
     List<Gamer> gamers;
@@ -68,15 +67,18 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
         // then - DESCRIPTION 상태
         MessageResponse descriptionState = stateResponses.get(2, TimeUnit.SECONDS);
-        assertThat(payloadAs(descriptionState, SpeedTouchStateResponse.class).state()).isEqualTo("DESCRIPTION");
+        assertThat(payloadAs(descriptionState, SpeedTouchStateResponse.class).state())
+                .isEqualTo("DESCRIPTION");
 
         // PREPARE 상태
         MessageResponse prepareState = stateResponses.get(6, TimeUnit.SECONDS);
-        assertThat(payloadAs(prepareState, SpeedTouchStateResponse.class).state()).isEqualTo("PREPARE");
+        assertThat(payloadAs(prepareState, SpeedTouchStateResponse.class).state())
+                .isEqualTo("PREPARE");
 
         // PLAYING 상태
         MessageResponse playingState = stateResponses.get(4, TimeUnit.SECONDS);
-        assertThat(payloadAs(playingState, SpeedTouchStateResponse.class).state()).isEqualTo("PLAYING");
+        assertThat(payloadAs(playingState, SpeedTouchStateResponse.class).state())
+                .isEqualTo("PLAYING");
     }
 
     @Test
@@ -103,7 +105,8 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
         // then - 진행도 응답 (blocking get으로 메시지 도착까지 대기)
         MessageResponse progressUpdate = progressResponses.get(3, TimeUnit.SECONDS);
-        assertThat(payloadAs(progressUpdate, SpeedTouchProgressResponse.class).players()).isNotEmpty();
+        assertThat(payloadAs(progressUpdate, SpeedTouchProgressResponse.class).players())
+                .isNotEmpty();
     }
 
     @Test
@@ -141,10 +144,9 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
                 // 게임 도메인 객체의 currentNumber가 갱신될 때까지 대기
                 await().atMost(Duration.ofSeconds(5))
                         .pollInterval(Duration.ofMillis(50))
-                        .untilAsserted(() ->
-                                assertThat(game.findPlayer(playerName).getCurrentNumber())
-                                        .isGreaterThanOrEqualTo(expectedNext)
-                        );
+                        .untilAsserted(
+                                () -> assertThat(game.findPlayer(playerName).getCurrentNumber())
+                                        .isGreaterThanOrEqualTo(expectedNext));
             }
         }
 

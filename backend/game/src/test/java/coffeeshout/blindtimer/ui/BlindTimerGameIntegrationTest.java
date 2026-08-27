@@ -39,7 +39,6 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
     @Autowired
     TestDataHelper testDataHelper;
 
-
     JoinCode joinCode;
     Gamer host;
     List<Gamer> gamers;
@@ -79,14 +78,18 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         startBlindTimerGame();
 
         // 상태 전환: DESCRIPTION(targetTimeMillis) → PREPARE → PLAYING
-        BlindTimerStateResponse descriptionState = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), BlindTimerStateResponse.class);
-        BlindTimerStateResponse prepareState = payloadAs(stateResponses.get(6, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        BlindTimerStateResponse descriptionState =
+                payloadAs(stateResponses.get(2, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        BlindTimerStateResponse prepareState =
+                payloadAs(stateResponses.get(6, TimeUnit.SECONDS), BlindTimerStateResponse.class);
         progressResponses.get(6, TimeUnit.SECONDS); // PREPARE 시 초기 progress
-        BlindTimerStateResponse playingState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        BlindTimerStateResponse playingState =
+                payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
 
         // host STOP → 진행도 브로드캐스트
         session.send(stopUrl, new StopCommand(host.getName()));
-        BlindTimerProgressResponse progressUpdate = payloadAs(progressResponses.get(3, TimeUnit.SECONDS), BlindTimerProgressResponse.class);
+        BlindTimerProgressResponse progressUpdate =
+                payloadAs(progressResponses.get(3, TimeUnit.SECONDS), BlindTimerProgressResponse.class);
 
         // 전원 STOP (host 포함, 재STOP은 멱등) → DONE
         for (Gamer gamer : gamers) {
@@ -96,10 +99,10 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
             await().atMost(Duration.ofSeconds(5))
                     .pollInterval(Duration.ofMillis(50))
                     .untilAsserted(() ->
-                            assertThat(game.findPlayer(playerName).isStopped()).isTrue()
-                    );
+                            assertThat(game.findPlayer(playerName).isStopped()).isTrue());
         }
-        BlindTimerStateResponse doneState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
+        BlindTimerStateResponse doneState =
+                payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
 
         // then
         SoftAssertions.assertSoftly(softly -> {

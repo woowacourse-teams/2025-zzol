@@ -42,7 +42,6 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
     @Autowired
     TestDataHelper testDataHelper;
 
-
     @BeforeEach
     void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
         joinCode = joinCodeGenerator.generate();
@@ -73,10 +72,14 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
             startLadderGame();
 
             final LadderStateResponse description = payloadAs(stateResponses.get(), LadderStateResponse.class);
-            final LadderStateResponse prepare = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
-            final LadderStateResponse drawing = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
-            final LadderStateResponse result = payloadAs(stateResponses.get(3, TimeUnit.SECONDS), LadderStateResponse.class);
-            final LadderStateResponse done = payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse prepare =
+                    payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse drawing =
+                    payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse result =
+                    payloadAs(stateResponses.get(3, TimeUnit.SECONDS), LadderStateResponse.class);
+            final LadderStateResponse done =
+                    payloadAs(stateResponses.get(2, TimeUnit.SECONDS), LadderStateResponse.class);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(description.state()).isEqualTo(LadderGameState.DESCRIPTION);

@@ -53,7 +53,6 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
     @Autowired
     TestDataHelper testDataHelper;
 
-
     @Autowired
     NunchiTimingProperties timing;
 
@@ -70,7 +69,8 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
         testDataHelper.게임_시작_준비된_방_생성(joinCode);
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
-        gameSessionService.getSession(joinCode)
+        gameSessionService
+                .getSession(joinCode)
                 .replaceGames(host, List.of(new NunchiGame(timing.numberWindow().toMillis())));
 
         session = createSession(joinCode.getValue(), host.getName());
@@ -86,8 +86,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
             startNunchiGame();
 
             // 첫 메시지는 규칙 설명(DESCRIPTION) — serverNowEpochMs만 싣는다(결정 9)
-            final NunchiStateResponse description =
-                    payloadAs(stateResponses.get(), NunchiStateResponse.class);
+            final NunchiStateResponse description = payloadAs(stateResponses.get(), NunchiStateResponse.class);
             assertThat(description.state()).isEqualTo(NunchiState.DESCRIPTION);
             assertThat(description.serverNowEpochMs()).isNotNull();
             assertThat(description.playStartEpochMs()).isNull();
@@ -145,8 +144,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
 
             session.send(pressCommandUrl()); // 호스트(꾹이) 단독 press
 
-            final NunchiStandResponse stand =
-                    payloadAs(standResponses.get(), NunchiStandResponse.class);
+            final NunchiStandResponse stand = payloadAs(standResponses.get(), NunchiStandResponse.class);
             assertThat(stand.name()).isEqualTo(host.getName());
             assertThat(stand.number()).isEqualTo(1);
             assertThat(stand.idleDeadlineEpochMs()).isPositive();
@@ -192,10 +190,9 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
             standResponses.get(); // stand 수신 = 복구 저장 완료(save가 broadcast 직전 실행)
 
             // lastId="0-0"(스트림 시작)부터 재생 — 시드 PLAYING과 이후 stand가 모두 복구 대상에 들어있다
-            final List<String> destinations =
-                    wsRecoveryService.getMessagesSince(joinCode.getValue(), "0-0").stream()
-                            .map(RecoveryMessage::destination)
-                            .toList();
+            final List<String> destinations = wsRecoveryService.getMessagesSince(joinCode.getValue(), "0-0").stream()
+                    .map(RecoveryMessage::destination)
+                    .toList();
 
             assertThat(destinations).contains(stateUrl(), standUrl());
         }
@@ -264,8 +261,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
             awaitState(stateResponses, NunchiState.PLAYING); // DESCRIPTION→READY→PLAYING 후에야 입력 수락
 
             session.send(pressCommandUrl()); // 호스트 첫 press
-            final NunchiStandResponse first =
-                    payloadAs(standResponses.get(), NunchiStandResponse.class);
+            final NunchiStandResponse first = payloadAs(standResponses.get(), NunchiStandResponse.class);
             assertThat(first.name()).isEqualTo(host.getName());
 
             session.send(pressCommandUrl()); // 같은 사람의 재press → IGNORED

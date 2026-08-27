@@ -49,7 +49,6 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
     @Autowired
     TestDataHelper testDataHelper;
 
-
     @BeforeEach
     void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
         joinCode = joinCodeGenerator.generate();
@@ -74,7 +73,8 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
 
             startBlockStackingGame();
 
-            final BlockStackingStateResponse prepare = payloadAs(stateResponses.get(), BlockStackingStateResponse.class);
+            final BlockStackingStateResponse prepare =
+                    payloadAs(stateResponses.get(), BlockStackingStateResponse.class);
             final MessageResponse playingMessage = stateResponses.get();
             final MessageResponse doneMessage = stateResponses.get(4, TimeUnit.SECONDS);
             final BlockStackingStateResponse playing = payloadAs(playingMessage, BlockStackingStateResponse.class);
@@ -177,9 +177,7 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
     }
 
     private BlockStackingProgressRequest progressCommand(
-            int floor,
-            double movingBlockX, double stackTopX, double stackTopWidth
-    ) {
+            int floor, double movingBlockX, double stackTopX, double stackTopWidth) {
         return new BlockStackingProgressRequest(floor, movingBlockX, stackTopX, stackTopWidth);
     }
 

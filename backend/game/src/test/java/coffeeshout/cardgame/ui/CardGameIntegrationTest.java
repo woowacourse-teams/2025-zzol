@@ -52,7 +52,6 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
     @Autowired
     TestDataHelper testDataHelper;
 
-
     @Autowired
     ObjectMapper objectMapper;
 
@@ -91,16 +90,25 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
         // 게임 종료
         MessageResponse done = responses.get();
 
-        assertThat(payloadAs(firstRoundLoading, MiniGameStateMessage.class).cardGameState()).isEqualTo("FIRST_LOADING");
-        assertThat(payloadAs(firstRoundLoading, MiniGameStateMessage.class).currentRound()).isEqualTo("FIRST");
-        assertThat(payloadAs(firstRoundLoading, MiniGameStateMessage.class).allSelected()).isFalse();
+        assertThat(payloadAs(firstRoundLoading, MiniGameStateMessage.class).cardGameState())
+                .isEqualTo("FIRST_LOADING");
+        assertThat(payloadAs(firstRoundLoading, MiniGameStateMessage.class).currentRound())
+                .isEqualTo("FIRST");
+        assertThat(payloadAs(firstRoundLoading, MiniGameStateMessage.class).allSelected())
+                .isFalse();
 
-        assertThat(payloadAs(prepare, MiniGameStateMessage.class).cardGameState()).isEqualTo("PREPARE");
-        assertThat(payloadAs(firstRoundPlaying, MiniGameStateMessage.class).cardGameState()).isEqualTo("PLAYING");
-        assertThat(payloadAs(firstRoundScoreBoard, MiniGameStateMessage.class).cardGameState()).isEqualTo("SCORE_BOARD");
-        assertThat(payloadAs(secondRoundLoading, MiniGameStateMessage.class).cardGameState()).isEqualTo("LOADING");
-        assertThat(payloadAs(secondRoundPlaying, MiniGameStateMessage.class).cardGameState()).isEqualTo("PLAYING");
-        assertThat(payloadAs(secondRoundScoreBoard, MiniGameStateMessage.class).cardGameState()).isEqualTo("SCORE_BOARD");
+        assertThat(payloadAs(prepare, MiniGameStateMessage.class).cardGameState())
+                .isEqualTo("PREPARE");
+        assertThat(payloadAs(firstRoundPlaying, MiniGameStateMessage.class).cardGameState())
+                .isEqualTo("PLAYING");
+        assertThat(payloadAs(firstRoundScoreBoard, MiniGameStateMessage.class).cardGameState())
+                .isEqualTo("SCORE_BOARD");
+        assertThat(payloadAs(secondRoundLoading, MiniGameStateMessage.class).cardGameState())
+                .isEqualTo("LOADING");
+        assertThat(payloadAs(secondRoundPlaying, MiniGameStateMessage.class).cardGameState())
+                .isEqualTo("PLAYING");
+        assertThat(payloadAs(secondRoundScoreBoard, MiniGameStateMessage.class).cardGameState())
+                .isEqualTo("SCORE_BOARD");
         assertThat(payloadAs(done, MiniGameStateMessage.class).cardGameState()).isEqualTo("DONE");
     }
 
@@ -230,8 +238,10 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
         // playing 제한시간(2000ms)을 기다리지 않고 earlyFinishDelay(500ms) 후 도달해야 함
         MessageResponse scoreBoard = responses.get(3, TimeUnit.SECONDS);
 
-        assertThat(payloadAs(lastSelection, MiniGameStateMessage.class).allSelected()).isTrue();
-        assertThat(payloadAs(scoreBoard, MiniGameStateMessage.class).cardGameState()).isEqualTo("SCORE_BOARD");
+        assertThat(payloadAs(lastSelection, MiniGameStateMessage.class).allSelected())
+                .isTrue();
+        assertThat(payloadAs(scoreBoard, MiniGameStateMessage.class).cardGameState())
+                .isEqualTo("SCORE_BOARD");
 
         // 핵심 검증: playing 제한시간(2000ms)보다 훨씬 빠르게 전환됨
         assertThat(scoreBoard.duration())
@@ -259,8 +269,7 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
      */
     private void selectCard(String playerName, int cardIndex) {
         String json = objectMapper.writeValueAsString(new MiniGameMessage(
-                CommandType.SELECT_CARD,
-                objectMapper.valueToTree(new SelectCardCommand(playerName, cardIndex))));
+                CommandType.SELECT_CARD, objectMapper.valueToTree(new SelectCardCommand(playerName, cardIndex))));
         session.send(commandUrl(), json);
     }
 

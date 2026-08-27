@@ -1,6 +1,5 @@
 package coffeeshout.minigame.event;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import coffeeshout.GameModuleIntegrationTest;
@@ -23,11 +22,15 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.room.infra.persistence.RoomEntity;
+import coffeeshout.settlement.infra.SettlementStreamKey;
 import coffeeshout.speedtouch.application.SpeedTouchGameProgressHandler;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import coffeeshout.speedtouch.domain.SpeedTouchPlayer;
+import coffeeshout.user.infra.persistence.UserEntity;
+import coffeeshout.user.infra.persistence.UserJpaRepository;
 import java.time.Duration;
 import java.util.List;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +80,9 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
     @Autowired
     SpeedTouchGameProgressHandler speedTouchProgressHandler;
 
+    @Autowired
+    UserJpaRepository userJpaRepository;
+
     JoinCode joinCode;
     Gamer host;
     List<Gamer> gamers;
@@ -91,28 +97,28 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
     }
 
     @Test
-    void 카드게임_종료시_결과가_저장된다() {
+    void 카드게임_종료시_결과와_정산_이벤트가_저장된다() {
         게임을_시작한다(new CardGameFake(new CardGameDeckStub()));
 
         결과_저장과_정산_아웃박스를_확인한다(MiniGameType.CARD_GAME);
     }
 
     @Test
-    void 사다리게임_종료시_결과가_저장된다() {
+    void 사다리게임_종료시_결과와_정산_이벤트가_저장된다() {
         게임을_시작한다(new LadderGame());
 
         결과_저장과_정산_아웃박스를_확인한다(MiniGameType.LADDER_GAME);
     }
 
     @Test
-    void 블록쌓기_종료시_결과가_저장된다() {
+    void 블록쌓기_종료시_결과와_정산_이벤트가_저장된다() {
         게임을_시작한다(new BlockStackingGame());
 
         결과_저장과_정산_아웃박스를_확인한다(MiniGameType.BLOCK_STACKING);
     }
 
     @Test
-    void 눈치게임_종료시_결과가_저장된다() {
+    void 눈치게임_종료시_결과와_정산_이벤트가_저장된다() {
         // 아무도 누르지 않으면 idle 타임아웃(500ms)으로 종료된다.
         게임을_시작한다(new NunchiGame(nunchiTiming.numberWindow().toMillis()));
 
@@ -120,7 +126,7 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
     }
 
     @Test
-    void 블라인드타이머_종료시_결과가_저장된다() {
+    void 블라인드타이머_종료시_결과와_정산_이벤트가_저장된다() {
         // 종료는 targetTime + timeoutBuffer(3s)에 예약된다. 목표 시간을 줄여 입력 없이 타임아웃으로 끝낸다
         // (미입력 플레이어는 BlindTimerScore.ofTimeout으로 채점되므로 결과는 그대로 만들어진다).
         게임을_시작한다(new BlindTimerGame(Duration.ofMillis(500)));
@@ -129,7 +135,7 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
     }
 
     @Test
-    void 스피드터치_종료시_결과가_저장된다() {
+    void 스피드터치_종료시_결과와_정산_이벤트가_저장된다() {
         final SpeedTouchGame game = new SpeedTouchGame();
         게임을_시작한다(game);
 
@@ -169,7 +175,6 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
         roomRepository.save(room);
         roomEntityRepository.save(new RoomEntity(joinCode.getValue()));
 
-        gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));
 
@@ -182,10 +187,11 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
      * (2라운드 × playing 2s)을 기준으로 넉넉히 잡는다.
      */
     private void 결과_저장과_정산_아웃박스를_확인한다(MiniGameType miniGameType) {
-        await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
-            assertThat(저장된_결과_수(miniGameType)).isEqualTo(gamers.size());
-            assertThat(정산_아웃박스_수(miniGameType)).isEqualTo(1);
-        });
+        await().atMost(Duration.ofSeconds(20))
+                .untilAsserted(() -> SoftAssertions.assertSoftly(softly -> {
+                    softly.assertThat(저장된_결과_수(miniGameType)).isEqualTo(gamers.size());
+                    softly.assertThat(정산_아웃박스_수(miniGameType)).isEqualTo(1);
+                }));
     }
 
     private Integer 저장된_결과_수(MiniGameType miniGameType) {
@@ -193,20 +199,23 @@ class MiniGameResultSaveIntegrationTest extends GameModuleIntegrationTest {
                 "SELECT COUNT(*) FROM mini_game_result WHERE mini_game_type = ?", Integer.class, miniGameType.name());
     }
 
-    /** 정산 이벤트는 결과 저장과 같은 트랜잭션에서 Outbox에 기록된다(#1610). 릴레이는 행을 지우지 않고 상태만 바꾼다. */
+    /**
+     * 정산 이벤트는 결과 저장과 같은 트랜잭션에서 Outbox에 기록된다(#1610). 릴레이는 행을 지우지 않고 상태만 바꾼다.
+     *
+     * <p>스트림 키만으로도 테스트당 게임이 하나라 충분하지만 payload의 게임 타입까지 건다. 게임 스케줄러는 컨텍스트
+     * 수명이라 앞선 테스트가 남긴 종료 태스크가 이 테스트 도중 발화할 수 있고, 그때 격리를 보장하는 것이 타입
+     * 필터다(레이싱 IT가 같은 이유로 스케줄러 큐를 비운다).
+     */
     private Integer 정산_아웃박스_수(MiniGameType miniGameType) {
         return jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM outbox_event WHERE stream_key = 'settlement:result' AND payload LIKE ?",
+                "SELECT COUNT(*) FROM outbox_event WHERE stream_key = ? AND payload LIKE ?",
                 Integer.class,
+                SettlementStreamKey.RESULT.getRedisKey(),
                 "%" + miniGameType.name() + "%");
     }
 
     private Long 회원_한_명을_만든다() {
-        jdbcTemplate.update(
-                "INSERT INTO app_user (user_code, nickname, created_at, updated_at) VALUES (?, ?, NOW(6), NOW(6))",
-                "T1663",
-                "루키");
-        return jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
+        return userJpaRepository.save(new UserEntity("T1663", "루키")).getId();
     }
 
     private List<Gamer> 루키를_회원으로_바꾼_명단(Long userId) {

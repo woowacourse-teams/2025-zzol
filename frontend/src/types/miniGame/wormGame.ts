@@ -51,8 +51,8 @@ export type WormSnapshotMessage = {
   worms: WormTrailSnapshot[];
 };
 
+/** 조향 대상은 서버가 STOMP principal 로 정한다 — playerName 을 실으면 남의 지렁이를 조종할 수 있다. */
 export type SteerCommand = {
-  playerName: string;
   /** 목표각(라디안) */
   angle: number;
   /** 단조증가 입력 일련번호 */

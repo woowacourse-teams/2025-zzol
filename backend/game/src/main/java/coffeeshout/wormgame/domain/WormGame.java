@@ -28,10 +28,6 @@ public class WormGame implements Playable {
     private long tickCount;
     private boolean roundOver;
 
-    public WormGame() {
-        this(WormGameRules.defaults());
-    }
-
     public WormGame(WormGameRules rules) {
         this.rules = rules;
     }

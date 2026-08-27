@@ -2,6 +2,7 @@ package coffeeshout.wormgame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
 class TrailTest {
@@ -40,7 +41,9 @@ class TrailTest {
 
     @Test
     void 점이_하나면_세그먼트는_없다() {
-        assertThat(trailOf(1).segmentCount()).isZero();
-        assertThat(trailOf(0).sampled(2)).isEmpty();
+        final SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(trailOf(1).segmentCount()).isZero();
+        softly.assertThat(trailOf(0).sampled(2)).isEmpty();
+        softly.assertAll();
     }
 }

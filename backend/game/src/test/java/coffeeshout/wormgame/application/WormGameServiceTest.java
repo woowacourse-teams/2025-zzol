@@ -16,6 +16,7 @@ import coffeeshout.wormgame.domain.WormGame;
 import coffeeshout.wormgame.domain.WormGameState;
 import java.time.Duration;
 import java.util.List;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,8 +61,10 @@ class WormGameServiceTest extends GameModuleServiceTest {
 
         // then
         await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
-            assertThat(game.getState()).isEqualTo(WormGameState.PLAYING);
-            assertThat(game.getTickCount()).isPositive();
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(game.getState()).isEqualTo(WormGameState.PLAYING);
+            softly.assertThat(game.getTickCount()).isPositive();
+            softly.assertAll();
         });
     }
 

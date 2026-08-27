@@ -21,7 +21,7 @@ const announcementOf = (isDead: boolean, followName: string, isFinished: boolean
  * PREPARE 오버레이 → PLAYING(조향) → 사망 시 관전(탭으로 대상 순환) → FINISH 배지 → DONE 이면 결과로.
  */
 const WormGamePlayPage = () => {
-  const { joinCode, myName } = useIdentifier();
+  const { joinCode } = useIdentifier();
   const { miniGameType } = useParams();
   const navigate = useReplaceNavigate();
   const { wormGameState, store } = useWormGame();
@@ -33,7 +33,6 @@ const WormGamePlayPage = () => {
   const { onPointerDown, onPointerMove, onPointerUp } = useWormSteering({
     store,
     joinCode,
-    playerName: myName,
     containerRef,
     // PREPARE 중에도 조준은 허용(스폰 직후 방향 유실 방지), 전송은 PLAYING·생존 중에만
     inputEnabled: !isDead && wormGameState !== 'DESCRIPTION',

@@ -116,8 +116,11 @@ public class WormGameService implements MiniGameService {
                 }
             }
         } catch (Exception e) {
-            log.error("틱 처리 중 오류 — 틱 루프를 중단합니다: joinCode={}", joinCode, e);
+            // 루프만 끊으면 상태가 PLAYING 에 머물러 세션이 영원히 안 풀린다 — 클라는 DONE 에서만
+            // 결과로 넘어가고, 게임 세션이 잠기면 룰렛 진행까지 막힌다. 알림이 실패해도 종료는 시킨다.
+            log.error("틱 처리 중 오류 — 틱 루프를 중단하고 게임을 종료합니다: joinCode={}", joinCode, e);
             stopTicking(joinCode);
+            abort(game, joinCode);
         }
     }
 
@@ -125,6 +128,16 @@ public class WormGameService implements MiniGameService {
         stopTicking(joinCode);
         changeState(game, joinCode, WormGameState.FINISH);
         publishSnapshot(game, joinCode); // 최종 궤적 정지 화면
+        taskScheduler.schedule(() -> done(game, joinCode), Instant.now().plus(timing.finish()));
+    }
+
+    /** 틱 예외 복구 — 남은 연출 없이 FINISH 로 표시하고 정상 종료 경로(done)로 합류시킨다. */
+    private void abort(WormGame game, String joinCode) {
+        try {
+            changeState(game, joinCode, WormGameState.FINISH);
+        } catch (Exception e) {
+            log.error("종료 상태 알림 실패 — done 스케줄은 그대로 진행합니다: joinCode={}", joinCode, e);
+        }
         taskScheduler.schedule(() -> done(game, joinCode), Instant.now().plus(timing.finish()));
     }
 

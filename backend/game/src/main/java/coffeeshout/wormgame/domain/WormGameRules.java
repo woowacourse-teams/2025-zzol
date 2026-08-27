@@ -22,11 +22,6 @@ public record WormGameRules(
         int wetPaintSkipSegments,
         int selfSkipSegments) {
 
-    public static WormGameRules defaults() {
-        return new WormGameRules(
-                50L, 120.0, 1.6, 1200, Math.toRadians(200), 0.7, 220.0, 200, 1200, 0.30, 0.05, 40.0, 40, 6.0, 3, 5);
-    }
-
     public double speedUnitsPerSecond(long tick) {
         final double ramp = Math.min(1.0, tick / (double) speedRampTicks);
         return baseSpeed * (1 + ramp * (maxSpeedMultiplier - 1));

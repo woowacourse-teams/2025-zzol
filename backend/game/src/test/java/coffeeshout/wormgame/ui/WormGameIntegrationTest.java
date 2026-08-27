@@ -14,12 +14,14 @@ import coffeeshout.support.TestStompSession.MessageCollector;
 import coffeeshout.wormgame.application.WormGameService;
 import coffeeshout.wormgame.domain.WormGame;
 import coffeeshout.wormgame.domain.WormGameState;
+import coffeeshout.wormgame.fixture.WormGameRulesFixture;
 import coffeeshout.wormgame.ui.request.SteerCommand;
 import coffeeshout.wormgame.ui.response.WormGameStateResponse;
 import coffeeshout.wormgame.ui.response.WormsStateResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,7 +59,7 @@ class WormGameIntegrationTest extends GameModuleWebSocketTest {
         gamers = GamerFixture.꾹이_루키_엠제이_한스();
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
-        game = new WormGame();
+        game = new WormGame(WormGameRulesFixture.defaultRules());
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));
         session = createSession(joinCode.getValue(), host.getName());
     }
@@ -90,11 +92,13 @@ class WormGameIntegrationTest extends GameModuleWebSocketTest {
 
         // then — 20Hz 틱 델타가 전원 머리 상태를 싣고 흐른다
         final WormsStateResponse delta = payloadAs(deltaResponses.get(2, TimeUnit.SECONDS), WormsStateResponse.class);
-        assertThat(delta.tick()).isPositive();
-        assertThat(delta.worms()).hasSize(gamers.size());
+        final SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(delta.tick()).isPositive();
+        softly.assertThat(delta.worms()).hasSize(gamers.size());
+        softly.assertAll();
 
         // when — 조향: STOMP → Redis Stream → Consumer → Service → 도메인
-        session.send(String.format("/app/room/%s/worm/steer", code), new SteerCommand(host.getName(), 1.0, 1));
+        session.send(String.format("/app/room/%s/worm/steer", code), new SteerCommand(1.0, 1));
 
         // then
         await().atMost(Duration.ofSeconds(3))

@@ -9,7 +9,6 @@ const SEND_INTERVAL_MS = 100;
 type Params = {
   store: WormStore;
   joinCode: string;
-  playerName: string;
   containerRef: RefObject<HTMLElement | null>;
   /** 조준 입력 허용(PREPARE 중에도 미리 방향을 잡을 수 있게 전송과 분리) */
   inputEnabled: boolean;
@@ -26,7 +25,6 @@ type Params = {
 export const useWormSteering = ({
   store,
   joinCode,
-  playerName,
   containerRef,
   inputEnabled,
   sendEnabled,
@@ -83,11 +81,11 @@ export const useWormSteering = ({
       lastSentRef.current = angle;
       // 새로고침으로 훅이 리마운트되면 seqRef 는 0 부터다 — 서버가 수락한 마지막 seq 를 넘겨서 이어붙인다
       seqRef.current = Math.max(seqRef.current, store.myLastSeq) + 1;
-      const command: SteerCommand = { playerName, angle, seq: seqRef.current };
+      const command: SteerCommand = { angle, seq: seqRef.current };
       send(`/room/${joinCode}/worm/steer`, command);
     }, SEND_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [sendEnabled, isConnected, joinCode, playerName, send, store]);
+  }, [sendEnabled, isConnected, joinCode, send, store]);
 
   return { onPointerDown, onPointerMove: track, onPointerUp };
 };

@@ -6,7 +6,9 @@ import static org.assertj.core.api.Assertions.within;
 
 import coffeeshout.fixture.GamerFixture;
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.wormgame.fixture.WormGameRulesFixture;
 import java.util.List;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,11 @@ class WormGameTest {
 
     /** 판정 시나리오용 규칙 — 무적·페인트 유예를 끄고 틱당 30u를 움직여 기하를 단순화한다. */
     WormGameRules collisionRules(int invincibleTicks, int wetPaintSkipSegments) {
+        return collisionRules(invincibleTicks, wetPaintSkipSegments, 5);
+    }
+
+    /** 자기 궤적 유예(selfSkipSegments)까지 지정한다 — 자기/타인 분기를 구분하는 시나리오용. */
+    WormGameRules collisionRules(int invincibleTicks, int wetPaintSkipSegments, int selfSkipSegments) {
         return new WormGameRules(
                 50L,
                 600.0,
@@ -33,7 +40,7 @@ class WormGameTest {
                 invincibleTicks,
                 6.0,
                 wetPaintSkipSegments,
-                5);
+                selfSkipSegments);
     }
 
     void addVerticalTrail(Worm owner, double x, double fromY, double toY, double step) {
@@ -46,17 +53,19 @@ class WormGameTest {
     @Test
     void 게임_시작을_위해_준비한다() {
         // given
-        final WormGame game = new WormGame();
+        final WormGame game = new WormGame(WormGameRulesFixture.defaultRules());
 
         // when
         game.setUp(gamers);
 
         // then
-        assertThat(game.getState()).isEqualTo(WormGameState.DESCRIPTION);
-        assertThat(game.getWorms().all())
+        final SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(game.getState()).isEqualTo(WormGameState.DESCRIPTION);
+        softly.assertThat(game.getWorms().all())
                 .hasSize(4)
                 .allMatch(Worm::isAlive)
                 .allMatch(worm -> worm.distanceFromCenter() < game.currentRadius());
+        softly.assertAll();
     }
 
     @Nested
@@ -79,9 +88,11 @@ class WormGameTest {
             game.tick();
 
             // then
-            assertThat(mover.isAlive()).isFalse();
-            assertThat(mover.getDeathTick()).isEqualTo(1);
-            assertThat(owner.isAlive()).isTrue();
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(mover.isAlive()).isFalse();
+            softly.assertThat(mover.getDeathTick()).isEqualTo(1);
+            softly.assertThat(owner.isAlive()).isTrue();
+            softly.assertAll();
         }
 
         @Test
@@ -116,8 +127,53 @@ class WormGameTest {
             game.tick();
 
             // then
-            assertThat(escaper.isAlive()).isFalse();
-            assertThat(escaper.getDeathTick()).isEqualTo(1);
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(escaper.isAlive()).isFalse();
+            softly.assertThat(escaper.getDeathTick()).isEqualTo(1);
+            softly.assertAll();
+        }
+
+        @Test
+        void 자기_궤적의_오래된_구간에는_죽는다() {
+            // given — Tron 규칙의 핵심. 자기 궤적 10세그먼트 중 교차점(y=0)은 머리 직전 5세그먼트 밖이다.
+            final WormGame game = new WormGame(collisionRules(0, 3, 5));
+            game.setUp(twoGamers);
+            game.updateState(WormGameState.PLAYING);
+            final Worm mover = game.getWorms().findByName("꾹이");
+            final Worm other = game.getWorms().findByName("루키");
+            mover.placeAt(0, 0, 0);
+            other.placeAt(0, 100, Math.PI / 2);
+            addVerticalTrail(mover, 15, -50, 50, 10);
+
+            // when
+            game.tick();
+
+            // then
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(mover.isAlive()).isFalse();
+            softly.assertThat(mover.getDeathTick()).isEqualTo(1);
+            softly.assertThat(other.isAlive()).isTrue();
+            softly.assertAll();
+        }
+
+        @Test
+        void 자기_궤적의_머리_직전_구간은_판정에서_제외된다() {
+            // given — 자기 궤적이 정확히 5세그먼트(=selfSkipSegments)뿐이라 검사 대상이 없다.
+            // 타인 유예(3)를 잘못 적용하면 2세그먼트가 검사에 걸려 교차점(y=0)에서 죽는다.
+            final WormGame game = new WormGame(collisionRules(0, 3, 5));
+            game.setUp(twoGamers);
+            game.updateState(WormGameState.PLAYING);
+            final Worm mover = game.getWorms().findByName("꾹이");
+            final Worm other = game.getWorms().findByName("루키");
+            mover.placeAt(0, 0, 0);
+            other.placeAt(0, 100, Math.PI / 2);
+            addVerticalTrail(mover, 15, -20, 30, 10); // 6점 = 5세그먼트
+
+            // when
+            game.tick();
+
+            // then
+            assertThat(mover.isAlive()).isTrue();
         }
 
         @Test
@@ -176,9 +232,11 @@ class WormGameTest {
 
             // then
             final var scores = game.getScores();
-            assertThat(scores.values().stream().distinct()).hasSize(1);
-            assertThat(game.getResult().getRank().values()).containsExactly(1, 1);
-            assertThat(game.isRoundOver()).isTrue();
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(scores.values().stream().distinct()).hasSize(1);
+            softly.assertThat(game.getResult().getRank().values()).containsExactly(1, 1);
+            softly.assertThat(game.isRoundOver()).isTrue();
+            softly.assertAll();
         }
 
         @Test
@@ -197,9 +255,11 @@ class WormGameTest {
             // then
             assertThat(game.isRoundOver()).isTrue();
             final var rank = game.getResult().getRank();
-            assertThat(rank.get(gamers.get(2))).isEqualTo(1);
-            assertThat(rank.get(gamers.get(0))).isEqualTo(2);
-            assertThat(rank.get(gamers.get(1))).isEqualTo(2);
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(rank.get(gamers.get(2))).isEqualTo(1);
+            softly.assertThat(rank.get(gamers.get(0))).isEqualTo(2);
+            softly.assertThat(rank.get(gamers.get(1))).isEqualTo(2);
+            softly.assertAll();
         }
     }
 
@@ -209,7 +269,7 @@ class WormGameTest {
         @Test
         void 회전은_각속도_상한으로_클램프된다() {
             // given — 목표각이 정반대(π)여도 한 틱에 ω만큼만 돈다.
-            final WormGameRules rules = WormGameRules.defaults();
+            final WormGameRules rules = WormGameRulesFixture.defaultRules();
             final Worm worm = new Worm(GamerFixture.호스트_꾹이());
             worm.spawnAt(0, 0, 0);
             worm.steer(Math.PI, 1);
@@ -224,7 +284,7 @@ class WormGameTest {
         @Test
         void 회전_상한은_속도에_부분_비례한다() {
             // given
-            final WormGameRules rules = WormGameRules.defaults();
+            final WormGameRules rules = WormGameRulesFixture.defaultRules();
 
             // when — 최고 속도(램프 완료) 시점의 ω / 초기 ω = 1.6^0.7
             final double ratio = rules.omegaPerTick(rules.speedRampTicks()) / rules.omegaPerTick(0);
@@ -236,7 +296,7 @@ class WormGameTest {
         @Test
         void 유효하지_않은_각도는_거부한다() {
             // given
-            final WormGame game = new WormGame();
+            final WormGame game = new WormGame(WormGameRulesFixture.defaultRules());
             game.setUp(twoGamers);
             game.updateState(WormGameState.PLAYING);
 
@@ -247,7 +307,7 @@ class WormGameTest {
         @Test
         void 순서가_뒤바뀐_조향은_무시된다() {
             // given — 마지막 값만 유효: 늦게 도착한 과거 seq는 버린다.
-            final WormGame game = new WormGame();
+            final WormGame game = new WormGame(WormGameRulesFixture.defaultRules());
             game.setUp(twoGamers);
             game.updateState(WormGameState.PLAYING);
             final Worm worm = game.getWorms().findByName("꾹이");
@@ -263,7 +323,7 @@ class WormGameTest {
         @Test
         void 플레이_중이_아니면_조향할_수_없다() {
             // given
-            final WormGame game = new WormGame();
+            final WormGame game = new WormGame(WormGameRulesFixture.defaultRules());
             game.setUp(twoGamers);
 
             // when & then
@@ -274,27 +334,34 @@ class WormGameTest {
     @Nested
     class 축소_곡선 {
 
-        final WormGameRules rules = WormGameRules.defaults();
+        final WormGameRules rules = WormGameRulesFixture.defaultRules();
 
         @Test
         void 아레나_면적은_인원수에_비례한다() {
-            assertThat(rules.initialRadius(4)).isCloseTo(220.0, within(1e-9));
-            assertThat(rules.initialRadius(8)).isCloseTo(220.0 * Math.sqrt(2), within(1e-9));
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(rules.initialRadius(4)).isCloseTo(220.0, within(1e-9));
+            softly.assertThat(rules.initialRadius(8)).isCloseTo(220.0 * Math.sqrt(2), within(1e-9));
+            softly.assertAll();
         }
 
         @Test
         void 유예_동안은_줄지_않고_완료_시_최소_비율에_도달한다() {
-            assertThat(rules.arenaRadius(4, 0)).isCloseTo(220.0, within(1e-9));
-            assertThat(rules.arenaRadius(4, rules.shrinkDelayTicks() - 1)).isCloseTo(220.0, within(1e-9));
-            assertThat(rules.arenaRadius(4, rules.shrinkDelayTicks() + rules.shrinkDurationTicks()))
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(rules.arenaRadius(4, 0)).isCloseTo(220.0, within(1e-9));
+            softly.assertThat(rules.arenaRadius(4, rules.shrinkDelayTicks() - 1))
+                    .isCloseTo(220.0, within(1e-9));
+            softly.assertThat(rules.arenaRadius(4, rules.shrinkDelayTicks() + rules.shrinkDurationTicks()))
                     .isCloseTo(220.0 * 0.30, within(1e-9));
+            softly.assertAll();
         }
 
         @Test
         void 완료_후에도_완만히_줄다가_바닥에서_멈춘다() {
             final long doneTick = rules.shrinkDelayTicks() + rules.shrinkDurationTicks();
-            assertThat(rules.arenaRadius(4, doneTick + 100)).isCloseTo(220.0 * 0.30 - 0.05 * 100, within(1e-9));
-            assertThat(rules.arenaRadius(4, doneTick + 100_000)).isEqualTo(rules.minRadius());
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(rules.arenaRadius(4, doneTick + 100)).isCloseTo(220.0 * 0.30 - 0.05 * 100, within(1e-9));
+            softly.assertThat(rules.arenaRadius(4, doneTick + 100_000)).isEqualTo(rules.minRadius());
+            softly.assertAll();
         }
     }
 }

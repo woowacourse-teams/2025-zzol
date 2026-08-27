@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,8 +81,10 @@ class WormGameFlowTest {
         startAndReachPlaying();
 
         // then
-        assertThat(game.getState()).isEqualTo(WormGameState.PLAYING);
-        assertThat(scheduler.tickTask()).isNotNull();
+        final SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(game.getState()).isEqualTo(WormGameState.PLAYING);
+        softly.assertThat(scheduler.tickTask()).isNotNull();
+        softly.assertAll();
         final InOrder inOrder = inOrder(eventPublisher);
         inOrder.verify(eventPublisher).publishEvent(stateChangedTo(WormGameState.DESCRIPTION));
         inOrder.verify(eventPublisher).publishEvent(stateChangedTo(WormGameState.PREPARE));
@@ -109,9 +112,10 @@ class WormGameFlowTest {
     }
 
     @Test
-    void 틱_처리_중_예외가_나면_루프를_중단한다() {
+    void 틱_처리_중_예외가_나면_루프를_중단하고_FINISH_뒤_DONE까지_도달한다() {
         // given
         startAndReachPlaying();
+        given(gameSessionService.finishGame(any())).willReturn(1);
         willThrow(new IllegalStateException("broker down"))
                 .given(eventPublisher)
                 .publishEvent(any(WormsMovedEvent.class));
@@ -119,8 +123,18 @@ class WormGameFlowTest {
         // when
         scheduler.tickTask().run();
 
-        // then
+        // then — 루프를 끊는 것만으로는 부족하다. 상태가 PLAYING 에 남으면 세션이 안 풀려 룰렛까지 막힌다
         then(scheduler.tickFuture()).should().cancel(false);
+        assertThat(game.getState()).isEqualTo(WormGameState.FINISH);
+
+        // when — 종료 연출 만료
+        scheduler.lastTask().run();
+
+        // then
+        final SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(game.getState()).isEqualTo(WormGameState.DONE);
+        softly.assertAll();
+        then(gameSessionService).should().finishGame(any());
     }
 
     @Test

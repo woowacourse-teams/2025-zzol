@@ -1,6 +1,6 @@
 import { merge } from 'webpack-merge';
 import { GenerateSW } from 'workbox-webpack-plugin';
-import common from './webpack.common.js';
+import common, { CONTENT_ROUTE_PATTERN } from './webpack.common.js';
 
 export default (env, argv) =>
   merge(common(env, { ...argv, mode: 'production' }), {
@@ -12,7 +12,7 @@ export default (env, argv) =>
         navigateFallback: '/index.html',
         // 라우트별 정적 HTML 이 있는 콘텐츠 경로는 SW 가 홈 HTML 로 대체하면 안 된다
         // — 재방문자에게 홈 title/canonical 이 보이면 정적 생성이 무의미해진다.
-        navigateFallbackDenylist: [/^\/(guide|games|privacy|404)(\/|$)/],
+        navigateFallbackDenylist: [CONTENT_ROUTE_PATTERN],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/cdn\.jsdelivr\.net\//,

@@ -35,6 +35,10 @@ transform(content) {
 },
 ```
 
+> **이후 변경 (#1710):** `public/sitemap.xml`과 위 `transform`은 제거됐다. sitemap은 이제
+> `src/seo/pages.json`에서 `webpack.common.js`의 인라인 플러그인이 빌드 시 생성하며,
+> `lastmod`도 거기서 빌드일로 채운다.
+
 ---
 
 ## 3. Web App Manifest 누락

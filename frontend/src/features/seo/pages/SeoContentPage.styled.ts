@@ -29,7 +29,7 @@ export const Title = styled.h1`
 export const Body = styled.p`
   ${({ theme }) => theme.typography.paragraph}
   color: ${({ theme }) => theme.color.gray[700]};
-  line-height: 1.8;
+  /* body 에 줄바꿈을 넣으면 그대로 렌더되도록 둔다 — 정적 셸의 <br /> 와 대응한다 */
   white-space: pre-line;
 `;
 
@@ -41,6 +41,7 @@ export const LinkList = styled.ul`
 
 export const LinkItem = styled.li`
   a {
+    ${({ theme }) => theme.typography.paragraph}
     display: flex;
     align-items: center;
     gap: 10px;
@@ -55,10 +56,6 @@ export const LinkItem = styled.li`
     width: 28px;
     height: 28px;
   }
-`;
-
-export const LinkTitle = styled.span`
-  ${({ theme }) => theme.typography.paragraph}
 `;
 
 export const Cta = styled(Link)`

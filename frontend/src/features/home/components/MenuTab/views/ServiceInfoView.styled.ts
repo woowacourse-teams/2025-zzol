@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { Link } from 'react-router-dom';
 
 export const Container = styled.div`
   display: flex;
@@ -135,3 +136,6 @@ export const InternalLinkRow = styled.button`
     background: ${({ theme }) => theme.color.point[50]};
   }
 `;
+
+// 크롤러가 따라갈 수 있도록 실제 <a> 로 렌더한다 — button 은 링크로 인식되지 않는다.
+export const InternalLinkAnchor = InternalLinkRow.withComponent(Link);

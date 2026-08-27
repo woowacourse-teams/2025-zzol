@@ -19,8 +19,16 @@ const SITE_URL = 'https://www.zzol.site';
 // 라우트별 메타의 단일 소스. SPA 콘텐츠 페이지(src/seo/pages.ts)와 같은 파일을 읽는다.
 const seoPages = JSON.parse(readFileSync(path.resolve(__dirname, 'src/seo/pages.json'), 'utf8'));
 
-// CloudFront Function 이 확장자 없는 URI 를 `.../index.html` 로 재작성하므로,
-// 라우트마다 실제 파일을 만들어 두면 SPA fallback 대신 이 파일이 서빙된다.
+// 홈(`/`)을 뺀 콘텐츠 라우트의 최상위 세그먼트. webpack.prod.js 의 Service Worker
+// denylist 가 이걸 쓴다 — 라우트 목록을 두 벌로 적으면 pages.json 에 라우트를 더할 때 조용히 어긋난다.
+// Workbox 는 pathname 이 아니라 pathname+search 에 매칭하므로 끝을 `[/?]` 까지 허용한다.
+export const CONTENT_ROUTE_PATTERN = new RegExp(
+  `^/(${[...new Set(seoPages.filter((page) => page.path !== '/').map((page) => page.path.split('/')[1]))].join('|')})($|[/?])`
+);
+
+// ⚠️ 라우트마다 실제 파일을 만들어 둘 뿐이다. 프로덕션에서 이 파일이 실제로 서빙되려면
+// 확장자 없는 URI 를 `.../index.html` 로 재작성하는 CloudFront Function 이 있어야 한다(별도 인프라 작업).
+// 그 함수를 붙이기 전에 이 빌드가 먼저 배포돼야 한다 — 반대로 하면 `/privacy` 가 깨진다.
 const htmlPlugins = (devSnippet) =>
   seoPages.map(
     (page) =>
@@ -35,6 +43,7 @@ const htmlPlugins = (devSnippet) =>
           H1: page.h1,
           BODY: page.body,
           ROBOTS: page.noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large',
+          // `<` 를 이스케이프한다 — 값에 `</script>` 가 섞이면 스크립트가 그 자리에서 끊긴다.
           JSON_LD: JSON.stringify(
             page.jsonLd ?? {
               '@context': 'https://schema.org',
@@ -45,7 +54,7 @@ const htmlPlugins = (devSnippet) =>
               inLanguage: 'ko',
               isPartOf: { '@type': 'WebSite', name: '쫄 (ZZOL)', url: `${SITE_URL}/` },
             }
-          ),
+          ).replace(/</g, '\\u003c'),
         },
       })
   );

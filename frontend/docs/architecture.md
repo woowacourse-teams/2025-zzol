@@ -11,6 +11,7 @@ React Router v7, 페이지는 모두 lazy-load. 주요 라우트 구조:
   - `/roulette/play`, `/roulette/result` — 룰렛 게임
   - `/:miniGameType/ready|play|result` — 미니게임 페이지 (MiniGameProviders로 래핑)
 - `/join/:joinCode` — QR 딥링크 입장 페이지
+- `/guide`, `/games`, `/games/:slug` — SEO 콘텐츠 페이지 (`SeoContentPage` 하나가 셋을 담당하며 본문은 `src/seo/pages.json`에서 읽는다)
 
 ## Provider 계층 (`src/App.tsx`)
 
@@ -95,4 +96,5 @@ Sentry는 `src/main.tsx`에서 프로덕션 전용으로 초기화되며, `@sent
 
 기존에는 AWS CodePipeline(GitHub App 소스)이 이 역할을 했으나, 조직 이관 후 GitHub App 설치 권한이 없어져 GitHub Actions 직접 배포로 전환했다(#1568).
 
-- 정적 파일(`sitemap.xml`, `robots.txt`, `manifest.json` 등)은 `webpack.common.js`의 CopyWebpackPlugin으로 `dist/`에 복사되어 아티팩트에 포함된다.
+- 정적 파일(`robots.txt`, `manifest.json` 등)은 `webpack.common.js`의 CopyWebpackPlugin으로 `dist/`에 복사되어 아티팩트에 포함된다.
+- `sitemap.xml`과 라우트별 `{path}/index.html`은 복사가 아니라 `webpack.common.js`가 `src/seo/pages.json`에서 **생성**한다 (#1710).

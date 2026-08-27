@@ -38,16 +38,16 @@ const SeoContentPage = () => {
                 <S.LinkItem key={gamePage.path}>
                   <Link to={gamePage.path}>
                     <img src={MINI_GAME_ICON_MAP[gamePage.game]} alt="" />
-                    <S.LinkTitle>{MINI_GAME_NAME_MAP[gamePage.game]}</S.LinkTitle>
+                    {MINI_GAME_NAME_MAP[gamePage.game]}
                   </Link>
                 </S.LinkItem>
               ))}
             </S.LinkList>
           )}
 
-          {page.game && <S.Cta to="/games">다른 미니게임 보기 &gt;</S.Cta>}
-          {page.path !== '/guide' && <S.Cta to="/guide">쫄 이용 가이드 보기 &gt;</S.Cta>}
-          <S.Cta to="/">쫄에서 내기 시작하기 &gt;</S.Cta>
+          {page.game && <S.Cta to="/games">다른 미니게임 보기</S.Cta>}
+          {page.path !== '/guide' && <S.Cta to="/guide">쫄 이용 가이드 보기</S.Cta>}
+          <S.Cta to="/">쫄에서 내기 시작하기</S.Cta>
         </S.Container>
       </Layout.Content>
     </Layout>

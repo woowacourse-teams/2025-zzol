@@ -10,17 +10,20 @@ export type SeoPage = {
   title: string;
   description: string;
   h1: string;
+  /** 정적 셸에는 HTML 로, SPA 에는 텍스트로 들어간다 — 홈만 `<br />` 를 쓴다 */
   body: string;
   changefreq: string;
   priority: string;
   game?: MiniGameType;
   noindex?: boolean;
+  /** 홈만 직접 정의한다. 나머지는 webpack 이 WebPage 스키마를 만들어 넣는다 */
+  jsonLd?: Record<string, unknown>;
 };
 
 export const SEO_PAGES = pages as SeoPage[];
 
 export const findSeoPage = (path: string) => SEO_PAGES.find((page) => page.path === path);
 
-export type GameSeoPage = SeoPage & { game: MiniGameType };
+type GameSeoPage = SeoPage & { game: MiniGameType };
 
 export const GAME_PAGES = SEO_PAGES.filter((page): page is GameSeoPage => page.game !== undefined);

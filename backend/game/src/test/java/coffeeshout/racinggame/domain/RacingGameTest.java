@@ -45,7 +45,7 @@ class RacingGameTest {
                 players.get(1).getName().value(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
 
         // when
-        racingGame.moveAll();
+        racingGame.moveAll(Instant.now());
 
         // then
         final Map<Runner, Integer> positions = racingGame.getPositions();
@@ -65,7 +65,7 @@ class RacingGameTest {
 
         // when
         for (int i = 0; i < 101; ++i) {
-            racingGame.moveAll();
+            racingGame.moveAll(Instant.now());
         }
 
         // then
@@ -99,34 +99,31 @@ class RacingGameTest {
                 .isInstanceOf(BusinessException.class);
     }
 
-    // PMD.NoThreadSleep 억제 — 아래 Thread.sleep은 테스트 편의가 아니라 프로덕션 제약이다.
-    // RacingGame.moveAll()이 내부에서 Instant.now()를 읽고(RacingGame:50) getResult()가 그
-    // finishTime으로 순위를 매기므로, 두 주자의 완주 시각을 벌리지 않으면 순위가 비결정적이 된다.
-    // 근본 해결은 moveAll()이 Instant를 주입받는 것(컨벤션: 시간은 파라미터로 주입)이며,
-    // 프로덕션 API 변경이라 별도 이슈로 분리한다.
-    @SuppressWarnings("PMD.NoThreadSleep")
+    // 완주 순서는 tick 시각으로만 갈린다. 점수는 밀리초로 절삭되므로(RacingGame#convertScore)
+    // 실제 시각으로 돌리면 300틱이 같은 밀리초에 들어가 동률이 되고 순위가 뒤집힌다.
+    // startTime을 기준으로 MOVE_INTERVAL_MILLIS 간격의 가짜 tick을 주입해 결정적으로 만든다.
     @Test
-    void 게임_결과를_조회할_수_있다() throws InterruptedException {
+    void 게임_결과를_조회할_수_있다() {
         // given
         racingGame.setUp(players.stream().map(p -> p.toGamer()).toList());
         racingGame.updateState(RacingGameState.PLAYING);
         racingGame.setUpStart();
         racingGame.setAutoMoveFuture(null);
 
+        final Instant startTime = racingGame.getStartTime();
+        int tick = 0;
+
         for (int i = 0; i < 100; i++) {
-            racingGame.updateSpeed(
-                    players.get(1).getName().value(), 10, (lastTapedTime, now, tapCount) -> 30, Instant.now());
-            racingGame.updateSpeed(
-                    players.getFirst().getName().value(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
-            racingGame.moveAll();
+            final Instant now = startTime.plusMillis(++tick * RacingGame.MOVE_INTERVAL_MILLIS);
+            racingGame.updateSpeed(players.get(1).getName().value(), 10, (lastTapedTime, at, tapCount) -> 30, now);
+            racingGame.updateSpeed(players.getFirst().getName().value(), 10, (lastTapedTime, at, tapCount) -> 10, now);
+            racingGame.moveAll(now);
         }
 
-        Thread.sleep(2);
-
         for (int i = 0; i < 200; i++) {
-            racingGame.updateSpeed(
-                    players.getFirst().getName().value(), 10, (lastTapedTime, now, tapCount) -> 10, Instant.now());
-            racingGame.moveAll();
+            final Instant now = startTime.plusMillis(++tick * RacingGame.MOVE_INTERVAL_MILLIS);
+            racingGame.updateSpeed(players.getFirst().getName().value(), 10, (lastTapedTime, at, tapCount) -> 10, now);
+            racingGame.moveAll(now);
         }
 
         // when

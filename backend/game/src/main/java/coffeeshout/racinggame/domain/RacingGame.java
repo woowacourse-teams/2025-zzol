@@ -46,8 +46,8 @@ public class RacingGame implements Playable {
         this.runners.initialLastTapTime(startTime);
     }
 
-    public void moveAll() {
-        runners.moveAll(Instant.now());
+    public void moveAll(Instant now) {
+        runners.moveAll(now);
     }
 
     public boolean isStarted() {

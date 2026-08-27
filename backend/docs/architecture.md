@@ -18,7 +18,8 @@
                 + 도메인 간 계약 (이벤트, RoomSnapshotQuery·SeasonUserProfileQuery 포트)
 :user         — User + Auth + Friend
 :room         — Room aggregate + Player + Roulette + RoomSessionToken
-:game         — 6게임 구현체 + minigame orchestration
+:game         — 미니게임 구현체(cardgame·laddergame·racinggame·blockstacking·speedtouch·blindtimer·nunchi)
+                + minigame orchestration + settlement(시즌 정산·종합 랭크)
 :profanity    — 비속어 필터 (:admin·:app 이 사용, :room·:game 은 테스트에서만)
 :admin        — dashboard + patchnote + report
 :zzolbot      — AI 운영자 어시스턴트

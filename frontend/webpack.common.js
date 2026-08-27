@@ -26,9 +26,9 @@ export const CONTENT_ROUTE_PATTERN = new RegExp(
   `^/(${[...new Set(seoPages.filter((page) => page.path !== '/').map((page) => page.path.split('/')[1]))].join('|')})($|[/?])`
 );
 
-// ⚠️ 라우트마다 실제 파일을 만들어 둘 뿐이다. 프로덕션에서 이 파일이 실제로 서빙되려면
-// 확장자 없는 URI 를 `.../index.html` 로 재작성하는 CloudFront Function 이 있어야 한다(별도 인프라 작업).
-// 그 함수를 붙이기 전에 이 빌드가 먼저 배포돼야 한다 — 반대로 하면 `/privacy` 가 깨진다.
+// 라우트마다 실제 파일을 만들어 둘 뿐이다. S3 REST 오리진은 `/guide` 를 `guide/index.html` 로 해석하지 않으므로
+// 확장자 없는 URI 를 `.../index.html` 로 재작성하는 CloudFront Function(`zzol-spa-router`)이 dev·prod 에 붙어 있다.
+// 함수·에러 응답 설정은 docs/seo-optimization.md §7 참고.
 const htmlPlugins = (devSnippet) =>
   seoPages.map(
     (page) =>

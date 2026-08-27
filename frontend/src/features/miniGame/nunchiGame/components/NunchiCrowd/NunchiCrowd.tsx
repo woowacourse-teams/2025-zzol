@@ -1,6 +1,6 @@
 import PlayerIcon from '@/components/@composition/PlayerIcon/PlayerIcon';
 import Description from '@/components/@common/Description/Description';
-import { colorList, ColorKey, fallbackColorIndex } from '@/constants/color';
+import { colorList, ColorKey } from '@/constants/color';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useNunchiGameContext } from '@/contexts/NunchiGame/NunchiGameContext';
 import { useParticipants } from '@/contexts/Participants/ParticipantsContext';

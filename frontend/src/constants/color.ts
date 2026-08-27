@@ -56,15 +56,3 @@ export const tierColorMap = {
 } as const;
 
 export type TierColorKey = keyof typeof tierColorMap;
-
-/**
- * 참가자 명단이 없을 때(하드 리프레시·직접 진입) getParticipantColorIndex 가 전원 0 을 반환해
- * 같은 색이 되는 것을 피하는 이름 해시 폴백. 같은 이름이면 어느 화면에서든 같은 색이다.
- */
-export const fallbackColorIndex = (name: string): number => {
-  let hash = 0;
-  for (let i = 0; i < name.length; i += 1) {
-    hash = (hash * 31 + name.charCodeAt(i)) % colorList.length;
-  }
-  return hash;
-};

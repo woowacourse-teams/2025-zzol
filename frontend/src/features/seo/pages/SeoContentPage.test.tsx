@@ -23,7 +23,7 @@ describe('SeoContentPage', () => {
   it('목록 경로는 미니게임 7종 링크를 렌더한다', () => {
     renderAt('/games');
 
-    expect(screen.getByRole('link', { name: '눈치게임' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /눈치게임/ })).toHaveAttribute(
       'href',
       '/games/nunchi-game'
     );

@@ -61,7 +61,7 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
         host = GamerFixture.호스트_꾹이();
         gamers = GamerFixture.꾹이_루키_엠제이_한스();
         cardGame = new CardGameFake(new CardGameDeckStub());
-        testDataHelper.게임_시작_준비된_방_생성(joinCode);
+        testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(cardGame));

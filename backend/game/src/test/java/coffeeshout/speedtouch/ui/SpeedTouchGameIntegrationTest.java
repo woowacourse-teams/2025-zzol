@@ -10,6 +10,7 @@ import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.event.GameStartReadyEvent;
+import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
 import coffeeshout.speedtouch.ui.request.TouchCommand;
 import coffeeshout.speedtouch.ui.response.SpeedTouchProgressResponse;
@@ -42,12 +43,12 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
     SpeedTouchGame game;
 
     @BeforeEach
-    void setUp() throws Exception {
-        joinCode = new JoinCode("A4BX");
+    void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
+        joinCode = joinCodeGenerator.generate();
         host = GamerFixture.호스트_꾹이();
         gamers = GamerFixture.꾹이_루키_엠제이_한스();
         game = new SpeedTouchGame();
-        testDataHelper.게임_시작_준비된_방_생성(joinCode);
+        testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService.getSession(joinCode).replaceGames(host, List.of(game));

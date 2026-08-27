@@ -65,8 +65,7 @@ class NunchiIntegrationTest extends GameModuleWebSocketTest {
         host = GamerFixture.호스트_꾹이();
         gamers = GamerFixture.꾹이_루키_엠제이_한스();
 
-        // GameSession을 READY로 사전 구성한다 — Room 검증·영속을 거치지 않고 :game만으로 시작(ADR-0025, BlockStacking IT와 동일).
-        testDataHelper.게임_시작_준비된_방_생성(joinCode);
+        testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
         gameSessionService.initSession(joinCode, host);
         gameSessionService

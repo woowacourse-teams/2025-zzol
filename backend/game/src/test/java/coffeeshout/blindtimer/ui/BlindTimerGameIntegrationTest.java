@@ -6,7 +6,6 @@ import static org.awaitility.Awaitility.await;
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.blindtimer.application.BlindTimerGameService;
 import coffeeshout.blindtimer.domain.BlindTimerGame;
-import coffeeshout.blindtimer.ui.request.StopCommand;
 import coffeeshout.blindtimer.ui.response.BlindTimerProgressResponse;
 import coffeeshout.blindtimer.ui.response.BlindTimerStateResponse;
 import coffeeshout.fixture.GamerFixture;
@@ -58,7 +57,7 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
      * 단일 플로우에서 상태 전환·진행도 브로드캐스트·DONE 전환을 함께 검증한다.
      */
     @Test
-    void 게임_시작부터_전원_STOP까지_상태와_진행도가_순서대로_브로드캐스트된다() {
+    void 게임_시작부터_전원_STOP까지_상태와_진행도가_순서대로_브로드캐스트된다() throws Exception {
         // given
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/blind-timer/state", joinCodeValue);
@@ -77,14 +76,14 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
         progressResponses.get(6, TimeUnit.SECONDS); // PREPARE 시 초기 progress
         BlindTimerStateResponse playingState = payloadAs(stateResponses.get(10, TimeUnit.SECONDS), BlindTimerStateResponse.class);
 
-        // host STOP → 진행도 브로드캐스트
-        session.send(stopUrl, new StopCommand(host.getName()));
+        // host STOP → 진행도 브로드캐스트. STOP 주인은 본문이 아니라 세션 principal로 정해진다(#1702).
+        session.send(stopUrl);
         BlindTimerProgressResponse progressUpdate = payloadAs(progressResponses.get(3, TimeUnit.SECONDS), BlindTimerProgressResponse.class);
 
         // 전원 STOP (host 포함, 재STOP은 멱등) → DONE
         for (Gamer gamer : gamers) {
             final String playerName = gamer.getName();
-            session.send(stopUrl, new StopCommand(playerName));
+            createSession(joinCodeValue, playerName).send(stopUrl);
 
             await().atMost(Duration.ofSeconds(5))
                     .pollInterval(Duration.ofMillis(50))

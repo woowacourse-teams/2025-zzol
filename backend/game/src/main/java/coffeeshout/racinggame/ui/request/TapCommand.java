@@ -1,9 +1,7 @@
 package coffeeshout.racinggame.ui.request;
 
-import jakarta.validation.constraints.NotBlank;
-
-public record TapCommand(
-        @NotBlank(message = "플레이어 이름은 필수입니다") String playerName,
-        int tapCount
-) {
+/**
+ * 탭 주인(playerName)은 본문에 없다 — STOMP principal 에서 도출한다(RacingGameWebSocketController).
+ */
+public record TapCommand(int tapCount) {
 }

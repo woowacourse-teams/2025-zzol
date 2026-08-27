@@ -9,6 +9,7 @@ import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
@@ -46,7 +47,11 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
     void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
         joinCode = joinCodeGenerator.generate();
         host = GamerFixture.호스트_꾹이();
-        gamers = GamerFixture.꾹이_루키_엠제이_한스();
+        // IT 가속: 터치는 strict sequential(number != currentNumber면 거부)이라 터치마다 직렬 await가 필수다.
+        // 라운드트립 횟수가 곧 실행시간이므로 플레이어를 2명(꾹이·루키)으로 줄여 100회(4명×25)를 50회로 절반화한다.
+        // 방 명단과 게임 명단은 같아야 한다 — 어긋나면 종료 시 확률 조정 리스너가 순위 없는 플레이어에서 죽고,
+        // 같은 이벤트의 뒤 순서인 결과 저장 리스너까지 돌지 않는다.
+        gamers = 루키가_회원인_명단(joinCode).subList(0, 2);
         game = new SpeedTouchGame();
         testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
@@ -121,11 +126,6 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         var stateResponses = session.subscribe(subscribeStateUrl);
         var progressResponses = session.subscribe(subscribeProgressUrl);
 
-        // IT 가속: 터치는 strict sequential(number != currentNumber면 거부)이라 터치마다 직렬 await가 필수다.
-        // 라운드트립 횟수가 곧 실행시간이므로, 전원 완주→DONE 검증(다중 플레이어 allMatch)은 유지하되
-        // 플레이어를 2명으로 줄여 100회(4명×25)였던 직렬 라운드트립을 50회로 절반화한다.
-        gamers = gamers.subList(0, 2);
-
         // 게임 시작 후 PLAYING 까지 대기
         startSpeedTouchGame();
 
@@ -154,6 +154,7 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         // then - DONE 상태 확인
         MessageResponse doneState = stateResponses.get(10, TimeUnit.SECONDS);
         assertThat(payloadAs(doneState, SpeedTouchStateResponse.class).state()).isEqualTo("DONE");
+        결과_저장과_정산_아웃박스를_확인한다(MiniGameType.SPEED_TOUCH, gamers.size());
     }
 
     /**

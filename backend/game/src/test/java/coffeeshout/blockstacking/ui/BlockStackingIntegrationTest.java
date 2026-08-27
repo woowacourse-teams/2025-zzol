@@ -14,6 +14,7 @@ import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.support.MessageResponse;
@@ -53,7 +54,7 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
     void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
         joinCode = joinCodeGenerator.generate();
         host = GamerFixture.호스트_꾹이();
-        gamers = GamerFixture.꾹이_루키_엠제이_한스();
+        gamers = 루키가_회원인_명단(joinCode);
 
         testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
@@ -87,6 +88,7 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
             // DONE 전환은 playing 제한 시간(2000ms) 이후여야 한다
             assertThat(doneMessage.duration()).isGreaterThanOrEqualTo(PLAYING_MS - 100);
             assertThat(done.endTimeEpochMs()).isNull();
+            결과_저장과_정산_아웃박스를_확인한다(MiniGameType.BLOCK_STACKING, gamers.size());
         }
     }
 

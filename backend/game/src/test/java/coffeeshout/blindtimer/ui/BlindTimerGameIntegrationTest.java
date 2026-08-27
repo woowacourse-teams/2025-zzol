@@ -13,6 +13,7 @@ import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.support.TestStompSession;
 import java.time.Duration;
@@ -49,7 +50,7 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
     void setUp() throws Exception {
         joinCode = uniqueJoinCode();
         host = GamerFixture.호스트_꾹이();
-        gamers = GamerFixture.꾹이_루키_엠제이_한스();
+        gamers = 루키가_회원인_명단(joinCode);
         game = new BlindTimerGame(Duration.ofSeconds(10));
         testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
@@ -113,6 +114,7 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
             softly.assertThat(progressUpdate.players()).isNotEmpty();
             softly.assertThat(doneState.state()).isEqualTo("DONE");
         });
+        결과_저장과_정산_아웃박스를_확인한다(MiniGameType.BLIND_TIMER, gamers.size());
     }
 
     /**

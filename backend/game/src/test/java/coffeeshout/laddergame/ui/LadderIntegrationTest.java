@@ -11,6 +11,7 @@ import coffeeshout.laddergame.domain.LadderGame;
 import coffeeshout.laddergame.domain.LadderGameState;
 import coffeeshout.laddergame.ui.request.LadderDrawRequest;
 import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.support.TestStompSession;
@@ -46,7 +47,7 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
     void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
         joinCode = joinCodeGenerator.generate();
         host = GamerFixture.호스트_꾹이();
-        gamers = GamerFixture.꾹이_루키_엠제이_한스();
+        gamers = 루키가_회원인_명단(joinCode);
 
         testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
@@ -98,6 +99,7 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
                 softly.assertThat(done.poles()).isNull();
                 softly.assertThat(done.rankings()).isNull();
             });
+            결과_저장과_정산_아웃박스를_확인한다(MiniGameType.LADDER_GAME, gamers.size());
         }
     }
 

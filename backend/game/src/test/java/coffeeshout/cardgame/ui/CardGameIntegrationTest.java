@@ -12,6 +12,7 @@ import coffeeshout.fixture.TestDataHelper;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.minigame.ui.request.CommandType;
 import coffeeshout.minigame.ui.request.MiniGameMessage;
@@ -59,7 +60,7 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
     void setUp(@Autowired JoinCodeGenerator joinCodeGenerator) throws Exception {
         joinCode = joinCodeGenerator.generate();
         host = GamerFixture.호스트_꾹이();
-        gamers = GamerFixture.꾹이_루키_엠제이_한스();
+        gamers = 루키가_회원인_명단(joinCode);
         cardGame = new CardGameFake(new CardGameDeckStub());
         testDataHelper.게임_시작_준비된_방_생성(joinCode, gamers);
         gameSessionService.deleteSession(joinCode);
@@ -110,6 +111,7 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
         assertThat(payloadAs(secondRoundScoreBoard, MiniGameStateMessage.class).cardGameState())
                 .isEqualTo("SCORE_BOARD");
         assertThat(payloadAs(done, MiniGameStateMessage.class).cardGameState()).isEqualTo("DONE");
+        결과_저장과_정산_아웃박스를_확인한다(MiniGameType.CARD_GAME, gamers.size());
     }
 
     @Test

@@ -42,7 +42,6 @@ public class WormGameService implements MiniGameService {
     /** 틱 주기의 단일 출처는 도메인 규칙의 tickMillis다 — 점수(생존 ms)와 스케줄 주기가 어긋나지 않도록. */
     private final Duration tickPeriod;
 
-    private final long snapshotEveryTicks;
     private final Map<String, ScheduledFuture<?>> tickFutures = new ConcurrentHashMap<>();
 
     public WormGameService(
@@ -56,7 +55,6 @@ public class WormGameService implements MiniGameService {
         this.eventPublisher = eventPublisher;
         this.timing = timing;
         this.tickPeriod = Duration.ofMillis(rules.tickMillis());
-        this.snapshotEveryTicks = Math.max(1, timing.snapshotInterval().toMillis() / rules.tickMillis());
     }
 
     @Override
@@ -100,6 +98,15 @@ public class WormGameService implements MiniGameService {
                         () -> tick(game, joinCode), Instant.now().plus(tickPeriod), tickPeriod));
     }
 
+    /**
+     * 틱은 20Hz 델타만 브로드캐스트한다 — 주기 풀 스냅샷은 제거했다(#1703). 궤적이 append-only라
+     * 스냅샷은 게임이 길어질수록 무한히 커지는데(3분·9인이면 한 개가 약 770KB), 그걸 50ms 예산의 틱
+     * 스레드가 {@code synchronized(game)}을 쥔 채 직렬화하면 틱 지터와 클라이언트 프레임 히치를 같이 만든다.
+     * 재접속 복구는 구독 시점 유니캐스트가 담당하므로 주기 발행 없이도 화면은 복원된다.
+     *
+     * <p>감수한 트레이드오프: 델타를 놓친 클라이언트의 자가 회복(10초 안에 서버 상태로 재정렬)이 사라진다.
+     * 필요해지면 클라이언트가 tick 갭을 감지했을 때만 스냅샷을 요청하는 pull 방식으로 되살린다 — 평시 비용 0.
+     */
     private void tick(WormGame game, String joinCode) {
         try {
             synchronized (game) {
@@ -108,9 +115,6 @@ public class WormGameService implements MiniGameService {
                 }
                 game.tick();
                 eventPublisher.publishEvent(WormsMovedEvent.of(game, joinCode));
-                if (game.getTickCount() % snapshotEveryTicks == 0) {
-                    publishSnapshot(game, joinCode);
-                }
                 if (game.isRoundOver()) {
                     finish(game, joinCode);
                 }

@@ -7,7 +7,7 @@
  * 토픽(FE 는 `/topic` 을 빼고 구독):
  *  - `/room/{joinCode}/worm/state`     → WormGameStateMessage (복구 저장 O)
  *  - `/room/{joinCode}/worm`           → WormDeltaMessage 20Hz (복구 저장 X, tick 단조증가 아니면 폐기)
- *  - `/room/{joinCode}/worm/snapshot`  → WormSnapshotMessage 10s 주기
+ *  - `/room/{joinCode}/worm/snapshot`  → WormSnapshotMessage 스폰·종료 각 1회(주기 발행 없음)
  *  - `/user/queue/worm/snapshot`       → WormSnapshotMessage 구독 시점 유니캐스트.
  *    **델타 토픽보다 먼저 구독해야** 유니캐스트를 놓치지 않는다.
  *  - 발행 `/room/{joinCode}/worm/steer` → SteerCommand (10Hz, 변화 시만)

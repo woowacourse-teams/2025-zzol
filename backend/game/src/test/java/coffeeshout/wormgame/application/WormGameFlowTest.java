@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 
 import coffeeshout.fixture.GamerFixture;
 import coffeeshout.minigame.application.GameSessionService;
@@ -19,6 +20,7 @@ import coffeeshout.wormgame.config.WormGameTimingProperties;
 import coffeeshout.wormgame.domain.WormGame;
 import coffeeshout.wormgame.domain.WormGameState;
 import coffeeshout.wormgame.domain.event.WormGameStateChangedEvent;
+import coffeeshout.wormgame.domain.event.WormSnapshotEvent;
 import coffeeshout.wormgame.domain.event.WormsMovedEvent;
 import java.time.Duration;
 import java.time.Instant;
@@ -58,8 +60,8 @@ class WormGameFlowTest {
     void setUp() {
         final WormGameRulesProperties rules = new WormGameRulesProperties(
                 50L, 120.0, 1.6, 1200, 200.0, 0.7, 1.0, 200, 1200, 0.30, 0.05, 0.5, 0, 6.0, 3, 5);
-        final WormGameTimingProperties timing = new WormGameTimingProperties(
-                Duration.ofMillis(1), Duration.ofMillis(1), Duration.ofMillis(1), Duration.ofSeconds(10));
+        final WormGameTimingProperties timing =
+                new WormGameTimingProperties(Duration.ofMillis(1), Duration.ofMillis(1), Duration.ofMillis(1));
         service = new WormGameService(gameSessionService, scheduler, eventPublisher, timing, rules);
 
         game = new WormGame(rules.toRules());
@@ -135,6 +137,16 @@ class WormGameFlowTest {
         softly.assertThat(game.getState()).isEqualTo(WormGameState.DONE);
         softly.assertAll();
         then(gameSessionService).should().finishGame(any());
+    }
+
+    @Test
+    void 스냅샷은_스폰과_종료_두_번만_발행한다() {
+        // when — PREPARE(스폰 배치) → 첫 틱에 라운드 종료 → FINISH(최종 정지 화면)
+        startAndReachPlaying();
+        scheduler.tickTask().run();
+
+        // then — 틱 루프는 델타만 보낸다. 주기 풀 스냅샷은 대역폭·틱 지터 때문에 제거했다(#1703)
+        then(eventPublisher).should(times(2)).publishEvent(any(WormSnapshotEvent.class));
     }
 
     @Test

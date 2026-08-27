@@ -63,4 +63,3 @@ worm-game:
     description: 500ms          # IT 가속
     prepare: 500ms              # IT 가속
     finish: 10ms                # IT 가속(종료 연출 지연 — 순수 지연이라 최소로)
-    snapshot-interval: 1000ms   # IT 가속(주기 스냅샷 관측)

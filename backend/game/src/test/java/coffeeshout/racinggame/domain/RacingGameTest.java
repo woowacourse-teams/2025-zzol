@@ -125,12 +125,12 @@ class RacingGameTest {
     class 주행_중_감속 {
 
         @Test
-        void 최고_속도를_찍고_탭을_멈추면_결승선까지_자동_주행하지_않는다() {
+        void 탭_메시지가_끊겨도_결승선까지_자동_주행하지_않는다() {
             // given — 한 틱 만에 최고 속도에 올린다
             경주를_시작한다();
             달린다(1, 1, Map.of(한스, RacingGame.MAX_SPEED));
 
-            // when — 속도가 굳어 있다면 3000 / 60 = 50 틱이면 완주한다
+            // when — 탭이 한 건도 도착하지 않는다. 속도가 굳어 있다면 3000 / 60 = 50 틱이면 완주한다
             달린다(2, 50, Map.of());
 
             // then
@@ -138,7 +138,7 @@ class RacingGameTest {
         }
 
         @Test
-        void 탭을_멈추면_속도가_줄어든다() {
+        void 탭_메시지가_끊기면_속도가_줄어든다() {
             // given
             경주를_시작한다();
             달린다(1, 1, Map.of(한스, RacingGame.MAX_SPEED));
@@ -167,12 +167,12 @@ class RacingGameTest {
         }
 
         @Test
-        void 계속_탭한_러너가_몰아치고_멈춘_러너보다_앞선다() {
+        void 계속_탭한_러너가_탭이_끊긴_러너보다_앞선다() {
             // given — 둘 다 최고 속도에서 출발한다
             경주를_시작한다();
             달린다(1, 1, Map.of(한스, RacingGame.MAX_SPEED, 꾹이, RacingGame.MAX_SPEED));
 
-            // when — 한스만 계속 탭한다
+            // when — 한스만 계속 탭하고, 꾹이는 탭 메시지가 끊긴다
             달린다(2, 40, Map.of(한스, RacingGame.MAX_SPEED));
 
             // then

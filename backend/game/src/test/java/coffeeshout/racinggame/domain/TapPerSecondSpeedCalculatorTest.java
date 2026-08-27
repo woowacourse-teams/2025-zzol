@@ -2,7 +2,6 @@ package coffeeshout.racinggame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.racinggame.domain.TapPerSecondSpeedCalculator;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +66,7 @@ class TapPerSecondSpeedCalculatorTest {
     }
 
     @Test
-    void 탭을_하지_않으면_속도는_0이다() {
+    void 탭_횟수가_0이면_최저_속도가_된다() {
         // given
         final Instant lastTapedTime = Instant.now();
         final Instant now = lastTapedTime.plusMillis(1000);

@@ -22,8 +22,16 @@ public class RacingGame implements Playable {
     public static final int MIN_SPEED = 3;
     public static final int MAX_SPEED = 60;
     public static final int CLICK_PER_SPEED_SCALE = 1;
-    // 주행 중 감속률 — 탭이 없으면 매 틱 이 비율로 줄어든다. 고속일수록 크게 깎여
-    // '몰아치고 손 떼기'를 초반에 강하게 응징한다. MIN_SPEED가 하한이라 완전히 멈추지는 않는다.
+    // 주행 중 감속률 — 매 틱 이 비율로 줄어든다.
+    //
+    // 막는 것은 손을 떼는 게 아니라 '탭 메시지가 끊긴 채 이전 속도로 자동 주행하는 것'이다.
+    // 손만 떼면 여기까지 오지 않는다 — 프론트는 안 눌러도 200ms마다 tapCount 0을 보내고,
+    // TapPerSecondSpeedCalculator가 그걸 MIN_SPEED로 환산한다. 메시지 자체가 끊기면
+    // (백그라운드 탭·화면 꺼짐·WS 끊김·변조 클라이언트) lastSpeedUpdateTime이 멈춰
+    // 이전 speed가 굳으므로, 서버가 시간으로 깎지 않으면 조작 없이 최고 속도로 완주한다.
+    //
+    // 틱당 비율이라 틱 길이에 의존한다. racing-game.timing.move-interval(운영 100ms)을
+    // 전제로 잡았으므로 주기를 바꾸면 이 값도 같이 봐야 한다.
     public static final double SPEED_DECAY_RATE = 0.9;
     public static final int FINISH_LINE = 3000;
     public static final int START_LINE = 0;

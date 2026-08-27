@@ -22,7 +22,14 @@ public class Runner {
         this.lastSpeedUpdateTime = Instant.now();
     }
 
-    public void updateSpeed(int tapCount, SpeedCalculator speedCalculator, Instant now) {
+    /**
+     * 탭(WS 인바운드 스레드)과 자동 이동(스케줄러 스레드)이 같은 {@code speed}를 쓴다.
+     * 주행 중 감속이 생기기 전에는 두 스레드의 쓰기 구간이 겹치지 않았지만
+     * ({@code slowDown()}은 완주 후에만 돌고 그때 updateSpeed는 조기 반환한다),
+     * {@code decay()}가 경주 내내 돌면서 겹치게 됐다. 러너 단위 락으로 막는다 —
+     * 틱은 초당 10회, 탭은 초당 5회라 경합 비용은 무시할 수 있다.
+     */
+    public synchronized void updateSpeed(int tapCount, SpeedCalculator speedCalculator, Instant now) {
         if (isFinished()) {
             return;
         }
@@ -34,7 +41,8 @@ public class Runner {
         this.speed = nextSpeed;
     }
 
-    public void move(Instant now) {
+    /** 락 이유는 {@link #updateSpeed} 주석 참고. 한 틱 안에서 speed를 여러 번 읽으므로 값이 흔들리면 안 된다. */
+    public synchronized void move(Instant now) {
         if (isStopped()) {
             return;
         }
@@ -53,10 +61,11 @@ public class Runner {
     }
 
     /**
-     * 주행 중 감속. 속도 갱신이 탭에서만 일어나면 최고 속도를 찍고 손을 떼도 그 속도가 굳어
-     * 조작 없이 완주한다. 매 틱 줄여 두고 탭이 다시 올려주게 해야 계속 누르는 쪽이 빠르다.
-     * MIN_SPEED가 하한인 이유는 속도가 0이 되면 isStopped()로 영영 못 움직여
-     * 완주하지 못한 채 경주가 끝나기 때문이다(finishTime이 null로 남는다).
+     * 주행 중 감속. 무엇을 막는 값인지는 {@link RacingGame#SPEED_DECAY_RATE} 주석 참고.
+     *
+     * <p>MIN_SPEED가 하한인 이유는 속도가 0이 되면 {@code isStopped()}로 영영 못 움직여
+     * 완주하지 못한 채 경주가 끝나기 때문이다. 그러면 finishTime이 null로 남아
+     * {@code RacingGame#convertScore}의 {@code Duration.between(startTime, null)}이 터진다.
      */
     private void decay() {
         this.speed = Math.max(RacingGame.MIN_SPEED, (int) (speed * RacingGame.SPEED_DECAY_RATE));

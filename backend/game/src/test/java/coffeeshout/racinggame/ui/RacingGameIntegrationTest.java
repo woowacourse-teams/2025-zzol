@@ -163,7 +163,9 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
         /*
          탭은 주기적으로 보내야 한다. 주행 중에는 매 틱 속도가 감쇠하므로(RacingGame.SPEED_DECAY_RATE)
          한 발만 쏘면 속도가 MIN_SPEED까지 떨어져 아무도 결승(3000)에 닿지 못한다 — 실제 플레이와 같이
-         계속 눌러야 한다. 프론트도 200ms마다 누적 탭을 보낸다(RacingGameOverlay).
+         계속 눌러야 한다. 프론트도 200ms마다 누적 탭을 보낸다(RacingGameOverlay). 다만 프론트는
+         안 눌렀을 때 tapCount 0을 보내고 그건 MIN_SPEED로 환산되므로, 여기서 재현하는 것은
+         '탭 메시지가 계속 도착하는' 정상 경로다.
 
          주기를 400ms로 두는 이유는 WS Rate Limiter다. 세션당 초당 20건을 넘기면 초과분이 조용히
          드롭되는데(#1664 CI 실패) 이 테스트는 한 세션으로 4명분을 보낸다. 400ms 주기면 초당 10건이라

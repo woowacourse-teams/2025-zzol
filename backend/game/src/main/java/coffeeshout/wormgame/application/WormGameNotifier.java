@@ -53,7 +53,7 @@ public class WormGameNotifier {
     @WsTopic(
             path = "/room/{joinCode}/worm/snapshot",
             payload = WormSnapshotResponse.class,
-            description = "지렁이 게임 주기 풀 스냅샷(정합 검증 보조). 스냅샷 tick 이전 델타 폐기. 복구 저장 제외")
+            description = "지렁이 게임 풀 스냅샷 — 스폰·종료 각 1회(주기 발행 없음, #1703). 스냅샷 tick 이전 델타 폐기. 복구 저장 제외")
     public void publishSnapshot(WormSnapshotEvent event) {
         messagingTemplate.convertAndSendTransient(
                 String.format(SNAPSHOT_DESTINATION, event.joinCode()),

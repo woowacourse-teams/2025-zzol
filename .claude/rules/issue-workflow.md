@@ -122,6 +122,8 @@ gh issue edit {N} --body-file /tmp/issue.md
 
 PR을 만들기 전에 **연결된 이슈를 다시 읽어 성공 기준이 충족됐는지 확인한다.** 어긋나면 5단계 표의 기본값에 따른다.
 
+**base가 `dev`·`prod`가 아니면 CI가 돌지 않는다** — 워크플로가 `pull_request: branches: [dev, prod]`로 제한돼 있다. 통합 브랜치를 두고 단계별 PR을 쌓았다면 테스트 게이트는 통합→dev PR에서 **처음** 걸린다. 그 PR을 열기 전에 `./gradlew spotlessCheck pmdMain pmdTest pmdTestFixtures`와 테스트를 로컬에서 먼저 돌린다.
+
 ### 5. 리뷰 반영 — 지적마다 답한다
 
 리뷰가 달렸는데 커밋만 올리고 끝내지 않는다. 리뷰어는 답이 없으면 무엇이 반영됐는지 알 수 없고, PR 본문 수정은 알림이 가지 않아 갈음이 안 된다.

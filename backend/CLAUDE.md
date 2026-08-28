@@ -88,3 +88,5 @@ Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는�
 - [Notion 워크스페이스](docs/notion-workspace.md) — Notion 주요 페이지 URL, WebSocket 명세서 DB 구조 및 작업 흐름
 
 통합 테스트는 Docker 기반 TestContainers를 사용하므로 Docker가 실행 중이어야 한다.
+
+PMD 실패 시 **CI 로그에는 위반 내용이 안 나온다**(HTML 리포트로만 간다). 로컬에서 `./gradlew :<모듈>:pmdMain`으로 재현해 파일·줄을 얻는다.

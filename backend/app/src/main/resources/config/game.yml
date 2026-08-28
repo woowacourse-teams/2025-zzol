@@ -57,5 +57,19 @@ nunchi:
     hard-cap: 30000ms           # 라운드 전체 강제 종료 안전망(결정 5)
     all-pressed-delay: 2000ms   # 전원 입력 조기 종료 시 마지막 입력을 잠깐 보여주고 DONE으로 전이(결정 5)
 
+worm-game:
+  timing:
+    description: 4000ms
+    prepare: 2000ms
+    finish: 4000ms               # 종료 연출(줌아웃 + 순위 스태거) — 서버 주도
+    snapshot-interval: 10000ms   # 주기 스냅샷은 정합 검증 보조. 재접속 복구는 구독 시점 유니캐스트가 맡는다
+  # 틱 주기(20Hz)는 rules.tick-millis(기본 50)가 단일 출처다 — 점수(생존 ms)와 스케줄 주기가 같이 움직인다.
+  # rules(물리·판정 17개 노브)는 WormGameRulesProperties의 @DefaultValue가 설계 문서 v0.3 값이다.
+  # 튜닝할 때만 worm-game.rules.* 로 덮어쓴다.
+  rules:
+    arena-base-radius: 330       # 설계값 220의 1.5배 — 모바일 실측에서 맵이 작다는 피드백(2026-08-26)
+    arena-exponent: 0.35         # 설계값 0.5(면적∝인원)를 낮춤 — 고인원에서 아레나가 커지면
+                                 # 궤적 레이어가 메모리 상한(LAYER_MAX_PX)에 걸려 폰 화면보다 저해상도가 된다(2026-08-28)
+
 roulette:
   default-adjustment-weight: 0.7

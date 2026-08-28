@@ -57,3 +57,10 @@ nunchi:
     idle-timeout: 500ms         # IT 가속
     hard-cap: 3000ms            # IT 가속(idle/cooldown 합보다 넉넉한 상한이면 충분)
     all-pressed-delay: 10ms     # IT 가속(전원 입력 후 DONE 전이 대기 — 값 자체는 무의미, 최소로)
+
+worm-game:
+  timing:
+    description: 500ms          # IT 가속
+    prepare: 500ms              # IT 가속
+    finish: 10ms                # IT 가속(종료 연출 지연 — 순수 지연이라 최소로)
+    snapshot-interval: 1000ms   # IT 가속(주기 스냅샷 관측)

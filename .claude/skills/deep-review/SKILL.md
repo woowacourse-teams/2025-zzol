@@ -39,7 +39,9 @@ bash "$(git rev-parse --show-toplevel)/.claude/skills/deep-review/scope.sh" dev 
 
 ## 2. 렌즈 팬아웃 (해당하는 렌즈를 한 응답에 전부 넣어 병렬 실행)
 
-전부 `run_in_background: false`(foreground) — 결과 텍스트를 받아 병합해야 한다. **순차 호출하지 않는다.**
+한 응답에 전부 넣어 병렬로 띄운다. **순차 호출하지 않는다.**
+
+렌즈는 비동기로 돌고 메인 루프는 그동안 다른 일을 한다(CI 감시 등). 대신 **완료 알림이 와도 결과 본문은 안 오는 경우가 잦다**(2026-08-27 실행에서 7/7). 그러면 `SendMessage`로 다시 요청한다 — 요청문에 "파일에 쓰거나 요약하지 말고 본문 그대로"를 명시하고 빈손 선택지(발견사항 없음 / 미완료)를 준다. 3회까지 시도하고 끝내 못 받으면 리포트에 **"해당 렌즈 미회수"**를 남긴다 — 빈손을 "지적 없음"으로 보고하지 않는다.
 
 | 렌즈 | `subagent_type` | 실행 조건 |
 | --- | --- | --- |
@@ -55,20 +57,20 @@ bash "$(git rev-parse --show-toplevel)/.claude/skills/deep-review/scope.sh" dev 
 스택 전용 에이전트를 섞지 않는다 — 백엔드는 `code-reviewer`, 프론트엔드는 `fe-code-reviewer`다. 백엔드 에이전트는 상대 경로(`docs/...`, `./gradlew`)를 쓰므로 프롬프트에 **`작업 기준 디렉터리: <REPO_ROOT>/backend`** 를 명시한다(프론트는 `<REPO_ROOT>/frontend`).
 
 ```text
-Agent(subagent_type: "code-reviewer", run_in_background: false,
+Agent(subagent_type: "code-reviewer",
       prompt: "작업 기준 디렉터리: <REPO_ROOT>/backend. 리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다.
                대상 파일은 `git diff --name-only origin/$BASE...HEAD -- backend/` 결과 전체다(src/main/java 등으로 좁히지 말 것).
                발견사항만 텍스트로 반환한다.")
 
-Agent(subagent_type: "fe-code-reviewer", run_in_background: false,
+Agent(subagent_type: "fe-code-reviewer",
       prompt: "작업 기준 디렉터리: <REPO_ROOT>/frontend. 리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다.
                대상 파일은 `git diff --name-only origin/$BASE...HEAD -- frontend/` 결과 전체다(frontend/src 등으로 좁히지 말 것).
                발견사항만 텍스트로 반환한다.")
 
-Agent(subagent_type: "bug-hunter", run_in_background: false,
+Agent(subagent_type: "bug-hunter",
       prompt: "리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다. 대상 파일: <diff 목록>. 발견사항만 텍스트로 반환한다.")
 
-Agent(subagent_type: "test-verifier", run_in_background: false,
+Agent(subagent_type: "test-verifier",
       prompt: "작업 기준 디렉터리: <REPO_ROOT>/backend. 리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다.
                대상은 `git diff --name-only origin/$BASE...HEAD -- backend/` 중 src/test/java 경로이며,
                변경된 src/main/java 코드에 대응 테스트가 없는 경우도 지적한다. 발견사항만 텍스트로 반환한다.")
@@ -79,7 +81,7 @@ Agent(subagent_type: "test-verifier", run_in_background: false,
 `ponytail-review`는 스킬이라 에이전트에 위임한다. 서브에이전트에서 스킬 호출이 되는 것은 확인했다(2026-07-30, `general-purpose`에서 성공). 플러그인 미설치·미신뢰 환경을 위해 태그 기준 폴백을 함께 준다.
 
 ```text
-Agent(subagent_type: "general-purpose", run_in_background: false,
+Agent(subagent_type: "general-purpose",
       prompt: "`Skill(\"ponytail:ponytail-review\")` 를 호출해 origin/$BASE...HEAD diff를 과설계 관점으로 리뷰하라.
                스킬을 쓸 수 없으면 아래 태그 기준으로 직접 리뷰한다.
                - delete: 죽은 코드·안 쓰는 유연성·투기적 기능 → 대체물 없음
@@ -95,7 +97,7 @@ Agent(subagent_type: "general-purpose", run_in_background: false,
 `NEEDS_SECURITY=1`일 때만 실행한다(스크립트가 인증·토큰·비밀값·필터 경로를 파일명으로 판별). 플래그가 없어도 diff 본문에 입력 검증·역직렬화·파일 업로드·SQL 직접 작성이 보이면 실행한다. 건너뛰면 그 사실을 리포트에 한 줄로 남긴다.
 
 ```text
-Agent(subagent_type: "general-purpose", run_in_background: false,
+Agent(subagent_type: "general-purpose",
       prompt: "`Skill(\"security-review\")` 를 호출해 origin/$BASE...HEAD 변경의 보안 취약점을 검토하라.
                스킬을 쓸 수 없으면 인증·인가 우회, 입력 검증 누락, 비밀값 노출, 인젝션, 권한 상승 관점으로 직접 검토한다.
                발견사항만 텍스트로 반환한다.")
@@ -112,7 +114,7 @@ CodeRabbit이 실제로 해주던 일은 노이즈 필터다. 병합 결과를 �
 **ponytail 렌즈 결과는 이 채점에 넣지 않는다.** 과설계 지적은 "버그인가"를 묻는 루브릭에서 구조적으로 25점을 받아 전멸한다. 대신 별도 섹션으로 분리하고, **사실로 확인되는 것만**(사용처 0건, 구현체 1개, 중복 트리거처럼 세어서 검증 가능한 것) 남긴다. 취향 판단은 버린다.
 
 ```text
-Agent(subagent_type: "general-purpose", run_in_background: false,
+Agent(subagent_type: "general-purpose",
       prompt: "아래 코드 리뷰 발견사항이 진짜 문제인지 각각 0-100점으로 채점하라. 필요한 파일은 직접 읽어 검증한다.
                루브릭(그대로 적용):
                - 0: 가벼운 검증도 통과 못 하는 오탐, 또는 이번 변경 이전부터 있던 문제

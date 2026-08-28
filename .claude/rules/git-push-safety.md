@@ -79,6 +79,8 @@ git fetch origin dev && git merge origin/dev
 
 판별이 번거로우면 push 이력이 있어도 그냥 위 두 줄을 쓴다. squash가 히스토리를 정리하므로 rebase로 얻을 게 없다.
 
+**머지 충돌이 없다고 정리가 끝난 게 아니다.** `dev`가 안 건드린 파일에 우리가 넣은 임시방편은 충돌 없이 살아남는다(`dev`에 대체 구현이 들어와도 마찬가지다). 머지 뒤 `git diff origin/dev -- <파일>`로 남은 차이를 직접 확인한다.
+
 ### 이 규칙의 한계 (사용자 인지 필요)
 
 이 규칙은 **Claude의 git 조작에만** 적용된다. 사용자의 수동 push나 VS Code "Push/Sync" 버튼은 이 규칙으로 막지 못한다. 다만 Claude가 작업 브랜치 upstream을 보호 브랜치로 만들지 않으면, IDE Sync가 보호 브랜치를 target으로 삼을 소지 자체가 사라진다(근본 원인 제거). 완전 차단이 필요하면 서버측 `enforce_admins=true` 또는 로컬 pre-push hook을 별도로 도입한다.

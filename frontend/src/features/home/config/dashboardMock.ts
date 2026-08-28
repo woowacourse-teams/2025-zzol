@@ -6,6 +6,7 @@ import type {
   RacingGameTopPlayer,
   BlindTimerTopPlayer,
   SpeedTouchTopPlayer,
+  WormGameTopPlayer,
 } from '@/types/dashBoard';
 
 export const MOCK_TOP_WINNERS: TopWinner[] = [
@@ -52,6 +53,14 @@ export const MOCK_BLIND_TIMER_TOP_PLAYERS: BlindTimerTopPlayer[] = [
   { playerName: '느낌적인느낌', bestErrorMillis: 230 },
   { playerName: '시간감각', bestErrorMillis: 360 },
   { playerName: '대충맞춤', bestErrorMillis: 470 },
+];
+
+export const MOCK_WORM_GAME_TOP_PLAYERS: WormGameTopPlayer[] = [
+  { playerName: '꼬리물기장인', bestSurvivalMillis: 87450 },
+  { playerName: '벽타는지렁이', bestSurvivalMillis: 81200 },
+  { playerName: '한칸차이', bestSurvivalMillis: 76830 },
+  { playerName: '코너의달인', bestSurvivalMillis: 68910 },
+  { playerName: '살아남기만해', bestSurvivalMillis: 61540 },
 ];
 
 export const MOCK_SPEED_TOUCH_TOP_PLAYERS: SpeedTouchTopPlayer[] = [

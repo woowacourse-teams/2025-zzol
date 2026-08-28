@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum MiniGameType {
-
     CARD_GAME("카드게임"),
     RACING_GAME("레이싱"),
     SPEED_TOUCH("스피드터치"),
@@ -12,6 +11,7 @@ public enum MiniGameType {
     BLOCK_STACKING("블록쌓기"),
     LADDER_GAME("사다리타기"),
     NUNCHI_GAME("눈치게임"),
+    WORM_GAME("지렁이 게임"),
     ;
 
     public final String label;

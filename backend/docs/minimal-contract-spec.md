@@ -82,7 +82,14 @@ READY → FIRST_LOADING → PREPARE → PLAYING → SCORE_BOARD   (1라운드)
 
 ### 아웃바운드 — WS 토픽
 
-모든 발행은 `WebSocketResponse` 래퍼로 감싼다: `{"success": true, "data": …, "id": "…"}` (실패 시 `success:false` + `errorMessage`, null 필드는 직렬화 제외).
+모든 발행은 **`WebSocketResponse<T>`** 래퍼로 감싼다 — `:websocket` 모듈의 공용 클래스(`coffeeshout.websocket.ui.WebSocketResponse`)로, **재구현 대상이 아니라 그대로 재사용한다**. `@JsonInclude(NON_NULL)`이라 null 필드는 직렬화에서 빠진다.
+
+| 필드 | 타입 | 성공 시 | 실패 시 |
+| --- | --- | --- | --- |
+| `success` | boolean | `true` | `false` |
+| `data` | T | 페이로드 | 생략 |
+| `errorMessage` | string | 생략 | 에러 메시지 |
+| `id` | string | 복구용 메시지 ID — 발행 인프라(`LoggingSimpMessagingTemplate`)가 부여 | 동일 |
 
 **`/topic/room/{joinCode}/gameState`** — 페이로드 `MiniGameStateMessage` (상태 변경·카드 선택 때마다 전체 스냅샷):
 

@@ -21,8 +21,11 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.repository.RoomRepository;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import coffeeshout.support.TestStompSession;
+import coffeeshout.support.TestStompSession.MessageCollector;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -154,31 +157,58 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
         eventPublisher.publishEvent(
                 new GameStartReadyEvent("evt-" + joinCodeValue, joinCodeValue, host.getName(), gamers));
 
-        stateResponses.get(1, TimeUnit.SECONDS); // DESCRIPTION
-        stateResponses.get(5, TimeUnit.SECONDS); // PREPARE (4초 후)
-        stateResponses.get(3, TimeUnit.SECONDS); // PLAYING (2초 후)
+        awaitState(stateResponses, RacingGameState.PLAYING, 5);
 
         /*
-         탭은 플레이어당 한 번만 보낸다. 속도는 감쇠하지 않고(Runner.speed는 탭 또는 완주 후 감속으로만 변한다)
-         `tapCount / 경과시간`을 MAX_SPEED(60)로 clamp한 값이므로, 큰 tapCount 한 발이면 전원이 최고속도에
-         고정된 채 결승(3000)까지 간다 — 50틱 주행 + 감속 20틱(SLOW_DOWN_STEP 3) 뒤 전원 정지하면 DONE.
-         연타로 유지하면 안 된다: WS Rate Limiter가 세션당 초당 20건 초과분을 조용히 드롭하므로(#1664 CI 실패)
-         어느 라운드가 살아남는지가 부하에 따라 갈리고, 마지막 생존 탭의 경과시간이 길면 그 러너만 MIN_SPEED로
-         남아 완주하지 못한다. DONE은 전원 정지가 조건이라 한 명만 뒤처져도 영영 오지 않는다.
-        */
-        for (Gamer gamer : gamers) {
-            singleSession.send(tapRequestUrl, new TapCommand(gamer.getName(), 200));
-        }
+         탭은 주기적으로 보내야 한다. 주행 중에는 매 틱 속도가 감쇠하므로(RacingGame.SPEED_DECAY_RATE)
+         한 발만 쏘면 속도가 MIN_SPEED까지 떨어져 아무도 결승(3000)에 닿지 못한다 — 실제 플레이와 같이
+         계속 눌러야 한다. 프론트도 200ms마다 누적 탭을 보낸다(RacingGameOverlay). 다만 프론트는
+         안 눌렀을 때 tapCount 0을 보내고 그건 MIN_SPEED로 환산되므로, 여기서 재현하는 것은
+         '탭 메시지가 계속 도착하는' 정상 경로다.
 
-        // then - DONE 상태 확인. 70틱 × move-interval(50ms) + race-finished-delay 만큼 걸리므로 상한을 넉넉히 둔다.
-        RacingGameStateResponse finishedState =
-                payloadAs(stateResponses.get(10, TimeUnit.SECONDS), RacingGameStateResponse.class);
-        assertThat(finishedState.state()).isEqualTo(RacingGameState.DONE);
+         주기를 400ms로 두는 이유는 WS Rate Limiter다. 세션당 초당 20건을 넘기면 초과분이 조용히
+         드롭되는데(#1664 CI 실패) 이 테스트는 한 세션으로 4명분을 보낸다. 400ms 주기면 초당 10건이라
+         상한의 절반이다. 200ms로 줄이면 정확히 상한에 걸려 드롭 여부가 부하에 좌우된다.
+
+         tapCount 40은 경과 400ms 기준 초당 100탭이라 MAX_SPEED(60)로 clamp된다.
+        */
+        final ScheduledExecutorService tapper = Executors.newSingleThreadScheduledExecutor();
+        tapper.scheduleAtFixedRate(
+                () -> gamers.forEach(gamer -> singleSession.send(tapRequestUrl, new TapCommand(gamer.getName(), 40))),
+                0,
+                400,
+                TimeUnit.MILLISECONDS);
+
+        // then - DONE 상태 확인. 주행 약 9주기(3.6초) + 완주 후 감속 + race-finished-delay 만큼 걸린다.
+        try {
+            awaitState(stateResponses, RacingGameState.DONE, 10);
+        } finally {
+            // DONE 이후의 탭은 컨슈머 스레드에서 BusinessException이 되어 WARN 로그만 남긴다.
+            // 태퍼가 스스로 멈추지는 않으므로 여기서 끈다.
+            tapper.shutdownNow();
+        }
 
         // then - 종료 결과가 실제로 저장된다. DONE 브로드캐스트는 결과 저장보다 앞서 예약되므로(#1662)
         // 종료 신호만 검증하면 저장이 통째로 실패해도 이 테스트는 초록으로 남는다.
         await().atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> assertThat(저장된_레이싱_결과_수()).isEqualTo(gamers.size()));
+    }
+
+    /**
+     * 목표 상태가 나올 때까지 훑는다. 상태 토픽은 DESCRIPTION→PREPARE→PLAYING→DONE 순으로
+     * 브로드캐스트되므로 위치 기반 get()으로 읽으면 프레임이 하나만 끼어도 엉뚱한 것을 단언한다
+     * (testing-integration.md). 참조 구현은 NunchiIntegrationTest#awaitState.
+     */
+    private RacingGameStateResponse awaitState(
+            MessageCollector stateResponses, RacingGameState target, int timeoutSeconds) {
+        for (int i = 0; i < 8; i++) {
+            final RacingGameStateResponse response =
+                    payloadAs(stateResponses.get(timeoutSeconds, TimeUnit.SECONDS), RacingGameStateResponse.class);
+            if (response.state() == target) {
+                return response;
+            }
+        }
+        throw new AssertionError(target + " 상태를 받지 못했습니다");
     }
 
     private Integer 저장된_레이싱_결과_수() {

@@ -14,7 +14,7 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.profanity.application.ProfanityFilterService;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
-import coffeeshout.profanity.fixture.ProfanityTestDataSeeder;
+import coffeeshout.profanity.fixture.ProfanityTestDataFixture;
 import coffeeshout.room.application.service.DelayedRoomRemovalService;
 import coffeeshout.room.application.service.RoomCommandService;
 import coffeeshout.room.application.service.RoomCreateResult;
@@ -150,7 +150,7 @@ class RoomServiceTest extends RoomModuleServiceTest {
 
         @BeforeEach
         void seedProfanityWords() {
-            new ProfanityTestDataSeeder(profanityWordRepository, profanityFilterService).seedForTest();
+            new ProfanityTestDataFixture(profanityWordRepository, profanityFilterService).seedForTest();
         }
 
         @Test

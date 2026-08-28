@@ -1,10 +1,10 @@
 package coffeeshout.profanity.application;
 
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
-import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
-import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
+import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -28,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfanityAuditService {
 
     private final NicknameAuditRepository auditRepository;
-    private final ProfanityAuditBatchProcessor batchProcessor;
+    private final ProfanityAuditBatchService batchProcessor;
     private final ProfanityWordManagementService profanityWordManagementService;
     private final NicknameAuditProperties properties;
     private final MeterRegistry meterRegistry;
@@ -91,8 +91,10 @@ public class ProfanityAuditService {
         unauditedQueueDepth.set(initialQueueSize);
         log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
 
-        final Pageable pageable = PageRequest.of(0, properties.batchSize(), Sort.by("createdAt").ascending());
-        List<NicknameAudit> batch = auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+        final Pageable pageable =
+                PageRequest.of(0, properties.batchSize(), Sort.by("createdAt").ascending());
+        List<NicknameAudit> batch =
+                auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
         int processedTotal = 0;
 
         while (!batch.isEmpty()) {

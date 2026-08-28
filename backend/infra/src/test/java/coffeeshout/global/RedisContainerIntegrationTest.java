@@ -18,7 +18,7 @@ class RedisContainerIntegrationTest extends InfraModuleIntegrationTest {
 
     @Test
     @DisplayName("Valkey 컨테이너 연결 확인")
-    void testValkeyConnectionIsAvailable() {
+    void Valkey_연결이_가능하다() {
         // given & when & then
         assertThat(valkey.isRunning()).isTrue();
         assertThat(valkey.getHost()).isNotNull();
@@ -27,7 +27,7 @@ class RedisContainerIntegrationTest extends InfraModuleIntegrationTest {
 
     @Test
     @DisplayName("Redis String 연산 테스트")
-    void testRedisStringOperations() {
+    void 문자열_연산이_동작한다() {
         // given
         String key = "test:string:key";
         String value = "test-value";
@@ -42,7 +42,7 @@ class RedisContainerIntegrationTest extends InfraModuleIntegrationTest {
 
     @Test
     @DisplayName("Redis String TTL 설정 테스트")
-    void testRedisStringWithTtl() {
+    void TTL을_지정하면_남은_만료시간이_조회된다() {
         // given
         String key = "test:ttl:key";
         String value = "test-ttl-value";
@@ -58,7 +58,7 @@ class RedisContainerIntegrationTest extends InfraModuleIntegrationTest {
 
     @Test
     @DisplayName("Redis Hash 연산 테스트")
-    void testRedisHashOperations() {
+    void 해시_연산이_동작한다() {
         // given
         String key = "test:hash:key";
         String hashKey = "field1";
@@ -74,7 +74,7 @@ class RedisContainerIntegrationTest extends InfraModuleIntegrationTest {
 
     @Test
     @DisplayName("Redis List 연산 테스트")
-    void testRedisListOperations() {
+    void 리스트_연산이_동작한다() {
         // given
         String key = "test:list:key";
         String value1 = "item1";
@@ -92,7 +92,7 @@ class RedisContainerIntegrationTest extends InfraModuleIntegrationTest {
 
     @Test
     @DisplayName("Redis Set 연산 테스트")
-    void testRedisSetOperations() {
+    void 셋_연산이_동작한다() {
         // given
         String key = "test:set:key";
         String member1 = "member1";
@@ -110,7 +110,7 @@ class RedisContainerIntegrationTest extends InfraModuleIntegrationTest {
 
     @Test
     @DisplayName("Redis 트랜잭션 테스트")
-    void testRedisTransaction() {
+    void 트랜잭션이_동작한다() {
         // given
         String key1 = "test:tx:key1";
         String key2 = "test:tx:key2";
@@ -136,7 +136,7 @@ class RedisContainerIntegrationTest extends InfraModuleIntegrationTest {
 
     @Test
     @DisplayName("Redis 연결 풀 테스트")
-    void testRedisConnectionPool() {
+    void 커넥션_풀이_동시_요청을_처리한다() {
         // given
         String keyPrefix = "test:pool:key:";
         int numberOfOperations = 50;

@@ -2,20 +2,20 @@ package coffeeshout.migration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.config.IntegrationSchedulerTestConfig;
+import coffeeshout.support.CommonTestSchedulerConfig;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import coffeeshout.support.CommonTestSchedulerConfig;
-import coffeeshout.support.app.config.IntegrationTestConfig;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
@@ -35,11 +35,11 @@ import org.testcontainers.utility.DockerImageName;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.MOCK,
         properties = {
-                "spring.flyway.enabled=true",
-                "spring.jpa.hibernate.ddl-auto=validate",
+            "spring.flyway.enabled=true",
+            "spring.jpa.hibernate.ddl-auto=validate",
         })
 @ActiveProfiles("test")
-@Import({CommonTestSchedulerConfig.class, IntegrationTestConfig.class})
+@Import({CommonTestSchedulerConfig.class, IntegrationSchedulerTestConfig.class})
 class FlywayMigrationIntegrationTest {
 
     private static final int VALKEY_PORT = 6379;
@@ -80,13 +80,12 @@ class FlywayMigrationIntegrationTest {
         // 컨텍스트가 flyway.enabled=true + ddl-auto=validate로 빈 DB에 떴다는 것 자체가
         // Flyway가 스키마를 만들었다는 뜻이다(오토컨피그가 없으면 여기까지 오지 못한다).
         // 히스토리와 실제 스키마 양쪽을 직접 확인한다.
-        final Integer flywayRuns = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1", Integer.class);
+        final Integer flywayRuns =
+                jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1", Integer.class);
         final boolean v39Applied = Boolean.TRUE.equals(jdbc.queryForObject(
                 "SELECT EXISTS(SELECT 1 FROM flyway_schema_history WHERE version = '39' AND success = 1)",
                 Boolean.class));
-        final Integer dedupKeyColumn = jdbc.queryForObject(
-                """
+        final Integer dedupKeyColumn = jdbc.queryForObject("""
                 SELECT COUNT(*) FROM information_schema.columns
                  WHERE table_schema = DATABASE()
                    AND table_name = 'zzolbot_monitor_run'

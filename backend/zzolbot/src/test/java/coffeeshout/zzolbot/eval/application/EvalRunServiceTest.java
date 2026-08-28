@@ -33,7 +33,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class EvalRunnerTest {
+class EvalRunServiceTest {
 
     private static final ZzolBotProperties PROPERTIES = new ZzolBotProperties(
             "test-key",
@@ -60,11 +60,11 @@ class EvalRunnerTest {
     @Mock
     private ScenarioEvaluator chatEvaluator;
 
-    private EvalRunner runner;
+    private EvalRunService runner;
 
     @BeforeEach
     void setUp() {
-        runner = new EvalRunner(
+        runner = new EvalRunService(
                 scenarioRepository, runRepository, resultRepository, judgeClient, PROPERTIES, List.of(chatEvaluator));
 
         given(runRepository.save(any())).willAnswer(invocation -> {

@@ -185,16 +185,16 @@ lifecycle stop 사이의 순서는 phase로 조정할 수 없다.
 
 동적 타이머가 필요한 게임(SpeedTouch·BlindTimer·Nunchi)은 OCP 한 줄 등록(`MiniGameType` + Factory) 외에 **전용 빈/스트림**을 추가한다. 이때 프로덕션에만 등록하고 테스트측 미러를 빠뜨리면, 도메인·서비스 단위 테스트는 통과하지만 **통합테스트가 컨텍스트 로딩 실패 또는 "메시지 미수신"으로 깨진다**.
 
-★ **전용 스케줄러 빈 미러는 모듈마다 따로 존재하는 3곳을 전부 추가해야 한다.** 이 셋은 서로 다른 테스트 컨텍스트가 import하므로, 한 곳만 고치면 그 곳을 안 쓰는 모듈의 IT가 깨진다(아래 표 1행).
+★ **전용 스케줄러 빈 미러는 2곳이다.** 둘은 서로 다른 테스트 컨텍스트가 import하고 스케줄러 구현도 다르지만(mock vs 실행 가능), **빈 이름은 같아야 한다**.
 
 | 프로덕션 등록 | 같은 커밋에서 반드시 추가할 테스트 미러 | 누락 시 증상 |
 |---|---|---|
-| `@Bean("xGameScheduler") @Profile("!test")` (전용 `TaskScheduler`) | **같은 이름** 빈을 다음 3곳에 모두 추가:<br>① `game/src/testFixtures/.../config/GameSchedulerTestConfig` → `new TestTaskScheduler()` (game·service 테스트가 import)<br>② `game/src/test/.../config/IntegrationTestConfig` → `new ShutDownTestScheduler()`<br>③ `app/src/test/.../support/app/config/IntegrationTestConfig` → `new ShutDownTestScheduler()` (전체 컨텍스트 로드 IT가 쓰는 곳) | 컨텍스트 로딩 실패 — `NoSuchBeanDefinitionException: TaskScheduler` (해당 미러가 빠진 모듈의 IT 전체가 무더기 실패) |
+| `@Bean("xGameScheduler") @Profile("!test")` (전용 `TaskScheduler`) | **같은 이름** 빈을 두 곳에 추가:<br>① `game/src/testFixtures/.../config/GameSchedulerTestConfig` → `new TestTaskScheduler()` (game·service 테스트가 import)<br>② `game/src/testFixtures/.../config/IntegrationSchedulerTestConfig` → `new ShutDownTestScheduler()` (game IT와 app IT가 **함께** import) | 컨텍스트 로딩 실패 — `NoSuchBeanDefinitionException: TaskScheduler` |
 | `config/redis.yml`의 `redis.stream.keys["[x]"]` (전용 입력 스트림) | `test-support/.../application-test-base.yml`의 `redis.stream.keys`에 **같은 키** | 컨슈머 미기동 → 스트림 경로 IT가 타임아웃("메시지 미수신") |
 
-체크: 새 게임 PR에 `@Profile("!test")` 빈 또는 새 `redis.stream.keys` 항목이 있으면, 대응하는 테스트 설정이 같은 diff에 있는지 확인한다. 모두 **공유 테스트 자원**이라 누락 시 그 게임만이 아니라 해당 stream/scheduler를 쓰는 통합테스트 전체가 영향받는다.
+체크는 사람이 하지 않는다 — `:app`의 `SchedulerMirrorTest`·`ConfigMirrorTest`가 프로덕션의 `@Profile("!test")` 스케줄러 빈 이름 집합과 두 미러를, 그리고 `redis.yml`·`game.yml`의 키셋과 테스트 설정을 대조한다. Spring 컨텍스트도 Docker도 띄우지 않아 몇 초면 끝난다.
 
-ADR-0031(Nunchi) 선례: 1차에서 ①②(game쪽)는 추가했으나 ③(app쪽 `IntegrationTestConfig`)을 빠뜨려, PR #1484 CI에서 전체 컨텍스트 로드 IT 약 55건이 `nunchiGameScheduler` `NoSuchBeanDefinitionException`으로 무더기 실패했다(상세: [postmortem 0004](postmortem/0004-test-mirror-checklist-incomplete-recurrence.md)).
+ADR-0031(Nunchi) 선례: 당시 미러는 **3곳**이었고(game testFixtures / game test / app test), 1차에서 앞의 둘만 채우고 app쪽을 빠뜨려 PR #1484 CI에서 IT 약 55건이 `nunchiGameScheduler` `NoSuchBeanDefinitionException`으로 무더기 실패했다(상세: [postmortem 0004](postmortem/0004-test-mirror-checklist-incomplete-recurrence.md)). 이후 game test와 app test의 설정이 **바이트 단위로 같은 복사본**이었음이 드러나 하나로 합쳤고(#1716), 그 실패 모드 자체가 사라졌다.
 
 ---
 

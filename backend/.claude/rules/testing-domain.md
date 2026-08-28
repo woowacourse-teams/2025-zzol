@@ -14,6 +14,7 @@ paths:
 
 ## 도메인 단위 테스트 체크
 
-- 베이스 클래스 **없음** — 순수 Java 단위 테스트. Spring 컨텍스트·TestContainer를 띄우지 않는 가장 빠른 계층이다
+- 베이스 클래스 **없음** — 순수 Java 단위 테스트. PMD가 막는다(`NoBaseClassInDomainTest`·`NoSpringContextInDomainTest`).
+  단 `..domain.service..`의 `*ServiceTest`는 이름이 말하는 대로 `testing-service.md`가 관할한다
 - 도메인 객체의 비즈니스 로직만 검증한다. 협력 객체가 필요하면 Fake/Stub 픽스처로 대체한다
 - DB·Redis·네트워크 등 외부 의존이 필요하면 도메인 단위 테스트가 아니다 → 서비스(`testing-service.md`) 또는 통합(`testing-integration.md`) 계층으로 올린다

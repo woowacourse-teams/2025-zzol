@@ -6,10 +6,10 @@ import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
-import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -28,7 +28,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ProfanityAuditBatchProcessor {
+public class ProfanityAuditBatchService {
 
     private final NicknameAuditRepository auditRepository;
     private final NicknameAuditor nicknameAuditor;
@@ -49,10 +49,8 @@ public class ProfanityAuditBatchProcessor {
     }
 
     public int process(List<NicknameAudit> batch) {
-        final List<String> nicknames = batch.stream()
-                .map(NicknameAudit::getNickname)
-                .distinct()
-                .toList();
+        final List<String> nicknames =
+                batch.stream().map(NicknameAudit::getNickname).distinct().toList();
 
         final List<NicknameAuditResult> results = nicknameAuditor.audit(nicknames);
 
@@ -98,7 +96,9 @@ public class ProfanityAuditBatchProcessor {
     private void applyResult(NicknameAudit entity, NicknameAuditResult result) {
         if (result == null) return;
         entity.complete(result.status(), result.confidence(), result.reason());
-        meterRegistry.counter("nickname.audit.result", "status", result.status().name()).increment();
+        meterRegistry
+                .counter("nickname.audit.result", "status", result.status().name())
+                .increment();
         if (result.status() == NicknameAuditStatus.FLAGGED) {
             autoBlock(result);
         }
@@ -122,8 +122,7 @@ public class ProfanityAuditBatchProcessor {
         final List<String> fragments =
                 result.extractProfanityFragments(textNormalizer, nicknameAuditProperties.minTermLength());
         if (fragments.isEmpty()) {
-            log.info("유효한 비속어 조각 없음 — 닉네임 전체 차단 폴백: nickname={}, terms={}",
-                    result.nickname(), result.profanityTerms());
+            log.info("유효한 비속어 조각 없음 — 닉네임 전체 차단 폴백: nickname={}, terms={}", result.nickname(), result.profanityTerms());
             return List.of(result.nickname());
         }
         return fragments;

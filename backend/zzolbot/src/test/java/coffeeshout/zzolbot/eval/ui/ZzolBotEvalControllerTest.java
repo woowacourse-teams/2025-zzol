@@ -6,7 +6,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-import coffeeshout.zzolbot.eval.application.EvalRunner;
+import coffeeshout.zzolbot.eval.application.EvalRunService;
 import coffeeshout.zzolbot.eval.application.EvalScenarioService;
 import coffeeshout.zzolbot.eval.domain.EvalVerdict;
 import coffeeshout.zzolbot.eval.domain.JudgeScore;
@@ -41,7 +41,7 @@ import org.springframework.web.server.ResponseStatusException;
 class ZzolBotEvalControllerTest {
 
     @Mock
-    private EvalRunner evalRunner;
+    private EvalRunService evalRunner;
 
     @Mock
     private EvalScenarioService scenarioService;

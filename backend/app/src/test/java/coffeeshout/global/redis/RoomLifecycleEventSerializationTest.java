@@ -25,7 +25,7 @@ class RoomLifecycleEventSerializationTest {
 
         @Test
         @DisplayName("Created")
-        void created() throws Exception {
+        void Created_이벤트가_구체_타입으로_복원된다() throws Exception {
             final RoomLifecycleEvent.Created event = new RoomLifecycleEvent.Created("호스트", "ABCD");
 
             final String json = mapper.writeValueAsString(event);
@@ -34,27 +34,23 @@ class RoomLifecycleEventSerializationTest {
             // 와이어 계약 고정: 중첩 record의 @type 식별자(Jackson Id.NAME 기본값 = getName 기반, 패키지만 제거).
             // 기존 평탄 GameRoomCreatedEvent는 "GameRoomCreatedEvent"였으므로 이 문자열은 신규 계약이다.
             assertThat(json).contains("\"@type\":\"RoomLifecycleEvent$Created\"");
-            assertThat(restored)
-                    .isInstanceOf(RoomLifecycleEvent.Created.class)
-                    .isEqualTo(event);
+            assertThat(restored).isInstanceOf(RoomLifecycleEvent.Created.class).isEqualTo(event);
         }
 
         @Test
         @DisplayName("Removed")
-        void removed() throws Exception {
+        void Removed_이벤트가_구체_타입으로_복원된다() throws Exception {
             final RoomLifecycleEvent.Removed event = new RoomLifecycleEvent.Removed("ABCD");
 
             final String json = mapper.writeValueAsString(event);
             final BaseEvent restored = mapper.readValue(json, BaseEvent.class);
 
-            assertThat(restored)
-                    .isInstanceOf(RoomLifecycleEvent.Removed.class)
-                    .isEqualTo(event);
+            assertThat(restored).isInstanceOf(RoomLifecycleEvent.Removed.class).isEqualTo(event);
         }
 
         @Test
         @DisplayName("HostChanged")
-        void hostChanged() throws Exception {
+        void HostChanged_이벤트가_구체_타입으로_복원된다() throws Exception {
             final RoomLifecycleEvent.HostChanged event = new RoomLifecycleEvent.HostChanged("ABCD", "새호스트");
 
             final String json = mapper.writeValueAsString(event);

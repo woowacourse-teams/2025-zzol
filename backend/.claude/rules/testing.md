@@ -24,7 +24,7 @@ paths:
 - 테스트 데이터 직접 생성 금지 → 픽스처 사용
 - `CoffeeShoutException` 계열은 `assertCoffeeShoutException` 사용. `assertThatThrownBy` 체인 직접 작성 금지
 
-## PMD가 막는 것 (여기 다시 적지 않는다)
+## PMD가 검사하는 것
 
-한글 테스트 메서드명 · `Thread.sleep` · JUnit 단언 · `System.out` · `..fixture` 패키지 클래스명 패턴.
-판정의 SSOT는 `config/pmd/ruleset-test.xml`이고, 위반하면 `./gradlew build`가 파일·줄과 함께 실패한다.
+판정의 SSOT는 `config/pmd/ruleset-test.xml`이다. 규칙 목록을 여기 옮겨 적지 않는다 —
+위반하면 `./gradlew build`가 파일·줄과 **무엇을 하라는지**까지 붙여 실패한다.

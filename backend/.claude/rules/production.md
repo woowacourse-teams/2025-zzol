@@ -8,7 +8,7 @@ paths:
 
 ## 자주 놓치는 항목
 
-- `if-else` 금지 → early return
+- `if-else` 금지 → early return (then 절이 return·throw로 끝나는 형태는 PMD `NoElseAfterReturn`)
 - 비즈니스 로직은 도메인 객체 안에. 서비스는 조합만
 - 조정 가능한 값은 `application.yml` + `@ConfigurationProperties`. 하드코딩 금지
 - 식별자·핵심 개념은 record(Value Object). 원시 타입을 시그니처에 직접 노출 금지

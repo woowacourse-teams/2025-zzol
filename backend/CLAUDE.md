@@ -52,7 +52,7 @@ Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는�
 의존 방향 다이어그램은 [아키텍처 레퍼런스](docs/architecture.md)를 참조한다.
 
 - `:room`은 `:game-api`만 알고 `:game` 구체 클래스를 몰라야 한다 (OCP — 새 게임 추가 시 room 코드 무수정)
-- `:common`은 Spring 의존이 없다. Spring import를 추가하지 않는다
+- `:common`은 Spring 의존이 없다 — Spring import는 컴파일에서 걸린다
 - ArchUnit이 역방향 의존을 CI에서 차단한다
 
 ### 메시지 처리 흐름 (Redis Stream 경유 필수)
@@ -82,7 +82,7 @@ Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는�
 - [기술 스택 & 처리 흐름](docs/tech-stack.md) — 기술 스택, Redis Stream / MySQL 처리 흐름
 - [프로덕션 코드 컨벤션](docs/conventions-production.md) — 네이밍, 코드 작성 원칙, 예외 처리
 - [테스트 컨벤션](docs/conventions-test.md) — @Nested, 픽스처, 단위/통합 테스트 작성 규칙
-- [문서 작성 컨벤션](docs/conventions-docs.md) — Markdown 린트 규칙 (MD040, MD031, MD022)
+- [문서 작성 컨벤션](docs/conventions-docs.md) — Markdown 린트 규칙의 "왜"와 예시
 - [ADR 인덱스](docs/adr/index.md) — 주요 기술 의사결정 한 줄 요약 목록 (`/adr [주제]`로 새 ADR 작성, 상세 내용은 개별 파일 참조)
 - [포스트모템 인덱스](docs/postmortem/index.md) — 장애·인시던트·반복 오진의 사후 회고 목록 (`/postmortem [사건]`으로 새 회고 작성, ADR과 독립된 번호 시퀀스)
 - [Notion 워크스페이스](docs/notion-workspace.md) — Notion 주요 페이지 URL, WebSocket 명세서 DB 구조 및 작업 흐름

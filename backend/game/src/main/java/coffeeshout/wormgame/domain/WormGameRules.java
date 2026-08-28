@@ -12,6 +12,7 @@ public record WormGameRules(
         double omegaBaseRadians,
         double omegaExponent,
         double arenaBaseRadius,
+        double arenaExponent,
         int shrinkDelayTicks,
         int shrinkDurationTicks,
         double shrinkMinRatio,
@@ -57,7 +58,12 @@ public record WormGameRules(
         return Math.max(minRadius, late);
     }
 
+    /**
+     * 인원 4명을 기준으로 한 초기 아레나 반지름. 지수 0.5 면 면적이 인원에 정비례하지만,
+     * 고인원에서 아레나가 커지면 궤적 레이어 해상도가 메모리 상한에 걸려 떨어지고
+     * 고정 시야가 덮는 비율도 같이 줄어든다 — 그래서 0.5 보다 낮춰 쓴다(#1681 실측).
+     */
     public double initialRadius(int playerCount) {
-        return arenaBaseRadius * Math.sqrt(playerCount / 4.0);
+        return arenaBaseRadius * Math.pow(playerCount / 4.0, arenaExponent);
     }
 }

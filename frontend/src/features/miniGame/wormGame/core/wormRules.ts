@@ -1,5 +1,5 @@
 /**
- * 서버 `WormGameRules.defaults()` 의 클라이언트 미러 — 자기 지렁이 클라 예측·타인 외삽 전용.
+ * 서버 `WormGameRulesProperties` 의 @DefaultValue 클라이언트 미러 — 자기 지렁이 클라 예측·타인 외삽 전용.
  * 판정은 전부 서버가 한다. 값이 바뀌면 BE 와 함께 고친다.
  */
 export const WORM_RULES = {

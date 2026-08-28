@@ -2,11 +2,30 @@ import { WormPoint } from '@/types/miniGame/wormGame';
 import { Pose, WORM_RULES } from './wormRules';
 import { INTERP_DELAY_TICKS, WormStore, WormView } from './wormStore';
 
-/** 메인 뷰 시야 반지름(u). 회전 반경 34~55u 대비 회피 판단에 충분(설계 SSOT) */
+/** 메인 뷰 시야 반지름(u) 상한. 회전 반경 34~55u 대비 회피 판단에 충분(설계 SSOT) */
 const VIEW_RADIUS = 130;
+/**
+ * 화면 해상도 하한(px/u). 시야를 월드 단위로 고정하면 화면이 작을수록 모든 게 그대로 작아진다 —
+ * 430px 폰에서 130u 는 1.65px/u 라 머리가 19px 이었다. 이 하한이 작은 화면에서만 시야를 당긴다.
+ * 상한이 2 인 것은 궤적 레이어 해상도(LAYER_PX_PER_UNIT)가 2 라서다 — 더 당기면 벽이 확대돼 뭉개진다.
+ */
+const MIN_PX_PER_UNIT = 2;
+/**
+ * 시야 하한(u). 진행 방향으로 보이는 거리이자 회피에 쓸 수 있는 시간이다 —
+ * 후반 최고 속도(192u/s)에서 105u 는 0.55s 로, 터치 조향 반응에 남길 수 있는 최소치다.
+ * 360px 같은 작은 폰은 이 하한에 걸려 MIN_PX_PER_UNIT 를 못 채운다(선명도보다 회피가 우선).
+ */
+const MIN_VIEW_RADIUS = 105;
+
+/**
+ * 추적 시야(u). 작은 화면에서만 당겨 px/u 하한을 지키고, 큰 화면은 VIEW_RADIUS 그대로 둔다.
+ * 430px 폰 → 107.5u(≈1.2배 확대, 2px/u), 768px 이상 → 130u.
+ */
+export const followViewRadius = (minSide: number): number =>
+  Math.max(MIN_VIEW_RADIUS, Math.min(VIEW_RADIUS, minSide / (2 * MIN_PX_PER_UNIT)));
 /** 줌아웃 시 아레나 초기 반지름 대비 여유 */
 const ZOOM_OUT_MARGIN = 1.12;
-/** 궤적 레이어 해상도(px/u). 430px 폰에서 메인 뷰가 ≈1.65px/u 라 2 면 흐려지지 않는다 */
+/** 궤적 레이어 해상도(px/u). 메인 뷰의 px/u 하한(MIN_PX_PER_UNIT)과 같은 값이라 확대로 뭉개지지 않는다 */
 const LAYER_PX_PER_UNIT = 2;
 /**
  * 레이어 한 변 상한(px). 레이어는 지렁이당 하나라 메모리가 인원수만큼 곱해진다 —
@@ -108,7 +127,9 @@ export class WormRenderer {
     const target = follow ?? { x: 0, y: 0 };
     // 줌아웃 목표는 initialRadius 가 아니라 현재 radius 다 — 아레나가 줄어들면 그보다 바깥은
     // 어차피 아래 clip 에 잘려서, R₀ 로 맞추면 종료 화면이 텅 빈 배경에 뜬 작은 원이 된다
-    const targetView = follow ? VIEW_RADIUS : store.radius * ZOOM_OUT_MARGIN;
+    const targetView = follow
+      ? followViewRadius(Math.min(width, height))
+      : store.radius * ZOOM_OUT_MARGIN;
     if (!this.camera) this.camera = { x: target.x, y: target.y };
     const kCam = 1 - Math.exp(-dt / CAMERA_SMOOTH_MS);
     const kView = 1 - Math.exp(-dt / VIEW_SMOOTH_MS);

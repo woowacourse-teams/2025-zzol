@@ -24,6 +24,12 @@ class WormGameTest {
 
     /** 자기 궤적 유예(selfSkipSegments)까지 지정한다 — 자기/타인 분기를 구분하는 시나리오용. */
     WormGameRules collisionRules(int invincibleTicks, int wetPaintSkipSegments, int selfSkipSegments) {
+        return collisionRules(invincibleTicks, wetPaintSkipSegments, selfSkipSegments, 0.5);
+    }
+
+    /** 아레나 지수까지 지정한다 — 인원수별 반지름 시나리오용. */
+    WormGameRules collisionRules(
+            int invincibleTicks, int wetPaintSkipSegments, int selfSkipSegments, double arenaExponent) {
         return new WormGameRules(
                 50L,
                 600.0,
@@ -32,6 +38,7 @@ class WormGameTest {
                 Math.toRadians(200),
                 0.7,
                 220.0,
+                arenaExponent,
                 200,
                 1200,
                 0.30,
@@ -337,10 +344,23 @@ class WormGameTest {
         final WormGameRules rules = WormGameRulesFixture.defaultRules();
 
         @Test
-        void 아레나_면적은_인원수에_비례한다() {
+        void 아레나_반지름은_인원수에_지수로_비례한다() {
+            // 기준은 4인 — 그 지점에서 arenaBaseRadius 그대로다. 지수는 튜닝 노브(운영 0.35).
             final SoftAssertions softly = new SoftAssertions();
             softly.assertThat(rules.initialRadius(4)).isCloseTo(220.0, within(1e-9));
-            softly.assertThat(rules.initialRadius(8)).isCloseTo(220.0 * Math.sqrt(2), within(1e-9));
+            softly.assertThat(rules.initialRadius(8)).isCloseTo(220.0 * Math.pow(2, 0.5), within(1e-9));
+            softly.assertAll();
+        }
+
+        @Test
+        void 지수를_낮추면_고인원_아레나가_작아진다() {
+            // 지수 0.35(운영값)는 4인에서 같고 9인에서 더 작다 — 레이어 해상도·시야 비율을 지키기 위한 값이다.
+            final WormGameRules flat = collisionRules(0, 3, 5, 0.35);
+
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(flat.initialRadius(4)).isCloseTo(rules.initialRadius(4), within(1e-9));
+            softly.assertThat(flat.initialRadius(9)).isLessThan(rules.initialRadius(9));
+            softly.assertThat(flat.initialRadius(2)).isGreaterThan(rules.initialRadius(2));
             softly.assertAll();
         }
 

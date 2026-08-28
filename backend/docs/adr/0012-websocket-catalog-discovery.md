@@ -55,8 +55,8 @@ public @interface WsReceive {
 
 `@MessageMapping`만 있는 핸들러 — 즉 직접 토픽을 발행하지 않고 Redis Stream 이벤트를 발행해 비동기로 응답이 나가는 핸들러 — 에 사용한다.
 `@WsTopic(payload = Object.class)` 형식의 회피 코드를 막기 위해 도입되었다 — 빌더가 `Object.class` payload 를 거부하므로 비동기 핸들러는 `@WsReceive` 를 써야 한다.
-`respondsOnTopics`로 이 send 처리 결과가 어떤 토픽으로 최종 발행되는지 선언적으로 표시해 FE가 send→topic 인과 관계를 파악할 수 있도록 한다.
-request payload 식별은 `@Payload` 어노테이션을 통해 명시한다 — `@Payload` 없는 매개변수는 카탈로그에서 `requestType=null` 로 표시된다.
+`respondsOnTopics`로 이 send 처리 결과가 어떤 토픽으로 최종 발행되는지 선언적으로 표시해 FE가 send→topic 인과 관계를 파악하게 한다.
+request payload 식별은 `@Payload` 어노테이션으로 명시한다 — `@Payload` 없는 매개변수는 카탈로그에서 `requestType=null` 로 표시된다.
 
 **`@WsQueue` 어노테이션 시그니처** (`coffeeshout.websocket.docs.WsQueue`)
 

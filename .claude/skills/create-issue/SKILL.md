@@ -1,6 +1,6 @@
 ---
 name: create-issue
-description: GitHub 이슈를 템플릿 기반으로 생성하고, 이슈 번호로 dev에서 작업 워크트리·브랜치를 만들어 진입한다. 백엔드·프론트엔드 공통.
+description: GitHub 이슈를 템플릿으로 생성하고, 이슈 번호로 dev에서 작업 워크트리·브랜치를 만들어 진입한다. 백엔드·프론트엔드 공통.
 argument-hint: "[type] 이슈 제목 — type: feat | fix | refactor | chore | docs | test"
 allowed-tools: Bash, EnterWorktree
 ---
@@ -27,7 +27,7 @@ allowed-tools: Bash, EnterWorktree
 
 ## 2. 이슈 템플릿 읽기
 
-type에 맞는 템플릿 **하나만** 읽어 본문 골격으로 삼는다 — `fix`는 `bug_report.md`, 그 외는 `feature-template.md` (두 템플릿은 제목 줄만 다르고 섹션 구조는 동일하다).
+type에 맞는 템플릿 **하나만** 읽어 본문 골격으로 삼는다. `fix`는 `bug_report.md`, 그 외는 `feature-template.md`를 읽는다. 두 템플릿은 제목 줄만 다르고 섹션 구조는 같다.
 
 템플릿은 **모노레포 루트** `.github/ISSUE_TEMPLATE/`에 있다(`backend/` 하위 아님). worktree는 자체 `.github/`를 가지므로 `git rev-parse --show-toplevel`로 루트를 앵커한다(하드코딩·`../` 금지):
 

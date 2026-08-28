@@ -148,7 +148,7 @@ PR=1234
 REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
 
 # 아직 답하지 않은 스레드의 최상위 코멘트 id 목록.
-#  --paginate: 없으면 30개까지만 와서 그 뒤 지적이 통째로 안 보인다(답을 다 했다고 착각하게 된다).
+#  --paginate: 없으면 30개까지만 와서 그 뒤 지적이 통째로 안 보인다. 답을 다 했다고 착각하게 된다.
 #  isResolved 는 REST 에 없다 — GraphQL reviewThreads 로만 알 수 있다.
 gh api graphql --paginate -F pr="$PR" -F owner="${REPO%/*}" -F name="${REPO#*/}" -f query='
 query($owner:String!,$name:String!,$pr:Int!,$endCursor:String){

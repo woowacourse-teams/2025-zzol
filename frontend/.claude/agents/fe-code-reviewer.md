@@ -89,7 +89,7 @@ tools: Bash, Read, Glob, Grep
 - [ ] GET 요청에 `useFetch` 또는 `useLazyFetch`를 사용하는가
 - [ ] POST/PUT/PATCH/DELETE 요청에 `useMutation`을 사용하는가
 - [ ] `errorDisplayMode`가 명시되어 있는가 (`'toast'` | `'text'` | `'none'`)
-- [ ] `api` 객체를 컴포넌트 내부에서 직접 호출하지 않는가 (훅을 통해 사용)
+- [ ] `api` 객체를 컴포넌트 내부에서 직접 호출하지 않는가 (훅으로 감싸 사용)
 - [ ] 하드코딩된 API 엔드포인트 문자열이 아닌 상수나 타입으로 관리되는가
 
 ### WebSocket 컨트랙트

@@ -34,7 +34,7 @@ ZZOL 프로젝트의 Notion 워크스페이스 구조와 주요 페이지 위치
 
 ## Notion MCP 연동
 
-Claude Code에서 Notion MCP 서버를 통해 워크스페이스를 직접 읽고 쓸 수 있다.
+Claude Code에서 Notion MCP 서버로 워크스페이스를 직접 읽고 쓸 수 있다.
 
 ### 설정
 
@@ -55,7 +55,7 @@ Notion API 토큰은 [Notion 인테그레이션 설정](https://www.notion.so/pr
 }
 ```
 
-인테그레이션을 생성한 뒤, 접근할 페이지/DB에서 **연결(Connect)** 을 통해 인테그레이션을 추가해야 한다.
+인테그레이션을 생성한 뒤, 접근할 페이지/DB에서 **연결(Connect)** 로 인테그레이션을 추가해야 한다.
 
 ### 주요 도구
 

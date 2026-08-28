@@ -7,18 +7,17 @@ import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.WordSource;
 import java.util.List;
 
-public class ProfanityTestDataSeeder {
+public class ProfanityTestDataHelper {
 
     private static final List<ProfanityWord> SEED_WORDS = List.of(
             new ProfanityWord("씨발", Language.KOREAN, WordSource.MANUAL, true),
             new ProfanityWord("개새끼", Language.KOREAN, WordSource.MANUAL, true),
-            new ProfanityWord("fuck", Language.ENGLISH, WordSource.MANUAL, true)
-    );
+            new ProfanityWord("fuck", Language.ENGLISH, WordSource.MANUAL, true));
 
     private final ProfanityWordRepository wordRepository;
     private final ProfanityFilterService filterService;
 
-    public ProfanityTestDataSeeder(ProfanityWordRepository wordRepository, ProfanityFilterService filterService) {
+    public ProfanityTestDataHelper(ProfanityWordRepository wordRepository, ProfanityFilterService filterService) {
         this.wordRepository = wordRepository;
         this.filterService = filterService;
     }

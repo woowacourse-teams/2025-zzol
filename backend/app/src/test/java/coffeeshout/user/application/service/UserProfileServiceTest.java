@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.fixture.UserFixture;
 import coffeeshout.profanity.application.ProfanityFilterService;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
-import coffeeshout.profanity.fixture.ProfanityTestDataSeeder;
+import coffeeshout.profanity.fixture.ProfanityTestDataHelper;
 import coffeeshout.support.app.ServiceTest;
 import coffeeshout.user.domain.User;
 import coffeeshout.user.domain.UserErrorCode;
@@ -35,7 +35,7 @@ class UserProfileServiceTest extends ServiceTest {
     @BeforeEach
     void setUp() {
         userId = userRepository.save(UserFixture.회원_엠제이()).getId();
-        new ProfanityTestDataSeeder(profanityWordRepository, profanityFilterService).seedForTest();
+        new ProfanityTestDataHelper(profanityWordRepository, profanityFilterService).seedForTest();
     }
 
     @Nested
@@ -44,9 +44,7 @@ class UserProfileServiceTest extends ServiceTest {
         @Test
         void 비속어가_포함된_닉네임은_예외를_던진다() {
             assertCoffeeShoutException(
-                    () -> userProfileService.changeNickname(userId, "씨발"),
-                    UserErrorCode.NICKNAME_CONTAINS_PROFANITY
-            );
+                    () -> userProfileService.changeNickname(userId, "씨발"), UserErrorCode.NICKNAME_CONTAINS_PROFANITY);
         }
 
         @Test

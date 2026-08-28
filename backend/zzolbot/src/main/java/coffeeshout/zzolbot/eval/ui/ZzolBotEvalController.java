@@ -1,6 +1,6 @@
 package coffeeshout.zzolbot.eval.ui;
 
-import coffeeshout.zzolbot.eval.application.EvalRunner;
+import coffeeshout.zzolbot.eval.application.EvalRunService;
 import coffeeshout.zzolbot.eval.application.EvalScenarioService;
 import coffeeshout.zzolbot.eval.domain.ScenarioKind;
 import coffeeshout.zzolbot.eval.infra.EvalResultEntity;
@@ -49,7 +49,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/admin/zzolbot/eval")
 public class ZzolBotEvalController {
 
-    private final EvalRunner evalRunner;
+    private final EvalRunService evalRunner;
     private final EvalScenarioService scenarioService;
     private final EvalRunRepository runRepository;
     private final EvalResultRepository resultRepository;
@@ -59,7 +59,7 @@ public class ZzolBotEvalController {
     private final AtomicBoolean evalRunning = new AtomicBoolean(false);
 
     public ZzolBotEvalController(
-            EvalRunner evalRunner,
+            EvalRunService evalRunner,
             EvalScenarioService scenarioService,
             EvalRunRepository runRepository,
             EvalResultRepository resultRepository,

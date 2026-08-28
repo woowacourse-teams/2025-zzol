@@ -64,4 +64,117 @@
         <priority>1</priority>
     </rule>
 
+    <!-- ===== 묶음 B — 위반 0곳, 현재 상태를 잠그는 가드 (#1716) =====
+         계층 판정은 ruleset-main.xml과 같은 방식으로 CompilationUnit의 @PackageName으로 한다. -->
+
+    <!-- testing.md: "테스트 메서드명은 한글". 테스트 메서드 1,579곳이 이미 전부 한글이다 —
+         이미 일관된 상태를 잠그는 규칙이라 도입 비용이 0이다.
+         @DisplayName으로 한글 설명을 다는 방식은 이 저장소가 쓰지 않는다(메서드명 자체가 설명이다). -->
+    <rule name="KoreanTestMethodName"
+          language="java"
+          message="테스트 메서드명은 한글로 쓴다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//MethodDeclaration[ModifierList/Annotation[@SimpleName = ('Test', 'ParameterizedTest',
+                                                           'RepeatedTest', 'TestFactory')]]
+    [not(matches(@Name, '[가-힣]'))]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- testing-domain.md: "베이스 클래스 없음 — 순수 Java 단위 테스트. Spring 컨텍스트·TestContainer를
+         띄우지 않는 가장 빠른 계층이다." 컨텍스트를 띄우는 순간 피라미드 밑변이 밑변이 아니게 된다. -->
+    <rule name="NoSpringContextInDomainTest"
+          language="java"
+          message="도메인 테스트는 Spring 컨텍스트를 띄우지 않는다. 컨텍스트가 필요하면 서비스·통합 계층으로 올린다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//ClassDeclaration[ModifierList/Annotation[@SimpleName = ('SpringBootTest', 'DataJpaTest',
+                                                          'WebMvcTest', 'JsonTest')]]
+    [ancestor::CompilationUnit[matches(@PackageName, '\.domain(\.|$)')]]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- 위 규칙의 우회로 차단 — 베이스 클래스를 통해 @SpringBootTest를 물려받는 경우까지 잡는다.
+         `*ServiceTest`는 제외한다: `..domain.service..`에 사는 도메인 서비스(`{Domain}CommandService`)의
+         테스트는 이름이 말하는 대로 testing-service.md가 관할하고, 그쪽은 반대로 베이스 상속을 요구한다
+         (RoomCommandServiceTest가 그 경우다). 어느 규칙이 적용될지는 패키지가 아니라 이름이 정한다. -->
+    <rule name="NoBaseClassInDomainTest"
+          language="java"
+          message="도메인 테스트는 베이스 클래스를 상속하지 않는다. 협력 객체는 Fake/Stub 픽스처로 대체한다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//ClassDeclaration[not(ancestor::ClassBody)][ExtendsList]
+    [not(ends-with(@SimpleName, 'ServiceTest'))]
+    [ancestor::CompilationUnit[matches(@PackageName, '\.domain(\.|$)')]]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- testing.md: "테스트 데이터 직접 생성 금지 → 픽스처 사용. 클래스명은 반드시 5가지 패턴 중 하나."
+         판정 범위는 `..fixture` 패키지다 — testFixtures 소스셋 전체로 잡으면 그 안의 설정 클래스
+         (GameSchedulerTestConfig 등)까지 걸린다. 소스셋은 배포 단위지 역할이 아니다.
+
+         문서와 다르게 두 군데를 느슨하게 뒀다.
+         ① Stub은 접두(StubDeck)·접미(CardGameDeckStub) 둘 다 허용한다 — 실제로 둘 다 쓰이고
+            한쪽만 남기려 리네임할 값어치가 없다.
+         ② TestDataHelper는 접미 일치다(`ProfanityTestDataHelper`). 정확 일치로 두면 모듈이 둘 이상일 때
+            둘째 모듈이 이름을 못 만들어, DB 영속화 헬퍼를 순수 팩토리를 뜻하는 `*Fixture`로 부르게 된다
+            (conventions-test.md의 두 정의가 서로 다른 물건이다). #1716 리뷰에서 실제로 그렇게 잘못 옮겼다가 되돌렸다.
+
+         record·enum까지 본다 — `//ClassDeclaration`만 쓰면 PMD 7에서 record(RecordDeclaration)와
+         enum(EnumDeclaration)이 빠지는데, `..fixture`에 이미 record 픽스처가 있다(BaseEventDummy). -->
+    <rule name="FixtureClassNaming"
+          language="java"
+          message="픽스처 클래스명은 *Fixture / *Fake / *Dummy / Stub* / *Stub / *TestDataHelper 중 하나여야 한다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+(//ClassDeclaration | //RecordDeclaration | //EnumDeclaration)[not(ancestor::ClassBody)]
+    [ancestor::CompilationUnit[matches(@PackageName, '\.fixture(\.|$)')]]
+    [not(matches(@SimpleName, '(Fixture|Fake|Dummy|Stub|TestDataHelper)$|^Stub'))]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- testing-service.md: 서비스 테스트의 베이스는 모듈 로컬 `{Module}ServiceTest`다.
+         베이스를 안 타고 컨텍스트를 직접 올리면 캐시되지 않는 컨텍스트가 하나 더 떠서
+         전체 테스트 시간이 늘고, 베이스가 제공하는 목(ApplicationEventPublisher 등)도 못 받는다.
+
+         "`*ServiceTest`는 무조건 베이스 상속"이 아니라 "Spring을 쓰면 베이스 상속"인 이유:
+         ADR-0033은 슬라이스로 충분하면 풀 컨텍스트를 지양하라고 하고, 실제로 순수 Mockito 단위
+         테스트인 `*ServiceTest`가 28곳이다. 그것들까지 컨텍스트로 끌어올리는 건 퇴보다. -->
+    <rule name="SpringServiceTestMustExtendBase"
+          language="java"
+          message="Spring을 쓰는 서비스 테스트는 모듈 로컬 {Module}ServiceTest를 상속한다"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//ClassDeclaration[not(ancestor::ClassBody)][ends-with(@SimpleName, 'ServiceTest')]
+    [not(ExtendsList)]
+    [.//Annotation[@SimpleName = ('SpringBootTest', 'DataJpaTest', 'WebMvcTest', 'JsonTest',
+                                  'MockitoBean', 'Autowired')]]
+                ]]></value>
+            </property>
+        </properties>
+    </rule>
+
 </ruleset>

@@ -14,6 +14,8 @@ paths:
 
 ## 서비스 테스트 체크
 
-- 베이스: 모듈 로컬 `{Module}ServiceTest`(`coffeeshout.support.ServiceTest` 확장). `src/test/java/coffeeshout/` 아래에 위치
+- **Spring이 매개하는 것을 검증할 때만** 베이스를 탄다 — 모듈 로컬 `{Module}ServiceTest`(`coffeeshout.support.ServiceTest` 확장), `src/test/java/coffeeshout/` 아래에 위치.
+  순수 단위로 검증되는 서비스는 상속하지 않는다(ADR-0033 "슬라이스로 충분하면 풀 컨텍스트 지양" — 실제로 `*ServiceTest` 28곳이 순수 Mockito다).
+  베이스를 안 타고 컨텍스트만 직접 올리는 경우는 PMD가 막는다(`SpringServiceTestMustExtendBase`)
 - Mock 빈은 `src/test/java/coffeeshout/config/ServiceTestConfig.java`에 선언한다
 - `ApplicationEventPublisher`는 `coffeeshout.support.ServiceTest`가 `@MockitoBean`으로 제공 — `ServiceTestConfig`에 **재선언 금지**

@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class EvalRunner {
+public class EvalRunService {
 
     private final EvalScenarioRepository scenarioRepository;
     private final EvalRunRepository runRepository;

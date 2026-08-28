@@ -33,7 +33,7 @@ describe('SEO 페이지 메타', () => {
     });
   });
 
-  it('게임 페이지는 MINI_GAME_NAME_MAP 의 7종과 정확히 일치한다', () => {
+  it('게임 페이지는 MINI_GAME_NAME_MAP 과 정확히 일치한다', () => {
     expect(GAME_PAGES.map((page) => page.game).sort()).toEqual(
       Object.keys(MINI_GAME_NAME_MAP).sort()
     );

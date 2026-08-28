@@ -60,6 +60,8 @@ cat "$(git rev-parse --show-toplevel)/.github/ISSUE_TEMPLATE/<bug_report|feature
 
 ## 4. 템플릿 채우기
 
+본문은 [korean-style](../../rules/korean-style.md)의 문체 규칙을 지켜 쓴다. 특히 번역투 연결어와 하이픈으로 정보를 잇는 문장을 쓰지 않는다.
+
 frontmatter(`---`로 감싼 부분)는 제거하고 본문 섹션만 사용한다.
 
 | 섹션 | 작성 기준 |

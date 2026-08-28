@@ -12,6 +12,16 @@
 - 규칙별 검증 주체를 표기한다: `archunit`(기존 ArchUnit 테스트) / `pmd`(기존 PMD 룰셋) / `script`(결정적 스크립트) / `llm`(판정 에이전트). 기계 검증(`archunit`·`pmd`·`script`)이 Tier 0 게이트에서 이미 걸러진 규칙은 Tier 1에서 재판정하지 않는다.
 - 판정 기준의 문장은 "~하면 위반" 형식이다. 나열된 기준에 해당하지 않는 회색 지대는 판정 에이전트가 계약 문장의 취지로 판단하되, 확신이 없으면 `충족`으로 둔다(의심만으로 위반 판정 금지).
 
+## 실험 수칙 — 샌드박스 격리 (구현 에이전트 대상)
+
+구현과 탐색은 **체크아웃된 샌드박스 브랜치의 워킹트리 안에서만** 한다. 다음은 금지이며, 시도 자체가 후보 실격 사유다:
+
+- 다른 브랜치·태그·원격 참조 조회 (`origin/*` 참조, `git fetch`/`git pull`, 다른 후보 브랜치 열람)
+- 커밋 히스토리 발굴 (`git log`·`git show`로 삭제된 기존 구현을 복원하려는 시도)
+- 외부 네트워크에서 기존 구현·답지를 검색하는 행위
+
+샌드박스 작업 공간은 single-branch shallow clone(depth 1)으로 생성되어 위 대부분이 물리적으로 불가능하다 — 이 수칙은 그 강제의 선언이다. 실험의 목적은 계약과 현재 코드베이스만으로 어디까지 해내는지를 재는 것이므로, 답지 접근은 데이터를 무효화한다.
+
 ## 제1부 — 패턴 불변 규칙
 
 ### R1. 동시성 직렬화
@@ -76,15 +86,16 @@ WebSocket 메시지를 발행하는 메서드에는 `@WsTopic`(convertAndSend) �
 
 ### R4. 이벤트 계약
 
-**계약** — 도메인 이벤트는 record로 정의하고 `BaseEvent`를 구현하며, 컴팩트 생성자에서 `eventId`(UUID)·`timestamp`(`Instant.now()`)를 자동 생성한다. 이벤트에 분산 추적 코드를 넣지 않는다(인프라 경계가 자동 전파). 이벤트 페이로드에 도메인 객체(엔티티·`CardGame` 등)를 그대로 노출하지 않는다. 같은 JVM 안 모듈 간 이벤트는 동기로 처리한다 — 리스너에 `@Async`를 붙이지 않는다.
+**계약** — 도메인 이벤트는 record로 정의하고 `BaseEvent`를 구현하며, 컴팩트 생성자에서 `eventId`(UUID)·`timestamp`(`Instant.now()`)를 자동 생성한다. 이벤트에 분산 추적 코드를 넣지 않는다 — **추적 전파는 알림 채널 경계가 담당한다**: 인스턴스 경계를 넘는 알림은 베이스에 제공된 알림 채널 SPI와 traceparent 전파 어댑터(pub/sub·Stream)를 통해 발행하며, 자체 어댑터를 만들 경우에도 전파는 어댑터 경계에서 한다. 이벤트 페이로드에 도메인 객체(엔티티·`CardGame` 등)를 그대로 노출하지 않는다. 같은 JVM 안 모듈 간 이벤트는 동기로 처리한다 — 리스너에 `@Async`를 붙이지 않는다(같은 스레드라 추적도 자동으로 이어진다).
 
-**근거** — `docs/conventions-production.md` L76-82, ADR-0021(트레이싱 경계), ADR-0025("`MiniGameFinishedEvent` in-process 동기 리스너 경유, `@Async` 금지").
+**근거** — `docs/conventions-production.md` L76-82, ADR-0021(트레이싱은 인프라 경계에서 — 기존 `StreamPublisher` inject / Listener extract의 일반화), ADR-0025("`MiniGameFinishedEvent` in-process 동기 리스너 경유, `@Async` 금지").
 
 **판정 기준**
 
 - 이벤트가 record가 아니거나 `BaseEvent` 미구현이면 위반.
 - 이벤트 필드에 traceId·span 등 추적 정보가 있으면 위반.
 - 이벤트 필드 타입이 도메인 엔티티/애그리거트면 위반(식별자·값·DTO로 풀어야 함).
+- 인스턴스 경계를 넘는 알림을 제공된 채널 SPI(또는 경계에서 전파하는 동등한 자체 어댑터) 밖에서 직접 발행하면 위반.
 - in-process 이벤트 리스너에 `@Async`가 있으면 위반.
 
 **충족 예** — `record CardSelectedEvent(String joinCode, String playerName, int cardIndex, ...) implements BaseEvent`. / **위반 예** — `record CardSelectedEvent(CardGame game)`.

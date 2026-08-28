@@ -23,10 +23,6 @@ public class SpeedTouchGameWebSocketController {
 
     private final StreamPublisher streamPublisher;
 
-    /**
-     * 터치 주인은 STOMP principal 에서 도출한다 — 본문으로 받으면 남의 이름을 실어 그 사람 진행도를
-     * 대신 올릴 수 있다. 항상 principal 과 같아야 하는 값이라 대조하지 않고 아예 본문에서 뺐다.
-     */
     @MessageMapping("/room/{joinCode}/speed-touch/touch")
     @WsReceive(
             respondsOnTopics = "/room/{joinCode}/speed-touch/progress",

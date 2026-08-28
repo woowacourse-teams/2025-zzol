@@ -16,7 +16,7 @@ https://zzol.site/oauth/callback?accessToken=eyJ...&refreshToken=abc...
 
 - 브라우저 히스토리에 토큰이 평문으로 기록됨
 - 서버 액세스 로그, CDN 로그에 토큰이 노출됨
-- `Referer` 헤더를 통해 외부 도메인으로 토큰이 유출될 수 있음
+- `Referer` 헤더를 타고 외부 도메인으로 토큰이 유출될 수 있음
 
 ## 결정
 

@@ -25,4 +25,4 @@ Agent(subagent_type: "code-reviewer", run_in_background: true, prompt: "...")
 
 `code-reviewer` 단독 호출은 **백엔드 컨벤션·계층·ADR 렌즈 하나만** 도는 것이고, `deep-review`는 그 렌즈를 포함한 전체 팬아웃이다.
 
-> 내장 `/code-review`는 사용자 입력 전용 커맨드다 — `Skill("code-review")`로 호출할 수 없다(메인 루프·서브에이전트 모두). 스킬·에이전트 정의에 넣지 않는다.
+> 내장 `/code-review`는 사용자 입력 전용 커맨드다. `Skill("code-review")`로 호출할 수 없다(메인 루프·서브에이전트 모두). 스킬·에이전트 정의에 넣지 않는다.

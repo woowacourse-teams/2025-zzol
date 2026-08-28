@@ -61,7 +61,7 @@ RestExceptionHandler
 | `springdoc-openapi-starter-webmvc-ui` | 각 도메인 모듈 | `api`로 노출, 도메인 모듈 중복 선언 제거 |
 
 `java-library` 플러그인의 `api` 설정을 사용하므로 루트 `build.gradle.kts`에서 `java` → `java-library`로 전환한다.
-이를 통해 `:web`에 선언한 의존이 다운스트림 모듈의 컴파일 클래스패스에 전파된다.
+그러면 `:web`에 선언한 의존이 다운스트림 모듈의 컴파일 클래스패스에 전파된다.
 
 ### `:app`에서 유지할 것
 

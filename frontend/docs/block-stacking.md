@@ -27,7 +27,7 @@ DESCRIPTION → PREPARE → PLAYING → DONE
 - **PLAYING**: 게임 진행 중
 - **DONE**: 게임 오버 → result 페이지로 이동
 
-> 현재 구현에서는 Provider가 WebSocket을 통해 게임 상태를 구독한다.
+> 현재 구현에서는 Provider가 WebSocket으로 게임 상태를 구독한다.
 > `state`, `progress`, `complete` 이벤트를 수신하며, 상태 머신 전환과 진행 상태 반영에 사용된다.
 
 ---
@@ -384,7 +384,7 @@ BLOCK_STACKING: {
 #### 3. 게임 오버 — 최종 점수 제출 (Optional)
 
 클라이언트는 게임 오버(블록 이탈 또는 타이머 만료) 시 최종 상태를 기록합니다.
-이미 매 탭마다 `progress` 토픽을 통해 실시간 검증 및 점수 기록이 이루어지고 있으므로, 별도의 누적 로그 제출은 생략합니다.
+매 탭마다 `progress` 토픽으로 실시간 검증과 점수 기록이 이미 이루어집니다. 별도의 누적 로그 제출은 생략합니다.
 
 #### 4. 전체 완료 브로드캐스트
 
@@ -551,7 +551,7 @@ BLOCK_STACKING: {
 
 #### 최종 점수 제출 수신
 
-이미 매 탭마다 `progress` 토픽을 통해 실시간 검증 및 점수 기록이 이루어지고 있으므로, 별도의 누적 로그 제출은 생략 가능합니다.
+매 탭마다 `progress` 토픽으로 실시간 검증과 점수 기록이 이미 이루어집니다. 별도의 누적 로그 제출은 생략해도 됩니다.
 모든 플레이어 제출 완료(또는 20초 타이머 만료) 시 complete 브로드캐스트를 수행합니다.
 
 **Publish** `/room/{joinCode}/block-stacking/complete`

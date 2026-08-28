@@ -1,14 +1,14 @@
 # CLAUDE.md
 
-**쫄(ZZOL)** — 미니게임 기반 당첨자 추첨 서비스(<https://zzol.site>)의 모노레포다. `backend/`·`frontend/` 2개 영역.
+**쫄(ZZOL)** 은 미니게임 기반 당첨자 추첨 서비스(<https://zzol.site>)의 모노레포다. `backend/`·`frontend/` 2개 영역.
 
 ## 브랜치 전략 (단일 `dev`)
 
 - **모든 작업(백엔드·프론트·풀스택)은 통합 브랜치 `dev`에서 분기해 `dev`로 PR한다.**
 - 브랜치명은 prefix 없이 `{type}/{N}-{slug}` (예: `feat/1502-nunchi-game`). type: `feat`·`fix`·`refactor`·`chore`·`docs`·`test`.
-- 영역(BE/FE)은 브랜치가 아니라 **라벨**로 구분한다 — `create-issue`/`create-pr`가 변경 영역을 판별해 `BE`/`FE`(풀스택이면 둘 다) 라벨을 단다.
+- 영역(BE/FE)은 브랜치가 아니라 **라벨**로 구분한다. `create-issue`와 `create-pr`가 변경 영역을 판별해 `BE`·`FE` 라벨을 단다. 풀스택이면 둘 다 단다.
 - 프로덕션 승격은 통합 `prod` 브랜치로의 `dev`→`prod` PR로만 한다. `prod` push가 곧 운영 배포다. 상세는 [git-push-safety](.claude/rules/git-push-safety.md).
-- **작업마다 워크트리를 분리한다** — 현재 디렉터리에서 브랜치를 갈아타지 않아야 여러 작업을 동시에 돌릴 수 있다. 작업 순서(이슈→워크트리→설계→PR→리뷰 반영→merge)와 판단 기준은 [issue-workflow](.claude/rules/issue-workflow.md).
+- **작업마다 워크트리를 분리한다.** 현재 디렉터리에서 브랜치를 갈아타지 않아야 여러 작업을 동시에 돌릴 수 있다. 작업 순서(이슈→워크트리→설계→PR→리뷰 반영→merge)와 판단 기준은 [issue-workflow](.claude/rules/issue-workflow.md).
 
 ## 스킬·에이전트·규칙
 
@@ -21,6 +21,7 @@
 - 요구사항이 모호하거나 해석이 여럿이면 **구현 전에 질문**한다. 추측으로 진행하지 않는다.
 - **외과적 변경**: 요청 범위 밖 코드·주석·포맷은 건드리지 않는다.
 - 20줄 이상 대량 출력이 예상되는 탐색·분석은 서브에이전트에 위임한다.
+- 이슈·PR·리뷰 코멘트·커밋 메시지처럼 사람이 읽는 한국어 글은 [korean-style](.claude/rules/korean-style.md)을 따른다. 번역투 연결어와 내용 없는 부사를 걸러 사람이 쓴 글로 읽히게 한다.
 
 ## git push 안전
 

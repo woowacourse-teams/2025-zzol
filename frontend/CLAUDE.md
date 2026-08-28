@@ -25,7 +25,7 @@ npm run build-storybook   # @common/@composition 수정 시 PR 전 검증
 
 ## .claude 리소스
 
-> 브랜치 전략·git push 안전·공통 스킬(`create-issue`·`create-pr`·`adr`)은 **모노레포 루트**로 통합됐다 — 루트 [CLAUDE.md](../CLAUDE.md)·[.claude/rules/git-push-safety.md](../.claude/rules/git-push-safety.md)·[.claude/skills/](../.claude/skills/) 참조. 아래는 프론트 전용 리소스만 정리한다.
+> 브랜치 전략·git push 안전·공통 스킬(`create-issue`·`create-pr`·`adr`)은 **모노레포 루트**로 통합됐다. 루트 [CLAUDE.md](../CLAUDE.md)·[.claude/rules/git-push-safety.md](../.claude/rules/git-push-safety.md)·[.claude/skills/](../.claude/skills/) 참조. 아래는 프론트 전용 리소스만 정리한다.
 
 `.claude/rules/`는 자동 로드되고(`paths` 범위가 있는 파일은 해당 경로 작업 시에만), `.claude/skills/`는 `paths`에 해당하는 파일 작업 시 proactive하게 적용한다.
 

@@ -79,7 +79,7 @@ tools: Bash, Read, Glob, Grep
 
 ### 상태 관리
 
-- [ ] 외부 상태 라이브러리(Redux, Zustand 등)가 사용되지 않는가 — React Context API만 허용
+- [ ] 외부 상태 라이브러리(Redux, Zustand 등)가 사용되지 않는가. React Context API만 허용한다
 - [ ] 전역 상태가 아닌 로컬 상태로 해결 가능한 것을 Context에 올리지 않는가
 - [ ] Context value가 불필요하게 매 렌더마다 새 객체를 생성하지 않는가 (useMemo 등으로 안정화)
 - [ ] Context 훅(`useContext`)이 Provider 바깥에서 호출될 경우 적절한 에러를 던지는가
@@ -89,22 +89,22 @@ tools: Bash, Read, Glob, Grep
 - [ ] GET 요청에 `useFetch` 또는 `useLazyFetch`를 사용하는가
 - [ ] POST/PUT/PATCH/DELETE 요청에 `useMutation`을 사용하는가
 - [ ] `errorDisplayMode`가 명시되어 있는가 (`'toast'` | `'text'` | `'none'`)
-- [ ] `api` 객체를 컴포넌트 내부에서 직접 호출하지 않는가 (훅을 통해 사용)
+- [ ] `api` 객체를 컴포넌트 내부에서 직접 호출하지 않는가 (훅으로 감싸 사용)
 - [ ] 하드코딩된 API 엔드포인트 문자열이 아닌 상수나 타입으로 관리되는가
 
 ### WebSocket 컨트랙트
 
 WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할 때는 `api-mcp` 의 `ws_*` 도구로 BE 카탈로그와 일치 여부를 확인한다. 도구는 `frontend/.mcp.json` 으로 자동 등록되어 있다.
 
-- [ ] destination 에 prefix(`/topic`, `/app`, `/user`)가 중복으로 들어가 있지 않은가 — FE wrapper 가 자동 추가하므로 path 에서 제거해야 한다 (`.claude/rules/websocket.md` 참조)
-- [ ] 사용한 destination 이 `ws_list_topics` 또는 `ws_describe` 카탈로그에 존재하는가 — 존재하지 않으면 BE 측 `@WsTopic` 추가 필요. 임의 신설 금지
+- [ ] destination 에 prefix(`/topic`, `/app`, `/user`)가 중복으로 들어가 있지 않은가. FE wrapper 가 자동으로 붙이므로 path 에서 제거해야 한다 (`.claude/rules/websocket.md` 참조)
+- [ ] 사용한 destination 이 `ws_list_topics` 또는 `ws_describe` 카탈로그에 존재하는가. 없으면 BE 측 `@WsTopic` 추가가 필요하다. 임의 신설 금지
 - [ ] 카탈로그의 `payloadType` 과 onData 콜백 타입이 일치하는가 (특히 `WebSocketResponse<List<X>>` 같은 envelope 의 데이터 부분 매핑)
 - [ ] 동일 `path` 의 publishers 가 여러 개인 경우(예: `/queue/friends/responses` 의 수락/거절) 각 발행 시나리오를 모두 다루는가
 - [ ] 구독은 Provider 또는 훅에서만 — 컴포넌트에서 직접 `useWebSocket().subscribe` 호출 금지
 
 ### 스타일링
 
-- [ ] 하드코딩된 색상값 대신 `theme.color.*` 토큰을 사용하는가 — styled 컴포넌트 내부뿐 아니라 JSX prop(`fill`, `stroke`, `color`, `backgroundColor` 등 인라인 속성)도 포함. `'#888'`, `'#fff'` 같은 hex 리터럴은 위치 무관하게 금지
+- [ ] 하드코딩된 색상값 대신 `theme.color.*` 토큰을 사용하는가. styled 컴포넌트 내부뿐 아니라 JSX prop(`fill`, `stroke`, `color`, `backgroundColor` 등 인라인 속성)도 포함. `'#888'`, `'#fff'` 같은 hex 리터럴은 위치 무관하게 금지
 - [ ] 하드코딩된 타이포그래피 대신 `theme.typography.*` 토큰을 사용하는가
 - [ ] 인라인 스타일(`style={{}}`)을 피하고 Emotion styled 컴포넌트를 사용하는가
 - [ ] 매직 넘버(근거 없는 px 값 등)가 없는가 — 디자인 토큰 또는 named constant 사용

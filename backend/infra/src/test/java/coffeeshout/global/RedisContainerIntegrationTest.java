@@ -135,8 +135,8 @@ class RedisContainerIntegrationTest extends InfraModuleIntegrationTest {
     }
 
     @Test
-    @DisplayName("Redis 연결 풀 테스트")
-    void 커넥션_풀이_동시_요청을_처리한다() {
+    @DisplayName("Redis 연속 요청 테스트")
+    void 연속된_요청_50건이_모두_성공한다() {
         // given
         String keyPrefix = "test:pool:key:";
         int numberOfOperations = 50;

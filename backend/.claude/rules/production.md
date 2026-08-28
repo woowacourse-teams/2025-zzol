@@ -43,8 +43,11 @@ CoffeeShoutException
 └── SystemException         — 시스템 레벨
 ```
 
-파일 하나를 차지하는 예외가 이 계층 밖에 있으면 ArchUnit이 막는다. 도메인·애플리케이션에서
-JDK 표준 예외(`IllegalStateException` 등)를 직접 던지는 것은 PMD가 막는다(`NoRawExceptionInDomain`).
+파일 하나를 차지하는 `RuntimeException` 하위가 이 계층 밖에 있으면 ArchUnit이 막는다.
+
+`..domain..`·`..application..`·`..event..`에서 JDK 런타임 예외를 직접 생성하는 것은 PMD가 막는다
+(`NoRawExceptionInDomain` — `RuntimeException`·`IllegalArgumentException`·`IllegalStateException`·
+`NullPointerException` 등 11종). **그 밖의 계층(`ui`·`infra`·`config`)은 아직 리뷰가 본다** — 범위 확대는 #1654다.
 
 ## WebSocket 복구
 

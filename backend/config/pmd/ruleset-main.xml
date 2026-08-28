@@ -68,7 +68,13 @@
          없어 전부 빠져나갔다(#1629 리뷰). 생성만 하고 던지지 않는 코드는 이 저장소에 없다.
 
          event 계층을 포함한다: 이벤트 리스너는 도메인 흐름의 연장이고(MiniGameResultSaveEventListener),
-         범위를 넓혀도 새로 걸리는 위반이 없다. ui·infra·config는 성격이 섞여 있어 #1654로 미룬다. -->
+         범위를 넓혀도 새로 걸리는 위반이 없다. ui·infra·config는 성격이 섞여 있어 #1654로 미룬다.
+
+         잡는 예외 종류는 두 축이 다르다 — 여기서 넓히는 것은 **종류**고, #1654가 다루는 것은 **패키지 범위**다.
+         처음엔 IllegalArgument/IllegalState 둘만 잡았는데, 그러면 RuntimeException·NullPointerException을
+         직접 던지는 쪽이 규칙을 그냥 비켜 간다. domain·application·event에는 이 11종 위반이 0곳이라
+         종류를 넓히는 비용이 없다(#1716 리뷰). main 전체의 raw 예외 12곳은 전부 ui·infra·config·aspect라
+         패키지 범위 문제로 남아 #1654 소관이다. -->
     <rule name="NoRawExceptionInDomain"
           language="java"
           message="ErrorCode를 가진 CoffeeShoutException 계열을 던진다 (내부 불변식이면 SystemException + 500 ErrorCode)"
@@ -77,7 +83,12 @@
         <properties>
             <property name="xpath">
                 <value><![CDATA[
-//ConstructorCall[ClassType[@SimpleName = ('IllegalArgumentException', 'IllegalStateException')]]
+//ConstructorCall[ClassType[@SimpleName = ('IllegalArgumentException', 'IllegalStateException',
+                                           'RuntimeException', 'UnsupportedOperationException',
+                                           'NullPointerException', 'IndexOutOfBoundsException',
+                                           'NoSuchElementException', 'NumberFormatException',
+                                           'ClassCastException', 'ArithmeticException',
+                                           'ConcurrentModificationException')]]
     [ancestor::CompilationUnit[matches(@PackageName, '\.(domain|application|event)(\.|$)')]]
                 ]]></value>
             </property>

@@ -23,7 +23,7 @@ testImplementation(project(":test-support"))
 | 종류 | 베이스 | 특징 |
 |------|--------|------|
 | 순수 단위 테스트 | 없음 (순수 Java) | 스프링 컨텍스트 없이 도메인 로직만 검증 |
-| 서비스 테스트 | 모듈 로컬 `{Module}ServiceTest` 상속 | `coffeeshout.support.ServiceTest` 확장. `@SpringBootTest` + `@ActiveProfiles("test")` + `@Transactional` 상속. 모듈별 `ServiceTestConfig`에 외부 의존 Mock 선언 |
+| 서비스 테스트 | **Spring이 매개하는 것을 검증할 때만** 모듈 로컬 `{Module}ServiceTest` 상속 (순수 단위로 되면 상속하지 않는다 — ADR-0033) | `coffeeshout.support.ServiceTest` 확장. `@SpringBootTest` + `@ActiveProfiles("test")` + `@Transactional` 상속. 모듈별 `ServiceTestConfig`에 외부 의존 Mock 선언 |
 | WebSocket 통합 테스트 | 모듈 로컬 `{Module}IntegrationTest` 상속 + `TestStompSession` 사용 | `coffeeshout.support.IntegrationTestSupport` 확장. `RANDOM_PORT` 명시 오버라이드 + `test` 프로파일. `TestStompSession`으로 STOMP 구독·전송·메시지 수집 |
 | 일반 통합 테스트 (REST, Stream 등) | 모듈 로컬 `{Module}IntegrationTest` 상속 | `coffeeshout.support.IntegrationTestSupport` 확장. 기본 `MOCK` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup |
 
@@ -112,12 +112,12 @@ scheduler.taskAt(1).run(); // onReadyEnd → PLAYING
 | 유형         | 클래스명 패턴          | 특징                            |
 |------------|------------------|-------------------------------|
 | 도메인 객체 팩토리 | `*Fixture`       | 순수 Java 정적 팩토리, 스프링 컨텍스트 불필요  |
-| DB 영속화 헬퍼  | `TestDataHelper` | `@Component`, 통합 테스트에서 DI로 사용 |
+| DB 영속화 헬퍼  | `*TestDataHelper` | 리포지토리를 주입받아 실제로 저장한다. 모듈이 둘 이상이면 접두를 붙인다(`ProfanityTestDataHelper`) |
 | 경량 대체 구현   | `*Fake`          | 실제 로직을 갖지만 외부 의존을 제거한 구현      |
 | 최소 더미 구현   | `*Dummy`         | 인터페이스 계약을 최소한으로 충족, 로직 없음     |
-| 반환값 제어     | `Stub*`          | 특정 메서드의 반환값을 고정하거나 무력화        |
+| 반환값 제어     | `Stub*` / `*Stub` | 특정 메서드의 반환값을 고정하거나 무력화. 접두·접미 둘 다 쓴다 |
 
-위 5가지 패턴 외 클래스명은 사용하지 않는다.
+위 5가지 패턴 외 클래스명은 사용하지 않는다. 판정은 PMD `FixtureClassNaming`이 하며 대상은 `..fixture` 패키지다(`config/pmd/ruleset-test.xml`).
 
 ## 통합 테스트 (WebSocket)
 

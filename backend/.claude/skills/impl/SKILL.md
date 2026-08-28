@@ -23,7 +23,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 사전 작업으로 파악한 내용을 바탕으로, **Phase 1 코드를 작성하기 전에** 사용자와 범위·예외를 합의한다. 추측으로 구현하지 않는다(CLAUDE.md).
 
 1. **무엇을 만들지 한 문단으로 요약**해 제시한다 — 대상 계층/클래스, 핵심 동작, 건드릴 모듈.
-2. **열린 질문으로 예외·경계 케이스를 함께 짚는다.** 고정 체크리스트가 아니라, 사전 작업에서 파악한 도메인 맥락에서 실제로 동작이 갈릴 지점을 질문한다 — 빈 입력·경계값, 동시성·순서, 실패·롤백, 잘못된 상태 전이, 권한·인증, 중복 요청 등. "이 경우엔 어떻게 동작해야 하나요?" 식으로 사용자가 결정하게 한다.
+2. **열린 질문으로 예외·경계 케이스를 함께 짚는다.** 고정 체크리스트가 아니라, 사전 작업에서 파악한 도메인 맥락에서 실제로 동작이 갈릴 지점을 질문한다. 빈 입력·경계값, 동시성·순서, 실패·롤백, 잘못된 상태 전이, 권한·인증, 중복 요청이 여기 해당한다. "이 경우엔 어떻게 동작해야 하나요?" 식으로 사용자가 결정하게 한다.
 3. 모호한 목표는 **검증 가능한 성공 기준**으로 바꿔 합의한다. 이슈에서 시작했다면 이슈의 `✅ 성공 기준`·`🔧 TODO`를 먼저 읽어 채운다.
 4. 합의된 범위·예외·성공 기준을 확인받은 뒤에만 Phase 1로 넘어간다. 합의 내용이 ADR 핵심 제약과 충돌하면 멈추고 보고한다.
 
@@ -85,7 +85,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 구현 대상:
 - REST Controller
 - Request/Response DTO
-- WebSocket Handler (해당 시): 커맨드 수신 후 **Redis Stream에 발행**한다. Application Service를 직접 호출하지 않는다 — CLAUDE.md 핵심 제약(Handler → Stream 발행 → Consumer → Service → Notifier). Stream을 건너뛰면 비동기 처리 보장이 깨진다. (REST Controller는 Service 직접 위임 OK)
+- WebSocket Handler (해당 시): 커맨드 수신 후 **Redis Stream에 발행**한다. Application Service를 직접 호출하지 않는다. CLAUDE.md 핵심 제약이다(Handler → Stream 발행 → Consumer → Service → Notifier). Stream을 건너뛰면 비동기 처리 보장이 깨진다. (REST Controller는 Service 직접 위임 OK)
 
 완료 기준:
 - [ ] Controller는 요청 파싱·응답 직렬화·서비스 위임만 담당

@@ -39,7 +39,7 @@ git push -u origin HEAD:{type}/{N}-{slug}
 
 **Claude는 `gh pr merge`를 실행하지 않는다.** 보호 브랜치를 전진시키는 행위이고 되돌리기 어렵다. 리뷰 반영이 끝났다는 자체 판단만으로 진행하지 않고, 사용자가 명시적으로 merge를 지시했을 때만 실행한다.
 
-지시받아 실행할 때는 squash로 합치고 커밋 제목을 PR 제목으로 고정한다 — `--subject`를 생략하면 GitHub이 커밋 목록을 합쳐 제목을 만들어 `[type] 설명` 컨벤션이 깨진다.
+지시받아 실행할 때는 squash로 합치고 커밋 제목을 PR 제목으로 고정한다. `--subject`를 생략하면 GitHub이 커밋 목록을 합쳐 제목을 만들어 `[type] 설명` 컨벤션이 깨진다.
 
 ```bash
 gh pr merge <번호> --squash --subject "[fix] 카드 점수 집계 누락 수정"
@@ -51,7 +51,7 @@ gh pr merge <번호> --squash --subject "[fix] 카드 점수 집계 누락 수�
 
 이미 origin에 올라간 커밋은 rebase·`reset --hard`·`commit --amend`로 갈아엎지 않는다. `push --force`(`--force-with-lease` 포함)를 쓰지 않는다.
 
-**`dev`가 앞서가 충돌하면 `git rebase origin/dev`가 아니라 `git merge origin/dev`로 푼다.** PR은 squash로 합쳐지므로(위 merge 권한) 브랜치에 커밋이 몇 개든 merge 커밋이 섞이든 **어차피 하나가 된다** — rebase로 얻는 "깨끗한 히스토리"를 squash가 이미 보장한다.
+**`dev`가 앞서가 충돌하면 `git rebase origin/dev`가 아니라 `git merge origin/dev`로 푼다.** PR은 squash로 합쳐지므로(위 merge 권한) 브랜치에 커밋이 몇 개든 merge 커밋이 섞이든 **어차피 하나가 된다.** rebase로 얻는 "깨끗한 히스토리"를 squash가 이미 보장한다.
 
 되쓰면 잃는 것: ① 같은 저장소의 다른 워크트리·세션이 그 브랜치를 보고 있으면 꼬인다 ② force push 후 GitHub은 "지난 리뷰 이후 변경분"을 제대로 못 보여줘 리뷰어가 처음부터 다시 읽어야 한다. `--force-with-lease`는 남의 push만 막아줄 뿐 내 실수는 못 막는다.
 
@@ -69,7 +69,7 @@ git ls-remote --exit-code --heads origin "$(git branch --show-current)" >/dev/nu
 - **있으면(push 이력 O)** → `git pull --no-rebase`.
 - **없으면(push 이력 X)** → `git pull` 자체가 안 된다. 아래를 쓴다.
 
-**첫 push 전에는 `git pull`을 쓰지 않는다.** 작업 브랜치는 만들자마자 upstream을 떼어내므로(위 절), `git pull`은 `--rebase`든 `--no-rebase`든 `fatal: There is no tracking information for the current branch.`로 죽는다. upstream을 다시 붙이는 것으로 해결하지 않는다 — 그게 이 문서가 막으려는 상태다.
+**첫 push 전에는 `git pull`을 쓰지 않는다.** 작업 브랜치는 만들자마자 upstream을 떼어내므로(위 절), `git pull`은 `--rebase`든 `--no-rebase`든 `fatal: There is no tracking information for the current branch.`로 죽는다. upstream을 다시 붙이는 것으로 해결하지 않는다. 그게 이 문서가 막으려는 상태다.
 
 `dev` 동기화는 브랜치 상태와 무관하게 **항상 이것으로 한다**:
 

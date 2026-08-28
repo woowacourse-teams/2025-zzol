@@ -35,6 +35,10 @@ transform(content) {
 },
 ```
 
+> **이후 변경 (#1710):** `public/sitemap.xml`과 위 `transform`은 제거됐다. sitemap은 이제
+> `src/seo/pages.json`에서 `webpack.common.js`의 인라인 플러그인이 빌드 시 생성하며,
+> `lastmod`도 거기서 빌드일로 채운다.
+
 ---
 
 ## 3. Web App Manifest 누락
@@ -144,6 +148,56 @@ Google Search Console 기준 "커피내기 게임", "커피 내기 게임", "커
 
 ---
 
+## 7. 라우트별 정적 HTML + CloudFront Function (2026-08-27, #1710)
+
+### 배경
+
+색인된 페이지가 홈 하나뿐이었다. 모든 경로가 같은 `index.html`(canonical=`/`)을 받아 `/privacy`가 "중복 페이지"로 제외됐고, 없는 경로도 200을 돌려줬다(soft 404).
+
+### 코드 (PR #1712)
+
+`src/seo/pages.json` 하나에서 라우트별 HTML(`HtmlWebpackPlugin` × 페이지 수)·`sitemap.xml`·페이지 컴포넌트가 만들어진다. `/guide`, `/games`, `/games/{slug}` 7종, `/privacy`, `/404`(noindex).
+
+### 인프라 — S3 REST 오리진의 함정
+
+오리진이 S3 REST 엔드포인트라 `/guide` 요청은 객체 키 `guide`를 찾다 실패한다. `guide/index.html`이 있어도 자동으로 해석되지 않는다. 그래서 viewer-request CloudFront Function `zzol-spa-router`를 dev(`EUMR2KCC8FLQ2`)·prod(`EO1PM4UUO7I8L`) 기본 동작에 붙였다(2026-08-27 적용 완료).
+
+```js
+function handler(event) {
+  var req = event.request;
+  var uri = req.uri;
+  if (/^\/(room|join|entry|auth)\//.test(uri)) {
+    req.uri = '/index.html';
+    return req;
+  } // SPA 동적 라우트
+  if (uri.endsWith('/')) req.uri = uri + 'index.html';
+  else if (uri.lastIndexOf('.') <= uri.lastIndexOf('/')) req.uri = uri + '/index.html'; // 확장자 없는 URI
+  return req;
+}
+```
+
+함수는 파일이 없으면 기존 에러 응답(4xx → `/index.html` 200)이 받아주므로 **PR 배포 전에 붙여도 안전**하다. 남은 인프라 한 단계:
+
+- **에러 응답 전환** — `403/404 → /404/index.html, 응답코드 404`. 이건 `404/index.html`이 S3에 있어야 하므로 PR #1712 배포 **후**에 dev → prod 순으로 적용한다. 적용 전까지 없는 경로는 여전히 200이다.
+
+apex `zzol.site` → `http://www.zzol.site` 2홉 리다이렉트는 AWS가 아니라 GoDaddy 도메인 포워딩이었다. target을 `https://www.zzol.site`로 바꿔 https 단일 홉 301로 해결(2026-08-27).
+
+`dev.zzol.site`에는 응답 헤더 정책 `zzol-dev-noindex`(`X-Robots-Tag: noindex, nofollow`)를 붙여 prod와 중복 색인되지 않게 했다.
+
+### 검증
+
+배포 후 `curl -sI`로 확인한다.
+
+| URL                            | 기대                               |
+| ------------------------------ | ---------------------------------- |
+| `/games/card-game`             | 200, `<title>`·canonical이 자기 값 |
+| `/privacy`, `/guide`, `/games` | 위와 동일                          |
+| `/room/ABC/lobby`              | 200, `x-cache: Hit`(SPA)           |
+| `/aaa-not-exist`               | 에러 응답 전환 후 404              |
+| `https://zzol.site/`           | 301 → `https://www.zzol.site`      |
+
+---
+
 ## 다음 단계 (우선순위 순)
 
 ### 단기 — Search Console 데이터 모니터링
@@ -158,11 +212,7 @@ Google Search Console 기준 "커피내기 게임", "커피 내기 게임", "커
 
 ### 중기 — 콘텐츠 SEO (가이드 페이지)
 
-Search Console 데이터에서 순위 개선이 더딜 경우 고려.
-
-- `/guide` 같은 별도 정적 콘텐츠 페이지 신설
-- 키워드별 타겟 페이지: "내기 게임이란", "커피 내기 방법", "미니게임으로 당번 정하기"
-- **주의**: React 라우트로 만들면 SPA 문제가 동일하게 적용됨 → 정적 HTML 파일 or Prerender 필요
+§7에서 `/guide`·`/games/*`로 착수했다. 추가 키워드 페이지("내기 게임이란", "커피 내기 방법" 등)는 `src/seo/pages.json`에 항목을 더하면 된다.
 
 ### 장기 — Prerender 또는 SSG
 

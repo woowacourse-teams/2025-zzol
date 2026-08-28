@@ -10,7 +10,7 @@ type Props = {
 };
 
 const RacingGameOverlay = ({ children, isGoal }: Props) => {
-  const { joinCode, myName } = useIdentifier();
+  const { joinCode } = useIdentifier();
   const { send } = useWebSocket();
   const { racingGameState } = useRacingGame();
 
@@ -28,8 +28,8 @@ const RacingGameOverlay = ({ children, isGoal }: Props) => {
       const currentTapCount = tapCountRef.current;
       tapCountRef.current = 0;
 
+      // playerName은 보내지 않는다 — 서버가 STOMP principal에서 도출한다.
       send(`/room/${joinCode}/racing-game/tap`, {
-        playerName: myName,
         tapCount: currentTapCount,
       });
     }, 200);
@@ -38,7 +38,7 @@ const RacingGameOverlay = ({ children, isGoal }: Props) => {
         window.clearInterval(intervalRef.current);
       }
     };
-  }, [joinCode, myName, send, racingGameState, isGoal]);
+  }, [joinCode, send, racingGameState, isGoal]);
 
   return (
     <S.Overlay data-testid="racing-game-overlay" onPointerDown={handlePointerDown}>

@@ -327,13 +327,13 @@
   "sends" : [ {
     "destination" : "/app/room/{joinCode}/blind-timer/stop",
     "description" : "블라인드 타이머 게임 STOP 버튼",
-    "requestType" : "StopCommand",
+    "requestType" : null,
     "triggersTopics" : [ "/topic/room/{joinCode}/blind-timer/progress" ],
     "source" : {
       "className" : "BlindTimerGameWebSocketController",
       "methodName" : "stop"
     },
-    "referencedSchemas" : [ "StopCommand" ]
+    "referencedSchemas" : [ ]
   }, {
     "destination" : "/app/room/{joinCode}/block-stacking/fail",
     "description" : "블록 쌓기 실패 이벤트 — 상태 변경 브로드캐스트",
@@ -898,20 +898,9 @@
       } ],
       "values" : null
     },
-    "StopCommand" : {
-      "kind" : "record",
-      "fields" : [ {
-        "name" : "playerName",
-        "type" : "String"
-      } ],
-      "values" : null
-    },
     "TapCommand" : {
       "kind" : "record",
       "fields" : [ {
-        "name" : "playerName",
-        "type" : "String"
-      }, {
         "name" : "tapCount",
         "type" : "int"
       } ],
@@ -920,9 +909,6 @@
     "TouchCommand" : {
       "kind" : "record",
       "fields" : [ {
-        "name" : "playerName",
-        "type" : "String"
-      }, {
         "name" : "touchedNumber",
         "type" : "int"
       } ],

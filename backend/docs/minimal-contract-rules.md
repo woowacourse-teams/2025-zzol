@@ -87,7 +87,7 @@ WebSocket 메시지를 발행하는 메서드에는 `@WsTopic`(convertAndSend) �
 
 ### R4. 이벤트 계약
 
-**계약** — 도메인 이벤트는 record로 정의하고 `BaseEvent`를 구현하며, 컴팩트 생성자에서 `eventId`(UUID)·`timestamp`(`Instant.now()`)를 자동 생성한다. 이벤트에 분산 추적 코드를 넣지 않는다 — **추적 전파는 알림 채널 경계가 담당한다**: 인스턴스 경계를 넘는 알림은 베이스에 제공된 알림 채널 SPI와 traceparent 전파 어댑터(pub/sub·Stream)를 통해 발행하며, 자체 어댑터를 만들 경우에도 전파는 어댑터 경계에서 한다. 이벤트 페이로드에 도메인 객체(엔티티·`CardGame` 등)를 그대로 노출하지 않는다. 같은 JVM 안 모듈 간 이벤트는 동기로 처리한다 — 리스너에 `@Async`를 붙이지 않는다(같은 스레드라 추적도 자동으로 이어진다).
+**계약** — 도메인 이벤트는 record로 정의하고 `BaseEvent`를 구현하며, 컴팩트 생성자에서 `eventId`(UUID)·`timestamp`(`Instant.now()`)를 자동 생성한다. 이벤트에 분산 추적 코드를 넣지 않는다 — **추적 전파는 알림 채널 경계가 담당한다**: 인스턴스 경계를 넘는 알림은 베이스에 제공된 알림 채널 SPI와 pub/sub 어댑터(traceparent 전파 포함)를 통해 발행한다 — Stream 채널은 기존 경계(`StreamPublisher`)가 이미 전파를 제공하므로 그대로 재사용한다. 자체 어댑터를 만들 경우에도 전파는 어댑터 경계에서 한다. 이벤트 페이로드에 도메인 객체(엔티티·`CardGame` 등)를 그대로 노출하지 않는다. 같은 JVM 안 모듈 간 이벤트는 동기로 처리한다 — 리스너에 `@Async`를 붙이지 않는다(같은 스레드라 추적도 자동으로 이어진다).
 
 **근거** — `docs/conventions-production.md` L76-82, ADR-0021(트레이싱은 인프라 경계에서 — 기존 `StreamPublisher` inject / Listener extract의 일반화), ADR-0025("`MiniGameFinishedEvent` in-process 동기 리스너 경유, `@Async` 금지").
 

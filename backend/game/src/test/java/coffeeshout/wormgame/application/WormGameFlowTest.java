@@ -57,7 +57,7 @@ class WormGameFlowTest {
     @BeforeEach
     void setUp() {
         final WormGameRulesProperties rules = new WormGameRulesProperties(
-                50L, 120.0, 1.6, 1200, 200.0, 0.7, 1.0, 0.5, 200, 1200, 0.30, 0.05, 0.5, 0, 6.0, 3, 5);
+                50L, 120.0, 1.6, 1200, 200.0, 0.7, 1.0, 0.5, 200, 1200, 0.30, 0.05, 0.5, 0, 6.0, 3);
         final WormGameTimingProperties timing = new WormGameTimingProperties(
                 Duration.ofMillis(1), Duration.ofMillis(1), Duration.ofMillis(1), Duration.ofSeconds(10));
         service = new WormGameService(gameSessionService, scheduler, eventPublisher, timing, rules);

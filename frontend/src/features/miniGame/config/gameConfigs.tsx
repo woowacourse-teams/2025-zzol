@@ -182,7 +182,7 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
         className: 'slide-first',
       },
       {
-        textLines: ['지나간 자리는 벽!', '경계가 줄어드니 끝까지 살아남으세요'],
+        textLines: ['남이 지나간 자리는 벽!', '경계가 줄어드니 끝까지 살아남으세요'],
         className: 'slide-second',
       },
     ],

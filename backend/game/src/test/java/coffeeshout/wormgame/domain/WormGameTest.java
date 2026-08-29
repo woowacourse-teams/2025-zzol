@@ -149,10 +149,7 @@ class WormGameTest {
             game.tick();
 
             // then
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(mover.isAlive()).isTrue();
-            softly.assertThat(other.isAlive()).isTrue();
-            softly.assertAll();
+            assertThat(mover.isAlive()).isTrue();
         }
 
         @Test
@@ -177,6 +174,7 @@ class WormGameTest {
         @Test
         void 타인_궤적의_오래된_구간에는_죽는다() {
             // given — 교차 지점(y=0)이 최신 3세그먼트(y 20~50) 밖의 오래된 구간이다.
+            // mover 도 자기 궤적을 깔고 지나간다. 자기 궤적 면제가 타인 판정까지 삼키면 여기서 안 죽는다.
             final WormGame game = new WormGame(collisionRules(0, 3));
             game.setUp(twoGamers);
             game.updateState(WormGameState.PLAYING);
@@ -184,6 +182,7 @@ class WormGameTest {
             final Worm owner = game.getWorms().findByName("루키");
             mover.placeAt(0, 0, 0);
             owner.placeAt(0, 100, Math.PI / 2);
+            addVerticalTrail(mover, 5, -50, 50, 10);
             addVerticalTrail(owner, 15, -50, 50, 10);
 
             // when

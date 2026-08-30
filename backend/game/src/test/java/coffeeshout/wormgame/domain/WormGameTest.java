@@ -19,17 +19,11 @@ class WormGameTest {
 
     /** 판정 시나리오용 규칙 — 무적·페인트 유예를 끄고 틱당 30u를 움직여 기하를 단순화한다. */
     WormGameRules collisionRules(int invincibleTicks, int wetPaintSkipSegments) {
-        return collisionRules(invincibleTicks, wetPaintSkipSegments, 5);
-    }
-
-    /** 자기 궤적 유예(selfSkipSegments)까지 지정한다 — 자기/타인 분기를 구분하는 시나리오용. */
-    WormGameRules collisionRules(int invincibleTicks, int wetPaintSkipSegments, int selfSkipSegments) {
-        return collisionRules(invincibleTicks, wetPaintSkipSegments, selfSkipSegments, 0.5);
+        return collisionRules(invincibleTicks, wetPaintSkipSegments, 0.5);
     }
 
     /** 아레나 지수까지 지정한다 — 인원수별 반지름 시나리오용. */
-    WormGameRules collisionRules(
-            int invincibleTicks, int wetPaintSkipSegments, int selfSkipSegments, double arenaExponent) {
+    WormGameRules collisionRules(int invincibleTicks, int wetPaintSkipSegments, double arenaExponent) {
         return new WormGameRules(
                 50L,
                 600.0,
@@ -46,8 +40,7 @@ class WormGameTest {
                 40.0,
                 invincibleTicks,
                 6.0,
-                wetPaintSkipSegments,
-                selfSkipSegments);
+                wetPaintSkipSegments);
     }
 
     void addVerticalTrail(Worm owner, double x, double fromY, double toY, double step) {
@@ -141,9 +134,9 @@ class WormGameTest {
         }
 
         @Test
-        void 자기_궤적의_오래된_구간에는_죽는다() {
-            // given — Tron 규칙의 핵심. 자기 궤적 10세그먼트 중 교차점(y=0)은 머리 직전 5세그먼트 밖이다.
-            final WormGame game = new WormGame(collisionRules(0, 3, 5));
+        void 자기_궤적을_가로질러도_죽지_않는다() {
+            // given — 궤적 10세그먼트를 가로지른다. 타인 유예(3)를 자기 궤적에 잘못 적용하면 교차점(y=0)에서 죽는다.
+            final WormGame game = new WormGame(collisionRules(0, 3));
             game.setUp(twoGamers);
             game.updateState(WormGameState.PLAYING);
             final Worm mover = game.getWorms().findByName("꾹이");
@@ -151,30 +144,6 @@ class WormGameTest {
             mover.placeAt(0, 0, 0);
             other.placeAt(0, 100, Math.PI / 2);
             addVerticalTrail(mover, 15, -50, 50, 10);
-
-            // when
-            game.tick();
-
-            // then
-            final SoftAssertions softly = new SoftAssertions();
-            softly.assertThat(mover.isAlive()).isFalse();
-            softly.assertThat(mover.getDeathTick()).isEqualTo(1);
-            softly.assertThat(other.isAlive()).isTrue();
-            softly.assertAll();
-        }
-
-        @Test
-        void 자기_궤적의_머리_직전_구간은_판정에서_제외된다() {
-            // given — 자기 궤적이 정확히 5세그먼트(=selfSkipSegments)뿐이라 검사 대상이 없다.
-            // 타인 유예(3)를 잘못 적용하면 2세그먼트가 검사에 걸려 교차점(y=0)에서 죽는다.
-            final WormGame game = new WormGame(collisionRules(0, 3, 5));
-            game.setUp(twoGamers);
-            game.updateState(WormGameState.PLAYING);
-            final Worm mover = game.getWorms().findByName("꾹이");
-            final Worm other = game.getWorms().findByName("루키");
-            mover.placeAt(0, 0, 0);
-            other.placeAt(0, 100, Math.PI / 2);
-            addVerticalTrail(mover, 15, -20, 30, 10); // 6점 = 5세그먼트
 
             // when
             game.tick();
@@ -205,6 +174,7 @@ class WormGameTest {
         @Test
         void 타인_궤적의_오래된_구간에는_죽는다() {
             // given — 교차 지점(y=0)이 최신 3세그먼트(y 20~50) 밖의 오래된 구간이다.
+            // mover 도 자기 궤적을 깔고 지나간다. 자기 궤적 면제가 타인 판정까지 삼키면 여기서 안 죽는다.
             final WormGame game = new WormGame(collisionRules(0, 3));
             game.setUp(twoGamers);
             game.updateState(WormGameState.PLAYING);
@@ -212,6 +182,7 @@ class WormGameTest {
             final Worm owner = game.getWorms().findByName("루키");
             mover.placeAt(0, 0, 0);
             owner.placeAt(0, 100, Math.PI / 2);
+            addVerticalTrail(mover, 5, -50, 50, 10);
             addVerticalTrail(owner, 15, -50, 50, 10);
 
             // when
@@ -355,7 +326,7 @@ class WormGameTest {
         @Test
         void 지수를_낮추면_고인원_아레나가_작아진다() {
             // 지수 0.35(운영값)는 4인에서 같고 9인에서 더 작다 — 레이어 해상도·시야 비율을 지키기 위한 값이다.
-            final WormGameRules flat = collisionRules(0, 3, 5, 0.35);
+            final WormGameRules flat = collisionRules(0, 3, 0.35);
 
             final SoftAssertions softly = new SoftAssertions();
             softly.assertThat(flat.initialRadius(4)).isCloseTo(rules.initialRadius(4), within(1e-9));

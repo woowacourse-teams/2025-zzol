@@ -20,8 +20,7 @@ public record WormGameRules(
         double minRadius,
         int invincibleTicks,
         double trailRadius,
-        int wetPaintSkipSegments,
-        int selfSkipSegments) {
+        int wetPaintSkipSegments) {
 
     public double speedUnitsPerSecond(long tick) {
         final double ramp = Math.min(1.0, tick / (double) speedRampTicks);

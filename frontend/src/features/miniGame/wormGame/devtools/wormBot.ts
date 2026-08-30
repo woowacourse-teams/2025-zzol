@@ -9,8 +9,6 @@ const LOOKAHEAD_U = 70;
 const LOOKAHEAD_STEPS = 6;
 /** 궤적 두께 + 여유 */
 const CLEARANCE_U = WORM_RULES.trailRadius * 2 + 6;
-/** 자기 궤적 끝(머리 바로 뒤)은 항상 가까우니 판정에서 뺀다 */
-const SELF_SKIP_POINTS = 8;
 /** 후보 방향(현재 진행각 기준 오프셋, rad). 앞이 막히면 좌우로 점점 크게 꺾는다 */
 const CANDIDATE_OFFSETS = [0, -0.55, 0.55, -1.2, 1.2, -1.9, 1.9];
 const EDGE_RATIO = 0.72;
@@ -23,9 +21,9 @@ const isSafeAhead = (store: WormStore, x: number, y: number, heading: number): b
     const py = y + Math.sin(heading) * d;
     if (Math.hypot(px, py) > store.radius - CLEARANCE_U) return false;
     for (const w of store.worms.values()) {
+      if (w === me) continue; // 자기 궤적은 통과하므로 회피 대상이 아니다 (#1722)
       const points = [...w.trail, ...w.pending];
-      const end = w === me ? Math.max(0, points.length - SELF_SKIP_POINTS) : points.length;
-      for (let k = 0; k < end; k++) {
+      for (let k = 0; k < points.length; k++) {
         if (Math.hypot(points[k].x - px, points[k].y - py) < CLEARANCE_U) return false;
       }
     }

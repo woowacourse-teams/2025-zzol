@@ -34,7 +34,7 @@ export const MINI_GAME_DESCRIPTION_MAP: Record<MiniGameType, string[]> = {
   BLOCK_STACKING: ['블록을 정확히 쌓아올리세요!'],
   LADDER_GAME: ['사다리를 타고 순위를 결정하세요!'],
   NUNCHI_GAME: ['눈치를 보며 숫자를 순서대로 누르세요! 동시에 누르면 충돌입니다.'],
-  WORM_GAME: ['지나간 자리가 벽이 됩니다. 벽과 경계를 피해 끝까지 살아남으세요!'],
+  WORM_GAME: ['상대가 지나간 자리가 벽이 됩니다. 벽과 경계를 피해 끝까지 살아남으세요!'],
 };
 
 export const MINI_GAME_ICON_MAP: Record<MiniGameType, string> = {

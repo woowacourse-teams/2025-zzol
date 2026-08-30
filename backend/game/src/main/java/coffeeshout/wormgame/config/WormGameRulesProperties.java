@@ -29,8 +29,7 @@ public record WormGameRulesProperties(
         @DefaultValue("40") @Positive double minRadius,
         @DefaultValue("40") @PositiveOrZero int invincibleTicks,
         @DefaultValue("6") @Positive double trailRadius,
-        @DefaultValue("3") @PositiveOrZero int wetPaintSkipSegments,
-        @DefaultValue("5") @PositiveOrZero int selfSkipSegments) {
+        @DefaultValue("3") @PositiveOrZero int wetPaintSkipSegments) {
 
     public WormGameRules toRules() {
         return new WormGameRules(
@@ -49,7 +48,6 @@ public record WormGameRulesProperties(
                 minRadius,
                 invincibleTicks,
                 trailRadius,
-                wetPaintSkipSegments,
-                selfSkipSegments);
+                wetPaintSkipSegments);
     }
 }

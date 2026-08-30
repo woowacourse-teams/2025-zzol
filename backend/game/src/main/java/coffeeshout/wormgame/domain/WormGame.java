@@ -14,8 +14,9 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 
 /**
- * 지렁이 게임 — Tron식 궤적 서바이벌. 좌표계 중심은 (0,0)이고 모든 판정·시간은 틱에서 유도된다.
- * 규칙·수치의 SSOT는 설계 문서 v0.3(이슈 #1681).
+ * 지렁이 게임 — 궤적 서바이벌. 좌표계 중심은 (0,0)이고 모든 판정·시간은 틱에서 유도된다.
+ * 규칙·수치의 SSOT는 설계 문서 v0.3(이슈 #1681)이되 자기 궤적 충돌만 갈라진다. v0.3은 Tron처럼
+ * 자기 벽에도 죽지만 #1722에서 면제로 바꿨다.
  */
 @Getter
 public class WormGame implements Playable {
@@ -132,10 +133,12 @@ public class WormGame implements Playable {
 
     private boolean hitsAnyTrail(Worm mover, List<Worm> aliveAtTickStart) {
         for (final Worm owner : aliveAtTickStart) {
-            // 자기 궤적은 머리와 맞닿은 직전 구간을, 타인 궤적은 최신 ~150ms("마르지 않은 페인트")를 제외한다.
-            final int skipTail = owner == mover ? rules.selfSkipSegments() : rules.wetPaintSkipSegments();
+            if (owner == mover) {
+                continue; // 자기 궤적은 판정하지 않는다. slither.io 계열과 조작감을 맞췄다(#1722).
+            }
+            // 타인 궤적은 최신 ~150ms("마르지 않은 페인트")를 판정에서 제외한다.
             final Trail trail = owner.getTrail();
-            final int checkable = trail.segmentCount() - skipTail;
+            final int checkable = trail.segmentCount() - rules.wetPaintSkipSegments();
             for (int i = 0; i < checkable; i++) {
                 final Point start = trail.start(i);
                 final Point end = trail.end(i);

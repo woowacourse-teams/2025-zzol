@@ -1,0 +1,26 @@
+{
+  "name": "monitor-db-pool-exhaustion-request-timeouts",
+  "question": "알림 DbConnectionPoolHigh(warning)가 prod에서 발화했다 - HikariCP 활성 커넥션이 8을 초과. 봇에는 최근 30분 ERROR 로그 샘플 5줄(트랜잭션 열기 실패 및 스케줄 작업 실패)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 여러 HTTP 요청 스레드에서 JPA 트랜잭션을 열지 못한 실패(CannotCreateTransactionException)와 스케줄 작업 실패로, 커넥션 풀(최대 10) 포화와 직접 관련된다. '근거 발견: 예'로 판정하고 커넥션 풀 고갈(슬로우 쿼리 또는 커넥션 누수로 반납 지연)을 원인 가설로 제시하면 정답. '근거 발견: 아니오'로 판정하거나, Redis 또는 게임 이벤트 처리를 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "DbConnectionPoolHigh",
+    "severity": "warning",
+    "fingerprint": "golden-synth-01",
+    "summary": "DB 커넥션 풀 활성 > 8 (prod-app)",
+    "description": "활성 연결 9개 (최대 10). 슬로우 쿼리 또는 커넥션 누수 확인 필요.",
+    "labels": {
+      "alertname": "DbConnectionPoolHigh",
+      "severity": "warning",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-20 14:21:08.412] [ERROR] [9f3c1a7e5b2d48c0a6e1f47d8b92c355,4d7a1c9e2f8b6a03] --- [http-nio-8080-exec-24] c.web.exception.RestExceptionHandler : method=POST uri=/rooms exception=CannotCreateTransactionException message=Could not open JPA EntityManager for transaction",
+    "[2026-08-20 14:21:41.098] [ERROR] [b81d64f20c9e47a3ae55d0c1e8f37b62,7e2c90a4f1d85b36] --- [http-nio-8080-exec-31] c.web.exception.RestExceptionHandler : method=POST uri=/rooms exception=CannotCreateTransactionException message=Could not open JPA EntityManager for transaction",
+    "[2026-08-20 14:22:15.771] [ERROR] [3aa07c5d91e24f68b3d9f80a26c47e11,90cf4b27a8e16d54] --- [http-nio-8080-exec-18] c.web.exception.RestExceptionHandler : method=POST uri=/rooms exception=CannotCreateTransactionException message=Could not open JPA EntityManager for transaction",
+    "[2026-08-20 14:22:58.240] [ERROR] [,] --- [pool-11-thread-1] o.s.s.s.TaskUtils$LoggingErrorHandler : Unexpected error occurred in scheduled task",
+    "[2026-08-20 14:23:37.905] [ERROR] [5e19d3b8a7c04f22b6a1e94d07f8c2d3,1b6f8a03d47c92e5] --- [http-nio-8080-exec-07] c.web.exception.RestExceptionHandler : method=POST uri=/rooms exception=CannotCreateTransactionException message=Could not open JPA EntityManager for transaction"
+  ],
+  "logEnvironment": "prod"
+}

@@ -14,6 +14,84 @@ const __dirname = dirname(__filename);
 const packageJson = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
 const appVersion = packageJson.version;
 
+const SITE_URL = 'https://www.zzol.site';
+
+// 라우트별 메타의 단일 소스. SPA 콘텐츠 페이지(src/seo/pages.ts)와 같은 파일을 읽는다.
+const seoPages = JSON.parse(readFileSync(path.resolve(__dirname, 'src/seo/pages.json'), 'utf8'));
+
+// 홈(`/`)을 뺀 콘텐츠 라우트의 최상위 세그먼트. webpack.prod.js 의 Service Worker
+// denylist 가 이걸 쓴다 — 라우트 목록을 두 벌로 적으면 pages.json 에 라우트를 더할 때 조용히 어긋난다.
+// Workbox 는 pathname 이 아니라 pathname+search 에 매칭하므로 끝을 `[/?]` 까지 허용한다.
+export const CONTENT_ROUTE_PATTERN = new RegExp(
+  `^/(${[...new Set(seoPages.filter((page) => page.path !== '/').map((page) => page.path.split('/')[1]))].join('|')})($|[/?])`
+);
+
+// 라우트마다 실제 파일을 만들어 둘 뿐이다. S3 REST 오리진은 `/guide` 를 `guide/index.html` 로 해석하지 않으므로
+// 확장자 없는 URI 를 `.../index.html` 로 재작성하는 CloudFront Function(`zzol-spa-router`)이 dev·prod 에 붙어 있다.
+// 함수·에러 응답 설정은 docs/seo-optimization.md §7 참고.
+const htmlPlugins = (devSnippet) =>
+  seoPages.map(
+    (page) =>
+      new HtmlWebpackPlugin({
+        template: './public/index.html',
+        filename: page.path === '/' ? 'index.html' : `${page.path.slice(1)}/index.html`,
+        templateParameters: {
+          DEV_SNIPPET: devSnippet,
+          TITLE: page.title,
+          DESCRIPTION: page.description,
+          CANONICAL: `${SITE_URL}${page.path}`,
+          H1: page.h1,
+          BODY: page.body,
+          ROBOTS: page.noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large',
+          // `<` 를 이스케이프한다 — 값에 `</script>` 가 섞이면 스크립트가 그 자리에서 끊긴다.
+          JSON_LD: JSON.stringify(
+            page.jsonLd ?? {
+              '@context': 'https://schema.org',
+              '@type': 'WebPage',
+              name: page.title,
+              description: page.description,
+              url: `${SITE_URL}${page.path}`,
+              inLanguage: 'ko',
+              isPartOf: { '@type': 'WebSite', name: '쫄 (ZZOL)', url: `${SITE_URL}/` },
+            }
+          ).replace(/</g, '\\u003c'),
+        },
+      })
+  );
+
+// sitemap 도 같은 소스에서 만든다 — public/sitemap.xml 수기 관리를 없애고 lastmod 를 빌드일로 갱신한다.
+const sitemapPlugin = {
+  apply(compiler) {
+    compiler.hooks.thisCompilation.tap('SitemapPlugin', (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'SitemapPlugin',
+          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+        },
+        () => {
+          const lastmod = new Date().toISOString().split('T')[0];
+          const urls = seoPages
+            .filter((page) => !page.noindex)
+            .map(
+              (page) =>
+                `  <url>\n    <loc>${SITE_URL}${page.path}</loc>\n    <lastmod>${lastmod}</lastmod>\n` +
+                `    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>`
+            )
+            .join('\n');
+
+          compilation.emitAsset(
+            'sitemap.xml',
+            new compiler.webpack.sources.RawSource(
+              `<?xml version="1.0" encoding="UTF-8"?>\n` +
+                `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`
+            )
+          );
+        }
+      );
+    });
+  },
+};
+
 export default (_, argv) => {
   const mode = argv.mode || 'development';
 
@@ -74,16 +152,12 @@ export default (_, argv) => {
       conditionNames: ['import', 'module', 'browser', 'default'],
     },
     plugins: [
-      new HtmlWebpackPlugin({
-        template: './public/index.html',
-        favicon: './public/favicon.ico',
-        templateParameters: {
-          DEV_SNIPPET:
-            process.env.ENABLE_DEVTOOLS === 'true'
-              ? `<script type="module" src="/devtools/devSnippet.js"></script>`
-              : '',
-        },
-      }),
+      ...htmlPlugins(
+        process.env.ENABLE_DEVTOOLS === 'true'
+          ? `<script type="module" src="/devtools/devSnippet.js"></script>`
+          : ''
+      ),
+      sitemapPlugin,
       new CopyWebpackPlugin({
         patterns: [
           {
@@ -99,14 +173,10 @@ export default (_, argv) => {
             to: 'robots.txt',
           },
           {
-            from: 'public/sitemap.xml',
-            to: 'sitemap.xml',
-            transform(content) {
-              const today = new Date().toISOString().split('T')[0];
-              return content
-                .toString()
-                .replace(/<lastmod>[^<]*<\/lastmod>/g, `<lastmod>${today}</lastmod>`);
-            },
+            // HtmlWebpackPlugin 의 favicon 옵션 대신 여기서 복사한다 —
+            // 페이지 수만큼 인스턴스가 생기면 같은 파일을 여러 번 emit 하게 된다.
+            from: 'public/favicon.ico',
+            to: 'favicon.ico',
           },
           {
             from: 'public/manifest.json',

@@ -11,6 +11,7 @@ Allow: /$
 Disallow: /room/
 Disallow: /join/
 Disallow: /entry/
+Disallow: /auth/
 
 # 정적 자산 허용
 Allow: /logo/

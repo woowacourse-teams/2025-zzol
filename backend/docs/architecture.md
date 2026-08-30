@@ -17,7 +17,7 @@
 :game-api     — 게임 SPI (Playable, MiniGameFactory, FlowScheduler, Gamer)
 :user         — User + Auth + Friend
 :room         — Room aggregate + Player + Roulette + RoomSessionToken
-:game         — 6게임 구현체 + minigame orchestration
+:game         — 8게임 구현체 + minigame orchestration
 :profanity    — 비속어 필터 (:admin·:app 이 사용, :room·:game 은 테스트에서만)
 :admin        — dashboard + patchnote + report
 :zzolbot      — AI 운영자 어시스턴트
@@ -183,7 +183,7 @@ lifecycle stop 사이의 순서는 phase로 조정할 수 없다.
 
 ### 전용 스케줄러·스트림을 쓰는 게임 — 테스트 미러링 (자주 누락)
 
-동적 타이머가 필요한 게임(SpeedTouch·BlindTimer·Nunchi)은 OCP 한 줄 등록(`MiniGameType` + Factory) 외에 **전용 빈/스트림**을 추가한다. 이때 프로덕션에만 등록하고 테스트측 미러를 빠뜨리면, 도메인·서비스 단위 테스트는 통과하지만 **통합테스트가 컨텍스트 로딩 실패 또는 "메시지 미수신"으로 깨진다**.
+동적 타이머가 필요한 게임(SpeedTouch·BlindTimer·Nunchi·WormGame)은 OCP 한 줄 등록(`MiniGameType` + Factory) 외에 **전용 빈/스트림**을 추가한다. 이때 프로덕션에만 등록하고 테스트측 미러를 빠뜨리면, 도메인·서비스 단위 테스트는 통과하지만 **통합테스트가 컨텍스트 로딩 실패 또는 "메시지 미수신"으로 깨진다**.
 
 ★ **전용 스케줄러 빈 미러는 모듈마다 따로 존재하는 3곳을 전부 추가해야 한다.** 이 셋은 서로 다른 테스트 컨텍스트가 import하므로, 한 곳만 고치면 그 곳을 안 쓰는 모듈의 IT가 깨진다(아래 표 1행).
 

@@ -166,8 +166,9 @@ class RacingGameIntegrationTest extends GameModuleWebSocketTest {
          어느 라운드가 살아남는지가 부하에 따라 갈리고, 마지막 생존 탭의 경과시간이 길면 그 러너만 MIN_SPEED로
          남아 완주하지 못한다. DONE은 전원 정지가 조건이라 한 명만 뒤처져도 영영 오지 않는다.
         */
+        // 탭 주인은 본문이 아니라 세션 principal로 정해지므로(#1702) 게이머마다 자기 세션으로 보낸다.
         for (Gamer gamer : gamers) {
-            singleSession.send(tapRequestUrl, new TapCommand(gamer.getName(), 200));
+            createSession(joinCodeValue, gamer.getName()).send(tapRequestUrl, new TapCommand(200));
         }
 
         // then - DONE 상태 확인. 70틱 × move-interval(50ms) + race-finished-delay 만큼 걸리므로 상한을 넉넉히 둔다.

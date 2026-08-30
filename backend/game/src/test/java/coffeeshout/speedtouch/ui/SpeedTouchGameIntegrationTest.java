@@ -61,15 +61,18 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
         // then - DESCRIPTION 상태
         MessageResponse descriptionState = stateResponses.get(2, TimeUnit.SECONDS);
-        assertThat(payloadAs(descriptionState, SpeedTouchStateResponse.class).state()).isEqualTo("DESCRIPTION");
+        assertThat(payloadAs(descriptionState, SpeedTouchStateResponse.class).state())
+                .isEqualTo("DESCRIPTION");
 
         // PREPARE 상태
         MessageResponse prepareState = stateResponses.get(6, TimeUnit.SECONDS);
-        assertThat(payloadAs(prepareState, SpeedTouchStateResponse.class).state()).isEqualTo("PREPARE");
+        assertThat(payloadAs(prepareState, SpeedTouchStateResponse.class).state())
+                .isEqualTo("PREPARE");
 
         // PLAYING 상태
         MessageResponse playingState = stateResponses.get(4, TimeUnit.SECONDS);
-        assertThat(payloadAs(playingState, SpeedTouchStateResponse.class).state()).isEqualTo("PLAYING");
+        assertThat(payloadAs(playingState, SpeedTouchStateResponse.class).state())
+                .isEqualTo("PLAYING");
     }
 
     @Test
@@ -91,16 +94,17 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         progressResponses.get(6, TimeUnit.SECONDS); // PREPARE 시 초기 progress
         stateResponses.get(4, TimeUnit.SECONDS); // PLAYING
 
-        // when - 터치
-        session.send(touchUrl, new TouchCommand(host.getName(), 1));
+        // when - 터치. 터치 주인은 본문이 아니라 세션 principal로 정해진다(#1702) — host 세션이므로 host의 터치다.
+        session.send(touchUrl, new TouchCommand(1));
 
         // then - 진행도 응답 (blocking get으로 메시지 도착까지 대기)
         MessageResponse progressUpdate = progressResponses.get(3, TimeUnit.SECONDS);
-        assertThat(payloadAs(progressUpdate, SpeedTouchProgressResponse.class).players()).isNotEmpty();
+        assertThat(payloadAs(progressUpdate, SpeedTouchProgressResponse.class).players())
+                .isNotEmpty();
     }
 
     @Test
-    void 전원_완주하면_DONE_상태가_전송된다() {
+    void 전원_완주하면_DONE_상태가_전송된다() throws Exception {
         // given
         final String joinCodeValue = joinCode.getValue();
         final String subscribeStateUrl = String.format("/topic/room/%s/speed-touch/state", joinCodeValue);
@@ -127,17 +131,18 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         // 각 플레이어별로 1~25를 순차 전송하되, 이전 터치 처리 완료를 Awaitility로 확인
         for (Gamer gamer : gamers) {
             final String playerName = gamer.getName();
+            // 터치 주인은 세션 principal에서 도출되므로(#1702) 플레이어마다 자기 세션으로 보낸다.
+            final TestStompSession playerSession = createSession(joinCodeValue, playerName);
             for (int i = 1; i <= 25; i++) {
                 final int expectedNext = i + 1;
-                session.send(touchUrl, new TouchCommand(playerName, i));
+                playerSession.send(touchUrl, new TouchCommand(i));
 
                 // 게임 도메인 객체의 currentNumber가 갱신될 때까지 대기
                 await().atMost(Duration.ofSeconds(5))
                         .pollInterval(Duration.ofMillis(50))
-                        .untilAsserted(() ->
-                                assertThat(game.findPlayer(playerName).getCurrentNumber())
-                                        .isGreaterThanOrEqualTo(expectedNext)
-                        );
+                        .untilAsserted(
+                                () -> assertThat(game.findPlayer(playerName).getCurrentNumber())
+                                        .isGreaterThanOrEqualTo(expectedNext));
             }
         }
 

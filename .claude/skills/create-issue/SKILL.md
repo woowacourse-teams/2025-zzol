@@ -1,6 +1,6 @@
 ---
 name: create-issue
-description: GitHub 이슈를 템플릿 기반으로 생성하고, 이슈 번호로 dev에서 작업 워크트리·브랜치를 만들어 진입한다. 백엔드·프론트엔드 공통.
+description: GitHub 이슈를 템플릿으로 생성하고, 이슈 번호로 dev에서 작업 워크트리·브랜치를 만들어 진입한다. 백엔드·프론트엔드 공통.
 argument-hint: "[type] 이슈 제목 — type: feat | fix | refactor | chore | docs | test"
 allowed-tools: Bash, EnterWorktree
 ---
@@ -23,11 +23,11 @@ allowed-tools: Bash, EnterWorktree
 | docs | feature-template | `📝docs` |
 | test | feature-template | `🧪 test` |
 
-영역 라벨(`BE`/`FE`)은 type 라벨과 **별도**로 부여한다 — 3단계에서 함께 확인한다.
+영역 라벨(`BE`/`FE`)은 type 라벨과 **별도**로 부여한다. 3단계에서 함께 확인한다.
 
 ## 2. 이슈 템플릿 읽기
 
-type에 맞는 템플릿 **하나만** 읽어 본문 골격으로 삼는다 — `fix`는 `bug_report.md`, 그 외는 `feature-template.md` (두 템플릿은 제목 줄만 다르고 섹션 구조는 동일하다).
+type에 맞는 템플릿 **하나만** 읽어 본문 골격으로 삼는다. `fix`는 `bug_report.md`, 그 외는 `feature-template.md`를 읽는다. 두 템플릿은 제목 줄만 다르고 섹션 구조는 같다.
 
 템플릿은 **모노레포 루트** `.github/ISSUE_TEMPLATE/`에 있다(`backend/` 하위 아님). worktree는 자체 `.github/`를 가지므로 `git rev-parse --show-toplevel`로 루트를 앵커한다(하드코딩·`../` 금지):
 
@@ -49,16 +49,18 @@ cat "$(git rev-parse --show-toplevel)/.github/ISSUE_TEMPLATE/<bug_report|feature
 >    _현재 파악한 내용: {$ARGUMENTS에서 추론한 동기 또는 "명확하지 않음"}_
 >
 > 2. **완료를 어떻게 검증할 수 있나요? (성공 기준)**
->    (테스트 통과, 특정 동작 확인, 수치 목표 등 — 체크리스트 형태로 알려주세요)
+>    (테스트 통과, 특정 동작 확인, 수치 목표 등을 체크리스트 형태로 알려주세요)
 >    _현재 파악한 내용: {$ARGUMENTS에서 추론한 성공 기준 또는 "명확하지 않음"}_
 >
 > 3. **백엔드 작업인가요, 프론트 작업인가요? (영역 라벨)**
->    (`BE` / `FE` / 둘 다 — 풀스택). 작업 설명에서 추론해 제안하되 확인받는다.
+>    (`BE` / `FE` / 둘 다면 풀스택). 작업 설명에서 추론해 제안하되 확인받는다.
 >    _현재 파악한 내용: {$ARGUMENTS에서 추론한 영역 또는 "명확하지 않음"}_
 
 사용자 응답이 돌아온 뒤에만 다음 단계로 진행한다. 3번 답이 영역 라벨(`BE`/`FE`/둘 다)을 결정한다.
 
 ## 4. 템플릿 채우기
+
+본문은 [korean-style](../../rules/korean-style.md)의 문체 규칙을 지켜 쓴다. 특히 번역투 연결어와 하이픈으로 정보를 잇는 문장을 쓰지 않는다.
 
 frontmatter(`---`로 감싼 부분)는 제거하고 본문 섹션만 사용한다.
 
@@ -92,9 +94,9 @@ EOF
 
 **현재 디렉터리에서 `git switch`로 브랜치를 갈아타지 않는다.** 같은 저장소를 보는 다른 세션의 작업을 덮어쓴다. 작업마다 워크트리를 새로 만들어 동시에 진행할 수 있게 한다([issue-workflow](../../rules/issue-workflow.md)).
 
-통합 브랜치 `dev`를 **체크아웃하지 않고** `origin/dev`에서 직접 분기한다. `dev` 위에서 분기하면 autoSetupMerge가 새 브랜치 upstream을 `dev`로 잡아 이후 push·IDE Sync가 `dev`로 직행한다(#1404 사고 원인) — 금지. 영역(BE/FE)과 무관하게 브랜치 prefix는 붙이지 않는다.
+통합 브랜치 `dev`를 **체크아웃하지 않고** `origin/dev`에서 직접 분기한다. `dev` 위에서 분기하면 autoSetupMerge가 새 브랜치 upstream을 `dev`로 잡아 이후 push·IDE Sync가 `dev`로 직행한다(#1404 사고 원인). 이 방식은 금지한다. 영역(BE/FE)과 무관하게 브랜치 prefix는 붙이지 않는다.
 
-**실패를 삼키지 않는다.** 아래 가드는 하나라도 어긋나면 `ABORT`로 멈춘다 — 특히 upstream 제거는 #1404 재발방지의 핵심이라, 조용히 실패하면 이후 push 한 번으로 작업 커밋이 `dev`에 직행한다.
+**실패를 삼키지 않는다.** 아래 가드는 하나라도 어긋나면 `ABORT`로 멈춘다. 특히 upstream 제거가 #1404 재발방지의 핵심이라, 조용히 실패하면 이후 push 한 번으로 작업 커밋이 `dev`에 직행한다.
 
 ```bash
 MAIN="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"   # 주 저장소 경로 (워크트리 안에서 실행해도 안전)
@@ -132,7 +134,7 @@ EnterWorktree(path: "<WT 경로>")
 - 한국어 단어는 의미를 유지하는 영문으로 변환
 - **`git worktree add`가 실패하는 두 경우를 구분한다.** 메시지를 보고 갈라진다.
   - `already exists` (경로 선점) → 새로 만들지 말고 `EnterWorktree(path:)`로 기존 워크트리에 들어간다.
-  - `a branch named '...' already exists` (브랜치 선점 — 지난 작업의 브랜치가 남아 있다) → 워크트리만 새로 붙인다: `git worktree add "$WT" "{type}/{issue-number}-{slug}"` (`-b` 없이). 그래도 안 되면 사용자에게 보고한다. **`git switch`로 되돌아가지 않는다.**
+  - `a branch named '...' already exists` (브랜치 선점. 지난 작업의 브랜치가 남아 있다) → 워크트리만 새로 붙인다: `git worktree add "$WT" "{type}/{issue-number}-{slug}"` (`-b` 없이). 그래도 안 되면 사용자에게 보고한다. **`git switch`로 되돌아가지 않는다.**
 
 ## 7. 완료 출력
 

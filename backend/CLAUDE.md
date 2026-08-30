@@ -6,9 +6,9 @@
 
 ## 브랜치 전략
 
-브랜치 전략은 모노레포 공통이다 — 루트 [CLAUDE.md](../CLAUDE.md)·[git-push-safety](../.claude/rules/git-push-safety.md)를 따른다. 백엔드에서 추가로 알아야 할 것:
+브랜치 전략은 모노레포 공통이다. 루트 [CLAUDE.md](../CLAUDE.md)와 [git-push-safety](../.claude/rules/git-push-safety.md)를 따른다. 백엔드에서 추가로 알아야 할 것:
 
-- `dev`가 저장소 **기본 브랜치**다. README·dependabot·CodeRabbit·워크플로우 등 GitHub 관련 파일도 `dev`에서 관리한다(dependabot·보안 스캔·스케줄은 기본 브랜치 기준으로 동작). `main`은 배포 브랜치가 아니며(배포는 `dev`·`prod` push 트리거) 전환기 잔재로만 남아 있다 — 신규 작업에 사용하지 않는다.
+- `dev`가 저장소 **기본 브랜치**다. README·dependabot·CodeRabbit·워크플로우 등 GitHub 관련 파일도 `dev`에서 관리한다(dependabot·보안 스캔·스케줄은 기본 브랜치 기준으로 동작). `main`은 배포 브랜치가 아니며(배포는 `dev`·`prod` push 트리거) 전환기 잔재로만 남아 있다. 신규 작업에 사용하지 않는다.
 
 ## 작업 규칙
 
@@ -25,15 +25,15 @@
 
 파일을 Read하기 전에 **먼저 Grep 툴로 파일 경로와 줄 번호를 확인**한 뒤, `offset`과 `limit`을 지정해 필요한 범위만 읽는다.
 
-1. Grep 툴로 심볼 위치를 찾는다 (예: 패턴 `class CardGameFlowOrchestrator`, `void startRound`) — 내용은 읽지 않고 경로·줄 번호만 얻는다
-2. 얻은 줄 번호로 `Read(file, offset=N, limit=40)` — 전체 파일 Read는 피한다
+1. Grep 툴로 심볼 위치를 찾는다 (예: 패턴 `class CardGameFlowOrchestrator`, `void startRound`). 내용은 읽지 않고 경로와 줄 번호만 얻는다
+2. 얻은 줄 번호로 `Read(file, offset=N, limit=40)` 를 호출한다. 전체 파일 Read는 피한다
 
 - 구조 파악이 목적이면 Grep 툴로 `public|private|class|interface` 패턴을 잡아 메서드 목록만 먼저 확인한다
 - Java는 파일명 = 클래스명 규칙이 강제되므로 클래스명을 알면 경로를 예측해 바로 Read할 수 있다 (이 경우 Grep 생략 가능)
 
 ## 모듈 경로
 
-Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는다** — `backend/src/`는 존재하지 않고 `backend/game/src/main/java/…` 형태다. 경로를 예측해 Read하거나 글롭을 쓸 때 이걸 놓치면 조용히 빗나간다(`.claude/rules/`의 `paths`가 이 이유로 매칭에 실패한 적이 있다).
+Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는다.** `backend/src/`는 존재하지 않고 `backend/game/src/main/java/…` 형태다. 경로를 예측해 Read하거나 글롭을 쓸 때 이걸 놓치면 조용히 빗나간다(`.claude/rules/`의 `paths`가 이 이유로 매칭에 실패한 적이 있다).
 
 모듈 목록·역할·의존 방향은 [아키텍처 레퍼런스](docs/architecture.md)가 유일한 출처다. 여기에 옮겨 적지 않는다.
 
@@ -51,7 +51,7 @@ Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는�
 
 의존 방향 다이어그램은 [아키텍처 레퍼런스](docs/architecture.md)를 참조한다.
 
-- `:room`은 `:game-api`만 알고 `:game` 구체 클래스를 몰라야 한다 (OCP — 새 게임 추가 시 room 코드 무수정)
+- `:room`은 `:game-api`만 알고 `:game` 구체 클래스를 몰라야 한다. OCP를 지켜 새 게임을 추가해도 room 코드는 고치지 않는다
 - `:common`은 Spring 의존이 없다. Spring import를 추가하지 않는다
 - ArchUnit이 역방향 의존을 CI에서 차단한다
 
@@ -88,3 +88,5 @@ Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는�
 - [Notion 워크스페이스](docs/notion-workspace.md) — Notion 주요 페이지 URL, WebSocket 명세서 DB 구조 및 작업 흐름
 
 통합 테스트는 Docker 기반 TestContainers를 사용하므로 Docker가 실행 중이어야 한다.
+
+PMD 실패 시 **CI 로그에는 위반 내용이 안 나온다**(HTML 리포트로만 간다). 로컬에서 `./gradlew :<모듈>:pmdMain`으로 재현해 파일·줄을 얻는다.

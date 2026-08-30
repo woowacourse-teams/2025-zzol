@@ -1,9 +1,6 @@
 package coffeeshout.racinggame.ui.request;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 
 public record TapCommand(
-        @NotBlank(message = "플레이어 이름은 필수입니다") String playerName,
-        int tapCount
-) {
-}
+        @PositiveOrZero(message = "탭 횟수는 0 이상이어야 합니다") int tapCount) {}

@@ -1,0 +1,23 @@
+{
+  "name": "monitor-error-spike-sparse-two-lines",
+  "question": "알림 AppErrorLogSpike(warning)가 prod에서 발화했다 - 최근 5분 ERROR 로그 30건 초과. 봇에는 최근 30분 ERROR 로그 샘플이 2줄만 주어졌고, 두 줄의 시각은 25분 떨어져 있다.",
+  "rubric": "5분에 38건이라는 스파이크 알림을 시각이 25분 떨어진 ERROR 2줄로는 설명할 수 없다. 근거 불충분('근거 발견: 아니오')을 명시하면 정답. QR 업로드 실패나 스케줄 작업 실패 1건을 스파이크의 근본 원인으로 단정하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "AppErrorLogSpike",
+    "severity": "warning",
+    "fingerprint": "golden-synth-13",
+    "summary": "ERROR 로그 급증(최근 5분, prod-app)",
+    "description": "ERROR 로그가 38건(임계 30/5m)입니다. zzol-bot이 근본원인을 분석합니다.",
+    "labels": {
+      "alertname": "AppErrorLogSpike",
+      "severity": "warning",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-25 03:41:09.226] [ERROR] [5d20c8a94e17f3b6b1a4d76c03e92f85,9c35e0a72d84b1f6] --- [] c.r.infra.OracleObjectStorageService : Oracle Object Storage QR 코드 업로드 실패: contents=https://www.zzol.site/join/D4HN, error=Read timed out",
+    "[2026-08-25 04:06:33.851] [ERROR] [,] --- [pool-11-thread-1] o.s.s.s.TaskUtils$LoggingErrorHandler : Unexpected error occurred in scheduled task"
+  ],
+  "logEnvironment": "prod"
+}

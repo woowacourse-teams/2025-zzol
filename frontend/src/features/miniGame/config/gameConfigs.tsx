@@ -32,6 +32,9 @@ import NunchiGameProvider from '@/contexts/NunchiGame/NunchiGameProvider';
 import NunchiGameReadyPage from '../nunchiGame/pages/NunchiGameReadyPage';
 import NunchiGamePlayPage from '../nunchiGame/pages/NunchiGamePlayPage';
 import NunchiGameResultContent from '../nunchiGame/pages/NunchiGameResultPage';
+import WormGameProvider from '@/contexts/WormGame/WormGameProvider';
+import WormGameReadyPage from '../wormGame/pages/WormGameReadyPage';
+import WormGamePlayPage from '../wormGame/pages/WormGamePlayPage';
 
 export type SlideConfig = {
   textLines: string[];
@@ -169,5 +172,20 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
     ],
     PlayPage: NunchiGamePlayPage,
     ResultContent: NunchiGameResultContent,
+  },
+  WORM_GAME: {
+    Provider: WormGameProvider,
+    ReadyPage: WormGameReadyPage,
+    slides: [
+      {
+        textLines: ['화면을 터치한 방향으로', '지렁이가 꺾여요'],
+        className: 'slide-first',
+      },
+      {
+        textLines: ['상대가 지나간 자리는 벽!', '경계가 줄어드니 끝까지 살아남으세요'],
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: WormGamePlayPage,
   },
 };

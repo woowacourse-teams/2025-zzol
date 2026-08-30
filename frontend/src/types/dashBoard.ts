@@ -33,3 +33,9 @@ export type SpeedTouchTopPlayer = {
   playerName: string;
   bestTime: number;
 };
+
+export type WormGameTopPlayer = {
+  playerName: string;
+  /** 최장 생존 시간(ms) */
+  bestSurvivalMillis: number;
+};

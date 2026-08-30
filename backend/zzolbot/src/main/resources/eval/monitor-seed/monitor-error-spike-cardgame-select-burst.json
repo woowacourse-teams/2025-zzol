@@ -1,0 +1,29 @@
+{
+  "name": "monitor-error-spike-cardgame-select-burst",
+  "question": "알림 AppErrorLogSpike(warning)가 prod에서 발화했다 - 최근 5분 ERROR 로그 30건 초과. 봇에는 최근 30분 ERROR 로그 샘플 8줄(같은 방의 카드게임 카드 선택 이벤트 처리 실패 집중)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 동일한 방(joinCode=J5WM)의 카드게임 SelectCardCommandEvent 처리 실패가 알림 시각과 정합하는 좁은 시간창에 반복된 것으로, ERROR 급증 알림의 직접 근거다. '근거 발견: 예'로 판정하고 특정 방의 카드게임 카드 선택 이벤트 처리 실패 반복을 원인 가설로 제시하면 정답. '근거 발견: 아니오'로 판정하거나 IP 차단, DB 등 무관한 원인을 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "AppErrorLogSpike",
+    "severity": "warning",
+    "fingerprint": "golden-synth-14",
+    "summary": "ERROR 로그 급증(최근 5분, prod-app)",
+    "description": "ERROR 로그가 36건(임계 30/5m)입니다. zzol-bot이 근본원인을 분석합니다.",
+    "labels": {
+      "alertname": "AppErrorLogSpike",
+      "severity": "warning",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-25 22:07:18.204] [ERROR] [40c8a2d97e15f3b6b3d0a86c25e91f47,7d02a5c84e91b3f6] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=81f42c07-6d95-4a38-b2e0-59c817d04a63, timestamp=2026-08-25T13:07:18.200517324Z, joinCode=J5WM, playerName=PLAYER_1, cardIndex=2]",
+    "[2026-08-25 22:07:19.861] [ERROR] [93e5b0c74a28d1f6b6a1c40d87e52f39,2a86e4c09d53b7f1] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=c05d93a8-1e46-4b72-8f31-d27a60e84c95, timestamp=2026-08-25T13:07:19.857203841Z, joinCode=J5WM, playerName=PLAYER_3, cardIndex=6]",
+    "[2026-08-25 22:07:21.033] [ERROR] [58a1d4c20e97f6b3b0e7a92c41d85f36,9c40b8a57e12d3f6] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=27b80e51-9c34-4d68-a5f2-e94d01c73a86, timestamp=2026-08-25T13:07:21.029861107Z, joinCode=J5WM, playerName=PLAYER_2, cardIndex=0]",
+    "[2026-08-25 22:08:02.517] [ERROR] [06e9c3a85d21f4b7b8c2d50e94a17f63,4e73a1c96d80b2f5] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=f63a08d2-4b91-4e57-8c20-a15e79d43c68, timestamp=2026-08-25T13:08:02.513442960Z, joinCode=J5WM, playerName=PLAYER_4, cardIndex=5]",
+    "[2026-08-25 22:08:44.172] [ERROR] [71b5e0d48c92a3f6b5d9c21e80a47f52,0d95c3a82e61b4f7] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=b48c72e0-5a13-4f96-9d24-c80e51a67d39, timestamp=2026-08-25T13:08:44.168015733Z, joinCode=J5WM, playerName=PLAYER_1, cardIndex=7]",
+    "[2026-08-25 22:09:27.808] [ERROR] [24d0a7c95e83f1b6b2a5d64c09e81f73,6a18e5c40d97b2f3] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=59e04a86-2d71-4c35-b8f0-17c92e64d58a, timestamp=2026-08-25T13:09:27.804529186Z, joinCode=J5WM, playerName=PLAYER_2, cardIndex=3]",
+    "[2026-08-25 22:10:11.450] [ERROR] [85c2e9a40d17f6b3b9e0a53c78d24f61,3f60d2a91c85e4b7] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=d17f50b3-8e29-4a64-9c05-b42a86e01d73, timestamp=2026-08-25T13:10:11.446307852Z, joinCode=J5WM, playerName=PLAYER_3, cardIndex=1]",
+    "[2026-08-25 22:10:53.926] [ERROR] [62a8d5c01e94f3b7b1c6a40d95e82f37,8b31c7a04d62e9f5] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=30c94e17-7f52-4b86-a1d3-e58d20a94c76, timestamp=2026-08-25T13:10:53.921938564Z, joinCode=J5WM, playerName=PLAYER_4, cardIndex=4]"
+  ],
+  "logEnvironment": "prod"
+}

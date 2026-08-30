@@ -42,6 +42,12 @@ redis:
         thread-pool-name: concurrent
       "[racinggame]":
         thread-pool-name: concurrent
+      # 지렁이 게임 조향 — 방당 9인×10Hz=90msg/s. 버퍼 초 = max-length / (90 × 동시 방 수):
+      # 3000이면 10방 동시에도 ≈3.3초. 조향은 마지막 값만 유효라 그 이상 밀린 메시지는 버려도 되고,
+      # 그때 병목은 버퍼가 아니라 스트림당 단일 폴링 태스크의 처리량이다(#1681).
+      "[wormgame]":
+        thread-pool-name: concurrent
+        max-length: 3000
       "[speedtouch]":
         thread-pool-name: concurrent
       "[blindtimer]":

@@ -8,10 +8,10 @@ paths:
 
 ### 핵심 원칙
 
-- 구독은 반드시 `useWebSocketSubscription` 사용 — `useWebSocket().subscribe` 직접 호출 금지
+- 구독은 반드시 `useWebSocketSubscription` 을 쓴다. `useWebSocket().subscribe` 직접 호출 금지
 - 발행은 `useWebSocket().send` 사용
 - 구독은 **Provider** 또는 **훅**에서만 — 컴포넌트에서 직접 구독 금지
-- destination prefix(`/topic`, `/app`)는 내부 자동 추가됨 — 경로에 포함하지 않는다
+- destination prefix(`/topic`, `/app`)는 내부에서 자동으로 붙는다. 경로에 포함하지 않는다
 - 단, broker destination(`/user/`, `/queue/`로 시작)은 STOMP broker 가 자체 routing 하므로 `/topic` 이 추가되지 않는다. 개인 큐 구독 시 `/user/queue/...` 를 그대로 전달한다 (예: `/user/queue/errors`)
 
 ### destination 형식

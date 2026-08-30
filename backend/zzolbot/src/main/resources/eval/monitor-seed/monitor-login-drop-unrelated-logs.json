@@ -1,0 +1,24 @@
+{
+  "name": "monitor-login-drop-unrelated-logs",
+  "question": "알림 LoginSuccessDroppedToZero(critical)가 prod에서 발화했다 - kakao 로그인 시도는 계속되는데 성공이 0. 봇에는 최근 30분 ERROR 로그 샘플 2줄(카드게임 이벤트 실패, 방 이벤트 정리 실패)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 카드게임 이벤트 처리 실패와 방 이벤트 정리 실패로, 로그인 성공률과 무관하며 인증/OAuth 관련 로그가 전혀 없다. 로그인 실패의 전형적 원인(redirect_uri 불일치, provider 콘솔 설정, 시크릿)은 이 로그로 판단할 수 없다. '근거 발견: 아니오'로 판정하고 원인 가설을 내지 않아야 정답. 게임 이벤트 실패를 로그인 성공 0의 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "LoginSuccessDroppedToZero",
+    "severity": "critical",
+    "fingerprint": "golden-synth-16",
+    "summary": "kakao 로그인 성공 0 (prod-app) — 시도는 계속됨",
+    "description": "최근 로그인 시도는 있으나 성공이 없다. redirect_uri(스킴/호스트)·provider 콘솔 등록·시크릿을 점검. 여러 provider 동시 발생 시 프록시/baseUrl 의심.",
+    "labels": {
+      "alertname": "LoginSuccessDroppedToZero",
+      "severity": "critical",
+      "job": "prod-app",
+      "provider": "kakao"
+    }
+  },
+  "logSamples": [
+    "[2026-08-25 19:02:36.774] [ERROR] [a94c07d25e81f3b6b7e0a52c48d13f95,1b86d4a03e57c2f9] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=c72e50a9-4d18-4b63-8f05-92a6d41c78e3, timestamp=2026-08-25T10:02:36.770518203Z, joinCode=G6XD, playerName=PLAYER_2, cardIndex=5]",
+    "[2026-08-25 19:15:48.291] [ERROR] [50e8a3c71d94b2f6a2c6e04d87b39f15,6d21a9c40e83b7f5] --- [pool-12-thread-1] c.r.i.messaging.RoomEventWaitManager : 방 이벤트 자동 정리 (실패): eventId=8b53d07e-2a96-4c41-9f60-e14a72c85d93"
+  ],
+  "logEnvironment": "prod"
+}

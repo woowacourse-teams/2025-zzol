@@ -1,0 +1,30 @@
+{
+  "name": "monitor-error-spike-roomjoin-current-window",
+  "question": "알림 AppErrorLogSpike(warning)가 prod에서 발화했다 - 최근 5분 ERROR 로그 30건 초과. 봇에는 최근 30분 ERROR 로그 샘플 9줄(같은 방의 방 참가 이벤트 처리 실패 반복)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 동일한 방(joinCode=B7QF)의 방 참가(RoomJoinEvent) 처리 실패가 알림 시각과 정합하는 좁은 시간창에 반복된 것으로, ERROR 급증 알림의 직접 근거다. '근거 발견: 예'로 판정하고 특정 방의 방 참가 이벤트 처리 실패 반복을 원인 가설로 제시하면 정답. '근거 발견: 아니오'로 판정하거나 로그 재적재 아티팩트로 치부하면 오답(타임스탬프가 알림 시각과 정합한다).",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "AppErrorLogSpike",
+    "severity": "warning",
+    "fingerprint": "golden-synth-12",
+    "summary": "ERROR 로그 급증(최근 5분, prod-app)",
+    "description": "ERROR 로그가 39건(임계 30/5m)입니다. zzol-bot이 근본원인을 분석합니다.",
+    "labels": {
+      "alertname": "AppErrorLogSpike",
+      "severity": "warning",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-24 21:35:12.408] [ERROR] [80c4d2e97a1f45b3b6e3a05c81d92f47,5b17e8a03d64c9f2] --- [redis-stream-thread-pool-room:join1] c.r.application.service.RoomService : 방 참가 비동기 처리 실패: eventId=e91c47a5-0d38-4b62-8f74-a25d90c31e86, joinCode=B7QF, playerName=PLAYER_1",
+    "[2026-08-24 21:35:12.409] [ERROR] [80c4d2e97a1f45b3b6e3a05c81d92f47,5b17e8a03d64c9f2] --- [redis-stream-thread-pool-room:join1] c.r.i.messaging.RoomEventWaitManager : 방 이벤트 자동 정리 (실패): eventId=e91c47a5-0d38-4b62-8f74-a25d90c31e86",
+    "[2026-08-24 21:35:12.409] [ERROR] [80c4d2e97a1f45b3b6e3a05c81d92f47,5b17e8a03d64c9f2] --- [redis-stream-thread-pool-room:join1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=RoomJoinConsumer, message=RoomJoinEvent[eventId=e91c47a5-0d38-4b62-8f74-a25d90c31e86, timestamp=2026-08-24T12:35:12.404918260Z, joinCode=B7QF, guestName=PLAYER_1, userId=null]",
+    "[2026-08-24 21:36:44.121] [ERROR] [29e7a0c45d81f3b2b4c9d16e30a85f72,7f42d0a91c58e6b3] --- [redis-stream-thread-pool-room:join1] c.r.application.service.RoomService : 방 참가 비동기 처리 실패: eventId=b60d15f8-3c72-4a94-9e21-c48a07d63f95, joinCode=B7QF, playerName=PLAYER_3",
+    "[2026-08-24 21:36:44.122] [ERROR] [29e7a0c45d81f3b2b4c9d16e30a85f72,7f42d0a91c58e6b3] --- [redis-stream-thread-pool-room:join1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=RoomJoinConsumer, message=RoomJoinEvent[eventId=b60d15f8-3c72-4a94-9e21-c48a07d63f95, timestamp=2026-08-24T12:36:44.117530082Z, joinCode=B7QF, guestName=PLAYER_3, userId=null]",
+    "[2026-08-24 21:37:58.735] [ERROR] [63b1f8d02c7a49e5a0d5c48e92b17f36,4e90a7c53d12b8f6] --- [redis-stream-thread-pool-room:join1] c.r.application.service.RoomService : 방 참가 비동기 처리 실패: eventId=7d24a90c-8e16-4f53-b3a7-01e58c46d92b, joinCode=B7QF, playerName=PLAYER_2",
+    "[2026-08-24 21:37:58.736] [ERROR] [63b1f8d02c7a49e5a0d5c48e92b17f36,4e90a7c53d12b8f6] --- [redis-stream-thread-pool-room:join1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=RoomJoinConsumer, message=RoomJoinEvent[eventId=7d24a90c-8e16-4f53-b3a7-01e58c46d92b, timestamp=2026-08-24T12:37:58.731662041Z, joinCode=B7QF, guestName=PLAYER_2, userId=null]",
+    "[2026-08-24 21:39:21.064] [ERROR] [f18a4c70d25e49b3b8e1a63c04d97f52,0d63b9a47e21c5f8] --- [redis-stream-thread-pool-room:join1] c.r.application.service.RoomService : 방 참가 비동기 처리 실패: eventId=42f80c61-5a97-4d38-8b64-e93a25d07c14, joinCode=B7QF, playerName=PLAYER_4",
+    "[2026-08-24 21:39:21.065] [ERROR] [f18a4c70d25e49b3b8e1a63c04d97f52,0d63b9a47e21c5f8] --- [redis-stream-thread-pool-room:join1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=RoomJoinConsumer, message=RoomJoinEvent[eventId=42f80c61-5a97-4d38-8b64-e93a25d07c14, timestamp=2026-08-24T12:39:21.060274196Z, joinCode=B7QF, guestName=PLAYER_4, userId=null]"
+  ],
+  "logEnvironment": "prod"
+}

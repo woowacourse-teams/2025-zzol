@@ -53,7 +53,12 @@ class NotificationChannelSubscriberTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         sinkFake = new NotificationSinkFake();
-        subscriber = new NotificationChannelSubscriber(
+    }
+
+    // sink는 생성자에서 해결되므로 스텁을 생성 전에 건다
+    private NotificationChannelSubscriber 구독자를_생성한다(NotificationSink sink) {
+        given(sinkProvider.getIfAvailable()).willReturn(sink);
+        return new NotificationChannelSubscriber(
                 container,
                 sinkProvider,
                 objectMapper,
@@ -62,7 +67,7 @@ class NotificationChannelSubscriberTest {
     }
 
     private void sink이_있는_상태로_등록한다() {
-        given(sinkProvider.getIfAvailable()).willReturn(sinkFake);
+        subscriber = 구독자를_생성한다(sinkFake);
         subscriber.register();
     }
 
@@ -133,7 +138,7 @@ class NotificationChannelSubscriberTest {
     @DisplayName("sink가 없으면 구독을 등록하지 않는다")
     void sink가_없으면_구독을_등록하지_않는다() {
         // given
-        given(sinkProvider.getIfAvailable()).willReturn(null);
+        subscriber = 구독자를_생성한다(null);
 
         // when
         subscriber.register();

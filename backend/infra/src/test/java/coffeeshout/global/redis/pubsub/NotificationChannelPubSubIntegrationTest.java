@@ -3,7 +3,7 @@ package coffeeshout.global.redis.pubsub;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.InfraModuleIntegrationTest;
-import coffeeshout.global.notify.GameNotificationChannel;
+import coffeeshout.global.notify.NotificationChannel;
 import coffeeshout.global.notify.NotificationSink;
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
@@ -28,7 +28,7 @@ class NotificationChannelPubSubIntegrationTest extends InfraModuleIntegrationTes
     private static final String DESTINATION = "/topic/room/ABC123/gameState";
 
     @Autowired
-    private GameNotificationChannel gameNotificationChannel;
+    private NotificationChannel notificationChannel;
 
     @Autowired
     private NotificationSinkFake sinkFake;
@@ -48,7 +48,7 @@ class NotificationChannelPubSubIntegrationTest extends InfraModuleIntegrationTes
         sinkFake.expectDeliveries(1);
 
         // when
-        gameNotificationChannel.publish(DESTINATION, new PayloadDummy("PLAYING"));
+        notificationChannel.publish(DESTINATION, new PayloadDummy("PLAYING"));
 
         // then
         assertThat(sinkFake.awaitDelivery(5)).isTrue();
@@ -67,7 +67,7 @@ class NotificationChannelPubSubIntegrationTest extends InfraModuleIntegrationTes
 
         // when
         try (Tracer.SpanInScope ignored = tracer.withSpan(span)) {
-            gameNotificationChannel.publish(DESTINATION, new PayloadDummy("PLAYING"));
+            notificationChannel.publish(DESTINATION, new PayloadDummy("PLAYING"));
         } finally {
             span.end();
         }

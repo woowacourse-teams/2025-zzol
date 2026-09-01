@@ -10,6 +10,6 @@ package coffeeshout.global.redis.pubsub;
  *
  * @param destination WS destination
  * @param payload     페이로드 JSON 본문
- * @param traceparent W3C Trace Context 헤더. 발행 시 활성 스팬이 없으면 null (ADR-0021)
+ * @param traceparent W3C Trace Context 헤더. 발행 시 활성 스팬이 없으면 null
  */
 public record NotificationEnvelope(String destination, String payload, String traceparent) {}

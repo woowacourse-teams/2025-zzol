@@ -21,6 +21,10 @@ import org.springframework.stereotype.Component;
  * {@code WsRecoveryService}의 메시지 식별자는 (destination + success + data + errorMessage)의 md5라
  * 인스턴스마다 동일하게 나오고, 저장 Lua 스크립트가 이미 있는 식별자면 기존 streamId를 그대로 돌려준다.
  * id 필드는 식별자 계산에 들어가지 않으므로 저장 순서도 결과를 바꾸지 않는다.
+ * <p>
+ * {@code WebSocketResponse.class} raw 역직렬화라 {@code data}는 원래 타입이 아닌 {@code LinkedHashMap}으로
+ * 되살아난다. 의도된 것이다 — 채널은 페이로드 타입을 모르고, STOMP 직렬화와 복구 저장 모두 JSON 구조만
+ * 보므로 타입 정보가 필요 없다.
  */
 @Slf4j
 @Component
@@ -37,12 +41,14 @@ public class WsNotificationSink implements NotificationSink {
     }
 
     @Override
-    public void deliver(String destination, String payloadJson) {
+    public boolean deliver(String destination, String payloadJson) {
         try {
             final WebSocketResponse<?> response = objectMapper.readValue(payloadJson, WebSocketResponse.class);
             loggingSimpMessagingTemplate.convertAndSend(destination, response);
+            return true;
         } catch (JsonProcessingException e) {
             log.error("알림 페이로드 역직렬화 실패 — destination: {}", destination, e);
+            return false;
         }
     }
 }

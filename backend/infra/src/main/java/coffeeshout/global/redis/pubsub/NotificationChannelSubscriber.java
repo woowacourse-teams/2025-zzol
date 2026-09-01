@@ -31,12 +31,10 @@ public class NotificationChannelSubscriber implements MessageListener {
     private static final String CONSUMER_SPAN_NAME = "notification.channel.receive";
 
     private final RedisMessageListenerContainer container;
-    private final ObjectProvider<NotificationSink> sinkProvider;
     private final ObjectMapper objectMapper;
     private final StreamTracePropagator streamTracePropagator;
     private final NotificationChannelProperties properties;
-
-    private NotificationSink sink;
+    private final NotificationSink sink;
 
     public NotificationChannelSubscriber(
             RedisMessageListenerContainer container,
@@ -45,7 +43,7 @@ public class NotificationChannelSubscriber implements MessageListener {
             StreamTracePropagator streamTracePropagator,
             NotificationChannelProperties properties) {
         this.container = container;
-        this.sinkProvider = sinkProvider;
+        this.sink = sinkProvider.getIfAvailable();
         this.objectMapper = objectMapper;
         this.streamTracePropagator = streamTracePropagator;
         this.properties = properties;
@@ -53,7 +51,6 @@ public class NotificationChannelSubscriber implements MessageListener {
 
     @PostConstruct
     public void register() {
-        sink = sinkProvider.getIfAvailable();
         if (sink == null) {
             log.info("알림 전달 지점(NotificationSink)이 없어 알림 채널 구독을 생략한다 — channel: {}", properties.channel());
             return;
@@ -67,10 +64,12 @@ public class NotificationChannelSubscriber implements MessageListener {
         try {
             final String body = new String(message.getBody(), StandardCharsets.UTF_8);
             final NotificationEnvelope envelope = objectMapper.readValue(body, NotificationEnvelope.class);
-            streamTracePropagator.runInConsumerScope(
-                    carrierOf(envelope),
-                    CONSUMER_SPAN_NAME,
-                    () -> sink.deliver(envelope.destination(), envelope.payload()));
+            streamTracePropagator.runInConsumerScope(carrierOf(envelope), CONSUMER_SPAN_NAME, () -> {
+                if (!sink.deliver(envelope.destination(), envelope.payload())) {
+                    log.warn(
+                            "알림 로컬 전달 실패 — channel: {}, destination: {}", properties.channel(), envelope.destination());
+                }
+            });
         } catch (Exception e) {
             // 리스너 스레드를 보호한다 — 여기서 예외가 새면 이후 메시지 수신이 끊긴다(Profanity 구독자 선례).
             log.error("알림 채널 메시지 처리 실패 — channel: {}", properties.channel(), e);

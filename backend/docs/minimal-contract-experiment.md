@@ -56,7 +56,7 @@
 "클라이언트가 이벤트를 못 받으면 불일치, 발행 실패 시 현재 상태로 정합 처리 필요"라는 우려의 답은 기존 컨트랙트에 이미 절반 있다. **현행 카드게임 컨트랙트는 스냅샷 방식이다** — `CardGameNotifier`가 카드 선택·단계 완료마다 `/topic/room/{joinCode}/gameState`로 `MiniGameStateMessage.from(cardGame)`(게임 상태 전체)를 브로드캐스트한다. 델타가 아니므로 유실된 메시지는 다음 브로드캐스트가 자동 치유한다. 이를 R12의 구체 규칙으로 승격한다:
 
 - **발행 규칙** — 상태 페이로드는 전이 시점의 메모리 값이 아니라 **저장소에서 읽은 최신 전체 스냅샷**. 어떤 알림이든 도착만 하면 클라이언트가 완전 정합
-- **발행 실패** — 재시도하되, 스냅샷 방식이므로 다음 발행이 자연 치유. 실패가 상태를 해치지 않는다
+- **발행 실패** — 재시도를 요구하지 않는다(제공 채널 어댑터에도 재시도가 없다). 스냅샷 방식이므로 다음 발행이 자연 치유하며, 실패가 상태를 해치지 않아야 한다는 것이 계약의 전부다
 - **정지 구간**(마지막 메시지 유실 후 이벤트 없음)이 잔여 위험 — 재연결·재구독 시 현재 스냅샷 재전송 경로를 **기존 컨트랙트 범위 안에서** 후보가 설계 (FE 수정 금지, §5 제약)
 
 ## 3. 원초적 규칙 초안 — 패턴이 바뀌어도 살아남는 것
@@ -83,7 +83,7 @@
 | R9 | **저장 성공 후 발행** — 이벤트는 상태 저장 성공 뒤에만. 뒤집히면 구독자가 낡은 상태를 봄. R12와 짝(R9 발행 측, R12 수신 측) |
 | R10 | **핸들러 멱등성** — 재시도·중복 명령이 상태를 이중 전이시키지 않아야 함 |
 | R11 | **핫패스 지연 예산** — 게임 루프 안 동기 접근은 Redis까지만, DB는 정산·영속 경로만 |
-| R12 | **알림은 진실이 아니다** — 상태 알림은 저장소에서 읽은 최신 전체 스냅샷으로 발행(전이 시점 메모리 값 금지). 발행 실패는 재시도하되 다음 발행이 자연 치유, 정지 구간은 재연결·재구독 시 스냅샷 재전송으로 재동기화(§2). 채널(pub/sub·Stream)은 자유 — 이 규칙만 지키면 됨 |
+| R12 | **알림은 진실이 아니다** — 상태 알림은 저장소에서 읽은 최신 전체 스냅샷으로 발행(전이 시점 메모리 값 금지). 발행 실패는 재시도 불요(다음 발행이 자연 치유), 정지 구간은 재연결·재구독 시 스냅샷 재전송으로 재동기화(§2). 채널(pub/sub·Stream)은 자유 — 이 규칙만 지키면 됨 |
 
 > **명세화**: 규칙별 판정 기준·예시를 갖춘 계약 명세서 초안이 [minimal-contract-rules.md](minimal-contract-rules.md)에 작성됐다 — 팀 검수 대기.
 
@@ -174,7 +174,7 @@ best-of-N 한 번이 곧 실험 N회분이다.
 1. **원초적 규칙 명세서 작성 (0순위)** — 초안 작성됨([minimal-contract-rules.md](minimal-contract-rules.md)), 검수 대기
 2. ~~기존 카드게임 테스트에서 케이스 체크리스트 추출 + 동작 스펙·컨트랙트 명세 작성~~ — **완료**: [minimal-contract-spec.md](minimal-contract-spec.md)(공개 계약) + `minimal-contract-cases.md`(비공개, 1부 26케이스·2부 신규 12·3부 공백 5)
 3. **동결 인수 테스트 스위트 구현 (공개 + 홀드아웃)** — 컨트랙트만으로 검증하는 E2E. 기존 통합 테스트의 행동을 기반으로 하되, 기존 스위트가 못 챙긴 예외를 단단히: 실패 케이스(비정상 상태·중복 카드·잘못된 인덱스·비방장 시작), 동시성 케이스(경합·중복 명령), 재동기화. 케이스별 공개/홀드아웃 배분은 여기서 확정하고 케이스 체크리스트에 표기. 멀티 인스턴스 케이스(인스턴스 사망 등)는 실행 난도가 높아 파일럿에서 실행 가능성 검증
-4. ~~공용 알림 채널 경계 구현 — SPI + traceparent 전파 어댑터~~ — **완료**: SPI 2종(`:common`의 `GameNotificationChannel`·`NotificationSink`) + pub/sub 어댑터 4종(`:infra`의 `RedisPubSubNotificationChannel`·`NotificationChannelSubscriber`·`NotificationEnvelope`·`NotificationChannelProperties`) + 전달 구현(`:websocket`의 `WsNotificationSink`). Stream 채널은 `StreamPublisher`가 이미 전파를 제공해 신규 어댑터 없이 재사용. 실험 소모품이 아니라 채택 이후에도 필요한 프로덕션 인프라
+4. ~~공용 알림 채널 경계 구현 — SPI + traceparent 전파 어댑터~~ — **완료**: SPI 2종(`:common`의 `NotificationChannel`·`NotificationSink`) + pub/sub 어댑터 4종(`:infra`의 `RedisPubSubNotificationChannel`·`NotificationChannelSubscriber`·`NotificationEnvelope`·`NotificationChannelProperties`) + 전달 구현(`:websocket`의 `WsNotificationSink`). Stream 채널은 `StreamPublisher`가 이미 전파를 제공해 신규 어댑터 없이 재사용. 실험 소모품이 아니라 채택 이후에도 필요한 프로덕션 인프라
 5. 샌드박스 베이스 브랜치 준비 스크립트 (+ 후보 작업 공간 shallow clone·원격 차단 설정)
 6. 채점 스킬(가칭 `doc-compliance`) — deep-review 오케스트레이션·근거 강제 패턴 재사용
 7. 파일럿: 2~3 후보 1사이클 완주 → 루브릭·판정 프롬프트 보정 → 본 실험(후보 6)

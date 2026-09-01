@@ -29,9 +29,10 @@ public class NotificationSinkFake implements NotificationSink {
     }
 
     @Override
-    public void deliver(String destination, String payloadJson) {
+    public boolean deliver(String destination, String payloadJson) {
         deliveries.add(new Delivered(destination, payloadJson, currentTraceIdSupplier.get()));
         latch.countDown();
+        return true;
     }
 
     /**

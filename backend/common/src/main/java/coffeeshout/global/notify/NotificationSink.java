@@ -14,6 +14,8 @@ public interface NotificationSink {
      *
      * @param destination WS destination
      * @param payloadJson 발행 측이 직렬화한 페이로드 JSON 본문
+     * @return 로컬 전달에 성공하면 true. false는 이 인스턴스에서 알림이 유실됐다는 뜻이다 — 구현이
+     *         실패를 삼키면 호출자(채널 구독자)가 유실을 알 길이 없으므로 반환값으로 드러낸다
      */
-    void deliver(String destination, String payloadJson);
+    boolean deliver(String destination, String payloadJson);
 }

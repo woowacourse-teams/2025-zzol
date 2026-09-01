@@ -36,6 +36,12 @@ import org.springframework.stereotype.Component;
 @Profile("!prod")
 public class WsCatalogBuilder implements SmartInitializingSingleton {
 
+    // 스캔 순서(getDeclaredMethods)는 JVM 이 보장하지 않는다. 병합 전에 발행 지점으로 정렬해야
+    // 대표 payloadType(getFirst)과 referencedSchemas 순서가 실행마다 같아진다.
+    private static final Comparator<RawEntry> BY_SOURCE = Comparator.comparing(
+                    (RawEntry entry) -> entry.source().className())
+            .thenComparing(entry -> entry.source().methodName());
+
     private final ApplicationContext applicationContext;
     private final WsCatalogProperties properties;
     private volatile WsCatalog cached;
@@ -82,7 +88,9 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
 
         final List<WsCatalog.TopicEntry> topics = mergeTopics(rawTopics);
         final List<WsCatalog.QueueEntry> queues = mergeQueues(rawQueues);
-        sends.sort(Comparator.comparing(WsCatalog.SendEntry::destination));
+        sends.sort(Comparator.comparing(WsCatalog.SendEntry::destination)
+                .thenComparing(entry -> entry.source().className())
+                .thenComparing(entry -> entry.source().methodName()));
 
         final Map<String, WsCatalog.SchemaEntry> schemas = expandSchemas(referenced);
 
@@ -96,8 +104,8 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
                 queues,
                 sends,
                 schemas,
-                new WsCatalog.ErrorShape(properties.errorTopic(), properties.envelopeClass().getSimpleName() + "<String>")
-        );
+                new WsCatalog.ErrorShape(
+                        properties.errorTopic(), properties.envelopeClass().getSimpleName() + "<String>"));
     }
 
     private void collectFromBean(
@@ -105,8 +113,7 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
             List<RawTopic> rawTopics,
             List<RawQueue> rawQueues,
             List<WsCatalog.SendEntry> sends,
-            Set<Class<?>> referenced
-    ) {
+            Set<Class<?>> referenced) {
         final Class<?> targetClass = AopUtils.getTargetClass(bean);
         for (final Method method : targetClass.getDeclaredMethods()) {
             final WsTopic[] wsTopics = method.getAnnotationsByType(WsTopic.class);
@@ -118,8 +125,10 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
                 continue;
             }
             if (messageMapping != null && wsTopics.length == 0 && wsReceive == null) {
-                log.warn("@MessageMapping 메서드에 @WsTopic 또는 @WsReceive 가 없습니다: {}#{}",
-                        targetClass.getSimpleName(), method.getName());
+                log.warn(
+                        "@MessageMapping 메서드에 @WsTopic 또는 @WsReceive 가 없습니다: {}#{}",
+                        targetClass.getSimpleName(),
+                        method.getName());
             }
             final WsCatalog.Source source = new WsCatalog.Source(targetClass.getSimpleName(), method.getName());
             for (final WsTopic wsTopic : wsTopics) {
@@ -136,6 +145,7 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
 
     private List<WsCatalog.TopicEntry> mergeTopics(List<RawTopic> raw) {
         final Map<String, List<RawTopic>> byPath = raw.stream()
+                .sorted(BY_SOURCE)
                 .collect(Collectors.groupingBy(RawTopic::path, LinkedHashMap::new, Collectors.toList()));
         final List<WsCatalog.TopicEntry> result = new ArrayList<>();
         for (final Map.Entry<String, List<RawTopic>> entry : byPath.entrySet()) {
@@ -147,11 +157,13 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
 
     private WsCatalog.TopicEntry mergeTopicGroup(String path, List<RawTopic> group) {
         warnIfPayloadConflict("토픽", path, group);
-        return new WsCatalog.TopicEntry(path, group.getFirst().payloadType(), buildPublishers(group), collectReferencedSchemas(group));
+        return new WsCatalog.TopicEntry(
+                path, group.getFirst().payloadType(), buildPublishers(group), collectReferencedSchemas(group));
     }
 
     private List<WsCatalog.QueueEntry> mergeQueues(List<RawQueue> raw) {
         final Map<String, List<RawQueue>> byPath = raw.stream()
+                .sorted(BY_SOURCE)
                 .collect(Collectors.groupingBy(RawQueue::path, LinkedHashMap::new, Collectors.toList()));
         final List<WsCatalog.QueueEntry> result = new ArrayList<>();
         for (final Map.Entry<String, List<RawQueue>> entry : byPath.entrySet()) {
@@ -163,13 +175,15 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
 
     private WsCatalog.QueueEntry mergeQueueGroup(String path, List<RawQueue> group) {
         warnIfPayloadConflict("큐", path, group);
-        return new WsCatalog.QueueEntry(path, group.getFirst().payloadType(), buildPublishers(group), collectReferencedSchemas(group));
+        return new WsCatalog.QueueEntry(
+                path, group.getFirst().payloadType(), buildPublishers(group), collectReferencedSchemas(group));
     }
 
     private List<WsCatalog.Publisher> buildPublishers(List<? extends RawEntry> group) {
         return group.stream()
                 .map(r -> new WsCatalog.Publisher(r.description(), r.source()))
-                .sorted(Comparator.comparing(p -> p.source().className() + "#" + p.source().methodName()))
+                .sorted(Comparator.comparing(
+                        p -> p.source().className() + "#" + p.source().methodName()))
                 .toList();
     }
 
@@ -185,17 +199,14 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
         if (payloads.size() <= 1) {
             return;
         }
-        final List<String> sources = group.stream()
-                .map(r -> r.source() + " → " + r.payloadType())
-                .toList();
+        final List<String> sources =
+                group.stream().map(r -> r.source() + " → " + r.payloadType()).toList();
         log.warn("동일 {} path 에 서로 다른 payload 가 선언되었습니다: path={}, sources={}", kind, path, sources);
     }
 
     private List<String> collectTriggerTopics(WsTopic[] wsTopics, WsReceive wsReceive, WsCatalog.Source source) {
-        final Stream<String> fromTopics = Arrays.stream(wsTopics)
-                .map(t -> properties.topicPath() + t.path());
-        final Stream<String> fromReceive = Optional.ofNullable(wsReceive)
-                .stream()
+        final Stream<String> fromTopics = Arrays.stream(wsTopics).map(t -> properties.topicPath() + t.path());
+        final Stream<String> fromReceive = Optional.ofNullable(wsReceive).stream()
                 .flatMap(r -> Arrays.stream(r.respondsOnTopics()))
                 .map(path -> validatedTopicPath(path, source));
         return Stream.concat(fromTopics, fromReceive).toList();
@@ -203,14 +214,16 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
 
     private String validatedTopicPath(String path, WsCatalog.Source source) {
         if (path == null || path.isBlank()) {
-            throw new SystemException(WsCatalogErrorCode.ANNOTATION_BLANK_TOPIC_PATH,
-                    "@WsReceive.respondsOnTopics 에 빈 경로가 포함되어 있습니다: %s#%s".formatted(
-                            source.className(), source.methodName()));
+            throw new SystemException(
+                    WsCatalogErrorCode.ANNOTATION_BLANK_TOPIC_PATH,
+                    "@WsReceive.respondsOnTopics 에 빈 경로가 포함되어 있습니다: %s#%s"
+                            .formatted(source.className(), source.methodName()));
         }
         if (!path.startsWith("/")) {
-            throw new SystemException(WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT,
-                    "@WsReceive.respondsOnTopics 는 '/' 로 시작해야 합니다: %s#%s path=%s".formatted(
-                            source.className(), source.methodName(), path));
+            throw new SystemException(
+                    WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT,
+                    "@WsReceive.respondsOnTopics 는 '/' 로 시작해야 합니다: %s#%s path=%s"
+                            .formatted(source.className(), source.methodName(), path));
         }
         return properties.topicPath() + path;
     }
@@ -241,29 +254,34 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
 
     private void validatePath(String label, String path, String prefixToReject, WsCatalog.Source source) {
         if (path.isBlank()) {
-            throw new SystemException(WsCatalogErrorCode.ANNOTATION_BLANK_PATH,
+            throw new SystemException(
+                    WsCatalogErrorCode.ANNOTATION_BLANK_PATH,
                     "%s 가 비어 있습니다: %s#%s".formatted(label, source.className(), source.methodName()));
         }
         if (!path.startsWith("/")) {
-            throw new SystemException(WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT,
-                    "%s 는 '/' 로 시작해야 합니다: %s#%s path=%s".formatted(
-                            label, source.className(), source.methodName(), path));
+            throw new SystemException(
+                    WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT,
+                    "%s 는 '/' 로 시작해야 합니다: %s#%s path=%s"
+                            .formatted(label, source.className(), source.methodName(), path));
         }
         if (path.startsWith(prefixToReject + "/") || path.equals(prefixToReject)) {
-            throw new SystemException(WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT,
-                    "%s 에 prefix('%s')가 이미 포함되어 있습니다 — 상대 경로만 입력하세요: %s#%s path=%s".formatted(
-                            label, prefixToReject, source.className(), source.methodName(), path));
+            throw new SystemException(
+                    WsCatalogErrorCode.ANNOTATION_INVALID_PATH_FORMAT,
+                    "%s 에 prefix('%s')가 이미 포함되어 있습니다 — 상대 경로만 입력하세요: %s#%s path=%s"
+                            .formatted(label, prefixToReject, source.className(), source.methodName(), path));
         }
     }
 
     private void validatePayload(String label, Class<?> payload, String path, WsCatalog.Source source) {
         if (payload == Void.class) {
-            throw new SystemException(WsCatalogErrorCode.ANNOTATION_VOID_PAYLOAD,
-                    "%s 가 Void.class 입니다: %s#%s path=%s".formatted(
-                            label, source.className(), source.methodName(), path));
+            throw new SystemException(
+                    WsCatalogErrorCode.ANNOTATION_VOID_PAYLOAD,
+                    "%s 가 Void.class 입니다: %s#%s path=%s"
+                            .formatted(label, source.className(), source.methodName(), path));
         }
         if (payload == Object.class) {
-            throw new SystemException(WsCatalogErrorCode.ANNOTATION_OBJECT_PAYLOAD,
+            throw new SystemException(
+                    WsCatalogErrorCode.ANNOTATION_OBJECT_PAYLOAD,
                     "%s 에 Object.class 는 허용되지 않습니다 — @WsReceive 를 사용하거나 명시적 payload 타입을 지정하세요: %s#%s path=%s"
                             .formatted(label, source.className(), source.methodName(), path));
         }
@@ -275,18 +293,22 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
             WsTopic[] wsTopics,
             WsReceive wsReceive,
             WsCatalog.Source source,
-            Set<Class<?>> referenced
-    ) {
+            Set<Class<?>> referenced) {
         final String requestType = findRequestPayload(method, referenced);
         final List<String> requestSchemas = findRequestSchemas(method);
         final List<String> triggersTopics = collectTriggerTopics(wsTopics, wsReceive, source);
         final String description = resolveDescription(wsTopics, wsReceive);
         final String[] values = mapping.value();
-        final String[] destinations = values.length == 0 ? new String[]{""} : values;
+        final String[] destinations = values.length == 0 ? new String[] {""} : values;
         final List<WsCatalog.SendEntry> entries = new ArrayList<>();
         for (final String mappingPath : destinations) {
             entries.add(new WsCatalog.SendEntry(
-                    properties.appPath() + mappingPath, description, requestType, triggersTopics, source, requestSchemas));
+                    properties.appPath() + mappingPath,
+                    description,
+                    requestType,
+                    triggersTopics,
+                    source,
+                    requestSchemas));
         }
         return entries;
     }
@@ -359,8 +381,7 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
             }
             return result.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
-                    .collect(Collectors.toMap(
-                            Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new));
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new));
         }
 
         private void process(Class<?> cls) {
@@ -369,8 +390,11 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
             }
             final String simpleName = cls.getSimpleName();
             if (seenByName.containsKey(simpleName)) {
-                log.warn("스키마 simpleName 충돌: '{}' — {} vs {} (첫 선언 유지)",
-                        simpleName, seenByName.get(simpleName).getName(), cls.getName());
+                log.warn(
+                        "스키마 simpleName 충돌: '{}' — {} vs {} (첫 선언 유지)",
+                        simpleName,
+                        seenByName.get(simpleName).getName(),
+                        cls.getName());
                 return;
             }
             seenByName.put(simpleName, cls);
@@ -442,7 +466,8 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
     private WsCatalog.Envelope buildEnvelope() {
         final Class<?> envelopeClass = properties.envelopeClass();
         if (!envelopeClass.isRecord()) {
-            throw new SystemException(WsCatalogErrorCode.INVALID_ENVELOPE_CLASS,
+            throw new SystemException(
+                    WsCatalogErrorCode.INVALID_ENVELOPE_CLASS,
                     "envelope-class 는 record 타입이어야 합니다: " + envelopeClass.getName());
         }
         final List<WsCatalog.FieldEntry> fields = new ArrayList<>();
@@ -450,25 +475,34 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
             fields.add(new WsCatalog.FieldEntry(component.getName(), typeNameOf(component.getGenericType())));
         }
         return new WsCatalog.Envelope(
-                envelopeClass.getSimpleName() + "<T>",
-                fields,
-                "모든 토픽 페이로드는 이 envelope 으로 감싸 전송됩니다."
-        );
+                envelopeClass.getSimpleName() + "<T>", fields, "모든 토픽 페이로드는 이 envelope 으로 감싸 전송됩니다.");
     }
 
     private sealed interface RawEntry permits RawTopic, RawQueue {
         String path();
+
         String description();
+
         String payloadType();
+
         WsCatalog.Source source();
+
         List<String> referencedSchemas();
     }
 
-    private record RawTopic(String path, String description, String payloadType, WsCatalog.Source source, List<String> referencedSchemas)
-            implements RawEntry {
-    }
+    private record RawTopic(
+            String path,
+            String description,
+            String payloadType,
+            WsCatalog.Source source,
+            List<String> referencedSchemas)
+            implements RawEntry {}
 
-    private record RawQueue(String path, String description, String payloadType, WsCatalog.Source source, List<String> referencedSchemas)
-            implements RawEntry {
-    }
+    private record RawQueue(
+            String path,
+            String description,
+            String payloadType,
+            WsCatalog.Source source,
+            List<String> referencedSchemas)
+            implements RawEntry {}
 }

@@ -1,12 +1,50 @@
 #!/bin/sh
-# push 전 backend Spotless 포맷 검사 — CI의 :spotlessJavaCheck가 깨지기 전에 로컬에서 잡는다.
+# push 전 backend 로컬 검사 — CI가 깨지기 전에 잡는다.
 # 켜기: git config core.hooksPath .githooks   /   한 번 건너뛰기: git push --no-verify
 
 git fetch -q origin dev 2>/dev/null
 git diff --name-only origin/dev...HEAD | grep -q '^backend/.*\.java$' || exit 0
 
 echo "[pre-push] spotlessCheck…"
-backend/gradlew -p backend spotlessCheck -q && exit 0
+if ! backend/gradlew -p backend spotlessCheck -q; then
+  echo "[pre-push] 포맷 위반 — 'backend/gradlew -p backend spotlessApply' 후 다시 커밋하세요."
+  exit 1
+fi
 
-echo "[pre-push] 포맷 위반 — 'backend/gradlew -p backend spotlessApply' 후 다시 커밋하세요."
+# WebSocket 계약 애노테이션 줄이 바뀐 push 에서만 ws-catalog fixture 를 다시 만든다.
+# 최근 6개월 백엔드 커밋 195건 중 10건만 해당해 대부분의 push 는 여기서 그냥 끝난다.
+#
+# 이 훅은 흔한 경우를 빨리 잡는 편의 장치지 게이트가 아니다. 게이트는 backend-ci 다.
+# payload record 의 필드만 바꾸면 애노테이션 줄은 그대로인데 fixture 의 schemas 는
+# 바뀌므로 여기서 안 걸린다. 그건 CI 가 잡는다. 완전히 판별하려면 backend .java 변경
+# 전부에 대해 컨테이너를 띄워야 해서 대부분의 push 가 30초씩 느려진다.
+#
+# 애노테이션 사용만 보도록 줄 시작을 고정한다. 그렇지 않으면 주석과 예외 메시지 안의
+# "@WsTopic" 같은 문자열까지 잡혀 매번 돌게 된다.
+git diff origin/dev...HEAD -- backend \
+  | grep -qE '^[+-][[:space:]]*@(WsTopic|WsQueue|WsReceive|MessageMapping)[[:space:]]*\(' || exit 0
+
+# 컨트랙트 테스트는 MySQL·Valkey 컨테이너를 띄운다(reuse 는 #1402 에서 영구 비활성).
+# Docker 가 꺼져 있으면 막지 않고 넘긴다. 어차피 CI 가 잡고, push 자체를 막을 일은 아니다.
+if ! docker info >/dev/null 2>&1; then
+  echo "[pre-push] Docker 가 꺼져 있어 ws-catalog fixture 검사를 건너뜁니다. backend-ci 가 잡습니다."
+  exit 0
+fi
+
+# 테스트가 애플리케이션 로그를 그대로 뱉어 성공해도 수백 줄이 나온다. 파일로 받고
+# 실패했을 때만 꼬리를 보여준다.
+LOG=$(mktemp -t ws-catalog-pre-push)
+echo "[pre-push] ws-catalog fixture 갱신… (컨테이너 기동 포함 30초 내외)"
+if ! backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*' -q >"$LOG" 2>&1; then
+  grep -E "발행 경로 상수|수신 문서|expected|but was|Test.*FAILED" "$LOG" | head -20
+  echo "[pre-push] 컨트랙트 테스트 실패 — 전체 로그: $LOG"
+  echo "  리포트: backend/app/build/reports/tests/test/index.html"
+  exit 1
+fi
+rm -f "$LOG"
+
+git diff --quiet -- backend/app/src/test/resources/__fixtures__/ws-catalog.json && exit 0
+
+echo "[pre-push] ws-catalog fixture 를 갱신했습니다. 커밋에 포함하고 다시 push 하세요:"
+echo "  git add backend/app/src/test/resources/__fixtures__/ws-catalog.json"
 exit 1

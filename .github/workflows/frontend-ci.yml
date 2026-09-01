@@ -6,6 +6,9 @@ on:
     branches: [dev, prod]
     paths:
       - "frontend/**"
+      # wsContract 테스트가 이 fixture 를 SSOT 로 읽는다. BE 만 바꾼 PR 에서도 돌아야
+      # 토픽 이름 변경으로 FE 구독이 끊기는 걸 머지 전에 잡는다.
+      - "backend/app/src/test/resources/__fixtures__/ws-catalog.json"
 
   # 다른 워크플로우에서 호출할 수 있도록 설정
   workflow_call:

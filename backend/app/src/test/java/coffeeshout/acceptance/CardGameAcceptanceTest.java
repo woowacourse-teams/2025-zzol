@@ -75,14 +75,18 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
         }
 
         for (final String guest : GUESTS) {
-            sessions.get(guest).send(
-                    "/app/room/%s/update-ready".formatted(joinCode),
-                    new ReadyChangeMessage(joinCode, guest, true));
+            sessions.get(guest)
+                    .send(
+                            "/app/room/%s/update-ready".formatted(joinCode),
+                            new ReadyChangeMessage(joinCode, guest, true));
         }
         // ready 반영은 Stream 비동기 — 방이 시작 가능한 상태가 될 때까지 게이트한다(Room 공개 API만 사용)
         await().atMost(Duration.ofSeconds(5)).until(() -> {
             try {
-                roomRepository.findByJoinCode(new JoinCode(joinCode)).orElseThrow().validateStartable(HOST);
+                roomRepository
+                        .findByJoinCode(new JoinCode(joinCode))
+                        .orElseThrow()
+                        .validateStartable(HOST);
                 return true;
             } catch (final Exception e) {
                 return false;
@@ -91,9 +95,10 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
 
         // 카드게임을 대기열에 선택 (구현 클래스가 아니라 타입 이름만 — 컨트랙트 경로)
         final var minigameTopic = sessions.get(HOST).subscribe("/topic/room/%s/minigame".formatted(joinCode));
-        sessions.get(HOST).send(
-                "/app/room/%s/update-minigames".formatted(joinCode),
-                new MiniGameSelectMessage(HOST, List.of(MiniGameType.CARD_GAME)));
+        sessions.get(HOST)
+                .send(
+                        "/app/room/%s/update-minigames".formatted(joinCode),
+                        new MiniGameSelectMessage(HOST, List.of(MiniGameType.CARD_GAME)));
         minigameTopic.get();
     }
 
@@ -115,8 +120,9 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
 
         // 상태 시퀀스: 선택이 없으므로 전이 브로드캐스트가 정확히 8회
         final JsonNode first = data(gameStates.get());
-        final String[] expectedAfterFirst =
-                {"PREPARE", "PLAYING", "SCORE_BOARD", "LOADING", "PLAYING", "SCORE_BOARD", "DONE"};
+        final String[] expectedAfterFirst = {
+            "PREPARE", "PLAYING", "SCORE_BOARD", "LOADING", "PLAYING", "SCORE_BOARD", "DONE"
+        };
 
         final SoftAssertions softly = new SoftAssertions();
         softly.assertThat(first.path("cardGameState").asText()).isEqualTo("FIRST_LOADING");
@@ -200,8 +206,8 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
         selectCard(HOST, 0);
         gameStates.get();
 
-        selectCard(GUESTS.get(0), 0);   // 중복 카드 — 거부되어야 한다
-        selectCard(GUESTS.get(0), 1);   // 거부된 플레이어는 다른 카드를 선택할 수 있다
+        selectCard(GUESTS.get(0), 0); // 중복 카드 — 거부되어야 한다
+        selectCard(GUESTS.get(0), 1); // 거부된 플레이어는 다른 카드를 선택할 수 있다
         final JsonNode snapshot = awaitCardOwned(gameStates, 1);
 
         final JsonNode cards = snapshot.path("cardInfoMessages");
@@ -219,11 +225,12 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
         startGame(HOST);
         awaitGameState(gameStates, "PLAYING");
 
-        selectCard(HOST, 99);   // 범위 밖 — 거부되어야 한다
-        selectCard(HOST, 0);    // 거부 후에도 정상 선택은 동작해야 한다
+        selectCard(HOST, 99); // 범위 밖 — 거부되어야 한다
+        selectCard(HOST, 0); // 거부 후에도 정상 선택은 동작해야 한다
         final JsonNode snapshot = awaitCardOwned(gameStates, 0);
 
-        assertThat(snapshot.path("cardInfoMessages").get(0).path("playerName").asText()).isEqualTo(HOST);
+        assertThat(snapshot.path("cardInfoMessages").get(0).path("playerName").asText())
+                .isEqualTo(HOST);
         awaitGameState(gameStates, "SCORE_BOARD");
     }
 
@@ -247,14 +254,19 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
 
     /** 커맨드는 컨트랙트 JSON 그대로 보낸다 — 서버측 요청 클래스에 컴파일 의존하지 않는다. */
     private void startGame(String hostName) {
-        sessions.get(hostName).send(commandUrl(),
-                "{\"commandType\":\"START_MINI_GAME\",\"commandRequest\":{\"hostName\":\"%s\"}}".formatted(hostName));
+        sessions.get(hostName)
+                .send(
+                        commandUrl(),
+                        "{\"commandType\":\"START_MINI_GAME\",\"commandRequest\":{\"hostName\":\"%s\"}}"
+                                .formatted(hostName));
     }
 
     private void selectCard(String playerName, int cardIndex) {
-        sessions.get(playerName).send(commandUrl(),
-                "{\"commandType\":\"SELECT_CARD\",\"commandRequest\":{\"playerName\":\"%s\",\"cardIndex\":%d}}"
-                        .formatted(playerName, cardIndex));
+        sessions.get(playerName)
+                .send(
+                        commandUrl(),
+                        "{\"commandType\":\"SELECT_CARD\",\"commandRequest\":{\"playerName\":\"%s\",\"cardIndex\":%d}}"
+                                .formatted(playerName, cardIndex));
     }
 
     private String commandUrl() {
@@ -263,7 +275,9 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
 
     private JsonNode data(MessageResponse response) {
         final JsonNode root = objectMapper.readTree(response.payload());
-        assertThat(root.path("success").asBoolean()).as("브로드캐스트는 success=true 래퍼여야 한다").isTrue();
+        assertThat(root.path("success").asBoolean())
+                .as("브로드캐스트는 success=true 래퍼여야 한다")
+                .isTrue();
         return root.path("data");
     }
 

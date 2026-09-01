@@ -58,8 +58,7 @@ class NotificationChannelSubscriberTest {
                 sinkProvider,
                 objectMapper,
                 streamTracePropagator,
-                new NotificationChannelProperties(CHANNEL)
-        );
+                new NotificationChannelProperties(CHANNEL));
     }
 
     private void sink이_있는_상태로_등록한다() {
@@ -69,17 +68,18 @@ class NotificationChannelSubscriberTest {
 
     private void consumer_스코프가_task를_실행하도록_설정한다(AtomicReference<Map<String, String>> 캐리어) {
         willAnswer(invocation -> {
-            캐리어.set(invocation.getArgument(0));
-            invocation.getArgument(2, Runnable.class).run();
-            return null;
-        }).given(streamTracePropagator).runInConsumerScope(any(), any(), any());
+                    캐리어.set(invocation.getArgument(0));
+                    invocation.getArgument(2, Runnable.class).run();
+                    return null;
+                })
+                .given(streamTracePropagator)
+                .runInConsumerScope(any(), any(), any());
     }
 
     private Message 봉투_메시지(NotificationEnvelope envelope) throws Exception {
         return new DefaultMessage(
                 CHANNEL.getBytes(StandardCharsets.UTF_8),
-                objectMapper.writeValueAsString(envelope).getBytes(StandardCharsets.UTF_8)
-        );
+                objectMapper.writeValueAsString(envelope).getBytes(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -93,11 +93,10 @@ class NotificationChannelSubscriberTest {
         subscriber.onMessage(봉투_메시지(new NotificationEnvelope(DESTINATION, PAYLOAD_JSON, null)), null);
 
         // then
-        assertThat(sinkFake.deliveries()).singleElement()
-                .satisfies(delivered -> {
-                    assertThat(delivered.destination()).isEqualTo(DESTINATION);
-                    assertThat(delivered.payloadJson()).isEqualTo(PAYLOAD_JSON);
-                });
+        assertThat(sinkFake.deliveries()).singleElement().satisfies(delivered -> {
+            assertThat(delivered.destination()).isEqualTo(DESTINATION);
+            assertThat(delivered.payloadJson()).isEqualTo(PAYLOAD_JSON);
+        });
     }
 
     @Test
@@ -159,9 +158,7 @@ class NotificationChannelSubscriberTest {
         // given
         sink이_있는_상태로_등록한다();
         final Message 깨진_메시지 = new DefaultMessage(
-                CHANNEL.getBytes(StandardCharsets.UTF_8),
-                "not-json".getBytes(StandardCharsets.UTF_8)
-        );
+                CHANNEL.getBytes(StandardCharsets.UTF_8), "not-json".getBytes(StandardCharsets.UTF_8));
 
         // when & then
         assertThatCode(() -> subscriber.onMessage(깨진_메시지, null)).doesNotThrowAnyException();

@@ -16,6 +16,4 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "redis.notification")
 public record NotificationChannelProperties(
-        @DefaultValue("notification:ws") @NotBlank String channel
-) {
-}
+        @DefaultValue("notification:ws") @NotBlank String channel) {}

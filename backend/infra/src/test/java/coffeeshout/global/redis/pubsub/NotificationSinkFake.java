@@ -53,6 +53,5 @@ public class NotificationSinkFake implements NotificationSink {
         deliveries.clear();
     }
 
-    public record Delivered(String destination, String payloadJson, String traceId) {
-    }
+    public record Delivered(String destination, String payloadJson, String traceId) {}
 }

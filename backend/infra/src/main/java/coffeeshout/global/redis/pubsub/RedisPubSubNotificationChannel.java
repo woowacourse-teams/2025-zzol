@@ -33,8 +33,7 @@ public class RedisPubSubNotificationChannel implements GameNotificationChannel {
             StringRedisTemplate stringRedisTemplate,
             @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
             StreamTracePropagator streamTracePropagator,
-            NotificationChannelProperties properties
-    ) {
+            NotificationChannelProperties properties) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
         this.streamTracePropagator = streamTracePropagator;
@@ -46,10 +45,7 @@ public class RedisPubSubNotificationChannel implements GameNotificationChannel {
         final String channel = properties.channel();
         try {
             final NotificationEnvelope envelope = new NotificationEnvelope(
-                    destination,
-                    objectMapper.writeValueAsString(payload),
-                    streamTracePropagator.currentTraceparent()
-            );
+                    destination, objectMapper.writeValueAsString(payload), streamTracePropagator.currentTraceparent());
             stringRedisTemplate.convertAndSend(channel, objectMapper.writeValueAsString(envelope));
             log.debug("알림 채널 발행 — channel: {}, destination: {}", channel, destination);
         } catch (JsonProcessingException e) {

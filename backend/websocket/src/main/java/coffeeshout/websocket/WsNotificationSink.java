@@ -31,8 +31,7 @@ public class WsNotificationSink implements NotificationSink {
 
     public WsNotificationSink(
             LoggingSimpMessagingTemplate loggingSimpMessagingTemplate,
-            @Qualifier("redisObjectMapper") ObjectMapper objectMapper
-    ) {
+            @Qualifier("redisObjectMapper") ObjectMapper objectMapper) {
         this.loggingSimpMessagingTemplate = loggingSimpMessagingTemplate;
         this.objectMapper = objectMapper;
     }

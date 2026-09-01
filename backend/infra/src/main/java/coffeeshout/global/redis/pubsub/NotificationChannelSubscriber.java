@@ -43,8 +43,7 @@ public class NotificationChannelSubscriber implements MessageListener {
             ObjectProvider<NotificationSink> sinkProvider,
             @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
             StreamTracePropagator streamTracePropagator,
-            NotificationChannelProperties properties
-    ) {
+            NotificationChannelProperties properties) {
         this.container = container;
         this.sinkProvider = sinkProvider;
         this.objectMapper = objectMapper;
@@ -71,8 +70,7 @@ public class NotificationChannelSubscriber implements MessageListener {
             streamTracePropagator.runInConsumerScope(
                     carrierOf(envelope),
                     CONSUMER_SPAN_NAME,
-                    () -> sink.deliver(envelope.destination(), envelope.payload())
-            );
+                    () -> sink.deliver(envelope.destination(), envelope.payload()));
         } catch (Exception e) {
             // 리스너 스레드를 보호한다 — 여기서 예외가 새면 이후 메시지 수신이 끊긴다(Profanity 구독자 선례).
             log.error("알림 채널 메시지 처리 실패 — channel: {}", properties.channel(), e);

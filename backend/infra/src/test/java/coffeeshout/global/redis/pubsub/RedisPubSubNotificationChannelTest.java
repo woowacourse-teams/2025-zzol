@@ -37,11 +37,7 @@ class RedisPubSubNotificationChannelTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         channel = new RedisPubSubNotificationChannel(
-                stringRedisTemplate,
-                objectMapper,
-                streamTracePropagator,
-                new NotificationChannelProperties(CHANNEL)
-        );
+                stringRedisTemplate, objectMapper, streamTracePropagator, new NotificationChannelProperties(CHANNEL));
     }
 
     private NotificationEnvelope 발행된_봉투를_읽는다() throws Exception {
@@ -91,6 +87,5 @@ class RedisPubSubNotificationChannelTest {
         assertThat(발행된_봉투를_읽는다().traceparent()).isNull();
     }
 
-    private record PayloadDummy(String state) {
-    }
+    private record PayloadDummy(String state) {}
 }

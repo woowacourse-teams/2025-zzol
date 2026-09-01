@@ -52,11 +52,10 @@ class NotificationChannelPubSubIntegrationTest extends InfraModuleIntegrationTes
 
         // then
         assertThat(sinkFake.awaitDelivery(5)).isTrue();
-        assertThat(sinkFake.deliveries()).singleElement()
-                .satisfies(delivered -> {
-                    assertThat(delivered.destination()).isEqualTo(DESTINATION);
-                    assertThat(delivered.payloadJson()).isEqualTo("{\"state\":\"PLAYING\"}");
-                });
+        assertThat(sinkFake.deliveries()).singleElement().satisfies(delivered -> {
+            assertThat(delivered.destination()).isEqualTo(DESTINATION);
+            assertThat(delivered.payloadJson()).isEqualTo("{\"state\":\"PLAYING\"}");
+        });
     }
 
     @Test
@@ -75,13 +74,11 @@ class NotificationChannelPubSubIntegrationTest extends InfraModuleIntegrationTes
 
         // then
         assertThat(sinkFake.awaitDelivery(5)).isTrue();
-        assertThat(sinkFake.deliveries()).singleElement()
-                .satisfies(delivered ->
-                        assertThat(delivered.traceId()).isEqualTo(span.context().traceId()));
+        assertThat(sinkFake.deliveries()).singleElement().satisfies(delivered -> assertThat(delivered.traceId())
+                .isEqualTo(span.context().traceId()));
     }
 
-    private record PayloadDummy(String state) {
-    }
+    private record PayloadDummy(String state) {}
 
     @TestConfiguration(proxyBeanMethods = false)
     static class NotificationSinkTestConfig {

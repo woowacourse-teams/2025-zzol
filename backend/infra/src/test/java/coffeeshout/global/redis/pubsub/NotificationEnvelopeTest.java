@@ -18,10 +18,7 @@ class NotificationEnvelopeTest {
     void 직렬화_왕복에서_세_필드가_보존된다() throws Exception {
         // given
         final NotificationEnvelope envelope = new NotificationEnvelope(
-                "/topic/room/ABC123/gameState",
-                "{\"success\":true,\"data\":{\"state\":\"PLAYING\"}}",
-                TRACEPARENT
-        );
+                "/topic/room/ABC123/gameState", "{\"success\":true,\"data\":{\"state\":\"PLAYING\"}}", TRACEPARENT);
 
         // when
         final String json = objectMapper.writeValueAsString(envelope);

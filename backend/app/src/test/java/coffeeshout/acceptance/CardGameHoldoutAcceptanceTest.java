@@ -125,7 +125,7 @@ class CardGameHoldoutAcceptanceTest extends WebSocketIntegrationTestSupport {
 
         final JsonNode contested = awaitCardOwned(gameStates, 0);
         final String owner =
-                contested.path("cardInfoMessages").get(0).path("playerName").asText();
+                contested.path("cardInfoMessages").get(0).path("playerName").asString();
         assertThat(owner).as("경합 카드의 소유자는 정확히 한 명").isIn(HOST, GUESTS.get(0));
 
         // 패자는 다른 카드를 정상적으로 선택할 수 있어야 한다
@@ -135,11 +135,11 @@ class CardGameHoldoutAcceptanceTest extends WebSocketIntegrationTestSupport {
 
         final SoftAssertions softly = new SoftAssertions();
         softly.assertThat(
-                        next.path("cardInfoMessages").get(0).path("playerName").asText())
+                        next.path("cardInfoMessages").get(0).path("playerName").asString())
                 .as("경합 승자의 소유권이 뒤집히면 안 된다")
                 .isEqualTo(owner);
         softly.assertThat(
-                        next.path("cardInfoMessages").get(1).path("playerName").asText())
+                        next.path("cardInfoMessages").get(1).path("playerName").asString())
                 .isEqualTo(loser);
         softly.assertAll();
     }
@@ -173,7 +173,7 @@ class CardGameHoldoutAcceptanceTest extends WebSocketIntegrationTestSupport {
         // 새로 구독한 컬렉터가 다음 이벤트 없이도 현재 스냅샷을 받아야 한다
         final var resubscribed = sessions.get(GUESTS.get(1)).subscribe("/topic/room/%s/gameState".formatted(joinCode));
         final JsonNode snapshot = data(resubscribed.get(3, TimeUnit.SECONDS));
-        assertThat(snapshot.path("cardGameState").asText()).isEqualTo("PLAYING");
+        assertThat(snapshot.path("cardGameState").asString()).isEqualTo("PLAYING");
     }
 
     @Test
@@ -192,7 +192,7 @@ class CardGameHoldoutAcceptanceTest extends WebSocketIntegrationTestSupport {
         selectCard(GUESTS.get(1), 1);
         final JsonNode snapshot = awaitCardOwned(gameStates, 1);
 
-        assertThat(snapshot.path("cardInfoMessages").get(0).path("playerName").asText())
+        assertThat(snapshot.path("cardInfoMessages").get(0).path("playerName").asString())
                 .as("위장 선택이 꾹이 소유로 기록되면 안 된다")
                 .isNotEqualTo(HOST);
     }
@@ -242,7 +242,7 @@ class CardGameHoldoutAcceptanceTest extends WebSocketIntegrationTestSupport {
     private JsonNode awaitGameState(TestStompSession.MessageCollector collector, String state) {
         for (int i = 0; i < 20; i++) {
             final JsonNode node = data(collector.get(5, TimeUnit.SECONDS));
-            if (state.equals(node.path("cardGameState").asText())) {
+            if (state.equals(node.path("cardGameState").asString())) {
                 return node;
             }
         }

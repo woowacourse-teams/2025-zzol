@@ -116,7 +116,7 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
 
         // 시작 알림 — round 토픽 (gameState와의 도착 순서는 컨트랙트상 비보장)
         final JsonNode roundData = data(rounds.get());
-        assertThat(roundData.path("miniGameType").asText()).isEqualTo("CARD_GAME");
+        assertThat(roundData.path("miniGameType").asString()).isEqualTo("CARD_GAME");
 
         // 상태 시퀀스: 선택이 없으므로 전이 브로드캐스트가 정확히 8회
         final JsonNode first = data(gameStates.get());
@@ -125,13 +125,13 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
         };
 
         final SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(first.path("cardGameState").asText()).isEqualTo("FIRST_LOADING");
-        softly.assertThat(first.path("currentRound").asText()).isEqualTo("FIRST");
+        softly.assertThat(first.path("cardGameState").asString()).isEqualTo("FIRST_LOADING");
+        softly.assertThat(first.path("currentRound").asString()).isEqualTo("FIRST");
         softly.assertThat(first.path("allSelected").asBoolean()).isFalse();
         assertDeckShape(softly, first.path("cardInfoMessages"));
         for (final String expected : expectedAfterFirst) {
             final MessageResponse response = gameStates.get(5, TimeUnit.SECONDS);
-            softly.assertThat(data(response).path("cardGameState").asText()).isEqualTo(expected);
+            softly.assertThat(data(response).path("cardGameState").asString()).isEqualTo(expected);
         }
         softly.assertAll();
     }
@@ -147,10 +147,10 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
 
         final JsonNode cards = afterSelect.path("cardInfoMessages");
         final SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(afterSelect.path("cardGameState").asText()).isEqualTo("PLAYING");
+        softly.assertThat(afterSelect.path("cardGameState").asString()).isEqualTo("PLAYING");
         softly.assertThat(afterSelect.path("allSelected").asBoolean()).isFalse();
         softly.assertThat(cards.get(0).path("selected").asBoolean()).isTrue();
-        softly.assertThat(cards.get(0).path("playerName").asText()).isEqualTo(HOST);
+        softly.assertThat(cards.get(0).path("playerName").asString()).isEqualTo(HOST);
         softly.assertThat(cards.get(0).path("colorIndex").asInt()).isBetween(0, 9);
         for (int i = 1; i < cards.size(); i++) {
             softly.assertThat(cards.get(i).path("selected").asBoolean()).isFalse();
@@ -179,7 +179,7 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
 
         final SoftAssertions softly = new SoftAssertions();
         softly.assertThat(lastSelection.path("allSelected").asBoolean()).isTrue();
-        softly.assertThat(data(scoreBoard).path("cardGameState").asText()).isEqualTo("SCORE_BOARD");
+        softly.assertThat(data(scoreBoard).path("cardGameState").asString()).isEqualTo("SCORE_BOARD");
         softly.assertThat(scoreBoard.duration())
                 .as("전원 선택 후에는 playing 제한시간(%dms)을 기다리지 않아야 한다", PLAYING_MS)
                 .isLessThan(PLAYING_MS);
@@ -212,10 +212,10 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
 
         final JsonNode cards = snapshot.path("cardInfoMessages");
         final SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(cards.get(0).path("playerName").asText())
+        softly.assertThat(cards.get(0).path("playerName").asString())
                 .as("중복 선택 시도가 기존 소유자를 바꾸면 안 된다")
                 .isEqualTo(HOST);
-        softly.assertThat(cards.get(1).path("playerName").asText()).isEqualTo(GUESTS.get(0));
+        softly.assertThat(cards.get(1).path("playerName").asString()).isEqualTo(GUESTS.get(0));
         softly.assertAll();
     }
 
@@ -229,7 +229,7 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
         selectCard(HOST, 0); // 거부 후에도 정상 선택은 동작해야 한다
         final JsonNode snapshot = awaitCardOwned(gameStates, 0);
 
-        assertThat(snapshot.path("cardInfoMessages").get(0).path("playerName").asText())
+        assertThat(snapshot.path("cardInfoMessages").get(0).path("playerName").asString())
                 .isEqualTo(HOST);
         awaitGameState(gameStates, "SCORE_BOARD");
     }
@@ -285,7 +285,7 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
     private JsonNode awaitGameState(TestStompSession.MessageCollector collector, String state) {
         for (int i = 0; i < 20; i++) {
             final JsonNode node = data(collector.get(5, TimeUnit.SECONDS));
-            if (state.equals(node.path("cardGameState").asText())) {
+            if (state.equals(node.path("cardGameState").asString())) {
                 return node;
             }
         }
@@ -308,7 +308,7 @@ class CardGameAcceptanceTest extends WebSocketIntegrationTestSupport {
         int multipliers = 0;
         for (final JsonNode card : cards) {
             final int value = card.path("value").asInt();
-            if ("ADDITION".equals(card.path("cardType").asText())) {
+            if ("ADDITION".equals(card.path("cardType").asString())) {
                 additions++;
                 softly.assertThat(value % 5).as("덧셈 카드 값은 5 단위").isZero();
                 softly.assertThat(Math.abs(value)).isLessThanOrEqualTo(40);

@@ -94,10 +94,10 @@ tools: Bash, Read, Glob, Grep
 
 ### WebSocket 컨트랙트
 
-WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할 때는 `api-mcp` 의 `ws_*` 도구로 BE 카탈로그와 일치 여부를 확인한다. 도구는 `frontend/.mcp.json` 으로 자동 등록되어 있다.
+WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할 때는 `backend/app/src/test/resources/__fixtures__/ws-catalog.json` 을 읽어 BE 카탈로그와 일치 여부를 확인한다. destination 존재 여부는 `npm run test:jest -- wsContract` 가 CI 에서 강제하므로, 리뷰는 그 검사가 못 보는 payload 타입과 구독 위치에 집중한다.
 
-- [ ] destination 에 prefix(`/topic`, `/app`, `/user`)가 중복으로 들어가 있지 않은가. FE wrapper 가 자동으로 붙이므로 path 에서 제거해야 한다 (`.claude/rules/websocket.md` 참조)
-- [ ] 사용한 destination 이 `ws_list_topics` 또는 `ws_describe` 카탈로그에 존재하는가. 없으면 BE 측 `@WsTopic` 추가가 필요하다. 임의 신설 금지
+- [ ] destination 에 prefix(`/topic`, `/app`)가 중복으로 들어가 있지 않은가. FE wrapper 가 자동으로 붙이므로 path 에서 제거해야 한다. 개인 큐(`/user/queue/...`)는 그대로 넘긴다 (`.claude/rules/websocket.md` 참조)
+- [ ] 사용한 destination 이 fixture 에 존재하는가. 없으면 BE 측 `@WsTopic` 추가가 필요하다. 임의 신설 금지
 - [ ] 카탈로그의 `payloadType` 과 onData 콜백 타입이 일치하는가 (특히 `WebSocketResponse<List<X>>` 같은 envelope 의 데이터 부분 매핑)
 - [ ] 동일 `path` 의 publishers 가 여러 개인 경우(예: `/queue/friends/responses` 의 수락/거절) 각 발행 시나리오를 모두 다루는가
 - [ ] 구독은 Provider 또는 훅에서만 — 컴포넌트에서 직접 `useWebSocket().subscribe` 호출 금지

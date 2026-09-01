@@ -131,6 +131,17 @@ jobs:
       - name: Run Tests
         run: ./gradlew test jacocoTestReport --build-cache --no-daemon
 
+      # WsCatalogContractTest 가 방금 카탈로그를 fixture 로 다시 썼다. 커밋본과 다르면
+      # 애노테이션을 고치고 fixture 를 갱신하지 않았다는 뜻이고, FE 게이트가 그 낡은 fixture 를
+      # SSOT 로 읽으므로 정상 destination 을 오탐하게 된다.
+      - name: Check ws-catalog fixture freshness
+        run: |
+          git diff --exit-code -- app/src/test/resources/__fixtures__/ws-catalog.json || {
+            echo "::error::ws-catalog fixture 가 소스와 다릅니다. 로컬에서 아래를 실행하고 커밋하세요:"
+            echo "  cd backend && ./gradlew :app:test --tests '*WsCatalogContractTest*'"
+            exit 1
+          }
+
       # 테스트 결과는 EnricoMi로 Checks 탭에 표시. dorny/test-reporter(내장 Node)는
       # 멀티모듈 XML 전체 + git 추적 파일 2121개를 한 번에 메모리 적재하다 V8 힙
       # OOM으로 죽어(#1564) 롤백. 표기 시간은 JUnit XML 합계라 wall-clock이 아니다 —

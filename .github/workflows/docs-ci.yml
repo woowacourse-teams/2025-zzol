@@ -6,6 +6,7 @@ on:
     branches: [dev]
     paths:
       - "**/*.md"
+      - "docs/adr/**"
       - ".markdownlint.jsonc"
       - ".markdownlint-cli2.jsonc"
       - ".github/workflows/docs-ci.yml"
@@ -15,6 +16,7 @@ on:
     branches: [dev]
     paths:
       - "**/*.md"
+      - "docs/adr/**"
       - ".markdownlint.jsonc"
       - ".markdownlint-cli2.jsonc"
       - ".github/workflows/docs-ci.yml"
@@ -49,3 +51,24 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24
         with:
           globs: "**/*.md"
+
+  # 루트(전역) ADR index.md 는 생성물이다. frontmatter(SSOT)와 어긋나면 실패시킨다.
+  adr-index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Verify docs/adr/index.md is up to date
+        run: node docs/adr/gen-index.mjs --check

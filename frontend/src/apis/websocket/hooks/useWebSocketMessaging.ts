@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { isBrokerDestination, WEBSOCKET_CONFIG, WebSocketMessage } from '../constants/constants';
 import { saveLastStreamId } from '@/apis/rest/recovery';
 import WebSocketErrorHandler from '../utils/WebSocketErrorHandler';
+import type { WsSendDestination, WsSendPath, WsSubscribePath } from '../generated/wsContract';
 
 type Props = {
   client: Client | null;
@@ -13,7 +14,7 @@ type Props = {
 
 export const useWebSocketMessaging = ({ client, isConnected, playerName, joinCode }: Props) => {
   const subscribe = useCallback(
-    <T>(url: string, onData: (data: T) => void, onError?: (error: Error) => void) => {
+    <T>(url: WsSubscribePath, onData: (data: T) => void, onError?: (error: Error) => void) => {
       if (!client || !isConnected) {
         WebSocketErrorHandler.handleConnectionRequiredError({
           type: 'subscription',
@@ -61,7 +62,11 @@ export const useWebSocketMessaging = ({ client, isConnected, playerName, joinCod
   );
 
   const send = useCallback(
-    <T>(url: string, body?: T, onError?: (error: Error) => void) => {
+    <T, D extends WsSendPath>(
+      url: WsSendDestination<D>,
+      body?: T,
+      onError?: (error: Error) => void
+    ) => {
       if (!client || !isConnected) {
         WebSocketErrorHandler.handleConnectionRequiredError({
           type: 'send',

@@ -50,7 +50,7 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
   const [collisionSeq, setCollisionSeq] = useState(0);
 
   // --- state 토픽 구독 -------------------------------------------------------
-  useWebSocketSubscription<NunchiStateMessage>(
+  useWebSocketSubscription(
     `/room/${joinCode}/nunchi/state`,
     useCallback(
       (msg: NunchiStateMessage) => {
@@ -123,7 +123,7 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
   );
 
   // --- stand 토픽 구독 -------------------------------------------------------
-  useWebSocketSubscription<NunchiStandMessage>(
+  useWebSocketSubscription(
     `/room/${joinCode}/nunchi/stand`,
     useCallback(
       (msg: NunchiStandMessage) => {

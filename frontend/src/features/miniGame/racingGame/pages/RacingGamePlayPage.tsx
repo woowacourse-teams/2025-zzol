@@ -1,4 +1,3 @@
-import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import { colorList } from '@/constants/color';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
@@ -24,7 +23,6 @@ const FINISH_LINE_VISUAL_OFFSET = 30;
 
 const RacingGamePage = () => {
   const { joinCode, myName } = useIdentifier();
-  const { send } = useWebSocket();
   const navigate = useReplaceNavigate();
   const { miniGameType } = useParams();
   const { racingGameState, racingGameData } = useRacingGame();
@@ -48,14 +46,6 @@ const RacingGamePage = () => {
     containerRef,
     mySpeed,
   });
-
-  useEffect(() => {
-    setTimeout(() => {
-      send(`/room/${joinCode}/racing-game/start`, {
-        hostName: myName,
-      });
-    }, 2000);
-  }, [joinCode, send, myName]);
 
   useEffect(() => {
     if (racingGameState === 'DONE') {

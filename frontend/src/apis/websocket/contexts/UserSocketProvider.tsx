@@ -4,6 +4,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { tokenStore } from '@/features/auth/tokens';
 import { createUserStompClient } from '../utils/createUserStompClient';
 import { UserSocketContext, UserSocketContextType } from './UserSocketContext';
+import type { WsSubscribePath } from '../generated/wsContract';
 
 export const UserSocketProvider = ({ children }: PropsWithChildren) => {
   const { isAuthenticated } = useAuth();
@@ -65,7 +66,7 @@ export const UserSocketProvider = ({ children }: PropsWithChildren) => {
   }, [disconnect]);
 
   const subscribe = useCallback(
-    <T,>(destination: string, onData: (data: T) => void): StompSubscription | null => {
+    <T,>(destination: WsSubscribePath, onData: (data: T) => void): StompSubscription | null => {
       if (!clientRef.current || !isConnected) return null;
       return clientRef.current.subscribe(destination, (msg: IMessage) => {
         try {

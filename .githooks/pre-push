@@ -43,8 +43,10 @@ if ! backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*' -q >
 fi
 rm -f "$LOG"
 
-git diff --quiet -- backend/app/src/test/resources/__fixtures__/ws-catalog.json && exit 0
+git diff --quiet -- backend/app/src/test/resources/__fixtures__/ws-catalog.json \
+  frontend/src/apis/websocket/generated/wsContract.ts && exit 0
 
-echo "[pre-push] ws-catalog fixture 를 갱신했습니다. 커밋에 포함하고 다시 push 하세요:"
-echo "  git add backend/app/src/test/resources/__fixtures__/ws-catalog.json"
+echo "[pre-push] ws-catalog fixture 와 FE 타입 파일을 갱신했습니다. 커밋에 포함하고 다시 push 하세요:"
+echo "  git add backend/app/src/test/resources/__fixtures__/ws-catalog.json \\"
+echo "          frontend/src/apis/websocket/generated/wsContract.ts"
 exit 1

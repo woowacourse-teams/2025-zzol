@@ -35,7 +35,7 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => () => clearGhostTimer(), [clearGhostTimer]);
 
-  useWebSocketSubscription<StateMessage>(
+  useWebSocketSubscription(
     `/room/${joinCode}/ladder/state`,
     useCallback((msg: StateMessage) => {
       setGameState(msg.state);
@@ -51,7 +51,7 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
     }, [])
   );
 
-  useWebSocketSubscription<LadderLine>(
+  useWebSocketSubscription(
     `/room/${joinCode}/ladder/line`,
     useCallback(
       (line: LadderLine) => {

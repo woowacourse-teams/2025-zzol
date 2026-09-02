@@ -3,9 +3,10 @@ import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { StompSubscription } from '@stomp/stompjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { subscriptionRegistry } from '../utils/subscriptionRegistry';
+import type { WsSubscribeDestination, WsSubscribePath } from '../generated/wsContract';
 
-export const useWebSocketSubscription = <T>(
-  destination: string,
+export const useWebSocketSubscription = <T, D extends WsSubscribePath>(
+  destination: WsSubscribeDestination<D>,
   onData: (data: T) => void,
   onError?: (error: Error) => void,
   enabled: boolean = true

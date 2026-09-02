@@ -2,11 +2,8 @@ package coffeeshout.global.metric;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.EventTypeName;
-import coffeeshout.global.redis.config.RedisStreamProperties;
-import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -22,13 +19,13 @@ import org.springframework.stereotype.Component;
  *
  * <p>Prometheus 메트릭명: redis_stream_e2e_latency_seconds (tag: stream)</p>
  *
- * <p>브로드캐스트 리스너가 있는 스트림만 기동 시점에 미리 등록한다. 이 등록 범위가 컨슈머 정지
- * 알림({@code RedisStreamConsumptionStalled})의 판정 근거다. 소비 경로가 없는 스트림
- * ({@code listener-enabled: false})은 시계열 자체가 생기지 않아 그 룰의 대상에서 빠지므로,
- * 룰에 스트림 이름을 박아 예외를 두지 않아도 설정이 바뀌면 대상이 따라 바뀐다(#1744).</p>
+ * <p>타이머는 첫 소비 때 만든다. 미리 등록하면 트래픽이 없는 스트림도 버킷 수만큼 시계열을
+ * 차지한다. 소비가 끊긴 상태를 판정하는 쪽은 이 타이머가 아니라 {@code redis.stream.consumed}
+ * 카운터다(#1744).</p>
  *
- * <p>버킷 범위는 5ms~5s로 좁혔다. 기본값(1ms~30s)은 스트림 수만큼 버킷이 늘어나는데 prod 관측
- * p95가 65ms이고 알림 임계가 0.5s라 위아래로 쓰이지 않는 구간이 넓다. 클라이언트 측 분위수
+ * <p>버킷 범위는 5ms~5s로 좁혔다. 스트림 태그를 붙이면 버킷이 스트림 수만큼 늘어나는데 prod 관측
+ * p95가 65ms이고 알림 임계가 0.5s라 위아래로 쓰이지 않는 구간이 넓다. 하한보다 빠른 소비는 최저
+ * 버킷({@code le="0.005"}) 하나에 뭉쳐 5ms 미만은 분해되지 않는다. 클라이언트 측 분위수
  * ({@code publishPercentiles})는 등록하지 않는다. 알림이 버킷에서 분위수를 계산하고, 인스턴스별로
  * 나온 분위수는 blue/green을 가로질러 합산되지 않는다.</p>
  */
@@ -41,27 +38,10 @@ public class RedisStreamLatencyMetricService {
     private static final long SLOW_CONSUME_LOG_THRESHOLD_MS = 50;
 
     private final MeterRegistry meterRegistry;
-    private final RedisStreamProperties redisStreamProperties;
     private final Map<String, Timer> timers = new ConcurrentHashMap<>();
 
-    public RedisStreamLatencyMetricService(MeterRegistry meterRegistry, RedisStreamProperties redisStreamProperties) {
+    public RedisStreamLatencyMetricService(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
-        this.redisStreamProperties = redisStreamProperties;
-    }
-
-    @PostConstruct
-    public void initializeMetrics() {
-        if (redisStreamProperties.keys() == null) {
-            log.warn("Redis Stream 설정이 없습니다. 지연 메트릭을 미리 등록하지 않습니다.");
-            return;
-        }
-
-        for (Map.Entry<String, StreamConfig> entry :
-                redisStreamProperties.keys().entrySet()) {
-            if (entry.getValue().isListenerEnabled()) {
-                timers.computeIfAbsent(entry.getKey(), this::registerTimer);
-            }
-        }
     }
 
     /**

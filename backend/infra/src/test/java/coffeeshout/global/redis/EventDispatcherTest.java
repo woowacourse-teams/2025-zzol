@@ -8,9 +8,18 @@ import static org.mockito.BDDMockito.willThrow;
 
 import coffeeshout.fixture.BaseEventDummy;
 import coffeeshout.global.metric.RedisStreamLatencyMetricService;
+import coffeeshout.global.redis.config.RedisStreamProperties;
+import coffeeshout.global.redis.config.RedisStreamProperties.CommonSettings;
+import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
@@ -29,9 +38,12 @@ class EventDispatcherTest {
 
     private static final String STREAM_KEY = "room";
 
+    private static final String WORK_QUEUE_STREAM = "settlement:result";
+
     @Mock
     RedisStreamLatencyMetricService latencyMetricService;
 
+    MeterRegistry meterRegistry;
     GenericApplicationContext applicationContext;
 
     @AfterEach
@@ -49,7 +61,11 @@ class EventDispatcherTest {
             applicationContext.registerBean("consumer" + i, (Class<Object>) bean.getClass(), () -> bean);
         }
         applicationContext.refresh();
-        return new EventDispatcher(applicationContext, latencyMetricService);
+        meterRegistry = new SimpleMeterRegistry();
+        final EventDispatcher dispatcher =
+                new EventDispatcher(applicationContext, latencyMetricService, properties(), meterRegistry);
+        dispatcher.initializeCounters();
+        return dispatcher;
     }
 
     @Nested
@@ -154,6 +170,63 @@ class EventDispatcherTest {
         }
     }
 
+    @Nested
+    @DisplayName("소비 카운터")
+    class 소비_카운터 {
+
+        // 컨슈머 정지 룰의 우변이다. 폴링이 살아 있다는 신호라 Consumer 처리 성공과 무관하게 센다.
+        @Test
+        void 소비하면_stream_태그가_붙은_카운터가_증가한다() {
+            // given
+            final EventDispatcher dispatcher = dispatcherWith(new RecordingConsumer());
+
+            // when
+            dispatcher.handle(STREAM_KEY, BaseEventDummy.페이로드("하나"));
+            dispatcher.handle(STREAM_KEY, BaseEventDummy.페이로드("둘"));
+
+            // then
+            assertThat(consumedCounterOf(STREAM_KEY).count()).isEqualTo(2.0);
+        }
+
+        // 지연 히스토그램은 timestamp가 없는 이벤트를 건너뛴다. 소비 카운터가 그 구멍을 안 갖는 것이
+        // 전용 카운터를 둔 이유다. 히스토그램 _count를 쓰면 이 경우 정지 룰이 오탐한다.
+        @Test
+        void timestamp가_없어_지연을_못_재도_소비는_센다() {
+            // given
+            final EventDispatcher dispatcher = dispatcherWith(new RecordingConsumer());
+
+            // when
+            dispatcher.handle(STREAM_KEY, new BaseEventDummy(UUID.randomUUID().toString(), null, "무시각"));
+
+            // then
+            assertThat(consumedCounterOf(STREAM_KEY).count()).isEqualTo(1.0);
+        }
+
+        // rate()가 시계열의 첫 샘플을 증가로 세지 않아, 첫 소비 때 시계열이 생기면 그 한 건이 빠진다.
+        @Test
+        void 소비_전에도_브로드캐스트_스트림_카운터가_0으로_등록된다() {
+            // given
+            dispatcherWith();
+
+            // when & then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(consumedCounterOf(STREAM_KEY)).isNotNull();
+                softly.assertThat(consumedCounterOf(STREAM_KEY).count()).isZero();
+            });
+        }
+
+        // 이 성질이 RedisStreamConsumptionStalled가 작업 큐 스트림에서 영구 발화하지 않는 근거다.
+        // 시계열이 없으면 룰의 and 우변이 매칭되지 않는다.
+        @Test
+        void listener가_없는_작업_큐_스트림은_카운터를_만들지_않는다() {
+            // given
+            dispatcherWith();
+
+            // when & then
+            assertThat(consumedCounterOf(WORK_QUEUE_STREAM)).isNull();
+        }
+    }
+
     @Order(1)
     static class FailingConsumer implements Consumer<BaseEventDummy> {
 
@@ -178,4 +251,19 @@ class EventDispatcherTest {
     }
 
     record OtherEventDummy(String eventId, Instant timestamp) implements BaseEvent {}
+
+    private Counter consumedCounterOf(String streamKey) {
+        return meterRegistry
+                .find("redis.stream.consumed")
+                .tag("stream", streamKey)
+                .counter();
+    }
+
+    private RedisStreamProperties properties() {
+        final Map<String, StreamConfig> keys = new LinkedHashMap<>();
+        keys.put(STREAM_KEY, new StreamConfig("concurrent", null, null, null, null, null));
+        keys.put(WORK_QUEUE_STREAM, new StreamConfig(null, null, 10000, null, null, false));
+        return new RedisStreamProperties(
+                new CommonSettings(100, 10, Duration.ofSeconds(2), Duration.ofSeconds(5)), Map.of(), keys);
+    }
 }

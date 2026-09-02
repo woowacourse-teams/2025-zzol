@@ -5,8 +5,8 @@
 #
 # 사용 메트릭 (tag: stream):
 #   redis_stream_e2e_latency_seconds_bucket   발행~소비 지연 히스토그램 → 분위수 계산 가능
-#   redis_stream_e2e_latency_seconds_count    소비 건수. 소비할 때만 늘어 소비율 그 자체다
-#   redis_stream_published_total              발행 건수. 소비율과 짝지어 컨슈머 정지를 판정한다
+#   redis_stream_published_total              발행 건수
+#   redis_stream_consumed_total               소비 건수. 발행 건수와 짝지어 컨슈머 정지를 판정한다
 #   redis_stream_group_lag                    정산 그룹에 아직 전달되지 않은 메시지 수 (XINFO GROUPS)
 #   redis_stream_group_pending                정산 그룹이 전달받고 ACK하지 않은 메시지 수 (XINFO GROUPS)
 #   settlement_deadletter_count               재전달 소진 후 격리된 정산 메시지 수 (RDBMS)
@@ -52,12 +52,11 @@ groups:
       # 발화하지 않으므로, 발행량 대비 소비량을 보는 아래 룰이 그 구간을 맡는다.
 
       # 컨슈머 정지 — 발행은 되는데 소비가 0이다. 지연 룰이 못 보는 최악의 경우를 잡는다(#1744).
-      # 작업 큐 스트림(settlement:result)이 여기서 영구 발화하지 않는 근거는 메트릭 등록 범위다.
-      # 사유와 그 범위를 바꿀 때의 파급은 RedisStreamLatencyMetricService javadoc에 있다.
+      # 소비는 지연 히스토그램의 _count가 아니라 전용 카운터로 센다. 히스토그램은 timestamp가 없거나
+      # 시각이 뒤집힌 이벤트를 건너뛰어 "소비했는데 안 세는" 구멍이 있고, 그 구멍이 이 룰을 오탐시킨다.
+      # 작업 큐 스트림(settlement:result)이 여기서 영구 발화하지 않는 근거는 소비 카운터의 등록 범위다.
+      # 사유와 그 범위를 바꿀 때의 파급은 EventDispatcher.initializeCounters javadoc에 있다.
       # 그 스트림의 적체는 아래 컨슈머 그룹 룰이 따로 본다.
-      # ⚠️ 우변은 정확히는 "지연 기록에 성공한 소비" 건수다. timestamp가 없거나 시각이 뒤집힌
-      # 이벤트는 소비해도 세지 않는다. 어떤 스트림의 트래픽이 전부 그런 이벤트가 되면 이 룰이
-      # 오탐한다. 지금은 모든 이벤트가 timestamp를 채우고, 빠뜨리면 소비 측에 warn 로그가 남는다.
       # for 10m — 5분 윈도 끝에 발행된 메시지가 아직 안 잡히는 순간이 있어 3분은 짧다. 발행이 띄엄한
       # 스트림에서도 10분 내내 소비가 0이면 폴링이 멎은 것이다. 게임이 없는 시간대는 발행률도 0이라
       # 좌변이 비어 발화하지 않는다.
@@ -65,7 +64,7 @@ groups:
         expr: |
           sum by (job, stream) (rate(redis_stream_published_total{job="prod-app"}[5m])) > 0
           and
-          sum by (job, stream) (rate(redis_stream_e2e_latency_seconds_count{job="prod-app"}[5m])) == 0
+          sum by (job, stream) (rate(redis_stream_consumed_total{job="prod-app"}[5m])) == 0
         for: 10m
         labels:
           severity: critical

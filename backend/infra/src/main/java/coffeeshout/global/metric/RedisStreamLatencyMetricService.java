@@ -87,7 +87,8 @@ public class RedisStreamLatencyMetricService {
 
         if (latency.toMillis() > SLOW_CONSUME_LOG_THRESHOLD_MS) {
             log.warn(
-                    "Redis Stream 지연 50ms 초과: stream={}, eventId={}, latency={}ms, eventType={}",
+                    "Redis Stream 지연 {}ms 초과: stream={}, eventId={}, latency={}ms, eventType={}",
+                    SLOW_CONSUME_LOG_THRESHOLD_MS,
                     streamKey,
                     event.eventId(),
                     latency.toMillis(),

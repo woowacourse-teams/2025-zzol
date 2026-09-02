@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +42,20 @@ public class StreamPublisher {
         this.objectMapper = objectMapper;
         this.streamTracePropagator = streamTracePropagator;
         this.meterRegistry = meterRegistry;
+    }
+
+    // 카운터를 기동 시점에 0으로 만들어 둔다. 첫 발행 때 시계열이 생기면 Prometheus rate()가 그
+    // 첫 샘플을 증가로 세지 않아, 기동 후 발행이 한 번뿐인 스트림은 컨슈머가 멎어도 정지 룰이
+    // 침묵한다. 발행이 띄엄한 스트림을 잡는 게 그 룰의 목적이라 등록 시점을 지연 타이머와 맞춘다.
+    @PostConstruct
+    public void initializeCounters() {
+        if (redisStreamProperties.keys() == null) {
+            return;
+        }
+        redisStreamProperties
+                .keys()
+                .keySet()
+                .forEach(redisKey -> publishedCounters.computeIfAbsent(redisKey, this::registerPublishedCounter));
     }
 
     public void publish(StreamKey key, BaseEvent event) {

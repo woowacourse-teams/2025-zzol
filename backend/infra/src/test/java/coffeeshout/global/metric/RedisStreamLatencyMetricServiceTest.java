@@ -10,6 +10,7 @@ import coffeeshout.support.StubBaseEvent;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
@@ -45,22 +46,7 @@ class RedisStreamLatencyMetricServiceTest {
     class 스트림별_기록 {
 
         @Test
-        void 지연_시간이_stream_태그와_함께_기록된다() {
-            // when
-            latencyMetricService.recordLatency(
-                    BROADCAST_STREAM, createEvent(Instant.now().minusMillis(30)));
-
-            // then
-            final Timer timer = timerOf(BROADCAST_STREAM);
-            SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(timer).isNotNull();
-                softly.assertThat(timer.count()).isEqualTo(1);
-                softly.assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isGreaterThan(0);
-            });
-        }
-
-        @Test
-        void 스트림이_다르면_다른_타이머에_쌓인다() {
+        void 스트림별로_다른_타이머에_stream_태그와_함께_쌓인다() {
             // when
             latencyMetricService.recordLatency(
                     BROADCAST_STREAM, createEvent(Instant.now().minusMillis(10)));
@@ -72,6 +58,8 @@ class RedisStreamLatencyMetricServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(timerOf(BROADCAST_STREAM).count()).isEqualTo(2);
+                softly.assertThat(timerOf(BROADCAST_STREAM).totalTime(TimeUnit.MILLISECONDS))
+                        .isGreaterThan(0);
                 softly.assertThat(timerOf(OTHER_BROADCAST_STREAM).count()).isEqualTo(1);
             });
         }
@@ -136,10 +124,12 @@ class RedisStreamLatencyMetricServiceTest {
     @DisplayName("히스토그램 구성")
     class 히스토그램_구성 {
 
-        // SimpleMeterRegistry는 percentile histogram 버킷을 만들지 않는다. 버킷 수가 곧 시계열 수라
-        // 실제 노출 대상인 Prometheus 레지스트리로 잰다.
+        // 버킷 수가 곧 시계열 수인데 SimpleMeterRegistry는 버킷을 만들지 않는다. 실제 노출 대상인
+        // Prometheus 레지스트리로 잰다.
+        // 분위수는 알림이 버킷에서 계산한다. 인스턴스별 클라이언트 분위수는 blue/green을 가로질러
+        // 합산되지 않아 쓸 수 없고, 스트림 수만큼 시계열만 늘린다.
         @Test
-        void 버킷_상한이_5초로_제한된다() {
+        void 버킷은_5초까지만_두고_클라이언트_분위수는_등록하지_않는다() {
             // given
             final PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
             final RedisStreamLatencyMetricService service =
@@ -148,32 +138,20 @@ class RedisStreamLatencyMetricServiceTest {
             service.recordLatency(BROADCAST_STREAM, createEvent(Instant.now().minusMillis(30)));
 
             // when
-            final CountAtBucket[] buckets = prometheusRegistry
+            final HistogramSnapshot snapshot = prometheusRegistry
                     .find("redis.stream.e2e.latency")
                     .tag("stream", BROADCAST_STREAM)
                     .timer()
-                    .takeSnapshot()
-                    .histogramCounts();
+                    .takeSnapshot();
+            final CountAtBucket[] buckets = snapshot.histogramCounts();
 
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(buckets).isNotEmpty();
                 softly.assertThat(buckets[buckets.length - 1].bucket(TimeUnit.SECONDS))
                         .isLessThanOrEqualTo(5.0);
+                softly.assertThat(snapshot.percentileValues()).isEmpty();
             });
-        }
-
-        // 알림은 버킷에서 분위수를 계산한다. 인스턴스별 클라이언트 분위수는 blue/green을 가로질러
-        // 합산되지 않아 쓸 수 없고, 스트림 수만큼 시계열만 늘린다.
-        @Test
-        void 클라이언트_측_분위수는_등록하지_않는다() {
-            // given
-            latencyMetricService.recordLatency(
-                    BROADCAST_STREAM, createEvent(Instant.now().minusMillis(30)));
-
-            // when & then
-            assertThat(timerOf(BROADCAST_STREAM).takeSnapshot().percentileValues())
-                    .isEmpty();
         }
     }
 

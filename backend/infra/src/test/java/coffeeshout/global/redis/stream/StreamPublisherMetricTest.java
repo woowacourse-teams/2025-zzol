@@ -1,6 +1,9 @@
 package coffeeshout.global.redis.stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 
@@ -18,6 +21,9 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.data.redis.connection.RedisStreamCommands.XAddOptions;
+import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
@@ -42,19 +48,22 @@ class StreamPublisherMetricTest {
                 new ObjectMapper(),
                 mock(StreamTracePropagator.class),
                 meterRegistry);
+        streamPublisher.initializeCounters();
+    }
+
+    // 첫 발행 때 시계열이 생기면 Prometheus rate()가 그 증가를 못 세서, 발행이 한 번뿐인 스트림에서
+    // 정지 룰이 침묵한다. 기동 시점 0 등록이 그걸 막는다.
+    @Test
+    void 발행_전에도_설정된_모든_스트림의_카운터가_0으로_등록된다() {
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(counterOf(STREAM_KEY)).isNotNull();
+            softly.assertThat(counterOf(STREAM_KEY).count()).isZero();
+            softly.assertThat(counterOf(OTHER_STREAM_KEY)).isNotNull();
+        });
     }
 
     @Test
-    void 발행하면_stream_태그가_붙은_카운터가_증가한다() {
-        // when
-        streamPublisher.publish(STREAM_KEY, "{}", null);
-
-        // then
-        assertThat(counterOf(STREAM_KEY).count()).isEqualTo(1.0);
-    }
-
-    @Test
-    void 스트림별로_카운터가_나뉜다() {
+    void 발행하면_해당_스트림의_카운터만_증가한다() {
         // when
         streamPublisher.publish(STREAM_KEY, "{}", null);
         streamPublisher.publish(STREAM_KEY, "{}", null);
@@ -67,14 +76,21 @@ class StreamPublisherMetricTest {
         });
     }
 
+    // 카운터는 XADD 뒤에 올린다. 발행에 실패한 건을 세면 정지 룰의 좌변이 부풀어 오탐이 된다.
     @Test
-    void 같은_스트림에_반복_발행해도_미터는_하나만_등록된다() {
-        // when
-        streamPublisher.publish(STREAM_KEY, "{}", null);
-        streamPublisher.publish(STREAM_KEY, "{}", null);
+    void 발행에_실패하면_카운터가_증가하지_않는다() {
+        // given
+        final StringRedisTemplate failingTemplate = mock(StringRedisTemplate.class, RETURNS_DEEP_STUBS);
+        given(failingTemplate.opsForStream().add(any(MapRecord.class), any(XAddOptions.class)))
+                .willThrow(new RedisConnectionFailureException("연결 실패"));
+        final StreamPublisher publisher = new StreamPublisher(
+                failingTemplate, properties(), new ObjectMapper(), mock(StreamTracePropagator.class), meterRegistry);
+        publisher.initializeCounters();
 
-        // then
-        assertThat(meterRegistry.find("redis.stream.published").counters()).hasSize(1);
+        // when & then
+        assertThatThrownBy(() -> publisher.publish(STREAM_KEY, "{}", null))
+                .isInstanceOf(RedisConnectionFailureException.class);
+        assertThat(counterOf(STREAM_KEY).count()).isZero();
     }
 
     private Counter counterOf(String streamKey) {

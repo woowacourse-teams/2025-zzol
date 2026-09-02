@@ -1,5 +1,6 @@
 package coffeeshout.room.infra.websocket;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.websocket.StompSessionManager;
 import java.time.Duration;
@@ -46,7 +47,7 @@ public class DelayedPlayerRemovalService {
 
     public void schedulePlayerRemoval(String playerKey, String sessionId, String reason) {
         final String joinCode = playerKey.split(":")[0];
-        if (!roomService.isReadyState(joinCode)) {
+        if (!isRemovalSchedulable(joinCode)) {
             // 지연 삭제를 걸지 않는 경로라 재접속 유예도 없다. 매핑을 남기면 영영 안 지워진다
             stompSessionManager.removeSession(sessionId);
             return;
@@ -68,6 +69,20 @@ public class DelayedPlayerRemovalService {
                 Instant.now().plus(removalDelay));
 
         scheduledTasks.put(playerKey, future);
+    }
+
+    /**
+     * 방이 이미 삭제됐으면 지연 삭제를 걸 대상도 없다. 게임이 끝난 방은 짧은 지연 뒤 삭제되므로,
+     * 결과 화면에 머물던 클라이언트가 그 뒤 끊으면 방 조회가 예외로 끝난다. 그 예외를 밖으로 내보내면
+     * 세션 매핑 정리까지 건너뛰게 된다.
+     */
+    private boolean isRemovalSchedulable(String joinCode) {
+        try {
+            return roomService.isReadyState(joinCode);
+        } catch (BusinessException e) {
+            log.debug("방이 없어 지연 삭제를 건너뛴다: joinCode={}", joinCode);
+            return false;
+        }
     }
 
     public void cancelScheduledRemoval(String playerKey) {

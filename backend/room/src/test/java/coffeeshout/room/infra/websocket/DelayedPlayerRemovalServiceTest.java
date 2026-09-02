@@ -7,6 +7,8 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.websocket.StompSessionManager;
 import java.time.Duration;
@@ -80,12 +82,23 @@ class DelayedPlayerRemovalServiceTest {
         }
 
         @Test
-        void 게임중이면_세션_매핑을_즉시_제거한다() {
+        void 방이_READY가_아니면_세션_매핑을_즉시_제거한다() {
             given(roomService.isReadyState("ABC23")).willReturn(false);
 
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
             then(sessionManager).should().removeSession(sessionId);
+        }
+
+        @Test
+        void 방이_이미_삭제됐어도_세션_매핑을_제거한다() {
+            given(roomService.isReadyState("ABC23"))
+                    .willThrow(new BusinessException(GlobalErrorCode.NOT_EXIST, "방이 존재하지 않습니다."));
+
+            delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
+
+            then(sessionManager).should().removeSession(sessionId);
+            then(taskScheduler).should(never()).schedule(any(Runnable.class), any(Instant.class));
         }
 
         @Test
@@ -160,6 +173,7 @@ class DelayedPlayerRemovalServiceTest {
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
             then(playerDisconnectionService).should().handlePlayerDisconnection(playerKey, sessionId, reason);
+            then(sessionManager).should().removeSession(sessionId);
         }
 
         @Test
@@ -180,6 +194,7 @@ class DelayedPlayerRemovalServiceTest {
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
             then(playerDisconnectionService).should().handlePlayerDisconnection(playerKey, sessionId, reason);
+            then(sessionManager).should().removeSession(sessionId);
         }
     }
 

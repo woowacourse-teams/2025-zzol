@@ -11,6 +11,7 @@ import coffeeshout.websocket.metric.WebSocketMetricService;
 import coffeeshout.websocket.ratelimit.WebSocketRateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.event.Level;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -36,16 +37,14 @@ public class SessionDisconnectEventListener {
         final String sessionId = event.getSessionId();
         final CloseStatus closeStatus = event.getCloseStatus();
 
-        if (webSocketMetricService.hasEstablishedConnection(sessionId)) {
-            log.info(
-                    "세션 연결 해제 감지: sessionId={}, closeStatus={}, reason={}",
-                    sessionId,
-                    closeStatus,
-                    closeStatus.getReason());
-        } else {
-            // STOMP CONNECT 없이 핸드셰이크만 하고 끊는 세션(예: blackbox 프로브)이라 남길 게 없다
-            log.debug("연결 수립 전 세션 해제 감지: sessionId={}, closeStatus={}", sessionId, closeStatus);
-        }
+        // STOMP CONNECT 없이 핸드셰이크만 하고 끊는 세션(예: blackbox 프로브)은 DEBUG 로 내린다
+        final Level level = webSocketMetricService.hasEstablishedConnection(sessionId) ? Level.INFO : Level.DEBUG;
+        log.atLevel(level)
+                .log(
+                        "세션 연결 해제 감지: sessionId={}, closeStatus={}, reason={}",
+                        sessionId,
+                        closeStatus,
+                        closeStatus.getReason());
 
         subscriptionInfoService.removeAllSubscriptions(sessionId);
         webSocketRateLimiter.removeSession(sessionId);

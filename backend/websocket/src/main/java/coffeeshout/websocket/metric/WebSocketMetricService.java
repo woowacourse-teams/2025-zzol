@@ -104,8 +104,13 @@ public class WebSocketMetricService {
     }
 
     public void recordDisconnection(String sessionId, String reason) {
-        establishedConnections.remove(sessionId);
         connectionSamples.remove(sessionId);
+
+        // 연결을 수립한 세션만 한 번씩 센다. 같은 세션에 해제 이벤트가 두 번 와도 중복 집계되지 않고,
+        // CONNECT 없이 끊는 세션은 애초에 집합에 없어 게이지도 카운터도 건드리지 않는다
+        if (!establishedConnections.remove(sessionId)) {
+            return;
+        }
 
         String key = "disconnected." + reason;
 

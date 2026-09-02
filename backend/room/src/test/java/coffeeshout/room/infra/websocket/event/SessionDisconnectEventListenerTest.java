@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import coffeeshout.global.redis.stream.StreamPublisher;
@@ -123,6 +124,23 @@ class SessionDisconnectEventListenerTest {
             listener.handleSessionDisconnectEvent(event);
 
             assertThat(sessionManager.hasPlayerKey(sessionId)).isTrue();
+        }
+
+        @Test
+        void 해제를_메트릭에_기록한다() {
+            SessionDisconnectEvent event = createSessionDisconnectEvent(sessionId);
+
+            listener.handleSessionDisconnectEvent(event);
+
+            then(metricService).should().recordDisconnection(sessionId, "CLIENT_DISCONNECT");
+        }
+
+        @Test
+        void 플레이어가_아닌_세션은_해제_이벤트가_두_번_와도_그대로_처리한다() {
+            listener.handleSessionDisconnectEvent(createSessionDisconnectEvent(sessionId));
+            listener.handleSessionDisconnectEvent(createSessionDisconnectEvent(sessionId));
+
+            then(metricService).should(times(2)).recordDisconnection(sessionId, "CLIENT_DISCONNECT");
         }
     }
 

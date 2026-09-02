@@ -1,58 +1,53 @@
 ---
-description: WebSocket 구독·발행 코드 작성 또는 수정 시 api-mcp 카탈로그로 BE 컨트랙트를 먼저 확인한다. destination prefix·payload·publisher 위치를 코드 작성 전에 검증해 prefix 중복·오타·존재하지 않는 토픽 구독을 사전 차단한다.
+description: WebSocket 구독·발행 코드 작성 또는 수정 시 BE 가 생성한 wsContract.ts 로 컨트랙트를 먼저 확인한다. destination 과 payload 타입은 생성 파일이 SSOT 이고 tsc 가 강제한다.
 paths:
   - "src/apis/websocket/**"
   - "src/contexts/**"
   - "src/features/**/hooks/use*WebSocket*.ts"
   - "src/features/**/hooks/use*Subscription*.ts"
-allowed-tools: Read, mcp__api__ws_list_topics, mcp__api__ws_describe, mcp__api__ws_source
+allowed-tools: Read, Grep
 ---
 
-# WebSocket 컨트랙트 조회 워크플로우
+# WebSocket 컨트랙트 워크플로우
 
-## 사전 검색 — 새 구독/발행 작성 전 필수
+## 컨트랙트는 어디에 있나
 
-`useWebSocketSubscription` / `send` 호출을 새로 추가하거나 destination 을 수정할 때는 **반드시 api-mcp 의 `ws_*` 도구로 BE 카탈로그를 먼저 확인**한다. 존재하지 않는 토픽 구독, prefix 중복, payload 타입 오해를 사전에 차단한다.
+`src/apis/websocket/generated/wsContract.ts` 가 SSOT 다. BE 의 `@WsTopic`·`@WsQueue`·`@WsReceive` 애노테이션과 response record 에서 `WsCatalogContractTest` 가 생성한다. 손으로 고치지 않는다. 소스보다 낡으면 backend-ci 가 실패한다(ADR-0037).
 
-```text
-1. ws_list_topics q="<도메인 키워드>"   # 후보 토픽/큐 좁히기
-2. ws_describe path=<선택한 path>      # 풀 컨트랙트 (payloadType + publishers + 참조 schema)
-3. ws_source path=<...>                # 필요시 발행 메서드 위치 확인
+파일 안에 넷이 있다.
+
+- `WsSubscribePath`·`WsSendPath` — FE 훅이 받는 형태의 destination union. topic 은 `/topic` 을, send 는 `/app` 을 뗀 경로이고 개인 큐는 `/user/queue/...` 그대로다.
+- payload 타입 — BE record 와 enum 을 그대로 옮긴 것. `@Nullable` 이 붙은 필드만 `field?: T | null` 이다.
+- `WsPayloadOf<D>` — destination 에서 payload 타입을 찾는다. 훅의 `onData` 파라미터 타입이 여기서 나온다.
+- `WsSubscribeDestination<D>`·`WsSendDestination<D>` — 호출부 리터럴이 카탈로그 패턴 하나와 정확히 같을 때만 통과시키는 검사.
+
+원본 애노테이션이나 record 를 보고 싶으면 그쪽이 더 정확하다.
+
+```bash
+grep -rn '@WsTopic(path = "/room' ../backend/
+grep -rn 'record LadderStateResponse' ../backend/
 ```
 
-`mcp__api__ws_*` 도구는 `frontend/.mcp.json` 으로 자동 등록된다. BE 가 안 떠 있어도 `~/.zzol-mcp/catalog.json` 캐시로 동작한다.
+## 새 구독·발행을 쓸 때
 
-## destination 형식 — prefix 변환 규칙
+1. 생성 파일에서 destination 을 찾는다. 없으면 BE 에 그 토픽이나 큐가 아직 없다는 뜻이다. 임의로 만들지 않는다. 만들어도 컴파일 오류다.
 
-api-mcp 카탈로그의 path 는 prefix 를 포함하지만, FE wrapper(`useWebSocketSubscription` / `send`)는 prefix 를 자동 추가한다. **path 에서 prefix 를 제거해 전달**한다.
+   ```bash
+   grep -n "ladder" src/apis/websocket/generated/wsContract.ts
+   ```
 
-| 카탈로그 path (MCP 응답)                               | FE 호출 시 path                                        |
-| ------------------------------------------------------ | ------------------------------------------------------ |
-| `/topic/room/{joinCode}/winner`                        | `/room/{joinCode}/winner`                              |
-| `/topic/room/{joinCode}/ladder/state`                  | `/room/{joinCode}/ladder/state`                        |
-| `/app/room/{joinCode}/update-ready` (send destination) | `/room/{joinCode}/update-ready`                        |
-| `/user/queue/friends/requests` (개인 큐)               | `/queue/friends/requests` (`/user` 는 wrapper 가 자동) |
+2. destination 은 방 코드를 변수로 보간한 템플릿 리터럴로 넘긴다. `` `/room/${joinCode}/ladder/state` `` 처럼. `/room/ABCD/...` 처럼 고정한 문자열은 정상 경로여도 동치 검사에 걸린다.
+3. payload 타입은 `useWebSocketSubscription<T>(…)` 로 명시하지 않는다. `onData` 의 파라미터 타입이 destination 에서 추론된다. 콜백에 타입을 적고 싶으면 생성 타입이나 그 alias(`@/types/**`)를 쓴다.
+4. 개인 소켓(`useUserSocketSubscription`)은 envelope 를 벗기지 않는다. `onData` 가 `WebSocketSuccess<Payload>` 를 받으므로 `event.data.…` 로 읽는다. 방 소켓은 wrapper 가 envelope 를 풀어 `data` 만 넘긴다.
 
-상세 룰은 `.claude/rules/websocket.md` 참조.
+## 카탈로그에 없는 경로가 필요할 때
 
-## 카탈로그에 없는 path 를 쓰려고 할 때
+BE PR 을 선행한다. 해당 Publisher 나 컨트롤러에 `@WsTopic(path = "...", payload = Xxx.class)` 를 달고 `backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*'` 로 생성 파일을 갱신해 함께 커밋한다. null 을 넘기는 record 컴포넌트에는 `@Nullable` 을 단다.
 
-BE 측에 해당 토픽/큐가 아직 존재하지 않는다는 신호다. 임의로 새 destination 을 만들지 않는다. 두 선택지:
+## 검증
 
-1. **기존 토픽 재사용**: `ws_list_topics q="..."` 로 유사 토픽 검색. 의미가 맞으면 그것을 쓴다.
-2. **BE 측에 어노테이션 추가 요청**: 해당 컨트롤러/Publisher 에 `@WsTopic(path = "...", payload = <Type>.class)` 추가가 필요하다. PR 본문에 "BE: 토픽 신설 필요 (`/room/{joinCode}/...`, payload `XxxResponse`)" 명시하고 BE 측 PR 선행 후 dev sync 후 진행한다.
-
-## payload 타입 안전성
-
-ws_describe 응답의 `payloadType` (예: `WebSocketResponse<List<PlayerResponse>>`) 과 `schemas` 의 필드 명세를 보고 onData 콜백의 타입을 정의한다. FE 의 wrapper 가 envelope 을 풀어 `data` 만 전달하는지 raw envelope 인지는 `useWebSocketSubscription` 시그니처를 확인한다 (보통 envelope 의 `data` 만 전달).
-
-## ws_subscribe / ws_send 로 검증 (선택)
-
-새 토픽 구독 로직을 짠 후 실제 메시지가 들어오는지 검증하려면:
-
-```text
-ws_subscribe topic=<full path> roomToken=<RST> durationMs=15000   # 캡처
-ws_send destination=<full app path> roomToken=<RST> payload=...   # 트리거
+```bash
+npm run type-check
 ```
 
-`roomToken` 발급은 `POST /api/rooms/{joinCode}/session-token` (ADR-0009).
+카탈로그에 없는 destination 은 `parameter of type '`ws 카탈로그에 없는 destination: …`'` 오류로, 어긋난 payload 필드는 그 필드를 쓰는 줄의 오류로 나온다.

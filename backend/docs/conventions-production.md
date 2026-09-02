@@ -21,7 +21,7 @@
 ### WebSocket 컨트랙트 어노테이션
 
 WebSocket 메시지를 발행하는 메서드에는 반드시 아래 어노테이션을 붙여야 한다.
-어노테이션이 누락되면 `/dev/ws-catalog` 카탈로그에서 해당 컨트랙트가 노출되지 않는다.
+어노테이션이 누락되면 카탈로그에 빠지고, `/topic/` 발행 상수가 있는데 `@WsTopic` 이 없으면 `WsCatalogContractTest` 가 실패한다. FE 는 그 카탈로그에서 생성한 `wsContract.ts` 로 destination 과 payload 를 컴파일 시점에 검사한다(ADR-0037).
 
 | 어노테이션        | 사용 위치                                                  | 설명                             |
 |--------------|--------------------------------------------------------|--------------------------------|
@@ -31,6 +31,8 @@ WebSocket 메시지를 발행하는 메서드에는 반드시 아래 어노테�
 
 `@WsTopic.path` 는 `/topic/` prefix 를 제외한 상대 경로를 적는다 (예: `/room/{joinCode}`).
 `@WsQueue.path` 는 `/queue/` 를 포함한 경로를 적는다 (예: `/queue/friends/requests`).
+
+payload record 에서 null 을 넘기는 컴포넌트에는 `@Nullable`(jspecify)을 단다. 카탈로그가 그 표시로 FE 타입을 `field?: T | null` 로 내고, 표시가 없으면 non-null 로 생성된다. enum 값은 `String` 으로 지우지 않고 enum 타입 그대로 둔다. 지우면 FE 에서 `string` 이 되어 값 검사가 안 된다.
 
 ### 값 객체(Value Object)
 

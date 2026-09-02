@@ -4,12 +4,7 @@ import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { LadderGameState, LadderLine, Pole } from '@/types/miniGame/ladderGame';
 import { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
 import { LadderGameContext } from './LadderGameContext';
-
-type StateMessage =
-  | { state: 'DESCRIPTION' | 'DONE' }
-  | { state: 'PREPARE'; poles: Pole[]; bottomRanks: Record<string, number> }
-  | { state: 'DRAWING'; endTimeEpochMs: number }
-  | { state: 'RESULT'; rankings: Record<string, number>; animationDurationMs: number };
+import type { LadderStateResponse } from '@/apis/websocket/generated/wsContract';
 
 const LadderGameProvider = ({ children }: PropsWithChildren) => {
   const { joinCode, myName } = useIdentifier();
@@ -37,16 +32,16 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
 
   useWebSocketSubscription(
     `/room/${joinCode}/ladder/state`,
-    useCallback((msg: StateMessage) => {
+    useCallback((msg: LadderStateResponse) => {
       setGameState(msg.state);
       if (msg.state === 'PREPARE') {
-        setPoles(msg.poles);
-        setBottomRanks(msg.bottomRanks);
+        setPoles(msg.poles ?? []);
+        setBottomRanks(msg.bottomRanks ?? {});
       } else if (msg.state === 'DRAWING') {
-        setEndTimeEpochMs(msg.endTimeEpochMs);
+        setEndTimeEpochMs(msg.endTimeEpochMs ?? null);
       } else if (msg.state === 'RESULT') {
-        setRankings(msg.rankings);
-        setAnimationDurationMs(msg.animationDurationMs);
+        setRankings(msg.rankings ?? null);
+        setAnimationDurationMs(msg.animationDurationMs ?? null);
       }
     }, [])
   );

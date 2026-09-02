@@ -10,6 +10,7 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.speedtouch.application.SpeedTouchGameService;
 import coffeeshout.speedtouch.domain.SpeedTouchGame;
+import coffeeshout.speedtouch.domain.SpeedTouchGameState;
 import coffeeshout.speedtouch.ui.request.TouchCommand;
 import coffeeshout.speedtouch.ui.response.SpeedTouchProgressResponse;
 import coffeeshout.speedtouch.ui.response.SpeedTouchStateResponse;
@@ -62,17 +63,17 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
         // then - DESCRIPTION 상태
         MessageResponse descriptionState = stateResponses.get(2, TimeUnit.SECONDS);
         assertThat(payloadAs(descriptionState, SpeedTouchStateResponse.class).state())
-                .isEqualTo("DESCRIPTION");
+                .isEqualTo(SpeedTouchGameState.DESCRIPTION);
 
         // PREPARE 상태
         MessageResponse prepareState = stateResponses.get(6, TimeUnit.SECONDS);
         assertThat(payloadAs(prepareState, SpeedTouchStateResponse.class).state())
-                .isEqualTo("PREPARE");
+                .isEqualTo(SpeedTouchGameState.PREPARE);
 
         // PLAYING 상태
         MessageResponse playingState = stateResponses.get(4, TimeUnit.SECONDS);
         assertThat(payloadAs(playingState, SpeedTouchStateResponse.class).state())
-                .isEqualTo("PLAYING");
+                .isEqualTo(SpeedTouchGameState.PLAYING);
     }
 
     @Test
@@ -148,7 +149,7 @@ class SpeedTouchGameIntegrationTest extends GameModuleWebSocketTest {
 
         // then - DONE 상태 확인
         MessageResponse doneState = stateResponses.get(10, TimeUnit.SECONDS);
-        assertThat(payloadAs(doneState, SpeedTouchStateResponse.class).state()).isEqualTo("DONE");
+        assertThat(payloadAs(doneState, SpeedTouchStateResponse.class).state()).isEqualTo(SpeedTouchGameState.DONE);
     }
 
     private void startSpeedTouchGame() {

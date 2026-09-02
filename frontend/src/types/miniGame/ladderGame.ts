@@ -1,14 +1,7 @@
-export type LadderGameState = 'DESCRIPTION' | 'PREPARE' | 'DRAWING' | 'RESULT' | 'DONE';
+import type { LadderLineResponse, PoleInfo } from '@/apis/websocket/generated/wsContract';
 
-export type Pole = {
-  index: number;
-  playerName: string;
-  colorIndex?: number;
-};
+export type { LadderGameState } from '@/apis/websocket/generated/wsContract';
 
-export type LadderLine = {
-  playerName: string;
-  segmentIndex: number | string;
-  row: number;
-  colorIndex?: number;
-};
+export type Pole = PoleInfo;
+
+export type LadderLine = LadderLineResponse;

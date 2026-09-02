@@ -70,3 +70,285 @@ type Exact<D extends string, P extends string> = true extends MatchesOne<D, P>
 
 export type WsSubscribeDestination<D extends WsSubscribePath> = Exact<D, WsSubscribePath>;
 export type WsSendDestination<D extends WsSendPath> = Exact<D, WsSendPath>;
+
+// BE record 를 그대로 옮긴 payload 타입. BE 에서 @Nullable 을 단 필드만 `field?: T | null` 이다.
+// @JsonInclude(NON_NULL) 이면 필드가 빠지고, 아니면 null 이 오므로 둘 다 허용한다.
+export type BlindTimerGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
+export type BlindTimerPlayerProgress = {
+  playerName: string;
+  stopped: boolean;
+  timedOut: boolean;
+};
+export type BlindTimerProgressResponse = {
+  players: BlindTimerPlayerProgress[];
+};
+export type BlindTimerStateResponse = {
+  state: BlindTimerGameState;
+  targetTimeMillis: number;
+  blindDelayMillis: number;
+};
+export type BlockStackingGameState = 'READY' | 'PREPARE' | 'PLAYING' | 'DONE';
+export type BlockStackingPlayerRankInfo = {
+  name: string;
+  floor: number;
+};
+export type BlockStackingProgressRequest = {
+  floor: number;
+  movingBlockX: number;
+  stackTopX: number;
+  stackTopWidth: number;
+};
+export type BlockStackingProgressResponse = {
+  players: BlockStackingPlayerRankInfo[];
+};
+export type BlockStackingStateResponse = {
+  state: BlockStackingGameState;
+  endTimeEpochMs?: number | null;
+};
+export type CardGameState = 'READY' | 'FIRST_LOADING' | 'LOADING' | 'PREPARE' | 'PLAYING' | 'SCORE_BOARD' | 'DONE';
+export type CardInfoMessage = {
+  cardType: CardType;
+  value: number;
+  selected: boolean;
+  playerName?: string | null;
+  colorIndex?: number | null;
+};
+export type CardType = 'ADDITION' | 'MULTIPLIER';
+export type CommandType = 'START_MINI_GAME' | 'SELECT_CARD';
+export type Entry = {
+  playerName: string;
+  totalPoints: number;
+  tier: string;
+  seasonRank: number;
+};
+export type FriendRemovedPayload = {
+  removedByUserId: number;
+};
+export type FriendRequestPayload = {
+  requestId: number;
+  fromUserId: number;
+  fromUserCode: string;
+  fromNickname: string;
+  createdAt: string;
+};
+export type FriendResponsePayload = {
+  requestId: number;
+  accepted: boolean;
+  counterpartUserId: number;
+  counterpartUserCode: string;
+  counterpartNickname: string;
+};
+export type LadderDrawRequest = {
+  segmentIndex: number;
+};
+export type LadderGameState = 'DESCRIPTION' | 'PREPARE' | 'DRAWING' | 'RESULT' | 'DONE';
+export type LadderLineResponse = {
+  playerName: string;
+  segmentIndex: number;
+  row: number;
+  colorIndex?: number | null;
+};
+export type LadderStateResponse = {
+  state: LadderGameState;
+  poles?: PoleInfo[] | null;
+  bottomRanks?: Record<string, number> | null;
+  endTimeEpochMs?: number | null;
+  rankings?: Record<string, number> | null;
+  animationDurationMs?: number | null;
+};
+export type MiniGameMessage = {
+  commandType: CommandType;
+  commandRequest: unknown;
+};
+export type MiniGameSelectMessage = {
+  hostName: string;
+  miniGameTypes: MiniGameType[];
+};
+export type MiniGameStartMessage = {
+  miniGameType: MiniGameType;
+};
+export type MiniGameStateMessage = {
+  cardGameState: CardGameState;
+  currentRound: RoundLabel;
+  cardInfoMessages: CardInfoMessage[];
+  allSelected: boolean;
+};
+export type MiniGameType = 'CARD_GAME' | 'RACING_GAME' | 'SPEED_TOUCH' | 'BLIND_TIMER' | 'BLOCK_STACKING' | 'LADDER_GAME' | 'NUNCHI_GAME' | 'WORM_GAME';
+export type NunchiStandResponse = {
+  name: string;
+  number: number;
+  serverNowEpochMs: number;
+  idleDeadlineEpochMs: number;
+};
+export type NunchiState = 'DESCRIPTION' | 'READY' | 'PLAYING' | 'COLLISION_COOLDOWN' | 'DONE';
+export type NunchiStateResponse = {
+  state: NunchiState;
+  currentNumber?: number | null;
+  stood?: string[] | null;
+  number?: number | null;
+  collided?: string[] | null;
+  serverNowEpochMs?: number | null;
+  idleDeadlineEpochMs?: number | null;
+  hardCapEpochMs?: number | null;
+  resumeAtEpochMs?: number | null;
+  playStartEpochMs?: number | null;
+};
+export type PlayerResponse = {
+  userId?: number | null;
+  playerName: string;
+  playerType: PlayerType;
+  isReady: boolean;
+  colorIndex: number;
+  probability: number;
+};
+export type PlayerType = 'HOST' | 'GUEST';
+export type Point = {
+  x: number;
+  y: number;
+};
+export type PoleInfo = {
+  index: number;
+  playerName: string;
+  colorIndex?: number | null;
+};
+export type PresencePayload = {
+  userId: number;
+  online: boolean;
+  joinCode?: string | null;
+  joinable: boolean;
+};
+export type QrCodeStatus = 'PENDING' | 'SUCCESS' | 'ERROR';
+export type QrCodeStatusResponse = {
+  status: QrCodeStatus;
+  qrCodeUrl?: string | null;
+};
+export type RacingGameRunnersStateResponse = {
+  distance: RacingRange;
+  players: RunnerPosition[];
+};
+export type RacingGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
+export type RacingGameStateResponse = {
+  state: RacingGameState;
+};
+export type RacingRange = {
+  start: number;
+  end: number;
+};
+export type ReadyChangeMessage = {
+  joinCode: string;
+  playerName: string;
+  isReady: boolean;
+};
+export type RoomInvitationPayload = {
+  inviterUserId: number;
+  inviterNickname: string;
+  joinCode: string;
+};
+export type RoomState = 'READY' | 'PLAYING' | 'SCORE_BOARD' | 'ROULETTE' | 'DONE';
+export type RoomStatusResponse = {
+  joinCode: string;
+  roomState: RoomState;
+};
+export type RouletteSpinMessage = {
+  hostName: string;
+};
+export type RoundLabel = 'READY' | 'FIRST' | 'SECOND';
+export type RunnerPosition = {
+  playerName: string;
+  position: number;
+  speed: number;
+};
+export type SeasonRankMessage = {
+  seasonKey: string;
+  entries: Entry[];
+};
+export type SpeedTouchGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
+export type SpeedTouchPlayerProgress = {
+  playerName: string;
+  currentNumber: number;
+  finished: boolean;
+};
+export type SpeedTouchProgressResponse = {
+  players: SpeedTouchPlayerProgress[];
+};
+export type SpeedTouchStateResponse = {
+  state: SpeedTouchGameState;
+};
+export type SteerCommand = {
+  angle: number;
+  seq: number;
+};
+export type TapCommand = {
+  tapCount: number;
+};
+export type TouchCommand = {
+  touchedNumber: number;
+};
+export type WinnerResponse = {
+  playerName: string;
+  colorIndex: number;
+  randomAngle: number;
+};
+export type WormGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'FINISH' | 'DONE';
+export type WormGameStateResponse = {
+  state: WormGameState;
+};
+export type WormPosition = {
+  playerName: string;
+  x: number;
+  y: number;
+  angle: number;
+  alive: boolean;
+  lastSeq: number;
+};
+export type WormSnapshotResponse = {
+  tick: number;
+  tickMillis: number;
+  serverNow: string;
+  radius: number;
+  worms: WormTrailSnapshot[];
+};
+export type WormTrailSnapshot = {
+  playerName: string;
+  alive: boolean;
+  trail: Point[];
+};
+export type WormsStateResponse = {
+  tick: number;
+  radius: number;
+  worms: WormPosition[];
+};
+
+// destination 별 payload. 세그먼트가 많은 패턴을 앞에 둬야 `/room/${string}` 이 다른 room 경로를 삼키지 않는다.
+export type WsPayloadOf<D extends WsSubscribePath> =
+  D extends '/user/queue/friends/presence' ? PresencePayload :
+  D extends '/user/queue/friends/removed' ? FriendRemovedPayload :
+  D extends '/user/queue/friends/requests' ? FriendRequestPayload :
+  D extends '/user/queue/friends/responses' ? FriendResponsePayload :
+  D extends '/user/queue/rooms/invitations' ? RoomInvitationPayload :
+  D extends '/user/queue/worm/snapshot' ? WormSnapshotResponse :
+  D extends `/room/${string}/blind-timer/progress` ? BlindTimerProgressResponse :
+  D extends `/room/${string}/blind-timer/state` ? BlindTimerStateResponse :
+  D extends `/room/${string}/block-stacking/progress` ? BlockStackingProgressResponse :
+  D extends `/room/${string}/block-stacking/state` ? BlockStackingStateResponse :
+  D extends `/room/${string}/ladder/line` ? LadderLineResponse :
+  D extends `/room/${string}/ladder/state` ? LadderStateResponse :
+  D extends `/room/${string}/nunchi/stand` ? NunchiStandResponse :
+  D extends `/room/${string}/nunchi/state` ? NunchiStateResponse :
+  D extends `/room/${string}/racing-game/state` ? RacingGameStateResponse :
+  D extends `/room/${string}/speed-touch/progress` ? SpeedTouchProgressResponse :
+  D extends `/room/${string}/speed-touch/state` ? SpeedTouchStateResponse :
+  D extends `/room/${string}/worm/snapshot` ? WormSnapshotResponse :
+  D extends `/room/${string}/worm/state` ? WormGameStateResponse :
+  D extends '/user/queue/errors' ? string :
+  D extends `/room/${string}/gameState` ? MiniGameStateMessage :
+  D extends `/room/${string}/minigame` ? MiniGameType[] :
+  D extends `/room/${string}/qr-code` ? QrCodeStatusResponse :
+  D extends `/room/${string}/racing-game` ? RacingGameRunnersStateResponse :
+  D extends `/room/${string}/roulette` ? RoomStatusResponse :
+  D extends `/room/${string}/round` ? MiniGameStartMessage :
+  D extends `/room/${string}/settlement` ? SeasonRankMessage :
+  D extends `/room/${string}/winner` ? WinnerResponse :
+  D extends `/room/${string}/worm` ? WormsStateResponse :
+  D extends `/room/${string}` ? PlayerResponse[] :
+  never;

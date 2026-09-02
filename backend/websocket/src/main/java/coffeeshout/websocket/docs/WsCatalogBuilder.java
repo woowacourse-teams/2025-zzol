@@ -422,10 +422,25 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
         private WsCatalog.SchemaEntry describeRecord(Class<?> cls) {
             final List<WsCatalog.FieldEntry> fields = new ArrayList<>();
             for (final RecordComponent component : cls.getRecordComponents()) {
-                fields.add(
-                        new WsCatalog.FieldEntry(component.getName(), describeFieldType(component.getGenericType())));
+                final String type = describeFieldType(component.getGenericType());
+                fields.add(new WsCatalog.FieldEntry(component.getName(), isNullable(component) ? type + "?" : type));
             }
             return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.RECORD, fields, null);
+        }
+
+        /**
+         * {@code @Nullable} 이 붙은 컴포넌트는 타입 뒤에 {@code ?} 를 붙인다. 래퍼 타입만으로는 null 여부를 알 수 없고,
+         * FE 는 이 표시로 {@code field?: T | null} 을 만든다. jspecify(TYPE_USE)·jakarta(METHOD) 어느 쪽이든 잡히게
+         * 컴포넌트·접근자·타입 애노테이션을 모두 본다.
+         */
+        private static boolean isNullable(RecordComponent component) {
+            return Stream.of(
+                            component.getAnnotations(),
+                            component.getAccessor().getAnnotations(),
+                            component.getAnnotatedType().getAnnotations())
+                    .flatMap(Arrays::stream)
+                    .anyMatch(annotation ->
+                            annotation.annotationType().getSimpleName().equals("Nullable"));
         }
 
         private String describeFieldType(Type type) {

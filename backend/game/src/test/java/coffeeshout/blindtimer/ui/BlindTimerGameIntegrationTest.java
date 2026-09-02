@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.blindtimer.application.BlindTimerGameService;
 import coffeeshout.blindtimer.domain.BlindTimerGame;
+import coffeeshout.blindtimer.domain.BlindTimerGameState;
 import coffeeshout.blindtimer.ui.response.BlindTimerProgressResponse;
 import coffeeshout.blindtimer.ui.response.BlindTimerStateResponse;
 import coffeeshout.fixture.GamerFixture;
@@ -99,12 +100,12 @@ class BlindTimerGameIntegrationTest extends GameModuleWebSocketTest {
 
         // then
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(descriptionState.state()).isEqualTo("DESCRIPTION");
+            softly.assertThat(descriptionState.state()).isEqualTo(BlindTimerGameState.DESCRIPTION);
             softly.assertThat(descriptionState.targetTimeMillis()).isEqualTo(10000);
-            softly.assertThat(prepareState.state()).isEqualTo("PREPARE");
-            softly.assertThat(playingState.state()).isEqualTo("PLAYING");
+            softly.assertThat(prepareState.state()).isEqualTo(BlindTimerGameState.PREPARE);
+            softly.assertThat(playingState.state()).isEqualTo(BlindTimerGameState.PLAYING);
             softly.assertThat(progressUpdate.players()).isNotEmpty();
-            softly.assertThat(doneState.state()).isEqualTo("DONE");
+            softly.assertThat(doneState.state()).isEqualTo(BlindTimerGameState.DONE);
         });
     }
 

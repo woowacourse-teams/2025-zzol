@@ -9,6 +9,7 @@ import {
 } from '@/types/miniGame/nunchiGame';
 import { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 import { NunchiGameContext } from './NunchiGameContext';
+import type { NunchiStateResponse } from '@/apis/websocket/generated/wsContract';
 
 /**
  * 눈치게임 Provider — 구독·상태·낙관적 입력의 단일 오케스트레이션 지점.
@@ -53,7 +54,10 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
   useWebSocketSubscription(
     `/room/${joinCode}/nunchi/state`,
     useCallback(
-      (msg: NunchiStateMessage) => {
+      // BE 는 모든 상태 필드를 한 record(NunchiStateResponse)에 담아 보낸다. FE 는 ADR-0031 계약대로
+      // state 별 discriminated union 으로 읽는다. 필드 집합은 같고 좁히기만 다르다.
+      (raw: NunchiStateResponse) => {
+        const msg = raw as unknown as NunchiStateMessage;
         // 1. 스큐 보정(D) — 모든 분기 공통. DONE 은 serverNowEpochMs 가 없으므로 분기 안에서 처리.
         setGameState(msg.state);
 

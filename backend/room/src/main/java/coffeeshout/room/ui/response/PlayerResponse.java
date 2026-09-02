@@ -3,15 +3,15 @@ package coffeeshout.room.ui.response;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.domain.roulette.Probability;
+import org.jspecify.annotations.Nullable;
 
 public record PlayerResponse(
-        Long userId,
+        @Nullable Long userId,
         String playerName,
         PlayerType playerType,
         Boolean isReady,
         Integer colorIndex,
-        Double probability
-) {
+        Double probability) {
 
     public static PlayerResponse from(Player player) {
         return new PlayerResponse(
@@ -20,8 +20,7 @@ public record PlayerResponse(
                 player.getPlayerType(),
                 player.getIsReady(),
                 player.getColorIndex(),
-                parseProbability(player.getProbability())
-        );
+                parseProbability(player.getProbability()));
     }
 
     private static Double parseProbability(Probability probability) {

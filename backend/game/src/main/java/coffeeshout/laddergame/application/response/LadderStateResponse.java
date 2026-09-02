@@ -7,16 +7,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 @JsonInclude(Include.NON_NULL)
 public record LadderStateResponse(
         LadderGameState state,
-        List<PoleInfo> poles,
-        Map<Integer, Integer> bottomRanks,
-        Long endTimeEpochMs,
-        Map<String, Integer> rankings,
-        Long animationDurationMs
-) {
+        @Nullable List<PoleInfo> poles,
+        @Nullable Map<Integer, Integer> bottomRanks,
+        @Nullable Long endTimeEpochMs,
+        @Nullable Map<String, Integer> rankings,
+        @Nullable Long animationDurationMs) {
 
     public static LadderStateResponse ofDescription() {
         return new LadderStateResponse(LadderGameState.DESCRIPTION, null, null, null, null, null);

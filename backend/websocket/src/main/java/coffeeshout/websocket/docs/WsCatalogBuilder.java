@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
@@ -390,12 +391,12 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
             }
             final String simpleName = cls.getSimpleName();
             if (seenByName.containsKey(simpleName)) {
-                log.warn(
-                        "스키마 simpleName 충돌: '{}' — {} vs {} (첫 선언 유지)",
-                        simpleName,
-                        seenByName.get(simpleName).getName(),
-                        cls.getName());
-                return;
+                // 카탈로그는 FE 타입의 원천이라 한쪽을 버리면 FE 가 다른 클래스의 모양으로 필드를 읽는다.
+                throw new SystemException(
+                        WsCatalogErrorCode.SCHEMA_NAME_COLLISION,
+                        "스키마 simpleName 충돌: '%s' — %s vs %s"
+                                .formatted(
+                                        simpleName, seenByName.get(simpleName).getName(), cls.getName()));
             }
             seenByName.put(simpleName, cls);
             result.put(simpleName, describe(cls));
@@ -429,18 +430,11 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
         }
 
         /**
-         * {@code @Nullable} 이 붙은 컴포넌트는 타입 뒤에 {@code ?} 를 붙인다. 래퍼 타입만으로는 null 여부를 알 수 없고,
-         * FE 는 이 표시로 {@code field?: T | null} 을 만든다. jspecify(TYPE_USE)·jakarta(METHOD) 어느 쪽이든 잡히게
-         * 컴포넌트·접근자·타입 애노테이션을 모두 본다.
+         * jspecify {@code @Nullable} 이 붙은 컴포넌트는 타입 뒤에 {@code ?} 를 붙인다. 래퍼 타입만으로는 null 여부를
+         * 알 수 없고, FE 는 이 표시로 {@code field?: T | null} 을 만든다. TYPE_USE 애노테이션이라 타입 쪽에서 읽는다.
          */
         private static boolean isNullable(RecordComponent component) {
-            return Stream.of(
-                            component.getAnnotations(),
-                            component.getAccessor().getAnnotations(),
-                            component.getAnnotatedType().getAnnotations())
-                    .flatMap(Arrays::stream)
-                    .anyMatch(annotation ->
-                            annotation.annotationType().getSimpleName().equals("Nullable"));
+            return component.getAnnotatedType().isAnnotationPresent(Nullable.class);
         }
 
         private String describeFieldType(Type type) {

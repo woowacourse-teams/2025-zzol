@@ -146,7 +146,7 @@ export type LadderLineResponse = {
   playerName: string;
   segmentIndex: number;
   row: number;
-  colorIndex: number;
+  colorIndex?: number | null;
 };
 export type LadderStateResponse = {
   state: LadderGameState;
@@ -209,7 +209,7 @@ export type Point = {
 export type PoleInfo = {
   index: number;
   playerName: string;
-  colorIndex: number;
+  colorIndex?: number | null;
 };
 export type PresencePayload = {
   userId: number;

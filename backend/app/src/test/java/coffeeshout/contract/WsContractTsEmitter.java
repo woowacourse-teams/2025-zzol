@@ -59,9 +59,8 @@ final class WsContractTsEmitter {
             // destination 별 payload. 세그먼트가 많은 패턴을 앞에 둬야 `/room/${string}` 이 다른 room 경로를 삼키지 않는다.
             """;
 
-    private static final Set<String> NUMBER_PRIMITIVES = Set.of("int", "long", "double", "float", "short", "byte");
-    private static final Set<String> NUMBER_WRAPPERS = Set.of("Integer", "Long", "Double", "Float", "Short", "Byte");
-    private static final Set<String> STRING_LIKE = Set.of("String", "Instant", "LocalDateTime", "LocalDate", "UUID");
+    private static final Set<String> NUMBERS = Set.of("int", "long", "double", "Integer", "Long", "Double");
+    private static final Set<String> STRINGS = Set.of("String", "Instant");
 
     private WsContractTsEmitter() {}
 
@@ -177,33 +176,19 @@ final class WsContractTsEmitter {
         }
         if (type.startsWith("Map<") && type.endsWith(">")) {
             final String inner = type.substring(4, type.length() - 1);
-            return "Record<string, " + tsType(inner.substring(topLevelComma(inner) + 1), schemaNames) + ">";
+            // JSON 객체 키는 문자열이라 Map 키 타입은 제네릭을 못 가진다. 첫 콤마가 곧 최상위 콤마다.
+            return "Record<string, " + tsType(inner.substring(inner.indexOf(',') + 1), schemaNames) + ">";
         }
-        if (NUMBER_PRIMITIVES.contains(type) || NUMBER_WRAPPERS.contains(type)) {
+        if (NUMBERS.contains(type)) {
             return "number";
         }
         if (type.equals("boolean") || type.equals("Boolean")) {
             return "boolean";
         }
-        if (STRING_LIKE.contains(type)) {
+        if (STRINGS.contains(type)) {
             return "string";
         }
         return schemaNames.contains(type) ? type : "unknown";
-    }
-
-    private static int topLevelComma(String generics) {
-        int depth = 0;
-        for (int i = 0; i < generics.length(); i++) {
-            final char c = generics.charAt(i);
-            if (c == '<') {
-                depth++;
-            } else if (c == '>') {
-                depth--;
-            } else if (c == ',' && depth == 0) {
-                return i;
-            }
-        }
-        throw new IllegalArgumentException("Map 타입 인자를 나눌 수 없다: " + generics);
     }
 
     private static String union(String name, Collection<String> paths) {

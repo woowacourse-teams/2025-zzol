@@ -55,9 +55,10 @@ const NunchiGameProvider = ({ children }: PropsWithChildren) => {
     `/room/${joinCode}/nunchi/state`,
     useCallback(
       // BE 는 모든 상태 필드를 한 record(NunchiStateResponse)에 담아 보낸다. FE 는 ADR-0031 계약대로
-      // state 별 discriminated union 으로 읽는다. 필드 집합은 같고 좁히기만 다르다.
+      // state 별 discriminated union 으로 읽는다. union 이 생성 타입을 extends 하므로 단일 캐스팅이 되고,
+      // BE 가 필드명을 바꾸면 여기서 컴파일 오류가 난다.
       (raw: NunchiStateResponse) => {
-        const msg = raw as unknown as NunchiStateMessage;
+        const msg = raw as NunchiStateMessage;
         // 1. 스큐 보정(D) — 모든 분기 공통. DONE 은 serverNowEpochMs 가 없으므로 분기 안에서 처리.
         setGameState(msg.state);
 

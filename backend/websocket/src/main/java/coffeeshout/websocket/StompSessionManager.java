@@ -49,8 +49,9 @@ public class StompSessionManager {
 
     private void upsertSessionMapping(@NonNull String playerKey, @NonNull String sessionId) {
         // 기존 세션이 있으면 정리
+        // 복제 이벤트를 되받아 같은 세션으로 재등록할 때는 건너뛴다. remove 와 put 사이에 매핑이 잠깐 빈다
         final String oldSessionId = playerSessionMap.get(playerKey);
-        if (oldSessionId != null) {
+        if (oldSessionId != null && !oldSessionId.equals(sessionId)) {
             log.info("기존 플레이어 세션 정리: playerKey={}, oldSessionId={}", playerKey, oldSessionId);
             sessionPlayerMap.remove(oldSessionId);
         }

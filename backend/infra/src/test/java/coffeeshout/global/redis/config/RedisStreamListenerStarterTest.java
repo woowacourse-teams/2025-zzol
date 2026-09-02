@@ -102,8 +102,7 @@ class RedisStreamListenerStarterTest {
                 eventDispatcher,
                 streamTracePropagator,
                 applicationContext,
-                containerRegistry
-        );
+                containerRegistry);
     }
 
     @Nested
@@ -112,10 +111,10 @@ class RedisStreamListenerStarterTest {
         @Test
         void listener_enabled가_false인_스트림은_브로드캐스트_컨테이너를_만들지_않는다() {
             // given: 컨슈머 그룹 전용 작업 큐 스트림(#1610)
-            given(properties.keys()).willReturn(Map.of(
-                    "settlement:result",
-                    new RedisStreamProperties.StreamConfig(null, null, 10000, null, null, false)
-            ));
+            given(properties.keys())
+                    .willReturn(Map.of(
+                            "settlement:result",
+                            new RedisStreamProperties.StreamConfig(null, null, 10000, null, null, false)));
 
             // when
             starter.streamContainers();
@@ -144,8 +143,10 @@ class RedisStreamListenerStarterTest {
 
             // then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(cancelOnError.test(new RuntimeException("리스너 처리 실패"))).isFalse();
-                softly.assertThat(cancelOnError.test(new RedisSystemException("연결 오류", new IOException()))).isFalse();
+                softly.assertThat(cancelOnError.test(new RuntimeException("리스너 처리 실패")))
+                        .isFalse();
+                softly.assertThat(cancelOnError.test(new RedisSystemException("연결 오류", new IOException())))
+                        .isFalse();
                 softly.assertThat(cancelOnError.test(new Error("심각한 오류"))).isFalse();
             });
         }
@@ -157,7 +158,8 @@ class RedisStreamListenerStarterTest {
             starter.onContextClosed(new ContextClosedEvent(applicationContext));
 
             // when & then
-            assertThat(request.getCancelSubscriptionOnError().test(new RuntimeException("종료 중 오류"))).isTrue();
+            assertThat(request.getCancelSubscriptionOnError().test(new RuntimeException("종료 중 오류")))
+                    .isTrue();
         }
 
         @Test
@@ -167,7 +169,8 @@ class RedisStreamListenerStarterTest {
             starter.markStopping();
 
             // when & then
-            assertThat(request.getCancelSubscriptionOnError().test(new RuntimeException("파괴 후 폴링 오류"))).isTrue();
+            assertThat(request.getCancelSubscriptionOnError().test(new RuntimeException("파괴 후 폴링 오류")))
+                    .isTrue();
         }
 
         @Test
@@ -232,8 +235,8 @@ class RedisStreamListenerStarterTest {
 
         @BeforeEach
         void stubCommonSettings() {
-            given(properties.commonSettings()).willReturn(
-                    new RedisStreamProperties.CommonSettings(
+            given(properties.commonSettings())
+                    .willReturn(new RedisStreamProperties.CommonSettings(
                             100, 10, Duration.ofSeconds(2), Duration.ofSeconds(5)));
         }
 
@@ -297,15 +300,13 @@ class RedisStreamListenerStarterTest {
         @Test
         void 종료_중에는_어떤_오류도_ERROR로_기록하지_않는다() {
             // given
-            final ErrorHandler errorHandler = Objects.requireNonNull(
-                    starter.buildReadRequest(STREAM_KEY).getErrorHandler()
-            );
+            final ErrorHandler errorHandler =
+                    Objects.requireNonNull(starter.buildReadRequest(STREAM_KEY).getErrorHandler());
             starter.onContextClosed(new ContextClosedEvent(applicationContext));
 
             // when
             errorHandler.handleError(
-                    new IllegalStateException("LettuceConnectionFactory was destroyed and cannot be used anymore")
-            );
+                    new IllegalStateException("LettuceConnectionFactory was destroyed and cannot be used anymore"));
             errorHandler.handleError(new RuntimeException("종료 중 임의 오류"));
 
             // then — appender.list는 같은 클래스 Logger를 쓰는 다른 테스트의 잔여 백그라운드
@@ -316,9 +317,8 @@ class RedisStreamListenerStarterTest {
         @Test
         void 평시_오류는_ERROR로_기록한다() {
             // given
-            final ErrorHandler errorHandler = Objects.requireNonNull(
-                    starter.buildReadRequest(STREAM_KEY).getErrorHandler()
-            );
+            final ErrorHandler errorHandler =
+                    Objects.requireNonNull(starter.buildReadRequest(STREAM_KEY).getErrorHandler());
 
             // when
             errorHandler.handleError(new RuntimeException("폴링 실패"));
@@ -343,7 +343,7 @@ class RedisStreamListenerStarterTest {
 
             // then
             final ArgumentCaptor<BaseEventDummy> captor = ArgumentCaptor.forClass(BaseEventDummy.class);
-            verify(eventDispatcher).handle(captor.capture());
+            verify(eventDispatcher).handle(eq(STREAM_KEY), captor.capture());
             assertThat(captor.getValue().eventId()).isEqualTo(event.eventId());
         }
 
@@ -361,20 +361,19 @@ class RedisStreamListenerStarterTest {
 
             // then
             final ArgumentCaptor<BaseEventDummy> captor = ArgumentCaptor.forClass(BaseEventDummy.class);
-            verify(eventDispatcher).handle(captor.capture());
+            verify(eventDispatcher).handle(eq(STREAM_KEY), captor.capture());
             assertThat(captor.getValue().eventId()).isEqualTo(event.eventId());
         }
 
         @Test
         void payload_필드가_없는_레코드는_무시한다() {
             // given
-            final MapRecord<String, String, String> message = StreamRecords.newRecord()
-                    .in(STREAM_KEY)
-                    .ofMap(Map.of("unknown", "값"));
+            final MapRecord<String, String, String> message =
+                    StreamRecords.newRecord().in(STREAM_KEY).ofMap(Map.of("unknown", "값"));
 
             // when & then
             assertThatCode(() -> starter.onMessage(message)).doesNotThrowAnyException();
-            verify(eventDispatcher, never()).handle(any());
+            verify(eventDispatcher, never()).handle(any(), any());
         }
 
         @Test
@@ -384,17 +383,16 @@ class RedisStreamListenerStarterTest {
 
             // when & then — 예외가 전파되면 Spring Data Redis가 구독을 취소할 수 있다
             assertThatCode(() -> starter.onMessage(message)).doesNotThrowAnyException();
-            verify(eventDispatcher, never()).handle(any());
+            verify(eventDispatcher, never()).handle(any(), any());
         }
 
         @Test
         void 이벤트_처리_중_예외가_발생해도_전파하지_않는다() throws JsonProcessingException {
             // given
             stubPropagatorToRunTask();
-            willThrow(new RuntimeException("처리 실패")).given(eventDispatcher).handle(any());
-            final MapRecord<String, String, String> message = 메시지(
-                    objectMapper.writeValueAsString(BaseEventDummy.페이로드("처리 실패 메시지"))
-            );
+            willThrow(new RuntimeException("처리 실패")).given(eventDispatcher).handle(any(), any());
+            final MapRecord<String, String, String> message =
+                    메시지(objectMapper.writeValueAsString(BaseEventDummy.페이로드("처리 실패 메시지")));
 
             // when & then — 예외가 전파되면 Spring Data Redis가 구독을 취소할 수 있다
             assertThatCode(() -> starter.onMessage(message)).doesNotThrowAnyException();
@@ -402,16 +400,16 @@ class RedisStreamListenerStarterTest {
 
         private void stubPropagatorToRunTask() {
             willAnswer(invocation -> {
-                invocation.getArgument(2, Runnable.class).run();
-                return null;
-            }).given(streamTracePropagator).runInConsumerScope(any(), any(), any());
+                        invocation.getArgument(2, Runnable.class).run();
+                        return null;
+                    })
+                    .given(streamTracePropagator)
+                    .runInConsumerScope(any(), any(), any());
         }
     }
 
     private MapRecord<String, String, String> 메시지(String payload) {
-        return StreamRecords.newRecord()
-                .in(STREAM_KEY)
-                .ofMap(Map.of(StreamRecordFields.PAYLOAD, payload));
+        return StreamRecords.newRecord().in(STREAM_KEY).ofMap(Map.of(StreamRecordFields.PAYLOAD, payload));
     }
 
     private void 스트림_마지막_레코드를_반환한다(List<MapRecord<String, Object, Object>> records) {

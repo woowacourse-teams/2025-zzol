@@ -3,6 +3,7 @@ package coffeeshout.global.redis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.willThrow;
 
 import coffeeshout.fixture.BaseEventDummy;
@@ -25,6 +26,8 @@ import org.springframework.core.annotation.Order;
 
 @ExtendWith(MockitoExtension.class)
 class EventDispatcherTest {
+
+    private static final String STREAM_KEY = "room";
 
     @Mock
     RedisStreamLatencyMetricService latencyMetricService;
@@ -62,7 +65,7 @@ class EventDispatcherTest {
             final BaseEventDummy event = BaseEventDummy.페이로드("단일");
 
             // when
-            dispatcher.handle(event);
+            dispatcher.handle(STREAM_KEY, event);
 
             // then
             assertThat(consumer.received).containsExactly(event);
@@ -78,7 +81,7 @@ class EventDispatcherTest {
             final BaseEventDummy event = BaseEventDummy.페이로드("팬아웃");
 
             // when
-            dispatcher.handle(event);
+            dispatcher.handle(STREAM_KEY, event);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -95,7 +98,7 @@ class EventDispatcherTest {
             final BaseEventDummy event = BaseEventDummy.페이로드("미등록");
 
             // when & then
-            assertThatCode(() -> dispatcher.handle(event)).doesNotThrowAnyException();
+            assertThatCode(() -> dispatcher.handle(STREAM_KEY, event)).doesNotThrowAnyException();
         }
 
         @Test
@@ -108,7 +111,7 @@ class EventDispatcherTest {
             final BaseEventDummy event = BaseEventDummy.페이로드("격리");
 
             // when
-            dispatcher.handle(event);
+            dispatcher.handle(STREAM_KEY, event);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -126,7 +129,7 @@ class EventDispatcherTest {
             final OtherEventDummy event = new OtherEventDummy(UUID.randomUUID().toString(), Instant.now());
 
             // when
-            dispatcher.handle(event);
+            dispatcher.handle(STREAM_KEY, event);
 
             // then
             assertThat(consumer.received).isEmpty();
@@ -138,13 +141,13 @@ class EventDispatcherTest {
             // given
             willThrow(new RuntimeException("메트릭 실패"))
                     .given(latencyMetricService)
-                    .recordLatency(any(BaseEvent.class));
+                    .recordLatency(anyString(), any(BaseEvent.class));
             final RecordingConsumer consumer = new RecordingConsumer();
             final EventDispatcher dispatcher = dispatcherWith(consumer);
             final BaseEventDummy event = BaseEventDummy.페이로드("메트릭");
 
             // when
-            dispatcher.handle(event);
+            dispatcher.handle(STREAM_KEY, event);
 
             // then
             assertThat(consumer.received).containsExactly(event);
@@ -174,6 +177,5 @@ class EventDispatcherTest {
         }
     }
 
-    record OtherEventDummy(String eventId, Instant timestamp) implements BaseEvent {
-    }
+    record OtherEventDummy(String eventId, Instant timestamp) implements BaseEvent {}
 }

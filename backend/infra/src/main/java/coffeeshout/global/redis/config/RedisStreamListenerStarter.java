@@ -57,8 +57,7 @@ public class RedisStreamListenerStarter {
             EventDispatcher eventDispatcher,
             StreamTracePropagator streamTracePropagator,
             ApplicationContext applicationContext,
-            RedisStreamContainerRegistry containerRegistry
-    ) {
+            RedisStreamContainerRegistry containerRegistry) {
         this.properties = properties;
         this.redisConnectionFactory = redisConnectionFactory;
         this.stringRedisTemplate = stringRedisTemplate;
@@ -87,11 +86,8 @@ public class RedisStreamListenerStarter {
                 continue;
             }
 
-            final StreamMessageListenerContainer<String, MapRecord<String, String, String>> container = createContainer(
-                    redisConnectionFactory,
-                    findExecutor(streamKey, streamConfig),
-                    streamConfig
-            );
+            final StreamMessageListenerContainer<String, MapRecord<String, String, String>> container =
+                    createContainer(redisConnectionFactory, findExecutor(streamKey, streamConfig), streamConfig);
 
             // start/await 이전에 등록한다 — await 실패로 기동이 중단돼도
             // 이미 start된 컨테이너가 레지스트리의 @PreDestroy stop 대상에 포함된다
@@ -110,8 +106,7 @@ public class RedisStreamListenerStarter {
         try {
             if (!subscription.await(timeout)) {
                 throw new IllegalStateException(
-                        "Redis Stream 구독이 제한 시간 내에 시작되지 않았습니다 (공유 스레드풀 core-size가 "
-                                + "스트림 수보다 작은지 확인): " + streamKey);
+                        "Redis Stream 구독이 제한 시간 내에 시작되지 않았습니다 (공유 스레드풀 core-size가 " + "스트림 수보다 작은지 확인): " + streamKey);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -122,9 +117,7 @@ public class RedisStreamListenerStarter {
     private Executor findExecutor(String streamKey, StreamConfig streamConfig) {
         if (streamConfig.isUseSharedThreadPool()) {
             return applicationContext.getBean(
-                    RedisStreamThreadPoolConfig.convertBeanName(streamConfig.threadPoolName()),
-                    Executor.class
-            );
+                    RedisStreamThreadPoolConfig.convertBeanName(streamConfig.threadPoolName()), Executor.class);
         }
         return applicationContext.getBean(RedisStreamThreadPoolConfig.convertBeanName(streamKey), Executor.class);
     }
@@ -168,7 +161,8 @@ public class RedisStreamListenerStarter {
     // 구체 ID는 NextMessage 전략을 타므로 리플레이 없이 이후 메시지를 빠짐없이 소비하며,
     // 오프셋이 등록 시점에 고정되어 첫 XREAD 전에 발행된 메시지도 수신된다
     private ReadOffset resolveStartOffset(String streamKey) {
-        final List<MapRecord<String, Object, Object>> lastRecords = stringRedisTemplate.opsForStream()
+        final List<MapRecord<String, Object, Object>> lastRecords = stringRedisTemplate
+                .opsForStream()
                 .reverseRange(streamKey, Range.unbounded(), Limit.limit().count(1));
         if (lastRecords == null || lastRecords.isEmpty()) {
             return ReadOffset.from("0-0");
@@ -186,10 +180,7 @@ public class RedisStreamListenerStarter {
         try {
             final BaseEvent event = redisObjectMapper.readValue(payload, BaseEvent.class);
             streamTracePropagator.runInConsumerScope(
-                    fields,
-                    EventTypeName.of(event),
-                    () -> eventDispatcher.handle(event)
-            );
+                    fields, EventTypeName.of(event), () -> eventDispatcher.handle(message.getStream(), event));
         } catch (JsonProcessingException e) {
             log.error("Failed to parse event: {}", payload, e);
         } catch (Exception e) {
@@ -209,10 +200,7 @@ public class RedisStreamListenerStarter {
     }
 
     private StreamMessageListenerContainer<String, MapRecord<String, String, String>> createContainer(
-            RedisConnectionFactory redisConnectionFactory,
-            Executor executor,
-            StreamConfig streamConfig
-    ) {
+            RedisConnectionFactory redisConnectionFactory, Executor executor, StreamConfig streamConfig) {
         if (properties.commonSettings() == null) {
             throw new IllegalStateException("Redis Stream 공통 설정이 없습니다.");
         }

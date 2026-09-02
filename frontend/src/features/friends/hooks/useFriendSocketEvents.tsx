@@ -34,10 +34,10 @@ export const useFriendSocketEvents = ({
   const { openModal, closeModal } = useModal();
 
   // 친구 요청 수신
-  useUserSocketSubscription(
+  useUserSocketSubscription<FriendRequestEvent>(
     '/user/queue/friends/requests',
     useCallback(
-      (event: FriendRequestEvent) => {
+      (event) => {
         const { data } = event;
         const req: ReceivedRequest = {
           requestId: data.requestId,
@@ -58,10 +58,10 @@ export const useFriendSocketEvents = ({
   );
 
   // 내가 보낸 요청 응답 수신
-  useUserSocketSubscription(
+  useUserSocketSubscription<FriendResponseEvent>(
     '/user/queue/friends/responses',
     useCallback(
-      (event: FriendResponseEvent) => {
+      (event) => {
         const { data } = event;
         setSentRequests((prev) => prev.filter((r) => r.requestId !== data.requestId));
 
@@ -92,10 +92,10 @@ export const useFriendSocketEvents = ({
   );
 
   // 친구 끊기 알림 수신
-  useUserSocketSubscription(
+  useUserSocketSubscription<FriendRemovedEvent>(
     '/user/queue/friends/removed',
     useCallback(
-      (event: FriendRemovedEvent) => {
+      (event) => {
         setFriends((prev) => prev.filter((f) => f.userId !== event.data.removedByUserId));
       },
       [setFriends]
@@ -104,10 +104,10 @@ export const useFriendSocketEvents = ({
   );
 
   // 방 초대 수신 — 방 안에 있으면 무시
-  useUserSocketSubscription(
+  useUserSocketSubscription<RoomInvitationEvent>(
     '/user/queue/rooms/invitations',
     useCallback(
-      (event: RoomInvitationEvent) => {
+      (event) => {
         if (isInRoomRef.current) return;
         const { data } = event;
         openModal(
@@ -126,10 +126,10 @@ export const useFriendSocketEvents = ({
 
   // 친구 접속·방 참여 상태 전이 (서버가 항상 전체 스냅샷을 보낸다)
   // REST 완료(isFriendsLoaded) 후 구독 — 서버 일괄 푸시가 friends 배열에 정상 반영되도록 순서 보장
-  useUserSocketSubscription(
+  useUserSocketSubscription<FriendPresenceEvent>(
     '/user/queue/friends/presence',
     useCallback(
-      (event: FriendPresenceEvent) => {
+      (event) => {
         const { data } = event;
         setFriends((prev) =>
           prev.map((f) =>

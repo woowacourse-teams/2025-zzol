@@ -1,6 +1,6 @@
 import { Client, StompSubscription } from '@stomp/stompjs';
 import { createContext, useContext } from 'react';
-import type { WsSendDestination, WsSendPath, WsSubscribePath } from '../generated/wsContract';
+import type { WsSendDestination, WsSendPath } from '../generated/wsContract';
 
 export type WebSocketContextType = {
   startSocket: (roomToken: string) => void;
@@ -11,7 +11,7 @@ export type WebSocketContextType = {
     onError?: (error: Error) => void
   ) => void;
   subscribe: <T>(
-    destination: WsSubscribePath,
+    destination: string,
     onData: (data: T) => void,
     onError?: (error: Error) => void
   ) => StompSubscription | null;

@@ -8,6 +8,8 @@ on:
       - prod
     paths:
       - "backend/**"
+      # WsCatalogContractTest 가 생성하는 FE 타입 파일. 손으로 고친 PR 도 신선도 검사를 받게 한다.
+      - "frontend/src/apis/websocket/generated/**"
       - ".github/workflows/backend-ci.yml"
 
   # 2. 다른 워크플로우(Deploy)에서 호출 가능하도록 설정

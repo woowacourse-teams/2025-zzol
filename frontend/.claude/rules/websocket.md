@@ -29,12 +29,14 @@ useWebSocketSubscription(`/topic/room/${joinCode}/gameState`, handler);
 
 ```ts
 useWebSocketSubscription(
-  destination: string,
+  destination: WsSubscribeDestination<D>,  // BE 가 생성한 src/apis/websocket/generated/wsContract.ts 의 경로만 받는다
   onData: (data: T) => void,
   onError?: (error: Error) => void,
   enabled?: boolean   // 기본값 true — 조건부 구독에 useEffect 분기 대신 사용
 )
 ```
+
+destination 은 `` `/room/${joinCode}/round` `` 처럼 방 코드를 보간한 템플릿 리터럴로 넘긴다. 카탈로그에 없는 경로는 컴파일 오류가 난다. payload 타입은 `useWebSocketSubscription<T>(…)` 로 명시하지 않고 `onData` 의 파라미터에 적는다. destination 타입 파라미터가 추가돼 `<T>` 하나만 주면 `TS2558` 이 난다.
 
 ### Provider 구독 패턴
 

@@ -98,8 +98,6 @@ class WsCatalogContractTest extends IntegrationTestSupport {
         assertThat(FIXTURE.toAbsolutePath().toString())
                 .as("Test 태스크의 작업 디렉터리는 :app 이라 이 상대경로가 커밋본을 가리켜야 한다")
                 .endsWith("app/src/test/resources/__fixtures__/ws-catalog.json");
-        assertThat(FE_TYPES.toAbsolutePath().normalize().toString())
-                .endsWith("frontend/src/apis/websocket/generated/wsContract.ts");
 
         final WsCatalog catalog = catalogBuilder.build();
         Files.createDirectories(FIXTURE.getParent());

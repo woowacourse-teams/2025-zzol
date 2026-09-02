@@ -40,6 +40,8 @@ import org.springframework.stereotype.Component;
 class WsCatalogContractTest extends IntegrationTestSupport {
 
     private static final Path FIXTURE = Path.of("src", "test", "resources", "__fixtures__", "ws-catalog.json");
+    private static final Path FE_TYPES =
+            Path.of("..", "..", "frontend", "src", "apis", "websocket", "generated", "wsContract.ts");
     private static final String TOPIC_PREFIX = "/topic/";
 
     @Autowired
@@ -86,15 +88,22 @@ class WsCatalogContractTest extends IntegrationTestSupport {
                 .isEmpty();
     }
 
+    /**
+     * fixture 와 함께 FE 타입 파일도 쓴다. 파일이 {@code frontend/} 아래라 계약이 바뀐 BE PR 에서
+     * frontend-ci 가 자동으로 돌고, 낡은 destination 을 쓰는 호출부가 tsc 오류로 같은 PR 에서 드러난다.
+     */
     @Test
-    @DisplayName("카탈로그를 fixture 로 기록한다")
-    void 카탈로그를_fixture_로_기록한다() throws Exception {
+    @DisplayName("카탈로그를 fixture 와 FE 타입으로 기록한다")
+    void 카탈로그를_fixture_와_FE_타입으로_기록한다() throws Exception {
         assertThat(FIXTURE.toAbsolutePath().toString())
                 .as("Test 태스크의 작업 디렉터리는 :app 이라 이 상대경로가 커밋본을 가리켜야 한다")
                 .endsWith("app/src/test/resources/__fixtures__/ws-catalog.json");
 
+        final WsCatalog catalog = catalogBuilder.build();
         Files.createDirectories(FIXTURE.getParent());
-        Files.writeString(FIXTURE, serialize(catalogBuilder.build()));
+        Files.writeString(FIXTURE, serialize(catalog));
+        Files.createDirectories(FE_TYPES.getParent());
+        Files.writeString(FE_TYPES, WsContractTsEmitter.emit(catalog));
     }
 
     /**

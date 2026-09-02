@@ -1,9 +1,10 @@
 import { StompSubscription } from '@stomp/stompjs';
 import { useEffect, useRef } from 'react';
 import { useUserSocket } from '../contexts/UserSocketContext';
+import type { WsQueuePath } from '../generated/wsContract';
 
 export const useUserSocketSubscription = <T>(
-  destination: string,
+  destination: WsQueuePath,
   onData: (data: T) => void,
   enabled: boolean = true
 ) => {

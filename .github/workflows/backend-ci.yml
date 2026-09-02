@@ -8,6 +8,8 @@ on:
       - prod
     paths:
       - "backend/**"
+      # WsCatalogContractTest 가 생성하는 FE 타입 파일. 손으로 고친 PR 도 신선도 검사를 받게 한다.
+      - "frontend/src/apis/websocket/generated/**"
       - ".github/workflows/backend-ci.yml"
 
   # 2. 다른 워크플로우(Deploy)에서 호출 가능하도록 설정
@@ -131,13 +133,14 @@ jobs:
       - name: Run Tests
         run: ./gradlew test jacocoTestReport --build-cache --no-daemon
 
-      # WsCatalogContractTest 가 방금 카탈로그를 fixture 로 다시 썼다. 커밋본과 다르면
-      # 애노테이션을 고치고 fixture 를 갱신하지 않았다는 뜻이고, FE 게이트가 그 낡은 fixture 를
-      # SSOT 로 읽으므로 정상 destination 을 오탐하게 된다.
+      # WsCatalogContractTest 가 방금 카탈로그를 fixture 와 FE 타입 파일로 다시 썼다. 커밋본과
+      # 다르면 애노테이션을 고치고 생성물을 갱신하지 않았다는 뜻이다. FE 는 그 타입 파일로
+      # destination 을 검사하므로 낡은 채로 두면 정상 destination 을 오탐하거나 drift 를 놓친다.
       - name: Check ws-catalog fixture freshness
         run: |
-          git diff --exit-code -- app/src/test/resources/__fixtures__/ws-catalog.json || {
-            echo "::error::ws-catalog fixture 가 소스와 다릅니다. 로컬에서 아래를 실행하고 커밋하세요:"
+          git diff --exit-code -- app/src/test/resources/__fixtures__/ws-catalog.json \
+            ../frontend/src/apis/websocket/generated/wsContract.ts || {
+            echo "::error::ws-catalog fixture 또는 FE 타입 파일이 소스와 다릅니다. 로컬에서 아래를 실행하고 커밋하세요:"
             echo "  cd backend && ./gradlew :app:test --tests '*WsCatalogContractTest*'"
             exit 1
           }

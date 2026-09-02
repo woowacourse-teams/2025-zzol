@@ -223,7 +223,7 @@ FlowOrchestrator
 | (루트)           | `StompSessionManager`, `SubscriptionInfoService`, `PlayerKey`, `UserPrincipal`, `LoggingSimpMessagingTemplate` 등 핵심 서비스 |
 | `aspect/`      | `MessageMappingTracingAspect` — 메시지 핸들러 트레이싱                                                                            |
 | `config/`      | STOMP 브로커 설정 (`WebSocketMessageBrokerConfig`)                                                                           |
-| `docs/`        | WebSocket 컨트랙트 디스커버리 (애너테이션 + `/dev/ws-catalog`)                                                                        |
+| `docs/`        | WebSocket 컨트랙트 디스커버리 (애너테이션 + `/dev/ws-catalog` + FE 타입 생성, ADR-0037)                                                                        |
 | `event/`       | Spring 이벤트 리스너 — 세션 구독·해제 처리                                                                                            |
 | `exception/`   | `WebSocketExceptionHandler`                                                                                             |
 | `interceptor/` | STOMP 인터셉터 — 레이트 리밋, 메트릭, Graceful Shutdown                                                                             |
@@ -253,5 +253,7 @@ STOMP 연결 엔드포인트: `/ws` (SockJS 폴백 지원)
 ### 카탈로그 조회
 
 `GET /dev/ws-catalog` (`!prod` 프로파일에서만 활성화)
+
+같은 카탈로그를 `:app` 의 `WsCatalogContractTest` 가 `app/src/test/resources/__fixtures__/ws-catalog.json` 과 `frontend/src/apis/websocket/generated/wsContract.ts` 로 생성한다. FE 훅의 파라미터 타입이 그 파일을 받아 카탈로그에 없는 destination 과 어긋난 payload 필드가 tsc 오류가 된다. 생성물이 소스보다 낡으면 backend-ci 가 실패한다(ADR-0037).
 
 `WsCatalogBuilder`가 `ApplicationContext`를 스캔하여 애너테이션이 붙은 모든 Bean을 수집하고 JSON으로 직렬화한다.

@@ -46,7 +46,7 @@ public class StreamPublisher {
 
     // 카운터를 기동 시점에 0으로 만들어 둔다. 첫 발행 때 시계열이 생기면 Prometheus rate()가 그
     // 첫 샘플을 증가로 세지 않아, 기동 후 발행이 한 번뿐인 스트림은 컨슈머가 멎어도 정지 룰이
-    // 침묵한다. 발행이 띄엄한 스트림을 잡는 게 그 룰의 목적이라 등록 시점을 지연 타이머와 맞춘다.
+    // 침묵한다. 발행이 띄엄한 스트림을 잡는 게 그 룰의 목적이다.
     @PostConstruct
     public void initializeCounters() {
         if (redisStreamProperties.keys() == null) {
@@ -124,7 +124,7 @@ public class StreamPublisher {
                 .increment();
     }
 
-    // 발행률만으로는 적체를 알 수 없다. 소비율(redis_stream_e2e_latency_seconds_count)과 짝지어
+    // 발행률만으로는 적체를 알 수 없다. 소비율(redis_stream_consumed_total)과 짝지어
     // "발행은 되는데 소비가 0"인 상태를 잡는 데 쓴다 (RedisStreamConsumptionStalled, #1744).
     private Counter registerPublishedCounter(String redisKey) {
         return Counter.builder("redis.stream.published")

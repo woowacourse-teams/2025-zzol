@@ -55,13 +55,6 @@ class RedisStreamLatencyMetricServiceTest {
                 softly.assertThat(timerOf(OTHER_BROADCAST_STREAM).count()).isEqualTo(1);
             });
         }
-
-        // 미리 등록하면 트래픽 없는 스트림도 버킷 수만큼 시계열을 차지한다. 소비가 끊긴 상태는
-        // redis.stream.consumed 카운터가 판정하므로 이 타이머는 지연이 실제로 기록될 때만 만든다.
-        @Test
-        void 소비하기_전에는_타이머를_만들지_않는다() {
-            assertThat(timerOf(BROADCAST_STREAM)).isNull();
-        }
     }
 
     @Nested

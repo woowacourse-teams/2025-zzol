@@ -1113,7 +1113,7 @@
         },
         {
           "name" : "colorIndex",
-          "type" : "Integer"
+          "type" : "Integer?"
         }
       ],
       "values" : null
@@ -1366,7 +1366,7 @@
         },
         {
           "name" : "colorIndex",
-          "type" : "Integer"
+          "type" : "Integer?"
         }
       ],
       "values" : null

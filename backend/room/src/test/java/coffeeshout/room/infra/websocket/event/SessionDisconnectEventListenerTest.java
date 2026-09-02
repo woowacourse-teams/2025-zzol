@@ -1,5 +1,6 @@
 package coffeeshout.room.infra.websocket.event;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.then;
@@ -28,10 +29,13 @@ class SessionDisconnectEventListenerTest {
 
     @Mock
     StreamPublisher streamPublisher;
+
     @Mock
     SubscriptionInfoService subscriptionInfoService;
+
     @Mock
     WebSocketMetricService metricService;
+
     @Mock
     WebSocketRateLimiter webSocketRateLimiter;
 
@@ -46,8 +50,13 @@ class SessionDisconnectEventListenerTest {
     void setUp() {
         sessionManager = new StompSessionManager();
         final var publisher = Mockito.mock(org.springframework.context.ApplicationEventPublisher.class);
-        listener = new SessionDisconnectEventListener(sessionManager, streamPublisher,
-                subscriptionInfoService, metricService, webSocketRateLimiter, publisher);
+        listener = new SessionDisconnectEventListener(
+                sessionManager,
+                streamPublisher,
+                subscriptionInfoService,
+                metricService,
+                webSocketRateLimiter,
+                publisher);
     }
 
     @Nested
@@ -69,8 +78,7 @@ class SessionDisconnectEventListenerTest {
 
             listener.handleSessionDisconnectEvent(event);
 
-            then(streamPublisher).should()
-                    .publish(eq(RoomStreamKey.BROADCAST), any());
+            then(streamPublisher).should().publish(eq(RoomStreamKey.BROADCAST), any());
         }
 
         @Test
@@ -82,6 +90,39 @@ class SessionDisconnectEventListenerTest {
             listener.handleSessionDisconnectEvent(event);
 
             verifyNoInteractions(streamPublisher);
+        }
+    }
+
+    @Nested
+    class 세션_상태_정리 {
+
+        @Test
+        void 플레이어가_아닌_세션은_중복_방지_항목을_남기지_않는다() {
+            SessionDisconnectEvent event = createSessionDisconnectEvent(sessionId);
+
+            listener.handleSessionDisconnectEvent(event);
+
+            assertThat(sessionManager.isDisconnectionProcessed(sessionId)).isFalse();
+        }
+
+        @Test
+        void 유저_세션은_해제_시_유저_매핑을_지운다() {
+            sessionManager.registerUserSession(1L, sessionId);
+            SessionDisconnectEvent event = createSessionDisconnectEvent(sessionId);
+
+            listener.handleSessionDisconnectEvent(event);
+
+            assertThat(sessionManager.getUserId(sessionId)).isNull();
+        }
+
+        @Test
+        void 플레이어_세션은_재접속_유예를_위해_매핑을_남긴다() {
+            sessionManager.registerPlayerSession(joinCode, playerName, sessionId);
+            SessionDisconnectEvent event = createSessionDisconnectEvent(sessionId);
+
+            listener.handleSessionDisconnectEvent(event);
+
+            assertThat(sessionManager.hasPlayerKey(sessionId)).isTrue();
         }
     }
 

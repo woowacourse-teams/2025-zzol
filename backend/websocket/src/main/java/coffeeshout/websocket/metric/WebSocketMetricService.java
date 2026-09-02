@@ -7,8 +7,8 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.Timer.Sample;
 import jakarta.annotation.PostConstruct;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +17,8 @@ import org.springframework.stereotype.Component;
 public class WebSocketMetricService {
 
     private final MeterRegistry meterRegistry;
-    private final AtomicLong currentConnections = new AtomicLong(0);
+    // 연결이 수립된 세션 ID. 게이지가 이 집합의 크기를 읽으므로 증감을 따로 세지 않는다
+    private final Set<String> establishedConnections = ConcurrentHashMap.newKeySet();
     private final Map<String, Sample> connectionSamples = new ConcurrentHashMap<>();
     // Counter 캐싱용
     private final Map<String, Counter> failedCounters = new ConcurrentHashMap<>();
@@ -31,7 +32,7 @@ public class WebSocketMetricService {
     private Timer connectionEstablishmentTimer;
     private Counter inboundMessageCounter;
     private Counter outboundMessageCounter;
-    private Timer inboundMessageTimer;  // 큐 대기 시간 측정용
+    private Timer inboundMessageTimer; // 큐 대기 시간 측정용
     private Timer outboundMessageTimer;
     private Timer businessLogicTimer;
 
@@ -41,7 +42,7 @@ public class WebSocketMetricService {
 
     @PostConstruct
     public void initializeMetrics() {
-        Gauge.builder("websocket.connections.current", currentConnections, AtomicLong::get)
+        Gauge.builder("websocket.connections.current", establishedConnections, Set::size)
                 .description("현재 웹소켓 연결 개수")
                 .register(meterRegistry);
 
@@ -75,7 +76,7 @@ public class WebSocketMetricService {
     }
 
     public void completeConnection(String sessionId) {
-        currentConnections.incrementAndGet();
+        establishedConnections.add(sessionId);
         Sample sample = connectionSamples.remove(sessionId);
         if (sample != null) {
             long durationNanos = sample.stop(connectionEstablishmentTimer);
@@ -88,28 +89,31 @@ public class WebSocketMetricService {
         connectionSamples.remove(sessionId);
 
         String key = "failed." + reason;
-        Counter counter = failedCounters.computeIfAbsent(
-                key, k ->
-                        Counter.builder("websocket.connections.failed")
-                                .description("웹소켓 연결 실패 건수")
-                                .tag("reason", reason)
-                                .register(meterRegistry)
-        );
+        Counter counter = failedCounters.computeIfAbsent(key, k -> Counter.builder("websocket.connections.failed")
+                .description("웹소켓 연결 실패 건수")
+                .tag("reason", reason)
+                .register(meterRegistry));
         counter.increment();
     }
 
+    /**
+     * STOMP 연결이 수립된 세션인지 확인한다. CONNECT 없이 핸드셰이크만 하고 끊는 세션과 구분하는 데 쓴다.
+     */
+    public boolean hasEstablishedConnection(String sessionId) {
+        return establishedConnections.contains(sessionId);
+    }
+
     public void recordDisconnection(String sessionId, String reason) {
+        establishedConnections.remove(sessionId);
         connectionSamples.remove(sessionId);
 
         String key = "disconnected." + reason;
 
-        Counter counter = disconnectedCounters.computeIfAbsent(
-                key, k ->
-                        Counter.builder("websocket.connections.disconnected")
-                                .description("웹소켓 연결 해제 건수")
-                                .tag("reason", reason)
-                                .register(meterRegistry)
-        );
+        Counter counter =
+                disconnectedCounters.computeIfAbsent(key, k -> Counter.builder("websocket.connections.disconnected")
+                        .description("웹소켓 연결 해제 건수")
+                        .tag("reason", reason)
+                        .register(meterRegistry));
         counter.increment();
     }
 

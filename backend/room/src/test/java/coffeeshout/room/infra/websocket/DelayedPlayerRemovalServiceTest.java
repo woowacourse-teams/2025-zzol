@@ -49,8 +49,8 @@ class DelayedPlayerRemovalServiceTest {
 
     @BeforeEach
     void setUp() {
-        delayedPlayerRemovalService = new DelayedPlayerRemovalService(taskScheduler, TEST_REMOVAL_DELAY,
-                playerDisconnectionService, sessionManager, roomService);
+        delayedPlayerRemovalService = new DelayedPlayerRemovalService(
+                taskScheduler, TEST_REMOVAL_DELAY, playerDisconnectionService, sessionManager, roomService);
     }
 
     @Nested
@@ -77,6 +77,15 @@ class DelayedPlayerRemovalServiceTest {
 
             then(taskScheduler).should(never()).schedule(any(Runnable.class), any(Instant.class));
             then(playerDisconnectionService).should(never()).cancelReady(any());
+        }
+
+        @Test
+        void 게임중이면_세션_매핑을_즉시_제거한다() {
+            given(roomService.isReadyState("ABC23")).willReturn(false);
+
+            delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
+
+            then(sessionManager).should().removeSession(sessionId);
         }
 
         @Test
@@ -150,8 +159,7 @@ class DelayedPlayerRemovalServiceTest {
 
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
-            then(playerDisconnectionService).should()
-                    .handlePlayerDisconnection(playerKey, sessionId, reason);
+            then(playerDisconnectionService).should().handlePlayerDisconnection(playerKey, sessionId, reason);
         }
 
         @Test
@@ -171,8 +179,7 @@ class DelayedPlayerRemovalServiceTest {
 
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
-            then(playerDisconnectionService).should()
-                    .handlePlayerDisconnection(playerKey, sessionId, reason);
+            then(playerDisconnectionService).should().handlePlayerDisconnection(playerKey, sessionId, reason);
         }
     }
 

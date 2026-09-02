@@ -28,8 +28,7 @@ public class DelayedPlayerRemovalService {
             @Value("${player.removalDelay}") Duration removalDelay,
             PlayerDisconnectionService playerDisconnectionService,
             StompSessionManager stompSessionManager,
-            RoomService roomService
-    ) {
+            RoomService roomService) {
         validateRemovalDuration(removalDelay);
         this.taskScheduler = taskScheduler;
         this.removalDelay = removalDelay;
@@ -48,11 +47,16 @@ public class DelayedPlayerRemovalService {
     public void schedulePlayerRemoval(String playerKey, String sessionId, String reason) {
         final String joinCode = playerKey.split(":")[0];
         if (!roomService.isReadyState(joinCode)) {
+            // 지연 삭제를 걸지 않는 경로라 재접속 유예도 없다. 매핑을 남기면 영영 안 지워진다
+            stompSessionManager.removeSession(sessionId);
             return;
         }
 
-        log.info("플레이어 지연 삭제 스케줄링: playerKey={}, sessionId={}, delay={}초",
-                playerKey, sessionId, removalDelay.getSeconds());
+        log.info(
+                "플레이어 지연 삭제 스케줄링: playerKey={}, sessionId={}, delay={}초",
+                playerKey,
+                sessionId,
+                removalDelay.getSeconds());
 
         playerDisconnectionService.cancelReady(playerKey);
 
@@ -61,8 +65,7 @@ public class DelayedPlayerRemovalService {
                     executePlayerRemoval(playerKey, sessionId, reason);
                     stompSessionManager.removeSession(sessionId);
                 },
-                Instant.now().plus(removalDelay)
-        );
+                Instant.now().plus(removalDelay));
 
         scheduledTasks.put(playerKey, future);
     }
@@ -77,15 +80,13 @@ public class DelayedPlayerRemovalService {
 
     private void executePlayerRemoval(String playerKey, String sessionId, String reason) {
         try {
-            log.info("플레이어 지연 삭제 실행: playerKey={}, sessionId={}, reason={}",
-                    playerKey, sessionId, reason);
+            log.info("플레이어 지연 삭제 실행: playerKey={}, sessionId={}, reason={}", playerKey, sessionId, reason);
 
             playerDisconnectionService.handlePlayerDisconnection(playerKey, sessionId, reason);
             scheduledTasks.remove(playerKey);
 
         } catch (Exception e) {
-            log.error("플레이어 지연 삭제 실행 중 오류 발생: playerKey={}, error={}",
-                    playerKey, e.getMessage(), e);
+            log.error("플레이어 지연 삭제 실행 중 오류 발생: playerKey={}, error={}", playerKey, e.getMessage(), e);
         }
     }
 }

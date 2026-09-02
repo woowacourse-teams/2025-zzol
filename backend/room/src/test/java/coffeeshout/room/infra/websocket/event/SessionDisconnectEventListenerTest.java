@@ -2,7 +2,9 @@ package coffeeshout.room.infra.websocket.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -58,6 +60,10 @@ class SessionDisconnectEventListenerTest {
                 metricService,
                 webSocketRateLimiter,
                 publisher);
+        // 연결을 수립한 세션의 첫 해제가 기본값이다. 중복 해제를 보는 테스트만 거짓으로 덮어쓴다
+        Mockito.lenient()
+                .when(metricService.recordDisconnection(anyString(), anyString()))
+                .thenReturn(true);
     }
 
     @Nested
@@ -84,8 +90,8 @@ class SessionDisconnectEventListenerTest {
 
         @Test
         void 이미_처리된_세션의_중복_해제를_무시한다() {
+            given(metricService.recordDisconnection(anyString(), anyString())).willReturn(false);
             sessionManager.registerPlayerSession(joinCode, playerName, sessionId);
-            sessionManager.isDisconnectionProcessed(sessionId);
             SessionDisconnectEvent event = createSessionDisconnectEvent(sessionId);
 
             listener.handleSessionDisconnectEvent(event);
@@ -96,15 +102,6 @@ class SessionDisconnectEventListenerTest {
 
     @Nested
     class 세션_상태_정리 {
-
-        @Test
-        void 플레이어가_아닌_세션은_중복_방지_항목을_남기지_않는다() {
-            SessionDisconnectEvent event = createSessionDisconnectEvent(sessionId);
-
-            listener.handleSessionDisconnectEvent(event);
-
-            assertThat(sessionManager.isDisconnectionProcessed(sessionId)).isFalse();
-        }
 
         @Test
         void 유저_세션은_해제_시_유저_매핑을_지운다() {

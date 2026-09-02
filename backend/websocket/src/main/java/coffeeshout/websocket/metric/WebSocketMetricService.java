@@ -97,19 +97,15 @@ public class WebSocketMetricService {
     }
 
     /**
-     * STOMP 연결이 수립된 세션인지 확인한다. CONNECT 없이 핸드셰이크만 하고 끊는 세션과 구분하는 데 쓴다.
+     * 해제를 기록하고 이 세션의 해제를 처음 처리하는지 알린다. 연결을 수립한 세션만 한 번 true 를 받는다.
+     * 같은 세션에 해제 이벤트가 두 번 와도 두 번째는 false 이므로, 호출부가 중복 처리 방지 표식을 따로 둘 필요가 없다.
+     * CONNECT 없이 핸드셰이크만 하고 끊는 세션은 애초에 집합에 없어 게이지도 카운터도 건드리지 않는다.
      */
-    public boolean hasEstablishedConnection(String sessionId) {
-        return establishedConnections.contains(sessionId);
-    }
-
-    public void recordDisconnection(String sessionId, String reason) {
+    public boolean recordDisconnection(String sessionId, String reason) {
         connectionSamples.remove(sessionId);
 
-        // 연결을 수립한 세션만 한 번씩 센다. 같은 세션에 해제 이벤트가 두 번 와도 중복 집계되지 않고,
-        // CONNECT 없이 끊는 세션은 애초에 집합에 없어 게이지도 카운터도 건드리지 않는다
         if (!establishedConnections.remove(sessionId)) {
-            return;
+            return false;
         }
 
         String key = "disconnected." + reason;
@@ -120,6 +116,7 @@ public class WebSocketMetricService {
                         .tag("reason", reason)
                         .register(meterRegistry));
         counter.increment();
+        return true;
     }
 
     public void incrementInboundMessage() {

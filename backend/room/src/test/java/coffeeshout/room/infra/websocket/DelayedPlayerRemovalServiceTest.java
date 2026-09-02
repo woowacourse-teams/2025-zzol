@@ -72,6 +72,20 @@ class DelayedPlayerRemovalServiceTest {
 
         @Test
         @SuppressWarnings("unchecked")
+        void 같은_플레이어를_두_번_예약하면_앞선_예약을_취소한다() {
+            given(roomService.isReadyState("ABC23")).willReturn(true);
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willReturn(scheduledFuture);
+
+            delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
+            delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, "session-456", reason);
+
+            // 취소하지 않으면 앞선 태스크가 고아로 살아남아 제거가 두 번 실행된다
+            then(scheduledFuture).should().cancel(false);
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
         void 게임중이면_지연_삭제를_스케줄링_안한다() {
             given(roomService.isReadyState("ABC23")).willReturn(false);
 

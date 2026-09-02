@@ -86,28 +86,26 @@ class WebSocketMetricServiceTest {
     }
 
     @Nested
-    class 연결_수립_여부_조회 {
+    class 첫_해제_여부_반환 {
 
         @Test
-        void 연결을_수립한_세션만_수립으로_본다() {
-            metricService.startConnection("probe-session");
+        void 연결을_수립한_세션의_첫_해제만_참을_받는다() {
             metricService.completeConnection("session-1");
 
             assertSoftly(softly -> {
-                softly.assertThat(metricService.hasEstablishedConnection("session-1"))
+                softly.assertThat(metricService.recordDisconnection("session-1", DISCONNECT_REASON))
                         .isTrue();
-                softly.assertThat(metricService.hasEstablishedConnection("probe-session"))
+                softly.assertThat(metricService.recordDisconnection("session-1", DISCONNECT_REASON))
                         .isFalse();
             });
         }
 
         @Test
-        void 해제된_세션은_더_이상_수립_상태가_아니다() {
-            metricService.completeConnection("session-1");
+        void 연결을_수립하지_않은_세션의_해제는_거짓을_받는다() {
+            metricService.startConnection("probe-session");
 
-            metricService.recordDisconnection("session-1", DISCONNECT_REASON);
-
-            assertThat(metricService.hasEstablishedConnection("session-1")).isFalse();
+            assertThat(metricService.recordDisconnection("probe-session", DISCONNECT_REASON))
+                    .isFalse();
         }
     }
 }

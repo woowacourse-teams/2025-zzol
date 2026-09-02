@@ -68,7 +68,9 @@ public class DelayedPlayerRemovalService {
                 },
                 Instant.now().plus(removalDelay));
 
-        scheduledTasks.put(playerKey, future);
+        // 앞선 예약이 남아 있으면 취소하고 갈아끼운다. put 만 하면 옛 태스크가 고아로 살아남아 제거가 두 번 실행된다
+        final ScheduledFuture<?> previous = scheduledTasks.put(playerKey, future);
+        cancelIfPending(previous);
     }
 
     /**
@@ -86,11 +88,17 @@ public class DelayedPlayerRemovalService {
     }
 
     public void cancelScheduledRemoval(String playerKey) {
-        final ScheduledFuture<?> future = scheduledTasks.remove(playerKey);
-        if (future != null && !future.isDone()) {
-            future.cancel(false);
+        if (cancelIfPending(scheduledTasks.remove(playerKey))) {
             log.info("플레이어 지연 삭제 취소됨: playerKey={}", playerKey);
         }
+    }
+
+    private boolean cancelIfPending(ScheduledFuture<?> future) {
+        if (future == null || future.isDone()) {
+            return false;
+        }
+        future.cancel(false);
+        return true;
     }
 
     private void executePlayerRemoval(String playerKey, String sessionId, String reason) {

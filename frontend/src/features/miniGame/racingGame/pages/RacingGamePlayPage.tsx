@@ -18,6 +18,7 @@ import RacingRanks from '../components/RacingRanks/RacingRanks';
 import TrackNotice from '../components/TrackNotice/TrackNotice';
 import { useBackgroundAnimation } from '../hooks/useBackgroundAnimation';
 import { useRaceAnnouncement } from '../hooks/useRaceAnnouncement';
+import { useRaceRanking } from '../hooks/useRaceRanking';
 import { useGoalDisplay } from '../hooks/useGoalDisplay';
 import { usePlayerData } from '../hooks/usePlayerData';
 import { getVisiblePlayers } from '../utils/getVisiblePlayers';
@@ -25,6 +26,8 @@ import * as S from './RacingGamePlayPage.styled';
 
 const FINISH_LINE_VISUAL_OFFSET = 30;
 const STUCK_TIMEOUT_MS = 8000;
+/** DONE 을 받고 결과 화면으로 넘어가기까지 완주 연출을 보여 주는 시간. */
+const FINISH_DISPLAY_MS = 2000;
 const TAP_POP_SCALE = 1.06;
 const TAP_POP_DURATION_MS = 160;
 
@@ -69,6 +72,11 @@ const RacingGamePage = () => {
     myName,
   });
 
+  const rankedPlayers = useRaceRanking({
+    players: racingGameData.players,
+    endDistance: racingGameData.distance.end,
+  });
+
   const isGoal = useGoalDisplay({
     myPosition,
     endDistance: racingGameData.distance.end,
@@ -86,10 +94,14 @@ const RacingGamePage = () => {
     enabled: racingGameState === 'PLAYING',
   });
 
+  // DONE 을 받은 프레임에 바로 navigate 하면 완주 연출이 한 프레임 스치고 사라진다.
   useEffect(() => {
-    if (racingGameState === 'DONE') {
+    if (racingGameState !== 'DONE') return;
+
+    const timer = window.setTimeout(() => {
       navigate(`/room/${joinCode}/${miniGameType}/result`);
-    }
+    }, FINISH_DISPLAY_MS);
+    return () => window.clearTimeout(timer);
   }, [racingGameState, joinCode, navigate, miniGameType]);
 
   // stuck 폴백: 시작을 알리는 상태가 안 와 화면이 멈춰 있으면 로비로 보낸다. 눈치게임과 같은 기준이다.
@@ -106,13 +118,13 @@ const RacingGamePage = () => {
   return (
     <>
       {racingGameState === 'PREPARE' && <PrepareOverlay />}
-      {racingGameState === 'DONE' && <Finish />}
+      {racingGameState === 'DONE' && <Finish rankedPlayers={rankedPlayers} myName={myName} />}
       {isGoal && racingGameState === 'PLAYING' && <Goal />}
       <ScreenReaderOnly aria-live="polite">{announcement}</ScreenReaderOnly>
       <RacingGameOverlay isGoal={isGoal} onTap={handleTap}>
         <S.Container ref={containerRef}>
           <RacingRanks
-            players={racingGameData.players}
+            rankedPlayers={rankedPlayers}
             myName={myName}
             endDistance={racingGameData.distance.end}
           />

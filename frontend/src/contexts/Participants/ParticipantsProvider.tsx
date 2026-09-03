@@ -1,8 +1,6 @@
 import { PropsWithChildren, useCallback, useState } from 'react';
 import { ParticipantsContext } from './ParticipantsContext';
-import { colorList } from '@/constants/color';
 import { Player } from '@/types/player';
-import { hashIndex } from '@/utils/hashIndex';
 
 export const ParticipantsProvider = ({ children }: PropsWithChildren) => {
   const [participants, setParticipants] = useState<Player[]>([]);
@@ -19,9 +17,9 @@ export const ParticipantsProvider = ({ children }: PropsWithChildren) => {
   const getParticipantColorIndex = useCallback(
     (playerName: string): number => {
       const participant = participants.find((p) => p.playerName === playerName);
-      // 명단이 복구되기 전에는 못 찾은 이름이 전부 0번 색으로 떨어져 전원이 같은 색이 된다.
-      // 이름 해시로 흩어 놓으면 그 구간에도 서로 구분된다.
-      return participant?.colorIndex ?? hashIndex(playerName, colorList.length);
+      // 색의 원천은 서버 colorIndex 하나다. 명단이 비어 있으면 useRestoreParticipants 가
+      // GET /rooms/{joinCode}/players 로 채운다(#1688). 여기서 따로 지어내면 채워지는 순간 색이 갈아엎힌다.
+      return participant?.colorIndex ?? 0;
     },
     [participants]
   );

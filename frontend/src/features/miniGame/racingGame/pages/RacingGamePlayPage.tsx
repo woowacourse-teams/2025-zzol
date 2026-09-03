@@ -15,6 +15,7 @@ import RacingLine from '../components/RacingLine/RacingLine';
 import RacingPlayer from '../components/RacingPlayer/RacingPlayer';
 import RacingProgressBar from '../components/RacingProgressBar/RacingProgressBar';
 import RacingRanks from '../components/RacingRanks/RacingRanks';
+import TrackGround from '../components/TrackGround/TrackGround';
 import TrackNotice from '../components/TrackNotice/TrackNotice';
 import { useBackgroundAnimation } from '../hooks/useBackgroundAnimation';
 import { useRaceAnnouncement } from '../hooks/useRaceAnnouncement';
@@ -157,6 +158,7 @@ const RacingGamePage = () => {
               <HiddenPlayersBadge direction="ahead" count={hiddenAhead} />
               <HiddenPlayersBadge direction="behind" count={hiddenBehind} />
               {isSpectating && <TrackNotice />}
+              <TrackGround myPosition={myPosition} endDistance={racingGameData.distance.end} />
             </S.PlayersWrapper>
           </S.ContentWrapper>
         </S.Container>

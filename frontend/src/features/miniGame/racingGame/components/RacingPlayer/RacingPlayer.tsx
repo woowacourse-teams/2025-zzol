@@ -25,7 +25,7 @@ type Props = {
 };
 
 const RacingPlayer = ({ player, isMe, myPosition, color, slot, isVisible, ref }: Props) => {
-  const rotatingRef = useRotationAnimation({ speed: player.speed });
+  const rotatingRef = useRotationAnimation({ speed: player.speed, isVisible });
   const prefersReducedMotion = usePrefersReducedMotion();
 
   // 서버가 최저 속도 3을 깔아 둬 안 눌러도 캐릭터가 계속 굴러간다. 그 위로만 속도선을 켜

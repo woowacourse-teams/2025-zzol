@@ -8,9 +8,11 @@ const MIN_RENDER_SPEED = 0.05;
 
 type Props = {
   speed: number;
+  /** 가장자리 밖에 숨은 사람은 루프를 안 건다. 안 보이는 각도는 유지할 필요가 없다. */
+  isVisible: boolean;
 };
 
-export const useRotationAnimation = ({ speed }: Props) => {
+export const useRotationAnimation = ({ speed, isVisible }: Props) => {
   const rotatingRef = useRef<HTMLDivElement>(null);
   const angleRef = useRef(0);
   const currentSpeedRef = useRef(0);
@@ -22,7 +24,7 @@ export const useRotationAnimation = ({ speed }: Props) => {
   }, [speed]);
 
   useEffect(() => {
-    if (prefersReducedMotion) return;
+    if (prefersReducedMotion || !isVisible) return;
 
     let frameId: number;
     let lastTime = performance.now();
@@ -46,7 +48,7 @@ export const useRotationAnimation = ({ speed }: Props) => {
 
     frameId = requestAnimationFrame(update);
     return () => cancelAnimationFrame(frameId);
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, isVisible]);
 
   return rotatingRef;
 };

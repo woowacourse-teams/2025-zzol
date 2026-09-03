@@ -115,7 +115,7 @@ const RacingGamePage = () => {
   return (
     <>
       {racingGameState === 'PREPARE' && <PrepareOverlay />}
-      {racingGameState === 'DONE' && <Finish rankedPlayers={rankedPlayers} myName={myName} />}
+      {racingGameState === 'DONE' && <Finish />}
       {isGoal && racingGameState === 'PLAYING' && <Goal />}
       <ScreenReaderOnly aria-live="polite">{announcement}</ScreenReaderOnly>
       <RacingGameOverlay isGoal={isGoal} onTap={handleTap}>

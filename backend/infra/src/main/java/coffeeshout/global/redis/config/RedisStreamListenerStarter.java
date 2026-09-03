@@ -8,11 +8,14 @@ import coffeeshout.global.redis.stream.StreamRecordFields;
 import coffeeshout.global.redis.stream.StreamTracePropagator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +51,10 @@ public class RedisStreamListenerStarter {
     private final StreamTracePropagator streamTracePropagator;
     private final ApplicationContext applicationContext;
     private final RedisStreamContainerRegistry containerRegistry;
+    private final MeterRegistry meterRegistry;
+    // 스트림별 소비 카운터. 리스너를 만든 스트림에만 생기므로 이 맵의 키 집합이 곧
+    // RedisStreamConsumptionStalled 룰의 대상이다(#1744).
+    private final Map<String, Counter> consumedCounters = new ConcurrentHashMap<>();
 
     public RedisStreamListenerStarter(
             RedisStreamProperties properties,
@@ -57,8 +64,8 @@ public class RedisStreamListenerStarter {
             EventDispatcher eventDispatcher,
             StreamTracePropagator streamTracePropagator,
             ApplicationContext applicationContext,
-            RedisStreamContainerRegistry containerRegistry
-    ) {
+            RedisStreamContainerRegistry containerRegistry,
+            MeterRegistry meterRegistry) {
         this.properties = properties;
         this.redisConnectionFactory = redisConnectionFactory;
         this.stringRedisTemplate = stringRedisTemplate;
@@ -67,6 +74,7 @@ public class RedisStreamListenerStarter {
         this.streamTracePropagator = streamTracePropagator;
         this.applicationContext = applicationContext;
         this.containerRegistry = containerRegistry;
+        this.meterRegistry = meterRegistry;
     }
 
     @PostConstruct
@@ -87,11 +95,13 @@ public class RedisStreamListenerStarter {
                 continue;
             }
 
-            final StreamMessageListenerContainer<String, MapRecord<String, String, String>> container = createContainer(
-                    redisConnectionFactory,
-                    findExecutor(streamKey, streamConfig),
-                    streamConfig
-            );
+            final StreamMessageListenerContainer<String, MapRecord<String, String, String>> container =
+                    createContainer(redisConnectionFactory, findExecutor(streamKey, streamConfig), streamConfig);
+
+            // 리스너를 만드는 자리에서 소비 카운터도 만든다. 등록 조건을 따로 두면 둘이 어긋나
+            // 소비 경로 없는 스트림에 시계열이 생기고, 정지 룰이 그 스트림에서 영구 발화한다.
+            // 0으로 미리 노출하는 이유는 Prometheus rate()가 시계열의 첫 샘플을 증가로 세지 않아서다.
+            consumedCounters.computeIfAbsent(streamKey, this::registerConsumedCounter);
 
             // start/await 이전에 등록한다 — await 실패로 기동이 중단돼도
             // 이미 start된 컨테이너가 레지스트리의 @PreDestroy stop 대상에 포함된다
@@ -110,8 +120,7 @@ public class RedisStreamListenerStarter {
         try {
             if (!subscription.await(timeout)) {
                 throw new IllegalStateException(
-                        "Redis Stream 구독이 제한 시간 내에 시작되지 않았습니다 (공유 스레드풀 core-size가 "
-                                + "스트림 수보다 작은지 확인): " + streamKey);
+                        "Redis Stream 구독이 제한 시간 내에 시작되지 않았습니다 (공유 스레드풀 core-size가 " + "스트림 수보다 작은지 확인): " + streamKey);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -122,9 +131,7 @@ public class RedisStreamListenerStarter {
     private Executor findExecutor(String streamKey, StreamConfig streamConfig) {
         if (streamConfig.isUseSharedThreadPool()) {
             return applicationContext.getBean(
-                    RedisStreamThreadPoolConfig.convertBeanName(streamConfig.threadPoolName()),
-                    Executor.class
-            );
+                    RedisStreamThreadPoolConfig.convertBeanName(streamConfig.threadPoolName()), Executor.class);
         }
         return applicationContext.getBean(RedisStreamThreadPoolConfig.convertBeanName(streamKey), Executor.class);
     }
@@ -168,7 +175,8 @@ public class RedisStreamListenerStarter {
     // 구체 ID는 NextMessage 전략을 타므로 리플레이 없이 이후 메시지를 빠짐없이 소비하며,
     // 오프셋이 등록 시점에 고정되어 첫 XREAD 전에 발행된 메시지도 수신된다
     private ReadOffset resolveStartOffset(String streamKey) {
-        final List<MapRecord<String, Object, Object>> lastRecords = stringRedisTemplate.opsForStream()
+        final List<MapRecord<String, Object, Object>> lastRecords = stringRedisTemplate
+                .opsForStream()
                 .reverseRange(streamKey, Range.unbounded(), Limit.limit().count(1));
         if (lastRecords == null || lastRecords.isEmpty()) {
             return ReadOffset.from("0-0");
@@ -177,6 +185,11 @@ public class RedisStreamListenerStarter {
     }
 
     void onMessage(MapRecord<String, String, String> message) {
+        // 폴링이 살아 있다는 신호라 역직렬화 성공 여부보다 앞에서 센다. 파싱에 실패한 메시지도
+        // Redis에서 꺼내 온 것이므로 소비다. 처리 성공 지점에서 세면, 전 메시지가 파싱에 실패하는
+        // 배포에서 정지 룰이 "폴링이 멎었다"고 오진한다.
+        countConsumed(message.getStream());
+
         final Map<String, String> fields = message.getValue();
         final String payload = resolvePayload(fields);
         if (payload == null) {
@@ -186,10 +199,7 @@ public class RedisStreamListenerStarter {
         try {
             final BaseEvent event = redisObjectMapper.readValue(payload, BaseEvent.class);
             streamTracePropagator.runInConsumerScope(
-                    fields,
-                    EventTypeName.of(event),
-                    () -> eventDispatcher.handle(event)
-            );
+                    fields, EventTypeName.of(event), () -> eventDispatcher.handle(message.getStream(), event));
         } catch (JsonProcessingException e) {
             log.error("Failed to parse event: {}", payload, e);
         } catch (Exception e) {
@@ -197,6 +207,23 @@ public class RedisStreamListenerStarter {
             // 재던지면 구독이 cancel될 수 있으므로 로깅만 한다 (컨슈머 그룹 미사용 — 재전달 이득 없음)
             log.error("예외가 발생했습니다.", e);
         }
+    }
+
+    private void countConsumed(String streamKey) {
+        try {
+            consumedCounters
+                    .computeIfAbsent(streamKey, this::registerConsumedCounter)
+                    .increment();
+        } catch (Exception e) {
+            log.warn("Redis Stream 소비 카운터 기록 실패: stream={}", streamKey, e);
+        }
+    }
+
+    private Counter registerConsumedCounter(String streamKey) {
+        return Counter.builder("redis.stream.consumed")
+                .description("Redis Stream에서 소비한 메시지 수")
+                .tag("stream", streamKey)
+                .register(meterRegistry);
     }
 
     private String resolvePayload(Map<String, String> fields) {
@@ -209,10 +236,7 @@ public class RedisStreamListenerStarter {
     }
 
     private StreamMessageListenerContainer<String, MapRecord<String, String, String>> createContainer(
-            RedisConnectionFactory redisConnectionFactory,
-            Executor executor,
-            StreamConfig streamConfig
-    ) {
+            RedisConnectionFactory redisConnectionFactory, Executor executor, StreamConfig streamConfig) {
         if (properties.commonSettings() == null) {
             throw new IllegalStateException("Redis Stream 공통 설정이 없습니다.");
         }

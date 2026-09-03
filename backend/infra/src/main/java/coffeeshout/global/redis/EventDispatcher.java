@@ -21,8 +21,8 @@ public class EventDispatcher {
     // 동일 이벤트 타입의 Consumer 전체에 팬아웃한다 (ADR-0025 결정 6 — 예: RoomLifecycleEvent.Created를
     // RoomCreateConsumer와 GameSessionInitConsumer가 함께 처리). 한 Consumer의 실패가
     // 나머지 Consumer의 이벤트 수신을 막지 않도록 개별 격리한다
-    public void handle(BaseEvent event) {
-        recordLatency(event);
+    public void handle(String streamKey, BaseEvent event) {
+        recordLatency(streamKey, event);
 
         final List<Consumer<BaseEvent>> consumers = findConsumers(event.getClass());
         if (consumers.isEmpty()) {
@@ -33,14 +33,18 @@ public class EventDispatcher {
             try {
                 consumer.accept(event);
             } catch (Exception e) {
-                log.error("이벤트 처리 실패: consumer={}, message={}", consumer.getClass().getSimpleName(), event, e);
+                log.error(
+                        "이벤트 처리 실패: consumer={}, message={}",
+                        consumer.getClass().getSimpleName(),
+                        event,
+                        e);
             }
         }
     }
 
-    private void recordLatency(BaseEvent event) {
+    private void recordLatency(String streamKey, BaseEvent event) {
         try {
-            latencyMetricService.recordLatency(event);
+            latencyMetricService.recordLatency(streamKey, event);
         } catch (Exception e) {
             log.warn("Redis Stream 지연 메트릭 기록 실패: eventId={}", event.eventId(), e);
         }

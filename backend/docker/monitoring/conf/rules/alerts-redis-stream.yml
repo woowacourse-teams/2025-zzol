@@ -3,12 +3,18 @@
 # 메시지 처리 흐름(Handler → Stream 발행 → Consumer → App Service → Notifier)의
 # 지연·적체를 본다. 이 경로가 막히면 게임 액션이 클라이언트에 늦게/안 전달된다.
 #
-# 사용 메트릭 (ADR-0026 컨텍스트에서 수집 확인됨):
-#   redis_stream_e2e_latency_seconds_bucket   히스토그램 버킷 → 분위수 계산 가능
-#   redis_stream_length                       스트림 적체 길이
-#   redis_stream_threadpool_*                  컨슈머 스레드풀 지표
+# 사용 메트릭 (tag: stream):
+#   redis_stream_e2e_latency_seconds_bucket   발행~소비 지연 히스토그램 → 분위수 계산 가능
+#   redis_stream_e2e_latency_seconds_count    지연 표본 수. 분위수를 믿을 만한지 거르는 하한에 쓴다
+#   redis_stream_published_total              발행 건수
+#   redis_stream_consumed_total               소비 건수. 발행 건수와 짝지어 컨슈머 정지를 판정한다
+#   redis_stream_group_lag                    정산 그룹에 아직 전달되지 않은 메시지 수 (XINFO GROUPS)
+#   redis_stream_group_pending                정산 그룹이 전달받고 ACK하지 않은 메시지 수 (XINFO GROUPS)
+#   settlement_deadletter_count               재전달 소진 후 격리된 정산 메시지 수 (RDBMS)
 #
-# ⚠️ 임계값은 베이스라인 미측정 추정치. 배포 전 정상 분위수/길이를 재고 조정한다.
+# redis_stream_length(XLEN)와 redis_stream_threadpool_*은 적체 신호가 아니다. 사유는 아래(#1744).
+#
+# ⚠️ 임계값은 베이스라인 미측정 추정치. 배포 전 정상 분위수/적체 수를 재고 조정한다.
 groups:
   - name: redis-stream
     rules:
@@ -16,32 +22,102 @@ groups:
       # 버킷이 있으므로 histogram_quantile로 분위수를 직접 계산한다(ADR-0026 line 22).
       # prod로 한정하고 job 라벨을 보존한다(#1596) — 이전에는 sum by (le)가 dev·prod 히스토그램을
       # 합쳐, 07/17 21:05 알림은 dev 2.201s에서 나왔고 prod는 표본조차 없었다.
-      # 임계 0.5s 유지 — prod 관측 최대 p95가 65ms라 여유가 충분하다(2026-07 실측).
+      # stream 라벨을 보존한다(#1744) — 이전에는 타이머가 하나뿐이라 어느 스트림이 느린지 알 수 없었다.
+      # 뒤의 처리율 하한이 그 대가다. 스트림별로 쪼개면 표본이 적은 스트림에서 p95가 한 건에 끌려가므로,
+      # 5분에 30건(0.1/s) 미만인 스트림은 분위수를 믿지 않는다. 그 스트림들은 뭉쳐 재던 시절에도
+      # 초당 90건짜리 wormgame에 희석돼 사실상 안 보였으므로, 이 하한이 있던 감시를 뺏는 것은 아니다.
+      # 소비가 아예 끊긴 경우는 아래 정지 룰이 맡고, 느리지만 흐르는 구간은 지금 아무도 안 본다.
+      # ⚠️ 임계 0.5s의 근거인 "prod 관측 최대 p95 65ms"(2026-07 실측)는 전 스트림을 뭉친 값이라
+      # 스트림별 임계의 근거로는 약하다. 특히 room은 Outbox 릴레이 대기가 timestamp에 포함돼 다른
+      # 스트림보다 높게 나온다. 배포 후 스트림별로 다시 재고 조정한다.
       - alert: RedisStreamE2eLatencyHigh
         expr: |
           histogram_quantile(
             0.95,
-            sum by (le, job) (rate(redis_stream_e2e_latency_seconds_bucket{job="prod-app"}[5m]))
+            sum by (le, job, stream) (rate(redis_stream_e2e_latency_seconds_bucket{job="prod-app"}[5m]))
           ) > 0.5
+          and
+          sum by (job, stream) (rate(redis_stream_e2e_latency_seconds_count{job="prod-app"}[5m])) > 0.1
         for: 3m
         labels:
           severity: warning
         annotations:
-          summary: "Redis Stream E2E 지연 p95 > 500ms ({{ $labels.job }})"
-          description: "스트림 처리 p95 지연이 {{ $value | printf \"%.3f\" }}s. 컨슈머 처리 적체 또는 다운스트림(App Service) 지연 가능성."
+          summary: "Redis Stream E2E 지연 p95 > 500ms ({{ $labels.stream }})"
+          description: "{{ $labels.stream }} 스트림 처리 p95 지연이 {{ $value | printf \"%.3f\" }}s. 컨슈머 처리 적체 또는 다운스트림(App Service) 지연 가능성."
 
-      # 스트림 적체 — 컨슈머가 발행 속도를 못 따라가면 length가 쌓인다.
-      # max()는 blue/green 두 인스턴스가 같은 값을 보고하는 중복을 제거하려는 것이지만, job 필터가
-      # 없으면 dev·prod까지 뭉갠다. prod로 한정하고 job별로 집계해 두 의도를 모두 지킨다(#1596).
-      # 임계 1000 유지 — prod 관측 최대가 117이라 여유가 충분하다(2026-07 실측).
-      - alert: RedisStreamBacklogHigh
-        expr: max by (job) (redis_stream_length{job="prod-app"}) > 1000
-        for: 3m
+      # 브로드캐스트 스트림의 적체는 위 E2E 지연 룰이 본다. XLEN 기반 RedisStreamBacklogHigh는
+      # 제거했다(#1744). XLEN은 StreamPublisher의 MAXLEN 트리밍 상한에 붙어 머물러(wormgame 3000)
+      # 임계를 어디에 두든 상시 발화 아니면 영원한 침묵이고, 스레드풀 큐에는 스트림당 폴링 태스크
+      # 하나만 들어가 평시 0이다(ADR-0022). 둘 다 컨슈머가 밀렸는지를 알려주지 않는다.
+      # 다만 E2E 지연은 소비가 있어야 표본이 생긴다. 컨슈머가 완전히 멎으면 분위수가 NaN이라
+      # 발화하지 않으므로, 발행량 대비 소비량을 보는 아래 룰이 그 구간을 맡는다.
+
+      # 컨슈머 정지 — 발행은 되는데 소비가 0이다. 지연 룰이 못 보는 최악의 경우를 잡는다(#1744).
+      # 소비는 전용 카운터로 센다. 지연 히스토그램의 _count는 timestamp가 없는 이벤트를 건너뛰어
+      # "소비했는데 안 세는" 구멍이 있다.
+      # 작업 큐 스트림(settlement:result)이 여기서 영구 발화하지 않는 근거는 소비 카운터의 등록 범위다.
+      # 소비 카운터는 리스너를 만드는 자리에서 함께 등록한다(RedisStreamListenerStarter).
+      # 그 스트림의 적체는 아래 컨슈머 그룹 룰이 따로 본다.
+      # for 10m — 5분 윈도 끝에 발행된 메시지가 아직 안 잡히는 순간이 있어 3분은 짧다. 발행이 띄엄한
+      # 스트림에서도 10분 내내 소비가 0이면 폴링이 멎은 것이다. 게임이 없는 시간대는 발행률도 0이라
+      # 좌변이 비어 발화하지 않는다.
+      - alert: RedisStreamConsumptionStalled
+        expr: |
+          sum by (job, stream) (rate(redis_stream_published_total{job="prod-app"}[5m])) > 0
+          and
+          sum by (job, stream) (rate(redis_stream_consumed_total{job="prod-app"}[5m])) == 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis Stream 소비 정지 ({{ $labels.stream }})"
+          description: "{{ $labels.stream }} 스트림에 발행은 되는데 10분간 소비가 없습니다. 폴링 태스크 중단 또는 리스너 컨테이너 정지를 확인."
+
+      # 정산 컨슈머 그룹 적체 — 컨슈머 그룹을 쓰는 유일한 스트림이라 XINFO GROUPS로 진짜 미처리
+      # 수를 읽을 수 있고(#1610), 브로드캐스트 리스너가 없어 위 E2E 지연 룰의 관측 대상도 아니다.
+      # lag(미전달)과 pending(미ACK)은 서로를 못 잡는다. 컨슈머가 XREADGROUP을 못 돌리면 lag만
+      # 오르고, 읽고서 처리에 실패하면 pending만 오른다. 더해서 한 룰로 묶지도 않는다. Redis가
+      # lag을 산정하지 못하면 게이지가 NaN이고, PromQL에서 NaN + x는 NaN이라 합산 룰은 조용히 죽는다.
+      # 둘은 같은 장애를 다른 각도에서 보므로 incident_group으로 묶어 LLM 분석을 한 번만 쓴다(#1598).
+      # ⚠️ 임계 10은 베이스라인 미측정 추정치. 정산은 미니게임 종료 1건당 1메시지라 평시 lag·pending은
+      # 곧 0으로 돌아가고, 처리에 실패하는 메시지도 5회 재전달 뒤 DLQ로 빠진다(ADR-0035). 10건이
+      # 10분간 유지되면 컨슈머도 PEL 스위퍼도 비우지 못하는 상태다.
+      - alert: SettlementStreamGroupLagHigh
+        expr: max by (job, stream, group) (redis_stream_group_lag{job="prod-app"}) > 10
+        for: 10m
         labels:
           severity: warning
+          incident_group: settlement-consumer
         annotations:
-          summary: "Redis Stream 적체 (length > 1000, {{ $labels.job }})"
-          description: "스트림 길이가 {{ $value }}. 컨슈머 처리 속도가 발행을 못 따라가고 있습니다."
+          summary: "정산 스트림 미전달 적체 (lag > 10, {{ $labels.stream }})"
+          description: "{{ $labels.group }} 그룹에 전달되지 않은 메시지가 {{ $value }}건. 컨슈머가 스트림을 읽지 못하고 있습니다."
+
+      - alert: SettlementStreamGroupPendingHigh
+        expr: max by (job, stream, group) (redis_stream_group_pending{job="prod-app"}) > 10
+        for: 10m
+        labels:
+          severity: warning
+          incident_group: settlement-consumer
+        annotations:
+          summary: "정산 스트림 미ACK 적체 (pending > 10, {{ $labels.stream }})"
+          description: "{{ $labels.group }} 그룹이 전달받고 ACK하지 않은 메시지가 {{ $value }}건. 정산 처리가 반복 실패하거나 컨슈머가 죽었을 수 있습니다."
+
+      # 정산 DLQ — 임계가 0인 이유는 이 값이 이미 재시도를 다 쓴 뒤의 숫자라서다. 5회 재전달까지
+      # 실패한 메시지만 settlement_dead_letter로 격리되므로(ADR-0035), 1건이라도 있으면 그 회차
+      # 정산이 원장에 안 들어간 것이고 사람이 직접 처리해야 한다. 자동 복구 경로가 없다.
+      # OutboxDeadLetterHigh의 10은 옛 self-poll 임계를 보존한 값이라 여기 맞추지 않는다.
+      # 격리된 행은 사람이 지울 때까지 남아 게이지가 요동치지 않으므로 for는 짧아도 된다. 5m은
+      # 스크레이프 몇 회분의 여유일 뿐이다. DB 조회가 실패하면 게이지가 NaN이고 NaN > 0은 거짓이라
+      # 그 경우는 애초에 발화하지 않는다.
+      - alert: SettlementDeadLetterPresent
+        expr: max by (job) (settlement_deadletter_count{job="prod-app"}) > 0
+        for: 5m
+        labels:
+          severity: warning
+          incident_group: settlement-consumer
+        annotations:
+          summary: "정산 DLQ에 격리된 메시지 존재 ({{ $labels.job }})"
+          description: "재전달 5회를 소진해 격리된 정산 메시지가 {{ $value }}건. 해당 회차 정산이 원장에 반영되지 않았습니다. settlement_dead_letter 테이블 확인 필요."
 
       # Outbox DEAD_LETTER 적체 — 재시도 초과로 죽은 이벤트가 쌓이면 메시지 유실.
       # 과거 zzol-bot 자체 폴링(DB count ≥ 10)을 Prometheus로 이관(ADR-0032). "적체 깊이" 신호라

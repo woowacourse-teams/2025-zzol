@@ -5,8 +5,12 @@ import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.connection.RedisStreamCommands.TrimOptions;
@@ -23,17 +27,35 @@ public class StreamPublisher {
     private final RedisStreamProperties redisStreamProperties;
     private final ObjectMapper objectMapper;
     private final StreamTracePropagator streamTracePropagator;
+    private final MeterRegistry meterRegistry;
+    // 발행마다 Counter를 새로 만들지 않도록 스트림별로 캐싱한다 (WebSocketMetricService 선례)
+    private final Map<String, Counter> publishedCounters = new ConcurrentHashMap<>();
 
     public StreamPublisher(
             StringRedisTemplate stringRedisTemplate,
             RedisStreamProperties redisStreamProperties,
             @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
-            StreamTracePropagator streamTracePropagator
-    ) {
+            StreamTracePropagator streamTracePropagator,
+            MeterRegistry meterRegistry) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.redisStreamProperties = redisStreamProperties;
         this.objectMapper = objectMapper;
         this.streamTracePropagator = streamTracePropagator;
+        this.meterRegistry = meterRegistry;
+    }
+
+    // 카운터를 기동 시점에 0으로 만들어 둔다. 첫 발행 때 시계열이 생기면 Prometheus rate()가 그
+    // 첫 샘플을 증가로 세지 않아, 기동 후 발행이 한 번뿐인 스트림은 컨슈머가 멎어도 정지 룰이
+    // 침묵한다. 발행이 띄엄한 스트림을 잡는 게 그 룰의 목적이다.
+    @PostConstruct
+    public void initializeCounters() {
+        if (redisStreamProperties.keys() == null) {
+            return;
+        }
+        redisStreamProperties
+                .keys()
+                .keySet()
+                .forEach(redisKey -> publishedCounters.computeIfAbsent(redisKey, this::registerPublishedCounter));
     }
 
     public void publish(StreamKey key, BaseEvent event) {
@@ -75,7 +97,10 @@ public class StreamPublisher {
         }
 
         if (!redisStreamProperties.keys().containsKey(redisKey)) {
-            log.error("존재하지 않는 키입니다: {}. 사용 가능한 키: {}", redisKey, redisStreamProperties.keys().keySet());
+            log.error(
+                    "존재하지 않는 키입니다: {}. 사용 가능한 키: {}",
+                    redisKey,
+                    redisStreamProperties.keys().keySet());
             throw new IllegalArgumentException("존재하지 않는 키입니다: " + redisKey);
         }
 
@@ -88,9 +113,23 @@ public class StreamPublisher {
 
         final int maxLength = streamConfig.getMaxLength(redisStreamProperties.commonSettings());
 
-        stringRedisTemplate.opsForStream().add(
-                StreamRecords.newRecord().in(redisKey).ofMap(fields),
-                XAddOptions.trim(TrimOptions.maxLen(maxLength).approximate())
-        );
+        stringRedisTemplate
+                .opsForStream()
+                .add(
+                        StreamRecords.newRecord().in(redisKey).ofMap(fields),
+                        XAddOptions.trim(TrimOptions.maxLen(maxLength).approximate()));
+
+        publishedCounters
+                .computeIfAbsent(redisKey, this::registerPublishedCounter)
+                .increment();
+    }
+
+    // 발행률만으로는 적체를 알 수 없다. 소비율(redis_stream_consumed_total)과 짝지어
+    // "발행은 되는데 소비가 0"인 상태를 잡는 데 쓴다 (RedisStreamConsumptionStalled, #1744).
+    private Counter registerPublishedCounter(String redisKey) {
+        return Counter.builder("redis.stream.published")
+                .description("Redis Stream에 발행된 메시지 수")
+                .tag("stream", redisKey)
+                .register(meterRegistry);
     }
 }

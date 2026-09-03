@@ -35,7 +35,7 @@ const RacingPlayer = ({ player, isMe, myPosition, color, ref }: Props) => {
         <Description color={isMe ? 'point-500' : 'white'}>{player.playerName}</Description>
       </S.PlayerName>
 
-      <S.IconRing $borderStyle={borderStyle} $isMe={isMe}>
+      <S.IconRing $borderStyle={borderStyle}>
         <S.RotatingWrapper ref={rotatingRef}>
           <PlayerIcon color={color} />
         </S.RotatingWrapper>

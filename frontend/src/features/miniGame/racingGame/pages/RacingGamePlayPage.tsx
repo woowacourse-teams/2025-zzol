@@ -125,15 +125,15 @@ const RacingGamePage = () => {
       <ScreenReaderOnly aria-live="polite">{announcement}</ScreenReaderOnly>
       <RacingGameOverlay isGoal={isGoal} onTap={handleTap}>
         <S.Container ref={containerRef}>
-          <RacingRanks
-            rankedPlayers={rankedPlayers}
-            myName={myName}
-            endDistance={racingGameData.distance.end}
-          />
           <RacingProgressBar
             myName={myName}
             endDistance={racingGameData.distance.end}
             players={racingGameData.players}
+          />
+          <RacingRanks
+            rankedPlayers={rankedPlayers}
+            myName={myName}
+            endDistance={racingGameData.distance.end}
           />
           <S.ContentWrapper>
             <S.PlayersWrapper>

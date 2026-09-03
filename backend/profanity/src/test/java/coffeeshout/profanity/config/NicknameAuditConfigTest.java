@@ -27,6 +27,7 @@ class NicknameAuditConfigTest {
     }
 
     private NicknameAuditProperties propertiesWithTimeout(Duration timeout) {
-        return new NicknameAuditProperties("api-key", "gemini-3.5-flash", 0.85, 100, 20, 2, timeout);
+        return new NicknameAuditProperties(
+                "api-key", "gemini-3.5-flash", 0.85, 100, 20, 2, timeout, Duration.ofMinutes(10));
     }
 }

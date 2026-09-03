@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
@@ -16,10 +17,11 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -38,8 +40,8 @@ class ProfanityAuditServiceTest {
         batchProcessor = mock(ProfanityAuditBatchProcessor.class);
         profanityWordManagementService = mock(ProfanityWordManagementService.class);
 
-        final NicknameAuditProperties properties =
-                new NicknameAuditProperties("api-key", "gemini-2.0-flash", 0.8, 10, 5, 2, Duration.ofSeconds(120));
+        final NicknameAuditProperties properties = new NicknameAuditProperties(
+                "api-key", "gemini-2.0-flash", 0.8, 10, 5, 2, Duration.ofSeconds(120), Duration.ofMinutes(10));
         service = new ProfanityAuditService(
                 auditRepository,
                 batchProcessor,
@@ -116,17 +118,11 @@ class ProfanityAuditServiceTest {
     }
 
     /**
-     * 재현 테스트 — 드레인 루프에 시간 예산이 없다.
+     * 드레인 루프에 회차 시간 예산이 있는지 검증한다.
      *
-     * <p>{@code auditPending()}은 큐가 빌 때까지 배치를 연속으로 돈다. 배치 하나는 Gemini 호출 하나이고,
-     * 레이트리미터가 13초에 한 번만 허용하므로({@code resilience4j.yml}의 {@code geminiAudit.limit-refresh-period})
-     * 한 회차 소요 시간은 적체량에 정비례한다. 상한이 없어 적체가 크면 회차가 끝없이 길어진다.
-     *
-     * <p>이게 왜 위험한가. 프로덕션의 {@code @Scheduled}는 전부 스레드 하나를 공유한다
-     * ({@code DelayRemovalSchedulerConfig}가 유일한 {@code TaskScheduler} 빈이라 Spring Boot 자동설정이 물러난다).
-     * 그 안에 500ms 주기 Outbox 릴레이가 있다. 감사 회차가 길어지는 만큼 릴레이가 멈춘다.
-     *
-     * <p>수정 방향은 회차당 시간 예산 또는 최대 배치 수를 두는 것이다.
+     * <p>배치 하나가 Gemini 호출 하나이고 레이트리미터가 13초에 하나만 허용하므로
+     * ({@code resilience4j.yml}의 geminiAudit.limit-refresh-period) 회차 소요가 적체량에 정비례한다.
+     * 예산이 없으면 적체 10만 건에 3.6시간을 도는데 그동안 실행기 스레드를 붙잡고 있게 된다.
      */
     @Nested
     class auditPending_한_회차_소요시간 {
@@ -137,16 +133,17 @@ class ProfanityAuditServiceTest {
         /** 프로덕션 배치 크기. {@code service.yml}의 nickname-audit.batch-size. */
         private static final int PRODUCTION_BATCH_SIZE = 100;
 
-        /** 한 회차가 공유 스케줄러 스레드를 붙잡아도 되는 상한. 이보다 길면 Outbox 릴레이가 굶는다. */
+        /** 회차 예산. {@code service.yml}의 nickname-audit.max-run-duration. */
         private static final int MAX_RUN_SECONDS = 600;
 
         private static final int BACKLOG = 10_000;
 
         @Test
-        void 적체가_크면_한_회차가_시간_예산을_넘긴다() {
-            final ProfanityAuditService target = productionSizedService();
+        void 적체가_커도_한_회차는_시간_예산_안에서_끝난다() {
+            final StubClock clock = new StubClock(Instant.parse("2026-09-03T00:00:00Z"));
+            final Instant startedAt = clock.instant();
+            final ProfanityAuditService target = productionSizedService(clock);
             final AtomicInteger remaining = new AtomicInteger(BACKLOG);
-            final AtomicLong simulatedSeconds = new AtomicLong();
 
             given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
                     .willReturn((long) BACKLOG);
@@ -154,27 +151,51 @@ class ProfanityAuditServiceTest {
                     .willAnswer(invocation -> nextBatch(remaining));
             given(batchProcessor.process(any())).willAnswer(invocation -> {
                 final List<NicknameAudit> batch = invocation.getArgument(0);
-                simulatedSeconds.addAndGet(SECONDS_PER_BATCH);
+                clock.advance(Duration.ofSeconds(SECONDS_PER_BATCH));
                 return batch.size();
             });
 
             target.auditPending();
 
-            assertThat(simulatedSeconds.get())
-                    .as("적체 %,d건을 비우는 데 걸리는 초. 이 시간 동안 공유 스케줄러 스레드가 묶인다.", BACKLOG)
-                    .isLessThanOrEqualTo(MAX_RUN_SECONDS);
+            assertThat(Duration.between(startedAt, clock.instant()).toSeconds())
+                    .as("적체 %,d건 회차가 붙잡은 시간(초). 예산 확인이 배치 사이에 걸리므로 한 배치까지 초과할 수 있다.", BACKLOG)
+                    .isLessThanOrEqualTo(MAX_RUN_SECONDS + SECONDS_PER_BATCH);
         }
 
-        private ProfanityAuditService productionSizedService() {
+        @Test
+        void 진행이_없으면_같은_페이지를_반복해_읽지_않는다() {
+            final StubClock clock = new StubClock(Instant.parse("2026-09-03T00:00:00Z"));
+            final ProfanityAuditService target = productionSizedService(clock);
+
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn((long) PRODUCTION_BATCH_SIZE);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willAnswer(invocation -> batchOf(PRODUCTION_BATCH_SIZE));
+            // 배치 전체가 판정을 못 받아 UNAUDITED로 남은 상황. 처리 건수가 0이면 다시 읽어봐야 같은 행이다.
+            given(batchProcessor.process(any())).willReturn(0);
+
+            target.auditPending();
+
+            then(batchProcessor).should(times(1)).process(any());
+        }
+
+        private ProfanityAuditService productionSizedService(Clock clock) {
             final NicknameAuditProperties production = new NicknameAuditProperties(
-                    "api-key", "gemini-3.5-flash", 0.85, PRODUCTION_BATCH_SIZE, 20, 2, Duration.ofSeconds(120));
+                    "api-key",
+                    "gemini-3.5-flash",
+                    0.85,
+                    PRODUCTION_BATCH_SIZE,
+                    20,
+                    2,
+                    Duration.ofSeconds(120),
+                    Duration.ofSeconds(MAX_RUN_SECONDS));
             final ProfanityAuditService target = new ProfanityAuditService(
                     auditRepository,
                     batchProcessor,
                     profanityWordManagementService,
                     production,
                     new SimpleMeterRegistry(),
-                    Clock.systemDefaultZone());
+                    clock);
             target.initMetrics();
             return target;
         }
@@ -182,11 +203,44 @@ class ProfanityAuditServiceTest {
         private List<NicknameAudit> nextBatch(AtomicInteger remaining) {
             final int take = Math.min(PRODUCTION_BATCH_SIZE, remaining.get());
             remaining.addAndGet(-take);
-            final List<NicknameAudit> batch = new ArrayList<>(take);
-            for (int i = 0; i < take; i++) {
+            return batchOf(take);
+        }
+
+        private List<NicknameAudit> batchOf(int size) {
+            final List<NicknameAudit> batch = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
                 batch.add(new NicknameAudit("닉" + i));
             }
             return batch;
+        }
+    }
+
+    /** 배치 소요 시간을 흉내내기 위한 수동 진행 시계. */
+    private static final class StubClock extends Clock {
+
+        private Instant now;
+
+        private StubClock(Instant start) {
+            this.now = start;
+        }
+
+        void advance(Duration amount) {
+            now = now.plus(amount);
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return now;
         }
     }
 }

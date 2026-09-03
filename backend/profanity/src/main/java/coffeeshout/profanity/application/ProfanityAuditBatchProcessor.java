@@ -6,10 +6,10 @@ import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
-import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
@@ -49,10 +49,8 @@ public class ProfanityAuditBatchProcessor {
     }
 
     public int process(List<NicknameAudit> batch) {
-        final List<String> nicknames = batch.stream()
-                .map(NicknameAudit::getNickname)
-                .distinct()
-                .toList();
+        final List<String> nicknames =
+                batch.stream().map(NicknameAudit::getNickname).distinct().toList();
 
         final List<NicknameAuditResult> results = nicknameAuditor.audit(nicknames);
 
@@ -65,40 +63,58 @@ public class ProfanityAuditBatchProcessor {
         final Map<String, NicknameAuditResult> resultMap = results.stream()
                 .collect(Collectors.toMap(NicknameAuditResult::nickname, Function.identity(), (a, b) -> a));
 
-        transactionTemplate.executeWithoutResult(status -> {
-            // 배치 닉네임 중 이미 검열 완료(terminal) 행을 가진 것들을 한 번에 조회한다 (건별 조회 N+1 회피).
-            final Set<String> nicknamesWithTerminal = auditRepository.findNicknamesWithTerminalStatus(nicknames);
+        final Integer settled = transactionTemplate.execute(status -> settle(batch, nicknames, resultMap));
+        return settled == null ? 0 : settled;
+    }
 
-            final List<NicknameAudit> toPromote = new ArrayList<>();
-            final List<NicknameAudit> redundant = new ArrayList<>();
-            for (final NicknameAudit entity : batch) {
-                final NicknameAuditResult result = resultMap.get(entity.getNickname());
-                // 같은 닉네임의 검열 완료(terminal) 행이 이미 있으면 이 UNAUDITED는 #1467 fix 이전에 생긴
-                // 잔존 중복 재등록이다(register의 "이름당 1행" 불변식 위반). 승격하면 대상 상태가 같을 때
-                // uq_player_name_audit_name_status에 충돌해 배치 전체가 롤백되고 매 tick 재크래시하며,
-                // 다를 때는 (예: 기존 CLEAN + 신규 FLAGGED) 모순된 감사 이력과 autoBlock 오발동을 남긴다.
-                // 어느 쪽이든 승격 대신 제거한다 — 기존 terminal 행이 권위 있는 판정을 이미 보유한다.
-                if (result != null && nicknamesWithTerminal.contains(entity.getNickname())) {
-                    redundant.add(entity);
-                    continue;
-                }
-                applyResult(entity, result);
-                toPromote.add(entity);
-            }
-            auditRepository.saveAll(toPromote);
-            if (!redundant.isEmpty()) {
-                auditRepository.deleteAll(redundant);
-                log.warn("이미 검열된 닉네임의 잔존 UNAUDITED {}건 제거 (중복 재등록)", redundant.size());
-            }
-        });
+    /**
+     * 판정을 DB에 반영하고 <b>실제로 UNAUDITED에서 빠져나간 행 수</b>를 돌려준다.
+     *
+     * <p>배치 크기를 그대로 돌려주면 안 된다. 판정을 못 짝지어 그대로 남은 행까지 처리했다고 세면,
+     * 드레인 루프가 진행이 없는데도 같은 0페이지를 계속 다시 읽는다.
+     */
+    private int settle(List<NicknameAudit> batch, List<String> nicknames, Map<String, NicknameAuditResult> resultMap) {
+        // 배치 닉네임 중 이미 검열 완료(terminal) 행을 가진 것들을 한 번에 조회한다 (건별 조회 N+1 회피).
+        final Set<String> nicknamesWithTerminal = auditRepository.findNicknamesWithTerminalStatus(nicknames);
 
-        return batch.size();
+        final List<NicknameAudit> toPromote = new ArrayList<>();
+        final List<NicknameAudit> redundant = new ArrayList<>();
+        int unmatched = 0;
+        for (final NicknameAudit entity : batch) {
+            final NicknameAuditResult result = resultMap.get(entity.getNickname());
+            if (result == null) {
+                unmatched++;
+                continue;
+            }
+            // 같은 닉네임의 검열 완료(terminal) 행이 이미 있으면 이 UNAUDITED는 #1467 fix 이전에 생긴
+            // 잔존 중복 재등록이다(register의 "이름당 1행" 불변식 위반). 승격하면 대상 상태가 같을 때
+            // uq_player_name_audit_name_status에 충돌해 배치 전체가 롤백되고 매 tick 재크래시하며,
+            // 다를 때는 (예: 기존 CLEAN + 신규 FLAGGED) 모순된 감사 이력과 autoBlock 오발동을 남긴다.
+            // 어느 쪽이든 승격 대신 제거한다 — 기존 terminal 행이 권위 있는 판정을 이미 보유한다.
+            if (nicknamesWithTerminal.contains(entity.getNickname())) {
+                redundant.add(entity);
+                continue;
+            }
+            applyResult(entity, result);
+            toPromote.add(entity);
+        }
+        auditRepository.saveAll(toPromote);
+        if (!redundant.isEmpty()) {
+            auditRepository.deleteAll(redundant);
+            log.warn("이미 검열된 닉네임의 잔존 UNAUDITED {}건 제거 (중복 재등록)", redundant.size());
+        }
+        if (unmatched > 0) {
+            log.warn("판정을 짝지을 수 없는 닉네임 {}건 — UNAUDITED로 남긴다", unmatched);
+        }
+        return toPromote.size() + redundant.size();
     }
 
     private void applyResult(NicknameAudit entity, NicknameAuditResult result) {
         if (result == null) return;
         entity.complete(result.status(), result.confidence(), result.reason());
-        meterRegistry.counter("nickname.audit.result", "status", result.status().name()).increment();
+        meterRegistry
+                .counter("nickname.audit.result", "status", result.status().name())
+                .increment();
         if (result.status() == NicknameAuditStatus.FLAGGED) {
             autoBlock(result);
         }
@@ -122,8 +138,7 @@ public class ProfanityAuditBatchProcessor {
         final List<String> fragments =
                 result.extractProfanityFragments(textNormalizer, nicknameAuditProperties.minTermLength());
         if (fragments.isEmpty()) {
-            log.info("유효한 비속어 조각 없음 — 닉네임 전체 차단 폴백: nickname={}, terms={}",
-                    result.nickname(), result.profanityTerms());
+            log.info("유효한 비속어 조각 없음 — 닉네임 전체 차단 폴백: nickname={}, terms={}", result.nickname(), result.profanityTerms());
             return List.of(result.nickname());
         }
         return fragments;

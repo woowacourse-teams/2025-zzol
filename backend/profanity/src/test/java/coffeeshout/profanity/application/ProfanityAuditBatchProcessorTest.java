@@ -64,8 +64,8 @@ class ProfanityAuditBatchProcessorTest {
             protected void doRollback(DefaultTransactionStatus status) {}
         });
 
-        final NicknameAuditProperties properties =
-                new NicknameAuditProperties("test-key", "gemini-test", 0.85, 10, 20, 2, Duration.ofSeconds(120));
+        final NicknameAuditProperties properties = new NicknameAuditProperties(
+                "test-key", "gemini-test", 0.85, 10, 20, 2, Duration.ofSeconds(120), Duration.ofMinutes(10));
         processor = new ProfanityAuditBatchProcessor(
                 auditRepository,
                 nicknameAuditor,
@@ -366,6 +366,48 @@ class ProfanityAuditBatchProcessorTest {
             then(auditRepository).should().saveAll(List.of(fresh));
             then(auditRepository).should(never()).deleteAll(any());
             assertThat(fresh.getStatus()).isEqualTo(NicknameAuditStatus.CLEAN);
+        }
+    }
+
+    /**
+     * 처리 건수는 <b>실제로 UNAUDITED에서 빠져나간 행 수</b>여야 한다.
+     *
+     * <p>배치 크기를 그대로 돌려주면, 판정을 못 짝지어 그대로 남은 행까지 처리했다고 세게 된다.
+     * 그러면 드레인 루프({@code ProfanityAuditService.auditPending})가 진행이 없는데도 같은 0페이지를
+     * 계속 다시 읽는다. 배치 전체가 짝을 못 찾으면 13초마다 Gemini를 부르며 영원히 돈다.
+     */
+    @Nested
+    class 처리_건수 {
+
+        @Test
+        void 판정을_짝짓지_못한_행은_처리_건수에서_빠진다() {
+            final NicknameAudit matched = new NicknameAudit("짝맞는닉");
+            final NicknameAudit unmatched = new NicknameAudit("짝없는닉");
+            // AI가 요청과 다른 이름을 돌려준 상황. "짝없는닉"에 대응하는 판정이 없다.
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "짝맞는닉", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반 닉네임")));
+            given(auditRepository.findNicknamesWithTerminalStatus(any())).willReturn(Set.of());
+
+            final int processed = processor.process(List.of(matched, unmatched));
+
+            assertThat(processed)
+                    .as("판정이 없어 UNAUDITED로 남은 행을 처리했다고 세면 드레인 루프가 멈추지 못한다.")
+                    .isEqualTo(1);
+        }
+
+        @Test
+        void 배치_전체가_짝을_못_찾으면_처리_건수가_0이다() {
+            final NicknameAudit first = new NicknameAudit("닉하나");
+            final NicknameAudit second = new NicknameAudit("닉둘");
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "엉뚱한닉", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반 닉네임")));
+            given(auditRepository.findNicknamesWithTerminalStatus(any())).willReturn(Set.of());
+
+            final int processed = processor.process(List.of(first, second));
+
+            assertThat(processed).as("0을 돌려줘야 드레인 루프가 같은 페이지 반복을 멈춘다.").isZero();
         }
     }
 }

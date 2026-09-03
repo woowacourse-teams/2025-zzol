@@ -1,14 +1,16 @@
 package coffeeshout.profanity.application;
 
+import coffeeshout.global.lock.RedisLock;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
-import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
-import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
+import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ProfanityAuditService {
+
+    /**
+     * Redisson은 leaseTime을 명시하면 워치독 갱신 없이 그 시간 뒤 락을 자동 해제한다.
+     * 회차 예산({@code nickname-audit.max-run-duration}, 기본 10분)보다 넉넉히 길어야
+     * 실행 도중 락이 풀려 다른 인스턴스가 같은 큐에 끼어드는 일을 막는다.
+     */
+    private static final long LOCK_LEASE_MILLIS = 900_000L;
+
+    /** 주기 작업이라 완료 마킹은 짧게 둔다. cron 주기(12시간)보다 길면 다음 회차가 조용히 건너뛰어진다. */
+    private static final long LOCK_DONE_TTL_MILLIS = 60_000L;
 
     private final NicknameAuditRepository auditRepository;
     private final ProfanityAuditBatchProcessor batchProcessor;
@@ -86,21 +98,50 @@ public class ProfanityAuditService {
         auditRepository.insertUnaudited(nickname, clock.instant());
     }
 
+    /**
+     * 미검열 닉네임을 배치로 검열한다.
+     *
+     * <p>회차에 시간 예산을 둔다. 배치 하나가 Gemini 호출 하나이고 레이트리미터가 13초에 하나만
+     * 허용하므로 소요 시간이 적체량에 정비례한다. 상한이 없으면 적체 10만 건에 3.6시간을 도는데,
+     * 그동안 실행기 스레드를 붙잡고 있게 된다.
+     *
+     * <p>분산 락은 여기 건다. 스케줄러는 작업을 실행기로 넘기고 즉시 반환하므로 그쪽에 걸면
+     * 락이 바로 풀린다. Blue/Green 전환 구간에 두 인스턴스가 같은 큐를 읽는 것을 막는 게 목적이다.
+     */
+    @RedisLock(
+            key = "'nickname-audit'",
+            lockPrefix = "lock:",
+            donePrefix = "done:",
+            waitTime = 0,
+            leaseTime = LOCK_LEASE_MILLIS,
+            doneTtl = LOCK_DONE_TTL_MILLIS)
     public void auditPending() {
         final long initialQueueSize = auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED);
         unauditedQueueDepth.set(initialQueueSize);
         log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
 
-        final Pageable pageable = PageRequest.of(0, properties.batchSize(), Sort.by("createdAt").ascending());
-        List<NicknameAudit> batch = auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+        final Instant deadline = clock.instant().plus(properties.maxRunDuration());
+        final Pageable pageable =
+                PageRequest.of(0, properties.batchSize(), Sort.by("createdAt").ascending());
+        List<NicknameAudit> batch =
+                auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
         int processedTotal = 0;
 
         while (!batch.isEmpty()) {
+            // processed는 실제로 UNAUDITED에서 빠져나간 행 수다. 진행이 없으면 같은 0페이지를 영원히
+            // 다시 읽게 되므로 0이면 멈춘다.
             int processed = batchProcessor.process(batch);
             processedTotal += processed;
-            log.info("닉네임 검열 진행: 이번 배치 {}건, 누적 {}건", batch.size(), processedTotal);
+            log.info("닉네임 검열 진행: 이번 배치 {}건 중 {}건 처리, 누적 {}건", batch.size(), processed, processedTotal);
 
             if (processed == 0 || batch.size() < properties.batchSize()) {
+                break;
+            }
+            if (!clock.instant().isBefore(deadline)) {
+                log.warn(
+                        "닉네임 검열 회차 시간 예산({}) 소진 — 남은 적체는 다음 회차로 넘긴다. 누적 {}건",
+                        properties.maxRunDuration(),
+                        processedTotal);
                 break;
             }
             batch = auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);

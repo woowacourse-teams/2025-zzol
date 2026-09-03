@@ -3,7 +3,7 @@ import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
 import { useRacingGame } from '@/contexts/RacingGame/RacingGameContext';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import PrepareOverlay from '../../components/PrepareOverlay/PrepareOverlay';
 import Finish from '../components/Finish/Finish';
@@ -23,6 +23,8 @@ import * as S from './RacingGamePlayPage.styled';
 
 const FINISH_LINE_VISUAL_OFFSET = 30;
 const STUCK_TIMEOUT_MS = 8000;
+const TAP_POP_SCALE = 1.06;
+const TAP_POP_DURATION_MS = 160;
 
 const RacingGamePage = () => {
   const { joinCode, myName } = useIdentifier();
@@ -32,6 +34,22 @@ const RacingGamePage = () => {
   const { getParticipantColorIndex } = useParticipants();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const myPlayerRef = useRef<HTMLDivElement | null>(null);
+  const tapPopRef = useRef<Animation | null>(null);
+
+  // 탭한 순간 내 캐릭터를 한 번 튕긴다. 리렌더 없이 그리려고 Web Animations API 로 직접 건다.
+  const handleTap = useCallback(() => {
+    tapPopRef.current?.cancel();
+    tapPopRef.current =
+      myPlayerRef.current?.animate?.(
+        [
+          { transform: 'scale(1)' },
+          { transform: `scale(${TAP_POP_SCALE})` },
+          { transform: 'scale(1)' },
+        ],
+        { duration: TAP_POP_DURATION_MS, easing: 'ease-out' }
+      ) ?? null;
+  }, []);
 
   const {
     players: visiblePlayers,
@@ -81,7 +99,7 @@ const RacingGamePage = () => {
       {racingGameState === 'PREPARE' && <PrepareOverlay />}
       {racingGameState === 'DONE' && <Finish />}
       {isGoal && racingGameState === 'PLAYING' && <Goal />}
-      <RacingGameOverlay isGoal={isGoal}>
+      <RacingGameOverlay isGoal={isGoal} onTap={handleTap}>
         <S.Container ref={containerRef}>
           <RacingRanks
             players={racingGameData.players}
@@ -105,6 +123,7 @@ const RacingGamePage = () => {
               {visiblePlayers.map((player) => (
                 <RacingPlayer
                   key={player.playerName}
+                  ref={player.playerName === myName ? myPlayerRef : undefined}
                   player={player}
                   isMe={player.playerName === myName}
                   myPosition={myPosition}

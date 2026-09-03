@@ -137,11 +137,13 @@ const RacingGamePage = () => {
             <S.PlayersWrapper>
               {/* 출발선 */}
               <RacingLine position={racingGameData.distance.start} myPosition={myPosition} />
-              {/* 도착선 */}
-              <RacingLine
-                position={racingGameData.distance.end - FINISH_LINE_VISUAL_OFFSET}
-                myPosition={myPosition}
-              />
+              {/* 도착선 — 결승선 거리를 받기 전에는 그리지 않는다 */}
+              {racingGameData.distance.end > 0 && (
+                <RacingLine
+                  position={racingGameData.distance.end - FINISH_LINE_VISUAL_OFFSET}
+                  myPosition={myPosition}
+                />
+              )}
               {visiblePlayers.map((player) => (
                 <RacingPlayer
                   key={player.playerName}

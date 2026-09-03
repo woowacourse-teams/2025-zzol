@@ -24,7 +24,7 @@ const RacingProgressBar = ({ myName, endDistance, players }: Props) => {
     <S.Container>
       <S.Legend>
         <S.LegendLabel>출발 0</S.LegendLabel>
-        <S.LegendLabel>결승 {endDistance}</S.LegendLabel>
+        <S.LegendLabel>결승 {endDistance > 0 ? endDistance : '—'}</S.LegendLabel>
       </S.Legend>
       <S.ProgressTrack>
         {/* 채움 막대는 내 것만 그린다. 전원 것을 그리면 같은 자리에 겹쳐 선두 것만 보였다. */}

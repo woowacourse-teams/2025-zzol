@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import skyImage from '@/assets/sky.png';
+import skyImage from '@/assets/sky.webp';
 
 export const Container = styled.div`
   position: relative;

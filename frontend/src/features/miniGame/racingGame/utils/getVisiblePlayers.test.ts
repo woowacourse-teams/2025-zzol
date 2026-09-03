@@ -7,6 +7,8 @@ const player = (playerName: string, position: number): RacingPlayer => ({
   speed: 0,
 });
 
+const names = (players: RacingPlayer[]) => players.map(({ playerName }) => playerName);
+
 describe('getVisiblePlayers', () => {
   it('9인 방에서 나와 가까운 7명을 남긴다', () => {
     const players = [
@@ -23,21 +25,13 @@ describe('getVisiblePlayers', () => {
 
     const { players: visible, hiddenAhead, hiddenBehind } = getVisiblePlayers(players, '나');
 
-    expect(visible.map(({ playerName }) => playerName)).toEqual([
-      'a',
-      'b',
-      'c',
-      '나',
-      'd',
-      'e',
-      'f',
-    ]);
+    expect(names(visible).sort()).toEqual(['a', 'b', 'c', 'd', 'e', 'f', '나']);
     expect(hiddenAhead).toBe(0);
     expect(hiddenBehind).toBe(2);
   });
 
   it('참가 순서가 아니라 거리로 자른다', () => {
-    // 배열 순서로 앞뒤 3명씩 자르면 바로 옆의 far1·far2 대신 멀리 있는 near 가 잘린다.
+    // 배열 순서로 앞뒤 3명씩 자르면 바로 옆의 near 가 잘리고 멀리 있는 far 가 남는다.
     const players = [
       player('나', 1000),
       player('far1', 0),
@@ -51,8 +45,42 @@ describe('getVisiblePlayers', () => {
 
     const { players: visible } = getVisiblePlayers(players, '나');
 
-    expect(visible.map(({ playerName }) => playerName)).toContain('near');
-    expect(visible.map(({ playerName }) => playerName)).not.toContain('far1');
+    expect(names(visible)).toContain('near');
+    expect(names(visible)).not.toContain('far1');
+  });
+
+  it('추월이 일어나도 행 순서가 바뀌지 않는다', () => {
+    const before = [player('나', 100), player('x', 200), player('y', 50)];
+    // 내가 x 를 제치고 선두가 됐다. 보이는 사람은 그대로다.
+    const after = [player('나', 300), player('x', 200), player('y', 50)];
+
+    expect(names(getVisiblePlayers(after, '나').players)).toEqual(
+      names(getVisiblePlayers(before, '나').players)
+    );
+  });
+
+  it('내 행을 세로 가운데에 둔다', () => {
+    const players = [
+      player('a', 900),
+      player('b', 800),
+      player('나', 700),
+      player('c', 600),
+      player('d', 500),
+    ];
+
+    const { players: visible } = getVisiblePlayers(players, '나');
+
+    expect(visible[Math.floor(visible.length / 2)].playerName).toBe('나');
+  });
+
+  it('내 등수가 바뀌어도 내 자리는 가운데 그대로다', () => {
+    const players = [player('a', 900), player('b', 800), player('나', 700)];
+    const overtaken = [player('a', 900), player('b', 800), player('나', 1000)];
+
+    const center = (list: RacingPlayer[]) => list[Math.floor(list.length / 2)].playerName;
+
+    expect(center(getVisiblePlayers(players, '나').players)).toBe('나');
+    expect(center(getVisiblePlayers(overtaken, '나').players)).toBe('나');
   });
 
   it('내 이름이 목록에 없으면 트랙을 비우지 않고 관전으로 표시한다', () => {
@@ -62,13 +90,5 @@ describe('getVisiblePlayers', () => {
 
     expect(visible).toHaveLength(2);
     expect(isSpectating).toBe(true);
-  });
-
-  it('앞선 사람이 위에 오도록 내림차순으로 준다', () => {
-    const players = [player('꼴찌', 100), player('나', 500), player('선두', 900)];
-
-    const { players: visible } = getVisiblePlayers(players, '나');
-
-    expect(visible.map(({ playerName }) => playerName)).toEqual(['선두', '나', '꼴찌']);
   });
 });

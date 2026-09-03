@@ -3,7 +3,7 @@ import { RacingPlayer } from '@/types/miniGame/racingGame';
 const VISIBLE_PLAYER_COUNT = 7;
 
 export type VisiblePlayers = {
-  /** 화면에 세울 플레이어. 앞선 사람이 위에 오도록 position 내림차순이다. */
+  /** 화면에 세울 플레이어. 내 행이 가운데 오도록 돌려 놓은 참가 순서다. */
   players: RacingPlayer[];
   /** 잘려서 안 보이는 인원. 나보다 앞선 쪽과 뒤진 쪽을 나눠 센다. */
   hiddenAhead: number;
@@ -19,6 +19,13 @@ const EMPTY: VisiblePlayers = {
   isSpectating: false,
 };
 
+/** 배열을 shift 칸 돌린다. 이웃 관계가 그대로라 행끼리 자리를 바꾸지 않는다. */
+const rotate = <T>(items: T[], shift: number): T[] => {
+  const size = items.length;
+  const offset = ((shift % size) + size) % size;
+  return [...items.slice(offset), ...items.slice(0, offset)];
+};
+
 export const getVisiblePlayers = (players: RacingPlayer[], myName: string): VisiblePlayers => {
   if (players.length === 0) return EMPTY;
 
@@ -30,11 +37,22 @@ export const getVisiblePlayers = (players: RacingPlayer[], myName: string): Visi
     .sort((a, b) => Math.abs(a.position - myPosition) - Math.abs(b.position - myPosition))
     .slice(0, VISIBLE_PLAYER_COUNT);
 
-  const shownNames = new Set(nearest.map((player) => player.playerName));
+  // 세로 순서는 위치가 아니라 참가 순서로 잡는다. 위치로 정렬하면 추월할 때마다 행이 통째로 뒤바뀐다.
+  const joinOrder = new Map(players.map((player, index) => [player.playerName, index]));
+  const ordered = nearest.sort(
+    (a, b) => joinOrder.get(a.playerName)! - joinOrder.get(b.playerName)!
+  );
+
+  // 내 행을 세로 가운데에 고정한다. 등수가 바뀌어도 내 자리는 안 움직인다.
+  const myIndex = ordered.findIndex((player) => player.playerName === myName);
+  const centerIndex = Math.floor(ordered.length / 2);
+  const visible = myIndex === -1 ? ordered : rotate(ordered, myIndex - centerIndex);
+
+  const shownNames = new Set(visible.map((player) => player.playerName));
   const hidden = players.filter((player) => !shownNames.has(player.playerName));
 
   return {
-    players: nearest.sort((a, b) => b.position - a.position),
+    players: visible,
     hiddenAhead: hidden.filter((player) => player.position > myPosition).length,
     hiddenBehind: hidden.filter((player) => player.position <= myPosition).length,
     isSpectating: me === undefined,

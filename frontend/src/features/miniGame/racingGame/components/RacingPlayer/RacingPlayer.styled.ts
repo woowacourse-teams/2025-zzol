@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { PIXELS_PER_UNIT } from '../../constants/track';
+import { PIXELS_PER_UNIT, ROW_MOVE_MS, ROW_PITCH_PX } from '../../constants/track';
 import { RACING_Z_INDEX } from '../../constants/zIndex';
 
 const TRANSITION_DURATION_MS = 100;
@@ -10,6 +10,31 @@ type Props = {
   $myPosition: number;
 };
 
+type SlotProps = {
+  $slot: number;
+  $isVisible: boolean;
+  $reduceMotion: boolean;
+};
+
+/**
+ * 세로 자리를 잡는 층. 나는 늘 슬롯 0이라 화면 세로 가운데에 고정된다.
+ *
+ * 흐름에서 빼고 슬롯 번호로 배치해야 추월할 때 두 행이 스르륵 자리를 바꾼다. flex 순서만 바꾸면
+ * 즉시 튄다. 잘린 사람은 언마운트하지 않고 가장자리 밖 슬롯에 숨겨, 들어오고 나가는 것도 같은
+ * 이동 애니메이션으로 처리한다.
+ */
+export const Slot = styled.div<SlotProps>`
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, calc(-50% + ${({ $slot }) => $slot * ROW_PITCH_PX}px));
+  opacity: ${({ $isVisible }) => ($isVisible ? 1 : 0)};
+  pointer-events: none;
+  transition: ${({ $reduceMotion }) =>
+    $reduceMotion ? 'none' : `transform ${ROW_MOVE_MS}ms ease, opacity ${ROW_MOVE_MS}ms ease`};
+  z-index: ${RACING_Z_INDEX.PLAYER};
+`;
+
 export const Container = styled.div<Props>`
   position: relative;
   transform: ${({ $isMe, $position, $myPosition }) => {
@@ -18,7 +43,6 @@ export const Container = styled.div<Props>`
     return `translateX(${relativeX}px)`;
   }};
   transition: transform ${TRANSITION_DURATION_MS}ms linear;
-  z-index: ${RACING_Z_INDEX.PLAYER};
 `;
 
 type RingProps = {

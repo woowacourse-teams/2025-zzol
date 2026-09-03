@@ -11,6 +11,12 @@ export const MAX_SPEED = 60;
 
 export const SPEED_SEGMENT_COUNT = 6;
 
+/** 세로 슬롯 한 칸의 높이. 기존 아이콘 56px + 여백 48px 과 같다. */
+export const ROW_PITCH_PX = 104;
+
+/** 슬롯을 옮길 때 걸리는 시간. 추월하면 두 행이 이만큼에 걸쳐 자리를 바꾼다. */
+export const ROW_MOVE_MS = 320;
+
 /**
  * 서버 RacingGame.MIN_SPEED 와 같은 값. 탭을 멈춰도 속도가 이 아래로 안 내려간다.
  * 속도가 0이면 isStopped() 로 못 움직여 완주 못 한 채 경기가 끝나므로 서버가 바닥을 깔아 둔 것이다.

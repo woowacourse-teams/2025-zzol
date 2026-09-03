@@ -18,11 +18,13 @@ type Props = {
   isMe: boolean;
   myPosition: number;
   color: ColorList;
+  slot: number;
+  isVisible: boolean;
   /** 탭할 때 튕기는 연출을 부모가 걸 수 있게 내 캐릭터만 넘겨받는다. */
   ref?: Ref<HTMLDivElement>;
 };
 
-const RacingPlayer = ({ player, isMe, myPosition, color, ref }: Props) => {
+const RacingPlayer = ({ player, isMe, myPosition, color, slot, isVisible, ref }: Props) => {
   const rotatingRef = useRotationAnimation({ speed: player.speed });
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -36,22 +38,24 @@ const RacingPlayer = ({ player, isMe, myPosition, color, ref }: Props) => {
     : BORDER_STYLES[hashIndex(player.playerName, BORDER_STYLES.length)];
 
   return (
-    <S.Container ref={ref} $isMe={isMe} $position={player.position} $myPosition={myPosition}>
-      {isMe && <S.MyMarker />}
-      <S.PlayerName>
-        <Description color={isMe ? 'point-500' : 'white'}>{player.playerName}</Description>
-      </S.PlayerName>
+    <S.Slot $slot={slot} $isVisible={isVisible} $reduceMotion={prefersReducedMotion}>
+      <S.Container ref={ref} $isMe={isMe} $position={player.position} $myPosition={myPosition}>
+        {isMe && <S.MyMarker />}
+        <S.PlayerName>
+          <Description color={isMe ? 'point-500' : 'white'}>{player.playerName}</Description>
+        </S.PlayerName>
 
-      {trailIntensity > 0 && <S.SpeedTrail style={{ opacity: trailIntensity }} />}
+        {trailIntensity > 0 && <S.SpeedTrail style={{ opacity: trailIntensity }} />}
 
-      <S.IconRing $borderStyle={borderStyle}>
-        <S.RotatingWrapper ref={rotatingRef}>
-          <PlayerIcon color={color} />
-        </S.RotatingWrapper>
-      </S.IconRing>
+        <S.IconRing $borderStyle={borderStyle}>
+          <S.RotatingWrapper ref={rotatingRef}>
+            <PlayerIcon color={color} />
+          </S.RotatingWrapper>
+        </S.IconRing>
 
-      {isMe && <SpeedGauge speed={player.speed} />}
-    </S.Container>
+        {isMe && <SpeedGauge speed={player.speed} />}
+      </S.Container>
+    </S.Slot>
   );
 };
 

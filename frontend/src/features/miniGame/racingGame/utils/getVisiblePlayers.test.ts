@@ -7,88 +7,78 @@ const player = (playerName: string, position: number): RacingPlayer => ({
   speed: 0,
 });
 
-const names = (players: RacingPlayer[]) => players.map(({ playerName }) => playerName);
+const shown = (players: RacingPlayer[], myName: string) =>
+  getVisiblePlayers(players, myName).rows.filter(({ isVisible }) => isVisible);
+
+const slotOf = (players: RacingPlayer[], myName: string, target: string) =>
+  getVisiblePlayers(players, myName).rows.find(({ player }) => player.playerName === target)?.slot;
 
 describe('getVisiblePlayers', () => {
-  it('9인 방에서 나와 가까운 7명을 남긴다', () => {
-    const players = [
-      player('a', 900),
-      player('b', 800),
-      player('c', 700),
-      player('나', 600),
-      player('d', 500),
-      player('e', 400),
-      player('f', 300),
-      player('g', 200),
-      player('h', 100),
-    ];
+  const nine = [
+    player('a', 900),
+    player('b', 800),
+    player('c', 700),
+    player('나', 600),
+    player('d', 500),
+    player('e', 400),
+    player('f', 300),
+    player('g', 200),
+    player('h', 100),
+  ];
 
-    const { players: visible, hiddenAhead, hiddenBehind } = getVisiblePlayers(players, '나');
+  it('나는 항상 가운데 슬롯이다', () => {
+    expect(slotOf(nine, '나', '나')).toBe(0);
+    expect(slotOf([player('나', 10), player('a', 900)], '나', '나')).toBe(0);
+  });
 
-    expect(names(visible).sort()).toEqual(['a', 'b', 'c', 'd', 'e', 'f', '나']);
+  it('내 위에는 앞선 사람만, 아래에는 뒤진 사람만 온다', () => {
+    const rows = shown(nine, '나');
+    const above = rows.filter(({ slot }) => slot < 0).map(({ player }) => player.position);
+    const below = rows.filter(({ slot }) => slot > 0).map(({ player }) => player.position);
+
+    expect(Math.min(...above)).toBeGreaterThan(600);
+    expect(Math.max(...below)).toBeLessThan(600);
+  });
+
+  it('바로 앞사람이 내 바로 위, 바로 뒷사람이 내 바로 아래에 온다', () => {
+    expect(slotOf(nine, '나', 'c')).toBe(-1);
+    expect(slotOf(nine, '나', 'd')).toBe(1);
+  });
+
+  it('9인 방에서 7명만 보이고 잘린 인원을 센다', () => {
+    const { hiddenAhead, hiddenBehind } = getVisiblePlayers(nine, '나');
+
+    expect(shown(nine, '나')).toHaveLength(7);
     expect(hiddenAhead).toBe(0);
     expect(hiddenBehind).toBe(2);
   });
 
-  it('참가 순서가 아니라 거리로 자른다', () => {
-    // 배열 순서로 앞뒤 3명씩 자르면 바로 옆의 near 가 잘리고 멀리 있는 far 가 남는다.
-    const players = [
-      player('나', 1000),
-      player('far1', 0),
-      player('far2', 10),
-      player('far3', 20),
-      player('far4', 30),
-      player('far5', 40),
-      player('far6', 50),
-      player('near', 990),
-    ];
+  it('내가 1등이면 아래가 더 채워지고 총 인원은 그대로다', () => {
+    const leading = nine.map((p) => (p.playerName === '나' ? player('나', 1000) : p));
+    const rows = shown(leading, '나');
 
-    const { players: visible } = getVisiblePlayers(players, '나');
-
-    expect(names(visible)).toContain('near');
-    expect(names(visible)).not.toContain('far1');
+    expect(rows).toHaveLength(7);
+    expect(rows.every(({ slot }) => slot >= 0)).toBe(true);
+    expect(getVisiblePlayers(leading, '나').hiddenAhead).toBe(0);
   });
 
-  it('추월이 일어나도 행 순서가 바뀌지 않는다', () => {
-    const before = [player('나', 100), player('x', 200), player('y', 50)];
-    // 내가 x 를 제치고 선두가 됐다. 보이는 사람은 그대로다.
-    const after = [player('나', 300), player('x', 200), player('y', 50)];
+  it('추월이 일어나면 두 사람의 슬롯만 바뀐다', () => {
+    const after = nine.map((p) => (p.playerName === 'd' ? player('d', 650) : p));
 
-    expect(names(getVisiblePlayers(after, '나').players)).toEqual(
-      names(getVisiblePlayers(before, '나').players)
-    );
-  });
-
-  it('내 행을 세로 가운데에 둔다', () => {
-    const players = [
-      player('a', 900),
-      player('b', 800),
-      player('나', 700),
-      player('c', 600),
-      player('d', 500),
-    ];
-
-    const { players: visible } = getVisiblePlayers(players, '나');
-
-    expect(visible[Math.floor(visible.length / 2)].playerName).toBe('나');
-  });
-
-  it('내 등수가 바뀌어도 내 자리는 가운데 그대로다', () => {
-    const players = [player('a', 900), player('b', 800), player('나', 700)];
-    const overtaken = [player('a', 900), player('b', 800), player('나', 1000)];
-
-    const center = (list: RacingPlayer[]) => list[Math.floor(list.length / 2)].playerName;
-
-    expect(center(getVisiblePlayers(players, '나').players)).toBe('나');
-    expect(center(getVisiblePlayers(overtaken, '나').players)).toBe('나');
+    // d 가 나를 제쳐 내 바로 위로, 원래 바로 위였던 c 는 한 칸 올라간다. 나머지는 그대로다.
+    expect(slotOf(after, '나', 'd')).toBe(-1);
+    expect(slotOf(after, '나', 'c')).toBe(-2);
+    expect(slotOf(after, '나', 'e')).toBe(1);
+    expect(slotOf(after, '나', 'f')).toBe(2);
+    expect(slotOf(after, '나', '나')).toBe(0);
   });
 
   it('내 이름이 목록에 없으면 트랙을 비우지 않고 관전으로 표시한다', () => {
     const players = [player('a', 300), player('b', 200)];
 
-    const { players: visible, isSpectating } = getVisiblePlayers(players, '없는사람');
+    const { rows, isSpectating } = getVisiblePlayers(players, '없는사람');
 
-    expect(visible).toHaveLength(2);
+    expect(rows).toHaveLength(2);
     expect(isSpectating).toBe(true);
   });
 });

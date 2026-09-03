@@ -21,12 +21,8 @@ export const ContentWrapper = styled.div`
   overflow: hidden;
 `;
 
+/* 행은 슬롯 번호로 배치한다. flex 순서로 세우면 추월할 때 자리가 즉시 튄다. */
 export const PlayersWrapper = styled.div`
   height: 100%;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-  justify-content: center;
-  align-items: center;
 `;

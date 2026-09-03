@@ -57,6 +57,8 @@ const meta: Meta<typeof RacingPlayer> = {
     isMe: true,
     myPosition: 0,
     color: '#FF6B6B',
+    slot: 0,
+    isVisible: true,
   },
 };
 
@@ -81,6 +83,8 @@ export const MultiplePlayersComparison: Story = {
           isMe={true}
           myPosition={0}
           color="#8a8b8e"
+          slot={0}
+          isVisible
         />
       </div>
       <div style={{ textAlign: 'center' }}>
@@ -90,6 +94,8 @@ export const MultiplePlayersComparison: Story = {
           isMe={true}
           myPosition={0}
           color="#4cafa9"
+          slot={0}
+          isVisible
         />
       </div>
       <div style={{ textAlign: 'center' }}>
@@ -99,6 +105,8 @@ export const MultiplePlayersComparison: Story = {
           isMe={true}
           myPosition={0}
           color="#85b62e"
+          slot={0}
+          isVisible
         />
       </div>
       <div style={{ textAlign: 'center' }}>
@@ -108,6 +116,8 @@ export const MultiplePlayersComparison: Story = {
           isMe={true}
           myPosition={0}
           color="#ffa102"
+          slot={0}
+          isVisible
         />
       </div>
     </div>

@@ -58,12 +58,7 @@ const RacingGamePage = () => {
       ) ?? null;
   }, []);
 
-  const {
-    players: visiblePlayers,
-    hiddenAhead,
-    hiddenBehind,
-    isSpectating,
-  } = useMemo(
+  const { rows, hiddenAhead, hiddenBehind, isSpectating } = useMemo(
     () => getVisiblePlayers(racingGameData.players, myName),
     [racingGameData.players, myName]
   );
@@ -146,7 +141,7 @@ const RacingGamePage = () => {
                   myPosition={myPosition}
                 />
               )}
-              {visiblePlayers.map((player) => (
+              {rows.map(({ player, slot, isVisible }) => (
                 <RacingPlayer
                   key={player.playerName}
                   ref={player.playerName === myName ? myPlayerRef : undefined}
@@ -154,13 +149,15 @@ const RacingGamePage = () => {
                   isMe={player.playerName === myName}
                   myPosition={myPosition}
                   color={colorList[getParticipantColorIndex(player.playerName)]}
+                  slot={slot}
+                  isVisible={isVisible}
                 />
               ))}
               <HiddenPlayersBadge direction="ahead" count={hiddenAhead} />
               <HiddenPlayersBadge direction="behind" count={hiddenBehind} />
               <HiddenPlayersSummary
                 totalCount={racingGameData.players.length}
-                visibleCount={visiblePlayers.length}
+                visibleCount={rows.filter(({ isVisible }) => isVisible).length}
               />
               {(isSpectating || racingGameData.players.length === 0) && <TrackNotice />}
             </S.PlayersWrapper>

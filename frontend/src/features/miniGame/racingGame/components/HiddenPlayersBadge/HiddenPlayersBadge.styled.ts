@@ -8,9 +8,9 @@ type Props = {
 export const Badge = styled.div<Props>`
   position: absolute;
   right: 12px;
-  /* 아래쪽 배지는 바닥 눈금과 인원 요약 위에 올린다. */
+  /* 아래쪽 배지는 인원 요약 위에 올린다. */
   ${({ $direction }) =>
-    $direction === 'ahead' ? 'top: 8px;' : 'bottom: calc(100px + env(safe-area-inset-bottom));'}
+    $direction === 'ahead' ? 'top: 8px;' : 'bottom: calc(56px + env(safe-area-inset-bottom));'}
   display: flex;
   align-items: center;
   gap: 6px;
@@ -42,7 +42,7 @@ export const Summary = styled.div`
   position: absolute;
   left: 14px;
   right: 14px;
-  bottom: calc(52px + env(safe-area-inset-bottom));
+  bottom: calc(8px + env(safe-area-inset-bottom));
   padding: 9px 12px;
   border-radius: 6px;
   text-align: center;

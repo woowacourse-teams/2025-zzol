@@ -1,3 +1,4 @@
+import ScreenReaderOnly from '@/components/@common/ScreenReaderOnly/ScreenReaderOnly';
 import { colorList } from '@/constants/color';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
@@ -16,6 +17,7 @@ import RacingProgressBar from '../components/RacingProgressBar/RacingProgressBar
 import RacingRanks from '../components/RacingRanks/RacingRanks';
 import TrackNotice from '../components/TrackNotice/TrackNotice';
 import { useBackgroundAnimation } from '../hooks/useBackgroundAnimation';
+import { useRaceAnnouncement } from '../hooks/useRaceAnnouncement';
 import { useGoalDisplay } from '../hooks/useGoalDisplay';
 import { usePlayerData } from '../hooks/usePlayerData';
 import { getVisiblePlayers } from '../utils/getVisiblePlayers';
@@ -77,6 +79,13 @@ const RacingGamePage = () => {
     mySpeed,
   });
 
+  const announcement = useRaceAnnouncement({
+    rank: racingGameData.players.filter((player) => player.position > myPosition).length + 1,
+    totalPlayers: racingGameData.players.length,
+    remainingDistance: Math.max(0, Math.round(racingGameData.distance.end - myPosition)),
+    enabled: racingGameState === 'PLAYING',
+  });
+
   useEffect(() => {
     if (racingGameState === 'DONE') {
       navigate(`/room/${joinCode}/${miniGameType}/result`);
@@ -99,6 +108,7 @@ const RacingGamePage = () => {
       {racingGameState === 'PREPARE' && <PrepareOverlay />}
       {racingGameState === 'DONE' && <Finish />}
       {isGoal && racingGameState === 'PLAYING' && <Goal />}
+      <ScreenReaderOnly aria-live="polite">{announcement}</ScreenReaderOnly>
       <RacingGameOverlay isGoal={isGoal} onTap={handleTap}>
         <S.Container ref={containerRef}>
           <RacingRanks

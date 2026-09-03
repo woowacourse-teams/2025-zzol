@@ -76,7 +76,12 @@ const RacingGameOverlay = ({ children, isGoal, onTap }: Props) => {
   }, [joinCode, send, racingGameState, isGoal, isConnected]);
 
   return (
-    <S.Overlay data-testid="racing-game-overlay" onPointerDown={handlePointerDown}>
+    <S.Overlay
+      data-testid="racing-game-overlay"
+      role="application"
+      aria-label="레이싱 게임. 화면을 빠르게 연타하면 앞으로 나갑니다"
+      onPointerDown={handlePointerDown}
+    >
       {children}
       {ripples.map(({ id, x, y }) => (
         // 좌표는 탭할 때마다 달라진다. styled prop 으로 넘기면 탭마다 클래스가 하나씩 생긴다.

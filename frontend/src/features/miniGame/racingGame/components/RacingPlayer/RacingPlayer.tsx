@@ -5,8 +5,8 @@ import Description from '@/components/@common/Description/Description';
 import type { RacingPlayer as RacingPlayerType } from '@/types/miniGame/racingGame';
 import type { Ref } from 'react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { hashIndex } from '@/utils/hashIndex';
 import { getSpeedTrailIntensity } from '../../utils/getSpeedTrailIntensity';
+import { hashIndex } from '../../utils/hashIndex';
 import SpeedGauge from '../SpeedGauge/SpeedGauge';
 import * as S from './RacingPlayer.styled';
 

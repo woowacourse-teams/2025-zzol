@@ -1,8 +1,12 @@
 package coffeeshout.room.infra.websocket.event;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import coffeeshout.global.redis.stream.StreamPublisher;
@@ -28,10 +32,13 @@ class SessionDisconnectEventListenerTest {
 
     @Mock
     StreamPublisher streamPublisher;
+
     @Mock
     SubscriptionInfoService subscriptionInfoService;
+
     @Mock
     WebSocketMetricService metricService;
+
     @Mock
     WebSocketRateLimiter webSocketRateLimiter;
 
@@ -46,8 +53,17 @@ class SessionDisconnectEventListenerTest {
     void setUp() {
         sessionManager = new StompSessionManager();
         final var publisher = Mockito.mock(org.springframework.context.ApplicationEventPublisher.class);
-        listener = new SessionDisconnectEventListener(sessionManager, streamPublisher,
-                subscriptionInfoService, metricService, webSocketRateLimiter, publisher);
+        listener = new SessionDisconnectEventListener(
+                sessionManager,
+                streamPublisher,
+                subscriptionInfoService,
+                metricService,
+                webSocketRateLimiter,
+                publisher);
+        // 연결을 수립한 세션의 첫 해제가 기본값이다. 중복 해제를 보는 테스트만 거짓으로 덮어쓴다
+        Mockito.lenient()
+                .when(metricService.recordDisconnection(anyString(), anyString()))
+                .thenReturn(true);
     }
 
     @Nested
@@ -69,19 +85,59 @@ class SessionDisconnectEventListenerTest {
 
             listener.handleSessionDisconnectEvent(event);
 
-            then(streamPublisher).should()
-                    .publish(eq(RoomStreamKey.BROADCAST), any());
+            then(streamPublisher).should().publish(eq(RoomStreamKey.BROADCAST), any());
         }
 
         @Test
         void 이미_처리된_세션의_중복_해제를_무시한다() {
+            given(metricService.recordDisconnection(anyString(), anyString())).willReturn(false);
             sessionManager.registerPlayerSession(joinCode, playerName, sessionId);
-            sessionManager.isDisconnectionProcessed(sessionId);
             SessionDisconnectEvent event = createSessionDisconnectEvent(sessionId);
 
             listener.handleSessionDisconnectEvent(event);
 
             verifyNoInteractions(streamPublisher);
+        }
+    }
+
+    @Nested
+    class 세션_상태_정리 {
+
+        @Test
+        void 유저_세션은_해제_시_유저_매핑을_지운다() {
+            sessionManager.registerUserSession(1L, sessionId);
+            SessionDisconnectEvent event = createSessionDisconnectEvent(sessionId);
+
+            listener.handleSessionDisconnectEvent(event);
+
+            assertThat(sessionManager.getUserId(sessionId)).isNull();
+        }
+
+        @Test
+        void 플레이어_세션은_재접속_유예를_위해_매핑을_남긴다() {
+            sessionManager.registerPlayerSession(joinCode, playerName, sessionId);
+            SessionDisconnectEvent event = createSessionDisconnectEvent(sessionId);
+
+            listener.handleSessionDisconnectEvent(event);
+
+            assertThat(sessionManager.hasPlayerKey(sessionId)).isTrue();
+        }
+
+        @Test
+        void 해제를_메트릭에_기록한다() {
+            SessionDisconnectEvent event = createSessionDisconnectEvent(sessionId);
+
+            listener.handleSessionDisconnectEvent(event);
+
+            then(metricService).should().recordDisconnection(sessionId, "CLIENT_DISCONNECT");
+        }
+
+        @Test
+        void 플레이어가_아닌_세션은_해제_이벤트가_두_번_와도_그대로_처리한다() {
+            listener.handleSessionDisconnectEvent(createSessionDisconnectEvent(sessionId));
+            listener.handleSessionDisconnectEvent(createSessionDisconnectEvent(sessionId));
+
+            then(metricService).should(times(2)).recordDisconnection(sessionId, "CLIENT_DISCONNECT");
         }
     }
 

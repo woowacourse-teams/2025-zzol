@@ -2,7 +2,6 @@ package coffeeshout.websocket;
 
 import static org.springframework.util.Assert.isTrue;
 
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -11,9 +10,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class StompSessionManager {
-
-    // 중복 처리 방지용
-    private final Set<String> processedDisconnections = ConcurrentHashMap.newKeySet();
 
     // 플레이어 세션 매핑 관리
     private final ConcurrentHashMap<String, String> playerSessionMap; // "joinCode:playerName" -> sessionId
@@ -53,8 +49,9 @@ public class StompSessionManager {
 
     private void upsertSessionMapping(@NonNull String playerKey, @NonNull String sessionId) {
         // 기존 세션이 있으면 정리
+        // 복제 이벤트를 되받아 같은 세션으로 재등록할 때는 건너뛴다. remove 와 put 사이에 매핑이 잠깐 빈다
         final String oldSessionId = playerSessionMap.get(playerKey);
-        if (oldSessionId != null) {
+        if (oldSessionId != null && !oldSessionId.equals(sessionId)) {
             log.info("기존 플레이어 세션 정리: playerKey={}, oldSessionId={}", playerKey, oldSessionId);
             sessionPlayerMap.remove(oldSessionId);
         }
@@ -82,7 +79,8 @@ public class StompSessionManager {
     public String getSessionId(@NonNull String joinCode, @NonNull String playerName) {
         final String playerKey = PlayerKey.of(joinCode, playerName).toString();
 
-        isTrue(playerSessionMap.containsKey(playerKey),
+        isTrue(
+                playerSessionMap.containsKey(playerKey),
                 "플레이어 세션이 존재하지 않습니다: joinCode=%s, playerName=%s".formatted(joinCode, playerName));
 
         return playerSessionMap.get(playerKey);
@@ -96,8 +94,7 @@ public class StompSessionManager {
     }
 
     public String getPlayerKey(@NonNull String sessionId) {
-        isTrue(sessionPlayerMap.containsKey(sessionId),
-                "세션 ID가 존재하지 않습니다: sessionId=%s".formatted(sessionId));
+        isTrue(sessionPlayerMap.containsKey(sessionId), "세션 ID가 존재하지 않습니다: sessionId=%s".formatted(sessionId));
 
         return sessionPlayerMap.get(sessionId);
     }
@@ -113,16 +110,6 @@ public class StompSessionManager {
         }
 
         sessionUserMap.remove(sessionId);
-
-        // 중복 disconnect 방지 세트 정리(메모리 누수 방지 목적)
-        processedDisconnections.remove(sessionId);
-    }
-
-    /**
-     * 중복 disconnection 처리 방지를 위한 체크 및 등록
-     */
-    public boolean isDisconnectionProcessed(@NonNull String sessionId) {
-        return !processedDisconnections.add(sessionId);
     }
 
     /**

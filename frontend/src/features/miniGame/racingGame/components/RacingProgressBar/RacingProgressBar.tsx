@@ -22,11 +22,6 @@ const RacingProgressBar = ({ myName, endDistance, players }: Props) => {
 
   return (
     <S.Container>
-      <S.Legend>
-        <S.LegendLabel>출발 0</S.LegendLabel>
-        <S.LegendLabel>결승 {endDistance > 0 ? endDistance : '—'}</S.LegendLabel>
-      </S.Legend>
-
       <S.MarkerRow>
         {playersProgressData.map(({ player, progress, isMe }) => {
           const color = colorList[getParticipantColorIndex(player.playerName)];

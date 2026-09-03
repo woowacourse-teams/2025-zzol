@@ -10,19 +10,6 @@ export const Container = styled.div`
   padding: calc(1.8rem + env(safe-area-inset-top)) 1rem 0 1rem;
 `;
 
-export const Legend = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-`;
-
-export const LegendLabel = styled.span`
-  ${({ theme }) => theme.typography.caption}
-  letter-spacing: 0.08em;
-  color: ${({ theme }) => theme.color.white}BF;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-`;
-
 /** 마커를 트랙 위에 걸치지 않고 제 줄에 세운다. 겹쳐 있으면 첫 글자가 안 읽힌다. */
 export const MarkerRow = styled.div`
   position: relative;

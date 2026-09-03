@@ -34,7 +34,7 @@ export const useRaceAnnouncement = ({
     const timer = window.setInterval(() => {
       const latest = latestRef.current;
       setAnnouncement(
-        `${latest.totalPlayers}명 중 ${latest.rank}등, 결승까지 ${latest.remainingDistance}`
+        `${latest.totalPlayers}명 중 ${latest.rank}등, 결승까지 ${latest.remainingDistance} 남음`
       );
     }, ANNOUNCE_INTERVAL_MS);
     return () => window.clearInterval(timer);

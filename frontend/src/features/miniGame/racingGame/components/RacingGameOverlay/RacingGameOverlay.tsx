@@ -85,7 +85,7 @@ const RacingGameOverlay = ({ children, isGoal, onTap }: Props) => {
   return (
     <S.Overlay
       data-testid="racing-game-overlay"
-      role="application"
+      // role="application" 은 스크린리더에게 키 입력을 넘기라는 선언이다. 탭은 포인터 전용이라 받을 키가 없다.
       aria-label="레이싱 게임. 화면을 빠르게 연타하면 앞으로 나갑니다"
       onPointerDown={handlePointerDown}
     >

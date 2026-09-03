@@ -35,6 +35,7 @@ export const IconRing = styled.div<RingProps>`
   border: 3px ${({ $borderStyle }) => $borderStyle} ${({ theme }) => theme.color.white};
   border-radius: 50%;
   box-shadow: ${({ theme, $isMe }) => ($isMe ? `0 0 0 3px ${theme.color.white}47` : 'none')};
+  ${({ $borderStyle }) => $borderStyle === 'double' && 'border-width: 4px;'}
 `;
 
 export const RotatingWrapper = styled.div`
@@ -43,7 +44,7 @@ export const RotatingWrapper = styled.div`
 
 export const PlayerName = styled.div`
   position: absolute;
-  top: -1rem;
+  top: -18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -56,13 +57,13 @@ export const PlayerName = styled.div`
 /** 색과 무관하게 내가 누구인지 알리는 표식. 이름 위에 항상 띄운다. */
 export const MyMarker = styled.span`
   position: absolute;
-  top: -2.4rem;
+  top: -38px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
   height: 0;
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
-  border-top: 9px solid ${({ theme }) => theme.color.white};
+  border-bottom: 9px solid ${({ theme }) => theme.color.white};
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.85));
 `;

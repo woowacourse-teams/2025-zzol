@@ -9,7 +9,9 @@ import { useParams } from 'react-router-dom';
 import PrepareOverlay from '../../components/PrepareOverlay/PrepareOverlay';
 import Finish from '../components/Finish/Finish';
 import Goal from '../components/Goal/Goal';
-import HiddenPlayersBadge from '../components/HiddenPlayersBadge/HiddenPlayersBadge';
+import HiddenPlayersBadge, {
+  HiddenPlayersSummary,
+} from '../components/HiddenPlayersBadge/HiddenPlayersBadge';
 import RacingGameOverlay from '../components/RacingGameOverlay/RacingGameOverlay';
 import RacingLine from '../components/RacingLine/RacingLine';
 import RacingPlayer from '../components/RacingPlayer/RacingPlayer';
@@ -157,6 +159,10 @@ const RacingGamePage = () => {
               ))}
               <HiddenPlayersBadge direction="ahead" count={hiddenAhead} />
               <HiddenPlayersBadge direction="behind" count={hiddenBehind} />
+              <HiddenPlayersSummary
+                totalCount={racingGameData.players.length}
+                visibleCount={visiblePlayers.length}
+              />
               {(isSpectating || racingGameData.players.length === 0) && <TrackNotice />}
               <TrackGround myPosition={myPosition} endDistance={racingGameData.distance.end} />
             </S.PlayersWrapper>

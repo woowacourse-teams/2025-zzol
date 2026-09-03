@@ -18,3 +18,21 @@ const HiddenPlayersBadge = ({ direction, count }: Props) => {
 };
 
 export default HiddenPlayersBadge;
+
+type SummaryProps = {
+  totalCount: number;
+  visibleCount: number;
+};
+
+/** 트랙에 몇 명이 보이는지와 무엇을 기준으로 골랐는지 적는다. */
+export const HiddenPlayersSummary = ({ totalCount, visibleCount }: SummaryProps) => {
+  if (totalCount === visibleCount) return null;
+
+  return (
+    <S.Summary>
+      <S.SummaryText>
+        {totalCount}명 중 {visibleCount}명 표시 · 나와 가까운 순서
+      </S.SummaryText>
+    </S.Summary>
+  );
+};

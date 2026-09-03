@@ -3,6 +3,7 @@ import * as S from './RacingGameOverlay.styled';
 import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useRacingGame } from '@/contexts/RacingGame/RacingGameContext';
+import DisconnectOverlay from '../DisconnectOverlay/DisconnectOverlay';
 
 const TAP_SEND_INTERVAL_MS = 200;
 const TAP_VIBRATION_MS = 10;
@@ -87,12 +88,7 @@ const RacingGameOverlay = ({ children, isGoal, onTap }: Props) => {
         // 좌표는 탭할 때마다 달라진다. styled prop 으로 넘기면 탭마다 클래스가 하나씩 생긴다.
         <S.Ripple key={id} style={{ left: x, top: y }} onAnimationEnd={() => removeRipple(id)} />
       ))}
-      {!isConnected && (
-        <S.DisconnectBanner role="status" aria-live="polite">
-          <S.DisconnectTitle>연결이 끊겼습니다. 다시 연결 중...</S.DisconnectTitle>
-          <S.DisconnectHint>그동안 누른 탭은 서버로 가지 않습니다.</S.DisconnectHint>
-        </S.DisconnectBanner>
-      )}
+      {!isConnected && <DisconnectOverlay />}
     </S.Overlay>
   );
 };

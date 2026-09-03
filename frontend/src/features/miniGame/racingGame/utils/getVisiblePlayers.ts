@@ -45,7 +45,15 @@ export const getVisiblePlayers = (players: RacingPlayer[], myName: string): Visi
 
   const me = players.find((player) => player.playerName === myName);
   if (me === undefined) {
-    return { rows: spectateRows(players), hiddenAhead: 0, hiddenBehind: 0, isSpectating: true };
+    const rows = spectateRows(players);
+
+    // 관전은 앞선 사람부터 채우므로 잘리는 쪽은 항상 뒤다.
+    return {
+      rows,
+      hiddenAhead: 0,
+      hiddenBehind: rows.filter(({ isVisible }) => !isVisible).length,
+      isSpectating: true,
+    };
   }
 
   const others = players.filter((player) => player.playerName !== myName);

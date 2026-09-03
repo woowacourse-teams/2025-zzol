@@ -19,12 +19,16 @@ export const useRaceRanking = ({ players, endDistance }: Props) => {
 
   // 결승선 통과 순서를 렌더 중 누적한다(React 공식 "렌더 중 state 조정" 패턴).
   // 새 통과자가 있을 때만 setState → 즉시 재렌더 후 통과자 목록이 비어 무한 루프가 없다.
-  const newFinishers = players.filter(
-    ({ playerName, position }) =>
-      endDistance > 0 &&
-      position >= endDistance &&
-      !finishOrder.some((player) => player.playerName === playerName)
-  );
+  // 같은 틱에 둘이 함께 넘으면 서버 배열 순서는 참가 순서라 등수가 아니다.
+  // 서버는 결승선을 얼마나 지나쳤는지로 통과 시각을 되짚으므로 더 멀리 간 쪽이 먼저다.
+  const newFinishers = players
+    .filter(
+      ({ playerName, position }) =>
+        endDistance > 0 &&
+        position >= endDistance &&
+        !finishOrder.some((player) => player.playerName === playerName)
+    )
+    .sort((a, b) => b.position - a.position);
   if (newFinishers.length > 0) {
     setFinishOrder((prev) => [
       ...prev,

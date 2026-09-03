@@ -56,7 +56,8 @@ export const Anchor = styled.div`
   left: 0;
   top: 0;
   width: 100%;
-  height: 0;
+  /* 높이가 0 이면 자식의 백분율 top 이 전부 0 이 된다. 눈금을 트랙 세로 중앙에 세우려면 높이를 물려줘야 한다. */
+  height: 100%;
   transition: transform ${FILL_TRANSITION_DURATION}ms ease-out;
 `;
 

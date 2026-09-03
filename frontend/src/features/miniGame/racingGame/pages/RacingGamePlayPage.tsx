@@ -84,11 +84,14 @@ const RacingGamePage = () => {
     mySpeed,
   });
 
+  // 낭독도 화면 순위표와 같은 순서를 쓴다. position 으로 따로 세면 완주자가 감속하는 동안 등수가 갈린다.
+  const myRank = rankedPlayers.findIndex((player) => player.playerName === myName) + 1;
+
   const announcement = useRaceAnnouncement({
-    rank: racingGameData.players.filter((player) => player.position > myPosition).length + 1,
+    rank: myRank,
     totalPlayers: racingGameData.players.length,
     remainingDistance: Math.max(0, Math.round(racingGameData.distance.end - myPosition)),
-    enabled: racingGameState === 'PLAYING',
+    enabled: racingGameState === 'PLAYING' && myRank > 0,
   });
 
   // DONE 을 받은 프레임에 바로 navigate 하면 완주 연출이 한 프레임 스치고 사라진다.
@@ -103,14 +106,19 @@ const RacingGamePage = () => {
 
   // stuck 폴백: 시작을 알리는 상태가 안 와 화면이 멈춰 있으면 로비로 보낸다. 눈치게임과 같은 기준이다.
   // 진행 중(PLAYING)과 종료(DONE)는 화면이 정상이므로 감시하지 않는다.
+  // 상태는 이벤트로만 오고 스냅샷이 없다. 경기 도중 새로고침하면 기본값 DESCRIPTION 에 머무는데,
+  // 위치는 100ms 마다 계속 오므로 트랙은 정상이다. 위치까지 안 올 때만 멈춘 것으로 본다.
+  const hasTrackData = racingGameData.players.length > 0;
+
   useEffect(() => {
     if (racingGameState !== 'DESCRIPTION' && racingGameState !== 'PREPARE') return;
+    if (hasTrackData) return;
 
     const timer = window.setTimeout(() => {
       navigate(`/room/${joinCode}/lobby`);
     }, STUCK_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
-  }, [racingGameState, joinCode, navigate]);
+  }, [racingGameState, hasTrackData, joinCode, navigate]);
 
   return (
     <>

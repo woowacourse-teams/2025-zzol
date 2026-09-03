@@ -81,4 +81,12 @@ describe('getVisiblePlayers', () => {
     expect(rows).toHaveLength(2);
     expect(isSpectating).toBe(true);
   });
+
+  it('관전 중에 화면 밖으로 밀린 인원을 뒤쪽으로 센다', () => {
+    const { rows, hiddenAhead, hiddenBehind } = getVisiblePlayers(nine, '없는사람');
+
+    expect(rows.filter(({ isVisible }) => isVisible)).toHaveLength(7);
+    expect(hiddenAhead).toBe(0);
+    expect(hiddenBehind).toBe(2);
+  });
 });

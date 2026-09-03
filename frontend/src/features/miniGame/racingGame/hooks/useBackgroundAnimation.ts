@@ -39,8 +39,10 @@ export const useBackgroundAnimation = ({ containerRef, mySpeed }: Props) => {
         (mySpeedRef.current - currentSpeedRef.current) * SPEED_SMOOTHING_FACTOR;
 
       if (currentSpeedRef.current > MIN_RENDER_SPEED) {
-        // 전경은 내가 전진할수록 왼쪽으로 빠진다. 배경도 같은 쪽으로 흘러야 앞으로 가는 것으로 읽힌다.
-        backgroundPositionRef.current -=
+        // background-position 의 백분율은 이미지의 그 지점을 컨테이너의 같은 지점에 맞춘다.
+        // 이미지가 컨테이너보다 넓으므로 값이 커질수록 이미지는 왼쪽으로 밀린다.
+        // 세상이 왼쪽으로 흘러야 내가 앞으로 달리는 것으로 읽히므로 값을 키운다.
+        backgroundPositionRef.current +=
           currentSpeedRef.current * delta * BACKGROUND_SPEED_MULTIPLIER;
         if (containerRef.current) {
           containerRef.current.style.backgroundPosition = `${backgroundPositionRef.current}% center`;

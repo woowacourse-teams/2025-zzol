@@ -13,15 +13,15 @@ import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.Language;
-
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.domain.audit.AiConfidence;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
-import coffeeshout.profanity.domain.audit.NicknameAudit;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,19 +49,32 @@ class ProfanityAuditBatchProcessorTest {
         profanityWordManagementService = mock(ProfanityWordManagementService.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
         transactionTemplate = new TransactionTemplate(new AbstractPlatformTransactionManager() {
-            @Override protected Object doGetTransaction() { return new Object(); }
-            @Override protected void doBegin(Object tx, TransactionDefinition def) {}
-            @Override protected void doCommit(DefaultTransactionStatus status) {}
-            @Override protected void doRollback(DefaultTransactionStatus status) {}
+            @Override
+            protected Object doGetTransaction() {
+                return new Object();
+            }
+
+            @Override
+            protected void doBegin(Object tx, TransactionDefinition def) {}
+
+            @Override
+            protected void doCommit(DefaultTransactionStatus status) {}
+
+            @Override
+            protected void doRollback(DefaultTransactionStatus status) {}
         });
 
-        final NicknameAuditProperties properties = new NicknameAuditProperties(
-                "test-key", "gemini-test", 0.85, 10, 20, 2
-        );
+        final NicknameAuditProperties properties =
+                new NicknameAuditProperties("test-key", "gemini-test", 0.85, 10, 20, 2, Duration.ofSeconds(120));
         processor = new ProfanityAuditBatchProcessor(
-                auditRepository, nicknameAuditor, profanityWordManagementService,
-                eventPublisher, new SimpleMeterRegistry(), transactionTemplate, new TextNormalizer(), properties
-        );
+                auditRepository,
+                nicknameAuditor,
+                profanityWordManagementService,
+                eventPublisher,
+                new SimpleMeterRegistry(),
+                transactionTemplate,
+                new TextNormalizer(),
+                properties);
         processor.initMetrics();
     }
 
@@ -71,10 +84,11 @@ class ProfanityAuditBatchProcessorTest {
         @Test
         void FLAGGED_닉네임은_비속어로_등록되고_차단_이벤트가_발행된다() {
             final NicknameAudit entity = new NicknameAudit("욕설닉네임");
-            given(nicknameAuditor.audit(List.of("욕설닉네임"))).willReturn(List.of(
-                    new NicknameAuditResult("욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")
-            ));
-            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED)).willReturn(true);
+            given(nicknameAuditor.audit(List.of("욕설닉네임")))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")));
+            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED))
+                    .willReturn(true);
 
             processor.process(List.of(entity));
 
@@ -85,10 +99,11 @@ class ProfanityAuditBatchProcessorTest {
         @Test
         void 영어_닉네임은_ENGLISH_언어로_등록된다() {
             final NicknameAudit entity = new NicknameAudit("badword");
-            given(nicknameAuditor.audit(List.of("badword"))).willReturn(List.of(
-                    new NicknameAuditResult("badword", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "영어 비속어")
-            ));
-            given(profanityWordManagementService.add("badword", Language.ENGLISH, WordSource.AI_FLAGGED)).willReturn(true);
+            given(nicknameAuditor.audit(List.of("badword")))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "badword", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "영어 비속어")));
+            given(profanityWordManagementService.add("badword", Language.ENGLISH, WordSource.AI_FLAGGED))
+                    .willReturn(true);
 
             processor.process(List.of(entity));
 
@@ -98,10 +113,11 @@ class ProfanityAuditBatchProcessorTest {
         @Test
         void 이미_등록된_단어는_차단_이벤트를_발행하지_않는다() {
             final NicknameAudit entity = new NicknameAudit("욕설닉네임");
-            given(nicknameAuditor.audit(List.of("욕설닉네임"))).willReturn(List.of(
-                    new NicknameAuditResult("욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")
-            ));
-            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED)).willReturn(false);
+            given(nicknameAuditor.audit(List.of("욕설닉네임")))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")));
+            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED))
+                    .willReturn(false);
 
             processor.process(List.of(entity));
 
@@ -111,9 +127,9 @@ class ProfanityAuditBatchProcessorTest {
         @Test
         void FLAGGED_처리_후_엔티티_상태가_업데이트된다() {
             final NicknameAudit entity = new NicknameAudit("욕설닉네임");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")));
 
             processor.process(List.of(entity));
 
@@ -127,25 +143,26 @@ class ProfanityAuditBatchProcessorTest {
         @Test
         void 추출된_조각만_등록하고_닉네임_전체는_등록하지_않는다() {
             final NicknameAudit entity = new NicknameAudit("경찬이병신");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("경찬이병신", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95),
-                            "비속어 포함", List.of("병신"))
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "경찬이병신", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "비속어 포함", List.of("병신"))));
 
             processor.process(List.of(entity));
 
             then(profanityWordManagementService).should().add("병신", Language.KOREAN, WordSource.AI_FLAGGED);
-            then(profanityWordManagementService).should(never())
-                    .add(eq("경찬이병신"), any(), any());
+            then(profanityWordManagementService).should(never()).add(eq("경찬이병신"), any(), any());
         }
 
         @Test
         void 여러_조각이면_모두_등록된다() {
             final NicknameAudit entity = new NicknameAudit("시발경찬이병신");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("시발경찬이병신", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95),
-                            "비속어 포함", List.of("시발", "병신"))
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "시발경찬이병신",
+                            NicknameAuditStatus.FLAGGED,
+                            AiConfidence.of(0.95),
+                            "비속어 포함",
+                            List.of("시발", "병신"))));
 
             processor.process(List.of(entity));
 
@@ -156,25 +173,26 @@ class ProfanityAuditBatchProcessorTest {
         @Test
         void 닉네임에_없는_조각은_등록하지_않는다() {
             final NicknameAudit entity = new NicknameAudit("경찬이병신");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("경찬이병신", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95),
-                            "비속어 포함", List.of("병신", "핵상욕설"))
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "경찬이병신",
+                            NicknameAuditStatus.FLAGGED,
+                            AiConfidence.of(0.95),
+                            "비속어 포함",
+                            List.of("병신", "핵상욕설"))));
 
             processor.process(List.of(entity));
 
             then(profanityWordManagementService).should().add("병신", Language.KOREAN, WordSource.AI_FLAGGED);
-            then(profanityWordManagementService).should(never())
-                    .add(eq("핵상욕설"), any(), any());
+            then(profanityWordManagementService).should(never()).add(eq("핵상욕설"), any(), any());
         }
 
         @Test
         void 유효한_조각이_없으면_닉네임_전체를_폴백_등록한다() {
             final NicknameAudit entity = new NicknameAudit("씨발놈");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("씨발놈", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95),
-                            "비속어 포함", List.of("닉네임에없는말"))
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "씨발놈", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "비속어 포함", List.of("닉네임에없는말"))));
 
             processor.process(List.of(entity));
 
@@ -184,40 +202,46 @@ class ProfanityAuditBatchProcessorTest {
         @Test
         void 정규화_후_한_글자_조각은_과차단_방지를_위해_제외된다() {
             final NicknameAudit entity = new NicknameAudit("경찬이병신");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("경찬이병신", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95),
-                            "비속어 포함", List.of("병신", "이"))
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "경찬이병신",
+                            NicknameAuditStatus.FLAGGED,
+                            AiConfidence.of(0.95),
+                            "비속어 포함",
+                            List.of("병신", "이"))));
 
             processor.process(List.of(entity));
 
             then(profanityWordManagementService).should().add("병신", Language.KOREAN, WordSource.AI_FLAGGED);
-            then(profanityWordManagementService).should(never())
-                    .add(eq("이"), any(), any());
+            then(profanityWordManagementService).should(never()).add(eq("이"), any(), any());
         }
 
         @Test
         void 정규화_결과가_같은_조각은_한_번만_등록된다() {
             final NicknameAudit entity = new NicknameAudit("시1발놈");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("시1발놈", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95),
-                            "비속어 포함", List.of("시1발", "시i발"))
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "시1발놈",
+                            NicknameAuditStatus.FLAGGED,
+                            AiConfidence.of(0.95),
+                            "비속어 포함",
+                            List.of("시1발", "시i발"))));
 
             processor.process(List.of(entity));
 
             // leet 치환(1→i)으로 두 조각의 정규화 결과가 동일 → add는 한 번만 호출
-            then(profanityWordManagementService).should().add(eq("시1발"), eq(Language.KOREAN), eq(WordSource.AI_FLAGGED));
+            then(profanityWordManagementService)
+                    .should()
+                    .add(eq("시1발"), eq(Language.KOREAN), eq(WordSource.AI_FLAGGED));
             then(profanityWordManagementService).should(never()).add(eq("시i발"), any(), any());
         }
 
         @Test
         void 조각이_비어있으면_닉네임_전체를_폴백_등록한다() {
             final NicknameAudit entity = new NicknameAudit("욕설닉네임");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95),
-                            "비속어 포함", List.of())
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "비속어 포함", List.of())));
 
             processor.process(List.of(entity));
 
@@ -231,9 +255,9 @@ class ProfanityAuditBatchProcessorTest {
         @Test
         void CLEAN_닉네임은_비속어_등록_없이_상태만_업데이트된다() {
             final NicknameAudit entity = new NicknameAudit("용감한호랑이");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반 닉네임")
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반 닉네임")));
 
             processor.process(List.of(entity));
 
@@ -249,9 +273,9 @@ class ProfanityAuditBatchProcessorTest {
         @Test
         void PENDING_닉네임은_비속어_등록_없이_상태만_업데이트된다() {
             final NicknameAudit entity = new NicknameAudit("애매한닉네임");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("애매한닉네임", NicknameAuditStatus.PENDING, AiConfidence.of(0.6), "판단 불명확")
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "애매한닉네임", NicknameAuditStatus.PENDING, AiConfidence.of(0.6), "판단 불명확")));
 
             processor.process(List.of(entity));
 
@@ -280,14 +304,11 @@ class ProfanityAuditBatchProcessorTest {
 
         @Test
         void 처리된_엔티티_수를_반환한다() {
-            final List<NicknameAudit> batch = List.of(
-                    new NicknameAudit("닉네임1"),
-                    new NicknameAudit("닉네임2")
-            );
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("닉네임1", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반"),
-                    new NicknameAuditResult("닉네임2", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
-            ));
+            final List<NicknameAudit> batch = List.of(new NicknameAudit("닉네임1"), new NicknameAudit("닉네임2"));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(
+                            new NicknameAuditResult("닉네임1", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반"),
+                            new NicknameAuditResult("닉네임2", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")));
 
             final int processed = processor.process(batch);
 
@@ -302,9 +323,9 @@ class ProfanityAuditBatchProcessorTest {
         void 이미_terminal_행이_있는_닉네임의_UNAUDITED는_승격_대신_제거된다() {
             // #1467 fix 이전 잔존 데이터: (host, CLEAN)이 이미 존재하는 상태에서 (host, UNAUDITED) 승격 시도.
             final NicknameAudit residual = new NicknameAudit("host");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("host", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(
+                            new NicknameAuditResult("host", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")));
             given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of("host"));
 
             processor.process(List.of(residual));
@@ -319,9 +340,9 @@ class ProfanityAuditBatchProcessorTest {
             // 기존 (host, CLEAN)이 있는데 이번 AI 결과가 FLAGGED인 경우. 상태가 달라 유니크 충돌은 없지만,
             // 승격하면 (host, CLEAN)+(host, FLAGGED) 모순 공존 + autoBlock 오발동이 생긴다. 제거가 정답이다.
             final NicknameAudit residual = new NicknameAudit("host");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("host", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "재판정")
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "host", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "재판정")));
             given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of("host"));
 
             processor.process(List.of(residual));
@@ -335,9 +356,9 @@ class ProfanityAuditBatchProcessorTest {
         @Test
         void terminal_트윈이_없는_닉네임은_정상_승격된다() {
             final NicknameAudit fresh = new NicknameAudit("용감한호랑이");
-            given(nicknameAuditor.audit(anyList())).willReturn(List.of(
-                    new NicknameAuditResult("용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")
-            ));
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(
+                            new NicknameAuditResult("용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")));
             given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of());
 
             processor.process(List.of(fresh));

@@ -14,6 +14,7 @@ import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ class ProfanityAuditServiceTest {
         profanityWordManagementService = mock(ProfanityWordManagementService.class);
 
         final NicknameAuditProperties properties =
-                new NicknameAuditProperties("api-key", "gemini-2.0-flash", 0.8, 10, 5, 2);
+                new NicknameAuditProperties("api-key", "gemini-2.0-flash", 0.8, 10, 5, 2, Duration.ofSeconds(120));
         service = new ProfanityAuditService(
                 auditRepository,
                 batchProcessor,
@@ -165,8 +166,8 @@ class ProfanityAuditServiceTest {
         }
 
         private ProfanityAuditService productionSizedService() {
-            final NicknameAuditProperties production =
-                    new NicknameAuditProperties("api-key", "gemini-3.5-flash", 0.85, PRODUCTION_BATCH_SIZE, 20, 2);
+            final NicknameAuditProperties production = new NicknameAuditProperties(
+                    "api-key", "gemini-3.5-flash", 0.85, PRODUCTION_BATCH_SIZE, 20, 2, Duration.ofSeconds(120));
             final ProfanityAuditService target = new ProfanityAuditService(
                     auditRepository,
                     batchProcessor,

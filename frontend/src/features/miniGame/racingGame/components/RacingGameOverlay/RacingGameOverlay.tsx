@@ -4,6 +4,7 @@ import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useRacingGame } from '@/contexts/RacingGame/RacingGameContext';
 import DisconnectOverlay from '../DisconnectOverlay/DisconnectOverlay';
+import { canAcceptTap } from '../../utils/canAcceptTap';
 
 const TAP_SEND_INTERVAL_MS = 200;
 const TAP_VIBRATION_MS = 10;
@@ -32,8 +33,13 @@ const RacingGameOverlay = ({ children, isGoal, onTap }: Props) => {
   const rippleIdRef = useRef(0);
   const [ripples, setRipples] = useState<Ripple[]>([]);
 
+  const acceptsTap = canAcceptTap({ isConnected, racingGameState, isGoal });
+
   // 탭이 먹혔다는 신호를 서버 응답 전에 로컬에서 낸다. 서버는 200ms 인터벌과 왕복 뒤에야 답한다.
+  // 못 움직이는 구간에서는 신호도 내지 않는다. 안 먹히는 탭에 반응하면 F04 의 취지가 뒤집힌다.
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (!acceptsTap) return;
+
     tapCountRef.current += 1;
     onTap?.();
     navigator.vibrate?.(TAP_VIBRATION_MS);
@@ -56,7 +62,7 @@ const RacingGameOverlay = ({ children, isGoal, onTap }: Props) => {
     intervalRef.current = window.setInterval(() => {
       // 끊긴 동안 send 는 실패하면서 Sentry 이벤트를 남긴다. 200ms 마다 쌓이므로 아예 보내지 않고,
       // 그 사이 누른 탭도 버린다. 나중에 몰아서 보내면 서버가 받은 적 없는 속도로 뛴다.
-      if (!isConnected || racingGameState !== 'PLAYING' || isGoal) {
+      if (!canAcceptTap({ isConnected, racingGameState, isGoal })) {
         tapCountRef.current = 0;
         return;
       }

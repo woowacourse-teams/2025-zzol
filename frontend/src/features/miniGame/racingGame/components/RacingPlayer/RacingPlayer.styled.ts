@@ -47,11 +47,15 @@ export const Container = styled.div<Props>`
 
 type RingProps = {
   $borderStyle: string;
+  $isMe: boolean;
 };
 
 /**
  * 색 말고 형태로도 사람을 가른다. 적록색약 사용자와, 명단이 복구되기 전 전원이 같은 색으로
  * 떨어지는 구간이 대상이다. 테두리는 회전하지 않아야 읽히므로 도는 아이콘 바깥에 둔다.
+ *
+ * 내 것에는 안 그린다. 나는 화면 정중앙에 고정돼 있어 내가 누군지 이미 알고, 흰 테두리를
+ * 두르면 원형 버튼이 늘 가운데 떠 있는 것으로 읽힌다. 크기를 남과 맞추려 자리는 남긴다.
  *
  * 내 것에만 글로우를 두르지 않는다. 내 캐릭터는 화면 정중앙에 고정돼 있어 글로우를 얹으면
  * 흰 링이 둘린 원이 늘 가운데 떠 있게 되고 탭 버튼으로 읽힌다. 나를 짚는 표식은 머리 위
@@ -59,7 +63,8 @@ type RingProps = {
  */
 export const IconRing = styled.div<RingProps>`
   display: flex;
-  border: 3px ${({ $borderStyle }) => $borderStyle} ${({ theme }) => theme.color.white};
+  border: 3px ${({ $borderStyle }) => $borderStyle}
+    ${({ theme, $isMe }) => ($isMe ? 'transparent' : theme.color.white)};
   border-radius: 50%;
   ${({ $borderStyle }) => $borderStyle === 'double' && 'border-width: 4px;'}
 `;

@@ -33,9 +33,7 @@ const RacingPlayer = ({ player, isMe, myPosition, color, slot, isVisible, ref }:
   const trailIntensity = prefersReducedMotion ? 0 : getSpeedTrailIntensity(player.speed);
 
   // 참가자 색 인덱스가 아니라 이름에서 뽑는다. 명단이 아직 없어도 모양은 사람마다 다르다.
-  const borderStyle = isMe
-    ? BORDER_STYLES[0]
-    : BORDER_STYLES[hashIndex(player.playerName, BORDER_STYLES.length)];
+  const borderStyle = BORDER_STYLES[hashIndex(player.playerName, BORDER_STYLES.length)];
 
   return (
     <S.Slot $slot={slot} $isVisible={isVisible} $reduceMotion={prefersReducedMotion}>
@@ -47,7 +45,7 @@ const RacingPlayer = ({ player, isMe, myPosition, color, slot, isVisible, ref }:
 
         {trailIntensity > 0 && <S.SpeedTrail style={{ opacity: trailIntensity }} />}
 
-        <S.IconRing $borderStyle={borderStyle}>
+        <S.IconRing $borderStyle={borderStyle} $isMe={isMe}>
           <S.RotatingWrapper ref={rotatingRef}>
             <PlayerIcon color={color} />
           </S.RotatingWrapper>

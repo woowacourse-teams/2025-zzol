@@ -8,7 +8,9 @@ type Props = {
 export const Badge = styled.div<Props>`
   position: absolute;
   right: 14px;
-  ${({ $direction }) => ($direction === 'ahead' ? 'top: 8px;' : 'bottom: 8px;')}
+  /* 아래쪽 배지는 바닥 눈금 위에 올린다. */
+  ${({ $direction }) =>
+    $direction === 'ahead' ? 'top: 8px;' : 'bottom: calc(52px + env(safe-area-inset-bottom));'}
   display: flex;
   align-items: center;
   gap: 5px;

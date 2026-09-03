@@ -157,7 +157,7 @@ const RacingGamePage = () => {
               ))}
               <HiddenPlayersBadge direction="ahead" count={hiddenAhead} />
               <HiddenPlayersBadge direction="behind" count={hiddenBehind} />
-              {isSpectating && <TrackNotice />}
+              {(isSpectating || racingGameData.players.length === 0) && <TrackNotice />}
               <TrackGround myPosition={myPosition} endDistance={racingGameData.distance.end} />
             </S.PlayersWrapper>
           </S.ContentWrapper>

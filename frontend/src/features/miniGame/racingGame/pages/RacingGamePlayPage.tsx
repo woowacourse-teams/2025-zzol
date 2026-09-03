@@ -1,19 +1,20 @@
-import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import { colorList } from '@/constants/color';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
 import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
 import { useRacingGame } from '@/contexts/RacingGame/RacingGameContext';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import PrepareOverlay from '../../components/PrepareOverlay/PrepareOverlay';
 import Finish from '../components/Finish/Finish';
 import Goal from '../components/Goal/Goal';
+import HiddenPlayersBadge from '../components/HiddenPlayersBadge/HiddenPlayersBadge';
 import RacingGameOverlay from '../components/RacingGameOverlay/RacingGameOverlay';
 import RacingLine from '../components/RacingLine/RacingLine';
 import RacingPlayer from '../components/RacingPlayer/RacingPlayer';
 import RacingProgressBar from '../components/RacingProgressBar/RacingProgressBar';
 import RacingRanks from '../components/RacingRanks/RacingRanks';
+import TrackNotice from '../components/TrackNotice/TrackNotice';
 import { useBackgroundAnimation } from '../hooks/useBackgroundAnimation';
 import { useGoalDisplay } from '../hooks/useGoalDisplay';
 import { usePlayerData } from '../hooks/usePlayerData';
@@ -21,10 +22,10 @@ import { getVisiblePlayers } from '../utils/getVisiblePlayers';
 import * as S from './RacingGamePlayPage.styled';
 
 const FINISH_LINE_VISUAL_OFFSET = 30;
+const STUCK_TIMEOUT_MS = 8000;
 
 const RacingGamePage = () => {
   const { joinCode, myName } = useIdentifier();
-  const { send } = useWebSocket();
   const navigate = useReplaceNavigate();
   const { miniGameType } = useParams();
   const { racingGameState, racingGameData } = useRacingGame();
@@ -32,10 +33,19 @@ const RacingGamePage = () => {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const visiblePlayers = getVisiblePlayers(racingGameData.players, myName);
-
-  const { myPosition, mySpeed } = usePlayerData({
+  const {
     players: visiblePlayers,
+    hiddenAhead,
+    hiddenBehind,
+    isSpectating,
+  } = useMemo(
+    () => getVisiblePlayers(racingGameData.players, myName),
+    [racingGameData.players, myName]
+  );
+
+  // 잘라낸 목록이 아니라 원본에서 내 위치를 찾는다. 자르는 기준이 바뀌어도 내 좌표는 흔들리지 않는다.
+  const { myPosition, mySpeed } = usePlayerData({
+    players: racingGameData.players,
     myName,
   });
 
@@ -50,18 +60,21 @@ const RacingGamePage = () => {
   });
 
   useEffect(() => {
-    setTimeout(() => {
-      send(`/room/${joinCode}/racing-game/start`, {
-        hostName: myName,
-      });
-    }, 2000);
-  }, [joinCode, send, myName]);
-
-  useEffect(() => {
     if (racingGameState === 'DONE') {
       navigate(`/room/${joinCode}/${miniGameType}/result`);
     }
   }, [racingGameState, joinCode, navigate, miniGameType]);
+
+  // stuck 폴백: 시작을 알리는 상태가 안 와 화면이 멈춰 있으면 로비로 보낸다. 눈치게임과 같은 기준이다.
+  // 진행 중(PLAYING)과 종료(DONE)는 화면이 정상이므로 감시하지 않는다.
+  useEffect(() => {
+    if (racingGameState !== 'DESCRIPTION' && racingGameState !== 'PREPARE') return;
+
+    const timer = window.setTimeout(() => {
+      navigate(`/room/${joinCode}/lobby`);
+    }, STUCK_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [racingGameState, joinCode, navigate]);
 
   return (
     <>
@@ -98,6 +111,9 @@ const RacingGamePage = () => {
                   color={colorList[getParticipantColorIndex(player.playerName)]}
                 />
               ))}
+              <HiddenPlayersBadge direction="ahead" count={hiddenAhead} />
+              <HiddenPlayersBadge direction="behind" count={hiddenBehind} />
+              {isSpectating && <TrackNotice />}
             </S.PlayersWrapper>
           </S.ContentWrapper>
         </S.Container>

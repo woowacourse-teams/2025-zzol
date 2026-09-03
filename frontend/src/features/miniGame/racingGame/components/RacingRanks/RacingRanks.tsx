@@ -1,11 +1,9 @@
+import { RacingPlayer } from '@/types/miniGame/racingGame';
 import { useMemo, useState } from 'react';
 import RankItem from '../RankItem/RankItem';
 import * as S from './RacingRanks.styled';
 
-type Player = {
-  playerName: string;
-  position: number;
-};
+type Player = Pick<RacingPlayer, 'playerName' | 'position'>;
 
 type Props = {
   players: Player[];

@@ -259,27 +259,45 @@ const racingGamePlayPageAction = async () => {
 
   await wait(DELAY_BETWEEN_ACTIONS);
 
-  // 1초에 5번 클릭 = 200ms마다 클릭
   const CLICK_INTERVAL_MS = 100;
+  // 서버 TapPerSecondSpeedCalculator 는 speed = 초당 탭 수 를 [3, 60] 으로 clamp 한다.
+  // 100ms 틱마다 1~6번 쏘면 초당 10~60탭이라 속도가 바닥부터 천장까지 훑는다.
+  const MIN_TAPS_PER_TICK = 1;
+  const MAX_TAPS_PER_TICK = 6;
+  // 매 틱 새로 뽑으면 서버가 창 단위로 평균 내 값이 뭉개진다. 1~2초 유지해야 가감속이 보인다.
+  const MIN_HOLD_MS = 1000;
+  const MAX_HOLD_MS = 2000;
+
+  const randomInt = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
+
+  let tapsPerTick = randomInt(MIN_TAPS_PER_TICK, MAX_TAPS_PER_TICK);
+  let holdUntil = Date.now() + randomInt(MIN_HOLD_MS, MAX_HOLD_MS);
 
   racingGameClickIntervalId = window.setInterval(() => {
+    if (Date.now() >= holdUntil) {
+      tapsPerTick = randomInt(MIN_TAPS_PER_TICK, MAX_TAPS_PER_TICK);
+      holdUntil = Date.now() + randomInt(MIN_HOLD_MS, MAX_HOLD_MS);
+    }
+
     // RacingGameOverlay 요소 찾기 (data-testid 사용)
     const overlayElement = findElement('racing-game-overlay');
 
     // Overlay를 찾지 못한 경우 body에 이벤트 발생 (fallback)
     const targetElement = overlayElement || document.body;
 
-    // pointerdown 이벤트 발생
-    const pointerDownEvent = new PointerEvent('pointerdown', {
-      bubbles: true,
-      cancelable: true,
-      pointerId: 1,
-      pointerType: 'mouse',
-      clientX: window.innerWidth / 2,
-      clientY: window.innerHeight / 2,
-    });
+    for (let i = 0; i < tapsPerTick; i++) {
+      // 좌표를 조금씩 흩어 같은 틱의 리플이 완전히 겹치지 않게 한다.
+      const pointerDownEvent = new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 1,
+        pointerType: 'mouse',
+        clientX: window.innerWidth / 2 + randomInt(-30, 30),
+        clientY: window.innerHeight / 2 + randomInt(-30, 30),
+      });
 
-    targetElement.dispatchEvent(pointerDownEvent);
+      targetElement.dispatchEvent(pointerDownEvent);
+    }
   }, CLICK_INTERVAL_MS);
 };
 

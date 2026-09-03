@@ -5,3 +5,8 @@
  * 기기별로 보이는 범위를 조정하는 손잡이라 상수로 뽑아 둔다.
  */
 export const PIXELS_PER_UNIT = 1;
+
+/** 서버 RacingGame.MAX_SPEED 와 같은 값. 속도 게이지의 눈금 상한이다. */
+export const MAX_SPEED = 60;
+
+export const SPEED_SEGMENT_COUNT = 6;

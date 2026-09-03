@@ -11,15 +11,18 @@ export const Container = styled.div<Props>`
   gap: 8px;
   width: fit-content;
   min-width: max-content;
-  background: linear-gradient(to right, rgba(19, 8, 8, 0.56) 0%, rgba(46, 35, 35, 0.19) 100%);
+  /* 오른쪽 끝이 0.19까지 떨어져 이름 자리에 하늘이 그대로 비쳤다. */
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.56) 0%, rgba(0, 0, 0, 0.45) 100%);
   padding: 2px;
   border-radius: 4px;
   overflow: hidden;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 
   ${({ $isFixed }) =>
     $isFixed &&
     `
-    ::before {
+    /* & 가 없으면 stylis 가 자손 선택자로 컴파일해 반짝임이 숫자 칸과 이름 안쪽에서 따로 뜬다. */
+    &::before {
       content: '';
       position: absolute;
       top: 0;
@@ -42,6 +45,12 @@ export const Container = styled.div<Props>`
     }
     100% {
       left: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      animation: none;
     }
   }
 `;

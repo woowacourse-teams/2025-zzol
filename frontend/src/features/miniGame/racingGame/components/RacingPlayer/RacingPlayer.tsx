@@ -4,7 +4,9 @@ import { useRotationAnimation } from '../../hooks/useRotationAnimation';
 import Description from '@/components/@common/Description/Description';
 import type { RacingPlayer as RacingPlayerType } from '@/types/miniGame/racingGame';
 import type { Ref } from 'react';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { hashIndex } from '@/utils/hashIndex';
+import { getSpeedTrailIntensity } from '../../utils/getSpeedTrailIntensity';
 import SpeedGauge from '../SpeedGauge/SpeedGauge';
 import * as S from './RacingPlayer.styled';
 
@@ -22,6 +24,11 @@ type Props = {
 
 const RacingPlayer = ({ player, isMe, myPosition, color, ref }: Props) => {
   const rotatingRef = useRotationAnimation({ speed: player.speed });
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  // 서버가 최저 속도 3을 깔아 둬 안 눌러도 캐릭터가 계속 굴러간다. 그 위로만 속도선을 켜
+  // 연타의 효과가 화면에 드러나게 한다. 굴러가는 표현 자체는 그대로 둔다.
+  const trailIntensity = prefersReducedMotion ? 0 : getSpeedTrailIntensity(player.speed);
 
   // 참가자 색 인덱스가 아니라 이름에서 뽑는다. 명단이 아직 없어도 모양은 사람마다 다르다.
   const borderStyle = isMe
@@ -34,6 +41,8 @@ const RacingPlayer = ({ player, isMe, myPosition, color, ref }: Props) => {
       <S.PlayerName>
         <Description color={isMe ? 'point-500' : 'white'}>{player.playerName}</Description>
       </S.PlayerName>
+
+      {trailIntensity > 0 && <S.SpeedTrail style={{ opacity: trailIntensity }} />}
 
       <S.IconRing $borderStyle={borderStyle}>
         <S.RotatingWrapper ref={rotatingRef}>

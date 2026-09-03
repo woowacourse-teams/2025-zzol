@@ -44,6 +44,30 @@ export const RotatingWrapper = styled.div`
   will-change: transform;
 `;
 
+/**
+ * 캐릭터 뒤로 흐르는 속도선. 진하기는 style 로 넘긴다. 매 틱 값이 달라 prop 으로 주면
+ * 틱마다 emotion 클래스가 하나씩 쌓인다.
+ *
+ * 아이콘을 두르지 않고 뒤에만 깐다. 정중앙에 고정된 원을 감싸면 탭 버튼으로 읽힌다.
+ */
+export const SpeedTrail = styled.span`
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 4px);
+  transform: translateY(-50%);
+  width: 34px;
+  height: 26px;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    ${({ theme }) => theme.color.white}CC 0 2px,
+    transparent 2px 9px
+  );
+  /* 오른쪽으로 갈수록 진해져 캐릭터에서 뻗어 나온 것으로 보인다. */
+  -webkit-mask-image: linear-gradient(to right, transparent, ${({ theme }) => theme.color.black});
+  mask-image: linear-gradient(to right, transparent, ${({ theme }) => theme.color.black});
+`;
+
 export const PlayerName = styled.div`
   position: absolute;
   top: -18px;

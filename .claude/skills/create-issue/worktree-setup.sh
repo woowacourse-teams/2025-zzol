@@ -55,3 +55,13 @@ while IFS= read -r f; do
 done <<< "$env_files"
 
 [ "$linked" -gt 0 ] || echo "  (연결할 env 파일 없음)"
+
+# ── 2. frontend/node_modules 링크 ─────────────────────────────────────
+# gitignore 대상이라 워크트리에 딸려오지 않는다. 없으면 pre-push 훅의 ESLint 가
+# 조용히 건너뛰어(#1659) 로컬 검증이 프론트에서만 사라진다. 워크트리마다 npm install 을
+# 다시 도는 건 수 분이 들므로 주 저장소 것을 링크해 쓴다.
+# 의존성이 바뀐 브랜치라면 워크트리에서 npm install 을 돌려 링크를 실제 디렉터리로 바꾼다.
+if [ -d "$MAIN/frontend/node_modules" ] && [ ! -e "$WT/frontend/node_modules" ]; then
+  ln -sfn "$MAIN/frontend/node_modules" "$WT/frontend/node_modules"
+  echo "  link: frontend/node_modules"
+fi

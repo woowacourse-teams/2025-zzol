@@ -1,12 +1,41 @@
 #!/bin/sh
-# push 전 backend Spotless 포맷 검사 — CI의 :spotlessJavaCheck가 깨지기 전에 로컬에서 잡는다.
-# 켜기: git config core.hooksPath .githooks   /   한 번 건너뛰기: git push --no-verify
+# push 전 로컬 lint 검증 — CI의 lint 단계가 깨지기 전에 잡는다 (#1659).
+#
+# 켜기: git config core.hooksPath .githooks
+#       (frontend `npm install` 또는 `./gradlew build` 가 자동으로 설정한다)
+# 한 번 건너뛰기: git push --no-verify
+#       — CI에서 같은 검사가 다시 도므로, 건너뛴 책임은 push한 사람에게 있다.
+#
+# 검사 범위는 CI와 같다(backend-ci.yml / frontend-ci.yml). 다르면 로컬에서 통과하고 CI가 깨진다.
 
 git fetch -q origin dev 2>/dev/null
-git diff --name-only origin/dev...HEAD | grep -q '^backend/.*\.java$' || exit 0
 
-echo "[pre-push] spotlessCheck…"
-backend/gradlew -p backend spotlessCheck -q && exit 0
+# 삭제된 파일은 제외한다(ACMR) — 없는 경로를 lint에 넘기면 그것만으로 실패한다.
+CHANGED=$(git diff --name-only --diff-filter=ACMR origin/dev...HEAD)
 
-echo "[pre-push] 포맷 위반 — 'backend/gradlew -p backend spotlessApply' 후 다시 커밋하세요."
-exit 1
+# 백엔드 — Spotless는 ratchetFrom("origin/dev")라 변경 파일만 본다. PMD 대상도 CI와 맞춘다.
+if printf '%s\n' "$CHANGED" | grep -q '^backend/.*\.java$'; then
+    echo "[pre-push] backend lint (spotless + pmd)…"
+    if ! backend/gradlew -p backend --console=plain spotlessCheck pmdMain pmdTest pmdTestFixtures; then
+        echo "[pre-push] backend lint 실패 — 포맷은 'backend/gradlew -p backend spotlessApply',"
+        echo "           PMD 지적은 위 리포트를 보고 직접 고치세요."
+        exit 1
+    fi
+fi
+
+# 프론트 — 변경된 파일만 ESLint. 경로에서 frontend/ 를 떼야 frontend/ 안에서 실행할 수 있다.
+FE=$(printf '%s\n' "$CHANGED" | sed -n 's|^frontend/\(.*\.[cm]\{0,1\}[jt]sx\{0,1\}\)$|\1|p')
+if [ -n "$FE" ]; then
+    if [ ! -d frontend/node_modules ]; then
+        echo "[pre-push] frontend/node_modules 없음 — eslint를 건너뛴다. 'npm install' 후 다시 push하세요."
+    else
+        echo "[pre-push] frontend eslint…"
+        # --no-warn-ignored: eslint.config.js 가 무시하는 파일을 명시로 넘길 때 나는 경고를 죽인다.
+        if ! printf '%s\n' "$FE" | tr '\n' '\0' | (cd frontend && xargs -0 npx eslint --no-warn-ignored); then
+            echo "[pre-push] eslint 실패 — 'cd frontend && npm run lint:fix' 후 다시 커밋하세요."
+            exit 1
+        fi
+    fi
+fi
+
+exit 0

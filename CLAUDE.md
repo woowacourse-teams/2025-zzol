@@ -23,6 +23,14 @@
 - 20줄 이상 대량 출력이 예상되는 탐색·분석은 서브에이전트에 위임한다.
 - 이슈·PR·리뷰 코멘트·커밋 메시지처럼 사람이 읽는 한국어 글은 [korean-style](.claude/rules/korean-style.md)을 따른다. 번역투 연결어와 내용 없는 부사를 걸러 사람이 쓴 글로 읽히게 한다.
 
+## 로컬 lint 훅 (pre-push)
+
+`.githooks/pre-push`가 push 전에 **변경된 파일만** 검사한다 — backend는 Spotless+PMD, frontend는 ESLint. 검사 범위는 CI(`backend-ci.yml`·`frontend-ci.yml`)와 같게 맞춰 둔다.
+
+훅은 `core.hooksPath=.githooks`로 켜지며, `npm install`(frontend `prepare`)이나 `./gradlew build`(`installGitHooks`)가 자동으로 설정한다. 수동으로 켜려면 `git config core.hooksPath .githooks`.
+
+급할 때는 `git push --no-verify`로 건너뛸 수 있다. **건너뛴 책임은 push한 사람에게 있다** — 같은 검사가 CI에서 다시 돌아 실패하며, 그때는 포맷 전용 커밋이 PR에 남는다.
+
 ## git push 안전
 
 보호 브랜치(`dev`·`prod`·`main`·`master`)에는 **직접 push·commit하지 않는다.** 작업 브랜치 upstream을 보호 브랜치로 두지 않고(`git branch --unset-upstream`), push는 명시 refspec(`git push -u origin HEAD:{type}/{N}-{slug}`)으로 한다. 전문은 [.claude/rules/git-push-safety.md](.claude/rules/git-push-safety.md).

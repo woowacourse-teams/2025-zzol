@@ -2,7 +2,6 @@ package coffeeshout.racinggame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.racinggame.domain.TapPerSecondSpeedCalculator;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +24,7 @@ class TapPerSecondSpeedCalculatorTest {
     }
 
     @Test
-    void 탭_횟수가_임계값을_초과하면_임계값으로_제한된다() {
+    void 초당_15탭이면_속도도_15다() {
         // given
         final Instant lastTapedTime = Instant.now();
         final Instant now = lastTapedTime.plusMillis(1000);
@@ -138,5 +137,18 @@ class TapPerSecondSpeedCalculatorTest {
         // when & then - 3초에 6번 = 초당 2번
         Instant now3 = lastTapedTime.plusMillis(3000);
         assertThat(speedCalculator.calculateSpeed(lastTapedTime, now3, 6)).isEqualTo(3);
+    }
+
+    @Test
+    void 탭_횟수가_아무리_커도_속도는_상한을_넘지_않는다() {
+        // given
+        final Instant lastTapedTime = Instant.now();
+        final Instant now = lastTapedTime.plusMillis(1);
+
+        // when
+        final int speed = speedCalculator.calculateSpeed(lastTapedTime, now, Integer.MAX_VALUE);
+
+        // then
+        assertThat(speed).isEqualTo(RacingGame.MAX_SPEED);
     }
 }

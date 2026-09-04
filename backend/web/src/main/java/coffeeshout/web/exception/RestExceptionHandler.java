@@ -5,7 +5,6 @@ import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.exception.custom.SystemException;
-import coffeeshout.global.ipblock.IpBlockAttributes;
 import coffeeshout.global.log.NotificationMarker;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -34,7 +33,6 @@ public class RestExceptionHandler {
     public ProblemDetail handleNoResourceFoundException(
             NoResourceFoundException exception, HttpServletRequest request) {
         logWarning(exception, request);
-        request.setAttribute(IpBlockAttributes.UNMATCHED_NOT_FOUND, true);
         return getProblemDetail(HttpStatus.NOT_FOUND, exception, GlobalErrorCode.RESOURCE_NOT_FOUND);
     }
 

@@ -23,8 +23,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.web.servlet.DispatcherServlet;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @DisplayName("IpBlockFilter")
 @ExtendWith(MockitoExtension.class)
@@ -161,49 +164,20 @@ class IpBlockFilterTest {
         }
 
         @Test
-        void 매핑_없는_경로_속성이_설정된_404_응답_시_카운터를_증가시킨다() throws Exception {
-            final MockHttpServletRequest request = 요청(REMOTE_IP, "/not-found");
-            request.setAttribute(IpBlockAttributes.UNMATCHED_NOT_FOUND, true);
+        void 매핑_없는_경로의_404_응답_시_카운터를_증가시킨다() throws Exception {
+            체인이_404를_낸다();
 
-            doAnswer(invocation -> {
-                        ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
-                        return null;
-                    })
-                    .when(filterChain)
-                    .doFilter(any(), any());
-
-            filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+            filter.doFilter(매핑_없는_요청(REMOTE_IP, "/not-found"), new MockHttpServletResponse(), filterChain);
 
             then(ipBlockStore).should().incrementNotFoundAndBlockIfExceeded(REMOTE_IP);
         }
 
         @Test
-        void 속성_없이_컨트롤러가_직접_낸_404_응답_시_카운터를_증가시키지_않는다() throws Exception {
-            // SettlementRestController.getRank 처럼 ResponseEntity.notFound() 를 직접 돌려주는 경우(#1757)
-            doAnswer(invocation -> {
-                        ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
-                        return null;
-                    })
-                    .when(filterChain)
-                    .doFilter(any(), any());
+        void 컨트롤러가_직접_낸_404_응답_시_카운터를_증가시키지_않는다() throws Exception {
+            // ResponseEntity.notFound() 를 직접 돌려주는 경우(#1757). 예외가 없으니 EXCEPTION_ATTRIBUTE 도 없다
+            체인이_404를_낸다();
 
             filter.doFilter(요청(REMOTE_IP, "/settlement/ranks"), new MockHttpServletResponse(), filterChain);
-
-            then(ipBlockStore).should(never()).incrementNotFoundAndBlockIfExceeded(any());
-        }
-
-        @Test
-        void 속성_없는_404_응답이_반복되어도_카운터를_증가시키지_않는다() throws Exception {
-            doAnswer(invocation -> {
-                        ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
-                        return null;
-                    })
-                    .when(filterChain)
-                    .doFilter(any(), any());
-
-            for (int i = 0; i < 10; i++) {
-                filter.doFilter(요청(REMOTE_IP, "/settlement/ranks"), new MockHttpServletResponse(), filterChain);
-            }
 
             then(ipBlockStore).should(never()).incrementNotFoundAndBlockIfExceeded(any());
         }
@@ -311,15 +285,10 @@ class IpBlockFilterTest {
         }
 
         @Test
-        void 내부_IP는_404_응답에도_누적_카운트하지_않는다() throws Exception {
-            doAnswer(invocation -> {
-                        ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
-                        return null;
-                    })
-                    .when(filterChain)
-                    .doFilter(any(), any());
+        void 내부_IP는_매핑_없는_경로의_404_응답에도_누적_카운트하지_않는다() throws Exception {
+            체인이_404를_낸다();
 
-            filter.doFilter(요청(new Ip("172.21.0.5"), "/not-found"), new MockHttpServletResponse(), filterChain);
+            filter.doFilter(매핑_없는_요청(new Ip("172.21.0.5"), "/not-found"), new MockHttpServletResponse(), filterChain);
 
             then(ipBlockStore).should(never()).incrementNotFoundAndBlockIfExceeded(any());
         }
@@ -354,5 +323,22 @@ class IpBlockFilterTest {
         request.setRemoteAddr(remoteAddr.value());
         request.setRequestURI(uri);
         return request;
+    }
+
+    /** 매핑된 핸들러가 없어 DispatcherServlet이 NoResourceFoundException을 EXCEPTION_ATTRIBUTE에 남긴 요청 */
+    private MockHttpServletRequest 매핑_없는_요청(Ip remoteAddr, String uri) {
+        final MockHttpServletRequest request = 요청(remoteAddr, uri);
+        request.setAttribute(
+                DispatcherServlet.EXCEPTION_ATTRIBUTE, new NoResourceFoundException(HttpMethod.GET, uri, uri));
+        return request;
+    }
+
+    private void 체인이_404를_낸다() throws Exception {
+        doAnswer(invocation -> {
+                    ((HttpServletResponse) invocation.getArgument(1)).setStatus(404);
+                    return null;
+                })
+                .when(filterChain)
+                .doFilter(any(), any());
     }
 }

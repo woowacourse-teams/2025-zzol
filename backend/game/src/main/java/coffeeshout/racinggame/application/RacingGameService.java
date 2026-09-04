@@ -2,10 +2,10 @@ package coffeeshout.racinggame.application;
 
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
-import coffeeshout.racinggame.config.RacingGameTimingProperties;
 import coffeeshout.minigame.domain.MiniGameService;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameFinishedEvent;
+import coffeeshout.racinggame.config.RacingGameTimingProperties;
 import coffeeshout.racinggame.domain.RacingGame;
 import coffeeshout.racinggame.domain.RacingGameState;
 import coffeeshout.racinggame.domain.SpeedCalculator;
@@ -35,8 +35,7 @@ public class RacingGameService implements MiniGameService {
             @Qualifier("racingGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
             SpeedCalculator speedCalculator,
-            RacingGameTimingProperties timing
-    ) {
+            RacingGameTimingProperties timing) {
         this.gameSessionService = gameSessionService;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
@@ -67,31 +66,33 @@ public class RacingGameService implements MiniGameService {
     }
 
     private void startAutoMove(RacingGame racingGame, String joinCode) {
+        // 프론트는 PLAYING 을 받는 즉시 탭을 보낸다. 발행 뒤에 초기화하면 그 첫 탭을 지운다.
+        racingGame.setUpStart();
         racingGame.updateState(RacingGameState.PLAYING);
         eventPublisher.publishEvent(RaceStateChangedEvent.of(racingGame, joinCode));
-        racingGame.setUpStart();
         final ScheduledFuture<?> autoMoveFuture = scheduleAutoMoveTask(racingGame, joinCode);
         racingGame.setAutoMoveFuture(autoMoveFuture);
     }
 
     private void processDescription(String joinCode, RacingGame racingGame) {
         racingGame.updateState(RacingGameState.DESCRIPTION);
-        taskScheduler.schedule(() -> {
-            processPrepare(racingGame, joinCode);
-            eventPublisher.publishEvent(RaceStateChangedEvent.of(racingGame, joinCode));
-        }, Instant.now().plus(timing.description()));
+        taskScheduler.schedule(
+                () -> {
+                    processPrepare(racingGame, joinCode);
+                    eventPublisher.publishEvent(RaceStateChangedEvent.of(racingGame, joinCode));
+                },
+                Instant.now().plus(timing.description()));
     }
 
     private void processPrepare(RacingGame racingGame, String joinCode) {
         racingGame.updateState(RacingGameState.PREPARE);
         eventPublisher.publishEvent(RunnersMovedEvent.of(racingGame, joinCode));
-        taskScheduler.schedule(() -> startAutoMove(racingGame, joinCode),
-                Instant.now().plus(timing.prepare()));
+        taskScheduler.schedule(
+                () -> startAutoMove(racingGame, joinCode), Instant.now().plus(timing.prepare()));
     }
 
     private ScheduledFuture<?> scheduleAutoMoveTask(RacingGame racingGame, String joinCode) {
-        return taskScheduler.scheduleAtFixedRate(() -> executeAutoMove(racingGame, joinCode),
-                timing.moveInterval());
+        return taskScheduler.scheduleAtFixedRate(() -> executeAutoMove(racingGame, joinCode), timing.moveInterval());
     }
 
     private void executeAutoMove(RacingGame racingGame, String joinCode) {
@@ -114,13 +115,17 @@ public class RacingGameService implements MiniGameService {
         racingGame.updateState(RacingGameState.DONE);
         // 순서 불변식(ADR-0025 결정 5): finishGame()으로 roundCount를 먼저 확정·상태 복귀시킨다.
         final int roundCount = gameSessionService.finishGame(new JoinCode(joinCode));
-        taskScheduler.schedule(() -> eventPublisher.publishEvent(RaceFinishedEvent.of(racingGame, joinCode)),
+        taskScheduler.schedule(
+                () -> eventPublisher.publishEvent(RaceFinishedEvent.of(racingGame, joinCode)),
                 Instant.now().plus(timing.raceFinishedDelay()));
         racingGame.stopAutoMove();
         // 확률 조정·결과 저장을 유발하는 이벤트는 종료 알림·정리를 모두 끝낸 뒤 마지막에 발행한다 —
         // 저장 리스너(@Transactional/@RedisLock) 실패가 게임 종료 알림·자동이동 정지를 막지 않도록.
         eventPublisher.publishEvent(new MiniGameFinishedEvent(
-                joinCode, MiniGameType.RACING_GAME.name(), racingGame.getResult().toRankMap(), roundCount));
+                joinCode,
+                MiniGameType.RACING_GAME.name(),
+                racingGame.getResult().toRankMap(),
+                roundCount));
         log.info("레이싱 게임 종료: joinCode={}", joinCode);
     }
 
@@ -134,7 +139,6 @@ public class RacingGameService implements MiniGameService {
     }
 
     private RacingGame getRacingGame(JoinCode joinCode) {
-        return (RacingGame) gameSessionService.getSession(joinCode)
-                .findCompletedGame(MiniGameType.RACING_GAME);
+        return (RacingGame) gameSessionService.getSession(joinCode).findCompletedGame(MiniGameType.RACING_GAME);
     }
 }

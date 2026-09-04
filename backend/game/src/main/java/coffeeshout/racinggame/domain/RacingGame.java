@@ -29,7 +29,8 @@ public class RacingGame implements Playable {
 
     private Instant startTime;
     private Runners runners;
-    private RacingGameState state;
+    // 스케줄러 스레드가 바꾸고 컨슈머 스레드가 validatePlaying 으로 읽는다.
+    private volatile RacingGameState state;
 
     @Setter
     private ScheduledFuture<?> autoMoveFuture;

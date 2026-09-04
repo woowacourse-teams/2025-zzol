@@ -6,10 +6,15 @@ import coffeeshout.gamecommon.Gamer;
 import java.time.Instant;
 import lombok.Getter;
 
-@Getter
+/**
+ * 컨슈머 스레드가 {@link #updateSpeed}를, 스케줄러 스레드가 {@link #move}를 부른다.
+ * 가변 필드 넷을 같은 모니터로 잠가 한쪽이 쓰는 중에 다른 쪽이 읽거나 끼어들지 못하게 한다.
+ */
 public class Runner {
 
     public static final int SLOW_DOWN_STEP = 3;
+
+    @Getter
     private final Gamer gamer;
 
     private int position = 0;
@@ -22,24 +27,26 @@ public class Runner {
         this.lastSpeedUpdateTime = Instant.now();
     }
 
-    public void updateSpeed(int tapCount, SpeedCalculator speedCalculator, Instant now) {
+    public synchronized void updateSpeed(int tapCount, SpeedCalculator speedCalculator, Instant now) {
         if (isFinished()) {
             return;
         }
         final int nextSpeed = speedCalculator.calculateSpeed(lastSpeedUpdateTime, now, tapCount);
-        isTrue(nextSpeed >= RacingGame.MIN_SPEED && nextSpeed <= RacingGame.MAX_SPEED,
+        isTrue(
+                nextSpeed >= RacingGame.MIN_SPEED && nextSpeed <= RacingGame.MAX_SPEED,
                 String.format("스피드는 0 ~ %d이어야 합니다.", RacingGame.MAX_SPEED));
         this.lastSpeedUpdateTime = now;
         this.speed = nextSpeed;
     }
 
-    public void move(Instant now) {
+    public synchronized void move(Instant now) {
         if (isStopped()) {
             return;
         }
         final int nextPosition = position + speed;
         if (crossesFinishLine(nextPosition)) {
-            final long remainingMillis = (long) (calculateDistanceToFinishLine(nextPosition) * calculateMillisPerPosition());
+            final long remainingMillis =
+                    (long) (calculateDistanceToFinishLine(nextPosition) * calculateMillisPerPosition());
             finishTime = now.minusMillis(RacingGame.MOVE_INTERVAL_MILLIS).plusMillis(remainingMillis);
         }
         if (isSlowingDown()) {
@@ -72,19 +79,35 @@ public class Runner {
         speed -= SLOW_DOWN_STEP;
     }
 
-    public boolean isFinished() {
+    public synchronized boolean isFinished() {
         return position >= RacingGame.FINISH_LINE;
     }
 
-    public void initializeSpeed() {
+    public synchronized void initializeSpeed() {
         this.speed = RacingGame.MIN_SPEED;
     }
 
-    public void initializeLastSpeedUpdateTime(Instant time) {
+    public synchronized void initializeLastSpeedUpdateTime(Instant time) {
         this.lastSpeedUpdateTime = time;
     }
 
-    public boolean isStopped() {
+    public synchronized boolean isStopped() {
         return speed == 0;
+    }
+
+    public synchronized int getPosition() {
+        return position;
+    }
+
+    public synchronized int getSpeed() {
+        return speed;
+    }
+
+    public synchronized Instant getLastSpeedUpdateTime() {
+        return lastSpeedUpdateTime;
+    }
+
+    public synchronized Instant getFinishTime() {
+        return finishTime;
     }
 }

@@ -1,5 +1,6 @@
 package coffeeshout.room.infra.websocket;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.websocket.StompSessionManager;
 import java.time.Duration;
@@ -28,8 +29,7 @@ public class DelayedPlayerRemovalService {
             @Value("${player.removalDelay}") Duration removalDelay,
             PlayerDisconnectionService playerDisconnectionService,
             StompSessionManager stompSessionManager,
-            RoomService roomService
-    ) {
+            RoomService roomService) {
         validateRemovalDuration(removalDelay);
         this.taskScheduler = taskScheduler;
         this.removalDelay = removalDelay;
@@ -47,12 +47,17 @@ public class DelayedPlayerRemovalService {
 
     public void schedulePlayerRemoval(String playerKey, String sessionId, String reason) {
         final String joinCode = playerKey.split(":")[0];
-        if (!roomService.isReadyState(joinCode)) {
+        if (!isRemovalSchedulable(joinCode)) {
+            // 지연 삭제를 걸지 않는 경로라 재접속 유예도 없다. 매핑을 남기면 영영 안 지워진다
+            stompSessionManager.removeSession(sessionId);
             return;
         }
 
-        log.info("플레이어 지연 삭제 스케줄링: playerKey={}, sessionId={}, delay={}초",
-                playerKey, sessionId, removalDelay.getSeconds());
+        log.info(
+                "플레이어 지연 삭제 스케줄링: playerKey={}, sessionId={}, delay={}초",
+                playerKey,
+                sessionId,
+                removalDelay.getSeconds());
 
         playerDisconnectionService.cancelReady(playerKey);
 
@@ -61,31 +66,50 @@ public class DelayedPlayerRemovalService {
                     executePlayerRemoval(playerKey, sessionId, reason);
                     stompSessionManager.removeSession(sessionId);
                 },
-                Instant.now().plus(removalDelay)
-        );
+                Instant.now().plus(removalDelay));
 
-        scheduledTasks.put(playerKey, future);
+        // 앞선 예약이 남아 있으면 취소하고 갈아끼운다. put 만 하면 옛 태스크가 고아로 살아남아 제거가 두 번 실행된다
+        final ScheduledFuture<?> previous = scheduledTasks.put(playerKey, future);
+        cancelIfPending(previous);
+    }
+
+    /**
+     * 방이 이미 삭제됐으면 지연 삭제를 걸 대상도 없다. 게임이 끝난 방은 짧은 지연 뒤 삭제되므로,
+     * 결과 화면에 머물던 클라이언트가 그 뒤 끊으면 방 조회가 예외로 끝난다. 그 예외를 밖으로 내보내면
+     * 세션 매핑 정리까지 건너뛰게 된다.
+     */
+    private boolean isRemovalSchedulable(String joinCode) {
+        try {
+            return roomService.isReadyState(joinCode);
+        } catch (BusinessException e) {
+            log.debug("방이 없어 지연 삭제를 건너뛴다: joinCode={}", joinCode);
+            return false;
+        }
     }
 
     public void cancelScheduledRemoval(String playerKey) {
-        final ScheduledFuture<?> future = scheduledTasks.remove(playerKey);
-        if (future != null && !future.isDone()) {
-            future.cancel(false);
+        if (cancelIfPending(scheduledTasks.remove(playerKey))) {
             log.info("플레이어 지연 삭제 취소됨: playerKey={}", playerKey);
         }
     }
 
+    private boolean cancelIfPending(ScheduledFuture<?> future) {
+        if (future == null || future.isDone()) {
+            return false;
+        }
+        future.cancel(false);
+        return true;
+    }
+
     private void executePlayerRemoval(String playerKey, String sessionId, String reason) {
         try {
-            log.info("플레이어 지연 삭제 실행: playerKey={}, sessionId={}, reason={}",
-                    playerKey, sessionId, reason);
+            log.info("플레이어 지연 삭제 실행: playerKey={}, sessionId={}, reason={}", playerKey, sessionId, reason);
 
             playerDisconnectionService.handlePlayerDisconnection(playerKey, sessionId, reason);
             scheduledTasks.remove(playerKey);
 
         } catch (Exception e) {
-            log.error("플레이어 지연 삭제 실행 중 오류 발생: playerKey={}, error={}",
-                    playerKey, e.getMessage(), e);
+            log.error("플레이어 지연 삭제 실행 중 오류 발생: playerKey={}, error={}", playerKey, e.getMessage(), e);
         }
     }
 }

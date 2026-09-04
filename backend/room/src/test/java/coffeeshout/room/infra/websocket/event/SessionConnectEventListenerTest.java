@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -16,12 +17,14 @@ import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.domain.RoomErrorCode;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.StompSessionManager;
+import coffeeshout.websocket.event.player.PlayerReconnectedEvent;
 import coffeeshout.websocket.metric.WebSocketMetricService;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.Message;
@@ -34,12 +37,16 @@ class SessionConnectEventListenerTest {
 
     @Mock
     private WebSocketMetricService webSocketMetricService;
+
     @Mock
     private StreamPublisher streamPublisher;
+
     @Mock
     private RoomQueryService roomQueryService;
+
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     @Mock
     private StompSessionManager sessionManager;
 
@@ -47,7 +54,8 @@ class SessionConnectEventListenerTest {
 
     @BeforeEach
     void setUp() {
-        listener = new SessionConnectEventListener(webSocketMetricService, streamPublisher, roomQueryService, eventPublisher, sessionManager);
+        listener = new SessionConnectEventListener(
+                webSocketMetricService, streamPublisher, roomQueryService, eventPublisher, sessionManager);
     }
 
     private SessionConnectedEvent eventWith(String principalName) {
@@ -68,6 +76,39 @@ class SessionConnectEventListenerTest {
             verify(roomQueryService).getByJoinCode(any());
             verify(streamPublisher).publish(eq(RoomStreamKey.BROADCAST), any(BaseEvent.class));
             verify(webSocketMetricService).completeConnection("session-1");
+        }
+    }
+
+    @Nested
+    class 플레이어_세션_등록 {
+
+        private static final String PRINCIPAL = "ABCD:홍길동";
+
+        @Test
+        void 매핑이_남아_있으면_재접속_이벤트를_함께_발행한다() {
+            given(sessionManager.hasPlayerKeyInternal(PRINCIPAL)).willReturn(true);
+
+            listener.handleSessionConnected(eventWith(PRINCIPAL));
+
+            verify(streamPublisher).publish(eq(RoomStreamKey.BROADCAST), any(PlayerReconnectedEvent.class));
+        }
+
+        @Test
+        void 처음_등록하는_플레이어는_재접속으로_보지_않는다() {
+            listener.handleSessionConnected(eventWith(PRINCIPAL));
+
+            verify(streamPublisher, never()).publish(eq(RoomStreamKey.BROADCAST), any(PlayerReconnectedEvent.class));
+        }
+
+        @Test
+        void 재접속_판정을_매핑_등록보다_먼저_한다() {
+            final InOrder order = inOrder(sessionManager);
+
+            listener.handleSessionConnected(eventWith(PRINCIPAL));
+
+            // 순서가 뒤집히면 방금 넣은 자기 매핑 때문에 모든 연결이 재접속으로 읽힌다
+            order.verify(sessionManager).hasPlayerKeyInternal(PRINCIPAL);
+            order.verify(sessionManager).registerPlayerSession(PRINCIPAL, "session-1");
         }
     }
 
@@ -136,11 +177,11 @@ class SessionConnectEventListenerTest {
         @Test
         void 예외가_전파되더라도_메트릭_완료는_반드시_호출된다() {
             willThrow(new RuntimeException("Redis publish 실패"))
-                    .given(streamPublisher).publish(any(RoomStreamKey.class), any(BaseEvent.class));
+                    .given(streamPublisher)
+                    .publish(any(RoomStreamKey.class), any(BaseEvent.class));
             final SessionConnectedEvent event = eventWith("ABCD:홍길동");
 
-            assertThatThrownBy(() -> listener.handleSessionConnected(event))
-                    .isInstanceOf(RuntimeException.class);
+            assertThatThrownBy(() -> listener.handleSessionConnected(event)).isInstanceOf(RuntimeException.class);
 
             verify(webSocketMetricService).completeConnection("session-1");
         }

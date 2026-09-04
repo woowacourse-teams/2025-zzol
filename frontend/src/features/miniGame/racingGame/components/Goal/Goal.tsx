@@ -3,8 +3,10 @@ import * as S from './Goal.styled';
 
 const Goal = () => {
   return (
-    <S.Container>
-      <Headline1 color="white">Goal!</Headline1>
+    <S.Container role="status" aria-live="assertive">
+      <S.Plate>
+        <Headline1 color="white">Goal!</Headline1>
+      </S.Plate>
     </S.Container>
   );
 };

@@ -7,6 +7,8 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
+import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.room.application.service.RoomService;
 import coffeeshout.websocket.StompSessionManager;
 import java.time.Duration;
@@ -49,8 +51,8 @@ class DelayedPlayerRemovalServiceTest {
 
     @BeforeEach
     void setUp() {
-        delayedPlayerRemovalService = new DelayedPlayerRemovalService(taskScheduler, TEST_REMOVAL_DELAY,
-                playerDisconnectionService, sessionManager, roomService);
+        delayedPlayerRemovalService = new DelayedPlayerRemovalService(
+                taskScheduler, TEST_REMOVAL_DELAY, playerDisconnectionService, sessionManager, roomService);
     }
 
     @Nested
@@ -70,6 +72,20 @@ class DelayedPlayerRemovalServiceTest {
 
         @Test
         @SuppressWarnings("unchecked")
+        void 같은_플레이어를_두_번_예약하면_앞선_예약을_취소한다() {
+            given(roomService.isReadyState("ABC23")).willReturn(true);
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willReturn(scheduledFuture);
+
+            delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
+            delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, "session-456", reason);
+
+            // 취소하지 않으면 앞선 태스크가 고아로 살아남아 제거가 두 번 실행된다
+            then(scheduledFuture).should().cancel(false);
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
         void 게임중이면_지연_삭제를_스케줄링_안한다() {
             given(roomService.isReadyState("ABC23")).willReturn(false);
 
@@ -77,6 +93,26 @@ class DelayedPlayerRemovalServiceTest {
 
             then(taskScheduler).should(never()).schedule(any(Runnable.class), any(Instant.class));
             then(playerDisconnectionService).should(never()).cancelReady(any());
+        }
+
+        @Test
+        void 방이_READY가_아니면_세션_매핑을_즉시_제거한다() {
+            given(roomService.isReadyState("ABC23")).willReturn(false);
+
+            delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
+
+            then(sessionManager).should().removeSession(sessionId);
+        }
+
+        @Test
+        void 방이_이미_삭제됐어도_세션_매핑을_제거한다() {
+            given(roomService.isReadyState("ABC23"))
+                    .willThrow(new BusinessException(GlobalErrorCode.NOT_EXIST, "방이 존재하지 않습니다."));
+
+            delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
+
+            then(sessionManager).should().removeSession(sessionId);
+            then(taskScheduler).should(never()).schedule(any(Runnable.class), any(Instant.class));
         }
 
         @Test
@@ -150,8 +186,8 @@ class DelayedPlayerRemovalServiceTest {
 
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
-            then(playerDisconnectionService).should()
-                    .handlePlayerDisconnection(playerKey, sessionId, reason);
+            then(playerDisconnectionService).should().handlePlayerDisconnection(playerKey, sessionId, reason);
+            then(sessionManager).should().removeSession(sessionId);
         }
 
         @Test
@@ -171,8 +207,8 @@ class DelayedPlayerRemovalServiceTest {
 
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
-            then(playerDisconnectionService).should()
-                    .handlePlayerDisconnection(playerKey, sessionId, reason);
+            then(playerDisconnectionService).should().handlePlayerDisconnection(playerKey, sessionId, reason);
+            then(sessionManager).should().removeSession(sessionId);
         }
     }
 

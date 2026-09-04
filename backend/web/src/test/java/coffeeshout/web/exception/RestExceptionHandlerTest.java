@@ -37,32 +37,45 @@ class RestExceptionHandlerTest {
             this.statusCode = statusCode;
         }
 
-        @Override public String getCode() { return code; }
-        @Override public String getMessage() { return message; }
-        @Override public int getStatusCode() { return statusCode; }
+        @Override
+        public String getCode() {
+            return code;
+        }
+
+        @Override
+        public String getMessage() {
+            return message;
+        }
+
+        @Override
+        public int getStatusCode() {
+            return statusCode;
+        }
     }
 
     @Nested
     class BusinessException_404_처리 {
 
         @Test
-        void 비즈니스_예외가_404_상태면_IP_차단_스킵_속성을_설정한다() {
+        void 비즈니스_예외가_404_상태여도_IP_차단_카운트_속성을_설정하지_않는다() {
             final BusinessException exception = new BusinessException(TestErrorCode.NOT_FOUND, "Not found");
             final MockHttpServletRequest request = new MockHttpServletRequest();
 
             handler.handleBusinessException(exception, request);
 
-            assertThat(request.getAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND)).isEqualTo(true);
+            assertThat(request.getAttribute(IpBlockAttributes.UNMATCHED_NOT_FOUND))
+                    .isNull();
         }
 
         @Test
-        void 비즈니스_예외가_404_외_상태면_IP_차단_스킵_속성을_설정하지_않는다() {
+        void 비즈니스_예외가_404_외_상태면_IP_차단_카운트_속성을_설정하지_않는다() {
             final BusinessException exception = new BusinessException(TestErrorCode.BAD_REQUEST, "Bad request");
             final MockHttpServletRequest request = new MockHttpServletRequest();
 
             handler.handleBusinessException(exception, request);
 
-            assertThat(request.getAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND)).isNull();
+            assertThat(request.getAttribute(IpBlockAttributes.UNMATCHED_NOT_FOUND))
+                    .isNull();
         }
     }
 
@@ -70,14 +83,15 @@ class RestExceptionHandlerTest {
     class NoResourceFoundException_처리 {
 
         @Test
-        void 미등록_경로_접근_시_IP_차단_스킵_속성을_설정하지_않는다() {
+        void 미등록_경로_접근_시_IP_차단_카운트_속성을_설정한다() {
             final NoResourceFoundException exception =
                     new NoResourceFoundException(HttpMethod.GET, "/random-probe", "/random-probe");
             final MockHttpServletRequest request = new MockHttpServletRequest();
 
             handler.handleNoResourceFoundException(exception, request);
 
-            assertThat(request.getAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND)).isNull();
+            assertThat(request.getAttribute(IpBlockAttributes.UNMATCHED_NOT_FOUND))
+                    .isEqualTo(true);
         }
     }
 }

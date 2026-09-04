@@ -29,7 +29,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * <ol>
  *   <li>악성 경로(스캐너 패턴) 접근 시 해당 IP를 즉시 차단하고 403 반환 (예외 경로 포함 — 항상 적용)</li>
  *   <li>이미 차단된 IP는 요청 초입에서 즉시 403 반환 (예외 경로는 건너뜀)</li>
- *   <li>404 응답이 누적되면 차단 (IpBlockStore 위임)</li>
+ *   <li>매핑 없는 경로의 404 응답이 누적되면 차단 (IpBlockStore 위임). 컨트롤러가 낸 404는 세지 않는다(#1757)</li>
  * </ol>
  *
  * <p>예외 경로({@code security.ip-block.exempt-paths})는 차단 여부 검사를 우회하지만,
@@ -107,7 +107,7 @@ public class IpBlockFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
 
         if (response.getStatus() == HttpStatus.NOT_FOUND.value()
-                && !Boolean.TRUE.equals(request.getAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND))) {
+                && Boolean.TRUE.equals(request.getAttribute(IpBlockAttributes.UNMATCHED_NOT_FOUND))) {
             ipBlockStore.incrementNotFoundAndBlockIfExceeded(ip);
         }
     }

@@ -57,6 +57,8 @@ const meta: Meta<typeof RacingPlayer> = {
     isMe: true,
     myPosition: 0,
     color: '#FF6B6B',
+    slot: 0,
+    isVisible: true,
   },
 };
 
@@ -76,39 +78,55 @@ export const MultiplePlayersComparison: Story = {
     >
       <div style={{ textAlign: 'center' }}>
         <div style={{ color: 'white', marginBottom: '0.5rem', fontSize: '0.875rem' }}>속도: 1</div>
-        <RacingPlayer
-          player={{ playerName: '최소', position: 0, speed: 1 }}
-          isMe={true}
-          myPosition={0}
-          color="#8a8b8e"
-        />
+        <div style={{ position: 'relative', height: '96px' }}>
+          <RacingPlayer
+            player={{ playerName: '최소', position: 0, speed: 1 }}
+            isMe={true}
+            myPosition={0}
+            color="#8a8b8e"
+            slot={0}
+            isVisible
+          />
+        </div>
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ color: 'white', marginBottom: '0.5rem', fontSize: '0.875rem' }}>속도: 3</div>
-        <RacingPlayer
-          player={{ playerName: '느림', position: 0, speed: 3 }}
-          isMe={true}
-          myPosition={0}
-          color="#4cafa9"
-        />
+        <div style={{ position: 'relative', height: '96px' }}>
+          <RacingPlayer
+            player={{ playerName: '느림', position: 0, speed: 3 }}
+            isMe={true}
+            myPosition={0}
+            color="#4cafa9"
+            slot={0}
+            isVisible
+          />
+        </div>
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ color: 'white', marginBottom: '0.5rem', fontSize: '0.875rem' }}>속도: 6</div>
-        <RacingPlayer
-          player={{ playerName: '중간', position: 0, speed: 6 }}
-          isMe={true}
-          myPosition={0}
-          color="#85b62e"
-        />
+        <div style={{ position: 'relative', height: '96px' }}>
+          <RacingPlayer
+            player={{ playerName: '중간', position: 0, speed: 6 }}
+            isMe={true}
+            myPosition={0}
+            color="#85b62e"
+            slot={0}
+            isVisible
+          />
+        </div>
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ color: 'white', marginBottom: '0.5rem', fontSize: '0.875rem' }}>속도: 10</div>
-        <RacingPlayer
-          player={{ playerName: '최대', position: 0, speed: 10 }}
-          isMe={true}
-          myPosition={0}
-          color="#ffa102"
-        />
+        <div style={{ position: 'relative', height: '96px' }}>
+          <RacingPlayer
+            player={{ playerName: '최대', position: 0, speed: 10 }}
+            isMe={true}
+            myPosition={0}
+            color="#ffa102"
+            slot={0}
+            isVisible
+          />
+        </div>
       </div>
     </div>
   ),

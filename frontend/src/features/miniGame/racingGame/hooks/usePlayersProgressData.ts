@@ -19,10 +19,13 @@ type PlayerProgressData = {
 export const usePlayersProgressData = ({ players, endDistance, myName }: Props) => {
   const playersProgressData = useMemo((): PlayerProgressData[] => {
     return players.map((player, index) => {
-      const progress = Math.min(
-        (player.position / endDistance) * MAX_PROGRESS_PERCENTAGE,
-        MAX_PROGRESS_PERCENTAGE
-      );
+      const progress =
+        endDistance > 0
+          ? Math.min(
+              (player.position / endDistance) * MAX_PROGRESS_PERCENTAGE,
+              MAX_PROGRESS_PERCENTAGE
+            )
+          : 0;
       const isMe = player.playerName === myName;
 
       return {

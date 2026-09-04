@@ -9,4 +9,5 @@ export const RACING_Z_INDEX = {
   OVERLAY: 900,
   GOAL: 1000,
   FINISH: 1000,
+  BANNER: 1100,
 } as const;

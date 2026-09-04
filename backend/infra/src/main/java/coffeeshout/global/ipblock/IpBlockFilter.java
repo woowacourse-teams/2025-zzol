@@ -21,6 +21,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.DispatcherServlet;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * IP 기반 차단 필터.
@@ -29,7 +31,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * <ol>
  *   <li>악성 경로(스캐너 패턴) 접근 시 해당 IP를 즉시 차단하고 403 반환 (예외 경로 포함 — 항상 적용)</li>
  *   <li>이미 차단된 IP는 요청 초입에서 즉시 403 반환 (예외 경로는 건너뜀)</li>
- *   <li>404 응답이 누적되면 차단 (IpBlockStore 위임)</li>
+ *   <li>매핑 없는 경로의 404(NoResourceFoundException)가 누적되면 차단 (IpBlockStore 위임).
+ *       컨트롤러나 SockJS처럼 매핑된 핸들러가 낸 404는 세지 않는다(#1757)</li>
  * </ol>
  *
  * <p>예외 경로({@code security.ip-block.exempt-paths})는 차단 여부 검사를 우회하지만,
@@ -106,8 +109,9 @@ public class IpBlockFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
 
-        if (response.getStatus() == HttpStatus.NOT_FOUND.value()
-                && !Boolean.TRUE.equals(request.getAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND))) {
+        // 매핑된 핸들러가 없으면 Spring이 NoResourceFoundException을 던지고, 예외 핸들러가 본문만 쓰고 뷰를 안 그리면
+        // DispatcherServlet이 그 예외를 EXCEPTION_ATTRIBUTE에 남긴다. 컨트롤러가 직접 낸 404에는 이 속성이 없다(#1757).
+        if (request.getAttribute(DispatcherServlet.EXCEPTION_ATTRIBUTE) instanceof NoResourceFoundException) {
             ipBlockStore.incrementNotFoundAndBlockIfExceeded(ip);
         }
     }

@@ -1,6 +1,7 @@
 package coffeeshout.racinggame.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -18,9 +19,13 @@ import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.repository.RoomRepository;
 import java.time.Duration;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 class RacingGameServiceTest extends GameModuleServiceTest {
 
@@ -37,10 +42,27 @@ class RacingGameServiceTest extends GameModuleServiceTest {
 
     private Room room = RoomFixture.호스트_꾹이();
 
+    @Autowired
+    @Qualifier("racingGameScheduler")
+    private TaskScheduler racingGameScheduler;
+
     @BeforeEach
     void setUp() {
         room.getPlayers().forEach(player -> player.updateReadyState(true));
         roomRepository.save(room);
+    }
+
+    /**
+     * start() 가 건 100ms 자동 이동은 컨텍스트 수명 스케줄러에 남아 테스트가 끝나도 돈다.
+     * 탭이 없으면 약 50초 뒤 혼자 완주해 그때 돌고 있는 다른 테스트의 세션에 결과를 덧쓴다.
+     * 통합 테스트의 자동이동_정리 와 같은 이유로 예약 큐를 비운다.
+     */
+    @AfterEach
+    void 자동이동_정리() {
+        ((ThreadPoolTaskScheduler) racingGameScheduler)
+                .getScheduledThreadPoolExecutor()
+                .getQueue()
+                .clear();
     }
 
     @Test
@@ -92,17 +114,16 @@ class RacingGameServiceTest extends GameModuleServiceTest {
 
         // then
         // 발행 뒤에 속도를 초기화하면 이 탭이 지워져 최저 속도로 남는다.
-        await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
-            assertThat(racingGame.getState()).isEqualTo(RacingGameState.PLAYING);
-            assertThat(speedOf(racingGame, HOST_NAME)).isGreaterThan(RacingGame.MIN_SPEED);
-        });
-    }
-
-    private int speedOf(RacingGame racingGame, String playerName) {
-        return racingGame.getRunners().stream()
-                .filter(runner -> runner.getGamer().getName().equals(playerName))
-                .findFirst()
-                .orElseThrow()
-                .getSpeed();
+        await().atMost(Duration.ofSeconds(3))
+                .untilAsserted(() -> assertSoftly(softly -> {
+                    softly.assertThat(racingGame.getState()).isEqualTo(RacingGameState.PLAYING);
+                    // 방 픽스처는 호스트 한 명이라 첫 러너가 곧 탭을 친 사람이다.
+                    softly.assertThat(racingGame
+                                    .getRunners()
+                                    .getRunners()
+                                    .getFirst()
+                                    .getSpeed())
+                            .isGreaterThan(RacingGame.MIN_SPEED);
+                }));
     }
 }

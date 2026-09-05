@@ -177,6 +177,11 @@ outbox:
   relay:
     delay: 500
 
+# @Scheduled 의 cron 플레이스홀더는 @ConfigurationProperties 의 @DefaultValue 를 못 본다. 값이 없으면
+# profanity 빈을 스캔하는 모든 모듈 테스트에서 컨텍스트가 안 뜬다. 운영값은 config/service.yml 에 있다.
+nickname-audit:
+  cron: "0 0 0/12 * * *"
+
 report:
   rate-limit:
     rate: 5

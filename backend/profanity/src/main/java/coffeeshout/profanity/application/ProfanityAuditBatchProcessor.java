@@ -15,6 +15,7 @@ import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,16 @@ import org.springframework.transaction.support.TransactionTemplate;
 @RequiredArgsConstructor
 public class ProfanityAuditBatchProcessor {
 
+    /**
+     * 회차 구간별 소요 시간. phase 태그로 나눈다. LLM 없이 회차를 돌려 어디가 느린지 볼 때 이게 근거가 된다.
+     *
+     * <p>{@code settle}은 {@code block}을 안에 포함한다. 자동 차단이 승격 저장 트랜잭션 안에서 돌기 때문이다.
+     * 합이 회차 전체 시간과 맞아떨어지지 않는 건 그래서다.
+     */
+    static final String PHASE_TIMER = "nickname.audit.phase";
+
+    static final String PHASE_TIMER_DESCRIPTION = "닉네임 검열 회차의 구간별 소요 시간 (settle은 block을 포함한다)";
+
     /** 배치 내용이 원인이라 다시 불러도 같은 결과가 나오는 실패. 이것만 시도 횟수에 센다. */
     private static final Set<ErrorCode> DETERMINISTIC_AUDIT_FAILURES = Set.of(
             NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED,
@@ -50,6 +61,9 @@ public class ProfanityAuditBatchProcessor {
 
     private Counter batchSkippedCounter;
     private Counter deadLetteredCounter;
+    private Timer auditPhaseTimer;
+    private Timer settlePhaseTimer;
+    private Timer blockPhaseTimer;
 
     @PostConstruct
     void initMetrics() {
@@ -59,6 +73,16 @@ public class ProfanityAuditBatchProcessor {
         deadLetteredCounter = Counter.builder("nickname.audit.dead.lettered")
                 .description("시도 횟수 상한에 닿아 DEAD_LETTER로 내려간 행 수")
                 .register(meterRegistry);
+        auditPhaseTimer = phaseTimer("audit");
+        settlePhaseTimer = phaseTimer("settle");
+        blockPhaseTimer = phaseTimer("block");
+    }
+
+    private Timer phaseTimer(String phase) {
+        return Timer.builder(PHASE_TIMER)
+                .description(PHASE_TIMER_DESCRIPTION)
+                .tag("phase", phase)
+                .register(meterRegistry);
     }
 
     public int process(List<NicknameAudit> batch) {
@@ -67,7 +91,7 @@ public class ProfanityAuditBatchProcessor {
 
         final List<NicknameAuditResult> results;
         try {
-            results = nicknameAuditor.audit(nicknames);
+            results = auditPhaseTimer.record(() -> nicknameAuditor.audit(nicknames));
         } catch (RuntimeException e) {
             // 파싱 실패·빈 응답은 InfrastructureException이고 resilience4j ignore 목록이라
             // (resilience4j.yml의 geminiAudit.ignore-exceptions) 재시도 없이 여기까지 올라온다.
@@ -90,10 +114,13 @@ public class ProfanityAuditBatchProcessor {
                 .collect(Collectors.toMap(NicknameAuditResult::nickname, Function.identity(), (a, b) -> a));
 
         try {
-            final Integer settled = transactionTemplate.execute(status -> settle(batch, nicknames, resultMap));
+            final Integer settled = settlePhaseTimer.record(
+                    () -> transactionTemplate.execute(status -> settle(batch, nicknames, resultMap)));
             return settled == null ? 0 : settled;
         } catch (RuntimeException e) {
             log.warn("배치 저장 실패 {}건 — 같은 판정으로 건별 저장을 다시 시도한다", batch.size(), e);
+            // 여기서 다시 재지 않는다. 위 record는 예외로 빠져나가도 실패한 트랜잭션 시간을 이미 기록했다.
+            // 폴백까지 같은 타이머로 감싸면 그 배치의 settle이 두 번 세어져 병목을 잘못 지목하게 된다.
             return settleIndividually(batch, resultMap);
         }
     }
@@ -236,6 +263,10 @@ public class ProfanityAuditBatchProcessor {
     }
 
     private void autoBlock(NicknameAuditResult result) {
+        blockPhaseTimer.record(() -> blockWords(result));
+    }
+
+    private void blockWords(NicknameAuditResult result) {
         resolveBlockWords(result).forEach(word -> {
             final Language language = Language.detect(textNormalizer.normalize(word));
             if (profanityWordManagementService.add(word, language, WordSource.AI_FLAGGED)) {

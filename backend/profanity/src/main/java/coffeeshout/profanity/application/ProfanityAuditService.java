@@ -8,6 +8,7 @@ import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
 import java.time.Clock;
 import java.time.Instant;
@@ -48,10 +49,16 @@ public class ProfanityAuditService {
 
     private final AtomicLong unauditedQueueDepth = new AtomicLong(0);
 
+    private Timer fetchPhaseTimer;
+
     @PostConstruct
     void initMetrics() {
         Gauge.builder("nickname.audit.unaudited.queue", unauditedQueueDepth, AtomicLong::get)
                 .description("스케줄러 실행 시점의 UNAUDITED 닉네임 적체량")
+                .register(meterRegistry);
+        fetchPhaseTimer = Timer.builder(ProfanityAuditBatchProcessor.PHASE_TIMER)
+                .description(ProfanityAuditBatchProcessor.PHASE_TIMER_DESCRIPTION)
+                .tag("phase", "fetch")
                 .register(meterRegistry);
     }
 
@@ -116,9 +123,7 @@ public class ProfanityAuditService {
             leaseTime = LOCK_LEASE_MILLIS,
             doneTtl = LOCK_DONE_TTL_MILLIS)
     public void auditPending() {
-        final long initialQueueSize = auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED);
-        unauditedQueueDepth.set(initialQueueSize);
-        log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
+        recordQueueDepth();
 
         final Instant deadline = clock.instant().plus(properties.maxRunDuration());
         int page = 0;
@@ -164,9 +169,17 @@ public class ProfanityAuditService {
         log.info("닉네임 검열 완료: 총 {}건 처리", processedTotal);
     }
 
+    private void recordQueueDepth() {
+        final long initialQueueSize = auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED);
+        unauditedQueueDepth.set(initialQueueSize);
+        log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
+    }
+
     private List<NicknameAudit> readPage(int page) {
-        final Pageable pageable = PageRequest.of(
-                page, properties.batchSize(), Sort.by("createdAt").ascending());
-        return auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+        return fetchPhaseTimer.record(() -> {
+            final Pageable pageable = PageRequest.of(
+                    page, properties.batchSize(), Sort.by("createdAt").ascending());
+            return auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+        });
     }
 }

@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.scheduling.annotation.Scheduled;
 
 /**
  * 12시간 주기 검열 스케줄러의 구조적 결함 두 가지를 고정한다. 둘 다 실사용자 트래픽 없이 재현된다.
@@ -106,6 +107,27 @@ class NicknameAuditSchedulerTest {
             assertThat(auditPendingLock().doneTtl())
                     .as("완료 마킹이 cron 주기(12시간)보다 오래 남으면 다음 회차가 조용히 건너뛰어진다.")
                     .isLessThan(TimeUnit.HOURS.toMillis(12));
+        }
+    }
+
+    /**
+     * 결함 3 — cron 이 코드에 박혀 있으면 local 에서 회차를 돌려볼 수 없다.
+     *
+     * <p>12시간 주기를 그대로 두면 파이프라인을 한 번 재려고 12시간을 기다리거나 코드를 고쳐야 한다.
+     * {@code @Scheduled} 는 컴파일 상수만 받으므로 어노테이션에는 프로퍼티를 가리키는 문자열을 둔다.
+     */
+    @Nested
+    class 회차_주기_설정 {
+
+        @Test
+        void cron은_프로퍼티에서_읽어야_한다() throws NoSuchMethodException {
+            final Scheduled scheduled = NicknameAuditScheduler.class
+                    .getDeclaredMethod("auditPendingNicknames")
+                    .getAnnotation(Scheduled.class);
+
+            assertThat(scheduled.cron())
+                    .as("리터럴이면 local 에서 주기를 당기려고 프로덕션 코드를 고쳐야 한다.")
+                    .isEqualTo("${nickname-audit.cron}");
         }
     }
 }

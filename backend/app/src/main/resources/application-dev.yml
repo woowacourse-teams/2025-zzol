@@ -19,6 +19,10 @@ room:
   qr:
     prefix: "https://dev.zzol.site/join/"
 
+nickname-audit:
+  # dev 는 flash-lite 를 쓴다. Gemini 요청 한도는 모델별로 세므로 prod 의 flash 와 쿼터가 갈린다.
+  model: gemini-3.5-flash-lite
+
 websocket:
   docs:
     server-url: "https://api.dev.zzol.site/ws"

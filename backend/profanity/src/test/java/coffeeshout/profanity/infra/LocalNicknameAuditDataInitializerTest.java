@@ -54,6 +54,20 @@ class LocalNicknameAuditDataInitializerTest extends ServiceTest {
         }
 
         @Test
+        void 회차가_끝나_승격된_뒤에도_같은_이름을_다시_넣지_않는다() {
+            초기화기(적재_건수).run(null);
+            jdbcTemplate.update(
+                    "UPDATE player_name_audit SET status = 'CLEAN', audited_at = NOW() WHERE player_name LIKE '측정%'");
+
+            초기화기(적재_건수).run(null);
+
+            assertThat(미검열_건수())
+                    .as("UNAUDITED 건수로만 막으면 회차를 한 번 끝낸 뒤 같은 이름이 다시 들어간다."
+                            + " 그 행들은 다음 회차에서 판정 대신 중복 재등록으로 지워져 측정이 삭제 경로를 잰다.")
+                    .isZero();
+        }
+
+        @Test
         void 기본값_0이면_아무것도_넣지_않는다() {
             초기화기(0).run(null);
 

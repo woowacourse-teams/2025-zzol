@@ -48,4 +48,5 @@ nickname-audit:
     count: 0                           # local 에서 넣을 측정용 미검열 닉네임 수. 0 이면 안 넣는다.
   stub:                                # local/test 프로파일의 NoOpNicknameAuditor 동작. 아래 기본값이면 지연 0에 전부 CLEAN.
     latency: 0s                        # 호출 하나가 흉내 낼 지연. 0으로 두면 LLM이 무한히 빠를 때의 처리량을 잰다.
-    flagged-ratio: 0                    # FLAGGED로 판정할 비율(0~1). 올리면 자동 차단·사전 INSERT·트라이 재빌드까지 실제로 탄다.
+    flagged-ratio: 0                   # FLAGGED로 판정할 비율(0~1). 올리면 자동 차단·사전 INSERT·트라이 재빌드까지 실제로 탄다.
+                                       # 해상도는 0.01이다. 그보다 작은 값은 0으로 반올림돼 아무것도 안 걸린다.

@@ -31,7 +31,7 @@ public class NicknameAuditScheduler {
     @Qualifier("nicknameAuditExecutor")
     private final Executor auditExecutor;
 
-    // @Scheduled는 컴파일 상수만 받는다. 값 자체는 NicknameAuditProperties#cron이 검증한다.
+    // @Scheduled는 컴파일 상수만 받는다. 값의 형식은 NicknameAuditProperties의 컴팩트 생성자가 파싱해 검증한다.
     @Scheduled(cron = "${nickname-audit.cron}")
     public void auditPendingNicknames() {
         log.info("닉네임 AI 검열 스케줄러 시작 — 실행기로 넘긴다");

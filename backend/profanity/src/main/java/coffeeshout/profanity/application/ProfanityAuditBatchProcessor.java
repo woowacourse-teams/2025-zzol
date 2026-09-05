@@ -119,7 +119,9 @@ public class ProfanityAuditBatchProcessor {
             return settled == null ? 0 : settled;
         } catch (RuntimeException e) {
             log.warn("배치 저장 실패 {}건 — 같은 판정으로 건별 저장을 다시 시도한다", batch.size(), e);
-            return settlePhaseTimer.record(() -> settleIndividually(batch, resultMap));
+            // 여기서 다시 재지 않는다. 위 record는 예외로 빠져나가도 실패한 트랜잭션 시간을 이미 기록했다.
+            // 폴백까지 같은 타이머로 감싸면 그 배치의 settle이 두 번 세어져 병목을 잘못 지목하게 된다.
+            return settleIndividually(batch, resultMap);
         }
     }
 

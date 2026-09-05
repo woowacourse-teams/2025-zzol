@@ -25,7 +25,7 @@ import org.springframework.validation.annotation.Validated;
  *                       빠진다. 늘리면 되풀이 실패하는 행 하나가 회차마다 Gemini 호출을 그만큼 더 태운다.
  * @param cron           검열 회차 주기. {@code @Scheduled}는 컴파일 상수만 받으므로 어노테이션에는 이 프로퍼티를
  *                       가리키는 문자열을 쓴다. 값을 여기 두는 이유는 local에서 12시간을 기다리지 않고 회차를
- *                       돌려보기 위해서다.
+ *                       돌려보기 위해서다. 형식은 컴팩트 생성자가 실제로 파싱해 검증한다.
  * @param seed           local 프로파일에서 미검열 닉네임을 몇 건 적재할지. 측정용이라 기본값은 0이다.
  * @param stub           local·test 프로파일에서 Gemini 대신 도는 {@code NoOpNicknameAuditor}의 동작.
  *                       기본값이 지연 0에 전부 CLEAN이라 값을 주지 않으면 지금까지와 똑같이 움직인다.
@@ -71,6 +71,7 @@ public record NicknameAuditProperties(
      * @param latency      호출 하나가 흉내 낼 지연. 0이면 LLM이 무한히 빠를 때의 처리량을 잰다.
      * @param flaggedRatio FLAGGED로 판정할 닉네임 비율. 0보다 크면 자동 차단과 사전 INSERT, 트라이 재빌드까지
      *                     실제로 탄다. 어떤 닉네임이 걸릴지는 닉네임 해시로 정해 같은 입력에 같은 결과가 나온다.
+     *                     해상도는 0.01이다. 그보다 작은 값은 반올림되어 0이 되고 아무것도 FLAGGED가 되지 않는다.
      */
     public record Stub(
             @DefaultValue("0s") @NotNull Duration latency,

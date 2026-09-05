@@ -7,8 +7,8 @@ import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -25,16 +25,21 @@ import org.springframework.transaction.annotation.Transactional;
 public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
 
     /**
-     * 합성 닉네임에 섞을 음절. 스텁 검열기가 닉네임에서 한글 두 글자를 잘라 차단 조각으로 쓰는데, 모든 닉네임이
-     * 같은 조각을 내면 사전 INSERT가 첫 건 뒤로 전부 중복이 되어 자동 차단과 트라이 재빌드가 안 돈다.
+     * 합성 닉네임에 섞을 음절 범위. 스텁 검열기가 닉네임에서 한글 두 글자를 잘라 차단 조각으로 쓰는데, 음절
+     * 가짓수가 적으면 사전 INSERT가 초반 몇백 건 뒤로 전부 중복이 되어 자동 차단과 트라이 재빌드가 멈춘다.
+     * 완성형 한글 전체를 쓰면 음절 두 자리 조합이 1억 가지라 적재 상한까지 겹치지 않는다.
      */
-    private static final String SYLLABLES = "가나다라마바사아자차카타파하거너더러머버";
+    private static final char FIRST_SYLLABLE = '가';
+
+    private static final int SYLLABLE_COUNT = 11_172;
 
     private static final String SEED_INSERT =
             "INSERT INTO player_name_audit (player_name, status, attempt_count, created_at) VALUES (?, ?, 0, ?)";
 
     /** 한 번에 보낼 행 수. 10만 건을 한 문장으로 보내면 패킷 상한에 걸린다. */
     private static final int SEED_CHUNK = 1_000;
+
+    private static final String SEED_EXISTS = "SELECT COUNT(*) FROM player_name_audit WHERE player_name = ?";
 
     private final NicknameAuditRepository auditRepository;
     private final NicknameAuditProperties properties;
@@ -58,30 +63,36 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
         if (count == 0) {
             return;
         }
-        if (auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED) > 0) {
-            log.info("[LocalInit] 미검열 닉네임이 이미 있습니다. 측정용 적재를 건너뜁니다.");
+        if (alreadySeeded()) {
+            log.info("[LocalInit] 측정용 닉네임이 이미 있습니다. 적재를 건너뜁니다.");
             return;
         }
 
         final Timestamp now = Timestamp.from(Instant.now());
-        List<Object[]> chunk = new ArrayList<>(SEED_CHUNK);
-        for (int i = 0; i < count; i++) {
-            chunk.add(new Object[] {seedNickname(i), NicknameAuditStatus.UNAUDITED.name(), now});
-            if (chunk.size() == SEED_CHUNK) {
-                jdbcTemplate.batchUpdate(SEED_INSERT, chunk);
-                chunk = new ArrayList<>(SEED_CHUNK);
-            }
-        }
-        if (!chunk.isEmpty()) {
-            jdbcTemplate.batchUpdate(SEED_INSERT, chunk);
-        }
+        jdbcTemplate.batchUpdate(SEED_INSERT, IntStream.range(0, count).boxed().toList(), SEED_CHUNK, (ps, index) -> {
+            ps.setString(1, seedNickname(index));
+            ps.setString(2, NicknameAuditStatus.UNAUDITED.name());
+            ps.setTimestamp(3, now);
+        });
         log.info("[LocalInit] 측정용 미검열 닉네임 {}건 적재 완료", count);
+    }
+
+    /**
+     * 상태를 보지 않고 첫 시드 이름이 있는지로 판단한다.
+     *
+     * <p>UNAUDITED 건수로 막으면 회차를 한 번 끝낸 뒤에 0이 되어, 앱을 다시 띄울 때마다 같은 이름이 또 들어간다.
+     * 그 행들은 다음 회차에서 판정 대신 중복 재등록으로 지워지므로 두 번째 측정이 검열 경로가 아니라 삭제
+     * 경로를 재게 된다.
+     */
+    private boolean alreadySeeded() {
+        final Integer existing = jdbcTemplate.queryForObject(SEED_EXISTS, Integer.class, seedNickname(0));
+        return existing != null && existing > 0;
     }
 
     /** 접두사 두 자에 음절 두 자를 붙이고 일련번호로 끝낸다. 닉네임 칼럼이 10자라 번호는 여섯 자리까지다. */
     private String seedNickname(int index) {
-        final char first = SYLLABLES.charAt(index % SYLLABLES.length());
-        final char second = SYLLABLES.charAt(index / SYLLABLES.length() % SYLLABLES.length());
+        final char first = (char) (FIRST_SYLLABLE + index % SYLLABLE_COUNT);
+        final char second = (char) (FIRST_SYLLABLE + index / SYLLABLE_COUNT % SYLLABLE_COUNT);
         return "측정" + first + second + index;
     }
 

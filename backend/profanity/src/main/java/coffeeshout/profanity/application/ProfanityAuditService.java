@@ -128,6 +128,12 @@ public class ProfanityAuditService {
         int processedTotal = 0;
 
         while (!batch.isEmpty()) {
+            // 실행기의 shutdownNow가 보낸 인터럽트다. 종료가 회차 끝을 기다리지 않게 배치를 시작하기 전에 본다.
+            // 락은 애스펙트의 finally가 푼다.
+            if (Thread.currentThread().isInterrupted()) {
+                log.warn("종료 요청으로 닉네임 검열 회차 중단 — 누적 {}건", processedTotal);
+                break;
+            }
             // processed는 실제로 UNAUDITED에서 빠져나간 행 수다. 진행이 없으면 같은 0페이지를 영원히
             // 다시 읽게 되므로 0이면 멈춘다.
             int processed = batchProcessor.process(batch);

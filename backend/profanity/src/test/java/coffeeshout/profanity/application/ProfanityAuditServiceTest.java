@@ -215,6 +215,35 @@ class ProfanityAuditServiceTest {
         }
     }
 
+    /**
+     * 종료 신호가 회차를 끊는지 검증한다.
+     *
+     * <p>회차는 전용 실행기에서 돌고 그 실행기는 destroyMethod가 {@code shutdownNow}다. 종료 시 회차 스레드에
+     * 인터럽트가 오는데, 루프가 그걸 안 보면 컨텍스트 종료가 회차 예산(기본 10분)만큼 밀린다.
+     * Blue/Green 전환에서 구 컨테이너가 그만큼 늦게 내려가거나 SIGKILL을 맞는다.
+     */
+    @Nested
+    class auditPending_종료_요청 {
+
+        @Test
+        void 인터럽트가_걸려_있으면_배치를_시작하지_않는다() {
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn(1L);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willReturn(List.of(new NicknameAudit("닉네임")));
+
+            Thread.currentThread().interrupt();
+            try {
+                service.auditPending();
+            } finally {
+                // 다음 테스트로 새지 않게 플래그를 지운다.
+                Thread.interrupted();
+            }
+
+            then(batchProcessor).should(never()).process(any());
+        }
+    }
+
     /** 배치 소요 시간을 흉내내기 위한 수동 진행 시계. */
     private static final class StubClock extends Clock {
 

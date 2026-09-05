@@ -34,8 +34,12 @@ public class NicknameAudit {
     private String nickname;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 20)
     private NicknameAuditStatus status;
+
+    /** 검열 호출이 이 행을 담은 배치에서 실패한 횟수. 상한에 닿으면 DEAD_LETTER로 내려간다. */
+    @Column(nullable = false)
+    private int attemptCount;
 
     @Column(precision = 3, scale = 2)
     private AiConfidence confidence;

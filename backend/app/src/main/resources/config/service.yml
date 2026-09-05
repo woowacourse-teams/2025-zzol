@@ -40,5 +40,6 @@ nickname-audit:
   feedback-injection-threshold: 20
   min-term-length: 2                   # 자동 차단할 비속어 조각의 정규화 후 최소 길이 (짧을수록 Trie 부분일치 과차단 위험 ↑)
   max-run-duration: 10m                # 한 회차가 실행기 스레드를 붙잡아도 되는 상한. 넘으면 남은 적체는 다음 회차로.
+  max-attempts: 3                      # 한 행이 검열 호출 실패를 견디는 횟수. 닿으면 DEAD_LETTER가 되어 스캔에서 빠진다.
   request-timeout: 120s                # Gemini HTTP 타임아웃. 없으면 응답 없는 호출이 스케줄러 스레드를 무기한 점유한다.
                                        # batch-size 를 올리면 응답 생성 시간도 늘어나므로 함께 올린다.

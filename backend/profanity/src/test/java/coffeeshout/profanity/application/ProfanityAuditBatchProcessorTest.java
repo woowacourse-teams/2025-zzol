@@ -24,11 +24,13 @@ import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
@@ -36,6 +38,9 @@ import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 
 class ProfanityAuditBatchProcessorTest {
+
+    /** 검열 호출 실패를 견디는 횟수. {@code service.yml}의 nickname-audit.max-attempts. */
+    private static final int MAX_ATTEMPTS = 3;
 
     private NicknameAuditRepository auditRepository;
     private NicknameAuditor nicknameAuditor;
@@ -67,7 +72,7 @@ class ProfanityAuditBatchProcessorTest {
         });
 
         final NicknameAuditProperties properties = new NicknameAuditProperties(
-                "test-key", "gemini-test", 0.85, 10, 20, 2, Duration.ofSeconds(120), Duration.ofMinutes(10));
+                "test-key", "gemini-test", 0.85, 10, 20, 2, Duration.ofSeconds(120), Duration.ofMinutes(10), MAX_ATTEMPTS);
         processor = new ProfanityAuditBatchProcessor(
                 auditRepository,
                 nicknameAuditor,
@@ -434,6 +439,23 @@ class ProfanityAuditBatchProcessorTest {
 
             assertThat(processed).isZero();
             then(auditRepository).should(never()).saveAll(any());
+        }
+
+        @Test
+        void 검열_호출이_실패하면_그_배치_행의_시도_횟수를_올린다() {
+            final List<NicknameAudit> batch = List.of(new NicknameAudit("닉하나"), new NicknameAudit("닉둘"));
+            given(nicknameAuditor.audit(anyList()))
+                    .willThrow(new InfrastructureException(
+                            NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED, "닉네임 검열 AI 응답 파싱 실패"));
+
+            processor.process(batch);
+
+            final ArgumentCaptor<Collection<Long>> ids = ArgumentCaptor.captor();
+            then(auditRepository).should().incrementAttemptCount(ids.capture());
+            then(auditRepository).should().markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS));
+            assertThat(ids.getValue())
+                    .as("실패한 배치 행만 세야 다른 행이 애먼 상한에 닿지 않는다.")
+                    .hasSize(batch.size());
         }
     }
 }

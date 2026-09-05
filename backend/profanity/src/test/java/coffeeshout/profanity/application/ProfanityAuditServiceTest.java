@@ -41,7 +41,7 @@ class ProfanityAuditServiceTest {
         profanityWordManagementService = mock(ProfanityWordManagementService.class);
 
         final NicknameAuditProperties properties = new NicknameAuditProperties(
-                "api-key", "gemini-2.0-flash", 0.8, 10, 5, 2, Duration.ofSeconds(120), Duration.ofMinutes(10));
+                "api-key", "gemini-2.0-flash", 0.8, 10, 5, 2, Duration.ofSeconds(120), Duration.ofMinutes(10), 3);
         service = new ProfanityAuditService(
                 auditRepository,
                 batchProcessor,
@@ -203,7 +203,8 @@ class ProfanityAuditServiceTest {
                     20,
                     2,
                     Duration.ofSeconds(120),
-                    Duration.ofSeconds(MAX_RUN_SECONDS));
+                    Duration.ofSeconds(MAX_RUN_SECONDS),
+                    3);
             final ProfanityAuditService target = new ProfanityAuditService(
                     auditRepository,
                     batchProcessor,

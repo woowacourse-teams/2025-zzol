@@ -61,6 +61,7 @@ public class ProfanityAuditBatchProcessor {
             // 잡지 않으면 배치 하나가 회차를 끝내고 남은 적체가 통째로 다음 회차까지 밀린다.
             batchSkippedCounter.increment();
             log.warn("배치 검열 호출 실패로 {}건 skip — 회차는 다음 배치로 넘어간다", batch.size(), e);
+            recordFailure(batch);
             return 0;
         }
 
@@ -75,6 +76,20 @@ public class ProfanityAuditBatchProcessor {
 
         final Integer settled = transactionTemplate.execute(status -> settle(batch, nicknames, resultMap));
         return settled == null ? 0 : settled;
+    }
+
+    /**
+     * 실패한 배치 행들의 시도 횟수를 올린다. 상한에 닿은 행은 리포지토리가 DEAD_LETTER로 내려
+     * 다음 회차의 UNAUDITED 스캔에서 뺀다.
+     */
+    private void recordFailure(List<NicknameAudit> batch) {
+        final List<Long> ids = batch.stream().map(NicknameAudit::getId).toList();
+        final int maxAttempts = nicknameAuditProperties.maxAttempts();
+        final Integer deadLettered = transactionTemplate.execute(status -> {
+            auditRepository.incrementAttemptCount(ids);
+            return auditRepository.markDeadLetterAtAttemptLimit(ids, maxAttempts);
+        });
+        log.warn("검열 실패 {}건 기록 — 시도 {}회 상한에 닿아 DEAD_LETTER로 내린 행 {}", batch.size(), maxAttempts, deadLettered);
     }
 
     /**

@@ -29,4 +29,25 @@ public interface NicknameAuditJpaRepository extends Repository<NicknameAudit, Lo
             + "WHERE n.nickname IN :nicknames "
             + "AND n.status <> coffeeshout.profanity.domain.audit.NicknameAuditStatus.UNAUDITED")
     Set<String> findNicknamesWithTerminalStatus(@Param("nicknames") Collection<String> nicknames);
+
+    /**
+     * 증가와 상한 판정을 한 UPDATE에 합치지 않는다. MySQL은 SET 대입을 왼쪽부터 차례로 평가해서
+     * 뒤에 오는 식이 이미 증가한 값을 본다. 그러면 상한 3에 두 번째 실패부터 DEAD_LETTER가 된다.
+     * 두 문장은 호출자 트랜잭션 안에서 함께 커밋되므로 중간 상태가 밖으로 보이지 않는다.
+     */
+    @Override
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE NicknameAudit n SET n.attemptCount = n.attemptCount + 1 "
+            + "WHERE n.id IN :ids "
+            + "AND n.status = coffeeshout.profanity.domain.audit.NicknameAuditStatus.UNAUDITED")
+    int incrementAttemptCount(@Param("ids") Collection<Long> ids);
+
+    @Override
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE NicknameAudit n "
+            + "SET n.status = coffeeshout.profanity.domain.audit.NicknameAuditStatus.DEAD_LETTER "
+            + "WHERE n.id IN :ids "
+            + "AND n.attemptCount >= :maxAttempts "
+            + "AND n.status = coffeeshout.profanity.domain.audit.NicknameAuditStatus.UNAUDITED")
+    int markDeadLetterAtAttemptLimit(@Param("ids") Collection<Long> ids, @Param("maxAttempts") int maxAttempts);
 }

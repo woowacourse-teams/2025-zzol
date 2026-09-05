@@ -36,6 +36,11 @@ public final class NicknameAuditPropertiesFixture {
         return of("api-key", 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, new Stub(latency, flaggedRatio), new Seed(0));
     }
 
+    public static NicknameAuditProperties 주기(String cron) {
+        return new NicknameAuditProperties(
+                "api-key", 모델, 0.85, 배치_크기, 20, 2, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, cron, new Seed(0), 스텁_꺼짐);
+    }
+
     public static NicknameAuditProperties 적재(int seedCount) {
         return of("api-key", 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(seedCount));
     }

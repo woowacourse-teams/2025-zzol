@@ -6,6 +6,7 @@ import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import coffeeshout.support.ServiceTest;
+import java.time.Clock;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ class LocalNicknameAuditDataInitializerTest extends ServiceTest {
 
     private LocalNicknameAuditDataInitializer 초기화기(int seedCount) {
         return new LocalNicknameAuditDataInitializer(
-                auditRepository, NicknameAuditPropertiesFixture.적재(seedCount), jdbcTemplate);
+                auditRepository, NicknameAuditPropertiesFixture.적재(seedCount), jdbcTemplate, Clock.systemUTC());
     }
 
     private long 미검열_건수() {
@@ -57,7 +58,7 @@ class LocalNicknameAuditDataInitializerTest extends ServiceTest {
         void 회차가_끝나_승격된_뒤에도_같은_이름을_다시_넣지_않는다() {
             초기화기(적재_건수).run(null);
             jdbcTemplate.update(
-                    "UPDATE player_name_audit SET status = 'CLEAN', audited_at = NOW() WHERE player_name LIKE '측정%'");
+                    "UPDATE player_name_audit SET status = 'CLEAN', audited_at = NOW() WHERE player_name LIKE 'zz%'");
 
             초기화기(적재_건수).run(null);
 

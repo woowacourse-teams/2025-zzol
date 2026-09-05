@@ -6,7 +6,7 @@ import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import java.sql.Timestamp;
-import java.time.Instant;
+import java.time.Clock;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +25,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
 
     /**
-     * 합성 닉네임에 섞을 음절 범위. 스텁 검열기가 닉네임에서 한글 두 글자를 잘라 차단 조각으로 쓰는데, 음절
-     * 가짓수가 적으면 사전 INSERT가 초반 몇백 건 뒤로 전부 중복이 되어 자동 차단과 트라이 재빌드가 멈춘다.
-     * 완성형 한글 전체를 쓰면 음절 두 자리 조합이 1억 가지라 적재 상한까지 겹치지 않는다.
+     * 합성 닉네임의 접두사. 한글이 아니어야 한다.
+     *
+     * <p>스텁 검열기는 닉네임의 한글 구간에서 두 글자를 잘라 차단 조각으로 쓴다. 접두사가 한글이면 구간이 네
+     * 글자로 늘어 자르는 자리가 셋이 되고, 그중 하나는 언제나 접두사 그 자체다. 시드의 3분의 1이 같은 조각을
+     * 내면 사전 INSERT가 중복으로 걸러져 자동 차단과 트라이 재빌드가 그만큼 안 돈다. block 구간이 실제보다
+     * 싸게 측정된다. 접두사를 한글 밖에 두면 구간이 음절 두 자와 정확히 겹쳐 조각이 전부 달라진다.
+     */
+    private static final String SEED_PREFIX = "zz";
+
+    /**
+     * 합성 닉네임에 섞을 음절 범위. 음절 가짓수가 적으면 사전 INSERT가 초반 몇백 건 뒤로 전부 중복이 되어
+     * 자동 차단과 트라이 재빌드가 멈춘다. 완성형 한글 전체를 쓰면 두 자리 조합이 1억 가지라 적재 상한까지
+     * 겹치지 않는다.
      */
     private static final char FIRST_SYLLABLE = '가';
 
@@ -44,6 +54,7 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
     private final NicknameAuditRepository auditRepository;
     private final NicknameAuditProperties properties;
     private final JdbcTemplate jdbcTemplate;
+    private final Clock clock;
 
     @Override
     @Transactional
@@ -68,7 +79,7 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
             return;
         }
 
-        final Timestamp now = Timestamp.from(Instant.now());
+        final Timestamp now = Timestamp.from(clock.instant());
         jdbcTemplate.batchUpdate(SEED_INSERT, IntStream.range(0, count).boxed().toList(), SEED_CHUNK, (ps, index) -> {
             ps.setString(1, seedNickname(index));
             ps.setString(2, NicknameAuditStatus.UNAUDITED.name());
@@ -93,7 +104,7 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
     private String seedNickname(int index) {
         final char first = (char) (FIRST_SYLLABLE + index % SYLLABLE_COUNT);
         final char second = (char) (FIRST_SYLLABLE + index / SYLLABLE_COUNT % SYLLABLE_COUNT);
-        return "측정" + first + second + index;
+        return SEED_PREFIX + first + second + index;
     }
 
     private void seedSamples() {

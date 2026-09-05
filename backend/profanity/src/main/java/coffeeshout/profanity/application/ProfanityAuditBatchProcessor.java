@@ -40,7 +40,7 @@ public class ProfanityAuditBatchProcessor {
      * <p>{@code settle}은 {@code block}을 안에 포함한다. 자동 차단이 승격 저장 트랜잭션 안에서 돌기 때문이다.
      * 합이 회차 전체 시간과 맞아떨어지지 않는 건 그래서다.
      */
-    public static final String PHASE_TIMER = "nickname.audit.phase";
+    static final String PHASE_TIMER = "nickname.audit.phase";
 
     static final String PHASE_TIMER_DESCRIPTION = "닉네임 검열 회차의 구간별 소요 시간 (settle은 block을 포함한다)";
 

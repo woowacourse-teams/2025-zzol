@@ -6,8 +6,10 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
@@ -24,6 +26,7 @@ import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +35,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
@@ -456,6 +460,65 @@ class ProfanityAuditBatchProcessorTest {
             assertThat(ids.getValue())
                     .as("실패한 배치 행만 세야 다른 행이 애먼 상한에 닿지 않는다.")
                     .hasSize(batch.size());
+        }
+    }
+
+    /**
+     * 벌크 저장이 한 행에서 터지면 배치 전체가 롤백된다. 이미 받아둔 Gemini 판정까지 버리면
+     * 다음 회차에 같은 닉네임을 다시 사야 한다. 판정을 들고 한 건씩 다시 저장해야 한다.
+     */
+    @Nested
+    class 벌크_저장_실패 {
+
+        @Test
+        void 벌크_저장이_실패하면_판정을_버리지_않고_건별로_저장한다() {
+            final List<NicknameAudit> batch = List.of(new NicknameAudit("닉하나"), new NicknameAudit("닉둘"));
+            givenCleanResultsFor("닉하나", "닉둘");
+            // 배치 전체를 한 번에 저장할 때만 터지고, 한 건씩이면 통과한다.
+            willAnswer(invocation -> failWhenBulk(invocation.getArgument(0)))
+                    .given(auditRepository)
+                    .saveAll(any());
+
+            final int processed = processor.process(batch);
+
+            assertThat(processed).isEqualTo(2);
+            // 판정을 다시 사면 같은 배치에 Gemini 호출이 두 번 나간다. 폴백은 들고 있는 판정만 쓴다.
+            then(nicknameAuditor).should(times(1)).audit(anyList());
+        }
+
+        @Test
+        void 건별_저장도_실패하는_행만_UNAUDITED로_남는다() {
+            final List<NicknameAudit> batch = List.of(new NicknameAudit("닉하나"), new NicknameAudit("말썽닉"));
+            givenCleanResultsFor("닉하나", "말썽닉");
+            willAnswer(invocation -> failWhenTrouble(invocation.getArgument(0)))
+                    .given(auditRepository)
+                    .saveAll(any());
+
+            final int processed = processor.process(batch);
+
+            assertThat(processed).as("저장에 성공한 행만 UNAUDITED에서 빠진다.").isEqualTo(1);
+        }
+
+        private void givenCleanResultsFor(String... nicknames) {
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(Arrays.stream(nicknames)
+                            .map(nickname -> new NicknameAuditResult(
+                                    nickname, NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반 닉네임"))
+                            .toList());
+        }
+
+        private List<NicknameAudit> failWhenBulk(List<NicknameAudit> saved) {
+            if (saved.size() > 1) {
+                throw new DataIntegrityViolationException("uq_player_name_audit_name_status 충돌");
+            }
+            return saved;
+        }
+
+        private List<NicknameAudit> failWhenTrouble(List<NicknameAudit> saved) {
+            if (saved.stream().anyMatch(entity -> "말썽닉".equals(entity.getNickname()))) {
+                throw new DataIntegrityViolationException("uq_player_name_audit_name_status 충돌");
+            }
+            return saved;
         }
     }
 }

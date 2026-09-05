@@ -13,6 +13,7 @@ import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -24,13 +25,7 @@ class GeminiNicknameAuditorConnectivityTest {
 
     private static final String API_KEY = System.getenv("GEMINI_API_KEY");
     private static final NicknameAuditProperties PROPERTIES = new NicknameAuditProperties(
-            API_KEY,
-            "gemini-3.5-flash",
-            0.85,
-            100,
-            20,
-            2
-    );
+            API_KEY, "gemini-3.5-flash", 0.85, 100, 20, 2, Duration.ofSeconds(120), Duration.ofMinutes(10));
 
     private GeminiNicknameAuditor auditor;
 
@@ -47,8 +42,7 @@ class GeminiNicknameAuditorConnectivityTest {
                 PROPERTIES,
                 feedbackRepository,
                 new NicknameAuditPromptTemplate(objectMapper),
-                new SimpleMeterRegistry()
-        );
+                new SimpleMeterRegistry());
     }
 
     @Test

@@ -26,6 +26,8 @@ import io.micrometer.core.instrument.Timer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
@@ -38,9 +40,8 @@ import org.springframework.stereotype.Component;
 @Profile("!local & !test")
 public class GeminiNicknameAuditor implements NicknameAuditor {
 
-    private static final Content SYSTEM_INSTRUCTION = Content.fromParts(
-            Part.fromText(NicknameAuditPromptTemplate.SYSTEM_INSTRUCTION)
-    );
+    private static final Content SYSTEM_INSTRUCTION =
+            Content.fromParts(Part.fromText(NicknameAuditPromptTemplate.SYSTEM_INSTRUCTION));
 
     private static final Schema RESPONSE_SCHEMA = Schema.builder()
             .type("ARRAY")
@@ -51,11 +52,13 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
                             "flagged", Schema.builder().type("BOOLEAN").build(),
                             "confidence", Schema.builder().type("NUMBER").build(),
                             "reason", Schema.builder().type("STRING").build(),
-                            "terms", Schema.builder()
-                                    .type("ARRAY")
-                                    .items(Schema.builder().type("STRING").build())
-                                    .build()
-                    ))
+                            "terms",
+                                    Schema.builder()
+                                            .type("ARRAY")
+                                            .items(Schema.builder()
+                                                    .type("STRING")
+                                                    .build())
+                                            .build()))
                     .required(List.of("nickname", "flagged", "confidence", "reason", "terms"))
                     .build())
             .build();
@@ -75,8 +78,7 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
             NicknameAuditProperties properties,
             NicknameFeedbackRepository feedbackRepository,
             NicknameAuditPromptTemplate promptTemplate,
-            MeterRegistry meterRegistry
-    ) {
+            MeterRegistry meterRegistry) {
         this.geminiClient = geminiClient;
         this.objectMapper = objectMapper;
         this.properties = properties;
@@ -101,16 +103,14 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
 
         final GenerateContentResponse response;
         try {
-            response = apiCallTimer.recordCallable(() ->
-                    geminiClient.models.generateContent(
-                            properties.model(),
-                            userMessage,
-                            GenerateContentConfig.builder()
-                                    .systemInstruction(SYSTEM_INSTRUCTION)
-                                    .responseMimeType("application/json")
-                                    .responseSchema(RESPONSE_SCHEMA)
-                                    .build()
-                    ));
+            response = apiCallTimer.recordCallable(() -> geminiClient.models.generateContent(
+                    properties.model(),
+                    userMessage,
+                    GenerateContentConfig.builder()
+                            .systemInstruction(SYSTEM_INSTRUCTION)
+                            .responseMimeType("application/json")
+                            .responseSchema(RESPONSE_SCHEMA)
+                            .build()));
         } catch (Exception e) {
             throw new InfrastructureException(NicknameAuditErrorCode.AI_CALL_FAILED, "닉네임 검열 AI 호출 실패", e);
         }
@@ -128,9 +128,8 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
     }
 
     private List<NicknameFeedback> loadFeedbackExamples() {
-        final List<NicknameFeedback> feedbacks = feedbackRepository.findRecentFeedbacks(
-                PageRequest.of(0, properties.feedbackInjectionThreshold(), Sort.by("createdAt").descending())
-        );
+        final List<NicknameFeedback> feedbacks = feedbackRepository.findRecentFeedbacks(PageRequest.of(
+                0, properties.feedbackInjectionThreshold(), Sort.by("createdAt").descending()));
         if (feedbacks.size() < properties.feedbackInjectionThreshold()) {
             return List.of();
         }
@@ -143,14 +142,16 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
             nodes = objectMapper.readValue(responseText, new TypeReference<>() {});
         } catch (Exception e) {
             parseFailureCounter.increment();
-            log.warn("[NicknameAudit] Gemini 응답 JSON 파싱 실패 ({}건). responseText={}",
-                    requestedNicknames.size(), responseText, e);
+            log.warn(
+                    "[NicknameAudit] Gemini 응답 JSON 파싱 실패 ({}건). responseText={}",
+                    requestedNicknames.size(),
+                    responseText,
+                    e);
             throw new InfrastructureException(NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED, "닉네임 검열 AI 응답 파싱 실패", e);
         }
 
         if (nodes.size() != requestedNicknames.size()) {
-            log.error("[NicknameAudit] 응답 항목 수 불일치: expected={}, actual={}",
-                    requestedNicknames.size(), nodes.size());
+            log.error("[NicknameAudit] 응답 항목 수 불일치: expected={}, actual={}", requestedNicknames.size(), nodes.size());
         }
 
         final int processCount = Math.min(nodes.size(), requestedNicknames.size());
@@ -161,28 +162,49 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
             try {
                 final GeminiAuditItem item = objectMapper.treeToValue(node, GeminiAuditItem.class);
                 results.add(NicknameAuditResult.of(
-                        item.nickname(), item.flagged(), item.confidence(), item.reason(),
+                        item.nickname(),
+                        item.flagged(),
+                        item.confidence(),
+                        item.reason(),
                         item.terms() == null ? List.of() : item.terms(),
-                        properties.flaggedThreshold()
-                ));
+                        properties.flaggedThreshold()));
             } catch (Exception e) {
                 itemParseFailureCounter.increment();
                 log.warn("[NicknameAudit] Gemini 응답 항목 파싱 실패, PENDING 처리. index={}, node={}", i, node, e);
                 results.add(new NicknameAuditResult(
-                        requestedNicknames.get(i), NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 파싱 실패"
-                ));
+                        requestedNicknames.get(i), NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 파싱 실패"));
             }
         }
 
         for (int i = processCount; i < requestedNicknames.size(); i++) {
             log.warn("[NicknameAudit] 응답 누락 닉네임 PENDING 처리. index={}, nickname={}", i, requestedNicknames.get(i));
             results.add(new NicknameAuditResult(
-                    requestedNicknames.get(i), NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 항목 수 불일치"
-            ));
+                    requestedNicknames.get(i), NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 항목 수 불일치"));
         }
+
+        fillUnmatched(results, requestedNicknames);
 
         return results;
     }
 
-    private record GeminiAuditItem(String nickname, boolean flagged, double confidence, String reason, List<String> terms) {}
+    /**
+     * 요청한 닉네임이 모두 결과에 들어가도록 메운다.
+     *
+     * <p>응답 개수는 맞아도 이름이 어긋날 수 있다(AI가 공백을 붙이거나 글자를 바꿔 돌려주는 경우).
+     * 호출자는 우리가 보낸 이름으로 판정을 찾으므로, 짝을 못 찾은 닉네임이 남으면 그 행은 영영 UNAUDITED로 남는다.
+     */
+    private void fillUnmatched(List<NicknameAuditResult> results, List<String> requestedNicknames) {
+        final Set<String> covered =
+                results.stream().map(NicknameAuditResult::nickname).collect(Collectors.toSet());
+        for (final String requested : requestedNicknames) {
+            if (!covered.contains(requested)) {
+                log.warn("[NicknameAudit] 응답에서 짝을 찾지 못한 닉네임 PENDING 처리. nickname={}", requested);
+                results.add(new NicknameAuditResult(
+                        requested, NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 닉네임 불일치"));
+            }
+        }
+    }
+
+    private record GeminiAuditItem(
+            String nickname, boolean flagged, double confidence, String reason, List<String> terms) {}
 }

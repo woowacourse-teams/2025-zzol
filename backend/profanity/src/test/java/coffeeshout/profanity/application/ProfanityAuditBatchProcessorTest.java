@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -467,6 +467,52 @@ class ProfanityAuditBatchProcessorTest {
             then(auditRepository).should().markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS));
             assertThat(ids.getValue()).as("실패한 배치 행만 세야 다른 행이 애먼 상한에 닿지 않는다.").hasSize(batch.size());
         }
+
+        @Test
+        void 일시적인_호출_실패는_시도_횟수를_올리지_않는다() {
+            // GeminiNicknameAuditor는 네트워크 끊김·레이트리밋·타임아웃을 전부 AI_CALL_FAILED로 감싼다.
+            // 이걸 세면 Gemini가 잠깐 죽은 회차 몇 번에 멀쩡한 닉네임이 DEAD_LETTER로 내려간다.
+            final NicknameAudit entity = new NicknameAudit("멀쩡닉네임");
+            given(nicknameAuditor.audit(anyList()))
+                    .willThrow(new InfrastructureException(NicknameAuditErrorCode.AI_CALL_FAILED, "닉네임 검열 AI 호출 실패"));
+
+            processor.process(List.of(entity));
+
+            then(auditRepository).should(never()).incrementAttemptCount(any());
+        }
+
+        @Test
+        void 상한에_닿아_DEAD_LETTER로_내려간_행은_처리_건수로_보고한다() {
+            // DEAD_LETTER는 UNAUDITED 스캔에서 빠진다. 0을 돌려주면 드레인 루프의 페이지 커서가
+            // 스캔이 앞으로 당겨진 만큼을 그냥 건너뛴다.
+            final NicknameAudit entity = new NicknameAudit("독닉네임");
+            given(nicknameAuditor.audit(anyList()))
+                    .willThrow(new InfrastructureException(
+                            NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED, "닉네임 검열 AI 응답 파싱 실패"));
+            given(auditRepository.markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS)))
+                    .willReturn(1);
+
+            final int processed = processor.process(List.of(entity));
+
+            assertThat(processed).isEqualTo(1);
+        }
+
+        @Test
+        void 시도_횟수_기록이_실패해도_예외를_전파하지_않는다() {
+            // 이 기록은 "배치 하나가 회차를 끝내지 않게" 하려고 잡은 자리에서 부른다.
+            // 여기서 예외가 다시 올라가면 그 try/catch가 무의미해진다.
+            final NicknameAudit entity = new NicknameAudit("닉네임");
+            given(nicknameAuditor.audit(anyList()))
+                    .willThrow(new InfrastructureException(
+                            NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED, "닉네임 검열 AI 응답 파싱 실패"));
+            willThrow(new DataIntegrityViolationException("DB 오류"))
+                    .given(auditRepository)
+                    .incrementAttemptCount(any());
+
+            final int processed = processor.process(List.of(entity));
+
+            assertThat(processed).isZero();
+        }
     }
 
     /**
@@ -480,29 +526,49 @@ class ProfanityAuditBatchProcessorTest {
         void 벌크_저장이_실패하면_판정을_버리지_않고_건별로_저장한다() {
             final List<NicknameAudit> batch = List.of(new NicknameAudit("닉하나"), new NicknameAudit("닉둘"));
             givenCleanResultsFor("닉하나", "닉둘");
-            // 배치 전체를 한 번에 저장할 때만 터지고, 한 건씩이면 통과한다.
-            willAnswer(invocation -> failWhenBulk(invocation.getArgument(0)))
-                    .given(auditRepository)
-                    .saveAll(any());
+            givenBulkSaveFails();
 
             final int processed = processor.process(batch);
 
             assertThat(processed).isEqualTo(2);
+            then(auditRepository).should().save(batch.get(0));
+            then(auditRepository).should().save(batch.get(1));
             // 판정을 다시 사면 같은 배치에 Gemini 호출이 두 번 나간다. 폴백은 들고 있는 판정만 쓴다.
             then(nicknameAuditor).should(times(1)).audit(anyList());
         }
 
         @Test
         void 건별_저장도_실패하는_행만_UNAUDITED로_남는다() {
-            final List<NicknameAudit> batch = List.of(new NicknameAudit("닉하나"), new NicknameAudit("말썽닉"));
+            final NicknameAudit healthy = new NicknameAudit("닉하나");
+            final NicknameAudit trouble = new NicknameAudit("말썽닉");
             givenCleanResultsFor("닉하나", "말썽닉");
-            willAnswer(invocation -> failWhenTrouble(invocation.getArgument(0)))
+            givenBulkSaveFails();
+            willThrow(new DataIntegrityViolationException("uq_player_name_audit_name_status 충돌"))
                     .given(auditRepository)
-                    .saveAll(any());
+                    .save(trouble);
 
-            final int processed = processor.process(batch);
+            final int processed = processor.process(List.of(healthy, trouble));
 
             assertThat(processed).as("저장에 성공한 행만 UNAUDITED에서 빠진다.").isEqualTo(1);
+        }
+
+        /**
+         * 벌크 트랜잭션이 커밋에 성공하고도 예외를 낼 수 있다. {@code ProfanityWordBlockedEvent} 수신자가
+         * AFTER_COMMIT + REQUIRES_NEW라 거기서 난 예외가 커밋 뒤에 올라온다. 폴백이 판정을 다시 계산하면
+         * 방금 커밋한 행을 자기 자신의 terminal 트윈으로 착각해 지워버린다.
+         */
+        @Test
+        void 폴백은_이미_검열된_행을_중복으로_보고_지우지_않는다() {
+            final NicknameAudit entity = new NicknameAudit("닉하나");
+            givenCleanResultsFor("닉하나");
+            givenBulkSaveFails();
+            // 커밋이 끝나 자기 행이 이미 CLEAN으로 남아 있는 상태를 흉내낸다.
+            given(auditRepository.findNicknamesWithTerminalStatus(any())).willReturn(Set.of("닉하나"));
+
+            processor.process(List.of(entity));
+
+            then(auditRepository).should(never()).deleteAll(any());
+            then(auditRepository).should().save(entity);
         }
 
         private void givenCleanResultsFor(String... nicknames) {
@@ -513,18 +579,10 @@ class ProfanityAuditBatchProcessorTest {
                             .toList());
         }
 
-        private List<NicknameAudit> failWhenBulk(List<NicknameAudit> saved) {
-            if (saved.size() > 1) {
-                throw new DataIntegrityViolationException("uq_player_name_audit_name_status 충돌");
-            }
-            return saved;
-        }
-
-        private List<NicknameAudit> failWhenTrouble(List<NicknameAudit> saved) {
-            if (saved.stream().anyMatch(entity -> "말썽닉".equals(entity.getNickname()))) {
-                throw new DataIntegrityViolationException("uq_player_name_audit_name_status 충돌");
-            }
-            return saved;
+        private void givenBulkSaveFails() {
+            willThrow(new DataIntegrityViolationException("uq_player_name_audit_name_status 충돌"))
+                    .given(auditRepository)
+                    .saveAll(any());
         }
     }
 }

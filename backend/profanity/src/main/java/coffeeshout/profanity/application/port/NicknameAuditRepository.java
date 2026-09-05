@@ -47,7 +47,7 @@ public interface NicknameAuditRepository {
      *
      * <p>세지 않으면 파싱 실패를 일으키는 닉네임 하나가 회차마다 같은 실패를 되풀이한다.
      */
-    int incrementAttemptCount(Collection<Long> ids);
+    void incrementAttemptCount(Collection<Long> ids);
 
     /**
      * 시도 횟수가 상한에 닿은 행을 DEAD_LETTER로 내린다. DEAD_LETTER는 UNAUDITED가 아니므로

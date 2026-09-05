@@ -1,5 +1,7 @@
 package coffeeshout.profanity.application;
 
+import coffeeshout.global.exception.ErrorCode;
+import coffeeshout.global.exception.custom.CoffeeShoutException;
 import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
@@ -7,6 +9,7 @@ import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
+import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
@@ -29,6 +32,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Service
 @RequiredArgsConstructor
 public class ProfanityAuditBatchProcessor {
+
+    /** 배치 내용이 원인이라 다시 불러도 같은 결과가 나오는 실패. 이것만 시도 횟수에 센다. */
+    private static final Set<ErrorCode> DETERMINISTIC_AUDIT_FAILURES = Set.of(
+            NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED,
+            NicknameAuditErrorCode.AI_EMPTY_RESPONSE,
+            NicknameAuditErrorCode.PROMPT_BUILD_FAILED);
 
     private final NicknameAuditRepository auditRepository;
     private final NicknameAuditor nicknameAuditor;
@@ -61,14 +70,16 @@ public class ProfanityAuditBatchProcessor {
             // 잡지 않으면 배치 하나가 회차를 끝내고 남은 적체가 통째로 다음 회차까지 밀린다.
             batchSkippedCounter.increment();
             log.warn("배치 검열 호출 실패로 {}건 skip — 회차는 다음 배치로 넘어간다", batch.size(), e);
-            recordFailure(batch);
-            return 0;
+            if (!isDeterministicFailure(e)) {
+                return 0;
+            }
+            return recordFailure(batch);
         }
 
         if (results.isEmpty()) {
             batchSkippedCounter.increment();
             log.warn("배치 파싱 실패로 {}건 skip — 다음 스케줄러 실행 시 재시도", batch.size());
-            return 0;
+            return recordFailure(batch);
         }
 
         final Map<String, NicknameAuditResult> resultMap = results.stream()
@@ -84,18 +95,40 @@ public class ProfanityAuditBatchProcessor {
     }
 
     /**
+     * 배치 내용 때문에 다시 불러도 똑같이 실패하는 오류인지 본다.
+     *
+     * <p>일시적 실패까지 세면 멀쩡한 닉네임이 DEAD_LETTER로 내려간다. {@code GeminiNicknameAuditor}가
+     * 네트워크 끊김·레이트리밋·타임아웃을 전부 {@code AI_CALL_FAILED}로 감싸는데, 그건 다음 회차에 풀리는 쪽이다.
+     */
+    private static boolean isDeterministicFailure(RuntimeException e) {
+        return e instanceof CoffeeShoutException exception
+                && DETERMINISTIC_AUDIT_FAILURES.contains(exception.getErrorCode());
+    }
+
+    /**
      * 벌크 저장이 실패한 배치를 한 건씩 다시 저장한다. 이미 받아둔 판정을 그대로 쓰므로 AI를 다시 부르지 않는다.
      *
-     * <p>실패한 트랜잭션은 롤백 상태라 같은 트랜잭션에서 이어 쓸 수 없다. 행마다 새 트랜잭션을 열어,
-     * 한 행이 유니크 제약에 걸려도 나머지 판정은 살아남게 한다.
+     * <p>여기서는 {@code settle}을 다시 돌리지 않고 저장만 한다. 벌크 트랜잭션은 커밋에 성공하고도
+     * 예외를 낼 수 있다. {@code ProfanityWordBlockedEvent} 수신자가 AFTER_COMMIT + REQUIRES_NEW라
+     * 거기서 난 예외가 커밋 뒤에 올라온다. 그 경우 {@code settle}을 다시 돌리면 방금 커밋한 행을
+     * 자기 자신의 terminal 트윈으로 착각해 지워버린다. 저장만 하면 같은 값을 다시 쓰는 것이라 안전하다.
+     *
+     * <p>행마다 새 트랜잭션을 연다. 실패한 트랜잭션은 롤백 상태라 이어 쓸 수 없고, 한 행이 제약에 걸려도
+     * 나머지 판정은 살아남아야 한다.
      */
     private int settleIndividually(List<NicknameAudit> batch, Map<String, NicknameAuditResult> resultMap) {
         int settled = 0;
         for (final NicknameAudit entity : batch) {
+            final NicknameAuditResult result = resultMap.get(entity.getNickname());
+            if (result == null) {
+                continue;
+            }
             try {
-                final Integer one = transactionTemplate.execute(
-                        status -> settle(List.of(entity), List.of(entity.getNickname()), resultMap));
-                settled += one == null ? 0 : one;
+                transactionTemplate.executeWithoutResult(status -> {
+                    applyResult(entity, result);
+                    auditRepository.save(entity);
+                });
+                settled++;
             } catch (RuntimeException e) {
                 log.warn("건별 저장도 실패 — UNAUDITED로 남긴다. nickname={}", entity.getNickname(), e);
             }
@@ -104,17 +137,28 @@ public class ProfanityAuditBatchProcessor {
     }
 
     /**
-     * 실패한 배치 행들의 시도 횟수를 올린다. 상한에 닿은 행은 리포지토리가 DEAD_LETTER로 내려
-     * 다음 회차의 UNAUDITED 스캔에서 뺀다.
+     * 실패한 배치 행들의 시도 횟수를 올리고, 상한에 닿아 DEAD_LETTER로 내려간 행 수를 돌려준다.
+     *
+     * <p>DEAD_LETTER는 UNAUDITED 스캔에서 빠지므로 드레인 루프에는 진행이다. 0을 돌려주면 스캔이
+     * 앞으로 당겨진 만큼을 커서가 그냥 건너뛴다.
+     *
+     * <p>여기서 난 예외는 삼킨다. 이 메서드는 검열 호출 실패를 잡은 자리에서 불리는데, 다시 예외를
+     * 올리면 배치 하나의 실패가 회차를 끝내는 것을 막으려던 try/catch가 무의미해진다.
      */
-    private void recordFailure(List<NicknameAudit> batch) {
+    private int recordFailure(List<NicknameAudit> batch) {
         final List<Long> ids = batch.stream().map(NicknameAudit::getId).toList();
         final int maxAttempts = nicknameAuditProperties.maxAttempts();
-        final Integer deadLettered = transactionTemplate.execute(status -> {
-            auditRepository.incrementAttemptCount(ids);
-            return auditRepository.markDeadLetterAtAttemptLimit(ids, maxAttempts);
-        });
-        log.warn("검열 실패 {}건 기록 — 시도 {}회 상한에 닿아 DEAD_LETTER로 내린 행 {}", batch.size(), maxAttempts, deadLettered);
+        try {
+            final Integer deadLettered = transactionTemplate.execute(status -> {
+                auditRepository.incrementAttemptCount(ids);
+                return auditRepository.markDeadLetterAtAttemptLimit(ids, maxAttempts);
+            });
+            log.warn("검열 실패 {}건 기록 — 시도 {}회 상한에 닿아 DEAD_LETTER로 내린 행 {}", batch.size(), maxAttempts, deadLettered);
+            return deadLettered == null ? 0 : deadLettered;
+        } catch (RuntimeException e) {
+            log.error("시도 횟수 기록 실패 — 이번 배치는 세지 않고 넘어간다", e);
+            return 0;
+        }
     }
 
     /**

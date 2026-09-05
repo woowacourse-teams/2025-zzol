@@ -44,7 +44,7 @@ public interface NicknameAuditJpaRepository extends Repository<NicknameAudit, Lo
     @Query("UPDATE NicknameAudit n SET n.attemptCount = n.attemptCount + 1 "
             + "WHERE n.id IN :ids "
             + "AND n.status = coffeeshout.profanity.domain.audit.NicknameAuditStatus.UNAUDITED")
-    int incrementAttemptCount(@Param("ids") Collection<Long> ids);
+    void incrementAttemptCount(@Param("ids") Collection<Long> ids);
 
     @Override
     @Modifying(clearAutomatically = true, flushAutomatically = true)

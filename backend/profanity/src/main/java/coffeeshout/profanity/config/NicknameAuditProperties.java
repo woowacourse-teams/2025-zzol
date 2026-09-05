@@ -18,6 +18,8 @@ import org.springframework.validation.annotation.Validated;
  *                       0은 무제한이라서다. {@code @Positive}는 {@link Duration}에 적용되지 않는다.
  * @param maxRunDuration 한 회차가 실행기 스레드를 붙잡아도 되는 상한. 넘기면 남은 적체는 다음 회차로 넘긴다.
  *                       {@code ProfanityAuditService.LOCK_LEASE_MILLIS}보다 반드시 짧아야 한다.
+ * @param maxAttempts    한 행이 검열 호출 실패를 견디는 횟수. 여기 닿으면 DEAD_LETTER가 되어 UNAUDITED 스캔에서
+ *                       빠진다. 늘리면 되풀이 실패하는 행 하나가 회차마다 Gemini 호출을 그만큼 더 태운다.
  */
 @Validated
 @ConfigurationProperties(prefix = "nickname-audit")
@@ -33,4 +35,6 @@ public record NicknameAuditProperties(
         Duration requestTimeout,
 
         @DefaultValue("10m") @NotNull @DurationMin(minutes = 1)
-        Duration maxRunDuration) {}
+        Duration maxRunDuration,
+
+        @DefaultValue("3") @Positive int maxAttempts) {}

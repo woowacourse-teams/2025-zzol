@@ -25,7 +25,7 @@ class GeminiNicknameAuditorConnectivityTest {
 
     private static final String API_KEY = System.getenv("GEMINI_API_KEY");
     private static final NicknameAuditProperties PROPERTIES = new NicknameAuditProperties(
-            API_KEY, "gemini-3.5-flash", 0.85, 100, 20, 2, Duration.ofSeconds(120), Duration.ofMinutes(10));
+            API_KEY, "gemini-3.5-flash", 0.85, 100, 20, 2, Duration.ofSeconds(120), Duration.ofMinutes(10), 3);
 
     private GeminiNicknameAuditor auditor;
 

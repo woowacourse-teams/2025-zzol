@@ -107,13 +107,14 @@ profanity_word (
 
 ```sql
 player_name_audit (
-  id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-  nickname    VARCHAR(10)  NOT NULL,
-  status      VARCHAR(10)  NOT NULL,  -- UNAUDITED | FLAGGED | PENDING | CLEAN | ALLOWED | BLOCKED
-  confidence  DECIMAL(3,2),
-  reason      VARCHAR(255),
-  created_at  TIMESTAMP    NOT NULL,
-  audited_at  TIMESTAMP
+  id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nickname      VARCHAR(10)  NOT NULL,
+  status        VARCHAR(20)  NOT NULL,  -- UNAUDITED | FLAGGED | PENDING | CLEAN | ALLOWED | BLOCKED | DEAD_LETTER
+  confidence    DECIMAL(3,2),
+  reason        VARCHAR(255),
+  attempt_count INT          NOT NULL DEFAULT 0,  -- 검열 호출이 이 행을 담은 배치에서 실패한 횟수
+  created_at    TIMESTAMP    NOT NULL,
+  audited_at    TIMESTAMP
 )
 
 player_name_feedback (

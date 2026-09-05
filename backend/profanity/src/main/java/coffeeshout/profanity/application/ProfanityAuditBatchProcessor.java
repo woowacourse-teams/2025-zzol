@@ -49,11 +49,15 @@ public class ProfanityAuditBatchProcessor {
     private final NicknameAuditProperties nicknameAuditProperties;
 
     private Counter batchSkippedCounter;
+    private Counter deadLetteredCounter;
 
     @PostConstruct
     void initMetrics() {
         batchSkippedCounter = Counter.builder("nickname.audit.batch.skipped")
-                .description("파싱 실패로 skip된 배치 수")
+                .description("검열 호출 실패로 skip된 배치 수")
+                .register(meterRegistry);
+        deadLetteredCounter = Counter.builder("nickname.audit.dead.lettered")
+                .description("시도 횟수 상한에 닿아 DEAD_LETTER로 내려간 행 수")
                 .register(meterRegistry);
     }
 
@@ -128,6 +132,7 @@ public class ProfanityAuditBatchProcessor {
                     applyResult(entity, result);
                     auditRepository.save(entity);
                 });
+                countResults(List.of(entity));
                 settled++;
             } catch (RuntimeException e) {
                 log.warn("건별 저장도 실패 — UNAUDITED로 남긴다. nickname={}", entity.getNickname(), e);
@@ -150,11 +155,20 @@ public class ProfanityAuditBatchProcessor {
         final int maxAttempts = nicknameAuditProperties.maxAttempts();
         try {
             final Integer deadLettered = transactionTemplate.execute(status -> {
-                auditRepository.incrementAttemptCount(ids);
+                final int attempted = auditRepository.incrementAttemptCount(ids);
+                if (attempted != ids.size()) {
+                    // UNAUDITED인 행만 올린다. 차이가 나면 그 사이 다른 인스턴스가 같은 행을 판정했거나
+                    // 이미 DEAD_LETTER로 내려간 것이다.
+                    log.warn("시도 횟수가 오른 행이 배치보다 적다: 배치 {}행, 갱신 {}행", ids.size(), attempted);
+                }
                 return auditRepository.markDeadLetterAtAttemptLimit(ids, maxAttempts);
             });
             log.warn("검열 실패 {}건 기록 — 시도 {}회 상한에 닿아 DEAD_LETTER로 내린 행 {}", batch.size(), maxAttempts, deadLettered);
-            return deadLettered == null ? 0 : deadLettered;
+            if (deadLettered == null) {
+                return 0;
+            }
+            deadLetteredCounter.increment(deadLettered);
+            return deadLettered;
         } catch (RuntimeException e) {
             log.error("시도 횟수 기록 실패 — 이번 배치는 세지 않고 넘어간다", e);
             return 0;
@@ -193,6 +207,7 @@ public class ProfanityAuditBatchProcessor {
             toPromote.add(entity);
         }
         auditRepository.saveAll(toPromote);
+        countResults(toPromote);
         if (!redundant.isEmpty()) {
             auditRepository.deleteAll(redundant);
             log.warn("이미 검열된 닉네임의 잔존 UNAUDITED {}건 제거 (중복 재등록)", redundant.size());
@@ -205,12 +220,19 @@ public class ProfanityAuditBatchProcessor {
 
     private void applyResult(NicknameAudit entity, NicknameAuditResult result) {
         entity.complete(result.status(), result.confidence(), result.reason());
-        meterRegistry
-                .counter("nickname.audit.result", "status", result.status().name())
-                .increment();
         if (result.status() == NicknameAuditStatus.FLAGGED) {
             autoBlock(result);
         }
+    }
+
+    /**
+     * 저장에 성공한 뒤에만 부른다. 판정을 반영하는 자리에서 올리면 벌크 저장이 실패해 폴백이 도는 경로에서
+     * 같은 행이 두 번 세어진다. 카운터는 롤백되지 않는다.
+     */
+    private void countResults(List<NicknameAudit> saved) {
+        saved.forEach(entity -> meterRegistry
+                .counter("nickname.audit.result", "status", entity.getStatus().name())
+                .increment());
     }
 
     private void autoBlock(NicknameAuditResult result) {

@@ -28,10 +28,13 @@ public interface NicknameAuditJpaRepository extends Repository<NicknameAudit, Lo
     @Query("SELECT DISTINCT n.nickname FROM NicknameAudit n WHERE n.status = :status")
     Set<String> findNicknamesByStatus(@Param("status") NicknameAuditStatus status);
 
+    // DEAD_LETTER도 뺀다. 그 행은 검열을 못 끝낸 행이지 판정을 가진 행이 아니다. 넣어두면 같은 닉네임의
+    // UNAUDITED가 "이미 검열됨"으로 오인돼 판정 대신 삭제된다.
     @Override
     @Query("SELECT DISTINCT n.nickname FROM NicknameAudit n "
             + "WHERE n.nickname IN :nicknames "
-            + "AND n.status <> coffeeshout.profanity.domain.audit.NicknameAuditStatus.UNAUDITED")
+            + "AND n.status NOT IN (coffeeshout.profanity.domain.audit.NicknameAuditStatus.UNAUDITED, "
+            + "coffeeshout.profanity.domain.audit.NicknameAuditStatus.DEAD_LETTER)")
     Set<String> findNicknamesWithTerminalStatus(@Param("nicknames") Collection<String> nicknames);
 
     /**
@@ -44,7 +47,7 @@ public interface NicknameAuditJpaRepository extends Repository<NicknameAudit, Lo
     @Query("UPDATE NicknameAudit n SET n.attemptCount = n.attemptCount + 1 "
             + "WHERE n.id IN :ids "
             + "AND n.status = coffeeshout.profanity.domain.audit.NicknameAuditStatus.UNAUDITED")
-    void incrementAttemptCount(@Param("ids") Collection<Long> ids);
+    int incrementAttemptCount(@Param("ids") Collection<Long> ids);
 
     @Override
     @Modifying(clearAutomatically = true, flushAutomatically = true)

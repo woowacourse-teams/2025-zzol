@@ -2,6 +2,7 @@ package coffeeshout.profanity.infra.persistence.audit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.support.ServiceTest;
@@ -74,10 +75,50 @@ class NicknameAuditJpaRepositoryTest extends ServiceTest {
                     .isZero();
         }
 
+        @Test
+        void 이미_DEAD_LETTER인_행은_시도_횟수가_더_오르지_않는다() {
+            final NicknameAudit audit = auditRepository.save(new NicknameAudit("독닉네임"));
+            for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+                recordFailure(audit.getId());
+            }
+
+            final int updated = auditRepository.incrementAttemptCount(List.of(audit.getId()));
+
+            assertThat(updated).as("UNAUDITED인 행만 올린다.").isZero();
+        }
+
         /** 실패한 배치 하나를 기록하는 경로. {@code ProfanityAuditBatchProcessor}가 두 쿼리를 한 트랜잭션에서 부른다. */
         private void recordFailure(Long id) {
             auditRepository.incrementAttemptCount(List.of(id));
             auditRepository.markDeadLetterAtAttemptLimit(List.of(id), MAX_ATTEMPTS);
+        }
+    }
+
+    /**
+     * DEAD_LETTER는 검열을 못 끝낸 행이지 판정을 가진 행이 아니다. terminal로 세면 같은 닉네임의
+     * UNAUDITED가 "이미 검열됨"으로 오인돼 판정 대신 삭제된다.
+     */
+    @Nested
+    class findNicknamesWithTerminalStatus_판정_보유_판별 {
+
+        @Test
+        void DEAD_LETTER만_있는_닉네임은_판정을_가진_것으로_보지_않는다() {
+            final NicknameAudit audit = auditRepository.save(new NicknameAudit("독닉네임"));
+            audit.updateStatus(NicknameAuditStatus.DEAD_LETTER);
+            auditRepository.save(audit);
+
+            assertThat(auditRepository.findNicknamesWithTerminalStatus(List.of("독닉네임")))
+                    .isEmpty();
+        }
+
+        @Test
+        void 검열이_끝난_닉네임은_판정을_가진_것으로_본다() {
+            final NicknameAudit audit = auditRepository.save(new NicknameAudit("검열된닉"));
+            audit.complete(NicknameAuditStatus.CLEAN, AiConfidence.UNKNOWN, "기존 검열 완료");
+            auditRepository.save(audit);
+
+            assertThat(auditRepository.findNicknamesWithTerminalStatus(List.of("검열된닉")))
+                    .containsOnly("검열된닉");
         }
     }
 }

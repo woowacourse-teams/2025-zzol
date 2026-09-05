@@ -46,8 +46,10 @@ public interface NicknameAuditRepository {
      * 검열 호출이 실패한 배치 행들의 시도 횟수를 한 번에 올린다.
      *
      * <p>세지 않으면 파싱 실패를 일으키는 닉네임 하나가 회차마다 같은 실패를 되풀이한다.
+     *
+     * @return 갱신된 행 수. UNAUDITED인 행만 올리므로 넘긴 id 수보다 적을 수 있다
      */
-    void incrementAttemptCount(Collection<Long> ids);
+    int incrementAttemptCount(Collection<Long> ids);
 
     /**
      * 시도 횟수가 상한에 닿은 행을 DEAD_LETTER로 내린다. DEAD_LETTER는 UNAUDITED가 아니므로

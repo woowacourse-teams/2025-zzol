@@ -51,6 +51,7 @@ class ProfanityAuditBatchProcessorTest {
     private ProfanityWordManagementService profanityWordManagementService;
     private ApplicationEventPublisher eventPublisher;
     private TransactionTemplate transactionTemplate;
+    private SimpleMeterRegistry meterRegistry;
     private ProfanityAuditBatchProcessor processor;
 
     @BeforeEach
@@ -85,12 +86,13 @@ class ProfanityAuditBatchProcessorTest {
                 Duration.ofSeconds(120),
                 Duration.ofMinutes(10),
                 MAX_ATTEMPTS);
+        meterRegistry = new SimpleMeterRegistry();
         processor = new ProfanityAuditBatchProcessor(
                 auditRepository,
                 nicknameAuditor,
                 profanityWordManagementService,
                 eventPublisher,
-                new SimpleMeterRegistry(),
+                meterRegistry,
                 transactionTemplate,
                 new TextNormalizer(),
                 properties);
@@ -513,6 +515,21 @@ class ProfanityAuditBatchProcessorTest {
 
             assertThat(processed).isZero();
         }
+
+        @Test
+        void DEAD_LETTER로_내려간_행_수를_메트릭으로_남긴다() {
+            final NicknameAudit entity = new NicknameAudit("독닉네임");
+            given(nicknameAuditor.audit(anyList()))
+                    .willThrow(new InfrastructureException(
+                            NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED, "닉네임 검열 AI 응답 파싱 실패"));
+            given(auditRepository.markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS)))
+                    .willReturn(2);
+
+            processor.process(List.of(entity));
+
+            assertThat(meterRegistry.counter("nickname.audit.dead.lettered").count())
+                    .isEqualTo(2.0);
+        }
     }
 
     /**
@@ -569,6 +586,21 @@ class ProfanityAuditBatchProcessorTest {
 
             then(auditRepository).should(never()).deleteAll(any());
             then(auditRepository).should().save(entity);
+        }
+
+        @Test
+        void 폴백이_돌아도_판정_메트릭은_행마다_한_번만_오른다() {
+            final List<NicknameAudit> batch = List.of(new NicknameAudit("닉하나"), new NicknameAudit("닉둘"));
+            givenCleanResultsFor("닉하나", "닉둘");
+            givenBulkSaveFails();
+
+            processor.process(batch);
+
+            assertThat(meterRegistry
+                            .counter("nickname.audit.result", "status", NicknameAuditStatus.CLEAN.name())
+                            .count())
+                    .as("판정을 반영하는 자리에서 올리면 벌크 시도와 폴백에서 두 번 세어진다.")
+                    .isEqualTo(2.0);
         }
 
         private void givenCleanResultsFor(String... nicknames) {

@@ -157,8 +157,8 @@ public class ProfanityAuditService {
     }
 
     private List<NicknameAudit> readPage(int page) {
-        final Pageable pageable =
-                PageRequest.of(page, properties.batchSize(), Sort.by("createdAt").ascending());
+        final Pageable pageable = PageRequest.of(
+                page, properties.batchSize(), Sort.by("createdAt").ascending());
         return auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
     }
 }

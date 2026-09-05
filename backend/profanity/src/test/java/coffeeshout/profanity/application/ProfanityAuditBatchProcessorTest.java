@@ -76,7 +76,15 @@ class ProfanityAuditBatchProcessorTest {
         });
 
         final NicknameAuditProperties properties = new NicknameAuditProperties(
-                "test-key", "gemini-test", 0.85, 10, 20, 2, Duration.ofSeconds(120), Duration.ofMinutes(10), MAX_ATTEMPTS);
+                "test-key",
+                "gemini-test",
+                0.85,
+                10,
+                20,
+                2,
+                Duration.ofSeconds(120),
+                Duration.ofMinutes(10),
+                MAX_ATTEMPTS);
         processor = new ProfanityAuditBatchProcessor(
                 auditRepository,
                 nicknameAuditor,
@@ -457,9 +465,7 @@ class ProfanityAuditBatchProcessorTest {
             final ArgumentCaptor<Collection<Long>> ids = ArgumentCaptor.captor();
             then(auditRepository).should().incrementAttemptCount(ids.capture());
             then(auditRepository).should().markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS));
-            assertThat(ids.getValue())
-                    .as("실패한 배치 행만 세야 다른 행이 애먼 상한에 닿지 않는다.")
-                    .hasSize(batch.size());
+            assertThat(ids.getValue()).as("실패한 배치 행만 세야 다른 행이 애먼 상한에 닿지 않는다.").hasSize(batch.size());
         }
     }
 

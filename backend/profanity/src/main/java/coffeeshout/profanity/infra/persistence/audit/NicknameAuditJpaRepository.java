@@ -17,9 +17,11 @@ public interface NicknameAuditJpaRepository extends Repository<NicknameAudit, Lo
     @Modifying
     // attempt_count를 명시한다. 마이그레이션은 DEFAULT 0을 주지만, ddl-auto로 스키마를 만드는
     // 테스트·로컬에는 기본값이 없어 이 INSERT가 통째로 실패한다.
-    @Query(value = "INSERT INTO player_name_audit (player_name, status, attempt_count, created_at) "
-            + "VALUES (:nickname, 'UNAUDITED', 0, :createdAt) "
-            + "ON DUPLICATE KEY UPDATE id = id", nativeQuery = true)
+    @Query(
+            value = "INSERT INTO player_name_audit (player_name, status, attempt_count, created_at) "
+                    + "VALUES (:nickname, 'UNAUDITED', 0, :createdAt) "
+                    + "ON DUPLICATE KEY UPDATE id = id",
+            nativeQuery = true)
     void insertUnaudited(@Param("nickname") String nickname, @Param("createdAt") Instant createdAt);
 
     @Override

@@ -52,7 +52,17 @@ public class ProfanityAuditBatchProcessor {
         final List<String> nicknames =
                 batch.stream().map(NicknameAudit::getNickname).distinct().toList();
 
-        final List<NicknameAuditResult> results = nicknameAuditor.audit(nicknames);
+        final List<NicknameAuditResult> results;
+        try {
+            results = nicknameAuditor.audit(nicknames);
+        } catch (RuntimeException e) {
+            // 파싱 실패·빈 응답은 InfrastructureException이고 resilience4j ignore 목록이라
+            // (resilience4j.yml의 geminiAudit.ignore-exceptions) 재시도 없이 여기까지 올라온다.
+            // 잡지 않으면 배치 하나가 회차를 끝내고 남은 적체가 통째로 다음 회차까지 밀린다.
+            batchSkippedCounter.increment();
+            log.warn("배치 검열 호출 실패로 {}건 skip — 회차는 다음 배치로 넘어간다", batch.size(), e);
+            return 0;
+        }
 
         if (results.isEmpty()) {
             batchSkippedCounter.increment();

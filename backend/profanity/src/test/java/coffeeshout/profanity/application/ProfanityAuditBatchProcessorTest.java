@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
+import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
@@ -17,6 +18,7 @@ import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
 import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
+import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
@@ -408,6 +410,30 @@ class ProfanityAuditBatchProcessorTest {
             final int processed = processor.process(List.of(first, second));
 
             assertThat(processed).as("0을 돌려줘야 드레인 루프가 같은 페이지 반복을 멈춘다.").isZero();
+        }
+    }
+
+    /**
+     * 배치 하나의 검열 호출 실패가 회차를 끝내지 않아야 한다.
+     *
+     * <p>Gemini 응답 파싱 실패는 {@link InfrastructureException}인데 resilience4j ignore 목록이라
+     * ({@code resilience4j.yml}의 geminiAudit.ignore-exceptions) 재시도 없이 그대로 올라온다.
+     * 여기서 잡지 않으면 남은 적체가 통째로 다음 회차까지 밀린다.
+     */
+    @Nested
+    class 검열_호출_실패 {
+
+        @Test
+        void 검열_호출이_예외로_실패해도_예외를_전파하지_않고_0건으로_보고한다() {
+            final NicknameAudit entity = new NicknameAudit("닉네임");
+            given(nicknameAuditor.audit(anyList()))
+                    .willThrow(new InfrastructureException(
+                            NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED, "닉네임 검열 AI 응답 파싱 실패"));
+
+            final int processed = processor.process(List.of(entity));
+
+            assertThat(processed).isZero();
+            then(auditRepository).should(never()).saveAll(any());
         }
     }
 }

@@ -162,21 +162,36 @@ class ProfanityAuditServiceTest {
                     .isLessThanOrEqualTo(MAX_RUN_SECONDS + SECONDS_PER_BATCH);
         }
 
+        /**
+         * 진행이 없는 배치를 만나면 같은 페이지를 다시 읽지 않고 그 다음 페이지로 넘어가야 한다.
+         *
+         * <p>같은 페이지를 다시 읽으면 같은 행이 돌아와 같은 실패를 무한히 되풀이한다. 그렇다고 회차를
+         * 끝내버리면 검열 호출이 실패한 배치 하나가 남은 적체 전부를 다음 회차까지 붙잡는다(#1759).
+         * 커서를 앞으로 밀면 둘 다 피한다. 빈 페이지를 만나면 회차가 끝난다.
+         */
         @Test
-        void 진행이_없으면_같은_페이지를_반복해_읽지_않는다() {
+        void 진행이_없는_배치는_건너뛰고_다음_페이지로_넘어간다() {
             final StubClock clock = new StubClock(Instant.parse("2026-09-03T00:00:00Z"));
             final ProfanityAuditService target = productionSizedService(clock);
+            final List<Integer> readPages = new ArrayList<>();
 
             given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
-                    .willReturn((long) PRODUCTION_BATCH_SIZE);
+                    .willReturn((long) PRODUCTION_BATCH_SIZE * 2);
             given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
-                    .willAnswer(invocation -> batchOf(PRODUCTION_BATCH_SIZE));
-            // 배치 전체가 판정을 못 받아 UNAUDITED로 남은 상황. 처리 건수가 0이면 다시 읽어봐야 같은 행이다.
+                    .willAnswer(invocation -> {
+                        final Pageable pageable = invocation.getArgument(1);
+                        readPages.add(pageable.getPageNumber());
+                        return pageable.getPageNumber() < 2 ? batchOf(PRODUCTION_BATCH_SIZE) : List.of();
+                    });
+            // 배치가 통째로 UNAUDITED로 남은 상황. 검열 호출 실패와 판정 짝짓기 실패가 여기로 모인다.
             given(batchProcessor.process(any())).willReturn(0);
 
             target.auditPending();
 
-            then(batchProcessor).should(times(1)).process(any());
+            assertThat(readPages)
+                    .as("같은 페이지를 다시 읽으면 무한 반복이고, 커서를 안 밀면 회차가 첫 배치에서 끝난다.")
+                    .containsExactly(0, 1, 2);
+            then(batchProcessor).should(times(2)).process(any());
         }
 
         private ProfanityAuditService productionSizedService(Clock clock) {

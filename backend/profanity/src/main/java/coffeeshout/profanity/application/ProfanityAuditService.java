@@ -121,10 +121,8 @@ public class ProfanityAuditService {
         log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
 
         final Instant deadline = clock.instant().plus(properties.maxRunDuration());
-        final Pageable pageable =
-                PageRequest.of(0, properties.batchSize(), Sort.by("createdAt").ascending());
-        List<NicknameAudit> batch =
-                auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+        int page = 0;
+        List<NicknameAudit> batch = readPage(page);
         int processedTotal = 0;
 
         while (!batch.isEmpty()) {
@@ -134,13 +132,11 @@ public class ProfanityAuditService {
                 log.warn("종료 요청으로 닉네임 검열 회차 중단 — 누적 {}건", processedTotal);
                 break;
             }
-            // processed는 실제로 UNAUDITED에서 빠져나간 행 수다. 진행이 없으면 같은 0페이지를 영원히
-            // 다시 읽게 되므로 0이면 멈춘다.
-            int processed = batchProcessor.process(batch);
+            final int processed = batchProcessor.process(batch);
             processedTotal += processed;
             log.info("닉네임 검열 진행: 이번 배치 {}건 중 {}건 처리, 누적 {}건", batch.size(), processed, processedTotal);
 
-            if (processed == 0 || batch.size() < properties.batchSize()) {
+            if (batch.size() < properties.batchSize()) {
                 break;
             }
             if (!clock.instant().isBefore(deadline)) {
@@ -150,9 +146,19 @@ public class ProfanityAuditService {
                         processedTotal);
                 break;
             }
-            batch = auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+            // processed는 실제로 UNAUDITED에서 빠져나간 행 수다. 진행이 없는데 같은 페이지를 다시 읽으면
+            // 같은 행이 돌아와 같은 실패를 무한히 되풀이한다. 커서를 한 칸 밀어 그 배치를 이번 회차에서
+            // 건너뛴다. 진행이 있었으면 처리된 행이 스캔에서 빠져 뒤가 앞으로 당겨지므로 0으로 되돌린다.
+            page = processed == 0 ? page + 1 : 0;
+            batch = readPage(page);
         }
 
         log.info("닉네임 검열 완료: 총 {}건 처리", processedTotal);
+    }
+
+    private List<NicknameAudit> readPage(int page) {
+        final Pageable pageable =
+                PageRequest.of(page, properties.batchSize(), Sort.by("createdAt").ascending());
+        return auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
     }
 }

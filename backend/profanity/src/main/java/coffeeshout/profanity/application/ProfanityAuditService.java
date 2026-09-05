@@ -8,10 +8,14 @@ import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,12 +50,21 @@ public class ProfanityAuditService {
     private final MeterRegistry meterRegistry;
     private final Clock clock;
 
+    /** 회차 끝 로그에 찍는 구간. 회차 시작과 끝의 타이머 누적값 차이로 이번 회차 몫만 뽑는다. */
+    private static final List<String> PHASES = List.of("fetch", "audit", "settle", "block");
+
     private final AtomicLong unauditedQueueDepth = new AtomicLong(0);
+
+    private Timer fetchPhaseTimer;
 
     @PostConstruct
     void initMetrics() {
         Gauge.builder("nickname.audit.unaudited.queue", unauditedQueueDepth, AtomicLong::get)
                 .description("스케줄러 실행 시점의 UNAUDITED 닉네임 적체량")
+                .register(meterRegistry);
+        fetchPhaseTimer = Timer.builder(ProfanityAuditBatchProcessor.PHASE_TIMER)
+                .description(ProfanityAuditBatchProcessor.PHASE_TIMER_DESCRIPTION)
+                .tag("phase", "fetch")
                 .register(meterRegistry);
     }
 
@@ -120,6 +133,7 @@ public class ProfanityAuditService {
         unauditedQueueDepth.set(initialQueueSize);
         log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
 
+        final Map<String, Long> phaseBefore = phaseTotalMillis();
         final Instant deadline = clock.instant().plus(properties.maxRunDuration());
         int page = 0;
         List<NicknameAudit> batch = readPage(page);
@@ -161,12 +175,34 @@ public class ProfanityAuditService {
             batch = readPage(page);
         }
 
-        log.info("닉네임 검열 완료: 총 {}건 처리", processedTotal);
+        log.info("닉네임 검열 완료: 총 {}건 처리, 구간별 소요(ms) {}", processedTotal, phaseElapsedMillis(phaseBefore));
     }
 
     private List<NicknameAudit> readPage(int page) {
-        final Pageable pageable = PageRequest.of(
-                page, properties.batchSize(), Sort.by("createdAt").ascending());
-        return auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+        return fetchPhaseTimer.record(() -> {
+            final Pageable pageable = PageRequest.of(
+                    page, properties.batchSize(), Sort.by("createdAt").ascending());
+            return auditRepository.findByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED, pageable);
+        });
+    }
+
+    private Map<String, Long> phaseTotalMillis() {
+        final Map<String, Long> totals = new LinkedHashMap<>();
+        PHASES.forEach(phase -> totals.put(phase, totalMillis(phase)));
+        return totals;
+    }
+
+    private Map<String, Long> phaseElapsedMillis(Map<String, Long> before) {
+        final Map<String, Long> elapsed = new LinkedHashMap<>();
+        before.forEach((phase, millis) -> elapsed.put(phase, totalMillis(phase) - millis));
+        return elapsed;
+    }
+
+    private long totalMillis(String phase) {
+        final Timer timer = meterRegistry
+                .find(ProfanityAuditBatchProcessor.PHASE_TIMER)
+                .tag("phase", phase)
+                .timer();
+        return timer == null ? 0L : (long) timer.totalTime(TimeUnit.MILLISECONDS);
     }
 }

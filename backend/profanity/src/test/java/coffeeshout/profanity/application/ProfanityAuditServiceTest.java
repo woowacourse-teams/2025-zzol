@@ -33,6 +33,7 @@ class ProfanityAuditServiceTest {
     private NicknameAuditRepository auditRepository;
     private ProfanityAuditBatchProcessor batchProcessor;
     private ProfanityWordManagementService profanityWordManagementService;
+    private SimpleMeterRegistry meterRegistry;
     private ProfanityAuditService service;
 
     @BeforeEach
@@ -42,12 +43,13 @@ class ProfanityAuditServiceTest {
         profanityWordManagementService = mock(ProfanityWordManagementService.class);
 
         final NicknameAuditProperties properties = NicknameAuditPropertiesFixture.회차(10, Duration.ofMinutes(10), 3);
+        meterRegistry = new SimpleMeterRegistry();
         service = new ProfanityAuditService(
                 auditRepository,
                 batchProcessor,
                 profanityWordManagementService,
                 properties,
-                new SimpleMeterRegistry(),
+                meterRegistry,
                 Clock.systemDefaultZone());
         service.initMetrics();
     }
@@ -88,6 +90,24 @@ class ProfanityAuditServiceTest {
 
     @Nested
     class auditPending_배치_검열 {
+
+        @Test
+        void 회차를_돌면_fetch_구간이_기록된다() {
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn(0L);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willReturn(List.of());
+
+            service.auditPending();
+
+            assertThat(meterRegistry
+                            .get(ProfanityAuditBatchProcessor.PHASE_TIMER)
+                            .tag("phase", "fetch")
+                            .timer()
+                            .count())
+                    .as("페이지 조회가 안 잡히면 회차 로그가 fetch를 0으로 보고한다.")
+                    .isPositive();
+        }
 
         @Test
         void UNAUDITED_닉네임이_없으면_배치_처리를_하지_않는다() {

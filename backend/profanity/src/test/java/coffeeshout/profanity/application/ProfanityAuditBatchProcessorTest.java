@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -608,6 +609,38 @@ class ProfanityAuditBatchProcessorTest {
             willThrow(new DataIntegrityViolationException("uq_player_name_audit_name_status 충돌"))
                     .given(auditRepository)
                     .saveAll(any());
+        }
+    }
+
+    /**
+     * 구간별 타이머가 없으면 회차가 느릴 때 어디가 느린지 추측으로 답하게 된다.
+     * {@code settle}은 자동 차단을 트랜잭션 안에서 돌리므로 {@code block}을 안에 포함한다.
+     */
+    @Nested
+    class 구간_타이머 {
+
+        @Test
+        void FLAGGED_배치를_처리하면_audit_settle_block_구간이_모두_기록된다() {
+            final NicknameAudit entity = new NicknameAudit("욕설닉네임");
+            given(nicknameAuditor.audit(List.of("욕설닉네임")))
+                    .willReturn(List.of(new NicknameAuditResult(
+                            "욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")));
+
+            processor.process(List.of(entity));
+
+            final SoftAssertions softly = new SoftAssertions();
+            List.of("audit", "settle", "block").forEach(phase -> softly.assertThat(구간_호출수(phase))
+                    .as("%s 구간이 안 잡히면 회차 로그가 그 구간을 0으로 보고한다.", phase)
+                    .isPositive());
+            softly.assertAll();
+        }
+
+        private long 구간_호출수(String phase) {
+            return meterRegistry
+                    .get(ProfanityAuditBatchProcessor.PHASE_TIMER)
+                    .tag("phase", phase)
+                    .timer()
+                    .count();
         }
     }
 }

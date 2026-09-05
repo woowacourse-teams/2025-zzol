@@ -43,3 +43,6 @@ nickname-audit:
   max-attempts: 3                      # 한 행이 검열 호출 실패를 견디는 횟수. 닿으면 DEAD_LETTER가 되어 스캔에서 빠진다.
   request-timeout: 120s                # Gemini HTTP 타임아웃. 없으면 응답 없는 호출이 스케줄러 스레드를 무기한 점유한다.
                                        # batch-size 를 올리면 응답 생성 시간도 늘어나므로 함께 올린다.
+  stub:                                # local/test 프로파일의 NoOpNicknameAuditor 동작. 아래 기본값이면 지연 0에 전부 CLEAN.
+    latency: 0s                        # 호출 하나가 흉내 낼 지연. 0으로 두면 LLM이 무한히 빠를 때의 처리량을 잰다.
+    flagged-ratio: 0                    # FLAGGED로 판정할 비율(0~1). 올리면 자동 차단·사전 INSERT·트라이 재빌드까지 실제로 탄다.

@@ -10,10 +10,10 @@ import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
+import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -24,8 +24,7 @@ import org.springframework.data.domain.PageRequest;
 class GeminiNicknameAuditorConnectivityTest {
 
     private static final String API_KEY = System.getenv("GEMINI_API_KEY");
-    private static final NicknameAuditProperties PROPERTIES = new NicknameAuditProperties(
-            API_KEY, "gemini-3.5-flash", 0.85, 100, 20, 2, Duration.ofSeconds(120), Duration.ofMinutes(10), 3);
+    private static final NicknameAuditProperties PROPERTIES = NicknameAuditPropertiesFixture.API_키(API_KEY);
 
     private GeminiNicknameAuditor auditor;
 

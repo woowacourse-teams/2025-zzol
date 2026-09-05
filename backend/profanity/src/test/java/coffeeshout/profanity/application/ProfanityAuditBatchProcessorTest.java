@@ -24,6 +24,7 @@ import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
+import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.util.Arrays;
@@ -76,16 +77,8 @@ class ProfanityAuditBatchProcessorTest {
             protected void doRollback(DefaultTransactionStatus status) {}
         });
 
-        final NicknameAuditProperties properties = new NicknameAuditProperties(
-                "test-key",
-                "gemini-test",
-                0.85,
-                10,
-                20,
-                2,
-                Duration.ofSeconds(120),
-                Duration.ofMinutes(10),
-                MAX_ATTEMPTS);
+        final NicknameAuditProperties properties =
+                NicknameAuditPropertiesFixture.회차(10, Duration.ofMinutes(10), MAX_ATTEMPTS);
         meterRegistry = new SimpleMeterRegistry();
         processor = new ProfanityAuditBatchProcessor(
                 auditRepository,

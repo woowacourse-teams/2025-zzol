@@ -2,6 +2,7 @@ package coffeeshout.profanity.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import com.google.genai.types.HttpOptions;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
@@ -17,17 +18,12 @@ class NicknameAuditConfigTest {
 
     @Test
     void 요청_타임아웃이_밀리초로_변환되어_설정된다() {
-        final NicknameAuditProperties properties = propertiesWithTimeout(Duration.ofSeconds(90));
+        final NicknameAuditProperties properties = NicknameAuditPropertiesFixture.요청_타임아웃(Duration.ofSeconds(90));
 
         final HttpOptions httpOptions = NicknameAuditConfig.httpOptions(properties);
 
         assertThat(httpOptions.timeout())
                 .as("HttpOptions.timeout 은 밀리초 단위다. 초 단위 값을 그대로 넣으면 90ms 가 되어 모든 호출이 즉시 끊긴다.")
                 .contains(90_000);
-    }
-
-    private NicknameAuditProperties propertiesWithTimeout(Duration timeout) {
-        return new NicknameAuditProperties(
-                "api-key", "gemini-3.5-flash", 0.85, 100, 20, 2, timeout, Duration.ofMinutes(10), 3);
     }
 }

@@ -129,9 +129,7 @@ public class ProfanityAuditService {
             leaseTime = LOCK_LEASE_MILLIS,
             doneTtl = LOCK_DONE_TTL_MILLIS)
     public void auditPending() {
-        final long initialQueueSize = auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED);
-        unauditedQueueDepth.set(initialQueueSize);
-        log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
+        recordQueueDepth();
 
         final Map<String, Long> phaseBefore = phaseTotalMillis();
         final Instant deadline = clock.instant().plus(properties.maxRunDuration());
@@ -176,6 +174,12 @@ public class ProfanityAuditService {
         }
 
         log.info("닉네임 검열 완료: 총 {}건 처리, 구간별 소요(ms) {}", processedTotal, phaseElapsedMillis(phaseBefore));
+    }
+
+    private void recordQueueDepth() {
+        final long initialQueueSize = auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED);
+        unauditedQueueDepth.set(initialQueueSize);
+        log.info("닉네임 검열 시작: UNAUDITED 적체량 {}건", initialQueueSize);
     }
 
     private List<NicknameAudit> readPage(int page) {

@@ -82,6 +82,9 @@ public class NoOpNicknameAuditor implements NicknameAuditor {
         return List.of(run.substring(start, start + 2));
     }
 
+    // 스텁이 HTTP 호출 시간을 흉내 내는 자리라 호출 스레드를 실제로 붙잡아야 한다. 스케줄러로 미루면
+    // 회차가 기다리지 않고 지나가 지연을 준 의미가 없어진다.
+    @SuppressWarnings("PMD.NoThreadSleep")
     private void sleepStubLatency() {
         if (latency.isZero() || latency.isNegative()) {
             return;

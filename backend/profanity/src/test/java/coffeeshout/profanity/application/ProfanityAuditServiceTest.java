@@ -194,6 +194,39 @@ class ProfanityAuditServiceTest {
             then(batchProcessor).should(times(2)).process(any());
         }
 
+        /**
+         * 진행이 있으면 커서를 그 자리에 둔다. 처리된 행이 스캔에서 빠지면서 뒷행이 같은 페이지 인덱스로
+         * 당겨지므로 되감을 이유가 없다.
+         *
+         * <p>0으로 되감으면 앞 페이지의 실패 배치를 성공 배치마다 다시 만난다. Gemini를 그만큼 다시 부르고
+         * 시도 횟수를 한 회차 안에 다 태워 DEAD_LETTER까지 내려간다. 커서를 두면 실패 배치를 회차당
+         * 한 번만 만나 세 회차에 걸쳐 판정한다.
+         */
+        @Test
+        void 진행이_있으면_커서를_되감지_않아_건너뛴_배치를_다시_만나지_않는다() {
+            final StubClock clock = new StubClock(Instant.parse("2026-09-03T00:00:00Z"));
+            final ProfanityAuditService target = productionSizedService(clock);
+            final List<Integer> readPages = new ArrayList<>();
+            final AtomicInteger reads = new AtomicInteger();
+
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn((long) PRODUCTION_BATCH_SIZE * 2);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willAnswer(invocation -> {
+                        final Pageable pageable = invocation.getArgument(1);
+                        readPages.add(pageable.getPageNumber());
+                        return reads.getAndIncrement() < 2 ? batchOf(PRODUCTION_BATCH_SIZE) : List.of();
+                    });
+            // 페이지 0은 통째로 실패하고, 페이지 1은 부분 진행이다. 남은 행은 같은 페이지에 다시 잡힌다.
+            given(batchProcessor.process(any())).willReturn(0, PRODUCTION_BATCH_SIZE - 40);
+
+            target.auditPending();
+
+            assertThat(readPages)
+                    .as("0으로 되감으면 페이지 0의 실패 배치를 다시 읽어 Gemini를 다시 부른다.")
+                    .containsExactly(0, 1, 1);
+        }
+
         private ProfanityAuditService productionSizedService(Clock clock) {
             final NicknameAuditProperties production = new NicknameAuditProperties(
                     "api-key",

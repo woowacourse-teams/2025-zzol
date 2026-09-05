@@ -43,6 +43,16 @@ public final class NicknameAuditPropertiesFixture {
             int maxAttempts,
             Stub stub) {
         return new NicknameAuditProperties(
-                geminiApiKey, 모델, 0.85, batchSize, 20, 2, requestTimeout, maxRunDuration, maxAttempts, stub);
+                geminiApiKey,
+                모델,
+                0.85,
+                batchSize,
+                20,
+                2,
+                requestTimeout,
+                maxRunDuration,
+                maxAttempts,
+                "0 0 0/12 * * *",
+                stub);
     }
 }

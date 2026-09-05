@@ -54,6 +54,9 @@ outbox:
   relay:
     delay: 5000  # 로컬에서는 5초마다 폴링 (기본값 500ms)
 
+nickname-audit:
+  cron: "0 */5 * * * *"  # 로컬에서 12시간을 기다리지 않고 회차를 돌려보려고 5분으로 당긴다
+
 logging:
   level:
     coffeeshout: DEBUG

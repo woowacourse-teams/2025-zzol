@@ -9,3 +9,4 @@ nickname-audit:
   batch-size: 10
   feedback-injection-threshold: 20
   min-term-length: 2
+  cron: "0 0 0/12 * * *"   # @Scheduled 플레이스홀더는 @DefaultValue 를 못 본다. 값이 없으면 컨텍스트가 안 뜬다.

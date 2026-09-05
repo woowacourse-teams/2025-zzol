@@ -21,6 +21,9 @@ import org.springframework.validation.annotation.Validated;
  *                       {@code ProfanityAuditService.LOCK_LEASE_MILLIS}보다 반드시 짧아야 한다.
  * @param maxAttempts    한 행이 검열 호출 실패를 견디는 횟수. 여기 닿으면 DEAD_LETTER가 되어 UNAUDITED 스캔에서
  *                       빠진다. 늘리면 되풀이 실패하는 행 하나가 회차마다 Gemini 호출을 그만큼 더 태운다.
+ * @param cron           검열 회차 주기. {@code @Scheduled}는 컴파일 상수만 받으므로 어노테이션에는 이 프로퍼티를
+ *                       가리키는 문자열을 쓴다. 값을 여기 두는 이유는 local에서 12시간을 기다리지 않고 회차를
+ *                       돌려보기 위해서다.
  * @param stub           local·test 프로파일에서 Gemini 대신 도는 {@code NoOpNicknameAuditor}의 동작.
  *                       기본값이 지연 0에 전부 CLEAN이라 값을 주지 않으면 지금까지와 똑같이 움직인다.
  */
@@ -41,6 +44,8 @@ public record NicknameAuditProperties(
         Duration maxRunDuration,
 
         @DefaultValue("3") @Positive int maxAttempts,
+
+        @NotBlank String cron,
 
         @DefaultValue @Valid @NotNull Stub stub) {
 

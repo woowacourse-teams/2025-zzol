@@ -1,6 +1,7 @@
 package coffeeshout.profanity.fixture;
 
 import coffeeshout.profanity.config.NicknameAuditProperties;
+import coffeeshout.profanity.config.NicknameAuditProperties.Seed;
 import coffeeshout.profanity.config.NicknameAuditProperties.Stub;
 import java.time.Duration;
 
@@ -35,6 +36,10 @@ public final class NicknameAuditPropertiesFixture {
         return of("api-key", 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, new Stub(latency, flaggedRatio));
     }
 
+    public static NicknameAuditProperties 적재(int seedCount) {
+        return of("api-key", 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(seedCount));
+    }
+
     private static NicknameAuditProperties of(
             String geminiApiKey,
             int batchSize,
@@ -42,6 +47,17 @@ public final class NicknameAuditPropertiesFixture {
             Duration maxRunDuration,
             int maxAttempts,
             Stub stub) {
+        return of(geminiApiKey, batchSize, requestTimeout, maxRunDuration, maxAttempts, stub, new Seed(0));
+    }
+
+    private static NicknameAuditProperties of(
+            String geminiApiKey,
+            int batchSize,
+            Duration requestTimeout,
+            Duration maxRunDuration,
+            int maxAttempts,
+            Stub stub,
+            Seed seed) {
         return new NicknameAuditProperties(
                 geminiApiKey,
                 모델,
@@ -53,6 +69,7 @@ public final class NicknameAuditPropertiesFixture {
                 maxRunDuration,
                 maxAttempts,
                 "0 0 0/12 * * *",
+                seed,
                 stub);
     }
 }

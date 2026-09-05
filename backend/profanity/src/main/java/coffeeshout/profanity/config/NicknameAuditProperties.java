@@ -3,9 +3,11 @@ package coffeeshout.profanity.config;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.time.Duration;
 import org.hibernate.validator.constraints.time.DurationMin;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -24,6 +26,7 @@ import org.springframework.validation.annotation.Validated;
  * @param cron           검열 회차 주기. {@code @Scheduled}는 컴파일 상수만 받으므로 어노테이션에는 이 프로퍼티를
  *                       가리키는 문자열을 쓴다. 값을 여기 두는 이유는 local에서 12시간을 기다리지 않고 회차를
  *                       돌려보기 위해서다.
+ * @param seed           local 프로파일에서 미검열 닉네임을 몇 건 적재할지. 측정용이라 기본값은 0이다.
  * @param stub           local·test 프로파일에서 Gemini 대신 도는 {@code NoOpNicknameAuditor}의 동작.
  *                       기본값이 지연 0에 전부 CLEAN이라 값을 주지 않으면 지금까지와 똑같이 움직인다.
  */
@@ -47,7 +50,20 @@ public record NicknameAuditProperties(
 
         @NotBlank String cron,
 
+        @DefaultValue @Valid @NotNull Seed seed,
+
         @DefaultValue @Valid @NotNull Stub stub) {
+
+    /**
+     * local 전용 적재 설정.
+     *
+     * @param count 합성 UNAUDITED 닉네임을 몇 건 넣을지. 0이면 아무것도 안 넣어 지금까지와 같다.
+     *              상한은 닉네임 칼럼이 10자라서 정했다. 접두사 두 자에 음절 두 자를 붙이고 나면 일련번호에
+     *              여섯 자리가 남는다.
+     */
+    public record Seed(
+            @DefaultValue("0") @PositiveOrZero @Max(1_000_000)
+            int count) {}
 
     /**
      * 스텁 검열기의 동작. LLM을 빼고 파이프라인 내부 병목만 재려고 둔다.

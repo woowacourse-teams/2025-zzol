@@ -75,8 +75,10 @@ jobs:
           npm run build
           # 라우트별 정적 HTML·sitemap 이 실제로 생성됐는지 확인한다 (#1710).
           # 빠지면 CloudFront 가 SPA fallback 으로 홈 HTML 을 주고 색인이 다시 홈으로 합쳐진다.
-          grep -q 'canonical" href="https://www.zzol.site/games/card-game"' dist/games/card-game/index.html
-          grep -q 'name="robots" content="noindex' dist/404/index.html
+          # 속성 따옴표는 있어도 없어도 통과시킨다 — webpack 5.110 부터 production 빌드가 HTML 을 자체 압축하며
+          # 불필요한 따옴표를 지운다(webpack/webpack#21841). 따옴표를 전제하면 minor 업데이트마다 CI 가 빨개진다.
+          grep -qE 'canonical"? href="?https://www.zzol.site/games/card-game["> ]' dist/games/card-game/index.html
+          grep -qE 'name="?robots"? content="?noindex' dist/404/index.html
           # 기대 개수도 pages.json 에서 뽑는다 — 숫자를 여기 적으면 페이지를 늘릴 때마다 CI 만 빨개진다.
           # node -p 대신 stdout.write 를 쓴다 — node -p 는 TTY 에서 숫자에 ANSI 색을 입혀 test 가 깨진다.
           test "$(grep -c '<loc>' dist/sitemap.xml)" -eq "$(node -e \

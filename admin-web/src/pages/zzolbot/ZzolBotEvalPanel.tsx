@@ -82,7 +82,9 @@ export function ZzolBotEvalPanel() {
         accessorKey: 'startedAt',
         header: '시작',
         meta: { width: '9rem' },
-        cell: (c) => <span className="tabular-nums text-ink-secondary">{String(c.getValue())}</span>,
+        cell: (c) => (
+          <span className="tabular-nums text-ink-secondary">{String(c.getValue())}</span>
+        ),
       },
     ],
     [],
@@ -95,7 +97,7 @@ export function ZzolBotEvalPanel() {
   return (
     <div className="flex flex-col gap-4">
       {/* 표보다 위에 둔다. 이 화면에 들어오는 이유가 "좋아졌나"이고, 그 답이 여기 있다.
-        * 점이 하나뿐이면 선이 안 그려지므로 둘 이상일 때만 낸다. */}
+       * 점이 하나뿐이면 선이 안 그려지므로 둘 이상일 때만 낸다. */}
       {finishedRuns.length >= 2 && (
         <Card>
           <CardHeader
@@ -137,7 +139,10 @@ export function ZzolBotEvalPanel() {
             description={detail.data ? `${detail.data.results.length}개 시나리오` : '불러오는 중'}
           />
           {detail.isError ? (
-            <ErrorState message={(detail.error as Error).message} onRetry={() => detail.refetch()} />
+            <ErrorState
+              message={(detail.error as Error).message}
+              onRetry={() => detail.refetch()}
+            />
           ) : (
             <DataTable
               columns={RESULT_COLUMNS}
@@ -224,6 +229,12 @@ const RESULT_COLUMNS: ColumnDef<EvalResult, unknown>[] = [
  * <p>409 를 빨간 실패로 보여주지 않는다. 잘못 누른 것이 아니라 이미 돌고 있다는 뜻이고,
  * 사용자가 할 일은 기다리는 것뿐이다.
  */
+/**
+ * 서버의 {@code ScenarioKind} 와 같은 값이어야 한다. 이름은 {@code labels.ts} 가 붙인다.
+ * 목록 열과 같은 표를 쓰므로 고르는 값과 찍히는 이름이 어긋날 자리가 없다.
+ */
+const SCENARIO_KINDS = ['CHAT', 'MONITOR'] as const;
+
 function StartRunForm() {
   const [label, setLabel] = useState('');
   const [kind, setKind] = useState('');
@@ -253,6 +264,10 @@ function StartRunForm() {
         aria-label="실행 라벨"
         className="w-44"
       />
+      {/* 여기 값은 시나리오의 <b>종류</b>(무엇을 채점하는가)이지 출처(어디서 왔는가)가
+       * 아니다. 한때 출처 값(MANUAL, RECORDED)을 보내고 있었고, 그러면 서버가 kind 로
+       * 읽다가 "알 수 없는 시나리오 kind" 로 거절해 실행 자체가 안 됐다. 두 축이 직교라
+       * 이름이 비슷해도 섞이면 안 된다. */}
       <Select
         value={kind}
         onChange={(event) => setKind(event.target.value)}
@@ -260,8 +275,11 @@ function StartRunForm() {
         className="w-28"
       >
         <option value="">전체</option>
-        <option value="MANUAL">직접 등록</option>
-        <option value="RECORDED">대화 기록</option>
+        {SCENARIO_KINDS.map((value) => (
+          <option key={value} value={value}>
+            {evalKindLabel(value)}
+          </option>
+        ))}
       </Select>
       <Button type="submit" size="sm" disabled={label.trim() === '' || start.isPending}>
         실행
@@ -286,13 +304,17 @@ function ScenarioCard({ scenarios }: { scenarios: ReturnType<typeof useEvalScena
       {
         accessorKey: 'question',
         header: '질문',
-        cell: (c) => <span className="line-clamp-2 text-xs text-ink-secondary">{String(c.getValue())}</span>,
+        cell: (c) => (
+          <span className="line-clamp-2 text-xs text-ink-secondary">{String(c.getValue())}</span>
+        ),
       },
       {
         accessorKey: 'sourceType',
         header: '출처',
         meta: { width: '8rem' },
-        cell: (c) => <span className="text-xs text-ink-muted">{evalSourceLabel(String(c.getValue()))}</span>,
+        cell: (c) => (
+          <span className="text-xs text-ink-muted">{evalSourceLabel(String(c.getValue()))}</span>
+        ),
       },
       {
         id: 'actions',

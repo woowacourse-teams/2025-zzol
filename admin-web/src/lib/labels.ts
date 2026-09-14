@@ -114,6 +114,8 @@ const EVAL_KIND: Record<string, string> = {
 const EVAL_SOURCE: Record<string, string> = {
   MANUAL: '손으로 등록',
   RECORDED: '실환경 녹화',
+  // 서버 enum 에 있는데 여기 빠져 있어 목록의 출처 열에 영문이 그대로 찍혔다.
+  POSTMORTEM: '장애 회고',
 };
 
 /**

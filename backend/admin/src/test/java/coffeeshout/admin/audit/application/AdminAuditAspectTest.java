@@ -9,8 +9,15 @@ import static org.mockito.Mockito.never;
 import coffeeshout.admin.account.domain.AdminEmail;
 import coffeeshout.admin.audit.domain.AdminAuditResult;
 import coffeeshout.admin.auth.domain.AdminPrincipal;
+import coffeeshout.admin.ipblock.ui.AdminIpBlockController;
+import coffeeshout.patchnote.ui.AdminPatchNoteController;
+import coffeeshout.report.ui.AdminReportController;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,6 +30,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -82,6 +90,51 @@ class AdminAuditAspectTest {
         return new StubJoinPoint(() -> {
             throw error;
         });
+    }
+
+    /**
+     * 포인트컷이 어느 컨트롤러까지 보는지.
+     *
+     * <p>어드바이스 본문만 테스트하면 이 층이 통째로 빈다. 실제로 {@code within(coffeeshout.admin..*)}
+     * 가 걸려 있어서 신고, 패치노트, ZzolBot 의 조치가 감사 로그에 남지 않았는데, 본문
+     * 테스트는 전부 통과하고 있었다. 대상을 고르는 식을 <b>애너테이션에서 직접 읽어</b> 건다.
+     */
+    @Nested
+    class 대상_선정 {
+
+        /**
+         * 메서드 단위로 본다. {@code @within} 의 클래스 필터는 넉넉하게 참을 돌려줄 때가
+         * 있어서, 클래스 필터만 보면 잡지 않는 것도 잡는다고 나온다.
+         */
+        private static boolean advises(Class<?> type) throws NoSuchMethodException {
+            final Around around = AdminAuditAspect.class
+                    .getMethod("recordWrite", ProceedingJoinPoint.class)
+                    .getAnnotation(Around.class);
+            final AspectJExpressionPointcut expression = new AspectJExpressionPointcut();
+            expression.setExpression(around.value());
+
+            return Arrays.stream(type.getDeclaredMethods())
+                    .filter(method -> Modifier.isPublic(method.getModifiers()))
+                    .anyMatch(method -> expression.matches(method, type));
+        }
+
+        @ParameterizedTest
+        @ValueSource(
+                classes = {AdminIpBlockController.class, AdminReportController.class, AdminPatchNoteController.class})
+        void 관리자_API_컨트롤러는_패키지와_무관하게_잡는다(Class<?> controller) throws Exception {
+            // 뒤의 둘은 coffeeshout.admin 밖에 있다. 무엇을 남길지는 패키지가 아니라 주소가
+            // 정한다. 패키지로 고르면 새 컨트롤러가 다른 곳에 생길 때 조용히 빠진다.
+            //
+            // ZzolBot 컨트롤러 셋도 같은 처지이지만 여기 넣지 못한다. :admin 이 :zzolbot 을
+            // 의존하지 않아 타입이 안 보인다. 모듈 의존 방향을 테스트 하나 때문에 뒤집지
+            // 않는다. 같은 패키지 밖이라는 사실은 위 둘이 이미 고정한다.
+            assertThat(advises(controller)).isTrue();
+        }
+
+        @Test
+        void 컨트롤러가_아니면_잡지_않는다() throws Exception {
+            assertThat(advises(AdminAuditLogService.class)).isFalse();
+        }
     }
 
     @Nested

@@ -22,6 +22,19 @@ import org.springframework.web.servlet.HandlerMapping;
  * 빠진 것을 알아차리는 시점은 대개 "누가 이걸 했는지 확인해야 하는" 바로 그때다.
  *
  * <p>조회(GET)는 남기지 않는다. 목록을 열어본 기록까지 쌓으면 실제 조치가 묻힌다.
+ *
+ * <p><b>패키지로 대상을 고르지 않는다.</b> 한때 {@code within(coffeeshout.admin..*)} 를 함께
+ * 걸어 두었는데, {@code /admin/api/**} 를 서비스하는 컨트롤러가 그 패키지 밖에도 다섯 개
+ * 있었다(신고, 패치노트, ZzolBot 셋). 그 조치들은 감사 로그에 아예 남지 않았다. 화면은
+ * "신고 처리", "패치노트 작성" 이라는 이름표까지 들고 있었는데 그 줄이 생길 수가 없었다.
+ *
+ * <p>무엇을 남길지는 <b>주소가 정한다</b>({@code /admin/api/**} 의 쓰기 요청). 그게 이 기능의
+ * 실제 계약이고, 패키지는 그 계약과 우연히 겹쳤을 뿐이라 새 컨트롤러가 다른 곳에 생기면
+ * 조용히 빠진다. 조건을 하나로 줄여 빠질 자리를 없앤다.
+ *
+ * <p>대신 모든 {@code @RestController} 가 이 어드바이스를 거친다. 사용자 API 까지 프록시를
+ * 한 겹 쓰지만, 어드바이스가 하는 일은 요청 주소 두 번 비교가 전부라 그 비용은 조치 하나가
+ * 기록에서 빠지는 값보다 싸다.
  */
 @Aspect
 @Component
@@ -34,7 +47,7 @@ public class AdminAuditAspect {
 
     private final AdminAuditLogService adminAuditLogService;
 
-    @Around("@within(org.springframework.web.bind.annotation.RestController) && within(coffeeshout.admin..*)")
+    @Around("@within(org.springframework.web.bind.annotation.RestController)")
     public Object recordWrite(ProceedingJoinPoint joinPoint) throws Throwable {
         final HttpServletRequest request = currentRequest();
         if (request == null || !isAuditTarget(request)) {

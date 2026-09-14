@@ -6,6 +6,7 @@ import coffeeshout.admin.user.domain.UserListRow;
 import coffeeshout.admin.user.domain.UserLookupRepository;
 import coffeeshout.admin.user.domain.UserPlayAggregate;
 import coffeeshout.admin.user.domain.UserSummary;
+import coffeeshout.global.persistence.LikePattern;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.persistence.QMiniGameResultEntity;
 import coffeeshout.room.infra.persistence.QPlayerEntity;
@@ -254,13 +255,19 @@ public class QueryDslUserLookupRepository implements UserLookupRepository {
      *
      * <p>유저코드는 완전 일치만 본다. 5자짜리 코드에 부분 일치를 걸면 아무 두 글자로도
      * 수십 명이 걸려 나와 검색이 쓸모없어진다.
+     *
+     * <p>{@code contains} 를 쓰지 않는다. QueryDSL 이 {@code like concat('%', ?, '%')} 로
+     * 풀어 주는데 이스케이프가 없어서, 검색어에 들어 있는 {@code %} 와 {@code _} 가
+     * 와일드카드로 읽힌다. 닉네임에 밑줄을 쓰는 사람이 있어 실제로 마주치는 자리다.
      */
     private static BooleanExpression keywordMatches(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             return null;
         }
         final String trimmed = keyword.trim();
-        return USER.nickname.contains(trimmed).or(USER.userCode.eq(trimmed.toUpperCase()));
+        return USER.nickname
+                .like(LikePattern.contains(trimmed), LikePattern.ESCAPE)
+                .or(USER.userCode.eq(trimmed.toUpperCase()));
     }
 
     private static long nullToZero(Long value) {

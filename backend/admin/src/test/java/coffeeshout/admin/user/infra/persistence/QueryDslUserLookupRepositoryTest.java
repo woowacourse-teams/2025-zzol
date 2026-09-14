@@ -128,6 +128,29 @@ class QueryDslUserLookupRepositoryTest extends AdminModuleServiceTest {
         }
 
         @Test
+        void 검색어의_와일드카드는_글자_그대로_찾는다() {
+            // LIKE 의 _ 는 아무 글자 하나와 맞는다. 이스케이프하지 않으면 "김_수" 를 찾을 때
+            // "김철수" 까지 걸린다. 찾는 사람은 정확히 그 닉네임을 쳤는데 엉뚱한 사람이 나온다.
+            userJpaRepository.save(new UserEntity("AB3CD", "김_수"));
+            userJpaRepository.save(new UserEntity("XY4ZQ", "김철수"));
+
+            assertThat(userLookupRepository.search("김_수", FIRST_PAGE).getContent())
+                    .extracting(UserListRow::nickname)
+                    .containsExactly("김_수");
+        }
+
+        @Test
+        void 퍼센트를_쳐도_전체가_걸리지_않는다() {
+            // LIKE 의 % 는 아무 글자나 여럿과 맞는다. 이스케이프하지 않으면 % 한 글자로
+            // 전체 회원이 걸려 나온다.
+            userJpaRepository.save(new UserEntity("AB3CD", "김철수"));
+            userJpaRepository.save(new UserEntity("XY4ZQ", "박영희"));
+
+            assertThat(userLookupRepository.search("%", FIRST_PAGE).getContent())
+                    .isEmpty();
+        }
+
+        @Test
         void 유저코드는_완전_일치로만_찾는다() {
             // 5자짜리 코드에 부분 일치를 걸면 아무 두 글자로도 수십 명이 걸려 검색이 쓸모없어진다.
             userJpaRepository.save(new UserEntity("AB3CD", "철수"));

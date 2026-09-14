@@ -252,6 +252,28 @@ class QueryDslUserLookupRepositoryTest extends AdminModuleServiceTest {
         }
 
         @Test
+        void 탈퇴_회원은_빠진다() {
+            // player.user_id 만 보고 세면 탈퇴 회원이 섞인다. @SQLRestriction 은 그 엔티티가
+            // 쿼리에 등장할 때 붙는 것이라 id 만 들고 다니면 걸리지 않는다. 같은 화면의
+            // 회원 수는 탈퇴를 빼고 세므로, 섞이면 분포의 합이 회원 수를 넘어선다.
+            final UserEntity active = userJpaRepository.save(new UserEntity("AB3CD", "활성"));
+            final UserEntity withdrawn = userJpaRepository.save(new UserEntity("XY4ZQ", "탈퇴"));
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("AAAA"));
+            final PlayerEntity stayed =
+                    playerJpaRepository.save(new PlayerEntity(room, "활성", PlayerType.HOST, active.getId()));
+            final PlayerEntity left =
+                    playerJpaRepository.save(new PlayerEntity(room, "탈퇴", PlayerType.GUEST, withdrawn.getId()));
+            play(room, stayed, MiniGameType.CARD_GAME);
+            play(room, left, MiniGameType.CARD_GAME);
+            withdrawn.softDelete();
+            userJpaRepository.saveAndFlush(withdrawn);
+
+            assertThat(userLookupRepository.aggregatePlays())
+                    .extracting(UserPlayAggregate::userId)
+                    .containsExactly(active.getId());
+        }
+
+        @Test
         void 게스트는_회원과_이을_수_없어_빠진다() {
             // player.user_id 가 없는 참여자다. 세면 회원 수보다 많은 분포가 나온다.
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("AAAA"));

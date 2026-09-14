@@ -21,7 +21,6 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -215,39 +214,35 @@ public class QueryDslUserLookupRepository implements UserLookupRepository {
     /**
      * 플레이 수와 마지막 참여를 사람마다 한 줄로 모은다.
      *
-     * <p>두 값을 한 쿼리로 뽑지 않는다. 판 수는 {@code mini_game_result} 에 있고 마지막
-     * 참여는 {@code player} 에 있는데, 둘을 조인하면 판 수만큼 player 행이 불어나 참여한
-     * 방이 여러 번 세진다. 각각 접어서 자바에서 합친다.
+     * <p>한 쿼리로 뽑는다. 한때 둘로 나눠 놓고 "조인하면 판 수만큼 player 행이 불어나
+     * 참여한 방이 여러 번 세진다"고 적어 두었는데, <b>여기서 세는 것이 방이 아니라서</b>
+     * 그 걱정이 성립하지 않았다. 판 수는 {@code mini_game_result} 행을 세는 것이라 불어난
+     * 쪽이 곧 세려던 쪽이고, 마지막 참여는 최댓값이라 같은 값이 여러 번 나와도 결과가
+     * 바뀌지 않는다. 방 수를 함께 세려 했다면 그때는 정말 나눠야 한다.
      *
-     * <p>게스트는 빠진다. {@code player.user_id} 가 없어 회원과 이을 수 없다. 화면이 세는
-     * 것은 회원이므로 맞는 동작이고, 그래서 이 목록의 합은 참여자 수보다 작다.
+     * <p><b>{@code USER} 를 조인하는 것이 핵심이다.</b> {@code player.user_id} 만 보고 세면
+     * 탈퇴 회원이 그대로 섞인다. {@code UserEntity} 의 {@code @SQLRestriction} 은 그 엔티티가
+     * 쿼리에 등장할 때 붙는 것이라, id 만 들고 다니면 걸리지 않는다. 같은 화면의 회원 수는
+     * 탈퇴를 빼고 세므로 그대로 두면 분포의 합이 회원 수를 넘어선다.
+     *
+     * <p>게스트도 이 조인이 걸러 낸다. {@code player.user_id} 가 없어 회원과 이을 수 없다.
+     * 화면이 세는 것은 회원이므로 맞는 동작이고, 그래서 이 목록의 합은 참여자 수보다 작다.
+     *
+     * <p>{@code RESULT} 는 왼쪽 조인이다. 한 판도 안 끝낸 회원이 빠지면 참여도 분포의
+     * "0회" 칸이 비어 버린다. 방에 들어오기만 한 사람도 세어야 한다.
      */
     @Override
     public List<UserPlayAggregate> aggregatePlays() {
-        final Map<Long, Long> playsByUser = new HashMap<>();
-        for (Tuple row : queryFactory
-                .select(PLAYER.userId, RESULT.count())
-                .from(RESULT)
-                .join(PLAYER)
-                .on(PLAYER.id.eq(RESULT.playerId))
-                .where(PLAYER.userId.isNotNull())
-                .groupBy(PLAYER.userId)
-                .fetch()) {
-            playsByUser.put(row.get(PLAYER.userId), nullToZero(row.get(RESULT.count())));
-        }
-
-        final List<UserPlayAggregate> aggregates = new ArrayList<>();
-        for (Tuple row : queryFactory
-                .select(PLAYER.userId, PLAYER.createdAt.max())
+        return queryFactory
+                .select(Projections.constructor(
+                        UserPlayAggregate.class, PLAYER.userId, RESULT.id.count(), PLAYER.createdAt.max()))
                 .from(PLAYER)
-                .where(PLAYER.userId.isNotNull())
+                .join(USER)
+                .on(USER.id.eq(PLAYER.userId))
+                .leftJoin(RESULT)
+                .on(RESULT.playerId.eq(PLAYER.id))
                 .groupBy(PLAYER.userId)
-                .fetch()) {
-            final Long userId = row.get(PLAYER.userId);
-            aggregates.add(new UserPlayAggregate(
-                    userId, playsByUser.getOrDefault(userId, 0L), row.get(PLAYER.createdAt.max())));
-        }
-        return aggregates;
+                .fetch();
     }
 
     private static ConstructorExpression<UserSummary> summaryProjection() {

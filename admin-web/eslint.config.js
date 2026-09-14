@@ -3,6 +3,7 @@ import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
+import preferEarlyReturn from './eslint-rules/prefer-early-return.js';
 
 /**
  * 규칙을 많이 켜지 않는다.
@@ -26,6 +27,7 @@ export default tseslint.config(
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      local: { rules: { 'prefer-early-return': preferEarlyReturn } },
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -36,6 +38,8 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      // 함수 본문 전체를 감싸는 if 를 금지한다. 근거와 직접 쓴 이유는 규칙 파일에 있다.
+      'local/prefer-early-return': 'error',
     },
   },
 );

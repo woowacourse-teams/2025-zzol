@@ -76,15 +76,7 @@ public class OpsService {
      */
     @Transactional
     public void requeue(long outboxEventId) {
-        final OutboxEvent event = outboxEventRepository
-                .findById(outboxEventId)
-                .orElseThrow(() -> new BusinessException(
-                        OpsErrorCode.DEAD_LETTER_NOT_FOUND, "존재하지 않는 격리 메시지입니다. id=" + outboxEventId));
-
-        if (event.getStatus() != OutboxStatus.DEAD_LETTER) {
-            throw new BusinessException(
-                    OpsErrorCode.NOT_DEAD_LETTER, "격리 상태가 아닌 메시지는 다시 넣을 수 없습니다. 현재 상태=" + event.getStatus());
-        }
+        final OutboxEvent event = findDeadLetter(outboxEventId);
 
         event.setStatusPending();
         log.info(
@@ -101,14 +93,46 @@ public class OpsService {
      * 않은 이유는, 폐기한 메시지를 계속 들고 있어 봐야 목록만 길어지고 아무도 다시 보지
      * 않기 때문이다. 대신 <b>누가 언제 지웠는지는 감사 로그에 남는다</b> - 이 API 는
      * DELETE 라 {@code AdminAuditAspect} 가 자동으로 기록한다.
+     *
+     * <p>지우기 전에 <b>격리된 메시지가 맞는지 확인한다.</b> outbox 테이블에는 발행을
+     * 기다리는 PENDING 행과 이미 발행된 PUBLISHED 행이 함께 산다. id 만 보고 지우면
+     * 아직 나가지 않은 도메인 이벤트를 삭제할 수 있고, 그건 outbox 를 둔 이유(메시지를
+     * 잃지 않는 것)를 정면으로 깨뜨린다. 화면은 격리 목록만 보여주지만 API 는 id 를 직접
+     * 받는다.
+     *
+     * <p>정산 쪽은 테이블 자체가 격리 전용이라 상태를 볼 것이 없다. 대신 없는 id 는
+     * 404 로 돌려준다. {@code deleteById} 는 없는 행을 조용히 넘기므로, 그대로 두면
+     * 일어나지 않은 삭제가 감사 로그에 성공으로 남는다.
      */
     @Transactional
     public void discard(DeadLetterSource source, long id) {
         if (source == DeadLetterSource.OUTBOX) {
-            outboxEventRepository.deleteById(id);
+            outboxEventRepository.delete(findDeadLetter(id));
             return;
         }
-        settlementDeadLetterRepository.deleteById(id);
+
+        settlementDeadLetterRepository.delete(
+                settlementDeadLetterRepository.findById(id).orElseThrow(() -> notFound(id)));
+    }
+
+    /**
+     * 격리된 outbox 메시지를 집는다. 없거나 격리 상태가 아니면 거절한다.
+     *
+     * <p>다시 넣기와 폐기가 같은 확인을 쓴다. 한쪽에만 두면 다른 쪽이 조용히 뚫린다.
+     * 실제로 폐기가 그렇게 뚫려 있었다.
+     */
+    private OutboxEvent findDeadLetter(long outboxEventId) {
+        final OutboxEvent event =
+                outboxEventRepository.findById(outboxEventId).orElseThrow(() -> notFound(outboxEventId));
+
+        if (event.getStatus() != OutboxStatus.DEAD_LETTER) {
+            throw new BusinessException(OpsErrorCode.NOT_DEAD_LETTER, "격리 상태가 아닌 메시지입니다. 현재 상태=" + event.getStatus());
+        }
+        return event;
+    }
+
+    private static BusinessException notFound(long id) {
+        return new BusinessException(OpsErrorCode.DEAD_LETTER_NOT_FOUND, "존재하지 않는 격리 메시지입니다. id=" + id);
     }
 
     public List<MigrationRecord> migrations() {

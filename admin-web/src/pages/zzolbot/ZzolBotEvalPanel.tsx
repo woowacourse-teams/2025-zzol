@@ -115,7 +115,9 @@ export function ZzolBotEvalPanel() {
       <Card>
         <CardHeader
           title="평가 실행"
-          description="최근 20건. 줄을 누르면 시나리오별 결과가 펼쳐집니다."
+          // 건수를 받은 것에서 센다. 서버는 findTop20 으로 잘라 보내는데 화면 문구에도
+          // 20을 적어 두면, 한쪽만 바뀌었을 때 화면이 거짓말을 한다.
+          description={`최근 ${(runs.data ?? []).length}건. 줄을 누르면 시나리오별 결과가 펼쳐집니다.`}
           actions={<StartRunForm />}
         />
         {runs.isError ? (

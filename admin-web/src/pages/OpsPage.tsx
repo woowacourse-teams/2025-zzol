@@ -72,7 +72,9 @@ export function OpsPage() {
       {
         accessorKey: 'reason',
         header: '사유',
-        cell: (c) => <span className="line-clamp-2 text-xs text-ink-secondary">{String(c.getValue())}</span>,
+        cell: (c) => (
+          <span className="line-clamp-2 text-xs text-ink-secondary">{String(c.getValue())}</span>
+        ),
       },
       {
         id: 'actions',
@@ -172,7 +174,10 @@ export function OpsPage() {
                   label: source === 'OUTBOX' ? '스트림' : '레코드',
                   value: <span className="font-mono text-xs">{selected.reference}</span>,
                 },
-                { label: '재시도', value: selected.retryCount === null ? null : `${selected.retryCount}회` },
+                {
+                  label: '재시도',
+                  value: selected.retryCount === null ? null : `${selected.retryCount}회`,
+                },
               ]}
             />
             {selected.payload ? (
@@ -253,11 +258,14 @@ function MigrationsCard() {
 
   return (
     <Card>
+      {/* 건수를 받은 것에서 센다. "최근 30건" 이라고 적어 두었더니 서버의 상한과 화면의
+       * 문구가 각각 30을 들고 있었고, 한쪽만 바뀌면 화면이 거짓말을 하는 상태였다.
+       * 화면은 자기가 그린 것을 말하면 된다. */}
       <CardHeader
         title="스키마 버전"
         description={
           migrations.data?.managed
-            ? `최신 V${migrations.data.current} · 최근 30건`
+            ? `최신 V${migrations.data.current} · 최근 ${migrations.data.records.length}건`
             : undefined
         }
       />
@@ -292,7 +300,10 @@ function DeploymentCard() {
 
   return (
     <Card className="h-fit">
-      <CardHeader title="배포" description="화면 상단 배지는 빌드 시점 값이라 여기와 어긋날 수 있습니다." />
+      <CardHeader
+        title="배포"
+        description="화면 상단 배지는 빌드 시점 값이라 여기와 어긋날 수 있습니다."
+      />
       <Loaded query={deployment}>
         {(data) => (
           <CardBody>
@@ -301,10 +312,15 @@ function DeploymentCard() {
                 { label: '버전', value: data.version },
                 {
                   label: '커밋',
-                  value: data.commit ? <span className="font-mono text-xs">{data.commit}</span> : null,
+                  value: data.commit ? (
+                    <span className="font-mono text-xs">{data.commit}</span>
+                  ) : null,
                 },
                 { label: '빌드 시각', value: <Timestamp value={data.builtAt} /> },
-                { label: '활성 프로필', value: <span className="font-mono text-xs">{data.profile}</span> },
+                {
+                  label: '활성 프로필',
+                  value: <span className="font-mono text-xs">{data.profile}</span>,
+                },
               ]}
             />
           </CardBody>

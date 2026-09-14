@@ -1,11 +1,9 @@
 package coffeeshout.admin.system.application;
 
 import coffeeshout.global.exception.ErrorCode;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@Getter
 public enum SystemErrorCode implements ErrorCode {
     DEAD_LETTER_NOT_FOUND(404, "존재하지 않는 격리 메시지입니다."),
     // 다시 넣기와 폐기가 같이 쓴다. 메시지에 동작 이름을 넣지 않는 이유다.
@@ -17,5 +15,15 @@ public enum SystemErrorCode implements ErrorCode {
     @Override
     public String getCode() {
         return this.name();
+    }
+
+    @Override
+    public int getStatusCode() {
+        return this.statusCode;
+    }
+
+    @Override
+    public String getMessage() {
+        return this.message;
     }
 }

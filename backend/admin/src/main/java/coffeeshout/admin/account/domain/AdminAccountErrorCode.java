@@ -1,11 +1,9 @@
 package coffeeshout.admin.account.domain;
 
 import coffeeshout.global.exception.ErrorCode;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@Getter
 public enum AdminAccountErrorCode implements ErrorCode {
     NOT_ADMIN(403, "관리자 허용목록에 없는 계정입니다."),
     INVALID_ADMIN_EMAIL(400, "관리자 이메일 형식이 올바르지 않습니다."),
@@ -23,5 +21,15 @@ public enum AdminAccountErrorCode implements ErrorCode {
     @Override
     public String getCode() {
         return this.name();
+    }
+
+    @Override
+    public int getStatusCode() {
+        return this.statusCode;
+    }
+
+    @Override
+    public String getMessage() {
+        return this.message;
     }
 }

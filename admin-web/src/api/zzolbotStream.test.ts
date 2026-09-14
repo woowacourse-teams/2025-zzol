@@ -53,13 +53,15 @@ describe('askZzolBot', () => {
   it('이벤트 이름별로 콜백을 나눠 부른다', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(
-        streamOf(
-          'event: progress\ndata: countRooms\n\n',
-          'event: sessionId\ndata: 42\n\n',
-          'event: result\ndata: 어제 방은 12개였습니다\n\n',
+      vi
+        .fn()
+        .mockResolvedValue(
+          streamOf(
+            'event: progress\ndata: countRooms\n\n',
+            'event: sessionId\ndata: 42\n\n',
+            'event: result\ndata: 어제 방은 12개였습니다\n\n',
+          ),
         ),
-      ),
     );
 
     const sink = collect();
@@ -83,6 +85,37 @@ describe('askZzolBot', () => {
     expect(sink.answer).toBe('첫 줄\n둘째 줄');
   });
 
+  /**
+   * 위 테스트는 우리가 지어낸 입력을 우리가 파싱한다. 서버가 정말 그 모양으로 보내는지는
+   * 알 수 없어서, 실제로 나가는 바이트를 그대로 넣어 본다. 그 바이트는 백엔드의
+   * SseFramingTest 가 고정하고 있다. 공백 없는 `data:` 이고 줄마다 하나씩 붙는다.
+   */
+  it('서버가 내보내는 바이트를 그대로 받아 답을 복원한다', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(streamOf('event:result\ndata:첫 줄\ndata:둘째 줄\n\n')),
+    );
+
+    const sink = collect();
+    await askZzolBot('q', sink.handlers);
+
+    expect(sink.answer).toBe('첫 줄\n둘째 줄');
+  });
+
+  it('답변 속 빈 줄도 그대로 돌아온다', async () => {
+    // 서버는 빈 줄을 내용 없는 data: 로 내보낸다. 진짜 빈 줄이었다면 그 자리가 이벤트
+    // 끝으로 읽혀 앞부분만 답이 된다. LLM 답변은 대개 문단이 여럿이라 늘 걸리는 자리다.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(streamOf('event:result\ndata:가\ndata:\ndata:나\n\n')),
+    );
+
+    const sink = collect();
+    await askZzolBot('q', sink.handlers);
+
+    expect(sink.answer).toBe('가\n\n나');
+  });
+
   it('청크가 이벤트 한가운데서 끊겨도 이어 붙인다', async () => {
     vi.stubGlobal(
       'fetch',
@@ -97,10 +130,7 @@ describe('askZzolBot', () => {
 
   it('마지막 이벤트가 빈 줄로 끝나지 않아도 흘린다', async () => {
     // 서버가 complete() 하면서 종료 개행 없이 스트림을 닫는 경우가 있다.
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(streamOf('event: result\ndata: 끝맺음 없음')),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(streamOf('event: result\ndata: 끝맺음 없음')));
 
     const sink = collect();
     await askZzolBot('q', sink.handlers);

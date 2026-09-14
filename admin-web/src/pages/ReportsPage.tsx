@@ -382,7 +382,9 @@ function ReportPanel({
                       label: '방',
                       value: (
                         <Link
-                          to={`/trace?q=${encodeURIComponent(report.joinCode)}`}
+                          // 옛 주소(/trace)를 거치지 않는다. 리다이렉트가 한 번 더 도는
+                          // 것도 그렇고, 지금 있는 화면으로 곧장 보내는 편이 읽기도 쉽다.
+                          to={`/rooms?q=${encodeURIComponent(report.joinCode)}`}
                           className="inline-flex items-center gap-1 font-mono text-xs text-ink underline decoration-border-strong underline-offset-2 hover:decoration-ink"
                         >
                           {report.joinCode}

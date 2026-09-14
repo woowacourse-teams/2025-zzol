@@ -1,6 +1,7 @@
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { lazy } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { LegacyRedirect } from '@/routes/LegacyRedirect';
 import { ApiError } from '@/api/client';
 import { AuthProvider, useAuth } from '@/auth/AuthProvider';
 import { AdminLayout } from '@/components/layout/AdminLayout';
@@ -88,15 +89,18 @@ export function App() {
                 <Route path="/rooms" element={<RoomsPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 {/* 상세가 라우트에서 패널로 옮겨 갔다. 옛 주소는 목록으로 보낸다 - 패널을
-                  * 여는 데 필요한 것은 id 인데 그 id 가 검색 결과 안에 있다는 보장이 없고,
-                  * 억지로 열면 목록에 없는 항목의 패널만 덩그러니 뜬다. */}
-                <Route path="/rooms/:roomId" element={<Navigate to="/rooms" replace />} />
-                <Route path="/users/:userId" element={<Navigate to="/users" replace />} />
+                 * 여는 데 필요한 것은 id 인데 그 id 가 검색 결과 안에 있다는 보장이 없고,
+                 * 억지로 열면 목록에 없는 항목의 패널만 덩그러니 뜬다. */}
+                <Route path="/rooms/:roomId" element={<LegacyRedirect to="/rooms" />} />
+                <Route path="/users/:userId" element={<LegacyRedirect to="/users" />} />
                 {/* 방과 유저를 한 화면에 합쳤다가 되돌렸다. 표 두 개가 세로로 쌓이면서
-                  * 어느 표를 보고 있는지가 흐려졌다. */}
-                <Route path="/trace" element={<Navigate to="/rooms" replace />} />
+                 * 어느 표를 보고 있는지가 흐려졌다.
+                 *
+                 * 검색어를 들고 넘어간다. 이 주소로 오는 링크는 "이 코드를 찾아라"라는
+                 * 뜻을 쿼리에 담고 오는데, 경로만 넘기면 목록만 열리고 코드는 사라진다. */}
+                <Route path="/trace" element={<LegacyRedirect to="/rooms" />} />
                 {/* 서비스 분석을 홈에 흡수했다. 옛 주소는 홈으로 보낸다. */}
-                <Route path="/games" element={<Navigate to="/" replace />} />
+                <Route path="/games" element={<LegacyRedirect to="/" />} />
                 <Route path="/patch-notes" element={<PatchNotesPage />} />
                 <Route path="/patch-notes/new" element={<PatchNoteFormPage />} />
                 <Route path="/patch-notes/:id" element={<PatchNoteFormPage />} />

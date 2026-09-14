@@ -132,7 +132,7 @@ const NAV: NavGroup[] = [
       { to: '/patch-notes', label: '패치노트', icon: ScrollText },
       { to: '/zzolbot', label: 'ZzolBot', icon: AlertTriangle },
       {
-        to: '/ops',
+        to: '/system',
         label: '시스템',
         icon: ServerCog,
         count: (queue) => queue.deadLetters,

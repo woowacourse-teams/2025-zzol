@@ -1,7 +1,7 @@
-package coffeeshout.admin.ops.ui.response;
+package coffeeshout.admin.system.ui.response;
 
-import coffeeshout.admin.ops.domain.DeadLetter;
-import coffeeshout.admin.ops.domain.DeadLetterSource;
+import coffeeshout.admin.system.domain.DeadLetter;
+import coffeeshout.admin.system.domain.DeadLetterSource;
 import java.time.Instant;
 
 /**

@@ -2,9 +2,9 @@ package coffeeshout.admin.inbox.application;
 
 import coffeeshout.admin.inbox.domain.InboxItem;
 import coffeeshout.admin.inbox.domain.InboxKind;
-import coffeeshout.admin.ops.application.OpsService;
-import coffeeshout.admin.ops.domain.DeadLetter;
-import coffeeshout.admin.ops.domain.DeadLetterSource;
+import coffeeshout.admin.system.application.SystemService;
+import coffeeshout.admin.system.domain.DeadLetter;
+import coffeeshout.admin.system.domain.DeadLetterSource;
 import coffeeshout.profanity.application.ProfanityAuditService;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
@@ -51,7 +51,7 @@ public class InboxService {
 
     private final ReportAdminService reportAdminService;
     private final ProfanityAuditService profanityAuditService;
-    private final OpsService opsService;
+    private final SystemService systemService;
     private final Clock clock;
 
     /**
@@ -120,7 +120,7 @@ public class InboxService {
      */
     private List<InboxItem> deadLetters() {
         return Stream.of(DeadLetterSource.values())
-                .flatMap(source -> opsService.findDeadLetters(source, 0, LIMIT).getContent().stream())
+                .flatMap(source -> systemService.findDeadLetters(source, 0, LIMIT).getContent().stream())
                 .map(this::toItem)
                 .toList();
     }

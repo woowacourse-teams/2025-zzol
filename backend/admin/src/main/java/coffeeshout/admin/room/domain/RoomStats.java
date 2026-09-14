@@ -12,7 +12,7 @@ import java.util.List;
  * 기준으로 봐야 하고, 끝까지 가는 방이 30%면 목록을 아무리 뒤져도 그 사실은 안 보인다.
  *
  * @param roomCount       기간 안에 만들어진 방
- * @param games           게임별 완료 판 수와 비중
+ * @param games           게임별 시작 판 수와 완료 판 수. 둘의 차이가 중간에 깨진 판이다
  * @param playerBuckets   인원수 구간별 방 수
  * @param statuses        상태별 방 수. 어디까지 갔는지를 본다
  * @param durationBuckets 소요 시간 구간별 방 수. 끝난 방만 센다

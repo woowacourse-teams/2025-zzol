@@ -1,6 +1,6 @@
-package coffeeshout.admin.ops.ui.response;
+package coffeeshout.admin.system.ui.response;
 
-import coffeeshout.admin.ops.domain.MigrationRecord;
+import coffeeshout.admin.system.domain.MigrationRecord;
 import java.time.Instant;
 import java.util.List;
 

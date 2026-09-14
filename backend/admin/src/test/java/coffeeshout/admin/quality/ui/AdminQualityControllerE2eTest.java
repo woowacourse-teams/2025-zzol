@@ -37,21 +37,21 @@ class AdminQualityControllerE2eTest extends AdminApiE2eTest {
     }
 
     @Nested
-    class 신고_처리_시간 {
+    class 신고_적체 {
 
         @Test
-        void 미처리_건수와_백분위를_돌려준다() throws Exception {
+        void 미처리_건수와_가장_오래_기다린_건의_나이를_돌려준다() throws Exception {
             givenPendingReport(ReportCategory.BUG, null);
             givenResolvedReport(30);
 
-            mockMvc.perform(get("/admin/api/quality/report-sla")
-                            .param("days", "30")
-                            .with(admin()))
+            mockMvc.perform(get("/admin/api/quality/report-backlog").with(admin()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.pendingCount").value(1))
-                    .andExpect(jsonPath("$.resolvedCount").value(1))
-                    .andExpect(jsonPath("$.p50Minutes").exists())
-                    .andExpect(jsonPath("$.p95Minutes").exists());
+                    .andExpect(jsonPath("$.oldestPendingMinutes").exists())
+                    // 처리 시간 백분위는 걷어냈다. 신고가 하루에 몇 건뿐이라 한 건이
+                    // 들어오고 나갈 때마다 크게 흔들렸다.
+                    .andExpect(jsonPath("$.p50Minutes").doesNotExist())
+                    .andExpect(jsonPath("$.p95Minutes").doesNotExist());
         }
     }
 
@@ -122,6 +122,6 @@ class AdminQualityControllerE2eTest extends AdminApiE2eTest {
 
     @Test
     void 토큰이_없으면_401_이다() throws Exception {
-        mockMvc.perform(get("/admin/api/quality/report-sla")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/admin/api/quality/report-backlog")).andExpect(status().isUnauthorized());
     }
 }

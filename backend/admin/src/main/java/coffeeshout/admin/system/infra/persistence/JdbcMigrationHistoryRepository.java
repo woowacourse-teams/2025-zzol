@@ -1,7 +1,7 @@
-package coffeeshout.admin.ops.infra.persistence;
+package coffeeshout.admin.system.infra.persistence;
 
-import coffeeshout.admin.ops.domain.MigrationHistoryRepository;
-import coffeeshout.admin.ops.domain.MigrationRecord;
+import coffeeshout.admin.system.domain.MigrationHistoryRepository;
+import coffeeshout.admin.system.domain.MigrationRecord;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -65,7 +65,7 @@ public class JdbcMigrationHistoryRepository implements MigrationHistoryRepositor
             // exists() 와 조회 사이에 테이블이 사라지는 경우는 사실상 없지만, 여기서 터지면
             // 시스템 화면 전체가 오류로 덮인다. 마이그레이션 이력 하나 때문에 DLQ 목록까지
             // 못 보게 만들지 않는다.
-            log.warn("[Ops] 마이그레이션 이력 조회 실패", e);
+            log.warn("[System] 마이그레이션 이력 조회 실패", e);
             return List.of();
         }
     }

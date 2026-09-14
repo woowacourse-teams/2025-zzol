@@ -58,7 +58,7 @@ const ROUTES = [
   '/zzolbot?tab=monitor',
   '/zzolbot?tab=eval',
   '/admins',
-  '/ops',
+  '/system',
   '/audit-logs',
 ];
 

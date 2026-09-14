@@ -10,7 +10,6 @@ import coffeeshout.report.infra.persistence.QReport;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -55,22 +54,6 @@ public class QueryDslQualityStatisticsRepository implements QualityStatisticsRep
             }
         }
         return new NicknameAuditQuality(total, falsePositive, falseNegative);
-    }
-
-    @Override
-    public List<Long> findResolvedDurationMinutes(Instant from, Instant to) {
-        // 소요 시간 계산을 DB 함수로 밀지 않는다. TIMESTAMPDIFF 는 방언에 묶여
-        // 테스트 DB 와 운영 DB 가 다르면 조용히 갈라진다. 두 시각을 받아 자바에서 뺀다.
-        return queryFactory
-                .select(REPORT.createdAt, REPORT.resolvedAt)
-                .from(REPORT)
-                .where(REPORT.resolvedAt.isNotNull(), REPORT.resolvedAt.goe(from), REPORT.resolvedAt.lt(to))
-                .fetch()
-                .stream()
-                .map(row -> Duration.between(row.get(REPORT.createdAt), row.get(REPORT.resolvedAt))
-                        .toMinutes())
-                .sorted()
-                .toList();
     }
 
     @Override

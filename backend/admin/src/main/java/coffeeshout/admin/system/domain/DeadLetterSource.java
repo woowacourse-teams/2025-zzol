@@ -1,4 +1,4 @@
-package coffeeshout.admin.ops.domain;
+package coffeeshout.admin.system.domain;
 
 /**
  * 격리된 메시지가 어느 큐에서 왔는지.

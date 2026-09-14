@@ -24,9 +24,19 @@ public interface OverviewStatisticsRepository {
      */
     List<DailyTrendPoint> findDailyTrend(LocalDateTime from, LocalDateTime to);
 
-    /** 완료된 게임만 센다. 비중 계산은 서비스가 한다. */
+    /**
+     * 게임별로 <b>시작한 판</b>과 그중 <b>결과가 남은 판</b>을 함께 센다. 비중 계산은 서비스가 한다.
+     *
+     * <p>기간은 방 생성 시각으로 자른다. {@code mini_game_play} 에는 시각 컬럼이 없고,
+     * 퍼널의 다른 단계와 같은 기준이어야 단계 간 숫자가 이어진다.
+     */
     List<GamePlayCount> countPlaysByGame(LocalDateTime from, LocalDateTime to);
 
-    /** 비중을 계산하기 전의 원시 집계. */
-    record GamePlayCount(MiniGameType miniGameType, long plays) {}
+    /**
+     * 비중을 계산하기 전의 원시 집계.
+     *
+     * @param started  {@code mini_game_play} 행 수. 이 행은 게임이 <b>시작될 때</b> 쌓인다
+     * @param finished 그중 결과가 한 줄이라도 남은 판. 시작만 하고 만 판은 여기서 빠진다
+     */
+    record GamePlayCount(MiniGameType miniGameType, long started, long finished) {}
 }

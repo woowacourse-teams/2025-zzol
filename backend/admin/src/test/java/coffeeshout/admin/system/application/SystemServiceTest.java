@@ -1,4 +1,4 @@
-package coffeeshout.admin.ops.application;
+package coffeeshout.admin.system.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,8 +7,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-import coffeeshout.admin.ops.domain.DeadLetterSource;
-import coffeeshout.admin.ops.domain.MigrationHistoryRepository;
+import coffeeshout.admin.system.domain.DeadLetterSource;
+import coffeeshout.admin.system.domain.MigrationHistoryRepository;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.outbox.OutboxEvent;
 import coffeeshout.global.outbox.OutboxEventRepository;
@@ -24,9 +24,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@DisplayName("OpsService")
+@DisplayName("SystemService")
 @ExtendWith(MockitoExtension.class)
-class OpsServiceTest {
+class SystemServiceTest {
 
     @Mock
     private OutboxEventRepository outboxEventRepository;
@@ -38,7 +38,7 @@ class OpsServiceTest {
     private MigrationHistoryRepository migrationHistoryRepository;
 
     @InjectMocks
-    private OpsService opsService;
+    private SystemService systemService;
 
     @Nested
     class countDeadLetters {
@@ -50,7 +50,7 @@ class OpsServiceTest {
             given(outboxEventRepository.countByStatus(OutboxStatus.DEAD_LETTER)).willReturn(3L);
             given(settlementDeadLetterRepository.count()).willReturn(2L);
 
-            assertThat(opsService.countDeadLetters()).isEqualTo(5L);
+            assertThat(systemService.countDeadLetters()).isEqualTo(5L);
         }
     }
 
@@ -69,7 +69,7 @@ class OpsServiceTest {
             event.markDeadLetter();
             given(outboxEventRepository.findById(1L)).willReturn(Optional.of(event));
 
-            opsService.requeue(1L);
+            systemService.requeue(1L);
 
             assertThat(event.getStatus()).isEqualTo(OutboxStatus.PENDING);
         }
@@ -84,7 +84,7 @@ class OpsServiceTest {
             event.markDeadLetter();
             given(outboxEventRepository.findById(1L)).willReturn(Optional.of(event));
 
-            opsService.requeue(1L);
+            systemService.requeue(1L);
 
             assertThat(event.getRetryCount()).isEqualTo(2);
         }
@@ -95,7 +95,7 @@ class OpsServiceTest {
             final OutboxEvent pending = OutboxEvent.create("settlement:result", "{}");
             given(outboxEventRepository.findById(1L)).willReturn(Optional.of(pending));
 
-            assertThatThrownBy(() -> opsService.requeue(1L))
+            assertThatThrownBy(() -> systemService.requeue(1L))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("PENDING");
         }
@@ -104,7 +104,7 @@ class OpsServiceTest {
         void 없는_메시지는_거절한다() {
             given(outboxEventRepository.findById(404L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> opsService.requeue(404L)).isInstanceOf(BusinessException.class);
+            assertThatThrownBy(() -> systemService.requeue(404L)).isInstanceOf(BusinessException.class);
         }
     }
 
@@ -116,7 +116,7 @@ class OpsServiceTest {
             final OutboxEvent deadLetter = deadLetter();
             given(outboxEventRepository.findById(1L)).willReturn(Optional.of(deadLetter));
 
-            opsService.discard(DeadLetterSource.OUTBOX, 1L);
+            systemService.discard(DeadLetterSource.OUTBOX, 1L);
 
             then(outboxEventRepository).should().delete(deadLetter);
             then(settlementDeadLetterRepository).should(never()).delete(any());
@@ -129,7 +129,7 @@ class OpsServiceTest {
             final OutboxEvent pending = OutboxEvent.create("settlement:result", "{}");
             given(outboxEventRepository.findById(1L)).willReturn(Optional.of(pending));
 
-            assertThatThrownBy(() -> opsService.discard(DeadLetterSource.OUTBOX, 1L))
+            assertThatThrownBy(() -> systemService.discard(DeadLetterSource.OUTBOX, 1L))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("PENDING");
             then(outboxEventRepository).should(never()).delete(any());
@@ -139,7 +139,7 @@ class OpsServiceTest {
         void 없는_outbox_메시지는_거절한다() {
             given(outboxEventRepository.findById(404L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> opsService.discard(DeadLetterSource.OUTBOX, 404L))
+            assertThatThrownBy(() -> systemService.discard(DeadLetterSource.OUTBOX, 404L))
                     .isInstanceOf(BusinessException.class);
             then(outboxEventRepository).should(never()).delete(any());
         }
@@ -149,7 +149,7 @@ class OpsServiceTest {
             final SettlementDeadLetterEntity entity = new SettlementDeadLetterEntity("record-1", "사유", "{}");
             given(settlementDeadLetterRepository.findById(1L)).willReturn(Optional.of(entity));
 
-            opsService.discard(DeadLetterSource.SETTLEMENT, 1L);
+            systemService.discard(DeadLetterSource.SETTLEMENT, 1L);
 
             then(settlementDeadLetterRepository).should().delete(entity);
             then(outboxEventRepository).should(never()).delete(any());
@@ -161,7 +161,7 @@ class OpsServiceTest {
             // 감사 로그에 성공으로 남는다.
             given(settlementDeadLetterRepository.findById(404L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> opsService.discard(DeadLetterSource.SETTLEMENT, 404L))
+            assertThatThrownBy(() -> systemService.discard(DeadLetterSource.SETTLEMENT, 404L))
                     .isInstanceOf(BusinessException.class);
             then(settlementDeadLetterRepository).should(never()).delete(any());
         }

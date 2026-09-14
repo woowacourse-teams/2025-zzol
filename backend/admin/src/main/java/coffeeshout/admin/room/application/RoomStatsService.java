@@ -89,11 +89,14 @@ public class RoomStatsService {
     }
 
     private static List<GamePlayStat> toGameStats(List<GamePlayCount> counts) {
-        final long total = counts.stream().mapToLong(GamePlayCount::plays).sum();
+        final long total = counts.stream().mapToLong(GamePlayCount::started).sum();
         return counts.stream()
-                .sorted(Comparator.comparingLong(GamePlayCount::plays).reversed())
+                .sorted(Comparator.comparingLong(GamePlayCount::started).reversed())
                 .map(count -> new GamePlayStat(
-                        count.miniGameType(), count.plays(), total == 0 ? 0 : (double) count.plays() / total))
+                        count.miniGameType(),
+                        count.started(),
+                        count.finished(),
+                        total == 0 ? 0 : (double) count.started() / total))
                 .toList();
     }
 

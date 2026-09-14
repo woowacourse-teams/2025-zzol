@@ -1,4 +1,4 @@
-package coffeeshout.admin.ops.domain;
+package coffeeshout.admin.system.domain;
 
 import java.time.Instant;
 

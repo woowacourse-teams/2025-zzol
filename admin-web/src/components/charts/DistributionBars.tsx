@@ -1,11 +1,33 @@
+import type { ReactNode } from 'react';
 import type { Bucket } from '@/api/types';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Meter } from '@/components/ui/Meter';
 import { cn } from '@/lib/cn';
 import { formatNumber, formatPercent } from '@/lib/format';
 
+/**
+ * 한 줄에 그릴 값.
+ *
+ * <p>{@code note} 는 오른쪽 끝의 비중 자리를 대신 차지한다. 비중이 그 줄에서 가장 할 말이
+ * 아닌 경우가 있다. 게임별 플레이가 그렇다 - 어느 게임을 많이 하는지는 막대가 이미
+ * 말하고, 정작 손댈 거리는 <b>그중 몇 판이 중간에 끊겼는가</b>다.
+ *
+ * <p>{@code completed} 를 주면 막대가 그만큼만 차고 {@code count} 까지는 옅은 자국으로
+ * 남는다. 자국과 막대의 차이가 곧 못 채운 몫이다. 숫자를 읽지 않아도 어느 줄이 덜
+ * 찼는지가 먼저 보인다.
+ *
+ * <p>{@code ratio} 는 막대 길이를 직접 정한다. 목록의 주인공이 개수가 아니라 <b>비율</b>일
+ * 때 쓴다(게임별 이탈). 개수로 막대를 그리면 많이 하는 게임이 늘 위에 서서, 열 판 중
+ * 여덟 판이 끊기는 게임이 아래에 묻힌다.
+ */
+export type DistributionRow = Bucket & {
+  note?: ReactNode;
+  completed?: number;
+  ratio?: number;
+};
+
 type DistributionBarsProps = {
-  data: Bucket[];
+  data: DistributionRow[];
   /** 값이 전부 0일 때 칸 대신 보여줄 문구. */
   emptyTitle: string;
   emptyDescription?: string;
@@ -65,6 +87,9 @@ export function DistributionBars({
   }
 
   const top = Math.max(...data.map((bucket) => bucket.count));
+  // 폭은 목록 전체가 하나로 정한다. 줄마다 note 유무로 정하면 note 가 없는 줄만
+  // 좁아져 숫자 끝이 어긋난다.
+  const noted = data.some((bucket) => bucket.note !== undefined);
 
   return (
     <ul className={cn('flex w-full flex-col gap-2.5', className)}>
@@ -95,15 +120,20 @@ export function DistributionBars({
             {bucket.label}
           </span>
           <Meter
-            ratio={top === 0 ? 0 : bucket.count / top}
+            ratio={bucket.ratio ?? (top === 0 ? 0 : (bucket.completed ?? bucket.count) / top)}
+            ghostRatio={bucket.completed === undefined || top === 0 ? undefined : bucket.count / top}
             size="sm"
             muted={bucket.count !== top}
           />
           <span className="flex shrink-0 items-baseline gap-1.5 tabular-nums">
             <span className="text-xs font-semibold text-ink">{formatNumber(bucket.count)}</span>
-            {/* 비중은 전체 대비다. 막대(1등 대비)와 기준이 다르므로 숫자로만 둔다. */}
-            <span className="w-7 text-right text-2xs text-ink-muted">
-              {formatPercent(bucket.count / total, 0)}
+            {/* 비중은 전체 대비다. 막대(1등 대비)와 기준이 다르므로 숫자로만 둔다.
+              * note 를 주면 그 자리를 note 가 가져간다. 그때는 폭을 내용에 맡긴다 -
+              * 고정 폭을 주면 남는 자리만큼 note 가 앞 숫자에서 떨어져 "10  판 중" 으로
+              * 벌어진다. note 는 안쪽 칸마다 폭이 박혀 있어 폭을 풀어도 줄끼리 어긋나지
+              * 않는다. */}
+            <span className={cn('text-right text-2xs text-ink-muted', noted || 'w-7')}>
+              {bucket.note ?? formatPercent(bucket.count / total, 0)}
             </span>
           </span>
         </li>

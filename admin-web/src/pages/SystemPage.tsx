@@ -45,7 +45,7 @@ const SOURCE_HINT: Record<DeadLetterSource, string> = {
  * 메시지는 스위퍼가 30초마다 스스로 회수한다. 사람이 볼 필요도 할 일도 없는 숫자를
  * 화면에 두면 나머지 숫자의 값어치까지 떨어진다.
  */
-export function OpsPage() {
+export function SystemPage() {
   const [source, setSource] = useState<DeadLetterSource>('OUTBOX');
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<DeadLetter | null>(null);

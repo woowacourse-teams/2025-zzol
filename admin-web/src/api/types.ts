@@ -83,12 +83,22 @@ export type DailyTrend = {
   players: number;
 };
 
+/**
+ * 게임별 플레이.
+ *
+ * <p>`started` 와 `finished` 의 차이가 <b>중간에 끊긴 판</b>이다. `mini_game_play` 행은
+ * 게임이 시작될 때 쌓이고 결과는 끝날 때 쌓이기 때문에 이 차이가 남는다. 한때 완료 판만
+ * 받았는데, 그러면 중간에 끊기는 게임이 "아무도 안 고르는 게임"과 똑같이 생긴다.
+ */
 export type GamePlayStat = {
   miniGameType: string;
   /** 화면에 찍는 한글 이름. 서버 enum 이 들고 있는 값을 그대로 받는다. */
   label: string;
-  plays: number;
-  /** 전체 대비 비중. 0.0 ~ 1.0 */
+  /** 시작한 판. */
+  started: number;
+  /** 그중 결과가 남은 판. */
+  finished: number;
+  /** 전체 시작 판 대비 비중. 0.0 ~ 1.0 */
   share: number;
 };
 
@@ -163,6 +173,15 @@ export type PeriodSummary = {
 
 export type ReportStatus = 'PENDING' | 'RESOLVED';
 
+/**
+ * 신고 유형. 목록 필터가 이 값을 서버로 보낸다.
+ *
+ * <p>{@link Report#category} 는 여전히 string 이다. 서버에 새 유형이 생겼을 때 화면이
+ * 그 값을 그대로 찍어야 한다 - 알 수 없는 값을 빈칸으로 바꾸면 새 유형이 들어온 것을
+ * 화면에서 알아챌 방법이 사라진다. 이 union 은 <b>우리가 고를 수 있는 것</b>의 목록이다.
+ */
+export type ReportCategory = 'BUG' | 'SUGGESTION' | 'GAME_REQUEST' | 'OTHER';
+
 export type Report = {
   id: number;
   category: string;
@@ -175,18 +194,23 @@ export type Report = {
   ip: string | null;
 };
 
-export type ReportSla = {
-  resolvedCount: number;
-  p50Minutes: number;
-  p95Minutes: number;
+/**
+ * 신고가 지금 얼마나 밀렸는가.
+ *
+ * <p>처리 시간의 중앙값과 p95 도 함께 받았는데 걷어냈다. 백분위는 표본이 쌓여야 뜻이
+ * 생기는 수인데 신고는 하루에 몇 건이라, 한 건이 들어오고 나갈 때마다 크게 흔들렸다.
+ */
+export type ReportBacklog = {
+  /** 아직 처리하지 않은 신고. 지금 손대야 할 건수다. */
   pendingCount: number;
+  /** 가장 오래 기다린 미처리 신고의 나이(분). 없으면 0. */
   oldestPendingMinutes: number;
 };
 
 /**
  * 신고 화면 상단 그래프.
  *
- * <p>목록은 "이 신고가 무엇인가"에, 처리 시간 타일은 "지금 밀렸나"에 답한다. 둘 다 답하지
+ * <p>목록은 "이 신고가 무엇인가"에, 미처리 타일은 "지금 밀렸나"에 답한다. 둘 다 답하지
  * 못하는 질문이 남는다. 무엇 때문에 신고가 들어오는가. 신고의 절반이 한 게임에서 나오면
  * 그건 신고 처리로 풀 일이 아니라 그 게임을 고칠 일이다.
  */
@@ -198,8 +222,6 @@ export type ReportStats = {
   games: { gameType: string | null; label: string | null; count: number }[];
   /** 처리는 접수일이 아니라 처리일로 센다. */
   daily: { date: string; received: number; resolved: number }[];
-  /** 처리된 신고만 센다. */
-  resolveBuckets: Bucket[];
 };
 
 /* ── 닉네임 검열 ─────────────────────────────────────────── */

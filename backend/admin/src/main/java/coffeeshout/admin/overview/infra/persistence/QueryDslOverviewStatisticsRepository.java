@@ -56,7 +56,7 @@ public class QueryDslOverviewStatisticsRepository implements OverviewStatisticsR
         return new RoomFunnel(
                 created,
                 countRooms(from, to, ROOM.roomStatus.in(STARTED)),
-                countRoomsWithMiniGamePlay(from, to),
+                countRoomsWithFinishedMiniGame(from, to),
                 countRooms(from, to, ROOM.roomStatus.in(ROULETTE_REACHED)),
                 countRooms(from, to, ROOM.roomStatus.eq(RoomState.DONE)));
     }
@@ -129,18 +129,29 @@ public class QueryDslOverviewStatisticsRepository implements OverviewStatisticsR
 
     @Override
     public List<GamePlayCount> countPlaysByGame(LocalDateTime from, LocalDateTime to) {
-        // mini_game_play 에는 시각이 없다. 결과(mini_game_result)의 시각으로 기간을 자르고
-        // 판 단위로 센다. 한 판에 참가자 수만큼 결과가 생기므로 distinct 가 없으면
-        // 4명짜리 한 판이 4판으로 세진다.
+        // 시작한 판(mini_game_play)에서 출발해 결과를 left join 한다. 결과에서 출발하면
+        // 시작만 하고 만 판은 애초에 조회에 안 걸려, 이탈이 있었다는 사실 자체가 안 보인다.
+        //
+        // 양쪽 다 countDistinct 다. 한 판에 참가자 수만큼 결과가 생기므로 distinct 가
+        // 없으면 4명짜리 한 판이 4판으로 세진다.
         return queryFactory
-                .select(MINI_GAME_RESULT.miniGameType, MINI_GAME_RESULT.miniGamePlay.id.countDistinct())
-                .from(MINI_GAME_RESULT)
-                .where(MINI_GAME_RESULT.createdAt.goe(from), MINI_GAME_RESULT.createdAt.lt(to))
-                .groupBy(MINI_GAME_RESULT.miniGameType)
+                .select(
+                        MINI_GAME_PLAY.miniGameType,
+                        MINI_GAME_PLAY.id.countDistinct(),
+                        MINI_GAME_RESULT.miniGamePlay.id.countDistinct())
+                .from(MINI_GAME_PLAY)
+                .join(ROOM)
+                .on(ROOM.id.eq(MINI_GAME_PLAY.roomSessionId))
+                .leftJoin(MINI_GAME_RESULT)
+                .on(MINI_GAME_RESULT.miniGamePlay.id.eq(MINI_GAME_PLAY.id))
+                .where(ROOM.createdAt.goe(from), ROOM.createdAt.lt(to))
+                .groupBy(MINI_GAME_PLAY.miniGameType)
                 .fetch()
                 .stream()
-                .map(row ->
-                        new GamePlayCount(row.get(MINI_GAME_RESULT.miniGameType), nullToZero(row.get(1, Long.class))))
+                .map(row -> new GamePlayCount(
+                        row.get(MINI_GAME_PLAY.miniGameType),
+                        nullToZero(row.get(1, Long.class)),
+                        nullToZero(row.get(2, Long.class))))
                 .toList();
     }
 
@@ -177,20 +188,20 @@ public class QueryDslOverviewStatisticsRepository implements OverviewStatisticsR
     }
 
     /**
-     * 참여자가 2명 이상인 방. 방장 혼자 만들고 아무도 안 들어온 방을 걸러낸다.
-     * 그 방들을 세면 퍼널 1단계가 부풀어 이탈 지점을 못 찾는다.
-     */
-    /**
      * 미니게임을 한 판이라도 끝낸 방의 수.
      *
-     * <p>{@code mini_game_play} 를 조인하지 않고 exists 로 본다. 조인하면 판 수만큼
-     * 방이 부풀어 세 판 한 방이 셋으로 세진다. distinct 로 덮을 수도 있지만, 여기서
-     * 필요한 것은 "있느냐" 하나라서 첫 행을 찾는 순간 멈추는 exists 가 맞다.
+     * <p>조인하지 않고 exists 로 본다. 조인하면 판 수만큼 방이 부풀어 세 판 한 방이
+     * 셋으로 세진다. distinct 로 덮을 수도 있지만, 여기서 필요한 것은 "있느냐" 하나라서
+     * 첫 행을 찾는 순간 멈추는 exists 가 맞다.
+     *
+     * <p><b>결과(mini_game_result)로 본다.</b> {@code mini_game_play} 행은 게임이 시작될 때
+     * 쌓이므로 그 행만 보면 시작한 방까지 "완료"로 세진다. 한때 그렇게 세어 이 단계가
+     * 직전 단계인 "게임 시작"보다 커졌고, 퍼널이 106%를 찍었다.
      *
      * <p>기간은 <b>방 생성 시각</b>으로 자른다. 퍼널의 다른 단계와 같은 기준이어야
-     * 단계 간 숫자가 이어진다. mini_game_play 에는 시각 컬럼 자체가 없기도 하다.
+     * 단계 간 숫자가 이어진다.
      */
-    private long countRoomsWithMiniGamePlay(LocalDateTime from, LocalDateTime to) {
+    private long countRoomsWithFinishedMiniGame(LocalDateTime from, LocalDateTime to) {
         return nullToZero(queryFactory
                 .select(ROOM.count())
                 .from(ROOM)
@@ -198,8 +209,8 @@ public class QueryDslOverviewStatisticsRepository implements OverviewStatisticsR
                         ROOM.createdAt.goe(from),
                         ROOM.createdAt.lt(to),
                         JPAExpressions.selectOne()
-                                .from(MINI_GAME_PLAY)
-                                .where(MINI_GAME_PLAY.roomSessionId.eq(ROOM.id))
+                                .from(MINI_GAME_RESULT)
+                                .where(MINI_GAME_RESULT.miniGamePlay.roomSessionId.eq(ROOM.id))
                                 .exists())
                 .fetchOne());
     }

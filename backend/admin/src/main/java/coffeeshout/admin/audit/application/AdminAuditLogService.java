@@ -56,6 +56,9 @@ public class AdminAuditLogService {
      * 불리고, 그때 어떤 값이 넘어오는지는 호출부가 늘어날수록 보장하기 어려워진다.
      */
     private static String forLog(String value) {
-        return value == null ? null : value.replaceAll("[\\r\\n]", "_");
+        // null 분기를 두지 않는다. 분기가 있으면 "어떤 경로에서는 원본이 그대로 나간다"가
+        // 참이 되고, 그 사실은 사람이 읽을 때도 정적 분석이 읽을 때도 똑같이 걸린다.
+        // null 이면 "null" 이 찍히는데 로그에서는 그걸로 충분하다.
+        return String.valueOf(value).replaceAll("[\\r\\n]", "_");
     }
 }

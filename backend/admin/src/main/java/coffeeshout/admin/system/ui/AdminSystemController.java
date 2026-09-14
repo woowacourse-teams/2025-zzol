@@ -1,11 +1,11 @@
-package coffeeshout.admin.ops.ui;
+package coffeeshout.admin.system.ui;
 
-import coffeeshout.admin.ops.application.OpsService;
-import coffeeshout.admin.ops.domain.DeadLetterSource;
-import coffeeshout.admin.ops.ui.response.DeadLetterResponse;
-import coffeeshout.admin.ops.ui.response.DeploymentResponse;
-import coffeeshout.admin.ops.ui.response.MigrationsResponse;
 import coffeeshout.admin.support.PageResponse;
+import coffeeshout.admin.system.application.SystemService;
+import coffeeshout.admin.system.domain.DeadLetterSource;
+import coffeeshout.admin.system.ui.response.DeadLetterResponse;
+import coffeeshout.admin.system.ui.response.DeploymentResponse;
+import coffeeshout.admin.system.ui.response.MigrationsResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.util.Optional;
@@ -30,14 +30,14 @@ import org.springframework.web.bind.annotation.RestController;
  * 남긴다. 격리된 정산 메시지를 누가 지웠는지는 나중에 반드시 묻게 되는 질문이다.
  */
 @RestController
-@RequestMapping("/admin/api/ops")
+@RequestMapping("/admin/api/system")
 @Validated
 @RequiredArgsConstructor
-public class AdminOpsController {
+public class AdminSystemController {
 
     private static final int PAGE_SIZE = 20;
 
-    private final OpsService opsService;
+    private final SystemService systemService;
     private final Environment environment;
     /**
      * {@code build-info.properties} 가 없으면 이 빈도 없다. 그래서 Optional 로 받는다.
@@ -51,25 +51,25 @@ public class AdminOpsController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return PageResponse.of(
-                opsService.findDeadLetters(source, page, size == 0 ? PAGE_SIZE : size), DeadLetterResponse::from);
+                systemService.findDeadLetters(source, page, size == 0 ? PAGE_SIZE : size), DeadLetterResponse::from);
     }
 
     /** outbox 만 가능하다. 정산 DLQ 는 재처리가 아니라 보존이 목적이라 경로를 두지 않았다. */
     @PostMapping("/dead-letters/outbox/{id}/requeue")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void requeue(@PathVariable Long id) {
-        opsService.requeue(id);
+        systemService.requeue(id);
     }
 
     @DeleteMapping("/dead-letters/{source}/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void discard(@PathVariable DeadLetterSource source, @PathVariable Long id) {
-        opsService.discard(source, id);
+        systemService.discard(source, id);
     }
 
     @GetMapping("/migrations")
     public MigrationsResponse migrations() {
-        return MigrationsResponse.of(opsService.migrationHistoryExists(), opsService.migrations());
+        return MigrationsResponse.of(systemService.migrationHistoryExists(), systemService.migrations());
     }
 
     @GetMapping("/deployment")

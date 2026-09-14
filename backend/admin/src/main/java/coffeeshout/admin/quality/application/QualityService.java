@@ -5,7 +5,7 @@ import coffeeshout.admin.quality.domain.NicknameAuditStats;
 import coffeeshout.admin.quality.domain.QualityStatisticsRepository;
 import coffeeshout.admin.quality.domain.QualityStatisticsRepository.AuditRecord;
 import coffeeshout.admin.quality.domain.QualityStatisticsRepository.ReportRecord;
-import coffeeshout.admin.quality.domain.ReportSla;
+import coffeeshout.admin.quality.domain.ReportBacklog;
 import coffeeshout.admin.quality.domain.ReportStats;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.profanity.domain.audit.AiConfidence;
@@ -38,19 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class QualityService {
 
     /**
-     * 신고 처리 소요 시간 구간.
-     *
-     * <p>하루를 경계에 둔다. 하루를 넘긴 신고는 그날 안에 못 본 것이고, 사흘을 넘긴 것은
-     * 사실상 잊힌 것이다. 그 둘을 한 칸에 묶으면 "느렸다" 하나로 뭉개진다.
-     */
-    private static final List<MinuteBand> RESOLVE_BANDS = List.of(
-            new MinuteBand("1시간 미만", 60),
-            new MinuteBand("1~6시간", 360),
-            new MinuteBand("6~24시간", 1_440),
-            new MinuteBand("1~3일", 4_320),
-            new MinuteBand("3일 초과", Long.MAX_VALUE));
-
-    /**
      * AI 신뢰도 구간.
      *
      * <p>0.6 아래가 두꺼우면 모델이 <b>확신 없이 걸고 있다</b>는 뜻이고, 그 구간은 사람이
@@ -74,29 +61,20 @@ public class QualityService {
         return qualityStatisticsRepository.findNicknameAuditQuality(to.minus(Duration.ofDays(days)), to);
     }
 
-    public ReportSla reportSla(int days) {
+    public ReportBacklog reportBacklog() {
         final Instant now = clock.instant();
-        final List<Long> durations =
-                qualityStatisticsRepository.findResolvedDurationMinutes(now.minus(Duration.ofDays(days)), now);
-
-        final long pendingCount = qualityStatisticsRepository.countPendingReports();
         final long oldestPendingMinutes = qualityStatisticsRepository
                 .findOldestPendingReportCreatedAt()
                 .map(createdAt -> Duration.between(createdAt, now).toMinutes())
                 .orElse(0L);
 
-        return new ReportSla(
-                durations.size(),
-                percentile(durations, 50),
-                percentile(durations, 95),
-                pendingCount,
-                oldestPendingMinutes);
+        return new ReportBacklog(qualityStatisticsRepository.countPendingReports(), oldestPendingMinutes);
     }
 
     /**
      * 신고 화면 상단 그래프.
      *
-     * <p>네 그래프가 한 번의 조회에서 나온다. 따로 돌리면 그사이 신고 하나가 처리되어
+     * <p>세 그래프가 한 번의 조회에서 나온다. 따로 돌리면 그사이 신고 하나가 처리되어
      * 카테고리 합과 날짜 합이 어긋난다.
      */
     public ReportStats reportStats(int days) {
@@ -111,8 +89,7 @@ public class QualityService {
                 reports.size(),
                 countCategories(reports),
                 countGames(reports),
-                countReportsByDate(reports, zone, first, today),
-                countResolveDurations(reports));
+                countReportsByDate(reports, zone, first, today));
     }
 
     /** 신고가 없는 카테고리도 0으로 보낸다. 화면이 채우게 두면 카테고리가 늘었을 때 칸이 사라진다. */
@@ -172,27 +149,6 @@ public class QualityService {
         return counts.entrySet().stream()
                 .map(entry -> new ReportStats.DailyCount(entry.getKey(), entry.getValue()[0], entry.getValue()[1]))
                 .toList();
-    }
-
-    private static List<ReportStats.Bucket> countResolveDurations(List<ReportRecord> reports) {
-        final List<Long> minutes = reports.stream()
-                .filter(report -> report.resolvedAt() != null)
-                .map(report -> Duration.between(report.createdAt(), report.resolvedAt())
-                        .toMinutes())
-                .toList();
-
-        final List<ReportStats.Bucket> buckets = new ArrayList<>();
-        long lower = 0;
-        for (MinuteBand band : RESOLVE_BANDS) {
-            final long from = lower;
-            buckets.add(new ReportStats.Bucket(
-                    band.label(),
-                    minutes.stream()
-                            .filter(value -> value >= from && value < band.upperMinutes())
-                            .count()));
-            lower = band.upperMinutes();
-        }
-        return buckets;
     }
 
     /**
@@ -266,21 +222,5 @@ public class QualityService {
         return buckets;
     }
 
-    private record MinuteBand(String label, long upperMinutes) {}
-
     private record ConfidenceBand(String label, double upperBound) {}
-
-    /**
-     * 정렬된 목록에서 백분위 값을 고른다(nearest-rank).
-     *
-     * <p>보간하지 않는다. 표본이 몇 건뿐인 백오피스에서 보간값은 실제로 없었던 소요 시간을
-     * 만들어 낸다. "실제 있었던 신고 중 하나"를 고르는 편이 읽는 사람에게 정직하다.
-     */
-    private static long percentile(List<Long> sortedAscending, int percentile) {
-        if (sortedAscending.isEmpty()) {
-            return 0;
-        }
-        final int rank = (int) Math.ceil(percentile / 100.0 * sortedAscending.size());
-        return sortedAscending.get(Math.min(rank, sortedAscending.size()) - 1);
-    }
 }

@@ -30,7 +30,8 @@ import type {
   ProfanityWord,
   ProviderStats,
   Report,
-  ReportSla,
+  ReportBacklog,
+  ReportCategory,
   ReportStats,
   ReportStatus,
   RoomDetail,
@@ -53,7 +54,7 @@ export const keys = {
   },
   reports: {
     list: (filters: unknown) => ['reports', 'list', filters] as const,
-    sla: (days: number) => ['reports', 'sla', days] as const,
+    backlog: ['reports', 'backlog'] as const,
   },
   profanity: {
     audits: (status: NicknameAuditStatus, page: number) =>
@@ -140,7 +141,7 @@ export function useDailySummary(date?: string) {
 /* ── 신고 ───────────────────────────────────────────────── */
 type ReportFilters = {
   status?: ReportStatus;
-  category?: string;
+  category?: ReportCategory;
   gameType?: string;
   page: number;
 };
@@ -157,10 +158,11 @@ export function useReportStats(days = 30) {
     queryFn: () => api.get<ReportStats>('/quality/report-stats', { days }),
   });
 }
-export function useReportSla(days = 30) {
+/** 기간 인자가 없다. 미처리는 지금 쌓여 있는 것이고 거기에 기간은 뜻이 없다. */
+export function useReportBacklog() {
   return useQuery({
-    queryKey: keys.reports.sla(days),
-    queryFn: () => api.get<ReportSla>('/quality/report-sla', { days }),
+    queryKey: keys.reports.backlog,
+    queryFn: () => api.get<ReportBacklog>('/quality/report-backlog'),
   });
 }
 export function useResolveReport() {
@@ -454,8 +456,8 @@ export function useDeleteEvalScenario() {
 /* ── 시스템 운영 ─────────────────────────────────────────── */
 export function useDeadLetters(source: DeadLetterSource, page = 0) {
   return useQuery({
-    queryKey: ['ops', 'dead-letters', source, page],
-    queryFn: () => api.get<PageResponse<DeadLetter>>('/ops/dead-letters', { source, page }),
+    queryKey: ['system', 'dead-letters', source, page],
+    queryFn: () => api.get<PageResponse<DeadLetter>>('/system/dead-letters', { source, page }),
   });
 }
 /**
@@ -467,9 +469,9 @@ export function useDeadLetters(source: DeadLetterSource, page = 0) {
 export function useRequeueDeadLetter() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api.post<void>(`/ops/dead-letters/outbox/${id}/requeue`),
+    mutationFn: (id: number) => api.post<void>(`/system/dead-letters/outbox/${id}/requeue`),
     onSuccess: () => {
-      client.invalidateQueries({ queryKey: ['ops', 'dead-letters'] });
+      client.invalidateQueries({ queryKey: ['system', 'dead-letters'] });
       client.invalidateQueries({ queryKey: keys.overview.queue });
     },
   });
@@ -478,25 +480,25 @@ export function useDiscardDeadLetter() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ source, id }: { source: DeadLetterSource; id: number }) =>
-      api.delete<void>(`/ops/dead-letters/${source}/${id}`),
+      api.delete<void>(`/system/dead-letters/${source}/${id}`),
     onSuccess: () => {
-      client.invalidateQueries({ queryKey: ['ops', 'dead-letters'] });
+      client.invalidateQueries({ queryKey: ['system', 'dead-letters'] });
       client.invalidateQueries({ queryKey: keys.overview.queue });
     },
   });
 }
 export function useMigrations() {
   return useQuery({
-    queryKey: ['ops', 'migrations'],
-    queryFn: () => api.get<Migrations>('/ops/migrations'),
+    queryKey: ['system', 'migrations'],
+    queryFn: () => api.get<Migrations>('/system/migrations'),
     // 배포 중이 아니면 안 바뀐다. 화면을 열어 둔 채로 다시 물을 이유가 없다.
     staleTime: 5 * 60_000,
   });
 }
 export function useDeployment() {
   return useQuery({
-    queryKey: ['ops', 'deployment'],
-    queryFn: () => api.get<Deployment>('/ops/deployment'),
+    queryKey: ['system', 'deployment'],
+    queryFn: () => api.get<Deployment>('/system/deployment'),
     staleTime: Infinity,
   });
 }

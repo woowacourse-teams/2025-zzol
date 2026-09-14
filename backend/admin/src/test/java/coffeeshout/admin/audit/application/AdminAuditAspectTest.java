@@ -184,6 +184,19 @@ class AdminAuditAspectTest {
         }
 
         @Test
+        void 매핑_패턴이_없으면_요청_URI_대신_핸들러_이름을_남긴다() throws Throwable {
+            // 요청 URI 는 부르는 쪽이 정하는 문자열이다. 개행을 끼워 넣으면 감사 로그 한 줄이
+            // 여러 줄로 쪼개지고, 같은 값이 조치 이력 테이블에도 그대로 쌓인다.
+            bindRequest("POST", "/admin/api/accounts\n가짜 로그 줄", null, null);
+            authenticateAs("mj@zzol.site");
+
+            aspect.recordWrite(returning("ok"));
+
+            then(adminAuditLogService).should().record(any(), actionCaptor.capture(), any(), any(), any(), any());
+            assertThat(actionCaptor.getValue()).doesNotContain("가짜 로그 줄").isEqualTo("POST stub");
+        }
+
+        @Test
         void 자원_이름과_대상_id를_함께_남긴다() throws Throwable {
             bindRequest("DELETE", "/admin/api/accounts/7", "/admin/api/accounts/{id}", Map.of("id", "7"));
             authenticateAs("mj@zzol.site");

@@ -1,4 +1,4 @@
-package coffeeshout.admin.ops.ui.response;
+package coffeeshout.admin.system.ui.response;
 
 import java.time.Instant;
 

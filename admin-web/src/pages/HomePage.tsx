@@ -37,6 +37,7 @@ import { TileGrid, TileSkeletons } from '@/components/ui/TileGrid';
 import { Timestamp } from '@/components/ui/Timestamp';
 import { DataTable } from '@/components/DataTable';
 import { DistributionBars } from '@/components/charts/DistributionBars';
+import { toGameRowsWithDropOff } from '@/lib/gameStats';
 import { formatNumber, formatPercent } from '@/lib/format';
 import { inboxKindLabel, reportCategoryLabel } from '@/lib/labels';
 
@@ -191,7 +192,7 @@ export function HomePage() {
                     {
                       label: '격리 메시지',
                       count: data.deadLetters,
-                      to: '/ops',
+                      to: '/system',
                       icon: ServerCog,
                       critical: true,
                     },
@@ -284,7 +285,7 @@ export function HomePage() {
         <Card className="flex flex-col">
           <CardHeader
             title="게임별 플레이"
-            description="완료 기준. 비중이 0에 가까우면 목록에서 뺄지 고민할 때입니다."
+            description="시작한 판을 셉니다. 막대의 옅은 꼬리와 오른쪽 숫자가 이탈입니다."
           />
           <div className="flex flex-1 flex-col justify-center">
             <Loaded
@@ -301,9 +302,9 @@ export function HomePage() {
                 <DistributionBars
                   ranked
                   className="px-5 pb-5"
-                  data={data.map((stat) => ({ label: stat.label, count: stat.plays }))}
-                  emptyTitle="완료된 게임이 없습니다"
-                  emptyDescription="게임이 끝나야 집계됩니다. 시작만 하고 만 게임은 기록이 남지 않습니다."
+                  data={toGameRowsWithDropOff(data)}
+                  emptyTitle="시작된 게임이 없습니다"
+                  emptyDescription="방이 만들어지고 게임이 시작돼야 집계됩니다."
                 />
               )}
             </Loaded>
@@ -497,7 +498,7 @@ function routeOf(item: InboxItem): string {
   if (item.kind === 'NICKNAME') {
     return '/profanity';
   }
-  return '/ops';
+  return '/system';
 }
 
 function count(items: InboxItem[], kind: InboxKind): number {

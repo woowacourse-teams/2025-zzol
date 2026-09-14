@@ -8,9 +8,9 @@ import static org.mockito.BDDMockito.given;
 
 import coffeeshout.admin.inbox.domain.InboxItem;
 import coffeeshout.admin.inbox.domain.InboxKind;
-import coffeeshout.admin.ops.application.OpsService;
-import coffeeshout.admin.ops.domain.DeadLetter;
-import coffeeshout.admin.ops.domain.DeadLetterSource;
+import coffeeshout.admin.system.application.SystemService;
+import coffeeshout.admin.system.domain.DeadLetter;
+import coffeeshout.admin.system.domain.DeadLetterSource;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.profanity.application.ProfanityAuditService;
 import coffeeshout.profanity.domain.audit.AiConfidence;
@@ -57,10 +57,10 @@ class InboxServiceTest {
     private ProfanityAuditService profanityAuditService;
 
     @Mock
-    private OpsService opsService;
+    private SystemService systemService;
 
     private InboxService newService() {
-        return new InboxService(reportAdminService, profanityAuditService, opsService, CLOCK);
+        return new InboxService(reportAdminService, profanityAuditService, systemService, CLOCK);
     }
 
     @Nested
@@ -197,7 +197,7 @@ class InboxServiceTest {
     }
 
     private void givenDeadLetters(DeadLetterSource source, List<DeadLetter> letters) {
-        given(opsService.findDeadLetters(eq(source), eq(0), anyInt()))
+        given(systemService.findDeadLetters(eq(source), eq(0), anyInt()))
                 .willReturn(new PageImpl<>(letters, PageRequest.of(0, 20), letters.size()));
     }
 

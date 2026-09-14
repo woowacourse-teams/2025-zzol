@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("local")
 @Component
 @RequiredArgsConstructor
-public class ReportMockDataInitializer implements ApplicationRunner {
+public class LocalReportDataInitializer implements ApplicationRunner {
 
     /**
      * 처리 소요 시간 후보(분).
@@ -59,14 +59,14 @@ public class ReportMockDataInitializer implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         if (reportRepository.count() > 0) {
-            log.debug("[ReportMockDataInitializer] 이미 데이터가 존재하므로 건너뜁니다.");
+            log.debug("[LocalReportDataInitializer] 이미 데이터가 존재하므로 건너뜁니다.");
             return;
         }
 
         final List<Report> entities = buildMockData();
         reportRepository.saveAll(entities);
         backdateResolvedAt(entities);
-        log.info("[ReportMockDataInitializer] mock 신고 데이터 {}건 삽입 완료", entities.size());
+        log.info("[LocalReportDataInitializer] mock 신고 데이터 {}건 삽입 완료", entities.size());
     }
 
     // PMD.NcssCount 억제 — 이 메서드는 로직이 아니라 mock 데이터 표다(list.add 나열).

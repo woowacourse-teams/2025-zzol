@@ -116,11 +116,5 @@ class QueryDslQualityStatisticsRepositoryTest extends AdminModuleServiceTest {
             assertThat(qualityStatisticsRepository.findOldestPendingReportCreatedAt())
                     .isEmpty();
         }
-
-        @Test
-        void 처리된_신고가_없으면_소요_시간_목록이_비어_있다() {
-            assertThat(qualityStatisticsRepository.findResolvedDurationMinutes(FROM, TO))
-                    .isEmpty();
-        }
     }
 }

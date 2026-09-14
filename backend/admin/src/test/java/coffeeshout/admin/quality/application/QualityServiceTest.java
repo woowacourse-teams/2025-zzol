@@ -10,7 +10,7 @@ import coffeeshout.admin.quality.domain.NicknameAuditStats;
 import coffeeshout.admin.quality.domain.QualityStatisticsRepository;
 import coffeeshout.admin.quality.domain.QualityStatisticsRepository.AuditRecord;
 import coffeeshout.admin.quality.domain.QualityStatisticsRepository.ReportRecord;
-import coffeeshout.admin.quality.domain.ReportSla;
+import coffeeshout.admin.quality.domain.ReportBacklog;
 import coffeeshout.admin.quality.domain.ReportStats;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.profanity.domain.audit.AiConfidence;
@@ -44,74 +44,27 @@ class QualityServiceTest {
         return new QualityService(qualityStatisticsRepository, CLOCK);
     }
 
-    private void givenDurations(List<Long> minutes) {
-        given(qualityStatisticsRepository.findResolvedDurationMinutes(any(), any()))
-                .willReturn(minutes);
-        given(qualityStatisticsRepository.findOldestPendingReportCreatedAt()).willReturn(Optional.empty());
-    }
-
     @Nested
-    class reportSla {
-
-        @Test
-        void 중앙값과_p95를_nearest_rank로_고른다() {
-            // 1..10 이면 p50 은 5번째(5), p95 는 10번째(10)다.
-            givenDurations(List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L));
-
-            final ReportSla sla = service().reportSla(30);
-
-            assertThat(sla.p50Minutes()).isEqualTo(5);
-            assertThat(sla.p95Minutes()).isEqualTo(10);
-        }
-
-        @Test
-        void 이상치_하나가_중앙값을_끌고_가지_않는다() {
-            // 평균이면 1440 짜리 하나가 전체를 왜곡한다. 중앙값은 버틴다.
-            givenDurations(List.of(1L, 2L, 3L, 1440L));
-
-            assertThat(service().reportSla(30).p50Minutes()).isEqualTo(2);
-        }
-
-        @Test
-        void 표본이_하나면_두_백분위가_같다() {
-            givenDurations(List.of(7L));
-
-            final ReportSla sla = service().reportSla(30);
-
-            assertThat(sla.p50Minutes()).isEqualTo(7);
-            assertThat(sla.p95Minutes()).isEqualTo(7);
-        }
-
-        @Test
-        void 처리된_신고가_없으면_0이다() {
-            givenDurations(List.of());
-
-            final ReportSla sla = service().reportSla(30);
-
-            assertThat(sla.resolvedCount()).isZero();
-            assertThat(sla.p50Minutes()).isZero();
-            assertThat(sla.p95Minutes()).isZero();
-        }
+    class reportBacklog {
 
         @Test
         void 가장_오래된_미처리_신고의_나이를_분으로_돌려준다() {
-            given(qualityStatisticsRepository.findResolvedDurationMinutes(any(), any()))
-                    .willReturn(List.of());
             given(qualityStatisticsRepository.findOldestPendingReportCreatedAt())
                     .willReturn(Optional.of(NOW.minusSeconds(3 * 3600)));
             given(qualityStatisticsRepository.countPendingReports()).willReturn(4L);
 
-            final ReportSla sla = service().reportSla(30);
+            final ReportBacklog backlog = service().reportBacklog();
 
-            assertThat(sla.oldestPendingMinutes()).isEqualTo(180);
-            assertThat(sla.pendingCount()).isEqualTo(4L);
+            assertThat(backlog.oldestPendingMinutes()).isEqualTo(180);
+            assertThat(backlog.pendingCount()).isEqualTo(4L);
         }
 
         @Test
         void 미처리_신고가_없으면_대기_시간이_0이다() {
-            givenDurations(List.of());
+            given(qualityStatisticsRepository.findOldestPendingReportCreatedAt())
+                    .willReturn(Optional.empty());
 
-            assertThat(service().reportSla(30).oldestPendingMinutes()).isZero();
+            assertThat(service().reportBacklog().oldestPendingMinutes()).isZero();
         }
     }
 
@@ -191,41 +144,6 @@ class QualityServiceTest {
                     .hasSize(7)
                     .extracting(ReportStats.DailyCount::date)
                     .endsWith(LocalDate.of(2026, 9, 6));
-        }
-
-        @Test
-        void 처리_안_된_신고는_소요_시간에_들어가지_않는다() {
-            // 진행 중인 신고를 0분으로 넣으면 "1시간 미만"이 부풀어 빨리 처리하는 것처럼 보인다.
-            given(qualityStatisticsRepository.findReportsBetween(any(), any()))
-                    .willReturn(List.of(report(ReportCategory.BUG, null, 1), resolved(2, 30)));
-
-            final List<ReportStats.Bucket> buckets = service().reportStats(30).resolveBuckets();
-
-            assertThat(buckets.stream().mapToLong(ReportStats.Bucket::count).sum())
-                    .isEqualTo(1);
-            assertThat(buckets.getFirst().count()).isEqualTo(1);
-        }
-
-        @Test
-        void 소요_시간_구간은_아래를_포함하고_위를_뺀다() {
-            // 60분짜리가 "1시간 미만"과 "1~6시간" 양쪽에 들어가면 합이 신고 수보다 커진다.
-            given(qualityStatisticsRepository.findReportsBetween(any(), any()))
-                    .willReturn(List.of(
-                            resolved(1, 0),
-                            resolved(1, 60),
-                            resolved(1, 360),
-                            resolved(1, 1_440),
-                            resolved(1, 4_320),
-                            resolved(1, 10_000)));
-
-            assertThat(service().reportStats(30).resolveBuckets())
-                    .extracting(ReportStats.Bucket::label, ReportStats.Bucket::count)
-                    .containsExactly(
-                            tuple("1시간 미만", 1L),
-                            tuple("1~6시간", 1L),
-                            tuple("6~24시간", 1L),
-                            tuple("1~3일", 1L),
-                            tuple("3일 초과", 2L));
         }
     }
 

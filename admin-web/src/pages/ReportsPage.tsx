@@ -2,8 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useReportSla, useReportStats, useReports, useResolveReport } from '@/api/queries';
-import type { Report, ReportStats, ReportStatus } from '@/api/types';
+import { useReportBacklog, useReportStats, useReports, useResolveReport } from '@/api/queries';
+import type { Report, ReportCategory, ReportStats, ReportStatus } from '@/api/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -15,17 +15,24 @@ import { Select } from '@/components/ui/Field';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Pagination } from '@/components/ui/Pagination';
 import { Tile } from '@/components/ui/Tile';
-import { TileGrid, TileSkeletons } from '@/components/ui/TileGrid';
+import { TileSkeletons } from '@/components/ui/TileGrid';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Timestamp } from '@/components/ui/Timestamp';
 import { DataTable } from '@/components/DataTable';
 import { DailyChart } from '@/components/charts/DailyChart';
 import { DistributionBars } from '@/components/charts/DistributionBars';
 import { DonutChart } from '@/components/charts/DonutChart';
-import { Histogram } from '@/components/charts/Histogram';
 import { Skeleton } from '@/components/ui/EmptyState';
 import { formatDurationMinutes } from '@/lib/format';
 import { miniGameLabel, reportCategoryLabel } from '@/lib/labels';
+
+/**
+ * 유형 필터가 고를 수 있는 값.
+ *
+ * <p>표시할 말은 여기 적지 않고 {@link reportCategoryLabel} 이 낸다. 두 곳에 적어 두면
+ * 목록의 "건의" 와 필터의 "건의사항" 처럼 같은 값이 화면에서 다른 이름으로 불린다.
+ */
+const CATEGORIES: ReportCategory[] = ['BUG', 'SUGGESTION', 'GAME_REQUEST', 'OTHER'];
 
 /** 접수가 코랄이다. 들어오는 일이 주인공이고, 처리는 그것을 얼마나 따라갔는지를 보여준다. */
 const DAILY_SERIES = [
@@ -57,11 +64,22 @@ function gameCardDescription(stats: ReportStats | undefined) {
 
 export function ReportsPage() {
   const [status, setStatus] = useState<ReportStatus | ''>('PENDING');
+  const [category, setCategory] = useState<ReportCategory | ''>('');
   const [page, setPage] = useState(0);
   const [target, setTarget] = useState<Report | null>(null);
 
-  const reports = useReports({ status: status || undefined, page });
-  const sla = useReportSla(30);
+  const reports = useReports({
+    status: status || undefined,
+    category: category || undefined,
+    page,
+  });
+
+  /** 조건을 바꾸면 첫 페이지로 돌아간다. 3페이지에서 필터를 걸면 결과가 없는 페이지가 뜬다. */
+  const change = (apply: () => void) => {
+    apply();
+    setPage(0);
+  };
+  const backlog = useReportBacklog();
   const stats = useReportStats(30);
   const resolve = useResolveReport();
 
@@ -133,47 +151,61 @@ export function ReportsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="신고"
-        description="접수된 신고를 확인하고 처리합니다. 처리 시간은 최근 30일 기준입니다."
+        description="접수된 신고를 확인하고 처리합니다. 그래프는 최근 30일 기준입니다."
       />
 
-      {/* 실패하면 "-" 대신 실패했다고 말한다. "-" 는 "오늘 0건"과 똑같이 생겨서,
-       * 서버가 답을 못 준 것을 처리할 게 없는 것으로 읽게 만든다. */}
-      <Loaded
-        query={sla}
-        errorClassName={ERROR_SURFACE}
-        skeleton={
-          <TileGrid>
-            <TileSkeletons />
-          </TileGrid>
-        }
-      >
-        {(data) => (
-          <TileGrid>
-            <Tile
-              label="미처리"
-              value={data.pendingCount}
-              // 이 칸만 hint 가 없어 나란히 선 넷 중 첫 칸의 아래가 비어 있었다.
-              // 타일은 라벨, 값, 보조 문구 세 줄이 한 벌이라 하나만 두 줄이면 어긋나 보인다.
-              hint="지금 손대야 할 건수"
-            />
-            <Tile
-              label="가장 오래 기다린 건"
-              value={formatDurationMinutes(data.oldestPendingMinutes)}
-              hint="접수 후 경과"
-            />
-            <Tile
-              label="처리 시간 중앙값"
-              value={formatDurationMinutes(data.p50Minutes)}
-              hint="평균이 아닌 중앙값"
-            />
-            <Tile
-              label="처리 시간 p95"
-              value={formatDurationMinutes(data.p95Minutes)}
-              hint={`최근 30일 ${data.resolvedCount}건 기준`}
-            />
-          </TileGrid>
-        )}
-      </Loaded>
+      {/* 지금 밀린 신고 둘과 일자별 흐름을 한 줄에 둔다.
+       *
+       * <p>한때 이 줄은 타일 넷이었다. 처리 시간의 중앙값과 p95 가 뒤의 둘이었는데
+       * 걷어냈다. 백분위는 표본이 쌓여야 뜻이 생기는 수인데 신고는 하루에 몇 건이라,
+       * 한 건이 들어오고 나갈 때마다 두 수가 크게 흔들렸다. 흔들리는 수가 한 줄에 서
+       * 있으면 옆의 미처리 건수까지 못 믿게 된다.
+       *
+       * <p>남은 둘만으로 줄을 채우면 오른쪽 절반이 빈다. 그래서 일자별 그래프를 이 줄로
+       * 올렸다. "지금 밀렸나"와 "요즘 얼마나 들어오나"는 같은 자리에서 묻는 질문이다. */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        {/* 실패하면 "-" 대신 실패했다고 말한다. "-" 는 "오늘 0건"과 똑같이 생겨서,
+         * 서버가 답을 못 준 것을 처리할 게 없는 것으로 읽게 만든다. */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2">
+          <Loaded
+            query={backlog}
+            errorClassName={ERROR_SURFACE}
+            skeleton={<TileSkeletons count={2} />}
+          >
+            {(data) => (
+              <>
+                <Tile
+                  label="미처리"
+                  value={data.pendingCount}
+                  // 이 칸만 hint 가 없어 나란히 선 둘 중 첫 칸의 아래가 비어 있었다.
+                  // 타일은 라벨, 값, 보조 문구 세 줄이 한 벌이라 하나만 두 줄이면 어긋나 보인다.
+                  hint="지금 손대야 할 건수"
+                />
+                <Tile
+                  label="가장 오래 기다린 건"
+                  value={formatDurationMinutes(data.oldestPendingMinutes)}
+                  hint="접수 후 경과"
+                />
+              </>
+            )}
+          </Loaded>
+        </div>
+
+        <Card className="flex flex-col">
+          <CardHeader
+            title="일자별 접수와 처리"
+            description="처리는 접수일이 아니라 처리한 날로 셉니다."
+          />
+          {/* 높이를 못 박는다. 왼쪽 타일 둘이 이 카드 높이에 맞춰 늘어나는데, 그래프가
+            * 기본 높이(180)면 타일 하나가 160px 이 되어 숫자 아래가 휑해진다. 140 이면
+            * 타일이 제 높이(약 100)로 선다. 28개 막대는 이 높이에서도 읽힌다. */}
+          <CardBody className="flex-1 pb-4">
+            <Loaded query={stats} skeleton={<Skeleton className="h-[8.75rem]" />}>
+              {(data) => <DailyChart data={data.daily} series={DAILY_SERIES} height={140} />}
+            </Loaded>
+          </CardBody>
+        </Card>
+      </div>
 
       {/* 무엇 때문에 신고가 들어오는가. 목록과 SLA 타일이 둘 다 답하지 못하는 질문이다.
        * 신고의 절반이 한 게임에서 나오면 그건 신고 처리로 풀 일이 아니다. */}
@@ -212,55 +244,40 @@ export function ReportsPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader
-            title="일자별 접수와 처리"
-            description="처리는 접수일이 아니라 처리한 날로 셉니다."
-          />
-          <CardBody className="flex-1 pb-4">
-            <Loaded query={stats} skeleton={<Skeleton className="h-40" />}>
-              {(data) => <DailyChart data={data.daily} series={DAILY_SERIES} height="100%" />}
-            </Loaded>
-          </CardBody>
-        </Card>
-
-        <Card className="flex flex-col">
-          <CardHeader
-            title="처리까지 걸린 시간"
-            description="처리된 신고만 셉니다. 미처리 건은 빠집니다."
-          />
-          <CardBody className="flex-1 pb-4">
-            <Loaded query={stats} skeleton={<Skeleton className="h-40" />}>
-              {(data) => (
-                <Histogram
-                  data={data.resolveBuckets}
-                  emptyTitle="처리된 신고가 없습니다"
-                  emptyDescription="처리해야 소요 시간이 남습니다."
-                />
-              )}
-            </Loaded>
-          </CardBody>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader
           title="신고 목록"
           description="행을 누르면 전문과 처리가 옆에서 열립니다."
           actions={
-            <Select
-              value={status}
-              onChange={(event) => {
-                setStatus(event.target.value as ReportStatus | '');
-                setPage(0);
-              }}
-              className="w-32"
-            >
-              <option value="">전체</option>
-              <option value="PENDING">미처리</option>
-              <option value="RESOLVED">처리 완료</option>
-            </Select>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select
+                value={status}
+                onChange={(event) =>
+                  change(() => setStatus(event.target.value as ReportStatus | ''))
+                }
+                className="w-32"
+              >
+                <option value="">전체 상태</option>
+                <option value="PENDING">미처리</option>
+                <option value="RESOLVED">처리 완료</option>
+              </Select>
+              {/* 유형은 상태 다음이다. 운영자가 먼저 정하는 것은 "지금 손댈 것만 볼까"이고,
+                * 유형은 그 안에서 다시 좁히는 조건이다. */}
+              <Select
+                value={category}
+                onChange={(event) =>
+                  change(() => setCategory(event.target.value as ReportCategory | ''))
+                }
+                className="w-32"
+              >
+                <option value="">전체 유형</option>
+                {CATEGORIES.map((value) => (
+                  <option key={value} value={value}>
+                    {reportCategoryLabel(value)}
+                  </option>
+                ))}
+              </Select>
+            </div>
           }
         />
 
@@ -272,8 +289,10 @@ export function ReportsPage() {
           loading={reports.isPending}
           onRowClick={(report) => panel.open(String(report.id))}
           isRowSelected={(report) => String(report.id) === panel.value}
-          emptyTitle={status === 'PENDING' ? '미처리 신고가 없습니다' : '신고가 없습니다'}
-          emptyDescription="새 신고가 들어오면 여기에 쌓입니다."
+          emptyTitle={emptyListTitle(status, category)}
+          emptyDescription={
+            category ? '조건을 풀어 보세요.' : '새 신고가 들어오면 여기에 쌓입니다.'
+          }
         />
         {reports.data && (
           <Pagination
@@ -312,6 +331,18 @@ export function ReportsPage() {
       />
     </div>
   );
+}
+
+/**
+ * 목록이 비었을 때의 제목. 걸어 둔 조건을 그대로 되읽어 준다.
+ *
+ * <p>"신고가 없습니다" 한 문장으로 두면, 유형을 걸어 놓은 것을 잊은 운영자가 신고가 한
+ * 건도 없다고 믿고 화면을 닫는다. 조건이 제목에 적혀 있으면 빈 목록이 곧 단서가 된다.
+ */
+function emptyListTitle(status: ReportStatus | '', category: ReportCategory | '') {
+  const state = { PENDING: '미처리 ', RESOLVED: '처리 완료된 ', '': '' }[status];
+  const kind = category ? `${reportCategoryLabel(category)} ` : '';
+  return `${state}${kind}신고가 없습니다`;
 }
 
 /**

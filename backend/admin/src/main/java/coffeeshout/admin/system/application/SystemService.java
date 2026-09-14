@@ -1,9 +1,9 @@
-package coffeeshout.admin.ops.application;
+package coffeeshout.admin.system.application;
 
-import coffeeshout.admin.ops.domain.DeadLetter;
-import coffeeshout.admin.ops.domain.DeadLetterSource;
-import coffeeshout.admin.ops.domain.MigrationHistoryRepository;
-import coffeeshout.admin.ops.domain.MigrationRecord;
+import coffeeshout.admin.system.domain.DeadLetter;
+import coffeeshout.admin.system.domain.DeadLetterSource;
+import coffeeshout.admin.system.domain.MigrationHistoryRepository;
+import coffeeshout.admin.system.domain.MigrationRecord;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.outbox.OutboxEvent;
 import coffeeshout.global.outbox.OutboxEventRepository;
@@ -36,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class OpsService {
+public class SystemService {
 
     private static final int MIGRATION_LIMIT = 30;
 
@@ -61,9 +61,9 @@ public class OpsService {
         if (source == DeadLetterSource.OUTBOX) {
             return outboxEventRepository
                     .findByStatus(OutboxStatus.DEAD_LETTER, pageable)
-                    .map(OpsService::toDeadLetter);
+                    .map(SystemService::toDeadLetter);
         }
-        return settlementDeadLetterRepository.findAll(pageable).map(OpsService::toDeadLetter);
+        return settlementDeadLetterRepository.findAll(pageable).map(SystemService::toDeadLetter);
     }
 
     /**
@@ -80,7 +80,7 @@ public class OpsService {
 
         event.setStatusPending();
         log.info(
-                "[Ops] outbox 격리 메시지를 다시 큐에 넣음. id={} streamKey={} retryCount={}",
+                "[System] outbox 격리 메시지를 다시 큐에 넣음. id={} streamKey={} retryCount={}",
                 event.getId(),
                 event.getStreamKey(),
                 event.getRetryCount());
@@ -126,13 +126,14 @@ public class OpsService {
                 outboxEventRepository.findById(outboxEventId).orElseThrow(() -> notFound(outboxEventId));
 
         if (event.getStatus() != OutboxStatus.DEAD_LETTER) {
-            throw new BusinessException(OpsErrorCode.NOT_DEAD_LETTER, "격리 상태가 아닌 메시지입니다. 현재 상태=" + event.getStatus());
+            throw new BusinessException(
+                    SystemErrorCode.NOT_DEAD_LETTER, "격리 상태가 아닌 메시지입니다. 현재 상태=" + event.getStatus());
         }
         return event;
     }
 
     private static BusinessException notFound(long id) {
-        return new BusinessException(OpsErrorCode.DEAD_LETTER_NOT_FOUND, "존재하지 않는 격리 메시지입니다. id=" + id);
+        return new BusinessException(SystemErrorCode.DEAD_LETTER_NOT_FOUND, "존재하지 않는 격리 메시지입니다. id=" + id);
     }
 
     public List<MigrationRecord> migrations() {

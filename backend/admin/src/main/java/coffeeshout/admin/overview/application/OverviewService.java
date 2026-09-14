@@ -1,12 +1,12 @@
 package coffeeshout.admin.overview.application;
 
 import coffeeshout.admin.ipblock.IpBlockAdminService;
-import coffeeshout.admin.ops.application.OpsService;
 import coffeeshout.admin.overview.domain.DailyTrendPoint;
 import coffeeshout.admin.overview.domain.GamePlayStat;
 import coffeeshout.admin.overview.domain.OverviewStatisticsRepository;
 import coffeeshout.admin.overview.domain.OverviewStatisticsRepository.GamePlayCount;
 import coffeeshout.admin.overview.domain.RoomFunnel;
+import coffeeshout.admin.system.application.SystemService;
 import coffeeshout.profanity.application.ProfanityAuditService;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.report.application.ReportAdminService;
@@ -42,7 +42,7 @@ public class OverviewService {
     private final ReportAdminService reportAdminService;
     private final ProfanityAuditService profanityAuditService;
     private final IpBlockAdminService ipBlockAdminService;
-    private final OpsService opsService;
+    private final SystemService systemService;
     private final Clock clock;
 
     /** 상단의 처리 대기 큐. 0 이면 오늘 볼 게 없다는 뜻이다. */
@@ -52,7 +52,7 @@ public class OverviewService {
                 countAudits(NicknameAuditStatus.FLAGGED),
                 countAudits(NicknameAuditStatus.PENDING),
                 ipBlockAdminService.getBlockedIps().size(),
-                opsService.countDeadLetters());
+                systemService.countDeadLetters());
     }
 
     /**
@@ -133,17 +133,25 @@ public class OverviewService {
                 .toList();
     }
 
-    /** 게임별 완료 수와 비중. 비중이 0에 가까운 게임은 아무도 고르지 않는다는 뜻이다. */
+    /**
+     * 게임별 시작 판과 비중. 비중이 0에 가까운 게임은 아무도 고르지 않는다는 뜻이다.
+     *
+     * <p>완료 판이 아니라 <b>시작 판</b>으로 정렬하고 비중을 낸다. 완료 판으로 세면 중간에
+     * 깨지는 게임이 "인기가 없는 게임"으로 보인다. 둘은 서로 다른 문제다.
+     */
     public List<GamePlayStat> gamePlayStats(int days) {
         final LocalDate today = LocalDate.now(clock);
         final List<GamePlayCount> counts = overviewStatisticsRepository.countPlaysByGame(
                 today.minusDays(days - 1L).atStartOfDay(), today.plusDays(1).atStartOfDay());
 
-        final long total = counts.stream().mapToLong(GamePlayCount::plays).sum();
+        final long total = counts.stream().mapToLong(GamePlayCount::started).sum();
         return counts.stream()
-                .sorted(Comparator.comparingLong(GamePlayCount::plays).reversed())
+                .sorted(Comparator.comparingLong(GamePlayCount::started).reversed())
                 .map(count -> new GamePlayStat(
-                        count.miniGameType(), count.plays(), total == 0 ? 0 : (double) count.plays() / total))
+                        count.miniGameType(),
+                        count.started(),
+                        count.finished(),
+                        total == 0 ? 0 : (double) count.started() / total))
                 .toList();
     }
 

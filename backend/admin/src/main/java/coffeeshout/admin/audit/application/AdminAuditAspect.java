@@ -55,7 +55,7 @@ public class AdminAuditAspect {
         }
 
         final String actor = currentActorEmail();
-        final String action = request.getMethod() + " " + uriTemplate(request);
+        final String action = request.getMethod() + " " + uriTemplate(request, joinPoint);
         final String targetId = pathVariablesOf(request);
 
         try {
@@ -99,10 +99,18 @@ public class AdminAuditAspect {
     /**
      * 실제 URI 대신 매핑 패턴({@code /admin/api/accounts/{id}})을 쓴다.
      * id 마다 다른 action 이 쌓이면 "무슨 조치가 몇 번 있었나"를 집계할 수 없다.
+     *
+     * <p>패턴이 없으면 요청 URI 로 되돌아가지 않고 핸들러 이름을 쓴다. 요청 URI 는 부르는
+     * 쪽이 정하는 문자열이라 개행을 끼워 넣으면 감사 로그 한 줄이 여러 줄로 쪼개지고,
+     * 같은 값이 조치 이력 테이블에도 그대로 쌓인다. 핸들러 이름은 서버가 정한 값이면서
+     * 어느 조치였는지도 똑같이 짚어 준다.
      */
-    private static String uriTemplate(HttpServletRequest request) {
+    private static String uriTemplate(HttpServletRequest request, ProceedingJoinPoint joinPoint) {
         final Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-        return pattern != null ? pattern.toString() : request.getRequestURI();
+        if (pattern != null) {
+            return pattern.toString();
+        }
+        return joinPoint.toShortString();
     }
 
     private static String targetTypeOf(HttpServletRequest request) {

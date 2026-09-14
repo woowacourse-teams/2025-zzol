@@ -43,7 +43,7 @@ const ReportsPage = lazy(() =>
 );
 const RoomsPage = lazy(() => import('@/pages/RoomsPage').then((m) => ({ default: m.RoomsPage })));
 const UsersPage = lazy(() => import('@/pages/UsersPage').then((m) => ({ default: m.UsersPage })));
-const OpsPage = lazy(() => import('@/pages/OpsPage').then((m) => ({ default: m.OpsPage })));
+const SystemPage = lazy(() => import('@/pages/SystemPage').then((m) => ({ default: m.SystemPage })));
 const ZzolBotPage = lazy(() =>
   import('@/pages/ZzolBotPage').then((m) => ({ default: m.ZzolBotPage })),
 );
@@ -106,7 +106,9 @@ export function App() {
                 <Route path="/patch-notes/:id" element={<PatchNoteFormPage />} />
                 <Route path="/admins" element={<AdminAccountsPage />} />
                 <Route path="/zzolbot" element={<ZzolBotPage />} />
-                <Route path="/ops" element={<OpsPage />} />
+                <Route path="/system" element={<SystemPage />} />
+                {/* 화면 이름을 "시스템"으로 맞추면서 주소도 옮겼다. 옛 주소는 살려 둔다. */}
+                <Route path="/ops" element={<LegacyRedirect to="/system" />} />
                 <Route path="/audit-logs" element={<AuditLogsPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>

@@ -1,4 +1,4 @@
-package coffeeshout.admin.ops.ui;
+package coffeeshout.admin.system.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 
 @DisplayName("시스템 운영 API")
-class AdminOpsControllerE2eTest extends AdminApiE2eTest {
+class AdminSystemControllerE2eTest extends AdminApiE2eTest {
 
     @Autowired
     private OutboxEventRepository outboxEventRepository;
@@ -51,7 +51,7 @@ class AdminOpsControllerE2eTest extends AdminApiE2eTest {
             givenDeadLetter();
             givenPending();
 
-            mockMvc.perform(get("/admin/api/ops/dead-letters")
+            mockMvc.perform(get("/admin/api/system/dead-letters")
                             .param("source", "OUTBOX")
                             .with(admin()))
                     .andExpect(status().isOk())
@@ -64,7 +64,7 @@ class AdminOpsControllerE2eTest extends AdminApiE2eTest {
         void 정산_큐도_같은_모양으로_돌려준다() throws Exception {
             settlementDeadLetterRepository.save(new SettlementDeadLetterEntity("record-1", "JSON 파싱 실패", "{}"));
 
-            mockMvc.perform(get("/admin/api/ops/dead-letters")
+            mockMvc.perform(get("/admin/api/system/dead-letters")
                             .param("source", "SETTLEMENT")
                             .with(admin()))
                     .andExpect(status().isOk())
@@ -80,7 +80,7 @@ class AdminOpsControllerE2eTest extends AdminApiE2eTest {
         void 상태를_PENDING_으로_되돌린다() throws Exception {
             final OutboxEvent event = givenDeadLetter();
 
-            mockMvc.perform(post("/admin/api/ops/dead-letters/outbox/{id}/requeue", event.getId())
+            mockMvc.perform(post("/admin/api/system/dead-letters/outbox/{id}/requeue", event.getId())
                             .with(admin()))
                     .andExpect(status().isNoContent());
 
@@ -94,14 +94,14 @@ class AdminOpsControllerE2eTest extends AdminApiE2eTest {
         void 격리_상태가_아니면_409_다() throws Exception {
             final OutboxEvent pending = givenPending();
 
-            mockMvc.perform(post("/admin/api/ops/dead-letters/outbox/{id}/requeue", pending.getId())
+            mockMvc.perform(post("/admin/api/system/dead-letters/outbox/{id}/requeue", pending.getId())
                             .with(admin()))
                     .andExpect(status().isConflict());
         }
 
         @Test
         void 없는_메시지는_404_다() throws Exception {
-            mockMvc.perform(post("/admin/api/ops/dead-letters/outbox/{id}/requeue", 999_999L)
+            mockMvc.perform(post("/admin/api/system/dead-letters/outbox/{id}/requeue", 999_999L)
                             .with(admin()))
                     .andExpect(status().isNotFound());
         }
@@ -114,7 +114,7 @@ class AdminOpsControllerE2eTest extends AdminApiE2eTest {
         void 행을_지우고_감사_로그를_남긴다() throws Exception {
             final OutboxEvent event = givenDeadLetter();
 
-            mockMvc.perform(delete("/admin/api/ops/dead-letters/{source}/{id}", "OUTBOX", event.getId())
+            mockMvc.perform(delete("/admin/api/system/dead-letters/{source}/{id}", "OUTBOX", event.getId())
                             .with(admin()))
                     .andExpect(status().isNoContent());
 
@@ -125,7 +125,7 @@ class AdminOpsControllerE2eTest extends AdminApiE2eTest {
                             .getContent())
                     .extracting(AdminAuditLog::getAction, AdminAuditLog::getActorEmail)
                     .contains(org.assertj.core.api.Assertions.tuple(
-                            "DELETE /admin/api/ops/dead-letters/{source}/{id}", ACTOR));
+                            "DELETE /admin/api/system/dead-letters/{source}/{id}", ACTOR));
         }
 
         @Test
@@ -134,7 +134,7 @@ class AdminOpsControllerE2eTest extends AdminApiE2eTest {
             // 도메인 이벤트가 사라진다.
             final OutboxEvent pending = givenPending();
 
-            mockMvc.perform(delete("/admin/api/ops/dead-letters/{source}/{id}", "OUTBOX", pending.getId())
+            mockMvc.perform(delete("/admin/api/system/dead-letters/{source}/{id}", "OUTBOX", pending.getId())
                             .with(admin()))
                     .andExpect(status().isConflict());
 
@@ -143,7 +143,7 @@ class AdminOpsControllerE2eTest extends AdminApiE2eTest {
 
         @Test
         void 없는_정산_메시지는_404_다() throws Exception {
-            mockMvc.perform(delete("/admin/api/ops/dead-letters/{source}/{id}", "SETTLEMENT", 999_999L)
+            mockMvc.perform(delete("/admin/api/system/dead-letters/{source}/{id}", "SETTLEMENT", 999_999L)
                             .with(admin()))
                     .andExpect(status().isNotFound());
         }
@@ -156,14 +156,14 @@ class AdminOpsControllerE2eTest extends AdminApiE2eTest {
         void 마이그레이션_이력을_돌려준다() throws Exception {
             // 테스트 DB 는 ddl-auto 로 만들어 flyway 이력 테이블이 없다. 그 사실을 그대로
             // 알려 주는 것이 이 API 의 일이다.
-            mockMvc.perform(get("/admin/api/ops/migrations").with(admin()))
+            mockMvc.perform(get("/admin/api/system/migrations").with(admin()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.managed").value(false));
         }
 
         @Test
         void 배포_정보를_돌려준다() throws Exception {
-            mockMvc.perform(get("/admin/api/ops/deployment").with(admin())).andExpect(status().isOk());
+            mockMvc.perform(get("/admin/api/system/deployment").with(admin())).andExpect(status().isOk());
         }
     }
 }

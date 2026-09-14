@@ -170,14 +170,53 @@ class QueryDslOverviewStatisticsRepositoryTest extends AdminModuleServiceTest {
         void 한_방에서_여러_판을_해도_한_번만_센다() {
             // 조인으로 세면 판 수만큼 방이 부풀어 퍼널이 앞 단계보다 커진다.
             final RoomEntity room = room("AAAA", RoomState.DONE);
-            miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.CARD_GAME));
-            miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME));
-            miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.WORM_GAME));
+            for (MiniGameType type :
+                    List.of(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME, MiniGameType.WORM_GAME)) {
+                final MiniGameEntity play = miniGameJpaRepository.save(new MiniGameEntity(room.getId(), type));
+                miniGameResultJpaRepository.save(new MiniGameResultEntity(play, 1L, 1, 100L));
+            }
 
             assertThat(overviewStatisticsRepository
                             .findFunnelBetween(WIDE_FROM, WIDE_TO)
                             .miniGamePlayed())
                     .isEqualTo(1L);
+        }
+
+        @Test
+        void 시작만_하고_끝내지_못한_판은_완료로_세지_않는다() {
+            // mini_game_play 행은 게임이 시작될 때 쌓인다. 그 행만 보고 세면 시작한 방까지
+            // "미니게임 완료"가 되어, 이 단계가 직전 단계인 "게임 시작"보다 커진다.
+            final RoomEntity room = room("AAAA", RoomState.PLAYING);
+            miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.CARD_GAME));
+
+            final RoomFunnel funnel = overviewStatisticsRepository.findFunnelBetween(WIDE_FROM, WIDE_TO);
+
+            assertThat(funnel.gameStarted()).isEqualTo(1L);
+            assertThat(funnel.miniGamePlayed()).isZero();
+        }
+
+        @Test
+        void 완료_단계는_시작_단계를_넘지_않는다() {
+            // 퍼널이 106%를 찍은 적이 있다. 단계가 앞 단계보다 크면 읽는 사람은 어느 숫자를
+            // 믿어야 할지 알 수 없고, 그 순간 나머지 단계까지 못 믿게 된다.
+            //
+            // READY 방에 판 행을 붙여 그 상태를 그대로 재현한다. 판 행으로 세면 이 방까지
+            // "완료"에 들어가 시작(2)보다 완료(3)가 커진다.
+            final RoomEntity ready = room("AAAA", RoomState.READY);
+            miniGameJpaRepository.save(new MiniGameEntity(ready.getId(), MiniGameType.NUNCHI_GAME));
+
+            final RoomEntity playing = room("BBBB", RoomState.PLAYING);
+            miniGameJpaRepository.save(new MiniGameEntity(playing.getId(), MiniGameType.CARD_GAME));
+
+            final RoomEntity done = room("CCCC", RoomState.DONE);
+            final MiniGameEntity play =
+                    miniGameJpaRepository.save(new MiniGameEntity(done.getId(), MiniGameType.RACING_GAME));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(play, 1L, 1, 100L));
+
+            final RoomFunnel funnel = overviewStatisticsRepository.findFunnelBetween(WIDE_FROM, WIDE_TO);
+
+            assertThat(funnel.gameStarted()).isEqualTo(2L);
+            assertThat(funnel.miniGamePlayed()).isEqualTo(1L).isLessThanOrEqualTo(funnel.gameStarted());
         }
 
         @Test
@@ -220,8 +259,8 @@ class QueryDslOverviewStatisticsRepositoryTest extends AdminModuleServiceTest {
 
             assertThat(overviewStatisticsRepository.countPlaysByGame(WIDE_FROM, WIDE_TO))
                     .singleElement()
-                    .extracting(GamePlayCount::plays)
-                    .isEqualTo(1L);
+                    .extracting(GamePlayCount::started, GamePlayCount::finished)
+                    .containsExactly(1L, 1L);
         }
 
         @Test
@@ -238,7 +277,53 @@ class QueryDslOverviewStatisticsRepositoryTest extends AdminModuleServiceTest {
 
             assertThat(overviewStatisticsRepository.countPlaysByGame(WIDE_FROM, WIDE_TO))
                     .hasSize(2)
-                    .allSatisfy(count -> assertThat(count.plays()).isEqualTo(1L));
+                    .allSatisfy(count -> assertThat(count.started()).isEqualTo(1L));
+        }
+
+        @Test
+        void 결과가_없는_판도_시작한_판으로_센다() {
+            // 이 테스트가 이탈률의 근거다. mini_game_play 행은 게임이 시작될 때 쌓이므로
+            // 결과가 한 줄도 없는 판이 남는다. 그 판이 조회에서 빠지면 이탈이 있었다는
+            // 사실 자체가 화면에 안 보인다.
+            final RoomEntity room = room("AAAA", RoomState.PLAYING);
+            miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME));
+
+            assertThat(overviewStatisticsRepository.countPlaysByGame(WIDE_FROM, WIDE_TO))
+                    .singleElement()
+                    .extracting(GamePlayCount::started, GamePlayCount::finished)
+                    .containsExactly(1L, 0L);
+        }
+
+        @Test
+        void 같은_게임의_깨진_판과_끝난_판을_한_줄에_모은다() {
+            final RoomEntity room = room("AAAA", RoomState.PLAYING);
+            final PlayerEntity player = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST));
+
+            final MiniGameEntity finished =
+                    miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(finished, player.getId(), 1, 100L));
+            miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME));
+
+            assertThat(overviewStatisticsRepository.countPlaysByGame(WIDE_FROM, WIDE_TO))
+                    .singleElement()
+                    .extracting(GamePlayCount::started, GamePlayCount::finished)
+                    .containsExactly(2L, 1L);
+        }
+
+        @Test
+        void 기간은_방_생성_시각으로_자른다() {
+            // mini_game_play 에는 시각 컬럼이 없다. 결과 시각으로 자르면 결과가 없는 판은
+            // 어느 기간에도 안 걸려 영영 안 보인다.
+            final RoomEntity room = room("AAAA", RoomState.PLAYING);
+            miniGameJpaRepository.save(new MiniGameEntity(room.getId(), MiniGameType.RACING_GAME));
+            final LocalDateTime createdAt = room.getCreatedAt();
+
+            assertThat(overviewStatisticsRepository.countPlaysByGame(createdAt, createdAt))
+                    .isEmpty();
+            assertThat(overviewStatisticsRepository.countPlaysByGame(createdAt, createdAt.plusSeconds(1)))
+                    .singleElement()
+                    .extracting(GamePlayCount::started)
+                    .isEqualTo(1L);
         }
 
         @Test

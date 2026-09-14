@@ -17,6 +17,7 @@ import { Histogram } from '@/components/charts/Histogram';
 import { RoomPanel } from '@/pages/lookup/RoomPanel';
 import { roomStatusBadge } from '@/pages/lookup/roomStatus';
 import { formatNumber } from '@/lib/format';
+import { toGameRowsWithDropOff } from '@/lib/gameStats';
 import { roomStateLabel } from '@/lib/labels';
 import { useDebounced } from '@/lib/useDebounced';
 
@@ -135,20 +136,32 @@ export function RoomsPage() {
         </Select>
       </div>
 
+      {/* 네 카드를 2x2 로 세운다. 넷을 한 줄에 펴면 막대 하나가 100px 이 안 되고,
+        * 세로로 쌓으면 인원과 소요 시간을 같이 보려고 스크롤을 오간다. 둘씩 두 줄이면
+        * 네 카드가 한 화면에 들어오면서 막대가 카드 폭을 쓴다.
+        *
+        * 순서는 판, 방, 방, 방이다. 게임별 플레이가 먼저고 나머지 셋이 방을 인원,
+        * 시간, 멈춘 자리 순으로 본다. */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* 이탈을 이 카드 안에 적는다. 한때 이탈률 순으로 다시 세운 카드를 옆에 따로
+          * 뒀는데, 같은 게임 목록이 다른 순서로 두 번 서니 한 게임을 두 카드에서 찾아
+          * 맞춰 보게 됐다. 줄마다 "10판 중 4판 이탈 40%" 가 붙으면 순서는 판 수 하나로
+          * 족하다. 기간 전체 이탈률은 제목 옆에 남긴다 - 줄을 눈으로 더해야 나오는
+          * 수이고, 이 수가 평소보다 크면 게임 하나가 아니라 서버 쪽을 봐야 한다. */}
         <Card className="flex flex-col">
           <CardHeader
             title="게임별 플레이"
-            description="끝난 판만 셉니다. 시작만 하고 만 게임은 기록이 없습니다."
+            description="시작한 판을 셉니다. 막대의 옅은 꼬리와 오른쪽 숫자가 이탈입니다."
+            actions={stats.data && <DropOffShare stats={stats.data} />}
           />
           <CardBody className="flex-1 pb-4">
             <Loaded query={stats} skeleton={<Skeleton className="h-40" />}>
               {(data) => (
                 <DistributionBars
                   ranked
-                  data={data.games.map((stat) => ({ label: stat.label, count: stat.plays }))}
-                  emptyTitle="완료된 게임이 없습니다"
-                  emptyDescription="게임이 끝나야 집계됩니다."
+                  data={toGameRowsWithDropOff(data.games)}
+                  emptyTitle="시작된 게임이 없습니다"
+                  emptyDescription="게임이 시작돼야 집계됩니다."
                 />
               )}
             </Loaded>
@@ -173,30 +186,6 @@ export function RoomsPage() {
             </Loaded>
           </CardBody>
         </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="flex flex-col">
-          <CardHeader
-            title="진행 단계"
-            description="방이 멈춘 자리입니다. 끝까지 간 방만 완주입니다."
-            actions={stats.data && <DoneShare stats={stats.data} />}
-          />
-          <CardBody className="flex flex-1 items-center pb-4">
-            <Loaded query={stats} skeleton={<Skeleton className="h-40" />}>
-              {(data) => (
-                <DistributionBars
-                  data={data.statuses.map((slice) => ({
-                    label: roomStateLabel(slice.status),
-                    count: slice.count,
-                  }))}
-                  emptyTitle="방이 없습니다"
-                  emptyDescription="기간을 늘려 보세요."
-                />
-              )}
-            </Loaded>
-          </CardBody>
-        </Card>
 
         <Card className="flex flex-col">
           <CardHeader title="소요 시간" description="끝난 방만 셉니다. 진행 중인 방은 빠집니다." />
@@ -207,6 +196,28 @@ export function RoomsPage() {
                   data={data.durationBuckets}
                   emptyTitle="끝난 방이 없습니다"
                   emptyDescription="방이 끝나야 소요 시간이 남습니다."
+                />
+              )}
+            </Loaded>
+          </CardBody>
+        </Card>
+
+        <Card className="flex flex-col">
+          <CardHeader
+            title="진행 단계"
+            description="방이 멈춘 자리입니다. 끝까지 간 방만 완주입니다."
+            actions={stats.data && <DoneShare stats={stats.data} />}
+          />
+          <CardBody className="flex-1 pb-4">
+            <Loaded query={stats} skeleton={<Skeleton className="h-40" />}>
+              {(data) => (
+                <DistributionBars
+                  data={data.statuses.map((slice) => ({
+                    label: roomStateLabel(slice.status),
+                    count: slice.count,
+                  }))}
+                  emptyTitle="방이 없습니다"
+                  emptyDescription="기간을 늘려 보세요."
                 />
               )}
             </Loaded>
@@ -257,6 +268,18 @@ export function RoomsPage() {
  */
 function SoloShare({ stats }: { stats: RoomStats }) {
   return <ShareNote value={stats.soloRoomCount} total={stats.roomCount} suffix="개가 혼자" />;
+}
+
+/**
+ * 기간 전체의 이탈 비율.
+ *
+ * <p>줄마다 비율이 적혀 있어도 "그래서 전체로는 얼마나 깨지나"는 눈으로 더해야 나온다.
+ * 이 수가 평소보다 크면 게임 하나가 아니라 서버 쪽을 봐야 한다는 뜻이다.
+ */
+function DropOffShare({ stats }: { stats: RoomStats }) {
+  const started = stats.games.reduce((sum, stat) => sum + stat.started, 0);
+  const dropped = stats.games.reduce((sum, stat) => sum + (stat.started - stat.finished), 0);
+  return <ShareNote value={dropped} total={started} suffix="판이 이탈" />;
 }
 
 /** 끝까지 간 방의 비율. */

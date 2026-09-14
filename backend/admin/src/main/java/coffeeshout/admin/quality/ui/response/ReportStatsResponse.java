@@ -14,11 +14,7 @@ import java.util.List;
  * 노출된다.
  */
 public record ReportStatsResponse(
-        long total,
-        List<CategorySlice> categories,
-        List<GameSlice> games,
-        List<DailyPoint> daily,
-        List<BucketSlice> resolveBuckets) {
+        long total, List<CategorySlice> categories, List<GameSlice> games, List<DailyPoint> daily) {
 
     public static ReportStatsResponse from(ReportStats stats) {
         return new ReportStatsResponse(
@@ -32,9 +28,6 @@ public record ReportStatsResponse(
                         .toList(),
                 stats.daily().stream()
                         .map(row -> new DailyPoint(row.date(), row.received(), row.resolved()))
-                        .toList(),
-                stats.resolveBuckets().stream()
-                        .map(row -> new BucketSlice(row.label(), row.count()))
                         .toList());
     }
 
@@ -44,6 +37,4 @@ public record ReportStatsResponse(
     public record GameSlice(MiniGameType gameType, String label, long count) {}
 
     public record DailyPoint(LocalDate date, long received, long resolved) {}
-
-    public record BucketSlice(String label, long count) {}
 }

@@ -8,12 +8,12 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 
 import coffeeshout.admin.ipblock.IpBlockAdminService;
-import coffeeshout.admin.ops.application.OpsService;
 import coffeeshout.admin.overview.application.OverviewService.ActionQueue;
 import coffeeshout.admin.overview.application.OverviewService.DailySummary;
 import coffeeshout.admin.overview.application.OverviewService.PeriodSummary;
 import coffeeshout.admin.overview.domain.OverviewStatisticsRepository;
 import coffeeshout.admin.overview.domain.RoomFunnel;
+import coffeeshout.admin.system.application.SystemService;
 import coffeeshout.global.ipblock.IpBlockStore.BlockedIp;
 import coffeeshout.profanity.application.ProfanityAuditService;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
@@ -57,7 +57,7 @@ class OverviewServiceTest {
     private IpBlockAdminService ipBlockAdminService;
 
     @Mock
-    private OpsService opsService;
+    private SystemService systemService;
 
     private OverviewService service() {
         return new OverviewService(
@@ -65,7 +65,7 @@ class OverviewServiceTest {
                 reportAdminService,
                 profanityAuditService,
                 ipBlockAdminService,
-                opsService,
+                systemService,
                 CLOCK);
     }
 

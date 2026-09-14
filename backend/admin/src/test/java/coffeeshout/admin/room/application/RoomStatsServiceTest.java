@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
+import coffeeshout.admin.overview.domain.GamePlayStat;
 import coffeeshout.admin.overview.domain.OverviewStatisticsRepository;
 import coffeeshout.admin.overview.domain.OverviewStatisticsRepository.GamePlayCount;
 import coffeeshout.admin.room.domain.RoomLookupRepository;
@@ -173,19 +174,35 @@ class RoomStatsServiceTest {
     class 게임_비중 {
 
         @Test
-        void 판_수가_많은_게임부터_주고_비중을_합이_1이_되게_나눈다() {
+        void 시작한_판이_많은_게임부터_주고_비중을_합이_1이_되게_나눈다() {
             given(roomLookupRepository.findSnapshots(any(), any())).willReturn(List.of());
             given(overviewStatisticsRepository.countPlaysByGame(any(), any()))
                     .willReturn(List.of(
-                            new GamePlayCount(MiniGameType.RACING_GAME, 1),
-                            new GamePlayCount(MiniGameType.CARD_GAME, 3)));
+                            new GamePlayCount(MiniGameType.RACING_GAME, 1, 1),
+                            new GamePlayCount(MiniGameType.CARD_GAME, 3, 2)));
             roomStatsService = new RoomStatsService(roomLookupRepository, overviewStatisticsRepository, CLOCK);
 
             assertThat(roomStatsService.findStats(30).games())
-                    .extracting(stat -> stat.miniGameType().name(), stat -> stat.plays())
+                    .extracting(stat -> stat.miniGameType().name(), GamePlayStat::started)
                     .containsExactly(tuple("CARD_GAME", 3L), tuple("RACING_GAME", 1L));
             assertThat(roomStatsService.findStats(30).games().getFirst().share())
                     .isEqualTo(0.75);
+        }
+
+        @Test
+        void 완료_판이_아니라_시작한_판으로_순위를_매긴다() {
+            // 완료 판으로 세면 중간에 깨지는 게임이 "아무도 안 고르는 게임"으로 보인다.
+            // 둘은 서로 다른 문제라 한 숫자로 뭉개면 안 된다.
+            given(roomLookupRepository.findSnapshots(any(), any())).willReturn(List.of());
+            given(overviewStatisticsRepository.countPlaysByGame(any(), any()))
+                    .willReturn(List.of(
+                            new GamePlayCount(MiniGameType.RACING_GAME, 10, 1),
+                            new GamePlayCount(MiniGameType.CARD_GAME, 4, 4)));
+            roomStatsService = new RoomStatsService(roomLookupRepository, overviewStatisticsRepository, CLOCK);
+
+            assertThat(roomStatsService.findStats(30).games())
+                    .extracting(stat -> stat.miniGameType().name(), GamePlayStat::dropped)
+                    .containsExactly(tuple("RACING_GAME", 9L), tuple("CARD_GAME", 0L));
         }
     }
 }

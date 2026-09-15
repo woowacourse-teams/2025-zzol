@@ -561,6 +561,33 @@ class ProfanityAuditBatchProcessorTest {
             final int processed = processor.process(List.of(healthy, trouble));
 
             assertThat(processed).as("저장에 성공한 행만 UNAUDITED에서 빠진다.").isEqualTo(1);
+            final ArgumentCaptor<Collection<Long>> ids = ArgumentCaptor.captor();
+            then(auditRepository).should().incrementAttemptCount(ids.capture());
+            assertThat(ids.getValue())
+                    .as("건별 저장에 실패한 행만 센다. 성공한 행까지 세면 애먼 상한에 닿는다.")
+                    .hasSize(1);
+        }
+
+        /**
+         * DB 제약에 계속 걸리는 행을 세지 않으면 회차마다 그 배치의 Gemini 호출과 실패한 벌크 트랜잭션이
+         * 되풀이되고, 그 행은 영영 UNAUDITED로 남는다. 검열 호출 실패와 같은 상한으로 격리한다.
+         */
+        @Test
+        void 건별_저장_실패가_상한에_닿으면_DEAD_LETTER로_내려가고_처리_건수로_센다() {
+            final NicknameAudit trouble = new NicknameAudit("말썽닉");
+            givenCleanResultsFor("말썽닉");
+            givenBulkUpdateFails();
+            willThrow(new DataIntegrityViolationException("uq_player_name_audit_name_status 충돌"))
+                    .given(auditRepository)
+                    .save(trouble);
+            given(auditRepository.markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS)))
+                    .willReturn(1);
+
+            final int processed = processor.process(List.of(trouble));
+
+            assertThat(processed)
+                    .as("DEAD_LETTER도 UNAUDITED 스캔에서 빠지므로 드레인 루프에는 진행이다.")
+                    .isEqualTo(1);
         }
 
         /**

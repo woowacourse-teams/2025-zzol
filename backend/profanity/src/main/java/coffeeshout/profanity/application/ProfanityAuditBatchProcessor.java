@@ -147,6 +147,10 @@ public class ProfanityAuditBatchProcessor {
      * <p>행마다 새 트랜잭션을 연다. 실패한 트랜잭션은 롤백 상태라 이어 쓸 수 없고, 한 행이 제약에 걸려도
      * 나머지 판정은 살아남아야 한다.
      *
+     * <p>건별 저장까지 실패한 행은 검열 호출 실패와 같은 시도 횟수를 센다. 세지 않으면 DB 제약에 계속
+     * 걸리는 행 하나가 회차마다 그 배치의 Gemini 호출과 실패한 벌크 트랜잭션을 되풀이하고, DEAD_LETTER로
+     * 격리되지도 않는다. 판정 자체는 다음 회차에 다시 산다.
+     *
      * <p>{@code save}는 JPA merge라 attempt_count까지 포함한 전 컬럼을 준영속 엔티티 값으로 덮는다.
      * {@code NicknameAuditBulkUpdaterImpl}이 attempt_count를 일부러 뺀 것과 다른 컬럼 집합이다.
      * 이 폴백은 벌크 저장이 실패했을 때만 도는 드문 경로라 그 차이를 맞추지 않는다.
@@ -166,7 +170,8 @@ public class ProfanityAuditBatchProcessor {
                 countResults(List.of(entity));
                 settled++;
             } catch (RuntimeException e) {
-                log.warn("건별 저장도 실패 — UNAUDITED로 남긴다. nickname={}", entity.getNickname(), e);
+                log.warn("건별 저장도 실패 — 시도 횟수를 올린다. nickname={}", entity.getNickname(), e);
+                settled += recordFailure(List.of(entity));
             }
         }
         return settled;

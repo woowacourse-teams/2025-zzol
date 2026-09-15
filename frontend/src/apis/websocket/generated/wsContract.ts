@@ -1,7 +1,8 @@
 // 자동 생성 파일이라 손으로 고치지 않는다. 원천은 backend 의 @WsTopic/@WsQueue/@WsReceive 다.
-// 갱신: backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*'
+// 갱신: backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*' && npm run generate:ws
 // destination 은 방 코드를 변수로 보간해서 넘긴다. `/room/ABCD/winner` 처럼 통째로 고정한
 // 문자열은 정상 경로여도 아래 동치 검사에 걸려 컴파일 오류가 난다.
+import type { components } from './wsOpenApi';
 
 /** 구독 destination. useWebSocketSubscription 이 /topic 을 붙이므로 topic 은 prefix 없이 쓴다. */
 export type WsTopicPath =
@@ -71,253 +72,70 @@ type Exact<D extends string, P extends string> = true extends MatchesOne<D, P>
 export type WsSubscribeDestination<D extends WsSubscribePath> = Exact<D, WsSubscribePath>;
 export type WsSendDestination<D extends WsSendPath> = Exact<D, WsSendPath>;
 
-// BE record 를 그대로 옮긴 payload 타입. BE 에서 @Nullable 을 단 필드만 `field?: T | null` 이다.
-// @JsonInclude(NON_NULL) 이면 필드가 빠지고, 아니면 null 이 오므로 둘 다 허용한다.
-export type BlindTimerGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
-export type BlindTimerPlayerProgress = {
-  playerName: string;
-  stopped: boolean;
-  timedOut: boolean;
-};
-export type BlindTimerProgressResponse = {
-  players: BlindTimerPlayerProgress[];
-};
-export type BlindTimerStateResponse = {
-  state: BlindTimerGameState;
-  targetTimeMillis: number;
-  blindDelayMillis: number;
-};
-export type BlockStackingGameState = 'READY' | 'PREPARE' | 'PLAYING' | 'DONE';
-export type BlockStackingPlayerRankInfo = {
-  name: string;
-  floor: number;
-};
-export type BlockStackingProgressRequest = {
-  floor: number;
-  movingBlockX: number;
-  stackTopX: number;
-  stackTopWidth: number;
-};
-export type BlockStackingProgressResponse = {
-  players: BlockStackingPlayerRankInfo[];
-};
-export type BlockStackingStateResponse = {
-  state: BlockStackingGameState;
-  endTimeEpochMs?: number | null;
-};
-export type CardGameState = 'READY' | 'FIRST_LOADING' | 'LOADING' | 'PREPARE' | 'PLAYING' | 'SCORE_BOARD' | 'DONE';
-export type CardInfoMessage = {
-  cardType: CardType;
-  value: number;
-  selected: boolean;
-  playerName?: string | null;
-  colorIndex?: number | null;
-};
-export type CardType = 'ADDITION' | 'MULTIPLIER';
-export type CommandType = 'START_MINI_GAME' | 'SELECT_CARD';
-export type Entry = {
-  playerName: string;
-  totalPoints: number;
-  tier: string;
-  seasonRank: number;
-};
-export type FriendRemovedPayload = {
-  removedByUserId: number;
-};
-export type FriendRequestPayload = {
-  requestId: number;
-  fromUserId: number;
-  fromUserCode: string;
-  fromNickname: string;
-  createdAt: string;
-};
-export type FriendResponsePayload = {
-  requestId: number;
-  accepted: boolean;
-  counterpartUserId: number;
-  counterpartUserCode: string;
-  counterpartNickname: string;
-};
-export type LadderDrawRequest = {
-  segmentIndex: number;
-};
-export type LadderGameState = 'DESCRIPTION' | 'PREPARE' | 'DRAWING' | 'RESULT' | 'DONE';
-export type LadderLineResponse = {
-  playerName: string;
-  segmentIndex: number;
-  row: number;
-  colorIndex?: number | null;
-};
-export type LadderStateResponse = {
-  state: LadderGameState;
-  poles?: PoleInfo[] | null;
-  bottomRanks?: Record<string, number> | null;
-  endTimeEpochMs?: number | null;
-  rankings?: Record<string, number> | null;
-  animationDurationMs?: number | null;
-};
-export type MiniGameMessage = {
-  commandType: CommandType;
-  commandRequest: unknown;
-};
-export type MiniGameSelectMessage = {
-  hostName: string;
-  miniGameTypes: MiniGameType[];
-};
-export type MiniGameStartMessage = {
-  miniGameType: MiniGameType;
-};
-export type MiniGameStateMessage = {
-  cardGameState: CardGameState;
-  currentRound: RoundLabel;
-  cardInfoMessages: CardInfoMessage[];
-  allSelected: boolean;
-};
-export type MiniGameType = 'CARD_GAME' | 'RACING_GAME' | 'SPEED_TOUCH' | 'BLIND_TIMER' | 'BLOCK_STACKING' | 'LADDER_GAME' | 'NUNCHI_GAME' | 'WORM_GAME';
-export type NunchiStandResponse = {
-  name: string;
-  number: number;
-  serverNowEpochMs: number;
-  idleDeadlineEpochMs: number;
-};
-export type NunchiState = 'DESCRIPTION' | 'READY' | 'PLAYING' | 'COLLISION_COOLDOWN' | 'DONE';
-export type NunchiStateResponse = {
-  state: NunchiState;
-  currentNumber?: number | null;
-  stood?: string[] | null;
-  number?: number | null;
-  collided?: string[] | null;
-  serverNowEpochMs?: number | null;
-  idleDeadlineEpochMs?: number | null;
-  hardCapEpochMs?: number | null;
-  resumeAtEpochMs?: number | null;
-  playStartEpochMs?: number | null;
-};
-export type PlayerResponse = {
-  userId?: number | null;
-  playerName: string;
-  playerType: PlayerType;
-  isReady: boolean;
-  colorIndex: number;
-  probability: number;
-};
-export type PlayerType = 'HOST' | 'GUEST';
-export type Point = {
-  x: number;
-  y: number;
-};
-export type PoleInfo = {
-  index: number;
-  playerName: string;
-  colorIndex?: number | null;
-};
-export type PresencePayload = {
-  userId: number;
-  online: boolean;
-  joinCode?: string | null;
-  joinable: boolean;
-};
-export type QrCodeStatus = 'PENDING' | 'SUCCESS' | 'ERROR';
-export type QrCodeStatusResponse = {
-  status: QrCodeStatus;
-  qrCodeUrl?: string | null;
-};
-export type RacingGameRunnersStateResponse = {
-  distance: RacingRange;
-  players: RunnerPosition[];
-};
-export type RacingGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
-export type RacingGameStateResponse = {
-  state: RacingGameState;
-};
-export type RacingRange = {
-  start: number;
-  end: number;
-};
-export type ReadyChangeMessage = {
-  joinCode: string;
-  playerName: string;
-  isReady: boolean;
-};
-export type RoomInvitationPayload = {
-  inviterUserId: number;
-  inviterNickname: string;
-  joinCode: string;
-};
-export type RoomState = 'READY' | 'PLAYING' | 'SCORE_BOARD' | 'ROULETTE' | 'DONE';
-export type RoomStatusResponse = {
-  joinCode: string;
-  roomState: RoomState;
-};
-export type RouletteSpinMessage = {
-  hostName: string;
-};
-export type RoundLabel = 'READY' | 'FIRST' | 'SECOND';
-export type RunnerPosition = {
-  playerName: string;
-  position: number;
-  speed: number;
-};
-export type SeasonRankMessage = {
-  seasonKey: string;
-  entries: Entry[];
-};
-export type SpeedTouchGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
-export type SpeedTouchPlayerProgress = {
-  playerName: string;
-  currentNumber: number;
-  finished: boolean;
-};
-export type SpeedTouchProgressResponse = {
-  players: SpeedTouchPlayerProgress[];
-};
-export type SpeedTouchStateResponse = {
-  state: SpeedTouchGameState;
-};
-export type SteerCommand = {
-  angle: number;
-  seq: number;
-};
-export type TapCommand = {
-  tapCount: number;
-};
-export type TouchCommand = {
-  touchedNumber: number;
-};
-export type WinnerResponse = {
-  playerName: string;
-  colorIndex: number;
-  randomAngle: number;
-};
-export type WormGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'FINISH' | 'DONE';
-export type WormGameStateResponse = {
-  state: WormGameState;
-};
-export type WormPosition = {
-  playerName: string;
-  x: number;
-  y: number;
-  angle: number;
-  alive: boolean;
-  lastSeq: number;
-};
-export type WormSnapshotResponse = {
-  tick: number;
-  tickMillis: number;
-  serverNow: string;
-  radius: number;
-  worms: WormTrailSnapshot[];
-};
-export type WormTrailSnapshot = {
-  playerName: string;
-  alive: boolean;
-  trail: Point[];
-};
-export type WormsStateResponse = {
-  tick: number;
-  radius: number;
-  worms: WormPosition[];
-};
+// payload 타입. 모양은 ws-openapi.json 에서 openapi-typescript 가 만든 wsOpenApi.d.ts 에 있다.
+// BE 에서 @Nullable 을 단 필드만 `field?: T | null` 이다.
+export type BlindTimerGameState = components['schemas']['BlindTimerGameState'];
+export type BlindTimerPlayerProgress = components['schemas']['BlindTimerPlayerProgress'];
+export type BlindTimerProgressResponse = components['schemas']['BlindTimerProgressResponse'];
+export type BlindTimerStateResponse = components['schemas']['BlindTimerStateResponse'];
+export type BlockStackingGameState = components['schemas']['BlockStackingGameState'];
+export type BlockStackingPlayerRankInfo = components['schemas']['BlockStackingPlayerRankInfo'];
+export type BlockStackingProgressRequest = components['schemas']['BlockStackingProgressRequest'];
+export type BlockStackingProgressResponse = components['schemas']['BlockStackingProgressResponse'];
+export type BlockStackingStateResponse = components['schemas']['BlockStackingStateResponse'];
+export type CardGameState = components['schemas']['CardGameState'];
+export type CardInfoMessage = components['schemas']['CardInfoMessage'];
+export type CardType = components['schemas']['CardType'];
+export type CommandType = components['schemas']['CommandType'];
+export type Entry = components['schemas']['Entry'];
+export type FriendRemovedPayload = components['schemas']['FriendRemovedPayload'];
+export type FriendRequestPayload = components['schemas']['FriendRequestPayload'];
+export type FriendResponsePayload = components['schemas']['FriendResponsePayload'];
+export type LadderDrawRequest = components['schemas']['LadderDrawRequest'];
+export type LadderGameState = components['schemas']['LadderGameState'];
+export type LadderLineResponse = components['schemas']['LadderLineResponse'];
+export type LadderStateResponse = components['schemas']['LadderStateResponse'];
+export type MiniGameMessage = components['schemas']['MiniGameMessage'];
+export type MiniGameSelectMessage = components['schemas']['MiniGameSelectMessage'];
+export type MiniGameStartMessage = components['schemas']['MiniGameStartMessage'];
+export type MiniGameStateMessage = components['schemas']['MiniGameStateMessage'];
+export type MiniGameType = components['schemas']['MiniGameType'];
+export type NunchiStandResponse = components['schemas']['NunchiStandResponse'];
+export type NunchiState = components['schemas']['NunchiState'];
+export type NunchiStateResponse = components['schemas']['NunchiStateResponse'];
+export type PlayerResponse = components['schemas']['PlayerResponse'];
+export type PlayerType = components['schemas']['PlayerType'];
+export type Point = components['schemas']['Point'];
+export type PoleInfo = components['schemas']['PoleInfo'];
+export type PresencePayload = components['schemas']['PresencePayload'];
+export type QrCodeStatus = components['schemas']['QrCodeStatus'];
+export type QrCodeStatusResponse = components['schemas']['QrCodeStatusResponse'];
+export type RacingGameRunnersStateResponse = components['schemas']['RacingGameRunnersStateResponse'];
+export type RacingGameState = components['schemas']['RacingGameState'];
+export type RacingGameStateResponse = components['schemas']['RacingGameStateResponse'];
+export type RacingRange = components['schemas']['RacingRange'];
+export type ReadyChangeMessage = components['schemas']['ReadyChangeMessage'];
+export type RoomInvitationPayload = components['schemas']['RoomInvitationPayload'];
+export type RoomState = components['schemas']['RoomState'];
+export type RoomStatusResponse = components['schemas']['RoomStatusResponse'];
+export type RouletteSpinMessage = components['schemas']['RouletteSpinMessage'];
+export type RoundLabel = components['schemas']['RoundLabel'];
+export type RunnerPosition = components['schemas']['RunnerPosition'];
+export type SeasonRankMessage = components['schemas']['SeasonRankMessage'];
+export type SpeedTouchGameState = components['schemas']['SpeedTouchGameState'];
+export type SpeedTouchPlayerProgress = components['schemas']['SpeedTouchPlayerProgress'];
+export type SpeedTouchProgressResponse = components['schemas']['SpeedTouchProgressResponse'];
+export type SpeedTouchStateResponse = components['schemas']['SpeedTouchStateResponse'];
+export type SteerCommand = components['schemas']['SteerCommand'];
+export type TapCommand = components['schemas']['TapCommand'];
+export type TouchCommand = components['schemas']['TouchCommand'];
+export type WinnerResponse = components['schemas']['WinnerResponse'];
+export type WormGameState = components['schemas']['WormGameState'];
+export type WormGameStateResponse = components['schemas']['WormGameStateResponse'];
+export type WormPosition = components['schemas']['WormPosition'];
+export type WormSnapshotResponse = components['schemas']['WormSnapshotResponse'];
+export type WormTrailSnapshot = components['schemas']['WormTrailSnapshot'];
+export type WormsStateResponse = components['schemas']['WormsStateResponse'];
 
 // destination 별 payload. 세그먼트가 많은 패턴을 앞에 둬야 `/room/${string}` 이 다른 room 경로를 삼키지 않는다.
 export type WsPayloadOf<D extends WsSubscribePath> =

@@ -23,9 +23,10 @@ final class WsContractTsEmitter {
 
     private static final String HEADER = """
             // 자동 생성 파일이라 손으로 고치지 않는다. 원천은 backend 의 @WsTopic/@WsQueue/@WsReceive 다.
-            // 갱신: backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*'
+            // 갱신: backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*' && npm run generate:ws
             // destination 은 방 코드를 변수로 보간해서 넘긴다. `/room/ABCD/winner` 처럼 통째로 고정한
             // 문자열은 정상 경로여도 아래 동치 검사에 걸려 컴파일 오류가 난다.
+            import type { components } from './wsOpenApi';
 
             """;
 
@@ -50,8 +51,8 @@ final class WsContractTsEmitter {
             """;
 
     private static final String PAYLOAD_NOTE = """
-            // BE record 를 그대로 옮긴 payload 타입. BE 에서 @Nullable 을 단 필드만 `field?: T | null` 이다.
-            // @JsonInclude(NON_NULL) 이면 필드가 빠지고, 아니면 null 이 오므로 둘 다 허용한다.
+            // payload 타입. 모양은 ws-openapi.json 에서 openapi-typescript 가 만든 wsOpenApi.d.ts 에 있다.
+            // BE 에서 @Nullable 을 단 필드만 `field?: T | null` 이다.
             """;
 
     private static final String PAYLOAD_OF_NOTE = """
@@ -97,34 +98,10 @@ final class WsContractTsEmitter {
     }
 
     private static String schemas(Map<String, WsCatalog.SchemaEntry> schemas) {
-        final StringBuilder out = new StringBuilder();
-        new TreeMap<>(schemas).forEach((name, entry) -> {
-            out.append("export type ").append(name).append(" = ");
-            switch (entry.kind()) {
-                case ENUM ->
-                    out.append(entry.values().stream()
-                            .map(value -> "'" + value + "'")
-                            .collect(Collectors.joining(" | ")));
-                case RECORD -> {
-                    out.append("{\n");
-                    entry.fields().forEach(field -> {
-                        final boolean nullable = field.type().endsWith("?");
-                        final String type = nullable
-                                ? field.type().substring(0, field.type().length() - 1)
-                                : field.type();
-                        out.append("  ")
-                                .append(field.name())
-                                .append(nullable ? "?: " : ": ")
-                                .append(tsType(type, schemas.keySet()))
-                                .append(nullable ? " | null;\n" : ";\n");
-                    });
-                    out.append("}");
-                }
-                case OBJECT -> out.append("Record<string, unknown>");
-            }
-            out.append(";\n");
-        });
-        return out.toString();
+        return new TreeMap<>(schemas)
+                .keySet().stream()
+                        .map(name -> "export type " + name + " = components['schemas']['" + name + "'];\n")
+                        .collect(Collectors.joining());
     }
 
     /**

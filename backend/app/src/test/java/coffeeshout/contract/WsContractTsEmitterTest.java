@@ -68,20 +68,13 @@ class WsContractTsEmitterTest {
     class Payload_타입 {
 
         @Test
-        @DisplayName("record 는 객체, enum 은 리터럴 union, ? 접미사는 optional | null 이 된다")
-        void 스키마를_TS_타입으로_옮긴다() {
+        @DisplayName("모양은 openapi-typescript 생성물에 맡기고 이름만 components 에 잇는다")
+        void 스키마_이름을_components_에_잇는다() {
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(ts)
-                        .contains("export type Foo = {\n"
-                                + "  id: number;\n"
-                                + "  tags: string[];\n"
-                                + "  ranks: Record<string, number>;\n"
-                                + "  note?: string | null;\n"
-                                + "  poles?: Foo[] | null;\n"
-                                + "  raw: unknown;\n"
-                                + "  kind: Kind;\n"
-                                + "};");
-                softly.assertThat(ts).contains("export type Kind = 'A' | 'B';");
+                softly.assertThat(ts).contains("import type { components } from './wsOpenApi';");
+                softly.assertThat(ts).contains("export type Foo = components['schemas']['Foo'];");
+                softly.assertThat(ts).contains("export type Kind = components['schemas']['Kind'];");
+                softly.assertThat(ts).doesNotContain("export type Foo = {");
             });
         }
     }

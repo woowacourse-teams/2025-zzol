@@ -133,15 +133,17 @@ jobs:
       - name: Run Tests
         run: ./gradlew test jacocoTestReport --build-cache --no-daemon
 
-      # WsCatalogContractTest 가 방금 카탈로그를 fixture 와 FE 타입 파일로 다시 썼다. 커밋본과
-      # 다르면 애노테이션을 고치고 생성물을 갱신하지 않았다는 뜻이다. FE 는 그 타입 파일로
-      # destination 을 검사하므로 낡은 채로 두면 정상 destination 을 오탐하거나 drift 를 놓친다.
+      # WsCatalogContractTest 가 방금 카탈로그를 fixture 와 FE 생성물(wsContract.ts·ws-openapi.json)로 다시 썼다.
+      # 커밋본과 다르면 애노테이션이나 payload record 를 고치고 생성물을 갱신하지 않았다는 뜻이다. FE 는 그 파일로
+      # destination 과 payload 를 검사하므로 낡은 채로 두면 정상 destination 을 오탐하거나 drift 를 놓친다.
+      # ws-openapi.json 에서 나오는 wsOpenApi.d.ts 는 node 가 있는 frontend-ci 가 같은 방식으로 검사한다.
       - name: Check ws-catalog fixture freshness
         run: |
           git diff --exit-code -- app/src/test/resources/__fixtures__/ws-catalog.json \
-            ../frontend/src/apis/websocket/generated/wsContract.ts || {
-            echo "::error::ws-catalog fixture 또는 FE 타입 파일이 소스와 다릅니다. 로컬에서 아래를 실행하고 커밋하세요:"
-            echo "  cd backend && ./gradlew :app:test --tests '*WsCatalogContractTest*'"
+            ../frontend/src/apis/websocket/generated/wsContract.ts \
+            ../frontend/src/apis/websocket/generated/ws-openapi.json || {
+            echo "::error::ws-catalog fixture 또는 FE 생성물이 소스와 다릅니다. 로컬에서 아래를 실행하고 커밋하세요:"
+            echo "  cd backend && ./gradlew :app:test --tests '*WsCatalogContractTest*' && cd ../frontend && npm run generate:ws"
             exit 1
           }
 

@@ -10,6 +10,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +49,7 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
     private final WsCatalogProperties properties;
     private volatile WsCatalog cached;
     private volatile String cachedEtag;
+    private volatile Map<String, Class<?>> cachedSchemaClasses;
 
     public WsCatalogBuilder(ApplicationContext applicationContext, WsCatalogProperties properties) {
         this.applicationContext = applicationContext;
@@ -76,6 +79,12 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
         return cachedEtag;
     }
 
+    /** 카탈로그 {@code schemas} 와 같은 이름 집합의 원본 클래스. 계약 테스트가 OpenAPI 스키마를 만들 때 쓴다. */
+    public Map<String, Class<?>> schemaClasses() {
+        build();
+        return cachedSchemaClasses;
+    }
+
     private WsCatalog buildInternal() {
         final List<RawTopic> rawTopics = new ArrayList<>();
         final List<RawQueue> rawQueues = new ArrayList<>();
@@ -93,7 +102,9 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
                 .thenComparing(entry -> entry.source().className())
                 .thenComparing(entry -> entry.source().methodName()));
 
-        final Map<String, WsCatalog.SchemaEntry> schemas = expandSchemas(referenced);
+        final SchemaExpander expander = new SchemaExpander();
+        final Map<String, WsCatalog.SchemaEntry> schemas = expander.expand(referenced);
+        cachedSchemaClasses = Collections.unmodifiableMap(new TreeMap<>(expander.seenByName));
 
         return new WsCatalog(
                 properties.stompEndpoint(),
@@ -363,10 +374,6 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
             return (type.isRecord() || type.isEnum()) ? List.of(type.getSimpleName()) : List.of();
         }
         return List.of();
-    }
-
-    private Map<String, WsCatalog.SchemaEntry> expandSchemas(Set<Class<?>> seeds) {
-        return new SchemaExpander().expand(seeds);
     }
 
     private class SchemaExpander {

@@ -13,6 +13,4 @@ public record LadderTimingProperties(
         @NotNull @DurationMin(nanos = 1) Duration prepare,
         @NotNull @DurationMin(nanos = 1) Duration drawing,
         @NotNull @DurationMin(nanos = 1) Duration drawingGracePeriod,
-        @NotNull @DurationMin(nanos = 1) Duration result
-) {
-}
+        @NotNull @DurationMin(nanos = 1) Duration result) {}

@@ -22,7 +22,9 @@ public class ProfanityWordQueryRepository {
     public List<ProfanityWordEntity> findAllActive() {
         return queryFactory
                 .selectFrom(profanityWordEntity)
-                .where(profanityWordEntity.isActive.isTrue()
+                .where(profanityWordEntity
+                        .isActive
+                        .isTrue()
                         .and(profanityWordEntity.source.ne(WordSource.OPERATOR_ALLOWED)))
                 .fetch();
     }

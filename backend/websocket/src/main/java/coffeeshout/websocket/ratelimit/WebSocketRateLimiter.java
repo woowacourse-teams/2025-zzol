@@ -35,8 +35,7 @@ public class WebSocketRateLimiter {
     @Autowired
     public WebSocketRateLimiter(
             @Value("${websocket.rate-limit.max-messages-per-second:20}") int maxMessagesPerSecond,
-            MeterRegistry meterRegistry
-    ) {
+            MeterRegistry meterRegistry) {
         this(maxMessagesPerSecond, Clock.systemUTC(), meterRegistry);
     }
 
@@ -63,9 +62,8 @@ public class WebSocketRateLimiter {
      * @return true: 허용, false: 제한 초과
      */
     public boolean tryAcquire(String sessionId) {
-        final SessionCounter counter = sessionCounters.computeIfAbsent(
-                sessionId, k -> new SessionCounter(clock.millis())
-        );
+        final SessionCounter counter =
+                sessionCounters.computeIfAbsent(sessionId, k -> new SessionCounter(clock.millis()));
         boolean allowed = counter.tryAcquire(maxMessagesPerSecond, clock.millis());
         if (!allowed && rateLimitDropCounter != null) {
             rateLimitDropCounter.increment();
@@ -88,14 +86,11 @@ public class WebSocketRateLimiter {
         final long now = clock.millis();
         final int before = sessionCounters.size();
 
-        sessionCounters.entrySet().removeIf(entry ->
-                now - entry.getValue().getLastAccessTime() > 30_000
-        );
+        sessionCounters.entrySet().removeIf(entry -> now - entry.getValue().getLastAccessTime() > 30_000);
 
         final int removed = before - sessionCounters.size();
         if (removed > 0) {
-            log.debug("비활성 WebSocket Rate Limit 세션 정리: {} 개 제거, 남은 세션: {} 개",
-                    removed, sessionCounters.size());
+            log.debug("비활성 WebSocket Rate Limit 세션 정리: {} 개 제거, 남은 세션: {} 개", removed, sessionCounters.size());
         }
     }
 

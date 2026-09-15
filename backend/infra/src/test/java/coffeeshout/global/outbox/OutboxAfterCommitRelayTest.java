@@ -51,7 +51,8 @@ class OutboxAfterCommitRelayTest {
             // given
             BaseEvent mockEvent = new StubBaseEvent();
             String traceparent = "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01";
-            OutboxSavedEvent savedEvent = new OutboxSavedEvent(1L, "room", "{\"@type\":\"StubBaseEvent\"}", traceparent);
+            OutboxSavedEvent savedEvent =
+                    new OutboxSavedEvent(1L, "room", "{\"@type\":\"StubBaseEvent\"}", traceparent);
 
             BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
                     .willReturn(mockEvent);
@@ -73,7 +74,8 @@ class OutboxAfterCommitRelayTest {
             BDDMockito.given(objectMapper.readValue(savedEvent.payload(), BaseEvent.class))
                     .willReturn(mockEvent);
             doThrow(new RuntimeException("Redis connection refused"))
-                    .when(streamPublisher).publish(any(String.class), any(String.class), nullable(String.class));
+                    .when(streamPublisher)
+                    .publish(any(String.class), any(String.class), nullable(String.class));
 
             // when — 예외가 밖으로 나가면 안 된다
             outboxAfterCommitRelay.onOutboxSaved(savedEvent);

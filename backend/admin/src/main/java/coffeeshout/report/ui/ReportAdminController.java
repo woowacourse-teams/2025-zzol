@@ -31,8 +31,7 @@ public class ReportAdminController {
             @RequestParam(required = false) ReportCategory category,
             @RequestParam(required = false) MiniGameType gameType,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            Model model
-    ) {
+            Model model) {
         final Page<ReportRow> reports = reportAdminService.list(status, category, gameType, page);
 
         if (!reports.isEmpty() || reports.getTotalPages() == 0) {
@@ -58,8 +57,7 @@ public class ReportAdminController {
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = false) ReportCategory category,
             @RequestParam(required = false) MiniGameType gameType,
-            @RequestParam(defaultValue = "0") @Min(0) int page
-    ) {
+            @RequestParam(defaultValue = "0") @Min(0) int page) {
         reportAdminService.resolve(id);
         return buildRedirect(page, status, category, gameType);
     }
@@ -70,8 +68,7 @@ public class ReportAdminController {
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = false) ReportCategory category,
             @RequestParam(required = false) MiniGameType gameType,
-            @RequestParam(defaultValue = "0") @Min(0) int page
-    ) {
+            @RequestParam(defaultValue = "0") @Min(0) int page) {
         reportAdminService.unblockReporterIp(id);
         return buildRedirect(page, status, category, gameType);
     }

@@ -5,8 +5,7 @@ import coffeeshout.room.domain.player.PlayerName;
 
 public final class PlayerFixture {
 
-    private PlayerFixture() {
-    }
+    private PlayerFixture() {}
 
     public static Player 호스트한스() {
         return Player.createHost(new PlayerName("한스"));

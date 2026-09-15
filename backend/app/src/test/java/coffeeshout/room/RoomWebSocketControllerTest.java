@@ -4,8 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
-import coffeeshout.gamecommon.RoomLifecycleEvent;
+import coffeeshout.fixture.RoomFixture;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -25,7 +26,6 @@ import coffeeshout.room.ui.request.ReadyChangeMessage;
 import coffeeshout.room.ui.request.RouletteSpinMessage;
 import coffeeshout.room.ui.response.PlayerResponse;
 import coffeeshout.room.ui.response.WinnerResponse;
-import coffeeshout.fixture.RoomFixture;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.support.app.WebSocketIntegrationTestSupport;
 import java.util.List;
@@ -49,14 +49,15 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
     Room testRoom;
 
     @BeforeEach
-    void setUp(@Autowired RoomRepository roomRepository,
-               @Autowired RoomJpaRepository roomJpaRepository,
-               @Autowired PlayerJpaRepository playerJpaRepository,
-               @Autowired PlatformTransactionManager transactionManager,
-               @Autowired JoinCodeGenerator joinCodeGenerator,
-               @Autowired StreamPublisher streamPublisher,
-               @Autowired GameSessionRepository gameSessionRepository
-    ) throws Exception {
+    void setUp(
+            @Autowired RoomRepository roomRepository,
+            @Autowired RoomJpaRepository roomJpaRepository,
+            @Autowired PlayerJpaRepository playerJpaRepository,
+            @Autowired PlatformTransactionManager transactionManager,
+            @Autowired JoinCodeGenerator joinCodeGenerator,
+            @Autowired StreamPublisher streamPublisher,
+            @Autowired GameSessionRepository gameSessionRepository)
+            throws Exception {
         joinCode = joinCodeGenerator.generate();
         testRoom = RoomFixture.호스트_꾹이(joinCode);
         host = testRoom.getHost();
@@ -75,23 +76,20 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
 
             // DB에 PlayerEntity들 저장 (룰렛 결과 저장 시 필요)
             testRoom.getPlayers().forEach(player -> {
-                PlayerEntity playerEntity = new PlayerEntity(
-                        roomEntity,
-                        player.getName().value(),
-                        player.getPlayerType()
-                );
+                PlayerEntity playerEntity =
+                        new PlayerEntity(roomEntity, player.getName().value(), player.getPlayerType());
                 playerJpaRepository.save(playerEntity);
             });
         });
 
         // 게임 선택 흐름은 GameSession 사전 생성을 전제하므로(ADR-0025 결정 4), 실제 방 생성과 동일하게
         // RoomLifecycleEvent.Created를 스트림에 발행해 GameSessionInitConsumer가 권위 있는 호스트로 세션을 만들도록 한다.
-        streamPublisher.publish(RoomStreamKey.BROADCAST,
+        streamPublisher.publish(
+                RoomStreamKey.BROADCAST,
                 new RoomLifecycleEvent.Created(host.getName().value(), joinCode.getValue()));
 
         // 비동기 컨슈머의 세션 생성 완료를 보장한 뒤 진행한다.
-        await().atMost(5, TimeUnit.SECONDS)
-                .until(() -> gameSessionRepository.existsByJoinCode(joinCode));
+        await().atMost(5, TimeUnit.SECONDS).until(() -> gameSessionRepository.existsByJoinCode(joinCode));
 
         session = createSession(joinCode, host.getName());
     }
@@ -108,14 +106,16 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
         List<PlayerResponse> players = payloadAsList(responses.get(), PlayerResponse.class);
 
         assertThat(players)
-                .extracting(PlayerResponse::playerName, PlayerResponse::playerType,
-                        PlayerResponse::isReady, PlayerResponse::probability)
+                .extracting(
+                        PlayerResponse::playerName,
+                        PlayerResponse::playerType,
+                        PlayerResponse::isReady,
+                        PlayerResponse::probability)
                 .containsExactly(
                         tuple("꾹이", PlayerType.HOST, true, 25.0),
                         tuple("루키", PlayerType.GUEST, false, 25.0),
                         tuple("엠제이", PlayerType.GUEST, false, 25.0),
-                        tuple("한스", PlayerType.GUEST, false, 25.0)
-                );
+                        tuple("한스", PlayerType.GUEST, false, 25.0));
     }
 
     @Test
@@ -130,14 +130,16 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
         List<PlayerResponse> players = payloadAsList(responses.get(), PlayerResponse.class);
 
         assertThat(players)
-                .extracting(PlayerResponse::playerName, PlayerResponse::playerType,
-                        PlayerResponse::isReady, PlayerResponse::probability)
+                .extracting(
+                        PlayerResponse::playerName,
+                        PlayerResponse::playerType,
+                        PlayerResponse::isReady,
+                        PlayerResponse::probability)
                 .containsExactly(
                         tuple("꾹이", PlayerType.HOST, true, 25.0),
                         tuple("루키", PlayerType.GUEST, false, 25.0),
                         tuple("엠제이", PlayerType.GUEST, false, 25.0),
-                        tuple("한스", PlayerType.GUEST, false, 25.0)
-                );
+                        tuple("한스", PlayerType.GUEST, false, 25.0));
     }
 
     @Test

@@ -6,12 +6,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record QrCodeStatusEvent(
-        String eventId,
-        Instant timestamp,
-        String joinCode,
-        QrCodeStatus status,
-        String qrCodeUrl
-) implements BaseEvent {
+        String eventId, Instant timestamp, String joinCode, QrCodeStatus status, String qrCodeUrl)
+        implements BaseEvent {
 
     public QrCodeStatusEvent(String joinCode, QrCodeStatus status, String qrCodeUrl) {
         this(
@@ -19,7 +15,6 @@ public record QrCodeStatusEvent(
                 Instant.now(),
                 joinCode,
                 status,
-                status == QrCodeStatus.SUCCESS ? qrCodeUrl : null
-        );
+                status == QrCodeStatus.SUCCESS ? qrCodeUrl : null);
     }
 }

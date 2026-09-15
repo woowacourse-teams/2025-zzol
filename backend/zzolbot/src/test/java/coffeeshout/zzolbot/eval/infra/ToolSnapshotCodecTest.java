@@ -20,9 +20,7 @@ class ToolSnapshotCodecTest {
 
         final ToolSnapshot restored = codec.fromJson(codec.toJson(original));
 
-        assertThat(restored.find("room_state", Map.of("joinCode", "A4BX")))
-                .contains("{\"state\":\"PLAYING\"}");
-        assertThat(restored.find("redis_stream_status", Map.of()))
-                .contains("{\"game-stream\":48213}");
+        assertThat(restored.find("room_state", Map.of("joinCode", "A4BX"))).contains("{\"state\":\"PLAYING\"}");
+        assertThat(restored.find("redis_stream_status", Map.of())).contains("{\"game-stream\":48213}");
     }
 }

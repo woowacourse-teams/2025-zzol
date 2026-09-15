@@ -65,7 +65,8 @@ class QrCodeSubscriptionHandlerTest {
 
         // then
         then(roomService).should(times(1)).getQrCodeStatus(joinCode);
-        then(messagingTemplate).should(timeout(500).times(1))
+        then(messagingTemplate)
+                .should(timeout(500).times(1))
                 .convertAndSend(eq(destination), eq(WebSocketResponse.success(response)));
     }
 
@@ -89,7 +90,8 @@ class QrCodeSubscriptionHandlerTest {
 
         // then
         then(roomService).should(times(1)).getQrCodeStatus(joinCode);
-        then(messagingTemplate).should(timeout(500).times(1))
+        then(messagingTemplate)
+                .should(timeout(500).times(1))
                 .convertAndSend(eq(destination), eq(WebSocketResponse.success(response)));
     }
 
@@ -153,7 +155,7 @@ class QrCodeSubscriptionHandlerTest {
         String joinCode = "ABCD";
         String destination = "/topic/room/" + joinCode + "/qr-code";
 
-        Message<byte[]> message = createSubscribeMessage(null, destination);  // sessionId를 null로
+        Message<byte[]> message = createSubscribeMessage(null, destination); // sessionId를 null로
         SessionSubscribeEvent event = new SessionSubscribeEvent(this, message);
 
         // when

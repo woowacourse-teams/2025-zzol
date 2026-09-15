@@ -28,14 +28,13 @@ public class ZzolBotMonitorController {
 
     @GetMapping("/alerts")
     public List<AlertResponse> alerts() {
-        return monitorService.recentRuns().stream()
-                .map(this::toResponse)
-                .toList();
+        return monitorService.recentRuns().stream().map(this::toResponse).toList();
     }
 
     @GetMapping("/alerts/{id}")
     public ResponseEntity<AlertResponse> alert(@PathVariable Long id) {
-        return monitorService.findRun(id)
+        return monitorService
+                .findRun(id)
                 .map(this::toResponse)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -54,6 +53,14 @@ public class ZzolBotMonitorController {
                 formatter.format(run.getCreatedAt()));
     }
 
-    record AlertResponse(Long id, boolean anomalous, String severity, String signalsJson, String fingerprint,
-                         String analysisSummary, String suggestedActionsJson, boolean notified, String createdAt) {}
+    record AlertResponse(
+            Long id,
+            boolean anomalous,
+            String severity,
+            String signalsJson,
+            String fingerprint,
+            String analysisSummary,
+            String suggestedActionsJson,
+            boolean notified,
+            String createdAt) {}
 }

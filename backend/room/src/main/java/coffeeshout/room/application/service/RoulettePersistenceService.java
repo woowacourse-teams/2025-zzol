@@ -20,8 +20,7 @@ public class RoulettePersistenceService {
             lockPrefix = "event:lock:",
             donePrefix = "event:done:",
             waitTime = 0,
-            leaseTime = 5000
-    )
+            leaseTime = 5000)
     public void saveRoomStatus(RouletteShowEvent event) {
         rouletteService.updateRoomStatusToRoulette(event.joinCode());
         log.info("룰렛 상태 DB 저장 완료: eventId={}, joinCode={}", event.eventId(), event.joinCode());
@@ -32,17 +31,18 @@ public class RoulettePersistenceService {
             lockPrefix = "event:lock:",
             donePrefix = "event:done:",
             waitTime = 0,
-            leaseTime = 5000
-    )
+            leaseTime = 5000)
     public void saveRouletteResult(RouletteSpinEvent event) {
         try {
             rouletteService.saveRouletteResult(event.joinCode(), event.winner());
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.info("이미 처리된 룰렛 결과입니다. (낙관적 락 충돌): eventId={}, joinCode={}",
-                    event.eventId(), event.joinCode());
+            log.info("이미 처리된 룰렛 결과입니다. (낙관적 락 충돌): eventId={}, joinCode={}", event.eventId(), event.joinCode());
             return;
         }
-        log.info("룰렛 결과 DB 저장 완료: eventId={}, joinCode={}, winner={}",
-                event.eventId(), event.joinCode(), event.winner().name().value());
+        log.info(
+                "룰렛 결과 DB 저장 완료: eventId={}, joinCode={}, winner={}",
+                event.eventId(),
+                event.joinCode(),
+                event.winner().name().value());
     }
 }

@@ -1,4 +1,3 @@
 package coffeeshout.user.domain;
 
-public record OAuthCodeEntry(TokenPair tokenPair, boolean isNewUser) {
-}
+public record OAuthCodeEntry(TokenPair tokenPair, boolean isNewUser) {}

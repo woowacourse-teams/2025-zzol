@@ -48,7 +48,6 @@ public class NunchiService implements MiniGameService {
     }
 
     private NunchiGame getGame(JoinCode joinCode) {
-        return (NunchiGame) gameSessionService.getSession(joinCode)
-                .findCompletedGame(MiniGameType.NUNCHI_GAME);
+        return (NunchiGame) gameSessionService.getSession(joinCode).findCompletedGame(MiniGameType.NUNCHI_GAME);
     }
 }

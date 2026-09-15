@@ -40,8 +40,7 @@ class ProfanityTrieRebuildSchedulerTest {
         void 재빌드_예외를_삼킨다() {
             doThrow(new RuntimeException("DB 조회 실패")).when(filterService).rebuildTrie();
 
-            assertThatCode(() -> scheduler.rebuildPeriodically())
-                    .doesNotThrowAnyException();
+            assertThatCode(() -> scheduler.rebuildPeriodically()).doesNotThrowAnyException();
             verify(filterService, times(1)).rebuildTrie();
         }
     }

@@ -17,6 +17,4 @@ public record WsCatalogProperties(
         @NotBlank String stompEndpoint,
         @NotBlank String errorTopic,
         @NotNull Class<?> envelopeClass,
-        @NotEmpty List<String> allowedIps
-) {
-}
+        @NotEmpty List<String> allowedIps) {}

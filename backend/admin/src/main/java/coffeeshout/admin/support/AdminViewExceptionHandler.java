@@ -32,10 +32,7 @@ public class AdminViewExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public String handleBusinessException(
-            BusinessException e,
-            HttpServletRequest request,
-            RedirectAttributes redirectAttributes
-    ) {
+            BusinessException e, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         log.warn("어드민 요청 처리 실패: uri={} message={}", request.getRequestURI(), e.getMessage());
         redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         return redirectToReferer(request);
@@ -43,10 +40,7 @@ public class AdminViewExceptionHandler {
 
     @ExceptionHandler({ConstraintViolationException.class, HandlerMethodValidationException.class})
     public String handleValidationException(
-            Exception e,
-            HttpServletRequest request,
-            RedirectAttributes redirectAttributes
-    ) {
+            Exception e, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         log.warn("어드민 요청 파라미터 검증 실패: uri={} message={}", request.getRequestURI(), e.getMessage());
         redirectAttributes.addFlashAttribute("errorMessage", "요청 파라미터가 유효하지 않습니다.");
         return redirectToReferer(request);

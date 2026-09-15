@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
+import coffeeshout.settlement.infra.persistence.SettlementDeadLetterJpaRepository;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -11,7 +12,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.connection.stream.StreamInfo.XInfoGroups;
-import coffeeshout.settlement.infra.persistence.SettlementDeadLetterJpaRepository;
 import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
@@ -38,12 +38,21 @@ class SettlementConsumerMetricsTest {
     void 그룹_pending_lag_컨슈머수_DLQ길이_게이지가_등록된다() {
         metrics.initializeMetrics();
 
-        assertThat(meterRegistry.find("redis.stream.group.pending")
-                .tag("group", SettlementStreamConsumer.GROUP).gauge()).isNotNull();
-        assertThat(meterRegistry.find("redis.stream.group.lag")
-                .tag("group", SettlementStreamConsumer.GROUP).gauge()).isNotNull();
-        assertThat(meterRegistry.find("redis.stream.group.consumers")
-                .tag("group", SettlementStreamConsumer.GROUP).gauge()).isNotNull();
+        assertThat(meterRegistry
+                        .find("redis.stream.group.pending")
+                        .tag("group", SettlementStreamConsumer.GROUP)
+                        .gauge())
+                .isNotNull();
+        assertThat(meterRegistry
+                        .find("redis.stream.group.lag")
+                        .tag("group", SettlementStreamConsumer.GROUP)
+                        .gauge())
+                .isNotNull();
+        assertThat(meterRegistry
+                        .find("redis.stream.group.consumers")
+                        .tag("group", SettlementStreamConsumer.GROUP)
+                        .gauge())
+                .isNotNull();
         assertThat(meterRegistry.find("settlement.deadletter.count").gauge()).isNotNull();
     }
 
@@ -55,8 +64,10 @@ class SettlementConsumerMetricsTest {
 
         metrics.initializeMetrics();
 
-        Gauge lag = meterRegistry.find("redis.stream.group.lag")
-                .tag("group", SettlementStreamConsumer.GROUP).gauge();
+        Gauge lag = meterRegistry
+                .find("redis.stream.group.lag")
+                .tag("group", SettlementStreamConsumer.GROUP)
+                .gauge();
         assertThat(lag.value()).isEqualTo(4.0);
     }
 
@@ -68,28 +79,30 @@ class SettlementConsumerMetricsTest {
 
         metrics.initializeMetrics();
 
-        Gauge lag = meterRegistry.find("redis.stream.group.lag")
-                .tag("group", SettlementStreamConsumer.GROUP).gauge();
+        Gauge lag = meterRegistry
+                .find("redis.stream.group.lag")
+                .tag("group", SettlementStreamConsumer.GROUP)
+                .gauge();
         assertThat(lag.value()).isNaN();
     }
 
     private List<Object> 그룹_응답(String extraKey, Object extraValue) {
         return List.of(
-                "name", SettlementStreamConsumer.GROUP,
-                "consumers", 1L,
-                "pending", 2L,
-                "last-delivered-id", "0-0",
-                extraKey, extraValue
-        );
+                "name",
+                SettlementStreamConsumer.GROUP,
+                "consumers",
+                1L,
+                "pending",
+                2L,
+                "last-delivered-id",
+                "0-0",
+                extraKey,
+                extraValue);
     }
 
     private List<Object> 그룹_응답_lag_없음() {
         return List.of(
-                "name", SettlementStreamConsumer.GROUP,
-                "consumers", 1L,
-                "pending", 2L,
-                "last-delivered-id", "0-0"
-        );
+                "name", SettlementStreamConsumer.GROUP, "consumers", 1L, "pending", 2L, "last-delivered-id", "0-0");
     }
 
     @Test
@@ -100,8 +113,10 @@ class SettlementConsumerMetricsTest {
 
         metrics.initializeMetrics();
 
-        Gauge pending = meterRegistry.find("redis.stream.group.pending")
-                .tag("group", SettlementStreamConsumer.GROUP).gauge();
+        Gauge pending = meterRegistry
+                .find("redis.stream.group.pending")
+                .tag("group", SettlementStreamConsumer.GROUP)
+                .gauge();
         assertThat(pending.value()).isNaN();
     }
 

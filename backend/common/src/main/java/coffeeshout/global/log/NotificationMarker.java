@@ -7,6 +7,5 @@ public final class NotificationMarker {
 
     public static final Marker INSTANCE = MarkerFactory.getMarker("[NOTIFICATION]");
 
-    private NotificationMarker() {
-    }
+    private NotificationMarker() {}
 }

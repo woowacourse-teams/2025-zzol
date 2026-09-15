@@ -35,7 +35,8 @@ class RedisStreamSubscriptionResilienceTest extends InfraModuleIntegrationTest {
     @Test
     void 역직렬화_불가능한_메시지가_들어와도_구독이_유지되어_후속_메시지를_소비한다() {
         // given — 역직렬화에 실패하는 poison 메시지를 스트림에 직접 삽입
-        stringRedisTemplate.opsForStream()
+        stringRedisTemplate
+                .opsForStream()
                 .add(StreamRecords.newRecord().in(STREAM_KEY).ofObject("json이 아닌 poison 메시지"));
 
         // when — poison 이후 정상 이벤트 발행
@@ -50,8 +51,8 @@ class RedisStreamSubscriptionResilienceTest extends InfraModuleIntegrationTest {
     @Test
     void Consumer가_예외를_던져도_구독이_유지되어_후속_메시지를_소비한다() {
         // given — Consumer가 예외를 던지는 이벤트 발행
-        final BaseEventDummy failingEvent = BaseEventDummy.페이로드(
-                RedisStreamResilienceTestConfig.THROW_PREFIX + UUID.randomUUID());
+        final BaseEventDummy failingEvent =
+                BaseEventDummy.페이로드(RedisStreamResilienceTestConfig.THROW_PREFIX + UUID.randomUUID());
         streamPublisher.publish(STREAM_KEY, failingEvent);
 
         // when — 실패 이벤트 이후 정상 이벤트 발행

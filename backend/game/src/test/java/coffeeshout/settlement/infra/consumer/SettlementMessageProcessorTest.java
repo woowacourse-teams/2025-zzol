@@ -13,10 +13,10 @@ import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.global.redis.stream.StreamTracePropagator;
 import coffeeshout.minigame.infra.MinigameStreamKey;
 import coffeeshout.settlement.application.SeasonLeaderboardService;
+import coffeeshout.settlement.application.SeasonLeaderboardService.LeaderboardEntry;
 import coffeeshout.settlement.application.SettlementService;
 import coffeeshout.settlement.application.SettlementService.SettledScore;
 import coffeeshout.settlement.domain.SeasonTier;
-import coffeeshout.settlement.application.SeasonLeaderboardService.LeaderboardEntry;
 import coffeeshout.settlement.event.SeasonRankUpdatedEvent;
 import coffeeshout.settlement.event.SettlementResultEvent;
 import coffeeshout.settlement.event.SettlementResultEvent.PlayerResult;
@@ -43,10 +43,13 @@ class SettlementMessageProcessorTest {
 
     @Mock
     StreamTracePropagator streamTracePropagator;
+
     @Mock
     SettlementService settlementService;
+
     @Mock
     SeasonLeaderboardService leaderboardService;
+
     @Mock
     StreamPublisher streamPublisher;
 
@@ -54,8 +57,7 @@ class SettlementMessageProcessorTest {
     private SettlementMessageProcessor processor;
 
     /** 정산 스트림에 잘못 흘러든 다른 타입을 흉내내는 더미 이벤트 */
-    record OtherEventDummy(String eventId, Instant timestamp) implements BaseEvent {
-    }
+    record OtherEventDummy(String eventId, Instant timestamp) implements BaseEvent {}
 
     @BeforeEach
     void setUp() {
@@ -68,9 +70,11 @@ class SettlementMessageProcessorTest {
 
         // 트레이스 스코프는 본문 실행만 위임한다
         willAnswer(invocation -> {
-            invocation.getArgument(2, Runnable.class).run();
-            return null;
-        }).given(streamTracePropagator).runInConsumerScope(any(), anyString(), any(Runnable.class));
+                    invocation.getArgument(2, Runnable.class).run();
+                    return null;
+                })
+                .given(streamTracePropagator)
+                .runInConsumerScope(any(), anyString(), any(Runnable.class));
     }
 
     @Test
@@ -123,22 +127,19 @@ class SettlementMessageProcessorTest {
                 .ofMap(Map.of("other", "field"))
                 .withId(RecordId.of("1-1"));
 
-        assertThatThrownBy(() -> processor.process(record))
-                .isInstanceOf(PoisonMessageException.class);
+        assertThatThrownBy(() -> processor.process(record)).isInstanceOf(PoisonMessageException.class);
     }
 
     @Test
     void 파싱_불가능한_payload는_포이즌으로_판정한다() {
-        assertThatThrownBy(() -> processor.process(레코드("{깨진 json")))
-                .isInstanceOf(PoisonMessageException.class);
+        assertThatThrownBy(() -> processor.process(레코드("{깨진 json"))).isInstanceOf(PoisonMessageException.class);
     }
 
     @Test
     void 정산_이벤트가_아닌_타입은_포이즌으로_판정한다() throws Exception {
         String otherPayload = objectMapper.writeValueAsString(new OtherEventDummy("id", Instant.now()));
 
-        assertThatThrownBy(() -> processor.process(레코드(otherPayload)))
-                .isInstanceOf(PoisonMessageException.class);
+        assertThatThrownBy(() -> processor.process(레코드(otherPayload))).isInstanceOf(PoisonMessageException.class);
     }
 
     @Test

@@ -29,7 +29,7 @@ class NunchiGameTest {
     void setUp() {
         game = new NunchiGame(WINDOW_MILLIS);
         game.setUp(List.of(일, 이, 삼, 사));
-        game.startReady();   // DESCRIPTION → READY
+        game.startReady(); // DESCRIPTION → READY
         game.startPlaying(); // READY → PLAYING: 이하 입력 테스트는 입력 수락 상태를 전제로 한다
     }
 
@@ -88,7 +88,7 @@ class NunchiGameTest {
             final NunchiGame fresh = new NunchiGame(WINDOW_MILLIS);
             fresh.setUp(List.of(일, 이, 삼, 사));
 
-            fresh.startReady();   // DESCRIPTION → READY
+            fresh.startReady(); // DESCRIPTION → READY
             fresh.startPlaying(); // READY → PLAYING
 
             SoftAssertions.assertSoftly(softly -> {
@@ -112,8 +112,7 @@ class NunchiGameTest {
 
         @Test
         void 없는_닉네임이면_예외를_던진다() {
-            assertThat(catchThrowable(() -> game.findByName("없는사람")))
-                    .isInstanceOf(BusinessException.class);
+            assertThat(catchThrowable(() -> game.findByName("없는사람"))).isInstanceOf(BusinessException.class);
         }
     }
 
@@ -212,7 +211,8 @@ class NunchiGameTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.outcome()).isEqualTo(PressOutcome.COLLIDED);
                 softly.assertThat(result.collidedGroup()).containsExactlyInAnyOrder(일, 이, 삼);
-                softly.assertThat(game.getScores().get(삼)).isEqualTo(game.getScores().get(일));
+                softly.assertThat(game.getScores().get(삼))
+                        .isEqualTo(game.getScores().get(일));
             });
         }
 
@@ -290,11 +290,11 @@ class NunchiGameTest {
         void 최종_랭킹은_정상_충돌_미입력_3계층으로_매겨진다() {
             // given — 삼·사 충돌(1번) → 일 단독(1번 재차지) → 이 미입력
             game.press(삼, T0);
-            game.press(사, T0.plusMillis(100));   // 삼·사 충돌, 쿨다운
+            game.press(사, T0.plusMillis(100)); // 삼·사 충돌, 쿨다운
             game.endCooldown();
-            game.press(일, T0.plusMillis(1_000));  // 일 단독으로 1번 차지
+            game.press(일, T0.plusMillis(1_000)); // 일 단독으로 1번 차지
             game.closeWindow();
-            game.finishByTimeout();                // 이 미입력 → MISS
+            game.finishByTimeout(); // 이 미입력 → MISS
 
             // when
             final MiniGameResult result = game.getResult();

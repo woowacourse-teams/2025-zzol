@@ -12,8 +12,7 @@ package coffeeshout.global.redis;
  */
 public final class EventTypeName {
 
-    private EventTypeName() {
-    }
+    private EventTypeName() {}
 
     public static String of(BaseEvent event) {
         return of(event.getClass());

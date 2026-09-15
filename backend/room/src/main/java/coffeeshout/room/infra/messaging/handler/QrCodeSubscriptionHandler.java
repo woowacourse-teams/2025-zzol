@@ -35,11 +35,10 @@ public class QrCodeSubscriptionHandler {
 
         if (destination != null && pathMatcher.match(QR_CODE_TOPIC_PATTERN, destination)) {
             final String sessionId = headerAccessor.getSessionId();
-            log.info("QR 코드 상태 구독 이벤트 감지: sessionId={}, destination={}",
-                    sessionId, destination);
+            log.info("QR 코드 상태 구독 이벤트 감지: sessionId={}, destination={}", sessionId, destination);
 
-            final Map<String, String> variables = pathMatcher.extractUriTemplateVariables(QR_CODE_TOPIC_PATTERN,
-                    destination);
+            final Map<String, String> variables =
+                    pathMatcher.extractUriTemplateVariables(QR_CODE_TOPIC_PATTERN, destination);
             final String joinCode = variables.get("joinCode");
 
             if (sessionId == null) {
@@ -54,19 +53,19 @@ public class QrCodeSubscriptionHandler {
         }
     }
 
-    private void sendQrCodeStatus(String destination, String sessionId, String joinCode,
-                                  QrCodeStatusResponse qrCodeStatus) {
+    private void sendQrCodeStatus(
+            String destination, String sessionId, String joinCode, QrCodeStatusResponse qrCodeStatus) {
         try {
-            messagingTemplate.convertAndSend(
-                    destination,
-                    WebSocketResponse.success(qrCodeStatus)
-            );
+            messagingTemplate.convertAndSend(destination, WebSocketResponse.success(qrCodeStatus));
 
-            log.info("QR 코드 구독 시 현재 상태 전송 완료: sessionId={}, joinCode={}, status={}",
-                    sessionId, joinCode, qrCodeStatus.status());
+            log.info(
+                    "QR 코드 구독 시 현재 상태 전송 완료: sessionId={}, joinCode={}, status={}",
+                    sessionId,
+                    joinCode,
+                    qrCodeStatus.status());
         } catch (Exception e) {
-            log.error("QR 코드 상태 전송 중 오류 발생: sessionId={}, joinCode={}, error={}",
-                    sessionId, joinCode, e.getMessage(), e);
+            log.error(
+                    "QR 코드 상태 전송 중 오류 발생: sessionId={}, joinCode={}, error={}", sessionId, joinCode, e.getMessage(), e);
         }
     }
 }

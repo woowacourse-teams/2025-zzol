@@ -20,6 +20,4 @@ public record NunchiTimingProperties(
         @NotNull @DurationMin(nanos = 1) Duration collisionCooldown,
         @NotNull @DurationMin(nanos = 1) Duration idleTimeout,
         @NotNull @DurationMin(nanos = 1) Duration hardCap,
-        @NotNull @DurationMin(nanos = 1) Duration allPressedDelay
-) {
-}
+        @NotNull @DurationMin(nanos = 1) Duration allPressedDelay) {}

@@ -40,8 +40,7 @@ class GameSessionTest {
         void 호스트가_교체하면_대기열이_갱신된다() {
             session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME), game(MiniGameType.RACING_GAME)));
 
-            assertThat(session.getSelectedTypes())
-                    .containsExactly(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME);
+            assertThat(session.getSelectedTypes()).containsExactly(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME);
         }
 
         @Test
@@ -66,7 +65,8 @@ class GameSessionTest {
         @DisplayName("동일 게임 타입을 중복 선택하면 DUPLICATE_GAME 예외가 발생한다")
         void 동일_게임_타입_중복이면_DUPLICATE_GAME_예외가_발생한다() {
             assertCoffeeShoutException(
-                    () -> session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME), game(MiniGameType.CARD_GAME))),
+                    () -> session.replaceGames(
+                            HOST, List.of(game(MiniGameType.CARD_GAME), game(MiniGameType.CARD_GAME))),
                     GameSessionErrorCode.DUPLICATE_GAME);
         }
 
@@ -96,9 +96,7 @@ class GameSessionTest {
                     game(MiniGameType.BLOCK_STACKING),
                     game(MiniGameType.LADDER_GAME));
 
-            assertCoffeeShoutException(
-                    () -> session.replaceGames(HOST, sixGames),
-                    GameSessionErrorCode.TOO_MANY_GAMES);
+            assertCoffeeShoutException(() -> session.replaceGames(HOST, sixGames), GameSessionErrorCode.TOO_MANY_GAMES);
         }
 
         @Test
@@ -154,7 +152,8 @@ class GameSessionTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(session.getSelectedTypes()).isEmpty();
-                softly.assertThat(session.findCompletedGame(MiniGameType.CARD_GAME).getMiniGameType())
+                softly.assertThat(session.findCompletedGame(MiniGameType.CARD_GAME)
+                                .getMiniGameType())
                         .isEqualTo(MiniGameType.CARD_GAME);
             });
         }
@@ -165,16 +164,14 @@ class GameSessionTest {
             session.replaceGames(HOST, List.of(game(MiniGameType.CARD_GAME)));
 
             assertCoffeeShoutException(
-                    () -> session.startNextGame(GUEST, List.of(HOST, GUEST)),
-                    GameSessionErrorCode.NOT_HOST);
+                    () -> session.startNextGame(GUEST, List.of(HOST, GUEST)), GameSessionErrorCode.NOT_HOST);
         }
 
         @Test
         @DisplayName("대기 게임이 없으면 NO_PENDING_GAMES 예외가 발생한다")
         void 대기_게임이_없으면_NO_PENDING_GAMES_예외가_발생한다() {
             assertCoffeeShoutException(
-                    () -> session.startNextGame(HOST, List.of(HOST, GUEST)),
-                    GameSessionErrorCode.NO_PENDING_GAMES);
+                    () -> session.startNextGame(HOST, List.of(HOST, GUEST)), GameSessionErrorCode.NO_PENDING_GAMES);
         }
     }
 
@@ -213,8 +210,7 @@ class GameSessionTest {
         @DisplayName("완료 목록에 없는 타입을 조회하면 GAME_NOT_FOUND 예외가 발생한다")
         void 완료_목록에_없는_타입을_조회하면_GAME_NOT_FOUND_예외가_발생한다() {
             assertCoffeeShoutException(
-                    () -> session.findCompletedGame(MiniGameType.LADDER_GAME),
-                    GameSessionErrorCode.GAME_NOT_FOUND);
+                    () -> session.findCompletedGame(MiniGameType.LADDER_GAME), GameSessionErrorCode.GAME_NOT_FOUND);
         }
     }
 
@@ -250,8 +246,7 @@ class GameSessionTest {
             session.finishCurrentGame();
             session.startNextGame(HOST, List.of(HOST, GUEST));
 
-            assertThat(session.getCompletedTypes())
-                    .containsExactly(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME);
+            assertThat(session.getCompletedTypes()).containsExactly(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME);
         }
     }
 
@@ -296,10 +291,12 @@ class GameSessionTest {
         @DisplayName("선택한 게임 총수는 전부 완료될 때까지 매 단계 일정하게 유지된다")
         void 선택한_게임_총수는_매_단계_일정하게_유지된다() {
             final int selectedCount = 3;
-            session.replaceGames(HOST, List.of(
-                    game(MiniGameType.CARD_GAME),
-                    game(MiniGameType.RACING_GAME),
-                    game(MiniGameType.SPEED_TOUCH)));
+            session.replaceGames(
+                    HOST,
+                    List.of(
+                            game(MiniGameType.CARD_GAME),
+                            game(MiniGameType.RACING_GAME),
+                            game(MiniGameType.SPEED_TOUCH)));
 
             SoftAssertions softly = new SoftAssertions();
             softly.assertThat(session.roundCount()).as("선택 직후").isEqualTo(selectedCount);

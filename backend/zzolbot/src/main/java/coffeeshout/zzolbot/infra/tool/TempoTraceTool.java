@@ -27,8 +27,10 @@ public class TempoTraceTool implements ZzolBotTool {
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
 
-    public TempoTraceTool(ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
-        this.restClient = restClientBuilder.baseUrl(properties.monitoring().tempoUrl()).build();
+    public TempoTraceTool(
+            ZzolBotProperties properties, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
+        this.restClient =
+                restClientBuilder.baseUrl(properties.monitoring().tempoUrl()).build();
         this.objectMapper = objectMapper;
     }
 
@@ -39,22 +41,20 @@ public class TempoTraceTool implements ZzolBotTool {
 
     @Override
     public String description() {
-        return "Tempo에서 분산 트레이스를 조회한다. " +
-                "joinCode가 있으면 해당 방의 요청 흐름을 조회하고, 없으면 최근 전체 트레이스를 조회한다.";
+        return "Tempo에서 분산 트레이스를 조회한다. " + "joinCode가 있으면 해당 방의 요청 흐름을 조회하고, 없으면 최근 전체 트레이스를 조회한다.";
     }
 
     @Override
     public Map<String, Object> parameterSchema() {
         return Map.of(
                 "type", "object",
-                "properties", Map.of(
-                        "joinCode", Map.of(
-                                "type", "string",
-                                "description", "4자리 방 입장 코드. 생략하면 전체 트레이스 조회"
-                        )
-                ),
-                "required", List.of()
-        );
+                "properties",
+                        Map.of(
+                                "joinCode",
+                                Map.of(
+                                        "type", "string",
+                                        "description", "4자리 방 입장 코드. 생략하면 전체 트레이스 조회")),
+                "required", List.of());
     }
 
     @Override
@@ -65,9 +65,11 @@ public class TempoTraceTool implements ZzolBotTool {
         }
         final String joinCode = (rawJoinCode instanceof String s && s.matches("[A-Z0-9]{4}")) ? s : null;
         try {
-            final String response = restClient.get()
+            final String response = restClient
+                    .get()
                     .uri(uriBuilder -> {
-                        final UriBuilder builder = uriBuilder.path("/api/search").queryParam("limit", TRACE_LIMIT);
+                        final UriBuilder builder =
+                                uriBuilder.path("/api/search").queryParam("limit", TRACE_LIMIT);
                         if (joinCode != null) {
                             builder.queryParam("tags", "joinCode=" + joinCode);
                         }

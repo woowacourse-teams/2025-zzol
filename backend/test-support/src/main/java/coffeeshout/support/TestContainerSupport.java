@@ -10,9 +10,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 public abstract class TestContainerSupport {
@@ -31,11 +31,15 @@ public abstract class TestContainerSupport {
             .withDatabaseName(BASE_DB)
             .withUsername("test")
             .withPassword("test")
-            .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci",
-                    "--max_connections=500", "--innodb_flush_log_at_trx_commit=2", "--sync_binlog=0");
+            .withCommand(
+                    "--character-set-server=utf8mb4",
+                    "--collation-server=utf8mb4_unicode_ci",
+                    "--max_connections=500",
+                    "--innodb_flush_log_at_trx_commit=2",
+                    "--sync_binlog=0");
 
     protected static final GenericContainer<?> valkey = new GenericContainer<>(
-            DockerImageName.parse("valkey/valkey:alpine"))
+                    DockerImageName.parse("valkey/valkey:alpine"))
             .withExposedPorts(VALKEY_PORT)
             .withCommand("valkey-server", "--save", "", "--appendonly", "no", "--loglevel", "warning")
             .withEnv("VALKEY_DISABLE_COMMANDS", "CONFIG,SHUTDOWN,DEBUG")

@@ -9,17 +9,16 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -30,7 +29,8 @@ import org.springframework.web.client.RestClient;
 @WireMockTest
 class LokiQueryToolTest {
 
-    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+    private static final AskContext CTX =
+            AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     private LokiQueryTool createTool(WireMockRuntimeInfo wmInfo) {
         return createTool(wmInfo.getHttpBaseUrl());
@@ -41,17 +41,11 @@ class LokiQueryToolTest {
                 "",
                 "gemini-2.0-flash",
                 8,
-                new ZzolBotProperties.MonitoringProperties(
-                        lokiUrl,
-                        "http://tempo",
-                        "http://prometheus",
-                        "local"
-                ),
+                new ZzolBotProperties.MonitoringProperties(lokiUrl, "http://tempo", "http://prometheus", "local"),
                 new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
                 60,
                 10000L,
-                new ZzolBotProperties.SqlProperties(List.of(), 100, 3)
-        );
+                new ZzolBotProperties.SqlProperties(List.of(), 100, 3));
         return new LokiQueryTool(props, RestClient.builder(), new ObjectMapper());
     }
 
@@ -74,8 +68,7 @@ class LokiQueryToolTest {
 
         @Test
         void Loki_서버_오류_시_실패_결과를_반환한다(WireMockRuntimeInfo wmInfo) {
-            stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
-                    .willReturn(serverError()));
+            stubFor(get(urlPathEqualTo("/loki/api/v1/query_range")).willReturn(serverError()));
 
             final ToolExecutionResult result = createTool(wmInfo).execute(Map.of("joinCode", "A4BX"), CTX);
 
@@ -97,8 +90,8 @@ class LokiQueryToolTest {
             stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
                     .willReturn(ok().withBody("{\"status\":\"success\"}")));
 
-            final ToolExecutionResult result = createTool(wmInfo)
-                    .execute(Map.of("joinCode", "A4BX", "since", "30m"), CTX);
+            final ToolExecutionResult result =
+                    createTool(wmInfo).execute(Map.of("joinCode", "A4BX", "since", "30m"), CTX);
 
             assertThat(result.success()).isTrue();
         }
@@ -108,8 +101,8 @@ class LokiQueryToolTest {
             stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
                     .willReturn(ok().withBody("{\"status\":\"success\"}")));
 
-            final ToolExecutionResult result = createTool(wmInfo)
-                    .execute(Map.of("joinCode", "A4BX", "since", "999h"), CTX);
+            final ToolExecutionResult result =
+                    createTool(wmInfo).execute(Map.of("joinCode", "A4BX", "since", "999h"), CTX);
 
             assertThat(result.success()).isTrue();
         }
@@ -119,8 +112,8 @@ class LokiQueryToolTest {
             stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
                     .willReturn(ok().withBody("{\"status\":\"success\"}")));
 
-            final ToolExecutionResult result = createTool(wmInfo)
-                    .execute(Map.of("joinCode", "A4BX", "since", "-30m"), CTX);
+            final ToolExecutionResult result =
+                    createTool(wmInfo).execute(Map.of("joinCode", "A4BX", "since", "-30m"), CTX);
 
             assertThat(result.success()).isTrue();
         }
@@ -163,11 +156,13 @@ class LokiQueryToolTest {
             stubFor(get(urlPathEqualTo("/loki/api/v1/query_range"))
                     .willReturn(ok().withBody("{\"status\":\"success\",\"data\":{}}")));
 
-            final ToolExecutionResult result = createTool(wmInfo.getHttpBaseUrl() + "/").execute(Map.of(), CTX);
+            final ToolExecutionResult result =
+                    createTool(wmInfo.getHttpBaseUrl() + "/").execute(Map.of(), CTX);
 
             assertThat(result.success()).isTrue(); // '//loki' 가 되면 path 불일치로 stub 미적중 → 실패했을 것
             final String rawUrl = findAll(getRequestedFor(urlPathEqualTo("/loki/api/v1/query_range")))
-                    .get(0).getUrl();
+                    .get(0)
+                    .getUrl();
             assertThat(rawUrl).doesNotContain("//loki");
         }
 

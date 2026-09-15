@@ -77,13 +77,13 @@ public class TestStompSession implements AutoCloseable {
         String token = UUID.randomUUID().toString();
         Map<String, String> ping = Map.of(SUBSCRIBE_BARRIER_KEY, token);
         Awaitility.await()
-            .atMost(DEFAULT_RESPONSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .pollDelay(Duration.ZERO)
-            .pollInterval(Duration.ofMillis(50))
-            .until(() -> {
-                session.send(topic, ping);
-                return collector.receivedBarrierPing(token);
-            });
+                .atMost(DEFAULT_RESPONSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .pollDelay(Duration.ZERO)
+                .pollInterval(Duration.ofMillis(50))
+                .until(() -> {
+                    session.send(topic, ping);
+                    return collector.receivedBarrierPing(token);
+                });
     }
 
     public void send(String sendEndpoint, Object bodyMessage) {
@@ -136,6 +136,7 @@ public class TestStompSession implements AutoCloseable {
          * 진단 종료 후 제거 예정.
          */
         private final List<String> receivedHistory = new CopyOnWriteArrayList<>();
+
         private volatile long firstAddAt = -1L;
 
         /** subscribe() 등록 확인용 barrier ping. 일반 큐에서 걸러내 단언을 오염시키지 않고 등록 확인에만 쓴다(#1410). */
@@ -165,16 +166,17 @@ public class TestStompSession implements AutoCloseable {
         public MessageResponse get(long timeout, TimeUnit unit) {
             long start = System.currentTimeMillis();
             try {
-                Awaitility.await()
-                    .atMost(timeout, unit)
-                    .until(() -> !queue.isEmpty());
+                Awaitility.await().atMost(timeout, unit).until(() -> !queue.isEmpty());
             } catch (ConditionTimeoutException e) {
                 // [진단 계측 — #1410] 예외 타입은 유지하고 메시지만 보강한다.
                 // ConditionTimeoutException은 (String) 생성자만 제공하므로 initCause로 원본을 cause에 보존한다.
                 ConditionTimeoutException enriched = new ConditionTimeoutException(String.format(
-                    "메시지 미수신 (timeout=%d %s). 미폴링 큐 크기=%d, 누적 수신 이력(%d건)=%s",
-                    timeout, unit.name(), queue.size(), receivedHistory.size(),
-                    Collections.unmodifiableList(receivedHistory)));
+                        "메시지 미수신 (timeout=%d %s). 미폴링 큐 크기=%d, 누적 수신 이력(%d건)=%s",
+                        timeout,
+                        unit.name(),
+                        queue.size(),
+                        receivedHistory.size(),
+                        Collections.unmodifiableList(receivedHistory)));
                 enriched.initCause(e);
                 throw enriched;
             }
@@ -196,9 +198,9 @@ public class TestStompSession implements AutoCloseable {
 
         public void assertNoMessage(long timeout, TimeUnit unit) {
             Awaitility.await()
-                .during(timeout, unit)
-                .atMost(unit.toMillis(timeout) + 200, TimeUnit.MILLISECONDS)
-                .until(queue::isEmpty);
+                    .during(timeout, unit)
+                    .atMost(unit.toMillis(timeout) + 200, TimeUnit.MILLISECONDS)
+                    .until(queue::isEmpty);
         }
     }
 

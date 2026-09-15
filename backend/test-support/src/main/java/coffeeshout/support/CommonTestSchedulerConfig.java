@@ -22,5 +22,4 @@ public class CommonTestSchedulerConfig {
     public TaskScheduler testDelayRemovalScheduler() {
         return new ShutDownTestScheduler();
     }
-
 }

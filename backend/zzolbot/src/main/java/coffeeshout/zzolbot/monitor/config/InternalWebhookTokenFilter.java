@@ -30,8 +30,7 @@ public class InternalWebhookTokenFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         if (!matches(extractToken(request))) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
@@ -53,7 +52,6 @@ public class InternalWebhookTokenFilter extends OncePerRequestFilter {
             return false;
         }
         return MessageDigest.isEqual(
-                expectedToken.getBytes(StandardCharsets.UTF_8),
-                provided.getBytes(StandardCharsets.UTF_8));
+                expectedToken.getBytes(StandardCharsets.UTF_8), provided.getBytes(StandardCharsets.UTF_8));
     }
 }

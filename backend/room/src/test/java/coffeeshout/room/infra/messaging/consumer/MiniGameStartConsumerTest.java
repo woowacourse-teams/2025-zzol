@@ -68,11 +68,11 @@ class MiniGameStartConsumerTest {
             final StartMiniGameCommandEvent event = new StartMiniGameCommandEvent("ABCD", "비호스트");
             given(roomQueryService.getByJoinCode(new JoinCode("ABCD"))).willReturn(room);
             willThrow(new IllegalStateException("게임을 시작할 수 있는 상태가 아닙니다."))
-                    .given(room).validateStartable("비호스트");
+                    .given(room)
+                    .validateStartable("비호스트");
 
             // when & then
-            assertThatThrownBy(() -> consumer.accept(event))
-                    .isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(() -> consumer.accept(event)).isInstanceOf(IllegalStateException.class);
             verify(eventPublisher, never()).publishEvent(any());
         }
     }

@@ -34,11 +34,14 @@ public class GeminiZzolBotClient implements ZzolBotLlmClient {
     private final ZzolBotProperties properties;
     private final ZzolBotSchemaConverter schemaConverter;
 
+    @Override
     @Retry(name = "zzolBotGemini")
     @RateLimiter(name = "zzolBotGemini")
-    public ZzolBotLlmResponse generate(List<ZzolBotMessage> conversation, List<ZzolBotTool> tools, String systemInstruction, AskContext ctx) {
+    public ZzolBotLlmResponse generate(
+            List<ZzolBotMessage> conversation, List<ZzolBotTool> tools, String systemInstruction, AskContext ctx) {
         final GenerateContentConfig config = buildConfig(tools, systemInstruction, ctx);
-        final List<Content> contents = conversation.stream().map(this::toContent).toList();
+        final List<Content> contents =
+                conversation.stream().map(this::toContent).toList();
         final GenerateContentResponse response = callApi(contents, config);
         return parseResponse(response);
     }
@@ -52,15 +55,12 @@ public class GeminiZzolBotClient implements ZzolBotLlmClient {
     }
 
     private GenerateContentConfig buildConfig(List<ZzolBotTool> tools, String systemInstruction, AskContext ctx) {
-        final List<FunctionDeclaration> declarations = tools.stream()
-                .map(this::toFunctionDeclaration)
-                .toList();
+        final List<FunctionDeclaration> declarations =
+                tools.stream().map(this::toFunctionDeclaration).toList();
 
         return GenerateContentConfig.builder()
                 .systemInstruction(Content.fromParts(Part.fromText(systemInstruction)))
-                .tools(List.of(Tool.builder()
-                        .functionDeclarations(declarations)
-                        .build()))
+                .tools(List.of(Tool.builder().functionDeclarations(declarations).build()))
                 .temperature((float) properties.determinism().temperature())
                 .topP((float) properties.determinism().topP())
                 .seed((int) (ctx.seed() & Integer.MAX_VALUE))
@@ -70,13 +70,16 @@ public class GeminiZzolBotClient implements ZzolBotLlmClient {
     private Content toContent(ZzolBotMessage message) {
         return switch (message) {
             case ZzolBotMessage.UserMessage m ->
-                    Content.builder().role("user").parts(Part.fromText(m.text())).build();
+                Content.builder().role("user").parts(Part.fromText(m.text())).build();
             case ZzolBotMessage.AssistantMessage m ->
-                    Content.builder().role("model").parts(Part.fromText(m.text())).build();
+                Content.builder().role("model").parts(Part.fromText(m.text())).build();
             case ZzolBotMessage.ToolCallMessage m ->
-                    Content.builder().role("model").parts(Part.fromFunctionCall(m.toolName(), m.args())).build();
+                Content.builder()
+                        .role("model")
+                        .parts(Part.fromFunctionCall(m.toolName(), m.args()))
+                        .build();
             case ZzolBotMessage.ToolResultMessage m ->
-                    Content.fromParts(Part.fromFunctionResponse(m.toolName(), Map.of("result", m.result())));
+                Content.fromParts(Part.fromFunctionResponse(m.toolName(), Map.of("result", m.result())));
         };
     }
 
@@ -94,12 +97,14 @@ public class GeminiZzolBotClient implements ZzolBotLlmClient {
         if (!functionCalls.isEmpty()) {
             final List<ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem> calls = functionCalls.stream()
                     .map(fc -> new ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem(
-                            fc.name().orElse(""),
-                            fc.args().orElse(Collections.emptyMap())
-                    ))
+                            fc.name().orElse(""), fc.args().orElse(Collections.emptyMap())))
                     .toList();
-            log.debug("[ZzolBot] tool 호출 요청: count={}, tools={}", calls.size(),
-                    calls.stream().map(ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem::toolName).toList());
+            log.debug(
+                    "[ZzolBot] tool 호출 요청: count={}, tools={}",
+                    calls.size(),
+                    calls.stream()
+                            .map(ZzolBotLlmResponse.ToolCallsResponse.ToolCallItem::toolName)
+                            .toList());
             return new ZzolBotLlmResponse.ToolCallsResponse(calls);
         }
 

@@ -9,7 +9,7 @@ import org.springframework.util.Assert;
 public class CardGameRound {
 
     private final int number; // 0 = READY, 1 = 첫 번째 라운드, ...
-    private final int total;  // 게임 라운드 수
+    private final int total; // 게임 라운드 수
 
     public static CardGameRound ready(int totalRounds) {
         return new CardGameRound(0, totalRounds);

@@ -89,13 +89,13 @@ public class Report {
         return create(ReportCreation.bug(gameType, joinCode, content, null, null), createdAt);
     }
 
-    public static Report createBugReport(MiniGameType gameType, String joinCode, String content, Clock clock,
-                                         Reporter author) {
+    public static Report createBugReport(
+            MiniGameType gameType, String joinCode, String content, Clock clock, Reporter author) {
         return create(ReportCreation.bug(gameType, joinCode, content, author, null), clock);
     }
 
-    public static Report createBugReport(MiniGameType gameType, String joinCode, String content, Instant createdAt,
-                                         Reporter author) {
+    public static Report createBugReport(
+            MiniGameType gameType, String joinCode, String content, Instant createdAt, Reporter author) {
         return create(ReportCreation.bug(gameType, joinCode, content, author, null), createdAt);
     }
 
@@ -107,13 +107,12 @@ public class Report {
         return create(ReportCreation.general(category, content, null, null), createdAt);
     }
 
-    public static Report createGeneralReport(ReportCategory category, String content, Clock clock,
-                                             Reporter author) {
+    public static Report createGeneralReport(ReportCategory category, String content, Clock clock, Reporter author) {
         return create(ReportCreation.general(category, content, author, null), clock);
     }
 
-    public static Report createGeneralReport(ReportCategory category, String content, Instant createdAt,
-                                             Reporter author) {
+    public static Report createGeneralReport(
+            ReportCategory category, String content, Instant createdAt, Reporter author) {
         return create(ReportCreation.general(category, content, author, null), createdAt);
     }
 
@@ -123,15 +122,13 @@ public class Report {
             String joinCode,
             String content,
             Reporter author,
-            String ip
-    ) {
-        public static ReportCreation bug(MiniGameType gameType, String joinCode, String content,
-                                         Reporter author, String ip) {
+            String ip) {
+        public static ReportCreation bug(
+                MiniGameType gameType, String joinCode, String content, Reporter author, String ip) {
             return new ReportCreation(ReportCategory.BUG, gameType, joinCode, content, author, ip);
         }
 
-        public static ReportCreation general(ReportCategory category, String content,
-                                              Reporter author, String ip) {
+        public static ReportCreation general(ReportCategory category, String content, Reporter author, String ip) {
             return new ReportCreation(category, null, null, content, author, ip);
         }
     }

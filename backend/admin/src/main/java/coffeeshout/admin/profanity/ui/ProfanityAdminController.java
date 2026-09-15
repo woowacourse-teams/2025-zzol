@@ -14,7 +14,6 @@ import jakarta.validation.Valid;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -27,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Controller
 @RequestMapping("/admin/profanity")
@@ -107,14 +107,15 @@ public class ProfanityAdminController {
     }
 
     @PostMapping("/words")
-    public String addWord(@Valid @ModelAttribute AddProfanityWordRequest request,
-                          BindingResult bindingResult,
-                          @RequestParam(defaultValue = "") String search,
-                          @RequestParam(name = "filterLanguage", defaultValue = "") String language,
-                          @RequestParam(defaultValue = "") String source,
-                          @RequestParam(defaultValue = "") String activeFilter,
-                          @RequestParam(defaultValue = "0") int wordsPage,
-                          Model model) {
+    public String addWord(
+            @Valid @ModelAttribute AddProfanityWordRequest request,
+            BindingResult bindingResult,
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(name = "filterLanguage", defaultValue = "") String language,
+            @RequestParam(defaultValue = "") String source,
+            @RequestParam(defaultValue = "") String activeFilter,
+            @RequestParam(defaultValue = "0") int wordsPage,
+            Model model) {
         if (bindingResult.hasErrors()) {
             populateWordsModel(model, search, language, source, activeFilter, wordsPage);
             model.addAttribute("tab", "words");
@@ -125,23 +126,25 @@ public class ProfanityAdminController {
     }
 
     @PostMapping("/words/activate")
-    public String activate(@RequestParam String word,
-                           @RequestParam(defaultValue = "") String search,
-                           @RequestParam(defaultValue = "") String language,
-                           @RequestParam(defaultValue = "") String source,
-                           @RequestParam(defaultValue = "") String activeFilter,
-                           @RequestParam(defaultValue = "0") int wordsPage) {
+    public String activate(
+            @RequestParam String word,
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(defaultValue = "") String language,
+            @RequestParam(defaultValue = "") String source,
+            @RequestParam(defaultValue = "") String activeFilter,
+            @RequestParam(defaultValue = "0") int wordsPage) {
         managementService.activate(word);
         return redirectWords(search, language, source, activeFilter, wordsPage);
     }
 
     @PostMapping("/words/deactivate")
-    public String deactivate(@RequestParam String word,
-                             @RequestParam(defaultValue = "") String search,
-                             @RequestParam(defaultValue = "") String language,
-                             @RequestParam(defaultValue = "") String source,
-                             @RequestParam(defaultValue = "") String activeFilter,
-                             @RequestParam(defaultValue = "0") int wordsPage) {
+    public String deactivate(
+            @RequestParam String word,
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(defaultValue = "") String language,
+            @RequestParam(defaultValue = "") String source,
+            @RequestParam(defaultValue = "") String activeFilter,
+            @RequestParam(defaultValue = "0") int wordsPage) {
         managementService.deactivate(word);
         return redirectWords(search, language, source, activeFilter, wordsPage);
     }
@@ -163,14 +166,14 @@ public class ProfanityAdminController {
         return "redirect:" + url;
     }
 
-    private void populateWordsModel(Model model, String search, String language, String source,
-                                    String activeFilter, int wordsPage) {
+    private void populateWordsModel(
+            Model model, String search, String language, String source, String activeFilter, int wordsPage) {
         final Language langFilter = parseEnum(Language.class, language);
         final WordSource sourceFilter = parseEnum(WordSource.class, source);
-        final Boolean activeOnly = "active".equals(activeFilter) ? Boolean.TRUE
-                : "inactive".equals(activeFilter) ? Boolean.FALSE : null;
-        final Page<ProfanityWord> words =
-                managementService.findAllPaged(search, langFilter, sourceFilter, activeOnly, wordsPage, WORDS_PAGE_SIZE);
+        final Boolean activeOnly =
+                "active".equals(activeFilter) ? Boolean.TRUE : "inactive".equals(activeFilter) ? Boolean.FALSE : null;
+        final Page<ProfanityWord> words = managementService.findAllPaged(
+                search, langFilter, sourceFilter, activeOnly, wordsPage, WORDS_PAGE_SIZE);
         model.addAttribute("words", words);
         model.addAttribute("search", search);
         model.addAttribute("language", language);
@@ -190,8 +193,7 @@ public class ProfanityAdminController {
                 e.getConfidence() != null ? e.getConfidence() : AiConfidence.UNKNOWN,
                 e.getReason() != null ? e.getReason() : "",
                 LocalDateTime.ofInstant(e.getCreatedAt(), clock.getZone()),
-                e.getAuditedAt() != null ? LocalDateTime.ofInstant(e.getAuditedAt(), clock.getZone()) : null
-        );
+                e.getAuditedAt() != null ? LocalDateTime.ofInstant(e.getAuditedAt(), clock.getZone()) : null);
     }
 
     private static <E extends Enum<E>> E parseEnum(Class<E> type, String value) {
@@ -211,6 +213,5 @@ public class ProfanityAdminController {
             AiConfidence confidence,
             String reason,
             LocalDateTime createdAt,
-            LocalDateTime auditedAt
-    ) {}
+            LocalDateTime auditedAt) {}
 }

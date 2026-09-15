@@ -66,7 +66,8 @@ class RoomServiceMemberTest extends RoomModuleServiceTest {
             final RoomSessionClaim claim = roomSessionTokenService.verify(result.roomSessionToken());
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(claim.joinCode()).isEqualTo(result.room().getJoinCode().getValue());
+                softly.assertThat(claim.joinCode())
+                        .isEqualTo(result.room().getJoinCode().getValue());
                 softly.assertThat(claim.playerName()).isEqualTo("엠제이");
                 softly.assertThat(claim.userId()).isEqualTo(저장된_엠제이.getId());
             });
@@ -80,9 +81,12 @@ class RoomServiceMemberTest extends RoomModuleServiceTest {
         void 회원_방_입장_RST에는_올바른_클레임이_담겨있다() throws Exception {
             final Room room = roomService.createRoom("호스트").room();
             final String joinCode = room.getJoinCode().getValue();
-            doReturn(CompletableFuture.completedFuture(room)).when(roomEventWaitManager).registerWait(anyString());
+            doReturn(CompletableFuture.completedFuture(room))
+                    .when(roomEventWaitManager)
+                    .registerWait(anyString());
 
-            final RoomEnterResult result = roomService.enterRoomAsync(joinCode, 엠제이_인증).get();
+            final RoomEnterResult result =
+                    roomService.enterRoomAsync(joinCode, 엠제이_인증).get();
             final RoomSessionClaim claim = roomSessionTokenService.verify(result.roomSessionToken());
 
             SoftAssertions.assertSoftly(softly -> {

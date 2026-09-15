@@ -15,8 +15,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
                     + "ORDER BY id ASC "
                     + "LIMIT :size "
                     + "FOR UPDATE SKIP LOCKED",
-            nativeQuery = true
-    )
+            nativeQuery = true)
     List<OutboxEvent> findPendingEventsForUpdate(@Param("size") int size);
 
     /**

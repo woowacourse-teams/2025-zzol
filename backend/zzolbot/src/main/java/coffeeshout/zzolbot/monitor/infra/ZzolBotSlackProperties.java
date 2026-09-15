@@ -7,11 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * zzolbot 모니터링 알림용 Slack 설정. admin 모듈의 SlackProperties와 분리해 모듈 의존을 끊는다.
  */
 @ConfigurationProperties(prefix = "zzol-bot.slack")
-public record ZzolBotSlackProperties(
-        String webhookUrl,
-        Duration connectTimeout,
-        Duration readTimeout
-) {
+public record ZzolBotSlackProperties(String webhookUrl, Duration connectTimeout, Duration readTimeout) {
 
     public ZzolBotSlackProperties {
         if (connectTimeout == null) {

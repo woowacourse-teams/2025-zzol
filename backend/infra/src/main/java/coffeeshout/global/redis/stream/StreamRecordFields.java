@@ -20,6 +20,5 @@ public final class StreamRecordFields {
      */
     public static final String LEGACY_RAW = "_raw";
 
-    private StreamRecordFields() {
-    }
+    private StreamRecordFields() {}
 }

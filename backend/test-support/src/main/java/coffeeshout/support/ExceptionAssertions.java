@@ -9,13 +9,11 @@ import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 
 public class ExceptionAssertions {
 
-    private ExceptionAssertions() {
-    }
+    private ExceptionAssertions() {}
 
     public static void assertCoffeeShoutException(ThrowingCallable callable, ErrorCode expectedCode) {
-        assertThatThrownBy(callable)
-                .isInstanceOf(CoffeeShoutException.class)
-                .satisfies(e -> assertThat(((CoffeeShoutException) e).getErrorCode())
-                        .isEqualTo(expectedCode));
+        assertThatThrownBy(callable).isInstanceOf(CoffeeShoutException.class).satisfies(e -> assertThat(
+                        ((CoffeeShoutException) e).getErrorCode())
+                .isEqualTo(expectedCode));
     }
 }

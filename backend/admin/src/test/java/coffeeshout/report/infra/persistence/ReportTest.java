@@ -92,8 +92,7 @@ class ReportTest {
         @Test
         void ip를_전달하면_bug_신고에_저장된다() {
             final Report entity = Report.create(
-                    ReportCreation.bug(MiniGameType.CARD_GAME, "ABC12", "내용", null, "1.2.3.4"),
-                    FIXED_CLOCK);
+                    ReportCreation.bug(MiniGameType.CARD_GAME, "ABC12", "내용", null, "1.2.3.4"), FIXED_CLOCK);
 
             assertThat(entity.getIp()).isEqualTo("1.2.3.4");
         }
@@ -101,17 +100,15 @@ class ReportTest {
         @Test
         void ip를_전달하면_general_신고에_저장된다() {
             final Report entity = Report.create(
-                    ReportCreation.general(ReportCategory.SUGGESTION, "내용", null, "5.6.7.8"),
-                    FIXED_CLOCK);
+                    ReportCreation.general(ReportCategory.SUGGESTION, "내용", null, "5.6.7.8"), FIXED_CLOCK);
 
             assertThat(entity.getIp()).isEqualTo("5.6.7.8");
         }
 
         @Test
         void ip_없이_생성하면_null이다() {
-            final Report entity = Report.create(
-                    ReportCreation.bug(MiniGameType.CARD_GAME, "ABC12", "내용", null, null),
-                    FIXED_CLOCK);
+            final Report entity =
+                    Report.create(ReportCreation.bug(MiniGameType.CARD_GAME, "ABC12", "내용", null, null), FIXED_CLOCK);
 
             assertThat(entity.getIp()).isNull();
         }

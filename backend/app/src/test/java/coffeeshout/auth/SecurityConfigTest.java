@@ -5,8 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import coffeeshout.support.app.IntegrationTestSupport;
 import coffeeshout.fixture.UserFixture;
+import coffeeshout.support.app.IntegrationTestSupport;
 import coffeeshout.user.application.service.AuthTokenService;
 import coffeeshout.user.domain.TokenPair;
 import coffeeshout.user.domain.User;
@@ -36,8 +36,7 @@ class SecurityConfigTest extends IntegrationTestSupport {
 
         @Test
         void admin_엔드포인트는_비로그인_시_로그인_페이지로_리다이렉트된다() throws Exception {
-            final MvcResult result = mockMvc.perform(get("/admin"))
-                    .andReturn();
+            final MvcResult result = mockMvc.perform(get("/admin")).andReturn();
 
             assertThat(result.getResponse().getStatus())
                     .isIn(HttpStatus.FOUND.value(), HttpStatus.MOVED_PERMANENTLY.value());
@@ -45,8 +44,7 @@ class SecurityConfigTest extends IntegrationTestSupport {
 
         @Test
         void admin_login_페이지는_인증_없이_접근_가능하다() throws Exception {
-            mockMvc.perform(get("/admin/login"))
-                    .andExpect(status().isOk());
+            mockMvc.perform(get("/admin/login")).andExpect(status().isOk());
         }
     }
 
@@ -76,21 +74,18 @@ class SecurityConfigTest extends IntegrationTestSupport {
             final User user = userRepository.save(UserFixture.회원_엠제이());
             final TokenPair tokens = authTokenService.issue(user);
 
-            mockMvc.perform(get("/users/me")
-                            .header("Authorization", "Bearer " + tokens.accessToken()))
+            mockMvc.perform(get("/users/me").header("Authorization", "Bearer " + tokens.accessToken()))
                     .andExpect(status().isOk());
         }
 
         @Test
         void 토큰_없이_users_me를_호출하면_401을_반환한다() throws Exception {
-            mockMvc.perform(get("/users/me"))
-                    .andExpect(status().isUnauthorized());
+            mockMvc.perform(get("/users/me")).andExpect(status().isUnauthorized());
         }
 
         @Test
         void 위변조된_토큰으로_users_me를_호출하면_401을_반환한다() throws Exception {
-            mockMvc.perform(get("/users/me")
-                            .header("Authorization", "Bearer invalid.jwt.token"))
+            mockMvc.perform(get("/users/me").header("Authorization", "Bearer invalid.jwt.token"))
                     .andExpect(status().isUnauthorized());
         }
     }

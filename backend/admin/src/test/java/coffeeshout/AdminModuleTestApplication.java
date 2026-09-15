@@ -2,28 +2,36 @@ package coffeeshout;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@EntityScan(basePackages = {
-        "coffeeshout.dashboard", "coffeeshout.patchnote", "coffeeshout.report",
-        "coffeeshout.user", "coffeeshout.friend",
-        "coffeeshout.room",
-        "coffeeshout.profanity",
-        "coffeeshout.minigame",
-        "coffeeshout.settlement",
-        "coffeeshout.global"
-})
-@EnableJpaRepositories(basePackages = {
-        "coffeeshout.dashboard", "coffeeshout.patchnote", "coffeeshout.report",
-        "coffeeshout.user", "coffeeshout.friend",
-        "coffeeshout.room",
-        "coffeeshout.profanity",
-        "coffeeshout.minigame",
-        "coffeeshout.settlement",
-        "coffeeshout.global"
-})
+@EntityScan(
+        basePackages = {
+            "coffeeshout.dashboard",
+            "coffeeshout.patchnote",
+            "coffeeshout.report",
+            "coffeeshout.user",
+            "coffeeshout.friend",
+            "coffeeshout.room",
+            "coffeeshout.profanity",
+            "coffeeshout.minigame",
+            "coffeeshout.settlement",
+            "coffeeshout.global"
+        })
+@EnableJpaRepositories(
+        basePackages = {
+            "coffeeshout.dashboard",
+            "coffeeshout.patchnote",
+            "coffeeshout.report",
+            "coffeeshout.user",
+            "coffeeshout.friend",
+            "coffeeshout.room",
+            "coffeeshout.profanity",
+            "coffeeshout.minigame",
+            "coffeeshout.settlement",
+            "coffeeshout.global"
+        })
 @ConfigurationPropertiesScan(basePackages = "coffeeshout")
 @SpringBootApplication(scanBasePackages = "coffeeshout")
 public class AdminModuleTestApplication {

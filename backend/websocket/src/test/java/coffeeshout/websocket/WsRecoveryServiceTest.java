@@ -33,7 +33,6 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
     @Autowired
     StringRedisTemplate stringRedisTemplate;
 
-
     private String joinCode;
 
     @BeforeEach
@@ -62,7 +61,7 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
             String streamId = wsRecoveryService.save(joinCode, destination, response);
 
             // then
-            assertThat(streamId).isNotBlank().matches("\\d+-\\d+"); //Redis Stream ID 형식: 1234567890-0
+            assertThat(streamId).isNotBlank().matches("\\d+-\\d+"); // Redis Stream ID 형식: 1234567890-0
         }
 
         @Test
@@ -288,7 +287,8 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
             List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, "0-0");
 
             // then
-            assertThat(messages).hasSize(5)
+            assertThat(messages)
+                    .hasSize(5)
                     .extracting(RecoveryMessage::destination)
                     .containsExactlyInAnyOrder(dest1, dest2, dest3, dest4, dest5);
         }
@@ -301,12 +301,12 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
 
     static Stream<Arguments> 다양한_lastStreamId_시나리오() {
         return Stream.of(
-                Arguments.of(0, 5),  // 처음부터 조회 -> 5개
-                Arguments.of(1, 4),  // 1개 건너뛰고 조회 -> 4개
-                Arguments.of(2, 3),  // 2개 건너뛰고 조회 -> 3개
-                Arguments.of(4, 1),  // 4개 건너뛰고 조회 -> 1개
-                Arguments.of(5, 0)   // 전부 건너뛰고 조회 -> 0개
-        );
+                Arguments.of(0, 5), // 처음부터 조회 -> 5개
+                Arguments.of(1, 4), // 1개 건너뛰고 조회 -> 4개
+                Arguments.of(2, 3), // 2개 건너뛰고 조회 -> 3개
+                Arguments.of(4, 1), // 4개 건너뛰고 조회 -> 1개
+                Arguments.of(5, 0) // 전부 건너뛰고 조회 -> 0개
+                );
     }
 
     @Nested
@@ -355,8 +355,7 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
             String nonExistentJoinCode = "ZZZZ";
 
             // when & then - 예외 없이 정상 수행
-            assertThatCode(() -> wsRecoveryService.cleanup(nonExistentJoinCode))
-                    .doesNotThrowAnyException();
+            assertThatCode(() -> wsRecoveryService.cleanup(nonExistentJoinCode)).doesNotThrowAnyException();
         }
 
         @ParameterizedTest
@@ -401,12 +400,7 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
         void idMapKey는_짧은_TTL_후_만료된다() {
             // given - 짧은 dedup TTL(2초)로 GameRecoveryService 생성
             WsRecoveryService shortTtlService = new WsRecoveryService(
-                    stringRedisTemplate,
-                    objectMapper,
-                    MAX_LENGTH,
-                    SHORT_STREAM_TTL,
-                    SHORT_DEDUP_TTL
-            );
+                    stringRedisTemplate, objectMapper, MAX_LENGTH, SHORT_STREAM_TTL, SHORT_DEDUP_TTL);
 
             String destination = "/topic/room/" + TTL_TEST_JOIN_CODE;
             WebSocketResponse<String> response = WebSocketResponse.success("ttl test");
@@ -434,12 +428,7 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
         void 중복_방지_TTL_만료_후_같은_메시지를_다시_저장할_수_있다() {
             // given
             WsRecoveryService shortTtlService = new WsRecoveryService(
-                    stringRedisTemplate,
-                    objectMapper,
-                    MAX_LENGTH,
-                    SHORT_STREAM_TTL,
-                    SHORT_DEDUP_TTL
-            );
+                    stringRedisTemplate, objectMapper, MAX_LENGTH, SHORT_STREAM_TTL, SHORT_DEDUP_TTL);
 
             String destination = "/topic/room/" + TTL_TEST_JOIN_CODE;
             WebSocketResponse<String> response = WebSocketResponse.success("same message");
@@ -470,12 +459,7 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
         void 중복_방지_TTL_내에서는_같은_메시지가_중복_저장되지_않는다() {
             // given
             WsRecoveryService shortTtlService = new WsRecoveryService(
-                    stringRedisTemplate,
-                    objectMapper,
-                    MAX_LENGTH,
-                    SHORT_STREAM_TTL,
-                    SHORT_DEDUP_TTL
-            );
+                    stringRedisTemplate, objectMapper, MAX_LENGTH, SHORT_STREAM_TTL, SHORT_DEDUP_TTL);
 
             String destination = "/topic/room/" + TTL_TEST_JOIN_CODE;
             WebSocketResponse<String> response = WebSocketResponse.success("same message");
@@ -495,12 +479,7 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
         void streamKey와_idMapKey의_TTL이_서로_다르게_설정된다() {
             // given
             WsRecoveryService shortTtlService = new WsRecoveryService(
-                    stringRedisTemplate,
-                    objectMapper,
-                    MAX_LENGTH,
-                    SHORT_STREAM_TTL,
-                    SHORT_DEDUP_TTL
-            );
+                    stringRedisTemplate, objectMapper, MAX_LENGTH, SHORT_STREAM_TTL, SHORT_DEDUP_TTL);
 
             String destination = "/topic/room/" + TTL_TEST_JOIN_CODE;
             WebSocketResponse<String> response = WebSocketResponse.success("ttl test");
@@ -519,7 +498,9 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
             assertThat(idMapKeyTtl).isGreaterThan(0L).isLessThanOrEqualTo(SHORT_DEDUP_TTL);
 
             // streamKey는 긴 TTL (5초 이하, idMapKey보다 큼)
-            assertThat(streamKeyTtl).isGreaterThan(0L).isLessThanOrEqualTo(SHORT_STREAM_TTL)
+            assertThat(streamKeyTtl)
+                    .isGreaterThan(0L)
+                    .isLessThanOrEqualTo(SHORT_STREAM_TTL)
                     .isGreaterThan(idMapKeyTtl);
         }
     }
@@ -644,5 +625,4 @@ class WsRecoveryServiceTest extends WebsocketModuleIntegrationTest {
             cleanupRedis(joinCode2);
         }
     }
-
 }

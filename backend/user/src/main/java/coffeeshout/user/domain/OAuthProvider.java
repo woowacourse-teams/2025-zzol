@@ -4,7 +4,6 @@ import coffeeshout.global.exception.custom.BusinessException;
 import java.util.Optional;
 
 public enum OAuthProvider {
-
     GOOGLE("google"),
     KAKAO("kakao"),
     NAVER("naver");
@@ -17,8 +16,8 @@ public enum OAuthProvider {
 
     public static OAuthProvider from(String registrationId) {
         return fromRegistrationId(registrationId)
-                .orElseThrow(() -> new BusinessException(UserErrorCode.OAUTH_PROVIDER_NOT_SUPPORTED,
-                        "지원하지 않는 OAuth 제공자입니다: " + registrationId));
+                .orElseThrow(() -> new BusinessException(
+                        UserErrorCode.OAUTH_PROVIDER_NOT_SUPPORTED, "지원하지 않는 OAuth 제공자입니다: " + registrationId));
     }
 
     /**

@@ -50,8 +50,7 @@ class UserStatsControllerTest extends UserModuleIntegrationTest {
 
         @Test
         void 인증된_사용자는_초기_통계를_조회할_수_있다() throws Exception {
-            mockMvc.perform(get("/users/me/stats")
-                            .header("Authorization", "Bearer " + accessToken))
+            mockMvc.perform(get("/users/me/stats").header("Authorization", "Bearer " + accessToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.winCount").value(0))
                     .andExpect(jsonPath("$.survivalStreak").value(0));
@@ -59,8 +58,7 @@ class UserStatsControllerTest extends UserModuleIntegrationTest {
 
         @Test
         void 토큰_없이_호출하면_401을_반환한다() throws Exception {
-            mockMvc.perform(get("/users/me/stats"))
-                    .andExpect(status().isUnauthorized());
+            mockMvc.perform(get("/users/me/stats")).andExpect(status().isUnauthorized());
         }
     }
 

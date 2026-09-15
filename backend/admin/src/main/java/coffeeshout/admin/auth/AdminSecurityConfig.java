@@ -29,30 +29,23 @@ public class AdminSecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain adminFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/admin/**")
+        http.securityMatcher("/admin/**")
                 // .cors()가 없으면 이 체인이 MVC CORS 설정(web.cors.allowed-origins)을 적용하지 않아
                 // 크로스 오리진 어드민 호출(프리플라이트 포함)이 인증 단계에서 막힌다(postmortem 0003).
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/admin/login").permitAll()
-                        .anyRequest().hasRole("ADMIN")
-                )
-                .formLogin(form -> form
-                        .loginPage("/admin/login")
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/admin/login")
+                        .permitAll()
+                        .anyRequest()
+                        .hasRole("ADMIN"))
+                .formLogin(form -> form.loginPage("/admin/login")
                         .loginProcessingUrl("/admin/login")
                         .defaultSuccessUrl("/admin")
-                        .permitAll()
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/admin/logout")
+                        .permitAll())
+                .logout(logout -> logout.logoutUrl("/admin/logout")
                         .logoutSuccessUrl("/admin/login?logout")
-                        .permitAll()
-                )
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers(new NegatedRequestMatcher(
-                                PathPatternRequestMatcher.withDefaults().matcher("/admin/**")))
-                );
+                        .permitAll())
+                .csrf(csrf -> csrf.ignoringRequestMatchers(new NegatedRequestMatcher(
+                        PathPatternRequestMatcher.withDefaults().matcher("/admin/**"))));
         return http.build();
     }
 

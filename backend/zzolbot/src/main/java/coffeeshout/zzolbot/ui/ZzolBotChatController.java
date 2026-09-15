@@ -3,7 +3,6 @@ package coffeeshout.zzolbot.ui;
 import coffeeshout.zzolbot.application.ZzolBotChatService;
 import coffeeshout.zzolbot.domain.ZzolBotChatResult;
 import coffeeshout.zzolbot.domain.ZzolBotFeedback;
-import coffeeshout.zzolbot.infra.ZzolBotSessionEntity;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -42,8 +41,7 @@ public class ZzolBotChatController {
     public ZzolBotChatController(
             ZzolBotChatService chatService,
             @Qualifier("virtualThreadExecutor") ExecutorService virtualThreadExecutor,
-            Clock clock
-    ) {
+            Clock clock) {
         this.chatService = chatService;
         this.virtualThreadExecutor = virtualThreadExecutor;
         this.formatter = DateTimeFormatter.ofPattern("MM/dd HH:mm").withZone(clock.getZone());
@@ -71,17 +69,13 @@ public class ZzolBotChatController {
         try {
             virtualThreadExecutor.execute(() -> {
                 try {
-                    final ZzolBotChatResult result = chatService.ask(
-                            request.question(),
-                            adminUsername,
-                            toolName -> {
-                                try {
-                                    emitter.send(SseEmitter.event().name("progress").data(toolName));
-                                } catch (IOException e) {
-                                    log.warn("[ZzolBot] SSE progress 전송 실패. toolName={}", toolName, e);
-                                }
-                            }
-                    );
+                    final ZzolBotChatResult result = chatService.ask(request.question(), adminUsername, toolName -> {
+                        try {
+                            emitter.send(SseEmitter.event().name("progress").data(toolName));
+                        } catch (IOException e) {
+                            log.warn("[ZzolBot] SSE progress 전송 실패. toolName={}", toolName, e);
+                        }
+                    });
                     emitter.send(SseEmitter.event().name("sessionId").data(result.sessionId()));
                     emitter.send(SseEmitter.event().name("result").data(result.answer()));
                     emitter.complete();
@@ -100,10 +94,7 @@ public class ZzolBotChatController {
 
     @PostMapping("/sessions/{id}/feedback")
     @ResponseBody
-    public ResponseEntity<Void> feedback(
-            @PathVariable Long id,
-            @RequestBody @Valid FeedbackRequest request
-    ) {
+    public ResponseEntity<Void> feedback(@PathVariable Long id, @RequestBody @Valid FeedbackRequest request) {
         chatService.applyFeedback(id, request.feedback());
         return ResponseEntity.ok().build();
     }
@@ -117,8 +108,7 @@ public class ZzolBotChatController {
                         s.getQuestion(),
                         s.getAnswer(),
                         s.getFeedback() != null ? s.getFeedback().name() : null,
-                        formatter.format(s.getCreatedAt())
-                ))
+                        formatter.format(s.getCreatedAt())))
                 .toList();
     }
 

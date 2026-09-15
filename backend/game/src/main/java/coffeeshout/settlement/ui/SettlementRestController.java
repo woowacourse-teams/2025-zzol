@@ -38,18 +38,18 @@ public class SettlementRestController {
 
     @GetMapping("/settlement/leaderboard")
     public ResponseEntity<SeasonLeaderboardResponse> getLeaderboard(
-            @RequestParam(required = false) String season,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
+            @RequestParam(required = false) String season, @RequestParam(defaultValue = "10") int limit) {
         final String seasonKey = resolveSeason(season);
         // 하한 보정 필수 — PageRequest.of가 양수 page size를 요구한다. 상한은 과도한 조회를 막는다
         final int boundedLimit = Math.clamp(limit, 1, MAX_LIMIT);
         final List<LeaderboardEntry> entries = leaderboardService.top(seasonKey, boundedLimit);
 
-        final Map<Long, SeasonUserProfile> profiles = userProfileQuery
-                .resolveProfiles(entries.stream().map(LeaderboardEntry::userId).toList())
-                .stream()
-                .collect(Collectors.toMap(SeasonUserProfile::userId, Function.identity()));
+        final Map<Long, SeasonUserProfile> profiles =
+                userProfileQuery
+                        .resolveProfiles(
+                                entries.stream().map(LeaderboardEntry::userId).toList())
+                        .stream()
+                        .collect(Collectors.toMap(SeasonUserProfile::userId, Function.identity()));
 
         final List<Row> rows = new ArrayList<>();
         for (LeaderboardEntry entry : entries) {
@@ -63,8 +63,7 @@ public class SettlementRestController {
                     profile.nickname(),
                     profile.userCode(),
                     entry.totalPoints(),
-                    SeasonTier.fromPoints(entry.totalPoints()).name()
-            ));
+                    SeasonTier.fromPoints(entry.totalPoints()).name()));
         }
         return ResponseEntity.ok(
                 new SeasonLeaderboardResponse(seasonKey, leaderboardService.memberCount(seasonKey), rows));
@@ -72,17 +71,16 @@ public class SettlementRestController {
 
     @GetMapping("/settlement/ranks")
     public ResponseEntity<SeasonRankResponse> getRank(
-            @RequestParam String userCode,
-            @RequestParam(required = false) String season
-    ) {
+            @RequestParam String userCode, @RequestParam(required = false) String season) {
         final String seasonKey = resolveSeason(season);
 
-        final Optional<SeasonRankResponse> response = userProfileQuery.resolveUserIdByCode(userCode)
-                .flatMap(userId -> leaderboardService.rankOf(seasonKey, userId)
+        final Optional<SeasonRankResponse> response = userProfileQuery
+                .resolveUserIdByCode(userCode)
+                .flatMap(userId -> leaderboardService
+                        .rankOf(seasonKey, userId)
                         .map(entry -> toRankResponse(seasonKey, userId, entry)));
 
-        return response
-                .map(ResponseEntity::ok)
+        return response.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -97,8 +95,7 @@ public class SettlementRestController {
                 entry.rank(),
                 entry.totalPoints(),
                 SeasonTier.fromPoints(entry.totalPoints()).name(),
-                leaderboardService.memberCount(seasonKey)
-        );
+                leaderboardService.memberCount(seasonKey));
     }
 
     private String resolveSeason(String season) {

@@ -57,10 +57,16 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
         final Severity severity = toSeverity(alert.severity());
         final String dedupKey = resolveDedupKey(alert);
         if (recentlyEnriched(dedupKey, now)) {
-            log.info("[ZzolBot] 중복 분석 방지 — 일정 시간 내 같은 인시던트 분석 이력 존재. dedupKey={} fingerprint={}",
-                    dedupKey, alert.fingerprint());
+            log.info(
+                    "[ZzolBot] 중복 분석 방지 — 일정 시간 내 같은 인시던트 분석 이력 존재. dedupKey={} fingerprint={}",
+                    dedupKey,
+                    alert.fingerprint());
             monitorRunRepository.save(MonitorRunEntity.duplicate(
-                    now, severity, alert.fingerprint(), dedupKey, toJson(alertContext(alert)),
+                    now,
+                    severity,
+                    alert.fingerprint(),
+                    dedupKey,
+                    toJson(alertContext(alert)),
                     "LLM 분석 생략 — 같은 인시던트(%s)가 이미 분석됨".formatted(dedupKey)));
             return;
         }
@@ -95,9 +101,8 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
             return fallbackEnvironment(alert, "job 라벨 없음");
         }
         final String trimmed = job.trim();
-        final String derived = trimmed.endsWith(JOB_SUFFIX)
-                ? trimmed.substring(0, trimmed.length() - JOB_SUFFIX.length())
-                : trimmed;
+        final String derived =
+                trimmed.endsWith(JOB_SUFFIX) ? trimmed.substring(0, trimmed.length() - JOB_SUFFIX.length()) : trimmed;
         if (!SAFE_ENVIRONMENT.matcher(derived).matches()) {
             return fallbackEnvironment(alert, "환경명 형식 위반(job=%s)".formatted(job));
         }
@@ -106,8 +111,7 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
 
     private String fallbackEnvironment(FiringAlert alert, String reason) {
         final String fallback = lokiLogClient.defaultEnvironment();
-        log.info("[ZzolBot] {} — 실행 환경({})으로 폴백. fingerprint={}",
-                reason, fallback, alert.fingerprint());
+        log.info("[ZzolBot] {} — 실행 환경({})으로 폴백. fingerprint={}", reason, fallback, alert.fingerprint());
         return fallback;
     }
 
@@ -119,9 +123,12 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
      */
     private MonitorAnalysis analyze(FiringAlert alert, List<String> logs, String environment) {
         if (logs.isEmpty()) {
-            log.info("[ZzolBot] 조회 구간에 ERROR 로그 없음 — LLM 분석 생략. environment={} fingerprint={}",
-                    environment, alert.fingerprint());
-            return MonitorAnalysis.noEvidence(environment, (int) properties.window().toMinutes());
+            log.info(
+                    "[ZzolBot] 조회 구간에 ERROR 로그 없음 — LLM 분석 생략. environment={} fingerprint={}",
+                    environment,
+                    alert.fingerprint());
+            return MonitorAnalysis.noEvidence(
+                    environment, (int) properties.window().toMinutes());
         }
         if (!llmCallBudget.tryAcquire()) {
             log.warn("[ZzolBot] 일일 LLM 예산 소진 — 이상 분석 생략. fingerprint={}", alert.fingerprint());
@@ -160,8 +167,7 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
         if (cooldown.isZero() || dedupKey == null || dedupKey.isBlank()) {
             return false;
         }
-        return monitorRunRepository.existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(
-                dedupKey, now.minus(cooldown));
+        return monitorRunRepository.existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(dedupKey, now.minus(cooldown));
     }
 
     private MonitorAnalysis safeAnalyze(FiringAlert alert, List<String> logSamples, String environment) {

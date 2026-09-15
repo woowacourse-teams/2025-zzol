@@ -47,9 +47,7 @@ public class UserRestController {
 
     @PatchMapping("/me")
     public ResponseEntity<UserMeResponse> updateMe(
-            @AuthUser Optional<AuthenticatedUser> authUser,
-            @Valid @RequestBody UpdateNicknameRequest request
-    ) {
+            @AuthUser Optional<AuthenticatedUser> authUser, @Valid @RequestBody UpdateNicknameRequest request) {
         final AuthenticatedUser user = requireAuthenticated(authUser);
         final User updated = userProfileService.changeNickname(user.userId(), request.nickname());
         return ResponseEntity.ok(UserMeResponse.from(updated));
@@ -57,9 +55,7 @@ public class UserRestController {
 
     @PatchMapping("/me/nickname")
     public ResponseEntity<UserMeResponse> updateNickname(
-            @AuthUser Optional<AuthenticatedUser> authUser,
-            @Valid @RequestBody UpdateNicknameRequest request
-    ) {
+            @AuthUser Optional<AuthenticatedUser> authUser, @Valid @RequestBody UpdateNicknameRequest request) {
         final AuthenticatedUser user = requireAuthenticated(authUser);
         final User updated = userProfileService.changeNickname(user.userId(), request.nickname());
         return ResponseEntity.ok(UserMeResponse.from(updated));
@@ -73,10 +69,7 @@ public class UserRestController {
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteMe(
-            @AuthUser Optional<AuthenticatedUser> authUser,
-            HttpServletResponse response
-    ) {
+    public ResponseEntity<Void> deleteMe(@AuthUser Optional<AuthenticatedUser> authUser, HttpServletResponse response) {
         final AuthenticatedUser user = requireAuthenticated(authUser);
         userWithdrawalService.withdraw(user.userId());
         cookieHelper.clear(response);
@@ -92,16 +85,13 @@ public class UserRestController {
 
     @PostMapping("/me/stats")
     public ResponseEntity<UserStatsResponse> updateStats(
-            @AuthUser Optional<AuthenticatedUser> authUser,
-            @Valid @RequestBody UpdateStatsRequest request
-    ) {
+            @AuthUser Optional<AuthenticatedUser> authUser, @Valid @RequestBody UpdateStatsRequest request) {
         final AuthenticatedUser user = requireAuthenticated(authUser);
         final UserStats updated = userStatsService.updateStats(user.userId(), request.isWinner());
         return ResponseEntity.ok(UserStatsResponse.from(updated));
     }
 
     private AuthenticatedUser requireAuthenticated(Optional<AuthenticatedUser> authUser) {
-        return authUser.orElseThrow(() -> new BusinessException(
-                UserErrorCode.UNAUTHORIZED, "인증이 필요합니다."));
+        return authUser.orElseThrow(() -> new BusinessException(UserErrorCode.UNAUTHORIZED, "인증이 필요합니다."));
     }
 }

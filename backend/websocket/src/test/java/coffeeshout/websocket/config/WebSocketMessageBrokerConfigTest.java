@@ -26,6 +26,7 @@ class WebSocketMessageBrokerConfigTest extends WebsocketModuleIntegrationTest {
      */
     @Test
     void 클라이언트_아웃바운드_채널은_발행_순서를_보존한다() {
-        assertThat(OrderedMessageChannelDecorator.supportsOrderedMessages(clientOutboundChannel)).isTrue();
+        assertThat(OrderedMessageChannelDecorator.supportsOrderedMessages(clientOutboundChannel))
+                .isTrue();
     }
 }

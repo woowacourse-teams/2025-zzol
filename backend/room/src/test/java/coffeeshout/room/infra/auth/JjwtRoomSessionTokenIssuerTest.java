@@ -77,15 +77,13 @@ class JjwtRoomSessionTokenIssuerTest {
 
             await().atMost(Duration.ofSeconds(2))
                     .untilAsserted(() -> assertCoffeeShoutException(
-                            () -> shortLivedIssuer.verify(token),
-                            RoomSessionTokenErrorCode.ROOM_TOKEN_EXPIRED));
+                            () -> shortLivedIssuer.verify(token), RoomSessionTokenErrorCode.ROOM_TOKEN_EXPIRED));
         }
 
         @Test
         void 위조된_토큰_검증_시_ROOM_TOKEN_INVALID_예외가_발생한다() {
             assertCoffeeShoutException(
-                    () -> issuer.verify("invalid.token.value"),
-                    RoomSessionTokenErrorCode.ROOM_TOKEN_INVALID);
+                    () -> issuer.verify("invalid.token.value"), RoomSessionTokenErrorCode.ROOM_TOKEN_INVALID);
         }
 
         @Test
@@ -96,8 +94,7 @@ class JjwtRoomSessionTokenIssuerTest {
             final String tokenFromOtherKey = otherIssuer.issue(RoomSessionClaimFixture.로그인_플레이어());
 
             assertCoffeeShoutException(
-                    () -> issuer.verify(tokenFromOtherKey),
-                    RoomSessionTokenErrorCode.ROOM_TOKEN_INVALID);
+                    () -> issuer.verify(tokenFromOtherKey), RoomSessionTokenErrorCode.ROOM_TOKEN_INVALID);
         }
     }
 }

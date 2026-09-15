@@ -32,8 +32,7 @@ public class OutboxAfterCommitRelay {
     public OutboxAfterCommitRelay(
             StreamPublisher streamPublisher,
             OutboxEventProcessor eventProcessor,
-            @Qualifier("redisObjectMapper") ObjectMapper objectMapper
-    ) {
+            @Qualifier("redisObjectMapper") ObjectMapper objectMapper) {
         this.streamPublisher = streamPublisher;
         this.eventProcessor = eventProcessor;
         this.objectMapper = objectMapper;
@@ -59,12 +58,14 @@ public class OutboxAfterCommitRelay {
             // 즉시 발행 성공 → PUBLISHED로 전환 (REQUIRES_NEW 트랜잭션)
             eventProcessor.markPublished(savedEvent.outboxEventId());
 
-            log.debug("Outbox 즉시 발행 성공: outboxId={}, streamKey={}",
-                    savedEvent.outboxEventId(), savedEvent.streamKey());
+            log.debug("Outbox 즉시 발행 성공: outboxId={}, streamKey={}", savedEvent.outboxEventId(), savedEvent.streamKey());
         } catch (Exception e) {
             // 즉시 발행 실패 → 무시. Outbox에 PENDING으로 남아있으므로 Worker가 재시도
-            log.warn("Outbox 즉시 발행 실패 (Worker가 재시도 예정): outboxId={}, streamKey={}, error={}",
-                    savedEvent.outboxEventId(), savedEvent.streamKey(), e.getMessage());
+            log.warn(
+                    "Outbox 즉시 발행 실패 (Worker가 재시도 예정): outboxId={}, streamKey={}, error={}",
+                    savedEvent.outboxEventId(),
+                    savedEvent.streamKey(),
+                    e.getMessage());
         }
     }
 }

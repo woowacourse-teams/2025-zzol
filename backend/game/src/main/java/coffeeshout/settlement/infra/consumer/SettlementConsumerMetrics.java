@@ -60,8 +60,7 @@ public class SettlementConsumerMetrics {
 
     private double readGroupInfo(GroupField field) {
         try {
-            final XInfoGroups groups = stringRedisTemplate.opsForStream()
-                    .groups(SettlementStreamConsumer.STREAM_KEY);
+            final XInfoGroups groups = stringRedisTemplate.opsForStream().groups(SettlementStreamConsumer.STREAM_KEY);
             return groups.stream()
                     .filter(group -> SettlementStreamConsumer.GROUP.equals(group.groupName()))
                     .findFirst()
@@ -100,6 +99,8 @@ public class SettlementConsumerMetrics {
     }
 
     private enum GroupField {
-        PENDING, LAG, CONSUMERS
+        PENDING,
+        LAG,
+        CONSUMERS
     }
 }

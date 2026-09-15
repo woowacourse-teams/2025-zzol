@@ -129,8 +129,8 @@ class LadderLinesTest {
 
         @Test
         void 여러_선을_row_순서대로_따라간다() {
-            lines.add(꾹이, 0);   // 1번째 → row=1, 구간0
-            lines.add(철수, 2);   // 2번째 → row=2, 구간2
+            lines.add(꾹이, 0); // 1번째 → row=1, 구간0
+            lines.add(철수, 2); // 2번째 → row=2, 구간2
 
             // 기둥0: row=1 구간0 만남→기둥1 이동, row=2 구간2는 관계없음→기둥1 유지
             assertThat(lines.trace(0)).isEqualTo(1);
@@ -138,9 +138,9 @@ class LadderLinesTest {
 
         @Test
         void 여러_구간의_선을_순서대로_따라가며_올바른_경로를_계산한다() {
-            lines.add(꾹이, 0);   // 1번째 → row=1, 구간0
-            lines.add(영희, 0);   // 2번째 → row=2, 구간0
-            lines.add(철수, 1);   // 3번째 → row=3, 구간1
+            lines.add(꾹이, 0); // 1번째 → row=1, 구간0
+            lines.add(영희, 0); // 2번째 → row=2, 구간0
+            lines.add(철수, 1); // 3번째 → row=3, 구간1
 
             // 기둥1: row=1 구간0(seg+1=1) → 기둥0, row=2 구간0(seg=0) → 기둥1, row=3 구간1(seg=1) → 기둥2
             assertThat(lines.trace(1)).isEqualTo(2);

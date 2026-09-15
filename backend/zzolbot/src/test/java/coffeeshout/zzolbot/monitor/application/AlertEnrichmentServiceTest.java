@@ -44,12 +44,16 @@ class AlertEnrichmentServiceTest {
 
     @Mock
     private LlmCallBudget llmCallBudget;
+
     @Mock
     private LokiLogClient lokiLogClient;
+
     @Mock
     private AnomalyAnalyzer analyzer;
+
     @Mock
     private ZzolBotSlackNotifier notifier;
+
     @Mock
     private MonitorRunRepository monitorRunRepository;
 
@@ -57,8 +61,15 @@ class AlertEnrichmentServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer, notifier,
-                monitorRunRepository, PROPERTIES, new ObjectMapper(), Clock.systemUTC());
+        service = new AlertEnrichmentService(
+                llmCallBudget,
+                lokiLogClient,
+                analyzer,
+                notifier,
+                monitorRunRepository,
+                PROPERTIES,
+                new ObjectMapper(),
+                Clock.systemUTC());
         given(monitorRunRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
         given(lokiLogClient.tailErrors(any(), any(), anyInt(), anyString())).willReturn(LOG_SAMPLES);
         given(lokiLogClient.defaultEnvironment()).willReturn("prod");
@@ -105,24 +116,34 @@ class AlertEnrichmentServiceTest {
 
     @Test
     void 간격이_0이면_가드를_건너뛰고_분석한다() {
-        final AlertEnrichmentService noDedup = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer,
-                notifier, monitorRunRepository, new MonitorProperties(true, 30, 0), new ObjectMapper(),
+        final AlertEnrichmentService noDedup = new AlertEnrichmentService(
+                llmCallBudget,
+                lokiLogClient,
+                analyzer,
+                notifier,
+                monitorRunRepository,
+                new MonitorProperties(true, 30, 0),
+                new ObjectMapper(),
                 Clock.systemUTC());
         given(llmCallBudget.tryAcquire()).willReturn(true);
-        given(analyzer.analyze(any(), any(), anyString()))
-                .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
+        given(analyzer.analyze(any(), any(), anyString())).willReturn(new MonitorAnalysis("요약", "", List.of(), true));
 
         noDedup.enrich(warningAlert());
 
-        verify(monitorRunRepository, never())
-                .existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(any(), any());
+        verify(monitorRunRepository, never()).existsByDedupKeyAndNotifiedTrueAndCreatedAtAfter(any(), any());
         verify(notifier).notifyAnomaly(any(), any());
     }
 
     @Test
     void 모니터링이_비활성이면_아무것도_하지_않는다() {
-        final AlertEnrichmentService disabled = new AlertEnrichmentService(llmCallBudget, lokiLogClient, analyzer,
-                notifier, monitorRunRepository, new MonitorProperties(false, 30, 240), new ObjectMapper(),
+        final AlertEnrichmentService disabled = new AlertEnrichmentService(
+                llmCallBudget,
+                lokiLogClient,
+                analyzer,
+                notifier,
+                monitorRunRepository,
+                new MonitorProperties(false, 30, 240),
+                new ObjectMapper(),
                 Clock.systemUTC());
 
         disabled.enrich(warningAlert());
@@ -146,8 +167,7 @@ class AlertEnrichmentServiceTest {
     @Test
     void severity_문자열을_심각도로_매핑한다() {
         given(llmCallBudget.tryAcquire()).willReturn(true);
-        given(analyzer.analyze(any(), any(), anyString()))
-                .willReturn(new MonitorAnalysis("요약", "", List.of(), true));
+        given(analyzer.analyze(any(), any(), anyString())).willReturn(new MonitorAnalysis("요약", "", List.of(), true));
 
         service.enrich(alert("critical"));
         service.enrich(alert("warning"));
@@ -367,18 +387,32 @@ class AlertEnrichmentServiceTest {
     }
 
     private FiringAlert groupedAlert(String severity) {
-        return new FiringAlert("MassIpBlockingSpike", severity, "fp-1", "IP 차단 급증", "임계 초과",
-                Map.of("alertname", "MassIpBlockingSpike", "severity", severity,
-                        "incident_group", "ip-blocking"));
+        return new FiringAlert(
+                "MassIpBlockingSpike",
+                severity,
+                "fp-1",
+                "IP 차단 급증",
+                "임계 초과",
+                Map.of("alertname", "MassIpBlockingSpike", "severity", severity, "incident_group", "ip-blocking"));
     }
 
     private FiringAlert alert(String severity) {
-        return new FiringAlert("AppErrorLogSpike", severity, "fp-1", "ERROR 급증", "임계 초과",
+        return new FiringAlert(
+                "AppErrorLogSpike",
+                severity,
+                "fp-1",
+                "ERROR 급증",
+                "임계 초과",
                 Map.of("alertname", "AppErrorLogSpike", "severity", severity));
     }
 
     private FiringAlert alertWithJob(String job) {
-        return new FiringAlert("AppErrorLogSpike", "warning", "fp-1", "ERROR 급증", "임계 초과",
+        return new FiringAlert(
+                "AppErrorLogSpike",
+                "warning",
+                "fp-1",
+                "ERROR 급증",
+                "임계 초과",
                 Map.of("alertname", "AppErrorLogSpike", "severity", "warning", "job", job));
     }
 }

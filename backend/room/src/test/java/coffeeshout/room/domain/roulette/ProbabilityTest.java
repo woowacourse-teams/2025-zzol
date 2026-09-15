@@ -12,8 +12,7 @@ class ProbabilityTest {
     @ParameterizedTest
     @ValueSource(ints = {-1, 10001, Integer.MIN_VALUE, Integer.MAX_VALUE})
     void 확률이_범위를_벗어나면_예외가_발생한다(int invalidValue) {
-        assertThatThrownBy(() -> new Probability(invalidValue))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new Probability(invalidValue)).isInstanceOf(IllegalStateException.class);
     }
 
     @ParameterizedTest

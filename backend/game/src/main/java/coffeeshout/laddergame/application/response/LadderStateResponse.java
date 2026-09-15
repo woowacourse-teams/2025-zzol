@@ -15,8 +15,7 @@ public record LadderStateResponse(
         Map<Integer, Integer> bottomRanks,
         Long endTimeEpochMs,
         Map<String, Integer> rankings,
-        Long animationDurationMs
-) {
+        Long animationDurationMs) {
 
     public static LadderStateResponse ofDescription() {
         return new LadderStateResponse(LadderGameState.DESCRIPTION, null, null, null, null, null);

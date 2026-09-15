@@ -15,10 +15,7 @@ class FriendshipTest {
 
         @Test
         void 자기_자신에게_요청하면_예외가_발생한다() {
-            assertCoffeeShoutException(
-                    () -> Friendship.request(1L, 1L),
-                    FriendErrorCode.CANNOT_FRIEND_SELF
-            );
+            assertCoffeeShoutException(() -> Friendship.request(1L, 1L), FriendErrorCode.CANNOT_FRIEND_SELF);
         }
 
         @Test
@@ -41,20 +38,14 @@ class FriendshipTest {
         void 수신자가_아닌_사용자가_수락하면_예외가_발생한다() {
             final Friendship friendship = FriendshipFixture.pending(1L, 2L);
 
-            assertCoffeeShoutException(
-                    () -> friendship.acceptBy(1L),
-                    FriendErrorCode.FRIEND_REQUEST_FORBIDDEN
-            );
+            assertCoffeeShoutException(() -> friendship.acceptBy(1L), FriendErrorCode.FRIEND_REQUEST_FORBIDDEN);
         }
 
         @Test
         void PENDING이_아닌_상태에서_수락하면_예외가_발생한다() {
             final Friendship friendship = FriendshipFixture.accepted(1L, 2L);
 
-            assertCoffeeShoutException(
-                    () -> friendship.acceptBy(2L),
-                    FriendErrorCode.FRIEND_REQUEST_INVALID_STATE
-            );
+            assertCoffeeShoutException(() -> friendship.acceptBy(2L), FriendErrorCode.FRIEND_REQUEST_INVALID_STATE);
         }
 
         @Test
@@ -75,9 +66,7 @@ class FriendshipTest {
             final Friendship friendship = FriendshipFixture.pending(1L, 2L);
 
             assertCoffeeShoutException(
-                    () -> friendship.validateRejectableBy(1L),
-                    FriendErrorCode.FRIEND_REQUEST_FORBIDDEN
-            );
+                    () -> friendship.validateRejectableBy(1L), FriendErrorCode.FRIEND_REQUEST_FORBIDDEN);
         }
 
         @Test
@@ -85,9 +74,7 @@ class FriendshipTest {
             final Friendship friendship = FriendshipFixture.accepted(1L, 2L);
 
             assertCoffeeShoutException(
-                    () -> friendship.validateRejectableBy(2L),
-                    FriendErrorCode.FRIEND_REQUEST_INVALID_STATE
-            );
+                    () -> friendship.validateRejectableBy(2L), FriendErrorCode.FRIEND_REQUEST_INVALID_STATE);
         }
 
         @Test

@@ -15,18 +15,14 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "복구 API 응답")
 public record RecoveryResponse(
-        @Schema(description = "성공 여부", example = "true")
-        boolean success,
+        @Schema(description = "성공 여부", example = "true") boolean success,
 
-        @Schema(description = "복구된 메시지 개수", example = "5")
-        int messageCount,
+        @Schema(description = "복구된 메시지 개수", example = "5") int messageCount,
 
         @Schema(description = "에러 메시지 (실패 시)", example = "웹소켓 미연결")
         String errorMessage,
 
-        @Schema(description = "복구된 메시지 리스트")
-        List<RecoveryMessage> messages
-) {
+        @Schema(description = "복구된 메시지 리스트") List<RecoveryMessage> messages) {
 
     public static RecoveryResponse success(List<RecoveryMessage> messages) {
         return new RecoveryResponse(true, messages.size(), null, messages);

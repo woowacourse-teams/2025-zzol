@@ -31,8 +31,8 @@ public class SeasonLeaderboardService {
     /** 시즌 상위 {@code limit}명 (포인트 내림차순). */
     @Transactional(readOnly = true)
     public List<LeaderboardEntry> top(String seasonKey, int limit) {
-        final List<SeasonScoreEntity> scores = scoreRepository
-                .findBySeasonKeyOrderByTotalPointsDescIdAsc(seasonKey, PageRequest.of(0, limit));
+        final List<SeasonScoreEntity> scores =
+                scoreRepository.findBySeasonKeyOrderByTotalPointsDescIdAsc(seasonKey, PageRequest.of(0, limit));
 
         final List<LeaderboardEntry> entries = new ArrayList<>();
         int rank = 0;
@@ -51,13 +51,14 @@ public class SeasonLeaderboardService {
     /** 특정 회원의 시즌 순위. 이번 시즌 정산 이력이 없으면 빈 값. */
     @Transactional(readOnly = true)
     public Optional<LeaderboardEntry> rankOf(String seasonKey, long userId) {
-        return scoreRepository.findBySeasonKeyAndUserId(seasonKey, userId)
+        return scoreRepository
+                .findBySeasonKeyAndUserId(seasonKey, userId)
                 .map(score -> new LeaderboardEntry(
                         userId,
-                        Math.toIntExact(scoreRepository
-                                .countBySeasonKeyAndTotalPointsGreaterThan(seasonKey, score.getTotalPoints()) + 1),
-                        score.getTotalPoints()
-                ));
+                        Math.toIntExact(scoreRepository.countBySeasonKeyAndTotalPointsGreaterThan(
+                                        seasonKey, score.getTotalPoints())
+                                + 1),
+                        score.getTotalPoints()));
     }
 
     /** 시즌에 정산 이력이 있는 회원 수. */
@@ -66,6 +67,5 @@ public class SeasonLeaderboardService {
         return scoreRepository.countBySeasonKey(seasonKey);
     }
 
-    public record LeaderboardEntry(long userId, int rank, long totalPoints) {
-    }
+    public record LeaderboardEntry(long userId, int rank, long totalPoints) {}
 }

@@ -43,8 +43,7 @@ class OutboxAfterCommitRelayIntegrationTest extends InfraModuleIntegrationTest {
         doNothing().when(outboxAfterCommitRelay).onOutboxSaved(any(OutboxSavedEvent.class));
 
         // when — 트랜잭션 내에서 이벤트 발행 후 커밋
-        transactionTemplate.executeWithoutResult(status ->
-                eventPublisher.publishEvent(savedEvent));
+        transactionTemplate.executeWithoutResult(status -> eventPublisher.publishEvent(savedEvent));
 
         // then — AFTER_COMMIT 리스너가 호출되어야 한다
         verify(outboxAfterCommitRelay).onOutboxSaved(eq(savedEvent));

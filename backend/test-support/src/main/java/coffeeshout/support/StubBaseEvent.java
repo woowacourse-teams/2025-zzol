@@ -19,8 +19,12 @@ public final class StubBaseEvent implements BaseEvent {
     }
 
     @Override
-    public String eventId() { return id; }
+    public String eventId() {
+        return id;
+    }
 
     @Override
-    public Instant timestamp() { return timestamp; }
+    public Instant timestamp() {
+        return timestamp;
+    }
 }

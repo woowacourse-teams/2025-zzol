@@ -24,8 +24,8 @@ import coffeeshout.minigame.domain.MiniGameScore;
 public class NunchiScore extends MiniGameScore {
 
     // 밴드 분리: 모든 SOLO(<~1e15) < 모든 COLLISION(~1e15) < MISS(1e18). long overflow 없음.
-    private static final long COLLISION_BASE = 1_000_000_000_000_000L;   // 1e15
-    private static final long MISS_VALUE = 1_000_000_000_000_000_000L;   // 1e18
+    private static final long COLLISION_BASE = 1_000_000_000_000_000L; // 1e15
+    private static final long MISS_VALUE = 1_000_000_000_000_000_000L; // 1e18
     // 어떤 epoch ms보다도 큰 역전 기준(약 서기 2286년). collisionInstantMs < TIME_PIVOT 를 전제.
     private static final long COLLISION_TIME_PIVOT = 10_000_000_000_000L; // 1e13
 

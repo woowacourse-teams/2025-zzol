@@ -9,6 +9,4 @@ public record AdminRow(
         String title,
         String content,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
-) {
-}
+        LocalDateTime updatedAt) {}

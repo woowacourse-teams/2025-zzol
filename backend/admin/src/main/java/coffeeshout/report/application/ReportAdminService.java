@@ -5,9 +5,9 @@ import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.ipblock.Ip;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportStatus;
+import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.infra.persistence.ReportRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -44,7 +44,8 @@ public class ReportAdminService {
 
     @Transactional(readOnly = true)
     public String findReporterIp(Long id) {
-        return reportRepository.findById(id)
+        return reportRepository
+                .findById(id)
                 .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "신고를 찾을 수 없습니다."))
                 .getIp();
     }
@@ -60,7 +61,8 @@ public class ReportAdminService {
 
     @Transactional
     public void resolve(Long id) {
-        final Report report = reportRepository.findById(id)
+        final Report report = reportRepository
+                .findById(id)
                 .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "신고를 찾을 수 없습니다."));
 
         if (report.getStatus() == ReportStatus.RESOLVED) {
@@ -79,8 +81,7 @@ public class ReportAdminService {
                 e.getStatus(),
                 toKst(e.getCreatedAt()),
                 e.getResolvedAt() != null ? toKst(e.getResolvedAt()) : null,
-                e.getIp()
-        );
+                e.getIp());
     }
 
     private LocalDateTime toKst(Instant instant) {
@@ -96,7 +97,5 @@ public class ReportAdminService {
             ReportStatus status,
             LocalDateTime createdAt,
             LocalDateTime resolvedAt,
-            String ip
-    ) {
-    }
+            String ip) {}
 }

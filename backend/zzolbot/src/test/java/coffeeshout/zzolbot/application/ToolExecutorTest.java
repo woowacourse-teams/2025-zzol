@@ -33,10 +33,10 @@ class ToolExecutorTest {
             new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
             60,
             10000L,
-            new ZzolBotProperties.SqlProperties(List.of(), 100, 3)
-    );
+            new ZzolBotProperties.SqlProperties(List.of(), 100, 3));
 
-    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+    private static final AskContext CTX =
+            AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     @Mock
     private ZzolBotTool toolA;
@@ -63,8 +63,7 @@ class ToolExecutorTest {
             final List<ToolCallItem> calls = List.of(
                     new ToolCallItem("tool_a", Map.of()),
                     new ToolCallItem("tool_b", Map.of()),
-                    new ToolCallItem("tool_c", Map.of())
-            );
+                    new ToolCallItem("tool_c", Map.of()));
 
             final List<ToolExecutionResult> results = executor.executeAll(calls, CTX);
 
@@ -84,8 +83,7 @@ class ToolExecutorTest {
             final List<ToolCallItem> calls = List.of(
                     new ToolCallItem("tool_a", Map.of()),
                     new ToolCallItem("tool_b", Map.of()),
-                    new ToolCallItem("tool_c", Map.of())
-            );
+                    new ToolCallItem("tool_c", Map.of()));
 
             final List<ToolExecutionResult> results = executor.executeAll(calls, CTX);
 
@@ -102,10 +100,8 @@ class ToolExecutorTest {
             given(toolA.execute(anyMap(), any())).willReturn(ToolExecutionResult.ok("tool_a", "A"));
 
             final ToolExecutor executor = new ToolExecutor(List.of(toolA), PROPERTIES);
-            final List<ToolCallItem> calls = List.of(
-                    new ToolCallItem("unknown_tool", Map.of()),
-                    new ToolCallItem("tool_a", Map.of())
-            );
+            final List<ToolCallItem> calls =
+                    List.of(new ToolCallItem("unknown_tool", Map.of()), new ToolCallItem("tool_a", Map.of()));
 
             final List<ToolExecutionResult> results = executor.executeAll(calls, CTX);
 
@@ -124,10 +120,8 @@ class ToolExecutorTest {
             given(toolB.execute(anyMap(), any())).willReturn(ToolExecutionResult.ok("tool_b", "B"));
 
             final ToolExecutor executor = new ToolExecutor(List.of(toolA, toolB), PROPERTIES);
-            final List<ToolCallItem> calls = List.of(
-                    new ToolCallItem("tool_a", Map.of()),
-                    new ToolCallItem("tool_b", Map.of())
-            );
+            final List<ToolCallItem> calls =
+                    List.of(new ToolCallItem("tool_a", Map.of()), new ToolCallItem("tool_b", Map.of()));
 
             final List<ToolExecutionResult> results = executor.executeAll(calls, CTX);
 

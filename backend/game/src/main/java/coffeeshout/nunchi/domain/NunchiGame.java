@@ -37,7 +37,7 @@ public class NunchiGame implements Playable {
 
     private NunchiState state;
     private int currentNumber;
-    private PendingPress pending;        // nullable — 현재 번호의 첫 press(solo 확정 전)
+    private PendingPress pending; // nullable — 현재 번호의 첫 press(solo 확정 전)
     private OpenCollision openCollision; // nullable — COOLDOWN 동안 열린 충돌 그룹
 
     public NunchiGame(long windowMillis) {
@@ -159,7 +159,8 @@ public class NunchiGame implements Playable {
     /** 전원이 (정상/충돌로) 입력을 마쳤는가 — 조기 종료 트리거(ADR 결정 5). pending도 입력으로 친다. */
     public boolean isAllPressed() {
         return gamers.stream()
-                .allMatch(g -> results.containsKey(g) || (pending != null && pending.gamer().equals(g)));
+                .allMatch(g -> results.containsKey(g)
+                        || (pending != null && pending.gamer().equals(g)));
     }
 
     public boolean isFinished() {
@@ -176,8 +177,7 @@ public class NunchiGame implements Playable {
         return gamers.stream()
                 .filter(gamer -> gamer.getName().equals(name))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        GlobalErrorCode.NOT_EXIST, "플레이어를 찾을 수 없습니다: " + name));
+                .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "플레이어를 찾을 수 없습니다: " + name));
     }
 
     public NunchiState getState() {
@@ -212,9 +212,7 @@ public class NunchiGame implements Playable {
         return MiniGameType.NUNCHI_GAME;
     }
 
-    private record PendingPress(Gamer gamer, Instant at) {
-    }
+    private record PendingPress(Gamer gamer, Instant at) {}
 
-    private record OpenCollision(List<Gamer> members, Instant anchor) {
-    }
+    private record OpenCollision(List<Gamer> members, Instant anchor) {}
 }

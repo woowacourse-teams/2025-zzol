@@ -38,7 +38,7 @@ class MiniGameSelectFailedNotificationTest extends RoomModuleWebSocketTest {
     @DisplayName("실패 알림은 요청 클라이언트의 개인 에러 큐로만 전달되고 다른 클라이언트로는 새지 않는다")
     void 요청자에게만_전달된다() throws Exception {
         try (final TestStompSession target = createSession(JOIN_CODE, TARGET_PLAYER);
-             final TestStompSession bystander = createSession(JOIN_CODE, BYSTANDER_PLAYER)) {
+                final TestStompSession bystander = createSession(JOIN_CODE, BYSTANDER_PLAYER)) {
             assertThat(target.getPrincipalName()).isEqualTo(TARGET_PRINCIPAL);
 
             final MessageCollector targetCollector = target.subscribe(USER_ERROR_QUEUE);

@@ -13,12 +13,7 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
-                .info(new Info()
-                        .title("쫄 API")
-                        .description("쫄 API 문서")
-                        .version("v1.0.0"))
-                .servers(List.of(
-                        new Server().url("/").description("현재 서버")
-                ));
+                .info(new Info().title("쫄 API").description("쫄 API 문서").version("v1.0.0"))
+                .servers(List.of(new Server().url("/").description("현재 서버")));
     }
 }

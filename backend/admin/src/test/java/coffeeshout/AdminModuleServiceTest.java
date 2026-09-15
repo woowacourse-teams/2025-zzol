@@ -7,5 +7,4 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootTest(classes = AdminModuleTestApplication.class)
 @Import(ServiceTestConfig.class)
-public abstract class AdminModuleServiceTest extends ServiceTest {
-}
+public abstract class AdminModuleServiceTest extends ServiceTest {}

@@ -68,8 +68,7 @@ public class SettlementStreamConsumer {
             SettlementMessageProcessor processor,
             SettlementDeadLetterPublisher deadLetterPublisher,
             @Qualifier("settlementConsumerExecutor") ThreadPoolTaskExecutor executor,
-            @Qualifier("settlementConsumerName") String consumerName
-    ) {
+            @Qualifier("settlementConsumerName") String consumerName) {
         this.redisConnectionFactory = redisConnectionFactory;
         this.stringRedisTemplate = stringRedisTemplate;
         this.properties = properties;
@@ -110,12 +109,15 @@ public class SettlementStreamConsumer {
     private void ensureGroup() {
         try {
             final byte[] rawKey = RedisSerializer.string().serialize(STREAM_KEY);
-            stringRedisTemplate.execute(connection -> {
-                connection.streamCommands().xGroupCreate(rawKey, GROUP, ReadOffset.from("0-0"), true);
-                return null;
-            }, true);
+            stringRedisTemplate.execute(
+                    connection -> {
+                        connection.streamCommands().xGroupCreate(rawKey, GROUP, ReadOffset.from("0-0"), true);
+                        return null;
+                    },
+                    true);
         } catch (RedisSystemException e) {
-            if (e.getCause() != null && String.valueOf(e.getCause().getMessage()).contains("BUSYGROUP")) {
+            if (e.getCause() != null
+                    && String.valueOf(e.getCause().getMessage()).contains("BUSYGROUP")) {
                 log.debug("정산 컨슈머 그룹이 이미 존재합니다: {}", GROUP);
                 return;
             }
@@ -124,8 +126,7 @@ public class SettlementStreamConsumer {
     }
 
     ConsumerStreamReadRequest<String> buildReadRequest() {
-        return ConsumerStreamReadRequest
-                .builder(StreamOffset.create(STREAM_KEY, ReadOffset.lastConsumed()))
+        return ConsumerStreamReadRequest.builder(StreamOffset.create(STREAM_KEY, ReadOffset.lastConsumed()))
                 .consumer(Consumer.from(GROUP, consumerName))
                 // ACK는 처리 성공 후 명시적으로 — 자동 ACK는 처리 실패 시에도 PEL에서 지워져 회수가 불가능하다
                 .autoAcknowledge(false)

@@ -56,7 +56,8 @@ class AuthTokenServiceTest extends UserModuleServiceTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(verified.userId()).isEqualTo(저장된_엠제이.getId());
-                softly.assertThat(verified.userCode()).isEqualTo(저장된_엠제이.getUserCode().value());
+                softly.assertThat(verified.userCode())
+                        .isEqualTo(저장된_엠제이.getUserCode().value());
             });
         }
 
@@ -65,8 +66,8 @@ class AuthTokenServiceTest extends UserModuleServiceTest {
             final TokenPair tokens = authTokenService.issue(저장된_엠제이);
             final String tokenId = extractTokenId(tokens.refreshToken());
 
-            final AuthenticatedUser stored = refreshTokenRepository.findByTokenId(tokenId)
-                    .orElseThrow();
+            final AuthenticatedUser stored =
+                    refreshTokenRepository.findByTokenId(tokenId).orElseThrow();
 
             assertThat(stored.userId()).isEqualTo(저장된_엠제이.getId());
         }
@@ -95,17 +96,14 @@ class AuthTokenServiceTest extends UserModuleServiceTest {
             authTokenService.rotate(original.refreshToken());
 
             assertCoffeeShoutException(
-                    () -> authTokenService.rotate(original.refreshToken()),
-                    UserErrorCode.REFRESH_TOKEN_NOT_FOUND
-            );
+                    () -> authTokenService.rotate(original.refreshToken()), UserErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
         @Test
         void 형식이_잘못된_refreshToken으로_회전하면_예외가_발생한다() {
             assertCoffeeShoutException(
                     () -> authTokenService.rotate("invalid-format-without-colon"),
-                    UserErrorCode.REFRESH_TOKEN_NOT_FOUND
-            );
+                    UserErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
         @Test
@@ -115,9 +113,7 @@ class AuthTokenServiceTest extends UserModuleServiceTest {
             authTokenService.rotate(original.refreshToken());
 
             assertCoffeeShoutException(
-                    () -> authTokenService.rotate(original.refreshToken()),
-                    UserErrorCode.REFRESH_TOKEN_NOT_FOUND
-            );
+                    () -> authTokenService.rotate(original.refreshToken()), UserErrorCode.REFRESH_TOKEN_NOT_FOUND);
 
             final String secondTokenId = extractTokenId(second.refreshToken());
             assertThat(refreshTokenRepository.findByTokenId(secondTokenId)).isEmpty();
@@ -135,8 +131,10 @@ class AuthTokenServiceTest extends UserModuleServiceTest {
             authTokenService.revoke(저장된_엠제이.getId());
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(refreshTokenRepository.findByTokenId(extractTokenId(first.refreshToken()))).isEmpty();
-                softly.assertThat(refreshTokenRepository.findByTokenId(extractTokenId(second.refreshToken()))).isEmpty();
+                softly.assertThat(refreshTokenRepository.findByTokenId(extractTokenId(first.refreshToken())))
+                        .isEmpty();
+                softly.assertThat(refreshTokenRepository.findByTokenId(extractTokenId(second.refreshToken())))
+                        .isEmpty();
             });
         }
     }

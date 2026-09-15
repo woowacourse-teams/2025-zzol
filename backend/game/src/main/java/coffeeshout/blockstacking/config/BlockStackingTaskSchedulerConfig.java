@@ -23,8 +23,7 @@ public class BlockStackingTaskSchedulerConfig {
 
     @Bean(name = "blockStackingFlowScheduler")
     @Profile("!test")
-    public FlowScheduler blockStackingFlowScheduler(
-            ThreadPoolTaskScheduler blockStackingThreadPoolTaskScheduler) {
+    public FlowScheduler blockStackingFlowScheduler(ThreadPoolTaskScheduler blockStackingThreadPoolTaskScheduler) {
         return new CompletableFutureFlowScheduler(blockStackingThreadPoolTaskScheduler);
     }
 }

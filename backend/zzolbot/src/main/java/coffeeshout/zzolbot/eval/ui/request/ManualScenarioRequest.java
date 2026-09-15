@@ -6,5 +6,4 @@ public record ManualScenarioRequest(
         @NotBlank String name,
         @NotBlank String question,
         @NotBlank String snapshotJson,
-        @NotBlank String rubric) {
-}
+        @NotBlank String rubric) {}

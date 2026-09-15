@@ -47,13 +47,8 @@ class QrCodeServiceTest {
     @BeforeEach
     void setUp() {
         QrProperties qrProperties = new QrProperties(qrCodePrefix, 10, 100, null, "");
-        qrCodeService = new QrCodeService(
-                qrProperties,
-                qrCodeGenerator,
-                storageService,
-                meterRegistry,
-                streamPublisher
-        );
+        qrCodeService =
+                new QrCodeService(qrProperties, qrCodeGenerator, storageService, meterRegistry, streamPublisher);
     }
 
     @Test
@@ -83,14 +78,11 @@ class QrCodeServiceTest {
     void QR_코드_생성_실패_시_QR_CODE_GENERATION_FAILED_에러를_던진다() throws Exception {
         // given
         String contents = "TXXX";
-        when(qrCodeGenerator.generate(anyString()))
-                .thenThrow(new RuntimeException("QR code generation failed"));
+        when(qrCodeGenerator.generate(anyString())).thenThrow(new RuntimeException("QR code generation failed"));
 
         // when & then
         assertCoffeeShoutException(
-                () -> qrCodeService.getQrCodeUrl(contents),
-                QrCodeErrorCode.QR_CODE_GENERATION_FAILED
-        );
+                () -> qrCodeService.getQrCodeUrl(contents), QrCodeErrorCode.QR_CODE_GENERATION_FAILED);
     }
 
     @Test
@@ -101,14 +93,11 @@ class QrCodeServiceTest {
 
         when(qrCodeGenerator.generate(anyString())).thenReturn(qrCodeImage);
         when(storageService.upload(contents, qrCodeImage))
-                .thenThrow(new InfrastructureException(QrCodeErrorCode.QR_CODE_UPLOAD_FAILED,
-                        QrCodeErrorCode.QR_CODE_UPLOAD_FAILED.getMessage()));
+                .thenThrow(new InfrastructureException(
+                        QrCodeErrorCode.QR_CODE_UPLOAD_FAILED, QrCodeErrorCode.QR_CODE_UPLOAD_FAILED.getMessage()));
 
         // when & then
-        assertCoffeeShoutException(
-                () -> qrCodeService.getQrCodeUrl(contents),
-                QrCodeErrorCode.QR_CODE_UPLOAD_FAILED
-        );
+        assertCoffeeShoutException(() -> qrCodeService.getQrCodeUrl(contents), QrCodeErrorCode.QR_CODE_UPLOAD_FAILED);
     }
 
     @Test
@@ -121,14 +110,13 @@ class QrCodeServiceTest {
         when(qrCodeGenerator.generate(anyString())).thenReturn(qrCodeImage);
         when(storageService.upload(contents, qrCodeImage)).thenReturn(storageKey);
         when(storageService.getUrl(storageKey))
-                .thenThrow(new InfrastructureException(QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED,
+                .thenThrow(new InfrastructureException(
+                        QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED,
                         QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage()));
 
         // when & then
         assertCoffeeShoutException(
-                () -> qrCodeService.getQrCodeUrl(contents),
-                QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED
-        );
+                () -> qrCodeService.getQrCodeUrl(contents), QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED);
     }
 
     @Test
@@ -159,9 +147,7 @@ class QrCodeServiceTest {
 
         // when & then
         assertCoffeeShoutException(
-                () -> qrCodeService.getQrCodeUrl(contents),
-                QrCodeErrorCode.QR_CODE_GENERATION_FAILED
-        );
+                () -> qrCodeService.getQrCodeUrl(contents), QrCodeErrorCode.QR_CODE_GENERATION_FAILED);
     }
 
     // ===== 비동기 QR 코드 생성 테스트 =====

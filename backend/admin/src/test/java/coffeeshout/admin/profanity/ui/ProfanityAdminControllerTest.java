@@ -42,8 +42,7 @@ class ProfanityAdminControllerTest {
                 Clock.systemDefaultZone(),
                 mock(ProfanityAuditService.class),
                 mock(ProfanityFeedbackService.class),
-                managementService
-        );
+                managementService);
         model = new ExtendedModelMap();
     }
 
@@ -92,8 +91,9 @@ class ProfanityAdminControllerTest {
             String viewName = controller.addWord(request, bindingResult, "", "", "", "", 0, model);
 
             then(managementService).should().add("욕설", Language.KOREAN, WordSource.MANUAL);
-            assertThat(viewName).isEqualTo(
-                    "redirect:/admin/profanity?tab=words&search=&language=&source=&activeFilter=&wordsPage=0");
+            assertThat(viewName)
+                    .isEqualTo(
+                            "redirect:/admin/profanity?tab=words&search=&language=&source=&activeFilter=&wordsPage=0");
         }
 
         @Test
@@ -115,8 +115,9 @@ class ProfanityAdminControllerTest {
             String viewName = controller.deactivate("욕설", "", "", "", "", 0);
 
             then(managementService).should().deactivate("욕설");
-            assertThat(viewName).isEqualTo(
-                    "redirect:/admin/profanity?tab=words&search=&language=&source=&activeFilter=&wordsPage=0");
+            assertThat(viewName)
+                    .isEqualTo(
+                            "redirect:/admin/profanity?tab=words&search=&language=&source=&activeFilter=&wordsPage=0");
         }
 
         @Test
@@ -137,8 +138,9 @@ class ProfanityAdminControllerTest {
             String viewName = controller.activate("욕설", "", "", "", "", 0);
 
             then(managementService).should().activate("욕설");
-            assertThat(viewName).isEqualTo(
-                    "redirect:/admin/profanity?tab=words&search=&language=&source=&activeFilter=&wordsPage=0");
+            assertThat(viewName)
+                    .isEqualTo(
+                            "redirect:/admin/profanity?tab=words&search=&language=&source=&activeFilter=&wordsPage=0");
         }
     }
 }

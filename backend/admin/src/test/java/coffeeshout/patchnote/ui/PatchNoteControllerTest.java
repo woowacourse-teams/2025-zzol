@@ -68,8 +68,7 @@ class PatchNoteControllerTest extends AdminModuleIntegrationTest {
 
         @Test
         void 패치노트가_없으면_204를_반환한다() throws Exception {
-            mockMvc.perform(get("/patch-notes/latest"))
-                    .andExpect(status().isNoContent());
+            mockMvc.perform(get("/patch-notes/latest")).andExpect(status().isNoContent());
         }
     }
 }

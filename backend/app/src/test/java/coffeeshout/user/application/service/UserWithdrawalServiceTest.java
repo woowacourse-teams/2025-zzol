@@ -6,14 +6,14 @@ import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.UserFixture;
-import coffeeshout.support.app.ServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.infra.persistence.ReportRepository;
 import coffeeshout.report.infra.persistence.Reporter;
+import coffeeshout.support.app.ServiceTest;
 import coffeeshout.user.domain.User;
-import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.domain.UserErrorCode;
+import coffeeshout.user.domain.repository.UserRepository;
 import coffeeshout.user.infra.persistence.OAuthAccountJpaRepository;
 import coffeeshout.user.infra.persistence.UserEntity;
 import coffeeshout.user.infra.persistence.UserJpaRepository;
@@ -59,7 +59,8 @@ class UserWithdrawalServiceTest extends ServiceTest {
             final Instant before = Instant.now();
             userWithdrawalService.withdraw(userId);
 
-            final UserEntity entity = userJpaRepository.findByIdIgnoringDeletedAt(userId).orElseThrow();
+            final UserEntity entity =
+                    userJpaRepository.findByIdIgnoringDeletedAt(userId).orElseThrow();
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(entity.isDeleted()).isTrue();
                 softly.assertThat(entity.getNickname()).isNull();
@@ -83,23 +84,19 @@ class UserWithdrawalServiceTest extends ServiceTest {
 
         @Test
         void 존재하지_않는_회원_탈퇴_시_예외가_발생한다() {
-            assertCoffeeShoutException(
-                    () -> userWithdrawalService.withdraw(-1L),
-                    UserErrorCode.USER_NOT_FOUND
-            );
+            assertCoffeeShoutException(() -> userWithdrawalService.withdraw(-1L), UserErrorCode.USER_NOT_FOUND);
         }
 
         @Test
         void 탈퇴_후_신고의_user_code가_null로_익명화된다() {
             final Report report = Report.createBugReport(
-                    MiniGameType.CARD_GAME, "ABC12", "버그가 있어요.",
-                    Instant.now(), new Reporter(userId, userCode)
-            );
+                    MiniGameType.CARD_GAME, "ABC12", "버그가 있어요.", Instant.now(), new Reporter(userId, userCode));
             final Long reportId = reportRepository.save(report).getId();
 
             userWithdrawalService.withdraw(userId);
 
-            final Reporter author = reportRepository.findById(reportId).orElseThrow().getAuthor();
+            final Reporter author =
+                    reportRepository.findById(reportId).orElseThrow().getAuthor();
             assertThat(author.getUserCode()).isNull();
         }
     }

@@ -63,7 +63,8 @@ class ProfanityAuditRegistrationIntegrationTest extends IntegrationTestSupport {
         });
 
         // 같은 트랜잭션이므로 비즈니스 롤백이 검열 등록까지 되돌린다.
-        assertThat(auditRepository.findNicknamesByStatus(NicknameAuditStatus.UNAUDITED)).isEmpty();
+        assertThat(auditRepository.findNicknamesByStatus(NicknameAuditStatus.UNAUDITED))
+                .isEmpty();
     }
 
     @Test
@@ -98,7 +99,8 @@ class ProfanityAuditRegistrationIntegrationTest extends IntegrationTestSupport {
             executor.shutdownNow();
         }
 
-        assertThat(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED)).isEqualTo(1);
+        assertThat(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                .isEqualTo(1);
     }
 
     private void awaitBothGuardsPassed(CountDownLatch guardPassed) {

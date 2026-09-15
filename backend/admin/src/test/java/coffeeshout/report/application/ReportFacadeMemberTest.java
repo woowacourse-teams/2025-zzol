@@ -1,7 +1,5 @@
 package coffeeshout.report.application;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import coffeeshout.AdminModuleServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
@@ -32,13 +30,7 @@ class ReportFacadeMemberTest extends AdminModuleServiceTest {
         @Test
         void userId와_userCode가_저장된다() {
             final long id = reportFacade.submit(
-                    회원_IP,
-                    ReportCategory.BUG,
-                    MiniGameType.CARD_GAME,
-                    "ABC12",
-                    "버그 내용",
-                    Optional.of(회원_인증)
-            );
+                    회원_IP, ReportCategory.BUG, MiniGameType.CARD_GAME, "ABC12", "버그 내용", Optional.of(회원_인증));
 
             final Report saved = reportRepository.findById(id).orElseThrow();
             SoftAssertions.assertSoftly(softly -> {
@@ -53,14 +45,8 @@ class ReportFacadeMemberTest extends AdminModuleServiceTest {
 
         @Test
         void userId와_userCode가_null이다() {
-            final long id = reportFacade.submit(
-                    익명_IP,
-                    ReportCategory.SUGGESTION,
-                    null,
-                    null,
-                    "건의 내용",
-                    Optional.empty()
-            );
+            final long id =
+                    reportFacade.submit(익명_IP, ReportCategory.SUGGESTION, null, null, "건의 내용", Optional.empty());
 
             final Report saved = reportRepository.findById(id).orElseThrow();
             SoftAssertions.assertSoftly(softly -> {

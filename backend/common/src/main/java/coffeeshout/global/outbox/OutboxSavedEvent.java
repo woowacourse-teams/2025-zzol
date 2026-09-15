@@ -7,10 +7,4 @@ package coffeeshout.global.outbox;
  * {@link OutboxAfterCommitRelay}가 트랜잭션 커밋 후 이 이벤트를 수신하여
  * 즉시 Redis Stream 발행을 시도한다.
  */
-public record OutboxSavedEvent(
-        Long outboxEventId,
-        String streamKey,
-        String payload,
-        String traceparent
-) {
-}
+public record OutboxSavedEvent(Long outboxEventId, String streamKey, String payload, String traceparent) {}

@@ -1,7 +1,5 @@
 package coffeeshout.zzolbot.eval.infra;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import coffeeshout.zzolbot.eval.domain.EvalRunStatus;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;

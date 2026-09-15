@@ -7,7 +7,4 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "admin")
 public record AdminProperties(
-        @NotBlank String username,
-        @NotBlank String password
-) {
-}
+        @NotBlank String username, @NotBlank String password) {}

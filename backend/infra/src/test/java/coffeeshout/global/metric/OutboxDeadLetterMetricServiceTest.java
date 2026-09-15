@@ -30,8 +30,7 @@ class OutboxDeadLetterMetricServiceTest {
 
     @Test
     void 조회_실패시_NaN으로_안전하게_떨어진다() {
-        given(outboxEventRepository.countByStatus(OutboxStatus.DEAD_LETTER))
-                .willThrow(new RuntimeException("db down"));
+        given(outboxEventRepository.countByStatus(OutboxStatus.DEAD_LETTER)).willThrow(new RuntimeException("db down"));
         final SimpleMeterRegistry registry = new SimpleMeterRegistry();
         new OutboxDeadLetterMetricService(outboxEventRepository, registry).initializeMetrics();
 

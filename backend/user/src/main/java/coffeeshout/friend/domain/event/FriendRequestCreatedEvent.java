@@ -10,12 +10,17 @@ public record FriendRequestCreatedEvent(
         Long requesterId,
         String requesterUserCode,
         String requesterNickname,
-        Long addresseeId
-) {
+        Long addresseeId) {
 
-    public FriendRequestCreatedEvent(Long requestId, Long requesterId, String requesterUserCode,
-                                     String requesterNickname, Long addresseeId) {
-        this(UUID.randomUUID().toString(), Instant.now(), requestId, requesterId,
-                requesterUserCode, requesterNickname, addresseeId);
+    public FriendRequestCreatedEvent(
+            Long requestId, Long requesterId, String requesterUserCode, String requesterNickname, Long addresseeId) {
+        this(
+                UUID.randomUUID().toString(),
+                Instant.now(),
+                requestId,
+                requesterId,
+                requesterUserCode,
+                requesterNickname,
+                addresseeId);
     }
 }

@@ -21,21 +21,18 @@ public class WsCatalogSecurityConfig {
 
     @PostConstruct
     public void init() {
-        matchers = properties.allowedIps().stream()
-                .map(IpAddressMatcher::new)
-                .toList();
+        matchers = properties.allowedIps().stream().map(IpAddressMatcher::new).toList();
     }
 
     @Bean
     @Order(0)
     public SecurityFilterChain devCatalogFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/dev/**")
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(request -> matchers.stream().anyMatch(m -> m.matches(request)))
+        http.securityMatcher("/dev/**")
+                .authorizeHttpRequests(auth -> auth.requestMatchers(
+                                request -> matchers.stream().anyMatch(m -> m.matches(request)))
                         .permitAll()
-                        .anyRequest().denyAll()
-                )
+                        .anyRequest()
+                        .denyAll())
                 .csrf(csrf -> csrf.disable());
         return http.build();
     }

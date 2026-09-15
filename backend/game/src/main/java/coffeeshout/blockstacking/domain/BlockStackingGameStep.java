@@ -1,7 +1,6 @@
 package coffeeshout.blockstacking.domain;
 
 public enum BlockStackingGameStep {
-
     PREPARE {
         @Override
         public void execute(BlockStackingGame game) {

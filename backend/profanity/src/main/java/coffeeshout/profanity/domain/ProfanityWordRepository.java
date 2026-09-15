@@ -23,7 +23,8 @@ public interface ProfanityWordRepository {
 
     List<ProfanityWord> findAll();
 
-    Page<ProfanityWord> findAllPaged(String search, Language language, WordSource source, Boolean activeOnly, Pageable pageable);
+    Page<ProfanityWord> findAllPaged(
+            String search, Language language, WordSource source, Boolean activeOnly, Pageable pageable);
 
     void activate(String word);
 }

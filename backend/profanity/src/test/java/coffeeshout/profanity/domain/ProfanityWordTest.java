@@ -2,7 +2,6 @@ package coffeeshout.profanity.domain;
 
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.fixture.ProfanityWordFixture;
 import org.assertj.core.api.SoftAssertions;
@@ -52,24 +51,20 @@ class ProfanityWordTest {
             void null이면_예외가_발생한다() {
                 assertCoffeeShoutException(
                         () -> ProfanityWord.of(null, Language.KOREAN, WordSource.MANUAL),
-                        ProfanityErrorCode.WORD_BLANK
-                );
+                        ProfanityErrorCode.WORD_BLANK);
             }
 
             @Test
             void 빈_문자열이면_예외가_발생한다() {
                 assertCoffeeShoutException(
-                        () -> ProfanityWord.of("", Language.KOREAN, WordSource.MANUAL),
-                        ProfanityErrorCode.WORD_BLANK
-                );
+                        () -> ProfanityWord.of("", Language.KOREAN, WordSource.MANUAL), ProfanityErrorCode.WORD_BLANK);
             }
 
             @Test
             void 공백만_있으면_예외가_발생한다() {
                 assertCoffeeShoutException(
                         () -> ProfanityWord.of("   ", Language.KOREAN, WordSource.MANUAL),
-                        ProfanityErrorCode.WORD_BLANK
-                );
+                        ProfanityErrorCode.WORD_BLANK);
             }
         }
 
@@ -82,8 +77,7 @@ class ProfanityWordTest {
 
                 assertCoffeeShoutException(
                         () -> ProfanityWord.of(tooLong, Language.KOREAN, WordSource.MANUAL),
-                        ProfanityErrorCode.WORD_TOO_LONG
-                );
+                        ProfanityErrorCode.WORD_TOO_LONG);
             }
         }
 
@@ -93,17 +87,13 @@ class ProfanityWordTest {
             @Test
             void language가_null이면_예외가_발생한다() {
                 assertCoffeeShoutException(
-                        () -> ProfanityWord.of("욕설", null, WordSource.MANUAL),
-                        ProfanityErrorCode.LANGUAGE_REQUIRED
-                );
+                        () -> ProfanityWord.of("욕설", null, WordSource.MANUAL), ProfanityErrorCode.LANGUAGE_REQUIRED);
             }
 
             @Test
             void source가_null이면_예외가_발생한다() {
                 assertCoffeeShoutException(
-                        () -> ProfanityWord.of("욕설", Language.KOREAN, null),
-                        ProfanityErrorCode.SOURCE_REQUIRED
-                );
+                        () -> ProfanityWord.of("욕설", Language.KOREAN, null), ProfanityErrorCode.SOURCE_REQUIRED);
             }
         }
 
@@ -114,16 +104,14 @@ class ProfanityWordTest {
             void 두_글자_ASCII_단어면_예외가_발생한다() {
                 assertCoffeeShoutException(
                         () -> ProfanityWord.of("aa", Language.ENGLISH, WordSource.VANE),
-                        ProfanityErrorCode.WORD_TOO_SHORT
-                );
+                        ProfanityErrorCode.WORD_TOO_SHORT);
             }
 
             @Test
             void 한_글자_ASCII_단어면_예외가_발생한다() {
                 assertCoffeeShoutException(
                         () -> ProfanityWord.of("a", Language.ENGLISH, WordSource.VANE),
-                        ProfanityErrorCode.WORD_TOO_SHORT
-                );
+                        ProfanityErrorCode.WORD_TOO_SHORT);
             }
 
             @Test
@@ -177,6 +165,5 @@ class ProfanityWordTest {
 
             assertThat(a).isEqualTo(b);
         }
-
     }
 }

@@ -23,13 +23,12 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "zzolbot_monitor_run",
         indexes = {
-                @Index(name = "idx_zzolbot_monitor_run_created_at", columnList = "created_at DESC"),
-                // firing 재배달 멱등 가드(dedup_key=? AND notified=true AND created_at>?)용 복합 인덱스.
-                // fingerprint가 아니라 dedup_key로 잡는다 — 한 인시던트가 알림 2건으로 발화할 때
-                // fingerprint는 서로 달라 가드를 통과해버리기 때문이다(#1598).
-                @Index(name = "idx_zzolbot_monitor_run_dedup", columnList = "dedup_key, notified, created_at DESC")
-        }
-)
+            @Index(name = "idx_zzolbot_monitor_run_created_at", columnList = "created_at DESC"),
+            // firing 재배달 멱등 가드(dedup_key=? AND notified=true AND created_at>?)용 복합 인덱스.
+            // fingerprint가 아니라 dedup_key로 잡는다 — 한 인시던트가 알림 2건으로 발화할 때
+            // fingerprint는 서로 달라 가드를 통과해버리기 때문이다(#1598).
+            @Index(name = "idx_zzolbot_monitor_run_dedup", columnList = "dedup_key, notified, created_at DESC")
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MonitorRunEntity {

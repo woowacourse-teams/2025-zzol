@@ -6,8 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 public record BlockStackingStateResponse(
         BlockStackingGameState state,
-        @JsonInclude(Include.NON_NULL) Long endTimeEpochMs
-) {
+        @JsonInclude(Include.NON_NULL) Long endTimeEpochMs) {
 
     public static BlockStackingStateResponse of(BlockStackingGameState state) {
         return new BlockStackingStateResponse(state, null);

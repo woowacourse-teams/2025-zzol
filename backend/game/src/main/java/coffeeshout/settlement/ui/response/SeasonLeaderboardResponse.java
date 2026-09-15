@@ -8,6 +8,5 @@ import java.util.List;
  */
 public record SeasonLeaderboardResponse(String seasonKey, long totalMembers, List<Row> rows) {
 
-    public record Row(int rank, String nickname, String userCode, long totalPoints, String tier) {
-    }
+    public record Row(int rank, String nickname, String userCode, long totalPoints, String tier) {}
 }

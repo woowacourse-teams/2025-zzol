@@ -72,7 +72,8 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
         // 등록 건수를 셀 수 없으므로, INSERT IGNORE 전후 행 수 차이로 실제 삽입 건수를 계산한다(#1500).
         final long before = jpaRepository.count();
         final Instant now = Instant.now();
-        final String sql = "INSERT IGNORE INTO profanity_word (word, language, source, is_active, created_at, updated_at) VALUES (?, ?, ?, true, ?, ?)";
+        final String sql =
+                "INSERT IGNORE INTO profanity_word (word, language, source, is_active, created_at, updated_at) VALUES (?, ?, ?, true, ?, ?)";
         jdbcTemplate.batchUpdate(sql, words, 500, (ps, word) -> {
             ps.setString(1, word.word());
             ps.setString(2, word.language().name());
@@ -90,11 +91,11 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
 
     @Override
     public void operatorAllow(String word, Language language) {
-        jpaRepository.findByWord(word)
+        jpaRepository
+                .findByWord(word)
                 .ifPresentOrElse(
                         ProfanityWordEntity::operatorAllow,
-                        () -> jpaRepository.save(ProfanityWordEntity.fromOperatorAllowed(word, language))
-                );
+                        () -> jpaRepository.save(ProfanityWordEntity.fromOperatorAllowed(word, language)));
     }
 
     @Override
@@ -110,8 +111,10 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
     }
 
     @Override
-    public Page<ProfanityWord> findAllPaged(String search, Language language, WordSource source, Boolean activeOnly, Pageable pageable) {
-        return queryRepository.findAllPaged(search, language, source, activeOnly, pageable)
+    public Page<ProfanityWord> findAllPaged(
+            String search, Language language, WordSource source, Boolean activeOnly, Pageable pageable) {
+        return queryRepository
+                .findAllPaged(search, language, source, activeOnly, pageable)
                 .map(ProfanityWordEntity::toDomain);
     }
 

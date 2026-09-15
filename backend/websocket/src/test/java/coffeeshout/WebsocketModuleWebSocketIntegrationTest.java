@@ -8,5 +8,4 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootTest(classes = WebsocketModuleTestApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(ServiceTestConfig.class)
-public abstract class WebsocketModuleWebSocketIntegrationTest extends WebSocketIntegrationTestSupport {
-}
+public abstract class WebsocketModuleWebSocketIntegrationTest extends WebSocketIntegrationTestSupport {}

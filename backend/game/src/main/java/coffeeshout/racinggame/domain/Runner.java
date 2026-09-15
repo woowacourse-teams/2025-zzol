@@ -27,7 +27,8 @@ public class Runner {
             return;
         }
         final int nextSpeed = speedCalculator.calculateSpeed(lastSpeedUpdateTime, now, tapCount);
-        isTrue(nextSpeed >= RacingGame.MIN_SPEED && nextSpeed <= RacingGame.MAX_SPEED,
+        isTrue(
+                nextSpeed >= RacingGame.MIN_SPEED && nextSpeed <= RacingGame.MAX_SPEED,
                 String.format("스피드는 0 ~ %d이어야 합니다.", RacingGame.MAX_SPEED));
         this.lastSpeedUpdateTime = now;
         this.speed = nextSpeed;
@@ -39,7 +40,8 @@ public class Runner {
         }
         final int nextPosition = position + speed;
         if (crossesFinishLine(nextPosition)) {
-            final long remainingMillis = (long) (calculateDistanceToFinishLine(nextPosition) * calculateMillisPerPosition());
+            final long remainingMillis =
+                    (long) (calculateDistanceToFinishLine(nextPosition) * calculateMillisPerPosition());
             finishTime = now.minusMillis(RacingGame.MOVE_INTERVAL_MILLIS).plusMillis(remainingMillis);
         }
         if (isSlowingDown()) {

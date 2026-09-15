@@ -19,8 +19,10 @@ class InternalWebhookTokenFilterTest {
 
     @Mock
     private HttpServletRequest request;
+
     @Mock
     private HttpServletResponse response;
+
     @Mock
     private FilterChain chain;
 

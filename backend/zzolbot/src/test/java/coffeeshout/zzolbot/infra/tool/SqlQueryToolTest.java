@@ -30,8 +30,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class SqlQueryToolTest {
 
-    private static final AskContext CTX = AskContext.stamp("req-1", List.of(),
-            Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+    private static final AskContext CTX =
+            AskContext.stamp("req-1", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     @Mock
     private SqlQueryValidator validator;
@@ -54,8 +54,8 @@ class SqlQueryToolTest {
             final String rawSql = "SELECT id FROM app_user";
             final String validSql = rawSql + " LIMIT 100";
             given(validator.validate(rawSql)).willReturn(validSql);
-            given(runner.run(validSql)).willReturn(
-                    new SqlQueryResult(List.of(Map.of("id", 1L), Map.of("id", 2L)), false));
+            given(runner.run(validSql))
+                    .willReturn(new SqlQueryResult(List.of(Map.of("id", 1L), Map.of("id", 2L)), false));
 
             final ToolExecutionResult result = tool.execute(Map.of("sql", rawSql), CTX);
 
@@ -98,7 +98,8 @@ class SqlQueryToolTest {
         @Test
         void 검증_실패하면_실패_결과를_반환한다() {
             willThrow(new BusinessException(ZzolBotErrorCode.INVALID_SQL, "SELECT 문만 허용됩니다."))
-                    .given(validator).validate(any());
+                    .given(validator)
+                    .validate(any());
 
             final ToolExecutionResult result = tool.execute(Map.of("sql", "DROP TABLE app_user"), CTX);
 
@@ -112,7 +113,8 @@ class SqlQueryToolTest {
         void 실행_중_예외가_발생하면_실패_결과를_반환한다() {
             given(validator.validate(any())).willReturn("SELECT id FROM app_user LIMIT 100");
             willThrow(new InfrastructureException(ZzolBotErrorCode.SQL_EXECUTION_FAILED, "타임아웃"))
-                    .given(runner).run(any());
+                    .given(runner)
+                    .run(any());
 
             final ToolExecutionResult result = tool.execute(Map.of("sql", "SELECT id FROM app_user"), CTX);
 

@@ -35,6 +35,5 @@ class MultiplierCardsTest {
         assertThatThrownBy(() -> multiplierCards.pickCards(count, new Random(1234L)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("최대 사용 가능한 카드 수를 초과했습니다.");
-
     }
 }

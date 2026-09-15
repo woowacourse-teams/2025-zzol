@@ -7,9 +7,9 @@ import coffeeshout.cardgame.domain.card.AdditionCard;
 import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.cardgame.domain.card.MultiplierCard;
 import coffeeshout.fixture.PlayerFixture;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameScore;
-import coffeeshout.gamecommon.Gamer;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Players;
@@ -37,7 +37,8 @@ class PlayerHandsTest {
         players.join(PlayerFixture.호스트한스());
         players.join(PlayerFixture.호스트엠제이());
 
-        playerHands = new PlayerHands(players.getPlayers().stream().map(Player::toGamer).toList());
+        playerHands = new PlayerHands(
+                players.getPlayers().stream().map(Player::toGamer).toList());
     }
 
     @Nested
@@ -162,8 +163,7 @@ class PlayerHandsTest {
             String nonExistentName = "존재하지않는플레이어";
 
             // when & then
-            assertThatThrownBy(() -> playerHands.findByName(nonExistentName))
-                    .isInstanceOf(BusinessException.class);
+            assertThatThrownBy(() -> playerHands.findByName(nonExistentName)).isInstanceOf(BusinessException.class);
         }
     }
 
@@ -198,9 +198,7 @@ class PlayerHandsTest {
             Map<Gamer, MiniGameScore> scores = playerHands.scoreByPlayer();
 
             // then
-            scores.values().forEach(score ->
-                    assertThat(score.getValue()).isZero()
-            );
+            scores.values().forEach(score -> assertThat(score.getValue()).isZero());
         }
     }
 
@@ -219,10 +217,10 @@ class PlayerHandsTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(unselectedPlayers).hasSize(2);
-                softly.assertThat(unselectedPlayers).contains(
-                        players.getPlayer(new PlayerName("한스")).toGamer(),
-                        players.getPlayer(new PlayerName("엠제이")).toGamer()
-                );
+                softly.assertThat(unselectedPlayers)
+                        .contains(
+                                players.getPlayer(new PlayerName("한스")).toGamer(),
+                                players.getPlayer(new PlayerName("엠제이")).toGamer());
             });
         }
 
@@ -243,11 +241,11 @@ class PlayerHandsTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(unselectedPlayers).hasSize(3);
-                softly.assertThat(unselectedPlayers).contains(
-                        players.getPlayer(new PlayerName("루키")).toGamer(),
-                        players.getPlayer(new PlayerName("한스")).toGamer(),
-                        players.getPlayer(new PlayerName("엠제이")).toGamer()
-                );
+                softly.assertThat(unselectedPlayers)
+                        .contains(
+                                players.getPlayer(new PlayerName("루키")).toGamer(),
+                                players.getPlayer(new PlayerName("한스")).toGamer(),
+                                players.getPlayer(new PlayerName("엠제이")).toGamer());
             });
         }
 

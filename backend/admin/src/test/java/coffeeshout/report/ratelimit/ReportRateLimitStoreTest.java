@@ -70,22 +70,36 @@ class ReportRateLimitStoreTest extends AdminModuleServiceTest {
             for (long i = 0; i < rateLimitProperties.rate(); i++) {
                 rateLimitStore.tryAcquire(ip);
             }
-            double before = meterRegistry.find("report.ratelimit.dropped.total").counter().count();
+            double before = meterRegistry
+                    .find("report.ratelimit.dropped.total")
+                    .counter()
+                    .count();
 
             rateLimitStore.tryAcquire(ip);
 
-            assertThat(meterRegistry.find("report.ratelimit.dropped.total").counter().count() - before)
+            assertThat(meterRegistry
+                                    .find("report.ratelimit.dropped.total")
+                                    .counter()
+                                    .count()
+                            - before)
                     .isEqualTo(1.0);
         }
 
         @Test
         void Rate_Limit_이내에서는_dropped_카운터가_증가하지_않는다() {
             String ip = "10.0.0.2";
-            double before = meterRegistry.find("report.ratelimit.dropped.total").counter().count();
+            double before = meterRegistry
+                    .find("report.ratelimit.dropped.total")
+                    .counter()
+                    .count();
 
             rateLimitStore.tryAcquire(ip);
 
-            assertThat(meterRegistry.find("report.ratelimit.dropped.total").counter().count() - before)
+            assertThat(meterRegistry
+                                    .find("report.ratelimit.dropped.total")
+                                    .counter()
+                                    .count()
+                            - before)
                     .isEqualTo(0.0);
         }
     }
@@ -99,7 +113,8 @@ class ReportRateLimitStoreTest extends AdminModuleServiceTest {
             String ip = "172.16.0.1";
             rateLimitStore.tryAcquire(ip);
 
-            long remainTimeToLive = redissonClient.getRateLimiter(KEY_PREFIX + ip).remainTimeToLive();
+            long remainTimeToLive =
+                    redissonClient.getRateLimiter(KEY_PREFIX + ip).remainTimeToLive();
             assertThat(remainTimeToLive).isGreaterThan(0);
         }
 
@@ -111,8 +126,7 @@ class ReportRateLimitStoreTest extends AdminModuleServiceTest {
             }
             assertThat(rateLimitStore.tryAcquire(ip)).isFalse();
 
-            await().atMost(Duration.ofSeconds(3))
-                    .until(() -> rateLimitStore.tryAcquire(ip));
+            await().atMost(Duration.ofSeconds(3)).until(() -> rateLimitStore.tryAcquire(ip));
         }
     }
 }

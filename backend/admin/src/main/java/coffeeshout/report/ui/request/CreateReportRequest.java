@@ -10,6 +10,4 @@ public record CreateReportRequest(
         @NotNull ReportCategory category,
         MiniGameType gameType,
         @Size(max = 10) String joinCode,
-        @NotBlank @Size(max = 200) String content
-) {
-}
+        @NotBlank @Size(max = 200) String content) {}

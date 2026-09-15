@@ -25,11 +25,19 @@ public class NunchiCommandEventConsumer implements Consumer<NunchiCommandEvent> 
         try {
             nunchiService.handlePress(event.joinCode(), event.playerName(), event.timestamp());
         } catch (BusinessException e) {
-            log.warn("눈치게임 press 처리 중 비즈니스 예외: joinCode={}, playerName={}, eventId={}",
-                    event.joinCode(), event.playerName(), event.eventId(), e);
+            log.warn(
+                    "눈치게임 press 처리 중 비즈니스 예외: joinCode={}, playerName={}, eventId={}",
+                    event.joinCode(),
+                    event.playerName(),
+                    event.eventId(),
+                    e);
         } catch (Exception e) {
-            log.error("눈치게임 press 처리 중 오류: joinCode={}, playerName={}, eventId={}",
-                    event.joinCode(), event.playerName(), event.eventId(), e);
+            log.error(
+                    "눈치게임 press 처리 중 오류: joinCode={}, playerName={}, eventId={}",
+                    event.joinCode(),
+                    event.playerName(),
+                    event.eventId(),
+                    e);
             throw e;
         }
     }

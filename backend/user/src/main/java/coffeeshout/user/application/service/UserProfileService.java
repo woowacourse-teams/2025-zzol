@@ -24,13 +24,13 @@ public class UserProfileService {
     public User changeNickname(Long userId, String rawNickname) {
         final UserNickname newNickname = new UserNickname(rawNickname);
         if (profanityChecker.contains(newNickname.value())) {
-            throw new BusinessException(UserErrorCode.NICKNAME_CONTAINS_PROFANITY,
-                    "비속어가 포함된 닉네임입니다. 입력값: '" + newNickname.value() + "'");
+            throw new BusinessException(
+                    UserErrorCode.NICKNAME_CONTAINS_PROFANITY, "비속어가 포함된 닉네임입니다. 입력값: '" + newNickname.value() + "'");
         }
 
-        final User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND,
-                        "존재하지 않는 회원입니다. id=" + userId));
+        final User user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다. id=" + userId));
 
         user.changeNickname(newNickname);
         final User updated = userRepository.save(user);
@@ -41,8 +41,8 @@ public class UserProfileService {
 
     @Transactional(readOnly = true)
     public User findById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND,
-                        "존재하지 않는 회원입니다. id=" + userId));
+        return userRepository
+                .findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다. id=" + userId));
     }
 }

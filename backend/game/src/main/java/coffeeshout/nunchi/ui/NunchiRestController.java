@@ -24,8 +24,8 @@ public class NunchiRestController {
 
     @GetMapping("/minigames/nunchi/result")
     public ResponseEntity<NunchiResultResponse> getResult(@RequestParam String joinCode) {
-        final Playable game = gameSessionService.getSession(new JoinCode(joinCode))
-                .findCompletedGame(MiniGameType.NUNCHI_GAME);
+        final Playable game =
+                gameSessionService.getSession(new JoinCode(joinCode)).findCompletedGame(MiniGameType.NUNCHI_GAME);
         return ResponseEntity.ok(NunchiResultResponse.of(game.getResult(), game.getScores()));
     }
 }

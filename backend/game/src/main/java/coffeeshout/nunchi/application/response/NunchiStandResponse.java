@@ -5,10 +5,4 @@ package coffeeshout.nunchi.application.response;
  * 아니며 rank는 싣지 않는다(결정 8). {@code idleDeadlineEpochMs}는 이 유효 입력으로 리셋된 무입력 종료
  * 예정 시각, {@code serverNowEpochMs}는 클라 시계 스큐 보정용 서버 현재 시각이다.
  */
-public record NunchiStandResponse(
-        String name,
-        int number,
-        long serverNowEpochMs,
-        long idleDeadlineEpochMs
-) {
-}
+public record NunchiStandResponse(String name, int number, long serverNowEpochMs, long idleDeadlineEpochMs) {}

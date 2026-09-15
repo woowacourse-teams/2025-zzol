@@ -5,8 +5,7 @@ import coffeeshout.room.domain.roulette.RoulettePicker;
 
 public final class RouletteFixture {
 
-    private RouletteFixture() {
-    }
+    private RouletteFixture() {}
 
     public static Roulette 고정_끝값_반환() {
         final Roulette roulette = new Roulette(new StubRandomPicker());

@@ -58,9 +58,12 @@ class LadderGameTest {
         @Test
         void setUp_후_기둥에_모든_플레이어가_배정된다() {
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(game.getPoles().contains(꾹이.getName().value())).isTrue();
-                softly.assertThat(game.getPoles().contains(철수.getName().value())).isTrue();
-                softly.assertThat(game.getPoles().contains(영희.getName().value())).isTrue();
+                softly.assertThat(game.getPoles().contains(꾹이.getName().value()))
+                        .isTrue();
+                softly.assertThat(game.getPoles().contains(철수.getName().value()))
+                        .isTrue();
+                softly.assertThat(game.getPoles().contains(영희.getName().value()))
+                        .isTrue();
             });
         }
     }
@@ -72,10 +75,7 @@ class LadderGameTest {
         void 허용되지_않은_상태_전환_시_예외를_던진다() {
             assertThat(game.getState()).isEqualTo(LadderGameState.DESCRIPTION);
 
-            assertCoffeeShoutException(
-                    () -> game.changeToDrawing(),
-                    LadderGameErrorCode.INVALID_STATE_TRANSITION
-            );
+            assertCoffeeShoutException(() -> game.changeToDrawing(), LadderGameErrorCode.INVALID_STATE_TRANSITION);
         }
 
         @Test
@@ -137,20 +137,14 @@ class LadderGameTest {
 
         @Test
         void 미등록_플레이어_선_긋기_시_예외를_던진다() {
-            assertCoffeeShoutException(
-                    () -> game.drawLine("미등록", 0),
-                    LadderGameErrorCode.PLAYER_NOT_FOUND
-            );
+            assertCoffeeShoutException(() -> game.drawLine("미등록", 0), LadderGameErrorCode.PLAYER_NOT_FOUND);
         }
 
         @Test
         void 이미_선을_그은_플레이어가_다시_그으면_예외를_던진다() {
             game.drawLine(꾹이.getName().value(), 0);
 
-            assertCoffeeShoutException(
-                    () -> game.drawLine(꾹이.getName().value(), 0),
-                    LadderGameErrorCode.ALREADY_DREW
-            );
+            assertCoffeeShoutException(() -> game.drawLine(꾹이.getName().value(), 0), LadderGameErrorCode.ALREADY_DREW);
         }
     }
 
@@ -218,7 +212,8 @@ class LadderGameTest {
             game.tracePaths();
 
             final Map<String, Integer> rankings = game.getRankingsForBroadcast();
-            final int totalRankSum = rankings.values().stream().mapToInt(Integer::intValue).sum();
+            final int totalRankSum =
+                    rankings.values().stream().mapToInt(Integer::intValue).sum();
 
             // 1+2+3 = 6
             assertThat(totalRankSum).isEqualTo(6);

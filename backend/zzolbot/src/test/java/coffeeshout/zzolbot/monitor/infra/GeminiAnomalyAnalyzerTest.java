@@ -25,8 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class GeminiAnomalyAnalyzerTest {
 
     private static final FiringAlert ALERT = new FiringAlert(
-            "AppErrorLogSpike", "warning", "fp-1", "ERROR 급증", "임계 초과",
-            Map.of("alertname", "AppErrorLogSpike"));
+            "AppErrorLogSpike", "warning", "fp-1", "ERROR 급증", "임계 초과", Map.of("alertname", "AppErrorLogSpike"));
     // 프로덕션 상수(GeminiAnomalyAnalyzer.NO_EVIDENCE_SUMMARY)와 동일해야 한다. private이라 값으로 고정한다.
     private static final String NO_EVIDENCE_SUMMARY = "제공된 로그에서 이 알림을 뒷받침할 근거를 찾지 못했습니다.";
 

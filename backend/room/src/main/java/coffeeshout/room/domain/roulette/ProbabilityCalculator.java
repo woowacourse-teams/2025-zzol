@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /*
-    등수별 확률 조정 정도를 계산하는 클래스
- */
+   등수별 확률 조정 정도를 계산하는 클래스
+*/
 public class ProbabilityCalculator {
 
     private final Integer playerCount;
@@ -64,21 +64,18 @@ public class ProbabilityCalculator {
     private Map<Integer, Integer> processProbabilityChangeRangeMap() {
         return IntStream.rangeClosed(1, playerCount)
                 .boxed()
-                .collect(Collectors.toMap(
-                        rank -> rank,
-                        this::processProbabilityChange
-                ));
+                .collect(Collectors.toMap(rank -> rank, this::processProbabilityChange));
     }
 
     private Integer processProbabilityChange(int rank) {
         final MiniGameResultType resultType = MiniGameResultType.of(playerCount, rank);
-        final Probability probability = adjustProbability(resultType, countAdjustableRanks(), relativeRank(rank),
-                computeAdjustmentStep());
+        final Probability probability =
+                adjustProbability(resultType, countAdjustableRanks(), relativeRank(rank), computeAdjustmentStep());
         return probability.getProbabilityChange(resultType);
     }
 
-    private static Probability adjustProbability(MiniGameResultType resultType, int rankCount, int relativeRank,
-                                                  Probability step) {
+    private static Probability adjustProbability(
+            MiniGameResultType resultType, int rankCount, int relativeRank, Probability step) {
         if (resultType == MiniGameResultType.UNDECIDED) {
             return Probability.ZERO;
         }

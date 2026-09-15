@@ -46,6 +46,7 @@ class SettlementServiceTest {
 
     @Mock
     SeasonSettlementJpaRepository settlementRepository;
+
     @Mock
     SeasonScoreJpaRepository scoreRepository;
 
@@ -106,8 +107,7 @@ class SettlementServiceTest {
             시즌_성적_조회_설정(1L, 85, SeasonTier.BRONZE);
             시즌_성적_조회_설정(2L, 85, SeasonTier.BRONZE);
 
-            settlementService.settle(
-                    정산_이벤트(new PlayerResult(1L, "한스", 1, 12L), new PlayerResult(2L, "루키", 1, 12L)));
+            settlementService.settle(정산_이벤트(new PlayerResult(1L, "한스", 1, 12L), new PlayerResult(2L, "루키", 1, 12L)));
 
             verify(scoreRepository).addPoints(SEASON, 1L, 85);
             verify(scoreRepository).addPoints(SEASON, 2L, 85);
@@ -188,7 +188,6 @@ class SettlementServiceTest {
                 ROOM_SESSION_ID,
                 GAME_TYPE,
                 List.of(results),
-                Arrays.stream(results).map(PlayerResult::rank).toList()
-        );
+                Arrays.stream(results).map(PlayerResult::rank).toList());
     }
 }

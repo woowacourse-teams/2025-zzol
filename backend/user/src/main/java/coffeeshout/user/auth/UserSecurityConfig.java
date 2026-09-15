@@ -27,28 +27,17 @@ public class UserSecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain userFilterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService))
-                        .successHandler(oAuthSuccessHandler)
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .oauth2Login(
+                        oauth2 -> oauth2.userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                                .successHandler(oAuthSuccessHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(authTokenService),
-                        UsernamePasswordAuthenticationFilter.class
-                )
+                        new JwtAuthenticationFilter(authTokenService), UsernamePasswordAuthenticationFilter.class)
                 // 로그인 "시도" 카운트 — 인가 리다이렉트가 응답을 끝내기 전에 세야 한다
                 .addFilterBefore(
-                        new LoginStartMetricFilter(loginMetricService),
-                        OAuth2AuthorizationRequestRedirectFilter.class
-                );
+                        new LoginStartMetricFilter(loginMetricService), OAuth2AuthorizationRequestRedirectFilter.class);
         return http.build();
     }
 }

@@ -1,4 +1,3 @@
 package coffeeshout.blockstacking.domain;
 
-public record BlockStackingPlayerRankInfo(String name, int floor) {
-}
+public record BlockStackingPlayerRankInfo(String name, int floor) {}

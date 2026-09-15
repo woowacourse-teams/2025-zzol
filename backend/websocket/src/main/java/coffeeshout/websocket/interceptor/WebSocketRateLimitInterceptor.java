@@ -35,9 +35,7 @@ public class WebSocketRateLimitInterceptor implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        final StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(
-                message, StompHeaderAccessor.class
-        );
+        final StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
         if (accessor == null) {
             return message;
@@ -57,8 +55,7 @@ public class WebSocketRateLimitInterceptor implements ChannelInterceptor {
         }
 
         if (!rateLimiter.tryAcquire(sessionId)) {
-            log.warn("WebSocket Rate Limit 초과: sessionId={}, destination={}",
-                    sessionId, accessor.getDestination());
+            log.warn("WebSocket Rate Limit 초과: sessionId={}, destination={}", sessionId, accessor.getDestination());
             return null; // 메시지 드롭
         }
 

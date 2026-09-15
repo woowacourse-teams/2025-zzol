@@ -37,8 +37,7 @@ class WsCatalogBuilderTest {
                 "/ws",
                 "/queue/errors",
                 WebSocketResponse.class,
-                List.of("127.0.0.1")
-        );
+                List.of("127.0.0.1"));
         builder = new WsCatalogBuilder(applicationContext, properties);
     }
 
@@ -60,11 +59,25 @@ class WsCatalogBuilderTest {
                 softly.assertThat(catalog.topics().getFirst().payloadType())
                         .isEqualTo("WebSocketResponse<FixturePayload>");
                 softly.assertThat(catalog.topics().getFirst().publishers()).hasSize(1);
-                softly.assertThat(catalog.topics().getFirst().publishers().getFirst().description())
+                softly.assertThat(catalog.topics()
+                                .getFirst()
+                                .publishers()
+                                .getFirst()
+                                .description())
                         .isEqualTo("테스트 토픽");
-                softly.assertThat(catalog.topics().getFirst().publishers().getFirst().source().className())
+                softly.assertThat(catalog.topics()
+                                .getFirst()
+                                .publishers()
+                                .getFirst()
+                                .source()
+                                .className())
                         .isEqualTo("FixtureWebSocketController");
-                softly.assertThat(catalog.topics().getFirst().publishers().getFirst().source().methodName())
+                softly.assertThat(catalog.topics()
+                                .getFirst()
+                                .publishers()
+                                .getFirst()
+                                .source()
+                                .methodName())
                         .isEqualTo("doAction");
 
                 softly.assertThat(catalog.sends()).hasSize(1);
@@ -129,14 +142,14 @@ class WsCatalogBuilderTest {
         @Test
         @DisplayName("WebSocketResponse 필드 4개가 포함된다")
         void envelope_필드가_채워진다() {
-            when(applicationContext.getBeansWithAnnotation(Component.class))
-                    .thenReturn(Map.of());
+            when(applicationContext.getBeansWithAnnotation(Component.class)).thenReturn(Map.of());
 
             final WsCatalog catalog = builder.build();
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(catalog.envelope().type()).isEqualTo("WebSocketResponse<T>");
-                softly.assertThat(catalog.envelope().fields()).extracting(WsCatalog.FieldEntry::name)
+                softly.assertThat(catalog.envelope().fields())
+                        .extracting(WsCatalog.FieldEntry::name)
                         .containsExactly("success", "data", "errorMessage", "id");
                 softly.assertThat(catalog.errors().topic()).isEqualTo("/queue/errors");
             });
@@ -182,7 +195,11 @@ class WsCatalogBuilderTest {
                 softly.assertThat(catalog.queues().getFirst().payloadType())
                         .isEqualTo("WebSocketResponse<FixturePayload>");
                 softly.assertThat(catalog.queues().getFirst().publishers()).hasSize(1);
-                softly.assertThat(catalog.queues().getFirst().publishers().getFirst().description())
+                softly.assertThat(catalog.queues()
+                                .getFirst()
+                                .publishers()
+                                .getFirst()
+                                .description())
                         .isEqualTo("친구 요청 알림");
                 softly.assertThat(catalog.topics()).isEmpty();
             });
@@ -248,8 +265,7 @@ class WsCatalogBuilderTest {
 
             final WsCatalog catalog = builder.build();
 
-            assertThat(catalog.queues().getFirst().payloadType())
-                    .isEqualTo("WebSocketResponse<List<FixturePayload>>");
+            assertThat(catalog.queues().getFirst().payloadType()).isEqualTo("WebSocketResponse<List<FixturePayload>>");
         }
     }
 
@@ -366,165 +382,142 @@ class WsCatalogBuilderTest {
         @DisplayName("envelope-class 가 record 가 아니면 빌드가 실패한다")
         void envelope_class_가_record_가_아니면_실패한다() {
             final WsCatalogProperties invalidProperties = new WsCatalogProperties(
-                    "/app", "/topic", "/queue", "/user", "/ws", "/queue/errors",
+                    "/app",
+                    "/topic",
+                    "/queue",
+                    "/user",
+                    "/ws",
+                    "/queue/errors",
                     NonRecordEnvelope.class,
-                    List.of("127.0.0.1")
-            );
+                    List.of("127.0.0.1"));
             final WsCatalogBuilder invalidBuilder = new WsCatalogBuilder(applicationContext, invalidProperties);
             when(applicationContext.getBeansWithAnnotation(eq(Component.class))).thenReturn(Map.of());
 
             assertCoffeeShoutException(() -> invalidBuilder.build(), WsCatalogErrorCode.INVALID_ENVELOPE_CLASS);
         }
 
-        static class NonRecordEnvelope {
-        }
+        static class NonRecordEnvelope {}
     }
 
     static class FixtureQueueNotifier {
 
         @WsQueue(path = "/queue/friends/requests", payload = FixturePayload.class, description = "친구 요청 알림")
-        public void onRequest() {
-        }
+        public void onRequest() {}
     }
 
     static class FixtureDuplicateQueueNotifier {
 
         @WsQueue(path = "/queue/friends/responses", payload = FixturePayload.class, description = "수락")
-        public void onAccepted() {
-        }
+        public void onAccepted() {}
 
         @WsQueue(path = "/queue/friends/responses", payload = FixturePayload.class, description = "거절")
-        public void onRejected() {
-        }
+        public void onRejected() {}
     }
 
     static class FixtureGenericQueueNotifier {
 
         @WsQueue(path = "/queue/friends/list", payload = List.class, generic = FixturePayload.class)
-        public void onListChanged() {
-        }
+        public void onListChanged() {}
     }
 
     static class FixtureWebSocketController {
 
         @MessageMapping("/test/{joinCode}/action")
         @WsTopic(path = "/test/{joinCode}/result", payload = FixturePayload.class, description = "테스트 토픽")
-        public void doAction(@DestinationVariable String joinCode, @Payload FixtureRequest request) {
-        }
+        public void doAction(@DestinationVariable String joinCode, @Payload FixtureRequest request) {}
     }
 
     static class FixtureReceiveController {
 
         @MessageMapping("/test/{joinCode}/command")
         @WsReceive(respondsOnTopics = "/test/{joinCode}/result", description = "테스트 수신 엔드포인트")
-        public void handleCommand(@DestinationVariable String joinCode, @Payload FixtureRequest request) {
-        }
+        public void handleCommand(@DestinationVariable String joinCode, @Payload FixtureRequest request) {}
     }
 
     static class FixtureGenericPublisher {
 
-        @WsTopic(
-                path = "/test/{joinCode}/list",
-                payload = List.class,
-                generic = FixturePayload.class
-        )
-        public void publishList() {
-        }
+        @WsTopic(path = "/test/{joinCode}/list", payload = List.class, generic = FixturePayload.class)
+        public void publishList() {}
     }
 
     static class FixtureMultiTopicPublisher {
 
         @WsTopic(path = "/test/a", payload = FixturePayload.class)
         @WsTopic(path = "/test/b", payload = FixturePayload.class)
-        public void publish() {
-        }
+        public void publish() {}
     }
 
     static class FixtureSamePathTopicPublisher {
 
         @WsTopic(path = "/test/state", payload = FixturePayload.class, description = "시작")
-        public void publishStart() {
-        }
+        public void publishStart() {}
 
         @WsTopic(path = "/test/state", payload = FixturePayload.class, description = "종료")
-        public void publishFinish() {
-        }
+        public void publishFinish() {}
     }
 
     static class FixtureObjectPayloadPublisher {
 
         @WsTopic(path = "/test/object", payload = Object.class)
-        public void publish() {
-        }
+        public void publish() {}
     }
 
     static class FixtureObjectGenericPublisher {
 
         @WsTopic(path = "/test/obj-generic", payload = List.class, generic = Object.class)
-        public void publish() {
-        }
+        public void publish() {}
     }
 
     static class FixtureObjectPayloadQueueNotifier {
 
         @WsQueue(path = "/queue/object", payload = Object.class)
-        public void onEvent() {
-        }
+        public void onEvent() {}
     }
 
     static class FixtureBlankPathQueueNotifier {
 
         @WsQueue(path = "", payload = FixturePayload.class)
-        public void onEvent() {
-        }
+        public void onEvent() {}
     }
 
     static class FixtureVoidPayloadQueueNotifier {
 
         @WsQueue(path = "/queue/test", payload = Void.class)
-        public void onEvent() {
-        }
+        public void onEvent() {}
     }
 
     static class FixtureBlankPathPublisher {
 
         @WsTopic(path = "", payload = FixturePayload.class)
-        public void publish() {
-        }
+        public void publish() {}
     }
 
     static class FixtureVoidPayloadPublisher {
 
         @WsTopic(path = "/test/void", payload = Void.class)
-        public void publish() {
-        }
+        public void publish() {}
     }
 
     static class FixtureNoSlashPathPublisher {
 
         @WsTopic(path = "test/result", payload = FixturePayload.class)
-        public void publish() {
-        }
+        public void publish() {}
     }
 
     static class FixtureNoSlashPathQueueNotifier {
 
         @WsQueue(path = "queue/test", payload = FixturePayload.class)
-        public void onEvent() {
-        }
+        public void onEvent() {}
     }
 
     static class FixtureNoSlashReceiveController {
 
         @MessageMapping("/test/{joinCode}/command")
         @WsReceive(respondsOnTopics = "test/{joinCode}/result")
-        public void handleCommand(@Payload FixtureRequest request) {
-        }
+        public void handleCommand(@Payload FixtureRequest request) {}
     }
 
-    public record FixturePayload(String name, int value) {
-    }
+    public record FixturePayload(String name, int value) {}
 
-    public record FixtureRequest(String input) {
-    }
+    public record FixtureRequest(String input) {}
 }

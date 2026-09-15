@@ -93,8 +93,7 @@ class RedisJoinCodeRepositoryTest extends RoomModuleServiceTest {
         // then
         String key = JOIN_CODE_KEY_PREFIX + joinCode.getValue();
         Long ttl = redisTemplate.getExpire(key);
-        assertThat(ttl).isNotNull()
-                .isGreaterThan(0);
+        assertThat(ttl).isNotNull().isGreaterThan(0);
     }
 
     @Test
@@ -118,9 +117,7 @@ class RedisJoinCodeRepositoryTest extends RoomModuleServiceTest {
 
         // when - 10개의 스레드가 동시에 같은 코드를 저장 시도
         List<CompletableFuture<Boolean>> futures = IntStream.range(0, threadCount)
-                .mapToObj(i -> CompletableFuture.supplyAsync(
-                        () -> redisJoinCodeRepository.save(joinCode)
-                ))
+                .mapToObj(i -> CompletableFuture.supplyAsync(() -> redisJoinCodeRepository.save(joinCode)))
                 .toList();
 
         // 모든 작업 완료 대기

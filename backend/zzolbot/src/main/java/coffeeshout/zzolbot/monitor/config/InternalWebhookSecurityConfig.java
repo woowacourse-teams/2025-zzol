@@ -25,17 +25,13 @@ public class InternalWebhookSecurityConfig {
     @Bean
     @Order(0)
     public SecurityFilterChain internalWebhookFilterChain(
-            HttpSecurity http,
-            @Value("${ZZOL_BOT_ALERT_WEBHOOK_TOKEN:}") String webhookToken) throws Exception {
-        http
-                .securityMatcher("/internal/**")
+            HttpSecurity http, @Value("${ZZOL_BOT_ALERT_WEBHOOK_TOKEN:}") String webhookToken) throws Exception {
+        http.securityMatcher("/internal/**")
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(
-                        new InternalWebhookTokenFilter(webhookToken),
-                        UsernamePasswordAuthenticationFilter.class);
+                        new InternalWebhookTokenFilter(webhookToken), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

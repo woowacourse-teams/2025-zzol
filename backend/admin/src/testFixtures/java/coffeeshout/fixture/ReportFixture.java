@@ -1,14 +1,13 @@
 package coffeeshout.fixture;
 
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;
+import coffeeshout.report.infra.persistence.Report;
 import java.time.Instant;
 
 public final class ReportFixture {
 
-    private ReportFixture() {
-    }
+    private ReportFixture() {}
 
     public static Report 버그_카드게임_신고() {
         return Report.createBugReport(MiniGameType.CARD_GAME, "ABC12", "카드게임이 멈춰요.", Instant.now());

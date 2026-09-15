@@ -9,19 +9,13 @@ import java.util.List;
  */
 public final class GamerFixture {
 
-    private GamerFixture() {
-    }
+    private GamerFixture() {}
 
     public static Gamer 호스트_꾹이() {
         return Gamer.of("꾹이", null, 0);
     }
 
     public static List<Gamer> 꾹이_루키_엠제이_한스() {
-        return List.of(
-                호스트_꾹이(),
-                Gamer.of("루키", null, 1),
-                Gamer.of("엠제이", null, 2),
-                Gamer.of("한스", null, 3)
-        );
+        return List.of(호스트_꾹이(), Gamer.of("루키", null, 1), Gamer.of("엠제이", null, 2), Gamer.of("한스", null, 3));
     }
 }

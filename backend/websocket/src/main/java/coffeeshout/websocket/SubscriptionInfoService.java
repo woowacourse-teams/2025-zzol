@@ -20,10 +20,16 @@ public class SubscriptionInfoService {
      * 구독 추가
      */
     public void addSubscription(String sessionId, String destination, String subscriptionId) {
-        subscriptions.computeIfAbsent(destination, k -> ConcurrentHashMap.newKeySet()).add(sessionId);
+        subscriptions
+                .computeIfAbsent(destination, k -> ConcurrentHashMap.newKeySet())
+                .add(sessionId);
         subscriptionToDestination.put(subscriptionId, destination);
-        log.debug("구독 추가: sessionId={}, destination={}, subscriptionId={}, 현재 구독자수={}",
-                sessionId, destination, subscriptionId, getSubscriberCount(destination));
+        log.debug(
+                "구독 추가: sessionId={}, destination={}, subscriptionId={}, 현재 구독자수={}",
+                sessionId,
+                destination,
+                subscriptionId,
+                getSubscriberCount(destination));
     }
 
     /**
@@ -37,21 +43,24 @@ public class SubscriptionInfoService {
                 subscriptions.remove(destination);
             }
         }
-        log.debug("구독 제거: sessionId={}, destination={}, 현재 구독자수={}",
-                sessionId, destination, getSubscriberCount(destination));
+        log.debug(
+                "구독 제거: sessionId={}, destination={}, 현재 구독자수={}",
+                sessionId,
+                destination,
+                getSubscriberCount(destination));
     }
 
-//    /**
-//     * subscriptionId로 구독 제거
-//     */
-//    public void removeSubscriptionById(String sessionId, String subscriptionId) {
-//        String destination = subscriptionToDestination.remove(subscriptionId);
-//        if (destination != null) {
-//            removeSubscription(sessionId, destination);
-//        } else {
-//            log.warn("subscriptionId에 해당하는 destination을 찾을 수 없음: subscriptionId={}", subscriptionId);
-//        }
-//    }
+    //    /**
+    //     * subscriptionId로 구독 제거
+    //     */
+    //    public void removeSubscriptionById(String sessionId, String subscriptionId) {
+    //        String destination = subscriptionToDestination.remove(subscriptionId);
+    //        if (destination != null) {
+    //            removeSubscription(sessionId, destination);
+    //        } else {
+    //            log.warn("subscriptionId에 해당하는 destination을 찾을 수 없음: subscriptionId={}", subscriptionId);
+    //        }
+    //    }
 
     /**
      * 세션의 모든 구독 제거
@@ -95,9 +104,7 @@ public class SubscriptionInfoService {
 
         Set<String> sessions = subscriptions.get(destination);
         if (sessions != null) {
-            sessions.forEach(sessionId ->
-                    log.info("  - sessionId={}", sessionId)
-            );
+            sessions.forEach(sessionId -> log.info("  - sessionId={}", sessionId));
         }
     }
 
@@ -106,8 +113,7 @@ public class SubscriptionInfoService {
      */
     public void logAllSubscriptions() {
         log.info("=== 전체 구독 정보 ===");
-        subscriptions.forEach((destination, sessions) ->
-                log.info("destination={}, 구독자수={}", destination, sessions.size())
-        );
+        subscriptions.forEach(
+                (destination, sessions) -> log.info("destination={}, 구독자수={}", destination, sessions.size()));
     }
 }

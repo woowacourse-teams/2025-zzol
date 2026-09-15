@@ -9,6 +9,7 @@
 #   ip_block_request_blocked_total      차단된 요청 카운터
 #   login_start_total / login_success_total  라벨: provider, job — LoginMetricService(앱 코드) 신설
 #     (예외: LoginSuccessDroppedToZero는 기존 메트릭으로 잡히지 않아 전용 카운터를 도입했다)
+#   nickname_audit_unaudited_queue      닉네임 AI 검열 회차 시작 시점의 미검열 적체량 (ProfanityAuditService)
 #
 # ⚠️ 임계값은 전부 베이스라인 미측정 상태의 보수적 추정치다(ADR-0026 트레이드오프).
 #    배포 전 Prometheus API로 정상 범위를 재고, 초기엔 오탐을 줄이는 방향(높게)으로 둔다.
@@ -107,3 +108,41 @@ groups:
         annotations:
           summary: "{{ $labels.provider }} 로그인 성공 0 ({{ $labels.job }}) — 시도는 계속됨"
           description: "최근 로그인 시도는 있으나 성공이 없다. redirect_uri(스킴/호스트)·provider 콘솔 등록·시크릿을 점검. 여러 provider 동시 발생 시 프록시/baseUrl 의심."
+
+      # 닉네임 AI 검열 큐 적체 — 등록은 제한이 없고 처리만 상한에 묶여 있어, 유입이 처리량을 넘으면
+      # 큐가 단조 증가한다.
+      # blue/green 두 인스턴스 중 분산 락을 잡은 쪽만 게이지를 갱신하고 나머지는 0에 머물러
+      # max()로 활성 인스턴스 값을 고른다(OutboxDeadLetterHigh와 같은 이유).
+      #
+      # for: 13h는 오타가 아니다. 잡으려는 신호가 적체량이 아니라 "회차가 지나도 안 빠진다"는
+      # 사실이라서다. 하루 처리 상한은 9200건이라(회차 예산 10분 ÷ 레이트리미터 13초/콜 = 회차당
+      # 약 4600건, cron 12시간 주기로 하루 두 회차) 100건은 한 회차에 다 빠지는 양이다. 게이지가
+      # 회차 시작 때만 갱신돼 회차 사이 12시간 동안 값이 고정되므로, 13시간을 버티면 회차가 통째로
+      # 지나고도 큐가 그대로라는 뜻이 된다. 정상이면 회차 직후 값이 0으로 떨어져 for를 못 채운다.
+      # for를 줄이면 이 판정이 사라지고 평소 적체량을 재는 룰이 된다.
+      #
+      # 임계 100·500은 현재 유입 수준(하루 약 10건) 기준이다. 정상이면 회차마다 비워져 두 자릿수를
+      # 넘지 않으므로, 100건은 열흘치, 500건은 쉰날치 유입이 안 빠지고 쌓인 양이다. 처리 상한
+      # 9200건에 맞춘 값이 아니라서 유입이 늘면 함께 올린다.
+      # 앱 재기동 직후에는 게이지가 0으로 시작해 다음 회차까지 최대 12시간 알림이 해제된 상태가 된다.
+      - alert: NicknameAuditQueueBacklogHigh
+        expr: max by (job) (nickname_audit_unaudited_queue{job="prod-app"}) > 100
+        for: 13h
+        labels:
+          severity: warning
+          incident_group: nickname-audit-backlog
+        annotations:
+          summary: "닉네임 검열 큐 적체 (> 100, {{ $labels.job }})"
+          description: "미검열 닉네임 {{ $value }}건이 검열 회차를 하나 넘기고도 남아 있습니다. 회차가 아예 안 돌거나(스케줄러·분산 락) 배치마다 실패하는 상태. 검열 회차 로그와 Gemini 쿼터를 확인."
+
+      # 임계 500 — warning을 놓쳤거나 처리가 훨씬 오래 멎은 상태다.
+      # 위 warning과 같은 인시던트라 incident_group으로 묶어 LLM 분석을 한 번만 쓴다(#1598).
+      - alert: NicknameAuditQueueBacklogCritical
+        expr: max by (job) (nickname_audit_unaudited_queue{job="prod-app"}) > 500
+        for: 13h
+        labels:
+          severity: critical
+          incident_group: nickname-audit-backlog
+        annotations:
+          summary: "닉네임 검열 큐 적체 심각 (> 500, {{ $labels.job }})"
+          description: "미검열 닉네임이 {{ $value }}건. 검열 회차가 오래 멎어 있었다는 뜻입니다. 스케줄러 실행 여부와 분산 락(lock:nickname-audit) 잔류를 확인."

@@ -11,6 +11,5 @@ public class StubDeck extends Deck {
     }
 
     @Override
-    public void shuffle() {
-    }
+    public void shuffle() {}
 }

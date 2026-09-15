@@ -16,43 +16,55 @@ public class AdminArchitectureTest {
 
     @ArchTest
     static final ArchRule dashboard는_patchnote를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.dashboard..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.dashboard..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.patchnote..")
             .as("dashboard는 patchnote를 직접 참조할 수 없다");
 
     @ArchTest
     static final ArchRule dashboard는_report를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.dashboard..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.dashboard..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.report..")
             .as("dashboard는 report를 직접 참조할 수 없다");
 
     @ArchTest
     static final ArchRule patchnote는_dashboard를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.patchnote..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.patchnote..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.dashboard..")
             .as("patchnote는 dashboard를 직접 참조할 수 없다");
 
     @ArchTest
     static final ArchRule patchnote는_report를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.patchnote..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.patchnote..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.report..")
             .as("patchnote는 report를 직접 참조할 수 없다");
 
     @ArchTest
     static final ArchRule report는_dashboard를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.report..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.report..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.dashboard..")
             .as("report는 dashboard를 직접 참조할 수 없다");
 
     @ArchTest
     static final ArchRule report는_patchnote를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.report..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.report..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.patchnote..")
             .as("report는 patchnote를 직접 참조할 수 없다");
 }

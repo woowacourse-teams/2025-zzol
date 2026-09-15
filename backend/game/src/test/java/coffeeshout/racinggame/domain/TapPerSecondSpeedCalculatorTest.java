@@ -2,7 +2,6 @@ package coffeeshout.racinggame.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import coffeeshout.racinggame.domain.TapPerSecondSpeedCalculator;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 

@@ -32,8 +32,8 @@ public class TestStompSessionFactory {
 
     public TestStompSession connect(StompHeaders connectHeaders)
             throws InterruptedException, ExecutionException, TimeoutException {
-        final SockJsClient sockJsClient = new SockJsClient(
-                List.of(new WebSocketTransport(new StandardWebSocketClient())));
+        final SockJsClient sockJsClient =
+                new SockJsClient(List.of(new WebSocketTransport(new StandardWebSocketClient())));
         final WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
         final JacksonJsonMessageConverter converter = new JacksonJsonMessageConverter();
         converter.setStrictContentTypeMatch(false);
@@ -57,8 +57,12 @@ public class TestStompSessionFactory {
                             }
 
                             @Override
-                            public void handleException(StompSession session, StompCommand command,
-                                    StompHeaders headers, byte[] payload, Throwable exception) {
+                            public void handleException(
+                                    StompSession session,
+                                    StompCommand command,
+                                    StompHeaders headers,
+                                    byte[] payload,
+                                    Throwable exception) {
                                 principalFuture.completeExceptionally(exception);
                                 throw new RuntimeException(exception);
                             }

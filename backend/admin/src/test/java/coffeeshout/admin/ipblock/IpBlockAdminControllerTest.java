@@ -41,9 +41,7 @@ class IpBlockAdminControllerTest {
         @ValueSource(strings = {"not-an-ip", "256.1.1.1", "block:ip:*"})
         void 유효하지_않은_IP_형식이면_예외를_던지고_서비스를_호출하지_않는다(String invalidIp) {
             assertCoffeeShoutException(
-                    () -> ipBlockAdminController.unblock(invalidIp),
-                    GlobalErrorCode.VALIDATION_ERROR
-            );
+                    () -> ipBlockAdminController.unblock(invalidIp), GlobalErrorCode.VALIDATION_ERROR);
 
             then(ipBlockAdminService).shouldHaveNoInteractions();
         }

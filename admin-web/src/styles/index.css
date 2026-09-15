@@ -1,0 +1,147 @@
+/* @import 는 다른 규칙보다 먼저 와야 한다. 폰트를 아래에 두면 브라우저가 무시한다.
+ *
+ * Pretendard 는 서비스 프론트와 같은 폰트다. CDN 을 쓰는 것은 백오피스가 소수만 쓰고
+ * 폰트 자산을 따로 관리할 이유가 없어서다. */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+@import url('https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.19/index.min.css');
+
+@import 'tailwindcss';
+@import './tokens.css';
+
+/*
+ * tokens.css 의 CSS 변수를 Tailwind 유틸리티로 노출한다.
+ * @theme 에 등록한 값만 bg-*, text-*, border-* 같은 클래스가 생긴다.
+ *
+ * 원색(--point-400 등)은 일부러 등록하지 않는다. 컴포넌트가 bg-point-400 을 직접 쓰기
+ * 시작하면 역할 별칭이 있는 의미가 사라지고, 팔레트를 바꿀 때 전 파일을 찾아다녀야 한다.
+ * 차트 계열만 예외로 원색을 노출한다. 계열 번호 자체가 역할이기 때문이다.
+ */
+@theme inline {
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-subtle: var(--bg-subtle);
+  --color-selected: var(--bg-selected);
+
+  --color-border-default: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-ink: var(--text-primary);
+  --color-ink-secondary: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
+  --color-ink-inverse: var(--text-inverse);
+
+  --color-rail: var(--rail-bg);
+  --color-rail-active: var(--rail-item-active-bg);
+  --color-rail-hover: var(--rail-item-hover-bg);
+  --color-rail-line: var(--rail-border);
+  --color-rail-ink: var(--rail-text);
+  --color-rail-ink-active: var(--rail-text-active);
+  --color-rail-ink-heading: var(--rail-text-heading);
+
+  --color-accent: var(--accent);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-ink: var(--accent-text);
+
+  --color-action: var(--action-primary-bg);
+  --color-action-hover: var(--action-primary-bg-hover);
+  --color-action-text: var(--action-primary-text);
+
+  /* 신호는 하나다. 회색으로 못 하는 말만 이 색이 한다.
+   * mark 가 색을 지고 attention 은 그 옆의 글자색(=잉크)이다. 둘을 헷갈리면
+   * 로고색 글자가 다시 생겨난다. */
+  --color-attention: var(--attention-fg);
+  --color-attention-bg: var(--attention-bg);
+  --color-attention-mark: var(--attention-mark);
+  --color-attention-solid: var(--attention-solid);
+  --color-attention-on-solid: var(--attention-on-solid);
+  --color-attention-icon-on-solid: var(--attention-icon-on-solid);
+
+  --color-chart-1: var(--chart-1);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --text-2xs: var(--text-2xs);
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-base: var(--text-base);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --text-2xl: var(--text-2xl);
+  --text-3xl: var(--text-3xl);
+
+  /* 숫자 전용 자간. 큰 숫자를 쓰는 곳은 전부 이걸 쓴다. */
+  --tracking-metric: var(--metric-tracking);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-popover: var(--shadow-popover);
+  --shadow-dialog: var(--shadow-dialog);
+
+  --spacing-rail: var(--rail-width);
+  --spacing-rail-offset: var(--rail-offset);
+  --spacing-rail-inset: var(--rail-inset);
+  --spacing-topbar: var(--topbar-height);
+  --spacing-row: var(--row-height);
+  --spacing-row-compact: var(--row-height-compact);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    font-size: 16px;
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 숫자 자리를 고정한다. 표에서 자릿수가 흔들리면 눈으로 훑을 수 없다. */
+  body {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 포커스 링은 브랜드 코랄이다. 밝은 색이 가장 잘하는 일이고,
+   * 키보드로 다니는 운영자에게 지금 어디인지가 늘 보여야 한다. */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* 표 안에서 긴 ID 나 joinCode 가 줄바꿈되지 않게 한다. */
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-mono);
+  }
+}
+
+/* 스크롤바를 얇게. 표가 많은 화면에서 기본 스크롤바는 면적을 많이 먹는다. */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border: 2px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-400);
+    background-clip: content-box;
+  }
+}

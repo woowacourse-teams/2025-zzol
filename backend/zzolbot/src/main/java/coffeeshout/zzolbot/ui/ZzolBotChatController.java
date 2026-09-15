@@ -16,20 +16,19 @@ import java.util.concurrent.RejectedExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
-@Controller
+@RestController
 @Validated
-@RequestMapping("/admin/zzolbot")
+@RequestMapping("/admin/api/zzolbot")
 public class ZzolBotChatController {
 
     private static final long SSE_TIMEOUT_MS = 120_000L;
@@ -47,13 +46,7 @@ public class ZzolBotChatController {
         this.formatter = DateTimeFormatter.ofPattern("MM/dd HH:mm").withZone(clock.getZone());
     }
 
-    @GetMapping
-    public String page() {
-        return "admin/zzolbot";
-    }
-
     @PostMapping("/ask")
-    @ResponseBody
     public SseEmitter ask(@RequestBody @Valid AskRequest request, Principal principal) {
         final SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
         emitter.onTimeout(() -> {
@@ -93,14 +86,12 @@ public class ZzolBotChatController {
     }
 
     @PostMapping("/sessions/{id}/feedback")
-    @ResponseBody
     public ResponseEntity<Void> feedback(@PathVariable Long id, @RequestBody @Valid FeedbackRequest request) {
         chatService.applyFeedback(id, request.feedback());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/sessions")
-    @ResponseBody
     public List<SessionResponse> sessions() {
         return chatService.getRecentSessions().stream()
                 .map(s -> new SessionResponse(

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 모니터링 어드민 API. Alertmanager가 분석·영속한 firing 알림 이력을 조회한다(조회 전용).
  */
 @RestController
-@RequestMapping("/admin/zzolbot/monitor")
+@RequestMapping("/admin/api/zzolbot/monitor")
 public class ZzolBotMonitorController {
 
     private final MonitorService monitorService;

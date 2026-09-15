@@ -115,8 +115,11 @@ websocket:
 
 
 admin:
-  username: admin
-  password: "1234"
+  auth:
+    emails: mj@zzol.site,root@zzol.site
+    google-client-id: test-admin-client-id
+    jwt-secret: "admin-test-secret-key-must-be-at-least-32-bytes-long"
+    token-validity-seconds: 3600
 
 user:
   jwt:

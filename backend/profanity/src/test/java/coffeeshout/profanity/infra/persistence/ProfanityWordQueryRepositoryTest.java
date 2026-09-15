@@ -70,6 +70,24 @@ class ProfanityWordQueryRepositoryTest extends ServiceTest {
         }
 
         @Test
+        void 검색어의_와일드카드는_글자_그대로_찾는다() {
+            // LIKE 의 _ 는 아무 글자 하나와 맞는다. 이스케이프하지 않으면 "씨_" 로 "씨발" 이
+            // 걸린다. 금칙어 사전에는 그 두 글자가 낱말 자체로 들어 있을 수 있다.
+            Page<ProfanityWordEntity> result =
+                    queryRepository.findAllPaged("씨_", null, null, null, PageRequest.of(0, 20));
+
+            assertThat(result.isEmpty()).isTrue();
+        }
+
+        @Test
+        void 퍼센트를_쳐도_전체가_걸리지_않는다() {
+            Page<ProfanityWordEntity> result =
+                    queryRepository.findAllPaged("%", null, null, null, PageRequest.of(0, 20));
+
+            assertThat(result.isEmpty()).isTrue();
+        }
+
+        @Test
         void 일치하는_단어가_없으면_빈_결과를_반환한다() {
             Page<ProfanityWordEntity> result =
                     queryRepository.findAllPaged("xyz", null, null, null, PageRequest.of(0, 20));

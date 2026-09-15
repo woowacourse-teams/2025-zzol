@@ -253,6 +253,6 @@ STOMP 연결 엔드포인트: `/ws` (SockJS 폴백 지원)
 
 `GET /dev/ws-catalog` (`!prod` 프로파일에서만 활성화)
 
-같은 카탈로그를 `:app` 의 `WsCatalogContractTest` 가 `app/src/test/resources/__fixtures__/ws-catalog.json` 과 `frontend/src/apis/websocket/generated/wsContract.ts` 로 생성한다. FE 훅의 파라미터 타입이 그 파일을 받아 카탈로그에 없는 destination 과 어긋난 payload 필드가 tsc 오류가 된다. 생성물이 소스보다 낡으면 backend-ci 가 실패한다(ADR-0037).
+같은 카탈로그를 `:app` 의 `WsCatalogContractTest` 가 `app/src/test/resources/__fixtures__/ws-catalog.json` 과 `frontend/src/apis/websocket/generated/` 의 `wsContract.ts`(destination)·`ws-openapi.json`(payload 스키마)으로 생성한다. FE 는 `openapi-typescript` 로 JSON 에서 payload 타입을 만들고, 훅의 파라미터 타입이 그 파일들을 받아 카탈로그에 없는 destination 과 어긋난 payload 필드가 tsc 오류가 된다. 생성물이 소스보다 낡으면 CI 가 실패한다(ADR-0037).
 
 `WsCatalogBuilder`가 `ApplicationContext`를 스캔하여 애너테이션이 붙은 모든 Bean을 수집하고 JSON으로 직렬화한다.

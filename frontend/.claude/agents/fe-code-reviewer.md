@@ -94,7 +94,7 @@ tools: Bash, Read, Glob, Grep
 
 ### WebSocket 컨트랙트
 
-WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할 때는 `src/apis/websocket/generated/wsContract.ts` 를 읽어 BE 계약과 대조한다. destination 존재와 payload 필드는 tsc 가 강제하므로, 리뷰는 타입이 못 보는 것에 집중한다. optional 필드(`field?: T | null`)를 non-null 로 가정하는 소비처, 구독 위치, envelope 처리(개인 소켓은 `event.data`)가 그것이다.
+WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할 때는 `src/apis/websocket/generated/wsContract.ts`(destination)와 `wsOpenApi.d.ts`(payload 모양)를 읽어 BE 계약과 대조한다. destination 존재와 payload 필드는 tsc 가 강제하므로, 리뷰는 타입이 못 보는 것에 집중한다. optional 필드(`field?: T | null`)를 non-null 로 가정하는 소비처, 구독 위치, envelope 처리(개인 소켓은 `event.data`)가 그것이다.
 
 - [ ] destination 에 prefix(`/topic`, `/app`)가 중복으로 들어가 있지 않은가. FE wrapper 가 자동으로 붙이므로 path 에서 제거해야 한다. 개인 큐(`/user/queue/...`)는 그대로 넘긴다 (`.claude/rules/websocket.md` 참조)
 - [ ] 사용한 destination 이 생성 파일에 존재하는가. 없으면 BE 측 `@WsTopic` 추가가 필요하다. 임의 신설 금지

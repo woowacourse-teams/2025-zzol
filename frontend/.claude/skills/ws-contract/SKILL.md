@@ -1,5 +1,5 @@
 ---
-description: WebSocket 구독·발행 코드 작성 또는 수정 시 BE 가 생성한 wsContract.ts 로 컨트랙트를 먼저 확인한다. destination 과 payload 타입은 생성 파일이 SSOT 이고 tsc 가 강제한다.
+description: WebSocket 구독·발행 코드 작성 또는 수정 시 BE 가 생성한 wsContract.ts 와 wsOpenApi.d.ts 로 컨트랙트를 먼저 확인한다. destination 과 payload 타입은 생성 파일이 SSOT 이고 tsc 가 강제한다.
 paths:
   - "src/apis/websocket/**"
   - "src/contexts/**"
@@ -12,12 +12,16 @@ allowed-tools: Read, Grep
 
 ## 컨트랙트는 어디에 있나
 
-`src/apis/websocket/generated/wsContract.ts` 가 SSOT 다. BE 의 `@WsTopic`·`@WsQueue`·`@WsReceive` 애노테이션과 response record 에서 `WsCatalogContractTest` 가 생성한다. 손으로 고치지 않는다. 소스보다 낡으면 backend-ci 가 실패한다(ADR-0037).
+`src/apis/websocket/generated/` 의 세 파일이 SSOT 다. 손으로 고치지 않는다. 소스보다 낡으면 CI 가 실패한다(ADR-0037).
 
-파일 안에 넷이 있다.
+- `wsContract.ts` — BE 의 `@WsTopic`·`@WsQueue`·`@WsReceive` 애노테이션에서 `WsCatalogContractTest` 가 생성한다. import 는 이 파일 하나로 한다.
+- `ws-openapi.json` — 같은 테스트가 response record 를 OpenAPI 스키마로 낸 것.
+- `wsOpenApi.d.ts` — `npm run generate:ws` 가 위 JSON 에서 `openapi-typescript` 로 만든 payload 타입. `wsContract.ts` 가 이름을 다시 내보내므로 직접 import 하지 않는다.
+
+`wsContract.ts` 안에 넷이 있다.
 
 - `WsSubscribePath`·`WsSendPath` — FE 훅이 받는 형태의 destination union. topic 은 `/topic` 을, send 는 `/app` 을 뗀 경로이고 개인 큐는 `/user/queue/...` 그대로다.
-- payload 타입 — BE record 와 enum 을 그대로 옮긴 것. `@Nullable` 이 붙은 필드만 `field?: T | null` 이다.
+- payload 타입 alias — `export type PlayerResponse = components['schemas']['PlayerResponse']` 처럼 BE record·enum 이름을 그대로 쓴다. `@Nullable` 이 붙은 필드만 `field?: T | null` 이다.
 - `WsPayloadOf<D>` — destination 에서 payload 타입을 찾는다. 훅의 `onData` 파라미터 타입이 여기서 나온다.
 - `WsSubscribeDestination<D>`·`WsSendDestination<D>` — 호출부 리터럴이 카탈로그 패턴 하나와 정확히 같을 때만 통과시키는 검사.
 
@@ -42,7 +46,12 @@ grep -rn 'record LadderStateResponse' ../backend/
 
 ## 카탈로그에 없는 경로가 필요할 때
 
-BE PR 을 선행한다. 해당 Publisher 나 컨트롤러에 `@WsTopic(path = "...", payload = Xxx.class)` 를 달고 `backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*'` 로 생성 파일을 갱신해 함께 커밋한다. null 을 넘기는 record 컴포넌트에는 `@Nullable` 을 단다.
+BE PR 을 선행한다. 해당 Publisher 나 컨트롤러에 `@WsTopic(path = "...", payload = Xxx.class)` 를 달고 생성 파일을 갱신해 함께 커밋한다. pre-push 훅이 같은 두 명령을 이어 돌린다. null 을 넘기는 record 컴포넌트에는 `@Nullable` 을 단다.
+
+```bash
+backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*'
+npm run generate:ws
+```
 
 ## 검증
 

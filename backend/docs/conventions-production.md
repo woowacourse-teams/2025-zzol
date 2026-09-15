@@ -21,7 +21,7 @@
 ### WebSocket 컨트랙트 어노테이션
 
 WebSocket 메시지를 발행하는 메서드에는 반드시 아래 어노테이션을 붙여야 한다.
-어노테이션이 누락되면 카탈로그에 빠지고, `/topic/` 발행 상수가 있는데 `@WsTopic` 이 없으면 `WsCatalogContractTest` 가 실패한다. FE 는 그 카탈로그에서 생성한 `wsContract.ts` 로 destination 과 payload 를 컴파일 시점에 검사한다(ADR-0037).
+어노테이션이 누락되면 카탈로그에 빠지고, `/topic/` 발행 상수가 있는데 `@WsTopic` 이 없으면 `WsCatalogContractTest` 가 실패한다. FE 는 그 카탈로그에서 생성한 `wsContract.ts` 와 `ws-openapi.json` 으로 destination 과 payload 를 컴파일 시점에 검사한다(ADR-0037).
 
 | 어노테이션        | 사용 위치                                                  | 설명                             |
 |--------------|--------------------------------------------------------|--------------------------------|

@@ -214,7 +214,11 @@ apply_monitoring() {
 
     # best-effort지만 각 단계 실패를 집계해 호출부(main)가 경고를 띄울 수 있도록 비0 전파.
     local rc=0
-    rsync -a --delete "${MONITOR_SRC}/conf/" "${MONITOR_DIR}/conf/" \
+    # --inplace: 기존 inode에 덮어쓴다. 미지정 시 rsync는 temp+rename으로 새 inode를
+    # 만드는데, prometheus.yml처럼 단일 파일을 bind-mount한 컨테이너는 기동 시 inode에
+    # 고정돼 새 inode를 못 본다 → 아래 SIGHUP 리로드가 옛 파일만 읽어 갱신이 조용히 실패한다
+    # (restart/recreate로만 반영). --inplace로 inode를 유지해 SIGHUP 핫리로드가 먹게 한다.
+    rsync -a --delete --inplace "${MONITOR_SRC}/conf/" "${MONITOR_DIR}/conf/" \
         || { log_warning "monitor conf sync 실패"; rc=1; }
     cp -a "${MONITOR_SRC}/docker-compose.yml" "${MONITOR_DIR}/docker-compose.yml" \
         || { log_warning "monitor compose 복사 실패"; rc=1; }

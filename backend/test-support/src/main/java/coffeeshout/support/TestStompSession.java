@@ -126,7 +126,16 @@ public class TestStompSession implements AutoCloseable {
     }
 
     public static class MessageCollector {
-        private final BlockingQueue<String> queue = new LinkedBlockingQueue<>();
+        /** 도착 시각을 함께 보관해 {@code get()} 이 호출 시점과 무관하게 메시지 간격을 잴 수 있게 한다. */
+        private record Arrived(long at, String message) {}
+
+        private final BlockingQueue<Arrived> queue = new LinkedBlockingQueue<>();
+
+        /** 구독 시각. 첫 메시지의 duration 기준점이다. */
+        private final long subscribedAt = System.currentTimeMillis();
+
+        /** 직전에 꺼낸 메시지의 도착 시각. 다음 메시지의 duration 기준점이다. */
+        private long lastPolledAt = -1L;
 
         /**
          * [진단 계측 — #1410] 폴링되어 큐에서 빠져나간 메시지까지 포함해 이 컬렉터가 수신한
@@ -142,7 +151,7 @@ public class TestStompSession implements AutoCloseable {
         /** subscribe() 등록 확인용 barrier ping. 일반 큐에서 걸러내 단언을 오염시키지 않고 등록 확인에만 쓴다(#1410). */
         private final Set<String> barrierPings = ConcurrentHashMap.newKeySet();
 
-        private void add(String message) {
+        void add(String message) {
             if (message.contains(SUBSCRIBE_BARRIER_KEY)) {
                 barrierPings.add(message);
                 return;
@@ -152,7 +161,7 @@ public class TestStompSession implements AutoCloseable {
                 firstAddAt = now;
             }
             receivedHistory.add("+" + (now - firstAddAt) + "ms " + message);
-            queue.add(message);
+            queue.add(new Arrived(now, message));
         }
 
         private boolean receivedBarrierPing(String token) {
@@ -163,8 +172,12 @@ public class TestStompSession implements AutoCloseable {
             return get(DEFAULT_RESPONSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         }
 
+        /**
+         * 다음 메시지를 꺼낸다. {@link MessageResponse#duration()} 은 직전에 꺼낸 메시지(없으면 구독 시각)의
+         * 도착부터 이 메시지 도착까지의 간격이다. 호출 시점부터 기다린 시간이 아니므로, 테스트 스레드가 앞
+         * 메시지를 처리하느라 늦게 불러도 값이 줄지 않는다(#1782).
+         */
         public MessageResponse get(long timeout, TimeUnit unit) {
-            long start = System.currentTimeMillis();
             try {
                 Awaitility.await().atMost(timeout, unit).until(() -> !queue.isEmpty());
             } catch (ConditionTimeoutException e) {
@@ -180,8 +193,10 @@ public class TestStompSession implements AutoCloseable {
                 enriched.initCause(e);
                 throw enriched;
             }
-            long end = System.currentTimeMillis();
-            return new MessageResponse(end - start, queue.poll());
+            final Arrived next = queue.poll();
+            final long since = lastPolledAt < 0L ? subscribedAt : lastPolledAt;
+            lastPolledAt = next.at();
+            return new MessageResponse(next.at() - since, next.message());
         }
 
         public int size() {

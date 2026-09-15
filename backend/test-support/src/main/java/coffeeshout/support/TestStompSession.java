@@ -131,11 +131,11 @@ public class TestStompSession implements AutoCloseable {
 
         private final BlockingQueue<Arrived> queue = new LinkedBlockingQueue<>();
 
-        /** 구독 시각. 첫 메시지의 duration 기준점이다. */
-        private final long subscribedAt = System.currentTimeMillis();
-
-        /** 직전에 꺼낸 메시지의 도착 시각. 다음 메시지의 duration 기준점이다. */
-        private long lastPolledAt = -1L;
+        /**
+         * 직전에 꺼낸 메시지의 도착 시각. 다음 메시지의 duration 기준점이다. 초기값은 컬렉터 생성 시각이라
+         * 첫 메시지의 duration 에는 {@code awaitRegistered} 의 브로커 등록 대기가 섞인다. 첫 메시지 간격은 단언하지 않는다.
+         */
+        private long lastPolledAt = System.currentTimeMillis();
 
         /**
          * [진단 계측 — #1410] 폴링되어 큐에서 빠져나간 메시지까지 포함해 이 컬렉터가 수신한
@@ -173,7 +173,7 @@ public class TestStompSession implements AutoCloseable {
         }
 
         /**
-         * 다음 메시지를 꺼낸다. {@link MessageResponse#duration()} 은 직전에 꺼낸 메시지(없으면 구독 시각)의
+         * 다음 메시지를 꺼낸다. {@link MessageResponse#duration()} 은 직전에 꺼낸 메시지(없으면 컬렉터 생성 시각)의
          * 도착부터 이 메시지 도착까지의 간격이다. 호출 시점부터 기다린 시간이 아니므로, 테스트 스레드가 앞
          * 메시지를 처리하느라 늦게 불러도 값이 줄지 않는다(#1782).
          */
@@ -194,9 +194,9 @@ public class TestStompSession implements AutoCloseable {
                 throw enriched;
             }
             final Arrived next = queue.poll();
-            final long since = lastPolledAt < 0L ? subscribedAt : lastPolledAt;
+            final long duration = next.at() - lastPolledAt;
             lastPolledAt = next.at();
-            return new MessageResponse(next.at() - since, next.message());
+            return new MessageResponse(duration, next.message());
         }
 
         public int size() {

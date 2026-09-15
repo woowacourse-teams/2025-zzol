@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 class MessageCollectorTest {
 
     private static final long ARRIVAL_GAP_MS = 500L;
-    private static final long TEST_THREAD_LAG_MS = 200L;
 
     private final ScheduledExecutorService server = Executors.newSingleThreadScheduledExecutor();
 
@@ -27,20 +26,24 @@ class MessageCollectorTest {
     /**
      * 게임 IT 는 duration 을 "직전 메시지 → 이번 메시지 간격" 으로 단언한다. get() 을 부른 시점부터 잰다면
      * 테스트 스레드가 앞 메시지를 처리하느라 늦게 부를수록 값이 줄어 CI 부하에서 흔들린다(#1782).
+     *
+     * <p>첫 메시지도 GAP 만큼 늦게 도착시킨다. 생성 직후 도착하면 "직전 메시지 기준" 과 "생성 시각 기준" 이
+     * 같은 값을 내 기준점 갱신을 지운 돌연변이가 살아남는다. 두 번째 get() 은 도착을 확인한 뒤 부른다.
+     * 옛 구현(호출 시점 기준)은 0 에 가까운 값을, 생성 시각 기준 돌연변이는 2×GAP 을 내 둘 다 걸린다.
      */
     @Test
     void duration_은_get_호출_시점이_아니라_메시지_도착_간격을_잰다() {
         final MessageCollector collector = new MessageCollector();
-        collector.add("first");
-        server.schedule(() -> collector.add("second"), ARRIVAL_GAP_MS, TimeUnit.MILLISECONDS);
+        server.schedule(() -> collector.add("first"), ARRIVAL_GAP_MS, TimeUnit.MILLISECONDS);
+        server.schedule(() -> collector.add("second"), ARRIVAL_GAP_MS * 2, TimeUnit.MILLISECONDS);
 
         collector.get();
-        Awaitility.await().pollDelay(TEST_THREAD_LAG_MS, TimeUnit.MILLISECONDS).until(() -> true);
+        Awaitility.await().atMost(ARRIVAL_GAP_MS * 3, TimeUnit.MILLISECONDS).until(() -> !collector.isEmpty());
         final MessageResponse second = collector.get();
 
         assertThat(second.payload()).isEqualTo("second");
         assertThat(second.duration())
-                .as("테스트 스레드가 %dms 늦게 get() 을 불러도 도착 간격 %dms 가 나와야 한다", TEST_THREAD_LAG_MS, ARRIVAL_GAP_MS)
-                .isBetween(ARRIVAL_GAP_MS - 50, ARRIVAL_GAP_MS + 500);
+                .as("두 번째 메시지가 도착한 뒤 get() 을 불러도 도착 간격 %dms 가 나와야 한다", ARRIVAL_GAP_MS)
+                .isBetween(ARRIVAL_GAP_MS - 50, ARRIVAL_GAP_MS + 400);
     }
 }

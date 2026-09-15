@@ -60,7 +60,8 @@ ADR-0012 는 fixture 스냅샷 동등 검증을 두지 않기로 했다. 근거 
 - **FE 쪽 스크립트가 fixture 를 TS 로 변환**: BE PR 이 fixture 를 바꾸면 FE 생성물이 낡아 BE 작업자가 FE 스크립트를 한 번 더 돌려야 한다. BE 테스트가 두 파일을 함께 쓰면 한 명령으로 끝난다. **기각**.
 - **래퍼 타입을 전부 `| null` 로**: FE 15곳 이상에서 거짓 오류. **기각**, `@Nullable` 표시로 대체.
 - **BE+FE 를 띄우는 E2E**: 런타임 전체를 덮지만 실행당 4~6분, 호스트·게스트 2컨텍스트, 게임 타이머 flaky. 정적 게이트가 잡는 것을 E2E 로 잡을 이유가 없다. dev push 시 도는 얇은 스모크 E2E 는 별도 이슈로 남긴다.
-- **Pact/CDC**: STOMP 미지원이고 브로커 인프라가 든다. **기각**.
+- **Pact 메시지 계약**: 계약 파일을 저장소에 커밋하면 브로커 없이도 돌고, STOMP 전송과 무관하게 payload 형태는 검증한다. 다만 FE 가 기대값을 손으로 적는 소비자 주도 방식이라 지금 손글씨 타입과 같은 약점이 남고, tsc 게이트를 잃는다. **기각**.
+- **Springwolf + AsyncAPI Modelina**: `@MessageMapping`·`@SendTo` 를 스캔해 AsyncAPI 문서를 내고 Modelina 가 TS payload 타입을 만든다. 카탈로그와 payload 생성기는 대체하지만 destination union 과 동치 검사는 어차피 직접 써야 하고, 템플릿 발행부에 `@AsyncPublisher` 규약이 새로 든다. 생성기가 커지면 옮길 후보로 남긴다. **보류**.
 
 ## 결과
 
@@ -72,7 +73,7 @@ ADR-0012 는 fixture 스냅샷 동등 검증을 두지 않기로 했다. 근거 
 ## 다음 단계
 
 - **`send` body 타입**: `WsRequestOf<D>`. `MiniGameMessage.commandRequest` 가 `JsonNode` 라 `unknown` 이 되어 지금 호출부가 깨진다. BE 가 command 별 타입을 드러낸 뒤에 한다.
-- **REST 경로 union**: `/v3/api-docs` 를 같은 테스트에서 받아 경로·메서드 union 을 내고 `apiRequest` 의 endpoint 파라미터를 조인다.
+- **REST 계약 (#1741)**: `/v3/api-docs` 를 같은 테스트에서 받아 `frontend/` 아래에 쓰고, 타입은 `openapi-typescript` 로 만든다. REST 는 기성품이 있으므로 생성기를 직접 쓰지 않는다.
 - **스모크 E2E**: dev push 트리거, Playwright 2컨텍스트, 방 생성부터 레이싱 PLAYING 까지.
 
 ## 변경 범위

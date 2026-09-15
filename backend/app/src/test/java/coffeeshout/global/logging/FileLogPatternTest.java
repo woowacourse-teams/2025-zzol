@@ -1,5 +1,6 @@
 package coffeeshout.global.logging;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import ch.qos.logback.classic.Level;
@@ -8,11 +9,10 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import java.io.InputStream;
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPathFactory;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 /**
  * 파일 로그 패턴이 엔트리 하나를 반드시 한 줄로 쓰는지 고정한다.
@@ -25,12 +25,18 @@ import org.w3c.dom.NodeList;
 class FileLogPatternTest {
 
     @Test
+    void FILE_어펜더는_FILE_LOG_PATTERN_을_쓴다() throws Exception {
+        // 패턴만 검사하고 어펜더가 그 패턴을 쓰는지 안 보면, 어펜더에 다른 패턴을 직접 박아도 초록으로 남는다.
+        assertThat(xpath("//appender[@name='FILE']/encoder/pattern/text()")).isEqualTo("${FILE_LOG_PATTERN}");
+    }
+
+    @Test
     void 메시지와_예외의_개행을_지워_한_줄로_쓴다() throws Exception {
         // 새 LoggerContext 에는 MDC 어댑터가 없어 %X 가 NPE 를 낸다. 실제 컨텍스트를 빌려 쓴다.
         final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         final PatternLayout layout = new PatternLayout();
         layout.setContext(context);
-        layout.setPattern(fileLogPattern());
+        layout.setPattern(xpath("//property[@name='FILE_LOG_PATTERN']/@value"));
         layout.start();
 
         final LoggingEvent event = new LoggingEvent(
@@ -42,12 +48,10 @@ class FileLogPatternTest {
                 null);
 
         final String line = layout.doLayout(event);
-        final String body =
-                line.substring(0, line.length() - System.lineSeparator().length());
 
         assertSoftly(softly -> {
             softly.assertThat(line).endsWith(System.lineSeparator());
-            softly.assertThat(body)
+            softly.assertThat(line.stripTrailing())
                     .doesNotContain("\n")
                     .doesNotContain("\r")
                     .contains("playerName=x")
@@ -57,19 +61,9 @@ class FileLogPatternTest {
         });
     }
 
-    private static String fileLogPattern() throws Exception {
+    private static String xpath(String expression) throws Exception {
         try (InputStream xml = FileLogPatternTest.class.getResourceAsStream("/logback-spring.xml")) {
-            final NodeList properties = DocumentBuilderFactory.newInstance()
-                    .newDocumentBuilder()
-                    .parse(xml)
-                    .getElementsByTagName("property");
-            for (int i = 0; i < properties.getLength(); i++) {
-                final Element property = (Element) properties.item(i);
-                if ("FILE_LOG_PATTERN".equals(property.getAttribute("name"))) {
-                    return property.getAttribute("value");
-                }
-            }
+            return XPathFactory.newInstance().newXPath().evaluate(expression, new InputSource(xml));
         }
-        throw new IllegalStateException("logback-spring.xml 에 FILE_LOG_PATTERN 이 없다");
     }
 }

@@ -1,11 +1,11 @@
 package coffeeshout.report.application;
 
 import coffeeshout.global.exception.custom.BusinessException;
-import coffeeshout.report.ratelimit.ReportRateLimitStore;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.domain.ReportErrorCode;
 import coffeeshout.report.infra.persistence.Reporter;
+import coffeeshout.report.ratelimit.ReportRateLimitStore;
 import coffeeshout.user.domain.AuthenticatedUser;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -27,17 +27,23 @@ public class ReportFacade {
         return submit(ip, category, gameType, joinCode, content, Optional.empty());
     }
 
-    public long submit(String ip, ReportCategory category, MiniGameType gameType, String joinCode, String content,
-                       Optional<AuthenticatedUser> authUser) {
+    public long submit(
+            String ip,
+            ReportCategory category,
+            MiniGameType gameType,
+            String joinCode,
+            String content,
+            Optional<AuthenticatedUser> authUser) {
         if (ip == null || ip.isBlank()) {
-            throw new BusinessException(ReportErrorCode.INVALID_CLIENT_IP, ReportErrorCode.INVALID_CLIENT_IP.getMessage());
+            throw new BusinessException(
+                    ReportErrorCode.INVALID_CLIENT_IP, ReportErrorCode.INVALID_CLIENT_IP.getMessage());
         }
         if (!rateLimitStore.tryAcquire(ip)) {
-            throw new BusinessException(ReportErrorCode.REPORT_RATE_LIMITED, ReportErrorCode.REPORT_RATE_LIMITED.getMessage());
+            throw new BusinessException(
+                    ReportErrorCode.REPORT_RATE_LIMITED, ReportErrorCode.REPORT_RATE_LIMITED.getMessage());
         }
-        final Reporter author = authUser
-                .map(u -> new Reporter(u.userId(), u.userCode()))
-                .orElse(null);
+        final Reporter author =
+                authUser.map(u -> new Reporter(u.userId(), u.userCode())).orElse(null);
         return reportService.submit(category, gameType, joinCode, content, author, ip);
     }
 }

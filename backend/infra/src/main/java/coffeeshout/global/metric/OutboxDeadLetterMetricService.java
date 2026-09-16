@@ -25,8 +25,7 @@ public class OutboxDeadLetterMetricService {
     private final OutboxEventRepository outboxEventRepository;
     private final MeterRegistry meterRegistry;
 
-    public OutboxDeadLetterMetricService(
-            OutboxEventRepository outboxEventRepository, MeterRegistry meterRegistry) {
+    public OutboxDeadLetterMetricService(OutboxEventRepository outboxEventRepository, MeterRegistry meterRegistry) {
         this.outboxEventRepository = outboxEventRepository;
         this.meterRegistry = meterRegistry;
     }

@@ -12,8 +12,7 @@ public class ProfanityTestDataSeeder {
     private static final List<ProfanityWord> SEED_WORDS = List.of(
             new ProfanityWord("씨발", Language.KOREAN, WordSource.MANUAL, true),
             new ProfanityWord("개새끼", Language.KOREAN, WordSource.MANUAL, true),
-            new ProfanityWord("fuck", Language.ENGLISH, WordSource.MANUAL, true)
-    );
+            new ProfanityWord("fuck", Language.ENGLISH, WordSource.MANUAL, true));
 
     private final ProfanityWordRepository wordRepository;
     private final ProfanityFilterService filterService;

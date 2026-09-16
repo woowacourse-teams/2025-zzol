@@ -1,7 +1,7 @@
 package coffeeshout.global.redis.config;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;

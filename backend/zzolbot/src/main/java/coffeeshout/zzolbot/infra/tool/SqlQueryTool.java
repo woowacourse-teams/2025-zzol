@@ -34,24 +34,23 @@ public class SqlQueryTool implements ZzolBotTool {
 
     @Override
     public String description() {
-        return "운영 통계 조회용 read-only SQL 도구. " +
-                "회원·방·미니게임 등 운영 데이터를 집계할 때 사용한다. " +
-                "단일 SELECT 문만 허용되며, LIMIT가 없으면 자동으로 제한된다. " +
-                "와일드카드(*)는 사용할 수 없으며 컬럼을 직접 명시해야 한다.";
+        return "운영 통계 조회용 read-only SQL 도구. " + "회원·방·미니게임 등 운영 데이터를 집계할 때 사용한다. "
+                + "단일 SELECT 문만 허용되며, LIMIT가 없으면 자동으로 제한된다. "
+                + "와일드카드(*)는 사용할 수 없으며 컬럼을 직접 명시해야 한다.";
     }
 
     @Override
     public Map<String, Object> parameterSchema() {
         return Map.of(
                 "type", "object",
-                "properties", Map.of(
-                        "sql", Map.of(
-                                "type", "string",
-                                "description", "실행할 단일 SELECT SQL. 와일드카드(*) 사용 금지, 컬럼 명시 필수. LIMIT 미포함 시 자동 제한됨."
-                        )
-                ),
-                "required", List.of("sql")
-        );
+                "properties",
+                        Map.of(
+                                "sql",
+                                Map.of(
+                                        "type", "string",
+                                        "description",
+                                                "실행할 단일 SELECT SQL. 와일드카드(*) 사용 금지, 컬럼 명시 필수. LIMIT 미포함 시 자동 제한됨.")),
+                "required", List.of("sql"));
     }
 
     @Override

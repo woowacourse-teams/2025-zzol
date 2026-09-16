@@ -41,15 +41,15 @@ public final class JoinCode {
 
     private void validateLength(String value) {
         if (value.length() != CODE_LENGTH) {
-            throw new BusinessException(JoinCodeErrorCode.JOIN_CODE_ILLEGAL_LENGTH,
-                    "4자리 코드여야 합니다. 현재 길이: " + value.length());
+            throw new BusinessException(
+                    JoinCodeErrorCode.JOIN_CODE_ILLEGAL_LENGTH, "4자리 코드여야 합니다. 현재 길이: " + value.length());
         }
     }
 
     private void validateCharacters(String value) {
         if (value.chars().anyMatch(charCode -> !isValidCharacter(charCode))) {
-            throw new BusinessException(JoinCodeErrorCode.JOIN_CODE_ILLEGAL_CHARACTER,
-                    "허용되지 않는 문자가 포함되어 있습니다. 현재 코드: " + value);
+            throw new BusinessException(
+                    JoinCodeErrorCode.JOIN_CODE_ILLEGAL_CHARACTER, "허용되지 않는 문자가 포함되어 있습니다. 현재 코드: " + value);
         }
     }
 
@@ -86,5 +86,4 @@ public final class JoinCode {
     public String toString() {
         return value;
     }
-
 }

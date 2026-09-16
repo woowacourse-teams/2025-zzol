@@ -113,8 +113,7 @@ class PlayerServiceTest extends StreamMockedServiceTest {
                 // when & then
                 assertCoffeeShoutException(
                         () -> playerService.checkAndKickPlayer(joinCode.getValue(), null),
-                        RoomErrorCode.PLAYER_NAME_BLANK
-                );
+                        RoomErrorCode.PLAYER_NAME_BLANK);
             }
         }
 
@@ -122,19 +121,14 @@ class PlayerServiceTest extends StreamMockedServiceTest {
         void 존재하지_않는_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
             PlayerKickEvent event = new PlayerKickEvent("ABCD", "플레이어");
-            assertCoffeeShoutException(
-                    () -> playerService.kickPlayer(event),
-                    GlobalErrorCode.NOT_EXIST
-            );
+            assertCoffeeShoutException(() -> playerService.kickPlayer(event), GlobalErrorCode.NOT_EXIST);
         }
 
         @Test
         void null_방_코드로_제거_시도_시_예외가_발생한다() {
             // when & then
             assertCoffeeShoutException(
-                    () -> playerService.checkAndKickPlayer(null, "플레이어"),
-                    JoinCodeErrorCode.JOIN_CODE_NULL
-            );
+                    () -> playerService.checkAndKickPlayer(null, "플레이어"), JoinCodeErrorCode.JOIN_CODE_NULL);
         }
     }
 
@@ -150,12 +144,12 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             joinGuest(createdRoom.getJoinCode(), guestName);
 
             // when
-            List<Player> players = playerService.getPlayers(createdRoom.getJoinCode().getValue());
+            List<Player> players =
+                    playerService.getPlayers(createdRoom.getJoinCode().getValue());
 
             // then
             assertThat(players).hasSize(2);
-            assertThat(players.stream().map(p -> p.getName().value()))
-                    .containsExactlyInAnyOrder(hostName, guestName);
+            assertThat(players.stream().map(p -> p.getName().value())).containsExactlyInAnyOrder(hostName, guestName);
         }
 
         @Test
@@ -170,28 +164,19 @@ class PlayerServiceTest extends StreamMockedServiceTest {
             playerService.kickPlayer(event);
 
             // when & then
-            assertCoffeeShoutException(
-                    () -> playerService.getPlayers(joinCode.getValue()),
-                    GlobalErrorCode.NOT_EXIST
-            );
+            assertCoffeeShoutException(() -> playerService.getPlayers(joinCode.getValue()), GlobalErrorCode.NOT_EXIST);
         }
 
         @Test
         void 존재하지_않는_방_코드로_조회_시_예외가_발생한다() {
             // when & then
-            assertCoffeeShoutException(
-                    () -> playerService.getPlayers("ABCD"),
-                    GlobalErrorCode.NOT_EXIST
-            );
+            assertCoffeeShoutException(() -> playerService.getPlayers("ABCD"), GlobalErrorCode.NOT_EXIST);
         }
 
         @Test
         void null_방_코드로_조회_시_예외가_발생한다() {
             // when & then
-            assertCoffeeShoutException(
-                    () -> playerService.getPlayers(null),
-                    JoinCodeErrorCode.JOIN_CODE_NULL
-            );
+            assertCoffeeShoutException(() -> playerService.getPlayers(null), JoinCodeErrorCode.JOIN_CODE_NULL);
         }
     }
 }

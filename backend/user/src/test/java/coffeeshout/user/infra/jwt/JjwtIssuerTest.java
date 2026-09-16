@@ -54,31 +54,22 @@ class JjwtIssuerTest {
             final JjwtIssuer expiredIssuer = new JjwtIssuer(expiredProps);
             final String expiredToken = expiredIssuer.issue(new AuthenticatedUser(1L, "ABCDF"));
 
-            assertCoffeeShoutException(
-                    () -> jwtIssuer.verify(expiredToken),
-                    UserErrorCode.TOKEN_EXPIRED
-            );
+            assertCoffeeShoutException(() -> jwtIssuer.verify(expiredToken), UserErrorCode.TOKEN_EXPIRED);
         }
 
         @Test
         void 위변조된_토큰은_예외가_발생한다() {
-            assertCoffeeShoutException(
-                    () -> jwtIssuer.verify("invalid.jwt.token"),
-                    UserErrorCode.INVALID_TOKEN
-            );
+            assertCoffeeShoutException(() -> jwtIssuer.verify("invalid.jwt.token"), UserErrorCode.INVALID_TOKEN);
         }
 
         @Test
         void 다른_시크릿으로_발급한_토큰은_예외가_발생한다() {
-            final JwtProperties otherProps = new JwtProperties(
-                    "other-secret-key-must-be-at-least-256-bits-long-for-hs256", 1800L, 1209600L);
+            final JwtProperties otherProps =
+                    new JwtProperties("other-secret-key-must-be-at-least-256-bits-long-for-hs256", 1800L, 1209600L);
             final JjwtIssuer otherIssuer = new JjwtIssuer(otherProps);
             final String tokenFromOther = otherIssuer.issue(new AuthenticatedUser(1L, "ABCDF"));
 
-            assertCoffeeShoutException(
-                    () -> jwtIssuer.verify(tokenFromOther),
-                    UserErrorCode.INVALID_TOKEN
-            );
+            assertCoffeeShoutException(() -> jwtIssuer.verify(tokenFromOther), UserErrorCode.INVALID_TOKEN);
         }
     }
 }

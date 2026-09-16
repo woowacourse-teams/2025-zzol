@@ -8,6 +8,4 @@ public record SeasonRankResponse(
         int rank,
         long totalPoints,
         String tier,
-        long totalMembers
-) {
-}
+        long totalMembers) {}

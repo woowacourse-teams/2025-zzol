@@ -11,6 +11,5 @@ import java.util.List;
  */
 public record MiniGameStatsRecordedEvent(List<PlayerStat> playerStats) {
 
-    public record PlayerStat(Long userId, boolean isWinner) {
-    }
+    public record PlayerStat(Long userId, boolean isWinner) {}
 }

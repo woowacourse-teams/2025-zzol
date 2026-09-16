@@ -42,8 +42,12 @@ public class NicknameFeedback {
     @Column(nullable = false)
     private Instant createdAt;
 
-    public NicknameFeedback(String nickname, boolean aiFlagged, AiConfidence aiConfidence,
-                            OperatorDecision operatorDecision, String reason) {
+    public NicknameFeedback(
+            String nickname,
+            boolean aiFlagged,
+            AiConfidence aiConfidence,
+            OperatorDecision operatorDecision,
+            String reason) {
         this.nickname = nickname;
         this.aiFlagged = aiFlagged;
         this.aiConfidence = aiConfidence != null ? aiConfidence : AiConfidence.UNKNOWN;
@@ -53,6 +57,7 @@ public class NicknameFeedback {
     }
 
     public enum OperatorDecision {
-        ALLOWED, BLOCKED
+        ALLOWED,
+        BLOCKED
     }
 }

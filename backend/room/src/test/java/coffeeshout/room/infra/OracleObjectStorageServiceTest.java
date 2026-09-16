@@ -42,25 +42,12 @@ class OracleObjectStorageServiceTest {
     @BeforeEach
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
-        oracleProperties = new OracleObjectStorageProperties(
-                "ap-chuncheon-1",
-                "ax9wq4bhn4cn",
-                "zzol-public"
-        );
-        qrProperties = new QrProperties(
-                "https://example.com/join",
-                150,
-                150,
-                new QrProperties.PresignedUrl(1),
-                "qr-code"
-        );
+        oracleProperties = new OracleObjectStorageProperties("ap-chuncheon-1", "ax9wq4bhn4cn", "zzol-public");
+        qrProperties =
+                new QrProperties("https://example.com/join", 150, 150, new QrProperties.PresignedUrl(1), "qr-code");
 
-        oracleObjectStorageService = new OracleObjectStorageService(
-                objectStorage,
-                oracleProperties,
-                qrProperties,
-                meterRegistry
-        );
+        oracleObjectStorageService =
+                new OracleObjectStorageService(objectStorage, oracleProperties, qrProperties, meterRegistry);
     }
 
     @Test
@@ -81,7 +68,8 @@ class OracleObjectStorageServiceTest {
         verify(objectStorage).putObject(any(PutObjectRequest.class));
 
         // 메트릭 검증
-        Counter uploadSuccessCounter = meterRegistry.find("oracle.objectstorage.upload.success").counter();
+        Counter uploadSuccessCounter =
+                meterRegistry.find("oracle.objectstorage.upload.success").counter();
         assertThat(uploadSuccessCounter).isNotNull();
         assertThat(uploadSuccessCounter.count()).isEqualTo(1.0);
     }
@@ -121,9 +109,7 @@ class OracleObjectStorageServiceTest {
 
         // when & then
         assertCoffeeShoutException(
-                () -> oracleObjectStorageService.upload(contents, emptyData),
-                QrCodeErrorCode.QR_CODE_UPLOAD_FAILED
-        );
+                () -> oracleObjectStorageService.upload(contents, emptyData), QrCodeErrorCode.QR_CODE_UPLOAD_FAILED);
     }
 
     @Test
@@ -132,8 +118,7 @@ class OracleObjectStorageServiceTest {
         String contents = "FAIL123";
         byte[] qrCodeImage = "mock data".getBytes();
 
-        when(objectStorage.putObject(any(PutObjectRequest.class)))
-                .thenThrow(new RuntimeException("Upload failed"));
+        when(objectStorage.putObject(any(PutObjectRequest.class))).thenThrow(new RuntimeException("Upload failed"));
 
         // when & then
         // 서킷 브레이커 적용 후 원본 예외를 그대로 던지도록 변경됨
@@ -147,7 +132,8 @@ class OracleObjectStorageServiceTest {
     void Public_URL_생성이_성공적으로_완료된다() {
         // given
         String storageKey = "qr-code/XYZ789.png";
-        String expectedUrl = "https://objectstorage.ap-chuncheon-1.oraclecloud.com/n/ax9wq4bhn4cn/b/zzol-public/o/qr-code/XYZ789.png";
+        String expectedUrl =
+                "https://objectstorage.ap-chuncheon-1.oraclecloud.com/n/ax9wq4bhn4cn/b/zzol-public/o/qr-code/XYZ789.png";
 
         // when
         String url = oracleObjectStorageService.getUrl(storageKey);
@@ -156,7 +142,9 @@ class OracleObjectStorageServiceTest {
         assertThat(url).isEqualTo(expectedUrl);
 
         // 메트릭 검증
-        Counter urlGenerationSuccessCounter = meterRegistry.find("oracle.objectstorage.url.generation.success").counter();
+        Counter urlGenerationSuccessCounter = meterRegistry
+                .find("oracle.objectstorage.url.generation.success")
+                .counter();
         assertThat(urlGenerationSuccessCounter).isNotNull();
         assertThat(urlGenerationSuccessCounter.count()).isEqualTo(1.0);
     }
@@ -168,12 +156,11 @@ class OracleObjectStorageServiceTest {
 
         // when & then
         assertCoffeeShoutException(
-                () -> oracleObjectStorageService.getUrl(storageKey),
-                QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED
-        );
+                () -> oracleObjectStorageService.getUrl(storageKey), QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED);
 
         // 실패 메트릭 검증
-        Counter urlGenerationFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.generation.failed")
+        Counter urlGenerationFailedCounter = meterRegistry
+                .find("oracle.objectstorage.qr.url.generation.failed")
                 .tag("error", "IllegalArgumentException")
                 .counter();
         assertThat(urlGenerationFailedCounter).isNotNull();
@@ -187,12 +174,11 @@ class OracleObjectStorageServiceTest {
 
         // when & then
         assertCoffeeShoutException(
-                () -> oracleObjectStorageService.getUrl(storageKey),
-                QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED
-        );
+                () -> oracleObjectStorageService.getUrl(storageKey), QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED);
 
         // 실패 메트릭 검증
-        Counter urlGenerationFailedCounter = meterRegistry.find("oracle.objectstorage.qr.url.generation.failed")
+        Counter urlGenerationFailedCounter = meterRegistry
+                .find("oracle.objectstorage.qr.url.generation.failed")
                 .tag("error", "IllegalArgumentException")
                 .counter();
         assertThat(urlGenerationFailedCounter).isNotNull();
@@ -208,7 +194,8 @@ class OracleObjectStorageServiceTest {
         String url = oracleObjectStorageService.getUrl(storageKey);
 
         // then
-        assertThat(url).startsWith("https://")
+        assertThat(url)
+                .startsWith("https://")
                 .contains("objectstorage")
                 .contains("ap-chuncheon-1")
                 .contains("oraclecloud.com")

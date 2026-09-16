@@ -25,8 +25,7 @@ public class ToolExecutor implements ToolResultSource {
     private final long toolTimeoutMillis;
 
     public ToolExecutor(List<ZzolBotTool> tools, ZzolBotProperties properties) {
-        this.toolsByName = tools.stream()
-                .collect(Collectors.toUnmodifiableMap(ZzolBotTool::name, t -> t));
+        this.toolsByName = tools.stream().collect(Collectors.toUnmodifiableMap(ZzolBotTool::name, t -> t));
         this.virtualExecutor = Executors.newVirtualThreadPerTaskExecutor();
         this.toolTimeoutMillis = properties.toolTimeoutMillis();
     }
@@ -38,8 +37,7 @@ public class ToolExecutor implements ToolResultSource {
     @Override
     public List<ToolExecutionResult> executeAll(List<ToolCallItem> calls, AskContext ctx) {
         final List<CompletableFuture<ToolExecutionResult>> futures = calls.stream()
-                .map(call -> CompletableFuture
-                        .supplyAsync(() -> safeExecute(call, ctx), virtualExecutor)
+                .map(call -> CompletableFuture.supplyAsync(() -> safeExecute(call, ctx), virtualExecutor)
                         .orTimeout(toolTimeoutMillis, TimeUnit.MILLISECONDS)
                         .exceptionally(e -> {
                             log.warn("[ZzolBot] tool 타임아웃 또는 예외. toolName={}", call.toolName(), e);
@@ -47,9 +45,7 @@ public class ToolExecutor implements ToolResultSource {
                         }))
                 .toList();
 
-        return futures.stream()
-                .map(CompletableFuture::join)
-                .toList();
+        return futures.stream().map(CompletableFuture::join).toList();
     }
 
     private ToolExecutionResult safeExecute(ToolCallItem call, AskContext ctx) {

@@ -18,10 +18,9 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "outbox_event",
         indexes = {
-                @Index(name = "idx_outbox_status_id", columnList = "status, id"),
-                @Index(name = "idx_outbox_join_code_status", columnList = "join_code, status")
-        }
-)
+            @Index(name = "idx_outbox_status_id", columnList = "status, id"),
+            @Index(name = "idx_outbox_join_code_status", columnList = "join_code, status")
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OutboxEvent {

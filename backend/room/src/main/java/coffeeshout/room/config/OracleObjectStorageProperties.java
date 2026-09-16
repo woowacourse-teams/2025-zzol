@@ -9,6 +9,4 @@ import org.springframework.validation.annotation.Validated;
 public record OracleObjectStorageProperties(
         @NotBlank String region,
         @NotBlank String namespace,
-        @NotBlank String bucket
-) {
-}
+        @NotBlank String bucket) {}

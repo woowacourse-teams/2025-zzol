@@ -8,7 +8,6 @@ import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -29,6 +28,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
      * :websocket이 :room을 모르므로 ChannelInterceptor 타입 + @Qualifier로 식별.
      */
     private final ChannelInterceptor stompPrincipalInterceptor;
+
     private final WebSocketRateLimitInterceptor webSocketRateLimitInterceptor;
     private final WebSocketInboundMetricInterceptor webSocketInboundMetricInterceptor;
     private final WebSocketOutboundMetricInterceptor webSocketOutboundMetricInterceptor;
@@ -43,8 +43,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
             WebSocketOutboundMetricInterceptor webSocketOutboundMetricInterceptor,
             ShutdownAwareHandshakeInterceptor shutdownAwareHandshakeInterceptor,
             ObservationRegistry observationRegistry,
-            ContextSnapshotFactory snapshotFactory
-    ) {
+            ContextSnapshotFactory snapshotFactory) {
         this.stompPrincipalInterceptor = stompPrincipalInterceptor;
         this.webSocketRateLimitInterceptor = webSocketRateLimitInterceptor;
         this.webSocketInboundMetricInterceptor = webSocketInboundMetricInterceptor;
@@ -62,7 +61,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
         heartbeatScheduler.initialize();
 
         config.enableSimpleBroker("/topic/", "/queue/")
-                .setHeartbeatValue(new long[]{4000, 4000})
+                .setHeartbeatValue(new long[] {4000, 4000})
                 .setTaskScheduler(heartbeatScheduler);
 
         config.setApplicationDestinationPrefixes("/app");
@@ -84,7 +83,8 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration
-                .interceptors(stompPrincipalInterceptor, webSocketRateLimitInterceptor, webSocketInboundMetricInterceptor)
+                .interceptors(
+                        stompPrincipalInterceptor, webSocketRateLimitInterceptor, webSocketInboundMetricInterceptor)
                 .taskExecutor()
                 .corePoolSize(32)
                 .maxPoolSize(32)
@@ -104,7 +104,8 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
                 if (parent != null) {
                     Observation.createNotStarted("websocket.outbound", observationRegistry)
                             .parentObservation(parent)
-                            .lowCardinalityKeyValue("thread", Thread.currentThread().getName())
+                            .lowCardinalityKeyValue(
+                                    "thread", Thread.currentThread().getName())
                             .observeChecked(runnable::run);
                 } else {
                     runnable.run();

@@ -19,7 +19,6 @@ public class BlockStackingService implements MiniGameService {
     private final BlockStackingFlowOrchestrator flowOrchestrator;
     private final BlockStackingNotifier notifier;
 
-
     @Override
     public void start(String joinCode, String hostName) {
         final JoinCode code = new JoinCode(joinCode);
@@ -28,11 +27,13 @@ public class BlockStackingService implements MiniGameService {
     }
 
     public void recordProgress(
-            String joinCode, String playerName, int floor,
-            double movingBlockX, double stackTopX, double stackTopWidth
-    ) {
-        log.debug("블록 쌓기 진행 처리 시작: joinCode={}, playerName={}, floor={}",
-                joinCode, playerName, floor);
+            String joinCode,
+            String playerName,
+            int floor,
+            double movingBlockX,
+            double stackTopX,
+            double stackTopWidth) {
+        log.debug("블록 쌓기 진행 처리 시작: joinCode={}, playerName={}, floor={}", joinCode, playerName, floor);
 
         final JoinCode code = new JoinCode(joinCode);
         final BlockStackingGame game = getGame(code);
@@ -63,8 +64,8 @@ public class BlockStackingService implements MiniGameService {
     }
 
     private BlockStackingGame getGame(JoinCode joinCode) {
-        return (BlockStackingGame) gameSessionService.getSession(joinCode)
-                .findCompletedGame(MiniGameType.BLOCK_STACKING);
+        return (BlockStackingGame)
+                gameSessionService.getSession(joinCode).findCompletedGame(MiniGameType.BLOCK_STACKING);
     }
 
     private Gamer findGamer(BlockStackingGame game, String playerName) {

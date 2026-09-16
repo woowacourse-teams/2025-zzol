@@ -76,9 +76,8 @@ public class IpBlockStore {
         blockedRequestCounter = Counter.builder("ip.block.request.blocked.total")
                 .description("IP 차단에 의해 거절된 요청 수")
                 .register(meterRegistry);
-        newIpBlockCounter = Counter.builder("ip.block.new.total")
-                .description("새로 차단된 IP 수")
-                .register(meterRegistry);
+        newIpBlockCounter =
+                Counter.builder("ip.block.new.total").description("새로 차단된 IP 수").register(meterRegistry);
     }
 
     @CircuitBreaker(name = "redisBlockStore", fallbackMethod = "isBlockedFallback")
@@ -92,7 +91,10 @@ public class IpBlockStore {
     }
 
     private boolean isBlockedFallback(Ip ip, Throwable t) {
-        log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 IP 차단 여부를 확인할 수 없습니다. Fail-open 처리합니다. ip={} error={}", ip, t.getMessage());
+        log.warn(
+                "서킷 브레이커 OPEN/장애 발생: Redis 장애로 IP 차단 여부를 확인할 수 없습니다. Fail-open 처리합니다. ip={} error={}",
+                ip,
+                t.getMessage());
         return false; // Redis 장애 시 차단하지 않고 통과시킴
     }
 
@@ -117,8 +119,7 @@ public class IpBlockStore {
         final Long count = stringRedisTemplate.execute(
                 INCREMENT_WITH_EXPIRE_SCRIPT,
                 List.of(key),
-                String.valueOf(properties.notFoundWindow().getSeconds())
-        );
+                String.valueOf(properties.notFoundWindow().getSeconds()));
 
         if (count >= properties.notFoundThreshold()) {
             log.warn("404 임계값 초과 → IP 차단: ip={} count={}", ip, count);
@@ -143,14 +144,13 @@ public class IpBlockStore {
                 .match(BLOCKED_IP_PREFIX + "*")
                 .count(100L)
                 .build();
-        final Set<String> keys = stringRedisTemplate.execute(
-                (RedisCallback<Set<String>>) connection -> {
-                    final Set<String> result = new HashSet<>();
-                    try (var cursor = connection.keyCommands().scan(options)) {
-                        cursor.forEachRemaining(k -> result.add(new String(k, StandardCharsets.UTF_8)));
-                    }
-                    return result;
-                });
+        final Set<String> keys = stringRedisTemplate.execute((RedisCallback<Set<String>>) connection -> {
+            final Set<String> result = new HashSet<>();
+            try (var cursor = connection.keyCommands().scan(options)) {
+                cursor.forEachRemaining(k -> result.add(new String(k, StandardCharsets.UTF_8)));
+            }
+            return result;
+        });
         if (keys == null || keys.isEmpty()) {
             return List.of();
         }
@@ -164,6 +164,5 @@ public class IpBlockStore {
                 .toList();
     }
 
-    public record BlockedIp(String ip, long remainingTtlSeconds) {
-    }
+    public record BlockedIp(String ip, long remainingTtlSeconds) {}
 }

@@ -27,8 +27,7 @@ public class OracleCloudConfig {
     @Bean
     public ObjectStorage objectStorageClient(
             InstancePrincipalsAuthenticationDetailsProvider authProvider,
-            OracleObjectStorageProperties oracleProperties
-    ) {
+            OracleObjectStorageProperties oracleProperties) {
         return ObjectStorageClient.builder()
                 .region(Region.valueOf(oracleProperties.region()))
                 .build(authProvider);

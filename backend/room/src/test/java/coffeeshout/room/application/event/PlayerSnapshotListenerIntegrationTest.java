@@ -58,12 +58,11 @@ class PlayerSnapshotListenerIntegrationTest extends RoomModuleIntegrationTest {
         roomRepository.save(room);
 
         final TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
-        txTemplate.executeWithoutResult(status ->
-                roomJpaRepository.save(new RoomEntity(JOIN_CODE.getValue())));
+        txTemplate.executeWithoutResult(status -> roomJpaRepository.save(new RoomEntity(JOIN_CODE.getValue())));
 
         // when — 실제 발행자가 실제 리스너로 디스패치한다(발행자 트랜잭션 안에서 동기 실행, 운영과 동일)
-        txTemplate.executeWithoutResult(status ->
-                eventPublisher.publishEvent(new PlayerSnapshotRequiredEvent(JOIN_CODE.getValue())));
+        txTemplate.executeWithoutResult(
+                status -> eventPublisher.publishEvent(new PlayerSnapshotRequiredEvent(JOIN_CODE.getValue())));
 
         // then — 방 플레이어 전원이 PlayerEntity로 실제 DB에 저장된다
         final RoomEntity savedRoomEntity = roomEntityRepository
@@ -71,7 +70,8 @@ class PlayerSnapshotListenerIntegrationTest extends RoomModuleIntegrationTest {
                 .orElseThrow();
         final List<PlayerEntity> savedPlayers = playerJpaRepository.findAllByRoomSession(savedRoomEntity);
 
-        final List<String> savedNames = savedPlayers.stream().map(PlayerEntity::getPlayerName).toList();
+        final List<String> savedNames =
+                savedPlayers.stream().map(PlayerEntity::getPlayerName).toList();
         final List<String> expectedNames = room.getPlayers().stream()
                 .map(player -> player.getName().value())
                 .toList();

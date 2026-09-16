@@ -36,8 +36,7 @@ public class BlindTimerGameService implements MiniGameService {
             @Qualifier("blindTimerGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
             BlindTimerGameTimingProperties timing,
-            GameDurationMetricService gameDurationMetricService
-    ) {
+            GameDurationMetricService gameDurationMetricService) {
         this.gameSessionService = gameSessionService;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
@@ -72,8 +71,7 @@ public class BlindTimerGameService implements MiniGameService {
         eventPublisher.publishEvent(BlindTimerProgressEvent.of(game, joinCode));
         taskScheduler.schedule(
                 () -> eventPublisher.publishEvent(BlindTimerFinishedEvent.of(game, joinCode)),
-                Instant.now().plus(timing.resultDelay())
-        );
+                Instant.now().plus(timing.resultDelay()));
         // 확률 조정·결과 저장을 유발하는 이벤트는 종료 알림을 모두 보낸 뒤 마지막에 발행한다 —
         // 저장 리스너(@Transactional/@RedisLock) 실패가 게임 종료 알림을 막지 않도록(다른 게임과 동일 순서).
         eventPublisher.publishEvent(new MiniGameFinishedEvent(
@@ -82,16 +80,13 @@ public class BlindTimerGameService implements MiniGameService {
     }
 
     public BlindTimerGame getBlindTimerGame(JoinCode joinCode) {
-        return (BlindTimerGame) gameSessionService.getSession(joinCode)
-                .findCompletedGame(MiniGameType.BLIND_TIMER);
+        return (BlindTimerGame) gameSessionService.getSession(joinCode).findCompletedGame(MiniGameType.BLIND_TIMER);
     }
 
     private void scheduleDescription(BlindTimerGame game, String joinCode) {
         game.updateState(BlindTimerGameState.DESCRIPTION);
         taskScheduler.schedule(
-                () -> schedulePrepare(game, joinCode),
-                Instant.now().plus(timing.description())
-        );
+                () -> schedulePrepare(game, joinCode), Instant.now().plus(timing.description()));
     }
 
     private void schedulePrepare(BlindTimerGame game, String joinCode) {
@@ -99,10 +94,7 @@ public class BlindTimerGameService implements MiniGameService {
         eventPublisher.publishEvent(stateEvent(game, joinCode));
         eventPublisher.publishEvent(BlindTimerProgressEvent.of(game, joinCode));
 
-        taskScheduler.schedule(
-                () -> startPlaying(game, joinCode),
-                Instant.now().plus(timing.prepare())
-        );
+        taskScheduler.schedule(() -> startPlaying(game, joinCode), Instant.now().plus(timing.prepare()));
     }
 
     private void startPlaying(BlindTimerGame game, String joinCode) {
@@ -112,9 +104,7 @@ public class BlindTimerGameService implements MiniGameService {
 
         final Duration timeout = game.getTargetTime().plus(timing.timeoutBuffer());
         final ScheduledFuture<?> timeoutFuture = taskScheduler.schedule(
-                () -> handleTimeout(game, joinCode),
-                game.getStartTime().plus(timeout)
-        );
+                () -> handleTimeout(game, joinCode), game.getStartTime().plus(timeout));
         game.setTimeoutFuture(timeoutFuture);
     }
 

@@ -28,19 +28,13 @@ public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Authentication authentication
-    ) throws IOException {
+            HttpServletRequest request, HttpServletResponse response, Authentication authentication)
+            throws IOException {
         final CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
         final OAuthProvider provider = OAuthProvider.from(oAuth2User.registrationId());
 
         final LoginResult loginResult = userRegistrationService.registerOrLogin(
-                provider,
-                oAuth2User.providerUserId(),
-                oAuth2User.email(),
-                oAuth2User.nickname()
-        );
+                provider, oAuth2User.providerUserId(), oAuth2User.email(), oAuth2User.nickname());
 
         final String code = authTokenService.issueCode(loginResult);
         loginMetricService.countSuccess(provider);

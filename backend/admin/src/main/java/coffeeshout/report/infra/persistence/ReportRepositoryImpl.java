@@ -22,11 +22,7 @@ public class ReportRepositoryImpl implements ReportAdminQueryRepository {
 
     @Override
     public Page<Report> findWithFilters(
-            ReportStatus status,
-            ReportCategory category,
-            MiniGameType gameType,
-            Pageable pageable
-    ) {
+            ReportStatus status, ReportCategory category, MiniGameType gameType, Pageable pageable) {
         final List<Report> content = queryFactory
                 .selectFrom(REPORT)
                 .where(statusEq(status), categoryEq(category), gameTypeEq(gameType))

@@ -5,7 +5,6 @@ import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.exception.custom.SystemException;
-import coffeeshout.global.ipblock.IpBlockAttributes;
 import coffeeshout.global.log.NotificationMarker;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -31,7 +30,8 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ProblemDetail handleNoResourceFoundException(NoResourceFoundException exception, HttpServletRequest request) {
+    public ProblemDetail handleNoResourceFoundException(
+            NoResourceFoundException exception, HttpServletRequest request) {
         logWarning(exception, request);
         return getProblemDetail(HttpStatus.NOT_FOUND, exception, GlobalErrorCode.RESOURCE_NOT_FOUND);
     }
@@ -40,11 +40,7 @@ public class RestExceptionHandler {
     public ProblemDetail handleBusinessException(BusinessException exception, HttpServletRequest request) {
         logWarning(exception, request);
         final ErrorCode errorCode = exception.getErrorCode();
-        final HttpStatus httpStatus = HttpStatus.resolve(errorCode.getStatusCode());
-        if (httpStatus == HttpStatus.NOT_FOUND) {
-            request.setAttribute(IpBlockAttributes.BUSINESS_NOT_FOUND, true);
-        }
-        return getProblemDetail(httpStatus, exception, errorCode);
+        return getProblemDetail(HttpStatus.resolve(errorCode.getStatusCode()), exception, errorCode);
     }
 
     @ExceptionHandler(SystemException.class)
@@ -60,28 +56,33 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ProblemDetail handleHttpMessageNotReadableException(HttpMessageNotReadableException exception, HttpServletRequest request) {
+    public ProblemDetail handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException exception, HttpServletRequest request) {
         logWarning(exception, request);
         return getProblemDetail(HttpStatus.BAD_REQUEST, exception, GlobalErrorCode.VALIDATION_ERROR);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleMethodArgumentNotValidException(MethodArgumentNotValidException exception, HttpServletRequest request) {
+    public ProblemDetail handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException exception, HttpServletRequest request) {
         logWarning(exception, request);
         final String errorMessage = exception.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .reduce((msg1, msg2) -> msg1 + ", " + msg2)
                 .orElse(GlobalErrorCode.VALIDATION_ERROR.getMessage());
-        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, toErrorCode(errorMessage, GlobalErrorCode.VALIDATION_ERROR));
+        return getProblemDetail(
+                HttpStatus.BAD_REQUEST, exception, toErrorCode(errorMessage, GlobalErrorCode.VALIDATION_ERROR));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ProblemDetail handleConstraintViolationException(ConstraintViolationException exception, HttpServletRequest request) {
+    public ProblemDetail handleConstraintViolationException(
+            ConstraintViolationException exception, HttpServletRequest request) {
         logWarning(exception, request);
         final String errorMessage = exception.getConstraintViolations().stream()
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .collect(Collectors.joining(", "));
-        return getProblemDetail(HttpStatus.BAD_REQUEST, exception, toErrorCode(errorMessage, GlobalErrorCode.CONSTRAINT_VIOLATION));
+        return getProblemDetail(
+                HttpStatus.BAD_REQUEST, exception, toErrorCode(errorMessage, GlobalErrorCode.CONSTRAINT_VIOLATION));
     }
 
     private static HttpStatus toStatus(ErrorCode errorCode) {
@@ -98,19 +99,40 @@ public class RestExceptionHandler {
 
     private static ErrorCode toErrorCode(String errorMessage, GlobalErrorCode fallback) {
         return new ErrorCode() {
-            @Override public String getCode() { return fallback.getCode(); }
-            @Override public String getMessage() { return errorMessage.isBlank() ? fallback.getMessage() : errorMessage; }
-            @Override public int getStatusCode() { return fallback.getStatusCode(); }
+            @Override
+            public String getCode() {
+                return fallback.getCode();
+            }
+
+            @Override
+            public String getMessage() {
+                return errorMessage.isBlank() ? fallback.getMessage() : errorMessage;
+            }
+
+            @Override
+            public int getStatusCode() {
+                return fallback.getStatusCode();
+            }
         };
     }
 
     private void logError(Exception e, HttpServletRequest request) {
-        log.error(NotificationMarker.INSTANCE, "method={} uri={} exception={} message={}",
-                request.getMethod(), request.getRequestURI(), e.getClass().getSimpleName(), e.getMessage(), e);
+        log.error(
+                NotificationMarker.INSTANCE,
+                "method={} uri={} exception={} message={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                e.getClass().getSimpleName(),
+                e.getMessage(),
+                e);
     }
 
     private void logWarning(Exception e, HttpServletRequest request) {
-        log.warn("method={} uri={} exception={} message={}",
-                request.getMethod(), request.getRequestURI(), e.getClass().getSimpleName(), e.getMessage());
+        log.warn(
+                "method={} uri={} exception={} message={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                e.getClass().getSimpleName(),
+                e.getMessage());
     }
 }

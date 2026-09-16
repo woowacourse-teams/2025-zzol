@@ -35,9 +35,7 @@ class RedisStreamHealthIndicatorTest {
     private RedisStreamContainerRegistry containerRegistry;
     private RedisStreamHealthIndicator indicator;
 
-    private static final String[] STREAM_KEYS = {
-            "room", "room:join", "cardgame:select", "minigame", "racinggame"
-    };
+    private static final String[] STREAM_KEYS = {"room", "room:join", "cardgame:select", "minigame", "racinggame"};
 
     @BeforeEach
     void setUp() {

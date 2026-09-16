@@ -17,14 +17,16 @@ public class CompletableFutureFlowScheduler implements FlowScheduler {
     @Override
     public FlowHandle schedule(Runnable action, Duration delay) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        taskScheduler.schedule(() -> {
-            try {
-                action.run();
-                future.complete(null);
-            } catch (Exception e) {
-                future.completeExceptionally(e);
-            }
-        }, Instant.now().plus(delay));
+        taskScheduler.schedule(
+                () -> {
+                    try {
+                        action.run();
+                        future.complete(null);
+                    } catch (Exception e) {
+                        future.completeExceptionally(e);
+                    }
+                },
+                Instant.now().plus(delay));
         return new CompletableFutureFlowHandle(future, taskScheduler);
     }
 

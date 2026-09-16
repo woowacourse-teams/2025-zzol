@@ -10,8 +10,7 @@ public record PlayerResponse(
         PlayerType playerType,
         Boolean isReady,
         Integer colorIndex,
-        Double probability
-) {
+        Double probability) {
 
     public static PlayerResponse from(Player player) {
         return new PlayerResponse(
@@ -20,8 +19,7 @@ public record PlayerResponse(
                 player.getPlayerType(),
                 player.getIsReady(),
                 player.getColorIndex(),
-                parseProbability(player.getProbability())
-        );
+                parseProbability(player.getProbability()));
     }
 
     private static Double parseProbability(Probability probability) {

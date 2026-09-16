@@ -9,10 +9,6 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "spring.data.redis")
 public record RedisProperties(
-        @NotBlank String host,
-        @Min(1) @Max(65535) int port,
-        Ssl ssl
-) {
-    public record Ssl(boolean enabled) {
-    }
+        @NotBlank String host, @Min(1) @Max(65535) int port, Ssl ssl) {
+    public record Ssl(boolean enabled) {}
 }

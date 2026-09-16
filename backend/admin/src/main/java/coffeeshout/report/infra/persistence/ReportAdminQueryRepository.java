@@ -9,9 +9,5 @@ import org.springframework.data.domain.Pageable;
 public interface ReportAdminQueryRepository {
 
     Page<Report> findWithFilters(
-            ReportStatus status,
-            ReportCategory category,
-            MiniGameType gameType,
-            Pageable pageable
-    );
+            ReportStatus status, ReportCategory category, MiniGameType gameType, Pageable pageable);
 }

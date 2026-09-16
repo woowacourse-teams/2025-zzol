@@ -20,29 +20,18 @@ class ZzolBotPromptTemplateTest {
             "gemini-2.0-flash",
             8,
             new ZzolBotProperties.MonitoringProperties(
-                    "http://loki:3100",
-                    "http://tempo:3200",
-                    "http://prometheus:9090",
-                    "local"
-            ),
+                    "http://loki:3100", "http://tempo:3200", "http://prometheus:9090", "local"),
             new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
             60,
             10000L,
             new ZzolBotProperties.SqlProperties(
-                    List.of(
-                            new ZzolBotProperties.TableSchema(
-                                    "app_user",
-                                    List.of("id", "nickname", "created_at"),
-                                    List.of("provider_user_id"),
-                                    "회원 정보"
-                            )
-                    ),
+                    List.of(new ZzolBotProperties.TableSchema(
+                            "app_user", List.of("id", "nickname", "created_at"), List.of("provider_user_id"), "회원 정보")),
                     100,
-                    3
-            )
-    );
+                    3));
 
-    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+    private static final AskContext CTX =
+            AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     private ZzolBotPromptTemplate promptTemplate;
 

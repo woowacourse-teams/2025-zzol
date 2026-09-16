@@ -10,5 +10,4 @@ package coffeeshout.minigame.event;
  *
  * <p>사용자 대상 "게임 시작" 브로드캐스트는 별도의 {@link MiniGameStartedEvent}(I/O 성공 후 발행)가 담당한다.
  */
-public record GameSessionStartedEvent(String joinCode) {
-}
+public record GameSessionStartedEvent(String joinCode) {}

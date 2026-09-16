@@ -4,9 +4,7 @@ import coffeeshout.room.domain.QrCodeStatus;
 import jakarta.annotation.Nullable;
 
 public record QrCodeStatusResponse(
-        QrCodeStatus status,
-        @Nullable String qrCodeUrl
-) {
+        QrCodeStatus status, @Nullable String qrCodeUrl) {
     public QrCodeStatusResponse {
         if (status == QrCodeStatus.SUCCESS && qrCodeUrl == null) {
             throw new IllegalArgumentException("SUCCESS 상태에서는 qrCodeUrl이 필수입니다");

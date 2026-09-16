@@ -44,9 +44,7 @@ class UserProfileServiceTest extends ServiceTest {
         @Test
         void 비속어가_포함된_닉네임은_예외를_던진다() {
             assertCoffeeShoutException(
-                    () -> userProfileService.changeNickname(userId, "씨발"),
-                    UserErrorCode.NICKNAME_CONTAINS_PROFANITY
-            );
+                    () -> userProfileService.changeNickname(userId, "씨발"), UserErrorCode.NICKNAME_CONTAINS_PROFANITY);
         }
 
         @Test

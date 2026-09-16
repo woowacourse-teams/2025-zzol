@@ -20,12 +20,13 @@ public class SettlementNotifier {
 
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
-    @WsTopic(path = "/room/{joinCode}/settlement", payload = SeasonRankMessage.class,
+    @WsTopic(
+            path = "/room/{joinCode}/settlement",
+            payload = SeasonRankMessage.class,
             description = "미니게임 시즌 정산 완료 시 순위 변동 브로드캐스트")
     public void notifyRankUpdated(SeasonRankUpdatedEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(SETTLEMENT_DESTINATION_FORMAT, event.joinCode()),
-                WebSocketResponse.success(SeasonRankMessage.from(event))
-        );
+                WebSocketResponse.success(SeasonRankMessage.from(event)));
     }
 }

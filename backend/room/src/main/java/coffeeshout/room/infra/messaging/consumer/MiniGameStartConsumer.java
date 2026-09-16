@@ -34,7 +34,7 @@ public class MiniGameStartConsumer implements Consumer<StartMiniGameCommandEvent
         final Room room = roomQueryService.getByJoinCode(new JoinCode(event.joinCode()));
         room.validateStartable(event.hostName());
 
-        eventPublisher.publishEvent(new GameStartReadyEvent(
-                event.eventId(), event.joinCode(), event.hostName(), room.getGamers()));
+        eventPublisher.publishEvent(
+                new GameStartReadyEvent(event.eventId(), event.joinCode(), event.hostName(), room.getGamers()));
     }
 }

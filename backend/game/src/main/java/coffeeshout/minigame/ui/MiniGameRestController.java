@@ -33,9 +33,7 @@ public class MiniGameRestController implements MiniGameApi {
 
     @GetMapping("/minigames/scores")
     public ResponseEntity<MiniGameScoresResponse> getScores(
-            @RequestParam String joinCode,
-            @RequestParam MiniGameType miniGameType
-    ) {
+            @RequestParam String joinCode, @RequestParam MiniGameType miniGameType) {
         Map<Gamer, MiniGameScore> result = gameSessionService.getScores(new JoinCode(joinCode), miniGameType);
 
         return ResponseEntity.ok(MiniGameScoresResponse.from(result));
@@ -43,9 +41,7 @@ public class MiniGameRestController implements MiniGameApi {
 
     @GetMapping("/minigames/ranks")
     public ResponseEntity<MiniGameRanksResponse> getRanks(
-            @RequestParam String joinCode,
-            @RequestParam MiniGameType miniGameType
-    ) {
+            @RequestParam String joinCode, @RequestParam MiniGameType miniGameType) {
         final MiniGameResult result = gameSessionService.getRanks(new JoinCode(joinCode), miniGameType);
 
         return ResponseEntity.ok(MiniGameRanksResponse.from(result));
@@ -53,7 +49,8 @@ public class MiniGameRestController implements MiniGameApi {
 
     @GetMapping("/rooms/minigames")
     public ResponseEntity<List<MiniGameType>> getMiniGames() {
-        final List<MiniGameType> responses = Arrays.stream(MiniGameType.values()).toList();
+        final List<MiniGameType> responses =
+                Arrays.stream(MiniGameType.values()).toList();
 
         return ResponseEntity.ok(responses);
     }

@@ -26,7 +26,8 @@ public class PatchNoteController implements PatchNoteApi {
 
     @GetMapping("/latest")
     public ResponseEntity<PatchNoteResponse> findLatest() {
-        return patchNoteQueryService.findLatest()
+        return patchNoteQueryService
+                .findLatest()
                 .map(PatchNoteResponse::from)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.noContent().build());

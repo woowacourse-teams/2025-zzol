@@ -14,8 +14,7 @@ import org.springframework.validation.annotation.Validated;
 public record MonitorProperties(
         boolean enabled,
         @Positive int errorLogWindowMinutes,
-        @PositiveOrZero int enrichCooldownMinutes
-) {
+        @PositiveOrZero int enrichCooldownMinutes) {
 
     /**
      * ERROR 로그 샘플 조회 윈도우.

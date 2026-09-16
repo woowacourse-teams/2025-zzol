@@ -1,4 +1,3 @@
 package coffeeshout.speedtouch.ui.response;
 
-public record SpeedTouchStateResponse(String state) {
-}
+public record SpeedTouchStateResponse(String state) {}

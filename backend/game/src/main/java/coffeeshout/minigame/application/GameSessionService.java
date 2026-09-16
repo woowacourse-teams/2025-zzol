@@ -48,7 +48,8 @@ public class GameSessionService {
      * 세션이 반드시 존재한다고 가정하는 읽기 전용 조회.
      */
     public GameSession getSession(JoinCode joinCode) {
-        return gameSessionRepository.findByJoinCode(joinCode)
+        return gameSessionRepository
+                .findByJoinCode(joinCode)
                 .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "게임 세션이 존재하지 않습니다."));
     }
 
@@ -145,8 +146,6 @@ public class GameSessionService {
      * (게임 선택 전의 방 — 기존 Room 대기열 조회와 동일한 의미).
      */
     public List<MiniGameType> getSelectedTypes(JoinCode joinCode) {
-        return findSession(joinCode)
-                .map(GameSession::getSelectedTypes)
-                .orElseGet(List::of);
+        return findSession(joinCode).map(GameSession::getSelectedTypes).orElseGet(List::of);
     }
 }

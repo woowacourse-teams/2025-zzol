@@ -29,9 +29,7 @@ public class GameTaskSchedulerFactory {
     private final int poolSize;
 
     public GameTaskSchedulerFactory(
-            ContextSnapshotFactory snapshotFactory,
-            @Value("${game.scheduler.pool-size:2}") int poolSize
-    ) {
+            ContextSnapshotFactory snapshotFactory, @Value("${game.scheduler.pool-size:2}") int poolSize) {
         this.snapshotFactory = snapshotFactory;
         this.poolSize = poolSize;
     }

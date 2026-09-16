@@ -18,7 +18,8 @@ public class RoomQueryService {
     private final RoomRepository roomRepository;
 
     public Room getByJoinCode(@NonNull JoinCode joinCode) {
-        return roomRepository.findByJoinCode(joinCode)
+        return roomRepository
+                .findByJoinCode(joinCode)
                 .orElseThrow(() -> new BusinessException(GlobalErrorCode.NOT_EXIST, "방이 존재하지 않습니다."));
     }
 
@@ -31,10 +32,11 @@ public class RoomQueryService {
         return List.copyOf(room.getPlayers());
     }
 
-    public boolean existsPlayer(@NonNull JoinCode joinCode, @NonNull coffeeshout.room.domain.player.PlayerName playerName) {
-        return roomRepository.findByJoinCode(joinCode)
-                .map(room -> room.getPlayers().stream()
-                        .anyMatch(player -> player.sameName(playerName)))
+    public boolean existsPlayer(
+            @NonNull JoinCode joinCode, @NonNull coffeeshout.room.domain.player.PlayerName playerName) {
+        return roomRepository
+                .findByJoinCode(joinCode)
+                .map(room -> room.getPlayers().stream().anyMatch(player -> player.sameName(playerName)))
                 .orElse(false);
     }
 }

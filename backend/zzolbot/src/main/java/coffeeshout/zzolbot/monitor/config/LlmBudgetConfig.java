@@ -25,9 +25,7 @@ public class LlmBudgetConfig {
 
     @Bean
     public LlmCallBudget llmCallBudget(
-            ObjectProvider<StringRedisTemplate> redisTemplateProvider,
-            LlmBudgetProperties properties,
-            Clock clock) {
+            ObjectProvider<StringRedisTemplate> redisTemplateProvider, LlmBudgetProperties properties, Clock clock) {
         final StringRedisTemplate redisTemplate = redisTemplateProvider.getIfAvailable();
         if (redisTemplate == null) {
             log.warn("[ZzolBot] StringRedisTemplate 부재 — 무제한 예산 폴백 사용(단일 인스턴스 가정)");

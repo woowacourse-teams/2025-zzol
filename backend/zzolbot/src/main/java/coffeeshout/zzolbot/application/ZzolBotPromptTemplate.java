@@ -80,19 +80,15 @@ public class ZzolBotPromptTemplate {
 
                 ## 공통 조회 기준 (모든 답변에 포함)
                 asOf: %s, 요청ID: %s, 사용한 도구 목록
-                """.formatted(
-                ctx.asOf(),
-                properties.defaultWindowMinutes(),
-                ctx.asOf(),
-                ctx.requestId()
-        );
+                """.formatted(ctx.asOf(), properties.defaultWindowMinutes(), ctx.asOf(), ctx.requestId());
     }
 
     private String buildFewShotSection(List<FewShotExample> examples) {
         final StringBuilder sb = new StringBuilder("\n## 운영자가 좋은 진단으로 평가한 예시\n");
-        examples.forEach(example -> sb
-                .append("\n질문: ").append(example.question())
-                .append("\n답변 요약: ").append(truncateAnswer(example.answer()))
+        examples.forEach(example -> sb.append("\n질문: ")
+                .append(example.question())
+                .append("\n답변 요약: ")
+                .append(truncateAnswer(example.answer()))
                 .append("...\n"));
         return sb.toString();
     }
@@ -112,10 +108,6 @@ public class ZzolBotPromptTemplate {
     }
 
     private String formatTableSchema(TableSchema schema) {
-        return "- %s(%s)  — %s".formatted(
-                schema.name(),
-                String.join(", ", schema.columns()),
-                schema.description()
-        );
+        return "- %s(%s)  — %s".formatted(schema.name(), String.join(", ", schema.columns()), schema.description());
     }
 }

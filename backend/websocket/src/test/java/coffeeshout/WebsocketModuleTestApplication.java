@@ -2,15 +2,14 @@ package coffeeshout;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
-import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 
 @ConfigurationPropertiesScan(basePackages = "coffeeshout")
 @SpringBootApplication(
         scanBasePackages = "coffeeshout",
-        exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class}
-)
+        exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 public class WebsocketModuleTestApplication {
 
     public static void main(String[] args) {

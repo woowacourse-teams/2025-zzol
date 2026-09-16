@@ -19,8 +19,8 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.hasParameterAnnotation(AuthUser.class)
-               && (parameter.getParameterType().equals(Optional.class)
-                   || parameter.getParameterType().equals(AuthenticatedUser.class));
+                && (parameter.getParameterType().equals(Optional.class)
+                        || parameter.getParameterType().equals(AuthenticatedUser.class));
     }
 
     @Override
@@ -28,11 +28,10 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
             MethodParameter parameter,
             ModelAndViewContainer mavContainer,
             NativeWebRequest webRequest,
-            WebDataBinderFactory binderFactory
-    ) {
+            WebDataBinderFactory binderFactory) {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final boolean isAuthenticated = authentication != null
-                && authentication.getPrincipal() instanceof AuthenticatedUser;
+        final boolean isAuthenticated =
+                authentication != null && authentication.getPrincipal() instanceof AuthenticatedUser;
 
         if (parameter.getParameterType().equals(AuthenticatedUser.class)) {
             if (!isAuthenticated) {

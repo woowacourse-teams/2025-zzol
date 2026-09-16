@@ -67,22 +67,26 @@ public class PatchNoteEntity {
 
     private static void validateCategory(PatchNoteCategory category) {
         if (category == null) {
-            throw new BusinessException(PatchNoteErrorCode.INVALID_CATEGORY, PatchNoteErrorCode.INVALID_CATEGORY.getMessage());
+            throw new BusinessException(
+                    PatchNoteErrorCode.INVALID_CATEGORY, PatchNoteErrorCode.INVALID_CATEGORY.getMessage());
         }
     }
 
     private static void validateTitle(String title) {
         if (title == null || title.isBlank() || title.length() > 100) {
-            throw new BusinessException(PatchNoteErrorCode.INVALID_TITLE, PatchNoteErrorCode.INVALID_TITLE.getMessage());
+            throw new BusinessException(
+                    PatchNoteErrorCode.INVALID_TITLE, PatchNoteErrorCode.INVALID_TITLE.getMessage());
         }
     }
 
     private static void validateContent(String content) {
         if (content == null || content.isBlank()) {
-            throw new BusinessException(PatchNoteErrorCode.INVALID_CONTENT, PatchNoteErrorCode.INVALID_CONTENT.getMessage());
+            throw new BusinessException(
+                    PatchNoteErrorCode.INVALID_CONTENT, PatchNoteErrorCode.INVALID_CONTENT.getMessage());
         }
         if (content.length() > 5000) {
-            throw new BusinessException(PatchNoteErrorCode.INVALID_CONTENT_LENGTH, PatchNoteErrorCode.INVALID_CONTENT_LENGTH.getMessage());
+            throw new BusinessException(
+                    PatchNoteErrorCode.INVALID_CONTENT_LENGTH, PatchNoteErrorCode.INVALID_CONTENT_LENGTH.getMessage());
         }
     }
 }

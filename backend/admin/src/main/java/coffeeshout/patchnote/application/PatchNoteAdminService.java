@@ -29,9 +29,11 @@ public class PatchNoteAdminService {
 
     @Transactional(readOnly = true)
     public AdminRow findById(Long id) {
-        return patchNoteRepository.findById(id)
+        return patchNoteRepository
+                .findById(id)
                 .map(this::toRow)
-                .orElseThrow(() -> new BusinessException(PatchNoteErrorCode.NOT_FOUND, PatchNoteErrorCode.NOT_FOUND.getMessage()));
+                .orElseThrow(() ->
+                        new BusinessException(PatchNoteErrorCode.NOT_FOUND, PatchNoteErrorCode.NOT_FOUND.getMessage()));
     }
 
     @Transactional
@@ -42,8 +44,10 @@ public class PatchNoteAdminService {
 
     @Transactional
     public void update(Long id, PatchNoteCategory category, String title, String content) {
-        final PatchNoteEntity entity = patchNoteRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(PatchNoteErrorCode.NOT_FOUND, PatchNoteErrorCode.NOT_FOUND.getMessage()));
+        final PatchNoteEntity entity = patchNoteRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new BusinessException(PatchNoteErrorCode.NOT_FOUND, PatchNoteErrorCode.NOT_FOUND.getMessage()));
         entity.update(category, title, content);
     }
 
@@ -59,8 +63,7 @@ public class PatchNoteAdminService {
                 entity.getTitle(),
                 entity.getContent(),
                 toKst(entity.getCreatedAt()),
-                toKst(entity.getUpdatedAt())
-        );
+                toKst(entity.getUpdatedAt()));
     }
 
     private LocalDateTime toKst(Instant instant) {

@@ -31,8 +31,7 @@ class SettlementDeadLetterPublisherTest {
     void 격리_메시지를_레코드_ID와_사유와_함께_저장한다() {
         publisher.publish(레코드(), "파싱 실패");
 
-        ArgumentCaptor<SettlementDeadLetterEntity> captor =
-                ArgumentCaptor.forClass(SettlementDeadLetterEntity.class);
+        ArgumentCaptor<SettlementDeadLetterEntity> captor = ArgumentCaptor.forClass(SettlementDeadLetterEntity.class);
         verify(deadLetterRepository).save(captor.capture());
         SettlementDeadLetterEntity saved = captor.getValue();
         assertThatCode(saved::getRecordId).doesNotThrowAnyException();
@@ -48,8 +47,6 @@ class SettlementDeadLetterPublisherTest {
     }
 
     private MapRecord<String, String, String> 레코드() {
-        return StreamRecords.newRecord()
-                .in("settlement:result")
-                .ofMap(Map.of("payload", "{\"broken\":true}"));
+        return StreamRecords.newRecord().in("settlement:result").ofMap(Map.of("payload", "{\"broken\":true}"));
     }
 }

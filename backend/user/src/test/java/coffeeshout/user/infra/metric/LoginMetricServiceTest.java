@@ -42,7 +42,8 @@ class LoginMetricServiceTest {
         loginMetricService.countStart(OAuthProvider.KAKAO);
 
         assertThat(count("login.start", "kakao")).isEqualTo(1.0);
-        assertThat(meterRegistry.find("login.success").tag("provider", "kakao").counter()).isNull();
+        assertThat(meterRegistry.find("login.success").tag("provider", "kakao").counter())
+                .isNull();
     }
 
     private double count(String name, String provider) {

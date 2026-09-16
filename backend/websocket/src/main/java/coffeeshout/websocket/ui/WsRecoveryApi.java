@@ -17,14 +17,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface WsRecoveryApi {
 
     @Operation(summary = "메시지 복구 요청", description = "웹소켓 연결이 끊어진 동안 유실된 메시지를 복구합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "복구 성공"),
-            @ApiResponse(responseCode = "409", description = "웹소켓 미연결 상태 (복구 불가)", 
-                         content = @Content(schema = @Schema(implementation = RecoveryResponse.class)))
-    })
+    @ApiResponses(
+            value = {
+                @ApiResponse(responseCode = "200", description = "복구 성공"),
+                @ApiResponse(
+                        responseCode = "409",
+                        description = "웹소켓 미연결 상태 (복구 불가)",
+                        content = @Content(schema = @Schema(implementation = RecoveryResponse.class)))
+            })
     ResponseEntity<RecoveryResponse> requestRecovery(
             @Parameter(description = "방 입장 코드", required = true) @PathVariable @NotBlank String joinCode,
             @Parameter(description = "플레이어 이름", required = true) @RequestParam @NotBlank String playerName,
-            @Parameter(description = "마지막으로 수신한 메시지 ID (Redis Stream ID)", required = true) @RequestParam @NotBlank String lastId
-    );
+            @Parameter(description = "마지막으로 수신한 메시지 ID (Redis Stream ID)", required = true) @RequestParam @NotBlank
+                    String lastId);
 }

@@ -62,7 +62,6 @@
 | `nickname/`  | ProfanityChecker, NicknameSubmittedEvent, WordPicker 등 닉네임 유틸 |
 | `redis/`     | BaseEvent, StreamKey 인터페이스                          |
 | `log/`       | NotificationMarker                                  |
-| `ipblock/`   | IpBlockAttributes (속성 VO만 — 필터·저장소는 `:infra`)       |
 
 `:infra` 모듈이 담는 것:
 

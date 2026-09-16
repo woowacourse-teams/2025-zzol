@@ -21,9 +21,7 @@ public class DelayRemovalSchedulerConfig {
         scheduler.setPoolSize(1);
         scheduler.setThreadNamePrefix("delay-removal-task-");
         scheduler.setDaemon(false);
-        scheduler.setErrorHandler(t ->
-                log.error("스케줄 실행 중 예외가 발생했습니다.", t)
-        );
+        scheduler.setErrorHandler(t -> log.error("스케줄 실행 중 예외가 발생했습니다.", t));
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         scheduler.setAwaitTerminationSeconds(30);
 

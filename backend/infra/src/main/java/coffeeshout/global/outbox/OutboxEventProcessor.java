@@ -65,14 +65,12 @@ public class OutboxEventProcessor {
 
         if (event.getRetryCount() >= MAX_RETRY_COUNT) {
             event.markDeadLetter();
-            log.error("Outbox 이벤트 최대 재시도 초과, DEAD_LETTER 전환: id={}, streamKey={}",
-                    event.getId(), event.getStreamKey());
+            log.error("Outbox 이벤트 최대 재시도 초과, DEAD_LETTER 전환: id={}, streamKey={}", event.getId(), event.getStreamKey());
             return;
         }
 
         event.setStatusPending();
-        log.warn("Outbox 이벤트 발행 실패, PENDING 복귀: id={}, retryCount={}",
-                event.getId(), event.getRetryCount());
+        log.warn("Outbox 이벤트 발행 실패, PENDING 복귀: id={}, retryCount={}", event.getId(), event.getRetryCount());
     }
 
     /**

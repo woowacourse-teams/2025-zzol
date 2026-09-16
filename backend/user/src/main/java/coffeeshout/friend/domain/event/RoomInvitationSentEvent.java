@@ -9,8 +9,7 @@ public record RoomInvitationSentEvent(
         Long inviterUserId,
         String inviterNickname,
         Long targetUserId,
-        String joinCode
-) {
+        String joinCode) {
 
     public RoomInvitationSentEvent(Long inviterUserId, String inviterNickname, Long targetUserId, String joinCode) {
         this(UUID.randomUUID().toString(), Instant.now(), inviterUserId, inviterNickname, targetUserId, joinCode);

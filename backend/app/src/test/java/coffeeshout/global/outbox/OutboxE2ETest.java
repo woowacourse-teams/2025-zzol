@@ -3,8 +3,8 @@ package coffeeshout.global.outbox;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
+import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.support.app.IntegrationTestSupport;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -64,9 +64,8 @@ class OutboxE2ETest extends IntegrationTestSupport {
 
             // then
             final List<OutboxEvent> events = outboxEventRepository.findAll();
-            assertThat(events).hasSize(5).allSatisfy(event ->
-                    assertThat(event.getStatus()).isEqualTo(OutboxStatus.PUBLISHED)
-            );
+            assertThat(events).hasSize(5).allSatisfy(event -> assertThat(event.getStatus())
+                    .isEqualTo(OutboxStatus.PUBLISHED));
         }
     }
 
@@ -76,7 +75,8 @@ class OutboxE2ETest extends IntegrationTestSupport {
         @Test
         void 직접_PENDING_레코드를_넣으면_Worker가_relay해서_PUBLISHED로_전환한다() {
             // given — Outbox에 직접 PENDING 레코드 삽입 (AFTER_COMMIT 우회)
-            final OutboxEvent event = OutboxEvent.create("room",
+            final OutboxEvent event = OutboxEvent.create(
+                    "room",
                     "{\"@type\":\"PlayerListUpdateEvent\",\"eventId\":\"test\",\"timestamp\":\"2025-01-01T00:00:00Z\",\"joinCode\":\"ABCD\"}");
             outboxEventRepository.saveAndFlush(event);
 
@@ -86,7 +86,8 @@ class OutboxE2ETest extends IntegrationTestSupport {
             outboxRelayWorker.relay();
 
             // then
-            final OutboxEvent afterRelay = outboxEventRepository.findById(event.getId()).orElseThrow();
+            final OutboxEvent afterRelay =
+                    outboxEventRepository.findById(event.getId()).orElseThrow();
             assertThat(afterRelay.getStatus()).isEqualTo(OutboxStatus.PUBLISHED);
         }
 
@@ -100,11 +101,11 @@ class OutboxE2ETest extends IntegrationTestSupport {
             outboxRelayWorker.relay();
 
             // then
-            final OutboxEvent afterRelay = outboxEventRepository.findById(event.getId()).orElseThrow();
+            final OutboxEvent afterRelay =
+                    outboxEventRepository.findById(event.getId()).orElseThrow();
             assertThat(afterRelay.getRetryCount()).isEqualTo(1);
             assertThat(afterRelay.getStatus()).isEqualTo(OutboxStatus.PENDING);
         }
-
     }
 
     @Test
@@ -119,7 +120,8 @@ class OutboxE2ETest extends IntegrationTestSupport {
         }
 
         // then
-        final OutboxEvent afterRetries = outboxEventRepository.findById(event.getId()).orElseThrow();
+        final OutboxEvent afterRetries =
+                outboxEventRepository.findById(event.getId()).orElseThrow();
         assertThat(afterRetries.getStatus()).isEqualTo(OutboxStatus.DEAD_LETTER);
         assertThat(afterRetries.getRetryCount()).isEqualTo(10);
     }

@@ -16,8 +16,6 @@ public class SlackConfig {
         factory.setConnectTimeout(properties.connectTimeout());
         factory.setReadTimeout(properties.readTimeout());
 
-        return RestClient.builder()
-                .requestFactory(factory)
-                .build();
+        return RestClient.builder().requestFactory(factory).build();
     }
 }

@@ -13,7 +13,8 @@ class RunnersTest {
 
     private final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> 30;
 
-    final List<Gamer> players = List.of(PlayerFixture.호스트한스().toGamer(), PlayerFixture.게스트꾹이().toGamer());
+    final List<Gamer> players =
+            List.of(PlayerFixture.호스트한스().toGamer(), PlayerFixture.게스트꾹이().toGamer());
     final Runners runners = new Runners(players);
 
     @Test

@@ -28,26 +28,17 @@ class UserNicknameTest {
         @ParameterizedTest
         @ValueSource(strings = {"", " ", "  "})
         void 공백이면_예외가_발생한다(String value) {
-            assertCoffeeShoutException(
-                    () -> new UserNickname(value),
-                    UserErrorCode.NICKNAME_BLANK
-            );
+            assertCoffeeShoutException(() -> new UserNickname(value), UserErrorCode.NICKNAME_BLANK);
         }
 
         @Test
         void null이면_예외가_발생한다() {
-            assertCoffeeShoutException(
-                    () -> new UserNickname(null),
-                    UserErrorCode.NICKNAME_BLANK
-            );
+            assertCoffeeShoutException(() -> new UserNickname(null), UserErrorCode.NICKNAME_BLANK);
         }
 
         @Test
         void 최대_길이_초과이면_예외가_발생한다() {
-            assertCoffeeShoutException(
-                    () -> new UserNickname("12345678901"),
-                    UserErrorCode.NICKNAME_TOO_LONG
-            );
+            assertCoffeeShoutException(() -> new UserNickname("12345678901"), UserErrorCode.NICKNAME_TOO_LONG);
         }
     }
 }

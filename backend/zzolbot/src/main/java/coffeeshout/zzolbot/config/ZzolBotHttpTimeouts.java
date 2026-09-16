@@ -17,13 +17,11 @@ public final class ZzolBotHttpTimeouts {
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(2);
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
 
-    private ZzolBotHttpTimeouts() {
-    }
+    private ZzolBotHttpTimeouts() {}
 
     public static ClientHttpRequestFactory requestFactory() {
-        final HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(CONNECT_TIMEOUT)
-                .build();
+        final HttpClient httpClient =
+                HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build();
         final JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
         factory.setReadTimeout(READ_TIMEOUT);
         return factory;

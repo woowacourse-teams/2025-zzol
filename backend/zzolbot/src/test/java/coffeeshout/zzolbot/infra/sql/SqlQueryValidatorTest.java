@@ -24,19 +24,15 @@ class SqlQueryValidatorTest {
             10000L,
             new SqlProperties(
                     List.of(
-                            new TableSchema("app_user",
+                            new TableSchema(
+                                    "app_user",
                                     List.of("id", "nickname", "created_at", "deleted_at"),
                                     List.of("provider_user_id", "refresh_token"),
                                     "회원 정보"),
-                            new TableSchema("room",
-                                    List.of("id", "join_code", "room_state", "created_at"),
-                                    List.of(),
-                                    "방 정보")
-                    ),
+                            new TableSchema(
+                                    "room", List.of("id", "join_code", "room_state", "created_at"), List.of(), "방 정보")),
                     100,
-                    3
-            )
-    );
+                    3));
 
     private SqlQueryValidator validator;
 
@@ -96,8 +92,8 @@ class SqlQueryValidatorTest {
 
         @Test
         void JOIN을_포함한_허용_테이블_쿼리가_통과한다() {
-            final String sql = "SELECT u.id, u.nickname, r.join_code "
-                    + "FROM app_user u JOIN room r ON u.id = r.id LIMIT 20";
+            final String sql =
+                    "SELECT u.id, u.nickname, r.join_code " + "FROM app_user u JOIN room r ON u.id = r.id LIMIT 20";
 
             final String result = validator.validate(sql);
 
@@ -121,40 +117,31 @@ class SqlQueryValidatorTest {
         void INSERT_문은_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("INSERT INTO app_user (nickname) VALUES ('test')"),
-                    ZzolBotErrorCode.INVALID_SQL
-            );
+                    ZzolBotErrorCode.INVALID_SQL);
         }
 
         @Test
         void UPDATE_문은_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("UPDATE app_user SET nickname = 'x' WHERE id = 1"),
-                    ZzolBotErrorCode.INVALID_SQL
-            );
+                    ZzolBotErrorCode.INVALID_SQL);
         }
 
         @Test
         void DELETE_문은_거부된다() {
             assertCoffeeShoutException(
-                    () -> validator.validate("DELETE FROM app_user WHERE id = 1"),
-                    ZzolBotErrorCode.INVALID_SQL
-            );
+                    () -> validator.validate("DELETE FROM app_user WHERE id = 1"), ZzolBotErrorCode.INVALID_SQL);
         }
 
         @Test
         void DROP_TABLE_문은_거부된다() {
-            assertCoffeeShoutException(
-                    () -> validator.validate("DROP TABLE app_user"),
-                    ZzolBotErrorCode.INVALID_SQL
-            );
+            assertCoffeeShoutException(() -> validator.validate("DROP TABLE app_user"), ZzolBotErrorCode.INVALID_SQL);
         }
 
         @Test
         void TRUNCATE_문은_거부된다() {
             assertCoffeeShoutException(
-                    () -> validator.validate("TRUNCATE TABLE app_user"),
-                    ZzolBotErrorCode.INVALID_SQL
-            );
+                    () -> validator.validate("TRUNCATE TABLE app_user"), ZzolBotErrorCode.INVALID_SQL);
         }
     }
 
@@ -165,16 +152,14 @@ class SqlQueryValidatorTest {
         void 세미콜론으로_구분된_복수_구문은_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("SELECT id FROM app_user; DROP TABLE app_user"),
-                    ZzolBotErrorCode.INVALID_SQL
-            );
+                    ZzolBotErrorCode.INVALID_SQL);
         }
 
         @Test
         void SELECT_두개를_나란히_넣으면_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("SELECT id FROM app_user; SELECT id FROM room"),
-                    ZzolBotErrorCode.INVALID_SQL
-            );
+                    ZzolBotErrorCode.INVALID_SQL);
         }
     }
 
@@ -185,16 +170,14 @@ class SqlQueryValidatorTest {
         void 화이트리스트에_없는_테이블은_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("SELECT id FROM oauth_account LIMIT 10"),
-                    ZzolBotErrorCode.SQL_TABLE_NOT_ALLOWED
-            );
+                    ZzolBotErrorCode.SQL_TABLE_NOT_ALLOWED);
         }
 
         @Test
         void friendship_테이블은_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("SELECT id FROM friendship LIMIT 10"),
-                    ZzolBotErrorCode.SQL_TABLE_NOT_ALLOWED
-            );
+                    ZzolBotErrorCode.SQL_TABLE_NOT_ALLOWED);
         }
     }
 
@@ -205,16 +188,14 @@ class SqlQueryValidatorTest {
         void SELECT_전체_와일드카드는_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("SELECT * FROM app_user LIMIT 10"),
-                    ZzolBotErrorCode.SQL_WILDCARD_NOT_ALLOWED
-            );
+                    ZzolBotErrorCode.SQL_WILDCARD_NOT_ALLOWED);
         }
 
         @Test
         void 테이블_별칭_와일드카드도_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("SELECT u.* FROM app_user u LIMIT 10"),
-                    ZzolBotErrorCode.SQL_WILDCARD_NOT_ALLOWED
-            );
+                    ZzolBotErrorCode.SQL_WILDCARD_NOT_ALLOWED);
         }
     }
 
@@ -225,24 +206,21 @@ class SqlQueryValidatorTest {
         void app_user의_provider_user_id는_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("SELECT id, provider_user_id FROM app_user LIMIT 10"),
-                    ZzolBotErrorCode.SQL_COLUMN_BLOCKED
-            );
+                    ZzolBotErrorCode.SQL_COLUMN_BLOCKED);
         }
 
         @Test
         void app_user의_refresh_token은_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("SELECT id, refresh_token FROM app_user LIMIT 10"),
-                    ZzolBotErrorCode.SQL_COLUMN_BLOCKED
-            );
+                    ZzolBotErrorCode.SQL_COLUMN_BLOCKED);
         }
 
         @Test
         void 테이블_명시_없이_blocked_컬럼_사용해도_거부된다() {
             assertCoffeeShoutException(
                     () -> validator.validate("SELECT provider_user_id FROM app_user LIMIT 10"),
-                    ZzolBotErrorCode.SQL_COLUMN_BLOCKED
-            );
+                    ZzolBotErrorCode.SQL_COLUMN_BLOCKED);
         }
 
         @Test
@@ -261,9 +239,7 @@ class SqlQueryValidatorTest {
         @Test
         void FOR_UPDATE는_거부된다() {
             assertCoffeeShoutException(
-                    () -> validator.validate("SELECT id FROM app_user FOR UPDATE"),
-                    ZzolBotErrorCode.INVALID_SQL
-            );
+                    () -> validator.validate("SELECT id FROM app_user FOR UPDATE"), ZzolBotErrorCode.INVALID_SQL);
         }
     }
 
@@ -273,17 +249,12 @@ class SqlQueryValidatorTest {
         @Test
         void 문법_오류_SQL은_거부된다() {
             assertCoffeeShoutException(
-                    () -> validator.validate("SELEKT id FORM app_user"),
-                    ZzolBotErrorCode.INVALID_SQL
-            );
+                    () -> validator.validate("SELEKT id FORM app_user"), ZzolBotErrorCode.INVALID_SQL);
         }
 
         @Test
         void 빈_문자열은_거부된다() {
-            assertCoffeeShoutException(
-                    () -> validator.validate(""),
-                    ZzolBotErrorCode.INVALID_SQL
-            );
+            assertCoffeeShoutException(() -> validator.validate(""), ZzolBotErrorCode.INVALID_SQL);
         }
     }
 }

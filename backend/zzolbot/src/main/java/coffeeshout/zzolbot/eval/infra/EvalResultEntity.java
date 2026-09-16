@@ -23,10 +23,9 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "zzolbot_eval_result",
         indexes = {
-                @Index(name = "idx_zzolbot_eval_result_run", columnList = "run_id"),
-                @Index(name = "idx_zzolbot_eval_result_scenario", columnList = "scenario_id")
-        }
-)
+            @Index(name = "idx_zzolbot_eval_result_run", columnList = "run_id"),
+            @Index(name = "idx_zzolbot_eval_result_scenario", columnList = "scenario_id")
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EvalResultEntity {

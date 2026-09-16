@@ -11,17 +11,12 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "redis.stream")
 public record RedisStreamProperties(
-        CommonSettings commonSettings,
-        Map<String, ThreadPoolConfig> threadPools,
-        Map<String, StreamConfig> keys
-) {
+        CommonSettings commonSettings, Map<String, ThreadPoolConfig> threadPools, Map<String, StreamConfig> keys) {
     public record CommonSettings(
             @Positive int maxLength,
             @Positive int batchSize,
             @NotNull Duration pollTimeout,
-            @DefaultValue("5s") @NotNull Duration subscriptionStartTimeout
-    ) {
-    }
+            @DefaultValue("5s") @NotNull Duration subscriptionStartTimeout) {}
 
     public record StreamConfig(
             String threadPoolName,
@@ -29,26 +24,19 @@ public record RedisStreamProperties(
             Integer maxLength,
             Integer batchSize,
             Duration pollTimeout,
-            Boolean listenerEnabled
-    ) {
+            Boolean listenerEnabled) {
         public StreamConfig {
             final boolean enabled = listenerEnabled == null || listenerEnabled;
             if (enabled) {
                 if (threadPoolName == null && threadPool == null) {
-                    throw new IllegalArgumentException(
-                            "threadPoolName 또는 threadPool 중 하나는 반드시 지정해야 합니다."
-                    );
+                    throw new IllegalArgumentException("threadPoolName 또는 threadPool 중 하나는 반드시 지정해야 합니다.");
                 }
                 if (threadPoolName != null && threadPool != null) {
-                    throw new IllegalArgumentException(
-                            "threadPoolName과 threadPool을 동시에 지정할 수 없습니다."
-                    );
+                    throw new IllegalArgumentException("threadPoolName과 threadPool을 동시에 지정할 수 없습니다.");
                 }
             } else if (threadPoolName != null || threadPool != null) {
                 // 리스너를 만들지 않는 스트림은 소비 스레드가 없다 — 풀 지정은 설정 오해의 신호다.
-                throw new IllegalArgumentException(
-                        "listener-enabled: false인 스트림은 스레드풀을 지정할 수 없습니다."
-                );
+                throw new IllegalArgumentException("listener-enabled: false인 스트림은 스레드풀을 지정할 수 없습니다.");
             }
         }
 
@@ -83,7 +71,5 @@ public record RedisStreamProperties(
     public record ThreadPoolConfig(
             @Positive int coreSize,
             @Positive int maxSize,
-            @Positive int queueCapacity
-    ) {
-    }
+            @Positive int queueCapacity) {}
 }

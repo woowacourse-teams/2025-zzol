@@ -65,7 +65,10 @@ public class ReportRateLimitStore {
     }
 
     private boolean tryAcquireFallback(String ip, Throwable t) {
-        log.warn("서킷 브레이커 OPEN/장애 발생: Redis 장애로 신고 rate limit을 확인할 수 없습니다. Fail-open 처리합니다. ip={} error={}", ip, t.getMessage());
+        log.warn(
+                "서킷 브레이커 OPEN/장애 발생: Redis 장애로 신고 rate limit을 확인할 수 없습니다. Fail-open 처리합니다. ip={} error={}",
+                ip,
+                t.getMessage());
         return true;
     }
 }

@@ -6,5 +6,7 @@ public enum NicknameAuditStatus {
     PENDING,
     CLEAN,
     ALLOWED,
-    BLOCKED
+    BLOCKED,
+    /** 검열 호출이 상한만큼 되풀이 실패한 행. UNAUDITED 스캔에서 빠져 회차를 더는 붙잡지 않는다. */
+    DEAD_LETTER
 }

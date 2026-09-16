@@ -4,11 +4,9 @@ import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-
 @Getter
 @RequiredArgsConstructor
 public enum LadderGameErrorCode implements ErrorCode {
-
     PLAYER_NOT_FOUND(404, "플레이어를 찾을 수 없습니다."),
     INVALID_POLE_INDEX(500, "유효하지 않은 기둥 인덱스입니다."),
     INVALID_PLAYER_COUNT(400, "플레이어 수는 1 이상이어야 합니다."),

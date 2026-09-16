@@ -10,19 +10,10 @@ import java.util.UUID;
  * 스트림 도착 순서가 아니라 이 {@code timestamp}로만 한다(N1). {@code BaseEvent}라 자동 직렬화·자동
  * 라우팅된다({@code EventDispatcher}가 concrete 타입으로 {@code Consumer<NunchiCommandEvent>}를 찾음).
  */
-public record NunchiCommandEvent(
-        String eventId,
-        String joinCode,
-        String playerName,
-        Instant timestamp
-) implements BaseEvent {
+public record NunchiCommandEvent(String eventId, String joinCode, String playerName, Instant timestamp)
+        implements BaseEvent {
 
     public static NunchiCommandEvent of(String joinCode, String playerName) {
-        return new NunchiCommandEvent(
-                UUID.randomUUID().toString(),
-                joinCode,
-                playerName,
-                Instant.now()
-        );
+        return new NunchiCommandEvent(UUID.randomUUID().toString(), joinCode, playerName, Instant.now());
     }
 }

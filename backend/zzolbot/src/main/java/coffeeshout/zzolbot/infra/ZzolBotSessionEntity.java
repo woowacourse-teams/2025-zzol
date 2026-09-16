@@ -19,10 +19,9 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "zzolbot_session",
         indexes = {
-                @Index(name = "idx_zzolbot_session_created_at", columnList = "created_at DESC"),
-                @Index(name = "idx_zzolbot_session_feedback", columnList = "feedback, created_at DESC")
-        }
-)
+            @Index(name = "idx_zzolbot_session_created_at", columnList = "created_at DESC"),
+            @Index(name = "idx_zzolbot_session_feedback", columnList = "feedback, created_at DESC")
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ZzolBotSessionEntity {

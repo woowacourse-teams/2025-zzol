@@ -1,7 +1,7 @@
 package coffeeshout.websocket.ui;
 
-import coffeeshout.websocket.WsRecoveryService;
 import coffeeshout.websocket.StompSessionManager;
+import coffeeshout.websocket.WsRecoveryService;
 import coffeeshout.websocket.ui.dto.RecoveryMessage;
 import coffeeshout.websocket.ui.dto.RecoveryResponse;
 import jakarta.validation.constraints.NotBlank;
@@ -35,18 +35,20 @@ public class WsRecoveryController implements WsRecoveryApi {
     public ResponseEntity<RecoveryResponse> requestRecovery(
             @PathVariable @NotBlank String joinCode,
             @RequestParam @NotBlank String playerName,
-            @RequestParam @NotBlank String lastId
-    ) {
+            @RequestParam @NotBlank String lastId) {
         if (!stompSessionManager.hasSessionId(joinCode, playerName)) {
             log.warn("복구 요청 실패: 웹소켓 미연결 - joinCode={}, playerName={}", joinCode, playerName);
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(RecoveryResponse.error("웹소켓 미연결"));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(RecoveryResponse.error("웹소켓 미연결"));
         }
 
         final List<RecoveryMessage> messages = wsRecoveryService.getMessagesSince(joinCode, lastId);
 
-        log.info("메시지 복구 완료: joinCode={}, playerName={}, lastId={}, count={}",
-                joinCode, playerName, lastId, messages.size());
+        log.info(
+                "메시지 복구 완료: joinCode={}, playerName={}, lastId={}, count={}",
+                joinCode,
+                playerName,
+                lastId,
+                messages.size());
 
         return ResponseEntity.ok(RecoveryResponse.success(messages));
     }

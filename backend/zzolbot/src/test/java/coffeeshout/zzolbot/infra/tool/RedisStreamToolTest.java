@@ -6,13 +6,13 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 import coffeeshout.global.redis.config.RedisStreamProperties;
-import java.util.List;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,11 +27,11 @@ import org.springframework.data.redis.core.StreamOperations;
 @ExtendWith(MockitoExtension.class)
 class RedisStreamToolTest {
 
-    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+    private static final AskContext CTX =
+            AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
     private static final Map<String, RedisStreamProperties.StreamConfig> STREAM_KEYS = Map.of(
             "room", mock(RedisStreamProperties.StreamConfig.class),
-            "racinggame", mock(RedisStreamProperties.StreamConfig.class)
-    );
+            "racinggame", mock(RedisStreamProperties.StreamConfig.class));
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;

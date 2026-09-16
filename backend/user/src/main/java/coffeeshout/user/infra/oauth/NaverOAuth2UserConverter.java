@@ -33,8 +33,7 @@ public class NaverOAuth2UserConverter implements OAuth2UserConverter {
     private Map<String, Object> getResponse(OAuth2User oAuth2User) {
         final Map<String, Object> response = oAuth2User.getAttribute("response");
         if (response == null) {
-            throw new BusinessException(UserErrorCode.OAUTH_PROVIDER_ERROR,
-                    "네이버 OAuth2 응답에서 필수 정보를 가져올 수 없습니다.");
+            throw new BusinessException(UserErrorCode.OAUTH_PROVIDER_ERROR, "네이버 OAuth2 응답에서 필수 정보를 가져올 수 없습니다.");
         }
         return response;
     }

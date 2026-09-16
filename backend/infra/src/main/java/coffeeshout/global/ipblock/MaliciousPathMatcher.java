@@ -29,8 +29,7 @@ public class MaliciousPathMatcher {
             "/config.php",
             "/setup.php",
             "/install.php",
-            "/graphql"
-    );
+            "/graphql");
 
     public boolean isMalicious(String path) {
         if (path == null || path.isBlank()) {

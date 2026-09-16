@@ -58,12 +58,16 @@ public class NicknameAuditPromptTemplate {
                 .map(fb -> {
                     final boolean flagged = fb.getOperatorDecision() == NicknameFeedback.OperatorDecision.BLOCKED;
                     return Map.<String, Object>of(
-                            "nickname", fb.getNickname(),
-                            "flagged", flagged,
-                            "confidence", EXAMPLE_CONFIDENCE,
-                            "reason", "운영자 피드백",
-                            "terms", flagged ? List.of(fb.getNickname()) : List.of()
-                    );
+                            "nickname",
+                            fb.getNickname(),
+                            "flagged",
+                            flagged,
+                            "confidence",
+                            EXAMPLE_CONFIDENCE,
+                            "reason",
+                            "운영자 피드백",
+                            "terms",
+                            flagged ? List.of(fb.getNickname()) : List.of());
                 })
                 .toList();
         try {
@@ -77,8 +81,7 @@ public class NicknameAuditPromptTemplate {
 
     private void appendNicknameList(StringBuilder message, List<String> nicknames) {
         try {
-            message.append("검열할 닉네임 목록:\n")
-                    .append(objectMapper.writeValueAsString(nicknames));
+            message.append("검열할 닉네임 목록:\n").append(objectMapper.writeValueAsString(nicknames));
         } catch (JsonProcessingException e) {
             throw new InfrastructureException(NicknameAuditErrorCode.PROMPT_BUILD_FAILED, "닉네임 목록 직렬화 실패", e);
         }

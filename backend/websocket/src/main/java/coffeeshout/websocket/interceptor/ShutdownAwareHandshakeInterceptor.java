@@ -27,14 +27,16 @@ public class ShutdownAwareHandshakeInterceptor implements HandshakeInterceptor {
     private final ObjectProvider<WebSocketGracefulShutdownHandler> shutdownHandlerProvider;
 
     @Override
-    public boolean beforeHandshake(ServerHttpRequest request,
-                                   ServerHttpResponse response,
-                                   WebSocketHandler wsHandler,
-                                   Map<String, Object> attributes) {
+    public boolean beforeHandshake(
+            ServerHttpRequest request,
+            ServerHttpResponse response,
+            WebSocketHandler wsHandler,
+            Map<String, Object> attributes) {
         final WebSocketGracefulShutdownHandler shutdownHandler = shutdownHandlerProvider.getIfAvailable();
 
         if (shutdownHandler != null && shutdownHandler.isShuttingDown()) {
-            log.warn("🚫 WebSocket Handshake 거부: 서버 Graceful Shutdown 진행 중 (from: {})",
+            log.warn(
+                    "🚫 WebSocket Handshake 거부: 서버 Graceful Shutdown 진행 중 (from: {})",
                     Objects.toString(request.getRemoteAddress(), "unknown"));
             return false;
         }
@@ -42,10 +44,8 @@ public class ShutdownAwareHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     @Override
-    public void afterHandshake(ServerHttpRequest request,
-                              ServerHttpResponse response,
-                              WebSocketHandler wsHandler,
-                              Exception exception) {
+    public void afterHandshake(
+            ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
         // afterHandshake는 별도 처리 불필요
     }
 }

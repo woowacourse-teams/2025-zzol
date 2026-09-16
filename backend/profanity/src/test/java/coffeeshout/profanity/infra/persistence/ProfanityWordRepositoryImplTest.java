@@ -43,7 +43,8 @@ class ProfanityWordRepositoryImplTest extends ServiceTest {
 
         @Test
         void 비활성화된_단어를_재활성화하고_true를_반환한다() {
-            jpaRepository.save(ProfanityWordEntity.from(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, false)));
+            jpaRepository.save(
+                    ProfanityWordEntity.from(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, false)));
 
             boolean result = repository.save(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true));
 
@@ -53,7 +54,8 @@ class ProfanityWordRepositoryImplTest extends ServiceTest {
 
         @Test
         void 이미_활성화된_단어는_false를_반환한다() {
-            jpaRepository.save(ProfanityWordEntity.from(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true)));
+            jpaRepository.save(
+                    ProfanityWordEntity.from(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true)));
 
             boolean result = repository.save(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true));
 
@@ -95,8 +97,7 @@ class ProfanityWordRepositoryImplTest extends ServiceTest {
             List<ProfanityWord> words = List.of(
                     new ProfanityWord("욕설1", Language.KOREAN, WordSource.MANUAL, true),
                     new ProfanityWord("욕설2", Language.KOREAN, WordSource.MANUAL, true),
-                    new ProfanityWord("badword", Language.ENGLISH, WordSource.LDNOOBW, true)
-            );
+                    new ProfanityWord("badword", Language.ENGLISH, WordSource.LDNOOBW, true));
 
             int count = repository.bulkInsertIgnore(words);
 
@@ -106,13 +107,12 @@ class ProfanityWordRepositoryImplTest extends ServiceTest {
         @Test
         void 중복_단어는_무시하고_신규_단어만_삽입된다() {
             // JDBC 삽입 전 JPA 캐시를 DB에 반영해야 INSERT IGNORE가 중복을 감지한다
-            jpaRepository.saveAndFlush(ProfanityWordEntity.from(
-                    new ProfanityWord("기존단어", Language.KOREAN, WordSource.MANUAL, true)));
+            jpaRepository.saveAndFlush(
+                    ProfanityWordEntity.from(new ProfanityWord("기존단어", Language.KOREAN, WordSource.MANUAL, true)));
 
             int count = repository.bulkInsertIgnore(List.of(
                     new ProfanityWord("기존단어", Language.KOREAN, WordSource.MANUAL, true),
-                    new ProfanityWord("신규단어", Language.KOREAN, WordSource.MANUAL, true)
-            ));
+                    new ProfanityWord("신규단어", Language.KOREAN, WordSource.MANUAL, true)));
 
             assertThat(count).isEqualTo(1);
         }
@@ -130,12 +130,12 @@ class ProfanityWordRepositoryImplTest extends ServiceTest {
 
         @Test
         void 기존_단어의_출처를_OPERATOR_ALLOWED로_변경한다() {
-            jpaRepository.save(ProfanityWordEntity.from(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true)));
+            jpaRepository.save(
+                    ProfanityWordEntity.from(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true)));
 
             repository.operatorAllow("욕설", Language.KOREAN);
 
-            assertThat(jpaRepository.findByWord("욕설").orElseThrow().getSource())
-                    .isEqualTo(WordSource.OPERATOR_ALLOWED);
+            assertThat(jpaRepository.findByWord("욕설").orElseThrow().getSource()).isEqualTo(WordSource.OPERATOR_ALLOWED);
         }
 
         @Test
@@ -155,7 +155,8 @@ class ProfanityWordRepositoryImplTest extends ServiceTest {
 
         @Test
         void 단어를_비활성화한다() {
-            jpaRepository.save(ProfanityWordEntity.from(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true)));
+            jpaRepository.save(
+                    ProfanityWordEntity.from(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true)));
 
             repository.deactivate("욕설");
 
@@ -168,7 +169,8 @@ class ProfanityWordRepositoryImplTest extends ServiceTest {
 
         @Test
         void 단어를_활성화한다() {
-            jpaRepository.save(ProfanityWordEntity.from(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, false)));
+            jpaRepository.save(
+                    ProfanityWordEntity.from(new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, false)));
 
             repository.activate("욕설");
 

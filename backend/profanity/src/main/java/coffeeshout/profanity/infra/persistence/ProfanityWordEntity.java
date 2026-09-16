@@ -103,6 +103,4 @@ public class ProfanityWordEntity {
         this.source = newSource;
         this.isActive = true;
     }
-
-
 }

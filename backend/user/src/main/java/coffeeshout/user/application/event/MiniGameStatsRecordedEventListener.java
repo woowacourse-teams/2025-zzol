@@ -26,7 +26,6 @@ public class MiniGameStatsRecordedEventListener {
 
     @EventListener
     public void handle(MiniGameStatsRecordedEvent event) {
-        event.playerStats().forEach(stat ->
-                userStatsService.updateStats(stat.userId(), stat.isWinner()));
+        event.playerStats().forEach(stat -> userStatsService.updateStats(stat.userId(), stat.isWinner()));
     }
 }

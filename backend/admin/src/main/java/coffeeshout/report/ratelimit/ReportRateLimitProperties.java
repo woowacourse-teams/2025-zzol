@@ -10,7 +10,9 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "report.rate-limit")
 public record ReportRateLimitProperties(
         @Positive long rate,
-        @DurationMin(nanos = 1, message = "레이트리밋 간격은 0보다 커야 합니다") Duration rateInterval,
-        @DurationMin(nanos = 1, message = "레이트리밋 TTL은 0보다 커야 합니다") Duration ttl
-) {
-}
+
+        @DurationMin(nanos = 1, message = "레이트리밋 간격은 0보다 커야 합니다")
+        Duration rateInterval,
+
+        @DurationMin(nanos = 1, message = "레이트리밋 TTL은 0보다 커야 합니다")
+        Duration ttl) {}

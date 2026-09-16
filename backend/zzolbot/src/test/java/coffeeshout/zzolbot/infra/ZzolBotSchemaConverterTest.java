@@ -1,7 +1,5 @@
 package coffeeshout.zzolbot.infra;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.google.genai.types.Schema;
 import java.util.List;
 import java.util.Map;
@@ -24,10 +22,7 @@ class ZzolBotSchemaConverterTest {
 
         @Test
         void 빈_properties_스키마를_변환한다() {
-            final Map<String, Object> schema = Map.of(
-                    "type", "object",
-                    "properties", Map.of()
-            );
+            final Map<String, Object> schema = Map.of("type", "object", "properties", Map.of());
 
             final Schema result = converter.convert(schema);
 
@@ -42,14 +37,13 @@ class ZzolBotSchemaConverterTest {
         void string_타입_프로퍼티를_포함한_스키마를_변환한다() {
             final Map<String, Object> schema = Map.of(
                     "type", "object",
-                    "properties", Map.of(
-                            "joinCode", Map.of(
-                                    "type", "string",
-                                    "description", "4자리 방 입장 코드"
-                            )
-                    ),
-                    "required", List.of("joinCode")
-            );
+                    "properties",
+                            Map.of(
+                                    "joinCode",
+                                    Map.of(
+                                            "type", "string",
+                                            "description", "4자리 방 입장 코드")),
+                    "required", List.of("joinCode"));
 
             final Schema result = converter.convert(schema);
 
@@ -66,12 +60,11 @@ class ZzolBotSchemaConverterTest {
         void 복수_프로퍼티와_required를_포함한_스키마를_변환한다() {
             final Map<String, Object> schema = Map.of(
                     "type", "object",
-                    "properties", Map.of(
-                            "joinCode", Map.of("type", "string"),
-                            "since", Map.of("type", "string", "description", "조회 기간")
-                    ),
-                    "required", List.of("joinCode")
-            );
+                    "properties",
+                            Map.of(
+                                    "joinCode", Map.of("type", "string"),
+                                    "since", Map.of("type", "string", "description", "조회 기간")),
+                    "required", List.of("joinCode"));
 
             final Schema result = converter.convert(schema);
 
@@ -87,8 +80,7 @@ class ZzolBotSchemaConverterTest {
         void type과_description만_있는_단순_스키마를_변환한다() {
             final Map<String, Object> schema = Map.of(
                     "type", "string",
-                    "description", "PromQL 표현식"
-            );
+                    "description", "PromQL 표현식");
 
             final Schema result = converter.convert(schema);
 

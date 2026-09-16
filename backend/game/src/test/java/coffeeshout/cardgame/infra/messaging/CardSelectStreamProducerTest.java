@@ -3,13 +3,13 @@ package coffeeshout.cardgame.infra.messaging;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import coffeeshout.GameModuleIntegrationTest;
 import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.domain.card.CardGameRandomDeckGenerator;
 import coffeeshout.cardgame.domain.event.SelectCardCommandEvent;
-import coffeeshout.fixture.CardGameFake;
-import coffeeshout.GameModuleIntegrationTest;
-import coffeeshout.fixture.RoomFixture;
 import coffeeshout.cardgame.infra.CardGameStreamKey;
+import coffeeshout.fixture.CardGameFake;
+import coffeeshout.fixture.RoomFixture;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.redis.stream.StreamPublisher;
@@ -68,7 +68,6 @@ class CardSelectStreamProducerTest extends GameModuleIntegrationTest {
         joinCode = room.getJoinCode();
 
         cardGameStreamKey = CardGameStreamKey.SELECT_BROADCAST.getRedisKey();
-
     }
 
     @Nested
@@ -79,14 +78,14 @@ class CardSelectStreamProducerTest extends GameModuleIntegrationTest {
             // given
             String playerName = "꾹이";
             Integer cardIndex = 0;
-            SelectCardCommandEvent event = new SelectCardCommandEvent(
-                    joinCode.getValue(), playerName, cardIndex);
+            SelectCardCommandEvent event = new SelectCardCommandEvent(joinCode.getValue(), playerName, cardIndex);
 
             // when
             streamPublisher.publish(CardGameStreamKey.SELECT_BROADCAST, event);
 
             // then
-            await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
+            await().atMost(Duration.ofSeconds(5))
+                    .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
                         Long streamSize = redisTemplate.opsForStream().size(cardGameStreamKey);
                         assertThat(streamSize).isGreaterThan(0);
@@ -101,13 +100,14 @@ class CardSelectStreamProducerTest extends GameModuleIntegrationTest {
 
             // when
             for (int i = 0; i < playerNames.length; i++) {
-                SelectCardCommandEvent event = new SelectCardCommandEvent(
-                        joinCode.getValue(), playerNames[i], cardIndexes[i]);
+                SelectCardCommandEvent event =
+                        new SelectCardCommandEvent(joinCode.getValue(), playerNames[i], cardIndexes[i]);
                 streamPublisher.publish(CardGameStreamKey.SELECT_BROADCAST, event);
             }
 
             // then
-            await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
+            await().atMost(Duration.ofSeconds(5))
+                    .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
                         Long streamSize = redisTemplate.opsForStream().size(cardGameStreamKey);
                         assertThat(streamSize).isGreaterThanOrEqualTo(3);

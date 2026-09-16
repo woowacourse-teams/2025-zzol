@@ -238,18 +238,14 @@ class RunnerTest {
 
     @ParameterizedTest
     @CsvSource({
-            "2950, 60, 83",     // 2950 + 60 = 3010, 10 초과
-            "2980, 30, 66",     // 2980 + 30 = 3010, 10 초과
-            "2990, 20, 50",     // 2990 + 20 = 3010, 10 초과
-            "2995, 10, 50",      // 2995 + 10 = 3005, 5 초과
-            "2997, 5, 60",       // 2997 + 5 = 3002, 2 초과
-            "2999, 3, 33",      // 2999 + 3 = 3002, 2 초과
+        "2950, 60, 83", // 2950 + 60 = 3010, 10 초과
+        "2980, 30, 66", // 2980 + 30 = 3010, 10 초과
+        "2990, 20, 50", // 2990 + 20 = 3010, 10 초과
+        "2995, 10, 50", // 2995 + 10 = 3005, 5 초과
+        "2997, 5, 60", // 2997 + 5 = 3002, 2 초과
+        "2999, 3, 33", // 2999 + 3 = 3002, 2 초과
     })
-    void 결승선을_초과하여_도착하면_남은_거리_비율만큼_시간이_보정된다(
-            int startPosition,
-            int speed,
-            int expectedTicksToFinish
-    ) {
+    void 결승선을_초과하여_도착하면_남은_거리_비율만큼_시간이_보정된다(int startPosition, int speed, int expectedTicksToFinish) {
         // given
         final Runner runner = new Runner(PlayerFixture.게스트한스().toGamer());
         final SpeedCalculator speedCalculator = (lastTapedTime, now, tapCount) -> speed;
@@ -261,8 +257,8 @@ class RunnerTest {
 
         // when
         runner.move(tickStartTime);
-        final Instant expectFinishTime = tickStartTime.minusMillis(RacingGame.MOVE_INTERVAL_MILLIS)
-                .plusMillis(expectedTicksToFinish);
+        final Instant expectFinishTime =
+                tickStartTime.minusMillis(RacingGame.MOVE_INTERVAL_MILLIS).plusMillis(expectedTicksToFinish);
 
         // then
         assertThat(runner.isFinished()).isTrue();

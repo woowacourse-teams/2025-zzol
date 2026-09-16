@@ -23,8 +23,7 @@ public class ZzolBotSlackNotifier {
     private final RestClient restClient;
 
     public ZzolBotSlackNotifier(
-            ZzolBotSlackProperties properties,
-            @Qualifier("zzolBotSlackRestClient") RestClient restClient) {
+            ZzolBotSlackProperties properties, @Qualifier("zzolBotSlackRestClient") RestClient restClient) {
         this.properties = properties;
         this.restClient = restClient;
     }
@@ -35,14 +34,14 @@ public class ZzolBotSlackNotifier {
             return;
         }
         try {
-            restClient.post()
+            restClient
+                    .post()
                     .uri(properties.webhookUrl())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(buildMessage(alert, analysis))
                     .retrieve()
                     .toBodilessEntity();
-            log.info("[ZzolBot] 이상 알림 전송 완료. severity={}, fingerprint={}",
-                    alert.severity(), alert.fingerprint());
+            log.info("[ZzolBot] 이상 알림 전송 완료. severity={}, fingerprint={}", alert.severity(), alert.fingerprint());
         } catch (Exception e) {
             log.error("[ZzolBot] 이상 알림 전송 실패. fingerprint={}", alert.fingerprint(), e);
         }
@@ -51,23 +50,23 @@ public class ZzolBotSlackNotifier {
     private Map<String, Object> buildMessage(FiringAlert alert, MonitorAnalysis analysis) {
         final List<Map<String, Object>> blocks = new ArrayList<>();
         final String severity = alert.severity() == null ? "" : alert.severity().toUpperCase();
-        blocks.add(Map.of("type", "header",
-                "text", Map.of("type", "plain_text",
-                        "text", "🚨 ZzolBot 이상 감지 [" + severity + "]")));
+        blocks.add(Map.of(
+                "type", "header", "text", Map.of("type", "plain_text", "text", "🚨 ZzolBot 이상 감지 [" + severity + "]")));
 
-        final String alertText = "*알림*\n• " + alert.alertname() + "\n"
-                + nullToEmpty(alert.summary()) + "\n" + nullToEmpty(alert.description());
-        blocks.add(Map.of("type", "section",
-                "text", Map.of("type", "mrkdwn", "text", alertText)));
+        final String alertText = "*알림*\n• " + alert.alertname() + "\n" + nullToEmpty(alert.summary()) + "\n"
+                + nullToEmpty(alert.description());
+        blocks.add(Map.of("type", "section", "text", Map.of("type", "mrkdwn", "text", alertText)));
 
-        blocks.add(Map.of("type", "section",
-                "text", Map.of("type", "mrkdwn", "text", "*분석*\n" + analysis.summary())));
+        blocks.add(Map.of("type", "section", "text", Map.of("type", "mrkdwn", "text", "*분석*\n" + analysis.summary())));
 
         if (!analysis.suggestedActions().isEmpty()) {
-            final String actions = "*제안 조치*\n" + String.join("\n",
-                    analysis.suggestedActions().stream().map(a -> "• " + a).toList());
-            blocks.add(Map.of("type", "section",
-                    "text", Map.of("type", "mrkdwn", "text", actions)));
+            final String actions = "*제안 조치*\n"
+                    + String.join(
+                            "\n",
+                            analysis.suggestedActions().stream()
+                                    .map(a -> "• " + a)
+                                    .toList());
+            blocks.add(Map.of("type", "section", "text", Map.of("type", "mrkdwn", "text", actions)));
         }
         blocks.add(Map.of("type", "divider"));
         return Map.of("blocks", blocks);

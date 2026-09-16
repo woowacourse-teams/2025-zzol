@@ -21,10 +21,13 @@ public class GameSession {
 
     @Getter
     private final JoinCode joinCode;
+
     @Getter
     private Gamer host;
+
     private final Queue<Playable> pendingGames;
     private final List<Playable> completedGames;
+
     @Getter
     private GameSessionStatus status;
 
@@ -86,14 +89,12 @@ public class GameSession {
         return completedGames.stream()
                 .filter(game -> game.getMiniGameType() == type)
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        GameSessionErrorCode.GAME_NOT_FOUND, "완료된 게임 중 해당 타입이 없습니다: " + type));
+                .orElseThrow(() ->
+                        new BusinessException(GameSessionErrorCode.GAME_NOT_FOUND, "완료된 게임 중 해당 타입이 없습니다: " + type));
     }
 
     public List<MiniGameType> getSelectedTypes() {
-        return pendingGames.stream()
-                .map(Playable::getMiniGameType)
-                .toList();
+        return pendingGames.stream().map(Playable::getMiniGameType).toList();
     }
 
     /**
@@ -101,9 +102,7 @@ public class GameSession {
      * {@code status == PLAYING}이면 마지막 항목이 현재 진행 중인 게임이다.
      */
     public List<MiniGameType> getCompletedTypes() {
-        return completedGames.stream()
-                .map(Playable::getMiniGameType)
-                .toList();
+        return completedGames.stream().map(Playable::getMiniGameType).toList();
     }
 
     /**
@@ -135,10 +134,8 @@ public class GameSession {
     }
 
     private void validateNoDuplicate(List<Playable> games) {
-        final long distinctTypes = games.stream()
-                .map(Playable::getMiniGameType)
-                .distinct()
-                .count();
+        final long distinctTypes =
+                games.stream().map(Playable::getMiniGameType).distinct().count();
         if (distinctTypes != games.size()) {
             throw new BusinessException(GameSessionErrorCode.DUPLICATE_GAME, "동일한 게임을 중복 선택할 수 없습니다.");
         }
@@ -146,8 +143,8 @@ public class GameSession {
 
     private void validateCount(List<Playable> games) {
         if (games.size() > MAX_GAMES) {
-            throw new BusinessException(GameSessionErrorCode.TOO_MANY_GAMES,
-                    "선택 가능한 게임은 최대 " + MAX_GAMES + "개입니다. 현재: " + games.size());
+            throw new BusinessException(
+                    GameSessionErrorCode.TOO_MANY_GAMES, "선택 가능한 게임은 최대 " + MAX_GAMES + "개입니다. 현재: " + games.size());
         }
     }
 }

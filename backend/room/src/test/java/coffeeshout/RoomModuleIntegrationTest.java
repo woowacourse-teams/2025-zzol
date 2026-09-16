@@ -8,5 +8,4 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootTest(classes = RoomModuleTestApplication.class, webEnvironment = WebEnvironment.MOCK)
 @Import(ServiceTestConfig.class)
-public abstract class RoomModuleIntegrationTest extends IntegrationTestSupport {
-}
+public abstract class RoomModuleIntegrationTest extends IntegrationTestSupport {}

@@ -35,26 +35,21 @@ class MiniGameResultRoomListenerTest {
     @DisplayName("이름 기반 순위 맵을 PlayerName 맵으로 변환해 applyGameResult를 호출한다")
     void 이름_순위_맵을_PlayerName_맵으로_변환해_위임한다() {
         // given
-        MiniGameFinishedEvent event = new MiniGameFinishedEvent(
-                JOIN_CODE,
-                MiniGameType.CARD_GAME.name(),
-                Map.of("한스", 1, "루키", 2),
-                3
-        );
+        MiniGameFinishedEvent event =
+                new MiniGameFinishedEvent(JOIN_CODE, MiniGameType.CARD_GAME.name(), Map.of("한스", 1, "루키", 2), 3);
 
         // when
         listener.handle(event);
 
         // then
-        verify(roomCommandService).applyGameResult(
-                org.mockito.ArgumentMatchers.eq(new JoinCode(JOIN_CODE)),
-                rankCaptor.capture(),
-                org.mockito.ArgumentMatchers.eq(3)
-        );
+        verify(roomCommandService)
+                .applyGameResult(
+                        org.mockito.ArgumentMatchers.eq(new JoinCode(JOIN_CODE)),
+                        rankCaptor.capture(),
+                        org.mockito.ArgumentMatchers.eq(3));
         org.assertj.core.api.Assertions.assertThat(rankCaptor.getValue())
                 .containsExactlyInAnyOrderEntriesOf(Map.of(
                         new PlayerName("한스"), 1,
-                        new PlayerName("루키"), 2
-                ));
+                        new PlayerName("루키"), 2));
     }
 }

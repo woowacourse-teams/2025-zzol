@@ -38,7 +38,8 @@ public class BlockStackingFlowOrchestrator {
         final String joinCodeValue = joinCode.getValue();
         final EarlyFinishTrigger trigger = blockStackingFlowScheduler.createEarlyFinishTrigger();
 
-        blockStackingFlowScheduler.schedule(step(game, joinCode, PREPARE), Duration.ZERO)
+        blockStackingFlowScheduler
+                .schedule(step(game, joinCode, PREPARE), Duration.ZERO)
                 .andThen(startPlay(game, joinCode, trigger), timing.prepare())
                 .raceTimeout(timing.playing(), trigger, timing.allFailedDelay())
                 .andThen(finishGame(game, joinCode), Duration.ZERO)
@@ -66,8 +67,7 @@ public class BlockStackingFlowOrchestrator {
             try {
                 notifier.notifyStateChanged(game, joinCode);
             } catch (Exception e) {
-                log.warn("BlockStacking step 알림 실패: joinCode={}, step={}",
-                        joinCode.getValue(), gameStep, e);
+                log.warn("BlockStacking step 알림 실패: joinCode={}, step={}", joinCode.getValue(), gameStep, e);
             }
         };
     }
@@ -98,7 +98,10 @@ public class BlockStackingFlowOrchestrator {
             // 순서 불변식(ADR-0025 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행
             final int roundCount = gameSessionService.finishGame(joinCode);
             eventPublisher.publishEvent(new MiniGameFinishedEvent(
-                    joinCodeValue, MiniGameType.BLOCK_STACKING.name(), game.getResult().toRankMap(), roundCount));
+                    joinCodeValue,
+                    MiniGameType.BLOCK_STACKING.name(),
+                    game.getResult().toRankMap(),
+                    roundCount));
         };
     }
 }

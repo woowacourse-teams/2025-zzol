@@ -19,8 +19,7 @@ class UserCodeTest {
             final UserCode code = UserCode.generate();
 
             assertThat(code.value()).hasSize(5);
-            assertThat(code.value().chars())
-                    .allMatch(c -> UserCode.CHARSET.indexOf(c) >= 0);
+            assertThat(code.value().chars()).allMatch(c -> UserCode.CHARSET.indexOf(c) >= 0);
         }
 
         @RepeatedTest(5)
@@ -48,28 +47,19 @@ class UserCodeTest {
 
         @Test
         void null이면_예외가_발생한다() {
-            assertCoffeeShoutException(
-                    () -> new UserCode(null),
-                    UserErrorCode.USER_CODE_INVALID
-            );
+            assertCoffeeShoutException(() -> new UserCode(null), UserErrorCode.USER_CODE_INVALID);
         }
 
         @ParameterizedTest
         @ValueSource(strings = {"ABCD", "ABCDFG"})
         void 길이가_5가_아니면_예외가_발생한다(String value) {
-            assertCoffeeShoutException(
-                    () -> new UserCode(value),
-                    UserErrorCode.USER_CODE_INVALID
-            );
+            assertCoffeeShoutException(() -> new UserCode(value), UserErrorCode.USER_CODE_INVALID);
         }
 
         @ParameterizedTest
         @ValueSource(strings = {"ABCE1", "1ABCD", "abcdf"})
         void 허용되지_않는_문자가_포함되면_예외가_발생한다(String value) {
-            assertCoffeeShoutException(
-                    () -> new UserCode(value),
-                    UserErrorCode.USER_CODE_INVALID
-            );
+            assertCoffeeShoutException(() -> new UserCode(value), UserErrorCode.USER_CODE_INVALID);
         }
     }
 

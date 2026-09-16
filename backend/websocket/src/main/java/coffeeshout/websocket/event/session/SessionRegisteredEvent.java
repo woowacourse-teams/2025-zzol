@@ -5,20 +5,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record SessionRegisteredEvent(
-        String eventId,
-        SessionEventType eventType,
-        String playerKey,
-        String sessionId,
-        Instant timestamp
-) implements BaseEvent {
+        String eventId, SessionEventType eventType, String playerKey, String sessionId, Instant timestamp)
+        implements BaseEvent {
 
     public static SessionRegisteredEvent create(String playerKey, String sessionId) {
         return new SessionRegisteredEvent(
-                UUID.randomUUID().toString(),
-                SessionEventType.SESSION_REGISTERED,
-                playerKey,
-                sessionId,
-                Instant.now()
-        );
+                UUID.randomUUID().toString(), SessionEventType.SESSION_REGISTERED, playerKey, sessionId, Instant.now());
     }
 }

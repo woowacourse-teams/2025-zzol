@@ -35,6 +35,12 @@ allowed-tools: Read, Bash, Glob, Agent, Skill
 - `$ARGUMENTS`에 제목이 있으면 그대로, 없으면 커밋 내용으로 자동 생성
 - type별 제목·본문 예시는 [examples.md](examples.md) 참조
 
+제목은 **간략한 설명 한 줄**이다. 변경 내용을 요약하는 자리지 목차를 미리 보여주는 자리가 아니다.
+
+- **줄표(`—`)로 부제를 붙이지 않는다.** 세부는 본문 `🚀 작업 내용`에 있다. 제목에 옮겨 적으면 목록 화면에서 잘리고, 본문과 두 벌이 된다([korean-style](../../rules/korean-style.md#하이픈과-줄표)).
+- 바꾼 대상 하나와 무엇이 달라지는지를 담는다. 쉼표·가운뎃점으로 항목을 나열하지 않는다.
+- `[type]`을 뺀 길이를 40자 안쪽으로 잡는다. 넘으면 대개 두 가지를 한 제목에 넣은 것이다.
+
 ## 라벨 & Assignee
 
 - **type 라벨** (1개): feat `✨feat` / fix `🐞bug` / refactor `🛠️refactor` / chore `⚙️chore` / docs `📝docs` / test `🧪 test`

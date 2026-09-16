@@ -29,6 +29,7 @@ class AlertmanagerWebhookControllerTest {
 
     @Mock
     private FiringAlertEnricher enricher;
+
     @Mock
     private ExecutorService virtualThreadExecutor;
 
@@ -42,9 +43,11 @@ class AlertmanagerWebhookControllerTest {
         controller = new AlertmanagerWebhookController(enricher, virtualThreadExecutor);
         // execute(Runnable)를 호출 스레드에서 즉시 실행해 비동기 디스패치를 동기로 검증한다.
         doAnswer(inv -> {
-            ((Runnable) inv.getArgument(0)).run();
-            return null;
-        }).when(virtualThreadExecutor).execute(any());
+                    ((Runnable) inv.getArgument(0)).run();
+                    return null;
+                })
+                .when(virtualThreadExecutor)
+                .execute(any());
     }
 
     @Test

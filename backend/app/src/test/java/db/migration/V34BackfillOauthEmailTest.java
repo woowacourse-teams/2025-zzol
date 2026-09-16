@@ -54,16 +54,15 @@ class V34BackfillOauthEmailTest {
         try (Statement statement = connection.createStatement()) {
             final String emailValue = email == null ? "NULL" : "'" + email + "'";
             final String hashValue = emailHash == null ? "NULL" : "'" + emailHash + "'";
-            statement.execute(
-                    "INSERT INTO oauth_account (id, email, email_hash) VALUES (%d, %s, %s)"
-                            .formatted(id, emailValue, hashValue));
+            statement.execute("INSERT INTO oauth_account (id, email, email_hash) VALUES (%d, %s, %s)"
+                    .formatted(id, emailValue, hashValue));
         }
     }
 
     private String column(long id, String name) throws Exception {
         try (Statement statement = connection.createStatement();
-                ResultSet rs = statement.executeQuery(
-                        "SELECT %s FROM oauth_account WHERE id = %d".formatted(name, id))) {
+                ResultSet rs =
+                        statement.executeQuery("SELECT %s FROM oauth_account WHERE id = %d".formatted(name, id))) {
             assertThat(rs.next()).as("id=%d 행이 존재해야 한다", id).isTrue();
             return rs.getString(name);
         }

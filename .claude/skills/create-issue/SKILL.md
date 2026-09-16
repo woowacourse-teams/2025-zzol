@@ -1,7 +1,7 @@
 ---
 name: create-issue
 description: GitHub 이슈를 템플릿으로 생성하고, 이슈 번호로 dev에서 작업 워크트리·브랜치를 만들어 진입한다. 백엔드·프론트엔드 공통.
-argument-hint: "[type] 이슈 제목 — type: feat | fix | refactor | chore | docs | test"
+argument-hint: "[type] 간략한 설명 (type: feat|fix|refactor|chore|docs|test)"
 allowed-tools: Bash, EnterWorktree
 ---
 
@@ -24,6 +24,8 @@ allowed-tools: Bash, EnterWorktree
 | test | feature-template | `🧪 test` |
 
 영역 라벨(`BE`/`FE`)은 type 라벨과 **별도**로 부여한다. 3단계에서 함께 확인한다.
+
+**제목은 `[type] 간략한 설명` 한 줄로 쓴다.** 줄표(`—`)로 부제를 붙이거나 항목을 나열하지 않는다. 규칙과 예시는 [create-pr의 PR 제목](../create-pr/SKILL.md#pr-제목)에 있다. 이슈 제목은 그대로 PR 제목과 브랜치 `{slug}`가 되므로 여기서 길면 뒤도 같이 길어진다.
 
 ## 2. 이슈 템플릿 읽기
 
@@ -79,7 +81,7 @@ frontmatter(`---`로 감싼 부분)는 제거하고 본문 섹션만 사용한�
 
 ```bash
 gh issue create \
-  --title "[type] 제목" \
+  --title "[type] 간략한 설명" \
   --label "✨feat,BE" \
   --assignee "$(gh api user --jq '.login')" \
   --body "$(cat <<'EOF'

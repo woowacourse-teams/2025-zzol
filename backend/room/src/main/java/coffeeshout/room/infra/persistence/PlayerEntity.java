@@ -20,8 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "player",
-       indexes = @Index(name = "idx_player_player_name", columnList = "player_name"))
+@Table(name = "player", indexes = @Index(name = "idx_player_player_name", columnList = "player_name"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlayerEntity {

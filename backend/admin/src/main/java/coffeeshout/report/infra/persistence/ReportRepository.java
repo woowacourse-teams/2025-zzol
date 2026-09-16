@@ -9,8 +9,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-public interface ReportRepository extends JpaRepository<Report, Long>, ReportAdminQueryRepository,
-        ReportAnonymizationRepository, ReportAnonymizationPort {
+public interface ReportRepository
+        extends JpaRepository<Report, Long>,
+                ReportAdminQueryRepository,
+                ReportAnonymizationRepository,
+                ReportAnonymizationPort {
 
     long countByStatus(ReportStatus status);
 

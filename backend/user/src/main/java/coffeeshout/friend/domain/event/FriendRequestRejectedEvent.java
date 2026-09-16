@@ -10,12 +10,17 @@ public record FriendRequestRejectedEvent(
         Long requesterId,
         Long addresseeId,
         String addresseeUserCode,
-        String addresseeNickname
-) {
+        String addresseeNickname) {
 
-    public FriendRequestRejectedEvent(Long requestId, Long requesterId, Long addresseeId,
-                                      String addresseeUserCode, String addresseeNickname) {
-        this(UUID.randomUUID().toString(), Instant.now(), requestId, requesterId,
-                addresseeId, addresseeUserCode, addresseeNickname);
+    public FriendRequestRejectedEvent(
+            Long requestId, Long requesterId, Long addresseeId, String addresseeUserCode, String addresseeNickname) {
+        this(
+                UUID.randomUUID().toString(),
+                Instant.now(),
+                requestId,
+                requesterId,
+                addresseeId,
+                addresseeUserCode,
+                addresseeNickname);
     }
 }

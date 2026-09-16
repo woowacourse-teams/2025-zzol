@@ -1,7 +1,6 @@
 package coffeeshout.cardgame.domain;
 
 public enum CardGameStep {
-
     START_ROUND {
         @Override
         public void execute(CardGame cardGame) {

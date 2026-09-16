@@ -5,8 +5,7 @@ import coffeeshout.patchnote.infra.persistence.PatchNoteEntity;
 
 public final class PatchNoteFixture {
 
-    private PatchNoteFixture() {
-    }
+    private PatchNoteFixture() {}
 
     public static PatchNoteEntity 공지_패치노트() {
         return PatchNoteEntity.create(PatchNoteCategory.NOTICE, "1.0.0 공지사항", "서버 점검이 예정되어 있습니다.");

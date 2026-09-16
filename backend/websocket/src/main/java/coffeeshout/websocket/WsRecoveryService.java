@@ -38,8 +38,7 @@ public class WsRecoveryService {
             @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
             @Value("${websocket.recovery.max-length}") int maxLength,
             @Value("${websocket.recovery.stream-ttl-seconds}") int streamTtlSeconds,
-            @Value("${websocket.recovery.dedup-ttl-seconds}") int dedupTtlSeconds
-    ) {
+            @Value("${websocket.recovery.dedup-ttl-seconds}") int dedupTtlSeconds) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
         this.maxLength = maxLength;
@@ -63,34 +62,33 @@ public class WsRecoveryService {
             local maxLen = tonumber(ARGV[5])
             local streamTtl = tonumber(ARGV[6])
             local dedupTtl = tonumber(ARGV[7])
-            
+
             -- 중복 체크: 이미 저장된 메시지인지 확인
             local existingStreamId = redis.call('HGET', idMapKey, messageId)
             if existingStreamId then
                 return existingStreamId  -- 기존 streamId 반환
             end
-            
+
             -- Stream에 저장
             local streamId = redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*',
                 'destination', destination,
                 'payload', payloadJson,
                 'timestamp', timestamp
             )
-            
+
             -- messageId → streamId 매핑 저장 (짧은 TTL로 중복 방지)
             redis.call('HSET', idMapKey, messageId, streamId)
             redis.call('EXPIRE', idMapKey, dedupTtl)
-            
+
             -- Stream TTL 설정 (처음 생성 시에만)
             if redis.call('TTL', streamKey) == -1 then
                 redis.call('EXPIRE', streamKey, streamTtl)
             end
-            
+
             return streamId
             """;
 
     private static final String STREAM_ID_PATTERN = "^\\d+-\\d+$";
-
 
     /**
      * 메시지를 Recovery Stream에 저장 (중복 방지)
@@ -120,8 +118,7 @@ public class WsRecoveryService {
                     timestamp,
                     String.valueOf(maxLength),
                     String.valueOf(streamTtlSeconds),
-                    String.valueOf(dedupTtlSeconds)
-            );
+                    String.valueOf(dedupTtlSeconds));
 
             log.debug("복구 메시지 저장: joinCode={}, streamId={}, messageId={}", joinCode, streamId, messageId);
 
@@ -151,8 +148,7 @@ public class WsRecoveryService {
         try {
             // lastStreamId 이후 메시지만 조회 (exclusive)
             List<MapRecord<String, Object, Object>> records =
-                    stringRedisTemplate.opsForStream()
-                            .range(streamKey, Range.open(lastStreamId, "+"));
+                    stringRedisTemplate.opsForStream().range(streamKey, Range.open(lastStreamId, "+"));
 
             if (records == null || records.isEmpty()) {
                 log.debug("복구 메시지 없음: joinCode={}, lastStreamId={}", joinCode, lastStreamId);
@@ -202,12 +198,7 @@ public class WsRecoveryService {
 
             final WebSocketResponse<?> response = objectMapper.readValue(payloadJson, WebSocketResponse.class);
 
-            return new RecoveryMessage(
-                    streamId,
-                    destination,
-                    response,
-                    Long.parseLong(timestamp)
-            );
+            return new RecoveryMessage(streamId, destination, response, Long.parseLong(timestamp));
         } catch (Exception e) {
             log.error("메시지 역직렬화 실패: recordId={}", mapRecord.getId(), e);
             return null;
@@ -216,19 +207,16 @@ public class WsRecoveryService {
 
     private void validateStreamId(String streamId) {
         if (streamId == null || !streamId.matches(STREAM_ID_PATTERN)) {
-            throw new BusinessException(
-                    GlobalErrorCode.INVALID_STREAM_ID,
-                    "유효하지 않은 Stream ID 형식입니다: " + streamId
-            );
+            throw new BusinessException(GlobalErrorCode.INVALID_STREAM_ID, "유효하지 않은 Stream ID 형식입니다: " + streamId);
         }
     }
 
     private String generateMessageId(String destination, WebSocketResponse<?> response) {
         try {
-            final String content = destination +
-                    response.success() +
-                    objectMapper.writeValueAsString(response.data()) +
-                    response.errorMessage();
+            final String content = destination
+                    + response.success()
+                    + objectMapper.writeValueAsString(response.data())
+                    + response.errorMessage();
             return DigestUtils.md5DigestAsHex(content.getBytes(StandardCharsets.UTF_8));
         } catch (JsonProcessingException e) {
             log.error("메시지 ID 생성 실패", e);

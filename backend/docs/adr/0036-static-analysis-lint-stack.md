@@ -211,6 +211,17 @@ Spotless는 `ratchetFrom("origin/dev")`로 **변경된 파일만** 검사해 bas
 **CI에는 `fetch-depth: 0`이 필요하다.** `actions/checkout` 기본값(depth 1)이면 `origin/dev` ref가 없어
 `ratchetFrom`이 실패한다.
 
+## 후속 구현: 전체 포맷 정리 (#1766)
+
+2026-09-07, [PR #1766](https://github.com/woowacourse-teams/2025-zzol/pull/1766)에서
+백엔드 전체 Java 소스에 기존 Spotless 포맷을 적용했다. 변경된 Java 파일은 699개이며,
+공백·줄바꿈·import 순서를 정리하고 불필요한 import 18개를 제거했다.
+기능 PR에서 수정한 파일의 기존 포맷까지 함께 바뀌는 문제를 줄이기 위해 별도 PR로 분리했다.
+
+전체 적용 시에만 변경 파일 제한을 해제했고, 기존 `ratchetFrom("origin/dev")` 설정은 유지했다.
+로직·구조·PMD 규칙은 바꾸지 않았다. import를 제외한 Java 구문 트리를 비교해 699개 파일 모두
+동일함을 확인했고, 전체 Spotless 검사와 기존 설정의 PMD 검사·테스트 소스 컴파일을 통과했다.
+
 ## 고려한 대안
 
 | 대안 | 장점 | 단점 |

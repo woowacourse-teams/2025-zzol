@@ -35,8 +35,7 @@ public class OutboxEventRecorder {
             OutboxEventRepository outboxEventRepository,
             @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
             ApplicationEventPublisher applicationEventPublisher,
-            StreamTracePropagator streamTracePropagator
-    ) {
+            StreamTracePropagator streamTracePropagator) {
         this.outboxEventRepository = outboxEventRepository;
         this.objectMapper = objectMapper;
         this.applicationEventPublisher = applicationEventPublisher;
@@ -61,11 +60,9 @@ public class OutboxEventRecorder {
 
             // Spring 내부 이벤트 발행 → 트랜잭션 커밋 후 OutboxAfterCommitRelay가 수신
             applicationEventPublisher.publishEvent(
-                    new OutboxSavedEvent(outboxEvent.getId(), streamKey.getRedisKey(), payload, traceparent)
-            );
+                    new OutboxSavedEvent(outboxEvent.getId(), streamKey.getRedisKey(), payload, traceparent));
 
-            log.debug("Outbox 이벤트 저장: streamKey={}, eventId={}",
-                    streamKey.getRedisKey(), event.eventId());
+            log.debug("Outbox 이벤트 저장: streamKey={}, eventId={}", streamKey.getRedisKey(), event.eventId());
         } catch (JsonProcessingException e) {
             throw new RuntimeException("이벤트 직렬화 실패: " + e.getMessage(), e);
         }

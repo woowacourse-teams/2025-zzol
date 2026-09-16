@@ -46,8 +46,8 @@ class PlayerNameGeneratorTest {
             // 항상 ADJECTIVES[0] + NOUNS[0] = "용감한호랑이"만 생성
             PlayerNameGenerator generator = new PlayerNameGenerator(List::getFirst);
 
-            assertCoffeeShoutException(() -> generator.generate(Set.of("용감한호랑이")),
-                    RoomErrorCode.PLAYER_NAME_GENERATION_FAILED);
+            assertCoffeeShoutException(
+                    () -> generator.generate(Set.of("용감한호랑이")), RoomErrorCode.PLAYER_NAME_GENERATION_FAILED);
         }
     }
 }

@@ -19,9 +19,7 @@ class UserEntityTest {
             entity.softDelete();
 
             assertCoffeeShoutException(
-                    () -> entity.toDomain(mock(OAuthAccountEntity.class)),
-                    GlobalErrorCode.INTERNAL_SERVER_ERROR
-            );
+                    () -> entity.toDomain(mock(OAuthAccountEntity.class)), GlobalErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 }

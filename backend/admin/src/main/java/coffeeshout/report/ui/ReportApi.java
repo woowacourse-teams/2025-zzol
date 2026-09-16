@@ -12,6 +12,6 @@ import org.springframework.http.ResponseEntity;
 public interface ReportApi {
 
     @Operation(summary = "건의사항/신고 제출", description = "카테고리별 건의사항 또는 버그 신고를 제출합니다.")
-    ResponseEntity<Void> submit(Optional<AuthenticatedUser> authUser, CreateReportRequest request,
-                                HttpServletRequest httpRequest);
+    ResponseEntity<Void> submit(
+            Optional<AuthenticatedUser> authUser, CreateReportRequest request, HttpServletRequest httpRequest);
 }

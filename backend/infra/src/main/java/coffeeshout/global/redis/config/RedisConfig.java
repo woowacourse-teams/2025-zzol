@@ -1,6 +1,5 @@
 package coffeeshout.global.redis.config;
 
-import coffeeshout.global.redis.config.RedisProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

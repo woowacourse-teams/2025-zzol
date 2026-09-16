@@ -14,6 +14,4 @@ public record CardGameTimingProperties(
         @NotNull @DurationMin(nanos = 1) Duration prepare,
         @NotNull @DurationMin(nanos = 1) Duration playing,
         @NotNull @DurationMin(nanos = 1) Duration scoreBoard,
-        @NotNull @DurationMin(nanos = 1) Duration earlyFinishDelay
-) {
-}
+        @NotNull @DurationMin(nanos = 1) Duration earlyFinishDelay) {}

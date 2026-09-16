@@ -31,7 +31,11 @@ public class RankingNicknameCollectionScheduler {
         final long start = System.currentTimeMillis();
         try {
             final LocalDateTime now = LocalDateTime.now(clock);
-            final LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+            final LocalDateTime startOfMonth = now.withDayOfMonth(1)
+                    .withHour(0)
+                    .withMinute(0)
+                    .withSecond(0)
+                    .withNano(0);
 
             final Set<String> nicknames = collectRankingNicknames(startOfMonth, now);
             eventPublisher.publishEvent(new NicknamesCollectedEvent(nicknames));
@@ -45,13 +49,11 @@ public class RankingNicknameCollectionScheduler {
     private Set<String> collectRankingNicknames(LocalDateTime start, LocalDateTime end) {
         final Set<String> nicknames = new HashSet<>();
 
-        dashboardRepository.findTopWinnersBetween(start, end, RANKING_LIMIT)
-                .stream()
+        dashboardRepository.findTopWinnersBetween(start, end, RANKING_LIMIT).stream()
                 .map(TopWinnerResponse::nickname)
                 .forEach(nicknames::add);
 
-        dashboardRepository.findRacingGameTopPlayers(start, end, RANKING_LIMIT)
-                .stream()
+        dashboardRepository.findRacingGameTopPlayers(start, end, RANKING_LIMIT).stream()
                 .map(RacingGameTopPlayerResponse::playerName)
                 .forEach(nicknames::add);
 

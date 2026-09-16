@@ -33,22 +33,21 @@ public class OutboxTool implements ZzolBotTool {
 
     @Override
     public String description() {
-        return "joinCode와 관련된 Outbox 이벤트 중 PENDING(재시도 대기) 또는 DEAD_LETTER(최종 실패) 상태의 이벤트를 조회한다. " +
-                "이벤트 유실이나 Redis Stream 발행 실패를 진단할 때 사용한다.";
+        return "joinCode와 관련된 Outbox 이벤트 중 PENDING(재시도 대기) 또는 DEAD_LETTER(최종 실패) 상태의 이벤트를 조회한다. "
+                + "이벤트 유실이나 Redis Stream 발행 실패를 진단할 때 사용한다.";
     }
 
     @Override
     public Map<String, Object> parameterSchema() {
         return Map.of(
                 "type", "object",
-                "properties", Map.of(
-                        "joinCode", Map.of(
-                                "type", "string",
-                                "description", "4자리 방 입장 코드"
-                        )
-                ),
-                "required", List.of("joinCode")
-        );
+                "properties",
+                        Map.of(
+                                "joinCode",
+                                Map.of(
+                                        "type", "string",
+                                        "description", "4자리 방 입장 코드")),
+                "required", List.of("joinCode"));
     }
 
     @Override
@@ -61,11 +60,9 @@ public class OutboxTool implements ZzolBotTool {
             final List<OutboxEvent> events = outboxRepository.findByJoinCodeAndStatusInOrderByCreatedAtDesc(
                     joinCodeValue,
                     List.of(OutboxStatus.PENDING, OutboxStatus.DEAD_LETTER),
-                    org.springframework.data.domain.PageRequest.of(0, 50)
-            );
-            final List<Map<String, Object>> summaries = events.stream()
-                    .map(this::buildEventSummary)
-                    .toList();
+                    org.springframework.data.domain.PageRequest.of(0, 50));
+            final List<Map<String, Object>> summaries =
+                    events.stream().map(this::buildEventSummary).toList();
             return ToolExecutionResult.ok(TOOL_NAME, objectMapper.writeValueAsString(summaries));
         } catch (JsonProcessingException e) {
             log.warn("[ZzolBot] outbox_events 직렬화 실패. joinCode={}", joinCodeValue, e);

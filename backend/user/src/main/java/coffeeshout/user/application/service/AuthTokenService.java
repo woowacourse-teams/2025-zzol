@@ -33,16 +33,17 @@ public class AuthTokenService {
     }
 
     public OAuthCodeEntry exchangeCode(String code) {
-        return oAuthCodeRepository.findAndDelete(code)
-                .orElseThrow(() -> new BusinessException(
-                        UserErrorCode.OAUTH_CODE_NOT_FOUND, "유효하지 않거나 만료된 인증 코드입니다."));
+        return oAuthCodeRepository
+                .findAndDelete(code)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.OAUTH_CODE_NOT_FOUND, "유효하지 않거나 만료된 인증 코드입니다."));
     }
 
     public TokenPair issue(User user) {
-        final AuthenticatedUser authenticatedUser = new AuthenticatedUser(
-                user.getId(), user.getUserCode().value());
+        final AuthenticatedUser authenticatedUser =
+                new AuthenticatedUser(user.getId(), user.getUserCode().value());
         final String accessToken = jwtIssuer.issue(authenticatedUser);
-        final String refreshToken = generateRefreshToken(user.getId(), user.getUserCode().value());
+        final String refreshToken =
+                generateRefreshToken(user.getId(), user.getUserCode().value());
         return new TokenPair(accessToken, refreshToken);
     }
 
@@ -51,11 +52,11 @@ public class AuthTokenService {
         final long userId = Long.parseLong(parts[0]);
         final String tokenId = parts[1];
 
-        final AuthenticatedUser stored = refreshTokenRepository.findByTokenId(tokenId)
+        final AuthenticatedUser stored = refreshTokenRepository
+                .findByTokenId(tokenId)
                 .orElseGet(() -> {
                     refreshTokenRepository.deleteAllByUserId(userId);
-                    throw new BusinessException(
-                            UserErrorCode.REFRESH_TOKEN_NOT_FOUND, "이미 사용된 리프레시 토큰입니다.");
+                    throw new BusinessException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND, "이미 사용된 리프레시 토큰입니다.");
                 });
 
         refreshTokenRepository.delete(tokenId);

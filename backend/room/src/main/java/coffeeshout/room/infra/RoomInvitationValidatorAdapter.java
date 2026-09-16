@@ -26,15 +26,15 @@ public class RoomInvitationValidatorAdapter implements RoomInvitationValidator {
     @Override
     public void validateInviterInRoom(String joinCode, Long inviterUserId) {
         final Room room = getRoom(joinCode);
-        final boolean inRoom = room.getPlayers().stream()
-                .anyMatch(player -> inviterUserId.equals(player.getUserId()));
+        final boolean inRoom = room.getPlayers().stream().anyMatch(player -> inviterUserId.equals(player.getUserId()));
         if (!inRoom) {
             throw new BusinessException(RoomErrorCode.INVITER_NOT_IN_ROOM, "방에 참여 중인 사용자만 초대할 수 있습니다.");
         }
     }
 
     private Room getRoom(String joinCode) {
-        return roomRepository.findByJoinCode(new JoinCode(joinCode))
+        return roomRepository
+                .findByJoinCode(new JoinCode(joinCode))
                 .orElseThrow(() -> new BusinessException(RoomErrorCode.ROOM_NOT_FOUND, "존재하지 않는 방입니다."));
     }
 }

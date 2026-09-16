@@ -7,11 +7,7 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "slack")
-public record SlackProperties(
-        @NotNull String webhookUrl,
-        Duration connectTimeout,
-        Duration readTimeout
-) {
+public record SlackProperties(@NotNull String webhookUrl, Duration connectTimeout, Duration readTimeout) {
 
     public SlackProperties {
         if (connectTimeout == null) connectTimeout = Duration.ofSeconds(3);

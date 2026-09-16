@@ -19,9 +19,8 @@ public class LadderLines {
     }
 
     public synchronized int trace(int startPoleIndex) {
-        final List<LadderLine> sorted = lines.stream()
-                .sorted(Comparator.comparingInt(LadderLine::row))
-                .toList();
+        final List<LadderLine> sorted =
+                lines.stream().sorted(Comparator.comparingInt(LadderLine::row)).toList();
         int currentPole = startPoleIndex;
         for (LadderLine line : sorted) {
             if (line.segmentIndex() == currentPole) {
@@ -40,5 +39,4 @@ public class LadderLines {
     public List<LadderLine> getAll() {
         return List.copyOf(lines);
     }
-
 }

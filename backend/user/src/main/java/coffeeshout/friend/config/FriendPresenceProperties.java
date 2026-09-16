@@ -6,7 +6,4 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "friend.presence")
-public record FriendPresenceProperties(
-        @Positive long gracePeriodSeconds
-) {
-}
+public record FriendPresenceProperties(@Positive long gracePeriodSeconds) {}

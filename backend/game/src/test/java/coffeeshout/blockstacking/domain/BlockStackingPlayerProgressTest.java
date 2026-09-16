@@ -40,14 +40,16 @@ class BlockStackingPlayerProgressTest {
 
         @Test
         void fail_호출_후_failed가_true이다() {
-            final BlockStackingPlayerProgress progress = BlockStackingPlayerProgress.initial(플레이어명).fail();
+            final BlockStackingPlayerProgress progress =
+                    BlockStackingPlayerProgress.initial(플레이어명).fail();
 
             assertThat(progress.failed()).isTrue();
         }
 
         @Test
         void fail_호출_후_playerName과_currentFloor는_유지된다() {
-            final BlockStackingPlayerProgress original = BlockStackingPlayerProgress.initial(플레이어명).advanceTo(3);
+            final BlockStackingPlayerProgress original =
+                    BlockStackingPlayerProgress.initial(플레이어명).advanceTo(3);
 
             final BlockStackingPlayerProgress failed = original.fail();
 
@@ -67,9 +69,8 @@ class BlockStackingPlayerProgressTest {
 
         @Test
         void 실패_상태에서_advanceTo_호출_후_failed_상태가_유지된다() {
-            final BlockStackingPlayerProgress progress = BlockStackingPlayerProgress.initial(플레이어명)
-                    .fail()
-                    .advanceTo(1);
+            final BlockStackingPlayerProgress progress =
+                    BlockStackingPlayerProgress.initial(플레이어명).fail().advanceTo(1);
 
             assertThat(progress.failed()).isTrue();
         }
@@ -89,16 +90,16 @@ class BlockStackingPlayerProgressTest {
 
         @Test
         void advanceTo_호출_후_currentFloor가_갱신된다() {
-            final BlockStackingPlayerProgress progress = BlockStackingPlayerProgress.initial(플레이어명)
-                    .advanceTo(3);
+            final BlockStackingPlayerProgress progress =
+                    BlockStackingPlayerProgress.initial(플레이어명).advanceTo(3);
 
             assertThat(progress.currentFloor()).isEqualTo(3);
         }
 
         @Test
         void advanceTo_호출_후_playerName은_유지된다() {
-            final BlockStackingPlayerProgress progress = BlockStackingPlayerProgress.initial(플레이어명)
-                    .advanceTo(7);
+            final BlockStackingPlayerProgress progress =
+                    BlockStackingPlayerProgress.initial(플레이어명).advanceTo(7);
 
             assertThat(progress.gamer()).isEqualTo(플레이어명);
         }

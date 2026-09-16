@@ -27,12 +27,13 @@ public class ReportController implements ReportApi {
     public ResponseEntity<Void> submit(
             @AuthUser Optional<AuthenticatedUser> authUser,
             @Valid @RequestBody CreateReportRequest request,
-            HttpServletRequest httpRequest
-    ) {
+            HttpServletRequest httpRequest) {
         final String ip = httpRequest.getRemoteAddr();
-        final long id = reportFacade.submit(ip, request.category(), request.gameType(), request.joinCode(),
-                request.content(), authUser);
-        final URI location = UriComponentsBuilder.fromPath("/reports/{id}").buildAndExpand(id).toUri();
+        final long id = reportFacade.submit(
+                ip, request.category(), request.gameType(), request.joinCode(), request.content(), authUser);
+        final URI location = UriComponentsBuilder.fromPath("/reports/{id}")
+                .buildAndExpand(id)
+                .toUri();
         return ResponseEntity.created(location).build();
     }
 }

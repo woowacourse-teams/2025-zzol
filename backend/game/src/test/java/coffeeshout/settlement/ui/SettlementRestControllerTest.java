@@ -35,6 +35,7 @@ class SettlementRestControllerTest {
 
     @Mock
     SeasonLeaderboardService leaderboardService;
+
     @Mock
     SeasonUserProfileQuery userProfileQuery;
 
@@ -52,24 +53,21 @@ class SettlementRestControllerTest {
 
         @Test
         void 순위와_전역_식별자를_담아_반환하고_userId는_노출하지_않는다() {
-            given(leaderboardService.top(SEASON, 10)).willReturn(List.of(
-                    new LeaderboardEntry(1L, 1, 320),
-                    new LeaderboardEntry(2L, 2, 100)
-            ));
+            given(leaderboardService.top(SEASON, 10))
+                    .willReturn(List.of(new LeaderboardEntry(1L, 1, 320), new LeaderboardEntry(2L, 2, 100)));
             given(leaderboardService.memberCount(SEASON)).willReturn(2L);
-            given(userProfileQuery.resolveProfiles(anyList())).willReturn(List.of(
-                    new SeasonUserProfile(1L, "한스", "AB123"),
-                    new SeasonUserProfile(2L, "루키", "CD456")
-            ));
+            given(userProfileQuery.resolveProfiles(anyList()))
+                    .willReturn(List.of(
+                            new SeasonUserProfile(1L, "한스", "AB123"), new SeasonUserProfile(2L, "루키", "CD456")));
 
             ResponseEntity<SeasonLeaderboardResponse> response = controller.getLeaderboard(null, 10);
 
             SeasonLeaderboardResponse body = response.getBody();
             assertThat(body.seasonKey()).isEqualTo(SEASON);
-            assertThat(body.rows()).containsExactly(
-                    new SeasonLeaderboardResponse.Row(1, "한스", "AB123", 320, "SILVER"),
-                    new SeasonLeaderboardResponse.Row(2, "루키", "CD456", 100, "BRONZE")
-            );
+            assertThat(body.rows())
+                    .containsExactly(
+                            new SeasonLeaderboardResponse.Row(1, "한스", "AB123", 320, "SILVER"),
+                            new SeasonLeaderboardResponse.Row(2, "루키", "CD456", 100, "BRONZE"));
         }
 
         @Test
@@ -98,15 +96,12 @@ class SettlementRestControllerTest {
 
         @Test
         void 탈퇴한_회원의_행은_숨긴다() {
-            given(leaderboardService.top(SEASON, 10)).willReturn(List.of(
-                    new LeaderboardEntry(1L, 1, 320),
-                    new LeaderboardEntry(99L, 2, 100)
-            ));
+            given(leaderboardService.top(SEASON, 10))
+                    .willReturn(List.of(new LeaderboardEntry(1L, 1, 320), new LeaderboardEntry(99L, 2, 100)));
             given(leaderboardService.memberCount(SEASON)).willReturn(2L);
             // 탈퇴 회원(99L)은 프로필 조회에서 빠진다 (@SQLRestriction)
-            given(userProfileQuery.resolveProfiles(anyList())).willReturn(List.of(
-                    new SeasonUserProfile(1L, "한스", "AB123")
-            ));
+            given(userProfileQuery.resolveProfiles(anyList()))
+                    .willReturn(List.of(new SeasonUserProfile(1L, "한스", "AB123")));
 
             ResponseEntity<SeasonLeaderboardResponse> response = controller.getLeaderboard(SEASON, 10);
 

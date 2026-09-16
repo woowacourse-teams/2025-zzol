@@ -3,7 +3,6 @@ package coffeeshout.zzolbot.ui;
 import coffeeshout.zzolbot.application.ZzolBotChatService;
 import coffeeshout.zzolbot.domain.ZzolBotChatResult;
 import coffeeshout.zzolbot.domain.ZzolBotFeedback;
-import coffeeshout.zzolbot.infra.ZzolBotSessionEntity;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,20 +16,19 @@ import java.util.concurrent.RejectedExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
-@Controller
+@RestController
 @Validated
-@RequestMapping("/admin/zzolbot")
+@RequestMapping("/admin/api/zzolbot")
 public class ZzolBotChatController {
 
     private static final long SSE_TIMEOUT_MS = 120_000L;
@@ -42,20 +40,13 @@ public class ZzolBotChatController {
     public ZzolBotChatController(
             ZzolBotChatService chatService,
             @Qualifier("virtualThreadExecutor") ExecutorService virtualThreadExecutor,
-            Clock clock
-    ) {
+            Clock clock) {
         this.chatService = chatService;
         this.virtualThreadExecutor = virtualThreadExecutor;
         this.formatter = DateTimeFormatter.ofPattern("MM/dd HH:mm").withZone(clock.getZone());
     }
 
-    @GetMapping
-    public String page() {
-        return "admin/zzolbot";
-    }
-
     @PostMapping("/ask")
-    @ResponseBody
     public SseEmitter ask(@RequestBody @Valid AskRequest request, Principal principal) {
         final SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
         emitter.onTimeout(() -> {
@@ -71,17 +62,13 @@ public class ZzolBotChatController {
         try {
             virtualThreadExecutor.execute(() -> {
                 try {
-                    final ZzolBotChatResult result = chatService.ask(
-                            request.question(),
-                            adminUsername,
-                            toolName -> {
-                                try {
-                                    emitter.send(SseEmitter.event().name("progress").data(toolName));
-                                } catch (IOException e) {
-                                    log.warn("[ZzolBot] SSE progress 전송 실패. toolName={}", toolName, e);
-                                }
-                            }
-                    );
+                    final ZzolBotChatResult result = chatService.ask(request.question(), adminUsername, toolName -> {
+                        try {
+                            emitter.send(SseEmitter.event().name("progress").data(toolName));
+                        } catch (IOException e) {
+                            log.warn("[ZzolBot] SSE progress 전송 실패. toolName={}", toolName, e);
+                        }
+                    });
                     emitter.send(SseEmitter.event().name("sessionId").data(result.sessionId()));
                     emitter.send(SseEmitter.event().name("result").data(result.answer()));
                     emitter.complete();
@@ -99,17 +86,12 @@ public class ZzolBotChatController {
     }
 
     @PostMapping("/sessions/{id}/feedback")
-    @ResponseBody
-    public ResponseEntity<Void> feedback(
-            @PathVariable Long id,
-            @RequestBody @Valid FeedbackRequest request
-    ) {
+    public ResponseEntity<Void> feedback(@PathVariable Long id, @RequestBody @Valid FeedbackRequest request) {
         chatService.applyFeedback(id, request.feedback());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/sessions")
-    @ResponseBody
     public List<SessionResponse> sessions() {
         return chatService.getRecentSessions().stream()
                 .map(s -> new SessionResponse(
@@ -117,8 +99,7 @@ public class ZzolBotChatController {
                         s.getQuestion(),
                         s.getAnswer(),
                         s.getFeedback() != null ? s.getFeedback().name() : null,
-                        formatter.format(s.getCreatedAt())
-                ))
+                        formatter.format(s.getCreatedAt())))
                 .toList();
     }
 

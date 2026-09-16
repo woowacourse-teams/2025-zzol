@@ -42,13 +42,13 @@ class ShutdownPhaseOrderTest extends IntegrationTestSupport {
         List<String> stopOrder = stopOrder();
 
         // then: 사이에 다른 빈이 끼는 것은 무방하나, 이 다섯의 상대 순서는 계약이다
-        assertThat(stopOrder).containsSubsequence(
-                "WebServerGracefulShutdownLifecycle",
-                "WebServerStartStopLifecycle",
-                "RedisStreamContainerRegistry",
-                "RedisStreamLagMetricService",
-                "LettuceConnectionFactory"
-        );
+        assertThat(stopOrder)
+                .containsSubsequence(
+                        "WebServerGracefulShutdownLifecycle",
+                        "WebServerStartStopLifecycle",
+                        "RedisStreamContainerRegistry",
+                        "RedisStreamLagMetricService",
+                        "LettuceConnectionFactory");
     }
 
     @Test
@@ -59,16 +59,12 @@ class ShutdownPhaseOrderTest extends IntegrationTestSupport {
         int webSocketDrain = webSocketShutdownHandler().getPhase();
 
         // then: 높은 phase 가 먼저 멈춘다. HTTP 요청 드레인이 시작되기 전에 WS 세션을 정리해야 한다
-        assertThat(webSocketDrain)
-                .isGreaterThan(WebServerApplicationContext.GRACEFUL_SHUTDOWN_PHASE);
+        assertThat(webSocketDrain).isGreaterThan(WebServerApplicationContext.GRACEFUL_SHUTDOWN_PHASE);
     }
 
     private WebSocketGracefulShutdownHandler webSocketShutdownHandler() {
         return new WebSocketGracefulShutdownHandler(
-                mock(WebSocketMessageBrokerStats.class),
-                mock(TaskScheduler.class),
-                Duration.ofMinutes(5)
-        );
+                mock(WebSocketMessageBrokerStats.class), mock(TaskScheduler.class), Duration.ofMinutes(5));
     }
 
     private List<String> stopOrder() {

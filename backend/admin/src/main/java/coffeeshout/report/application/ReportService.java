@@ -4,8 +4,8 @@ import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.report.application.event.ReportSubmittedEvent;
 import coffeeshout.report.domain.ReportCategory;
 import coffeeshout.report.infra.persistence.Report;
-import coffeeshout.report.infra.persistence.Reporter;
 import coffeeshout.report.infra.persistence.ReportRepository;
+import coffeeshout.report.infra.persistence.Reporter;
 import java.time.Clock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,28 +26,26 @@ public class ReportService {
     }
 
     @Transactional
-    public long submit(ReportCategory category, MiniGameType gameType, String joinCode, String content,
-                       Reporter author) {
+    public long submit(
+            ReportCategory category, MiniGameType gameType, String joinCode, String content, Reporter author) {
         return submit(category, gameType, joinCode, content, author, null);
     }
 
     @Transactional
-    public long submit(ReportCategory category, MiniGameType gameType, String joinCode, String content,
-                       Reporter author, String ip) {
+    public long submit(
+            ReportCategory category,
+            MiniGameType gameType,
+            String joinCode,
+            String content,
+            Reporter author,
+            String ip) {
         final Report.ReportCreation creation = category == ReportCategory.BUG
                 ? Report.ReportCreation.bug(gameType, joinCode, content, author, ip)
                 : Report.ReportCreation.general(category, content, author, ip);
         final Report entity = Report.create(creation, clock);
         final Report saved = reportRepository.save(entity);
-        eventPublisher.publishEvent(
-                new ReportSubmittedEvent(
-                        saved.getId(),
-                        saved.getCategory(),
-                        saved.getGameType(),
-                        saved.getJoinCode(),
-                        saved.getContent()
-                ));
+        eventPublisher.publishEvent(new ReportSubmittedEvent(
+                saved.getId(), saved.getCategory(), saved.getGameType(), saved.getJoinCode(), saved.getContent()));
         return saved.getId();
     }
 }
-

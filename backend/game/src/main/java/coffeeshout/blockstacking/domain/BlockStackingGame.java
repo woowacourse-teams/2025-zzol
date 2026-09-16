@@ -1,11 +1,11 @@
 package coffeeshout.blockstacking.domain;
 
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.gamecommon.Gamer;
-import coffeeshout.gamecommon.Playable;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -49,46 +49,48 @@ public class BlockStackingGame implements Playable {
      * @return 유효한 이벤트면 true, 검증 실패로 무시됐으면 false
      */
     public synchronized boolean recordProgress(
-            Gamer gamer, int floor,
-            double movingBlockX, double stackTopX, double stackTopWidth
-    ) {
+            Gamer gamer, int floor, double movingBlockX, double stackTopX, double stackTopWidth) {
         if (state != BlockStackingGameState.PLAYING) {
             throw new BusinessException(
-                    BlockStackingGameErrorCode.NOT_PLAYING_STATE,
-                    "현재 게임이 진행중인 상태가 아닙니다. state=" + state
-            );
+                    BlockStackingGameErrorCode.NOT_PLAYING_STATE, "현재 게임이 진행중인 상태가 아닙니다. state=" + state);
         }
 
         final BlockStackingPlayerProgress progress = playerProgresses.get(gamer);
         if (progress == null) {
-            log.warn("[{}] 등록되지 않은 플레이어의 진행 이벤트 수신 — 무시: player={}",
+            log.warn(
+                    "[{}] 등록되지 않은 플레이어의 진행 이벤트 수신 — 무시: player={}",
                     BlockStackingGameErrorCode.PLAYER_NOT_FOUND.getCode(),
                     gamer.getName());
             throw new BusinessException(
-                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
-                    "등록되지 않은 플레이어입니다: " + gamer.getName()
-            );
+                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND, "등록되지 않은 플레이어입니다: " + gamer.getName());
         }
 
         if (progress.failed()) {
-            log.warn("[{}] 이미 실패한 플레이어의 진행 이벤트 수신 — 무시: player={}",
+            log.warn(
+                    "[{}] 이미 실패한 플레이어의 진행 이벤트 수신 — 무시: player={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
                     gamer.getName());
             return false;
         }
 
         if (!isValidFloorSequence(floor, progress.currentFloor())) {
-            log.warn("[{}] 비연속적 층수 수신 — 무시: player={}, expected={}, received={}",
+            log.warn(
+                    "[{}] 비연속적 층수 수신 — 무시: player={}, expected={}, received={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
-                    gamer.getName(), progress.currentFloor() + 1, floor);
+                    gamer.getName(),
+                    progress.currentFloor() + 1,
+                    floor);
             return false;
         }
 
         final double overlap = calculateOverlap(movingBlockX, stackTopX, stackTopWidth);
         if (overlap <= 0) {
-            log.warn("[{}] 유효하지 않은 overlap — 무시: player={}, floor={}, overlap={}",
+            log.warn(
+                    "[{}] 유효하지 않은 overlap — 무시: player={}, floor={}, overlap={}",
                     BlockStackingGameErrorCode.INVALID_PROGRESS.getCode(),
-                    gamer.getName(), floor, overlap);
+                    gamer.getName(),
+                    floor,
+                    overlap);
             return false;
         }
 
@@ -105,17 +107,13 @@ public class BlockStackingGame implements Playable {
     public synchronized boolean recordFailure(Gamer gamer) {
         if (state != BlockStackingGameState.PLAYING) {
             throw new BusinessException(
-                    BlockStackingGameErrorCode.NOT_PLAYING_STATE,
-                    "현재 게임이 진행중인 상태가 아닙니다. state=" + state
-            );
+                    BlockStackingGameErrorCode.NOT_PLAYING_STATE, "현재 게임이 진행중인 상태가 아닙니다. state=" + state);
         }
 
         final BlockStackingPlayerProgress progress = playerProgresses.get(gamer);
         if (progress == null) {
             throw new BusinessException(
-                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
-                    "등록되지 않은 플레이어입니다: " + gamer.getName()
-            );
+                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND, "등록되지 않은 플레이어입니다: " + gamer.getName());
         }
 
         if (progress.failed()) {
@@ -133,7 +131,8 @@ public class BlockStackingGame implements Playable {
 
     public List<BlockStackingPlayerRankInfo> getRanking() {
         return playerProgresses.values().stream()
-                .sorted(Comparator.comparingInt(BlockStackingPlayerProgress::currentFloor).reversed()
+                .sorted(Comparator.comparingInt(BlockStackingPlayerProgress::currentFloor)
+                        .reversed()
                         .thenComparing(p -> p.gamer().getName()))
                 .map(p -> new BlockStackingPlayerRankInfo(p.gamer().getName(), p.currentFloor()))
                 .toList();
@@ -143,10 +142,8 @@ public class BlockStackingGame implements Playable {
         return playerProgresses.keySet().stream()
                 .filter(gamer -> gamer.getName().equals(name))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        BlockStackingGameErrorCode.PLAYER_NOT_FOUND,
-                        "플레이어를 찾을 수 없습니다: " + name
-                ));
+                .orElseThrow(() ->
+                        new BusinessException(BlockStackingGameErrorCode.PLAYER_NOT_FOUND, "플레이어를 찾을 수 없습니다: " + name));
     }
 
     @Override
@@ -159,8 +156,7 @@ public class BlockStackingGame implements Playable {
         return playerProgresses.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        e -> new BlockStackingScore(e.getValue().currentFloor())
-                ));
+                        e -> new BlockStackingScore(e.getValue().currentFloor())));
     }
 
     @Override
@@ -173,7 +169,6 @@ public class BlockStackingGame implements Playable {
     }
 
     private double calculateOverlap(double movingBlockX, double stackTopX, double stackTopWidth) {
-        return Math.min(movingBlockX + stackTopWidth, stackTopX + stackTopWidth)
-                - Math.max(movingBlockX, stackTopX);
+        return Math.min(movingBlockX + stackTopWidth, stackTopX + stackTopWidth) - Math.max(movingBlockX, stackTopX);
     }
 }

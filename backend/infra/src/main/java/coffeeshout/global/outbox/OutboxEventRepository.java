@@ -2,6 +2,8 @@ package coffeeshout.global.outbox;
 
 import java.time.Instant;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,8 +17,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
                     + "ORDER BY id ASC "
                     + "LIMIT :size "
                     + "FOR UPDATE SKIP LOCKED",
-            nativeQuery = true
-    )
+            nativeQuery = true)
     List<OutboxEvent> findPendingEventsForUpdate(@Param("size") int size);
 
     /**
@@ -38,4 +39,12 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
      * {@code idx_outbox_status_id(status, id)} 인덱스를 타므로 스크레이프 시점 COUNT가 가볍다.
      */
     long countByStatus(OutboxStatus status);
+
+    /**
+     * 상태별 목록. 백오피스의 격리 메시지 화면이 쓴다.
+     *
+     * <p>{@code idx_outbox_status_id(status, id)} 를 그대로 탄다. 적체가 깊어져도
+     * 첫 페이지를 여는 비용이 늘지 않는다.
+     */
+    Page<OutboxEvent> findByStatus(OutboxStatus status, Pageable pageable);
 }

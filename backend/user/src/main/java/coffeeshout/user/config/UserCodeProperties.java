@@ -6,7 +6,4 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "user.code")
-public record UserCodeProperties(
-        @Positive int maxRetry
-) {
-}
+public record UserCodeProperties(@Positive int maxRetry) {}

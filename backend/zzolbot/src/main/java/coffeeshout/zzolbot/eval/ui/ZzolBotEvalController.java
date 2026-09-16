@@ -46,7 +46,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @RestController
 @Validated
-@RequestMapping("/admin/zzolbot/eval")
+@RequestMapping("/admin/api/zzolbot/eval")
 public class ZzolBotEvalController {
 
     private final EvalRunner evalRunner;

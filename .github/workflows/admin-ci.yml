@@ -1,0 +1,111 @@
+name: Admin CI
+
+on:
+  pull_request:
+    branches: [dev, prod]
+    paths:
+      - 'admin-web/**'
+      - '.github/workflows/admin-ci.yml'
+
+  workflow_call:
+    outputs:
+      build-success:
+        description: 'Build completion status'
+        value: ${{ jobs.ci.outputs.build-success }}
+
+# 같은 PR 에 새 커밋을 밀면 직전 실행을 취소한다.
+# CD 가 workflow_call 로 부른 실행은 그룹이 호출자 이름으로 잡혀 배포를 끊지 않는다
+# (frontend-ci.yml 주석 참고).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    outputs:
+      build-success: ${{ steps.build.outputs.success }}
+
+    defaults:
+      run:
+        working-directory: ./admin-web
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: './admin-web/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create .env.production
+        # Vite 는 VITE_* 를 빌드 시점에 번들로 인라인한다. 런타임 주입이 안 되는 대신,
+        # prod 번들에 dev 백엔드 주소가 아예 들어가지 않는다는 보장이 생긴다.
+        # 클라이언트 ID 는 비밀이 아니라 브라우저에 그대로 노출되므로 vars 로 둔다.
+        # 실제 방어는 승인된 자바스크립트 원본, 서버측 aud 검증, 허용목록이 한다.
+        env:
+          ENV_NAME: ${{ github.ref_name == 'prod' && 'PROD' || 'DEV' }}
+          API_BASE_URL: ${{ github.ref_name == 'prod' && vars.ADMIN_API_BASE_URL_PROD || vars.ADMIN_API_BASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ github.ref_name == 'prod' && vars.ADMIN_GOOGLE_CLIENT_ID_PROD || vars.ADMIN_GOOGLE_CLIENT_ID }}
+        run: |
+          # 값이 비어도 빌드는 성공한다. 그 번들은 로그인 팝업이 안 뜨거나(클라이언트 ID
+          # 없음) API 를 자기 자신에게 쏘는(base URL 없음) 상태로 나온다. 화면을 열어야만
+          # 알게 되는 종류의 고장이다.
+          #
+          # 그래서 배포로 가는 길(push)에서만 끊는다. PR 검증은 컴파일과 테스트가 목적이라
+          # 저장소 변수가 아직 없어도 돌 수 있어야 한다. 대신 경고는 남긴다.
+          missing=""
+          [ -z "${API_BASE_URL}" ] && missing="${missing} ADMIN_API_BASE_URL"
+          [ -z "${GOOGLE_CLIENT_ID}" ] && missing="${missing} ADMIN_GOOGLE_CLIENT_ID"
+
+          if [ -n "${missing}" ]; then
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              echo "::warning::저장소 변수 없음(${missing}). PR 빌드라 계속 진행합니다"
+            else
+              echo "::error::저장소 변수 없음(${missing}). prod 는 _PROD 접미사를 씁니다"
+              exit 1
+            fi
+          fi
+
+          {
+            echo "VITE_ENV_NAME=${ENV_NAME}"
+            echo "VITE_API_BASE_URL=${API_BASE_URL}"
+            echo "VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
+          } >> .env.production
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Test
+        run: npm run test
+        env:
+          CI: true
+
+      - name: Build
+        id: build
+        run: |
+          npm run build
+          # SPA 라우팅용 진입점이 없으면 CloudFront fallback 이 404 를 준다.
+          test -f dist/index.html
+          # 번들 내용을 grep 으로 검사하지 않는다. 소스에 'DEV' 'PROD' 'LOCAL' 문자열이
+          # 이미 들어 있어 무엇을 찾아도 매치한다. 통과만 하고 아무것도 못 잡는 검사는
+          # 없느니만 못하다 - 있으면 검증됐다고 믿게 된다.
+          # 실제로 틀리는 지점(저장소 변수 누락)은 위 단계에서 막는다.
+          echo "success=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: admin-web-dist
+          path: admin-web/dist

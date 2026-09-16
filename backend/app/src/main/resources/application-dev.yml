@@ -13,7 +13,9 @@ web:
   cors:
     allowed-origins:
       - https://dev.zzol.site
-      - https://dev.api.zzol.site   # 어드민 페이지(/admin/**)가 dev.api.zzol.site에서 서빙 — 어드민 호출 CORS 허용
+      # 백오피스 SPA(admin-web). 별도 도메인이라 CORS 허용이 없으면 로그인부터 막힌다.
+      # 예전 Thymeleaf 백오피스는 API와 같은 도메인에서 서빙돼 이 항목이 필요 없었다.
+      - https://admin.dev.zzol.site
 
 room:
   qr:

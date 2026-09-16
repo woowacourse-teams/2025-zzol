@@ -57,15 +57,6 @@ class ZzolBotChatControllerTest {
     }
 
     @Nested
-    class page_메서드 {
-
-        @Test
-        void zzolbot_뷰_이름을_반환한다() {
-            assertThat(controller.page()).isEqualTo("admin/zzolbot");
-        }
-    }
-
-    @Nested
     class ask_메서드 {
 
         @Test

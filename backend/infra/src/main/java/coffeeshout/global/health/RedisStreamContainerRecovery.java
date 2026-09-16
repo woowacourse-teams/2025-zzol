@@ -24,7 +24,9 @@ import org.springframework.stereotype.Component;
  * 2. 멈춘 container 발견 시 start()를 호출하여 복구 시도
  * 3. 복구 실패 시 failedRecoveryStreams에 기록
  * 4. HealthIndicator는 이 정보를 읽어서, 복구 실패한 container가 있으면 DOWN 반환
- * 5. DOWN이 되면 Docker HEALTHCHECK에 의해 컨테이너 재시작 (last resort)
+ * 5. DOWN이 되면 모니터링 알림으로 운영자가 개입 (last resort)
+ *    — 순수 Docker는 unhealthy 컨테이너를 재시작하지 않는다 (상태 표시만 함).
+ *      자동 재시작이 필요해지면 재시작 판단 전용 health group 분리 후 autoheal 도입을 검토한다.
  * <p>
  * 스트림 키 목록은 RedisStreamProperties에서 동적으로 로드한다.
  * application.yml에 스트림을 추가/제거하면 자동으로 반영된다.

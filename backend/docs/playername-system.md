@@ -216,7 +216,12 @@ resilience4j.ratelimiter:
 
 ### 운영자 인증 — Spring Security
 
-**확정: `spring-boot-starter-security` + 환경변수 기반 InMemoryUserDetails**
+> **이 절은 대체됐다 (#1762).** 아래는 2025년 당시의 결정 기록이며 지금 코드와 다르다.
+> Thymeleaf 백오피스와 `InMemoryUserDetails` 폼 로그인은 제거됐고, 운영자 인증은
+> 구글 ID 토큰 검증 + 허용목록(ENV ∪ DB) + 관리자 JWT로 바뀌었다. 화면은 별도 SPA
+> (`admin-web/`)다. 결정 기록이라 문장을 고쳐 쓰지 않고 표시만 남긴다.
+
+**확정(당시): `spring-boot-starter-security` + 환경변수 기반 InMemoryUserDetails**
 
 `/admin/**` 경로를 인증 없이 열어두면 프로덕션 보안 사고로 직결된다. Thymeleaf form 로그인과 Spring Security의 세션 기반 인증은 자연스럽게 결합되며, 별도 토큰 발급이나 OAuth 설정 없이 간단하게 구성할 수 있다. 운영자 계정이 2~3개 고정이므로 환경변수 기반 InMemoryUserDetails로 충분하다.
 

@@ -61,8 +61,12 @@ logging:
     org.springframework.web: INFO
 
 admin:
-  username: admin
-  password: "1234"
+  auth:
+    # 로컬 기본 허용목록. 환경변수(ADMIN_EMAILS)를 주면 그쪽이 이긴다.
+    # 값이 비면 부트스트랩 관리자가 없어 로컬에서 아무도 백오피스에 못 들어간다.
+    emails: ${ADMIN_EMAILS:admin@zzol.site}
+    google-client-id: ${ADMIN_GOOGLE_CLIENT_ID:}
+    token-validity-seconds: 3600
 
 security:
   ip-block:

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @EntityScan(
         basePackages = {
+            "coffeeshout.admin",
             "coffeeshout.dashboard",
             "coffeeshout.patchnote",
             "coffeeshout.report",
@@ -21,6 +22,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         })
 @EnableJpaRepositories(
         basePackages = {
+            "coffeeshout.admin",
             "coffeeshout.dashboard",
             "coffeeshout.patchnote",
             "coffeeshout.report",

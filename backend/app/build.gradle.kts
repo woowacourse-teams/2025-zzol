@@ -49,6 +49,28 @@ dependencies {
     testImplementation(libs.archunit)
 }
 
+/**
+ * build-info.properties 를 만든다.
+ *
+ * actuator/info 가 노출은 돼 있는데 내용이 {} 였다. 이 블록이 없으면 스프링이 넣을
+ * 정보 자체가 없다. 지금 떠 있는 게 어느 커밋인지는 장애 때 가장 먼저 묻는 것인데,
+ * 그동안 배포 로그를 뒤져야만 알 수 있었다.
+ *
+ * 커밋 해시는 플러그인을 들이지 않고 명령으로 읽는다. 읽지 못하는 환경(얕은 클론,
+ * 소스만 복사한 도커 빌드 컨텍스트)에서는 unknown 으로 떨어뜨린다 - 빌드를 실패시킬
+ * 만한 정보가 아니다.
+ */
+springBoot {
+    buildInfo {
+        properties {
+            additional.put("commit", providers.exec {
+                commandLine("git", "rev-parse", "--short", "HEAD")
+                isIgnoreExitValue = true
+            }.standardOutput.asText.map { it.trim().ifEmpty { "unknown" } })
+        }
+    }
+}
+
 tasks.named<BootRun>("bootRun") {
     // bootRun의 기본 작업 디렉터리는 :app이라 backend/ 기준 파일을 둘 다 놓친다.
     //  - springboot4-dotenv 가 읽을 backend/.env

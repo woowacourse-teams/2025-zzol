@@ -144,6 +144,9 @@ subprojects {
     tasks.withType<Test> {
         useJUnitPlatform()
         exclude("**/QueryPerformanceTest.class")
+        // 운영 JVM이 Asia/Seoul로 뜬다(docker/app/Dockerfile). 테스트가 UTC로 돌면 UTC Calendar를
+        // 명시하는 타임스탬프 바인딩이 어긋나도 값이 같아 회귀를 못 잡는다.
+        systemProperty("user.timezone", "Asia/Seoul")
         jvmArgs("-Xmx1g", "-XX:+HeapDumpOnOutOfMemoryError")
         // reuse-off로 JVM(모듈)마다 독립 컨테이너를 쓰므로 모듈별 DB/Redis 인덱스 격리는 불필요(이슈 #1402)
     }

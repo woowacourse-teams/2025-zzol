@@ -227,7 +227,13 @@ export type ReportStats = {
 /* ── 닉네임 검열 ─────────────────────────────────────────── */
 
 export type NicknameAuditStatus =
-  'UNAUDITED' | 'FLAGGED' | 'PENDING' | 'CLEAN' | 'ALLOWED' | 'BLOCKED';
+  | 'UNAUDITED'
+  | 'FLAGGED'
+  | 'PENDING'
+  | 'CLEAN'
+  | 'ALLOWED'
+  | 'BLOCKED'
+  | 'DEAD_LETTER';
 
 export type NicknameAudit = {
   id: number;

@@ -52,6 +52,7 @@ const NICKNAME_AUDIT_STATUS: Record<string, string> = {
   CLEAN: '정상',
   ALLOWED: '허용함',
   BLOCKED: '차단함',
+  DEAD_LETTER: '격리',
 };
 
 /** 방이 어디까지 갔는지. 상태 배지가 쓴다. */

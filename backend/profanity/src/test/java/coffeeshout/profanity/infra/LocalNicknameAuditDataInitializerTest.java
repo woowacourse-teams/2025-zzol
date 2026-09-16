@@ -6,6 +6,7 @@ import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import coffeeshout.support.ServiceTest;
+import jakarta.persistence.EntityManager;
 import java.time.Clock;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,9 +28,16 @@ class LocalNicknameAuditDataInitializerTest extends ServiceTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private EntityManager entityManager;
+
     private LocalNicknameAuditDataInitializer 초기화기(int seedCount) {
         return new LocalNicknameAuditDataInitializer(
-                auditRepository, NicknameAuditPropertiesFixture.적재(seedCount), jdbcTemplate, Clock.systemUTC());
+                auditRepository,
+                NicknameAuditPropertiesFixture.적재(seedCount),
+                jdbcTemplate,
+                Clock.systemUTC(),
+                entityManager);
     }
 
     private long 미검열_건수() {

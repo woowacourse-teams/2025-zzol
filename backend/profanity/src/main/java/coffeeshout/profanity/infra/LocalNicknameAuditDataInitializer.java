@@ -6,7 +6,6 @@ import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
@@ -66,9 +65,7 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
     private final NicknameAuditProperties properties;
     private final JdbcTemplate jdbcTemplate;
     private final Clock clock;
-
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
 
     @Override
     public void run(ApplicationArguments args) {

@@ -57,6 +57,10 @@ sum(count_over_time({job="prod-app"} |= "ERROR" [5m]))        # 에러 건수 �
 
 `query_loki_logs`는 한 번에 최대 100줄이다. 넓게 보려면 `query_loki_stats`나 `count_over_time`으로 분포부터 잡고 시간 범위를 좁힌다.
 
+**Loki 조회는 하나씩 보낸다.** 여러 도구 호출을 한 번에 던지면 Loki가 `429 too many outstanding requests`로 전부 거부한다. 날짜별로 나눠 볼 때도 앞 호출의 결과를 받은 뒤 다음을 보낸다.
+
+`|= "ERROR"` 라인 필터는 메시지에 "ERROR"가 든 INFO 로그도 잡는다. ZzolBot의 "ERROR 로그 없음" 같은 줄이 섞이니 집계할 때 `[ERROR]`로 한 번 더 거른다. 스택트레이스는 줄마다 별도 항목으로 적재되므로 예외 클래스를 보려면 `|~ "Exception"`으로 같은 시각 범위를 따로 조회한다.
+
 ## Prometheus
 
 알럿 규칙은 `backend/docker/monitoring/conf/rules/`에 있다. 알럿이 왜 울렸는지 볼 때는 그 규칙의 `expr`를 `query_prometheus`에 그대로 넣는다. 지표 이름을 모르면 `list_prometheus_metric_names`로 먼저 찾는다.

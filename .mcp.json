@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "grafana": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-e", "GRAFANA_URL",
+        "-e", "GRAFANA_SERVICE_ACCOUNT_TOKEN",
+        "mcp/grafana",
+        "-t", "stdio",
+        "--disable-write",
+        "--enabled-tools", "search,datasource,prometheus,loki,alerting,dashboard"
+      ],
+      "env": {
+        "GRAFANA_URL": "https://status.zzol.site",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "${GRAFANA_SA_TOKEN}"
+      }
+    }
+  }
+}

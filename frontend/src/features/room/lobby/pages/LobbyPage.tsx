@@ -264,12 +264,23 @@ const LobbyPage = () => {
     );
   };
 
-  const handleGameReadyButtonClick = () => {
-    send(`/room/${joinCode}/update-ready`, {
-      joinCode,
-      playerName: myName,
-      isReady: !isReady,
+  const handleReadyError = () => {
+    showToast({
+      type: 'error',
+      message: '연결 중입니다. 잠시 후 다시 시도해주세요.',
     });
+  };
+
+  const handleGameReadyButtonClick = () => {
+    send(
+      `/room/${joinCode}/update-ready`,
+      {
+        joinCode,
+        playerName: myName,
+        isReady: !isReady,
+      },
+      handleReadyError
+    );
   };
 
   const renderGameButton = () => {
@@ -285,7 +296,15 @@ const LobbyPage = () => {
       );
     }
 
-    return <GameReadyButton isReady={isReady} onClick={handleGameReadyButtonClick} />;
+    // 입장 직후·백그라운드 복귀·재연결 중에는 send 가 실패하므로 연결될 때까지 잠근다 (#1792)
+    return (
+      <GameReadyButton
+        isReady={isReady}
+        onClick={handleGameReadyButtonClick}
+        isLoading={!isConnected}
+        loadingText="연결 중..."
+      />
+    );
   };
 
   useEffect(() => {

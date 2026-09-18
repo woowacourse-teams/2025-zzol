@@ -39,6 +39,8 @@ export const useWebSocketConnection = () => {
       const stompClient = createStompClient({ roomToken });
       stompClient.onConnect = (frame) => handleConnect(frame);
       stompClient.onDisconnect = handleDisconnect;
+      // onDisconnect 는 deactivate() 때만 불린다. 서버가 error 없이 close 만 해도 isConnected 를 내린다
+      stompClient.onWebSocketClose = handleDisconnect;
       stompClient.onStompError = handleStompError;
       stompClient.onWebSocketError = (event) => handleWebSocketError(event, stompClient);
       return stompClient;

@@ -1,5 +1,19 @@
 import styled from '@emotion/styled';
 import { css } from '@emotion/react';
+import type { Theme } from '@emotion/react';
+
+const card = ({ theme }: { theme: Theme }) => css`
+  background: ${theme.color.white};
+  border: 1px solid ${theme.color.gray[100]};
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+`;
+
+/** 보조 설명 글자. 프로필 메타·링 라벨·타일 라벨 등에 같이 쓴다. */
+export const Caption = styled.span`
+  ${({ theme }) => theme.typography.caption}
+  color: ${({ theme }) => theme.color.gray[400]};
+`;
 
 export const Container = styled.div`
   display: flex;
@@ -62,11 +76,6 @@ export const Nickname = styled.span`
   text-overflow: ellipsis;
 `;
 
-export const ProfileMeta = styled.span`
-  ${({ theme }) => theme.typography.caption}
-  color: ${({ theme }) => theme.color.gray[400]};
-`;
-
 export const SeasonPill = styled.span`
   ${({ theme }) => theme.typography.caption}
   font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
@@ -122,18 +131,6 @@ export const RingCenter = styled.div`
   gap: 2px;
 `;
 
-export const RingPercent = styled.span`
-  ${({ theme }) => theme.typography.h1}
-  color: ${({ theme }) => theme.color.gray[900]};
-  letter-spacing: -0.04em;
-  line-height: 1;
-`;
-
-export const RingLabel = styled.span`
-  ${({ theme }) => theme.typography.caption}
-  color: ${({ theme }) => theme.color.gray[400]};
-`;
-
 export const WinStats = styled.div`
   display: flex;
   flex-direction: column;
@@ -166,12 +163,9 @@ export const WinStatValue = styled.span<{ $accent?: boolean }>`
 /* ── 미니게임 요약 ── */
 
 export const SummaryCard = styled.div`
+  ${card}
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: ${({ theme }) => theme.color.white};
-  border: 1px solid ${({ theme }) => theme.color.gray[100]};
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 `;
 
 export const SummaryCell = styled.div`
@@ -205,6 +199,8 @@ export const StatNumber = styled.span`
   line-height: 1;
 `;
 
+export const RingPercent = StatNumber;
+
 export const StatUnit = styled.span`
   ${({ theme }) => theme.typography.h4}
   color: ${({ theme }) => theme.color.gray[500]};
@@ -231,11 +227,6 @@ export const MostPlayedName = styled.span`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-`;
-
-export const MostPlayedCount = styled.span`
-  ${({ theme }) => theme.typography.caption}
-  color: ${({ theme }) => theme.color.gray[400]};
 `;
 
 export const EmptyText = styled.span`
@@ -290,14 +281,11 @@ export const Chip = styled.span<{ $muted?: boolean }>`
 `;
 
 export const GameCard = styled.div<{ $empty?: boolean }>`
+  ${card}
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 18px 20px 20px;
-  background: ${({ theme }) => theme.color.white};
-  border: 1px solid ${({ theme }) => theme.color.gray[100]};
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
   ${({ $empty, theme }) =>
     $empty &&
@@ -313,23 +301,12 @@ export const GameHeader = styled.div`
   gap: 12px;
 `;
 
-export const GameInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-`;
+export const GameInfo = ProfileInfo;
 
 export const GameName = styled.span`
   font-size: ${({ theme }) => theme.typography.h4.fontSize};
   font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
   color: ${({ theme }) => theme.color.gray[900]};
-`;
-
-export const GameHint = styled.span`
-  ${({ theme }) => theme.typography.caption}
-  color: ${({ theme }) => theme.color.gray[400]};
 `;
 
 export const TileGrid = styled.div`
@@ -348,11 +325,6 @@ export const Tile = styled.div`
   min-width: 0;
 `;
 
-export const TileLabel = styled.span`
-  ${({ theme }) => theme.typography.caption}
-  color: ${({ theme }) => theme.color.gray[400]};
-`;
-
 export const TileValue = styled.span<{ $muted?: boolean }>`
   ${({ theme }) => theme.typography.h3}
   font-weight: ${({ theme }) => theme.typography.h1.fontWeight};
@@ -360,11 +332,11 @@ export const TileValue = styled.span<{ $muted?: boolean }>`
   letter-spacing: -0.02em;
 `;
 
+/* 배경은 두지 않는다. recordBarRatio 가 한쪽을 항상 1 로 주어 막대가 꽉 찬다. */
 export const DiffBar = styled.div`
   position: relative;
   height: 6px;
   border-radius: 999px;
-  background: ${({ theme }) => theme.color.gray[100]};
   overflow: hidden;
 `;
 
@@ -428,13 +400,10 @@ export const TooltipList = styled.ul`
 `;
 
 export const DangerCard = styled.div`
+  ${card}
   display: flex;
   flex-direction: column;
-  border: 1px solid ${({ theme }) => theme.color.gray[100]};
-  border-radius: 16px;
   overflow: hidden;
-  background: ${({ theme }) => theme.color.white};
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   margin-top: 12px;
 `;
 

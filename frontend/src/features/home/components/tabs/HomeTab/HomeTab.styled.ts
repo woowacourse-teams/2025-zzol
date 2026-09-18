@@ -107,7 +107,7 @@ export const MyInfoFooter = styled.button`
   cursor: pointer;
   text-align: left;
   ${({ theme }) => theme.typography.small};
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
   color: ${({ theme }) => theme.color.gray[700]};
 
   &:active {

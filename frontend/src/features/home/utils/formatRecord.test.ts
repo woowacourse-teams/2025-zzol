@@ -4,6 +4,7 @@ import {
   formatWinRate,
   recordBarRatio,
   recordLabels,
+  winRatePercent,
 } from './formatRecord';
 
 describe('formatRecord', () => {
@@ -44,6 +45,13 @@ describe('recordBarRatio', () => {
 
   it('둘 다 0 이면 0 으로 나누지 않고 꽉 채운다', () => {
     expect(recordBarRatio('BLIND_TIMER', 0, 0)).toEqual({ best: 1, average: 1 });
+  });
+});
+
+describe('winRatePercent', () => {
+  it('정수 % 로 반올림하고 참여 0판이면 null 이다', () => {
+    expect(winRatePercent(1, 3)).toBe(33);
+    expect(winRatePercent(0, 0)).toBeNull();
   });
 });
 

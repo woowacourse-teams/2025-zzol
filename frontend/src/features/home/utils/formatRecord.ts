@@ -30,9 +30,15 @@ export const recordBarRatio = (type: RecordGameType, best: number, average: numb
     : { best: best / average, average: 1 };
 };
 
-/** 당첨 확률 정수 %. 참여 0판이면 `-`. */
-export const formatWinRate = (winCount: number, playCount: number) =>
-  playCount === 0 ? '-' : `${Math.round((winCount / playCount) * 100)}%`;
+/** 당첨 확률 정수 %. 참여 0판이면 null. */
+export const winRatePercent = (winCount: number, playCount: number) =>
+  playCount === 0 ? null : Math.round((winCount / playCount) * 100);
+
+/** 당첨 확률 표기. 참여 0판이면 `-`. */
+export const formatWinRate = (winCount: number, playCount: number) => {
+  const percent = winRatePercent(winCount, playCount);
+  return percent === null ? '-' : `${percent}%`;
+};
 
 export const RECORD_HINT: Record<RecordGameType, string> = {
   RACING_GAME: '완주 시간이 짧을수록 좋아요',

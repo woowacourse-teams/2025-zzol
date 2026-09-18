@@ -11,14 +11,12 @@ import {
   formatWinRate,
   recordBarRatio,
   recordLabels,
+  winRatePercent,
 } from '@/features/home/utils/formatRecord';
 import { PROVIDER_LABEL } from '@/features/home/components/tabs/MenuTab/AccountSection/AccountSection';
 import { MINI_GAME_ICON_MAP, MINI_GAME_NAME_MAP } from '@/types/miniGame/common';
 import type { GameRecord } from '@/types/records';
 import * as S from './MyInfoView.styled';
-
-/** r=48 원의 둘레. 당첨 확률 호의 dasharray 기준. */
-const RING_CIRCUMFERENCE = 301.6;
 
 const GameRecordCard = ({ record }: { record: GameRecord }) => {
   const { type, playCount, best, average } = record;
@@ -41,7 +39,7 @@ const GameRecordCard = ({ record }: { record: GameRecord }) => {
         </S.IconTile>
         <S.GameInfo>
           <S.GameName>{MINI_GAME_NAME_MAP[type]}</S.GameName>
-          <S.GameHint>{empty ? '아직 기록이 없어요' : RECORD_HINT[type]}</S.GameHint>
+          <S.Caption>{empty ? '아직 기록이 없어요' : RECORD_HINT[type]}</S.Caption>
         </S.GameInfo>
         <S.Chip $muted={empty}>{playCount}회</S.Chip>
       </S.GameHeader>
@@ -50,11 +48,11 @@ const GameRecordCard = ({ record }: { record: GameRecord }) => {
         <>
           <S.TileGrid>
             <S.Tile>
-              <S.TileLabel>{labels.best}</S.TileLabel>
+              <S.Caption>{labels.best}</S.Caption>
               <S.TileValue>{formatRecord(type, best)}</S.TileValue>
             </S.Tile>
             <S.Tile>
-              <S.TileLabel>{labels.average}</S.TileLabel>
+              <S.Caption>{labels.average}</S.Caption>
               <S.TileValue $muted>{formatRecord(type, average)}</S.TileValue>
             </S.Tile>
           </S.TileGrid>
@@ -104,10 +102,7 @@ const MyInfoView = () => {
   };
 
   const roulette = records?.roulette;
-  const winRate =
-    roulette && roulette.playCount > 0
-      ? Math.round((roulette.winCount / roulette.playCount) * 100)
-      : 0;
+  const winRate = roulette ? (winRatePercent(roulette.winCount, roulette.playCount) ?? 0) : 0;
   const mostPlayed = records?.minigame.mostPlayed ?? null;
 
   return (
@@ -121,9 +116,9 @@ const MyInfoView = () => {
               <S.Avatar>{user.nickname.slice(0, 1)}</S.Avatar>
               <S.ProfileInfo>
                 <S.Nickname>{user.nickname}</S.Nickname>
-                <S.ProfileMeta>
+                <S.Caption>
                   {PROVIDER_LABEL[user.provider] ?? user.provider} · #{user.userCode}
-                </S.ProfileMeta>
+                </S.Caption>
               </S.ProfileInfo>
               {myRank && (
                 <S.SeasonPill>
@@ -134,19 +129,23 @@ const MyInfoView = () => {
             <S.WinRow>
               <S.Ring>
                 <S.RingSvg viewBox="0 0 112 112" aria-hidden="true">
-                  <S.RingTrack cx="56" cy="56" r="48" />
-                  <S.RingArc
-                    cx="56"
-                    cy="56"
-                    r="48"
-                    strokeDasharray={`${(winRate / 100) * RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
-                  />
+                  <S.RingTrack cx="56" cy="56" r="48" pathLength="100" />
+                  {/* 0% 는 round linecap 때문에 점이 남아 아예 그리지 않는다 */}
+                  {winRate > 0 && (
+                    <S.RingArc
+                      cx="56"
+                      cy="56"
+                      r="48"
+                      pathLength="100"
+                      strokeDasharray={`${winRate} 100`}
+                    />
+                  )}
                 </S.RingSvg>
                 <S.RingCenter>
                   <S.RingPercent>
                     {formatWinRate(roulette.winCount, roulette.playCount)}
                   </S.RingPercent>
-                  <S.RingLabel>당첨 확률</S.RingLabel>
+                  <S.Caption>당첨 확률</S.Caption>
                 </S.RingCenter>
               </S.Ring>
               <S.WinStats>
@@ -183,7 +182,7 @@ const MyInfoView = () => {
                   </S.IconTile>
                   <S.MostPlayedText>
                     <S.MostPlayedName>{MINI_GAME_NAME_MAP[mostPlayed.type]}</S.MostPlayedName>
-                    <S.MostPlayedCount>{mostPlayed.playCount}판</S.MostPlayedCount>
+                    <S.Caption>{mostPlayed.playCount}판</S.Caption>
                   </S.MostPlayedText>
                 </S.MostPlayed>
               ) : (

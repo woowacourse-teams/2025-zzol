@@ -30,8 +30,9 @@ public class MemberMiniGameRecordQueryAdapter implements MemberMiniGameRecordQue
             List.of(RACING_GAME, BLOCK_STACKING, BLIND_TIMER, SPEED_TOUCH);
 
     /**
-     * 완주 기록 경계. 레이싱·1 to 25·초시계는 DNF·타임아웃을 10^6 이상 값으로 저장하므로 그 미만만 완주로 본다
-     * ({@code :admin} 대시보드 TOP 집계와 같은 기준). 블록 쌓기는 층수라 제외가 없다.
+     * 완주 기록 경계. 1 to 25·초시계는 DNF·타임아웃을 10^6 이상 값으로 저장하므로 그 미만만 완주로 본다.
+     * 이 두 게임은 {@code :admin} 대시보드 TOP 집계와 같은 기준이다. 레이싱은 완주 ms만 저장하고 DNF 값이 없어
+     * 경계가 안전장치로만 걸린다. 블록 쌓기는 층수라 제외가 없다.
      */
     private static final long FINISH_SCORE_CEILING = 1_000_000L;
 
@@ -63,11 +64,9 @@ public class MemberMiniGameRecordQueryAdapter implements MemberMiniGameRecordQue
         final List<GameRecord> games = RECORD_TYPES.stream()
                 .map(type -> toGameRecord(type, completed.get(type)))
                 .toList();
-        return new MiniGameRecords(totalPlayCount(playCounts), mostPlayed(playCounts), games);
-    }
-
-    private static int totalPlayCount(Map<MiniGameType, Long> playCounts) {
-        return playCounts.values().stream().mapToInt(Long::intValue).sum();
+        final int totalPlayCount =
+                playCounts.values().stream().mapToInt(Long::intValue).sum();
+        return new MiniGameRecords(totalPlayCount, mostPlayed(playCounts), games);
     }
 
     /** 최다 게임. 동률이면 enum 순서가 앞선 게임이다. 판이 없으면 null. */

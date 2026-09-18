@@ -122,6 +122,18 @@ class MemberRouletteRecordQueryAdapterIntegrationTest extends RoomModuleIntegrat
         }
 
         @Test
+        void 한_방에_회원_player_행이_둘이어도_한_판으로_센다() {
+            룰렛_한_판(한스, 엠제이, 엠제이);
+
+            final RouletteRecord record = memberRouletteRecordQuery.findByUserId(엠제이);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(record.playCount()).isEqualTo(1);
+                softly.assertThat(record.survivalStreak()).isEqualTo(1);
+            });
+        }
+
+        @Test
         void 기록이_없으면_모두_0이다() {
             룰렛_한_판(한스);
 

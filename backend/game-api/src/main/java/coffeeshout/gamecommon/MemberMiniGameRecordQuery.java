@@ -14,7 +14,7 @@ public interface MemberMiniGameRecordQuery {
     /**
      * @param totalPlayCount 8개 게임 전체, 미완주 포함 판수
      * @param mostPlayed     최다 게임. 판이 없으면 null
-     * @param games          레이싱·블록 쌓기·1 to 25·초시계 순서로 항상 네 개
+     * @param games          레이싱·블록 쌓기·초시계·1 to 25 순서로 항상 네 개
      */
     record MiniGameRecords(int totalPlayCount, MostPlayed mostPlayed, List<GameRecord> games) {}
 

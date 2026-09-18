@@ -34,6 +34,8 @@ dependencies {
     implementation("io.micrometer:context-propagation")
 
     implementation(libs.resilience4j)
+    // 회원 기록 집계 어댑터(#1794)가 JPAQueryFactory를 쓴다
+    implementation(libs.querydsl.jpa)
     annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jpa") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")

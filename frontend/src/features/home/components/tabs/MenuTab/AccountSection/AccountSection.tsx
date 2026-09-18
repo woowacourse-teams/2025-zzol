@@ -7,7 +7,7 @@ import LoginSheet from '@/features/auth/components/LoginSheet/LoginSheet';
 import CopyIcon from '@/components/icons/CopyIcon';
 import * as S from './AccountSection.styled';
 
-const PROVIDER_LABEL: Record<string, string> = {
+export const PROVIDER_LABEL: Record<string, string> = {
   google: 'Google 계정',
   kakao: '카카오 계정',
   naver: '네이버 계정',

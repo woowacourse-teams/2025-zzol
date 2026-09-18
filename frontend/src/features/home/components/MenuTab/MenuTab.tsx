@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ComponentType } from 'react';
 import BackButton from '@/components/@common/BackButton/BackButton';
 import TopBar from '@/layouts/TopBar/TopBar';
+import { useAuth } from '@/features/auth/contexts/AuthContext';
 import SuggestionTab from '../SuggestionTab/SuggestionTab';
 import AccountSection from '../tabs/MenuTab/AccountSection/AccountSection';
 import PatchNotesView from './views/PatchNotesView';
@@ -78,7 +79,11 @@ const MENU_ITEMS: {
 type Props = { initialView?: MenuView | null };
 
 const MenuTab = ({ initialView }: Props) => {
-  const [activeView, setActiveView] = useState<MenuView | null>(initialView ?? null);
+  const { isAuthenticated } = useAuth();
+  const [activeView, setActiveView] = useState<MenuView | null>(
+    initialView === 'my-info' && !isAuthenticated ? null : (initialView ?? null)
+  );
+  const menuItems = isAuthenticated ? MENU_ITEMS : MENU_ITEMS.filter((i) => i.key !== 'my-info');
 
   if (activeView !== null) {
     return (
@@ -105,7 +110,7 @@ const MenuTab = ({ initialView }: Props) => {
       <S.SectionLabel>서비스</S.SectionLabel>
       <S.MenuCard>
         <S.MenuList>
-          {MENU_ITEMS.map(({ key, icon: Icon, title, desc }) => (
+          {menuItems.map(({ key, icon: Icon, title, desc }) => (
             <li key={key}>
               <S.MenuItemButton onClick={() => setActiveView(key)}>
                 <S.MenuItemLeft>

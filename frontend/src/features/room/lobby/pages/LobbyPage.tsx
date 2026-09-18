@@ -264,23 +264,12 @@ const LobbyPage = () => {
     );
   };
 
-  const handleReadyError = () => {
-    showToast({
-      type: 'error',
-      message: '연결 중입니다. 잠시 후 다시 시도해주세요.',
-    });
-  };
-
   const handleGameReadyButtonClick = () => {
-    send(
-      `/room/${joinCode}/update-ready`,
-      {
-        joinCode,
-        playerName: myName,
-        isReady: !isReady,
-      },
-      handleReadyError
-    );
+    send(`/room/${joinCode}/update-ready`, {
+      joinCode,
+      playerName: myName,
+      isReady: !isReady,
+    });
   };
 
   const renderGameButton = () => {

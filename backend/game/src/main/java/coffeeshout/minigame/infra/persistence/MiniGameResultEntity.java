@@ -48,12 +48,21 @@ public class MiniGameResultEntity {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    // 회원 기록 집계용 비정규화 컬럼(#1794). 게스트는 null. player(:room)를 조인하지 않으려고 둔다.
+    @Column(name = "user_id")
+    private Long userId;
+
     public MiniGameResultEntity(MiniGameEntity miniGamePlay, Long playerId, Integer rank, Long score) {
+        this(miniGamePlay, playerId, rank, score, null);
+    }
+
+    public MiniGameResultEntity(MiniGameEntity miniGamePlay, Long playerId, Integer rank, Long score, Long userId) {
         this.miniGamePlay = miniGamePlay;
         this.playerId = playerId;
         this.rank = rank;
         this.score = score;
         this.miniGameType = miniGamePlay.getMiniGameType();
         this.createdAt = LocalDateTime.now();
+        this.userId = userId;
     }
 }

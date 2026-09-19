@@ -6,10 +6,11 @@ import { useMyRecords } from '@/features/home/hooks/useMyRecords';
 import { useMySeasonRank } from '@/features/home/hooks/useSeasonRanking';
 import {
   RECORD_HINT,
+  formatGlobalDiff,
+  formatPercentile,
   formatRecord,
-  formatRecordDiff,
   formatWinRate,
-  recordBarRatio,
+  globalBarRatio,
   recordLabels,
   winRatePercent,
 } from '@/features/home/utils/formatRecord';
@@ -19,15 +20,16 @@ import type { GameRecord } from '@/types/records';
 import * as S from './MyInfoView.styled';
 
 const GameRecordCard = ({ record }: { record: GameRecord }) => {
-  const { type, playCount, best, average } = record;
+  const { type, playCount, best, average, globalAverage, percentile, memberCount } = record;
   const empty = best === null || average === null;
   const labels = recordLabels(type);
-  const diff = empty ? null : formatRecordDiff(type, best, average);
-  const ratio = empty ? null : recordBarRatio(type, best, average);
+  // 비교 대상이 나뿐이면 전체 평균이 곧 내 평균이라 막대·배지를 감춘다
+  const comparable = !empty && globalAverage !== null && memberCount >= 2;
+  const ratio = comparable ? globalBarRatio(type, average, globalAverage) : null;
   const fills = ratio
     ? ([
-        { tone: 'best', ratio: ratio.best },
-        { tone: 'average', ratio: ratio.average },
+        { tone: 'mine', ratio: ratio.mine },
+        { tone: 'global', ratio: ratio.global },
       ] as const)
     : [];
 
@@ -56,7 +58,7 @@ const GameRecordCard = ({ record }: { record: GameRecord }) => {
               <S.TileValue $muted>{formatRecord(type, average)}</S.TileValue>
             </S.Tile>
           </S.TileGrid>
-          {diff && (
+          {comparable ? (
             <>
               <S.DiffBar>
                 {/* 긴 막대를 먼저 그려 짧은 막대가 위에 보이게 한다 */}
@@ -66,8 +68,15 @@ const GameRecordCard = ({ record }: { record: GameRecord }) => {
                     <S.DiffFill key={tone} $tone={tone} $ratio={r} />
                   ))}
               </S.DiffBar>
-              <S.DiffCaption>{diff}</S.DiffCaption>
+              <S.DiffRow>
+                <S.DiffCaption>{formatGlobalDiff(type, average, globalAverage)}</S.DiffCaption>
+                {percentile !== null && (
+                  <S.PercentilePill>{formatPercentile(percentile)}</S.PercentilePill>
+                )}
+              </S.DiffRow>
             </>
+          ) : (
+            <S.DiffCaption>아직 비교할 회원이 없어요</S.DiffCaption>
           )}
         </>
       )}
@@ -208,6 +217,7 @@ const MyInfoView = () => {
             <li>• 당첨 확률은 참여한 내기 판수 대비 당첨된 비율입니다.</li>
             <li>• 총 플레이는 로그인 상태로 참여한 모든 미니게임 판수입니다.</li>
             <li>• 게임 기록은 완주한 판만 집계합니다.</li>
+            <li>• 전체 평균과 상위 %는 로그인 회원의 완주 기록 기준입니다.</li>
             <li>• 시즌 순위는 매월 초기화됩니다.</li>
           </S.TooltipList>
         </S.TooltipCard>

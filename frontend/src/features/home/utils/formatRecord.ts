@@ -9,26 +9,41 @@ const isFloorGame = (type: RecordGameType) => type === 'BLOCK_STACKING';
 export const formatRecord = (type: RecordGameType, value: number) =>
   isFloorGame(type) ? `${value}층` : `${millisToSeconds(value).toFixed(2)}초`;
 
-/** 최고와 평균의 차이 문구. 같으면 null 이라 막대와 함께 숨긴다. */
-export const formatRecordDiff = (type: RecordGameType, best: number, average: number) => {
-  if (best === average) return null;
-  if (isFloorGame(type)) return `최고 기록이 평균보다 ${best - average}층 높아요`;
-  const seconds = millisToSeconds(Math.abs(average - best)).toFixed(2);
-  return type === 'BLIND_TIMER'
-    ? `최소 오차가 평균보다 ${seconds}초 정확해요`
-    : `최고 기록이 평균보다 ${seconds}초 빨라요`;
+/**
+ * 내 평균과 전체 평균의 차이 문구.
+ * 시간 게임은 빨라요·느려요, 초시계는 정확해요·오차가 커요, 블록은 높아요·낮아요.
+ */
+export const formatGlobalDiff = (type: RecordGameType, average: number, globalAverage: number) => {
+  if (average === globalAverage) return '전체 평균과 같아요';
+  if (isFloorGame(type)) {
+    const floors = Math.abs(average - globalAverage);
+    return average > globalAverage
+      ? `전체 평균보다 ${floors}층 높아요`
+      : `전체 평균보다 ${floors}층 낮아요`;
+  }
+  const seconds = millisToSeconds(Math.abs(average - globalAverage)).toFixed(2);
+  const better = average < globalAverage;
+  if (type === 'BLIND_TIMER') {
+    return better
+      ? `전체 평균보다 ${seconds}초 정확해요`
+      : `전체 평균보다 오차가 ${seconds}초 커요`;
+  }
+  return better ? `전체 평균보다 ${seconds}초 빨라요` : `전체 평균보다 ${seconds}초 느려요`;
 };
 
 /**
- * 차이 막대의 두 채움 비율(0~1). 좋은 쪽이 항상 1 이고 나쁜 쪽이 그 비율이다.
- * 시간·오차 게임은 작을수록 좋아 best/average, 블록은 클수록 좋아 average/best.
+ * 내 평균 대 전체 평균 막대의 두 채움 비율(0~1). 좋은 쪽이 항상 1 이고 나쁜 쪽이 그 비율이다.
+ * 시간·오차 게임은 작을수록 좋고, 블록은 클수록 좋다.
  */
-export const recordBarRatio = (type: RecordGameType, best: number, average: number) => {
-  if (best === 0 && average === 0) return { best: 1, average: 1 };
-  return isFloorGame(type)
-    ? { best: 1, average: average / best }
-    : { best: best / average, average: 1 };
+export const globalBarRatio = (type: RecordGameType, average: number, globalAverage: number) => {
+  const [small, large] = [Math.min(average, globalAverage), Math.max(average, globalAverage)];
+  const ratio = large === 0 ? 1 : small / large;
+  const mineIsGood = isFloorGame(type) ? average === large : average === small;
+  return mineIsGood ? { mine: 1, global: ratio } : { mine: ratio, global: 1 };
 };
+
+/** 상위 % 배지 문구. */
+export const formatPercentile = (percentile: number) => `상위 ${percentile}%에요`;
 
 /** 당첨 확률 정수 %. 참여 0판이면 null. */
 export const winRatePercent = (winCount: number, playCount: number) =>

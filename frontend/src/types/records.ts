@@ -7,15 +7,21 @@ export type RecordGameType = Extract<
 >;
 
 /**
- * best·average 는 저장 단위 그대로다.
+ * best·average·globalAverage 는 저장 단위 그대로다.
  * RACING_GAME·SPEED_TOUCH 는 완주 ms, BLIND_TIMER 는 오차 ms, BLOCK_STACKING 은 층수.
- * 완주한 판이 없으면 둘 다 null 이다.
+ * 완주한 판이 없으면 best·average·percentile 이 null 이다.
  */
 export type GameRecord = {
   type: RecordGameType;
   playCount: number;
   best: number | null;
   average: number | null;
+  /** 전체 회원의 완주 기록 평균(판수 가중). 완주한 회원이 없으면 null */
+  globalAverage: number | null;
+  /** 상위 N% 정수(1~100). 내 완주 판이 없으면 null */
+  percentile: number | null;
+  /** 완주 기록이 1판 이상인 회원 수 */
+  memberCount: number;
 };
 
 export type MyRecordsResponse = {

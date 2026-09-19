@@ -1,8 +1,9 @@
 import {
+  formatGlobalDiff,
+  formatPercentile,
   formatRecord,
-  formatRecordDiff,
   formatWinRate,
-  recordBarRatio,
+  globalBarRatio,
   recordLabels,
   winRatePercent,
 } from './formatRecord';
@@ -18,33 +19,47 @@ describe('formatRecord', () => {
   });
 });
 
-describe('formatRecordDiff', () => {
+describe('formatGlobalDiff', () => {
   it.each([
-    ['RACING_GAME', 12340, 14020, '최고 기록이 평균보다 1.68초 빨라요'],
-    ['SPEED_TOUCH', 9000, 9500, '최고 기록이 평균보다 0.50초 빨라요'],
-    ['BLIND_TIMER', 120, 410, '최소 오차가 평균보다 0.29초 정확해요'],
-    ['BLOCK_STACKING', 14, 9, '최고 기록이 평균보다 5층 높아요'],
-  ] as const)('%s 의 최고 %p 와 평균 %p 차이를 %p 로 적는다', (type, best, avg, expected) => {
-    expect(formatRecordDiff(type, best, avg)).toBe(expected);
-  });
+    ['RACING_GAME', 14020, 15800, '전체 평균보다 1.78초 빨라요'],
+    ['RACING_GAME', 15800, 15280, '전체 평균보다 0.52초 느려요'],
+    ['SPEED_TOUCH', 9000, 9500, '전체 평균보다 0.50초 빨라요'],
+    ['BLIND_TIMER', 410, 520, '전체 평균보다 0.11초 정확해요'],
+    ['BLIND_TIMER', 520, 410, '전체 평균보다 오차가 0.11초 커요'],
+    ['BLOCK_STACKING', 9, 7, '전체 평균보다 2층 높아요'],
+    ['BLOCK_STACKING', 5, 7, '전체 평균보다 2층 낮아요'],
+  ] as const)(
+    '%s 의 내 평균 %p 와 전체 평균 %p 차이를 %p 로 적는다',
+    (type, avg, global, expected) => {
+      expect(formatGlobalDiff(type, avg, global)).toBe(expected);
+    }
+  );
 
-  it('최고와 평균이 같으면 null 이다', () => {
-    expect(formatRecordDiff('RACING_GAME', 12340, 12340)).toBeNull();
-    expect(formatRecordDiff('BLOCK_STACKING', 7, 7)).toBeNull();
+  it('내 평균과 전체 평균이 같으면 같다고 적는다', () => {
+    expect(formatGlobalDiff('RACING_GAME', 12340, 12340)).toBe('전체 평균과 같아요');
+    expect(formatGlobalDiff('BLOCK_STACKING', 7, 7)).toBe('전체 평균과 같아요');
   });
 });
 
-describe('recordBarRatio', () => {
-  it('시간 게임은 최고가 짧을수록 좋아 최고 막대가 평균 대비 비율이다', () => {
-    expect(recordBarRatio('RACING_GAME', 5000, 10000)).toEqual({ best: 0.5, average: 1 });
+describe('globalBarRatio', () => {
+  it('시간 게임은 짧은 쪽이 1 이다', () => {
+    expect(globalBarRatio('RACING_GAME', 5000, 10000)).toEqual({ mine: 1, global: 0.5 });
+    expect(globalBarRatio('BLIND_TIMER', 10000, 5000)).toEqual({ mine: 0.5, global: 1 });
   });
 
-  it('블록은 높을수록 좋아 평균 막대가 최고 대비 비율이다', () => {
-    expect(recordBarRatio('BLOCK_STACKING', 10, 5)).toEqual({ best: 1, average: 0.5 });
+  it('블록은 높은 쪽이 1 이다', () => {
+    expect(globalBarRatio('BLOCK_STACKING', 10, 5)).toEqual({ mine: 1, global: 0.5 });
+    expect(globalBarRatio('BLOCK_STACKING', 5, 10)).toEqual({ mine: 0.5, global: 1 });
   });
 
   it('둘 다 0 이면 0 으로 나누지 않고 꽉 채운다', () => {
-    expect(recordBarRatio('BLIND_TIMER', 0, 0)).toEqual({ best: 1, average: 1 });
+    expect(globalBarRatio('BLIND_TIMER', 0, 0)).toEqual({ mine: 1, global: 1 });
+  });
+});
+
+describe('formatPercentile', () => {
+  it('상위 % 문구를 만든다', () => {
+    expect(formatPercentile(23)).toBe('상위 23%에요');
   });
 });
 

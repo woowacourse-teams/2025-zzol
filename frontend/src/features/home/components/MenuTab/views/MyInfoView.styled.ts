@@ -332,7 +332,7 @@ export const TileValue = styled.span<{ $muted?: boolean }>`
   letter-spacing: -0.02em;
 `;
 
-/* 배경은 두지 않는다. recordBarRatio 가 한쪽을 항상 1 로 주어 막대가 꽉 찬다. */
+/* 배경은 두지 않는다. globalBarRatio 가 한쪽을 항상 1 로 주어 막대가 꽉 찬다. */
 export const DiffBar = styled.div`
   position: relative;
   height: 6px;
@@ -340,18 +340,36 @@ export const DiffBar = styled.div`
   overflow: hidden;
 `;
 
-export const DiffFill = styled.div<{ $ratio: number; $tone: 'best' | 'average' }>`
+export const DiffFill = styled.div<{ $ratio: number; $tone: 'mine' | 'global' }>`
   position: absolute;
   inset: 0 auto 0 0;
   width: ${({ $ratio }) => Math.min(100, Math.max(0, $ratio * 100))}%;
   border-radius: 999px;
   background: ${({ theme, $tone }) =>
-    $tone === 'best' ? theme.color.point[500] : theme.color.point[200]};
+    $tone === 'mine' ? theme.color.point[500] : theme.color.point[200]};
+`;
+
+export const DiffRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 `;
 
 export const DiffCaption = styled.span`
   ${({ theme }) => theme.typography.caption}
   color: ${({ theme }) => theme.color.gray[500]};
+`;
+
+export const PercentilePill = styled.span`
+  ${({ theme }) => theme.typography.caption}
+  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
+  color: ${({ theme }) => theme.color.point[500]};
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: ${({ theme }) => theme.color.point[50]};
+  white-space: nowrap;
+  flex-shrink: 0;
 `;
 
 export const ErrorText = styled.p`

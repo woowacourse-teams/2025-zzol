@@ -1,3 +1,8 @@
+import type {
+  Entry,
+  SeasonRankMessage as WsSeasonRankMessage,
+} from '@/apis/websocket/generated/wsContract';
+
 export type SeasonTier = 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND';
 
 export type SeasonLeaderboardRow = {
@@ -24,14 +29,6 @@ export type SeasonRankResponse = {
   totalMembers: number;
 };
 
-export type SeasonRankEntry = {
-  playerName: string;
-  totalPoints: number;
-  tier: SeasonTier;
-  seasonRank: number;
-};
+export type SeasonRankEntry = Entry;
 
-export type SeasonRankMessage = {
-  seasonKey: string;
-  entries: SeasonRankEntry[];
-};
+export type SeasonRankMessage = WsSeasonRankMessage;

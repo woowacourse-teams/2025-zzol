@@ -28,13 +28,19 @@ useWebSocketSubscription(`/topic/room/${joinCode}/gameState`, handler);
 ### useWebSocketSubscription 시그니처
 
 ```ts
-useWebSocketSubscription(
-  destination: string,
-  onData: (data: T) => void,
+useWebSocketSubscription<D extends WsSubscribePath>(
+  destination: WsSubscribeDestination<D>,  // BE 가 생성한 src/apis/websocket/generated/wsContract.ts 의 경로만 받는다
+  onData: (data: WsPayloadOf<D>) => void,  // payload 타입은 destination 에서 추론된다
   onError?: (error: Error) => void,
   enabled?: boolean   // 기본값 true — 조건부 구독에 useEffect 분기 대신 사용
 )
 ```
+
+destination 은 `` `/room/${joinCode}/round` `` 처럼 방 코드를 보간한 템플릿 리터럴로 넘긴다. 카탈로그에 없는 경로는 컴파일 오류가 난다. 타입 파라미터는 destination 하나뿐이라 `useWebSocketSubscription<T>(…)` 처럼 payload 타입을 명시하지 않는다. 콜백 파라미터에 타입을 적으려면 생성 타입이나 그 alias(`@/types/**`)를 쓴다.
+
+`src/apis/websocket/generated/` 의 세 파일은 손으로 고치지 않는다. BE 컨트랙트 테스트가 `wsContract.ts`(destination union·`WsPayloadOf`)와 `ws-openapi.json`(payload 스키마)을 쓰고, `npm run generate:ws` 가 그 JSON 에서 `wsOpenApi.d.ts` 를 만든다. payload 이름은 `wsContract.ts` 가 `components['schemas'][…]` 로 다시 내보내므로 import 경로는 `wsContract` 하나면 된다.
+
+개인 소켓 `useUserSocketSubscription` 은 envelope 를 벗기지 않는다. `onData` 가 `WebSocketSuccess<WsPayloadOf<D>>` 를 받으므로 `event.data.…` 로 읽는다.
 
 ### Provider 구독 패턴
 

@@ -4,17 +4,13 @@ import { BlockStackingGameState } from '@/types/miniGame/blockStackingGame';
 import { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 import { BlockStackingGameContext } from './BlockStackingGameContext';
 import { GAME_DURATION } from '@/features/miniGame/blockStackingGame/constants/blockStackingBalance';
+import type { BlockStackingStateResponse } from '@/apis/websocket/generated/wsContract';
 
 type BlockStackingRanking = { name: string; floor: number };
 
-type StateMessage = {
-  state: BlockStackingGameState;
-  endTimeEpochMs?: number | null;
-};
-
 const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
   const { joinCode } = useIdentifier();
-  const [gameState, setGameState] = useState<BlockStackingGameState>('DESCRIPTION');
+  const [gameState, setGameState] = useState<BlockStackingGameState>('READY');
   const [rankings, setRankings] = useState<BlockStackingRanking[]>([]);
   const [isLocalGameOver, setIsLocalGameOver] = useState(false);
   const [endTimeEpochMs, setEndTimeEpochMs] = useState<number | null>(null);
@@ -24,7 +20,7 @@ const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
 
   useWebSocketSubscription(
     `/room/${joinCode}/block-stacking/state`,
-    useCallback(({ state, endTimeEpochMs: ms }: StateMessage) => {
+    useCallback(({ state, endTimeEpochMs: ms }: BlockStackingStateResponse) => {
       setGameState(state);
       if (state === 'PLAYING') {
         setIsLocalGameOver(false);

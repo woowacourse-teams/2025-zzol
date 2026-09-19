@@ -205,7 +205,7 @@
     },
     {
       "path" : "/topic/room/{joinCode}/minigame",
-      "payloadType" : "WebSocketResponse<List<String>>",
+      "payloadType" : "WebSocketResponse<List<MiniGameType>>",
       "publishers" : [
         {
           "description" : "미니게임 목록 변경 브로드캐스트",
@@ -215,7 +215,9 @@
           }
         }
       ],
-      "referencedSchemas" : [ ]
+      "referencedSchemas" : [
+        "MiniGameType"
+      ]
     },
     {
       "path" : "/topic/room/{joinCode}/nunchi/stand",
@@ -808,6 +810,16 @@
     }
   ],
   "schemas" : {
+    "BlindTimerGameState" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [
+        "DESCRIPTION",
+        "PREPARE",
+        "PLAYING",
+        "DONE"
+      ]
+    },
     "BlindTimerPlayerProgress" : {
       "kind" : "record",
       "fields" : [
@@ -841,7 +853,7 @@
       "fields" : [
         {
           "name" : "state",
-          "type" : "String"
+          "type" : "BlindTimerGameState"
         },
         {
           "name" : "targetTimeMillis",
@@ -919,17 +931,30 @@
         },
         {
           "name" : "endTimeEpochMs",
-          "type" : "Long"
+          "type" : "Long?"
         }
       ],
       "values" : null
+    },
+    "CardGameState" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [
+        "READY",
+        "FIRST_LOADING",
+        "LOADING",
+        "PREPARE",
+        "PLAYING",
+        "SCORE_BOARD",
+        "DONE"
+      ]
     },
     "CardInfoMessage" : {
       "kind" : "record",
       "fields" : [
         {
           "name" : "cardType",
-          "type" : "String"
+          "type" : "CardType"
         },
         {
           "name" : "value",
@@ -941,14 +966,22 @@
         },
         {
           "name" : "playerName",
-          "type" : "String"
+          "type" : "String?"
         },
         {
           "name" : "colorIndex",
-          "type" : "Integer"
+          "type" : "Integer?"
         }
       ],
       "values" : null
+    },
+    "CardType" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [
+        "ADDITION",
+        "MULTIPLIER"
+      ]
     },
     "CommandType" : {
       "kind" : "enum",
@@ -1080,7 +1113,7 @@
         },
         {
           "name" : "colorIndex",
-          "type" : "Integer"
+          "type" : "Integer?"
         }
       ],
       "values" : null
@@ -1094,23 +1127,23 @@
         },
         {
           "name" : "poles",
-          "type" : "List<PoleInfo>"
+          "type" : "List<PoleInfo>?"
         },
         {
           "name" : "bottomRanks",
-          "type" : "Map<Integer, Integer>"
+          "type" : "Map<Integer, Integer>?"
         },
         {
           "name" : "endTimeEpochMs",
-          "type" : "Long"
+          "type" : "Long?"
         },
         {
           "name" : "rankings",
-          "type" : "Map<String, Integer>"
+          "type" : "Map<String, Integer>?"
         },
         {
           "name" : "animationDurationMs",
-          "type" : "Long"
+          "type" : "Long?"
         }
       ],
       "values" : null
@@ -1158,11 +1191,11 @@
       "fields" : [
         {
           "name" : "cardGameState",
-          "type" : "String"
+          "type" : "CardGameState"
         },
         {
           "name" : "currentRound",
-          "type" : "String"
+          "type" : "RoundLabel"
         },
         {
           "name" : "cardInfoMessages",
@@ -1231,39 +1264,39 @@
         },
         {
           "name" : "currentNumber",
-          "type" : "Integer"
+          "type" : "Integer?"
         },
         {
           "name" : "stood",
-          "type" : "List<String>"
+          "type" : "List<String>?"
         },
         {
           "name" : "number",
-          "type" : "Integer"
+          "type" : "Integer?"
         },
         {
           "name" : "collided",
-          "type" : "List<String>"
+          "type" : "List<String>?"
         },
         {
           "name" : "serverNowEpochMs",
-          "type" : "Long"
+          "type" : "Long?"
         },
         {
           "name" : "idleDeadlineEpochMs",
-          "type" : "Long"
+          "type" : "Long?"
         },
         {
           "name" : "hardCapEpochMs",
-          "type" : "Long"
+          "type" : "Long?"
         },
         {
           "name" : "resumeAtEpochMs",
-          "type" : "Long"
+          "type" : "Long?"
         },
         {
           "name" : "playStartEpochMs",
-          "type" : "Long"
+          "type" : "Long?"
         }
       ],
       "values" : null
@@ -1273,7 +1306,7 @@
       "fields" : [
         {
           "name" : "userId",
-          "type" : "Long"
+          "type" : "Long?"
         },
         {
           "name" : "playerName",
@@ -1333,7 +1366,7 @@
         },
         {
           "name" : "colorIndex",
-          "type" : "Integer"
+          "type" : "Integer?"
         }
       ],
       "values" : null
@@ -1351,7 +1384,7 @@
         },
         {
           "name" : "joinCode",
-          "type" : "String"
+          "type" : "String?"
         },
         {
           "name" : "joinable",
@@ -1378,7 +1411,7 @@
         },
         {
           "name" : "qrCodeUrl",
-          "type" : "String"
+          "type" : "String?"
         }
       ],
       "values" : null
@@ -1502,6 +1535,15 @@
       ],
       "values" : null
     },
+    "RoundLabel" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [
+        "READY",
+        "FIRST",
+        "SECOND"
+      ]
+    },
     "RunnerPosition" : {
       "kind" : "record",
       "fields" : [
@@ -1533,6 +1575,16 @@
         }
       ],
       "values" : null
+    },
+    "SpeedTouchGameState" : {
+      "kind" : "enum",
+      "fields" : null,
+      "values" : [
+        "DESCRIPTION",
+        "PREPARE",
+        "PLAYING",
+        "DONE"
+      ]
     },
     "SpeedTouchPlayerProgress" : {
       "kind" : "record",
@@ -1567,7 +1619,7 @@
       "fields" : [
         {
           "name" : "state",
-          "type" : "String"
+          "type" : "SpeedTouchGameState"
         }
       ],
       "values" : null

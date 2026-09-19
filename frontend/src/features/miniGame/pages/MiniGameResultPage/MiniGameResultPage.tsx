@@ -39,11 +39,6 @@ type PlayerScoreResponse = {
   scores: PlayerScore[];
 };
 
-type ShowRouletteResponse = {
-  joinCode: string;
-  roomState: 'ROULETTE_SHOW';
-};
-
 const SECONDS_FORMATTER = new Intl.NumberFormat('ko-KR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -75,14 +70,8 @@ const MiniGameResultPage = () => {
     navigate(`/room/${joinCode}/roulette/play`);
   }, [navigate, joinCode]);
 
-  useWebSocketSubscription<ShowRouletteResponse>(
-    `/room/${joinCode}/roulette`,
-    handleNavigateToRoulettePlayPage
-  );
-  useWebSocketSubscription<SeasonRankMessage>(
-    `/room/${joinCode}/settlement`,
-    handleSeasonRankUpdated
-  );
+  useWebSocketSubscription(`/room/${joinCode}/roulette`, handleNavigateToRoulettePlayPage);
+  useWebSocketSubscription(`/room/${joinCode}/settlement`, handleSeasonRankUpdated);
 
   const handleClickRouletteResultButton = () => {
     send(`/room/${joinCode}/show-roulette`);

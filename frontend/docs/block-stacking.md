@@ -19,10 +19,10 @@
 ## 게임 상태 머신
 
 ```text
-DESCRIPTION → PREPARE → PLAYING → DONE
+READY → PREPARE → PLAYING → DONE
 ```
 
-- **DESCRIPTION**: 게임 설명 슬라이드 (기존 GameIntroSlides 재사용)
+- **READY**: 게임 설명 슬라이드 (기존 GameIntroSlides 재사용). BE 가 보내는 초기 상태이고 FE 초기값도 같다
 - **PREPARE**: 카운트다운 오버레이 (기존 PrepareOverlay 재사용)
 - **PLAYING**: 게임 진행 중
 - **DONE**: 게임 오버 → result 페이지로 이동
@@ -107,7 +107,7 @@ type FallingPiece = {
 };
 
 // 게임의 단계 자체는 문자열 유니온으로 관리
-type BlockStackingGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
+type BlockStackingGameState = 'READY' | 'PREPARE' | 'PLAYING' | 'DONE'; // BE 생성 타입(wsContract.ts)의 alias
 
 // Context가 별도로 제공하는 게임 데이터
 type BlockStackingGameContextValue = {

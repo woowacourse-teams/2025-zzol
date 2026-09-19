@@ -51,7 +51,7 @@ const RoulettePlayPage = () => {
     [joinCode, navigate]
   );
 
-  useWebSocketSubscription<RouletteWinnerResponse>(`/room/${joinCode}/winner`, handleWinnerData);
+  useWebSocketSubscription(`/room/${joinCode}/winner`, handleWinnerData);
   useWebSocketSubscription(`/room/${joinCode}/round`, handleGameStart);
 
   const handleViewChange = () => {

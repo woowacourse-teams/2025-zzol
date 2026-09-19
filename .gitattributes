@@ -6,3 +6,4 @@ backend/docker/** text eol=lf
 # ws-catalog fixture 는 CI 가 재생성 결과와 커밋본을 git diff 로 대조한다.
 # 줄바꿈이 OS 마다 달라지면 내용이 같아도 diff 가 떠서 게이트가 깜빡인다.
 backend/app/src/test/resources/__fixtures__/** text eol=lf
+frontend/src/apis/websocket/generated/** text eol=lf

@@ -22,7 +22,8 @@
     "test:jest": "jest --passWithNoTests --config jest.config.cjs",
     "test:cypress": "cypress open",
     "chromatic": "chromatic --exit-zero-on-changes",
-    "generate:icons": "node scripts/generate-icons.mjs"
+    "generate:icons": "node scripts/generate-icons.mjs",
+    "generate:ws": "openapi-typescript src/apis/websocket/generated/ws-openapi.json -o src/apis/websocket/generated/wsOpenApi.d.ts"
   },
   "sideEffects": [
     "*.css",
@@ -69,6 +70,7 @@
     "html-webpack-plugin": "^5.6.8",
     "jest": "^30.5.1",
     "jest-environment-jsdom": "^30.5.1",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.6",
     "sharp": "^0.35.4",
     "storybook": "^10.5.0",

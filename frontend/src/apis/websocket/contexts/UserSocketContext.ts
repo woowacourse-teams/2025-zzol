@@ -1,10 +1,11 @@
 import { Client, StompSubscription } from '@stomp/stompjs';
 import { createContext, useContext } from 'react';
+import type { WsQueuePath } from '../generated/wsContract';
 
 export type UserSocketContextType = {
   isConnected: boolean;
   client: Client | null;
-  subscribe: <T>(destination: string, onData: (data: T) => void) => StompSubscription | null;
+  subscribe: <T>(destination: WsQueuePath, onData: (data: T) => void) => StompSubscription | null;
   reconnect: () => void;
 };
 

@@ -1,4 +1,4 @@
-export type BlockStackingGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
+export type { BlockStackingGameState } from '@/apis/websocket/generated/wsContract';
 
 export type StackedBlock = {
   x: number;

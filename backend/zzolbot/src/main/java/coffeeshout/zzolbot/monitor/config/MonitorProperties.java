@@ -51,7 +51,8 @@ public record MonitorProperties(
      * @param enabled 꺼져 있으면 섀도우 빈이 아예 만들어지지 않는다
      * @param baseUrl llama.cpp 서버 주소
      * @param connectTimeoutMillis 연결 타임아웃
-     * @param readTimeoutMillis 응답 타임아웃. CPU 추론이라 API보다 넉넉해야 한다
+     * @param readTimeoutMillis 응답 타임아웃. CPU 추론이라 API보다 넉넉해야 한다.
+     *                          배포 대상에서 잰 최장이 알림 한 건에 121초라 그 두 배로 둔다
      * @param maxTokens 생성 상한
      */
     public record ShadowProperties(
@@ -62,7 +63,7 @@ public record MonitorProperties(
             @Positive int maxTokens) {
 
         public static ShadowProperties disabled() {
-            return new ShadowProperties(false, "http://127.0.0.1:8081", 2000, 120000, 700);
+            return new ShadowProperties(false, "http://127.0.0.1:8081", 2000, 240000, 700);
         }
 
         public Duration connectTimeout() {

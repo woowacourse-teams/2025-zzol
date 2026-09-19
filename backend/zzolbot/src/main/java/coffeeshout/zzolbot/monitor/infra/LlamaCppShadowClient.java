@@ -68,7 +68,10 @@ public class LlamaCppShadowClient implements ShadowModelClient {
                                         "content",
                                         contract.buildPrompt(alert, logSamples, logEnvironment)))),
                 Map.entry("grammar", CitationGrammar.forLogSamples(logSamples)),
+                // 네이티브 키와 OpenAI 호환 키를 둘 다 보낸다. 지금 서버는 둘 다 먹지만
+                // 버전이 올라가면 한쪽만 남을 수 있고, 무시되면 생성이 안 끊긴다
                 Map.entry("n_predict", maxTokens),
+                Map.entry("max_tokens", maxTokens),
                 Map.entry("temperature", 0.0),
                 Map.entry("top_k", 0),
                 Map.entry("top_p", 1.0),

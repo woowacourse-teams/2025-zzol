@@ -21,7 +21,7 @@ zzol-bot:
       enabled: ${ZZOL_BOT_MONITOR_SHADOW_ENABLED:false}   # 기본 꺼짐. 꺼져 있으면 섀도우 빈이 만들어지지 않아 경로가 이전과 완전히 같다
       base-url: ${ZZOL_BOT_SHADOW_BASE_URL:http://127.0.0.1:8081}  # llama.cpp 서버
       connect-timeout-millis: 2000
-      read-timeout-millis: 120000                # CPU 추론이라 API보다 넉넉하게 준다. 넘겨도 운영 경로는 영향 없음(다른 스레드)
+      read-timeout-millis: 240000                # 배포 대상 ARM 2코어에서 잰 최장이 알림 한 건에 121초. 그 두 배로 둔다. 넘겨도 운영 경로는 영향 없음(다른 스레드)
       max-tokens: 700
   slack:
     webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성

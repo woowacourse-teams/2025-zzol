@@ -34,7 +34,7 @@ class ShadowAnomalyAnalyzerTest {
             new MonitorAnalysis("컨슈머 지연", "컨슈머가 밀렸다", List.of("스케일 아웃"), true);
 
     @Mock
-    private GeminiAnomalyAnalyzer authoritative;
+    private AnomalyAnalyzer authoritative;
 
     @Mock
     private ShadowAnalysisRecorder recorder;

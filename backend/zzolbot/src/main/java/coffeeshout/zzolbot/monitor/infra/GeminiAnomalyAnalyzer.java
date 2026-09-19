@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @Profile("!test")
+@Qualifier(AnomalyAnalyzer.AUTHORITATIVE)
 @RequiredArgsConstructor
 public class GeminiAnomalyAnalyzer implements AnomalyAnalyzer {
 

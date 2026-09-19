@@ -36,7 +36,7 @@ public class ShadowAnomalyAnalyzer implements AnomalyAnalyzer {
     private final ExecutorService executor;
 
     public ShadowAnomalyAnalyzer(
-            GeminiAnomalyAnalyzer authoritative,
+            @Qualifier(AnomalyAnalyzer.AUTHORITATIVE) AnomalyAnalyzer authoritative,
             ShadowAnalysisRecorder recorder,
             @Qualifier("virtualThreadExecutor") ExecutorService executor) {
         this.authoritative = authoritative;

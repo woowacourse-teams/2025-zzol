@@ -137,8 +137,8 @@ jobs:
           ORACLE_NAMESPACE=${{ secrets.ORACLE_NAMESPACE }}
           ORACLE_BUCKET=${{ secrets.ORACLE_BUCKET }}
           STDICT_API_KEY=${{ secrets.STDICT_API_KEY }}
-          ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
-          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_EMAILS=${{ secrets.ADMIN_EMAILS }}
+          ADMIN_GOOGLE_CLIENT_ID=${{ secrets.ADMIN_GOOGLE_CLIENT_ID }}
           GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
           GEMINI_ZZOL_BOT_API_KEY=${{ secrets.GEMINI_ZZOL_BOT_API_KEY }}
           SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}

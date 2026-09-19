@@ -10,11 +10,12 @@ export const formatRecord = (type: RecordGameType, value: number) =>
   isFloorGame(type) ? `${value}층` : `${millisToSeconds(value).toFixed(2)}초`;
 
 /**
- * 상위 % 를 "몇 %보다 나은가"로 뒤집은 문구. 상위 23% 면 77% 보다 낫다.
+ * 상위 % 를 "몇 %보다 나은가"로 뒤집은 문구. 상위 23% 면 77% 보다 낫다. 상위 %는 최고 기록 기준이라 앞에 밝힌다.
  * 1등·꼴찌는 0%·99% 대신 말로 적는다.
  */
 export const formatBeatShare = (type: RecordGameType, percentile: number, memberCount: number) => {
-  const head = `회원 ${memberCount}명 중`;
+  const basis = type === 'BLIND_TIMER' ? '최소 오차 기준' : '최고 기록 기준';
+  const head = `${basis}, 회원 ${memberCount}명 중`;
   if (percentile === 1) return `${head} 1등이에요`;
   if (percentile === 100) return `${head} 가장 낮아요`;
   const verb = type === 'BLIND_TIMER' ? '정확해요' : isFloorGame(type) ? '높이 쌓았어요' : '빨라요';

@@ -19,17 +19,19 @@ describe('formatRecord', () => {
 
 describe('formatBeatShare', () => {
   it.each([
-    ['RACING_GAME', 23, 41, '회원 41명 중 77%보다 빨라요'],
-    ['SPEED_TOUCH', 50, 10, '회원 10명 중 50%보다 빨라요'],
-    ['BLIND_TIMER', 23, 41, '회원 41명 중 77%보다 정확해요'],
-    ['BLOCK_STACKING', 23, 41, '회원 41명 중 77%보다 높이 쌓았어요'],
+    ['RACING_GAME', 23, 41, '최고 기록 기준, 회원 41명 중 77%보다 빨라요'],
+    ['SPEED_TOUCH', 50, 10, '최고 기록 기준, 회원 10명 중 50%보다 빨라요'],
+    ['BLIND_TIMER', 23, 41, '최소 오차 기준, 회원 41명 중 77%보다 정확해요'],
+    ['BLOCK_STACKING', 23, 41, '최고 기록 기준, 회원 41명 중 77%보다 높이 쌓았어요'],
   ] as const)('%s 상위 %p%% 를 회원 %p명 기준 %p 로 적는다', (type, pct, members, expected) => {
     expect(formatBeatShare(type, pct, members)).toBe(expected);
   });
 
   it('1등과 꼴찌는 % 대신 말로 적는다', () => {
-    expect(formatBeatShare('RACING_GAME', 1, 41)).toBe('회원 41명 중 1등이에요');
-    expect(formatBeatShare('BLOCK_STACKING', 100, 41)).toBe('회원 41명 중 가장 낮아요');
+    expect(formatBeatShare('RACING_GAME', 1, 41)).toBe('최고 기록 기준, 회원 41명 중 1등이에요');
+    expect(formatBeatShare('BLOCK_STACKING', 100, 41)).toBe(
+      '최고 기록 기준, 회원 41명 중 가장 낮아요'
+    );
   });
 });
 

@@ -39,6 +39,12 @@ describe('formatGlobalDiff', () => {
     expect(formatGlobalDiff('RACING_GAME', 12340, 12340)).toBe('전체 평균과 같아요');
     expect(formatGlobalDiff('BLOCK_STACKING', 7, 7)).toBe('전체 평균과 같아요');
   });
+
+  it('시간 차이가 5ms 미만이면 0.00초 대신 같다고 적는다', () => {
+    expect(formatGlobalDiff('RACING_GAME', 14020, 14023)).toBe('전체 평균과 같아요');
+    expect(formatGlobalDiff('BLIND_TIMER', 414, 410)).toBe('전체 평균과 같아요');
+    expect(formatGlobalDiff('RACING_GAME', 14020, 14025)).toBe('전체 평균보다 0.01초 빨라요');
+  });
 });
 
 describe('globalBarRatio', () => {

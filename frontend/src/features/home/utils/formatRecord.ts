@@ -21,7 +21,10 @@ export const formatGlobalDiff = (type: RecordGameType, average: number, globalAv
       ? `전체 평균보다 ${floors}층 높아요`
       : `전체 평균보다 ${floors}층 낮아요`;
   }
-  const seconds = millisToSeconds(Math.abs(average - globalAverage)).toFixed(2);
+  const diffSeconds = millisToSeconds(Math.abs(average - globalAverage));
+  // 5ms 미만 차이는 소수 둘째 자리에서 0이 되어 "0.00초 빨라요"가 나온다. 같다고 본다.
+  if (diffSeconds === 0) return '전체 평균과 같아요';
+  const seconds = diffSeconds.toFixed(2);
   const better = average < globalAverage;
   if (type === 'BLIND_TIMER') {
     return better

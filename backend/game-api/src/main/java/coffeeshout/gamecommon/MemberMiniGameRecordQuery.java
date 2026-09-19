@@ -27,7 +27,8 @@ public interface MemberMiniGameRecordQuery {
      * @param best          기록이 없으면 null
      * @param average       내 완주 기록 평균. 기록이 없으면 null
      * @param globalAverage 회원 전체의 완주 기록을 판수로 가중한 평균. 완주한 회원이 없으면 null
-     * @param percentile    내 평균이 회원별 평균 중 몇 등인지를 상위 %로 센 값. 동률은 같은 등수. 내 기록이 없으면 null
+     * @param percentile    내 최고 기록이 회원별 최고 기록 중 몇 등인지를 상위 %로 센 값. 랭킹 탭과 같은 기준이라 많이 할수록
+     *                      손해가 없다. 동률은 같은 등수. 내 기록이 없으면 null
      * @param memberCount   완주 기록이 있는 회원 수
      */
     record GameRecord(

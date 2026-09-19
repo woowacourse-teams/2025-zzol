@@ -23,9 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * <p>테스트 DB는 {@code ddl-auto: create}라 player FK가 없다. player_id는 임의 값이다.
  *
- * <p>전체 평균·회원 수·상위 %의 기대값은 픽스처에서 손으로 센다. 레이싱은 엠제이만 완주해 회원 1명, 블록 쌓기는 한스 20층이
- * 엠제이 평균 11.5층보다 높아 한스가 상위 50%, 초시계는 엠제이 120이 한스 300보다 빨라 엠제이가 상위 50%다. 게스트 행은
- * 어느 집계에도 들어가지 않는다.
+ * <p>전체 평균·회원 수·상위 %의 기대값은 픽스처에서 손으로 센다. 상위 %는 최고 기록끼리 비교한다. 레이싱은 엠제이만 완주해
+ * 회원 1명, 블록 쌓기는 한스 20층이 엠제이 최고 14층보다 높아 한스가 상위 50%, 초시계는 엠제이 120이 한스 300보다 빨라
+ * 엠제이가 상위 50%다. 게스트 행은 어느 집계에도 들어가지 않는다.
  */
 class MemberMiniGameRecordQueryAdapterIntegrationTest extends GameModuleIntegrationTest {
 
@@ -127,7 +127,24 @@ class MemberMiniGameRecordQueryAdapterIntegrationTest extends GameModuleIntegrat
     }
 
     @Test
-    void 평균이_같은_회원은_같은_상위_퍼센트를_받는다() {
+    void 상위_퍼센트는_평균이_아니라_최고_기록으로_센다() {
+        결과_저장(RACING_GAME, 한스, 10_000, 30_000);
+
+        final GameRecord 엠제이_기록 =
+                memberMiniGameRecordQuery.findByUserId(엠제이).games().get(0);
+        final GameRecord 한스_기록 =
+                memberMiniGameRecordQuery.findByUserId(한스).games().get(0);
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(엠제이_기록)
+                    .as("평균 13500은 한스 20000보다 좋지만 최고 12000이 한스 10000보다 느리다")
+                    .isEqualTo(new GameRecord(RACING_GAME, 2, 12_000L, 13_500L, 16_750L, 100, 2));
+            softly.assertThat(한스_기록).isEqualTo(new GameRecord(RACING_GAME, 2, 10_000L, 20_000L, 16_750L, 50, 2));
+        });
+    }
+
+    @Test
+    void 최고_기록이_같은_회원은_같은_상위_퍼센트를_받는다() {
         결과_저장(SPEED_TOUCH, 엠제이, 700);
         결과_저장(SPEED_TOUCH, 한스, 700);
 

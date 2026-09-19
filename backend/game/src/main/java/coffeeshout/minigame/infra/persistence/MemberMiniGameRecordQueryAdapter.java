@@ -66,7 +66,13 @@ public class MemberMiniGameRecordQueryAdapter implements MemberMiniGameRecordQue
 
         // ponytail: 회원 수만큼 행을 읽는다. 회원이 수만 명이 되면 윈도 함수로 바꾼다.
         final Map<MiniGameType, List<Tuple>> members = queryFactory
-                .select(RESULT.miniGameType, RESULT.userId, RESULT.count(), RESULT.score.sumLong(), RESULT.score.avg())
+                .select(
+                        RESULT.miniGameType,
+                        RESULT.userId,
+                        RESULT.count(),
+                        RESULT.score.sumLong(),
+                        RESULT.score.min(),
+                        RESULT.score.max())
                 .from(RESULT)
                 .where(RESULT.userId.isNotNull(), COMPLETED)
                 .groupBy(RESULT.miniGameType, RESULT.userId)
@@ -104,16 +110,20 @@ public class MemberMiniGameRecordQueryAdapter implements MemberMiniGameRecordQue
         if (mine == null) {
             return new GameRecord(type, 0, null, null, globalAverage, null, memberCount);
         }
-        final Long best = type == BLOCK_STACKING ? mine.get(RESULT.score.max()) : mine.get(RESULT.score.min());
-        final double myAverage = mine.get(RESULT.score.avg());
+        final long best = best(type, mine);
         return new GameRecord(
                 type,
                 mine.get(RESULT.count()).intValue(),
                 best,
-                Math.round(myAverage),
+                Math.round(mine.get(RESULT.score.avg())),
                 globalAverage,
-                percentile(type, myAverage, members),
+                percentile(type, best, members),
                 memberCount);
+    }
+
+    /** 최고 기록. 블록 쌓기는 층수가 높을수록, 나머지는 ms가 짧을수록 좋다. */
+    private static long best(MiniGameType type, Tuple row) {
+        return type == BLOCK_STACKING ? row.get(RESULT.score.max()) : row.get(RESULT.score.min());
     }
 
     /** 판수 가중 전체 평균. 회원 완주 기록이 없으면 null. */
@@ -130,12 +140,15 @@ public class MemberMiniGameRecordQueryAdapter implements MemberMiniGameRecordQue
         return Math.round((double) sum / count);
     }
 
-    /** 내 평균이 회원별 평균 중 몇 등인지를 상위 %로. 동률은 같은 등수라 나보다 엄격히 좋은 회원만 센다. */
-    private static int percentile(MiniGameType type, double myAverage, List<Tuple> members) {
+    /**
+     * 내 최고 기록이 회원별 최고 기록 중 몇 등인지를 상위 %로. 랭킹 탭과 같은 기준이고, 최고 기록은 많이 할수록 나빠지지 않는다.
+     * 동률은 같은 등수라 나보다 엄격히 좋은 회원만 센다.
+     */
+    private static int percentile(MiniGameType type, long myBest, List<Tuple> members) {
         long betterCount = 0;
         for (Tuple row : members) {
-            final double average = row.get(RESULT.score.avg());
-            final boolean better = type == BLOCK_STACKING ? average > myAverage : average < myAverage;
+            final long best = best(type, row);
+            final boolean better = type == BLOCK_STACKING ? best > myBest : best < myBest;
             if (better) {
                 betterCount++;
             }

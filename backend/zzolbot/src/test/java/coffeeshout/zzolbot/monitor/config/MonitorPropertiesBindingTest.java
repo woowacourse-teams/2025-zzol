@@ -68,6 +68,5 @@ class MonitorPropertiesBindingTest {
     }
 
     @EnableConfigurationProperties(MonitorProperties.class)
-    static class Holder {
-    }
+    static class Holder {}
 }

@@ -8,6 +8,7 @@ import static coffeeshout.minigame.domain.MiniGameType.SPEED_TOUCH;
 import coffeeshout.gamecommon.MemberMiniGameRecordQuery;
 import coffeeshout.minigame.domain.MiniGameType;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,11 @@ public class MemberMiniGameRecordQueryAdapter implements MemberMiniGameRecordQue
      */
     private static final long FINISH_SCORE_CEILING = 1_000_000L;
 
+    /** 네 게임의 완주 행만 고르는 조건. 회원 본인 집계와 전체 회원 집계가 같은 경계를 쓴다. */
+    private static final BooleanExpression COMPLETED = RESULT.miniGameType
+            .in(RECORD_TYPES)
+            .and(RESULT.miniGameType.eq(BLOCK_STACKING).or(RESULT.score.lt(FINISH_SCORE_CEILING)));
+
     private final JPAQueryFactory queryFactory;
 
     @Override
@@ -52,17 +58,24 @@ public class MemberMiniGameRecordQueryAdapter implements MemberMiniGameRecordQue
         final Map<MiniGameType, Tuple> completed = queryFactory
                 .select(RESULT.miniGameType, RESULT.count(), RESULT.score.min(), RESULT.score.max(), RESULT.score.avg())
                 .from(RESULT)
-                .where(
-                        RESULT.userId.eq(userId),
-                        RESULT.miniGameType.in(RECORD_TYPES),
-                        RESULT.miniGameType.eq(BLOCK_STACKING).or(RESULT.score.lt(FINISH_SCORE_CEILING)))
+                .where(RESULT.userId.eq(userId), COMPLETED)
                 .groupBy(RESULT.miniGameType)
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(row -> row.get(RESULT.miniGameType), Function.identity()));
 
+        // ponytail: 회원 수만큼 행을 읽는다. 회원이 수만 명이 되면 윈도 함수로 바꾼다.
+        final Map<MiniGameType, List<Tuple>> members = queryFactory
+                .select(RESULT.miniGameType, RESULT.userId, RESULT.count(), RESULT.score.sumLong(), RESULT.score.avg())
+                .from(RESULT)
+                .where(RESULT.userId.isNotNull(), COMPLETED)
+                .groupBy(RESULT.miniGameType, RESULT.userId)
+                .fetch()
+                .stream()
+                .collect(Collectors.groupingBy(row -> row.get(RESULT.miniGameType)));
+
         final List<GameRecord> games = RECORD_TYPES.stream()
-                .map(type -> toGameRecord(type, completed.get(type)))
+                .map(type -> toGameRecord(type, completed.get(type), members.getOrDefault(type, List.of())))
                 .toList();
         final int totalPlayCount =
                 playCounts.values().stream().mapToInt(Long::intValue).sum();
@@ -81,11 +94,52 @@ public class MemberMiniGameRecordQueryAdapter implements MemberMiniGameRecordQue
         return mostPlayed;
     }
 
-    private static GameRecord toGameRecord(MiniGameType type, Tuple row) {
-        if (row == null) {
-            return new GameRecord(type, 0, null, null);
+    /**
+     * @param mine    회원 본인의 완주 집계. 없으면 null
+     * @param members 완주 기록이 있는 회원별 집계 행. 전체 평균·회원 수·상위 %의 모집단
+     */
+    private static GameRecord toGameRecord(MiniGameType type, Tuple mine, List<Tuple> members) {
+        final Long globalAverage = globalAverage(members);
+        final int memberCount = members.size();
+        if (mine == null) {
+            return new GameRecord(type, 0, null, null, globalAverage, null, memberCount);
         }
-        final Long best = type == BLOCK_STACKING ? row.get(RESULT.score.max()) : row.get(RESULT.score.min());
-        return new GameRecord(type, row.get(RESULT.count()).intValue(), best, Math.round(row.get(RESULT.score.avg())));
+        final Long best = type == BLOCK_STACKING ? mine.get(RESULT.score.max()) : mine.get(RESULT.score.min());
+        final double myAverage = mine.get(RESULT.score.avg());
+        return new GameRecord(
+                type,
+                mine.get(RESULT.count()).intValue(),
+                best,
+                Math.round(myAverage),
+                globalAverage,
+                percentile(type, myAverage, members),
+                memberCount);
+    }
+
+    /** 판수 가중 전체 평균. 회원 완주 기록이 없으면 null. */
+    private static Long globalAverage(List<Tuple> members) {
+        if (members.isEmpty()) {
+            return null;
+        }
+        long sum = 0;
+        long count = 0;
+        for (Tuple row : members) {
+            sum += row.get(RESULT.score.sumLong());
+            count += row.get(RESULT.count());
+        }
+        return Math.round((double) sum / count);
+    }
+
+    /** 내 평균이 회원별 평균 중 몇 등인지를 상위 %로. 동률은 같은 등수라 나보다 엄격히 좋은 회원만 센다. */
+    private static int percentile(MiniGameType type, double myAverage, List<Tuple> members) {
+        long betterCount = 0;
+        for (Tuple row : members) {
+            final double average = row.get(RESULT.score.avg());
+            final boolean better = type == BLOCK_STACKING ? average > myAverage : average < myAverage;
+            if (better) {
+                betterCount++;
+            }
+        }
+        return (int) Math.ceil((betterCount + 1) * 100.0 / members.size());
     }
 }

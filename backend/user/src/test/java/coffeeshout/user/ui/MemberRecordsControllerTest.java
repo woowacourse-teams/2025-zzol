@@ -62,10 +62,10 @@ class MemberRecordsControllerTest extends UserModuleIntegrationTest {
                         31,
                         new MostPlayed(RACING_GAME, 12),
                         List.of(
-                                new GameRecord(RACING_GAME, 12, 12_340L, 14_020L),
-                                new GameRecord(BLOCK_STACKING, 7, 14L, 9L),
-                                new GameRecord(BLIND_TIMER, 3, 120L, 410L),
-                                new GameRecord(SPEED_TOUCH, 0, null, null))));
+                                new GameRecord(RACING_GAME, 12, 12_340L, 14_020L, 15_800L, 23, 41),
+                                new GameRecord(BLOCK_STACKING, 7, 14L, 9L, 8L, 40, 35),
+                                new GameRecord(BLIND_TIMER, 3, 120L, 410L, 390L, 60, 28),
+                                new GameRecord(SPEED_TOUCH, 0, null, null, 12_000L, null, 30))));
     }
 
     @Test
@@ -83,10 +83,16 @@ class MemberRecordsControllerTest extends UserModuleIntegrationTest {
                 .andExpect(jsonPath("$.games[0].playCount").value(12))
                 .andExpect(jsonPath("$.games[0].best").value(12_340))
                 .andExpect(jsonPath("$.games[0].average").value(14_020))
+                .andExpect(jsonPath("$.games[0].globalAverage").value(15_800))
+                .andExpect(jsonPath("$.games[0].percentile").value(23))
+                .andExpect(jsonPath("$.games[0].memberCount").value(41))
                 .andExpect(jsonPath("$.games[3].type").value("SPEED_TOUCH"))
                 .andExpect(jsonPath("$.games[3].playCount").value(0))
                 .andExpect(jsonPath("$.games[3].best").isEmpty())
                 .andExpect(jsonPath("$.games[3].average").isEmpty())
+                .andExpect(jsonPath("$.games[3].globalAverage").value(12_000))
+                .andExpect(jsonPath("$.games[3].percentile").isEmpty())
+                .andExpect(jsonPath("$.games[3].memberCount").value(30))
                 .andExpect(content().string(not(containsString("userId"))));
     }
 

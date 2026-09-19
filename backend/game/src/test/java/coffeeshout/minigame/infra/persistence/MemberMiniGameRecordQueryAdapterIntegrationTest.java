@@ -5,6 +5,7 @@ import static coffeeshout.minigame.domain.MiniGameType.BLOCK_STACKING;
 import static coffeeshout.minigame.domain.MiniGameType.CARD_GAME;
 import static coffeeshout.minigame.domain.MiniGameType.RACING_GAME;
 import static coffeeshout.minigame.domain.MiniGameType.SPEED_TOUCH;
+import static org.assertj.core.api.Assertions.tuple;
 
 import coffeeshout.GameModuleIntegrationTest;
 import coffeeshout.gamecommon.MemberMiniGameRecordQuery;
@@ -21,6 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
  * {@link MemberMiniGameRecordQueryAdapter}의 회원별 미니게임 집계를 실제 DB로 검증한다(#1794).
  *
  * <p>테스트 DB는 {@code ddl-auto: create}라 player FK가 없다. player_id는 임의 값이다.
+ *
+ * <p>전체 평균·회원 수·상위 %의 기대값은 픽스처에서 손으로 센다. 레이싱은 엠제이만 완주해 회원 1명, 블록 쌓기는 한스 20층이
+ * 엠제이 평균 11.5층보다 높아 한스가 상위 50%, 초시계는 엠제이 120이 한스 300보다 빨라 엠제이가 상위 50%다. 게스트 행은
+ * 어느 집계에도 들어가지 않는다.
  */
 class MemberMiniGameRecordQueryAdapterIntegrationTest extends GameModuleIntegrationTest {
 
@@ -49,6 +54,7 @@ class MemberMiniGameRecordQueryAdapterIntegrationTest extends GameModuleIntegrat
         결과_저장(CARD_GAME, 엠제이, 1, 2, 3);
 
         결과_저장(RACING_GAME, 한스, DNF, DNF);
+        결과_저장(BLOCK_STACKING, 한스, 20);
         결과_저장(BLIND_TIMER, 한스, 300);
 
         결과_저장(RACING_GAME, 게스트, 500);
@@ -69,10 +75,10 @@ class MemberMiniGameRecordQueryAdapterIntegrationTest extends GameModuleIntegrat
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(records.games())
                     .containsExactly(
-                            new GameRecord(RACING_GAME, 2, 12_000L, 13_500L),
-                            new GameRecord(BLOCK_STACKING, 2, 14L, 12L),
-                            new GameRecord(BLIND_TIMER, 1, 120L, 120L),
-                            new GameRecord(SPEED_TOUCH, 0, null, null));
+                            new GameRecord(RACING_GAME, 2, 12_000L, 13_500L, 13_500L, 100, 1),
+                            new GameRecord(BLOCK_STACKING, 2, 14L, 12L, 14L, 100, 2),
+                            new GameRecord(BLIND_TIMER, 1, 120L, 120L, 210L, 50, 2),
+                            new GameRecord(SPEED_TOUCH, 0, null, null, null, null, 0));
             softly.assertThat(records.totalPlayCount()).as("8종 전체, DNF 포함").isEqualTo(10);
             softly.assertThat(records.mostPlayed())
                     .as("레이싱과 카드게임이 3판 동률이면 enum 순서가 앞선 카드게임")
@@ -81,17 +87,18 @@ class MemberMiniGameRecordQueryAdapterIntegrationTest extends GameModuleIntegrat
     }
 
     @Test
-    void 전부_DNF인_게임은_판수만_전체에_들어가고_기록은_비어_있다() {
+    void 전부_DNF인_게임은_판수만_전체에_들어가고_내_기록과_상위_퍼센트는_비어_있다() {
         final MiniGameRecords records = memberMiniGameRecordQuery.findByUserId(한스);
 
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(records.games())
+                    .as("레이싱은 내 기록이 없어도 엠제이 기준 전체 평균과 회원 수는 온다")
                     .containsExactly(
-                            new GameRecord(RACING_GAME, 0, null, null),
-                            new GameRecord(BLOCK_STACKING, 0, null, null),
-                            new GameRecord(BLIND_TIMER, 1, 300L, 300L),
-                            new GameRecord(SPEED_TOUCH, 0, null, null));
-            softly.assertThat(records.totalPlayCount()).isEqualTo(3);
+                            new GameRecord(RACING_GAME, 0, null, null, 13_500L, null, 1),
+                            new GameRecord(BLOCK_STACKING, 1, 20L, 20L, 14L, 50, 2),
+                            new GameRecord(BLIND_TIMER, 1, 300L, 300L, 210L, 100, 2),
+                            new GameRecord(SPEED_TOUCH, 0, null, null, null, null, 0));
+            softly.assertThat(records.totalPlayCount()).isEqualTo(4);
             softly.assertThat(records.mostPlayed()).isEqualTo(new MostPlayed(RACING_GAME, 2));
         });
     }
@@ -110,7 +117,28 @@ class MemberMiniGameRecordQueryAdapterIntegrationTest extends GameModuleIntegrat
                 softly.assertThat(game.playCount()).isZero();
                 softly.assertThat(game.best()).isNull();
                 softly.assertThat(game.average()).isNull();
+                softly.assertThat(game.percentile()).isNull();
             });
+            softly.assertThat(records.games())
+                    .as("전체 평균과 회원 수는 다른 회원들 기록으로 채워진다")
+                    .extracting(GameRecord::globalAverage, GameRecord::memberCount)
+                    .containsExactly(tuple(13_500L, 1), tuple(14L, 2), tuple(210L, 2), tuple(null, 0));
+        });
+    }
+
+    @Test
+    void 평균이_같은_회원은_같은_상위_퍼센트를_받는다() {
+        결과_저장(SPEED_TOUCH, 엠제이, 700);
+        결과_저장(SPEED_TOUCH, 한스, 700);
+
+        final GameRecord 엠제이_기록 =
+                memberMiniGameRecordQuery.findByUserId(엠제이).games().get(3);
+        final GameRecord 한스_기록 =
+                memberMiniGameRecordQuery.findByUserId(한스).games().get(3);
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(엠제이_기록).isEqualTo(new GameRecord(SPEED_TOUCH, 1, 700L, 700L, 700L, 50, 2));
+            softly.assertThat(한스_기록).isEqualTo(new GameRecord(SPEED_TOUCH, 1, 700L, 700L, 700L, 50, 2));
         });
     }
 }

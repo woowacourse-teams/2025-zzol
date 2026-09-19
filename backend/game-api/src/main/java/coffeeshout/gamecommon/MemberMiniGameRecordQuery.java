@@ -20,6 +20,22 @@ public interface MemberMiniGameRecordQuery {
 
     record MostPlayed(MiniGameType type, int playCount) {}
 
-    /** 완주 기록만 센다. 값은 저장 단위(ms, 층) 그대로이고 기록이 없으면 best·average는 null이다. */
-    record GameRecord(MiniGameType type, int playCount, Long best, Long average) {}
+    /**
+     * 완주 기록만 센다. 값은 저장 단위(ms, 층) 그대로다. 전체 평균과 상위 %의 모집단은 완주 기록이 있는 로그인 회원이고
+     * 게스트 행은 들어가지 않는다.
+     *
+     * @param best          기록이 없으면 null
+     * @param average       내 완주 기록 평균. 기록이 없으면 null
+     * @param globalAverage 회원 전체의 완주 기록을 판수로 가중한 평균. 완주한 회원이 없으면 null
+     * @param percentile    내 평균이 회원별 평균 중 몇 등인지를 상위 %로 센 값. 동률은 같은 등수. 내 기록이 없으면 null
+     * @param memberCount   완주 기록이 있는 회원 수
+     */
+    record GameRecord(
+            MiniGameType type,
+            int playCount,
+            Long best,
+            Long average,
+            Long globalAverage,
+            Integer percentile,
+            int memberCount) {}
 }

@@ -26,10 +26,13 @@ class MonitorAnalysisContractTest {
         void 모델이_주장한_판정을_그대로_읽는다() {
             // 인용 검증에 걸려 강등될 주장도 주장으로 센다. 모델의 판별력을 보는 값이다
             final String json = """
-                    {"evidenceFound":true,"evidenceLine":"없는 로그"}""";
+                    {"evidenceFound":true,"evidenceLine":"없는 로그","suggestedActions":[]}""";
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(contract.claimedEvidence(json)).isTrue();
+                softly.assertThat(contract.read(json))
+                        .get()
+                        .extracting(MonitorAnalysisContract.ModelAnswer::claimedEvidence)
+                        .isEqualTo(true);
                 softly.assertThat(contract.parse(json, LOGS).evidenceFound()).isFalse();
             });
         }
@@ -37,17 +40,19 @@ class MonitorAnalysisContractTest {
         @Test
         void 인용_원문을_그대로_읽는다() {
             final String json = """
-                    {"evidenceFound":true,"evidenceLine":"2026-08-26 ERROR consumer lag 12000 group=g1"}""";
+                    {"evidenceFound":true,"evidenceLine":"2026-08-26 ERROR consumer lag 12000 group=g1",
+                     "suggestedActions":[]}""";
 
-            assertThat(contract.citedLine(json)).isEqualTo("2026-08-26 ERROR consumer lag 12000 group=g1");
+            assertThat(contract.read(json))
+                    .get()
+                    .extracting(MonitorAnalysisContract.ModelAnswer::evidenceLine)
+                    .isEqualTo("2026-08-26 ERROR consumer lag 12000 group=g1");
         }
 
         @Test
-        void 깨진_JSON이면_주장하지_않은_것으로_본다() {
-            SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(contract.claimedEvidence("{깨짐")).isFalse();
-                softly.assertThat(contract.citedLine("{깨짐")).isEmpty();
-            });
+        void 형식이_깨지면_빈_값을_돌려준다() {
+            // 호출부가 형식 실패와 "근거 없음이라고 올바르게 답한 것"을 구분할 수 있어야 한다
+            assertThat(contract.read("{깨짐")).isEmpty();
         }
     }
 

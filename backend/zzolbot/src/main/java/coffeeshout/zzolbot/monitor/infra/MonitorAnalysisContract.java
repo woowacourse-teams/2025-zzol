@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -90,45 +91,64 @@ public class MonitorAnalysisContract {
     }
 
     /**
-     * 모델 응답을 분석으로 옮긴다. 근거 판정은 모델 자체 판정(evidenceFound)에 인용 검증을 코드로
-     * 덧씌우고, 판정이 누락되면 보수적으로 false로 본다 — 근거 있다고 잘못 표시하는 쪽이 더 위험하다.
-     *
-     * <p>근거가 없으면 모델이 무엇을 보냈든 원인 가설뿐 아니라 요약까지 안전한 문구로 강제한다.
-     * 화면엔 "근거 없음"인데 요약은 "DB에 심각한 문제" 같은 단정으로 남는 구멍을 막는다(#1595 리뷰).
+     * 모델이 낸 원 응답. 인용 검증을 거치기 <b>전</b>의 값이라 모델의 판별력과 옮겨 적기 능력을
+     * 분리해서 볼 수 있다.
      */
-    public MonitorAnalysis parse(String json, List<String> logSamples) {
+    public record ModelAnswer(
+            String summary,
+            String rootCauseHypothesis,
+            List<String> suggestedActions,
+            boolean claimedEvidence,
+            String evidenceLine) {
+
+        public ModelAnswer {
+            suggestedActions = List.copyOf(suggestedActions);
+        }
+    }
+
+    /**
+     * 응답을 한 번만 파싱한다. <b>형식이 깨졌으면 빈 값</b>이라 호출부가 "형식 실패"와
+     * "근거 없음이라고 올바르게 답한 것"을 구분할 수 있다.
+     *
+     * <p>둘을 같은 모양으로 기록하면 형식 실패가 정답으로 집계된다. 비교 기록이 재려는 값이
+     * 바로 그것이라 구분이 필요하다.
+     */
+    public Optional<ModelAnswer> read(String json) {
         try {
             final JsonNode node = objectMapper.readTree(json);
             final List<String> actions = new ArrayList<>();
             node.path("suggestedActions").forEach(a -> actions.add(a.asText()));
-            final boolean claimed = node.path("evidenceFound").asBoolean(false);
-            final boolean grounded = claimed
-                    && CitationVerifier.citedInLogs(node.path("evidenceLine").asText(""), logSamples);
-            final String summary = grounded ? node.path("summary").asText("") : NO_EVIDENCE_SUMMARY;
-            final String hypothesis =
-                    grounded ? node.path("rootCauseHypothesis").asText("") : "";
-            return new MonitorAnalysis(summary, hypothesis, actions, grounded);
+            return Optional.of(new ModelAnswer(
+                    node.path("summary").asText(""),
+                    node.path("rootCauseHypothesis").asText(""),
+                    actions,
+                    node.path("evidenceFound").asBoolean(false),
+                    node.path("evidenceLine").asText("")));
         } catch (Exception e) {
             log.warn("[ZzolBot] 이상 분석 응답 파싱 실패. raw={}", json, e);
-            return MonitorAnalysis.failed();
+            return Optional.empty();
         }
     }
 
-    /** 모델이 주장한 원 판정. 인용 검증 전 값이라 모델의 판별력을 본다. */
-    public boolean claimedEvidence(String json) {
-        try {
-            return objectMapper.readTree(json).path("evidenceFound").asBoolean(false);
-        } catch (Exception e) {
-            return false;
-        }
+    /**
+     * 원 응답에 인용 검증을 덧씌워 최종 분석으로 만든다. 판정이 누락되면 보수적으로 false로 본다.
+     * 근거 있다고 잘못 표시하는 쪽이 더 위험하다.
+     *
+     * <p>근거가 없으면 모델이 무엇을 보냈든 원인 가설뿐 아니라 요약까지 안전한 문구로 강제한다.
+     * 화면엔 "근거 없음"인데 요약은 "DB에 심각한 문제" 같은 단정으로 남는 구멍을 막는다(#1595 리뷰).
+     */
+    public MonitorAnalysis ground(ModelAnswer answer, List<String> logSamples) {
+        final boolean grounded =
+                answer.claimedEvidence() && CitationVerifier.citedInLogs(answer.evidenceLine(), logSamples);
+        return new MonitorAnalysis(
+                grounded ? answer.summary() : NO_EVIDENCE_SUMMARY,
+                grounded ? answer.rootCauseHypothesis() : "",
+                answer.suggestedActions(),
+                grounded);
     }
 
-    /** 모델이 인용한 로그 줄 원문. 판정 전 값이다. */
-    public String citedLine(String json) {
-        try {
-            return objectMapper.readTree(json).path("evidenceLine").asText("");
-        } catch (Exception e) {
-            return "";
-        }
+    /** 읽고 검증까지 한 번에. 형식이 깨졌으면 실패 분석으로 떨어진다. */
+    public MonitorAnalysis parse(String json, List<String> logSamples) {
+        return read(json).map(answer -> ground(answer, logSamples)).orElseGet(MonitorAnalysis::failed);
     }
 }

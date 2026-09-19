@@ -111,6 +111,21 @@ class ShadowAnalysisRecorderTest {
     class 섀도우_실패가_운영을_막지_않는다 {
 
         @Test
+        void 응답_형식이_깨지면_실패로_기록한다() {
+            // 정상 행으로 남기면 "근거 없음이라고 올바르게 답한 것"과 섞여 정확도가 부풀려진다
+            given(shadowModel.generate(ALERT, LOGS, "prod")).willReturn("모델이 그냥 말했다");
+            recorder = recorderWith(Clock.fixed(NOW, ZoneOffset.UTC));
+
+            recorder.record(ALERT, LOGS, "prod", AUTHORITATIVE);
+
+            final MonitorShadowRunEntity saved = captureSaved();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(saved.isShadowFailed()).isTrue();
+                softly.assertThat(saved.getShadowError()).isEqualTo("자체 모델 응답 형식이 깨졌다");
+            });
+        }
+
+        @Test
         void 모델_호출이_실패하면_실패로_기록한다() {
             given(shadowModel.generate(any(), anyList(), anyString())).willThrow(new IllegalStateException("연결 거부"));
             recorder = recorderWith(Clock.fixed(NOW, ZoneOffset.UTC));

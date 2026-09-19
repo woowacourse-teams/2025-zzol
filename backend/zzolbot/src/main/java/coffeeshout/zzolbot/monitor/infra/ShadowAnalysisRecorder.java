@@ -3,6 +3,7 @@ package coffeeshout.zzolbot.monitor.infra;
 import coffeeshout.zzolbot.monitor.domain.CitationVerifier;
 import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
+import coffeeshout.zzolbot.monitor.infra.MonitorAnalysisContract.ModelAnswer;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -39,8 +40,12 @@ public class ShadowAnalysisRecorder {
         final Instant startedAt = clock.instant();
         try {
             final String raw = shadowModel.generate(alert, logSamples, logEnvironment);
-            final MonitorAnalysis analysis = contract.parse(raw, logSamples);
-            final String citedLine = contract.citedLine(raw);
+            // 형식이 깨진 응답을 정상으로 기록하면 "근거 없음이라고 올바르게 답한 것"과 섞인다.
+            // 권위도 근거 없음인 알림에서 일치로 집계돼 자체 모델 정확도가 부풀려진다
+            final ModelAnswer answer =
+                    contract.read(raw).orElseThrow(() -> new IllegalStateException("자체 모델 응답 형식이 깨졌다"));
+            final MonitorAnalysis analysis = contract.ground(answer, logSamples);
+            final String citedLine = answer.evidenceLine();
             repository.save(MonitorShadowRunEntity.compared(
                     startedAt,
                     alert.fingerprint(),
@@ -49,7 +54,7 @@ public class ShadowAnalysisRecorder {
                     authoritative.evidenceFound(),
                     authoritative.summary(),
                     analysis.evidenceFound(),
-                    contract.claimedEvidence(raw),
+                    answer.claimedEvidence(),
                     analysis.summary(),
                     analysis.rootCauseHypothesis(),
                     citedLine,

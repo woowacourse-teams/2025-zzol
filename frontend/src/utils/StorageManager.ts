@@ -7,8 +7,6 @@ export const STORAGE_KEYS = {
   PLAYER_TYPE: 'zzol-player-type',
   RECENT_NICKNAMES: 'zzol-recent-nicknames',
   LAST_JOIN_CODE: 'zzol-last-join-code',
-  WIN_COUNT: 'zzol-win-count',
-  NON_WIN_STREAK: 'zzol-non-win-streak',
   ACCESS_TOKEN: 'zzol-access-token',
   REFRESH_TOKEN: 'zzol-refresh-token',
   TEMP_TOKEN: 'zzol-temp-token',

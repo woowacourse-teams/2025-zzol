@@ -25,12 +25,9 @@ public record MonitorProperties(
         }
     }
 
-    /**
-     * 섀도우를 쓰지 않는 구성. 설정에 블록이 없을 때와 같은 상태다.
-     */
-    public MonitorProperties(boolean enabled, int errorLogWindowMinutes, int enrichCooldownMinutes) {
-        this(enabled, errorLogWindowMinutes, enrichCooldownMinutes, ShadowProperties.disabled());
-    }
+    // 생성자를 하나 더 두면 안 된다. Spring Boot는 비-private 생성자가 정확히 하나일 때만
+    // 바인딩 생성자를 추론하고, 둘이 되는 순간 JavaBean 바인딩으로 떨어져 record에 기본
+    // 생성자가 없다는 이유로 컨텍스트가 뜨지 않는다. 테스트 편의 생성자를 넣었다가 실제로 겪었다.
 
     /**
      * ERROR 로그 샘플 조회 윈도우.

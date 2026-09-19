@@ -45,6 +45,27 @@ React Router v7, 페이지는 모두 lazy-load. 주요 라우트 구조:
 - `useWebSocketReconnection` — 구독 레지스트리 기반 자동 복구
 - `useStompSessionWatcher` — 세션 상태 추적
 
+### 계약 타입 (`src/apis/websocket/generated/`)
+
+destination 과 payload 타입은 손으로 쓰지 않고 BE 가 생성한다. 세 파일이 있고 모두 커밋한다.
+
+| 파일 | 만드는 쪽 | 담는 것 |
+| --- | --- | --- |
+| `wsContract.ts` | BE `WsCatalogContractTest` | destination union(`WsSubscribePath`·`WsSendPath`), destination 에서 payload 를 찾는 `WsPayloadOf<D>`, 동치 검사 `WsSubscribeDestination<D>`·`WsSendDestination<D>`, payload 이름 alias |
+| `ws-openapi.json` | BE `WsCatalogContractTest` | payload record 의 OpenAPI 스키마. `@Nullable` 필드만 `required` 에서 빠지고 `nullable` 이다 |
+| `wsOpenApi.d.ts` | `npm run generate:ws` (openapi-typescript) | 위 JSON 에서 만든 TS 타입. `wsContract.ts` 가 이름을 다시 내보내므로 직접 import 하지 않는다 |
+
+`useWebSocketSubscription(destination, onData)` 의 파라미터 타입이 이 파일을 받는다. 카탈로그에 없는 경로는 `` `ws 카탈로그에 없는 destination: …` `` 오류로, 어긋난 payload 필드는 그 필드를 쓰는 줄의 오류로 나온다. `src/types/**` 의 도메인 타입은 생성 타입의 alias 다.
+
+BE 계약이 바뀌면 BE PR 이 세 파일을 함께 갱신해 온다. 낡은 생성물은 CI 가 막는다(backend-ci 는 `wsContract.ts`·`ws-openapi.json`, frontend-ci 는 `wsOpenApi.d.ts`). 로컬에서 BE 를 고쳤을 때는 아래 두 명령으로 갱신하고, pre-push 훅이 같은 일을 이어 돌린다.
+
+```bash
+backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*'
+npm run generate:ws
+```
+
+결정 배경은 [ADR](adr/20260915-ws-contract-generated-types.md)에 있다.
+
 ## REST API 레이어 (`src/apis/rest/`)
 
 fetch를 래핑한 커스텀 훅:

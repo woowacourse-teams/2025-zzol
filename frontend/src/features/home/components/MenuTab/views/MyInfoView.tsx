@@ -2,15 +2,13 @@ import Skeleton from '@/components/@common/Skeleton/Skeleton';
 import useModal from '@/components/@common/Modal/useModal';
 import { useAuth } from '@/features/auth/contexts/AuthContext';
 import DeleteAccountSheet from '@/features/auth/components/DeleteAccountSheet/DeleteAccountSheet';
+import { useCountDown } from '@/features/home/hooks/useCountDown';
 import { useMyRecords } from '@/features/home/hooks/useMyRecords';
 import { useMySeasonRank } from '@/features/home/hooks/useSeasonRanking';
 import {
-  RECORD_HINT,
-  formatGlobalDiff,
-  formatPercentile,
+  formatBeatShare,
   formatRecord,
   formatWinRate,
-  globalBarRatio,
   recordLabels,
   winRatePercent,
 } from '@/features/home/utils/formatRecord';
@@ -19,19 +17,23 @@ import { MINI_GAME_ICON_MAP, MINI_GAME_NAME_MAP } from '@/types/miniGame/common'
 import type { GameRecord } from '@/types/records';
 import * as S from './MyInfoView.styled';
 
+const PercentileHeadline = ({ percentile }: { percentile: number }) => {
+  const value = useCountDown(percentile);
+  return (
+    <S.Headline aria-label={`상위 ${percentile}%`}>
+      <S.HeadlinePrefix>상위</S.HeadlinePrefix>
+      <S.HeadlineNumber>{value}</S.HeadlineNumber>
+      <S.HeadlineUnit>%</S.HeadlineUnit>
+    </S.Headline>
+  );
+};
+
 const GameRecordCard = ({ record }: { record: GameRecord }) => {
   const { type, playCount, best, average, globalAverage, percentile, memberCount } = record;
   const empty = best === null || average === null;
   const labels = recordLabels(type);
-  // 비교 대상이 나뿐이면 전체 평균이 곧 내 평균이라 막대·배지를 감춘다
-  const comparable = !empty && globalAverage !== null && memberCount >= 2;
-  const ratio = comparable ? globalBarRatio(type, average, globalAverage) : null;
-  const fills = ratio
-    ? ([
-        { tone: 'mine', ratio: ratio.mine },
-        { tone: 'global', ratio: ratio.global },
-      ] as const)
-    : [];
+  // 비교 대상이 나뿐이면 전체 평균이 곧 내 평균이라 헤드라인·막대를 감춘다
+  const comparable = !empty && percentile !== null && memberCount >= 2;
 
   return (
     <S.GameCard $empty={empty}>
@@ -41,13 +43,23 @@ const GameRecordCard = ({ record }: { record: GameRecord }) => {
         </S.IconTile>
         <S.GameInfo>
           <S.GameName>{MINI_GAME_NAME_MAP[type]}</S.GameName>
-          <S.Caption>{empty ? '아직 기록이 없어요' : RECORD_HINT[type]}</S.Caption>
+          <S.Caption>{empty ? '아직 기록이 없어요' : `완주 ${playCount}회`}</S.Caption>
         </S.GameInfo>
-        <S.Chip $muted={empty}>{playCount}회</S.Chip>
+        {comparable && <PercentileHeadline percentile={percentile} />}
       </S.GameHeader>
 
       {!empty && (
         <>
+          {comparable ? (
+            <>
+              <S.Bar>
+                <S.BarFill $ratio={(100 - percentile) / 100} />
+              </S.Bar>
+              <S.BarCaption>{formatBeatShare(type, percentile, memberCount)}</S.BarCaption>
+            </>
+          ) : (
+            <S.BarCaption>아직 비교할 회원이 없어요</S.BarCaption>
+          )}
           <S.TileGrid>
             <S.Tile>
               <S.Caption>{labels.best}</S.Caption>
@@ -55,29 +67,15 @@ const GameRecordCard = ({ record }: { record: GameRecord }) => {
             </S.Tile>
             <S.Tile>
               <S.Caption>{labels.average}</S.Caption>
-              <S.TileValue $muted>{formatRecord(type, average)}</S.TileValue>
+              <S.TileValue $tone="mine">{formatRecord(type, average)}</S.TileValue>
+            </S.Tile>
+            <S.Tile>
+              <S.Caption>{labels.global}</S.Caption>
+              <S.TileValue $tone="global">
+                {globalAverage === null ? '-' : formatRecord(type, globalAverage)}
+              </S.TileValue>
             </S.Tile>
           </S.TileGrid>
-          {comparable ? (
-            <>
-              <S.DiffBar>
-                {/* 긴 막대를 먼저 그려 짧은 막대가 위에 보이게 한다 */}
-                {[...fills]
-                  .sort((a, b) => b.ratio - a.ratio)
-                  .map(({ tone, ratio: r }) => (
-                    <S.DiffFill key={tone} $tone={tone} $ratio={r} />
-                  ))}
-              </S.DiffBar>
-              <S.DiffRow>
-                <S.DiffCaption>{formatGlobalDiff(type, average, globalAverage)}</S.DiffCaption>
-                {percentile !== null && (
-                  <S.PercentilePill>{formatPercentile(percentile)}</S.PercentilePill>
-                )}
-              </S.DiffRow>
-            </>
-          ) : (
-            <S.DiffCaption>아직 비교할 회원이 없어요</S.DiffCaption>
-          )}
         </>
       )}
     </S.GameCard>

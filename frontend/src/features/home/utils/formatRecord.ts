@@ -10,43 +10,16 @@ export const formatRecord = (type: RecordGameType, value: number) =>
   isFloorGame(type) ? `${value}층` : `${millisToSeconds(value).toFixed(2)}초`;
 
 /**
- * 내 평균과 전체 평균의 차이 문구.
- * 시간 게임은 빨라요·느려요, 초시계는 정확해요·오차가 커요, 블록은 높아요·낮아요.
+ * 상위 % 를 "몇 %보다 나은가"로 뒤집은 문구. 상위 23% 면 77% 보다 낫다.
+ * 1등·꼴찌는 0%·99% 대신 말로 적는다.
  */
-export const formatGlobalDiff = (type: RecordGameType, average: number, globalAverage: number) => {
-  if (average === globalAverage) return '전체 평균과 같아요';
-  if (isFloorGame(type)) {
-    const floors = Math.abs(average - globalAverage);
-    return average > globalAverage
-      ? `전체 평균보다 ${floors}층 높아요`
-      : `전체 평균보다 ${floors}층 낮아요`;
-  }
-  const diffSeconds = millisToSeconds(Math.abs(average - globalAverage));
-  // 5ms 미만 차이는 소수 둘째 자리에서 0이 되어 "0.00초 빨라요"가 나온다. 같다고 본다.
-  if (diffSeconds === 0) return '전체 평균과 같아요';
-  const seconds = diffSeconds.toFixed(2);
-  const better = average < globalAverage;
-  if (type === 'BLIND_TIMER') {
-    return better
-      ? `전체 평균보다 ${seconds}초 정확해요`
-      : `전체 평균보다 오차가 ${seconds}초 커요`;
-  }
-  return better ? `전체 평균보다 ${seconds}초 빨라요` : `전체 평균보다 ${seconds}초 느려요`;
+export const formatBeatShare = (type: RecordGameType, percentile: number, memberCount: number) => {
+  const head = `회원 ${memberCount}명 중`;
+  if (percentile === 1) return `${head} 1등이에요`;
+  if (percentile === 100) return `${head} 가장 낮아요`;
+  const verb = type === 'BLIND_TIMER' ? '정확해요' : isFloorGame(type) ? '높이 쌓았어요' : '빨라요';
+  return `${head} ${100 - percentile}%보다 ${verb}`;
 };
-
-/**
- * 내 평균 대 전체 평균 막대의 두 채움 비율(0~1). 좋은 쪽이 항상 1 이고 나쁜 쪽이 그 비율이다.
- * 시간·오차 게임은 작을수록 좋고, 블록은 클수록 좋다.
- */
-export const globalBarRatio = (type: RecordGameType, average: number, globalAverage: number) => {
-  const [small, large] = [Math.min(average, globalAverage), Math.max(average, globalAverage)];
-  const ratio = large === 0 ? 1 : small / large;
-  const mineIsGood = isFloorGame(type) ? average === large : average === small;
-  return mineIsGood ? { mine: 1, global: ratio } : { mine: ratio, global: 1 };
-};
-
-/** 상위 % 배지 문구. */
-export const formatPercentile = (percentile: number) => `상위 ${percentile}%에요`;
 
 /** 당첨 확률 정수 %. 참여 0판이면 null. */
 export const winRatePercent = (winCount: number, playCount: number) =>
@@ -58,14 +31,7 @@ export const formatWinRate = (winCount: number, playCount: number) => {
   return percent === null ? '-' : `${percent}%`;
 };
 
-export const RECORD_HINT: Record<RecordGameType, string> = {
-  RACING_GAME: '완주 시간이 짧을수록 좋아요',
-  BLOCK_STACKING: '높이 쌓을수록 좋아요',
-  BLIND_TIMER: '오차가 작을수록 좋아요',
-  SPEED_TOUCH: '빠르게 누를수록 좋아요',
-};
-
 export const recordLabels = (type: RecordGameType) =>
   type === 'BLIND_TIMER'
-    ? { best: '최소 오차', average: '평균 오차' }
-    : { best: '최고 기록', average: '평균 기록' };
+    ? { best: '최소 오차', average: '내 평균 오차', global: '전체 평균 오차' }
+    : { best: '최고 기록', average: '내 평균', global: '전체 평균' };

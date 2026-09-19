@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { css } from '@emotion/react';
+import { css, keyframes } from '@emotion/react';
 import type { Theme } from '@emotion/react';
 
 const card = ({ theme }: { theme: Theme }) => css`
@@ -269,10 +269,10 @@ export const SectionTitle = styled.h4`
   margin: 0;
 `;
 
-export const Chip = styled.span<{ $muted?: boolean }>`
+export const Chip = styled.span`
   ${({ theme }) => theme.typography.caption}
   font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
-  color: ${({ theme, $muted }) => ($muted ? theme.color.gray[400] : theme.color.gray[500])};
+  color: ${({ theme }) => theme.color.gray[500]};
   padding: 3px 10px;
   border-radius: 20px;
   background: ${({ theme }) => theme.color.gray[100]};
@@ -309,9 +309,66 @@ export const GameName = styled.span`
   color: ${({ theme }) => theme.color.gray[900]};
 `;
 
+export const Headline = styled.span`
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  flex-shrink: 0;
+`;
+
+export const HeadlinePrefix = styled.span`
+  ${({ theme }) => theme.typography.h4}
+  color: ${({ theme }) => theme.color.gray[500]};
+  margin-right: 2px;
+`;
+
+export const HeadlineNumber = styled.span`
+  ${({ theme }) => theme.typography.h1}
+  color: ${({ theme }) => theme.color.point[500]};
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+`;
+
+export const HeadlineUnit = styled.span`
+  ${({ theme }) => theme.typography.h4}
+  font-weight: ${({ theme }) => theme.typography.h1.fontWeight};
+  color: ${({ theme }) => theme.color.point[500]};
+`;
+
+export const Bar = styled.div`
+  height: 6px;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.color.gray[100]};
+  overflow: hidden;
+`;
+
+/* to 를 비우면 요소의 계산된 width 로 끝난다 */
+const grow = keyframes`
+  from { width: 0; }
+`;
+
+export const BarFill = styled.div<{ $ratio: number }>`
+  height: 100%;
+  width: ${({ $ratio }) => Math.min(100, Math.max(0, $ratio * 100))}%;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.color.point[500]};
+  animation: ${grow} 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+export const BarCaption = styled.span`
+  ${({ theme }) => theme.typography.caption}
+  color: ${({ theme }) => theme.color.gray[500]};
+  margin-top: -6px;
+`;
+
 export const TileGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 `;
 
@@ -319,57 +376,25 @@ export const Tile = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 12px 14px;
+  padding: 12px;
   border-radius: 12px;
   background: ${({ theme }) => theme.color.gray[50]};
   min-width: 0;
 `;
 
-export const TileValue = styled.span<{ $muted?: boolean }>`
-  ${({ theme }) => theme.typography.h3}
+const tileValueColor = (theme: Theme, tone?: 'mine' | 'global') => {
+  if (tone === 'mine') return theme.color.gray[600];
+  if (tone === 'global') return theme.color.gray[400];
+  return theme.color.gray[900];
+};
+
+/* 세 칸이 320px 폭에도 들어가야 해서 h3 대신 h4 */
+export const TileValue = styled.span<{ $tone?: 'mine' | 'global' }>`
+  ${({ theme }) => theme.typography.h4}
   font-weight: ${({ theme }) => theme.typography.h1.fontWeight};
-  color: ${({ theme, $muted }) => ($muted ? theme.color.gray[600] : theme.color.gray[900])};
+  color: ${({ theme, $tone }) => tileValueColor(theme, $tone)};
   letter-spacing: -0.02em;
-`;
-
-/* 배경은 두지 않는다. globalBarRatio 가 한쪽을 항상 1 로 주어 막대가 꽉 찬다. */
-export const DiffBar = styled.div`
-  position: relative;
-  height: 6px;
-  border-radius: 999px;
-  overflow: hidden;
-`;
-
-export const DiffFill = styled.div<{ $ratio: number; $tone: 'mine' | 'global' }>`
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: ${({ $ratio }) => Math.min(100, Math.max(0, $ratio * 100))}%;
-  border-radius: 999px;
-  background: ${({ theme, $tone }) =>
-    $tone === 'mine' ? theme.color.point[500] : theme.color.point[200]};
-`;
-
-export const DiffRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-`;
-
-export const DiffCaption = styled.span`
-  ${({ theme }) => theme.typography.caption}
-  color: ${({ theme }) => theme.color.gray[500]};
-`;
-
-export const PercentilePill = styled.span`
-  ${({ theme }) => theme.typography.caption}
-  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
-  color: ${({ theme }) => theme.color.point[500]};
-  padding: 3px 10px;
-  border-radius: 20px;
-  background: ${({ theme }) => theme.color.point[50]};
   white-space: nowrap;
-  flex-shrink: 0;
 `;
 
 export const ErrorText = styled.p`

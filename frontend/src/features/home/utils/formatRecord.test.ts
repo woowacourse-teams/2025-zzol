@@ -1,9 +1,7 @@
 import {
-  formatGlobalDiff,
-  formatPercentile,
+  formatBeatShare,
   formatRecord,
   formatWinRate,
-  globalBarRatio,
   recordLabels,
   winRatePercent,
 } from './formatRecord';
@@ -19,53 +17,19 @@ describe('formatRecord', () => {
   });
 });
 
-describe('formatGlobalDiff', () => {
+describe('formatBeatShare', () => {
   it.each([
-    ['RACING_GAME', 14020, 15800, '전체 평균보다 1.78초 빨라요'],
-    ['RACING_GAME', 15800, 15280, '전체 평균보다 0.52초 느려요'],
-    ['SPEED_TOUCH', 9000, 9500, '전체 평균보다 0.50초 빨라요'],
-    ['BLIND_TIMER', 410, 520, '전체 평균보다 0.11초 정확해요'],
-    ['BLIND_TIMER', 520, 410, '전체 평균보다 오차가 0.11초 커요'],
-    ['BLOCK_STACKING', 9, 7, '전체 평균보다 2층 높아요'],
-    ['BLOCK_STACKING', 5, 7, '전체 평균보다 2층 낮아요'],
-  ] as const)(
-    '%s 의 내 평균 %p 와 전체 평균 %p 차이를 %p 로 적는다',
-    (type, avg, global, expected) => {
-      expect(formatGlobalDiff(type, avg, global)).toBe(expected);
-    }
-  );
-
-  it('내 평균과 전체 평균이 같으면 같다고 적는다', () => {
-    expect(formatGlobalDiff('RACING_GAME', 12340, 12340)).toBe('전체 평균과 같아요');
-    expect(formatGlobalDiff('BLOCK_STACKING', 7, 7)).toBe('전체 평균과 같아요');
+    ['RACING_GAME', 23, 41, '회원 41명 중 77%보다 빨라요'],
+    ['SPEED_TOUCH', 50, 10, '회원 10명 중 50%보다 빨라요'],
+    ['BLIND_TIMER', 23, 41, '회원 41명 중 77%보다 정확해요'],
+    ['BLOCK_STACKING', 23, 41, '회원 41명 중 77%보다 높이 쌓았어요'],
+  ] as const)('%s 상위 %p%% 를 회원 %p명 기준 %p 로 적는다', (type, pct, members, expected) => {
+    expect(formatBeatShare(type, pct, members)).toBe(expected);
   });
 
-  it('시간 차이가 5ms 미만이면 0.00초 대신 같다고 적는다', () => {
-    expect(formatGlobalDiff('RACING_GAME', 14020, 14023)).toBe('전체 평균과 같아요');
-    expect(formatGlobalDiff('BLIND_TIMER', 414, 410)).toBe('전체 평균과 같아요');
-    expect(formatGlobalDiff('RACING_GAME', 14020, 14025)).toBe('전체 평균보다 0.01초 빨라요');
-  });
-});
-
-describe('globalBarRatio', () => {
-  it('시간 게임은 짧은 쪽이 1 이다', () => {
-    expect(globalBarRatio('RACING_GAME', 5000, 10000)).toEqual({ mine: 1, global: 0.5 });
-    expect(globalBarRatio('BLIND_TIMER', 10000, 5000)).toEqual({ mine: 0.5, global: 1 });
-  });
-
-  it('블록은 높은 쪽이 1 이다', () => {
-    expect(globalBarRatio('BLOCK_STACKING', 10, 5)).toEqual({ mine: 1, global: 0.5 });
-    expect(globalBarRatio('BLOCK_STACKING', 5, 10)).toEqual({ mine: 0.5, global: 1 });
-  });
-
-  it('둘 다 0 이면 0 으로 나누지 않고 꽉 채운다', () => {
-    expect(globalBarRatio('BLIND_TIMER', 0, 0)).toEqual({ mine: 1, global: 1 });
-  });
-});
-
-describe('formatPercentile', () => {
-  it('상위 % 문구를 만든다', () => {
-    expect(formatPercentile(23)).toBe('상위 23%에요');
+  it('1등과 꼴찌는 % 대신 말로 적는다', () => {
+    expect(formatBeatShare('RACING_GAME', 1, 41)).toBe('회원 41명 중 1등이에요');
+    expect(formatBeatShare('BLOCK_STACKING', 100, 41)).toBe('회원 41명 중 가장 낮아요');
   });
 });
 
@@ -94,7 +58,15 @@ describe('formatWinRate', () => {
 
 describe('recordLabels', () => {
   it('초시계만 오차 라벨을 쓴다', () => {
-    expect(recordLabels('BLIND_TIMER')).toEqual({ best: '최소 오차', average: '평균 오차' });
-    expect(recordLabels('RACING_GAME')).toEqual({ best: '최고 기록', average: '평균 기록' });
+    expect(recordLabels('BLIND_TIMER')).toEqual({
+      best: '최소 오차',
+      average: '내 평균 오차',
+      global: '전체 평균 오차',
+    });
+    expect(recordLabels('RACING_GAME')).toEqual({
+      best: '최고 기록',
+      average: '내 평균',
+      global: '전체 평균',
+    });
   });
 });

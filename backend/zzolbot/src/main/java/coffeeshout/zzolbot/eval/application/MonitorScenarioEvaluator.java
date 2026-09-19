@@ -6,7 +6,7 @@ import coffeeshout.zzolbot.eval.infra.EvalScenarioEntity;
 import coffeeshout.zzolbot.eval.infra.MonitorFixtureCodec;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
 import coffeeshout.zzolbot.monitor.infra.AnomalyAnalyzer;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,11 +16,20 @@ import org.springframework.stereotype.Component;
  * 채점 대상은 근거 인용 검증(강등 포함)을 거친 최종 분석 — 실제 Slack에 나가는 그 형태다.
  */
 @Component
-@RequiredArgsConstructor
 public class MonitorScenarioEvaluator implements ScenarioEvaluator {
 
     private final AnomalyAnalyzer analyzer;
     private final MonitorFixtureCodec codec;
+
+    /**
+     * 권위 모델을 직접 받는다. 섀도우 데코레이터가 {@code @Primary}라 한정자 없이 받으면 박제
+     * 시나리오까지 자체 모델을 태우게 되고, 실제 알림과 구분되지 않는 비교 기록이 쌓인다.
+     */
+    public MonitorScenarioEvaluator(
+            @Qualifier(AnomalyAnalyzer.AUTHORITATIVE) AnomalyAnalyzer analyzer, MonitorFixtureCodec codec) {
+        this.analyzer = analyzer;
+        this.codec = codec;
+    }
 
     @Override
     public ScenarioKind kind() {

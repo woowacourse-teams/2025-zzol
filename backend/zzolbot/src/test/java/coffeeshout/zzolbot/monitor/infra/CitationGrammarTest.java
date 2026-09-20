@@ -87,6 +87,13 @@ class CitationGrammarTest {
         }
 
         @Test
+        void 문자열에_제어문자를_허용하지_않는다() {
+            // JSON은 U+0000~U+001F를 문자열 안에 그대로 두지 못한다. 허용하면 모델이
+            // 생 개행을 뱉어도 문법이 통과시키고, 그 응답은 파서에서 깨진다
+            assertThat(CitationGrammar.forLogSamples(List.of("a"))).contains("char ::= [^\"\\\\\\x00-\\x1F]");
+        }
+
+        @Test
         void 모든_규칙이_한_줄에_있다() {
             // 괄호 밖에서는 줄바꿈이 규칙의 끝이다. 여러 줄에 걸치면 문법 파싱이 실패한다
             final String grammar = CitationGrammar.forLogSamples(List.of("[ERROR] a", "[ERROR] b"));

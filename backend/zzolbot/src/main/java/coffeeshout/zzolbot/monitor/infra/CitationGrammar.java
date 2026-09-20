@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public final class CitationGrammar {
 
     private static final String JSON_CHAR =
-            "[^\"\\\\] | \"\\\\\" [\"\\\\/bfnrt] | \"\\\\u\" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]";
+            "[^\"\\\\\\x00-\\x1F] | \"\\\\\" [\"\\\\/bfnrt] | \"\\\\u\" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]";
 
     private CitationGrammar() {}
 

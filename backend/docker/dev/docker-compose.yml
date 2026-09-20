@@ -27,6 +27,10 @@ x-dev-app: &dev-app
     - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
     - ZZOL_BOT_SLACK_WEBHOOK_URL=${ZZOL_BOT_SLACK_WEBHOOK_URL}
     - ZZOL_BOT_ALERT_WEBHOOK_TOKEN=${ZZOL_BOT_ALERT_WEBHOOK_TOKEN}
+    # 섀도우 분석 스위치. 기본 꺼짐이고 켜면 dev-llama를 같은 알림으로 나란히 부른다.
+    # 주소는 컨테이너 이름으로 고정한다. 앱 기본값 127.0.0.1은 컨테이너 안에서 자기 자신이라 못 쓴다
+    - ZZOL_BOT_MONITOR_SHADOW_ENABLED=${ZZOL_BOT_MONITOR_SHADOW_ENABLED:-false}
+    - ZZOL_BOT_SHADOW_BASE_URL=http://dev-llama:8080
     - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}

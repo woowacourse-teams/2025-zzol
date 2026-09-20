@@ -1,5 +1,6 @@
 package coffeeshout.zzolbot.monitor.infra;
 
+import coffeeshout.zzolbot.config.ZzolBotHttpTimeouts;
 import coffeeshout.zzolbot.monitor.config.MonitorProperties;
 import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -7,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -31,12 +31,11 @@ public class LlamaCppShadowClient implements ShadowModelClient {
 
     public LlamaCppShadowClient(
             MonitorProperties properties, RestClient.Builder restClientBuilder, MonitorAnalysisContract contract) {
-        final SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(properties.shadow().connectTimeout());
-        factory.setReadTimeout(properties.shadow().readTimeout());
         this.restClient = restClientBuilder
                 .baseUrl(properties.shadow().baseUrl())
-                .requestFactory(factory)
+                .requestFactory(ZzolBotHttpTimeouts.requestFactory(
+                        properties.shadow().connectTimeout(),
+                        properties.shadow().readTimeout()))
                 .build();
         this.contract = contract;
         this.maxTokens = properties.shadow().maxTokens();
@@ -51,7 +50,7 @@ public class LlamaCppShadowClient implements ShadowModelClient {
                 .retrieve()
                 .body(JsonNode.class);
         if (body == null) {
-            throw new IllegalStateException("자체 모델 응답이 비어 있다");
+            throw new BusinessException(ZzolBotErrorCode.SHADOW_MODEL_RESPONSE_INVALID, "자체 모델 응답 본문이 비어 있습니다.");
         }
         return body.path("choices").path(0).path("message").path("content").asText("");
     }

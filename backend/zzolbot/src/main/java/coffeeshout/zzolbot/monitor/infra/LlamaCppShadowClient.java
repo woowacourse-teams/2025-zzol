@@ -1,6 +1,8 @@
 package coffeeshout.zzolbot.monitor.infra;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.zzolbot.config.ZzolBotHttpTimeouts;
+import coffeeshout.zzolbot.domain.ZzolBotErrorCode;
 import coffeeshout.zzolbot.monitor.config.MonitorProperties;
 import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import com.fasterxml.jackson.databind.JsonNode;

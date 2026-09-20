@@ -121,7 +121,7 @@ class ShadowAnalysisRecorderTest {
             final MonitorShadowRunEntity saved = captureSaved();
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(saved.isShadowFailed()).isTrue();
-                softly.assertThat(saved.getShadowError()).isEqualTo("자체 모델 응답 형식이 깨졌다");
+                softly.assertThat(saved.getShadowError()).isEqualTo("자체 모델 응답 형식이 깨졌습니다.");
             });
         }
 

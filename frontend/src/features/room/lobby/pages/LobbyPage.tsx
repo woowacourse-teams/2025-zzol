@@ -285,7 +285,15 @@ const LobbyPage = () => {
       );
     }
 
-    return <GameReadyButton isReady={isReady} onClick={handleGameReadyButtonClick} />;
+    // 입장 직후·백그라운드 복귀·재연결 중에는 send 가 실패하므로 연결될 때까지 잠근다 (#1792)
+    return (
+      <GameReadyButton
+        isReady={isReady}
+        onClick={handleGameReadyButtonClick}
+        isLoading={!isConnected}
+        loadingText="연결 중..."
+      />
+    );
   };
 
   useEffect(() => {

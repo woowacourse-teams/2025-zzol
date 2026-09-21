@@ -3,9 +3,7 @@ package coffeeshout.zzolbot.monitor.infra;
 import coffeeshout.zzolbot.monitor.domain.CitationVerifier;
 import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -65,20 +63,6 @@ public class MonitorAnalysisContract {
     /** 근거가 확인되지 않은 분석의 요약을 대체하는 문구. 모델의 단정적 요약이 그대로 남지 않게 한다. */
     private static final String NO_EVIDENCE_SUMMARY = "제공된 로그에서 이 알림을 뒷받침할 근거를 찾지 못했습니다.";
 
-    /**
-     * 모델 응답 전용 파서. 문자열 안의 raw 제어문자를 거부하지 않는다.
-     *
-     * <p>모델은 로그 줄을 그대로 옮겨 적는다. 그 줄에 탭이 들어 있으면 JSON 명세상 이스케이프해야
-     * 하는데 모델이 그렇게 하리라는 보장이 없다. 실제로 Gemini가 근거를 정확히 찾고도 스택 트레이스의
-     * 탭을 그대로 인용해 분석 전체가 버려졌다(#1811).
-     *
-     * <p>로그에 탭이 들어가지 않게 하는 것은 {@code logback-spring.xml}이 맡는다. 이쪽은 이미
-     * 쌓인 로그와 모델의 변덕을 견디는 자리다. 우리가 통제하지 못하는 쪽을 막는다.
-     */
-    private final JsonMapper tolerantReader = JsonMapper.builder()
-            .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
-            .build();
-
     public String buildPrompt(FiringAlert alert, List<String> logSamples, String logEnvironment) {
         final StringBuilder sb = new StringBuilder();
         sb.append("심각도: ").append(alert.severity()).append('\n');
@@ -128,7 +112,7 @@ public class MonitorAnalysisContract {
      */
     public Optional<ModelAnswer> read(String json) {
         try {
-            final JsonNode node = tolerantReader.readTree(json);
+            final JsonNode node = TolerantJson.readTree(json);
             final List<String> actions = new ArrayList<>();
             node.path("suggestedActions").forEach(a -> actions.add(a.asText()));
             return Optional.of(new ModelAnswer(

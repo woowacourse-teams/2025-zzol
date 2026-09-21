@@ -21,8 +21,8 @@ zzol-bot:
       enabled: ${ZZOL_BOT_MONITOR_SHADOW_ENABLED:false}   # 기본 꺼짐. 꺼져 있으면 섀도우 빈이 만들어지지 않아 경로가 이전과 완전히 같다
       base-url: ${ZZOL_BOT_SHADOW_BASE_URL:http://127.0.0.1:8081}  # llama.cpp 서버
       connect-timeout-millis: 2000
-      read-timeout-millis: 240000                # 배포 대상 ARM 2코어에서 잰 최장이 알림 한 건에 121초. 그 두 배로 둔다. 넘겨도 운영 경로는 영향 없음(다른 스레드)
-      max-tokens: 700
+      read-timeout-millis: 420000                # 최악을 실측값으로 계산하면 326초다(프롬프트 20건 상한 + 생성 상한). 넘겨도 운영 경로는 영향 없음(다른 스레드)
+      max-tokens: 1400                         # 문법이 묶은 최악(요약 200자 + 가설 200자 + 조치 3×150자 + 인용 한 줄)이 약 1,130토큰
   slack:
     webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성
   llm-budget:

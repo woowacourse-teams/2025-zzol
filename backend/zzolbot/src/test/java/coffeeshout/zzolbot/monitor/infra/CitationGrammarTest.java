@@ -94,6 +94,20 @@ class CitationGrammarTest {
         }
 
         @Test
+        void 출력_길이를_문법으로_묶는다() {
+            // 안 묶으면 출력이 원리적으로 무한하다. 실제로 토큰 상한에서 잘려 JSON 이 닫히지
+            // 않았고 분석이 통째로 버려졌다(#1815). 상한을 올리는 것으로는 못 막는다
+            final String grammar = CitationGrammar.forLogSamples(List.of("a"));
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(grammar).contains("char{0,200}");
+                softly.assertThat(grammar).contains("char{0,150}");
+                softly.assertThat(grammar).contains("(ws \",\" ws astr){0,2}");
+                softly.assertThat(grammar).doesNotContain("char*");
+            });
+        }
+
+        @Test
         void 모든_규칙이_한_줄에_있다() {
             // 괄호 밖에서는 줄바꿈이 규칙의 끝이다. 여러 줄에 걸치면 문법 파싱이 실패한다
             final String grammar = CitationGrammar.forLogSamples(List.of("[ERROR] a", "[ERROR] b"));

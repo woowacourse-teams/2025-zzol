@@ -205,11 +205,9 @@ deploy_llama() {
         return 0
     fi
 
-    if check_container_running "$service_name"; then
-        log_success "llama already running: $service_name"
-        return 0
-    fi
-
+    # 떠 있어도 건너뛰지 않는다. MySQL·Redis 와 달리 상태가 없고, 건너뛰면 compose 정의를
+    # 바꿔도 배포에 반영되지 않는다. 실제로 컨텍스트 크기를 바꾼 배포가 조용히 무시돼
+    # 손으로 재생성해야 했다(#1815). up -d 는 정의가 그대로면 아무것도 하지 않는다.
     log_info "Starting llama: $service_name"
     if ! docker compose --env-file .env up -d "$service_name"; then
         log_warning "llama 기동 실패. 앱 배포는 계속 진행한다(섀도우 분석만 영향)"

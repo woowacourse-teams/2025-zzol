@@ -12,5 +12,14 @@ import java.util.List;
  */
 public interface AnomalyAnalyzer {
 
+    /**
+     * 운영 판정의 권위를 갖는 분석기를 가리키는 한정자.
+     *
+     * <p>섀도우 데코레이터가 {@code @Primary}로 기본 주입 지점을 가져가므로, <b>권위 모델 자체를
+     * 받아야 하는 곳</b>은 이 한정자로 명시해야 한다. 평가 경로가 그렇다. 박제 시나리오까지
+     * 섀도우를 태우면 실제 알림과 구분되지 않는 비교 기록이 쌓인다.
+     */
+    String AUTHORITATIVE = "authoritativeAnomalyAnalyzer";
+
     MonitorAnalysis analyze(FiringAlert alert, List<String> logSamples, String logEnvironment);
 }

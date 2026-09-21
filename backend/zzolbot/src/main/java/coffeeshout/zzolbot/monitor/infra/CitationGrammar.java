@@ -26,6 +26,15 @@ import java.util.stream.Collectors;
  */
 public final class CitationGrammar {
 
+    /** 요약과 원인 가설의 최대 길이. 시스템 지시가 요구하는 1~2문장에 넉넉하다. */
+    private static final int MAX_TEXT_CHARS = 200;
+
+    /** 제안 조치 한 건의 최대 길이. */
+    private static final int MAX_ACTION_CHARS = 150;
+
+    /** 제안 조치 개수 상한. 운영자가 실제로 읽는 수를 넘지 않는다. */
+    private static final int MAX_ACTIONS = 3;
+
     private static final String JSON_CHAR =
             "[^\"\\\\\\x00-\\x1F] | \"\\\\\" [\"\\\\/bfnrt] | \"\\\\u\" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]";
 
@@ -65,9 +74,14 @@ public final class CitationGrammar {
                         .append('\n');
             }
         }
-        sb.append("str ::= \"\\\"\" char* \"\\\"\"\n");
+        // 길이를 문법으로 묶는다. 안 묶으면 출력이 원리적으로 무한해 토큰 상한에서 잘리고,
+        // 잘린 JSON 은 닫히지 않아 통째로 버려진다. 실제로 정확히 상한(700 토큰)에서 잘렸다(#1815).
+        sb.append("str ::= \"\\\"\" char{0,").append(MAX_TEXT_CHARS).append("} \"\\\"\"\n");
+        sb.append("astr ::= \"\\\"\" char{0,").append(MAX_ACTION_CHARS).append("} \"\\\"\"\n");
         sb.append("char ::= ").append(JSON_CHAR).append('\n');
-        sb.append("arr ::= \"[\" ws (str (ws \",\" ws str)*)? ws \"]\"\n");
+        sb.append("arr ::= \"[\" ws (astr (ws \",\" ws astr){0,")
+                .append(MAX_ACTIONS - 1)
+                .append("})? ws \"]\"\n");
         sb.append("bool ::= \"true\" | \"false\"\n");
         sb.append("ws ::= [ \\t\\n]*\n");
         return sb.toString();

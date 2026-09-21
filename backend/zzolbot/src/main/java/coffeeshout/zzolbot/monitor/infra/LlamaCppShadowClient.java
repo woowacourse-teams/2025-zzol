@@ -5,7 +5,7 @@ import coffeeshout.zzolbot.config.ZzolBotHttpTimeouts;
 import coffeeshout.zzolbot.domain.ZzolBotErrorCode;
 import coffeeshout.zzolbot.monitor.config.MonitorProperties;
 import coffeeshout.zzolbot.monitor.domain.FiringAlert;
-import com.fasterxml.jackson.databind.JsonNode;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -45,16 +45,31 @@ public class LlamaCppShadowClient implements ShadowModelClient {
 
     @Override
     public String generate(FiringAlert alert, List<String> logSamples, String logEnvironment) {
-        final JsonNode body = restClient
+        // 본문을 문자열로 받아 직접 파싱한다. 프레임워크 컨버터에 맡기면 두 군데서 깨진다.
+        // Jackson 버전이 어긋나고(#1813), 모델이 옮겨 적은 제어문자를 거부한다(#1811).
+        final String raw = restClient
                 .post()
                 .uri("/v1/chat/completions")
                 .body(requestBody(alert, logSamples, logEnvironment))
                 .retrieve()
-                .body(JsonNode.class);
-        if (body == null) {
+                .body(String.class);
+        if (raw == null || raw.isBlank()) {
             throw new BusinessException(ZzolBotErrorCode.SHADOW_MODEL_RESPONSE_INVALID, "자체 모델 응답 본문이 비어 있습니다.");
         }
-        return body.path("choices").path(0).path("message").path("content").asText("");
+        return content(raw);
+    }
+
+    private String content(String raw) {
+        try {
+            return TolerantJson.readTree(raw)
+                    .path("choices")
+                    .path(0)
+                    .path("message")
+                    .path("content")
+                    .asText("");
+        } catch (IOException e) {
+            throw new BusinessException(ZzolBotErrorCode.SHADOW_MODEL_RESPONSE_INVALID, "자체 모델 응답 봉투를 읽지 못했습니다.");
+        }
     }
 
     private Map<String, Object> requestBody(FiringAlert alert, List<String> logSamples, String logEnvironment) {

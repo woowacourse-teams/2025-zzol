@@ -25,16 +25,16 @@
     "@modelcontextprotocol/sdk": "~1.30.0",
     "@stomp/stompjs": "^7.0.0",
     "ws": "^8.21.3",
-    "zod": "^4.6.2"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^26.5.1",
+    "@types/node": "^26.6.1",
     "@types/ws": "^8.5.12",
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "msw": "^2.15.0",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.8",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",
     "vitest": "^4.1.11"

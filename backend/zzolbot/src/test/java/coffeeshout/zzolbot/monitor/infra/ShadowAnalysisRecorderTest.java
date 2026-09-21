@@ -10,7 +10,6 @@ import static org.mockito.BDDMockito.willThrow;
 
 import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -43,8 +42,7 @@ class ShadowAnalysisRecorderTest {
     private ShadowAnalysisRecorder recorder;
 
     private ShadowAnalysisRecorder recorderWith(Clock clock) {
-        return new ShadowAnalysisRecorder(
-                repository, new MonitorAnalysisContract(new ObjectMapper()), shadowModel, clock);
+        return new ShadowAnalysisRecorder(repository, new MonitorAnalysisContract(), shadowModel, clock);
     }
 
     private MonitorShadowRunEntity captureSaved() {

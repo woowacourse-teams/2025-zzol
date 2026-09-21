@@ -9,7 +9,6 @@ import static org.mockito.Mockito.mock;
 
 import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import java.util.List;
@@ -31,8 +30,7 @@ class GeminiAnomalyAnalyzerTest {
 
     // client·properties는 callApi 안에서만 쓰이고 그 메서드를 스텁하므로 null로 둔다.
     @Spy
-    private GeminiAnomalyAnalyzer analyzer =
-            new GeminiAnomalyAnalyzer(null, null, new MonitorAnalysisContract(new ObjectMapper()));
+    private GeminiAnomalyAnalyzer analyzer = new GeminiAnomalyAnalyzer(null, null, new MonitorAnalysisContract());
 
     private MonitorAnalysis analyzeWith(String responseJson, List<String> logSamples) {
         final GenerateContentResponse response = mock(GenerateContentResponse.class);

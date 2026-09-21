@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -17,7 +16,7 @@ class MonitorAnalysisContractTest {
     private static final FiringAlert ALERT =
             new FiringAlert("AppErrorLogSpike", "warning", "fp-1", "ERROR 급증", "임계 초과", Map.of("job", "prod-app"));
 
-    private final MonitorAnalysisContract contract = new MonitorAnalysisContract(new ObjectMapper());
+    private final MonitorAnalysisContract contract = new MonitorAnalysisContract();
 
     @Nested
     class 접지_전_값을_따로_읽는다 {
@@ -88,6 +87,21 @@ class MonitorAnalysisContractTest {
                 softly.assertThat(result.evidenceFound()).isFalse();
                 softly.assertThat(result.rootCauseHypothesis()).isEmpty();
             });
+        }
+    }
+
+    @Nested
+    class 사고로_배운_계약을_고정한다 {
+
+        @Test
+        void 인용에_raw_탭이_있어도_파싱한다() {
+            // Gemini가 근거를 정확히 찾고도 스택 트레이스의 탭을 그대로 인용해 분석이 통째로
+            // 버려졌다(#1811). 모델이 이스케이프하리라고 기대할 수 없다.
+            final String withTab = "{\"summary\":\"요약\",\"rootCauseHypothesis\":\"가설\","
+                    + "\"suggestedActions\":[],\"evidenceFound\":true,"
+                    + "\"evidenceLine\":\"ERROR OOM\tat com.foo.Bar(Bar.java:42)\"}";
+
+            assertThat(contract.read(withTab)).isPresent();
         }
     }
 }

@@ -52,7 +52,7 @@ public record MonitorProperties(
      * @param baseUrl llama.cpp 서버 주소
      * @param connectTimeoutMillis 연결 타임아웃
      * @param readTimeoutMillis 응답 타임아웃. CPU 추론이라 API보다 넉넉해야 한다.
-     *                          배포 대상에서 잰 최장이 알림 한 건에 121초라 그 두 배로 둔다
+     *                          최악을 실측값으로 계산하면 326초다(프롬프트 36.7 tok/s, 생성 8.4 tok/s)
      * @param maxTokens 생성 상한
      */
     public record ShadowProperties(
@@ -63,7 +63,7 @@ public record MonitorProperties(
             @Positive int maxTokens) {
 
         public static ShadowProperties disabled() {
-            return new ShadowProperties(false, "http://127.0.0.1:8081", 2000, 240000, 700);
+            return new ShadowProperties(false, "http://127.0.0.1:8081", 2000, 420000, 1400);
         }
 
         public Duration connectTimeout() {

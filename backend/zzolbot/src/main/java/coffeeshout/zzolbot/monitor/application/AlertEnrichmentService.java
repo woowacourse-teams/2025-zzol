@@ -2,6 +2,7 @@ package coffeeshout.zzolbot.monitor.application;
 
 import coffeeshout.zzolbot.monitor.config.MonitorProperties;
 import coffeeshout.zzolbot.monitor.domain.FiringAlert;
+import coffeeshout.zzolbot.monitor.domain.LogSampleNormalizer;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
 import coffeeshout.zzolbot.monitor.domain.Severity;
 import coffeeshout.zzolbot.monitor.infra.AnomalyAnalyzer;
@@ -74,7 +75,10 @@ public class AlertEnrichmentService implements FiringAlertEnricher {
                 MonitorRunEntity.of(now, severity, alert.fingerprint(), dedupKey, toJson(alertContext(alert))));
 
         final String environment = resolveEnvironment(alert);
-        final List<String> logs = lokiLogClient.tailErrors(now, properties.window(), LOG_SAMPLE_LIMIT, environment);
+        // 두 모델과 인용 검증, 문법 생성이 모두 같은 문자열을 보게 여기서 한 번만 다듬는다.
+        // 모델마다 다르게 자르면 차이가 모델에서 온 것인지 입력에서 온 것인지 가릴 수 없다(#1811).
+        final List<String> logs = LogSampleNormalizer.normalize(
+                lokiLogClient.tailErrors(now, properties.window(), LOG_SAMPLE_LIMIT, environment));
         final MonitorAnalysis analysis = analyze(alert, logs, environment);
 
         run.attachAnalysis(

@@ -184,6 +184,40 @@ deploy_alloy() {
     return 0
 }
 
+deploy_llama() {
+    local service_name="${ENVIRONMENT}-llama"
+    local model_dir="${LLAMA_MODEL_DIR:-/home/ubuntu}"
+    local model_file="${LLAMA_MODEL_FILE:-sft-v6-s1-q8_0.gguf}"
+
+    log_step "📦 자체 호스팅 LLM 배포 (zzol-bot 섀도우 분석)"
+
+    # dev compose 에만 정의돼 있다. prod 에서는 조용히 건너뛴다.
+    if ! compose_service_exists "$service_name"; then
+        log_info "compose 에 ${service_name} 정의 없음 → skip"
+        return 0
+    fi
+
+    # 모델 파일(약 1.6GB)은 레포에 없고 호스트에 1회 배치한다(alloy bootstrap과 같은 방식).
+    # 없으면 이 서비스만 skip 한다. 섀도우는 관측 전용이라 앱 배포를 막을 이유가 없다.
+    if [[ ! -f "${model_dir}/${model_file}" ]]; then
+        log_warning "모델 파일 없음 → llama 기동 skip: ${model_dir}/${model_file}"
+        log_warning "최초 1회 호스트 배치 필요: scp <로컬 gguf> ubuntu@<host>:${model_dir}/"
+        return 0
+    fi
+
+    # 떠 있어도 건너뛰지 않는다. MySQL·Redis 와 달리 상태가 없고, 건너뛰면 compose 정의를
+    # 바꿔도 배포에 반영되지 않는다. 실제로 컨텍스트 크기를 바꾼 배포가 조용히 무시돼
+    # 손으로 재생성해야 했다(#1815). up -d 는 정의가 그대로면 아무것도 하지 않는다.
+    log_info "Starting llama: $service_name"
+    if ! docker compose --env-file .env up -d "$service_name"; then
+        log_warning "llama 기동 실패. 앱 배포는 계속 진행한다(섀도우 분석만 영향)"
+        return 0
+    fi
+
+    log_success "llama 기동 완료: $service_name (모델 적재에 수 초 걸린다)"
+    return 0
+}
+
 ensure_monitoring_network() {
     log_info "Ensuring monitoring-network exists..."
     docker network create monitoring-network 2>/dev/null || true
@@ -219,6 +253,9 @@ main() {
 
     # Alloy는 로그 수집기 — bootstrap 미배치/기동 실패해도 앱 배포를 막지 않는다(skip+warning).
     deploy_alloy || log_warning "Alloy 단계 예기치 못한 오류 — 무시하고 계속"
+
+    # 자체 호스팅 LLM은 zzol-bot 섀도우 분석 전용이다. 모델 미배치나 기동 실패가 앱 배포를 막지 않는다.
+    deploy_llama || log_warning "llama 단계 예기치 못한 오류. 무시하고 계속한다"
 
     log_step "✅ Infrastructure Deployment Completed"
     log_success "MySQL: ${ENVIRONMENT}-mysql (healthy)"

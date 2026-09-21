@@ -31,7 +31,7 @@ class FileLogPatternTest {
     }
 
     @Test
-    void 메시지와_예외의_개행을_지워_한_줄로_쓴다() throws Exception {
+    void 메시지와_예외의_개행과_탭을_지워_한_줄로_쓴다() throws Exception {
         // 새 LoggerContext 에는 MDC 어댑터가 없어 %X 가 NPE 를 낸다. 실제 컨텍스트를 빌려 쓴다.
         final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         final PatternLayout layout = new PatternLayout();
@@ -43,7 +43,7 @@ class FileLogPatternTest {
                 Logger.class.getName(),
                 context.getLogger("coffeeshout.room.RoomService"),
                 Level.WARN,
-                "playerName=x\n[2026-09-15 00:00:00.000] [ERROR] --- [main] fake : 가짜 줄",
+                "playerName=x\n\t[2026-09-15 00:00:00.000] [ERROR] --- [main] fake : 가짜 줄",
                 new IllegalArgumentException("입력값: '\r\n[ERROR] 가짜 예외'"),
                 null);
 
@@ -54,6 +54,7 @@ class FileLogPatternTest {
             softly.assertThat(line.stripTrailing())
                     .doesNotContain("\n")
                     .doesNotContain("\r")
+                    .doesNotContain("\t")
                     .contains("playerName=x")
                     .contains("가짜 줄")
                     .contains("IllegalArgumentException")

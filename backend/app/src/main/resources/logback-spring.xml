@@ -12,11 +12,13 @@
               value="[%d{yyyy-MM-dd HH:mm:ss}] [%clr(%-5level)] [%.8X{traceId:-}] %clr(---){faint} %clr([%15.15thread]){faint} %clr(%-40.40logger{36}){cyan} %clr(:){faint} %msg %clr(%marker)  %n"/>
 
     <!-- 파일: traceId/spanId 전체 출력 (검색·추적용).
-         메시지와 예외의 개행을 지워 엔트리 하나를 반드시 한 줄로 쓴다. Alloy 가 이 파일을 줄 단위로 읽어
+         메시지와 예외의 개행과 탭을 지워 엔트리 하나를 반드시 한 줄로 쓴다.
+         탭까지 지우는 이유는 스택 트레이스를 한 줄로 펴면 남는 \tat 의 탭 때문이다. 그 줄을
+         LLM 이 JSON 문자열에 인용하면 파서가 raw 제어문자를 거부해 분석이 통째로 버려진다(#1811). Alloy 가 이 파일을 줄 단위로 읽어
          정규식으로 자르므로, 요청 파라미터에 든 개행이 그대로 찍히면 가짜 ERROR 줄을 심을 수 있다.
          %ex 를 명시해야 logback 이 %n 뒤에 스택트레이스를 따로 붙이지 않는다. -->
     <property name="FILE_LOG_PATTERN"
-              value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%level] [%X{traceId:-},%X{spanId:-}] --- [%thread] %logger{36} : %replace(%msg %ex){'[\r\n]+', ' '}%n"/>
+              value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%level] [%X{traceId:-},%X{spanId:-}] --- [%thread] %logger{36} : %replace(%msg %ex){'[\r\n\t]+', ' '}%n"/>
 
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">

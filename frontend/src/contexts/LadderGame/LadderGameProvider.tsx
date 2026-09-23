@@ -26,6 +26,8 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
   const [animationDurationMs, setAnimationDurationMs] = useState<number | null>(null);
 
   const ghostTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 구독 콜백이 최신 ghost 를 읽게 state 와 함께 둔다
+  const ghostRef = useRef<LadderGhost | null>(null);
 
   const clearGhostTimer = useCallback(() => {
     if (ghostTimerRef.current) {
@@ -35,6 +37,12 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
   }, []);
 
   useEffect(() => () => clearGhostTimer(), [clearGhostTimer]);
+
+  const dropGhost = useCallback(() => {
+    clearGhostTimer();
+    ghostRef.current = null;
+    setGhost(null);
+  }, [clearGhostTimer]);
 
   useWebSocketSubscription<StateMessage>(
     `/room/${joinCode}/ladder/state`,
@@ -58,27 +66,31 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
     useCallback(
       (line: LadderLine) => {
         setLines((prev) => [...prev, line]);
-        if (line.playerName === myName) {
-          clearGhostTimer();
-          setGhost(null);
-        }
+        // 내 선이라도 지금 ghost 자리의 응답일 때만 거둔다. 타임아웃 뒤 늦게 온 앞선 응답이 새 ghost 를 지우지 않게 한다
+        const pending = ghostRef.current;
+        const isPendingLine =
+          line.playerName === myName &&
+          pending !== null &&
+          Number(line.segmentIndex) === pending.segmentIndex &&
+          line.row === pending.row;
+        if (isPendingLine) dropGhost();
       },
-      [myName, clearGhostTimer]
+      [myName, dropGhost]
     )
   );
 
   const drawLine = useCallback(
     (segmentIndex: number, row: number) => {
       clearGhostTimer();
-      setGhost({ segmentIndex, row });
+      const next = { segmentIndex, row };
+      ghostRef.current = next;
+      setGhost(next);
       send(`/room/${joinCode}/ladder/draw`, { playerName: myName, segmentIndex, row });
 
-      // 같은 자리를 다른 플레이어가 먼저 차지하면 서버가 조용히 무시한다. 그때 ghost 를 거둔다.
-      ghostTimerRef.current = setTimeout(() => {
-        setGhost(null);
-      }, 2000);
+      // 서버가 조용히 무시한 요청(범위 밖 등)은 응답이 없다. 그때 ghost 를 거둔다
+      ghostTimerRef.current = setTimeout(dropGhost, 2000);
     },
-    [clearGhostTimer, send, joinCode, myName]
+    [clearGhostTimer, dropGhost, send, joinCode, myName]
   );
 
   return (
@@ -94,6 +106,7 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
         rankings,
         animationDurationMs,
         drawLine,
+        dropGhost,
       }}
     >
       {children}

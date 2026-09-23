@@ -12,6 +12,7 @@ type LadderGameContextType = {
   rankings: Record<string, number> | null;
   animationDurationMs: number | null;
   drawLine: (segmentIndex: number, row: number) => void;
+  dropGhost: () => void;
 };
 
 export const LadderGameContext = createContext<LadderGameContextType | null>(null);

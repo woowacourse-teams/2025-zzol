@@ -87,10 +87,29 @@ const LadderBoard = () => {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
 
-  const { gameState, poles, bottomRanks, rowCount, lines, ghost, animationDurationMs, drawLine } =
-    useLadderGameContext();
+  const {
+    gameState,
+    poles,
+    bottomRanks,
+    rowCount,
+    lines,
+    ghost,
+    animationDurationMs,
+    drawLine,
+    dropGhost,
+  } = useLadderGameContext();
   const { myName } = useIdentifier();
   const { showToast } = useToast();
+
+  // 같은 자리를 동시에 누르면 서버는 먼저 도착한 요청만 받는다. 남의 선이 내 ghost 자리를 차지했다면 내 요청은
+  // 반드시 거절되므로, 2초 타임아웃을 기다리지 않고 바로 거둬 다시 누를 수 있게 한다
+  useEffect(() => {
+    if (ghost === null) return;
+    const othersLines = lines.filter((l) => l.playerName !== myName);
+    if (!isOccupied(othersLines, ghost.segmentIndex, ghost.row)) return;
+    dropGhost();
+    showToast({ message: '다른 사람이 먼저 그은 자리예요. 다시 눌러 주세요', type: 'info' });
+  }, [ghost, lines, myName, dropGhost, showToast]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -178,6 +197,22 @@ const LadderBoard = () => {
   return (
     <S.Container ref={containerRef}>
       <svg width={width} height={height}>
+        {/* 높이 안내선: 선이 놓일 수 있는 칸. DRAWING 동안만 보인다 */}
+        {isDrawing &&
+          Array.from({ length: totalRows }, (_, index) => (
+            <line
+              key={`guide-${index + 1}`}
+              x1={poleX(0)}
+              y1={rowY(index + 1)}
+              x2={poleX(poleCount - 1)}
+              y2={rowY(index + 1)}
+              stroke={theme.color.gray[400]}
+              strokeWidth={1}
+              strokeDasharray="3 5"
+              pointerEvents="none"
+            />
+          ))}
+
         {/* 세로 기둥 */}
         {poles.map((pole, i) => {
           const isMe = pole.playerName === myName;
@@ -309,6 +344,7 @@ const LadderBoard = () => {
           Array.from({ length: poleCount - 1 }).map((_, i) => (
             <rect
               key={`touch-${i}`}
+              data-testid="ladder-segment"
               x={poleX(i) - TOUCH_HIT_EXPANSION}
               y={TOP_Y}
               width={poleGap + TOUCH_HIT_EXPANSION * 2}

@@ -48,23 +48,22 @@ class LadderCommandServiceTest {
 
         @Test
         void 반환된_선의_playerName_segmentIndex_row가_요청과_일치한다() {
-            final LadderLine line = commandService.drawLine(game, "꾹이", 1, 7).orElseThrow();
+            final LadderLine line = commandService.drawLine(game, "꾹이", 1, 5).orElseThrow();
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(line.playerName()).isEqualTo("꾹이");
                 softly.assertThat(line.segmentIndex()).isEqualTo(1);
-                softly.assertThat(line.row()).isEqualTo(7);
+                softly.assertThat(line.row()).isEqualTo(5);
             });
         }
 
         @Test
-        void 한_플레이어가_선을_3개까지_그을_수_있다() {
+        void 한_플레이어가_선을_2개까지_그을_수_있다() {
             commandService.drawLine(game, "꾹이", 0, 1);
-            commandService.drawLine(game, "꾹이", 0, 2);
 
-            final Optional<LadderLine> third = commandService.drawLine(game, "꾹이", 0, 3);
+            final Optional<LadderLine> second = commandService.drawLine(game, "꾹이", 0, 2);
 
-            assertThat(third).isPresent();
+            assertThat(second).isPresent();
         }
     }
 
@@ -98,14 +97,13 @@ class LadderCommandServiceTest {
         }
 
         @Test
-        void 선을_3개_그은_플레이어의_네_번째_요청은_빈_Optional을_반환한다() {
+        void 선을_2개_그은_플레이어의_세_번째_요청은_빈_Optional을_반환한다() {
             commandService.drawLine(game, "꾹이", 0, 1);
             commandService.drawLine(game, "꾹이", 0, 2);
-            commandService.drawLine(game, "꾹이", 0, 3);
 
-            final Optional<LadderLine> fourth = commandService.drawLine(game, "꾹이", 0, 4);
+            final Optional<LadderLine> third = commandService.drawLine(game, "꾹이", 0, 3);
 
-            assertThat(fourth).isEmpty();
+            assertThat(third).isEmpty();
         }
 
         @Test
@@ -119,8 +117,8 @@ class LadderCommandServiceTest {
 
         @Test
         void 높이_칸_수를_넘는_row는_빈_Optional을_반환한다() {
-            // 기둥 3개 → 높이 칸 9개 → 10은 유효하지 않음
-            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0, 10);
+            // 기둥 3개 → 높이 칸 6개 → 7은 유효하지 않음
+            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0, 7);
 
             assertThat(result).isEmpty();
         }

@@ -87,7 +87,7 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
                 softly.assertThat(prepare.state()).isEqualTo(LadderGameState.PREPARE);
                 softly.assertThat(prepare.poles()).isNotEmpty();
                 softly.assertThat(prepare.bottomRanks()).isNotEmpty();
-                softly.assertThat(prepare.rowCount()).isEqualTo(gamers.size() * 3);
+                softly.assertThat(prepare.rowCount()).isEqualTo(gamers.size() * 2);
 
                 softly.assertThat(drawing.state()).isEqualTo(LadderGameState.DRAWING);
                 softly.assertThat(drawing.endTimeEpochMs()).isNotNull();
@@ -108,7 +108,7 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
     class 선_긋기_테스트 {
 
         @Test
-        void 선을_3개_그은_플레이어의_네_번째_요청은_브로드캐스트되지_않는다() {
+        void 선을_2개_그은_플레이어의_세_번째_요청은_브로드캐스트되지_않는다() {
             final var stateResponses = session.subscribe(stateUrl());
             final var lineResponses = session.subscribe(lineUrl());
 
@@ -120,12 +120,10 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
 
             session.send(drawCommandUrl(), drawRequest(0, 1));
             session.send(drawCommandUrl(), drawRequest(0, 2));
-            session.send(drawCommandUrl(), drawRequest(0, 3));
-            lineResponses.get();
             lineResponses.get();
             lineResponses.get();
 
-            session.send(drawCommandUrl(), drawRequest(0, 4)); // 네 번째 요청
+            session.send(drawCommandUrl(), drawRequest(0, 3)); // 세 번째 요청
 
             lineResponses.assertNoMessage();
         }

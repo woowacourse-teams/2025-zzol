@@ -97,14 +97,13 @@ class LadderServiceTest extends GameModuleServiceTest {
         }
 
         @Test
-        void 선을_3개_그은_플레이어의_네_번째_요청은_notifier를_호출하지_않는다() {
+        void 선을_2개_그은_플레이어의_세_번째_요청은_notifier를_호출하지_않는다() {
             service.drawLine(joinCode.getValue(), HOST_NAME, 0, 1);
             service.drawLine(joinCode.getValue(), HOST_NAME, 0, 2);
+
             service.drawLine(joinCode.getValue(), HOST_NAME, 0, 3);
 
-            service.drawLine(joinCode.getValue(), HOST_NAME, 0, 4);
-
-            verify(notifier, times(3)).notifyLineDrawn(any(), any(), any());
+            verify(notifier, times(2)).notifyLineDrawn(any(), any(), any());
         }
 
         @Test

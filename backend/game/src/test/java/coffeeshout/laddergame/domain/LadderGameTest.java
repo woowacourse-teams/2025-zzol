@@ -139,13 +139,12 @@ class LadderGameTest {
         }
 
         @Test
-        void 선을_3개_그은_플레이어가_다시_그으면_예외를_던진다() {
+        void 선을_2개_그은_플레이어가_다시_그으면_예외를_던진다() {
             final String name = 꾹이.getName().value();
             game.drawLine(name, 0, 1);
             game.drawLine(name, 0, 2);
-            game.drawLine(name, 0, 3);
 
-            assertCoffeeShoutException(() -> game.drawLine(name, 0, 4), LadderGameErrorCode.LINE_LIMIT_EXCEEDED);
+            assertCoffeeShoutException(() -> game.drawLine(name, 0, 3), LadderGameErrorCode.LINE_LIMIT_EXCEEDED);
         }
 
         @Test
@@ -168,9 +167,9 @@ class LadderGameTest {
     class 높이_칸_테스트 {
 
         @Test
-        void 높이_칸_수는_인원의_3배다() {
-            // 모두가 한 구간에 3개씩 그어도 자리가 모자라지 않는 최솟값
-            assertThat(game.getRowCount()).isEqualTo(9);
+        void 높이_칸_수는_인원의_2배다() {
+            // 모두가 한 구간에 2개씩 그어도 자리가 모자라지 않는 최솟값
+            assertThat(game.getRowCount()).isEqualTo(6);
         }
 
         @Test
@@ -178,8 +177,8 @@ class LadderGameTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(game.isValidRow(0)).isFalse();
                 softly.assertThat(game.isValidRow(1)).isTrue();
-                softly.assertThat(game.isValidRow(9)).isTrue();
-                softly.assertThat(game.isValidRow(10)).isFalse();
+                softly.assertThat(game.isValidRow(6)).isTrue();
+                softly.assertThat(game.isValidRow(7)).isFalse();
             });
         }
     }
@@ -199,20 +198,18 @@ class LadderGameTest {
         }
 
         @Test
-        void 선을_2개_그은_플레이어는_아직_그을_수_있다() {
+        void 선을_1개_그은_플레이어는_아직_그을_수_있다() {
             final String name = 꾹이.getName().value();
             game.drawLine(name, 0, 1);
-            game.drawLine(name, 0, 2);
 
             assertThat(game.canDraw(name)).isTrue();
         }
 
         @Test
-        void 선을_3개_그은_플레이어는_더_그을_수_없다() {
+        void 선을_2개_그은_플레이어는_더_그을_수_없다() {
             final String name = 꾹이.getName().value();
             game.drawLine(name, 0, 1);
             game.drawLine(name, 0, 2);
-            game.drawLine(name, 0, 3);
 
             assertThat(game.canDraw(name)).isFalse();
         }

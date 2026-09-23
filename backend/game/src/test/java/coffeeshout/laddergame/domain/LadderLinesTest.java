@@ -36,30 +36,27 @@ class LadderLinesTest {
         }
 
         @Test
-        void 한_플레이어는_선을_3개까지_그을_수_있다() {
+        void 한_플레이어는_선을_2개까지_그을_수_있다() {
             lines.add(꾹이, 0, 1);
             lines.add(꾹이, 0, 2);
-            lines.add(꾹이, 0, 3);
 
-            assertThat(lines.countOf(꾹이)).isEqualTo(3);
+            assertThat(lines.countOf(꾹이)).isEqualTo(2);
         }
 
         @Test
-        void 네_번째_선을_그으면_예외를_던진다() {
+        void 세_번째_선을_그으면_예외를_던진다() {
             lines.add(꾹이, 0, 1);
             lines.add(꾹이, 0, 2);
-            lines.add(꾹이, 0, 3);
 
-            assertCoffeeShoutException(() -> lines.add(꾹이, 0, 4), LadderGameErrorCode.LINE_LIMIT_EXCEEDED);
+            assertCoffeeShoutException(() -> lines.add(꾹이, 0, 3), LadderGameErrorCode.LINE_LIMIT_EXCEEDED);
         }
 
         @Test
         void 다른_플레이어의_선은_내_개수에_포함되지_않는다() {
             lines.add(꾹이, 0, 1);
             lines.add(꾹이, 0, 2);
-            lines.add(꾹이, 0, 3);
 
-            final LadderLine line = lines.add(철수, 0, 4);
+            final LadderLine line = lines.add(철수, 0, 3);
 
             assertThat(line.playerName()).isEqualTo(철수);
         }

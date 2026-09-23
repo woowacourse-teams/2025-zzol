@@ -7,7 +7,7 @@ import java.util.List;
 
 public class LadderLines {
 
-    public static final int MAX_LINES_PER_PLAYER = 3;
+    public static final int MAX_LINES_PER_PLAYER = 2;
 
     private final List<LadderLine> lines = new ArrayList<>();
 

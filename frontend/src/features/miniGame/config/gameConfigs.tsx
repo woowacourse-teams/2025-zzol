@@ -148,7 +148,7 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
         className: 'slide-first',
       },
       {
-        textLines: ['기둥 사이 원하는 높이를 눌러', '선을 3개까지 그을 수 있어요'],
+        textLines: ['기둥 사이 원하는 높이를 눌러', '선을 2개까지 그을 수 있어요'],
         imageSrc: LadderGameDescription2,
         className: 'slide-second',
       },

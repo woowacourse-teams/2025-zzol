@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import PrepareOverlay from '../../components/PrepareOverlay/PrepareOverlay';
 import LadderBoard from '../components/LadderBoard/LadderBoard';
+import RemainingLines from '../components/RemainingLines/RemainingLines';
 import * as S from './LadderGamePlayPage.styled';
 
 type TimerBarProps = { endTimeEpochMs: number | null };
@@ -68,6 +69,7 @@ const LadderGamePlayPage = () => {
       <Layout.Content>
         <S.Container>
           {gameState === 'DRAWING' && <TimerBar endTimeEpochMs={endTimeEpochMs ?? null} />}
+          {gameState === 'DRAWING' && <RemainingLines />}
           <S.BoardWrapper>
             {['PREPARE', 'DRAWING', 'RESULT'].includes(gameState) && <LadderBoard />}
           </S.BoardWrapper>

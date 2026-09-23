@@ -1,5 +1,13 @@
 export type LadderGameState = 'DESCRIPTION' | 'PREPARE' | 'DRAWING' | 'RESULT' | 'DONE';
 
+// 서버 LadderLines.MAX_LINES_PER_PLAYER 와 같은 값
+export const MAX_LINES_PER_PLAYER = 3;
+
+export type LadderGhost = {
+  segmentIndex: number;
+  row: number;
+};
+
 export type Pole = {
   index: number;
   playerName: string;

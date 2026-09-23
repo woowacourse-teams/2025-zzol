@@ -65,16 +65,29 @@ public class LadderGame implements Playable {
         this.state = next;
     }
 
-    public LadderLine drawLine(String playerName, int segmentIndex) {
+    public LadderLine drawLine(String playerName, int segmentIndex, int row) {
         poles.getPoleIndex(playerName);
-        if (lines.hasDrawn(playerName)) {
-            throw new BusinessException(LadderGameErrorCode.ALREADY_DREW, "이미 선을 그은 플레이어입니다: " + playerName);
+        if (!isValidRow(row)) {
+            throw new BusinessException(LadderGameErrorCode.INVALID_LINE_ROW, "유효하지 않은 높이입니다: " + row);
         }
-        return lines.add(playerName, segmentIndex);
+        return lines.add(playerName, segmentIndex, row);
     }
 
-    public boolean isAlreadyDrew(String playerName) {
-        return lines.hasDrawn(playerName);
+    public boolean canDraw(String playerName) {
+        return lines.countOf(playerName) < LadderLines.MAX_LINES_PER_PLAYER;
+    }
+
+    // 모두가 한 구간에 최대 개수만큼 그어도 자리가 모자라지 않는 최솟값
+    public int getRowCount() {
+        return poles.size() * LadderLines.MAX_LINES_PER_PLAYER;
+    }
+
+    public boolean isValidRow(int row) {
+        return row >= 1 && row <= getRowCount();
+    }
+
+    public boolean isOccupied(int segmentIndex, int row) {
+        return lines.isOccupied(segmentIndex, row);
     }
 
     public void tracePaths() {

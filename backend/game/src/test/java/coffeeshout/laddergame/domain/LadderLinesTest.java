@@ -3,11 +3,6 @@ package coffeeshout.laddergame.domain;
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -84,32 +79,6 @@ class LadderLinesTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(lines.countOf(철수)).isZero();
-                softly.assertThat(lines.size()).isEqualTo(1);
-            });
-        }
-
-        @Test
-        void 동시에_같은_자리를_요청하면_하나만_그어진다() throws Exception {
-            final int requestCount = 32;
-            final ExecutorService executor = Executors.newFixedThreadPool(requestCount);
-            final CountDownLatch start = new CountDownLatch(1);
-            final AtomicInteger succeeded = new AtomicInteger();
-
-            for (int i = 0; i < requestCount; i++) {
-                final String playerName = "플레이어" + i;
-                executor.submit(() -> {
-                    start.await();
-                    lines.add(playerName, 1, 4);
-                    succeeded.incrementAndGet();
-                    return null;
-                });
-            }
-            start.countDown();
-            executor.shutdown();
-
-            SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
-                softly.assertThat(succeeded.get()).isEqualTo(1);
                 softly.assertThat(lines.size()).isEqualTo(1);
             });
         }

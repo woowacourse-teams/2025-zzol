@@ -1048,6 +1048,10 @@
         {
           "name" : "segmentIndex",
           "type" : "int"
+        },
+        {
+          "name" : "row",
+          "type" : "int"
         }
       ],
       "values" : null
@@ -1099,6 +1103,10 @@
         {
           "name" : "bottomRanks",
           "type" : "Map<Integer, Integer>"
+        },
+        {
+          "name" : "rowCount",
+          "type" : "Integer"
         },
         {
           "name" : "endTimeEpochMs",

@@ -87,6 +87,7 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
                 softly.assertThat(prepare.state()).isEqualTo(LadderGameState.PREPARE);
                 softly.assertThat(prepare.poles()).isNotEmpty();
                 softly.assertThat(prepare.bottomRanks()).isNotEmpty();
+                softly.assertThat(prepare.rowCount()).isEqualTo(gamers.size() * 3);
 
                 softly.assertThat(drawing.state()).isEqualTo(LadderGameState.DRAWING);
                 softly.assertThat(drawing.endTimeEpochMs()).isNotNull();
@@ -107,7 +108,7 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
     class 선_긋기_테스트 {
 
         @Test
-        void 이미_선을_그은_플레이어의_재요청은_브로드캐스트되지_않는다() {
+        void 선을_3개_그은_플레이어의_네_번째_요청은_브로드캐스트되지_않는다() {
             final var stateResponses = session.subscribe(stateUrl());
             final var lineResponses = session.subscribe(lineUrl());
 
@@ -117,10 +118,14 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
             stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
             stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
 
-            session.send(drawCommandUrl(), drawRequest(0)); // 첫 번째 요청
-            lineResponses.get(); // 브로드캐스트 수신
+            session.send(drawCommandUrl(), drawRequest(0, 1));
+            session.send(drawCommandUrl(), drawRequest(0, 2));
+            session.send(drawCommandUrl(), drawRequest(0, 3));
+            lineResponses.get();
+            lineResponses.get();
+            lineResponses.get();
 
-            session.send(drawCommandUrl(), drawRequest(1)); // 중복 요청
+            session.send(drawCommandUrl(), drawRequest(0, 4)); // 네 번째 요청
 
             lineResponses.assertNoMessage();
         }
@@ -137,13 +142,13 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
             stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
 
             // 4명 플레이어 → 유효 구간 0~2, 3은 유효하지 않음
-            session.send(drawCommandUrl(), drawRequest(3));
+            session.send(drawCommandUrl(), drawRequest(3, 1));
 
             lineResponses.assertNoMessage();
         }
 
         @Test
-        void 여러_플레이어가_각자_선을_그으면_각_선이_line_토픽으로_브로드캐스트된다() throws Exception {
+        void 여러_플레이어가_각자_고른_높이에_그은_선이_line_토픽으로_브로드캐스트된다() throws Exception {
             try (final TestStompSession 루키세션 = createSession(joinCode.getValue(), "루키")) {
                 final var stateResponses = session.subscribe(stateUrl());
                 final var lineResponses = session.subscribe(lineUrl());
@@ -154,19 +159,19 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
                 stateResponses.get(2, TimeUnit.SECONDS); // PREPARE
                 stateResponses.get(2, TimeUnit.SECONDS); // DRAWING
 
-                session.send(drawCommandUrl(), drawRequest(0));
+                session.send(drawCommandUrl(), drawRequest(0, 6));
                 final LadderLineResponse 꾹이라인 = payloadAs(lineResponses.get(), LadderLineResponse.class);
 
-                루키세션.send(drawCommandUrl(), drawRequest(2));
+                루키세션.send(drawCommandUrl(), drawRequest(2, 6)); // 같은 높이, 기둥을 공유하지 않는 구간
                 final LadderLineResponse 루키라인 = payloadAs(lineResponses.get(), LadderLineResponse.class);
 
                 SoftAssertions.assertSoftly(softly -> {
                     softly.assertThat(꾹이라인.playerName()).isEqualTo("꾹이");
                     softly.assertThat(꾹이라인.segmentIndex()).isEqualTo(0);
-                    softly.assertThat(꾹이라인.row()).isPositive();
+                    softly.assertThat(꾹이라인.row()).isEqualTo(6);
                     softly.assertThat(루키라인.playerName()).isEqualTo("루키");
                     softly.assertThat(루키라인.segmentIndex()).isEqualTo(2);
-                    softly.assertThat(루키라인.row()).isPositive();
+                    softly.assertThat(루키라인.row()).isEqualTo(6);
                 });
             }
         }
@@ -196,7 +201,7 @@ class LadderIntegrationTest extends GameModuleWebSocketTest {
                 new GameStartReadyEvent("evt-" + joinCode.getValue(), joinCode.getValue(), host.getName(), gamers));
     }
 
-    private LadderDrawRequest drawRequest(int segmentIndex) {
-        return new LadderDrawRequest(segmentIndex);
+    private LadderDrawRequest drawRequest(int segmentIndex, int row) {
+        return new LadderDrawRequest(segmentIndex, row);
     }
 }

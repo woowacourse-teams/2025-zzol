@@ -10,6 +10,7 @@ import coffeeshout.laddergame.domain.LadderLine;
 import coffeeshout.room.domain.player.Player;
 import java.util.List;
 import java.util.Optional;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,17 +41,30 @@ class LadderCommandServiceTest {
 
         @Test
         void 유효한_요청은_LadderLine을_반환한다() {
-            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0);
+            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0, 1);
 
             assertThat(result).isPresent();
         }
 
         @Test
-        void 반환된_선의_playerName과_segmentIndex가_요청과_일치한다() {
-            final LadderLine line = commandService.drawLine(game, "꾹이", 1).orElseThrow();
+        void 반환된_선의_playerName_segmentIndex_row가_요청과_일치한다() {
+            final LadderLine line = commandService.drawLine(game, "꾹이", 1, 7).orElseThrow();
 
-            assertThat(line.segmentIndex()).isEqualTo(1);
-            assertThat(line.playerName()).isEqualTo("꾹이");
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(line.playerName()).isEqualTo("꾹이");
+                softly.assertThat(line.segmentIndex()).isEqualTo(1);
+                softly.assertThat(line.row()).isEqualTo(7);
+            });
+        }
+
+        @Test
+        void 한_플레이어가_선을_3개까지_그을_수_있다() {
+            commandService.drawLine(game, "꾹이", 0, 1);
+            commandService.drawLine(game, "꾹이", 0, 2);
+
+            final Optional<LadderLine> third = commandService.drawLine(game, "꾹이", 0, 3);
+
+            assertThat(third).isPresent();
         }
     }
 
@@ -61,7 +75,7 @@ class LadderCommandServiceTest {
         void DRAWING_상태가_아니면_빈_Optional을_반환한다() {
             game.changeToResult();
 
-            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0);
+            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0, 1);
 
             assertThat(result).isEmpty();
         }
@@ -71,38 +85,64 @@ class LadderCommandServiceTest {
             final LadderGame descriptionGame = new LadderGame();
             descriptionGame.setUp(List.of(꾹이.toGamer(), 루키.toGamer(), 엠제이.toGamer()));
 
-            final Optional<LadderLine> result = commandService.drawLine(descriptionGame, "꾹이", 0);
+            final Optional<LadderLine> result = commandService.drawLine(descriptionGame, "꾹이", 0, 1);
 
             assertThat(result).isEmpty();
         }
 
         @Test
         void 미참여자_요청은_빈_Optional을_반환한다() {
-            final Optional<LadderLine> result = commandService.drawLine(game, "없는플레이어", 0);
+            final Optional<LadderLine> result = commandService.drawLine(game, "없는플레이어", 0, 1);
 
             assertThat(result).isEmpty();
         }
 
         @Test
-        void 이미_선을_그은_플레이어_재요청은_빈_Optional을_반환한다() {
-            commandService.drawLine(game, "꾹이", 0);
+        void 선을_3개_그은_플레이어의_네_번째_요청은_빈_Optional을_반환한다() {
+            commandService.drawLine(game, "꾹이", 0, 1);
+            commandService.drawLine(game, "꾹이", 0, 2);
+            commandService.drawLine(game, "꾹이", 0, 3);
 
-            final Optional<LadderLine> second = commandService.drawLine(game, "꾹이", 1);
+            final Optional<LadderLine> fourth = commandService.drawLine(game, "꾹이", 0, 4);
 
-            assertThat(second).isEmpty();
+            assertThat(fourth).isEmpty();
+        }
+
+        @Test
+        void 이미_선이_있는_자리_요청은_빈_Optional을_반환한다() {
+            commandService.drawLine(game, "꾹이", 0, 5);
+
+            final Optional<LadderLine> result = commandService.drawLine(game, "루키", 1, 5);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        void 높이_칸_수를_넘는_row는_빈_Optional을_반환한다() {
+            // 기둥 3개 → 높이 칸 9개 → 10은 유효하지 않음
+            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0, 10);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        void 높이_0은_빈_Optional을_반환한다() {
+            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0, 0);
+
+            assertThat(result).isEmpty();
         }
 
         @Test
         void 유효하지_않은_segmentIndex는_빈_Optional을_반환한다() {
             // 기둥 3개 → 유효한 구간: 0, 1 → 2는 유효하지 않음
-            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 2);
+            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 2, 1);
 
             assertThat(result).isEmpty();
         }
 
         @Test
         void 음수_segmentIndex는_빈_Optional을_반환한다() {
-            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", -1);
+            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", -1, 1);
 
             assertThat(result).isEmpty();
         }
@@ -113,16 +153,16 @@ class LadderCommandServiceTest {
 
         @Test
         void 검증_실패_후_다른_플레이어는_정상적으로_선을_그을_수_있다() {
-            commandService.drawLine(game, "없는플레이어", 0); // 무시됨
+            commandService.drawLine(game, "없는플레이어", 0, 1); // 무시됨
 
-            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0);
+            final Optional<LadderLine> result = commandService.drawLine(game, "꾹이", 0, 1);
 
             assertThat(result).isPresent();
         }
 
         @Test
         void 검증_실패는_게임_상태를_변경하지_않는다() {
-            commandService.drawLine(game, "꾹이", -1); // 무시됨
+            commandService.drawLine(game, "꾹이", -1, 1); // 무시됨
 
             assertThat(game.getState()).isEqualTo(LadderGameState.DRAWING);
         }

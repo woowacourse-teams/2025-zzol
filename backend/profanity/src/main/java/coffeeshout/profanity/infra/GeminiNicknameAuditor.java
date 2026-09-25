@@ -132,7 +132,7 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
         return feedbacks;
     }
 
-    private List<NicknameAuditResult> parseResults(String responseText, List<String> requestedNicknames) {
+    List<NicknameAuditResult> parseResults(String responseText, List<String> requestedNicknames) {
         final List<JsonNode> nodes;
         try {
             nodes = objectMapper.readValue(responseText, new TypeReference<>() {});

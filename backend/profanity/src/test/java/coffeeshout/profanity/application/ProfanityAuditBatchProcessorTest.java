@@ -24,6 +24,7 @@ import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
+import coffeeshout.profanity.fixture.NicknameAuditFixture;
 import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
@@ -437,8 +438,8 @@ class ProfanityAuditBatchProcessorTest {
 
         @Test
         void 판정이_빠진_행은_UNAUDITED로_남고_그_행의_시도_횟수만_오른다() {
-            final NicknameAudit matched = new NicknameAudit("짝맞는닉");
-            final NicknameAudit missing = new NicknameAudit("씨b알");
+            final NicknameAudit matched = NicknameAuditFixture.미검열(1L, "짝맞는닉");
+            final NicknameAudit missing = NicknameAuditFixture.미검열(2L, "씨b알");
             // 모델이 "씨b알"을 "씨발"로 바꿔 돌려준 상황. 어느 행의 판정인지 알 수 없다.
             given(nicknameAuditor.audit(anyList()))
                     .willReturn(List.of(
@@ -448,10 +449,12 @@ class ProfanityAuditBatchProcessorTest {
 
             processor.process(List.of(matched, missing));
 
-            assertThat(missing.getStatus()).isEqualTo(NicknameAuditStatus.UNAUDITED);
             final ArgumentCaptor<Collection<Long>> ids = ArgumentCaptor.captor();
             then(auditRepository).should().incrementAttemptCount(ids.capture());
-            assertThat(ids.getValue()).as("판정을 받은 행까지 세면 애먼 상한에 닿는다.").hasSize(1);
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(missing.getStatus()).isEqualTo(NicknameAuditStatus.UNAUDITED);
+            softly.assertThat(ids.getValue()).as("판정을 받은 행까지 세면 애먼 상한에 닿는다.").containsExactly(2L);
+            softly.assertAll();
         }
 
         @Test

@@ -58,4 +58,12 @@ public interface NicknameAuditJpaRepository
             + "AND n.attemptCount >= :maxAttempts "
             + "AND n.status = coffeeshout.profanity.domain.audit.NicknameAuditStatus.UNAUDITED")
     int markDeadLetterAtAttemptLimit(@Param("ids") Collection<Long> ids, @Param("maxAttempts") int maxAttempts);
+
+    /** 영속성 컨텍스트를 비워 뒤이은 조회가 갱신 전 엔티티를 돌려받지 않게 한다. */
+    @Override
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE NicknameAudit n SET n.status = :decision "
+            + "WHERE n.id = :id AND n.reviewSample = true "
+            + "AND n.status = coffeeshout.profanity.domain.audit.NicknameAuditStatus.CLEAN")
+    int claimUnreviewedSample(@Param("id") Long id, @Param("decision") NicknameAuditStatus decision);
 }

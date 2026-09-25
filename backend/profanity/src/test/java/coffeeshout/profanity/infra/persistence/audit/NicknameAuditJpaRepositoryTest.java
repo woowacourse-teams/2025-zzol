@@ -144,13 +144,36 @@ class NicknameAuditJpaRepositoryTest extends ServiceTest {
                     .containsExactly("대기표본");
         }
 
-        private void save(String nickname, NicknameAuditStatus status, boolean reviewSample) {
+        @Test
+        void 같은_표본을_두_번_선점하면_두_번째는_0행이다() {
+            final Long id = save("대기표본", NicknameAuditStatus.CLEAN, true);
+
+            final int first = auditRepository.claimUnreviewedSample(id, NicknameAuditStatus.BLOCKED);
+            final int second = auditRepository.claimUnreviewedSample(id, NicknameAuditStatus.ALLOWED);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(first).isEqualTo(1);
+                softly.assertThat(second).as("앞선 결정을 덮어쓰지 않는다.").isZero();
+                softly.assertThat(auditRepository.findById(id).orElseThrow().getStatus())
+                        .isEqualTo(NicknameAuditStatus.BLOCKED);
+            });
+        }
+
+        @Test
+        void 표본이_아닌_CLEAN은_선점하지_않는다() {
+            final Long id = save("일반통과", NicknameAuditStatus.CLEAN, false);
+
+            assertThat(auditRepository.claimUnreviewedSample(id, NicknameAuditStatus.ALLOWED))
+                    .isZero();
+        }
+
+        private Long save(String nickname, NicknameAuditStatus status, boolean reviewSample) {
             final NicknameAudit audit = new NicknameAudit(nickname);
             audit.complete(status, AiConfidence.of(0.9), "사유");
             if (reviewSample) {
                 audit.markReviewSample();
             }
-            auditRepository.save(audit);
+            return auditRepository.save(audit).getId();
         }
     }
 

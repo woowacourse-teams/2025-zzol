@@ -76,9 +76,4 @@ public class NicknameAudit {
     public void markReviewSample() {
         this.reviewSample = true;
     }
-
-    /** 표본으로 뽑혔고 운영자가 아직 정상·미탐을 정하지 않았다. 결정하면 ALLOWED나 BLOCKED로 바뀐다. */
-    public boolean isUnreviewedSample() {
-        return reviewSample && status == NicknameAuditStatus.CLEAN;
-    }
 }

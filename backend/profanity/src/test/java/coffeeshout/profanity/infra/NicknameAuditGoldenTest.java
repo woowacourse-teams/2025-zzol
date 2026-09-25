@@ -4,12 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 
-import coffeeshout.profanity.application.eval.NicknameAuditEvaluation;
-import coffeeshout.profanity.application.eval.NicknameAuditEvaluator;
 import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Predicted;
+import coffeeshout.profanity.eval.NicknameAuditEvaluator;
 import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import coffeeshout.profanity.fixture.NicknameGoldenSetFixture;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,7 +64,11 @@ class NicknameAuditGoldenTest {
         Files.createDirectories(report.getParent());
         Files.writeString(report, evaluation.toMarkdown(model + ", 피드백 예시 없는 기본 프롬프트"));
         log.info("골든셋 리포트: {}", report.toAbsolutePath());
-        assertThat(report).exists();
+        // 리포트를 먼저 써 두고 판정한다. 실패한 회차도 무엇이 비었는지 리포트로 남는다
+        final int missing = evaluation.confusion().values().stream()
+                .mapToInt(row -> row.get(Predicted.MISSING))
+                .sum();
+        assertThat(missing).as("모든 배치가 실패했다. 키·모델 이름·쿼터를 확인한다").isLessThan(evaluation.itemCount());
     }
 
     private static GeminiNicknameAuditor 검열기(NicknameAuditProperties properties) {

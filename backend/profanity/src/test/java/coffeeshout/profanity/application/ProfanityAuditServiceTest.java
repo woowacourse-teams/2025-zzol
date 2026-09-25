@@ -13,6 +13,7 @@ import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
+import coffeeshout.profanity.fixture.NicknameAuditFixture;
 import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
@@ -23,6 +24,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -158,6 +161,9 @@ class ProfanityAuditServiceTest {
 
         private static final int BACKLOG = 10_000;
 
+        /** 읽을 때마다 새 행이 온다. id가 겹치면 이미 보낸 행으로 보고 건너뛴다. */
+        private final AtomicLong ids = new AtomicLong();
+
         @Test
         void 적체가_커도_한_회차는_시간_예산_안에서_끝난다() {
             final StubClock clock = new StubClock(Instant.parse("2026-09-03T00:00:00Z"));
@@ -247,6 +253,55 @@ class ProfanityAuditServiceTest {
                     .containsExactly(0, 1, 1);
         }
 
+        /**
+         * 판정을 붙이지 못한 행은 한 회차에 한 번만 보낸다.
+         *
+         * <p>배치 대부분이 처리되면 커서는 그 자리에 남는다. 짝을 못 찾은 행은 UNAUDITED 그대로라 같은
+         * 페이지 맨 앞에 다시 잡힌다. 다시 보내면 Gemini를 또 부르고 시도 횟수를 한 회차 안에 다 태워
+         * DEAD_LETTER까지 내려간다.
+         */
+        @Test
+        void 판정을_붙이지_못한_행은_한_회차에_한_번만_보낸다() {
+            final StubClock clock = new StubClock(Instant.parse("2026-09-03T00:00:00Z"));
+            final ProfanityAuditService target = productionSizedService(clock);
+            final List<NicknameAudit> queue = new ArrayList<>();
+            for (long id = 1; id <= PRODUCTION_BATCH_SIZE * 2 + 50; id++) {
+                queue.add(NicknameAuditFixture.미검열(id, "닉" + id));
+            }
+            final NicknameAudit unmatched = queue.getFirst();
+            final AtomicInteger unmatchedSent = new AtomicInteger();
+
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn((long) queue.size());
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willAnswer(invocation -> {
+                        final Pageable pageable = invocation.getArgument(1);
+                        final int from = Math.min((int) pageable.getOffset(), queue.size());
+                        final int to = Math.min(from + pageable.getPageSize(), queue.size());
+                        return List.copyOf(queue.subList(from, to));
+                    });
+            // 첫 행만 판정을 못 받아 UNAUDITED로 남고 나머지는 스캔에서 빠진다.
+            given(batchProcessor.process(any())).willAnswer(invocation -> {
+                final List<NicknameAudit> batch = invocation.getArgument(0);
+                if (batch.contains(unmatched)) {
+                    unmatchedSent.incrementAndGet();
+                }
+                final List<NicknameAudit> settled =
+                        batch.stream().filter(entity -> entity != unmatched).toList();
+                queue.removeAll(settled);
+                return settled.size();
+            });
+
+            target.auditPending();
+
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(unmatchedSent.get())
+                    .as("같은 회차에 다시 보내면 시도 횟수를 한 회차 안에 다 태운다.")
+                    .isEqualTo(1);
+            softly.assertThat(queue).as("나머지 적체는 이번 회차에 다 처리한다.").containsExactly(unmatched);
+            softly.assertAll();
+        }
+
         private ProfanityAuditService productionSizedService(Clock clock) {
             final NicknameAuditProperties production =
                     NicknameAuditPropertiesFixture.회차(PRODUCTION_BATCH_SIZE, Duration.ofSeconds(MAX_RUN_SECONDS), 3);
@@ -270,7 +325,8 @@ class ProfanityAuditServiceTest {
         private List<NicknameAudit> batchOf(int size) {
             final List<NicknameAudit> batch = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
-                batch.add(new NicknameAudit("닉" + i));
+                final long id = ids.incrementAndGet();
+                batch.add(NicknameAuditFixture.미검열(id, "닉" + id));
             }
             return batch;
         }

@@ -36,6 +36,8 @@ public interface NicknameAuditRepository {
 
     Page<NicknameAudit> findByStatus(NicknameAuditStatus status, Pageable pageable);
 
+    Page<NicknameAudit> findByReviewSampleTrueAndStatus(NicknameAuditStatus status, Pageable pageable);
+
     Set<String> findNicknamesByStatus(NicknameAuditStatus status);
 
     boolean existsByNickname(String nickname);

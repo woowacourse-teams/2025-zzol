@@ -98,6 +98,39 @@ class AdminProfanityControllerTest {
     }
 
     @Nested
+    class 표본_검토 {
+
+        @Test
+        void 미검토_표본을_감사_목록과_같은_크기와_정렬로_조회한다() {
+            given(auditService.listUnreviewedSamples(any(Pageable.class)))
+                    .willReturn(new PageImpl<>(List.<NicknameAudit>of()));
+
+            controller().samples(2);
+
+            then(auditService)
+                    .should()
+                    .listUnreviewedSamples(PageRequest.of(
+                            2,
+                            10,
+                            org.springframework.data.domain.Sort.by("auditedAt").descending()));
+        }
+
+        @Test
+        void 정상_확정을_위임한다() {
+            controller().confirmSampleOk(1L);
+
+            then(feedbackService).should().allowSample(1L);
+        }
+
+        @Test
+        void 미탐_확정을_위임한다() {
+            controller().confirmSampleMiss(1L);
+
+            then(feedbackService).should().blockSample(1L);
+        }
+    }
+
+    @Nested
     class words {
 
         @Test

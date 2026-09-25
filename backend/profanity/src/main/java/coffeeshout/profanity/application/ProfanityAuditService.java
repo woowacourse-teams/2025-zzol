@@ -81,6 +81,11 @@ public class ProfanityAuditService {
         return auditRepository.findByStatus(status, pageable);
     }
 
+    /** 운영자가 아직 정상·미탐을 정하지 않은 CLEAN 표본. 결정하면 ALLOWED·BLOCKED가 되어 목록에서 빠진다. */
+    public Page<NicknameAudit> listUnreviewedSamples(Pageable pageable) {
+        return auditRepository.findByReviewSampleTrueAndStatus(NicknameAuditStatus.CLEAN, pageable);
+    }
+
     /**
      * 트랜잭션을 요구한다. {@code insertUnaudited}가 {@code @Modifying} 네이티브 쿼리라
      * 주변 트랜잭션이 없으면 {@code TransactionRequiredException}으로 실패한다 —

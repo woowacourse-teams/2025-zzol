@@ -14,6 +14,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 
 class NicknameAuditJpaRepositoryTest extends ServiceTest {
 
@@ -125,6 +126,31 @@ class NicknameAuditJpaRepositoryTest extends ServiceTest {
 
             assertThat(auditRepository.findNicknamesWithTerminalStatus(List.of("검열된닉")))
                     .containsOnly("검열된닉");
+        }
+    }
+
+    @Nested
+    class findByReviewSampleTrueAndStatus_미검토_표본 {
+
+        @Test
+        void CLEAN_표본만_돌려주고_결정한_표본과_표본이_아닌_CLEAN은_뺀다() {
+            save("대기표본", NicknameAuditStatus.CLEAN, true);
+            save("결정표본", NicknameAuditStatus.BLOCKED, true);
+            save("일반통과", NicknameAuditStatus.CLEAN, false);
+
+            assertThat(auditRepository.findByReviewSampleTrueAndStatus(
+                            NicknameAuditStatus.CLEAN, PageRequest.of(0, 10)))
+                    .extracting(NicknameAudit::getNickname)
+                    .containsExactly("대기표본");
+        }
+
+        private void save(String nickname, NicknameAuditStatus status, boolean reviewSample) {
+            final NicknameAudit audit = new NicknameAudit(nickname);
+            audit.complete(status, AiConfidence.of(0.9), "사유");
+            if (reviewSample) {
+                audit.markReviewSample();
+            }
+            auditRepository.save(audit);
         }
     }
 

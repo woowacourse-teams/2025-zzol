@@ -13,6 +13,7 @@ import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.WordSource;
+import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
@@ -147,6 +148,74 @@ class ProfanityFeedbackServiceTest {
             }
 
             then(profanityWordManagementService).should(never()).add(any(), any(), any());
+        }
+    }
+
+    /**
+     * 표본 결정은 허용·차단 경로를 그대로 타되, 검토 대기 중인 표본에만 열려 있어야 한다.
+     * FLAGGED 행이 넘어오면 오탐으로, 이미 결정한 표본이 넘어오면 피드백이 두 번 쌓인다.
+     */
+    @Nested
+    class 표본_결정 {
+
+        @Test
+        void 정상으로_확정하면_ALLOWED가_되고_표본_표시는_남는다() {
+            final NicknameAudit sample = unreviewedSample("용감한호랑이");
+            given(auditRepository.findById(1L)).willReturn(Optional.of(sample));
+
+            service.allowSample(1L);
+
+            assertThat(sample.getStatus()).isEqualTo(NicknameAuditStatus.ALLOWED);
+            assertThat(sample.isReviewSample()).isTrue();
+            then(profanityWordManagementService).should().operatorAllow("용감한호랑이");
+        }
+
+        @Test
+        void 미탐으로_확정하면_BLOCKED가_되고_사전에_오른다() {
+            final NicknameAudit sample = unreviewedSample("욕설닉네임");
+            given(auditRepository.findById(1L)).willReturn(Optional.of(sample));
+            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL))
+                    .willReturn(true);
+
+            service.blockSample(1L);
+
+            assertThat(sample.getStatus()).isEqualTo(NicknameAuditStatus.BLOCKED);
+            then(eventPublisher).should().publishEvent(any(ProfanityWordBlockedEvent.class));
+        }
+
+        @Test
+        void 표본이_아닌_행은_거절한다() {
+            final NicknameAudit flagged = auditEntityWith("걸린닉네임");
+            flagged.complete(NicknameAuditStatus.FLAGGED, AiConfidence.of(0.9), "욕설");
+            given(auditRepository.findById(1L)).willReturn(Optional.of(flagged));
+
+            assertCoffeeShoutException(() -> service.allowSample(1L), NicknameAuditErrorCode.NOT_UNREVIEWED_SAMPLE);
+            assertThat(flagged.getStatus()).isEqualTo(NicknameAuditStatus.FLAGGED);
+            then(feedbackRepository).should(never()).save(any());
+        }
+
+        @Test
+        void 이미_결정한_표본은_거절한다() {
+            final NicknameAudit decided = unreviewedSample("용감한호랑이");
+            decided.updateStatus(NicknameAuditStatus.ALLOWED);
+            given(auditRepository.findById(1L)).willReturn(Optional.of(decided));
+
+            assertCoffeeShoutException(() -> service.blockSample(1L), NicknameAuditErrorCode.NOT_UNREVIEWED_SAMPLE);
+            then(profanityWordManagementService).should(never()).add(any(), any(), any());
+        }
+
+        @Test
+        void 존재하지_않는_표본은_예외가_발생한다() {
+            given(auditRepository.findById(999L)).willReturn(Optional.empty());
+
+            assertCoffeeShoutException(() -> service.allowSample(999L), NicknameAuditErrorCode.AUDIT_NOT_FOUND);
+        }
+
+        private NicknameAudit unreviewedSample(String nickname) {
+            final NicknameAudit audit = auditEntityWith(nickname);
+            audit.complete(NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반");
+            audit.markReviewSample();
+            return audit;
         }
     }
 

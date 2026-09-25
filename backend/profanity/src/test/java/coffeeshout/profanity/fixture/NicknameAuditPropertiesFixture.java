@@ -56,24 +56,6 @@ public final class NicknameAuditPropertiesFixture {
                 스텁_꺼짐);
     }
 
-    public static NicknameAuditProperties 표본(double cleanSampleRatio, int cleanSampleMax) {
-        return new NicknameAuditProperties(
-                "api-key",
-                모델,
-                0.85,
-                배치_크기,
-                20,
-                2,
-                요청_타임아웃_기본,
-                회차_예산_기본,
-                시도_상한_기본,
-                cleanSampleRatio,
-                cleanSampleMax,
-                "0 0 0/12 * * *",
-                new Seed(0),
-                스텁_꺼짐);
-    }
-
     public static NicknameAuditProperties 적재(int seedCount) {
         return of("api-key", 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(seedCount));
     }

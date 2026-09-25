@@ -73,7 +73,12 @@ public class NicknameAudit {
         this.auditedAt = Instant.now();
     }
 
-    public void markReviewSample() {
+    /** @return 이번 호출로 새로 표본이 됐으면 true, 이미 표본이었으면 false */
+    public boolean markReviewSample() {
+        if (reviewSample) {
+            return false;
+        }
         this.reviewSample = true;
+        return true;
     }
 }

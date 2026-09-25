@@ -4,6 +4,7 @@ import coffeeshout.global.lock.RedisLock;
 import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
+import coffeeshout.profanity.domain.audit.CleanSampler;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import io.micrometer.core.instrument.Gauge;
@@ -13,7 +14,6 @@ import jakarta.annotation.PostConstruct;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -135,8 +135,8 @@ public class ProfanityAuditService {
         int page = 0;
         List<NicknameAudit> batch = readPage(page);
         int processedTotal = 0;
-        // 표본 상한은 배치가 아니라 회차 단위다. 배치마다 새로 주면 적체를 몰아 처리하는 회차에 배치 수만큼 곱해진다.
-        final AtomicInteger sampleBudget = new AtomicInteger(properties.cleanSampleMax());
+        // 표본 상한은 배치가 아니라 회차 단위다. 배치마다 새로 만들면 적체를 몰아 처리하는 회차에 배치 수만큼 곱해진다.
+        final CleanSampler sampler = new CleanSampler(properties.cleanSampleRatio(), properties.cleanSampleMax());
 
         while (!batch.isEmpty()) {
             // 실행기의 shutdownNow가 보낸 인터럽트다. 종료가 회차 끝을 기다리지 않게 배치를 시작하기 전에 본다.
@@ -145,7 +145,7 @@ public class ProfanityAuditService {
                 log.warn("종료 요청으로 닉네임 검열 회차 중단 — 누적 {}건", processedTotal);
                 break;
             }
-            final int processed = batchProcessor.process(batch, sampleBudget);
+            final int processed = batchProcessor.process(batch, sampler);
             processedTotal += processed;
             log.info("닉네임 검열 진행: 이번 배치 {}건 중 {}건 처리, 누적 {}건", batch.size(), processed, processedTotal);
 

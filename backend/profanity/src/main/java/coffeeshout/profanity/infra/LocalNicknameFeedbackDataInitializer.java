@@ -169,7 +169,6 @@ public class LocalNicknameFeedbackDataInitializer implements ApplicationRunner {
         for (int i = 0; i < AGREED_BLOCKED_COUNT; i++) {
             samples.add(new Sample(
                     AGREED_BLOCKED.get(i % AGREED_BLOCKED.size()),
-                    true,
                     0.86 + random.nextDouble() * 0.13,
                     OperatorDecision.BLOCKED,
                     pick(AGREED_BLOCKED_REASONS, random)));
@@ -177,16 +176,15 @@ public class LocalNicknameFeedbackDataInitializer implements ApplicationRunner {
         for (int i = 0; i < AGREED_ALLOWED_COUNT; i++) {
             samples.add(new Sample(
                     AGREED_ALLOWED.get(i % AGREED_ALLOWED.size()),
-                    false,
                     random.nextDouble() * 0.35,
                     OperatorDecision.ALLOWED,
                     pick(AGREED_ALLOWED_REASONS, random)));
         }
         samples.addAll(FALSE_POSITIVE.stream()
-                .map(sample -> sample.withDecision(true, OperatorDecision.ALLOWED))
+                .map(sample -> sample.withDecision(OperatorDecision.ALLOWED))
                 .toList());
         samples.addAll(FALSE_NEGATIVE.stream()
-                .map(sample -> sample.withDecision(false, OperatorDecision.BLOCKED))
+                .map(sample -> sample.withDecision(OperatorDecision.BLOCKED))
                 .toList());
 
         return samples;
@@ -220,21 +218,20 @@ public class LocalNicknameFeedbackDataInitializer implements ApplicationRunner {
     }
 
     /**
-     * 표에 넣을 한 줄. {@code aiFlagged} 와 결정은 목록이 정해 주므로 뒤에서 채운다.
+     * 표에 넣을 한 줄. 결정은 목록이 정해 주므로 뒤에서 채운다.
      */
-    private record Sample(
-            String nickname, boolean aiFlagged, double confidence, OperatorDecision decision, String reason) {
+    private record Sample(String nickname, double confidence, OperatorDecision decision, String reason) {
 
         private Sample(String nickname, double confidence, String reason) {
-            this(nickname, false, confidence, OperatorDecision.ALLOWED, reason);
+            this(nickname, confidence, OperatorDecision.ALLOWED, reason);
         }
 
-        private Sample withDecision(boolean aiFlagged, OperatorDecision decision) {
-            return new Sample(nickname, aiFlagged, confidence, decision, reason);
+        private Sample withDecision(OperatorDecision decision) {
+            return new Sample(nickname, confidence, decision, reason);
         }
 
         private NicknameFeedback toEntity() {
-            return new NicknameFeedback(nickname, aiFlagged, AiConfidence.of(confidence), decision, reason);
+            return new NicknameFeedback(nickname, AiConfidence.of(confidence), decision, reason);
         }
     }
 }

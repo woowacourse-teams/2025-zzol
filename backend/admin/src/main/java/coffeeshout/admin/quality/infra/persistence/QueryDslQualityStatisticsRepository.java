@@ -2,9 +2,8 @@ package coffeeshout.admin.quality.infra.persistence;
 
 import coffeeshout.admin.quality.domain.NicknameAuditQuality;
 import coffeeshout.admin.quality.domain.QualityStatisticsRepository;
-import coffeeshout.profanity.domain.audit.NicknameFeedback.OperatorDecision;
+import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.QNicknameAudit;
-import coffeeshout.profanity.domain.audit.QNicknameFeedback;
 import coffeeshout.report.domain.ReportStatus;
 import coffeeshout.report.infra.persistence.QReport;
 import com.querydsl.core.Tuple;
@@ -20,36 +19,43 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class QueryDslQualityStatisticsRepository implements QualityStatisticsRepository {
 
-    private static final QNicknameFeedback FEEDBACK = QNicknameFeedback.nicknameFeedback;
     private static final QReport REPORT = QReport.report;
     private static final QNicknameAudit AUDIT = QNicknameAudit.nicknameAudit;
 
     private final JPAQueryFactory queryFactory;
 
+    /**
+     * 운영자가 결정한 감사 행(ALLOWED·BLOCKED)을 표본 여부와 함께 센다.
+     *
+     * <p>표본이 아닌 행이 ALLOWED·BLOCKED가 되는 건 AI가 FLAGGED·PENDING으로 걸렀을 때뿐이라, 그중 ALLOWED는
+     * 오탐이다. 표본은 AI가 CLEAN으로 통과시킨 행이라 BLOCKED면 미탐이다. 기간은 AI 판정 시각으로 자른다.
+     */
     @Override
     public NicknameAuditQuality findNicknameAuditQuality(Instant from, Instant to) {
-        // AI 판정과 관리자 결정의 네 조합을 한 번에 집계한다. 조합마다 쿼리를 돌리면
-        // 네 번 왕복하면서도 서로 다른 시점의 데이터를 섞어 합이 안 맞을 수 있다.
+        // 조합마다 쿼리를 돌리면 서로 다른 시점의 데이터를 섞어 합이 안 맞을 수 있어 한 번에 집계한다.
         final List<Tuple> rows = queryFactory
-                .select(FEEDBACK.aiFlagged, FEEDBACK.operatorDecision, FEEDBACK.count())
-                .from(FEEDBACK)
-                .where(FEEDBACK.createdAt.goe(from), FEEDBACK.createdAt.lt(to))
-                .groupBy(FEEDBACK.aiFlagged, FEEDBACK.operatorDecision)
+                .select(AUDIT.reviewSample, AUDIT.status, AUDIT.count())
+                .from(AUDIT)
+                .where(
+                        AUDIT.status.in(NicknameAuditStatus.ALLOWED, NicknameAuditStatus.BLOCKED),
+                        AUDIT.auditedAt.goe(from),
+                        AUDIT.auditedAt.lt(to))
+                .groupBy(AUDIT.reviewSample, AUDIT.status)
                 .fetch();
 
         long total = 0;
         long falsePositive = 0;
         long falseNegative = 0;
         for (Tuple row : rows) {
-            final boolean aiFlagged = Boolean.TRUE.equals(row.get(FEEDBACK.aiFlagged));
-            final OperatorDecision decision = row.get(FEEDBACK.operatorDecision);
-            final long count = nullToZero(row.get(FEEDBACK.count()));
+            final boolean reviewSample = Boolean.TRUE.equals(row.get(AUDIT.reviewSample));
+            final NicknameAuditStatus status = row.get(AUDIT.status);
+            final long count = nullToZero(row.get(AUDIT.count()));
 
             total += count;
-            if (aiFlagged && decision == OperatorDecision.ALLOWED) {
+            if (!reviewSample && status == NicknameAuditStatus.ALLOWED) {
                 falsePositive += count;
             }
-            if (!aiFlagged && decision == OperatorDecision.BLOCKED) {
+            if (reviewSample && status == NicknameAuditStatus.BLOCKED) {
                 falseNegative += count;
             }
         }

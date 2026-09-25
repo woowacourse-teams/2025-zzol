@@ -31,8 +31,8 @@ public class ProfanityFeedbackService {
         final NicknameAudit audit = getAuditEntity(auditId);
         final String nickname = audit.getNickname();
         audit.updateStatus(NicknameAuditStatus.ALLOWED);
-        feedbackRepository.save(new NicknameFeedback(
-                nickname, true, audit.getConfidence(), NicknameFeedback.OperatorDecision.ALLOWED, null));
+        feedbackRepository.save(
+                new NicknameFeedback(nickname, audit.getConfidence(), NicknameFeedback.OperatorDecision.ALLOWED, null));
         profanityWordManagementService.operatorAllow(nickname);
         log.info("닉네임 허용 처리: auditId={}, nickname={}", auditId, nickname);
     }
@@ -42,8 +42,8 @@ public class ProfanityFeedbackService {
         final NicknameAudit audit = getAuditEntity(auditId);
         final String nickname = audit.getNickname();
         audit.updateStatus(NicknameAuditStatus.BLOCKED);
-        feedbackRepository.save(new NicknameFeedback(
-                nickname, true, audit.getConfidence(), NicknameFeedback.OperatorDecision.BLOCKED, null));
+        feedbackRepository.save(
+                new NicknameFeedback(nickname, audit.getConfidence(), NicknameFeedback.OperatorDecision.BLOCKED, null));
         if (profanityWordManagementService.add(nickname, Language.detect(nickname), WordSource.MANUAL)) {
             eventPublisher.publishEvent(new ProfanityWordBlockedEvent(nickname));
         }

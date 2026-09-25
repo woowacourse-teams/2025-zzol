@@ -3,10 +3,8 @@ package coffeeshout.profanity.infra;
 import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
-import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
-import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
 import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -26,8 +24,6 @@ import io.micrometer.core.instrument.Timer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
@@ -170,39 +166,11 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
                         properties.flaggedThreshold()));
             } catch (Exception e) {
                 itemParseFailureCounter.increment();
-                log.warn("[NicknameAudit] Gemini 응답 항목 파싱 실패, PENDING 처리. index={}, node={}", i, node, e);
-                results.add(new NicknameAuditResult(
-                        requestedNicknames.get(i), NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 파싱 실패"));
+                log.warn("[NicknameAudit] Gemini 응답 항목 파싱 실패, 결과에서 뺀다. index={}, node={}", i, node, e);
             }
         }
-
-        for (int i = processCount; i < requestedNicknames.size(); i++) {
-            log.warn("[NicknameAudit] 응답 누락 닉네임 PENDING 처리. index={}, nickname={}", i, requestedNicknames.get(i));
-            results.add(new NicknameAuditResult(
-                    requestedNicknames.get(i), NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 항목 수 불일치"));
-        }
-
-        fillUnmatched(results, requestedNicknames);
 
         return results;
-    }
-
-    /**
-     * 요청한 닉네임이 모두 결과에 들어가도록 메운다.
-     *
-     * <p>응답 개수는 맞아도 이름이 어긋날 수 있다(AI가 공백을 붙이거나 글자를 바꿔 돌려주는 경우).
-     * 호출자는 우리가 보낸 이름으로 판정을 찾으므로, 짝을 못 찾은 닉네임이 남으면 그 행은 영영 UNAUDITED로 남는다.
-     */
-    private void fillUnmatched(List<NicknameAuditResult> results, List<String> requestedNicknames) {
-        final Set<String> covered =
-                results.stream().map(NicknameAuditResult::nickname).collect(Collectors.toSet());
-        for (final String requested : requestedNicknames) {
-            if (!covered.contains(requested)) {
-                log.warn("[NicknameAudit] 응답에서 짝을 찾지 못한 닉네임 PENDING 처리. nickname={}", requested);
-                results.add(new NicknameAuditResult(
-                        requested, NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 닉네임 불일치"));
-            }
-        }
     }
 
     private record GeminiAuditItem(

@@ -1,4 +1,4 @@
-package coffeeshout.profanity.application.eval;
+package coffeeshout.profanity.eval;
 
 import static coffeeshout.profanity.fixture.NicknameGoldenSetFixture.경계;
 import static coffeeshout.profanity.fixture.NicknameGoldenSetFixture.욕설;
@@ -7,16 +7,17 @@ import static coffeeshout.profanity.fixture.NicknameGoldenSetFixture.정상;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
-import coffeeshout.profanity.application.eval.GoldenItem.Expected;
-import coffeeshout.profanity.application.eval.NicknameAuditEvaluation.Mismatch;
-import coffeeshout.profanity.application.eval.NicknameAuditEvaluation.Predicted;
-import coffeeshout.profanity.application.eval.NicknameAuditEvaluation.Rate;
-import coffeeshout.profanity.application.eval.NicknameAuditEvaluation.Scores;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
+import coffeeshout.profanity.eval.GoldenItem.Expected;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Mismatch;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Predicted;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Rate;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Scores;
+import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import coffeeshout.profanity.fixture.NicknameGoldenSetFixture;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,11 @@ import org.junit.jupiter.api.Test;
 
 class NicknameAuditEvaluatorTest {
 
-    private final NicknameAuditEvaluator evaluator = new NicknameAuditEvaluator(new TextNormalizer(), 2);
+    // 운영 설정과 같은 조각 최소 길이를 쓴다
+    private static final int 조각_최소_길이 =
+            NicknameAuditPropertiesFixture.API_키("api-key").minTermLength();
+
+    private final NicknameAuditEvaluator evaluator = new NicknameAuditEvaluator(new TextNormalizer(), 조각_최소_길이);
 
     private static NicknameAuditResult 판정(String nickname, NicknameAuditStatus status, String... terms) {
         return new NicknameAuditResult(nickname, status, AiConfidence.of(0.9), "사유", List.of(terms));
@@ -182,6 +187,19 @@ class NicknameAuditEvaluatorTest {
     }
 
     @Test
+    void 요청하지_않은_닉네임의_결과는_버려_뒤_배치_항목을_가로채지_않는다() {
+        // 첫 배치 응답에 둘째 배치 닉네임 판정이 섞여 온다
+        final NicknameAuditor 검열기 = nicknames -> nicknames.contains("첫째닉")
+                ? List.of(판정("첫째닉", NicknameAuditStatus.CLEAN), 판정("둘째닉", NicknameAuditStatus.FLAGGED))
+                : List.of(판정("둘째닉", NicknameAuditStatus.CLEAN));
+
+        final NicknameAuditEvaluation 결과 =
+                evaluator.evaluate(List.of(정상("첫째닉", "일반닉네임"), 정상("둘째닉", "일반닉네임")), 검열기, 1, 1);
+
+        assertThat(결과.confusion().get(Expected.CLEAN)).containsEntry(Predicted.CLEAN, 2);
+    }
+
+    @Test
     void 골든셋_CSV는_평가에_쓸_수_있는_형태다() {
         final List<GoldenItem> 골든셋 = NicknameGoldenSetFixture.골든셋();
         final TextNormalizer normalizer = new TextNormalizer();
@@ -199,7 +217,7 @@ class NicknameAuditEvaluatorTest {
                             .isNotEmpty()
                             .allSatisfy(term -> {
                                 final String normalized = normalizer.normalize(term);
-                                assertThat(normalized).hasSizeGreaterThanOrEqualTo(2);
+                                assertThat(normalized).hasSizeGreaterThanOrEqualTo(조각_최소_길이);
                                 assertThat(normalizer.normalize(item.nickname()))
                                         .contains(normalized);
                             }));

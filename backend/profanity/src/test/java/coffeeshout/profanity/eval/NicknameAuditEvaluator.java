@@ -1,15 +1,16 @@
-package coffeeshout.profanity.application.eval;
+package coffeeshout.profanity.eval;
 
-import coffeeshout.profanity.application.eval.GoldenItem.Expected;
-import coffeeshout.profanity.application.eval.NicknameAuditEvaluation.Mismatch;
-import coffeeshout.profanity.application.eval.NicknameAuditEvaluation.Predicted;
-import coffeeshout.profanity.application.eval.NicknameAuditEvaluation.Rate;
-import coffeeshout.profanity.application.eval.NicknameAuditEvaluation.Scores;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
+import coffeeshout.profanity.eval.GoldenItem.Expected;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Mismatch;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Predicted;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Rate;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Scores;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,12 @@ public class NicknameAuditEvaluator {
         final Map<String, NicknameAuditResult> byNickname = new HashMap<>();
         for (int from = 0; from < nicknames.size(); from += batchSize) {
             final List<String> batch = nicknames.subList(from, Math.min(from + batchSize, nicknames.size()));
-            auditBatch(auditor, batch).forEach(result -> byNickname.putIfAbsent(result.nickname(), result));
+            // 응답에 섞인 다른 배치 닉네임이 뒤 항목의 판정을 가로채지 않게 요청한 닉네임만 받는다
+            // HashSet이라 모델이 nickname을 null로 돌려줘도 contains가 터지지 않는다
+            final Set<String> requested = new HashSet<>(batch);
+            auditBatch(auditor, batch).stream()
+                    .filter(result -> requested.contains(result.nickname()))
+                    .forEach(result -> byNickname.putIfAbsent(result.nickname(), result));
         }
         return byNickname;
     }

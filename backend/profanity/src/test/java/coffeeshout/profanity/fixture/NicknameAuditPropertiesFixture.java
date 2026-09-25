@@ -21,35 +21,23 @@ public final class NicknameAuditPropertiesFixture {
     private NicknameAuditPropertiesFixture() {}
 
     public static NicknameAuditProperties API_키(String geminiApiKey) {
-        return of(geminiApiKey, 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(0));
+        return of(geminiApiKey, 모델, 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(0));
     }
 
     public static NicknameAuditProperties 모델(String geminiApiKey, String model) {
-        return new NicknameAuditProperties(
-                geminiApiKey,
-                model,
-                0.85,
-                배치_크기,
-                20,
-                2,
-                요청_타임아웃_기본,
-                회차_예산_기본,
-                시도_상한_기본,
-                "0 0 0/12 * * *",
-                new Seed(0),
-                스텁_꺼짐);
+        return of(geminiApiKey, model, 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(0));
     }
 
     public static NicknameAuditProperties 요청_타임아웃(Duration requestTimeout) {
-        return of("api-key", 배치_크기, requestTimeout, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(0));
+        return of("api-key", 모델, 배치_크기, requestTimeout, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(0));
     }
 
     public static NicknameAuditProperties 회차(int batchSize, Duration maxRunDuration, int maxAttempts) {
-        return of("api-key", batchSize, 요청_타임아웃_기본, maxRunDuration, maxAttempts, 스텁_꺼짐, new Seed(0));
+        return of("api-key", 모델, batchSize, 요청_타임아웃_기본, maxRunDuration, maxAttempts, 스텁_꺼짐, new Seed(0));
     }
 
     public static NicknameAuditProperties 스텁(Duration latency, double flaggedRatio) {
-        return of("api-key", 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, new Stub(latency, flaggedRatio), new Seed(0));
+        return of("api-key", 모델, 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, new Stub(latency, flaggedRatio), new Seed(0));
     }
 
     public static NicknameAuditProperties 주기(String cron) {
@@ -58,11 +46,12 @@ public final class NicknameAuditPropertiesFixture {
     }
 
     public static NicknameAuditProperties 적재(int seedCount) {
-        return of("api-key", 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(seedCount));
+        return of("api-key", 모델, 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(seedCount));
     }
 
     private static NicknameAuditProperties of(
             String geminiApiKey,
+            String model,
             int batchSize,
             Duration requestTimeout,
             Duration maxRunDuration,
@@ -71,7 +60,7 @@ public final class NicknameAuditPropertiesFixture {
             Seed seed) {
         return new NicknameAuditProperties(
                 geminiApiKey,
-                모델,
+                model,
                 0.85,
                 batchSize,
                 20,

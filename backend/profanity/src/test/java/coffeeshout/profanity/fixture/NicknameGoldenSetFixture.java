@@ -1,7 +1,7 @@
 package coffeeshout.profanity.fixture;
 
-import coffeeshout.profanity.application.eval.GoldenItem;
-import coffeeshout.profanity.application.eval.GoldenItem.Expected;
+import coffeeshout.profanity.eval.GoldenItem;
+import coffeeshout.profanity.eval.GoldenItem.Expected;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;

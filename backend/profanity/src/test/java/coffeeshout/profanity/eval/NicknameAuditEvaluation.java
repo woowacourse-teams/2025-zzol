@@ -1,6 +1,6 @@
-package coffeeshout.profanity.application.eval;
+package coffeeshout.profanity.eval;
 
-import coffeeshout.profanity.application.eval.GoldenItem.Expected;
+import coffeeshout.profanity.eval.GoldenItem.Expected;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,10 +43,6 @@ public record NicknameAuditEvaluation(
     }
 
     public record Rate(int hit, int total) {
-
-        public double ratio() {
-            return total == 0 ? Double.NaN : (double) hit / total;
-        }
 
         @Override
         public String toString() {

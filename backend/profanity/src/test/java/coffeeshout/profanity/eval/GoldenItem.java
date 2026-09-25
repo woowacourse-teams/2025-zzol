@@ -1,4 +1,4 @@
-package coffeeshout.profanity.application.eval;
+package coffeeshout.profanity.eval;
 
 import java.util.List;
 

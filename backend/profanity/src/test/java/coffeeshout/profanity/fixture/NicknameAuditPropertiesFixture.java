@@ -24,6 +24,22 @@ public final class NicknameAuditPropertiesFixture {
         return of(geminiApiKey, 배치_크기, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(0));
     }
 
+    public static NicknameAuditProperties 모델(String geminiApiKey, String model) {
+        return new NicknameAuditProperties(
+                geminiApiKey,
+                model,
+                0.85,
+                배치_크기,
+                20,
+                2,
+                요청_타임아웃_기본,
+                회차_예산_기본,
+                시도_상한_기본,
+                "0 0 0/12 * * *",
+                new Seed(0),
+                스텁_꺼짐);
+    }
+
     public static NicknameAuditProperties 요청_타임아웃(Duration requestTimeout) {
         return of("api-key", 배치_크기, requestTimeout, 회차_예산_기본, 시도_상한_기본, 스텁_꺼짐, new Seed(0));
     }

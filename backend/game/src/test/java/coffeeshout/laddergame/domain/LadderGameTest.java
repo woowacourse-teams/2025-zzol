@@ -123,33 +123,68 @@ class LadderGameTest {
         }
 
         @Test
-        void drawLine_호출_시_LadderLine을_반환한다() {
-            final int validSegment = 0;
-
-            final LadderLine line = game.drawLine(꾹이.getName().value(), validSegment);
+        void drawLine_호출_시_요청한_구간과_높이의_LadderLine을_반환한다() {
+            final LadderLine line = game.drawLine(꾹이.getName().value(), 0, 3);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(line).isNotNull();
-                softly.assertThat(line.segmentIndex()).isEqualTo(validSegment);
-                softly.assertThat(line.row()).isPositive();
+                softly.assertThat(line.playerName()).isEqualTo(꾹이.getName().value());
+                softly.assertThat(line.segmentIndex()).isZero();
+                softly.assertThat(line.row()).isEqualTo(3);
             });
         }
 
         @Test
         void 미등록_플레이어_선_긋기_시_예외를_던진다() {
-            assertCoffeeShoutException(() -> game.drawLine("미등록", 0), LadderGameErrorCode.PLAYER_NOT_FOUND);
+            assertCoffeeShoutException(() -> game.drawLine("미등록", 0, 1), LadderGameErrorCode.PLAYER_NOT_FOUND);
         }
 
         @Test
-        void 이미_선을_그은_플레이어가_다시_그으면_예외를_던진다() {
-            game.drawLine(꾹이.getName().value(), 0);
+        void 선을_2개_그은_플레이어가_다시_그으면_예외를_던진다() {
+            final String name = 꾹이.getName().value();
+            game.drawLine(name, 0, 1);
+            game.drawLine(name, 0, 2);
 
-            assertCoffeeShoutException(() -> game.drawLine(꾹이.getName().value(), 0), LadderGameErrorCode.ALREADY_DREW);
+            assertCoffeeShoutException(() -> game.drawLine(name, 0, 3), LadderGameErrorCode.LINE_LIMIT_EXCEEDED);
+        }
+
+        @Test
+        void 높이_칸_수를_넘는_row로_그으면_예외를_던진다() {
+            assertCoffeeShoutException(
+                    () -> game.drawLine(꾹이.getName().value(), 0, game.getRowCount() + 1),
+                    LadderGameErrorCode.INVALID_LINE_ROW);
+        }
+
+        @Test
+        void 이미_선이_있는_자리에_그으면_예외를_던진다() {
+            game.drawLine(꾹이.getName().value(), 0, 2);
+
+            assertCoffeeShoutException(
+                    () -> game.drawLine(철수.getName().value(), 1, 2), LadderGameErrorCode.ROW_OCCUPIED);
         }
     }
 
     @Nested
-    class 이미_그었는지_확인_테스트 {
+    class 높이_칸_테스트 {
+
+        @Test
+        void 높이_칸_수는_인원의_2배다() {
+            // 모두가 한 구간에 2개씩 그어도 자리가 모자라지 않는 최솟값
+            assertThat(game.getRowCount()).isEqualTo(6);
+        }
+
+        @Test
+        void 높이는_1부터_칸_수까지만_유효하다() {
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(game.isValidRow(0)).isFalse();
+                softly.assertThat(game.isValidRow(1)).isTrue();
+                softly.assertThat(game.isValidRow(6)).isTrue();
+                softly.assertThat(game.isValidRow(7)).isFalse();
+            });
+        }
+    }
+
+    @Nested
+    class 더_그을_수_있는지_확인_테스트 {
 
         @BeforeEach
         void DRAWING_상태로_전환() {
@@ -158,15 +193,25 @@ class LadderGameTest {
         }
 
         @Test
-        void 선을_그지_않은_플레이어는_false를_반환한다() {
-            assertThat(game.isAlreadyDrew(꾹이.getName().value())).isFalse();
+        void 선을_긋지_않은_플레이어는_그을_수_있다() {
+            assertThat(game.canDraw(꾹이.getName().value())).isTrue();
         }
 
         @Test
-        void 선을_그은_플레이어는_true를_반환한다() {
-            game.drawLine(꾹이.getName().value(), 0);
+        void 선을_1개_그은_플레이어는_아직_그을_수_있다() {
+            final String name = 꾹이.getName().value();
+            game.drawLine(name, 0, 1);
 
-            assertThat(game.isAlreadyDrew(꾹이.getName().value())).isTrue();
+            assertThat(game.canDraw(name)).isTrue();
+        }
+
+        @Test
+        void 선을_2개_그은_플레이어는_더_그을_수_없다() {
+            final String name = 꾹이.getName().value();
+            game.drawLine(name, 0, 1);
+            game.drawLine(name, 0, 2);
+
+            assertThat(game.canDraw(name)).isFalse();
         }
     }
 

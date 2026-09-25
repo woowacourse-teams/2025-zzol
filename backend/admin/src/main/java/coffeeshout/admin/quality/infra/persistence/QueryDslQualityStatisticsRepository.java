@@ -46,6 +46,7 @@ public class QueryDslQualityStatisticsRepository implements QualityStatisticsRep
         long total = 0;
         long falsePositive = 0;
         long falseNegative = 0;
+        long sampleReviewed = 0;
         for (Tuple row : rows) {
             final boolean reviewSample = Boolean.TRUE.equals(row.get(AUDIT.reviewSample));
             final NicknameAuditStatus status = row.get(AUDIT.status);
@@ -55,11 +56,14 @@ public class QueryDslQualityStatisticsRepository implements QualityStatisticsRep
             if (!reviewSample && status == NicknameAuditStatus.ALLOWED) {
                 falsePositive += count;
             }
+            if (reviewSample) {
+                sampleReviewed += count;
+            }
             if (reviewSample && status == NicknameAuditStatus.BLOCKED) {
                 falseNegative += count;
             }
         }
-        return new NicknameAuditQuality(total, falsePositive, falseNegative);
+        return new NicknameAuditQuality(total, falsePositive, falseNegative, sampleReviewed);
     }
 
     @Override

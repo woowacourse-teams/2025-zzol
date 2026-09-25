@@ -96,6 +96,7 @@ class QueryDslQualityStatisticsRepositoryTest extends AdminModuleServiceTest {
             assertThat(quality.falseNegative()).isEqualTo(1);
             assertThat(quality.agreed()).isEqualTo(3);
             assertThat(quality.overrideRate()).isEqualTo(0.4);
+            assertThat(quality.sampleReviewed()).as("표본인 d, e만 센다.").isEqualTo(2);
         }
 
         @Test

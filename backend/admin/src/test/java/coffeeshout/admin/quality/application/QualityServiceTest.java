@@ -227,7 +227,7 @@ class QualityServiceTest {
         @Test
         void 조회_기간을_시계_기준으로_계산한다() {
             given(qualityStatisticsRepository.findNicknameAuditQuality(NOW.minusSeconds(30 * 24 * 3600), NOW))
-                    .willReturn(new NicknameAuditQuality(100, 10, 5));
+                    .willReturn(new NicknameAuditQuality(100, 10, 5, 40));
 
             assertThat(service().nicknameAuditQuality(30).total()).isEqualTo(100);
         }

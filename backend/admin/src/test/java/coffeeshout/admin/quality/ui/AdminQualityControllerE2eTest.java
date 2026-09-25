@@ -116,7 +116,8 @@ class AdminQualityControllerE2eTest extends AdminApiE2eTest {
                             .with(admin()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.total").exists())
-                    .andExpect(jsonPath("$.overrideRate").exists());
+                    .andExpect(jsonPath("$.overrideRate").exists())
+                    .andExpect(jsonPath("$.sampleReviewed").value(0));
         }
     }
 

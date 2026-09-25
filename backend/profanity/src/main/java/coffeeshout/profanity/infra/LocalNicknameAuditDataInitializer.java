@@ -62,6 +62,10 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
     /** 고정 씨앗. 기동할 때마다 같은 데이터가 나와야 화면 변경을 비교할 수 있다. */
     private static final long SEED = 20_260_912L;
 
+    private static final int UNREVIEWED_SAMPLE_COUNT = 12;
+
+    private static final int REVIEWED_OK_SAMPLE_COUNT = 52;
+
     private final NicknameAuditRepository auditRepository;
     private final NicknameAuditProperties properties;
     private final JdbcTemplate jdbcTemplate;
@@ -254,9 +258,15 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
         final Random random = new Random(SEED);
 
         for (int i = 0; i < 180; i++) {
-            settled.add(
-                    settled("유저닉네임" + (i + 1), NicknameAuditStatus.CLEAN, 0.02 + random.nextDouble() * 0.2, "비속어 없음"));
+            final NicknameAudit clean =
+                    settled("유저닉네임" + (i + 1), NicknameAuditStatus.CLEAN, 0.02 + random.nextDouble() * 0.2, "비속어 없음");
+            // 표본 검토 탭이 비어 있지 않게 CLEAN 일부를 검토 대기 표본으로 둔다.
+            if (i < UNREVIEWED_SAMPLE_COUNT) {
+                clean.markReviewSample();
+            }
+            settled.add(clean);
         }
+        settled.addAll(reviewedSamples(random));
         for (int i = 0; i < 22; i++) {
             settled.add(settled(
                     "허용된닉네임" + (i + 1), NicknameAuditStatus.ALLOWED, 0.55 + random.nextDouble() * 0.25, "관리자 허용"));
@@ -266,6 +276,30 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
                     "차단된닉네임" + (i + 1), NicknameAuditStatus.BLOCKED, 0.75 + random.nextDouble() * 0.24, "관리자 차단"));
         }
         return settled;
+    }
+
+    /**
+     * 운영자가 검토를 마친 표본. 품질 카드의 미탐과 신뢰 상한은 이 행에서만 나온다.
+     *
+     * <p>미탐은 숫자와 글자를 바꿔치기한 우회들이다. AI가 신뢰도 낮게 통과시키는 종류다.
+     * 표본 60건 중 8건을 미탐으로 두어 상한이 한 자리가 아니라 두 자리 퍼센트로 찍히는지 볼 수 있게 했다.
+     */
+    private List<NicknameAudit> reviewedSamples(Random random) {
+        final List<NicknameAudit> samples = new ArrayList<>();
+        for (int i = 0; i < REVIEWED_OK_SAMPLE_COUNT; i++) {
+            samples.add(settled(
+                    "표본정상닉" + (i + 1), NicknameAuditStatus.ALLOWED, 0.02 + random.nextDouble() * 0.2, "비속어 없음"));
+        }
+        samples.add(settled("ㅅ1발놈", NicknameAuditStatus.BLOCKED, 0.41, "숫자 치환 우회. 자동 판정 통과"));
+        samples.add(settled("씨8럴", NicknameAuditStatus.BLOCKED, 0.38, "숫자 치환 우회"));
+        samples.add(settled("ㅂ1ㅅ아", NicknameAuditStatus.BLOCKED, 0.44, "초성에 숫자 삽입"));
+        samples.add(settled("개ㅅㄲ야", NicknameAuditStatus.BLOCKED, 0.52, "초성 혼용 우회"));
+        samples.add(settled("죽0라진짜", NicknameAuditStatus.BLOCKED, 0.35, "숫자 치환 + 위협 표현"));
+        samples.add(settled("ㅗㅗ가세요", NicknameAuditStatus.BLOCKED, 0.29, "기호 모욕. 사전 미등재"));
+        samples.add(settled("뒤질래진짜", NicknameAuditStatus.BLOCKED, 0.48, "위협 표현. 임계값 미달"));
+        samples.add(settled("호구새1끼", NicknameAuditStatus.BLOCKED, 0.46, "숫자 삽입 우회"));
+        samples.forEach(NicknameAudit::markReviewSample);
+        return samples;
     }
 
     private NicknameAudit settled(String nickname, NicknameAuditStatus status, double confidence, String reason) {

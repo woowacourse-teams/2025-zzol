@@ -23,15 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 로컬 전용 닉네임 검열 피드백 시드.
  *
- * <p>백오피스의 "검열 판정 정확도"는 {@code player_name_feedback} 의 네 조합을 센다.
- * AI가 걸렀는데 운영자가 허용하면 오탐, AI가 안 걸렀는데 운영자가 차단하면 미탐이다.
- * 이 표를 안 채우면 로컬에서 그 카드가 늘 0 이라 <b>화면에서 판단할 수 있는 것이 없다.</b>
- * 숫자가 몇 자리로 찍히는지, 번복률이 한 자리인지 두 자리인지, 네 칸이 나란히 섰을 때
- * 시선 높이가 맞는지는 값이 있어야만 보인다.
- *
- * <p>분포를 일부러 기울였다. 고르게 뽑으면 오탐과 미탐이 비슷하게 나오는데, 실제로는
- * 신뢰도 0.85 위에서 자동 차단하므로 <b>오탐이 미탐보다 많다.</b> 그 모양이 나와야 카드가
- * "어느 쪽으로 틀리는가"를 말한다. 양쪽이 같으면 카드가 아무 말도 하지 않는다.
+ * <p>{@code player_name_feedback}은 검열 프롬프트에 넣는 운영자 결정 예시다. 백오피스의
+ * "검열 판정 정확도"는 이 표가 아니라 감사 행으로 센다. 미탐 표본은 닉네임 시더가 넣는다.
  *
  * <p>닉네임 시더({@code LocalNicknameAuditDataInitializer})와 나누어 둔다. 대기 목록과
  * 판정 이력은 다른 표이고 각자 멱등성 기준이 달라서, 한 러너에 묶으면 한쪽만 채워진 채로
@@ -110,22 +103,6 @@ public class LocalNicknameFeedbackDataInitializer implements ApplicationRunner {
             new Sample("빡빡이아저씨", 0.85, "외형 표현이나 자기 지칭"),
             new Sample("개편한하루", 0.86, "'개' 음절 오검출. 강조 접두"));
 
-    /**
-     * AI가 안 걸렀는데 운영자가 차단했다. <b>미탐.</b>
-     *
-     * <p>숫자와 글자를 바꿔치기한 우회들이다. 임계값 아래로 빠져나가는 종류라 신뢰도가 낮다.
-     * 미탐을 오탐보다 적게 둔 것은 임계값을 낮게 잡은 시스템의 모양을 따른 것이다.
-     */
-    private static final List<Sample> FALSE_NEGATIVE = List.of(
-            new Sample("ㅅ1발놈", 0.41, "숫자 치환 우회. 자동 판정 통과"),
-            new Sample("씨8럴", 0.38, "숫자 치환 우회"),
-            new Sample("ㅂ1ㅅ아", 0.44, "초성에 숫자 삽입"),
-            new Sample("개ㅅㄲ야", 0.52, "초성 혼용 우회"),
-            new Sample("죽0라진짜", 0.35, "숫자 치환 + 위협 표현"),
-            new Sample("ㅗㅗ가세요", 0.29, "기호 모욕. 사전 미등재"),
-            new Sample("뒤질래진짜", 0.48, "위협 표현. 임계값 미달"),
-            new Sample("호구새1끼", 0.46, "숫자 삽입 우회"));
-
     /** 일치 판정에는 사유를 길게 적지 않는다. 실제로도 운영자는 뒤집을 때만 이유를 쓴다. */
     private static final List<String> AGREED_BLOCKED_REASONS =
             List.of("AI 판정 유지", "직접적 욕설 확인", "우회 표현 확인", "재검토 후 차단 유지");
@@ -156,11 +133,7 @@ public class LocalNicknameFeedbackDataInitializer implements ApplicationRunner {
             backdate(saved, now, random);
         }
 
-        log.info(
-                "[LocalInit] 닉네임 판정 이력 삽입 완료 — 전체 {}건 (오탐 {}건, 미탐 {}건)",
-                samples.size(),
-                FALSE_POSITIVE.size(),
-                FALSE_NEGATIVE.size());
+        log.info("[LocalInit] 닉네임 판정 이력 삽입 완료 — 전체 {}건 (오탐 {}건)", samples.size(), FALSE_POSITIVE.size());
     }
 
     private List<Sample> buildSamples(Random random) {
@@ -182,9 +155,6 @@ public class LocalNicknameFeedbackDataInitializer implements ApplicationRunner {
         }
         samples.addAll(FALSE_POSITIVE.stream()
                 .map(sample -> sample.withDecision(OperatorDecision.ALLOWED))
-                .toList());
-        samples.addAll(FALSE_NEGATIVE.stream()
-                .map(sample -> sample.withDecision(OperatorDecision.BLOCKED))
                 .toList());
 
         return samples;

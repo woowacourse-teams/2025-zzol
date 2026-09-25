@@ -118,7 +118,7 @@ class ProfanityAuditServiceTest {
 
             service.auditPending();
 
-            then(batchProcessor).should(never()).process(any());
+            then(batchProcessor).should(never()).process(any(), any());
         }
 
         @Test
@@ -129,11 +129,11 @@ class ProfanityAuditServiceTest {
             given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
                     .willReturn(List.of(entity))
                     .willReturn(List.of());
-            given(batchProcessor.process(any())).willReturn(1);
+            given(batchProcessor.process(any(), any())).willReturn(1);
 
             service.auditPending();
 
-            then(batchProcessor).should().process(List.of(entity));
+            then(batchProcessor).should().process(eq(List.of(entity)), any());
         }
     }
 
@@ -169,7 +169,7 @@ class ProfanityAuditServiceTest {
                     .willReturn((long) BACKLOG);
             given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
                     .willAnswer(invocation -> nextBatch(remaining));
-            given(batchProcessor.process(any())).willAnswer(invocation -> {
+            given(batchProcessor.process(any(), any())).willAnswer(invocation -> {
                 final List<NicknameAudit> batch = invocation.getArgument(0);
                 clock.advance(Duration.ofSeconds(SECONDS_PER_BATCH));
                 return batch.size();
@@ -204,14 +204,14 @@ class ProfanityAuditServiceTest {
                         return pageable.getPageNumber() < 2 ? batchOf(PRODUCTION_BATCH_SIZE) : List.of();
                     });
             // 배치가 통째로 UNAUDITED로 남은 상황. 검열 호출 실패와 판정 짝짓기 실패가 여기로 모인다.
-            given(batchProcessor.process(any())).willReturn(0);
+            given(batchProcessor.process(any(), any())).willReturn(0);
 
             target.auditPending();
 
             assertThat(readPages)
                     .as("같은 페이지를 다시 읽으면 무한 반복이고, 커서를 안 밀면 회차가 첫 배치에서 끝난다.")
                     .containsExactly(0, 1, 2);
-            then(batchProcessor).should(times(2)).process(any());
+            then(batchProcessor).should(times(2)).process(any(), any());
         }
 
         /**
@@ -238,7 +238,7 @@ class ProfanityAuditServiceTest {
                         return reads.getAndIncrement() < 2 ? batchOf(PRODUCTION_BATCH_SIZE) : List.of();
                     });
             // 페이지 0은 통째로 실패하고, 페이지 1은 부분 진행이다. 남은 행은 같은 페이지에 다시 잡힌다.
-            given(batchProcessor.process(any())).willReturn(0, PRODUCTION_BATCH_SIZE - 40);
+            given(batchProcessor.process(any(), any())).willReturn(0, PRODUCTION_BATCH_SIZE - 40);
 
             target.auditPending();
 
@@ -301,7 +301,7 @@ class ProfanityAuditServiceTest {
                 Thread.interrupted();
             }
 
-            then(batchProcessor).should(never()).process(any());
+            then(batchProcessor).should(never()).process(any(), any());
         }
     }
 

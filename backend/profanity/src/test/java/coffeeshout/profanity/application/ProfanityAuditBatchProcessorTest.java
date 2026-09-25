@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -78,10 +80,12 @@ class ProfanityAuditBatchProcessorTest {
             protected void doRollback(DefaultTransactionStatus status) {}
         });
 
-        final NicknameAuditProperties properties =
-                NicknameAuditPropertiesFixture.회차(10, Duration.ofMinutes(10), MAX_ATTEMPTS);
         meterRegistry = new SimpleMeterRegistry();
-        processor = new ProfanityAuditBatchProcessor(
+        processor = processorWith(NicknameAuditPropertiesFixture.회차(10, Duration.ofMinutes(10), MAX_ATTEMPTS));
+    }
+
+    private ProfanityAuditBatchProcessor processorWith(NicknameAuditProperties properties) {
+        final ProfanityAuditBatchProcessor created = new ProfanityAuditBatchProcessor(
                 auditRepository,
                 nicknameAuditor,
                 profanityWordManagementService,
@@ -90,7 +94,12 @@ class ProfanityAuditBatchProcessorTest {
                 transactionTemplate,
                 new TextNormalizer(),
                 properties);
-        processor.initMetrics();
+        created.initMetrics();
+        return created;
+    }
+
+    private static AtomicInteger 표본_예산() {
+        return new AtomicInteger(20);
     }
 
     @Nested
@@ -105,7 +114,7 @@ class ProfanityAuditBatchProcessorTest {
             given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED))
                     .willReturn(true);
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(profanityWordManagementService).should().add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED);
             then(eventPublisher).should().publishEvent(any(ProfanityWordBlockedEvent.class));
@@ -120,7 +129,7 @@ class ProfanityAuditBatchProcessorTest {
             given(profanityWordManagementService.add("badword", Language.ENGLISH, WordSource.AI_FLAGGED))
                     .willReturn(true);
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(profanityWordManagementService).should().add("badword", Language.ENGLISH, WordSource.AI_FLAGGED);
         }
@@ -134,7 +143,7 @@ class ProfanityAuditBatchProcessorTest {
             given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED))
                     .willReturn(false);
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(eventPublisher).should(never()).publishEvent(any());
         }
@@ -146,7 +155,7 @@ class ProfanityAuditBatchProcessorTest {
                     .willReturn(List.of(new NicknameAuditResult(
                             "욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             assertThat(entity.getStatus()).isEqualTo(NicknameAuditStatus.FLAGGED);
         }
@@ -162,7 +171,7 @@ class ProfanityAuditBatchProcessorTest {
                     .willReturn(List.of(new NicknameAuditResult(
                             "경찬이병신", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "비속어 포함", List.of("병신"))));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(profanityWordManagementService).should().add("병신", Language.KOREAN, WordSource.AI_FLAGGED);
             then(profanityWordManagementService).should(never()).add(eq("경찬이병신"), any(), any());
@@ -179,7 +188,7 @@ class ProfanityAuditBatchProcessorTest {
                             "비속어 포함",
                             List.of("시발", "병신"))));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(profanityWordManagementService).should().add("시발", Language.KOREAN, WordSource.AI_FLAGGED);
             then(profanityWordManagementService).should().add("병신", Language.KOREAN, WordSource.AI_FLAGGED);
@@ -196,7 +205,7 @@ class ProfanityAuditBatchProcessorTest {
                             "비속어 포함",
                             List.of("병신", "핵상욕설"))));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(profanityWordManagementService).should().add("병신", Language.KOREAN, WordSource.AI_FLAGGED);
             then(profanityWordManagementService).should(never()).add(eq("핵상욕설"), any(), any());
@@ -209,7 +218,7 @@ class ProfanityAuditBatchProcessorTest {
                     .willReturn(List.of(new NicknameAuditResult(
                             "씨발놈", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "비속어 포함", List.of("닉네임에없는말"))));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(profanityWordManagementService).should().add("씨발놈", Language.KOREAN, WordSource.AI_FLAGGED);
         }
@@ -225,7 +234,7 @@ class ProfanityAuditBatchProcessorTest {
                             "비속어 포함",
                             List.of("병신", "이"))));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(profanityWordManagementService).should().add("병신", Language.KOREAN, WordSource.AI_FLAGGED);
             then(profanityWordManagementService).should(never()).add(eq("이"), any(), any());
@@ -242,7 +251,7 @@ class ProfanityAuditBatchProcessorTest {
                             "비속어 포함",
                             List.of("시1발", "시i발"))));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             // leet 치환(1→i)으로 두 조각의 정규화 결과가 동일 → add는 한 번만 호출
             then(profanityWordManagementService)
@@ -258,7 +267,7 @@ class ProfanityAuditBatchProcessorTest {
                     .willReturn(List.of(new NicknameAuditResult(
                             "욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "비속어 포함", List.of())));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(profanityWordManagementService).should().add("욕설닉네임", Language.KOREAN, WordSource.AI_FLAGGED);
         }
@@ -274,11 +283,119 @@ class ProfanityAuditBatchProcessorTest {
                     .willReturn(List.of(new NicknameAuditResult(
                             "용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반 닉네임")));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(profanityWordManagementService).should(never()).add(any(), any(), any());
             then(eventPublisher).should(never()).publishEvent(any());
             assertThat(entity.getStatus()).isEqualTo(NicknameAuditStatus.CLEAN);
+        }
+    }
+
+    /**
+     * CLEAN은 다시 검열받지 않으므로 표본으로 뽑지 않으면 놓친 욕을 아무도 보지 못한다.
+     * 뽑는 규칙이 결정론이어야 같은 닉네임이 회차마다 뽑혔다 안 뽑혔다 하지 않는다.
+     */
+    @Nested
+    class CLEAN_표본_추출 {
+
+        @Test
+        void 비율이_1이면_CLEAN만_표본으로_표시한다() {
+            final ProfanityAuditBatchProcessor sampling = processorWith(NicknameAuditPropertiesFixture.표본(1.0, 20));
+            final NicknameAudit clean = new NicknameAudit("용감한호랑이");
+            final NicknameAudit pending = new NicknameAudit("애매한닉네임");
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(
+                            new NicknameAuditResult("용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반"),
+                            new NicknameAuditResult(
+                                    "애매한닉네임", NicknameAuditStatus.PENDING, AiConfidence.of(0.6), "불명확")));
+
+            sampling.process(List.of(clean, pending), 표본_예산());
+
+            assertThat(clean.isReviewSample()).isTrue();
+            assertThat(pending.isReviewSample()).isFalse();
+        }
+
+        @Test
+        void 비율이_0이면_아무것도_뽑지_않는다() {
+            final ProfanityAuditBatchProcessor sampling = processorWith(NicknameAuditPropertiesFixture.표본(0, 20));
+            final NicknameAudit clean = new NicknameAudit("용감한호랑이");
+            givenCleanResultsFor("용감한호랑이");
+
+            sampling.process(List.of(clean), 표본_예산());
+
+            assertThat(clean.isReviewSample()).isFalse();
+        }
+
+        @Test
+        void 회차_예산을_배치를_넘어_나눠_쓴다() {
+            final ProfanityAuditBatchProcessor sampling = processorWith(NicknameAuditPropertiesFixture.표본(1.0, 2));
+            final AtomicInteger budget = new AtomicInteger(2);
+            final List<NicknameAudit> first = List.of(new NicknameAudit("닉하나"), new NicknameAudit("닉둘"));
+            final List<NicknameAudit> second = List.of(new NicknameAudit("닉셋"));
+            givenCleanResultsFor("닉하나", "닉둘", "닉셋");
+
+            sampling.process(first, budget);
+            sampling.process(second, budget);
+
+            assertThat(first).allMatch(NicknameAudit::isReviewSample);
+            assertThat(second.getFirst().isReviewSample())
+                    .as("앞 배치가 예산을 다 썼으므로 다음 배치는 뽑지 않는다.")
+                    .isFalse();
+            assertThat(budget).hasValue(0);
+        }
+
+        @Test
+        void 같은_닉네임은_늘_같은_결과가_나오고_비율에_가깝게_뽑힌다() {
+            final ProfanityAuditBatchProcessor sampling =
+                    processorWith(NicknameAuditPropertiesFixture.표본(0.05, Integer.MAX_VALUE));
+            final List<String> nicknames =
+                    IntStream.range(0, 2_000).mapToObj(i -> "닉" + i).toList();
+            given(nicknameAuditor.audit(anyList()))
+                    .willAnswer(invocation -> invocation.<List<String>>getArgument(0).stream()
+                            .map(nickname -> new NicknameAuditResult(
+                                    nickname, NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반"))
+                            .toList());
+
+            final List<String> firstRun = sampledNicknames(sampling, nicknames);
+            final List<String> secondRun = sampledNicknames(sampling, nicknames);
+
+            assertThat(secondRun).isEqualTo(firstRun);
+            assertThat(firstRun).hasSizeBetween(60, 140);
+        }
+
+        @Test
+        void 벌크_저장이_실패해도_폴백이_표시를_저장하고_예산을_한_번만_쓴다() {
+            final ProfanityAuditBatchProcessor sampling = processorWith(NicknameAuditPropertiesFixture.표본(1.0, 20));
+            final AtomicInteger budget = new AtomicInteger(20);
+            final NicknameAudit clean = new NicknameAudit("용감한호랑이");
+            givenCleanResultsFor("용감한호랑이");
+            willThrow(new DataIntegrityViolationException("일시 실패"))
+                    .given(auditRepository)
+                    .bulkUpdateAuditResults(any());
+
+            sampling.process(List.of(clean), budget);
+
+            then(auditRepository).should().save(clean);
+            assertThat(clean.isReviewSample()).isTrue();
+            assertThat(budget).hasValue(19);
+        }
+
+        private List<String> sampledNicknames(ProfanityAuditBatchProcessor sampling, List<String> nicknames) {
+            final List<NicknameAudit> batch =
+                    nicknames.stream().map(NicknameAudit::new).toList();
+            sampling.process(batch, new AtomicInteger(Integer.MAX_VALUE));
+            return batch.stream()
+                    .filter(NicknameAudit::isReviewSample)
+                    .map(NicknameAudit::getNickname)
+                    .toList();
+        }
+
+        private void givenCleanResultsFor(String... nicknames) {
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(Arrays.stream(nicknames)
+                            .map(nickname -> new NicknameAuditResult(
+                                    nickname, NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반 닉네임"))
+                            .toList());
         }
     }
 
@@ -292,7 +409,7 @@ class ProfanityAuditBatchProcessorTest {
                     .willReturn(List.of(new NicknameAuditResult(
                             "애매한닉네임", NicknameAuditStatus.PENDING, AiConfidence.of(0.6), "판단 불명확")));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(profanityWordManagementService).should(never()).add(any(), any(), any());
             assertThat(entity.getStatus()).isEqualTo(NicknameAuditStatus.PENDING);
@@ -307,7 +424,7 @@ class ProfanityAuditBatchProcessorTest {
             final NicknameAudit entity = new NicknameAudit("닉네임");
             given(nicknameAuditor.audit(anyList())).willReturn(List.of());
 
-            final int processed = processor.process(List.of(entity));
+            final int processed = processor.process(List.of(entity), 표본_예산());
 
             assertThat(processed).isZero();
             then(auditRepository).should(never()).bulkUpdateAuditResults(any());
@@ -325,7 +442,7 @@ class ProfanityAuditBatchProcessorTest {
                             new NicknameAuditResult("닉네임1", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반"),
                             new NicknameAuditResult("닉네임2", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")));
 
-            final int processed = processor.process(batch);
+            final int processed = processor.process(batch, 표본_예산());
 
             assertThat(processed).isEqualTo(2);
         }
@@ -343,7 +460,7 @@ class ProfanityAuditBatchProcessorTest {
                             new NicknameAuditResult("host", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")));
             given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of("host"));
 
-            processor.process(List.of(residual));
+            processor.process(List.of(residual), 표본_예산());
 
             then(auditRepository).should().deleteAll(List.of(residual));
             then(auditRepository).should().bulkUpdateAuditResults(List.of());
@@ -360,7 +477,7 @@ class ProfanityAuditBatchProcessorTest {
                             "host", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "재판정")));
             given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of("host"));
 
-            processor.process(List.of(residual));
+            processor.process(List.of(residual), 표본_예산());
 
             then(auditRepository).should().deleteAll(List.of(residual));
             then(profanityWordManagementService).should(never()).add(any(), any(), any());
@@ -376,7 +493,7 @@ class ProfanityAuditBatchProcessorTest {
                             new NicknameAuditResult("용감한호랑이", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")));
             given(auditRepository.findNicknamesWithTerminalStatus(anyList())).willReturn(Set.of());
 
-            processor.process(List.of(fresh));
+            processor.process(List.of(fresh), 표본_예산());
 
             then(auditRepository).should().bulkUpdateAuditResults(List.of(fresh));
             then(auditRepository).should(never()).deleteAll(any());
@@ -404,7 +521,7 @@ class ProfanityAuditBatchProcessorTest {
                             "짝맞는닉", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반 닉네임")));
             given(auditRepository.findNicknamesWithTerminalStatus(any())).willReturn(Set.of());
 
-            final int processed = processor.process(List.of(matched, unmatched));
+            final int processed = processor.process(List.of(matched, unmatched), 표본_예산());
 
             assertThat(processed)
                     .as("판정이 없어 UNAUDITED로 남은 행을 처리했다고 세면 드레인 루프가 멈추지 못한다.")
@@ -420,7 +537,7 @@ class ProfanityAuditBatchProcessorTest {
                             "엉뚱한닉", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반 닉네임")));
             given(auditRepository.findNicknamesWithTerminalStatus(any())).willReturn(Set.of());
 
-            final int processed = processor.process(List.of(first, second));
+            final int processed = processor.process(List.of(first, second), 표본_예산());
 
             assertThat(processed).as("0을 돌려줘야 드레인 루프가 같은 페이지 반복을 멈춘다.").isZero();
         }
@@ -443,7 +560,7 @@ class ProfanityAuditBatchProcessorTest {
                     .willThrow(new InfrastructureException(
                             NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED, "닉네임 검열 AI 응답 파싱 실패"));
 
-            final int processed = processor.process(List.of(entity));
+            final int processed = processor.process(List.of(entity), 표본_예산());
 
             assertThat(processed).isZero();
             then(auditRepository).should(never()).bulkUpdateAuditResults(any());
@@ -456,7 +573,7 @@ class ProfanityAuditBatchProcessorTest {
                     .willThrow(new InfrastructureException(
                             NicknameAuditErrorCode.AI_RESPONSE_PARSE_FAILED, "닉네임 검열 AI 응답 파싱 실패"));
 
-            processor.process(batch);
+            processor.process(batch, 표본_예산());
 
             final ArgumentCaptor<Collection<Long>> ids = ArgumentCaptor.captor();
             then(auditRepository).should().incrementAttemptCount(ids.capture());
@@ -472,7 +589,7 @@ class ProfanityAuditBatchProcessorTest {
             given(nicknameAuditor.audit(anyList()))
                     .willThrow(new InfrastructureException(NicknameAuditErrorCode.AI_CALL_FAILED, "닉네임 검열 AI 호출 실패"));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(auditRepository).should(never()).incrementAttemptCount(any());
         }
@@ -488,7 +605,7 @@ class ProfanityAuditBatchProcessorTest {
             given(auditRepository.markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS)))
                     .willReturn(1);
 
-            final int processed = processor.process(List.of(entity));
+            final int processed = processor.process(List.of(entity), 표본_예산());
 
             assertThat(processed).isEqualTo(1);
         }
@@ -505,7 +622,7 @@ class ProfanityAuditBatchProcessorTest {
                     .given(auditRepository)
                     .incrementAttemptCount(any());
 
-            final int processed = processor.process(List.of(entity));
+            final int processed = processor.process(List.of(entity), 표본_예산());
 
             assertThat(processed).isZero();
         }
@@ -519,7 +636,7 @@ class ProfanityAuditBatchProcessorTest {
             given(auditRepository.markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS)))
                     .willReturn(2);
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             assertThat(meterRegistry.counter("nickname.audit.dead.lettered").count())
                     .isEqualTo(2.0);
@@ -539,7 +656,7 @@ class ProfanityAuditBatchProcessorTest {
             givenCleanResultsFor("닉하나", "닉둘");
             givenBulkUpdateFails();
 
-            final int processed = processor.process(batch);
+            final int processed = processor.process(batch, 표본_예산());
 
             assertThat(processed).isEqualTo(2);
             then(auditRepository).should().save(batch.get(0));
@@ -558,7 +675,7 @@ class ProfanityAuditBatchProcessorTest {
                     .given(auditRepository)
                     .save(trouble);
 
-            final int processed = processor.process(List.of(healthy, trouble));
+            final int processed = processor.process(List.of(healthy, trouble), 표본_예산());
 
             assertThat(processed).as("저장에 성공한 행만 UNAUDITED에서 빠진다.").isEqualTo(1);
             final ArgumentCaptor<Collection<Long>> ids = ArgumentCaptor.captor();
@@ -583,7 +700,7 @@ class ProfanityAuditBatchProcessorTest {
             given(auditRepository.markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS)))
                     .willReturn(1);
 
-            final int processed = processor.process(List.of(trouble));
+            final int processed = processor.process(List.of(trouble), 표본_예산());
 
             assertThat(processed)
                     .as("DEAD_LETTER도 UNAUDITED 스캔에서 빠지므로 드레인 루프에는 진행이다.")
@@ -603,7 +720,7 @@ class ProfanityAuditBatchProcessorTest {
             // 커밋이 끝나 자기 행이 이미 CLEAN으로 남아 있는 상태를 흉내낸다.
             given(auditRepository.findNicknamesWithTerminalStatus(any())).willReturn(Set.of("닉하나"));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             then(auditRepository).should(never()).deleteAll(any());
             then(auditRepository).should().save(entity);
@@ -615,7 +732,7 @@ class ProfanityAuditBatchProcessorTest {
             givenCleanResultsFor("닉하나", "닉둘");
             givenBulkUpdateFails();
 
-            processor.process(batch);
+            processor.process(batch, 표본_예산());
 
             assertThat(meterRegistry
                             .counter("nickname.audit.result", "status", NicknameAuditStatus.CLEAN.name())
@@ -653,7 +770,7 @@ class ProfanityAuditBatchProcessorTest {
                     .willReturn(List.of(new NicknameAuditResult(
                             "욕설닉네임", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "직접 욕설")));
 
-            processor.process(List.of(entity));
+            processor.process(List.of(entity), 표본_예산());
 
             final SoftAssertions softly = new SoftAssertions();
             List.of("audit", "settle", "block").forEach(phase -> softly.assertThat(구간_호출수(phase))

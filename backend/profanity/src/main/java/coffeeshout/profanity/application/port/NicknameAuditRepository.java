@@ -19,7 +19,7 @@ public interface NicknameAuditRepository {
     List<NicknameAudit> saveAll(Iterable<NicknameAudit> entities);
 
     /**
-     * 이미 id를 가진 엔티티들의 status·confidence·reason·audited_at을 JDBC 배치 UPDATE 한 번으로
+     * 이미 id를 가진 엔티티들의 status·confidence·reason·audited_at·review_sample을 JDBC 배치 UPDATE 한 번으로
      * 갱신한다. {@link NicknameAudit#complete}를 거쳐 네 값이 모두 채워진 엔티티만 넘긴다.
      */
     void bulkUpdateAuditResults(List<NicknameAudit> entities);

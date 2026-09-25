@@ -52,6 +52,10 @@ public class NicknameAudit {
     @Column
     private Instant auditedAt;
 
+    /** CLEAN 판정 중 운영자가 다시 보도록 뽑힌 행. 미탐률을 표본으로 추정하는 데 쓴다. */
+    @Column(nullable = false)
+    private boolean reviewSample;
+
     public NicknameAudit(String nickname) {
         this.nickname = nickname;
         this.status = NicknameAuditStatus.UNAUDITED;
@@ -67,5 +71,14 @@ public class NicknameAudit {
         this.confidence = confidence;
         this.reason = reason;
         this.auditedAt = Instant.now();
+    }
+
+    public void markReviewSample() {
+        this.reviewSample = true;
+    }
+
+    /** 표본으로 뽑혔고 운영자가 아직 정상·미탐을 정하지 않았다. 결정하면 ALLOWED나 BLOCKED로 바뀐다. */
+    public boolean isUnreviewedSample() {
+        return reviewSample && status == NicknameAuditStatus.CLEAN;
     }
 }

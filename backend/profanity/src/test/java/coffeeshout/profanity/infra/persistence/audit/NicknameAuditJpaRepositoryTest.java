@@ -146,6 +146,7 @@ class NicknameAuditJpaRepositoryTest extends ServiceTest {
             // 밖으로 나갈 수 있다(리눅스 JVM에서 재현, macOS는 클럭이 마이크로초라 항상 통과했다).
             final Instant beforeAudit = Instant.now().truncatedTo(ChronoUnit.MICROS);
             first.complete(NicknameAuditStatus.CLEAN, AiConfidence.of(0.42), "검열 사유1");
+            first.markReviewSample();
             second.complete(NicknameAuditStatus.FLAGGED, AiConfidence.of(0.99), "검열 사유2");
             // 서버가 나노초를 올림할 수 있으니 상한을 한 칸 연다.
             final Instant afterAudit =
@@ -170,11 +171,13 @@ class NicknameAuditJpaRepositoryTest extends ServiceTest {
                 softly.assertThat(promotedFirst.getConfidence()).isEqualTo(AiConfidence.of(0.42));
                 softly.assertThat(promotedFirst.getReason()).isEqualTo("검열 사유1");
                 softly.assertThat(promotedFirst.getAuditedAt()).isBetween(beforeAudit, afterAudit);
+                softly.assertThat(promotedFirst.isReviewSample()).isTrue();
 
                 softly.assertThat(promotedSecond.getStatus()).isEqualTo(NicknameAuditStatus.FLAGGED);
                 softly.assertThat(promotedSecond.getConfidence()).isEqualTo(AiConfidence.of(0.99));
                 softly.assertThat(promotedSecond.getReason()).isEqualTo("검열 사유2");
                 softly.assertThat(promotedSecond.getAuditedAt()).isBetween(beforeAudit, afterAudit);
+                softly.assertThat(promotedSecond.isReviewSample()).isFalse();
 
                 softly.assertThat(reloadedUntouched.getStatus()).isEqualTo(NicknameAuditStatus.UNAUDITED);
                 softly.assertThat(reloadedUntouched.getAuditedAt()).isNull();

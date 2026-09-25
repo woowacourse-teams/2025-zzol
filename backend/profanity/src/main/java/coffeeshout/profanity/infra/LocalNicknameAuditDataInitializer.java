@@ -48,7 +48,8 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
     private static final int SYLLABLE_COUNT = 11_172;
 
     private static final String SEED_INSERT =
-            "INSERT INTO player_name_audit (player_name, status, attempt_count, created_at) VALUES (?, ?, 0, ?)";
+            "INSERT INTO player_name_audit (player_name, status, attempt_count, review_sample, created_at) "
+                    + "VALUES (?, ?, 0, FALSE, ?)";
 
     /** 한 번에 보낼 행 수. 10만 건을 한 문장으로 보내면 패킷 상한에 걸린다. */
     private static final int SEED_CHUNK = 1_000;

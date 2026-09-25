@@ -1,5 +1,6 @@
 package coffeeshout.admin.quality.ui;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -117,7 +118,8 @@ class AdminQualityControllerE2eTest extends AdminApiE2eTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.total").exists())
                     .andExpect(jsonPath("$.overrideRate").exists())
-                    .andExpect(jsonPath("$.sampleReviewed").value(0));
+                    .andExpect(jsonPath("$.sampleReviewed").value(0))
+                    .andExpect(jsonPath("$.missUpperBound").value(nullValue()));
         }
     }
 

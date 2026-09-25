@@ -10,6 +10,7 @@ import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.infra.persistence.audit.NicknameAuditJpaRepository;
 import java.time.Instant;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -91,12 +92,14 @@ class QueryDslQualityStatisticsRepositoryTest extends AdminModuleServiceTest {
 
             final NicknameAuditQuality quality = qualityStatisticsRepository.findNicknameAuditQuality(FROM, TO);
 
-            assertThat(quality.total()).isEqualTo(5);
-            assertThat(quality.falsePositive()).isEqualTo(1);
-            assertThat(quality.falseNegative()).isEqualTo(1);
-            assertThat(quality.agreed()).isEqualTo(3);
-            assertThat(quality.overrideRate()).isEqualTo(0.4);
-            assertThat(quality.sampleReviewed()).as("표본인 d, e만 센다.").isEqualTo(2);
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(quality.total()).isEqualTo(5);
+                softly.assertThat(quality.falsePositive()).isEqualTo(1);
+                softly.assertThat(quality.falseNegative()).isEqualTo(1);
+                softly.assertThat(quality.agreed()).isEqualTo(3);
+                softly.assertThat(quality.overrideRate()).isEqualTo(0.4);
+                softly.assertThat(quality.sampleReviewed()).as("표본인 d, e만 센다.").isEqualTo(2);
+            });
         }
 
         @Test
@@ -104,10 +107,15 @@ class QueryDslQualityStatisticsRepositoryTest extends AdminModuleServiceTest {
             save("통과닉", NicknameAuditStatus.CLEAN);
             save("걸린닉", NicknameAuditStatus.FLAGGED);
             save("애매닉", NicknameAuditStatus.PENDING);
+            // 표본으로 뽑혔지만 운영자가 아직 정상·미탐을 정하지 않은 CLEAN
+            saveDecided("대기표본", true, NicknameAuditStatus.CLEAN);
 
             final NicknameAuditQuality quality = qualityStatisticsRepository.findNicknameAuditQuality(FROM, TO);
 
-            assertThat(quality.total()).isZero();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(quality.total()).isZero();
+                softly.assertThat(quality.sampleReviewed()).isZero();
+            });
         }
 
         @Test

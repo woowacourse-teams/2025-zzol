@@ -31,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @DisplayName("AdminProfanityController")
 @ExtendWith(MockitoExtension.class)
@@ -62,8 +63,8 @@ class AdminProfanityControllerTest {
 
             controller().audits(NicknameAuditStatus.FLAGGED, 3);
 
-            final PageRequest expected = PageRequest.of(
-                    3, 10, org.springframework.data.domain.Sort.by("auditedAt").descending());
+            final PageRequest expected =
+                    PageRequest.of(3, 10, Sort.by("auditedAt").descending());
             then(auditService).should().listByStatus(NicknameAuditStatus.FLAGGED, expected);
         }
 
@@ -109,10 +110,8 @@ class AdminProfanityControllerTest {
 
             then(auditService)
                     .should()
-                    .listUnreviewedSamples(PageRequest.of(
-                            2,
-                            10,
-                            org.springframework.data.domain.Sort.by("auditedAt").descending()));
+                    .listUnreviewedSamples(
+                            PageRequest.of(2, 10, Sort.by("auditedAt").descending()));
         }
 
         @Test

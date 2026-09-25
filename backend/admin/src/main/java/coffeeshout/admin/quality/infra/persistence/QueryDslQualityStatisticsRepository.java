@@ -58,9 +58,9 @@ public class QueryDslQualityStatisticsRepository implements QualityStatisticsRep
             }
             if (reviewSample) {
                 sampleReviewed += count;
-            }
-            if (reviewSample && status == NicknameAuditStatus.BLOCKED) {
-                falseNegative += count;
+                if (status == NicknameAuditStatus.BLOCKED) {
+                    falseNegative += count;
+                }
             }
         }
         return new NicknameAuditQuality(total, falsePositive, falseNegative, sampleReviewed);

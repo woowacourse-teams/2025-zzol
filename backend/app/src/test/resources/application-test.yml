@@ -120,6 +120,9 @@ admin:
     google-client-id: test-admin-client-id
     jwt-secret: "admin-test-secret-key-must-be-at-least-32-bytes-long"
     token-validity-seconds: 3600
+    refresh-token-validity-seconds: 604800
+    web-origins:
+      - http://localhost:5173
 
 user:
   jwt:

@@ -58,7 +58,9 @@ admin:
     # local 프로필은 그 값을 환경변수 없이 yml 에 직접 넣어 두는데, 환경변수를 참조하면
     # 거기서 플레이스홀더가 풀리지 않아 앱이 기동조차 못 한다.
     jwt-secret: ${ADMIN_JWT_SECRET:${user.jwt.secret}}
-    token-validity-seconds: 3600   # 1시간. 리프레시 토큰 없음, 만료되면 재로그인
+    token-validity-seconds: 3600   # 1시간. 만료되면 admin-web 이 refresh 쿠키로 다시 받는다
+    refresh-token-validity-seconds: 604800   # 7일. 재발급할 때마다 다시 7일로 늘어난다
+    # web-origins 는 프로필마다 다르다. application-{profile}.yml 에 있다.
 
 user:
   jwt:

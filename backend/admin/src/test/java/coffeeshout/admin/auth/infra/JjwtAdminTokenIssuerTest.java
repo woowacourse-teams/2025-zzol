@@ -30,7 +30,8 @@ class JjwtAdminTokenIssuerTest {
 
     private static JjwtAdminTokenIssuer issuerAt(Instant now) {
         return new JjwtAdminTokenIssuer(
-                new AdminAuthProperties(List.of(), "client-id", SECRET, VALIDITY_SECONDS),
+                new AdminAuthProperties(
+                        List.of(), "client-id", SECRET, VALIDITY_SECONDS, 604800, List.of("http://localhost:5173")),
                 Clock.fixed(now, ZoneOffset.UTC));
     }
 

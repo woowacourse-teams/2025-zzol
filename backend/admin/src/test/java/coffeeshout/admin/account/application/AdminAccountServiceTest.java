@@ -41,7 +41,10 @@ class AdminAccountServiceTest {
 
     private AdminAccountService service(List<String> bootstrapEmails) {
         return new AdminAccountService(
-                adminAccountRepository, new AdminAuthProperties(bootstrapEmails, "client-id", SECRET, 3600), CLOCK);
+                adminAccountRepository,
+                new AdminAuthProperties(
+                        bootstrapEmails, "client-id", SECRET, 3600, 604800, List.of("http://localhost:5173")),
+                CLOCK);
     }
 
     private AdminAccountService serviceWithBootstrap() {

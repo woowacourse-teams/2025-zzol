@@ -82,7 +82,12 @@ const BlockStackingCanvas = () => {
 
   return (
     <S.Wrapper>
-      <S.GameContainer onPointerDown={handleTap} role="application" aria-label="빌딩쌓기 게임 영역">
+      <S.GameContainer
+        onPointerDown={handleTap}
+        role="application"
+        aria-label="빌딩쌓기 게임 영역"
+        data-testid="block-stacking-game"
+      >
         <S.Canvas ref={canvasRef} />
         <S.MuteButton onPointerDown={handleMutePointerDown}>
           {muted ? '소리 켜기' : '소리 끄기'}

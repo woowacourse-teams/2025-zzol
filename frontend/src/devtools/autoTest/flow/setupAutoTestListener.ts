@@ -2,6 +2,7 @@ import { wait, DELAY_BETWEEN_ACTIONS } from './domUtils';
 import {
   findPageAction,
   handleHostGameStart,
+  clearBlockStackingTapInterval,
   clearLadderGameDrawInterval,
   clearRacingGameClickInterval,
   clearWormGameSteerInterval,
@@ -70,6 +71,7 @@ const runFlow = async (role: 'host' | 'guest', context: PageActionContext) => {
         clearRacingGameClickInterval();
         clearWormGameSteerInterval();
         clearLadderGameDrawInterval();
+        clearBlockStackingTapInterval();
       }
 
       if (/^\/room\/[^/]+\/order$/.test(newPath)) {
@@ -81,6 +83,7 @@ const runFlow = async (role: 'host' | 'guest', context: PageActionContext) => {
         clearRacingGameClickInterval();
         clearWormGameSteerInterval();
         clearLadderGameDrawInterval();
+        clearBlockStackingTapInterval();
         setFlowState(role, 'idle');
         break;
       }
@@ -177,6 +180,7 @@ const createMessageHandlers = ({
     clearRacingGameClickInterval();
     clearWormGameSteerInterval();
     clearLadderGameDrawInterval();
+    clearBlockStackingTapInterval();
     setFlowState('host', 'idle');
     setFlowState('guest', 'idle');
   },
@@ -184,6 +188,7 @@ const createMessageHandlers = ({
     clearRacingGameClickInterval();
     clearWormGameSteerInterval();
     clearLadderGameDrawInterval();
+    clearBlockStackingTapInterval();
     setFlowState('host', 'idle');
     setFlowState('guest', 'idle');
   },

@@ -54,6 +54,7 @@ public class BlockStackingService implements MiniGameService {
 
         final boolean recorded = game.recordFailure(gamer);
         if (recorded) {
+            notifier.notifyProgressUpdated(game, code);
             flowOrchestrator.triggerEarlyFinishIfAllFailed(joinCode, game);
         }
     }

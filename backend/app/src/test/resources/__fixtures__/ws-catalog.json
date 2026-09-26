@@ -874,6 +874,18 @@
         {
           "name" : "floor",
           "type" : "int"
+        },
+        {
+          "name" : "failed",
+          "type" : "boolean"
+        },
+        {
+          "name" : "topX",
+          "type" : "Double"
+        },
+        {
+          "name" : "topWidth",
+          "type" : "Double"
         }
       ],
       "values" : null

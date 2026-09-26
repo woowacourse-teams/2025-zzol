@@ -1,5 +1,6 @@
 package coffeeshout.config;
 
+import coffeeshout.gamecommon.MemberMiniGameRecordQuery;
 import coffeeshout.user.application.port.ReportAnonymizationPort;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -16,5 +17,12 @@ public class ServiceTestConfig {
     @Primary
     public ReportAnonymizationPort mockReportAnonymizationPort() {
         return Mockito.mock(ReportAnonymizationPort.class);
+    }
+
+    // :user의 MemberRecordService(#1794)가 :game의 MemberMiniGameRecordQuery를 요구하지만 :room 컨텍스트에는 없다
+    @Bean
+    @Primary
+    public MemberMiniGameRecordQuery mockMemberMiniGameRecordQuery() {
+        return Mockito.mock(MemberMiniGameRecordQuery.class);
     }
 }

@@ -162,6 +162,9 @@ admin:
     google-client-id: test-admin-client-id
     jwt-secret: "admin-test-secret-key-must-be-at-least-32-bytes-long"
     token-validity-seconds: 3600
+    refresh-token-validity-seconds: 604800
+    web-origins:
+      - http://localhost:5173
 
 user:
   code:
@@ -221,3 +224,5 @@ web:
   cors:
     allowed-origins:
       - http://localhost:3000
+      # 관리자 웹. 운영처럼 CORS 허용과 admin.auth.web-origins 양쪽에 있어야 refresh 가 닿는다.
+      - http://localhost:5173

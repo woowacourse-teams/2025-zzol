@@ -2,8 +2,10 @@ package coffeeshout.admin.auth;
 
 import coffeeshout.admin.account.domain.AdminEmail;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,21 @@ public record AdminAuthProperties(
         @NotBlank @Size(min = 32, message = "관리자 JWT secret은 HS256 최소 키 길이(32자) 이상이어야 합니다.")
         String jwtSecret,
 
-        @Positive long tokenValiditySeconds) {
+        @Positive long tokenValiditySeconds,
+
+        @Positive long refreshTokenValiditySeconds,
+
+        // refresh 와 logout 을 부를 수 있는 오리진. 회원 프론트도 같은 사이트라 SameSite 만으로는
+        // 그쪽에서 오는 요청을 못 막는다. 그래서 Origin 헤더를 이 목록과 따로 대조한다.
+        @NotEmpty List<String> webOrigins) {
+
+    public Duration refreshTokenValidity() {
+        return Duration.ofSeconds(refreshTokenValiditySeconds);
+    }
+
+    public boolean isWebOrigin(String origin) {
+        return origin != null && webOrigins.contains(origin);
+    }
 
     public boolean isBootstrap(AdminEmail email) {
         return email != null && bootstrapEmails().contains(email);

@@ -30,6 +30,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class AdminApiSecurityConfig {
 
     private static final String LOGIN_PATH = "/admin/api/auth/login";
+    private static final String REFRESH_PATH = "/admin/api/auth/refresh";
+    private static final String LOGOUT_PATH = "/admin/api/auth/logout";
 
     private final AdminTokenIssuer adminTokenIssuer;
 
@@ -58,6 +60,10 @@ public class AdminApiSecurityConfig {
                 //
                 // 반대로 켜면 SPA 가 매 요청마다 토큰을 받아 되돌려주는 왕복을 해야 하는데,
                 // 얻는 것이 없다. 쿠키 인증으로 바꾸는 날에는 이 줄부터 되돌려야 한다.
+                //
+                // 예외가 둘 있다. refresh 와 logout 은 refresh 쿠키로 인증한다. 그 쿠키는
+                // Path 가 인증 경로로 좁혀져 다른 API 에는 실리지 않고, 두 경로는 SameSite=Strict 와
+                // Origin 대조로 따로 지킨다(AdminRefreshCookie, AdminAuthController).
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
@@ -67,7 +73,8 @@ public class AdminApiSecurityConfig {
     }
 
     /**
-     * 인증 없이 열어 두는 경로. <b>로그인 하나뿐이다.</b>
+     * 인증 없이 열어 두는 경로. 로그인과 refresh 쿠키로 인증하는 두 경로다.
+     * refresh 와 logout 은 액세스 토큰이 만료된 뒤에 불리므로 Authorization 헤더를 요구할 수 없다.
      *
      * <p>한때 {@code local} 프로필에서만 열리는 dev-login 이 여기 있었다. 구글 검증을
      * 건너뛰고 허용목록만 보는 경로였는데 걷어냈다. 프로필로 잠그는 것은 프로필을
@@ -77,6 +84,6 @@ public class AdminApiSecurityConfig {
      * {@code http://localhost:5173} 이 들어 있어 그대로 된다.
      */
     private String[] publicPaths() {
-        return new String[] {LOGIN_PATH};
+        return new String[] {LOGIN_PATH, REFRESH_PATH, LOGOUT_PATH};
     }
 }

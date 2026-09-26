@@ -49,6 +49,7 @@ public record WsCatalog(
 
     public record SchemaEntry(SchemaKind kind, List<FieldEntry> fields, List<String> values) {}
 
+    /** {@code type} 은 Java 타입 문자열이다. 컴포넌트에 jspecify {@code @Nullable} 이 있으면 뒤에 {@code ?} 가 붙는다. */
     public record FieldEntry(String name, String type) {}
 
     public record ErrorShape(String topic, String payloadType) {}

@@ -13,48 +13,24 @@
  *  - 발행 `/room/{joinCode}/worm/steer` → SteerCommand (10Hz, 변화 시만)
  */
 
-export type WormGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'FINISH' | 'DONE';
+import type {
+  Point,
+  WormGameStateResponse,
+  WormSnapshotResponse,
+  WormsStateResponse,
+} from '@/apis/websocket/generated/wsContract';
 
-export type WormGameStateMessage = { state: WormGameState };
+export type {
+  SteerCommand,
+  WormGameState,
+  WormPosition,
+  WormTrailSnapshot,
+} from '@/apis/websocket/generated/wsContract';
 
-export type WormPosition = {
-  playerName: string;
-  x: number;
-  y: number;
-  /** 진행 방향(라디안, 서버 정규화 (-π, π]) */
-  angle: number;
-  alive: boolean;
-  /** 서버가 마지막으로 적용한 이 플레이어의 조향 seq */
-  lastSeq: number;
-};
+export type WormGameStateMessage = WormGameStateResponse;
 
-export type WormDeltaMessage = {
-  tick: number;
-  radius: number;
-  worms: WormPosition[];
-};
+export type WormDeltaMessage = WormsStateResponse;
 
-export type WormPoint = { x: number; y: number };
+export type WormPoint = Point;
 
-export type WormTrailSnapshot = {
-  playerName: string;
-  alive: boolean;
-  trail: WormPoint[];
-};
-
-export type WormSnapshotMessage = {
-  tick: number;
-  tickMillis: number;
-  /** ISO-8601 — tick↔절대시각 매핑 전용 */
-  serverNow: string;
-  radius: number;
-  worms: WormTrailSnapshot[];
-};
-
-/** 조향 대상은 서버가 STOMP principal 로 정한다 — playerName 을 실으면 남의 지렁이를 조종할 수 있다. */
-export type SteerCommand = {
-  /** 목표각(라디안) */
-  angle: number;
-  /** 단조증가 입력 일련번호 */
-  seq: number;
-};
+export type WormSnapshotMessage = WormSnapshotResponse;

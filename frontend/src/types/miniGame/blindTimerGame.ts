@@ -1,17 +1,13 @@
-export type BlindTimerGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
+import type {
+  BlindTimerProgressResponse,
+  BlindTimerStateResponse,
+} from '@/apis/websocket/generated/wsContract';
 
-export type BlindTimerStateData = {
-  state: BlindTimerGameState;
-  targetTimeMillis: number;
-  blindDelayMillis: number;
-};
+export type {
+  BlindTimerGameState,
+  BlindTimerPlayerProgress,
+} from '@/apis/websocket/generated/wsContract';
 
-export type BlindTimerPlayerProgress = {
-  playerName: string;
-  stopped: boolean;
-  timedOut: boolean;
-};
+export type BlindTimerStateData = BlindTimerStateResponse;
 
-export type BlindTimerProgressData = {
-  players: BlindTimerPlayerProgress[];
-};
+export type BlindTimerProgressData = BlindTimerProgressResponse;

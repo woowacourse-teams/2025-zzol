@@ -1,6 +1,5 @@
-export type QRCodeStatus = 'PENDING' | 'SUCCESS' | 'ERROR';
+import type { QrCodeStatusResponse } from '@/apis/websocket/generated/wsContract';
 
-export type QRCodeEvent = {
-  status: QRCodeStatus;
-  qrCodeUrl?: string;
-};
+export type { QrCodeStatus as QRCodeStatus } from '@/apis/websocket/generated/wsContract';
+
+export type QRCodeEvent = QrCodeStatusResponse;

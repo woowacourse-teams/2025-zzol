@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.cardgame.application.response.MiniGameStateMessage;
 import coffeeshout.cardgame.domain.CardGame;
+import coffeeshout.cardgame.domain.CardGameState;
 import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.GamerFixture;
@@ -92,25 +93,25 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
         MessageResponse done = responses.get();
 
         assertThat(payloadAs(firstRoundLoading, MiniGameStateMessage.class).cardGameState())
-                .isEqualTo("FIRST_LOADING");
+                .isEqualTo(CardGameState.FIRST_LOADING);
         assertThat(payloadAs(firstRoundLoading, MiniGameStateMessage.class).currentRound())
-                .isEqualTo("FIRST");
+                .isEqualTo(MiniGameStateMessage.RoundLabel.FIRST);
         assertThat(payloadAs(firstRoundLoading, MiniGameStateMessage.class).allSelected())
                 .isFalse();
 
         assertThat(payloadAs(prepare, MiniGameStateMessage.class).cardGameState())
-                .isEqualTo("PREPARE");
+                .isEqualTo(CardGameState.PREPARE);
         assertThat(payloadAs(firstRoundPlaying, MiniGameStateMessage.class).cardGameState())
-                .isEqualTo("PLAYING");
+                .isEqualTo(CardGameState.PLAYING);
         assertThat(payloadAs(firstRoundScoreBoard, MiniGameStateMessage.class).cardGameState())
-                .isEqualTo("SCORE_BOARD");
+                .isEqualTo(CardGameState.SCORE_BOARD);
         assertThat(payloadAs(secondRoundLoading, MiniGameStateMessage.class).cardGameState())
-                .isEqualTo("LOADING");
+                .isEqualTo(CardGameState.LOADING);
         assertThat(payloadAs(secondRoundPlaying, MiniGameStateMessage.class).cardGameState())
-                .isEqualTo("PLAYING");
+                .isEqualTo(CardGameState.PLAYING);
         assertThat(payloadAs(secondRoundScoreBoard, MiniGameStateMessage.class).cardGameState())
-                .isEqualTo("SCORE_BOARD");
-        assertThat(payloadAs(done, MiniGameStateMessage.class).cardGameState()).isEqualTo("DONE");
+                .isEqualTo(CardGameState.SCORE_BOARD);
+        assertThat(payloadAs(done, MiniGameStateMessage.class).cardGameState()).isEqualTo(CardGameState.DONE);
         결과_저장과_정산_아웃박스를_확인한다(MiniGameType.CARD_GAME, gamers.size());
     }
 
@@ -243,7 +244,7 @@ class CardGameIntegrationTest extends GameModuleWebSocketTest {
         assertThat(payloadAs(lastSelection, MiniGameStateMessage.class).allSelected())
                 .isTrue();
         assertThat(payloadAs(scoreBoard, MiniGameStateMessage.class).cardGameState())
-                .isEqualTo("SCORE_BOARD");
+                .isEqualTo(CardGameState.SCORE_BOARD);
 
         // 핵심 검증: playing 제한시간(2000ms)보다 훨씬 빠르게 전환됨
         assertThat(scoreBoard.duration())

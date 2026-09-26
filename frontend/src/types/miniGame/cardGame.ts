@@ -2,9 +2,9 @@
  * 카드 게임 타입
  */
 
-export type CardGameState = 'READY' | 'LOADING' | 'PREPARE' | 'PLAYING' | 'SCORE_BOARD' | 'DONE';
+import type { CardInfoMessage, CardType } from '@/apis/websocket/generated/wsContract';
 
-export type CardType = 'ADDITION' | 'MULTIPLIER';
+export type { CardGameState, CardType } from '@/apis/websocket/generated/wsContract';
 
 // TODO: 백엔드가 수정한 값대로 변경사항 반영 필요
 export type AdditionValue = -40 | -30 | -20 | -10 | 0 | 10 | 20 | 30 | 40;
@@ -24,13 +24,7 @@ export type MultiplierCard = {
 
 export type Card = AdditionCard | MultiplierCard;
 
-export type CardInfo = {
-  cardType: CardType;
-  value: CardValue;
-  selected: boolean;
-  playerName: string | null;
-  colorIndex: number;
-};
+export type CardInfo = CardInfoMessage;
 
 export type SelectedCardInfo = Record<
   CardGameRound,

@@ -8,6 +8,7 @@ import {
 import { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 import { BlockStackingGameContext } from './BlockStackingGameContext';
 import { GAME_DURATION } from '@/features/miniGame/blockStackingGame/constants/blockStackingBalance';
+import type { BlockStackingStateResponse } from '@/apis/websocket/generated/wsContract';
 import {
   INITIAL_BLOCK_WIDTH,
   INITIAL_BLOCK_X,
@@ -42,14 +43,9 @@ const growTowers = (prev: Towers, players: BlockStackingRanking[]): Towers => {
   return changed ? next : prev;
 };
 
-type StateMessage = {
-  state: BlockStackingGameState;
-  endTimeEpochMs?: number | null;
-};
-
 const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
   const { joinCode } = useIdentifier();
-  const [gameState, setGameState] = useState<BlockStackingGameState>('DESCRIPTION');
+  const [gameState, setGameState] = useState<BlockStackingGameState>('READY');
   const [rankings, setRankings] = useState<BlockStackingRanking[]>([]);
   const [towers, setTowers] = useState<Towers>({});
   const [isLocalGameOver, setIsLocalGameOver] = useState(false);
@@ -60,7 +56,7 @@ const BlockStackingGameProvider = ({ children }: PropsWithChildren) => {
 
   useWebSocketSubscription(
     `/room/${joinCode}/block-stacking/state`,
-    useCallback(({ state, endTimeEpochMs: ms }: StateMessage) => {
+    useCallback(({ state, endTimeEpochMs: ms }: BlockStackingStateResponse) => {
       setGameState(state);
       if (state === 'PLAYING') {
         setIsLocalGameOver(false);

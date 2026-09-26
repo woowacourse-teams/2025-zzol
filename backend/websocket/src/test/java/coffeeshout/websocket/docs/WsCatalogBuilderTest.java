@@ -10,6 +10,7 @@ import coffeeshout.websocket.ui.WebSocketResponse;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -132,6 +133,42 @@ class WsCatalogBuilderTest {
                         .isEqualTo("WebSocketResponse<List<FixturePayload>>");
                 softly.assertThat(catalog.schemas()).containsKey("FixturePayload");
             });
+        }
+    }
+
+    @Nested
+    @DisplayName("@Nullable 컴포넌트를 가진 payload")
+    class Nullable_컴포넌트를_가진_payload {
+
+        @Test
+        @DisplayName("@Nullable 이 붙은 필드만 타입 뒤에 ? 가 붙는다")
+        void nullable_필드에_물음표가_붙는다() {
+            when(applicationContext.getBeansWithAnnotation(Component.class))
+                    .thenReturn(Map.of("fixture", new FixtureNullablePublisher()));
+
+            final WsCatalog catalog = builder.build();
+
+            final List<WsCatalog.FieldEntry> fields =
+                    catalog.schemas().get("FixtureNullablePayload").fields();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(fields)
+                        .extracting(WsCatalog.FieldEntry::type)
+                        .containsExactly("Long?", "List<String>?", "String");
+            });
+        }
+    }
+
+    @Nested
+    @DisplayName("simpleName 이 같은 payload 둘")
+    class simpleName_이_같은_payload_둘 {
+
+        @Test
+        @DisplayName("한쪽을 조용히 버리지 않고 실패한다")
+        void 충돌하면_실패한다() {
+            when(applicationContext.getBeansWithAnnotation(Component.class))
+                    .thenReturn(Map.of("fixture", new FixtureCollisionPublisher()));
+
+            assertCoffeeShoutException(builder::build, WsCatalogErrorCode.SCHEMA_NAME_COLLISION);
         }
     }
 
@@ -518,6 +555,22 @@ class WsCatalogBuilderTest {
     }
 
     public record FixturePayload(String name, int value) {}
+
+    public record FixtureNullablePayload(
+            @Nullable Long id, @Nullable List<String> tags, String name) {}
+
+    static class FixtureNullablePublisher {
+
+        @WsTopic(path = "/test/{joinCode}/nullable", payload = FixtureNullablePayload.class)
+        public void publish() {}
+    }
+
+    static class FixtureCollisionPublisher {
+
+        @WsTopic(path = "/test/a", payload = FixturePayload.class)
+        @WsTopic(path = "/test/b", payload = coffeeshout.websocket.docs.collision.FixturePayload.class)
+        public void publish() {}
+    }
 
     public record FixtureRequest(String input) {}
 }

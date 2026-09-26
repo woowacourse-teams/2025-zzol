@@ -51,8 +51,8 @@ const ZzolBotPage = lazy(() =>
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
-      // 401 은 화면마다 처리하지 않는다. 토큰은 client 가 이미 지웠고,
-      // 다음 렌더에서 RequireAuth 가 로그인으로 보낸다.
+      // 401 은 화면마다 처리하지 않는다. 여기까지 온 401 은 client 가 재발급까지 해 보고
+      // 실패한 것이다. 토큰은 이미 지워졌고, 다음 렌더에서 RequireAuth 가 로그인으로 보낸다.
       if (error instanceof ApiError && error.isUnauthorized) {
         queryClient.clear();
       }

@@ -24,12 +24,27 @@ function renderAuth() {
 
 const me = { email: 'admin@zzol.site' };
 
+/**
+ * 주소별로 답하는 가짜 서버. 토큰이 없으면 /auth/me 는 401 이고, refresh 는 기본으로 거절한다.
+ * 모든 주소에 200 을 주면 토큰 없이 시작한 화면이 곧바로 로그인돼 버려 흐름을 볼 수 없다.
+ */
+function stubServer({ refresh = () => new Response(null, { status: 401 }) } = {}) {
+  const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
+    const url = String(input);
+    if (url.endsWith('/auth/refresh')) return refresh();
+    if (url.endsWith('/auth/logout')) return new Response(null, { status: 204 });
+    const headers = (init?.headers ?? {}) as Record<string, string>;
+    return headers.Authorization
+      ? new Response(JSON.stringify(me), { status: 200 })
+      : new Response(null, { status: 401 });
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
 beforeEach(() => {
   localStorage.clear();
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => new Response(JSON.stringify(me), { status: 200 })),
-  );
+  stubServer();
 });
 
 afterEach(() => {
@@ -86,6 +101,42 @@ describe('AuthProvider', () => {
     });
 
     await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('authenticated'));
+  });
+
+  it('저장된 토큰이 없어도 refresh 쿠키가 살아 있으면 구글 로그인 없이 들어간다', async () => {
+    // 새 창이거나 며칠 만에 돌아온 경우다. 토큰이 없다고 곧바로 로그인 화면으로 보내면 안 된다.
+    stubServer({
+      refresh: () => new Response(JSON.stringify({ accessToken: 'refreshed' }), { status: 200 }),
+    });
+
+    renderAuth();
+
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('authenticated'));
+    expect(localStorage.getItem('zzol-admin-token')).toBe('refreshed');
+  });
+
+  it('refresh 쿠키도 없으면 로그아웃 상태가 된다', async () => {
+    renderAuth();
+
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('anonymous'));
+  });
+
+  it('로그아웃하면 서버에 refresh 폐기를 요청한다', async () => {
+    // 안 하면 다음에 앱을 열 때 쿠키로 다시 로그인된다.
+    const fetchMock = stubServer();
+    saveToken('live-token');
+    function LogoutButton() {
+      return <button onClick={useAuth().logout}>로그아웃</button>;
+    }
+    render(
+      <AuthProvider>
+        <LogoutButton />
+      </AuthProvider>,
+    );
+
+    act(() => screen.getByRole('button', { name: '로그아웃' }).click());
+
+    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/auth/logout'))).toBe(true);
   });
 
   it('우리 키가 아닌 저장소 변화는 무시한다', async () => {

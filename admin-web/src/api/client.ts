@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/lib/env';
+import { refreshAccessToken } from '@/auth/refresh';
 import { clearToken, readToken } from '@/auth/tokenStore';
 
 const PREFIX = '/admin/api';
@@ -34,15 +35,55 @@ type RequestOptions = {
   signal?: AbortSignal;
 };
 
+/** refresh 쿠키를 주고받는 경로. 여기서 받은 401 은 재발급으로 풀 수 없다. */
+const COOKIE_AUTH_PATHS = ['/auth/login', '/auth/refresh', '/auth/logout'];
+
+type AuthorizedInit = Omit<RequestInit, 'headers'> & { headers?: Record<string, string> };
+
 /**
- * 모든 API 호출이 지나는 한 곳.
+ * 관리자 토큰을 붙여 보내고, 401 이면 refresh 쿠키로 재발급받아 한 번 더 보낸다.
  *
- * <p>401 을 받으면 토큰을 지운다. 서버가 이미 거절한 토큰을 계속 들고 있으면 화면마다
- * 401 이 반복되고, 사용자는 새로고침해도 안 고쳐지는 상태에 갇힌다.
+ * <p>재발급까지 거절되면 토큰을 지운다. 서버가 이미 거절한 토큰을 계속 들고 있으면 화면마다
+ * 401 이 반복되고, 사용자는 새로고침해도 안 고쳐지는 상태에 갇힌다. 지우면 AuthProvider 가
+ * 따라 내려가 로그인 화면으로 보낸다.
  *
- * <p>401 자동 재발급은 하지 않는다. 관리자 토큰에는 리프레시가 없고, 재발급하려면
- * 구글 팝업이 다시 떠야 하는데 그것을 백그라운드에서 몰래 하면 팝업 차단에 걸린다.
- * 로그인 화면으로 돌려보내 사람이 누르게 한다.
+ * <p>재발급이 네트워크 오류로 실패하면 토큰을 지우지 않는다. 로그인이 끊긴 것이 아니다.
+ *
+ * <p>본문을 두 번 보내므로 스트림 본문은 넘기지 않는다. 문자열만 쓴다.
+ */
+export async function authorizedFetch(input: URL | string, init: AuthorizedInit = {}): Promise<Response> {
+  const send = (token: string | null) =>
+    fetch(input, {
+      ...init,
+      headers: { ...init.headers, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+
+  const token = readToken();
+  const response = await send(token);
+  if (response.status !== 401) {
+    return response;
+  }
+
+  let refreshed: string | null;
+  try {
+    refreshed = await refreshAccessToken(token);
+  } catch {
+    return response;
+  }
+  if (!refreshed) {
+    clearToken();
+    return response;
+  }
+
+  const retried = await send(refreshed);
+  if (retried.status === 401) {
+    clearToken();
+  }
+  return retried;
+}
+
+/**
+ * 모든 API 호출이 지나는 한 곳. 인증과 재발급은 {@link authorizedFetch} 가 맡는다.
  */
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, params, signal } = options;
@@ -56,20 +97,17 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     }
   }
 
-  const token = readToken();
-  const response = await fetch(url, {
+  const init: AuthorizedInit = {
     method,
     signal,
-    headers: {
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (response.status === 401) {
-    clearToken();
-  }
+  };
+  const isCookieAuth = COOKIE_AUTH_PATHS.includes(path);
+  const response = isCookieAuth
+    ? // 로그인 응답의 쿠키를 저장하고 logout 에 쿠키를 싣는다. 오리진이 달라 명시해야 한다.
+      await fetch(url, { ...init, credentials: 'include' })
+    : await authorizedFetch(url, init);
 
   if (!response.ok) {
     throw await toApiError(response);

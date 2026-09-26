@@ -1,5 +1,4 @@
-import { ApiError } from '@/api/client';
-import { readToken } from '@/auth/tokenStore';
+import { ApiError, authorizedFetch } from '@/api/client';
 import { API_BASE_URL } from '@/lib/env';
 
 type StreamHandlers = {
@@ -31,13 +30,10 @@ export async function askZzolBot(
   handlers: StreamHandlers,
   signal?: AbortSignal,
 ): Promise<void> {
-  const token = readToken();
-  const response = await fetch(`${API_BASE_URL}/admin/api/zzolbot/ask`, {
+  // 일반 조회와 같은 재발급 경로를 탄다. 본문이 문자열이라 재발급 뒤 다시 보낼 수 있다.
+  const response = await authorizedFetch(`${API_BASE_URL}/admin/api/zzolbot/ask`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question }),
     signal,
   });

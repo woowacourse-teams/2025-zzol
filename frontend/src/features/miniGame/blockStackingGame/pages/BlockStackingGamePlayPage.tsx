@@ -7,12 +7,11 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import PrepareOverlay from '../../components/PrepareOverlay/PrepareOverlay';
 import BlockStackingCanvas from '../components/BlockStackingCanvas/BlockStackingCanvas';
-import EliminatedOverlay from '../components/EliminatedOverlay/EliminatedOverlay';
 import * as S from './BlockStackingGamePlayPage.styled';
 
 const BlockStackingGamePlayPage = () => {
   const { joinCode } = useIdentifier();
-  const { gameState, isLocalGameOver } = useBlockStackingGameContext();
+  const { gameState } = useBlockStackingGameContext();
   const navigate = useReplaceNavigate();
   const { miniGameType } = useParams();
 
@@ -24,11 +23,10 @@ const BlockStackingGamePlayPage = () => {
 
   return (
     <Layout>
-      <Layout.TopBar center={<Headline4>블록 쌓기</Headline4>} />
+      <Layout.TopBar center={<Headline4>빌딩 쌓기</Headline4>} />
       <Layout.Content>
         <S.Container>
           <BlockStackingCanvas />
-          {isLocalGameOver && <EliminatedOverlay />}
         </S.Container>
       </Layout.Content>
       {gameState === 'PREPARE' && <PrepareOverlay />}

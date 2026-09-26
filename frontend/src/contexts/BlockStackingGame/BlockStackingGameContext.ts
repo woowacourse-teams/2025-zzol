@@ -1,14 +1,15 @@
-import { BlockStackingGameState } from '@/types/miniGame/blockStackingGame';
+import {
+  BlockStackingGameState,
+  BlockStackingRanking,
+  StackedBlock,
+} from '@/types/miniGame/blockStackingGame';
 import { createContext, useContext } from 'react';
-
-type BlockStackingRanking = {
-  name: string;
-  floor: number;
-};
 
 type BlockStackingGameContextType = {
   gameState: BlockStackingGameState;
   rankings: BlockStackingRanking[];
+  /** 참가자별로 지금까지 쌓은 블록. 0번은 받침 블록이다 */
+  towers: Record<string, StackedBlock[]>;
   isLocalGameOver: boolean;
   setLocalGameOver: () => void;
   endTimeEpochMs: number | null;

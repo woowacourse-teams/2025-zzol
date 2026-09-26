@@ -258,6 +258,15 @@ class AdminAuditAspectTest {
         }
 
         @Test
+        void 토큰_재발급은_기록하지_않는다() throws Throwable {
+            // 조치가 아니라 세션 유지다. 남기면 탭마다 한 시간에 한 줄씩 anonymous 기록이 쌓인다.
+            bindRequest("POST", "/admin/api/auth/refresh", "/admin/api/auth/refresh", null);
+
+            assertThat(aspect.recordWrite(returning("token"))).isEqualTo("token");
+            then(adminAuditLogService).should(never()).record(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
         void admin_api_밖의_경로는_기록하지_않는다() throws Throwable {
             bindRequest("POST", "/reports", "/reports", null);
 

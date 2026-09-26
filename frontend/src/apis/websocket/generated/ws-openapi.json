@@ -81,8 +81,11 @@
       },
       "BlockStackingPlayerRankInfo" : {
         "required" : [
+          "failed",
           "floor",
-          "name"
+          "name",
+          "topWidth",
+          "topX"
         ],
         "type" : "object",
         "properties" : {
@@ -92,6 +95,19 @@
           "floor" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "failed" : {
+            "type" : "boolean"
+          },
+          "topX" : {
+            "type" : "number",
+            "format" : "double",
+            "nullable" : true
+          },
+          "topWidth" : {
+            "type" : "number",
+            "format" : "double",
+            "nullable" : true
           }
         }
       },
@@ -309,12 +325,18 @@
       },
       "LadderDrawRequest" : {
         "required" : [
+          "row",
           "segmentIndex"
         ],
         "type" : "object",
         "properties" : {
           "segmentIndex" : {
             "minimum" : 0,
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "row" : {
+            "minimum" : 1,
             "type" : "integer",
             "format" : "int32"
           }
@@ -378,6 +400,11 @@
               "type" : "integer",
               "format" : "int32"
             },
+            "nullable" : true
+          },
+          "rowCount" : {
+            "type" : "integer",
+            "format" : "int32",
             "nullable" : true
           },
           "endTimeEpochMs" : {

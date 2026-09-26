@@ -2,6 +2,8 @@ import { wait, DELAY_BETWEEN_ACTIONS } from './domUtils';
 import {
   findPageAction,
   handleHostGameStart,
+  clearBlockStackingTapInterval,
+  clearLadderGameDrawInterval,
   clearRacingGameClickInterval,
   clearWormGameSteerInterval,
   type PageActionContext,
@@ -68,6 +70,8 @@ const runFlow = async (role: 'host' | 'guest', context: PageActionContext) => {
       if (currentPath.match(/^\/room\/[^/]+\/[^/]+\/play$/)) {
         clearRacingGameClickInterval();
         clearWormGameSteerInterval();
+        clearLadderGameDrawInterval();
+        clearBlockStackingTapInterval();
       }
 
       if (/^\/room\/[^/]+\/order$/.test(newPath)) {
@@ -78,6 +82,8 @@ const runFlow = async (role: 'host' | 'guest', context: PageActionContext) => {
       if (newPath === '/') {
         clearRacingGameClickInterval();
         clearWormGameSteerInterval();
+        clearLadderGameDrawInterval();
+        clearBlockStackingTapInterval();
         setFlowState(role, 'idle');
         break;
       }
@@ -173,12 +179,16 @@ const createMessageHandlers = ({
   TEST_COMPLETED: () => {
     clearRacingGameClickInterval();
     clearWormGameSteerInterval();
+    clearLadderGameDrawInterval();
+    clearBlockStackingTapInterval();
     setFlowState('host', 'idle');
     setFlowState('guest', 'idle');
   },
   STOP_TEST: () => {
     clearRacingGameClickInterval();
     clearWormGameSteerInterval();
+    clearLadderGameDrawInterval();
+    clearBlockStackingTapInterval();
     setFlowState('host', 'idle');
     setFlowState('guest', 'idle');
   },

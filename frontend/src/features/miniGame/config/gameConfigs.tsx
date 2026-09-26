@@ -126,7 +126,7 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
     ReadyPage: BlockStackingGameReadyPage,
     slides: [
       {
-        textLines: ['블록이 좌우로 움직입니다', '화면을 탭해서 블록을 쌓으세요!'],
+        textLines: ['빌딩 층이 좌우로 움직입니다', '화면을 탭해서 한 층씩 쌓으세요!'],
         imageSrc: BlockStackingDescription1,
         className: 'slide-first',
       },
@@ -148,7 +148,7 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
         className: 'slide-first',
       },
       {
-        textLines: ['기둥 사이를 터치해서', '선을 하나 그을 수 있어요'],
+        textLines: ['기둥 사이 원하는 높이를 눌러', '선을 2개까지 그을 수 있어요'],
         imageSrc: LadderGameDescription2,
         className: 'slide-second',
       },

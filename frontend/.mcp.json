@@ -6,6 +6,22 @@
       "env": {
         "API_MCP_CATALOG_URL": "http://localhost:8080/dev/ws-catalog"
       }
+    },
+    "grafana": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-e", "GRAFANA_URL",
+        "-e", "GRAFANA_SERVICE_ACCOUNT_TOKEN",
+        "grafana/mcp-grafana:1.4.2",
+        "-t", "stdio",
+        "--disable-write",
+        "--enabled-tools", "datasource,prometheus,loki"
+      ],
+      "env": {
+        "GRAFANA_URL": "https://status.zzol.site",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "${GRAFANA_SA_TOKEN}"
+      }
     }
   }
 }

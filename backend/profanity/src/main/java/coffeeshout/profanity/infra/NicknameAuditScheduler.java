@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * 12시간 주기 닉네임 AI 검열 트리거.
+ * 닉네임 AI 검열 트리거. 주기는 {@code nickname-audit.cron}이 정한다(운영 기본 12시간).
  *
  * <p>검열 작업을 직접 실행하지 않고 전용 실행기로 넘긴다. 프로덕션에서 모든 {@code @Scheduled}가
  * 단일 스레드를 공유하는데(그 안에 500ms 주기 Outbox 릴레이가 있다), 검열 회차는 적체량에 비례해
@@ -31,7 +31,8 @@ public class NicknameAuditScheduler {
     @Qualifier("nicknameAuditExecutor")
     private final Executor auditExecutor;
 
-    @Scheduled(cron = "0 0 0/12 * * *")
+    // @Scheduled는 컴파일 상수만 받는다. 값의 형식은 NicknameAuditProperties의 컴팩트 생성자가 파싱해 검증한다.
+    @Scheduled(cron = "${nickname-audit.cron}")
     public void auditPendingNicknames() {
         log.info("닉네임 AI 검열 스케줄러 시작 — 실행기로 넘긴다");
         auditExecutor.execute(this::runAudit);

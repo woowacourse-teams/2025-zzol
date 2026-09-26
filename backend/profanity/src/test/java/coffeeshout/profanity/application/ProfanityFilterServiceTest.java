@@ -10,6 +10,7 @@ import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -18,12 +19,14 @@ import org.junit.jupiter.api.Test;
 class ProfanityFilterServiceTest {
 
     private ProfanityWordRepository wordRepository;
+    private SimpleMeterRegistry meterRegistry;
     private ProfanityFilterService service;
 
     @BeforeEach
     void setUp() {
         wordRepository = mock(ProfanityWordRepository.class);
-        service = new ProfanityFilterService(wordRepository, new TextNormalizer());
+        meterRegistry = new SimpleMeterRegistry();
+        service = new ProfanityFilterService(wordRepository, new TextNormalizer(), meterRegistry);
 
         given(wordRepository.findAllActive())
                 .willReturn(List.of(ProfanityWordFixture.한국어_수동_욕설(), ProfanityWordFixture.영어_LDNOOBW_욕설()));
@@ -101,6 +104,26 @@ class ProfanityFilterServiceTest {
             service.rebuildTrie();
 
             assertThat(service.contains("욕설")).isFalse();
+        }
+    }
+
+    /**
+     * FLAGGED 한 건마다 pub/sub이 나가고 구독자가 여기서 트라이를 통째로 다시 만든다.
+     * 재빌드 시간을 안 재면 이게 병목인지 아닌지를 추측으로 답하게 된다.
+     */
+    @Nested
+    class rebuildTrie_재구성_시간 {
+
+        @Test
+        void 재구성마다_소요_시간이_기록된다() {
+            service.rebuildTrie();
+
+            assertThat(meterRegistry
+                            .get("profanity.trie.rebuild.duration")
+                            .timer()
+                            .count())
+                    .as("init 1회에 방금 호출 1회를 더해 2회다.")
+                    .isEqualTo(2L);
         }
     }
 }

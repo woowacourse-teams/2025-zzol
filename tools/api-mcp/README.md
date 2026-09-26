@@ -48,7 +48,7 @@ WebSocket 카탈로그를 한 번 받아 캐싱한다. BE 가 안 켜져 있어�
 
 ## 등록 — 서브프로젝트별 `.mcp.json`
 
-Claude Code 는 **실행한 디렉토리**의 `.mcp.json` 만 자동 인식한다. 모노레포 루트 `.mcp.json` 은 `cd backend && claude` / `cd frontend && claude` 흐름에서 인식되지 않으므로 두지 않고, **각 서브프로젝트 폴더**(`backend/.mcp.json`, `frontend/.mcp.json`) 에 각자 둔다.
+Claude Code 는 **실행한 디렉토리**의 `.mcp.json` 만 자동 인식한다. 모노레포 루트 `.mcp.json` 은 `cd backend && claude` / `cd frontend && claude` 흐름에서 인식되지 않으므로 `api` 서버는 **각 서브프로젝트 폴더**(`backend/.mcp.json`, `frontend/.mcp.json`) 에 각자 둔다. 상대 경로가 없는 서버(`grafana`, #1789)는 루트에서 띄우는 세션을 위해 루트 `.mcp.json` 에도 같은 항목을 둔다.
 
 `backend/.mcp.json` 예시:
 

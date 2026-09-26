@@ -71,6 +71,20 @@ class RedisAdminRefreshTokenRepositoryTest extends AdminModuleServiceTest {
     }
 
     @Test
+    void family의_관리자를_읽는다() {
+        final AdminRefreshToken token = AdminRefreshToken.newFamily();
+        repository.save(token, MJ, TTL);
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(repository.findEmail(token)).contains(MJ);
+            // 재발급 전에 허용목록을 보려고 읽는 것이라 tokenId 는 따지지 않는다. 재사용 판정은 회전이 한다.
+            softly.assertThat(repository.findEmail(token.rotate())).contains(MJ);
+            softly.assertThat(repository.findEmail(AdminRefreshToken.newFamily()))
+                    .isEmpty();
+        });
+    }
+
+    @Test
     void 없는_family면_빈_값이다() {
         final AdminRefreshToken unknown = AdminRefreshToken.newFamily();
 

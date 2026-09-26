@@ -44,15 +44,20 @@ public class AdminAuthService {
     public AdminTokens refresh(String rawRefreshToken) {
         final AdminRefreshToken presented =
                 AdminRefreshToken.parse(rawRefreshToken).orElseThrow(AdminAuthService::invalidRefreshToken);
-        final AdminRefreshToken next = presented.rotate();
-        final AdminEmail email = adminRefreshTokenRepository
-                .rotate(presented, next, adminAuthProperties.refreshTokenValidity())
-                .orElseThrow(AdminAuthService::invalidRefreshToken);
+        final AdminEmail email =
+                adminRefreshTokenRepository.findEmail(presented).orElseThrow(AdminAuthService::invalidRefreshToken);
 
+        // 허용목록을 회전보다 먼저 본다. 이 확인은 DB 를 부르는데, 회전한 뒤에 실패하면 브라우저는
+        // 새 쿠키를 못 받은 채 남고 다음 재발급이 재사용으로 판정돼 로그인이 끊긴다.
         if (!adminAccountService.isAllowed(email)) {
             adminRefreshTokenRepository.revoke(presented.familyId());
             throw new BusinessException(AdminAccountErrorCode.NOT_ADMIN, "관리자 허용목록에 없는 계정입니다.");
         }
+
+        final AdminRefreshToken next = presented.rotate();
+        adminRefreshTokenRepository
+                .rotate(presented, next, adminAuthProperties.refreshTokenValidity())
+                .orElseThrow(AdminAuthService::invalidRefreshToken);
         return new AdminTokens(adminTokenIssuer.issue(email), next);
     }
 

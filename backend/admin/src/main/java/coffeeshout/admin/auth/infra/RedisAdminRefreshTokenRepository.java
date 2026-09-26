@@ -59,6 +59,15 @@ public class RedisAdminRefreshTokenRepository implements AdminRefreshTokenReposi
     }
 
     @Override
+    public Optional<AdminEmail> findEmail(AdminRefreshToken token) {
+        final Object email = stringRedisTemplate.opsForHash().get(key(token.familyId()), "email");
+        if (email == null) {
+            return Optional.empty();
+        }
+        return AdminEmail.parse(email.toString());
+    }
+
+    @Override
     public Optional<AdminEmail> rotate(AdminRefreshToken presented, AdminRefreshToken next, Duration ttl) {
         final String result = stringRedisTemplate.execute(
                 ROTATE_SCRIPT, List.of(key(presented.familyId())), presented.tokenId(), next.tokenId(), seconds(ttl));

@@ -2,6 +2,7 @@ package coffeeshout.admin.auth.application;
 
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -135,6 +136,7 @@ class AdminAuthServiceTest {
 
         @Test
         void 회전에_성공하고_허용목록에_있으면_새_토큰을_준다() {
+            given(adminRefreshTokenRepository.findEmail(presented)).willReturn(Optional.of(MJ));
             given(adminRefreshTokenRepository.rotate(eq(presented), any(), eq(REFRESH_TTL)))
                     .willReturn(Optional.of(MJ));
             given(adminAccountService.isAllowed(MJ)).willReturn(true);
@@ -150,22 +152,21 @@ class AdminAuthServiceTest {
         }
 
         @Test
-        void 허용목록에서_빠졌으면_family를_폐기하고_거부한다() {
-            given(adminRefreshTokenRepository.rotate(eq(presented), any(), eq(REFRESH_TTL)))
-                    .willReturn(Optional.of(MJ));
+        void 허용목록에서_빠졌으면_회전하지_않고_family를_폐기한다() {
+            given(adminRefreshTokenRepository.findEmail(presented)).willReturn(Optional.of(MJ));
             given(adminAccountService.isAllowed(MJ)).willReturn(false);
 
             assertCoffeeShoutException(
                     () -> adminAuthService.refresh(presented.value()), AdminAccountErrorCode.NOT_ADMIN);
             then(adminRefreshTokenRepository).should().revoke(presented.familyId());
+            then(adminRefreshTokenRepository).should(never()).rotate(any(), any(), any());
             then(adminTokenIssuer).should(never()).issue(any());
         }
 
         @Test
-        void 회전에_실패하면_거부한다() {
-            // 없는 family, 만료, 폐기, 재사용이 모두 여기로 온다. 밖에서는 구분하지 않는다.
-            given(adminRefreshTokenRepository.rotate(eq(presented), any(), eq(REFRESH_TTL)))
-                    .willReturn(Optional.empty());
+        void family가_없으면_허용목록을_보지_않고_거부한다() {
+            // 만료되었거나 폐기된 경우다.
+            given(adminRefreshTokenRepository.findEmail(presented)).willReturn(Optional.empty());
 
             assertCoffeeShoutException(
                     () -> adminAuthService.refresh(presented.value()),
@@ -175,12 +176,38 @@ class AdminAuthServiceTest {
         }
 
         @Test
+        void 회전에_실패하면_거부한다() {
+            // 이미 쓴 토큰이 다시 온 경우다. 저장소가 family 를 지우고 빈 값을 준다.
+            given(adminRefreshTokenRepository.findEmail(presented)).willReturn(Optional.of(MJ));
+            given(adminAccountService.isAllowed(MJ)).willReturn(true);
+            given(adminRefreshTokenRepository.rotate(eq(presented), any(), eq(REFRESH_TTL)))
+                    .willReturn(Optional.empty());
+
+            assertCoffeeShoutException(
+                    () -> adminAuthService.refresh(presented.value()),
+                    AdminAccountErrorCode.ADMIN_REFRESH_TOKEN_INVALID);
+            then(adminTokenIssuer).should(never()).issue(any());
+        }
+
+        @Test
+        void 허용목록_확인이_실패하면_토큰을_회전하지_않는다() {
+            // 회전한 뒤에 실패하면 브라우저는 새 쿠키를 받지 못한다. 다음 재발급이 이전 토큰을 내서
+            // 재사용으로 판정되고, DB 가 잠깐 끊긴 것만으로 로그인이 끊긴다.
+            given(adminRefreshTokenRepository.findEmail(presented)).willReturn(Optional.of(MJ));
+            given(adminAccountService.isAllowed(MJ)).willThrow(new IllegalStateException("DB 연결 실패"));
+
+            assertThatThrownBy(() -> adminAuthService.refresh(presented.value()))
+                    .isInstanceOf(IllegalStateException.class);
+            then(adminRefreshTokenRepository).should(never()).rotate(any(), any(), any());
+        }
+
+        @Test
         void 쿠키가_없거나_망가졌으면_저장소를_보지_않고_거부한다() {
             assertCoffeeShoutException(
                     () -> adminAuthService.refresh(null), AdminAccountErrorCode.ADMIN_REFRESH_TOKEN_INVALID);
             assertCoffeeShoutException(
                     () -> adminAuthService.refresh("망가진값"), AdminAccountErrorCode.ADMIN_REFRESH_TOKEN_INVALID);
-            then(adminRefreshTokenRepository).should(never()).rotate(any(), any(), any());
+            then(adminRefreshTokenRepository).should(never()).findEmail(any());
         }
     }
 

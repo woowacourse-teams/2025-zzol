@@ -2,6 +2,9 @@ package coffeeshout.migration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
+import coffeeshout.profanity.domain.audit.AiConfidence;
+import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import coffeeshout.support.CommonTestSchedulerConfig;
 import coffeeshout.support.app.config.IntegrationTestConfig;
 import javax.sql.DataSource;
@@ -73,6 +76,9 @@ class FlywayMigrationIntegrationTest {
     @Autowired
     private DataSource dataSource;
 
+    @Autowired
+    private NicknameFeedbackRepository feedbackRepository;
+
     @Test
     void Flyway가_구동되어_마이그레이션을_적용한다() {
         final JdbcTemplate jdbc = new JdbcTemplate(dataSource);
@@ -95,5 +101,20 @@ class FlywayMigrationIntegrationTest {
         assertThat(flywayRuns).as("Flyway가 마이그레이션을 적용해야 한다").isGreaterThan(0);
         assertThat(v39Applied).as("V39가 성공적으로 적용돼야 한다").isTrue();
         assertThat(dedupKeyColumn).as("V39가 만든 dedup_key 컬럼이 존재해야 한다").isEqualTo(1);
+    }
+
+    /**
+     * V48은 롤백을 위해 {@code player_name_feedback.ai_flagged}를 남겨 둔다. 엔티티는 이 칼럼을 모르므로
+     * 기본값이 없으면 NOT NULL에 걸려 운영자의 허용·차단이 전부 실패한다.
+     */
+    @Test
+    void 남겨둔_ai_flagged_칼럼이_있어도_피드백을_저장한다() {
+        final NicknameFeedback saved = feedbackRepository.save(
+                new NicknameFeedback("검증닉", AiConfidence.of(0.9), NicknameFeedback.OperatorDecision.BLOCKED, null));
+
+        final Boolean aiFlagged = new JdbcTemplate(dataSource)
+                .queryForObject(
+                        "SELECT ai_flagged FROM player_name_feedback WHERE id = ?", Boolean.class, saved.getId());
+        assertThat(aiFlagged).isTrue();
     }
 }

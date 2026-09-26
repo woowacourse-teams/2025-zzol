@@ -16,6 +16,8 @@ public final class NicknameAuditPropertiesFixture {
     private static final Duration 요청_타임아웃_기본 = Duration.ofSeconds(120);
     private static final Duration 회차_예산_기본 = Duration.ofMinutes(10);
     private static final int 시도_상한_기본 = 3;
+    private static final double 표본_비율_기본 = 0.05;
+    private static final int 표본_상한_기본 = 20;
     private static final Stub 스텁_꺼짐 = new Stub(Duration.ZERO, 0);
 
     private NicknameAuditPropertiesFixture() {}
@@ -38,7 +40,20 @@ public final class NicknameAuditPropertiesFixture {
 
     public static NicknameAuditProperties 주기(String cron) {
         return new NicknameAuditProperties(
-                "api-key", 모델, 0.85, 배치_크기, 20, 2, 요청_타임아웃_기본, 회차_예산_기본, 시도_상한_기본, cron, new Seed(0), 스텁_꺼짐);
+                "api-key",
+                모델,
+                0.85,
+                배치_크기,
+                20,
+                2,
+                요청_타임아웃_기본,
+                회차_예산_기본,
+                시도_상한_기본,
+                표본_비율_기본,
+                표본_상한_기본,
+                cron,
+                new Seed(0),
+                스텁_꺼짐);
     }
 
     public static NicknameAuditProperties 적재(int seedCount) {
@@ -63,6 +78,8 @@ public final class NicknameAuditPropertiesFixture {
                 requestTimeout,
                 maxRunDuration,
                 maxAttempts,
+                표본_비율_기본,
+                표본_상한_기본,
                 "0 0 0/12 * * *",
                 seed,
                 stub);

@@ -1,12 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   useAuditDecision,
   useNicknameAuditQuality,
   useNicknameAuditStats,
   useNicknameAudits,
 } from '@/api/queries';
-import type { NicknameAudit, NicknameAuditStatus } from '@/api/types';
+import type { NicknameAudit, NicknameAuditQuality, NicknameAuditStatus } from '@/api/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { ERROR_SURFACE } from '@/components/ui/errorSurface';
@@ -24,6 +25,7 @@ import { Histogram } from '@/components/charts/Histogram';
 import { Skeleton } from '@/components/ui/EmptyState';
 import { nicknameAuditStatusLabel } from '@/lib/labels';
 import { ProfanityWordsCard } from '@/components/ProfanityWordsCard';
+import { SampleReviewCard } from '@/components/SampleReviewCard';
 import { formatPercent } from '@/lib/format';
 
 const TABS: { value: NicknameAuditStatus; label: string; hint: string }[] = [
@@ -35,13 +37,32 @@ const TABS: { value: NicknameAuditStatus; label: string; hint: string }[] = [
   },
 ];
 
+type Panel = 'queue' | 'samples';
+
+const PANELS: { value: Panel; label: string }[] = [
+  { value: 'queue', label: '검열 대기' },
+  { value: 'samples', label: '표본 검토' },
+];
+
 /** 걸린 쪽이 코랄이다. 사람 손이 필요해지는 쪽이라 그 막대가 늘어나는 것을 먼저 봐야 한다. */
 const DAILY_SERIES = [
   { key: 'flagged', name: '걸림', color: 'var(--chart-1)' },
   { key: 'passed', name: '통과', color: 'var(--gray-300)' },
 ];
 
+/**
+ * 탭 상태는 {@code ZzolBotPage}처럼 주소에 남긴다. 표본을 몇십 건 고르다 새로고침해도
+ * 검열 대기로 튕기지 않아야 한다.
+ */
 export function ProfanityPage() {
+  const [params, setParams] = useSearchParams();
+  const panel = readPanel(params.get('tab'));
+  const setPanel = (next: Panel) => {
+    const updated = new URLSearchParams(params);
+    updated.set('tab', next);
+    setParams(updated);
+  };
+
   const [status, setStatus] = useState<NicknameAuditStatus>('FLAGGED');
   const [page, setPage] = useState(0);
 
@@ -121,6 +142,7 @@ export function ProfanityPage() {
       <PageHeader
         title="닉네임 검열"
         description="AI가 걸러낸 닉네임을 사람이 확인합니다. 뒤집힌 비율이 모델을 손볼 시점을 알려줍니다."
+        actions={<Tabs tabs={PANELS} value={panel} onChange={setPanel} label="화면" />}
       />
 
       <Loaded
@@ -140,106 +162,128 @@ export function ProfanityPage() {
               hint="최근 30일. 높으면 모델 점검"
             />
             <Tile label="오탐" value={data.falsePositive} hint="AI가 걸렀는데 관리자가 허용" />
-            <Tile label="미탐" value={data.falseNegative} hint="AI가 놓쳤는데 관리자가 차단" />
+            <Tile label="미탐" value={data.falseNegative} hint={missHint(data)} />
             <Tile label="판정 일치" value={data.agreed} hint={`총 ${data.total}건 중`} />
           </TileGrid>
         )}
       </Loaded>
 
-      {/* 대기 목록은 지금 손이 필요한 것만 보여준다. 목록이 길어진 것이 욕이 늘어서인지
-       * 모델이 예민해져서인지는 이 셋을 나란히 봐야 갈린다.
-       *
-       * 일자별만 한 줄을 통째로 쓴다. 가로축이 서른 칸이라 절반 폭에서는 날짜 눈금이
-       * 서로 붙어 언제인지 못 읽는다. 칸이 다섯 이하인 분포 둘은 반씩 나눠도 넉넉하다. */}
-      <Card>
-        <CardHeader
-          title="일자별 검열"
-          description="걸림은 사람이 봐야 하는 판정입니다. 최근 30일."
-        />
-        <CardBody>
-          <Loaded query={stats} skeleton={<Skeleton className="h-44" />}>
-            {(data) => <DailyChart data={data.daily} series={DAILY_SERIES} height={200} />}
-          </Loaded>
-        </CardBody>
-      </Card>
+      {panel === 'samples' && <SampleReviewCard />}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="flex flex-col">
-          <CardHeader title="판정 분포" description="닉네임이 어디에서 멈췄는지입니다." />
-          <CardBody className="flex flex-1 items-center pb-4">
-            <Loaded query={stats} skeleton={<Skeleton className="h-40" />}>
-              {(data) => (
-                <DistributionBars
-                  data={data.statuses.map((slice) => ({
-                    label: nicknameAuditStatusLabel(slice.status),
-                    count: slice.count,
-                  }))}
-                  emptyTitle="검열 기록이 없습니다"
-                  emptyDescription="닉네임이 만들어지면 여기에 쌓입니다."
-                />
-              )}
-            </Loaded>
-          </CardBody>
-        </Card>
-
-        <Card className="flex flex-col">
-          <CardHeader
-            title="AI 신뢰도"
-            description="걸린 닉네임만 셉니다. 낮은 쪽이 두꺼우면 확신 없이 걸고 있다는 뜻입니다."
-          />
-          <CardBody className="flex-1 pb-4">
-            <Loaded query={stats} skeleton={<Skeleton className="h-40" />}>
-              {(data) => (
-                <Histogram
-                  data={data.confidenceBuckets}
-                  emptyTitle="걸린 닉네임이 없습니다"
-                  emptyDescription="검열에 걸려야 신뢰도가 남습니다."
-                />
-              )}
-            </Loaded>
-          </CardBody>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader
-          title="검열 대기"
-          description={TABS.find((tab) => tab.value === status)?.hint}
-          actions={
-            <Tabs
-              tabs={TABS}
-              value={status}
-              label="검열 상태"
-              onChange={(next) => {
-                setStatus(next);
-                setPage(0);
-              }}
+      {panel === 'queue' && (
+        <>
+          {/* 대기 목록은 지금 손이 필요한 것만 보여준다. 목록이 길어진 것이 욕이 늘어서인지
+           * 모델이 예민해져서인지는 이 셋을 나란히 봐야 갈린다.
+           *
+           * 일자별만 한 줄을 통째로 쓴다. 가로축이 서른 칸이라 절반 폭에서는 날짜 눈금이
+           * 서로 붙어 언제인지 못 읽는다. 칸이 다섯 이하인 분포 둘은 반씩 나눠도 넉넉하다. */}
+          <Card>
+            <CardHeader
+              title="일자별 검열"
+              description="걸림은 사람이 봐야 하는 판정입니다. 최근 30일."
             />
-          }
-        />
+            <CardBody>
+              <Loaded query={stats} skeleton={<Skeleton className="h-44" />}>
+                {(data) => <DailyChart data={data.daily} series={DAILY_SERIES} height={200} />}
+              </Loaded>
+            </CardBody>
+          </Card>
 
-        <DataTable
-          error={audits.error}
-          onRetry={() => audits.refetch()}
-          columns={columns}
-          data={audits.data?.content ?? []}
-          loading={audits.isPending}
-          emptyTitle={`${nicknameAuditStatusLabel(status)} 상태의 닉네임이 없습니다`}
-          emptyDescription="새 닉네임이 검열에 걸리면 여기에 쌓입니다."
-        />
-        {audits.data && (
-          <Pagination
-            page={audits.data.page}
-            totalPages={audits.data.totalPages}
-            totalElements={audits.data.totalElements}
-            onChange={setPage}
-          />
-        )}
-      </Card>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Card className="flex flex-col">
+              <CardHeader title="판정 분포" description="닉네임이 어디에서 멈췄는지입니다." />
+              <CardBody className="flex flex-1 items-center pb-4">
+                <Loaded query={stats} skeleton={<Skeleton className="h-40" />}>
+                  {(data) => (
+                    <DistributionBars
+                      data={data.statuses.map((slice) => ({
+                        label: nicknameAuditStatusLabel(slice.status),
+                        count: slice.count,
+                      }))}
+                      emptyTitle="검열 기록이 없습니다"
+                      emptyDescription="닉네임이 만들어지면 여기에 쌓입니다."
+                    />
+                  )}
+                </Loaded>
+              </CardBody>
+            </Card>
 
-      {/* 검열 큐 아래에 둔다. 같은 화면인 이유는, 큐를 보다가 "이건 사전에 넣자" 하는
-       * 순간이 잦기 때문이다. 메뉴를 옮겨 가며 하면 그 흐름이 끊긴다. */}
-      <ProfanityWordsCard />
+            <Card className="flex flex-col">
+              <CardHeader
+                title="AI 신뢰도"
+                description="걸린 닉네임만 셉니다. 낮은 쪽이 두꺼우면 확신 없이 걸고 있다는 뜻입니다."
+              />
+              <CardBody className="flex-1 pb-4">
+                <Loaded query={stats} skeleton={<Skeleton className="h-40" />}>
+                  {(data) => (
+                    <Histogram
+                      data={data.confidenceBuckets}
+                      emptyTitle="걸린 닉네임이 없습니다"
+                      emptyDescription="검열에 걸려야 신뢰도가 남습니다."
+                    />
+                  )}
+                </Loaded>
+              </CardBody>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader
+              title="검열 대기"
+              description={TABS.find((tab) => tab.value === status)?.hint}
+              actions={
+                <Tabs
+                  tabs={TABS}
+                  value={status}
+                  label="검열 상태"
+                  onChange={(next) => {
+                    setStatus(next);
+                    setPage(0);
+                  }}
+                />
+              }
+            />
+
+            <DataTable
+              error={audits.error}
+              onRetry={() => audits.refetch()}
+              columns={columns}
+              data={audits.data?.content ?? []}
+              loading={audits.isPending}
+              emptyTitle={`${nicknameAuditStatusLabel(status)} 상태의 닉네임이 없습니다`}
+              emptyDescription="새 닉네임이 검열에 걸리면 여기에 쌓입니다."
+            />
+            {audits.data && (
+              <Pagination
+                page={audits.data.page}
+                totalPages={audits.data.totalPages}
+                totalElements={audits.data.totalElements}
+                onChange={setPage}
+              />
+            )}
+          </Card>
+
+          {/* 검열 큐 아래에 둔다. 같은 화면인 이유는, 큐를 보다가 "이건 사전에 넣자" 하는
+           * 순간이 잦기 때문이다. 메뉴를 옮겨 가며 하면 그 흐름이 끊긴다. */}
+          <ProfanityWordsCard />
+        </>
+      )}
     </div>
   );
+}
+
+/**
+ * 미탐 수만 보면 표본을 몇 건 봤는지 알 수 없다. 표본 10건에 미탐 0건을 미탐률 0%로 읽지 않게
+ * 서버가 준 신뢰 상한을 함께 적는다.
+ */
+function missHint(quality: NicknameAuditQuality): string {
+  if (quality.missUpperBound === null) {
+    return '검토한 표본이 아직 없습니다';
+  }
+  return `표본 ${quality.sampleReviewed}건 중, 상한 ${formatPercent(quality.missUpperBound)}`;
+}
+
+/** 모르는 값이 오면 검열 대기로 떨어뜨린다. 주소를 손으로 고친 경우에도 화면은 떠야 한다. */
+function readPanel(value: string | null): Panel {
+  return PANELS.some((tab) => tab.value === value) ? (value as Panel) : 'queue';
 }

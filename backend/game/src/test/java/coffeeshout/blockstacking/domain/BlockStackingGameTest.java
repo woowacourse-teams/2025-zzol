@@ -225,6 +225,37 @@ class BlockStackingGameTest {
         }
 
         @Test
+        void 랭킹에_마지막으로_쌓은_블록이_겹친_구간으로_담긴다() {
+            // overlap = min(250,235) - max(100,85) = 135, 왼쪽 끝은 100
+            game.recordProgress(꾹이.toGamer(), 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+
+            final BlockStackingPlayerRankInfo 꾹이순위 = game.getRanking().get(0);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(꾹이순위.topX()).isEqualTo(100.0);
+                softly.assertThat(꾹이순위.topWidth()).isEqualTo(135.0);
+            });
+        }
+
+        @Test
+        void 랭킹에_탈락_여부가_담긴다() {
+            game.recordFailure(루키.toGamer());
+
+            final List<BlockStackingPlayerRankInfo> ranking = game.getRanking();
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(ranking)
+                        .filteredOn(r -> r.name().equals("루키"))
+                        .singleElement()
+                        .extracting(BlockStackingPlayerRankInfo::failed)
+                        .isEqualTo(true);
+                softly.assertThat(ranking)
+                        .filteredOn(r -> !r.name().equals("루키"))
+                        .allMatch(r -> !r.failed());
+            });
+        }
+
+        @Test
         void 초기_상태에서_모든_플레이어_floor가_0이다() {
             final List<BlockStackingPlayerRankInfo> ranking = game.getRanking();
 

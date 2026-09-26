@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { refreshAccessToken } from '@/auth/refresh';
-import { readToken, saveToken } from '@/auth/tokenStore';
+import { clearToken, readToken, saveToken } from '@/auth/tokenStore';
 
 function refreshCalls(fetchMock: ReturnType<typeof vi.fn>) {
   return fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/auth/refresh')).length;
@@ -42,6 +42,32 @@ describe('refreshAccessToken', () => {
     saveToken('refreshed-by-other-tab');
 
     await expect(refreshAccessToken('expired')).resolves.toBe('refreshed-by-other-tab');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('재발급 응답이 오기 전에 로그아웃하면 새 토큰을 저장하지 않는다', async () => {
+    // 저장하면 로그아웃한 화면이 새 토큰으로 다시 로그인 상태가 된다. 서버의 refresh 는
+    // 로그아웃이 지우지만 이미 받은 access 토큰은 1시간 동안 유효하다.
+    saveToken('expired');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        clearToken();
+        return new Response(JSON.stringify({ accessToken: 'new' }), { status: 200 });
+      }),
+    );
+
+    await expect(refreshAccessToken('expired')).resolves.toBeNull();
+    expect(readToken()).toBeNull();
+  });
+
+  it('로그아웃한 뒤 늦게 도착한 401 로는 재발급하지 않는다', async () => {
+    // 로그아웃 직전에 나간 조회가 옛 토큰으로 401 을 받은 경우다. 서버가 아직 로그아웃을
+    // 처리하지 않았으면 쿠키로 재발급이 성공해 다시 로그인된다.
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(refreshAccessToken('token-before-logout')).resolves.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

@@ -41,8 +41,11 @@ function withRefreshLock<T>(task: () => Promise<T>): Promise<T> {
 }
 
 async function refreshUnlessDone(failedToken: string | null): Promise<string | null> {
+  // 저장된 토큰이 실패한 요청의 토큰과 다르면 그사이 누가 바꾼 것이다. 다른 탭이 갱신했으면
+  // 그 토큰을 쓰고, 로그아웃으로 지워졌으면(null) 재발급하지 않는다. 로그아웃 직전에 나간
+  // 요청의 401 로 재발급하면 로그아웃한 화면이 다시 로그인된다.
   const current = readToken();
-  if (current && current !== failedToken) {
+  if (current !== failedToken) {
     return current;
   }
 
@@ -59,6 +62,11 @@ async function refreshUnlessDone(failedToken: string | null): Promise<string | n
   }
 
   const { accessToken } = (await response.json()) as { accessToken: string };
+  // 응답을 기다리는 동안 로그아웃했으면 새 토큰을 버린다. 서버의 refresh 는 로그아웃이 지우지만
+  // 이 access 토큰은 1시간 동안 유효해서, 저장하면 로그아웃한 화면이 다시 로그인된다.
+  if (readToken() !== current) {
+    return null;
+  }
   saveToken(accessToken);
   return accessToken;
 }

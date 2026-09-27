@@ -3,6 +3,15 @@ import { useCallback, useState } from 'react';
 import { createStompClient } from '../utils/createStompClient';
 import WebSocketErrorHandler from '../utils/WebSocketErrorHandler';
 
+// deactivate() 뒤에도 stompjs 는 콜백을 부른다. 죽은 소켓은 receipt 가 없어 close 가 약 8초 뒤에 오는데,
+// 그 사이 새 클라이언트가 붙었으면 옛 콜백이 새 연결의 isConnected 를 덮는다. 버릴 때 떼어낸다.
+const discardClient = (client: Client) => {
+  client.onWebSocketClose = () => {};
+  client.onWebSocketError = () => {};
+  client.onDisconnect = () => {};
+  client.deactivate();
+};
+
 export const useWebSocketConnection = () => {
   const [client, setClient] = useState<Client | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -39,6 +48,8 @@ export const useWebSocketConnection = () => {
       const stompClient = createStompClient({ roomToken });
       stompClient.onConnect = (frame) => handleConnect(frame);
       stompClient.onDisconnect = handleDisconnect;
+      // onDisconnect 는 deactivate() 때만 불린다. 서버가 error 없이 close 만 해도 isConnected 를 내린다
+      stompClient.onWebSocketClose = handleDisconnect;
       stompClient.onStompError = handleStompError;
       stompClient.onWebSocketError = (event) => handleWebSocketError(event, stompClient);
       return stompClient;
@@ -53,7 +64,7 @@ export const useWebSocketConnection = () => {
     }
     if (client && !isConnected) {
       console.log('🧹 이전 클라이언트 정리 중...');
-      client.deactivate();
+      discardClient(client);
       setClient(null);
     }
     return true;
@@ -81,7 +92,7 @@ export const useWebSocketConnection = () => {
   const stopSocket = useCallback(() => {
     if (!client) return;
     console.log('🛑 WebSocket 연결 종료...');
-    client.deactivate();
+    discardClient(client);
     setIsConnected(false);
     setConnectedFrame(null);
     setClient(null);

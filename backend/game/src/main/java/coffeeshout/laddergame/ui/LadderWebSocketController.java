@@ -27,14 +27,16 @@ public class LadderWebSocketController {
     public void draw(
             @DestinationVariable String joinCode, @Payload @Valid LadderDrawRequest request, Principal principal) {
         final String playerName = PlayerKey.parse(principal.getName()).playerName();
-        final LadderDrawCommandEvent event = LadderDrawCommandEvent.of(joinCode, playerName, request.segmentIndex());
+        final LadderDrawCommandEvent event =
+                LadderDrawCommandEvent.of(joinCode, playerName, request.segmentIndex(), request.row());
         streamPublisher.publish(LadderGameStreamKey.EVENTS, event);
 
         log.debug(
-                "사다리게임 선 그리기 이벤트 발행: joinCode={}, playerName={}, segmentIndex={}, eventId={}",
+                "사다리게임 선 그리기 이벤트 발행: joinCode={}, playerName={}, segmentIndex={}, row={}, eventId={}",
                 joinCode,
                 playerName,
                 request.segmentIndex(),
+                request.row(),
                 event.eventId());
     }
 }

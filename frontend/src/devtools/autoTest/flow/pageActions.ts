@@ -342,6 +342,71 @@ const wormGamePlayPageAction = async () => {
   }, STEER_INTERVAL_MS);
 };
 
+let ladderGameDrawIntervalId: number | null = null;
+
+export const clearLadderGameDrawInterval = () => {
+  if (ladderGameDrawIntervalId !== null) {
+    clearInterval(ladderGameDrawIntervalId);
+    ladderGameDrawIntervalId = null;
+  }
+};
+
+// 사다리 게임 봇 (게스트만): DRAWING 동안 아무 구간의 아무 높이나 눌러 선을 긋는다.
+// 호스트는 사람이 직접 그어 보게 비워 둔다. 개수 상한과 빈 자리 찾기는 보드가 알아서 막는다.
+const ladderGamePlayPageGuestAction = async () => {
+  clearLadderGameDrawInterval();
+  await wait(DELAY_BETWEEN_ACTIONS);
+
+  const TICK_MS = 400;
+  // 틱마다 이 확률로 누른다. 8초 DRAWING 동안 평균 5번쯤 눌러 2개를 다 쓰되, 누르는 시점은 흩어진다
+  const DRAW_CHANCE = 0.25;
+
+  ladderGameDrawIntervalId = window.setInterval(() => {
+    if (Math.random() > DRAW_CHANCE) return;
+    const segments = document.querySelectorAll<SVGRectElement>('[data-testid="ladder-segment"]');
+    if (segments.length === 0) return;
+
+    const segment = segments[Math.floor(Math.random() * segments.length)];
+    const box = segment.getBoundingClientRect();
+    segment.dispatchEvent(
+      new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        clientX: box.left + box.width / 2,
+        clientY: box.top + Math.random() * box.height,
+      })
+    );
+  }, TICK_MS);
+};
+
+let blockStackingTapIntervalId: number | null = null;
+
+export const clearBlockStackingTapInterval = () => {
+  if (blockStackingTapIntervalId !== null) {
+    clearInterval(blockStackingTapIntervalId);
+    blockStackingTapIntervalId = null;
+  }
+};
+
+// 빌딩 쌓기 봇 (게스트만): 아무 때나 탭해 옆 빌딩을 쌓는다. 초반엔 층이 넓어 거의 겹치지만
+// 폭이 좁아질수록 빗나가 탈락하는 봇이 섞인다. 호스트는 사람이 직접 쌓아 보게 비워 둔다.
+const blockStackingPlayPageGuestAction = async () => {
+  clearBlockStackingTapInterval();
+  await wait(DELAY_BETWEEN_ACTIONS);
+
+  const TICK_MS = 100;
+  // 틱마다 이 확률로 탭한다. 평균 0.8초에 한 층
+  const TAP_CHANCE = 0.12;
+
+  blockStackingTapIntervalId = window.setInterval(() => {
+    if (Math.random() > TAP_CHANCE) return;
+    const target = findElement('block-stacking-game') || document.body;
+    target.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 1 })
+    );
+  }, TICK_MS);
+};
+
 // 페이지 액션 목록
 export const pageActions: PageAction[] = [
   {
@@ -385,6 +450,16 @@ export const pageActions: PageAction[] = [
   {
     pathPattern: /^\/room\/[^/]+\/WORM_GAME\/play$/,
     execute: wormGamePlayPageAction,
+  },
+  {
+    pathPattern: /^\/room\/[^/]+\/LADDER_GAME\/play$/,
+    role: 'guest',
+    execute: ladderGamePlayPageGuestAction,
+  },
+  {
+    pathPattern: /^\/room\/[^/]+\/BLOCK_STACKING\/play$/,
+    role: 'guest',
+    execute: blockStackingPlayPageGuestAction,
   },
 ];
 

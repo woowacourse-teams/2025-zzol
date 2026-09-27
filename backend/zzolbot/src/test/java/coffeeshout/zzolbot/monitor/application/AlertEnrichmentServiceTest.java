@@ -39,7 +39,7 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class AlertEnrichmentServiceTest {
 
-    private static final MonitorProperties PROPERTIES = new MonitorProperties(true, 30, 240);
+    private static final MonitorProperties PROPERTIES = new MonitorProperties(true, 30, 240, null);
     private static final List<String> LOG_SAMPLES = List.of("[ERROR] 컨슈머 처리 실패");
 
     @Mock
@@ -122,7 +122,7 @@ class AlertEnrichmentServiceTest {
                 analyzer,
                 notifier,
                 monitorRunRepository,
-                new MonitorProperties(true, 30, 0),
+                new MonitorProperties(true, 30, 0, null),
                 new ObjectMapper(),
                 Clock.systemUTC());
         given(llmCallBudget.tryAcquire()).willReturn(true);
@@ -142,7 +142,7 @@ class AlertEnrichmentServiceTest {
                 analyzer,
                 notifier,
                 monitorRunRepository,
-                new MonitorProperties(false, 30, 240),
+                new MonitorProperties(false, 30, 240, null),
                 new ObjectMapper(),
                 Clock.systemUTC());
 

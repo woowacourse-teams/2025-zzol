@@ -26,13 +26,18 @@ public class LadderService implements MiniGameService {
         flowOrchestrator.startFlow(game, code);
     }
 
-    public void drawLine(String joinCode, String playerName, int segmentIndex) {
-        log.debug("사다리게임 선 그리기 처리 시작: joinCode={}, playerName={}, segmentIndex={}", joinCode, playerName, segmentIndex);
+    public void drawLine(String joinCode, String playerName, int segmentIndex, int row) {
+        log.debug(
+                "사다리게임 선 그리기 처리 시작: joinCode={}, playerName={}, segmentIndex={}, row={}",
+                joinCode,
+                playerName,
+                segmentIndex,
+                row);
 
         final JoinCode code = new JoinCode(joinCode);
         final LadderGame game = getGame(code);
         commandService
-                .drawLine(game, playerName, segmentIndex)
+                .drawLine(game, playerName, segmentIndex, row)
                 .ifPresent(line -> notifier.notifyLineDrawn(game, line, code));
     }
 

@@ -27,6 +27,10 @@ x-prod-app: &prod-app
     - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
     - ZZOL_BOT_SLACK_WEBHOOK_URL=${ZZOL_BOT_SLACK_WEBHOOK_URL}
     - ZZOL_BOT_ALERT_WEBHOOK_TOKEN=${ZZOL_BOT_ALERT_WEBHOOK_TOKEN}
+    # 섀도우 분석 스위치. 켜면 prod-llama를 같은 알림으로 나란히 부른다. 운영 판정은 안 바뀐다.
+    # 주소는 컨테이너 이름으로 고정한다. 앱 기본값 127.0.0.1은 컨테이너 안에서 자기 자신이라 못 쓴다
+    - ZZOL_BOT_MONITOR_SHADOW_ENABLED=${ZZOL_BOT_MONITOR_SHADOW_ENABLED:-false}
+    - ZZOL_BOT_SHADOW_BASE_URL=http://prod-llama:8080
     - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
@@ -252,6 +256,50 @@ services:
         reservations:
           cpus: '0.05'
           memory: 64M
+
+  # ============================================
+  # Prod 자체 호스팅 LLM (zzol-bot 섀도우 분석 전용)
+  # ============================================
+  # 알림 분석에서 Gemini와 나란히 돌려 결과만 기록한다. 운영 판정과 Slack 게시는 Gemini 것이다.
+  #
+  # 실제 알림이 prod 에만 오기 때문에 여기에 둔다. Alertmanager 의 zzolbot-enrich 수신기가
+  # nginx:8889 로 보내고 그 리스너는 prod 활성 색만 바라본다(dev 8890 은 수동 테스트 전용).
+  #
+  # 모델 파일은 레포에 없다. 호스트에 1회 배치한다(alloy bootstrap 과 같은 방식).
+  # 없으면 deploy-infrastructure.sh 가 이 서비스만 건너뛴다.
+  prod-llama:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: prod-llama
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - ${LLAMA_MODEL_DIR:-/home/ubuntu}:/models:ro
+    # -t 2 는 아래 cpus 제한과 짝이다. 빼면 llama.cpp가 호스트 코어 수를 보고 스레드를 4개
+    # 잡는데, 쿼터는 2코어라 생성 단계에서 스레드끼리 다퉈 20% 느려진다
+    # (2026-09-20 실측: 스레드 2개 95.7초, 4개 119.0초. 프롬프트 2,574토큰 기준)
+    command: >
+      -m /models/${LLAMA_MODEL_FILE:-sft-v6-s1-q8_0.gguf}
+      --host 0.0.0.0
+      --port 8080
+      --jinja
+      -c 8192
+      --no-warmup
+      -t 2
+    networks:
+      - prod-network
+    # 자원 제한 (Prod llama.cpp)
+    # 호스트는 4코어고 dev 와 나눠 쓴다. 2코어로 묶어 절반을 남긴다.
+    # 상시 점유가 아니다. 알림 한 건에 최장 96초고 일일 LLM 예산이 10건이다.
+    cpu_shares: 512          # 경합하면 다른 컨테이너에 양보한다
+    deploy:
+      resources:
+        limits:
+          cpus: '2'          # 최대 2 vCPU
+          memory: 3G         # 최대 3GB (실사용 1.9GB)
+        reservations:
+          cpus: '0.1'        # 유휴 시 0%라 최소만 잡는다
+          memory: 512M
 
 # ============================================
 # Networks

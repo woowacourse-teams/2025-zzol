@@ -30,6 +30,11 @@ export interface components {
             name: string;
             /** Format: int32 */
             floor: number;
+            failed: boolean;
+            /** Format: double */
+            topX: number | null;
+            /** Format: double */
+            topWidth: number | null;
         };
         BlockStackingProgressRequest: {
             /** Format: int32 */
@@ -98,6 +103,8 @@ export interface components {
         LadderDrawRequest: {
             /** Format: int32 */
             segmentIndex: number;
+            /** Format: int32 */
+            row: number;
         };
         /** @enum {string} */
         LadderGameState: "DESCRIPTION" | "PREPARE" | "DRAWING" | "RESULT" | "DONE";
@@ -116,6 +123,8 @@ export interface components {
             bottomRanks?: {
                 [key: string]: number;
             } | null;
+            /** Format: int32 */
+            rowCount?: number | null;
             /** Format: int64 */
             endTimeEpochMs?: number | null;
             rankings?: {

@@ -40,7 +40,11 @@ READY → PREPARE → PLAYING → DONE
 - 쌓인 블록: 매 프레임 전체 스택을 canvas에 다시 그림
 - 잘린 부분 낙하 애니메이션: 별도 `fallingPieces` 배열 관리, y좌표 증가 + opacity 감소
 - **반응형 컨테이너**: 기기 높이에 맞춰 캔버스 크기 자동 조정 (Full-Height Immersion)
-- **외부 타이머**: 캔버스 우측에 세로형 에너지 바 형태로 배치
+- **야경 빌딩 테마(#1831)**: 화면 이름은 "빌딩 쌓기"다(코드·서버 식별자는 `BLOCK_STACKING` 유지). 블록은 창문 달린 빌딩 층이고, 층이 오를수록 하늘이 낮→노을→밤으로 바뀐다. 받침 아래에 땅과 나무를 그린다
+- **라이벌 높이선**: 다른 참가자의 현재 층에 점선과 이름표를 긋는다. 색은 서버 `colorIndex`
+- **탈락 뒤 스카이라인**: 나와 아직 쌓는 사람의 빌딩만 순위대로 나란히 세운다. 칸 폭은 인원수로 나누되 72px 상한이라 인원이 적으면 여백이 남는다. 순위는 층수가 같으면 같게 매겨 결과 화면과 맞춘다. 시간이 다 돼 멈추면 전원을 세운다
+- **타이머**: 캔버스 상단 시계로 그린다
+- 그리기 함수는 `core/nightTowerDraw.ts`에 순수 함수로 두고, 훅이 매 프레임 상태를 넘긴다
 - 탭 이벤트: `pointerdown` (모바일/데스크톱 통합)
 
 ---
@@ -51,18 +55,11 @@ READY → PREPARE → PLAYING → DONE
 src/
 ├── features/miniGame/blockStackingGame/
 │   ├── components/
-│   │   ├── BlockStackingCanvas/
-│   │   │   ├── BlockStackingCanvas.tsx      # canvas 엘리먼트 + 이벤트 바인딩
-│   │   │   └── BlockStackingCanvas.styled.ts
-│   │   ├── EliminatedOverlay/
-│   │   │   ├── EliminatedOverlay.tsx        # 탈락/게임 종료 오버레이
-│   │   │   └── EliminatedOverlay.styled.ts
-│   │   ├── BlockStackingRanks/
-│   │   │   ├── BlockStackingRanks.tsx       # 랭킹 섹션 컨테이너
-│   │   │   └── BlockStackingRanks.styled.ts
-│   │   └── BlockStackingRankList/
-│   │       ├── BlockStackingRankList.tsx    # 랭킹 목록 아이템 렌더링
-│   │       └── BlockStackingRankList.styled.ts
+│   │   └── BlockStackingCanvas/
+│   │       ├── BlockStackingCanvas.tsx      # canvas 엘리먼트 + 이벤트 바인딩
+│   │       └── BlockStackingCanvas.styled.ts
+│   ├── core/
+│   │   └── nightTowerDraw.ts                # 하늘·빌딩 층·땅·높이선·스카이라인 그리기
 │   ├── hooks/
 │   │   ├── useBlockStackingGame.ts          # 핵심 게임 루프 (canvas 드로우 + 상태)
 │   │   └── useBlockStackingActions.ts       # 백엔드 연동 시 WebSocket publish 담당

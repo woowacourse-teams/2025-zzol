@@ -105,7 +105,7 @@ class AdminQualityControllerE2eTest extends AdminApiE2eTest {
                             .with(admin()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.total").value(0))
-                    .andExpect(jsonPath("$.statuses.length()").value(6))
+                    .andExpect(jsonPath("$.statuses.length()").value(7))
                     .andExpect(jsonPath("$.daily.length()").value(30));
         }
 

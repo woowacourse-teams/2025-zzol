@@ -12,6 +12,7 @@ public enum ZzolBotErrorCode implements ErrorCode {
     SQL_COLUMN_BLOCKED(400, "조회가 차단된 컬럼을 포함하고 있습니다."),
     SQL_WILDCARD_NOT_ALLOWED(400, "와일드카드(*)는 허용되지 않습니다. 컬럼을 명시해 주세요."),
     SQL_EXECUTION_FAILED(500, "SQL 실행 중 오류가 발생했습니다."),
+    SHADOW_MODEL_RESPONSE_INVALID(502, "자체 모델 응답을 읽을 수 없습니다."),
     ;
 
     private final int statusCode;

@@ -1,30 +1,59 @@
 package coffeeshout.profanity.infra;
 
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
+import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
 @Profile("local")
 @RequiredArgsConstructor
 public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
+
+    /**
+     * 합성 닉네임의 접두사. 한글이 아니어야 한다.
+     *
+     * <p>스텁 검열기는 닉네임의 한글 구간에서 두 글자를 잘라 차단 조각으로 쓴다. 접두사가 한글이면 구간이 네
+     * 글자로 늘어 자르는 자리가 셋이 되고, 그중 하나는 언제나 접두사 그 자체다. 시드의 3분의 1이 같은 조각을
+     * 내면 사전 INSERT가 중복으로 걸러져 자동 차단과 트라이 재빌드가 그만큼 안 돈다. block 구간이 실제보다
+     * 싸게 측정된다. 접두사를 한글 밖에 두면 구간이 음절 두 자와 정확히 겹쳐 조각이 전부 달라진다.
+     */
+    private static final String SEED_PREFIX = "zz";
+
+    /**
+     * 합성 닉네임에 섞을 음절 범위. 음절 가짓수가 적으면 사전 INSERT가 초반 몇백 건 뒤로 전부 중복이 되어
+     * 자동 차단과 트라이 재빌드가 멈춘다. 완성형 한글 전체를 쓰면 두 자리 조합이 1억 가지라 적재 상한까지
+     * 겹치지 않는다.
+     */
+    private static final char FIRST_SYLLABLE = '가';
+
+    private static final int SYLLABLE_COUNT = 11_172;
+
+    private static final String SEED_INSERT =
+            "INSERT INTO player_name_audit (player_name, status, attempt_count, created_at) VALUES (?, ?, 0, ?)";
+
+    /** 한 번에 보낼 행 수. 10만 건을 한 문장으로 보내면 패킷 상한에 걸린다. */
+    private static final int SEED_CHUNK = 1_000;
+
+    private static final String SEED_EXISTS = "SELECT COUNT(*) FROM player_name_audit WHERE player_name = ?";
 
     /** 14일에 걸쳐 흩는다. 검열 대기는 신고보다 빨리 쌓이고 빨리 처리되는 편이다. */
     private static final int DAYS = 14;
@@ -33,15 +62,71 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
     private static final long SEED = 20_260_912L;
 
     private final NicknameAuditRepository auditRepository;
-
-    @PersistenceContext
-    private EntityManager entityManager;
-
+    private final NicknameAuditProperties properties;
+    private final JdbcTemplate jdbcTemplate;
     private final Clock clock;
+    private final EntityManager entityManager;
 
     @Override
-    @Transactional
     public void run(ApplicationArguments args) {
+        seedUnaudited();
+        seedSamples();
+    }
+
+    /**
+     * 측정용 미검열 닉네임을 적재한다. 건수는 {@code nickname-audit.seed.count}가 정하고 기본값은 0이다.
+     *
+     * <p>행마다 저장하면 10만 건에 몇 분이 걸려 JDBC 배치로 넣는다. 일련번호가 이름을 유일하게 만들어
+     * 유니크 제약에 걸리지 않는다.
+     *
+     * <p><b>트랜잭션을 걸지 않는다.</b> 10만 건을 하나로 묶으면 그동안 undo 로그가 계속 자라고 락도 함께
+     * 길어진다. 트랜잭션 밖에서는 커넥션이 autocommit이라 {@link #SEED_CHUNK}마다 커밋된다. 적재 도중 죽으면
+     * 앞쪽 청크는 남고 뒤쪽은 안 들어온 상태가 되는데, 그때는 {@code player_name_audit}에서 접두사
+     * {@value #SEED_PREFIX}로 시작하는 행을 지우고 다시 띄운다. {@link #alreadySeeded()}가 첫 이름만 보므로
+     * 지우지 않고 다시 띄우면 적재를 통째로 건너뛴다.
+     */
+    private void seedUnaudited() {
+        final int count = properties.seed().count();
+        if (count == 0) {
+            return;
+        }
+        if (alreadySeeded()) {
+            log.info("[LocalInit] 측정용 닉네임이 이미 있습니다. 적재를 건너뜁니다.");
+            return;
+        }
+
+        final Timestamp now = Timestamp.from(clock.instant());
+        final long startedAt = System.nanoTime();
+        jdbcTemplate.batchUpdate(SEED_INSERT, IntStream.range(0, count).boxed().toList(), SEED_CHUNK, (ps, index) -> {
+            ps.setString(1, seedNickname(index));
+            ps.setString(2, NicknameAuditStatus.UNAUDITED.name());
+            ps.setTimestamp(3, now);
+        });
+        final long elapsedMillis =
+                Duration.ofNanos(System.nanoTime() - startedAt).toMillis();
+        log.info("[LocalInit] 측정용 미검열 닉네임 {}건 적재 완료 ({}ms)", count, elapsedMillis);
+    }
+
+    /**
+     * 상태를 보지 않고 첫 시드 이름이 있는지로 판단한다.
+     *
+     * <p>UNAUDITED 건수로 막으면 회차를 한 번 끝낸 뒤에 0이 되어, 앱을 다시 띄울 때마다 같은 이름이 또 들어간다.
+     * 그 행들은 다음 회차에서 판정 대신 중복 재등록으로 지워지므로 두 번째 측정이 검열 경로가 아니라 삭제
+     * 경로를 재게 된다.
+     */
+    private boolean alreadySeeded() {
+        final Integer existing = jdbcTemplate.queryForObject(SEED_EXISTS, Integer.class, seedNickname(0));
+        return existing != null && existing > 0;
+    }
+
+    /** 접두사 두 자에 음절 두 자를 붙이고 일련번호로 끝낸다. 닉네임 칼럼이 10자라 번호는 여섯 자리까지다. */
+    private String seedNickname(int index) {
+        final char first = (char) (FIRST_SYLLABLE + index % SYLLABLE_COUNT);
+        final char second = (char) (FIRST_SYLLABLE + index / SYLLABLE_COUNT % SYLLABLE_COUNT);
+        return SEED_PREFIX + first + second + index;
+    }
+
+    private void seedSamples() {
         if (auditRepository.countByStatus(NicknameAuditStatus.FLAGGED) > 0
                 || auditRepository.countByStatus(NicknameAuditStatus.PENDING) > 0) {
             log.info("[LocalInit] 닉네임 검열 데이터가 이미 존재합니다. 초기 데이터 삽입을 건너뜁니다.");

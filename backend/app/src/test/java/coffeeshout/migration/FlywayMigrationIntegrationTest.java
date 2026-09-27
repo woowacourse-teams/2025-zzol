@@ -104,7 +104,7 @@ class FlywayMigrationIntegrationTest {
     }
 
     /**
-     * V48은 롤백을 위해 {@code player_name_feedback.ai_flagged}를 남겨 둔다. 엔티티는 이 칼럼을 모르므로
+     * V49는 롤백을 위해 {@code player_name_feedback.ai_flagged}를 남겨 둔다. 엔티티는 이 칼럼을 모르므로
      * 기본값이 없으면 NOT NULL에 걸려 운영자의 허용·차단이 전부 실패한다.
      */
     @Test

@@ -4,7 +4,8 @@
 --
 -- #1841: 이 마이그레이션은 앱 기동 경로에서 돈다. 블루그린 배포의 readiness 150초 안에 끝나야 한다.
 --   - 컬럼과 인덱스를 한 ALTER로 묶으면 INSTANT를 못 써 테이블 전체를 다시 쓴다. dev 120만 행에서는 같은 둘을 되돌리는 DROP도 55초 걸렸다.
---     그래서 둘을 나누고 ALGORITHM을 명시한다. 명시한 방식을 쓸 수 없으면 MySQL이 느린 방식으로 바꾸지 않고 에러를 낸다.
+--     그래서 인덱스는 V48_1로 나누고 ALGORITHM을 명시한다. 명시한 방식을 쓸 수 없으면 MySQL이 느린 방식으로 바꾸지 않고 에러를 낸다.
+--   - 파일 하나에 DDL 하나만 둔다. MySQL DDL은 문장마다 커밋돼서, 한 파일의 두 번째 DDL이 실패하면 첫 번째만 남는다.
 --   - 기존 행 백필은 여기서 하지 않는다. 배포 뒤 backend/docs/postmortem/0005-v48-migration-readiness-timeout.md 의 백필 절차로 나눠 실행한다.
 --     백필 전까지 과거 결과의 user_id는 NULL이고, 새 결과는 저장 시점에 채워진다.
 
@@ -15,10 +16,6 @@ SET SESSION lock_wait_timeout = 10;
 ALTER TABLE mini_game_result
     ADD COLUMN user_id BIGINT NULL,
     ALGORITHM = INSTANT;
-
-ALTER TABLE mini_game_result
-    ADD INDEX idx_mini_game_result_user_type (user_id, mini_game_type),
-    ALGORITHM = INPLACE, LOCK = NONE;
 
 -- Flyway는 앱 커넥션 풀의 연결을 쓴다. 풀로 돌아가기 전에 세션 값을 서버 기본값으로 되돌린다.
 SET SESSION lock_wait_timeout = DEFAULT;

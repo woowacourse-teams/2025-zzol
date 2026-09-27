@@ -49,13 +49,14 @@
 
 - dev DB에서 `SHOW PROCESSLIST`로 남은 ALTER가 없는지 확인하고, 인덱스와 컬럼을 DROP한 뒤 V48 실패 기록을 지웠다.
 - #1841에서 V48을 고쳤다.
-  - 컬럼 추가는 `ALGORITHM=INSTANT`로, 인덱스 추가는 `ALGORITHM=INPLACE, LOCK=NONE`로 나눴다. 명시한 방식을 쓸 수 없으면 MySQL이 에러를 낸다.
+  - 컬럼 추가는 V48에 `ALGORITHM=INSTANT`로, 인덱스 추가는 V48_1에 `ALGORITHM=INPLACE, LOCK=NONE`로 나눴다. 명시한 방식을 쓸 수 없으면 MySQL이 에러를 낸다.
+  - 파일 하나에 DDL 하나만 뒀다. 한 파일의 두 번째 DDL이 실패하면 첫 번째만 커밋된 채 남기 때문이다.
   - 앞에 `lock_wait_timeout = 10`을 둬 메타데이터 락을 기본값 1년 동안 기다리지 않게 했다.
   - 백필을 마이그레이션에서 빼고 아래 절차로 옮겼다.
 
 ### 배포 후 백필 절차
 
-V48이 적용된 뒤 dev와 prod에서 한 번씩 실행한다. `id` 구간을 1만 행씩 나눠 한 번에 잡는 행 락을 짧게 유지한다. 이미 채운 행은 `user_id IS NULL` 조건으로 건너뛰므로 중간에 멈춰도 다시 돌리면 된다.
+V48이 적용되고 **nginx 전환 뒤 블루 컨테이너가 내려간 것을 확인한 다음** dev와 prod에서 한 번씩 실행한다. 블루는 `user_id`를 모르는 이전 코드라 전환 전까지 저장한 결과가 NULL로 남기 때문이다. `id` 구간을 1만 행씩 나눠 한 번에 잡는 행 락을 짧게 유지한다. 이미 채운 행은 `user_id IS NULL` 조건으로 건너뛰므로 중간에 멈춰도 다시 돌리면 된다.
 
 ```bash
 ENV=dev   # 또는 prod
@@ -72,7 +73,7 @@ for ((s = 0; s <= MAX; s += 10000)); do
 done
 ```
 
-완료 확인. 0이 나와야 한다.
+완료 확인. 0이 나와야 한다. 0이 아니면 같은 루프를 다시 돌린다. `MAX`를 다시 읽으므로 그 사이 들어온 행도 포함된다.
 
 ```sql
 SELECT COUNT(*) FROM mini_game_result r JOIN player p ON p.id = r.player_id
@@ -83,7 +84,7 @@ WHERE r.user_id IS NULL AND p.user_id IS NOT NULL;
 
 | 액션 | 상태 |
 |------|------|
-| V48을 INSTANT 컬럼 추가와 INPLACE 인덱스 추가로 나누고 백필을 분리 (#1841) | ☐ |
+| V48(INSTANT 컬럼 추가)과 V48_1(INPLACE 인덱스 추가)로 나누고 백필을 분리 (#1841) | ☐ |
 | dev에서 수정한 V48의 두 ALTER 소요 시간을 재서 #1841 PR에 기록 | ☐ |
 | dev·prod 배포 뒤 위 백필 절차 실행, 완료 확인 쿼리 0건 | ☐ |
 | 마이그레이션을 앱 기동에서 떼어 배포 파이프라인의 별도 단계로 옮길지 검토 (후속 이슈) | ☐ |

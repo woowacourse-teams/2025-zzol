@@ -1,19 +1,30 @@
 import { PointerEvent, useCallback, useEffect, useRef } from 'react';
+import { colorList } from '@/constants/color';
 import { useBlockStackingGameContext } from '@/contexts/BlockStackingGame/BlockStackingGameContext';
+import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
+import { useParticipants } from '@/contexts/Participants/ParticipantsContext';
 import { useBlockStackingGame } from '../../hooks/useBlockStackingGame';
 import { useBlockStackingActions } from '../../hooks/useBlockStackingActions';
 import { useBlockStackingSounds } from '../../hooks/useBlockStackingSounds';
-import BlockStackingRanks from '../BlockStackingRanks/BlockStackingRanks';
 import * as S from './BlockStackingCanvas.styled';
 
 const BlockStackingCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { gameState, isLocalGameOver, setLocalGameOver, endTimeEpochMs, totalTimeSeconds } =
+  const { gameState, isLocalGameOver, setLocalGameOver, endTimeEpochMs, rankings, towers } =
     useBlockStackingGameContext();
+  const { myName } = useIdentifier();
+  const { getParticipantColorIndex } = useParticipants();
   const sounds = useBlockStackingSounds();
   const { muted, toggleMute } = sounds;
   const { publishProgress, publishFail } = useBlockStackingActions();
-  const { handleTap, timeLeft } = useBlockStackingGame(
+
+  // 라이벌 높이선 색의 원천은 서버 Player.colorIndex (지렁이 게임과 같은 규칙)
+  const colorOf = useCallback(
+    (name: string) => colorList[getParticipantColorIndex(name)],
+    [getParticipantColorIndex]
+  );
+
+  const { handleTap } = useBlockStackingGame(
     canvasRef,
     gameState,
     isLocalGameOver,
@@ -23,6 +34,10 @@ const BlockStackingCanvas = () => {
       sounds,
       onBlockPlaced: publishProgress,
       onFail: publishFail,
+      myName,
+      rankings,
+      towers,
+      colorOf,
     }
   );
 
@@ -67,16 +82,17 @@ const BlockStackingCanvas = () => {
 
   return (
     <S.Wrapper>
-      <S.GameContainer onPointerDown={handleTap} role="application" aria-label="블록쌓기 게임 영역">
+      <S.GameContainer
+        onPointerDown={handleTap}
+        role="application"
+        aria-label="빌딩쌓기 게임 영역"
+        data-testid="block-stacking-game"
+      >
         <S.Canvas ref={canvasRef} />
-        <BlockStackingRanks />
         <S.MuteButton onPointerDown={handleMutePointerDown}>
           {muted ? '소리 켜기' : '소리 끄기'}
         </S.MuteButton>
       </S.GameContainer>
-      <S.TimerContainer>
-        <S.TimerFill timeLeft={timeLeft} totalTime={totalTimeSeconds} />
-      </S.TimerContainer>
     </S.Wrapper>
   );
 };

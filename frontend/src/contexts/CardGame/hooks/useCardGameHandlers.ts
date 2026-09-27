@@ -1,16 +1,10 @@
-import { CardGameRound, CardGameState, CardInfo } from '@/types/miniGame/cardGame';
+import { CardGameRound, CardInfo } from '@/types/miniGame/cardGame';
+import type { MiniGameStateMessage } from '@/apis/websocket/generated/wsContract';
 import React, { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import { useIdentifier } from '../../Identifier/IdentifierContext';
 import { Action } from '../reducer/cardGameReducer';
-
-type CardGameStateResponse = {
-  cardGameState: CardGameState;
-  currentRound: CardGameRound;
-  cardInfoMessages: CardInfo[];
-  allSelected: boolean;
-};
 
 type CardGameStateHandlers = {
   updateSelectedCardInfo: (
@@ -29,8 +23,11 @@ export const useCardGameHandlers = (
   const { miniGameType } = useParams();
 
   const handleCardGameState = useCallback(
-    (data: CardGameStateResponse) => {
-      const { cardGameState, currentRound, cardInfoMessages } = data;
+    (data: MiniGameStateMessage) => {
+      const { cardGameState, cardInfoMessages } = data;
+      // BE 의 RoundLabel 은 READY 를 포함한다. 라운드가 필요한 상태에서는 오지 않는다.
+      const currentRound: CardGameRound | null =
+        data.currentRound === 'READY' ? null : data.currentRound;
 
       switch (cardGameState) {
         case 'PREPARE':
@@ -38,6 +35,7 @@ export const useCardGameHandlers = (
           break;
 
         case 'PLAYING':
+          if (currentRound === null) break;
           dispatch({
             type: 'PLAYING',
             payload: { cardInfos: cardInfoMessages, round: currentRound },
@@ -46,6 +44,7 @@ export const useCardGameHandlers = (
           break;
 
         case 'SCORE_BOARD':
+          if (currentRound === null) break;
           dispatch({
             type: 'SCORE_BOARD',
             payload: { cardInfos: cardInfoMessages, round: currentRound },
@@ -54,6 +53,7 @@ export const useCardGameHandlers = (
           break;
 
         case 'LOADING':
+          if (currentRound === null) break;
           dispatch({ type: 'LOADING', payload: { round: currentRound } });
           break;
 

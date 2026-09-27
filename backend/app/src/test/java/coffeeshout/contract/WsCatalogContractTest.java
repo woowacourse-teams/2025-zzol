@@ -10,6 +10,7 @@ import coffeeshout.websocket.docs.WsTopic;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.core.util.Json;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -40,6 +41,9 @@ import org.springframework.stereotype.Component;
 class WsCatalogContractTest extends IntegrationTestSupport {
 
     private static final Path FIXTURE = Path.of("src", "test", "resources", "__fixtures__", "ws-catalog.json");
+    private static final Path FE_GENERATED = Path.of("..", "..", "frontend", "src", "apis", "websocket", "generated");
+    private static final Path FE_TYPES = FE_GENERATED.resolve("wsContract.ts");
+    private static final Path FE_OPENAPI = FE_GENERATED.resolve("ws-openapi.json");
     private static final String TOPIC_PREFIX = "/topic/";
 
     @Autowired
@@ -86,26 +90,38 @@ class WsCatalogContractTest extends IntegrationTestSupport {
                 .isEmpty();
     }
 
+    /**
+     * fixture 와 함께 FE 생성물도 쓴다. 파일이 {@code frontend/} 아래라 계약이 바뀐 BE PR 에서
+     * frontend-ci 가 자동으로 돌고, 낡은 destination 을 쓰는 호출부가 tsc 오류로 같은 PR 에서 드러난다.
+     *
+     * <p>payload 타입은 OpenAPI 문서로 내고 FE 의 {@code openapi-typescript} 가 TS 로 바꾼다({@code npm run generate:ws}).
+     * destination 과 payload 를 잇는 {@code wsContract.ts} 만 여기서 직접 낸다.
+     */
     @Test
-    @DisplayName("카탈로그를 fixture 로 기록한다")
-    void 카탈로그를_fixture_로_기록한다() throws Exception {
+    @DisplayName("카탈로그를 fixture 와 FE 생성물로 기록한다")
+    void 카탈로그를_fixture_와_FE_생성물로_기록한다() throws Exception {
         assertThat(FIXTURE.toAbsolutePath().toString())
                 .as("Test 태스크의 작업 디렉터리는 :app 이라 이 상대경로가 커밋본을 가리켜야 한다")
                 .endsWith("app/src/test/resources/__fixtures__/ws-catalog.json");
 
+        final WsCatalog catalog = catalogBuilder.build();
         Files.createDirectories(FIXTURE.getParent());
-        Files.writeString(FIXTURE, serialize(catalogBuilder.build()));
+        Files.writeString(FIXTURE, serialize(objectMapper, catalog));
+        Files.createDirectories(FE_GENERATED);
+        Files.writeString(FE_TYPES, WsContractTsEmitter.emit(catalog));
+        Files.writeString(
+                FE_OPENAPI, serialize(Json.mapper(), WsOpenApiEmitter.emit(catalog, catalogBuilder.schemaClasses())));
     }
 
     /**
      * 줄바꿈을 {@code \n} 으로 못 박는다. {@code SerializationFeature.INDENT_OUTPUT} 의 기본
      * {@code DefaultIndenter} 는 {@code System.lineSeparator()} 를 써서 OS 마다 다른 파일이 나온다.
      */
-    private String serialize(WsCatalog catalog) throws Exception {
+    private static String serialize(ObjectMapper mapper, Object value) throws Exception {
         final DefaultIndenter indenter = new DefaultIndenter("  ", "\n");
         final DefaultPrettyPrinter printer =
                 new DefaultPrettyPrinter().withObjectIndenter(indenter).withArrayIndenter(indenter);
-        return objectMapper.writer(printer).writeValueAsString(catalog) + "\n";
+        return mapper.writer(printer).writeValueAsString(value) + "\n";
     }
 
     private Stream<Class<?>> componentClasses() {

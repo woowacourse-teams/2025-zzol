@@ -1,4 +1,6 @@
-export type LadderGameState = 'DESCRIPTION' | 'PREPARE' | 'DRAWING' | 'RESULT' | 'DONE';
+import type { LadderLineResponse, PoleInfo } from '@/apis/websocket/generated/wsContract';
+
+export type { LadderGameState } from '@/apis/websocket/generated/wsContract';
 
 // 서버 LadderLines.MAX_LINES_PER_PLAYER 와 같은 값
 export const MAX_LINES_PER_PLAYER = 2;
@@ -8,15 +10,6 @@ export type LadderGhost = {
   row: number;
 };
 
-export type Pole = {
-  index: number;
-  playerName: string;
-  colorIndex?: number;
-};
+export type Pole = PoleInfo;
 
-export type LadderLine = {
-  playerName: string;
-  segmentIndex: number | string;
-  row: number;
-  colorIndex?: number;
-};
+export type LadderLine = LadderLineResponse;

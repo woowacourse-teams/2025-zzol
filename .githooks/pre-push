@@ -65,8 +65,13 @@ if ! backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*' -q >
 fi
 rm -f "$LOG"
 
-git diff --quiet -- backend/app/src/test/resources/__fixtures__/ws-catalog.json && exit 0
+# payload 타입은 ws-openapi.json 에서 openapi-typescript 가 만든다. 위 테스트가 JSON 만 쓰므로 여기서 이어 돌린다.
+(cd frontend && npm run -s generate:ws >/dev/null) || { echo "[pre-push] openapi-typescript 실패"; exit 1; }
 
-echo "[pre-push] ws-catalog fixture 를 갱신했습니다. 커밋에 포함하고 다시 push 하세요:"
-echo "  git add backend/app/src/test/resources/__fixtures__/ws-catalog.json"
+git diff --quiet -- backend/app/src/test/resources/__fixtures__/ws-catalog.json \
+  frontend/src/apis/websocket/generated && exit 0
+
+echo "[pre-push] ws-catalog fixture 와 FE 생성물을 갱신했습니다. 커밋에 포함하고 다시 push 하세요:"
+echo "  git add backend/app/src/test/resources/__fixtures__/ws-catalog.json \\"
+echo "          frontend/src/apis/websocket/generated"
 exit 1

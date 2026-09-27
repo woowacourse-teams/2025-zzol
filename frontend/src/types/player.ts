@@ -1,10 +1,5 @@
-export type PlayerType = 'HOST' | 'GUEST';
+import type { PlayerResponse } from '@/apis/websocket/generated/wsContract';
 
-export type Player = {
-  userId: number;
-  playerName: string;
-  playerType: PlayerType;
-  isReady: boolean;
-  colorIndex: number;
-  probability: number;
-};
+export type { PlayerType } from '@/apis/websocket/generated/wsContract';
+
+export type Player = PlayerResponse;

@@ -1,6 +1,7 @@
 package coffeeshout.user.ui;
 
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.user.application.service.MemberRecordService;
 import coffeeshout.user.application.service.TermsService;
 import coffeeshout.user.application.service.UserProfileService;
 import coffeeshout.user.application.service.UserStatsService;
@@ -12,6 +13,7 @@ import coffeeshout.user.domain.UserStats;
 import coffeeshout.user.ui.request.UpdateNicknameRequest;
 import coffeeshout.user.ui.request.UpdateStatsRequest;
 import coffeeshout.user.ui.resolver.AuthUser;
+import coffeeshout.user.ui.response.MemberRecordsResponse;
 import coffeeshout.user.ui.response.UserMeResponse;
 import coffeeshout.user.ui.response.UserStatsResponse;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,10 +32,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-public class UserRestController {
+public class UserRestController implements UserApi {
 
     private final UserProfileService userProfileService;
     private final UserStatsService userStatsService;
+    private final MemberRecordService memberRecordService;
     private final TermsService termsService;
     private final UserWithdrawalService userWithdrawalService;
     private final RefreshTokenCookieHelper cookieHelper;
@@ -66,6 +69,13 @@ public class UserRestController {
         final AuthenticatedUser user = requireAuthenticated(authUser);
         final UserStats stats = userStatsService.getStats(user.userId());
         return ResponseEntity.ok(UserStatsResponse.from(stats));
+    }
+
+    @GetMapping("/me/records")
+    @Override
+    public ResponseEntity<MemberRecordsResponse> getRecords(@AuthUser Optional<AuthenticatedUser> authUser) {
+        final AuthenticatedUser user = requireAuthenticated(authUser);
+        return ResponseEntity.ok(MemberRecordsResponse.from(memberRecordService.getRecords(user.userId())));
     }
 
     @DeleteMapping("/me")

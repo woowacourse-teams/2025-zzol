@@ -152,7 +152,8 @@ public class MiniGameResultSaveEventListener {
             final Integer rank = result.getPlayerRank(gamer);
             final Long score = entry.getValue().getValue();
 
-            resultEntities.add(new MiniGameResultEntity(miniGameEntity, snapshot.playerId(), rank, score));
+            resultEntities.add(
+                    new MiniGameResultEntity(miniGameEntity, snapshot.playerId(), rank, score, gamer.getUserId()));
             if (rank != null) {
                 allRanks.add(rank);
             }

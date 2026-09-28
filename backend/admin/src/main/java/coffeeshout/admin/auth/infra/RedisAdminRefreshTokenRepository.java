@@ -76,7 +76,9 @@ public class RedisAdminRefreshTokenRepository implements AdminRefreshTokenReposi
         }
         if (REUSED.equals(result)) {
             // 탈취를 의심할 신호다. 정상 흐름에서는 탭 사이 경합으로도 생길 수 있어 WARN 으로 둔다.
-            log.warn("관리자 refresh 토큰 재사용 감지, family 폐기: familyId={}", presented.familyId());
+            // familyId 는 남기지 않는다. refresh 토큰의 절반이고, 로그아웃은 familyId 만으로 폐기하므로
+            // 로그를 읽는 사람이 그 관리자를 로그아웃시킬 수 있게 된다.
+            log.warn("관리자 refresh 토큰 재사용 감지, family 폐기");
             return Optional.empty();
         }
         return AdminEmail.parse(result);

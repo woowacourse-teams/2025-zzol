@@ -44,6 +44,8 @@ public class AdminAuditAspect {
     private static final String ADMIN_API_PREFIX = "/admin/api/";
     private static final Set<String> WRITE_METHODS = Set.of("POST", "PUT", "PATCH", "DELETE");
     private static final String ANONYMOUS = "anonymous";
+    // 조치가 아니라 세션 유지다. 남기면 탭마다 한 시간에 한 줄씩 anonymous 기록이 쌓여 실제 조치가 묻힌다.
+    private static final Set<String> EXCLUDED_URIS = Set.of("/admin/api/auth/refresh");
 
     private final AdminAuditLogService adminAuditLogService;
 
@@ -84,7 +86,10 @@ public class AdminAuditAspect {
     }
 
     private static boolean isAuditTarget(HttpServletRequest request) {
-        return request.getRequestURI().startsWith(ADMIN_API_PREFIX) && WRITE_METHODS.contains(request.getMethod());
+        final String uri = request.getRequestURI();
+        return uri.startsWith(ADMIN_API_PREFIX)
+                && !EXCLUDED_URIS.contains(uri)
+                && WRITE_METHODS.contains(request.getMethod());
     }
 
     private static String currentActorEmail() {

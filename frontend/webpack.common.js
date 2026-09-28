@@ -204,11 +204,16 @@ export default (_, argv) => {
         release: appVersion,
         sourcemaps: { disable: mode !== 'production' },
       }),
-      new WebpackBundleAnalyzer.BundleAnalyzerPlugin({
-        analyzerMode: 'static',
-        openAnalyzer: false,
-        reportFilename: 'bundle-report.html',
-      }),
+      // 번들 크기를 잴 때만 켠다: ANALYZE=true npm run build
+      ...(process.env.ANALYZE === 'true'
+        ? [
+            new WebpackBundleAnalyzer.BundleAnalyzerPlugin({
+              analyzerMode: 'static',
+              openAnalyzer: false,
+              reportFilename: 'bundle-report.html',
+            }),
+          ]
+        : []),
     ],
     devServer: {
       static: {

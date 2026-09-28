@@ -21,6 +21,7 @@
 - 요구사항이 모호하거나 해석이 여럿이면 **구현 전에 질문**한다. 추측으로 진행하지 않는다.
 - **외과적 변경**: 요청 범위 밖 코드·주석·포맷은 건드리지 않는다.
 - 20줄 이상 대량 출력이 예상되는 탐색·분석은 서브에이전트에 위임한다.
+- **FE↔BE WebSocket 계약은 BE 가 생성한 타입이 정한다.** `frontend/src/apis/websocket/generated/` 는 손으로 고치지 않고, 계약 변경은 BE PR 이 생성물까지 함께 올린다. 결정은 [ADR-0037](backend/docs/adr/0037-fe-be-contract-type-generation.md), FE 관점은 [frontend ADR](frontend/docs/adr/20260915-ws-contract-generated-types.md).
 - 이슈·PR·리뷰 코멘트·커밋 메시지처럼 사람이 읽는 한국어 글은 [korean-style](.claude/rules/korean-style.md)을 따른다. 번역투 연결어와 내용 없는 부사를 걸러 사람이 쓴 글로 읽히게 한다.
 
 ## 로컬 lint 훅 (pre-push)

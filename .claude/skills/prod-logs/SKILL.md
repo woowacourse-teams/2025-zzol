@@ -7,7 +7,7 @@ description: Grafana MCP로 운영·개발 서버의 Loki 로그와 Prometheus �
 
 운영 로그는 Alloy가 Loki로 보내고 Grafana(`https://status.zzol.site`)가 Loki·Prometheus·Tempo를 본다. `.mcp.json`의 `grafana` 서버가 Grafana 공식 MCP(`grafana/mcp-grafana`)를 docker stdio로 띄워 그 Grafana에 붙는다. 사람이 로그를 복사해 붙여넣지 않고 `mcp__grafana__*` 도구로 직접 조회한다(#1789).
 
-같은 항목이 루트·`backend/`·`frontend/`의 `.mcp.json`에 있다. Claude Code는 실행한 디렉터리의 `.mcp.json`만 읽기 때문이다(`tools/api-mcp/README.md`). 바꿀 때는 셋을 같이 고친다.
+같은 항목이 루트·`backend/`·`frontend/`의 `.mcp.json`에 있다. Claude Code는 실행한 디렉터리의 `.mcp.json`만 읽기 때문이다. 바꿀 때는 셋을 같이 고친다.
 
 ## 준비 (한 번만)
 

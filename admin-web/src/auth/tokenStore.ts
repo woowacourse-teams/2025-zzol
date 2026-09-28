@@ -12,7 +12,8 @@ const KEY = 'zzol-admin-token';
  * 읽을 수 없다.
  *
  * <p>접근이 막힌 브라우저(시크릿 모드 설정, 저장소 차단)에서도 앱이 죽지 않아야 하므로
- * 모든 접근을 try 로 감싼다. 실패하면 "로그인 안 된 상태"로 흘러가면 된다.
+ * 모든 접근을 try 로 감싼다. 저장에 한 번 실패하면 그 탭은 메모리에만 토큰을 둔다. 새로고침하면
+ * 사라지지만, 저장한 토큰을 못 읽어 요청마다 401 을 받고 refresh 를 회전하는 일은 없어진다.
  *
  * <p>토큰이 바뀌면 {@link subscribeToken} 으로 알린다. 저장소를 <b>읽는 쪽이 여럿</b>이라
  * 그렇다. 화면은 AuthProvider 의 상태를 보고 그리는데 토큰을 지우는 것은 401 을 받은
@@ -24,6 +25,10 @@ type Listener = (token: string | null) => void;
 
 const listeners = new Set<Listener>();
 
+/** 저장소에 쓰지 못한 탭이 대신 쓰는 자리. 저장소가 정상이면 읽지 않는다. */
+let memoryToken: string | null = null;
+let storageUnavailable = false;
+
 function notify(): void {
   const token = readToken();
   for (const listener of listeners) {
@@ -31,23 +36,31 @@ function notify(): void {
   }
 }
 export function readToken(): string | null {
+  // 저장소가 정상이면 저장소만 본다. 메모리 사본을 섞으면 다른 탭의 로그아웃을 따라가지 못한다.
+  if (storageUnavailable) {
+    return memoryToken;
+  }
   try {
     return localStorage.getItem(KEY);
   } catch {
-    return null;
+    storageUnavailable = true;
+    return memoryToken;
   }
 }
 
 export function saveToken(token: string): void {
+  memoryToken = token;
   try {
     localStorage.setItem(KEY, token);
   } catch {
     // 저장이 막힌 브라우저에서는 이 탭 안에서만 로그인 상태가 유지된다.
+    storageUnavailable = true;
   }
   notify();
 }
 
 export function clearToken(): void {
+  memoryToken = null;
   try {
     localStorage.removeItem(KEY);
   } catch {

@@ -10,7 +10,11 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,20 +96,38 @@ class RedisAdminRefreshTokenRepositoryTest extends AdminModuleServiceTest {
     }
 
     @Test
-    void 같은_토큰으로_동시에_회전하면_하나만_성공한다() {
+    void 같은_토큰으로_동시에_회전하면_하나만_성공한다() throws Exception {
         final AdminRefreshToken token = AdminRefreshToken.newFamily();
         repository.save(token, MJ, TTL);
 
-        final List<CompletableFuture<Optional<AdminEmail>>> futures = new ArrayList<>();
-        for (int i = 0; i < 8; i++) {
-            futures.add(CompletableFuture.supplyAsync(() -> repository.rotate(token, token.rotate(), TTL)));
-        }
-        final long succeeded = futures.stream()
-                .map(CompletableFuture::join)
-                .filter(Optional::isPresent)
-                .count();
+        // 모든 스레드를 출발선에 세웠다가 한 번에 보낸다. 풀에 차례로 넣기만 하면 앞 요청이 회전을
+        // 끝낸 뒤 다음 요청이 시작될 수 있고, 그러면 조회와 교체를 따로 보내는 구현도 통과한다.
+        final int requests = 8;
+        final CountDownLatch ready = new CountDownLatch(requests);
+        final CountDownLatch start = new CountDownLatch(1);
+        final ExecutorService executor = Executors.newFixedThreadPool(requests);
+        try {
+            final List<Future<Optional<AdminEmail>>> futures = new ArrayList<>();
+            for (int i = 0; i < requests; i++) {
+                futures.add(executor.submit(() -> {
+                    ready.countDown();
+                    start.await();
+                    return repository.rotate(token, token.rotate(), TTL);
+                }));
+            }
+            ready.await();
+            start.countDown();
 
-        assertThat(succeeded).isEqualTo(1);
+            long succeeded = 0;
+            for (Future<Optional<AdminEmail>> future : futures) {
+                if (future.get(10, TimeUnit.SECONDS).isPresent()) {
+                    succeeded++;
+                }
+            }
+            assertThat(succeeded).isEqualTo(1);
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     @Test

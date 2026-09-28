@@ -18,7 +18,10 @@ import coffeeshout.admin.auth.domain.AdminRefreshTokenRepository;
 import coffeeshout.admin.auth.domain.AdminTokenIssuer;
 import coffeeshout.admin.auth.domain.SocialIdTokenVerifier;
 import coffeeshout.global.exception.custom.BusinessException;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import org.assertj.core.api.SoftAssertions;
@@ -40,6 +43,10 @@ class AdminAuthServiceTest {
     private static final AdminEmail STRANGER = AdminEmail.of("stranger@evil.site");
     private static final long REFRESH_SECONDS = 604800;
     private static final Duration REFRESH_TTL = Duration.ofSeconds(REFRESH_SECONDS);
+    private static final long MAX_LIFETIME_SECONDS = 2592000;
+    private static final Instant NOW = Instant.parse("2026-09-28T00:00:00Z");
+    // 이 시각보다 먼저 로그인한 family 는 로그인 유지 상한(30일)이 지난 것이다.
+    private static final Instant LOGGED_IN_BEFORE = NOW.minusSeconds(MAX_LIFETIME_SECONDS);
 
     @Mock
     private SocialIdTokenVerifier socialIdTokenVerifier;
@@ -63,9 +70,15 @@ class AdminAuthServiceTest {
                 "admin-test-secret-key-must-be-at-least-32-bytes-long",
                 3600,
                 REFRESH_SECONDS,
+                MAX_LIFETIME_SECONDS,
                 List.of("http://localhost:5173"));
         adminAuthService = new AdminAuthService(
-                socialIdTokenVerifier, adminAccountService, adminTokenIssuer, adminRefreshTokenRepository, properties);
+                socialIdTokenVerifier,
+                adminAccountService,
+                adminTokenIssuer,
+                adminRefreshTokenRepository,
+                properties,
+                Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     @Nested
@@ -80,7 +93,7 @@ class AdminAuthServiceTest {
             final AdminTokens tokens = adminAuthService.login(ID_TOKEN);
 
             final ArgumentCaptor<AdminRefreshToken> saved = ArgumentCaptor.forClass(AdminRefreshToken.class);
-            then(adminRefreshTokenRepository).should().save(saved.capture(), eq(MJ), eq(REFRESH_TTL));
+            then(adminRefreshTokenRepository).should().save(saved.capture(), eq(MJ), eq(REFRESH_TTL), eq(NOW));
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(tokens.accessToken()).isEqualTo("admin-token");
                 softly.assertThat(tokens.refreshToken()).isEqualTo(saved.getValue());
@@ -103,7 +116,7 @@ class AdminAuthServiceTest {
 
             assertCoffeeShoutException(() -> adminAuthService.login(ID_TOKEN), AdminAccountErrorCode.NOT_ADMIN);
             then(adminTokenIssuer).should(never()).issue(any());
-            then(adminRefreshTokenRepository).should(never()).save(any(), any(), any());
+            then(adminRefreshTokenRepository).should(never()).save(any(), any(), any(), any());
         }
 
         @Test
@@ -137,7 +150,7 @@ class AdminAuthServiceTest {
         @Test
         void 회전에_성공하고_허용목록에_있으면_새_토큰을_준다() {
             given(adminRefreshTokenRepository.findEmail(presented)).willReturn(Optional.of(MJ));
-            given(adminRefreshTokenRepository.rotate(eq(presented), any(), eq(REFRESH_TTL)))
+            given(adminRefreshTokenRepository.rotate(eq(presented), any(), eq(REFRESH_TTL), eq(LOGGED_IN_BEFORE)))
                     .willReturn(Optional.of(MJ));
             given(adminAccountService.isAllowed(MJ)).willReturn(true);
             given(adminTokenIssuer.issue(MJ)).willReturn("new-admin-token");
@@ -159,7 +172,7 @@ class AdminAuthServiceTest {
             assertCoffeeShoutException(
                     () -> adminAuthService.refresh(presented.value()), AdminAccountErrorCode.NOT_ADMIN);
             then(adminRefreshTokenRepository).should().revoke(presented.familyId());
-            then(adminRefreshTokenRepository).should(never()).rotate(any(), any(), any());
+            then(adminRefreshTokenRepository).should(never()).rotate(any(), any(), any(), any());
             then(adminTokenIssuer).should(never()).issue(any());
         }
 
@@ -180,7 +193,7 @@ class AdminAuthServiceTest {
             // 이미 쓴 토큰이 다시 온 경우다. 저장소가 family 를 지우고 빈 값을 준다.
             given(adminRefreshTokenRepository.findEmail(presented)).willReturn(Optional.of(MJ));
             given(adminAccountService.isAllowed(MJ)).willReturn(true);
-            given(adminRefreshTokenRepository.rotate(eq(presented), any(), eq(REFRESH_TTL)))
+            given(adminRefreshTokenRepository.rotate(eq(presented), any(), eq(REFRESH_TTL), eq(LOGGED_IN_BEFORE)))
                     .willReturn(Optional.empty());
 
             assertCoffeeShoutException(
@@ -198,7 +211,7 @@ class AdminAuthServiceTest {
 
             assertThatThrownBy(() -> adminAuthService.refresh(presented.value()))
                     .isInstanceOf(IllegalStateException.class);
-            then(adminRefreshTokenRepository).should(never()).rotate(any(), any(), any());
+            then(adminRefreshTokenRepository).should(never()).rotate(any(), any(), any(), any());
         }
 
         @Test

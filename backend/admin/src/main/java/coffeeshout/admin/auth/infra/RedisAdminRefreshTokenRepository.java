@@ -4,6 +4,7 @@ import coffeeshout.admin.account.domain.AdminEmail;
 import coffeeshout.admin.auth.domain.AdminRefreshToken;
 import coffeeshout.admin.auth.domain.AdminRefreshTokenRepository;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -30,15 +31,21 @@ public class RedisAdminRefreshTokenRepository implements AdminRefreshTokenReposi
     private static final String REUSED = "";
 
     private static final RedisScript<Long> SAVE_SCRIPT = RedisScript.of("""
-            redis.call('HSET', KEYS[1], 'email', ARGV[1], 'tokenId', ARGV[2])
+            redis.call('HSET', KEYS[1], 'email', ARGV[1], 'tokenId', ARGV[2], 'loginAt', ARGV[4])
             redis.call('EXPIRE', KEYS[1], ARGV[3])
             return 1
             """, Long.class);
 
-    // 없으면 nil, 재사용이면 빈 문자열, 성공하면 이메일을 돌려준다.
+    // 없거나 로그인 유지 상한이 지났으면 nil, 재사용이면 빈 문자열, 성공하면 이메일을 돌려준다.
+    // loginAt 이 없는 family 도 상한이 지난 것으로 본다. 상한을 피해 가는 family 가 생기면 안 된다.
     private static final RedisScript<String> ROTATE_SCRIPT = RedisScript.of("""
             local current = redis.call('HGET', KEYS[1], 'tokenId')
             if not current then
+              return nil
+            end
+            local loginAt = tonumber(redis.call('HGET', KEYS[1], 'loginAt'))
+            if not loginAt or loginAt < tonumber(ARGV[4]) then
+              redis.call('DEL', KEYS[1])
               return nil
             end
             if current ~= ARGV[1] then
@@ -53,9 +60,14 @@ public class RedisAdminRefreshTokenRepository implements AdminRefreshTokenReposi
     private final StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public void save(AdminRefreshToken token, AdminEmail email, Duration ttl) {
+    public void save(AdminRefreshToken token, AdminEmail email, Duration ttl, Instant loggedInAt) {
         stringRedisTemplate.execute(
-                SAVE_SCRIPT, List.of(key(token.familyId())), email.value(), token.tokenId(), seconds(ttl));
+                SAVE_SCRIPT,
+                List.of(key(token.familyId())),
+                email.value(),
+                token.tokenId(),
+                seconds(ttl),
+                String.valueOf(loggedInAt.getEpochSecond()));
     }
 
     @Override
@@ -68,9 +80,15 @@ public class RedisAdminRefreshTokenRepository implements AdminRefreshTokenReposi
     }
 
     @Override
-    public Optional<AdminEmail> rotate(AdminRefreshToken presented, AdminRefreshToken next, Duration ttl) {
+    public Optional<AdminEmail> rotate(
+            AdminRefreshToken presented, AdminRefreshToken next, Duration ttl, Instant loggedInBefore) {
         final String result = stringRedisTemplate.execute(
-                ROTATE_SCRIPT, List.of(key(presented.familyId())), presented.tokenId(), next.tokenId(), seconds(ttl));
+                ROTATE_SCRIPT,
+                List.of(key(presented.familyId())),
+                presented.tokenId(),
+                next.tokenId(),
+                seconds(ttl),
+                String.valueOf(loggedInBefore.getEpochSecond()));
         if (result == null) {
             return Optional.empty();
         }

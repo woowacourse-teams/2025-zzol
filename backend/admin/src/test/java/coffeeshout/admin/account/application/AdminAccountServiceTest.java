@@ -43,7 +43,7 @@ class AdminAccountServiceTest {
         return new AdminAccountService(
                 adminAccountRepository,
                 new AdminAuthProperties(
-                        bootstrapEmails, "client-id", SECRET, 3600, 604800, List.of("http://localhost:5173")),
+                        bootstrapEmails, "client-id", SECRET, 3600, 604800, 2592000, List.of("http://localhost:5173")),
                 CLOCK);
     }
 

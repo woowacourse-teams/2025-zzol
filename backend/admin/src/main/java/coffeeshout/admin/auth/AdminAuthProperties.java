@@ -35,12 +35,20 @@ public record AdminAuthProperties(
 
         @Positive long refreshTokenValiditySeconds,
 
+        // 로그인한 뒤 이 시간이 지나면 쓰고 있어도 재발급을 거절한다. 슬라이딩만 두면 탈취한 쿠키로
+        // 기간 안에 한 번씩 재발급해 무기한 쓸 수 있다.
+        @Positive long refreshTokenMaxLifetimeSeconds,
+
         // refresh 와 logout 을 부를 수 있는 오리진. 회원 프론트도 같은 사이트라 SameSite 만으로는
         // 그쪽에서 오는 요청을 못 막는다. 그래서 Origin 헤더를 이 목록과 따로 대조한다.
         @NotEmpty List<String> webOrigins) {
 
     public Duration refreshTokenValidity() {
         return Duration.ofSeconds(refreshTokenValiditySeconds);
+    }
+
+    public Duration refreshTokenMaxLifetime() {
+        return Duration.ofSeconds(refreshTokenMaxLifetimeSeconds);
     }
 
     public boolean isWebOrigin(String origin) {

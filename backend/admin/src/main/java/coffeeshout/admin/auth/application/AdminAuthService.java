@@ -9,6 +9,8 @@ import coffeeshout.admin.auth.domain.AdminRefreshTokenRepository;
 import coffeeshout.admin.auth.domain.AdminTokenIssuer;
 import coffeeshout.admin.auth.domain.SocialIdTokenVerifier;
 import coffeeshout.global.exception.custom.BusinessException;
+import java.time.Clock;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,9 @@ import org.springframework.stereotype.Service;
  *
  * <p>재발급 때도 허용목록을 다시 본다. access 토큰 검증은 서명과 만료만 보므로, 목록에서 뺀
  * 관리자를 실제로 막는 자리는 여기다. 막히기까지 최대 access 수명(1시간)이 걸린다.
+ *
+ * <p>로그인한 지 {@code refresh-token-max-lifetime-seconds}(30일)가 지나면 쓰고 있어도 재발급하지 않는다.
+ * 7일 슬라이딩만 두면 탈취한 쿠키로 7일 안에 한 번씩 재발급해 무기한 쓸 수 있다.
  */
 @Slf4j
 @Service
@@ -33,11 +38,13 @@ public class AdminAuthService {
     private final AdminTokenIssuer adminTokenIssuer;
     private final AdminRefreshTokenRepository adminRefreshTokenRepository;
     private final AdminAuthProperties adminAuthProperties;
+    private final Clock clock;
 
     public AdminTokens login(String idToken) {
         final AdminEmail email = allowedEmail(socialIdTokenVerifier.verifyAndExtractEmail(idToken));
         final AdminRefreshToken refreshToken = AdminRefreshToken.newFamily();
-        adminRefreshTokenRepository.save(refreshToken, email, adminAuthProperties.refreshTokenValidity());
+        adminRefreshTokenRepository.save(
+                refreshToken, email, adminAuthProperties.refreshTokenValidity(), clock.instant());
         return new AdminTokens(adminTokenIssuer.issue(email), refreshToken);
     }
 
@@ -56,7 +63,7 @@ public class AdminAuthService {
 
         final AdminRefreshToken next = presented.rotate();
         adminRefreshTokenRepository
-                .rotate(presented, next, adminAuthProperties.refreshTokenValidity())
+                .rotate(presented, next, adminAuthProperties.refreshTokenValidity(), loggedInBefore())
                 .orElseThrow(AdminAuthService::invalidRefreshToken);
         return new AdminTokens(adminTokenIssuer.issue(email), next);
     }
@@ -76,6 +83,11 @@ public class AdminAuthService {
         return AdminEmail.parse(rawEmail)
                 .filter(adminAccountService::isAllowed)
                 .orElseThrow(() -> new BusinessException(AdminAccountErrorCode.NOT_ADMIN, "관리자 허용목록에 없는 계정입니다."));
+    }
+
+    /** 이 시각보다 먼저 로그인한 family 는 쓰고 있어도 재발급하지 않는다. */
+    private Instant loggedInBefore() {
+        return clock.instant().minus(adminAuthProperties.refreshTokenMaxLifetime());
     }
 
     private static BusinessException invalidRefreshToken() {

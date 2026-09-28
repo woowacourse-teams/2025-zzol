@@ -11,7 +11,9 @@ import coffeeshout.admin.auth.domain.AdminRefreshToken;
 import coffeeshout.admin.auth.domain.AdminRefreshTokenRepository;
 import coffeeshout.admin.support.AdminApiE2eTest;
 import jakarta.servlet.http.Cookie;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,9 @@ class AdminAuthControllerE2eTest extends AdminApiE2eTest {
 
     @Autowired
     private AdminRefreshTokenRepository adminRefreshTokenRepository;
+
+    @Autowired
+    private Clock clock;
 
     @Nested
     class me {
@@ -123,7 +128,7 @@ class AdminAuthControllerE2eTest extends AdminApiE2eTest {
                     .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.errorCode").value("NOT_ADMIN"));
             // family 가 폐기돼 다시 목록에 넣어도 이 쿠키로는 못 돌아온다. 구글로 다시 로그인해야 한다.
-            assertThat(adminRefreshTokenRepository.rotate(token, token.rotate(), Duration.ofMinutes(5)))
+            assertThat(adminRefreshTokenRepository.rotate(token, token.rotate(), Duration.ofMinutes(5), Instant.EPOCH))
                     .isEmpty();
         }
 
@@ -185,7 +190,7 @@ class AdminAuthControllerE2eTest extends AdminApiE2eTest {
 
     private AdminRefreshToken loggedInAs(String email) {
         final AdminRefreshToken token = AdminRefreshToken.newFamily();
-        adminRefreshTokenRepository.save(token, AdminEmail.of(email), Duration.ofMinutes(5));
+        adminRefreshTokenRepository.save(token, AdminEmail.of(email), Duration.ofMinutes(5), clock.instant());
         return token;
     }
 

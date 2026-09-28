@@ -163,6 +163,7 @@ admin:
     jwt-secret: "admin-test-secret-key-must-be-at-least-32-bytes-long"
     token-validity-seconds: 3600
     refresh-token-validity-seconds: 604800
+    refresh-token-max-lifetime-seconds: 2592000
     web-origins:
       - http://localhost:5173
 

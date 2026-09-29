@@ -5,7 +5,7 @@ import MiniGameProviders from './features/miniGame/context/MiniGameProviders';
 import RoomLayout from './features/room/RoomLayout';
 import { EntryNamePage, HomePage } from './pages';
 
-const RELOAD_KEY = 'chunk-reload-at';
+const RELOAD_KEY = 'zzol-chunk-reload-at';
 
 // 재배포로 옛 해시 청크를 못 받으면 새 index.html 을 받도록 한 번 새로고침한다(#1857).
 // 10초 안에 또 실패하면 새로고침을 반복하지 않고 에러를 그대로 올린다.

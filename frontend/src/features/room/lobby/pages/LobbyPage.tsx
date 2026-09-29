@@ -157,17 +157,13 @@ const LobbyPage = () => {
     [showToast]
   );
 
-  const { isSubscribed: isParticipantsSubscribed } = useWebSocketSubscription<Player[]>(
+  const { isSubscribed: isParticipantsSubscribed } = useWebSocketSubscription(
     `/room/${joinCode}`,
     handleParticipant
   );
-  useWebSocketSubscription<MiniGameType[]>(
-    `/room/${joinCode}/minigame`,
-    handleMiniGameData,
-    handleMiniGameError
-  );
+  useWebSocketSubscription(`/room/${joinCode}/minigame`, handleMiniGameData, handleMiniGameError);
   useWebSocketSubscription(`/room/${joinCode}/round`, handleGameStart);
-  useWebSocketSubscription<QRCodeEvent>(
+  useWebSocketSubscription(
     `/room/${joinCode}/qr-code`,
     handleQRCodeEvent,
     undefined,

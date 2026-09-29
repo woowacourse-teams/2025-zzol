@@ -43,7 +43,7 @@ const millisToSeconds = (millis: number) => Math.round(millis / 10) / 100;
 export const RANKING_CATEGORIES: RankingCategory[] = [
   {
     key: 'blockstacking-top-players',
-    label: '블록쌓기 최고 기록',
+    label: '빌딩쌓기 최고 기록',
     icon: BlocksIcon,
     endpoint: '/dashboard/block-stacking-top-players',
     mockRaw: MOCK_BLOCK_STACKING_TOP_PLAYERS,

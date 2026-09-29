@@ -17,6 +17,12 @@ web:
       # 예전 Thymeleaf 백오피스는 API와 같은 도메인에서 서빙돼 이 항목이 필요 없었다.
       - https://admin.dev.zzol.site
 
+admin:
+  auth:
+    # refresh 와 logout 을 부를 수 있는 오리진(admin-web). CORS 허용 목록과 따로 둔다.
+    web-origins:
+      - https://admin.dev.zzol.site
+
 room:
   qr:
     prefix: "https://dev.zzol.site/join/"

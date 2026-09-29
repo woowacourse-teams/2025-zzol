@@ -3,9 +3,10 @@ package coffeeshout.room.ui.response;
 import coffeeshout.room.domain.player.Player;
 import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.domain.roulette.Probability;
+import org.jspecify.annotations.Nullable;
 
 public record PlayerResponse(
-        Long userId,
+        @Nullable Long userId,
         String playerName,
         PlayerType playerType,
         Boolean isReady,

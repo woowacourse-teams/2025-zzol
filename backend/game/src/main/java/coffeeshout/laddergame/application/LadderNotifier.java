@@ -34,7 +34,7 @@ public class LadderNotifier {
             payload = LadderStateResponse.class,
             description = "사다리게임 준비 상태 브로드캐스트")
     public void notifyPrepare(LadderGame game, JoinCode joinCode) {
-        sendState(joinCode, LadderStateResponse.ofPrepare(game.getPoles(), game.getBottomRanks()));
+        sendState(joinCode, LadderStateResponse.ofPrepare(game.getPoles(), game.getBottomRanks(), game.getRowCount()));
     }
 
     @WsTopic(

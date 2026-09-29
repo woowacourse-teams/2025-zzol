@@ -5,10 +5,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record LadderDrawCommandEvent(
-        String eventId, String joinCode, String playerName, int segmentIndex, Instant timestamp) implements BaseEvent {
+        String eventId, String joinCode, String playerName, int segmentIndex, int row, Instant timestamp)
+        implements BaseEvent {
 
-    public static LadderDrawCommandEvent of(String joinCode, String playerName, int segmentIndex) {
+    public static LadderDrawCommandEvent of(String joinCode, String playerName, int segmentIndex, int row) {
         return new LadderDrawCommandEvent(
-                UUID.randomUUID().toString(), joinCode, playerName, segmentIndex, Instant.now());
+                UUID.randomUUID().toString(), joinCode, playerName, segmentIndex, row, Instant.now());
     }
 }

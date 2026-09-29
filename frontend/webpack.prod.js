@@ -1,6 +1,6 @@
 import { merge } from 'webpack-merge';
 import { GenerateSW } from 'workbox-webpack-plugin';
-import common, { CONTENT_ROUTE_PATTERN } from './webpack.common.js';
+import common from './webpack.common.js';
 
 export default (env, argv) =>
   merge(common(env, { ...argv, mode: 'production' }), {
@@ -9,10 +9,10 @@ export default (env, argv) =>
       new GenerateSW({
         clientsClaim: true,
         skipWaiting: true,
-        navigateFallback: '/index.html',
-        // 라우트별 정적 HTML 이 있는 콘텐츠 경로는 SW 가 홈 HTML 로 대체하면 안 된다
-        // — 재방문자에게 홈 title/canonical 이 보이면 정적 생성이 무의미해진다.
-        navigateFallbackDenylist: [CONTENT_ROUTE_PATTERN],
+        // HTML 은 precache 하지 않는다. precache 한 index.html 을 내비게이션에 돌려주면
+        // 재배포 뒤에도 옛 번들이 떠서 새 백엔드와 어긋난다(#1857). 내비게이션은 아래
+        // NetworkFirst 가 받아 온라인이면 항상 새 HTML 을 쓰고, 오프라인일 때만 캐시로 떨어진다.
+        exclude: [/\.map$/, /\.html$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/cdn\.jsdelivr\.net\//,

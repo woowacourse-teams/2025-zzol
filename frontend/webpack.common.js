@@ -19,13 +19,6 @@ const SITE_URL = 'https://www.zzol.site';
 // 라우트별 메타의 단일 소스. SPA 콘텐츠 페이지(src/seo/pages.ts)와 같은 파일을 읽는다.
 const seoPages = JSON.parse(readFileSync(path.resolve(__dirname, 'src/seo/pages.json'), 'utf8'));
 
-// 홈(`/`)을 뺀 콘텐츠 라우트의 최상위 세그먼트. webpack.prod.js 의 Service Worker
-// denylist 가 이걸 쓴다 — 라우트 목록을 두 벌로 적으면 pages.json 에 라우트를 더할 때 조용히 어긋난다.
-// Workbox 는 pathname 이 아니라 pathname+search 에 매칭하므로 끝을 `[/?]` 까지 허용한다.
-export const CONTENT_ROUTE_PATTERN = new RegExp(
-  `^/(${[...new Set(seoPages.filter((page) => page.path !== '/').map((page) => page.path.split('/')[1]))].join('|')})($|[/?])`
-);
-
 // 라우트마다 실제 파일을 만들어 둘 뿐이다. S3 REST 오리진은 `/guide` 를 `guide/index.html` 로 해석하지 않으므로
 // 확장자 없는 URI 를 `.../index.html` 로 재작성하는 CloudFront Function(`zzol-spa-router`)이 dev·prod 에 붙어 있다.
 // 함수·에러 응답 설정은 docs/seo-optimization.md §7 참고.

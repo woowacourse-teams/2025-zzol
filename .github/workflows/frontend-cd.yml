@@ -61,8 +61,35 @@ jobs:
           role-to-assume: ${{ vars.FRONTEND_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
 
-      - name: Sync to S3
-        run: aws s3 sync dist "s3://${S3_BUCKET}" --delete
+      # 파일명에 20자리 contenthash 가 붙은 번들·이미지는 내용이 바뀌면 이름도 바뀌므로 1년 캐시한다.
+      # 나머지(HTML·service-worker.js·manifest·fonts 등)는 매번 재검증하게 no-cache 로 둔다(#1857).
+      # 해시 파일을 먼저 올려야 새 HTML 이 아직 없는 청크를 가리키는 순간이 생기지 않는다.
+      - name: Sync hashed assets to S3
+        run: |
+          aws s3 sync dist "s3://${S3_BUCKET}" \
+            --exclude "*" --include "*.????????????????????.*" \
+            --cache-control "public, max-age=31536000, immutable"
+
+      # --delete 를 쓰지 않는다. 배포 직전에 열린 탭은 옛 해시 청크를 요청하므로 아래 단계에서 기간을 두고 지운다.
+      - name: Sync other files to S3
+        run: |
+          aws s3 sync dist "s3://${S3_BUCKET}" \
+            --exclude "*.????????????????????.*" \
+            --cache-control "no-cache"
+
+      # 이번 빌드에 없고 7일 넘게 갱신되지 않은 파일만 지운다. sync 가 매 배포마다 현재 파일을 다시 올려
+      # LastModified 가 갱신되므로, 7일 넘은 파일은 그 뒤 배포에서 빠진 옛 파일이다.
+      - name: Remove stale files from S3
+        run: |
+          BUCKET="${S3_BUCKET%%/*}"
+          PREFIX="${S3_BUCKET#*/}/"
+          CUTOFF="$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%S)"
+          aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$PREFIX" --output json \
+            | jq -r --arg cutoff "$CUTOFF" '.Contents[]? | select(.LastModified < $cutoff) | .Key' \
+            | while read -r key; do
+                [ -e "dist/${key#"$PREFIX"}" ] && continue
+                aws s3 rm "s3://${BUCKET}/${key}"
+              done
 
       - name: Invalidate CloudFront cache
         run: |

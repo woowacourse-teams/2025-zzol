@@ -21,6 +21,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 @Component
@@ -66,11 +67,17 @@ public class LocalNicknameAuditDataInitializer implements ApplicationRunner {
     private final JdbcTemplate jdbcTemplate;
     private final Clock clock;
     private final EntityManager entityManager;
+    private final TransactionTemplate transactionTemplate;
 
+    /**
+     * 샘플 적재만 트랜잭션으로 감싼다. 접수 시각을 흩는 벌크 UPDATE는 트랜잭션 밖에서
+     * {@code TransactionRequiredException}을 던지고, 이 클래스가 러너라 그 예외가 곧 기동 실패다(#1859).
+     * 측정용 시드 적재는 {@link #seedUnaudited()}에 적은 이유로 일부러 밖에 둔다.
+     */
     @Override
     public void run(ApplicationArguments args) {
         seedUnaudited();
-        seedSamples();
+        transactionTemplate.executeWithoutResult(status -> seedSamples());
     }
 
     /**

@@ -1,7 +1,6 @@
 package coffeeshout.profanity.infra;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
@@ -12,6 +11,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,11 +98,17 @@ class LocalNicknameAuditDataInitializerTest extends ServiceTest {
     /**
      * 실제 기동에는 주변 트랜잭션이 없다. 베이스의 테스트 트랜잭션 안에서만 돌리면 접수 시각을 흩는 벌크
      * UPDATE가 그 트랜잭션에 얹혀 통과하고, 로컬 기동은 TransactionRequiredException으로 죽는다(#1859).
-     * 그래서 이 묶음만 테스트 트랜잭션을 끄고, 커밋된 행은 직접 지운다.
+     * 그래서 이 묶음만 테스트 트랜잭션을 끄고, 커밋된 행은 직접 지운다. 앞선 테스트가 남긴 대기 행이
+     * 있으면 샘플 적재가 통째로 건너뛰어지므로 시작 전에도 비운다.
      */
     @Nested
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     class 트랜잭션_없는_기동 {
+
+        @BeforeEach
+        void 남은_행을_지운다() {
+            cleanDatabase();
+        }
 
         @AfterEach
         void 커밋된_행을_지운다() {
@@ -111,7 +117,7 @@ class LocalNicknameAuditDataInitializerTest extends ServiceTest {
 
         @Test
         void 샘플_데이터를_넣고_접수_시각을_흩는다() {
-            assertThatCode(() -> 초기화기(0).run(null)).doesNotThrowAnyException();
+            초기화기(0).run(null);
 
             final Instant 가장_이른_접수 = entityManager
                     .createQuery("SELECT MIN(a.createdAt) FROM NicknameAudit a", Instant.class)

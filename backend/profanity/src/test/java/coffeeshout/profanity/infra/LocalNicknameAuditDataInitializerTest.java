@@ -117,8 +117,11 @@ class LocalNicknameAuditDataInitializerTest extends ServiceTest {
 
         @Test
         void 샘플_데이터를_넣고_접수_시각을_흩는다() {
+            // 스프링이 기동 때 부르는 호출 그대로다. null 자리는 기동 인자인데 시더가 읽지 않는다.
+            // 시더가 스스로 트랜잭션을 열지 않으면 이 줄에서 TransactionRequiredException이 올라와 실패한다.
             초기화기(0).run(null);
 
+            // 시더가 쓴 것과 같은 JPQL 매핑으로 결과만 읽는다. JDBC로 읽으면 시간대 변환이 달라진다.
             final Instant 가장_이른_접수 = entityManager
                     .createQuery("SELECT MIN(a.createdAt) FROM NicknameAudit a", Instant.class)
                     .getSingleResult();

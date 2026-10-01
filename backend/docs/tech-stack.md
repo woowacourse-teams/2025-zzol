@@ -4,7 +4,7 @@
 
 | 분류         | 기술                                            |
 |------------|-----------------------------------------------|
-| 프레임워크      | Spring Boot 3.5.3, Java 21                    |
+| 프레임워크      | Spring Boot 4.1.1, Java 21                    |
 | 실시간 통신     | WebSocket (STOMP) + SockJS                    |
 | 메시징        | Redis Stream                                  |
 | 캐시 / 분산 락  | Valkey(Redis) + Redisson                      |
@@ -13,7 +13,7 @@
 | 서킷 브레이커    | Resilience4j                                  |
 | 관찰 가능성     | Micrometer + Prometheus, OpenTelemetry(Tempo) |
 | 외부 스토리지    | Oracle Object Storage (QR 코드)                 |
-| 테스트        | JUnit 5, AssertJ, TestContainers              |
+| 테스트        | JUnit Jupiter 6, AssertJ, TestContainers      |
 
 ---
 
@@ -38,12 +38,13 @@
       ▼
 [RedisStreamListenerStarter]
   StreamKey별 StreamMessageListenerContainer + 전용 ThreadPool로 폴링
+  payload JSON 역직렬화 → @JsonTypeInfo로 구체 타입 복원
   traceparent 필드에서 컨텍스트 복원 → consumer span 스코프 안에서 디스패치
       │
       ▼
-[EventDispatcher.handle(BaseEvent)]
-  1. JSON 역직렬화 → @JsonTypeInfo로 구체 타입 복원
-  2. ResolvableType으로 Consumer<이벤트타입> 빈 동적 조회 후 실행
+[EventDispatcher.handle(streamKey, BaseEvent)]
+  ResolvableType으로 Consumer<이벤트타입> 빈을 모두 조회해 순서대로 팬아웃 실행
+  한 Consumer의 실패가 나머지 Consumer의 수신을 막지 않는다
       │
       ▼
 [Consumer<T> 구현체 (infra/messaging/consumer/)]
@@ -58,7 +59,7 @@
 
 - 모든 이벤트는 `BaseEvent`를 구현하는 record로 정의한다
 - `StreamPublisher.publish(StreamKey, BaseEvent)`로 발행한다. StreamKey로 설정(max-length, thread-pool)을 자동 적용한다
-- Consumer는 `java.util.function.Consumer<구체이벤트타입>`을 구현하고 `@Component` 등으로 스프링 빈으로 등록해야 한다. `EventDispatcher`가 이벤트 타입으로 스프링 컨텍스트에서 빈을 조회하는 구조이므로, 빈 등록이 없으면 소비가 일어나지 않는다
+- Consumer는 `java.util.function.Consumer<구체이벤트타입>`을 구현하고 `@Component` 등으로 스프링 빈으로 등록해야 한다. `EventDispatcher`가 이벤트 타입으로 스프링 컨텍스트에서 빈을 조회하는 구조이므로, 빈 등록이 없으면 소비가 일어나지 않는다. 같은 타입의 Consumer가 여럿이면 전부 호출한다(ADR-0025)
 - 순서 보장이 필요한 스트림(카드 선택 등)은 `core-size: 1` 단일 스레드, 브로드캐스트성 스트림은 공용 concurrent 풀을 사용한다
 
 ---

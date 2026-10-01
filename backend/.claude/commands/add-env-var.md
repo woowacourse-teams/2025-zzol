@@ -6,27 +6,29 @@
 
 ### 1. `backend/docker/dev/docker-compose.yml`
 
-`x-dev-app.environment` 블록의 마지막 항목(`- OAUTH_FRONTEND_REDIRECT_URI=...`) 바로 아래에 추가:
+`x-dev-app.environment` 블록 끝에 추가:
 
 ```yaml
-    - ROOM_SESSION_TOKEN_SECRET=${ROOM_SESSION_TOKEN_SECRET}
+    - <VARIABLE_NAME>=${<VARIABLE_NAME>}
 ```
 
 ### 2. `backend/docker/prod/docker-compose.yml`
 
-`x-prod-app.environment` 블록의 마지막 항목(`- OAUTH_FRONTEND_REDIRECT_URI=...`) 바로 아래에 추가:
+`x-prod-app.environment` 블록 끝에 추가:
 
 ```yaml
-    - ROOM_SESSION_TOKEN_SECRET=${ROOM_SESSION_TOKEN_SECRET}
+    - <VARIABLE_NAME>=${<VARIABLE_NAME>}
 ```
 
 ### 3. `.github/workflows/backend-cd.yml`
 
-`Create .env file` 스텝의 `OAUTH_FRONTEND_REDIRECT_URI=...` 줄 바로 아래에 추가:
+`Create .env file` 스텝의 heredoc 끝인 `EOF` 바로 위에 추가:
 
 ```text
-          ROOM_SESSION_TOKEN_SECRET=${{ secrets.ROOM_SESSION_TOKEN_SECRET }}
+          <VARIABLE_NAME>=${{ secrets.<VARIABLE_NAME> }}
 ```
+
+`<VARIABLE_NAME>`은 `$ARGUMENTS`로 바꾼다. 세 파일에 같은 이름이 이미 있으면 추가하지 않고 알린다.
 
 ## 완료 후 출력
 

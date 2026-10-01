@@ -16,46 +16,49 @@
 testImplementation(project(":test-support"))
 ```
 
-공통 테스트 설정은 `:test-support`의 `application-test-base.yml`에 정의되며, 각 모듈의 `application-test.yml`과 함께 `test` 프로파일 적용 시 자동으로 로드된다.
+공통 테스트 설정은 `:test-support`의 `application-test-base.yml`에 있다. 자동으로 로드되지 않으므로 각 모듈의 `application-test.yml`이 `spring.config.import: classpath:application-test-base.yml`로 가져와야 한다. `:app`은 base를 import하지 않고 자체 `application-test.yml`을 쓴다.
 
 ## 테스트 종류별 베이스
 
 | 종류 | 베이스 | 특징 |
 |------|--------|------|
 | 순수 단위 테스트 | 없음 (순수 Java) | 스프링 컨텍스트 없이 도메인 로직만 검증 |
-| 서비스 테스트 | 모듈 로컬 `{Module}ServiceTest` 상속 | `coffeeshout.support.ServiceTest` 확장. `@SpringBootTest` + `@ActiveProfiles("test")` + `@Transactional` 상속. 모듈별 `ServiceTestConfig`에 외부 의존 Mock 선언 |
-| WebSocket 통합 테스트 | 모듈 로컬 `{Module}IntegrationTest` 상속 + `TestStompSession` 사용 | `coffeeshout.support.IntegrationTestSupport` 확장. `RANDOM_PORT` 명시 오버라이드 + `test` 프로파일. `TestStompSession`으로 STOMP 구독·전송·메시지 수집 |
-| 일반 통합 테스트 (REST, Stream 등) | 모듈 로컬 `{Module}IntegrationTest` 상속 | `coffeeshout.support.IntegrationTestSupport` 확장. 기본 `MOCK` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup |
+| 서비스 테스트 | 모듈 로컬 `{Module}ModuleServiceTest` 상속 | `coffeeshout.support.ServiceTest` 확장. `@ActiveProfiles("test")` + `@Transactional` 상속. 모듈별 `ServiceTestConfig`에 외부 의존 Mock 선언 |
+| WebSocket 통합 테스트 | 모듈 로컬 `{Module}ModuleWebSocketTest` 상속 | `coffeeshout.support.WebSocketIntegrationTestSupport` 확장. `RANDOM_PORT` + `test` 프로파일. `createSession*()`으로 `TestStompSession`을 얻어 STOMP 구독·전송·메시지 수집 |
+| REST·Stream 등 일반 통합 테스트 | 모듈 로컬 `{Module}ModuleIntegrationTest` 상속 | `coffeeshout.support.IntegrationTestSupport` 확장. 기본 `MOCK` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup |
 
-모든 모듈 로컬 베이스는 `coffeeshout.support.ServiceTest` 또는 `coffeeshout.support.IntegrationTestSupport`를 거쳐 `TestContainerSupport`를 상속하므로 MySQL·Valkey TestContainer가 자동으로 구동된다.
+모든 모듈 로컬 베이스는 `coffeeshout.support`의 베이스를 거쳐 `TestContainerSupport`를 상속하므로 MySQL·Valkey TestContainer가 자동으로 구동된다.
+
+이름 패턴의 예외는 셋이다. `:app`은 `coffeeshout.support.app` 패키지의 `ServiceTest`·`IntegrationTestSupport`·`WebSocketIntegrationTestSupport`를 쓴다. `:profanity`는 로컬 베이스 없이 `coffeeshout.support.ServiceTest`·`IntegrationTestSupport`를 직접 상속한다. `:websocket`의 WebSocket 베이스는 `WebsocketModuleWebSocketIntegrationTest`다.
 
 ### 모듈 로컬 베이스 클래스
 
-각 도메인 모듈은 `src/test/java/coffeeshout/` 아래에 두 개의 베이스 클래스를 정의한다.
+각 도메인 모듈은 `src/test/java/coffeeshout/` 아래에 베이스 클래스를 정의한다. 모듈 테스트 앱 클래스를 `@SpringBootTest(classes = …)`로 명시하고 `ServiceTestConfig`를 `@Import`한다.
 
-**서비스 테스트용** — `@SpringBootTest`·`@ActiveProfiles`·`@Transactional`·`MockEventPublisherConfig` 모두 부모에서 상속한다.
+**서비스 테스트용** — `@ActiveProfiles`·`@Transactional`·`MockEventPublisherConfig`는 부모에서 상속한다.
 
 ```java
+@SpringBootTest(classes = {Module}ModuleTestApplication.class)
 @Import(ServiceTestConfig.class)
-public abstract class {Module}ServiceTest extends coffeeshout.support.ServiceTest {
+public abstract class {Module}ModuleServiceTest extends coffeeshout.support.ServiceTest {
 }
 ```
 
-**통합 테스트용** — 부모의 auto-detection을 대신해 모듈 테스트 앱 클래스를 명시한다. 기본값은 `MOCK`이며, WebSocket/STOMP·`TestRestTemplate`·`WebTestClient` 등 실제 TCP 소켓이 필요한 경우에만 `RANDOM_PORT`로 오버라이드한다.
+**통합 테스트용** — 기본값은 `MOCK`이다. REST·Stream 테스트가 쓴다.
 
 ```java
-@SpringBootTest(classes = {Module}TestApplication.class, webEnvironment = WebEnvironment.MOCK)
+@SpringBootTest(classes = {Module}ModuleTestApplication.class, webEnvironment = WebEnvironment.MOCK)
 @Import(ServiceTestConfig.class)
-public abstract class {Module}IntegrationTest extends coffeeshout.support.IntegrationTestSupport {
+public abstract class {Module}ModuleIntegrationTest extends coffeeshout.support.IntegrationTestSupport {
 }
 ```
 
-WebSocket/STOMP 또는 `TestRestTemplate` · `WebTestClient`를 사용하는 모듈은 `RANDOM_PORT`로 명시 오버라이드한다.
+**WebSocket 통합 테스트용** — 실제 TCP 소켓이 필요하므로 `RANDOM_PORT`를 쓴다. `TestRestTemplate`·`WebTestClient`를 쓰는 테스트도 이 베이스를 쓴다. `createSession*()` 헬퍼는 여기에 둔다.
 
 ```java
-@SpringBootTest(classes = {Module}TestApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = {Module}ModuleTestApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(ServiceTestConfig.class)
-public abstract class {Module}IntegrationTest extends coffeeshout.support.IntegrationTestSupport {
+public abstract class {Module}ModuleWebSocketTest extends coffeeshout.support.WebSocketIntegrationTestSupport {
 }
 ```
 
@@ -64,7 +67,7 @@ public abstract class {Module}IntegrationTest extends coffeeshout.support.Integr
 
 > **주의 — 테스트 클래스 내부 `@TestConfiguration`은 자동 감지되지 않는다**
 >
-> `@SpringBootTest`가 **부모 클래스**(`{Module}IntegrationTest` 등)에 선언된 경우,
+> `@SpringBootTest`가 `{Module}ModuleIntegrationTest` 같은 **부모 클래스**에 선언된 경우,
 > 자식 테스트 클래스에 작성한 `static class` 형태의 내부 `@TestConfiguration`은
 > Spring Boot Test가 자동으로 로드하지 않는다.
 >
@@ -121,11 +124,11 @@ scheduler.taskAt(1).run(); // onReadyEnd → PLAYING
 
 ## 통합 테스트 (WebSocket)
 
-`IntegrationTestSupport`를 상속하고 `TestStompSession`(`coffeeshout.support`)을 직접 생성해서 사용한다.
+`{Module}ModuleWebSocketTest`를 상속하고 베이스의 `createSession*()`으로 `TestStompSession`을 얻는다. `TestStompSession`을 직접 생성하지 않는다. 생성은 `TestStompSessionFactory`가 맡는다.
 `subscribe()`는 `MessageCollector`를 반환하며, `get()`으로 메시지를 Awaitility 기반으로 대기한다.
 
 ```java
-TestStompSession session = new TestStompSession(stompSession, principalName);
+TestStompSession session = createSession(joinCode, playerName);
 MessageCollector collector = session.subscribe("/topic/...");
 session.send("/app/...", requestPayload);
 
@@ -216,7 +219,7 @@ assertCoffeeShoutException(
 
 ## 테스트 프로파일
 
-`test` 프로파일 적용 시 `:test-support`의 `application-test-base.yml`과 각 모듈의 `application-test.yml`이 자동 적용된다.
+`test` 프로파일에서는 각 모듈의 `application-test.yml`이 `:test-support`의 `application-test-base.yml`을 import해 적용한다.
 
 - 타이밍 값이 500ms~2s로 단축됨
 - DB: MySQL TestContainer 사용 (Flyway 비활성화)

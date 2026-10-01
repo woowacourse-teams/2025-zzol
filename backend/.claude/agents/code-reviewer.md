@@ -46,7 +46,7 @@ background: true
   | Application Service | `{Domain}Service`             |
   | 플로우 오케스트레이터         | `{Domain}FlowOrchestrator`    |
   | WebSocket 알림        | `{Domain}Notifier`            |
-  | 도메인 서비스             | `{Domain}CommandService`      |
+  | Application 커맨드 서비스   | `{Domain}CommandService`      |
   | WebSocket 컨트롤러      | `{Domain}WebSocketController` |
   | 커맨드 핸들러             | `{Action}CommandHandler`      |
   | Redis Consumer      | `{Event}Consumer`             |
@@ -61,7 +61,7 @@ background: true
 > 여기서 다시 지적하지 않는다. 같은 문제가 CI와 리뷰로 두 번 오면 리뷰 신호가 묻힌다.
 
 - [ ] 단일 책임 원칙을 지키는가 (변경 이유가 하나인가)
-- [ ] 인스턴스 변수가 `final` 인가 (JPA 엔티티는 제외한다. 프록시·리플렉션이 non-final을 요구한다)
+- [ ] 인스턴스 변수가 `final` 인가. JPA 엔티티는 제외한다
 - [ ] 비즈니스 로직이 서비스가 아닌 도메인 객체 안에 있는가
 - [ ] 외부 의존성(시간, 랜덤, I/O)이 파라미터로 주입되는가
 - [ ] 상태 변경 메서드가 결과를 반환하는가
@@ -71,7 +71,7 @@ background: true
 
 - [ ] `domain/` 이 `application/`, `infra/`, `ui/` 에 의존하지 않는가
 - [ ] `ui/` 가 도메인 서비스를 직접 호출하지 않고 Application Layer 를 경유하는가
-- [ ] 스프링·JPA·Redis 의존성이 `infra/` 에만 존재하는가
+- [ ] `domain/` 의 스프링 의존이 최소인가. JPA 애노테이션은 ADR-0019 가 도메인에 허용한다
 - [ ] 포트(interface) 가 `domain/` 에 정의되고 구현체가 `infra/` 에 있는가
 
 ### 예외 처리
@@ -82,8 +82,8 @@ background: true
 
 ### 도메인 이벤트 (이벤트 클래스 변경 시)
 
-- [ ] 이벤트가 record 로 정의되고 `BaseEvent` 를 구현하는가
-- [ ] 컴팩트 생성자에서 `eventId`(UUID), `timestamp`(Instant.now()) 를 자동 생성하는가
+- [ ] Redis Stream 으로 나가는 이벤트가 record 로 정의되고 `BaseEvent` 를 구현하는가. in-process `ApplicationEvent` 는 해당하지 않는다
+- [ ] UUID 인 `eventId` 와 `Instant.now()` 값인 `timestamp` 를 보조 생성자 또는 정적 팩토리가 채우는가
 
 ### ADR 충돌
 

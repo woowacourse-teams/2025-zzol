@@ -44,8 +44,8 @@ allowed-tools: Read, Bash, Glob, Agent, Skill
 ## 라벨 & Assignee
 
 - **type 라벨** (1개): feat `✨feat` / fix `🐞bug` / refactor `🛠️refactor` / chore `⚙️chore` / docs `📝docs` / test `🧪 test`
-- **영역 라벨**: 변경 경로로 판별한다. `git diff --name-only "origin/$BASE"...HEAD` 결과가 `backend/` 만이면 `BE`, `frontend/` 만이면 `FE`, 양쪽이 섞였으면 `BE`+`FE`(풀스택). 루트 설정 등 어느 쪽도 아니면 변경 성격으로 판단해 사용자에게 확인한다.
-- 우선순위(`p-*`)는 `$ARGUMENTS`에 있을 때만 추가
+- **영역 라벨**: 변경 경로로 판별한다. `git diff --name-only "origin/$BASE"...HEAD` 결과가 `backend/` 만이면 `BE`, `frontend/` 또는 `admin-web/` 만이면 `FE`, 양쪽이 섞였으면 `BE`+`FE`(풀스택). `admin-web/`은 백오피스지만 프론트 앱이라 `FE`다. 루트 설정 등 어느 쪽도 아니면 변경 성격으로 판단해 사용자에게 확인한다. 응답이 없으면 판단한 라벨로 진행하고 PR 본문 `💬 리뷰 중점사항`에 그 판단을 적는다.
+- 우선순위는 `$ARGUMENTS`에 있을 때만 추가한다. 라벨명에 이모지가 붙어 있어 그대로 넘겨야 찾는다: `🚨p-critical`·`🔥p-high`·`⚠️p-medium`·`💡p-low`
 - Assignee: `gh api user --jq '.login'` 결과로 자동 지정
 
 ## 작성 원칙 (본문 공통)
@@ -143,6 +143,10 @@ GitHub은 `mermaid` 코드블록을 그림으로 그려준다. 이미지 업로�
 - 💬 리뷰 중점사항: 리뷰어가 **판단해주길 바라는 것**만 적는다. 내린 결정과 그 이유, 확신이 덜 선 트레이드오프, 놓치기 쉬운 부분이 여기 해당한다. 이미 확실한 사실은 적지 않는다. 그건 작업 내용에 있다.
 - 🙅 이번에 하지 않은 것: 템플릿에는 없는 섹션이지만 **맨 마지막에 덧붙인다**. 의도적으로 범위 밖에 둔 것과 그 이유를 한 곳에 모은다. 없으면 섹션째 생략한다.
 
+## 사용자 확인
+
+채운 제목·라벨·본문을 생성 전에 사용자에게 보여 준다. 응답이 없으면 기다리지 않고 `--draft`로 연다. 응답이 오면 내용을 반영하고 `gh pr ready <번호>`로 바꾼다. 연결된 이슈의 성공 기준과 어긋난 항목이 있으면 draft 를 유지하고 `💬 리뷰 중점사항`에 목록으로 적는다. 기본값의 근거는 [issue-workflow](../../rules/issue-workflow.md)의 "사용자 확인과 부재 시 기본값" 절이다.
+
 ## 실행
 
 `gh pr create`는 생성된 PR URL을 stdout으로 출력하므로 그대로 캡처한다.
@@ -150,6 +154,7 @@ GitHub은 `mermaid` 코드블록을 그림으로 그려준다. 이미지 업로�
 ```bash
 BASE="dev"   # 사전 작업 1의 값 (--base 로 오버라이드 가능)
 PR_URL="$(gh pr create \
+  --draft \
   --title "[fix] 카드 점수 집계 누락 수정" \
   --base "$BASE" \
   --label "🐞bug,BE" \

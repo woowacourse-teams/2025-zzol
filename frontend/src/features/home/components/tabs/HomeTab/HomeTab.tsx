@@ -2,7 +2,8 @@ import useModal from '@/components/@common/Modal/useModal';
 import { usePlayerType } from '@/contexts/PlayerType/PlayerTypeContext';
 import { useReplaceNavigate } from '@/hooks/useReplaceNavigate';
 import { useAuth } from '@/features/auth/contexts/AuthContext';
-import { useMyStats } from '@/features/home/hooks/useMyStats';
+import { useMyRecords } from '@/features/home/hooks/useMyRecords';
+import { formatWinRate } from '@/features/home/utils/formatRecord';
 import EnterRoomModal from '../../EnterRoomModal/EnterRoomModal';
 import HeroCard from './HeroCard/HeroCard';
 import JoinByCodeCard from './JoinByCodeCard/JoinByCodeCard';
@@ -10,14 +11,15 @@ import NewsCarousel from './NewsCarousel/NewsCarousel';
 import MiniGameCarousel from './MiniGameCarousel/MiniGameCarousel';
 import * as S from './HomeTab.styled';
 
-type Props = { onNavigateToPatchNotes: () => void };
+type Props = { onNavigateToPatchNotes: () => void; onNavigateToMyInfo: () => void };
 
-const HomeTab = ({ onNavigateToPatchNotes }: Props) => {
+const HomeTab = ({ onNavigateToPatchNotes, onNavigateToMyInfo }: Props) => {
   const navigate = useReplaceNavigate();
   const { openModal, closeModal } = useModal();
   const { setHost, setGuest } = usePlayerType();
   const { isAuthenticated } = useAuth();
-  const { winCount, streak } = useMyStats();
+  const { data: records } = useMyRecords();
+  const roulette = records?.roulette;
 
   const handleClickHost = () => {
     setHost();
@@ -47,18 +49,30 @@ const HomeTab = ({ onNavigateToPatchNotes }: Props) => {
               <S.MyInfoStat>
                 <S.MyInfoLabel>누적 당첨 횟수</S.MyInfoLabel>
                 <S.MyInfoValueRow>
-                  <S.MyInfoNumber>{winCount}</S.MyInfoNumber>
+                  <S.MyInfoNumber>{roulette?.winCount ?? '-'}</S.MyInfoNumber>
                   <S.MyInfoUnit>회</S.MyInfoUnit>
+                </S.MyInfoValueRow>
+              </S.MyInfoStat>
+              <S.MyInfoStat>
+                <S.MyInfoLabel>당첨 확률</S.MyInfoLabel>
+                <S.MyInfoValueRow>
+                  <S.MyInfoNumber>
+                    {roulette ? formatWinRate(roulette.winCount, roulette.playCount) : '-'}
+                  </S.MyInfoNumber>
                 </S.MyInfoValueRow>
               </S.MyInfoStat>
               <S.MyInfoStat>
                 <S.MyInfoLabel>연속 생존</S.MyInfoLabel>
                 <S.MyInfoValueRow>
-                  <S.MyInfoNumber>{streak}</S.MyInfoNumber>
+                  <S.MyInfoNumber>{roulette?.survivalStreak ?? '-'}</S.MyInfoNumber>
                   <S.MyInfoUnit>번</S.MyInfoUnit>
                 </S.MyInfoValueRow>
               </S.MyInfoStat>
             </S.MyInfoStatGrid>
+            <S.MyInfoFooter type="button" onClick={onNavigateToMyInfo}>
+              <span>내 게임 기록 보기</span>
+              <S.MyInfoChevron aria-hidden="true">›</S.MyInfoChevron>
+            </S.MyInfoFooter>
           </S.MyInfoCard>
         </S.Section>
       )}

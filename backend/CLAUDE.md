@@ -8,7 +8,7 @@
 
 브랜치 전략은 모노레포 공통이다. 루트 [CLAUDE.md](../CLAUDE.md)와 [git-push-safety](../.claude/rules/git-push-safety.md)를 따른다. 백엔드에서 추가로 알아야 할 것:
 
-- `dev`가 저장소 **기본 브랜치**다. README·dependabot·CodeRabbit·워크플로우 등 GitHub 관련 파일도 `dev`에서 관리한다(dependabot·보안 스캔·스케줄은 기본 브랜치 기준으로 동작). `main`은 배포 브랜치가 아니며(배포는 `dev`·`prod` push 트리거) 전환기 잔재로만 남아 있다. 신규 작업에 사용하지 않는다.
+- `dev`가 저장소 **기본 브랜치**다. README·dependabot·워크플로우 등 GitHub 관련 파일도 `dev`에서 관리한다(dependabot·보안 스캔·스케줄은 기본 브랜치 기준으로 동작). `main`은 배포 브랜치가 아니며(배포는 `dev`·`prod` push 트리거) 전환기 잔재로만 남아 있다. 신규 작업에 사용하지 않는다.
 
 ## 작업 규칙
 

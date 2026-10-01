@@ -11,7 +11,6 @@ if (process.env.NODE_ENV === 'production') {
     dsn: process.env.DSN_KEY || '',
     release: process.env.VERSION || '1.0.0',
     environment: process.env.NODE_ENV || 'development',
-    sendDefaultPii: true,
     integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,

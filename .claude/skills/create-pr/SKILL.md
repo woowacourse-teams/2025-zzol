@@ -44,8 +44,8 @@ allowed-tools: Read, Bash, Glob, Agent, Skill
 ## 라벨 & Assignee
 
 - **type 라벨** (1개): feat `✨feat` / fix `🐞bug` / refactor `🛠️refactor` / chore `⚙️chore` / docs `📝docs` / test `🧪 test`
-- **영역 라벨**: 변경 경로로 판별한다. `git diff --name-only "origin/$BASE"...HEAD` 결과가 `backend/` 만이면 `BE`, `frontend/` 또는 `admin-web/` 만이면 `FE`, 양쪽이 섞였으면 `BE`+`FE`(풀스택). `admin-web/`은 백오피스지만 프론트 앱이라 `FE`다. 루트 설정 등 어느 쪽도 아니면 변경 성격으로 판단해 사용자에게 확인한다. 응답이 없으면 판단한 라벨로 진행하고 PR 본문 `💬 리뷰 중점사항`에 그 판단을 적는다.
-- 우선순위는 `$ARGUMENTS`에 있을 때만 추가한다. 라벨명에 이모지가 붙어 있어 그대로 넘겨야 찾는다: `🚨p-critical`·`🔥p-high`·`⚠️p-medium`·`💡p-low`
+- **영역 라벨**: 변경 경로로 판별한다. `git diff --name-only "origin/$BASE"...HEAD` 결과가 `backend/` 만이면 `BE`, `frontend/` 또는 `admin-web/` 만이면 `FE`, 양쪽이 섞인 풀스택이면 `BE`+`FE`. 루트 설정 등 어느 쪽도 아니면 변경 성격으로 판단해 사용자에게 확인한다. 응답이 없으면 판단한 라벨로 진행하고 PR 본문 `💬 리뷰 중점사항`에 그 판단을 적는다.
+- 우선순위는 `$ARGUMENTS`에 있을 때만 추가한다. 라벨명은 이모지까지 그대로 넘긴다: `🚨p-critical`·`🔥p-high`·`⚠️p-medium`·`💡p-low`
 - Assignee: `gh api user --jq '.login'` 결과로 자동 지정
 
 ## 작성 원칙 (본문 공통)

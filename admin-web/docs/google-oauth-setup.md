@@ -128,15 +128,15 @@ dev 와 prod 를 한 클라이언트에 함께 등록했다. `aud` 검증은 <b>
 설정 위치는 `backend/app/src/main/resources/config/security.yml`의 `admin.auth` 블록이고,
 로컬은 `backend/.env`에 넣는다(워크트리에는 심볼릭 링크로 걸려 있다).
 
-`admin.auth.web-origins`는 프로필별 `application-{profile}.yml`에 있다. refresh 와 logout 을 부를 수 있는 오리진 목록이라
-admin-web 도메인이 여기 없으면 로그인은 되는데 1시간 뒤 재발급이 거절된다. CORS 허용 목록과 따로 관리하므로
-새 도메인을 붙이면 둘 다 넣는다.
+`admin.auth.web-origins`는 프로필별 `application-{profile}.yml`에 있는, refresh 와 logout 을 부를 수 있는 오리진 목록이다.
+admin-web 도메인이 여기 없으면 로그인은 되는데 1시간 뒤 재발급이 거절된다. 새 도메인을 붙이면 CORS 허용 목록과
+이 목록에 둘 다 넣는다.
 
 `ADMIN_JWT_SECRET`을 굳이 나누면 좋은 이유: 관리자 토큰은 권한이 훨씬 크다.
 사용자 JWT 시크릿이 새더라도 관리자 토큰까지 위조되지는 않게 분리해 두는 편이 안전하다.
 다만 미설정이어도 `type=ADMIN` 클레임 검증이 있어 사용자 토큰이 관리자로 통과하지는 않는다.
 
-### 프론트 (admin-web)
+### 프론트
 
 | 변수 | 값 |
 | --- | --- |
@@ -164,14 +164,13 @@ admin-web 도메인이 여기 없으면 로그인은 되는데 1시간 뒤 재�
 **받는 것은 `credential`(ID 토큰)이지 access token이 아니다.** 구글 API를 호출할 게
 없으므로 access token은 필요 없다.
 
-로그인·refresh·logout 요청은 `credentials: 'include'`로 보낸다. 배포에서 admin 과 api 가 다른 오리진이라
-이것이 없으면 refresh 쿠키가 실리지 않아 재발급이 조용히 실패한다.
+로그인·refresh·logout 요청은 `credentials: 'include'`로 보낸다.
 
 ---
 
 ## 6. 확인 절차
 
-로컬 백엔드(`:8080`)와 admin-web(`:5173`)을 띄우고 브라우저에서 구글 로그인을 마친 뒤 확인한다.
+로컬 백엔드 `:8080`과 admin-web `:5173`을 띄우고 브라우저에서 구글 로그인을 마친 뒤 확인한다.
 
 ```bash
 # 1. 로그인 뒤 개발자 도구 Network 에서 POST /admin/api/auth/login 응답 → 200 + accessToken,

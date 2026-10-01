@@ -1,14 +1,14 @@
 # CLAUDE.md
 
-**쫄(ZZOL)** 은 미니게임 기반 당첨자 추첨 서비스(<https://zzol.site>)의 모노레포다. `backend/`·`frontend/`·`admin-web/` 3개 영역.
+**쫄(ZZOL)** 은 미니게임 기반 당첨자 추첨 서비스 <https://zzol.site>의 모노레포다. `backend/`·`frontend/`·`admin-web/` 3개 영역.
 
-`admin-web/`은 운영자만 쓰는 백오피스 SPA다. `frontend/`와 스택이 달라 그쪽 규약을 상속하지 않는다. 규약은 [admin-web/CLAUDE.md](admin-web/CLAUDE.md), CI·CD는 `admin-ci.yml`·`admin-cd.yml`.
+`admin-web/`은 운영자만 쓰는 백오피스 SPA다. `frontend/` 규약을 상속하지 않는다. 규약은 [admin-web/CLAUDE.md](admin-web/CLAUDE.md), CI·CD는 `admin-ci.yml`·`admin-cd.yml`.
 
 ## 브랜치 전략 (단일 `dev`)
 
 - **모든 작업(백엔드·프론트·풀스택)은 통합 브랜치 `dev`에서 분기해 `dev`로 PR한다.**
 - 브랜치명은 prefix 없이 `{type}/{N}-{slug}` (예: `feat/1502-nunchi-game`). type: `feat`·`fix`·`refactor`·`chore`·`docs`·`test`.
-- 영역(BE/FE)은 브랜치가 아니라 **라벨**로 구분한다. `create-issue`와 `create-pr`가 변경 영역을 판별해 `BE`·`FE` 라벨을 단다. 풀스택이면 둘 다 단다. `admin-web/`도 프론트 앱이라 `FE`를 단다.
+- 영역(BE/FE)은 브랜치가 아니라 **라벨**로 구분한다. `create-issue`와 `create-pr`가 변경 영역을 판별해 `BE`·`FE` 라벨을 단다. 풀스택이면 둘 다 단다. `admin-web/`도 `FE`를 단다.
 - 프로덕션 승격은 통합 `prod` 브랜치로의 `dev`→`prod` PR로만 한다. `prod` push가 곧 운영 배포다. 상세는 [git-push-safety](.claude/rules/git-push-safety.md).
 - **작업마다 워크트리를 분리한다.** 현재 디렉터리에서 브랜치를 갈아타지 않아야 여러 작업을 동시에 돌릴 수 있다. 작업 순서(이슈→워크트리→설계→PR→리뷰 반영→merge)와 판단 기준은 [issue-workflow](.claude/rules/issue-workflow.md).
 
@@ -30,7 +30,7 @@
 
 ## 로컬 lint 훅 (pre-push)
 
-`.githooks/pre-push`가 push 전에 세 가지를 검사한다. backend는 Spotless와 PMD(`pmdMain pmdTest pmdTestFixtures`), frontend는 변경 파일만 ESLint. Spotless도 `ratchetFrom`으로 변경 파일만 본다. 세 번째는 WS 계약이다. 이번 push 에 WS 애노테이션 변경이 있으면 `WsCatalogContractTest`와 `npm run generate:ws`를 돌리고, 생성물이 달라지면 push 를 막는다. 검사 범위는 CI(`backend-ci.yml`·`frontend-ci.yml`)와 같게 맞춰 둔다. `admin-web/`은 훅이 검사하지 않고 `admin-ci.yml`만 본다.
+`.githooks/pre-push`가 push 전에 세 가지를 검사한다. backend는 Spotless와 PMD, frontend는 변경 파일만 ESLint. Spotless도 `ratchetFrom`으로 변경 파일만 본다. 세 번째는 WS 계약이다. 이번 push 에 WS 애노테이션 변경이 있으면 `WsCatalogContractTest`와 `npm run generate:ws`를 돌리고, 생성물이 달라지면 push 를 막는다. 검사 범위는 `backend-ci.yml`·`frontend-ci.yml`과 같게 맞춰 둔다. `admin-web/`은 훅이 검사하지 않고 `admin-ci.yml`만 본다.
 
 훅은 `core.hooksPath=.githooks`로 켜지며, `npm install`(frontend `prepare`)이나 `./gradlew build`(`installGitHooks`)가 자동으로 설정한다. 수동으로 켜려면 `git config core.hooksPath .githooks`.
 

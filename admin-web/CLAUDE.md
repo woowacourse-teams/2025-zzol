@@ -26,7 +26,7 @@ npm run test         # vitest run
 npm run build        # tsc -b && vite build
 ```
 
-로컬은 백엔드 `:8080`이 떠 있어야 한다. Vite 프록시가 `/admin/api`를 넘기므로 로컬은 같은 오리진이다. 배포는 다르다. `admin.zzol.site`와 `api.zzol.site`가 다른 오리진이라 백엔드의 CORS 허용 목록과 `admin.auth.web-origins`(프로필별 yml) 양쪽에 admin 도메인이 등록돼 있어야 로그인과 재발급이 된다. 로컬에서 되는 것이 배포에서 안 되면 먼저 그 두 목록을 본다.
+로컬은 백엔드 `:8080`이 떠 있어야 한다. Vite 프록시가 `/admin/api`를 넘기므로 로컬은 같은 오리진이다. 배포는 `admin.zzol.site`와 `api.zzol.site`가 다른 오리진이다. 백엔드의 CORS 허용 목록과 프로필별 yml의 `admin.auth.web-origins` 양쪽에 admin 도메인이 등록돼 있어야 로그인과 재발급이 된다. 로컬에서 되는 것이 배포에서 안 되면 먼저 그 두 목록을 본다.
 
 ## 문서
 
@@ -128,7 +128,7 @@ playwright 는 의존성에 없다(브라우저 바이너리까지 받아야 해
 
 ### 8. 감사 로그에 남는 것을 의식한다
 
-`/admin/api/**`의 POST·PUT·PATCH·DELETE는 감사 로그에 남는다. 예외는 `/admin/api/auth/refresh` 하나다. 1시간마다 자동으로 도는 재발급까지 쌓으면 실제 조치가 묻힌다. 조회도 같은 이유로 남기지 않는다.
+`/admin/api/**`의 POST·PUT·PATCH·DELETE는 감사 로그에 남는다. 예외는 `/admin/api/auth/refresh` 하나다. 조회는 남기지 않는다.
 
 기록되는 action은 **매핑 패턴**이지 요청 본문이 아니다. 본문을 남기면 로그인 요청의 구글 ID 토큰이 그대로 저장된다.
 
@@ -139,7 +139,7 @@ Vite가 `VITE_*`를 **빌드 시점에 인라인**한다. 런타임 주입이 �
 | 변수 | 비고 |
 | --- | --- |
 | `VITE_GOOGLE_CLIENT_ID` | 비밀이 아니다(브라우저에 그대로 노출). 방어는 승인된 원본·서버측 `aud` 검증·허용목록이 한다 |
-| `VITE_API_BASE_URL` | 비우면 상대경로라 로컬 프록시가 받는다. 배포는 api 도메인이 달라 반드시 넣는다. CI 가 push 빌드에서 비면 중단한다 |
+| `VITE_API_BASE_URL` | 비우면 상대경로로 로컬 프록시가 받는다. 배포에서는 반드시 넣는다 |
 | `VITE_ENV_NAME` | `LOCAL`/`DEV`/`PROD`. 상단 배지에 찍힌다 |
 
 CI는 배포 경로(push)에서 이 값들이 비면 중단한다. 비어도 빌드는 성공하지만 그 번들은 로그인 팝업이 안 뜨거나 API를 자기 자신에게 쏜다.

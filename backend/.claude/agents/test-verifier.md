@@ -45,8 +45,6 @@ tools: Bash, Read, Glob, Grep, Edit
 - [ ] `CoffeeShoutException` 계열은 `assertCoffeeShoutException` 으로 검증했는가
 - [ ] 테스트 데이터를 직접 생성하지 않고 픽스처를 사용했는가. 모듈 간 공유 픽스처는 `src/testFixtures/java/coffeeshout/fixture/`, 모듈 내부 픽스처는 `src/test/java/coffeeshout/fixture/`에 있다
 
-`Thread.sleep`과 JUnit 단언은 PMD 규칙 `NoThreadSleep`·`NoJUnitAssertions`가 CI에서 잡는다. 여기서 다시 지적하지 않는다.
-
 ### 품질
 
 - [ ] 구현 세부사항이 아닌 동작(행동)을 검증하는가

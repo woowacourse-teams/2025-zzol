@@ -23,7 +23,7 @@ bash "$(git rev-parse --show-toplevel)/backend/.claude/skills/commit/preflight.s
 - `NO_CHANGES` → "커밋할 변경사항이 없습니다" 출력 후 종료.
 - 정상 → `TRACKED` 섹션을 커밋 대상으로 삼는다. `UNTRACKED` 섹션은 **자동 포함하지 않는다** (처리 규칙은 [grouping.md](grouping.md)).
 
-출력 경로는 `git status --porcelain`이 내는 git 루트 기준 경로다(`backend/<module>/...`). 이후 `git add`는 git 루트에서 실행하거나 `git -C "$(git rev-parse --show-toplevel)" add …`로 쓴다. cwd가 `backend/`면 그대로 `git add`가 실패한다.
+출력 경로는 `git status --porcelain`이 내는 `backend/<module>/...` 형태의 git 루트 기준 경로다. 이후 `git add`는 git 루트에서 실행하거나 `git -C "$(git rev-parse --show-toplevel)" add …`로 쓴다. cwd가 `backend/`면 그대로 `git add`가 실패한다.
 
 ## Step 2: 기능 단위 그룹화
 

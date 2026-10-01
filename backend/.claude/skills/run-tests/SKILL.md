@@ -22,12 +22,12 @@ allowed-tools: Agent
 
 | 대상 입력                              | 실행 명령                                               |
 |------------------------------------|-----------------------------------------------------|
-| `:module` (콜론으로 시작)                | `./gradlew :module:test`                            |
-| `:module package.pattern` (모듈 + 점 표기) | `./gradlew :module:test --tests "package.pattern"`  |
-| `package.pattern` 단독 (모듈 없음)        | **거부**. 아래 안내를 출력하고 종료한다                        |
+| 콜론으로 시작하는 `:module`              | `./gradlew :module:test`                            |
+| 모듈과 점 표기를 함께 준 `:module package.pattern` | `./gradlew :module:test --tests "package.pattern"`  |
+| 모듈 없이 점 표기만 준 `package.pattern`   | **거부**. 아래 안내를 출력하고 종료한다                        |
 | 비어 있음                              | `./gradlew test`                                    |
 
-점 표기에는 모듈이 필수다. `./gradlew test --tests "…"`는 13개 모듈 전부에 필터를 걸어, 매칭 테스트가 없는 모듈(`:common` 등)이 "No tests found for given includes"로 빌드를 실패시킨다. 모듈 없는 점 표기는 Agent를 띄우지 않고 이렇게 안내한다.
+점 표기에는 모듈이 필수다. `./gradlew test --tests "…"`는 13개 모듈 전부에 필터를 걸어, 매칭 테스트가 없는 `:common` 같은 모듈이 "No tests found for given includes"로 빌드를 실패시킨다. 모듈 없는 점 표기는 Agent를 띄우지 않고 이렇게 안내한다.
 
 ```text
 점 표기 대상에는 모듈을 함께 지정해야 합니다. 예: /run-tests :room coffeeshout.room.domain.*

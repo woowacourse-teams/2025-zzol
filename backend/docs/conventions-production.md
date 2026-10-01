@@ -9,7 +9,7 @@
 | Application Service | `{Domain}Service`                        | `CardGameService`                |
 | 플로우 오케스트레이터         | `{Domain}FlowOrchestrator`               | `CardGameFlowOrchestrator`       |
 | WebSocket 알림        | `{Domain}Notifier`                       | `CardGameNotifier`               |
-| 커맨드 서비스 (Application) | `{Domain}CommandService`                 | `CardGameCommandService`         |
+| Application 커맨드 서비스   | `{Domain}CommandService`                 | `CardGameCommandService`         |
 | WebSocket 컨트롤러      | `{Domain}WebSocketController`            | `RoomWebSocketController`        |
 | 커맨드 핸들러             | `{Action}CommandHandler`                 | `SelectCardCommandHandler`       |
 | Redis Consumer      | `{Event}Consumer`                        | `SelectCardCommandEventConsumer` |
@@ -78,7 +78,7 @@ CoffeeShoutException (abstract)
 ## 도메인 이벤트 작성
 
 - 이벤트는 record로 정의하고 `BaseEvent`를 구현한다
-- `eventId`(UUID)와 `timestamp`(Instant.now())는 보조 생성자 또는 정적 팩토리(`of()`)가 채운다. 호출자는 도메인 필드만 넘긴다
+- UUID인 `eventId`와 `Instant.now()` 값인 `timestamp`는 보조 생성자 또는 `of()` 같은 정적 팩토리가 채운다. 호출자는 도메인 필드만 넘긴다
 - 분산 추적은 인프라 경계(`StreamPublisher`/`RedisStreamListenerStarter`)가 W3C `traceparent` 캐리어로 자동 전파한다. 이벤트에 트레이싱 코드를 넣지 않는다 ([ADR-0021](adr/0021-trace-propagation-traceparent.md))
 
 > **외부 의존성 주입 원칙과의 관계**: `eventId`·`timestamp`는 "이벤트가 생성된 사실 자체"를 기록하는 메타데이터이므로, 비즈니스 로직 테스트의 격리 대상이 아니다. 이벤트 생성 시점이 테스트에 영향을 준다면 이벤트 객체 자체보다 그것을 소비하는 쪽의 설계를 먼저 검토한다.
@@ -87,4 +87,4 @@ CoffeeShoutException (abstract)
 
 ## 설정 관리
 
-타이밍, 스레드풀 크기 등 조정 가능한 값은 `app/src/main/resources/config/<영역>.yml`(예: `game.yml`, `service.yml`)에 선언하고 `@ConfigurationProperties`로 바인딩한다. `application.yml`은 이 파일들을 import만 한다. 하드코딩하지 않는다.
+타이밍, 스레드풀 크기 등 조정 가능한 값은 `game.yml`, `service.yml` 같은 `app/src/main/resources/config/<영역>.yml`에 선언하고 `@ConfigurationProperties`로 바인딩한다. `application.yml`은 이 파일들을 import만 한다. 하드코딩하지 않는다.

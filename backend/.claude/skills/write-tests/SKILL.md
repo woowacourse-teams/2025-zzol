@@ -14,8 +14,8 @@ allowed-tools: Read, Glob, Grep, Write, Edit
 
 ## 반드시 지킬 규칙
 
-- **모듈 로컬 베이스를 상속한다** — 서비스 테스트는 `{Module}ModuleServiceTest`, REST·Stream 통합은 `{Module}ModuleIntegrationTest`, WebSocket 통합은 `{Module}ModuleWebSocketTest`(각각 `coffeeshout.support.ServiceTest` / `IntegrationTestSupport` / `WebSocketIntegrationTestSupport` 확장). 이 상속이 TestContainers(MySQL·Valkey)와 `test` 프로파일을 자동 구동한다. 빠뜨리면 컨테이너가 안 떠 테스트가 깨진다 (ADR-0015). `@IntegrationTest` 같은 애노테이션은 없다(베이스 상속이다). `:app`은 `coffeeshout.support.app`의 베이스를, `:profanity`는 `coffeeshout.support`의 베이스를 직접 상속한다
-- **통합 테스트 종류별** — REST는 기본 `MOCK`(`@WebMvcTest` 금지), WebSocket은 `{Module}ModuleWebSocketTest` 상속(베이스가 `RANDOM_PORT`를 준다) (ADR-0017)
+- **모듈 로컬 베이스를 상속한다** — 서비스 테스트는 `coffeeshout.support.ServiceTest`를 확장한 `{Module}ModuleServiceTest`, REST·Stream 통합은 `IntegrationTestSupport`를 확장한 `{Module}ModuleIntegrationTest`, WebSocket 통합은 `WebSocketIntegrationTestSupport`를 확장한 `{Module}ModuleWebSocketTest`를 상속한다. 이 상속이 MySQL·Valkey TestContainers와 `test` 프로파일을 자동 구동한다. 빠뜨리면 컨테이너가 안 떠 테스트가 깨진다 (ADR-0015). `@IntegrationTest` 같은 애노테이션은 없고 베이스 상속으로 한다. `:app`은 `coffeeshout.support.app`의 베이스를, `:profanity`는 `coffeeshout.support`의 베이스를 직접 상속한다
+- **통합 테스트 종류별** — REST는 기본 `MOCK`이고 `@WebMvcTest`는 금지한다. WebSocket은 `{Module}ModuleWebSocketTest`를 상속하고, 베이스가 `RANDOM_PORT`를 준다 (ADR-0017)
 - Fixture를 활용한다(없으면 생성). 모듈 간 **공유**는 `src/testFixtures/java/coffeeshout/fixture/`, 모듈 **내부 전용**은 `src/test/java/coffeeshout/fixture/`. 유형 구분: `*Fixture`(팩토리)·`*Fake`·`*Dummy`·`Stub*`·`TestDataHelper`(@Component DB헬퍼) (ADR-0016)
 - `@Nested`로 시나리오를 그룹화한다
 - 테스트 메서드명은 한글로 작성한다

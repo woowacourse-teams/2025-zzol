@@ -43,7 +43,7 @@
       │
       ▼
 [EventDispatcher.handle(streamKey, BaseEvent)]
-  ResolvableType으로 Consumer<이벤트타입> 빈을 모두 조회해 순서대로 실행 (팬아웃)
+  ResolvableType으로 Consumer<이벤트타입> 빈을 모두 조회해 순서대로 팬아웃 실행
   한 Consumer의 실패가 나머지 Consumer의 수신을 막지 않는다
       │
       ▼

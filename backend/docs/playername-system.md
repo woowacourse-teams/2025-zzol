@@ -4,7 +4,7 @@
 
 ## 1. 닉네임 생성
 
-`PlayerNameGenerator`(`room/domain/service`)가 `:common`의 `RandomNameWordPool`에서 형용사와 명사를 하나씩 뽑아 붙인다. 예: "용감한호랑이". `PlayerName.MAX_NAME_LENGTH`(10자)를 넘거나 방에 이미 있는 이름이면 다른 조합으로 다시 뽑는다. 재시도 상한은 50회다.
+`PlayerNameGenerator`가 `:common`의 `RandomNameWordPool`에서 형용사와 명사를 하나씩 뽑아 붙인다. 예: "용감한호랑이". `PlayerName.MAX_NAME_LENGTH`(10자)를 넘거나 방에 이미 있는 이름이면 다른 조합으로 다시 뽑는다. 재시도 상한은 50회다.
 
 ```text
 GET /rooms/nickname/random            → RoomService.generateRandomNicknameForHost()
@@ -48,7 +48,7 @@ FLAGGED는 닉네임 전체가 아니라 `min-term-length` 이상인 비속어 �
 
 ### 운영자 피드백
 
-`AdminProfanityController`(`/admin/api/profanity/audits/{id}/allow|block`)가 `ProfanityFeedbackService`를 부른다.
+`AdminProfanityController`가 `/admin/api/profanity/audits/{id}/allow|block` 요청을 받아 `ProfanityFeedbackService`를 부른다.
 
 - `allow`: ALLOWED. 사전에서 `OPERATOR_ALLOWED`로 표시해 다시 검열 큐에 들지 않는다
 - `block`: BLOCKED. 닉네임을 `MANUAL` 단어로 등록해 즉시 차단한다
@@ -57,7 +57,7 @@ FLAGGED는 닉네임 전체가 아니라 `min-term-length` 이상인 비속어 �
 
 ### 랭킹 닉네임 정리
 
-`RankingNicknameCollectionScheduler`(`:admin`)가 월간 랭킹 상위 닉네임을 모아 `NicknamesCollectedEvent`로 발행한다. `PlayerNameRankingCleanupService`(`:room`)와 `UserNicknameCleanupService`(`:user`)가 사전에 걸리는 이름을 생성 닉네임으로 교체한다. 검열 큐와 별개로, 이미 차단된 단어가 랭킹에 남는 것을 막는 경로다.
+`:admin`의 `RankingNicknameCollectionScheduler`가 월간 랭킹 상위 닉네임을 모아 `NicknamesCollectedEvent`로 발행한다. `:room`의 `PlayerNameRankingCleanupService`와 `:user`의 `UserNicknameCleanupService`가 사전에 걸리는 이름을 생성 닉네임으로 교체한다. 검열 큐와 별개로, 이미 차단된 단어가 랭킹에 남는 것을 막는 경로다.
 
 ### 상태
 
@@ -73,10 +73,10 @@ WHERE status = 'DEAD_LETTER';
 
 ## 설정
 
-`app/src/main/resources/config/service.yml`의 `nickname-audit` 블록이 모델(`gemini-3.5-flash`), `flagged-threshold`, `batch-size`, `feedback-injection-threshold`, `min-term-length`, `max-run-duration`, `max-attempts`, `request-timeout`, `cron`을 든다. `NicknameAuditProperties`가 바인딩한다.
+`app/src/main/resources/config/service.yml`의 `nickname-audit` 블록이 모델 `gemini-3.5-flash`와 `flagged-threshold`, `batch-size`, `feedback-injection-threshold`, `min-term-length`, `max-run-duration`, `max-attempts`, `request-timeout`, `cron`을 든다. `NicknameAuditProperties`가 바인딩한다.
 
 Gemini 호출의 재시도와 속도 제한은 `config/resilience4j.yml`의 `geminiAudit` 인스턴스가 정한다. retry는 지수 백오프, ratelimiter는 13초에 1회다.
 
 ## 메트릭
 
-`nickname.audit.*` 메트릭으로 Gemini 호출 시간, 파싱 실패, 판정 분포(`status` 태그), skip된 배치, DEAD_LETTER 전환, UNAUDITED 적체량을 낸다. 이름의 출처는 `ProfanityAuditService`·`ProfanityAuditBatchProcessor`의 등록 코드다.
+`nickname.audit.*` 메트릭으로 Gemini 호출 시간, 파싱 실패, `status` 태그별 판정 분포, skip된 배치, DEAD_LETTER 전환, UNAUDITED 적체량을 낸다. 이름의 출처는 `ProfanityAuditService`·`ProfanityAuditBatchProcessor`의 등록 코드다.

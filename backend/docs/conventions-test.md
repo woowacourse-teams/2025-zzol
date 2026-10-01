@@ -25,7 +25,7 @@ testImplementation(project(":test-support"))
 | 순수 단위 테스트 | 없음 (순수 Java) | 스프링 컨텍스트 없이 도메인 로직만 검증 |
 | 서비스 테스트 | 모듈 로컬 `{Module}ModuleServiceTest` 상속 | `coffeeshout.support.ServiceTest` 확장. `@ActiveProfiles("test")` + `@Transactional` 상속. 모듈별 `ServiceTestConfig`에 외부 의존 Mock 선언 |
 | WebSocket 통합 테스트 | 모듈 로컬 `{Module}ModuleWebSocketTest` 상속 | `coffeeshout.support.WebSocketIntegrationTestSupport` 확장. `RANDOM_PORT` + `test` 프로파일. `createSession*()`으로 `TestStompSession`을 얻어 STOMP 구독·전송·메시지 수집 |
-| 일반 통합 테스트 (REST, Stream 등) | 모듈 로컬 `{Module}ModuleIntegrationTest` 상속 | `coffeeshout.support.IntegrationTestSupport` 확장. 기본 `MOCK` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup |
+| REST·Stream 등 일반 통합 테스트 | 모듈 로컬 `{Module}ModuleIntegrationTest` 상속 | `coffeeshout.support.IntegrationTestSupport` 확장. 기본 `MOCK` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup |
 
 모든 모듈 로컬 베이스는 `coffeeshout.support`의 베이스를 거쳐 `TestContainerSupport`를 상속하므로 MySQL·Valkey TestContainer가 자동으로 구동된다.
 
@@ -67,7 +67,7 @@ public abstract class {Module}ModuleWebSocketTest extends coffeeshout.support.We
 
 > **주의 — 테스트 클래스 내부 `@TestConfiguration`은 자동 감지되지 않는다**
 >
-> `@SpringBootTest`가 **부모 클래스**(`{Module}ModuleIntegrationTest` 등)에 선언된 경우,
+> `@SpringBootTest`가 `{Module}ModuleIntegrationTest` 같은 **부모 클래스**에 선언된 경우,
 > 자식 테스트 클래스에 작성한 `static class` 형태의 내부 `@TestConfiguration`은
 > Spring Boot Test가 자동으로 로드하지 않는다.
 >

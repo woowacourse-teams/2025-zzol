@@ -35,7 +35,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Agent, Skill
 2. `/write-tests`로 해당 계층 테스트를 작성한다 (베이스 상속·픽스처 등 컨벤션은 `/write-tests`가 SSOT).
 3. `/run-tests :<해당모듈> <해당패키지>.* --sync`로 모든 테스트 통과를 확인한다.
 4. `test-verifier` agent를 `run_in_background: true`로 실행한다.
-5. **커밋** — `bash "$(git rev-parse --show-toplevel)/backend/.claude/skills/commit/preflight.sh"`로 보호 브랜치·detached HEAD를 차단(`ABORT` 출력 시 중단·보고)한 뒤, 해당 계층 파일만 git 루트에서 `git add` 후 `feat: [기능명] <계층> 구현`으로 커밋한다. Phase 테스트는 이미 검증했으므로 `/commit` 재검증은 생략한다.
+5. **커밋** — `bash "$(git rev-parse --show-toplevel)/backend/.claude/skills/commit/preflight.sh"`로 보호 브랜치·detached HEAD를 차단한다. `ABORT`가 출력되면 중단하고 보고한다. 통과하면 해당 계층 파일만 git 루트에서 `git add` 후 `feat: [기능명] <계층> 구현`으로 커밋한다. Phase 테스트는 이미 검증했으므로 `/commit` 재검증은 생략한다.
 6. 사용자에게 Phase 완료를 알리고 다음 Phase 진행 여부를 확인한다. (마지막 Phase면 생략)
 
 ---

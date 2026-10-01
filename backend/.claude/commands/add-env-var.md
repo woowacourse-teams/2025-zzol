@@ -22,7 +22,7 @@
 
 ### 3. `.github/workflows/backend-cd.yml`
 
-`Create .env file` 스텝의 heredoc 끝(`EOF` 바로 위)에 추가:
+`Create .env file` 스텝의 heredoc 끝인 `EOF` 바로 위에 추가:
 
 ```text
           <VARIABLE_NAME>=${{ secrets.<VARIABLE_NAME> }}

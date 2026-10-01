@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import coffeeshout.minigame.ui.request.command.SelectCardCommand;
 import coffeeshout.minigame.ui.request.command.StartMiniGameCommand;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -22,8 +23,10 @@ class MiniGameMessageTest {
                 "{\"commandType\":\"SELECT_CARD\",\"commandRequest\":{\"playerName\":\"루키\",\"cardIndex\":3}}",
                 MiniGameMessage.class);
 
-        assertThat(start.commandRequest()).isEqualTo(new StartMiniGameCommand("루키"));
-        assertThat(select.commandRequest()).isEqualTo(new SelectCardCommand("루키", 3));
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(start.commandRequest()).isEqualTo(new StartMiniGameCommand("루키"));
+            softly.assertThat(select.commandRequest()).isEqualTo(new SelectCardCommand("루키", 3));
+        });
     }
 
     @Test

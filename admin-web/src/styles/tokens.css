@@ -10,7 +10,7 @@
  *   frontend/src/constants/color.ts  colorList(레이싱 게임 플레이어 색), tierColorMap
  *   admin-web/public/brand/logo.svg  워드마크 fill = #FD6C6E (= point-400)
  *
- * 근거와 대비 수치는 docs/design-tokens.md 참조.
+ * 사용 규칙과 대비 수치는 docs/design-tokens.md 참조.
  */
 
 :root {

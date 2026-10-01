@@ -29,7 +29,7 @@ npm run generate:ws       # ws-openapi.json → wsOpenApi.d.ts (BE 계약이 바
 | `docs/architecture.md` | 라우팅, Provider 계층, 상태관리, WebSocket, REST API, 컴포넌트 계층, 빌드, 배포 |
 | `docs/adr/` | 설계 결정 기록 — 결정 근거·대안·영향 (ADR) |
 | `docs/block-stacking.md` | 빌딩 쌓기 미니게임 구조 |
-| `docs/seo-optimization.md` | SEO 구성 (라우트별 정적 HTML, CloudFront 함수, 메타태그) |
+| `docs/seo-optimization.md` | SEO 구성, 라우트별 정적 HTML·CloudFront 함수·메타태그 |
 | `docs/adr/20260915-ws-contract-generated-types.md` | WebSocket 계약을 BE 생성 타입으로 강제하는 결정이 FE 에 미치는 영향. 결정 본문은 `backend/docs/adr/0037` |
 
 ## .claude 리소스

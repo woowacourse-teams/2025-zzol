@@ -44,7 +44,7 @@ payload 타입을 Provider 안에서 `type StateMessage = …` 처럼 손으로 
 
 생성 타입에서 `?` 가 붙은 필드는 BE `@Nullable` 이라 상태에 따라 빠진다. `setPoles(msg.poles ?? [])` 처럼 기본값을 준다. 상태별로 필드가 달라지는 판별 union 은 만들지 않는다. `msg.state` 로 분기한 뒤 `??` 로 받는다.
 
-BE 응답 record 에 필드를 더하거나 바꾸는 PR 은 생성물도 같이 커밋한다. 순서는 BE 컨트랙트 테스트(`backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*'`)로 fixture 와 `ws-openapi.json` 을 쓰고, `npm run generate:ws` 로 `wsOpenApi.d.ts` 를 만든다. pre-push 훅은 `@WsTopic` 같은 애노테이션이 바뀐 push 에만 이 테스트를 돌린다. record 필드만 바뀐 경우는 CI 가 잡는다.
+BE 응답 record 에 필드를 더하거나 바꾸는 PR 은 생성물도 같이 커밋한다. 순서는 BE 컨트랙트 테스트 `backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*'`로 fixture 와 `ws-openapi.json` 을 쓰고, `npm run generate:ws` 로 `wsOpenApi.d.ts` 를 만든다. pre-push 훅은 `@WsTopic` 같은 애노테이션이 바뀐 push 에만 이 테스트를 돌린다. record 필드만 바뀐 경우는 CI 가 잡는다.
 
 개인 소켓 `useUserSocketSubscription` 은 envelope 를 벗기지 않는다. `onData` 가 `WebSocketSuccess<WsPayloadOf<D>>` 를 받으므로 `event.data.…` 로 읽는다.
 

@@ -4,7 +4,7 @@
 
 | 파일            | 역할                                                                 |
 | --------------- | -------------------------------------------------------------------- |
-| `error.ts`      | `ApiError`(HTTP 상태 코드 에러), `NetworkError`(연결 실패)와 `ErrorDisplayMode` |
+| `error.ts`      | HTTP 상태 코드 에러 `ApiError`, 연결 실패 `NetworkError`, `ErrorDisplayMode` |
 | `apiRequest.ts` | `fetch` 래퍼. JSON 직렬화, 에러 파싱, 재시도, 401 토큰 갱신 후 1회 재요청 |
 | `api.ts`        | `apiRequest`를 메서드별로 감싼 `api.get`·`post`·`put`·`patch`·`delete` |
 

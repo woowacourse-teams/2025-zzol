@@ -1,4 +1,4 @@
-# 빌딩 쌓기 (Block Stacking) 미니게임
+# 빌딩 쌓기 미니게임
 
 화면 이름은 "빌딩 쌓기"고 코드·서버 식별자는 `BLOCK_STACKING`이다.
 
@@ -11,7 +11,7 @@
 - 속도는 층마다 5%씩 복리로 오르고 상한이 있다
 - 양 끝 오차가 모두 `PERFECT_THRESHOLD`(3px) 안이면 퍼펙트다. 너비가 깎이지 않고 효과가 따로 난다
 
-값은 `features/miniGame/blockStackingGame/constants/blockStackingBalance.ts`(속도·시간·퍼펙트 기준)와 `blockStackingConstants.ts`(캔버스·블록 치수, 낙하 물리, 야경 팔레트)에 있다. 문서에 숫자를 베끼지 않는다.
+속도·시간·퍼펙트 기준은 `features/miniGame/blockStackingGame/constants/blockStackingBalance.ts`에, 캔버스·블록 치수와 낙하 물리, 야경 팔레트는 `blockStackingConstants.ts`에 있다. 문서에 숫자를 베끼지 않는다.
 
 ## 상태 흐름
 
@@ -51,7 +51,7 @@ HTML5 Canvas와 `requestAnimationFrame`으로 그린다. 매 프레임 하늘, �
 - **탈락 뒤 스카이라인**: "N층에서 멈춤"을 잠시 보여준 뒤, 나와 아직 쌓는 사람의 빌딩을 순위대로 나란히 세운다. 순위는 층수가 같으면 같게 매겨 결과 화면과 맞춘다. 시간이 다 돼 멈추면 전원을 세운다
 - **효과음**: 안착·퍼펙트·탈락·속도 구간 진입. `AudioContext`는 첫 탭에서 만들어 자동재생 정책을 피한다. 음소거는 캔버스 위 버튼으로 토글한다
 
-## Context (`BlockStackingGameProvider`)
+## `BlockStackingGameProvider` Context
 
 | 값 | 설명 |
 | --- | --- |

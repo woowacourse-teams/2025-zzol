@@ -4,9 +4,9 @@
 
 ## 1. 라우트별 정적 HTML (#1710)
 
-SPA 하나로는 색인 페이지가 홈 하나였다. 모든 경로가 같은 `index.html`(canonical=`/`)을 받아 `/privacy`가 중복 페이지로 제외됐고, 없는 경로도 200을 돌려줬다(soft 404).
+SPA 하나로는 색인 페이지가 홈 하나였다. 모든 경로가 canonical이 `/`인 같은 `index.html`을 받아 `/privacy`가 중복 페이지로 제외됐고, 없는 경로도 200을 돌려주는 soft 404가 났다.
 
-지금은 `src/seo/pages.json` 하나에서 라우트별 HTML(`HtmlWebpackPlugin` × 페이지 수), `sitemap.xml`, `SeoContentPage` 본문이 만들어진다. 페이지는 `/`, `/guide`, `/games`, `/games/{slug}` 8종, `/privacy`, `/404`(noindex)다. 키워드 페이지를 더하려면 `pages.json`에 항목을 추가하면 된다. CI는 생성된 HTML과 sitemap의 `<loc>` 개수를 `pages.json`과 대조한다.
+지금은 `src/seo/pages.json` 하나에서 라우트별 HTML, `sitemap.xml`, `SeoContentPage` 본문이 만들어진다. 라우트별 HTML은 페이지마다 `HtmlWebpackPlugin`을 하나씩 둔다. 페이지는 `/`, `/guide`, `/games`, `/games/{slug}` 8종, `/privacy`, noindex인 `/404`다. 키워드 페이지를 더하려면 `pages.json`에 항목을 추가하면 된다. CI는 생성된 HTML과 sitemap의 `<loc>` 개수를 `pages.json`과 대조한다.
 
 `public/index.html`은 템플릿이다. `<title>`·description·canonical·`og:url`·`robots`와 `#root` 안의 `<h1>`·`<p>`를 페이지마다 채운다. React가 `createRoot().render`로 `#root`를 교체하면 이 폴백 텍스트는 사라진다. 폴백 텍스트와 실제 화면 내용이 크게 다르면 cloaking 판정 위험이 있으니 서비스 소개 수준으로 유지한다.
 
@@ -14,7 +14,7 @@ SPA 하나로는 색인 페이지가 홈 하나였다. 모든 경로가 같은 `
 
 `public/index.html`에 `WebApplication` JSON-LD, `robots`, `theme-color`, `twitter:card`, `og:*`, `manifest` 링크가 있다. `keywords`·`author`·`hreflang`은 두지 않는다. Google이 쓰지 않고 과최적화 신호가 될 수 있다. description은 한 줄로 쓴다. content 안 줄바꿈은 검색 결과 snippet을 깨뜨린다.
 
-`public/manifest.json`과 아이콘(192·512·maskable, `apple-touch-icon`)으로 PWA로 인식된다.
+`public/manifest.json`과 192·512·maskable 아이콘, `apple-touch-icon`으로 PWA로 인식된다.
 
 ## 3. sitemap.xml·robots.txt
 
@@ -40,9 +40,9 @@ function handler(event) {
 }
 ```
 
-파일이 없으면 기존 에러 응답(4xx → `/index.html` 200)이 받아준다. 없는 경로가 404를 돌려주려면 에러 응답을 `403/404 → /404/index.html, 응답코드 404`로 바꿔야 한다. 이 전환은 `404/index.html`이 S3에 있어야 하므로 dev → prod 순으로 적용한다.
+파일이 없으면 기존 에러 응답이 4xx를 `/index.html` 200으로 받아준다. 없는 경로가 404를 돌려주려면 에러 응답을 `403/404 → /404/index.html, 응답코드 404`로 바꿔야 한다. 이 전환은 `404/index.html`이 S3에 있어야 하므로 dev → prod 순으로 적용한다.
 
-도메인은 apex `zzol.site`가 GoDaddy 포워딩으로 `https://www.zzol.site`에 301 한 홉으로 간다. `dev.zzol.site`에는 응답 헤더 정책 `zzol-dev-noindex`(`X-Robots-Tag: noindex, nofollow`)를 붙여 prod와 중복 색인되지 않게 했다.
+도메인은 apex `zzol.site`가 GoDaddy 포워딩으로 `https://www.zzol.site`에 301 한 홉으로 간다. `dev.zzol.site`에는 응답 헤더 정책 `zzol-dev-noindex`를 붙여 `X-Robots-Tag: noindex, nofollow`를 내보낸다. prod와 중복 색인되지 않게 하려는 설정이다.
 
 ## 5. 배포 후 확인
 
@@ -52,7 +52,7 @@ function handler(event) {
 | ------------------------------ | ---------------------------------- |
 | `/games/card-game`             | 200, `<title>`·canonical이 자기 값 |
 | `/privacy`, `/guide`, `/games` | 위와 동일                          |
-| `/room/ABC/lobby`              | 200, `x-cache: Hit`(SPA)           |
+| `/room/ABC/lobby`              | 200, `x-cache: Hit`, SPA           |
 | `/aaa-not-exist`               | 에러 응답 전환 후 404              |
 | `https://zzol.site/`           | 301 → `https://www.zzol.site`      |
 

@@ -17,7 +17,7 @@ allowed-tools: Read
 | 버튼 클릭 등 사용자 액션으로 조회 | `useLazyFetch` |
 | POST / PUT / PATCH / DELETE       | `useMutation`  |
 
-`api.get()`, `api.post()` 등을 컴포넌트나 훅 내에서 **직접 호출하지 않는다**. 예외는 `bypassAuth: true`가 필요한 비인증 공개 API 하나다. 훅은 이 옵션을 받지 않으므로 훅 경계 안에서만 `api.get()`을 직접 부른다([ADR](../../../docs/adr/20260515-patch-notes-bypass-auth.md)). `api.*` 옵션은 `src/apis/rest/docs.md`에 있다.
+`api.get()`, `api.post()` 등을 컴포넌트나 훅 내에서 **직접 호출하지 않는다**. 예외는 `bypassAuth: true`가 필요한 비인증 공개 API 하나다. 훅은 이 옵션을 받지 않는다. 이 API만 훅 경계 안에서 `api.get()`을 직접 부른다. 예외 결정은 [ADR](../../../docs/adr/20260515-patch-notes-bypass-auth.md)에 있다. `api.*` 옵션은 `src/apis/rest/docs.md`에 있다.
 
 ---
 

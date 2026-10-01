@@ -17,7 +17,7 @@ tools: Bash, Read, Glob, Grep
 | `bug-hunter` 에이전트 | 범용 버그·정확성, 일반 React/TS 정확성(`key` 인덱스, `useEffect` 의존성, 정리 누락 등) |
 | ponytail 렌즈 | 중복·과설계·삭제 후보·단순화 |
 | security 렌즈 | 보안 취약점 |
-| **이 에이전트** | 컴포넌트 계층, 스타일 토큰·Emotion 패턴, API 훅 컨벤션, WebSocket 컨트랙트(생성 타입 대조), 접근성, Storybook, ADR 충돌. 범용 렌즈가 알 수 없는 **프로젝트 고유 규칙** |
+| **이 에이전트** | 컴포넌트 계층, 스타일 토큰·Emotion 패턴, API 훅 컨벤션, 생성 타입과 대조하는 WebSocket 컨트랙트, 접근성, Storybook, ADR 충돌. 범용 렌즈가 알 수 없는 **프로젝트 고유 규칙** |
 
 출력이 겹치면 본 에이전트는 프로젝트 고유 규칙 위반만 남긴다. `deep-review`가 렌즈를 병렬로 돌리므로 순서를 신경 쓰지 않는다.
 
@@ -88,8 +88,8 @@ tools: Bash, Read, Glob, Grep
 
 - [ ] GET 요청에 `useFetch` 또는 `useLazyFetch`를 사용하는가
 - [ ] POST/PUT/PATCH/DELETE 요청에 `useMutation`을 사용하는가
-- [ ] `errorDisplayMode`가 명시되어 있는가 (`'fallback'` | `'toast'` | `'text'`). `'text'`는 `error`를 비우므로 `onError`로 받고 있는가
-- [ ] `api` 객체를 컴포넌트 내부에서 직접 호출하지 않는가 (훅으로 감싸 사용). `bypassAuth`가 필요한 공개 API만 훅 안에서 직접 호출할 수 있다
+- [ ] `errorDisplayMode`가 `'fallback'`·`'toast'`·`'text'` 중 하나로 명시되어 있는가. `'text'`는 `error`를 비우므로 `onError`로 받고 있는가
+- [ ] `api` 객체를 컴포넌트 내부에서 직접 호출하지 않고 훅으로 감싸 쓰는가. `bypassAuth`가 필요한 공개 API만 훅 안에서 직접 호출할 수 있다
 - [ ] 하드코딩된 API 엔드포인트 문자열이 아닌 상수나 타입으로 관리되는가
 
 ### WebSocket 컨트랙트

@@ -10,6 +10,8 @@ tools: Bash, Read, Glob, Grep, Edit
 
 ## 작업 순서
 
+이 문서의 경로는 모두 저장소 루트 기준이다. 먼저 `git rev-parse --show-toplevel`로 루트를 구해 절대 경로로 읽는다. 세션을 `backend/`에서 열었어도 같다.
+
 1. `backend/docs/conventions-test.md` 를 읽어 프로젝트 테스트 컨벤션을 파악한다
 2. 검토할 파일을 확정한다
    - 사용자가 파일을 명시했으면 해당 파일 사용

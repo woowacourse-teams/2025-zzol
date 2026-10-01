@@ -23,6 +23,8 @@ tools: Bash, Read, Glob, Grep
 
 ## 작업 순서
 
+이 문서의 경로는 모두 저장소 루트 기준이다. 먼저 `git rev-parse --show-toplevel`로 루트를 구해 절대 경로로 읽는다. 세션을 `frontend/`에서 열었어도 같다.
+
 1. 다음 문서를 읽어 프로젝트 기준을 파악한다
    - `CLAUDE.md`
    - `frontend/.claude/rules/principles.md` — 프로젝트 특화 원칙 (작업 방식 등)

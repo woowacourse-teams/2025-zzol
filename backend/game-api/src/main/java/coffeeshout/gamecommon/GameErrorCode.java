@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Getter
 public enum GameErrorCode implements ErrorCode {
-
     PLAYER_NOT_FOUND(404, "플레이어가 존재하지 않습니다."),
     ;
 

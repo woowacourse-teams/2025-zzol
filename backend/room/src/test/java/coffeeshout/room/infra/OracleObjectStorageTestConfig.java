@@ -17,8 +17,7 @@ public class OracleObjectStorageTestConfig {
             ObjectStorage objectStorage,
             OracleObjectStorageProperties oracleProperties,
             QrProperties qrProperties,
-            MeterRegistry meterRegistry
-    ) {
+            MeterRegistry meterRegistry) {
         return new OracleObjectStorageService(objectStorage, oracleProperties, qrProperties, meterRegistry);
     }
 }

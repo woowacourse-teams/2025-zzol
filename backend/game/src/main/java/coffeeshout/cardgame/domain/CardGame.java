@@ -3,12 +3,12 @@ package coffeeshout.cardgame.domain;
 import coffeeshout.cardgame.domain.card.Card;
 import coffeeshout.cardgame.domain.card.CardGameDeckGenerator;
 import coffeeshout.cardgame.domain.card.Deck;
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.gamecommon.Gamer;
-import coffeeshout.gamecommon.Playable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,10 +75,7 @@ public class CardGame implements Playable {
 
     public boolean selectCard(Gamer gamer, Integer cardIndex) {
         if (state != CardGameState.PLAYING) {
-            throw new BusinessException(
-                    CardGameErrorCode.NOT_PLAYING_STATE,
-                    "현재 게임이 진행중인 상태가 아닙니다. state=" + state
-            );
+            throw new BusinessException(CardGameErrorCode.NOT_PLAYING_STATE, "현재 게임이 진행중인 상태가 아닙니다. state=" + state);
         }
 
         playerHands.put(gamer, deck.pick(cardIndex));

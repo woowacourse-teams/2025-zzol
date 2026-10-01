@@ -10,19 +10,10 @@ import java.util.UUID;
  * (ADR-0025 결정 4 — 이벤트 분리). 검증 통과 후 {@code :room}이 in-process 동기 {@code GameStartReadyEvent}로
  * {@code :game}에 시작을 위임한다.
  */
-public record StartMiniGameCommandEvent(
-        String eventId,
-        Instant timestamp,
-        String joinCode,
-        String hostName
-) implements BaseEvent {
+public record StartMiniGameCommandEvent(String eventId, Instant timestamp, String joinCode, String hostName)
+        implements BaseEvent {
 
     public StartMiniGameCommandEvent(String joinCode, String hostName) {
-        this(
-                UUID.randomUUID().toString(),
-                Instant.now(),
-                joinCode,
-                hostName
-        );
+        this(UUID.randomUUID().toString(), Instant.now(), joinCode, hostName);
     }
 }

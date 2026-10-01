@@ -9,7 +9,6 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-
 @RequiredArgsConstructor
 @Service
 public class PlayerNameGenerator {
@@ -20,8 +19,8 @@ public class PlayerNameGenerator {
 
     public PlayerName generate(Set<String> existingNames) {
         for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
-            final String candidate = wordPicker.pick(RandomNameWordPool.ADJECTIVES)
-                    + wordPicker.pick(RandomNameWordPool.NOUNS);
+            final String candidate =
+                    wordPicker.pick(RandomNameWordPool.ADJECTIVES) + wordPicker.pick(RandomNameWordPool.NOUNS);
 
             if (candidate.length() > PlayerName.MAX_NAME_LENGTH) {
                 continue;
@@ -32,9 +31,6 @@ public class PlayerNameGenerator {
             }
         }
 
-        throw new SystemException(
-                RoomErrorCode.PLAYER_NAME_GENERATION_FAILED,
-                "닉네임 생성 실패: 최대 재시도 횟수를 초과했습니다."
-        );
+        throw new SystemException(RoomErrorCode.PLAYER_NAME_GENERATION_FAILED, "닉네임 생성 실패: 최대 재시도 횟수를 초과했습니다.");
     }
 }

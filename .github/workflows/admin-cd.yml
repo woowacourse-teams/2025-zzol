@@ -1,0 +1,112 @@
+name: Admin Deploy (CD)
+
+# 백오피스 SPA(admin-web) 배포. frontend-cd 와 같은 모양이다.
+# OIDC 로 AWS Role 을 assume 하므로 장기 access key 를 쓰지 않는다.
+# dev·prod 가 같은 Role 을 assume 한다 - IAM trust policy 의 sub 조건에
+# refs/heads/dev 와 refs/heads/prod 가 모두 등록돼 있어야 한다.
+on:
+  push:
+    branches:
+      - dev
+      - prod
+    paths:
+      - 'admin-web/**'
+      - '.github/workflows/admin-ci.yml'
+      - '.github/workflows/admin-cd.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: admin-deploy-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  ci-and-build:
+    uses: ./.github/workflows/admin-ci.yml
+    secrets: inherit
+
+  deploy:
+    needs: ci-and-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      S3_BUCKET: ${{ github.ref_name == 'prod' && vars.ADMIN_S3_BUCKET_PROD || vars.ADMIN_S3_BUCKET }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ github.ref_name == 'prod' && vars.ADMIN_CLOUDFRONT_DISTRIBUTION_ID_PROD || vars.ADMIN_CLOUDFRONT_DISTRIBUTION_ID }}
+
+    steps:
+      # 필요한 값이 하나라도 비면 여기서 멈춘다.
+      #
+      # 이 가드가 없으면 S3 업로드까지 끝난 뒤 CloudFront 무효화에서 죽는다. 그러면
+      # 배포는 실패로 뜨는데 버킷에는 새 파일이 올라가 있어, 무엇이 서빙되는 중인지
+      # 알 수 없는 상태가 남는다. 아무것도 안 한 실패가 절반만 한 실패보다 낫다.
+      - name: Guard — 필수 변수 확인
+        env:
+          ROLE_ARN: ${{ vars.ADMIN_DEPLOY_ROLE_ARN }}
+        run: |
+          missing=""
+          [ -z "${S3_BUCKET}" ] && missing="${missing} ADMIN_S3_BUCKET"
+          [ -z "${CLOUDFRONT_DISTRIBUTION_ID}" ] && missing="${missing} ADMIN_CLOUDFRONT_DISTRIBUTION_ID"
+          [ -z "${ROLE_ARN}" ] && missing="${missing} ADMIN_DEPLOY_ROLE_ARN"
+
+          if [ -n "${missing}" ]; then
+            echo "::error::GitHub 저장소 변수가 비어 있습니다:${missing}"
+            echo "  prod 브랜치는 이름 뒤에 _PROD 가 붙습니다."
+            echo "  Settings > Secrets and variables > Actions > Variables 에서 채웁니다."
+            exit 1
+          fi
+
+      # 버킷을 여러 환경이 프리픽스로 공유한다. 프리픽스 없는 값이 들어오면
+      # 루트 sync --delete 가 양쪽 환경을 전부 지운다(2026-07-17 프론트에서 실제 발생).
+      # frontend-cd 와 같은 가드를 둔다 - 같은 사고가 여기서 다시 날 이유가 없다.
+      - name: Guard — S3 경로에 환경 프리픽스 필수
+        run: |
+          case "${S3_BUCKET}" in
+            */*) echo "S3 target OK: s3://${S3_BUCKET}" ;;
+            *) echo "::error::S3 버킷 변수('${S3_BUCKET}')에 환경 프리픽스가 없습니다 — 루트 sync --delete는 버킷 전체를 삭제합니다"; exit 1 ;;
+          esac
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: admin-web-dist
+          path: dist
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.ADMIN_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
+
+      # 해시가 박힌 에셋은 오래 캐시하고 index.html 만 매번 새로 받게 한다.
+      # index.html 까지 캐시하면 배포 직후에도 옛 번들을 가리키는 HTML 이 살아 있어
+      # 무효화가 끝날 때까지 사람마다 다른 버전을 본다.
+      - name: Sync assets to S3
+        run: |
+          aws s3 sync dist "s3://${S3_BUCKET}" --delete \
+            --exclude "index.html" \
+            --cache-control "public, max-age=31536000, immutable"
+
+      - name: Sync index.html to S3
+        run: |
+          aws s3 cp dist/index.html "s3://${S3_BUCKET}/index.html" \
+            --cache-control "no-cache, must-revalidate"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
+            --paths "/*"
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          {
+            echo "### Admin Deploy Summary :rocket:"
+            echo ""
+            echo "- **Branch:** ${{ github.ref_name }}"
+            echo "- **Commit:** ${{ github.sha }}"
+            echo "- **Target:** s3://${S3_BUCKET}"
+            echo "- **Status:** ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"

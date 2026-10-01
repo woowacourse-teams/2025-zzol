@@ -10,6 +10,7 @@ import {
   DELAY_AFTER_API,
 } from './domUtils';
 import { MiniGameType } from '@/types/miniGame/common';
+import { chooseHeading } from '@/features/miniGame/wormGame/devtools/wormBot';
 
 // 기본 게임 순서 상수
 export const DEFAULT_SINGLE_GAME: readonly MiniGameType[] = ['CARD_GAME'] as const;
@@ -258,28 +259,152 @@ const racingGamePlayPageAction = async () => {
 
   await wait(DELAY_BETWEEN_ACTIONS);
 
-  // 1초에 5번 클릭 = 200ms마다 클릭
   const CLICK_INTERVAL_MS = 100;
+  // 서버 TapPerSecondSpeedCalculator 는 speed = 초당 탭 수 를 [3, 60] 으로 clamp 한다.
+  // 100ms 틱마다 1~6번 쏘면 초당 10~60탭이라 속도가 바닥부터 천장까지 훑는다.
+  const MIN_TAPS_PER_TICK = 1;
+  const MAX_TAPS_PER_TICK = 6;
+  // 매 틱 새로 뽑으면 서버가 창 단위로 평균 내 값이 뭉개진다. 1~2초 유지해야 가감속이 보인다.
+  const MIN_HOLD_MS = 1000;
+  const MAX_HOLD_MS = 2000;
+
+  const randomInt = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
+
+  let tapsPerTick = randomInt(MIN_TAPS_PER_TICK, MAX_TAPS_PER_TICK);
+  let holdUntil = Date.now() + randomInt(MIN_HOLD_MS, MAX_HOLD_MS);
 
   racingGameClickIntervalId = window.setInterval(() => {
+    if (Date.now() >= holdUntil) {
+      tapsPerTick = randomInt(MIN_TAPS_PER_TICK, MAX_TAPS_PER_TICK);
+      holdUntil = Date.now() + randomInt(MIN_HOLD_MS, MAX_HOLD_MS);
+    }
+
     // RacingGameOverlay 요소 찾기 (data-testid 사용)
     const overlayElement = findElement('racing-game-overlay');
 
     // Overlay를 찾지 못한 경우 body에 이벤트 발생 (fallback)
     const targetElement = overlayElement || document.body;
 
-    // pointerdown 이벤트 발생
-    const pointerDownEvent = new PointerEvent('pointerdown', {
-      bubbles: true,
-      cancelable: true,
-      pointerId: 1,
-      pointerType: 'mouse',
-      clientX: window.innerWidth / 2,
-      clientY: window.innerHeight / 2,
-    });
+    for (let i = 0; i < tapsPerTick; i++) {
+      // 좌표를 조금씩 흩어 같은 틱의 리플이 완전히 겹치지 않게 한다.
+      const pointerDownEvent = new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 1,
+        pointerType: 'mouse',
+        clientX: window.innerWidth / 2 + randomInt(-30, 30),
+        clientY: window.innerHeight / 2 + randomInt(-30, 30),
+      });
 
-    targetElement.dispatchEvent(pointerDownEvent);
+      targetElement.dispatchEvent(pointerDownEvent);
+    }
   }, CLICK_INTERVAL_MS);
+};
+
+let wormGameSteerIntervalId: number | null = null;
+
+export const clearWormGameSteerInterval = () => {
+  if (wormGameSteerIntervalId !== null) {
+    clearInterval(wormGameSteerIntervalId);
+    wormGameSteerIntervalId = null;
+  }
+};
+
+// 지렁이 게임 봇: WormGameProvider 가 dev 에서 노출한 스토어(window.__ZZOL_WORM_STORE__)를 읽어
+// 궤적·경계를 피하는 방향(devtools/wormBot.chooseHeading)으로 조향한다. 스토어가 없으면 포인터를 흔드는 폴백.
+const wormGamePlayPageAction = async () => {
+  clearWormGameSteerInterval();
+  await wait(DELAY_BETWEEN_ACTIONS);
+
+  const STEER_INTERVAL_MS = 150;
+  const POINTER_DISTANCE_PX = 120;
+  let fallbackAngle = Math.random() * Math.PI * 2;
+
+  wormGameSteerIntervalId = window.setInterval(() => {
+    const store = window.__ZZOL_WORM_STORE__;
+    if (store) {
+      const heading = chooseHeading(store);
+      if (heading !== null) store.steer(heading);
+      return;
+    }
+    const targetElement = findElement('worm-game-container') || document.body;
+    fallbackAngle += (Math.random() - 0.5) * 1.2;
+    targetElement.dispatchEvent(
+      new PointerEvent('pointermove', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 1,
+        pointerType: 'mouse',
+        clientX: window.innerWidth / 2 + Math.cos(fallbackAngle) * POINTER_DISTANCE_PX,
+        clientY: window.innerHeight / 2 + Math.sin(fallbackAngle) * POINTER_DISTANCE_PX,
+      })
+    );
+  }, STEER_INTERVAL_MS);
+};
+
+let ladderGameDrawIntervalId: number | null = null;
+
+export const clearLadderGameDrawInterval = () => {
+  if (ladderGameDrawIntervalId !== null) {
+    clearInterval(ladderGameDrawIntervalId);
+    ladderGameDrawIntervalId = null;
+  }
+};
+
+// 사다리 게임 봇 (게스트만): DRAWING 동안 아무 구간의 아무 높이나 눌러 선을 긋는다.
+// 호스트는 사람이 직접 그어 보게 비워 둔다. 개수 상한과 빈 자리 찾기는 보드가 알아서 막는다.
+const ladderGamePlayPageGuestAction = async () => {
+  clearLadderGameDrawInterval();
+  await wait(DELAY_BETWEEN_ACTIONS);
+
+  const TICK_MS = 400;
+  // 틱마다 이 확률로 누른다. 8초 DRAWING 동안 평균 5번쯤 눌러 2개를 다 쓰되, 누르는 시점은 흩어진다
+  const DRAW_CHANCE = 0.25;
+
+  ladderGameDrawIntervalId = window.setInterval(() => {
+    if (Math.random() > DRAW_CHANCE) return;
+    const segments = document.querySelectorAll<SVGRectElement>('[data-testid="ladder-segment"]');
+    if (segments.length === 0) return;
+
+    const segment = segments[Math.floor(Math.random() * segments.length)];
+    const box = segment.getBoundingClientRect();
+    segment.dispatchEvent(
+      new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        clientX: box.left + box.width / 2,
+        clientY: box.top + Math.random() * box.height,
+      })
+    );
+  }, TICK_MS);
+};
+
+let blockStackingTapIntervalId: number | null = null;
+
+export const clearBlockStackingTapInterval = () => {
+  if (blockStackingTapIntervalId !== null) {
+    clearInterval(blockStackingTapIntervalId);
+    blockStackingTapIntervalId = null;
+  }
+};
+
+// 빌딩 쌓기 봇 (게스트만): 아무 때나 탭해 옆 빌딩을 쌓는다. 초반엔 층이 넓어 거의 겹치지만
+// 폭이 좁아질수록 빗나가 탈락하는 봇이 섞인다. 호스트는 사람이 직접 쌓아 보게 비워 둔다.
+const blockStackingPlayPageGuestAction = async () => {
+  clearBlockStackingTapInterval();
+  await wait(DELAY_BETWEEN_ACTIONS);
+
+  const TICK_MS = 100;
+  // 틱마다 이 확률로 탭한다. 평균 0.8초에 한 층
+  const TAP_CHANCE = 0.12;
+
+  blockStackingTapIntervalId = window.setInterval(() => {
+    if (Math.random() > TAP_CHANCE) return;
+    const target = findElement('block-stacking-game') || document.body;
+    target.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 1 })
+    );
+  }, TICK_MS);
 };
 
 // 페이지 액션 목록
@@ -321,6 +446,20 @@ export const pageActions: PageAction[] = [
   {
     pathPattern: /^\/room\/[^/]+\/RACING_GAME\/play$/,
     execute: racingGamePlayPageAction,
+  },
+  {
+    pathPattern: /^\/room\/[^/]+\/WORM_GAME\/play$/,
+    execute: wormGamePlayPageAction,
+  },
+  {
+    pathPattern: /^\/room\/[^/]+\/LADDER_GAME\/play$/,
+    role: 'guest',
+    execute: ladderGamePlayPageGuestAction,
+  },
+  {
+    pathPattern: /^\/room\/[^/]+\/BLOCK_STACKING\/play$/,
+    role: 'guest',
+    execute: blockStackingPlayPageGuestAction,
   },
 ];
 

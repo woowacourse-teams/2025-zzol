@@ -40,7 +40,8 @@ class WebSocketRateLimiterMetricTest {
         rateLimiter.tryAcquire(sessionId);
 
         // then
-        Counter counter = meterRegistry.find("websocket.ratelimit.dropped.total").counter();
+        Counter counter =
+                meterRegistry.find("websocket.ratelimit.dropped.total").counter();
         assertThat(counter).isNotNull();
         assertThat(counter.count()).isEqualTo(1.0);
     }
@@ -56,7 +57,8 @@ class WebSocketRateLimiterMetricTest {
         }
 
         // then
-        Counter counter = meterRegistry.find("websocket.ratelimit.dropped.total").counter();
+        Counter counter =
+                meterRegistry.find("websocket.ratelimit.dropped.total").counter();
         assertThat(counter).isNotNull();
         assertThat(counter.count()).isEqualTo(0.0);
     }
@@ -75,7 +77,8 @@ class WebSocketRateLimiterMetricTest {
         rateLimiter.tryAcquire(sessionId);
 
         // then
-        Counter counter = meterRegistry.find("websocket.ratelimit.dropped.total").counter();
+        Counter counter =
+                meterRegistry.find("websocket.ratelimit.dropped.total").counter();
         assertThat(counter).isNotNull();
         assertThat(counter.count()).isEqualTo(3.0);
     }
@@ -97,7 +100,8 @@ class WebSocketRateLimiterMetricTest {
         rateLimiter.tryAcquire(sessionId); // 드롭 2회째
 
         // then
-        Counter counter = meterRegistry.find("websocket.ratelimit.dropped.total").counter();
+        Counter counter =
+                meterRegistry.find("websocket.ratelimit.dropped.total").counter();
         assertThat(counter).isNotNull();
         assertThat(counter.count()).isEqualTo(2.0);
     }

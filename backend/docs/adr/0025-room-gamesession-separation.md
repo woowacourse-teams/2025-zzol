@@ -350,7 +350,7 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 
 ### Step 4 — 게임 서비스 조회 경로·결과 전달 변경
 
-- 게임 서비스(`CardGameService` 등 6종)가 GameSession을 통해 게임 인스턴스를 조회하도록 변경
+- 게임 서비스(`CardGameService` 등 6종)가 GameSession으로 게임 인스턴스를 조회하도록 변경
 - 게임 시작 흐름이 `GameSessionService.startGame()`을 호출하도록 변경(플레이어 목록은 `RoomQueryService`에서 조회해 전달)
 - `MiniGameSelectConsumer`를 `:game`으로 이동, `GameSessionService.updateGames()` 호출
 - `MiniGameFinishedEvent`에 `ranks`·`roundCount` 필드 추가, `MiniGameResult.toRankMap()` 신설

@@ -10,11 +10,8 @@ public record RunnersMovedEvent(String joinCode, RacingRange racingRange, List<R
     public static RunnersMovedEvent of(RacingGame racingGame, String joinCode) {
         final RacingRange distance = new RacingRange(RacingGame.START_LINE, RacingGame.FINISH_LINE);
         final List<RunnerPosition> positions = racingGame.getRunners().stream()
-                .map(runner -> new RunnerPosition(
-                        runner.getGamer().getName(),
-                        runner.getPosition(),
-                        runner.getSpeed()
-                )).toList();
+                .map(runner -> new RunnerPosition(runner.getGamer().getName(), runner.getPosition(), runner.getSpeed()))
+                .toList();
         return new RunnersMovedEvent(joinCode, distance, positions);
     }
 }

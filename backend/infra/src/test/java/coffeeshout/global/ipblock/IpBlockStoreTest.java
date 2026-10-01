@@ -212,21 +212,35 @@ class IpBlockStoreTest extends InfraModuleIntegrationTest {
         @Test
         void 차단된_IP_확인_시_blockedRequest_카운터가_증가한다() {
             ipBlockStore.blockImmediately(new Ip("9.9.9.1"));
-            double before = meterRegistry.find("ip.block.request.blocked.total").counter().count();
+            double before = meterRegistry
+                    .find("ip.block.request.blocked.total")
+                    .counter()
+                    .count();
 
             ipBlockStore.isBlocked(new Ip("9.9.9.1"));
 
-            assertThat(meterRegistry.find("ip.block.request.blocked.total").counter().count() - before)
+            assertThat(meterRegistry
+                                    .find("ip.block.request.blocked.total")
+                                    .counter()
+                                    .count()
+                            - before)
                     .isEqualTo(1.0);
         }
 
         @Test
         void 차단되지_않은_IP_확인_시_blockedRequest_카운터가_증가하지_않는다() {
-            double before = meterRegistry.find("ip.block.request.blocked.total").counter().count();
+            double before = meterRegistry
+                    .find("ip.block.request.blocked.total")
+                    .counter()
+                    .count();
 
             ipBlockStore.isBlocked(new Ip("9.9.9.2"));
 
-            assertThat(meterRegistry.find("ip.block.request.blocked.total").counter().count() - before)
+            assertThat(meterRegistry
+                                    .find("ip.block.request.blocked.total")
+                                    .counter()
+                                    .count()
+                            - before)
                     .isEqualTo(0.0);
         }
 

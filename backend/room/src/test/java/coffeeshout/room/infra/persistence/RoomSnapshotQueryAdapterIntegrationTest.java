@@ -56,10 +56,8 @@ class RoomSnapshotQueryAdapterIntegrationTest extends RoomModuleIntegrationTest 
         // then
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(roomSessionId).isEqualTo(ids[0]);
-            softly.assertThat(players).containsExactlyInAnyOrder(
-                    new PlayerSnapshot("한스", ids[1]),
-                    new PlayerSnapshot("루키", ids[2])
-            );
+            softly.assertThat(players)
+                    .containsExactlyInAnyOrder(new PlayerSnapshot("한스", ids[1]), new PlayerSnapshot("루키", ids[2]));
         });
     }
 }

@@ -44,6 +44,16 @@ public class LoggingSimpMessagingTemplate {
         messagingTemplate.convertAndSend(destination, payload);
     }
 
+    /**
+     * 복구 저장 없이 브로드캐스트한다. 고빈도 게임 델타(예: 지렁이 20Hz)를 복구 스트림에 저장하면
+     * 방 공용 버퍼(max-length)를 수십 초 만에 밀어내 다른 토픽의 복구까지 파괴하고, 매 틱 동기 Redis 왕복을
+     * 틱 스레드가 지불하게 된다. 재접속 복구가 스냅샷 같은 별도 경로로 보장되는 토픽만 쓴다(#1681).
+     */
+    @Observed(name = "websocket.send.transient")
+    public void convertAndSendTransient(String destination, Object payload) {
+        messagingTemplate.convertAndSend(destination, payload);
+    }
+
     @Observed(name = "websocket.send.toUser")
     public void convertAndSendToUser(String userName, String destination, Object payload) {
         // 개인 메시지는 복구 대상 제외

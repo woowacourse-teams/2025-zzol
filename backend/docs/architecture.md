@@ -18,8 +18,7 @@
                 + 도메인 간 계약 (이벤트, RoomSnapshotQuery·SeasonUserProfileQuery 포트)
 :user         — User + Auth + Friend
 :room         — Room aggregate + Player + Roulette + RoomSessionToken
-:game         — 미니게임 구현체(cardgame·laddergame·racinggame·blockstacking·speedtouch·blindtimer·nunchi)
-                + minigame orchestration + settlement(시즌 정산·종합 랭크)
+:game         — 미니게임 8종 구현체 + minigame orchestration + settlement(시즌 정산·종합 랭크)
 :profanity    — 비속어 필터 (:admin·:app 이 사용, :room·:game 은 테스트에서만)
 :admin        — dashboard + patchnote + report
 :zzolbot      — AI 운영자 어시스턴트
@@ -95,7 +94,6 @@ L0  순수      :common                                     ← Spring 무관
 | `nickname/`  | ProfanityChecker, NicknameSubmittedEvent, WordPicker 등 닉네임 유틸 |
 | `redis/`     | BaseEvent, StreamKey 인터페이스                          |
 | `log/`       | NotificationMarker                                  |
-| `ipblock/`   | IpBlockAttributes (속성 VO만 — 필터·저장소는 `:infra`)       |
 
 `:infra` 모듈이 담는 것:
 
@@ -216,7 +214,7 @@ lifecycle stop 사이의 순서는 phase로 조정할 수 없다.
 
 ### 전용 스케줄러·스트림을 쓰는 게임 — 테스트 미러링 (자주 누락)
 
-동적 타이머가 필요한 게임(SpeedTouch·BlindTimer·Nunchi)은 OCP 한 줄 등록(`MiniGameType` + Factory) 외에 **전용 빈/스트림**을 추가한다. 이때 프로덕션에만 등록하고 테스트측 미러를 빠뜨리면, 도메인·서비스 단위 테스트는 통과하지만 **통합테스트가 컨텍스트 로딩 실패 또는 "메시지 미수신"으로 깨진다**.
+동적 타이머가 필요한 게임(SpeedTouch·BlindTimer·Nunchi·WormGame)은 OCP 한 줄 등록(`MiniGameType` + Factory) 외에 **전용 빈/스트림**을 추가한다. 이때 프로덕션에만 등록하고 테스트측 미러를 빠뜨리면, 도메인·서비스 단위 테스트는 통과하지만 **통합테스트가 컨텍스트 로딩 실패 또는 "메시지 미수신"으로 깨진다**.
 
 ★ **전용 스케줄러 빈 미러는 모듈마다 따로 존재하는 3곳을 전부 추가해야 한다.** 이 셋은 서로 다른 테스트 컨텍스트가 import하므로, 한 곳만 고치면 그 곳을 안 쓰는 모듈의 IT가 깨진다(아래 표 1행).
 
@@ -256,7 +254,7 @@ FlowOrchestrator
 | (루트)           | `StompSessionManager`, `SubscriptionInfoService`, `PlayerKey`, `UserPrincipal`, `LoggingSimpMessagingTemplate` 등 핵심 서비스 |
 | `aspect/`      | `MessageMappingTracingAspect` — 메시지 핸들러 트레이싱                                                                            |
 | `config/`      | STOMP 브로커 설정 (`WebSocketMessageBrokerConfig`)                                                                           |
-| `docs/`        | WebSocket 컨트랙트 디스커버리 (애너테이션 + `/dev/ws-catalog`)                                                                        |
+| `docs/`        | WebSocket 컨트랙트 디스커버리 (애너테이션 + `/dev/ws-catalog` + FE 타입 생성, ADR-0037)                                                                        |
 | `event/`       | Spring 이벤트 리스너 — 세션 구독·해제 처리                                                                                            |
 | `exception/`   | `WebSocketExceptionHandler`                                                                                             |
 | `interceptor/` | STOMP 인터셉터 — 레이트 리밋, 메트릭, Graceful Shutdown                                                                             |
@@ -286,5 +284,7 @@ STOMP 연결 엔드포인트: `/ws` (SockJS 폴백 지원)
 ### 카탈로그 조회
 
 `GET /dev/ws-catalog` (`!prod` 프로파일에서만 활성화)
+
+같은 카탈로그를 `:app` 의 `WsCatalogContractTest` 가 `app/src/test/resources/__fixtures__/ws-catalog.json` 과 `frontend/src/apis/websocket/generated/` 의 `wsContract.ts`(destination)·`ws-openapi.json`(payload 스키마)으로 생성한다. FE 는 `openapi-typescript` 로 JSON 에서 payload 타입을 만들고, 훅의 파라미터 타입이 그 파일들을 받아 카탈로그에 없는 destination 과 어긋난 payload 필드가 tsc 오류가 된다. 생성물이 소스보다 낡으면 CI 가 실패한다(ADR-0037).
 
 `WsCatalogBuilder`가 `ApplicationContext`를 스캔하여 애너테이션이 붙은 모든 Bean을 수집하고 JSON으로 직렬화한다.

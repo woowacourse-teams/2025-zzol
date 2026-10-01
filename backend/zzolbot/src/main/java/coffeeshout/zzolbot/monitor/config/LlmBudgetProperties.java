@@ -9,7 +9,4 @@ import org.springframework.validation.annotation.Validated;
  */
 @Validated
 @ConfigurationProperties(prefix = "zzol-bot.llm-budget")
-public record LlmBudgetProperties(
-        @Positive long dailyMax
-) {
-}
+public record LlmBudgetProperties(@Positive long dailyMax) {}

@@ -1,0 +1,25 @@
+{
+  "name": "monitor-outbox-deadletter-publish-failures",
+  "question": "알림 OutboxDeadLetterHigh(warning)가 prod에서 발화했다 - DEAD_LETTER 전환된 outbox 이벤트가 10건 초과. 봇에는 최근 30분 ERROR 로그 샘플 4줄(outbox 재시도 초과)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 laddergame 스트림으로 발행하려던 outbox 이벤트들이 최대 재시도(10회)를 초과해 DEAD_LETTER로 전환되는 내용으로, DEAD_LETTER 적체 알림의 직접 근거다. '근거 발견: 예'로 판정하고 laddergame 스트림 발행 경로의 반복 실패(다운스트림 Redis 발행 실패 지속)를 원인 가설로 제시하면 정답. '근거 발견: 아니오'로 판정하거나 DB, 게임 로직 등 무관한 원인을 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "OutboxDeadLetterHigh",
+    "severity": "warning",
+    "fingerprint": "golden-synth-07",
+    "summary": "Outbox DEAD_LETTER 적체 (> 10, prod-app)",
+    "description": "재시도 초과로 DEAD_LETTER 전환된 outbox 이벤트가 14건. 다운스트림 발행 경로 점검 필요.",
+    "labels": {
+      "alertname": "OutboxDeadLetterHigh",
+      "severity": "warning",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-24 18:41:22.310] [ERROR] [,] --- [pool-11-thread-1] c.global.outbox.OutboxEventProcessor : Outbox 이벤트 최대 재시도 초과, DEAD_LETTER 전환: id=8241, streamKey=laddergame",
+    "[2026-08-24 18:43:57.882] [ERROR] [,] --- [pool-11-thread-1] c.global.outbox.OutboxEventProcessor : Outbox 이벤트 최대 재시도 초과, DEAD_LETTER 전환: id=8242, streamKey=laddergame",
+    "[2026-08-24 18:47:10.454] [ERROR] [,] --- [pool-11-thread-1] c.global.outbox.OutboxEventProcessor : Outbox 이벤트 최대 재시도 초과, DEAD_LETTER 전환: id=8247, streamKey=laddergame",
+    "[2026-08-24 18:52:33.019] [ERROR] [,] --- [pool-11-thread-1] c.global.outbox.OutboxEventProcessor : Outbox 이벤트 최대 재시도 초과, DEAD_LETTER 전환: id=8253, streamKey=laddergame"
+  ],
+  "logEnvironment": "prod"
+}

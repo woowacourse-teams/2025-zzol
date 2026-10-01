@@ -32,8 +32,7 @@ public class ToolSnapshotCodec {
 
     public ToolSnapshot fromJson(String json) {
         try {
-            final List<Entry> entries = objectMapper.readValue(json, new TypeReference<>() {
-            });
+            final List<Entry> entries = objectMapper.readValue(json, new TypeReference<>() {});
             final Map<ToolCallKey, String> results = new LinkedHashMap<>();
             for (Entry entry : entries) {
                 results.put(new ToolCallKey(entry.toolName(), entry.canonicalArgs()), entry.content());
@@ -44,6 +43,5 @@ public class ToolSnapshotCodec {
         }
     }
 
-    private record Entry(String toolName, String canonicalArgs, String content) {
-    }
+    private record Entry(String toolName, String canonicalArgs, String content) {}
 }

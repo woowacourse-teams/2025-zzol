@@ -26,18 +26,14 @@ class ProbabilityCalculatorTest {
     @ValueSource(ints = {0, 1, -1, Integer.MIN_VALUE})
     void 플레이어_수가_2보다_작으면_예외가_발생한다(int invalidPlayerCount) {
         assertCoffeeShoutException(
-                () -> new ProbabilityCalculator(invalidPlayerCount, 5, 0.7),
-                RoomErrorCode.INSUFFICIENT_PLAYER_COUNT
-        );
+                () -> new ProbabilityCalculator(invalidPlayerCount, 5, 0.7), RoomErrorCode.INSUFFICIENT_PLAYER_COUNT);
     }
 
     @ParameterizedTest
     @ValueSource(ints = {0, -1, -5, Integer.MIN_VALUE})
     void 라운드_수가_0보다_작거나_같으면_예외가_발생한다(int invalidRoundCount) {
         assertCoffeeShoutException(
-                () -> new ProbabilityCalculator(4, invalidRoundCount, 0.7),
-                RoomErrorCode.INVALID_ROUND_COUNT
-        );
+                () -> new ProbabilityCalculator(4, invalidRoundCount, 0.7), RoomErrorCode.INVALID_ROUND_COUNT);
     }
 
     @Test
@@ -71,10 +67,8 @@ class ProbabilityCalculatorTest {
 
         // when & then
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(calculator.calculateProbabilityChange(1, 1))
-                    .isEqualTo((int) (-5000 * 0.7)); // 2명에서 1등
-            softly.assertThat(calculator.calculateProbabilityChange(2, 1))
-                    .isEqualTo((int) (5000 * 0.7));  // 2명에서 2등
+            softly.assertThat(calculator.calculateProbabilityChange(1, 1)).isEqualTo((int) (-5000 * 0.7)); // 2명에서 1등
+            softly.assertThat(calculator.calculateProbabilityChange(2, 1)).isEqualTo((int) (5000 * 0.7)); // 2명에서 2등
         });
     }
 
@@ -99,8 +93,10 @@ class ProbabilityCalculatorTest {
         @Test
         void 경계값_0_1과_0_9는_정상_생성된다() {
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThatCode(() -> new ProbabilityCalculator(4, 5, 0.1)).doesNotThrowAnyException();
-                softly.assertThatCode(() -> new ProbabilityCalculator(4, 5, 0.9)).doesNotThrowAnyException();
+                softly.assertThatCode(() -> new ProbabilityCalculator(4, 5, 0.1))
+                        .doesNotThrowAnyException();
+                softly.assertThatCode(() -> new ProbabilityCalculator(4, 5, 0.9))
+                        .doesNotThrowAnyException();
             });
         }
 

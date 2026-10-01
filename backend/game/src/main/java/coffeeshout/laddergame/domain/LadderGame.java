@@ -1,11 +1,11 @@
 package coffeeshout.laddergame.domain;
 
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.gamecommon.Gamer;
-import coffeeshout.gamecommon.Playable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,12 +16,16 @@ public class LadderGame implements Playable {
 
     @Getter
     private volatile LadderGameState state;
+
     @Getter
     private Poles poles;
+
     @Getter
     private LadderLines lines = new LadderLines();
+
     @Getter
     private BottomRanks bottomRanks;
+
     private Map<Gamer, Integer> finalRanks;
 
     public LadderGame() {
@@ -55,23 +59,35 @@ public class LadderGame implements Playable {
 
     private void transition(LadderGameState next) {
         if (!state.canTransitionTo(next)) {
-            throw new BusinessException(LadderGameErrorCode.INVALID_STATE_TRANSITION,
-                    state + " → " + next + " 전환은 허용되지 않습니다.");
+            throw new BusinessException(
+                    LadderGameErrorCode.INVALID_STATE_TRANSITION, state + " → " + next + " 전환은 허용되지 않습니다.");
         }
         this.state = next;
     }
 
-    public LadderLine drawLine(String playerName, int segmentIndex) {
+    public LadderLine drawLine(String playerName, int segmentIndex, int row) {
         poles.getPoleIndex(playerName);
-        if (lines.hasDrawn(playerName)) {
-            throw new BusinessException(LadderGameErrorCode.ALREADY_DREW,
-                    "이미 선을 그은 플레이어입니다: " + playerName);
+        if (!isValidRow(row)) {
+            throw new BusinessException(LadderGameErrorCode.INVALID_LINE_ROW, "유효하지 않은 높이입니다: " + row);
         }
-        return lines.add(playerName, segmentIndex);
+        return lines.add(playerName, segmentIndex, row);
     }
 
-    public boolean isAlreadyDrew(String playerName) {
-        return lines.hasDrawn(playerName);
+    public boolean canDraw(String playerName) {
+        return lines.countOf(playerName) < LadderLines.MAX_LINES_PER_PLAYER;
+    }
+
+    // 모두가 한 구간에 최대 개수만큼 그어도 자리가 모자라지 않는 최솟값
+    public int getRowCount() {
+        return poles.size() * LadderLines.MAX_LINES_PER_PLAYER;
+    }
+
+    public boolean isValidRow(int row) {
+        return row >= 1 && row <= getRowCount();
+    }
+
+    public boolean isOccupied(int segmentIndex, int row) {
+        return lines.isOccupied(segmentIndex, row);
     }
 
     public void tracePaths() {
@@ -86,14 +102,10 @@ public class LadderGame implements Playable {
 
     public Map<String, Integer> getRankingsForBroadcast() {
         if (finalRanks == null) {
-            throw new BusinessException(LadderGameErrorCode.PATH_NOT_TRACED,
-                    "tracePaths()가 먼저 호출되어야 합니다.");
+            throw new BusinessException(LadderGameErrorCode.PATH_NOT_TRACED, "tracePaths()가 먼저 호출되어야 합니다.");
         }
         return finalRanks.entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> e.getKey().getName(),
-                        Map.Entry::getValue
-                ));
+                .collect(Collectors.toMap(e -> e.getKey().getName(), Map.Entry::getValue));
     }
 
     @Override
@@ -104,14 +116,10 @@ public class LadderGame implements Playable {
     @Override
     public Map<Gamer, MiniGameScore> getScores() {
         if (finalRanks == null) {
-            throw new BusinessException(LadderGameErrorCode.PATH_NOT_TRACED,
-                    "tracePaths()가 먼저 호출되어야 합니다.");
+            throw new BusinessException(LadderGameErrorCode.PATH_NOT_TRACED, "tracePaths()가 먼저 호출되어야 합니다.");
         }
         return finalRanks.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> new LadderGameScore(e.getValue())
-                ));
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> new LadderGameScore(e.getValue())));
     }
 
     @Override

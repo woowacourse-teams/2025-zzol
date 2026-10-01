@@ -1,7 +1,6 @@
 package coffeeshout.zzolbot.infra;
 
 import com.google.genai.types.Schema;
-import com.google.genai.types.Type;
 import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Component;
@@ -28,10 +27,7 @@ public class ZzolBotSchemaConverter {
             final Map<String, Schema> converted = new java.util.LinkedHashMap<>();
             for (Map.Entry<?, ?> entry : propsMap.entrySet()) {
                 if (entry.getValue() instanceof Map<?, ?> propSchema) {
-                    converted.put(
-                            (String) entry.getKey(),
-                            convert((Map<String, Object>) propSchema)
-                    );
+                    converted.put((String) entry.getKey(), convert((Map<String, Object>) propSchema));
                 }
             }
             builder.properties(converted);

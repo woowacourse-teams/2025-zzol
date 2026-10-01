@@ -1,0 +1,23 @@
+{
+  "name": "monitor-db-pool-high-unrelated-game-errors",
+  "question": "알림 DbConnectionPoolHigh(warning)가 prod에서 발화했다 - HikariCP 활성 커넥션이 8을 초과. 봇에는 최근 30분 ERROR 로그 샘플 2줄(카드게임 이벤트 처리 실패, 눈치게임 스케줄 예외)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 카드게임 이벤트 처리 실패와 눈치게임 스케줄러 예외로, DB 커넥션 풀 활성 수 상승과 무관하며 커넥션, 트랜잭션, 쿼리 관련 로그가 전혀 없다. '근거 발견: 아니오'로 판정하고 원인 가설을 내지 않아야 정답. 카드게임 이벤트 실패나 게임 스케줄러 예외를 커넥션 풀 상승의 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "DbConnectionPoolHigh",
+    "severity": "warning",
+    "fingerprint": "golden-synth-02",
+    "summary": "DB 커넥션 풀 활성 > 8 (prod-app)",
+    "description": "활성 연결 9개 (최대 10). 슬로우 쿼리 또는 커넥션 누수 확인 필요.",
+    "labels": {
+      "alertname": "DbConnectionPoolHigh",
+      "severity": "warning",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-21 16:44:12.583] [ERROR] [c47a91e2d05f483bb9e6a2d17c84f950,6a3e18d29c7b40f5] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=b3f61c88-4a2d-49e7-8f05-d2c917a6e304, timestamp=2026-08-21T07:44:12.580917244Z, joinCode=M4TR, playerName=PLAYER_3, cardIndex=1]",
+    "[2026-08-21 16:52:47.031] [ERROR] [,] --- [nunchi-task-1] c.g.s.GameTaskSchedulerFactory : [nunchi] 스케줄 실행 중 예외가 발생했습니다."
+  ],
+  "logEnvironment": "prod"
+}

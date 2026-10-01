@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum GameSessionErrorCode implements ErrorCode {
-
     NOT_HOST(403, "호스트만 게임 세션을 조작할 수 있습니다."),
     DUPLICATE_GAME(400, "동일한 게임을 중복 선택할 수 없습니다."),
     TOO_MANY_GAMES(400, "선택 가능한 게임은 최대 5개입니다."),

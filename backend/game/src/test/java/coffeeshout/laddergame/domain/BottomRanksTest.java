@@ -56,10 +56,7 @@ class BottomRanksTest {
         void 존재하지_않는_기둥_인덱스는_예외를_던진다() {
             final BottomRanks ranks = BottomRanks.generate(3);
 
-            assertCoffeeShoutException(
-                    () -> ranks.getRank(99),
-                    LadderGameErrorCode.INVALID_POLE_INDEX
-            );
+            assertCoffeeShoutException(() -> ranks.getRank(99), LadderGameErrorCode.INVALID_POLE_INDEX);
         }
     }
 }

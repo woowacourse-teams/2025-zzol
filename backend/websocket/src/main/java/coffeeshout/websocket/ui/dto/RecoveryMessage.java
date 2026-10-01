@@ -19,10 +19,7 @@ public record RecoveryMessage(
         @Schema(description = "원래 웹소켓 destination (프론트 라우팅용)", example = "/topic/room/TESTCODE")
         String destination,
 
-        @Schema(description = "WebSocketResponse 객체")
-        WebSocketResponse<?> response,
+        @Schema(description = "WebSocketResponse 객체") WebSocketResponse<?> response,
 
         @Schema(description = "메시지 생성 시간 (epoch millis)", example = "1769155902388")
-        long timestamp
-) {
-}
+        long timestamp) {}

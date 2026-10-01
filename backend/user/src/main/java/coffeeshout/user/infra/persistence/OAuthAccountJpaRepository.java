@@ -9,11 +9,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface OAuthAccountJpaRepository extends JpaRepository<OAuthAccountEntity, Long> {
 
-    @Query("SELECT o FROM OAuthAccountEntity o JOIN FETCH o.user WHERE o.provider = :provider AND o.providerUserId = :providerUserId")
+    @Query(
+            "SELECT o FROM OAuthAccountEntity o JOIN FETCH o.user WHERE o.provider = :provider AND o.providerUserId = :providerUserId")
     Optional<OAuthAccountEntity> findByProviderAndProviderUserIdWithUser(
-            @Param("provider") String provider,
-            @Param("providerUserId") String providerUserId
-    );
+            @Param("provider") String provider, @Param("providerUserId") String providerUserId);
 
     @Query("SELECT o FROM OAuthAccountEntity o JOIN FETCH o.user WHERE o.emailHash = :emailHash")
     List<OAuthAccountEntity> findByEmailHashWithUser(@Param("emailHash") String emailHash);

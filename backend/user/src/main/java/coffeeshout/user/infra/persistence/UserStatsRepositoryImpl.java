@@ -17,14 +17,16 @@ public class UserStatsRepositoryImpl implements UserStatsRepository {
 
     @Override
     public UserStats findOrCreateByUserId(Long userId) {
-        return userStatsJpaRepository.findByUser_Id(userId)
+        return userStatsJpaRepository
+                .findByUser_Id(userId)
                 .map(UserStatsEntity::toDomain)
                 .orElseGet(() -> createEmpty(userId));
     }
 
     @Override
     public UserStats save(UserStats userStats) {
-        final UserStatsEntity entity = userStatsJpaRepository.findByUser_Id(userStats.getUserId())
+        final UserStatsEntity entity = userStatsJpaRepository
+                .findByUser_Id(userStats.getUserId())
                 .orElseGet(() -> {
                     final UserEntity userEntity = findUserEntityById(userStats.getUserId());
                     return new UserStatsEntity(userEntity);
@@ -38,14 +40,16 @@ public class UserStatsRepositoryImpl implements UserStatsRepository {
         try {
             return userStatsJpaRepository.save(new UserStatsEntity(userEntity)).toDomain();
         } catch (DataIntegrityViolationException e) {
-            return userStatsJpaRepository.findByUser_Id(userId)
+            return userStatsJpaRepository
+                    .findByUser_Id(userId)
                     .map(UserStatsEntity::toDomain)
                     .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
         }
     }
 
     private UserEntity findUserEntityById(Long userId) {
-        return userJpaRepository.findById(userId)
+        return userJpaRepository
+                .findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
     }
 }

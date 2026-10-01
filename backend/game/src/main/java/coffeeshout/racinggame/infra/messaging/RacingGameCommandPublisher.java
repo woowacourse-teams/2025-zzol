@@ -1,9 +1,9 @@
 package coffeeshout.racinggame.infra.messaging;
 
 import coffeeshout.global.redis.BaseEvent;
-import coffeeshout.racinggame.infra.RacingGameStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.racinggame.domain.event.TapCommandEvent;
+import coffeeshout.racinggame.infra.RacingGameStreamKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,11 @@ public class RacingGameCommandPublisher {
     public void tap(String joinCode, String hostName, int tapCount) {
         final BaseEvent event = TapCommandEvent.create(joinCode, hostName, tapCount);
         streamPublisher.publish(RacingGameStreamKey.EVENTS, event);
-        log.debug("탭 이벤트 발행: joinCode={}, playerName={}, tapCount={}, eventId={}",
-                joinCode, hostName, tapCount, event.eventId());
+        log.debug(
+                "탭 이벤트 발행: joinCode={}, playerName={}, tapCount={}, eventId={}",
+                joinCode,
+                hostName,
+                tapCount,
+                event.eventId());
     }
 }

@@ -6,10 +6,8 @@ import java.util.regex.Pattern;
 
 public final class PiiMaskingSession {
 
-    private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("[a-zA-Z0-9+_.%-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}");
-    private static final Pattern IP_PATTERN =
-            Pattern.compile("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("[a-zA-Z0-9+_.%-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}");
+    private static final Pattern IP_PATTERN = Pattern.compile("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b");
 
     private final long seed;
     private final ConcurrentHashMap<String, String> emailMap;

@@ -57,8 +57,7 @@ class MiniGameEventServiceTest {
     void 전이_이벤트를_실패_가능_IO보다_먼저_발행한다() {
         // given — 이 순서가 불변식이다: startGame → GameSessionStartedEvent(방 markPlaying) → start → save
         // 전이 이벤트가 start/save보다 먼저여야, 이후 I/O가 실패해도 GameSession·Room이 모두 PLAYING으로 일관된다.
-        final GameStartReadyEvent event = new GameStartReadyEvent(
-                "evt-1", "ABCD", "꾹이", List.of(Gamer.guest("꾹이")));
+        final GameStartReadyEvent event = new GameStartReadyEvent("evt-1", "ABCD", "꾹이", List.of(Gamer.guest("꾹이")));
         given(gameSessionService.startGame(eq(new JoinCode("ABCD")), any(Gamer.class), anyList()))
                 .willReturn(playable);
         given(playable.getMiniGameType()).willReturn(MiniGameType.CARD_GAME);
@@ -67,7 +66,8 @@ class MiniGameEventServiceTest {
         service.onGameStartReady(event);
 
         // then
-        final InOrder inOrder = inOrder(gameSessionService, eventPublisher, miniGameService, miniGamePersistenceService);
+        final InOrder inOrder =
+                inOrder(gameSessionService, eventPublisher, miniGameService, miniGamePersistenceService);
         inOrder.verify(gameSessionService).startGame(eq(new JoinCode("ABCD")), any(Gamer.class), anyList());
         inOrder.verify(eventPublisher).publishEvent(isA(GameSessionStartedEvent.class));
         inOrder.verify(miniGameService).start("ABCD", "꾹이");

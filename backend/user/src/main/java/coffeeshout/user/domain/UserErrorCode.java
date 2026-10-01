@@ -4,11 +4,9 @@ import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-
 @RequiredArgsConstructor
 @Getter
 public enum UserErrorCode implements ErrorCode {
-
     USER_CODE_GENERATION_FAILED(500, "사용자 식별 코드 생성에 실패했습니다."),
     USER_CODE_INVALID(400, "유효하지 않은 사용자 식별 코드입니다."),
     USER_NOT_FOUND(404, "존재하지 않는 회원입니다."),

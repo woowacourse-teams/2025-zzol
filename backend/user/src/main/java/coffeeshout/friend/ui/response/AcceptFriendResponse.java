@@ -6,9 +6,6 @@ public record AcceptFriendResponse(Long friendUserId, String friendUserCode, Str
 
     public static AcceptFriendResponse from(User user) {
         return new AcceptFriendResponse(
-                user.getId(),
-                user.getUserCode().value(),
-                user.getNickname().value()
-        );
+                user.getId(), user.getUserCode().value(), user.getNickname().value());
     }
 }

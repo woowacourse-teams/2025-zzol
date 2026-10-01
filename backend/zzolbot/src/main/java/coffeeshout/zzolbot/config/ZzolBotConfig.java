@@ -24,8 +24,6 @@ public class ZzolBotConfig {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException("GEMINI_ZZOL_BOT_API_KEY가 설정되지 않았습니다.");
         }
-        return Client.builder()
-                .apiKey(apiKey)
-                .build();
+        return Client.builder().apiKey(apiKey).build();
     }
 }

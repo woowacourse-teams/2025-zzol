@@ -29,8 +29,7 @@ public class PresenceTracker {
     public PresenceTracker(
             @Qualifier("presenceScheduler") ScheduledExecutorService scheduler,
             ApplicationEventPublisher eventPublisher,
-            FriendPresenceProperties properties
-    ) {
+            FriendPresenceProperties properties) {
         this.scheduler = scheduler;
         this.eventPublisher = eventPublisher;
         this.gracePeriodSeconds = properties.gracePeriodSeconds();
@@ -69,9 +68,8 @@ public class PresenceTracker {
             return;
         }
 
-        final ScheduledFuture<?> future = scheduler.schedule(
-                () -> handleOffline(userId), gracePeriodSeconds, TimeUnit.SECONDS
-        );
+        final ScheduledFuture<?> future =
+                scheduler.schedule(() -> handleOffline(userId), gracePeriodSeconds, TimeUnit.SECONDS);
         final ScheduledFuture<?> previous = pendingOffline.put(userId, future);
         if (previous != null) {
             previous.cancel(false);

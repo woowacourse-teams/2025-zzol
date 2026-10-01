@@ -119,8 +119,7 @@ class RoomTest {
         ReflectionTestUtils.setField(room, "roomState", RoomState.PLAYING);
 
         // when & then
-        assertThatThrownBy(() -> room.spinRoulette(guest, roulette))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> room.spinRoulette(guest, roulette)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -129,8 +128,7 @@ class RoomTest {
         Player host = room.findPlayer(호스트_한스);
 
         // when & then
-        assertThatThrownBy(() -> room.spinRoulette(host, roulette))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> room.spinRoulette(host, roulette)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -140,8 +138,7 @@ class RoomTest {
         Player host = room.findPlayer(호스트_한스);
 
         // when & then
-        assertThatThrownBy(() -> room.spinRoulette(host, roulette))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> room.spinRoulette(host, roulette)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -242,8 +239,10 @@ class RoomTest {
         @Test
         void 경계값_0_1과_0_9는_정상_변경된다() {
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThatCode(() -> room.updateAdjustmentWeight(호스트_한스, 0.1)).doesNotThrowAnyException();
-                softly.assertThatCode(() -> room.updateAdjustmentWeight(호스트_한스, 0.9)).doesNotThrowAnyException();
+                softly.assertThatCode(() -> room.updateAdjustmentWeight(호스트_한스, 0.1))
+                        .doesNotThrowAnyException();
+                softly.assertThatCode(() -> room.updateAdjustmentWeight(호스트_한스, 0.9))
+                        .doesNotThrowAnyException();
             });
         }
 
@@ -253,10 +252,7 @@ class RoomTest {
             room.joinGuest(게스트_꾹이);
 
             // when & then
-            assertCoffeeShoutException(
-                    () -> room.updateAdjustmentWeight(게스트_꾹이, 0.5),
-                    RoomErrorCode.NOT_HOST
-            );
+            assertCoffeeShoutException(() -> room.updateAdjustmentWeight(게스트_꾹이, 0.5), RoomErrorCode.NOT_HOST);
         }
 
         @Test
@@ -266,45 +262,35 @@ class RoomTest {
 
             // when & then
             assertCoffeeShoutException(
-                    () -> room.updateAdjustmentWeight(호스트_한스, 0.5),
-                    RoomErrorCode.ROOM_NOT_READY_TO_UPDATE
-            );
+                    () -> room.updateAdjustmentWeight(호스트_한스, 0.5), RoomErrorCode.ROOM_NOT_READY_TO_UPDATE);
         }
 
         @ParameterizedTest
         @ValueSource(doubles = {0.0, 0.09, -0.1, -1.0})
         void 가중치가_0_1_미만이면_예외가_발생한다(double invalidWeight) {
             assertCoffeeShoutException(
-                    () -> room.updateAdjustmentWeight(호스트_한스, invalidWeight),
-                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
-            );
+                    () -> room.updateAdjustmentWeight(호스트_한스, invalidWeight), RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT);
         }
 
         @ParameterizedTest
         @ValueSource(doubles = {0.91, 1.0, 2.0})
         void 가중치가_0_9_초과이면_예외가_발생한다(double invalidWeight) {
             assertCoffeeShoutException(
-                    () -> room.updateAdjustmentWeight(호스트_한스, invalidWeight),
-                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
-            );
+                    () -> room.updateAdjustmentWeight(호스트_한스, invalidWeight), RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT);
         }
 
         @ParameterizedTest
         @ValueSource(doubles = {0.0, 0.09, -0.1, -1.0})
         void 생성_시_가중치가_0_1_미만이면_예외가_발생한다(double invalidWeight) {
             assertCoffeeShoutException(
-                    () -> new Room(joinCode, 호스트_한스, invalidWeight),
-                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
-            );
+                    () -> new Room(joinCode, 호스트_한스, invalidWeight), RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT);
         }
 
         @ParameterizedTest
         @ValueSource(doubles = {0.91, 1.0, 2.0})
         void 생성_시_가중치가_0_9_초과이면_예외가_발생한다(double invalidWeight) {
             assertCoffeeShoutException(
-                    () -> new Room(joinCode, 호스트_한스, invalidWeight),
-                    RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT
-            );
+                    () -> new Room(joinCode, 호스트_한스, invalidWeight), RoomErrorCode.INVALID_ADJUSTMENT_WEIGHT);
         }
 
         @Test
@@ -321,8 +307,7 @@ class RoomTest {
 
         @Test
         void 호스트면_예외가_발생하지_않는다() {
-            assertThatCode(() -> room.validateHost(호스트_한스.value()))
-                    .doesNotThrowAnyException();
+            assertThatCode(() -> room.validateHost(호스트_한스.value())).doesNotThrowAnyException();
         }
 
         @Test
@@ -331,10 +316,7 @@ class RoomTest {
             room.joinGuest(게스트_꾹이);
 
             // when & then
-            assertCoffeeShoutException(
-                    () -> room.validateHost(게스트_꾹이.value()),
-                    RoomErrorCode.NOT_HOST
-            );
+            assertCoffeeShoutException(() -> room.validateHost(게스트_꾹이.value()), RoomErrorCode.NOT_HOST);
         }
     }
 
@@ -414,7 +396,8 @@ class RoomTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(gamers).hasSize(2);
-                softly.assertThat(gamers).extracting(Gamer::getName)
+                softly.assertThat(gamers)
+                        .extracting(Gamer::getName)
                         .containsExactlyInAnyOrder(호스트_한스.value(), 게스트_꾹이.value());
             });
         }
@@ -433,8 +416,7 @@ class RoomTest {
                     호스트_한스, 1,
                     게스트_루키, 2,
                     게스트_꾹이, 3,
-                    게스트_엠제이, 4
-            );
+                    게스트_엠제이, 4);
 
             // when
             room.applyGameResult(rankByPlayer, 5);

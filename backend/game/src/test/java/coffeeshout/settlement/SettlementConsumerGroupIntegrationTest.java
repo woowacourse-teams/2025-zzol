@@ -32,10 +32,13 @@ class SettlementConsumerGroupIntegrationTest extends GameModuleIntegrationTest {
 
     @Autowired
     private StreamPublisher streamPublisher;
+
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
     @Autowired
     private SeasonSettlementJpaRepository settlementRepository;
+
     @Autowired
     private SeasonScoreJpaRepository scoreRepository;
 
@@ -45,10 +48,12 @@ class SettlementConsumerGroupIntegrationTest extends GameModuleIntegrationTest {
         // 같은 경로지만, 폴링 주기를 기다리지 않도록 결정적으로 재보장한다.
         try {
             final byte[] rawKey = RedisSerializer.string().serialize(SettlementStreamKey.RESULT.getRedisKey());
-            stringRedisTemplate.execute(connection -> {
-                connection.streamCommands().xGroupCreate(rawKey, "settlement", ReadOffset.from("0-0"), true);
-                return null;
-            }, true);
+            stringRedisTemplate.execute(
+                    connection -> {
+                        connection.streamCommands().xGroupCreate(rawKey, "settlement", ReadOffset.from("0-0"), true);
+                        return null;
+                    },
+                    true);
         } catch (RedisSystemException e) {
             // BUSYGROUP — 이미 존재
         }
@@ -62,8 +67,7 @@ class SettlementConsumerGroupIntegrationTest extends GameModuleIntegrationTest {
                 ROOM_SESSION_ID,
                 "BLIND_TIMER",
                 List.of(new PlayerResult(1L, "한스", 1, 12L), new PlayerResult(2L, "루키", 2, 40L)),
-                List.of(1, 2)
-        );
+                List.of(1, 2));
         final String seasonKey = SeasonKey.from(event.timestamp()).value();
 
         // when
@@ -71,21 +75,25 @@ class SettlementConsumerGroupIntegrationTest extends GameModuleIntegrationTest {
 
         // then: 원장과 누적 성적이 반영된다
         await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-            assertThat(settlementRepository
-                    .existsByRoomSessionIdAndMiniGameTypeAndUserId(ROOM_SESSION_ID, "BLIND_TIMER", 1L)).isTrue();
-            assertThat(settlementRepository
-                    .existsByRoomSessionIdAndMiniGameTypeAndUserId(ROOM_SESSION_ID, "BLIND_TIMER", 2L)).isTrue();
+            assertThat(settlementRepository.existsByRoomSessionIdAndMiniGameTypeAndUserId(
+                            ROOM_SESSION_ID, "BLIND_TIMER", 1L))
+                    .isTrue();
+            assertThat(settlementRepository.existsByRoomSessionIdAndMiniGameTypeAndUserId(
+                            ROOM_SESSION_ID, "BLIND_TIMER", 2L))
+                    .isTrue();
 
-            final SeasonScoreEntity first = scoreRepository.findBySeasonKeyAndUserId(seasonKey, 1L).orElseThrow();
-            final SeasonScoreEntity second = scoreRepository.findBySeasonKeyAndUserId(seasonKey, 2L).orElseThrow();
+            final SeasonScoreEntity first =
+                    scoreRepository.findBySeasonKeyAndUserId(seasonKey, 1L).orElseThrow();
+            final SeasonScoreEntity second =
+                    scoreRepository.findBySeasonKeyAndUserId(seasonKey, 2L).orElseThrow();
             assertThat(first.getTotalPoints()).isEqualTo(100L);
             assertThat(second.getTotalPoints()).isEqualTo(70L);
         });
 
         // then: 처리 완료가 ACK로 확정된다 — PEL이 비어야 회수 대상이 남지 않은 것이다
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-            final var summary = stringRedisTemplate.opsForStream()
-                    .pending(SettlementStreamKey.RESULT.getRedisKey(), "settlement");
+            final var summary =
+                    stringRedisTemplate.opsForStream().pending(SettlementStreamKey.RESULT.getRedisKey(), "settlement");
             assertThat(summary.getTotalPendingMessages()).isZero();
         });
     }

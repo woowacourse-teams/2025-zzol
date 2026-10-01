@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.fixture.PlayerFixture;
 import coffeeshout.fixture.PlayersFixture;
+import coffeeshout.gamecommon.Gamer;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.gamecommon.Gamer;
 import coffeeshout.room.domain.player.Player;
 import java.util.List;
 import java.util.Map;
@@ -137,8 +137,7 @@ class BlockStackingGameTest {
 
             assertCoffeeShoutException(
                     () -> game.recordProgress(꾹이.toGamer(), 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH),
-                    BlockStackingGameErrorCode.NOT_PLAYING_STATE
-            );
+                    BlockStackingGameErrorCode.NOT_PLAYING_STATE);
         }
 
         @Test
@@ -194,7 +193,8 @@ class BlockStackingGameTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(game.getScores().get(꾹이.toGamer()).getValue()).isEqualTo(2L);
                 softly.assertThat(game.getScores().get(루키.toGamer()).getValue()).isEqualTo(1L);
-                softly.assertThat(game.getScores().get(엠제이.toGamer()).getValue()).isZero();
+                softly.assertThat(game.getScores().get(엠제이.toGamer()).getValue())
+                        .isZero();
             });
         }
     }
@@ -225,11 +225,41 @@ class BlockStackingGameTest {
         }
 
         @Test
+        void 랭킹에_마지막으로_쌓은_블록이_겹친_구간으로_담긴다() {
+            // overlap = min(250,235) - max(100,85) = 135, 왼쪽 끝은 100
+            game.recordProgress(꾹이.toGamer(), 1, MOVING_BLOCK_X, STACK_TOP_X, STACK_TOP_WIDTH);
+
+            final BlockStackingPlayerRankInfo 꾹이순위 = game.getRanking().get(0);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(꾹이순위.topX()).isEqualTo(100.0);
+                softly.assertThat(꾹이순위.topWidth()).isEqualTo(135.0);
+            });
+        }
+
+        @Test
+        void 랭킹에_탈락_여부가_담긴다() {
+            game.recordFailure(루키.toGamer());
+
+            final List<BlockStackingPlayerRankInfo> ranking = game.getRanking();
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(ranking)
+                        .filteredOn(r -> r.name().equals("루키"))
+                        .singleElement()
+                        .extracting(BlockStackingPlayerRankInfo::failed)
+                        .isEqualTo(true);
+                softly.assertThat(ranking)
+                        .filteredOn(r -> !r.name().equals("루키"))
+                        .allMatch(r -> !r.failed());
+            });
+        }
+
+        @Test
         void 초기_상태에서_모든_플레이어_floor가_0이다() {
             final List<BlockStackingPlayerRankInfo> ranking = game.getRanking();
 
-            assertThat(ranking).hasSize(4)
-                    .allMatch(r -> r.floor() == 0);
+            assertThat(ranking).hasSize(4).allMatch(r -> r.floor() == 0);
         }
     }
 
@@ -245,10 +275,7 @@ class BlockStackingGameTest {
 
         @Test
         void 존재하지_않는_플레이어_조회_시_예외를_던진다() {
-            assertCoffeeShoutException(
-                    () -> game.findByName("없는플레이어"),
-                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND
-            );
+            assertCoffeeShoutException(() -> game.findByName("없는플레이어"), BlockStackingGameErrorCode.PLAYER_NOT_FOUND);
         }
     }
 
@@ -267,7 +294,8 @@ class BlockStackingGameTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(recorded).isTrue();
-                softly.assertThat(game.getPlayerProgresses().get(꾹이.toGamer()).failed()).isTrue();
+                softly.assertThat(game.getPlayerProgresses().get(꾹이.toGamer()).failed())
+                        .isTrue();
             });
         }
 
@@ -288,7 +316,8 @@ class BlockStackingGameTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(second).isFalse();
-                softly.assertThat(game.getPlayerProgresses().get(꾹이.toGamer()).failed()).isTrue();
+                softly.assertThat(game.getPlayerProgresses().get(꾹이.toGamer()).failed())
+                        .isTrue();
             });
         }
 
@@ -297,9 +326,7 @@ class BlockStackingGameTest {
             game.finish();
 
             assertCoffeeShoutException(
-                    () -> game.recordFailure(꾹이.toGamer()),
-                    BlockStackingGameErrorCode.NOT_PLAYING_STATE
-            );
+                    () -> game.recordFailure(꾹이.toGamer()), BlockStackingGameErrorCode.NOT_PLAYING_STATE);
         }
 
         @Test
@@ -307,9 +334,7 @@ class BlockStackingGameTest {
             final Player 미등록플레이어 = PlayerFixture.호스트유령();
 
             assertCoffeeShoutException(
-                    () -> game.recordFailure(미등록플레이어.toGamer()),
-                    BlockStackingGameErrorCode.PLAYER_NOT_FOUND
-            );
+                    () -> game.recordFailure(미등록플레이어.toGamer()), BlockStackingGameErrorCode.PLAYER_NOT_FOUND);
         }
     }
 

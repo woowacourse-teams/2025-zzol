@@ -2,8 +2,8 @@ package coffeeshout.settlement.infra.consumer;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.EventTypeName;
-import coffeeshout.global.redis.stream.StreamRecordFields;
 import coffeeshout.global.redis.stream.StreamPublisher;
+import coffeeshout.global.redis.stream.StreamRecordFields;
 import coffeeshout.global.redis.stream.StreamTracePropagator;
 import coffeeshout.minigame.infra.MinigameStreamKey;
 import coffeeshout.settlement.application.SeasonLeaderboardService;
@@ -44,8 +44,7 @@ public class SettlementMessageProcessor {
             StreamTracePropagator streamTracePropagator,
             SettlementService settlementService,
             SeasonLeaderboardService leaderboardService,
-            StreamPublisher streamPublisher
-    ) {
+            StreamPublisher streamPublisher) {
         this.redisObjectMapper = redisObjectMapper;
         this.streamTracePropagator = streamTracePropagator;
         this.settlementService = settlementService;
@@ -93,18 +92,18 @@ public class SettlementMessageProcessor {
         final String seasonKey = settled.getFirst().seasonKey();
         final List<RankEntry> entries = new ArrayList<>();
         for (SettledScore score : settled) {
-            final int seasonRank = leaderboardService.rankOf(seasonKey, score.userId())
+            final int seasonRank = leaderboardService
+                    .rankOf(seasonKey, score.userId())
                     .map(LeaderboardEntry::rank)
                     .orElse(0);
             entries.add(new RankEntry(
                     namesByUserId.getOrDefault(score.userId(), "unknown"),
                     score.totalPoints(),
                     score.tier().name(),
-                    seasonRank
-            ));
+                    seasonRank));
         }
-        streamPublisher.publish(MinigameStreamKey.EVENTS,
-                SeasonRankUpdatedEvent.of(event.joinCode(), seasonKey, entries));
+        streamPublisher.publish(
+                MinigameStreamKey.EVENTS, SeasonRankUpdatedEvent.of(event.joinCode(), seasonKey, entries));
     }
 
     private SettlementResultEvent parse(String payload) {
@@ -115,7 +114,8 @@ public class SettlementMessageProcessor {
             throw new PoisonMessageException("정산 이벤트 파싱 실패: " + e.getMessage(), e);
         }
         if (!(event instanceof SettlementResultEvent settlementEvent)) {
-            throw new PoisonMessageException("정산 스트림에 예상 밖 이벤트 타입: " + event.getClass().getSimpleName());
+            throw new PoisonMessageException(
+                    "정산 스트림에 예상 밖 이벤트 타입: " + event.getClass().getSimpleName());
         }
         return settlementEvent;
     }

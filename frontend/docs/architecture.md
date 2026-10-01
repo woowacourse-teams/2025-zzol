@@ -11,6 +11,7 @@ React Router v7, 페이지는 모두 lazy-load. 주요 라우트 구조:
   - `/roulette/play`, `/roulette/result` — 룰렛 게임
   - `/:miniGameType/ready|play|result` — 미니게임 페이지 (MiniGameProviders로 래핑)
 - `/join/:joinCode` — QR 딥링크 입장 페이지
+- `/guide`, `/games`, `/games/:slug` — SEO 콘텐츠 페이지 (`SeoContentPage` 하나가 셋을 담당하며 본문은 `src/seo/pages.json`에서 읽는다)
 
 ## Provider 계층 (`src/App.tsx`)
 
@@ -43,6 +44,27 @@ React Router v7, 페이지는 모두 lazy-load. 주요 라우트 구조:
 - `useWebSocketMessaging` — publish/subscribe
 - `useWebSocketReconnection` — 구독 레지스트리 기반 자동 복구
 - `useStompSessionWatcher` — 세션 상태 추적
+
+### 계약 타입 (`src/apis/websocket/generated/`)
+
+destination 과 payload 타입은 손으로 쓰지 않고 BE 가 생성한다. 세 파일이 있고 모두 커밋한다.
+
+| 파일 | 만드는 쪽 | 담는 것 |
+| --- | --- | --- |
+| `wsContract.ts` | BE `WsCatalogContractTest` | destination union(`WsSubscribePath`·`WsSendPath`), destination 에서 payload 를 찾는 `WsPayloadOf<D>`, 동치 검사 `WsSubscribeDestination<D>`·`WsSendDestination<D>`, payload 이름 alias |
+| `ws-openapi.json` | BE `WsCatalogContractTest` | payload record 의 OpenAPI 스키마. `@Nullable` 필드만 `required` 에서 빠지고 `nullable` 이다 |
+| `wsOpenApi.d.ts` | `npm run generate:ws` (openapi-typescript) | 위 JSON 에서 만든 TS 타입. `wsContract.ts` 가 이름을 다시 내보내므로 직접 import 하지 않는다 |
+
+`useWebSocketSubscription(destination, onData)` 의 파라미터 타입이 이 파일을 받는다. 카탈로그에 없는 경로는 `` `ws 카탈로그에 없는 destination: …` `` 오류로, 어긋난 payload 필드는 그 필드를 쓰는 줄의 오류로 나온다. `src/types/**` 의 도메인 타입은 생성 타입의 alias 다.
+
+BE 계약이 바뀌면 BE PR 이 세 파일을 함께 갱신해 온다. 낡은 생성물은 CI 가 막는다(backend-ci 는 `wsContract.ts`·`ws-openapi.json`, frontend-ci 는 `wsOpenApi.d.ts`). 로컬에서 BE 를 고쳤을 때는 아래 두 명령으로 갱신하고, pre-push 훅이 같은 일을 이어 돌린다.
+
+```bash
+backend/gradlew -p backend :app:test --tests '*WsCatalogContractTest*'
+npm run generate:ws
+```
+
+결정 배경은 [ADR](adr/20260915-ws-contract-generated-types.md)에 있다.
 
 ## REST API 레이어 (`src/apis/rest/`)
 
@@ -95,4 +117,5 @@ Sentry는 `src/main.tsx`에서 프로덕션 전용으로 초기화되며, `@sent
 
 기존에는 AWS CodePipeline(GitHub App 소스)이 이 역할을 했으나, 조직 이관 후 GitHub App 설치 권한이 없어져 GitHub Actions 직접 배포로 전환했다(#1568).
 
-- 정적 파일(`sitemap.xml`, `robots.txt`, `manifest.json` 등)은 `webpack.common.js`의 CopyWebpackPlugin으로 `dist/`에 복사되어 아티팩트에 포함된다.
+- 정적 파일(`robots.txt`, `manifest.json` 등)은 `webpack.common.js`의 CopyWebpackPlugin으로 `dist/`에 복사되어 아티팩트에 포함된다.
+- `sitemap.xml`과 라우트별 `{path}/index.html`은 복사가 아니라 `webpack.common.js`가 `src/seo/pages.json`에서 **생성**한다 (#1710).

@@ -58,7 +58,8 @@ class JwtAuthenticationFilterTest {
 
             filter.doFilterInternal(request, response, chain);
 
-            final Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            final Object principal =
+                    SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             assertThat(principal).isEqualTo(user);
         }
     }

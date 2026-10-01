@@ -102,8 +102,8 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
             JoinCode unknownCode = joinCodeGenerator.generate();
 
             // when & then - 멱등하게 무시한다(예외를 던져 스트림 컨슈머를 잠식하지 않는다)
-            assertThatNoException().isThrownBy(() ->
-                    roomCommandService.assignQrCode(unknownCode, "data:image/png;base64,QR"));
+            assertThatNoException()
+                    .isThrownBy(() -> roomCommandService.assignQrCode(unknownCode, "data:image/png;base64,QR"));
         }
 
         @Test
@@ -112,8 +112,7 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
             JoinCode unknownCode = joinCodeGenerator.generate();
 
             // when & then
-            assertThatNoException().isThrownBy(() ->
-                    roomCommandService.assignQrCodeError(unknownCode));
+            assertThatNoException().isThrownBy(() -> roomCommandService.assignQrCodeError(unknownCode));
         }
     }
 
@@ -168,9 +167,7 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
 
             // when & then
             assertCoffeeShoutException(
-                    () -> roomCommandService.joinGuest(invalidJoinCode, guestName),
-                    GlobalErrorCode.NOT_EXIST
-            );
+                    () -> roomCommandService.joinGuest(invalidJoinCode, guestName), GlobalErrorCode.NOT_EXIST);
         }
 
         @Test
@@ -184,8 +181,7 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
             // when & then
             assertCoffeeShoutException(
                     () -> roomCommandService.joinGuest(existingJoinCode, guestName),
-                    RoomErrorCode.ROOM_NOT_READY_TO_JOIN
-            );
+                    RoomErrorCode.ROOM_NOT_READY_TO_JOIN);
         }
 
         @Test
@@ -222,9 +218,7 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
 
             // when & then
             assertCoffeeShoutException(
-                    () -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트10")),
-                    RoomErrorCode.ROOM_FULL
-            );
+                    () -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트10")), RoomErrorCode.ROOM_FULL);
         }
 
         @Test
@@ -239,10 +233,8 @@ class RoomCommandServiceTest extends RoomModuleServiceTest {
             // when & then
             assertCoffeeShoutException(
                     () -> roomCommandService.joinGuest(testJoinCode, new PlayerName("게스트")),
-                    RoomErrorCode.DUPLICATE_PLAYER_NAME
-            );
+                    RoomErrorCode.DUPLICATE_PLAYER_NAME);
         }
-
     }
 
     @Nested

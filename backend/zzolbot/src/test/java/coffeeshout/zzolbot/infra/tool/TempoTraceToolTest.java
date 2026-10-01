@@ -10,12 +10,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import coffeeshout.zzolbot.config.ZzolBotProperties;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -26,7 +26,8 @@ import org.springframework.web.client.RestClient;
 @WireMockTest
 class TempoTraceToolTest {
 
-    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+    private static final AskContext CTX =
+            AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     private TempoTraceTool createTool(WireMockRuntimeInfo wmInfo) {
         final ZzolBotProperties props = new ZzolBotProperties(
@@ -34,16 +35,11 @@ class TempoTraceToolTest {
                 "gemini-2.0-flash",
                 8,
                 new ZzolBotProperties.MonitoringProperties(
-                        "http://loki",
-                        wmInfo.getHttpBaseUrl(),
-                        "http://prometheus",
-                        "local"
-                ),
+                        "http://loki", wmInfo.getHttpBaseUrl(), "http://prometheus", "local"),
                 new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
                 60,
                 10000L,
-                new ZzolBotProperties.SqlProperties(List.of(), 100, 3)
-        );
+                new ZzolBotProperties.SqlProperties(List.of(), 100, 3));
         return new TempoTraceTool(props, RestClient.builder(), new ObjectMapper());
     }
 
@@ -52,8 +48,7 @@ class TempoTraceToolTest {
 
         @Test
         void Tempo_응답_성공_시_ok_결과를_반환한다(WireMockRuntimeInfo wmInfo) {
-            stubFor(get(urlPathEqualTo("/api/search"))
-                    .willReturn(ok().withBody("{\"traces\":[]}")));
+            stubFor(get(urlPathEqualTo("/api/search")).willReturn(ok().withBody("{\"traces\":[]}")));
 
             final ToolExecutionResult result = createTool(wmInfo).execute(Map.of("joinCode", "A4BX"), CTX);
 
@@ -66,8 +61,7 @@ class TempoTraceToolTest {
 
         @Test
         void Tempo_서버_오류_시_실패_결과를_반환한다(WireMockRuntimeInfo wmInfo) {
-            stubFor(get(urlPathEqualTo("/api/search"))
-                    .willReturn(serverError()));
+            stubFor(get(urlPathEqualTo("/api/search")).willReturn(serverError()));
 
             final ToolExecutionResult result = createTool(wmInfo).execute(Map.of("joinCode", "A4BX"), CTX);
 
@@ -76,8 +70,7 @@ class TempoTraceToolTest {
 
         @Test
         void joinCode_없이_호출하면_전체_트레이스_조회에_성공한다(WireMockRuntimeInfo wmInfo) {
-            stubFor(get(urlPathEqualTo("/api/search"))
-                    .willReturn(ok().withBody("{\"traces\":[]}")));
+            stubFor(get(urlPathEqualTo("/api/search")).willReturn(ok().withBody("{\"traces\":[]}")));
 
             final ToolExecutionResult result = createTool(wmInfo).execute(Map.of(), CTX);
 

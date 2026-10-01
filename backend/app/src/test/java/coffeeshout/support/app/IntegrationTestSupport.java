@@ -6,5 +6,4 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(IntegrationTestConfig.class)
-public abstract class IntegrationTestSupport extends coffeeshout.support.IntegrationTestSupport {
-}
+public abstract class IntegrationTestSupport extends coffeeshout.support.IntegrationTestSupport {}

@@ -32,19 +32,14 @@ public class AuthRestController {
 
     @PostMapping("/token")
     public ResponseEntity<AuthTokenResponse> exchangeCode(
-            @Valid @RequestBody ExchangeCodeRequest request,
-            HttpServletResponse response
-    ) {
+            @Valid @RequestBody ExchangeCodeRequest request, HttpServletResponse response) {
         final OAuthCodeEntry entry = authTokenService.exchangeCode(request.code());
         cookieHelper.set(response, entry.tokenPair().refreshToken());
         return ResponseEntity.ok(new AuthTokenResponse(entry.tokenPair().accessToken(), null, entry.isNewUser()));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthTokenResponse> refresh(
-            HttpServletRequest request,
-            HttpServletResponse response
-    ) {
+    public ResponseEntity<AuthTokenResponse> refresh(HttpServletRequest request, HttpServletResponse response) {
         final String refreshToken = extractRefreshTokenCookie(request);
         final TokenPair tokens = authTokenService.rotate(refreshToken);
         cookieHelper.set(response, tokens.refreshToken());
@@ -52,10 +47,7 @@ public class AuthRestController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
-            @AuthUser Optional<AuthenticatedUser> authUser,
-            HttpServletResponse response
-    ) {
+    public ResponseEntity<Void> logout(@AuthUser Optional<AuthenticatedUser> authUser, HttpServletResponse response) {
         authUser.ifPresent(user -> authTokenService.revoke(user.userId()));
         cookieHelper.clear(response);
         return ResponseEntity.noContent().build();
@@ -69,7 +61,6 @@ public class AuthRestController {
                 .filter(c -> RefreshTokenCookieHelper.COOKIE_NAME.equals(c.getName()))
                 .map(Cookie::getValue)
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        UserErrorCode.REFRESH_TOKEN_NOT_FOUND, "리프레시 토큰이 없습니다."));
+                .orElseThrow(() -> new BusinessException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND, "리프레시 토큰이 없습니다."));
     }
 }

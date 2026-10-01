@@ -24,8 +24,7 @@ public class V34__backfill_oauth_email extends BaseJavaMigration {
 
     private static final String SELECT_PLAINTEXT =
             "SELECT id, email FROM oauth_account WHERE email_hash IS NULL AND email IS NOT NULL";
-    private static final String UPDATE_ENCRYPTED =
-            "UPDATE oauth_account SET email = ?, email_hash = ? WHERE id = ?";
+    private static final String UPDATE_ENCRYPTED = "UPDATE oauth_account SET email = ?, email_hash = ? WHERE id = ?";
     private static final int MIN_KEY_LENGTH = 32;
 
     @Override
@@ -67,7 +66,8 @@ public class V34__backfill_oauth_email extends BaseJavaMigration {
     private EmailCryptoProperties loadProperties() {
         // EmailCryptoProperties의 @Size 검증은 Spring 바인딩 시에만 동작하고, 여기서는 직접 생성하므로 우회된다.
         // 약한 키로 백필되는 것을 막기 위해 최소 길이를 직접 검증한다.
-        final String encryptionKey = requireKey("USER_EMAIL_ENCRYPTION_KEY", System.getenv("USER_EMAIL_ENCRYPTION_KEY"));
+        final String encryptionKey =
+                requireKey("USER_EMAIL_ENCRYPTION_KEY", System.getenv("USER_EMAIL_ENCRYPTION_KEY"));
         final String hmacKey = requireKey("USER_EMAIL_HMAC_KEY", System.getenv("USER_EMAIL_HMAC_KEY"));
         return new EmailCryptoProperties(encryptionKey, hmacKey);
     }

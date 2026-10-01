@@ -41,17 +41,12 @@ public class MiniGameResult {
     }
 
     public static MiniGameResult of(
-            @NonNull Map<Gamer, MiniGameScore> playerScores,
-            Comparator<MiniGameScore> comparator
-    ) {
-        final List<MiniGameScore> sortedScores = playerScores.values().stream()
-                .sorted(comparator)
-                .toList();
+            @NonNull Map<Gamer, MiniGameScore> playerScores, Comparator<MiniGameScore> comparator) {
+        final List<MiniGameScore> sortedScores =
+                playerScores.values().stream().sorted(comparator).toList();
         final Map<MiniGameScore, Integer> ranks = calculateRank(sortedScores);
-        return new MiniGameResult(playerScores.entrySet().stream().collect(Collectors.toMap(
-                Entry::getKey,
-                entry -> ranks.get(entry.getValue())
-        )));
+        return new MiniGameResult(playerScores.entrySet().stream()
+                .collect(Collectors.toMap(Entry::getKey, entry -> ranks.get(entry.getValue()))));
     }
 
     private static Map<MiniGameScore, Integer> calculateRank(List<MiniGameScore> sortedScores) {
@@ -71,9 +66,7 @@ public class MiniGameResult {
     }
 
     public int getTieCountByRank(int rank) {
-        return (int) this.rank.values()
-                .stream()
-                .filter(value -> value.equals(rank))
-                .count();
+        return (int)
+                this.rank.values().stream().filter(value -> value.equals(rank)).count();
     }
 }

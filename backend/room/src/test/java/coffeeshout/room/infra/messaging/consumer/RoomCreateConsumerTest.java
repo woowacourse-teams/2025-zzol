@@ -3,8 +3,8 @@ package coffeeshout.room.infra.messaging.consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.gamecommon.RoomLifecycleEvent;
 import coffeeshout.room.StreamMockedServiceTest;
 import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.domain.Room;
@@ -38,10 +38,7 @@ class RoomCreateConsumerTest extends StreamMockedServiceTest {
         // given
         String hostName = "호스트";
 
-        RoomLifecycleEvent.Created event = new RoomLifecycleEvent.Created(
-                hostName,
-                joinCode.getValue()
-        );
+        RoomLifecycleEvent.Created event = new RoomLifecycleEvent.Created(hostName, joinCode.getValue());
 
         // when
         roomCreateEventConsumer.accept(event);
@@ -60,10 +57,7 @@ class RoomCreateConsumerTest extends StreamMockedServiceTest {
         // given
         String hostName = "호스트";
 
-        RoomLifecycleEvent.Created event = new RoomLifecycleEvent.Created(
-                hostName,
-                joinCode.getValue()
-        );
+        RoomLifecycleEvent.Created event = new RoomLifecycleEvent.Created(hostName, joinCode.getValue());
 
         // when
         roomCreateEventConsumer.accept(event);
@@ -77,10 +71,7 @@ class RoomCreateConsumerTest extends StreamMockedServiceTest {
         // given
         String hostName = "호스트";
 
-        RoomLifecycleEvent.Created event = new RoomLifecycleEvent.Created(
-                hostName,
-                joinCode.getValue()
-        );
+        RoomLifecycleEvent.Created event = new RoomLifecycleEvent.Created(hostName, joinCode.getValue());
 
         // when
         roomCreateEventConsumer.accept(event);

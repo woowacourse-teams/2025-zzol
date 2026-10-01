@@ -4,11 +4,11 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.GameSession;
+import coffeeshout.room.application.service.RoomQueryService;
+import coffeeshout.room.domain.Room;
 import coffeeshout.zzolbot.domain.AskContext;
 import coffeeshout.zzolbot.domain.ToolExecutionResult;
 import coffeeshout.zzolbot.domain.ZzolBotTool;
-import coffeeshout.room.domain.Room;
-import coffeeshout.room.application.service.RoomQueryService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
@@ -37,23 +37,21 @@ public class RoomStateTool implements ZzolBotTool {
 
     @Override
     public String description() {
-        return "joinCode로 방의 현재 상태를 조회한다. " +
-                "방 상태(READY/PLAYING/SCORE_BOARD/ROULETTE/DONE), 호스트, 플레이어 목록, " +
-                "대기 중인 미니게임 큐, 완료된 미니게임 이력을 반환한다.";
+        return "joinCode로 방의 현재 상태를 조회한다. " + "방 상태(READY/PLAYING/SCORE_BOARD/ROULETTE/DONE), 호스트, 플레이어 목록, "
+                + "대기 중인 미니게임 큐, 완료된 미니게임 이력을 반환한다.";
     }
 
     @Override
     public Map<String, Object> parameterSchema() {
         return Map.of(
                 "type", "object",
-                "properties", Map.of(
-                        "joinCode", Map.of(
-                                "type", "string",
-                                "description", "4자리 방 입장 코드"
-                        )
-                ),
-                "required", List.of("joinCode")
-        );
+                "properties",
+                        Map.of(
+                                "joinCode",
+                                Map.of(
+                                        "type", "string",
+                                        "description", "4자리 방 입장 코드")),
+                "required", List.of("joinCode"));
     }
 
     @Override
@@ -79,15 +77,22 @@ public class RoomStateTool implements ZzolBotTool {
         summary.put("roomState", room.getRoomState().name());
         summary.put("host", room.getHost().getName().value());
         summary.put("playerCount", room.getPlayers().size());
-        summary.put("players", room.getPlayers().stream()
-                .map(p -> p.getName().value())
-                .toList());
+        summary.put(
+                "players",
+                room.getPlayers().stream().map(p -> p.getName().value()).toList());
         // 게임 대기열·완료 이력은 GameSession이 소유한다(ADR-0025). 세션이 없으면(게임 선택 전) 빈 목록
-        final GameSession session = gameSessionService.findSession(room.getJoinCode()).orElse(null);
-        summary.put("pendingMiniGames", session == null ? List.of()
-                : session.getSelectedTypes().stream().map(Enum::name).toList());
-        summary.put("finishedMiniGames", session == null ? List.of()
-                : session.getCompletedTypes().stream().map(Enum::name).toList());
+        final GameSession session =
+                gameSessionService.findSession(room.getJoinCode()).orElse(null);
+        summary.put(
+                "pendingMiniGames",
+                session == null
+                        ? List.of()
+                        : session.getSelectedTypes().stream().map(Enum::name).toList());
+        summary.put(
+                "finishedMiniGames",
+                session == null
+                        ? List.of()
+                        : session.getCompletedTypes().stream().map(Enum::name).toList());
         return summary;
     }
 }

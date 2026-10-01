@@ -1,15 +1,12 @@
 package coffeeshout.profanity.infra.seed;
 
+import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.profanity.application.ProfanityFilterService;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.ProfanityWord;
 import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
-import coffeeshout.global.exception.custom.BusinessException;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +16,9 @@ import java.util.List;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

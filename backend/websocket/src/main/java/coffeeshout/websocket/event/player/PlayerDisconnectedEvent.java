@@ -5,13 +5,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record PlayerDisconnectedEvent(
-        String eventId,
-        Instant timestamp,
-        PlayerEventType eventType,
-        String playerKey,
-        String sessionId,
-        String reason
-) implements BaseEvent {
+        String eventId, Instant timestamp, PlayerEventType eventType, String playerKey, String sessionId, String reason)
+        implements BaseEvent {
 
     public static PlayerDisconnectedEvent create(String playerKey, String sessionId, String reason) {
         return new PlayerDisconnectedEvent(
@@ -20,7 +15,6 @@ public record PlayerDisconnectedEvent(
                 PlayerEventType.PLAYER_DISCONNECTED,
                 playerKey,
                 sessionId,
-                reason
-        );
+                reason);
     }
 }

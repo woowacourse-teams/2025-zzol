@@ -32,8 +32,7 @@ public class AlertmanagerWebhookController {
     private final ExecutorService virtualThreadExecutor;
 
     public AlertmanagerWebhookController(
-            FiringAlertEnricher enricher,
-            @Qualifier("virtualThreadExecutor") ExecutorService virtualThreadExecutor) {
+            FiringAlertEnricher enricher, @Qualifier("virtualThreadExecutor") ExecutorService virtualThreadExecutor) {
         this.enricher = enricher;
         this.virtualThreadExecutor = virtualThreadExecutor;
     }

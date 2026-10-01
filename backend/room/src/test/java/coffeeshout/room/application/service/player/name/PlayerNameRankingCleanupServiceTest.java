@@ -28,17 +28,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PlayerNameRankingCleanupServiceTest {
 
-    @Mock ProfanityChecker profanityChecker;
-    @Mock PlayerEntityRepository playerRepository;
-    @Mock PlayerNameGenerator playerNameGenerator;
+    @Mock
+    ProfanityChecker profanityChecker;
+
+    @Mock
+    PlayerEntityRepository playerRepository;
+
+    @Mock
+    PlayerNameGenerator playerNameGenerator;
 
     PlayerNameRankingCleanupService cleanupService;
 
     @BeforeEach
     void setUp() {
-        cleanupService = new PlayerNameRankingCleanupService(
-                profanityChecker, playerRepository, playerNameGenerator
-        );
+        cleanupService = new PlayerNameRankingCleanupService(profanityChecker, playerRepository, playerNameGenerator);
     }
 
     @Nested
@@ -46,16 +49,14 @@ class PlayerNameRankingCleanupServiceTest {
 
         @Test
         void 교체_없이_종료한다() {
-            cleanupService.onNicknamesCollected(
-                    new NicknamesCollectedEvent(Set.of("용감한호랑이")));
+            cleanupService.onNicknamesCollected(new NicknamesCollectedEvent(Set.of("용감한호랑이")));
 
             then(playerRepository).shouldHaveNoInteractions();
         }
 
         @Test
         void playerRepository_findAllByPlayerName을_호출하지_않는다() {
-            cleanupService.onNicknamesCollected(
-                    new NicknamesCollectedEvent(Set.of("용감한호랑이")));
+            cleanupService.onNicknamesCollected(new NicknamesCollectedEvent(Set.of("용감한호랑이")));
 
             then(playerRepository).should(never()).findAllByPlayerName(anyString());
         }
@@ -79,8 +80,7 @@ class PlayerNameRankingCleanupServiceTest {
             given(roommate.getPlayerName()).willReturn("용감한호랑이");
             given(playerNameGenerator.generate(Set.of("씨발", "용감한호랑이"))).willReturn(new PlayerName("빠른여우"));
 
-            cleanupService.onNicknamesCollected(
-                    new NicknamesCollectedEvent(Set.of("씨발")));
+            cleanupService.onNicknamesCollected(new NicknamesCollectedEvent(Set.of("씨발")));
 
             then(player).should().updatePlayerName(new PlayerName("빠른여우"));
             then(roommate).should(never()).updatePlayerName(any(PlayerName.class));
@@ -100,10 +100,10 @@ class PlayerNameRankingCleanupServiceTest {
             given(playerRepository.findAllByRoomSessionIn(anyList())).willReturn(List.of(player1, player2));
             given(player1.getPlayerName()).willReturn("씨발");
             given(player2.getPlayerName()).willReturn("씨발");
-            given(playerNameGenerator.generate(eq(Set.of("씨발")))).willReturn(new PlayerName("빠른여우"), new PlayerName("용감한호랑이"));
+            given(playerNameGenerator.generate(eq(Set.of("씨발"))))
+                    .willReturn(new PlayerName("빠른여우"), new PlayerName("용감한호랑이"));
 
-            cleanupService.onNicknamesCollected(
-                    new NicknamesCollectedEvent(Set.of("씨발")));
+            cleanupService.onNicknamesCollected(new NicknamesCollectedEvent(Set.of("씨발")));
 
             then(player1).should().updatePlayerName(new PlayerName("빠른여우"));
             then(player2).should().updatePlayerName(new PlayerName("용감한호랑이"));

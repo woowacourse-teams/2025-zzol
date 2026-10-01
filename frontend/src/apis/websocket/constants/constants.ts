@@ -24,6 +24,7 @@ export type WebSocketError = {
 
 export type WebSocketErrorOptions = {
   type?: WebSocketErrorType;
+  level?: 'error' | 'warning';
   extra?: Record<string, unknown>;
 };
 

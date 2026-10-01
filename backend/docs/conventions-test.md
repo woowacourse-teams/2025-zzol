@@ -27,7 +27,7 @@ testImplementation(project(":test-support"))
 | WebSocket 통합 테스트 | 모듈 로컬 `{Module}IntegrationTest` 상속 + `TestStompSession` 사용 | `coffeeshout.support.IntegrationTestSupport` 확장. `RANDOM_PORT` 명시 오버라이드 + `test` 프로파일. `TestStompSession`으로 STOMP 구독·전송·메시지 수집 |
 | 일반 통합 테스트 (REST, Stream 등) | 모듈 로컬 `{Module}IntegrationTest` 상속 | `coffeeshout.support.IntegrationTestSupport` 확장. 기본 `MOCK` + `test` 프로파일 + `@BeforeEach`/`@AfterEach` DB cleanup |
 
-모든 모듈 로컬 베이스는 `coffeeshout.support.ServiceTest` 또는 `coffeeshout.support.IntegrationTestSupport`를 통해 `TestContainerSupport`를 상속하므로 MySQL·Valkey TestContainer가 자동으로 구동된다.
+모든 모듈 로컬 베이스는 `coffeeshout.support.ServiceTest` 또는 `coffeeshout.support.IntegrationTestSupport`를 거쳐 `TestContainerSupport`를 상속하므로 MySQL·Valkey TestContainer가 자동으로 구동된다.
 
 ### 모듈 로컬 베이스 클래스
 
@@ -100,7 +100,7 @@ scheduler.taskAt(1).run(); // onReadyEnd → PLAYING
 
 ## 픽스처
 
-테스트 데이터를 직접 생성하지 않고 픽스처를 통해 재사용한다. 메서드명은 한글 도메인 용어를 사용한다.
+테스트 데이터를 직접 생성하지 않고 픽스처로 재사용한다. 메서드명은 한글 도메인 용어를 사용한다.
 
 ### 위치
 

@@ -6,8 +6,7 @@ import coffeeshout.profanity.domain.WordSource;
 
 public final class ProfanityWordFixture {
 
-    private ProfanityWordFixture() {
-    }
+    private ProfanityWordFixture() {}
 
     public static ProfanityWord 한국어_수동_욕설() {
         return new ProfanityWord("욕설", Language.KOREAN, WordSource.MANUAL, true);

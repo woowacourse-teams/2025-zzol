@@ -17,15 +17,16 @@ public record ProfanityWord(String word, Language language, WordSource source, b
 
     private static void validate(String word, Language language, WordSource source) {
         if (word == null || word.isBlank()) {
-            throw new BusinessException(ProfanityErrorCode.WORD_BLANK,
-                    "비속어는 공백일 수 없습니다. 입력값: '" + word + "'");
+            throw new BusinessException(ProfanityErrorCode.WORD_BLANK, "비속어는 공백일 수 없습니다. 입력값: '" + word + "'");
         }
         if (word.length() > MAX_WORD_LENGTH) {
-            throw new BusinessException(ProfanityErrorCode.WORD_TOO_LONG,
+            throw new BusinessException(
+                    ProfanityErrorCode.WORD_TOO_LONG,
                     "비속어는 " + MAX_WORD_LENGTH + "자 이하여야 합니다. 현재 길이: " + word.length());
         }
         if (isDegenerateAsciiKeyword(word)) {
-            throw new BusinessException(ProfanityErrorCode.WORD_TOO_SHORT,
+            throw new BusinessException(
+                    ProfanityErrorCode.WORD_TOO_SHORT,
                     "ASCII 비속어는 " + MIN_ASCII_WORD_LENGTH + "자 이상이어야 합니다. "
                             + "너무 짧은 ASCII 키워드는 무관한 닉네임을 부분 매칭으로 오탐한다. 입력값: '" + word + "'");
         }

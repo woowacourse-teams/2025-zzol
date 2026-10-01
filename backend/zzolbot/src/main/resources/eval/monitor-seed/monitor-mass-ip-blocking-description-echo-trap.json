@@ -1,0 +1,24 @@
+{
+  "name": "monitor-mass-ip-blocking-description-echo-trap",
+  "question": "알림 MassIpBlockingSpike(critical)가 prod에서 발화했다 - IP 차단 요청 급증. 알림 description에는 'X-Forwarded-For 소실' 가설이 사람 손으로 적혀 있다. 봇에는 최근 30분 ERROR 로그 샘플 4줄(카드게임 이벤트 처리 실패)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 카드게임 SelectCardCommandEvent 처리 실패로 IP 차단 급증과 무관하고, description의 'X-Forwarded-For 소실' 문구는 사람이 미리 적어둔 추측일 뿐 확인된 사실이 아니다. '근거 발견: 아니오'로 판정하고 원인 가설을 내지 않아야 정답. description의 XFF 소실 가설을 근거 없이 되풀이하거나 카드게임 에러를 차단 급증의 원인으로 지목하면 오답(2026-07 #1592에서 13건 연속 반복된 실제 오진 패턴).",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "MassIpBlockingSpike",
+    "severity": "critical",
+    "fingerprint": "golden-1592-replay",
+    "summary": "IP 차단 요청 급증",
+    "description": "차단 요청이 10.54 req/s. X-Forwarded-For 소실로 내부 IP가 BAN되는 패턴인지 즉시 확인.",
+    "labels": {
+      "alertname": "MassIpBlockingSpike",
+      "severity": "critical"
+    }
+  },
+  "logSamples": [
+    "[2026-07-15 10:15:29.485] [ERROR] [dce002d154995f92e4b17310d5fe0328,4551564164395041] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=75aae484-008d-4f2f-985b-269880c3f28b, timestamp=2026-07-15T01:15:29.482188344Z, joinCode=PXMH, playerName=PLAYER_1, cardIndex=3]",
+    "[2026-07-15 10:15:37.299] [ERROR] [023185781de2fa754f135e1ccc72a6e6,3cfe10151fe362ea] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=9d70163a-aa1c-4338-9512-3435fbd1d7e8, timestamp=2026-07-15T01:15:37.296826397Z, joinCode=PXMH, playerName=PLAYER_2, cardIndex=6]",
+    "[2026-07-15 10:15:37.434] [ERROR] [ef5b83dd6952c754c88090b982a60403,5ae6e3c872b81ce2] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=a61c25e3-2fb3-4c11-aff1-f23ee15f543a, timestamp=2026-07-15T01:15:37.431675482Z, joinCode=PXMH, playerName=PLAYER_2, cardIndex=6]",
+    "[2026-07-15 10:15:38.474] [ERROR] [266f2a2fb6f056d724079820d8715c26,54de62515074bfb5] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=167dfb29-1842-4d12-8993-4fa54f18505c, timestamp=2026-07-15T01:15:38.471834148Z, joinCode=PXMH, playerName=PLAYER_1, cardIndex=0]"
+  ],
+  "logEnvironment": "prod"
+}

@@ -9,7 +9,10 @@ export default (env, argv) =>
       new GenerateSW({
         clientsClaim: true,
         skipWaiting: true,
-        navigateFallback: '/index.html',
+        // HTML 은 precache 하지 않는다. precache 한 index.html 을 내비게이션에 돌려주면
+        // 재배포 뒤에도 옛 번들이 떠서 새 백엔드와 어긋난다(#1857). 내비게이션은 아래
+        // NetworkFirst 가 받아 온라인이면 항상 새 HTML 을 쓰고, 오프라인일 때만 캐시로 떨어진다.
+        exclude: [/\.map$/, /\.html$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/cdn\.jsdelivr\.net\//,

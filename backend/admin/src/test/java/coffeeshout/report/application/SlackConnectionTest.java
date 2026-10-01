@@ -32,19 +32,16 @@ class SlackConnectionTest {
     void Slack_webhook에_테스트_메시지를_전송한다() {
         String webhookUrl = resolveWebhookUrl();
         assumeTrue(
-                webhookUrl != null && !webhookUrl.isBlank(),
-                "SLACK_WEBHOOK_URL을 찾을 수 없습니다. 환경변수 또는 .env 파일을 확인하세요."
-        );
+                webhookUrl != null && !webhookUrl.isBlank(), "SLACK_WEBHOOK_URL을 찾을 수 없습니다. 환경변수 또는 .env 파일을 확인하세요.");
 
-        assertThatCode(() ->
-                restClient.post()
+        assertThatCode(() -> restClient
+                        .post()
                         .uri(webhookUrl)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(Map.of("text",
-                                "*[테스트]* `SlackConnectionTest` — Slack 연동 확인용 메시지입니다. :white_check_mark:"))
+                        .body(Map.of("text", "*[테스트]* `SlackConnectionTest` — Slack 연동 확인용 메시지입니다. :white_check_mark:"))
                         .retrieve()
-                        .toBodilessEntity()
-        ).doesNotThrowAnyException();
+                        .toBodilessEntity())
+                .doesNotThrowAnyException();
     }
 
     /**

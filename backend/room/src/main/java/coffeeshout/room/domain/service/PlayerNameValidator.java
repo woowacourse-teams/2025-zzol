@@ -8,7 +8,6 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-
 @RequiredArgsConstructor
 @Service
 public class PlayerNameValidator {
@@ -20,9 +19,7 @@ public class PlayerNameValidator {
 
         if (profanityChecker.contains(playerName.value())) {
             throw new BusinessException(
-                    RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY,
-                    "비속어가 포함된 닉네임입니다. 입력값: '" + playerName + "'"
-            );
+                    RoomErrorCode.PLAYER_NAME_CONTAINS_PROFANITY, "비속어가 포함된 닉네임입니다. 입력값: '" + playerName + "'");
         }
     }
 }

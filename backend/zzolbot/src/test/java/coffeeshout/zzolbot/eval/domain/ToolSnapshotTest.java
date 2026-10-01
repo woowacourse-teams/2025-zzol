@@ -48,17 +48,16 @@ class ToolSnapshotTest {
 
         @Test
         void 스냅샷에_있는_도구_호출은_결과를_반환한다() {
-            final ToolSnapshot snapshot = new ToolSnapshot(Map.of(
-                    ToolCallKey.of("room_state", Map.of("joinCode", "A4BX")), "{\"state\":\"PLAYING\"}"));
+            final ToolSnapshot snapshot = new ToolSnapshot(
+                    Map.of(ToolCallKey.of("room_state", Map.of("joinCode", "A4BX")), "{\"state\":\"PLAYING\"}"));
 
-            assertThat(snapshot.find("room_state", Map.of("joinCode", "A4BX")))
-                    .contains("{\"state\":\"PLAYING\"}");
+            assertThat(snapshot.find("room_state", Map.of("joinCode", "A4BX"))).contains("{\"state\":\"PLAYING\"}");
         }
 
         @Test
         void 스냅샷에_없는_도구_호출은_빈_값을_반환한다() {
-            final ToolSnapshot snapshot = new ToolSnapshot(Map.of(
-                    ToolCallKey.of("room_state", Map.of("joinCode", "A4BX")), "{\"state\":\"PLAYING\"}"));
+            final ToolSnapshot snapshot = new ToolSnapshot(
+                    Map.of(ToolCallKey.of("room_state", Map.of("joinCode", "A4BX")), "{\"state\":\"PLAYING\"}"));
 
             assertThat(snapshot.find("room_state", Map.of("joinCode", "ZZZZ"))).isEmpty();
         }

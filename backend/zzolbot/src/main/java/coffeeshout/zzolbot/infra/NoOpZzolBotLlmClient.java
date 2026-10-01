@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 public class NoOpZzolBotLlmClient implements ZzolBotLlmClient {
 
     @Override
-    public ZzolBotLlmResponse generate(List<ZzolBotMessage> conversation, List<ZzolBotTool> tools, String systemInstruction, AskContext ctx) {
+    public ZzolBotLlmResponse generate(
+            List<ZzolBotMessage> conversation, List<ZzolBotTool> tools, String systemInstruction, AskContext ctx) {
         return new ZzolBotLlmResponse.TextResponse("ZzolBot이 비활성화된 환경입니다.");
     }
 }

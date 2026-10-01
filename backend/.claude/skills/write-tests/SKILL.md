@@ -9,7 +9,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit
 ## 순서
 
 1. 대상 클래스의 public 메서드와 책임을 파악한다
-2. 해당 **모듈의** `src/test/java/` 하위 동일 패키지에 테스트 파일을 생성한다 (멀티모듈 — 경로는 `<module>/src/test/java/coffeeshout/...`)
+2. 해당 **모듈의** `src/test/java/` 하위 동일 패키지에 테스트 파일을 생성한다 (멀티모듈이라 경로는 `<module>/src/test/java/coffeeshout/...`)
 3. `docs/conventions-test.md`의 컨벤션을 따른다
 
 ## 반드시 지킬 규칙

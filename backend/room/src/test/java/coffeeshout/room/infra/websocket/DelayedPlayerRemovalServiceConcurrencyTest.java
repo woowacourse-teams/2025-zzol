@@ -43,8 +43,8 @@ class DelayedPlayerRemovalServiceConcurrencyTest {
         taskScheduler.initialize();
         stompSessionManager = new StompSessionManager();
 
-        delayedPlayerRemovalService = new DelayedPlayerRemovalService(taskScheduler, TEST_REMOVAL_DELAY,
-                playerDisconnectionService, stompSessionManager, roomService);
+        delayedPlayerRemovalService = new DelayedPlayerRemovalService(
+                taskScheduler, TEST_REMOVAL_DELAY, playerDisconnectionService, stompSessionManager, roomService);
     }
 
     @Nested
@@ -56,11 +56,9 @@ class DelayedPlayerRemovalServiceConcurrencyTest {
 
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
-            await().atMost(Duration.ofSeconds(2))
-                    .untilAsserted(() -> {
-                        then(playerDisconnectionService).should()
-                                .handlePlayerDisconnection(playerKey, sessionId, reason);
-                    });
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> {
+                then(playerDisconnectionService).should().handlePlayerDisconnection(playerKey, sessionId, reason);
+            });
         }
 
         @Test
@@ -70,12 +68,11 @@ class DelayedPlayerRemovalServiceConcurrencyTest {
 
             delayedPlayerRemovalService.cancelScheduledRemoval(playerKey);
 
-            await().during(Duration.ofMillis(700))
-                    .atMost(Duration.ofSeconds(1))
-                    .untilAsserted(() -> {
-                        then(playerDisconnectionService).should(never())
-                                .handlePlayerDisconnection(playerKey, sessionId, reason);
-                    });
+            await().during(Duration.ofMillis(700)).atMost(Duration.ofSeconds(1)).untilAsserted(() -> {
+                then(playerDisconnectionService)
+                        .should(never())
+                        .handlePlayerDisconnection(playerKey, sessionId, reason);
+            });
         }
     }
 
@@ -96,15 +93,11 @@ class DelayedPlayerRemovalServiceConcurrencyTest {
             delayedPlayerRemovalService.schedulePlayerRemoval(player2, "session-2", reason);
             delayedPlayerRemovalService.schedulePlayerRemoval(player3, "session-3", reason);
 
-            await().atMost(Duration.ofSeconds(2))
-                    .untilAsserted(() -> {
-                        then(playerDisconnectionService).should()
-                                .handlePlayerDisconnection(player1, "session-1", reason);
-                        then(playerDisconnectionService).should()
-                                .handlePlayerDisconnection(player2, "session-2", reason);
-                        then(playerDisconnectionService).should()
-                                .handlePlayerDisconnection(player3, "session-3", reason);
-                    });
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> {
+                then(playerDisconnectionService).should().handlePlayerDisconnection(player1, "session-1", reason);
+                then(playerDisconnectionService).should().handlePlayerDisconnection(player2, "session-2", reason);
+                then(playerDisconnectionService).should().handlePlayerDisconnection(player3, "session-3", reason);
+            });
         }
     }
 
@@ -117,11 +110,9 @@ class DelayedPlayerRemovalServiceConcurrencyTest {
 
             delayedPlayerRemovalService.schedulePlayerRemoval(playerKey, sessionId, reason);
 
-            await().atMost(Duration.ofSeconds(2))
-                    .untilAsserted(() -> {
-                        then(playerDisconnectionService).should()
-                                .handlePlayerDisconnection(playerKey, sessionId, reason);
-                    });
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> {
+                then(playerDisconnectionService).should().handlePlayerDisconnection(playerKey, sessionId, reason);
+            });
         }
 
         @Test
@@ -131,12 +122,11 @@ class DelayedPlayerRemovalServiceConcurrencyTest {
 
             delayedPlayerRemovalService.cancelScheduledRemoval(playerKey);
 
-            await().during(Duration.ofMillis(700))
-                    .atMost(Duration.ofSeconds(1))
-                    .untilAsserted(() -> {
-                        then(playerDisconnectionService).should(never())
-                                .handlePlayerDisconnection(playerKey, sessionId, reason);
-                    });
+            await().during(Duration.ofMillis(700)).atMost(Duration.ofSeconds(1)).untilAsserted(() -> {
+                then(playerDisconnectionService)
+                        .should(never())
+                        .handlePlayerDisconnection(playerKey, sessionId, reason);
+            });
         }
     }
 }

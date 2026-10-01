@@ -3,10 +3,11 @@ import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { StompSubscription } from '@stomp/stompjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { subscriptionRegistry } from '../utils/subscriptionRegistry';
+import type { WsPayloadOf, WsSubscribeDestination, WsSubscribePath } from '../generated/wsContract';
 
-export const useWebSocketSubscription = <T>(
-  destination: string,
-  onData: (data: T) => void,
+export const useWebSocketSubscription = <D extends WsSubscribePath>(
+  destination: WsSubscribeDestination<D>,
+  onData: (data: WsPayloadOf<D>) => void,
   onError?: (error: Error) => void,
   enabled: boolean = true
 ) => {
@@ -29,7 +30,7 @@ export const useWebSocketSubscription = <T>(
     if (!enabled) return;
 
     const handler = (data: unknown) => {
-      onDataRef.current(data as T);
+      onDataRef.current(data as WsPayloadOf<D>);
     };
 
     subscriptionRegistry.register(destination, handler);
@@ -64,7 +65,7 @@ export const useWebSocketSubscription = <T>(
     }
 
     try {
-      const sub = subscribe<T>(destination, onData, onError);
+      const sub = subscribe<WsPayloadOf<D>>(destination, onData, onError);
 
       subscriptionRef.current = sub;
       prevSessionIdRef.current = sessionId;

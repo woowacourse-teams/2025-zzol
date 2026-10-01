@@ -33,8 +33,7 @@ public class QrCodeService {
             QrCodeGenerator qrCodeGenerator,
             StorageService storageService,
             MeterRegistry meterRegistry,
-            StreamPublisher streamPublisher
-    ) {
+            StreamPublisher streamPublisher) {
         this.qrCodePrefix = qrProperties.prefix();
         this.qrCodeGenerator = qrCodeGenerator;
         this.storageService = storageService;
@@ -62,7 +61,8 @@ public class QrCodeService {
             final String qrCodeUrl = getQrCodeUrl(joinCode);
 
             // 3. Room에 저장
-            streamPublisher.publish(RoomStreamKey.BROADCAST, new QrCodeStatusEvent(joinCode, QrCodeStatus.SUCCESS, qrCodeUrl));
+            streamPublisher.publish(
+                    RoomStreamKey.BROADCAST, new QrCodeStatusEvent(joinCode, QrCodeStatus.SUCCESS, qrCodeUrl));
             log.info("QR 코드 생성 완료: joinCode={}, url={}", joinCode, qrCodeUrl);
         } catch (Exception e) {
             log.error("QR 코드 생성 실패: joinCode={}, error={}", joinCode, e.getMessage(), e);
@@ -78,8 +78,9 @@ public class QrCodeService {
             final String storageKey = uploadToStorage(contents, qrCodeImage);
             return getStorageUrl(storageKey);
         } catch (Exception e) {
-            meterRegistry.counter("qr.service.failed",
-                    "error", e.getClass().getSimpleName()).increment();
+            meterRegistry
+                    .counter("qr.service.failed", "error", e.getClass().getSimpleName())
+                    .increment();
             log.error("QR 이미지 URL 생성 실패: contents={}, error={}", contents, e.getMessage(), e);
 
             throw e;
@@ -98,12 +99,11 @@ public class QrCodeService {
         final String url = getUrl(contents);
 
         try {
-            return qrCodeGenerationTimer.recordCallable(() ->
-                    qrCodeGenerator.generate(url)
-            );
+            return qrCodeGenerationTimer.recordCallable(() -> qrCodeGenerator.generate(url));
         } catch (Exception e) {
-            meterRegistry.counter("qr.generation.failed",
-                    "error", e.getClass().getSimpleName()).increment();
+            meterRegistry
+                    .counter("qr.generation.failed", "error", e.getClass().getSimpleName())
+                    .increment();
             log.error("QR 코드 생성 실패: contents={}, error={}", contents, e.getMessage(), e);
 
             throw new InfrastructureException(QrCodeErrorCode.QR_CODE_GENERATION_FAILED, "QR 코드 생성에 실패했습니다.", e);

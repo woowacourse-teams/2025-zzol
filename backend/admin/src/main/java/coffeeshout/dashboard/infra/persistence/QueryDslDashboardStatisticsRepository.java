@@ -7,6 +7,7 @@ import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
+import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.persistence.QMiniGameEntity;
@@ -42,21 +43,14 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<TopWinnerResponse> findTopWinnersBetween(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    ) {
+    public List<TopWinnerResponse> findTopWinnersBetween(LocalDateTime startDate, LocalDateTime endDate, int limit) {
         return queryFactory
                 .select(Projections.constructor(
-                        TopWinnerResponse.class,
-                        USER.nickname,
-                        USER.userCode,
-                        ROULETTE_RESULT.count()
-                ))
+                        TopWinnerResponse.class, USER.nickname, USER.userCode, ROULETTE_RESULT.count()))
                 .from(ROULETTE_RESULT)
                 .join(ROULETTE_RESULT.winner, PLAYER)
-                .join(USER).on(USER.id.eq(PLAYER.userId))
+                .join(USER)
+                .on(USER.id.eq(PLAYER.userId))
                 .where(ROULETTE_RESULT.createdAt.between(startDate, endDate))
                 .groupBy(PLAYER.userId)
                 .orderBy(ROULETTE_RESULT.count().desc())
@@ -66,15 +60,13 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
 
     @Override
     public Optional<LowestProbabilityWinnerResponse> findLowestProbabilityWinner(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    ) {
+            LocalDateTime startDate, LocalDateTime endDate, int limit) {
         final Integer minProbability = queryFactory
                 .select(ROULETTE_RESULT.winnerProbability.min())
                 .from(ROULETTE_RESULT)
                 .join(ROULETTE_RESULT.winner, PLAYER)
-                .join(USER).on(USER.id.eq(PLAYER.userId))
+                .join(USER)
+                .on(USER.id.eq(PLAYER.userId))
                 .where(ROULETTE_RESULT.createdAt.between(startDate, endDate))
                 .fetchOne();
 
@@ -83,18 +75,14 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
         }
 
         final List<Tuple> results = queryFactory
-                .select(
-                        ROULETTE_RESULT.winnerProbability,
-                        USER.nickname,
-                        USER.userCode
-                )
+                .select(ROULETTE_RESULT.winnerProbability, USER.nickname, USER.userCode)
                 .from(ROULETTE_RESULT)
                 .join(ROULETTE_RESULT.winner, PLAYER)
-                .join(USER).on(USER.id.eq(PLAYER.userId))
+                .join(USER)
+                .on(USER.id.eq(PLAYER.userId))
                 .where(
                         ROULETTE_RESULT.createdAt.between(startDate, endDate),
-                        ROULETTE_RESULT.winnerProbability.eq(minProbability)
-                )
+                        ROULETTE_RESULT.winnerProbability.eq(minProbability))
                 .distinct()
                 .orderBy(USER.nickname.asc())
                 .limit(limit)
@@ -102,9 +90,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
 
         final List<LowestProbabilityWinnerResponse.PlayerInfo> players = results.stream()
                 .map(tuple -> new LowestProbabilityWinnerResponse.PlayerInfo(
-                        tuple.get(USER.nickname),
-                        tuple.get(USER.userCode)
-                ))
+                        tuple.get(USER.nickname), tuple.get(USER.userCode)))
                 .toList();
 
         return Optional.of(LowestProbabilityWinnerResponse.of(minProbability, players));
@@ -113,13 +99,10 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
     @Override
     public List<GamePlayCountResponse> findGamePlayCountByMonth(LocalDateTime startDate, LocalDateTime endDate) {
         return queryFactory
-                .select(Projections.constructor(
-                        GamePlayCountResponse.class,
-                        MINI_GAME.miniGameType,
-                        MINI_GAME.count()
-                ))
+                .select(Projections.constructor(GamePlayCountResponse.class, MINI_GAME.miniGameType, MINI_GAME.count()))
                 .from(MINI_GAME)
-                .join(ROOM).on(ROOM.id.eq(MINI_GAME.roomSessionId))
+                .join(ROOM)
+                .on(ROOM.id.eq(MINI_GAME.roomSessionId))
                 .where(ROOM.createdAt.between(startDate, endDate))
                 .groupBy(MINI_GAME.miniGameType)
                 .orderBy(MINI_GAME.count().desc())
@@ -128,26 +111,14 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
 
     @Override
     public List<RacingGameTopPlayerResponse> findRacingGameTopPlayers(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    ) {
+            LocalDateTime startDate, LocalDateTime endDate, int limit) {
         return findTopPlayersByMinScore(
-                MiniGameType.RACING_GAME,
-                startDate,
-                endDate,
-                limit,
-                null,
-                RacingGameTopPlayerResponse::new
-        );
+                MiniGameType.RACING_GAME, startDate, endDate, limit, null, RacingGameTopPlayerResponse::new);
     }
 
     @Override
     public List<SpeedTouchTopPlayerResponse> findSpeedTouchTopPlayers(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    ) {
+            LocalDateTime startDate, LocalDateTime endDate, int limit) {
         // 완주 점수는 완주 시간(ms). DNF는 SpeedTouchScore에서 DNF_BASE(1_000_000_000) - progress로
         // 10^9 부근 값이므로, 이 경계 미만(실제 완주 기록)만 집계해 미완주 기록을 TOP에서 제외한다.
         final long finishScoreCeiling = 1_000_000L;
@@ -158,16 +129,12 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 endDate,
                 limit,
                 MINI_GAME_RESULT.score.lt(finishScoreCeiling),
-                SpeedTouchTopPlayerResponse::new
-        );
+                SpeedTouchTopPlayerResponse::new);
     }
 
     @Override
     public List<BlindTimerTopPlayerResponse> findBlindTimerTopPlayers(
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit
-    ) {
+            LocalDateTime startDate, LocalDateTime endDate, int limit) {
         // 점수는 목표 시간과의 오차(ms, 작을수록 가까움). 타임아웃은 BlindTimerScore에서 TIMEOUT_PENALTY(999_999_999)로
         // 항상 꼴등 그룹이므로, 이 경계 미만(정상 STOP, 최대 오차 약 20초)만 집계해 타임아웃 기록을 TOP에서 제외한다.
         final long normalStopScoreCeiling = 1_000_000L;
@@ -178,32 +145,57 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 endDate,
                 limit,
                 MINI_GAME_RESULT.score.lt(normalStopScoreCeiling),
-                BlindTimerTopPlayerResponse::new
-        );
+                BlindTimerTopPlayerResponse::new);
     }
 
     @Override
     public List<BlockStackingTopPlayerResponse> findBlockStackingTopPlayers(
+            LocalDateTime startDate, LocalDateTime endDate, int limit) {
+        return findTopPlayersByMaxScore(
+                MiniGameType.BLOCK_STACKING, startDate, endDate, limit, BlockStackingTopPlayerResponse::new);
+    }
+
+    /** 지렁이 게임 — 점수 = 생존 시간(ms)이므로 블록쌓기와 같은 최대값 기준. */
+    @Override
+    public List<WormGameTopPlayerResponse> findWormGameTopPlayers(
+            LocalDateTime startDate, LocalDateTime endDate, int limit) {
+        return findTopPlayersByMaxScore(
+                MiniGameType.WORM_GAME, startDate, endDate, limit, WormGameTopPlayerResponse::new);
+    }
+
+    /**
+     * 최대 점수가 우수한 미니게임의 TOP 플레이어를 조회한다(BlockStacking·WormGame 공통).
+     * findTopPlayersByMinScore 와 같은 2-스텝 방식이다 — player_id 로 집계해야 다른 방의 동명이인이 한 행으로 합쳐지지 않는다.
+     * 동점은 playerId 오름차순으로 순서를 고정한다.
+     */
+    private <T> List<T> findTopPlayersByMaxScore(
+            MiniGameType type,
             LocalDateTime startDate,
             LocalDateTime endDate,
-            int limit
-    ) {
-        return queryFactory
-                .select(Projections.constructor(
-                        BlockStackingTopPlayerResponse.class,
-                        PLAYER.playerName,
-                        MINI_GAME_RESULT.score.max()
-                ))
+            int limit,
+            BiFunction<String, Long, T> mapper) {
+        final List<Tuple> aggregations = queryFactory
+                .select(MINI_GAME_RESULT.playerId, MINI_GAME_RESULT.score.max())
                 .from(MINI_GAME_RESULT)
-                .join(PLAYER).on(PLAYER.id.eq(MINI_GAME_RESULT.playerId))
-                .where(
-                        MINI_GAME_RESULT.miniGameType.eq(MiniGameType.BLOCK_STACKING),
-                        MINI_GAME_RESULT.createdAt.between(startDate, endDate)
-                )
-                .groupBy(PLAYER.playerName)
-                .orderBy(MINI_GAME_RESULT.score.max().desc())
+                .where(MINI_GAME_RESULT.miniGameType.eq(type), MINI_GAME_RESULT.createdAt.between(startDate, endDate))
+                .groupBy(MINI_GAME_RESULT.playerId)
+                .orderBy(MINI_GAME_RESULT.score.max().desc(), MINI_GAME_RESULT.playerId.asc())
                 .limit(limit)
                 .fetch();
+
+        if (aggregations.isEmpty()) {
+            return List.of();
+        }
+
+        final Map<Long, String> playerNameMap = findPlayerNames(aggregations.stream()
+                .map(tuple -> tuple.get(MINI_GAME_RESULT.playerId))
+                .toList());
+
+        return aggregations.stream()
+                .map(tuple -> mapper.apply(
+                        playerNameMap.get(tuple.get(MINI_GAME_RESULT.playerId)),
+                        tuple.get(MINI_GAME_RESULT.score.max())))
+                .toList();
     }
 
     /**
@@ -219,19 +211,14 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
             LocalDateTime endDate,
             int limit,
             BooleanExpression scoreFilter,
-            BiFunction<String, Long, T> mapper
-    ) {
+            BiFunction<String, Long, T> mapper) {
         final List<Tuple> aggregations = queryFactory
-                .select(
-                        MINI_GAME_RESULT.playerId,
-                        MINI_GAME_RESULT.score.min()
-                )
+                .select(MINI_GAME_RESULT.playerId, MINI_GAME_RESULT.score.min())
                 .from(MINI_GAME_RESULT)
                 .where(
                         MINI_GAME_RESULT.miniGameType.eq(miniGameType),
                         MINI_GAME_RESULT.createdAt.between(startDate, endDate),
-                        scoreFilter
-                )
+                        scoreFilter)
                 .groupBy(MINI_GAME_RESULT.playerId)
                 .orderBy(MINI_GAME_RESULT.score.min().asc(), MINI_GAME_RESULT.playerId.asc())
                 .limit(limit)
@@ -250,8 +237,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
         return aggregations.stream()
                 .map(tuple -> mapper.apply(
                         playerNameMap.get(tuple.get(MINI_GAME_RESULT.playerId)),
-                        tuple.get(MINI_GAME_RESULT.score.min())
-                ))
+                        tuple.get(MINI_GAME_RESULT.score.min())))
                 .toList();
     }
 
@@ -262,9 +248,6 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 .where(PLAYER.id.in(playerIds))
                 .fetch()
                 .stream()
-                .collect(Collectors.toMap(
-                        tuple -> tuple.get(PLAYER.id),
-                        tuple -> tuple.get(PLAYER.playerName)
-                ));
+                .collect(Collectors.toMap(tuple -> tuple.get(PLAYER.id), tuple -> tuple.get(PLAYER.playerName)));
     }
 }

@@ -22,11 +22,12 @@ public class RedisStreamThreadPoolConfig {
 
     @PostConstruct
     public void registerThreadPools() {
-        properties.threadPools().forEach((poolName, poolConfig) -> applicationContext.registerBean(
-                String.format(BEAN_NAME, poolName),
-                ThreadPoolTaskExecutor.class,
-                () -> createThreadPoolExecutor(poolConfig, String.format(BEAN_NAME, poolName))
-        ));
+        properties
+                .threadPools()
+                .forEach((poolName, poolConfig) -> applicationContext.registerBean(
+                        String.format(BEAN_NAME, poolName),
+                        ThreadPoolTaskExecutor.class,
+                        () -> createThreadPoolExecutor(poolConfig, String.format(BEAN_NAME, poolName))));
         properties.keys().entrySet().stream()
                 // 리스너를 만들지 않는 스트림(컨슈머 그룹 전용)은 소비 스레드풀이 필요 없다
                 .filter(entry -> entry.getValue().isListenerEnabled())
@@ -37,8 +38,8 @@ public class RedisStreamThreadPoolConfig {
                     applicationContext.registerBean(
                             String.format(BEAN_NAME, keyName),
                             ThreadPoolTaskExecutor.class,
-                            () -> createThreadPoolExecutor(streamConfig.threadPool(), String.format(BEAN_NAME, keyName))
-                    );
+                            () -> createThreadPoolExecutor(
+                                    streamConfig.threadPool(), String.format(BEAN_NAME, keyName)));
                 });
     }
 

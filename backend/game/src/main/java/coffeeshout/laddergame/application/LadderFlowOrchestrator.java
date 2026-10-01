@@ -26,7 +26,8 @@ public class LadderFlowOrchestrator {
     private final ApplicationEventPublisher eventPublisher;
 
     public void startFlow(LadderGame game, JoinCode joinCode) {
-        ladderFlowScheduler.schedule(description(joinCode), Duration.ZERO)
+        ladderFlowScheduler
+                .schedule(description(joinCode), Duration.ZERO)
                 .andThen(prepare(game, joinCode), timing.description())
                 .andThen(drawing(game, joinCode), timing.prepare())
                 .andThen(result(game, joinCode), timing.drawing().plus(timing.drawingGracePeriod()))
@@ -91,7 +92,10 @@ public class LadderFlowOrchestrator {
             // 순서 불변식(ADR-0025 결정 5): finishGame()으로 roundCount 확정·상태 복귀 후 이벤트 발행
             final int roundCount = gameSessionService.finishGame(joinCode);
             eventPublisher.publishEvent(new MiniGameFinishedEvent(
-                    joinCodeValue, MiniGameType.LADDER_GAME.name(), game.getResult().toRankMap(), roundCount));
+                    joinCodeValue,
+                    MiniGameType.LADDER_GAME.name(),
+                    game.getResult().toRankMap(),
+                    roundCount));
         };
     }
 }

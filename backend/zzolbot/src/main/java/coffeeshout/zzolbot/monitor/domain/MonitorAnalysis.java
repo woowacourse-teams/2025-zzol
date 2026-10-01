@@ -10,11 +10,7 @@ import java.util.List;
  * 판정이 누락되면 보수적으로 false로 본다 — 운영봇에서는 과소 주장이 과대 주장보다 안전하다.
  */
 public record MonitorAnalysis(
-        String summary,
-        String rootCauseHypothesis,
-        List<String> suggestedActions,
-        boolean evidenceFound
-) {
+        String summary, String rootCauseHypothesis, List<String> suggestedActions, boolean evidenceFound) {
 
     public MonitorAnalysis {
         suggestedActions = List.copyOf(suggestedActions);
@@ -34,8 +30,7 @@ public record MonitorAnalysis(
      */
     public static MonitorAnalysis noEvidence(String environment, int windowMinutes) {
         return new MonitorAnalysis(
-                "LLM 분석 생략 — %s 환경의 최근 %d분 구간에서 ERROR 로그를 찾지 못해 알림을 뒷받침할 근거가 없다."
-                        .formatted(environment, windowMinutes),
+                "LLM 분석 생략 — %s 환경의 최근 %d분 구간에서 ERROR 로그를 찾지 못해 알림을 뒷받침할 근거가 없다.".formatted(environment, windowMinutes),
                 "",
                 List.of(),
                 false);

@@ -1,9 +1,10 @@
 package coffeeshout.room.ui.messaging;
 
 import coffeeshout.gamecommon.JoinCode;
-import coffeeshout.room.application.service.RoomQueryService;
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import coffeeshout.minigame.event.dto.MiniGameSelectFailedEvent;
+import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.QrCodeStatusEvent;
 import coffeeshout.room.domain.event.RouletteShownEvent;
@@ -40,14 +41,11 @@ public class RoomMessagePublisher {
             path = "/room/{joinCode}",
             payload = List.class,
             generic = PlayerResponse.class,
-            description = "플레이어 목록 변경 브로드캐스트"
-    )
+            description = "플레이어 목록 변경 브로드캐스트")
     public void onPlayerListChanged(PlayerListUpdateEvent event) {
-        log.debug("플레이어 목록 변경 이벤트 수신: joinCode={}",
-                event.joinCode());
+        log.debug("플레이어 목록 변경 이벤트 수신: joinCode={}", event.joinCode());
 
-        final List<PlayerResponse> responses = roomQueryService.getPlayers(new JoinCode(event.joinCode()))
-                .stream()
+        final List<PlayerResponse> responses = roomQueryService.getPlayers(new JoinCode(event.joinCode())).stream()
                 .map(PlayerResponse::from)
                 .toList();
 
@@ -61,12 +59,13 @@ public class RoomMessagePublisher {
     @WsTopic(
             path = "/room/{joinCode}/minigame",
             payload = List.class,
-            generic = String.class,
-            description = "미니게임 목록 변경 브로드캐스트"
-    )
+            generic = MiniGameType.class,
+            description = "미니게임 목록 변경 브로드캐스트")
     public void onMiniGameListChanged(MiniGameSelectEvent event) {
-        log.debug("미니게임 목록 변경 이벤트 수신: joinCode={}, gameCount={}",
-                event.joinCode(), event.miniGameTypes().size());
+        log.debug(
+                "미니게임 목록 변경 이벤트 수신: joinCode={}, gameCount={}",
+                event.joinCode(),
+                event.miniGameTypes().size());
 
         final String destination = String.format(MINI_GAME_TOPIC_FORMAT, event.joinCode());
         messagingTemplate.convertAndSend(destination, WebSocketResponse.success(event.miniGameTypes()));
@@ -86,14 +85,9 @@ public class RoomMessagePublisher {
     }
 
     @EventListener
-    @WsTopic(
-            path = "/room/{joinCode}/roulette",
-            payload = RoomStatusResponse.class,
-            description = "룰렛 화면 전환 브로드캐스트"
-    )
+    @WsTopic(path = "/room/{joinCode}/roulette", payload = RoomStatusResponse.class, description = "룰렛 화면 전환 브로드캐스트")
     public void onRouletteShown(RouletteShownEvent event) {
-        log.debug("룰렛 화면 표시 이벤트 수신: joinCode={}, roomState={}",
-                event.joinCode(), event.roomState());
+        log.debug("룰렛 화면 표시 이벤트 수신: joinCode={}, roomState={}", event.joinCode(), event.roomState());
 
         final RoomStatusResponse response = RoomStatusResponse.of(new JoinCode(event.joinCode()), event.roomState());
         final String destination = String.format(ROULETTE_TOPIC_FORMAT, event.joinCode());
@@ -103,32 +97,30 @@ public class RoomMessagePublisher {
     }
 
     @EventListener
-    @WsTopic(
-            path = "/room/{joinCode}/winner",
-            payload = WinnerResponse.class,
-            description = "룰렛 당첨자 브로드캐스트"
-    )
+    @WsTopic(path = "/room/{joinCode}/winner", payload = WinnerResponse.class, description = "룰렛 당첨자 브로드캐스트")
     public void onRouletteWinnerSelected(RouletteWinnerEvent event) {
-        log.debug("룰렛 당첨자 선택 이벤트 수신: joinCode={}, winner={}",
-                event.joinCode(), event.winner().name().value());
+        log.debug(
+                "룰렛 당첨자 선택 이벤트 수신: joinCode={}, winner={}",
+                event.joinCode(),
+                event.winner().name().value());
 
         final WinnerResponse response = WinnerResponse.from(event.winner());
         final String destination = String.format(WINNER_TOPIC_FORMAT, event.joinCode());
         messagingTemplate.convertAndSend(destination, WebSocketResponse.success(response));
 
-        log.debug("룰렛 당첨자 브로드캐스트 완료: joinCode={}, winner={}",
-                event.joinCode(), event.winner().name().value());
+        log.debug(
+                "룰렛 당첨자 브로드캐스트 완료: joinCode={}, winner={}",
+                event.joinCode(),
+                event.winner().name().value());
     }
 
     @EventListener
     @WsTopic(
             path = "/room/{joinCode}/qr-code",
             payload = QrCodeStatusResponse.class,
-            description = "QR 코드 상태 변경 브로드캐스트"
-    )
+            description = "QR 코드 상태 변경 브로드캐스트")
     public void onQrCodeStatusChanged(QrCodeStatusEvent event) {
-        log.debug("QR 코드 상태 변경 이벤트 수신: joinCode={}, status={}",
-                event.joinCode(), event.status());
+        log.debug("QR 코드 상태 변경 이벤트 수신: joinCode={}, status={}", event.joinCode(), event.status());
 
         final QrCodeStatusResponse response = new QrCodeStatusResponse(event.status(), event.qrCodeUrl());
         final String destination = String.format(QR_CODE_TOPIC_FORMAT, event.joinCode());
@@ -137,4 +129,3 @@ public class RoomMessagePublisher {
         log.debug("QR 코드 상태 브로드캐스트 완료: joinCode={}, status={}", event.joinCode(), event.status());
     }
 }
-

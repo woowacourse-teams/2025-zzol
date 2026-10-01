@@ -36,8 +36,7 @@ class CardGameRoundTest {
     void 마지막_라운드에서_다음으로_진행하면_예외가_발생한다() {
         CardGameRound lastRound = CardGameRound.roundOf(2, 2);
 
-        assertThatThrownBy(lastRound::next)
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(lastRound::next).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

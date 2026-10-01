@@ -89,8 +89,7 @@ public class GeminiJudgeClient implements JudgeClient {
                     clamp(node.path("accuracy").asInt(0)),
                     clamp(node.path("groundedness").asInt(0)),
                     node.path("hallucinationDetected").asBoolean(false),
-                    "PASS".equalsIgnoreCase(node.path("verdict").asText("FAIL"))
-                            ? EvalVerdict.PASS : EvalVerdict.FAIL,
+                    "PASS".equalsIgnoreCase(node.path("verdict").asText("FAIL")) ? EvalVerdict.PASS : EvalVerdict.FAIL,
                     node.path("rationale").asText(""));
         } catch (Exception e) {
             log.warn("[ZzolBot] judge 응답 파싱 실패. raw={}", json, e);

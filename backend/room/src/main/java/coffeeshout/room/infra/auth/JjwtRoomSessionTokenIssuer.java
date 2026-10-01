@@ -23,8 +23,7 @@ public class JjwtRoomSessionTokenIssuer implements RoomSessionTokenIssuer {
     private final long expirationMillis;
 
     public JjwtRoomSessionTokenIssuer(
-            RoomSessionTokenProperties properties,
-            @Value("${room.removalDelay}") Duration roomRemovalDelay) {
+            RoomSessionTokenProperties properties, @Value("${room.removalDelay}") Duration roomRemovalDelay) {
         this.secretKey = Keys.hmacShaKeyFor(properties.secret().getBytes(StandardCharsets.UTF_8));
         this.expirationMillis = roomRemovalDelay.toMillis();
     }

@@ -1,10 +1,6 @@
 package coffeeshout.zzolbot.domain;
 
-public record ToolExecutionResult(
-        String toolName,
-        String content,
-        boolean success
-) {
+public record ToolExecutionResult(String toolName, String content, boolean success) {
 
     public static ToolExecutionResult ok(String toolName, String content) {
         return new ToolExecutionResult(toolName, content, true);

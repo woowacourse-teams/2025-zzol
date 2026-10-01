@@ -2,9 +2,9 @@ package coffeeshout.user.infra.redis;
 
 import coffeeshout.user.domain.AuthenticatedUser;
 import coffeeshout.user.domain.repository.RefreshTokenRepository;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -20,13 +20,20 @@ public class RedisRefreshTokenRepository implements RefreshTokenRepository {
 
     @Override
     public void save(Long userId, String userCode, String tokenId, long expirationSeconds) {
+        // Duration.ZERO는 Spring Data Redis가 Expiration.persistent()로 바꿔 만료 없이 저장한다.
+        // 리프레시 토큰이 조용히 영구 유효해지는 것보다 여기서 터지는 편이 낫다.
+        if (expirationSeconds <= 0) {
+            throw new IllegalArgumentException("expirationSeconds는 양수여야 합니다: " + expirationSeconds);
+        }
         final String tokenKey = tokenKey(tokenId);
         final String userTokensKey = userTokensKey(userId);
         final String storedValue = userId + ":" + userCode;
 
-        stringRedisTemplate.opsForValue().set(tokenKey, storedValue, expirationSeconds, TimeUnit.SECONDS);
+        final Duration expiration = Duration.ofSeconds(expirationSeconds);
+
+        stringRedisTemplate.opsForValue().set(tokenKey, storedValue, expiration);
         stringRedisTemplate.opsForSet().add(userTokensKey, tokenId);
-        stringRedisTemplate.expire(userTokensKey, expirationSeconds, TimeUnit.SECONDS);
+        stringRedisTemplate.expire(userTokensKey, expiration);
     }
 
     @Override

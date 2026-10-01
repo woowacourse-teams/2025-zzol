@@ -18,7 +18,11 @@ public class ProfanityTrieRefreshPublisher implements TrieRefreshNotifier {
         try {
             redisTemplate.convertAndSend(ProfanityRedisChannel.TRIE_REFRESH, "refresh");
         } catch (Exception e) {
-            log.error("Failed to publish trie refresh to channel '{}': {}", ProfanityRedisChannel.TRIE_REFRESH, e.getMessage(), e);
+            log.error(
+                    "Failed to publish trie refresh to channel '{}': {}",
+                    ProfanityRedisChannel.TRIE_REFRESH,
+                    e.getMessage(),
+                    e);
         }
     }
 }

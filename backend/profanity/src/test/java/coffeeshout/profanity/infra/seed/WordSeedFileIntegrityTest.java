@@ -27,9 +27,7 @@ class WordSeedFileIntegrityTest {
 
         // 정규화 후 검증에 걸려 스킵되는 줄(예: 3자 미만 ASCII로 붕괴하는 @!@→aa)은 시드 파일에서
         // 제거해 노이즈 로그와 죽은 데이터를 남기지 않는다. 새 단어 추가 시 이 가드가 회귀를 잡는다.
-        assertThat(skipped)
-                .as("시드 파일에 로드 불가능한(스킵되는) 줄이 있다: %s", skipped)
-                .isEmpty();
+        assertThat(skipped).as("시드 파일에 로드 불가능한(스킵되는) 줄이 있다: %s", skipped).isEmpty();
     }
 
     private List<String> findSkippedLines(String resourcePath, Language language, WordSource source) {

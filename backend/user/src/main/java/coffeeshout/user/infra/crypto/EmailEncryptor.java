@@ -81,8 +81,8 @@ public class EmailEncryptor {
 
     private SecretKey deriveKey(String rawKey) {
         try {
-            final byte[] keyBytes = MessageDigest.getInstance("SHA-256")
-                    .digest(rawKey.getBytes(StandardCharsets.UTF_8));
+            final byte[] keyBytes =
+                    MessageDigest.getInstance("SHA-256").digest(rawKey.getBytes(StandardCharsets.UTF_8));
             return new SecretKeySpec(keyBytes, KEY_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
             throw new BusinessException(UserErrorCode.EMAIL_CRYPTO_FAILED, "암호화 키 초기화에 실패했습니다.", e);

@@ -14,10 +14,6 @@ public class SelectCardCommandEventConsumer implements Consumer<SelectCardComman
 
     @Override
     public void accept(SelectCardCommandEvent event) {
-        cardGameService.selectCard(
-                event.joinCode(),
-                event.playerName(),
-                event.cardIndex()
-        );
+        cardGameService.selectCard(event.joinCode(), event.playerName(), event.cardIndex());
     }
 }

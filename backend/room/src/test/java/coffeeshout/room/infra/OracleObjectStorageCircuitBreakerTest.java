@@ -55,25 +55,13 @@ class OracleObjectStorageCircuitBreakerTest {
 
     @BeforeEach
     void setUp() {
-        OracleObjectStorageProperties oracleProperties = new OracleObjectStorageProperties(
-                "ap-chuncheon-1",
-                "test-namespace",
-                "test-bucket"
-        );
-        QrProperties qrProperties = new QrProperties(
-                "https://example.com/join",
-                150,
-                150,
-                new QrProperties.PresignedUrl(1),
-                "qr-code"
-        );
+        OracleObjectStorageProperties oracleProperties =
+                new OracleObjectStorageProperties("ap-chuncheon-1", "test-namespace", "test-bucket");
+        QrProperties qrProperties =
+                new QrProperties("https://example.com/join", 150, 150, new QrProperties.PresignedUrl(1), "qr-code");
 
         storageService = new OracleObjectStorageService(
-                objectStorage,
-                oracleProperties,
-                qrProperties,
-                new SimpleMeterRegistry()
-        );
+                objectStorage, oracleProperties, qrProperties, new SimpleMeterRegistry());
 
         // 서킷 브레이커 설정 (운영 설정과 동일)
         CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
@@ -107,10 +95,8 @@ class OracleObjectStorageCircuitBreakerTest {
         when(objectStorage.putObject(any(PutObjectRequest.class))).thenReturn(putObjectResponse);
         when(putObjectResponse.getETag()).thenReturn("test-etag");
 
-        Supplier<String> decoratedSupplier = CircuitBreaker.decorateSupplier(
-                circuitBreaker,
-                () -> storageService.upload("test", "data".getBytes())
-        );
+        Supplier<String> decoratedSupplier =
+                CircuitBreaker.decorateSupplier(circuitBreaker, () -> storageService.upload("test", "data".getBytes()));
 
         // when
         decoratedSupplier.get();
@@ -126,10 +112,8 @@ class OracleObjectStorageCircuitBreakerTest {
         when(objectStorage.putObject(any(PutObjectRequest.class)))
                 .thenThrow(new BmcException(500, "ServiceCode", "Storage unavailable", "requestId"));
 
-        Supplier<String> decoratedSupplier = CircuitBreaker.decorateSupplier(
-                circuitBreaker,
-                () -> storageService.upload("test", "data".getBytes())
-        );
+        Supplier<String> decoratedSupplier =
+                CircuitBreaker.decorateSupplier(circuitBreaker, () -> storageService.upload("test", "data".getBytes()));
 
         // when - minimumNumberOfCalls(10)의 50% 이상 실패해야 OPEN
         for (int i = 0; i < 10; i++) {
@@ -149,10 +133,8 @@ class OracleObjectStorageCircuitBreakerTest {
         // given
         circuitBreaker.transitionToOpenState();
 
-        Supplier<String> decoratedSupplier = CircuitBreaker.decorateSupplier(
-                circuitBreaker,
-                () -> storageService.upload("test", "data".getBytes())
-        );
+        Supplier<String> decoratedSupplier =
+                CircuitBreaker.decorateSupplier(circuitBreaker, () -> storageService.upload("test", "data".getBytes()));
 
         // when & then
         assertThatThrownBy(decoratedSupplier::get)
@@ -172,10 +154,8 @@ class OracleObjectStorageCircuitBreakerTest {
                 .thenReturn(putObjectResponse);
         when(putObjectResponse.getETag()).thenReturn("test-etag");
 
-        Supplier<String> decoratedSupplier = Retry.decorateSupplier(
-                retry,
-                () -> storageService.upload("test", "data".getBytes())
-        );
+        Supplier<String> decoratedSupplier =
+                Retry.decorateSupplier(retry, () -> storageService.upload("test", "data".getBytes()));
 
         // when
         String result = decoratedSupplier.get();
@@ -192,14 +172,11 @@ class OracleObjectStorageCircuitBreakerTest {
         when(objectStorage.putObject(any(PutObjectRequest.class)))
                 .thenThrow(new BmcException(500, "ServiceCode", "Persistent failure", "requestId"));
 
-        Supplier<String> decoratedSupplier = Retry.decorateSupplier(
-                retry,
-                () -> storageService.upload("test", "data".getBytes())
-        );
+        Supplier<String> decoratedSupplier =
+                Retry.decorateSupplier(retry, () -> storageService.upload("test", "data".getBytes()));
 
         // when & then - BmcException이 그대로 던져짐 (fallback은 어노테이션 기반에서만 동작)
-        assertThatThrownBy(decoratedSupplier::get)
-                .isInstanceOf(BmcException.class);
+        assertThatThrownBy(decoratedSupplier::get).isInstanceOf(BmcException.class);
 
         // maxAttempts(3)만큼 호출됨
         verify(objectStorage, times(3)).putObject(any(PutObjectRequest.class));
@@ -217,12 +194,7 @@ class OracleObjectStorageCircuitBreakerTest {
 
         // 서킷 브레이커 안에 리트라이를 감싸서 사용
         Supplier<String> decoratedSupplier = CircuitBreaker.decorateSupplier(
-                circuitBreaker,
-                Retry.decorateSupplier(
-                        retry,
-                        () -> storageService.upload("test", "data".getBytes())
-                )
-        );
+                circuitBreaker, Retry.decorateSupplier(retry, () -> storageService.upload("test", "data".getBytes())));
 
         // when
         String result = decoratedSupplier.get();
@@ -240,14 +212,11 @@ class OracleObjectStorageCircuitBreakerTest {
         when(objectStorage.putObject(any(PutObjectRequest.class)))
                 .thenThrow(new IllegalArgumentException("Invalid argument"));
 
-        Supplier<String> decoratedSupplier = Retry.decorateSupplier(
-                retry,
-                () -> storageService.upload("test", "data".getBytes())
-        );
+        Supplier<String> decoratedSupplier =
+                Retry.decorateSupplier(retry, () -> storageService.upload("test", "data".getBytes()));
 
         // when & then - 리트라이 없이 바로 예외 발생
-        assertThatThrownBy(decoratedSupplier::get)
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(decoratedSupplier::get).isInstanceOf(IllegalArgumentException.class);
 
         // 1번만 호출됨 (리트라이 안 함)
         verify(objectStorage, times(1)).putObject(any(PutObjectRequest.class));

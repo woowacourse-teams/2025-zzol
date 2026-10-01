@@ -17,15 +17,21 @@ public final class ZzolBotHttpTimeouts {
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(2);
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
 
-    private ZzolBotHttpTimeouts() {
-    }
+    private ZzolBotHttpTimeouts() {}
 
     public static ClientHttpRequestFactory requestFactory() {
-        final HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(CONNECT_TIMEOUT)
-                .build();
+        return requestFactory(CONNECT_TIMEOUT, READ_TIMEOUT);
+    }
+
+    /**
+     * 타임아웃을 직접 지정한다. 관측 백엔드와 응답 특성이 다른 호출에 쓴다.
+     * 예를 들어 CPU 추론은 응답이 분 단위라 위 기본값 5초로는 매번 끊긴다.
+     */
+    public static ClientHttpRequestFactory requestFactory(Duration connectTimeout, Duration readTimeout) {
+        final HttpClient httpClient =
+                HttpClient.newBuilder().connectTimeout(connectTimeout).build();
         final JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
-        factory.setReadTimeout(READ_TIMEOUT);
+        factory.setReadTimeout(readTimeout);
         return factory;
     }
 }

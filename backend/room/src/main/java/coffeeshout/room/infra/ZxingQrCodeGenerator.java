@@ -23,10 +23,7 @@ public class ZxingQrCodeGenerator implements QrCodeGenerator {
     private final int width;
     private final QRCodeWriter qrCodeWriter;
 
-    public ZxingQrCodeGenerator(
-            QrProperties qrProperties,
-            QRCodeWriter qrCodeWriter
-    ) {
+    public ZxingQrCodeGenerator(QrProperties qrProperties, QRCodeWriter qrCodeWriter) {
         this.height = qrProperties.height();
         this.width = qrProperties.width();
         this.qrCodeWriter = qrCodeWriter;
@@ -41,8 +38,7 @@ public class ZxingQrCodeGenerator implements QrCodeGenerator {
 
             return outputStream.toByteArray();
         } catch (WriterException e) {
-            log.error("QR코드 생성 실패: contents={}, width={}, height={}, error={}",
-                    contents, width, height, e.toString());
+            log.error("QR코드 생성 실패: contents={}, width={}, height={}, error={}", contents, width, height, e.toString());
             throw new IOException(e);
         }
     }

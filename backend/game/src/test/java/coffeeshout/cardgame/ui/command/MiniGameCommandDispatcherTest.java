@@ -31,7 +31,6 @@ class MiniGameCommandDispatcherTest {
         verify(mockHandler).handle(joinCode, command);
     }
 
-
     @Test
     void 등록되지_않은_Command에_대해_예외를_발생시킨다() {
         // given
@@ -46,9 +45,7 @@ class MiniGameCommandDispatcherTest {
                 .hasMessage("해당하는 요청에 대한 게임이 존재하지 않습니다.");
     }
 
-    private static class ValidCommand implements MiniGameCommand {
-    }
+    private static class ValidCommand implements MiniGameCommand {}
 
-    private static class InvalidCommand implements MiniGameCommand {
-    }
+    private static class InvalidCommand implements MiniGameCommand {}
 }

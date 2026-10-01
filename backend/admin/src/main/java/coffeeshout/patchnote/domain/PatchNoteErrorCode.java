@@ -4,11 +4,9 @@ import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-
 @RequiredArgsConstructor
 @Getter
 public enum PatchNoteErrorCode implements ErrorCode {
-
     NOT_FOUND(404, "패치노트를 찾을 수 없습니다."),
     INVALID_TITLE(400, "제목은 1~100자여야 합니다."),
     INVALID_CONTENT(400, "본문은 비어 있을 수 없습니다."),

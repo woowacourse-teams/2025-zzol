@@ -3,15 +3,15 @@ package coffeeshout.zzolbot.eval.application;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import coffeeshout.zzolbot.config.ZzolBotProperties;
-import coffeeshout.zzolbot.domain.ZzolBotChatResult;
 import coffeeshout.zzolbot.eval.domain.EvalRunStatus;
 import coffeeshout.zzolbot.eval.domain.EvalVerdict;
 import coffeeshout.zzolbot.eval.domain.JudgeScore;
-import coffeeshout.zzolbot.eval.domain.ToolSnapshot;
+import coffeeshout.zzolbot.eval.domain.ScenarioKind;
+import coffeeshout.zzolbot.eval.domain.ScenarioSource;
 import coffeeshout.zzolbot.eval.infra.EvalResultEntity;
 import coffeeshout.zzolbot.eval.infra.EvalResultRepository;
 import coffeeshout.zzolbot.eval.infra.EvalRunEntity;
@@ -19,11 +19,7 @@ import coffeeshout.zzolbot.eval.infra.EvalRunRepository;
 import coffeeshout.zzolbot.eval.infra.EvalScenarioEntity;
 import coffeeshout.zzolbot.eval.infra.EvalScenarioRepository;
 import coffeeshout.zzolbot.eval.infra.JudgeClient;
-import coffeeshout.zzolbot.eval.infra.ToolSnapshotCodec;
-import coffeeshout.zzolbot.application.ZzolBotChatService;
-import coffeeshout.zzolbot.eval.domain.ScenarioSource;
 import java.util.List;
-import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,31 +36,36 @@ import org.springframework.test.util.ReflectionTestUtils;
 class EvalRunnerTest {
 
     private static final ZzolBotProperties PROPERTIES = new ZzolBotProperties(
-            "test-key", "gemini-2.5-flash", 5,
+            "test-key",
+            "gemini-2.5-flash",
+            5,
             new ZzolBotProperties.MonitoringProperties("http://loki", "http://tempo", "http://prom", "local"),
             new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
-            60, 10000L,
+            60,
+            10000L,
             new ZzolBotProperties.SqlProperties(List.of(), 100, 3));
 
     @Mock
     private EvalScenarioRepository scenarioRepository;
+
     @Mock
     private EvalRunRepository runRepository;
+
     @Mock
     private EvalResultRepository resultRepository;
-    @Mock
-    private ZzolBotChatService chatService;
+
     @Mock
     private JudgeClient judgeClient;
+
     @Mock
-    private ToolSnapshotCodec codec;
+    private ScenarioEvaluator chatEvaluator;
 
     private EvalRunner runner;
 
     @BeforeEach
     void setUp() {
-        runner = new EvalRunner(scenarioRepository, runRepository, resultRepository,
-                chatService, judgeClient, codec, PROPERTIES);
+        runner = new EvalRunner(
+                scenarioRepository, runRepository, resultRepository, judgeClient, PROPERTIES, List.of(chatEvaluator));
 
         given(runRepository.save(any())).willAnswer(invocation -> {
             final EvalRunEntity run = invocation.getArgument(0);
@@ -73,9 +74,8 @@ class EvalRunnerTest {
             }
             return run;
         });
-        given(codec.fromJson(anyString())).willReturn(new ToolSnapshot(Map.of()));
-        given(chatService.ask(anyString(), anyString(), any(), any(), any()))
-                .willReturn(new ZzolBotChatResult(null, "진단 답변"));
+        given(chatEvaluator.kind()).willReturn(ScenarioKind.CHAT);
+        given(chatEvaluator.evaluate(any())).willReturn(new EvalAnswer("진단 답변", 0));
     }
 
     @Test
@@ -109,9 +109,43 @@ class EvalRunnerTest {
         verify(resultRepository, times(0)).save(any());
     }
 
+    @Test
+    void kind를_지정하면_해당_kind_시나리오만_실행한다() {
+        given(scenarioRepository.findAllByKindOrderByCreatedAtDesc(ScenarioKind.CHAT))
+                .willReturn(List.of(scenario(1L)));
+        given(judgeClient.evaluate(anyString(), anyString(), anyString()))
+                .willReturn(new JudgeScore(5, 5, false, EvalVerdict.PASS, "정답"));
+
+        final EvalRunEntity run = runner.run("chat-only", 1, ScenarioKind.CHAT);
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(run.getScenarioCount()).isEqualTo(1);
+            softly.assertThat(run.getPassCount()).isEqualTo(1);
+        });
+        verify(scenarioRepository, times(0)).findAllByOrderByCreatedAtDesc();
+    }
+
+    @Test
+    void 평가기가_없는_kind의_시나리오는_FAIL_결과로_기록된다() {
+        final EvalScenarioEntity monitorScenario = EvalScenarioEntity.create(
+                "monitor-1", ScenarioKind.MONITOR, "알림", "{}", "rubric", ScenarioSource.RECORDED);
+        ReflectionTestUtils.setField(monitorScenario, "id", 3L);
+        given(scenarioRepository.findAllByOrderByCreatedAtDesc()).willReturn(List.of(monitorScenario));
+
+        final EvalRunEntity run = runner.run("no-evaluator");
+
+        final ArgumentCaptor<EvalResultEntity> captor = ArgumentCaptor.forClass(EvalResultEntity.class);
+        verify(resultRepository, times(1)).save(captor.capture());
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(run.getStatus()).isEqualTo(EvalRunStatus.COMPLETED);
+            softly.assertThat(run.getPassCount()).isZero();
+            softly.assertThat(captor.getValue().getVerdict()).isEqualTo(EvalVerdict.FAIL);
+        });
+    }
+
     private EvalScenarioEntity scenario(Long id) {
         final EvalScenarioEntity entity = EvalScenarioEntity.create(
-                "scenario-" + id, "질문 " + id, "[]", "rubric", ScenarioSource.MANUAL);
+                "scenario-" + id, ScenarioKind.CHAT, "질문 " + id, "[]", "rubric", ScenarioSource.MANUAL);
         ReflectionTestUtils.setField(entity, "id", id);
         return entity;
     }

@@ -22,11 +22,11 @@ public class BlockStackingFailEventConsumer implements Consumer<BlockStackingFai
         } catch (BusinessException e) {
             log.warn(
                     "블록 쌓기 실패 이벤트 처리 중 비즈니스 예외 발생: joinCode={}, playerName={}",
-                    event.joinCode(), event.playerName(), e);
+                    event.joinCode(),
+                    event.playerName(),
+                    e);
         } catch (Exception e) {
-            log.error(
-                    "블록 쌓기 실패 이벤트 처리 중 오류 발생: joinCode={}, playerName={}",
-                    event.joinCode(), event.playerName(), e);
+            log.error("블록 쌓기 실패 이벤트 처리 중 오류 발생: joinCode={}, playerName={}", event.joinCode(), event.playerName(), e);
             throw e;
         }
     }

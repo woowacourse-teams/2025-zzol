@@ -10,19 +10,17 @@ type Props = {
 
 const RankItem = ({ playerName, rank, isMe, isFixed }: Props) => {
   return (
-    <S.Container $isFixed={isFixed}>
+    <S.Container $isFixed={isFixed} $isMe={isMe}>
       <S.RankNumber>
-        <Description color={getTextColor(isMe, isFixed)}>{rank}</Description>
+        <Description color={getTextColor(isFixed)}>{rank}</Description>
       </S.RankNumber>
-      <Description color={getTextColor(isMe, isFixed)}>{playerName}</Description>
+      <Description color={getTextColor(isFixed)}>{playerName}</Description>
+      {isMe && <S.MyPointer />}
     </S.Container>
   );
 };
 
 export default RankItem;
 
-const getTextColor = (isMe: boolean, isFixed: boolean) => {
-  if (isMe) return 'point-500';
-  if (isFixed) return 'yellow';
-  return 'white';
-};
+// 내 행은 배경이 빨강으로 바뀌므로 글자는 흰색을 그대로 둔다. 완주하면 노랑으로 고정된다.
+const getTextColor = (isFixed: boolean) => (isFixed ? 'yellow' : 'white');

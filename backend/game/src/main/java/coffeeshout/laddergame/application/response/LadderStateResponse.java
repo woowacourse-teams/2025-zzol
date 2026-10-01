@@ -7,37 +7,39 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 @JsonInclude(Include.NON_NULL)
 public record LadderStateResponse(
         LadderGameState state,
-        List<PoleInfo> poles,
-        Map<Integer, Integer> bottomRanks,
-        Long endTimeEpochMs,
-        Map<String, Integer> rankings,
-        Long animationDurationMs
-) {
+        @Nullable List<PoleInfo> poles,
+        @Nullable Map<Integer, Integer> bottomRanks,
+        @Nullable Integer rowCount,
+        @Nullable Long endTimeEpochMs,
+        @Nullable Map<String, Integer> rankings,
+        @Nullable Long animationDurationMs) {
 
     public static LadderStateResponse ofDescription() {
-        return new LadderStateResponse(LadderGameState.DESCRIPTION, null, null, null, null, null);
+        return new LadderStateResponse(LadderGameState.DESCRIPTION, null, null, null, null, null, null);
     }
 
-    public static LadderStateResponse ofPrepare(Poles poles, BottomRanks bottomRanks) {
+    public static LadderStateResponse ofPrepare(Poles poles, BottomRanks bottomRanks, int rowCount) {
         final List<PoleInfo> poleInfos = poles.getAll().stream()
                 .map(p -> new PoleInfo(p.index(), p.gamer().getName(), p.gamer().getColorIndex()))
                 .toList();
-        return new LadderStateResponse(LadderGameState.PREPARE, poleInfos, bottomRanks.getAll(), null, null, null);
+        return new LadderStateResponse(
+                LadderGameState.PREPARE, poleInfos, bottomRanks.getAll(), rowCount, null, null, null);
     }
 
     public static LadderStateResponse ofDrawing(long endTimeEpochMs) {
-        return new LadderStateResponse(LadderGameState.DRAWING, null, null, endTimeEpochMs, null, null);
+        return new LadderStateResponse(LadderGameState.DRAWING, null, null, null, endTimeEpochMs, null, null);
     }
 
     public static LadderStateResponse ofResult(Map<String, Integer> rankings, long animationDurationMs) {
-        return new LadderStateResponse(LadderGameState.RESULT, null, null, null, rankings, animationDurationMs);
+        return new LadderStateResponse(LadderGameState.RESULT, null, null, null, null, rankings, animationDurationMs);
     }
 
     public static LadderStateResponse ofDone() {
-        return new LadderStateResponse(LadderGameState.DONE, null, null, null, null, null);
+        return new LadderStateResponse(LadderGameState.DONE, null, null, null, null, null, null);
     }
 }

@@ -22,11 +22,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "season_settlement",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_season_settlement_result",
-                columnNames = {"room_session_id", "mini_game_type", "user_id"}
-        )
-)
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uk_season_settlement_result",
+                        columnNames = {"room_session_id", "mini_game_type", "user_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SeasonSettlementEntity {
@@ -66,8 +65,7 @@ public class SeasonSettlementEntity {
             Integer rank,
             Long score,
             Integer points,
-            String seasonKey
-    ) {
+            String seasonKey) {
         this.roomSessionId = roomSessionId;
         this.miniGameType = miniGameType;
         this.userId = userId;

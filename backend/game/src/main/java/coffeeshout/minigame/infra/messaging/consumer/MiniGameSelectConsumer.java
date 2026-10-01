@@ -35,8 +35,12 @@ public class MiniGameSelectConsumer implements Consumer<MiniGameSelectEvent> {
         } catch (BusinessException e) {
             // 비동기 경로라 EventDispatcher가 예외를 삼켜 클라이언트가 거부 사실을 알 수 없으므로,
             // 실패 이벤트를 발행해 :room 리스너가 요청 클라이언트에게만 에러를 되돌리게 한다(ADR-0025).
-            log.warn("미니게임 선택 반영 실패: joinCode={}, principal={}, errorCode={}, message={}",
-                    event.joinCode(), event.principalName(), e.getErrorCode().getCode(), e.getMessage());
+            log.warn(
+                    "미니게임 선택 반영 실패: joinCode={}, principal={}, errorCode={}, message={}",
+                    event.joinCode(),
+                    event.principalName(),
+                    e.getErrorCode().getCode(),
+                    e.getMessage());
             eventPublisher.publishEvent(new MiniGameSelectFailedEvent(
                     event.joinCode(), event.principalName(), e.getErrorCode().getMessage()));
             return;

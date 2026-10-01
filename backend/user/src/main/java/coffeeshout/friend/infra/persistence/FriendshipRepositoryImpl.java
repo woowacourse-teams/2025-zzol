@@ -19,8 +19,10 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
     @Override
     public Friendship save(Friendship friendship) {
         if (friendship.getId() != null) {
-            final FriendshipEntity entity = friendshipJpaRepository.findById(friendship.getId())
-                    .orElseThrow(() -> new BusinessException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND, "존재하지 않는 친구 요청입니다."));
+            final FriendshipEntity entity = friendshipJpaRepository
+                    .findById(friendship.getId())
+                    .orElseThrow(
+                            () -> new BusinessException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND, "존재하지 않는 친구 요청입니다."));
             if (friendship.isAccepted()) {
                 entity.accept();
             }
@@ -28,9 +30,11 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
         }
 
         final FriendshipEntity entity = new FriendshipEntity(
-                friendship.getRequesterId(), friendship.getAddresseeId(),
-                friendship.getStatus(), friendship.getCreatedAt(), friendship.getUpdatedAt()
-        );
+                friendship.getRequesterId(),
+                friendship.getAddresseeId(),
+                friendship.getStatus(),
+                friendship.getCreatedAt(),
+                friendship.getUpdatedAt());
         return friendshipJpaRepository.save(entity).toDomain();
     }
 
@@ -46,20 +50,23 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
 
     @Override
     public List<Friendship> findReceivedPending(Long userId) {
-        return friendshipJpaRepository.findAllByAddresseeIdAndStatus(userId, FriendshipStatus.PENDING)
-                .stream().map(FriendshipEntity::toDomain).toList();
+        return friendshipJpaRepository.findAllByAddresseeIdAndStatus(userId, FriendshipStatus.PENDING).stream()
+                .map(FriendshipEntity::toDomain)
+                .toList();
     }
 
     @Override
     public List<Friendship> findSentPending(Long userId) {
-        return friendshipJpaRepository.findAllByRequesterIdAndStatus(userId, FriendshipStatus.PENDING)
-                .stream().map(FriendshipEntity::toDomain).toList();
+        return friendshipJpaRepository.findAllByRequesterIdAndStatus(userId, FriendshipStatus.PENDING).stream()
+                .map(FriendshipEntity::toDomain)
+                .toList();
     }
 
     @Override
     public List<Friendship> findAcceptedOf(Long userId) {
-        return friendshipJpaRepository.findAllAcceptedOf(userId, FriendshipStatus.ACCEPTED)
-                .stream().map(FriendshipEntity::toDomain).toList();
+        return friendshipJpaRepository.findAllAcceptedOf(userId, FriendshipStatus.ACCEPTED).stream()
+                .map(FriendshipEntity::toDomain)
+                .toList();
     }
 
     @Override
@@ -72,7 +79,8 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
         if (targetUserIds.isEmpty()) {
             return List.of();
         }
-        return friendshipJpaRepository.findAllBetween(myId, targetUserIds)
-                .stream().map(FriendshipEntity::toDomain).toList();
+        return friendshipJpaRepository.findAllBetween(myId, targetUserIds).stream()
+                .map(FriendshipEntity::toDomain)
+                .toList();
     }
 }

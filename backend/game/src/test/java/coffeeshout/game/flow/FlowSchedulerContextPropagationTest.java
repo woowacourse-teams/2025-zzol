@@ -33,9 +33,8 @@ class FlowSchedulerContextPropagationTest {
     void setUp() {
         ContextRegistry registry = new ContextRegistry();
         registry.registerThreadLocalAccessor("test-trace", TRACE::get, TRACE::set, TRACE::remove);
-        ContextSnapshotFactory snapshotFactory = ContextSnapshotFactory.builder()
-                .contextRegistry(registry)
-                .build();
+        ContextSnapshotFactory snapshotFactory =
+                ContextSnapshotFactory.builder().contextRegistry(registry).build();
 
         schedulerFactory = new GameTaskSchedulerFactory(snapshotFactory, 2);
         scheduler = schedulerFactory.create("test");
@@ -72,8 +71,8 @@ class FlowSchedulerContextPropagationTest {
             AtomicReference<String> seenInSecondStep = new AtomicReference<>();
 
             // when — 첫 스텝 완료 후 스케줄러 스레드에서 두 번째 스텝이 제출된다
-            flowScheduler.schedule(() -> {
-                    }, Duration.ofMillis(10))
+            flowScheduler
+                    .schedule(() -> {}, Duration.ofMillis(10))
                     .andThen(() -> seenInSecondStep.set(TRACE.get()), Duration.ofMillis(10));
 
             // then
@@ -109,7 +108,8 @@ class FlowSchedulerContextPropagationTest {
             ThreadPoolTaskScheduler created = zeroPoolFactory.create("min-pool");
 
             // then — getPoolSize()는 현재 스레드 수를 반환하므로 corePoolSize로 검증한다
-            assertThat(created.getScheduledThreadPoolExecutor().getCorePoolSize()).isEqualTo(1);
+            assertThat(created.getScheduledThreadPoolExecutor().getCorePoolSize())
+                    .isEqualTo(1);
             created.shutdown();
         }
 

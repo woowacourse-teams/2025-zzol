@@ -2,7 +2,6 @@ package coffeeshout.profanity.application;
 
 import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -75,7 +74,9 @@ class ProfanityWordManagementServiceTest {
         void 대문자_단어는_소문자로_정규화되어_저장된다() {
             service.add("BADWORD", Language.ENGLISH, WordSource.LDNOOBW);
 
-            then(wordRepository).should().save(new ProfanityWord("badword", Language.ENGLISH, WordSource.LDNOOBW, true));
+            then(wordRepository)
+                    .should()
+                    .save(new ProfanityWord("badword", Language.ENGLISH, WordSource.LDNOOBW, true));
         }
 
         @Test
@@ -114,10 +115,7 @@ class ProfanityWordManagementServiceTest {
         void 존재하지_않는_단어는_예외가_발생한다() {
             given(wordRepository.findByWord(any())).willReturn(Optional.empty());
 
-            assertCoffeeShoutException(
-                    () -> service.deactivate("없는단어"),
-                    ProfanityErrorCode.WORD_NOT_FOUND
-            );
+            assertCoffeeShoutException(() -> service.deactivate("없는단어"), ProfanityErrorCode.WORD_NOT_FOUND);
         }
 
         @Test
@@ -184,24 +182,21 @@ class ProfanityWordManagementServiceTest {
 
         @Test
         void OPERATOR_ALLOWED_source_단어는_true를_반환한다() {
-            given(wordRepository.findByWord("허용닉네임"))
-                    .willReturn(Optional.of(ProfanityWordFixture.운영자_허용_단어()));
+            given(wordRepository.findByWord("허용닉네임")).willReturn(Optional.of(ProfanityWordFixture.운영자_허용_단어()));
 
             assertThat(service.isOperatorAllowed("허용닉네임")).isTrue();
         }
 
         @Test
         void MANUAL_source_단어는_false를_반환한다() {
-            given(wordRepository.findByWord("욕설"))
-                    .willReturn(Optional.of(ProfanityWordFixture.한국어_수동_욕설()));
+            given(wordRepository.findByWord("욕설")).willReturn(Optional.of(ProfanityWordFixture.한국어_수동_욕설()));
 
             assertThat(service.isOperatorAllowed("욕설")).isFalse();
         }
 
         @Test
         void AI_FLAGGED_source_단어는_false를_반환한다() {
-            given(wordRepository.findByWord("욕설닉네임"))
-                    .willReturn(Optional.of(ProfanityWordFixture.한국어_AI_FLAGGED_욕설()));
+            given(wordRepository.findByWord("욕설닉네임")).willReturn(Optional.of(ProfanityWordFixture.한국어_AI_FLAGGED_욕설()));
 
             assertThat(service.isOperatorAllowed("욕설닉네임")).isFalse();
         }
@@ -242,10 +237,7 @@ class ProfanityWordManagementServiceTest {
         void 존재하지_않는_단어는_예외가_발생한다() {
             given(wordRepository.findByWord(any())).willReturn(Optional.empty());
 
-            assertCoffeeShoutException(
-                    () -> service.activate("없는단어"),
-                    ProfanityErrorCode.WORD_NOT_FOUND
-            );
+            assertCoffeeShoutException(() -> service.activate("없는단어"), ProfanityErrorCode.WORD_NOT_FOUND);
         }
 
         @Test
@@ -268,10 +260,12 @@ class ProfanityWordManagementServiceTest {
         void 검색어와_필터를_repository에_위임하고_결과를_반환한다() {
             final List<ProfanityWord> words = List.of(ProfanityWordFixture.한국어_수동_욕설());
             final Page<ProfanityWord> expected = new PageImpl<>(words);
-            given(wordRepository.findAllPaged(eq("욕"), eq(Language.KOREAN), eq(WordSource.MANUAL), eq(true), any(Pageable.class)))
+            given(wordRepository.findAllPaged(
+                            eq("욕"), eq(Language.KOREAN), eq(WordSource.MANUAL), eq(true), any(Pageable.class)))
                     .willReturn(expected);
 
-            final Page<ProfanityWord> result = service.findAllPaged("욕", Language.KOREAN, WordSource.MANUAL, true, 0, 20);
+            final Page<ProfanityWord> result =
+                    service.findAllPaged("욕", Language.KOREAN, WordSource.MANUAL, true, 0, 20);
 
             assertThat(result).isEqualTo(expected);
         }

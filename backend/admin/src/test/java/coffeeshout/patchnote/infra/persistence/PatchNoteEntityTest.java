@@ -21,8 +21,7 @@ class PatchNoteEntityTest {
 
         @Test
         void 필드가_정상적으로_설정된다() {
-            final PatchNoteEntity entity = PatchNoteEntity.create(
-                    PatchNoteCategory.NOTICE, "1.0.0 공지", "서버 점검 예정입니다.");
+            final PatchNoteEntity entity = PatchNoteEntity.create(PatchNoteCategory.NOTICE, "1.0.0 공지", "서버 점검 예정입니다.");
 
             assertSoftly(softly -> {
                 softly.assertThat(entity.getCategory()).isEqualTo(PatchNoteCategory.NOTICE);
@@ -39,8 +38,7 @@ class PatchNoteEntityTest {
         void 제목이_공백이면_예외가_발생한다(String title) {
             assertCoffeeShoutException(
                     () -> PatchNoteEntity.create(PatchNoteCategory.NOTICE, title, "본문입니다."),
-                    PatchNoteErrorCode.INVALID_TITLE
-            );
+                    PatchNoteErrorCode.INVALID_TITLE);
         }
 
         @Test
@@ -49,8 +47,7 @@ class PatchNoteEntityTest {
 
             assertCoffeeShoutException(
                     () -> PatchNoteEntity.create(PatchNoteCategory.NOTICE, longTitle, "본문입니다."),
-                    PatchNoteErrorCode.INVALID_TITLE
-            );
+                    PatchNoteErrorCode.INVALID_TITLE);
         }
 
         @Test
@@ -65,9 +62,7 @@ class PatchNoteEntityTest {
         @Test
         void 카테고리가_null이면_예외가_발생한다() {
             assertCoffeeShoutException(
-                    () -> PatchNoteEntity.create(null, "제목", "본문입니다."),
-                    PatchNoteErrorCode.INVALID_CATEGORY
-            );
+                    () -> PatchNoteEntity.create(null, "제목", "본문입니다."), PatchNoteErrorCode.INVALID_CATEGORY);
         }
 
         @ParameterizedTest
@@ -76,8 +71,7 @@ class PatchNoteEntityTest {
         void 본문이_공백이면_예외가_발생한다(String content) {
             assertCoffeeShoutException(
                     () -> PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", content),
-                    PatchNoteErrorCode.INVALID_CONTENT
-            );
+                    PatchNoteErrorCode.INVALID_CONTENT);
         }
 
         @Test
@@ -86,8 +80,7 @@ class PatchNoteEntityTest {
 
             assertCoffeeShoutException(
                     () -> PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", longContent),
-                    PatchNoteErrorCode.INVALID_CONTENT_LENGTH
-            );
+                    PatchNoteErrorCode.INVALID_CONTENT_LENGTH);
         }
 
         @Test
@@ -106,8 +99,7 @@ class PatchNoteEntityTest {
 
         @Test
         void 필드가_모두_갱신된다() {
-            final PatchNoteEntity entity = PatchNoteEntity.create(
-                    PatchNoteCategory.NOTICE, "원래 제목", "원래 본문");
+            final PatchNoteEntity entity = PatchNoteEntity.create(PatchNoteCategory.NOTICE, "원래 제목", "원래 본문");
 
             entity.update(PatchNoteCategory.EVENT, "수정 제목", "수정 본문");
 
@@ -120,8 +112,7 @@ class PatchNoteEntityTest {
 
         @Test
         void updatedAt이_createdAt보다_이전이_아니다() {
-            final PatchNoteEntity entity = PatchNoteEntity.create(
-                    PatchNoteCategory.NOTICE, "제목", "본문");
+            final PatchNoteEntity entity = PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", "본문");
 
             entity.update(PatchNoteCategory.UPDATE, "새 제목", "새 본문");
 
@@ -132,61 +123,46 @@ class PatchNoteEntityTest {
         @NullAndEmptySource
         @ValueSource(strings = {"   "})
         void 제목이_공백이면_예외가_발생한다(String title) {
-            final PatchNoteEntity entity = PatchNoteEntity.create(
-                    PatchNoteCategory.NOTICE, "제목", "본문");
+            final PatchNoteEntity entity = PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", "본문");
 
             assertCoffeeShoutException(
-                    () -> entity.update(PatchNoteCategory.NOTICE, title, "본문"),
-                    PatchNoteErrorCode.INVALID_TITLE
-            );
+                    () -> entity.update(PatchNoteCategory.NOTICE, title, "본문"), PatchNoteErrorCode.INVALID_TITLE);
         }
 
         @Test
         void 제목이_100자를_초과하면_예외가_발생한다() {
-            final PatchNoteEntity entity = PatchNoteEntity.create(
-                    PatchNoteCategory.NOTICE, "제목", "본문");
+            final PatchNoteEntity entity = PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", "본문");
             final String longTitle = "가".repeat(101);
 
             assertCoffeeShoutException(
-                    () -> entity.update(PatchNoteCategory.NOTICE, longTitle, "본문"),
-                    PatchNoteErrorCode.INVALID_TITLE
-            );
+                    () -> entity.update(PatchNoteCategory.NOTICE, longTitle, "본문"), PatchNoteErrorCode.INVALID_TITLE);
         }
 
         @Test
         void 카테고리가_null이면_예외가_발생한다() {
-            final PatchNoteEntity entity = PatchNoteEntity.create(
-                    PatchNoteCategory.NOTICE, "제목", "본문");
+            final PatchNoteEntity entity = PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", "본문");
 
-            assertCoffeeShoutException(
-                    () -> entity.update(null, "제목", "본문"),
-                    PatchNoteErrorCode.INVALID_CATEGORY
-            );
+            assertCoffeeShoutException(() -> entity.update(null, "제목", "본문"), PatchNoteErrorCode.INVALID_CATEGORY);
         }
 
         @ParameterizedTest
         @NullAndEmptySource
         @ValueSource(strings = {"   "})
         void 본문이_공백이면_예외가_발생한다(String content) {
-            final PatchNoteEntity entity = PatchNoteEntity.create(
-                    PatchNoteCategory.NOTICE, "제목", "본문");
+            final PatchNoteEntity entity = PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", "본문");
 
             assertCoffeeShoutException(
-                    () -> entity.update(PatchNoteCategory.NOTICE, "제목", content),
-                    PatchNoteErrorCode.INVALID_CONTENT
-            );
+                    () -> entity.update(PatchNoteCategory.NOTICE, "제목", content), PatchNoteErrorCode.INVALID_CONTENT);
         }
 
         @Test
         void 본문이_5000자를_초과하면_예외가_발생한다() {
-            final PatchNoteEntity entity = PatchNoteEntity.create(
-                    PatchNoteCategory.NOTICE, "제목", "본문");
+            final PatchNoteEntity entity = PatchNoteEntity.create(PatchNoteCategory.NOTICE, "제목", "본문");
             final String longContent = "가".repeat(5001);
 
             assertCoffeeShoutException(
                     () -> entity.update(PatchNoteCategory.NOTICE, "제목", longContent),
-                    PatchNoteErrorCode.INVALID_CONTENT_LENGTH
-            );
+                    PatchNoteErrorCode.INVALID_CONTENT_LENGTH);
         }
     }
 }

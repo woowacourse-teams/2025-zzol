@@ -5,5 +5,4 @@ import org.springframework.context.annotation.Profile;
 
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
-public class ServiceTestConfig {
-}
+public class ServiceTestConfig {}

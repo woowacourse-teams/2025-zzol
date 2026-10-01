@@ -13,6 +13,5 @@ public record SeasonRankMessage(String seasonKey, List<Entry> entries) {
         return new SeasonRankMessage(event.seasonKey(), entries);
     }
 
-    public record Entry(String playerName, long totalPoints, String tier, int seasonRank) {
-    }
+    public record Entry(String playerName, long totalPoints, String tier, int seasonRank) {}
 }

@@ -8,6 +8,4 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "roulette")
 public record RouletteProperties(
-        @DecimalMin("0.1") @DecimalMax("0.9") double defaultAdjustmentWeight
-) {
-}
+        @DecimalMin("0.1") @DecimalMax("0.9") double defaultAdjustmentWeight) {}

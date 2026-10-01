@@ -51,7 +51,8 @@ public class StreamTracePropagator {
             task.run();
             return;
         }
-        final Span span = propagator.extract(carrier, Map::get)
+        final Span span = propagator
+                .extract(carrier, Map::get)
                 .name(spanName)
                 .kind(Span.Kind.CONSUMER)
                 .start();

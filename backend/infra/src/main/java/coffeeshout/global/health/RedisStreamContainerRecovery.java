@@ -53,8 +53,8 @@ public class RedisStreamContainerRecovery {
 
     private static final int MAX_RECOVERY_ATTEMPTS = 2;
 
-    public RedisStreamContainerRecovery(RedisStreamContainerRegistry containerRegistry,
-                                        RedisStreamProperties redisStreamProperties) {
+    public RedisStreamContainerRecovery(
+            RedisStreamContainerRegistry containerRegistry, RedisStreamProperties redisStreamProperties) {
         this.containerRegistry = containerRegistry;
         this.redisStreamProperties = redisStreamProperties;
     }
@@ -119,8 +119,8 @@ public class RedisStreamContainerRecovery {
 
     private void handleRecoveryFailure(String streamKey) {
         int failCount = recoveryFailureCounts.merge(streamKey, 1, Integer::sum);
-        log.warn("Redis Stream container 복구 실패: stream={}, 연속 실패 횟수={}/{}",
-                streamKey, failCount, MAX_RECOVERY_ATTEMPTS);
+        log.warn(
+                "Redis Stream container 복구 실패: stream={}, 연속 실패 횟수={}/{}", streamKey, failCount, MAX_RECOVERY_ATTEMPTS);
 
         if (failCount >= MAX_RECOVERY_ATTEMPTS) {
             failedRecoveryStreams.add(streamKey);

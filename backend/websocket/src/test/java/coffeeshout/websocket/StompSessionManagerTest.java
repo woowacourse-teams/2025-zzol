@@ -31,15 +31,13 @@ class StompSessionManagerTest {
     @Test
     void joinCode가_null인_경우_예외_발생() {
         // when & then
-        assertThatThrownBy(() -> PlayerKey.of(null, "player1"))
-                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> PlayerKey.of(null, "player1")).isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void playerName이_null인_경우_예외_발생() {
         // when & then
-        assertThatThrownBy(() -> PlayerKey.of("ABC23", null))
-                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> PlayerKey.of("ABC23", null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -85,8 +83,7 @@ class StompSessionManagerTest {
     @Test
     void null_플레이어_키로_parse_시_예외_발생() {
         // when & then
-        assertThatThrownBy(() -> PlayerKey.parse(null))
-                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> PlayerKey.parse(null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test

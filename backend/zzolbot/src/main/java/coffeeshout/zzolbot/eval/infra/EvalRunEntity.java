@@ -21,8 +21,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "zzolbot_eval_run",
-        indexes = @Index(name = "idx_zzolbot_eval_run_started_at", columnList = "started_at DESC")
-)
+        indexes = @Index(name = "idx_zzolbot_eval_run_started_at", columnList = "started_at DESC"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EvalRunEntity {

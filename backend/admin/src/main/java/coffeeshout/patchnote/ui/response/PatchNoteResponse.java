@@ -11,8 +11,7 @@ public record PatchNoteResponse(
         String title,
         String content,
         Instant createdAt,
-        Instant updatedAt
-) {
+        Instant updatedAt) {
     public static PatchNoteResponse from(PatchNoteEntity entity) {
         return new PatchNoteResponse(
                 entity.getId(),
@@ -21,7 +20,6 @@ public record PatchNoteResponse(
                 entity.getTitle(),
                 entity.getContent(),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
-        );
+                entity.getUpdatedAt());
     }
 }

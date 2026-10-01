@@ -8,7 +8,6 @@ import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.TrieRefreshNotifier;
 import coffeeshout.profanity.domain.WordSource;
-import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +41,10 @@ public class ProfanityWordManagementService {
     @Transactional
     public void deactivate(String rawWord) {
         final String normalized = textNormalizer.normalize(rawWord);
-        wordRepository.findByWord(normalized)
-                .orElseThrow(() -> new BusinessException(ProfanityErrorCode.WORD_NOT_FOUND, "비속어를 찾을 수 없습니다: " + normalized));
+        wordRepository
+                .findByWord(normalized)
+                .orElseThrow(() ->
+                        new BusinessException(ProfanityErrorCode.WORD_NOT_FOUND, "비속어를 찾을 수 없습니다: " + normalized));
         wordRepository.deactivate(normalized);
         afterCommit(trieRefreshNotifier::publish);
         log.info("비속어 비활성화: word={}", normalized);
@@ -70,14 +71,17 @@ public class ProfanityWordManagementService {
     @Transactional
     public void activate(String rawWord) {
         final String normalized = textNormalizer.normalize(rawWord);
-        wordRepository.findByWord(normalized)
-                .orElseThrow(() -> new BusinessException(ProfanityErrorCode.WORD_NOT_FOUND, "비속어를 찾을 수 없습니다: " + normalized));
+        wordRepository
+                .findByWord(normalized)
+                .orElseThrow(() ->
+                        new BusinessException(ProfanityErrorCode.WORD_NOT_FOUND, "비속어를 찾을 수 없습니다: " + normalized));
         wordRepository.activate(normalized);
         afterCommit(trieRefreshNotifier::publish);
         log.info("비속어 활성화: word={}", normalized);
     }
 
-    public Page<ProfanityWord> findAllPaged(String search, Language language, WordSource source, Boolean activeOnly, int page, int size) {
+    public Page<ProfanityWord> findAllPaged(
+            String search, Language language, WordSource source, Boolean activeOnly, int page, int size) {
         final String searchTerm = (search == null) ? "" : search.strip();
         return wordRepository.findAllPaged(searchTerm, language, source, activeOnly, PageRequest.of(page, size));
     }

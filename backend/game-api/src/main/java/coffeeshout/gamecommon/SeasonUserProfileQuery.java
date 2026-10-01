@@ -18,6 +18,5 @@ public interface SeasonUserProfileQuery {
     /** 전역 식별자의 userCode로 내부 userId를 해석한다("내 순위" 조회 진입점). */
     Optional<Long> resolveUserIdByCode(String userCode);
 
-    record SeasonUserProfile(Long userId, String nickname, String userCode) {
-    }
+    record SeasonUserProfile(Long userId, String nickname, String userCode) {}
 }

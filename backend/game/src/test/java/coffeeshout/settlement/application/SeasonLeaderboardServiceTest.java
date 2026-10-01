@@ -40,11 +40,11 @@ class SeasonLeaderboardServiceTest {
 
         List<LeaderboardEntry> entries = leaderboardService.top(SEASON, 10);
 
-        assertThat(entries).containsExactly(
-                new LeaderboardEntry(1L, 1, 170),
-                new LeaderboardEntry(2L, 2, 100),
-                new LeaderboardEntry(3L, 3, 70)
-        );
+        assertThat(entries)
+                .containsExactly(
+                        new LeaderboardEntry(1L, 1, 170),
+                        new LeaderboardEntry(2L, 2, 100),
+                        new LeaderboardEntry(3L, 3, 70));
     }
 
     @Test
@@ -55,18 +55,19 @@ class SeasonLeaderboardServiceTest {
 
         List<LeaderboardEntry> entries = leaderboardService.top(SEASON, 10);
 
-        assertThat(entries).containsExactly(
-                new LeaderboardEntry(1L, 1, 100),
-                new LeaderboardEntry(2L, 1, 100),
-                new LeaderboardEntry(3L, 3, 70)
-        );
+        assertThat(entries)
+                .containsExactly(
+                        new LeaderboardEntry(1L, 1, 100),
+                        new LeaderboardEntry(2L, 1, 100),
+                        new LeaderboardEntry(3L, 3, 70));
     }
 
     @Test
     void 내_순위는_나보다_포인트가_높은_회원_수에_1을_더한_값이다() {
         SeasonScoreEntity score = 성적(5L, 70);
         given(scoreRepository.findBySeasonKeyAndUserId(SEASON, 5L)).willReturn(Optional.of(score));
-        given(scoreRepository.countBySeasonKeyAndTotalPointsGreaterThan(SEASON, 70L)).willReturn(2L);
+        given(scoreRepository.countBySeasonKeyAndTotalPointsGreaterThan(SEASON, 70L))
+                .willReturn(2L);
 
         Optional<LeaderboardEntry> entry = leaderboardService.rankOf(SEASON, 5L);
 

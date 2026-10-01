@@ -32,8 +32,7 @@ public class MiniGameDummy implements Playable {
     }
 
     @Override
-    public void setUp(List<Gamer> gamers) {
-    }
+    public void setUp(List<Gamer> gamers) {}
 
     public static class Factory implements MiniGameFactory {
         @Override

@@ -36,5 +36,3 @@ public class CardGameScore extends MiniGameScore {
         return (long) addition * multiplier;
     }
 }
-
-

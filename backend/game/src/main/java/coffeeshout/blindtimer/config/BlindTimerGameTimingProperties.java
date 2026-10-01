@@ -13,6 +13,4 @@ public record BlindTimerGameTimingProperties(
         @NotNull @DurationMin(nanos = 1) Duration prepare,
         @NotNull @DurationMin(nanos = 1) Duration blindDelay,
         @NotNull @DurationMin(nanos = 1) Duration timeoutBuffer,
-        @NotNull @DurationMin(nanos = 1) Duration resultDelay
-) {
-}
+        @NotNull @DurationMin(nanos = 1) Duration resultDelay) {}

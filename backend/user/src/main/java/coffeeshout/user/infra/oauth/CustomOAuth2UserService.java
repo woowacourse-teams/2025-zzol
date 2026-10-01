@@ -27,8 +27,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .filter(c -> c.provider().getRegistrationId().equals(registrationId))
                 .findFirst()
                 .orElseThrow(() -> new OAuth2AuthenticationException(
-                        new OAuth2Error("provider_not_supported"),
-                        "지원하지 않는 OAuth 제공자입니다: " + registrationId));
+                        new OAuth2Error("provider_not_supported"), "지원하지 않는 OAuth 제공자입니다: " + registrationId));
 
         final String providerUserId = converter.extractProviderUserId(oAuth2User);
         final String email = converter.extractEmail(oAuth2User);
@@ -38,12 +37,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     public record CustomOAuth2User(
-            OAuth2User delegate,
-            String registrationId,
-            String providerUserId,
-            String email,
-            String nickname
-    ) implements OAuth2User {
+            OAuth2User delegate, String registrationId, String providerUserId, String email, String nickname)
+            implements OAuth2User {
 
         @Override
         public Map<String, Object> getAttributes() {

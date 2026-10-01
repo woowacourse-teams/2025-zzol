@@ -6,7 +6,4 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record AddProfanityWordRequest(
-        @NotBlank @Size(max = 200) String word,
-        @NotNull Language language
-) {
-}
+        @NotBlank @Size(max = 200) String word, @NotNull Language language) {}

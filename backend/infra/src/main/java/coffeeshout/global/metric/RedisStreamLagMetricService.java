@@ -63,8 +63,7 @@ public class RedisStreamLagMetricService implements SmartLifecycle {
             StringRedisTemplate stringRedisTemplate,
             RedisStreamProperties redisStreamProperties,
             MeterRegistry meterRegistry,
-            ApplicationContext applicationContext
-    ) {
+            ApplicationContext applicationContext) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.redisStreamProperties = redisStreamProperties;
         this.meterRegistry = meterRegistry;
@@ -78,7 +77,8 @@ public class RedisStreamLagMetricService implements SmartLifecycle {
             return;
         }
 
-        for (Map.Entry<String, StreamConfig> entry : redisStreamProperties.keys().entrySet()) {
+        for (Map.Entry<String, StreamConfig> entry :
+                redisStreamProperties.keys().entrySet()) {
             final String streamKey = entry.getKey();
             final StreamConfig streamConfig = entry.getValue();
 
@@ -95,21 +95,22 @@ public class RedisStreamLagMetricService implements SmartLifecycle {
             }
 
             // 2) 스레드풀 큐 깊이 Gauge
-            Gauge.builder("redis.stream.threadpool.queue.size",
-                            () -> getThreadPoolQueueSize(streamKey, streamConfig))
+            Gauge.builder("redis.stream.threadpool.queue.size", () -> getThreadPoolQueueSize(streamKey, streamConfig))
                     .description("Redis Stream 컨슈머 스레드풀의 대기 큐 크기")
                     .tag("stream", streamKey)
                     .register(meterRegistry);
 
             // 3) 스레드풀 활성 스레드 수
-            Gauge.builder("redis.stream.threadpool.active.count",
+            Gauge.builder(
+                            "redis.stream.threadpool.active.count",
                             () -> getThreadPoolActiveCount(streamKey, streamConfig))
                     .description("Redis Stream 컨슈머 스레드풀의 활성 스레드 수")
                     .tag("stream", streamKey)
                     .register(meterRegistry);
         }
 
-        log.info("Redis Stream Lag 메트릭 등록 완료: streams={}",
+        log.info(
+                "Redis Stream Lag 메트릭 등록 완료: streams={}",
                 redisStreamProperties.keys().keySet());
     }
 

@@ -36,8 +36,7 @@ public class SpeedTouchGameService implements MiniGameService {
             @Qualifier("speedTouchGameScheduler") TaskScheduler taskScheduler,
             ApplicationEventPublisher eventPublisher,
             SpeedTouchGameTimingProperties timing,
-            GameDurationMetricService gameDurationMetricService
-    ) {
+            GameDurationMetricService gameDurationMetricService) {
         this.gameSessionService = gameSessionService;
         this.taskScheduler = taskScheduler;
         this.eventPublisher = eventPublisher;
@@ -64,8 +63,7 @@ public class SpeedTouchGameService implements MiniGameService {
         game.updateState(SpeedTouchGameState.DESCRIPTION);
         taskScheduler.schedule(
                 () -> schedulePrepare(game, joinCode),
-                Instant.now().plus(timing.description().toMillis(), ChronoUnit.MILLIS)
-        );
+                Instant.now().plus(timing.description().toMillis(), ChronoUnit.MILLIS));
     }
 
     private void schedulePrepare(SpeedTouchGame game, String joinCode) {
@@ -75,8 +73,7 @@ public class SpeedTouchGameService implements MiniGameService {
 
         taskScheduler.schedule(
                 () -> startPlaying(game, joinCode),
-                Instant.now().plus(timing.prepare().toMillis(), ChronoUnit.MILLIS)
-        );
+                Instant.now().plus(timing.prepare().toMillis(), ChronoUnit.MILLIS));
     }
 
     private void startPlaying(SpeedTouchGame game, String joinCode) {
@@ -86,8 +83,7 @@ public class SpeedTouchGameService implements MiniGameService {
 
         final ScheduledFuture<?> timeoutFuture = taskScheduler.schedule(
                 () -> handleTimeout(game, joinCode),
-                Instant.now().plus(timing.playing().toMillis(), ChronoUnit.MILLIS)
-        );
+                Instant.now().plus(timing.playing().toMillis(), ChronoUnit.MILLIS));
         game.setTimeoutFuture(timeoutFuture);
     }
 
@@ -108,8 +104,7 @@ public class SpeedTouchGameService implements MiniGameService {
         eventPublisher.publishEvent(SpeedTouchProgressEvent.of(game, joinCode));
         taskScheduler.schedule(
                 () -> eventPublisher.publishEvent(SpeedTouchFinishedEvent.of(game, joinCode)),
-                Instant.now().plusSeconds(2)
-        );
+                Instant.now().plusSeconds(2));
         // 확률 조정·결과 저장을 유발하는 이벤트는 종료 알림을 모두 보낸 뒤 마지막에 발행한다 —
         // 저장 리스너(@Transactional/@RedisLock) 실패가 게임 종료 알림을 막지 않도록(다른 게임과 동일 순서).
         eventPublisher.publishEvent(new MiniGameFinishedEvent(
@@ -118,7 +113,6 @@ public class SpeedTouchGameService implements MiniGameService {
     }
 
     public SpeedTouchGame getSpeedTouchGame(JoinCode joinCode) {
-        return (SpeedTouchGame) gameSessionService.getSession(joinCode)
-                .findCompletedGame(MiniGameType.SPEED_TOUCH);
+        return (SpeedTouchGame) gameSessionService.getSession(joinCode).findCompletedGame(MiniGameType.SPEED_TOUCH);
     }
 }

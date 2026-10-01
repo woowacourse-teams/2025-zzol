@@ -31,8 +31,7 @@ public class SettlementDeadLetterPublisher {
             deadLetterRepository.save(new SettlementDeadLetterEntity(
                     record.getId().getValue(),
                     truncate(reason),
-                    record.getValue().getOrDefault(StreamRecordFields.PAYLOAD, "")
-            ));
+                    record.getValue().getOrDefault(StreamRecordFields.PAYLOAD, "")));
         } catch (DataIntegrityViolationException e) {
             // 격리 후 ACK 실패로 재전달된 메시지 — 이미 행이 있으므로 성공으로 간주해야
             // 호출자가 ACK까지 진행해 재전달 루프가 끊긴다(record_id 유니크 제약)

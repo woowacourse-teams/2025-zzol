@@ -8,9 +8,11 @@ const RacingGameProvider = ({ children }: PropsWithChildren) => {
   const [racingGameState, setRacingGameState] = useState<RacingGameState>('DESCRIPTION');
   const [racingGameData, setRacingGameData] = useState<RacingGameData>({
     players: [],
+    // 첫 메시지가 오기 전에는 결승선 거리를 모른다. 임의의 숫자를 채우면 도착선이
+    // 실제보다 앞에 그려지고 진행률도 틀리게 나온다. 0은 "아직 모름"이다.
     distance: {
       start: 0,
-      end: 1000,
+      end: 0,
     },
   });
   const { joinCode } = useIdentifier();

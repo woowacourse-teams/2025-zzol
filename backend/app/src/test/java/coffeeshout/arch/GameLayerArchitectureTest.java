@@ -21,43 +21,55 @@ public class GameLayerArchitectureTest {
 
     @ArchTest
     static final ArchRule cardgame_domain은_infra를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.cardgame.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.cardgame.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.cardgame.infra..")
             .as("cardgame.domain은 cardgame.infra를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule blockstacking_domain은_infra를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.blockstacking.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.blockstacking.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.blockstacking.infra..")
             .as("blockstacking.domain은 blockstacking.infra를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule laddergame_domain은_infra를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.laddergame.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.laddergame.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.laddergame.infra..")
             .as("laddergame.domain은 laddergame.infra를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule racinggame_domain은_infra를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.racinggame.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.racinggame.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.racinggame.infra..")
             .as("racinggame.domain은 racinggame.infra를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule speedtouch_domain은_infra를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.speedtouch.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.speedtouch.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.speedtouch.infra..")
             .as("speedtouch.domain은 speedtouch.infra를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule blindtimer_domain은_infra를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.blindtimer.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.blindtimer.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.blindtimer.infra..")
             .as("blindtimer.domain은 blindtimer.infra를 참조할 수 없다");
 
@@ -67,50 +79,64 @@ public class GameLayerArchitectureTest {
 
     @ArchTest
     static final ArchRule cardgame_application은_ui를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.cardgame.application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.cardgame.application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.cardgame.ui..")
             .as("cardgame.application은 cardgame.ui를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule laddergame_application은_ui를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.laddergame.application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.laddergame.application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.laddergame.ui..")
             .as("laddergame.application은 laddergame.ui를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule racinggame_application은_ui를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.racinggame.application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.racinggame.application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.racinggame.ui..")
             .as("racinggame.application은 racinggame.ui를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule blockstacking_application은_ui를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.blockstacking.application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.blockstacking.application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.blockstacking.ui..")
             .as("blockstacking.application은 blockstacking.ui를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule speedtouch_application은_ui를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.speedtouch.application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.speedtouch.application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.speedtouch.ui..")
             .as("speedtouch.application은 speedtouch.ui를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule blindtimer_application은_ui를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.blindtimer.application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.blindtimer.application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.blindtimer.ui..")
             .as("blindtimer.application은 blindtimer.ui를 참조할 수 없다");
 
     @ArchTest
     static final ArchRule minigame_application은_ui를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.minigame.application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.minigame.application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.minigame.ui..")
             .as("minigame.application은 minigame.ui를 참조할 수 없다");
 }

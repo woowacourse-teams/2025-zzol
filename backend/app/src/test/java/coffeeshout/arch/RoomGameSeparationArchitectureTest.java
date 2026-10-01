@@ -21,8 +21,10 @@ public class RoomGameSeparationArchitectureTest {
 
     @ArchTest
     static final ArchRule room_domain은_minigame_패키지를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.room.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.room.domain..")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.minigame..")
             .as("room.domain은 게임 타입(coffeeshout.minigame..)을 참조할 수 없다 — 게임 소유권은 GameSession에 있다 (ADR-0025)");
 
@@ -32,8 +34,10 @@ public class RoomGameSeparationArchitectureTest {
      */
     @ArchTest
     static final ArchRule room_domain은_게임_SPI를_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.room.domain..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.room.domain..")
+            .should()
+            .dependOnClassesThat()
             .haveNameMatching("coffeeshout\\.gamecommon\\.(Playable|MiniGameFactory)")
             .as("room.domain은 게임 SPI(Playable, MiniGameFactory)를 참조할 수 없다 (ADR-0025)");
 
@@ -45,11 +49,16 @@ public class RoomGameSeparationArchitectureTest {
      */
     @ArchTest
     static final ArchRule room_application은_게임_이벤트_리스너_외에_minigame을_참조할_수_없다 = noClasses()
-            .that().resideInAPackage("coffeeshout.room.application..")
-            .and().haveSimpleNameNotContaining("MiniGameResultRoomListener")
-            .and().haveSimpleNameNotContaining("RoomGameStartListener")
-            .and().haveSimpleNameNotContaining("PlayerSnapshotListener")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("coffeeshout.room.application..")
+            .and()
+            .haveSimpleNameNotContaining("MiniGameResultRoomListener")
+            .and()
+            .haveSimpleNameNotContaining("RoomGameStartListener")
+            .and()
+            .haveSimpleNameNotContaining("PlayerSnapshotListener")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.minigame..")
             .as("room.application의 게임 패키지 참조는 game-api 이벤트 in-process 리스너 3곳만 허용한다 (ADR-0025)");
 
@@ -61,17 +70,19 @@ public class RoomGameSeparationArchitectureTest {
      */
     @ArchTest
     static final ArchRule game은_room_domain_player를_참조할_수_없다 = noClasses()
-            .that().resideInAnyPackage(
+            .that()
+            .resideInAnyPackage(
                     "coffeeshout.minigame..",
                     "coffeeshout.cardgame..",
                     "coffeeshout.blockstacking..",
                     "coffeeshout.laddergame..",
                     "coffeeshout.racinggame..",
                     "coffeeshout.speedtouch..",
-                    "coffeeshout.blindtimer.."
-            )
-            .and().haveSimpleNameNotContaining("PersistenceService")
-            .should().dependOnClassesThat()
+                    "coffeeshout.blindtimer..")
+            .and()
+            .haveSimpleNameNotContaining("PersistenceService")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.room.domain.player..")
             .as("게임 모듈은 room.domain.player를 참조할 수 없다 — 플레이어 식별은 Gamer(:game-api)를 사용한다 (ADR-0025)");
 
@@ -97,17 +108,19 @@ public class RoomGameSeparationArchitectureTest {
      */
     @ArchTest
     static final ArchRule game은_room_domain을_직접_참조할_수_없다 = noClasses()
-            .that().resideInAnyPackage(
+            .that()
+            .resideInAnyPackage(
                     "coffeeshout.minigame..",
                     "coffeeshout.cardgame..",
                     "coffeeshout.blockstacking..",
                     "coffeeshout.laddergame..",
                     "coffeeshout.racinggame..",
                     "coffeeshout.speedtouch..",
-                    "coffeeshout.blindtimer.."
-            )
-            .and().haveSimpleNameNotContaining("MiniGamePersistenceService")
-            .should().dependOnClassesThat()
+                    "coffeeshout.blindtimer..")
+            .and()
+            .haveSimpleNameNotContaining("MiniGamePersistenceService")
+            .should()
+            .dependOnClassesThat()
             .resideInAPackage("coffeeshout.room.domain..")
             .as("게임 모듈은 Room 애그리거트(coffeeshout.room.domain..)를 직접 참조할 수 없다 "
                     + "— 식별은 JoinCode/Gamer, 게임 조회는 GameSession 경유 (ADR-0025)");

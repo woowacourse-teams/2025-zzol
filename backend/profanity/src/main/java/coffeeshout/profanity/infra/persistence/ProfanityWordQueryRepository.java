@@ -2,6 +2,7 @@ package coffeeshout.profanity.infra.persistence;
 
 import static coffeeshout.profanity.infra.persistence.QProfanityWordEntity.profanityWordEntity;
 
+import coffeeshout.global.persistence.LikePattern;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.WordSource;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -22,7 +23,9 @@ public class ProfanityWordQueryRepository {
     public List<ProfanityWordEntity> findAllActive() {
         return queryFactory
                 .selectFrom(profanityWordEntity)
-                .where(profanityWordEntity.isActive.isTrue()
+                .where(profanityWordEntity
+                        .isActive
+                        .isTrue()
                         .and(profanityWordEntity.source.ne(WordSource.OPERATOR_ALLOWED)))
                 .fetch();
     }
@@ -47,8 +50,16 @@ public class ProfanityWordQueryRepository {
         return new PageImpl<>(content, pageable, total == null ? 0 : total);
     }
 
+    /**
+     * {@code containsIgnoreCase} 를 쓰지 않는다. QueryDSL 이 이스케이프 없는 LIKE 로 풀어
+     * 주어서, 검색어의 {@code %} 와 {@code _} 가 와일드카드로 읽힌다. 금칙어 사전에는
+     * 그 두 글자가 낱말 자체로 들어 있을 수 있다.
+     */
     private BooleanExpression searchContains(String search) {
-        return (search == null || search.isBlank()) ? null : profanityWordEntity.word.containsIgnoreCase(search);
+        if (search == null || search.isBlank()) {
+            return null;
+        }
+        return profanityWordEntity.word.likeIgnoreCase(LikePattern.contains(search), LikePattern.ESCAPE);
     }
 
     private BooleanExpression languageEq(Language language) {

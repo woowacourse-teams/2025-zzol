@@ -14,9 +14,7 @@ class ZzolBotSessionEntityTest {
 
         @Test
         void 질문_답변_어드민_정보로_세션을_생성한다() {
-            final ZzolBotSessionEntity entity = ZzolBotSessionEntity.create(
-                    "A4BX 방 상태 알려줘", "PLAYING 상태입니다.", "admin"
-            );
+            final ZzolBotSessionEntity entity = ZzolBotSessionEntity.create("A4BX 방 상태 알려줘", "PLAYING 상태입니다.", "admin");
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(entity.getQuestion()).isEqualTo("A4BX 방 상태 알려줘");

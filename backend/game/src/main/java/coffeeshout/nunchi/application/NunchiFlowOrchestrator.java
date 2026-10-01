@@ -64,8 +64,7 @@ public class NunchiFlowOrchestrator {
             NunchiTimingProperties timing,
             NunchiNotifier notifier,
             GameSessionService gameSessionService,
-            ApplicationEventPublisher eventPublisher
-    ) {
+            ApplicationEventPublisher eventPublisher) {
         this.taskScheduler = taskScheduler;
         this.timing = timing;
         this.notifier = notifier;
@@ -113,8 +112,13 @@ public class NunchiFlowOrchestrator {
             session.hardCapEpochMs = now + timing.hardCap().toMillis();
             scheduleIdle(session); // idleDeadlineEpochMs 저장 포함 — notify 전에 걸어 종료 경로 보장
 
-            notifyQuietly(() -> notifier.notifyPlaying(code, game.getCurrentNumber(), snapshotStood(session),
-                    now, session.idleDeadlineEpochMs, session.hardCapEpochMs));
+            notifyQuietly(() -> notifier.notifyPlaying(
+                    code,
+                    game.getCurrentNumber(),
+                    snapshotStood(session),
+                    now,
+                    session.idleDeadlineEpochMs,
+                    session.hardCapEpochMs));
 
             session.hardCap = schedule(() -> onHardCap(code), timing.hardCap());
         });
@@ -137,29 +141,34 @@ public class NunchiFlowOrchestrator {
             switch (result.outcome()) {
                 case STOOD -> onStood(session, gamer);
                 case COLLIDED -> onCollided(session, result);
-                case IGNORED -> log.warn("눈치게임 press 무시(이미 입력/쿨다운 밖/종료): joinCode={}, player={}",
-                        code, gamer.getName());
+                case IGNORED ->
+                    log.warn("눈치게임 press 무시(이미 입력/쿨다운 밖/종료): joinCode={}, player={}", code, gamer.getName());
             }
         }
     }
 
     private void onStood(NunchiSession session, Gamer gamer) {
         session.stood.add(gamer.getName());
-        scheduleIdle(session);   // 유효 입력이므로 idle 리셋(N6) — idleDeadlineEpochMs 갱신
+        scheduleIdle(session); // 유효 입력이므로 idle 리셋(N6) — idleDeadlineEpochMs 갱신
         scheduleWindow(session); // 이 번호가 윈도우 안에 또 눌리지 않으면 solo 확정(N2)
 
-        notifyQuietly(() -> notifier.notifyStood(session.code, gamer.getName(), session.game.getCurrentNumber(),
-                System.currentTimeMillis(), session.idleDeadlineEpochMs));
+        notifyQuietly(() -> notifier.notifyStood(
+                session.code,
+                gamer.getName(),
+                session.game.getCurrentNumber(),
+                System.currentTimeMillis(),
+                session.idleDeadlineEpochMs));
 
         finishIfAllPressed(session);
     }
 
     private void onCollided(NunchiSession session, PressResult result) {
-        final List<String> collided = result.collidedGroup().stream().map(Gamer::getName).toList();
+        final List<String> collided =
+                result.collidedGroup().stream().map(Gamer::getName).toList();
         session.stood.removeAll(collided); // 충돌자는 깨끗이 선 사람이 아니므로 stood 스냅샷에서 제거
 
         cancelWindow(session); // 충돌 확정 — 이 번호의 윈도우는 끝
-        cancelIdle(session);   // 쿨다운 동안 idle 일시정지(N6, 쿨다운을 idle로 오인 방지)
+        cancelIdle(session); // 쿨다운 동안 idle 일시정지(N6, 쿨다운을 idle로 오인 방지)
 
         final long now = System.currentTimeMillis();
         final long resumeAt = now + timing.collisionCooldown().toMillis();
@@ -271,16 +280,23 @@ public class NunchiFlowOrchestrator {
         try {
             final int roundCount = gameSessionService.finishGame(session.joinCode);
             eventPublisher.publishEvent(new MiniGameFinishedEvent(
-                    session.code, MiniGameType.NUNCHI_GAME.name(), session.game.getResult().toRankMap(), roundCount));
+                    session.code,
+                    MiniGameType.NUNCHI_GAME.name(),
+                    session.game.getResult().toRankMap(),
+                    roundCount));
         } finally {
             sessions.remove(session.code);
         }
     }
 
     private void broadcastPlaying(NunchiSession session) {
-        notifyQuietly(() -> notifier.notifyPlaying(session.code, session.game.getCurrentNumber(),
-                snapshotStood(session), System.currentTimeMillis(),
-                session.idleDeadlineEpochMs, session.hardCapEpochMs));
+        notifyQuietly(() -> notifier.notifyPlaying(
+                session.code,
+                session.game.getCurrentNumber(),
+                snapshotStood(session),
+                System.currentTimeMillis(),
+                session.idleDeadlineEpochMs,
+                session.hardCapEpochMs));
     }
 
     /**
@@ -323,7 +339,8 @@ public class NunchiFlowOrchestrator {
     private void scheduleIdle(NunchiSession session) {
         session.idle = cancel(session.idle);
         final long gen = ++session.idleGen;
-        session.idleDeadlineEpochMs = System.currentTimeMillis() + timing.idleTimeout().toMillis();
+        session.idleDeadlineEpochMs =
+                System.currentTimeMillis() + timing.idleTimeout().toMillis();
         session.idle = schedule(() -> onIdleTimeout(session.code, gen), timing.idleTimeout());
     }
 
@@ -368,22 +385,22 @@ public class NunchiFlowOrchestrator {
     /** joinCode별 Flow 상태. 자기 게임·코드를 들고, 모든 필드 접근은 {@code lock} 아래에서만 한다. */
     private static final class NunchiSession {
         private final Object lock = new Object();
-        private final NunchiGame game;     // 이 세션의 도메인 상태기계(startFlow 시점 고정)
-        private final JoinCode joinCode;   // finalize 시 finishGame에 그대로 전달
-        private final String code;         // joinCode.getValue() 캐시 — 맵 키·알림 인자로 빈번히 쓰임
+        private final NunchiGame game; // 이 세션의 도메인 상태기계(startFlow 시점 고정)
+        private final JoinCode joinCode; // finalize 시 finishGame에 그대로 전달
+        private final String code; // joinCode.getValue() 캐시 — 맵 키·알림 인자로 빈번히 쓰임
         private final List<String> stood = new ArrayList<>();
         private ScheduledFuture<?> description; // 규칙 설명 → READY 전이 타이머(시작 시 한 번)
-        private ScheduledFuture<?> ready;       // 곧 시작 카운트다운 → PLAYING 전이 타이머(시작 시 한 번)
+        private ScheduledFuture<?> ready; // 곧 시작 카운트다운 → PLAYING 전이 타이머(시작 시 한 번)
         private ScheduledFuture<?> window;
         private ScheduledFuture<?> idle;
         private ScheduledFuture<?> cooldown;
         private ScheduledFuture<?> hardCap;
-        private ScheduledFuture<?> finish;  // 전원 입력 → allPressedDelay 후 DONE 전이 타이머(결정 5, 단발 예약)
-        private long windowGen;          // 윈도우 타이머 세대 — stale 발화 가드
-        private long idleGen;            // idle 타이머 세대 — stale 발화 가드
+        private ScheduledFuture<?> finish; // 전원 입력 → allPressedDelay 후 DONE 전이 타이머(결정 5, 단발 예약)
+        private long windowGen; // 윈도우 타이머 세대 — stale 발화 가드
+        private long idleGen; // idle 타이머 세대 — stale 발화 가드
         private long idleDeadlineEpochMs; // 실제 예약된 idle 발화 절대 시각(브로드캐스트와 일치)
-        private long hardCapEpochMs;      // PLAYING 시작 시 고정되는 하드캡 절대 시각(결정 8 — 불변)
-        private boolean finishing;        // 전원 입력으로 종료 대기 중(allPressedDelay) — 추가 입력·재예약 차단
+        private long hardCapEpochMs; // PLAYING 시작 시 고정되는 하드캡 절대 시각(결정 8 — 불변)
+        private boolean finishing; // 전원 입력으로 종료 대기 중(allPressedDelay) — 추가 입력·재예약 차단
         private boolean finished;
 
         private NunchiSession(NunchiGame game, JoinCode joinCode) {

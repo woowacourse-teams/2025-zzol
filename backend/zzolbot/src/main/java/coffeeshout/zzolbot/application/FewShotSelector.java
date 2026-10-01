@@ -22,13 +22,10 @@ public class FewShotSelector {
         final List<FewShotExample> shuffled = new ArrayList<>(pool);
         Collections.shuffle(shuffled, new Random(question.hashCode()));
 
-        final List<FewShotExample> selected = List.copyOf(
-                shuffled.subList(0, Math.min(EXAMPLE_LIMIT, shuffled.size()))
-        );
-        final List<Long> ids = selected.stream()
-                .map(FewShotExample::id)
-                .sorted()
-                .toList();
+        final List<FewShotExample> selected =
+                List.copyOf(shuffled.subList(0, Math.min(EXAMPLE_LIMIT, shuffled.size())));
+        final List<Long> ids =
+                selected.stream().map(FewShotExample::id).sorted().toList();
         return new Selection(selected, ids);
     }
 }

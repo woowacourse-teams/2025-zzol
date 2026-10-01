@@ -18,17 +18,11 @@ public class TapCommandEventConsumer implements Consumer<TapCommandEvent> {
     @Override
     public void accept(TapCommandEvent event) {
         try {
-            racingGameService.tap(
-                    event.joinCode(),
-                    event.playerName(),
-                    event.tapCount()
-            );
+            racingGameService.tap(event.joinCode(), event.playerName(), event.tapCount());
         } catch (BusinessException e) {
-            log.warn("탭 이벤트 처리 중 상태 오류: eventId={}, joinCode={}",
-                    event.eventId(), event.joinCode(), e);
+            log.warn("탭 이벤트 처리 중 상태 오류: eventId={}, joinCode={}", event.eventId(), event.joinCode(), e);
         } catch (Exception e) {
-            log.error("탭 이벤트 처리 실패: eventId={}, joinCode={}",
-                    event.eventId(), event.joinCode(), e);
+            log.error("탭 이벤트 처리 실패: eventId={}, joinCode={}", event.eventId(), event.joinCode(), e);
         }
     }
 }

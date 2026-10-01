@@ -12,6 +12,15 @@ version = "0.0.1-SNAPSHOT"
 val springBootVersion: String = libs.versions.spring.boot.get()
 val pmdVersion: String = libs.versions.pmd.get()
 
+// pre-push 훅 자동 활성화 — 클론 후 별도 지식 없이 켜지게 한다 (#1659).
+// 프론트만 만지는 사람은 frontend/package.json 의 prepare 스크립트가 같은 일을 한다.
+tasks.register<Exec>("installGitHooks") {
+    group = "build setup"
+    description = "core.hooksPath 를 .githooks 로 설정해 pre-push 훅을 켠다."
+    commandLine("git", "config", "core.hooksPath", ".githooks")
+    isIgnoreExitValue = true // git 이 없거나 저장소가 아니어도 빌드를 막지 않는다
+}
+
 tasks.register<Exec>("pruneStaleTestContainers") {
     group = "verification"
     description = "종료된 Testcontainers 컨테이너를 제거한다. reuse 캐시 초기화 시 사용."
@@ -107,18 +116,37 @@ subprojects {
             xml.required.set(true)
             html.required.set(false)
         }
-        // event 패키지의 *Event record는 로직 없는 전송 DTO — 커버리지 측정 제외
+        // 커버리지에서 빼는 둘.
+        //
+        //  1. event 패키지의 *Event record — 로직 없는 전송 DTO다.
+        //  2. Local* — @Profile("local") 로만 뜨는 로컬 시연 데이터 시더다. 운영에서는
+        //     아예 로드되지 않는 코드라 테스트를 붙여도 지키는 것이 없고, 덩치는 커서
+        //     (LocalGameFlowSeeder 하나가 명령어 1,542개) 모듈 전체 수치를 끌어내렸다.
+        //     빼지 않으면 "커버리지를 올리려면 시연 데이터 생성기를 테스트하라"가 된다.
+        //
+        //     이름과 @Profile("local") 이 어긋나면 빼려던 것이 안 빠지거나 엉뚱한 것이
+        //     빠진다. LocalSeederNamingArchitectureTest 가 양쪽을 다 막는다.
         classDirectories.setFrom(
             classDirectories.files.map { dir ->
-                fileTree(dir) { exclude("**/event/*Event.class") }
+                fileTree(dir) {
+                    exclude("**/event/*Event.class")
+                    exclude("**/Local*.class")
+                    exclude("**/Local*$*.class")
+                }
             }
         )
+    }
+
+    tasks.named("build") {
+        dependsOn(rootProject.tasks.named("installGitHooks"))
     }
 
     tasks.withType<Test> {
         useJUnitPlatform()
         exclude("**/QueryPerformanceTest.class")
-        systemProperty("updateFixture", System.getProperty("updateFixture", "false"))
+        // 운영 JVM이 Asia/Seoul로 뜬다(docker/app/Dockerfile). 테스트가 UTC로 돌면 UTC Calendar를
+        // 명시하는 타임스탬프 바인딩이 어긋나도 값이 같아 회귀를 못 잡는다.
+        systemProperty("user.timezone", "Asia/Seoul")
         jvmArgs("-Xmx1g", "-XX:+HeapDumpOnOutOfMemoryError")
         // reuse-off로 JVM(모듈)마다 독립 컨테이너를 쓰므로 모듈별 DB/Redis 인덱스 격리는 불필요(이슈 #1402)
     }

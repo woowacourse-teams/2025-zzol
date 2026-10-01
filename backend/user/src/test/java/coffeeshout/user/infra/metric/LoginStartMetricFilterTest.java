@@ -61,7 +61,8 @@ class LoginStartMetricFilterTest {
 
         // 성공 카운트 태그(소문자 enum 값)와 동일한 값집합으로 정규화된다
         assertThat(count("kakao")).isEqualTo(2.0);
-        assertThat(meterRegistry.find("login.start").tag("provider", "KAKAO").counter()).isNull();
+        assertThat(meterRegistry.find("login.start").tag("provider", "KAKAO").counter())
+                .isNull();
     }
 
     @Test
@@ -80,6 +81,10 @@ class LoginStartMetricFilterTest {
     }
 
     private double count(String provider) {
-        return meterRegistry.find("login.start").tag("provider", provider).counter().count();
+        return meterRegistry
+                .find("login.start")
+                .tag("provider", provider)
+                .counter()
+                .count();
     }
 }

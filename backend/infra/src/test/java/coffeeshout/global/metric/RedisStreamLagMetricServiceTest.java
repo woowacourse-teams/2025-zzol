@@ -45,15 +45,11 @@ class RedisStreamLagMetricServiceTest {
         StreamConfig roomConfig = new StreamConfig("concurrent", null, null, null, null, null);
         StreamConfig racingConfig = new StreamConfig("concurrent", null, null, null, null, null);
 
-        redisStreamProperties = new RedisStreamProperties(
-                commonSettings,
-                null,
-                Map.of("room", roomConfig, "racinggame", racingConfig)
-        );
+        redisStreamProperties =
+                new RedisStreamProperties(commonSettings, null, Map.of("room", roomConfig, "racinggame", racingConfig));
 
         lagMetricService = new RedisStreamLagMetricService(
-                stringRedisTemplate, redisStreamProperties, meterRegistry, applicationContext
-        );
+                stringRedisTemplate, redisStreamProperties, meterRegistry, applicationContext);
     }
 
     @Test
@@ -62,9 +58,8 @@ class RedisStreamLagMetricServiceTest {
         lagMetricService.initializeMetrics();
 
         // then
-        Gauge roomGauge = meterRegistry.find("redis.stream.length")
-                .tag("stream", "room")
-                .gauge();
+        Gauge roomGauge =
+                meterRegistry.find("redis.stream.length").tag("stream", "room").gauge();
         assertThat(roomGauge).isNotNull();
         assertThat(roomGauge.value()).isEqualTo(42.0);
     }
@@ -75,10 +70,10 @@ class RedisStreamLagMetricServiceTest {
         lagMetricService.initializeMetrics();
 
         // then
-        Gauge roomGauge = meterRegistry.find("redis.stream.length")
-                .tag("stream", "room")
-                .gauge();
-        Gauge racingGauge = meterRegistry.find("redis.stream.length")
+        Gauge roomGauge =
+                meterRegistry.find("redis.stream.length").tag("stream", "room").gauge();
+        Gauge racingGauge = meterRegistry
+                .find("redis.stream.length")
                 .tag("stream", "racinggame")
                 .gauge();
 
@@ -94,7 +89,8 @@ class RedisStreamLagMetricServiceTest {
         lagMetricService.initializeMetrics();
 
         // then: 빈을 못 찾으면 Nan 반환
-        Gauge queueGauge = meterRegistry.find("redis.stream.threadpool.queue.size")
+        Gauge queueGauge = meterRegistry
+                .find("redis.stream.threadpool.queue.size")
                 .tag("stream", "room")
                 .gauge();
         assertThat(queueGauge).isNotNull();
@@ -113,20 +109,20 @@ class RedisStreamLagMetricServiceTest {
         RedisStreamProperties workQueueProperties = new RedisStreamProperties(
                 new CommonSettings(100, 10, Duration.ofSeconds(2), Duration.ofSeconds(5)),
                 null,
-                Map.of("settlement:result", workQueueConfig)
-        );
+                Map.of("settlement:result", workQueueConfig));
         RedisStreamLagMetricService service = new RedisStreamLagMetricService(
-                stringRedisTemplate, workQueueProperties, meterRegistry, applicationContext
-        );
+                stringRedisTemplate, workQueueProperties, meterRegistry, applicationContext);
 
         // when
         service.initializeMetrics();
 
         // then
-        Gauge lengthGauge = meterRegistry.find("redis.stream.length")
+        Gauge lengthGauge = meterRegistry
+                .find("redis.stream.length")
                 .tag("stream", "settlement:result")
                 .gauge();
-        Gauge queueGauge = meterRegistry.find("redis.stream.threadpool.queue.size")
+        Gauge queueGauge = meterRegistry
+                .find("redis.stream.threadpool.queue.size")
                 .tag("stream", "settlement:result")
                 .gauge();
         assertThat(lengthGauge).isNotNull();
@@ -139,8 +135,7 @@ class RedisStreamLagMetricServiceTest {
         // given
         RedisStreamProperties emptyProperties = new RedisStreamProperties(null, null, null);
         RedisStreamLagMetricService emptyService = new RedisStreamLagMetricService(
-                stringRedisTemplate, emptyProperties, meterRegistry, applicationContext
-        );
+                stringRedisTemplate, emptyProperties, meterRegistry, applicationContext);
 
         // when
         emptyService.initializeMetrics();
@@ -154,9 +149,8 @@ class RedisStreamLagMetricServiceTest {
     void 종료_신호를_받으면_게이지가_Redis를_조회하지_않고_Nan를_반환한다() {
         // given: 종료 전에는 정상 조회된다
         lagMetricService.initializeMetrics();
-        Gauge gauge = meterRegistry.find("redis.stream.length")
-                .tag("stream", "room")
-                .gauge();
+        Gauge gauge =
+                meterRegistry.find("redis.stream.length").tag("stream", "room").gauge();
         assertThat(gauge).isNotNull();
         assertThat(gauge.value()).isEqualTo(42.0);
 
@@ -174,9 +168,7 @@ class RedisStreamLagMetricServiceTest {
     void 게이지는_폴러_정지_뒤_커넥션_팩토리_정지_전에_멈춘다() {
         // 종료는 phase 내림차순이다. RedisStreamContainerRegistry(1024)가 폴러를 멈춘 뒤에도
         // 백로그는 관측 대상이고, LettuceConnectionFactory(0)가 멈춘 뒤에는 조회가 불가능하다
-        assertThat(lagMetricService.getPhase())
-                .isGreaterThan(0)
-                .isLessThan(1024);
+        assertThat(lagMetricService.getPhase()).isGreaterThan(0).isLessThan(1024);
     }
 
     @SuppressWarnings("unchecked")
@@ -190,9 +182,8 @@ class RedisStreamLagMetricServiceTest {
         lagMetricService.initializeMetrics();
 
         // when
-        Gauge gauge = meterRegistry.find("redis.stream.length")
-                .tag("stream", "room")
-                .gauge();
+        Gauge gauge =
+                meterRegistry.find("redis.stream.length").tag("stream", "room").gauge();
 
         // then
         assertThat(gauge).isNotNull();

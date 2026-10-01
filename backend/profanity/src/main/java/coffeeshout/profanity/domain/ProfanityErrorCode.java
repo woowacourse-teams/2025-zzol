@@ -3,7 +3,6 @@ package coffeeshout.profanity.domain;
 import coffeeshout.global.exception.ErrorCode;
 
 public enum ProfanityErrorCode implements ErrorCode {
-
     WORD_BLANK("P001", "비속어는 공백일 수 없습니다.", 400),
     WORD_TOO_LONG("P002", "비속어는 " + ProfanityWord.MAX_WORD_LENGTH + "자 이하여야 합니다.", 400),
     WORD_NOT_FOUND("P003", "등록되지 않은 비속어입니다.", 404),
@@ -22,11 +21,17 @@ public enum ProfanityErrorCode implements ErrorCode {
     }
 
     @Override
-    public String getCode() { return code; }
+    public String getCode() {
+        return code;
+    }
 
     @Override
-    public String getMessage() { return message; }
+    public String getMessage() {
+        return message;
+    }
 
     @Override
-    public int getStatusCode() { return statusCode; }
+    public int getStatusCode() {
+        return statusCode;
+    }
 }

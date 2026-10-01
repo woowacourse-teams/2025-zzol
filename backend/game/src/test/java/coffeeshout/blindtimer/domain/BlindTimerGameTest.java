@@ -86,8 +86,7 @@ class BlindTimerGameTest {
             newGame.setUp(List.of(한스.toGamer()));
 
             // when & then
-            assertThatThrownBy(() -> newGame.stop("한스", Instant.now()))
-                    .isInstanceOf(BusinessException.class);
+            assertThatThrownBy(() -> newGame.stop("한스", Instant.now())).isInstanceOf(BusinessException.class);
         }
 
         @Test
@@ -163,9 +162,9 @@ class BlindTimerGameTest {
         void 오차가_작은_사람이_높은_순위를_받는다() {
             // given - 목표: 10.00초
             final Instant startTime = game.getStartTime();
-            game.stop("한스", startTime.plusMillis(9800));   // 오차 200ms
+            game.stop("한스", startTime.plusMillis(9800)); // 오차 200ms
             game.stop("꾹이", startTime.plusMillis(10500)); // 오차 500ms
-            game.stop("루키", startTime.plusMillis(8000));  // 오차 2000ms
+            game.stop("루키", startTime.plusMillis(8000)); // 오차 2000ms
 
             // when
             final MiniGameResult result = game.getResult();

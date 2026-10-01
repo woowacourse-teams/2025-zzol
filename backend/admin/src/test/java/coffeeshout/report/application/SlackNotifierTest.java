@@ -29,9 +29,9 @@ class SlackNotifierTest {
         @Test
         void enabled가_false이면_알림을_건너뛴다() {
 
-            assertThatCode(() -> notifier.onReportSubmitted(
-                    new ReportSubmittedEvent(1L, ReportCategory.BUG, MiniGameType.CARD_GAME, "ABC12", "카드게임 버그 테스트")
-            )).doesNotThrowAnyException();
+            assertThatCode(() -> notifier.onReportSubmitted(new ReportSubmittedEvent(
+                            1L, ReportCategory.BUG, MiniGameType.CARD_GAME, "ABC12", "카드게임 버그 테스트")))
+                    .doesNotThrowAnyException();
         }
 
         @Test
@@ -39,16 +39,16 @@ class SlackNotifierTest {
             SlackNotifier disabledNotifier = new SlackNotifier(new SlackProperties(null, null, null), restClient);
 
             assertThatCode(() -> disabledNotifier.onReportSubmitted(
-                    new ReportSubmittedEvent(2L, ReportCategory.SUGGESTION, null, null, "건의사항 테스트")
-            )).doesNotThrowAnyException();
+                            new ReportSubmittedEvent(2L, ReportCategory.SUGGESTION, null, null, "건의사항 테스트")))
+                    .doesNotThrowAnyException();
         }
 
         @Test
         void gameType과_joinCode가_null이어도_정상_종료한다() {
             // Test with disabled notifier to verify message building logic doesn't crash before restClient call
             assertThatCode(() -> notifier.onReportSubmitted(
-                    new ReportSubmittedEvent(3L, ReportCategory.OTHER, null, null, "기타 의견입니다.")
-            )).doesNotThrowAnyException();
+                            new ReportSubmittedEvent(3L, ReportCategory.OTHER, null, null, "기타 의견입니다.")))
+                    .doesNotThrowAnyException();
         }
     }
 }

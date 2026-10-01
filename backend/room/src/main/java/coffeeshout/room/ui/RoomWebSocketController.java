@@ -2,8 +2,8 @@ package coffeeshout.room.ui;
 
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.stream.StreamPublisher;
-import coffeeshout.room.application.service.RoomService;
 import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
+import coffeeshout.room.application.service.RoomService;
 import coffeeshout.room.domain.event.PlayerListUpdateEvent;
 import coffeeshout.room.domain.event.PlayerReadyEvent;
 import coffeeshout.room.domain.event.RouletteShowEvent;
@@ -31,8 +31,7 @@ public class RoomWebSocketController {
     @MessageMapping("/room/{joinCode}/update-players")
     @WsReceive(
             respondsOnTopics = {"/room/{joinCode}"},
-            description = "플레이어 목록 업데이트 및 브로드캐스트"
-    )
+            description = "플레이어 목록 업데이트 및 브로드캐스트")
     public void broadcastPlayers(@DestinationVariable String joinCode) {
         final BaseEvent event = new PlayerListUpdateEvent(joinCode);
         streamPublisher.publish(RoomStreamKey.BROADCAST, event);
@@ -41,8 +40,7 @@ public class RoomWebSocketController {
     @MessageMapping("/room/{joinCode}/update-ready")
     @WsReceive(
             respondsOnTopics = {"/room/{joinCode}"},
-            description = "플레이어 준비 상태 변경 및 브로드캐스트"
-    )
+            description = "플레이어 준비 상태 변경 및 브로드캐스트")
     public void broadcastReady(@DestinationVariable String joinCode, @Payload ReadyChangeMessage message) {
         final BaseEvent event = new PlayerReadyEvent(joinCode, message.playerName(), message.isReady());
         streamPublisher.publish(RoomStreamKey.BROADCAST, event);
@@ -51,24 +49,19 @@ public class RoomWebSocketController {
     @MessageMapping("/room/{joinCode}/update-minigames")
     @WsReceive(
             respondsOnTopics = {"/room/{joinCode}/minigame"},
-            description = "미니게임 목록 업데이트 및 브로드캐스트"
-    )
+            description = "미니게임 목록 업데이트 및 브로드캐스트")
     public void broadcastMiniGames(
-            @DestinationVariable String joinCode,
-            @Payload MiniGameSelectMessage message,
-            Principal user
-    ) {
+            @DestinationVariable String joinCode, @Payload MiniGameSelectMessage message, Principal user) {
         // user.getName()(WebSocket Principal)을 이벤트에 실어, 비동기 반영이 실패하면 이 클라이언트에게만 에러를 되돌린다
-        final BaseEvent event = new MiniGameSelectEvent(joinCode, message.hostName(),
-                message.miniGameTypes(), user.getName());
+        final BaseEvent event =
+                new MiniGameSelectEvent(joinCode, message.hostName(), message.miniGameTypes(), user.getName());
         streamPublisher.publish(RoomStreamKey.BROADCAST, event);
     }
 
     @MessageMapping("/room/{joinCode}/show-roulette")
     @WsReceive(
             respondsOnTopics = {"/room/{joinCode}/roulette"},
-            description = "룰렛 페이지로 이동"
-    )
+            description = "룰렛 페이지로 이동")
     public void broadcastShowRoulette(@DestinationVariable String joinCode) {
         final BaseEvent event = new RouletteShowEvent(joinCode);
         streamPublisher.publish(RoomStreamKey.BROADCAST, event);
@@ -77,8 +70,7 @@ public class RoomWebSocketController {
     @MessageMapping("/room/{joinCode}/spin-roulette")
     @WsReceive(
             respondsOnTopics = {"/room/{joinCode}/winner"},
-            description = "룰렛 게임 실행 및 당첨자 발표"
-    )
+            description = "룰렛 게임 실행 및 당첨자 발표")
     public void broadcastRouletteSpin(@DestinationVariable String joinCode, @Payload RouletteSpinMessage message) {
         final Winner winner = roomService.spinRoulette(joinCode, message.hostName());
         final BaseEvent event = new RouletteSpinEvent(joinCode, message.hostName(), winner);

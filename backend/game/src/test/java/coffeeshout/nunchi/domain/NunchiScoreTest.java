@@ -86,7 +86,8 @@ class NunchiScoreTest {
             // when & then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(NunchiScore.miss()).isEqualTo(NunchiScore.miss());
-                softly.assertThat(NunchiScore.miss().compareTo(NunchiScore.miss())).isZero();
+                softly.assertThat(NunchiScore.miss().compareTo(NunchiScore.miss()))
+                        .isZero();
             });
         }
 

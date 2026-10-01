@@ -38,7 +38,8 @@ public class RedisStreamHealthIndicator implements HealthIndicator {
 
         if (redisStreamProperties.keys() != null) {
             for (String streamKey : redisStreamProperties.keys().keySet()) {
-                final String status = containerRegistry.find(streamKey)
+                final String status = containerRegistry
+                        .find(streamKey)
                         .map(container -> container.isRunning() ? "RUNNING" : "STOPPED")
                         .orElse("NOT_REGISTERED");
                 details.put(streamKey, status);
@@ -49,13 +50,9 @@ public class RedisStreamHealthIndicator implements HealthIndicator {
             final Set<String> failedStreams = containerRecovery.getFailedRecoveryStreams();
             details.put("unrecoverable", failedStreams);
             details.put("action", "Internal recovery failed. Docker restart required.");
-            return Health.down()
-                    .withDetails(details)
-                    .build();
+            return Health.down().withDetails(details).build();
         }
 
-        return Health.up()
-                .withDetails(details)
-                .build();
+        return Health.up().withDetails(details).build();
     }
 }

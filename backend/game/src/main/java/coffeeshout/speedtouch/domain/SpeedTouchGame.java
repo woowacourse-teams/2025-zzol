@@ -1,11 +1,11 @@
 package coffeeshout.speedtouch.domain;
 
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.gamecommon.Gamer;
-import coffeeshout.gamecommon.Playable;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -19,8 +19,7 @@ import lombok.Setter;
 public class SpeedTouchGame implements Playable {
 
     private SpeedTouchPlayers players;
-    private final AtomicReference<SpeedTouchGameState> state =
-            new AtomicReference<>(SpeedTouchGameState.DESCRIPTION);
+    private final AtomicReference<SpeedTouchGameState> state = new AtomicReference<>(SpeedTouchGameState.DESCRIPTION);
     private volatile Instant startTime;
 
     @Setter
@@ -38,11 +37,7 @@ public class SpeedTouchGame implements Playable {
 
     @Override
     public Map<Gamer, MiniGameScore> getScores() {
-        return players.stream()
-                .collect(Collectors.toMap(
-                        SpeedTouchPlayer::getGamer,
-                        this::calculateScore
-                ));
+        return players.stream().collect(Collectors.toMap(SpeedTouchPlayer::getGamer, this::calculateScore));
     }
 
     @Override
@@ -105,9 +100,7 @@ public class SpeedTouchGame implements Playable {
     private void validatePlaying() {
         if (state.get() != SpeedTouchGameState.PLAYING) {
             throw new BusinessException(
-                    SpeedTouchGameErrorCode.NOT_PLAYING_STATE,
-                    "현재 게임 상태가 플레이 중이 아닙니다: " + state.get()
-            );
+                    SpeedTouchGameErrorCode.NOT_PLAYING_STATE, "현재 게임 상태가 플레이 중이 아닙니다: " + state.get());
         }
     }
 }

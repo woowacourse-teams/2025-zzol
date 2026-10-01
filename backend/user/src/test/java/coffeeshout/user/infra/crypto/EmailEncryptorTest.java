@@ -67,10 +67,7 @@ class EmailEncryptorTest {
             final EmailEncryptor otherEncryptor = new EmailEncryptor(
                     new EmailCryptoProperties("another-encryption-key-at-least-32-chars-long", HMAC_KEY));
 
-            assertCoffeeShoutException(
-                    () -> otherEncryptor.decrypt(encrypted),
-                    UserErrorCode.EMAIL_CRYPTO_FAILED
-            );
+            assertCoffeeShoutException(() -> otherEncryptor.decrypt(encrypted), UserErrorCode.EMAIL_CRYPTO_FAILED);
         }
     }
 }

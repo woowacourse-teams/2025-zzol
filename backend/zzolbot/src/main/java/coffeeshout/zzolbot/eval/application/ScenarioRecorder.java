@@ -32,18 +32,21 @@ public class ScenarioRecorder {
             final List<ToolExecutionResult> results = toolExecutor.executeAll(calls, ctx);
             for (int i = 0; i < calls.size(); i++) {
                 final String masked = piiMasker.mask(results.get(i).content(), ctx.piiSession());
-                captured.put(ToolCallKey.of(calls.get(i).toolName(), calls.get(i).args()), masked);
+                captured.put(
+                        ToolCallKey.of(calls.get(i).toolName(), calls.get(i).args()), masked);
             }
             return results;
         };
 
         final ZzolBotChatResult result = chatService.ask(
-                question, adminUsername, toolName -> {
-                }, recording, (q, a, admin, ctx) -> new ZzolBotChatResult(null, a));
+                question,
+                adminUsername,
+                toolName -> {},
+                recording,
+                (q, a, admin, ctx) -> new ZzolBotChatResult(null, a));
 
         return new Recorded(result.answer(), new ToolSnapshot(captured));
     }
 
-    public record Recorded(String answer, ToolSnapshot snapshot) {
-    }
+    public record Recorded(String answer, ToolSnapshot snapshot) {}
 }

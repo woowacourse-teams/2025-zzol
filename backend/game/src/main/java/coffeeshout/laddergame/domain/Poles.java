@@ -29,10 +29,8 @@ public class Poles {
                 .filter(p -> p.gamer().getName().equals(playerName))
                 .mapToInt(Pole::index)
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        LadderGameErrorCode.PLAYER_NOT_FOUND,
-                        "플레이어를 찾을 수 없습니다: " + playerName
-                ));
+                .orElseThrow(() ->
+                        new BusinessException(LadderGameErrorCode.PLAYER_NOT_FOUND, "플레이어를 찾을 수 없습니다: " + playerName));
     }
 
     public Gamer getGamer(int poleIndex) {
@@ -41,9 +39,7 @@ public class Poles {
                 .map(Pole::gamer)
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
-                        LadderGameErrorCode.INVALID_POLE_INDEX,
-                        "기둥 인덱스가 유효하지 않습니다: " + poleIndex
-                ));
+                        LadderGameErrorCode.INVALID_POLE_INDEX, "기둥 인덱스가 유효하지 않습니다: " + poleIndex));
     }
 
     public Gamer findGamer(String playerName) {
@@ -51,10 +47,8 @@ public class Poles {
                 .map(Pole::gamer)
                 .filter(gamer -> gamer.getName().equals(playerName))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        LadderGameErrorCode.PLAYER_NOT_FOUND,
-                        "플레이어를 찾을 수 없습니다: " + playerName
-                ));
+                .orElseThrow(() ->
+                        new BusinessException(LadderGameErrorCode.PLAYER_NOT_FOUND, "플레이어를 찾을 수 없습니다: " + playerName));
     }
 
     public int size() {

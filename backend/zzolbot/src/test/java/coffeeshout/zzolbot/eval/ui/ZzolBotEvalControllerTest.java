@@ -1,8 +1,8 @@
 package coffeeshout.zzolbot.eval.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -10,6 +10,7 @@ import coffeeshout.zzolbot.eval.application.EvalRunner;
 import coffeeshout.zzolbot.eval.application.EvalScenarioService;
 import coffeeshout.zzolbot.eval.domain.EvalVerdict;
 import coffeeshout.zzolbot.eval.domain.JudgeScore;
+import coffeeshout.zzolbot.eval.domain.ScenarioKind;
 import coffeeshout.zzolbot.eval.infra.EvalResultEntity;
 import coffeeshout.zzolbot.eval.infra.EvalResultRepository;
 import coffeeshout.zzolbot.eval.infra.EvalRunEntity;
@@ -33,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -40,10 +42,13 @@ class ZzolBotEvalControllerTest {
 
     @Mock
     private EvalRunner evalRunner;
+
     @Mock
     private EvalScenarioService scenarioService;
+
     @Mock
     private EvalRunRepository runRepository;
+
     @Mock
     private EvalResultRepository resultRepository;
 
@@ -64,10 +69,27 @@ class ZzolBotEvalControllerTest {
 
     @Test
     void startRun_은_202를_반환하고_평가를_비동기로_실행한다() {
-        final var response = controller.startRun(new RunRequest("baseline", null));
+        final var response = controller.startRun(new RunRequest("baseline", null, null));
 
         assertThat(response.getStatusCode().value()).isEqualTo(202);
-        await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> verify(evalRunner).run("baseline", 1));
+        await().atMost(Duration.ofSeconds(3))
+                .untilAsserted(() -> verify(evalRunner).run("baseline", 1, null));
+    }
+
+    @Test
+    void startRun_에_kind를_지정하면_러너에_전달한다() {
+        final var response = controller.startRun(new RunRequest("monitor-baseline", null, "monitor"));
+
+        assertThat(response.getStatusCode().value()).isEqualTo(202);
+        await().atMost(Duration.ofSeconds(3))
+                .untilAsserted(() -> verify(evalRunner).run("monitor-baseline", 1, ScenarioKind.MONITOR));
+    }
+
+    @Test
+    void startRun_에_알_수_없는_kind면_400을_던진다() {
+        assertThatThrownBy(() -> controller.startRun(new RunRequest("bad", null, "bogus")))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("400");
     }
 
     @Test
@@ -101,8 +123,7 @@ class ZzolBotEvalControllerTest {
         run.complete(1);
         ReflectionTestUtils.setField(run, "id", 7L);
         final EvalResultEntity entity = EvalResultEntity.create(
-                7L, 3L, "PLAYING 상태입니다.",
-                new JudgeScore(5, 4, false, EvalVerdict.PASS, "정답"), 1200L, 0);
+                7L, 3L, "PLAYING 상태입니다.", new JudgeScore(5, 4, false, EvalVerdict.PASS, "정답"), 1200L, 0);
         given(runRepository.findById(7L)).willReturn(Optional.of(run));
         given(resultRepository.findByRunIdOrderByIdAsc(7L)).willReturn(List.of(entity));
 

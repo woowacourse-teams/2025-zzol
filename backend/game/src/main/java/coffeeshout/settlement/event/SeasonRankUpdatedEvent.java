@@ -11,12 +11,8 @@ import java.util.UUID;
  * 세션에 알림을 뿌려야 하기 때문이다. 알림은 유실 허용이므로 eventId도 랜덤이면 충분하다(#1610).
  */
 public record SeasonRankUpdatedEvent(
-        String eventId,
-        Instant timestamp,
-        String joinCode,
-        String seasonKey,
-        List<RankEntry> entries
-) implements BaseEvent {
+        String eventId, Instant timestamp, String joinCode, String seasonKey, List<RankEntry> entries)
+        implements BaseEvent {
 
     public SeasonRankUpdatedEvent {
         entries = List.copyOf(entries);
@@ -26,6 +22,5 @@ public record SeasonRankUpdatedEvent(
         return new SeasonRankUpdatedEvent(UUID.randomUUID().toString(), Instant.now(), joinCode, seasonKey, entries);
     }
 
-    public record RankEntry(String playerName, long totalPoints, String tier, int seasonRank) {
-    }
+    public record RankEntry(String playerName, long totalPoints, String tier, int seasonRank) {}
 }

@@ -126,8 +126,7 @@ class CardHandTest {
         @Test
         void 잘못된_인덱스로_카드를_조회하면_예외가_발생한다() {
             // when & then
-            assertThatThrownBy(() -> cardHand.getCard(0))
-                    .isInstanceOf(IndexOutOfBoundsException.class);
+            assertThatThrownBy(() -> cardHand.getCard(0)).isInstanceOf(IndexOutOfBoundsException.class);
         }
     }
 
@@ -238,7 +237,8 @@ class CardHandTest {
             // when & then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(cardHand.isAssign(existingCard, ROUND_FIRST)).isTrue();
-                softly.assertThat(cardHand.isAssign(nonExistentCard, ROUND_FIRST)).isFalse();
+                softly.assertThat(cardHand.isAssign(nonExistentCard, ROUND_FIRST))
+                        .isFalse();
             });
         }
 

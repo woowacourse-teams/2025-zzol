@@ -23,30 +23,33 @@ public class RoomLogAspect {
 
     @AfterReturning(
             value = "execution(* coffeeshout.room.application.service.RoomService.createRoom(..))",
-            returning = "room"
-    )
+            returning = "room")
     public void logRoomCreation(Room room) {
-        log.info(NotificationMarker.INSTANCE, "JoinCode[{}] 방 생성 완료 - host: {}, createdAt: {}",
+        log.info(
+                NotificationMarker.INSTANCE,
+                "JoinCode[{}] 방 생성 완료 - host: {}, createdAt: {}",
                 room.getJoinCode().getValue(),
                 room.getHost().getName().value(),
                 LocalDateTime.now(clock));
     }
 
     @AfterReturning(
-            value = "execution(* coffeeshout.room.application.service.RoomService.spinRoulette(..)) && args(joinCode, hostName)",
+            value =
+                    "execution(* coffeeshout.room.application.service.RoomService.spinRoulette(..)) && args(joinCode, hostName)",
             returning = "winner",
-            argNames = "joinCode,hostName,winner"
-    )
+            argNames = "joinCode,hostName,winner")
     public void logSpinRoulette(String joinCode, String hostName, Winner winner) {
-        log.info(NotificationMarker.INSTANCE, "JoinCode[{}] 룰렛 추첨 완료 - 당첨자: {}, 호스트 : {}",
+        log.info(
+                NotificationMarker.INSTANCE,
+                "JoinCode[{}] 룰렛 추첨 완료 - 당첨자: {}, 호스트 : {}",
                 joinCode,
                 winner.name().value(),
                 hostName);
     }
 
     @After(
-            value = "execution(* coffeeshout.room.domain.repository.RoomRepository.deleteByJoinCode(..)) && args(joinCode)"
-    )
+            value =
+                    "execution(* coffeeshout.room.domain.repository.RoomRepository.deleteByJoinCode(..)) && args(joinCode)")
     public void logDelayCleanUp(JoinCode joinCode) {
         log.info("JoinCode[{}] 방 삭제 완료", joinCode.getValue());
     }

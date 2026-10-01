@@ -1,20 +1,28 @@
 package coffeeshout.profanity.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
-import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
+import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
+import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,6 +33,7 @@ class ProfanityAuditServiceTest {
     private NicknameAuditRepository auditRepository;
     private ProfanityAuditBatchProcessor batchProcessor;
     private ProfanityWordManagementService profanityWordManagementService;
+    private SimpleMeterRegistry meterRegistry;
     private ProfanityAuditService service;
 
     @BeforeEach
@@ -33,11 +42,15 @@ class ProfanityAuditServiceTest {
         batchProcessor = mock(ProfanityAuditBatchProcessor.class);
         profanityWordManagementService = mock(ProfanityWordManagementService.class);
 
-        final NicknameAuditProperties properties = new NicknameAuditProperties(
-                "api-key", "gemini-2.0-flash", 0.8, 10, 5, 2
-        );
-        service = new ProfanityAuditService(auditRepository, batchProcessor, profanityWordManagementService, properties,
-                new SimpleMeterRegistry(), Clock.systemDefaultZone());
+        final NicknameAuditProperties properties = NicknameAuditPropertiesFixture.회차(10, Duration.ofMinutes(10), 3);
+        meterRegistry = new SimpleMeterRegistry();
+        service = new ProfanityAuditService(
+                auditRepository,
+                batchProcessor,
+                profanityWordManagementService,
+                properties,
+                meterRegistry,
+                Clock.systemDefaultZone());
         service.initMetrics();
     }
 
@@ -46,8 +59,7 @@ class ProfanityAuditServiceTest {
 
         @Test
         void 새로운_닉네임은_UNAUDITED_상태로_저장된다() {
-            given(auditRepository.existsByNickname("새닉네임"))
-                    .willReturn(false);
+            given(auditRepository.existsByNickname("새닉네임")).willReturn(false);
 
             service.register("새닉네임");
 
@@ -59,8 +71,7 @@ class ProfanityAuditServiceTest {
             // issue #1467 재현: 이미 검열된(CLEAN 등) 닉네임이 재등장하면, 상태 무관 검사가 없으면
             // 새 UNAUDITED 중복이 생기고 다음 검열 시 (player_name, status) 유니크 충돌이 발생한다.
             // 상태와 무관하게 이미 존재하면 저장하지 않아야 한다.
-            given(auditRepository.existsByNickname("이미검열된닉네임"))
-                    .willReturn(true);
+            given(auditRepository.existsByNickname("이미검열된닉네임")).willReturn(true);
 
             service.register("이미검열된닉네임");
 
@@ -69,8 +80,7 @@ class ProfanityAuditServiceTest {
 
         @Test
         void 운영자_허용_닉네임은_검열_등록이_생략된다() {
-            given(profanityWordManagementService.isOperatorAllowed("허용닉네임"))
-                    .willReturn(true);
+            given(profanityWordManagementService.isOperatorAllowed("허용닉네임")).willReturn(true);
 
             service.register("허용닉네임");
 
@@ -82,10 +92,29 @@ class ProfanityAuditServiceTest {
     class auditPending_배치_검열 {
 
         @Test
+        void 회차를_돌면_fetch_구간이_기록된다() {
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn(0L);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willReturn(List.of());
+
+            service.auditPending();
+
+            assertThat(meterRegistry
+                            .get(ProfanityAuditBatchProcessor.PHASE_TIMER)
+                            .tag("phase", "fetch")
+                            .timer()
+                            .count())
+                    .as("페이지 조회가 안 잡히면 회차 로그가 fetch를 0으로 보고한다.")
+                    .isPositive();
+        }
+
+        @Test
         void UNAUDITED_닉네임이_없으면_배치_처리를_하지_않는다() {
-            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED)).willReturn(0L);
-            given(auditRepository.findByStatusAndAuditedAtIsNull(
-                    any(NicknameAuditStatus.class), any(Pageable.class))).willReturn(List.of());
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn(0L);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willReturn(List.of());
 
             service.auditPending();
 
@@ -95,9 +124,9 @@ class ProfanityAuditServiceTest {
         @Test
         void UNAUDITED_닉네임이_있으면_배치_처리가_수행된다() {
             final NicknameAudit entity = new NicknameAudit("욕설닉네임");
-            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED)).willReturn(1L);
-            given(auditRepository.findByStatusAndAuditedAtIsNull(
-                    any(NicknameAuditStatus.class), any(Pageable.class)))
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn(1L);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
                     .willReturn(List.of(entity))
                     .willReturn(List.of());
             given(batchProcessor.process(any())).willReturn(1);
@@ -105,6 +134,203 @@ class ProfanityAuditServiceTest {
             service.auditPending();
 
             then(batchProcessor).should().process(List.of(entity));
+        }
+    }
+
+    /**
+     * 드레인 루프에 회차 시간 예산이 있는지 검증한다.
+     *
+     * <p>배치 하나가 Gemini 호출 하나이고 레이트리미터가 13초에 하나만 허용하므로
+     * ({@code resilience4j.yml}의 geminiAudit.limit-refresh-period) 회차 소요가 적체량에 정비례한다.
+     * 예산이 없으면 적체 10만 건에 3.6시간을 도는데 그동안 실행기 스레드를 붙잡고 있게 된다.
+     */
+    @Nested
+    class auditPending_한_회차_소요시간 {
+
+        /** 레이트리미터가 허용하는 최소 간격. {@code resilience4j.yml}의 geminiAudit.limit-refresh-period = 13s. */
+        private static final int SECONDS_PER_BATCH = 13;
+
+        /** 프로덕션 배치 크기. {@code service.yml}의 nickname-audit.batch-size. */
+        private static final int PRODUCTION_BATCH_SIZE = 100;
+
+        /** 회차 예산. {@code service.yml}의 nickname-audit.max-run-duration. */
+        private static final int MAX_RUN_SECONDS = 600;
+
+        private static final int BACKLOG = 10_000;
+
+        @Test
+        void 적체가_커도_한_회차는_시간_예산_안에서_끝난다() {
+            final StubClock clock = new StubClock(Instant.parse("2026-09-03T00:00:00Z"));
+            final Instant startedAt = clock.instant();
+            final ProfanityAuditService target = productionSizedService(clock);
+            final AtomicInteger remaining = new AtomicInteger(BACKLOG);
+
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn((long) BACKLOG);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willAnswer(invocation -> nextBatch(remaining));
+            given(batchProcessor.process(any())).willAnswer(invocation -> {
+                final List<NicknameAudit> batch = invocation.getArgument(0);
+                clock.advance(Duration.ofSeconds(SECONDS_PER_BATCH));
+                return batch.size();
+            });
+
+            target.auditPending();
+
+            assertThat(Duration.between(startedAt, clock.instant()).toSeconds())
+                    .as("적체 %,d건 회차가 붙잡은 시간(초). 예산 확인이 배치 사이에 걸리므로 한 배치까지 초과할 수 있다.", BACKLOG)
+                    .isLessThanOrEqualTo(MAX_RUN_SECONDS + SECONDS_PER_BATCH);
+        }
+
+        /**
+         * 진행이 없는 배치를 만나면 같은 페이지를 다시 읽지 않고 그 다음 페이지로 넘어가야 한다.
+         *
+         * <p>같은 페이지를 다시 읽으면 같은 행이 돌아와 같은 실패를 무한히 되풀이한다. 그렇다고 회차를
+         * 끝내버리면 검열 호출이 실패한 배치 하나가 남은 적체 전부를 다음 회차까지 붙잡는다(#1759).
+         * 커서를 앞으로 밀면 둘 다 피한다. 빈 페이지를 만나면 회차가 끝난다.
+         */
+        @Test
+        void 진행이_없는_배치는_건너뛰고_다음_페이지로_넘어간다() {
+            final StubClock clock = new StubClock(Instant.parse("2026-09-03T00:00:00Z"));
+            final ProfanityAuditService target = productionSizedService(clock);
+            final List<Integer> readPages = new ArrayList<>();
+
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn((long) PRODUCTION_BATCH_SIZE * 2);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willAnswer(invocation -> {
+                        final Pageable pageable = invocation.getArgument(1);
+                        readPages.add(pageable.getPageNumber());
+                        return pageable.getPageNumber() < 2 ? batchOf(PRODUCTION_BATCH_SIZE) : List.of();
+                    });
+            // 배치가 통째로 UNAUDITED로 남은 상황. 검열 호출 실패와 판정 짝짓기 실패가 여기로 모인다.
+            given(batchProcessor.process(any())).willReturn(0);
+
+            target.auditPending();
+
+            assertThat(readPages)
+                    .as("같은 페이지를 다시 읽으면 무한 반복이고, 커서를 안 밀면 회차가 첫 배치에서 끝난다.")
+                    .containsExactly(0, 1, 2);
+            then(batchProcessor).should(times(2)).process(any());
+        }
+
+        /**
+         * 진행이 있으면 커서를 그 자리에 둔다. 처리된 행이 스캔에서 빠지면서 뒷행이 같은 페이지 인덱스로
+         * 당겨지므로 되감을 이유가 없다.
+         *
+         * <p>0으로 되감으면 앞 페이지의 실패 배치를 성공 배치마다 다시 만난다. Gemini를 그만큼 다시 부르고
+         * 시도 횟수를 한 회차 안에 다 태워 DEAD_LETTER까지 내려간다. 커서를 두면 실패 배치를 회차당
+         * 한 번만 만나 세 회차에 걸쳐 판정한다.
+         */
+        @Test
+        void 진행이_있으면_커서를_되감지_않아_건너뛴_배치를_다시_만나지_않는다() {
+            final StubClock clock = new StubClock(Instant.parse("2026-09-03T00:00:00Z"));
+            final ProfanityAuditService target = productionSizedService(clock);
+            final List<Integer> readPages = new ArrayList<>();
+            final AtomicInteger reads = new AtomicInteger();
+
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn((long) PRODUCTION_BATCH_SIZE * 2);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willAnswer(invocation -> {
+                        final Pageable pageable = invocation.getArgument(1);
+                        readPages.add(pageable.getPageNumber());
+                        return reads.getAndIncrement() < 2 ? batchOf(PRODUCTION_BATCH_SIZE) : List.of();
+                    });
+            // 페이지 0은 통째로 실패하고, 페이지 1은 부분 진행이다. 남은 행은 같은 페이지에 다시 잡힌다.
+            given(batchProcessor.process(any())).willReturn(0, PRODUCTION_BATCH_SIZE - 40);
+
+            target.auditPending();
+
+            assertThat(readPages)
+                    .as("0으로 되감으면 페이지 0의 실패 배치를 다시 읽어 Gemini를 다시 부른다.")
+                    .containsExactly(0, 1, 1);
+        }
+
+        private ProfanityAuditService productionSizedService(Clock clock) {
+            final NicknameAuditProperties production =
+                    NicknameAuditPropertiesFixture.회차(PRODUCTION_BATCH_SIZE, Duration.ofSeconds(MAX_RUN_SECONDS), 3);
+            final ProfanityAuditService target = new ProfanityAuditService(
+                    auditRepository,
+                    batchProcessor,
+                    profanityWordManagementService,
+                    production,
+                    new SimpleMeterRegistry(),
+                    clock);
+            target.initMetrics();
+            return target;
+        }
+
+        private List<NicknameAudit> nextBatch(AtomicInteger remaining) {
+            final int take = Math.min(PRODUCTION_BATCH_SIZE, remaining.get());
+            remaining.addAndGet(-take);
+            return batchOf(take);
+        }
+
+        private List<NicknameAudit> batchOf(int size) {
+            final List<NicknameAudit> batch = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                batch.add(new NicknameAudit("닉" + i));
+            }
+            return batch;
+        }
+    }
+
+    /**
+     * 종료 신호가 회차를 끊는지 검증한다.
+     *
+     * <p>회차는 전용 실행기에서 돌고 그 실행기는 destroyMethod가 {@code shutdownNow}다. 종료 시 회차 스레드에
+     * 인터럽트가 오는데, 루프가 그걸 안 보면 컨텍스트 종료가 회차 예산(기본 10분)만큼 밀린다.
+     * Blue/Green 전환에서 구 컨테이너가 그만큼 늦게 내려가거나 SIGKILL을 맞는다.
+     */
+    @Nested
+    class auditPending_종료_요청 {
+
+        @Test
+        void 인터럽트가_걸려_있으면_배치를_시작하지_않는다() {
+            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
+                    .willReturn(1L);
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willReturn(List.of(new NicknameAudit("닉네임")));
+
+            Thread.currentThread().interrupt();
+            try {
+                service.auditPending();
+            } finally {
+                // 다음 테스트로 새지 않게 플래그를 지운다.
+                Thread.interrupted();
+            }
+
+            then(batchProcessor).should(never()).process(any());
+        }
+    }
+
+    /** 배치 소요 시간을 흉내내기 위한 수동 진행 시계. */
+    private static final class StubClock extends Clock {
+
+        private Instant now;
+
+        private StubClock(Instant start) {
+            this.now = start;
+        }
+
+        void advance(Duration amount) {
+            now = now.plus(amount);
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return now;
         }
     }
 }

@@ -8,9 +8,12 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "room.qr")
-public record QrProperties(@NotNull String prefix, @Positive int height, @Positive int width, @NotNull PresignedUrl presignedUrl,
-                           @NotNull String storageKeyPrefix) {
+public record QrProperties(
+        @NotNull String prefix,
+        @Positive int height,
+        @Positive int width,
+        @NotNull PresignedUrl presignedUrl,
+        @NotNull String storageKeyPrefix) {
 
-    public record PresignedUrl(@Positive @Max(168) int expirationHours) {
-    }
+    public record PresignedUrl(@Positive @Max(168) int expirationHours) {}
 }

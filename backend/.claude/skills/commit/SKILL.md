@@ -37,7 +37,7 @@ bash .claude/skills/commit/preflight.sh
 
 그룹 유형별 검증 대상:
 
-- **자바 프로덕션 포함** → `/run-tests`로 위임. 한 모듈 안이면 `:module` 타겟, 여러 모듈/패키지에 걸치면 해당 패키지 필터를 모두 포함한다 (`./gradlew` 직접 실행 금지 — CLAUDE.md).
+- **자바 프로덕션 포함** → `/run-tests`로 위임. 한 모듈 안이면 `:module` 타겟, 여러 모듈/패키지에 걸치면 해당 패키지 필터를 모두 포함한다 (`./gradlew` 직접 실행 금지. 근거는 CLAUDE.md).
 - **문서(`.md`)만** → 저장소 루트에서 `npx markdownlint-cli2` (Docs CI가 dev PR에서 강제하는 것과 동일).
 - **설정/빌드만** → 자동 검증 없음.
 - **테스트 파일만** → 해당 테스트만 실행한다.

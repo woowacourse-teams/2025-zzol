@@ -15,8 +15,7 @@ import org.springframework.messaging.simp.stomp.StompHeaders;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(IntegrationTestConfig.class)
-public abstract class WebSocketIntegrationTestSupport
-        extends coffeeshout.support.WebSocketIntegrationTestSupport {
+public abstract class WebSocketIntegrationTestSupport extends coffeeshout.support.WebSocketIntegrationTestSupport {
 
     private static final String SMOKE_JOIN_CODE = "SMOK";
     private static final String SMOKE_PLAYER_NAME = "smoketest";

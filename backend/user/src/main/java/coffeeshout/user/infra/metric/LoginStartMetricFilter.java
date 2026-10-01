@@ -25,19 +25,15 @@ public class LoginStartMetricFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         final String uri = request.getRequestURI();
         if (uri != null && uri.startsWith(PREFIX)) {
             // URL 세그먼트를 그대로 태그로 쓰면 임의 provider(예: /oauth2/authorization/<랜덤>)로
             // 메트릭 시리즈가 무한 생성돼 카디널리티가 폭발한다. 지원 provider일 때만, 그리고
             // enum의 정규화된 값(소문자)으로만 센다 — 성공 카운트 태그와도 값집합이 일치한다.
             final String segment = uri.substring(PREFIX.length());
-            OAuthProvider.fromRegistrationId(segment)
-                    .ifPresent(loginMetricService::countStart);
+            OAuthProvider.fromRegistrationId(segment).ifPresent(loginMetricService::countStart);
         }
         filterChain.doFilter(request, response);
     }

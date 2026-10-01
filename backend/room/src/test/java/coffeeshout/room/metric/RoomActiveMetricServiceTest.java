@@ -31,12 +31,11 @@ class RoomActiveMetricServiceTest {
     void 모든_RoomState에_대해_Gauge가_등록된다() {
         // when & then
         for (RoomState state : RoomState.values()) {
-            Gauge gauge = meterRegistry.find("room.active.count")
+            Gauge gauge = meterRegistry
+                    .find("room.active.count")
                     .tag("state", state.name())
                     .gauge();
-            assertThat(gauge)
-                    .as("state=%s에 대한 Gauge가 등록되어야 한다", state.name())
-                    .isNotNull();
+            assertThat(gauge).as("state=%s에 대한 Gauge가 등록되어야 한다", state.name()).isNotNull();
             assertThat(gauge.value()).isEqualTo(0.0);
         }
 
@@ -52,7 +51,8 @@ class RoomActiveMetricServiceTest {
         memoryRoomRepository.save(room);
 
         // when
-        Gauge readyGauge = meterRegistry.find("room.active.count")
+        Gauge readyGauge = meterRegistry
+                .find("room.active.count")
                 .tag("state", RoomState.READY.name())
                 .gauge();
         Gauge totalGauge = meterRegistry.find("room.total.count").gauge();
@@ -72,7 +72,8 @@ class RoomActiveMetricServiceTest {
         memoryRoomRepository.save(room2);
 
         // when
-        Gauge readyGauge = meterRegistry.find("room.active.count")
+        Gauge readyGauge = meterRegistry
+                .find("room.active.count")
                 .tag("state", RoomState.READY.name())
                 .gauge();
         Gauge totalGauge = meterRegistry.find("room.total.count").gauge();
@@ -93,7 +94,8 @@ class RoomActiveMetricServiceTest {
         memoryRoomRepository.deleteByJoinCode(joinCode);
 
         // then
-        Gauge readyGauge = meterRegistry.find("room.active.count")
+        Gauge readyGauge = meterRegistry
+                .find("room.active.count")
                 .tag("state", RoomState.READY.name())
                 .gauge();
         Gauge totalGauge = meterRegistry.find("room.total.count").gauge();

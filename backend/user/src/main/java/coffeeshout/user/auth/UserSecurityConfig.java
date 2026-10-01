@@ -24,31 +24,24 @@ public class UserSecurityConfig {
     private final AuthTokenService authTokenService;
     private final LoginMetricService loginMetricService;
 
+    /**
+     * securityMatcher 가 없는 fallback 체인이라 항상 마지막이어야 한다.
+     * 앞선 체인: 0 = ws-catalog·internal webhook, 1 = admin API. (2번은 레거시 Thymeleaf 체인이었고 제거됐다)
+     */
     @Bean
-    @Order(2)
+    @Order(3)
     public SecurityFilterChain userFilterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService))
-                        .successHandler(oAuthSuccessHandler)
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .oauth2Login(
+                        oauth2 -> oauth2.userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                                .successHandler(oAuthSuccessHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(authTokenService),
-                        UsernamePasswordAuthenticationFilter.class
-                )
+                        new JwtAuthenticationFilter(authTokenService), UsernamePasswordAuthenticationFilter.class)
                 // 로그인 "시도" 카운트 — 인가 리다이렉트가 응답을 끝내기 전에 세야 한다
                 .addFilterBefore(
-                        new LoginStartMetricFilter(loginMetricService),
-                        OAuth2AuthorizationRequestRedirectFilter.class
-                );
+                        new LoginStartMetricFilter(loginMetricService), OAuth2AuthorizationRequestRedirectFilter.class);
         return http.build();
     }
 }

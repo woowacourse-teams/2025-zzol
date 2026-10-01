@@ -29,8 +29,7 @@ public class UserCreateAttemptHelper implements UserCreationPort {
                 oAuthAccount.provider().getRegistrationId(),
                 oAuthAccount.providerUserId(),
                 oAuthAccount.email(),
-                emailBlindIndexHasher.hash(oAuthAccount.email())
-        );
+                emailBlindIndexHasher.hash(oAuthAccount.email()));
         final OAuthAccountEntity savedOAuth = oAuthAccountJpaRepository.save(oAuthAccountEntity);
 
         return savedUser.toDomain(savedOAuth);

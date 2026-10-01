@@ -32,6 +32,11 @@ public class GameSchedulerTestConfig {
         return new TestTaskScheduler();
     }
 
+    @Bean(name = "wormGameScheduler")
+    public TaskScheduler testWormGameScheduler() {
+        return new TestTaskScheduler();
+    }
+
     @Bean(name = "speedTouchGameScheduler")
     public TaskScheduler testSpeedTouchGameScheduler() {
         return new TestTaskScheduler();

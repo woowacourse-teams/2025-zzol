@@ -32,5 +32,4 @@ class CardGameRandomDeckGeneratorTest {
                 .count();
         assertThat(specialCardCount).isEqualTo(3);
     }
-
 }

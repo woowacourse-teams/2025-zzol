@@ -24,15 +24,12 @@ class FriendRequestResponseSerializationTest extends UserModuleIntegrationTest {
     @Test
     @DisplayName("FriendRequestResponse 직렬화 결과가 Boot 3.5 기준과 동일하다")
     void 직렬화_결과가_boot_3_5_기준과_동일하다() throws Exception {
-        final FriendRequestResponse response = new FriendRequestResponse(
-                1L, 2L, "USER1234", "닉네임", Instant.parse("2026-01-01T00:00:00Z")
-        );
+        final FriendRequestResponse response =
+                new FriendRequestResponse(1L, 2L, "USER1234", "닉네임", Instant.parse("2026-01-01T00:00:00Z"));
 
         final String json = objectMapper.writeValueAsString(response);
 
-        assertThat(json).isEqualTo(
-                """
-                {"requestId":1,"userId":2,"userCode":"USER1234","nickname":"닉네임","createdAt":1767225600.000000000}"""
-        );
+        assertThat(json).isEqualTo("""
+                {"requestId":1,"userId":2,"userCode":"USER1234","nickname":"닉네임","createdAt":1767225600.000000000}""");
     }
 }

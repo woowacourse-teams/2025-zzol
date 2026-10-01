@@ -16,5 +16,4 @@ public class QrCodeStatusConsumer implements Consumer<QrCodeStatusEvent> {
     public void accept(QrCodeStatusEvent event) {
         roomService.handleQrCodeStatus(event);
     }
-
 }

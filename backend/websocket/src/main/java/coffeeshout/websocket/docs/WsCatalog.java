@@ -14,11 +14,12 @@ public record WsCatalog(
         List<QueueEntry> queues,
         List<SendEntry> sends,
         Map<String, SchemaEntry> schemas,
-        ErrorShape errors
-) {
+        ErrorShape errors) {
 
     public enum SchemaKind {
-        RECORD, ENUM, OBJECT;
+        RECORD,
+        ENUM,
+        OBJECT;
 
         @JsonValue
         public String wire() {
@@ -26,30 +27,30 @@ public record WsCatalog(
         }
     }
 
-    public record Envelope(String type, List<FieldEntry> fields, String note) {
-    }
+    public record Envelope(String type, List<FieldEntry> fields, String note) {}
 
-    public record TopicEntry(String path, String payloadType, List<Publisher> publishers, List<String> referencedSchemas) {
-    }
+    public record TopicEntry(
+            String path, String payloadType, List<Publisher> publishers, List<String> referencedSchemas) {}
 
-    public record QueueEntry(String path, String payloadType, List<Publisher> publishers, List<String> referencedSchemas) {
-    }
+    public record QueueEntry(
+            String path, String payloadType, List<Publisher> publishers, List<String> referencedSchemas) {}
 
-    public record SendEntry(String destination, String description, String requestType, List<String> triggersTopics, Source source, List<String> referencedSchemas) {
-    }
+    public record SendEntry(
+            String destination,
+            String description,
+            String requestType,
+            List<String> triggersTopics,
+            Source source,
+            List<String> referencedSchemas) {}
 
-    public record Publisher(String description, Source source) {
-    }
+    public record Publisher(String description, Source source) {}
 
-    public record Source(String className, String methodName) {
-    }
+    public record Source(String className, String methodName) {}
 
-    public record SchemaEntry(SchemaKind kind, List<FieldEntry> fields, List<String> values) {
-    }
+    public record SchemaEntry(SchemaKind kind, List<FieldEntry> fields, List<String> values) {}
 
-    public record FieldEntry(String name, String type) {
-    }
+    /** {@code type} 은 Java 타입 문자열이다. 컴포넌트에 jspecify {@code @Nullable} 이 있으면 뒤에 {@code ?} 가 붙는다. */
+    public record FieldEntry(String name, String type) {}
 
-    public record ErrorShape(String topic, String payloadType) {
-    }
+    public record ErrorShape(String topic, String payloadType) {}
 }

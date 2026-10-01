@@ -41,6 +41,8 @@ Prometheus 룰 + Loki ruler  →  Alertmanager (그룹·억제·silence)
 1. **탐지를 단일 엔진으로 되돌리되, 옛 폴링이 보던 신호 5개를 빠짐없이 옮긴다.**
    - **HTTP 5xx** → 기존 Prometheus 룰 `Http5xxRatioHigh`. 이미 커버.
    - **Stream backlog** → 기존 룰 `RedisStreamBacklogHigh`(`max(redis_stream_length) > 1000`). 이미 커버 — 폴링이 이걸 중복으로 보던 것이라 제거가 맞다.
+
+     > 2026-09-03 갱신(#1744): `RedisStreamBacklogHigh`는 제거했다. XLEN이 `MAXLEN` 트리밍 상한에 붙어 머물러 상시 발화했고, 임계를 어디에 둬도 적체를 판정할 수 없었다. 여기서 "이미 커버"라고 본 브로드캐스트 스트림 적체는 `RedisStreamE2eLatencyHigh`가 지연으로 대신 본다. 컨슈머가 완전히 멎어 표본이 사라지는 경우는 아직 대응 룰이 없다.
    - **ERROR/WARN 로그** → 새 **Loki ruler 룰**(`count_over_time(... |= "ERROR" [w]) > N`).
    - **DLQ 적체** → 대응 메트릭·룰이 **없어 누락 위험**이었다(리뷰 발견). 로그 율 룰로는 느린 누적을 못 잡으므로 `outbox_dead_letter_count` 게이지(`OutboxDeadLetterMetricService`)를 새로 만들고 룰 `OutboxDeadLetterHigh`(`> 10`, 옛 임계 유지)로 복구했다.
 

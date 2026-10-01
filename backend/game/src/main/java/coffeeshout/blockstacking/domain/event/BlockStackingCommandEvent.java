@@ -13,12 +13,11 @@ public record BlockStackingCommandEvent(
         double movingBlockX,
         double stackTopX,
         double stackTopWidth,
-        Instant timestamp
-) implements BaseEvent {
+        Instant timestamp)
+        implements BaseEvent {
 
     public static BlockStackingCommandEvent of(
-            String joinCode, String authenticatedPlayerName, BlockStackingProgressRequest request
-    ) {
+            String joinCode, String authenticatedPlayerName, BlockStackingProgressRequest request) {
         return new BlockStackingCommandEvent(
                 UUID.randomUUID().toString(),
                 joinCode,
@@ -27,7 +26,6 @@ public record BlockStackingCommandEvent(
                 request.movingBlockX(),
                 request.stackTopX(),
                 request.stackTopWidth(),
-                Instant.now()
-        );
+                Instant.now());
     }
 }

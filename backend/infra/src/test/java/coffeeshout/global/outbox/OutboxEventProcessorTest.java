@@ -41,10 +41,8 @@ class OutboxEventProcessorTest extends InfraModuleServiceTest {
             List<OutboxEvent> result = outboxEventProcessor.fetchAndMarkInProgress(10);
 
             // then
-            assertThat(result).hasSize(2)
-                    .allSatisfy(event ->
-                    assertThat(event.getStatus()).isEqualTo(OutboxStatus.IN_PROGRESS)
-            );
+            assertThat(result).hasSize(2).allSatisfy(event -> assertThat(event.getStatus())
+                    .isEqualTo(OutboxStatus.IN_PROGRESS));
         }
 
         @Test
@@ -59,9 +57,7 @@ class OutboxEventProcessorTest extends InfraModuleServiceTest {
         @Test
         void batchSize만큼만_조회한다() {
             // given
-            IntStream.range(0, 5).forEach(i ->
-                    createPendingEvent("room", "{\"index\":" + i + "}")
-            );
+            IntStream.range(0, 5).forEach(i -> createPendingEvent("room", "{\"index\":" + i + "}"));
 
             // when
             List<OutboxEvent> result = outboxEventProcessor.fetchAndMarkInProgress(3);
@@ -114,9 +110,7 @@ class OutboxEventProcessorTest extends InfraModuleServiceTest {
             OutboxEvent event = createPendingEvent("room", "{\"type\":\"test\"}");
 
             // when
-            IntStream.range(0, 10).forEach(i ->
-                    outboxEventProcessor.handleFailure(event.getId())
-            );
+            IntStream.range(0, 10).forEach(i -> outboxEventProcessor.handleFailure(event.getId()));
 
             // then
             OutboxEvent updated = outboxEventRepository.findById(event.getId()).orElseThrow();

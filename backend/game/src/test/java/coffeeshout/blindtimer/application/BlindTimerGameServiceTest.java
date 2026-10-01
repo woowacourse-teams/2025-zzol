@@ -3,10 +3,10 @@ package coffeeshout.blindtimer.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import coffeeshout.GameModuleServiceTest;
 import coffeeshout.blindtimer.domain.BlindTimerGame;
 import coffeeshout.blindtimer.domain.BlindTimerGameState;
 import coffeeshout.fixture.RoomFixture;
-import coffeeshout.GameModuleServiceTest;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -51,11 +51,10 @@ class BlindTimerGameServiceTest extends GameModuleServiceTest {
         blindTimerGameService.start(room.getJoinCode().getValue(), HOST_NAME);
 
         // then
-        await().atMost(Duration.ofSeconds(3))
-                .untilAsserted(() -> {
-                    assertThat(game.getState()).isEqualTo(BlindTimerGameState.DONE);
-                    assertThat(game.getStartTime()).isNotNull();
-                });
+        await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+            assertThat(game.getState()).isEqualTo(BlindTimerGameState.DONE);
+            assertThat(game.getStartTime()).isNotNull();
+        });
     }
 
     @Test

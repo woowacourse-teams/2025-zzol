@@ -42,15 +42,13 @@ class TermsControllerTest extends UserModuleIntegrationTest {
 
         @Test
         void 인증된_사용자가_약관에_동의하면_204를_반환한다() throws Exception {
-            mockMvc.perform(post("/users/me/terms")
-                            .header("Authorization", "Bearer " + accessToken))
+            mockMvc.perform(post("/users/me/terms").header("Authorization", "Bearer " + accessToken))
                     .andExpect(status().isNoContent());
         }
 
         @Test
         void 토큰_없이_호출하면_401을_반환한다() throws Exception {
-            mockMvc.perform(post("/users/me/terms"))
-                    .andExpect(status().isUnauthorized());
+            mockMvc.perform(post("/users/me/terms")).andExpect(status().isUnauthorized());
         }
     }
 }

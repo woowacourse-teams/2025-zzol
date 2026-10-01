@@ -1,4 +1,9 @@
 package coffeeshout.laddergame.application.response;
 
-public record LadderLineResponse(String playerName, int segmentIndex, int row, Integer colorIndex) {
-}
+import org.jspecify.annotations.Nullable;
+
+public record LadderLineResponse(
+        String playerName,
+        int segmentIndex,
+        int row,
+        @Nullable Integer colorIndex) {}

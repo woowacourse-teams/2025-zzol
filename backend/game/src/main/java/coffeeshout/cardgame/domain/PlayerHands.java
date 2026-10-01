@@ -17,10 +17,7 @@ public class PlayerHands {
     private final Map<Gamer, CardHand> playerHands;
 
     public PlayerHands(List<Gamer> gamers) {
-        this.playerHands = gamers.stream().collect(Collectors.toMap(
-                gamer -> gamer,
-                gamer -> new CardHand()
-        ));
+        this.playerHands = gamers.stream().collect(Collectors.toMap(gamer -> gamer, gamer -> new CardHand()));
     }
 
     public void put(Gamer gamer, Card card) {
@@ -28,9 +25,7 @@ public class PlayerHands {
     }
 
     public int totalHandSize() {
-        return playerHands.values().stream()
-                .mapToInt(CardHand::size)
-                .sum();
+        return playerHands.values().stream().mapToInt(CardHand::size).sum();
     }
 
     public int playerCount() {
@@ -38,25 +33,20 @@ public class PlayerHands {
     }
 
     public boolean isRoundFinished(CardGameRound round) {
-        return playerHands.values().stream()
-                .allMatch(hand -> hand.isSelected(round));
+        return playerHands.values().stream().allMatch(hand -> hand.isSelected(round));
     }
 
     public Gamer findByName(String name) {
         return playerHands.keySet().stream()
                 .filter(gamer -> gamer.getName().equals(name))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        GameErrorCode.PLAYER_NOT_FOUND,
-                        "해당 플레이어를 찾을 수 없습니다. name: " + name)
-                );
+                .orElseThrow(() ->
+                        new BusinessException(GameErrorCode.PLAYER_NOT_FOUND, "해당 플레이어를 찾을 수 없습니다. name: " + name));
     }
 
     public Map<Gamer, MiniGameScore> scoreByPlayer() {
-        return playerHands.entrySet().stream().collect(Collectors.toMap(
-                Entry::getKey,
-                entry -> entry.getValue().calculateCardGameScore()
-        ));
+        return playerHands.entrySet().stream().collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue()
+                .calculateCardGameScore()));
     }
 
     public List<Gamer> getUnselectedPlayers(CardGameRound round) {

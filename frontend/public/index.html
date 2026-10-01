@@ -20,37 +20,29 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <title>쫄 - 똥손도 즐기는 미니게임 내기 서비스</title>
-    <meta
-      name="description"
-      content="커피 내기, 점심 내기, 당번 정하기를 미니게임으로! 내기 게임과 룰렛으로 긴장감 있게 결정하세요. 가위바위보는 그만, 쫄(ZZOL)에서 똥손 탈출에 도전해보세요!"
-    />
+    <title><%- TITLE %></title>
+    <meta name="description" content="<%- DESCRIPTION %>" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.zzol.site/" />
-    <meta property="og:title" content="쫄 - 똥손도 즐기는 미니게임 내기 서비스" />
-    <meta
-      property="og:description"
-      content="커피 내기, 점심 내기, 당번 정하기를 미니게임으로! 내기 게임과 룰렛으로 긴장감 있게 결정하세요. 가위바위보는 그만, 쫄(ZZOL)에서 똥손 탈출에 도전해보세요!"
-    />
+    <meta property="og:url" content="<%- CANONICAL %>" />
+    <meta property="og:title" content="<%- TITLE %>" />
+    <meta property="og:description" content="<%- DESCRIPTION %>" />
     <meta property="og:image" content="https://www.zzol.site/logo/og_image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="쫄 (ZZOL)" />
     <meta property="og:locale" content="ko_KR" />
 
-    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="robots" content="<%- ROBOTS %>" />
     <meta name="theme-color" content="#F53E41" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="쫄 - 똥손도 즐기는 미니게임 내기 서비스" />
-    <meta
-      name="twitter:description"
-      content="커피 내기, 점심 내기, 당번 정하기를 미니게임으로! 내기 게임과 룰렛으로 긴장감 있게 결정하세요. 가위바위보는 그만, 쫄(ZZOL)에서 똥손 탈출에 도전해보세요!"
-    />
+    <meta name="twitter:title" content="<%- TITLE %>" />
+    <meta name="twitter:description" content="<%- DESCRIPTION %>" />
     <meta name="twitter:image" content="https://www.zzol.site/logo/og_image.png" />
 
-    <link rel="canonical" href="https://www.zzol.site/" />
+    <link rel="canonical" href="<%- CANONICAL %>" />
+    <link rel="icon" href="/favicon.ico" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -180,33 +172,7 @@
       }
     </style>
     <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "쫄 (ZZOL)",
-        "url": "https://www.zzol.site/",
-        "description": "커피 내기, 점심 내기, 당번 정하기를 미니게임으로 결정하는 내기 게임 서비스. QR코드로 방에 입장하고 미니게임 결과로 룰렛 당첨 확률을 정합니다.",
-        "applicationCategory": "GameApplication",
-        "operatingSystem": "Web",
-        "inLanguage": "ko",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "KRW"
-        },
-        "featureList": [
-          "QR코드로 방 입장 후 즉시 내기 시작",
-          "미니게임 결과로 룰렛 당첨 확률 결정",
-          "커피·점심·당번 등 내기 결과 실시간 추첨",
-          "실시간 멀티플레이어 미니게임 진행",
-          "복불복 룰렛으로 긴장감 있는 당첨자 발표"
-        ],
-        "author": {
-          "@type": "Organization",
-          "name": "쫄 (ZZOL)",
-          "url": "https://www.zzol.site/"
-        }
-      }
+      <%= JSON_LD %>
     </script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2150P8R4FF"></script>
     <script>
@@ -246,11 +212,8 @@
             fill="currentColor"
           />
         </svg>
-        <h1>커피 내기 · 점심 내기를 미니게임으로</h1>
-        <p>
-          내기 게임·복불복을 미니게임으로!<br />커피 내기, 술 내기, 점심 메뉴, 당번 뽑기까지<br />가위바위보
-          대신 쫄(ZZOL)로.
-        </p>
+        <h1><%- H1 %></h1>
+        <p><%= BODY %></p>
         <div id="zzol-dots" aria-hidden="true">
           <span></span>
           <span></span>

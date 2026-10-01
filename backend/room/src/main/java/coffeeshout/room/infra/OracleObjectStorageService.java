@@ -35,8 +35,7 @@ public class OracleObjectStorageService implements StorageService {
             ObjectStorage objectStorage,
             OracleObjectStorageProperties oracleProperties,
             QrProperties qrProperties,
-            MeterRegistry meterRegistry
-    ) {
+            MeterRegistry meterRegistry) {
         this.objectStorage = objectStorage;
         this.namespaceName = oracleProperties.namespace();
         this.bucketName = oracleProperties.bucket();
@@ -50,7 +49,7 @@ public class OracleObjectStorageService implements StorageService {
 
     /**
      * QR 코드 이미지를 Oracle Object Storage에 업로드합니다.
-     * 
+     *
      * 서킷 브레이커와 리트라이가 적용되어 있으며, 원본 예외를 그대로 던져서
      * Resilience4j가 예외 타입을 정확히 판단할 수 있도록 합니다.
      * 모든 예외 래핑은 fallback 메서드에서 처리합니다.
@@ -71,10 +70,15 @@ public class OracleObjectStorageService implements StorageService {
         try {
             return generatePublicUrl(storageKey);
         } catch (Exception e) {
-            meterRegistry.counter("oracle.objectstorage.qr.url.generation.failed",
-                    "error", e.getClass().getSimpleName()).increment();
+            meterRegistry
+                    .counter(
+                            "oracle.objectstorage.qr.url.generation.failed",
+                            "error",
+                            e.getClass().getSimpleName())
+                    .increment();
             log.error("Oracle Object Storage Public URL 생성 실패: storageKey={}, error={}", storageKey, e.getMessage(), e);
-            throw new InfrastructureException(QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED,
+            throw new InfrastructureException(
+                    QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED,
                     QrCodeErrorCode.QR_CODE_URL_SIGNING_FAILED.getMessage());
         }
     }
@@ -84,18 +88,22 @@ public class OracleObjectStorageService implements StorageService {
      * 여기서 예외를 StorageServiceException으로 래핑합니다.
      */
     private String uploadFallback(String contents, byte[] data, Exception e) {
-        meterRegistry.counter("oracle.objectstorage.qr.upload.failed",
-                "error", e.getClass().getSimpleName()).increment();
+        meterRegistry
+                .counter(
+                        "oracle.objectstorage.qr.upload.failed",
+                        "error",
+                        e.getClass().getSimpleName())
+                .increment();
 
         if (e instanceof CallNotPermittedException) {
             log.warn("서킷 브레이커 OPEN 상태 - Oracle Storage 호출 차단됨: contents={}", contents);
-            throw new InfrastructureException(QrCodeErrorCode.QR_CODE_UPLOAD_FAILED,
-                    "스토리지 서비스가 일시적으로 사용 불가능합니다. 잠시 후 다시 시도해주세요.");
+            throw new InfrastructureException(
+                    QrCodeErrorCode.QR_CODE_UPLOAD_FAILED, "스토리지 서비스가 일시적으로 사용 불가능합니다. 잠시 후 다시 시도해주세요.");
         }
 
         log.error("Oracle Object Storage QR 코드 업로드 실패: contents={}, error={}", contents, e.getMessage(), e);
-        throw new InfrastructureException(QrCodeErrorCode.QR_CODE_UPLOAD_FAILED,
-                "QR 코드 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.", e);
+        throw new InfrastructureException(
+                QrCodeErrorCode.QR_CODE_UPLOAD_FAILED, "QR 코드 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.", e);
     }
 
     /**
@@ -116,8 +124,11 @@ public class OracleObjectStorageService implements StorageService {
                         .build();
 
                 final PutObjectResponse response = objectStorage.putObject(putObjectRequest);
-                log.info("QR 코드 Oracle Object Storage 업로드 완료: contents={}, objectName={}, etag={}",
-                        contents, objectName, response.getETag());
+                log.info(
+                        "QR 코드 Oracle Object Storage 업로드 완료: contents={}, objectName={}, etag={}",
+                        contents,
+                        objectName,
+                        response.getETag());
 
                 meterRegistry.counter("oracle.objectstorage.upload.success").increment();
                 return objectName;
@@ -134,7 +145,8 @@ public class OracleObjectStorageService implements StorageService {
             throw new IllegalArgumentException("objectName은 null이거나 비어있을 수 없습니다.");
         }
 
-        final String publicUrl = String.format("https://objectstorage.%s.oraclecloud.com/n/%s/b/%s/o/%s",
+        final String publicUrl = String.format(
+                "https://objectstorage.%s.oraclecloud.com/n/%s/b/%s/o/%s",
                 region, namespaceName, bucketName, objectName);
 
         log.info("Public URL 생성 완료: objectName={}", objectName);

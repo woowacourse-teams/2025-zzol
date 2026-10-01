@@ -1,0 +1,25 @@
+{
+  "name": "monitor-5xx-db-connection-failure",
+  "question": "알림 Http5xxRatioHigh(critical)가 prod에서 발화했다 - 최근 5분 5xx 비율 5% 초과. 봇에는 최근 30분 ERROR 로그 샘플 4줄(JDBC 커넥션 확보 실패)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 서로 다른 여러 HTTP 요청이 JDBC Connection 확보 실패(JDBCConnectionException: Unable to acquire JDBC Connection)로 실패한 내용으로, 광범위한 5xx의 직접 근거다. '근거 발견: 예'로 판정하고 DB 연결 실패(MySQL 장애 또는 커넥션 확보 불가)를 근본 원인 가설로 제시하면 정답. '근거 발견: 아니오'로 판정하거나 Redis, 게임 로직을 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "Http5xxRatioHigh",
+    "severity": "critical",
+    "fingerprint": "golden-synth-19",
+    "summary": "HTTP 5xx 비율 5% 초과 (prod-app)",
+    "description": "최근 5분 5xx 비율이 9.8%. 서버 측 광범위 실패 가능성.",
+    "labels": {
+      "alertname": "Http5xxRatioHigh",
+      "severity": "critical",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-26 11:18:07.335] [ERROR] [61d43a90c8e2f5b7a3b8c04e97d15f28,4c07e9a25d81b3f6] --- [http-nio-8080-exec-14] c.web.exception.RestExceptionHandler : method=POST uri=/rooms exception=JDBCConnectionException message=Unable to acquire JDBC Connection",
+    "[2026-08-26 11:18:36.902] [ERROR] [08b5e2c74a91d3f6b6d0a95c21e84f73,7e51a3c80d94b2f6] --- [http-nio-8080-exec-22] c.web.exception.RestExceptionHandler : method=POST uri=/rooms exception=JDBCConnectionException message=Unable to acquire JDBC Connection",
+    "[2026-08-26 11:19:14.478] [ERROR] [95c2d7a40e83f1b6b1e6a38c50d97f42,0a68d5c93e27b1f4] --- [http-nio-8080-exec-09] c.web.exception.RestExceptionHandler : method=POST uri=/rooms exception=JDBCConnectionException message=Unable to acquire JDBC Connection",
+    "[2026-08-26 11:20:02.611] [ERROR] [,] --- [pool-11-thread-1] o.s.s.s.TaskUtils$LoggingErrorHandler : Unexpected error occurred in scheduled task"
+  ],
+  "logEnvironment": "prod"
+}

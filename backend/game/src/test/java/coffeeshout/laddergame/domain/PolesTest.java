@@ -38,10 +38,8 @@ class PolesTest {
 
         @Test
         void 기둥_인덱스는_0부터_n_minus_1까지다() {
-            final List<Integer> indices = poles.getAll().stream()
-                    .map(Pole::index)
-                    .sorted()
-                    .toList();
+            final List<Integer> indices =
+                    poles.getAll().stream().map(Pole::index).sorted().toList();
 
             assertThat(indices).containsExactly(0, 1, 2);
         }
@@ -69,10 +67,7 @@ class PolesTest {
 
         @Test
         void 미등록_플레이어_조회_시_예외를_던진다() {
-            assertCoffeeShoutException(
-                    () -> poles.getPoleIndex("없는플레이어"),
-                    LadderGameErrorCode.PLAYER_NOT_FOUND
-            );
+            assertCoffeeShoutException(() -> poles.getPoleIndex("없는플레이어"), LadderGameErrorCode.PLAYER_NOT_FOUND);
         }
     }
 
@@ -89,10 +84,7 @@ class PolesTest {
 
         @Test
         void 유효하지_않은_인덱스_조회_시_예외를_던진다() {
-            assertCoffeeShoutException(
-                    () -> poles.getGamer(99),
-                    LadderGameErrorCode.INVALID_POLE_INDEX
-            );
+            assertCoffeeShoutException(() -> poles.getGamer(99), LadderGameErrorCode.INVALID_POLE_INDEX);
         }
     }
 

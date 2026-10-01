@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.AdminModuleServiceTest;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.domain.ReportCategory;
+import coffeeshout.report.infra.persistence.Report;
 import coffeeshout.report.infra.persistence.ReportRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,9 +26,8 @@ class ReportServiceTest extends AdminModuleServiceTest {
 
         @Test
         void BUG_신고를_저장하고_id를_반환한다() {
-            final long reportId = reportService.submit(
-                    ReportCategory.BUG, MiniGameType.CARD_GAME, "ABC12", "카드게임이 멈춰요."
-            );
+            final long reportId =
+                    reportService.submit(ReportCategory.BUG, MiniGameType.CARD_GAME, "ABC12", "카드게임이 멈춰요.");
 
             final Report saved = reportRepository.findById(reportId).orElseThrow();
             assertThat(saved.getCategory()).isEqualTo(ReportCategory.BUG);
@@ -38,9 +37,7 @@ class ReportServiceTest extends AdminModuleServiceTest {
 
         @Test
         void 건의사항을_저장하고_id를_반환한다() {
-            final long reportId = reportService.submit(
-                    ReportCategory.SUGGESTION, null, null, "새 게임 추가해주세요."
-            );
+            final long reportId = reportService.submit(ReportCategory.SUGGESTION, null, null, "새 게임 추가해주세요.");
 
             final Report saved = reportRepository.findById(reportId).orElseThrow();
             assertThat(saved.getCategory()).isEqualTo(ReportCategory.SUGGESTION);
@@ -50,9 +47,8 @@ class ReportServiceTest extends AdminModuleServiceTest {
 
         @Test
         void ip를_전달하면_신고에_저장된다() {
-            final long reportId = reportService.submit(
-                    ReportCategory.BUG, MiniGameType.CARD_GAME, "ABC12", "내용", null, "1.2.3.4"
-            );
+            final long reportId =
+                    reportService.submit(ReportCategory.BUG, MiniGameType.CARD_GAME, "ABC12", "내용", null, "1.2.3.4");
 
             final Report saved = reportRepository.findById(reportId).orElseThrow();
             assertThat(saved.getIp()).isEqualTo("1.2.3.4");
@@ -60,9 +56,7 @@ class ReportServiceTest extends AdminModuleServiceTest {
 
         @Test
         void ip_없이_제출하면_null로_저장된다() {
-            final long reportId = reportService.submit(
-                    ReportCategory.SUGGESTION, null, null, "내용"
-            );
+            final long reportId = reportService.submit(ReportCategory.SUGGESTION, null, null, "내용");
 
             final Report saved = reportRepository.findById(reportId).orElseThrow();
             assertThat(saved.getIp()).isNull();

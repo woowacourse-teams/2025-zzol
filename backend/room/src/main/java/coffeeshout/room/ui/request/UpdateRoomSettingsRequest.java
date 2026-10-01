@@ -6,6 +6,4 @@ import jakarta.validation.constraints.NotBlank;
 
 public record UpdateRoomSettingsRequest(
         @NotBlank String hostName,
-        @DecimalMin("0.1") @DecimalMax("0.9") double adjustmentWeight
-) {
-}
+        @DecimalMin("0.1") @DecimalMax("0.9") double adjustmentWeight) {}

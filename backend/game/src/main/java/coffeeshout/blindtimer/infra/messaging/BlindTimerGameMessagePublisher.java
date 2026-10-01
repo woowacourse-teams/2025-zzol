@@ -22,32 +22,35 @@ public class BlindTimerGameMessagePublisher {
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
     @EventListener
-    @WsTopic(path = "/room/{joinCode}/blind-timer/progress", payload = BlindTimerProgressResponse.class,
+    @WsTopic(
+            path = "/room/{joinCode}/blind-timer/progress",
+            payload = BlindTimerProgressResponse.class,
             description = "블라인드 타이머 진행 상황 브로드캐스트")
     public void publishProgress(BlindTimerProgressEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(PROGRESS_DESTINATION_FORMAT, event.joinCode()),
-                WebSocketResponse.success(BlindTimerProgressResponse.from(event))
-        );
+                WebSocketResponse.success(BlindTimerProgressResponse.from(event)));
     }
 
     @EventListener
-    @WsTopic(path = "/room/{joinCode}/blind-timer/state", payload = BlindTimerStateResponse.class,
+    @WsTopic(
+            path = "/room/{joinCode}/blind-timer/state",
+            payload = BlindTimerStateResponse.class,
             description = "블라인드 타이머 상태 변경 브로드캐스트")
     public void publishStateChanged(BlindTimerStateChangedEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(STATE_DESTINATION_FORMAT, event.joinCode()),
-                WebSocketResponse.success(BlindTimerStateResponse.from(event))
-        );
+                WebSocketResponse.success(BlindTimerStateResponse.from(event)));
     }
 
     @EventListener
-    @WsTopic(path = "/room/{joinCode}/blind-timer/state", payload = BlindTimerStateResponse.class,
+    @WsTopic(
+            path = "/room/{joinCode}/blind-timer/state",
+            payload = BlindTimerStateResponse.class,
             description = "블라인드 타이머 종료 브로드캐스트")
     public void publishFinished(BlindTimerFinishedEvent event) {
         messagingTemplate.convertAndSend(
                 String.format(STATE_DESTINATION_FORMAT, event.joinCode()),
-                WebSocketResponse.success(new BlindTimerStateResponse(event.state().name(), 0, 0))
-        );
+                WebSocketResponse.success(new BlindTimerStateResponse(event.state(), 0, 0)));
     }
 }

@@ -3,7 +3,6 @@ package coffeeshout.racinggame.domain;
 import java.time.Duration;
 import java.time.Instant;
 
-
 public class TapPerSecondSpeedCalculator implements SpeedCalculator {
 
     @Override

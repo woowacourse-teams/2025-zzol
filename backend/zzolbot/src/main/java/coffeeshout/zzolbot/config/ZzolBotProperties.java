@@ -21,33 +21,28 @@ public record ZzolBotProperties(
         @NotNull @Valid DeterminismProperties determinism,
         @Positive int defaultWindowMinutes,
         @Positive long toolTimeoutMillis,
-        @NotNull @Valid SqlProperties sql
-) {
+        @NotNull @Valid SqlProperties sql) {
 
     public record MonitoringProperties(
             @NotBlank String lokiUrl,
             @NotBlank String tempoUrl,
             @NotBlank String prometheusUrl,
-            @NotBlank String environment
-    ) {}
+            @NotBlank String environment) {}
 
     public record DeterminismProperties(
             @DecimalMin("0.0") @DecimalMax("2.0") double temperature,
-            @DecimalMin("0.0") @DecimalMax("1.0") double topP
-    ) {}
+            @DecimalMin("0.0") @DecimalMax("1.0") double topP) {}
 
     public record SqlProperties(
             @NotNull @Valid List<TableSchema> allowedTables,
             @Positive int maxRows,
-            @Positive int queryTimeoutSeconds
-    ) {}
+            @Positive int queryTimeoutSeconds) {}
 
     public record TableSchema(
             @NotBlank String name,
             @NotEmpty List<String> columns,
             List<String> blockedColumns,
-            @NotBlank String description
-    ) {
+            @NotBlank String description) {
         public TableSchema {
             blockedColumns = blockedColumns != null ? List.copyOf(blockedColumns) : List.of();
         }

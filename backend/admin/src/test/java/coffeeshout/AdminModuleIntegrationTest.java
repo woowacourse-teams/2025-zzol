@@ -3,9 +3,9 @@ package coffeeshout;
 import coffeeshout.config.ServiceTestConfig;
 import coffeeshout.report.ratelimit.ReportRateLimitStore;
 import coffeeshout.support.IntegrationTestSupport;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 

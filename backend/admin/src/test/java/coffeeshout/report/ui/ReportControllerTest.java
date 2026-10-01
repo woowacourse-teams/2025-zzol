@@ -40,8 +40,7 @@ class ReportControllerTest extends AdminModuleIntegrationTest {
                     "category", "BUG",
                     "gameType", "CARD_GAME",
                     "joinCode", "ABC12",
-                    "content", "카드게임이 멈춰요."
-            );
+                    "content", "카드게임이 멈춰요.");
 
             mockMvc.perform(post("/reports")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -53,8 +52,7 @@ class ReportControllerTest extends AdminModuleIntegrationTest {
         void BUG_신고에서_gameType과_joinCode가_없어도_201을_반환한다() throws Exception {
             final Map<String, Object> body = Map.of(
                     "category", "BUG",
-                    "content", "게임 외 버그입니다."
-            );
+                    "content", "게임 외 버그입니다.");
 
             mockMvc.perform(post("/reports")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -66,8 +64,7 @@ class ReportControllerTest extends AdminModuleIntegrationTest {
         void SUGGESTION_제출을_정상_처리하면_201을_반환한다() throws Exception {
             final Map<String, Object> body = Map.of(
                     "category", "SUGGESTION",
-                    "content", "새 게임을 추가해주세요."
-            );
+                    "content", "새 게임을 추가해주세요.");
 
             mockMvc.perform(post("/reports")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -77,9 +74,7 @@ class ReportControllerTest extends AdminModuleIntegrationTest {
 
         @Test
         void content가_없으면_400을_반환한다() throws Exception {
-            final Map<String, Object> body = Map.of(
-                    "category", "SUGGESTION"
-            );
+            final Map<String, Object> body = Map.of("category", "SUGGESTION");
 
             mockMvc.perform(post("/reports")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -89,10 +84,7 @@ class ReportControllerTest extends AdminModuleIntegrationTest {
 
         @Test
         void content가_200자를_초과하면_400을_반환한다() throws Exception {
-            final Map<String, Object> body = Map.of(
-                    "category", "SUGGESTION",
-                    "content", "a".repeat(201)
-            );
+            final Map<String, Object> body = Map.of("category", "SUGGESTION", "content", "a".repeat(201));
 
             mockMvc.perform(post("/reports")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -102,9 +94,7 @@ class ReportControllerTest extends AdminModuleIntegrationTest {
 
         @Test
         void category가_없으면_400을_반환한다() throws Exception {
-            final Map<String, Object> body = Map.of(
-                    "content", "내용입니다."
-            );
+            final Map<String, Object> body = Map.of("content", "내용입니다.");
 
             mockMvc.perform(post("/reports")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -116,8 +106,7 @@ class ReportControllerTest extends AdminModuleIntegrationTest {
         void 유효하지_않은_category_값이면_400을_반환한다() throws Exception {
             final Map<String, Object> body = Map.of(
                     "category", "INVALID",
-                    "content", "내용입니다."
-            );
+                    "content", "내용입니다.");
 
             mockMvc.perform(post("/reports")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -131,8 +120,7 @@ class ReportControllerTest extends AdminModuleIntegrationTest {
 
             final Map<String, Object> body = Map.of(
                     "category", "SUGGESTION",
-                    "content", "건의합니다."
-            );
+                    "content", "건의합니다.");
 
             mockMvc.perform(post("/reports")
                             .contentType(MediaType.APPLICATION_JSON)

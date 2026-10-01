@@ -1,15 +1,10 @@
 import { useWebSocketSubscription } from '@/apis/websocket/hooks/useWebSocketSubscription';
 import { useWebSocket } from '@/apis/websocket/contexts/WebSocketContext';
 import { useIdentifier } from '@/contexts/Identifier/IdentifierContext';
-import { LadderGameState, LadderLine, Pole } from '@/types/miniGame/ladderGame';
+import { LadderGameState, LadderGhost, LadderLine, Pole } from '@/types/miniGame/ladderGame';
 import { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
 import { LadderGameContext } from './LadderGameContext';
-
-type StateMessage =
-  | { state: 'DESCRIPTION' | 'DONE' }
-  | { state: 'PREPARE'; poles: Pole[]; bottomRanks: Record<string, number> }
-  | { state: 'DRAWING'; endTimeEpochMs: number }
-  | { state: 'RESULT'; rankings: Record<string, number>; animationDurationMs: number };
+import type { LadderStateResponse } from '@/apis/websocket/generated/wsContract';
 
 const LadderGameProvider = ({ children }: PropsWithChildren) => {
   const { joinCode, myName } = useIdentifier();
@@ -18,13 +13,16 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
   const [gameState, setGameState] = useState<LadderGameState>('DESCRIPTION');
   const [poles, setPoles] = useState<Pole[]>([]);
   const [bottomRanks, setBottomRanks] = useState<Record<string, number>>({});
+  const [rowCount, setRowCount] = useState(0);
   const [lines, setLines] = useState<LadderLine[]>([]);
-  const [ghostSegmentIndex, setGhostSegmentIndex] = useState<number | null>(null);
+  const [ghost, setGhost] = useState<LadderGhost | null>(null);
   const [endTimeEpochMs, setEndTimeEpochMs] = useState<number | null>(null);
   const [rankings, setRankings] = useState<Record<string, number> | null>(null);
   const [animationDurationMs, setAnimationDurationMs] = useState<number | null>(null);
 
   const ghostTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 구독 콜백이 최신 ghost 를 읽게 state 와 함께 둔다
+  const ghostRef = useRef<LadderGhost | null>(null);
 
   const clearGhostTimer = useCallback(() => {
     if (ghostTimerRef.current) {
@@ -35,47 +33,59 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => () => clearGhostTimer(), [clearGhostTimer]);
 
-  useWebSocketSubscription<StateMessage>(
+  const dropGhost = useCallback(() => {
+    clearGhostTimer();
+    ghostRef.current = null;
+    setGhost(null);
+  }, [clearGhostTimer]);
+
+  useWebSocketSubscription(
     `/room/${joinCode}/ladder/state`,
-    useCallback((msg: StateMessage) => {
+    useCallback((msg: LadderStateResponse) => {
       setGameState(msg.state);
       if (msg.state === 'PREPARE') {
-        setPoles(msg.poles);
-        setBottomRanks(msg.bottomRanks);
+        setPoles(msg.poles ?? []);
+        setBottomRanks(msg.bottomRanks ?? {});
+        setRowCount(msg.rowCount ?? 0);
       } else if (msg.state === 'DRAWING') {
-        setEndTimeEpochMs(msg.endTimeEpochMs);
+        setEndTimeEpochMs(msg.endTimeEpochMs ?? null);
       } else if (msg.state === 'RESULT') {
-        setRankings(msg.rankings);
-        setAnimationDurationMs(msg.animationDurationMs);
+        setRankings(msg.rankings ?? null);
+        setAnimationDurationMs(msg.animationDurationMs ?? null);
       }
     }, [])
   );
 
-  useWebSocketSubscription<LadderLine>(
+  useWebSocketSubscription(
     `/room/${joinCode}/ladder/line`,
     useCallback(
       (line: LadderLine) => {
         setLines((prev) => [...prev, line]);
-        if (line.playerName === myName) {
-          clearGhostTimer();
-          setGhostSegmentIndex(null);
-        }
+        // 내 선이라도 지금 ghost 자리의 응답일 때만 거둔다. 타임아웃 뒤 늦게 온 앞선 응답이 새 ghost 를 지우지 않게 한다
+        const pending = ghostRef.current;
+        const isPendingLine =
+          line.playerName === myName &&
+          pending !== null &&
+          Number(line.segmentIndex) === pending.segmentIndex &&
+          line.row === pending.row;
+        if (isPendingLine) dropGhost();
       },
-      [myName, clearGhostTimer]
+      [myName, dropGhost]
     )
   );
 
   const drawLine = useCallback(
-    (segmentIndex: number) => {
+    (segmentIndex: number, row: number) => {
       clearGhostTimer();
-      setGhostSegmentIndex(segmentIndex);
-      send(`/room/${joinCode}/ladder/draw`, { playerName: myName, segmentIndex });
+      const next = { segmentIndex, row };
+      ghostRef.current = next;
+      setGhost(next);
+      send(`/room/${joinCode}/ladder/draw`, { playerName: myName, segmentIndex, row });
 
-      ghostTimerRef.current = setTimeout(() => {
-        setGhostSegmentIndex(null);
-      }, 2000);
+      // 서버가 조용히 무시한 요청(범위 밖 등)은 응답이 없다. 그때 ghost 를 거둔다
+      ghostTimerRef.current = setTimeout(dropGhost, 2000);
     },
-    [clearGhostTimer, send, joinCode, myName]
+    [clearGhostTimer, dropGhost, send, joinCode, myName]
   );
 
   return (
@@ -84,12 +94,14 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
         gameState,
         poles,
         bottomRanks,
+        rowCount,
         lines,
-        ghostSegmentIndex,
+        ghost,
         endTimeEpochMs,
         rankings,
         animationDurationMs,
         drawLine,
+        dropGhost,
       }}
     >
       {children}

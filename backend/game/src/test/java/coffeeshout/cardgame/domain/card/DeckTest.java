@@ -26,12 +26,8 @@ class DeckTest {
                 AdditionCard.PLUS_10,
                 AdditionCard.ZERO,
                 AdditionCard.MINUS_10,
-                AdditionCard.MINUS_20
-        );
-        multiplierCards = List.of(
-                MultiplierCard.QUADRUPLE,
-                MultiplierCard.DOUBLE
-        );
+                AdditionCard.MINUS_20);
+        multiplierCards = List.of(MultiplierCard.QUADRUPLE, MultiplierCard.DOUBLE);
         deck = new Deck(additionCards, multiplierCards);
     }
 
@@ -91,16 +87,14 @@ class DeckTest {
             deck.pick(cardIndex);
 
             // when & then
-            assertThatThrownBy(() -> deck.pick(cardIndex))
-                    .isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(() -> deck.pick(cardIndex)).isInstanceOf(IllegalStateException.class);
         }
 
         @ParameterizedTest
         @ValueSource(ints = {-1, 9, 100})
         void 유효하지_않은_인덱스로_카드를_선택하면_예외가_발생한다(int invalidIndex) {
             // when & then
-            assertThatThrownBy(() -> deck.pick(invalidIndex))
-                    .isInstanceOf(IndexOutOfBoundsException.class);
+            assertThatThrownBy(() -> deck.pick(invalidIndex)).isInstanceOf(IndexOutOfBoundsException.class);
         }
 
         @Test

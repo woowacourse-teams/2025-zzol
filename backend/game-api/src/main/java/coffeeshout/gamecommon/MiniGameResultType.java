@@ -1,7 +1,6 @@
 package coffeeshout.gamecommon;
 
 public enum MiniGameResultType {
-
     WINNER,
     UNDECIDED,
     LOSER,

@@ -7,6 +7,7 @@ import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
+import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -37,7 +38,8 @@ public class DashboardService {
         final LocalDateTime startOfMonth = getStartOfMonth();
         final LocalDateTime endOfMonth = getEndOfMonth();
 
-        return dashboardStatisticsRepository.findLowestProbabilityWinner(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT)
+        return dashboardStatisticsRepository
+                .findLowestProbabilityWinner(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT)
                 .orElse(LowestProbabilityWinnerResponse.empty());
     }
 
@@ -60,6 +62,13 @@ public class DashboardService {
         final LocalDateTime endOfMonth = getEndOfMonth();
 
         return dashboardStatisticsRepository.findBlockStackingTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT);
+    }
+
+    public List<WormGameTopPlayerResponse> getWormGameTopPlayers() {
+        final LocalDateTime startOfMonth = getStartOfMonth();
+        final LocalDateTime endOfMonth = getEndOfMonth();
+
+        return dashboardStatisticsRepository.findWormGameTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT);
     }
 
     public List<SpeedTouchTopPlayerResponse> getSpeedTouchTopPlayers() {

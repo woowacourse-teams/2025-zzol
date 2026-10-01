@@ -6,5 +6,4 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootTest(classes = UserModuleTestApplication.class)
 @Import(ServiceTestConfig.class)
-public abstract class UserModuleServiceTest extends coffeeshout.support.ServiceTest {
-}
+public abstract class UserModuleServiceTest extends coffeeshout.support.ServiceTest {}

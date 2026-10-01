@@ -3,6 +3,7 @@ package coffeeshout.zzolbot.monitor.infra;
 import coffeeshout.zzolbot.monitor.domain.FiringAlert;
 import coffeeshout.zzolbot.monitor.domain.MonitorAnalysis;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Profile("test")
+@Qualifier(AnomalyAnalyzer.AUTHORITATIVE)
 public class NoOpAnomalyAnalyzer implements AnomalyAnalyzer {
 
     @Override

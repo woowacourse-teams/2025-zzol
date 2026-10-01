@@ -1,0 +1,25 @@
+{
+  "name": "monitor-target-down-mysql-exporter",
+  "question": "알림 MonitoringTargetDown(warning)이 발화했다 - mysql-exporter(prod-mysql)가 5분 이상 무응답. 봇에는 최근 30분 prod 앱 ERROR 로그 샘플 2줄이 주어졌다.",
+  "rubric": "이 알림의 대상은 애플리케이션이 아니라 관측 스택의 익스포터 컨테이너(prod-mysql-exporter)이며, 앱은 정상 동작 중이다(DB 관련 앱 에러도 없다). 앱 ERROR 로그는 익스포터 다운의 근거가 될 수 없다. '근거 발견: 아니오'로 판정하고 원인 가설을 내지 않아야 정답. 앱 로그의 무관한 에러를 익스포터 다운의 원인으로 지목하거나, MySQL 자체 장애로 단정하면 오답(MySQL이 죽었다면 앱에 DB 에러가 쏟아졌을 것이다).",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "MonitoringTargetDown",
+    "severity": "warning",
+    "fingerprint": "golden-synth-18",
+    "summary": "모니터링 타깃 down (mysql-exporter / prod-mysql)",
+    "description": "mysql-exporter 익스포터가 5분 이상 응답하지 않습니다. 이 타깃에 의존하는 알림이 평가 불능 상태일 수 있습니다.",
+    "labels": {
+      "alertname": "MonitoringTargetDown",
+      "severity": "warning",
+      "job": "mysql-exporter",
+      "instance": "prod-mysql",
+      "env": "prod"
+    }
+  },
+  "logSamples": [
+    "[2026-08-26 08:37:44.910] [ERROR] [,] --- [nunchi-task-1] c.g.s.GameTaskSchedulerFactory : [nunchi] 스케줄 실행 중 예외가 발생했습니다.",
+    "[2026-08-26 08:51:02.375] [ERROR] [c15e80a94d27f6b3b9d4a71c50e83f26,2e94a0c67d51b8f3] --- [pool-12-thread-1] c.r.i.messaging.RoomEventWaitManager : 방 이벤트 자동 정리 (실패): eventId=94c61e07-3b85-4d20-a7f4-58d19c02e6b3"
+  ],
+  "logEnvironment": "prod"
+}

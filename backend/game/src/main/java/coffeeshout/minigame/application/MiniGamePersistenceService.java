@@ -27,8 +27,7 @@ public class MiniGamePersistenceService {
             lockPrefix = "event:lock:",
             donePrefix = "event:done:",
             waitTime = 0,
-            leaseTime = 5000
-    )
+            leaseTime = 5000)
     @Transactional
     public void saveGameEntities(GameStartReadyEvent event, MiniGameType miniGameType) {
         final JoinCode roomJoinCode = new JoinCode(event.joinCode());

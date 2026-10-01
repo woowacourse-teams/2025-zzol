@@ -39,8 +39,7 @@ public class OutboxRelayWorker {
             OutboxEventProcessor eventProcessor,
             OutboxEventRepository outboxEventRepository,
             StreamPublisher streamPublisher,
-            @Qualifier("redisObjectMapper") ObjectMapper objectMapper
-    ) {
+            @Qualifier("redisObjectMapper") ObjectMapper objectMapper) {
         this.eventProcessor = eventProcessor;
         this.outboxEventRepository = outboxEventRepository;
         this.streamPublisher = streamPublisher;

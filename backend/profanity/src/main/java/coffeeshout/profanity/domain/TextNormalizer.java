@@ -20,8 +20,7 @@ public class TextNormalizer {
     }
 
     private String applyLeetSubstitutions(String text) {
-        return text
-                .replace('0', 'o')
+        return text.replace('0', 'o')
                 .replace('1', 'i')
                 .replace('3', 'e')
                 .replace('4', 'a')

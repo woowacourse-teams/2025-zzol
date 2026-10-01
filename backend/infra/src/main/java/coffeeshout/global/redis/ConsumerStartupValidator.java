@@ -54,9 +54,7 @@ public class ConsumerStartupValidator implements SmartInitializingSingleton {
             return;
         }
         missing.forEach(eventType -> log.error("Consumer 없음: {}", eventType));
-        throw new IllegalStateException(
-                "Consumer가 등록되지 않은 이벤트 타입 " + missing.size() + "개 — 위 로그를 확인하세요"
-        );
+        throw new IllegalStateException("Consumer가 등록되지 않은 이벤트 타입 " + missing.size() + "개 — 위 로그를 확인하세요");
     }
 
     private boolean isAbstractOrInterface(Class<?> clazz) {

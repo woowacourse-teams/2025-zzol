@@ -19,8 +19,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -56,7 +56,7 @@ class QueryPerformanceTest {
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         String jdbcUrl = "jdbc:mysql://" + mysql.getHost() + ":" + mysql.getMappedPort(MYSQL_PORT) + "/coffeeshout_test"
-                + "?rewriteBatchedStatements=true";  // Batch INSERT 성능 최적화
+                + "?rewriteBatchedStatements=true"; // Batch INSERT 성능 최적화
         registry.add("spring.datasource.url", () -> jdbcUrl);
         registry.add("spring.datasource.username", () -> "test");
         registry.add("spring.datasource.password", () -> "test");
@@ -176,8 +176,10 @@ class QueryPerformanceTest {
 
         System.out.println("\n=== 결과 ===");
         System.out.println("평균: " + (totalTime / iterations) + "ms");
-        System.out.println("최소: " + times.stream().mapToLong(Long::longValue).min().orElse(0) + "ms");
-        System.out.println("최대: " + times.stream().mapToLong(Long::longValue).max().orElse(0) + "ms");
+        System.out.println(
+                "최소: " + times.stream().mapToLong(Long::longValue).min().orElse(0) + "ms");
+        System.out.println(
+                "최대: " + times.stream().mapToLong(Long::longValue).max().orElse(0) + "ms");
     }
 
     @Test
@@ -206,8 +208,10 @@ class QueryPerformanceTest {
 
         System.out.println("\n=== 결과 ===");
         System.out.println("평균: " + (totalTime / 10) + "ms");
-        System.out.println("최소: " + times.stream().mapToLong(Long::longValue).min().orElse(0) + "ms");
-        System.out.println("최대: " + times.stream().mapToLong(Long::longValue).max().orElse(0) + "ms");
+        System.out.println(
+                "최소: " + times.stream().mapToLong(Long::longValue).min().orElse(0) + "ms");
+        System.out.println(
+                "최대: " + times.stream().mapToLong(Long::longValue).max().orElse(0) + "ms");
     }
 
     @Test
@@ -236,8 +240,10 @@ class QueryPerformanceTest {
 
         System.out.println("\n=== 결과 ===");
         System.out.println("평균: " + (totalTime / 10) + "ms");
-        System.out.println("최소: " + times.stream().mapToLong(Long::longValue).min().orElse(0) + "ms");
-        System.out.println("최대: " + times.stream().mapToLong(Long::longValue).max().orElse(0) + "ms");
+        System.out.println(
+                "최소: " + times.stream().mapToLong(Long::longValue).min().orElse(0) + "ms");
+        System.out.println(
+                "최대: " + times.stream().mapToLong(Long::longValue).max().orElse(0) + "ms");
     }
 
     @Test
@@ -267,8 +273,10 @@ class QueryPerformanceTest {
 
         System.out.println("\n=== 결과 ===");
         System.out.println("평균: " + (totalTime / 10) + "ms");
-        System.out.println("최소: " + times.stream().mapToLong(Long::longValue).min().orElse(0) + "ms");
-        System.out.println("최대: " + times.stream().mapToLong(Long::longValue).max().orElse(0) + "ms");
+        System.out.println(
+                "최소: " + times.stream().mapToLong(Long::longValue).min().orElse(0) + "ms");
+        System.out.println(
+                "최대: " + times.stream().mapToLong(Long::longValue).max().orElse(0) + "ms");
     }
 
     @Test
@@ -312,22 +320,22 @@ class QueryPerformanceTest {
 
             // PreparedStatement 준비
             try (PreparedStatement roomStmt = conn.prepareStatement(
-                    "INSERT INTO room_session (join_code, room_status, created_at, finished_at) VALUES (?, ?, ?, ?)",
-                    Statement.RETURN_GENERATED_KEYS);
-                 PreparedStatement playerStmt = conn.prepareStatement(
-                         "INSERT INTO player (room_session_id, player_name, player_type, created_at) VALUES (?, ?, ?, ?)",
-                         Statement.RETURN_GENERATED_KEYS);
-                 PreparedStatement miniGameStmt = conn.prepareStatement(
-                         "INSERT INTO mini_game_play (room_session_id, mini_game_type) VALUES (?, ?)",
-                         Statement.RETURN_GENERATED_KEYS);
-                 PreparedStatement miniGameResultStmt = conn.prepareStatement(
-                         "INSERT INTO mini_game_result (mini_game_play_id, player_id, player_rank, score, mini_game_type, created_at) VALUES (?, ?, ?, ?, ?, ?)");
-                 PreparedStatement rouletteStmt = conn.prepareStatement(
-                         "INSERT INTO roulette_result (room_session_id, winner_id, winner_probability, created_at) VALUES (?, ?, ?, ?)")) {
+                            "INSERT INTO room_session (join_code, room_status, created_at, finished_at) VALUES (?, ?, ?, ?)",
+                            Statement.RETURN_GENERATED_KEYS);
+                    PreparedStatement playerStmt = conn.prepareStatement(
+                            "INSERT INTO player (room_session_id, player_name, player_type, created_at) VALUES (?, ?, ?, ?)",
+                            Statement.RETURN_GENERATED_KEYS);
+                    PreparedStatement miniGameStmt = conn.prepareStatement(
+                            "INSERT INTO mini_game_play (room_session_id, mini_game_type) VALUES (?, ?)",
+                            Statement.RETURN_GENERATED_KEYS);
+                    PreparedStatement miniGameResultStmt = conn.prepareStatement(
+                            "INSERT INTO mini_game_result (mini_game_play_id, player_id, player_rank, score, mini_game_type, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+                    PreparedStatement rouletteStmt = conn.prepareStatement(
+                            "INSERT INTO roulette_result (room_session_id, winner_id, winner_probability, created_at) VALUES (?, ?, ?, ?)")) {
 
                 // 1. Room 데이터 준비 및 삽입
                 List<RoomData> roomDataList = prepareRoomData(random, baseDate, totalDays);
-                long baseRoomId = insertRooms(conn, roomStmt, roomDataList, random);
+                long baseRoomId = insertRooms(conn, roomStmt, roomDataList);
 
                 // 2. Player 삽입
                 int totalPlayers = insertPlayers(playerStmt, roomDataList, baseRoomId);
@@ -338,7 +346,8 @@ class QueryPerformanceTest {
                 // 4. Results 삽입
                 long basePlayerId = getMinId(conn, "player");
                 long baseMiniGameId = getMinId(conn, "mini_game_play");
-                int totalMiniGameResults = insertMiniGameResults(miniGameResultStmt, roomDataList, basePlayerId, baseMiniGameId, random);
+                int totalMiniGameResults =
+                        insertMiniGameResults(miniGameResultStmt, roomDataList, basePlayerId, baseMiniGameId, random);
                 insertRouletteResults(rouletteStmt, roomDataList, baseRoomId, basePlayerId, random);
 
                 conn.commit();
@@ -357,9 +366,8 @@ class QueryPerformanceTest {
 
         for (int roomIdx = 0; roomIdx < TOTAL_ROOMS; roomIdx++) {
             int dayOffset = (roomIdx * totalDays) / TOTAL_ROOMS;
-            LocalDateTime roomCreatedAt = baseDate.plusDays(dayOffset)
-                    .plusHours(random.nextInt(24))
-                    .plusMinutes(random.nextInt(60));
+            LocalDateTime roomCreatedAt =
+                    baseDate.plusDays(dayOffset).plusHours(random.nextInt(24)).plusMinutes(random.nextInt(60));
 
             int playerCount = MIN_PLAYERS_PER_ROOM + random.nextInt(MAX_PLAYERS_PER_ROOM - MIN_PLAYERS_PER_ROOM + 1);
             int miniGameCount = 1 + random.nextInt(3);
@@ -375,7 +383,8 @@ class QueryPerformanceTest {
         return roomDataList;
     }
 
-    private long insertRooms(Connection conn, PreparedStatement roomStmt, List<RoomData> roomDataList, Random random) throws Exception {
+    private long insertRooms(Connection conn, PreparedStatement roomStmt, List<RoomData> roomDataList)
+            throws Exception {
         System.out.println("  Room 생성 중...");
 
         for (int roomIdx = 0; roomIdx < TOTAL_ROOMS; roomIdx++) {
@@ -399,7 +408,8 @@ class QueryPerformanceTest {
         return getMinId(conn, "room_session");
     }
 
-    private int insertPlayers(PreparedStatement playerStmt, List<RoomData> roomDataList, long baseRoomId) throws Exception {
+    private int insertPlayers(PreparedStatement playerStmt, List<RoomData> roomDataList, long baseRoomId)
+            throws Exception {
         System.out.println("  Player 생성 중...");
         long currentRoomId = baseRoomId;
         int playerBatchCount = 0;
@@ -434,7 +444,8 @@ class QueryPerformanceTest {
         return totalPlayers;
     }
 
-    private int insertMiniGames(PreparedStatement miniGameStmt, List<RoomData> roomDataList, long baseRoomId) throws Exception {
+    private int insertMiniGames(PreparedStatement miniGameStmt, List<RoomData> roomDataList, long baseRoomId)
+            throws Exception {
         System.out.println("  MiniGame 생성 중...");
         long currentRoomId = baseRoomId;
         int miniGameBatchCount = 0;
@@ -461,8 +472,13 @@ class QueryPerformanceTest {
         return totalMiniGames;
     }
 
-    private int insertMiniGameResults(PreparedStatement miniGameResultStmt, List<RoomData> roomDataList,
-                                      long basePlayerId, long baseMiniGameId, Random random) throws Exception {
+    private int insertMiniGameResults(
+            PreparedStatement miniGameResultStmt,
+            List<RoomData> roomDataList,
+            long basePlayerId,
+            long baseMiniGameId,
+            Random random)
+            throws Exception {
         System.out.println("  MiniGameResult 생성 중...");
         long currentPlayerId = basePlayerId;
         long currentMiniGameId = baseMiniGameId;
@@ -515,8 +531,13 @@ class QueryPerformanceTest {
         return totalMiniGameResults;
     }
 
-    private void insertRouletteResults(PreparedStatement rouletteStmt, List<RoomData> roomDataList,
-                                       long baseRoomId, long basePlayerId, Random random) throws Exception {
+    private void insertRouletteResults(
+            PreparedStatement rouletteStmt,
+            List<RoomData> roomDataList,
+            long baseRoomId,
+            long basePlayerId,
+            Random random)
+            throws Exception {
         System.out.println("  RouletteResult 생성 중...");
         long currentRoomId = baseRoomId;
         long currentPlayerId = basePlayerId;
@@ -578,7 +599,6 @@ class QueryPerformanceTest {
             this.miniGameTypes = miniGameTypes;
         }
     }
-
 
     private String generateJoinCode(int index) {
         String base = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

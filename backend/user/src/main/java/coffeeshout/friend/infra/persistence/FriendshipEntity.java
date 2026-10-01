@@ -19,11 +19,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "friendship",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_friendship_pair",
-                columnNames = {"requester_id", "addressee_id"}
-        )
-)
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uk_friendship_pair",
+                        columnNames = {"requester_id", "addressee_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FriendshipEntity {
@@ -48,8 +47,8 @@ public class FriendshipEntity {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    public FriendshipEntity(Long requesterId, Long addresseeId, FriendshipStatus status,
-                            Instant createdAt, Instant updatedAt) {
+    public FriendshipEntity(
+            Long requesterId, Long addresseeId, FriendshipStatus status, Instant createdAt, Instant updatedAt) {
         this.requesterId = requesterId;
         this.addresseeId = addresseeId;
         this.status = status;

@@ -18,17 +18,11 @@ public class TouchProgressEventConsumer implements Consumer<TouchProgressCommand
     @Override
     public void accept(TouchProgressCommandEvent event) {
         try {
-            progressHandler.handleTouch(
-                    event.joinCode(),
-                    event.playerName(),
-                    event.touchedNumber()
-            );
+            progressHandler.handleTouch(event.joinCode(), event.playerName(), event.touchedNumber());
         } catch (BusinessException e) {
-            log.warn("터치 이벤트 처리 중 상태 오류: eventId={}, joinCode={}",
-                    event.eventId(), event.joinCode(), e);
+            log.warn("터치 이벤트 처리 중 상태 오류: eventId={}, joinCode={}", event.eventId(), event.joinCode(), e);
         } catch (Exception e) {
-            log.error("터치 이벤트 처리 실패: eventId={}, joinCode={}",
-                    event.eventId(), event.joinCode(), e);
+            log.error("터치 이벤트 처리 실패: eventId={}, joinCode={}", event.eventId(), event.joinCode(), e);
         }
     }
 }

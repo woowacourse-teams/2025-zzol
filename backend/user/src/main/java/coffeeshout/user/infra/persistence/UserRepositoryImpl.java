@@ -33,10 +33,8 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     private User createNew(User user) {
-        final UserEntity userEntity = new UserEntity(
-                user.getUserCode().value(),
-                user.getNickname().value()
-        );
+        final UserEntity userEntity =
+                new UserEntity(user.getUserCode().value(), user.getNickname().value());
         final UserEntity savedUser = userJpaRepository.save(userEntity);
 
         final OAuthAccount oAuthAccount = user.getOAuthAccount();
@@ -45,29 +43,30 @@ public class UserRepositoryImpl implements UserRepository {
                 oAuthAccount.provider().getRegistrationId(),
                 oAuthAccount.providerUserId(),
                 oAuthAccount.email(),
-                emailBlindIndexHasher.hash(oAuthAccount.email())
-        );
+                emailBlindIndexHasher.hash(oAuthAccount.email()));
         final OAuthAccountEntity savedOAuth = oAuthAccountJpaRepository.save(oAuthAccountEntity);
 
         return savedUser.toDomain(savedOAuth);
     }
 
     private User updateNickname(User user) {
-        final UserEntity userEntity = userJpaRepository.findById(user.getId())
+        final UserEntity userEntity = userJpaRepository
+                .findById(user.getId())
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
         userEntity.updateNickname(user.getNickname().value());
         final UserEntity savedUser = userJpaRepository.save(userEntity);
 
-        return oAuthAccountJpaRepository.findByUser_Id(savedUser.getId())
+        return oAuthAccountJpaRepository
+                .findByUser_Id(savedUser.getId())
                 .map(savedUser::toDomain)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
     }
 
     @Override
     public Optional<User> findById(Long id) {
-        return userJpaRepository.findById(id)
-                .flatMap(userEntity -> oAuthAccountJpaRepository.findByUser_Id(id)
-                        .map(userEntity::toDomain));
+        return userJpaRepository.findById(id).flatMap(userEntity -> oAuthAccountJpaRepository
+                .findByUser_Id(id)
+                .map(userEntity::toDomain));
     }
 
     @Override
@@ -83,9 +82,7 @@ public class UserRepositoryImpl implements UserRepository {
             return Optional.empty();
         }
         // email_hash는 non-unique(이메일은 provider 간 중복 가능)이므로 다건이 반환될 수 있다. 첫 건을 사용한다.
-        return oAuthAccountJpaRepository
-                .findByEmailHashWithUser(emailBlindIndexHasher.hash(email))
-                .stream()
+        return oAuthAccountJpaRepository.findByEmailHashWithUser(emailBlindIndexHasher.hash(email)).stream()
                 .findFirst()
                 .map(oAuth -> oAuth.getUser().toDomain(oAuth));
     }
@@ -100,15 +97,16 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Optional<User> findByUserCode(UserCode userCode) {
-        return userJpaRepository.findByUserCode(userCode.value())
-                .flatMap(userEntity -> oAuthAccountJpaRepository.findByUser_Id(userEntity.getId())
-                        .map(userEntity::toDomain));
+        return userJpaRepository.findByUserCode(userCode.value()).flatMap(userEntity -> oAuthAccountJpaRepository
+                .findByUser_Id(userEntity.getId())
+                .map(userEntity::toDomain));
     }
 
     @Override
     @Transactional
     public void softDeleteById(Long userId) {
-        final UserEntity userEntity = userJpaRepository.findById(userId)
+        final UserEntity userEntity = userJpaRepository
+                .findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다."));
         userEntity.anonymize();
         userEntity.softDelete();
@@ -118,7 +116,8 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     @Transactional
     public void agreeTerms(Long userId) {
-        final UserEntity userEntity = userJpaRepository.findById(userId)
+        final UserEntity userEntity = userJpaRepository
+                .findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
         userEntity.agreeTerms();
     }
@@ -134,13 +133,11 @@ public class UserRepositoryImpl implements UserRepository {
 
     private List<User> toDomains(List<UserEntity> users) {
         final List<Long> userIds = users.stream().map(UserEntity::getId).toList();
-        final Map<Long, OAuthAccountEntity> oauthByUserId = oAuthAccountJpaRepository
-                .findAllByUser_IdIn(userIds).stream()
-                .collect(Collectors.toMap(o -> o.getUser().getId(), o -> o));
+        final Map<Long, OAuthAccountEntity> oauthByUserId =
+                oAuthAccountJpaRepository.findAllByUser_IdIn(userIds).stream()
+                        .collect(Collectors.toMap(o -> o.getUser().getId(), o -> o));
         return users.stream()
-                .flatMap(u -> Optional.ofNullable(oauthByUserId.get(u.getId()))
-                        .map(u::toDomain)
-                        .stream())
+                .flatMap(u -> Optional.ofNullable(oauthByUserId.get(u.getId())).map(u::toDomain).stream())
                 .toList();
     }
 }

@@ -5,7 +5,6 @@ import coffeeshout.report.config.SlackProperties;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -36,7 +35,8 @@ public class SlackNotifier {
         }
 
         try {
-            restClient.post()
+            restClient
+                    .post()
                     .uri(slackProperties.webhookUrl())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(buildMessage(event))
@@ -59,14 +59,17 @@ public class SlackNotifier {
             fields.add(mrkdwnField("*방코드*", "`" + event.joinCode() + "`"));
         }
 
-        return Map.of("blocks", List.of(
-                Map.of("type", "header",
-                        "text", Map.of("type", "plain_text", "text", "📋 신고 접수 #" + event.reportId())),
-                Map.of("type", "section", "fields", fields),
-                Map.of("type", "section",
-                        "text", Map.of("type", "plain_text", "text", event.content())),
-                Map.of("type", "divider")
-        ));
+        return Map.of(
+                "blocks",
+                List.of(
+                        Map.of(
+                                "type",
+                                "header",
+                                "text",
+                                Map.of("type", "plain_text", "text", "📋 신고 접수 #" + event.reportId())),
+                        Map.of("type", "section", "fields", fields),
+                        Map.of("type", "section", "text", Map.of("type", "plain_text", "text", event.content())),
+                        Map.of("type", "divider")));
     }
 
     private Map<String, Object> mrkdwnField(String title, String value) {

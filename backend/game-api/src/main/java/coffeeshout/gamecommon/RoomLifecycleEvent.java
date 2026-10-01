@@ -17,12 +17,7 @@ public sealed interface RoomLifecycleEvent extends BaseEvent {
     /**
      * 방이 생성됐음을 통지한다. {@code :room}(방 등록)과 {@code :game}(GameSession 사전 생성)이 함께 소비한다.
      */
-    record Created(
-            String eventId,
-            Instant timestamp,
-            String hostName,
-            String joinCode
-    ) implements RoomLifecycleEvent {
+    record Created(String eventId, Instant timestamp, String hostName, String joinCode) implements RoomLifecycleEvent {
 
         public Created(String hostName, String joinCode) {
             this(UUID.randomUUID().toString(), Instant.now(), hostName, joinCode);
@@ -33,11 +28,7 @@ public sealed interface RoomLifecycleEvent extends BaseEvent {
      * 방이 삭제됐음을 통지한다. {@code :game}이 소비해 GameSession을 정리한다(인스턴스 로컬 세션이라
      * 생성과 동일한 Stream 경로로 세션 소유 인스턴스에 도달해야 한다).
      */
-    record Removed(
-            String eventId,
-            Instant timestamp,
-            String joinCode
-    ) implements RoomLifecycleEvent {
+    record Removed(String eventId, Instant timestamp, String joinCode) implements RoomLifecycleEvent {
 
         public Removed(String joinCode) {
             this(UUID.randomUUID().toString(), Instant.now(), joinCode);
@@ -49,12 +40,8 @@ public sealed interface RoomLifecycleEvent extends BaseEvent {
      * 지정되면 발행되고, {@code :game}이 소비해 GameSession 호스트를 갱신한다(세션 호스트가 생성 시점
      * 값에 고정돼 새 호스트의 조작이 거부되던 문제 해소). 식별은 이름 기준이라 {@code newHostName}만 싣는다.
      */
-    record HostChanged(
-            String eventId,
-            Instant timestamp,
-            String joinCode,
-            String newHostName
-    ) implements RoomLifecycleEvent {
+    record HostChanged(String eventId, Instant timestamp, String joinCode, String newHostName)
+            implements RoomLifecycleEvent {
 
         public HostChanged(String joinCode, String newHostName) {
             this(UUID.randomUUID().toString(), Instant.now(), joinCode, newHostName);

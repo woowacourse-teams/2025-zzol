@@ -29,9 +29,8 @@ public class PlayerNameRankingCleanupService {
     @EventListener
     @Transactional
     public void onNicknamesCollected(NicknamesCollectedEvent event) {
-        final List<String> originalTargets = event.nicknames().stream()
-                .filter(profanityChecker::contains)
-                .toList();
+        final List<String> originalTargets =
+                event.nicknames().stream().filter(profanityChecker::contains).toList();
 
         if (originalTargets.isEmpty()) {
             log.info("[RankingCleanup] 랭킹 내 BLOCKED 닉네임 없음, 종료");
@@ -50,17 +49,13 @@ public class PlayerNameRankingCleanupService {
         final List<PlayerEntity> targets = playerRepository.findAllByPlayerName(nickname);
         if (targets.isEmpty()) return 0;
 
-        final List<RoomEntity> rooms = targets.stream()
-                .map(PlayerEntity::getRoomSession)
-                .distinct()
-                .toList();
+        final List<RoomEntity> rooms =
+                targets.stream().map(PlayerEntity::getRoomSession).distinct().toList();
 
-        final Map<RoomEntity, Set<String>> namesByRoom = playerRepository.findAllByRoomSessionIn(rooms)
-                .stream()
+        final Map<RoomEntity, Set<String>> namesByRoom = playerRepository.findAllByRoomSessionIn(rooms).stream()
                 .collect(Collectors.groupingBy(
                         PlayerEntity::getRoomSession,
-                        Collectors.mapping(PlayerEntity::getPlayerName, Collectors.toSet())
-                ));
+                        Collectors.mapping(PlayerEntity::getPlayerName, Collectors.toSet())));
 
         for (final PlayerEntity player : targets) {
             final Set<String> existingNamesInRoom = namesByRoom.getOrDefault(player.getRoomSession(), Set.of());

@@ -118,7 +118,8 @@ PlayerNameAuditService.auditPending()
   ├─ [배치 루프]
   │   → GeminiPlayerNameAuditor.audit(batch)   ← Gemini API 호출
   │   → JSON 전체 파싱 성공: 항목별 entity.complete(status, confidence, reason)
-  │   → JSON 전체 파싱 실패: 빈 리스트 반환 → 해당 배치 skip (UNAUDITED 유지, 다음 실행 재시도)
+  │   → JSON 전체 파싱 실패: 배치 skip + 배치 행의 attempt_count +1, 상한(기본 3)에서 DEAD_LETTER
+  │   → 네트워크·타임아웃·레이트리밋: 배치 skip만, attempt_count는 안 올린다
   │   → 항목 단위 파싱 실패: 해당 항목만 skip, 나머지 항목은 정상 처리
   │   → 배치 간 RateLimiter 대기 (Resilience4j, RPM 5 대응)
   │
@@ -130,6 +131,17 @@ PlayerNameAuditService.auditPending()
 
 **FLAGGED는 즉시 차단, PENDING은 운영자 검토를 거친다.**
 FLAGGED 차단 후 운영자가 오판으로 판단하면 ALLOWED 처리로 필터에서 제거한다.
+
+**DEAD_LETTER는 판정이 아니라 검열을 못 끝낸 상태다.** 배치 내용이 원인인 실패만 시도 횟수로 세고,
+상한에 닿은 행을 UNAUDITED 스캔에서 뺀다. 그러지 않으면 파싱을 깨뜨리는 닉네임 하나가 회차마다 같은
+실패를 되풀이한다. 시도 횟수는 배치 전체에 함께 오르므로 문제 닉네임 하나가 같은 배치의 나머지를
+데려간다. 되살릴 때는 SQL로 되돌린다.
+
+```sql
+UPDATE player_name_audit
+SET status = 'UNAUDITED', attempt_count = 0
+WHERE status = 'DEAD_LETTER';
+```
 
 ### 신뢰도 임계값
 
@@ -216,7 +228,12 @@ resilience4j.ratelimiter:
 
 ### 운영자 인증 — Spring Security
 
-**확정: `spring-boot-starter-security` + 환경변수 기반 InMemoryUserDetails**
+> **이 절은 대체됐다 (#1762).** 아래는 2025년 당시의 결정 기록이며 지금 코드와 다르다.
+> Thymeleaf 백오피스와 `InMemoryUserDetails` 폼 로그인은 제거됐고, 운영자 인증은
+> 구글 ID 토큰 검증 + 허용목록(ENV ∪ DB) + 관리자 JWT로 바뀌었다. 화면은 별도 SPA
+> (`admin-web/`)다. 결정 기록이라 문장을 고쳐 쓰지 않고 표시만 남긴다.
+
+**확정(당시): `spring-boot-starter-security` + 환경변수 기반 InMemoryUserDetails**
 
 `/admin/**` 경로를 인증 없이 열어두면 프로덕션 보안 사고로 직결된다. Thymeleaf form 로그인과 Spring Security의 세션 기반 인증은 자연스럽게 결합되며, 별도 토큰 발급이나 OAuth 설정 없이 간단하게 구성할 수 있다. 운영자 계정이 2~3개 고정이므로 환경변수 기반 InMemoryUserDetails로 충분하다.
 
@@ -287,7 +304,8 @@ resilience4j.ratelimiter:
 | `nickname.audit.gemini.parse.failures`      | Counter | —                                | JSON 전체 파싱 실패 횟수 (배치 skip) |
 | `nickname.audit.gemini.item.parse.failures` | Counter | —                                | 항목 단위 파싱 실패 횟수             |
 | `nickname.audit.result`                     | Counter | `status=FLAGGED\|PENDING\|CLEAN` | 검열 결과 분포                   |
-| `nickname.audit.batch.skipped`              | Counter | —                                | 파싱 실패로 skip된 배치 수          |
+| `nickname.audit.batch.skipped`              | Counter | —                                | 검열 호출 실패로 skip된 배치 수       |
+| `nickname.audit.dead.lettered`              | Counter | —                                | 시도 상한에 닿아 DEAD_LETTER가 된 행 수 |
 | `nickname.audit.unaudited.queue`            | Gauge   | —                                | 스케줄러 실행 시점 UNAUDITED 적체량   |
 
 #### Grafana 패널 구성 예시

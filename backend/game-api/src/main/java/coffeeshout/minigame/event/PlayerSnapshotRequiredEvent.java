@@ -11,5 +11,4 @@ package coffeeshout.minigame.event;
  * <p>동기 리스너이므로 발행자의 {@code @Transactional}+{@code @RedisLock} 안에서 실행된다 — 기존 직접 생성과
  * 동일한 순서·멱등·실패 전파를 보장하면서 {@code :game}의 {@code PlayerEntity} 의존만 제거한다.
  */
-public record PlayerSnapshotRequiredEvent(String joinCode) {
-}
+public record PlayerSnapshotRequiredEvent(String joinCode) {}

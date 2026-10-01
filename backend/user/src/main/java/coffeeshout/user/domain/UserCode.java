@@ -16,8 +16,7 @@ public record UserCode(String value) {
     }
 
     public static UserCode generate() {
-        final List<Integer> asciiCodes = CHARSET.chars().boxed()
-                .collect(Collectors.toCollection(ArrayList::new));
+        final List<Integer> asciiCodes = CHARSET.chars().boxed().collect(Collectors.toCollection(ArrayList::new));
         Collections.shuffle(asciiCodes);
         final String code = asciiCodes.stream()
                 .limit(CODE_LENGTH)
@@ -40,15 +39,14 @@ public record UserCode(String value) {
 
     private void validateLength(String value) {
         if (value.length() != CODE_LENGTH) {
-            throw new BusinessException(UserErrorCode.USER_CODE_INVALID,
-                    CODE_LENGTH + "자리 코드여야 합니다. 현재 길이: " + value.length());
+            throw new BusinessException(
+                    UserErrorCode.USER_CODE_INVALID, CODE_LENGTH + "자리 코드여야 합니다. 현재 길이: " + value.length());
         }
     }
 
     private void validateCharacters(String value) {
         if (value.chars().anyMatch(c -> CHARSET.indexOf(c) < 0)) {
-            throw new BusinessException(UserErrorCode.USER_CODE_INVALID,
-                    "허용되지 않는 문자가 포함되어 있습니다. 현재 코드: " + value);
+            throw new BusinessException(UserErrorCode.USER_CODE_INVALID, "허용되지 않는 문자가 포함되어 있습니다. 현재 코드: " + value);
         }
     }
 

@@ -32,6 +32,9 @@ import NunchiGameProvider from '@/contexts/NunchiGame/NunchiGameProvider';
 import NunchiGameReadyPage from '../nunchiGame/pages/NunchiGameReadyPage';
 import NunchiGamePlayPage from '../nunchiGame/pages/NunchiGamePlayPage';
 import NunchiGameResultContent from '../nunchiGame/pages/NunchiGameResultPage';
+import WormGameProvider from '@/contexts/WormGame/WormGameProvider';
+import WormGameReadyPage from '../wormGame/pages/WormGameReadyPage';
+import WormGamePlayPage from '../wormGame/pages/WormGamePlayPage';
 
 export type SlideConfig = {
   textLines: string[];
@@ -123,7 +126,7 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
     ReadyPage: BlockStackingGameReadyPage,
     slides: [
       {
-        textLines: ['블록이 좌우로 움직입니다', '화면을 탭해서 블록을 쌓으세요!'],
+        textLines: ['빌딩 층이 좌우로 움직입니다', '화면을 탭해서 한 층씩 쌓으세요!'],
         imageSrc: BlockStackingDescription1,
         className: 'slide-first',
       },
@@ -145,7 +148,7 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
         className: 'slide-first',
       },
       {
-        textLines: ['기둥 사이를 터치해서', '선을 하나 그을 수 있어요'],
+        textLines: ['기둥 사이 원하는 높이를 눌러', '선을 2개까지 그을 수 있어요'],
         imageSrc: LadderGameDescription2,
         className: 'slide-second',
       },
@@ -169,5 +172,20 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
     ],
     PlayPage: NunchiGamePlayPage,
     ResultContent: NunchiGameResultContent,
+  },
+  WORM_GAME: {
+    Provider: WormGameProvider,
+    ReadyPage: WormGameReadyPage,
+    slides: [
+      {
+        textLines: ['화면을 터치한 방향으로', '지렁이가 꺾여요'],
+        className: 'slide-first',
+      },
+      {
+        textLines: ['상대가 지나간 자리는 벽!', '경계가 줄어드니 끝까지 살아남으세요'],
+        className: 'slide-second',
+      },
+    ],
+    PlayPage: WormGamePlayPage,
   },
 };

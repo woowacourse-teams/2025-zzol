@@ -124,10 +124,12 @@ class WebSocketErrorHandler {
 
     const errorMessage = `${TYPE_MESSAGE[type]} 실패 (${url}): WebSocket 연결 안됨`;
 
+    // 연결 대기 중(입장 직후·백그라운드 복귀·재연결) 클릭은 정상 상황이라 error 로 알림받지 않는다
     return this.handleError(
       errorMessage,
       {
         type,
+        level: 'warning',
         extra: { url, isConnected, hasClient },
       },
       onError

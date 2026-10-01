@@ -22,11 +22,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "season_score",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_season_score_user",
-                columnNames = {"season_key", "user_id"}
-        )
-)
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uk_season_score_user",
+                        columnNames = {"season_key", "user_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SeasonScoreEntity {

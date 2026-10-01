@@ -105,9 +105,8 @@ class PresenceTrackerTest {
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(tracker.isOnline(1L)).isTrue();
-                softly.assertThatCode(() ->
-                        verify(eventPublisher, times(1)).publishEvent((Object) any())
-                ).doesNotThrowAnyException();
+                softly.assertThatCode(() -> verify(eventPublisher, times(1)).publishEvent((Object) any()))
+                        .doesNotThrowAnyException();
             });
         }
 
@@ -121,9 +120,7 @@ class PresenceTrackerTest {
             final ArgumentCaptor<PresenceChangedEvent> captor = forClass(PresenceChangedEvent.class);
             await().atMost(ofSeconds(3)).untilAsserted(() -> {
                 verify(eventPublisher, times(2)).publishEvent(captor.capture());
-                assertThat(captor.getAllValues())
-                        .filteredOn(e -> !e.online())
-                        .hasSize(1);
+                assertThat(captor.getAllValues()).filteredOn(e -> !e.online()).hasSize(1);
             });
         }
 
@@ -149,9 +146,8 @@ class PresenceTrackerTest {
 
             tracker.onConnected(connected(1L));
 
-            verify(eventPublisher, never()).publishEvent(
-                    argThat((Object obj) -> obj instanceof PresenceChangedEvent p && !p.online())
-            );
+            verify(eventPublisher, never())
+                    .publishEvent(argThat((Object obj) -> obj instanceof PresenceChangedEvent p && !p.online()));
         }
 
         @Test

@@ -84,10 +84,7 @@ class PatchNoteAdminServiceTest extends AdminModuleServiceTest {
 
         @Test
         void 존재하지_않는_id이면_예외가_발생한다() {
-            assertCoffeeShoutException(
-                    () -> patchNoteAdminService.findById(999L),
-                    PatchNoteErrorCode.NOT_FOUND
-            );
+            assertCoffeeShoutException(() -> patchNoteAdminService.findById(999L), PatchNoteErrorCode.NOT_FOUND);
         }
     }
 
@@ -113,8 +110,7 @@ class PatchNoteAdminServiceTest extends AdminModuleServiceTest {
         void 존재하지_않는_id이면_예외가_발생한다() {
             assertCoffeeShoutException(
                     () -> patchNoteAdminService.update(999L, PatchNoteCategory.NOTICE, "제목", "본문"),
-                    PatchNoteErrorCode.NOT_FOUND
-            );
+                    PatchNoteErrorCode.NOT_FOUND);
         }
     }
 

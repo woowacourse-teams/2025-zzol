@@ -8,6 +8,7 @@ import coffeeshout.room.application.service.RoomQueryService;
 import coffeeshout.room.infra.messaging.RoomStreamKey;
 import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.UserPrincipal;
+import coffeeshout.websocket.event.player.PlayerReconnectedEvent;
 import coffeeshout.websocket.event.session.SessionRegisteredEvent;
 import coffeeshout.websocket.event.user.UserSessionConnectedEvent;
 import coffeeshout.websocket.metric.WebSocketMetricService;
@@ -63,7 +64,11 @@ public class SessionConnectEventListener {
         }
 
         final PlayerKey parsed = PlayerKey.parse(principalName);
-        log.info("웹소켓 연결 완료: sessionId={}, joinCode={}, playerName={}", sessionId, parsed.joinCode(), parsed.playerName());
+        log.info(
+                "웹소켓 연결 완료: sessionId={}, joinCode={}, playerName={}",
+                sessionId,
+                parsed.joinCode(),
+                parsed.playerName());
         try {
             processPlayerConnection(sessionId, parsed.joinCode(), parsed.playerName());
         } finally {
@@ -82,9 +87,21 @@ public class SessionConnectEventListener {
 
     private void publishSessionRegisteredEvent(String sessionId, String joinCode, String playerName) {
         final String playerKey = PlayerKey.of(joinCode, playerName).toString();
+
+        // 재접속 판정을 등록보다 먼저 한다. 순서를 바꾸면 방금 넣은 매핑 때문에 늘 재접속으로 읽힌다
+        final boolean reconnected = sessionManager.hasPlayerKeyInternal(playerKey);
+
+        // 소켓을 쥔 인스턴스가 자기 매핑을 즉시 만든다. 스트림을 한 바퀴 돌 때까지 매핑이 없으면
+        // 복구 API가 미연결로 오판하고, 연결 직후 끊는 세션은 지울 매핑이 없어 그대로 샌다
+        sessionManager.registerPlayerSession(playerKey, sessionId);
+
         final BaseEvent event = SessionRegisteredEvent.create(playerKey, sessionId);
         streamPublisher.publish(RoomStreamKey.BROADCAST, event);
-
         log.info("세션 등록 이벤트 발행: playerKey={}, sessionId={}", playerKey, sessionId);
+
+        if (reconnected) {
+            log.info("플레이어 재연결 감지: playerKey={}, sessionId={}", playerKey, sessionId);
+            streamPublisher.publish(RoomStreamKey.BROADCAST, PlayerReconnectedEvent.create(playerKey, sessionId));
+        }
     }
 }

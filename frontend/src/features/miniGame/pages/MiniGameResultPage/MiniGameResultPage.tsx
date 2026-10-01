@@ -39,11 +39,6 @@ type PlayerScoreResponse = {
   scores: PlayerScore[];
 };
 
-type ShowRouletteResponse = {
-  joinCode: string;
-  roomState: 'ROULETTE_SHOW';
-};
-
 const SECONDS_FORMATTER = new Intl.NumberFormat('ko-KR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -75,14 +70,8 @@ const MiniGameResultPage = () => {
     navigate(`/room/${joinCode}/roulette/play`);
   }, [navigate, joinCode]);
 
-  useWebSocketSubscription<ShowRouletteResponse>(
-    `/room/${joinCode}/roulette`,
-    handleNavigateToRoulettePlayPage
-  );
-  useWebSocketSubscription<SeasonRankMessage>(
-    `/room/${joinCode}/settlement`,
-    handleSeasonRankUpdated
-  );
+  useWebSocketSubscription(`/room/${joinCode}/roulette`, handleNavigateToRoulettePlayPage);
+  useWebSocketSubscription(`/room/${joinCode}/settlement`, handleSeasonRankUpdated);
 
   const handleClickRouletteResultButton = () => {
     send(`/room/${joinCode}/show-roulette`);
@@ -158,6 +147,9 @@ const getScoreTextByGameType = ({
     }
     case 'LADDER_GAME': {
       return scoreValue + '위';
+    }
+    case 'WORM_GAME': {
+      return SECONDS_FORMATTER.format(scoreValue / 1000) + '초 생존';
     }
     default:
       return null;

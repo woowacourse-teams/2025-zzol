@@ -24,10 +24,12 @@ public class PlayerDisconnectionService {
     public void cancelReady(String playerKeyStr) {
         final PlayerKey playerKey = PlayerKey.parse(playerKeyStr);
 
-        roomCommandService.readyPlayer(new JoinCode(playerKey.joinCode()), new PlayerName(playerKey.playerName()), false);
+        roomCommandService.readyPlayer(
+                new JoinCode(playerKey.joinCode()), new PlayerName(playerKey.playerName()), false);
 
         eventPublisher.publishEvent(new RoomStateUpdateEvent(playerKey.joinCode(), "PLAYER_SET_READY_FALSE"));
-        log.info("삭제 대기된 플레이어 ready 상태 변경 완료: joinCode={}, playerName={}", playerKey.joinCode(), playerKey.playerName());
+        log.info(
+                "삭제 대기된 플레이어 ready 상태 변경 완료: joinCode={}, playerName={}", playerKey.joinCode(), playerKey.playerName());
     }
 
     /**
@@ -42,7 +44,11 @@ public class PlayerDisconnectionService {
 
             final PlayerKey playerKey = PlayerKey.parse(playerKeyStr);
 
-            log.info("플레이어 연결 해제 처리: joinCode={}, playerName={}, reason={}", playerKey.joinCode(), playerKey.playerName(), reason);
+            log.info(
+                    "플레이어 연결 해제 처리: joinCode={}, playerName={}, reason={}",
+                    playerKey.joinCode(),
+                    playerKey.playerName(),
+                    reason);
 
             removePlayerFromRoom(playerKey.joinCode(), playerKey.playerName());
 

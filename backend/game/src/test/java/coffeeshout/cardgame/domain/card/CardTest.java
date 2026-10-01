@@ -24,7 +24,6 @@ class CardTest {
                 Arguments.of(new AdditionCard(-40), new AdditionCard(-40)),
                 Arguments.of(new MultiplierCard(4), new MultiplierCard(4)),
                 Arguments.of(new MultiplierCard(0), new MultiplierCard(0)),
-                Arguments.of(new MultiplierCard(-1), new MultiplierCard(-1))
-        );
+                Arguments.of(new MultiplierCard(-1), new MultiplierCard(-1)));
     }
 }

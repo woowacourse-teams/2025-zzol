@@ -12,14 +12,25 @@ public record FriendRequestAcceptedEvent(
         String requesterNickname,
         Long addresseeId,
         String addresseeUserCode,
-        String addresseeNickname
-) {
+        String addresseeNickname) {
 
-    public FriendRequestAcceptedEvent(Long requestId,
-                                      Long requesterId, String requesterUserCode, String requesterNickname,
-                                      Long addresseeId, String addresseeUserCode, String addresseeNickname) {
-        this(UUID.randomUUID().toString(), Instant.now(), requestId,
-                requesterId, requesterUserCode, requesterNickname,
-                addresseeId, addresseeUserCode, addresseeNickname);
+    public FriendRequestAcceptedEvent(
+            Long requestId,
+            Long requesterId,
+            String requesterUserCode,
+            String requesterNickname,
+            Long addresseeId,
+            String addresseeUserCode,
+            String addresseeNickname) {
+        this(
+                UUID.randomUUID().toString(),
+                Instant.now(),
+                requestId,
+                requesterId,
+                requesterUserCode,
+                requesterNickname,
+                addresseeId,
+                addresseeUserCode,
+                addresseeNickname);
     }
 }

@@ -17,10 +17,4 @@ import java.util.List;
  * 발행 인스턴스와 동일 인스턴스에서 처리되므로 플레이어 명단({@link Gamer})을 원시 직렬화 없이 그대로 싣는다.
  * {@code eventId}는 원본 커맨드의 식별자로, 게임 결과 영속의 멱등 키({@code @RedisLock})로 재사용된다.
  */
-public record GameStartReadyEvent(
-        String eventId,
-        String joinCode,
-        String hostName,
-        List<Gamer> gamers
-) {
-}
+public record GameStartReadyEvent(String eventId, String joinCode, String hostName, List<Gamer> gamers) {}

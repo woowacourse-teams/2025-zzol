@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.cardgame.domain.CardGameScore;
 import coffeeshout.fixture.PlayerFixture;
-import coffeeshout.racinggame.domain.RacingGameScore;
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.racinggame.domain.RacingGameScore;
 import coffeeshout.room.domain.player.Player;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -25,26 +25,21 @@ class MiniGameResultTest {
                 게스트_엠제이.toGamer(), new CardGameScore(80),
                 호스트_한스.toGamer(), new CardGameScore(40),
                 게스트_루키.toGamer(), new CardGameScore(10),
-                게스트_꾹이.toGamer(), new CardGameScore(-40)
-        );
+                게스트_꾹이.toGamer(), new CardGameScore(-40));
 
         // when
         MiniGameResult miniGameResult = MiniGameResult.fromDescending(playerScores);
 
         // then
-        SoftAssertions.assertSoftly(
-                softly -> {
-                    softly.assertThat(miniGameResult.getRank().size()).isEqualTo(4);
-                    softly.assertThat(miniGameResult.getRank()).containsExactlyInAnyOrderEntriesOf(
-                            Map.of(
-                                    게스트_엠제이.toGamer(), 1,
-                                    호스트_한스.toGamer(), 2,
-                                    게스트_루키.toGamer(), 3,
-                                    게스트_꾹이.toGamer(), 4
-                            )
-                    );
-                }
-        );
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(miniGameResult.getRank().size()).isEqualTo(4);
+            softly.assertThat(miniGameResult.getRank())
+                    .containsExactlyInAnyOrderEntriesOf(Map.of(
+                            게스트_엠제이.toGamer(), 1,
+                            호스트_한스.toGamer(), 2,
+                            게스트_루키.toGamer(), 3,
+                            게스트_꾹이.toGamer(), 4));
+        });
     }
 
     @Test
@@ -54,21 +49,18 @@ class MiniGameResultTest {
                 게스트_엠제이.toGamer(), new CardGameScore(80),
                 호스트_한스.toGamer(), new CardGameScore(40),
                 게스트_루키.toGamer(), new CardGameScore(10),
-                게스트_꾹이.toGamer(), new CardGameScore(-40)
-        );
+                게스트_꾹이.toGamer(), new CardGameScore(-40));
 
         // when
         MiniGameResult miniGameResult = MiniGameResult.fromDescending(playerScores);
 
         // then
-        SoftAssertions.assertSoftly(
-                softly -> {
-                    softly.assertThat(miniGameResult.getPlayerRank(게스트_엠제이.toGamer())).isEqualTo(1);
-                    softly.assertThat(miniGameResult.getPlayerRank(호스트_한스.toGamer())).isEqualTo(2);
-                    softly.assertThat(miniGameResult.getPlayerRank(게스트_루키.toGamer())).isEqualTo(3);
-                    softly.assertThat(miniGameResult.getPlayerRank(게스트_꾹이.toGamer())).isEqualTo(4);
-                }
-        );
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(miniGameResult.getPlayerRank(게스트_엠제이.toGamer())).isEqualTo(1);
+            softly.assertThat(miniGameResult.getPlayerRank(호스트_한스.toGamer())).isEqualTo(2);
+            softly.assertThat(miniGameResult.getPlayerRank(게스트_루키.toGamer())).isEqualTo(3);
+            softly.assertThat(miniGameResult.getPlayerRank(게스트_꾹이.toGamer())).isEqualTo(4);
+        });
     }
 
     @Test
@@ -77,19 +69,18 @@ class MiniGameResultTest {
         MiniGameResult result = new MiniGameResult(Map.of(
                 호스트_한스.toGamer(), 1,
                 게스트_루키.toGamer(), 2,
-                게스트_꾹이.toGamer(), 3
-        ));
+                게스트_꾹이.toGamer(), 3));
 
         // when
         Map<String, Integer> rankMap = result.toRankMap();
 
         // then
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(rankMap).containsExactlyInAnyOrderEntriesOf(Map.of(
-                    호스트_한스.toGamer().getName(), 1,
-                    게스트_루키.toGamer().getName(), 2,
-                    게스트_꾹이.toGamer().getName(), 3
-            ));
+            softly.assertThat(rankMap)
+                    .containsExactlyInAnyOrderEntriesOf(Map.of(
+                            호스트_한스.toGamer().getName(), 1,
+                            게스트_루키.toGamer().getName(), 2,
+                            게스트_꾹이.toGamer().getName(), 3));
         });
     }
 
@@ -100,8 +91,7 @@ class MiniGameResultTest {
                 호스트_한스.toGamer(), new RacingGameScore(99999),
                 게스트_루키.toGamer(), new RacingGameScore(99999),
                 게스트_엠제이.toGamer(), new RacingGameScore(99999),
-                게스트_꾹이.toGamer(), new RacingGameScore(99999)
-        ));
+                게스트_꾹이.toGamer(), new RacingGameScore(99999)));
 
         // when
         int count = result.getTieCountByRank(1);

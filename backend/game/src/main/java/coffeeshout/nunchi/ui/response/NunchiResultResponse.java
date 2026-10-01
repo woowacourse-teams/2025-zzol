@@ -16,15 +16,12 @@ import java.util.Map;
  */
 public record NunchiResultResponse(List<Entry> results) {
 
-    public record Entry(String playerName, int rank, NunchiTier tier) {
-    }
+    public record Entry(String playerName, int rank, NunchiTier tier) {}
 
     public static NunchiResultResponse of(MiniGameResult result, Map<Gamer, MiniGameScore> scores) {
         final List<Entry> entries = scores.entrySet().stream()
                 .map(e -> new Entry(
-                        e.getKey().getName(),
-                        result.getPlayerRank(e.getKey()),
-                        ((NunchiScore) e.getValue()).getTier()))
+                        e.getKey().getName(), result.getPlayerRank(e.getKey()), ((NunchiScore) e.getValue()).getTier()))
                 .sorted(Comparator.comparingInt(Entry::rank)) // rank 오름차순
                 .toList();
         return new NunchiResultResponse(entries);

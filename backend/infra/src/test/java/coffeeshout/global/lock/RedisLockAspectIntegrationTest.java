@@ -89,7 +89,8 @@ class RedisLockAspectIntegrationTest extends InfraModuleIntegrationTest {
             final String doneKey = RedisLockedTaskFake.DONE_PREFIX + "evt-2";
             assertSoftly(softly -> {
                 softly.assertThat(redisTemplate.hasKey(doneKey)).isTrue();
-                softly.assertThat(redisTemplate.getExpire(doneKey, TimeUnit.MILLISECONDS)).isPositive();
+                softly.assertThat(redisTemplate.getExpire(doneKey, TimeUnit.MILLISECONDS))
+                        .isPositive();
             });
         }
 
@@ -156,8 +157,7 @@ class RedisLockAspectIntegrationTest extends InfraModuleIntegrationTest {
         @Test
         void done_마킹이_없어_같은_키로_재시도할_수_있다() {
             // given — 첫 실행이 예외로 실패
-            assertThatThrownBy(() -> task.executeFailing("evt-7"))
-                    .isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(() -> task.executeFailing("evt-7")).isInstanceOf(IllegalStateException.class);
 
             // then — 실패한 실행은 done으로 마킹되지 않는다 (재시도 여지 보존)
             final boolean markedAfterFailure = redisTemplate.hasKey(RedisLockedTaskFake.DONE_PREFIX + "evt-7");

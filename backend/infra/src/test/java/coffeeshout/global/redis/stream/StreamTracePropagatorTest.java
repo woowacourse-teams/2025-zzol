@@ -46,10 +46,12 @@ class StreamTracePropagatorTest {
 
     private void inject가_traceparent를_쓰도록_설정한다(TraceContext traceContext) {
         willAnswer(invocation -> {
-            Map<String, String> carrier = invocation.getArgument(1);
-            carrier.put(StreamRecordFields.TRACEPARENT, TRACEPARENT);
-            return null;
-        }).given(propagator).inject(eq(traceContext), any(), any());
+                    Map<String, String> carrier = invocation.getArgument(1);
+                    carrier.put(StreamRecordFields.TRACEPARENT, TRACEPARENT);
+                    return null;
+                })
+                .given(propagator)
+                .inject(eq(traceContext), any(), any());
     }
 
     @Nested
@@ -125,10 +127,7 @@ class StreamTracePropagatorTest {
 
         @Test
         void traceparent가_있으면_consumer_span_스코프_안에서_task를_실행하고_스팬을_종료한다(
-                @Mock Span.Builder spanBuilder,
-                @Mock Span span,
-                @Mock Tracer.SpanInScope spanInScope
-        ) {
+                @Mock Span.Builder spanBuilder, @Mock Span span, @Mock Tracer.SpanInScope spanInScope) {
             // given
             Map<String, String> carrier = Map.of(StreamRecordFields.TRACEPARENT, TRACEPARENT);
             given(propagator.extract(eq(carrier), any())).willReturn(spanBuilder);
@@ -151,10 +150,7 @@ class StreamTracePropagatorTest {
 
         @Test
         void task가_예외를_던지면_스팬에_오류를_기록하고_종료한_뒤_재던진다(
-                @Mock Span.Builder spanBuilder,
-                @Mock Span span,
-                @Mock Tracer.SpanInScope spanInScope
-        ) {
+                @Mock Span.Builder spanBuilder, @Mock Span span, @Mock Tracer.SpanInScope spanInScope) {
             // given
             Map<String, String> carrier = Map.of(StreamRecordFields.TRACEPARENT, TRACEPARENT);
             given(propagator.extract(eq(carrier), any())).willReturn(spanBuilder);
@@ -166,8 +162,7 @@ class StreamTracePropagatorTest {
             RuntimeException failure = new RuntimeException("처리 실패");
 
             // when
-            assertThatThrownBy(() -> streamTracePropagator.runInConsumerScope(
-                    carrier, "TestEvent", () -> {
+            assertThatThrownBy(() -> streamTracePropagator.runInConsumerScope(carrier, "TestEvent", () -> {
                         throw failure;
                     }))
                     .isSameAs(failure);

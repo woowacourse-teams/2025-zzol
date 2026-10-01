@@ -31,8 +31,7 @@ public class MiniGameDummy implements Playable {
     }
 
     @Override
-    public void setUp(List<Gamer> gamers) {
-    }
+    public void setUp(List<Gamer> gamers) {}
 
     private static MiniGameScore score(long value) {
         return new MiniGameScore() {

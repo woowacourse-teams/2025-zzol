@@ -8,15 +8,14 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
-import coffeeshout.fixture.ProfanityWordFixture;
 import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.WordSource;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
-import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +37,8 @@ class ProfanityFeedbackServiceTest {
         feedbackRepository = mock(NicknameFeedbackRepository.class);
         profanityWordManagementService = mock(ProfanityWordManagementService.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
-        service = new ProfanityFeedbackService(auditRepository, feedbackRepository, profanityWordManagementService, eventPublisher);
+        service = new ProfanityFeedbackService(
+                auditRepository, feedbackRepository, profanityWordManagementService, eventPublisher);
     }
 
     @Nested
@@ -71,10 +71,7 @@ class ProfanityFeedbackServiceTest {
         void 존재하지_않는_검열_항목은_예외가_발생한다() {
             given(auditRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertCoffeeShoutException(
-                    () -> service.allow(999L),
-                    NicknameAuditErrorCode.AUDIT_NOT_FOUND
-            );
+            assertCoffeeShoutException(() -> service.allow(999L), NicknameAuditErrorCode.AUDIT_NOT_FOUND);
         }
     }
 
@@ -86,7 +83,8 @@ class ProfanityFeedbackServiceTest {
             final NicknameAudit audit = auditEntityWith("욕설닉네임");
             given(auditRepository.findById(1L)).willReturn(Optional.of(audit));
             given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
-            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL)).willReturn(true);
+            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL))
+                    .willReturn(true);
 
             service.block(1L);
 
@@ -100,7 +98,8 @@ class ProfanityFeedbackServiceTest {
             final NicknameAudit audit = auditEntityWith("욕설닉네임");
             given(auditRepository.findById(1L)).willReturn(Optional.of(audit));
             given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
-            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL)).willReturn(false);
+            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL))
+                    .willReturn(false);
 
             service.block(1L);
 
@@ -123,7 +122,8 @@ class ProfanityFeedbackServiceTest {
             final NicknameAudit audit = auditEntityWith("badword");
             given(auditRepository.findById(2L)).willReturn(Optional.of(audit));
             given(feedbackRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
-            given(profanityWordManagementService.add("badword", Language.ENGLISH, WordSource.MANUAL)).willReturn(true);
+            given(profanityWordManagementService.add("badword", Language.ENGLISH, WordSource.MANUAL))
+                    .willReturn(true);
 
             service.block(2L);
 
@@ -134,10 +134,7 @@ class ProfanityFeedbackServiceTest {
         void 존재하지_않는_검열_항목은_예외가_발생한다() {
             given(auditRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertCoffeeShoutException(
-                    () -> service.block(999L),
-                    NicknameAuditErrorCode.AUDIT_NOT_FOUND
-            );
+            assertCoffeeShoutException(() -> service.block(999L), NicknameAuditErrorCode.AUDIT_NOT_FOUND);
         }
 
         @Test

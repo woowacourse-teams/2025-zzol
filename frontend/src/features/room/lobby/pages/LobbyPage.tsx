@@ -157,17 +157,13 @@ const LobbyPage = () => {
     [showToast]
   );
 
-  const { isSubscribed: isParticipantsSubscribed } = useWebSocketSubscription<Player[]>(
+  const { isSubscribed: isParticipantsSubscribed } = useWebSocketSubscription(
     `/room/${joinCode}`,
     handleParticipant
   );
-  useWebSocketSubscription<MiniGameType[]>(
-    `/room/${joinCode}/minigame`,
-    handleMiniGameData,
-    handleMiniGameError
-  );
+  useWebSocketSubscription(`/room/${joinCode}/minigame`, handleMiniGameData, handleMiniGameError);
   useWebSocketSubscription(`/room/${joinCode}/round`, handleGameStart);
-  useWebSocketSubscription<QRCodeEvent>(
+  useWebSocketSubscription(
     `/room/${joinCode}/qr-code`,
     handleQRCodeEvent,
     undefined,
@@ -285,7 +281,15 @@ const LobbyPage = () => {
       );
     }
 
-    return <GameReadyButton isReady={isReady} onClick={handleGameReadyButtonClick} />;
+    // 입장 직후·백그라운드 복귀·재연결 중에는 send 가 실패하므로 연결될 때까지 잠근다 (#1792)
+    return (
+      <GameReadyButton
+        isReady={isReady}
+        onClick={handleGameReadyButtonClick}
+        isLoading={!isConnected}
+        loadingText="연결 중..."
+      />
+    );
   };
 
   useEffect(() => {

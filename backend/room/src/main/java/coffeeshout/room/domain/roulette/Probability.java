@@ -5,9 +5,9 @@ import static org.springframework.util.Assert.state;
 import coffeeshout.gamecommon.MiniGameResultType;
 
 /*
-    - 확률은 100.00 형태에 100을 곱해서 소수점을 없앤 형태로 사용한다.
-    - 따라서 value는 0 ~ 10000값을 가진다.
- */
+   - 확률은 100.00 형태에 100을 곱해서 소수점을 없앤 형태로 사용한다.
+   - 따라서 value는 0 ~ 10000값을 가진다.
+*/
 public record Probability(Integer value) {
 
     public static final Probability ZERO = new Probability(0);

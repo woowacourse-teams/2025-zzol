@@ -5,7 +5,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-
 /**
  * Redis 분산 락을 사용하는 메서드에 적용하는 어노테이션
  * <p>

@@ -82,13 +82,13 @@ public class UserEntity {
 
     public User toDomain(OAuthAccountEntity oAuthAccountEntity) {
         if (isDeleted()) {
-            throw new SystemException(GlobalErrorCode.INTERNAL_SERVER_ERROR, "탈퇴한 사용자를 도메인 객체로 변환하려 했습니다. userId: " + id);
+            throw new SystemException(
+                    GlobalErrorCode.INTERNAL_SERVER_ERROR, "탈퇴한 사용자를 도메인 객체로 변환하려 했습니다. userId: " + id);
         }
         final OAuthAccount oAuthAccount = new OAuthAccount(
                 OAuthProvider.from(oAuthAccountEntity.getProvider()),
                 oAuthAccountEntity.getProviderUserId(),
-                oAuthAccountEntity.getEmail()
-        );
+                oAuthAccountEntity.getEmail());
         return new User(id, new UserCode(userCode), new UserNickname(nickname), oAuthAccount);
     }
 }

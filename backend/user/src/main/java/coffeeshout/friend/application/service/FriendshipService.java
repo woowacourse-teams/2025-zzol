@@ -37,10 +37,11 @@ public class FriendshipService {
 
         final User requester = findUser(requesterId);
         eventPublisher.publishEvent(new FriendRequestCreatedEvent(
-                saved.getId(), requesterId,
-                requester.getUserCode().value(), requester.getNickname().value(),
-                targetUserId
-        ));
+                saved.getId(),
+                requesterId,
+                requester.getUserCode().value(),
+                requester.getNickname().value(),
+                targetUserId));
         return saved;
     }
 
@@ -54,9 +55,12 @@ public class FriendshipService {
         final User addressee = findUser(saved.getAddresseeId());
         eventPublisher.publishEvent(new FriendRequestAcceptedEvent(
                 saved.getId(),
-                saved.getRequesterId(), requester.getUserCode().value(), requester.getNickname().value(),
-                saved.getAddresseeId(), addressee.getUserCode().value(), addressee.getNickname().value()
-        ));
+                saved.getRequesterId(),
+                requester.getUserCode().value(),
+                requester.getNickname().value(),
+                saved.getAddresseeId(),
+                addressee.getUserCode().value(),
+                addressee.getNickname().value()));
         return saved;
     }
 
@@ -68,14 +72,17 @@ public class FriendshipService {
 
         final User addressee = findUser(friendship.getAddresseeId());
         eventPublisher.publishEvent(new FriendRequestRejectedEvent(
-                friendship.getId(), friendship.getRequesterId(), friendship.getAddresseeId(),
-                addressee.getUserCode().value(), addressee.getNickname().value()
-        ));
+                friendship.getId(),
+                friendship.getRequesterId(),
+                friendship.getAddresseeId(),
+                addressee.getUserCode().value(),
+                addressee.getNickname().value()));
     }
 
     @Transactional
     public void unfriend(Long userId, Long friendUserId) {
-        final Friendship friendship = friendshipRepository.findBetween(userId, friendUserId)
+        final Friendship friendship = friendshipRepository
+                .findBetween(userId, friendUserId)
                 .filter(Friendship::isAccepted)
                 .orElseThrow(() -> new BusinessException(FriendErrorCode.NOT_FRIEND, "친구 관계가 아닌 사용자입니다."));
         friendshipRepository.delete(friendship);
@@ -85,9 +92,10 @@ public class FriendshipService {
     @Transactional(readOnly = true)
     public List<FriendRequestWithUser> findReceivedPending(Long userId) {
         final List<Friendship> friendships = friendshipRepository.findReceivedPending(userId);
-        final List<Long> requesterIds = friendships.stream().map(Friendship::getRequesterId).toList();
-        final Map<Long, User> userById = userRepository.findAllByIds(requesterIds).stream()
-                .collect(Collectors.toMap(User::getId, u -> u));
+        final List<Long> requesterIds =
+                friendships.stream().map(Friendship::getRequesterId).toList();
+        final Map<Long, User> userById =
+                userRepository.findAllByIds(requesterIds).stream().collect(Collectors.toMap(User::getId, u -> u));
         return friendships.stream()
                 .map(f -> new FriendRequestWithUser(f.getId(), userById.get(f.getRequesterId()), f.getCreatedAt()))
                 .toList();
@@ -96,9 +104,10 @@ public class FriendshipService {
     @Transactional(readOnly = true)
     public List<FriendRequestWithUser> findSentPending(Long userId) {
         final List<Friendship> friendships = friendshipRepository.findSentPending(userId);
-        final List<Long> addresseeIds = friendships.stream().map(Friendship::getAddresseeId).toList();
-        final Map<Long, User> userById = userRepository.findAllByIds(addresseeIds).stream()
-                .collect(Collectors.toMap(User::getId, u -> u));
+        final List<Long> addresseeIds =
+                friendships.stream().map(Friendship::getAddresseeId).toList();
+        final Map<Long, User> userById =
+                userRepository.findAllByIds(addresseeIds).stream().collect(Collectors.toMap(User::getId, u -> u));
         return friendships.stream()
                 .map(f -> new FriendRequestWithUser(f.getId(), userById.get(f.getAddresseeId()), f.getCreatedAt()))
                 .toList();
@@ -114,16 +123,18 @@ public class FriendshipService {
     @Transactional(readOnly = true)
     public List<FriendWithUser> findFriends(Long userId) {
         final List<Friendship> friendships = friendshipRepository.findAcceptedOf(userId);
-        final List<Long> counterpartIds = friendships.stream().map(f -> f.counterpartOf(userId)).toList();
-        final Map<Long, User> userById = userRepository.findAllByIds(counterpartIds).stream()
-                .collect(Collectors.toMap(User::getId, u -> u));
+        final List<Long> counterpartIds =
+                friendships.stream().map(f -> f.counterpartOf(userId)).toList();
+        final Map<Long, User> userById =
+                userRepository.findAllByIds(counterpartIds).stream().collect(Collectors.toMap(User::getId, u -> u));
         return friendships.stream()
                 .map(f -> new FriendWithUser(userById.get(f.counterpartOf(userId)), f.getUpdatedAt()))
                 .toList();
     }
 
     private User findUser(Long userId) {
-        return userRepository.findById(userId)
+        return userRepository
+                .findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, "존재하지 않는 회원입니다. id=" + userId));
     }
 
@@ -141,7 +152,9 @@ public class FriendshipService {
     }
 
     private Friendship findPendingById(Long requestId) {
-        return friendshipRepository.findById(requestId)
-                .orElseThrow(() -> new BusinessException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND, "존재하지 않는 친구 요청입니다."));
+        return friendshipRepository
+                .findById(requestId)
+                .orElseThrow(
+                        () -> new BusinessException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND, "존재하지 않는 친구 요청입니다."));
     }
 }

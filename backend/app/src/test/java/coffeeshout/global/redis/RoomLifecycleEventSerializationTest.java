@@ -34,9 +34,7 @@ class RoomLifecycleEventSerializationTest {
             // 와이어 계약 고정: 중첩 record의 @type 식별자(Jackson Id.NAME 기본값 = getName 기반, 패키지만 제거).
             // 기존 평탄 GameRoomCreatedEvent는 "GameRoomCreatedEvent"였으므로 이 문자열은 신규 계약이다.
             assertThat(json).contains("\"@type\":\"RoomLifecycleEvent$Created\"");
-            assertThat(restored)
-                    .isInstanceOf(RoomLifecycleEvent.Created.class)
-                    .isEqualTo(event);
+            assertThat(restored).isInstanceOf(RoomLifecycleEvent.Created.class).isEqualTo(event);
         }
 
         @Test
@@ -47,9 +45,7 @@ class RoomLifecycleEventSerializationTest {
             final String json = mapper.writeValueAsString(event);
             final BaseEvent restored = mapper.readValue(json, BaseEvent.class);
 
-            assertThat(restored)
-                    .isInstanceOf(RoomLifecycleEvent.Removed.class)
-                    .isEqualTo(event);
+            assertThat(restored).isInstanceOf(RoomLifecycleEvent.Removed.class).isEqualTo(event);
         }
 
         @Test

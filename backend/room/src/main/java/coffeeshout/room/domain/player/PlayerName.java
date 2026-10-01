@@ -18,15 +18,14 @@ public record PlayerName(String value) {
 
     private void validateNotBlank(String value) {
         if (value == null || value.isBlank()) {
-            throw new BusinessException(RoomErrorCode.PLAYER_NAME_BLANK,
-                    "이름은 공백일 수 없습니다. 입력값: '" + value + "'");
+            throw new BusinessException(RoomErrorCode.PLAYER_NAME_BLANK, "이름은 공백일 수 없습니다. 입력값: '" + value + "'");
         }
     }
 
     private void validateLength(String value) {
         if (value.length() > MAX_NAME_LENGTH) {
-            throw new BusinessException(RoomErrorCode.PLAYER_NAME_TOO_LONG,
-                    "이름은 10자 이하여야 합니다. 현재 길이: " + value.length());
+            throw new BusinessException(
+                    RoomErrorCode.PLAYER_NAME_TOO_LONG, "이름은 10자 이하여야 합니다. 현재 길이: " + value.length());
         }
     }
 }

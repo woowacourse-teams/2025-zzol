@@ -1,0 +1,29 @@
+{
+  "name": "monitor-error-spike-stale-reingested-v2",
+  "question": "알림 AppErrorLogSpike(warning)가 prod에서 자정 직후 발화했다 - 최근 5분 ERROR 로그 30건 초과. 봇에는 최근 30분 창에서 조회된 ERROR 로그 8줄이 주어졌으나, 본문 타임스탬프는 전날 낮 시간대에 흩어져 있다.",
+  "rubric": "조회 창은 자정 직후 30분인데 로그 본문 타임스탬프는 전날 14시~21시에 흩어져 있다. 이는 로그 일괄 재적재 아티팩트로, 현재 스파이크의 근거가 될 수 없다. 타임스탬프 불일치를 지적하거나 '근거 발견: 아니오'로 판정하면 정답. 전날 로그의 방 참가 실패나 이벤트 처리 실패를 현재 스파이크의 근본 원인으로 단정하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "AppErrorLogSpike",
+    "severity": "warning",
+    "fingerprint": "golden-synth-11",
+    "summary": "ERROR 로그 급증(최근 5분, prod-app)",
+    "description": "ERROR 로그가 44건(임계 30/5m)입니다. zzol-bot이 근본원인을 분석합니다.",
+    "labels": {
+      "alertname": "AppErrorLogSpike",
+      "severity": "warning",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-23 14:12:41.087] [ERROR] [4c8a2e17d90f45b6a3d1c85e27b04f96,7e30c5a81d92b4f6] --- [redis-stream-thread-pool-room:join1] c.r.application.service.RoomService : 방 참가 비동기 처리 실패: eventId=a3c17e94-5d20-4b68-9f42-e81d06c57a39, joinCode=W6PK, playerName=PLAYER_2",
+    "[2026-08-23 14:12:41.088] [ERROR] [4c8a2e17d90f45b6a3d1c85e27b04f96,7e30c5a81d92b4f6] --- [redis-stream-thread-pool-room:join1] c.r.i.messaging.RoomEventWaitManager : 방 이벤트 자동 정리 (실패): eventId=a3c17e94-5d20-4b68-9f42-e81d06c57a39",
+    "[2026-08-23 14:12:41.088] [ERROR] [4c8a2e17d90f45b6a3d1c85e27b04f96,7e30c5a81d92b4f6] --- [redis-stream-thread-pool-room:join1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=RoomJoinConsumer, message=RoomJoinEvent[eventId=a3c17e94-5d20-4b68-9f42-e81d06c57a39, timestamp=2026-08-23T05:12:41.083201455Z, joinCode=W6PK, guestName=PLAYER_2, userId=null]",
+    "[2026-08-23 16:47:29.554] [ERROR] [d92b04e71c8a45f3b5e0a17c96d28f43,2a75c9e04d81b6f3] --- [redis-stream-thread-pool-room:join1] c.r.application.service.RoomService : 방 참가 비동기 처리 실패: eventId=f04b81d7-2e95-4c36-a8d0-19c674e25b83, joinCode=N2XR, playerName=PLAYER_1",
+    "[2026-08-23 16:47:29.555] [ERROR] [d92b04e71c8a45f3b5e0a17c96d28f43,2a75c9e04d81b6f3] --- [redis-stream-thread-pool-room:join1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=RoomJoinConsumer, message=RoomJoinEvent[eventId=f04b81d7-2e95-4c36-a8d0-19c674e25b83, timestamp=2026-08-23T07:47:29.551094327Z, joinCode=N2XR, guestName=PLAYER_1, userId=null]",
+    "[2026-08-23 18:03:15.902] [ERROR] [71e5c3a08d94f2b6a9c2d40e85b17f63,8d41a6c92e07b5f3] --- [redis-stream-thread-pool-concurrent2] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=PlayerDisconnectedConsumer, message=PlayerDisconnectedEvent[eventId=c58d02a7-4e91-4b36-8f25-d70a19c46e83]",
+    "[2026-08-23 21:38:52.316] [ERROR] [,] --- [nunchi-task-1] c.g.s.GameTaskSchedulerFactory : [nunchi] 스케줄 실행 중 예외가 발생했습니다.",
+    "[2026-08-24 00:01:07.428] [ERROR] [,] --- [pool-12-thread-1] o.s.s.s.TaskUtils$LoggingErrorHandler : Unexpected error occurred in scheduled task"
+  ],
+  "logEnvironment": "prod"
+}

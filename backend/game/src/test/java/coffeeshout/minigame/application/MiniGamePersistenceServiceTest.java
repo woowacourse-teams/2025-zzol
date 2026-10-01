@@ -51,11 +51,7 @@ class MiniGamePersistenceServiceTest {
     @BeforeEach
     void setUp() {
         service = new MiniGamePersistenceService(
-                gameSessionService,
-                roomSnapshotQuery,
-                miniGameEntityRepository,
-                eventPublisher
-        );
+                gameSessionService, roomSnapshotQuery, miniGameEntityRepository, eventPublisher);
     }
 
     private GameStartReadyEvent gameStartReadyEvent() {

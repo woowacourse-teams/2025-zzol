@@ -40,8 +40,7 @@ public class SettlementPendingSweeper {
             StringRedisTemplate stringRedisTemplate,
             SettlementMessageProcessor processor,
             SettlementDeadLetterPublisher deadLetterPublisher,
-            @Qualifier("settlementConsumerName") String consumerName
-    ) {
+            @Qualifier("settlementConsumerName") String consumerName) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.processor = processor;
         this.deadLetterPublisher = deadLetterPublisher;
@@ -52,12 +51,13 @@ public class SettlementPendingSweeper {
     // 회수 처리 자체는 짧고(정산 1건 수 ms), 실패 메시지는 다음 주기로 미룬다.
     @Scheduled(fixedDelay = 30_000, initialDelay = 60_000)
     public void sweep() {
-        final PendingMessages pending = stringRedisTemplate.opsForStream().pending(
-                SettlementStreamConsumer.STREAM_KEY,
-                SettlementStreamConsumer.GROUP,
-                Range.unbounded(),
-                SWEEP_BATCH
-        );
+        final PendingMessages pending = stringRedisTemplate
+                .opsForStream()
+                .pending(
+                        SettlementStreamConsumer.STREAM_KEY,
+                        SettlementStreamConsumer.GROUP,
+                        Range.unbounded(),
+                        SWEEP_BATCH);
         if (pending == null || pending.isEmpty()) {
             return;
         }
@@ -82,16 +82,17 @@ public class SettlementPendingSweeper {
             // 남았다는 것 자체가 직전 전달의 처리 실패를 뜻하므로, N이면 이미 N회 시도가
             // 소진된 상태다 — MAX_DELIVERIES회 시도 후 격리라는 계약에 >=가 부합한다.
             if (message.getTotalDeliveryCount() >= MAX_DELIVERIES) {
-                deadLetterPublisher.publish(record,
-                        "최대 재전달 횟수 소진: deliveries=" + message.getTotalDeliveryCount());
+                deadLetterPublisher.publish(record, "최대 재전달 횟수 소진: deliveries=" + message.getTotalDeliveryCount());
                 acknowledge(record.getId());
                 continue;
             }
             try {
                 processor.process(record);
                 acknowledge(record.getId());
-                log.info("pending 정산 메시지 회수 처리 완료: recordId={}, deliveries={}",
-                        record.getId(), message.getTotalDeliveryCount());
+                log.info(
+                        "pending 정산 메시지 회수 처리 완료: recordId={}, deliveries={}",
+                        record.getId(),
+                        message.getTotalDeliveryCount());
             } catch (PoisonMessageException e) {
                 deadLetterPublisher.publish(record, e.getMessage());
                 acknowledge(record.getId());
@@ -104,22 +105,22 @@ public class SettlementPendingSweeper {
 
     @SuppressWarnings("unchecked")
     private List<MapRecord<String, String, String>> claim(RecordId recordId) {
-        return stringRedisTemplate.opsForStream()
+        return stringRedisTemplate
+                .opsForStream()
                 .claim(
                         SettlementStreamConsumer.STREAM_KEY,
                         SettlementStreamConsumer.GROUP,
                         consumerName,
-                        org.springframework.data.redis.connection.RedisStreamCommands.XClaimOptions
-                                .minIdle(MIN_IDLE)
-                                .ids(recordId)
-                )
+                        org.springframework.data.redis.connection.RedisStreamCommands.XClaimOptions.minIdle(MIN_IDLE)
+                                .ids(recordId))
                 .stream()
                 .map(record -> (MapRecord<String, String, String>) (MapRecord<String, ?, ?>) record)
                 .toList();
     }
 
     private void acknowledge(RecordId recordId) {
-        stringRedisTemplate.opsForStream()
+        stringRedisTemplate
+                .opsForStream()
                 .acknowledge(SettlementStreamConsumer.STREAM_KEY, SettlementStreamConsumer.GROUP, recordId);
     }
 }

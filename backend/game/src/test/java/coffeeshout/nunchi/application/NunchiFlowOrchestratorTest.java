@@ -64,16 +64,15 @@ class NunchiFlowOrchestratorTest {
         when(gameSessionService.finishGame(any())).thenReturn(1);
 
         final NunchiTimingProperties timing = new NunchiTimingProperties(
-                Duration.ofMillis(2000),  // description
-                Duration.ofMillis(2000),  // ready
-                Duration.ofMillis(300),   // numberWindow
-                Duration.ofMillis(2000),  // collisionCooldown
+                Duration.ofMillis(2000), // description
+                Duration.ofMillis(2000), // ready
+                Duration.ofMillis(300), // numberWindow
+                Duration.ofMillis(2000), // collisionCooldown
                 Duration.ofMillis(10000), // idleTimeout
                 Duration.ofMillis(30000), // hardCap
-                Duration.ofMillis(10)     // allPressedDelay (캡처 스케줄러라 값 무의미, 최소로)
-        );
-        orchestrator = new NunchiFlowOrchestrator(
-                scheduler, timing, notifier, gameSessionService, eventPublisher);
+                Duration.ofMillis(10) // allPressedDelay (캡처 스케줄러라 값 무의미, 최소로)
+                );
+        orchestrator = new NunchiFlowOrchestrator(scheduler, timing, notifier, gameSessionService, eventPublisher);
 
         game = new NunchiGame(300L);
         game.setUp(List.of(일, 이, 삼));
@@ -104,8 +103,7 @@ class NunchiFlowOrchestratorTest {
             verify(notifier).notifyDescription(eq(JOIN_CODE.getValue()), anyLong());
             // 설명 단계에선 READY·PLAYING·idle·hardCap을 아직 걸지 않는다 — description 타이머 하나뿐
             verify(notifier, never()).notifyReady(anyString(), anyLong(), anyLong());
-            verify(notifier, never()).notifyPlaying(anyString(), anyInt(), any(),
-                    anyLong(), anyLong(), anyLong());
+            verify(notifier, never()).notifyPlaying(anyString(), anyInt(), any(), anyLong(), anyLong(), anyLong());
             assertThat(scheduler.scheduledCount()).isEqualTo(1);
         }
 
@@ -117,8 +115,7 @@ class NunchiFlowOrchestratorTest {
             // READY는 playStartEpochMs(PLAYING 시작 절대 시각)를 싣는다(결정 9)
             verify(notifier).notifyReady(eq(JOIN_CODE.getValue()), anyLong(), anyLong());
             // 카운트다운 단계에선 PLAYING·idle·hardCap을 아직 걸지 않는다 — description(0) + ready(1)
-            verify(notifier, never()).notifyPlaying(anyString(), anyInt(), any(),
-                    anyLong(), anyLong(), anyLong());
+            verify(notifier, never()).notifyPlaying(anyString(), anyInt(), any(), anyLong(), anyLong(), anyLong());
             assertThat(scheduler.scheduledCount()).isEqualTo(2);
         }
 
@@ -126,8 +123,7 @@ class NunchiFlowOrchestratorTest {
         void ready_종료시_PLAYING을_브로드캐스트하고_idle과_하드캡_타이머를_건다() {
             startAndEnterPlaying();
 
-            verify(notifier).notifyPlaying(eq(JOIN_CODE.getValue()), eq(1), any(),
-                    anyLong(), anyLong(), anyLong());
+            verify(notifier).notifyPlaying(eq(JOIN_CODE.getValue()), eq(1), any(), anyLong(), anyLong(), anyLong());
             // description(0) + ready(1) + idle(2) + hardCap(3)
             assertThat(scheduler.scheduledCount()).isEqualTo(4);
         }
@@ -179,8 +175,9 @@ class NunchiFlowOrchestratorTest {
             orchestrator.handlePress(JOIN_CODE, 이, T0.plusMillis(100)); // 윈도우 내 → 충돌
 
             verify(windowFuture).cancel(false); // 충돌로 윈도우 종료
-            verify(notifier).notifyCollisionCooldown(eq(JOIN_CODE.getValue()), eq(1),
-                    eq(List.of("일", "이")), anyLong(), anyLong());
+            verify(notifier)
+                    .notifyCollisionCooldown(
+                            eq(JOIN_CODE.getValue()), eq(1), eq(List.of("일", "이")), anyLong(), anyLong());
             assertThat(game.getState()).isEqualTo(NunchiState.COLLISION_COOLDOWN);
         }
     }
@@ -273,8 +270,9 @@ class NunchiFlowOrchestratorTest {
         void 하드캡은_재개_브로드캐스트에서도_고정값이다() {
             startAndEnterPlaying();
             final ArgumentCaptor<Long> hardCapCaptor = ArgumentCaptor.forClass(Long.class);
-            verify(notifier).notifyPlaying(eq(JOIN_CODE.getValue()), anyInt(), any(),
-                    anyLong(), anyLong(), hardCapCaptor.capture());
+            verify(notifier)
+                    .notifyPlaying(
+                            eq(JOIN_CODE.getValue()), anyInt(), any(), anyLong(), anyLong(), hardCapCaptor.capture());
             final long startHardCap = hardCapCaptor.getValue();
 
             // 충돌 → 쿨다운 종료(재개)에서 PLAYING이 다시 브로드캐스트된다
@@ -283,8 +281,9 @@ class NunchiFlowOrchestratorTest {
             fireCooldown(); // onCooldownEnd → broadcastPlaying
 
             final ArgumentCaptor<Long> resumeHardCap = ArgumentCaptor.forClass(Long.class);
-            verify(notifier, times(2)).notifyPlaying(eq(JOIN_CODE.getValue()), anyInt(), any(),
-                    anyLong(), anyLong(), resumeHardCap.capture());
+            verify(notifier, times(2))
+                    .notifyPlaying(
+                            eq(JOIN_CODE.getValue()), anyInt(), any(), anyLong(), anyLong(), resumeHardCap.capture());
             // 마지막(재개) 브로드캐스트의 hardCap이 시작값과 동일해야 한다 — 드리프트 금지
             assertThat(resumeHardCap.getValue()).isEqualTo(startHardCap);
         }

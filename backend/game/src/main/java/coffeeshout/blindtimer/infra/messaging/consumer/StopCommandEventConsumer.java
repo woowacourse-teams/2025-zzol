@@ -20,11 +20,14 @@ public class StopCommandEventConsumer implements Consumer<StopCommandEvent> {
         try {
             progressHandler.handleStop(event.joinCode(), event.playerName());
         } catch (BusinessException e) {
-            log.warn("STOP 이벤트 처리 중 비즈니스 예외: eventId={}, joinCode={}, errorCode={}",
-                    event.eventId(), event.joinCode(), e.getErrorCode(), e);
+            log.warn(
+                    "STOP 이벤트 처리 중 비즈니스 예외: eventId={}, joinCode={}, errorCode={}",
+                    event.eventId(),
+                    event.joinCode(),
+                    e.getErrorCode(),
+                    e);
         } catch (Exception e) {
-            log.error("STOP 이벤트 처리 실패: eventId={}, joinCode={}",
-                    event.eventId(), event.joinCode(), e);
+            log.error("STOP 이벤트 처리 실패: eventId={}, joinCode={}", event.eventId(), event.joinCode(), e);
         }
     }
 }

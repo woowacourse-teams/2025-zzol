@@ -1,7 +1,7 @@
 package coffeeshout.cardgame.application;
 
-import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.cardgame.application.service.CardGameCommandService;
+import coffeeshout.cardgame.domain.CardGame;
 import coffeeshout.game.metric.GameDurationMetricService;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.minigame.application.GameSessionService;
@@ -43,7 +43,6 @@ public class CardGameService implements MiniGameService {
     }
 
     private CardGame getCardGame(JoinCode joinCode) {
-        return (CardGame) gameSessionService.getSession(joinCode)
-                .findCompletedGame(MiniGameType.CARD_GAME);
+        return (CardGame) gameSessionService.getSession(joinCode).findCompletedGame(MiniGameType.CARD_GAME);
     }
 }

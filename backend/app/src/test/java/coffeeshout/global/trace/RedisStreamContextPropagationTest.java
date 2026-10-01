@@ -95,8 +95,8 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
      * 레코드 자체가 없으면 검증 실패, traceparent 필드만 없으면 null을 반환한다.
      */
     private String findPublishedTraceparent(String guestName) {
-        List<MapRecord<String, Object, Object>> records = stringRedisTemplate.opsForStream()
-                .range(RoomStreamKey.BROADCAST.getRedisKey(), Range.unbounded());
+        List<MapRecord<String, Object, Object>> records =
+                stringRedisTemplate.opsForStream().range(RoomStreamKey.BROADCAST.getRedisKey(), Range.unbounded());
 
         MapRecord<String, Object, Object> published = records.stream()
                 .filter(record -> {
@@ -114,9 +114,12 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
         await().atMost(Duration.ofSeconds(5))
                 .pollInterval(Duration.ofMillis(100))
                 .untilAsserted(() -> {
-                    Room updatedRoom = roomRepository.findByJoinCode(new JoinCode(joinCode)).orElseThrow();
+                    Room updatedRoom = roomRepository
+                            .findByJoinCode(new JoinCode(joinCode))
+                            .orElseThrow();
                     boolean playerExists = updatedRoom.getPlayers().stream()
-                            .anyMatch(player -> guestName.equals(player.getName().value()));
+                            .anyMatch(
+                                    player -> guestName.equals(player.getName().value()));
                     assertThat(playerExists).isTrue();
                 });
     }
@@ -129,7 +132,8 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
             // given
             AtomicReference<String> publisherTraceId = new AtomicReference<>();
 
-            Observation observation = Observation.createNotStarted("test-publish", observationRegistry).start();
+            Observation observation = Observation.createNotStarted("test-publish", observationRegistry)
+                    .start();
             try (Scope scope = observation.openScope()) {
                 publisherTraceId.set(tracer.currentSpan().context().traceId());
 
@@ -150,7 +154,8 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
             // given
             AtomicReference<String> publisherTraceId = new AtomicReference<>();
 
-            Observation observation = Observation.createNotStarted("test-e2e-trace", observationRegistry).start();
+            Observation observation = Observation.createNotStarted("test-e2e-trace", observationRegistry)
+                    .start();
             try (Scope scope = observation.openScope()) {
                 publisherTraceId.set(tracer.currentSpan().context().traceId());
 
@@ -166,14 +171,14 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
             // then — StreamTracePropagator가 Publisher의 traceId가 담긴 캐리어로
             // consumer span 스코프 실행을 수행했는지 검증
             String expectedTraceId = publisherTraceId.get();
-            verify(streamTracePropagator).runInConsumerScope(
-                    argThat(carrier -> {
-                        String traceparent = carrier.get(StreamRecordFields.TRACEPARENT);
-                        return traceparent != null && traceparent.contains(expectedTraceId);
-                    }),
-                    eq("RoomJoinEvent"),
-                    any(Runnable.class)
-            );
+            verify(streamTracePropagator)
+                    .runInConsumerScope(
+                            argThat(carrier -> {
+                                String traceparent = carrier.get(StreamRecordFields.TRACEPARENT);
+                                return traceparent != null && traceparent.contains(expectedTraceId);
+                            }),
+                            eq("RoomJoinEvent"),
+                            any(Runnable.class));
         }
 
         @Test
@@ -190,27 +195,31 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
                 CompletableFuture<?>[] futures = new CompletableFuture[playerNames.length];
                 for (int i = 0; i < playerNames.length; i++) {
                     String playerName = playerNames[i];
-                    futures[i] = CompletableFuture.runAsync(() -> {
-                        try {
-                            startBarrier.await(3, java.util.concurrent.TimeUnit.SECONDS);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            return;
-                        }
+                    futures[i] = CompletableFuture.runAsync(
+                            () -> {
+                                try {
+                                    startBarrier.await(3, java.util.concurrent.TimeUnit.SECONDS);
+                                } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
+                                    return;
+                                }
 
-                        Observation observation = Observation.createNotStarted(
-                                "test-concurrent-" + playerName, observationRegistry).start();
-                        try (Scope scope = observation.openScope()) {
-                            synchronized (capturedTraceIds) {
-                                capturedTraceIds.add(tracer.currentSpan().context().traceId());
-                            }
+                                Observation observation = Observation.createNotStarted(
+                                                "test-concurrent-" + playerName, observationRegistry)
+                                        .start();
+                                try (Scope scope = observation.openScope()) {
+                                    synchronized (capturedTraceIds) {
+                                        capturedTraceIds.add(
+                                                tracer.currentSpan().context().traceId());
+                                    }
 
-                            RoomJoinEvent event = new RoomJoinEvent(joinCode, playerName);
-                            streamPublisher.publish(RoomStreamKey.BROADCAST, event);
-                        } finally {
-                            observation.stop();
-                        }
-                    }, executor);
+                                    RoomJoinEvent event = new RoomJoinEvent(joinCode, playerName);
+                                    streamPublisher.publish(RoomStreamKey.BROADCAST, event);
+                                } finally {
+                                    observation.stop();
+                                }
+                            },
+                            executor);
                 }
 
                 startBarrier.countDown();
@@ -232,14 +241,14 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
 
             // then — 각 traceId가 Consumer 측 캐리어로 전파됨
             for (String traceId : capturedTraceIds) {
-                verify(streamTracePropagator).runInConsumerScope(
-                        argThat(carrier -> {
-                            String traceparent = carrier.get(StreamRecordFields.TRACEPARENT);
-                            return traceparent != null && traceparent.contains(traceId);
-                        }),
-                        eq("RoomJoinEvent"),
-                        any(Runnable.class)
-                );
+                verify(streamTracePropagator)
+                        .runInConsumerScope(
+                                argThat(carrier -> {
+                                    String traceparent = carrier.get(StreamRecordFields.TRACEPARENT);
+                                    return traceparent != null && traceparent.contains(traceId);
+                                }),
+                                eq("RoomJoinEvent"),
+                                any(Runnable.class));
             }
         }
     }
@@ -272,11 +281,11 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
 
             // then — 캐리어에 traceparent가 없는 상태로 스코프 실행이 호출되어야 하고,
             // 내부에서 traceparent 부재 시 스팬 생성 없이 task만 실행
-            verify(streamTracePropagator).runInConsumerScope(
-                    argThat(carrier -> !carrier.containsKey(StreamRecordFields.TRACEPARENT)),
-                    eq("RoomJoinEvent"),
-                    any(Runnable.class)
-            );
+            verify(streamTracePropagator)
+                    .runInConsumerScope(
+                            argThat(carrier -> !carrier.containsKey(StreamRecordFields.TRACEPARENT)),
+                            eq("RoomJoinEvent"),
+                            any(Runnable.class));
         }
     }
 
@@ -290,11 +299,11 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
             String legacyPayload = redisObjectMapper.writeValueAsString(event);
 
             // when
-            stringRedisTemplate.opsForStream().add(
-                    StreamRecords.newRecord()
+            stringRedisTemplate
+                    .opsForStream()
+                    .add(StreamRecords.newRecord()
                             .in(RoomStreamKey.BROADCAST.getRedisKey())
-                            .ofObject(legacyPayload)
-            );
+                            .ofObject(legacyPayload));
 
             // then — 신형 리스너가 _raw 폴백으로 페이로드를 읽어 정상 처리한다
             awaitPlayerJoined("레거시폴백");

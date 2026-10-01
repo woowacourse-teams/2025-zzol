@@ -17,6 +17,12 @@ zzol-bot:
     enabled: ${ZZOL_BOT_MONITOR_ENABLED:true}    # Alertmanager firing 알림 분석 활성 여부
     error-log-window-minutes: 30                 # ERROR 로그 샘플 조회 윈도우. 넓으면 알림과 무관한 상시 에러가 딸려 들어와 분석이 엉뚱한 근거 위에 선다(#1594). 알림 시점 전후를 좁게 본다
     enrich-cooldown-minutes: 240                 # 같은 fingerprint 재분석 최소 간격(기본 4시간). 중복 분석 방지 — 재시도·flapping 흡수 + 지속 장애 LLM 재호출 비용 절감. 0이면 비활성
+    shadow:                                      # 자체 호스팅 모델을 같은 입력으로 나란히 돌려 결과만 기록한다. 운영 판정과 Slack 게시는 바뀌지 않는다
+      enabled: ${ZZOL_BOT_MONITOR_SHADOW_ENABLED:false}   # 기본 꺼짐. 꺼져 있으면 섀도우 빈이 만들어지지 않아 경로가 이전과 완전히 같다
+      base-url: ${ZZOL_BOT_SHADOW_BASE_URL:http://127.0.0.1:8081}  # llama.cpp 서버
+      connect-timeout-millis: 2000
+      read-timeout-millis: 420000                # 최악을 실측값으로 계산하면 326초다(프롬프트 20건 상한 + 생성 상한). 넘겨도 운영 경로는 영향 없음(다른 스레드)
+      max-tokens: 1400                         # 문법이 묶은 최악(요약 200자 + 가설 200자 + 조치 3×150자 + 인용 한 줄)이 약 1,130토큰
   slack:
     webhook-url: ${ZZOL_BOT_SLACK_WEBHOOK_URL:}  # 미설정 시 알림 비활성
   llm-budget:

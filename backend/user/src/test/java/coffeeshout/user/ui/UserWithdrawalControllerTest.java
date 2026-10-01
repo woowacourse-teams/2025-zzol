@@ -42,15 +42,13 @@ class UserWithdrawalControllerTest extends UserModuleIntegrationTest {
 
         @Test
         void 인증된_사용자가_탈퇴하면_204를_반환한다() throws Exception {
-            mockMvc.perform(delete("/users/me")
-                            .header("Authorization", "Bearer " + accessToken))
+            mockMvc.perform(delete("/users/me").header("Authorization", "Bearer " + accessToken))
                     .andExpect(status().isNoContent());
         }
 
         @Test
         void 토큰_없이_호출하면_401을_반환한다() throws Exception {
-            mockMvc.perform(delete("/users/me"))
-                    .andExpect(status().isUnauthorized());
+            mockMvc.perform(delete("/users/me")).andExpect(status().isUnauthorized());
         }
     }
 }

@@ -8,20 +8,17 @@ import lombok.NonNull;
 
 public record MiniGameScoresMessage(List<MiniGameScoreMessage> scores) {
 
-    public record MiniGameScoreMessage(
-            String playerName,
-            Long score
-    ) {
+    public record MiniGameScoreMessage(String playerName, Long score) {
 
         public static MiniGameScoreMessage from(@NonNull Map.Entry<Gamer, MiniGameScore> scoreEntry) {
-            return new MiniGameScoreMessage(scoreEntry.getKey().getName(), scoreEntry.getValue().getValue());
+            return new MiniGameScoreMessage(
+                    scoreEntry.getKey().getName(), scoreEntry.getValue().getValue());
         }
     }
 
     public static MiniGameScoresMessage from(Map<Gamer, MiniGameScore> miniGameScores) {
-        return new MiniGameScoresMessage(
-                miniGameScores.entrySet().stream()
-                        .map(MiniGameScoreMessage::from)
-                        .toList());
+        return new MiniGameScoresMessage(miniGameScores.entrySet().stream()
+                .map(MiniGameScoreMessage::from)
+                .toList());
     }
 }

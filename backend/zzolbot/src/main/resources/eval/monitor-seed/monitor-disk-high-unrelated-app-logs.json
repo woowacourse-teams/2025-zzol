@@ -1,0 +1,23 @@
+{
+  "name": "monitor-disk-high-unrelated-app-logs",
+  "question": "알림 DiskUsageHigh(warning)가 발화했다 - 호스트 루트 파일시스템 사용률 85% 초과. 봇에는 최근 30분 prod 앱 ERROR 로그 샘플 2줄이 주어졌다.",
+  "rubric": "이 알림은 node-exporter가 보는 호스트(공유 서버) 루트 파일시스템의 사용률로, 원인은 호스트 레이어(로그/이미지/볼륨 누적)에 있으며 주어진 앱 ERROR 로그 2줄(QR 업로드 실패, 스케줄 작업 실패)로는 판단할 수 없다. '근거 발견: 아니오'로 판정하고 원인 가설을 내지 않아야 정답. 앱의 산발 에러를 디스크 사용률 상승의 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "DiskUsageHigh",
+    "severity": "warning",
+    "fingerprint": "golden-synth-20",
+    "summary": "디스크 사용률 > 85%",
+    "description": "디스크 사용률이 88.6%. 로그 정리 또는 디스크 확장 필요.",
+    "labels": {
+      "alertname": "DiskUsageHigh",
+      "severity": "warning",
+      "job": "node"
+    }
+  },
+  "logSamples": [
+    "[2026-08-26 14:09:31.540] [ERROR] [82e0c5a17d94f3b6a6b3d28c40e91f75,3d85a0c96e12b7f4] --- [] c.r.infra.OracleObjectStorageService : Oracle Object Storage QR 코드 업로드 실패: contents=https://www.zzol.site/join/F7RD, error=Read timed out",
+    "[2026-08-26 14:26:18.092] [ERROR] [,] --- [pool-11-thread-1] o.s.s.s.TaskUtils$LoggingErrorHandler : Unexpected error occurred in scheduled task"
+  ],
+  "logEnvironment": "prod"
+}

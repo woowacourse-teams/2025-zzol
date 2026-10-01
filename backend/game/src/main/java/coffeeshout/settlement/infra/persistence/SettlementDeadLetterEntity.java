@@ -23,8 +23,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "settlement_dead_letter",
-        uniqueConstraints = @UniqueConstraint(name = "uk_settlement_dead_letter_record", columnNames = "record_id")
-)
+        uniqueConstraints = @UniqueConstraint(name = "uk_settlement_dead_letter_record", columnNames = "record_id"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SettlementDeadLetterEntity {

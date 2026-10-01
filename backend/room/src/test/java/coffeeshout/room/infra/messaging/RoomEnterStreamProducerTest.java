@@ -45,11 +45,16 @@ class RoomEnterStreamProducerTest extends RoomModuleIntegrationTest {
             streamPublisher.publish(RoomStreamKey.BROADCAST, new RoomJoinEvent(joinCode, playerName));
 
             // then
-            await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
+            await().atMost(Duration.ofSeconds(5))
+                    .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        Room updatedRoom = roomRepository.findByJoinCode(new JoinCode(joinCode)).orElseThrow();
+                        Room updatedRoom = roomRepository
+                                .findByJoinCode(new JoinCode(joinCode))
+                                .orElseThrow();
                         Player result = updatedRoom.getPlayers().stream()
-                                .filter(player -> playerName.equals(player.getName().value())).findFirst()
+                                .filter(player ->
+                                        playerName.equals(player.getName().value()))
+                                .findFirst()
                                 .orElseThrow(() -> new IllegalStateException("플레이어가 추가되지 않음"));
 
                         assertThat(result.getName().value()).isEqualTo(playerName);
@@ -67,9 +72,12 @@ class RoomEnterStreamProducerTest extends RoomModuleIntegrationTest {
             }
 
             // then
-            await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
+            await().atMost(Duration.ofSeconds(5))
+                    .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        Room updatedRoom = roomRepository.findByJoinCode(new JoinCode(joinCode)).orElseThrow();
+                        Room updatedRoom = roomRepository
+                                .findByJoinCode(new JoinCode(joinCode))
+                                .orElseThrow();
                         assertThat(updatedRoom.getPlayers())
                                 .extracting(player -> player.getName().value())
                                 .contains(playerNames);
@@ -85,11 +93,15 @@ class RoomEnterStreamProducerTest extends RoomModuleIntegrationTest {
             streamPublisher.publish(RoomStreamKey.BROADCAST, new RoomJoinEvent(joinCode, playerName));
 
             // then
-            await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
+            await().atMost(Duration.ofSeconds(5))
+                    .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        Room updatedRoom = roomRepository.findByJoinCode(new JoinCode(joinCode)).orElseThrow();
+                        Room updatedRoom = roomRepository
+                                .findByJoinCode(new JoinCode(joinCode))
+                                .orElseThrow();
                         boolean playerExists = updatedRoom.getPlayers().stream()
-                                .anyMatch(player -> playerName.equals(player.getName().value()));
+                                .anyMatch(player ->
+                                        playerName.equals(player.getName().value()));
 
                         assertThat(playerExists).isTrue();
                     });

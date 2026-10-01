@@ -3,8 +3,8 @@ package coffeeshout.speedtouch.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import coffeeshout.fixture.RoomFixture;
 import coffeeshout.GameModuleServiceTest;
+import coffeeshout.fixture.RoomFixture;
 import coffeeshout.gamecommon.Gamer;
 import coffeeshout.minigame.application.GameSessionService;
 import coffeeshout.minigame.domain.MiniGameType;
@@ -52,11 +52,10 @@ class SpeedTouchGameServiceTest extends GameModuleServiceTest {
         speedTouchGameService.start(room.getJoinCode().getValue(), HOST_NAME);
 
         // then - 비동기 스케줄러가 상태 전이를 완료할 때까지 대기
-        await().atMost(Duration.ofSeconds(3))
-                .untilAsserted(() -> {
-                    assertThat(game.getState()).isEqualTo(SpeedTouchGameState.DONE);
-                    assertThat(game.getStartTime()).isNotNull();
-                });
+        await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+            assertThat(game.getState()).isEqualTo(SpeedTouchGameState.DONE);
+            assertThat(game.getStartTime()).isNotNull();
+        });
     }
 
     @Test

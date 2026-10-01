@@ -65,12 +65,12 @@ class NicknameAuditPromptTemplateTest {
     }
 
     private NicknameFeedback blockedFeedback(String nickname) {
-        return new NicknameFeedback(nickname, true, AiConfidence.of(0.95),
-                NicknameFeedback.OperatorDecision.BLOCKED, null);
+        return new NicknameFeedback(
+                nickname, true, AiConfidence.of(0.95), NicknameFeedback.OperatorDecision.BLOCKED, null);
     }
 
     private NicknameFeedback allowedFeedback(String nickname) {
-        return new NicknameFeedback(nickname, false, AiConfidence.UNKNOWN,
-                NicknameFeedback.OperatorDecision.ALLOWED, null);
+        return new NicknameFeedback(
+                nickname, false, AiConfidence.UNKNOWN, NicknameFeedback.OperatorDecision.ALLOWED, null);
     }
 }

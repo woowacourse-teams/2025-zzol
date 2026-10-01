@@ -24,7 +24,6 @@ class EventTypeNameTest {
     }
 
     sealed interface Family extends BaseEvent {
-        record Child(String eventId, Instant timestamp) implements Family {
-        }
+        record Child(String eventId, Instant timestamp) implements Family {}
     }
 }

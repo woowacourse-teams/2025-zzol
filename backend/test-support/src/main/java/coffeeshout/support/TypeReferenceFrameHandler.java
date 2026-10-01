@@ -14,8 +14,8 @@ public class TypeReferenceFrameHandler<T> implements StompFrameHandler {
     private final TypeReference<T> typeReference;
     private final ObjectMapper objectMapper;
 
-    public TypeReferenceFrameHandler(BlockingQueue<T> queue, TypeReference<T> typeReference,
-                                     ObjectMapper objectMapper) {
+    public TypeReferenceFrameHandler(
+            BlockingQueue<T> queue, TypeReference<T> typeReference, ObjectMapper objectMapper) {
         this.queue = queue;
         this.typeReference = typeReference;
         this.objectMapper = objectMapper;

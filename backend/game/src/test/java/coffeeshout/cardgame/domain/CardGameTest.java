@@ -10,8 +10,8 @@ import coffeeshout.fixture.CardGameDeckStub;
 import coffeeshout.fixture.CardGameFake;
 import coffeeshout.fixture.PlayersFixture;
 import coffeeshout.gamecommon.GameErrorCode;
-import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.gamecommon.Gamer;
+import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.room.domain.player.PlayerName;
 import coffeeshout.room.domain.player.Players;
 import java.util.Map;
@@ -32,7 +32,9 @@ class CardGameTest {
         players = PlayersFixture.호스트꾹이_루키_엠제이_한스;
 
         cardGame = new CardGameFake(deckGenerator);
-        cardGame.setUp(players.getPlayers().stream().map(coffeeshout.room.domain.player.Player::toGamer).toList());
+        cardGame.setUp(players.getPlayers().stream()
+                .map(coffeeshout.room.domain.player.Player::toGamer)
+                .toList());
     }
 
     @Nested
@@ -100,10 +102,7 @@ class CardGameTest {
             Gamer player = players.getPlayer(new PlayerName("꾹이")).toGamer();
 
             // when & then
-            assertCoffeeShoutException(
-                    () -> cardGame.selectCard(player, 0),
-                    CardGameErrorCode.NOT_PLAYING_STATE
-            );
+            assertCoffeeShoutException(() -> cardGame.selectCard(player, 0), CardGameErrorCode.NOT_PLAYING_STATE);
         }
 
         @Test
@@ -129,8 +128,7 @@ class CardGameTest {
             cardGame.selectCard(player1, 0);
 
             // then
-            assertThatThrownBy(() -> cardGame.selectCard(player2, 0))
-                    .isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(() -> cardGame.selectCard(player2, 0)).isInstanceOf(IllegalStateException.class);
         }
     }
 
@@ -232,11 +230,13 @@ class CardGameTest {
             cardGame.startPlay();
             cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")).toGamer(), 0);
             cardGame.selectCard(players.getPlayer(new PlayerName("루키")).toGamer(), 1);
-            boolean notYetFinished = cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2);
+            boolean notYetFinished =
+                    cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2);
             assertThat(notYetFinished).isFalse();
 
             // when
-            boolean roundFinished = cardGame.selectCard(players.getPlayer(new PlayerName("한스")).toGamer(), 3);
+            boolean roundFinished =
+                    cardGame.selectCard(players.getPlayer(new PlayerName("한스")).toGamer(), 3);
 
             // then
             assertThat(roundFinished).isTrue();
@@ -248,11 +248,13 @@ class CardGameTest {
             cardGame.startPlay();
             cardGame.selectCard(players.getPlayer(new PlayerName("꾹이")).toGamer(), 0);
             cardGame.selectCard(players.getPlayer(new PlayerName("루키")).toGamer(), 1);
-            boolean notYetFinished = cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2);
+            boolean notYetFinished =
+                    cardGame.selectCard(players.getPlayer(new PlayerName("엠제이")).toGamer(), 2);
             assertThat(notYetFinished).isFalse();
 
             // when - 마지막 플레이어가 선택
-            boolean roundFinished = cardGame.selectCard(players.getPlayer(new PlayerName("한스")).toGamer(), 3);
+            boolean roundFinished =
+                    cardGame.selectCard(players.getPlayer(new PlayerName("한스")).toGamer(), 3);
 
             // then
             assertThat(roundFinished).isTrue();
@@ -280,10 +282,7 @@ class CardGameTest {
             String nonExistentName = "존재하지않는플레이어";
 
             // when & then
-            assertCoffeeShoutException(
-                    () -> cardGame.findByName(nonExistentName),
-                    GameErrorCode.PLAYER_NOT_FOUND
-            );
+            assertCoffeeShoutException(() -> cardGame.findByName(nonExistentName), GameErrorCode.PLAYER_NOT_FOUND);
         }
     }
 

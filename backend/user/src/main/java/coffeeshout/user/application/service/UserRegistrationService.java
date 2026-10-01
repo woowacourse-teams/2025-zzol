@@ -27,9 +27,10 @@ public class UserRegistrationService {
     private final ProfanityChecker profanityChecker;
     private final NicknameDefaultGenerator nicknameDefaultGenerator;
 
-    public LoginResult registerOrLogin(OAuthProvider provider, String providerUserId, String email, String suggestedNickname) {
-        final Optional<User> existing = userRepository.findByProviderAndProviderUserId(
-                provider.getRegistrationId(), providerUserId);
+    public LoginResult registerOrLogin(
+            OAuthProvider provider, String providerUserId, String email, String suggestedNickname) {
+        final Optional<User> existing =
+                userRepository.findByProviderAndProviderUserId(provider.getRegistrationId(), providerUserId);
         if (existing.isPresent()) {
             log.debug("기존 회원 로그인: provider={}, providerUserId={}", provider, providerUserId);
             return new LoginResult(existing.get(), false);
@@ -55,8 +56,8 @@ public class UserRegistrationService {
                 log.debug("UserCode 중복 발생, 재시도: {}/{}", attempt + 1, userCodeProperties.maxRetry());
             }
         }
-        throw new BusinessException(UserErrorCode.USER_CODE_GENERATION_FAILED,
-                "사용자 식별 코드 생성에 실패했습니다. 최대 시도 횟수를 초과했습니다.");
+        throw new BusinessException(
+                UserErrorCode.USER_CODE_GENERATION_FAILED, "사용자 식별 코드 생성에 실패했습니다. 최대 시도 횟수를 초과했습니다.");
     }
 
     private boolean isUserCodeViolation(DataIntegrityViolationException e) {
@@ -76,8 +77,8 @@ public class UserRegistrationService {
 
         try {
             if (profanityChecker.contains(trimmed)) {
-                throw new BusinessException(UserErrorCode.NICKNAME_CONTAINS_PROFANITY,
-                        "비속어가 포함된 닉네임입니다. 입력값: '" + trimmed + "'");
+                throw new BusinessException(
+                        UserErrorCode.NICKNAME_CONTAINS_PROFANITY, "비속어가 포함된 닉네임입니다. 입력값: '" + trimmed + "'");
             }
             return new UserNickname(trimmed);
         } catch (BusinessException e) {

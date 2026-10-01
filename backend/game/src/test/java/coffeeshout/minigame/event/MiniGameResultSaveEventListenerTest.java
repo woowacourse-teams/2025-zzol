@@ -49,14 +49,19 @@ class MiniGameResultSaveEventListenerTest {
 
     @Mock
     RoomSnapshotQuery roomSnapshotQuery;
+
     @Mock
     MiniGameJpaRepository miniGameJpaRepository;
+
     @Mock
     MiniGameResultJpaRepository miniGameResultJpaRepository;
+
     @Mock
     GameSessionService gameSessionService;
+
     @Mock
     ApplicationEventPublisher eventPublisher;
+
     @Mock
     OutboxEventRecorder outboxEventRecorder;
 
@@ -90,8 +95,7 @@ class MiniGameResultSaveEventListenerTest {
 
             listener.handle(미니게임종료이벤트(한스, 루키));
 
-            assertThat(발행된_통계().playerStats())
-                    .containsExactly(new PlayerStat(1L, true));
+            assertThat(발행된_통계().playerStats()).containsExactly(new PlayerStat(1L, true));
         }
 
         @Test
@@ -159,7 +163,8 @@ class MiniGameResultSaveEventListenerTest {
 
     private SettlementResultEvent 발행된_정산_이벤트() {
         ArgumentCaptor<SettlementResultEvent> captor = ArgumentCaptor.forClass(SettlementResultEvent.class);
-        verify(outboxEventRecorder).record(org.mockito.ArgumentMatchers.eq(SettlementStreamKey.RESULT), captor.capture());
+        verify(outboxEventRecorder)
+                .record(org.mockito.ArgumentMatchers.eq(SettlementStreamKey.RESULT), captor.capture());
         return captor.getValue();
     }
 
@@ -171,8 +176,7 @@ class MiniGameResultSaveEventListenerTest {
         MiniGameResult result = new MiniGameResult(Map.of(한스, 1, 루키, 2));
         Map<Gamer, MiniGameScore> scores = Map.of(
                 한스, new CardGameScore(100),
-                루키, new CardGameScore(80)
-        );
+                루키, new CardGameScore(80));
 
         when(roomSnapshotQuery.resolveRoomSessionId(JOIN_CODE)).thenReturn(ROOM_SESSION_ID);
         MiniGameEntity miniGameEntity = mock(MiniGameEntity.class);
@@ -189,8 +193,7 @@ class MiniGameResultSaveEventListenerTest {
     }
 
     private void 플레이어_설정(PlayerSnapshot... snapshots) {
-        when(roomSnapshotQuery.resolvePlayers(eq(ROOM_SESSION_ID), any()))
-                .thenReturn(List.of(snapshots));
+        when(roomSnapshotQuery.resolvePlayers(eq(ROOM_SESSION_ID), any())).thenReturn(List.of(snapshots));
     }
 
     private MiniGameStatsRecordedEvent 발행된_통계() {

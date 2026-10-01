@@ -22,7 +22,8 @@ public class RoomSnapshotQueryAdapter implements RoomSnapshotQuery {
 
     @Override
     public long resolveRoomSessionId(String joinCode) {
-        return roomEntityRepository.findFirstByJoinCodeOrderByCreatedAtDesc(joinCode)
+        return roomEntityRepository
+                .findFirstByJoinCodeOrderByCreatedAtDesc(joinCode)
                 .orElseThrow(() -> new IllegalArgumentException("방이 존재하지 않습니다: " + joinCode))
                 .getId();
     }

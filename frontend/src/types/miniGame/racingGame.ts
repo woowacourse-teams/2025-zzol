@@ -1,15 +1,10 @@
-export type RacingGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
+import type {
+  RacingGameRunnersStateResponse,
+  RunnerPosition,
+} from '@/apis/websocket/generated/wsContract';
 
-export type RacingGameData = {
-  distance: {
-    start: number;
-    end: number;
-  };
-  players: RacingPlayer[];
-};
+export type { RacingGameState } from '@/apis/websocket/generated/wsContract';
 
-export type RacingPlayer = {
-  playerName: string;
-  position: number;
-  speed: number;
-};
+export type RacingGameData = RacingGameRunnersStateResponse;
+
+export type RacingPlayer = RunnerPosition;

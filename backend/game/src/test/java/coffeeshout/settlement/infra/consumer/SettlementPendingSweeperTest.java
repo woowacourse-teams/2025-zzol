@@ -36,10 +36,13 @@ class SettlementPendingSweeperTest {
 
     @Mock
     StringRedisTemplate stringRedisTemplate;
+
     @Mock
     StreamOperations<String, Object, Object> streamOperations;
+
     @Mock
     SettlementMessageProcessor processor;
+
     @Mock
     SettlementDeadLetterPublisher deadLetterPublisher;
 
@@ -48,8 +51,7 @@ class SettlementPendingSweeperTest {
     @BeforeEach
     void setUp() {
         given(stringRedisTemplate.opsForStream()).willReturn(streamOperations);
-        sweeper = new SettlementPendingSweeper(
-                stringRedisTemplate, processor, deadLetterPublisher, "test-consumer");
+        sweeper = new SettlementPendingSweeper(stringRedisTemplate, processor, deadLetterPublisher, "test-consumer");
     }
 
     @Nested
@@ -73,9 +75,11 @@ class SettlementPendingSweeperTest {
             sweeper.sweep();
 
             verify(processor).process(record);
-            verify(streamOperations).acknowledge(
-                    eq(SettlementStreamConsumer.STREAM_KEY), eq(SettlementStreamConsumer.GROUP),
-                    eq(RecordId.of("1-1")));
+            verify(streamOperations)
+                    .acknowledge(
+                            eq(SettlementStreamConsumer.STREAM_KEY),
+                            eq(SettlementStreamConsumer.GROUP),
+                            eq(RecordId.of("1-1")));
         }
 
         @Test
@@ -87,9 +91,11 @@ class SettlementPendingSweeperTest {
 
             verify(deadLetterPublisher).publish(eq(record), anyString());
             verify(processor, never()).process(any());
-            verify(streamOperations).acknowledge(
-                    eq(SettlementStreamConsumer.STREAM_KEY), eq(SettlementStreamConsumer.GROUP),
-                    eq(RecordId.of("1-1")));
+            verify(streamOperations)
+                    .acknowledge(
+                            eq(SettlementStreamConsumer.STREAM_KEY),
+                            eq(SettlementStreamConsumer.GROUP),
+                            eq(RecordId.of("1-1")));
         }
 
         @Test
@@ -113,9 +119,11 @@ class SettlementPendingSweeperTest {
             sweeper.sweep();
 
             verify(deadLetterPublisher).publish(eq(record), anyString());
-            verify(streamOperations).acknowledge(
-                    eq(SettlementStreamConsumer.STREAM_KEY), eq(SettlementStreamConsumer.GROUP),
-                    eq(RecordId.of("1-1")));
+            verify(streamOperations)
+                    .acknowledge(
+                            eq(SettlementStreamConsumer.STREAM_KEY),
+                            eq(SettlementStreamConsumer.GROUP),
+                            eq(RecordId.of("1-1")));
         }
 
         @Test
@@ -134,16 +142,12 @@ class SettlementPendingSweeperTest {
 
     private PendingMessage 대기_메시지(String id, Duration idle, long deliveryCount) {
         return new PendingMessage(
-                RecordId.of(id),
-                Consumer.from(SettlementStreamConsumer.GROUP, "dead-consumer"),
-                idle,
-                deliveryCount
-        );
+                RecordId.of(id), Consumer.from(SettlementStreamConsumer.GROUP, "dead-consumer"), idle, deliveryCount);
     }
 
     private void pending_설정(PendingMessage... messages) {
         given(streamOperations.pending(
-                eq(SettlementStreamConsumer.STREAM_KEY), eq(SettlementStreamConsumer.GROUP), any(), eq(50L)))
+                        eq(SettlementStreamConsumer.STREAM_KEY), eq(SettlementStreamConsumer.GROUP), any(), eq(50L)))
                 .willReturn(new PendingMessages(SettlementStreamConsumer.GROUP, List.of(messages)));
     }
 

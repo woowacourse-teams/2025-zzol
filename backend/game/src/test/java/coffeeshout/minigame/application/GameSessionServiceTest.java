@@ -18,8 +18,8 @@ import coffeeshout.minigame.domain.GameSessionStatus;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.minigame.infra.MemoryGameSessionRepository;
 import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
+import coffeeshout.minigame.infra.MemoryGameSessionRepository;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -76,9 +76,7 @@ class GameSessionServiceTest {
         @Test
         @DisplayName("존재하지 않는 세션을 getSession하면 NOT_EXIST 예외가 발생한다")
         void 존재하지_않는_세션을_조회하면_NOT_EXIST_예외가_발생한다() {
-            assertCoffeeShoutException(
-                    () -> service.getSession(JOIN_CODE),
-                    GlobalErrorCode.NOT_EXIST);
+            assertCoffeeShoutException(() -> service.getSession(JOIN_CODE), GlobalErrorCode.NOT_EXIST);
         }
 
         @Test
@@ -158,9 +156,7 @@ class GameSessionServiceTest {
             // 지연 생성을 제거했으므로 select가 init보다 먼저 도달하면 거짓 호스트를 신뢰하지 않고 거부한다.
             final GameSessionService sut = serviceWithFactories(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME);
             final MiniGameSelectEvent event = new MiniGameSelectEvent(
-                    JOIN_CODE.getValue(),
-                    HOST.getName(),
-                    List.of(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME));
+                    JOIN_CODE.getValue(), HOST.getName(), List.of(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME));
 
             assertCoffeeShoutException(() -> sut.updateGames(event), GlobalErrorCode.NOT_EXIST);
             assertThat(repository.existsByJoinCode(JOIN_CODE)).isFalse();
@@ -169,15 +165,14 @@ class GameSessionServiceTest {
         @Test
         @DisplayName("기존 세션이 있으면 선택 게임 목록을 통째로 교체한다")
         void 기존_세션이_있으면_교체한다() {
-            final GameSessionService sut = serviceWithFactories(
-                    MiniGameType.CARD_GAME, MiniGameType.RACING_GAME, MiniGameType.LADDER_GAME);
+            final GameSessionService sut =
+                    serviceWithFactories(MiniGameType.CARD_GAME, MiniGameType.RACING_GAME, MiniGameType.LADDER_GAME);
             sut.initSession(JOIN_CODE, HOST);
-            sut.updateGames(new MiniGameSelectEvent(
-                    JOIN_CODE.getValue(), HOST.getName(), List.of(MiniGameType.CARD_GAME)));
+            sut.updateGames(
+                    new MiniGameSelectEvent(JOIN_CODE.getValue(), HOST.getName(), List.of(MiniGameType.CARD_GAME)));
 
             sut.updateGames(new MiniGameSelectEvent(
-                    JOIN_CODE.getValue(), HOST.getName(),
-                    List.of(MiniGameType.RACING_GAME, MiniGameType.LADDER_GAME)));
+                    JOIN_CODE.getValue(), HOST.getName(), List.of(MiniGameType.RACING_GAME, MiniGameType.LADDER_GAME)));
 
             assertThat(sut.getSession(JOIN_CODE).getSelectedTypes())
                     .containsExactly(MiniGameType.RACING_GAME, MiniGameType.LADDER_GAME);
@@ -188,13 +183,12 @@ class GameSessionServiceTest {
         void 팩토리_맵으로_Playable을_생성한다() {
             final GameSessionService sut = serviceWithFactories(MiniGameType.CARD_GAME);
             sut.initSession(JOIN_CODE, HOST);
-            final MiniGameSelectEvent event = new MiniGameSelectEvent(
-                    JOIN_CODE.getValue(), HOST.getName(), List.of(MiniGameType.CARD_GAME));
+            final MiniGameSelectEvent event =
+                    new MiniGameSelectEvent(JOIN_CODE.getValue(), HOST.getName(), List.of(MiniGameType.CARD_GAME));
 
             sut.updateGames(event);
 
-            assertThat(sut.getSession(JOIN_CODE).getSelectedTypes())
-                    .containsExactly(MiniGameType.CARD_GAME);
+            assertThat(sut.getSession(JOIN_CODE).getSelectedTypes()).containsExactly(MiniGameType.CARD_GAME);
         }
     }
 
@@ -211,8 +205,7 @@ class GameSessionServiceTest {
 
         private void initSessionWithScoredGame(Map<Gamer, MiniGameScore> scores) {
             service.initSession(JOIN_CODE, HOST);
-            service.getSession(JOIN_CODE)
-                    .replaceGames(HOST, List.of(new StubPlayable(MiniGameType.CARD_GAME, scores)));
+            service.getSession(JOIN_CODE).replaceGames(HOST, List.of(new StubPlayable(MiniGameType.CARD_GAME, scores)));
             service.startGame(JOIN_CODE, HOST, List.of(HOST, GUEST));
         }
 
@@ -242,8 +235,7 @@ class GameSessionServiceTest {
         @DisplayName("getScores는 세션이 없으면 NOT_EXIST 예외가 발생한다")
         void getScores는_세션이_없으면_NOT_EXIST_예외가_발생한다() {
             assertCoffeeShoutException(
-                    () -> service.getScores(JOIN_CODE, MiniGameType.CARD_GAME),
-                    GlobalErrorCode.NOT_EXIST);
+                    () -> service.getScores(JOIN_CODE, MiniGameType.CARD_GAME), GlobalErrorCode.NOT_EXIST);
         }
 
         @Test
@@ -252,8 +244,7 @@ class GameSessionServiceTest {
             initSessionWithStartedGame();
 
             assertCoffeeShoutException(
-                    () -> service.getScores(JOIN_CODE, MiniGameType.LADDER_GAME),
-                    GameSessionErrorCode.GAME_NOT_FOUND);
+                    () -> service.getScores(JOIN_CODE, MiniGameType.LADDER_GAME), GameSessionErrorCode.GAME_NOT_FOUND);
         }
 
         @Test

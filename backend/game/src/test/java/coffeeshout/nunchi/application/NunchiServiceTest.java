@@ -56,7 +56,8 @@ class NunchiServiceTest {
     void start는_게임을_조회해_Flow를_시작한다() {
         service.start(JOIN_CODE.getValue(), "일");
 
-        verify(flowOrchestrator).startFlow(eq(game), argThat(code -> code.getValue().equals(JOIN_CODE.getValue())));
+        verify(flowOrchestrator)
+                .startFlow(eq(game), argThat(code -> code.getValue().equals(JOIN_CODE.getValue())));
     }
 
     @Test
@@ -64,7 +65,8 @@ class NunchiServiceTest {
         service.handlePress(JOIN_CODE.getValue(), "일", T0);
 
         // 새 Gamer가 아니라 setUp으로 주입된 원본 인스턴스를 넘겨야 점수맵 키와 매칭된다
-        verify(flowOrchestrator).handlePress(argThat(code -> code.getValue().equals(JOIN_CODE.getValue())), eq(일), eq(T0));
+        verify(flowOrchestrator)
+                .handlePress(argThat(code -> code.getValue().equals(JOIN_CODE.getValue())), eq(일), eq(T0));
     }
 
     @Test
@@ -78,7 +80,6 @@ class NunchiServiceTest {
 
     @Test
     void getMiniGameType은_NUNCHI_GAME이다() {
-        org.assertj.core.api.Assertions.assertThat(service.getMiniGameType())
-                .isEqualTo(MiniGameType.NUNCHI_GAME);
+        org.assertj.core.api.Assertions.assertThat(service.getMiniGameType()).isEqualTo(MiniGameType.NUNCHI_GAME);
     }
 }

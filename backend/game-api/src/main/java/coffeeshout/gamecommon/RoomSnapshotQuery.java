@@ -21,6 +21,5 @@ public interface RoomSnapshotQuery {
      */
     List<PlayerSnapshot> resolvePlayers(long roomSessionId, List<String> playerNames);
 
-    record PlayerSnapshot(String playerName, long playerId) {
-    }
+    record PlayerSnapshot(String playerName, long playerId) {}
 }

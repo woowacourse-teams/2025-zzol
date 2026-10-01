@@ -32,57 +32,48 @@ public class FriendNotifier {
     private final LoggingSimpMessagingTemplate messagingTemplate;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @WsQueue(path = FRIEND_REQUESTS_QUEUE, payload = FriendRequestPayload.class,
-            description = "친구 요청 수신 알림")
+    @WsQueue(path = FRIEND_REQUESTS_QUEUE, payload = FriendRequestPayload.class, description = "친구 요청 수신 알림")
     public void onFriendRequestCreated(FriendRequestCreatedEvent event) {
         final FriendRequestPayload payload = new FriendRequestPayload(
                 event.requestId(),
                 event.requesterId(),
                 event.requesterUserCode(),
                 event.requesterNickname(),
-                event.timestamp()
-        );
+                event.timestamp());
         sendToUser(event.addresseeId(), FRIEND_REQUESTS_QUEUE, payload);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @WsQueue(path = FRIEND_RESPONSES_QUEUE, payload = FriendResponsePayload.class,
+    @WsQueue(
+            path = FRIEND_RESPONSES_QUEUE,
+            payload = FriendResponsePayload.class,
             description = "친구 요청 수락 알림 (요청자·수신자 양방향)")
     public void onFriendRequestAccepted(FriendRequestAcceptedEvent event) {
         final FriendResponsePayload toRequester = new FriendResponsePayload(
-                event.requestId(), true,
-                event.addresseeId(), event.addresseeUserCode(), event.addresseeNickname()
-        );
+                event.requestId(), true, event.addresseeId(), event.addresseeUserCode(), event.addresseeNickname());
         sendToUser(event.requesterId(), FRIEND_RESPONSES_QUEUE, toRequester);
 
         final FriendResponsePayload toAddressee = new FriendResponsePayload(
-                event.requestId(), true,
-                event.requesterId(), event.requesterUserCode(), event.requesterNickname()
-        );
+                event.requestId(), true, event.requesterId(), event.requesterUserCode(), event.requesterNickname());
         sendToUser(event.addresseeId(), FRIEND_RESPONSES_QUEUE, toAddressee);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @WsQueue(path = FRIEND_RESPONSES_QUEUE, payload = FriendResponsePayload.class,
-            description = "친구 요청 거절 알림")
+    @WsQueue(path = FRIEND_RESPONSES_QUEUE, payload = FriendResponsePayload.class, description = "친구 요청 거절 알림")
     public void onFriendRequestRejected(FriendRequestRejectedEvent event) {
         final FriendResponsePayload payload = new FriendResponsePayload(
-                event.requestId(), false,
-                event.addresseeId(), event.addresseeUserCode(), event.addresseeNickname()
-        );
+                event.requestId(), false, event.addresseeId(), event.addresseeUserCode(), event.addresseeNickname());
         sendToUser(event.requesterId(), FRIEND_RESPONSES_QUEUE, payload);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @WsQueue(path = FRIEND_REMOVED_QUEUE, payload = FriendRemovedPayload.class,
-            description = "친구 삭제 알림")
+    @WsQueue(path = FRIEND_REMOVED_QUEUE, payload = FriendRemovedPayload.class, description = "친구 삭제 알림")
     public void onFriendRemoved(FriendRemovedEvent event) {
         sendToUser(event.targetUserId(), FRIEND_REMOVED_QUEUE, new FriendRemovedPayload(event.removedByUserId()));
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @WsQueue(path = ROOM_INVITATIONS_QUEUE, payload = RoomInvitationPayload.class,
-            description = "방 초대 알림")
+    @WsQueue(path = ROOM_INVITATIONS_QUEUE, payload = RoomInvitationPayload.class, description = "방 초대 알림")
     public void onRoomInvitationSent(RoomInvitationSentEvent event) {
         sendToUser(event.targetUserId(), ROOM_INVITATIONS_QUEUE, RoomInvitationPayload.from(event));
     }

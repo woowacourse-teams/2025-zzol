@@ -1,6 +1,3 @@
 package coffeeshout.room.ui.request;
 
-public record RouletteSpinMessage(
-        String hostName
-) {
-}
+public record RouletteSpinMessage(String hostName) {}

@@ -1,48 +1,59 @@
 <svg width="299" height="453" viewBox="0 0 299 453" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- 배경 -->
-  <rect width="299" height="453" rx="20" fill="#EAF6F0"/>
-
-  <!-- 배경 패널 -->
-  <rect x="20" y="30" width="259" height="393" rx="14" fill="#1DD1A1" fill-opacity="0.12"/>
-
-  <!-- 쌓인 블록 타워 (아래에서 위로) -->
-  <!-- 1층 -->
-  <rect x="50" y="370" width="200" height="28" rx="5" fill="#FF6B6B"/>
-  <rect x="50" y="370" width="200" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
-
-  <!-- 2층 -->
-  <rect x="62" y="340" width="176" height="28" rx="5" fill="#FF9F43"/>
-  <rect x="62" y="340" width="176" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
-
-  <!-- 3층 -->
-  <rect x="74" y="310" width="152" height="28" rx="5" fill="#FECA57"/>
-  <rect x="74" y="310" width="152" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
-
-  <!-- 4층 -->
-  <rect x="88" y="280" width="124" height="28" rx="5" fill="#48DBFB"/>
-  <rect x="88" y="280" width="124" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
-
-  <!-- 5층 -->
-  <rect x="100" y="250" width="100" height="28" rx="5" fill="#1DD1A1"/>
-  <rect x="100" y="250" width="100" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
-
-  <!-- 6층 -->
-  <rect x="112" y="220" width="76" height="28" rx="5" fill="#54A0FF"/>
-  <rect x="112" y="220" width="76" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
-
-  <!-- 7층 -->
-  <rect x="122" y="190" width="56" height="28" rx="5" fill="#A29BFE"/>
-  <rect x="122" y="190" width="56" height="5" rx="3" fill="rgba(255,255,255,0.3)"/>
-
+  <rect width="299" height="453" rx="20" fill="#E9E6F5"/>
+  <!-- 위는 밤, 땅 가까이는 노을 -->
+  <rect x="20" y="30" width="259" height="393" rx="14" fill="#0B1026"/>
+  <rect x="20" y="200" width="259" height="180" fill="#1B2A4A"/>
+  <rect x="20" y="300" width="259" height="80" fill="#5B4B8A"/>
+  <rect x="20" y="352" width="259" height="28" fill="#F58E6B"/>
+  <!-- 달과 별 -->
+  <circle cx="60" cy="80" r="14" fill="#FFD66B"/>
+  <circle cx="67" cy="74" r="12" fill="#0B1026"/>
+  <circle cx="98" cy="120" r="1.5" fill="white"/>
+  <circle cx="232" cy="98" r="2" fill="white"/>
+  <circle cx="262" cy="150" r="1.5" fill="white"/>
+  <circle cx="48" cy="170" r="2" fill="white"/>
+  <circle cx="200" cy="52" r="1.5" fill="white"/>
+  <!-- 땅: 잔디와 흙 -->
+  <path d="M20 392H279V409A14 14 0 0 1 265 423H34A14 14 0 0 1 20 409Z" fill="#6B4E36"/>
+  <rect x="20" y="380" width="259" height="12" fill="#67B45C"/>
+  <!-- 나무 -->
+  <rect x="32" y="352" width="6" height="28" rx="2" fill="#6B4E36"/>
+  <circle cx="35" cy="346" r="13" fill="#67B45C"/>
+  <rect x="50" y="354" width="200" height="24" rx="5" fill="#2B3445"/>
+  <rect x="85" y="361" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="125" y="361" width="10" height="10" rx="2" fill="#44536B"/>
+  <rect x="165" y="361" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="205" y="361" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="62" y="328" width="178" height="24" rx="5" fill="#44536B"/>
+  <rect x="93" y="335" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="128" y="335" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="164" y="335" width="10" height="10" rx="2" fill="#2B3445"/>
+  <rect x="199" y="335" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="66" y="302" width="158" height="24" rx="5" fill="#44536B"/>
+  <rect x="93" y="309" width="10" height="10" rx="2" fill="#2B3445"/>
+  <rect x="124" y="309" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="156" y="309" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="187" y="309" width="10" height="10" rx="2" fill="#2B3445"/>
+  <rect x="84" y="276" width="138" height="24" rx="5" fill="#44536B"/>
+  <rect x="107" y="283" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="134" y="283" width="10" height="10" rx="2" fill="#2B3445"/>
+  <rect x="162" y="283" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="189" y="283" width="10" height="10" rx="2" fill="#2B3445"/>
+  <rect x="80" y="250" width="116" height="24" rx="5" fill="#44536B"/>
+  <rect x="114" y="257" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="152" y="257" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="98" y="224" width="96" height="24" rx="5" fill="#44536B"/>
+  <rect x="125" y="231" width="10" height="10" rx="2" fill="#2B3445"/>
+  <rect x="157" y="231" width="10" height="10" rx="2" fill="#FFD66B"/>
+  <rect x="92" y="198" width="76" height="24" rx="5" fill="#44536B"/>
+  <rect x="125" y="205" width="10" height="10" rx="2" fill="#FFD66B"/>
   <!-- 층수 배지 -->
   <circle cx="230" cy="200" r="28" fill="#F53E41"/>
   <text x="230" y="196" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="13" font-weight="700" fill="white">7층</text>
   <text x="230" y="213" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="10" font-weight="500" fill="rgba(255,255,255,0.85)">달성!</text>
-
-  <!-- 위쪽 화살표 (높이 강조) -->
-  <path d="M149 155 L149 80" stroke="#1DD1A1" stroke-width="3" stroke-linecap="round"/>
-  <path d="M137 92 L149 76 L161 92" fill="none" stroke="#1DD1A1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-
-  <!-- 설명 텍스트 -->
-  <text x="149" y="62" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="14" font-weight="700" fill="#1DD1A1">높이 쌓을수록 유리!</text>
+  <!-- 위쪽 화살표 -->
+  <path d="M149 160L149 80" stroke="#FFD66B" stroke-width="3" stroke-linecap="round"/>
+  <path d="M137 92L149 76L161 92" stroke="#FFD66B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="149" y="62" text-anchor="middle" font-family="'Pretendard Variable', Pretendard, sans-serif" font-size="14" font-weight="700" fill="#FFD66B">높이 쌓을수록 유리!</text>
 </svg>

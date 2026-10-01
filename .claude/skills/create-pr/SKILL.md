@@ -35,6 +35,12 @@ allowed-tools: Read, Bash, Glob, Agent, Skill
 - `$ARGUMENTS`에 제목이 있으면 그대로, 없으면 커밋 내용으로 자동 생성
 - type별 제목·본문 예시는 [examples.md](examples.md) 참조
 
+제목은 **간략한 설명 한 줄**이다. 변경 내용을 요약하는 자리지 목차를 미리 보여주는 자리가 아니다.
+
+- **줄표(`—`)로 부제를 붙이지 않는다.** 세부는 본문 `🚀 작업 내용`에 있다. 제목에 옮겨 적으면 목록 화면에서 잘리고, 본문과 두 벌이 된다([korean-style](../../rules/korean-style.md#하이픈과-줄표)).
+- 바꾼 대상 하나와 무엇이 달라지는지를 담는다. 쉼표·가운뎃점으로 항목을 나열하지 않는다.
+- `[type]`을 뺀 길이를 40자 안쪽으로 잡는다. 넘으면 대개 두 가지를 한 제목에 넣은 것이다.
+
 ## 라벨 & Assignee
 
 - **type 라벨** (1개): feat `✨feat` / fix `🐞bug` / refactor `🛠️refactor` / chore `⚙️chore` / docs `📝docs` / test `🧪 test`
@@ -43,6 +49,8 @@ allowed-tools: Read, Bash, Glob, Agent, Skill
 - Assignee: `gh api user --jq '.login'` 결과로 자동 지정
 
 ## 작성 원칙 (본문 공통)
+
+**문장과 낱말은 [korean-style](../../rules/korean-style.md)이 정한다.** 여기서는 정보를 어떻게 배치할지만 다룬다.
 
 **독자는 이 저장소를 처음 보는 1년차 팀원이다.** 목표는 글자 수를 줄이는 것이 아니라 **독자가 다시 읽는 횟수를 줄이는 것**이다.
 
@@ -160,7 +168,7 @@ Bash 툴은 호출마다 새 셸이라 `$PR_URL`은 블록 간 유지되지 않�
 
 CodeRabbit 자동 리뷰를 대체하는 단계다(#1600). PR이 이미 존재하므로 여기서 리뷰를 돌려 발견사항을 PR 코멘트로 게시한다.
 
-리뷰 로직은 `deep-review` 스킬에 있다. 그대로 호출한다 — 렌즈 선택·병렬 실행·채점·코멘트 게시를 스킬이 처리한다.
+리뷰 로직은 `deep-review` 스킬에 있다. 그대로 호출하면 렌즈 선택·병렬 실행·채점·코멘트 게시를 스킬이 처리한다.
 
 ```text
 Skill("deep-review", "--base=$BASE --comment")

@@ -107,13 +107,14 @@ profanity_word (
 
 ```sql
 player_name_audit (
-  id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-  nickname    VARCHAR(10)  NOT NULL,
-  status      VARCHAR(10)  NOT NULL,  -- UNAUDITED | FLAGGED | PENDING | CLEAN | ALLOWED | BLOCKED
-  confidence  DECIMAL(3,2),
-  reason      VARCHAR(255),
-  created_at  TIMESTAMP    NOT NULL,
-  audited_at  TIMESTAMP
+  id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nickname      VARCHAR(10)  NOT NULL,
+  status        VARCHAR(20)  NOT NULL,  -- UNAUDITED | FLAGGED | PENDING | CLEAN | ALLOWED | BLOCKED | DEAD_LETTER
+  confidence    DECIMAL(3,2),
+  reason        VARCHAR(255),
+  attempt_count INT          NOT NULL DEFAULT 0,  -- 검열 호출이 이 행을 담은 배치에서 실패한 횟수
+  created_at    TIMESTAMP    NOT NULL,
+  audited_at    TIMESTAMP
 )
 
 player_name_feedback (
@@ -158,3 +159,17 @@ player_name_feedback (
 - `VaneProfanityChecker`, `ProfanityCheckerSyncListener`, `CustomProfanityLoader`를 제거하고 `:profanity` 구현체로 대체한다
 - `PlayerNameRankingCleanupService`의 차단 단어 조회를 `ProfanityWordRepository`로 교체한다
 - `:admin` 모듈에 비속어 관리 CRUD REST API(`/admin/profanity/words`)를 추가한다
+
+## 갱신 지연 한계 (#1759)
+
+10만 건 규모의 닉네임 검열 회차를 실측하니 트라이 재빌드가 10,028회, 합계 2,272초 걸려 회차 시간(271초)의
+8.4배가 겹쳐 돌았다. `RedisMessageListenerContainer`의 기본 실행기가 신호마다 새 스레드를 만들어 동시
+실행 상한이 없던 게 원인이다.
+
+`ProfanityTrieRefreshSubscriber`가 신호를 병합하고 최소 간격(기본 5초, `ProfanityTrieRebuildProperties`)을
+두도록 바꿨다. 그 결과 위 "다중 인스턴스 동기화"의 **즉시 broadcast**와 트레이드오프의 **단어 변경 시마다
+리빌드**는 더 이상 사실이 아니다.
+
+- 단어 변경 반영은 최대 `min-interval`만큼 늦을 수 있다. 매시 정각에 도는 `ProfanityTrieRebuildScheduler`
+  안전망이 이미 최대 1시간 지연을 설계로 받아들이고 있어, 몇 초 지연은 그 안에 든다.
+- 재빌드와 단어 변경은 더 이상 1:1이 아니다. 재빌드 한 번이 그 사이 쌓인 여러 변경을 한꺼번에 반영한다.

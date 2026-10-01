@@ -1,0 +1,73 @@
+package coffeeshout.admin.auth;
+
+import coffeeshout.admin.account.domain.AdminEmail;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import java.time.Duration;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
+
+/**
+ * 관리자 인증 설정.
+ *
+ * <p>{@code emails}는 환경변수 {@code ADMIN_EMAILS}로 주입하는 부트스트랩 허용목록이다.
+ * DB {@code admin_account} 테이블과 합집합으로 판정하되, 이 목록은 백오피스 UI에서 삭제할 수 없다.
+ * 관리자가 실수로 자기들을 전부 지워 아무도 못 들어가는 상태를 막는 break-glass 경로다.
+ *
+ * <p>바인딩은 {@code List<String>}으로 받는다. 환경변수에 오타가 있어도 앱이 뜨긴 해야 하므로,
+ * 형식이 어긋난 항목은 예외 대신 조용히 걸러낸다. 대신 남은 항목은 전부 정규화된 {@link AdminEmail}이다.
+ */
+@Validated
+@ConfigurationProperties(prefix = "admin.auth")
+public record AdminAuthProperties(
+        List<String> emails,
+        String googleClientId,
+
+        @NotBlank @Size(min = 32, message = "관리자 JWT secret은 HS256 최소 키 길이(32자) 이상이어야 합니다.")
+        String jwtSecret,
+
+        @Positive long tokenValiditySeconds,
+
+        @Positive long refreshTokenValiditySeconds,
+
+        // 로그인한 뒤 이 시간이 지나면 쓰고 있어도 재발급을 거절한다. 슬라이딩만 두면 탈취한 쿠키로
+        // 기간 안에 한 번씩 재발급해 무기한 쓸 수 있다.
+        @Positive long refreshTokenMaxLifetimeSeconds,
+
+        // refresh 와 logout 을 부를 수 있는 오리진. 회원 프론트도 같은 사이트라 SameSite 만으로는
+        // 그쪽에서 오는 요청을 못 막는다. 그래서 Origin 헤더를 이 목록과 따로 대조한다.
+        @NotEmpty List<String> webOrigins) {
+
+    public Duration refreshTokenValidity() {
+        return Duration.ofSeconds(refreshTokenValiditySeconds);
+    }
+
+    public Duration refreshTokenMaxLifetime() {
+        return Duration.ofSeconds(refreshTokenMaxLifetimeSeconds);
+    }
+
+    public boolean isWebOrigin(String origin) {
+        return origin != null && webOrigins.contains(origin);
+    }
+
+    public boolean isBootstrap(AdminEmail email) {
+        return email != null && bootstrapEmails().contains(email);
+    }
+
+    /** 순서를 유지해야 목록 화면에서 부트스트랩 관리자가 매번 같은 자리에 보인다. */
+    public Set<AdminEmail> bootstrapEmails() {
+        if (emails == null) {
+            return Set.of();
+        }
+        final Set<AdminEmail> parsed = new LinkedHashSet<>();
+        for (String each : emails) {
+            AdminEmail.parse(each).ifPresent(parsed::add);
+        }
+        return parsed;
+    }
+}

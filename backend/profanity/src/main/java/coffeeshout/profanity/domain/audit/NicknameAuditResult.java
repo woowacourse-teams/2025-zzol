@@ -11,8 +11,7 @@ public record NicknameAuditResult(
         NicknameAuditStatus status,
         AiConfidence confidence,
         String reason,
-        List<String> profanityTerms
-) {
+        List<String> profanityTerms) {
 
     public NicknameAuditResult {
         profanityTerms = (profanityTerms == null)
@@ -48,15 +47,17 @@ public record NicknameAuditResult(
     }
 
     public static NicknameAuditResult of(
-            String nickname, boolean flagged, double confidence, String reason, double flaggedThreshold
-    ) {
+            String nickname, boolean flagged, double confidence, String reason, double flaggedThreshold) {
         return of(nickname, flagged, confidence, reason, List.of(), flaggedThreshold);
     }
 
     public static NicknameAuditResult of(
-            String nickname, boolean flagged, double confidence, String reason,
-            List<String> profanityTerms, double flaggedThreshold
-    ) {
+            String nickname,
+            boolean flagged,
+            double confidence,
+            String reason,
+            List<String> profanityTerms,
+            double flaggedThreshold) {
         final AiConfidence aiConfidence = AiConfidence.of(confidence);
 
         if (!flagged) {

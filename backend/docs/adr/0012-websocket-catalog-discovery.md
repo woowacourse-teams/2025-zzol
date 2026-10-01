@@ -55,8 +55,8 @@ public @interface WsReceive {
 
 `@MessageMapping`만 있는 핸들러 — 즉 직접 토픽을 발행하지 않고 Redis Stream 이벤트를 발행해 비동기로 응답이 나가는 핸들러 — 에 사용한다.
 `@WsTopic(payload = Object.class)` 형식의 회피 코드를 막기 위해 도입되었다 — 빌더가 `Object.class` payload 를 거부하므로 비동기 핸들러는 `@WsReceive` 를 써야 한다.
-`respondsOnTopics`로 이 send 처리 결과가 어떤 토픽으로 최종 발행되는지 선언적으로 표시해 FE가 send→topic 인과 관계를 파악할 수 있도록 한다.
-request payload 식별은 `@Payload` 어노테이션을 통해 명시한다 — `@Payload` 없는 매개변수는 카탈로그에서 `requestType=null` 로 표시된다.
+`respondsOnTopics`로 이 send 처리 결과가 어떤 토픽으로 최종 발행되는지 선언적으로 표시해 FE가 send→topic 인과 관계를 파악하게 한다.
+request payload 식별은 `@Payload` 어노테이션으로 명시한다 — `@Payload` 없는 매개변수는 카탈로그에서 `requestType=null` 로 표시된다.
 
 **`@WsQueue` 어노테이션 시그니처** (`coffeeshout.websocket.docs.WsQueue`)
 
@@ -142,5 +142,5 @@ public @interface WsQueue {
 - Node MCP 서버 (`tools/ws-mcp/`)는 커밋 726a51f0 에서 6종 도구(ws_connect, ws_describe, ws_list_topics, ws_send, ws_source, ws_subscribe)로 추가되었다. roomToken 발급 흐름은 ADR-0009(POST /api/rooms/{joinCode}/session-token) 를 따른다.
 - MCP 등록 파일(`.mcp.json`)은 **각 서브프로젝트 폴더**(`backend/.mcp.json`, `frontend/.mcp.json`)에 둔다. Claude Code 는 실행 디렉토리의 `.mcp.json` 만 인식하고 개발자가 보통 `cd backend && claude` / `cd frontend && claude` 흐름으로 띄우므로 모노레포 루트 `.mcp.json` 은 두지 않는다. `args` 의 상대 경로는 `../tools/ws-mcp/dist/server.js` 를 공통 사용한다.
 - `frontend/CLAUDE.md` 와 `frontend/.mcp.json` 가이드는 별도 PR(fe/dev 베이스)에서 추가한다.
-- `ws-catalog.json` fixture 는 `WsCatalogFixtureGeneratorTest`(`-DupdateFixture=true` 실행)로 재생성한다. 스냅샷 동등 검증 테스트는 두지 않는다 — MCP 서버가 라이브 엔드포인트를 직접 소비하므로 fixture 스냅샷이 계약을 강제할 근거가 없고, OS별 줄바꿈 차이로 인한 불안정성 비용이 더 크다.
+- ~~`ws-catalog.json` fixture 는 `WsCatalogFixtureGeneratorTest`(`-DupdateFixture=true` 실행)로 재생성한다. 스냅샷 동등 검증 테스트는 두지 않는다 — MCP 서버가 라이브 엔드포인트를 직접 소비하므로 fixture 스냅샷이 계약을 강제할 근거가 없고, OS별 줄바꿈 차이로 인한 불안정성 비용이 더 크다.~~ **ADR-0037 로 뒤집음.** MCP 폐기로 fixture 와 생성 TS 파일이 FE 게이트의 SSOT 가 됐고, `WsCatalogContractTest` 가 항상 다시 써서 backend-ci 가 신선도를 강제한다. 줄바꿈은 `DefaultIndenter("  ", "\n")` 와 `.gitattributes eol=lf` 로 고정했다.
 - `WsCatalogBuilder` 는 publishers(`className#methodName` 사전순)와 schemas(이름 사전순)를 안정 정렬해 카탈로그 JSON 출력이 결정적임을 보장한다. JVM HashSet/HashMap 의 비결정적 순서가 출력에 새지 않도록 막아 호출마다 동일한 바이트열을 유지한다. 이는 `WsCatalogController` 의 ETag 캐시(`hashCode` 기반 약한 지문)가 의미를 갖기 위한 전제 조건이다.

@@ -10,10 +10,4 @@ package coffeeshout.zzolbot.eval.domain;
  * @param rationale            판정 근거
  */
 public record JudgeScore(
-        int accuracy,
-        int groundedness,
-        boolean hallucinationDetected,
-        EvalVerdict verdict,
-        String rationale
-) {
-}
+        int accuracy, int groundedness, boolean hallucinationDetected, EvalVerdict verdict, String rationale) {}

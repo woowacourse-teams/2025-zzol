@@ -12,6 +12,4 @@ public record RacingGameTimingProperties(
         @NotNull @DurationMin(nanos = 1) Duration description,
         @NotNull @DurationMin(nanos = 1) Duration prepare,
         @NotNull @DurationMin(nanos = 1) Duration raceFinishedDelay,
-        @NotNull @DurationMin(nanos = 1) Duration moveInterval
-) {
-}
+        @NotNull @DurationMin(nanos = 1) Duration moveInterval) {}

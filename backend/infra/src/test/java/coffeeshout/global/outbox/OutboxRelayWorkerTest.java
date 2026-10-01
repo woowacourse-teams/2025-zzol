@@ -74,8 +74,7 @@ class OutboxRelayWorkerTest {
             // given
             OutboxEvent event = createMockEvent(1L, "room", "{\"@type\":\"StubEvent\"}");
             given(eventProcessor.fetchAndMarkInProgress(50)).willReturn(List.of(event));
-            given(objectMapper.readValue(event.getPayload(), BaseEvent.class))
-                    .willReturn(new StubBaseEvent());
+            given(objectMapper.readValue(event.getPayload(), BaseEvent.class)).willReturn(new StubBaseEvent());
 
             // when
             outboxRelayWorker.relay();
@@ -91,10 +90,10 @@ class OutboxRelayWorkerTest {
             // given
             OutboxEvent event = createMockEvent(1L, "room", "{\"@type\":\"StubEvent\"}");
             given(eventProcessor.fetchAndMarkInProgress(50)).willReturn(List.of(event));
-            given(objectMapper.readValue(event.getPayload(), BaseEvent.class))
-                    .willReturn(new StubBaseEvent());
+            given(objectMapper.readValue(event.getPayload(), BaseEvent.class)).willReturn(new StubBaseEvent());
             doThrow(new RuntimeException("Redis connection refused"))
-                    .when(streamPublisher).publish(any(String.class), any(String.class), nullable(String.class));
+                    .when(streamPublisher)
+                    .publish(any(String.class), any(String.class), nullable(String.class));
 
             // when
             outboxRelayWorker.relay();
@@ -111,8 +110,7 @@ class OutboxRelayWorkerTest {
             OutboxEvent event2 = createMockEvent(2L, "room", "{\"@type\":\"event2\"}");
             OutboxEvent event3 = createMockEvent(3L, "room", "{\"@type\":\"event3\"}");
 
-            given(eventProcessor.fetchAndMarkInProgress(50))
-                    .willReturn(List.of(event1, event2, event3));
+            given(eventProcessor.fetchAndMarkInProgress(50)).willReturn(List.of(event1, event2, event3));
 
             given(objectMapper.readValue(any(String.class), eq(BaseEvent.class)))
                     .willReturn(new StubBaseEvent());
@@ -120,7 +118,8 @@ class OutboxRelayWorkerTest {
             doThrow(new RuntimeException("timeout"))
                     .doNothing()
                     .doNothing()
-                    .when(streamPublisher).publish(any(String.class), any(String.class), nullable(String.class));
+                    .when(streamPublisher)
+                    .publish(any(String.class), any(String.class), nullable(String.class));
 
             // when
             outboxRelayWorker.relay();
@@ -131,5 +130,4 @@ class OutboxRelayWorkerTest {
             verify(eventProcessor).markPublished(3L);
         }
     }
-
 }

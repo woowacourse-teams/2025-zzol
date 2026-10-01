@@ -32,8 +32,8 @@ class OAuthAccountEmailEncryptionTest extends UserModuleIntegrationTest {
         void DB에는_평문이_아닌_암호문이_저장된다() {
             userRepository.save(UserFixture.회원_엠제이());
 
-            final String storedEmail = jdbcTemplate.queryForObject(
-                    "SELECT email FROM oauth_account LIMIT 1", String.class);
+            final String storedEmail =
+                    jdbcTemplate.queryForObject("SELECT email FROM oauth_account LIMIT 1", String.class);
 
             assertThat(storedEmail).isNotEqualTo(PLAIN_EMAIL);
         }
@@ -85,8 +85,7 @@ class OAuthAccountEmailEncryptionTest extends UserModuleIntegrationTest {
                     null,
                     new UserCode("ZZ9ZZ"),
                     new UserNickname("카카오엠제이"),
-                    new OAuthAccount(OAuthProvider.KAKAO, "kakao-uid-mj", PLAIN_EMAIL)
-            ));
+                    new OAuthAccount(OAuthProvider.KAKAO, "kakao-uid-mj", PLAIN_EMAIL)));
 
             assertThat(userRepository.findByEmail(PLAIN_EMAIL)).isPresent();
         }

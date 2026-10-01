@@ -1,16 +1,18 @@
-import { LadderGameState, LadderLine, Pole } from '@/types/miniGame/ladderGame';
+import { LadderGameState, LadderGhost, LadderLine, Pole } from '@/types/miniGame/ladderGame';
 import { createContext, useContext } from 'react';
 
 type LadderGameContextType = {
   gameState: LadderGameState;
   poles: Pole[];
   bottomRanks: Record<string, number>;
+  rowCount: number;
   lines: LadderLine[];
-  ghostSegmentIndex: number | null;
+  ghost: LadderGhost | null;
   endTimeEpochMs: number | null;
   rankings: Record<string, number> | null;
   animationDurationMs: number | null;
-  drawLine: (segmentIndex: number) => void;
+  drawLine: (segmentIndex: number, row: number) => void;
+  dropGhost: () => void;
 };
 
 export const LadderGameContext = createContext<LadderGameContextType | null>(null);

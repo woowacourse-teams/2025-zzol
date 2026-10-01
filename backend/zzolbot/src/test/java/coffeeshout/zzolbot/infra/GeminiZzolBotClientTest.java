@@ -38,18 +38,14 @@ class GeminiZzolBotClientTest {
             "gemini-2.0-flash",
             8,
             new ZzolBotProperties.MonitoringProperties(
-                    "http://loki:3100",
-                    "http://tempo:3200",
-                    "http://prometheus:9090",
-                    "local"
-            ),
+                    "http://loki:3100", "http://tempo:3200", "http://prometheus:9090", "local"),
             new ZzolBotProperties.DeterminismProperties(0.1, 0.1),
             60,
             10000L,
-            new ZzolBotProperties.SqlProperties(List.of(), 100, 3)
-    );
+            new ZzolBotProperties.SqlProperties(List.of(), 100, 3));
 
-    private static final AskContext CTX = AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+    private static final AskContext CTX =
+            AskContext.stamp("test", List.of(), Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
 
     @Spy
     private GeminiZzolBotClient geminiZzolBotClient =
@@ -66,11 +62,7 @@ class GeminiZzolBotClientTest {
             doReturn(response).when(geminiZzolBotClient).callApi(anyList(), any(GenerateContentConfig.class));
 
             final ZzolBotLlmResponse result = geminiZzolBotClient.generate(
-                    List.of(new ZzolBotMessage.UserMessage("ABC1 방 상태 알려줘")),
-                    List.of(),
-                    "시스템 지시사항",
-                    CTX
-            );
+                    List.of(new ZzolBotMessage.UserMessage("ABC1 방 상태 알려줘")), List.of(), "시스템 지시사항", CTX);
 
             assertThat(result).isInstanceOf(ZzolBotLlmResponse.TextResponse.class);
             assertThat(((ZzolBotLlmResponse.TextResponse) result).text()).contains("PLAYING");
@@ -87,15 +79,10 @@ class GeminiZzolBotClientTest {
             doReturn(response).when(geminiZzolBotClient).callApi(anyList(), any(GenerateContentConfig.class));
 
             final ZzolBotLlmResponse result = geminiZzolBotClient.generate(
-                    List.of(new ZzolBotMessage.UserMessage("ABC1 방 상태")),
-                    List.of(),
-                    "시스템 지시사항",
-                    CTX
-            );
+                    List.of(new ZzolBotMessage.UserMessage("ABC1 방 상태")), List.of(), "시스템 지시사항", CTX);
 
             assertThat(result).isInstanceOf(ZzolBotLlmResponse.ToolCallsResponse.class);
-            final ZzolBotLlmResponse.ToolCallsResponse toolCalls =
-                    (ZzolBotLlmResponse.ToolCallsResponse) result;
+            final ZzolBotLlmResponse.ToolCallsResponse toolCalls = (ZzolBotLlmResponse.ToolCallsResponse) result;
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(toolCalls.calls()).hasSize(1);
                 softly.assertThat(toolCalls.calls().get(0).toolName()).isEqualTo("room_state");
@@ -106,14 +93,12 @@ class GeminiZzolBotClientTest {
         @Test
         void callApi_예외_시_RuntimeException으로_전파된다() {
             doThrow(new RuntimeException("Gemini API 호출 실패"))
-                    .when(geminiZzolBotClient).callApi(anyList(), any(GenerateContentConfig.class));
+                    .when(geminiZzolBotClient)
+                    .callApi(anyList(), any(GenerateContentConfig.class));
 
             assertThatThrownBy(() -> geminiZzolBotClient.generate(
-                    List.of(new ZzolBotMessage.UserMessage("질문")),
-                    List.of(),
-                    "시스템 지시사항",
-                    CTX
-            )).isInstanceOf(RuntimeException.class);
+                            List.of(new ZzolBotMessage.UserMessage("질문")), List.of(), "시스템 지시사항", CTX))
+                    .isInstanceOf(RuntimeException.class);
         }
     }
 }

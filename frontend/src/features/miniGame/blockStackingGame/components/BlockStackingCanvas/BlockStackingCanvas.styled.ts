@@ -28,33 +28,6 @@ export const Canvas = styled.canvas`
   height: 100%;
 `;
 
-export const TimerContainer = styled.div`
-  width: 12px;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
-  backdrop-filter: blur(4px);
-`;
-
-export const TimerFill = styled.div<{ timeLeft: number; totalTime: number }>`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: ${({ timeLeft, totalTime }) => (timeLeft / totalTime) * 100}%;
-  background: ${({ timeLeft }) =>
-    timeLeft < 5
-      ? 'linear-gradient(to top, #ff4d4d, #ff9f43)'
-      : 'linear-gradient(to top, #48dbfb, #1dd1a1)'};
-  transition:
-    background 0.3s ease,
-    box-shadow 0.3s ease;
-  box-shadow: 0 0 8px
-    ${({ timeLeft }) => (timeLeft < 5 ? 'rgba(255, 77, 77, 0.5)' : 'rgba(72, 219, 251, 0.3)')};
-`;
-
 export const MuteButton = styled.button`
   position: absolute;
   top: 12px;

@@ -4,11 +4,9 @@ import coffeeshout.global.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-
 @RequiredArgsConstructor
 @Getter
 public enum RoomErrorCode implements ErrorCode {
-
     PLAYER_NAME_BLANK(400, "이름은 공백일 수 없습니다."),
     PLAYER_NAME_TOO_LONG(400, "이름은 10자 이하여야 합니다."),
     PLAYER_NAME_CONTAINS_PROFANITY(400, "비속어가 포함된 닉네임은 사용할 수 없습니다."),

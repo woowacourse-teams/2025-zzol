@@ -1,0 +1,23 @@
+{
+  "name": "monitor-heap-high-sparse-unrelated-errors",
+  "question": "알림 JvmHeapUsageHigh(critical)가 prod에서 발화했다 - JVM 힙 사용률 85% 초과. 봇에는 최근 30분 ERROR 로그 샘플 2줄(눈치게임 스케줄 예외, 카드게임 이벤트 처리 실패)이 주어졌다.",
+  "rubric": "주어진 ERROR 로그는 눈치게임 스케줄러 예외 1건과 카드게임 이벤트 처리 실패 1건뿐으로, 힙 사용률 상승(메모리 누수, 과도한 객체 보유, GC 문제)을 뒷받침하는 근거가 아니다. '근거 발견: 아니오'로 판정하고 원인 가설을 내지 않아야 정답. 산발적인 게임 에러 2건을 힙 사용률 85% 초과의 원인으로 지목하면 오답.",
+  "source": "MANUAL",
+  "alert": {
+    "alertname": "JvmHeapUsageHigh",
+    "severity": "critical",
+    "fingerprint": "golden-synth-05",
+    "summary": "JVM 힙 사용률 > 85% (prod-app)",
+    "description": "힙 사용률이 91.3%. GC 오버헤드 증가 및 OOM 위험.",
+    "labels": {
+      "alertname": "JvmHeapUsageHigh",
+      "severity": "critical",
+      "job": "prod-app"
+    }
+  },
+  "logSamples": [
+    "[2026-08-23 02:14:37.921] [ERROR] [,] --- [nunchi-task-1] c.g.s.GameTaskSchedulerFactory : [nunchi] 스케줄 실행 중 예외가 발생했습니다.",
+    "[2026-08-23 02:29:50.114] [ERROR] [d94b07c2a5e14f83b6a0c81d47e92f35,7c50a2e94d18b6f3] --- [redis-stream-thread-pool-cardgame:select1] c.global.redis.EventDispatcher : 이벤트 처리 실패: consumer=SelectCardCommandEventConsumer, message=SelectCardCommandEvent[eventId=f7a92c40-6b1e-45d8-9c23-a80e514d7b96, timestamp=2026-08-22T17:29:50.110883122Z, joinCode=T8WN, playerName=PLAYER_1, cardIndex=4]"
+  ],
+  "logEnvironment": "prod"
+}

@@ -1,11 +1,11 @@
 package coffeeshout.blindtimer.domain;
 
+import coffeeshout.gamecommon.Gamer;
+import coffeeshout.gamecommon.Playable;
 import coffeeshout.global.exception.custom.BusinessException;
 import coffeeshout.minigame.domain.MiniGameResult;
 import coffeeshout.minigame.domain.MiniGameScore;
 import coffeeshout.minigame.domain.MiniGameType;
-import coffeeshout.gamecommon.Gamer;
-import coffeeshout.gamecommon.Playable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -25,9 +25,10 @@ public class BlindTimerGame implements Playable {
     private static final Duration TARGET_MAX = Duration.ofMillis(19990);
 
     private BlindTimerPlayers players;
+
     @Getter(AccessLevel.NONE)
-    private final AtomicReference<BlindTimerGameState> state =
-            new AtomicReference<>(BlindTimerGameState.DESCRIPTION);
+    private final AtomicReference<BlindTimerGameState> state = new AtomicReference<>(BlindTimerGameState.DESCRIPTION);
+
     private volatile Instant startTime;
     private final Duration targetTime;
 
@@ -35,8 +36,8 @@ public class BlindTimerGame implements Playable {
     private ScheduledFuture<?> timeoutFuture;
 
     public BlindTimerGame() {
-        final long millis = ThreadLocalRandom.current().nextLong(
-                TARGET_MIN.toMillis() / 10, TARGET_MAX.toMillis() / 10 + 1) * 10;
+        final long millis =
+                ThreadLocalRandom.current().nextLong(TARGET_MIN.toMillis() / 10, TARGET_MAX.toMillis() / 10 + 1) * 10;
         this.targetTime = Duration.ofMillis(millis);
     }
 
@@ -56,11 +57,7 @@ public class BlindTimerGame implements Playable {
 
     @Override
     public Map<Gamer, MiniGameScore> getScores() {
-        return players.stream()
-                .collect(Collectors.toMap(
-                        BlindTimerPlayer::getGamer,
-                        this::calculateScore
-                ));
+        return players.stream().collect(Collectors.toMap(BlindTimerPlayer::getGamer, this::calculateScore));
     }
 
     @Override
@@ -76,9 +73,7 @@ public class BlindTimerGame implements Playable {
     }
 
     public void markAllTimedOut() {
-        players.stream()
-                .filter(p -> !p.isStopped())
-                .forEach(BlindTimerPlayer::markTimedOut);
+        players.stream().filter(p -> !p.isStopped()).forEach(BlindTimerPlayer::markTimedOut);
     }
 
     public boolean isAllStopped() {
@@ -126,9 +121,7 @@ public class BlindTimerGame implements Playable {
     private void validatePlaying() {
         if (state.get() != BlindTimerGameState.PLAYING) {
             throw new BusinessException(
-                    BlindTimerGameErrorCode.NOT_PLAYING_STATE,
-                    "현재 게임 상태가 플레이 중이 아닙니다: " + state.get()
-            );
+                    BlindTimerGameErrorCode.NOT_PLAYING_STATE, "현재 게임 상태가 플레이 중이 아닙니다: " + state.get());
         }
     }
 }

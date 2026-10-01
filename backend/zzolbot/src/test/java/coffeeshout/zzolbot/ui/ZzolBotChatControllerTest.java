@@ -57,15 +57,6 @@ class ZzolBotChatControllerTest {
     }
 
     @Nested
-    class page_메서드 {
-
-        @Test
-        void zzolbot_뷰_이름을_반환한다() {
-            assertThat(controller.page()).isEqualTo("admin/zzolbot");
-        }
-    }
-
-    @Nested
     class ask_메서드 {
 
         @Test
@@ -73,15 +64,11 @@ class ZzolBotChatControllerTest {
             given(chatService.ask(anyString(), anyString(), any()))
                     .willReturn(new ZzolBotChatResult(1L, "방 A4BX는 PLAYING 상태입니다."));
 
-            final SseEmitter emitter = controller.ask(
-                    new ZzolBotChatController.AskRequest("A4BX 방 상태"),
-                    principal
-            );
+            final SseEmitter emitter = controller.ask(new ZzolBotChatController.AskRequest("A4BX 방 상태"), principal);
 
             assertThat(emitter).isNotNull();
-            await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
-                    verify(chatService).ask(eq("A4BX 방 상태"), eq("admin"), any())
-            );
+            await().atMost(Duration.ofSeconds(3))
+                    .untilAsserted(() -> verify(chatService).ask(eq("A4BX 방 상태"), eq("admin"), any()));
         }
     }
 
@@ -90,9 +77,8 @@ class ZzolBotChatControllerTest {
 
         @Test
         void 피드백을_적용하고_200을_반환한다() {
-            final ResponseEntity<Void> response = controller.feedback(
-                    1L, new ZzolBotChatController.FeedbackRequest(ZzolBotFeedback.GOOD)
-            );
+            final ResponseEntity<Void> response =
+                    controller.feedback(1L, new ZzolBotChatController.FeedbackRequest(ZzolBotFeedback.GOOD));
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -107,9 +93,8 @@ class ZzolBotChatControllerTest {
 
         @Test
         void 최근_세션_목록을_SessionResponse로_변환해_반환한다() {
-            final ZzolBotSessionEntity session = ZzolBotSessionEntity.create(
-                    "A4BX 방 상태 알려줘", "PLAYING 상태입니다.", "admin"
-            );
+            final ZzolBotSessionEntity session =
+                    ZzolBotSessionEntity.create("A4BX 방 상태 알려줘", "PLAYING 상태입니다.", "admin");
             given(chatService.getRecentSessions()).willReturn(List.of(session));
 
             final List<ZzolBotChatController.SessionResponse> result = controller.sessions();

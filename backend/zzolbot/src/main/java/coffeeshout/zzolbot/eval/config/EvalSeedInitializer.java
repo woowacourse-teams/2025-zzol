@@ -1,5 +1,6 @@
 package coffeeshout.zzolbot.eval.config;
 
+import coffeeshout.zzolbot.eval.domain.ScenarioKind;
 import coffeeshout.zzolbot.eval.domain.ScenarioSource;
 import coffeeshout.zzolbot.eval.domain.ToolCallKey;
 import coffeeshout.zzolbot.eval.domain.ToolSnapshot;
@@ -61,7 +62,12 @@ public class EvalSeedInitializer implements ApplicationRunner {
             }
             final String snapshotJson = codec.toJson(new ToolSnapshot(results));
             scenarioRepository.save(EvalScenarioEntity.create(
-                    seed.name(), seed.question(), snapshotJson, seed.rubric(), resolveSource(seed.source())));
+                    seed.name(),
+                    ScenarioKind.CHAT,
+                    seed.question(),
+                    snapshotJson,
+                    seed.rubric(),
+                    resolveSource(seed.source())));
             log.info("[ZzolBot] 평가 시드 적재: {}", seed.name());
         } catch (Exception e) {
             log.warn("[ZzolBot] 평가 시드 파일 처리 실패. resource={}", resource.getFilename(), e);
@@ -80,9 +86,7 @@ public class EvalSeedInitializer implements ApplicationRunner {
         }
     }
 
-    private record SeedFile(String name, String question, String rubric, String source, List<SeedEntry> snapshot) {
-    }
+    private record SeedFile(String name, String question, String rubric, String source, List<SeedEntry> snapshot) {}
 
-    private record SeedEntry(String toolName, Map<String, Object> args, String content) {
-    }
+    private record SeedEntry(String toolName, Map<String, Object> args, String content) {}
 }

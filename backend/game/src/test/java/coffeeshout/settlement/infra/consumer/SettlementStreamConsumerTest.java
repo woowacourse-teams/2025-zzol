@@ -22,10 +22,10 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -36,18 +36,25 @@ class SettlementStreamConsumerTest {
 
     @Mock
     RedisConnectionFactory redisConnectionFactory;
+
     @Mock
     StringRedisTemplate stringRedisTemplate;
+
     @Mock
     StreamOperations<String, Object, Object> streamOperations;
+
     @Mock
     RedisStreamProperties properties;
+
     @Mock
     RedisStreamContainerRegistry containerRegistry;
+
     @Mock
     SettlementMessageProcessor processor;
+
     @Mock
     SettlementDeadLetterPublisher deadLetterPublisher;
+
     @Mock
     ThreadPoolTaskExecutor executor;
 
@@ -64,8 +71,7 @@ class SettlementStreamConsumerTest {
                 processor,
                 deadLetterPublisher,
                 executor,
-                "test-consumer"
-        );
+                "test-consumer");
     }
 
     @Nested
@@ -78,8 +84,7 @@ class SettlementStreamConsumerTest {
             // 폴링 루프가 에러 스택 로그를 무한 반복한다(테스트 결과 XML 177MB 사고)
             RedisSystemException wrapped = new RedisSystemException(
                     "Error in execution",
-                    new RuntimeException("NOGROUP No such key 'settlement:result' or consumer group 'settlement'")
-            );
+                    new RuntimeException("NOGROUP No such key 'settlement:result' or consumer group 'settlement'"));
 
             consumer.handleStreamError(wrapped);
 
@@ -104,8 +109,8 @@ class SettlementStreamConsumerTest {
             consumer.onMessage(record);
 
             verify(processor).process(record);
-            verify(streamOperations).acknowledge(
-                    SettlementStreamConsumer.STREAM_KEY, SettlementStreamConsumer.GROUP, record.getId());
+            verify(streamOperations)
+                    .acknowledge(SettlementStreamConsumer.STREAM_KEY, SettlementStreamConsumer.GROUP, record.getId());
         }
 
         @Test
@@ -116,8 +121,8 @@ class SettlementStreamConsumerTest {
             consumer.onMessage(record);
 
             verify(deadLetterPublisher).publish(eq(record), anyString());
-            verify(streamOperations).acknowledge(
-                    SettlementStreamConsumer.STREAM_KEY, SettlementStreamConsumer.GROUP, record.getId());
+            verify(streamOperations)
+                    .acknowledge(SettlementStreamConsumer.STREAM_KEY, SettlementStreamConsumer.GROUP, record.getId());
         }
 
         @Test

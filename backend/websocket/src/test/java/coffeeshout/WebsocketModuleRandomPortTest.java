@@ -10,5 +10,4 @@ import org.springframework.context.annotation.Import;
 @SpringBootTest(classes = WebsocketModuleTestApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @Import(ServiceTestConfig.class)
-public abstract class WebsocketModuleRandomPortTest extends IntegrationTestSupport {
-}
+public abstract class WebsocketModuleRandomPortTest extends IntegrationTestSupport {}

@@ -103,3 +103,16 @@ export const RacingCarIcon = () => (
     <path d="M9 9h2M9 11h2" stroke="white" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
   </svg>
 );
+
+export const WormIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M3 15c0-2.2 1.8-4 4-4s4-1.8 4-4 1.8-4 4-4"
+      stroke="#22C55E"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+    <circle cx="15.5" cy="3.5" r="2.5" fill="#16A34A" />
+    <circle cx="16.4" cy="2.9" r="0.7" fill="white" />
+  </svg>
+);

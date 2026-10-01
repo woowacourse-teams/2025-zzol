@@ -1,6 +1,7 @@
 package coffeeshout.websocket.docs;
 
 import coffeeshout.global.exception.custom.SystemException;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
@@ -432,6 +433,7 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
             for (final RecordComponent component : cls.getRecordComponents()) {
                 final String type = describeFieldType(component.getGenericType());
                 fields.add(new WsCatalog.FieldEntry(component.getName(), isNullable(component) ? type + "?" : type));
+                registerSubTypes(component);
             }
             return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.RECORD, fields, null);
         }
@@ -442,6 +444,18 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
          */
         private static boolean isNullable(RecordComponent component) {
             return component.getAnnotatedType().isAnnotationPresent(Nullable.class);
+        }
+
+        /**
+         * 인터페이스 타입 필드는 그대로는 펼칠 게 없다. Jackson 이 {@code @JsonSubTypes} 로 고르는 구체 record 를 등록해야
+         * FE 가 하위 타입별 모양을 받는다. 애노테이션 target 에 RECORD_COMPONENT 가 없어 접근자 메서드에서 읽는다.
+         */
+        private void registerSubTypes(RecordComponent component) {
+            final JsonSubTypes subTypes = component.getAccessor().getAnnotation(JsonSubTypes.class);
+            if (subTypes == null) {
+                return;
+            }
+            Arrays.stream(subTypes.value()).forEach(subType -> registerIfDescribable(subType.value(), pending));
         }
 
         private String describeFieldType(Type type) {

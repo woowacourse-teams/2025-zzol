@@ -995,14 +995,6 @@
         "MULTIPLIER"
       ]
     },
-    "CommandType" : {
-      "kind" : "enum",
-      "fields" : null,
-      "values" : [
-        "START_MINI_GAME",
-        "SELECT_CARD"
-      ]
-    },
     "Entry" : {
       "kind" : "record",
       "fields" : [
@@ -1172,12 +1164,8 @@
       "kind" : "record",
       "fields" : [
         {
-          "name" : "commandType",
-          "type" : "CommandType"
-        },
-        {
           "name" : "commandRequest",
-          "type" : "JsonNode"
+          "type" : "MiniGameCommand"
         }
       ],
       "values" : null
@@ -1596,6 +1584,20 @@
       ],
       "values" : null
     },
+    "SelectCardCommand" : {
+      "kind" : "record",
+      "fields" : [
+        {
+          "name" : "playerName",
+          "type" : "String"
+        },
+        {
+          "name" : "cardIndex",
+          "type" : "Integer"
+        }
+      ],
+      "values" : null
+    },
     "SpeedTouchGameState" : {
       "kind" : "enum",
       "fields" : null,
@@ -1640,6 +1642,16 @@
         {
           "name" : "state",
           "type" : "SpeedTouchGameState"
+        }
+      ],
+      "values" : null
+    },
+    "StartMiniGameCommand" : {
+      "kind" : "record",
+      "fields" : [
+        {
+          "name" : "hostName",
+          "type" : "String"
         }
       ],
       "values" : null

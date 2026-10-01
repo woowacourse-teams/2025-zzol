@@ -7,6 +7,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import coffeeshout.websocket.ui.WebSocketResponse;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.SoftAssertions;
@@ -155,6 +157,22 @@ class WsCatalogBuilderTest {
                         .extracting(WsCatalog.FieldEntry::type)
                         .containsExactly("Long?", "List<String>?", "String");
             });
+        }
+    }
+
+    @Nested
+    @DisplayName("@JsonSubTypes 인터페이스 필드를 가진 요청")
+    class JsonSubTypes_필드를_가진_요청 {
+
+        @Test
+        @DisplayName("하위 record 가 스키마로 등록된다")
+        void 하위_record_가_스키마로_등록된다() {
+            when(applicationContext.getBeansWithAnnotation(Component.class))
+                    .thenReturn(Map.of("fixture", new FixturePolyController()));
+
+            final WsCatalog catalog = builder.build();
+
+            assertThat(catalog.schemas()).containsKeys("FixturePolyRequest", "FixtureStartCmd", "FixtureSelectCmd");
         }
     }
 
@@ -462,6 +480,27 @@ class WsCatalogBuilderTest {
         @MessageMapping("/test/{joinCode}/action")
         @WsTopic(path = "/test/{joinCode}/result", payload = FixturePayload.class, description = "테스트 토픽")
         public void doAction(@DestinationVariable String joinCode, @Payload FixtureRequest request) {}
+    }
+
+    interface FixtureCmd {}
+
+    record FixtureStartCmd(String hostName) implements FixtureCmd {}
+
+    record FixtureSelectCmd(int cardIndex) implements FixtureCmd {}
+
+    record FixturePolyRequest(
+            @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
+            @JsonSubTypes({
+                @JsonSubTypes.Type(value = FixtureStartCmd.class, name = "START"),
+                @JsonSubTypes.Type(value = FixtureSelectCmd.class, name = "SELECT")
+            })
+            FixtureCmd body) {}
+
+    static class FixturePolyController {
+
+        @MessageMapping("/test/{joinCode}/poly")
+        @WsReceive(respondsOnTopics = "/test/{joinCode}/result", description = "다형 요청")
+        public void handle(@DestinationVariable String joinCode, @Payload FixturePolyRequest request) {}
     }
 
     static class FixtureReceiveController {

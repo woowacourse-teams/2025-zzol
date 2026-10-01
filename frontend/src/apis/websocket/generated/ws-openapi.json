@@ -220,13 +220,6 @@
           "MULTIPLIER"
         ]
       },
-      "CommandType" : {
-        "type" : "string",
-        "enum" : [
-          "START_MINI_GAME",
-          "SELECT_CARD"
-        ]
-      },
       "Entry" : {
         "required" : [
           "playerName",
@@ -428,19 +421,44 @@
         }
       },
       "MiniGameMessage" : {
-        "required" : [
-          "commandRequest",
-          "commandType"
-        ],
-        "type" : "object",
-        "properties" : {
-          "commandType" : {
-            "$ref" : "#/components/schemas/CommandType"
+        "oneOf" : [
+          {
+            "required" : [
+              "commandRequest",
+              "commandType"
+            ],
+            "type" : "object",
+            "properties" : {
+              "commandRequest" : {
+                "$ref" : "#/components/schemas/StartMiniGameCommand"
+              },
+              "commandType" : {
+                "type" : "string",
+                "enum" : [
+                  "START_MINI_GAME"
+                ]
+              }
+            }
           },
-          "commandRequest" : {
-            "type" : "object"
+          {
+            "required" : [
+              "commandRequest",
+              "commandType"
+            ],
+            "type" : "object",
+            "properties" : {
+              "commandRequest" : {
+                "$ref" : "#/components/schemas/SelectCardCommand"
+              },
+              "commandType" : {
+                "type" : "string",
+                "enum" : [
+                  "SELECT_CARD"
+                ]
+              }
+            }
           }
-        }
+        ]
       },
       "MiniGameSelectMessage" : {
         "required" : [
@@ -909,6 +927,22 @@
           }
         }
       },
+      "SelectCardCommand" : {
+        "required" : [
+          "cardIndex",
+          "playerName"
+        ],
+        "type" : "object",
+        "properties" : {
+          "playerName" : {
+            "type" : "string"
+          },
+          "cardIndex" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "SpeedTouchGameState" : {
         "type" : "string",
         "enum" : [
@@ -960,6 +994,17 @@
         "properties" : {
           "state" : {
             "$ref" : "#/components/schemas/SpeedTouchGameState"
+          }
+        }
+      },
+      "StartMiniGameCommand" : {
+        "required" : [
+          "hostName"
+        ],
+        "type" : "object",
+        "properties" : {
+          "hostName" : {
+            "type" : "string"
           }
         }
       },

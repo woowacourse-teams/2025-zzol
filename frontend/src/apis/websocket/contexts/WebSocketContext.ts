@@ -1,14 +1,16 @@
 import { Client, StompSubscription } from '@stomp/stompjs';
 import { createContext, useContext } from 'react';
-import type { WsSendDestination, WsSendPath } from '../generated/wsContract';
+import type { WsRequestOf, WsSendDestination, WsSendPath } from '../generated/wsContract';
 
 export type WebSocketContextType = {
   startSocket: (roomToken: string) => void;
   stopSocket: () => void;
-  send: <T, D extends WsSendPath>(
+  /** body 는 BE 요청 record 에서 생성한 타입이다. 요청 record 가 없는 destination 은 body 를 생략한다. */
+  send: <D extends WsSendPath>(
     destination: WsSendDestination<D>,
-    body?: T,
-    onError?: (error: Error) => void
+    ...args: WsRequestOf<D> extends undefined
+      ? [body?: undefined, onError?: (error: Error) => void]
+      : [body: WsRequestOf<D>, onError?: (error: Error) => void]
   ) => void;
   subscribe: <T>(
     destination: string,

@@ -1,7 +1,8 @@
 # 0029. api-mcp — WebSocket 디스커버리에서 HTTP/OpenAPI 디스커버리로 확장 + `ws-mcp` 리네임
 
 - 날짜: 2026-06-15
-- 상태: 폐기됨 (ADR-0037 로 대체)
+- 상태: 대체됨 ([ADR-0037](0037-fe-be-contract-type-generation.md))
+- 사유: api-mcp 실호출이 0건이었고, 조회형 도구는 계약 위반을 막지 못해 생성 타입과 tsc 게이트로 바꿨다.
 
 ## 컨텍스트
 

@@ -2,7 +2,7 @@
 
 ## 상태
 
-승인 (2026-06-04) — Phase 1(QueryDSL fork 교체) 완료(#1389), Phase 2–3 잔여
+승인 (2026-06-04; Phase 1 QueryDSL fork 교체 완료 #1389, Phase 2 Boot 4 전환 완료 #1563, Phase 3 Jackson 3 네이티브 잔여)
 
 ## 컨텍스트
 

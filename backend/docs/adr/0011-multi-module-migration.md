@@ -2,6 +2,7 @@
 
 - 날짜: 2026-05-11
 - 상태: 적용됨 (2026-05-22)
+- 2026-10-01 갱신: 본문의 `:game → :room` 의존은 [ADR-0025](0025-room-gamesession-separation.md)와 [ADR-0034](0034-game-room-decoupling.md)로 제거됐다. 모듈은 `:test-support`([ADR-0013](0013-domain-module-test-isolation.md))·`:web`([ADR-0014](0014-shared-web-module.md))·`:profanity`([ADR-0018](0018-profanity-module-extraction.md)) 추가로 13개다. 아래 의존 그래프와 모듈 맵은 전환 당시 기록이다.
 
 ## 컨텍스트
 

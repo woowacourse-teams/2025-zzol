@@ -14,21 +14,21 @@
 :infra        — Spring + JPA + Redis + Outbox + Lock + IpBlock + Health + Metric
 :web          — 공유 HTTP 인프라 (RestExceptionHandler, CORS, SpringDoc)
 :websocket    — STOMP 플랫폼 (도메인 무지)
-:game-api     — 게임 SPI (Playable, MiniGameFactory, MiniGameService, FlowScheduler, Gamer)
-                + 도메인 간 계약 (이벤트, RoomSnapshotQuery 등 조회 포트 4종)
+:game-api     — 게임 SPI: Playable, MiniGameFactory, MiniGameService, FlowScheduler, Gamer
+                + 도메인 간 계약: 이벤트, RoomSnapshotQuery 등 조회 포트 4종
 :user         — User + Auth + Friend
 :room         — Room aggregate + Player + Roulette + RoomSessionToken
-:game         — 미니게임 8종 구현체 + minigame orchestration + settlement(시즌 정산·종합 랭크)
+:game         — 미니게임 8종 구현체 + minigame orchestration + 시즌 정산·종합 랭크를 맡는 settlement
 :profanity    — 비속어 필터 (:admin·:app 이 사용, :room·:game 은 테스트에서만)
-:admin        — 백오피스 API (관리자 계정·인증, 운영 현황, 회원·방·신고 처리, 검열·IP 차단, 패치노트)
+:admin        — 백오피스 API: 관리자 계정·인증, 운영 현황, 회원·방·신고 처리, 검열·IP 차단, 패치노트
 :zzolbot      — AI 운영자 어시스턴트
 :app          — Spring Boot 진입점, 모든 모듈 조합
 :test-support — 통합/서비스 테스트 공통 인프라 (testImplementation 전용)
 ```
 
-### 의존 방향 (단방향, 순환 없음)
+### 의존 방향
 
-계층은 아래에서 위로만 의존한다. L2 도메인 간 의존은 `:room → :user` 하나뿐이다.
+의존은 단방향이고 순환이 없다. 계층은 아래에서 위로만 의존한다. L2 도메인 간 의존은 `:room → :user` 하나뿐이다.
 
 ```text
 L4  조립      :app                                        ← 모든 모듈 조합
@@ -38,7 +38,7 @@ L1  플랫폼    :websocket  :web  :infra  :game-api  :test-support
 L0  순수      :common                                     ← Spring 무관
 ```
 
-모듈별 프로덕션 의존(`implementation`/`api`)은 다음과 같다. 표의 `→`는 **"왼쪽이 오른쪽에 의존한다"**를 뜻한다.
+`implementation`이나 `api`로 건 모듈별 프로덕션 의존은 다음과 같다. 표의 `→`는 **"왼쪽이 오른쪽에 의존한다"**를 뜻한다.
 
 | 모듈 | 프로덕션 의존 |
 | --- | --- |
@@ -54,21 +54,23 @@ L0  순수      :common                                     ← Spring 무관
 | `:room` | `:common` `:game-api` `:infra` `:web` `:websocket` **`:user`** |
 | `:zzolbot` | `:common` `:game-api` `:infra` `:web` + `:game` `:room` |
 | `:admin` | `:common` `:game-api` `:infra` `:web` + `:game` `:room` `:user` `:profanity` |
-| `:app` | 전 모듈 (`:test-support` 제외 — 테스트 전용) |
+| `:app` | 테스트 전용인 `:test-support`를 뺀 전 모듈 |
 
 **L2 도메인 4개 중 `:game`·`:user`·`:profanity`는 다른 도메인 모듈을 컴파일 시점에 모른다.** `:game`이 방·유저와 주고받는 것은 전부 `:game-api`의 이벤트·조회 포트를 거친다(ADR-0025, ADR-0034). ArchUnit `game_프로덕션은_room을_직접_참조할_수_없다`·`game_프로덕션은_user를_직접_참조할_수_없다`가 재유입을 CI에서 차단한다.
 
-`:room → :user`는 남아 있는 유일한 도메인 간 의존이다. 인증 타입과 `AuthTokenService`, 닉네임 조회, friend 포트(`RoomMembershipQuery`·`RoomInvitationValidator`) 구현에 쓴다.
+`:room → :user`는 남아 있는 유일한 도메인 간 의존이다. 인증 타입과 `AuthTokenService`, 닉네임 조회, friend 포트인 `RoomMembershipQuery`·`RoomInvitationValidator` 구현에 쓴다.
 
 #### 테스트 스코프는 위 그림과 다르다
 
-`testImplementation`/`testFixtures`로만 걸린 의존은 프로덕션 의존이 아니다. `@SpringBootTest` 컨텍스트가 전이 빈을 로드해 생긴 것으로, 위 계층 판단의 근거로 쓰지 않는다.
+`testImplementation`/`testFixtures`로만 걸린 의존은 프로덕션 의존이 아니다. `@SpringBootTest` 컨텍스트가 전이 빈을 로드해 생긴 것으로, 위 계층 판단의 근거로 쓰지 않는다. 아래 의존은 모두 테스트 전용이다.
 
 ```text
-:game → :room  :user  :profanity     (테스트 전용 — 프로덕션 의존 아님)
-:room → :profanity                   (테스트 전용)
-테스트가 있는 9개 모듈 → :test-support  (테스트 전용; :common·:web·:game-api 는 걸지 않는다)
+:game → :room  :user  :profanity
+:room → :profanity
+테스트가 있는 9개 모듈 → :test-support
 ```
+
+`:common`·`:web`·`:game-api`는 `:test-support`를 걸지 않는다.
 
 ---
 
@@ -85,7 +87,7 @@ L0  순수      :common                                     ← Spring 무관
   config/        # 도메인별 스프링 설정 (타이밍, 스레드풀 등)
 ```
 
-`:common` 모듈이 담는 것 (`coffeeshout.global` 아래):
+`:common` 모듈이 `coffeeshout.global` 아래에 담는 것:
 
 | 패키지           | 역할                                                        |
 |---------------|-----------------------------------------------------------|
@@ -101,14 +103,14 @@ L0  순수      :common                                     ← Spring 무관
 
 | 패키지          | 역할                                              |
 |--------------|-------------------------------------------------|
-| `config/`    | 프레임워크 Bean 등록 (Async, Clock, QueryDsl, Observation 등) |
+| `config/`    | 프레임워크 Bean 등록: Async, Clock, QueryDsl, Observation 등 |
 | `redis/`     | Redis Stream 인프라, Redisson, 커넥션 설정              |
 | `ipblock/`   | IP 차단 (필터, 저장소, 악성 경로 감지)                       |
 | `metric/`    | HTTP·Redis Stream Micrometer 메트릭 수집             |
 | `outbox/`    | Transactional Outbox (이벤트 유실 방지)                |
 | `lock/`      | Redisson 기반 분산 락                                |
 | `health/`    | Spring Actuator 헬스 인디케이터                        |
-| `trace/`     | ProfileObservationFilter (관측에 프로파일 태그 부착)        |
+| `trace/`     | 관측에 프로파일 태그를 붙이는 ProfileObservationFilter        |
 
 `:web` 모듈이 담는 것:
 
@@ -128,7 +130,7 @@ L0  순수      :common                                     ← Spring 무관
 - 유스케이스 단위로 클래스를 나눈다
 - 도메인 서비스들을 조합하고 외부 의존성(스케줄러, 알림 등)을 주입받는다
 - `{Domain}FlowOrchestrator`: 복잡한 게임 흐름(타이밍, 페이즈 전환)을 관리
-- `{Domain}CommandService`: 단일 커맨드 처리 (select, touch 등)
+- `{Domain}CommandService`: select, touch 같은 단일 커맨드 처리
 - `{Domain}Notifier`: 도메인 이벤트를 WebSocket 메시지로 변환하여 발행
 
 ### Domain Layer
@@ -183,7 +185,7 @@ L0  순수      :common                                     ← Spring 무관
 각 자리의 근거:
 
 - **WS 세션 드레인이 가장 먼저** — HTTP 요청 드레인이 시작되기 전에 클라이언트를 정리해야 세션이 끊기지 않는다.
-- **폴러 정지(1024)가 커넥션 팩토리(0)보다 먼저** — 순서가 뒤집히면 폴러가 정지된 팩토리에 무한 재시도한다 (#1573).
+- **phase 1024인 폴러 정지가 phase 0인 커넥션 팩토리보다 먼저** — 순서가 뒤집히면 폴러가 정지된 팩토리에 무한 재시도한다 (#1573).
 - **게이지 소등(512)이 폴러 정지 뒤, 커넥션 팩토리 앞** — 폴러가 멈춘 뒤에도 백로그는 관측 대상이다.
   기본값(`Integer.MAX_VALUE`)으로 두면 드레인(`spring.lifecycle.timeout-per-shutdown-phase: 5m`) 내내
   액추에이터는 살아 스크레이핑되는데 게이지만 NaN이 된다 (#1642).
@@ -203,7 +205,7 @@ lifecycle stop 사이의 순서는 phase로 조정할 수 없다.
 :game-api
   Playable        — 게임이 구현해야 하는 인터페이스
   MiniGameFactory — 게임 생성 SPI (각 게임이 Spring 빈으로 등록)
-  MiniGameService — 게임 시작 진입점 SPI (각 게임이 Spring 빈으로 등록)
+  MiniGameService — 게임 시작 진입점 SPI, 각 게임이 Spring 빈으로 등록
   Gamer           — 게임 참여자 (String name, Long userId, Integer colorIndex; 불변 class)
 
 :game
@@ -216,9 +218,9 @@ lifecycle stop 사이의 순서는 phase로 조정할 수 없다.
 
 `Gamer`는 `room.Player` 대신 게임이 사용하는 플레이어 표현으로, game 모듈이 room 타입 없이 플레이어 정보를 다룰 수 있게 한다. 식별(`name`+`userId`)과 표시 상태(`colorIndex`)를 함께 갖는 불변 class이며, 동등성은 식별만으로 정의한다(`colorIndex`는 `equals`/`hashCode` 제외). 색상은 `Player.toGamer()`가 채우고, 게임 응답 DTO가 Room 재조회 없이 `Gamer.colorIndex()`에서 읽는다 (ADR-0025 Step 3).
 
-### 전용 스케줄러·스트림·타이밍 — 테스트 미러링 (자주 누락)
+### 전용 스케줄러·스트림·타이밍의 테스트 미러링은 자주 누락된다
 
-게임은 OCP 한 줄 등록(`MiniGameType` + Factory·Service) 외에 **전용 스케줄러 빈·입력 스트림·타이밍 설정**을 추가한다. 이때 프로덕션에만 등록하고 테스트측 미러를 빠뜨리면, 도메인·서비스 단위 테스트는 통과하지만 **통합테스트가 컨텍스트 로딩 실패 또는 "메시지 미수신"으로 깨진다**. 미러 목록의 기준은 `.claude/rules/game-test-mirror.md`다.
+게임은 `MiniGameType`과 Factory·Service를 거는 OCP 한 줄 등록 외에 **전용 스케줄러 빈·입력 스트림·타이밍 설정**을 추가한다. 이때 프로덕션에만 등록하고 테스트측 미러를 빠뜨리면, 도메인·서비스 단위 테스트는 통과하지만 **통합테스트가 컨텍스트 로딩 실패 또는 "메시지 미수신"으로 깨진다**. 미러 목록의 기준은 `.claude/rules/game-test-mirror.md`다.
 
 ★ **전용 스케줄러 빈 미러는 모듈마다 따로 존재하는 3곳을 전부 추가해야 한다.** 이 셋은 서로 다른 테스트 컨텍스트가 import하므로, 한 곳만 고치면 그 곳을 안 쓰는 모듈의 IT가 깨진다(아래 표 1행).
 
@@ -226,7 +228,7 @@ lifecycle stop 사이의 순서는 phase로 조정할 수 없다.
 |---|---|---|
 | `@Bean("xGameScheduler") @Profile("!test")` (전용 `TaskScheduler`) | **같은 이름** 빈을 다음 3곳에 모두 추가:<br>① `game/src/testFixtures/.../config/GameSchedulerTestConfig` → `new TestTaskScheduler()` (game·service 테스트가 import)<br>② `game/src/test/.../config/IntegrationTestConfig` → `new ShutDownTestScheduler()`<br>③ `app/src/test/.../support/app/config/IntegrationTestConfig` → `new ShutDownTestScheduler()` (전체 컨텍스트 로드 IT가 쓰는 곳) | 컨텍스트 로딩 실패 — `NoSuchBeanDefinitionException: TaskScheduler` (해당 미러가 빠진 모듈의 IT 전체가 무더기 실패) |
 | `config/redis.yml`의 `redis.stream.keys["[x]"]` (전용 입력 스트림) | `test-support/.../application-test-base.yml`의 `redis.stream.keys`에 **같은 키** | 컨슈머 미기동 → 스트림 경로 IT가 타임아웃("메시지 미수신") |
-| `config/game.yml`의 `x-game.timing.*` (`@ConfigurationProperties` + `@NotNull`) | `game/src/testFixtures/resources/application-test-game.yml`에 **같은 키**(IT 가속값) | `@Validated` 바인딩 실패 → 게임 컨텍스트를 올리는 테스트 전체 기동 실패 |
+| `@ConfigurationProperties`와 `@NotNull`로 바인딩하는 `config/game.yml`의 `x-game.timing.*` | `game/src/testFixtures/resources/application-test-game.yml`에 **같은 키**를 IT 가속값으로 | `@Validated` 바인딩 실패 → 게임 컨텍스트를 올리는 테스트 전체 기동 실패 |
 
 체크: 새 게임 PR에 `@Profile("!test")` 빈, 새 `redis.stream.keys` 항목, 새 `timing` 키가 있으면 대응하는 테스트 설정이 같은 diff에 있는지 확인한다. 모두 **공유 테스트 자원**이라 누락 시 그 게임만이 아니라 해당 stream/scheduler를 쓰는 통합테스트 전체가 영향받는다.
 

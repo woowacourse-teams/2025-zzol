@@ -17,9 +17,14 @@ groups:
       # 임계 30 — prod 관측 최대 16건/5분 대비 약 2배 여유(2026-07 실측).
       # ⚠️ 이 실측치는 로그 재수집 아티팩트가 섞인 값이다. #1596의 __path__ 수정이 배포되어
       #    자정 중복 적재가 사라진 뒤 재측정해 보정한다.
+      #
+      # level 라벨 대신 라인 필터를 쓴다(#1791). 이 룰은 서버 체크아웃에서 마운트되고, level 라벨을
+      # 붙이는 prod Alloy 정규식은 prod 브랜치에서 pull 된다. 둘의 반영 시점이 달라 라벨 셀렉터로 먼저
+      # 바꾸면 알림이 조용히 0건이 된다. 대신 "] [ERROR] [" 로 레벨 필드만 잡아, 메시지 본문에
+      # ERROR 가 든 INFO 줄은 세지 않는다.
       - alert: AppErrorLogSpike
         expr: |
-          sum by (job) (count_over_time({job="prod-app"} |= "ERROR" [5m])) > 30
+          sum by (job) (count_over_time({job="prod-app"} |= "] [ERROR] [" [5m])) > 30
         for: 2m
         labels:
           severity: warning

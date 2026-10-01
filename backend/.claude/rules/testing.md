@@ -26,6 +26,6 @@ paths:
 
 - 테스트 메서드명은 한글
 - 복수 검증은 `SoftAssertions`
-- `Thread.sleep` 금지 → Awaitility
+- `Thread.sleep` 금지 → Awaitility (PMD `NoThreadSleep`이 CI에서 강제)
 - 테스트 데이터 직접 생성 금지 → 픽스처 사용. 클래스명은 반드시 5가지 패턴 중 하나: `*Fixture` / `TestDataHelper` / `*Fake` / `*Dummy` / `Stub*`
 - `CoffeeShoutException` 계열은 `assertCoffeeShoutException` 사용. `assertThatThrownBy` 체인 직접 작성 금지

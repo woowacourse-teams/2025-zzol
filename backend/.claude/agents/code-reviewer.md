@@ -46,7 +46,7 @@ background: true
   | Application Service | `{Domain}Service`             |
   | 플로우 오케스트레이터         | `{Domain}FlowOrchestrator`    |
   | WebSocket 알림        | `{Domain}Notifier`            |
-  | 도메인 서비스             | `{Domain}CommandService`      |
+  | 커맨드 서비스 (Application) | `{Domain}CommandService`      |
   | WebSocket 컨트롤러      | `{Domain}WebSocketController` |
   | 커맨드 핸들러             | `{Action}CommandHandler`      |
   | Redis Consumer      | `{Event}Consumer`             |
@@ -71,7 +71,7 @@ background: true
 
 - [ ] `domain/` 이 `application/`, `infra/`, `ui/` 에 의존하지 않는가
 - [ ] `ui/` 가 도메인 서비스를 직접 호출하지 않고 Application Layer 를 경유하는가
-- [ ] 스프링·JPA·Redis 의존성이 `infra/` 에만 존재하는가
+- [ ] `domain/` 의 스프링 의존이 최소인가. JPA 애노테이션은 ADR-0019 가 도메인에 허용한다. `application/` 의 `@Service`·`@Transactional` 은 정상이다
 - [ ] 포트(interface) 가 `domain/` 에 정의되고 구현체가 `infra/` 에 있는가
 
 ### 예외 처리
@@ -82,8 +82,8 @@ background: true
 
 ### 도메인 이벤트 (이벤트 클래스 변경 시)
 
-- [ ] 이벤트가 record 로 정의되고 `BaseEvent` 를 구현하는가
-- [ ] 컴팩트 생성자에서 `eventId`(UUID), `timestamp`(Instant.now()) 를 자동 생성하는가
+- [ ] Redis Stream 으로 나가는 이벤트가 record 로 정의되고 `BaseEvent` 를 구현하는가 (in-process `ApplicationEvent` 는 해당 없음)
+- [ ] `eventId`(UUID), `timestamp`(Instant.now()) 를 보조 생성자 또는 정적 팩토리가 채우는가
 
 ### ADR 충돌
 

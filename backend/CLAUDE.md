@@ -85,7 +85,7 @@ Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는�
 - [문서 작성 컨벤션](docs/conventions-docs.md) — Markdown 린트 규칙 (MD040, MD031, MD022)
 - [ADR 인덱스](docs/adr/index.md) — 주요 기술 의사결정 한 줄 요약 목록 (`/adr [주제]`로 새 ADR 작성, 상세 내용은 개별 파일 참조)
 - [포스트모템 인덱스](docs/postmortem/index.md) — 장애·인시던트·반복 오진의 사후 회고 목록 (`/postmortem [사건]`으로 새 회고 작성, ADR과 독립된 번호 시퀀스)
-- [Notion 워크스페이스](docs/notion-workspace.md) — Notion 주요 페이지 URL, WebSocket 명세서 DB 구조 및 작업 흐름
+- [Notion 워크스페이스](docs/notion-workspace.md) — Notion 주요 페이지 URL. WebSocket 계약은 생성 타입이 출처다(ADR-0037)
 
 통합 테스트는 Docker 기반 TestContainers를 사용하므로 Docker가 실행 중이어야 한다.
 

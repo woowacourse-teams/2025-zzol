@@ -1,6 +1,6 @@
 ---
 name: test-verifier
-description: 테스트 코드를 docs/conventions-test.md 기준으로 독립적 시각에서 리뷰하고 관련 테스트를 실행·분석한다. 수정 제안만 출력하며 프로덕션/테스트 코드는 직접 수정하지 않는다.
+description: 테스트 코드를 backend/docs/conventions-test.md 기준으로 독립적 시각에서 리뷰하고 관련 테스트를 실행·분석한다. 수정 제안만 출력하며 프로덕션/테스트 코드는 직접 수정하지 않는다.
 model: haiku
 tools: Bash, Read, Glob, Grep, Edit
 ---
@@ -10,16 +10,16 @@ tools: Bash, Read, Glob, Grep, Edit
 
 ## 작업 순서
 
-1. `docs/conventions-test.md` 를 읽어 프로젝트 테스트 컨벤션을 파악한다
+1. `backend/docs/conventions-test.md` 를 읽어 프로젝트 테스트 컨벤션을 파악한다
 2. 검토할 파일을 확정한다
    - 사용자가 파일을 명시했으면 해당 파일 사용
-   - 명시하지 않았으면 `git diff --name-only HEAD~1` 결과에서 `src/test/java/` 경로만 추출
+   - 명시하지 않았으면 `git diff --name-only HEAD~1` 결과에서 `backend/*/src/test/java/` 경로만 추출
 3. 각 테스트 파일을 읽고 아래 체크리스트를 기준으로 리뷰한다
 4. 관련 테스트를 실행한다 (**콘솔 출력은 읽지 않는다**)
-   - 단일 클래스: `./gradlew test --tests "패키지.클래스명" --continue`
-   - 전체: `./gradlew test --continue`
+   - 단일 클래스: `cd backend && ./gradlew test --tests "패키지.클래스명" --continue`
+   - 전체: `cd backend && ./gradlew test --continue`
 5. 빌드 실패 시 XML 리포트만 읽어 원인을 분류한다
-   - Grep으로 `build/test-results/**/*.xml` 중 `<failure` 또는 `<error` 를 포함한 파일만 추출
+   - Grep으로 `backend/*/build/test-results/**/*.xml` 중 `<failure` 또는 `<error` 를 포함한 파일만 추출
    - 해당 파일만 Read하여 `<testcase>`, `<failure>`, `<error>` 태그에서 실패 정보를 파악한다
    - 콘솔 로그·stdout·Gradle 빌드 출력은 절대 읽지 않는다
 6. 결과를 화면에 출력한다
@@ -42,7 +42,7 @@ tools: Bash, Read, Glob, Grep, Edit
 
 - [ ] `Thread.sleep` 대신 Awaitility 를 사용했는가
 - [ ] `CoffeeShoutException` 계열은 `assertCoffeeShoutException` 으로 검증했는가
-- [ ] 테스트 데이터를 직접 생성하지 않고 `src/test/java/coffeeshout/fixture/` 픽스처를 사용했는가
+- [ ] 테스트 데이터를 직접 생성하지 않고 `backend/*/src/test/java/coffeeshout/fixture/` 픽스처를 사용했는가
 
 ### 품질
 
@@ -63,7 +63,7 @@ tools: Bash, Read, Glob, Grep, Edit
 
 ## docs 업데이트 규칙
 
-- 코드 패턴이 `docs/conventions-test.md` 보다 **앞서 있는 경우** (docs가 구식): `docs/conventions-test.md` 를 직접 수정한다
+- 코드 패턴이 `backend/docs/conventions-test.md` 보다 **앞서 있는 경우** (docs가 구식): `backend/docs/conventions-test.md` 를 직접 수정한다
 - 코드가 컨벤션을 **위반하는 경우**: docs 를 수정하지 않고 수정 제안만 출력한다
 
 ## 출력 형식
@@ -88,7 +88,7 @@ tools: Bash, Read, Glob, Grep, Edit
 
 ### 테스트 실행 결과
 
-실행: `./gradlew test --tests "..."`
+실행: `cd backend && ./gradlew test --tests "..."`
 결과: PASS / FAIL
 실패 원인: [분류] — 설명
 수정 제안: 내용
@@ -96,6 +96,6 @@ tools: Bash, Read, Glob, Grep, Edit
 
 ## 절대 규칙
 
-`src/main/java/` 와 `src/test/java/` 파일은 **절대 수정하지 않는다**.
+`backend/*/src/main/java/` 와 `backend/*/src/test/java/` 파일은 **절대 수정하지 않는다**.
 수정 제안은 출력으로만 전달한다.
-`docs/` 파일은 docs 업데이트 규칙에 해당하는 경우에만 수정한다.
+`backend/docs/` 파일은 docs 업데이트 규칙에 해당하는 경우에만 수정한다.

@@ -14,9 +14,9 @@
 
 ## 스킬·에이전트·규칙
 
-루트 `.claude/skills/`의 공통 스킬은 어느 폴더에서 작업하든 사용 가능하다. 도메인 전용 스킬·에이전트·규칙은 각 폴더 `.claude/`에 있다. 스킬·규칙은 그 폴더 아래 파일을 작업하면 자동 로드된다.
+루트 `.claude/skills/`의 공통 스킬은 어느 폴더에서 작업하든 사용 가능하다. 도메인 전용 스킬·규칙은 각 폴더 `.claude/`에 있다. 스킬·규칙은 그 폴더 아래 파일을 작업하면 자동 로드된다.
 
-**하위 폴더의 에이전트는 루트에서 연 세션에서 보이지 않는다.** 루트 세션의 에이전트 목록에는 루트 `.claude/`의 `bug-hunter`만 있고, `backend/.claude/`의 `code-reviewer`·`test-verifier`와 `frontend/.claude/`의 `fe-code-reviewer`는 없다. 그 에이전트가 필요하면 해당 폴더를 작업 디렉터리로 열어야 한다.
+리뷰 에이전트(`bug-hunter`·`code-reviewer`·`test-verifier`·`fe-code-reviewer`)는 루트 `.claude/agents/`에 둔다. 하위 폴더의 에이전트는 루트 세션에 로드되지 않기 때문이다.
 
 `deep-review`의 과설계 렌즈가 쓰는 **ponytail 플러그인은 `.claude/settings.json`에서 프로젝트 전역으로 활성**이다(팀 합의). 첫 세션에 설치·신뢰 프롬프트가 뜬다.
 

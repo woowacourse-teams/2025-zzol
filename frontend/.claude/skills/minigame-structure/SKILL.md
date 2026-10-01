@@ -118,7 +118,7 @@ grep -r "miniGameType\|MiniGamePlayPage\|MiniGameReadyPage" src --include="*.tsx
 
 ## 기존 게임 현황
 
-현재 등록된 게임: `CARD_GAME`, `RACING_GAME`, `SPEED_TOUCH`, `BLIND_TIMER`, `BLOCK_STACKING`, `LADDER_GAME`
+등록된 게임 목록은 `src/types/miniGame/common.ts`의 `MINI_GAME_NAME_MAP`이 SSOT다. 여기 나열하지 않는다.
 
 Context 위치 패턴: `src/contexts/<PascalCase>Game/<PascalCase>GameProvider.tsx`
 

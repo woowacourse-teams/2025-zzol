@@ -17,7 +17,7 @@ tools: Bash, Read, Glob, Grep
 | `bug-hunter` 에이전트 | 범용 버그·정확성, 일반 React/TS 정확성(`key` 인덱스, `useEffect` 의존성, 정리 누락 등) |
 | ponytail 렌즈 | 중복·과설계·삭제 후보·단순화 |
 | security 렌즈 | 보안 취약점 |
-| **이 에이전트** | 컴포넌트 계층, 스타일 토큰·Emotion 패턴, API 훅 컨벤션, WebSocket 컨트랙트(MCP 카탈로그 대조), 접근성, Storybook, ADR 충돌 — 범용 렌즈가 알 수 없는 **프로젝트 고유 규칙** |
+| **이 에이전트** | 컴포넌트 계층, 스타일 토큰·Emotion 패턴, API 훅 컨벤션, WebSocket 컨트랙트(생성 타입 대조), 접근성, Storybook, ADR 충돌. 범용 렌즈가 알 수 없는 **프로젝트 고유 규칙** |
 
 출력이 겹치면 본 에이전트는 프로젝트 고유 규칙 위반만 남긴다. `deep-review`가 렌즈를 병렬로 돌리므로 순서를 신경 쓰지 않는다.
 
@@ -29,7 +29,7 @@ tools: Bash, Read, Glob, Grep
    - `.claude/rules/style.md` — 스타일링 상세 규칙 (토큰, Emotion 패턴, 금지 항목)
    - `src/styles/theme.ts` — 디자인 토큰 구조
    - `src/constants/zIndex.ts` — z-index 상수
-   - `src/apis/rest/docs.md` — REST API 훅 사용법
+   - `.claude/skills/api-conventions/SKILL.md` — REST API 훅 컨벤션과 `errorDisplayMode` 기준
 2. 검토할 파일을 확정한다
    - 사용자가 파일을 명시했으면 해당 파일 사용
    - 명시하지 않았으면 `git diff --name-only HEAD~1` 결과에서 `src/` 경로만 추출
@@ -60,7 +60,7 @@ tools: Bash, Read, Glob, Grep
 - [ ] 스타일 파일이 `.styled.ts` 컨벤션을 따르는가
 - [ ] 스타일을 `* as S from './Component.styled'` 패턴으로 임포트하는가
 - [ ] `@common`, `@composition` 컴포넌트에 `.stories.tsx`가 존재하는가
-- [ ] 미니게임은 `src/features/miniGame/<gameName>/` 하위에 `context/`, `pages/`, `components/`, `hooks/` 구조를 따르는가
+- [ ] 미니게임은 `src/features/miniGame/<gameName>/` 하위에 `pages/`, `components/`, `hooks/`를 두고, 게임별 Provider는 `src/contexts/<GameName>/`에 있는가
 
 ### 네이밍
 
@@ -88,8 +88,8 @@ tools: Bash, Read, Glob, Grep
 
 - [ ] GET 요청에 `useFetch` 또는 `useLazyFetch`를 사용하는가
 - [ ] POST/PUT/PATCH/DELETE 요청에 `useMutation`을 사용하는가
-- [ ] `errorDisplayMode`가 명시되어 있는가 (`'toast'` | `'text'` | `'none'`)
-- [ ] `api` 객체를 컴포넌트 내부에서 직접 호출하지 않는가 (훅으로 감싸 사용)
+- [ ] `errorDisplayMode`가 명시되어 있는가 (`'fallback'` | `'toast'` | `'text'`). `'text'`는 `error`를 비우므로 `onError`로 받고 있는가
+- [ ] `api` 객체를 컴포넌트 내부에서 직접 호출하지 않는가 (훅으로 감싸 사용). `bypassAuth`가 필요한 공개 API만 훅 안에서 직접 호출할 수 있다
 - [ ] 하드코딩된 API 엔드포인트 문자열이 아닌 상수나 타입으로 관리되는가
 
 ### WebSocket 컨트랙트
@@ -98,8 +98,6 @@ WebSocket 구독·발행 코드(`useWebSocketSubscription`, `send`)를 검토할
 
 - [ ] destination 에 prefix(`/topic`, `/app`)가 중복으로 들어가 있지 않은가. FE wrapper 가 자동으로 붙이므로 path 에서 제거해야 한다. 개인 큐(`/user/queue/...`)는 그대로 넘긴다 (`.claude/rules/websocket.md` 참조)
 - [ ] 사용한 destination 이 생성 파일에 존재하는가. 없으면 BE 측 `@WsTopic` 추가가 필요하다. 임의 신설 금지
-- [ ] 카탈로그의 `payloadType` 과 onData 콜백 타입이 일치하는가 (특히 `WebSocketResponse<List<X>>` 같은 envelope 의 데이터 부분 매핑)
-- [ ] 동일 `path` 의 publishers 가 여러 개인 경우(예: `/queue/friends/responses` 의 수락/거절) 각 발행 시나리오를 모두 다루는가
 - [ ] 구독은 Provider 또는 훅에서만 — 컴포넌트에서 직접 `useWebSocket().subscribe` 호출 금지
 
 ### 스타일링

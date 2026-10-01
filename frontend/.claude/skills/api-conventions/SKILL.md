@@ -17,7 +17,7 @@ allowed-tools: Read
 | 버튼 클릭 등 사용자 액션으로 조회 | `useLazyFetch` |
 | POST / PUT / PATCH / DELETE       | `useMutation`  |
 
-`api.get()`, `api.post()` 등을 컴포넌트나 훅 내에서 **직접 호출하지 않는다**.
+`api.get()`, `api.post()` 등을 컴포넌트나 훅 내에서 **직접 호출하지 않는다**. 예외는 `bypassAuth: true`가 필요한 비인증 공개 API 하나다. 훅은 이 옵션을 받지 않으므로 훅 경계 안에서만 `api.get()`을 직접 부른다([ADR](../../../docs/adr/20260515-patch-notes-bypass-auth.md)). `api.*` 옵션은 `src/apis/rest/docs.md`에 있다.
 
 ---
 
@@ -29,7 +29,7 @@ import useFetch from '@/apis/rest/useFetch';
 const { data, loading, refetch } = useFetch<ResponseType>({
   endpoint: '/api/resource',
   enabled: isReady,              // 기본값 true — false면 실행 안 함
-  errorDisplayMode: 'toast',     // 'toast' | 'text' | 'none' (생략 시 ErrorBoundary로 throw)
+  errorDisplayMode: 'toast',     // 'fallback' | 'toast' | 'text' (생략 시 ErrorBoundary로 throw)
   onSuccess: (data) => { ... },
   onError: (error) => { ... },
 });
@@ -84,18 +84,20 @@ const handleSubmit = async (payload: RequestType) => {
 
 ## errorDisplayMode 결정 기준
 
-| 값        | 동작                                   | 사용 시점             |
-| --------- | -------------------------------------- | --------------------- |
-| `'toast'` | 에러 토스트 표시 후 `error: null` 유지 | 대부분의 경우         |
-| `'text'`  | 에러 상태를 UI에서 직접 렌더링         | 폼 인라인 에러        |
-| `'none'`  | 에러 무시                              | 백그라운드 갱신 등    |
-| 미지정    | ErrorBoundary로 throw                  | 페이지 레벨 에러 처리 |
+| 값           | 동작                                                                                   | 사용 시점             |
+| ------------ | -------------------------------------------------------------------------------------- | --------------------- |
+| `'toast'`    | 에러 토스트를 띄우고 `error`를 `null`로 비운다                                          | 대부분의 경우         |
+| `'text'`     | 토스트도 throw도 없다. 훅의 `error`는 `null`로 비워지므로 `onError`로 받아 직접 그린다 | 폼 인라인 에러        |
+| `'fallback'` | throw해서 `LocalErrorBoundary`가 fallback UI를 그린다                                  | 영역 단위 에러 처리   |
+| 미지정       | throw해서 ErrorBoundary가 처리한다. `'fallback'`과 같다                                | 페이지 레벨 에러 처리 |
+
+세 값 모두 `onError`는 호출된다.
 
 ---
 
 ## 엔드포인트 관리
 
-- 엔드포인트 문자열을 훅 파일 내 상수로 분리하거나, `src/constants/endpoints.ts`에서 관리한다
+- 엔드포인트 문자열은 훅 파일 안의 상수로 둔다. 쿼리 파라미터도 이 문자열에 직접 붙인다
 - 컴포넌트에 하드코딩하지 않는다
 
 ```ts

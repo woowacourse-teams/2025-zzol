@@ -28,9 +28,8 @@ npm run generate:ws       # ws-openapi.json → wsOpenApi.d.ts (BE 계약이 바
 | --- | --- |
 | `docs/architecture.md` | 라우팅, Provider 계층, 상태관리, WebSocket, REST API, 컴포넌트 계층, 빌드, 배포 |
 | `docs/adr/` | 설계 결정 기록 — 결정 근거·대안·영향 (ADR) |
-| `docs/block-stacking.md` | 블록 쌓기 미니게임 설계 |
-| `docs/seo-optimization.md` | SEO 최적화 작업 기록 |
-| `docs/api-design-menu-tab.md` | 메뉴 탭 API 설계 — 백엔드 협의용 (POST /reports, GET /patch-notes Request/Response 스펙) |
+| `docs/block-stacking.md` | 빌딩 쌓기 미니게임 구조 |
+| `docs/seo-optimization.md` | SEO 구성 (라우트별 정적 HTML, CloudFront 함수, 메타태그) |
 | `docs/adr/20260915-ws-contract-generated-types.md` | WebSocket 계약을 BE 생성 타입으로 강제하는 결정이 FE 에 미치는 영향. 결정 본문은 `backend/docs/adr/0037` |
 
 ## .claude 리소스
@@ -44,6 +43,17 @@ npm run generate:ws       # ws-openapi.json → wsOpenApi.d.ts (BE 계약이 바
 | 스킬 | 언제 뜨는가 | 설명 |
 | --- | --- | --- |
 | `ws-contract` | `src/apis/websocket/**`, `src/contexts/**`, `use*WebSocket*`·`use*Subscription*` 훅 | 구독·발행 코드를 쓰기 전에 생성 파일에서 destination 과 payload 를 확인한다. 없는 경로는 BE PR 을 선행한다 |
+| `api-conventions` | `src/features/**/hooks/**`, `src/features/**/pages/**`, `src/apis/**` | `useFetch`·`useLazyFetch`·`useMutation` 선택 기준과 `errorDisplayMode` 결정 기준 |
+| `minigame-structure` | `src/features/miniGame/**`, `src/contexts/*Game*/**` | 미니게임 디렉터리 구조, Context 위치, `GAME_CONFIGS` 등록 절차 |
+| `storybook-conventions` | `src/components/@common/**`, `src/components/@composition/**` | Story 파일 Meta 구조, argTypes, variant 커버리지 |
+| `style-check` | `**/*.styled.ts` | 저장 직후 hex 리터럴·z-index 숫자·타이포 하드코딩·인라인 스타일 검증 |
+| `frontend-design` | 컴포넌트를 새로 만들 때 요청으로 | 디자인 방향을 잡고 component + `.styled.ts` + Story 를 함께 만든다 |
+
+### Commands
+
+| 커맨드 | 설명 |
+| --- | --- |
+| `/style-audit [파일 ...] [--fix]` | 변경된 파일 전체를 대상으로 스타일 규칙 위반을 일괄 감사한다. `style-check`는 단일 파일 자동, 이쪽은 프로젝트 범위 |
 
 ### Agents
 

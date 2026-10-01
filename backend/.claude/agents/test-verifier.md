@@ -16,7 +16,7 @@ tools: Bash, Read, Glob, Grep, Edit
    - 명시하지 않았으면 `git diff --name-only HEAD~1` 결과에서 `src/test/java/` 경로만 추출
 3. 각 테스트 파일을 읽고 아래 체크리스트를 기준으로 리뷰한다
 4. 관련 테스트를 실행한다 (**콘솔 출력은 읽지 않는다**)
-   - 단일 클래스: `./gradlew :<모듈>:test --tests "패키지.클래스명" --continue`. 모듈 없이 `--tests`를 주면 매칭이 없는 모듈에서 "No tests found"로 빌드가 실패한다
+   - 단일 클래스: `./gradlew :<모듈>:test --tests "패키지.클래스명" --continue`
    - 전체: `./gradlew test --continue`
 5. 빌드 실패 시 XML 리포트만 읽어 원인을 분류한다
    - Grep으로 `**/build/test-results/**/*.xml` 중 `<failure` 또는 `<error` 를 포함한 파일만 추출. 결과는 모듈별 `<module>/build/test-results/`에 있고, 루트 `backend/build/test-results/`는 멀티모듈 전환 전 잔재라 신뢰하지 않는다

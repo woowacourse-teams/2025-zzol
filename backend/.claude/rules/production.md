@@ -8,13 +8,12 @@ paths:
 
 ## 자주 놓치는 항목
 
-- `if-else` 대신 early return. then이 `return`/`throw`로 끝나는 `else`는 PMD `NoElseAfterReturn`이 CI에서 잡는다
 - 비즈니스 로직은 도메인 객체 안에. 서비스는 조합만
 - 조정 가능한 값은 `game.yml`·`service.yml` 같은 `app/src/main/resources/config/<영역>.yml`에 두고 `@ConfigurationProperties`로 바인딩한다. `application.yml`은 import만 한다. 하드코딩 금지
 - 식별자·핵심 개념은 record(Value Object). 원시 타입을 시그니처에 직접 노출 금지
 - 도메인 계층은 DTO·UI 계층에 의존하지 않는다. 도메인 메서드의 매개변수·반환 타입에 Request/Response DTO를 사용 금지
 - 예외 메시지는 한국어로 작성한다
-- 도메인 예외는 `CoffeeShoutException` 계열이다. 규칙 위반은 `BusinessException(${Domain}ErrorCode, 메시지)`, 내부 불변식 위반은 500 ErrorCode를 쓰는 `SystemException`이다. `IllegalStateException`·`IllegalArgumentException`은 PMD `NoRawExceptionInDomain`이 CI에서 막는다
+- 도메인 예외는 `CoffeeShoutException` 계열이다. 규칙 위반은 `BusinessException(${Domain}ErrorCode, 메시지)`, 내부 불변식 위반은 500 ErrorCode를 쓰는 `SystemException`이다
 - 데이터베이스 엔티티의 시간 필드는 `LocalDateTime` 대신 `Instant`를 사용한다
 
 ## 계층별 클래스 네이밍

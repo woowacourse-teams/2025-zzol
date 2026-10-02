@@ -9,5 +9,8 @@
         "repo": "DietrichGebert/ponytail"
       }
     }
+  },
+  "worktree": {
+    "baseRef": "fresh"
   }
 }

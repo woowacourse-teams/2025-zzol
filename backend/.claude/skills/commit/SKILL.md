@@ -12,8 +12,10 @@ allowed-tools: Bash, Read, Glob, Grep, Skill
 ## Step 1: 프리플라이트 (브랜치 가드 + 변경 수집)
 
 ```bash
-bash .claude/skills/commit/preflight.sh
+bash "$(git rev-parse --show-toplevel)/backend/.claude/skills/commit/preflight.sh"
 ```
+
+스크립트는 `backend/.claude/`에만 있다. 루트 `.claude/skills/`에는 `commit`이 없으므로 상대 경로로 부르지 않는다.
 
 출력에 따라:
 
@@ -21,7 +23,7 @@ bash .claude/skills/commit/preflight.sh
 - `NO_CHANGES` → "커밋할 변경사항이 없습니다" 출력 후 종료.
 - 정상 → `TRACKED` 섹션을 커밋 대상으로 삼는다. `UNTRACKED` 섹션은 **자동 포함하지 않는다** (처리 규칙은 [grouping.md](grouping.md)).
 
-경로는 git 루트 기준이다(`backend/<module>/...`). 이후 `git add`에 그대로 쓴다.
+출력 경로는 `git status --porcelain`이 내는 `backend/<module>/...` 형태의 git 루트 기준 경로다. 이후 `git add`는 git 루트에서 실행하거나 `git -C "$(git rev-parse --show-toplevel)" add …`로 쓴다. cwd가 `backend/`면 그대로 `git add`가 실패한다.
 
 ## Step 2: 기능 단위 그룹화
 
@@ -56,7 +58,7 @@ bash .claude/skills/commit/preflight.sh
 검증 통과 후 그룹 순서대로 스테이징·커밋한다.
 
 ```bash
-git add <그룹 내 파일 목록>   # git 루트 기준 경로. 확인된 untracked만 포함.
+git -C "$(git rev-parse --show-toplevel)" add <그룹 내 파일 목록>   # git 루트 기준 경로. 확인된 untracked만 포함.
 ```
 
 커밋 메시지 결정:

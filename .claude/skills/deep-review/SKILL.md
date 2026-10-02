@@ -55,18 +55,16 @@ bash "$(git rev-parse --show-toplevel)/.claude/skills/deep-review/scope.sh" dev 
 
 `SRC_EMPTY=1`이면 위 표 전체를 건너뛴다.
 
-**루트에서 연 세션에는 `code-reviewer`·`fe-code-reviewer`·`test-verifier`가 없다.** 루트 세션이면 그 렌즈를 건너뛰고 리포트에 "해당 렌즈 없음"으로 남긴다.
-
-스택 전용 에이전트를 섞지 않는다. 백엔드는 `code-reviewer`, 프론트엔드는 `fe-code-reviewer`다. 백엔드 에이전트는 상대 경로(`docs/...`, `./gradlew`)를 쓰므로 프롬프트에 **`작업 기준 디렉터리: <REPO_ROOT>/backend`** 를 명시한다(프론트는 `<REPO_ROOT>/frontend`).
+스택 전용 에이전트를 섞지 않는다. 백엔드는 `code-reviewer`, 프론트엔드는 `fe-code-reviewer`다.
 
 ```text
 Agent(subagent_type: "code-reviewer",
-      prompt: "작업 기준 디렉터리: <REPO_ROOT>/backend. 리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다.
+      prompt: "리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다.
                대상 파일은 `git diff --name-only origin/$BASE...HEAD -- backend/` 결과 전체다(src/main/java 등으로 좁히지 말 것).
                발견사항만 텍스트로 반환한다.")
 
 Agent(subagent_type: "fe-code-reviewer",
-      prompt: "작업 기준 디렉터리: <REPO_ROOT>/frontend. 리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다.
+      prompt: "리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다.
                대상 파일은 `git diff --name-only origin/$BASE...HEAD -- frontend/` 결과 전체다(frontend/src 등으로 좁히지 말 것).
                발견사항만 텍스트로 반환한다.")
 
@@ -74,7 +72,7 @@ Agent(subagent_type: "bug-hunter",
       prompt: "리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다. 대상 파일: <diff 목록>. 발견사항만 텍스트로 반환한다.")
 
 Agent(subagent_type: "test-verifier",
-      prompt: "작업 기준 디렉터리: <REPO_ROOT>/backend. 리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다.
+      prompt: "리뷰 범위는 origin/$BASE...HEAD(브랜치 전체)다.
                대상은 `git diff --name-only origin/$BASE...HEAD -- backend/` 중 src/test/java 경로이며,
                변경된 src/main/java 코드에 대응 테스트가 없는 경우도 지적한다. 발견사항만 텍스트로 반환한다.")
 ```

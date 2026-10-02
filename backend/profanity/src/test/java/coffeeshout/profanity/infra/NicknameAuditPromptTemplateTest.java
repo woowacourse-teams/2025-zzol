@@ -57,6 +57,19 @@ class NicknameAuditPromptTemplateTest {
         }
 
         @Test
+        void 피드백_예시는_nickname_flagged_reason만_담고_terms와_confidence는_뺀다() {
+            final NicknameFeedback feedback = blockedFeedback("욕설닉네임");
+            final String message = template.buildUserMessage(List.of("욕설닉네임"), List.of(feedback));
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(message)
+                        .contains("[{\"nickname\":\"욕설닉네임\",\"flagged\":true,\"reason\":\"운영자 피드백\"}]");
+                softly.assertThat(message).doesNotContain("terms");
+                softly.assertThat(message).doesNotContain("confidence");
+            });
+        }
+
+        @Test
         void 닉네임_목록_섹션이_항상_포함된다() {
             final String message = template.buildUserMessage(List.of("닉네임"), List.of());
 

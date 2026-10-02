@@ -1,7 +1,8 @@
 # 0001. AI 닉네임 검열 + 운영자 피드백 루프 설계
 
 - 날짜: 2026-03-21
-- 상태: 승인 (2026-04-30 범위 확장)
+- 상태: 적용됨 (2026-04-30 범위 확장)
+- 2026-10-01 갱신: `BadWordFiltering`·`custom_profanity` 는 [ADR-0018](0018-profanity-module-extraction.md)로 제거돼 `profanity_word` 테이블로 일원화됐다. 검열 코드와 테이블은 `backend/profanity/` 에 있다.
 
 ## 컨텍스트
 
@@ -60,7 +61,7 @@ AI 판단은 오판 가능성이 있으므로 신뢰도(confidence)에 따라 �
 
 ## 범위 확장 (2026-04-30)
 
-ADR 0003(OAuth2 로그인 도입)으로 회원 가입·프로필 닉네임 변경 시점이 검열 트리거에 추가되었다.
+ADR 0004(OAuth2 로그인 도입)으로 회원 가입·프로필 닉네임 변경 시점이 검열 트리거에 추가되었다.
 
 - **회원 가입 시**: OAuth provider 닉네임을 기본값으로 사용하되, `PlayerNameValidator` 즉시 검사 통과 후 `PlayerNameAuditService`에 AI 사후 검열 등록.
 - **닉네임 변경 시** (`PATCH /users/me/nickname`): 동일하게 즉시 검사 + AI 사후 검열.

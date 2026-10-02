@@ -1,7 +1,7 @@
 # 0012. WebSocket 컨트랙트 디스커버리 — `@WsTopic`/`@WsQueue`/`@WsReceive` + `/dev/ws-catalog`
 
 - 날짜: 2026-05-14
-- 상태: 적용됨 (WsCatalog 구현 반영; 2026-05-16 개정 — `@WsQueue`/`@WsReceive` 추가, 다중 발행자 표시 방식 정리, `envelope-class` 도입 및 `info` 섹션 제거; 2026-05-17 개정 — `WsCatalogSecurityConfig` IP 허용 목록 가드 추가, `generic=Object.class` 거부 보완, fixture 스냅샷 검증 테스트 제거)
+- 상태: 적용됨 (MCP 소비 부분은 ADR-0037 로 대체; WsCatalog 구현 반영; 2026-05-16 개정 — `@WsQueue`/`@WsReceive` 추가, 다중 발행자 표시 방식 정리, `envelope-class` 도입 및 `info` 섹션 제거; 2026-05-17 개정 — `WsCatalogSecurityConfig` IP 허용 목록 가드 추가, `generic=Object.class` 거부 보완, fixture 스냅샷 검증 테스트 제거)
 
 ## 컨텍스트
 
@@ -22,12 +22,13 @@ FE 개발자는 BE에 어떤 토픽이 있는지, 페이로드 스키마가 무�
 
 **3. 멀티 인스턴스 운영에서의 디버깅 어려움**
 
-ADR-0010 으로 `StompSessionManager`가 Redis 기반으로 전환된 뒤 세션 상태는 인스턴스 간 공유되지만, "지금 어떤 토픽으로 어떤 페이로드를 보내야 하는가"라는 정적 컨트랙트는 여전히 코드를 직접 읽어야 알 수 있다.
+ADR-0010 이 제안한 `StompSessionManager` Redis 전환(보류 상태, 현재는 인메모리 `ConcurrentHashMap`)이 적용되더라도 세션 상태만 공유될 뿐, "지금 어떤 토픽으로 어떤 페이로드를 보내야 하는가"라는 정적 컨트랙트는 여전히 코드를 직접 읽어야 알 수 있다.
 
 ## 결정
 
 자체 `@WsTopic`/`@WsQueue`/`@WsReceive` 어노테이션과 dev 전용 카탈로그 엔드포인트 `GET /dev/ws-catalog`를 도입한다.
 Node 기반 MCP 서버(`tools/ws-mcp/`)가 이 엔드포인트를 소비해 컨트랙트 디스커버리와 연결 검증을 한 번에 제공한다.
+MCP 서버는 [ADR-0037](0037-fe-be-contract-type-generation.md)로 폐기됐다. 지금은 `WsCatalogContractTest` 가 카탈로그를 소비해 fixture 와 FE 타입을 생성한다.
 
 **`@WsTopic` 어노테이션 시그니처** (`coffeeshout.websocket.docs.WsTopic`)
 
@@ -139,8 +140,8 @@ public @interface WsQueue {
 - `build.gradle.kts` 에서 legacy 의존성 라인 1개 제거.
 - `application.yml` 의 `websocket.docs.*` 키를 재구성한다. `app-path`, `topic-path`, `queue-path`, `user-destination-prefix`, `stomp-endpoint`, `error-topic`, `envelope-class`, `allowed-ips` 를 사용하며 `enabled` / `base-package` / `server-url` / `info` 키는 제거한다 (`@Profile("!prod")` 가 dev 가드 단일 책임을 지므로 별도 `info` 메타가 필요 없다).
 - 멀티 모듈 분리(`@WsTopic`/`@WsQueue` 등 어노테이션의 별도 모듈 추출)는 본 ADR 범위 밖으로, 멀티 모듈 마이그레이션이 실제로 시작되는 시점에 별도 ADR 로 다룬다.
-- Node MCP 서버 (`tools/ws-mcp/`)는 커밋 726a51f0 에서 6종 도구(ws_connect, ws_describe, ws_list_topics, ws_send, ws_source, ws_subscribe)로 추가되었다. roomToken 발급 흐름은 ADR-0009(POST /api/rooms/{joinCode}/session-token) 를 따른다.
-- MCP 등록 파일(`.mcp.json`)은 **각 서브프로젝트 폴더**(`backend/.mcp.json`, `frontend/.mcp.json`)에 둔다. Claude Code 는 실행 디렉토리의 `.mcp.json` 만 인식하고 개발자가 보통 `cd backend && claude` / `cd frontend && claude` 흐름으로 띄우므로 모노레포 루트 `.mcp.json` 은 두지 않는다. `args` 의 상대 경로는 `../tools/ws-mcp/dist/server.js` 를 공통 사용한다.
+- Node MCP 서버 (`tools/ws-mcp/`)는 커밋 726a51f0 에서 6종 도구(ws_connect, ws_describe, ws_list_topics, ws_send, ws_source, ws_subscribe)로 추가되었다(ADR-0037 로 폐기). roomToken 발급 흐름은 ADR-0009 를 따른다. 토큰은 방 입장 `POST /api/rooms/{joinCode}` 응답으로 발급되며 별도 `session-token` 엔드포인트는 없다.
+- MCP 등록 파일(`.mcp.json`)은 **각 서브프로젝트 폴더**(`backend/.mcp.json`, `frontend/.mcp.json`)에 둔다. Claude Code 는 실행 디렉토리의 `.mcp.json` 만 인식하고 개발자가 보통 `cd backend && claude` / `cd frontend && claude` 흐름으로 띄우므로 모노레포 루트 `.mcp.json` 은 두지 않는다. `args` 의 상대 경로는 `../tools/ws-mcp/dist/server.js` 를 공통 사용한다. 이 결정은 ADR-0037 로 폐기됐다. 현재 세 `.mcp.json` 은 Grafana MCP 설정이다.
 - `frontend/CLAUDE.md` 와 `frontend/.mcp.json` 가이드는 별도 PR(fe/dev 베이스)에서 추가한다.
 - ~~`ws-catalog.json` fixture 는 `WsCatalogFixtureGeneratorTest`(`-DupdateFixture=true` 실행)로 재생성한다. 스냅샷 동등 검증 테스트는 두지 않는다 — MCP 서버가 라이브 엔드포인트를 직접 소비하므로 fixture 스냅샷이 계약을 강제할 근거가 없고, OS별 줄바꿈 차이로 인한 불안정성 비용이 더 크다.~~ **ADR-0037 로 뒤집음.** MCP 폐기로 fixture 와 생성 TS 파일이 FE 게이트의 SSOT 가 됐고, `WsCatalogContractTest` 가 항상 다시 써서 backend-ci 가 신선도를 강제한다. 줄바꿈은 `DefaultIndenter("  ", "\n")` 와 `.gitattributes eol=lf` 로 고정했다.
 - `WsCatalogBuilder` 는 publishers(`className#methodName` 사전순)와 schemas(이름 사전순)를 안정 정렬해 카탈로그 JSON 출력이 결정적임을 보장한다. JVM HashSet/HashMap 의 비결정적 순서가 출력에 새지 않도록 막아 호출마다 동일한 바이트열을 유지한다. 이는 `WsCatalogController` 의 ETag 캐시(`hashCode` 기반 약한 지문)가 의미를 갖기 위한 전제 조건이다.

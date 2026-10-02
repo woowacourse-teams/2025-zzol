@@ -1,7 +1,7 @@
 # 0025. Room-GameSession 분리 — 게임 대기열 소유권을 `:game`으로 이관
 
 - 날짜: 2026-06-05
-- 상태: 승인 (구현 완료)
+- 상태: 적용됨 (구현 완료; 유예한 JPA FK 계열은 [ADR-0034](0034-game-room-decoupling.md)로 완료)
 - 참조 구현: `be/refactor/game-entity-ownership` 브랜치 (`d7abc0ea`, `ddfee28b`, `53cf40cc`, `af0d1a70`) — 멀티 모듈 전환 이전 코드베이스에서 동일 설계를 구현·검증한 선행 작업
 
 ## 구현 중 개정 (2026-06-10)
@@ -12,10 +12,10 @@
    - **Redis Stream이 아니라 in-process 동기 이벤트를 쓰는 이유**: 스트림 리스너가 컨슈머 그룹을 쓰지 않아(각 인스턴스가 모든 메시지를 독립 소비) 중간 단계를 스트림으로 쪼개면 인스턴스 수만큼 중복 발행돼 대기열이 깨진다. in-process는 발행 인스턴스에서 한 번만 동기 실행되고, 예외가 발행 측으로 전파돼 순서·원자성을 보장하므로 결정 5의 `MiniGameFinishedEvent` 패턴과 대칭이다.
    - **두 PLAYING 전이의 원자성(중요).** 방 `markPlaying`은 `MiniGameStartConsumer`가 하지 않는다. `onGameStartReady`가 `startGame`으로 GameSession을 `PLAYING`으로 전이한 **직후**, 실패 가능 I/O(`miniGameService.start`·결과 영속 `@RedisLock`+`@Transactional`)보다 **먼저** in-process 동기 `GameSessionStartedEvent`(`:game-api`)를 발행하고, `:room`의 `RoomGameStartListener`가 이를 받아 `markPlaying` 한다. 이렇게 두 전이를 I/O 앞에 한 묶음으로 끝내야, 이후 I/O가 실패해도 GameSession·Room이 **모두 PLAYING으로 일관**되게 남는다. `markPlaying`을 I/O 뒤에 두면 `startGame` 성공 후 I/O 실패 시 GameSession=PLAYING / Room=READY로 찢어지고 재전송이 `GAME_IN_PROGRESS`로 막혀 복구 불가하다. `startGame` 자체가 실패하면 전이 이벤트가 발행되지 않아 둘 다 READY로 남고 재전송으로 복구된다.
 2. **결정 2 / Step 4 — `updateGames` 지연 생성 폴백을 제거한다(Option B).** 미니게임 선택 호스트 검증을 `MiniGameSelectConsumer`가 `RoomQueryService`로 하던 것을 제거하고 **GameSession이 단독 수행**한다. 세션은 방 생성 시 `GameSessionInitConsumer`가 권위 있는 호스트로 사전 생성하므로(지연 생성 없음), `replaceGames`의 호스트 검증이 "select가 주장한 hostName == 권위 호스트 이름"을 보증한다(기존 Room 검증과 보안 등가). init보다 select가 먼저 도달하는 극히 짧은 창에서는 `getSession`이 예외를 던져 `EventDispatcher`가 격리·스킵하고 클라이언트 재전송으로 복구된다.
-3. **결정 6 — 생명주기 이벤트를 `:game-api`로 이전하고 중립 네이밍한다.** `RoomCreateEvent`/`RoomRemovedEvent`(`:room.domain.event`)를 **`GameRoomCreatedEvent`/`GameRoomRemovedEvent`(`:game-api` `gamecommon`)** 로 이전한다. `BaseEvent`가 `:common`에 있어 의존 위반이 없고, `:game`이 `:room` 이벤트를 import하던 참조 2건이 사라진다(`:game → :game-api`만 남음). `:room`은 생산자로서, `:game`은 소비자로서 모두 `:game-api`만 본다.
+3. **결정 6 — 생명주기 이벤트를 `:game-api`로 이전하고 중립 네이밍한다.** `RoomCreateEvent`/`RoomRemovedEvent`(`:room.domain.event`)를 **`GameRoomCreatedEvent`/`GameRoomRemovedEvent`(`:game-api` `gamecommon`)** 로 이전한다. `BaseEvent`가 `:common`에 있어 의존 위반이 없고, `:game`이 `:room` 이벤트를 import하던 참조 2건이 사라진다(`:game → :game-api`만 남음). `:room`은 생산자로서, `:game`은 소비자로서 모두 `:game-api`만 본다. 현재 이름은 `RoomLifecycleEvent.Created`/`RoomLifecycleEvent.Removed`다(Step 6 참조).
 4. **부수 — `PlayerHands`의 `room.domain.RoomErrorCode`를 공용 `GameErrorCode`(`:game-api` `gamecommon`)로 교체**한다. 게임 전반의 횡단 개념(플레이어 식별 실패 등)을 담는 공용 에러 코드를 신설한다.
 
-> `MiniGamePersistenceService`의 `Room`/`RoomState`/`PlayerEntity` 의존(JPA FK 계열)은 본 개정 범위 밖이며, `MiniGameEntity`의 `RoomEntity` FK·`PlayerEntity` 영속 책임 분리는 별도 후속 작업으로 미룬다.
+> `MiniGamePersistenceService`의 `Room`/`RoomState`/`PlayerEntity` 의존(JPA FK 계열)은 본 개정 범위 밖이며, `MiniGameEntity`의 `RoomEntity` FK·`PlayerEntity` 영속 책임 분리는 별도 후속 작업으로 미룬다. 이 후속 작업은 [ADR-0034](0034-game-room-decoupling.md)로 끝났다.
 
 ## 컨텍스트
 
@@ -265,6 +265,8 @@ URL 경로는 클라이언트 호환을 위해 유지한다.
           :game → :room     (MiniGamePersistenceService의 PlayerEntity 영속 참조만 잔존 — 결정 4 개정으로 RoomQueryService 조회는 제거됨)
 ```
 
+- 위 `:game → :room` 잔존 의존은 [ADR-0034](0034-game-room-decoupling.md)로 제거됐다. 현재 `:game`은 `:room`에 의존하지 않는다.
+
 - `:room`의 도메인 코드(`room.domain`)에서 `Playable`, `MiniGameType`, `MiniGameResult`, `MiniGameScore` import가 사라진다. 단 `room.domain.roulette`(`ProbabilityCalculator`·`Probability`)는 순위→승패 분류를 위해 `:game-api`의 값 enum `MiniGameResultType`을 참조한다 — 게임 인스턴스·타입이 아닌 결과 분류 값이므로 소유권 분리에 위배되지 않는다.
 - `GameSession` 도메인은 `JoinCode`·`Gamer`·`Playable` 모두 `:game-api` 타입만 사용하므로 `:room` 의존이 없다.
 - 게임 내부 도메인(`Runners`, `PlayerHands` 등)의 `room.domain.player.Player` import 21곳이 `Gamer`로 대체된다.
@@ -299,7 +301,7 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 
 ## 핵심 제약
 
-- `GameSession`은 `JoinCode`로 Room과 1:1 연결된다. Room 삭제 시 `GameRoomRemovedEvent`(`:game-api`) → `GameSessionCleanupConsumer`(Redis Stream)로 GameSession도 반드시 정리한다. 생성·정리 모두 Stream Consumer로 통일하고 in-process 리스너를 섞지 않는다.
+- `GameSession`은 `JoinCode`로 Room과 1:1 연결된다. Room 삭제 시 `RoomLifecycleEvent.Removed`(`:game-api`) → `GameSessionCleanupConsumer`(Redis Stream)로 GameSession도 반드시 정리한다. 생성·정리 모두 Stream Consumer로 통일하고 in-process 리스너를 섞지 않는다.
 - `:room` 도메인 코드는 `Playable`, `MiniGameType`, `MiniGameResult`, `MiniGameScore`를 import하지 않는다(결과 분류 값 enum `MiniGameResultType`은 `room.domain.roulette`에서 참조 허용 — 게임 인스턴스가 아닌 값). `:room` 애플리케이션의 `:game-api` 이벤트 in-process 리스너는 3종(`MiniGameResultRoomListener` ← `MiniGameFinishedEvent`, `RoomGameStartListener` ← `GameSessionStartedEvent`, `PlayerSnapshotListener` ← `PlayerSnapshotRequiredEvent`)이며 ArchUnit이 이 목록으로 동결한다(결정 4 개정으로 `RoomGameStartListener`가, PlayerEntity 영속 분리 후속 작업으로 `PlayerSnapshotListener`가 추가됐다).
 - 게임 결과 전달은 `MiniGameFinishedEvent`(`:game-api`) in-process 동기 리스너로 처리한다. 해당 리스너에 `@Async` 적용 금지 — `publishEvent()` 반환 시점에 확률 조정 완료가 보장돼야 룰렛/스코어보드 조회 타이밍이 깨지지 않는다.
 - `:game`은 `RoomCommandService`를 직접 호출하지 않는다.
@@ -367,7 +369,7 @@ Room 엔티티를 그대로 두고 게임 서비스가 Room 대신 별도 캐시
 
 ### Step 6 — 생명주기 이벤트 연결
 
-- `RoomRemovedEvent` 신설, `DelayedRoomRemovalService`에서 Redis Stream 발행 + Stream 구독 등록
+- `RoomLifecycleEvent.Removed` 신설(원안 이름 `RoomRemovedEvent`), `DelayedRoomRemovalService`에서 Redis Stream 발행 + Stream 구독 등록
 - `GameSessionInitConsumer`/`GameSessionCleanupConsumer` (`:game`)
 - `EventDispatcher` 팬아웃 전환 + 기존 Consumer 회귀 테스트
 

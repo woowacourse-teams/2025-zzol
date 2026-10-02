@@ -89,4 +89,4 @@ ADR-0012 는 fixture 스냅샷 동등 검증을 두지 않기로 했다. 근거 
 
 - 신설: `backend/app/src/test/java/coffeeshout/contract/WsCatalogContractTest.java`, `WsContractTsEmitter.java`, `WsOpenApiEmitter.java`, `frontend/src/apis/websocket/generated/`(`wsContract.ts`·`ws-openapi.json`·`wsOpenApi.d.ts`), `frontend` 의 `openapi-typescript` devDependency 와 `npm run generate:ws`
 - 수정: `WsCatalogBuilder`(결정론 3곳, `@Nullable` → `?`), 게임 response record 의 enum·`@Nullable`, `useWebSocketSubscription`·`useUserSocketSubscription`·`WebSocketContext`, `frontend/src/types/**`(생성 타입 alias), `.gitattributes`, `backend-ci.yml`, `frontend-ci.yml`, `.githooks/pre-push`, `ws-contract` 스킬, `fe-code-reviewer` 에이전트
-- 삭제: `tools/api-mcp/`, `.github/workflows/api-mcp-ci.yml`, `backend/.mcp.json`, `frontend/.mcp.json`, `frontend/.claude/skills/api-contract/`, `WsCatalogFixtureGeneratorTest`, dependabot 의 `/tools/api-mcp` 항목
+- 삭제: `tools/api-mcp/`, `.github/workflows/api-mcp-ci.yml`, `frontend/.claude/skills/api-contract/`, `backend/.mcp.json`·`frontend/.mcp.json` 의 api-mcp 항목(두 파일은 Grafana MCP 설정으로 남는다), `WsCatalogFixtureGeneratorTest`, dependabot 의 `/tools/api-mcp` 항목

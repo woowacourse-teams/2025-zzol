@@ -141,6 +141,11 @@ subprojects {
         dependsOn(rootProject.tasks.named("installGitHooks"))
     }
 
+    // 실제 LLM을 부르는 평가 러너(@Tag("golden"))는 기본 test에서 뺀다. :profanity:goldenTest로만 돈다
+    tasks.named<Test>("test") {
+        useJUnitPlatform { excludeTags("golden") }
+    }
+
     tasks.withType<Test> {
         useJUnitPlatform()
         exclude("**/QueryPerformanceTest.class")

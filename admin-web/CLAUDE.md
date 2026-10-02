@@ -21,18 +21,18 @@ ZZOL 백오피스 SPA. 운영자만 쓰는 내부 도구다.
 ```bash
 npm run dev          # Vite :5173 (포트 고정 — OAuth 승인 원본에 등록돼 있다)
 npm run lint         # eslint
-npm run type-check   # tsc --noEmit
-npm run test         # vitest
+npm run type-check   # tsc -b --noEmit
+npm run test         # vitest run
 npm run build        # tsc -b && vite build
 ```
 
-로컬은 백엔드 `:8080`이 떠 있어야 한다. Vite 프록시가 `/admin/api`를 넘긴다. 배포(CloudFront)와 같은 모양이라 로컬에서만 되는 CORS 설정이 생기지 않는다.
+로컬은 백엔드 `:8080`이 떠 있어야 한다. Vite 프록시가 `/admin/api`를 넘기므로 로컬은 같은 오리진이다. 배포는 `admin.zzol.site`와 `api.zzol.site`가 다른 오리진이다. 백엔드의 CORS 허용 목록과 프로필별 yml의 `admin.auth.web-origins` 양쪽에 admin 도메인이 등록돼 있어야 로그인과 재발급이 된다. 로컬에서 되는 것이 배포에서 안 되면 먼저 그 두 목록을 본다.
 
 ## 문서
 
 | 파일 | 내용 |
 | --- | --- |
-| `docs/design-tokens.md` | 색·타이포·폭 규격과 **왜 그 값인지**. 화면을 만들기 전에 읽는다 |
+| `docs/design-tokens.md` | 색·타이포·폭 토큰과 사용 규칙. 화면을 만들기 전에 읽는다 |
 | `docs/google-oauth-setup.md` | 구글 OAuth 클라이언트 설정, 승인된 자바스크립트 원본 |
 
 ## 지켜야 할 것
@@ -43,7 +43,7 @@ npm run build        # tsc -b && vite build
 
 ### 2. 못 세는 것은 화면에 적는다
 
-`SCORE_BOARD` 단계는 메모리에만 있어 퍼널에 없다. 늘 0으로 찍히는 칸을 두면 나머지 숫자까지 못 믿게 된다. **빼는 대신 왜 없는지를 화면에 남긴다** (홈 하단 "이 숫자가 세지 않는 것").
+`SCORE_BOARD` 단계는 메모리에만 있어 퍼널에 없다. 늘 0으로 찍히는 칸을 두면 나머지 숫자까지 못 믿게 된다. **빼는 대신 왜 없는지를 그 카드의 설명에 남긴다.** 퍼널 카드가 "게임 시작과 미니게임 완료의 차이가 하다가 나간 방"이라 적는 식이다.
 
 ### 3. 조회 실패를 "-"로 두지 않는다
 
@@ -56,7 +56,7 @@ npm run build        # tsc -b && vite build
 
 ### 4. 색은 회색과 로고색(`#FD6C6E`) 둘뿐이다
 
-초록·노랑·파랑·별도의 빨강을 두지 않는다. **로고색은 채움과 마크로만 쓰고 글자는 잉크가 진다** — 읽힐 만큼 어둡게 내리면 브랜드가 아니라 에러 빨강으로 읽힌다. 근거와 대비 수치는 `docs/design-tokens.md`.
+초록·노랑·파랑·별도의 빨강을 두지 않는다. **로고색은 채움과 마크로만 쓰고 글자는 잉크가 진다** — 읽힐 만큼 어둡게 내리면 브랜드가 아니라 에러 빨강으로 읽힌다. 대비 수치는 `docs/design-tokens.md`에 있다.
 
 컴포넌트는 원색(`--point-400`)을 직접 쓰지 않고 역할 별칭(`--accent`, `--attention-mark`)을 쓴다.
 
@@ -75,7 +75,7 @@ npm run build        # tsc -b && vite build
 | `Tile` `TileGrid` | 지표 한 칸과 그 줄 |
 | `MetricRow` | 카드 안 목록의 지표 한 줄 |
 | `Meter` | 퍼널, 순위 막대, 처리 대기 |
-| `TimelineDot` | 조치 이력, 퍼널 단계 |
+| `TimelineDot` | 퍼널 단계 |
 | `Legend` `Swatch` | 차트 범례 |
 | `Loaded` | 조회 로딩과 실패 |
 | `DataTable` | 모든 목록. 선택 행, 키보드 이동, 실패와 빈 상태까지 |
@@ -110,7 +110,7 @@ playwright 는 의존성에 없다(브라우저 바이너리까지 받아야 해
 
 ### 6-3. 그래프 종류는 데이터의 성격이 고른다
 
-종류를 늘리려고 늘리지 않는다. 같은 "비중"이라도 게임별은 순위 막대고 소셜 제공자는 도넛인 이유가 있다. 자리별 근거는 `docs/design-tokens.md` 12절. **이중 축은 어떤 경우에도 쓰지 않는다.**
+종류를 늘리려고 늘리지 않는다. 같은 "비중"이라도 게임별은 순위 막대고 소셜 제공자는 도넛인 이유가 있다. 자리별 규칙은 `docs/design-tokens.md` 12절에 있다. **이중 축은 어떤 경우에도 쓰지 않는다.**
 
 ### 6-4. 목록 화면에도 그 목록 전체의 모양을 올린다
 
@@ -128,7 +128,7 @@ playwright 는 의존성에 없다(브라우저 바이너리까지 받아야 해
 
 ### 8. 감사 로그에 남는 것을 의식한다
 
-`/admin/api/**`의 POST·PUT·PATCH·DELETE는 전부 감사 로그에 남는다. 조회는 남기지 않는다 — 목록을 열어본 기록까지 쌓으면 실제 조치가 묻힌다.
+`/admin/api/**`의 POST·PUT·PATCH·DELETE는 감사 로그에 남는다. 예외는 `/admin/api/auth/refresh` 하나다. 조회는 남기지 않는다.
 
 기록되는 action은 **매핑 패턴**이지 요청 본문이 아니다. 본문을 남기면 로그인 요청의 구글 ID 토큰이 그대로 저장된다.
 
@@ -139,7 +139,7 @@ Vite가 `VITE_*`를 **빌드 시점에 인라인**한다. 런타임 주입이 �
 | 변수 | 비고 |
 | --- | --- |
 | `VITE_GOOGLE_CLIENT_ID` | 비밀이 아니다(브라우저에 그대로 노출). 방어는 승인된 원본·서버측 `aud` 검증·허용목록이 한다 |
-| `VITE_API_BASE_URL` | 비우면 상대경로. 로컬은 프록시, 배포는 앞단이 받는다 |
+| `VITE_API_BASE_URL` | 비우면 상대경로로 로컬 프록시가 받는다. 배포에서는 반드시 넣는다 |
 | `VITE_ENV_NAME` | `LOCAL`/`DEV`/`PROD`. 상단 배지에 찍힌다 |
 
 CI는 배포 경로(push)에서 이 값들이 비면 중단한다. 비어도 빌드는 성공하지만 그 번들은 로그인 팝업이 안 뜨거나 API를 자기 자신에게 쏜다.

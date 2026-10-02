@@ -83,7 +83,7 @@ git fetch origin dev
 git worktree add -b "{type}/{N}-{slug}" "$MAIN/.claude/worktrees/{type}-{N}" origin/dev
 git -C "$MAIN/.claude/worktrees/{type}-{N}" branch --unset-upstream 2>/dev/null || true
 
-# env 심볼릭 링크 + 워크트리 전용 포트 (#1660)
+# env 와 frontend/node_modules 심볼릭 링크 (#1660)
 bash "$MAIN/.claude/skills/create-issue/worktree-setup.sh" "$MAIN/.claude/worktrees/{type}-{N}"
 ```
 
@@ -93,7 +93,7 @@ bash "$MAIN/.claude/skills/create-issue/worktree-setup.sh" "$MAIN/.claude/worktr
 - **`EnterWorktree`를 `name`으로 부르지 않는다.** 그러면 브랜치명이 `worktree-<name>`이 되어 규약을 깨고 이슈 번호 추출이 실패한다. 브랜치는 위처럼 `git worktree add -b`로 만들고, `EnterWorktree`는 `path`로 들어가기만 한다.
 - 하네스가 직접 만드는 워크트리(`EnterWorktree` `name`·서브에이전트 `isolation: worktree`)도 `origin/dev`에서 분기하게 `.claude/settings.json`에 `worktree.baseRef: "fresh"`를 고정해 둔다. 로컬 `dev`는 fetch만 하고 전진시키지 않아 금방 뒤처지기 때문이다.
 - `.claude/worktrees/`는 `.gitignore` 대상이다. 워크트리가 저장소를 더럽히지 않는다.
-- **`.env` 계열은 `.gitignore` 대상이라 `git worktree add`가 가져오지 않는다.** 위 `worktree-setup.sh`가 주 저장소에서 심볼릭 링크하고, 워크트리 전용 포트를 `.ports`에 잡는다. 이걸 건너뛰면 백엔드는 OAuth 없이 뜨고 프론트는 `API_URL`이 `undefined`인 채로 조용히 백엔드에 못 붙는다(#1660). 실행은 [`run-local`](../skills/run-local/SKILL.md).
+- **`.env` 계열과 `frontend/node_modules`는 `.gitignore` 대상이라 `git worktree add`가 가져오지 않는다.** 위 `worktree-setup.sh`가 둘을 주 저장소에서 심볼릭 링크한다. 이걸 건너뛰면 백엔드는 OAuth 없이 뜨고 프론트는 `API_URL`이 `undefined`인 채로 조용히 백엔드에 못 붙는다(#1660). 포트는 백엔드 8080·프론트 3000 고정이다. 한 번에 한 워크트리만 띄운다. 실행은 [`run-local`](../skills/run-local/SKILL.md).
 - 워크트리는 작업이 끝나도 자동으로 지우지 않는다. PR이 merge된 뒤 정리한다.
 
   ```bash
@@ -121,7 +121,7 @@ gh issue edit {N} --body-file /tmp/issue.md
 
 `/create-pr`이 push 가드·템플릿·라벨·`close #N`을 처리하고, 생성 직후 `deep-review`를 돌려 발견사항을 PR 코멘트로 게시한다.
 
-PR을 만들기 전에 **연결된 이슈를 다시 읽어 성공 기준이 충족됐는지 확인한다.** 어긋나면 5단계 표의 기본값에 따른다.
+PR을 만들기 전에 **연결된 이슈를 다시 읽어 성공 기준이 충족됐는지 확인한다.** 어긋나면 아래 [사용자 확인과 부재 시 기본값](#사용자-확인과-부재-시-기본값) 표에 따른다.
 
 **base가 `dev`·`prod`가 아니면 CI가 돌지 않는다.** 워크플로가 `pull_request: branches: [dev, prod]`로 제한돼 있다. 통합 브랜치를 두고 단계별 PR을 쌓았다면 테스트 게이트는 통합→dev PR에서 **처음** 걸린다. 그 PR을 열기 전에 `./gradlew spotlessCheck pmdMain pmdTest pmdTestFixtures`와 테스트를 로컬에서 먼저 돌린다.
 

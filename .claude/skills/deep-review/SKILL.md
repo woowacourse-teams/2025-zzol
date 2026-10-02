@@ -28,6 +28,7 @@ bash "$(git rev-parse --show-toplevel)/.claude/skills/deep-review/scope.sh" dev 
 | `SRC_LINES=N` | 문서를 뺀 변경 줄 수. 렌즈 선택에는 안 쓰고, [issue-workflow](../../rules/issue-workflow.md)의 경량 경로 판정이 쓴다 |
 | `SRC_BINARY=1` | 줄 수로 잴 수 없는 소스 변경(이미지·폰트 등)이 섞였다. 경량 경로 판정에서 전체로 본다 |
 | `HAS_BE=1` / `HAS_FE=1` | 해당 스택 컨벤션 렌즈 실행 |
+| `HAS_ADMIN=1` | `admin-web/` 변경. bug-hunter·ponytail 만 돈다. `fe-code-reviewer`는 쓰지 않는다 |
 | `NEEDS_SECURITY=1` | 보안 렌즈 실행 |
 | `DIRTY=1` | 커밋 안 된 변경은 범위 밖 — 사용자에게 알린다 |
 
@@ -53,6 +54,8 @@ bash "$(git rev-parse --show-toplevel)/.claude/skills/deep-review/scope.sh" dev 
 | 보안 | `general-purpose` (security 렌즈) | 아래 조건부 참조 |
 
 `SRC_EMPTY=1`이면 위 표 전체를 건너뛴다.
+
+**루트에서 연 세션에는 `code-reviewer`·`fe-code-reviewer`·`test-verifier`가 없다.** 루트 세션이면 그 렌즈를 건너뛰고 리포트에 "해당 렌즈 없음"으로 남긴다.
 
 스택 전용 에이전트를 섞지 않는다. 백엔드는 `code-reviewer`, 프론트엔드는 `fe-code-reviewer`다. 백엔드 에이전트는 상대 경로(`docs/...`, `./gradlew`)를 쓰므로 프롬프트에 **`작업 기준 디렉터리: <REPO_ROOT>/backend`** 를 명시한다(프론트는 `<REPO_ROOT>/frontend`).
 
@@ -147,4 +150,4 @@ EOF
 
 ## 절대 규칙
 
-리뷰 렌즈는 **제안만** 한다. 이 스킬은 프로덕션 코드를 수정하지 않는다. 수정은 사용자가 확인 후 `/fix`·`/impl`로 진행한다.
+리뷰 렌즈는 **제안만** 한다. 이 스킬은 프로덕션 코드를 수정하지 않는다. 수정은 사용자가 확인한 뒤 진행한다. `/fix`·`/impl`은 백엔드 세션에서만 쓴다. 루트·프론트 세션에서는 직접 고치고 커밋한다.

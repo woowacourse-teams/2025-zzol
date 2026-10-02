@@ -86,7 +86,6 @@ export type BlockStackingStateResponse = components['schemas']['BlockStackingSta
 export type CardGameState = components['schemas']['CardGameState'];
 export type CardInfoMessage = components['schemas']['CardInfoMessage'];
 export type CardType = components['schemas']['CardType'];
-export type CommandType = components['schemas']['CommandType'];
 export type Entry = components['schemas']['Entry'];
 export type FriendRemovedPayload = components['schemas']['FriendRemovedPayload'];
 export type FriendRequestPayload = components['schemas']['FriendRequestPayload'];
@@ -122,10 +121,12 @@ export type RouletteSpinMessage = components['schemas']['RouletteSpinMessage'];
 export type RoundLabel = components['schemas']['RoundLabel'];
 export type RunnerPosition = components['schemas']['RunnerPosition'];
 export type SeasonRankMessage = components['schemas']['SeasonRankMessage'];
+export type SelectCardCommand = components['schemas']['SelectCardCommand'];
 export type SpeedTouchGameState = components['schemas']['SpeedTouchGameState'];
 export type SpeedTouchPlayerProgress = components['schemas']['SpeedTouchPlayerProgress'];
 export type SpeedTouchProgressResponse = components['schemas']['SpeedTouchProgressResponse'];
 export type SpeedTouchStateResponse = components['schemas']['SpeedTouchStateResponse'];
+export type StartMiniGameCommand = components['schemas']['StartMiniGameCommand'];
 export type SteerCommand = components['schemas']['SteerCommand'];
 export type TapCommand = components['schemas']['TapCommand'];
 export type TouchCommand = components['schemas']['TouchCommand'];
@@ -169,4 +170,22 @@ export type WsPayloadOf<D extends WsSubscribePath> =
   D extends `/room/${string}/winner` ? WinnerResponse :
   D extends `/room/${string}/worm` ? WormsStateResponse :
   D extends `/room/${string}` ? PlayerResponse[] :
+  never;
+
+// destination 별 send body. 정렬 규칙은 WsPayloadOf 와 같다.
+export type WsRequestOf<D extends WsSendPath> =
+  D extends `/room/${string}/blind-timer/stop` ? undefined :
+  D extends `/room/${string}/block-stacking/fail` ? undefined :
+  D extends `/room/${string}/block-stacking/progress` ? BlockStackingProgressRequest :
+  D extends `/room/${string}/ladder/draw` ? LadderDrawRequest :
+  D extends `/room/${string}/minigame/command` ? MiniGameMessage :
+  D extends `/room/${string}/nunchi/press` ? undefined :
+  D extends `/room/${string}/racing-game/tap` ? TapCommand :
+  D extends `/room/${string}/speed-touch/touch` ? TouchCommand :
+  D extends `/room/${string}/worm/steer` ? SteerCommand :
+  D extends `/room/${string}/show-roulette` ? undefined :
+  D extends `/room/${string}/spin-roulette` ? RouletteSpinMessage :
+  D extends `/room/${string}/update-minigames` ? MiniGameSelectMessage :
+  D extends `/room/${string}/update-players` ? undefined :
+  D extends `/room/${string}/update-ready` ? ReadyChangeMessage :
   never;

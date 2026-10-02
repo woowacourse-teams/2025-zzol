@@ -101,6 +101,38 @@ class WsContractTsEmitterTest {
         }
     }
 
+    @Nested
+    @DisplayName("WsRequestOf 체인")
+    class WsRequestOf_체인 {
+
+        @Test
+        @DisplayName("요청 record 는 이름으로 잇고, 없으면 undefined 다")
+        void send_body_타입을_잇는다() {
+            final WsCatalog catalog = new WsCatalog(
+                    "/ws",
+                    "/app",
+                    "/topic",
+                    "/queue",
+                    null,
+                    List.of(),
+                    List.of(),
+                    List.of(
+                            new WsCatalog.SendEntry("/app/room/{joinCode}/draw", "", "Foo", List.of(), null, List.of()),
+                            new WsCatalog.SendEntry(
+                                    "/app/room/{joinCode}/press", "", null, List.of(), null, List.of())),
+                    CATALOG.schemas(),
+                    CATALOG.errors());
+
+            final String emitted = WsContractTsEmitter.emit(catalog);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(emitted).contains("export type WsRequestOf<D extends WsSendPath> =");
+                softly.assertThat(emitted).contains("D extends `/room/${string}/draw` ? Foo :");
+                softly.assertThat(emitted).contains("D extends `/room/${string}/press` ? undefined :");
+            });
+        }
+    }
+
     @Test
     @DisplayName("생성 결과는 never 로 끝난다")
     void 체인은_never_로_끝난다() {

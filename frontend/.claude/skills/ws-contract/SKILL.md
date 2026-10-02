@@ -18,11 +18,12 @@ allowed-tools: Read, Grep
 - `ws-openapi.json` — 같은 테스트가 response record 를 OpenAPI 스키마로 낸 것.
 - `wsOpenApi.d.ts` — `npm run generate:ws` 가 위 JSON 에서 `openapi-typescript` 로 만든 payload 타입. `wsContract.ts` 가 이름을 다시 내보내므로 직접 import 하지 않는다.
 
-`wsContract.ts` 안에 넷이 있다.
+`wsContract.ts` 안에 다섯이 있다.
 
 - `WsSubscribePath`·`WsSendPath` — FE 훅이 받는 형태의 destination union. topic 은 `/topic` 을, send 는 `/app` 을 뗀 경로이고 개인 큐는 `/user/queue/...` 그대로다.
 - payload 타입 alias — `export type PlayerResponse = components['schemas']['PlayerResponse']` 처럼 BE record·enum 이름을 그대로 쓴다. `@Nullable` 이 붙은 필드만 `field?: T | null` 이다.
 - `WsPayloadOf<D>` — destination 에서 payload 타입을 찾는다. 훅의 `onData` 파라미터 타입이 여기서 나온다.
+- `WsRequestOf<D>` — send destination 에서 body 타입을 찾는다. `send` 의 body 파라미터 타입이 여기서 나온다. BE 요청 record 가 없는 경로는 `undefined` 라 body 를 넘기지 않는다(`{}` 도 오류).
 - `WsSubscribeDestination<D>`·`WsSendDestination<D>` — 호출부 리터럴이 카탈로그 패턴 하나와 정확히 같을 때만 통과시키는 검사.
 
 원본 애노테이션이나 record 를 보고 싶으면 그쪽이 더 정확하다.

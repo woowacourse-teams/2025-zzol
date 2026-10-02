@@ -67,8 +67,6 @@ export interface components {
         };
         /** @enum {string} */
         CardType: "ADDITION" | "MULTIPLIER";
-        /** @enum {string} */
-        CommandType: "START_MINI_GAME" | "SELECT_CARD";
         Entry: {
             playerName: string;
             /** Format: int64 */
@@ -134,8 +132,13 @@ export interface components {
             animationDurationMs?: number | null;
         };
         MiniGameMessage: {
-            commandType: components["schemas"]["CommandType"];
-            commandRequest: Record<string, never>;
+            commandRequest: components["schemas"]["StartMiniGameCommand"];
+            /** @enum {string} */
+            commandType: "START_MINI_GAME";
+        } | {
+            commandRequest: components["schemas"]["SelectCardCommand"];
+            /** @enum {string} */
+            commandType: "SELECT_CARD";
         };
         MiniGameSelectMessage: {
             hostName: string;
@@ -269,6 +272,11 @@ export interface components {
             seasonKey: string;
             entries: components["schemas"]["Entry"][];
         };
+        SelectCardCommand: {
+            playerName: string;
+            /** Format: int32 */
+            cardIndex: number;
+        };
         /** @enum {string} */
         SpeedTouchGameState: "DESCRIPTION" | "PREPARE" | "PLAYING" | "DONE";
         SpeedTouchPlayerProgress: {
@@ -282,6 +290,9 @@ export interface components {
         };
         SpeedTouchStateResponse: {
             state: components["schemas"]["SpeedTouchGameState"];
+        };
+        StartMiniGameCommand: {
+            hostName: string;
         };
         SteerCommand: {
             /** Format: double */

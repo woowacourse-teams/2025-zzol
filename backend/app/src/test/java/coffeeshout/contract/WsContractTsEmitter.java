@@ -60,6 +60,11 @@ final class WsContractTsEmitter {
             // destination 별 payload. 세그먼트가 많은 패턴을 앞에 둬야 `/room/${string}` 이 다른 room 경로를 삼키지 않는다.
             """;
 
+    private static final String REQUEST_OF_NOTE = """
+
+            // destination 별 send body. 정렬 규칙은 WsPayloadOf 와 같다.
+            """;
+
     private static final Set<String> NUMBERS = Set.of("int", "long", "double", "Integer", "Long", "Double");
     private static final Set<String> STRINGS = Set.of("String", "Instant");
 
@@ -94,7 +99,9 @@ final class WsContractTsEmitter {
                 + PAYLOAD_NOTE
                 + schemas(catalog.schemas())
                 + PAYLOAD_OF_NOTE
-                + payloadOf(catalog);
+                + payloadOf(catalog)
+                + REQUEST_OF_NOTE
+                + requestOf(catalog);
     }
 
     private static String schemas(Map<String, WsCatalog.SchemaEntry> schemas) {
@@ -121,13 +128,28 @@ final class WsContractTsEmitter {
             "/user" + catalog.errors().topic(), unwrapEnvelope(catalog.errors().payloadType())
         });
 
+        return chain("WsPayloadOf<D extends WsSubscribePath>", entries, names);
+    }
+
+    /** send 별 body. 요청 record 가 없는 send 는 {@code undefined} 라 body 를 넘기면 컴파일 오류가 난다. */
+    private static String requestOf(WsCatalog catalog) {
+        final List<String[]> entries = new ArrayList<>();
+        catalog.sends()
+                .forEach(send ->
+                        entries.add(new String[] {stripPrefix(send.destination(), catalog.app()), send.requestType()}));
+        return chain(
+                "WsRequestOf<D extends WsSendPath>", entries, catalog.schemas().keySet());
+    }
+
+    private static String chain(String head, List<String[]> entries, Set<String> names) {
         entries.sort(Comparator.<String[]>comparingInt(e -> -e[0].split("/", -1).length)
                 .thenComparingInt(e -> -literalSegments(e[0]))
                 .thenComparing(e -> e[0]));
 
-        return "export type WsPayloadOf<D extends WsSubscribePath> =\n"
+        return "export type " + head + " =\n"
                 + entries.stream()
-                        .map(e -> "  D extends " + literal(e[0]) + " ? " + tsType(e[1], names) + " :\n")
+                        .map(e -> "  D extends " + literal(e[0]) + " ? "
+                                + (e[1] == null ? "undefined" : tsType(e[1], names)) + " :\n")
                         .collect(Collectors.joining())
                 + "  never;\n";
     }

@@ -80,12 +80,12 @@ const LadderGameProvider = ({ children }: PropsWithChildren) => {
       const next = { segmentIndex, row };
       ghostRef.current = next;
       setGhost(next);
-      send(`/room/${joinCode}/ladder/draw`, { playerName: myName, segmentIndex, row });
+      send(`/room/${joinCode}/ladder/draw`, { segmentIndex, row });
 
       // 서버가 조용히 무시한 요청(범위 밖 등)은 응답이 없다. 그때 ghost 를 거둔다
       ghostTimerRef.current = setTimeout(dropGhost, 2000);
     },
-    [clearGhostTimer, dropGhost, send, joinCode, myName]
+    [clearGhostTimer, dropGhost, send, joinCode]
   );
 
   return (

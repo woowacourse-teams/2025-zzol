@@ -16,11 +16,11 @@ public interface NicknameAuditJpaRepository
 
     @Override
     @Modifying
-    // attempt_count를 명시한다. 마이그레이션은 DEFAULT 0을 주지만, ddl-auto로 스키마를 만드는
+    // attempt_count·review_sample을 명시한다. 마이그레이션은 DEFAULT를 주지만, ddl-auto로 스키마를 만드는
     // 테스트·로컬에는 기본값이 없어 이 INSERT가 통째로 실패한다.
     @Query(
-            value = "INSERT INTO player_name_audit (player_name, status, attempt_count, created_at) "
-                    + "VALUES (:nickname, 'UNAUDITED', 0, :createdAt) "
+            value = "INSERT INTO player_name_audit (player_name, status, attempt_count, review_sample, created_at) "
+                    + "VALUES (:nickname, 'UNAUDITED', 0, FALSE, :createdAt) "
                     + "ON DUPLICATE KEY UPDATE id = id",
             nativeQuery = true)
     void insertUnaudited(@Param("nickname") String nickname, @Param("createdAt") Instant createdAt);
@@ -58,4 +58,12 @@ public interface NicknameAuditJpaRepository
             + "AND n.attemptCount >= :maxAttempts "
             + "AND n.status = coffeeshout.profanity.domain.audit.NicknameAuditStatus.UNAUDITED")
     int markDeadLetterAtAttemptLimit(@Param("ids") Collection<Long> ids, @Param("maxAttempts") int maxAttempts);
+
+    /** 영속성 컨텍스트를 비워 뒤이은 조회가 갱신 전 엔티티를 돌려받지 않게 한다. */
+    @Override
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE NicknameAudit n SET n.status = :decision "
+            + "WHERE n.id = :id AND n.reviewSample = true "
+            + "AND n.status = coffeeshout.profanity.domain.audit.NicknameAuditStatus.CLEAN")
+    int claimUnreviewedSample(@Param("id") Long id, @Param("decision") NicknameAuditStatus decision);
 }

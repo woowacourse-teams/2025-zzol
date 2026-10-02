@@ -4,6 +4,7 @@ import coffeeshout.global.lock.RedisLock;
 import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
+import coffeeshout.profanity.domain.audit.CleanSampler;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import io.micrometer.core.instrument.Gauge;
@@ -80,6 +81,11 @@ public class ProfanityAuditService {
         return auditRepository.findByStatus(status, pageable);
     }
 
+    /** 운영자가 아직 정상·미탐을 정하지 않은 CLEAN 표본. 결정하면 ALLOWED·BLOCKED가 되어 목록에서 빠진다. */
+    public Page<NicknameAudit> listUnreviewedSamples(Pageable pageable) {
+        return auditRepository.findByReviewSampleTrueAndStatus(NicknameAuditStatus.CLEAN, pageable);
+    }
+
     /**
      * 트랜잭션을 요구한다. {@code insertUnaudited}가 {@code @Modifying} 네이티브 쿼리라
      * 주변 트랜잭션이 없으면 {@code TransactionRequiredException}으로 실패한다 —
@@ -129,6 +135,8 @@ public class ProfanityAuditService {
         int page = 0;
         List<NicknameAudit> batch = readPage(page);
         int processedTotal = 0;
+        // 표본 상한은 배치가 아니라 회차 단위다. 배치마다 새로 만들면 적체를 몰아 처리하는 회차에 배치 수만큼 곱해진다.
+        final CleanSampler sampler = new CleanSampler(properties.cleanSampleRatio(), properties.cleanSampleMax());
 
         while (!batch.isEmpty()) {
             // 실행기의 shutdownNow가 보낸 인터럽트다. 종료가 회차 끝을 기다리지 않게 배치를 시작하기 전에 본다.
@@ -137,7 +145,7 @@ public class ProfanityAuditService {
                 log.warn("종료 요청으로 닉네임 검열 회차 중단 — 누적 {}건", processedTotal);
                 break;
             }
-            final int processed = batchProcessor.process(batch);
+            final int processed = batchProcessor.process(batch, sampler);
             processedTotal += processed;
             log.info("닉네임 검열 진행: 이번 배치 {}건 중 {}건 처리, 누적 {}건", batch.size(), processed, processedTotal);
 

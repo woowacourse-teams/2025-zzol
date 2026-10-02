@@ -14,6 +14,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 
 class NicknameAuditJpaRepositoryTest extends ServiceTest {
 
@@ -128,6 +129,54 @@ class NicknameAuditJpaRepositoryTest extends ServiceTest {
         }
     }
 
+    @Nested
+    class findByReviewSampleTrueAndStatus_미검토_표본 {
+
+        @Test
+        void CLEAN_표본만_돌려주고_결정한_표본과_표본이_아닌_CLEAN은_뺀다() {
+            save("대기표본", NicknameAuditStatus.CLEAN, true);
+            save("결정표본", NicknameAuditStatus.BLOCKED, true);
+            save("일반통과", NicknameAuditStatus.CLEAN, false);
+
+            assertThat(auditRepository.findByReviewSampleTrueAndStatus(
+                            NicknameAuditStatus.CLEAN, PageRequest.of(0, 10)))
+                    .extracting(NicknameAudit::getNickname)
+                    .containsExactly("대기표본");
+        }
+
+        @Test
+        void 같은_표본을_두_번_선점하면_두_번째는_0행이다() {
+            final Long id = save("대기표본", NicknameAuditStatus.CLEAN, true);
+
+            final int first = auditRepository.claimUnreviewedSample(id, NicknameAuditStatus.BLOCKED);
+            final int second = auditRepository.claimUnreviewedSample(id, NicknameAuditStatus.ALLOWED);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(first).isEqualTo(1);
+                softly.assertThat(second).as("앞선 결정을 덮어쓰지 않는다.").isZero();
+                softly.assertThat(auditRepository.findById(id).orElseThrow().getStatus())
+                        .isEqualTo(NicknameAuditStatus.BLOCKED);
+            });
+        }
+
+        @Test
+        void 표본이_아닌_CLEAN은_선점하지_않는다() {
+            final Long id = save("일반통과", NicknameAuditStatus.CLEAN, false);
+
+            assertThat(auditRepository.claimUnreviewedSample(id, NicknameAuditStatus.ALLOWED))
+                    .isZero();
+        }
+
+        private Long save(String nickname, NicknameAuditStatus status, boolean reviewSample) {
+            final NicknameAudit audit = new NicknameAudit(nickname);
+            audit.complete(status, AiConfidence.of(0.9), "사유");
+            if (reviewSample) {
+                audit.markReviewSample();
+            }
+            return auditRepository.save(audit).getId();
+        }
+    }
+
     /**
      * 승격 저장이 JDBC 배치 UPDATE({@code bulkUpdateAuditResults})로 바뀌면서 JPA가 대신해주던
      * 타입 변환을 직접 하게 됐다. 값이 실제 DB를 오가며 제대로 들어가는지 다시 읽어 확인한다.
@@ -146,6 +195,7 @@ class NicknameAuditJpaRepositoryTest extends ServiceTest {
             // 밖으로 나갈 수 있다(리눅스 JVM에서 재현, macOS는 클럭이 마이크로초라 항상 통과했다).
             final Instant beforeAudit = Instant.now().truncatedTo(ChronoUnit.MICROS);
             first.complete(NicknameAuditStatus.CLEAN, AiConfidence.of(0.42), "검열 사유1");
+            first.markReviewSample();
             second.complete(NicknameAuditStatus.FLAGGED, AiConfidence.of(0.99), "검열 사유2");
             // 서버가 나노초를 올림할 수 있으니 상한을 한 칸 연다.
             final Instant afterAudit =
@@ -170,11 +220,13 @@ class NicknameAuditJpaRepositoryTest extends ServiceTest {
                 softly.assertThat(promotedFirst.getConfidence()).isEqualTo(AiConfidence.of(0.42));
                 softly.assertThat(promotedFirst.getReason()).isEqualTo("검열 사유1");
                 softly.assertThat(promotedFirst.getAuditedAt()).isBetween(beforeAudit, afterAudit);
+                softly.assertThat(promotedFirst.isReviewSample()).isTrue();
 
                 softly.assertThat(promotedSecond.getStatus()).isEqualTo(NicknameAuditStatus.FLAGGED);
                 softly.assertThat(promotedSecond.getConfidence()).isEqualTo(AiConfidence.of(0.99));
                 softly.assertThat(promotedSecond.getReason()).isEqualTo("검열 사유2");
                 softly.assertThat(promotedSecond.getAuditedAt()).isBetween(beforeAudit, afterAudit);
+                softly.assertThat(promotedSecond.isReviewSample()).isFalse();
 
                 softly.assertThat(reloadedUntouched.getStatus()).isEqualTo(NicknameAuditStatus.UNAUDITED);
                 softly.assertThat(reloadedUntouched.getAuditedAt()).isNull();

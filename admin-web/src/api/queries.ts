@@ -61,6 +61,7 @@ export const keys = {
       ['profanity', 'audits', status, page] as const,
     words: (filters: unknown) => ['profanity', 'words', filters] as const,
     quality: (days: number) => ['profanity', 'quality', days] as const,
+    samples: (page: number) => ['profanity', 'samples', page] as const,
   },
   inbox: ['inbox'] as const,
   ipBlocks: ['ip-blocks'] as const,
@@ -203,6 +204,22 @@ export function useAuditDecision() {
       client.invalidateQueries({ queryKey: ['profanity'] });
       client.invalidateQueries({ queryKey: keys.overview.queue });
     },
+  });
+}
+/** AI가 CLEAN으로 통과시킨 닉네임 중 검토용으로 뽑힌 것. 결정하면 목록에서 빠진다. */
+export function useNicknameSamples(page: number) {
+  return useQuery({
+    queryKey: keys.profanity.samples(page),
+    queryFn: () => api.get<PageResponse<NicknameAudit>>('/profanity/samples', { page }),
+  });
+}
+/** 미탐은 차단과 같은 경로를 타 사전에 오른다. 그래서 사전과 품질 지표까지 다시 불러온다. */
+export function useSampleDecision() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, decision }: { id: number; decision: 'ok' | 'miss' }) =>
+      api.post<void>(`/profanity/samples/${id}/${decision}`),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['profanity'] }),
   });
 }
 type WordFilters = {

@@ -85,7 +85,7 @@ zzol-bot:
         blocked-columns: []
       - name: nickname_feedback
         description: "플레이어명 검열에 대한 운영자 피드백"
-        columns: [id, nickname, ai_flagged, ai_confidence, operator_decision, reason, created_at]
+        columns: [id, nickname, ai_confidence, operator_decision, reason, created_at]
         blocked-columns: []
       - name: custom_profanity
         description: "커스텀 비속어 목록"

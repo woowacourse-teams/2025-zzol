@@ -1,186 +1,48 @@
-# API 객체 사용법
+# `api` 객체 사용법
 
-> 프로젝트에서 HTTP API 통신을 위한 범용 유틸 함수 사용법
+`src/apis/rest/`의 저수준 HTTP 함수 설명이다. 컴포넌트와 훅은 이 객체를 직접 부르지 않고 `useFetch`·`useLazyFetch`·`useMutation`을 쓴다. 훅 사용법과 예외는 `.claude/skills/api-conventions/SKILL.md`에 있다.
 
-## 📁 파일 구조
+| 파일            | 역할                                                                 |
+| --------------- | -------------------------------------------------------------------- |
+| `error.ts`      | HTTP 상태 코드 에러 `ApiError`, 연결 실패 `NetworkError`, `ErrorDisplayMode` |
+| `apiRequest.ts` | `fetch` 래퍼. JSON 직렬화, 에러 파싱, 재시도, 401 토큰 갱신 후 1회 재요청 |
+| `api.ts`        | `apiRequest`를 메서드별로 감싼 `api.get`·`post`·`put`·`patch`·`delete` |
 
-```text
-src/
-├── utils/
-│   ├── api/
-│   │   ├── error.ts      # 에러 클래스 정의
-│   │   ├── apiRequest.ts    # API 요청 함수
-│   │   └── api.ts        # API 요청 함수를 래핑한 객체 (GET, POST, PUT 등)
+## 호출
+
+```ts
+const users = await api.get<User[]>('/users?page=1&limit=10');
+const created = await api.post<User, CreateUserRequest>('/users', { name: '홍길동' });
+await api.put<User, CreateUserRequest>('/users/1', { name: '김길동' });
+await api.patch<User, Partial<CreateUserRequest>>('/users/1', { name: '박길동' });
+await api.delete<void>('/users/1');
 ```
 
----
+- URL은 `API_URL` 뒤에 그대로 붙는다. 쿼리 파라미터는 문자열에 직접 쓴다.
+- body는 항상 `JSON.stringify`로 보낸다. FormData는 보낼 수 없다.
+- 204나 빈 응답은 `{}`로 돌아온다.
 
-<br/>
+## 옵션
 
-## 📋 파일별 설명
-
-### 1. `error.ts` - 에러 클래스
-
-API 통신 중 발생할 수 있는 에러들을 타입별로 분류하여 처리합니다.
-
-**포함된 에러 클래스:**
-
-- `ApiError`: HTTP 상태 코드 에러 (400, 500 등)
-- `NetworkError`: 네트워크 연결 실패 에러
-
-<br/>
-
-### 2. `apiRequest.ts` - API 요청 함수
-
-HTTP 요청을 처리하는 핵심 함수가 포함되어 있습니다.
-
-**주요 기능**
-
-- 자동 JSON 직렬화/역직렬화
-- 쿼리 파라미터 자동 처리
-- 에러 응답 파싱
-- 재시도 로직
-
-<br/>
-
-### 3. `api.ts` - API 요청 함수를 래핑한 객체
-
-일반적인 HTTP 메서드들을 쉽게 사용할 수 있는 래퍼 함수들입니다.
-
-<br/>
-
-## ✅ 사용법
-
-### GET 요청
-
-```typescript
-// 기본 GET 요청
-const users = await api.get<User[]>('/api/users');
-
-// 쿼리 파라미터와 함께
-const filteredUsers = await api.get<User[]>('/api/users', {
-  params: {
-    page: 1,
-    limit: 10,
-    search: '김',
-    active: true,
-  },
-});
-// 실제 요청: /api/users?page=1&limit=10&search=김&active=true
-
-// 커스텀 헤더
-const protectedData = await api.get<any>('/api/protected', {
-  headers: {
-    Authorization: 'Bearer token123',
-    'X-API-Version': 'v2',
-  },
+```ts
+await api.get<PatchNote[]>('/patch-notes', {
+  bypassAuth: true,                   // Authorization 헤더와 401 갱신을 생략한다
+  headers: { 'X-Request-ID': 'abc' }, // 기본 헤더에 덧붙인다
+  retry: { count: 3, delay: 1000 },   // 실패 시 재시도 횟수와 간격(ms)
+  errorDisplayMode: 'toast',          // 던지는 에러의 displayMode. 기본은 GET 'fallback', 그 외 'toast'
 });
 ```
 
-### POST/PUT/PATCH 요청
+## 에러
 
-```typescript
-// POST
-const newUser = await api.post<User, CreateUserRequest>('/api/users', {
-  name: '홍길동',
-  email: 'hong@example.com',
-});
+실패하면 `ApiError` 또는 `NetworkError`를 던진다. 둘 다 `displayMode`를 가지며, `LocalErrorBoundary`는 `'fallback'`인 에러만 잡고 나머지는 위로 올린다. 서버가 `application/problem+json`을 주면 `detail`이 `message`가 되고 원문은 `data`에 남는다.
 
-// PUT
-const updatedUser = await api.put<User, CreateUserRequest>('/api/users/1', {
-  name: '김길동',
-  email: 'kim@example.com',
-});
-
-// PATCH
-const partiallyUpdated = await api.patch<User, Partial<CreateUserRequest>>('/api/users/1', {
-  name: '박길동', // 이름만 수정
-});
-```
-
-### DELETE 요청
-
-```typescript
-// 리소스 삭제
-await api.delete<void>('/api/users/1');
-
-// 쿼리 파라미터와 함께
-await api.delete<void>('/api/users/1', {
-  params: { force: true },
-});
-```
-
----
-
-<br/>
-
-## ⚙️ 추가 옵션
-
-### 재시도 설정
-
-네트워크 불안정이나 일시적 오류에 대비하여 자동 재시도를 설정할 수 있습니다.
-
-```typescript
-const importantData = await api.post<User, CreateUserRequest>('/api/users', userData, {
-  retry: {
-    count: 3, // 3번까지 재시도
-    delay: 1000, // 1초 간격
-  },
-});
-```
-
-### 커스텀 헤더
-
-요청별로 특별한 헤더가 필요한 경우 설정할 수 있습니다.
-
-```typescript
-const result = await api.post<any>('/api/upload', formData, {
-  headers: {
-    'X-Request-ID': 'unique-123',
-    'Content-Type': 'multipart/form-data',
-  },
-});
-```
-
-<br/>
-
-## 🚨 에러 처리
-
-### 에러 타입별 처리
-
-```typescript
+```ts
 try {
-  const users = await api.get<User[]>('/api/users');
-  return users;
+  return await api.get<User[]>('/users');
 } catch (error) {
-  if (error instanceof ApiError) {
-    // HTTP 에러 (400, 500 등)
-    switch (error.status) {
-      case 400:
-        console.error('잘못된 요청:', error.message);
-        break;
-      case 401:
-        console.error('인증 실패');
-        // 로그인 페이지로 자동 리다이렉트
-        break;
-      case 403:
-        console.error('권한 없음:', error.message);
-        break;
-      case 404:
-        console.error('리소스를 찾을 수 없음');
-        break;
-      case 500:
-        console.error('서버 오류:', error.message);
-        break;
-      default:
-        console.error('API 오류:', error.message);
-    }
-  } else if (error instanceof NetworkError) {
-    // 네트워크 연결 실패
-    console.error('네트워크 오류:', error.message);
-    // 사용자에게 인터넷 연결 확인 안내
-  } else {
-    console.error('알 수 없는 오류:', error);
-  }
+  if (error instanceof ApiError) console.error(error.status, error.message);
+  else if (error instanceof NetworkError) console.error('네트워크 오류', error.message);
+  throw error;
 }
 ```

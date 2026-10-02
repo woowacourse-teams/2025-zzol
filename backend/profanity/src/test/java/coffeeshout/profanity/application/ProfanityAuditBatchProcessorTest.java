@@ -24,6 +24,7 @@ import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
+import coffeeshout.profanity.fixture.NicknameAuditFixture;
 import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
@@ -423,6 +424,73 @@ class ProfanityAuditBatchProcessorTest {
             final int processed = processor.process(List.of(first, second));
 
             assertThat(processed).as("0을 돌려줘야 드레인 루프가 같은 페이지 반복을 멈춘다.").isZero();
+        }
+    }
+
+    /**
+     * 응답을 받고도 판정을 행에 붙이지 못한 경우다. 항목 파싱 실패, 항목 누락, 모델이 닉네임을 바꿔 돌려준 경우가 그렇다.
+     *
+     * <p>판정이 없는 것이므로 PENDING으로 사람에게 넘기지 않고 다시 판정받게 시도 횟수를 센다. 세지 않으면
+     * 같은 행이 회차마다 Gemini를 부르고도 영영 UNAUDITED로 남는다.
+     */
+    @Nested
+    class 판정을_붙이지_못한_행 {
+
+        @Test
+        void 판정이_빠진_행은_UNAUDITED로_남고_그_행의_시도_횟수만_오른다() {
+            final NicknameAudit matched = NicknameAuditFixture.미검열(1L, "짝맞는닉");
+            final NicknameAudit missing = NicknameAuditFixture.미검열(2L, "씨b알");
+            // 모델이 "씨b알"을 "씨발"로 바꿔 돌려준 상황. 어느 행의 판정인지 알 수 없다.
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(
+                            new NicknameAuditResult("짝맞는닉", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반"),
+                            new NicknameAuditResult("씨발", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.95), "욕설")));
+            given(auditRepository.findNicknamesWithTerminalStatus(any())).willReturn(Set.of());
+
+            processor.process(List.of(matched, missing));
+
+            final ArgumentCaptor<Collection<Long>> ids = ArgumentCaptor.captor();
+            then(auditRepository).should().incrementAttemptCount(ids.capture());
+            final SoftAssertions softly = new SoftAssertions();
+            softly.assertThat(missing.getStatus()).isEqualTo(NicknameAuditStatus.UNAUDITED);
+            softly.assertThat(ids.getValue()).as("판정을 받은 행까지 세면 애먼 상한에 닿는다.").containsExactly(2L);
+            softly.assertAll();
+        }
+
+        @Test
+        void 판정이_빠진_행이_상한에_닿으면_DEAD_LETTER로_내려가고_처리_건수로_센다() {
+            final NicknameAudit matched = new NicknameAudit("짝맞는닉");
+            final NicknameAudit missing = new NicknameAudit("누락닉");
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(
+                            new NicknameAuditResult("짝맞는닉", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")));
+            given(auditRepository.findNicknamesWithTerminalStatus(any())).willReturn(Set.of());
+            given(auditRepository.markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS)))
+                    .willReturn(1);
+
+            final int processed = processor.process(List.of(matched, missing));
+
+            assertThat(processed)
+                    .as("DEAD_LETTER도 UNAUDITED 스캔에서 빠지므로 드레인 루프에는 진행이다.")
+                    .isEqualTo(2);
+        }
+
+        @Test
+        void 벌크_저장이_실패해_건별로_저장할_때도_판정이_빠진_행의_시도_횟수를_올린다() {
+            final NicknameAudit matched = new NicknameAudit("짝맞는닉");
+            final NicknameAudit missing = new NicknameAudit("누락닉");
+            given(nicknameAuditor.audit(anyList()))
+                    .willReturn(List.of(
+                            new NicknameAuditResult("짝맞는닉", NicknameAuditStatus.CLEAN, AiConfidence.of(0.99), "일반")));
+            willThrow(new DataIntegrityViolationException("uq_player_name_audit_name_status 충돌"))
+                    .given(auditRepository)
+                    .bulkUpdateAuditResults(any());
+
+            processor.process(List.of(matched, missing));
+
+            final ArgumentCaptor<Collection<Long>> ids = ArgumentCaptor.captor();
+            then(auditRepository).should().incrementAttemptCount(ids.capture());
+            assertThat(ids.getValue()).hasSize(1);
         }
     }
 

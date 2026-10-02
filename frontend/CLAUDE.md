@@ -70,4 +70,4 @@ npm run generate:ws       # ws-openapi.json → wsOpenApi.d.ts (BE 계약이 바
 | `/code-review` (내장 커맨드) | 범용 버그(정확성)·중복·단순화·효율, 일반 React/TS 정확성. effort·`ultra`(클라우드)·`--comment`·`--fix` 지원 | **사용자가 직접 입력** — Claude는 `Skill("code-review")`로 호출할 수 없다 |
 | `fe-code-reviewer` (에이전트) | zzol FE 고유 규칙·ADR 준수 (`/code-review`가 모르는 영역) | Agent 툴, `run_in_background: true` |
 
-실행 패턴: Claude는 `fe-code-reviewer`를 백그라운드로 띄워 FE 고유 규칙을 보고, 범용 버그 렌즈가 필요하면 `Skill("deep-review")`를 함께 돌린다. `/code-review`는 사용자가 직접 입력했을 때만 도는 커맨드이므로 Claude의 실행 계획에 넣지 않는다(근거: `backend/.claude/rules/agent-dispatch.md`). (자세한 분업은 `.claude/agents/fe-code-reviewer.md` "검토 범위" 참조)
+실행 패턴: Claude는 `fe-code-reviewer`를 백그라운드로 띄워 FE 고유 규칙을 보고, 범용 버그 렌즈가 필요하면 `Skill("deep-review")`를 함께 돌린다. `/code-review`는 사용자가 직접 입력했을 때만 도는 커맨드이므로 Claude의 실행 계획에 넣지 않는다(근거: `backend/.claude/rules/agent-dispatch.md`). (자세한 분업은 루트 `.claude/agents/fe-code-reviewer.md` "검토 범위" 참조)

@@ -1,7 +1,8 @@
 # 0027. 로그 콜렉터 Promtail → Grafana Alloy 마이그레이션
 
 - 날짜: 2026-06-11
-- 상태: 승인 (2026-06-14)
+- 상태: 적용됨 (2026-06-14; config 내용 전달은 [ADR-0028](0028-alloy-pull-based-config-via-git.md)로 대체)
+- 2026-10-01 갱신: 브랜치 통합(#1574) 뒤 본문의 `be/dev`·`be/prod` 는 현재 `dev`·`prod` 에 해당한다.
 
 ## 컨텍스트
 
@@ -51,7 +52,7 @@ dev/prod 두 환경은 애플리케이션 로그(`/app/logs/application*.log`)�
 - **수정 파일**: `backend/docker/dev/docker-compose.yml`(`dev-promtail`→`dev-alloy`), `backend/docker/prod/docker-compose.yml`(`prod-promtail`→`prod-alloy`), `docs/adr/index.md`(본 ADR 등록).
 - **삭제 파일**: `backend/docker/dev/conf/promtail.yml`, `backend/docker/prod/conf/promtail.yml`(교체).
 - **검증 통과**: `alloy validate /work/config.alloy` dev/prod 각각 exit 0. `docker compose config`도 dev/prod 모두 통과(미설정 env 경고만, 서비스 정의 파싱 오류 없음).
-- **배포 경로 정합성**: dev/prod compose는 `edge-cd.yml`(ADR-0023) 대상이 **아니다.** edge-cd는 `backend/docker/nginx/**`·`backend/docker/monitoring/**`만 트리거·동기화한다. dev/prod compose는 **`backend-cd.yml`**(`backend/**` push)이 SCP로 `~/${ENV}/docker-compose.yml`에 복사하고 `deploy-infrastructure.sh`/`deploy-application.sh`로 적용한다(이 두 스크립트는 레포에 없고 서버에 존재 — 미확인). 따라서 본 변경은 backend-cd 경로로 흘러간다.
+- **배포 경로 정합성**: dev/prod compose는 `edge-cd.yml`(ADR-0023) 대상이 **아니다.** edge-cd는 `backend/docker/nginx/**`·`backend/docker/monitoring/**`만 트리거·동기화한다. dev/prod compose는 **`backend-cd.yml`**(`backend/**` push)이 SCP로 `~/${ENV}/docker-compose.yml`에 복사하고 `deploy-infrastructure.sh`/`deploy-application.sh`로 적용한다(두 스크립트는 `.github/scripts/` 에 있다). 따라서 본 변경은 backend-cd 경로로 흘러간다.
 - **서비스 리네임에 따른 고아 컨테이너 정리 필요(배포 시 확인).** `dev-promtail`→`dev-alloy`로 서비스명·컨테이너명이 바뀌므로 `docker compose up -d`만으로는 기존 promtail 컨테이너가 고아로 남는다. `deploy-infrastructure.sh`가 `--remove-orphans`를 쓰는지 확인하거나, 1회 수동으로 `docker rm -f dev-promtail prod-promtail`(+ 사용처 없는 promtail 이미지/포지션 볼륨 정리)이 필요하다. promtail은 별도 볼륨을 쓰지 않고 positions 파일을 컨테이너 내부 `/tmp`에 두므로 상태 마이그레이션은 불필요하다.
 - **prod 콜렉터 헬스 재점검.** #1399가 기록한 "prod-promtail unhealthy"는 콜렉터 교체로 자연 해소될 수 있으나, 배포 후 Loki에 dev/prod 로그가 정상 인입되는지(특히 prod의 KST→UTC 타임스탬프) 확인이 필요하다.
 - **monitoring 무관.** `backend/docker/monitoring/`는 promtail/9080을 참조하지 않으므로(Alloy→Loki push 구조, cross-network scrape 없음) monitoring 변경은 불필요하며 본 작업 범위 밖이다.

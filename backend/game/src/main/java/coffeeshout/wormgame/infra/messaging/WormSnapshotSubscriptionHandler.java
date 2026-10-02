@@ -7,7 +7,7 @@ import coffeeshout.websocket.LoggingSimpMessagingTemplate;
 import coffeeshout.websocket.docs.WsQueue;
 import coffeeshout.websocket.ui.WebSocketResponse;
 import coffeeshout.wormgame.application.WormGameService;
-import coffeeshout.wormgame.ui.response.WormSnapshotResponse;
+import coffeeshout.wormgame.application.response.WormSnapshotResponse;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

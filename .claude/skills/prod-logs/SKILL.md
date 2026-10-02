@@ -36,7 +36,7 @@ description: Grafana MCP로 운영·개발 서버의 Loki 로그와 Prometheus �
 | --- | --- | --- |
 | `job` | `prod-app`, `dev-app` | 환경별 config.alloy가 넘긴다 |
 | `environment` | `prod`, `dev` | |
-| `level` | **지금은 안 붙는다** | Alloy 정규식이 로그의 `[traceId,spanId]` 필드를 빠뜨려 매칭이 실패한다. 레벨은 라벨이 아니라 라인 필터로 거른다 |
+| `level` | `INFO`, `WARN`, `ERROR` 등 | 로그 줄의 레벨 필드에서 뽑는다. #1791 반영 전에 적재된 로그에는 없다 |
 
 로그 한 줄 형식(`backend/app/src/main/resources/logback-spring.xml`의 `FILE_LOG_PATTERN`):
 
@@ -44,15 +44,15 @@ description: Grafana MCP로 운영·개발 서버의 Loki 로그와 Prometheus �
 [yyyy-MM-dd HH:mm:ss.SSS] [LEVEL] [traceId,spanId] --- [thread] logger : message
 ```
 
-같은 이유로 `timestamp`도 못 뽑아 로그 시각이 아니라 Loki 인입 시각으로 적재된다. 시간 범위를 좁힐 때 인입 지연만큼 어긋난다. 운영 알럿 규칙(`backend/docker/monitoring/conf/loki-rules/fake/zzolbot-log-signals.yml`)도 그래서 `|= "ERROR"` 라인 필터를 쓴다.
+prod는 로그 줄의 KST 시각으로 적재하고, dev는 Loki 인입 시각으로 적재한다(ADR-0027). 운영 알럿 규칙(`backend/docker/monitoring/conf/loki-rules/fake/zzolbot-log-signals.yml`)은 룰과 Alloy의 반영 시점이 달라 라벨 대신 `|= "] [ERROR] ["` 라인 필터를 쓴다. 이유는 그 파일 주석에 있다.
 
 ## 자주 쓰는 LogQL
 
 ```logql
-{job="prod-app"} |= "ERROR"                                   # 운영 에러만
+{job="prod-app", level="ERROR"}                               # 운영 에러만
 {job="prod-app"} |= "roomId=abc123"                           # 특정 방 추적
 {job="prod-app"} |~ "WebSocket|1006"                          # 정규식
-sum(count_over_time({job="prod-app"} |= "ERROR" [5m]))        # 에러 건수 추이
+sum(count_over_time({job="prod-app", level="ERROR"} [5m]))    # 에러 건수 추이
 ```
 
 `query_loki_logs`는 한 번에 최대 100줄이다. 넓게 보려면 `query_loki_stats`나 `count_over_time`으로 분포부터 잡고 시간 범위를 좁힌다.

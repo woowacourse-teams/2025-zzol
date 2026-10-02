@@ -24,12 +24,12 @@ preflight 의 `UNTRACKED` 섹션 파일은 기본적으로 그룹에 넣지 않�
 
 ```text
 [그룹 1] feat(catalog): WsCatalog 캐싱 개선
-  M backend/websocket/src/main/java/coffeeshout/websocket/catalog/WsCatalog.java
-  M backend/websocket/src/main/java/coffeeshout/websocket/catalog/WsCatalogBuilder.java
-  M backend/websocket/src/test/java/coffeeshout/websocket/catalog/WsCatalogBuilderTest.java
+  M backend/websocket/src/main/java/coffeeshout/websocket/docs/WsCatalog.java
+  M backend/websocket/src/main/java/coffeeshout/websocket/docs/WsCatalogBuilder.java
+  M backend/websocket/src/test/java/coffeeshout/websocket/docs/WsCatalogBuilderTest.java
 
 [그룹 2] docs(adr): 번호 산정·index 행 형식 보강
-  M backend/.claude/skills/adr/SKILL.md
+  M .claude/skills/adr/SKILL.md
 
 변경·병합·재정렬하려면 알려주세요. 그대로 진행할까요?
 ```

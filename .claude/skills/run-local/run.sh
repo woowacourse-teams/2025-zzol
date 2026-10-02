@@ -44,9 +44,9 @@ case "$TARGET" in
   frontend)
     require_free_port "$FRONTEND_PORT" "프론트엔드"
     cd "$ROOT/frontend"
-    # node_modules 는 워크트리마다 따로 필요하다(gitignore 대상이라 worktree add 가 안 가져온다).
-    # 워크트리 생성 때 일괄 설치하지 않는 건, 백엔드·문서만 건드리는 작업이 대부분이라
-    # 쓰지도 않을 설치에 매번 시간을 물기 때문이다. 실제로 띄울 때만 채운다.
+    # node_modules 는 gitignore 대상이라 worktree add 가 안 가져온다. 보통은 worktree-setup.sh 가
+    # 주 저장소 것을 링크해 두므로 여기 안 걸린다. 링크가 없을 때(주 저장소에도 없었거나
+    # 수동으로 만든 워크트리)만 실제로 띄우는 시점에 채운다.
     if [ ! -x node_modules/.bin/webpack ]; then
       echo "node_modules 가 없다 — npm ci 로 설치한다 (최초 1회)"
       npm ci

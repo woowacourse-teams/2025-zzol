@@ -63,6 +63,10 @@ const HomePage = () => {
               setMenuInitialView('patch-notes');
               setActiveTab('menu');
             }}
+            onNavigateToMyInfo={() => {
+              setMenuInitialView('my-info');
+              setActiveTab('menu');
+            }}
           />
         )}
         {activeTab === 'ranking' && <RankingTab />}

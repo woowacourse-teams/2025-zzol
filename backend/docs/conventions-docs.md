@@ -16,7 +16,7 @@ Markdown 파일 작성 시 지켜야 할 규칙과 그 배경을 설명한다.
 로컬에서 검사하려면 저장소 루트에서 다음을 실행한다.
 
 ```bash
-npx markdownlint-cli2          # 검사 (CI와 동일: 버전 미고정, .markdownlint.jsonc allowlist가 안정성 보장)
+npx markdownlint-cli2          # 검사
 npx markdownlint-cli2 --fix    # 자동 수정 가능한 위반(MD031/MD022/MD047/MD012/MD007) 정리
 ```
 

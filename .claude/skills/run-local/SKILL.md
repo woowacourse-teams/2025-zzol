@@ -9,7 +9,7 @@ description: 현재 워크트리에서 백엔드·프론트엔드를 로컬로 �
 
 ## 한 번에 한 워크트리만 띄운다
 
-포트는 백엔드 `8080`·프론트 `3000` **고정**이다. 워크트리마다 포트를 달리하는 방안을 시도했으나 성립하지 않았다. `application-local.yml`의 `web.cors.allowed-origins`·`user.oauth.frontend-redirect-uri`·`room.qr.prefix`와 `docker-compose.yml`의 호스트 포트가 전부 그 두 값으로 하드코딩돼 있다. 포트만 바꾸면 **화면은 뜨는데 API가 전부 CORS로 막히는** 형태로 반쯤 깨진다.
+포트는 백엔드 `8080`·프론트 `3000` **고정**이다. 워크트리마다 포트를 달리하는 방안을 시도했으나 성립하지 않았다. `application-local.yml`의 `web.cors.allowed-origins`·`user.oauth.frontend-redirect-uri`·`room.qr.prefix`가 그 두 값으로 하드코딩돼 있다. 포트만 바꾸면 **화면은 뜨는데 API가 전부 CORS로 막히는** 형태로 반쯤 깨진다. `docker-compose.yml`의 호스트 포트도 MySQL `33061`·Valkey `6379` 고정이다. 컨테이너를 워크트리별로 나눌 수 없다.
 
 그래서 포트가 잡혀 있으면 다른 포트로 새지 않고 `run.sh`가 **멈춘다.** 다른 워크트리에서 띄운 것을 먼저 끄면 된다.
 

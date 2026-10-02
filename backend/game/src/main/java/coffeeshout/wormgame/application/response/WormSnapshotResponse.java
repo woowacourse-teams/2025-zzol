@@ -1,4 +1,4 @@
-package coffeeshout.wormgame.ui.response;
+package coffeeshout.wormgame.application.response;
 
 import coffeeshout.wormgame.domain.WormTrailSnapshot;
 import coffeeshout.wormgame.domain.event.WormSnapshotEvent;

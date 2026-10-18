@@ -4,7 +4,7 @@ argument-hint: '[파일경로 ...] [--fix]'
 allowed-tools: Read, Glob, Grep, Bash
 ---
 
-# style-check
+# style-audit
 
 zzol 프로젝트의 스타일 일관성을 검사한다.
 `--fix` 인자가 있으면 자동 수정 가능한 항목을 직접 수정한다.
@@ -94,7 +94,7 @@ style=\{\{
 ### [파일경로]
 
 #### 색상 하드코딩
-- L42: `background: '#F53E41'` → `background: theme.color.point[400]`
+- L42: `background: '#F53E41'` → `background: theme.color.point[500]`
 
 #### 타이포그래피 하드코딩
 - L49: `font-size: 15px` → `${({ theme }) => theme.typography.paragraph.fontSize}`

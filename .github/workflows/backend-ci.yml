@@ -152,7 +152,7 @@ jobs:
       # OOM으로 죽어(#1564) 롤백. 표기 시간은 JUnit XML 합계라 wall-clock이 아니다 —
       # 실제 경과는 Build Scan 참조.
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2.24.0
+        uses: EnricoMi/publish-unit-test-result-action@v2.25.0
         if: always()
         with:
           files: backend/*/build/test-results/test/*.xml

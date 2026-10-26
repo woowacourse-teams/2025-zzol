@@ -1,11 +1,11 @@
 [versions]
-spring-boot                  = "4.1.1"
+spring-boot                  = "4.1.2"
 spring-doc                   = "3.1.1"
 oci-sdk                      = "3.97.2"
 redisson                     = "4.8.0"
 zxing                        = "3.5.4"
 querydsl                     = "7.7"
-google-genai                 = "1.76.0"
+google-genai                 = "1.79.0"
 testcontainers               = "2.0.5"
 reflections                  = "0.10.2"
 resilience4j                 = "2.4.0"

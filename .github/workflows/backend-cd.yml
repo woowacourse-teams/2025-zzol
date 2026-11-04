@@ -84,11 +84,28 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # setup-trivy 의 install.sh 는 바이너리를 get.trivy.dev 에서 받는데 이 도메인이 사라졌다(#1896).
+      # GitHub releases 에서 직접 받고 같은 릴리스의 checksums.txt 로 검증한다.
+      - name: Install Trivy
+        env:
+          TRIVY_VERSION: 0.70.0
+        run: |
+          set -euo pipefail
+          base="https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}"
+          tarball="trivy_${TRIVY_VERSION}_Linux-ARM64.tar.gz"
+          cd "$RUNNER_TEMP"
+          curl -fsSL -O "$base/$tarball" -O "$base/trivy_${TRIVY_VERSION}_checksums.txt"
+          grep " ${tarball}\$" "trivy_${TRIVY_VERSION}_checksums.txt" | sha256sum -c -
+          mkdir -p trivy-bin
+          tar -xzf "$tarball" -C trivy-bin trivy
+          echo "$RUNNER_TEMP/trivy-bin" >> "$GITHUB_PATH"
+
       - name: Scan image for vulnerabilities
         uses: aquasecurity/trivy-action@v0.36.0
         env:
           TRIVY_PLATFORM: linux/arm64
         with:
+          skip-setup-trivy: true
           image-ref: ghcr.io/${{ env.REPO_OWNER }}/zzol-backend:${{ env.IMAGE_TAG }}
           format: table
           severity: CRITICAL

@@ -1,3 +1,10 @@
+# Docker 기본 json-file 드라이버는 크기 제한이 없다. Loki stdout 이 17G 까지 쌓여 DiskUsageHigh 가 떴다.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "100m"
+    max-file: "3"
+
 services:
   # ============================================
   # Tempo - Distributed Tracing
@@ -7,6 +14,7 @@ services:
     container_name: tempo
     user: "0:0"
     restart: unless-stopped
+    logging: *default-logging
     command: ["-config.file=/etc/tempo.yaml", "-config.expand-env=true"]
     volumes:
       - tempo-data:/tmp/tempo
@@ -39,6 +47,7 @@ services:
     container_name: prometheus
     user: "65534:65534"  # nobody:nogroup (Prometheus 기본 UID)
     restart: unless-stopped
+    logging: *default-logging
     volumes:
       - prometheus-data:/prometheus
       - prometheus-logs:/var/log/prometheus
@@ -80,6 +89,7 @@ services:
     image: prom/alertmanager:v0.27.0
     container_name: alertmanager
     restart: unless-stopped
+    logging: *default-logging
     volumes:
       - ./conf/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - ./secrets:/etc/alertmanager/secrets:ro   # slack_api_url (서버에서 생성, 미커밋)
@@ -116,6 +126,7 @@ services:
     container_name: grafana
     user: "472:472"  # grafana:grafana (Grafana 기본 UID)
     restart: unless-stopped
+    logging: *default-logging
     volumes:
       - ./data/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./data/grafana/grafana_data:/var/lib/grafana
@@ -162,6 +173,7 @@ services:
     image: grafana/loki:2.9.6
     container_name: loki
     restart: unless-stopped
+    logging: *default-logging
     volumes:
       - loki-data:/loki
       - loki-logs:/var/log/loki
@@ -195,6 +207,7 @@ services:
     container_name: cadvisor
     privileged: true
     restart: unless-stopped
+    logging: *default-logging
     command:
       - '--docker_only=true'
       - '--housekeeping_interval=10s'
@@ -240,6 +253,7 @@ services:
     image: prom/node-exporter:v1.8.2
     container_name: node-exporter
     restart: unless-stopped
+    logging: *default-logging
     command:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
@@ -280,6 +294,7 @@ services:
     image: prom/blackbox-exporter:v0.25.0
     container_name: blackbox-exporter
     restart: unless-stopped
+    logging: *default-logging
     volumes:
       - ./conf/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
     networks:

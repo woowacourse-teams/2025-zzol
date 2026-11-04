@@ -21,8 +21,10 @@ public interface OAuthAccountJpaRepository extends JpaRepository<OAuthAccountEnt
 
     List<OAuthAccountEntity> findAllByUser_IdIn(List<Long> userIds);
 
+    // 탈퇴는 soft delete 뒤에 이 삭제를 부른다. JPQL 의 o.user.id 는 Hibernate 7.4.13 부터 app_user 와 JOIN 해
+    // UserEntity 의 @SQLRestriction 이 붙고, 이미 탈퇴한 회원이라 0행이 지워진다(#1898). 그래서 외래키를 직접 쓴다.
     @Modifying(flushAutomatically = true)
-    @Query("DELETE FROM OAuthAccountEntity o WHERE o.user.id = :userId")
+    @Query(value = "DELETE FROM oauth_account WHERE user_id = :userId", nativeQuery = true)
     void deleteByUser_Id(@Param("userId") Long userId);
 
     @Query(value = "SELECT COUNT(*) FROM oauth_account WHERE user_id = :userId", nativeQuery = true)

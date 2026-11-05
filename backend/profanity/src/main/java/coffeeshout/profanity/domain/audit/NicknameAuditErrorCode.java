@@ -11,7 +11,8 @@ public enum NicknameAuditErrorCode implements ErrorCode {
     AI_EMPTY_RESPONSE("AUDIT_002", "닉네임 검열 AI가 빈 응답을 반환했습니다.", 500),
     AI_RESPONSE_PARSE_FAILED("AUDIT_003", "닉네임 검열 AI 응답 파싱에 실패했습니다.", 500),
     PROMPT_BUILD_FAILED("AUDIT_004", "닉네임 검열 프롬프트 생성에 실패했습니다.", 500),
-    AUDIT_NOT_FOUND("AUDIT_005", "검열 항목을 찾을 수 없습니다.", 404);
+    AUDIT_NOT_FOUND("AUDIT_005", "검열 항목을 찾을 수 없습니다.", 404),
+    NOT_UNREVIEWED_SAMPLE("AUDIT_006", "검토를 기다리는 표본이 아닙니다.", 400);
 
     private final String code;
     private final String message;

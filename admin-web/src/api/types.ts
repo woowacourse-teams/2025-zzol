@@ -256,8 +256,13 @@ export type NicknameAuditQuality = {
   total: number;
   agreed: number;
   falsePositive: number;
+  /** 표본(AI가 CLEAN으로 통과시켜 검토용으로 뽑힌 닉네임) 중 관리자가 차단한 수. */
   falseNegative: number;
   overrideRate: number;
+  /** 관리자가 정상·미탐을 정한 표본 수. 미탐률 추정의 분모다. */
+  sampleReviewed: number;
+  /** CLEAN 전체 미탐률의 95% 신뢰 상한(0~1). 검토한 표본이 없으면 null 이다. 0으로 오지 않는다. */
+  missUpperBound: number | null;
 };
 
 /**

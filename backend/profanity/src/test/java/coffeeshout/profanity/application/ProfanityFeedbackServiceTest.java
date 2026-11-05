@@ -13,11 +13,13 @@ import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.WordSource;
+import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import java.util.Optional;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -147,6 +149,79 @@ class ProfanityFeedbackServiceTest {
             }
 
             then(profanityWordManagementService).should(never()).add(any(), any(), any());
+        }
+    }
+
+    /**
+     * 표본 결정은 허용·차단 경로를 그대로 타되, 검토 대기 중인 표본에만 열려 있어야 한다.
+     * FLAGGED 행이 넘어오면 오탐으로, 이미 결정한 표본이 넘어오면 피드백이 두 번 쌓인다.
+     */
+    @Nested
+    class 표본_결정 {
+
+        /**
+         * 맞게 통과시킨 CLEAN은 교정이 아니다. 피드백을 남기면 프롬프트의 최근 예시 20건이 "정상" 확인으로
+         * 밀려나고, 운영자 허용 단어로 올리면 닉네임 전체가 사전에 들어가 트라이가 다시 빌드된다.
+         */
+        @Test
+        void 정상은_상태만_ALLOWED로_바꾸고_피드백도_허용_단어도_남기지_않는다() {
+            given(auditRepository.claimUnreviewedSample(1L, NicknameAuditStatus.ALLOWED))
+                    .willReturn(1);
+
+            service.allowSample(1L);
+
+            then(auditRepository).should().claimUnreviewedSample(1L, NicknameAuditStatus.ALLOWED);
+            then(feedbackRepository).should(never()).save(any());
+            then(profanityWordManagementService).should(never()).operatorAllow(any());
+        }
+
+        @Test
+        void 미탐은_BLOCKED로_선점한_뒤_피드백과_사전_등록까지_차단_경로를_탄다() {
+            final NicknameAudit claimed = sample("욕설닉네임", NicknameAuditStatus.BLOCKED);
+            given(auditRepository.claimUnreviewedSample(1L, NicknameAuditStatus.BLOCKED))
+                    .willReturn(1);
+            given(auditRepository.findById(1L)).willReturn(Optional.of(claimed));
+            given(profanityWordManagementService.add("욕설닉네임", Language.KOREAN, WordSource.MANUAL))
+                    .willReturn(true);
+
+            service.blockSample(1L);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(claimed.getStatus()).isEqualTo(NicknameAuditStatus.BLOCKED);
+                then(feedbackRepository).should().save(any(NicknameFeedback.class));
+                then(eventPublisher).should().publishEvent(any(ProfanityWordBlockedEvent.class));
+            });
+        }
+
+        /**
+         * 두 운영자가 같은 표본을 동시에 누르면 읽고 나서 확인하는 가드는 둘 다 통과한다.
+         * 조건부 UPDATE가 0행이면 이미 다른 쪽이 가져간 것이라 아무것도 남기지 않는다.
+         */
+        @Test
+        void 선점에_실패하면_거절하고_아무것도_남기지_않는다() {
+            given(auditRepository.claimUnreviewedSample(1L, NicknameAuditStatus.BLOCKED))
+                    .willReturn(0);
+            given(auditRepository.findById(1L)).willReturn(Optional.of(sample("욕설닉네임", NicknameAuditStatus.ALLOWED)));
+
+            assertCoffeeShoutException(() -> service.blockSample(1L), NicknameAuditErrorCode.NOT_UNREVIEWED_SAMPLE);
+            then(feedbackRepository).should(never()).save(any());
+            then(profanityWordManagementService).should(never()).add(any(), any(), any());
+        }
+
+        @Test
+        void 존재하지_않는_표본은_예외가_발생한다() {
+            given(auditRepository.claimUnreviewedSample(999L, NicknameAuditStatus.ALLOWED))
+                    .willReturn(0);
+            given(auditRepository.findById(999L)).willReturn(Optional.empty());
+
+            assertCoffeeShoutException(() -> service.allowSample(999L), NicknameAuditErrorCode.AUDIT_NOT_FOUND);
+        }
+
+        private NicknameAudit sample(String nickname, NicknameAuditStatus status) {
+            final NicknameAudit audit = auditEntityWith(nickname);
+            audit.complete(status, AiConfidence.of(0.99), "일반");
+            audit.markReviewSample();
+            return audit;
         }
     }
 

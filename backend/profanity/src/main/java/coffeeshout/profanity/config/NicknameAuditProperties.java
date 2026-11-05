@@ -24,6 +24,9 @@ import org.springframework.validation.annotation.Validated;
  *                       {@code ProfanityAuditService.LOCK_LEASE_MILLIS}보다 반드시 짧아야 한다.
  * @param maxAttempts    한 행이 검열 호출 실패를 견디는 횟수. 여기 닿으면 DEAD_LETTER가 되어 UNAUDITED 스캔에서
  *                       빠진다. 늘리면 되풀이 실패하는 행 하나가 회차마다 Gemini 호출을 그만큼 더 태운다.
+ * @param cleanSampleRatio CLEAN 판정 중 운영자 검토 표본으로 뽑을 비율. 표본의 미탐 비율로 CLEAN 전체의 미탐률을
+ *                       추정한다. 어떤 닉네임이 뽑힐지는 닉네임 해시로 정한다. 해상도는 0.0001이다.
+ * @param cleanSampleMax 한 회차에 뽑을 표본 상한. 적체를 몰아서 처리하는 회차에 검토 목록이 한꺼번에 불어나지 않게 막는다.
  * @param cron           검열 회차 주기. {@code @Scheduled}는 컴파일 상수만 받으므로 어노테이션에는 이 프로퍼티를
  *                       가리키는 문자열을 쓴다. 값을 여기 두는 이유는 local에서 12시간을 기다리지 않고 회차를
  *                       돌려보기 위해서다. 형식은 컴팩트 생성자가 실제로 파싱해 검증한다.
@@ -50,6 +53,11 @@ public record NicknameAuditProperties(
         Duration maxRunDuration,
 
         @DefaultValue("3") @Positive int maxAttempts,
+
+        @DefaultValue("0.05") @DecimalMin("0.0") @DecimalMax("1.0")
+        double cleanSampleRatio,
+
+        @DefaultValue("20") @PositiveOrZero int cleanSampleMax,
 
         @NotBlank String cron,
 

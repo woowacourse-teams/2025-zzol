@@ -41,6 +41,8 @@ nickname-audit:
   min-term-length: 2                   # 자동 차단할 비속어 조각의 정규화 후 최소 길이 (짧을수록 Trie 부분일치 과차단 위험 ↑)
   max-run-duration: 10m                # 한 회차가 실행기 스레드를 붙잡아도 되는 상한. 넘으면 남은 적체는 다음 회차로.
   max-attempts: 3                      # 한 행이 검열 호출 실패를 견디는 횟수. 닿으면 DEAD_LETTER가 되어 스캔에서 빠진다.
+  clean-sample-ratio: 0.05             # CLEAN 판정 중 운영자 검토 표본으로 뽑을 비율. 표본의 미탐 비율로 전체 미탐률을 추정한다.
+  clean-sample-max: 20                 # 한 회차에 뽑을 표본 상한.
   request-timeout: 120s                # Gemini HTTP 타임아웃. 없으면 응답 없는 호출이 스케줄러 스레드를 무기한 점유한다.
                                        # batch-size 를 올리면 응답 생성 시간도 늘어나므로 함께 올린다.
   cron: "0 0 0/12 * * *"               # 검열 회차 주기. local 은 application-local.yml 에서 5분으로 당겨 쓴다.

@@ -92,6 +92,8 @@ const AUDIT_ACTION: Record<string, string> = {
   'DELETE /admin/api/reports/{id}/reporter-ip-block': '신고자 IP 해제',
   'POST /admin/api/profanity/audits/{id}/allow': '닉네임 허용',
   'POST /admin/api/profanity/audits/{id}/block': '닉네임 차단',
+  'POST /admin/api/profanity/samples/{id}/ok': '표본 정상 확정',
+  'POST /admin/api/profanity/samples/{id}/miss': '표본 미탐 확정',
   'POST /admin/api/profanity/words': '금칙어 추가',
   'POST /admin/api/profanity/words/{word}/activate': '금칙어 켜기',
   'DELETE /admin/api/profanity/words/{word}/activate': '금칙어 끄기',

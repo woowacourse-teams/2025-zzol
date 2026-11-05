@@ -69,6 +69,25 @@ public class AdminProfanityController {
         feedbackService.block(id);
     }
 
+    @GetMapping("/samples")
+    public PageResponse<NicknameAuditResponse> samples(@RequestParam(defaultValue = "0") @Min(0) int page) {
+        return PageResponse.of(
+                auditService.listUnreviewedSamples(PageRequest.of(page, AUDIT_PAGE_SIZE, AUDITED_AT_DESC)),
+                audit -> NicknameAuditResponse.from(audit, clock.getZone()));
+    }
+
+    @PostMapping("/samples/{id}/ok")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void confirmSampleOk(@PathVariable Long id) {
+        feedbackService.allowSample(id);
+    }
+
+    @PostMapping("/samples/{id}/miss")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void confirmSampleMiss(@PathVariable Long id) {
+        feedbackService.blockSample(id);
+    }
+
     @GetMapping("/words")
     public PageResponse<ProfanityWordResponse> words(
             @RequestParam(defaultValue = "") String search,

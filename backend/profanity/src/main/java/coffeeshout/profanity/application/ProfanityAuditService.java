@@ -12,7 +12,9 @@ import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -129,6 +131,7 @@ public class ProfanityAuditService {
         int page = 0;
         List<NicknameAudit> batch = readPage(page);
         int processedTotal = 0;
+        final Set<Long> sent = new HashSet<>();
 
         while (!batch.isEmpty()) {
             // 실행기의 shutdownNow가 보낸 인터럽트다. 종료가 회차 끝을 기다리지 않게 배치를 시작하기 전에 본다.
@@ -137,7 +140,7 @@ public class ProfanityAuditService {
                 log.warn("종료 요청으로 닉네임 검열 회차 중단 — 누적 {}건", processedTotal);
                 break;
             }
-            final int processed = batchProcessor.process(batch);
+            final int processed = processUnsent(batch, sent);
             processedTotal += processed;
             log.info("닉네임 검열 진행: 이번 배치 {}건 중 {}건 처리, 누적 {}건", batch.size(), processed, processedTotal);
 
@@ -156,10 +159,13 @@ public class ProfanityAuditService {
             // 건너뛴다.
             //
             // 진행이 있으면 커서를 그 자리에 둔다. 처리된 행이 스캔에서 빠지면서 뒷행이 같은 페이지
-            // 인덱스로 당겨지므로 되감을 이유가 없다. 0으로 되감으면 앞 페이지의 실패 배치를 성공 배치마다
-            // 다시 만나 Gemini를 다시 부르고 시도 횟수를 한 회차 안에 다 태운다. 커서를 두면 실패 배치를
-            // 회차당 한 번만 만나 세 회차에 걸쳐 판정한다. 회차마다 LLM 응답이 달라질 수 있어 그쪽이
-            // 결정론 실패 분류의 오판 위험도 낮다.
+            // 인덱스로 당겨지므로 되감을 이유가 없다. 이때 판정을 붙이지 못한 행은 UNAUDITED 그대로라
+            // 같은 페이지에 다시 잡힌다. 이번 회차에 이미 보낸 행은 sent로 걸러 다시 보내지 않는다.
+            // 다시 보내면 Gemini를 또 부르고 시도 횟수를 한 회차 안에 다 태워 DEAD_LETTER까지 내려간다.
+            // 페이지가 전부 보낸 행이면 보낼 게 없어 processed가 0이므로 커서가 밀린다.
+            //
+            // 회차당 한 번만 보내면 실패한 행은 세 회차에 걸쳐 판정받는다. 회차마다 LLM 응답이 달라질 수
+            // 있어 결정론 실패 분류의 오판 위험도 그쪽이 낮다.
             if (processed == 0) {
                 page++;
             }
@@ -167,6 +173,17 @@ public class ProfanityAuditService {
         }
 
         log.info("닉네임 검열 완료: 총 {}건 처리", processedTotal);
+    }
+
+    /** 이번 회차에 아직 보내지 않은 행만 검열한다. 보낼 행이 없으면 진행이 없는 것이라 0이다. */
+    private int processUnsent(List<NicknameAudit> batch, Set<Long> sent) {
+        final List<NicknameAudit> unsent =
+                batch.stream().filter(entity -> !sent.contains(entity.getId())).toList();
+        if (unsent.isEmpty()) {
+            return 0;
+        }
+        unsent.forEach(entity -> sent.add(entity.getId()));
+        return batchProcessor.process(unsent);
     }
 
     private void recordQueueDepth() {

@@ -24,16 +24,11 @@ import org.springframework.validation.annotation.Validated;
  *                       {@code ProfanityAuditService.LOCK_LEASE_MILLIS}보다 반드시 짧아야 한다.
  * @param maxAttempts    한 행이 검열 호출 실패를 견디는 횟수. 여기 닿으면 DEAD_LETTER가 되어 UNAUDITED 스캔에서
  *                       빠진다. 늘리면 되풀이 실패하는 행 하나가 회차마다 Gemini 호출을 그만큼 더 태운다.
- * @param dailyCallLimit Gemini에 하루 동안 보내는 검열 요청 수의 상한. 무료 티어의 하루 한도를 넘기지 않으려고 둔다.
- *                       닿으면 그날 남은 회차는 Gemini를 부르지 않고 행을 UNAUDITED로 남긴다. 하루의 경계는
- *                       한도가 초기화되는 태평양 시간 자정이다({@code RedisNicknameAuditCallBudget}).
- *                       같은 프로젝트의 같은 모델을 쓰는 환경이 여럿이면 상한의 합이 한도보다 작아야 한다.
  * @param cron           검열 회차 주기. {@code @Scheduled}는 컴파일 상수만 받으므로 어노테이션에는 이 프로퍼티를
- *                       가리키는 문자열을 쓴다. 값을 여기 두는 이유는 코드를 고치지 않고 환경마다 주기를
- *                       바꾸기 위해서다. 형식은 컴팩트 생성자가 실제로 파싱해 검증한다.
+ *                       가리키는 문자열을 쓴다. 값을 여기 두는 이유는 환경마다 주기를 다르게 두기
+ *                       위해서다. 형식은 컴팩트 생성자가 실제로 파싱해 검증한다.
  *                       주기를 {@code ProfanityAuditService.LOCK_DONE_TTL_MILLIS}(60초)보다 짧게 잡으면 안 된다.
- *                       완료 마킹이 아직 살아 있어 다음 회차가 락에 막혀 말없이 사라진다. 운영의 5분은 안전하다.
- *                       주기를 줄이면 하루 최악 호출 수가 늘어나므로 {@code dailyCallLimit}과 함께 본다.
+ *                       완료 마킹이 아직 살아 있어 다음 회차가 락에 막혀 말없이 사라진다.
  * @param seed           local 프로파일에서 미검열 닉네임을 몇 건 적재할지. 측정용이라 기본값은 0이다.
  * @param stub           local·test 프로파일에서 Gemini 대신 도는 {@code NoOpNicknameAuditor}의 동작.
  *                       기본값이 지연 0에 전부 CLEAN이라 값을 주지 않으면 지금까지와 똑같이 움직인다.
@@ -55,8 +50,6 @@ public record NicknameAuditProperties(
         Duration maxRunDuration,
 
         @DefaultValue("3") @Positive int maxAttempts,
-
-        @DefaultValue("400") @Positive int dailyCallLimit,
 
         @NotBlank String cron,
 

@@ -105,7 +105,7 @@ class NicknameAuditSchedulerTest {
         @Test
         void 완료_마킹_TTL은_cron_주기보다_짧아야_한다() throws NoSuchMethodException {
             assertThat(auditPendingLock().doneTtl())
-                    .as("완료 마킹이 cron 주기(운영 5분)보다 오래 남으면 다음 회차가 조용히 건너뛰어진다.")
+                    .as("완료 마킹이 cron 주기보다 오래 남으면 다음 회차가 조용히 건너뛰어진다.")
                     .isLessThan(TimeUnit.MINUTES.toMillis(5));
         }
     }
@@ -113,7 +113,7 @@ class NicknameAuditSchedulerTest {
     /**
      * 결함 3 — cron 이 코드에 박혀 있으면 local 에서 회차를 돌려볼 수 없다.
      *
-     * <p>주기가 리터럴이면 환경마다 주기를 다르게 두거나 파이프라인을 재려고 당길 때마다 코드를 고쳐야 한다.
+     * <p>주기가 리터럴이면 환경마다 주기를 다르게 두려고 코드를 고쳐야 한다.
      * {@code @Scheduled} 는 컴파일 상수만 받으므로 어노테이션에는 프로퍼티를 가리키는 문자열을 둔다.
      */
     @Nested

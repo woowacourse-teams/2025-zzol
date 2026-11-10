@@ -1,8 +1,6 @@
 package coffeeshout.profanity.application;
 
-import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -11,11 +9,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
-import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -274,64 +270,6 @@ class ProfanityAuditServiceTest {
         private List<NicknameAudit> batchOf(int size) {
             final List<NicknameAudit> batch = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
-                batch.add(new NicknameAudit("닉" + i));
-            }
-            return batch;
-        }
-    }
-
-    /**
-     * 하루 호출 상한에 닿은 회차가 거기서 끝나는지 검증한다(#1907).
-     *
-     * <p>진행이 없는 배치처럼 다음 페이지로 넘어가면, 적체가 있는 날에는 남은 페이지마다 조회와 거절을 되풀이한다.
-     * 상한은 내일까지 풀리지 않으므로 이번 회차에서 더 할 일이 없다.
-     */
-    @Nested
-    class auditPending_하루_호출_상한 {
-
-        private static final int BATCH_SIZE = 10;
-
-        @Test
-        void 상한에_막히면_남은_페이지를_읽지_않고_회차를_끝낸다() {
-            final List<Integer> readPages = new ArrayList<>();
-            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
-                    .willReturn((long) BATCH_SIZE * 3);
-            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
-                    .willAnswer(invocation -> {
-                        final Pageable pageable = invocation.getArgument(1);
-                        readPages.add(pageable.getPageNumber());
-                        return fullBatch();
-                    });
-            given(batchProcessor.process(any())).willReturn(BATCH_SIZE).willThrow(dailyCallLimitReached());
-
-            assertThatCode(service::auditPending)
-                    .as("상한은 장애가 아니다. 예외로 새면 스케줄러가 회차 실패로 기록한다.")
-                    .doesNotThrowAnyException();
-
-            assertThat(readPages).as("첫 배치는 처리하고, 상한에 막힌 둘째 배치에서 멈춘다.").containsExactly(0, 0);
-            then(batchProcessor).should(times(2)).process(any());
-        }
-
-        @Test
-        void 상한이_아닌_예외는_그대로_올린다() {
-            given(auditRepository.countByStatusAndAuditedAtIsNull(NicknameAuditStatus.UNAUDITED))
-                    .willReturn((long) BATCH_SIZE);
-            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
-                    .willReturn(fullBatch());
-            given(batchProcessor.process(any()))
-                    .willThrow(new InfrastructureException(NicknameAuditErrorCode.AI_CALL_FAILED, "닉네임 검열 AI 호출 실패"));
-
-            assertCoffeeShoutException(service::auditPending, NicknameAuditErrorCode.AI_CALL_FAILED);
-        }
-
-        private InfrastructureException dailyCallLimitReached() {
-            return new InfrastructureException(
-                    NicknameAuditErrorCode.AI_DAILY_CALL_LIMIT_REACHED, "닉네임 검열 AI 하루 호출 상한에 닿았습니다.");
-        }
-
-        private List<NicknameAudit> fullBatch() {
-            final List<NicknameAudit> batch = new ArrayList<>(BATCH_SIZE);
-            for (int i = 0; i < BATCH_SIZE; i++) {
                 batch.add(new NicknameAudit("닉" + i));
             }
             return batch;

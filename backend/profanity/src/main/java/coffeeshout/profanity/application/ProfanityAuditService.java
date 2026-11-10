@@ -37,11 +37,8 @@ public class ProfanityAuditService {
      */
     private static final long LOCK_LEASE_MILLIS = 900_000L;
 
-    /** 주기 작업이라 완료 마킹은 짧게 둔다. cron 주기(운영 5분)보다 길면 다음 회차가 조용히 건너뛰어진다. */
+    /** 주기 작업이라 완료 마킹은 짧게 둔다. cron 주기보다 길면 다음 회차가 조용히 건너뛰어진다. */
     private static final long LOCK_DONE_TTL_MILLIS = 60_000L;
-
-    /** 처리 건수는 0 이상이라 겹치지 않는다. 드레인 루프가 PMD의 메서드 길이 상한에 붙어 있어 값 하나로 알린다. */
-    private static final int DAILY_CALL_LIMIT_REACHED = -1;
 
     private final NicknameAuditRepository auditRepository;
     private final ProfanityAuditBatchProcessor batchProcessor;
@@ -140,10 +137,7 @@ public class ProfanityAuditService {
                 log.warn("종료 요청으로 닉네임 검열 회차 중단 — 누적 {}건", processedTotal);
                 break;
             }
-            final int processed = processUnlessDailyCallLimitReached(batch);
-            if (processed == DAILY_CALL_LIMIT_REACHED) {
-                break;
-            }
+            final int processed = batchProcessor.process(batch);
             processedTotal += processed;
             log.info("닉네임 검열 진행: 이번 배치 {}건 중 {}건 처리, 누적 {}건", batch.size(), processed, processedTotal);
 
@@ -173,25 +167,6 @@ public class ProfanityAuditService {
         }
 
         log.info("닉네임 검열 완료: 총 {}건 처리", processedTotal);
-    }
-
-    /**
-     * 배치를 처리하고 UNAUDITED에서 빠져나간 행 수를 돌려준다. 하루 호출 상한에 막혔으면
-     * {@link #DAILY_CALL_LIMIT_REACHED}를 돌려준다.
-     *
-     * <p>상한은 내일까지 풀리지 않는다. 진행이 없는 배치처럼 다음 페이지로 넘어가면 남은 페이지마다 조회와 거절을
-     * 되풀이하므로 회차를 끝낸다. 막힌 배치의 행은 시도 횟수가 오르지 않은 채 UNAUDITED로 남는다(#1907).
-     */
-    private int processUnlessDailyCallLimitReached(List<NicknameAudit> batch) {
-        try {
-            return batchProcessor.process(batch);
-        } catch (RuntimeException e) {
-            if (!ProfanityAuditBatchProcessor.isDailyCallLimitReached(e)) {
-                throw e;
-            }
-            log.info("닉네임 검열 하루 호출 상한에 닿아 회차를 끝낸다. 남은 적체는 상한이 풀린 뒤의 회차로 넘긴다.");
-            return DAILY_CALL_LIMIT_REACHED;
-        }
     }
 
     private void recordQueueDepth() {

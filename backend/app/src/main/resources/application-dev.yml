@@ -28,9 +28,7 @@ room:
     prefix: "https://dev.zzol.site/join/"
 
 nickname-audit:
-  # prod 와 같은 flash-lite 를 쓴다(#1907). Gemini 요청 한도는 프로젝트의 모델별로 세므로, 두 환경이 같은
-  # 프로젝트 키를 쓰면 하루 한도를 나눠 쓴다. dev 상한을 낮게 잡아 두 환경의 합(400 + 50)이 한도 아래에 있게 한다.
-  daily-call-limit: 50
+  cron: "0 */30 * * * *"  # prod 와 Gemini 하루 한도를 나눠 쓸 수 있다. 둘 다 5분이면 하루 576회차로 한도(약 500)를 넘는다.
 
 websocket:
   docs:

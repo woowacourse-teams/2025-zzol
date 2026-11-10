@@ -45,9 +45,8 @@ public class NicknameAuditConfig {
      * SDK가 빌드된 {@link Client}에서 타임아웃을 되읽을 방법을 주지 않아, 검증 가능하도록 조립부를 분리한다.
      * {@code HttpOptions.timeout}은 밀리초 단위다.
      *
-     * <p>SDK 재시도는 끈다. 설정하지 않으면 SDK가 408·429·5xx 응답에 같은 요청을 다섯 번까지 다시 보내는데,
-     * 그 요청은 SDK 안에서 나가서 하루 호출 상한({@code nickname-audit.daily-call-limit})이 세지 못한다.
-     * 실패한 배치는 UNAUDITED로 남아 다음 회차가 다시 집는다.
+     * <p>SDK 재시도는 끈다. 기본값이면 408·429·5xx 응답마다 같은 요청을 다섯 번까지 다시 보내서,
+     * 회차 수로 맞춘 Gemini 하루 호출 수({@code config/service.yml}의 cron 주석)가 그만큼 불어난다.
      */
     static HttpOptions httpOptions(NicknameAuditProperties properties) {
         return HttpOptions.builder()
